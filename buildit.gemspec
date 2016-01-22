@@ -3,9 +3,9 @@ Gem::Specification.new do |s|
   s.version     = '0.0.0'
   s.date        = '2016-01-22'
   s.summary     = ''
-  s.description = ''
+  s.description = s.summary
   s.authors     = ['']
   s.email       = ''
-  s.files       = ['lib/buildit.rb']
+  s.files       = Dir['lib/**/*']
   s.license     = ''
 end
