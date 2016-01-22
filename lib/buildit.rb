@@ -17,3 +17,7 @@ require 'buildit/git_repo/base'
 require 'buildit/git_repo/chronicler'
 require 'buildit/git_repo/remote'
 require 'buildit/git_artifact'
+
+module Buildit
+  VERSION = '0.0.0'
+end
