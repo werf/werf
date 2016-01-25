@@ -19,5 +19,5 @@ require 'buildit/git_repo/remote'
 require 'buildit/git_artifact'
 
 module Buildit
-  VERSION = '0.0.0'
+  VERSION = '0.0.1'
 end
