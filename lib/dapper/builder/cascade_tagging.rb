@@ -1,4 +1,4 @@
-module Buildit
+module Dapper
   class Builder
     module CascadeTagging
       def tag_cascade(image_id)

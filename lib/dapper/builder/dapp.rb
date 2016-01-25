@@ -1,4 +1,4 @@
-module Buildit
+module Dapper
   class Builder
     module Dapp
       def dappit(*extra_dapps, chef_version: "12.4.3", **kwargs)

@@ -1,4 +1,4 @@
-module Buildit
+module Dapper
   module GitRepo
     class Chronicler < Base
       def initialize(builder, name, **kwargs)

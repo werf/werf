@@ -1,4 +1,4 @@
-module Buildit
+module Dapper
   module GitRepo
     class Remote < Base
       def initialize(builder, name, url:, ssh_key_path: nil, **kwargs)

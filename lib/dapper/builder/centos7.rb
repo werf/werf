@@ -1,4 +1,4 @@
-module Buildit
+module Dapper
   class Builder
     module Centos7
       def from_centos7

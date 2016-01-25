@@ -1,4 +1,4 @@
-module Buildit
+module Dapper
   class Atomizer
     def initialize(builder, file_path)
       @builder = builder

@@ -1,4 +1,4 @@
-module Buildit
+module Dapper
   class GitArtifact
     include Filelock
 

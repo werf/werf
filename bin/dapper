@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require 'dapper'
+
+Dapper::Builder.default_opts[:docker_registry] = ENV["DOCKER_REGISTRY"] if ENV.key? "DOCKER_REGISTRY"
+Dapper::Builder.default_opts[:build_dir] = "build"
+Dapper::Builder.default_opts[:shared_build_dir] = true
+Dapper::Builder.default_opts[:cascade_tagging] = true
+
+Dapper::Builder.default_opts[:flush_cache] = true
+#Dapper::Builder.default_opts[:log_quiet] = true
+Dapper::Builder.default_opts[:log_verbose] = true
+
+ARGV.push "*" unless ARGV.any?
+
+while pattern = ARGV.shift
+  exit 1 unless Dapper::Builder.process_directory("apps", pattern).any?
+end

@@ -1,4 +1,4 @@
-module Buildit
+module Dapper
   class Docker
     def initialize(builder)
       @builder = builder

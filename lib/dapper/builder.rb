@@ -1,4 +1,4 @@
-module Buildit
+module Dapper
   class Builder
     include Dapp
     include Centos7
@@ -11,20 +11,20 @@ module Buildit
       end
 
       def process_directory(path, pattern = "*")
-        builditfiles_paths = pattern.split("-").instance_eval{ count.downto(1).map{|n| self.slice(0, n).join("-") } }.map{|p| Dir.glob(File.join(path, p, "Builditfile")) }.find(&:any?) || []
+        dappfiles_paths = pattern.split("-").instance_eval{ count.downto(1).map{|n| self.slice(0, n).join("-") } }.map{|p| Dir.glob(File.join(path, p, "Dappfile")) }.find(&:any?) || []
 
-        builditfiles_paths.map{|builditfile_path| process_file(builditfile_path, app_filter: pattern).builded_apps }.flatten
+        dappfiles_paths.map{|dappfile_path| process_file(dappfile_path, app_filter: pattern).builded_apps }.flatten
       end
 
-      def process_file(builditfile_path, app_filter: "*")
-        new(builditfile_path: builditfile_path, app_filter: app_filter) do |builder|
-          builder.log "Processing application #{builder.name} (#{builditfile_path})"
+      def process_file(dappfile_path, app_filter: "*")
+        new(dappfile_path: dappfile_path, app_filter: app_filter) do |builder|
+          builder.log "Processing application #{builder.name} (#{dappfile_path})"
 
           # indent all subsequent messages
           builder.indent_log
 
           # eval instructions from file
-          builder.instance_eval File.read(builditfile_path), builditfile_path
+          builder.instance_eval File.read(dappfile_path), dappfile_path
 
           # commit atomizers
           builder.commit_atomizers!
@@ -61,12 +61,12 @@ module Buildit
       # basename
       if opts[:name]
         opts[:basename], opts[:name] = opts[:name], nil
-      elsif opts[:builditfile_path]
-        opts[:basename] ||= Pathname.new(opts[:builditfile_path]).expand_path.parent.basename
+      elsif opts[:dappfile_path]
+        opts[:basename] ||= Pathname.new(opts[:dappfile_path]).expand_path.parent.basename
       end
 
       # home path
-      opts[:home_path] ||= Pathname.new(opts[:builditfile_path] || "fakedir").parent.expand_path.to_s
+      opts[:home_path] ||= Pathname.new(opts[:dappfile_path] || "fakedir").parent.expand_path.to_s
 
 
       # build path
