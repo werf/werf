@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'buildit'
-  s.version = '0.0.0'
+  s.version = '0.0.1'
   s.date = '2016-01-22'
 
   s.summary = ''
