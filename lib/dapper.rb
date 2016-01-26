@@ -6,7 +6,7 @@ require 'timeout'
 require 'base64'
 require 'mixlib/shellout'
 
-require 'dapper/builder/dapp'
+require 'dapper/builder/chefify'
 require 'dapper/builder/centos7'
 require 'dapper/builder/cascade_tagging'
 require 'dapper/filelock'
