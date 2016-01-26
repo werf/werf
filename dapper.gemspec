@@ -12,6 +12,6 @@ Gem::Specification.new do |s|
   s.license = ''
 
   s.files = Dir['lib/**/*']
-  s.executables = ['dapper']
+  s.executables = ['dappit']
   s.add_dependency 'mixlib-shellout', '>= 1.0', '< 3.0'
 end
