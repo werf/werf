@@ -1,6 +1,6 @@
 module Dapper
   class Builder
-    include Dapp
+    include Chefify
     include Centos7
     include CascadeTagging
     include Filelock
