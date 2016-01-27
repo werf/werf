@@ -3,18 +3,49 @@
 # vi: set ft=ruby :
 
 require 'dapper'
+require 'docopt'
 
-Dapper::Builder.default_opts[:docker_registry] = ENV["DOCKER_REGISTRY"] if ENV.key? "DOCKER_REGISTRY"
-Dapper::Builder.default_opts[:build_dir] = "build"
-Dapper::Builder.default_opts[:shared_build_dir] = true
-Dapper::Builder.default_opts[:cascade_tagging] = true
+HELP = <<HELP
+Version: #{Dapper::VERSION}
 
-Dapper::Builder.default_opts[:flush_cache] = true
-#Dapper::Builder.default_opts[:log_quiet] = true
-Dapper::Builder.default_opts[:log_verbose] = true
+Usage:
+  dappit [options] [APPS_PATTERN ...]
 
-ARGV.push "*" unless ARGV.any?
+  APPS_PATTERN                        Applications list to process [default: *].
 
-while pattern = ARGV.shift
-  exit 1 unless Dapper::Builder.process_directory("apps", pattern).any?
+Options:
+  -h, --help                          Show this message.
+  -v, --version                       Show version.
+  -q, --quiet                         Quiet logging.
+
+  -d PATH, --docker-registry PATH     Docker registry#{ENV.key?('DOCKER_REGISTRY') ? " [default: #{ENV['DOCKER_REGISTRY']}]" : nil}.
+  -b PATH, --build-dir PATH           Build directory [default: build].
+  -a PATH, --apps-dir PATH            Apps directory [default: apps].
+
+  --no-shared-build-dir               Use shared build dir [default: enabled].
+  --no-cascade-tagging                Use cascade tagging [default: enabled].
+  --no-flush-cache                    Flush cache [default: enabled].
+HELP
+
+begin
+  options = Docopt.docopt(HELP, version: Dapper::VERSION)
+  options['APPS_PATTERN'] << '*' if options['APPS_PATTERN'].empty?
+
+  Dapper::Builder.default_opts[:log_quiet] = options['--quiet']
+  Dapper::Builder.default_opts[:log_verbose] = !Dapper::Builder.default_opts[:log_quiet]
+
+  Dapper::Builder.default_opts[:docker_registry] = options['--docker-registry'] if options['--docker-registry']
+  Dapper::Builder.default_opts[:build_dir] = options['--build-dir']
+  Dapper::Builder.default_opts[:apps_dir] = options['--apps-dir']
+
+  Dapper::Builder.default_opts[:shared_build_dir] = !options['--no-shared-build-dir']
+  Dapper::Builder.default_opts[:cascade_tagging] = !options['--no-cascade-tagging']
+  Dapper::Builder.default_opts[:flush_cache] = !options['--no-flush-cache']
+
+  while pattern = options['APPS_PATTERN'].shift
+    exit 1 unless Dapper::Builder.process_directory(Dapper::Builder.default_opts[:apps_dir], pattern).any?
+  end
+rescue Docopt::Exit => err
+  STDERR.puts err.message
+  exit 1
 end
