@@ -16,7 +16,7 @@ Usage:
 Options:
   -h, --help                          Show this message.
   -v, --version                       Show version.
-  -q, --quiet                         Quiet logging.
+  -q, --quiet                         Suppress logging.
 
   -d PATH, --docker-registry PATH     Docker registry#{ENV.key?('DOCKER_REGISTRY') ? " [default: #{ENV['DOCKER_REGISTRY']}]" : nil}.
   -b PATH, --build-dir PATH           Build directory [default: build].
