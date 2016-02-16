@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
   s.description = s.summary
   s.homepage = 'https://github.com/flant/dapper'
 
-  s.authors = ['']
+  s.authors = ['Dmitry Stolyarov']
   s.email = ''
   s.license = ''
 
