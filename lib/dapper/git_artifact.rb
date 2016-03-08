@@ -17,7 +17,7 @@ module Dapper
 
       @build_path = build_path || []
 
-      @atomizer = Atomizer.new builder, build_path(filename '.atomizer')
+      @atomizer = Atomizer.new builder, build_path(filename('.atomizer'))
 
       # check params hash
       lock do
@@ -77,8 +77,8 @@ module Dapper
           paramshash_path,
           archive_path,
           archive_commitfile_path,
-          Dir.glob(layer_patch_path '*'),
-          Dir.glob(layer_commitfile_path '*'),
+          Dir.glob(layer_patch_path('*')),
+          Dir.glob(layer_commitfile_path('*')),
           latest_patch_path,
           latest_commitfile_path
         ].flatten
@@ -229,7 +229,7 @@ module Dapper
     end
 
     def layers
-      Dir.glob(layer_commitfile_path '*').map { |path| Integer(path.gsub(/.*_(\d+)\.commit$/, '\\1')) }.sort
+      Dir.glob(layer_commitfile_path('*')).map { |path| Integer(path.gsub(/.*_(\d+)\.commit$/, '\\1')) }.sort
     end
 
     def create_layer_patch!(from, layer)
@@ -269,7 +269,7 @@ module Dapper
     end
 
     def lock(**kwargs, &block)
-      builder.filelock(build_path(filename '.lock'), error_message: "Branch #{branch} of artifact #{name ? " #{name}" : nil} #{repo.name} (#{repo.dir_path}) in use! Try again later.", **kwargs, &block)
+      builder.filelock(build_path(filename('.lock')), error_message: "Branch #{branch} of artifact #{name ? " #{name}" : nil} #{repo.name} (#{repo.dir_path}) in use! Try again later.", **kwargs, &block)
     end
   end
 end

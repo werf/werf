@@ -38,8 +38,3 @@ Metrics/ParameterLists:
 # Offense count: 2
 Metrics/PerceivedComplexity:
   Max: 13
-
-# Offense count: 5
-Style/NestedParenthesizedCalls:
-  Exclude:
-    - 'lib/dapper/git_artifact.rb'
