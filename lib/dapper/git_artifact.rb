@@ -22,7 +22,7 @@ module Dapper
 
       # check params hash
       lock do
-        cleanup! unless !flush_cache && File.exists?(paramshash_path) && File.read(paramshash_path) == paramshash
+        cleanup! unless !flush_cache && File.exist?(paramshash_path) && File.read(paramshash_path) == paramshash
         File.write paramshash_path, paramshash
       end
     end
@@ -180,7 +180,7 @@ module Dapper
     end
 
     def archive_exists?
-      File.exists? archive_commitfile_path
+      File.exist? archive_commitfile_path
     end
 
     def add_archive
@@ -226,7 +226,7 @@ module Dapper
     end
 
     def layer_commit(layer)
-      File.read layer_commitfile_path(layer) if File.exists? layer_commitfile_path(layer)
+      File.read layer_commitfile_path(layer) if File.exist? layer_commitfile_path(layer)
     end
 
     def layers
@@ -254,7 +254,7 @@ module Dapper
     end
 
     def latest_commit
-      File.read latest_commitfile_path if File.exists? latest_commitfile_path
+      File.read latest_commitfile_path if File.exist? latest_commitfile_path
     end
 
     def create_latest_patch!(from)

@@ -14,12 +14,6 @@ Lint/AssignmentInCondition:
     - 'lib/dapper/atomizer.rb'
     - 'lib/dapper/docker.rb'
 
-# Offense count: 4
-# Cop supports --auto-correct.
-Lint/DeprecatedClassMethods:
-  Exclude:
-    - 'lib/dapper/git_artifact.rb'
-
 # Offense count: 1
 Lint/ParenthesesAsGroupedExpression:
   Exclude:
