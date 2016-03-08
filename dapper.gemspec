@@ -17,6 +17,8 @@ Gem::Specification.new do |s|
   s.files = Dir['lib/**/*']
   s.executables = ['dappit']
 
+  s.required_ruby_version = '>= 2.2'
+
   s.add_dependency 'mixlib-shellout', '>= 1.0', '< 3.0'
   s.add_dependency 'docopt', '>= 0.5', '< 2.0'
 end
