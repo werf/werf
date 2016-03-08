@@ -47,19 +47,6 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Max: 13
 
-# Offense count: 1
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-# SupportedStyles: braces, no_braces, context_dependent
-Style/BracesAroundHashParameters:
-  Exclude:
-    - 'lib/dapper/builder.rb'
-
-# Offense count: 1
-Style/ClassVars:
-  Exclude:
-    - 'lib/dapper/filelock.rb'
-
 # Offense count: 11
 Style/Documentation:
   Exclude:

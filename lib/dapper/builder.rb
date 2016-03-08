@@ -164,7 +164,9 @@ module Dapper
 
     def tag(image_id, name: nil, tag: nil, registry: nil)
       return unless name && tag
-      docker.tag image_id, {name: name, tag: tag, registry: registry}
+
+      new = {name: name, tag: tag, registry: registry}
+      docker.tag image_id, new
     end
 
     def register_atomizer(atomizer)

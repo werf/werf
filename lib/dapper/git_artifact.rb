@@ -1,7 +1,5 @@
 module Dapper
   class GitArtifact
-    include Filelock
-
     def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil, interlayer_period: 7*24*3600, build_path: nil, flush_cache: false)
       @builder = builder
       @repo = repo
@@ -270,7 +268,7 @@ module Dapper
     end
 
     def lock(**kwargs, &block)
-      filelock(build_path(filename '.lock'), error_message: "Branch #{branch} of artifact #{name ? " #{name}" : nil} #{repo.name} (#{repo.dir_path}) in use! Try again later.", **kwargs, &block)
+      builder.filelock(build_path(filename '.lock'), error_message: "Branch #{branch} of artifact #{name ? " #{name}" : nil} #{repo.name} (#{repo.dir_path}) in use! Try again later.", **kwargs, &block)
     end
   end
 end

@@ -1,8 +1,6 @@
 module Dapper
   module GitRepo
     class Base
-      include Filelock
-
       attr_reader :builder
       attr_reader :name
       attr_reader :su
@@ -44,7 +42,7 @@ module Dapper
       end
 
       def lock(**kwargs, &block)
-        filelock(build_path("#{name}.lock"), error_message: "Repository #{name} in use! Try again later.", **kwargs, &block)
+        builder.filelock(build_path("#{name}.lock"), error_message: "Repository #{name} in use! Try again later.", **kwargs, &block)
       end
     end
   end
