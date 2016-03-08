@@ -77,7 +77,7 @@ module Dapper
     end
 
     def image_exists?(**kwargs)
-      !!image_id(**kwargs)
+      !image_id(**kwargs).nil?
     end
 
     def image_id(**kwargs)
