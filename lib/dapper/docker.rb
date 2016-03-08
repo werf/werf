@@ -13,11 +13,11 @@ module Dapper
     end
 
     def build_path(*path)
-      builder.build_path(builder.home_branch, [name, "docker"].compact.join("."), *path)
+      builder.build_path(builder.home_branch, [name, 'docker'].compact.join('.'), *path)
     end
 
     def run(*command, step: :build)
-      add_instruction step, :run, command.join(" && ")
+      add_instruction step, :run, command.join(' && ')
     end
 
     def workdir(directory, step: :build)
@@ -86,7 +86,7 @@ module Dapper
     end
 
     def images(name:, tag: nil, registry: nil)
-      docker("images").stdout.lines.drop(1).map(&:strip)
+      docker('images').stdout.lines.drop(1).map(&:strip)
         .map{|line| Hash[[:name, :tag, :id].zip(line.strip.split(/\s{2,}/)[0..3])] }
         .select{|i| i[:name] == pad_image_name(name: name, registry: registry) && (!tag || i[:tag] == tag)}
     end
@@ -126,18 +126,18 @@ module Dapper
     end
 
     def dockerfile_path
-      build_path "Dockerfile"
+      build_path 'Dockerfile'
     end
 
     def generate_dockerfile
-      File.open dockerfile_path, "w" do |dockerfile|
-        dockerfile.puts "FROM " + from
+      File.open dockerfile_path, 'w' do |dockerfile|
+        dockerfile.puts 'FROM ' + from
 
         [:begining, :prepare, :build, :setup].each do |step|
           instructions(step).each do |directive, *params|
             case directive
             when :run
-              dockerfile.puts "RUN " + params[0]
+              dockerfile.puts 'RUN ' + params[0]
             when :copy
               dockerfile.puts "COPY #{params[0]} #{params[1]}"
             when :add
@@ -146,15 +146,15 @@ module Dapper
               FileUtils.link params[0], build_path(params[1]), force: true
               dockerfile.puts "ADD #{params[1]} #{params[2]}"
             when :expose
-              dockerfile.puts "EXPOSE " + params[0].map(&:to_s).join(" ")
+              dockerfile.puts 'EXPOSE ' + params[0].map(&:to_s).join(' ')
             when :env
-              dockerfile.puts "ENV " + params[0].map{|k, v| %(#{k}="#{v}")}.join(" ")
+              dockerfile.puts 'ENV ' + params[0].map{|k, v| %(#{k}="#{v}")}.join(' ')
             when :volume
-              dockerfile.puts "VOLUME " + params[0].join(" ")
+              dockerfile.puts 'VOLUME ' + params[0].join(' ')
             when :workdir
               dockerfile.puts "WORKDIR  #{params[0]}"
             when :cmd
-              dockerfile.puts "CMD " + params[0].join(" ")
+              dockerfile.puts 'CMD ' + params[0].join(' ')
             end
           end
         end

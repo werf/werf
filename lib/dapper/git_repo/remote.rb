@@ -19,7 +19,7 @@ module Dapper
         end
       end
 
-      def fetch!(branch = "master")
+      def fetch!(branch = 'master')
         lock do
           with_ssh_key do
             git_bare "fetch origin #{branch}:#{branch}", log_verbose: true

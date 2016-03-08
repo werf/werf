@@ -2,7 +2,7 @@ module Dapper
   class GitArtifact
     include Filelock
 
-    def initialize(builder, repo, where_to_add, name: nil, branch: "master", cwd: nil, paths: nil, owner: nil, group: nil, interlayer_period: 7*24*3600, build_path: nil, flush_cache: false)
+    def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil, interlayer_period: 7*24*3600, build_path: nil, flush_cache: false)
       @builder = builder
       @repo = repo
       @name = name
@@ -18,7 +18,7 @@ module Dapper
 
       @build_path = build_path || []
 
-      @atomizer = Atomizer.new builder, build_path(filename ".atomizer")
+      @atomizer = Atomizer.new builder, build_path(filename '.atomizer')
 
       # check params hash
       lock do
@@ -78,8 +78,8 @@ module Dapper
           paramshash_path,
           archive_path,
           archive_commitfile_path,
-          Dir.glob(layer_patch_path "*"),
-          Dir.glob(layer_commitfile_path "*"),
+          Dir.glob(layer_patch_path '*'),
+          Dir.glob(layer_commitfile_path '*'),
           latest_patch_path,
           latest_commitfile_path
         ].flatten
@@ -123,7 +123,7 @@ module Dapper
     attr_reader :atomizer
 
     def paths(with_cwd = false)
-      [@paths].flatten.compact.map{|path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(/^\/*|\/*$/, "") }.join(" ") if @paths
+      [@paths].flatten.compact.map{|path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(/^\/*|\/*$/, '') }.join(' ') if @paths
     end
 
     def repo_latest_commit
@@ -135,7 +135,7 @@ module Dapper
     end
 
     def paramshash_filename
-      filename ".paramshash"
+      filename '.paramshash'
     end
 
     def paramshash_path
@@ -143,11 +143,11 @@ module Dapper
     end
 
     def paramshash
-      Digest::SHA256.hexdigest [cwd, paths, owner, group].map(&:to_s).join(":::")
+      Digest::SHA256.hexdigest [cwd, paths, owner, group].map(&:to_s).join(':::')
     end
 
     def archive_filename
-      filename ".tar.gz"
+      filename '.tar.gz'
     end
 
     def archive_path
@@ -155,7 +155,7 @@ module Dapper
     end
 
     def archive_commitfile_path
-      build_path filename ".commit"
+      build_path filename '.commit'
     end
 
     def archive_commit
@@ -169,7 +169,7 @@ module Dapper
       unless owner || group
         repo.git_bare "archive --format tar.gz #{repo_latest_commit}:#{cwd} -o #{archive_path} #{paths}"
       else
-        Dir.mktmpdir("change_archive_owner", build_path) do |tmpdir_path|
+        Dir.mktmpdir('change_archive_owner', build_path) do |tmpdir_path|
           atomizer << tmpdir_path
           repo.git_bare "archive #{repo_latest_commit}:#{cwd} #{paths} | /bin/tar --extract --directory #{tmpdir_path}"
           builder.shellout "/usr/bin/find #{tmpdir_path} -maxdepth 1 -mindepth 1 -printf '%P\\n' | /bin/tar -czf #{archive_path} -C #{tmpdir_path} -T - --owner=#{owner || "root"} --group=#{group || "root"}"
@@ -188,10 +188,10 @@ module Dapper
     end
 
     def add_patch(filename, step:)
-      builder.docker.add_artifact build_path(filename), filename, "/tmp", step: step
+      builder.docker.add_artifact build_path(filename), filename, '/tmp', step: step
 
-      sudo = ""
-      sudo += "sudo " if owner || group
+      sudo = ''
+      sudo += 'sudo ' if owner || group
       sudo += "-u #{(Integer(owner) rescue nil) ? "\\\##{owner}" : owner} " if owner
       sudo += "-g #{(Integer(group) rescue nil) ? "\\\##{group}" : group} " if group
 
@@ -214,7 +214,7 @@ module Dapper
     end
 
     def layer_patch_filename(layer)
-      layer_filename(layer, ".patch.gz")
+      layer_filename(layer, '.patch.gz')
     end
 
     def layer_patch_path(layer)
@@ -222,7 +222,7 @@ module Dapper
     end
 
     def layer_commitfile_path(layer)
-      build_path layer_filename(layer, ".commit")
+      build_path layer_filename(layer, '.commit')
     end
 
     def layer_commit(layer)
@@ -230,7 +230,7 @@ module Dapper
     end
 
     def layers
-      Dir.glob(layer_commitfile_path "*").map{|path| Integer(path.gsub(/.*_(\d+)\.commit$/, "\\1")) }.sort
+      Dir.glob(layer_commitfile_path '*').map{|path| Integer(path.gsub(/.*_(\d+)\.commit$/, '\\1')) }.sort
     end
 
     def create_layer_patch!(from, layer)
@@ -242,7 +242,7 @@ module Dapper
     end
 
     def latest_patch_filename
-      filename "_latest.patch.gz"
+      filename '_latest.patch.gz'
     end
 
     def latest_patch_path
@@ -250,7 +250,7 @@ module Dapper
     end
 
     def latest_commitfile_path
-      build_path filename "_latest.commit"
+      build_path filename '_latest.commit'
     end
 
     def latest_commit
@@ -270,7 +270,7 @@ module Dapper
     end
 
     def lock(**kwargs, &block)
-      filelock(build_path(filename ".lock"), error_message: "Branch #{branch} of artifact #{name ? " #{name}" : nil} #{repo.name} (#{repo.dir_path}) in use! Try again later.", **kwargs, &block)
+      filelock(build_path(filename '.lock'), error_message: "Branch #{branch} of artifact #{name ? " #{name}" : nil} #{repo.name} (#{repo.dir_path}) in use! Try again later.", **kwargs, &block)
     end
   end
 end
