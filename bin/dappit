@@ -42,7 +42,7 @@ begin
   Dapper::Builder.default_opts[:cascade_tagging] = !options['--no-cascade-tagging']
   Dapper::Builder.default_opts[:flush_cache] = !options['--no-flush-cache']
 
-  while pattern = options['APPS_PATTERN'].shift
+  while (pattern = options['APPS_PATTERN'].shift)
     exit 1 unless Dapper::Builder.process_directory(Dapper::Builder.default_opts[:apps_dir], pattern).any?
   end
 rescue Docopt::Exit => err

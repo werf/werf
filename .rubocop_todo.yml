@@ -6,14 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 3
-# Configuration parameters: AllowSafeAssignment.
-Lint/AssignmentInCondition:
-  Exclude:
-    - 'bin/dappit'
-    - 'lib/dapper/atomizer.rb'
-    - 'lib/dapper/docker.rb'
-
 # Offense count: 13
 Metrics/AbcSize:
   Max: 54

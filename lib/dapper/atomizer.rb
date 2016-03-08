@@ -35,7 +35,7 @@ module Dapper
         file.flock(File::LOCK_EX)
       end
 
-      if not_commited_paths = file.read.lines.map(&:strip)
+      if (not_commited_paths = file.read.lines.map(&:strip))
         FileUtils.rm_rf not_commited_paths
       end
 
