@@ -47,7 +47,7 @@ module Dapper
       end
 
       def git(command, **kwargs)
-        if use_ssh_key and ssh_key_path
+        if use_ssh_key && ssh_key_path
           builder.shellout "ssh-agent bash -ec 'ssh-add #{ssh_key_path}; git #{command}'", **kwargs
         else
           super

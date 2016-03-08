@@ -79,15 +79,6 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Max: 13
 
-# Offense count: 5
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-# SupportedStyles: always, conditionals
-Style/AndOr:
-  Exclude:
-    - 'lib/dapper/git_artifact.rb'
-    - 'lib/dapper/git_repo/remote.rb'
-
 # Offense count: 1
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle, SupportedStyles.

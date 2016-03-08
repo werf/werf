@@ -22,7 +22,7 @@ module Dapper
 
       # check params hash
       lock do
-        cleanup! unless !flush_cache and File.exists?(paramshash_path) and File.read(paramshash_path) == paramshash
+        cleanup! unless !flush_cache && File.exists?(paramshash_path) && File.read(paramshash_path) == paramshash
         File.write paramshash_path, paramshash
       end
     end
@@ -166,7 +166,7 @@ module Dapper
       atomizer << archive_path
       atomizer << archive_commitfile_path
 
-      unless owner or group
+      unless owner || group
         repo.git_bare "archive --format tar.gz #{repo_latest_commit}:#{cwd} -o #{archive_path} #{paths}"
       else
         Dir.mktmpdir("change_archive_owner", build_path) do |tmpdir_path|
@@ -191,7 +191,7 @@ module Dapper
       builder.docker.add_artifact build_path(filename), filename, "/tmp", step: step
 
       sudo = ""
-      sudo += "sudo " if owner or group
+      sudo += "sudo " if owner || group
       sudo += "-u #{(Integer(owner) rescue nil) ? "\\\##{owner}" : owner} " if owner
       sudo += "-g #{(Integer(group) rescue nil) ? "\\\##{group}" : group} " if group
 
