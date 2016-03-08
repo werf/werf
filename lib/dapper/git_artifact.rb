@@ -209,7 +209,7 @@ module Dapper
     end
 
     def layer_filename(layer, ending)
-      filename "_layer_#{layer.is_a?(Fixnum) ? '%04d' % layer : layer}#{ending}"
+      filename "_layer_#{layer.is_a?(Fixnum) ? format('%04d', layer) : layer}#{ending}"
     end
 
     def layer_patch_filename(layer)
