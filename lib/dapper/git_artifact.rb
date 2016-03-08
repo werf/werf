@@ -1,6 +1,7 @@
 module Dapper
   # Artifact from Git repo
   class GitArtifact
+    # rubocop:disable Metrics/ParameterLists
     def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil,
                    interlayer_period: 7 * 24 * 3600, build_path: nil, flush_cache: false)
       @builder = builder
@@ -26,6 +27,7 @@ module Dapper
         File.write paramshash_path, paramshash
       end
     end
+    # rubocop:enable Metrics/ParameterLists
 
     def build_path(*paths)
       builder.build_path(*@build_path, *paths)
