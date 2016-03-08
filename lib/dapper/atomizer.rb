@@ -42,7 +42,7 @@ module Dapper
       file.rewind
 
       file
-    rescue Timeout::Error => e
+    rescue Timeout::Error
       file.close
 
       STDERR.puts 'Atomizer already in use! Try again later.'

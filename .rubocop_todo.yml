@@ -14,22 +14,6 @@ Lint/AssignmentInCondition:
     - 'lib/dapper/atomizer.rb'
     - 'lib/dapper/docker.rb'
 
-# Offense count: 1
-Lint/ParenthesesAsGroupedExpression:
-  Exclude:
-    - 'lib/dapper/git_artifact.rb'
-
-# Offense count: 1
-Lint/ShadowingOuterLocalVariable:
-  Exclude:
-    - 'lib/dapper/builder.rb'
-
-# Offense count: 2
-Lint/UselessAssignment:
-  Exclude:
-    - 'lib/dapper/atomizer.rb'
-    - 'lib/dapper/filelock.rb'
-
 # Offense count: 13
 Metrics/AbcSize:
   Max: 54

@@ -46,8 +46,8 @@ module Dapper
     end
 
     def build_path(*path)
-      path.compact.inject(Pathname.new(opts[:build_path]), &:+).expand_path.tap do |path|
-        FileUtils.mkdir_p path.parent
+      path.compact.inject(Pathname.new(opts[:build_path]), &:+).expand_path.tap do |p|
+        FileUtils.mkdir_p p.parent
       end.to_s
     end
 

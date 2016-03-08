@@ -19,7 +19,7 @@ module Dapper
           filelocks[filelock] -= 1
         end
       end
-    rescue Timeout::Error => e
+    rescue Timeout::Error
       STDERR.puts error_message
       exit 1
     end

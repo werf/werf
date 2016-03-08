@@ -59,12 +59,12 @@ module Dapper
             # layer
             remove_latest!
             layer = latest_layer.to_i + 1
-            create_layer_patch! (latest_layer_commit || archive_commit), layer
+            create_layer_patch!(latest_layer_commit || archive_commit, layer)
             add_layer_patch layer
           else
             # latest
             if latest_commit != repo_latest_commit
-              create_latest_patch! (latest_layer_commit || archive_commit)
+              create_latest_patch!(latest_layer_commit || archive_commit)
             end
             add_latest_patch
           end
