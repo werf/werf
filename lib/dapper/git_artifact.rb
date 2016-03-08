@@ -165,14 +165,14 @@ module Dapper
       atomizer << archive_path
       atomizer << archive_commitfile_path
 
-      unless owner || group
-        repo.git_bare "archive --format tar.gz #{repo_latest_commit}:#{cwd} -o #{archive_path} #{paths}"
-      else
+      if owner || group
         Dir.mktmpdir('change_archive_owner', build_path) do |tmpdir_path|
           atomizer << tmpdir_path
           repo.git_bare "archive #{repo_latest_commit}:#{cwd} #{paths} | /bin/tar --extract --directory #{tmpdir_path}"
           builder.shellout "/usr/bin/find #{tmpdir_path} -maxdepth 1 -mindepth 1 -printf '%P\\n' | /bin/tar -czf #{archive_path} -C #{tmpdir_path} -T - --owner=#{owner || "root"} --group=#{group || "root"}"
         end
+      else
+        repo.git_bare "archive --format tar.gz #{repo_latest_commit}:#{cwd} -o #{archive_path} #{paths}"
       end
 
       File.write archive_commitfile_path, repo_latest_commit

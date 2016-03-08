@@ -96,9 +96,3 @@ Style/RescueModifier:
 # SupportedStyles: single_quotes, double_quotes
 Style/StringLiteralsInInterpolation:
   Enabled: false
-
-# Offense count: 2
-Style/UnlessElse:
-  Exclude:
-    - 'lib/dapper/builder/chefify.rb'
-    - 'lib/dapper/git_artifact.rb'

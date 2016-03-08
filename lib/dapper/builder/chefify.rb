@@ -59,31 +59,32 @@ module Dapper
       end
 
       def setup_dapp_chef(chef_version)
-        unless opts[:dapp_chef_version]
-          # install chef, setup chef_solo
-          docker.run(
-            "curl -L https://www.opscode.com/chef/install.sh | bash -s -- -v #{chef_version}",
-            'mkdir -p /usr/share/dapp/chef_repo /var/cache/dapp/chef',
-            'echo file_cache_path \\"/var/cache/dapp/chef\\" > /usr/share/dapp/chef_solo.rb',
-            'echo cookbook_path \\"/usr/share/dapp/chef_repo/cookbooks\\" >> /usr/share/dapp/chef_solo.rb',
-            step: :begining
-          )
-
-          # add cookbooks
-          dapp_chef_cookbooks_artifact.add_multilayer!
-
-          # mark chef as installed
-          opts[:dapp_chef_version] = chef_version
-
-          # run chef solo for dapp-common
-          [:prepare, :build, :setup].each do |step|
-            if dapp_chef_cookbooks_artifact.exists_in_step? "cookbooks/dapp-common/recipes/#{step}.rb", step
-              # FIXME: env ???
-              docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o dapp-common::#{step},env-#{opts[:basename]}::void", step: step
-            end
-          end
-        else
+        if opts[:dapp_chef_version]
           raise "dapp chef version mismatch, version #{opts[:dapp_chef_version]} already installed" if opts[:dapp_chef_version] != chef_version
+          return
+        end
+
+        # install chef, setup chef_solo
+        docker.run(
+          "curl -L https://www.opscode.com/chef/install.sh | bash -s -- -v #{chef_version}",
+          'mkdir -p /usr/share/dapp/chef_repo /var/cache/dapp/chef',
+          'echo file_cache_path \\"/var/cache/dapp/chef\\" > /usr/share/dapp/chef_solo.rb',
+          'echo cookbook_path \\"/usr/share/dapp/chef_repo/cookbooks\\" >> /usr/share/dapp/chef_solo.rb',
+          step: :begining
+        )
+
+        # add cookbooks
+        dapp_chef_cookbooks_artifact.add_multilayer!
+
+        # mark chef as installed
+        opts[:dapp_chef_version] = chef_version
+
+        # run chef solo for dapp-common
+        [:prepare, :build, :setup].each do |step|
+          if dapp_chef_cookbooks_artifact.exists_in_step? "cookbooks/dapp-common/recipes/#{step}.rb", step
+            # FIXME: env ???
+            docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o dapp-common::#{step},env-#{opts[:basename]}::void", step: step
+          end
         end
       end
     end
