@@ -52,7 +52,8 @@ module Dapper
           repo.commit!
 
           # init artifact
-          @dapp_chef_cookbooks_artifact = GitArtifact.new(self, repo, '/usr/share/dapp/chef_repo/cookbooks', cwd: 'cookbooks', build_path: home_branch, flush_cache: opts[:flush_cache])
+          @dapp_chef_cookbooks_artifact = GitArtifact.new(self, repo, '/usr/share/dapp/chef_repo/cookbooks',
+                                                          cwd: 'cookbooks', build_path: home_branch, flush_cache: opts[:flush_cache])
         end
 
         @dapp_chef_cookbooks_artifact

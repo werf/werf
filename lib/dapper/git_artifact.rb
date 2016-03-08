@@ -1,7 +1,8 @@
 module Dapper
   # Artifact from Git repo
   class GitArtifact
-    def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil, interlayer_period: 7 * 24 * 3600, build_path: nil, flush_cache: false)
+    def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil,
+                   interlayer_period: 7 * 24 * 3600, build_path: nil, flush_cache: false)
       @builder = builder
       @repo = repo
       @name = name
@@ -169,7 +170,8 @@ module Dapper
         Dir.mktmpdir('change_archive_owner', build_path) do |tmpdir_path|
           atomizer << tmpdir_path
           repo.git_bare "archive #{repo_latest_commit}:#{cwd} #{paths} | /bin/tar --extract --directory #{tmpdir_path}"
-          builder.shellout "/usr/bin/find #{tmpdir_path} -maxdepth 1 -mindepth 1 -printf '%P\\n' | /bin/tar -czf #{archive_path} -C #{tmpdir_path} -T - --owner=#{owner || 'root'} --group=#{group || 'root'}"
+          builder.shellout("/usr/bin/find #{tmpdir_path} -maxdepth 1 -mindepth 1 -printf '%P\\n' | /bin/tar -czf #{archive_path} -C #{tmpdir_path}" \
+                           " -T - --owner=#{owner || 'root'} --group=#{group || 'root'}")
         end
       else
         repo.git_bare "archive --format tar.gz #{repo_latest_commit}:#{cwd} -o #{archive_path} #{paths}"
@@ -269,7 +271,8 @@ module Dapper
     end
 
     def lock(**kwargs, &block)
-      builder.filelock(build_path(filename('.lock')), error_message: "Branch #{branch} of artifact #{name ? " #{name}" : nil} #{repo.name} (#{repo.dir_path}) in use! Try again later.", **kwargs, &block)
+      builder.filelock(build_path(filename('.lock')), error_message: "Branch #{branch} of artifact #{name ? " #{name}" : nil} #{repo.name}" \
+                       " (#{repo.dir_path}) in use! Try again later.", **kwargs, &block)
     end
   end
 end

@@ -12,7 +12,8 @@ module Dapper
       end
 
       def process_directory(path, pattern = '*')
-        dappfiles_paths = pattern.split('-').instance_eval { count.downto(1).map { |n| slice(0, n).join('-') } }.map { |p| Dir.glob(File.join(path, p, 'Dappfile')) }.find(&:any?) || []
+        dappfiles_paths = pattern.split('-').instance_eval { count.downto(1).map { |n| slice(0, n).join('-') } }
+                                 .map { |p| Dir.glob(File.join(path, p, 'Dappfile')) }.find(&:any?) || []
 
         dappfiles_paths.map { |dappfile_path| process_file(dappfile_path, app_filter: pattern).builded_apps }.flatten
       end
@@ -205,7 +206,8 @@ module Dapper
     end
 
     def lock(**kwargs, &block)
-      filelock(build_path("#{home_branch}.lock"), error_message: "Application #{opts[:basename]} (#{home_branch}) in use! Try again later.", **kwargs, &block)
+      filelock(build_path("#{home_branch}.lock"), error_message: "Application #{opts[:basename]} (#{home_branch}) in use! Try again later.", **kwargs,
+               &block)
     end
   end
 end
