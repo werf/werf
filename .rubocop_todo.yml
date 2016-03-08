@@ -89,10 +89,3 @@ Style/RegexpLiteral:
 Style/RescueModifier:
   Exclude:
     - 'lib/dapper/git_artifact.rb'
-
-# Offense count: 4
-# Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles.
-# SupportedStyles: single_quotes, double_quotes
-Style/StringLiteralsInInterpolation:
-  Enabled: false

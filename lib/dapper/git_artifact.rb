@@ -169,7 +169,7 @@ module Dapper
         Dir.mktmpdir('change_archive_owner', build_path) do |tmpdir_path|
           atomizer << tmpdir_path
           repo.git_bare "archive #{repo_latest_commit}:#{cwd} #{paths} | /bin/tar --extract --directory #{tmpdir_path}"
-          builder.shellout "/usr/bin/find #{tmpdir_path} -maxdepth 1 -mindepth 1 -printf '%P\\n' | /bin/tar -czf #{archive_path} -C #{tmpdir_path} -T - --owner=#{owner || "root"} --group=#{group || "root"}"
+          builder.shellout "/usr/bin/find #{tmpdir_path} -maxdepth 1 -mindepth 1 -printf '%P\\n' | /bin/tar -czf #{archive_path} -C #{tmpdir_path} -T - --owner=#{owner || 'root'} --group=#{group || 'root'}"
         end
       else
         repo.git_bare "archive --format tar.gz #{repo_latest_commit}:#{cwd} -o #{archive_path} #{paths}"
@@ -209,7 +209,7 @@ module Dapper
     end
 
     def layer_filename(layer, ending)
-      filename "_layer_#{layer.is_a?(Fixnum) ? "%04d" % layer : layer}#{ending}"
+      filename "_layer_#{layer.is_a?(Fixnum) ? '%04d' % layer : layer}#{ending}"
     end
 
     def layer_patch_filename(layer)
