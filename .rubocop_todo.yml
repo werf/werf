@@ -51,12 +51,6 @@ Style/FormatString:
   Exclude:
     - 'lib/dapper/git_artifact.rb'
 
-# Offense count: 1
-# Configuration parameters: MinBodyLength.
-Style/GuardClause:
-  Exclude:
-    - 'lib/dapper/docker.rb'
-
 # Offense count: 2
 # Cop supports --auto-correct.
 # Configuration parameters: EnforcedStyle, SupportedStyles, IndentationWidth.

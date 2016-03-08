@@ -81,9 +81,8 @@ module Dapper
     end
 
     def image_id(**kwargs)
-      if (image = images(**kwargs).first)
-        image[:id]
-      end
+      image = images(**kwargs).first
+      image ? image[:id] : nil
     end
 
     def images(name:, tag: nil, registry: nil)
