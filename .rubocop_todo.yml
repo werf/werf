@@ -15,10 +15,6 @@ Metrics/AbcSize:
 Metrics/ClassLength:
   Max: 500
 
-# Offense count: 4
-Metrics/CyclomaticComplexity:
-  Max: 12
-
 # Offense count: 14
 # Configuration parameters: CountComments.
 Metrics/MethodLength:

@@ -80,15 +80,20 @@ module Dapper
       exists_in_commit?(path, commit_by_step(step))
     end
 
+    def prepare_step_commit
+      archive_commit
+    end
+
+    def build_step_commit
+      layer_commit(layers.last) || archive_commit
+    end
+
+    def setup_step_commit
+      latest_commit || layer_commit(layers.last) || archive_commit
+    end
+
     def commit_by_step(step)
-      case step
-      when :prepare
-        archive_commit
-      when :build
-        layer_commit(layers.last) || archive_commit
-      when :setup
-        latest_commit || layer_commit(layers.last) || archive_commit
-      end
+      send :"#{step}_step_commit"
     end
 
     def any_changes?(from)
@@ -205,13 +210,24 @@ module Dapper
       builder.docker.add_artifact archive_path, archive_filename, where_to_add, step: :prepare
     end
 
-    def add_patch(filename, step:)
-      builder.docker.add_artifact build_path(filename), filename, '/tmp', step: step
+    def sudo_format_user(user)
+      user.to_i.to_s == user ? "\\\##{user}" : user
+    end
 
+    def sudo
       sudo = ''
-      sudo += 'sudo ' if owner || group
-      sudo += "-u #{owner.to_i.to_s == owner ? "\\\##{owner}" : owner} " if owner
-      sudo += "-g #{group.to_i.to_s == group ? "\\\##{group}" : group} " if group
+
+      if owner || group
+        sudo = 'sudo '
+        sudo += "-u #{sudo_format_user(owner)} " if owner
+        sudo += "-g #{sudo_format_user(group)} " if group
+      end
+
+      sudo
+    end
+
+    def add_patch(filename, step:)
+      builder.docker.add_artifact(build_path(filename), filename, '/tmp', step: step)
 
       builder.docker.run [
         "zcat /tmp/#{filename} | #{sudo}git apply --whitespace=nowarn --directory=#{where_to_add}",

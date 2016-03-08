@@ -129,34 +129,55 @@ module Dapper
       build_path 'Dockerfile'
     end
 
+    def generate_dockerfile_run(dockerfile, *params)
+      dockerfile.puts 'RUN ' + params[0]
+    end
+
+    def generate_dockerfile_copy(dockerfile, *params)
+      dockerfile.puts "COPY #{params[0]} #{params[1]}"
+    end
+
+    def generate_dockerfile_add(dockerfile, *params)
+      dockerfile.puts "ADD #{params[0]} #{params[1]}"
+    end
+
+    def generate_dockerfile_add_artifact(dockerfile, *params)
+      FileUtils.link params[0], build_path(params[1]), force: true
+      dockerfile.puts "ADD #{params[1]} #{params[2]}"
+    end
+
+    def generate_dockerfile_expose(dockerfile, *params)
+      dockerfile.puts 'EXPOSE ' + params[0].map(&:to_s).join(' ')
+    end
+
+    def generate_dockerfile_env(dockerfile, *params)
+      dockerfile.puts 'ENV ' + params[0].map { |k, v| %(#{k}="#{v}") }.join(' ')
+    end
+
+    def generate_dockerfile_volume(dockerfile, *params)
+      dockerfile.puts 'VOLUME ' + params[0].join(' ')
+    end
+
+    def generate_dockerfile_workdir(dockerfile, *params)
+      dockerfile.puts "WORKDIR  #{params[0]}"
+    end
+
+    def generate_dockerfile_cmd(dockerfile, *params)
+      dockerfile.puts 'CMD ' + params[0].join(' ')
+    end
+
+    def generate_dockerfile_step(dockerfile, step)
+      instructions(step).each do |directive, *params|
+        send :"generate_dockerfile_#{directive}", dockerfile, *params
+      end
+    end
+
     def generate_dockerfile
       File.open dockerfile_path, 'w' do |dockerfile|
         dockerfile.puts 'FROM ' + from
 
         [:begining, :prepare, :build, :setup].each do |step|
-          instructions(step).each do |directive, *params|
-            case directive
-            when :run
-              dockerfile.puts 'RUN ' + params[0]
-            when :copy
-              dockerfile.puts "COPY #{params[0]} #{params[1]}"
-            when :add
-              dockerfile.puts "ADD #{params[0]} #{params[1]}"
-            when :add_artifact
-              FileUtils.link params[0], build_path(params[1]), force: true
-              dockerfile.puts "ADD #{params[1]} #{params[2]}"
-            when :expose
-              dockerfile.puts 'EXPOSE ' + params[0].map(&:to_s).join(' ')
-            when :env
-              dockerfile.puts 'ENV ' + params[0].map { |k, v| %(#{k}="#{v}") }.join(' ')
-            when :volume
-              dockerfile.puts 'VOLUME ' + params[0].join(' ')
-            when :workdir
-              dockerfile.puts "WORKDIR  #{params[0]}"
-            when :cmd
-              dockerfile.puts 'CMD ' + params[0].join(' ')
-            end
-          end
+          generate_dockerfile_step(dockerfile, step)
         end
       end
     end
