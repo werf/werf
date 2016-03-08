@@ -19,5 +19,5 @@ require 'dapper/git_repo/remote'
 require 'dapper/git_artifact'
 
 module Dapper
-  VERSION = '0.0.1'
+  VERSION = '0.0.1'.freeze
 end

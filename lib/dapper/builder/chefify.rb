@@ -1,8 +1,8 @@
 module Dapper
   class Builder
     module Chefify
-      def dappit(*extra_dapps, chef_version: "12.4.3", **kwargs)
-        log "Adding dapp chef cookbook artifact and chef solo run"
+      def dappit(*extra_dapps, chef_version: '12.4.3', **_kwargs)
+        log 'Adding dapp chef cookbook artifact and chef solo run'
 
         setup_dapp_chef chef_version
 
@@ -17,7 +17,7 @@ module Dapper
           end
 
           # run chef-solo for app
-          recipe = [opts[:name], step].compact.join "-"
+          recipe = [opts[:name], step].compact.join '-'
           # FIXME: env ???
           if dapp_chef_cookbooks_artifact.exists_in_step? "cookbooks/env-#{opts[:basename]}/recipes/#{recipe}.rb", step
             docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o env-#{opts[:basename]}::#{recipe}", step: step
@@ -38,20 +38,20 @@ module Dapper
       def dapp_chef_cookbooks_artifact
         unless @dapp_chef_cookbooks_artifact
           # init cronicler
-          repo = GitRepo::Chronicler.new(self, "dapp_cookbooks", build_path: home_branch)
+          repo = GitRepo::Chronicler.new(self, 'dapp_cookbooks', build_path: home_branch)
 
           # vendor cookbooks
-          shellout "berks vendor --berksfile=#{home_path "Berksfile"} #{repo.chronodir_path "cookbooks"}", log_verbose: true
+          shellout "berks vendor --berksfile=#{home_path 'Berksfile'} #{repo.chronodir_path 'cookbooks'}", log_verbose: true
 
           # create void receipt
           # FIXME: env ???
-          FileUtils.touch repo.chronodir_path "cookbooks", "env-#{opts[:basename]}", "recipes", "void.rb"
+          FileUtils.touch repo.chronodir_path 'cookbooks', "env-#{opts[:basename]}", 'recipes', 'void.rb'
 
           # commit (if smth changed)
           repo.commit!
 
           # init artifact
-          @dapp_chef_cookbooks_artifact = GitArtifact.new(self, repo, "/usr/share/dapp/chef_repo/cookbooks", cwd: "cookbooks", build_path: home_branch, flush_cache: opts[:flush_cache])
+          @dapp_chef_cookbooks_artifact = GitArtifact.new(self, repo, '/usr/share/dapp/chef_repo/cookbooks', cwd: 'cookbooks', build_path: home_branch, flush_cache: opts[:flush_cache])
         end
 
         @dapp_chef_cookbooks_artifact

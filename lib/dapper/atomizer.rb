@@ -26,11 +26,11 @@ module Dapper
     attr_reader :file
 
     def open
-      file = File.open(file_path, File::RDWR|File::CREAT, 0644)
+      file = File.open(file_path, File::RDWR | File::CREAT, 0644)
 
       file.sync = true
 
-      Timeout::timeout(10) do
+      Timeout.timeout(10) do
         file.flock(File::LOCK_EX)
       end
 
@@ -45,7 +45,7 @@ module Dapper
     rescue Timeout::Error => e
       file.close
 
-      STDERR.puts "Atomizer already in use! Try again later."
+      STDERR.puts 'Atomizer already in use! Try again later.'
       exit 1
     end
   end

@@ -10,13 +10,13 @@ module Dapper
         @default_opts ||= {}
       end
 
-      def process_directory(path, pattern = "*")
-        dappfiles_paths = pattern.split("-").instance_eval{ count.downto(1).map{|n| self.slice(0, n).join("-") } }.map{|p| Dir.glob(File.join(path, p, "Dappfile")) }.find(&:any?) || []
+      def process_directory(path, pattern = '*')
+        dappfiles_paths = pattern.split('-').instance_eval { count.downto(1).map { |n| slice(0, n).join('-') } }.map { |p| Dir.glob(File.join(path, p, 'Dappfile')) }.find(&:any?) || []
 
-        dappfiles_paths.map{|dappfile_path| process_file(dappfile_path, app_filter: pattern).builded_apps }.flatten
+        dappfiles_paths.map { |dappfile_path| process_file(dappfile_path, app_filter: pattern).builded_apps }.flatten
       end
 
-      def process_file(dappfile_path, app_filter: "*")
+      def process_file(dappfile_path, app_filter: '*')
         new(dappfile_path: dappfile_path, app_filter: app_filter) do |builder|
           builder.log "Processing application #{builder.name} (#{dappfile_path})"
 
@@ -33,12 +33,12 @@ module Dapper
     end
 
     def log(message)
-      puts " " * opts[:log_indent] + " * " + message if opts[:log_verbose] or !opts[:log_quiet]
+      puts ' ' * opts[:log_indent] + ' * ' + message if opts[:log_verbose] || !opts[:log_quiet]
     end
 
     def shellout(*args, log_verbose: false, **kwargs)
       kwargs[:live_stream] = STDOUT if log_verbose && opts[:log_verbose]
-      Mixlib::ShellOut.new(*args, :timeout => 3600, **kwargs).run_command.tap{ |s| s.error! }
+      Mixlib::ShellOut.new(*args, :timeout => 3600, **kwargs).run_command.tap(&:error!)
     end
 
     def home_path(*path)
@@ -56,25 +56,21 @@ module Dapper
       opts.merge! options
 
       # default log indentation
-      opts[:log_indent]  = 0
+      opts[:log_indent] = 0
 
       # basename
       if opts[:name]
-        opts[:basename], opts[:name] = opts[:name], nil
+        opts[:basename] = opts[:name]
+        opts[:name] = nil
       elsif opts[:dappfile_path]
         opts[:basename] ||= Pathname.new(opts[:dappfile_path]).expand_path.parent.basename
       end
 
       # home path
-      opts[:home_path] ||= Pathname.new(opts[:dappfile_path] || "fakedir").parent.expand_path.to_s
-
+      opts[:home_path] ||= Pathname.new(opts[:dappfile_path] || 'fakedir').parent.expand_path.to_s
 
       # build path
-      if opts[:build_dir]
-        opts[:build_path] = opts[:build_dir]
-      else
-        opts[:build_path] = home_path("build")
-      end
+      opts[:build_path] = opts[:build_dir] ? opts[:build_dir] : home_path('build')
       opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
       # home branch
@@ -109,7 +105,6 @@ module Dapper
       stack_settings(&blk)
     end
 
-
     def app(name)
       log "Processing #{self.name}-#{name}"
 
@@ -123,14 +118,14 @@ module Dapper
     end
 
     def name
-      [opts[:basename], opts[:name]].compact.join "-"
+      [opts[:basename], opts[:name]].compact.join '-'
     end
 
-    def add_artifact_from_git(url, where_to_add, branch: "master", ssh_key_path: nil, **kwargs)
+    def add_artifact_from_git(url, where_to_add, branch: 'master', ssh_key_path: nil, **kwargs)
       log "Adding artifact from git (#{url} to #{where_to_add}, branch: #{branch})"
 
       # extract git repo name from url
-      repo_name = url.gsub(/.*?([^\/ ]+)\.git/, "\\1")
+      repo_name = url.gsub(/.*?([^\/ ]+)\.git/, '\\1')
 
       # clone or fetch
       repo = GitRepo::Remote.new(self, repo_name, url: url, ssh_key_path: ssh_key_path)
@@ -141,7 +136,7 @@ module Dapper
       artifact.add_multilayer!
     end
 
-    def build(**kwargs)
+    def build(**_kwargs)
       # check app name
       unless !opts[:app_filter] || File.fnmatch("#{opts[:app_filter]}*", name)
         log "Skipped (does not match filter: #{opts[:app_filter]})!"
@@ -149,7 +144,7 @@ module Dapper
       end
 
       # build image
-      log "Building"
+      log 'Building'
       image_id = docker.build
 
       # apply cascade tagging
@@ -157,7 +152,7 @@ module Dapper
 
       # push to registry
       if opts[:docker_registry]
-        log "Pushing to registry"
+        log 'Pushing to registry'
         docker.push name: name, registry: opts[:docker_registry]
       end
 
@@ -168,9 +163,8 @@ module Dapper
     end
 
     def tag(image_id, name: nil, tag: nil, registry: nil)
-      if name && tag
-        docker.tag image_id, {name: name, tag: tag, registry: registry}
-      end
+      return unless name && tag
+      docker.tag image_id, {name: name, tag: tag, registry: registry}
     end
 
     def register_atomizer(atomizer)

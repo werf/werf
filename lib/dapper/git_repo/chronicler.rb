@@ -7,7 +7,7 @@ module Dapper
         lock do
           unless File.directory? chronodir_path
             git "init --separate-git-dir=#{dir_path} #{chronodir_path}"
-            git_chrono "commit --allow-empty -m init"
+            git_chrono 'commit --allow-empty -m init'
           end
         end
       end
@@ -16,10 +16,10 @@ module Dapper
         build_path name, *path
       end
 
-      def commit!(comment = "+")
+      def commit!(comment = '+')
         lock do
-          git_chrono "add --all"
-          unless git_chrono("diff --cached --quiet", returns: [0,1]).status.success?
+          git_chrono 'add --all'
+          unless git_chrono('diff --cached --quiet', returns: [0, 1]).status.success?
             git_chrono "commit -m #{comment}"
           end
         end

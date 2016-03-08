@@ -4,7 +4,7 @@ module Dapper
       def tag_cascade(image_id)
         return unless opts[:cascade_tagging]
 
-        log "Applying cascade tagging"
+        log 'Applying cascade tagging'
 
         opts[:build_history_length] ||= 10
 
@@ -19,10 +19,9 @@ module Dapper
 
         # remove excess tags
         tags_to_remove = docker.images(name: i[:name], registry: i[:registry])
-          .map{|image| image[:tag] }
-          .select{|tag| tag.start_with?("#{i[:tag]}_") && tag.sub(/^#{i[:tag]}_/, '').to_i >= opts[:build_history_length] }
+                               .map { |image| image[:tag] }
+                               .select { |tag| tag.start_with?("#{i[:tag]}_") && tag.sub(/^#{i[:tag]}_/, '').to_i >= opts[:build_history_length] }
         tags_to_remove.each do |tag_to_remove|
-          puts "TROMPUMPUM!"
           docker.rmi i.merge(tag: tag_to_remove)
         end
 
@@ -36,9 +35,7 @@ module Dapper
         end
 
         # shift top -> 1
-        if docker.image_exists? **i
-          docker.tag i, i.merge(tag: "#{i[:tag]}_1")
-        end
+        docker.tag i, i.merge(tag: "#{i[:tag]}_1") if docker.image_exists? **i
 
         # tag top
         docker.tag image_id, i

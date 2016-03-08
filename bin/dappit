@@ -5,7 +5,7 @@
 require 'dapper'
 require 'docopt'
 
-HELP = <<HELP
+HELP = <<HELP.freeze
 Version: #{Dapper::VERSION}
 
 Usage:

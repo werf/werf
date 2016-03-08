@@ -33,7 +33,7 @@ module Dapper
         Time.at Integer git_bare("show -s --format=%ct #{commit}").stdout.strip
       end
 
-      def latest_commit(branch = "master")
+      def latest_commit(branch = 'master')
         git_bare("rev-parse #{branch}").stdout.strip
       end
 
