@@ -35,18 +35,14 @@ module Dapper
       lock do
         repo.lock do
           # create and add archive
-          create_archive! unless archive_exists?
-          add_archive
+          create_and_add_archive
           return if archive_commit == repo_latest_commit
 
           # add layer patches
-          latest_layer = nil
-          layers.each do |layer|
-            add_layer_patch layer
-            latest_layer = layer
+          if (latest_layer = add_layer_patches)
+            latest_layer_commit = layer_commit(latest_layer)
+            return if latest_layer_commit == repo_latest_commit
           end
-          latest_layer_commit = layer_commit latest_layer if latest_layer
-          return if latest_layer_commit == repo_latest_commit
 
           # empty changes
           unless any_changes?(latest_layer_commit || archive_commit)
@@ -55,19 +51,7 @@ module Dapper
           end
 
           # create and add last patch
-          if (Time.now - repo.commit_at(latest_layer_commit || archive_commit)) > interlayer_period
-            # layer
-            remove_latest!
-            layer = latest_layer.to_i + 1
-            create_layer_patch!(latest_layer_commit || archive_commit, layer)
-            add_layer_patch layer
-          else
-            # latest
-            if latest_commit != repo_latest_commit
-              create_latest_patch!(latest_layer_commit || archive_commit)
-            end
-            add_latest_patch
-          end
+          create_and_add_last_patch(latest_layer, latest_layer_commit)
         end
       end
     end
@@ -121,6 +105,37 @@ module Dapper
     attr_reader :group
     attr_reader :interlayer_period
     attr_reader :atomizer
+
+    def create_and_add_archive
+      create_archive! unless archive_exists?
+      add_archive
+    end
+
+    def add_layer_patches
+      latest_layer = nil
+      layers.each do |layer|
+        add_layer_patch layer
+        latest_layer = layer
+      end
+
+      latest_layer
+    end
+
+    def create_and_add_last_patch(latest_layer, latest_layer_commit)
+      if (Time.now - repo.commit_at(latest_layer_commit || archive_commit)) > interlayer_period
+        # layer
+        remove_latest!
+        layer = latest_layer.to_i + 1
+        create_layer_patch!(latest_layer_commit || archive_commit, layer)
+        add_layer_patch layer
+      else
+        # latest
+        if latest_commit != repo_latest_commit
+          create_latest_patch!(latest_layer_commit || archive_commit)
+        end
+        add_latest_patch
+      end
+    end
 
     def paths(with_cwd = false)
       [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(%r{^\/*|\/*$}, '') }.join(' ') if @paths
