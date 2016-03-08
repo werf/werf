@@ -47,23 +47,6 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Max: 13
 
-# Offense count: 11
-Style/Documentation:
-  Exclude:
-    - 'spec/**/*'
-    - 'test/**/*'
-    - 'lib/dapper/atomizer.rb'
-    - 'lib/dapper/builder.rb'
-    - 'lib/dapper/builder/cascade_tagging.rb'
-    - 'lib/dapper/builder/centos7.rb'
-    - 'lib/dapper/builder/chefify.rb'
-    - 'lib/dapper/docker.rb'
-    - 'lib/dapper/filelock.rb'
-    - 'lib/dapper/git_artifact.rb'
-    - 'lib/dapper/git_repo/base.rb'
-    - 'lib/dapper/git_repo/chronicler.rb'
-    - 'lib/dapper/git_repo/remote.rb'
-
 # Offense count: 1
 Style/DoubleNegation:
   Exclude:

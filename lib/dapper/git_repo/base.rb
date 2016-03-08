@@ -1,5 +1,6 @@
 module Dapper
   module GitRepo
+    # Base class for any Git repo (remote, gitkeeper, etc)
     class Base
       attr_reader :builder
       attr_reader :name

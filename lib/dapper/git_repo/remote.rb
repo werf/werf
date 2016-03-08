@@ -1,5 +1,6 @@
 module Dapper
   module GitRepo
+    # Normal Git repo
     class Remote < Base
       def initialize(builder, name, url:, ssh_key_path: nil, **kwargs)
         super(builder, name, **kwargs)

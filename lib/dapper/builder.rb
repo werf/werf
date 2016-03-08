@@ -1,4 +1,5 @@
 module Dapper
+  # Main class that does all stuff
   class Builder
     include Chefify
     include Centos7

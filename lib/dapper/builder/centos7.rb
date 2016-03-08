@@ -1,5 +1,6 @@
 module Dapper
   class Builder
+    # Centos7 support
     module Centos7
       def from_centos7
         # use centos7

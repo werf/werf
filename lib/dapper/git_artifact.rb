@@ -1,4 +1,5 @@
 module Dapper
+  # Artifact from Git repo
   class GitArtifact
     def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil, interlayer_period: 7*24*3600, build_path: nil, flush_cache: false)
       @builder = builder

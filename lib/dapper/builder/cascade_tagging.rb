@@ -1,5 +1,6 @@
 module Dapper
   class Builder
+    # Cascade tagging strategy
     module CascadeTagging
       def tag_cascade(image_id)
         return unless opts[:cascade_tagging]
