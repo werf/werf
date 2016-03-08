@@ -1,5 +1,3 @@
-inherit_from: .rubocop_todo.yml
-
 AllCops:
   TargetRubyVersion: 2.2
 
@@ -11,3 +9,6 @@ Metrics/AbcSize:
 
 Metrics/MethodLength:
   Max: 15
+
+Metrics/ClassLength:
+  Max: 300
