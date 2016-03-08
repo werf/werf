@@ -2,7 +2,7 @@ module Dapper
   class Builder
     # Cascade tagging strategy
     module CascadeTagging
-      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       def tag_cascade(image_id)
         return unless opts[:cascade_tagging]
 
@@ -42,7 +42,7 @@ module Dapper
         # tag top
         docker.tag image_id, i
       end
-      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
     end
   end
 end

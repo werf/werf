@@ -2,6 +2,7 @@ module Dapper
   class Builder
     # Centos7 support
     module Centos7
+      # rubocop:disable Metrics/MethodLength:
       def from_centos7
         # use centos7
         docker.from 'centos:7'
@@ -39,6 +40,7 @@ module Dapper
           step: :begining
         )
       end
+      # rubocop:enable Metrics/MethodLength
     end
   end
 end

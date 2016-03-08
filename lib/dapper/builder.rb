@@ -55,7 +55,7 @@ module Dapper
       end.to_s
     end
 
-    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def initialize(**options)
       opts.merge! self.class.default_opts
       opts.merge! options
@@ -91,7 +91,7 @@ module Dapper
         yield self
       end
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     def indent_log
       opts[:log_indent] += 1
