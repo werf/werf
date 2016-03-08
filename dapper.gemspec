@@ -1,15 +1,14 @@
 Gem::Specification.new do |s|
   s.name = 'dapper'
-  s.version = '0.0.1'
-  s.date = '2016-01-22'
+  s.version = Dapper.VERSION
 
-  s.summary = ''
+  s.summary = 'Build docker packaged apps using chef or shell'
   s.description = s.summary
   s.homepage = 'https://github.com/flant/dapper'
 
   s.authors = ['Dmitry Stolyarov']
-  s.email = ''
-  s.license = ''
+  s.email = 'dmitry.stolyarov@flant.com'
+  s.license = 'MIT'
 
   s.files = Dir['lib/**/*']
   s.executables = ['dappit']
