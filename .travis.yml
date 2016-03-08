@@ -1,0 +1,11 @@
+language: ruby
+rvm:
+- 2.2.1
+deploy:
+  provider: rubygems
+  api_key:
+    secure: Bs+7LiwEJFM1FYxGNlcVjWogXkHrqDtlZi44YY2kvKgi1VuJoRnfZW5GE5cOYElbmCYVUD4yjPHn0idiRmvGB5SV/te0mHwYtHGCrjvs1mVgEnAnLG/sgLvVDCNr08hzyFh3QVR80DivNwpGuJuSK56cuHGVZax8CAlexyaFuEzSxXd7cLft/mF29APK+gLpcNLBUNzyhbKGaBzGn1B6mnmqvO0Rby+Ghky5wHjKvZ/Dx81OhnxbzTdiacNr8inxuTpY6qa++b+LOCo+fSmhTAR/eI4XdOo+lVUQ+oFqg6H+54QTdv+qWKTQ+ARactsOr3ZLMMANWIxZn6s5irfmZdELOq5kbQSAe4Ocy/Kg9l5/NsvfL+sIj3blbTqGal8nVxekgkYEBvsuZ9FFkznhsoyKtdf3oI6itjOagkGb7NRGgA+Fb+NNKNWq9Is3Uj8YcCUjn80LZ1rcrah9kEX2z2BOa7aMYJMiyfW4in//HiwmzWhwEPJuw4bg/p7sGhffNXISkozJfvdASE/SBnB2OOvRvWPrczdBB5cWrM8E3PGROVm+LNXuzYeG5+HYo0ThAoEthSzUzeoNhkAYii991I3+6GDR41OLZIv4aGq0WYw5bxC45ThtDBMvpldcIluOoAkJ8oYmktxGLU4hNQQfdAKH+uYgyNImfWelgLH8XcQ=
+  gem: dapper
+  on:
+    tags: true
+    repo: flant/dapper
