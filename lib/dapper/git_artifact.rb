@@ -191,8 +191,8 @@ module Dapper
 
       sudo = ''
       sudo += 'sudo ' if owner || group
-      sudo += "-u #{(Integer(owner) rescue nil) ? "\\\##{owner}" : owner} " if owner
-      sudo += "-g #{(Integer(group) rescue nil) ? "\\\##{group}" : group} " if group
+      sudo += "-u #{owner.to_i.to_s == owner ? "\\\##{owner}" : owner} " if owner
+      sudo += "-g #{group.to_i.to_s == group ? "\\\##{group}" : group} " if group
 
       builder.docker.run [
         "zcat /tmp/#{filename} | #{sudo}git apply --whitespace=nowarn --directory=#{where_to_add}",

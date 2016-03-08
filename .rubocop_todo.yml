@@ -50,9 +50,3 @@ Style/MultilineMethodCallIndentation:
 Style/NestedParenthesizedCalls:
   Exclude:
     - 'lib/dapper/git_artifact.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
-Style/RescueModifier:
-  Exclude:
-    - 'lib/dapper/git_artifact.rb'
