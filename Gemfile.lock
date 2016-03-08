@@ -1,0 +1,21 @@
+PATH
+  remote: .
+  specs:
+    dapper (0.0.1)
+      docopt (>= 0.5, < 2.0)
+      mixlib-shellout (>= 1.0, < 3.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    docopt (0.5.0)
+    mixlib-shellout (2.2.6)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  dapper!
+
+BUNDLED WITH
+   1.11.2

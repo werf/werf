@@ -1,6 +1,10 @@
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require 'dapper/version'
+
 Gem::Specification.new do |s|
   s.name = 'dapper'
-  s.version = Dapper.VERSION
+  s.version = Dapper::VERSION
 
   s.summary = 'Build docker packaged apps using chef or shell'
   s.description = s.summary

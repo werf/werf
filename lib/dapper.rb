@@ -6,6 +6,7 @@ require 'timeout'
 require 'base64'
 require 'mixlib/shellout'
 
+require 'dapper/version'
 require 'dapper/builder/chefify'
 require 'dapper/builder/centos7'
 require 'dapper/builder/cascade_tagging'
@@ -17,7 +18,3 @@ require 'dapper/git_repo/base'
 require 'dapper/git_repo/chronicler'
 require 'dapper/git_repo/remote'
 require 'dapper/git_artifact'
-
-module Dapper
-  VERSION = '0.0.1'.freeze
-end
