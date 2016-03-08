@@ -6,16 +6,6 @@
 # Note that changes in the inspected code, or installation of new
 # versions of RuboCop, may require this file to be generated again.
 
-# Offense count: 8
-Lint/AmbiguousOperator:
-  Exclude:
-    - 'lib/dapper/builder/cascade_tagging.rb'
-    - 'lib/dapper/builder/centos7.rb'
-    - 'lib/dapper/builder/chefify.rb'
-    - 'lib/dapper/docker.rb'
-    - 'lib/dapper/git_artifact.rb'
-    - 'lib/dapper/git_repo/base.rb'
-
 # Offense count: 3
 # Configuration parameters: AllowSafeAssignment.
 Lint/AssignmentInCondition:

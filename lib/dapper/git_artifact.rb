@@ -28,7 +28,7 @@ module Dapper
     end
 
     def build_path(*paths)
-      builder.build_path *@build_path, *paths
+      builder.build_path(*@build_path, *paths)
     end
 
     def add_multilayer!

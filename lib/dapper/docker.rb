@@ -92,7 +92,7 @@ module Dapper
     end
 
     def tag(origin, new, force: true)
-      docker "tag#{" -f" if force} #{origin.is_a?(String) ? origin : pad_image_name(**origin)} #{pad_image_name **new}"
+      docker "tag#{" -f" if force} #{origin.is_a?(String) ? origin : pad_image_name(**origin)} #{pad_image_name(**new)}"
     end
 
     def rmi(**kwargs)

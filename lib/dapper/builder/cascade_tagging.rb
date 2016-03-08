@@ -29,13 +29,13 @@ module Dapper
         (opts[:build_history_length] - 1).downto(1).each do |n|
           origin = i.merge(tag: "#{i[:tag]}_#{n}")
 
-          if docker.image_exists? **origin
+          if docker.image_exists?(**origin)
             docker.tag origin, i.merge(tag: "#{i[:tag]}_#{n + 1}")
           end
         end
 
         # shift top -> 1
-        docker.tag i, i.merge(tag: "#{i[:tag]}_1") if docker.image_exists? **i
+        docker.tag i, i.merge(tag: "#{i[:tag]}_1") if docker.image_exists?(**i)
 
         # tag top
         docker.tag image_id, i

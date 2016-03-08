@@ -60,12 +60,13 @@ module Dapper
       def setup_dapp_chef(chef_version)
         unless opts[:dapp_chef_version]
           # install chef, setup chef_solo
-          docker.run *[
+          docker.run(
             "curl -L https://www.opscode.com/chef/install.sh | bash -s -- -v #{chef_version}",
             'mkdir -p /usr/share/dapp/chef_repo /var/cache/dapp/chef',
             'echo file_cache_path \\"/var/cache/dapp/chef\\" > /usr/share/dapp/chef_solo.rb',
-            'echo cookbook_path \\"/usr/share/dapp/chef_repo/cookbooks\\" >> /usr/share/dapp/chef_solo.rb'
-          ], step: :begining
+            'echo cookbook_path \\"/usr/share/dapp/chef_repo/cookbooks\\" >> /usr/share/dapp/chef_solo.rb',
+            step: :begining
+          )
 
           # add cookbooks
           dapp_chef_cookbooks_artifact.add_multilayer!
