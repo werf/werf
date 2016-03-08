@@ -105,7 +105,7 @@ module Dapper
     end
 
     def any_changes?(from)
-      not repo.git_bare("diff --quiet #{from}..#{repo_latest_commit}#{" --relative=#{cwd}" if cwd} #{paths(true)}", returns: [0, 1]).status.success?
+      !repo.git_bare("diff --quiet #{from}..#{repo_latest_commit}#{" --relative=#{cwd}" if cwd} #{paths(true)}", returns: [0, 1]).status.success?
     end
 
     protected
