@@ -1,7 +1,7 @@
 module Dapper
   # Artifact from Git repo
   class GitArtifact
-    def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil, interlayer_period: 7*24*3600, build_path: nil, flush_cache: false)
+    def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil, interlayer_period: 7 * 24 * 3600, build_path: nil, flush_cache: false)
       @builder = builder
       @repo = repo
       @name = name
@@ -86,7 +86,7 @@ module Dapper
     end
 
     def exists_in_commit?(path, commit)
-      repo.git_bare("cat-file -e #{commit}:#{path}", returns: [0,128]).status.success?
+      repo.git_bare("cat-file -e #{commit}:#{path}", returns: [0, 128]).status.success?
     end
 
     def exists_in_step?(path, step)
@@ -122,7 +122,7 @@ module Dapper
     attr_reader :atomizer
 
     def paths(with_cwd = false)
-      [@paths].flatten.compact.map{|path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(/^\/*|\/*$/, '') }.join(' ') if @paths
+      [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(/^\/*|\/*$/, '') }.join(' ') if @paths
     end
 
     def repo_latest_commit
@@ -229,7 +229,7 @@ module Dapper
     end
 
     def layers
-      Dir.glob(layer_commitfile_path '*').map{|path| Integer(path.gsub(/.*_(\d+)\.commit$/, '\\1')) }.sort
+      Dir.glob(layer_commitfile_path '*').map { |path| Integer(path.gsub(/.*_(\d+)\.commit$/, '\\1')) }.sort
     end
 
     def create_layer_patch!(from, layer)

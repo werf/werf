@@ -88,8 +88,8 @@ module Dapper
 
     def images(name:, tag: nil, registry: nil)
       docker('images').stdout.lines.drop(1).map(&:strip)
-        .map{|line| Hash[[:name, :tag, :id].zip(line.strip.split(/\s{2,}/)[0..3])] }
-        .select{|i| i[:name] == pad_image_name(name: name, registry: registry) && (!tag || i[:tag] == tag)}
+        .map { |line| Hash[[:name, :tag, :id].zip(line.strip.split(/\s{2,}/)[0..3])] }
+        .select { |i| i[:name] == pad_image_name(name: name, registry: registry) && (!tag || i[:tag] == tag) }
     end
 
     def tag(origin, new, force: true)
@@ -149,7 +149,7 @@ module Dapper
             when :expose
               dockerfile.puts 'EXPOSE ' + params[0].map(&:to_s).join(' ')
             when :env
-              dockerfile.puts 'ENV ' + params[0].map{|k, v| %(#{k}="#{v}")}.join(' ')
+              dockerfile.puts 'ENV ' + params[0].map { |k, v| %(#{k}="#{v}") }.join(' ')
             when :volume
               dockerfile.puts 'VOLUME ' + params[0].join(' ')
             when :workdir
