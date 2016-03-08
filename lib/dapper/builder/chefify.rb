@@ -59,13 +59,7 @@ module Dapper
         @dapp_chef_cookbooks_artifact
       end
 
-      def setup_dapp_chef(chef_version)
-        if opts[:dapp_chef_version]
-          raise "dapp chef version mismatch, version #{opts[:dapp_chef_version]} already installed" if opts[:dapp_chef_version] != chef_version
-          return
-        end
-
-        # install chef, setup chef_solo
+      def install_chef_and_setup_chef_solo
         docker.run(
           "curl -L https://www.opscode.com/chef/install.sh | bash -s -- -v #{chef_version}",
           'mkdir -p /usr/share/dapp/chef_repo /var/cache/dapp/chef',
@@ -73,6 +67,25 @@ module Dapper
           'echo cookbook_path \\"/usr/share/dapp/chef_repo/cookbooks\\" >> /usr/share/dapp/chef_solo.rb',
           step: :begining
         )
+      end
+
+      def run_chef_solo_for_dapp_common
+        [:prepare, :build, :setup].each do |step|
+          if dapp_chef_cookbooks_artifact.exists_in_step? "cookbooks/dapp-common/recipes/#{step}.rb", step
+            # FIXME: env ???
+            docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o dapp-common::#{step},env-#{opts[:basename]}::void", step: step
+          end
+        end
+      end
+
+      def setup_dapp_chef(chef_version)
+        if opts[:dapp_chef_version]
+          raise "dapp chef version mismatch, version #{opts[:dapp_chef_version]} already installed" if opts[:dapp_chef_version] != chef_version
+          return
+        end
+
+        # install chef, setup chef_solo
+        install_chef_and_setup_chef_solo
 
         # add cookbooks
         dapp_chef_cookbooks_artifact.add_multilayer!
@@ -81,12 +94,7 @@ module Dapper
         opts[:dapp_chef_version] = chef_version
 
         # run chef solo for dapp-common
-        [:prepare, :build, :setup].each do |step|
-          if dapp_chef_cookbooks_artifact.exists_in_step? "cookbooks/dapp-common/recipes/#{step}.rb", step
-            # FIXME: env ???
-            docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o dapp-common::#{step},env-#{opts[:basename]}::void", step: step
-          end
-        end
+        run_chef_solo_for_dapp_common
       end
     end
   end

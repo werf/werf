@@ -11,11 +11,13 @@ module Dapper
         @default_opts ||= {}
       end
 
-      def process_directory(path, pattern = '*')
-        dappfiles_paths = pattern.split('-').instance_eval { count.downto(1).map { |n| slice(0, n).join('-') } }
-                                 .map { |p| Dir.glob(File.join(path, p, 'Dappfile')) }.find(&:any?) || []
+      def dappfiles_paths(path, pattern = '*')
+        pattern.split('-').instance_eval { count.downto(1).map { |n| slice(0, n).join('-') } }
+               .map { |p| Dir.glob(File.join(path, p, 'Dappfile')) }.find(&:any?) || []
+      end
 
-        dappfiles_paths.map { |dappfile_path| process_file(dappfile_path, app_filter: pattern).builded_apps }.flatten
+      def process_directory(path, pattern = '*')
+        dappfiles_paths(path, pattern).map { |dappfile_path| process_file(dappfile_path, app_filter: pattern).builded_apps }.flatten
       end
 
       def process_file(dappfile_path, app_filter: '*')
@@ -53,6 +55,7 @@ module Dapper
       end.to_s
     end
 
+    # rubocop:disable Metrics/AbcSize
     def initialize(**options)
       opts.merge! self.class.default_opts
       opts.merge! options
@@ -88,6 +91,7 @@ module Dapper
         yield self
       end
     end
+    # rubocop:enable Metrics/AbcSize
 
     def indent_log
       opts[:log_indent] += 1

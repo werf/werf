@@ -86,9 +86,12 @@ module Dapper
     end
 
     def images(name:, tag: nil, registry: nil)
+      all_images.select { |i| i[:name] == pad_image_name(name: name, registry: registry) && (!tag || i[:tag] == tag) }
+    end
+
+    def all_images
       docker('images').stdout.lines.drop(1).map(&:strip)
                       .map { |line| Hash[[:name, :tag, :id].zip(line.strip.split(/\s{2,}/)[0..3])] }
-                      .select { |i| i[:name] == pad_image_name(name: name, registry: registry) && (!tag || i[:tag] == tag) }
     end
 
     def tag(origin, new, force: true)

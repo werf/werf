@@ -34,27 +34,26 @@ module Dapper
     end
 
     def add_multilayer!
-      lock do
-        repo.lock do
-          # create and add archive
-          create_and_add_archive
-          return if archive_commit == repo_latest_commit
+      lock_with_repo do
+        # create and add archive
+        create_and_add_archive
+        return if archive_commit == repo_latest_commit
 
-          # add layer patches
-          if (latest_layer = add_layer_patches)
-            latest_layer_commit = layer_commit(latest_layer)
-            return if latest_layer_commit == repo_latest_commit
-          end
-
-          # empty changes
-          unless any_changes?(latest_layer_commit || archive_commit)
-            remove_latest!
-            return
-          end
-
-          # create and add last patch
-          create_and_add_last_patch(latest_layer, latest_layer_commit)
+        # add layer patches
+        latest_layer = add_layer_patches
+        if latest_layer
+          latest_layer_commit = layer_commit(latest_layer)
+          return if latest_layer_commit == repo_latest_commit
         end
+
+        # empty changes
+        unless any_changes?(latest_layer_commit || archive_commit)
+          remove_latest!
+          return
+        end
+
+        # create and add last patch
+        create_and_add_last_patch(latest_layer, latest_layer_commit)
       end
     end
 
@@ -113,6 +112,12 @@ module Dapper
     attr_reader :interlayer_period
     attr_reader :atomizer
 
+    def lock_with_repo(&blk)
+      lock do
+        repo.lock(&blk)
+      end
+    end
+
     def create_and_add_archive
       create_archive! unless archive_exists?
       add_archive
@@ -128,19 +133,25 @@ module Dapper
       latest_layer
     end
 
+    def create_and_add_last_patch_as_layer_patch(latest_layer, latest_layer_commit)
+      remove_latest!
+      layer = latest_layer.to_i + 1
+      create_layer_patch!(latest_layer_commit || archive_commit, layer)
+      add_layer_patch layer
+    end
+
+    def create_and_add_last_patch_as_latest_patch(_latest_layer, latest_layer_commit)
+      if latest_commit != repo_latest_commit
+        create_latest_patch!(latest_layer_commit || archive_commit)
+      end
+      add_latest_patch
+    end
+
     def create_and_add_last_patch(latest_layer, latest_layer_commit)
       if (Time.now - repo.commit_at(latest_layer_commit || archive_commit)) > interlayer_period
-        # layer
-        remove_latest!
-        layer = latest_layer.to_i + 1
-        create_layer_patch!(latest_layer_commit || archive_commit, layer)
-        add_layer_patch layer
+        create_and_add_last_patch_as_layer_patch(latest_layer, latest_layer_commit)
       else
-        # latest
-        if latest_commit != repo_latest_commit
-          create_latest_patch!(latest_layer_commit || archive_commit)
-        end
-        add_latest_patch
+        create_and_add_last_patch_as_latest_patch(latest_layer, latest_layer_commit)
       end
     end
 
@@ -184,19 +195,27 @@ module Dapper
       File.read archive_commitfile_path
     end
 
+    def create_arhive_with_owner_substitution!
+      Dir.mktmpdir('change_archive_owner', build_path) do |tmpdir_path|
+        atomizer << tmpdir_path
+        repo.git_bare "archive #{repo_latest_commit}:#{cwd} #{paths} | /bin/tar --extract --directory #{tmpdir_path}"
+        builder.shellout("/usr/bin/find #{tmpdir_path} -maxdepth 1 -mindepth 1 -printf '%P\\n' | /bin/tar -czf #{archive_path} -C #{tmpdir_path}" \
+                         " -T - --owner=#{owner || 'root'} --group=#{group || 'root'}")
+      end
+    end
+
+    def create_simple_archive!
+      repo.git_bare "archive --format tar.gz #{repo_latest_commit}:#{cwd} -o #{archive_path} #{paths}"
+    end
+
     def create_archive!
       atomizer << archive_path
       atomizer << archive_commitfile_path
 
       if owner || group
-        Dir.mktmpdir('change_archive_owner', build_path) do |tmpdir_path|
-          atomizer << tmpdir_path
-          repo.git_bare "archive #{repo_latest_commit}:#{cwd} #{paths} | /bin/tar --extract --directory #{tmpdir_path}"
-          builder.shellout("/usr/bin/find #{tmpdir_path} -maxdepth 1 -mindepth 1 -printf '%P\\n' | /bin/tar -czf #{archive_path} -C #{tmpdir_path}" \
-                           " -T - --owner=#{owner || 'root'} --group=#{group || 'root'}")
-        end
+        create_arhive_with_owner_substitution!
       else
-        repo.git_bare "archive --format tar.gz #{repo_latest_commit}:#{cwd} -o #{archive_path} #{paths}"
+        create_simple_archive!
       end
 
       File.write archive_commitfile_path, repo_latest_commit

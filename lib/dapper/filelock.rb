@@ -8,22 +8,31 @@ module Dapper
     # ClassMethods
     module ClassMethods
       def filelocks
-        @filelocks ||= Hash.new(0)
+        @filelocks ||= Hash.new(false)
       end
     end
 
-    def filelock(filelock, error_message: 'Already in use!', timeout: 10, &_block)
+    def filelock(filelock, error_message: 'Already in use!', timeout: 10, &blk)
+      return yield if self.class.filelocks[filelock]
+
+      begin
+        self.class.filelocks[filelock] = true
+        filelock_lockfile(filelock, error_message: error_message, timeout: timeout, &blk)
+        yield
+      ensure
+        self.class.filelocks[filelock] = false
+      end
+    end
+
+    protected
+
+    def filelock_lockfile(filelock, error_message: 'Already in use!', timeout: 10)
       File.open(build_path(filelock), File::RDWR | File::CREAT, 0644) do |file|
         Timeout.timeout(timeout) do
-          file.flock(File::LOCK_EX) unless self.class.filelocks[filelock] > 0
+          file.flock(File::LOCK_EX)
         end
 
-        begin
-          self.class.filelocks[filelock] += 1
-          yield
-        ensure
-          self.class.filelocks[filelock] -= 1
-        end
+        yield
       end
     rescue Timeout::Error
       STDERR.puts error_message

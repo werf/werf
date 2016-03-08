@@ -5,3 +5,6 @@ AllCops:
 
 Metrics/LineLength:
   Max: 150
+
+Metrics/AbcSize:
+    Max: 25
