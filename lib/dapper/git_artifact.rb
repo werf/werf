@@ -122,7 +122,7 @@ module Dapper
     attr_reader :atomizer
 
     def paths(with_cwd = false)
-      [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(/^\/*|\/*$/, '') }.join(' ') if @paths
+      [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(%r{^\/*|\/*$}, '') }.join(' ') if @paths
     end
 
     def repo_latest_commit

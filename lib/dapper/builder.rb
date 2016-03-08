@@ -126,7 +126,7 @@ module Dapper
       log "Adding artifact from git (#{url} to #{where_to_add}, branch: #{branch})"
 
       # extract git repo name from url
-      repo_name = url.gsub(/.*?([^\/ ]+)\.git/, '\\1')
+      repo_name = url.gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
 
       # clone or fetch
       repo = GitRepo::Remote.new(self, repo_name, url: url, ssh_key_path: ssh_key_path)

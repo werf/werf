@@ -71,15 +71,6 @@ Style/NestedParenthesizedCalls:
 
 # Offense count: 2
 # Cop supports --auto-correct.
-# Configuration parameters: EnforcedStyle, SupportedStyles, AllowInnerSlashes.
-# SupportedStyles: slashes, percent_r, mixed
-Style/RegexpLiteral:
-  Exclude:
-    - 'lib/dapper/builder.rb'
-    - 'lib/dapper/git_artifact.rb'
-
-# Offense count: 2
-# Cop supports --auto-correct.
 Style/RescueModifier:
   Exclude:
     - 'lib/dapper/git_artifact.rb'
