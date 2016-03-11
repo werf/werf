@@ -13,7 +13,7 @@ module Dapper
 
       def dappfiles_paths(path, pattern = '*')
         pattern.split('-').instance_eval { count.downto(1).map { |n| slice(0, n).join('-') } }
-               .map { |p| Dir.glob(File.join(path, p, 'Dappfile')) }.find(&:any?) || []
+               .map { |p| Dir.glob(File.join([path, p, default_opts[:dappfile_name] || 'Dappfile'].compact)) }.find(&:any?) || []
       end
 
       def process_directory(path, pattern = '*')
@@ -127,7 +127,7 @@ module Dapper
       [opts[:basename], opts[:name]].compact.join '-'
     end
 
-    def add_artifact_from_git(url, where_to_add, branch: 'master', ssh_key_path: nil, **kwargs)
+    def add_artifact_from_git(url, where_to_add, branch: opts[:git_artifact_branch], ssh_key_path: nil, **kwargs)
       log "Adding artifact from git (#{url} to #{where_to_add}, branch: #{branch})"
 
       # extract git repo name from url
