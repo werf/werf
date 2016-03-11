@@ -59,7 +59,7 @@ module Dapper
         @dapp_chef_cookbooks_artifact
       end
 
-      def install_chef_and_setup_chef_solo
+      def install_chef_and_setup_chef_solo(chef_version)
         docker.run(
           "curl -L https://www.opscode.com/chef/install.sh | bash -s -- -v #{chef_version}",
           'mkdir -p /usr/share/dapp/chef_repo /var/cache/dapp/chef',
@@ -85,7 +85,7 @@ module Dapper
         end
 
         # install chef, setup chef_solo
-        install_chef_and_setup_chef_solo
+        install_chef_and_setup_chef_solo(chef_version)
 
         # add cookbooks
         dapp_chef_cookbooks_artifact.add_multilayer!
