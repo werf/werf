@@ -11,6 +11,7 @@ module Dapp
 
     def <<(path)
       file.puts path
+      file.fsync
     end
 
     def commit!
