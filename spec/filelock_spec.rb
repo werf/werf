@@ -31,7 +31,6 @@ describe Dapp::Filelock do
           expect(File.exist?('lockfile')).to be_truthy
           expect(self.class.filelocks['lockfile']).to be_truthy
         end
-        expect(self.class.filelocks['lockfile']).to be_truthy
       end
       expect(self.class.filelocks['lockfile']).to be_truthy
     end
