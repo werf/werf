@@ -35,9 +35,9 @@ describe Dapp::GitRepo do
   def chronicler_commit(data)
     @commit_counter ||= 1
 
-    if File.exist?('chrono/test.txt') && File.read('chrono/test.txt') != data
+    if !File.exist?('chrono/test.txt') || File.read('chrono/test.txt') != data
       @commit_counter += 1
-      example.metadata[:construct].file 'chrono/test.txt', data
+      File.write 'chrono/test.txt', data
     end
 
     @repo.commit!
