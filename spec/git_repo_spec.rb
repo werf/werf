@@ -20,19 +20,54 @@ describe Dapp::GitRepo do
     allow(@builder).to receive(:filelock).and_yield
   end
 
-  it 'Chronicler', test_construct: true do |example|
-    repo = Dapp::GitRepo::Chronicler.new(@builder, 'test')
-    expect(File.exist?('test')).to be_truthy
-    expect(File.exist?('test.git')).to be_truthy
+  def chronicler_init
+    @repo = Dapp::GitRepo::Chronicler.new(@builder, 'chrono')
+    expect(File.exist?('chrono')).to be_truthy
+    expect(File.exist?('chrono.git')).to be_truthy
+  end
 
-    example.metadata[:construct].file 'test/test.txt', 'Some text'
-    repo.commit!
-    expect(`cd test.git; git rev-list --all --count`).to eq "2\n"
+  def chronicler_cleanup
+    @repo.cleanup!
+    expect(File.exist?('chrono')).to be_falsy
+    expect(File.exist?('chrono.git')).to be_falsy
+  end
 
-    expect(Time.now - repo.commit_at(repo.latest_commit)).to be < 2
+  def chronicler_commit(data)
+    @commit_counter ||= 1
 
-    repo.cleanup!
-    expect(File.exist?('test')).to be_falsy
-    expect(File.exist?('test.git')).to be_falsy
+    if File.exist?('chrono/test.txt') && File.read('chrono/test.txt') != data
+      @commit_counter += 1
+      example.metadata[:construct].file 'chrono/test.txt', data
+    end
+
+    @repo.commit!
+    expect(`cd chrono; git rev-list --all --count`).to eq "#{@commit_counter}\n"
+  end
+
+  it 'Chronicler # create and delete', test_construct: true do
+    chronicler_init
+    chronicler_cleanup
+  end
+
+  it 'Chronicler #commit', test_construct: true do
+    chronicler_init
+    chronicler_commit('Some text')
+    chronicler_commit('Some another text')
+    chronicler_cleanup
+  end
+
+  it 'Chronicler # empty commit', test_construct: true do
+    chronicler_init
+    chronicler_commit('Some text')
+    chronicler_commit('Some text')
+    chronicler_commit('Some another text')
+    chronicler_cleanup
+  end
+
+  it 'Chronicler # commit_at and latest_commit', test_construct: true do
+    chronicler_init
+    chronicler_commit('Some text')
+    expect(Time.now - @repo.commit_at(@repo.latest_commit)).to be < 2
+    chronicler_cleanup
   end
 end
