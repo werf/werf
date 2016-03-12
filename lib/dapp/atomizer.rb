@@ -1,6 +1,10 @@
 module Dapp
   # "Transaction" journal with rollback (mainly to protect cache fill with unbuildable configuration)
   class Atomizer
+    class << self
+      attr_accessor :lock_timeout
+    end
+
     def initialize(builder, file_path)
       @builder = builder
       @file_path = file_path
@@ -27,12 +31,17 @@ module Dapp
 
     attr_reader :file
 
+    def on_error
+      STDERR.puts 'Atomizer already in use! Try again later.'
+      exit 1
+    end
+
     def open
       file = File.open(file_path, File::RDWR | File::CREAT, 0644)
 
       file.sync = true
 
-      Timeout.timeout(10) do
+      Timeout.timeout(self.class.lock_timeout || 10) do
         file.flock(File::LOCK_EX)
       end
 
@@ -46,9 +55,7 @@ module Dapp
       file
     rescue Timeout::Error
       file.close
-
-      STDERR.puts 'Atomizer already in use! Try again later.'
-      exit 1
+      on_error
     end
   end
 end
