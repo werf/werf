@@ -1,13 +1,10 @@
 module Dapp
   # "Transaction" journal with rollback (mainly to protect cache fill with unbuildable configuration)
   class Atomizer
-    class << self
-      attr_accessor :lock_timeout
-    end
-
-    def initialize(builder, file_path)
+    def initialize(builder, file_path, lock_timeout: 10)
       @builder = builder
       @file_path = file_path
+      @lock_timeout = lock_timeout
       @file = open
 
       builder.register_atomizer self
@@ -29,6 +26,7 @@ module Dapp
     attr_reader :file_path
     attr_reader :builder
 
+    attr_reader :lock_timeout
     attr_reader :file
 
     def open
@@ -36,7 +34,7 @@ module Dapp
 
       file.sync = true
 
-      Timeout.timeout(self.class.lock_timeout || 10) do
+      Timeout.timeout(lock_timeout) do
         file.flock(File::LOCK_EX)
       end
 
