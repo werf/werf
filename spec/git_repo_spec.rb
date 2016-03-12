@@ -29,6 +29,8 @@ describe Dapp::GitRepo do
     repo.commit!
     expect(`cd test.git; git rev-list --all --count`).to eq "2\n"
 
+    expect(Time.now - repo.commit_at(repo.latest_commit)).to be < 2
+
     repo.cleanup!
     expect(File.exist?('test')).to be_falsy
     expect(File.exist?('test.git')).to be_falsy
