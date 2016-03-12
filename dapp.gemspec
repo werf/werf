@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'bundler', '~> 1.7'
   s.add_development_dependency 'rake', '~> 10.0'
   s.add_development_dependency 'rspec', '~> 3.4', '>= 3.4.0'
+  s.add_development_dependency 'test_construct'
   s.add_development_dependency 'pry', '>= 0.10.3', '< 1.0'
   s.add_development_dependency 'pry-stack_explorer', '>= 0.4.9.2', '< 1.0'
   s.add_development_dependency 'travis', '~> 1.8', '>= 1.8.2'

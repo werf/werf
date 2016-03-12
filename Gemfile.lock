@@ -73,6 +73,7 @@ GEM
       simplecov-html (~> 0.10.0)
     simplecov-html (0.10.0)
     slop (3.6.0)
+    test_construct (2.0.1)
     travis (1.8.2)
       backports
       faraday (~> 0.9)
@@ -97,6 +98,7 @@ DEPENDENCIES
   pry-stack_explorer (>= 0.4.9.2, < 1.0)
   rake (~> 10.0)
   rspec (~> 3.4, >= 3.4.0)
+  test_construct
   travis (~> 1.8, >= 1.8.2)
 
 BUNDLED WITH
