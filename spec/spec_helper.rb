@@ -8,6 +8,6 @@ end
 
 Bundler.require :default, :test
 
-def shellout(*args, **kwargs)
+def shellout(*args, log_verbose: false, **kwargs)
   Mixlib::ShellOut.new(*args, timeout: 5, **kwargs).run_command.tap(&:error!)
 end

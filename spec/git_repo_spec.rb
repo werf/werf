@@ -21,13 +21,13 @@ describe Dapp::GitRepo do
   end
 
   def chronicler_init
-    @repo = Dapp::GitRepo::Chronicler.new(@builder, 'chrono')
+    @chrono = Dapp::GitRepo::Chronicler.new(@builder, 'chrono')
     expect(File.exist?('chrono')).to be_truthy
     expect(File.exist?('chrono.git')).to be_truthy
   end
 
   def chronicler_cleanup
-    @repo.cleanup!
+    @chrono.cleanup!
     expect(File.exist?('chrono')).to be_falsy
     expect(File.exist?('chrono.git')).to be_falsy
   end
@@ -40,7 +40,7 @@ describe Dapp::GitRepo do
       File.write 'chrono/test.txt', data
     end
 
-    @repo.commit!
+    @chrono.commit!
     expect(`cd chrono; git rev-list --all --count`).to eq "#{@commit_counter}\n"
   end
 
@@ -67,7 +67,23 @@ describe Dapp::GitRepo do
   it 'Chronicler # commit_at and latest_commit', test_construct: true do
     chronicler_init
     chronicler_commit('Some text')
-    expect(Time.now - @repo.commit_at(@repo.latest_commit)).to be < 2
+    expect(Time.now - @chrono.commit_at(@chrono.latest_commit)).to be < 2
     chronicler_cleanup
+  end
+
+  def remote_init
+    @remote = Dapp::GitRepo::Remote.new(@builder, 'remote', url: 'https://github.com/flant/dapp.git')
+    expect(File.exist?('remote.git')).to be_truthy
+  end
+
+  def remote_cleanup
+    @remote.cleanup!
+    expect(File.exist?('remote')).to be_falsy
+    expect(File.exist?('remote.git')).to be_falsy
+  end
+
+  it 'Remote # init', test_construct: true do
+    remote_init
+    remote_cleanup
   end
 end
