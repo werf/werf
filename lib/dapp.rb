@@ -8,6 +8,7 @@ require 'mixlib/shellout'
 
 require 'dapp/version'
 require 'dapp/cli'
+require 'dapp/cli/build'
 require 'dapp/builder/chefify'
 require 'dapp/builder/centos7'
 require 'dapp/builder/cascade_tagging'

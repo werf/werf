@@ -6,12 +6,11 @@ module Dapp
     include Mixlib::CLI
 
     banner <<BANNER.freeze
-Version: #{Dapp::VERSION}
+Usage: dapp [options] sub-command [sub-command options]
 
-Usage:
-  dappit [options] [PATTERN ...]
+Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-    PATTERN                     Applications to process [default: *].
+dapp build [options] [PATTERN ...]
 
 Options:
 BANNER
@@ -21,23 +20,8 @@ BANNER
            description: 'Show version',
            on: :tail,
            boolean: true,
-           proc: proc { puts "Version: #{Dapp::VERSION}" },
+           proc: proc { puts "dapp: #{Dapp::VERSION}" },
            exit: 0
-
-    option :quiet,
-           short: '-q',
-           long: '--quiet',
-           description: 'Suppress logging',
-           on: :tail,
-           boolean: true,
-           proc: proc { Dapp::Builder.default_opts[:log_quiet] = true }
-
-    option :verbose,
-           long: '--verbose',
-           description: 'Enable verbose output',
-           on: :tail,
-           boolean: true,
-           proc: proc { Dapp::Builder.default_opts[:log_verbose] = true }
 
     option :help,
            short: '-h',
@@ -48,85 +32,54 @@ BANNER
            show_options: true,
            exit: 0
 
-    option :build_dir,
-           long: '--build-dir PATH',
-           description: 'Build directory',
-           proc: proc { |p| Dapp::Builder.default_opts[:build_dir] = p }
+    def initialize(*args)
+      super(*args)
 
-    option :dir,
-           long: '--dir PATH',
-           description: 'Change to directory',
-           on: :head
-
-    option :dappfile_name,
-           long: '--dappfile-name NAME',
-           description: 'Name of Dappfile',
-           proc: proc { |n| Dapp::Builder.default_opts[:dappfile_name] = n },
-           on: :head
-
-    option :flush_cache,
-           long: '--flush-cache',
-           description: 'Flush cache',
-           boolean: true,
-           proc: proc { Dapp::Builder.default_opts[:flush_cache] = true }
-
-    option :docker_registry,
-           long: '--docker-registry REGISTRY',
-           description: 'Docker registry',
-           proc: proc { |r| Dapp::Builder.default_opts[:docker_registry] = r }
-
-    option :cascade_tagging,
-           long: '--cascade_tagging',
-           description: 'Use cascade tagging',
-           boolean: true,
-           proc: proc { Dapp::Builder.default_opts[:cascade_tagging] = true }
-
-    option :git_artifact_branch,
-           long: '--git-artifact-branch BRANCH',
-           description: 'Default branch to archive artifacts from',
-           proc: proc { |b| Dapp::Builder.default_opts[:git_artifact_branch] = b }
-
-    def dappfile_path
-      @dappfile_path ||= File.join [config[:dir], 'Dappfile'].compact
+      opt_parser.program_name = 'dapp'
+      opt_parser.version = Dapp::VERSION
     end
 
-    def patterns
-      @patterns ||= cli_arguments
+    SUBCOMMANDS = %w(build).freeze
+
+    def parse_subcommand(argv)
+      if (index = argv.find_index { |v| SUBCOMMANDS.include? v })
+        return [
+          argv[0...index],
+          argv[index],
+          argv[index.next..-1]
+        ]
+      else
+        return [
+          argv,
+          nil,
+          []
+        ]
+      end
     end
 
     def run(argv = ARGV)
+      argv, subcommand, subcommand_argv = parse_subcommand(argv)
+
       begin
         parse_options(argv)
       rescue OptionParser::InvalidOption => e
         STDERR.puts "Error: #{e.message}"
+        puts
+        puts opt_parser
         exit 1
       end
 
-      patterns << '*' unless patterns.any?
+      run_subcommand subcommand, subcommand_argv
+    end
 
-      if File.exist? dappfile_path
-        process_file
+    def run_subcommand(subcommand, subcommand_argv)
+      if subcommand
+        self.class.const_get(subcommand.capitalize).new.run(subcommand_argv)
       else
-        process_directory
-      end
-    end
-
-    def process_file
-      patterns.each do |pattern|
-        unless Dapp::Builder.process_file(dappfile_path, app_filter: pattern).builded_apps.any?
-          STDERR.puts "Error! No such app: '#{pattern}' in #{dappfile_path}"
-          exit 1
-        end
-      end
-    end
-
-    def process_directory
-      Dapp::Builder.default_opts[:shared_build_dir] = true
-      patterns.each do |pattern|
-        unless Dapp::Builder.process_directory(config[:dir], pattern).any?
-          STDERR.puts "Error! No such app '#{pattern}'"
-          exit 1
-        end
+        STDERR.puts 'Error: subcommand not passed'
+        puts
+        puts opt_parser
+        exit 1
       end
     end
   end
