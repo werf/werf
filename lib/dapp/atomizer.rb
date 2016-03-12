@@ -31,11 +31,6 @@ module Dapp
 
     attr_reader :file
 
-    def on_error
-      STDERR.puts 'Atomizer already in use! Try again later.'
-      exit 1
-    end
-
     def open
       file = File.open(file_path, File::RDWR | File::CREAT, 0644)
 
@@ -55,7 +50,9 @@ module Dapp
       file
     rescue Timeout::Error
       file.close
-      on_error
+
+      STDERR.puts 'Atomizer already in use! Try again later.'
+      exit 1
     end
   end
 end

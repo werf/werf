@@ -73,10 +73,8 @@ describe Dapp::Atomizer do
 
   it '#locks', test_construct: true do
     Dapp::Atomizer.lock_timeout = 0.01
-    Dapp::Atomizer.class_eval do
-      def on_error
-        throw :exit
-      end
+    Dapp::Atomizer.send :define_method, :exit do |_x|
+      throw :exit
     end
 
     create_atomizer
