@@ -12,13 +12,14 @@ module Dapp
       end
     end
 
-    def filelock(filelock, error_message: 'Already in use!', timeout: 10, &blk)
+    def filelock(filelock, error_message: 'Already in use!', timeout: 10)
       return yield if self.class.filelocks[filelock]
 
       begin
         self.class.filelocks[filelock] = true
-        filelock_lockfile(filelock, error_message: error_message, timeout: timeout, &blk)
-        yield
+        filelock_lockfile(filelock, error_message: error_message, timeout: timeout) do
+          yield
+        end
       ensure
         self.class.filelocks[filelock] = false
       end

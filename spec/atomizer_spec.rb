@@ -71,7 +71,7 @@ describe Dapp::Atomizer do
     expect(File.exist?('foo')).to be_truthy
   end
 
-  it '#locks', test_construct: true do
+  it '#timeout', test_construct: true do
     Dapp::Atomizer.send :define_method, :exit do |_x|
       throw :exit
     end
