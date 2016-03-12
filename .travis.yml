@@ -1,6 +1,8 @@
 language: ruby
 rvm:
-- 2.2.1
+- 2.3.0
+- 2.2.4
+- 2.1.8
 deploy:
   provider: rubygems
   api_key:
