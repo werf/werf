@@ -13,6 +13,8 @@ describe Dapp::GitRepo do
       File.join(*args)
     end
 
+    allow(@builder).to receive(:home_path).and_return('')
+
     allow(@builder).to receive(:shellout) do |*args, **kwargs|
       shellout(*args, **kwargs)
     end
@@ -71,8 +73,8 @@ describe Dapp::GitRepo do
     chronicler_cleanup
   end
 
-  def remote_init
-    @remote = Dapp::GitRepo::Remote.new(@builder, 'remote', url: 'https://github.com/flant/dapp.git')
+  def remote_init(**kwargs)
+    @remote = Dapp::GitRepo::Remote.new(@builder, 'remote', url: 'https://github.com/flant/dapp.git', **kwargs)
     expect(File.exist?('remote.git')).to be_truthy
   end
 
@@ -84,6 +86,12 @@ describe Dapp::GitRepo do
 
   it 'Remote # init', test_construct: true do
     remote_init
+    remote_cleanup
+  end
+
+  it 'Remote # ssh', test_construct: true do
+    shellout 'ssh-keygen -b 1024 -f key -P ""'
+    remote_init ssh_key_path: 'key'
     remote_cleanup
   end
 end
