@@ -77,6 +77,7 @@ describe Dapp::Atomizer do
     end
 
     create_atomizer
+    allow(STDERR).to receive(:puts).with('Atomizer already in use! Try again later.')
     expect { create_atomizer(lock_timeout: 0.01) }.to throw_symbol(:exit)
   end
 end

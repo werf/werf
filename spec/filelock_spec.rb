@@ -44,6 +44,7 @@ describe Dapp::Filelock do
       expect(self.class.filelocks['lockfile']).to be_truthy
 
       self.class.filelocks['lockfile'] = false
+      allow(STDERR).to receive(:puts).with('Already in use!')
       expect { filelock('lockfile', timeout: 0.01) {} }.to throw_symbol(:exit)
     end
   end
