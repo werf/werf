@@ -1,6 +1,11 @@
 require_relative 'spec_helper'
 
 describe Dapp::GitRepo do
+  before :all do
+    shellout 'git config -l | grep "user.email" || git config --global user.email "dapp@flant.com"'
+    shellout 'git config -l | grep "user.name" || git config --global user.name "Dapp Dapp"'
+  end
+
   before :each do
     @builder = instance_double('Dapp::Builder')
 
@@ -9,7 +14,7 @@ describe Dapp::GitRepo do
     end
 
     allow(@builder).to receive(:shellout) do |*args, **kwargs|
-      Mixlib::ShellOut.new(*args, timeout: 3600, **kwargs).run_command.tap(&:error!)
+      shellout(*args, **kwargs)
     end
 
     allow(@builder).to receive(:filelock).and_yield

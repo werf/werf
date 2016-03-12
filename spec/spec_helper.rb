@@ -7,3 +7,7 @@ if ENV['CODECLIMATE_REPO_TOKEN']
 end
 
 Bundler.require :default, :test
+
+def shellout(*args, **kwargs)
+  Mixlib::ShellOut.new(*args, timeout: 5, **kwargs).run_command.tap(&:error!)
+end
