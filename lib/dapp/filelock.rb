@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   # File Monitor
   module Filelock
     def self.included(base)

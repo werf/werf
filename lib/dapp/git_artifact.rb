@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   # Artifact from Git repo
   class GitArtifact
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength

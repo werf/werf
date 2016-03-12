@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   class Builder
     # Build using chef "dapp" cookbooks
     module Chefify

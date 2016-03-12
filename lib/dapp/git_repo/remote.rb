@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   module GitRepo
     # Normal Git repo
     class Remote < Base

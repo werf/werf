@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   # Main class that does all stuff
   class Builder
     include Chefify

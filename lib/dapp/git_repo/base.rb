@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   module GitRepo
     # Base class for any Git repo (remote, gitkeeper, etc)
     class Base

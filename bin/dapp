@@ -3,6 +3,6 @@
 # vi: set ft=ruby :
 
 require 'rubygems'
-require 'dapper'
+require 'dapp'
 
-Dapper::CLI.new.run
+Dapp::CLI.new.run

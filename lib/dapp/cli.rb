@@ -1,12 +1,12 @@
 require 'mixlib/cli'
 
-module Dapper
+module Dapp
   # CLI
   class CLI
     include Mixlib::CLI
 
     banner <<BANNER.freeze
-Version: #{Dapper::VERSION}
+Version: #{Dapp::VERSION}
 
 Usage:
   dappit [options] [PATTERN ...]
@@ -21,7 +21,7 @@ BANNER
            description: 'Show version',
            on: :tail,
            boolean: true,
-           proc: proc { puts "Version: #{Dapper::VERSION}" },
+           proc: proc { puts "Version: #{Dapp::VERSION}" },
            exit: 0
 
     option :quiet,
@@ -30,14 +30,14 @@ BANNER
            description: 'Suppress logging',
            on: :tail,
            boolean: true,
-           proc: proc { Dapper::Builder.default_opts[:log_quiet] = true }
+           proc: proc { Dapp::Builder.default_opts[:log_quiet] = true }
 
     option :verbose,
            long: '--verbose',
            description: 'Enable verbose output',
            on: :tail,
            boolean: true,
-           proc: proc { Dapper::Builder.default_opts[:log_verbose] = true }
+           proc: proc { Dapp::Builder.default_opts[:log_verbose] = true }
 
     option :help,
            short: '-h',
@@ -51,7 +51,7 @@ BANNER
     option :build_dir,
            long: '--build-dir PATH',
            description: 'Build directory',
-           proc: proc { |p| Dapper::Builder.default_opts[:build_dir] = p }
+           proc: proc { |p| Dapp::Builder.default_opts[:build_dir] = p }
 
     option :dir,
            long: '--dir PATH',
@@ -61,30 +61,30 @@ BANNER
     option :dappfile_name,
            long: '--dappfile-name NAME',
            description: 'Name of Dappfile',
-           proc: proc { |n| Dapper::Builder.default_opts[:dappfile_name] = n },
+           proc: proc { |n| Dapp::Builder.default_opts[:dappfile_name] = n },
            on: :head
 
     option :flush_cache,
            long: '--flush-cache',
            description: 'Flush cache',
            boolean: true,
-           proc: proc { Dapper::Builder.default_opts[:flush_cache] = true }
+           proc: proc { Dapp::Builder.default_opts[:flush_cache] = true }
 
     option :docker_registry,
            long: '--docker-registry REGISTRY',
            description: 'Docker registry',
-           proc: proc { |r| Dapper::Builder.default_opts[:docker_registry] = r }
+           proc: proc { |r| Dapp::Builder.default_opts[:docker_registry] = r }
 
     option :cascade_tagging,
            long: '--cascade_tagging',
            description: 'Use cascade tagging',
            boolean: true,
-           proc: proc { Dapper::Builder.default_opts[:cascade_tagging] = true }
+           proc: proc { Dapp::Builder.default_opts[:cascade_tagging] = true }
 
     option :git_artifact_branch,
            long: '--git-artifact-branch BRANCH',
            description: 'Default branch to archive artifacts from',
-           proc: proc { |b| Dapper::Builder.default_opts[:git_artifact_branch] = b }
+           proc: proc { |b| Dapp::Builder.default_opts[:git_artifact_branch] = b }
 
     def dappfile_path
       @dappfile_path ||= File.join [config[:dir], 'Dappfile'].compact
@@ -113,7 +113,7 @@ BANNER
 
     def process_file
       patterns.each do |pattern|
-        unless Dapper::Builder.process_file(dappfile_path, app_filter: pattern).builded_apps.any?
+        unless Dapp::Builder.process_file(dappfile_path, app_filter: pattern).builded_apps.any?
           STDERR.puts "Error! No such app: '#{pattern}' in #{dappfile_path}"
           exit 1
         end
@@ -121,9 +121,9 @@ BANNER
     end
 
     def process_directory
-      Dapper::Builder.default_opts[:shared_build_dir] = true
+      Dapp::Builder.default_opts[:shared_build_dir] = true
       patterns.each do |pattern|
-        unless Dapper::Builder.process_directory(config[:dir], pattern).any?
+        unless Dapp::Builder.process_directory(config[:dir], pattern).any?
           STDERR.puts "Error! No such app '#{pattern}'"
           exit 1
         end

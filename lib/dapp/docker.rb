@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   # Dockerfile builder and docker binary wrapper
   class Docker
     def initialize(builder)

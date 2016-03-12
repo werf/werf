@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   # "Transaction" journal with rollback (mainly to protect cache fill with unbuildable configuration)
   class Atomizer
     def initialize(builder, file_path)

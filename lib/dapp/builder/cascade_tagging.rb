@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   class Builder
     # Cascade tagging strategy
     module CascadeTagging

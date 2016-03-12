@@ -1,4 +1,4 @@
-module Dapper
+module Dapp
   class Builder
     # Centos7 support
     module Centos7
