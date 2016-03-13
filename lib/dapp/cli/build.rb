@@ -17,20 +17,34 @@ Usage:
 Options:
 BANNER
 
-      option :quiet,
+      class << self
+        def option(name, args)
+          if args.delete :builder_opt
+            args[:proc] = if args[:boolean]
+                            proc { Dapp::Builder.default_opts[name] = true }
+                          else
+                            proc { |v| Dapp::Builder.default_opts[name] = v }
+                          end
+          end
+
+          super(name, args)
+        end
+      end
+
+      option :log_quiet,
              short: '-q',
              long: '--quiet',
              description: 'Suppress logging',
              on: :tail,
              boolean: true,
-             proc: proc { Dapp::Builder.default_opts[:log_quiet] = true }
+             builder_opt: true
 
-      option :verbose,
+      option :log_verbose,
              long: '--verbose',
              description: 'Enable verbose output',
              on: :tail,
              boolean: true,
-             proc: proc { Dapp::Builder.default_opts[:log_verbose] = true }
+             builder_opt: true
 
       option :help,
              short: '-h',
@@ -41,11 +55,6 @@ BANNER
              show_options: true,
              exit: 0
 
-      option :build_dir,
-             long: '--build-dir PATH',
-             description: 'Build directory',
-             proc: proc { |p| Dapp::Builder.default_opts[:build_dir] = p }
-
       option :dir,
              long: '--dir PATH',
              description: 'Change to directory',
@@ -54,33 +63,38 @@ BANNER
       option :dappfile_name,
              long: '--dappfile-name NAME',
              description: 'Name of Dappfile',
-             proc: proc { |n| Dapp::Builder.default_opts[:dappfile_name] = n },
+             builder_opt: true,
              on: :head
+
+      option :build_dir,
+             long: '--build-dir PATH',
+             description: 'Build directory',
+             builder_opt: true
+
+      option :docker_registry,
+             long: '--docker-registry REGISTRY',
+             description: 'Docker registry',
+             builder_opt: true
 
       option :flush_cache,
              long: '--flush-cache',
              description: 'Flush cache',
              boolean: true,
-             proc: proc { Dapp::Builder.default_opts[:flush_cache] = true }
-
-      option :docker_registry,
-             long: '--docker-registry REGISTRY',
-             description: 'Docker registry',
-             proc: proc { |r| Dapp::Builder.default_opts[:docker_registry] = r }
+             builder_opt: true
 
       option :cascade_tagging,
              long: '--cascade_tagging',
              description: 'Use cascade tagging',
              boolean: true,
-             proc: proc { Dapp::Builder.default_opts[:cascade_tagging] = true }
+             builder_opt: true
 
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
              description: 'Default branch to archive artifacts from',
-             proc: proc { |b| Dapp::Builder.default_opts[:git_artifact_branch] = b }
+             builder_opt: true
 
       def dappfile_path
-        @dappfile_path ||= File.join [config[:dir], 'Dappfile'].compact
+        @dappfile_path ||= File.join [config[:dir], config[:dappfile_name] || 'Dappfile'].compact
       end
 
       def patterns
