@@ -43,7 +43,7 @@ describe Dapp::GitRepo do
     end
 
     @chrono.commit!
-    expect(`cd chrono; git rev-list --all --count`).to eq "#{@commit_counter}\n"
+    expect(`git -C chrono.git rev-list --all --count`).to eq "#{@commit_counter}\n"
   end
 
   it 'Chronicler # create and delete', test_construct: true do
@@ -74,7 +74,9 @@ describe Dapp::GitRepo do
   end
 
   def remote_init(**kwargs)
-    @remote = Dapp::GitRepo::Remote.new(@builder, 'remote', url: 'https://github.com/flant/dapp.git', **kwargs)
+    chronicler_init
+    chronicler_commit('Some text')
+    @remote = Dapp::GitRepo::Remote.new(@builder, 'remote', url: 'chrono.git', **kwargs)
     expect(File.exist?('remote.git')).to be_truthy
   end
 
@@ -97,7 +99,9 @@ describe Dapp::GitRepo do
 
   it 'Remote # fetch', test_construct: true do
     remote_init
+    chronicler_commit('Some another text')
     @remote.fetch!
+    expect(`git -C remote.git rev-list --all --count`).to eq "#{@commit_counter}\n"
     remote_cleanup
   end
 end
