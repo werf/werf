@@ -94,4 +94,10 @@ describe Dapp::GitRepo do
     remote_init ssh_key_path: 'key'
     remote_cleanup
   end
+
+  it 'Remote # fetch', test_construct: true do
+    remote_init
+    @remote.fetch!
+    remote_cleanup
+  end
 end
