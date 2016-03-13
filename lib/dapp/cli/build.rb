@@ -88,14 +88,7 @@ BANNER
       end
 
       def run(argv = ARGV)
-        begin
-          parse_options(argv)
-        rescue OptionParser::InvalidOption => e
-          STDERR.puts "Error: #{e.message}"
-          puts
-          puts opt_parser
-          exit 1
-        end
+        CLI.parse_options(self, argv)
 
         patterns << '*' unless patterns.any?
 

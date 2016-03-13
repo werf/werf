@@ -5,6 +5,17 @@ module Dapp
   class CLI
     include Mixlib::CLI
 
+    class << self
+      def parse_options(cli, argv)
+        cli.parse_options(argv)
+      rescue OptionParser::InvalidOption => e
+        STDERR.puts "Error: #{e.message}"
+        puts
+        puts cli.opt_parser
+        exit 1
+      end
+    end
+
     banner <<BANNER.freeze
 Usage: dapp [options] sub-command [sub-command options]
 
@@ -60,14 +71,7 @@ BANNER
     def run(argv = ARGV)
       argv, subcommand, subcommand_argv = parse_subcommand(argv)
 
-      begin
-        parse_options(argv)
-      rescue OptionParser::InvalidOption => e
-        STDERR.puts "Error: #{e.message}"
-        puts
-        puts opt_parser
-        exit 1
-      end
+      CLI.parse_options(self, argv)
 
       run_subcommand subcommand, subcommand_argv
     end
