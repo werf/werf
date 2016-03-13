@@ -92,13 +92,13 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (~> 1.7)
-  codeclimate-test-reporter
+  codeclimate-test-reporter (~> 0.5)
   dapp!
   pry (>= 0.10.3, < 1.0)
   pry-stack_explorer (>= 0.4.9.2, < 1.0)
   rake (~> 10.0)
   rspec (~> 3.4, >= 3.4.0)
-  test_construct
+  test_construct (~> 2)
   travis (~> 1.8, >= 1.8.2)
 
 BUNDLED WITH
