@@ -248,10 +248,11 @@ module Dapp
     def add_patch(filename, step:)
       builder.docker.add_artifact(build_path(filename), filename, '/tmp', step: step)
 
-      builder.docker.run [
+      builder.docker.run(
         "zcat /tmp/#{filename} | #{sudo}git apply --whitespace=nowarn --directory=#{where_to_add}",
-        "rm /tmp/#{filename}"
-      ], step: step
+        "rm /tmp/#{filename}",
+        step: step
+      )
     end
 
     def create_patch!(from, filename, commitfile_path)
