@@ -195,7 +195,7 @@ describe Dapp::GitArtifact do
 
       artifact_reset
       artifact_init '/dest', **{ param => value }
-      expect(Dir.glob(artifact_filename('{.,_}*'))).to eq([artifact_filename('.paramshash'), artifact_filename('.atomizer')])
+      expect(Dir.glob(artifact_filename('{.,_}*'))).to match_array([artifact_filename('.paramshash'), artifact_filename('.atomizer')])
     end
   end
 end
