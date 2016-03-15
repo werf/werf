@@ -6,7 +6,7 @@ if ENV['CODECLIMATE_REPO_TOKEN']
   CodeClimate::TestReporter.start
 end
 
-Bundler.require :default, :test
+Bundler.require :default, :test, :development
 
 def shellout(*args, **kwargs)
   kwargs.delete :log_verbose
