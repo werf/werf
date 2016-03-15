@@ -46,19 +46,19 @@ describe Dapp::GitRepo do
     expect(`git -C chrono.git rev-list --all --count`).to eq "#{@commit_counter}\n"
   end
 
-  it 'Chronicler # create and delete', test_construct: true do
+  it 'Chronicler#create_and_delete', test_construct: true do
     chronicler_init
     chronicler_cleanup
   end
 
-  it 'Chronicler #commit', test_construct: true do
+  it 'Chronicler#commit', test_construct: true do
     chronicler_init
     chronicler_commit('Some text')
     chronicler_commit('Some another text')
     chronicler_cleanup
   end
 
-  it 'Chronicler # empty commit', test_construct: true do
+  it 'Chronicler#empty_commit', test_construct: true do
     chronicler_init
     chronicler_commit('Some text')
     chronicler_commit('Some text')
@@ -66,7 +66,7 @@ describe Dapp::GitRepo do
     chronicler_cleanup
   end
 
-  it 'Chronicler # commit_at and latest_commit', test_construct: true do
+  it 'Chronicler#_commit_at_and_latest_commit', test_construct: true do
     chronicler_init
     chronicler_commit('Some text')
     expect(Time.now - @chrono.commit_at(@chrono.latest_commit)).to be < 2
@@ -86,18 +86,18 @@ describe Dapp::GitRepo do
     expect(File.exist?('remote.git')).to be_falsy
   end
 
-  it 'Remote # init', test_construct: true do
+  it 'Remote#init', test_construct: true do
     remote_init
     remote_cleanup
   end
 
-  it 'Remote # ssh', test_construct: true do
+  it 'Remote#ssh', test_construct: true do
     shellout 'ssh-keygen -b 1024 -f key -P ""'
     remote_init ssh_key_path: 'key'
     remote_cleanup
   end
 
-  it 'Remote # fetch', test_construct: true do
+  it 'Remote#fetch', test_construct: true do
     remote_init
     chronicler_commit('Some another text')
     @remote.fetch!
