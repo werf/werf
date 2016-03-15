@@ -53,8 +53,8 @@ describe Dapp::GitArtifact do
     @repo.commit!
   end
 
-  def artifact_init(where_to_add, id: nil, changefile: nil, changedata: random_string, **kwargs)
-    commit(changefile, changedata) if changefile
+  def artifact_init(where_to_add, id: nil, changefile: 'data.txt', changedata: random_string, **kwargs)
+    commit(changefile, changedata)
 
     (@artifact ||= {})[id] = Dapp::GitArtifact.new(@builder, @repo, where_to_add, **kwargs)
   end
@@ -110,8 +110,8 @@ describe Dapp::GitArtifact do
     Timecop.return
   end
 
-  # rubocop:disable Metrics/AbcSize
-  def artifact_patch(suffix, step, id:, changefile: 'data.txt', changedata: random_string)
+  # rubocop:disable Metrics/AbcSize, Metrics/ParameterLists, Metrics/MethodLength
+  def artifact_patch(suffix, step, id:, changefile: 'data.txt', changedata: random_string, should_be_empty: false)
     commit(changefile, changedata)
 
     reset_instances
@@ -120,17 +120,25 @@ describe Dapp::GitArtifact do
     patch_filename = artifact_filename("#{suffix}.patch.gz", id: id)
     commit_filename = artifact_filename("#{suffix}.commit", id: id)
 
-    expect(@docker).to have_received(:add_artifact).with(patch_filename, patch_filename, '/tmp', step: step)
-    expect(@docker).to have_received(:run).with(
-      "zcat /tmp/#{patch_filename} | git apply --whitespace=nowarn --directory=#{@artifact[id].send(:where_to_add)}",
-      "rm /tmp/#{patch_filename}",
-      step: step
-    )
-    expect(File.read(commit_filename).strip).to eq(@repo.latest_commit)
-    expect(File.exist?(patch_filename)).to be_truthy
-    expect(shellout("zcat #{patch_filename}").stdout).to match(/#{changedata}/)
+    if should_be_empty
+      expect(@docker).to_not have_received(:add_artifact).with(patch_filename, patch_filename, '/tmp', step: step)
+      expect(@docker).to_not have_received(:run).with(/#{patch_filename}/, /#{patch_filename}/, step: step)
+      expect(File.exist?(patch_filename)).to be_falsy
+      expect(File.exist?(commit_filename)).to be_falsy
+    else
+      expect(@docker).to have_received(:add_artifact).with(patch_filename, patch_filename, '/tmp', step: step)
+      expect(@docker).to have_received(:run).with(
+        "zcat /tmp/#{patch_filename} | git apply --whitespace=nowarn --directory=#{@artifact[id].send(:where_to_add)}",
+        "rm /tmp/#{patch_filename}",
+        step: step
+      )
+      expect(File.read(commit_filename).strip).to eq(@repo.latest_commit)
+      expect(File.exist?(patch_filename)).to be_truthy
+      expect(File.exist?(commit_filename)).to be_truthy
+      expect(shellout("zcat #{patch_filename}").stdout).to match(/#{changedata}/)
+    end
   end
-  # rubocop:enable Metrics/AbcSize
+  # rubocop:enable Metrics/AbcSize, Metrics/ParameterLists, Metrics/MethodLength
 
   def artifact_do_test(where_to_add, latest_patch: true, layers: 3)
     artifact_init where_to_add
@@ -186,7 +194,17 @@ describe Dapp::GitArtifact do
     artifact_latest_patch id: :b
   end
 
-  it '#no_patch_if_no_more_diff', test_construct: true do
+  it '#remove_latest_patch_if_no_more_diff', test_construct: true do
+    artifact_init '/dest', changedata: 'text'
+    artifact_archive
+    artifact_latest_patch
+    artifact_latest_patch changedata: 'text', should_be_empty: true
+
+    3.times do |i|
+      artifact_layer_patch i + 1, changedata: "text_#{i}"
+      artifact_latest_patch
+      artifact_latest_patch changedata: "text_#{i}", should_be_empty: true
+    end
   end
 
   { cwd: 'x', paths: 'x', owner: 70_500, group: 70_500 }.each do |param, value|

@@ -2,7 +2,7 @@ module Dapp
   class Builder
     # Centos7 support
     module Centos7
-      # rubocop:disable Metrics/MethodLength:
+      # rubocop:disable Metrics/MethodLength
       def from_centos7
         # use centos7
         docker.from 'centos:7'
