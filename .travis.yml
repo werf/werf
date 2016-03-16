@@ -3,6 +3,11 @@ rvm:
 - 2.3.0
 - 2.2.4
 - 2.1.8
+
+before_script:
+  - tar --version
+  - lsb_release -a
+
 deploy:
   provider: rubygems
   api_key:
