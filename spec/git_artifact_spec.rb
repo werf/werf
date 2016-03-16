@@ -331,9 +331,6 @@ describe Dapp::GitArtifact do
     expect(artifact.exist_in_step?('data4.txt', :prepare)).to be_falsy
   end
 
-  # TODO: cwd: nil
-  # TODO: paths: nil
-
   it '#cwd', test_construct: true do
     artifact_init '/dest', cwd: 'a', changefile: 'a/data.txt'
     artifact_archive
