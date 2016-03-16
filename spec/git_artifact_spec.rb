@@ -400,4 +400,15 @@ describe Dapp::GitArtifact do
     artifact_latest_patch should_be_empty: true
     artifact_latest_patch changefile: 'a/x/y/data.txt'
   end
+
+  it '#file_removal_in_patch', test_construct: true do
+    artifact_init '/dest', changedata: 'test'
+    repo_change_and_commit changefile: 'data2.txt', changedata: 'test'
+
+    artifact_archive
+    FileUtils.rm File.join(@repo.name, 'data2.txt')
+
+    artifact_latest_patch changedata: 'test'
+    expect(shellout("zcat #{artifact_filename('_latest.patch.gz')}").stdout).to match(%r{^\+\+\+ /dev/null$})
+  end
 end
