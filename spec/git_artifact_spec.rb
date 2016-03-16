@@ -232,7 +232,15 @@ describe Dapp::GitArtifact do
     end
   end
 
-  [nil, 'root', 'some_unknown_user', 100_500].product([nil, 'root', 'some_unknown_group', 100_500]) do |owner, group|
+  class << self
+    def users_and_groups_to_test
+      users = [nil, 'root', 100_500]
+      users << 'some_unknown' unless shellout('lsb_release -cs').stdout.strip == 'precise'
+      users.product(users)
+    end
+  end
+
+  users_and_groups_to_test.each do |owner, group|
     it "#change_owner_to_#{owner}_and_group_to_#{group}", test_construct: true do
       artifact_do_test '/dest', owner: owner, group: group
     end
