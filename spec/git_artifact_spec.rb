@@ -87,8 +87,10 @@ describe Dapp::GitArtifact do
     )
     expect(File.read(artifact_filename('.commit', id: id)).strip).to eq(@repo.latest_commit)
     expect(File.exist?(artifact_filename('.tar.gz', id: id))).to be_truthy
-    expect(tar_files_owners(artifact_filename('.tar.gz', id: id))).to eq([@artifact[id].send(:owner).to_s]) if @artifact[id].send(:owner)
-    expect(tar_files_groups(artifact_filename('.tar.gz', id: id))).to eq([@artifact[id].send(:group).to_s]) if @artifact[id].send(:group)
+
+    [:owner, :group].each do |subj|
+      expect(send(:"tar_files_#{subj}s", artifact_filename('.tar.gz', id: id))).to eq([@artifact[id].send(subj).to_s]) if @artifact[id].send(subj)
+    end
   end
   # rubocop:enable Metrics/AbcSize
 
@@ -141,11 +143,10 @@ describe Dapp::GitArtifact do
         "rm /tmp/#{patch_filename}",
         step: step
       )
-      if @artifact[id].send(:owner)
-        expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-u #{@artifact[id].send(:owner)}.*git apply/, any_args)
-      end
-      if @artifact[id].send(:group)
-        expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-g #{@artifact[id].send(:group)}.*git apply/, any_args)
+      { owner: 'u', group: 'g' }.each do |subj, flag|
+        if @artifact[id].send(subj)
+          expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-#{flag} #{@artifact[id].send(subj)}.*git apply/, any_args)
+        end
       end
       expect(File.read(commit_filename).strip).to eq(@repo.latest_commit)
       expect(File.exist?(patch_filename)).to be_truthy
