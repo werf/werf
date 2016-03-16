@@ -76,7 +76,7 @@ module Dapp
       res.stdout.lines.grep(/^Successfully built ([0-9a-f]+)\n$/).first.strip.split.last
     end
 
-    def image_exists?(**kwargs)
+    def image_exist?(**kwargs)
       !image_id(**kwargs).nil?
     end
 

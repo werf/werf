@@ -71,7 +71,7 @@ module Dapp
       end
     end
 
-    def exists_in_step?(path, step)
+    def exist_in_step?(path, step)
       repo.exist_in_commit?(path, commit_by_step(step))
     end
 
@@ -116,7 +116,7 @@ module Dapp
     end
 
     def create_and_add_archive
-      create_archive! unless archive_exists?
+      create_archive! unless archive_exist?
       add_archive
     end
 
@@ -218,7 +218,7 @@ module Dapp
       File.write archive_commitfile_path, repo_latest_commit
     end
 
-    def archive_exists?
+    def archive_exist?
       File.exist? archive_commitfile_path
     end
 

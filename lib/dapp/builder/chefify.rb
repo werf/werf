@@ -11,7 +11,7 @@ module Dapp
         [:prepare, :build, :setup].each do |step|
           # run chef-solo for extra dapps
           extra_dapps.each do |extra_dapp|
-            if dapp_chef_cookbooks_artifact.exists_in_step? "cookbooks/#{extra_dapp}/recipes/#{step}.rb", step
+            if dapp_chef_cookbooks_artifact.exist_in_step? "cookbooks/#{extra_dapp}/recipes/#{step}.rb", step
               # FIXME: env ???
               docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o #{extra_dapp}::#{step},env-#{opts[:basename]}::void", step: step
             end
@@ -20,7 +20,7 @@ module Dapp
           # run chef-solo for app
           recipe = [opts[:name], step].compact.join '-'
           # FIXME: env ???
-          if dapp_chef_cookbooks_artifact.exists_in_step? "cookbooks/env-#{opts[:basename]}/recipes/#{recipe}.rb", step
+          if dapp_chef_cookbooks_artifact.exist_in_step? "cookbooks/env-#{opts[:basename]}/recipes/#{recipe}.rb", step
             docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o env-#{opts[:basename]}::#{recipe}", step: step
           end
         end
@@ -71,7 +71,7 @@ module Dapp
 
       def run_chef_solo_for_dapp_common
         [:prepare, :build, :setup].each do |step|
-          if dapp_chef_cookbooks_artifact.exists_in_step? "cookbooks/dapp-common/recipes/#{step}.rb", step
+          if dapp_chef_cookbooks_artifact.exist_in_step? "cookbooks/dapp-common/recipes/#{step}.rb", step
             # FIXME: env ???
             docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o dapp-common::#{step},env-#{opts[:basename]}::void", step: step
           end
