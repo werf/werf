@@ -92,7 +92,7 @@ module Dapp
     end
 
     def any_changes?(from)
-      !repo.git_bare("diff --quiet #{from}..#{repo_latest_commit}#{" --relative=#{cwd}" if cwd} #{paths(true)}", returns: [0, 1]).status.success?
+      !repo.git_bare("diff --quiet #{from}..#{repo_latest_commit}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}", returns: [0, 1]).status.success?
     end
 
     attr_reader :repo
@@ -256,7 +256,7 @@ module Dapp
       atomizer << build_path(filename)
       atomizer << commitfile_path
 
-      repo.git_bare "diff --binary #{from}..#{repo_latest_commit}#{" --relative=#{cwd}" if cwd} #{paths(true)} | gzip > #{build_path filename}"
+      repo.git_bare "diff --binary #{from}..#{repo_latest_commit}#{" --relative=#{cwd}" if cwd} -- #{paths(true)} | gzip > #{build_path filename}"
       File.write commitfile_path, repo_latest_commit
     end
 

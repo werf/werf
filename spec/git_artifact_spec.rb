@@ -31,14 +31,11 @@ describe Dapp::GitArtifact do
     RSpec::Mocks.space.proxy_for(@docker).instance_variable_get(:@messages_received).clear
   end
 
-  # TODO: cwd: nil
-  # TODO: paths: nil
-
   def repo_create_branch(branch)
     shellout "git branch #{branch}", cwd: @repo.name
   end
 
-  def repo_change_and_commit(changefile = 'data.txt', changedata = random_string, branch: 'master')
+  def repo_change_and_commit(changefile: 'data.txt', changedata: random_string, branch: 'master')
     shellout "git checkout #{branch}", cwd: @repo.name
     changefile = File.join(@repo.name, changefile)
     FileUtils.mkdir_p File.split(changefile)[0]
@@ -52,7 +49,7 @@ describe Dapp::GitArtifact do
 
   # rubocop:disable Metrics/ParameterLists
   def artifact_init(where_to_add, id: nil, changefile: 'data.txt', changedata: random_string, branch: 'master', **kwargs)
-    repo_change_and_commit(changefile, changedata, branch: branch)
+    repo_change_and_commit(changefile: changefile, changedata: changedata, branch: branch)
 
     (@artifacts ||= {})[id] = Dapp::GitArtifact.new(@builder, @repo, where_to_add, branch: branch, **kwargs)
   end
@@ -75,6 +72,10 @@ describe Dapp::GitArtifact do
 
   def tar_files_groups(arhive)
     shellout("tar -tvf #{arhive}").stdout.lines.map { |s| s.strip.sub(%r(.{11}[^\/]+\/([^\s]+).*), '\1') }.uniq
+  end
+
+  def artifact_tar_files(id: nil)
+    shellout("tar -tf #{artifact_filename('.tar.gz', id: id)}").stdout.lines.map(&:strip).select { |f| !(f =~ %r{/$}) }
   end
 
   # rubocop:disable Metrics/AbcSize
@@ -127,7 +128,7 @@ describe Dapp::GitArtifact do
 
   # rubocop:disable Metrics/AbcSize, Metrics/ParameterLists, Metrics/MethodLength
   def artifact_patch(suffix, step, id:, changefile: 'data.txt', changedata: random_string, should_be_empty: false, **_kwargs)
-    repo_change_and_commit(changefile, changedata, branch: artifact(id: id).branch)
+    repo_change_and_commit(changefile: changefile, changedata: changedata, branch: artifact(id: id).branch)
 
     reset_instances
     artifact(id: id).add_multilayer!
@@ -328,5 +329,78 @@ describe Dapp::GitArtifact do
     expect(artifact.exist_in_step?('data4.txt', :setup)).to be_truthy
     expect(artifact.exist_in_step?('data4.txt', :build)).to be_falsy
     expect(artifact.exist_in_step?('data4.txt', :prepare)).to be_falsy
+  end
+
+  # TODO: cwd: nil
+  # TODO: paths: nil
+
+  it '#cwd', test_construct: true do
+    artifact_init '/dest', cwd: 'a', changefile: 'a/data.txt'
+    artifact_archive
+    expect(artifact_tar_files).to match_array('data.txt')
+
+    artifact_latest_patch should_be_empty: true
+    artifact_layer_patch 1, should_be_empty: true
+
+    artifact_latest_patch changefile: 'a/data.txt'
+    artifact_layer_patch 1, changefile: 'a/data.txt'
+
+    artifact_latest_patch should_be_empty: true
+    artifact_latest_patch changefile: 'a/data.txt'
+  end
+
+  it '#paths', test_construct: true do
+    repo_change_and_commit changefile: 'x/data.txt'
+    repo_change_and_commit changefile: 'x/y/data.txt'
+    repo_change_and_commit changefile: 'z/data.txt'
+    artifact_init '/dest', paths: ['x/y', 'z']
+
+    artifact_archive
+    expect(artifact_tar_files).to match_array(['x/y/data.txt', 'z/data.txt'])
+
+    artifact_latest_patch should_be_empty: true
+    repo_change_and_commit changefile: 'x/data.txt'
+    artifact_latest_patch should_be_empty: true
+    artifact_layer_patch 1, should_be_empty: true
+    repo_change_and_commit changefile: 'x/data.txt'
+
+    artifact_latest_patch changefile: 'x/y/data.txt'
+    artifact_layer_patch 1, changefile: 'z/data.txt'
+
+    artifact_latest_patch should_be_empty: true
+    repo_change_and_commit changefile: 'x/data.txt'
+    artifact_latest_patch should_be_empty: true
+    artifact_latest_patch changefile: 'x/y/data.txt'
+  end
+
+  it '#cwd_and_paths', test_construct: true do
+    repo_change_and_commit changefile: 'a/data.txt'
+    repo_change_and_commit changefile: 'a/x/data.txt'
+    repo_change_and_commit changefile: 'a/x/y/data.txt'
+    repo_change_and_commit changefile: 'a/z/data.txt'
+    artifact_init '/dest', cwd: 'a', paths: ['x/y', 'z']
+
+    artifact_archive
+    expect(artifact_tar_files).to match_array(['x/y/data.txt', 'z/data.txt'])
+
+    artifact_latest_patch should_be_empty: true
+    repo_change_and_commit changefile: 'a/data.txt'
+    artifact_latest_patch should_be_empty: true
+    repo_change_and_commit changefile: 'a/x/data.txt'
+    artifact_latest_patch should_be_empty: true
+    artifact_layer_patch 1, should_be_empty: true
+    repo_change_and_commit changefile: 'a/data.txt'
+    artifact_layer_patch 1, should_be_empty: true
+    repo_change_and_commit changefile: 'a/x/data.txt'
+
+    artifact_latest_patch changefile: 'a/x/y/data.txt'
+    artifact_layer_patch 1, changefile: 'a/z/data.txt'
+
+    artifact_latest_patch should_be_empty: true
+    repo_change_and_commit changefile: 'a/data.txt'
+    artifact_latest_patch should_be_empty: true
+    repo_change_and_commit changefile: 'a/x/data.txt'
+    artifact_latest_patch should_be_empty: true
+    artifact_latest_patch changefile: 'a/x/y/data.txt'
   end
 end
