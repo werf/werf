@@ -282,4 +282,25 @@ describe Dapp::GitArtifact do
       artifact_latest_patch changedata: "text_#{i}", should_be_empty: true
     end
   end
+
+  it '#commit_by_step', test_construct: true do
+    artifact_init '/dest'
+
+    artifact_archive
+    expect(artifact.commit_by_step(:prepare)).to eq(artifact.commit_by_step(:build))
+    expect(artifact.commit_by_step(:build)).to eq(artifact.commit_by_step(:setup))
+
+    artifact_latest_patch changedata: 'text'
+    expect(artifact.commit_by_step(:build)).to eq(artifact.commit_by_step(:prepare))
+    expect(artifact.commit_by_step(:setup)).not_to eq(artifact.commit_by_step(:build))
+
+    artifact_layer_patch 1
+    expect(artifact.commit_by_step(:build)).not_to eq(artifact.commit_by_step(:prepare))
+    expect(artifact.commit_by_step(:setup)).to eq(artifact.commit_by_step(:build))
+
+    artifact_latest_patch changedata: 'text'
+    expect(artifact.commit_by_step(:build)).not_to eq(artifact.commit_by_step(:prepare))
+    expect(artifact.commit_by_step(:setup)).not_to eq(artifact.commit_by_step(:build))
+    expect(artifact.commit_by_step(:prepare)).not_to eq(artifact.commit_by_step(:setup))
+  end
 end
