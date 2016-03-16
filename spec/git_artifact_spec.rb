@@ -10,7 +10,7 @@ describe Dapp::GitArtifact do
     @builder = instance_double('Dapp::Builder')
     allow(@builder).to receive(:register_atomizer)
     allow(@builder).to receive(:build_path) do |*args|
-      File.join(*args)
+      File.absolute_path(File.join(*args))
     end
     allow(@builder).to receive(:home_path).and_return('')
     allow(@builder).to receive(:shellout) do |*args, **kwargs|
@@ -29,10 +29,6 @@ describe Dapp::GitArtifact do
   def reset_instances
     RSpec::Mocks.space.proxy_for(@builder).send(:instance_variable_get, :@messages_received).clear
     RSpec::Mocks.space.proxy_for(@docker).send(:instance_variable_get, :@messages_received).clear
-  end
-
-  after :each do
-    Timecop.return
   end
 
   # where to add
@@ -70,19 +66,31 @@ describe Dapp::GitArtifact do
     "#{@artifact[id].send(:repo).name}#{@artifact[id].send(:name) ? "_#{@artifact[id].send(:name)}" : nil}.#{@artifact[id].send(:branch)}#{ending}"
   end
 
+  def tar_files_owners(arhive)
+    shellout("tar -tvf #{arhive}").stdout.lines.map { |s| s.strip.sub(%r(.{11}([^\/]+)\/.*), '\1') }.uniq
+  end
+
+  def tar_files_groups(arhive)
+    shellout("tar -tvf #{arhive}").stdout.lines.map { |s| s.strip.sub(%r(.{11}[^\/]+\/([^\s]+).*), '\1') }.uniq
+  end
+
+  # rubocop:disable Metrics/AbcSize
   def artifact_archive(id: nil)
     reset_instances
     @artifact[id].add_multilayer!
 
     expect(@docker).to have_received(:add_artifact).with(
-      artifact_filename('.tar.gz', id: id),
+      %r{\/#{artifact_filename('.tar.gz', id: id)}$},
       artifact_filename('.tar.gz', id: id),
       @artifact[id].send(:where_to_add),
       step: :prepare
     )
     expect(File.read(artifact_filename('.commit', id: id)).strip).to eq(@repo.latest_commit)
     expect(File.exist?(artifact_filename('.tar.gz', id: id))).to be_truthy
+    expect(tar_files_owners(artifact_filename('.tar.gz', id: id))).to eq([@artifact[id].send(:owner).to_s]) if @artifact[id].send(:owner)
+    expect(tar_files_groups(artifact_filename('.tar.gz', id: id))).to eq([@artifact[id].send(:group).to_s]) if @artifact[id].send(:group)
   end
+  # rubocop:enable Metrics/AbcSize
 
   def random_string
     (('a'..'z').to_a * 10).sample(100).join
@@ -118,20 +126,27 @@ describe Dapp::GitArtifact do
     @artifact[id].add_multilayer!
 
     patch_filename = artifact_filename("#{suffix}.patch.gz", id: id)
+    patch_filename_esc = Regexp.escape(patch_filename)
     commit_filename = artifact_filename("#{suffix}.commit", id: id)
 
     if should_be_empty
-      expect(@docker).to_not have_received(:add_artifact).with(patch_filename, patch_filename, '/tmp', step: step)
-      expect(@docker).to_not have_received(:run).with(/#{patch_filename}/, /#{patch_filename}/, step: step)
+      expect(@docker).to_not have_received(:add_artifact).with(/#{patch_filename_esc}$/, patch_filename, '/tmp', step: step)
+      expect(@docker).to_not have_received(:run).with(/#{patch_filename_esc}/, /#{patch_filename_esc}$/, step: step)
       expect(File.exist?(patch_filename)).to be_falsy
       expect(File.exist?(commit_filename)).to be_falsy
     else
-      expect(@docker).to have_received(:add_artifact).with(patch_filename, patch_filename, '/tmp', step: step)
+      expect(@docker).to have_received(:add_artifact).with(/#{patch_filename_esc}$/, patch_filename, '/tmp', step: step)
       expect(@docker).to have_received(:run).with(
-        "zcat /tmp/#{patch_filename} | git apply --whitespace=nowarn --directory=#{@artifact[id].send(:where_to_add)}",
+        %r{^zcat \/tmp\/#{patch_filename_esc} \| .*git apply --whitespace=nowarn --directory=#{@artifact[id].send(:where_to_add)}$},
         "rm /tmp/#{patch_filename}",
         step: step
       )
+      if @artifact[id].send(:owner)
+        expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-u #{@artifact[id].send(:owner)}.*git apply/, any_args)
+      end
+      if @artifact[id].send(:group)
+        expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-g #{@artifact[id].send(:group)}.*git apply/, any_args)
+      end
       expect(File.read(commit_filename).strip).to eq(@repo.latest_commit)
       expect(File.exist?(patch_filename)).to be_truthy
       expect(File.exist?(commit_filename)).to be_truthy
@@ -140,8 +155,8 @@ describe Dapp::GitArtifact do
   end
   # rubocop:enable Metrics/AbcSize, Metrics/ParameterLists, Metrics/MethodLength
 
-  def artifact_do_test(where_to_add, latest_patch: true, layers: 3)
-    artifact_init where_to_add
+  def artifact_do_test(where_to_add, latest_patch: true, layers: 3, **kwargs)
+    artifact_init where_to_add, **kwargs
     artifact_archive
     layers.times do |i|
       artifact_layer_patch i + 1
@@ -214,6 +229,12 @@ describe Dapp::GitArtifact do
       artifact_reset
       artifact_init '/dest', **{ param => value }
       expect(Dir.glob(artifact_filename('{.,_}*'))).to match_array([artifact_filename('.paramshash'), artifact_filename('.atomizer')])
+    end
+  end
+
+  [nil, 'root', 'some_unknown_user', 100_500].product([nil, 'root', 'some_unknown_group', 100_500]) do |owner, group|
+    it "#change_owner_to_#{owner}_and_group_to_#{group}", test_construct: true do
+      artifact_do_test '/dest', owner: owner, group: group
     end
   end
 end
