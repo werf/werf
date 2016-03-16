@@ -71,12 +71,8 @@ module Dapp
       end
     end
 
-    def exists_in_commit?(path, commit)
-      repo.git_bare("cat-file -e #{commit}:#{path}", returns: [0, 128]).status.success?
-    end
-
     def exists_in_step?(path, step)
-      exists_in_commit?(path, commit_by_step(step))
+      repo.exist_in_commit?(path, commit_by_step(step))
     end
 
     def prepare_step_commit

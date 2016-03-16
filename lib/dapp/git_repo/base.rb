@@ -36,6 +36,10 @@ module Dapp
         git_bare("rev-parse #{branch}").stdout.strip
       end
 
+      def exist_in_commit?(path, commit)
+        git_bare("cat-file -e #{commit}:#{path}", returns: [0, 128]).status.success?
+      end
+
       def cleanup!
         lock do
           FileUtils.rm_rf dir_path

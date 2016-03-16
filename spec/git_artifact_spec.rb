@@ -303,4 +303,30 @@ describe Dapp::GitArtifact do
     expect(artifact.commit_by_step(:setup)).not_to eq(artifact.commit_by_step(:build))
     expect(artifact.commit_by_step(:prepare)).not_to eq(artifact.commit_by_step(:setup))
   end
+
+  it '#exists_in_step', test_construct: true do
+    artifact_init '/dest', changefile: 'data1.txt'
+    artifact_archive
+    expect(artifact.exists_in_step?('data1.txt', :prepare)).to be_truthy
+
+    artifact_latest_patch changefile: 'data2.txt'
+    expect(artifact.exists_in_step?('data1.txt', :setup)).to be_truthy
+    expect(artifact.exists_in_step?('data2.txt', :setup)).to be_truthy
+    expect(artifact.exists_in_step?('data2.txt', :build)).to be_falsy
+    expect(artifact.exists_in_step?('data2.txt', :prepare)).to be_falsy
+
+    artifact_layer_patch 1, changefile: 'data3.txt'
+    expect(artifact.exists_in_step?('data1.txt', :build)).to be_truthy
+    expect(artifact.exists_in_step?('data2.txt', :build)).to be_truthy
+    expect(artifact.exists_in_step?('data3.txt', :build)).to be_truthy
+    expect(artifact.exists_in_step?('data3.txt', :prepare)).to be_falsy
+
+    artifact_latest_patch changefile: 'data4.txt'
+    expect(artifact.exists_in_step?('data1.txt', :setup)).to be_truthy
+    expect(artifact.exists_in_step?('data2.txt', :setup)).to be_truthy
+    expect(artifact.exists_in_step?('data3.txt', :setup)).to be_truthy
+    expect(artifact.exists_in_step?('data4.txt', :setup)).to be_truthy
+    expect(artifact.exists_in_step?('data4.txt', :build)).to be_falsy
+    expect(artifact.exists_in_step?('data4.txt', :prepare)).to be_falsy
+  end
 end
