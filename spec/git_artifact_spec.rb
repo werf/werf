@@ -31,15 +31,9 @@ describe Dapp::GitArtifact do
     RSpec::Mocks.space.proxy_for(@docker).send(:instance_variable_get, :@messages_received).clear
   end
 
-  # where to add
-  # name
-  # branch: 'master'
-  # cwd: nil
-  # paths: nil
-  # owner: nil, group: nil
-  # interlayer_period: 7 * 24 * 3600
-  # build_path: nil
-  # flush_cache: false
+  # TODO: branch: 'master'
+  # TODO: cwd: nil
+  # TODO: paths: nil
 
   def commit(changefile, changedata, branch: 'master')
     shellout "cd repo; git checkout #{branch}"
@@ -165,6 +159,11 @@ describe Dapp::GitArtifact do
     artifact_latest_patch if latest_patch
   end
 
+  def artifact_expect_clean(id: nil)
+    expect(Dir.glob(artifact_filename('{.,_}*', id: id)))
+      .to match_array([artifact_filename('.paramshash', id: id), artifact_filename('.atomizer', id: id)])
+  end
+
   it '#archive_only', test_construct: true do
     artifact_do_test '/dest', latest_patch: false, layers: 0
   end
@@ -229,7 +228,7 @@ describe Dapp::GitArtifact do
 
       artifact_reset
       artifact_init '/dest', **{ param => value }
-      expect(Dir.glob(artifact_filename('{.,_}*'))).to match_array([artifact_filename('.paramshash'), artifact_filename('.atomizer')])
+      artifact_expect_clean
     end
   end
 
@@ -245,5 +244,16 @@ describe Dapp::GitArtifact do
     it "#change_owner_to_#{owner}_and_group_to_#{group}", test_construct: true do
       artifact_do_test '/dest', owner: owner, group: group
     end
+  end
+
+  it '#interlayer_period', test_construct: true do
+    artifact_do_test '/dest', interlayer_period: 10
+  end
+
+  it '#flush_cache', test_construct: true do
+    artifact_do_test '/dest'
+    artifact_reset
+    artifact_init '/dest', flush_cache: true
+    artifact_expect_clean
   end
 end
