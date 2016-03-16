@@ -99,9 +99,6 @@ module Dapp
       !repo.git_bare("diff --quiet #{from}..#{repo_latest_commit}#{" --relative=#{cwd}" if cwd} #{paths(true)}", returns: [0, 1]).status.success?
     end
 
-    protected
-
-    attr_reader :builder
     attr_reader :repo
     attr_reader :name
     attr_reader :where_to_add
@@ -110,6 +107,10 @@ module Dapp
     attr_reader :owner
     attr_reader :group
     attr_reader :interlayer_period
+
+    protected
+
+    attr_reader :builder
     attr_reader :atomizer
 
     def lock_with_repo(&blk)

@@ -27,37 +27,46 @@ describe Dapp::GitArtifact do
   end
 
   def reset_instances
-    RSpec::Mocks.space.proxy_for(@builder).send(:instance_variable_get, :@messages_received).clear
-    RSpec::Mocks.space.proxy_for(@docker).send(:instance_variable_get, :@messages_received).clear
+    RSpec::Mocks.space.proxy_for(@builder).instance_variable_get(:@messages_received).clear
+    RSpec::Mocks.space.proxy_for(@docker).instance_variable_get(:@messages_received).clear
   end
 
-  # TODO: branch: 'master'
   # TODO: cwd: nil
   # TODO: paths: nil
 
-  def commit(changefile, changedata, branch: 'master')
-    shellout "cd repo; git checkout #{branch}"
-    changefile = File.join('repo', changefile)
+  def repo_create_branch(branch)
+    shellout "git branch #{branch}", cwd: @repo.name
+  end
+
+  def repo_change_and_commit(changefile = 'data.txt', changedata = random_string, branch: 'master')
+    shellout "git checkout #{branch}", cwd: @repo.name
+    changefile = File.join(@repo.name, changefile)
     FileUtils.mkdir_p File.split(changefile)[0]
     File.write changefile, changedata
     @repo.commit!
   end
 
-  def artifact_init(where_to_add, id: nil, changefile: 'data.txt', changedata: random_string, **kwargs)
-    commit(changefile, changedata)
-
-    (@artifact ||= {})[id] = Dapp::GitArtifact.new(@builder, @repo, where_to_add, **kwargs)
+  def artifact(id: nil)
+    (@artifacts ||= {})[id]
   end
 
+  # rubocop:disable Metrics/ParameterLists
+  def artifact_init(where_to_add, id: nil, changefile: 'data.txt', changedata: random_string, branch: 'master', **kwargs)
+    repo_change_and_commit(changefile, changedata, branch: branch)
+
+    (@artifacts ||= {})[id] = Dapp::GitArtifact.new(@builder, @repo, where_to_add, branch: branch, **kwargs)
+  end
+  # rubocop:enable Metrics/ParameterLists
+
   def artifact_reset(id: nil)
-    @artifact.delete(id).send(:atomizer).tap do |atomizer|
+    @artifacts.delete(id).send(:atomizer).tap do |atomizer|
       atomizer.commit!
-      atomizer.send(:instance_variable_get, :@file).close
+      atomizer.instance_variable_get(:@file).close
     end
   end
 
   def artifact_filename(ending, id: nil)
-    "#{@artifact[id].send(:repo).name}#{@artifact[id].send(:name) ? "_#{@artifact[id].send(:name)}" : nil}.#{@artifact[id].send(:branch)}#{ending}"
+    "#{artifact(id: id).repo.name}#{artifact(id: id).name ? "_#{artifact(id: id).name}" : nil}.#{artifact(id: id).branch}#{ending}"
   end
 
   def tar_files_owners(arhive)
@@ -71,19 +80,21 @@ describe Dapp::GitArtifact do
   # rubocop:disable Metrics/AbcSize
   def artifact_archive(id: nil)
     reset_instances
-    @artifact[id].add_multilayer!
+    artifact(id: id).add_multilayer!
 
     expect(@docker).to have_received(:add_artifact).with(
       %r{\/#{artifact_filename('.tar.gz', id: id)}$},
       artifact_filename('.tar.gz', id: id),
-      @artifact[id].send(:where_to_add),
+      artifact(id: id).where_to_add,
       step: :prepare
     )
-    expect(File.read(artifact_filename('.commit', id: id)).strip).to eq(@repo.latest_commit)
+    expect(File.read(artifact_filename('.commit', id: id)).strip).to eq(@repo.latest_commit(artifact(id: id).branch))
     expect(File.exist?(artifact_filename('.tar.gz', id: id))).to be_truthy
 
     [:owner, :group].each do |subj|
-      expect(send(:"tar_files_#{subj}s", artifact_filename('.tar.gz', id: id))).to eq([@artifact[id].send(subj).to_s]) if @artifact[id].send(subj)
+      if artifact(id: id).send(subj)
+        expect(send(:"tar_files_#{subj}s", artifact_filename('.tar.gz', id: id))).to eq([artifact(id: id).send(subj).to_s])
+      end
     end
   end
   # rubocop:enable Metrics/AbcSize
@@ -102,7 +113,7 @@ describe Dapp::GitArtifact do
   end
 
   def artifact_layer_patch(layer, id: nil, **kwargs)
-    Timecop.travel(Time.now + @artifact[id].send(:interlayer_period))
+    Timecop.travel(Time.now + artifact(id: id).interlayer_period)
 
     artifact_patch(
       format('_layer_%04d', layer),
@@ -115,11 +126,11 @@ describe Dapp::GitArtifact do
   end
 
   # rubocop:disable Metrics/AbcSize, Metrics/ParameterLists, Metrics/MethodLength
-  def artifact_patch(suffix, step, id:, changefile: 'data.txt', changedata: random_string, should_be_empty: false)
-    commit(changefile, changedata)
+  def artifact_patch(suffix, step, id:, changefile: 'data.txt', changedata: random_string, should_be_empty: false, **_kwargs)
+    repo_change_and_commit(changefile, changedata, branch: artifact(id: id).branch)
 
     reset_instances
-    @artifact[id].add_multilayer!
+    artifact(id: id).add_multilayer!
 
     patch_filename = artifact_filename("#{suffix}.patch.gz", id: id)
     patch_filename_esc = Regexp.escape(patch_filename)
@@ -133,16 +144,16 @@ describe Dapp::GitArtifact do
     else
       expect(@docker).to have_received(:add_artifact).with(/#{patch_filename_esc}$/, patch_filename, '/tmp', step: step)
       expect(@docker).to have_received(:run).with(
-        %r{^zcat \/tmp\/#{patch_filename_esc} \| .*git apply --whitespace=nowarn --directory=#{@artifact[id].send(:where_to_add)}$},
+        %r{^zcat \/tmp\/#{patch_filename_esc} \| .*git apply --whitespace=nowarn --directory=#{artifact(id: id).where_to_add}$},
         "rm /tmp/#{patch_filename}",
         step: step
       )
       { owner: 'u', group: 'g' }.each do |subj, flag|
-        if @artifact[id].send(subj)
-          expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-#{flag} #{@artifact[id].send(subj)}.*git apply/, any_args)
+        if artifact(id: id).send(subj)
+          expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-#{flag} #{artifact(id: id).send(subj)}.*git apply/, any_args)
         end
       end
-      expect(File.read(commit_filename).strip).to eq(@repo.latest_commit)
+      expect(File.read(commit_filename).strip).to eq(@repo.latest_commit(artifact(id: id).branch))
       expect(File.exist?(patch_filename)).to be_truthy
       expect(File.exist?(commit_filename)).to be_truthy
       expect(shellout("zcat #{patch_filename}").stdout).to match(/#{changedata}/)
@@ -255,5 +266,20 @@ describe Dapp::GitArtifact do
     artifact_reset
     artifact_init '/dest', flush_cache: true
     artifact_expect_clean
+  end
+
+  it '#branch', test_construct: true do
+    repo_create_branch 'not_master'
+
+    artifact_init '/dest', branch: 'not_master', changedata: 'text'
+    artifact_archive
+    repo_change_and_commit branch: 'master'
+    artifact_latest_patch changedata: 'text', should_be_empty: true
+
+    3.times do |i|
+      artifact_layer_patch i + 1, changedata: "text_#{i}"
+      repo_change_and_commit branch: 'master'
+      artifact_latest_patch changedata: "text_#{i}", should_be_empty: true
+    end
   end
 end
