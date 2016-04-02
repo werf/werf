@@ -13,8 +13,6 @@ describe Dapp::GitRepo do
       File.join(*args)
     end
 
-    allow(@builder).to receive(:home_path).and_return('')
-
     allow(@builder).to receive(:shellout) do |*args, **kwargs|
       shellout(*args, **kwargs)
     end
@@ -93,6 +91,7 @@ describe Dapp::GitRepo do
 
   it 'Remote#ssh', test_construct: true do
     shellout 'ssh-keygen -b 1024 -f key -P ""'
+    allow(@builder).to receive(:home_path).and_return('')
     remote_init ssh_key_path: 'key'
     remote_cleanup
   end
@@ -103,5 +102,17 @@ describe Dapp::GitRepo do
     @remote.fetch!
     expect(`git -C remote.git rev-list --all --count`).to eq "#{@commit_counter}\n"
     remote_cleanup
+  end
+
+  it 'Own', test_construct: true do
+    chronicler_init
+    chronicler_commit('Some text')
+
+    allow(@builder).to receive(:home_path).and_return('chrono')
+    @own = Dapp::GitRepo::Own.new(@builder)
+    expect(@own.latest_commit).to eq @chrono.latest_commit
+
+    chronicler_commit('Some another text')
+    expect(@own.latest_commit).to eq @chrono.latest_commit
   end
 end

@@ -127,7 +127,18 @@ module Dapp
       [opts[:basename], opts[:name]].compact.join '-'
     end
 
-    def add_artifact_from_git(url, where_to_add, branch: opts[:git_artifact_branch], ssh_key_path: nil, **kwargs)
+    def add_git_artifact(where_to_add, **kwargs)
+      log "Adding artifact (to #{where_to_add})"
+
+      # own repo
+      repo = GitRepo::Own.new(self)
+
+      # add artifact
+      artifact = GitArtifact.new(self, repo, where_to_add, flush_cache: opts[:flush_cache], branch: home_branch, **kwargs)
+      artifact.add_multilayer!
+    end
+
+    def add_remote_git_artifact(url, where_to_add, branch: opts[:git_artifact_branch] || home_branch, ssh_key_path: nil, **kwargs)
       log "Adding artifact from git (#{url} to #{where_to_add}, branch: #{branch})"
 
       # extract git repo name from url

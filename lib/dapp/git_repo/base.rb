@@ -20,10 +20,6 @@ module Dapp
         build_path "#{name}.git"
       end
 
-      def git(command, **kwargs)
-        builder.shellout "git #{command}", **kwargs
-      end
-
       def git_bare(command, **kwargs)
         git "--git-dir=#{dir_path} #{command}", **kwargs
       end
@@ -41,13 +37,16 @@ module Dapp
       end
 
       def cleanup!
-        lock do
-          FileUtils.rm_rf dir_path
-        end
       end
 
       def lock(**kwargs, &block)
         builder.filelock(build_path("#{name}.lock"), error_message: "Repository #{name} in use! Try again later.", **kwargs, &block)
+      end
+
+      protected
+
+      def git(command, **kwargs)
+        builder.shellout "git #{command}", **kwargs
       end
     end
   end

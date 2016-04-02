@@ -28,6 +28,13 @@ module Dapp
         end
       end
 
+      def cleanup!
+        lock do
+          super
+          FileUtils.rm_rf dir_path
+        end
+      end
+
       protected
 
       attr_reader :url

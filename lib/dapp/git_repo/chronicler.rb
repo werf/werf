@@ -29,6 +29,7 @@ module Dapp
       def cleanup!
         lock do
           super
+          FileUtils.rm_rf dir_path
           FileUtils.rm_rf chronodir_path
         end
       end
