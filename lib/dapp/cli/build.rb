@@ -83,7 +83,7 @@ BANNER
              builder_opt: true
 
       option :cascade_tagging,
-             long: '--cascade_tagging',
+             long: '--cascade-tagging',
              description: 'Use cascade tagging',
              boolean: true,
              builder_opt: true
