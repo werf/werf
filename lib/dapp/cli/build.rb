@@ -88,6 +88,18 @@ BANNER
              boolean: true,
              builder_opt: true
 
+      option :tag_ci,
+             long: '--tag-ci',
+             description: 'Tag by CI branch and tag',
+             boolean: true,
+             builder_opt: true
+
+      option :tag_build_id,
+             long: '--tag-build-id',
+             description: 'Tag by CI build id',
+             boolean: true,
+             builder_opt: true
+
       option :tag,
              long: '--tag TAG',
              description: 'Add tag (can be used one or more times)',

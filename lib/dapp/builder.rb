@@ -3,6 +3,7 @@ module Dapp
   class Builder
     include Chefify
     include Centos7
+    include CiTagging
     include ManualTagging
     include GitTagging
     include CascadeTagging
@@ -167,14 +168,10 @@ module Dapp
       log 'Building'
       image_id = docker.build
 
-      # apply manual tagging
-      tag_manual image_id
-
-      # apply git tagging
-      tag_git image_id
-
-      # apply cascade tagging
-      tag_cascade image_id
+      # apply tagging
+      %w(ci manual git cascade).each do |strategy|
+        send "tag_#{strategy}", image_id
+      end
 
       # push to registry
       if opts[:docker_registry]
