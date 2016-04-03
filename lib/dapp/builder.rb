@@ -3,6 +3,7 @@ module Dapp
   class Builder
     include Chefify
     include Centos7
+    include ManualTagging
     include CascadeTagging
     include Filelock
 
@@ -153,6 +154,7 @@ module Dapp
       artifact.add_multilayer!
     end
 
+    # rubocop:disable Metrics/AbcSize
     def build(**_kwargs)
       # check app name
       unless !opts[:app_filter] || File.fnmatch("#{opts[:app_filter]}*", name)
@@ -163,6 +165,9 @@ module Dapp
       # build image
       log 'Building'
       image_id = docker.build
+
+      # apply manual tagging
+      tag_manual image_id
 
       # apply cascade tagging
       tag_cascade image_id
@@ -178,6 +183,7 @@ module Dapp
 
       image_id
     end
+    # rubocop:enable Metrics/AbcSize
 
     def tag(image_id, name: nil, tag: nil, registry: nil)
       return unless name && tag

@@ -20,11 +20,11 @@ BANNER
       class << self
         def option(name, args)
           if args.delete :builder_opt
-            args[:proc] = if args[:boolean]
-                            proc { Dapp::Builder.default_opts[name] = true }
-                          else
-                            proc { |v| Dapp::Builder.default_opts[name] = v }
-                          end
+            args[:proc] ||= if args[:boolean]
+                              proc { Dapp::Builder.default_opts[name] = true }
+                            else
+                              proc { |v| Dapp::Builder.default_opts[name] = v }
+                            end
           end
 
           super(name, args)
@@ -87,6 +87,12 @@ BANNER
              description: 'Use cascade tagging',
              boolean: true,
              builder_opt: true
+
+      option :tag,
+             long: '--tag TAG',
+             description: 'Add tag (can be used one or more times)',
+             on: :tail,
+             proc: proc { |v| (Dapp::Builder.default_opts[:tags] ||= []) << v }
 
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
