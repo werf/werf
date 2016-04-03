@@ -103,7 +103,6 @@ BANNER
       option :tag,
              long: '--tag TAG',
              description: 'Add tag (can be used one or more times)',
-             on: :tail,
              proc: proc { |v| (Dapp::Builder.default_opts[:tags] ||= []) << v }
 
       option :tag_commit,
