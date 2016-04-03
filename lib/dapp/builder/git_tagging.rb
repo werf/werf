@@ -8,16 +8,12 @@ module Dapp
           registry: opts[:docker_registry]
         }
 
-        if opts[:tag_commit]
-          log 'Applying git commit tag'
+        { commit: 'rev-parse HEAD', branch: 'rev-parse --abbrev-ref HEAD' }.each do |tag_type, git_command|
+          next unless opts[:"tag_#{tag_type}"]
 
-          docker.tag image_id, spec.merge(tag: shellout("git -C #{home_path} rev-parse HEAD").stdout.strip)
-        end
+          log "Applying git #{tag_type} tag"
 
-        if opts[:tag_branch]
-          log 'Applying git branch tag'
-
-          docker.tag image_id, spec.merge(tag: shellout("git -C #{home_path} rev-parse --abbrev-ref HEAD").stdout.strip)
+          docker.tag image_id, spec.merge(tag: shellout("git -C #{home_path} #{git_command}").stdout.strip)
         end
       end
     end
