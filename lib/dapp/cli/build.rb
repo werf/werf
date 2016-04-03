@@ -94,6 +94,18 @@ BANNER
              on: :tail,
              proc: proc { |v| (Dapp::Builder.default_opts[:tags] ||= []) << v }
 
+      option :tag_commit,
+             long: '--tag-commit',
+             description: 'Tag by git commit',
+             boolean: true,
+             builder_opt: true
+
+      option :tag_branch,
+             long: '--tag-branch',
+             description: 'Tag by git branch',
+             boolean: true,
+             builder_opt: true
+
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
              description: 'Default branch to archive artifacts from',

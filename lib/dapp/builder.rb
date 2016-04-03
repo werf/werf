@@ -4,6 +4,7 @@ module Dapp
     include Chefify
     include Centos7
     include ManualTagging
+    include GitTagging
     include CascadeTagging
     include Filelock
 
@@ -168,6 +169,9 @@ module Dapp
 
       # apply manual tagging
       tag_manual image_id
+
+      # apply git tagging
+      tag_git image_id
 
       # apply cascade tagging
       tag_cascade image_id
