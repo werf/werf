@@ -20,11 +20,11 @@ BANNER
       class << self
         def option(name, args)
           if args.delete :builder_opt
-            args[:proc] ||= if args[:boolean]
-                              proc { Dapp::Builder.default_opts[name] = true }
-                            else
-                              proc { |v| Dapp::Builder.default_opts[name] = v }
-                            end
+            args[:proc] = if args[:boolean]
+                            proc { Dapp::Builder.default_opts[name] = true }
+                          else
+                            proc { |v| Dapp::Builder.default_opts[name] = v }
+                          end
           end
 
           super(name, args)
@@ -82,8 +82,8 @@ BANNER
              boolean: true,
              builder_opt: true
 
-      option :cascade_tagging,
-             long: '--cascade-tagging',
+      option :tag_cascade,
+             long: '--tag-cascade',
              description: 'Use cascade tagging',
              boolean: true,
              builder_opt: true

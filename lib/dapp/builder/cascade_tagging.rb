@@ -4,7 +4,7 @@ module Dapp
     module CascadeTagging
       # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       def tag_cascade(image_id)
-        return unless opts[:cascade_tagging]
+        return unless opts[:tag_cascade]
 
         log 'Applying cascade tagging'
 
