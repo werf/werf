@@ -186,13 +186,6 @@ module Dapp
     end
     # rubocop:enable Metrics/AbcSize
 
-    def tag(image_id, name: nil, tag: nil, registry: nil)
-      return unless name && tag
-
-      new = { name: name, tag: tag, registry: registry }
-      docker.tag image_id, new
-    end
-
     def register_atomizer(atomizer)
       atomizers << atomizer
     end
