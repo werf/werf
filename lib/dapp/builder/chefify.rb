@@ -12,16 +12,14 @@ module Dapp
           # run chef-solo for extra dapps
           extra_dapps.each do |extra_dapp|
             if dapp_chef_cookbooks_artifact.exist_in_step? "cookbooks/#{extra_dapp}/recipes/#{step}.rb", step
-              # FIXME: env ???
-              docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o #{extra_dapp}::#{step},env-#{opts[:basename]}::void", step: step
+              docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o mdapp-#{extra_dapp}::#{step},dapp-#{opts[:basename]}::void", step: step
             end
           end
 
           # run chef-solo for app
           recipe = [opts[:name], step].compact.join '-'
-          # FIXME: env ???
-          if dapp_chef_cookbooks_artifact.exist_in_step? "cookbooks/env-#{opts[:basename]}/recipes/#{recipe}.rb", step
-            docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o env-#{opts[:basename]}::#{recipe}", step: step
+          if dapp_chef_cookbooks_artifact.exist_in_step? "cookbooks/dapp-#{opts[:basename]}/recipes/#{recipe}.rb", step
+            docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o dapp-#{opts[:basename]}::#{recipe}", step: step
           end
         end
       end
@@ -48,8 +46,7 @@ module Dapp
           shellout "berks vendor --berksfile=#{home_path 'Berksfile'} #{repo.chronodir_path 'cookbooks'}", log_verbose: true
 
           # create void receipt
-          # FIXME: env ???
-          FileUtils.touch repo.chronodir_path 'cookbooks', "env-#{opts[:basename]}", 'recipes', 'void.rb'
+          FileUtils.touch repo.chronodir_path 'cookbooks', "dapp-#{opts[:basename]}", 'recipes', 'void.rb'
 
           # commit (if smth changed)
           repo.commit!
@@ -75,8 +72,7 @@ module Dapp
       def run_chef_solo_for_dapp_common
         [:prepare, :build, :setup].each do |step|
           if dapp_chef_cookbooks_artifact.exist_in_step? "cookbooks/dapp-common/recipes/#{step}.rb", step
-            # FIXME: env ???
-            docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o dapp-common::#{step},env-#{opts[:basename]}::void", step: step
+            docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o mdapp-common::#{step},dapp-#{opts[:basename]}::void", step: step
           end
         end
       end
