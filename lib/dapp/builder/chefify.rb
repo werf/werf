@@ -41,6 +41,9 @@ module Dapp
           # init cronicler
           repo = GitRepo::Chronicler.new(self, 'dapp_cookbooks', build_path: home_branch)
 
+          # verify berks lock
+          shellout "berks verify --berksfile=#{home_path 'Berksfile'}"
+
           # vendor cookbooks
           shellout "berks vendor --berksfile=#{home_path 'Berksfile'} #{repo.chronodir_path 'cookbooks'}", log_verbose: true
 
