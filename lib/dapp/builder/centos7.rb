@@ -9,7 +9,6 @@ module Dapp
 
         # add real systemd
         docker.env container: 'docker', step: :begining
-        docker.run 'yum -y swap -- remove systemd-container systemd-container-libs -- install systemd systemd-libs', step: :begining
         docker.run(
           'yum -y update; yum clean all',
           '(cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done)',
@@ -20,6 +19,8 @@ module Dapp
           'rm -f /lib/systemd/system/sockets.target.wants/*initctl*',
           'rm -f /lib/systemd/system/basic.target.wants/*',
           'rm -f /lib/systemd/system/anaconda.target.wants/*',
+          'rm -f /lib/systemd/system/systemd-remount-fs.service',
+          'rm -f /lib/systemd/system/sys-fs-fuse-connections.mount',
           step: :begining
         )
         docker.volume '/sys/fs/cgroup', step: :begining
