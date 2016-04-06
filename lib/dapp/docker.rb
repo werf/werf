@@ -95,7 +95,20 @@ module Dapp
     end
 
     def tag(origin, new, force: true)
-      docker "tag#{' -f' if force} #{origin.is_a?(String) ? origin : pad_image_name(**origin)} #{pad_image_name(**new)}"
+      cmd = "tag#{' -f' if force} "
+
+      if origin.is_a?(String)
+        origin_image_id = origin
+        cmd += origin
+      else
+        origin_image_id = image_id(origin)
+        cmd += pad_image_name(origin)
+      end
+
+      # auto rmi
+      rmi new if force && origin_image_id && image_id(new) == origin_image_id
+
+      docker cmd + ' ' + pad_image_name(**new)
     end
 
     def rmi(**kwargs)
