@@ -31,8 +31,8 @@ module Dapp
           tag = ENV['TRAVIS_TAG']
         end
 
-        docker.tag image_id, spec.merge(tag: tag) if tag
         docker.tag image_id, spec.merge(tag: branch) if branch
+        [tag, 'latest'].each { |t| docker.tag image_id, spec.merge(tag: t) } if tag
       end
 
       def tag_ci_build_id(image_id, spec)
