@@ -106,7 +106,7 @@ module Dapp
       end
 
       # auto rmi
-      rmi new if force && origin_image_id && image_id(new) == origin_image_id
+      rmi new if force && origin_image_id && image_id(new) != origin_image_id
 
       docker cmd + ' ' + pad_image_name(**new)
     end
