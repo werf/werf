@@ -5,7 +5,7 @@ module Dapp
       def tag_git(image_id)
         spec = {
           name: name,
-          registry: opts[:docker_registry]
+          repo: opts[:docker_repo]
         }
 
         { commit: 'rev-parse HEAD', branch: 'rev-parse --abbrev-ref HEAD' }.each do |tag_type, git_command|

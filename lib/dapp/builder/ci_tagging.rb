@@ -9,7 +9,7 @@ module Dapp
 
         spec = {
           name: name,
-          registry: opts[:docker_registry]
+          repo: opts[:docker_repo]
         }
 
         tag_ci_branch_and_tag image_id, spec

@@ -13,14 +13,14 @@ module Dapp
         spec = {
           name: name,
           tag: home_branch,
-          registry: opts[:docker_registry]
+          repo: opts[:docker_repo]
         }
 
         # return if nothing changed
         return if image_id == docker.image_id(spec)
 
         # remove excess tags
-        tags_to_remove = docker.images(name: spec[:name], registry: spec[:registry])
+        tags_to_remove = docker.images(name: spec[:name], repo: spec[:repo])
         tags_to_remove.map! { |image| image[:tag] }
         tags_to_remove.select! { |tag| tag.start_with?("#{spec[:tag]}_") && tag.sub(/^#{spec[:tag]}_/, '').to_i >= opts[:build_history_length] }
         tags_to_remove.each do |tag_to_remove|

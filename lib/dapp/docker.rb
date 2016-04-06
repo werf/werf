@@ -85,8 +85,8 @@ module Dapp
       image ? image[:id] : nil
     end
 
-    def images(name:, tag: nil, registry: nil)
-      all_images.select { |i| i[:name] == pad_image_name(name: name, registry: registry) && (!tag || i[:tag] == tag) }
+    def images(name:, tag: nil, repo: nil)
+      all_images.select { |i| i[:name] == pad_image_name(name: name, repo: repo) && (!tag || i[:tag] == tag) }
     end
 
     def all_images
@@ -102,14 +102,14 @@ module Dapp
       docker "rmi #{pad_image_name(**kwargs)}"
     end
 
-    def push(name:, tag: nil, registry: nil)
-      docker "push #{pad_image_name name: name, tag: tag, registry: registry}", log_verbose: true
+    def push(name:, tag: nil, repo: nil)
+      docker "push #{pad_image_name name: name, tag: tag, repo: repo}", log_verbose: true
     end
 
     protected
 
-    def pad_image_name(name:, tag: nil, registry: nil)
-      name = "#{registry}/#{name}" if registry
+    def pad_image_name(name:, tag: nil, repo: nil)
+      name = "#{repo}/#{name}" if repo
       name = "#{name}:#{tag}" if tag
       name
     end

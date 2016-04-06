@@ -71,9 +71,9 @@ BANNER
              description: 'Build directory',
              builder_opt: true
 
-      option :docker_registry,
-             long: '--docker-registry REGISTRY',
-             description: 'Docker registry',
+      option :docker_repo,
+             long: '--docker-repo REPO',
+             description: 'Docker repo',
              builder_opt: true
 
       option :flush_cache,

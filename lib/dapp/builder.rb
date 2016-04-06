@@ -173,10 +173,10 @@ module Dapp
         send "tag_#{strategy}", image_id
       end
 
-      # push to registry
-      if opts[:docker_registry]
-        log 'Pushing to registry'
-        docker.push name: name, registry: opts[:docker_registry]
+      # push to repo
+      if opts[:docker_repo]
+        log 'Pushing to docker repo'
+        docker.push name: name, repo: opts[:docker_repo]
       end
 
       # count it

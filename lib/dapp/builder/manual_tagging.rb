@@ -11,7 +11,7 @@ module Dapp
           spec = {
             name: name,
             tag: tag,
-            registry: opts[:docker_registry]
+            repo: opts[:docker_repo]
           }
 
           docker.tag image_id, spec
