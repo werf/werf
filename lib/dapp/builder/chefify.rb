@@ -39,6 +39,13 @@ module Dapp
           # init cronicler
           repo = GitRepo::Chronicler.new(self, 'dapp_cookbooks', build_path: home_branch)
 
+          # warmup berks cache
+          Dir.mktmpdir('berks_warmup', build_path) do |tmpdir_path|
+            FileUtils.cp home_path('Berksfile'), tmpdir_path
+            FileUtils.cp home_path('metadata.rb'), tmpdir_path
+            shellout 'berks install', cwd: tmpdir_path
+          end
+
           # verify berks lock
           shellout "berks verify --berksfile=#{home_path 'Berksfile'}"
 
