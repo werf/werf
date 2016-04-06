@@ -94,6 +94,7 @@ module Dapp
                       .map { |line| Hash[[:name, :tag, :id].zip(line.strip.split(/\s{2,}/)[0..3])] }
     end
 
+    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def tag(origin, new, force: true)
       cmd = "tag#{' -f' if force} "
 
@@ -106,10 +107,13 @@ module Dapp
       end
 
       # auto rmi
-      rmi new if force && origin_image_id && image_id(new) != origin_image_id
+      if force && origin_image_id && (new_image_id = image_id(new))
+        rmi new if new_image_id != origin_image_id
+      end
 
       docker cmd + ' ' + pad_image_name(**new)
     end
+    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def rmi(**kwargs)
       docker "rmi #{pad_image_name(**kwargs)}"
