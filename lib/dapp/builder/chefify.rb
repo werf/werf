@@ -76,9 +76,9 @@ module Dapp
         )
       end
 
-      def run_chef_solo_for_dapp_common
+      def run_chef_solo_for_mdapp_common
         [:prepare, :build, :setup].each do |step|
-          if dapp_chef_cookbooks_artifact.exist_in_step? "cookbooks/dapp-common/recipes/#{step}.rb", step
+          if dapp_chef_cookbooks_artifact.exist_in_step? "cookbooks/mdapp-common/recipes/#{step}.rb", step
             docker.run "chef-solo -c /usr/share/dapp/chef_solo.rb -o mdapp-common::#{step},dapp-#{opts[:basename]}::void", step: step
           end
         end
