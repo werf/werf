@@ -100,7 +100,7 @@ module Dapp
         opts[:dapp_chef_version] = chef_version
 
         # run chef solo for dapp-common
-        run_chef_solo_for_dapp_common
+        run_chef_solo_for_mdapp_common
       end
     end
   end
