@@ -99,7 +99,7 @@ module Dapp
         # mark chef as installed
         opts[:dapp_chef_version] = chef_version
 
-        # run chef solo for dapp-common
+        # run chef solo for mdapp-common
         run_chef_solo_for_mdapp_common
       end
     end
