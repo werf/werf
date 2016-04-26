@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    dapp (0.0.15)
+    dapp (0.0.16)
       mixlib-cli (>= 1.0, < 3.0)
       mixlib-shellout (>= 1.0, < 3.0)
 
