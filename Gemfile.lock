@@ -39,7 +39,7 @@ GEM
     method_source (0.8.2)
     mixlib-cli (1.5.0)
     mixlib-shellout (2.2.6)
-    multi_json (1.11.2)
+    multi_json (1.11.3)
     multipart-post (2.0.0)
     net-http-persistent (2.9.4)
     net-http-pipeline (1.0.1)
@@ -74,7 +74,7 @@ GEM
     simplecov-html (0.10.0)
     slop (3.6.0)
     test_construct (2.0.1)
-    timecop (0.8.0)
+    timecop (0.8.1)
     travis (1.8.2)
       backports
       faraday (~> 0.9)
@@ -86,7 +86,7 @@ GEM
       typhoeus (~> 0.6, >= 0.6.8)
     typhoeus (0.8.0)
       ethon (>= 0.8.0)
-    websocket (1.2.2)
+    websocket (1.2.3)
 
 PLATFORMS
   ruby
