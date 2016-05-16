@@ -3,6 +3,7 @@ module Dapp
   class Builder
     include Chefify
     include Centos7
+    include Ubuntu1404
     include Ubuntu1604
     include CiTagging
     include ManualTagging
