@@ -7,7 +7,7 @@ module Dapp
         docker.from 'ubuntu:16.04'
         docker.run(
           'apt-get update',
-          'apt-get dist-upgrade',
+          'apt-get -y dist-upgrade',
           'apt-get -y install apt-utils git curl',
           step: :begining
         )
