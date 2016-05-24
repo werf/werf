@@ -8,46 +8,44 @@ module Dapp
       end
 
       def run
-=begin
-Варианты запуска стадий
-
-  prepare
-  infra_install
-  sources_1
-  infra_setup
-  app_install
-  app_setup
-
-  infra_install
-  sources_1
-  infra_setup
-  app_install
-  app_setup
-
-  infra_setup
-  app_install
-  sources_2
-  app_setup
-
-  infra_setup
-  app_install
-  sources_2
-  app_setup
-
-  app_install
-  sources_2
-  app_setup
-
-  app_setup
-  sources_3
-  sources_4
-=end
+        if prepare?
+          prepare
+          infra_install
+          sources_1
+          infra_setup
+          app_install
+          app_setup
+        elsif infra_install?
+          infra_install
+          sources_1
+          infra_setup
+          app_install
+          app_setup
+        elsif infra_setup?
+          infra_setup
+          app_install
+          sources_2
+          app_setup
+        elsif app_install?
+          app_install
+          sources_2
+          app_setup
+        elsif app_setup?
+          app_setup
+          sources_3
+          sources_4
+        end
       end
 
       def build_docker_image(from:, cmd: [], tag:)
         # запустить команды в новом контейнере через docker run
         # сделать docker commit
         # удалить контейнер
+      end
+
+
+      def prepare?
+        raise
       end
 
       def prepare
@@ -58,6 +56,11 @@ module Dapp
         # hash от shell-команд
       end
 
+
+      def infra_install?
+        raise
+      end
+
       def infra_install
         raise
       end
@@ -66,11 +69,8 @@ module Dapp
         raise
       end
 
-      def sources_1
-        raise
-      end
 
-      def sources_1_key
+      def infra_setup?
         raise
       end
 
@@ -82,6 +82,11 @@ module Dapp
         raise
       end
 
+
+      def app_install?
+        raise
+      end
+
       def app_install
         raise
       end
@@ -90,11 +95,8 @@ module Dapp
         raise
       end
 
-      def sources_2
-        raise
-      end
 
-      def sources_2_key
+      def app_setup?
         raise
       end
 
@@ -103,6 +105,23 @@ module Dapp
       end
 
       def app_setup_key
+        raise
+      end
+
+
+      def sources_1
+        raise
+      end
+
+      def sources_1_key
+        raise
+      end
+
+      def sources_2
+        raise
+      end
+
+      def sources_2_key
         raise
       end
 
