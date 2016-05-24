@@ -3,6 +3,11 @@ module Dapp
     class Base
       attr_reader :conf
 
+      # TODO Describe stages sequence with
+      # TODO   ordering data
+      # TODO Generate stages related methods
+      # TODO   from that data
+
       def initialize(conf)
         @conf = conf
       end
@@ -70,7 +75,7 @@ module Dapp
       end
 
       def infra_install!
-        build_stage!(from: :prepare, stage: :prepare)
+        build_stage!(from: prepare_key, stage: :infra_install)
       end
 
       def infra_install
@@ -86,6 +91,10 @@ module Dapp
         raise
       end
 
+      def infra_setup!
+        build_stage!(from: sources_1_key, stage: :infra_setup)
+      end
+
       def infra_setup
         raise
       end
@@ -97,6 +106,10 @@ module Dapp
 
       def app_install?
         raise
+      end
+
+      def app_install!
+        build_stage!(from: infra_setup_key, stage: :app_install)
       end
 
       def app_install
@@ -112,6 +125,10 @@ module Dapp
         raise
       end
 
+      def app_setup!
+        build_stage!(from: app_install_key, stage: :app_setup)
+      end
+
       def app_setup
         raise
       end
@@ -125,28 +142,47 @@ module Dapp
         raise
       end
 
+      def sources_1!
+        build_stage!(from: infra_install_key, stage: :sources_1)
+      end
+
       def sources_1_key
         raise
       end
 
+
       def sources_2
         raise
+      end
+
+      def sources_2!
+        build_stage!(from: app_install_key, stage: :sources_2)
       end
 
       def sources_2_key
         raise
       end
 
+
       def sources_3
         raise
+      end
+
+      def sources_3!
+        build_stage!(from: app_setup_key, stage: :sources_3)
       end
 
       def sources_3_key
         raise
       end
 
+
       def sources_4
         raise
+      end
+
+      def sources_4!
+        build_stage!(from: sources_3_key, stage: :sources_4)
       end
 
       def sources_4_key
