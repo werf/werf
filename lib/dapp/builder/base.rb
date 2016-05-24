@@ -7,12 +7,55 @@ module Dapp
         @conf = conf
       end
 
+      def run
+=begin
+Варианты запуска стадий
+
+  prepare
+  infra_install
+  sources_1
+  infra_setup
+  app_install
+  app_setup
+
+  infra_install
+  sources_1
+  infra_setup
+  app_install
+  app_setup
+
+  infra_setup
+  app_install
+  sources_2
+  app_setup
+
+  infra_setup
+  app_install
+  sources_2
+  app_setup
+
+  app_install
+  sources_2
+  app_setup
+
+  app_setup
+  sources_3
+  sources_4
+=end
+      end
+
+      def build_docker_image(from:, cmd: [], tag:)
+        # запустить команды в новом контейнере через docker run
+        # сделать docker commit
+        # удалить контейнер
+      end
+
       def prepare
-        raise
+        # запуск shell-команд из conf
       end
 
       def prepare_key
-        raise
+        # hash от shell-команд
       end
 
       def infra_install
