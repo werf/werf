@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'mixlib-shellout', '>= 1.0', '< 3.0'
   s.add_dependency 'mixlib-cli', '>= 1.0', '< 3.0'
+  s.add_dependency 'excon', '>= 0.45.4', '< 1.0'
 
   s.add_development_dependency 'bundler', '~> 1.7'
   s.add_development_dependency 'rake', '~> 10.0'
