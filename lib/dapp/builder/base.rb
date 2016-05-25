@@ -1,6 +1,7 @@
 module Dapp
   module Builder
     class Base
+      attr_reader :docker
       attr_reader :conf
 
       # TODO Describe stages sequence with
@@ -8,7 +9,8 @@ module Dapp
       # TODO Generate stages related methods
       # TODO   from that data
 
-      def initialize(conf)
+      def initialize(docker, conf)
+        @docker = docker
         @conf = conf
       end
 
@@ -44,12 +46,6 @@ module Dapp
 
       def build_stage!(from:, stage:)
         raise
-      end
-
-      def build_docker_image!(from:, cmd: [], tag:)
-        # запустить команды в новом контейнере через docker run
-        # сделать docker commit
-        # удалить контейнер
       end
 
 
