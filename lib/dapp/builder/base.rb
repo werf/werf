@@ -1,7 +1,33 @@
 module Dapp
   module Builder
     class Base
+      include CommonHelper
+
       attr_reader :conf
+
+      STAGES_DEPENDENCIES = {
+          prepare: nil,
+          infra_install: :prepare,
+          sources_1: :infra_install,
+          infra_setup: :sources_1,
+          app_install: :infra_setup,
+          sources_2: :app_install,
+          app_setup: :sources_2,
+          sources_3: :app_setup,
+          sources_4: :sources_3
+      }.freeze
+
+      STAGES_DEPENDENCIES.each do |stage, dependence|
+        define_method :"#{stage}_from" do
+          send("#{dependence}_key") unless dependence.nil?
+        end
+      end
+
+      [:infra_install, :infra_setup].each do |stage|
+        define_method :"#{stage}_key" do
+          send("#{stage}_from")
+        end
+      end
 
       # TODO Describe stages sequence with
       # TODO   ordering data
@@ -82,10 +108,6 @@ module Dapp
         raise
       end
 
-      def infra_install_key
-        raise
-      end
-
 
       def infra_setup?
         raise
@@ -96,10 +118,6 @@ module Dapp
       end
 
       def infra_setup
-        raise
-      end
-
-      def infra_setup_key
         raise
       end
 
