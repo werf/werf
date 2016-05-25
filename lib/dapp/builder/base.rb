@@ -20,7 +20,15 @@ module Dapp
 
       STAGES_DEPENDENCIES.each do |stage, dependence|
         define_method :"#{stage}_from" do
-          send("#{dependence}_key") unless dependence.nil?
+          send(:"#{dependence}_key") unless dependence.nil?
+        end
+
+        define_method :"#{stage}_image" do
+          "dapp:#{send(:"#{stage}_key")}"
+        end
+
+        define_method :"#{stage}!" do
+          build_stage!(from: send(:"#{stage}_from"), stage: stage)
         end
       end
 
@@ -79,12 +87,12 @@ module Dapp
         raise
       end
 
-      def prepare!
-        build_stage!(from: conf.from, stage: :prepare)
-      end
-
       def prepare
         # запуск shell-команд из conf
+      end
+
+      def prepare_from
+        conf[:from]
       end
 
       def prepare_key
@@ -96,10 +104,6 @@ module Dapp
         raise
       end
 
-      def infra_install!
-        build_stage!(from: prepare_key, stage: :infra_install)
-      end
-
       def infra_install
         raise
       end
@@ -109,10 +113,6 @@ module Dapp
         raise
       end
 
-      def infra_setup!
-        build_stage!(from: sources_1_key, stage: :infra_setup)
-      end
-
       def infra_setup
         raise
       end
@@ -120,10 +120,6 @@ module Dapp
 
       def app_install?
         raise
-      end
-
-      def app_install!
-        build_stage!(from: infra_setup_key, stage: :app_install)
       end
 
       def app_install
@@ -139,10 +135,6 @@ module Dapp
         raise
       end
 
-      def app_setup!
-        build_stage!(from: app_install_key, stage: :app_setup)
-      end
-
       def app_setup
         raise
       end
@@ -156,10 +148,6 @@ module Dapp
         raise
       end
 
-      def sources_1!
-        build_stage!(from: infra_install_key, stage: :sources_1)
-      end
-
       def sources_1_key
         raise
       end
@@ -167,10 +155,6 @@ module Dapp
 
       def sources_2
         raise
-      end
-
-      def sources_2!
-        build_stage!(from: app_install_key, stage: :sources_2)
       end
 
       def sources_2_key
@@ -182,10 +166,6 @@ module Dapp
         raise
       end
 
-      def sources_3!
-        build_stage!(from: app_setup_key, stage: :sources_3)
-      end
-
       def sources_3_key
         raise
       end
@@ -193,10 +173,6 @@ module Dapp
 
       def sources_4
         raise
-      end
-
-      def sources_4!
-        build_stage!(from: sources_3_key, stage: :sources_4)
       end
 
       def sources_4_key
