@@ -2,6 +2,9 @@ module Dapp
   module Builder
     class Base
       include CommonHelper
+      include Centos7
+      include Ubuntu1404
+      include Ubuntu1604
 
       attr_reader :docker
       attr_reader :conf
