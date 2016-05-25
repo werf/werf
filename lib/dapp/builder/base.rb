@@ -30,11 +30,13 @@ module Dapp
         define_method :"#{stage}!" do
           build_stage!(from: send(:"#{stage}_from"), stage: stage)
         end
-      end
 
-      [:infra_install, :infra_setup].each do |stage|
-        define_method :"#{stage}_key" do
-          send("#{stage}_from")
+        define_method :"#{stage}?" do
+          @docker.image_exist?(send("#{stage}_image"))
+        end
+
+        define_method stage do
+          raise
         end
       end
 
@@ -83,10 +85,6 @@ module Dapp
       end
 
 
-      def prepare?
-        raise
-      end
-
       def prepare
         # запуск shell-команд из conf
       end
@@ -95,85 +93,70 @@ module Dapp
         conf[:from]
       end
 
-      def prepare_key
-        # hash от shell-команд
+
+      def infra_install_key
+        infra_install_from
       end
 
 
-      def infra_install?
-        raise
+      def infra_setup_key
+        infra_setup_from
       end
 
-      def infra_install
-        raise
-      end
-
-
-      def infra_setup?
-        raise
-      end
-
-      def infra_setup
-        raise
-      end
-
-
-      def app_install?
-        raise
-      end
-
-      def app_install
-        raise
-      end
 
       def app_install_key
-        raise
+        if dependence_file?
+          app_install_from
+        else
+          sha256([app_install_key, dependence_file, dependency_file_regex])
+        end
       end
 
-
-      def app_setup?
-        raise
+      def dependence_file
+        file_path = Dir[File.join(config[:home_dir], '*')].detect {|x| x =~ dependency_file_regex }
+        File.read(file_path) unless file_path.nil?
       end
 
-      def app_setup
-        raise
+      def dependence_file?
+        !dependence_file.nil?
       end
+
+      def dependency_file_regex
+        /.*\/(Gemfile|composer.json|requirement_file.txt)$/
+      end
+
 
       def app_setup_key
-        raise
+        if app_setup_file?
+          app_setup_from
+        else
+          sha256([app_setup_from, app_setup_file])
+        end
       end
 
-
-      def sources_1
-        raise
+      def app_setup_file
+        File.read(File.join(config[:home_dir], '.app_setup')) if app_setup_file?
       end
+
+      def app_setup_file?
+        File.exist?(File.join(config[:home_dir], '.app_setup'))
+      end
+
 
       def sources_1_key
         raise
       end
 
 
-      def sources_2
-        raise
-      end
-
       def sources_2_key
         raise
       end
 
 
-      def sources_3
-        raise
-      end
-
       def sources_3_key
         raise
       end
 
-
-      def sources_4
-        raise
-      end
 
       def sources_4_key
         raise
