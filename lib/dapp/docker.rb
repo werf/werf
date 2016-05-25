@@ -12,9 +12,8 @@ module Dapp
       JSON.load(resp.body) if resp.status == 200
     end
 
-    def build_image!(from:, cmd: [], tag:, docker_opts: {})
-      container_name = tag
-      image_name = "dapp:#{tag}"
+    def build_image!(from:, cmd: [], name:, docker_opts: {})
+      container_name = SecureRandom.hex
 
       begin
         Mixlib::ShellOut.new(
@@ -23,12 +22,12 @@ module Dapp
           "--name=#{container_name} " +
           "#{from} bash -lec '#{cmd.join('; ')}'"
         ).run_command.tap(&:error!)
-        Mixlib::ShellOut.new("docker commit #{container_name} #{image_name}").run_command.tap(&:error!)
+        Mixlib::ShellOut.new("docker commit #{container_name} #{name}").run_command.tap(&:error!)
       ensure
         Mixlib::ShellOut.new("docker rm #{container_name}").run_command
       end
 
-      image_name
+      name
     end
 
     def image_exist?(name)
