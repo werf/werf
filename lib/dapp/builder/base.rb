@@ -89,7 +89,8 @@ module Dapp
 
 
       def prepare
-        # запуск shell-команд из conf
+        method = :"from_#{conf[:from].split(/[:.]/).join}"
+        send(method) if respond_to?(method)
       end
 
       def prepare_from
