@@ -89,12 +89,26 @@ module Dapp
 
 
       def prepare
-        method = :"from_#{conf[:from].split(/[:.]/).join}"
-        send(method) if respond_to?(method)
+        prepare_options
+      end
+
+      def prepare_key
+        sha256([prepare_from, prepare_options])
       end
 
       def prepare_from
         conf[:from]
+      end
+
+      def prepare_options
+        @prepare_options ||= begin
+          method = :"from_#{conf[:from].split(/[:.]/).join}"
+          raise "unsupported docker image '#{conf[:from]}'" unless respond_to?(method)
+          resp = send(method)
+          docker_opts = resp.last.is_a? Hash ? resp.pop : {}
+          docker_opts[:expose] = conf[:exposes]
+          resp.push(docker_opts)
+        end
       end
 
 
