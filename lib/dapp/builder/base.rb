@@ -31,11 +31,13 @@ module Dapp
         end
 
         define_method :"#{stage}!" do
-          build_stage!(from: send(:"#{stage}_from"), stage: stage)
+          cmds = send(stage)
+          docker_opts = kwargs(cmds)
+          docker.build_image!(from: send(:"#{stage}_from"), cmd: cmds, name: send(:"#{stage}_image"), docker_opts: docker_opts)
         end
 
         define_method :"#{stage}?" do
-          @docker.image_exist?(send("#{stage}_image"))
+          docker.image_exist?(send("#{stage}_image"))
         end
 
         define_method stage do
@@ -83,10 +85,6 @@ module Dapp
         end
       end
 
-      def build_stage!(from:, stage:)
-        raise
-      end
-
 
       def prepare
         prepare_options
@@ -105,7 +103,7 @@ module Dapp
           method = :"from_#{conf[:from].split(/[:.]/).join}"
           raise "unsupported docker image '#{conf[:from]}'" unless respond_to?(method)
           resp = send(method)
-          docker_opts = resp.last.is_a? Hash ? resp.pop : {}
+          docker_opts = kwargs(resp)
           docker_opts[:expose] = conf[:exposes]
           resp.push(docker_opts)
         end
@@ -131,8 +129,10 @@ module Dapp
       end
 
       def dependence_file
-        file_path = Dir[File.join(config[:home_dir], '*')].detect {|x| x =~ dependency_file_regex }
-        File.read(file_path) unless file_path.nil?
+        @dependence_file ||= begin
+          file_path = Dir[File.join(conf[:home_dir], '*')].detect {|x| x =~ dependency_file_regex }
+          File.read(file_path) unless file_path.nil?
+        end
       end
 
       def dependence_file?
@@ -153,11 +153,17 @@ module Dapp
       end
 
       def app_setup_file
-        File.read(File.join(config[:home_dir], '.app_setup')) if app_setup_file?
+        @app_setuo_file ||= begin
+          File.read(app_setup_file_path) if app_setup_file?
+        end
       end
 
       def app_setup_file?
-        File.exist?(File.join(config[:home_dir], '.app_setup'))
+        File.exist?(app_setup_file_path)
+      end
+
+      def app_setup_file_path
+        File.join(conf[:home_dir], '.app_setup')
       end
 
 
