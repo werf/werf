@@ -2,9 +2,9 @@ module Dapp
   module Builder
     class Base
       include CommonHelper
-      include Centos7
-      include Ubuntu1404
-      include Ubuntu1604
+      include Dapp::Builder::Centos7
+      include Dapp::Builder::Ubuntu1404
+      include Dapp::Builder::Ubuntu1604
 
       attr_reader :docker
       attr_reader :conf
@@ -105,7 +105,7 @@ module Dapp
           method = :"from_#{conf[:from].split(/[:.]/).join}"
           raise "unsupported docker image '#{conf[:from]}'" unless respond_to?(method)
           resp = send(method)
-          docker_opts = resp.last.is_a? Hash ? resp.pop : {}
+          docker_opts = resp.last.is_a?(Hash) ? resp.pop : {}
           docker_opts[:expose] = conf[:exposes]
           resp.push(docker_opts)
         end
@@ -161,8 +161,52 @@ module Dapp
       end
 
 
+      def make_local_git_artifact(cfg)
+        repo = GitRepo::Own.new(self)
+        GitArtifact.new(self, repo, cfg[:where_to_add],
+                        flush_cache: opts[:flush_cache],
+                        branch: home_branch)
+        repo.fetch!(branch)
+
+        # add artifact
+        artifact = GitArtifact.new(self, repo, cfg[:where_to_add], flush_cache: opts[:flush_cache], branch: branch)
+        artifact.add_multilayer!
+      end
+
+      def make_remote_git_artifact(cfg)
+        repo_name = cfg[:url].gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
+        repo = GitRepo::Remote.new(self, repo_name,
+                                   url: cfg[:url],
+                                   ssh_key_path: ssh_key_path)
+        repo.fetch!(cfg[:branch])
+        GitArtifact.new(self, repo, cfg[:where_to_add],
+                        flush_cache: opts[:flush_cache],
+                        branch: cfg[:branch])
+      end
+
+      def local_git_artifact
+        @local_git_artifact ||= begin
+          cfg = (conf[:git_artifact] || {})[:local]
+          make_local_git_artifact(cfg) if cfg
+        end
+      end
+
+      def remote_git_artifact_list
+        @remote_git_artifact_list ||= Array((conf[:git_artifact] || {})[:remote])
+                                      .map(&method(:make_local_git_artifact))
+      end
+
+      def git_artifact_list
+        [local_git_artifact, *remote_git_artifact_list].compact
+      end
+
+
+      def sources_1
+        ;
+      end
+
       def sources_1_key
-        raise
+        hashsum [sources_1_from, *git_artifact_list.map(&:signature)]
       end
 
 

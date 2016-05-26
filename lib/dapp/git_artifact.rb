@@ -1,6 +1,8 @@
 module Dapp
   # Artifact from Git repo
   class GitArtifact
+    include Dapp::CommonHelper
+
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
     def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil,
                    interlayer_period: 7 * 24 * 3600, build_path: nil, flush_cache: false)
@@ -28,6 +30,10 @@ module Dapp
       end
     end
     # rubocop:enable Metrics/ParameterLists, Metrics/MethodLength
+
+    def signature
+      hashsum [archive_commit, repo_latest_commit]
+    end
 
     def build_path(*paths)
       builder.build_path(*@build_path, *paths)

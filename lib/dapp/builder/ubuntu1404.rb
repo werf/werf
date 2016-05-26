@@ -1,5 +1,5 @@
 module Dapp
-  class Builder
+  module Builder
     # Ubuntu 16.04 support
     module Ubuntu1404
       def from_ubuntu1404
