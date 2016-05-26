@@ -5,4 +5,7 @@
 require 'rubygems'
 require 'dapp'
 
-Dapp::CLI.new.run
+builder = Dapp::Builder::Base.new(Dapp::Docker.new, { from: :'ubuntu:16.04' })
+builder.prepare!
+# builder.prepare?
+# Dapp::CLI.new.run

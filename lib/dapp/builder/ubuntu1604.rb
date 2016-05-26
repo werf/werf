@@ -9,7 +9,7 @@ module Dapp
             'apt-get -y dist-upgrade',
             'apt-get -y install apt-utils git curl apt-transport-https',
             {
-                env: ["TERM='xterm'", "LANG='C.UTF-8'"]
+                env: %w(TERM='xterm' LANG='C.UTF-8')
             }
         ]
       end

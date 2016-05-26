@@ -7,6 +7,7 @@ require 'base64'
 require 'mixlib/shellout'
 require 'securerandom'
 require 'excon'
+require 'json'
 
 require 'dapp/version'
 require 'dapp/cli'
