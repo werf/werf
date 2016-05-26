@@ -1,5 +1,5 @@
 module Dapp
-  class Builder
+  module Builder
     # Ubuntu 16.04 support
     module Ubuntu1604
       def from_ubuntu1604
@@ -9,7 +9,7 @@ module Dapp
             'apt-get -y dist-upgrade',
             'apt-get -y install apt-utils git curl apt-transport-https',
             {
-                env: ["TERM='xterm'", "LANG='C.UTF-8'"]
+                env: %w(TERM='xterm' LANG='C.UTF-8')
             }
         ]
       end

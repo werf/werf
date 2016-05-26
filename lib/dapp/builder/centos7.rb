@@ -1,5 +1,5 @@
 module Dapp
-  class Builder
+  module Builder
     # Centos7 support
     module Centos7
       # rubocop:disable Metrics/MethodLength
