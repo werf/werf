@@ -1,2 +1,5 @@
 *.swp
 *.gem
+.tags
+/.bundle
+/.vendor
