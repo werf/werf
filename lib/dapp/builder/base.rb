@@ -31,7 +31,7 @@ module Dapp
         end
 
         define_method :"#{stage}!" do
-          cmds = send(stage)
+          cmds = send(stage).dup
           docker_opts = kwargs(cmds)
           docker.build_image!(from: send(:"#{stage}_from"), cmd: cmds, name: send(:"#{stage}_image"), docker_opts: docker_opts)
         end
@@ -100,11 +100,11 @@ module Dapp
 
       def prepare_options
         @prepare_options ||= begin
-          method = :"from_#{conf[:from].split(/[:.]/).join}"
+          method = :"from_#{conf[:from].to_s.split(/[:.]/).join}"
           raise "unsupported docker image '#{conf[:from]}'" unless respond_to?(method)
           resp = send(method)
           docker_opts = kwargs(resp)
-          docker_opts[:expose] = conf[:exposes]
+          docker_opts[:expose] = conf[:exposes] unless conf[:exposes].nil?
           resp.push(docker_opts)
         end
       end

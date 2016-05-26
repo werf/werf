@@ -14,13 +14,14 @@ module Dapp
 
     def build_image!(from:, cmd: [], name:, docker_opts: {})
       container_name = SecureRandom.hex
+      cmd.map! { |elm| elm.gsub('$', '\$') }
 
       begin
         Mixlib::ShellOut.new(
           "docker run " +
           "#{docker_opts.map{|k, vals| Array(vals).map{|v| "--#{k}=#{v}"}}.join(' ')} " +
           "--name=#{container_name} " +
-          "#{from} bash -lec '#{cmd.join('; ')}'"
+          "#{from} bash -lec \"#{cmd.join('; ')}\""
         ).run_command.tap(&:error!)
         Mixlib::ShellOut.new("docker commit #{container_name} #{name}").run_command.tap(&:error!)
       ensure
