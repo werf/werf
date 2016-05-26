@@ -2,7 +2,7 @@ module Dapp
   class Builder
     # Build using chef "dapp" cookbooks
     module Chefify
-      def dappit(*extra_dapps, chef_version: '12.4.3', **_kwargs)
+      def dappit(*extra_dapps, chef_version: '12.5.1', **_kwargs)
         log 'Adding dapp chef cookbook artifact and chef solo run'
 
         setup_dapp_chef chef_version
