@@ -12,9 +12,12 @@ module Dapp
       JSON.load(resp.body) if resp.status == 200
     end
 
-    def build_image!(from:, cmd: [], name:, docker_opts: {})
-      container_name = SecureRandom.hex
+    def build_image!(image:, name:)
+      from = image.from
+      cmd = image.build_cmd
       cmd.map! { |elm| elm.gsub('$', '\$') }
+      docker_opts = image.build_opts
+      container_name = SecureRandom.hex
 
       begin
         Mixlib::ShellOut.new(
