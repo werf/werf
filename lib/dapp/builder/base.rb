@@ -231,30 +231,43 @@ module Dapp
         path.compact.inject(Pathname.new('/.build'), &:+).expand_path
       end
 
+      def sources_1_image
+        @sources_1_image ||= Image.new(from: sources_1_from)
+      end
+
       def sources_1
-        git_artifact_list.each do |ga|
-          ag.add_multilayer!
-        end
+        git_artifact_list.each {|ga| ga.add_multilayer! sources_1_image}
+
+        sources_1_image
       end
 
       def sources_1_key
         hashsum [sources_1_from, *git_artifact_list.map(&:signature)]
       end
 
+      def sources_2
+        sources_1
+      end
 
       def sources_2_key
-        raise
+        sources_1_key
       end
 
+      def sources_3
+        sources_1
+      end
 
       def sources_3_key
-        raise
+        sources_1_key
       end
 
+      def sources_4
+        sources_1
+      end
 
       def sources_4_key
-        raise
+        sources_1_key
       end
-    end
-  end
-end
+    end # Base
+  end # Builder
+end # Dapp
