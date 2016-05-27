@@ -226,6 +226,8 @@ module Dapp
       def sources_1
         git_artifact_list.each {|ga| ga.add_multilayer! sources_1_image}
 
+        sources_1_image.build_opts!(volume: "#{build_path}:#{container_build_path}:ro")
+
         sources_1_image
       end
 

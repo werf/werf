@@ -268,7 +268,7 @@ module Dapp
 
     def add_patch(image, filename)
       image.build_cmd! ["zcat #{container_build_path(filename)} | ",
-                        "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add}"].join,
+                        "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add}"].join
     end
 
     def create_patch!(from, filename, commitfile_path)
