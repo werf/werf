@@ -8,6 +8,7 @@ module Dapp
 
       attr_reader :docker
       attr_reader :conf
+      attr_reader :opts
 
       STAGES_DEPENDENCIES = {
           prepare: nil,
@@ -26,33 +27,21 @@ module Dapp
           send(:"#{dependence}_key") unless dependence.nil?
         end
 
-        define_method :"#{stage}_image" do
+        define_method :"#{stage}_image_name" do
           "dapp:#{send(:"#{stage}_key")}"
         end
 
         define_method :"#{stage}!" do
-          cmds = send(stage).dup
-          docker_opts = kwargs(cmds)
-          docker.build_image!(from: send(:"#{stage}_from"), cmd: cmds, name: send(:"#{stage}_image"), docker_opts: docker_opts)
+          docker.build_image!(image: send(stage), name: send(:"#{stage}_image_name"))
         end
 
         define_method :"#{stage}?" do
-          docker.image_exist?(send("#{stage}_image"))
+          docker.image_exist?(send("#{stage}_image_name"))
         end
 
         define_method stage do
           raise
         end
-      end
-
-      def home_path(*path)
-        path.compact.inject(Pathname.new(opts[:home_path]), &:+).expand_path.to_s
-      end
-
-      def build_path(*path)
-        path.compact.inject(Pathname.new(opts[:build_path]), &:+).expand_path.tap do |p|
-          FileUtils.mkdir_p p.parent
-        end.to_s
       end
 
       def initialize(docker:, conf:, opts:)
@@ -93,25 +82,24 @@ module Dapp
 
 
       def prepare
-        prepare_options
+        prepare_image
       end
 
       def prepare_key
-        sha256([prepare_from, prepare_options])
+        prepare_image.signature
       end
 
       def prepare_from
         conf[:from]
       end
 
-      def prepare_options
-        @prepare_options ||= begin
-          method = :"from_#{conf[:from].to_s.split(/[:.]/).join}"
-          raise "unsupported docker image '#{conf[:from]}'" unless respond_to?(method)
-          resp = send(method)
-          docker_opts = kwargs(resp)
-          docker_opts[:expose] = conf[:exposes] unless conf[:exposes].nil?
-          resp.push(docker_opts)
+      def prepare_image
+        @prepare_image ||= begin
+          image_method = :"from_#{conf[:from].to_s.split(/[:.]/).join}"
+          raise "unsupported docker image '#{conf[:from]}'" unless respond_to?(image_method)
+          send(image_method).tap do |image|
+            image.build_options[:expose] = conf[:exposes] unless conf[:exposes].nil?
+          end
         end
       end
 
