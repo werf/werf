@@ -167,16 +167,20 @@ module Dapp
       end
 
 
+      def home_branch #FIXME
+        'master'
+      end
+
       def make_local_git_artifact(cfg)
         repo = GitRepo::Own.new(self)
         GitArtifact.new(self, repo, cfg[:where_to_add],
                         flush_cache: opts[:flush_cache],
                         branch: home_branch)
-        repo.fetch!(branch)
+        repo.fetch!(cfg[:branch])
 
-        # add artifact
-        artifact = GitArtifact.new(self, repo, cfg[:where_to_add], flush_cache: opts[:flush_cache], branch: branch)
-        artifact.add_multilayer!
+        GitArtifact.new(self, repo, cfg[:where_to_add],
+                        flush_cache: opts[:flush_cache],
+                        branch: cfg[:branch])
       end
 
       def make_remote_git_artifact(cfg)
@@ -207,8 +211,24 @@ module Dapp
       end
 
 
+      def home_path(*path)
+        path.compact.inject(Pathname.new(opts[:home_path]), &:+).expand_path
+      end
+
+      def build_path(*path)
+        path.compact.inject(Pathname.new(opts[:build_path]), &:+).expand_path.tap do |p|
+          FileUtils.mkdir_p p.parent
+        end
+      end
+
+      def container_build_path(*path)
+        path.compact.inject(Pathname.new('/.build'), &:+).expand_path
+      end
+
       def sources_1
-        ;
+        git_artifact_list.each do |ga|
+          ag.add_multilayer!
+        end
       end
 
       def sources_1_key

@@ -35,8 +35,12 @@ module Dapp
       hashsum [archive_commit, repo_latest_commit]
     end
 
-    def build_path(*paths)
-      builder.build_path(*@build_path, *paths)
+    def build_path(*path)
+      builder.build_path(*@build_path, *path)
+    end
+
+    def container_build_path(*path)
+      builder.container_build_path(*@build_path, *path)
     end
 
     def add_multilayer!
@@ -190,8 +194,20 @@ module Dapp
       build_path archive_filename
     end
 
+    def container_archive_path
+      container_build_path archive_filename
+    end
+
+    def archive_commitfile_filename
+      filename '.commit'
+    end
+
     def archive_commitfile_path
-      build_path filename '.commit'
+      build_path archive_commitfile_filename
+    end
+
+    def container_archive_commitfile_path
+      container_build_path archive_commitfile_filename
     end
 
     def archive_commit
@@ -228,7 +244,10 @@ module Dapp
       File.exist? archive_commitfile_path
     end
 
-    def add_archive
+    def container_add_archive_instructions
+      ["tar xf #{container_archive_commitfile_path} " +
+       "-C #{Pathname.new(where_to_add).parent}"]
+
       builder.docker.add_artifact archive_path, archive_filename, where_to_add, step: :prepare
     end
 
