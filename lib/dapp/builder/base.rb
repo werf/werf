@@ -45,14 +45,20 @@ module Dapp
         end
       end
 
-      # TODO Describe stages sequence with
-      # TODO   ordering data
-      # TODO Generate stages related methods
-      # TODO   from that data
+      def home_path(*path)
+        path.compact.inject(Pathname.new(opts[:home_path]), &:+).expand_path.to_s
+      end
 
-      def initialize(docker, conf)
+      def build_path(*path)
+        path.compact.inject(Pathname.new(opts[:build_path]), &:+).expand_path.tap do |p|
+          FileUtils.mkdir_p p.parent
+        end.to_s
+      end
+
+      def initialize(docker:, conf:, opts:)
         @docker = docker
         @conf = conf
+        @opts = opts
       end
 
       def run
@@ -124,13 +130,13 @@ module Dapp
         if dependence_file?
           app_install_from
         else
-          sha256([app_install_key, dependence_file, dependency_file_regex])
+          sha256([app_install_from, dependence_file, dependency_file_regex])
         end
       end
 
       def dependence_file
         @dependence_file ||= begin
-          file_path = Dir[File.join(conf[:home_dir], '*')].detect {|x| x =~ dependency_file_regex }
+          file_path = Dir[build_path('*')].detect {|x| x =~ dependency_file_regex }
           File.read(file_path) unless file_path.nil?
         end
       end
@@ -163,7 +169,7 @@ module Dapp
       end
 
       def app_setup_file_path
-        File.join(conf[:home_dir], '.app_setup')
+        build_path('.app_setup')
       end
 
 

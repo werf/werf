@@ -17,6 +17,20 @@ Usage:
 Options:
 BANNER
 
+      class << self
+        def option(name, args)
+          if args.delete :builder_opt
+            args[:proc] = if args[:boolean]
+              proc { Dapp::Builder.default_opts[name] = true }
+            else
+              proc { |v| Dapp::Builder.default_opts[name] = v }
+            end
+          end
+
+          super(name, args)
+        end
+      end
+
       option :log_quiet,
              short: '-q',
              long: '--quiet',
@@ -62,10 +76,6 @@ BANNER
              description: 'Docker repo',
              builder_opt: true
 
-      option :docker_socket,
-             long: '--docker-socket SOCKET',
-             description: 'Docker socket'
-
       option :flush_cache,
              long: '--flush-cache',
              description: 'Flush cache',
@@ -93,7 +103,7 @@ BANNER
       option :tag,
              long: '--tag TAG',
              description: 'Add tag (can be used one or more times)',
-             proc: proc { |v| composite_options(:tags) << v }
+             proc: proc { |v| (Dapp::Builder.default_opts[:tags] ||= []) << v }
 
       option :tag_commit,
              long: '--tag-commit',
@@ -112,11 +122,6 @@ BANNER
              description: 'Default branch to archive artifacts from',
              builder_opt: true
 
-      def self.composite_options(opt)
-        @composite_options ||= {}
-        @composite_options[opt] ||= []
-      end
-
       def dappfile_path
         @dappfile_path ||= File.join [config[:dir], config[:dappfile_name] || 'Dappfile'].compact
       end
@@ -130,23 +135,30 @@ BANNER
 
         patterns << '*' unless patterns.any?
 
-        # TODO: creating build_conf
-        build_conf = {}
+        if File.exist? dappfile_path
+          process_file
+        else
+          process_directory
+        end
+      end
 
-        # builder options
-        options = {
-            docker: Dapp::Docker.new(socket: config[:docker_socket]),
-            conf: build_conf,
-            opts: config
-        }
+      def process_file
+        patterns.each do |pattern|
+          unless Dapp::Builder.process_file(dappfile_path, app_filter: pattern).builded_apps.any?
+            STDERR.puts "Error: No such app: '#{pattern}' in #{dappfile_path}"
+            exit 1
+          end
+        end
+      end
 
-        # TODO: choosing builder
-        builder = if 1 == 2
-                    Dapp::Builder::Chef
-                  else
-                    Dapp::Builder::Shell
-                  end
-        builder.new(**options).run
+      def process_directory
+        Dapp::Builder.default_opts[:shared_build_dir] = true
+        patterns.each do |pattern|
+          unless Dapp::Builder.process_directory(config[:dir], pattern).any?
+            STDERR.puts "Error: No such app '#{pattern}'"
+            exit 1
+          end
+        end
       end
     end
   end
