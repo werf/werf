@@ -101,6 +101,8 @@ module Dapp
           sources_3!
           sources_4!
         end
+
+        commit_atomizers!
       end
 
 
