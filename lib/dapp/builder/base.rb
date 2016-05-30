@@ -14,10 +14,10 @@ module Dapp
           prepare: nil,
           infra_install: :prepare,
           sources_1: :infra_install,
-          infra_setup: :infra_install,
+          infra_setup: :sources_1,
           app_install: :infra_setup,
           sources_2: :app_install,
-          app_setup: :app_install,
+          app_setup: :sources_2,
           sources_3: :app_setup,
           sources_4: :sources_3
       }.freeze
@@ -50,10 +50,6 @@ module Dapp
         @docker = docker
         @conf = conf
         @opts = opts
-
-        # FIXME
-        @opts[:build_path] ||= 'default'
-        @opts[:home_path] ||= 'default'
       end
 
       def run
@@ -121,18 +117,19 @@ module Dapp
 
 
       def app_install_key
-        sha256([app_install_from, dependence_file, dependency_file_regex])
+        sha256([app_install_from, dependency_file, dependency_file_regex])
+        sha256([app_install_from, dependency_file, dependency_file_regex])
       end
 
-      def dependence_file
-        @dependence_file ||= begin
+      def dependency_file
+        @dependency_file ||= begin
           file_path = Dir[build_path('*')].detect {|x| x =~ dependency_file_regex }
           File.read(file_path) unless file_path.nil?
         end
       end
 
       def dependency_file?
-        !dependence_file.nil?
+        !dependency_file.nil?
       end
 
       def dependency_file_regex
@@ -217,42 +214,45 @@ module Dapp
         path.compact.inject(Pathname.new('/.build'), &:+).expand_path
       end
 
+
+      def sources_1_image
+        @sources_1_image ||= Image.new(from: sources_1_from)
+      end
+
       def sources_1
-        git_artifact_list.each do |ga|
-          ag.add_multilayer!
-        end
-        nil
+        git_artifact_list.each {|ga| ga.add_multilayer! sources_1_image}
+
+        sources_1_image.build_opts!(volume: "#{build_path}:#{container_build_path}:ro")
+
+        sources_1_image
       end
 
       def sources_1_key
         hashsum [sources_1_from, *git_artifact_list.map(&:signature)]
       end
 
-
       def sources_2
-        nil
+        sources_1
       end
 
       def sources_2_key
-        raise
+        sources_1_key
       end
 
-
       def sources_3
-        nil
+        sources_1
       end
 
       def sources_3_key
-        raise
+        sources_1_key
       end
 
-
       def sources_4
-        nil
+        sources_1
       end
 
       def sources_4_key
-        raise
+        sources_1_key
       end
     end # Base
   end # Builder

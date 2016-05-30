@@ -43,14 +43,14 @@ module Dapp
       builder.container_build_path(*@build_path, *path)
     end
 
-    def add_multilayer!
+    def add_multilayer!(image)
       lock_with_repo do
         # create and add archive
-        create_and_add_archive
+        create_and_add_archive(image)
         return if archive_commit == repo_latest_commit
 
         # add layer patches
-        latest_layer = add_layer_patches
+        latest_layer = add_layer_patches(image)
         if latest_layer
           latest_layer_commit = layer_commit(latest_layer)
           return if latest_layer_commit == repo_latest_commit
@@ -63,7 +63,7 @@ module Dapp
         end
 
         # create and add last patch
-        create_and_add_last_patch(latest_layer, latest_layer_commit)
+        create_and_add_last_patch(image, latest_layer, latest_layer_commit)
       end
     end
 
@@ -125,40 +125,40 @@ module Dapp
       end
     end
 
-    def create_and_add_archive
+    def create_and_add_archive(image)
       create_archive! unless archive_exist?
-      add_archive
+      add_archive(image)
     end
 
-    def add_layer_patches
+    def add_layer_patches(image)
       latest_layer = nil
       layers.each do |layer|
-        add_layer_patch layer
+        add_layer_patch image, layer
         latest_layer = layer
       end
 
       latest_layer
     end
 
-    def create_and_add_last_patch_as_layer_patch(latest_layer, latest_layer_commit)
+    def create_and_add_last_patch_as_layer_patch(image, latest_layer, latest_layer_commit)
       remove_latest!
       layer = latest_layer.to_i + 1
       create_layer_patch!(latest_layer_commit || archive_commit, layer)
-      add_layer_patch layer
+      add_layer_patch image, layer
     end
 
-    def create_and_add_last_patch_as_latest_patch(_latest_layer, latest_layer_commit)
+    def create_and_add_last_patch_as_latest_patch(image, _latest_layer, latest_layer_commit)
       if latest_commit != repo_latest_commit
         create_latest_patch!(latest_layer_commit || archive_commit)
       end
-      add_latest_patch
+      add_latest_patch(image)
     end
 
-    def create_and_add_last_patch(latest_layer, latest_layer_commit)
+    def create_and_add_last_patch(image, latest_layer, latest_layer_commit)
       if (Time.now - repo.commit_at(latest_layer_commit || archive_commit)) > interlayer_period
-        create_and_add_last_patch_as_layer_patch(latest_layer, latest_layer_commit)
+        create_and_add_last_patch_as_layer_patch(image, latest_layer, latest_layer_commit)
       else
-        create_and_add_last_patch_as_latest_patch(latest_layer, latest_layer_commit)
+        create_and_add_last_patch_as_latest_patch(image, latest_layer, latest_layer_commit)
       end
     end
 
@@ -244,11 +244,10 @@ module Dapp
       File.exist? archive_commitfile_path
     end
 
-    def container_add_archive_instructions
-      ["tar xf #{container_archive_commitfile_path} " +
-       "-C #{Pathname.new(where_to_add).parent}"]
-
-      builder.docker.add_artifact archive_path, archive_filename, where_to_add, step: :prepare
+    def add_archive(image)
+      image.build_cmd! ["tar xf #{container_archive_commitfile_path} ",
+                        "-C #{where_to_add} ",
+                        "--strip-components=1"].join
     end
 
     def sudo_format_user(user)
@@ -267,14 +266,9 @@ module Dapp
       sudo
     end
 
-    def add_patch(filename, step:)
-      builder.docker.add_artifact(build_path(filename), filename, '/tmp', step: step)
-
-      builder.docker.run(
-        "zcat /tmp/#{filename} | #{sudo}git apply --whitespace=nowarn --directory=#{where_to_add}",
-        "rm /tmp/#{filename}",
-        step: step
-      )
+    def add_patch(image, filename)
+      image.build_cmd! ["zcat #{container_build_path(filename)} | ",
+                        "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add}"].join
     end
 
     def create_patch!(from, filename, commitfile_path)
@@ -313,8 +307,8 @@ module Dapp
       create_patch! from, layer_patch_filename(layer), layer_commitfile_path(layer)
     end
 
-    def add_layer_patch(layer)
-      add_patch layer_patch_filename(layer), step: :build
+    def add_layer_patch(image, layer)
+      add_patch image, layer_patch_filename(layer)
     end
 
     def latest_patch_filename
@@ -337,8 +331,8 @@ module Dapp
       create_patch! from, latest_patch_filename, latest_commitfile_path
     end
 
-    def add_latest_patch
-      add_patch latest_patch_filename, step: :setup
+    def add_latest_patch(image)
+      add_patch image, latest_patch_filename
     end
 
     def remove_latest!
