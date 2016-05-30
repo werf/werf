@@ -182,7 +182,7 @@ module Dapp
     end
 
     def filename(ending)
-      "#{repo.name}#{name ? "_#{name}" : nil}.#{ending}"
+      "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
     end
 
     def paramshash_filename
