@@ -14,17 +14,17 @@ module Dapp
           prepare: nil,
           infra_install: :prepare,
           sources_1: :infra_install,
-          infra_setup: :sources_1,
+          infra_setup: :infra_install,
           app_install: :infra_setup,
           sources_2: :app_install,
-          app_setup: :sources_2,
+          app_setup: :app_install,
           sources_3: :app_setup,
           sources_4: :sources_3
       }.freeze
 
       STAGES_DEPENDENCIES.each do |stage, dependence|
         define_method :"#{stage}_from" do
-          send(:"#{dependence}_key") unless dependence.nil?
+          send(:"#{dependence}_image_name") unless dependence.nil?
         end
 
         define_method :"#{stage}_image_name" do
@@ -32,7 +32,9 @@ module Dapp
         end
 
         define_method :"#{stage}!" do
-          docker.build_image!(image: send(stage), name: send(:"#{stage}_image_name"))
+          unless (image = send(stage)).nil?
+            docker.build_image!(image: image, name: send(:"#{stage}_image_name"))
+          end
         end
 
         define_method :"#{stage}?" do
@@ -48,32 +50,36 @@ module Dapp
         @docker = docker
         @conf = conf
         @opts = opts
+
+        # FIXME
+        @opts[:build_path] ||= 'default'
+        @opts[:home_path] ||= 'default'
       end
 
       def run
-        if prepare?
+        if not prepare?
           prepare!
           infra_install!
           sources_1!
           infra_setup!
           app_install!
           app_setup!
-        elsif infra_install?
+        elsif not infra_install?
           infra_install!
           sources_1!
           infra_setup!
           app_install!
           app_setup!
-        elsif infra_setup?
+        elsif not infra_setup?
           infra_setup!
           app_install!
           sources_2!
           app_setup!
-        elsif app_install?
+        elsif not app_install?
           app_install!
           sources_2!
           app_setup!
-        elsif app_setup?
+        elsif not app_setup?
           app_setup!
           sources_3!
           sources_4!
@@ -115,11 +121,7 @@ module Dapp
 
 
       def app_install_key
-        if dependence_file?
-          app_install_from
-        else
-          sha256([app_install_from, dependence_file, dependency_file_regex])
-        end
+        sha256([app_install_from, dependence_file, dependency_file_regex])
       end
 
       def dependence_file
@@ -129,7 +131,7 @@ module Dapp
         end
       end
 
-      def dependence_file?
+      def dependency_file?
         !dependence_file.nil?
       end
 
@@ -139,11 +141,7 @@ module Dapp
 
 
       def app_setup_key
-        if app_setup_file?
-          app_setup_from
-        else
-          sha256([app_setup_from, app_setup_file])
-        end
+        sha256([app_setup_from, app_setup_file])
       end
 
       def app_setup_file
@@ -223,6 +221,7 @@ module Dapp
         git_artifact_list.each do |ga|
           ag.add_multilayer!
         end
+        nil
       end
 
       def sources_1_key
@@ -230,19 +229,31 @@ module Dapp
       end
 
 
+      def sources_2
+        nil
+      end
+
       def sources_2_key
         raise
       end
 
+
+      def sources_3
+        nil
+      end
 
       def sources_3_key
         raise
       end
 
 
+      def sources_4
+        nil
+      end
+
       def sources_4_key
         raise
       end
-    end
-  end
-end
+    end # Base
+  end # Builder
+end # Dapp
