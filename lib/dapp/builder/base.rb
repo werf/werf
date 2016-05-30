@@ -117,8 +117,8 @@ module Dapp
 
       def prepare_image
         @prepare_image ||= begin
-          image_method = :"from_#{conf[:from].to_s.split(/[:.]/).join}"
-          raise "unsupported docker image '#{conf[:from]}'" unless respond_to?(image_method)
+          image_method = :"from_#{prepare_from.to_s.split(/[:.]/).join}"
+          raise "unsupported docker image '#{prepare_from}'" unless respond_to?(image_method)
           send(image_method).tap do |image|
             image.build_options[:expose] = conf[:exposes] unless conf[:exposes].nil?
           end
@@ -137,8 +137,7 @@ module Dapp
 
 
       def app_install_key
-        sha256([app_install_from, dependency_file, dependency_file_regex])
-        sha256([app_install_from, dependency_file, dependency_file_regex])
+        hashsum [app_install_from, dependency_file, dependency_file_regex]
       end
 
       def dependency_file
@@ -158,7 +157,7 @@ module Dapp
 
 
       def app_setup_key
-        sha256([app_setup_from, app_setup_file])
+        hashsum [app_setup_from, app_setup_file]
       end
 
       def app_setup_file
