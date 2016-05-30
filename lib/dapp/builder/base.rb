@@ -10,6 +10,7 @@ module Dapp
       attr_reader :docker
       attr_reader :conf
       attr_reader :opts
+      attr_reader :home_branch
 
       STAGES_DEPENDENCIES = {
           prepare: nil,
@@ -174,10 +175,6 @@ module Dapp
         build_path('.app_setup')
       end
 
-
-      def home_branch #FIXME
-        'master'
-      end
 
       def make_local_git_artifact(cfg)
         repo = GitRepo::Own.new(self)

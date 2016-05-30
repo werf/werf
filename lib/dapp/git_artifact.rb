@@ -4,13 +4,16 @@ module Dapp
     include Dapp::CommonHelper
 
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
-    def initialize(builder, repo, where_to_add, name: nil, branch: 'master', cwd: nil, paths: nil, owner: nil, group: nil,
+    def initialize(builder, repo, where_to_add,
+                   name: nil, commit: nil, branch: nil,
+                   cwd: nil, paths: nil, owner: nil, group: nil,
                    interlayer_period: 7 * 24 * 3600, build_path: nil, flush_cache: false)
       @builder = builder
       @repo = repo
       @name = name
 
       @where_to_add = where_to_add
+      @commit = commit
       @branch = branch
       @cwd = cwd
       @paths = paths
@@ -108,11 +111,15 @@ module Dapp
     attr_reader :repo
     attr_reader :name
     attr_reader :where_to_add
-    attr_reader :branch
+    attr_reader :commit
     attr_reader :cwd
     attr_reader :owner
     attr_reader :group
     attr_reader :interlayer_period
+
+    def branch
+      @branch || 'master'
+    end
 
     protected
 
@@ -167,7 +174,7 @@ module Dapp
     end
 
     def repo_latest_commit
-      repo.latest_commit(branch)
+      commit || repo.latest_commit(branch)
     end
 
     def filename(ending)
