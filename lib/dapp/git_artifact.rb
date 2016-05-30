@@ -5,7 +5,7 @@ module Dapp
 
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
     def initialize(builder, repo, where_to_add,
-                   name: nil, commit: nil, branch: nil,
+                   name: nil, branch: nil, commit: nil,
                    cwd: nil, paths: nil, owner: nil, group: nil,
                    interlayer_period: 7 * 24 * 3600, build_path: nil, flush_cache: false)
       @builder = builder
@@ -13,8 +13,12 @@ module Dapp
       @name = name
 
       @where_to_add = where_to_add
-      @commit = commit
+
       @branch = branch
+      @commit = commit || begin
+        @branch ? repo.latest_commit(branch) : repo.latest_commit('HEAD')
+      end
+
       @cwd = cwd
       @paths = paths
       @owner = owner
@@ -174,11 +178,11 @@ module Dapp
     end
 
     def repo_latest_commit
-      commit || repo.latest_commit(branch)
+      commit
     end
 
     def filename(ending)
-      "#{repo.name}#{name ? "_#{name}" : nil}.#{branch}#{ending}"
+      "#{repo.name}#{name ? "_#{name}" : nil}.#{ending}"
     end
 
     def paramshash_filename
@@ -354,9 +358,12 @@ module Dapp
       FileUtils.rm_f [latest_patch_path, latest_commitfile_path]
     end
 
-    def lock(**kwargs, &block)
-      builder.filelock(build_path(filename('.lock')), error_message: "Branch #{branch} of artifact #{name ? " #{name}" : nil} #{repo.name}" \
-                       " (#{repo.dir_path}) in use! Try again later.", **kwargs, &block)
+    def lock(**kwargs, &blk)
+      builder.filelock(build_path(filename('.lock')),
+                       error_message: "Git artifact commit:#{commit}" +
+                                      "#{name ? " #{name}" : nil} #{repo.name}" +
+                                      " (#{repo.dir_path}) in use! Try again later.",
+                       **kwargs, &blk)
     end
   end
 end

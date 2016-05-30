@@ -134,7 +134,7 @@ BANNER
         build_conf = {
           from: 'ubuntu:14.04',
           git_artifact: {
-            local: {where_to_add: '/myapp', branch: 'master'},
+            local: {where_to_add: '/myapp'},
           },
         }
 
