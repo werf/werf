@@ -131,7 +131,12 @@ BANNER
         patterns << '*' unless patterns.any?
 
         # TODO: creating build_conf
-        build_conf = {}
+        build_conf = {
+          from: 'ubuntu:14.04',
+          git_artifact: {
+            local: {where_to_add: '/myapp', branch: 'master'},
+          },
+        }
 
         # builder options
         options = {

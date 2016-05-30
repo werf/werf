@@ -211,7 +211,7 @@ module Dapp
     end
 
     def archive_commit
-      File.read archive_commitfile_path
+      archive_commitfile_path.read if archive_commitfile_path.exist?
     end
 
     def create_arhive_with_owner_substitution!

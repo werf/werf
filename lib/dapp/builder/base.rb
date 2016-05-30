@@ -5,6 +5,7 @@ module Dapp
       include Dapp::Builder::Centos7
       include Dapp::Builder::Ubuntu1404
       include Dapp::Builder::Ubuntu1604
+      include Dapp::Filelock
 
       attr_reader :docker
       attr_reader :conf
@@ -48,6 +49,25 @@ module Dapp
         @docker = docker
         @conf = conf
         @opts = opts
+
+        opts[:home_path] ||= Pathname.new(opts[:dappfile_path] || 'fakedir').parent.expand_path.to_s
+        opts[:build_path] = opts[:build_dir] ? opts[:build_dir] : home_path('build')
+        opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
+
+        @home_branch = shellout("git -C #{home_path} rev-parse --abbrev-ref HEAD").stdout.strip
+        @atomizers = []
+        @builded_apps = []
+
+        lock do
+          yield self
+        end if block_given?
+      end
+
+      def lock(**kwargs, &blk)
+        filelock(build_path("#{home_branch}.lock"),
+                 error_message: "Application #{opts[:basename]} " +
+                                "(#{home_branch}) in use! Try again later.",
+                 **kwargs, &blk)
       end
 
       def run
@@ -169,11 +189,6 @@ module Dapp
         repo = GitRepo::Own.new(self)
         GitArtifact.new(self, repo, cfg[:where_to_add],
                         flush_cache: opts[:flush_cache],
-                        branch: home_branch)
-        repo.fetch!(cfg[:branch])
-
-        GitArtifact.new(self, repo, cfg[:where_to_add],
-                        flush_cache: opts[:flush_cache],
                         branch: cfg[:branch])
       end
 
@@ -258,6 +273,18 @@ module Dapp
       def sources_4_key
         sources_1_key
       end
+
+      def register_atomizer(atomizer)
+        atomizers << atomizer
+      end
+
+      def commit_atomizers!
+        atomizers.each(&:commit!)
+      end
+
+      protected
+
+      attr_reader :atomizers
     end # Base
   end # Builder
 end # Dapp
