@@ -25,7 +25,7 @@ module Dapp
 
       STAGES_DEPENDENCIES.each do |stage, dependence|
         define_method :"#{stage}_from" do
-          send(:"#{dependence}_key") unless dependence.nil?
+          send(:"#{dependence}_image_name") unless dependence.nil?
         end
 
         define_method :"#{stage}_image_name" do
@@ -33,7 +33,9 @@ module Dapp
         end
 
         define_method :"#{stage}!" do
-          docker.build_image!(image: send(stage), name: send(:"#{stage}_image_name"))
+          unless (image = send(stage)).nil?
+            docker.build_image!(image: image, name: send(:"#{stage}_image_name"))
+          end
         end
 
         define_method :"#{stage}?" do
@@ -71,29 +73,29 @@ module Dapp
       end
 
       def run
-        if prepare?
+        if not prepare?
           prepare!
           infra_install!
           sources_1!
           infra_setup!
           app_install!
           app_setup!
-        elsif infra_install?
+        elsif not infra_install?
           infra_install!
           sources_1!
           infra_setup!
           app_install!
           app_setup!
-        elsif infra_setup?
+        elsif not infra_setup?
           infra_setup!
           app_install!
           sources_2!
           app_setup!
-        elsif app_install?
+        elsif not app_install?
           app_install!
           sources_2!
           app_setup!
-        elsif app_setup?
+        elsif not app_setup?
           app_setup!
           sources_3!
           sources_4!
@@ -135,22 +137,19 @@ module Dapp
 
 
       def app_install_key
-        if dependence_file?
-          app_install_from
-        else
-          sha256([app_install_from, dependence_file, dependency_file_regex])
-        end
+        sha256([app_install_from, dependency_file, dependency_file_regex])
+        sha256([app_install_from, dependency_file, dependency_file_regex])
       end
 
-      def dependence_file
-        @dependence_file ||= begin
+      def dependency_file
+        @dependency_file ||= begin
           file_path = Dir[build_path('*')].detect {|x| x =~ dependency_file_regex }
           File.read(file_path) unless file_path.nil?
         end
       end
 
-      def dependence_file?
-        !dependence_file.nil?
+      def dependency_file?
+        !dependency_file.nil?
       end
 
       def dependency_file_regex
@@ -159,11 +158,7 @@ module Dapp
 
 
       def app_setup_key
-        if app_setup_file?
-          app_setup_from
-        else
-          sha256([app_setup_from, app_setup_file])
-        end
+        sha256([app_setup_from, app_setup_file])
       end
 
       def app_setup_file
@@ -233,6 +228,7 @@ module Dapp
       def container_build_path(*path)
         path.compact.inject(Pathname.new('/.build'), &:+).expand_path
       end
+
 
       def sources_1_image
         @sources_1_image ||= Image.new(from: sources_1_from)
