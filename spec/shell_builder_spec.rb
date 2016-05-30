@@ -1,51 +1,58 @@
 require_relative 'spec_helper'
 
-describe Dapp::Builder::Base do
-  def shell_builder(**options)
-    opts = { docker: Dapp::Docker.new, conf: { from: 'ubuntu:16.04' }, opts: {} }.merge(options)
+describe Dapp::Builder::Shell do
+  def shell_builder(**conf)
+    conf = { from: 'ubuntu:16.04' }.merge!(conf)
+    opts = { docker: Dapp::Docker.new, conf: conf, opts: {} }
     Dapp::Builder::Shell.new(**opts)
   end
 
   def docker_exec(image, cmd)
-    shellout("docker run --rm #{image} bash -lec '#{cmd}'")
+    shellout("docker run --rm #{image} bash -lec '#{cmd}'").stdout
   end
 
-  it 'cash' do
+  it 'cash: base' do
     builder = shell_builder
     builder.run
 
-    cash = [:infra_install, :infra_setup, :app_install, :app_setup].map { |stage| puts builder.send("#{stage}_image_name") }
-  end
+    cash = [:infra_install, :infra_setup, :app_install, :app_setup].map { |stage| builder.send("#{stage}_image_name") }
 
-  it 'check stage' do
-    [:infra_install, :infra_setup, :app_install, :app_setup].each { |stage| options[:conf][stage] = "date +%s > /#{stage}" }
-    builder = shell_builder(options)
+    conf = {}
+    conf[:infra_install] = 'date +%s > /infra_install'
+    builder = shell_builder(conf)
     builder.run
 
+    [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
+      expect(cash.include?(builder.send("#{stage}_image_name"))).to_not be_truthy
+    end
+  end
 
+  it 'cash: container' do
+    # base
+    conf = {}
+    [:infra_install, :infra_setup, :app_install, :app_setup].each { |stage| conf[stage] = "date +%s > /#{stage}" }
+    builder = shell_builder(conf)
+    builder.run
 
-    # check shell stages
     [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
       expect { docker_exec(builder.send("#{stage}_image_name"), "cat /#{stage}") }.to_not raise_error
     end
 
-    app_setup_image_name = builder.app_setup_image_name
-    app_setup_timestamp = docker_exec(builder.app_setup_image_name, 'cat /app_setup').stdout
+    # compare
+    app_install_image_name = builder.app_install_image_name
+    app_install_timestamp = docker_exec(builder.app_install_image_name, 'cat /app_install')
+    expect(docker_exec(builder.app_install_image_name, 'cat /app_install')).to eq(app_install_timestamp)
 
-    expect(docker_exec(builder.app_setup_image_name, 'cat /app_setup').stdout).to eq(app_setup_timestamp)
-
-    # check rehash
-    options[:conf].delete(:infra_setup)
-    builder = Dapp::Builder::Shell.new(**options)
+    conf.delete(:infra_setup)
+    builder = shell_builder(conf)
     builder.run
 
-    [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
-      puts builder.send("#{stage}_image_name")
-    end
+    # infra_setup
+    expect { docker_exec(builder.infra_setup_image_name, 'cat /infra_setup') }.to raise_error Mixlib::ShellOut::ShellCommandFailed
 
-    expect { docker_exec(builder.app_install_image_name, 'cat /infra_setup') }.to raise_error Mixlib::ShellOut::ShellCommandFailed
-    expect(builder.app_setup_image_name).to_not eq(app_setup_image_name)
-    expect { docker_exec(builder.app_setup_image_name, 'cat /app_setup').stdout }.to_not raise_error
-    expect(docker_exec(builder.app_setup_image_name, 'cat /app_setup').stdout).to_not eq(app_setup_timestamp)
+    # app_install (next stage)
+    expect(builder.app_install_image_name).to_not eq(app_install_image_name)
+    expect { docker_exec(builder.app_install_image_name, 'cat /app_install') }.to_not raise_error
+    expect(docker_exec(builder.app_install_image_name, 'cat /app_install')).to_not eq(app_install_timestamp)
   end
 end
