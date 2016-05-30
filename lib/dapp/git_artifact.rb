@@ -25,8 +25,8 @@ module Dapp
 
       # check params hash
       lock do
-        cleanup! unless !flush_cache && File.exist?(paramshash_path) && File.read(paramshash_path) == paramshash
-        File.write paramshash_path, paramshash
+        cleanup! unless !flush_cache && paramshash_path.exist? && paramshash_path.read.strip == paramshash
+        paramshash_path.write paramshash + "\n"
       end
     end
     # rubocop:enable Metrics/ParameterLists, Metrics/MethodLength
@@ -211,7 +211,11 @@ module Dapp
     end
 
     def archive_commit
-      archive_commitfile_path.read if archive_commitfile_path.exist?
+      if archive_commitfile_path.exist?
+        archive_commitfile_path.read.strip
+      else
+        repo_latest_commit
+      end
     end
 
     def create_arhive_with_owner_substitution!
@@ -237,17 +241,18 @@ module Dapp
         create_simple_archive!
       end
 
-      File.write archive_commitfile_path, repo_latest_commit
+      archive_commitfile_path.write archive_commit + "\n"
     end
 
     def archive_exist?
-      File.exist? archive_commitfile_path
+      archive_commitfile_path.exist?
     end
 
     def add_archive(image)
-      image.build_cmd! ["tar xf #{container_archive_commitfile_path} ",
+      image.build_cmd!("mkdir -p #{where_to_add}",
+                       ["tar xf #{container_archive_path} ",
                         "-C #{where_to_add} ",
-                        "--strip-components=1"].join
+                        "--strip-components=1"].join)
     end
 
     def sudo_format_user(user)
@@ -275,8 +280,11 @@ module Dapp
       atomizer << build_path(filename)
       atomizer << commitfile_path
 
-      repo.git_bare "diff --binary #{from}..#{repo_latest_commit}#{" --relative=#{cwd}" if cwd} -- #{paths(true)} | gzip > #{build_path filename}"
-      File.write commitfile_path, repo_latest_commit
+      repo.git_bare "diff --binary #{from}..#{repo_latest_commit}" +
+                    "#{" --relative=#{cwd}" if cwd} -- #{paths(true)} " +
+                    "| gzip > #{build_path filename}"
+
+      commitfile_path.write repo_latest_commit + "\n"
     end
 
     def layer_filename(layer, ending)
@@ -296,7 +304,7 @@ module Dapp
     end
 
     def layer_commit(layer)
-      File.read layer_commitfile_path(layer) if File.exist? layer_commitfile_path(layer)
+      layer_commitfile_path(layer).read.strip if layer_commitfile_path(layer).exist?
     end
 
     def layers
@@ -324,7 +332,7 @@ module Dapp
     end
 
     def latest_commit
-      File.read latest_commitfile_path if File.exist? latest_commitfile_path
+      latest_commitfile_path.read.strip if latest_commitfile_path.exist?
     end
 
     def create_latest_patch!(from)
