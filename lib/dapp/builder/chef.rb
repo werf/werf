@@ -7,7 +7,6 @@ module Dapp
           Image.new(from: send(:"#{m}_from")).tap do |image|
             image.build_cmd! "chef-apply #{build_path("#{m}_recipes")}"
             image.build_opts! volume: '/opt/chefdk:/opt/chefdk'
-            image
           end
         end
 
@@ -17,7 +16,7 @@ module Dapp
       def chef_cash_file_sum(stage)
         if berksfile_lock?
           prepare_recipes(stage) unless chef_cash_file?(stage)
-          hashsum(File.read(berksfile_lock_path))
+          hashsum(File.read(chef_cash_file_path(stage)))
         end
       end
 
