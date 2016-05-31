@@ -42,11 +42,7 @@ module Dapp
 
       def prepare_recipes(stage)
         # vendor
-        if File.exists? chef_path('vendor')
-          shellout("berks vendor #{chef_path('vendor')}")
-        else
-          shellout("berks update #{chef_path('vendor')}")
-        end
+        shellout("berks vendor #{chef_path('vendor')}")
 
         # stage recipes
         recipes = []
