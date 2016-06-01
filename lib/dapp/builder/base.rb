@@ -21,7 +21,7 @@ module Dapp
           sources_2: :app_install,
           app_setup: :sources_2,
           sources_3: :app_setup,
-          sources_4: :sources_3
+          #sources_4: :sources_3
       }.freeze
 
       STAGES_DEPENDENCIES.each do |stage, dependence|
@@ -33,14 +33,31 @@ module Dapp
           "dapp:#{send(:"#{stage}_key")}"
         end
 
-        define_method :"#{stage}!" do
-          unless (image = send(stage)).nil?
-            docker.build_image!(image: image, name: send(:"#{stage}_image_name"))
-          end
+        define_method(:"#{stage}_image") do
+          instance_variable_get(:"@#{stage}_image") ||
+            instance_variable_set(:"@#{stage}_image", Image.new(from: send(:"#{stage}_from")))
         end
 
-        define_method :"#{stage}?" do
+        define_method :"#{stage}_image_exist?" do
           docker.image_exist?(send("#{stage}_image_name"))
+        end
+
+        define_method :"#{stage}_build?" do
+          (send(:"#{dependence}_build?") if dependence) or send(:"#{stage}_build_image?")
+        end
+
+        define_method :"#{stage}_build_image?" do
+          not send(:"#{stage}_image_exist?")
+        end
+
+        define_method :"#{stage}_build_image!" do
+          image = send(stage)
+          docker.build_image!(image: image, name: send(:"#{stage}_image_name")) if image
+        end
+
+        define_method :"#{stage}_build!" do
+          send(:"#{dependence}_build!") if dependence and send(:"#{dependence}_build?")
+          send(:"#{stage}_build_image!")
         end
 
         define_method stage do
@@ -74,37 +91,9 @@ module Dapp
       end
 
       def run
-        if not prepare?
-          prepare!
-          infra_install!
-          sources_1!
-          infra_setup!
-          app_install!
-          app_setup!
-        elsif not infra_install?
-          infra_install!
-          sources_1!
-          infra_setup!
-          app_install!
-          app_setup!
-        elsif not infra_setup?
-          infra_setup!
-          app_install!
-          sources_2!
-          app_setup!
-        elsif not app_install?
-          app_install!
-          sources_2!
-          app_setup!
-        elsif not app_setup?
-          app_setup!
-          sources_3!
-          sources_4!
-        end
-
+        sources_3_build! if sources_3_build?
         commit_atomizers!
       end
-
 
       def prepare
         prepare_image
@@ -114,15 +103,19 @@ module Dapp
         prepare_image.signature
       end
 
+      def _image_method(from)
+        :"from_#{from.to_s.split(/[:.]/).join}"
+      end
+
       def prepare_from
-        conf[:from]
+        conf[:from].tap do |from|
+          raise "unsupported docker image '#{from}'" unless respond_to?(_image_method(from))
+        end
       end
 
       def prepare_image
         @prepare_image ||= begin
-          image_method = :"from_#{prepare_from.to_s.split(/[:.]/).join}"
-          raise "unsupported docker image '#{prepare_from}'" unless respond_to?(image_method)
-          send(image_method).tap do |image|
+          send(_image_method(prepare_from)).tap do |image|
             image.build_options[:expose] = conf[:exposes] unless conf[:exposes].nil?
           end
         end
@@ -228,44 +221,61 @@ module Dapp
       end
 
 
-      def sources_1_image
-        @sources_1_image ||= Image.new(from: sources_1_from)
-      end
-
-      def sources_1
-        git_artifact_list.each {|ga| ga.add_multilayer! sources_1_image}
-
-        sources_1_image.build_opts!(volume: "#{build_path}:#{container_build_path}:ro")
-
-        sources_1_image
+      def sources_key(from)
+        hashsum [from, *git_artifact_list.map(&:signature)]
       end
 
       def sources_1_key
-        hashsum [sources_1_from, *git_artifact_list.map(&:signature)]
-      end
-
-      def sources_2
-        sources_1
+        sources_key sources_1_from
       end
 
       def sources_2_key
-        sources_1_key
-      end
-
-      def sources_3
-        sources_1
+        sources_key sources_2_from
       end
 
       def sources_3_key
-        sources_1_key
-      end
-
-      def sources_4
-        sources_1
+        sources_key sources_3_from
       end
 
       def sources_4_key
-        sources_1_key
+        #TODO: split sources_3 into period-layer + latest patch scheme
+      end
+
+
+      def sources_1_build_image?
+        not sources_1_exist? and begin
+          infra_setup_build? or
+            app_install_build? or
+              app_setup_build?
+        end
+      end
+
+      def sources_2_build_image?
+        not sources_2_exist? and app_setup_build?
+      end
+
+
+      def sources(image)
+        image.tap do
+          git_artifact_list.each {|ga| ga.add_multilayer! image}
+          image.build_opts!(volume: "#{build_path}:#{container_build_path}:ro")
+        end
+      end
+
+      def sources_1
+        sources sources_1_image
+      end
+
+      def sources_2
+        sources sources_2_image
+      end
+
+      def sources_3
+        sources sources_3_image
+      end
+
+      def sources_4
+        #TODO: split sources_3 into period-layer + latest patch scheme
       end
 
       def register_atomizer(atomizer)
