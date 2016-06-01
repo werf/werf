@@ -220,6 +220,16 @@ module Dapp
         path.compact.inject(Pathname.new('/.build'), &:+).expand_path
       end
 
+      def chef_path(*path)
+        path.compact.inject(build_path('chef'), &:+).expand_path.tap do |p|
+          FileUtils.mkdir_p p.parent
+        end
+      end
+
+      def container_chef_path(*path)
+        path.compact.inject(container_build_path('chef'), &:+).expand_path
+      end
+
 
       def sources_key(from)
         hashsum [from, *git_artifact_list.map(&:signature)]
