@@ -57,7 +57,7 @@ module Dapp
 
         define_method :"#{stage}_build!" do
           send(:"#{dependence}_build!") if dependence and send(:"#{dependence}_build?")
-          send(:"#{stage}_build_image!")
+          send(:"#{stage}_build_image!") if send(:"#{stage}_build_image?")
         end
 
         define_method stage do
@@ -96,6 +96,7 @@ module Dapp
       end
 
       def prepare
+        puts "--prepare"
         prepare_image
       end
 
@@ -157,7 +158,7 @@ module Dapp
       end
 
       def app_setup_file
-        @app_setuo_file ||= begin
+        @app_setup_file ||= begin
           File.read(app_setup_file_path) if app_setup_file?
         end
       end
@@ -253,19 +254,20 @@ module Dapp
 
 
       def sources_1_build_image?
-        not sources_1_exist? and begin
-          infra_setup_build? or
-            app_install_build? or
-              app_setup_build?
+        (not sources_1_image_exist?) and begin
+          infra_setup_build_image? or
+            app_install_build_image? or
+              app_setup_build_image?
         end
       end
 
       def sources_2_build_image?
-        not sources_2_exist? and app_setup_build?
+        (not sources_2_image_exist?) and app_setup_build_image?
       end
 
 
       def sources(image)
+        puts "--sources #{image}"
         image.tap do
           git_artifact_list.each {|ga| ga.add_multilayer! image}
           image.build_opts!(volume: "#{build_path}:#{container_build_path}:ro")
@@ -273,14 +275,17 @@ module Dapp
       end
 
       def sources_1
+        puts "--sources_1"
         sources sources_1_image
       end
 
       def sources_2
+        puts "--sources_2"
         sources sources_2_image
       end
 
       def sources_3
+        puts "--sources_3"
         sources sources_3_image
       end
 
