@@ -41,6 +41,9 @@ describe Dapp::Builder::Shell do
     # compare
     app_install_image_name = builder.app_install_image_name
     app_install_timestamp = docker_exec(builder.app_install_image_name, 'cat /app_install')
+
+    # using cash
+    builder.run
     expect(docker_exec(builder.app_install_image_name, 'cat /app_install')).to eq(app_install_timestamp)
 
     conf.delete(:infra_setup)
@@ -48,7 +51,7 @@ describe Dapp::Builder::Shell do
     builder.run
 
     # infra_setup
-    expect { docker_exec(builder.infra_setup_image_name, 'cat /infra_setup') }.to raise_error Mixlib::ShellOut::ShellCommandFailed
+    expect { docker_exec(builder.infra_setup_image_name, 'cat /infra_setup') }.to raise_error Mixlib::ShellOut::ShellCommandFailed # No such file or directory error
 
     # app_install (next stage)
     expect(builder.app_install_image_name).to_not eq(app_install_image_name)
