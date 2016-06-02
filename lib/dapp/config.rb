@@ -104,20 +104,11 @@ module Dapp
       save_opt(:dapps, *args)
     end
 
-    def infra_install(*args)
-      save_opt(:infra_install, *args)
-    end
-
-    def infra_setup
-      save_opt(:infra_setup, *args)
-    end
-
-    def app_install
-      save_opt(:app_install, *args)
-    end
-
-    def app_setup
-      save_opt(:app_setup, *args)
+    [:infra_install, :infra_setup, :app_install, :app_setup].each do |m|
+      define_method(m) do |*args|
+        raise "instruction '#{m}' only supported for 'shell' type!" unless opts[:type] == :shell
+        save_opt(m, *args)
+      end
     end
 
     # TODO => git_artifact
@@ -164,7 +155,7 @@ module Dapp
     end
 
     def type
-      opts.any? { |k, _v| [:infra_install, :infra_setup, :app_install, :app_setup].include? k } ? :shell : :chef
+      opts[:type]
     end
 
     def build_dapp(*args, extra_dapps: [], **kwargs, &blk)
@@ -180,7 +171,8 @@ module Dapp
         log "Skipped (does not match filter: #{opts[:app_filter]})!"
         return
       end
-      { name: name, type: type }.merge(opts.select { |k, v_| [:from, :home_path, :dapps, :exposes, :git_artifact].include?(k) } )
+      { name: name, type: type }.merge(opts.select { |k, v_| [:from, :home_path, :dapps, :exposes, :git_artifact,
+                                                              :infra_install, :infra_setup, :app_install, :app_setup].include?(k) } )
     end
 
     def indent_log

@@ -49,18 +49,21 @@ BANNER
       option :dappfile_name,
              long: '--dappfile-name NAME',
              description: 'Name of Dappfile',
-             builder_opt: true,
+             on: :head
+
+      option :type,
+             long: '--type NAME',
+             description: 'type of Dappfile',
+             default: :chef,
              on: :head
 
       option :build_dir,
              long: '--build-dir PATH',
-             description: 'Build directory',
-             builder_opt: true
+             description: 'Build directory'
 
       option :docker_repo,
              long: '--docker-repo REPO',
-             description: 'Docker repo',
-             builder_opt: true
+             description: 'Docker repo'
 
       option :docker_socket,
              long: '--docker-socket SOCKET',
@@ -68,27 +71,22 @@ BANNER
 
       option :flush_cache,
              long: '--flush-cache',
-             description: 'Flush cache',
-             boolean: true,
-             builder_opt: true
+             description: 'Flush cache'
 
       option :tag_cascade,
              long: '--tag-cascade',
              description: 'Use cascade tagging',
-             boolean: true,
-             builder_opt: true
+             boolean: true
 
       option :tag_ci,
              long: '--tag-ci',
              description: 'Tag by CI branch and tag',
-             boolean: true,
-             builder_opt: true
+             boolean: true
 
       option :tag_build_id,
              long: '--tag-build-id',
              description: 'Tag by CI build id',
-             boolean: true,
-             builder_opt: true
+             boolean: true
 
       option :tag,
              long: '--tag TAG',
@@ -98,19 +96,16 @@ BANNER
       option :tag_commit,
              long: '--tag-commit',
              description: 'Tag by git commit',
-             boolean: true,
-             builder_opt: true
+             boolean: true
 
       option :tag_branch,
              long: '--tag-branch',
              description: 'Tag by git branch',
-             boolean: true,
-             builder_opt: true
+             boolean: true
 
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
-             description: 'Default branch to archive artifacts from',
-             builder_opt: true
+             description: 'Default branch to archive artifacts from'
 
       def self.composite_options(opt)
         @composite_options ||= {}
@@ -137,7 +132,9 @@ BANNER
       end
 
       def build_configs
-        Dapp::Config.default_opts.merge!(config.select { |k, _v| [:log_quiet, :log_verbose].include? k })
+        Dapp::Config.default_opts.tap do |default_opts|
+          [:log_quiet, :log_verbose, :type].each { |opt| default_opts[opt] = config[opt] }
+        end
 
         if File.exist? dappfile_path
           process_file
