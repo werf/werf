@@ -1,29 +1,31 @@
 module Dapp
   module Builder
     module Stages
-      STAGES_DEPENDENCIES = {
-          prepare: nil,
-          infra_install: :prepare,
-          sources_1: :infra_install,
-          infra_setup: :sources_1,
-          app_install: :infra_setup,
-          sources_2: :app_install,
-          app_setup: :sources_2,
-          sources_3: :app_setup,
-          #sources_4: :sources_3
-      }.freeze
+      STAGES = %i(
+        prepare
+        infra_install
+        sources_1_archive
+        sources_1
+        app_install
+        sources_2
+        infra_setup
+        sources_3
+        app_setup
+        sources_4
+        sources_5
+      ).freeze
 
-      STAGES_DEPENDENCIES.each do |stage, dependence|
-        define_method :"#{stage}_dependence" do
-          dependence
+      STAGES.reduce(nil) do |dependency, stage|
+        define_method :"#{stage}_dependency" do
+          dependency
         end
 
-        define_method :"#{stage}_dependence_key" do
-          send(:"#{dependence}_key") if dependence
+        define_method :"#{stage}_dependency_key" do
+          send(:"#{dependency}_key") if dependency
         end
 
         define_method :"#{stage}_from" do
-          send(:"#{dependence}_image_name") unless dependence.nil?
+          send(:"#{dependency}_image_name") unless dependency.nil?
         end
 
         define_method :"#{stage}_image_name" do
@@ -40,7 +42,7 @@ module Dapp
         end
 
         define_method :"#{stage}_build?" do
-          (send(:"#{dependence}_build?") if dependence) or send(:"#{stage}_build_image?")
+          (send(:"#{dependency}_build?") if dependency) or send(:"#{stage}_build_image?")
         end
 
         define_method :"#{stage}_build_image?" do
@@ -53,7 +55,7 @@ module Dapp
         end
 
         define_method :"#{stage}_build!" do
-          send(:"#{dependence}_build!") if dependence and send(:"#{dependence}_build?")
+          send(:"#{dependency}_build!") if dependency and send(:"#{dependency}_build?")
           send(:"#{stage}_build_image!") if send(:"#{stage}_build_image?")
         end
 
