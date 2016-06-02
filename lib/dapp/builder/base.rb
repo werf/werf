@@ -2,6 +2,7 @@ module Dapp
   module Builder
     class Base
       include CommonHelper
+      include Dapp::Builder::Stages
       include Dapp::Builder::Centos7
       include Dapp::Builder::Ubuntu1404
       include Dapp::Builder::Ubuntu1604
@@ -11,71 +12,6 @@ module Dapp
       attr_reader :conf
       attr_reader :opts
       attr_reader :home_branch
-
-      STAGES_DEPENDENCIES = {
-          prepare: nil,
-          infra_install: :prepare,
-          sources_1: :infra_install,
-          infra_setup: :sources_1,
-          app_install: :infra_setup,
-          sources_2: :app_install,
-          app_setup: :sources_2,
-          sources_3: :app_setup,
-          #sources_4: :sources_3
-      }.freeze
-
-      STAGES_DEPENDENCIES.each do |stage, dependence|
-        define_method :"#{stage}_dependence" do
-          dependence
-        end
-
-        define_method :"#{stage}_dependence_key" do
-          send(:"#{dependence}_key") if dependence
-        end
-
-        define_method :"#{stage}_from" do
-          send(:"#{dependence}_image_name") unless dependence.nil?
-        end
-
-        define_method :"#{stage}_image_name" do
-          "dapp:#{send(:"#{stage}_key")}"
-        end
-
-        define_method(:"#{stage}_image") do
-          instance_variable_get(:"@#{stage}_image") ||
-            instance_variable_set(:"@#{stage}_image", Image.new(from: send(:"#{stage}_from")))
-        end
-
-        define_method :"#{stage}_image_exist?" do
-          docker.image_exist?(send("#{stage}_image_name"))
-        end
-
-        define_method :"#{stage}_build?" do
-          (send(:"#{dependence}_build?") if dependence) or send(:"#{stage}_build_image?")
-        end
-
-        define_method :"#{stage}_build_image?" do
-          not send(:"#{stage}_image_exist?")
-        end
-
-        define_method :"#{stage}_build_image!" do
-          image = send(stage)
-          docker.build_image!(image: image, name: send(:"#{stage}_image_name")) if image
-        end
-
-        define_method :"#{stage}_build!" do
-          send(:"#{dependence}_build!") if dependence and send(:"#{dependence}_build?")
-          send(:"#{stage}_build_image!") if send(:"#{stage}_build_image?")
-        end
-
-        define_method stage do
-          raise
-        end
-
-        define_method :"#{stage}_key" do
-          raise
-        end
-      end
 
       def initialize(docker:, conf:, opts:)
         @docker = docker
@@ -108,8 +44,9 @@ module Dapp
       end
 
       def prepare
-        puts "--prepare"
-        prepare_image
+        super do
+          prepare_image
+        end
       end
 
       def prepare_key
@@ -284,7 +221,6 @@ module Dapp
 
 
       def sources(image)
-        puts "--sources #{image}"
         image.tap do
           git_artifact_list.each {|ga| ga.add_multilayer! image}
           image.build_opts!(volume: "#{build_path}:#{container_build_path}:ro")
@@ -292,18 +228,21 @@ module Dapp
       end
 
       def sources_1
-        puts "--sources_1"
-        sources sources_1_image
+        super do
+          sources sources_1_image
+        end
       end
 
       def sources_2
-        puts "--sources_2"
-        sources sources_2_image
+        super do
+          sources sources_2_image
+        end
       end
 
       def sources_3
-        puts "--sources_3"
-        sources sources_3_image
+        super do
+          sources sources_3_image
+        end
       end
 
       def sources_4

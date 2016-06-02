@@ -1,5 +1,10 @@
 module Dapp
   module CommonHelper
+    def log(message)
+      return unless defined? opts
+      puts ' ' * opts[:log_indent] + ' * ' + message if opts[:log_verbose] || !opts[:log_quiet]
+    end
+
     def shellout(*args, log_verbose: false, **kwargs)
       log_verbose = (log_verbose and opts[:log_verbose]) if defined? opts
       kwargs[:live_stream] = STDOUT if log_verbose
