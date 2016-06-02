@@ -25,6 +25,14 @@ module Dapp
       }.freeze
 
       STAGES_DEPENDENCIES.each do |stage, dependence|
+        define_method :"#{stage}_dependence" do
+          dependence
+        end
+
+        define_method :"#{stage}_dependence_key" do
+          send(:"#{dependence}_key") if dependence
+        end
+
         define_method :"#{stage}_from" do
           send(:"#{dependence}_image_name") unless dependence.nil?
         end
@@ -61,6 +69,10 @@ module Dapp
         end
 
         define_method stage do
+          raise
+        end
+
+        define_method :"#{stage}_key" do
           raise
         end
       end
@@ -122,19 +134,8 @@ module Dapp
         end
       end
 
-
-      def infra_install_key
-        infra_install_from
-      end
-
-
-      def infra_setup_key
-        infra_setup_from
-      end
-
-
       def app_install_key
-        hashsum [app_install_from, dependency_file, dependency_file_regex]
+        hashsum [dependency_file, dependency_file_regex]
       end
 
       def dependency_file
@@ -154,7 +155,7 @@ module Dapp
 
 
       def app_setup_key
-        hashsum [app_setup_from, app_setup_file]
+        hashsum app_setup_file
       end
 
       def app_setup_file
@@ -232,20 +233,36 @@ module Dapp
       end
 
 
-      def sources_key(from)
-        hashsum [from, *git_artifact_list.map(&:signature)]
+      def sources_key
+        hashsum git_artifact_list.map(&:signature)
       end
 
       def sources_1_key
-        sources_key sources_1_from
+        sources_key
       end
 
       def sources_2_key
-        sources_key sources_2_from
+        if sources_1_image_exist?
+          sources_2_dependence_key
+        else
+          sources_key
+        end
+      end
+
+      def sources_2_image_exist?
+        sources_1_image_exist? or docker.image_exist?(sources_2_image_name)
       end
 
       def sources_3_key
-        sources_key sources_3_from
+        if sources_2_image_exist?
+          sources_3_dependence_key
+        else
+          sources_key
+        end
+      end
+
+      def sources_3_image_exist?
+        sources_2_image_exist? or docker.image_exist?(sources_3_image_name)
       end
 
       def sources_4_key
