@@ -130,28 +130,41 @@ BANNER
 
         patterns << '*' unless patterns.any?
 
-        # TODO: creating build_conf
-        build_conf = {
-          from: 'ubuntu:14.04',
-          git_artifact: {
-            local: {where_to_add: '/myapp'},
-          },
-        }
+        build_configs.each do |build_conf|
+          options = { docker: Dapp::Docker.new(socket: config[:docker_socket]), conf: build_conf, opts: config }
+          Dapp::Builder.new(**options).run
+        end
+      end
 
-        # builder options
-        options = {
-            docker: Dapp::Docker.new(socket: config[:docker_socket]),
-            conf: build_conf,
-            opts: config
-        }
+      def build_configs
+        Dapp::Config.default_opts.merge!(config.select { |k, _v| [:log_quiet, :log_verbose].include? k })
 
-        # TODO: choosing builder
-        builder = if 1 == 2
-                    Dapp::Builder::Chef
-                  else
-                    Dapp::Builder::Shell
-                  end
-        builder.new(**options).run
+        if File.exist? dappfile_path
+          process_file
+        else
+          process_directory
+        end
+      end
+
+      def process_file
+        patterns.map do |pattern|
+          unless (configs = Dapp::Config.process_file(dappfile_path, app_filter: pattern)).any?
+            STDERR.puts "Error: No such app: '#{pattern}' in #{dappfile_path}"
+            exit 1
+          end
+          configs
+        end.flatten
+      end
+
+      def process_directory
+        Dapp::Config.default_opts[:shared_build_dir] = true
+        patterns.map do |pattern|
+          unless (configs = Dapp::Config.process_directory(config[:dir], pattern)).any?
+            STDERR.puts "Error: No such app '#{pattern}'"
+            exit 1
+          end
+          configs
+        end.flatten
       end
     end
   end
