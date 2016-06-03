@@ -40,43 +40,39 @@ module Dapp
         commit_atomizers!
       end
 
-
-      def app_install_key
-        hashsum [dependency_file, dependency_file_regex]
+      def infra_install_do(_image)
+        raise
       end
 
-      def dependency_file
-        @dependency_file ||= begin
-          file_path = Dir[build_path('*')].detect {|x| x =~ dependency_file_regex }
-          File.read(file_path) unless file_path.nil?
-        end
-      end
-
-      def dependency_file?
-        !dependency_file.nil?
-      end
-
-      def dependency_file_regex
-        /.*\/(Gemfile|composer.json|requirement_file.txt)$/
+      def infra_install_signature_do
+        raise
       end
 
 
-      def app_setup_key
-        hashsum app_setup_file
+      def infra_setup_do(_image)
+        raise
       end
 
-      def app_setup_file
-        @app_setup_file ||= begin
-          File.read(app_setup_file_path) if app_setup_file?
-        end
+      def infra_setup_signature_do
+        raise
       end
 
-      def app_setup_file?
-        File.exist?(app_setup_file_path)
+
+      def app_install_do(_image)
+        raise
       end
 
-      def app_setup_file_path
-        build_path('.app_setup')
+      def app_install_signature_do
+        raise
+      end
+
+
+      def app_setup_do(_image)
+        raise
+      end
+
+      def app_setup_signature_do
+        raise
       end
 
 

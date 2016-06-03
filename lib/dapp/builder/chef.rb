@@ -2,15 +2,13 @@ module Dapp
   module Builder
     class Chef < Base
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |m|
-        define_method(m) do
+        define_method(:"#{m}_do") do |image|
           prepare_recipes(m) unless chef_cash_file?(m)
-          Image.new(from: send(:"#{m}_from")).tap do |image|
-            image.build_cmd! "chef-apply #{build_path("#{m}_recipes")}"
-            image.build_opts! volume: '/opt/chefdk:/opt/chefdk'
-          end
+          image.build_cmd! "chef-apply #{container_build_path("#{m}_recipes")}"
+          image.build_opts! volume: '/opt/chefdk:/opt/chefdk'
         end
 
-        define_method(:"#{m}_key") { hashsum [super(), chef_cash_file_sum(m)] }
+        define_method(:"#{m}_signature_do") { hashsum chef_cash_file_sum(m) }
       end
 
       def chef_cash_file_sum(stage)
