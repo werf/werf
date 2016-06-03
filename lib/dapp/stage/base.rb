@@ -41,7 +41,9 @@ module Dapp
       def image
         @image ||= begin
           Image.new(from: from_image_name).tap do |image|
-            image.build_opts! volume: "#{builder.build_path}:#{builder.container_build_path}"
+            volumes = ["#{builder.build_path}:#{builder.container_build_path}"]
+            volumes << "#{builder.local_git_artifact.repo.dir_path}:#{builder.local_git_artifact.repo.container_build_dir_path}" if builder.local_git_artifact
+            image.build_opts! volume: volumes
             yield image if block_given?
           end
         end

@@ -7,7 +7,7 @@ module Dapp
       end
 
       def dir_path
-        @dir_path ||= git("-C #{builder.home_path} rev-parse --git-dir").stdout.strip
+        @dir_path ||= Pathname(git("-C #{builder.home_path} rev-parse --git-dir").stdout.strip).expand_path
       end
     end
   end
