@@ -8,7 +8,7 @@ module Dapp
       end
 
       def signature
-        builder.infra_install_signature_do
+        image.signature
       end
     end # InfraInstall
   end # Stage

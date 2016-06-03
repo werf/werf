@@ -4,7 +4,7 @@ module Dapp
       def signature
         hashsum [builder.stages[:sources_1_archive].signature,
                  dependency_file, dependency_file_regex,
-                 builder.app_install_signature_do,
+                 *builder.app_install_commands, # TODO chef
                  *builder.git_artifact_list.map { |git_artifact| git_artifact.source_1_commit }]
       end
 

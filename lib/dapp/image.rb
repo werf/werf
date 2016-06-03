@@ -21,7 +21,7 @@ module Dapp
     end
 
     def signature
-      sha256([from, build_cmd, build_opts.inspect])
+      hashsum [from, *build_cmd, build_opts.inspect]
     end
   end # Image
 end # Dapp

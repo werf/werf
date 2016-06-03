@@ -64,7 +64,7 @@ module Dapp
         raise
       end
 
-      def infra_install_signature_do
+      def infra_install_commands
         raise
       end
 
@@ -73,7 +73,7 @@ module Dapp
         raise
       end
 
-      def infra_setup_signature_do
+      def infra_setup_commands
         raise
       end
 
@@ -82,7 +82,7 @@ module Dapp
         raise
       end
 
-      def app_install_signature_do
+      def app_install_commands
         raise
       end
 
@@ -91,7 +91,7 @@ module Dapp
         raise
       end
 
-      def app_setup_signature_do
+      def app_setup_commands
         raise
       end
 

@@ -251,6 +251,14 @@ module Dapp
       layer_commit(:source_1)
     end
 
+    def source_2_commit
+      layer_commit(:source_2)
+    end
+
+    def source_3_commit
+      layer_commit(:source_3)
+    end
+
     def layers
       Dir.glob(layer_commit_file_path('*')).map { |path| Integer(path.gsub(/.*_(\d+)\.commit$/, '\\1')) }.sort
     end
