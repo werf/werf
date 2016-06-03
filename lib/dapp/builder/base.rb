@@ -3,9 +3,9 @@ module Dapp
     class Base
       include CommonHelper
       include Dapp::Builder::Stages
-      include Dapp::Builder::Image::Centos7
-      include Dapp::Builder::Image::Ubuntu1404
-      include Dapp::Builder::Image::Ubuntu1604
+      include Dapp::Builder::Mod::Centos7
+      include Dapp::Builder::Mod::Ubuntu1404
+      include Dapp::Builder::Mod::Ubuntu1604
       include Dapp::Filelock
 
       attr_reader :docker
