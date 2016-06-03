@@ -41,6 +41,7 @@ module Dapp
       def image
         @image ||= begin
           Image.new(from: from_image_name).tap do |image|
+            image.build_opts! volume: "#{builder.build_path}:#{builder.container_build_path}"
             yield image if block_given?
           end
         end
