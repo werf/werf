@@ -6,14 +6,23 @@ module Dapp
       attr_reader :name
       attr_reader :su
 
-      def initialize(builder, name, build_path: nil)
+      def initialize(builder, name, build_path: nil, container_path: build_path)
         @builder = builder
         @name = name
         @build_path = build_path || []
+        @container_path = container_path || []
       end
 
       def build_path(*paths)
         builder.build_path(*@build_path, *paths)
+      end
+
+      def container_build_path(*paths)
+        builder.container_path(*@container_path, *paths)
+      end
+
+      def container_build_dir_path
+        container_build_path "#{name}.git"
       end
 
       def dir_path
