@@ -120,7 +120,7 @@ module Dapp
           paths: kwargs[:paths],
           owner: kwargs[:owner],
           group: kwargs[:group],
-          interlayer_period: :week
+          interlayer_period: interlayer_period(:week)
       }
     end
 
@@ -138,8 +138,17 @@ module Dapp
           paths: kwargs[:paths],
           owner: kwargs[:owner],
           group: kwargs[:group],
-          interlayer_period: :week
+          interlayer_period: interlayer_period(:week)
       }
+    end
+
+    def interlayer_period(period)
+      case period
+        when :day then 60*60*24
+        when :week then interlayer_period(:day)*7
+        when :month then interlayer_period(:week)*7
+        else nil
+      end
     end
 
     def app(name, &block)
@@ -157,10 +166,10 @@ module Dapp
     end
 
     def to_a
-      apps.empty? ? Array(to_json) : apps.map(&:to_json).compact
+      apps.empty? ? Array(to_h) : apps.map(&:to_h).compact
     end
 
-    def to_json
+    def to_h
       unless !opts[:app_filter] || File.fnmatch("#{opts[:app_filter]}*", name)
         log "Skipped (does not match filter: '#{opts[:app_filter]}')!"
         return
