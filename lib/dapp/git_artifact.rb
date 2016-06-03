@@ -200,10 +200,10 @@ module Dapp
       credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
       image.build_cmd!(
-          "git --git-dir=#{repo.container_build_dir_path} archive --format tar.gz #{archive_commit}:#{cwd} -o #{container_archive_path} #{paths}",
-          "mkdir -p #{where_to_add}",
-          ["tar xf #{container_archive_path} ", "-C #{where_to_add} ", "--strip-components=1", *credentials].join,
-          "rm -rf #{container_archive_path}"
+        "git --git-dir=#{repo.container_build_dir_path} archive --format tar.gz #{archive_commit}:#{cwd} -o #{container_archive_path} #{paths}",
+        "mkdir -p #{where_to_add}",
+        ["tar xf #{container_archive_path} ", "-C #{where_to_add} ", "--strip-components=1", *credentials].join,
+        "rm -rf #{container_archive_path}"
       )
     end
 
