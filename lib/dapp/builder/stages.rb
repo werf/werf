@@ -34,7 +34,7 @@ module Dapp
 
         define_method(:"#{stage}_image") do
           instance_variable_get(:"@#{stage}_image") ||
-            instance_variable_set(:"@#{stage}_image", Image.new(from: send(:"#{stage}_from")))
+            instance_variable_set(:"@#{stage}_image", Dapp::Image.new(from: send(:"#{stage}_from")))
         end
 
         define_method :"#{stage}_image_exist?" do
