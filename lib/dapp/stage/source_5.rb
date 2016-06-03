@@ -16,6 +16,14 @@ module Dapp
           hashsum [builder.stages[:source_4].signature, source_5_patch]
         end
       end
+
+      def image
+        super do |image|
+          builder.git_artifact_list.each do |git_artifact|
+            git_artifact.apply_source_5!(image)
+          end
+        end
+      end
     end # Source5
   end # Stage
 end # Dapp
