@@ -17,11 +17,11 @@ module Dapp
       end
 
       def image_exist?
-        docker.image_exist? image_name
+        builder.docker.image_exist? image_name
       end
 
       def build_image!
-        docker.build_image! image: image, name: image_name
+        builder.docker.build_image! image: image, name: image_name
       end
 
       def from_image_name
