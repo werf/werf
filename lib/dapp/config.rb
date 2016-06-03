@@ -113,8 +113,6 @@ module Dapp
 
     # TODO => git_artifact
     def add_git_artifact(where_to_add, **kwargs)
-      log "Adding artifact (to #{where_to_add})"
-
       opts[:git_artifact] ||= {}
       opts[:git_artifact][:local] = {
           where_to_add: where_to_add,
@@ -128,8 +126,6 @@ module Dapp
 
     # TODO => remote_git_artifact
     def add_remote_git_artifact(url, where_to_add, branch: opts[:git_artifact_branch] || home_branch, ssh_key_path: nil, **kwargs)
-      log "Adding artifact from git (#{url} to #{where_to_add}, branch: #{branch})"
-
       opts[:git_artifact] ||= {}
       opts[:git_artifact][:remote] ||= []
       opts[:git_artifact][:remote] << {
@@ -147,9 +143,7 @@ module Dapp
     end
 
     def app(name, &block)
-      log "Processing #{self.name}-#{name}"
-
-      name = "#{opts[:name]}-#{name}" if opts[:name]
+      name = "#{send(:name)}-#{name}"
       options = opts.merge(name: name, log_indent: opts[:log_indent] + 1)
       apps << self.class.new(**options, &block)
     end
@@ -168,10 +162,11 @@ module Dapp
 
     def to_json
       unless !opts[:app_filter] || File.fnmatch("#{opts[:app_filter]}*", name)
-        log "Skipped (does not match filter: #{opts[:app_filter]})!"
+        log "Skipped (does not match filter: '#{opts[:app_filter]}')!"
         return
       end
-      { name: name, type: type }.merge(opts.select { |k, v_| [:from, :home_path, :dapps, :exposes, :git_artifact,
+      log "Adding application '#{name}'"
+      { name: name, type: type }.merge(opts.select { |k, _v| [:from, :home_path, :dapps, :exposes, :git_artifact,
                                                               :infra_install, :infra_setup, :app_install, :app_setup].include?(k) } )
     end
 
