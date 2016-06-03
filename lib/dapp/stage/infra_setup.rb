@@ -8,7 +8,7 @@ module Dapp
       end
 
       def signature
-        hashsum builder.stages[:sources_2].signature
+        hashsum builder.stages[:source_2].signature
       end
     end # InfraSetup
   end # Stage

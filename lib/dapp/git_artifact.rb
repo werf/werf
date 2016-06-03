@@ -98,6 +98,45 @@ module Dapp
       @branch || 'master'
     end
 
+    def source_1_commit
+      layer_commit(:source_1)
+    end
+
+    def source_2_commit
+      layer_commit(:source_2)
+    end
+
+    def source_3_commit
+      layer_commit(:source_3)
+    end
+
+    def source_4_actual?
+      layer_actual?(:source_4)
+    end
+
+    def source_5_actual?
+      layer_actual?(:source_5)
+    end
+
+    def apply_archive!(image)
+      return if archive_commit_file_exist?
+
+      atomizer << archive_commit_file_path
+      atomizer << archive_commit_timestamp_path
+
+      archive_commit_file_path.write archive_commit + "\n"
+      archive_commit_timestamp_path.write repo.commit_at(archive_commit).to_s + "\n"
+
+      credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
+
+      image.build_cmd!(
+          "git --git-dir=#{repo.container_build_dir_path} archive --format tar.gz #{archive_commit}:#{cwd} -o #{container_archive_path} #{paths}",
+          "mkdir -p #{where_to_add}",
+          ["tar xf #{container_archive_path} ", "-C #{where_to_add} ", "--strip-components=1", *credentials].join,
+          "rm -rf #{container_archive_path}"
+      )
+    end
+
     protected
 
     attr_reader :builder
@@ -187,25 +226,6 @@ module Dapp
       archive_commit_file_path.exist?
     end
 
-    def apply_archive!(image)
-      return if archive_commit_file_exist?
-
-      atomizer << archive_commit_file_path
-      atomizer << archive_commit_timestamp_path
-
-      archive_commit_file_path.write archive_commit + "\n"
-      archive_commit_timestamp_path.write repo.commit_at(archive_commit) + "\n"
-
-      credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
-
-      image.build_cmd!(
-        "git --git-dir=#{repo.container_build_dir_path} archive --format tar.gz #{archive_commit}:#{cwd} -o #{container_archive_path} #{paths}",
-        "mkdir -p #{where_to_add}",
-        ["tar xf #{container_archive_path} ", "-C #{where_to_add} ", "--strip-components=1", *credentials].join,
-        "rm -rf #{container_archive_path}"
-      )
-    end
-
     def sudo_format_user(user)
       user.to_i.to_s == user ? "\\\##{user}" : user
     end
@@ -244,18 +264,6 @@ module Dapp
       else
         repo_latest_commit
       end
-    end
-
-    def source_1_commit
-      layer_commit(:source_1)
-    end
-
-    def source_2_commit
-      layer_commit(:source_2)
-    end
-
-    def source_3_commit
-      layer_commit(:source_3)
     end
 
     def layers

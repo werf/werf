@@ -2,7 +2,7 @@ module Dapp
   module Stage
     class Source5 < Base
       def source_5_actual?
-        git_artifact_list.map {|git_artifact| git_artifact.source_5_actual?}.all?
+        builder.git_artifact_list.map {|git_artifact| git_artifact.source_5_actual?}.all?
       end
 
       def source_5_patch

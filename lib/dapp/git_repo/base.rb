@@ -18,7 +18,7 @@ module Dapp
       end
 
       def container_build_path(*paths)
-        builder.container_path(*@container_path, *paths)
+        builder.container_build_path(*@container_path, *paths)
       end
 
       def container_build_dir_path

@@ -26,7 +26,7 @@ module Dapp
 
       def from_image_name
         @from_image_name || (prev.image_name if prev) || begin
-          raise "missing from_image_name"
+          raise 'missing from_image_name'
         end
       end
 

@@ -88,15 +88,15 @@ module Dapp
 
     # TODO => from
     def from_centos7
-      opts[:from] = :centos7
+      opts[:from] = :'centos:7'
     end
 
     def from_ubuntu1404
-      opts[:from] = :ubuntu1404
+      opts[:from] = :'ubuntu:14.04'
     end
 
     def from_ubuntu1604
-      opts[:from] = :ubuntu1604
+      opts[:from] = :'ubuntu:16.04'
     end
 
     # TODO => dapps

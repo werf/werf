@@ -55,6 +55,7 @@ BANNER
              long: '--type NAME',
              description: 'type of Dappfile',
              default: :chef,
+             proc: proc { |opt| opt.to_sym },
              on: :head
 
       option :build_dir,

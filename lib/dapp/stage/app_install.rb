@@ -8,7 +8,7 @@ module Dapp
       end
 
       def signature
-        hashsum builder.stages[:sources_1].signature
+        hashsum builder.stages[:source_1].signature
       end
     end # AppInstall
   end # Stage

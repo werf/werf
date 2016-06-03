@@ -8,7 +8,7 @@ module Dapp
       def image
         super do |image|
           send(_image_method, image)
-          image.build_options[:expose] = conf[:exposes] unless conf[:exposes].nil?
+          image.build_opts!({ expose: builder.conf[:exposes] }) unless builder.conf[:exposes].nil?
         end
       end
 

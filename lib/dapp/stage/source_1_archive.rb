@@ -7,10 +7,10 @@ module Dapp
             git_artifact.apply_archive!(image)
           end
         end
+      end
 
-        def signature
-          hashsum builder.stages[:infra_install].signature
-        end
+      def signature
+        hashsum builder.stages[:infra_install].signature
       end
     end # Source1Archive
   end # Stage
