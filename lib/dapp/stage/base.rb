@@ -4,9 +4,10 @@ module Dapp
       include CommonHelper
 
       attr_accessor :prev, :next
+      attr_reader :builder
 
-      def initialize(from_image_name: nil)
-        @from_image_name = from_image_name
+      def initialize(builder:)
+        @builder = builder
       end
 
       def build

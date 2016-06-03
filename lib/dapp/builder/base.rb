@@ -55,6 +55,28 @@ module Dapp
 
       def run
         stages.values.last.build
+        commit_atomizers!
+      end
+
+      def dependency_file
+        @dependency_file ||= begin
+          file_path = Dir[build_path('*')].detect {|x| x =~ dependency_file_regex }
+          File.read(file_path) unless file_path.nil?
+        end
+      end
+
+      def dependency_file?
+        !dependency_file.nil?
+      end
+
+      def dependency_file_regex
+        /.*\/(Gemfile|composer.json|requirement_file.txt)$/
+      end
+
+      def app_setup_file
+        @app_setup_file ||= begin
+          File.read(app_setup_file_path) if app_setup_file?
+        end
       end
 
       def make_local_git_artifact(cfg)
