@@ -130,10 +130,6 @@ module Dapp
         [local_git_artifact, *remote_git_artifact_list].compact
       end
 
-      def git_artifact_patch
-        git_artifact_list.map {|git_artifact| git_artifact.patch}.reduce(:+)
-      end
-
 
       def home_path(*path)
         path.compact.inject(Pathname.new(opts[:home_path]), &:+).expand_path
