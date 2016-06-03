@@ -1,5 +1,9 @@
 module Dapp
   # "Transaction" journal with rollback (mainly to protect cache fill with unbuildable configuration)
+  # TODO Restore deleted files
+  # TODO  write path into journal
+  # TODO  write backup file to restore from
+  # TODO  restore not committed delete paths
   class Atomizer
     def initialize(builder, file_path, lock_timeout: 10)
       @builder = builder
