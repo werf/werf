@@ -40,33 +40,6 @@ module Dapp
         commit_atomizers!
       end
 
-      def prepare
-        super do
-          prepare_image
-        end
-      end
-
-      def prepare_key
-        prepare_image.signature
-      end
-
-      def _image_method(from)
-        :"from_#{from.to_s.split(/[:.]/).join}"
-      end
-
-      def prepare_from
-        conf[:from].tap do |from|
-          raise "unsupported docker image '#{from}'" unless respond_to?(_image_method(from))
-        end
-      end
-
-      def prepare_image
-        @prepare_image ||= begin
-          send(_image_method(prepare_from)).tap do |image|
-            image.build_options[:expose] = conf[:exposes] unless conf[:exposes].nil?
-          end
-        end
-      end
 
       def app_install_key
         hashsum [dependency_file, dependency_file_regex]
