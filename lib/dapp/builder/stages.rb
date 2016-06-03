@@ -51,7 +51,7 @@ module Dapp
 
         define_method :"#{stage}_build_image!" do
           image = send(stage)
-          docker.build_image!(image: image, name: send(:"#{stage}_image_name")) if image
+          docker.build_image!(mods: image, name: send(:"#{stage}_image_name")) if image
         end
 
         define_method :"#{stage}_build!" do
