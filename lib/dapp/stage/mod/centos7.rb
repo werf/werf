@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Stage
     module Mod
       # Centos7 support
       module Centos7

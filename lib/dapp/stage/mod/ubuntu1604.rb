@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Stage
     module Mod
       # Ubuntu 16.04 support
       module Ubuntu1604

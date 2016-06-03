@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Stage
     module Mod
       # Ubuntu 14.04 support
       module Ubuntu1404
