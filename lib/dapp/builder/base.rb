@@ -2,13 +2,13 @@ module Dapp
   module Builder
     class Base
       include CommonHelper
-      include Dapp::Builder::Stages
       include Dapp::Filelock
 
       attr_reader :docker
       attr_reader :conf
       attr_reader :opts
       attr_reader :home_branch
+      attr_reader :stages
 
       def initialize(docker:, conf:, opts:)
         @docker = docker
@@ -23,6 +23,24 @@ module Dapp
         @atomizers = []
         @builded_apps = []
 
+        @stages = {
+          prepare: Stage::Prepare.new(self),
+          infra_install: Stage::InfraInstall.new(self),
+          source_1_archive: Stage::Source1Archive.new(self),
+          source_1: Stage::Source1.new(self),
+          app_install: Stage::AppInstall.new(self),
+          source_2:  Stage::Source2.new(self),
+          infra_setup: Stage::InfraSetup.new(self),
+          source_3: Stage::Source3.new(self),
+          app_setup: Stage::AppSetup.new(self),
+          source_4: Stage::Source4.new(self),
+          source_5: Stage::Source5.new(self),
+        }.values.reduce {|prev, stage|
+          prev.next = stage
+          stage.prev = prev
+          stage
+        }
+
         lock do
           yield self
         end if block_given?
@@ -36,7 +54,7 @@ module Dapp
       end
 
       def run
-        sources_3_build! if sources_3_build?
+        stages.values.last.build
         commit_atomizers!
       end
 
@@ -133,86 +151,6 @@ module Dapp
 
       def container_chef_path(*path)
         path.compact.inject(container_build_path('chef'), &:+).expand_path
-      end
-
-
-      def sources_key
-        hashsum git_artifact_list.map(&:signature)
-      end
-
-      def sources_1_key
-        sources_key
-      end
-
-      def sources_2_key
-        if sources_1_image_exist?
-          sources_2_dependence_key
-        else
-          sources_key
-        end
-      end
-
-      def sources_2_image_exist?
-        sources_1_image_exist? or docker.image_exist?(sources_2_image_name)
-      end
-
-      def sources_3_key
-        if sources_2_image_exist?
-          sources_3_dependence_key
-        else
-          sources_key
-        end
-      end
-
-      def sources_3_image_exist?
-        sources_2_image_exist? or docker.image_exist?(sources_3_image_name)
-      end
-
-      def sources_4_key
-        #TODO: split sources_3 into period-layer + latest patch scheme
-      end
-
-
-      def sources_1_build_image?
-        (not sources_1_image_exist?) and begin
-          infra_setup_build_image? or
-            app_install_build_image? or
-              app_setup_build_image?
-        end
-      end
-
-      def sources_2_build_image?
-        (not sources_2_image_exist?) and app_setup_build_image?
-      end
-
-
-      def sources(image)
-        image.tap do
-          git_artifact_list.each {|ga| ga.add_multilayer! image}
-          image.build_opts!(volume: "#{build_path}:#{container_build_path}:ro")
-        end
-      end
-
-      def sources_1
-        super do
-          sources sources_1_image
-        end
-      end
-
-      def sources_2
-        super do
-          sources sources_2_image
-        end
-      end
-
-      def sources_3
-        super do
-          sources sources_3_image
-        end
-      end
-
-      def sources_4
-        #TODO: split sources_3 into period-layer + latest patch scheme
       end
 
       def register_atomizer(atomizer)
