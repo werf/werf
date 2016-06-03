@@ -1,6 +1,6 @@
 module Dapp
-  module Builder
-    module Image
+  module Stage
+    module Mod
       # Centos7 support
       module Centos7
         # rubocop:disable Metrics/MethodLength
