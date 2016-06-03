@@ -6,7 +6,7 @@ module Dapp
       attr_accessor :prev, :next
       attr_reader :builder
 
-      def initialize(builder:)
+      def initialize(builder)
         @builder = builder
       end
 
