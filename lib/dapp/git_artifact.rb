@@ -53,12 +53,11 @@ module Dapp
     def cleanup!
       lock do
         FileUtils.rm_f [
-                           paramshash_path,
-                           archive_commit_file_path,
-                           Dir.glob(layer_patch_path('*')),
-                           Dir.glob(layer_commit_file_path('*')),
-                           latest_commit_file_path
-                       ].flatten
+          paramshash_path,
+          archive_commit_file_path,
+          Dir.glob(layer_commit_file_path('*')),
+          latest_commit_file_path
+        ].flatten
       end
     end
 
