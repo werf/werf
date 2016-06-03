@@ -35,10 +35,12 @@ module Dapp
           app_setup: Dapp::Stage::AppSetup.new(self),
           source_4: Dapp::Stage::Source4.new(self),
           source_5: Dapp::Stage::Source5.new(self),
-        }.values.reduce {|prev, stage|
-          prev.next = stage
-          stage.prev = prev
-          stage
+        }.tap {|stages|
+          stages.values.reduce {|prev, stage|
+            prev.next = stage
+            stage.prev = prev
+            stage
+          }
         }
 
         lock do
