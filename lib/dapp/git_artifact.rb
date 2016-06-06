@@ -183,45 +183,45 @@ module Dapp
       )
     end
 
-    def apply_source_1!(image)
-      if layer_timestamp_path(:source_1).to_i < archive_timestamp.to_i
+    def apply_source_2!(image)
+      if layer_timestamp_file_path(:source_1).to_i < archive_timestamp.to_i
         layer_commit_file_path(:source_1).delete
-        layer_timestamp_path(:source_1).delete
+        layer_timestamp_file_path(:source_1).delete
       end
 
       atomizer << layer_commit_file_path(:source_1)
-      atomizer << layer_timestamp_path(:source_1)
+      atomizer << layer_timestamp_file_path(:source_1)
 
       layer_commit_file_path(:source_1).write repo_latest_commit + "\n"
-      layer_timestamp_path(:source_1).write repo.commit_at(layer_commit(:source_1)).to_s + "\n" if layer_timestamp_path(:source_1).zero?
+      layer_timestamp_file_path(:source_1).write repo.commit_at(layer_commit(:source_1)).to_s + "\n" if layer_timestamp_file_path(:source_1).zero?
       apply_patch!(image, archive_commit, layer_commit(:source_1))
     end
 
     def apply_source_2!(image)
-      if layer_timestamp_path(:source_2).to_i < layer_timestamp_path(:source_1).to_i
+      if layer_timestamp_file_path(:source_2).to_i < layer_timestamp_file_path(:source_1).to_i
         layer_commit_file_path(:source_2).delete
-        layer_timestamp_path(:source_2).delete
+        layer_timestamp_file_path(:source_2).delete
       end
 
       atomizer << layer_commit_file_path(:source_2)
-      atomizer << layer_timestamp_path(:source_2)
+      atomizer << layer_timestamp_file_path(:source_2)
 
       layer_commit_file_path(:source_2).write repo_latest_commit + "\n"
-      layer_timestamp_path(:source_2).write repo.commit_at(layer_commit(:source_2)).to_s + "\n" if layer_timestamp_path(:source_2).zero?
+      layer_timestamp_file_path(:source_2).write repo.commit_at(layer_commit(:source_2)).to_s + "\n" if layer_timestamp_file_path(:source_2).zero?
       apply_patch!(image, layer_commit(:source_1), layer_commit(:source_2))
     end
 
     def apply_source_3!(image)
-      if layer_timestamp_path(:source_3).to_i < layer_timestamp_path(:source_2).to_i
+      if layer_timestamp_file_path(:source_3).to_i < layer_timestamp_file_path(:source_2).to_i
         layer_commit_file_path(:source_3).delete
-        layer_timestamp_path(:source_3).delete
+        layer_timestamp_file_path(:source_3).delete
       end
 
       atomizer << layer_commit_file_path(:source_3)
-      atomizer << layer_timestamp_path(:source_3)
+      atomizer << layer_timestamp_file_path(:source_3)
 
       layer_commit_file_path(:source_3).write repo_latest_commit + "\n"
-      layer_timestamp_path(:source_3).write repo.commit_at(layer_commit(:source_3)).to_s + "\n" if layer_timestamp_path(:source_3).zero?
+      layer_timestamp_file_path(:source_3).write repo.commit_at(layer_commit(:source_3)).to_s + "\n" if layer_timestamp_file_path(:source_3).zero?
       apply_patch!(image, layer_commit(:source_2), layer_commit(:source_3))
     end
 
@@ -346,12 +346,16 @@ module Dapp
       build_path layer_filename(stage, '.commit')
     end
 
+    def layer_timestamp_file_path(stage)
+      build_path layer_filename(stage, '.timestamp')
+    end
+
     def layer_actual?(stage)
       layer_commit(stage) == archive_commit || !any_changes?(archive_commit, layer_commit(stage))
     end
 
     def layer_commit(stage)
-      if layer_commit_file_path(stage).exist? and layer_timestamp_path(stage).exist?
+      if layer_commit_file_path(stage).exist? and layer_timestamp_file_path(stage).exist?
         layer_commit_file_path(stage).read.strip
       else
         repo_latest_commit
@@ -403,19 +407,32 @@ module Dapp
       end
     end
 
-    def source_5_exist?
-    end
-
     def source_5_actual?
-      if source_4_timestamp
+      if source_4_commit
+        source_5_commit == source_4_commit || !any_changes?(source_4_commit, source_5_commit)
       else
+        source_5_commit == source_3_commit || !any_changes?(source_3_commit, source_5_commit)
       end
-      layer_commit(:source_5) source_5_commit == source_k || !any_changes?(archive_commit, layer_commit(stage))
     end
 
     def apply_source_5!(image)
-      # TODO
-      return if layer_actual?(:source_5)
+      if (source_4_commit and source_5_timestamp.to_i < source_4_timestamp.to_i) or
+         (source_5_timestamp.to_i < source_3_timestamp.to_i)
+        layer_commit_file_path(:source_5).delete
+        layer_timestamp_file_path(:source_5).delete
+      end
+
+      atomizer << layer_commit_file_path(:source_5)
+      atomizer << layer_timestamp_file_path(:source_5)
+
+      layer_commit_file_path(:source_5).write source_5_commit + "\n"
+      layer_timestamp_file_path(:source_5).write repo.commit_at(source_5_commit) + "\n" if layer_timestamp_file_path(:source_5).zero?
+
+      if source_4_commit
+        apply_patch!(image, source_4_commit, source_5_commit)
+      else
+        apply_patch!(image, source_3_commit, source_5_commit)
+      end
     end
 
     def remove_latest!
