@@ -7,8 +7,6 @@ module Dapp
     # TODO  restore not committed delete paths
 
     class Base
-      include Dapp::CommonHelper
-
       def initialize(file_path, lock_timeout: 10)
         @file_path = file_path
         @lock_timeout = lock_timeout

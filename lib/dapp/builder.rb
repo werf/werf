@@ -65,11 +65,11 @@ module Dapp
       end
     end
 
-    def register_docker_atomizer(file_path)
+    def register_file_atomizer(file_path)
       atomizer(file_path) || (atomizers[file_path.to_s] = Atomizer::File.new(file_path))
     end
 
-    def register_file_atomizer(file_path)
+    def register_docker_atomizer(file_path)
       atomizer(file_path) || (atomizers[file_path.to_s] = Atomizer::Docker.new(file_path))
     end
 
