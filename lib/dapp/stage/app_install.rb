@@ -1,6 +1,10 @@
 module Dapp
   module Stage
     class AppInstall < Base
+      def name
+        :app_install
+      end
+
       def image
         super do |image|
           builder.app_install_do(image)

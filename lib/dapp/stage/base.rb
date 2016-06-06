@@ -10,6 +10,10 @@ module Dapp
         @builder = builder
       end
 
+      def name
+        raise
+      end
+
       def build
         return if image_exist?
         prev.build if prev

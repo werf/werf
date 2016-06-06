@@ -1,6 +1,10 @@
 module Dapp
   module Stage
     class AppSetup < Base
+      def name
+        :app_setup
+      end
+
       def image
         super do |image|
           builder.app_setup_do(image)

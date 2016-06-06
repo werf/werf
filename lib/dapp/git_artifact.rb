@@ -98,52 +98,57 @@ module Dapp
       @branch || 'master'
     end
 
-
-    def source_1_commit
-      layer_commit(:source_2)
+    def layer_filename(stage, ending)
+      filename "#{stage}.#{builder.stages[stage].signature}#{ending}"
     end
 
-    def source_2_commit
-      layer_commit(:source_2)
+    def layer_commit_filename(stage)
+      layer_filename stage, '.commit'
     end
 
-    def source_3_commit
-      layer_commit(:source_3)
+    def layer_timestamp_filename(stage)
+      layer_filename stage, '.timestamp'
     end
 
-    def source_4_commit
+    def layer_commit_file_path(stage)
+      build_path layer_commit_filename(stage)
     end
 
-    def source_5_commit
-      if layer_commit_file_path(:source_5).exist?
-        if source_4_timestamp.to_i > source_5_timestamp.to_i
-          repo_latest_commit
-        else
-          layer_commit_file_path(:source_5).read.strip
-        end
+    def layer_timestamp_file_path(stage)
+      build_path layer_timestamp_filename(stage)
+    end
+
+    def layer_commit(stage)
+      if layer_commit_filename(stage).exist?
+        layer_commit_filename(stage).read.strip 
       else
         repo_latest_commit
       end
     end
 
-
-    def source_1_timestamp
-      layer_timestamp(:source_1)
+    def layer_timestamp(stage)
+      if layer_timestamp_filename(stage).exist?
+        layer_timestamp_filename(stage).read.strip.to_i
+      else
+        repo.commit_at(layer_commit(stage))
+      end
     end
 
-    def source_2_timestamp
-      layer_timestamp(:source_2)
+    def layer_actual?(stage)
+      layer_commit(stage) != layer_commit(layer_prev_stage(stage)) and
+        any_changes?(archive_commit, layer_commit(stage))
     end
 
-    def source_3_timestamp
-      layer_timestamp(:source_3)
+    def layer_exist?(stage)
+      layer_commit_file_path(stage).exist?
     end
 
-    def source_4_timestamp
-    end
-
-    def source_5_timestamp
-      layer_timestamp(:source_5)
+    def layer_prev_stage(stage)
+      s = stage
+      while prev_stage = builder.stages[s].prev
+        return prev_stage.name if layer_commit(prev_stage.name)
+        s = prev_stage
+      end
     end
 
 
@@ -243,8 +248,20 @@ module Dapp
     end
 
     def apply_source_4!(image)
-      # TODO
+      if source_4_timestamp.to_i < source_3_timestamp.to_i
+        layer_commit_file_path(:source_4).delete
+        layer_timestamp_file_path(:source_4).delete
+      end
+
       return if layer_actual?(:source_4)
+
+      atomizer << layer_commit_file_path(:source_4)
+      atomizer << layer_timestamp_file_path(:source_4)
+
+      layer_commit_file_path(:source_4).write source_4_commit + "\n"
+      layer_timestamp_file_path(:source_4).write repo.commit_at(source_4_commit) + "\n" if layer_timestamp_file_path(:source_4).zero?
+
+      apply_patch!(image, source_3_commit, source_4_commit)
     end
 
     def apply_source_5!(image)
@@ -253,6 +270,8 @@ module Dapp
         layer_commit_file_path(:source_5).delete
         layer_timestamp_file_path(:source_5).delete
       end
+
+      return if layer_actual?(:source_5)
 
       atomizer << layer_commit_file_path(:source_5)
       atomizer << layer_timestamp_file_path(:source_5)
@@ -264,6 +283,12 @@ module Dapp
         apply_patch!(image, source_4_commit, source_5_commit)
       else
         apply_patch!(image, source_3_commit, source_5_commit)
+      end
+    end
+
+    def source_5_prev_stage
+      %i(source_4 source_3 source_2 source_1 source_1_archive).each do |stage|
+        return stage if layer_commit(stage)
       end
     end
 
@@ -392,10 +417,6 @@ module Dapp
 
     def layer_timestamp_file_path(stage)
       build_path layer_filename(stage, '.timestamp')
-    end
-
-    def layer_actual?(stage)
-      layer_commit(stage) != archive_commit && any_changes?(archive_commit, layer_commit(stage))
     end
 
     def layer_commit(stage)

@@ -1,6 +1,10 @@
 module Dapp
   module Stage
     class Source2 < Base
+      def name
+        :source_2
+      end
+
       def image
         super do |image|
           builder.git_artifact_list.each do |git_artifact|

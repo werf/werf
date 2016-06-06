@@ -1,6 +1,10 @@
 module Dapp
   module Stage
     class Source4 < Base
+      def name
+        :source_4
+      end
+
       def source_4_patch
         builder.git_artifact_list.map {|git_artifact| git_artifact.source_4_patch}.reduce(:+)
       end

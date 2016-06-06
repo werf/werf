@@ -5,6 +5,10 @@ module Dapp
       include Dapp::Stage::Mod::Ubuntu1404
       include Dapp::Stage::Mod::Ubuntu1604
 
+      def name
+        :prepare
+      end
+
       def image
         super do |image|
           send(_image_method, image)
