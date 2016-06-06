@@ -1,7 +1,10 @@
 module Dapp
   class Docker
-    def initialize(socket: nil)
+    attr_reader :atomizer
+
+    def initialize(socket: nil, build: nil)
       @socket = socket || '/var/run/docker.sock'
+      @atomizer = build.builder.register_docker_atomizer(build.build_path("#{build.signature}.docker_atomizer"))
     end
 
     def raw_connection
@@ -27,6 +30,7 @@ module Dapp
           "#{from} bash #{ "-lec \"#{cmd.join('; ')}\"" unless cmd.empty? }"
         ).run_command.tap(&:error!)
         Mixlib::ShellOut.new("docker commit #{container_name} #{name}").run_command.tap(&:error!)
+        atomizer << name
       ensure
         Mixlib::ShellOut.new("docker rm #{container_name}").run_command
       end

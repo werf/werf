@@ -3,22 +3,22 @@ module Dapp
     class Source1 < Base
       def image
         super do |image|
-          builder.git_artifact_list.each do |git_artifact|
+          build.git_artifact_list.each do |git_artifact|
             git_artifact.apply_source_1!(image)
           end
         end
       end
 
       def signature
-        hashsum [builder.stages[:source_1_archive].signature,
+        hashsum [build.stages[:source_1_archive].signature,
                  dependency_file, dependency_file_regex,
-                 *builder.app_install_commands, # TODO chef
-                 *builder.git_artifact_list.map { |git_artifact| git_artifact.source_1_commit }]
+                 *build.app_install_commands, # TODO chef
+                 *build.git_artifact_list.map { |git_artifact| git_artifact.source_1_commit }]
       end
 
       def dependency_file
         @dependency_file ||= begin
-          file_path = Dir[builder.build_path('*')].detect {|x| x =~ dependency_file_regex }
+          file_path = Dir[build.build_path('*')].detect {|x| x =~ dependency_file_regex }
           File.read(file_path) unless file_path.nil?
         end
       end

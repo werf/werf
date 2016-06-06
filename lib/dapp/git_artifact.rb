@@ -4,11 +4,11 @@ module Dapp
     include Dapp::CommonHelper
 
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
-    def initialize(builder, repo, where_to_add,
+    def initialize(build, repo, where_to_add,
                    name: nil, branch: nil, commit: nil,
                    cwd: nil, paths: nil, owner: nil, group: nil,
                    interlayer_period: 7 * 24 * 3600, build_path: nil, flush_cache: false)
-      @builder = builder
+      @build = build
       @repo = repo
       @name = name
 
@@ -28,7 +28,7 @@ module Dapp
 
       @build_path = build_path || []
 
-      @atomizer = Atomizer.new builder, build_path(filename('.atomizer'))
+      @file_atomizer = build.builder.register_file_atomizer(build_path(filename('.file_atomizer')))
 
       # check params hash
       lock do
@@ -43,11 +43,11 @@ module Dapp
     end
 
     def build_path(*path)
-      builder.build_path(*@build_path, *path)
+      build.build_path(*@build_path, *path)
     end
 
     def container_build_path(*path)
-      builder.container_build_path(*@build_path, *path)
+      build.container_build_path(*@build_path, *path)
     end
 
     def cleanup!
@@ -184,8 +184,8 @@ module Dapp
     def apply_source_1_archive!(image)
       return if archive_commit_file_exist?
 
-      atomizer << archive_commit_file_path
-      atomizer << archive_timestamp_path
+      file_atomizer << archive_commit_file_path
+      file_atomizer << archive_timestamp_path
 
       archive_commit_file_path.write archive_commit + "\n"
       archive_timestamp_path.write repo.commit_at(archive_commit).to_s + "\n"
@@ -206,12 +206,12 @@ module Dapp
         delete_file(layer_timestamp_file_path(:source_1))
       end
 
-      atomizer << layer_commit_file_path(:source_1)
-      atomizer << layer_timestamp_file_path(:source_1)
+      file_atomizer << layer_commit_file_path(:source_1)
+      file_atomizer << layer_timestamp_file_path(:source_1)
 
       layer_commit_file_path(:source_1).write repo_latest_commit + "\n"
       layer_timestamp_file_path(:source_1).write repo.commit_at(layer_commit(:source_1)).to_s + "\n" if layer_timestamp_file_path(:source_1).zero?
-      apply_patch!(image, archive_commit, layer_commit(:source_1)) if layer_actual?(:source_1)
+      apply_patch!(image, archive_commit, layer_commit(:source_1)) unless layer_actual?(:source_1)
     end
 
     def apply_source_2!(image)
@@ -220,12 +220,12 @@ module Dapp
         delete_file(layer_timestamp_file_path(:source_2))
       end
 
-      atomizer << layer_commit_file_path(:source_2)
-      atomizer << layer_timestamp_file_path(:source_2)
+      file_atomizer << layer_commit_file_path(:source_2)
+      file_atomizer << layer_timestamp_file_path(:source_2)
 
       layer_commit_file_path(:source_2).write repo_latest_commit + "\n"
       layer_timestamp_file_path(:source_2).write repo.commit_at(layer_commit(:source_2)).to_s + "\n" if layer_timestamp_file_path(:source_2).zero?
-      apply_patch!(image, layer_commit(:source_1), layer_commit(:source_2)) if layer_actual?(:source_2)
+      apply_patch!(image, layer_commit(:source_1), layer_commit(:source_2)) unless layer_actual?(:source_2)
     end
 
     def apply_source_3!(image)
@@ -234,12 +234,12 @@ module Dapp
         delete_file(layer_timestamp_file_path(:source_3))
       end
 
-      atomizer << layer_commit_file_path(:source_3)
-      atomizer << layer_timestamp_file_path(:source_3)
+      file_atomizer << layer_commit_file_path(:source_3)
+      file_atomizer << layer_timestamp_file_path(:source_3)
 
       layer_commit_file_path(:source_3).write repo_latest_commit + "\n"
       layer_timestamp_file_path(:source_3).write repo.commit_at(layer_commit(:source_3)).to_s + "\n" if layer_timestamp_file_path(:source_3).zero?
-      apply_patch!(image, layer_commit(:source_2), layer_commit(:source_3)) if layer_actual?(:source_3)
+      apply_patch!(image, layer_commit(:source_2), layer_commit(:source_3)) unless layer_actual?(:source_3)
     end
 
     def apply_source_4!(image)
@@ -254,8 +254,8 @@ module Dapp
         layer_timestamp_file_path(:source_5).delete
       end
 
-      atomizer << layer_commit_file_path(:source_5)
-      atomizer << layer_timestamp_file_path(:source_5)
+      file_atomizer << layer_commit_file_path(:source_5)
+      file_atomizer << layer_timestamp_file_path(:source_5)
 
       layer_commit_file_path(:source_5).write source_5_commit + "\n"
       layer_timestamp_file_path(:source_5).write repo.commit_at(source_5_commit) + "\n" if layer_timestamp_file_path(:source_5).zero?
@@ -269,8 +269,8 @@ module Dapp
 
     protected
 
-    attr_reader :builder
-    attr_reader :atomizer
+    attr_reader :build
+    attr_reader :file_atomizer
 
     def lock_with_repo(&blk)
       lock do
@@ -395,7 +395,7 @@ module Dapp
     end
 
     def layer_actual?(stage)
-      layer_commit(stage) != archive_commit && any_changes?(archive_commit, layer_commit(stage))
+      layer_commit(stage) == archive_commit || !any_changes?(archive_commit, layer_commit(stage))
     end
 
     def layer_commit(stage)
@@ -440,11 +440,11 @@ module Dapp
     end
 
     def lock(**kwargs, &blk)
-      builder.filelock(build_path(filename('.lock')),
-                       error_message: "Git artifact commit:#{commit}" +
-                           "#{name ? " #{name}" : nil} #{repo.name}" +
-                           " (#{repo.dir_path}) in use! Try again later.",
-                       **kwargs, &blk)
+      build.filelock(build_path(filename('.lock')),
+                     error_message: "Git artifact commit:#{commit}" +
+                         "#{name ? " #{name}" : nil} #{repo.name}" +
+                         " (#{repo.dir_path}) in use! Try again later.",
+                     **kwargs, &blk)
     end
   end
 end

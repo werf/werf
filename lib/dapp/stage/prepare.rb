@@ -8,7 +8,7 @@ module Dapp
       def image
         super do |image|
           send(_image_method, image)
-          image.build_opts!({ expose: builder.conf[:exposes] }) unless builder.conf[:exposes].nil?
+          image.build_opts!({ expose: build.conf[:exposes] }) unless build.conf[:exposes].nil?
         end
       end
 
@@ -20,12 +20,12 @@ module Dapp
       end
 
       def from_image_name
-        builder.conf[:from]
+        build.conf[:from]
       end
 
       def signature
         image.signature
       end
     end # Prepare
-  end # Builder
+  end # Stage
 end # Dapp

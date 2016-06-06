@@ -3,14 +3,14 @@ module Dapp
     class Source1Archive < Base
       def image
         super do |image|
-          builder.git_artifact_list.each do |git_artifact|
+          build.git_artifact_list.each do |git_artifact|
             git_artifact.apply_source_1_archive!(image)
           end
         end
       end
 
       def signature
-        hashsum builder.stages[:infra_install].signature
+        hashsum build.stages[:infra_install].signature
       end
     end # Source1Archive
   end # Stage

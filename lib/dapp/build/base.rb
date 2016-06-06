@@ -9,11 +9,13 @@ module Dapp
       attr_reader :opts
       attr_reader :home_branch
       attr_reader :stages
+      attr_reader :builder
+      attr_reader :docker_atomizer
 
-      def initialize(docker:, conf:, opts:)
-        @docker = docker
+      def initialize(conf:, opts:, builder:)
         @conf = conf
         @opts = opts
+        @builder = builder
 
         # default log indentation
         opts[:log_indent] = 0
@@ -22,7 +24,6 @@ module Dapp
         opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
         @home_branch = shellout("git -C #{home_path} rev-parse --abbrev-ref HEAD").stdout.strip
-        @atomizers = []
         @builded_apps = []
 
         @stages = {
@@ -44,10 +45,15 @@ module Dapp
             stage
           }
         }
+        @docker = Dapp::Docker.new(socket: opts[:docker_socket], build: self)
 
         lock do
           yield self
         end if block_given?
+      end
+
+      def signature
+        stages.values.last.signature
       end
 
       def lock(**kwargs, &blk)
@@ -58,8 +64,8 @@ module Dapp
       end
 
       def run
-        stages.values.last.build
-        commit_atomizers!
+        stages.values.last.do_build
+        builder.commit_atomizers!
       end
 
       def infra_install_do(_image)
@@ -156,19 +162,6 @@ module Dapp
       def container_chef_path(*path)
         path.compact.inject(container_build_path('chef'), &:+).expand_path
       end
-
-      def register_atomizer(atomizer)
-        atomizers << atomizer
-      end
-
-      def commit_atomizers!
-        atomizers.each(&:commit!)
-        atomizers.each(&:close!)
-      end
-
-      protected
-
-      attr_reader :atomizers
     end # Base
   end # Builder
 end # Dapp
