@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     class Base
       include CommonHelper
       include Dapp::Filelock

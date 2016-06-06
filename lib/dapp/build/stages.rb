@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module Stages
       STAGES = %i(
         prepare
