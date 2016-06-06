@@ -174,7 +174,7 @@ module Dapp
         log "Skipped (does not match filter: '#{opts[:app_filter]}')!"
         return
       end
-      log "Adding application '#{name}'"
+      log "Prepared application config '#{name}'"
       { name: name, type: type }.merge(opts.select { |k, _v| [:from, :home_path, :dapps, :exposes, :git_artifact,
                                                               :infra_install, :infra_setup, :app_install, :app_setup].include?(k) } )
     end
