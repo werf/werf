@@ -1,6 +1,14 @@
 module Dapp
   module Stage
     class Source2 < Base
+      def image
+        super do |image|
+          builder.git_artifact_list.each do |git_artifact|
+            git_artifact.apply_source_2!(image)
+          end
+        end
+      end
+
       def signature
         hashsum [builder.stages[:app_install].signature,
                  *builder.infra_setup_commands, # TODO chef

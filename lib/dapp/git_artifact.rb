@@ -98,6 +98,7 @@ module Dapp
       @branch || 'master'
     end
 
+
     def source_1_commit
       layer_commit(:source_1)
     end
@@ -110,6 +111,51 @@ module Dapp
       layer_commit(:source_3)
     end
 
+    def source_4_commit
+    end
+
+    def source_5_commit
+    end
+
+
+    def source_1_timestamp
+      layer_timestamp(:source_1)
+    end
+
+    def source_2_timestamp
+      layer_timestamp(:source_2)
+    end
+
+    def source_3_timestamp
+      layer_timestamp(:source_3)
+    end
+
+    def source_4_timestamp
+    end
+
+    def source_5_timestamp
+    end
+
+
+    def source_4_diff
+    end
+
+    def source_5_diff
+    end
+
+
+    def source_1_actual?
+      layer_actual?(:source_1)
+    end
+
+    def source_2_actual?
+      layer_actual?(:source_2)
+    end
+
+    def source_3_actual?
+      layer_actual?(:source_3)
+    end
+
     def source_4_actual?
       layer_actual?(:source_4)
     end
@@ -118,14 +164,15 @@ module Dapp
       layer_actual?(:source_5)
     end
 
-    def apply_archive!(image)
+
+    def apply_source_1_archive!(image)
       return if archive_commit_file_exist?
 
       atomizer << archive_commit_file_path
-      atomizer << archive_commit_timestamp_path
+      atomizer << archive_timestamp_path
 
       archive_commit_file_path.write archive_commit + "\n"
-      archive_commit_timestamp_path.write repo.commit_at(archive_commit).to_s + "\n"
+      archive_timestamp_path.write repo.commit_at(archive_commit).to_s + "\n"
 
       credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
@@ -135,6 +182,48 @@ module Dapp
           ["tar xf #{container_archive_path} ", "-C #{where_to_add} ", "--strip-components=1", *credentials].join,
           "rm -rf #{container_archive_path}"
       )
+    end
+
+    def apply_source_1!(image)
+      if layer_timestamp_path(:source_1).to_i < archive_timestamp.to_i
+        layer_commit_file_path(:source_1).delete
+        layer_timestamp_path(:source_1).delete
+      end
+
+      atomizer << layer_commit_file_path(:source_1)
+      atomizer << layer_timestamp_path(:source_1)
+
+      layer_commit_file_path(:source_1).write repo_latest_commit + "\n"
+      layer_timestamp_path(:source_1).write repo.commit_at(layer_commit(:source_1)).to_s + "\n" if layer_timestamp_path(:source_1).zero?
+      apply_patch!(image, archive_commit, layer_commit(:source_1))
+    end
+
+    def apply_source_2!(image)
+      if layer_timestamp_path(:source_2).to_i < layer_timestamp_path(:source_1).to_i
+        layer_commit_file_path(:source_2).delete
+        layer_timestamp_path(:source_2).delete
+      end
+
+      atomizer << layer_commit_file_path(:source_2)
+      atomizer << layer_timestamp_path(:source_2)
+
+      layer_commit_file_path(:source_2).write repo_latest_commit + "\n"
+      layer_timestamp_path(:source_2).write repo.commit_at(layer_commit(:source_2)).to_s + "\n" if layer_timestamp_path(:source_2).zero?
+      apply_patch!(image, layer_commit(:source_1), layer_commit(:source_2))
+    end
+
+    def apply_source_3!(image)
+      if layer_timestamp_path(:source_3).to_i < layer_timestamp_path(:source_2).to_i
+        layer_commit_file_path(:source_3).delete
+        layer_timestamp_path(:source_3).delete
+      end
+
+      atomizer << layer_commit_file_path(:source_3)
+      atomizer << layer_timestamp_path(:source_3)
+
+      layer_commit_file_path(:source_3).write repo_latest_commit + "\n"
+      layer_timestamp_path(:source_3).write repo.commit_at(layer_commit(:source_3)).to_s + "\n" if layer_timestamp_path(:source_3).zero?
+      apply_patch!(image, layer_commit(:source_2), layer_commit(:source_3))
     end
 
     protected
@@ -190,16 +279,20 @@ module Dapp
       container_build_path archive_filename
     end
 
-    def archive_commit_timestamp_filename
+    def archive_timestamp_filename
       filename '.timestamp'
     end
 
-    def archive_commit_timestamp_path
-      build_path archive_commit_timestamp_filename
+    def archive_timestamp_path
+      build_path archive_timestamp_filename
     end
 
-    def container_archive_commit_timestamp_path
-      container_build_path archive_commit_timestamp_filename
+    def archive_timestamp
+      archive_timestamp_path.read.strip
+    end
+
+    def container_archive_timestamp_path
+      container_build_path archive_timestamp_filename
     end
 
     def archive_commit_file_filename
@@ -254,12 +347,20 @@ module Dapp
       build_path layer_filename(stage, '.commit')
     end
 
+    def layer_timestamp_path(stage)
+      build_path layer_filename(stage, '.timestamp')
+    end
+
+    def layer_timestamp(stage)
+      layer_timestamp_path(stage).read.strip
+    end
+
     def layer_actual?(stage)
       layer_commit(stage) == archive_commit || !any_changes?(archive_commit, layer_commit(stage))
     end
 
     def layer_commit(stage)
-      if layer_commit_file_path(stage).exist?
+      if layer_commit_file_path(stage).exist? and layer_timestamp_path(stage).exist?
         layer_commit_file_path(stage).read.strip
       else
         repo_latest_commit
