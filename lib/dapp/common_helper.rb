@@ -22,5 +22,10 @@ module Dapp
     def kwargs(args)
       args.last.is_a?(Hash) ? args.pop : {}
     end
+
+    def delete_file(path)
+      path = Pathname(path)
+      path.delete if path.exist?
+    end
   end # CommonHelper
 end # Dapp

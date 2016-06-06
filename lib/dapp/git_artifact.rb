@@ -180,8 +180,12 @@ module Dapp
     def source_5_exist?
     end
 
+    def source_4_patch
+      ''
+    end
+
     def source_5_patch
-      nil
+      ''
     end
 
 
@@ -206,8 +210,8 @@ module Dapp
 
     def apply_source_1!(image)
       if layer_timestamp(:source_1).to_i < archive_timestamp.to_i
-        layer_commit_file_path(:source_1).delete
-        layer_timestamp_file_path(:source_1).delete
+        delete_file(layer_commit_file_path(:source_1))
+        delete_file(layer_timestamp_file_path(:source_1))
       end
 
       atomizer << layer_commit_file_path(:source_1)
@@ -220,8 +224,8 @@ module Dapp
 
     def apply_source_2!(image)
       if layer_timestamp(:source_2).to_i < layer_timestamp(:source_1).to_i
-        layer_commit_file_path(:source_2).delete
-        layer_timestamp_file_path(:source_2).delete
+        delete_file(layer_commit_file_path(:source_2))
+        delete_file(layer_timestamp_file_path(:source_2))
       end
 
       atomizer << layer_commit_file_path(:source_2)
@@ -234,8 +238,8 @@ module Dapp
 
     def apply_source_3!(image)
       if layer_timestamp(:source_3).to_i < layer_timestamp(:source_2).to_i
-        layer_commit_file_path(:source_3).delete
-        layer_timestamp_file_path(:source_3).delete
+        delete_file(layer_commit_file_path(:source_3))
+        delete_file(layer_timestamp_file_path(:source_3))
       end
 
       atomizer << layer_commit_file_path(:source_3)
@@ -244,6 +248,11 @@ module Dapp
       layer_commit_file_path(:source_3).write repo_latest_commit + "\n"
       layer_timestamp_file_path(:source_3).write repo.commit_at(layer_commit(:source_3)).to_s + "\n" if layer_timestamp_file_path(:source_3).zero?
       apply_patch!(image, layer_commit(:source_2), layer_commit(:source_3)) if layer_actual?(:source_3)
+    end
+
+    def apply_source_4!(image)
+      # TODO
+      return if layer_actual?(:source_4)
     end
 
     def apply_source_5!(image)
