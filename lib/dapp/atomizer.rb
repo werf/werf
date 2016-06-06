@@ -25,6 +25,10 @@ module Dapp
       @file = open
     end
 
+    def close!
+      @file.close
+    end
+
     protected
 
     attr_reader :file_path

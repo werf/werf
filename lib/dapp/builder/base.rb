@@ -18,7 +18,6 @@ module Dapp
         # default log indentation
         opts[:log_indent] = 0
 
-        opts[:home_path]  = conf[:home_path]
         opts[:build_path] = opts[:build_dir] ? opts[:build_dir] : home_path('build')
         opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
@@ -135,7 +134,7 @@ module Dapp
 
 
       def home_path(*path)
-        path.compact.inject(Pathname.new(opts[:home_path]), &:+).expand_path
+        path.compact.inject(Pathname.new(conf[:home_path]), &:+).expand_path
       end
 
       def build_path(*path)
@@ -164,6 +163,7 @@ module Dapp
 
       def commit_atomizers!
         atomizers.each(&:commit!)
+        atomizers.each(&:close!)
       end
 
       protected
