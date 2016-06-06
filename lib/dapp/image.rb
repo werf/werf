@@ -17,7 +17,9 @@ module Dapp
     end
 
     def build_opts!(**options)
-      build_opts.merge! **options
+      options.each do |k, v|
+        build_opts[k] = build_opts[k].nil? ? v : (Array(build_opts[k]) << v).flatten
+      end
     end
 
     def signature
