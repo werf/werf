@@ -4,28 +4,30 @@ module Dapp
       include CommonHelper
 
       attr_accessor :prev, :next
-      attr_reader :builder
+      attr_reader :build
 
-      def initialize(builder)
-        @builder = builder
+      def initialize(build)
+        @build = build
       end
 
+<<<<<<< HEAD
       def name
         raise
       end
 
-      def build
+      def do_build
         return if image_exist?
-        prev.build if prev
+        prev.do_build if prev
         build_image!
       end
 
       def image_exist?
-        builder.docker.image_exist? image_name
+        build.docker.image_exist? image_name
       end
 
       def build_image!
-        builder.docker.build_image! image: image, name: image_name
+        build.log self.class.to_s
+        build.docker.build_image! image: image, name: image_name
       end
 
       def from_image_name
@@ -45,8 +47,8 @@ module Dapp
       def image
         @image ||= begin
           Image.new(from: from_image_name).tap do |image|
-            volumes = ["#{builder.build_path}:#{builder.container_build_path}"]
-            volumes << "#{builder.local_git_artifact.repo.dir_path}:#{builder.local_git_artifact.repo.container_build_dir_path}" if builder.local_git_artifact
+            volumes = ["#{build.build_path}:#{build.container_build_path}"]
+            volumes << "#{build.local_git_artifact.repo.dir_path}:#{build.local_git_artifact.repo.container_build_dir_path}" if build.local_git_artifact
             image.build_opts! volume: volumes
             yield image if block_given?
           end

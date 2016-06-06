@@ -113,56 +113,9 @@ BANNER
         @composite_options[opt] ||= []
       end
 
-      def dappfile_path
-        @dappfile_path ||= File.join [config[:dir], config[:dappfile_name] || 'Dappfile'].compact
-      end
-
-      def patterns
-        @patterns ||= cli_arguments
-      end
-
       def run(argv = ARGV)
         CLI.parse_options(self, argv)
-
-        patterns << '*' unless patterns.any?
-
-        build_configs.each do |build_conf|
-          options = { docker: Dapp::Docker.new(socket: config[:docker_socket]), conf: build_conf, opts: config }
-          Dapp::Builder.new(**options).run
-        end
-      end
-
-      def build_configs
-        Dapp::Config.default_opts.tap do |default_opts|
-          [:log_quiet, :log_verbose, :type].each { |opt| default_opts[opt] = config[opt] }
-        end
-
-        if File.exist? dappfile_path
-          process_file
-        else
-          process_directory
-        end
-      end
-
-      def process_file
-        patterns.map do |pattern|
-          unless (configs = Dapp::Config.process_file(dappfile_path, app_filter: pattern)).any?
-            STDERR.puts "Error: No such app: '#{pattern}' in #{dappfile_path}"
-            exit 1
-          end
-          configs
-        end.flatten
-      end
-
-      def process_directory
-        Dapp::Config.default_opts[:shared_build_dir] = true
-        patterns.map do |pattern|
-          unless (configs = Dapp::Config.process_directory(config[:dir], pattern)).any?
-            STDERR.puts "Error: No such app '#{pattern}'"
-            exit 1
-          end
-          configs
-        end.flatten
+        Builder.new(cli_options: config, patterns: cli_arguments).build
       end
     end
   end

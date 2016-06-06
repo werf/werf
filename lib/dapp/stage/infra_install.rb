@@ -7,7 +7,7 @@ module Dapp
 
       def image
         super do |image|
-          builder.infra_install_do(image)
+          build.infra_install_do(image)
         end
       end
 
