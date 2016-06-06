@@ -18,7 +18,7 @@ module Dapp
         # default log indentation
         opts[:log_indent] = 0
 
-        opts[:home_path] ||= Pathname.new(opts[:dappfile_path] || 'fakedir').parent.expand_path.to_s
+        opts[:home_path]  = conf[:home_path]
         opts[:build_path] = opts[:build_dir] ? opts[:build_dir] : home_path('build')
         opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
