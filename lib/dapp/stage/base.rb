@@ -10,7 +10,6 @@ module Dapp
         @build = build
       end
 
-<<<<<<< HEAD
       def name
         raise
       end
