@@ -127,7 +127,7 @@ module Dapp
     end
 
     def layer_commit_write!(stage)
-      file_atomizer << layer_commit_file_path(stage)
+      file_atomizer.add_file(layer_commit_file_path(stage))
       layer_commit_file_path(stage).write(layer_commit(stage) + "\n")
     end
 
@@ -142,7 +142,7 @@ module Dapp
     def layer_timestamp_write!(stage)
       return unless layer_timestamp_file_path(stage).zero?
 
-      file_atomizer << layer_timestamp_file_path(stage)
+      file_atomizer.add_file(layer_timestamp_file_path(stage))
       layer_timestamp_file_path(stage).write(layer_timestamp(stage) + "\n")
     end
 
@@ -157,7 +157,7 @@ module Dapp
 
     def layer_prev_stage(stage)
       s = stage
-      while prev_stage = build.stages[s].prev
+      while (prev_stage = build.stages[s].prev)
         return prev_stage.name if layer_commit(prev_stage.name)
         s = prev_stage
       end
@@ -198,7 +198,7 @@ module Dapp
          "-o #{container_archive_path} #{paths}"].join(' '),
         "mkdir -p #{where_to_add}",
         ["tar xf #{container_archive_path}", "-C #{where_to_add}",
-         "--strip-components=1", *credentials].join(' '),
+         '--strip-components=1', *credentials].join(' '),
         "rm -rf #{container_archive_path}",
       )
     end
@@ -325,26 +325,6 @@ module Dapp
       image.build_cmd! "git --git-dir=#{repo.container_build_dir_path} diff #{from} #{to} | git --git-dir=#{repo.container_build_dir_path} apply --whitespace=nowarn --directory=#{where_to_add}"
     end
 
-    def layer_filename(stage, ending)
-      filename "_layer_#{stage.is_a?(Fixnum) ? format('%04d', stage) : stage}#{ending}"
-    end
-
-    def layer_commit_file_path(stage)
-      build_path layer_filename(stage, '.commit')
-    end
-
-    def layer_timestamp_file_path(stage)
-      build_path layer_filename(stage, '.timestamp')
-    end
-
-    def layer_commit(stage)
-      if layer_commit_file_path(stage).exist? and layer_timestamp_file_path(stage).exist?
-        layer_commit_file_path(stage).read.strip
-      else
-        repo_latest_commit
-      end
-    end
-
     def layers
       Dir.glob(layer_commit_file_path('*')).map { |path| Integer(path.gsub(/.*_(\d+)\.commit$/, '\\1')) }.sort
     end
@@ -366,12 +346,6 @@ module Dapp
     def apply_latest_patch!(image)
       # apply_patch! image, latest_patch_filename
       # TODO
-    end
-
-    def layer_timestamp(stage)
-      value = nil
-      value = layer_timestamp_file_path(stage).read.strip.to_i if layer_timestamp_file_path(stage).exist?
-      value
     end
 
     def remove_latest!
