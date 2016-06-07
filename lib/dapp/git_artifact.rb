@@ -82,7 +82,7 @@ module Dapp
     end
 
     def layer_filename(stage, ending)
-      filename "#{stage}.#{paramshash}.#{build.stages[stage].git_artifact_signature}#{ending}"
+      filename ".#{stage}.#{paramshash}.#{build.stages[stage].git_artifact_signature}#{ending}"
     end
 
     def layer_commit_filename(stage)
