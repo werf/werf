@@ -179,6 +179,8 @@ module Dapp
     %i(source_1_archive source_1 source_2 source_3 source_4 source_5).each do |stage|
       define_method("#{stage}_actual?") {layer_actual?(stage)}
       define_method("#{stage}_patch") {layer_patch(stage)}
+      define_method("#{stage}_commit") {layer_commit(stage)}
+      define_method("#{stage}_timestamp") {layer_timestamp(stage)}
       define_method("#{stage}_apply!") {|image| layer_apply!(image, stage)}
     end
 
