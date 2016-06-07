@@ -5,6 +5,10 @@ module Dapp
         :source_4
       end
 
+      def prev_source_stage_name
+        :source_3
+      end
+
       def source_4_patch
         build.git_artifact_list.map {|git_artifact| git_artifact.source_4_patch}.reduce(:+)
       end

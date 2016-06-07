@@ -147,19 +147,19 @@ module Dapp
     end
 
     def layer_actual?(stage)
-      prev_commit = layer_commit(layer_prev_stage(stage))
-      layer_commit(stage) != prev_commit and any_changes?(prev_commit, layer_commit(stage))
+      prev_commit = layer_commit(layer_prev_source_stage(stage))
+      layer_commit(stage) == prev_commit and !any_changes?(prev_commit, layer_commit(stage))
     end
 
     def layer_exist?(stage)
       layer_commit_file_path(stage).exist?
     end
 
-    def layer_prev_stage(stage)
+    def layer_prev_source_stage(stage)
       s = stage
-      while (prev_stage = build.stages[s].prev)
-        return prev_stage.name if layer_commit(prev_stage.name)
-        s = prev_stage
+      while (prev_stage_name = build.stages[s].prev_source_stage)
+        return prev_stage_name if layer_commit(prev_stage_name)
+        s = prev_stage_name
       end
       nil
     end
@@ -173,7 +173,7 @@ module Dapp
 
       layer_commit_write!(stage)
       layer_timestamp_write!(stage)
-      apply_patch!(image, layer_commit(layer_prev_stage(stage)), layer_commit(stage))
+      apply_patch!(image, layer_commit(layer_prev_source_stage(stage)), layer_commit(stage))
     end
 
     %i(source_1_archive source_1 source_2 source_3 source_4 source_5).each do |stage|
@@ -184,8 +184,12 @@ module Dapp
       define_method("#{stage}_apply!") {|image| layer_apply!(image, stage)}
     end
 
+    def source_1_archive_actual?
+      layer_commit_file_path(:source_1_archive).exist?
+    end
+
     def source_1_archive_apply!(image)
-      return if layer_commit_file_path(:source_1_archive).exist?
+      return if source_1_archive_actual?
 
       layer_commit_write!(:source_1_archive)
       layer_timestamp_write!(:source_1_archive)

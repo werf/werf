@@ -5,6 +5,10 @@ module Dapp
         :source_5
       end
 
+      def prev_source_stage_name
+        :source_4
+      end
+
       def source_5_actual?
         build.git_artifact_list.map {|git_artifact| git_artifact.source_5_actual?}.all?
       end

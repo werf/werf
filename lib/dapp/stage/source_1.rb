@@ -5,6 +5,10 @@ module Dapp
         :source_1
       end
 
+      def prev_source_stage_name
+        :source_1_archive
+      end
+
       def image
         super do |image|
           build.git_artifact_list.each do |git_artifact|
