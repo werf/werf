@@ -120,7 +120,7 @@ module Dapp
 
     def layer_commit(stage)
       if layer_commit_file_path(stage).exist?
-        layer_commit_file_path(stage).read.strip 
+        layer_commit_file_path(stage).read.strip
       else
         repo_latest_commit
       end
