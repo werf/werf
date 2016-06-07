@@ -39,6 +39,10 @@ module Dapp
         raise
       end
 
+      def git_artifact_signature
+        raise
+      end
+
       def image_name
         "dapp:#{signature}"
       end

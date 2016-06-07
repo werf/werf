@@ -20,6 +20,11 @@ module Dapp
                  *build.git_artifact_list.map { |git_artifact| git_artifact.source_1_commit }]
       end
 
+      def git_artifact_signature
+        hashsum [build.stages[:source_1_archive].signature,
+                 *build.app_install_commands]
+      end
+
       def dependency_file
         @dependency_file ||= begin
           file_path = Dir[build.build_path('*')].detect {|x| x =~ dependency_file_regex }

@@ -25,6 +25,10 @@ module Dapp
         end
       end
 
+      def git_artifact_signature
+        hashsum build.stages[:app_setup].signature
+      end
+
       def image
         super do |image|
           build.git_artifact_list.each do |git_artifact|

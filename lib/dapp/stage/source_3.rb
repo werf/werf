@@ -20,6 +20,11 @@ module Dapp
                  *build.git_artifact_list.map { |git_artifact| git_artifact.source_3_commit }]
       end
 
+      def git_artifact_signature
+        hashsum [build.stages[:infra_setup].signature,
+                 *build.app_setup_commands]
+      end
+
       def app_setup_file
         @app_setup_file ||= begin
           File.read(app_setup_file_path) if app_setup_file?

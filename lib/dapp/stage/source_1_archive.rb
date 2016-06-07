@@ -16,6 +16,10 @@ module Dapp
       def signature
         hashsum build.stages[:infra_install].signature
       end
+
+      def git_artifact_signature
+        signature
+      end
     end # Source1Archive
   end # Stage
 end # Dapp

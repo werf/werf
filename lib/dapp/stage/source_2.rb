@@ -18,6 +18,11 @@ module Dapp
                  *build.infra_setup_commands, # TODO chef
                  *build.git_artifact_list.map { |git_artifact| git_artifact.source_2_commit }]
       end
+
+      def git_artifact_signature
+        hashsum [build.stages[:app_install].signature,
+                 *build.infra_setup_commands]
+      end
     end # Source2
   end # Stage
 end # Dapp
