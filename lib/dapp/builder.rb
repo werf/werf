@@ -7,7 +7,7 @@ module Dapp
       @cli_options = cli_options
 
       @patterns = patterns || []
-      @patterns << '*' unless patterns.any?
+      @patterns << '*' unless @patterns.any?
 
       @atomizers = {}
     end

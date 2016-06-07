@@ -28,7 +28,7 @@ module Dapp
       def image
         super do |image|
           build.git_artifact_list.each do |git_artifact|
-            git_artifact.apply_source_4!(image)
+            git_artifact.source_4_apply!(image)
           end
         end
       end

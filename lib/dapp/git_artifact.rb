@@ -99,7 +99,7 @@ module Dapp
     end
 
     def layer_filename(stage, ending)
-      filename "#{stage}.#{builder.stages[stage].signature}#{ending}"
+      filename "#{stage}.#{build.stages[stage].signature}#{ending}"
     end
 
     def layer_commit_filename(stage)
@@ -126,12 +126,24 @@ module Dapp
       end
     end
 
+    def layer_commit_write!(stage)
+      file_atomizer << layer_commit_file_path(stage)
+      layer_commit_file_path(stage).write(layer_commit(stage) + "\n")
+    end
+
     def layer_timestamp(stage)
       if layer_timestamp_filename(stage).exist?
         layer_timestamp_filename(stage).read.strip.to_i
       else
         repo.commit_at(layer_commit(stage))
       end
+    end
+
+    def layer_timestamp_write!(stage)
+      return unless layer_timestamp_file_path(stage).zero?
+
+      file_atomizer << layer_timestamp_file_path(stage)
+      layer_timestamp_file_path(stage).write(layer_timestamp(stage) + "\n")
     end
 
     def layer_actual?(stage)
@@ -145,151 +157,57 @@ module Dapp
 
     def layer_prev_stage(stage)
       s = stage
-      while prev_stage = builder.stages[s].prev
+      while prev_stage = build.stages[s].prev
         return prev_stage.name if layer_commit(prev_stage.name)
         s = prev_stage
       end
+      nil
     end
 
-
-    def source_1_actual?
-      layer_actual?(:source_1)
-    end
-
-    def source_2_actual?
-      layer_actual?(:source_2)
-    end
-
-    def source_3_actual?
-      layer_actual?(:source_3)
-    end
-
-    def source_4_actual?
-      layer_actual?(:source_4)
-    end
-
-    def source_5_actual?
-      if source_4_commit
-        source_5_commit == source_4_commit || !any_changes?(source_4_commit, source_5_commit)
-      else
-        source_5_commit == source_3_commit || !any_changes?(source_3_commit, source_5_commit)
-      end
-    end
-
-
-    def source_4_patch
+    def layer_patch(stage)
       ''
     end
 
-    def source_5_patch
-      ''
+    def layer_apply!(image, stage)
+      return if layer_actual?(stage)
+
+      layer_commit_write!(stage)
+      layer_timestamp_write!(stage)
+      apply_patch!(image, layer_commit(layer_prev_stage(stage)), layer_commit(stage))
     end
 
+    %i(source_1_archive source_1 source_2 source_3 source_4 source_5).each do |stage|
+      define_method("#{stage}_actual?") {layer_actual?(stage)}
+      define_method("#{stage}_patch") {layer_patch(stage)}
+      define_method("#{stage}_apply!") {|image| layer_apply!(image, stage)}
+    end
 
-    def apply_source_1_archive!(image)
-      return if archive_commit_file_exist?
+    def source_1_archive_apply!(image)
+      return if layer_commit_file_path(:source_1_archive).exist?
 
-      file_atomizer << archive_commit_file_path
-      file_atomizer << archive_timestamp_path
+      layer_commit_write!(:source_1_archive)
+      layer_timestamp_write!(:source_1_archive)
 
-      archive_commit_file_path.write archive_commit + "\n"
-      archive_timestamp_path.write repo.commit_at(archive_commit).to_s + "\n"
-
-      credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
+      credentials = [:owner, :group].map {|attr|
+        "--#{attr}=#{send(attr)}" unless send(attr).nil?
+      }.compact
 
       image.build_cmd!(
-          "git --git-dir=#{repo.container_build_dir_path} archive --format tar.gz #{archive_commit}:#{cwd} -o #{container_archive_path} #{paths}",
-          "mkdir -p #{where_to_add}",
-          ["tar xf #{container_archive_path} ", "-C #{where_to_add} ", "--strip-components=1", *credentials].join,
-          "rm -rf #{container_archive_path}"
+        ["git --git-dir=#{repo.container_build_dir_path} archive",
+         "--format tar.gz #{archive_commit}:#{cwd}",
+         "-o #{container_archive_path} #{paths}"].join(' '),
+        "mkdir -p #{where_to_add}",
+        ["tar xf #{container_archive_path}", "-C #{where_to_add}",
+         "--strip-components=1", *credentials].join(' '),
+        "rm -rf #{container_archive_path}",
       )
     end
 
-    def apply_source_1!(image)
-      if layer_timestamp(:source_1).to_i < archive_timestamp.to_i
-        delete_file(layer_commit_file_path(:source_1))
-        delete_file(layer_timestamp_file_path(:source_1))
-      end
-
-      file_atomizer << layer_commit_file_path(:source_1)
-      file_atomizer << layer_timestamp_file_path(:source_1)
-
-      layer_commit_file_path(:source_1).write repo_latest_commit + "\n"
-      layer_timestamp_file_path(:source_1).write repo.commit_at(layer_commit(:source_1)).to_s + "\n" if layer_timestamp_file_path(:source_1).zero?
-      apply_patch!(image, archive_commit, layer_commit(:source_1)) unless layer_actual?(:source_1)
+    def source_4_actual? # FIXME: skipped stage
+      true
     end
 
-    def apply_source_2!(image)
-      if layer_timestamp(:source_2).to_i < layer_timestamp(:source_1).to_i
-        delete_file(layer_commit_file_path(:source_2))
-        delete_file(layer_timestamp_file_path(:source_2))
-      end
-
-      file_atomizer << layer_commit_file_path(:source_2)
-      file_atomizer << layer_timestamp_file_path(:source_2)
-
-      layer_commit_file_path(:source_2).write repo_latest_commit + "\n"
-      layer_timestamp_file_path(:source_2).write repo.commit_at(layer_commit(:source_2)).to_s + "\n" if layer_timestamp_file_path(:source_2).zero?
-      apply_patch!(image, layer_commit(:source_1), layer_commit(:source_2)) unless layer_actual?(:source_2)
-    end
-
-    def apply_source_3!(image)
-      if layer_timestamp(:source_3).to_i < layer_timestamp(:source_2).to_i
-        delete_file(layer_commit_file_path(:source_3))
-        delete_file(layer_timestamp_file_path(:source_3))
-      end
-
-      file_atomizer << layer_commit_file_path(:source_3)
-      file_atomizer << layer_timestamp_file_path(:source_3)
-
-      layer_commit_file_path(:source_3).write repo_latest_commit + "\n"
-      layer_timestamp_file_path(:source_3).write repo.commit_at(layer_commit(:source_3)).to_s + "\n" if layer_timestamp_file_path(:source_3).zero?
-      apply_patch!(image, layer_commit(:source_2), layer_commit(:source_3)) unless layer_actual?(:source_3)
-    end
-
-    def apply_source_4!(image)
-      if source_4_timestamp.to_i < source_3_timestamp.to_i
-        layer_commit_file_path(:source_4).delete
-        layer_timestamp_file_path(:source_4).delete
-      end
-
-      return if layer_actual?(:source_4)
-
-      atomizer << layer_commit_file_path(:source_4)
-      atomizer << layer_timestamp_file_path(:source_4)
-
-      layer_commit_file_path(:source_4).write source_4_commit + "\n"
-      layer_timestamp_file_path(:source_4).write repo.commit_at(source_4_commit) + "\n" if layer_timestamp_file_path(:source_4).zero?
-
-      apply_patch!(image, source_3_commit, source_4_commit)
-    end
-
-    def apply_source_5!(image)
-      if (source_4_commit and source_5_timestamp.to_i < source_4_timestamp.to_i) or
-         (source_5_timestamp.to_i < source_3_timestamp.to_i)
-        layer_commit_file_path(:source_5).delete
-        layer_timestamp_file_path(:source_5).delete
-      end
-
-      return if layer_actual?(:source_5)
-
-      file_atomizer << layer_commit_file_path(:source_5)
-      file_atomizer << layer_timestamp_file_path(:source_5)
-
-      layer_commit_file_path(:source_5).write source_5_commit + "\n"
-      layer_timestamp_file_path(:source_5).write repo.commit_at(source_5_commit) + "\n" if layer_timestamp_file_path(:source_5).zero?
-
-      if source_4_commit
-        apply_patch!(image, source_4_commit, source_5_commit)
-      else
-        apply_patch!(image, source_3_commit, source_5_commit)
-      end
-    end
-
-    def source_5_prev_stage
-      %i(source_4 source_3 source_2 source_1 source_1_archive).each do |stage|
-        return stage if layer_commit(stage)
-      end
+    def source_4_apply!(image) # FIXME: skipped stage
     end
 
     protected
