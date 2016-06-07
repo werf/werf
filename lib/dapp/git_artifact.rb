@@ -147,8 +147,8 @@ module Dapp
     end
 
     def layer_actual?(stage)
-      layer_commit(stage) != layer_commit(layer_prev_stage(stage)) and
-        any_changes?(archive_commit, layer_commit(stage))
+      prev_commit = layer_commit(layer_prev_stage(stage))
+      layer_commit(stage) != prev_commit and any_changes?(prev_commit, layer_commit(stage))
     end
 
     def layer_exist?(stage)
