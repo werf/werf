@@ -127,7 +127,7 @@ module Dapp
     end
 
     def layer_commit_write!(stage)
-      file_atomizer.add_file(layer_commit_file_path(stage))
+      file_atomizer.add_path(layer_commit_file_path(stage))
       layer_commit_file_path(stage).write(layer_commit(stage) + "\n")
     end
 
@@ -142,7 +142,7 @@ module Dapp
     def layer_timestamp_write!(stage)
       return unless layer_timestamp_file_path(stage).zero?
 
-      file_atomizer.add_file(layer_timestamp_file_path(stage))
+      file_atomizer.add_path(layer_timestamp_file_path(stage))
       layer_timestamp_file_path(stage).write(layer_timestamp(stage) + "\n")
     end
 
