@@ -54,9 +54,7 @@ module Dapp
       lock do
         FileUtils.rm_f [
           paramshash_path,
-          archive_commit_file_path,
           Dir.glob(layer_commit_file_path('*')),
-          latest_commit_file_path
         ].flatten
       end
     end
@@ -99,7 +97,7 @@ module Dapp
     end
 
     def layer_filename(stage, ending)
-      filename "#{stage}.#{build.stages[stage].git_artifact_signature}#{ending}"
+      filename "#{stage}.#{paramshash}.#{build.stages[stage].git_artifact_signature}#{ending}"
     end
 
     def layer_commit_filename(stage)
