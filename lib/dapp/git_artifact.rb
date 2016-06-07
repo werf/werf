@@ -157,7 +157,7 @@ module Dapp
 
     def layer_prev_source_stage(stage)
       s = stage
-      while (prev_stage_name = build.stages[s].prev_source_stage)
+      while (prev_stage_name = build.stages[s].prev_source_stage_name)
         return prev_stage_name if layer_commit(prev_stage_name)
         s = prev_stage_name
       end
