@@ -119,8 +119,8 @@ module Dapp
     end
 
     def layer_commit(stage)
-      if layer_commit_filename(stage).exist?
-        layer_commit_filename(stage).read.strip 
+      if layer_commit_file_path(stage).exist?
+        layer_commit_file_path(stage).read.strip 
       else
         repo_latest_commit
       end
@@ -132,8 +132,8 @@ module Dapp
     end
 
     def layer_timestamp(stage)
-      if layer_timestamp_filename(stage).exist?
-        layer_timestamp_filename(stage).read.strip.to_i
+      if layer_timestamp_file_path(stage).exist?
+        layer_timestamp_file_path(stage).read.strip.to_i
       else
         repo.commit_at(layer_commit(stage))
       end
