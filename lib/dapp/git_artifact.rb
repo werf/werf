@@ -29,12 +29,6 @@ module Dapp
       @build_path = build_path || []
 
       @file_atomizer = build.builder.register_file_atomizer(build_path(filename('.file_atomizer')))
-
-      # check params hash
-      lock do
-        cleanup! unless !flush_cache && paramshash_path.exist? && paramshash_path.read.strip == paramshash
-        paramshash_path.write paramshash + "\n"
-      end
     end
     # rubocop:enable Metrics/ParameterLists, Metrics/MethodLength
 
@@ -48,15 +42,6 @@ module Dapp
 
     def container_build_path(*path)
       build.container_build_path(*@build_path, *path)
-    end
-
-    def cleanup!
-      lock do
-        FileUtils.rm_f [
-          paramshash_path,
-          Dir.glob(layer_commit_file_path('*')),
-        ].flatten
-      end
     end
 
     def exist_in_step?(path, step)
@@ -244,14 +229,6 @@ module Dapp
 
     def filename(ending)
       "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
-    end
-
-    def paramshash_filename
-      filename '.paramshash'
-    end
-
-    def paramshash_path
-      build_path paramshash_filename
     end
 
     def paramshash
