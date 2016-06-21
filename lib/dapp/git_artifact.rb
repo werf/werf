@@ -105,11 +105,14 @@ module Dapp
       if layer_commit_file_path(stage).exist?
         layer_commit_file_path(stage).read.strip
       else
+        layer_commit_write!(stage)
         repo_latest_commit
       end
     end
 
     def layer_commit_write!(stage)
+      return if stage == :source_5
+
       file_atomizer.add_path(layer_commit_file_path(stage))
       layer_commit_file_path(stage).write(repo_latest_commit + "\n")
     end
@@ -118,7 +121,7 @@ module Dapp
       if layer_timestamp_file_path(stage).exist?
         layer_timestamp_file_path(stage).read.strip.to_i
       else
-        repo.commit_at(layer_commit(stage))
+        repo.commit_at(layer_commit(stage)).to_i
       end
     end
 
@@ -126,7 +129,7 @@ module Dapp
       return unless layer_timestamp_file_path(stage).zero?
 
       file_atomizer.add_path(layer_timestamp_file_path(stage))
-      layer_timestamp_file_path(stage).write(layer_timestamp(stage) + "\n")
+      layer_timestamp_file_path(stage).write("#{layer_timestamp(stage)}\n")
     end
 
     def layer_actual?(stage)

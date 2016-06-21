@@ -33,7 +33,7 @@ describe Dapp::Build::Shell do
   def docker
     instance_double('Dapp::Docker').tap do |obj|
       allow(obj).to receive(:build_image!)
-      allow(obj).to receive(:image_exist?).and_return([])
+      allow(obj).to receive(:image_exist?).and_return(true)
     end
   end
 
@@ -152,6 +152,16 @@ describe Dapp::Build::Shell do
 
   def do_source_5
     change_file_and_commit
+  end
+
+  def source_5_saved # TODO
+    # default
+    stages[0..-2]
+  end
+
+  def source_5_modified # TODO
+    # default
+    [:source_5]
   end
 
   def change_file_and_commit(file='test_file', body=SecureRandom.hex)
