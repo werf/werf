@@ -4,7 +4,7 @@ module Dapp
       include CommonHelper
       include Dapp::Filelock
 
-      attr_reader :docker
+      attr_accessor :docker
       attr_reader :conf
       attr_reader :opts
       attr_reader :home_branch
