@@ -1,4 +1,4 @@
-require_relative 'spec_helper'
+require_relative '../spec_helper'
 
 describe Dapp::Build::Shell do
   def current_build
@@ -77,11 +77,11 @@ describe Dapp::Build::Shell do
   end
 
   def next_stage(s)
-    build.stages[s].next.name
+    current_build.stages[s].next.name
   end
 
   def prev_stage(s)
-    build.stages[s].prev.name
+    current_build.stages[s].prev.name
   end
 
   def modifiable_stages
@@ -95,7 +95,7 @@ describe Dapp::Build::Shell do
   [:prepare, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage|
     define_method stage do
       build_and_check(stage) { send(:"do_#{stage}") }
-      next_modifiable_stages(stage).reverse_each { |s| puts "* #{s}"; send(s) }
+      next_modifiable_stages(stage).reverse_each { |s| send(s) }
     end
 
     define_method "#{stage}_modified" do
@@ -107,19 +107,22 @@ describe Dapp::Build::Shell do
     end
   end
 
-  [:source_4, :source_5].each do |stage|
-    define_method "#{stage}_expectation" do
-      check_image_command(stage, /git .* apply/)
-    end
-  end
-
   [:infra_install, :app_install, :infra_setup, :app_setup].each do |stage|
     define_method :"do_#{stage}" do
       config[stage] = generate_command
     end
+  end
 
+  [:app_install, :infra_setup, :app_setup].each do |stage|
     define_method "#{stage}_expectation" do
       check_image_command(stage, config[stage])
+      check_image_command(prev_stage(stage), 'patch')
+    end
+  end
+
+  [:source_4, :source_5].each do |stage|
+    define_method "#{stage}_expectation" do
+      check_image_command(stage, 'patch')
     end
   end
 
@@ -133,6 +136,7 @@ describe Dapp::Build::Shell do
 
   def prepare_expectation
     check_image_command(:prepare, 'apt-get update')
+    check_image_command(:source_1_archive, 'tar xf')
   end
 
   def prepare_modified
@@ -149,6 +153,12 @@ describe Dapp::Build::Shell do
 
   def infra_install_saved
     [stages.first]
+  end
+
+  def infra_install_expectation
+    stage = :infra_install
+    check_image_command(stage, config[stage])
+    check_image_command(:source_1_archive, 'tar xf')
   end
 
   def do_source_4
@@ -170,7 +180,7 @@ describe Dapp::Build::Shell do
   end
 
   def change_file_and_commit(file='test_file', body=SecureRandom.hex)
-    File.write repo_path.join(file), body
+    File.write repo_path.join(file), "#{body}\n"
     commit!
   end
 
@@ -189,11 +199,10 @@ describe Dapp::Build::Shell do
     build_run
 
     # caching
-    modified, saved = current_build.stages.values.partition { |s| send("#{stage}_modified").include? s.name }
-    modified.each { |s| expect(docker).to have_received(:build_image!).with(image: s.image, name: s.image_name) }
-    saved.each { |s| expect(docker).to_not have_received(:build_image!).with(image: s.image, name: s.image_name) }
+    built_stages = current_build.stages.values.select { |s| send("#{stage}_modified").include? s.name }
+    built_stages.each { |s| expect(docker).to have_received(:build_image!).with(image: s.image, name: s.image_name) }
 
-    # bash commands
+    # image bash commands
     send("#{stage}_expectation")
 
     # signature
@@ -235,6 +244,6 @@ describe Dapp::Build::Shell do
   it 'everything in the one right place' do
     init_repo
     build_run
-    modifiable_stages.reverse_each { |s| puts s; send(s) }
+    modifiable_stages.reverse_each { |s| send(s) }
   end
 end
