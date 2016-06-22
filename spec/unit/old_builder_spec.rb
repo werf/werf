@@ -1,4 +1,4 @@
-require_relative 'spec_helper'
+require_relative '../spec_helper'
 
 describe Dapp::Builder do
   it '.dappfiles_paths', test_construct: true do |example|

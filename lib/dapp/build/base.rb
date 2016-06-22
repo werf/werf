@@ -27,17 +27,17 @@ module Dapp
         @builded_apps = []
 
         @stages = {
-          prepare: Dapp::Stage::Prepare.new(self),
-          infra_install: Dapp::Stage::InfraInstall.new(self),
-          source_1_archive: Dapp::Stage::Source1Archive.new(self),
-          source_1: Dapp::Stage::Source1.new(self),
-          app_install: Dapp::Stage::AppInstall.new(self),
-          source_2:  Dapp::Stage::Source2.new(self),
-          infra_setup: Dapp::Stage::InfraSetup.new(self),
-          source_3: Dapp::Stage::Source3.new(self),
-          app_setup: Dapp::Stage::AppSetup.new(self),
-          source_4: Dapp::Stage::Source4.new(self),
-          source_5: Dapp::Stage::Source5.new(self),
+          prepare: Stage::Prepare.new(self),
+          infra_install: Stage::InfraInstall.new(self),
+          source_1_archive: Stage::Source1Archive.new(self),
+          source_1: Stage::Source1.new(self),
+          app_install: Stage::AppInstall.new(self),
+          source_2:  Stage::Source2.new(self),
+          infra_setup: Stage::InfraSetup.new(self),
+          source_3: Stage::Source3.new(self),
+          app_setup: Stage::AppSetup.new(self),
+          source_4: Stage::Source4.new(self),
+          source_5: Stage::Source5.new(self),
         }.tap {|stages|
           stages.values.reduce {|prev, stage|
             prev.next = stage
@@ -52,21 +52,56 @@ module Dapp
         end if block_given?
       end
 
-      def signature
-        stages.values.last.signature
-      end
-
-      def lock(**kwargs, &blk)
-        filelock(build_path("#{home_branch}.lock"),
-                 error_message: "Application #{opts[:basename]} " +
-                                "(#{home_branch}) in use! Try again later.",
-                 **kwargs, &blk)
-      end
-
       def run
         stages.values.last.do_build
         builder.commit_atomizers!
       end
+
+      def signature
+        stages.values.last.signature
+      end
+
+      def git_artifact_list
+        [local_git_artifact, *remote_git_artifact_list].compact
+      end
+
+      def local_git_artifact
+        @local_git_artifact ||= begin
+          cfg = (conf[:git_artifact] || {})[:local]
+          make_local_git_artifact(cfg) if cfg
+        end
+      end
+
+      def remote_git_artifact_list
+        @remote_git_artifact_list ||= Array((conf[:git_artifact] || {})[:remote])
+            .map(&method(:make_local_git_artifact))
+      end
+
+      def home_path(*path)
+        path.compact.inject(Pathname.new(conf[:home_path]), &:+).expand_path
+      end
+
+      def build_path(*path)
+        path.compact.inject(Pathname.new(opts[:build_path]), &:+).expand_path.tap do |p|
+          FileUtils.mkdir_p p.parent
+        end
+      end
+
+      def container_build_path(*path)
+        path.compact.inject(Pathname.new('/.build'), &:+).expand_path
+      end
+
+      def chef_path(*path)
+        path.compact.inject(build_path('chef'), &:+).expand_path.tap do |p|
+          FileUtils.mkdir_p p.parent
+        end
+      end
+
+      def container_chef_path(*path)
+        path.compact.inject(container_build_path('chef'), &:+).expand_path
+      end
+
+      protected
 
       def infra_install_do(_image)
         raise
@@ -104,6 +139,13 @@ module Dapp
       end
 
 
+      def lock(**kwargs, &blk)
+        filelock(build_path("#{home_branch}.lock"),
+                 error_message: "Application #{opts[:basename]} " +
+                     "(#{home_branch}) in use! Try again later.",
+                 **kwargs, &blk)
+      end
+
       def make_local_git_artifact(cfg)
         repo = GitRepo::Own.new(self)
         GitArtifact.new(self, repo, cfg[:where_to_add],
@@ -120,47 +162,6 @@ module Dapp
         GitArtifact.new(self, repo, cfg[:where_to_add],
                         flush_cache: opts[:flush_cache],
                         branch: cfg[:branch])
-      end
-
-      def local_git_artifact
-        @local_git_artifact ||= begin
-          cfg = (conf[:git_artifact] || {})[:local]
-          make_local_git_artifact(cfg) if cfg
-        end
-      end
-
-      def remote_git_artifact_list
-        @remote_git_artifact_list ||= Array((conf[:git_artifact] || {})[:remote])
-                                      .map(&method(:make_local_git_artifact))
-      end
-
-      def git_artifact_list
-        [local_git_artifact, *remote_git_artifact_list].compact
-      end
-
-
-      def home_path(*path)
-        path.compact.inject(Pathname.new(conf[:home_path]), &:+).expand_path
-      end
-
-      def build_path(*path)
-        path.compact.inject(Pathname.new(opts[:build_path]), &:+).expand_path.tap do |p|
-          FileUtils.mkdir_p p.parent
-        end
-      end
-
-      def container_build_path(*path)
-        path.compact.inject(Pathname.new('/.build'), &:+).expand_path
-      end
-
-      def chef_path(*path)
-        path.compact.inject(build_path('chef'), &:+).expand_path.tap do |p|
-          FileUtils.mkdir_p p.parent
-        end
-      end
-
-      def container_chef_path(*path)
-        path.compact.inject(container_build_path('chef'), &:+).expand_path
       end
     end # Base
   end # Builder

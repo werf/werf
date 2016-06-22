@@ -11,6 +11,8 @@ module Dapp
         define_method(:"#{m}_signature_do") { hashsum chef_cash_file_sum(m) }
       end
 
+      private
+
       def chef_cash_file_sum(stage)
         if berksfile_lock?
           prepare_recipes(stage) unless chef_cash_file?(stage)

@@ -34,6 +34,100 @@ module Dapp
     end
     # rubocop:enable Metrics/ParameterLists, Metrics/MethodLength
 
+    attr_reader :repo
+    attr_reader :name
+    attr_reader :where_to_add
+    attr_reader :commit
+    attr_reader :cwd
+    attr_reader :owner
+    attr_reader :group
+    attr_reader :interlayer_period
+
+    def layer_commit(stage)
+      if layer_commit_file_path(stage).exist?
+        layer_commit_file_path(stage).read.strip
+      else
+        layer_commit_write!(stage)
+        repo_latest_commit
+      end
+    end
+
+    def layer_timestamp(stage)
+      if layer_timestamp_file_path(stage).exist?
+        layer_timestamp_file_path(stage).read.strip.to_i
+      else
+        layer_timestamp_write!(stage)
+        repo.commit_at(layer_commit(stage)).to_i
+      end
+    end
+
+    def layer_commit_write!(stage)
+      return if stage == :source_5
+
+      file_atomizer.add_path(layer_commit_file_path(stage))
+      layer_commit_file_path(stage).write(repo_latest_commit + "\n")
+    end
+
+    def layer_timestamp_write!(stage)
+      return if stage == :source_5
+
+      file_atomizer.add_path(layer_timestamp_file_path(stage))
+      layer_timestamp_file_path(stage).write("#{repo.commit_at(layer_commit(stage)).to_i}\n")
+    end
+
+    def layer_actual?(stage)
+      prev_stage = layer_prev_source_stage(stage)
+      prev_commit = layer_commit(prev_stage)
+      layer_commit(stage) == prev_commit and !any_changes?(prev_commit, layer_commit(stage))
+    end
+
+    def layer_apply!(image, stage)
+      return if send("#{stage}_actual?")
+
+      layer_commit_write!(stage)
+      layer_timestamp_write!(stage)
+
+      apply_patch!(image, layer_commit(layer_prev_source_stage(stage)), layer_commit(stage))
+    end
+
+    %i(source_1_archive source_1 source_2 source_3 source_4 source_5).each do |stage|
+      define_method("#{stage}_actual?") {layer_actual?(stage)}
+      define_method("#{stage}_commit") {layer_commit(stage)}
+      define_method("#{stage}_timestamp") {layer_timestamp(stage)}
+      define_method("#{stage}_apply!") {|image| layer_apply!(image, stage)}
+    end
+
+    def source_1_archive_apply!(image)
+      layer_commit_write!(:source_1_archive)
+      layer_timestamp_write!(:source_1_archive)
+
+      credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
+
+      image.build_cmd!(
+        ["git --git-dir=#{repo.container_build_dir_path} archive",
+         "--format tar.gz #{archive_commit}:#{cwd}",
+         "-o #{container_archive_path} #{paths}"].join(' '),
+        "mkdir -p #{where_to_add}",
+        ["tar xf #{container_archive_path}", "-C #{where_to_add}", *credentials].join(' '),
+        "rm -rf #{container_archive_path}"
+      )
+    end
+
+    def source_4_actual?
+      if patch_size(layer_commit(:source_3), layer_commit(:source_5)) > MAX_PATCH_SIZE
+        layer_commit_write!(:source_4) if patch_size(layer_commit(:source_4), layer_commit(:source_5)) > MAX_PATCH_SIZE or
+            layer_timestamp(:source_3) > layer_timestamp(:source_4)
+        false
+      else
+        true
+      end
+    end
+
+    private
+
+    attr_reader :build
+    attr_reader :file_atomizer
+
     def signature
       hashsum [archive_commit, repo_latest_commit]
     end
@@ -70,15 +164,6 @@ module Dapp
       !repo.git_bare("diff --quiet #{from}..#{to}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}", returns: [0, 1]).status.success?
     end
 
-    attr_reader :repo
-    attr_reader :name
-    attr_reader :where_to_add
-    attr_reader :commit
-    attr_reader :cwd
-    attr_reader :owner
-    attr_reader :group
-    attr_reader :interlayer_period
-
     def branch
       @branch || 'master'
     end
@@ -103,48 +188,6 @@ module Dapp
       build_path layer_timestamp_filename(stage)
     end
 
-    def layer_commit(stage)
-      if layer_commit_file_path(stage).exist?
-        layer_commit_file_path(stage).read.strip
-      else
-        layer_commit_write!(stage)
-        repo_latest_commit
-      end
-    end
-
-    def layer_commit_write!(stage)
-      return if stage == :source_5
-
-      file_atomizer.add_path(layer_commit_file_path(stage))
-      layer_commit_file_path(stage).write(repo_latest_commit + "\n")
-    end
-
-    def layer_timestamp(stage)
-      if layer_timestamp_file_path(stage).exist?
-        layer_timestamp_file_path(stage).read.strip.to_i
-      else
-        layer_timestamp_write!(stage)
-        repo.commit_at(layer_commit(stage)).to_i
-      end
-    end
-
-    def layer_timestamp_write!(stage)
-      return if stage == :source_5
-
-      file_atomizer.add_path(layer_timestamp_file_path(stage))
-      layer_timestamp_file_path(stage).write("#{repo.commit_at(layer_commit(stage)).to_i}\n")
-    end
-
-    def layer_actual?(stage)
-      prev_stage = layer_prev_source_stage(stage)
-      prev_commit = layer_commit(prev_stage)
-      layer_commit(stage) == prev_commit and !any_changes?(prev_commit, layer_commit(stage))
-    end
-
-    def layer_exist?(stage)
-      layer_commit_file_path(stage).exist?
-    end
-
     def layer_prev_source_stage(stage)
       s = stage
       while (prev_stage_name = build.stages[s].prev_source_stage_name)
@@ -154,92 +197,22 @@ module Dapp
       nil
     end
 
-    def layer_apply!(image, stage)
-      return if send("#{stage}_actual?")
-
-      layer_commit_write!(stage)
-      layer_timestamp_write!(stage)
-      apply_patch!(image, layer_commit(layer_prev_source_stage(stage)), layer_commit(stage))
+    def archive_timestamp
+      value = nil
+      value = archive_timestamp_path.read.strip.to_i if archive_timestamp_path.exist?
+      value
     end
 
-    %i(source_1_archive source_1 source_2 source_3 source_4 source_5).each do |stage|
-      define_method("#{stage}_actual?") {layer_actual?(stage)}
-      define_method("#{stage}_commit") {layer_commit(stage)}
-      define_method("#{stage}_timestamp") {layer_timestamp(stage)}
-      define_method("#{stage}_apply!") {|image| layer_apply!(image, stage)}
-    end
-
-    def source_1_archive_actual?
-      layer_commit_file_path(:source_1_archive).exist?
-    end
-
-    def source_1_archive_apply!(image)
-      return if source_1_archive_actual?
-
-      layer_commit_write!(:source_1_archive)
-      layer_timestamp_write!(:source_1_archive)
-
-      credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
-
-      image.build_cmd!(
-        ["git --git-dir=#{repo.container_build_dir_path} archive",
-         "--format tar.gz #{archive_commit}:#{cwd}",
-         "-o #{container_archive_path} #{paths}"].join(' '),
-        "mkdir -p #{where_to_add}",
-        ["tar xf #{container_archive_path}", "-C #{where_to_add}", *credentials].join(' '),
-        "rm -rf #{container_archive_path}"
-      )
-    end
-
-    def source_4_actual?
-      if patch_size(layer_commit(:source_3), layer_commit(:source_5)) > MAX_PATCH_SIZE
-        layer_commit_write!(:source_4) if patch_size(layer_commit(:source_4), layer_commit(:source_5)) > MAX_PATCH_SIZE or
-            layer_timestamp(:source_3) > layer_timestamp(:source_4)
-        false
+    def archive_commit
+      if archive_commit_file_path.exist?
+        archive_commit_file_path.read.strip
       else
-        true
+        repo_latest_commit
       end
-    end
-
-    def patch_size(from, to)
-      shellout("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
-    end
-
-    protected
-
-    attr_reader :build
-    attr_reader :file_atomizer
-
-    def lock_with_repo(&blk)
-      lock do
-        repo.lock(&blk)
-      end
-    end
-
-    def apply_layer_patches(image)
-      latest_layer = nil
-      layers.each do |layer|
-        apply_layer_patch! image, layer
-        latest_layer = layer
-      end
-
-      latest_layer
-    end
-
-    def paths(with_cwd = false)
-      [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(%r{^\/*|\/*$}, '') }.join(' ') if @paths
-    end
-
-    def repo_latest_commit
-      commit
     end
 
     def filename(ending)
       "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
-    end
-
-    def paramshash
-      Digest::SHA256.hexdigest [cwd, paths, owner, group].map(&:to_s).join(':::')
     end
 
     def archive_filename
@@ -258,42 +231,20 @@ module Dapp
       build_path archive_timestamp_filename
     end
 
-    def archive_timestamp
-      value = nil
-      value = archive_timestamp_path.read.strip.to_i if archive_timestamp_path.exist?
-      value
-    end
-
-    def container_archive_timestamp_path
-      container_build_path archive_timestamp_filename
+    def archive_commit_file_path
+      build_path archive_commit_file_filename
     end
 
     def archive_commit_file_filename
       filename '.commit'
     end
 
-    def archive_commit_file_path
-      build_path archive_commit_file_filename
+    def apply_patch!(image, from, to)
+      image.build_cmd! "git --git-dir=#{repo.container_build_dir_path} diff #{from} #{to} | git --git-dir=#{repo.container_build_dir_path} apply --whitespace=nowarn --directory=#{where_to_add}"
     end
 
-    def container_archive_commit_file_path
-      container_build_path archive_commit_file_filename
-    end
-
-    def archive_commit
-      if archive_commit_file_path.exist?
-        archive_commit_file_path.read.strip
-      else
-        repo_latest_commit
-      end
-    end
-
-    def archive_commit_file_exist?
-      archive_commit_file_path.exist?
-    end
-
-    def sudo_format_user(user)
-      user.to_i.to_s == user ? "\\\##{user}" : user
+    def patch_size(from, to)
+      shellout("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
     end
 
     def sudo
@@ -308,35 +259,20 @@ module Dapp
       sudo
     end
 
-    def apply_patch!(image, from, to)
-      image.build_cmd! "git --git-dir=#{repo.container_build_dir_path} diff #{from} #{to} | git --git-dir=#{repo.container_build_dir_path} apply --whitespace=nowarn --directory=#{where_to_add}"
+    def sudo_format_user(user)
+      user.to_i.to_s == user ? "\\\##{user}" : user
     end
 
-    def layers
-      Dir.glob(layer_commit_file_path('*')).map { |path| Integer(path.gsub(/.*_(\d+)\.commit$/, '\\1')) }.sort
+    def paramshash
+      Digest::SHA256.hexdigest [cwd, paths, owner, group].map(&:to_s).join(':::')
     end
 
-    def apply_layer_patch!(image, stage)
-      return if layer_actual?(stage)
-      # apply_patch! image, layer_patch_filename(stage)
-      # TODO
+    def paths(with_cwd = false)
+      [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(%r{^\/*|\/*$}, '') }.join(' ') if @paths
     end
 
-    def latest_commit_file_path
-      build_path filename '_latest.commit'
-    end
-
-    def latest_commit
-      latest_commit_file_path.read.strip if latest_commit_file_path.exist?
-    end
-
-    def apply_latest_patch!(image)
-      # apply_patch! image, latest_patch_filename
-      # TODO
-    end
-
-    def remove_latest!
-      FileUtils.rm_f [latest_commit_file_path]
+    def repo_latest_commit
+      commit
     end
 
     def lock(**kwargs, &blk)

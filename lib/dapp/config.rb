@@ -2,6 +2,8 @@ module Dapp
   class Config
     include CommonHelper
 
+    attr_reader :home_branch
+
     class << self
       def default_opts
         @default_opts ||= {}
@@ -30,9 +32,7 @@ module Dapp
       end
     end
 
-    attr_reader :home_branch
-
-    def initialize(**options)
+    def initialize(**options, &block)
       opts.merge! self.class.default_opts
       opts.merge! options
 
@@ -53,8 +53,32 @@ module Dapp
       # home branch
       @home_branch = shellout("git -C #{home_path} rev-parse --abbrev-ref HEAD").stdout.strip
 
-      yield self if block_given?
+      self.instance_eval(&block)
     end
+
+    def log(message)
+      puts ' ' * opts[:log_indent] + ' * ' + message if opts[:log_verbose] || !opts[:log_quiet]
+    end
+
+    def indent_log
+      opts[:log_indent] += 1
+    end
+
+    def to_a
+      apps_to_build.empty? ? [to_h] : apps_to_build.map(&:to_h).compact
+    end
+
+    def to_h
+      unless !opts[:app_filter] || File.fnmatch("#{opts[:app_filter]}*", name)
+        log "Skipped (does not match filter: '#{opts[:app_filter]}')!"
+        return
+      end
+      log "Prepared application config '#{name}'"
+      { name: name, type: type }.merge(opts.select { |k, _v| [:from, :home_path, :dapps, :exposes, :git_artifact,
+                                                              :infra_install, :infra_setup, :app_install, :app_setup].include?(k) } )
+    end
+
+    protected
 
     def home_path(*path)
       path.compact.inject(Pathname.new(opts[:home_path]), &:+).expand_path.to_s
@@ -71,6 +95,10 @@ module Dapp
 
     def apps
       @apps ||= []
+    end
+
+    def apps_to_build
+      apps.map { |app| app.apps.empty? ? app : app.apps }.flatten
     end
 
     def name
@@ -153,7 +181,7 @@ module Dapp
 
     def app(name, &block)
       name = "#{send(:name)}-#{name}"
-      options = opts.merge(name: name, log_indent: opts[:log_indent] + 1)
+      options = opts.merge(name: name, basename: name, log_indent: opts[:log_indent] + 1)
       apps << self.class.new(**options, &block)
     end
 
@@ -163,28 +191,6 @@ module Dapp
 
     def build_dapp(*args, extra_dapps: [], **kwargs, &blk)
       dappit(*extra_dapps)
-    end
-
-    def to_a
-      apps.empty? ? Array(to_h) : apps.map(&:to_h).compact
-    end
-
-    def to_h
-      unless !opts[:app_filter] || File.fnmatch("#{opts[:app_filter]}*", name)
-        log "Skipped (does not match filter: '#{opts[:app_filter]}')!"
-        return
-      end
-      log "Prepared application config '#{name}'"
-      { name: name, type: type }.merge(opts.select { |k, _v| [:from, :home_path, :dapps, :exposes, :git_artifact,
-                                                              :infra_install, :infra_setup, :app_install, :app_setup].include?(k) } )
-    end
-
-    def indent_log
-      opts[:log_indent] += 1
-    end
-
-    def log(message)
-      puts ' ' * opts[:log_indent] + ' * ' + message if opts[:log_verbose] || !opts[:log_quiet]
     end
   end
 end

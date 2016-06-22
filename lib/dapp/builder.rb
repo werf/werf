@@ -12,10 +12,6 @@ module Dapp
       @atomizers = {}
     end
 
-    def dappfile_path
-      @dappfile_path ||= File.join [cli_options[:dir], cli_options[:dappfile_name] || 'Dappfile'].compact
-    end
-
     def build
       build_configs.each do |build_conf|
         puts build_conf[:name]
@@ -23,6 +19,20 @@ module Dapp
         build_new(**options).run
       end
     end
+
+    def register_file_atomizer(file_path)
+      atomizer(file_path) || (atomizers[file_path.to_s] = Atomizer::File.new(file_path))
+    end
+
+    def register_docker_atomizer(file_path)
+      atomizer(file_path) || (atomizers[file_path.to_s] = Atomizer::Docker.new(file_path))
+    end
+
+    def commit_atomizers!
+      atomizers.values.each(&:commit!)
+    end
+
+    protected
 
     def build_configs
       Dapp::Config.default_opts.tap do |default_opts|
@@ -34,6 +44,10 @@ module Dapp
       else
         process_directory
       end
+    end
+
+    def dappfile_path
+      @dappfile_path ||= File.join [cli_options[:dir], cli_options[:dappfile_name] || 'Dappfile'].compact
     end
 
     def process_file
@@ -65,21 +79,9 @@ module Dapp
       end
     end
 
-    def register_file_atomizer(file_path)
-      atomizer(file_path) || (atomizers[file_path.to_s] = Atomizer::File.new(file_path))
-    end
-
-    def register_docker_atomizer(file_path)
-      atomizer(file_path) || (atomizers[file_path.to_s] = Atomizer::Docker.new(file_path))
-    end
-
     def atomizer(file_path)
       name = file_path.to_s
       atomizers[name] unless atomizers[name].nil?
-    end
-
-    def commit_atomizers!
-      atomizers.values.each(&:commit!)
     end
   end # Builder
 end # Dapp

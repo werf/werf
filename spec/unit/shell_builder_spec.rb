@@ -1,4 +1,4 @@
-require_relative 'spec_helper'
+require_relative '../spec_helper'
 
 describe Dapp::Builder::Shell do
   def shell_builder(**conf)
