@@ -1,13 +1,9 @@
 require_relative 'spec_helper'
 
 describe Dapp::Build::Shell do
-  it 'cache' do
-    init_repo
-    build_run
-    modifiable_stages.reverse_each { |s| send(s) }
+  def current_build
+    @build || build
   end
-
-  # build
 
   def build_run
     build.run
@@ -15,7 +11,7 @@ describe Dapp::Build::Shell do
 
   def build
     options = { builder: builder, conf: config.dup, opts: opts }
-    Dapp::Build::Shell.new(**options).tap { |build| build.docker = docker }
+    @build = Dapp::Build::Shell.new(**options).tap { |build| build.docker = docker }
   end
 
   def builder
@@ -31,10 +27,14 @@ describe Dapp::Build::Shell do
   end
 
   def docker
-    instance_double('Dapp::Docker').tap do |obj|
-      allow(obj).to receive(:build_image!)
-      allow(obj).to receive(:image_exist?).and_return(true)
+    @docker ||= instance_double('Dapp::Docker').tap do |obj|
+      allow(obj).to receive(:build_image!) { |image:, name:| images_cash << name }
+      allow(obj).to receive(:image_exist?) { |name| images_cash.include? name }
     end
+  end
+
+  def images_cash
+    @images_cash ||= []
   end
 
   def config
@@ -64,26 +64,8 @@ describe Dapp::Build::Shell do
     }
   end
 
-  # stages
-
   def stages
     @stages ||= build.stages.keys
-  end
-
-  def modifiable_stages
-    [:prepare, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5]
-  end
-
-  def next_modifiable_stages(stage)
-    modifiable_stages[modifiable_stages.index(stage)+1..-1]
-  end
-
-  def build_and_check(stage)
-    saved_keys = build_keys
-    yield
-    build_run
-    send("#{stage}_saved").each { |s| expect(saved_keys).to include s => stage_build_key(s) }
-    send("#{stage}_modified").each { |s| expect(saved_keys).to_not include s => stage_build_key(s) }
   end
 
   def build_keys
@@ -94,10 +76,26 @@ describe Dapp::Build::Shell do
     build_keys[stage]
   end
 
+  def next_stage(s)
+    build.stages[s].next.name
+  end
+
+  def prev_stage(s)
+    build.stages[s].prev.name
+  end
+
+  def modifiable_stages
+    [:prepare, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5]
+  end
+
+  def next_modifiable_stages(stage)
+    modifiable_stages[modifiable_stages.index(stage)+1..-1]
+  end
+
   [:prepare, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage|
     define_method stage do
       build_and_check(stage) { send(:"do_#{stage}") }
-      next_modifiable_stages(stage).reverse_each { |s| send(s) }
+      next_modifiable_stages(stage).reverse_each { |s| puts "* #{s}"; send(s) }
     end
 
     define_method "#{stage}_modified" do
@@ -109,14 +107,32 @@ describe Dapp::Build::Shell do
     end
   end
 
+  [:source_4, :source_5].each do |stage|
+    define_method "#{stage}_expectation" do
+      check_image_command(stage, /git .* apply/)
+    end
+  end
+
   [:infra_install, :app_install, :infra_setup, :app_setup].each do |stage|
     define_method :"do_#{stage}" do
       config[stage] = generate_command
     end
+
+    define_method "#{stage}_expectation" do
+      check_image_command(stage, config[stage])
+    end
+  end
+
+  def generate_command
+    "echo '#{SecureRandom.hex}'"
   end
 
   def do_prepare
     config[:from] = 'ubuntu:14.04'
+  end
+
+  def prepare_expectation
+    check_image_command(:prepare, 'apt-get update')
   end
 
   def prepare_modified
@@ -136,32 +152,21 @@ describe Dapp::Build::Shell do
   end
 
   def do_source_4
-    # change_file_and_commit
-    # TODO
+    file_path = repo_path.join('large_file')
+    if File.exist? file_path
+      FileUtils.rm file_path
+      commit!
+    else
+      change_file_and_commit('large_file', ?x*Dapp::GitArtifact::MAX_PATCH_SIZE)
+    end
   end
 
-  def source_4_saved # TODO
-    # default
-    stages
-  end
-
-  def source_4_modified # TODO
-    # default
-    []
+  def source_4_modified
+    stages[stages.index(:source_4)..-1]
   end
 
   def do_source_5
     change_file_and_commit
-  end
-
-  def source_5_saved # TODO
-    # default
-    stages[0..-2]
-  end
-
-  def source_5_modified # TODO
-    # default
-    [:source_5]
   end
 
   def change_file_and_commit(file='test_file', body=SecureRandom.hex)
@@ -169,16 +174,35 @@ describe Dapp::Build::Shell do
     commit!
   end
 
-  def generate_command
-    "echo '#{SecureRandom.hex}'"
+  def source_5_saved
+    stages[0..-2]
   end
 
-  def next_stage(s)
-    build.stages[s].next.name
+  def source_5_modified
+    [:source_5]
   end
 
-  def prev_stage(s)
-    build.stages[s].prev.name
+  def build_and_check(stage)
+    saved_keys = build_keys
+    yield
+    new_keys = build_keys
+    build_run
+
+    # caching
+    modified, saved = current_build.stages.values.partition { |s| send("#{stage}_modified").include? s.name }
+    modified.each { |s| expect(docker).to have_received(:build_image!).with(image: s.image, name: s.image_name) }
+    saved.each { |s| expect(docker).to_not have_received(:build_image!).with(image: s.image, name: s.image_name) }
+
+    # bash commands
+    send("#{stage}_expectation")
+
+    # signature
+    send("#{stage}_saved").each { |s| expect(saved_keys).to include s => new_keys[s] }
+    send("#{stage}_modified").each { |s| expect(saved_keys).to_not include s => new_keys[s] }
+  end
+
+  def check_image_command(stage, command)
+    expect(current_build.stages[stage].image.build_cmd.join =~ Regexp.new(command)).to be
   end
 
   # git
@@ -206,5 +230,11 @@ describe Dapp::Build::Shell do
 
   def git(command, **kwargs)
     shellout "git -C #{repo_path} #{command}", **kwargs
+  end
+
+  it 'everything in the one right place' do
+    init_repo
+    build_run
+    modifiable_stages.reverse_each { |s| puts s; send(s) }
   end
 end

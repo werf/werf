@@ -3,6 +3,8 @@ module Dapp
   class GitArtifact
     include Dapp::CommonHelper
 
+    MAX_PATCH_SIZE = 1024*1024
+
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
     def initialize(build, repo, where_to_add,
                    name: nil, branch: nil, commit: nil,
@@ -121,19 +123,21 @@ module Dapp
       if layer_timestamp_file_path(stage).exist?
         layer_timestamp_file_path(stage).read.strip.to_i
       else
+        layer_timestamp_write!(stage)
         repo.commit_at(layer_commit(stage)).to_i
       end
     end
 
     def layer_timestamp_write!(stage)
-      return unless layer_timestamp_file_path(stage).zero?
+      return if stage == :source_5
 
       file_atomizer.add_path(layer_timestamp_file_path(stage))
-      layer_timestamp_file_path(stage).write("#{layer_timestamp(stage)}\n")
+      layer_timestamp_file_path(stage).write("#{repo.commit_at(layer_commit(stage)).to_i}\n")
     end
 
     def layer_actual?(stage)
-      prev_commit = layer_commit(layer_prev_source_stage(stage))
+      prev_stage = layer_prev_source_stage(stage)
+      prev_commit = layer_commit(prev_stage)
       layer_commit(stage) == prev_commit and !any_changes?(prev_commit, layer_commit(stage))
     end
 
@@ -150,12 +154,8 @@ module Dapp
       nil
     end
 
-    def layer_patch(stage)
-      ''
-    end
-
     def layer_apply!(image, stage)
-      return if layer_actual?(stage)
+      return if send("#{stage}_actual?")
 
       layer_commit_write!(stage)
       layer_timestamp_write!(stage)
@@ -164,7 +164,6 @@ module Dapp
 
     %i(source_1_archive source_1 source_2 source_3 source_4 source_5).each do |stage|
       define_method("#{stage}_actual?") {layer_actual?(stage)}
-      define_method("#{stage}_patch") {layer_patch(stage)}
       define_method("#{stage}_commit") {layer_commit(stage)}
       define_method("#{stage}_timestamp") {layer_timestamp(stage)}
       define_method("#{stage}_apply!") {|image| layer_apply!(image, stage)}
@@ -180,9 +179,7 @@ module Dapp
       layer_commit_write!(:source_1_archive)
       layer_timestamp_write!(:source_1_archive)
 
-      credentials = [:owner, :group].map {|attr|
-        "--#{attr}=#{send(attr)}" unless send(attr).nil?
-      }.compact
+      credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
       image.build_cmd!(
         ["git --git-dir=#{repo.container_build_dir_path} archive",
@@ -194,11 +191,18 @@ module Dapp
       )
     end
 
-    def source_4_actual? # FIXME: skipped stage
-      true
+    def source_4_actual?
+      if patch_size(layer_commit(:source_3), layer_commit(:source_5)) > MAX_PATCH_SIZE
+        layer_commit_write!(:source_4) if patch_size(layer_commit(:source_4), layer_commit(:source_5)) > MAX_PATCH_SIZE or
+            layer_timestamp(:source_3) > layer_timestamp(:source_4)
+        false
+      else
+        true
+      end
     end
 
-    def source_4_apply!(image) # FIXME: skipped stage
+    def patch_size(from, to)
+      shellout("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
     end
 
     protected

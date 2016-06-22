@@ -9,10 +9,6 @@ module Dapp
         :source_3
       end
 
-      def source_4_patch
-        build.git_artifact_list.map {|git_artifact| git_artifact.source_4_patch}.reduce(:+)
-      end
-
       def source_4_actual?
         build.git_artifact_list.map {|git_artifact| git_artifact.source_4_actual?}.all?
       end
@@ -22,7 +18,7 @@ module Dapp
       end
 
       def signature
-        if source_4_actual? or source_4_patch.bytesize < 50*1024*1024
+        if source_4_actual?
           build.stages[:app_setup].signature
         else
           hashsum [build.stages[:app_setup].signature, *source_4_commit_list]

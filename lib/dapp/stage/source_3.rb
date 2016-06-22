@@ -20,8 +20,7 @@ module Dapp
       def signature
         hashsum [build.stages[:infra_setup].signature,
                  app_setup_file,
-                 *build.app_setup_commands, # TODO chef
-                 *build.git_artifact_list.map { |git_artifact| git_artifact.source_3_commit }]
+                 *build.app_setup_commands] # TODO chef
       end
 
       def git_artifact_signature
