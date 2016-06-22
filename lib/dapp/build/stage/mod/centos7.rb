@@ -8,7 +8,6 @@ module Dapp
           def from_centos7(image)
             # use centos7
             image.build_cmd!('yum -y update; yum clean all',
-                             'yum install -y git',
                              '(cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done)',
                              'rm -f /lib/systemd/system/multi-user.target.wants/*',
                              'rm -f /etc/systemd/system/*.wants/*',
@@ -23,7 +22,7 @@ module Dapp
                              'yum makecache', # cache yum fastestmirror
                              'localedef -c -f UTF-8 -i en_US en_US.UTF-8', # TERM & utf8
                              'sed \'s/\(-\?session\s\+optional\s\+pam_systemd\.so.*\)/#\1/g\' -i /etc/pam.d/system-auth', # centos hacks
-                             'yum install -y sudo git',
+                             'yum install -y sudo git patch',
                              'echo \'Defaults:root !requiretty\' >> /etc/sudoers')
 
             image.build_opts!({ volume: '/sys/fs/cgroup',

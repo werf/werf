@@ -240,7 +240,7 @@ module Dapp
     end
 
     def apply_patch!(image, from, to)
-      image.build_cmd! "git --git-dir=#{repo.container_build_dir_path} diff #{from} #{to} | git --git-dir=#{repo.container_build_dir_path} apply --whitespace=nowarn --directory=#{where_to_add}"
+      image.build_cmd! "git --git-dir=#{repo.container_build_dir_path} diff #{from} #{to} | patch -l --directory=#{where_to_add}"
     end
 
     def patch_size(from, to)
