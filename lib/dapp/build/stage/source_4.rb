@@ -1,41 +1,37 @@
 module Dapp
   module Build
     module Stage
-      class Source4 < Base
+      class Source4 < SourceBase
+        def initialize(build, relative_stage)
+          @prev_stage = AppSetup.new(build, self)
+          super
+        end
+
         def name
           :source_4
         end
 
-        def prev_source_stage_name
-          :source_3
-        end
-
-        def source_4_actual?
-          build.git_artifact_list.map {|git_artifact| git_artifact.source_4_actual?}.all?
-        end
-
-        def source_4_commit_list
-          build.git_artifact_list.map {|git_artifact| git_artifact.source_4_commit}
+        def next_source_stage
+          next_stage
         end
 
         def signature
-          if source_4_actual?
-            build.stages[:app_setup].signature
+          app_setup = prev_stage
+          if layers_actual?
+            app_setup.signature
           else
-            hashsum [build.stages[:app_setup].signature, *source_4_commit_list]
+            hashsum [app_setup.signature, *commit_list]
           end
         end
 
         def git_artifact_signature
-          hashsum build.stages[:app_setup].signature
+          hashsum prev_stage.signature
         end
 
-        def image
-          super do |image|
-            build.git_artifact_list.each do |git_artifact|
-              git_artifact.source_4_apply!(image)
-            end
-          end
+        protected
+
+        def layers_actual?
+          build.git_artifact_list.map {|git_artifact| git_artifact.source_4_actual?(self)}.all?
         end
       end # Source4
     end # Stage

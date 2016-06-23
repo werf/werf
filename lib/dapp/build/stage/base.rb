@@ -4,11 +4,14 @@ module Dapp
       class Base
         include CommonHelper
 
-        attr_accessor :prev, :next
+        attr_accessor :prev_stage, :next_stage
         attr_reader :build
 
-        def initialize(build)
+        def initialize(build, relative_stage)
           @build = build
+
+          @next_stage = relative_stage
+          @next_stage.prev_stage = self
         end
 
         def name
@@ -17,7 +20,7 @@ module Dapp
 
         def do_build
           return if image_exist?
-          prev.do_build if prev
+          prev_stage.do_build if prev_stage
           build_image!
         end
 
@@ -30,24 +33,6 @@ module Dapp
           build.docker.build_image! image: image, name: image_name
         end
 
-        def from_image_name
-          @from_image_name || (prev.image_name if prev) || begin
-            raise 'missing from_image_name'
-          end
-        end
-
-        def signature
-          raise
-        end
-
-        def git_artifact_signature
-          raise
-        end
-
-        def image_name
-          "dapp:#{signature}"
-        end
-
         def image
           @image ||= begin
             Image.new(from: from_image_name).tap do |image|
@@ -57,6 +42,20 @@ module Dapp
               yield image if block_given?
             end
           end
+        end
+
+        def from_image_name
+          @from_image_name || (prev_stage.image_name if prev_stage) || begin
+            raise 'missing from_image_name'
+          end
+        end
+
+        def image_name
+          "dapp:#{signature}"
+        end
+
+        def signature
+          hashsum prev_stage.signature
         end
       end # Base
     end # Stage

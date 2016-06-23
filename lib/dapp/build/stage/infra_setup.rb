@@ -2,6 +2,11 @@ module Dapp
   module Build
     module Stage
       class InfraSetup < Base
+        def initialize(build, relative_stage)
+          @prev_stage = Source2.new(build, self)
+          super
+        end
+
         def name
           :infra_setup
         end
@@ -10,10 +15,6 @@ module Dapp
           super do |image|
             build.infra_setup_do(image)
           end
-        end
-
-        def signature
-          hashsum build.stages[:source_2].signature
         end
       end # InfraSetup
     end # Stage

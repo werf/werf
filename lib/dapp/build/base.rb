@@ -8,7 +8,7 @@ module Dapp
       attr_reader :conf
       attr_reader :opts
       attr_reader :home_branch
-      attr_reader :stages
+      attr_reader :starter_stage
       attr_reader :builder
       attr_reader :docker_atomizer
 
@@ -23,35 +23,17 @@ module Dapp
         opts[:build_path] = opts[:build_dir] ? opts[:build_dir] : home_path('build')
         opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
-        @stages = {
-          prepare: Stage::Prepare.new(self),
-          infra_install: Stage::InfraInstall.new(self),
-          source_1_archive: Stage::Source1Archive.new(self),
-          source_1: Stage::Source1.new(self),
-          app_install: Stage::AppInstall.new(self),
-          source_2:  Stage::Source2.new(self),
-          infra_setup: Stage::InfraSetup.new(self),
-          source_3: Stage::Source3.new(self),
-          app_setup: Stage::AppSetup.new(self),
-          source_4: Stage::Source4.new(self),
-          source_5: Stage::Source5.new(self),
-        }.tap {|stages|
-          stages.values.reduce {|prev, stage|
-            prev.next = stage
-            stage.prev = prev
-            stage
-          }
-        }
+        @starter_stage = Stage::Source5.new(self)
         @docker = Dapp::Docker.new(socket: opts[:docker_socket], build: self)
       end
 
       def run
-        stages.values.last.do_build
+        starter_stage.do_build
         builder.commit_atomizers!
       end
 
       def signature
-        stages.values.last.signature
+        starter_stage.signature
       end
 
       def git_artifact_list

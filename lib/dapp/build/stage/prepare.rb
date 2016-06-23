@@ -12,15 +12,7 @@ module Dapp
 
         def image
           super do |image|
-            send(_image_method, image)
-            image.build_opts!({ expose: build.conf[:exposes] }) unless build.conf[:exposes].nil?
-          end
-        end
-
-        def _image_method
-          from = from_image_name
-          :"from_#{from.to_s.split(/[:.]/).join}".tap do |from_method|
-            raise "unsupported docker image '#{from}'" unless respond_to?(from_method)
+            send(image_constructor_method, image)
           end
         end
 
@@ -30,6 +22,12 @@ module Dapp
 
         def signature
           image.signature
+        end
+
+        private
+
+        def image_constructor_method
+          :"from_#{from_image_name.to_s.split(/[:.]/).join}"
         end
       end # Prepare
     end # Stage

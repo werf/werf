@@ -2,6 +2,11 @@ module Dapp
   module Build
     module Stage
       class AppInstall < Base
+        def initialize(build, relative_stage)
+          @prev_stage = Source1.new(build, self)
+          super
+        end
+
         def name
           :app_install
         end
@@ -10,10 +15,6 @@ module Dapp
           super do |image|
             build.app_install_do(image)
           end
-        end
-
-        def signature
-          hashsum build.stages[:source_1].signature
         end
       end # AppInstall
     end # Stage

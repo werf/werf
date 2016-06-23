@@ -64,12 +64,22 @@ describe Dapp::Build::Shell do
     }
   end
 
-  def stages
-    @stages ||= build.stages.keys
+  def stages_names
+    @stages ||= stages.keys.reverse
+  end
+
+  def stages(b=build)
+    stgs = {}
+    s = b.starter_stage
+    while s.respond_to? :prev_stage
+      stgs[s.name] = s
+      s = s.prev_stage
+    end
+    stgs
   end
 
   def build_keys
-    build.stages.values.map { |s| [:"#{s.name}", s.signature] }.to_h
+    stages.values.map { |s| [:"#{s.name}", s.signature] }.to_h
   end
 
   def stage_build_key(stage)
@@ -77,11 +87,11 @@ describe Dapp::Build::Shell do
   end
 
   def next_stage(s)
-    current_build.stages[s].next.name
+    stages(current_build)[s].next_stage.name
   end
 
   def prev_stage(s)
-    current_build.stages[s].prev.name
+    stages(current_build)[s].prev_stage.name
   end
 
   def modifiable_stages
@@ -95,15 +105,15 @@ describe Dapp::Build::Shell do
   [:prepare, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage|
     define_method stage do
       build_and_check(stage) { send(:"do_#{stage}") }
-      next_modifiable_stages(stage).reverse_each { |s| send(s) }
+      next_modifiable_stages(stage).reverse_each { |s| puts s; send(s) }
     end
 
     define_method "#{stage}_modified" do
-      stages[stages.index(stage)-1..-1]
+      stages_names[stages_names.index(stage)-1..-1]
     end
 
     define_method "#{stage}_saved" do
-      stages[0..stages.index(stage)-2]
+      stages_names[0..stages_names.index(stage)-2]
     end
   end
 
@@ -140,7 +150,7 @@ describe Dapp::Build::Shell do
   end
 
   def prepare_modified
-    stages
+    stages_names
   end
 
   def prepare_saved
@@ -148,11 +158,11 @@ describe Dapp::Build::Shell do
   end
 
   def infra_install_modified
-    stages[stages.index(:infra_install)..-1]
+    stages_names[stages_names.index(:infra_install)..-1]
   end
 
   def infra_install_saved
-    [stages.first]
+    [stages_names.first]
   end
 
   def infra_install_expectation
@@ -172,7 +182,7 @@ describe Dapp::Build::Shell do
   end
 
   def source_4_modified
-    stages[stages.index(:source_4)..-1]
+    stages_names[stages_names.index(:source_4)..-1]
   end
 
   def do_source_5
@@ -185,7 +195,7 @@ describe Dapp::Build::Shell do
   end
 
   def source_5_saved
-    stages[0..-2]
+    stages_names[0..-2]
   end
 
   def source_5_modified
@@ -199,7 +209,7 @@ describe Dapp::Build::Shell do
     build_run
 
     # caching
-    built_stages = current_build.stages.values.select { |s| send("#{stage}_modified").include? s.name }
+    built_stages = stages(current_build).values.select { |s| send("#{stage}_modified").include? s.name }
     built_stages.each { |s| expect(docker).to have_received(:build_image!).with(image: s.image, name: s.image_name) }
 
     # image bash commands
@@ -211,7 +221,7 @@ describe Dapp::Build::Shell do
   end
 
   def check_image_command(stage, command)
-    expect(current_build.stages[stage].image.build_cmd.join =~ Regexp.new(command)).to be
+    expect(stages(current_build)[stage].image.build_cmd.join =~ Regexp.new(command)).to be
   end
 
   # git
@@ -244,6 +254,6 @@ describe Dapp::Build::Shell do
   it 'everything in the one right place' do
     init_repo
     build_run
-    modifiable_stages.reverse_each { |s| send(s) }
+    modifiable_stages.reverse_each { |s| puts s; send(s) }
   end
 end

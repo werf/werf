@@ -2,6 +2,11 @@ module Dapp
   module Build
     module Stage
       class InfraInstall < Base
+        def initialize(build, relative_stage)
+          @prev_stage = Prepare.new(build, self)
+          super
+        end
+
         def name
           :infra_install
         end

@@ -1,33 +1,29 @@
 module Dapp
   module Build
     module Stage
-      class Source3 < Base
+      class Source3 < SourceBase
+        def initialize(build, relative_stage)
+          @prev_stage = InfraSetup.new(build, self)
+          super
+        end
+
         def name
           :source_3
         end
 
-        def prev_source_stage_name
-          :source_2
-        end
-
-        def image
-          super do |image|
-            build.git_artifact_list.each do |git_artifact|
-              git_artifact.source_3_apply!(image)
-            end
-          end
-        end
-
         def signature
-          hashsum [build.stages[:infra_setup].signature,
+          hashsum [prev_stage.signature,
                    app_setup_file,
-                   *build.app_setup_commands] # TODO chef
+                   *build.app_setup_commands,
+                   *commit_list] # TODO chef
         end
 
         def git_artifact_signature
-          hashsum [build.stages[:infra_setup].signature,
+          hashsum [prev_stage.signature,
                    *build.app_setup_commands]
         end
+
+        private
 
         def app_setup_file
           @app_setup_file ||= begin

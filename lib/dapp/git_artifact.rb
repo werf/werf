@@ -62,44 +62,37 @@ module Dapp
     end
 
     def layer_commit_write!(stage)
-      return if stage == :source_5
+      return if stage.name == :source_5
 
       file_atomizer.add_path(layer_commit_file_path(stage))
       layer_commit_file_path(stage).write(repo_latest_commit + "\n")
     end
 
     def layer_timestamp_write!(stage)
-      return if stage == :source_5
+      return if stage.name == :source_5
 
       file_atomizer.add_path(layer_timestamp_file_path(stage))
       layer_timestamp_file_path(stage).write("#{repo.commit_at(layer_commit(stage)).to_i}\n")
     end
 
     def layer_actual?(stage)
-      prev_stage = layer_prev_source_stage(stage)
+      prev_stage = stage.prev_source_stage
       prev_commit = layer_commit(prev_stage)
       layer_commit(stage) == prev_commit and !any_changes?(prev_commit, layer_commit(stage))
     end
 
     def layer_apply!(image, stage)
-      return if send("#{stage}_actual?")
+      return if layer_actual?(stage)
 
       layer_commit_write!(stage)
       layer_timestamp_write!(stage)
 
-      apply_patch!(image, layer_commit(layer_prev_source_stage(stage)), layer_commit(stage))
+      apply_patch!(image, layer_commit(stage.prev_source_stage), layer_commit(stage))
     end
 
-    %i(source_1_archive source_1 source_2 source_3 source_4 source_5).each do |stage|
-      define_method("#{stage}_actual?") {layer_actual?(stage)}
-      define_method("#{stage}_commit") {layer_commit(stage)}
-      define_method("#{stage}_timestamp") {layer_timestamp(stage)}
-      define_method("#{stage}_apply!") {|image| layer_apply!(image, stage)}
-    end
-
-    def source_1_archive_apply!(image)
-      layer_commit_write!(:source_1_archive)
-      layer_timestamp_write!(:source_1_archive)
+    def source_1_archive_apply!(image, stage)
+      layer_commit_write!(stage)
+      layer_timestamp_write!(stage)
 
       credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
@@ -113,10 +106,12 @@ module Dapp
       )
     end
 
-    def source_4_actual?
-      if patch_size(layer_commit(:source_3), layer_commit(:source_5)) > MAX_PATCH_SIZE
-        layer_commit_write!(:source_4) if patch_size(layer_commit(:source_4), layer_commit(:source_5)) > MAX_PATCH_SIZE or
-            layer_timestamp(:source_3) > layer_timestamp(:source_4)
+    def source_4_actual?(stage)
+      source_3 = stage.prev_source_stage
+      source_5 = stage.next_source_stage
+      if patch_size(layer_commit(source_3), layer_commit(source_5)) > MAX_PATCH_SIZE
+        layer_commit_write!(stage) if patch_size(layer_commit(stage), layer_commit(source_5)) > MAX_PATCH_SIZE or
+            layer_timestamp(source_3) > layer_timestamp(stage)
         false
       else
         true
@@ -169,7 +164,7 @@ module Dapp
     end
 
     def layer_filename(stage, ending)
-      filename ".#{stage}.#{paramshash}.#{build.stages[stage].git_artifact_signature}#{ending}"
+      filename ".#{stage.name}.#{paramshash}.#{stage.git_artifact_signature}#{ending}"
     end
 
     def layer_commit_filename(stage)
@@ -186,15 +181,6 @@ module Dapp
 
     def layer_timestamp_file_path(stage)
       build_path layer_timestamp_filename(stage)
-    end
-
-    def layer_prev_source_stage(stage)
-      s = stage
-      while (prev_stage_name = build.stages[s].prev_source_stage_name)
-        return prev_stage_name if layer_commit(prev_stage_name)
-        s = prev_stage_name
-      end
-      nil
     end
 
     def archive_timestamp
@@ -273,14 +259,6 @@ module Dapp
 
     def repo_latest_commit
       commit
-    end
-
-    def lock(**kwargs, &blk)
-      build.filelock(build_path(filename('.lock')),
-                     error_message: "Git artifact commit:#{commit}" +
-                         "#{name ? " #{name}" : nil} #{repo.name}" +
-                         " (#{repo.dir_path}) in use! Try again later.",
-                     **kwargs, &blk)
     end
   end
 end
