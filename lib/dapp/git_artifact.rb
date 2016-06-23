@@ -43,6 +43,39 @@ module Dapp
     attr_reader :group
     attr_reader :interlayer_period
 
+    def archive_apply!(image, stage)
+      layer_commit_write!(stage)
+      layer_timestamp_write!(stage)
+
+      credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
+
+      image.build_cmd!(
+          ["git --git-dir=#{repo.container_build_dir_path} archive",
+           "--format tar.gz #{layer_commit(stage)}:#{cwd}",
+           "-o #{container_archive_path} #{paths}"].join(' '),
+          "mkdir -p #{where_to_add}",
+          ["tar xf #{container_archive_path}", "-C #{where_to_add}", *credentials].join(' '),
+          "rm -rf #{container_archive_path}"
+      )
+    end
+
+    def layer_apply!(image, stage)
+      return if stage.layer_actual?(self)
+
+      layer_commit_write!(stage)
+      layer_timestamp_write!(stage)
+
+      apply_patch!(image, layer_commit(stage.prev_source_stage), layer_commit(stage))
+    end
+
+    def any_changes?(from, to = repo_latest_commit)
+      !repo.git_bare("diff --quiet #{from}..#{to}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}", returns: [0, 1]).status.success?
+    end
+
+    def patch_size_valid?(stage)
+      patch_size(layer_commit(stage), layer_commit(stage.prev_source_stage)) < MAX_PATCH_SIZE
+    end
+
     def layer_commit(stage)
       if layer_commit_file_path(stage).exist?
         layer_commit_file_path(stage).read.strip
@@ -75,58 +108,21 @@ module Dapp
       layer_timestamp_file_path(stage).write("#{repo.commit_at(layer_commit(stage)).to_i}\n")
     end
 
-    def any_changes?(from, to = repo_latest_commit)
-      !repo.git_bare("diff --quiet #{from}..#{to}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}", returns: [0, 1]).status.success?
-    end
-
-    def layer_apply!(image, stage)
-      return if stage.layer_actual?(self)
-
-      layer_commit_write!(stage)
-      layer_timestamp_write!(stage)
-
-      apply_patch!(image, layer_commit(stage.prev_source_stage), layer_commit(stage))
-    end
-
-    def archive_apply!(image, stage)
-      layer_commit_write!(stage)
-      layer_timestamp_write!(stage)
-
-      credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
-
-      image.build_cmd!(
-          ["git --git-dir=#{repo.container_build_dir_path} archive",
-           "--format tar.gz #{layer_commit(stage)}:#{cwd}",
-           "-o #{container_archive_path} #{paths}"].join(' '),
-          "mkdir -p #{where_to_add}",
-          ["tar xf #{container_archive_path}", "-C #{where_to_add}", *credentials].join(' '),
-          "rm -rf #{container_archive_path}"
-      )
-    end
-
-    def patch_size_valid?(stage)
-      patch_size(layer_commit(stage), layer_commit(stage.prev_source_stage)) < MAX_PATCH_SIZE
-    end
-
     private
 
     attr_reader :build
     attr_reader :file_atomizer
 
-    def signature
-      hashsum [archive_commit, repo_latest_commit]
+    def apply_patch!(image, from, to)
+      image.build_cmd! "git --git-dir=#{repo.container_build_dir_path} diff #{from} #{to} | patch -l --directory=#{where_to_add}"
     end
 
-    def build_path(*path)
-      build.build_path(*@build_path, *path)
+    def patch_size(from, to)
+      shellout("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
     end
 
-    def container_build_path(*path)
-      build.container_build_path(*@build_path, *path)
-    end
-
-    def layer_filename(stage, ending)
-      filename ".#{stage.name}.#{paramshash}.#{stage.git_artifact_signature}#{ending}"
+    def container_archive_path
+      container_build_path archive_filename
     end
 
     def layer_commit_filename(stage)
@@ -145,24 +141,24 @@ module Dapp
       build_path layer_timestamp_filename(stage)
     end
 
-    def filename(ending)
-      "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
+    def build_path(*path)
+      build.build_path(*@build_path, *path)
+    end
+
+    def container_build_path(*path)
+      build.container_build_path(*@build_path, *path)
     end
 
     def archive_filename
       filename '.tar.gz'
     end
 
-    def container_archive_path
-      container_build_path archive_filename
+    def layer_filename(stage, ending)
+      filename ".#{stage.name}.#{paramshash}.#{stage.git_artifact_signature}#{ending}"
     end
 
-    def apply_patch!(image, from, to)
-      image.build_cmd! "git --git-dir=#{repo.container_build_dir_path} diff #{from} #{to} | patch -l --directory=#{where_to_add}"
-    end
-
-    def patch_size(from, to)
-      shellout("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
+    def filename(ending)
+      "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
     end
 
     def paramshash
