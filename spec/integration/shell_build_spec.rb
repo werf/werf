@@ -57,7 +57,7 @@ describe Dapp::Build::Shell do
   end
 
   def opts
-    {
+    @opts ||= {
         log_indent: 0,
         dir: repo_path.join('.dapps'),
         build_path: repo_path.join('.dapps/world/build')
@@ -82,8 +82,8 @@ describe Dapp::Build::Shell do
     stages.values.map { |s| [:"#{s.name}", s.signature] }.to_h
   end
 
-  def stage_build_key(stage)
-    build_keys[stage]
+  def stage_build_key(stage_name)
+    build_keys[stage_name]
   end
 
   def next_stage(s)
@@ -94,84 +94,75 @@ describe Dapp::Build::Shell do
     stages(current_build)[s].prev_stage.name
   end
 
-  def modifiable_stages
-    [:prepare, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5]
-  end
 
-  def next_modifiable_stages(stage)
-    modifiable_stages[modifiable_stages.index(stage)+1..-1]
-  end
-
-  [:prepare, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage|
-    define_method stage do
-      build_and_check(stage) { send(:"do_#{stage}") }
-      next_modifiable_stages(stage).reverse_each { |s| puts s; send(s) }
+  [:prepare, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage_name|
+    define_method "#{stage_name}_modified_signatures" do
+      stages_names[stages_names.index(stage_name)-1..-1]
     end
 
-    define_method "#{stage}_modified" do
-      stages_names[stages_names.index(stage)-1..-1]
-    end
-
-    define_method "#{stage}_saved" do
-      stages_names[0..stages_names.index(stage)-2]
+    define_method "#{stage_name}_saved_signatures" do
+      stages_names[0..stages_names.index(stage_name)-2]
     end
   end
 
-  [:infra_install, :app_install, :infra_setup, :app_setup].each do |stage|
-    define_method :"do_#{stage}" do
-      config[stage] = generate_command
+  [:infra_install, :app_install, :infra_setup, :app_setup].each do |stage_name|
+    define_method :"change_#{stage_name}" do
+      config[stage_name] = generate_command
     end
   end
 
-  [:app_install, :infra_setup, :app_setup].each do |stage|
-    define_method "#{stage}_expectation" do
-      check_image_command(stage, config[stage])
-      check_image_command(prev_stage(stage), 'patch')
+  [:app_install, :infra_setup, :app_setup].each do |stage_name|
+    define_method "expect_#{stage_name}_images_commands" do
+      check_image_command(stage_name, config[stage_name])
+      check_image_command(prev_stage(stage_name), 'patch')
     end
   end
 
-  [:source_4, :source_5].each do |stage|
-    define_method "#{stage}_expectation" do
-      check_image_command(stage, 'patch')
+  [:source_4, :source_5].each do |stage_name|
+    define_method "expect_#{stage_name}_images_commands" do
+      check_image_command(stage_name, 'patch')
     end
+  end
+
+  def check_image_command(stage_name, command)
+    expect(stages(current_build)[stage_name].image.build_cmd.join =~ Regexp.new(command)).to be
   end
 
   def generate_command
     "echo '#{SecureRandom.hex}'"
   end
 
-  def do_prepare
+  def change_prepare
     config[:from] = 'ubuntu:14.04'
   end
 
-  def prepare_expectation
+  def expect_prepare_images_commands
     check_image_command(:prepare, 'apt-get update')
     check_image_command(:source_1_archive, 'tar xf')
   end
 
-  def prepare_modified
+  def prepare_modified_signatures
     stages_names
   end
 
-  def prepare_saved
+  def prepare_saved_signatures
     []
   end
 
-  def infra_install_modified
+  def infra_install_modified_signatures
     stages_names[stages_names.index(:infra_install)..-1]
   end
 
-  def infra_install_saved
+  def infra_install_saved_signatures
     [stages_names.first]
   end
 
-  def infra_install_expectation
-    stage = :infra_install
-    check_image_command(stage, config[stage])
+  def expect_infra_install_images_commands
+    check_image_command(:infra_install, config[:infra_install])
     check_image_command(:source_1_archive, 'tar xf')
   end
 
-  def do_source_4
+  def change_source_4
     file_path = repo_path.join('large_file')
     if File.exist? file_path
       FileUtils.rm file_path
@@ -181,11 +172,11 @@ describe Dapp::Build::Shell do
     end
   end
 
-  def source_4_modified
+  def source_4_modified_signatures
     stages_names[stages_names.index(:source_4)..-1]
   end
 
-  def do_source_5
+  def change_source_5
     change_file_and_commit
   end
 
@@ -194,37 +185,39 @@ describe Dapp::Build::Shell do
     commit!
   end
 
-  def source_5_saved
+  def source_5_saved_signatures
     stages_names[0..-2]
   end
 
-  def source_5_modified
+  def source_5_modified_signatures
     [:source_5]
   end
 
-  def build_and_check(stage)
-    saved_keys = build_keys
-    yield
-    new_keys = build_keys
+
+  def build_and_check(stage_name)
+    saved, new = changed_stage_signatures(stage_name)
     build_run
+    expect_built_stages(stage_name)
+    send("expect_#{stage_name}_images_commands")
+    expect_stages_signatures(stage_name, saved, new)
+  end
 
-    # caching
-    built_stages = stages(current_build).values.select { |s| send("#{stage}_modified").include? s.name }
+  def changed_stage_signatures(stage_name)
+    saved_signatures = build_keys
+    send(:"change_#{stage_name}")
+    [saved_signatures, build_keys]
+  end
+
+  def expect_built_stages(stage_name)
+    built_stages = stages(current_build).values.select { |s| send("#{stage_name}_modified_signatures").include? s.name }
     built_stages.each { |s| expect(docker).to have_received(:build_image!).with(image: s.image, name: s.image_name) }
-
-    # image bash commands
-    send("#{stage}_expectation")
-
-    # signature
-    send("#{stage}_saved").each { |s| expect(saved_keys).to include s => new_keys[s] }
-    send("#{stage}_modified").each { |s| expect(saved_keys).to_not include s => new_keys[s] }
   end
 
-  def check_image_command(stage, command)
-    expect(stages(current_build)[stage].image.build_cmd.join =~ Regexp.new(command)).to be
+  def expect_stages_signatures(stage_name, saved_keys, new_keys)
+    send("#{stage_name}_saved_signatures").each { |s| expect(saved_keys).to include s => new_keys[s] }
+    send("#{stage_name}_modified_signatures").each { |s| expect(saved_keys).to_not include s => new_keys[s] }
   end
 
-  # git
 
   def init_repo
     FileUtils.rm_rf repo_path
@@ -251,9 +244,143 @@ describe Dapp::Build::Shell do
     shellout "git -C #{repo_path} #{command}", **kwargs
   end
 
-  it 'everything in the one right place' do
+
+  it 'workflow' do
     init_repo
     build_run
-    modifiable_stages.reverse_each { |s| puts s; send(s) }
+
+    build_and_check(:source_5)
+
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+
+    build_and_check(:infra_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+
+    build_and_check(:app_install)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:infra_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+
+    build_and_check(:infra_install)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:infra_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_install)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:infra_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+
+    build_and_check(:prepare)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:infra_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_install)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:infra_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:infra_install)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:infra_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_install)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:infra_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
+    build_and_check(:app_setup)
+    build_and_check(:source_5)
+    build_and_check(:source_4)
+    build_and_check(:source_5)
   end
 end
