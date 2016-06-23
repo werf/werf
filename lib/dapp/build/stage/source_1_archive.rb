@@ -19,20 +19,18 @@ module Dapp
           next_stage
         end
 
-        def image
-          super do |image|
-            build.git_artifact_list.each do |git_artifact|
-              git_artifact.archive_apply!(image, self)
-            end
-          end
-        end
-
         def signature
           hashsum [prev_stage.signature, *commit_list]
         end
 
         def git_artifact_signature
           hashsum prev_stage.signature
+        end
+
+        protected
+
+        def apply_method
+          :archive_apply!
         end
       end # Source1Archive
     end # Stage

@@ -12,13 +12,13 @@ module Dapp
           next_stage.next_stage
         end
 
-        def image(&blk)
-          blk = ->(image) do
+        def image
+          super do |image|
             build.git_artifact_list.each do |git_artifact|
-              git_artifact.layer_apply!(image, self)
+              git_artifact.send(apply_method, image, self)
             end
-          end unless block_given?
-          super(&blk)
+            yield image if block_given?
+          end
         end
 
         def layer_actual?(git_artifact)
@@ -28,6 +28,10 @@ module Dapp
         end
 
         protected
+
+        def apply_method
+          :layer_apply!
+        end
 
         def commit_list
           build.git_artifact_list.map { |git_artifact| git_artifact.layer_commit(self) }

@@ -21,9 +21,6 @@ module Dapp
 
         def image
           super do |image|
-            build.git_artifact_list.each do |git_artifact|
-              git_artifact.layer_apply!(image, self)
-            end
             image.build_opts!({ expose: build.conf[:exposes] }) unless build.conf[:exposes].nil?
           end
         end
