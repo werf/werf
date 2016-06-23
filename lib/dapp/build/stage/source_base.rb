@@ -21,6 +21,12 @@ module Dapp
           super(&blk)
         end
 
+        def layer_actual?(git_artifact)
+          prev_commit = git_artifact.layer_commit(prev_source_stage)
+          current_commit = git_artifact.layer_commit(self)
+          prev_commit == current_commit and !git_artifact.any_changes?(prev_commit, current_commit)
+        end
+
         protected
 
         def commit_list
@@ -28,7 +34,7 @@ module Dapp
         end
 
         def layers_actual?
-          build.git_artifact_list.map { |git_artifact| git_artifact.layer_actual?(self) }.all?
+          build.git_artifact_list.map { |git_artifact| layer_actual?(git_artifact) }.all?
         end
       end # SourceBase
     end # Stage

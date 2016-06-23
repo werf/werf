@@ -22,7 +22,7 @@ module Dapp
         def image
           super do |image|
             build.git_artifact_list.each do |git_artifact|
-              git_artifact.source_1_archive_apply!(image, self)
+              git_artifact.archive_apply!(image, self)
             end
           end
         end

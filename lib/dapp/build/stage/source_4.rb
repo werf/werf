@@ -28,10 +28,8 @@ module Dapp
           hashsum prev_stage.signature
         end
 
-        protected
-
-        def layers_actual?
-          build.git_artifact_list.map {|git_artifact| git_artifact.source_4_actual?(self)}.all?
+        def layer_actual?(git_artifact)
+          super and git_artifact.patch_size_valid?(next_source_stage)
         end
       end # Source4
     end # Stage

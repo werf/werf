@@ -75,14 +75,12 @@ module Dapp
       layer_timestamp_file_path(stage).write("#{repo.commit_at(layer_commit(stage)).to_i}\n")
     end
 
-    def layer_actual?(stage)
-      prev_stage = stage.prev_source_stage
-      prev_commit = layer_commit(prev_stage)
-      layer_commit(stage) == prev_commit and !any_changes?(prev_commit, layer_commit(stage))
+    def any_changes?(from, to = repo_latest_commit)
+      !repo.git_bare("diff --quiet #{from}..#{to}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}", returns: [0, 1]).status.success?
     end
 
     def layer_apply!(image, stage)
-      return if layer_actual?(stage)
+      return if stage.layer_actual?(self)
 
       layer_commit_write!(stage)
       layer_timestamp_write!(stage)
@@ -90,32 +88,24 @@ module Dapp
       apply_patch!(image, layer_commit(stage.prev_source_stage), layer_commit(stage))
     end
 
-    def source_1_archive_apply!(image, stage)
+    def archive_apply!(image, stage)
       layer_commit_write!(stage)
       layer_timestamp_write!(stage)
 
       credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
       image.build_cmd!(
-        ["git --git-dir=#{repo.container_build_dir_path} archive",
-         "--format tar.gz #{archive_commit}:#{cwd}",
-         "-o #{container_archive_path} #{paths}"].join(' '),
-        "mkdir -p #{where_to_add}",
-        ["tar xf #{container_archive_path}", "-C #{where_to_add}", *credentials].join(' '),
-        "rm -rf #{container_archive_path}"
+          ["git --git-dir=#{repo.container_build_dir_path} archive",
+           "--format tar.gz #{layer_commit(stage)}:#{cwd}",
+           "-o #{container_archive_path} #{paths}"].join(' '),
+          "mkdir -p #{where_to_add}",
+          ["tar xf #{container_archive_path}", "-C #{where_to_add}", *credentials].join(' '),
+          "rm -rf #{container_archive_path}"
       )
     end
 
-    def source_4_actual?(stage)
-      source_3 = stage.prev_source_stage
-      source_5 = stage.next_source_stage
-      if patch_size(layer_commit(source_3), layer_commit(source_5)) > MAX_PATCH_SIZE
-        layer_commit_write!(stage) if patch_size(layer_commit(stage), layer_commit(source_5)) > MAX_PATCH_SIZE or
-            layer_timestamp(source_3) > layer_timestamp(stage)
-        false
-      else
-        true
-      end
+    def patch_size_valid?(stage)
+      patch_size(layer_commit(stage), layer_commit(stage.prev_source_stage)) < MAX_PATCH_SIZE
     end
 
     private
@@ -133,34 +123,6 @@ module Dapp
 
     def container_build_path(*path)
       build.container_build_path(*@build_path, *path)
-    end
-
-    def exist_in_step?(path, step)
-      repo.exist_in_commit?(path, commit_by_step(step))
-    end
-
-    def prepare_step_commit
-      archive_commit
-    end
-
-    def build_step_commit
-      layer_commit(layers.last) || archive_commit
-    end
-
-    def setup_step_commit
-      latest_commit || layer_commit(layers.last) || archive_commit
-    end
-
-    def commit_by_step(step)
-      send :"#{step}_step_commit"
-    end
-
-    def any_changes?(from, to = repo_latest_commit)
-      !repo.git_bare("diff --quiet #{from}..#{to}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}", returns: [0, 1]).status.success?
-    end
-
-    def branch
-      @branch || 'master'
     end
 
     def layer_filename(stage, ending)
@@ -183,20 +145,6 @@ module Dapp
       build_path layer_timestamp_filename(stage)
     end
 
-    def archive_timestamp
-      value = nil
-      value = archive_timestamp_path.read.strip.to_i if archive_timestamp_path.exist?
-      value
-    end
-
-    def archive_commit
-      if archive_commit_file_path.exist?
-        archive_commit_file_path.read.strip
-      else
-        repo_latest_commit
-      end
-    end
-
     def filename(ending)
       "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
     end
@@ -209,44 +157,12 @@ module Dapp
       container_build_path archive_filename
     end
 
-    def archive_timestamp_filename
-      filename '.timestamp'
-    end
-
-    def archive_timestamp_path
-      build_path archive_timestamp_filename
-    end
-
-    def archive_commit_file_path
-      build_path archive_commit_file_filename
-    end
-
-    def archive_commit_file_filename
-      filename '.commit'
-    end
-
     def apply_patch!(image, from, to)
       image.build_cmd! "git --git-dir=#{repo.container_build_dir_path} diff #{from} #{to} | patch -l --directory=#{where_to_add}"
     end
 
     def patch_size(from, to)
       shellout("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
-    end
-
-    def sudo
-      sudo = ''
-
-      if owner || group
-        sudo = 'sudo '
-        sudo += "-u #{sudo_format_user(owner)} " if owner
-        sudo += "-g #{sudo_format_user(group)} " if group
-      end
-
-      sudo
-    end
-
-    def sudo_format_user(user)
-      user.to_i.to_s == user ? "\\\##{user}" : user
     end
 
     def paramshash
