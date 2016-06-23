@@ -23,9 +23,6 @@ module Dapp
         opts[:build_path] = opts[:build_dir] ? opts[:build_dir] : home_path('build')
         opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
-        @home_branch = shellout("git -C #{home_path} rev-parse --abbrev-ref HEAD").stdout.strip
-        @builded_apps = []
-
         @stages = {
           prepare: Stage::Prepare.new(self),
           infra_install: Stage::InfraInstall.new(self),
@@ -46,10 +43,6 @@ module Dapp
           }
         }
         @docker = Dapp::Docker.new(socket: opts[:docker_socket], build: self)
-
-        lock do
-          yield self
-        end if block_given?
       end
 
       def run
@@ -136,14 +129,6 @@ module Dapp
 
       def app_setup_commands
         raise
-      end
-
-
-      def lock(**kwargs, &blk)
-        filelock(build_path("#{home_branch}.lock"),
-                 error_message: "Application #{opts[:basename]} " +
-                     "(#{home_branch}) in use! Try again later.",
-                 **kwargs, &blk)
       end
 
       def make_local_git_artifact(cfg)
