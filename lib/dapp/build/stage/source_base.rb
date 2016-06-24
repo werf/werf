@@ -3,7 +3,6 @@ module Dapp
     module Stage
       class SourceBase < Base
         attr_accessor :prev_source_stage, :next_source_stage
-        MAX_PATCH_SIZE = 1024*1024
 
         def prev_source_stage
           prev_stage.prev_stage
@@ -19,6 +18,15 @@ module Dapp
 
         def dependencies_checksum
           hashsum [prev_stage.signature]
+        end
+
+        def layer_commit(git_artifact)
+          @commits[git_artifact] ||= git_artifact.repo_latest_commit
+        end
+
+        def commit!
+          # docker push
+          # write_commits
         end
 
         def layer_commit(git_artifact)
@@ -51,10 +59,7 @@ module Dapp
           build.git_artifact_list.map { |git_artifact| layer_commit(git_artifact) }
         end
 
-        def patch_size_valid?(git_artifact)
-          git_artifact.patch_size(prev_source_stage.layer_commit(git_artifact), layer_commit(git_artifact)) < MAX_PATCH_SIZE
-        end
-
+        # FIXME KISS
         def layer_timestamp(git_artifact)
           if layer_timestamp_file_path(git_artifact).exist?
             layer_timestamp_file_path(git_artifact).read.strip.to_i

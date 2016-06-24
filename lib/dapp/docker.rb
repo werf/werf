@@ -7,9 +7,11 @@ module Dapp
       @atomizer = build.builder.register_docker_atomizer(build.build_path("#{build.signature}.docker_atomizer"))
     end
 
+    # FIXME build!
     def build_image!(image_specification:, image_name:)
       container_name = SecureRandom.hex
       run(image_specification.options, container_name, image_specification.from, image_specification.bash_commands)
+      # FIXME @id = ...
       commit(container_name, image_name)
       atomizer << image_name
     ensure
@@ -17,12 +19,14 @@ module Dapp
     end
 
     def image_exist?(name)
+      # FIXME shellout
       not image_info(name).nil?
     end
 
     protected
 
     def run(options, image_name, from_image_name, commands)
+      # FIXME shellout
       Mixlib::ShellOut.new(['docker run',
                             prepare_options(options),
                             prepare_name(image_name),
@@ -30,11 +34,14 @@ module Dapp
                             prepare_bash_command(commands)].join(' ')).run_command.tap(&:error!)
     end
 
+    # FIXME commit!
     def commit(container_name, image_name)
+      # FIXME shellout
       Mixlib::ShellOut.new(['docker commit', container_name, image_name].join(' ')).run_command.tap(&:error!)
     end
 
     def rm(container_name)
+      # FIXME shellout
       Mixlib::ShellOut.new(['docker rm', container_name].join(' ')).run_command
     end
 

@@ -28,6 +28,15 @@ module Dapp
           build.docker.build_image! image_specification: image, image_name: image_name
         end
 
+        def fixate!
+          prev_stage.fixate! if prev_stage
+
+          # FIXME image.fixate!
+          #   tag
+          #   push
+          # FIXME write_layer_commit! (in source stages)
+        end
+
         def signature
           hashsum prev_stage.signature
         end
@@ -36,7 +45,7 @@ module Dapp
 
         def image
           @image ||= begin
-            ImageSpecification.new(from_name: from_image_name).tap do |image|
+            ImageSpecification.new(from: from_image).tap do |image|
               image.add_volume "#{build.build_path}:#{build.container_build_path}"
               image.add_volume "#{build.local_git_artifact.repo.dir_path}:#{build.local_git_artifact.repo.container_build_dir_path}" if build.local_git_artifact
               yield image if block_given?
@@ -44,10 +53,14 @@ module Dapp
           end
         end
 
-        def from_image_name
-          @from_image_name || (prev_stage.image_name if prev_stage) || begin
+        def from_image
+          prev_stage.image if prev_stage || begin
             raise 'missing from_image_name'
           end
+        end
+
+        def from_image
+          DockerImage.new name: 'ubuntu:14.04'
         end
 
         def image_name

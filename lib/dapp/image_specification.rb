@@ -1,4 +1,5 @@
 module Dapp
+  # DockerImage
   class ImageSpecification
     include CommonHelper
 
@@ -11,6 +12,18 @@ module Dapp
       @from_name = from_name
       @bash_commands = []
       @options = {}
+
+      # FIXME @id = docker images -q --no-trunc=true <name>
+    end
+
+    # TODO
+    # def exist?
+    #   !!@id
+    # end
+
+    def build!
+      # FIXME docker run
+      # FIXME @id = docker commit
     end
 
     def add_expose(value)

@@ -27,6 +27,8 @@ module Dapp
 
       def run
         last_stage.build!
+        last_stage.fixate!
+
         builder.commit_atomizers!
       end
 
