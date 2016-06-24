@@ -5,8 +5,11 @@ module Dapp
         include CommonHelper
 
         attr_accessor :prev_stage, :next_stage
+
+        # FIXME rename Build class to smth else
         attr_reader :build
 
+        # FIXME relative_stage -> next_stage
         def initialize(build, relative_stage)
           @build = build
 
@@ -15,9 +18,11 @@ module Dapp
         end
 
         def name
+          # FIXME use class.name.underscore.to_s
           raise
         end
 
+        # FIXME rename to build!
         def do_build
           return if image_exist?
           prev_stage.do_build if prev_stage
@@ -28,11 +33,13 @@ module Dapp
           build.docker.image_exist? image_name
         end
 
+        # FIXME move this to do_build
         def build_image!
           build.log self.class.to_s
           build.docker.build_image! image: image, name: image_name
         end
 
+        # FIXME protected
         def image
           @image ||= begin
             Image.new(from: from_image_name).tap do |image|
@@ -44,12 +51,14 @@ module Dapp
           end
         end
 
+        # FIXME protected
         def from_image_name
           @from_image_name || (prev_stage.image_name if prev_stage) || begin
             raise 'missing from_image_name'
           end
         end
 
+        # FIXME protected
         def image_name
           "dapp:#{signature}"
         end

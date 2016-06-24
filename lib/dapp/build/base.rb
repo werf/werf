@@ -23,6 +23,7 @@ module Dapp
         opts[:build_path] = opts[:build_dir] ? opts[:build_dir] : home_path('build')
         opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
+	# FIXME ambigous variable name
         @starter_stage = Stage::Source5.new(self)
         @docker = Dapp::Docker.new(socket: opts[:docker_socket], build: self)
       end
@@ -49,7 +50,7 @@ module Dapp
 
       def remote_git_artifact_list
         @remote_git_artifact_list ||= Array((conf[:git_artifact] || {})[:remote])
-            .map(&method(:make_local_git_artifact))
+            .map(&method(:make_local_git_artifact)) # FIXME make_remote_git_artifact
       end
 
       def home_path(*path)
@@ -66,12 +67,14 @@ module Dapp
         path.compact.inject(Pathname.new('/.build'), &:+).expand_path
       end
 
+      # FIXME wtf in base class????
       def chef_path(*path)
         path.compact.inject(build_path('chef'), &:+).expand_path.tap do |p|
           FileUtils.mkdir_p p.parent
         end
       end
 
+      # FIXME wtf in base class????
       def container_chef_path(*path)
         path.compact.inject(container_build_path('chef'), &:+).expand_path
       end
@@ -82,6 +85,7 @@ module Dapp
         raise
       end
 
+      # FIXME commands -> check_sum
       def infra_install_commands
         raise
       end
@@ -91,6 +95,7 @@ module Dapp
         raise
       end
 
+      # FIXME commands -> check_sum
       def infra_setup_commands
         raise
       end
@@ -100,6 +105,7 @@ module Dapp
         raise
       end
 
+      # FIXME commands -> check_sum
       def app_install_commands
         raise
       end
@@ -109,6 +115,7 @@ module Dapp
         raise
       end
 
+      # FIXME commands -> signature
       def app_setup_commands
         raise
       end

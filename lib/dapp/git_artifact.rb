@@ -43,9 +43,10 @@ module Dapp
     attr_reader :group
     attr_reader :interlayer_period
 
+    # FIXME archive_apply_command
     def archive_apply!(image, stage)
-      layer_commit_write!(stage)
-      layer_timestamp_write!(stage)
+      layer_commit_write!(stage) # FIXME move to stage
+      layer_timestamp_write!(stage) # FIXME move to stage
 
       credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
@@ -59,8 +60,9 @@ module Dapp
       )
     end
 
+    # FIXME move this to apply_patch (apply_patch_command)
     def layer_apply!(image, stage)
-      return if stage.layer_actual?(self)
+      return if stage.layer_actual?(self) # FIXME (????????????)
 
       layer_commit_write!(stage)
       layer_timestamp_write!(stage)
@@ -95,14 +97,14 @@ module Dapp
     end
 
     def layer_commit_write!(stage)
-      return if stage.name == :source_5
+      return if stage.name == :source_5 # FIXME
 
       file_atomizer.add_path(layer_commit_file_path(stage))
       layer_commit_file_path(stage).write(repo_latest_commit + "\n")
     end
 
     def layer_timestamp_write!(stage)
-      return if stage.name == :source_5
+      return if stage.name == :source_5 # FIXME
 
       file_atomizer.add_path(layer_timestamp_file_path(stage))
       layer_timestamp_file_path(stage).write("#{repo.commit_at(layer_commit(stage)).to_i}\n")
@@ -113,7 +115,11 @@ module Dapp
     attr_reader :build
     attr_reader :file_atomizer
 
+    # FIXME apply_patch_command
     def apply_patch!(image, from, to)
+      # [command]
+      # []
+
       image.build_cmd! "git --git-dir=#{repo.container_build_dir_path} diff #{from} #{to} | patch -l --directory=#{where_to_add}"
     end
 

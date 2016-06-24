@@ -1,3 +1,5 @@
+# FIXME move all of this to DockerImage
+
 module Dapp
   class Docker
     attr_reader :atomizer

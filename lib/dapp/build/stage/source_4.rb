@@ -29,6 +29,7 @@ module Dapp
         end
 
         def layer_actual?(git_artifact)
+          # FIXME git_artifact.patch_size(layer_commit(stage), layer_commit(stage.next_source_stage)) > NNN
           super and git_artifact.patch_size_valid?(next_source_stage)
         end
       end # Source4

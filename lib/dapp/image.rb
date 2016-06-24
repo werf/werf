@@ -1,9 +1,13 @@
 module Dapp
+  # FIXME DockerImage
   class Image
     include CommonHelper
 
     attr_reader   :from
     attr_reader   :build_cmd
+
+    # FIXME add_volume
+    # FIXME add_expose
     attr_accessor :build_opts
 
     def initialize(from:)
@@ -12,6 +16,11 @@ module Dapp
       @build_opts = {}
     end
 
+    # FIXME absolutle incorrect
+    #  * ! means immediate action
+    #  * build???
+    #
+    # add_command
     def build_cmd!(*cmd)
       build_cmd.push *cmd
     end

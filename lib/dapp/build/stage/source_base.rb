@@ -21,6 +21,7 @@ module Dapp
           end
         end
 
+        # FIXME move to patch_apply_command
         def layer_actual?(git_artifact)
           prev_commit = git_artifact.layer_commit(prev_source_stage)
           current_commit = git_artifact.layer_commit(self)

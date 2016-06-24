@@ -23,6 +23,7 @@ module Dapp
           hashsum [prev_stage.signature, *commit_list]
         end
 
+        # FIXME dependencies_checksum
         def git_artifact_signature
           hashsum prev_stage.signature
         end

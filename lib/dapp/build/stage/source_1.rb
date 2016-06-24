@@ -16,10 +16,11 @@ module Dapp
         end
 
         def signature
+          # TODO hashsum [dependencies_checksum, *commit_list]
           hashsum [prev_stage.signature,
-                   dependency_file, dependency_file_regex,
+                   dependency_file, dependency_file_regex, # FIXME move to git_artifact_signature
                    *build.app_install_commands,
-                   *commit_list] # TODO chef
+                   *commit_list]
         end
 
         def git_artifact_signature
