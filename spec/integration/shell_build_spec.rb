@@ -195,17 +195,20 @@ describe Dapp::Build::Shell do
 
 
   def build_and_check(stage_name)
-    saved, new = changed_stage_signatures(stage_name)
-    build_run
+    check_signatures_and_build(stage_name)
     expect_built_stages(stage_name)
     send("expect_#{stage_name}_images_commands")
-    expect_stages_signatures(stage_name, saved, new)
+  end
+
+  def check_signatures_and_build(stage_name)
+    saved_signatures = build_keys
+    send(:"change_#{stage_name}")
+    expect_stages_signatures(stage_name, saved_signatures, build_keys)
+    build_run
   end
 
   def changed_stage_signatures(stage_name)
-    saved_signatures = build_keys
-    send(:"change_#{stage_name}")
-    [saved_signatures, build_keys]
+
   end
 
   def expect_built_stages(stage_name)
