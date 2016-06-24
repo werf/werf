@@ -7,30 +7,22 @@ module Dapp
           super
         end
 
-        def name
-          :source_4
-        end
-
         def next_source_stage
           next_stage
         end
 
         def signature
-          app_setup = prev_stage
-          if layers_actual?
-            app_setup.signature
+          if patches_size_valid?
+            hashsum prev_stage.signature
           else
-            hashsum [app_setup.signature, *commit_list]
+            hashsum [dependencies_checksum, *commit_list]
           end
         end
 
-        def git_artifact_signature
-          hashsum prev_stage.signature
-        end
+        private
 
-        def layer_actual?(git_artifact)
-          # FIXME git_artifact.patch_size(layer_commit(stage), layer_commit(stage.next_source_stage)) > NNN
-          super and git_artifact.patch_size_valid?(next_source_stage)
+        def patches_size_valid?
+          build.git_artifact_list.all? { |git_artifact| patch_size_valid?(git_artifact) }
         end
       end # Source4
     end # Stage

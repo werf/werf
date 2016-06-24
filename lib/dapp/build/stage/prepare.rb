@@ -6,9 +6,11 @@ module Dapp
         include Mod::Ubuntu1404
         include Mod::Ubuntu1604
 
-        def name
-          :prepare
+        def signature
+          image.signature
         end
+
+        protected
 
         def image
           super do |image|
@@ -18,10 +20,6 @@ module Dapp
 
         def from_image_name
           build.conf[:from]
-        end
-
-        def signature
-          image.signature
         end
 
         private

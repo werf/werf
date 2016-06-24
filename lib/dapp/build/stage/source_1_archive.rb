@@ -7,10 +7,6 @@ module Dapp
           super
         end
 
-        def name
-          :source_1_archive
-        end
-
         def prev_source_stage
           nil
         end
@@ -19,19 +15,18 @@ module Dapp
           next_stage
         end
 
-        def signature
-          hashsum [prev_stage.signature, *commit_list]
+        def archive_filename(git_artifact)
+          git_artifact.filename '.tar.gz'
         end
 
-        # FIXME dependencies_checksum
-        def git_artifact_signature
-          hashsum prev_stage.signature
+        def container_archive_path(git_artifact)
+          container_build_path archive_filename(git_artifact)
         end
 
         protected
 
-        def apply_method
-          :archive_apply!
+        def apply_command_method
+          :archive_apply_command
         end
       end # Source1Archive
     end # Stage

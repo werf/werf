@@ -7,10 +7,6 @@ module Dapp
           @build = build
         end
 
-        def name
-          :source_5
-        end
-
         def prev_source_stage
           prev_stage
         end
@@ -19,24 +15,20 @@ module Dapp
           nil
         end
 
+        protected
+
         def image
           super do |image|
             image.build_opts!({ expose: build.conf[:exposes] }) unless build.conf[:exposes].nil?
           end
         end
 
-        def signature
-          source_4 = prev_stage
-          if layers_actual?
-            source_4.signature
-          else
-            hashsum [source_4.signature, *commit_list]
-          end
+        def layer_commit_write!(_git_artifact)
+          nil
         end
 
-        def git_artifact_signature
-          app_setup = prev_stage.prev_stage
-          hashsum app_setup.signature
+        def layer_timestamp_write!(_git_artifact)
+          nil
         end
       end # Source5
     end # Stage

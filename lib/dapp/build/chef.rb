@@ -13,6 +13,16 @@ module Dapp
 
       private
 
+      def chef_path(*path)
+        path.compact.inject(build_path('chef'), &:+).expand_path.tap do |p|
+          FileUtils.mkdir_p p.parent
+        end
+      end
+
+      def container_chef_path(*path)
+        path.compact.inject(container_build_path('chef'), &:+).expand_path
+      end
+
       def chef_cash_file_sum(stage)
         if berksfile_lock?
           prepare_recipes(stage) unless chef_cash_file?(stage)

@@ -7,25 +7,16 @@ module Dapp
           super
         end
 
-        def name
-          :source_1
-        end
-
         def prev_source_stage
           prev_stage
         end
 
-        def signature
-          # TODO hashsum [dependencies_checksum, *commit_list]
-          hashsum [prev_stage.signature,
-                   dependency_file, dependency_file_regex, # FIXME move to git_artifact_signature
-                   *build.app_install_commands,
-                   *commit_list]
-        end
+        protected
 
-        def git_artifact_signature
+        def dependencies_checksum
           hashsum [prev_stage.signature,
-                   *build.app_install_commands]
+                   dependency_file, dependency_file_regex,
+                   *build.app_install_checksum]
         end
 
         private

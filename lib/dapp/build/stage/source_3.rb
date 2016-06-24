@@ -7,20 +7,12 @@ module Dapp
           super
         end
 
-        def name
-          :source_3
-        end
+        protected
 
-        def signature
+        def dependencies_checksum
           hashsum [prev_stage.signature,
                    app_setup_file,
-                   *build.app_setup_commands,
-                   *commit_list] # TODO chef
-        end
-
-        def git_artifact_signature
-          hashsum [prev_stage.signature,
-                   *build.app_setup_commands]
+                   *build.app_setup_checksum]
         end
 
         private

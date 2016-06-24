@@ -7,18 +7,16 @@ module Dapp
           super
         end
 
-        def name
-          :infra_install
+        def signature
+          image.signature
         end
+
+        protected
 
         def image
           super do |image|
             build.infra_install_do(image)
           end
-        end
-
-        def signature
-          image.signature
         end
       end # InfraInstall
     end # Stage

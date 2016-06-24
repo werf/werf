@@ -28,8 +28,8 @@ describe Dapp::Build::Shell do
 
   def docker
     @docker ||= instance_double('Dapp::Docker').tap do |obj|
-      allow(obj).to receive(:build_image!) { |image:, name:| images_cash << name }
-      allow(obj).to receive(:image_exist?) { |name| images_cash.include? name }
+      allow(obj).to receive(:build_image!) { |image_specification:, image_name:| images_cash << image_name }
+      allow(obj).to receive(:image_exist?) { |image_name| images_cash.include? image_name }
     end
   end
 
@@ -70,7 +70,7 @@ describe Dapp::Build::Shell do
 
   def stages(b=build)
     stgs = {}
-    s = b.starter_stage
+    s = b.last_stage
     while s.respond_to? :prev_stage
       stgs[s.name] = s
       s = s.prev_stage
@@ -79,7 +79,7 @@ describe Dapp::Build::Shell do
   end
 
   def build_keys
-    stages.values.map { |s| [:"#{s.name}", s.signature] }.to_h
+    stages.values.map { |s| [:"#{s.name}", s.send(:signature)] }.to_h
   end
 
   def stage_build_key(stage_name)
@@ -125,7 +125,7 @@ describe Dapp::Build::Shell do
   end
 
   def check_image_command(stage_name, command)
-    expect(stages(current_build)[stage_name].image.build_cmd.join =~ Regexp.new(command)).to be
+    expect(stages(current_build)[stage_name].send(:image).bash_commands.join =~ Regexp.new(command)).to be
   end
 
   def generate_command
@@ -168,7 +168,7 @@ describe Dapp::Build::Shell do
       FileUtils.rm file_path
       commit!
     else
-      change_file_and_commit('large_file', ?x*Dapp::GitArtifact::MAX_PATCH_SIZE)
+      change_file_and_commit('large_file', ?x*1024*1024)
     end
   end
 
@@ -195,6 +195,7 @@ describe Dapp::Build::Shell do
 
 
   def build_and_check(stage_name)
+    puts stage_name
     check_signatures_and_build(stage_name)
     expect_built_stages(stage_name)
     send("expect_#{stage_name}_images_commands")
@@ -213,7 +214,7 @@ describe Dapp::Build::Shell do
 
   def expect_built_stages(stage_name)
     built_stages = stages(current_build).values.select { |s| send("#{stage_name}_modified_signatures").include? s.name }
-    built_stages.each { |s| expect(docker).to have_received(:build_image!).with(image: s.image, name: s.image_name) }
+    built_stages.each { |s| expect(docker).to have_received(:build_image!).with(image_specification: s.send(:image), image_name: s.send(:image_name)) }
   end
 
   def expect_stages_signatures(stage_name, saved_keys, new_keys)

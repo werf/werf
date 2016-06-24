@@ -9,62 +9,53 @@ module Dapp
         # FIXME rename Build class to smth else
         attr_reader :build
 
-        # FIXME relative_stage -> next_stage
-        def initialize(build, relative_stage)
+        def initialize(build, next_stage)
           @build = build
 
-          @next_stage = relative_stage
+          @next_stage = next_stage
           @next_stage.prev_stage = self
         end
 
         def name
-          # FIXME use class.name.underscore.to_s
-          raise
+          self.class.to_s.split('::').last.split(/(?=[[:upper:]]|[0-9])/).join(?_).downcase.to_sym
         end
 
-        # FIXME rename to build!
-        def do_build
+        def build!
           return if image_exist?
-          prev_stage.do_build if prev_stage
-          build_image!
-        end
-
-        def image_exist?
-          build.docker.image_exist? image_name
-        end
-
-        # FIXME move this to do_build
-        def build_image!
+          prev_stage.build! if prev_stage
           build.log self.class.to_s
-          build.docker.build_image! image: image, name: image_name
+          puts image.bash_commands.join
+          build.docker.build_image! image_specification: image, image_name: image_name
         end
 
-        # FIXME protected
+        def signature
+          hashsum prev_stage.signature
+        end
+
+        protected
+
         def image
           @image ||= begin
-            Image.new(from: from_image_name).tap do |image|
-              volumes = ["#{build.build_path}:#{build.container_build_path}"]
-              volumes << "#{build.local_git_artifact.repo.dir_path}:#{build.local_git_artifact.repo.container_build_dir_path}" if build.local_git_artifact
-              image.build_opts! volume: volumes
+            ImageSpecification.new(from_name: from_image_name).tap do |image|
+              image.add_volume "#{build.build_path}:#{build.container_build_path}"
+              image.add_volume "#{build.local_git_artifact.repo.dir_path}:#{build.local_git_artifact.repo.container_build_dir_path}" if build.local_git_artifact
               yield image if block_given?
             end
           end
         end
 
-        # FIXME protected
         def from_image_name
           @from_image_name || (prev_stage.image_name if prev_stage) || begin
             raise 'missing from_image_name'
           end
         end
 
-        # FIXME protected
         def image_name
           "dapp:#{signature}"
         end
 
-        def signature
-          hashsum prev_stage.signature
+        def image_exist?
+          build.docker.image_exist? image_name
         end
       end # Base
     end # Stage

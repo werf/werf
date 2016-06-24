@@ -2,7 +2,7 @@ require_relative '../spec_helper'
 
 describe Dapp::Builder::Shell do
   def shell_builder(**conf)
-    conf = { from: 'ubuntu:16.04' }.merge!(conf)
+    conf = { from_name: 'ubuntu:16.04' }.merge!(conf)
     opts = { docker: Dapp::Docker.new, conf: conf, opts: {} }
     Dapp::Builder::Shell.new(**opts)
   end

@@ -7,8 +7,7 @@ module Dapp
       attr_accessor :docker
       attr_reader :conf
       attr_reader :opts
-      attr_reader :home_branch
-      attr_reader :starter_stage
+      attr_reader :last_stage
       attr_reader :builder
       attr_reader :docker_atomizer
 
@@ -17,24 +16,22 @@ module Dapp
         @opts = opts
         @builder = builder
 
-        # default log indentation
         opts[:log_indent] = 0
 
         opts[:build_path] = opts[:build_dir] ? opts[:build_dir] : home_path('build')
         opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
-	# FIXME ambigous variable name
-        @starter_stage = Stage::Source5.new(self)
+        @last_stage = Stage::Source5.new(self)
         @docker = Dapp::Docker.new(socket: opts[:docker_socket], build: self)
       end
 
       def run
-        starter_stage.do_build
+        last_stage.build!
         builder.commit_atomizers!
       end
 
       def signature
-        starter_stage.signature
+        last_stage.signature
       end
 
       def git_artifact_list
@@ -50,7 +47,7 @@ module Dapp
 
       def remote_git_artifact_list
         @remote_git_artifact_list ||= Array((conf[:git_artifact] || {})[:remote])
-            .map(&method(:make_local_git_artifact)) # FIXME make_remote_git_artifact
+            .map(&method(:make_remote_git_artifact))
       end
 
       def home_path(*path)
@@ -67,26 +64,12 @@ module Dapp
         path.compact.inject(Pathname.new('/.build'), &:+).expand_path
       end
 
-      # FIXME wtf in base class????
-      def chef_path(*path)
-        path.compact.inject(build_path('chef'), &:+).expand_path.tap do |p|
-          FileUtils.mkdir_p p.parent
-        end
-      end
-
-      # FIXME wtf in base class????
-      def container_chef_path(*path)
-        path.compact.inject(container_build_path('chef'), &:+).expand_path
-      end
-
-      protected
 
       def infra_install_do(_image)
         raise
       end
 
-      # FIXME commands -> check_sum
-      def infra_install_commands
+      def infra_install_checksum
         raise
       end
 
@@ -95,8 +78,7 @@ module Dapp
         raise
       end
 
-      # FIXME commands -> check_sum
-      def infra_setup_commands
+      def infra_setup_checksum
         raise
       end
 
@@ -105,8 +87,7 @@ module Dapp
         raise
       end
 
-      # FIXME commands -> check_sum
-      def app_install_commands
+      def app_install_checksum
         raise
       end
 
@@ -115,15 +96,15 @@ module Dapp
         raise
       end
 
-      # FIXME commands -> signature
-      def app_setup_commands
+      def app_setup_checksum
         raise
       end
+
+      protected
 
       def make_local_git_artifact(cfg)
         repo = GitRepo::Own.new(self)
         GitArtifact.new(self, repo, cfg[:where_to_add],
-                        flush_cache: opts[:flush_cache],
                         branch: cfg[:branch])
       end
 
@@ -134,7 +115,6 @@ module Dapp
                                    ssh_key_path: ssh_key_path)
         repo.fetch!(cfg[:branch])
         GitArtifact.new(self, repo, cfg[:where_to_add],
-                        flush_cache: opts[:flush_cache],
                         branch: cfg[:branch])
       end
     end # Base

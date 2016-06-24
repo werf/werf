@@ -7,9 +7,7 @@ module Dapp
           super
         end
 
-        def name
-          :app_install
-        end
+        protected
 
         def image
           super do |image|

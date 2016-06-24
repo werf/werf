@@ -7,9 +7,7 @@ module Dapp
           super
         end
 
-        def name
-          :infra_setup
-        end
+        protected
 
         def image
           super do |image|
