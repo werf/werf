@@ -8,6 +8,7 @@ module Dapp
         end
 
         def signature
+          # FIXME hashsum [prev_stage.signature, *build.infra_install_checksum]
           image.signature
         end
 

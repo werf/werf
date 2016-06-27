@@ -3,7 +3,7 @@ module Dapp
     include CommonHelper
 
     attr_reader :from
-    attr_reader :id
+    attr_reader :id # FIXME remove reader
     attr_reader :container_name
     attr_reader :name
     attr_reader :bash_commands
@@ -16,7 +16,11 @@ module Dapp
       @name = name
 
       @container_name = SecureRandom.hex
-      @id = shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
+    end
+
+    def id
+      # TODO raise if no name nor id
+      @id ||= shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
     end
 
     def add_expose(value)
@@ -35,6 +39,7 @@ module Dapp
       bash_commands.push *commands
     end
 
+    # FIXME remove
     def signature
       hashsum [from.name, *bash_commands, options.inspect]
     end

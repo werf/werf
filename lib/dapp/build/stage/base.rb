@@ -35,6 +35,7 @@ module Dapp
         def image
           @image ||= begin
             DockerImage.new(name: image_name, from: from_image).tap do |image|
+              # FIXME only in source stages
               image.add_volume "#{build.build_path}:#{build.container_build_path}"
               image.add_volume "#{build.local_git_artifact.repo.dir_path}:#{build.local_git_artifact.repo.container_build_dir_path}" if build.local_git_artifact
               yield image if block_given?
