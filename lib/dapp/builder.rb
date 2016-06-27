@@ -1,4 +1,5 @@
 module Dapp
+  # FIXME NotBuilder
   class Builder
     attr_reader :cli_options, :patterns
 

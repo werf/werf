@@ -1,6 +1,6 @@
 module Dapp
-  module Build
-    class Base
+  module Build # FIXME remove
+    class Base # FIXME Application
       include CommonHelper
       include Dapp::Filelock
 
@@ -20,6 +20,7 @@ module Dapp
         @last_stage = Stage::Source5.new(self)
       end
 
+      # FIXME rename build_and_fixate!
       def run
         last_stage.build!
         last_stage.fixate!
@@ -54,7 +55,7 @@ module Dapp
         path.compact.inject(Pathname.new('/.build'), &:+).expand_path
       end
 
-
+      # FIXME move to Builder::Base
       def infra_install_do(_image)
         raise
       end
@@ -92,11 +93,13 @@ module Dapp
 
       protected
 
+      # FIXME remove
       def make_local_git_artifact(cfg)
         repo = GitRepo::Own.new(self)
         GitArtifact.new(repo, cfg[:where_to_add], branch: cfg[:branch])
       end
 
+      # FIXME remove
       def make_remote_git_artifact(cfg)
         repo_name = cfg[:url].gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
         repo = GitRepo::Remote.new(self, repo_name, url: cfg[:url], ssh_key_path: ssh_key_path)
