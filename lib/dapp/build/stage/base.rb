@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module Stage
       class Base
         include CommonHelper
@@ -55,5 +55,5 @@ module Dapp
         end
       end # Base
     end # Stage
-  end # Builder
+  end # Build
 end # Dapp

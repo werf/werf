@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module Stage
       class InfraInstall < Base
         def initialize(application, relative_stage)
@@ -18,5 +18,5 @@ module Dapp
         end
       end # InfraInstall
     end # Stage
-  end # Builder
+  end # Build
 end # Dapp

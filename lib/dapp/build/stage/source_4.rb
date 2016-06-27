@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module Stage
       class Source4 < SourceBase
         MAX_PATCH_SIZE = 1024*1024
@@ -30,5 +30,5 @@ module Dapp
         end
       end # Source4
     end # Stage
-  end # Builder
+  end # Build
 end # Dapp

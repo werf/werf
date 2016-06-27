@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module Stage
       class Source5 < SourceBase
         def initialize(application)
@@ -24,10 +24,10 @@ module Dapp
 
         protected
 
-        def layer_commit_write!(_git_artifact)
+        def layer_commits_write!
           nil
         end
       end # Source5
     end # Stage
-  end # Builder
+  end # Build
 end # Dapp

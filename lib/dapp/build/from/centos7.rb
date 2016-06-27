@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module From
       module Centos7
         CENTOS7_COMMAND = ['yum -y update; yum clean all',
@@ -27,7 +27,7 @@ module Dapp
         end
 
         def centos7_image
-          DockerImage.new(from: 'centos:7', name: image_name).tap do |image|
+          DockerImage.new(from: DockerImage.new(name: 'centos:7'), name: image_name).tap do |image|
             image.add_commands(CENTOS7_COMMAND)
             image.add_volume(CENTOS7_VOLUMES)
             image.add_env(CENTOS7_ENV)

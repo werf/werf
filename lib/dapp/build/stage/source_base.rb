@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module Stage
       class SourceBase < Base
         attr_accessor :prev_source_stage, :next_source_stage
@@ -76,5 +76,5 @@ module Dapp
         end
       end # SourceBase
     end # Stage
-  end # Builder
+  end # Build
 end # Dapp

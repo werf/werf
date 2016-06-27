@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module From
       module Ubuntu1404
         UBUNTU1404_COMMAND = ['apt-get update',
@@ -12,7 +12,7 @@ module Dapp
         end
 
         def ubuntu1404_image
-          DockerImage.new(from: 'ubuntu:14.04', name: image_name).tap do |image|
+          DockerImage.new(from: DockerImage.new(name: 'ubuntu:14.04'), name: image_name).tap do |image|
             image.add_commands(UBUNTU1404_COMMAND)
             image.add_env(UBUNTU1404_ENV)
           end

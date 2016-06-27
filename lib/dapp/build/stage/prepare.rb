@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module Stage
       class Prepare < Base
         include From::Centos7
@@ -21,5 +21,5 @@ module Dapp
         end
       end # Prepare
     end # Stage
-  end # Builder
+  end # Build
 end # Dapp

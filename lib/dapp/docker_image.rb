@@ -8,7 +8,7 @@ module Dapp
     attr_reader :bash_commands
     attr_reader :options
 
-    def initialize(from:, name:)
+    def initialize(name:, from: nil)
       @from = from
       @bash_commands = []
       @options = {}
@@ -18,7 +18,6 @@ module Dapp
     end
 
     def id
-      # TODO raise if no name nor id
       @id ||= shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
     end
 
@@ -50,7 +49,6 @@ module Dapp
     end
 
     def fixate!
-      puts [name, id].join(' ')
       tag!
       push!
     end
@@ -64,7 +62,8 @@ module Dapp
     private
 
     def run!
-      shellout!("docker run --name=#{container_name} #{from.id} #{prepared_options} #{prepared_bash_command}")
+      raise "`from` is not defined!" if from.nil?
+      shellout!("docker run #{prepared_options} --name=#{container_name} #{from.id} #{prepared_bash_command}")
     end
 
     def commit!

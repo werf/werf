@@ -1,5 +1,5 @@
 module Dapp
-  module Builder
+  module Build
     module Stage
       class Source2 < SourceBase
         def initialize(application, relative_stage)
@@ -15,5 +15,5 @@ module Dapp
         end
       end # Source2
     end # Stage
-  end # Builder
+  end # Build
 end # Dapp

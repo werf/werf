@@ -16,7 +16,7 @@ module Dapp
       opts[:build_path] = opts[:build_dir] ? opts[:build_dir] : home_path('build')
       opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
-      @last_stage = Builder::Stage::Source5.new(self)
+      @last_stage = Build::Stage::Source5.new(self)
     end
 
     def build_and_fixate!
