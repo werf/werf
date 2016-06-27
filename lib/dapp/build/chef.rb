@@ -52,7 +52,7 @@ module Dapp
 
       def prepare_recipes(stage)
         # vendor
-        shellout("berks vendor #{chef_path('vendor')}")
+        shellout!("berks vendor #{chef_path('vendor')}")
 
         # stage recipes
         recipes = []

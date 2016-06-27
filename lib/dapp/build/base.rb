@@ -4,17 +4,13 @@ module Dapp
       include CommonHelper
       include Dapp::Filelock
 
-      attr_accessor :docker
       attr_reader :conf
       attr_reader :opts
       attr_reader :last_stage
-      attr_reader :builder
-      attr_reader :docker_atomizer
 
-      def initialize(conf:, opts:, builder:)
+      def initialize(conf:, opts:)
         @conf = conf
         @opts = opts
-        @builder = builder
 
         opts[:log_indent] = 0
 
@@ -22,18 +18,11 @@ module Dapp
         opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
 
         @last_stage = Stage::Source5.new(self)
-        @docker = Dapp::Docker.new(socket: opts[:docker_socket], build: self)
       end
 
       def run
         last_stage.build!
         last_stage.fixate!
-
-        builder.commit_atomizers!
-      end
-
-      def signature
-        last_stage.signature
       end
 
       def git_artifact_list
@@ -48,8 +37,7 @@ module Dapp
       end
 
       def remote_git_artifact_list
-        @remote_git_artifact_list ||= Array((conf[:git_artifact] || {})[:remote])
-            .map(&method(:make_remote_git_artifact))
+        @remote_git_artifact_list ||= Array((conf[:git_artifact] || {})[:remote]).map(&method(:make_remote_git_artifact))
       end
 
       def home_path(*path)
@@ -106,18 +94,14 @@ module Dapp
 
       def make_local_git_artifact(cfg)
         repo = GitRepo::Own.new(self)
-        GitArtifact.new(self, repo, cfg[:where_to_add],
-                        branch: cfg[:branch])
+        GitArtifact.new(repo, cfg[:where_to_add], branch: cfg[:branch])
       end
 
       def make_remote_git_artifact(cfg)
         repo_name = cfg[:url].gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
-        repo = GitRepo::Remote.new(self, repo_name,
-                                   url: cfg[:url],
-                                   ssh_key_path: ssh_key_path)
+        repo = GitRepo::Remote.new(self, repo_name, url: cfg[:url], ssh_key_path: ssh_key_path)
         repo.fetch!(cfg[:branch])
-        GitArtifact.new(self, repo, cfg[:where_to_add],
-                        branch: cfg[:branch])
+        GitArtifact.new(repo, cfg[:where_to_add], branch: cfg[:branch])
       end
     end # Base
   end # Builder

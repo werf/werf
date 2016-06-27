@@ -12,8 +12,23 @@ module Dapp
           next_stage.next_stage
         end
 
+        def fixate!
+          super
+          layer_commits_write!
+        end
+
         def signature
           hashsum [dependencies_checksum, *commit_list]
+        end
+
+        def image
+          super do |image|
+            build.git_artifact_list.each do |git_artifact|
+              layer_commit_change(git_artifact)
+              image.add_commands git_artifact.send(apply_command_method, self)
+            end
+            yield image if block_given?
+          end
         end
 
         def dependencies_checksum
@@ -21,31 +36,12 @@ module Dapp
         end
 
         def layer_commit(git_artifact)
-          @commits[git_artifact] ||= git_artifact.repo_latest_commit
-        end
-
-        def commit!
-          # docker push
-          # write_commits
-        end
-
-        def layer_commit(git_artifact)
-          if layer_commit_file_path(git_artifact).exist?
-            layer_commit_file_path(git_artifact).read.strip
-          else
-            layer_commit_write!(git_artifact)
-            git_artifact.repo_latest_commit
-          end
-        end
-
-        def image
-          super do |image|
-            build.git_artifact_list.each do |git_artifact|
-              layer_commit_write!(git_artifact)
-              layer_timestamp_write!(git_artifact)
-              image.add_commands git_artifact.send(apply_command_method, self)
+          commits[git_artifact] ||= begin
+            if layer_commit_file_path(git_artifact).exist?
+              layer_commit_file_path(git_artifact).read.strip
+            else
+              git_artifact.repo_latest_commit
             end
-            yield image if block_given?
           end
         end
 
@@ -59,44 +55,16 @@ module Dapp
           build.git_artifact_list.map { |git_artifact| layer_commit(git_artifact) }
         end
 
-        # FIXME KISS
-        def layer_timestamp(git_artifact)
-          if layer_timestamp_file_path(git_artifact).exist?
-            layer_timestamp_file_path(git_artifact).read.strip.to_i
-          else
-            layer_timestamp_write!(git_artifact)
-            git_artifact.repo.commit_at(layer_commit(git_artifact)).to_i
-          end
+        def layer_commits_write!
+          build.git_artifact_list.each { |git_artifact| layer_commit_file_path(git_artifact).write(layer_commit(git_artifact)) }
         end
 
-        def layer_commit_write!(git_artifact)
-          git_artifact.file_atomizer.add_path(layer_commit_file_path(git_artifact))
-          layer_commit_file_path(git_artifact).write(git_artifact.repo_latest_commit + "\n")
-        end
-
-        def layer_timestamp_write!(git_artifact)
-          git_artifact.file_atomizer.add_path(layer_timestamp_file_path(git_artifact))
-          layer_timestamp_file_path(git_artifact).write("#{git_artifact.repo.commit_at(layer_commit(git_artifact)).to_i}\n")
-        end
-
-        def layer_commit_filename(git_artifact)
-          layer_filename git_artifact, '.commit'
-        end
-
-        def layer_timestamp_filename(git_artifact)
-          layer_filename git_artifact, '.timestamp'
+        def layer_commit_change(git_artifact)
+          commits[git_artifact] ||= git_artifact.repo_latest_commit
         end
 
         def layer_commit_file_path(git_artifact)
-          build_path layer_commit_filename(git_artifact)
-        end
-
-        def layer_timestamp_file_path(git_artifact)
-          build_path layer_timestamp_filename(git_artifact)
-        end
-
-        def layer_filename(git_artifact, ending)
-          git_artifact.filename ".#{name}.#{git_artifact.paramshash}.#{dependencies_checksum}#{ending}"
+          build_path git_artifact.filename ".#{name}.#{git_artifact.paramshash}.#{dependencies_checksum}.commit"
         end
 
         def build_path(*path)
@@ -105,6 +73,12 @@ module Dapp
 
         def container_build_path(*path)
           build.container_build_path(*path)
+        end
+
+        private
+
+        def commits
+          @commits ||= {}
         end
       end # SourceBase
     end # Stage

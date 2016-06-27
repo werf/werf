@@ -3,12 +3,20 @@ module Dapp
   class GitArtifact
     include Dapp::CommonHelper
 
+    attr_reader :repo
+    attr_reader :name
+    attr_reader :where_to_add
+    attr_reader :commit
+    attr_reader :cwd
+    attr_reader :owner
+    attr_reader :group
+    attr_reader :interlayer_period
+
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
-    def initialize(build, repo, where_to_add,
+    def initialize(repo, where_to_add,
                    name: nil, branch: nil, commit: nil,
                    cwd: nil, paths: nil, owner: nil, group: nil,
                    interlayer_period: 7 * 24 * 3600)
-      @build = build
       @repo = repo
       @name = name
 
@@ -25,21 +33,8 @@ module Dapp
       @group = group
 
       @interlayer_period = interlayer_period
-
-      @file_atomizer = build.builder.register_file_atomizer(build.build_path(filename('.file_atomizer')))
     end
     # rubocop:enable Metrics/ParameterLists, Metrics/MethodLength
-
-    attr_reader :repo
-    attr_reader :name
-    attr_reader :where_to_add
-    attr_reader :commit
-    attr_reader :cwd
-    attr_reader :owner
-    attr_reader :group
-    attr_reader :interlayer_period
-    attr_reader :build
-    attr_reader :file_atomizer
 
     def archive_apply_command(stage)
       credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
@@ -68,7 +63,7 @@ module Dapp
     end
 
     def patch_size(from, to)
-      shellout("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
+      shellout!("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
     end
 
     def repo_latest_commit

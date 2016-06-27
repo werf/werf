@@ -15,12 +15,8 @@ module Dapp
           next_stage
         end
 
-        def archive_filename(git_artifact)
-          git_artifact.filename '.tar.gz'
-        end
-
         def container_archive_path(git_artifact)
-          container_build_path archive_filename(git_artifact)
+          container_build_path git_artifact.filename '.tar.gz'
         end
 
         protected

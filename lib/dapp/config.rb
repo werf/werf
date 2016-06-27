@@ -51,7 +51,7 @@ module Dapp
       opts[:home_path] ||= Pathname.new(opts[:dappfile_path] || 'fakedir').parent.expand_path.to_s
 
       # home branch
-      @home_branch = shellout("git -C #{home_path} rev-parse --abbrev-ref HEAD").stdout.strip
+      @home_branch = shellout!("git -C #{home_path} rev-parse --abbrev-ref HEAD").stdout.strip
 
       self.instance_eval(&block)
     end
@@ -74,7 +74,7 @@ module Dapp
         return
       end
       log "Prepared application config '#{name}'"
-      { name: name, type: type }.merge(opts.select { |k, _v| [:from_name, :home_path, :dapps, :exposes, :git_artifact,
+      { name: name, type: type }.merge(opts.select { |k, _v| [:from, :home_path, :dapps, :exposes, :git_artifact,
                                                               :infra_install, :infra_setup, :app_install, :app_setup].include?(k) } )
     end
 
@@ -120,7 +120,7 @@ module Dapp
     end
 
     def from_ubuntu1404
-      opts[:from_name] = :'ubuntu:14.04'
+      opts[:from] = :'ubuntu:14.04'
     end
 
     def from_ubuntu1604

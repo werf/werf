@@ -11,8 +11,6 @@ module Dapp
           image.signature
         end
 
-        protected
-
         def image
           super do |image|
             build.infra_install_do(image)

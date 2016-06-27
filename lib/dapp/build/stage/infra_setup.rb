@@ -7,8 +7,6 @@ module Dapp
           super
         end
 
-        protected
-
         def image
           super do |image|
             build.infra_setup_do(image)

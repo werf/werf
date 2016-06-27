@@ -15,19 +15,15 @@ module Dapp
           nil
         end
 
-        protected
-
         def image
           super do |image|
-            image.build_opts!({ expose: build.conf[:exposes] }) unless build.conf[:exposes].nil?
+            image.add_expose(build.conf[:exposes]) unless build.conf[:exposes].nil?
           end
         end
 
-        def layer_commit_write!(_git_artifact)
-          nil
-        end
+        protected
 
-        def layer_timestamp_write!(_git_artifact)
+        def layer_commit_write!(_git_artifact)
           nil
         end
       end # Source5

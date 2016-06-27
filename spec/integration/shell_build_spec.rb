@@ -10,20 +10,8 @@ describe Dapp::Build::Shell do
   end
 
   def build
-    options = { builder: builder, conf: config.dup, opts: opts }
-    @build = Dapp::Build::Shell.new(**options).tap { |build| build.docker = docker }
-  end
-
-  def builder
-    instance_double('Dapp::Builder').tap do |obj|
-      allow(obj).to receive(:register_docker_atomizer).and_return([])
-      allow(obj).to receive(:register_file_atomizer).and_return begin
-                                                                  instance_double('Dapp::Atomizer::File').tap do |atomizer|
-                                                                    allow(atomizer).to receive(:add_path)
-                                                                  end
-                                                                end
-      allow(obj).to receive(:commit_atomizers!)
-    end
+    options = { conf: config.dup, opts: opts }
+    @build = Dapp::Build::Shell.new(**options)
   end
 
   def docker
@@ -72,14 +60,14 @@ describe Dapp::Build::Shell do
     stgs = {}
     s = b.last_stage
     while s.respond_to? :prev_stage
-      stgs[s.name] = s
+      stgs[s.send(:name)] = s
       s = s.prev_stage
     end
     stgs
   end
 
   def build_keys
-    stages.values.map { |s| [:"#{s.name}", s.send(:signature)] }.to_h
+    stages.values.map { |s| [:"#{s.send(:name)}", s.send(:signature)] }.to_h
   end
 
   def stage_build_key(stage_name)
@@ -87,11 +75,11 @@ describe Dapp::Build::Shell do
   end
 
   def next_stage(s)
-    stages(current_build)[s].next_stage.name
+    stages(current_build)[s].next_stage.send(:name)
   end
 
   def prev_stage(s)
-    stages(current_build)[s].prev_stage.name
+    stages(current_build)[s].prev_stage.send(:name)
   end
 
 

@@ -7,8 +7,6 @@ module Dapp
           super
         end
 
-        protected
-
         def image
           super do |image|
             build.app_install_do(image)

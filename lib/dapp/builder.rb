@@ -1,35 +1,20 @@
 module Dapp
   class Builder
     attr_reader :cli_options, :patterns
-    attr_reader :atomizers
 
     def initialize(cli_options:, patterns: nil)
       @cli_options = cli_options
 
       @patterns = patterns || []
       @patterns << '*' unless @patterns.any?
-
-      @atomizers = {}
     end
 
     def build
       build_configs.each do |build_conf|
         puts build_conf[:name]
-        options = { conf: build_conf, opts: cli_options, builder: self }
+        options = { conf: build_conf, opts: cli_options }
         build_new(**options).run
       end
-    end
-
-    def register_file_atomizer(file_path)
-      atomizer(file_path) || (atomizers[file_path.to_s] = Atomizer::File.new(file_path))
-    end
-
-    def register_docker_atomizer(file_path)
-      atomizer(file_path) || (atomizers[file_path.to_s] = Atomizer::Docker.new(file_path))
-    end
-
-    def commit_atomizers!
-      atomizers.values.each(&:commit!)
     end
 
     protected
@@ -77,11 +62,6 @@ module Dapp
       elsif options[:conf][:type] == :shell
         Dapp::Build::Shell.new(**options)
       end
-    end
-
-    def atomizer(file_path)
-      name = file_path.to_s
-      atomizers[name] unless atomizers[name].nil?
     end
   end # Builder
 end # Dapp

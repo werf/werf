@@ -10,22 +10,22 @@ module Dapp
           image.signature
         end
 
-        protected
-
         def image
           super do |image|
             send(image_constructor_method, image)
           end
         end
 
-        def from_image_name
-          build.conf[:from]
+        protected
+
+        def from_image
+          DockerImage.new from: build.conf[:from]
         end
 
         private
 
         def image_constructor_method
-          :"from_#{from_image_name.to_s.split(/[:.]/).join}"
+          :"from_#{build.conf[:from].to_s.split(/[:.]/).join}"
         end
       end # Prepare
     end # Stage
