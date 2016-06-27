@@ -2,31 +2,21 @@ module Dapp
   module GitRepo
     # Base class for any Git repo (remote, gitkeeper, etc)
     class Base
-      attr_reader :build
+      attr_reader :application
       attr_reader :name
       attr_reader :su
 
-      def initialize(build, name, build_path: nil, container_path: build_path)
-        @build = build
+      def initialize(application, name)
+        @application = application
         @name = name
-        @build_path = build_path || []
-        @container_path = container_path || []
-      end
-
-      def build_path(*paths)
-        build.build_path(*@build_path, *paths)
-      end
-
-      def container_build_path(*paths)
-        build.container_build_path(*@container_path, *paths)
       end
 
       def container_build_dir_path
-        container_build_path "#{name}.git"
+        application.container_build_path "#{name}.git"
       end
 
       def dir_path
-        build_path "#{name}.git"
+        application.build_path "#{name}.git"
       end
 
       def git_bare(command, **kwargs)
@@ -49,13 +39,13 @@ module Dapp
       end
 
       def lock(**kwargs, &block)
-        build.filelock(build_path("#{name}.lock"), error_message: "Repository #{name} in use! Try again later.", **kwargs, &block)
+        application.filelock(application.build_path("#{name}.lock"), error_message: "Repository #{name} in use! Try again later.", **kwargs, &block)
       end
 
       protected
 
       def git(command, **kwargs)
-        build.shellout!("git #{command}", **kwargs)
+        application.shellout!("git #{command}", **kwargs)
       end
     end
   end

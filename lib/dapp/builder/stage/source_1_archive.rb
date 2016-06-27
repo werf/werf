@@ -1,9 +1,9 @@
 module Dapp
-  module Build
+  module Builder
     module Stage
       class Source1Archive < SourceBase
-        def initialize(build, relative_stage)
-          @prev_stage = InfraInstall.new(build, self)
+        def initialize(application, relative_stage)
+          @prev_stage = InfraInstall.new(application, self)
           super
         end
 
@@ -16,7 +16,7 @@ module Dapp
         end
 
         def container_archive_path(git_artifact)
-          container_build_path git_artifact.filename '.tar.gz'
+          application.container_build_path git_artifact.filename '.tar.gz'
         end
 
         protected
@@ -26,5 +26,5 @@ module Dapp
         end
       end # Source1Archive
     end # Stage
-  end # Build
+  end # Builder
 end # Dapp

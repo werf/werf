@@ -1,9 +1,9 @@
 module Dapp
-  module Build
+  module Builder
     module Stage
       class Source3 < SourceBase
-        def initialize(build, relative_stage)
-          @prev_stage = InfraSetup.new(build, self)
+        def initialize(application, relative_stage)
+          @prev_stage = InfraSetup.new(application, self)
           super
         end
 
@@ -12,7 +12,7 @@ module Dapp
         def dependencies_checksum
           hashsum [prev_stage.signature,
                    app_setup_file,
-                   *build.app_setup_checksum]
+                   *application.builder.app_setup_checksum]
         end
 
         private
@@ -28,9 +28,9 @@ module Dapp
         end
 
         def app_setup_file_path
-          build.build_path('.app_setup')
+          application.build_path('.app_setup')
         end
       end # Source3
     end # Stage
-  end # Build
+  end # Builder
 end # Dapp

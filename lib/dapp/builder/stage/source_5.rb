@@ -1,10 +1,10 @@
 module Dapp
-  module Build
+  module Builder
     module Stage
       class Source5 < SourceBase
-        def initialize(build)
-          @prev_stage = Source4.new(build, self)
-          @build = build
+        def initialize(application)
+          @prev_stage = Source4.new(application, self)
+          @application = application
         end
 
         def prev_source_stage
@@ -17,7 +17,8 @@ module Dapp
 
         def image
           super do |image|
-            image.add_expose(build.conf[:exposes]) unless build.conf[:exposes].nil?
+            exposes = application.conf[:exposes]
+            image.add_expose(exposes) unless exposes.nil?
           end
         end
 
@@ -28,5 +29,5 @@ module Dapp
         end
       end # Source5
     end # Stage
-  end # Build
+  end # Builder
 end # Dapp

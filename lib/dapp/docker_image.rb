@@ -3,7 +3,6 @@ module Dapp
     include CommonHelper
 
     attr_reader :from
-    attr_reader :id # FIXME remove reader
     attr_reader :container_name
     attr_reader :name
     attr_reader :bash_commands
@@ -36,12 +35,7 @@ module Dapp
     end
 
     def add_commands(*commands)
-      bash_commands.push *commands
-    end
-
-    # FIXME remove
-    def signature
-      hashsum [from.name, *bash_commands, options.inspect]
+      @bash_commands += commands.flatten
     end
 
     def exist?
@@ -70,7 +64,7 @@ module Dapp
     private
 
     def run!
-      shellout!("docker run #{prepared_options} --name=#{container_name} #{from.id} #{prepared_bash_command}")
+      shellout!("docker run --name=#{container_name} #{from.id} #{prepared_options} #{prepared_bash_command}")
     end
 
     def commit!

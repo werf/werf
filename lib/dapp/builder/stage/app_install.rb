@@ -1,18 +1,18 @@
 module Dapp
-  module Build
+  module Builder
     module Stage
       class AppInstall < Base
-        def initialize(build, relative_stage)
-          @prev_stage = Source1.new(build, self)
+        def initialize(application, relative_stage)
+          @prev_stage = Source1.new(application, self)
           super
         end
 
         def image
           super do |image|
-            build.app_install_do(image)
+            application.builder.app_install(image)
           end
         end
       end # AppInstall
     end # Stage
-  end # Build
+  end # Builder
 end # Dapp

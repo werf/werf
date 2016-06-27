@@ -1,5 +1,5 @@
 module Dapp
-  module Build
+  module Builder
     module Stage
       class SourceBase < Base
         attr_accessor :prev_source_stage, :next_source_stage
@@ -23,8 +23,10 @@ module Dapp
 
         def image
           super do |image|
-            build.git_artifact_list.each do |git_artifact|
+            application.git_artifact_list.each do |git_artifact|
               layer_commit_change(git_artifact)
+              image.add_volume "#{application.build_path}:#{application.container_build_path}"
+              image.add_volume "#{application.local_git_artifact.repo.dir_path}:#{application.local_git_artifact.repo.container_build_dir_path}" if application.local_git_artifact
               image.add_commands git_artifact.send(apply_command_method, self)
             end
             yield image if block_given?
@@ -52,11 +54,11 @@ module Dapp
         end
 
         def commit_list
-          build.git_artifact_list.map { |git_artifact| layer_commit(git_artifact) }
+          application.git_artifact_list.map { |git_artifact| layer_commit(git_artifact) }
         end
 
         def layer_commits_write!
-          build.git_artifact_list.each { |git_artifact| layer_commit_file_path(git_artifact).write(layer_commit(git_artifact)) }
+          application.git_artifact_list.each { |git_artifact| layer_commit_file_path(git_artifact).write(layer_commit(git_artifact)) }
         end
 
         def layer_commit_change(git_artifact)
@@ -64,15 +66,7 @@ module Dapp
         end
 
         def layer_commit_file_path(git_artifact)
-          build_path git_artifact.filename ".#{name}.#{git_artifact.paramshash}.#{dependencies_checksum}.commit"
-        end
-
-        def build_path(*path)
-          build.build_path(*path)
-        end
-
-        def container_build_path(*path)
-          build.container_build_path(*path)
+          application.build_path git_artifact.filename ".#{name}.#{git_artifact.paramshash}.#{dependencies_checksum}.commit"
         end
 
         private
@@ -82,5 +76,5 @@ module Dapp
         end
       end # SourceBase
     end # Stage
-  end # Build
+  end # Builder
 end # Dapp

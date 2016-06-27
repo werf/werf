@@ -115,7 +115,7 @@ BANNER
 
       def run(argv = ARGV)
         CLI.parse_options(self, argv)
-        Builder.new(cli_options: config, patterns: cli_arguments).build
+        NotBuilder.new(cli_options: config, patterns: cli_arguments).build
       end
     end
   end

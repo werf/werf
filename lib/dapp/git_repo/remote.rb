@@ -2,11 +2,11 @@ module Dapp
   module GitRepo
     # Normal Git repo
     class Remote < Base
-      def initialize(build, name, url:, ssh_key_path: nil, **kwargs)
-        super(build, name, **kwargs)
+      def initialize(application, name, url:, ssh_key_path: nil)
+        super(application, name)
 
         @url = url
-        @ssh_key_path = File.expand_path(ssh_key_path, build.home_path) if ssh_key_path
+        @ssh_key_path = File.expand_path(ssh_key_path, application.home_path) if ssh_key_path
 
         @use_ssh_key = false
         File.chmod(0600, @ssh_key_path) if @ssh_key_path
@@ -56,7 +56,7 @@ module Dapp
 
       def git(command, **kwargs)
         if use_ssh_key && ssh_key_path
-          build.shellout!("ssh-agent bash -ec 'ssh-add #{ssh_key_path}; git #{command}'", **kwargs)
+          application.shellout!("ssh-agent bash -ec 'ssh-add #{ssh_key_path}; git #{command}'", **kwargs)
         else
           super
         end

@@ -1,11 +1,11 @@
 module Dapp
-  module Build
+  module Builder
     module Stage
       class Source4 < SourceBase
         MAX_PATCH_SIZE = 1024*1024
 
-        def initialize(build, relative_stage)
-          @prev_stage = AppSetup.new(build, self)
+        def initialize(application, relative_stage)
+          @prev_stage = AppSetup.new(application, self)
           super
         end
 
@@ -24,11 +24,11 @@ module Dapp
         private
 
         def latest_patch_to_big?
-          build.git_artifact_list.all? do |git_artifact|
+          application.git_artifact_list.all? do |git_artifact|
             git_artifact.patch_size(layer_commit(git_artifact), git_artifact.repo_latest_commit) < MAX_PATCH_SIZE
           end
         end
       end # Source4
     end # Stage
-  end # Build
+  end # Builder
 end # Dapp

@@ -1,18 +1,18 @@
 module Dapp
-  module Build
+  module Builder
     module Stage
       class InfraSetup < Base
-        def initialize(build, relative_stage)
-          @prev_stage = Source2.new(build, self)
+        def initialize(application, relative_stage)
+          @prev_stage = Source2.new(application, self)
           super
         end
 
         def image
           super do |image|
-            build.infra_setup_do(image)
+            application.builder.infra_setup(image)
           end
         end
       end # InfraSetup
     end # Stage
-  end # Build
+  end # Builder
 end # Dapp

@@ -1,9 +1,9 @@
 module Dapp
-  module Build
+  module Builder
     module Stage
       class Source2 < SourceBase
-        def initialize(build, relative_stage)
-          @prev_stage = AppInstall.new(build, self)
+        def initialize(application, relative_stage)
+          @prev_stage = AppInstall.new(application, self)
           super
         end
 
@@ -11,9 +11,9 @@ module Dapp
 
         def dependencies_checksum
           hashsum [prev_stage.signature,
-                   *build.infra_setup_checksum]
+                   *application.builder.infra_setup_checksum]
         end
       end # Source2
     end # Stage
-  end # Build
+  end # Builder
 end # Dapp

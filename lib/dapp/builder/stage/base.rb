@@ -1,16 +1,14 @@
 module Dapp
-  module Build
+  module Builder
     module Stage
       class Base
         include CommonHelper
 
         attr_accessor :prev_stage, :next_stage
+        attr_reader :application
 
-        # FIXME rename Build class to smth else
-        attr_reader :build
-
-        def initialize(build, next_stage)
-          @build = build
+        def initialize(application, next_stage)
+          @application = application
 
           @next_stage = next_stage
           @next_stage.prev_stage = self
@@ -19,7 +17,7 @@ module Dapp
         def build!
           return if image.exist?
           prev_stage.build! if prev_stage
-          build.log self.class.to_s
+          application.log self.class.to_s
           image.build!
         end
 
@@ -35,9 +33,6 @@ module Dapp
         def image
           @image ||= begin
             DockerImage.new(name: image_name, from: from_image).tap do |image|
-              # FIXME only in source stages
-              image.add_volume "#{build.build_path}:#{build.container_build_path}"
-              image.add_volume "#{build.local_git_artifact.repo.dir_path}:#{build.local_git_artifact.repo.container_build_dir_path}" if build.local_git_artifact
               yield image if block_given?
             end
           end
@@ -60,5 +55,5 @@ module Dapp
         end
       end # Base
     end # Stage
-  end # Build
+  end # Builder
 end # Dapp

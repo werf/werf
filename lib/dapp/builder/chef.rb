@@ -1,8 +1,8 @@
 module Dapp
-  module Build
+  module Builder
     class Chef < Base
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |m|
-        define_method(:"#{m}_do") do |image|
+        define_method(:"#{m}") do |image|
           prepare_recipes(m) unless chef_cash_file?(m)
           image.build_cmd! "chef-apply #{container_build_path("#{m}_recipes")}"
           image.build_opts! volume: '/opt/chefdk:/opt/chefdk'

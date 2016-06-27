@@ -1,6 +1,5 @@
 module Dapp
-  # FIXME NotBuilder
-  class Builder
+  class NotBuilder
     attr_reader :cli_options, :patterns
 
     def initialize(cli_options:, patterns: nil)
@@ -14,7 +13,7 @@ module Dapp
       build_configs.each do |build_conf|
         puts build_conf[:name]
         options = { conf: build_conf, opts: cli_options }
-        build_new(**options).run
+        Application.new(**options).build_and_fixate!
       end
     end
 
@@ -55,14 +54,6 @@ module Dapp
         end
         configs
       end.flatten
-    end
-
-    def build_new(**options)
-      if options[:conf][:type] == :chef
-        Dapp::Build::Chef.new(**options)
-      elsif options[:conf][:type] == :shell
-        Dapp::Build::Shell.new(**options)
-      end
     end
   end # Builder
 end # Dapp

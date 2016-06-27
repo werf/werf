@@ -1,17 +1,17 @@
 require_relative '../spec_helper'
 
-describe Dapp::Build::Shell do
+describe Dapp::Application do
   def current_build
-    @build || build
+    @build || builder
   end
 
-  def build_run
-    build.run
+  def builder_run
+    builder.build_and_fixate!
   end
 
-  def build
+  def builder
     options = { conf: config.dup, opts: opts }
-    @build = Dapp::Build::Shell.new(**options)
+    @build = Dapp::Application.new(**options)
   end
 
   def docker
@@ -56,7 +56,7 @@ describe Dapp::Build::Shell do
     @stages ||= stages.keys.reverse
   end
 
-  def stages(b=build)
+  def stages(b=builder)
     stgs = {}
     s = b.last_stage
     while s.respond_to? :prev_stage
@@ -193,7 +193,7 @@ describe Dapp::Build::Shell do
     saved_signatures = build_keys
     send(:"change_#{stage_name}")
     expect_stages_signatures(stage_name, saved_signatures, build_keys)
-    build_run
+    builder_run
   end
 
   def changed_stage_signatures(stage_name)
@@ -239,7 +239,7 @@ describe Dapp::Build::Shell do
 
   it 'workflow' do
     init_repo
-    build_run
+    builder_run
 
     build_and_check(:source_5)
 
