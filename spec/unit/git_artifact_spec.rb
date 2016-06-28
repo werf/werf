@@ -7,28 +7,25 @@ describe Dapp::GitArtifact do
   end
 
   before :each do
-    @builder = instance_double('Dapp::Builder')
-    allow(@builder).to receive(:register_atomizer)
-    allow(@builder).to receive(:build_path) do |*args|
+    @application = instance_double('Dapp::Application')
+    allow(@application).to receive(:build_path) do |*args|
       File.absolute_path(File.join(*args))
     end
-    allow(@builder).to receive(:home_path).and_return('')
-    allow(@builder).to receive(:shellout) do |*args, **kwargs|
+    allow(@application).to receive(:home_path).and_return('')
+    allow(@application).to receive(:shellout!) do |*args, **kwargs|
       shellout(*args, **kwargs)
     end
-    allow(@builder).to receive(:filelock).and_yield
 
-    @docker = instance_double('Dapp::Docker')
-    allow(@docker).to receive(:add_artifact)
-    allow(@docker).to receive(:run)
-    allow(@builder).to receive(:docker).and_return(@docker)
+    @docker_image = instance_double('Dapp::DockerImage')
+    allow(@docker_image).to receive(:build!)
+    allow(@docker_image).to receive(:fixate!)
 
-    @repo = Dapp::GitRepo::Chronicler.new(@builder, 'repo')
+    @repo = Dapp::GitRepo::Chronicler.new(@application, 'repo')
   end
 
   def reset_instances
-    RSpec::Mocks.space.proxy_for(@builder).instance_variable_get(:@messages_received).clear
-    RSpec::Mocks.space.proxy_for(@docker).instance_variable_get(:@messages_received).clear
+    RSpec::Mocks.space.proxy_for(@application).instance_variable_get(:@messages_received).clear
+    RSpec::Mocks.space.proxy_for(@docker_image).instance_variable_get(:@messages_received).clear
   end
 
   def repo_create_branch(branch)
@@ -51,7 +48,7 @@ describe Dapp::GitArtifact do
   def artifact_init(where_to_add, id: nil, changefile: 'data.txt', changedata: random_string, branch: 'master', **kwargs)
     repo_change_and_commit(changefile: changefile, changedata: changedata, branch: branch)
 
-    (@artifacts ||= {})[id] = Dapp::GitArtifact.new(@builder, @repo, where_to_add, branch: branch, **kwargs)
+    (@artifacts ||= {})[id] = Dapp::GitArtifact.new(@repo, where_to_add, branch: branch, **kwargs)
   end
   # rubocop:enable Metrics/ParameterLists
 
@@ -83,7 +80,7 @@ describe Dapp::GitArtifact do
     reset_instances
     artifact(id: id).add_multilayer!
 
-    expect(@docker).to have_received(:add_artifact).with(
+    expect(@docker_image).to have_received(:add_artifact).with(
       %r{\/#{artifact_filename('.tar.gz', id: id)}$},
       artifact_filename('.tar.gz', id: id),
       artifact(id: id).where_to_add,
@@ -138,20 +135,20 @@ describe Dapp::GitArtifact do
     commit_filename = artifact_filename("#{suffix}.commit", id: id)
 
     if should_be_empty
-      expect(@docker).to_not have_received(:add_artifact).with(/#{patch_filename_esc}$/, patch_filename, '/tmp', step: step)
-      expect(@docker).to_not have_received(:run).with(/#{patch_filename_esc}/, /#{patch_filename_esc}$/, step: step)
+      expect(@docker_image).to_not have_received(:add_artifact).with(/#{patch_filename_esc}$/, patch_filename, '/tmp', step: step)
+      expect(@docker_image).to_not have_received(:run).with(/#{patch_filename_esc}/, /#{patch_filename_esc}$/, step: step)
       expect(File.exist?(patch_filename)).to be_falsy
       expect(File.exist?(commit_filename)).to be_falsy
     else
-      expect(@docker).to have_received(:add_artifact).with(/#{patch_filename_esc}$/, patch_filename, '/tmp', step: step)
-      expect(@docker).to have_received(:run).with(
+      expect(@docker_image).to have_received(:add_artifact).with(/#{patch_filename_esc}$/, patch_filename, '/tmp', step: step)
+      expect(@docker_image).to have_received(:run).with(
         %r{^zcat \/tmp\/#{patch_filename_esc} \| .*git apply --whitespace=nowarn --directory=#{artifact(id: id).where_to_add}$},
         "rm /tmp/#{patch_filename}",
         step: step
       )
       { owner: 'u', group: 'g' }.each do |subj, flag|
         if artifact(id: id).send(subj)
-          expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-#{flag} #{artifact(id: id).send(subj)}.*git apply/, any_args)
+          expect(@docker_image).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-#{flag} #{artifact(id: id).send(subj)}.*git apply/, any_args)
         end
       end
       expect(File.read(commit_filename).strip).to eq(@repo.latest_commit(artifact(id: id).branch))

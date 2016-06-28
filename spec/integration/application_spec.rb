@@ -1,6 +1,37 @@
 require_relative '../spec_helper'
 
-describe Dapp::Application do
+describe Dapp::Application, order: :defined do
+  before :all do
+    shellout 'git config -l | grep "user.email" || git config --global user.email "dapp@flant.com"'
+    shellout 'git config -l | grep "user.name" || git config --global user.name "Dapp Dapp"'
+  end
+
+  before :all do
+    init_repo
+  end
+
+  before :each do
+    stub_docker_image
+    application_build!
+  end
+
+
+  def stub_docker_image
+    @images_cash = []
+
+    method_new = Dapp::DockerImage.method(:new)
+
+    docker_image = class_double(Dapp::DockerImage).as_stubbed_const
+    allow(docker_image).to receive(:new) do |*args, &block|
+      method_new.call(*args, &block).tap do |instance|
+        allow(instance).to receive(:build!) { @images_cash << instance.name }
+        allow(instance).to receive(:exist?) { @images_cash.include? instance.name }
+        allow(instance).to receive(:fixate!)
+      end
+    end
+  end
+
+
   def current_application
     @application || application
   end
@@ -272,31 +303,6 @@ describe Dapp::Application do
     infra_install
   end
 
-
-  def stub_docker_image
-    @images_cash = []
-
-    method_new = Dapp::DockerImage.method(:new)
-
-    docker_image = class_double(Dapp::DockerImage).as_stubbed_const
-    allow(docker_image).to receive(:new) do |*args, &block|
-      method_new.call(*args, &block).tap do |instance|
-        allow(instance).to receive(:build!) { @images_cash << instance.name }
-        allow(instance).to receive(:exist?) { @images_cash.include? instance.name }
-        allow(instance).to receive(:fixate!)
-      end
-    end
-  end
-
-
-  before :all do
-    init_repo
-  end
-
-  before :each do
-    stub_docker_image
-    application_build!
-  end
 
   [:source_5, :source_4, :app_setup, :infra_setup, :app_install, :infra_install, :prepare].each do |stage|
     it "test #{stage}" do

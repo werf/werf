@@ -38,10 +38,6 @@ module Dapp
       def cleanup!
       end
 
-      def lock(**kwargs, &block)
-        application.filelock(application.build_path("#{name}.lock"), error_message: "Repository #{name} in use! Try again later.", **kwargs, &block)
-      end
-
       protected
 
       def git(command, **kwargs)

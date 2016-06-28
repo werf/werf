@@ -11,28 +11,22 @@ module Dapp
         @use_ssh_key = false
         File.chmod(0600, @ssh_key_path) if @ssh_key_path
 
-        lock do
-          unless File.directory? dir_path
-            with_ssh_key do
-              git "clone --bare --depth 1 #{url} #{dir_path}", log_verbose: true
-            end
+        unless File.directory? dir_path
+          with_ssh_key do
+            git "clone --bare --depth 1 #{url} #{dir_path}", log_verbose: true
           end
         end
       end
 
       def fetch!(branch = 'master')
-        lock do
-          with_ssh_key do
-            git_bare "fetch origin #{branch}:#{branch}", log_verbose: true
-          end
+        with_ssh_key do
+          git_bare "fetch origin #{branch}:#{branch}", log_verbose: true
         end
       end
 
       def cleanup!
-        lock do
-          super
-          FileUtils.rm_rf dir_path
-        end
+        super
+        FileUtils.rm_rf dir_path
       end
 
       protected
