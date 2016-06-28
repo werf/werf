@@ -13,17 +13,16 @@ module Dapp
           next_stage
         end
 
-        def signature
-          change_commit_if_patch_to_big!
-          super
+        def dependencies_checksum
+          hashsum [super, (changes_size_since_source3 / MAX_PATCH_SIZE).to_i]
         end
 
         private
 
-        def change_commit_if_patch_to_big!
-          application.git_artifact_list.each do |git_artifact|
-            layer_commit_change(git_artifact) if git_artifact.patch_size(layer_commit(git_artifact), git_artifact.repo_latest_commit) > MAX_PATCH_SIZE
-          end
+        def changes_size_since_source3
+          application.git_artifact_list.map do |git_artifact|
+            git_artifact.patch_size(prev_source_stage.layer_commit(git_artifact), git_artifact.repo_latest_commit)
+          end.reduce(:+)
         end
       end # Source4
     end # Stage
