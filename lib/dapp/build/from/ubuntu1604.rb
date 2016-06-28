@@ -8,7 +8,7 @@ module Dapp
         UBUNTU1604_ENV     = %w(TERM='xterm' LANG='C.UTF-8')
 
         def ubuntu1604_signature
-          hashsum [*UBUNTU1604_COMMAND, *UBUNTU1604_ENV]
+          hashsum ['ubuntu1604', *UBUNTU1604_COMMAND, *UBUNTU1604_ENV]
         end
 
         def ubuntu1604_image

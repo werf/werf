@@ -24,7 +24,7 @@ module Dapp
 
         protected
 
-        def layer_commits_write!
+        def layers_commits_write!
           nil
         end
       end # Source5

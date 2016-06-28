@@ -8,7 +8,7 @@ module Dapp
         UBUNTU1404_ENV     = %w(TERM='xterm' LANG='C.UTF-8')
 
         def ubuntu1404_signature
-          hashsum [*UBUNTU1404_COMMAND, *UBUNTU1404_ENV]
+          hashsum ['ubuntu1404', *UBUNTU1404_COMMAND, *UBUNTU1404_ENV]
         end
 
         def ubuntu1404_image
