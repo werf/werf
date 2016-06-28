@@ -2,7 +2,7 @@ module Dapp
   module Build
     module Stage
       class AppSetup < Base
-        def initialize(application, relative_stage)
+        def initialize(application, next_stage)
           @prev_stage = Source3.new(application, self)
           super
         end
