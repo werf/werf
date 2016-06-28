@@ -10,13 +10,11 @@ module Dapp
     attr_reader :cwd
     attr_reader :owner
     attr_reader :group
-    attr_reader :interlayer_period
 
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
     def initialize(repo, where_to_add,
                    name: nil, branch: nil, commit: nil,
-                   cwd: nil, paths: nil, owner: nil, group: nil,
-                   interlayer_period: 7 * 24 * 3600)
+                   cwd: nil, paths: nil, owner: nil, group: nil)
       @repo = repo
       @name = name
 
@@ -31,8 +29,6 @@ module Dapp
       @paths = paths
       @owner = owner
       @group = group
-
-      @interlayer_period = interlayer_period
     end
     # rubocop:enable Metrics/ParameterLists, Metrics/MethodLength
 

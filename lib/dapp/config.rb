@@ -147,8 +147,7 @@ module Dapp
           cwd: kwargs[:cwd] || '/',
           paths: kwargs[:paths],
           owner: kwargs[:owner],
-          group: kwargs[:group],
-          interlayer_period: interlayer_period(:week)
+          group: kwargs[:group]
       }
     end
 
@@ -165,18 +164,8 @@ module Dapp
           cwd: kwargs[:cwd] || '/',
           paths: kwargs[:paths],
           owner: kwargs[:owner],
-          group: kwargs[:group],
-          interlayer_period: interlayer_period(:week)
+          group: kwargs[:group]
       }
-    end
-
-    def interlayer_period(period)
-      case period
-        when :day then 60*60*24
-        when :week then interlayer_period(:day)*7
-        when :month then interlayer_period(:week)*7
-        else nil
-      end
     end
 
     def app(name, &block)

@@ -26,8 +26,7 @@ describe Dapp::Application do
                 cwd: '/',
                 paths: nil,
                 owner: 'apache',
-                group: 'apache',
-                interlayer_period: 604800
+                group: 'apache'
             }
         }
     }
