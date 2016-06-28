@@ -1,28 +1,17 @@
 require_relative '../spec_helper'
 
 describe Dapp::Application do
-  def current_build
-    @build || builder
+  def current_application
+    @application || application
   end
 
-  def builder_run
-    builder.build_and_fixate!
+  def application_build!
+    application.build_and_fixate!
   end
 
-  def builder
+  def application
     options = { conf: config.dup, opts: opts }
-    @build = Dapp::Application.new(**options)
-  end
-
-  def docker
-    @docker ||= instance_double('Dapp::Docker').tap do |obj|
-      allow(obj).to receive(:build_image!) { |image_specification:, image_name:| images_cash << image_name }
-      allow(obj).to receive(:image_exist?) { |image_name| images_cash.include? image_name }
-    end
-  end
-
-  def images_cash
-    @images_cash ||= []
+    @application = Dapp::Application.new(**options)
   end
 
   def config
@@ -56,7 +45,7 @@ describe Dapp::Application do
     @stages ||= stages.keys.reverse
   end
 
-  def stages(b=builder)
+  def stages(b=application)
     stgs = {}
     s = b.last_stage
     while s.respond_to? :prev_stage
@@ -75,11 +64,11 @@ describe Dapp::Application do
   end
 
   def next_stage(s)
-    stages(current_build)[s].next_stage.send(:name)
+    stages(current_application)[s].next_stage.send(:name)
   end
 
   def prev_stage(s)
-    stages(current_build)[s].prev_stage.send(:name)
+    stages(current_application)[s].prev_stage.send(:name)
   end
 
 
@@ -113,7 +102,7 @@ describe Dapp::Application do
   end
 
   def check_image_command(stage_name, command)
-    expect(stages(current_build)[stage_name].send(:image).bash_commands.join =~ Regexp.new(command)).to be
+    expect(stages(current_application)[stage_name].send(:image).bash_commands.join =~ Regexp.new(command)).to be
   end
 
   def generate_command
@@ -183,9 +172,8 @@ describe Dapp::Application do
 
 
   def build_and_check(stage_name)
-    puts stage_name
     check_signatures_and_build(stage_name)
-    expect_built_stages(stage_name)
+    # expect_built_stages(stage_name) TODO
     send("expect_#{stage_name}_images_commands")
   end
 
@@ -193,15 +181,11 @@ describe Dapp::Application do
     saved_signatures = build_keys
     send(:"change_#{stage_name}")
     expect_stages_signatures(stage_name, saved_signatures, build_keys)
-    builder_run
-  end
-
-  def changed_stage_signatures(stage_name)
-
+    application_build!
   end
 
   def expect_built_stages(stage_name)
-    built_stages = stages(current_build).values.select { |s| send("#{stage_name}_modified_signatures").include? s.name }
+    built_stages = stages(current_application).values.select { |s| send("#{stage_name}_modified_signatures").include? s.send(:name) }
     built_stages.each { |s| expect(docker).to have_received(:build_image!).with(image_specification: s.send(:image), image_name: s.send(:image_name)) }
   end
 
@@ -237,142 +221,64 @@ describe Dapp::Application do
   end
 
 
-  it 'workflow' do
-    init_repo
-    builder_run
-
+  def source_5
     build_and_check(:source_5)
+  end
 
+  def source_4
     build_and_check(:source_4)
-    build_and_check(:source_5)
+    source_5
+  end
 
+  def app_setup
     build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
+    source_5
+    source_4
+  end
 
+  def infra_setup
     build_and_check(:infra_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
+    source_5
+    source_4
+    app_setup
+  end
 
+  def app_install
     build_and_check(:app_install)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:infra_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
+    source_5
+    source_4
+    app_setup
+    infra_setup
+  end
 
+  def infra_install
     build_and_check(:infra_install)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:infra_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_install)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:infra_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
+    source_5
+    source_4
+    app_setup
+    infra_setup
+    app_install
+  end
 
+  def prepare
     build_and_check(:prepare)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:infra_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_install)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:infra_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:infra_install)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:infra_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_install)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:infra_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
-    build_and_check(:app_setup)
-    build_and_check(:source_5)
-    build_and_check(:source_4)
-    build_and_check(:source_5)
+    source_5
+    source_4
+    app_setup
+    infra_setup
+    app_install
+    infra_install
+  end
+
+
+  before :all do
+    init_repo
+    application_build!
+  end
+
+  [:source_5, :source_4, :app_setup, :infra_setup, :app_install, :infra_install, :prepare].each do |stage|
+    it "test #{stage}" do
+      send(stage)
+    end
   end
 end
