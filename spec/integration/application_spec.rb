@@ -173,7 +173,7 @@ describe Dapp::Application do
 
   def build_and_check(stage_name)
     check_signatures_and_build(stage_name)
-    # expect_built_stages(stage_name) TODO
+    expect_built_stages(stage_name)
     send("expect_#{stage_name}_images_commands")
   end
 
@@ -185,8 +185,11 @@ describe Dapp::Application do
   end
 
   def expect_built_stages(stage_name)
-    built_stages = stages(current_application).values.select { |s| send("#{stage_name}_modified_signatures").include? s.send(:name) }
-    built_stages.each { |s| expect(docker).to have_received(:build_image!).with(image_specification: s.send(:image), image_name: s.send(:image_name)) }
+    built_stages, not_built_stages = stages(current_application).values.partition do |s|
+      send("#{stage_name}_modified_signatures").include? s.send(:name)
+    end
+    not_built_stages.each { |s| expect(s.send(:image)).to_not have_received(:build!) }
+    built_stages.each { |s| expect(s.send(:image)).to have_received(:build!) }
   end
 
   def expect_stages_signatures(stage_name, saved_keys, new_keys)
@@ -271,8 +274,28 @@ describe Dapp::Application do
   end
 
 
+  def stub_docker_image
+    @images_cash = []
+
+    method_new = Dapp::DockerImage.method(:new)
+
+    docker_image = class_double(Dapp::DockerImage).as_stubbed_const
+    allow(docker_image).to receive(:new) do |*args, &block|
+      method_new.call(*args, &block).tap do |instance|
+        allow(instance).to receive(:build!) { @images_cash << instance.name }
+        allow(instance).to receive(:exist?) { @images_cash.include? instance.name }
+        allow(instance).to receive(:fixate!)
+      end
+    end
+  end
+
+
   before :all do
     init_repo
+  end
+
+  before :each do
+    stub_docker_image
     application_build!
   end
 
