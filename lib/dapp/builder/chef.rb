@@ -3,9 +3,10 @@ module Dapp
     class Chef < Base
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |m|
         define_method(:"#{m}") do |image|
-          prepare_recipes(m) unless chef_cash_file?(m)
+          image.add_volume '/opt/chefdk:/opt/chefdk'
           image.build_cmd! "chef-apply #{container_build_path("#{m}_recipes")}"
-          image.build_opts! volume: '/opt/chefdk:/opt/chefdk'
+
+          prepare_recipes(m)
         end
 
         define_method(:"#{m}_signature_do") { hashsum chef_cash_file_sum(m) }
@@ -38,7 +39,7 @@ module Dapp
         home_path("#{stage}.#{berksfile_lock_sum}")
       end
 
-      def berksfile_lock_sum
+      def berksfile_lock_checksum
         hashsum(File.read(berksfile_lock_path)) if berksfile_lock?
       end
 
@@ -51,8 +52,7 @@ module Dapp
       end
 
       def prepare_recipes(stage)
-        # vendor
-        shellout!("berks vendor #{chef_path('vendor')}")
+        install_berks_vendor
 
         # stage recipes
         recipes = []
@@ -67,6 +67,38 @@ module Dapp
         # number and cp recipes
         FileUtils.rm_rf(build_path("#{stage}_recipes"))
         recipes.each_with_index { |file, index| FileUtils.copy(file.path, build_path("#{stage}_recipes", "#{index}_#{file.name}")) }
+      end
+
+      def install_berks_vendor
+        return if berks_vendor_checksum == installed_berks_vendor_checksum_path
+
+        shellout! "berks vendor #{chef_path('vendor')}"
+
+        berks_vendor_checksum_path.write "#{berks_vendor_checksum}\n"
+      end
+
+      def berks_vendor_checksum
+        @berks_vendor_checksum ||= begin
+          paths = %i(attributes recipes files templates).map do |dir|
+            Dir[home_path(dir, '**/*')].map {|p| Pathname(p)}
+          end.flatten.sort
+
+          hashsum(berksfile_lock_checksum,
+                  *paths.map(&:to_s),
+                  *paths.reject(&:directory?).map(&:read))
+        end
+      end
+
+      def installed_berks_vendor_checksum
+        berks_vendor_checksum_path.exist? and berks_vendor_checksum_path.read.strip
+      end
+
+      def berks_vendor_checksum_path
+        build_path('berks_vendor.checksum')
+      end
+
+      def berks_vendor_path
+        build_path('chef', 'vendor')
       end
     end
   end
