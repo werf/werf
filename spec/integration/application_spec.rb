@@ -1,13 +1,9 @@
 require_relative '../spec_helper'
 
-describe Dapp::Application, order: :defined do
-  before :all do
-    shellout 'git config -l | grep "user.email" || git config --global user.email "dapp@flant.com"'
-    shellout 'git config -l | grep "user.name" || git config --global user.name "Dapp Dapp"'
-  end
-
+describe Dapp::Application do
   before :all do
     init_repo
+    common_cash
   end
 
   before :each do
@@ -16,17 +12,21 @@ describe Dapp::Application, order: :defined do
   end
 
 
-  def stub_docker_image
+  def common_cash
     @images_cash = []
+    @tagged_images_cash = []
+  end
 
+  def stub_docker_image
     method_new = Dapp::DockerImage.method(:new)
 
     docker_image = class_double(Dapp::DockerImage).as_stubbed_const
     allow(docker_image).to receive(:new) do |*args, &block|
       method_new.call(*args, &block).tap do |instance|
-        allow(instance).to receive(:build!) { @images_cash << instance.name }
-        allow(instance).to receive(:exist?) { @images_cash.include? instance.name }
-        allow(instance).to receive(:fixate!)
+        allow(instance).to receive(:build!)  { @images_cash << instance.name }
+        allow(instance).to receive(:exist?)  { @images_cash.include? instance.name }
+        allow(instance).to receive(:tag!)    { @tagged_images_cash << instance.name }
+        allow(instance).to receive(:tagged?) { @tagged_images_cash.include? instance.name }
       end
     end
   end
@@ -66,6 +66,7 @@ describe Dapp::Application, order: :defined do
   def opts
     @opts ||= {
         log_indent: 0,
+        log_quiet: true,
         dir: repo_path.join('.dapps'),
         build_path: repo_path.join('.dapps/world/build')
     }
@@ -121,13 +122,13 @@ describe Dapp::Application, order: :defined do
   [:app_install, :infra_setup, :app_setup].each do |stage_name|
     define_method "expect_#{stage_name}_images_commands" do
       check_image_command(stage_name, config[stage_name])
-      check_image_command(prev_stage(stage_name), 'patch')
+      check_image_command(prev_stage(stage_name), 'apply')
     end
   end
 
   [:source_4, :source_5].each do |stage_name|
     define_method "expect_#{stage_name}_images_commands" do
-      check_image_command(stage_name, 'patch')
+      check_image_command(stage_name, 'apply')
     end
   end
 
@@ -204,6 +205,7 @@ describe Dapp::Application, order: :defined do
   def build_and_check(stage_name)
     check_signatures_and_build(stage_name)
     expect_built_stages(stage_name)
+    expect_tagged_stages(stage_name)
     send("expect_#{stage_name}_images_commands")
   end
 
@@ -215,11 +217,24 @@ describe Dapp::Application, order: :defined do
   end
 
   def expect_built_stages(stage_name)
+    stages_signatures(stage_name) do |built_stages, not_built_stages|
+      not_built_stages.each { |s| expect(s.send(:image)).to_not have_received(:build!) }
+      built_stages.each { |s| expect(s.send(:image)).to have_received(:build!) }
+    end
+  end
+
+  def expect_tagged_stages(stage_name)
+    stages_signatures(stage_name) do |built_stages, not_built_stages|
+      not_built_stages.each { |s| expect(s.send(:image)).to_not have_received(:tag!) }
+      built_stages.each { |s| expect(s.send(:image)).to have_received(:tag!) }
+    end
+  end
+
+  def stages_signatures(stage_name)
     built_stages, not_built_stages = stages(current_application).values.partition do |s|
       send("#{stage_name}_modified_signatures").include? s.send(:name)
     end
-    not_built_stages.each { |s| expect(s.send(:image)).to_not have_received(:build!) }
-    built_stages.each { |s| expect(s.send(:image)).to have_received(:build!) }
+    yield built_stages, not_built_stages
   end
 
   def expect_stages_signatures(stage_name, saved_keys, new_keys)

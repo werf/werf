@@ -4,7 +4,7 @@ module Dapp
       module Ubuntu1404
         UBUNTU1404_COMMAND = ['apt-get update',
                               'apt-get -y dist-upgrade',
-                              'apt-get -y install apt-utils git curl apt-transport-https git']
+                              'apt-get -y install apt-utils curl apt-transport-https git']
         UBUNTU1404_ENV     = %w(TERM='xterm' LANG='C.UTF-8')
 
         def ubuntu1404_signature

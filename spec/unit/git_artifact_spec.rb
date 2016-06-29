@@ -1,11 +1,6 @@
 require_relative '../spec_helper'
 
 describe Dapp::GitArtifact do
-  before :all do
-    shellout 'git config -l | grep "user.email" || git config --global user.email "dapp@flant.com"'
-    shellout 'git config -l | grep "user.name" || git config --global user.name "Dapp Dapp"'
-  end
-
   before :each do
     @application = instance_double('Dapp::Application')
     allow(@application).to receive(:build_path) do |*args|
