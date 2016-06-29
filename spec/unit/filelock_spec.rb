@@ -11,11 +11,6 @@ describe Dapp::Filelock do
     throw :exit
   end
 
-  before :each do
-    @builder = instance_double('Dapp::Builder')
-    allow(@builder).to receive(:register_atomizer)
-  end
-
   def filelock(**kwargs)
     already_locked = self.class.filelocks['lockfile']
 

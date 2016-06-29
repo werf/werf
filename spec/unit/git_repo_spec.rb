@@ -7,21 +7,21 @@ describe Dapp::GitRepo do
   end
 
   before :each do
-    @builder = instance_double('Dapp::Builder')
+    @application = instance_double('Dapp::Application')
 
-    allow(@builder).to receive(:build_path) do |*args|
+    allow(@application).to receive(:build_path) do |*args|
       File.join(*args)
     end
 
-    allow(@builder).to receive(:shellout) do |*args, **kwargs|
+    allow(@application).to receive(:shellout!) do |*args, **kwargs|
       shellout(*args, **kwargs)
     end
 
-    allow(@builder).to receive(:filelock).and_yield
+    allow(@application).to receive(:filelock).and_yield
   end
 
   def chronicler_init
-    @chrono = Dapp::GitRepo::Chronicler.new(@builder, 'chrono')
+    @chrono = Dapp::GitRepo::Chronicler.new(@application, 'chrono')
     expect(File.exist?('chrono')).to be_truthy
     expect(File.exist?('chrono.git')).to be_truthy
   end
@@ -74,7 +74,7 @@ describe Dapp::GitRepo do
   def remote_init(**kwargs)
     chronicler_init
     chronicler_commit('Some text')
-    @remote = Dapp::GitRepo::Remote.new(@builder, 'remote', url: 'chrono.git', **kwargs)
+    @remote = Dapp::GitRepo::Remote.new(@application, 'remote', url: 'chrono.git', **kwargs)
     expect(File.exist?('remote.git')).to be_truthy
   end
 
@@ -91,7 +91,7 @@ describe Dapp::GitRepo do
 
   it 'Remote#ssh', test_construct: true do
     shellout 'ssh-keygen -b 1024 -f key -P ""'
-    allow(@builder).to receive(:home_path).and_return('')
+    allow(@application).to receive(:home_path).and_return('')
     remote_init ssh_key_path: 'key'
     remote_cleanup
   end
@@ -108,8 +108,8 @@ describe Dapp::GitRepo do
     chronicler_init
     chronicler_commit('Some text')
 
-    allow(@builder).to receive(:home_path).and_return('chrono')
-    @own = Dapp::GitRepo::Own.new(@builder)
+    allow(@application).to receive(:home_path).and_return('chrono')
+    @own = Dapp::GitRepo::Own.new(@application)
     expect(@own.latest_commit).to eq @chrono.latest_commit
 
     chronicler_commit('Some another text')

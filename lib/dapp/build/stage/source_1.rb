@@ -2,7 +2,7 @@ module Dapp
   module Build
     module Stage
       class Source1 < SourceBase
-        def initialize(application, relative_stage)
+        def initialize(application, next_stage)
           @prev_stage = Source1Archive.new(application, self)
           super
         end

@@ -2,7 +2,7 @@ module Dapp
   module Build
     module Stage
       class Source3 < SourceBase
-        def initialize(application, relative_stage)
+        def initialize(application, next_stage)
           @prev_stage = InfraSetup.new(application, self)
           super
         end

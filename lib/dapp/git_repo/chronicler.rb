@@ -5,11 +5,9 @@ module Dapp
       def initialize(application, name)
         super
 
-        lock do
-          unless File.directory? chronodir_path
-            git "init --separate-git-dir=#{dir_path} #{chronodir_path}"
-            git_chrono 'commit --allow-empty -m init'
-          end
+        unless File.directory? chronodir_path
+          git "init --separate-git-dir=#{dir_path} #{chronodir_path}"
+          git_chrono 'commit --allow-empty -m init'
         end
       end
 
@@ -18,20 +16,16 @@ module Dapp
       end
 
       def commit!(comment = '+')
-        lock do
-          git_chrono 'add --all'
-          unless git_chrono('diff --cached --quiet', returns: [0, 1]).status.success?
-            git_chrono "commit -m #{comment}"
-          end
+        git_chrono 'add --all'
+        unless git_chrono('diff --cached --quiet', returns: [0, 1]).status.success?
+          git_chrono "commit -m #{comment}"
         end
       end
 
       def cleanup!
-        lock do
-          super
-          FileUtils.rm_rf dir_path
-          FileUtils.rm_rf chronodir_path
-        end
+        super
+        FileUtils.rm_rf dir_path
+        FileUtils.rm_rf chronodir_path
       end
 
       protected

@@ -62,7 +62,7 @@ module Dapp
     private
 
     def run!
-      raise "`from` is not defined!" if from.nil?
+      raise '`from` is not defined!' if from.nil?
       shellout!("docker run #{prepared_options} --name=#{container_name} #{from.id} #{prepared_bash_command}")
     end
 

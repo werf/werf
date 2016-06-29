@@ -23,7 +23,7 @@ module Dapp
         CENTOS7_ENV     =  %w(container='docker' TERM='xterm' LANG='en_US.UTF-8' LANGUAGE='en_US:en' LC_ALL='en_US.UTF-8')
 
         def centos7_signature
-          hashsum ['centos7', CENTOS7_COMMAND, CENTOS7_VOLUMES, CENTOS7_ENV]
+          hashsum ['centos7', *CENTOS7_COMMAND, *CENTOS7_VOLUMES, *CENTOS7_ENV]
         end
 
         def centos7_image
