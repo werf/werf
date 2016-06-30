@@ -22,7 +22,7 @@ module Dapp
         end
 
         def fixate!
-          return if image.tagged?
+          return if image.exist?
           prev_stage.fixate! if prev_stage
           image.fixate!
         end

@@ -7,6 +7,7 @@ module Dapp
     attr_reader :name
     attr_reader :bash_commands
     attr_reader :options
+    attr_reader :built_id
 
     def initialize(name:, from: nil)
       @from = from
@@ -14,10 +15,7 @@ module Dapp
       @options = {}
       @name = name
       @container_name = SecureRandom.hex
-    end
-
-    def built_id
-      @built_id ||= id
+      @built_id = id
     end
 
     def add_expose(value)
@@ -37,10 +35,6 @@ module Dapp
     end
 
     def exist?
-      !built_id.empty?
-    end
-
-    def tagged?
       !id.empty?
     end
 
@@ -78,6 +72,7 @@ module Dapp
     end
 
     def tag!
+      raise '`built_id` is not defined!' if built_id.nil?
       shellout!("docker tag #{built_id} #{name}")
     end
 
