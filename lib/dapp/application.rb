@@ -45,6 +45,12 @@ module Dapp
       end
     end
 
+    def build_cache_path(*path)
+      path.compact.inject(Pathname.new(opts[:build_cache_path]), &:+).expand_path.tap do |p|
+        FileUtils.mkdir_p p.parent
+      end
+    end
+
     def home_path(*path)
       path.compact.inject(Pathname.new(conf[:home_path]), &:+).expand_path
     end
@@ -56,7 +62,7 @@ module Dapp
     end
 
     def container_build_path(*path)
-      path.compact.inject(Pathname.new('/.build'), &:+).expand_path
+      path.compact.inject(Pathname.new('/.build'), &:+)
     end
 
     def builder
