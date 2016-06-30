@@ -7,18 +7,15 @@ module Dapp
     attr_reader :name
     attr_reader :bash_commands
     attr_reader :options
+    attr_reader :built_id
 
     def initialize(name:, from: nil)
       @from = from
       @bash_commands = []
       @options = {}
       @name = name
-
       @container_name = SecureRandom.hex
-    end
-
-    def id
-      @id ||= shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
+      @built_id = id
     end
 
     def add_expose(value)
@@ -43,7 +40,7 @@ module Dapp
 
     def build!
       run!
-      @id = commit!
+      @built_id = commit!
     ensure
       shellout("docker rm #{container_name}")
     end
@@ -61,9 +58,13 @@ module Dapp
 
     private
 
+    def id
+      shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
+    end
+
     def run!
-      raise '`from` is not defined!' if from.nil?
-      shellout!("docker run #{prepared_options} --name=#{container_name} #{from.id} #{prepared_bash_command}")
+      raise '`from.built_id` is not defined!' if from.built_id.empty?
+      shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}")
     end
 
     def commit!
@@ -71,7 +72,8 @@ module Dapp
     end
 
     def tag!
-      shellout!("docker tag #{id} #{name}")
+      raise '`built_id` is not defined!' if built_id.empty?
+      shellout!("docker tag #{built_id} #{name}")
     end
 
     def push!
@@ -87,7 +89,7 @@ module Dapp
     end
 
     def prepared_commands
-      bash_commands.map { |command| command.gsub('$', '\$') }.join('; ')
+      bash_commands.map { |command| command.gsub(/(\$|")/) { "\\#{$1}" } }.join('; ')
     end
   end # DockerImage
 end # Dapp

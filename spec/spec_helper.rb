@@ -8,7 +8,9 @@ end
 
 Bundler.require :default, :test, :development
 
-def shellout(*args, **kwargs)
-  kwargs.delete :log_verbose
-  Mixlib::ShellOut.new(*args, timeout: 20, **kwargs).run_command.tap(&:error!)
-end
+require 'active_support'
+
+require 'spec_helpers/common'
+require 'spec_helpers/application'
+require 'spec_helpers/git'
+require 'spec_helpers/git_artifact'

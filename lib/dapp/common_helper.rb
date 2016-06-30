@@ -31,5 +31,9 @@ module Dapp
       path = Pathname(path)
       path.delete if path.exist?
     end
+
+    def self.included(base)
+      base.extend(self)
+    end
   end # CommonHelper
 end # Dapp

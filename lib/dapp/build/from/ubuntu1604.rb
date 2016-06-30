@@ -4,7 +4,7 @@ module Dapp
       module Ubuntu1604
         UBUNTU1604_COMMAND = ['apt-get update',
                               'apt-get -y dist-upgrade',
-                              'apt-get -y install apt-utils git curl apt-transport-https git']
+                              'apt-get -y install apt-utils curl apt-transport-https git']
         UBUNTU1604_ENV     = %w(TERM='xterm' LANG='C.UTF-8')
 
         def ubuntu1604_signature

@@ -1,23 +1,11 @@
 require_relative '../spec_helper'
 
 describe Dapp::GitRepo do
-  before :all do
-    shellout 'git config -l | grep "user.email" || git config --global user.email "dapp@flant.com"'
-    shellout 'git config -l | grep "user.name" || git config --global user.name "Dapp Dapp"'
-  end
+  include SpecHelpers::Common
+  include SpecHelpers::Application
 
   before :each do
-    @application = instance_double('Dapp::Application')
-
-    allow(@application).to receive(:build_path) do |*args|
-      File.join(*args)
-    end
-
-    allow(@application).to receive(:shellout!) do |*args, **kwargs|
-      shellout(*args, **kwargs)
-    end
-
-    allow(@application).to receive(:filelock).and_yield
+    stub_application
   end
 
   def chronicler_init
