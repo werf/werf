@@ -28,13 +28,13 @@ module SpecHelpers
     end
 
     def stages
-      stgs = {}
+      hash = {}
       s = application.last_stage
       while s.respond_to? :prev_stage
-        stgs[s.send(:name)] = s
+        hash[s.send(:name)] = s
         s = s.prev_stage
       end
-      stgs
+      hash
     end
 
     def stage(stage_name)
@@ -69,21 +69,6 @@ module SpecHelpers
           allow(instance).to receive(:tag!)    { images_cash << instance.name }
         end
       end
-    end
-
-    def stub_application
-      @application = instance_double('Dapp::Application')
-      allow(@application).to receive(:build_path) do |*args|
-        File.absolute_path(File.join(*args))
-      end
-      allow(@application).to receive(:container_build_path) do |*args|
-        File.absolute_path(File.join(*args))
-      end
-      allow(@application).to receive(:home_path).and_return('')
-      allow(@application).to receive(:shellout!) do |*args, **kwargs|
-        shellout(*args, **kwargs)
-      end
-      allow(@application).to receive(:filelock).and_yield
     end
   end
 end

@@ -5,9 +5,29 @@ describe Dapp::Application do
   include SpecHelpers::Application
   include SpecHelpers::Git
 
+  before :all do
+    init
+  end
+
   before :each do
     stub_docker_image
     application_build!
+  end
+
+
+  def init
+    FileUtils.rm_rf project_path
+    FileUtils.mkpath project_path
+    Dir.chdir project_path
+    repo_init
+  end
+
+  def project_path
+    Pathname('/tmp/dapp/test')
+  end
+
+  def project_dapp_path
+    project_path.join('.dapps/dapp')
   end
 
 
@@ -15,18 +35,14 @@ describe Dapp::Application do
     @config ||= {
         name: 'test',
         type: :shell,
-        home_path: repo_name,
+        home_path: project_path,
         from: :'ubuntu:16.04',
         git_artifact: { local: { where_to_add: '/app', } }
     }
   end
 
   def opts
-    @opts ||= { log_quiet: true, build_path: repo_name.join('build') }
-  end
-
-  def repo_name
-    Pathname('/tmp/dapp/repo')
+    @opts ||= { log_quiet: true, build_dir: project_dapp_path.join('build') }
   end
 
 
@@ -94,7 +110,13 @@ describe Dapp::Application do
   end
 
   def change_source_4
-    repo_change_and_commit(changefile: SecureRandom.hex, changedata: ?x*1024*1024)
+    file_path = project_path.join('large_file')
+    if File.exist? file_path
+      FileUtils.rm file_path
+      repo_commit!
+    else
+      repo_change_and_commit('large_file', ?x*1024*1024)
+    end
   end
 
   def source_4_modified_signatures

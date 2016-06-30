@@ -25,7 +25,7 @@ module SpecHelpers
 
     # rubocop:disable Metrics/AbcSize
     def git_artifact_archive(id: nil)
-      git_artifact(id: id).add_multilayer!
+      git_artifact(id: id).archive_apply_command(stages[:source_1_archive])
 
       expect(@docker_image).to have_received(:add_git_artifact).with(
           %r{\/#{git_artifact_filename('.tar.gz', id: id)}$},
