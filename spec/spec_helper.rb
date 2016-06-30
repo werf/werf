@@ -8,14 +8,9 @@ end
 
 Bundler.require :default, :test, :development
 
-RSpec.configure do |c|
-  c.before :all do
-    shellout 'git config -l | grep "user.email" || git config --global user.email "dapp@flant.com"'
-    shellout 'git config -l | grep "user.name" || git config --global user.name "Dapp Dapp"'
-  end
-end
+require 'active_support'
 
-def shellout(*args, **kwargs)
-  kwargs.delete :log_verbose
-  Mixlib::ShellOut.new(*args, timeout: 20, **kwargs).run_command.tap(&:error!)
-end
+require 'spec_helpers/common'
+require 'spec_helpers/application'
+require 'spec_helpers/git'
+require 'spec_helpers/git_artifact'

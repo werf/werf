@@ -63,7 +63,7 @@ module Dapp
     end
 
     def run!
-      raise '`from` is not defined!' if from.nil?
+      raise '`from.built_id` is not defined!' if from.built_id.empty?
       shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}")
     end
 
@@ -72,7 +72,7 @@ module Dapp
     end
 
     def tag!
-      raise '`built_id` is not defined!' if built_id.nil?
+      raise '`built_id` is not defined!' if built_id.empty?
       shellout!("docker tag #{built_id} #{name}")
     end
 

@@ -1,18 +1,11 @@
 require_relative '../spec_helper'
 
 describe Dapp::GitRepo do
+  include SpecHelpers::Common
+  include SpecHelpers::Application
+
   before :each do
-    @application = instance_double('Dapp::Application')
-
-    allow(@application).to receive(:build_path) do |*args|
-      File.join(*args)
-    end
-
-    allow(@application).to receive(:shellout!) do |*args, **kwargs|
-      shellout(*args, **kwargs)
-    end
-
-    allow(@application).to receive(:filelock).and_yield
+    stub_application
   end
 
   def chronicler_init

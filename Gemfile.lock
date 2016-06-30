@@ -9,6 +9,12 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    activesupport (4.2.6)
+      i18n (~> 0.7)
+      json (~> 1.7, >= 1.7.7)
+      minitest (~> 5.1)
+      thread_safe (~> 0.3, >= 0.3.4)
+      tzinfo (~> 1.1)
     addressable (2.4.0)
     backports (3.6.8)
     binding_of_caller (0.7.2)
@@ -35,10 +41,12 @@ GEM
       net-http-persistent (>= 2.7)
       net-http-pipeline
     highline (1.7.8)
+    i18n (0.7.0)
     json (1.8.3)
     launchy (2.4.3)
       addressable (~> 2.3)
     method_source (0.8.2)
+    minitest (5.9.0)
     mixlib-cli (1.6.0)
     mixlib-shellout (2.2.6)
     multi_json (1.11.3)
@@ -76,6 +84,7 @@ GEM
     simplecov-html (0.10.0)
     slop (3.6.0)
     test_construct (2.0.1)
+    thread_safe (0.3.5)
     timecop (0.8.1)
     travis (1.8.2)
       backports
@@ -88,12 +97,15 @@ GEM
       typhoeus (~> 0.6, >= 0.6.8)
     typhoeus (0.8.0)
       ethon (>= 0.8.0)
+    tzinfo (1.2.2)
+      thread_safe (~> 0.1)
     websocket (1.2.3)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  activesupport (~> 4.2, >= 4.2.6)
   bundler (~> 1.7)
   codeclimate-test-reporter (~> 0.5)
   dapp!

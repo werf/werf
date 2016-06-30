@@ -32,4 +32,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'pry-stack_explorer', '>= 0.4.9.2', '< 1.0'
   s.add_development_dependency 'travis', '~> 1.8', '>= 1.8.2'
   s.add_development_dependency 'codeclimate-test-reporter', '~> 0.5'
+  s.add_development_dependency 'activesupport', '~> 4.2', '>= 4.2.6'
 end
