@@ -16,11 +16,11 @@ module SpecHelpers
     end
 
     def config
-      raise
+      {}
     end
 
     def opts
-      raise
+      {}
     end
 
     def stages_names
@@ -67,6 +67,28 @@ module SpecHelpers
           allow(instance).to receive(:build!)
           allow(instance).to receive(:exist?)  { images_cash.include? instance.name }
           allow(instance).to receive(:tag!)    { images_cash << instance.name }
+        end
+      end
+    end
+
+    def stub_application
+      method_new = Dapp::Application.method(:new)
+
+      application = class_double(Dapp::Application).as_stubbed_const
+      allow(application).to receive(:new) do |*args, &block|
+        if args.first.is_a? Hash
+          args.first[:opts] ||= {}
+          args.first[:opts][:build_path] = ''
+          args.first[:conf] ||= {}
+          args.first[:conf][:home_path] = ''
+        end
+
+        method_new.call(*args, &block).tap do |instance|
+          allow(instance).to receive(:build_path) { |*args| Pathname(File.absolute_path(File.join(*args))) }
+          allow(instance).to receive(:container_build_path) { |*args| instance.build_path('container', *args) }
+          allow(instance).to receive(:home_path)  { |*args| Pathname(File.absolute_path(File.join(*args))) }
+          allow(instance).to receive(:shellout!)  { |*args, **kwargs| shellout(*args, **kwargs) }
+          allow(instance).to receive(:filelock)
         end
       end
     end

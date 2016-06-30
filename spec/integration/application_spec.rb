@@ -19,7 +19,7 @@ describe Dapp::Application do
     FileUtils.rm_rf project_path
     FileUtils.mkpath project_path
     Dir.chdir project_path
-    repo_init
+    repo_init!
   end
 
   def project_path
@@ -115,7 +115,7 @@ describe Dapp::Application do
       FileUtils.rm file_path
       repo_commit!
     else
-      repo_change_and_commit('large_file', ?x*1024*1024)
+      repo_change_and_commit!('large_file', ?x*1024*1024)
     end
   end
 
@@ -124,7 +124,7 @@ describe Dapp::Application do
   end
 
   def change_source_5
-    repo_change_and_commit
+    repo_change_and_commit!
   end
 
   def source_5_saved_signatures

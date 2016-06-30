@@ -2,7 +2,7 @@ module SpecHelpers
   module GitArtifact
     # rubocop:disable Metrics/ParameterLists
     def git_artifact_init(where_to_add, id: nil, changefile: 'data.txt', changedata: random_string, branch: 'master', **kwargs)
-      repo_change_and_commit(changefile: changefile, changedata: changedata, branch: branch)
+      repo_change_and_commit!(changefile: changefile, changedata: changedata, branch: branch)
       (@git_artifacts ||= {})[id] = Dapp::GitArtifact.new(repo, where_to_add, branch: branch, **kwargs)
     end
     # rubocop:enable Metrics/ParameterLists
@@ -46,7 +46,7 @@ module SpecHelpers
 
     # rubocop:disable Metrics/AbcSize, Metrics/ParameterLists, Metrics/MethodLength
     def artifact_patch(suffix, step, id:, changefile: 'data.txt', changedata: random_string, should_be_empty: false, **_kwargs)
-      repo_change_and_commit(changefile: changefile, changedata: changedata, branch: artifact(id: id).branch)
+      repo_change_and_commit!(changefile: changefile, changedata: changedata, branch: artifact(id: id).branch)
 
       reset_instances
       artifact(id: id).add_multilayer!
