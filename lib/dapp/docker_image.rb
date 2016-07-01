@@ -7,7 +7,6 @@ module Dapp
     attr_reader :name
     attr_reader :bash_commands
     attr_reader :options
-    attr_reader :built_id
 
     def initialize(name:, from: nil)
       @from = from
@@ -15,7 +14,10 @@ module Dapp
       @options = {}
       @name = name
       @container_name = SecureRandom.hex
-      @built_id = id
+    end
+
+    def built_id
+      @built_id ||= id
     end
 
     def add_expose(value)
