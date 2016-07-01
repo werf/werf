@@ -21,11 +21,16 @@ module Dapp
           install_chef_solo_stage_config(stage)
 
           image.add_volume '/opt/chefdk:/opt/chefdk'
-          image.add_volume "#{stage_cookbooks_path(stage)}:#{container_stage_cookbooks_path(stage)}"
-          image.add_commands(
-            "mkdir -p #{container_chef_path}",
-            "/opt/chefdk/sbin/chef-solo -c #{container_chef_solo_stage_config_path(stage)}",
-          )
+          image.add_volume "/tmp/dapp/chef_cache_#{SecureRandom.uuid}:/var/cache/dapp/chef"
+
+          if berks_vendor_stage_installed?(stage)
+            image.add_volume "#{stage_cookbooks_path(stage)}:#{container_stage_cookbooks_path(stage)}"
+            image.add_commands(
+              "mkdir -p #{container_chef_path}",
+              "/opt/chefdk/bin/chef shell-init",
+              "chef-solo -c #{container_chef_solo_stage_config_path(stage)}",
+            )
+          end
         end
       end
 
@@ -40,7 +45,7 @@ module Dapp
       end
 
       def berksfile_lock_checksum
-        hashsum berksfile_lock_path.read if berksfile_lock_path.exist?
+        application.hashsum berksfile_lock_path.read if berksfile_lock_path.exist?
       end
 
       def local_cookbook_paths
@@ -50,12 +55,6 @@ module Dapp
           .flatten
           .map(&Pathname.method(:new))
           .sort
-      end
-
-      def berks_vendor_checksum
-        @berks_vendor_checksum ||= hashsum(berksfile_lock_checksum,
-                                           *local_cookbook_paths.map(&:to_s),
-                                           *local_cookbook_paths.reject(&:directory?).map(&:read))
       end
 
       def berks_vendor_stage_paths(stage)
@@ -77,26 +76,54 @@ module Dapp
         else
           install_berks_vendor
 
-          hashsum(*berks_vendor_stage_paths(stage).map(&:to_s),
-                  *berks_vendor_stage_paths(stage).reject(&:directory?).map(&:read)
-                 ).tap do |checksum|
+          application.hashsum([*berks_vendor_stage_paths(stage).map(&:to_s),
+                               *berks_vendor_stage_paths(stage).reject(&:directory?).map(&:read)
+                              ]).tap do |checksum|
             berks_vendor_stage_checksum_path(stage).write "#{checksum}\n"
           end
         end
       end
 
+      def berks_vendor_checksum_path
+        application.build_cache_path('berks_vendor_checksum')
+      end
+
+      def berks_vendor_checksum
+        @berks_vendor_checksum ||= application.hashsum [
+          berksfile_lock_checksum,
+          *local_cookbook_paths.map(&:to_s),
+          *local_cookbook_paths.reject(&:directory?).map(&:read),
+        ]
+      end
+
+      def installed_berks_vendor_checksum
+        berks_vendor_checksum_path.read.strip if berks_vendor_checksum_path.exist?
+      end
+
       def install_berks_vendor
-        shellout! "berks vendor #{berks_vendor_path.tap(&:mkdir_p)}"
+        return if berks_vendor_checksum == installed_berks_vendor_checksum
+
+        application.shellout!(["cd #{application.home_path}",
+                               "berks vendor #{berks_vendor_path.tap(&:mkpath)}"].join(' && '),
+                              log_verbose: true)
+
+        berks_vendor_checksum_path.write "#{berks_vendor_checksum}\n"
       end
 
       def install_berks_vendor_stage(stage)
         berks_vendor_stage_checksum(stage)
 
+        stage_cookbooks_path(stage).mkpath
+
         berks_vendor_stage_paths(stage).each do |path|
           new_path = stage_cookbooks_path(stage).join(path.relative_path_from(berks_vendor_path))
-          new_path.parent.mkdir_p
+          new_path.parent.mkpath
           FileUtils.cp path, new_path
         end
+      end
+
+      def berks_vendor_stage_installed?(stage)
+        stage_cookbooks_path(stage).exist? and stage_cookbooks_path(stage).entries.size > 2
       end
 
       def chef_path(*path)
@@ -129,7 +156,8 @@ module Dapp
 
       def install_chef_solo_stage_config(stage)
         chef_solo_stage_config_path(stage).write [
-          "cookbook_path #{container_stage_cookbooks_path(stage)}\n",
+          "file_cache_path \"/var/cache/dapp/chef\"\n",
+          "cookbook_path \"#{container_stage_cookbooks_path(stage)}\"\n",
         ].join
       end
     end
