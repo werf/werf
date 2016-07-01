@@ -35,12 +35,9 @@ module Dapp
     def archive_apply_command(stage)
       credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
-      [["git --git-dir=#{repo.container_build_dir_path} archive",
-       "--format tar.gz #{stage.layer_commit(self)}:#{cwd}",
-       "-o #{stage.container_archive_path(self)} #{paths}"].join(' '),
-       "mkdir -p #{where_to_add}",
-       ["tar xf #{stage.container_archive_path(self)}", "-C #{where_to_add}", *credentials].join(' '),
-       "rm -rf #{stage.container_archive_path(self)}"]
+      ["install #{credentials.join(' ')} -d #{where_to_add}",
+       ["git --git-dir=#{repo.container_build_dir_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths}",
+       "#{sudo}tar -x -C #{where_to_add}"].join(' | ')]
     end
 
     def apply_patch_command(stage)
@@ -48,12 +45,28 @@ module Dapp
       prev_commit = stage.prev_source_stage.layer_commit(self)
 
       if prev_commit != current_commit or any_changes?(prev_commit, current_commit)
-        ["git --git-dir=#{repo.container_build_dir_path} diff #{prev_commit} #{current_commit} | " \
-         "git apply --whitespace=nowarn --directory=#{where_to_add} " \
-         "$(if [ \"$(git --version)\" != \"git version 1.9.1\" ]; then echo \"--unsafe-paths\"; fi)"] # FIXME
+        [["git --git-dir=#{repo.container_build_dir_path} diff #{prev_commit}..#{current_commit}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}",
+         "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} " \
+         "$(if [ \"$(git --version)\" != \"git version 1.9.1\" ]; then echo \"--unsafe-paths\"; fi)"].join(' | ')] # FIXME
       else
         []
       end
+    end
+
+    def sudo_format_user(user)
+      user.to_s.to_i.to_s == user ? "\\\##{user}" : user
+    end
+
+    def sudo
+      sudo = ''
+
+      if owner || group
+        sudo = 'sudo '
+        sudo += "-u #{sudo_format_user(owner)} " if owner
+        sudo += "-g #{sudo_format_user(group)} " if group
+      end
+
+      sudo
     end
 
     def any_changes?(from, to=repo_latest_commit)
