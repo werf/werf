@@ -85,9 +85,8 @@ module SpecHelpers
 
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:build_path) { |*args| Pathname(File.absolute_path(File.join(*args))) }
-          allow(instance).to receive(:container_build_path) { |*args| instance.build_path('container', *args) }
+          allow(instance).to receive(:container_build_path) { |*args| instance.build_path(*args) }
           allow(instance).to receive(:home_path)  { |*args| Pathname(File.absolute_path(File.join(*args))) }
-          allow(instance).to receive(:shellout!)  { |*args, **kwargs| shellout(*args, **kwargs) }
           allow(instance).to receive(:filelock)
         end
       end

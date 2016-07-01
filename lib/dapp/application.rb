@@ -32,7 +32,7 @@ module Dapp
       @local_git_artifact ||= begin
         cfg = (conf[:git_artifact] || {})[:local]
         repo = GitRepo::Own.new(self)
-        GitArtifact.new(repo, cfg[:where_to_add], branch: cfg[:branch]) if cfg
+        GitArtifact.new(repo, cfg.delete(:where_to_add), **cfg) if cfg
       end
     end
 
@@ -41,7 +41,7 @@ module Dapp
         repo_name = cfg[:url].gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
         repo = GitRepo::Remote.new(self, repo_name, url: cfg[:url], ssh_key_path: ssh_key_path)
         repo.fetch!(cfg[:branch])
-        GitArtifact.new(repo, cfg[:where_to_add], branch: cfg[:branch])
+        GitArtifact.new(repo, cfg.delete(:where_to_add), **cfg) if cfg
       end
     end
 

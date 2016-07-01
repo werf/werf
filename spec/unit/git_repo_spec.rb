@@ -10,7 +10,7 @@ describe Dapp::GitRepo do
   end
 
   def init!(git_dir=nil)
-    repo_init!(git_dir: git_dir)
+    git_init!(git_dir: git_dir)
     expect(File.exist?(file_path(git_dir, '.git'))).to be_truthy
   end
 
@@ -23,7 +23,7 @@ describe Dapp::GitRepo do
       File.write text_txt, data
     end
 
-    repo_commit!(git_dir: git_dir)
+    git_commit!(git_dir: git_dir)
     expect(`git -C #{file_path(git_dir, '.git')} rev-list --all --count`).to eq "#{@commit_counter}\n"
   end
 
@@ -32,7 +32,7 @@ describe Dapp::GitRepo do
   end
 
   def latest_commit
-    repo_latest_commit
+    git_latest_commit
   end
 
   def remote_init!
@@ -80,9 +80,9 @@ describe Dapp::GitRepo do
     commit!('Some text')
 
     own = Dapp::GitRepo::Own.new(application)
-    expect(own.latest_commit).to eq repo_latest_commit
+    expect(own.latest_commit).to eq git_latest_commit
 
     commit!('Some another text')
-    expect(own.latest_commit).to eq repo_latest_commit
+    expect(own.latest_commit).to eq git_latest_commit
   end
 end
