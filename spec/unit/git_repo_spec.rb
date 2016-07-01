@@ -62,7 +62,7 @@ describe Dapp::GitRepo do
   end
 
   it 'Remote#ssh', test_construct: true do
-    shellout 'ssh-keygen -b 1024 -f key -P ""'
+    shellout! 'ssh-keygen -b 1024 -f key -P ""'
     dapp_remote_init ssh_key_path: 'key'
     dapp_remote_cleanup
   end
