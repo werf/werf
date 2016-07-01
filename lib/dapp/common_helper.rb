@@ -6,9 +6,11 @@ module Dapp
     end
 
     def shellout(*args, log_verbose: false, **kwargs)
-      log_verbose = (log_verbose and opts[:log_verbose]) if defined? opts
-      kwargs[:live_stream] = STDOUT if log_verbose
-      Mixlib::ShellOut.new(*args, timeout: 3600, **kwargs).run_command
+      Bundler.with_clean_env do
+        log_verbose = (log_verbose and opts[:log_verbose]) if defined? opts
+        kwargs[:live_stream] = STDOUT if log_verbose
+        Mixlib::ShellOut.new(*args, timeout: 3600, **kwargs).run_command
+      end # with_clean_env
     end
 
     def shellout!(*args, **kwargs)
