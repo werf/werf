@@ -1,0 +1,8 @@
+source 'https://supermarket.chef.io'
+
+cookbook 'dapp-test', path: '.'
+cookbook 'dapp-test-test1', path 'test1'
+cookbook 'dapp-test-test2', path 'test2'
+
+cookbook 'mysql'
+cookbook 'nginx'
