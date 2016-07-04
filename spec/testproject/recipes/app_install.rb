@@ -1,4 +1,4 @@
-apt_package 'htop'
+apt_package 'cron'
 
 cookbook_file '/app_install.txt' do
   source 'app_install/bar.txt'
@@ -6,4 +6,10 @@ cookbook_file '/app_install.txt' do
   group 'root'
   mode '0777'
   action :create
+end
+
+template '/bar.txt' do
+  require 'securerandom'
+  source 'app_install/bar.txt.erb'
+  variables(bar: "bar:#{SecureRandom.uuid}")
 end

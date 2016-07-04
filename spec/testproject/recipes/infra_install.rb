@@ -7,3 +7,9 @@ cookbook_file '/infra_install.txt' do
   mode '0777'
   action :create
 end
+
+template '/foo.txt' do
+  require 'securerandom'
+  source 'infra_install/foo.txt.erb'
+  variables(foo: "foo:#{SecureRandom.uuid}")
+end

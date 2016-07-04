@@ -1,4 +1,4 @@
-apt_package 'unzip'
+apt_package 'cron'
 
 cookbook_file '/app_setup.txt' do
   source 'app_setup/qux.txt'
@@ -6,4 +6,10 @@ cookbook_file '/app_setup.txt' do
   group 'root'
   mode '0777'
   action :create
+end
+
+template '/qux.txt' do
+  require 'securerandom'
+  source 'app_setup/qux.txt.erb'
+  variables(qux: "qux:#{SecureRandom.uuid}")
 end

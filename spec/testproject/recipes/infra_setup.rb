@@ -1,4 +1,4 @@
-apt_package 'tree'
+apt_package 'cron'
 
 cookbook_file '/infra_setup.txt' do
   source 'infra_setup/baz.txt'
@@ -6,4 +6,10 @@ cookbook_file '/infra_setup.txt' do
   group 'root'
   mode '0777'
   action :create
+end
+
+template '/baz.txt' do
+  require 'securerandom'
+  source 'infra_setup/baz.txt.erb'
+  variables(baz: "baz:#{SecureRandom.uuid}")
 end
