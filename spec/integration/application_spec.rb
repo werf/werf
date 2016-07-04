@@ -35,6 +35,12 @@ describe Dapp::Application do
     @config ||= {
         name: 'test',
         type: :shell,
+        infra_install: ['apt-get update',
+                        'apt-get -y dist-upgrade',
+                        'apt-get -y install apt-utils curl apt-transport-https git'],
+        infra_setup:   [],
+        app_install:   [],
+        app_setup:     [],
         home_path: project_path,
         from: :'ubuntu:16.04',
         git_artifact: { local: { where_to_add: '/app' } }
@@ -46,7 +52,7 @@ describe Dapp::Application do
   end
 
 
-  [:prepare, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage_name|
+  [:from, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage_name|
     define_method "#{stage_name}_modified_signatures" do
       stages_names[stages_names.index(stage_name)-1..-1]
     end
@@ -58,19 +64,19 @@ describe Dapp::Application do
 
   [:infra_install, :app_install, :infra_setup, :app_setup].each do |stage_name|
     define_method :"change_#{stage_name}" do
-      config[stage_name] = generate_command
+      config[stage_name] << generate_command
     end
   end
 
   [:app_install, :infra_setup, :app_setup].each do |stage_name|
-    define_method "expect_#{stage_name}_images_commands" do
-      check_image_command(stage_name, config[stage_name])
+    define_method "expect_#{stage_name}_image" do
+      check_image_command(stage_name, config[stage_name].last)
       check_image_command(prev_stage(stage_name), 'apply')
     end
   end
 
   [:source_4, :source_5].each do |stage_name|
-    define_method "expect_#{stage_name}_images_commands" do
+    define_method "expect_#{stage_name}_image" do
       check_image_command(stage_name, 'apply')
     end
   end
@@ -79,20 +85,20 @@ describe Dapp::Application do
     expect(stages[stage_name].send(:image).bash_commands.join =~ Regexp.new(command)).to be
   end
 
-  def change_prepare
+  def change_from
     config[:from] = 'ubuntu:14.04'
   end
 
-  def expect_prepare_images_commands
-    check_image_command(:prepare, 'apt-get update')
+  def expect_from_image
+    check_image_command(:infra_install, 'update')
     check_image_command(:source_1_archive, 'tar -x')
   end
 
-  def prepare_modified_signatures
+  def from_modified_signatures
     stages_names
   end
 
-  def prepare_saved_signatures
+  def from_saved_signatures
     []
   end
 
@@ -104,8 +110,8 @@ describe Dapp::Application do
     [stages_names.first]
   end
 
-  def expect_infra_install_images_commands
-    check_image_command(:infra_install, config[:infra_install])
+  def expect_infra_install_image
+    check_image_command(:infra_install, config[:infra_install].last)
     check_image_command(:source_1_archive, 'tar -x')
   end
 
@@ -140,7 +146,7 @@ describe Dapp::Application do
     check_signatures_and_build(stage_name)
     expect_built_stages(stage_name)
     expect_tagged_stages(stage_name)
-    send("expect_#{stage_name}_images_commands")
+    send("expect_#{stage_name}_image")
   end
 
   def check_signatures_and_build(stage_name)
@@ -217,8 +223,8 @@ describe Dapp::Application do
     app_install
   end
 
-  def prepare
-    build_and_check(:prepare)
+  def from
+    build_and_check(:from)
     source_5
     source_4
     app_setup
@@ -228,7 +234,7 @@ describe Dapp::Application do
   end
 
 
-  [:source_5, :source_4, :app_setup, :infra_setup, :app_install, :infra_install, :prepare].each do |stage|
+  [:source_5, :source_4, :app_setup, :infra_setup, :app_install, :infra_install, :from].each do |stage|
     it "test #{stage}" do
       send(stage)
     end
