@@ -1,15 +1,15 @@
-apt_package 'curl'
+apt_package 'sl'
 
 cookbook_file '/infra_install.txt' do
-  source 'infra_install/foo.txt'
+  source 'infra_install/pizza.txt'
   owner 'root'
   group 'root'
   mode '0777'
   action :create
 end
 
-template '/foo.txt' do
+template '/pizza.txt' do
   require 'securerandom'
-  source 'infra_install/foo.txt.erb'
+  source 'infra_install/pizza.txt.erb'
   variables(var: SecureRandom.uuid)
 end

@@ -1,15 +1,15 @@
-apt_package 'cron'
+apt_package 'automake'
 
 cookbook_file '/app_setup.txt' do
-  source 'app_setup/qux.txt'
+  source 'app_setup/pelmeni.txt'
   owner 'root'
   group 'root'
   mode '0777'
   action :create
 end
 
-template '/qux.txt' do
+template '/pelmeni.txt' do
   require 'securerandom'
-  source 'app_setup/qux.txt.erb'
+  source 'app_setup/pelmeni.txt.erb'
   variables(var: SecureRandom.uuid)
 end
