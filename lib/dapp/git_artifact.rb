@@ -21,9 +21,7 @@ module Dapp
       @where_to_add = where_to_add
 
       @branch = branch
-      @commit = commit || begin
-        @branch ? repo.latest_commit(branch) : repo.latest_commit('HEAD')
-      end
+      @commit = commit
 
       @cwd = cwd
       @paths = paths
@@ -77,8 +75,8 @@ module Dapp
       shellout!("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
     end
 
-    def repo_latest_commit
-      commit
+    def latest_commit
+      @latest_commit ||= commit || repo.latest_commit(branch)
     end
 
     def paramshash
