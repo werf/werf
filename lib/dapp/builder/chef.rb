@@ -25,7 +25,7 @@ module Dapp
             image.add_volume "/tmp/dapp/chef_cache_#{SecureRandom.uuid}:/var/cache/dapp/chef"
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}"
 
-            image.add_commands ["/opt/chefdk/chef-solo",
+            image.add_commands ["/opt/chefdk/bin/chef-solo",
                                 "-c #{container_stage_config_path(stage)}",
                                ].join(' ')
           end
@@ -127,7 +127,7 @@ module Dapp
       end
 
       def container_stage_build_path(stage, *path)
-        path.compact.inject(Pathname.new('/chef_build'), &:+)
+        path.compact.map(&:to_s).inject(Pathname.new('/chef_build'), &:+)
       end
 
       def stage_cookbooks_path(stage, *path)
