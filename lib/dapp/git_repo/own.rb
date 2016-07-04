@@ -10,7 +10,7 @@ module Dapp
         @dir_path ||= Pathname(git("-C #{application.home_path} rev-parse --git-dir").stdout.strip).expand_path
       end
 
-      def latest_commit(branch)
+      def latest_commit(branch = nil)
         super(branch || 'HEAD')
       end
     end

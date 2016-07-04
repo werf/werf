@@ -8,10 +8,7 @@ module Dapp
 
         def build!
           return if image.exist?
-          unless from_image.exist?
-            from_image.pull!
-            reset_image
-          end
+          from_image.pull_and_set! unless from_image.exist?
           application.log self.class.to_s
           image.build!
         end
@@ -29,10 +26,6 @@ module Dapp
 
         def from_image
           DockerImage.new(name: from_image_name)
-        end
-
-        def reset_image
-          @image = nil
         end
       end # Prepare
     end # Stage
