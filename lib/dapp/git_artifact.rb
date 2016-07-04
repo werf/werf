@@ -5,11 +5,6 @@ module Dapp
 
     attr_reader :repo
     attr_reader :name
-    attr_reader :where_to_add
-    attr_reader :commit
-    attr_reader :cwd
-    attr_reader :owner
-    attr_reader :group
 
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
     def initialize(repo, where_to_add,
@@ -21,9 +16,7 @@ module Dapp
       @where_to_add = where_to_add
 
       @branch = branch
-      @commit = commit || begin
-        @branch ? repo.latest_commit(branch) : repo.latest_commit('HEAD')
-      end
+      @commit = commit
 
       @cwd = cwd
       @paths = paths
@@ -35,12 +28,9 @@ module Dapp
     def archive_apply_command(stage)
       credentials = [:owner, :group].map {|attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
-      [["git --git-dir=#{repo.container_build_dir_path} archive",
-       "--format tar.gz #{stage.layer_commit(self)}:#{cwd}",
-       "-o #{stage.container_archive_path(self)} #{paths}"].join(' '),
-       "mkdir -p #{where_to_add}",
-       ["tar xf #{stage.container_archive_path(self)}", "-C #{where_to_add}", *credentials].join(' '),
-       "rm -rf #{stage.container_archive_path(self)}"]
+      ["install #{credentials.join(' ')} -d #{where_to_add}",
+       ["git --git-dir=#{repo.container_build_dir_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths}",
+       "#{sudo}tar -x -C #{where_to_add}"].join(' | ')]
     end
 
     def apply_patch_command(stage)
@@ -48,24 +38,24 @@ module Dapp
       prev_commit = stage.prev_source_stage.layer_commit(self)
 
       if prev_commit != current_commit or any_changes?(prev_commit, current_commit)
-        ["git --git-dir=#{repo.container_build_dir_path} diff #{prev_commit} #{current_commit} | " \
-         "git apply --whitespace=nowarn --directory=#{where_to_add} " \
-         "$(if [ \"$(git --version)\" != \"git version 1.9.1\" ]; then echo \"--unsafe-paths\"; fi)"] # FIXME
+        [["git --git-dir=#{repo.container_build_dir_path} #{diff_command(prev_commit, current_commit)}",
+         "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} " \
+         "$(if [ \"$(git --version)\" != \"git version 1.9.1\" ]; then echo \"--unsafe-paths\"; fi)"].join(' | ')] # FIXME
       else
         []
       end
     end
 
-    def any_changes?(from, to=repo_latest_commit)
-      !repo.git_bare("diff --quiet #{from}..#{to}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}", returns: [0, 1]).status.success?
+    def any_changes?(from, to=latest_commit)
+      !repo.git_bare(diff_command(from, to, quiet: true), returns: [0, 1]).status.success?
     end
 
     def patch_size(from, to)
-      shellout!("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
+      repo.git_bare("#{diff_command(from, to)} | wc -c").stdout.strip.to_i
     end
 
-    def repo_latest_commit
-      commit
+    def latest_commit
+      @latest_commit ||= commit || repo.latest_commit(branch)
     end
 
     def paramshash
@@ -78,6 +68,35 @@ module Dapp
 
     def filename(ending)
       "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
+    end
+
+    protected
+
+    attr_reader :where_to_add
+    attr_reader :commit
+    attr_reader :branch
+    attr_reader :cwd
+    attr_reader :owner
+    attr_reader :group
+
+    def sudo_format_user(user)
+      user.to_s.to_i.to_s == user ? "\\\##{user}" : user
+    end
+
+    def sudo
+      sudo = ''
+
+      if owner || group
+        sudo = 'sudo '
+        sudo += "-u #{sudo_format_user(owner)} " if owner
+        sudo += "-g #{sudo_format_user(group)} " if group
+      end
+
+      sudo
+    end
+
+    def diff_command(from, to, quiet: false)
+      "diff #{'--quiet' if quiet } #{from}..#{to} #{"--relative=#{cwd}" if cwd} -- #{paths(true)}"
     end
   end
 end

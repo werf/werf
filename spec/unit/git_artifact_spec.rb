@@ -25,37 +25,41 @@ describe Dapp::GitArtifact do
 
   def git_artifact_local_options
     {
-      cwd: (@cwd ||= ''),
-      paths: (@paths ||= []),
-      branch: (@branch ||= 'master'),
-      where_to_add: (@where_to_add ||= 'dest'),
-      group: (@group ||= 'root'),
-      owner: (@owner ||= 'root')
+        cwd: (@cwd ||= ''),
+        paths: (@paths ||= []),
+        branch: (@branch ||= 'master'),
+        where_to_add: (@where_to_add ||= 'dest'),
+        group: (@group ||= 'root'),
+        owner: (@owner ||= 'root')
     }
   end
 
 
-  def archive_apply(add_files: ['archive_data.txt'], added_files: add_files, not_added_files: [], **kwargs)
-    [:cwd, :paths, :branch, :where_to_add, :group, :owner].each { |opt| instance_variable_set(:"@#{opt}", kwargs[opt]) unless kwargs[opt].nil? }
+  [:patch, :archive].each do |type|
+    define_method "#{type}_apply" do |add_files: ['data.txt'], added_files: add_files, not_added_files: [], **kvargs, &blk|
+      [:cwd, :paths, :branch, :where_to_add, :group, :owner].each { |opt| instance_variable_set(:"@#{opt}", kvargs[opt]) unless kvargs[opt].nil? }
 
-    add_files.each { |file_path| git_change_and_commit!(file_path, branch: @branch) }
-    application_renew
+      application_build! if type == :patch and !kvargs[:ignore_build]
+      add_files.each { |file_path| git_change_and_commit!(file_path, branch: @branch) }
+      application_renew
 
-    command_apply(git_artifact.archive_apply_command(stages[:source_1_archive]))
+      command_apply(send("#{type}_command"))
 
-    expect(File.exist? @where_to_add).to be_truthy
-    added_files.each { |file_path| expect(File.exist? File.join(@where_to_add, file_path)).to be_truthy }
-    not_added_files.each { |file_path| expect(File.exist? File.join(@where_to_add, file_path)).to be_falsey }
-    expect(File.exist? '.tar.gz').to be_falsey
+      expect(File.exist? @where_to_add).to be_truthy
+      added_files.each { |file_path| expect(File.exist? File.join(@where_to_add, file_path)).to be_truthy }
+      not_added_files.each { |file_path| expect(File.exist? File.join(@where_to_add, file_path)).to be_falsey }
+
+      blk.call unless blk.nil? # expectation
+      clear_where_to_add
+    end
   end
 
-  def patch_apply(patch_file = 'new_file.txt')
-    git_change_and_commit!(patch_file)
-    application_renew
-    command_apply(git_artifact.apply_patch_command(stages[:source_5]))
+  def archive_command
+    git_artifact.archive_apply_command(stages[:source_1_archive])
+  end
 
-    expect(File.exist? @where_to_add).to be_truthy
-    expect(File.exist? File.join(@where_to_add, patch_file)).to be_truthy
+  def patch_command
+    git_artifact.apply_patch_command(stages[:source_5])
   end
 
   def command_apply(command)
@@ -67,50 +71,72 @@ describe Dapp::GitArtifact do
     FileUtils.rm_rf @where_to_add
   end
 
-
-  it '#archive', test_construct: true do
-    archive_apply
+  def with_credentials(owner_name, group_name)
+    shellout "groupadd #{group_name}; useradd #{owner_name} -g #{group_name}"
+    yield
+  ensure
+    shellout "userdel #{owner_name}"
   end
 
-  it '#patch', test_construct: true do
-    archive_apply
-    application_build!
-    patch_apply
+  def expect_file_credentials(file_path, group_name, user_name)
+    file_stat = File.stat(file_path)
+    file_group_name = Etc.getgrgid(file_stat.gid).name
+    file_user_name  = Etc.getpwuid(file_stat.uid).name
+    expect(file_group_name).to eq group_name.to_s
+    expect(file_user_name).to eq user_name.to_s
   end
 
-  it '#branch', test_construct: true do
-    archive_apply(branch: 'master')
-    git_create_branch!('not_master')
-    archive_apply(add_files: ['not_master.txt'], branch: 'not_master')
-    clear_where_to_add
-    archive_apply(branch: 'master', not_added_files: ['not_master.txt'])
+  [:patch, :archive].each do |type|
+    it "##{type}", test_construct: true do
+      send("#{type}_apply")
+    end
+
+    it "##{type} branch", test_construct: true do
+      send("#{type}_apply", branch: 'master')
+      git_create_branch!('not_master')
+      send("#{type}_apply", add_files: ['not_master.txt'], branch: 'not_master')
+      send("#{type}_apply", not_added_files: ['not_master.txt'], branch: 'master')
+    end
+
+    it "##{type} cwd", test_construct: true do
+      send("#{type}_apply", add_files: %w(master.txt a/master2.txt),
+           added_files: ['master2.txt'], not_added_files: %w(a master.txt),
+           cwd: 'a')
+    end
+
+    it "##{type} paths", test_construct: true do
+      send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
+           added_files: %w(x/y/data.txt z/data.txt), not_added_files: ['x/data.txt'],
+           paths: %w(x/y z))
+    end
+
+    it "##{type} cwd_and_paths", test_construct: true do
+      send("#{type}_apply", add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
+           added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(a data.txt),
+           cwd: 'a', paths: %w(x/y z))
+    end
   end
 
-  it '#cwd', test_construct: true do
-    archive_apply(add_files: %w(master.txt a/master2.txt),
-                  added_files: ['master2.txt'], not_added_files: ['a', 'master.txt'],
-                  cwd: 'a')
+  file_name = 'test_file.txt'
+  owner = :git_artifact
+  group = :git_artifact
+
+  it '#archive owner_and_group', test_construct: true do
+    with_credentials(owner, group) do
+      archive_apply(add_files: [file_name], owner: owner, group: group) do
+        expect_file_credentials(File.join(@where_to_add, file_name), owner, group)
+      end
+    end
   end
 
-  it '#paths', test_construct: true do
-    archive_apply(add_files: %w(x/data.txt x/y/data.txt z/data.txt),
-                  added_files: ['x/y/data.txt', 'z/data.txt'], not_added_files: ['x/data.txt'],
-                  paths: %w(x/y z))
-  end
-
-  it '#cwd_and_paths', test_construct: true do
-    archive_apply(add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
-                  added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(a data.txt),
-                  cwd: 'a', paths: %w(x/y z))
-  end
-
-  xit '#owner_and_group', test_construct: true do
-    archive_apply(add_files: ['test_file.txt'], owner: :nobody, group: :nobody)
-    expect_file_owner(File.join(@where_to_add, 'test_file.txt'), @owner)
-  end
-
-  def expect_file_owner(file_path, owner_name)
-    owner = Etc.getgrnam(owner_name)
-    expect(File.stat(file_path).id).to eq owner.id
+  it '#patch owner_and_group', test_construct: true do
+    with_credentials(owner, group) do |&blk|
+      archive_apply(owner: owner, group: group) do
+        application_build!
+        patch_apply(add_files: [file_name], owner: owner, group: group, ignore_build: true) do
+          expect_file_credentials(File.join(@where_to_add, file_name), owner, group)
+        end
+      end
+    end
   end
 end

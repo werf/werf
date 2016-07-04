@@ -21,7 +21,7 @@ module Dapp
 
         def changes_size_since_source3
           application.git_artifact_list.map do |git_artifact|
-            git_artifact.patch_size(prev_source_stage.layer_commit(git_artifact), git_artifact.repo_latest_commit)
+            git_artifact.patch_size(prev_source_stage.layer_commit(git_artifact), git_artifact.latest_commit)
           end.reduce(0, :+)
         end
       end # Source4

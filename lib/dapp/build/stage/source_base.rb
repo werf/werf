@@ -41,7 +41,7 @@ module Dapp
             if layer_commit_file_path(git_artifact).exist?
               layer_commit_file_path(git_artifact).read.strip
             else
-              git_artifact.repo_latest_commit
+              git_artifact.latest_commit
             end
           end
         end
