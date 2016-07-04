@@ -1,4 +1,4 @@
-apt_package 'cron'
+apt_package 'htop'
 
 cookbook_file '/app_install.txt' do
   source 'app_install/bar.txt'

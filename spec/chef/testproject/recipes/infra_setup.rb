@@ -1,4 +1,4 @@
-apt_package 'cron'
+apt_package 'tree'
 
 cookbook_file '/infra_setup.txt' do
   source 'infra_setup/baz.txt'

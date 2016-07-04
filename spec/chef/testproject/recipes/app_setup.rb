@@ -1,4 +1,4 @@
-apt_package 'cron'
+apt_package 'unzip'
 
 cookbook_file '/app_setup.txt' do
   source 'app_setup/qux.txt'
