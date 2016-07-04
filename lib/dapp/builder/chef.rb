@@ -1,6 +1,7 @@
 module Dapp
   module Builder
     class Chef < Base
+      # FIXME LOCAL_...
       COOKBOOK_PATTERNS = %w(
         recipes/**/*
         files/**/*
@@ -20,15 +21,17 @@ module Dapp
           install_berks_vendor_stage(stage)
           install_chef_solo_stage_config(stage)
 
-          image.add_volume '/opt/chefdk:/opt/chefdk'
-          image.add_volume "/tmp/dapp/chef_cache_#{SecureRandom.uuid}:/var/cache/dapp/chef"
 
           if berks_vendor_stage_installed?(stage)
+            image.add_volume '/opt/chefdk:/opt/chefdk'
+            image.add_volume "/tmp/dapp/chef_cache_#{SecureRandom.uuid}:/var/cache/dapp/chef"
+
             image.add_volume "#{stage_cookbooks_path(stage)}:#{container_stage_cookbooks_path(stage)}"
+            image.add_volume "#{stage_build_path(stage)}:/chef"
             image.add_commands(
-              "mkdir -p #{container_chef_path}",
-              "/opt/chefdk/bin/chef shell-init",
-              "chef-solo -c #{container_chef_solo_stage_config_path(stage)}",
+#              "mkdir -p #{container_chef_path}",
+#              "/opt/chefdk/bin/chef shell-init",
+              "/opt/chefdk/chef-solo -c /chef/config.rb" #{container_chef_solo_stage_config_path(stage)}",
             )
           end
         end
@@ -84,8 +87,9 @@ module Dapp
         end
       end
 
+      # FIXME remove
       def berks_vendor_checksum_path
-        application.build_cache_path('berks_vendor_checksum')
+        application.build_cache_path("berks_vendor_checksum.#{checksum}")
       end
 
       def berks_vendor_checksum
@@ -96,11 +100,14 @@ module Dapp
         ]
       end
 
+      # FIXME remove
       def installed_berks_vendor_checksum
         berks_vendor_checksum_path.read.strip if berks_vendor_checksum_path.exist?
       end
 
       def install_berks_vendor
+        # FIXME use flag variable instead of files
+
         return if berks_vendor_checksum == installed_berks_vendor_checksum
 
         application.shellout!(["cd #{application.home_path}",
@@ -111,6 +118,7 @@ module Dapp
       end
 
       def install_berks_vendor_stage(stage)
+        # FIXME remove
         berks_vendor_stage_checksum(stage)
 
         stage_cookbooks_path(stage).mkpath
@@ -122,14 +130,17 @@ module Dapp
         end
       end
 
+      # FIXME rename "empty?"
       def berks_vendor_stage_installed?(stage)
         stage_cookbooks_path(stage).exist? and stage_cookbooks_path(stage).entries.size > 2
       end
 
+      # FIXME stage_build_path
       def chef_path(*path)
         application.build_path('chef', *path)
       end
 
+      # FIXME container_stage_build_path
       def container_chef_path(*path)
         Pathname.new('/usr/share/dapp/chef')
       end

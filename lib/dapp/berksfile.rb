@@ -1,4 +1,5 @@
 module Dapp
+  # FIXME Move somewhere inside builder/chef
   class Berksfile
     class Parser
       def initialize(berksfile)
