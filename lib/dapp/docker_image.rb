@@ -52,6 +52,14 @@ module Dapp
       push!
     end
 
+    def pull!
+      shellout!("docker pull #{name}")
+    end
+
+    def rmi!
+      shellout!("docker rmi -f #{name}")
+    end
+
     protected
 
     def add_option(key, value)

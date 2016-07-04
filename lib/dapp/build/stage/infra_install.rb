@@ -3,7 +3,7 @@ module Dapp
     module Stage
       class InfraInstall < Base
         def initialize(application, next_stage)
-          @prev_stage = Prepare.new(application, self)
+          @prev_stage = From.new(application, self)
           super
         end
 
