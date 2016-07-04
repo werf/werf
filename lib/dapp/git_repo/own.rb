@@ -11,7 +11,7 @@ module Dapp
       end
 
       def latest_commit(branch)
-        super(branch.nil? ? 'HEAD' : branch)
+        super(branch || 'HEAD')
       end
     end
   end
