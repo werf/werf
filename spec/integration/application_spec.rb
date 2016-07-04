@@ -37,7 +37,7 @@ describe Dapp::Application do
         type: :shell,
         home_path: project_path,
         from: :'ubuntu:16.04',
-        git_artifact: { local: { where_to_add: '/app', } }
+        git_artifact: { local: { where_to_add: '/app' } }
     }
   end
 
@@ -85,7 +85,7 @@ describe Dapp::Application do
 
   def expect_prepare_images_commands
     check_image_command(:prepare, 'apt-get update')
-    check_image_command(:source_1_archive, 'tar xf')
+    check_image_command(:source_1_archive, 'tar -x')
   end
 
   def prepare_modified_signatures
@@ -106,7 +106,7 @@ describe Dapp::Application do
 
   def expect_infra_install_images_commands
     check_image_command(:infra_install, config[:infra_install])
-    check_image_command(:source_1_archive, 'tar xf')
+    check_image_command(:source_1_archive, 'tar -x')
   end
 
   def change_source_4

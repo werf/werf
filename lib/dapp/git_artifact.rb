@@ -5,11 +5,6 @@ module Dapp
 
     attr_reader :repo
     attr_reader :name
-    attr_reader :where_to_add
-    attr_reader :commit
-    attr_reader :cwd
-    attr_reader :owner
-    attr_reader :group
 
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
     def initialize(repo, where_to_add,
@@ -43,13 +38,46 @@ module Dapp
       prev_commit = stage.prev_source_stage.layer_commit(self)
 
       if prev_commit != current_commit or any_changes?(prev_commit, current_commit)
-        [["git --git-dir=#{repo.container_build_dir_path} diff #{prev_commit}..#{current_commit}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}",
+        [["git --git-dir=#{repo.container_build_dir_path} #{diff_command(prev_commit, current_commit)}",
          "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} " \
          "$(if [ \"$(git --version)\" != \"git version 1.9.1\" ]; then echo \"--unsafe-paths\"; fi)"].join(' | ')] # FIXME
       else
         []
       end
     end
+
+    def any_changes?(from, to=latest_commit)
+      !repo.git_bare(diff_command(from, to, quiet: true), returns: [0, 1]).status.success?
+    end
+
+    def patch_size(from, to)
+      repo.git_bare("#{diff_command(from, to)} | wc -c").stdout.strip.to_i
+    end
+
+    def latest_commit
+      @latest_commit ||= commit || repo.latest_commit(branch)
+    end
+
+    def paramshash
+      Digest::SHA256.hexdigest [cwd, paths, owner, group].map(&:to_s).join(':::')
+    end
+
+    def paths(with_cwd = false)
+      [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(%r{^\/*|\/*$}, '') }.join(' ') if @paths
+    end
+
+    def filename(ending)
+      "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
+    end
+
+    protected
+
+    attr_reader :where_to_add
+    attr_reader :commit
+    attr_reader :branch
+    attr_reader :cwd
+    attr_reader :owner
+    attr_reader :group
 
     def sudo_format_user(user)
       user.to_s.to_i.to_s == user ? "\\\##{user}" : user
@@ -67,28 +95,8 @@ module Dapp
       sudo
     end
 
-    def any_changes?(from, to=repo_latest_commit)
-      !repo.git_bare("diff --quiet #{from}..#{to}#{" --relative=#{cwd}" if cwd} -- #{paths(true)}", returns: [0, 1]).status.success?
-    end
-
-    def patch_size(from, to)
-      shellout!("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
-    end
-
-    def latest_commit
-      @latest_commit ||= commit || repo.latest_commit(branch)
-    end
-
-    def paramshash
-      Digest::SHA256.hexdigest [cwd, paths, owner, group].map(&:to_s).join(':::')
-    end
-
-    def paths(with_cwd = false)
-      [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(%r{^\/*|\/*$}, '') }.join(' ') if @paths
-    end
-
-    def filename(ending)
-      "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
+    def diff_command(from, to, quiet: false)
+      "diff #{'--quiet' if quiet } #{from}..#{to} #{"--relative=#{cwd}" if cwd} -- #{paths(true)}"
     end
   end
 end
