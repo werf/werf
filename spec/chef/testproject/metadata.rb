@@ -1,2 +1,2 @@
-name 'dapp-test'
+name 'testproject'
 version '0.0.1'
