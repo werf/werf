@@ -72,6 +72,9 @@ module Dapp
     end
 
     def patch_size(from, to)
+      # FIXME
+      #  1. use git repo instead of shellout
+      #  2. cwd, paths, ...
       shellout!("git --git-dir=#{repo.dir_path} diff #{from} #{to} | wc -c").stdout.strip.to_i
     end
 
