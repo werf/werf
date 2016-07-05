@@ -1,6 +1,6 @@
 apt_package 'sl'
 
-cookbook_file '/infra_install.txt' do
+cookbook_file "/#{cookbook_name}.infra_install.txt" do
   source 'infra_install/pizza.txt'
   owner 'root'
   group 'root'

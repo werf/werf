@@ -1,6 +1,6 @@
 apt_package 'htop'
 
-cookbook_file '/app_install.txt' do
+cookbook_file "/#{cookbook_name}.app_install.txt" do
   source 'app_install/bar.txt'
   owner 'root'
   group 'root'

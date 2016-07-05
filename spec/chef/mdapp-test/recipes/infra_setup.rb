@@ -1,6 +1,6 @@
 apt_package 'gcc'
 
-cookbook_file '/infra_setup.txt' do
+cookbook_file "/#{cookbook_name}.infra_setup.txt" do
   source 'infra_setup/burger.txt'
   owner 'root'
   group 'root'

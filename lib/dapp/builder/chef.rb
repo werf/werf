@@ -8,6 +8,7 @@ module Dapp
       )
 
       STAGE_COOKBOOK_PATTERNS = %w(
+        recipes/%{stage}.rb
         recipes/%{stage}-*.rb
         files/%{stage}/*
         templates/%{stage}/*
@@ -27,6 +28,7 @@ module Dapp
 
             image.add_commands ["/opt/chefdk/bin/chef-solo",
                                 "-c #{container_stage_config_path(stage)}",
+                                "-o #{stage_cookbooks_runlist(stage).join(',')}",
                                ].join(' ')
           end
         end
@@ -35,7 +37,7 @@ module Dapp
       private
 
       def berksfile
-        @berksfile ||= Dapp::Berksfile.new(application, application.home_path('Berksfile'))
+        @berksfile ||= Berksfile.new(application, application.home_path('Berksfile'))
       end
 
       def berksfile_lock_checksum
@@ -44,7 +46,7 @@ module Dapp
       end
 
       def local_cookbook_paths
-        @local_cookbook_paths ||= berksfile.local_cookbook_paths
+        @local_cookbook_paths ||= berksfile.local_cookbooks.values
           .product(LOCAL_COOKBOOK_PATTERNS)
           .map {|cb, dir| Dir[cb.join(dir)]}
           .flatten
@@ -52,9 +54,13 @@ module Dapp
           .sort
       end
 
-      def stage_cookbooks_paths(stage)
-        @stage_cookbooks_paths ||= {}
-        @stage_cookbooks_paths[stage] ||= STAGE_COOKBOOK_PATTERNS
+      def stage_cookbooks_runlist(stage)
+        berksfile.local_cookbooks.map {|name, _| "#{name}::#{stage}"}
+      end
+
+      def stage_cookbooks_vendor_paths(stage)
+        @stage_cookbooks_vendor_paths ||= {}
+        @stage_cookbooks_vendor_paths[stage] ||= STAGE_COOKBOOK_PATTERNS
           .map {|pattern| Dir[cookbooks_path('*', pattern % {stage: stage})]}
           .flatten
           .map(&Pathname.method(:new))
@@ -71,8 +77,8 @@ module Dapp
         else
           install_cookbooks
 
-          application.hashsum([*stage_cookbooks_paths(stage).map(&:to_s),
-                               *stage_cookbooks_paths(stage).reject(&:directory?).map(&:read)
+          application.hashsum([*stage_cookbooks_vendor_paths(stage).map(&:to_s),
+                               *stage_cookbooks_vendor_paths(stage).reject(&:directory?).map(&:read)
                               ]).tap do |checksum|
             stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
           end
@@ -98,7 +104,7 @@ module Dapp
 
       def install_stage_cookbooks(stage)
         stage_cookbooks_path(stage).mkpath
-        stage_cookbooks_paths(stage).each do |path|
+        stage_cookbooks_vendor_paths(stage).each do |path|
           new_path = stage_cookbooks_path(stage, path.relative_path_from(cookbooks_path))
           new_path.parent.mkpath
           FileUtils.cp path, new_path
@@ -112,9 +118,9 @@ module Dapp
 
       def install_chef_solo_stage_config(stage)
         stage_config_path(stage).write [
-          "file_cache_path \"/var/cache/dapp/chef\"",
-          "cookbook_path \"#{container_stage_cookbooks_path(stage)}\"",
-        ].join("\n")
+          "file_cache_path \"/var/cache/dapp/chef\"\n",
+          "cookbook_path \"#{container_stage_cookbooks_path(stage)}\"\n",
+        ].join
       end
 
 

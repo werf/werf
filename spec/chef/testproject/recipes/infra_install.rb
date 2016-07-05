@@ -1,6 +1,10 @@
+execute 'apt-get update' do
+  command 'apt-get update'
+end
+
 apt_package 'curl'
 
-cookbook_file '/infra_install.txt' do
+cookbook_file "/#{cookbook_name}.infra_install.txt" do
   source 'infra_install/foo.txt'
   owner 'root'
   group 'root'

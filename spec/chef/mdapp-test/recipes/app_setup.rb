@@ -1,6 +1,6 @@
 apt_package 'automake'
 
-cookbook_file '/app_setup.txt' do
+cookbook_file "/#{cookbook_name}.app_setup.txt" do
   source 'app_setup/pelmeni.txt'
   owner 'root'
   group 'root'

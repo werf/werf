@@ -1,6 +1,6 @@
 apt_package 'tree'
 
-cookbook_file '/infra_setup.txt' do
+cookbook_file "/#{cookbook_name}.infra_setup.txt" do
   source 'infra_setup/baz.txt'
   owner 'root'
   group 'root'
