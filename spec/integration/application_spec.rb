@@ -38,12 +38,12 @@ describe Dapp::Application do
         infra_install: ['apt-get update',
                         'apt-get -y dist-upgrade',
                         'apt-get -y install apt-utils curl apt-transport-https git'],
-        infra_setup:   [],
-        app_install:   [],
-        app_setup:     [],
-        home_path: project_path,
-        from: :'ubuntu:16.04',
-        git_artifact: { local: { where_to_add: '/app' } }
+        infra_setup:    [],
+        app_install:    [],
+        app_setup:      [],
+        home_path:      project_path,
+        from:           :'ubuntu:16.04',
+        git_artifact:   { local: { where_to_add: '/app' } }
     }
   end
 

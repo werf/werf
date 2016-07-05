@@ -40,24 +40,31 @@ module Dapp
       !id.empty?
     end
 
+    def pull_and_set!
+      pull!
+      @built_id = id
+    end
+
     def build!
-      run!
-      @built_id = commit!
-    ensure
-      shellout("docker rm #{container_name}")
+      @built_id = if bash_commands.empty?
+        from.built_id
+      else
+        begin
+          run!
+          commit!
+        ensure
+          shellout("docker rm #{container_name}")
+        end
+      end
+    end
+
+    def rmi!
+      shellout!("docker rmi -f #{name}")
     end
 
     def fixate!
       tag!
       push!
-    end
-
-    def pull!
-      shellout!("docker pull #{name}")
-    end
-
-    def rmi!
-      shellout!("docker rmi -f #{name}")
     end
 
     protected
@@ -75,6 +82,10 @@ module Dapp
     def run!
       raise '`from.built_id` is not defined!' if from.built_id.empty?
       shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}")
+    end
+
+    def pull!
+      shellout!("docker pull #{name}")
     end
 
     def commit!

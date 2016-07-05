@@ -32,7 +32,7 @@ module Dapp
 
     def local_git_artifact
       @local_git_artifact ||= begin
-        cfg = (conf[:git_artifact] || {})[:local]
+        cfg = (conf[:git_artifact] || {})[:local].dup
         repo = GitRepo::Own.new(self)
         # FIXME cfg should contain no branch and no commit
         GitArtifact.new(repo, cfg.delete(:where_to_add), **cfg) if cfg
