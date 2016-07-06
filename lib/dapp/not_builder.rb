@@ -7,53 +7,54 @@ module Dapp
 
       @patterns = patterns || []
       @patterns << '*' unless @patterns.any?
+
+      build_confs
     end
 
     def build
-      build_configs.each do |build_conf|
-        puts build_conf[:name]
+      @build_confs.each do |build_conf|
+        puts build_conf.name
         options = { conf: build_conf, opts: cli_options }
         Application.new(**options).build_and_fixate!
       end
     end
 
-    protected
+    private
 
-    def build_configs
-      Dapp::Config.default_opts.tap do |default_opts|
-        [:log_quiet, :log_verbose, :type].each { |opt| default_opts[opt] = cli_options[opt] }
-      end
+    def build_confs
+      options = {}
+      [:log_quiet, :log_verbose, :type].each { |opt| options[opt] = cli_options[opt] }
 
-      if File.exist? dappfile_path
-        process_file
+      @build_confs = if File.exist? dappfile_path
+        process_file(**options)
       else
-        process_directory
+        process_directory(**options)
       end
+    end
+
+    def process_file(**options)
+      patterns.map do |pattern|
+        unless (apps = Loader.process_file(dappfile_path, app_filter: pattern, **options)).any?
+          STDERR.puts "Error: No such app: '#{pattern}' in #{dappfile_path}"
+          exit 1
+        end
+        apps
+      end.flatten
+    end
+
+    def process_directory(**options)
+      options[:shared_build_dir] = true
+      patterns.map do |pattern|
+        unless (apps = Loader.process_directory(cli_options[:dir], pattern, **options)).any?
+          STDERR.puts "Error: No such app '#{pattern}'"
+          exit 1
+        end
+        apps
+      end.flatten
     end
 
     def dappfile_path
       @dappfile_path ||= File.join [cli_options[:dir], cli_options[:dappfile_name] || 'Dappfile'].compact
     end
-
-    def process_file
-      patterns.map do |pattern|
-        unless (configs = Dapp::Config.process_file(dappfile_path, app_filter: pattern)).any?
-          STDERR.puts "Error: No such app: '#{pattern}' in #{dappfile_path}"
-          exit 1
-        end
-        configs
-      end.flatten
-    end
-
-    def process_directory
-      Dapp::Config.default_opts[:shared_build_dir] = true
-      patterns.map do |pattern|
-        unless (configs = Dapp::Config.process_directory(cli_options[:dir], pattern)).any?
-          STDERR.puts "Error: No such app '#{pattern}'"
-          exit 1
-        end
-        configs
-      end.flatten
-    end
-  end # Builder
+  end # NotBuilder
 end # Dapp

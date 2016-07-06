@@ -77,5 +77,5 @@ module Dapp
         else raise 'builder type is not defined!'
       end
     end
-  end # Builder
+  end # Application
 end # Dapp
