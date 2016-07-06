@@ -7,6 +7,7 @@ module Dapp
       end
 
       def local(*args)
+        # FIXME
         @local ||= Local.new(main_conf, *args)
       end
 

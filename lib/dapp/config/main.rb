@@ -2,16 +2,14 @@ module Dapp
   module Config
     class Main < Base
       def initialize(**options)
-        keys.merge!(options)
+        keys = options
 
-        if options[:name]
-          keys[:basename] = [keys[:basename], options[:name]].compact.join('-')
-          keys[:name] = nil
-        elsif options[:dappfile_path]
-          keys[:basename] ||= Pathname.new(options[:dappfile_path]).expand_path.parent.basename
+        # FIXME we always have dappfile_path
+        keys[:home_path] ||= Pathname.new(keys[:dappfile_path] || 'fakedir').parent.expand_path.to_s
+
+        unless keys[:name]
+          keys[:name] ||= Pathname.new(keys[:home_path]).basename
         end
-
-        keys[:home_path] ||= Pathname.new(options[:dappfile_path] || 'fakedir').parent.expand_path.to_s
 
         @apps ||= []
         keys[:builder] = :shell
@@ -29,11 +27,22 @@ module Dapp
 
       def builder_validation(builder_name)
         another_builder = [:chef, :shell].find { |n| n != builder_name }
+        # FIXME user friendly raise
         raise unless keys[another_builder].nil? && keys[:builder] == builder_name
       end
 
       def name
-        keys[:basename]
+      end
+
+      def name(*args)
+        if args.size == 0
+          keys[:name]
+        elsif args.size == 1
+          keys[:name] = args.first
+        else
+          # FIXME user friendly raise
+          raise
+        end
       end
 
       def apps
@@ -46,9 +55,9 @@ module Dapp
         @keys ||= {}
       end
 
-      def app(name, &blk)
+      def app(subname, &blk)
         options = Marshal.load(Marshal.dump(keys))
-        options[:name] = name
+        options[:name] = [name, subname].compact.join('-')
 
         self.class.new(**options).tap do |app|
           app.instance_eval(&blk)
