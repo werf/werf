@@ -17,7 +17,7 @@ module Dapp
 
         def image
           super do |image|
-            exposes = application.conf[:exposes]
+            exposes = application.conf.docker.exposes
             image.add_expose(exposes) unless exposes.nil?
           end
         end

@@ -7,8 +7,7 @@ module Dapp
     attr_reader :name
 
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
-    def initialize(repo, where_to_add,
-                   name: nil, branch: nil, commit: nil,
+    def initialize(repo, where_to_add:, name: nil, branch: nil, commit: nil,
                    cwd: nil, paths: nil, owner: nil, group: nil)
       @repo = repo
       @name = name

@@ -27,26 +27,21 @@ module Dapp
     end
 
     def git_artifact_list
-      [local_git_artifact, *remote_git_artifact_list].compact
+      [*local_git_artifact_list, *remote_git_artifact_list].compact
     end
 
-    def local_git_artifact
-      @local_git_artifact ||= begin
-        if cfg = (conf[:git_artifact] || {})[:local]
-          # FIXME cfg should contain no branch and no commit
-          cfg = cfg.dup
-          repo = GitRepo::Own.new(self)
-          GitArtifact.new(repo, cfg.delete(:where_to_add), **cfg)
-        end
+    def local_git_artifact_list
+      @local_git_artifact_list ||= Array(conf.git_artifact.local).map do |ga_conf|
+        repo = GitRepo::Own.new(self)
+        GitArtifact.new(repo, **ga_conf.artifact_options)
       end
     end
 
     def remote_git_artifact_list
-      @remote_git_artifact_list ||= Array((conf[:git_artifact] || {})[:remote]).map do |cfg|
-        repo_name = cfg[:url].gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
-        repo = GitRepo::Remote.new(self, repo_name, url: cfg[:url], ssh_key_path: ssh_key_path)
-        repo.fetch!(cfg[:branch])
-        GitArtifact.new(repo, cfg.delete(:where_to_add), **cfg) if cfg
+      @remote_git_artifact_list ||= Array(conf.git_artifact.remote).map do |ga_conf|
+        repo = GitRepo::Remote.new(self, ga_conf.name, url: ga_conf.url, ssh_key_path: ga_conf.ssh_key_path)
+        repo.fetch!(ga_conf.branch)
+        GitArtifact.new(repo, **ga_conf.artifact_options)
       end
     end
 
@@ -57,7 +52,7 @@ module Dapp
     end
 
     def home_path(*path)
-      path.compact.map(&:to_s).inject(Pathname.new(conf[:home_path]), &:+).expand_path
+      path.compact.map(&:to_s).inject(Pathname.new(conf.home_path), &:+).expand_path
     end
 
     def build_path(*path)
@@ -71,8 +66,8 @@ module Dapp
     end
 
     def builder
-      @builder ||= case conf[:type]
-        when :chef then Builder::Chef.new(self)
+      @builder ||= case conf.builder
+        when :chef  then Builder::Chef.new(self)
         when :shell then Builder::Shell.new(self)
         else raise 'builder type is not defined!'
       end

@@ -32,19 +32,14 @@ describe Dapp::Application do
 
 
   def config
-    @config ||= {
-        name: 'test',
-        type: :shell,
-        infra_install: ['apt-get update',
-                        'apt-get -y dist-upgrade',
-                        'apt-get -y install apt-utils curl apt-transport-https git'],
-        infra_setup:    [],
-        app_install:    [],
-        app_setup:      [],
-        home_path:      project_path,
-        from:           :'ubuntu:16.04',
-        git_artifact:   { local: { where_to_add: '/app' } }
-    }
+    @config ||= RecursiveOpenStruct.new(
+        name: 'test', builder: :shell, home_path: project_path,
+        shell: { infra_install: ['apt-get update', 'apt-get -y dist-upgrade',
+                                 'apt-get -y install apt-utils curl apt-transport-https git'],
+                 infra_setup: [], app_install: [], app_setup: [] },
+        docker: { from: :'ubuntu:16.04' },
+        git_artifact: { local: { artifact_options: { where_to_add: '/app' } } }
+    )
   end
 
   def opts
@@ -64,13 +59,13 @@ describe Dapp::Application do
 
   [:infra_install, :app_install, :infra_setup, :app_setup].each do |stage_name|
     define_method :"change_#{stage_name}" do
-      config[stage_name] << generate_command
+      config.shell.send(stage_name) << generate_command
     end
   end
 
   [:app_install, :infra_setup, :app_setup].each do |stage_name|
     define_method "expect_#{stage_name}_image" do
-      check_image_command(stage_name, config[stage_name].last)
+      check_image_command(stage_name, config.shell.send(stage_name).last)
       check_image_command(prev_stage(stage_name), 'apply')
     end
   end
@@ -86,7 +81,7 @@ describe Dapp::Application do
   end
 
   def change_from
-    config[:from] = 'ubuntu:14.04'
+    config.docker.from = 'ubuntu:14.04'
   end
 
   def expect_from_image
@@ -111,7 +106,7 @@ describe Dapp::Application do
   end
 
   def expect_infra_install_image
-    check_image_command(:infra_install, config[:infra_install].last)
+    check_image_command(:infra_install, config.shell.infra_install.last)
     check_image_command(:source_1_archive, 'tar -x')
   end
 

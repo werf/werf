@@ -21,7 +21,7 @@ module Dapp
         private
 
         def from_image_name
-          application.conf[:from].to_s
+          application.conf.docker.from.to_s
         end
 
         def from_image

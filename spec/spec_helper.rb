@@ -9,6 +9,7 @@ end
 Bundler.require :default, :test, :development
 
 require 'active_support'
+require 'recursive_open_struct'
 
 require 'spec_helpers/common'
 require 'spec_helpers/application'
