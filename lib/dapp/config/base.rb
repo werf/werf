@@ -5,7 +5,7 @@ module Dapp
 
       def initialize(main_conf = nil, **options)
         @cache_version = {}
-        @main_conf = main_conf
+        @main_conf     = main_conf
 
         options.each do |k, v|
           if respond_to? k

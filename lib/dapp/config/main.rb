@@ -2,24 +2,21 @@ module Dapp
   module Config
     class Main < Base
       def initialize(**options)
-        keys = options
+        @keys = options
 
         # FIXME we always have dappfile_path
-        keys[:home_path] ||= Pathname.new(keys[:dappfile_path] || 'fakedir').parent.expand_path.to_s
+        @keys[:home_path] ||= Pathname.new(@keys[:dappfile_path] || 'fakedir').parent.expand_path.to_s
+        @keys[:name]      ||= Pathname.new(@keys[:home_path]).basename unless @keys[:name]
 
-        unless keys[:name]
-          keys[:name] ||= Pathname.new(keys[:home_path]).basename
-        end
-
-        @apps ||= []
-        keys[:builder] = :shell
+        @keys[:builder]   ||= :shell
+        @apps             = []
 
         super()
       end
 
       def method_missing(name, *args)
         return keys[name] if keys.key?(name)
-        klass = Config.const_get(name.to_s.split('_').map(&:capitalize).join)
+        klass      = Config.const_get(name.to_s.split('_').map(&:capitalize).join)
         keys[name] ||= klass.new(self, *args)
       rescue NameError
         super
@@ -27,22 +24,15 @@ module Dapp
 
       def builder_validation(builder_name)
         another_builder = [:chef, :shell].find { |n| n != builder_name }
-        # FIXME user friendly raise
-        raise unless keys[another_builder].nil? && keys[:builder] == builder_name
-      end
-
-      def name
+        raise RuntimeError unless keys[another_builder].nil? && keys[:builder] == builder_name
       end
 
       def name(*args)
-        if args.size == 0
-          keys[:name]
-        elsif args.size == 1
-          keys[:name] = args.first
-        else
-          # FIXME user friendly raise
-          raise
-        end
+        option(:name, *args)
+      end
+
+      def builder(*args)
+        option(:builder, *args)
       end
 
       def apps
@@ -56,7 +46,7 @@ module Dapp
       end
 
       def app(subname, &blk)
-        options = Marshal.load(Marshal.dump(keys))
+        options        = Marshal.load(Marshal.dump(keys))
         options[:name] = [name, subname].compact.join('-')
 
         self.class.new(**options).tap do |app|
@@ -65,8 +55,14 @@ module Dapp
         end
       end
 
-      def builder(name)
-        keys[:builder] = name
+      def option(name, *args)
+        if args.size == 0
+          keys[name]
+        elsif args.size == 1
+          keys[name] = args.first
+        else
+          raise ArgumentError
+        end
       end
     end
   end
