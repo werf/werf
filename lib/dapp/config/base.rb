@@ -11,7 +11,7 @@ module Dapp
           if respond_to? k
             send(:"#{k}=", v)
           else
-            raise "Object '#{self.class.to_s}' doesn't have attribute '#{k}'!"
+            raise "Object '#{object_name}' doesn't have attribute '#{k}'!"
           end
         end
 
@@ -33,6 +33,12 @@ module Dapp
       protected
 
       attr_reader :main_conf
+
+      private
+
+      def object_name
+        self.class.to_s.split('::').last
+      end
     end
   end
 end

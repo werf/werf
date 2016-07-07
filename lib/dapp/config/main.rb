@@ -4,7 +4,7 @@ module Dapp
       def initialize(**options)
         @keys = options
 
-        # FIXME we always have dappfile_path
+        # TODO we always have dappfile_path
         @keys[:home_path] ||= Pathname.new(@keys[:dappfile_path] || 'fakedir').parent.expand_path.to_s
         @keys[:name]      ||= Pathname.new(@keys[:home_path]).basename unless @keys[:name]
 
@@ -23,8 +23,7 @@ module Dapp
       end
 
       def builder_validation(builder_name)
-        another_builder = [:chef, :shell].find { |n| n != builder_name }
-        raise RuntimeError unless keys[another_builder].nil? && keys[:builder] == builder_name
+        raise RuntimeError, "Builder type '#{builder_name}' is not defined!" unless keys[:builder] == builder_name
       end
 
       def name(*args)
@@ -50,7 +49,7 @@ module Dapp
         options[:name] = [name, subname].compact.join('-')
 
         self.class.new(**options).tap do |app|
-          app.instance_eval(&blk)
+          app.instance_eval(&blk) if block_given?
           @apps += app.apps
         end
       end

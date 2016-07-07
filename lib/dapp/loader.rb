@@ -6,10 +6,10 @@ module Dapp
       end
 
       def process_file(dappfile_path, app_filter: '*', **options)
-        Config::Main.new(dappfile_path: dappfile_path, app_filter: app_filter, **options) do |conf|
+        Config::Main.new(dappfile_path: dappfile_path, **options) do |conf|
           conf.log "Processing dappfile '#{dappfile_path}'"
           conf.instance_eval File.read(dappfile_path), dappfile_path
-        end.apps
+        end.apps # TODO app_fitter
       end
 
       def dappfiles_paths(path, pattern = '*')
