@@ -24,11 +24,11 @@ module Dapp
         def fixate!
           return if image.exist?
           prev_stage.fixate! if prev_stage
-          image.fixate!
+          image.tag!
         end
 
         def signature
-          hashsum prev_stage.signature
+          hashsum [prev_stage.signature, *cache_keys]
         end
 
         def image
@@ -37,6 +37,10 @@ module Dapp
               yield image if block_given?
             end
           end
+        end
+
+        def cache_keys
+          [application.conf.cache_version]
         end
 
         protected
