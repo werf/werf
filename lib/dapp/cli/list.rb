@@ -3,14 +3,14 @@ require 'mixlib/cli'
 module Dapp
   class CLI
     # CLI build subcommand
-    class Build
+    class List
       include Base
 
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp build [options] [PATTERN ...]
+  dapp list [options] [PATTERN ...]
 
     PATTERN                     Applications to process [default: *].
 
@@ -30,14 +30,6 @@ BANNER
              long: '--dir PATH',
              description: 'Change to directory',
              on: :head
-
-      option :build_dir,
-             long: '--build-dir PATH',
-             description: 'Build directory'
-
-      option :build_cache_dir,
-             long: '--build-cache-dir PATH',
-             description: 'Build cache directory'
     end
   end
 end

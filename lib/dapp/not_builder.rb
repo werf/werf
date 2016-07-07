@@ -16,8 +16,13 @@ module Dapp
 
     def build
       @build_confs.each do |build_conf|
-        log build_conf.name
         Application.new(conf: build_conf, opts: opts).build_and_fixate!
+      end
+    end
+
+    def list
+      @build_confs.each do |build_conf|
+        log build_conf.name
       end
     end
 
@@ -35,7 +40,7 @@ module Dapp
         apps = dappfiles.map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten
 
         if apps.empty?
-          STDERR.puts "Error: No such app: '#{pattern}' in #{dappfile_path}"
+          STDERR.puts "Error: No such app: '#{patterns.join(', ')}' in #{dappfile_path}"
           exit 1
         else
           apps

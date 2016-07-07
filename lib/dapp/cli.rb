@@ -22,6 +22,7 @@ Usage: dapp [options] sub-command [sub-command options]
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
 dapp build [options] [PATTERN ...]
+dapp list [options] [PATTERN ...]
 
 Options:
 BANNER
@@ -50,7 +51,7 @@ BANNER
       opt_parser.version = Dapp::VERSION
     end
 
-    SUBCOMMANDS = %w(build).freeze
+    SUBCOMMANDS = %w(build list).freeze
 
     def parse_subcommand(argv)
       if (index = argv.find_index { |v| SUBCOMMANDS.include? v })

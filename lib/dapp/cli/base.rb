@@ -31,6 +31,15 @@ module Dapp
         super()
       end
 
+      def run(argv = ARGV)
+        CLI.parse_options(self, argv)
+        NotBuilder.new(cli_options: config, patterns: cli_arguments).public_send(method_name)
+      end
+
+      def method_name
+        self.class.to_s.split('::').last.downcase.to_s
+      end
+
       def self.included(base)
         base.include Mixlib::CLI
       end
