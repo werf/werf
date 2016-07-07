@@ -2,10 +2,11 @@ module Dapp
   class NotBuilder
     include CommonHelper
 
-    attr_reader :cli_options, :patterns
+    attr_reader :opts, :patterns
 
     def initialize(cli_options:, patterns: nil)
-      @cli_options = cli_options
+      @opts = cli_options
+      @opts[:log_indent] = 0
 
       @patterns = patterns || []
       @patterns << '*' unless @patterns.any?
@@ -16,8 +17,7 @@ module Dapp
     def build
       @build_confs.each do |build_conf|
         log build_conf.name
-        options = { conf: build_conf, opts: cli_options }
-        Application.new(**options).build_and_fixate!
+        Application.new(conf: build_conf, opts: opts).build_and_fixate!
       end
     end
 
@@ -52,11 +52,11 @@ module Dapp
     end
 
     def dappfile_path
-      @dappfile_path ||= File.join [cli_options[:dir], 'Dappfile'].compact
+      @dappfile_path ||= File.join [opts[:dir], 'Dappfile'].compact
     end
 
     def dapps_path
-      @dapps_path ||= File.join [cli_options[:dir], '.dapps'].compact
+      @dapps_path ||= File.join [opts[:dir], '.dapps'].compact
     end
   end # NotBuilder
 end # Dapp

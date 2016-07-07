@@ -11,8 +11,6 @@ module Dapp
       @conf = conf
       @opts = opts
 
-      opts[:log_indent] = 0
-
       opts[:build_path] = opts[:build_dir] || home_path('build')
       opts[:build_cache_path] = opts[:build_cache_dir] || home_path('build_cache')
 
