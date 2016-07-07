@@ -9,6 +9,7 @@ describe Dapp::GitArtifact do
   before :each do
     stub_application
     stub_docker_image
+    stub_r_open_struct
     stub_git_repo_own
 
     git_init!

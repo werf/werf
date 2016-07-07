@@ -11,6 +11,7 @@ describe Dapp::Application do
 
   before :each do
     stub_docker_image
+    stub_r_open_struct
     application_build!
   end
 

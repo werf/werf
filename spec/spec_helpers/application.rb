@@ -59,18 +59,13 @@ module SpecHelpers
 
     def stub_docker_image
       images_cash = []
-      method_new  = Dapp::DockerImage.method(:new)
-
-      docker_image = class_double(Dapp::DockerImage).as_stubbed_const
-      allow(docker_image).to receive(:new) do |*args, &block|
-        method_new.call(*args, &block).tap do |instance|
-          allow(instance).to receive(:build!)
-          allow(instance).to receive(:exist?)  { images_cash.include? instance.name }
-          allow(instance).to receive(:tag!)    { images_cash << instance.name }
-          allow(instance).to receive(:pull!)   { images_cash << instance.name }
-          allow(instance).to receive(:rmi!)    { images_cash.delete(instance.name) }
-          allow(instance).to receive(:id)
-        end
+      stub_instance(Dapp::DockerImage) do |instance|
+        allow(instance).to receive(:build!)
+        allow(instance).to receive(:exist?)  { images_cash.include? instance.name }
+        allow(instance).to receive(:tag!)    { images_cash << instance.name }
+        allow(instance).to receive(:pull!)   { images_cash << instance.name }
+        allow(instance).to receive(:rmi!)    { images_cash.delete(instance.name) }
+        allow(instance).to receive(:id)
       end
     end
 
