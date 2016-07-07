@@ -10,8 +10,8 @@ Gem::Specification.new do |s|
   s.description = s.summary
   s.homepage = 'https://github.com/flant/dapp'
 
-  s.authors = ['Dmitry Stolyarov', 'Timofey Kirillov']
-  s.email = ['dmitry.stolyarov@flant.com', 'timofey.kirillov@flant.com']
+  s.authors = ['Dmitry Stolyarov']
+  s.email = ['dmitry.stolyarov@flant.com']
   s.license = 'MIT'
 
   s.files = Dir['lib/**/*']
