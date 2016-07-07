@@ -62,9 +62,13 @@ module Dapp
       shellout!("docker rmi -f #{name}")
     end
 
-    def fixate!
-      tag!
-      push!
+    def tag!
+      raise '`built_id` is not defined!' if built_id.empty?
+      shellout!("docker tag #{built_id} #{name}")
+    end
+
+    def push!
+      # TODO
     end
 
     protected
@@ -90,15 +94,6 @@ module Dapp
 
     def commit!
       shellout!("docker commit #{container_name}").stdout.strip
-    end
-
-    def tag!
-      raise '`built_id` is not defined!' if built_id.empty?
-      shellout!("docker tag #{built_id} #{name}")
-    end
-
-    def push!
-      # TODO
     end
 
     def prepared_options

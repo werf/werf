@@ -14,9 +14,7 @@ module Dapp
       opts[:log_indent] = 0
 
       opts[:build_path] = opts[:build_dir] || home_path('build')
-      opts[:build_path] = build_path opts[:basename] if opts[:shared_build_dir]
-
-      opts[:build_cache_path] = opts[:build_cache_path] || home_path('build_cache')
+      opts[:build_cache_path] = opts[:build_cache_dir] || home_path('build_cache')
 
       @last_stage = Build::Stage::Source5.new(self)
     end

@@ -1,5 +1,7 @@
 module Dapp
   class NotBuilder
+    include CommonHelper
+
     attr_reader :cli_options, :patterns
 
     def initialize(cli_options:, patterns: nil)
@@ -13,7 +15,7 @@ module Dapp
 
     def build
       @build_confs.each do |build_conf|
-        puts build_conf.name
+        log build_conf.name
         options = { conf: build_conf, opts: cli_options }
         Application.new(**options).build_and_fixate!
       end
@@ -22,39 +24,39 @@ module Dapp
     private
 
     def build_confs
-      options = {}
-      [:log_quiet, :log_verbose, :type].each { |opt| options[opt] = cli_options[opt] }
+      @build_confs ||= begin
+        dappfiles = []
+        if File.exist? dappfile_path
+          dappfiles << dappfile_path
+        elsif File.exist? dapps_path
+          dappfiles += Dir.glob(File.join([dapps_path, '*', 'Dappfile'].compact))
+        end
+        dappfiles.flatten.uniq!
+        apps = dappfiles.map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten
 
-      @build_confs = if File.exist? dappfile_path
-        process_file(**options)
-      else
-        process_directory(**options)
+        if apps.empty?
+          STDERR.puts "Error: No such app: '#{pattern}' in #{dappfile_path}"
+          exit 1
+        else
+          apps
+        end
       end
     end
 
-    def process_file(**options)
-      patterns.map do |pattern|
-        unless (apps = Loader.process_file(dappfile_path, app_filter: pattern, **options)).any?
-          STDERR.puts "Error: No such app: '#{pattern}' in #{dappfile_path}"
-          exit 1
-        end
-        apps
-      end.flatten
-    end
-
-    def process_directory(**options)
-      options[:shared_build_dir] = true
-      patterns.map do |pattern|
-        unless (apps = Loader.process_directory(cli_options[:dir], pattern, **options)).any?
-          STDERR.puts "Error: No such app '#{pattern}'"
-          exit 1
-        end
-        apps
-      end.flatten
+    def apps(dappfile_path, app_filters:)
+      config = Config::Main.new(dappfile_path: dappfile_path) do |conf|
+        conf.log "Processing dappfile '#{dappfile_path}'"
+        conf.instance_eval File.read(dappfile_path), dappfile_path
+      end
+      config.apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app.name) } }
     end
 
     def dappfile_path
-      @dappfile_path ||= File.join [cli_options[:dir], cli_options[:dappfile_name] || 'Dappfile'].compact
+      @dappfile_path ||= File.join [cli_options[:dir], 'Dappfile'].compact
+    end
+
+    def dapps_path
+      @dapps_path ||= File.join [cli_options[:dir], '.dapps'].compact
     end
   end # NotBuilder
 end # Dapp
