@@ -6,7 +6,7 @@ module SpecHelpers
     end
 
     def shellout!(*args, **kwargs)
-      shellout.tap(&:error!)
+      shellout(*args, **kwargs).tap(&:error!)
     end
 
     def random_string

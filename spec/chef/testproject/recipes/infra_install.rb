@@ -4,7 +4,7 @@ end
 
 apt_package 'curl'
 
-cookbook_file "/#{cookbook_name}.infra_install.txt" do
+cookbook_file "/#{cookbook_name.to_s.gsub('-', '_')}_infra_install.txt" do
   source 'infra_install/foo.txt'
   owner 'root'
   group 'root'
