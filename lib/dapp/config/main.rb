@@ -2,28 +2,28 @@ module Dapp
   module Config
     class Main < Base
       def initialize(**options)
-        @keys = options
+        @attrs = options
 
-        @keys[:home_path]     ||= Pathname.new(@keys[:dappfile_path]).parent.expand_path.to_s
-        @keys[:name]          ||= Pathname.new(@keys[:home_path]).basename unless @keys[:name]
+        @attrs[:home_path]     ||= Pathname.new(@attrs[:dappfile_path]).parent.expand_path.to_s
+        @attrs[:name]          ||= Pathname.new(@attrs[:home_path]).basename unless @attrs[:name]
 
-        @keys[:builder]       ||= :shell
-        @keys[:cache_version] ||= {}
-        @apps                 = []
+        @attrs[:builder]       ||= :shell
+        @attrs[:cache_version] ||= {}
+        @apps                  = []
 
         super()
       end
 
       def method_missing(name, *args)
-        return keys[name] if keys.key?(name)
-        klass      = Config.const_get(name.to_s.split('_').map(&:capitalize).join)
-        keys[name] ||= klass.new(self, *args)
+        return attrs[name] if attrs.key?(name)
+        klass       = Config.const_get(name.to_s.split('_').map(&:capitalize).join)
+        attrs[name] ||= klass.new(self, *args)
       rescue NameError
         super
       end
 
       def builder_validation(builder_name)
-        raise RuntimeError, "Builder type '#{builder_name}' is not defined!" unless keys[:builder] == builder_name
+        raise RuntimeError, "Builder type '#{builder_name}' is not defined!" unless attrs[:builder] == builder_name
       end
 
       def name(*args)
@@ -39,25 +39,36 @@ module Dapp
       end
 
       def cache_key(key = nil)
-        @keys[:cache_version][key]
+        @attrs[:cache_version][key]
+      end
+
+      def to_h
+        hash = { name: name, builder: builder}
+        hash.merge!(attrs.keys.inject({}) do |total, key|
+          value = attrs[key]
+          total[key] = value.to_h if !value.nil? && value.is_a?(Base)
+          total
+        end)
+        hash[:cache_key] = attrs[:cache_version] unless attrs[:cache_version].empty?
+        hash
       end
 
       private
 
-      def keys
-        @keys ||= {}
+      def attrs
+        @attrs ||= {}
       end
 
       def cache_version(value = nil, **options)
         if value.nil?
-          options.each { |k, v| @keys[:cache_version][k] = v }
+          options.each { |k, v| @attrs[:cache_version][k] = v }
         else
-          @keys[:cache_version][nil] = value
+          @attrs[:cache_version][nil] = value
         end
       end
 
       def app(subname, &blk)
-        options        = Marshal.load(Marshal.dump(keys))
+        options        = Marshal.load(Marshal.dump(attrs))
         options[:name] = [name, subname].compact.join('-')
 
         self.class.new(**options).tap do |app|
@@ -68,9 +79,9 @@ module Dapp
 
       def option(name, *args)
         if args.size == 0
-          keys[name]
+          attrs[name]
         elsif args.size == 1
-          keys[name] = args.first
+          attrs[name] = args.first
         else
           raise ArgumentError
         end

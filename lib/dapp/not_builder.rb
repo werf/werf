@@ -15,14 +15,20 @@ module Dapp
     end
 
     def build
-      @build_confs.each do |build_conf|
-        Application.new(conf: build_conf, opts: opts).build_and_fixate!
-      end
+      @build_confs.each { |build_conf| Application.new(conf: build_conf, opts: opts).build_and_fixate! }
     end
 
     def list
       @build_confs.each do |build_conf|
         log build_conf.name
+      end
+    end
+
+    def show
+      @build_confs.each do |build_conf|
+        log build_conf.name
+        log JSON.pretty_generate(build_conf.to_h)
+        log
       end
     end
 

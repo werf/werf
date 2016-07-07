@@ -51,7 +51,7 @@ BANNER
       opt_parser.version = Dapp::VERSION
     end
 
-    SUBCOMMANDS = %w(build list).freeze
+    SUBCOMMANDS = %w(build list show).freeze
 
     def parse_subcommand(argv)
       if (index = argv.find_index { |v| SUBCOMMANDS.include? v })

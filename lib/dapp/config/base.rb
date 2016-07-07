@@ -17,6 +17,15 @@ module Dapp
         yield self if block_given?
       end
 
+      def to_h
+        hash = {}
+        instance_variables.each do |name|
+          next if name == :'@main_conf'
+          hash[name.to_s.gsub('@', '')] = instance_variable_get(name)
+        end
+        hash
+      end
+
       protected
 
       attr_reader :main_conf

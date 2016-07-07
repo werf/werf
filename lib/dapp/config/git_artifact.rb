@@ -19,6 +19,10 @@ module Dapp
         end
       end
 
+      def to_h
+        { local: local.map(&:to_h), remote: remote.map(&:to_h), }
+      end
+
       class Local < Base
         attr_accessor :where_to_add, :cwd, :paths, :owner, :group
 
