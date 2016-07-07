@@ -4,12 +4,12 @@ module Dapp
       def initialize(**options)
         @keys = options
 
-        # TODO we always have dappfile_path
-        @keys[:home_path] ||= Pathname.new(@keys[:dappfile_path] || 'fakedir').parent.expand_path.to_s
-        @keys[:name]      ||= Pathname.new(@keys[:home_path]).basename unless @keys[:name]
+        @keys[:home_path]     ||= Pathname.new(@keys[:dappfile_path]).parent.expand_path.to_s
+        @keys[:name]          ||= Pathname.new(@keys[:home_path]).basename unless @keys[:name]
 
-        @keys[:builder]   ||= :shell
-        @apps             = []
+        @keys[:builder]       ||= :shell
+        @keys[:cache_version] ||= {}
+        @apps                 = []
 
         super()
       end
@@ -38,10 +38,22 @@ module Dapp
         @apps.empty? ? [self] : @apps.flatten
       end
 
+      def cache_key(key = nil)
+        @keys[:cache_version][key]
+      end
+
       private
 
       def keys
         @keys ||= {}
+      end
+
+      def cache_version(value = nil, **options)
+        if value.nil?
+          options.each { |k, v| @keys[:cache_version][k] = v }
+        else
+          @keys[:cache_version][nil] = value
+        end
       end
 
       def app(subname, &blk)

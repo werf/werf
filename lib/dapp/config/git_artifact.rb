@@ -34,9 +34,10 @@ module Dapp
       end
 
       class Remote < Local
-        attr_accessor :name, :branch, :ssh_key_path
+        attr_accessor :url, :name, :branch, :ssh_key_path
 
         def initialize(main_conf, url, where_to_add, **options, &blk)
+          @url          = url
           @name         = url.gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
           @branch       = options.delete(:branch) || shellout!("git -C #{main_conf.home_path} rev-parse --abbrev-ref HEAD").stdout.strip
           @ssg_key_path = options.delete(:ssg_key_path)

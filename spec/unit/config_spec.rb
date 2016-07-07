@@ -6,7 +6,7 @@ describe Dapp::Config::Main do
   end
 
   def apps
-    Dapp::Config::Main.new do |conf|
+    Dapp::Config::Main.new(dappfile_path: File.join(Dir.getwd, 'Dappfile')) do |conf|
       conf.instance_eval(dappfile)
     end.apps
   end
@@ -227,5 +227,15 @@ describe Dapp::Config::Main do
       docker.from = :image_1
     }
     expect(app.docker.from).to_not eq :image_1
+  end
+
+
+  it '#cache_version' do
+    @dappfile = %{
+      cache_version from: 'cache_key1'
+      cache_version 'cache_key2'
+    }
+    expect(app.cache_key).to eq 'cache_key2'
+    expect(app.cache_key(:from)).to eq 'cache_key1'
   end
 end
