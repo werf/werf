@@ -11,15 +11,15 @@ module Dapp
         end
 
         def build!
-          return if image.exist?
+          return if image.exist? and !application.show_only
           from_image.pull_and_set! unless from_image.exist?
-          application.log self.class.to_s
-          image.build!
+          build_log
+          image.build! unless application.show_only
         end
 
         def fixate!
           super
-          from_image.rmi! if from_image.exist?
+          from_image.rmi! if from_image.exist? and !application.show_only
         end
 
         private

@@ -71,6 +71,12 @@ module Dapp
       # TODO
     end
 
+    def info
+      raise "Image `#{name}` doesn't exist!" unless exist?
+      date, bytesize = shellout!("docker inspect --format='{{.Created}} {{.Size}}' #{name}").stdout.strip.split
+      ["date: #{Time.parse(date)}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
+    end
+
     protected
 
     def add_option(key, value)
@@ -106,6 +112,10 @@ module Dapp
 
     def prepared_commands
       bash_commands.map { |command| command.gsub(/(\$|")/) { "\\#{$1}" } }.join('; ')
+    end
+
+    def to_mb(bytes)
+      bytes / 1024.0 / 1024.0
     end
   end # DockerImage
 end # Dapp

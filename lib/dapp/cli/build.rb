@@ -38,6 +38,10 @@ BANNER
       option :build_cache_dir,
              long: '--build-cache-dir PATH',
              description: 'Build cache directory'
+
+      option :show_only,
+             long: '--show-only',
+             boolean: true
     end
   end
 end

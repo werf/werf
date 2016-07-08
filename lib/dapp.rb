@@ -9,6 +9,7 @@ require 'securerandom'
 require 'excon'
 require 'json'
 require 'ostruct'
+require 'time'
 
 require 'dapp/version'
 require 'dapp/cli'

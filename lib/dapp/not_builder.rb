@@ -15,7 +15,10 @@ module Dapp
     end
 
     def build
-      @build_confs.each { |build_conf| Application.new(conf: build_conf, opts: opts).build_and_fixate! }
+      @build_confs.each { |build_conf|
+        log build_conf.name
+        with_log_indent { Application.new(conf: build_conf, opts: opts).build_and_fixate! }
+      }
     end
 
     def list
@@ -27,8 +30,7 @@ module Dapp
     def show
       @build_confs.each do |build_conf|
         log build_conf.name
-        log JSON.pretty_generate(build_conf.to_h)
-        log
+        with_log_indent { log JSON.pretty_generate(build_conf.to_h) }
       end
     end
 

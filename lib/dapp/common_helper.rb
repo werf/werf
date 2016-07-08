@@ -2,7 +2,27 @@ module Dapp
   module CommonHelper
     def log(message = '')
       return unless defined? opts
-      puts ' ' * opts[:log_indent] + message if opts[:log_verbose] || !opts[:log_quiet]
+      puts message.lines.map { |line| ' ' * 2 * opts[:log_indent] + line }.join if opts[:log_verbose] || !opts[:log_quiet]
+    end
+
+    def with_log_indent(with = true)
+      log_indent_next if with
+      yield
+      log_indent_prev if with
+    end
+
+    def log_indent_next
+      return unless defined? opts
+      opts[:log_indent] += 1
+    end
+
+    def log_indent_prev
+      return unless defined? opts
+      if opts[:log_indent] <= 0
+        opts[:log_indent] = 0
+      else
+        opts[:log_indent] -= 1
+      end
     end
 
     def shellout(*args, log_verbose: false, **kwargs)

@@ -15,16 +15,16 @@ module Dapp
         end
 
         def build!
-          return if image.exist?
+          return if image.exist? and !application.show_only
           prev_stage.build! if prev_stage
-          application.log self.class.to_s
-          image.build!
+          build_log
+          image.build! unless application.show_only
         end
 
         def fixate!
           return if image.exist?
           prev_stage.fixate! if prev_stage
-          image.tag!
+          image.tag! unless application.show_only
         end
 
         def signature
@@ -57,6 +57,11 @@ module Dapp
 
         def image_name
           "dapp:#{signature}"
+        end
+
+        def build_log
+          application.log "#{name} #{ "\u2713" if image.exist? } "
+          application.with_log_indent(application.show_only) { application.log "#{image.info}" if image.exist? }
         end
       end # Base
     end # Stage

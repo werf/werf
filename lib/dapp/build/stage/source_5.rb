@@ -15,6 +15,14 @@ module Dapp
           nil
         end
 
+        def build!
+          if application.show_only
+            application.log image_name
+            application.log 'stages:'
+          end
+          application.with_log_indent(application.show_only) { super }
+        end
+
         def image
           super do |image|
             exposes = application.conf.docker.exposes

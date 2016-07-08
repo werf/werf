@@ -6,6 +6,7 @@ module Dapp
     attr_reader :conf
     attr_reader :opts
     attr_reader :last_stage
+    attr_reader :show_only
 
     def initialize(conf:, opts:)
       @conf = conf
@@ -15,6 +16,7 @@ module Dapp
       opts[:build_cache_path] = opts[:build_cache_dir] || home_path('build_cache')
 
       @last_stage = Build::Stage::Source5.new(self)
+      @show_only = !!opts[:show_only]
     end
 
     def build_and_fixate!
