@@ -81,7 +81,7 @@ module Dapp
       tags = []
       tags += opts[:tag]
       tags << local_git_artifact.latest_commit if opts[:tag_commit]
-      if opts[:tag_branch] and (branch = local_git_artifact.branch).nil?
+      if opts[:tag_branch] and !(branch = local_git_artifact.repo.branch).nil?
         raise "Application has specific revision that isn't associated with a branch name!" if branch == 'HEAD'
         tags << branch
       end
