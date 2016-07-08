@@ -8,15 +8,39 @@ describe Dapp::Builder::Chef do
     init_project
   end
 
-  it "builds chef testproject" do
+  it "builds project" do
     application_build!
     stages.each {|_, stage| expect(stage.image.exist?).to be(true)}
     TEST_FILE_NAMES.each {|name| expect(send("#{name}_exist?")).to be(true)}
   end
 
-  %i(infra_install app_install infra_setup app_setup).each do |stage|
-    it "changes chef stage #{stage}" do
-      #TODO
+  [%i(infra_install foo pizza),
+   %i(app_install bar taco),
+   %i(infra_setup baz burger),
+   %i(app_setup qux pelmeni),
+  ].each do |stage, file1, file2|
+    it "rebuilds from stage #{stage}" do
+      old_template_file_values = {}
+      old_template_file_values[file1] = send(file1)
+      old_template_file_values[file2] = send(file2)
+
+      new_file_values = {}
+      new_file_values[file1] = SecureRandom.uuid
+      testproject_path.join("files/#{stage}/#{file1}.txt").tap do |path|
+        path.write "#{new_file_values[file1]}\n"
+      end
+      new_file_values[file2] = SecureRandom.uuid
+      mdapp_test_path.join("files/#{stage}/#{file2}.txt").tap do |path|
+        path.write "#{new_file_values[file2]}\n"
+      end
+
+      application_rebuild!
+
+      expect(send(file1, reload: true)).not_to eq(old_template_file_values[file1])
+      expect(send(file2, reload: true)).not_to eq(old_template_file_values[file2])
+
+      expect(send("testproject_#{stage}", reload: true)).to eq(new_file_values[file1])
+      expect(send("mdapp_test_#{stage}", reload: true)).to eq(new_file_values[file2])
     end
   end
 

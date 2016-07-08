@@ -15,6 +15,11 @@ module SpecHelpers
       end
     end
 
+    def application_rebuild!
+      application_renew
+      application_build!
+    end
+
     def config
       {}
     end
