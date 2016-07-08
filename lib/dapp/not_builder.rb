@@ -34,6 +34,22 @@ module Dapp
       end
     end
 
+    def push(repo)
+      raise "Several applications isn't available for push command!" unless @build_confs.one?
+      @build_confs.each do |build_conf|
+        log build_conf.name
+        with_log_indent { Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true).push!(repo) }
+      end
+    end
+
+    def smartpush(repo_prefix)
+      @build_confs.each do |build_conf|
+        log build_conf.name
+        tag_name = File.join(repo_prefix, build_conf.name)
+        with_log_indent { Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true).push!(tag_name) }
+      end
+    end
+
     private
 
     def build_confs

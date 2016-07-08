@@ -14,7 +14,7 @@ module Dapp
 
       @where_to_add = where_to_add
 
-      @branch = branch
+      @branch = branch || repo.application.opts[:git_artifact_branch]
       @commit = commit
 
       @cwd = cwd

@@ -21,7 +21,7 @@ module Dapp
       def fetch!(branch = 'master')
         with_ssh_key do
           git_bare "fetch origin #{branch}:#{branch}", log_verbose: true
-        end
+        end unless application.ignore_git_fetch
       end
 
       def cleanup!

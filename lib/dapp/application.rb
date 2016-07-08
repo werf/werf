@@ -7,8 +7,9 @@ module Dapp
     attr_reader :opts
     attr_reader :last_stage
     attr_reader :show_only
+    attr_reader :ignore_git_fetch
 
-    def initialize(conf:, opts:)
+    def initialize(conf:, opts:, ignore_git_fetch: false)
       @conf = conf
       @opts = opts
 
@@ -17,11 +18,24 @@ module Dapp
 
       @last_stage = Build::Stage::Source5.new(self)
       @show_only = !!opts[:show_only]
+      @ignore_git_fetch = ignore_git_fetch
     end
 
     def build_and_fixate!
       last_stage.build!
       last_stage.fixate!
+    end
+
+    def push!(image_name)
+      raise "Application isn't built yet!" unless last_stage.image.exist? or show_only
+      tags.each do |tag_name|
+        image_with_tag = [image_name, tag_name].join(':')
+        show_only ? log(image_with_tag) : last_stage.image.pushing!(image_with_tag)
+      end
+    end
+
+    def local_git_artifact
+      local_git_artifact_list.first
     end
 
     def git_artifact_list
@@ -61,6 +75,20 @@ module Dapp
 
     def container_build_path(*path)
       path.compact.map(&:to_s).inject(Pathname.new('/.build'), &:+)
+    end
+
+    def tags
+      tags = []
+      tags += opts[:tag]
+      tags << local_git_artifact.latest_commit if opts[:tag_commit]
+      if opts[:tag_branch] and (branch = local_git_artifact.branch).nil?
+        raise "Application has specific revision that isn't associated with a branch name!" if branch == 'HEAD'
+        tags << branch
+      end
+      # tags << nil if opts[:tag_build_id] TODO
+      # tags << nil if opts[:tag_ci] TODO
+      tags << :latest if tags.empty?
+      tags
     end
 
     def builder

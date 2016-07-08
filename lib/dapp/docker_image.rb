@@ -58,17 +58,19 @@ module Dapp
       end
     end
 
-    def rmi!
-      shellout!("docker rmi -f #{name}")
+    def rmi!(tag_name = name)
+      shellout!("docker rmi -f #{tag_name}")
     end
 
-    def tag!
+    def tag!(tag_name = name)
       raise '`built_id` is not defined!' if built_id.empty?
-      shellout!("docker tag #{built_id} #{name}")
+      shellout!("docker tag #{built_id} #{tag_name}")
     end
 
-    def push!
-      # TODO
+    def pushing!(tag_name)
+      tag!(tag_name)
+      push!(tag_name)
+      rmi!(tag_name)
     end
 
     def info
@@ -87,6 +89,10 @@ module Dapp
 
     def id
       shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
+    end
+
+    def push!(tag_name)
+      shellout!("docker push #{tag_name}")
     end
 
     def run!
