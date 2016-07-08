@@ -14,6 +14,15 @@ module Dapp
         puts cli.opt_parser
         exit 1
       end
+
+      def required_argument(cli)
+        unless (arg = cli.cli_arguments.pop)
+          puts
+          puts cli.opt_parser
+          exit 1
+        end
+        arg
+      end
     end
 
     banner <<BANNER.freeze
@@ -22,7 +31,10 @@ Usage: dapp [options] sub-command [sub-command options]
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
 dapp build [options] [PATTERN ...]
+dapp push [options] [PATTERN] REPO
+dapp smartpush [options] [PATTERN ...] REPOPREFIX
 dapp list [options] [PATTERN ...]
+dapp show [options] [PATTERN ...]
 
 Options:
 BANNER
@@ -51,7 +63,7 @@ BANNER
       opt_parser.version = Dapp::VERSION
     end
 
-    SUBCOMMANDS = %w(build list show).freeze
+    SUBCOMMANDS = %w(build smartpush push list show).freeze
 
     def parse_subcommand(argv)
       if (index = argv.find_index { |v| SUBCOMMANDS.include? v })

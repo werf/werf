@@ -2,9 +2,22 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
-    # CLI build subcommand
-    module Base
+    class Base
       include Mixlib::CLI
+
+      option :help,
+             short: '-h',
+             long: '--help',
+             description: 'Show this message',
+             on: :tail,
+             boolean: true,
+             show_options: true,
+             exit: 0
+
+      option :dir,
+             long: '--dir PATH',
+             description: 'Change to directory',
+             on: :head
 
       option :log_quiet,
              short: '-q',
@@ -38,10 +51,6 @@ module Dapp
 
       def method_name
         self.class.to_s.split('::').last.downcase.to_s
-      end
-
-      def self.included(base)
-        base.include Mixlib::CLI
       end
     end
   end

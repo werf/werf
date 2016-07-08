@@ -2,9 +2,7 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
-    # CLI build subcommand
-    class Build
-      include Base
+    class Build < Base
 
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
@@ -17,20 +15,6 @@ Usage:
 Options:
 BANNER
 
-      option :help,
-             short: '-h',
-             long: '--help',
-             description: 'Show this message',
-             on: :tail,
-             boolean: true,
-             show_options: true,
-             exit: 0
-
-      option :dir,
-             long: '--dir PATH',
-             description: 'Change to directory',
-             on: :head
-
       option :build_dir,
              long: '--build-dir PATH',
              description: 'Build directory'
@@ -38,6 +22,10 @@ BANNER
       option :build_cache_dir,
              long: '--build-cache-dir PATH',
              description: 'Build cache directory'
+
+      option :git_artifact_branch,
+             long: '--git-artifact-branch BRANCH',
+             description: 'Default branch to archive artifacts from'
 
       option :show_only,
              long: '--show-only',
