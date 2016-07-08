@@ -60,7 +60,7 @@ module Dapp
         end
 
         def build_log
-          application.log "#{name} #{ "\u2713" if image.exist? } "
+          application.log "#{name} #{"[#{ image.exist? ? image_name : '×' }]" if application.show_only}"
           application.with_log_indent(application.show_only) { application.log "#{image.info}" if image.exist? }
         end
       end # Base
