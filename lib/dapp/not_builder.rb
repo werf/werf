@@ -4,6 +4,15 @@ module Dapp
 
     attr_reader :opts, :patterns
 
+    class << self
+      def flush_stage_cache # TODO
+        3.times do
+          image_names = %w(none dapp)
+          image_names.each { |image_name| shellout("docker rmi -f $(docker images | grep \"#{image_name}\" | awk \"{print \$3}\")") }
+        end
+      end
+    end
+
     def initialize(cli_options:, patterns: nil)
       @opts = cli_options
       @opts[:log_indent] = 0

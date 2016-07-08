@@ -14,11 +14,6 @@ Usage:
 Options:
 BANNER
 
-      def run(argv = ARGV)
-        CLI.parse_options(self, argv)
-        repo_prefix = CLI.required_argument(self)
-        NotBuilder.new(cli_options: config, patterns: cli_arguments).smartpush(repo_prefix)
-      end
     end
   end
 end

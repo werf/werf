@@ -53,9 +53,9 @@ BANNER
              boolean: true
 
       def run(argv = ARGV)
-        CLI.parse_options(self, argv)
-        repo = CLI.required_argument(self)
-        NotBuilder.new(cli_options: config, patterns: cli_arguments).push(repo)
+        self.class.parse_options(self, argv)
+        repo = self.class.required_argument(self)
+        NotBuilder.new(cli_options: config, patterns: cli_arguments).public_send(method_name, repo)
       end
     end
   end
