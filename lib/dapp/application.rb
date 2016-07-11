@@ -28,6 +28,7 @@ module Dapp
 
     def push!(image_name)
       raise "Application isn't built yet!" unless last_stage.image.exist? or show_only
+
       tags.each do |tag_name|
         image_with_tag = [image_name, tag_name].join(':')
         show_only ? log(image_with_tag) : last_stage.image.pushing!(image_with_tag)

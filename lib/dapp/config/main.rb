@@ -1,11 +1,15 @@
 module Dapp
   module Config
+    # FIXME rename Application
     class Main < Base
       def initialize(**options)
         @attrs = options
 
         @attrs[:home_path]     ||= Pathname.new(@attrs[:dappfile_path]).parent.expand_path.to_s
         @attrs[:name]          ||= Pathname.new(@attrs[:home_path]).basename unless @attrs[:name]
+
+        # FIXME Chef.detect ? :chef : :shell
+        # FIXME 
 
         @attrs[:builder]       ||= :shell
         @attrs[:cache_version] ||= {}
@@ -14,6 +18,7 @@ module Dapp
         super()
       end
 
+      # FIXME remove, add 4 methods: chef, shell, git_artifact, docker
       def method_missing(name, *args)
         return attrs[name] if attrs.key?(name)
         klass       = Config.const_get(name.to_s.split('_').map(&:capitalize).join)
@@ -31,6 +36,7 @@ module Dapp
       end
 
       def builder(*args)
+        # FIXME remove other builder object
         option(:builder, *args)
       end
 
@@ -68,7 +74,7 @@ module Dapp
       end
 
       def app(subname, &blk)
-        options        = Marshal.load(Marshal.dump(attrs))
+        options        = Marshal.load(Marshal.dump(attrs)) # FIXME remove, override clone method
         options[:name] = [name, subname].compact.join('-')
 
         self.class.new(**options).tap do |app|

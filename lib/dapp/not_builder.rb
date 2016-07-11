@@ -1,11 +1,16 @@
 module Dapp
+  # FIXME rename Controller
   class NotBuilder
     include CommonHelper
 
     attr_reader :opts, :patterns
 
     class << self
-      def flush_stage_cache # TODO
+      def flush_stage_cache
+        # FIXME
+        # shellout('docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" registry)')
+        # shellout('docker rmi $(docker images -f "dangling=true" -q)')
+        # 
         3.times do
           image_names = %w(none dapp)
           image_names.each { |image_name| shellout("docker rmi -f $(docker images | grep \"#{image_name}\" | awk \"{print \$3}\")") }
@@ -45,10 +50,8 @@ module Dapp
 
     def push(repo)
       raise "Several applications isn't available for push command!" unless @build_confs.one?
-      @build_confs.each do |build_conf|
-        log build_conf.name
-        with_log_indent { Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true).push!(repo) }
-      end
+      log @build_confs.first.name
+      with_log_indent { Application.new(conf: @build_confs.first, opts: opts, ignore_git_fetch: true).push!(repo) }
     end
 
     def smartpush(repo_prefix)

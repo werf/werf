@@ -15,6 +15,8 @@ module Dapp
           nil
         end
 
+        # FIXME expose checksum
+
         def image
           super do |image|
             exposes = application.conf.docker.exposes

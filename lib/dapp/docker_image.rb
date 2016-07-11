@@ -19,6 +19,7 @@ module Dapp
       @container_name = SecureRandom.hex
     end
 
+    # FIXME remove
     def built_id
       @built_id ||= id
     end
@@ -43,6 +44,7 @@ module Dapp
       !id.empty?
     end
 
+    # FIXME remove?
     def pull_and_set!
       pull!
       @built_id = id
@@ -61,16 +63,27 @@ module Dapp
       end
     end
 
-    def rmi!(tag_name = name)
-      shellout!("docker rmi -f #{tag_name}")
+    def rmi!
+      # FIXME do nothing if no such name
+      # FIXME raise if name != id
+      shellout!("docker rmi #{name}")
     end
 
+    # FIXME remove tag_name argument
+    # FIXME 
     def tag!(tag_name = name)
+      # FIXME do nothing if image with this id already tagged
+      # FIXME raise if image with OTHER id already tagged
       raise '`built_id` is not defined!' if built_id.empty?
       shellout!("docker tag #{built_id} #{tag_name}")
     end
 
-    def pushing!(tag_name)
+    def export!(tag_name)
+      image = self.class.new(id: self.id, name: name)
+      image.tag!
+      image.push!
+      image.rmi!
+
       tag!(tag_name)
       push!(tag_name)
       rmi!(tag_name)
