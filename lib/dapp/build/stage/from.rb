@@ -3,11 +3,7 @@ module Dapp
     module Stage
       class From < Base
         def signature
-          hashsum [from_image_name, *cache_keys]
-        end
-
-        def cache_keys
-          [super, application.conf.cache_key(:from)].flatten
+          hashsum [from_image_name, application.conf.docker._cache_version(:from)]
         end
 
         def build!

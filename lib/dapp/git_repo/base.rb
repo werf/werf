@@ -4,7 +4,6 @@ module Dapp
     class Base
       attr_reader :application
       attr_reader :name
-      attr_reader :su
 
       def initialize(application, name)
         @application = application

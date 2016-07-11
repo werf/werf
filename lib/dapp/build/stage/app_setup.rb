@@ -7,10 +7,6 @@ module Dapp
           super
         end
 
-        def cache_keys
-          [super, application.conf.cache_key(:app_setup)].flatten
-        end
-
         def image
           super do |image|
             application.builder.app_setup(image)

@@ -28,7 +28,7 @@ module Dapp
         end
 
         def signature
-          hashsum [prev_stage.signature, *cache_keys]
+          hashsum prev_stage.signature
         end
 
         def image
@@ -38,10 +38,6 @@ module Dapp
               yield image if block_given?
             end
           end
-        end
-
-        def cache_keys
-          [application.conf.cache_version]
         end
 
         protected
