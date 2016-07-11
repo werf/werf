@@ -94,9 +94,8 @@ module Dapp
 
     def builder
       @builder ||= case conf.builder
-        when :chef  then Builder::Chef.new(self)
-        when :shell then Builder::Shell.new(self)
-        else raise 'builder type is not defined!'
+        when :chef then Builder::Chef.new(self)
+        else Builder::Shell.new(self)
       end
     end
   end # Application

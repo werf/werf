@@ -1,22 +1,8 @@
 module Dapp
-  # FIXME rename Controller
-  class NotBuilder
+  class Controller
     include CommonHelper
 
     attr_reader :opts, :patterns
-
-    class << self
-      def flush_stage_cache
-        # FIXME
-        # shellout('docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" registry)')
-        # shellout('docker rmi $(docker images -f "dangling=true" -q)')
-        # 
-        3.times do
-          image_names = %w(none dapp)
-          image_names.each { |image_name| shellout("docker rmi -f $(docker images | grep \"#{image_name}\" | awk \"{print \$3}\")") }
-        end
-      end
-    end
 
     def initialize(cli_options:, patterns: nil)
       @opts = cli_options
@@ -70,6 +56,11 @@ module Dapp
       end
     end
 
+    def self.flush_stage_cache
+      shellout('docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" dapp)')
+      shellout('docker rmi $(docker images -f "dangling=true" -q)')
+    end
+
     private
 
     def build_confs
@@ -93,7 +84,7 @@ module Dapp
     end
 
     def apps(dappfile_path, app_filters:)
-      config = Config::Main.new(dappfile_path: dappfile_path) do |conf|
+      config = Config::Application.new(dappfile_path: dappfile_path) do |conf|
         conf.log "Processing dappfile '#{dappfile_path}'"
         conf.instance_eval File.read(dappfile_path), dappfile_path
       end
@@ -107,5 +98,5 @@ module Dapp
     def dapps_path
       @dapps_path ||= File.join [opts[:dir], '.dapps'].compact
     end
-  end # NotBuilder
+  end # Controller
 end # Dapp
