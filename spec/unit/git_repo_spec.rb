@@ -14,6 +14,10 @@ describe Dapp::GitRepo do
     expect(File.exist?(file_path(git_dir, '.git'))).to be_truthy
   end
 
+  def config
+    {}
+  end
+
   def commit!(data, git_dir=nil)
     @commit_counter ||= 1
     text_txt = file_path(git_dir, 'test.txt')

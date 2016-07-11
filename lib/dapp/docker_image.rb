@@ -7,8 +7,11 @@ module Dapp
     attr_reader :name
     attr_reader :bash_commands
     attr_reader :options
+    attr_reader :application
 
-    def initialize(name:, from: nil)
+    def initialize(application, name:, from: nil)
+      @application = application
+
       @from = from
       @bash_commands = []
       @options = {}
@@ -58,13 +61,25 @@ module Dapp
       end
     end
 
-    def rmi!
-      shellout!("docker rmi -f #{name}")
+    def rmi!(tag_name = name)
+      shellout!("docker rmi -f #{tag_name}")
     end
 
-    def fixate!
-      tag!
-      push!
+    def tag!(tag_name = name)
+      raise '`built_id` is not defined!' if built_id.empty?
+      shellout!("docker tag #{built_id} #{tag_name}")
+    end
+
+    def pushing!(tag_name)
+      tag!(tag_name)
+      push!(tag_name)
+      rmi!(tag_name)
+    end
+
+    def info
+      raise "Image `#{name}` doesn't exist!" unless exist?
+      date, bytesize = shellout!("docker inspect --format='{{.Created}} {{.Size}}' #{name}").stdout.strip.split
+      ["date: #{Time.parse(date)}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
     end
 
     protected
@@ -77,6 +92,10 @@ module Dapp
 
     def id
       shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
+    end
+
+    def push!(tag_name)
+      shellout!("docker push #{tag_name}")
     end
 
     def run!
@@ -92,25 +111,23 @@ module Dapp
       shellout!("docker commit #{container_name}").stdout.strip
     end
 
-    def tag!
-      raise '`built_id` is not defined!' if built_id.empty?
-      shellout!("docker tag #{built_id} #{name}")
-    end
-
-    def push!
-      # TODO
-    end
-
     def prepared_options
       options.map { |k, vals| Array(vals).map{|v| "--#{k}=#{v}" }.join(' ') }.join(' ')
     end
 
     def prepared_bash_command
-      "bash #{ "-lec \"#{prepared_commands}\"" unless bash_commands.empty? }"
+      "bash #{ "-lec #{prepared_script}" unless bash_commands.empty? }"
     end
 
-    def prepared_commands
-      bash_commands.map { |command| command.gsub(/(\$|")/) { "\\#{$1}" } }.join('; ')
+    def prepared_script
+      application.build_path("#{name}.sh").tap do |path|
+        path.write <<BODY
+#!bin/bash
+#{bash_commands.join('; ')}
+BODY
+        path.chmod 0755
+      end
+      application.container_build_path("#{name}.sh")
     end
   end # DockerImage
 end # Dapp

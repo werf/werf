@@ -7,15 +7,14 @@ module Dapp
     attr_reader :name
 
     # rubocop:disable Metrics/ParameterLists, Metrics/MethodLength
-    def initialize(repo, where_to_add,
-                   name: nil, branch: nil, commit: nil,
+    def initialize(repo, where_to_add:, name: nil, branch: nil, commit: nil,
                    cwd: nil, paths: nil, owner: nil, group: nil)
       @repo = repo
       @name = name
 
       @where_to_add = where_to_add
 
-      @branch = branch
+      @branch = branch || repo.application.opts[:git_artifact_branch]
       @commit = commit
 
       @cwd = cwd

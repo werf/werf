@@ -10,7 +10,7 @@ module SpecHelpers
 
     def application_renew
       @application = begin
-        options = { conf: config.dup, opts: opts }
+        options = { conf: config, opts: opts }
         Dapp::Application.new(**options)
       end
     end
@@ -21,11 +21,11 @@ module SpecHelpers
     end
 
     def config
-      {}
+      raise
     end
 
     def opts
-      {}
+      { log_quiet: true, build_dir: '' }
     end
 
     def stages_names
@@ -64,17 +64,13 @@ module SpecHelpers
 
     def stub_docker_image
       images_cash = []
-      method_new  = Dapp::DockerImage.method(:new)
-
-      docker_image = class_double(Dapp::DockerImage).as_stubbed_const
-      allow(docker_image).to receive(:new) do |*args, &block|
-        method_new.call(*args, &block).tap do |instance|
-          allow(instance).to receive(:build!)
-          allow(instance).to receive(:exist?)  { images_cash.include? instance.name }
-          allow(instance).to receive(:tag!)    { images_cash << instance.name }
-          allow(instance).to receive(:pull!)   { images_cash << instance.name }
-          allow(instance).to receive(:rmi!)    { images_cash.delete(instance.name) }
-        end
+      stub_instance(Dapp::DockerImage) do |instance|
+        allow(instance).to receive(:build!)
+        allow(instance).to receive(:exist?)  { images_cash.include? instance.name }
+        allow(instance).to receive(:tag!)    { images_cash << instance.name }
+        allow(instance).to receive(:pull!)   { images_cash << instance.name }
+        allow(instance).to receive(:rmi!)    { images_cash.delete(instance.name) }
+        allow(instance).to receive(:id)
       end
     end
 
@@ -83,12 +79,7 @@ module SpecHelpers
 
       application = class_double(Dapp::Application).as_stubbed_const
       allow(application).to receive(:new) do |*args, &block|
-        if args.first.is_a? Hash
-          args.first[:opts] ||= {}
-          args.first[:opts][:build_path] = ''
-          args.first[:conf] ||= {}
-          args.first[:conf][:home_path] = ''
-        end
+        args.first[:conf] = args.first[:conf].to_h.empty? ? RecursiveOpenStruct.new(home_path: '') : args.first[:conf] if args.first.is_a? Hash
 
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:build_path) { |*args| Pathname(File.absolute_path(File.join(*args))) }

@@ -10,8 +10,8 @@ Gem::Specification.new do |s|
   s.description = s.summary
   s.homepage = 'https://github.com/flant/dapp'
 
-  s.authors = ['Dmitry Stolyarov', 'Timofey Kirillov']
-  s.email = ['dmitry.stolyarov@flant.com', 'timofey.kirillov@flant.com']
+  s.authors = ['Dmitry Stolyarov']
+  s.email = ['dmitry.stolyarov@flant.com']
   s.license = 'MIT'
 
   s.files = Dir['lib/**/*']
@@ -33,4 +33,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'travis', '~> 1.8', '>= 1.8.2'
   s.add_development_dependency 'codeclimate-test-reporter', '~> 0.5'
   s.add_development_dependency 'activesupport', '~> 4.2', '>= 4.2.6'
+  s.add_development_dependency 'recursive-open-struct', '~> 1.0', '>= 1.0.1'
 end

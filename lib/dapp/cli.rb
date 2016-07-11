@@ -4,17 +4,9 @@ module Dapp
   # CLI
   class CLI
     include Mixlib::CLI
+    include CliHelper
 
-    class << self
-      def parse_options(cli, argv)
-        cli.parse_options(argv)
-      rescue OptionParser::InvalidOption => e
-        STDERR.puts "Error: #{e.message}"
-        puts
-        puts cli.opt_parser
-        exit 1
-      end
-    end
+    SUBCOMMANDS = %w(build smartpush push list show flush).freeze
 
     banner <<BANNER.freeze
 Usage: dapp [options] sub-command [sub-command options]
@@ -22,6 +14,11 @@ Usage: dapp [options] sub-command [sub-command options]
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
 dapp build [options] [PATTERN ...]
+dapp push [options] [PATTERN] REPO
+dapp smartpush [options] [PATTERN ...] REPOPREFIX
+dapp list [options] [PATTERN ...]
+dapp show [options] [PATTERN ...]
+dapp flush
 
 Options:
 BANNER
@@ -50,41 +47,10 @@ BANNER
       opt_parser.version = Dapp::VERSION
     end
 
-    SUBCOMMANDS = %w(build).freeze
-
-    def parse_subcommand(argv)
-      if (index = argv.find_index { |v| SUBCOMMANDS.include? v })
-        return [
-          argv[0...index],
-          argv[index],
-          argv[index.next..-1]
-        ]
-      else
-        return [
-          argv,
-          nil,
-          []
-        ]
-      end
-    end
-
     def run(argv = ARGV)
-      argv, subcommand, subcommand_argv = parse_subcommand(argv)
-
-      CLI.parse_options(self, argv)
-
-      run_subcommand subcommand, subcommand_argv
-    end
-
-    def run_subcommand(subcommand, subcommand_argv)
-      if subcommand
-        self.class.const_get(subcommand.capitalize).new.run(subcommand_argv)
-      else
-        STDERR.puts 'Error: subcommand not passed'
-        puts
-        puts opt_parser
-        exit 1
-      end
+      argv, subcommand, subcommand_argv = self.class.parse_subcommand(self, argv)
+      self.class.parse_options(self, argv)
+      self.class.run_subcommand self, subcommand, subcommand_argv
     end
   end
 end

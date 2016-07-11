@@ -15,28 +15,33 @@ module Dapp
         end
 
         def build!
-          return if image.exist?
+          return if image.exist? and !application.show_only
           prev_stage.build! if prev_stage
-          application.log self.class.to_s
-          image.build!
+          build_log
+          image.build! unless application.show_only
         end
 
         def fixate!
           return if image.exist?
           prev_stage.fixate! if prev_stage
-          image.fixate!
+          image.tag! unless application.show_only
         end
 
         def signature
-          hashsum prev_stage.signature
+          hashsum [prev_stage.signature, *cache_keys]
         end
 
         def image
           @image ||= begin
-            DockerImage.new(name: image_name, from: from_image).tap do |image|
+            DockerImage.new(self.application, name: image_name, from: from_image).tap do |image|
+              image.add_volume "#{application.build_path}:#{application.container_build_path}"
               yield image if block_given?
             end
           end
+        end
+
+        def cache_keys
+          [application.conf.cache_version]
         end
 
         protected
@@ -53,6 +58,11 @@ module Dapp
 
         def image_name
           "dapp:#{signature}"
+        end
+
+        def build_log
+          application.log "#{name} #{"[#{ image.exist? ? image_name : '×' }]" if application.show_only}"
+          application.with_log_indent(application.show_only) { application.log "#{image.info}" if image.exist? }
         end
       end # Base
     end # Stage

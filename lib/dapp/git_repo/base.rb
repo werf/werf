@@ -38,6 +38,10 @@ module Dapp
       def cleanup!
       end
 
+      def branch
+        git_bare('rev-parse --abbrev-ref HEAD').stdout.strip
+      end
+
       protected
 
       def git(command, **kwargs)

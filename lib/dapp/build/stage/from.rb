@@ -3,29 +3,33 @@ module Dapp
     module Stage
       class From < Base
         def signature
-          hashsum from_image_name # TODO: add hashkey
+          hashsum [from_image_name, *cache_keys]
+        end
+
+        def cache_keys
+          [super, application.conf.cache_key(:from)].flatten
         end
 
         def build!
-          return if image.exist?
+          return if image.exist? and !application.show_only
           from_image.pull_and_set! unless from_image.exist?
-          application.log self.class.to_s
-          image.build!
+          build_log
+          image.build! unless application.show_only
         end
 
         def fixate!
           super
-          from_image.rmi! if from_image.exist?
+          from_image.rmi! if from_image.exist? and !application.show_only
         end
 
         private
 
         def from_image_name
-          application.conf[:from].to_s
+          application.conf.docker.from.to_s
         end
 
         def from_image
-          DockerImage.new(name: from_image_name)
+          DockerImage.new(self.application, name: from_image_name)
         end
       end # Prepare
     end # Stage

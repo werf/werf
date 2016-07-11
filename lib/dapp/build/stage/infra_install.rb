@@ -8,7 +8,11 @@ module Dapp
         end
 
         def signature
-          hashsum [prev_stage.signature, *application.builder.infra_install_checksum]
+          hashsum [prev_stage.signature, *application.builder.infra_install_checksum, *cache_keys]
+        end
+
+        def cache_keys
+          [super, application.conf.cache_key(:infra_install)].flatten
         end
 
         def image
