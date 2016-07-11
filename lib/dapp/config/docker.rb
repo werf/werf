@@ -1,15 +1,28 @@
 module Dapp
   module Config
     class Docker < Base
-      attr_accessor :from, :exposes
+      attr_reader :_from
+      attr_reader :_expose
 
-      def initialize(main_conf, &blk)
-        @exposes = []
+      def initialize
+        @_expose = []
         super
       end
 
+      def from(image_name, cache_version: nil)
+        @_from = image_name
+        cache_version(from: cache_version) unless cache_version.nil?
+      end
+
       def expose(*args)
-        exposes.push(*args.flatten)
+        @_expose.push(*args.flatten)
+      end
+
+      def to_h
+        {
+          from:    _from,
+          exposes: _exposes
+        }
       end
     end
   end

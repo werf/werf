@@ -15,7 +15,7 @@ BANNER
 
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
-            NotBuilder.flush_stage_cache
+            Controller.flush_stage_cache
           end
         end
       end

@@ -1,16 +1,21 @@
 module Dapp
   module Config
     class Chef < Base
-      attr_accessor :modules
+      attr_reader :_module
 
-      def initialize(main_conf, &blk)
-        main_conf.builder_validation(:chef)
-        @modules = []
+      def initialize
+        @_module = []
         super
       end
 
       def module(*args)
-        modules.push(*args.flatten)
+        @_module.push(*args.flatten)
+      end
+
+      def to_h
+        {
+          module: _module
+        }
       end
     end
   end

@@ -18,7 +18,7 @@ BANNER
 
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
-            NotBuilder.new(cli_options: config, patterns: cli_arguments).flush_build_cache
+            Controller.new(cli_options: config, patterns: cli_arguments).flush_build_cache
           end
         end
       end
