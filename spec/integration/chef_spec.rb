@@ -58,6 +58,10 @@ describe Dapp::Builder::Chef do
     )
   end
 
+  def opts
+    {log_quiet: true}
+  end
+
   def project_path
     @project_path ||= Pathname("/tmp/dapp-test-#{SecureRandom.uuid}")
   end
