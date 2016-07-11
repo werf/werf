@@ -7,10 +7,8 @@ module Dapp
         end
 
         def build!
-          return if image.exist? and !application.show_only
-          from_image.pull_and_set! unless from_image.exist?
-          build_log
-          image.build! unless application.show_only
+          from_image.pull_and_set! if application.conf.docker._pull_always or !from_image.exist?
+          super
         end
 
         def fixate!
