@@ -25,4 +25,4 @@ build/hub_image: build/image
 clean:
 	@rm -rf build
 
-.PHONY: all clean image
+.PHONY: all clean
