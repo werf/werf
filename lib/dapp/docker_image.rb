@@ -31,6 +31,10 @@ module Dapp
       add_option(:volume, value)
     end
 
+    def add_volumes_from(value)
+      add_option(:'volumes-from', value)
+    end
+
     def add_env(value)
       add_option(:env, value)
     end

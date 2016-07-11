@@ -8,6 +8,10 @@ describe Dapp::Builder::Chef do
     init_project
   end
 
+  before :each do
+    stub_r_open_struct
+  end
+
   it "builds project" do
     application_build!
     stages.each {|_, stage| expect(stage.image.exist?).to be(true)}
@@ -45,12 +49,13 @@ describe Dapp::Builder::Chef do
   end
 
   def config
-    @config ||= {
+    @config ||= RecursiveOpenStruct.new(
       name: 'testproject',
-      type: :chef,
-      from: 'ubuntu:14.04',
+      builder: :chef,
       home_path: testproject_path.to_s,
-    }
+      docker: {from: 'ubuntu:14.04'},
+      chef: {modules: ['testproject', 'mdapp-test']},
+    )
   end
 
   def project_path

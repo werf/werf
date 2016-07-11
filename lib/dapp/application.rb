@@ -43,17 +43,21 @@ module Dapp
     end
 
     def local_git_artifact_list
-      @local_git_artifact_list ||= Array(conf.git_artifact.local).map do |ga_conf|
-        repo = GitRepo::Own.new(self)
-        GitArtifact.new(repo, **ga_conf.artifact_options)
+      @local_git_artifact_list ||= begin
+        (conf.git_artifact ? Array(conf.git_artifact.local) : []).map do |ga_conf|
+          repo = GitRepo::Own.new(self)
+          GitArtifact.new(repo, **ga_conf.artifact_options)
+        end
       end
     end
 
     def remote_git_artifact_list
-      @remote_git_artifact_list ||= Array(conf.git_artifact.remote).map do |ga_conf|
-        repo = GitRepo::Remote.new(self, ga_conf.name, url: ga_conf.url, ssh_key_path: ga_conf.ssh_key_path)
-        repo.fetch!(ga_conf.branch)
-        GitArtifact.new(repo, **ga_conf.artifact_options)
+      @remote_git_artifact_list ||= begin
+        (conf.git_artifact ? Array(conf.git_artifact.remote) : []).map do |ga_conf|
+          repo = GitRepo::Remote.new(self, ga_conf.name, url: ga_conf.url, ssh_key_path: ga_conf.ssh_key_path)
+          repo.fetch!(ga_conf.branch)
+          GitArtifact.new(repo, **ga_conf.artifact_options)
+        end
       end
     end
 
