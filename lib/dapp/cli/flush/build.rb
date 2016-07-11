@@ -2,18 +2,19 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
-    class Flush < CLI
-      SUBCOMMANDS = %w(stage build).freeze
+    class Flush
+      class Build < Flush
+        SUBCOMMANDS = %w(cache).freeze
 
-      banner <<BANNER.freeze
+        banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-dapp flush stage
-dapp flush build
+dapp flush build cache
 BANNER
 
+      end
     end
   end
 end

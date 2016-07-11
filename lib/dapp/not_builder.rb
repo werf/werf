@@ -59,6 +59,14 @@ module Dapp
       end
     end
 
+    def flush_build_cache
+      @build_confs.each do |build_conf|
+        log build_conf.name
+        app = Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true)
+        FileUtils.rm_rf app.build_cache_path
+      end
+    end
+
     private
 
     def build_confs
