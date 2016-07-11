@@ -54,6 +54,10 @@ module Dapp
       path.delete if path.exist?
     end
 
+    def to_mb(bytes)
+      bytes / 1024.0 / 1024.0
+    end
+
     def self.included(base)
       base.extend(self)
     end

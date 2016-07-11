@@ -23,7 +23,6 @@ module Dapp
 
         def image
           super do |image|
-            image.add_volume "#{application.build_path}:#{application.container_build_path}"
             application.git_artifact_list.each do |git_artifact|
               image.add_volume "#{git_artifact.repo.dir_path}:#{git_artifact.repo.container_build_dir_path}"
               image.add_commands git_artifact.send(apply_command_method, self)

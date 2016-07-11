@@ -7,8 +7,11 @@ module Dapp
     attr_reader :name
     attr_reader :bash_commands
     attr_reader :options
+    attr_reader :application
 
-    def initialize(name:, from: nil)
+    def initialize(application, name:, from: nil)
+      @application = application
+
       @from = from
       @bash_commands = []
       @options = {}
@@ -113,15 +116,18 @@ module Dapp
     end
 
     def prepared_bash_command
-      "bash #{ "-lec \"#{prepared_commands}\"" unless bash_commands.empty? }"
+      "bash #{ "-lec #{prepared_script}" unless bash_commands.empty? }"
     end
 
-    def prepared_commands
-      bash_commands.map { |command| command.gsub(/(\$|")/) { "\\#{$1}" } }.join('; ')
-    end
-
-    def to_mb(bytes)
-      bytes / 1024.0 / 1024.0
+    def prepared_script
+      application.build_path("#{name}.sh").tap do |path|
+        path.write <<BODY
+#!bin/bash
+#{bash_commands.join('; ')}
+BODY
+        path.chmod 0755
+      end
+      application.container_build_path("#{name}.sh")
     end
   end # DockerImage
 end # Dapp

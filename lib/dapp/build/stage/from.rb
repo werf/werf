@@ -3,7 +3,7 @@ module Dapp
     module Stage
       class From < Base
         def signature
-          hashsum from_image_name
+          hashsum [from_image_name, *cache_keys]
         end
 
         def cache_keys
@@ -29,7 +29,7 @@ module Dapp
         end
 
         def from_image
-          DockerImage.new(name: from_image_name)
+          DockerImage.new(self.application, name: from_image_name)
         end
       end # Prepare
     end # Stage
