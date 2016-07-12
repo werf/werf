@@ -3,7 +3,6 @@ module Dapp
     class Docker < Base
       attr_reader :_from
       attr_reader :_expose
-      attr_reader :_pull_always
 
       def initialize
         @_expose = []
@@ -13,7 +12,6 @@ module Dapp
       def from(image_name, pull_always: false, cache_version: nil)
         @_from = image_name
         cache_version(from: cache_version) unless cache_version.nil?
-        @_pull_always = pull_always
       end
 
       def expose(*args)
@@ -22,8 +20,8 @@ module Dapp
 
       def to_h
         {
-          from:    _from,
-          exposes: _exposes
+          from:   _from,
+          expose: _expose
         }
       end
     end
