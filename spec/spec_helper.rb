@@ -15,3 +15,9 @@ require 'spec_helpers/common'
 require 'spec_helpers/application'
 require 'spec_helpers/git'
 require 'spec_helpers/git_artifact'
+
+RSpec.configure do |config|
+  config.mock_with :rspec do |mocks|
+    mocks.allow_message_expectations_on_nil = true
+  end
+end

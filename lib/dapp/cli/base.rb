@@ -30,7 +30,7 @@ module Dapp
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        NotBuilder.new(cli_options: config, patterns: cli_arguments).public_send(method_name)
+        Controller.new(cli_options: config, patterns: cli_arguments).public_send(method_name)
       end
     end
   end

@@ -1,17 +1,8 @@
 module Dapp
-  class NotBuilder
+  class Controller
     include CommonHelper
 
     attr_reader :opts, :patterns
-
-    class << self
-      def flush_stage_cache # TODO
-        3.times do
-          image_names = %w(none dapp)
-          image_names.each { |image_name| shellout("docker rmi -f $(docker images | grep \"#{image_name}\" | awk \"{print \$3}\")") }
-        end
-      end
-    end
 
     def initialize(cli_options:, patterns: nil)
       @opts = cli_options
@@ -45,10 +36,8 @@ module Dapp
 
     def push(repo)
       raise "Several applications isn't available for push command!" unless @build_confs.one?
-      @build_confs.each do |build_conf|
-        log build_conf.name
-        with_log_indent { Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true).push!(repo) }
-      end
+      log @build_confs.first.name
+      with_log_indent { Application.new(conf: @build_confs.first, opts: opts, ignore_git_fetch: true).push!(repo) }
     end
 
     def smartpush(repo_prefix)
@@ -65,6 +54,11 @@ module Dapp
         app = Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true)
         FileUtils.rm_rf app.build_cache_path
       end
+    end
+
+    def self.flush_stage_cache
+      shellout('docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" dapp)')
+      shellout('docker rmi $(docker images -f "dangling=true" -q)')
     end
 
     private
@@ -94,7 +88,7 @@ module Dapp
         conf.log "Processing dappfile '#{dappfile_path}'"
         conf.instance_eval File.read(dappfile_path), dappfile_path
       end
-      config.apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app.name) } }
+      config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app.name) } }
     end
 
     def dappfile_path
@@ -104,5 +98,5 @@ module Dapp
     def dapps_path
       @dapps_path ||= File.join [opts[:dir], '.dapps'].compact
     end
-  end # NotBuilder
+  end # Controller
 end # Dapp

@@ -28,6 +28,7 @@ module Dapp
 
     def push!(image_name)
       raise "Application isn't built yet!" unless last_stage.image.exist? or show_only
+
       tags.each do |tag_name|
         image_with_tag = [image_name, tag_name].join(':')
         show_only ? log(image_with_tag) : last_stage.image.pushing!(image_with_tag)
@@ -97,9 +98,8 @@ module Dapp
 
     def builder
       @builder ||= case conf.builder
-        when :chef  then Builder::Chef.new(self)
-        when :shell then Builder::Shell.new(self)
-        else raise 'builder type is not defined!'
+        when :chef then Builder::Chef.new(self)
+        else Builder::Shell.new(self)
       end
     end
   end # Application

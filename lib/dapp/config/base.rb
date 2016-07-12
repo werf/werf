@@ -1,39 +1,29 @@
 module Dapp
   module Config
     class Base
-      include Dapp::CommonHelper
+      attr_reader :_cache_version
 
-      def initialize(main_conf = nil, **options)
-        @main_conf = main_conf
-
-        options.each do |k, v|
-          if respond_to? k
-            send(:"#{k}=", v)
-          else
-            raise "Object '#{object_name}' doesn't have attribute '#{k}'!"
-          end
-        end
-
+      def initialize
+        @_cache_version = {}
         yield self if block_given?
       end
 
-      def to_h
-        hash = {}
-        instance_variables.each do |name|
-          next if name == :'@main_conf'
-          hash[name.to_s.gsub('@', '')] = instance_variable_get(name)
+      def cache_version(value = nil, **options)
+        if value.nil?
+          options.each { |k, v| @_cache_version[k] = v }
+        else
+          @_cache_version[nil] = value
         end
-        hash
+      end
+
+      def _cache_version(key = nil)
+        @_cache_version[key]
       end
 
       protected
 
-      attr_reader :main_conf
-
-      private
-
-      def object_name
-        self.class.to_s.split('::').last
+      def clone_with_marshal
+        Marshal.load(Marshal.dump(self))
       end
     end
   end

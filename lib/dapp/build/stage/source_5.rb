@@ -15,14 +15,21 @@ module Dapp
           nil
         end
 
+        def signature
+          hashsum [super, *exposes]
+        end
+
         def image
           super do |image|
-            exposes = application.conf.docker.exposes
             image.add_expose(exposes) unless exposes.nil?
           end
         end
 
         protected
+
+        def exposes
+          application.conf.docker._expose
+        end
 
         def layers_commits_write!
           nil
