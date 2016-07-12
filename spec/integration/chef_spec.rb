@@ -50,11 +50,11 @@ describe Dapp::Builder::Chef do
 
   def config
     @config ||= RecursiveOpenStruct.new(
-      name: 'testproject',
-      builder: :chef,
-      home_path: testproject_path.to_s,
-      docker: {from: 'ubuntu:14.04'},
-      chef: {modules: ['testproject', 'mdapp-test']},
+      _name: 'testproject',
+      _builder: :chef,
+      _home_path: testproject_path.to_s,
+      _docker: {_from: 'ubuntu:14.04'},
+      _chef: {_module: ['testproject', 'mdapp-test']},
     )
   end
 
