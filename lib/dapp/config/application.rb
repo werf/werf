@@ -17,12 +17,12 @@ module Dapp
       end
 
       def chef
-        builder(:chef)
+        raise 'Already defined another builder type!' unless _builder == :chef
         @_chef ||= Chef.new
       end
 
       def shell
-        builder(:shell)
+        raise 'Already defined another builder type!' unless _builder == :shell
         @_shell ||= Shell.new
       end
 
@@ -35,9 +35,9 @@ module Dapp
       end
 
       def builder(type)
-        type = type.to_sym
-        raise "Type `#{type}` isn't supported!" unless [:chef, :shell].include?(type)
-        raise "Another builder type '#{_builder}' already used!" if !_builder.nil? and _builder != type
+        raise "Builder type `#{type}` isn't supported!" unless [:chef, :shell].include?((type = type.to_sym))
+        another_builder = [:chef, :shell].find { |t| t != type }
+        instance_variable_set(:"@_#{another_builder}", nil)
         @_builder = type
       end
 
@@ -59,7 +59,7 @@ module Dapp
       private
 
       def clone
-        self.class.new(self).tap do |app|
+        Application.new(self).tap do |app|
           app.instance_variable_set(:'@_builder', _builder)
           app.instance_variable_set(:'@_home_path', _home_path)
           app.instance_variable_set(:'@_docker', _docker.clone_with_marshal)             unless @_docker.nil?

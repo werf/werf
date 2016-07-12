@@ -39,7 +39,7 @@ module Dapp
           super()
         end
 
-        def artifact_options
+        def _artifact_options
           to_h
         end
 
@@ -71,7 +71,7 @@ module Dapp
           super(where_to_add, **options)
         end
 
-        def artifact_options
+        def _artifact_options
           super.merge({ name: _name, branch: _branch })
         end
       end
