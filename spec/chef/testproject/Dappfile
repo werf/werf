@@ -2,7 +2,8 @@ builder :chef
 
 docker.from 'ubuntu:14.04'
 
-chef.module 'testproject'
+name 'test'
+
 chef.module 'mdapp-test'
 
 app 'X' do
