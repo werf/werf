@@ -1,22 +1,25 @@
 module Dapp
   module Config
     class GitArtifact < Base
+      attr_reader :_local
+      attr_reader :_remote
+
       def initialize
-        @local  = []
-        @remote = []
+        @_local  = []
+        @_remote = []
         super
       end
 
       def local(*args)
-        @local.tap { |local| local << Local.new(*args) unless args.empty? }
+        @_local.tap { |local| local << Local.new(*args) unless args.empty? }
       end
 
       def remote(*args)
-        @remote.tap { |remote| remote << Remote.new(*args) unless args.empty? }
+        @_remote.tap { |remote| remote << Remote.new(*args) unless args.empty? }
       end
 
       def to_h
-        { local: local.map(&:to_h), remote: remote.map(&:to_h) }
+        { local: _local.map(&:to_h), remote: _remote.map(&:to_h) }
       end
 
       class Local < Base

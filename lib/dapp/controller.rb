@@ -84,11 +84,11 @@ module Dapp
     end
 
     def apps(dappfile_path, app_filters:)
-      config = Config::Application.new(dappfile_path: dappfile_path) do |conf|
+      config = Config::Main.new(dappfile_path: dappfile_path) do |conf|
         conf.log "Processing dappfile '#{dappfile_path}'"
         conf.instance_eval File.read(dappfile_path), dappfile_path
       end
-      config.apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app.name) } }
+      config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app.name) } }
     end
 
     def dappfile_path

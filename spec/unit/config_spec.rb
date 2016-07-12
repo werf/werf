@@ -1,14 +1,14 @@
 require_relative '../spec_helper'
 
-describe Dapp::Config::Application do
+describe Dapp::Config::Main do
   def dappfile
     @dappfile ||= ''
   end
 
   def apps
-    Dapp::Config::Application.new(dappfile_path: File.join(Dir.getwd, 'Dappfile')) do |conf|
+    Dapp::Config::Main.new(dappfile_path: File.join(Dir.getwd, 'Dappfile')) do |conf|
       conf.instance_eval(dappfile)
-    end.apps
+    end._apps
   end
 
   def app

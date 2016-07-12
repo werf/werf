@@ -4,37 +4,34 @@ module Dapp
       attr_reader :_name
       attr_reader :_builder
       attr_reader :_home_path
-      attr_reader :apps
+      attr_reader :_docker
+      attr_reader :_git_artifact
+      attr_reader :_chef
+      attr_reader :_shell
+      attr_reader :_parent
 
-      def initialize(**options)
-        unless options.empty?
-          @_home_path = Pathname.new(options[:dappfile_path]).parent.expand_path.to_s
-          @_name      = Pathname.new(@_home_path).basename
-        end
-        @apps      = []
+      def initialize(parent)
+        @_apps      = []
+        @_parent    = parent
         super()
       end
 
       def chef
         builder(:chef)
-        @chef ||= Chef.new
+        @_chef ||= Chef.new
       end
 
       def shell
         builder(:shell)
-        @shell ||= Shell.new
+        @_shell ||= Shell.new
       end
 
       def git_artifact
-        @git_artifact ||= GitArtifact.new
+        @_git_artifact ||= GitArtifact.new
       end
 
       def docker
-        @docker ||= Docker.new
-      end
-
-      def name(value)
-        @_name = value
+        @_docker ||= Docker.new
       end
 
       def builder(type)
@@ -44,31 +41,31 @@ module Dapp
         @_builder = type
       end
 
-      def apps
-        @apps.empty? ? [self] : @apps.flatten
+      def _apps
+        @_apps.empty? ? [self] : @_apps.flatten
       end
 
       def to_h
         {
-          name:         _name,
-          builder:      _builder,
-          docker:       @docker.to_h,
-          git_artifact: @git_artifact.to_h,
-          shell:        @shell.to_h,
-          chef:         @chef.to_h
+            name:         _name,
+            builder:      _builder,
+            docker:       @_docker.to_h,
+            git_artifact: @_git_artifact.to_h,
+            shell:        @_shell.to_h,
+            chef:         @_chef.to_h
         }
       end
 
       private
 
       def clone
-        self.class.new.tap do |app|
+        self.class.new(self).tap do |app|
           app.instance_variable_set(:'@_builder', _builder)
           app.instance_variable_set(:'@_home_path', _home_path)
-          app.instance_variable_set(:'@docker', docker.clone_with_marshal)             unless @docker.nil?
-          app.instance_variable_set(:'@git_artifact', git_artifact.clone_with_marshal) unless @git_artifact.nil?
-          app.instance_variable_set(:'@chef', chef.clone_with_marshal)                 unless @chef.nil?
-          app.instance_variable_set(:'@shell', shell.clone_with_marshal)               unless @shell.nil?
+          app.instance_variable_set(:'@_docker', _docker.clone_with_marshal)             unless @_docker.nil?
+          app.instance_variable_set(:'@_git_artifact', _git_artifact.clone_with_marshal) unless @_git_artifact.nil?
+          app.instance_variable_set(:'@_chef', _chef.clone_with_marshal)                 unless @_chef.nil?
+          app.instance_variable_set(:'@_shell', _shell.clone_with_marshal)               unless @_shell.nil?
         end
       end
 
@@ -76,7 +73,7 @@ module Dapp
         clone.tap do |app|
           app.instance_variable_set(:'@_name', [_name, sub_name].compact.join('-'))
           app.instance_eval(&blk) if block_given?
-          @apps += app.apps
+          @_apps += app._apps
         end
       end
     end
