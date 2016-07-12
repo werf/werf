@@ -1,13 +1,13 @@
 CHEFDK_VERSION=0.15.16-1
-CHEFDK_DEB=chefdk_$(CHEFDK_VERSION)_amd64.deb
-CHEFDK_IMAGE=dapp2/chefdk:$(CHEFDK_VERSION)
+CHEFDK_DEB_NAME=chefdk_$(CHEFDK_VERSION)_amd64.deb
+DOCKER_IMAGE_NAME=dapp2/chefdk:$(CHEFDK_VERSION)
 
 all: build/hub_image
 
 build/chefdk:
 	@mkdir -p build
-	wget https://packages.chef.io/stable/ubuntu/12.04/$(CHEFDK_DEB) -P build
-	dpkg -x build/$(CHEFDK_DEB) build/chefdk
+	wget https://packages.chef.io/stable/ubuntu/12.04/$(CHEFDK_DEB_NAME) -P build
+	dpkg -x build/$(CHEFDK_DEB_NAME) build/chefdk
 
 build/Dockerfile: build/chefdk
 	@echo "FROM scratch" > build/Dockerfile
@@ -15,12 +15,12 @@ build/Dockerfile: build/chefdk
 	@echo "ADD chefdk /" >> build/Dockerfile
 
 build/image: build/Dockerfile
-	docker build -t $(CHEFDK_IMAGE) build
-	@echo $(CHEFDK_IMAGE) > build/image
+	docker build -t $(DOCKER_IMAGE_NAME) build
+	@echo $(DOCKER_IMAGE_NAME) > build/image
 
 build/hub_image: build/image
-	docker push $(CHEFDK_IMAGE)
-	@echo $(CHEFDK_IMAGE) > build/hub_image
+	docker push $(DOCKER_IMAGE_NAME)
+	@echo $(DOCKER_IMAGE_NAME) > build/hub_image
 
 clean:
 	@rm -rf build
