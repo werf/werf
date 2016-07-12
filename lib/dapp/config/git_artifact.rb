@@ -26,7 +26,7 @@ module Dapp
         attr_accessor :_where_to_add, :_cwd, :_paths, :_owner, :_group
 
         def initialize(where_to_add, **options)
-          @_cwd          = '/'
+          @_cwd          = ''
           @_where_to_add = where_to_add
 
           options.each do |k, v|

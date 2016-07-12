@@ -70,7 +70,7 @@ module SpecHelpers
         allow(instance).to receive(:tag!)    { images_cash << instance.name }
         allow(instance).to receive(:pull!)   { images_cash << instance.name }
         allow(instance).to receive(:rmi!)    { images_cash.delete(instance.name) }
-        allow(instance).to receive(:id)
+        allow(instance).to receive(:built_id)
       end
     end
 

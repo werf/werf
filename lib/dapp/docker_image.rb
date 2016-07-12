@@ -9,23 +9,22 @@ module Dapp
     attr_reader :options
     attr_reader :application
 
-    def initialize(application, name:, id: nil, from: nil)
+    def initialize(application, name:, built_id: nil, from: nil)
       @application = application
 
       @from = from
       @bash_commands = []
       @options = {}
       @name = name
-      @id = id
+      @built_id = built_id
       @container_name = SecureRandom.hex
     end
 
-    def id
-      @id || self.class.image_id(name)
+    def built_id
+      @built_id || id
     end
 
-    def self.image_id(name)
-      raise "Image name isn't defined!" if name.nil?
+    def id
       shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
     end
 
@@ -54,8 +53,8 @@ module Dapp
     end
 
     def build!
-      @id = if bash_commands.empty?
-        from.id
+      @built_id = if bash_commands.empty?
+        from.built_id
       else
         begin
           run!
@@ -67,16 +66,16 @@ module Dapp
     end
 
     def rmi!
-      return unless self.class.image_id(name)
+      return unless exist?
       shellout!("docker rmi #{name}")
     end
 
     def tag!
-      if (existed_id = self.class.image_id(name))
-        raise 'Image with other id has already tagged' if id != existed_id
+      unless (existed_id = id).empty?
+        raise 'Image with other id has already tagged' if built_id != existed_id
         return
       end
-      shellout!("docker tag #{id} #{name}")
+      shellout!("docker tag #{built_id} #{name}")
     end
 
     def pull!
@@ -84,14 +83,14 @@ module Dapp
     end
 
     def export!(image_name)
-      image = self.class.new(id: id, name: image_name)
+      image = self.class.new(built_id: built_id, name: image_name)
       image.tag!
       image.push!
       image.rmi!
     end
 
     def info
-      raise "Image `#{name}` doesn't exist!" unless self.class.image_id(name)
+      raise "Image `#{name}` doesn't exist!" unless exist?
       date, bytesize = shellout!("docker inspect --format='{{.Created}} {{.Size}}' #{name}").stdout.strip.split
       ["date: #{Time.parse(date)}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
     end

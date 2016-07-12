@@ -37,7 +37,7 @@ describe Dapp::Application do
         _name: 'test', _builder: :shell, _home_path: project_path,
         _shell: { _infra_install: ['apt-get update', 'apt-get -y dist-upgrade',
                                  'apt-get -y install apt-utils curl apt-transport-https git'],
-                 _infra_setup: [], _app_install: [], _app_setup: [] },
+                  _infra_setup: [], _app_install: [], _app_setup: [] },
         _docker: { _from: :'ubuntu:16.04' },
         _git_artifact: { _local: { _artifact_options: { where_to_add: '/app' } } }
     )

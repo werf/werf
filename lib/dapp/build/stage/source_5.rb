@@ -21,7 +21,7 @@ module Dapp
 
         def image
           super do |image|
-            image.add_expose(exposes) unless exposes.nil?
+            image.add_expose(exposes) unless exposes.empty?
           end
         end
 
