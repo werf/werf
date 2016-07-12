@@ -7,11 +7,11 @@ build:
 	@mkdir -p build
 
 build/git: build
-	@mkdir -p build/git
+	@mkdir -p build/git/aaa
 	@echo build/git #TODO
 
 build/sudo: build
-	@mkdir -p build/sudo
+	@mkdir -p build/sudo/aaa
 	@echo build/sudo #TODO
 
 build/Dockerfile: build/git build/sudo
