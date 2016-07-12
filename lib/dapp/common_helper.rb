@@ -2,7 +2,7 @@ module Dapp
   module CommonHelper
     def log(message = '')
       return unless defined? opts
-      puts message.lines.map { |line| ' ' * 2 * opts[:log_indent] + line }.join if opts[:log_verbose] || !opts[:log_quiet]
+      puts message.to_s.lines.map { |line| ' ' * 2 * opts[:log_indent].to_i + line }.join if opts[:log_verbose] || !opts[:log_quiet]
     end
 
     def with_log_indent(with = true)

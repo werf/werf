@@ -14,6 +14,9 @@ module Dapp
         templates/%{stage}/*
       )
 
+      CHEFDK_IMAGE = "dapp2/chefdk:0.15.16-1"
+      CHEFDK_CONTAINER = "dapp2_chefdk_0.15.16-1"
+
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
         define_method(:"#{stage}_checksum") {stage_cookbooks_checksum(stage)}
 
@@ -22,10 +25,8 @@ module Dapp
           install_chef_solo_stage_config(stage)
 
           unless stage_empty?(stage)
-            image.add_volume '/opt/chefdk:/opt/chefdk'
-            image.add_volume "/tmp/dapp/chef_cache_#{SecureRandom.uuid}:/var/cache/dapp/chef"
+            image.add_volumes_from(chefdk_container)
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}"
-
             image.add_commands ["/opt/chefdk/bin/chef-solo",
                                 "-c #{container_stage_config_path(stage)}",
                                 "-o #{stage_cookbooks_runlist(stage).join(',')}",
@@ -93,11 +94,31 @@ module Dapp
         ]
       end
 
+      def chefdk_container
+        @chefdk_container ||= begin
+          if application.shellout("docker inspect #{CHEFDK_CONTAINER}").exitstatus != 0
+            application.shellout ["docker run",
+                                  "--name #{CHEFDK_CONTAINER}",
+                                  "--volume /opt/chefdk #{CHEFDK_IMAGE}"].join(' ')
+          end
+          CHEFDK_CONTAINER
+        end
+      end
+
       def install_cookbooks
         @install_cookbooks ||= begin
-          application.shellout!(["cd #{application.home_path}",
-                                 "berks vendor #{cookbooks_path.tap(&:mkpath)}"].join(' && '),
-                                log_verbose: true)
+          application.shellout!(
+            ["docker run --rm",
+             "--volumes-from #{chefdk_container}",
+             "--volume #{cookbooks_path.tap(&:mkpath)}:#{cookbooks_path}",
+             *berksfile.local_cookbooks.values.map {|path| "--volume #{path}:#{path}"},
+             "ubuntu:14.04 bash -lec '#{["cd #{application.home_path}",
+                                         "/opt/chefdk/bin/berks vendor #{cookbooks_path}",
+                                        ].join(' && ')}'",
+            ].join(' '),
+            log_verbose: true
+          )
+
           true
         end
       end

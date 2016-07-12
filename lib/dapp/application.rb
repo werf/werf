@@ -93,7 +93,7 @@ module Dapp
     end
 
     def builder
-      @builder ||= case conf._builder
+      @builder ||= case conf.builder
         when :chef then Builder::Chef.new(self)
         else Builder::Shell.new(self)
       end
