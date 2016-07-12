@@ -79,7 +79,7 @@ module SpecHelpers
 
       application = class_double(Dapp::Application).as_stubbed_const
       allow(application).to receive(:new) do |*args, &block|
-        args.first[:conf] = args.first[:conf].to_h.empty? ? RecursiveOpenStruct.new(home_path: '') : args.first[:conf] if args.first.is_a? Hash
+        args.first[:conf] = args.first[:conf].to_h.empty? ? RecursiveOpenStruct.new(_home_path: '') : args.first[:conf] if args.first.is_a? Hash
 
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:build_path) { |*args| Pathname(File.absolute_path(File.join(*args))) }

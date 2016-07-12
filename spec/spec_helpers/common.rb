@@ -28,9 +28,11 @@ module SpecHelpers
     def stub_r_open_struct
       stub_instance(RecursiveOpenStruct) do |instance|
         allow(instance).to receive(:_cache_version)
-        allow(instance.shell).to receive(:_cache_version)
-        allow(instance.chef).to receive(:_cache_version)
-        allow(instance.docker).to receive(:_cache_version)
+        instance.to_h.keys.each do |key|
+          if (sub_instance = instance.send(key)).is_a? OpenStruct
+            allow(sub_instance).to receive(:_cache_version)
+          end
+        end
       end
     end
 

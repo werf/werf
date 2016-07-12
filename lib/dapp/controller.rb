@@ -16,20 +16,20 @@ module Dapp
 
     def build
       @build_confs.each { |build_conf|
-        log build_conf.name
+        log build_conf._name
         with_log_indent { Application.new(conf: build_conf, opts: opts).build_and_fixate! }
       }
     end
 
     def list
       @build_confs.each do |build_conf|
-        log build_conf.name
+        log build_conf._name
       end
     end
 
     def show
       @build_confs.each do |build_conf|
-        log build_conf.name
+        log build_conf._name
         with_log_indent { log JSON.pretty_generate(build_conf.to_h) }
       end
     end
@@ -42,15 +42,15 @@ module Dapp
 
     def smartpush(repo_prefix)
       @build_confs.each do |build_conf|
-        log build_conf.name
-        tag_name = File.join(repo_prefix, build_conf.name)
+        log build_conf._name
+        tag_name = File.join(repo_prefix, build_conf._name)
         with_log_indent { Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true).push!(tag_name) }
       end
     end
 
     def flush_build_cache
       @build_confs.each do |build_conf|
-        log build_conf.name
+        log build_conf._name
         app = Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true)
         FileUtils.rm_rf app.build_cache_path
       end

@@ -28,7 +28,7 @@ module Dapp
         protected
 
         def exposes
-          application.conf.docker._expose
+          application.conf._docker._expose
         end
 
         def layers_commits_write!

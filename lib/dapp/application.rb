@@ -44,17 +44,17 @@ module Dapp
     end
 
     def local_git_artifact_list
-      @local_git_artifact_list ||= Array(conf.git_artifact.local).map do |ga_conf|
+      @local_git_artifact_list ||= Array(conf._git_artifact._local).map do |ga_conf|
         repo = GitRepo::Own.new(self)
-        GitArtifact.new(repo, **ga_conf.artifact_options)
+        GitArtifact.new(repo, **ga_conf._artifact_options)
       end
     end
 
     def remote_git_artifact_list
-      @remote_git_artifact_list ||= Array(conf.git_artifact.remote).map do |ga_conf|
-        repo = GitRepo::Remote.new(self, ga_conf.name, url: ga_conf.url, ssh_key_path: ga_conf.ssh_key_path)
-        repo.fetch!(ga_conf.branch)
-        GitArtifact.new(repo, **ga_conf.artifact_options)
+      @remote_git_artifact_list ||= Array(conf._git_artifact._remote).map do |ga_conf|
+        repo = GitRepo::Remote.new(self, ga_conf._name, url: ga_conf._url, ssh_key_path: ga_conf._ssh_key_path)
+        repo.fetch!(ga_conf._branch)
+        GitArtifact.new(repo, **ga_conf._artifact_options)
       end
     end
 
@@ -65,7 +65,7 @@ module Dapp
     end
 
     def home_path(*path)
-      path.compact.map(&:to_s).inject(Pathname.new(conf.home_path), &:+).expand_path
+      path.compact.map(&:to_s).inject(Pathname.new(conf._home_path), &:+).expand_path
     end
 
     def build_path(*path)
@@ -93,7 +93,7 @@ module Dapp
     end
 
     def builder
-      @builder ||= case conf.builder
+      @builder ||= case conf._builder
         when :chef then Builder::Chef.new(self)
         else Builder::Shell.new(self)
       end

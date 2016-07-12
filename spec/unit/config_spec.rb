@@ -16,12 +16,15 @@ describe Dapp::Config::Main do
   end
 
   def expect_special_attribute(obj, attribute)
+    builder = "builder #{obj == :chef ? ':chef' : ':shell' }"
     attribute_path = "#{obj}.#{attribute}"
     @dappfile = %{
+      #{builder}
       #{attribute_path} 'a', 'b', 'c'
     }
     expect(app.public_send(obj).public_send("_#{attribute}")).to eq %w(a b c)
     @dappfile = %{
+      #{builder}
       #{attribute_path} 'a', 'b', 'c'
       #{attribute_path} 'd', 'e'
     }
@@ -39,7 +42,7 @@ describe Dapp::Config::Main do
       shell.infra_install 'a'
       chef.module 'a'
     }
-    expect { apps }.to raise_error RuntimeError, "Another builder type 'shell' already used!"
+    expect { apps }.to raise_error RuntimeError, 'Already defined another builder type!'
   end
 
   it '#builder chef already used' do
@@ -47,7 +50,7 @@ describe Dapp::Config::Main do
       builder :chef
       shell.infra_install 'a'
     }
-    expect { apps }.to raise_error RuntimeError, "Another builder type 'chef' already used!"
+    expect { apps }.to raise_error RuntimeError, 'Already defined another builder type!'
   end
 
 
@@ -158,8 +161,9 @@ describe Dapp::Config::Main do
     }
     expected_apps = %w(first parent-subparent-second parent-third).map { |app| "basename-#{app}" }
     expect(apps.map(&:_name)).to eq expected_apps
+  end
 
-
+  it '#app naming with name inside app' do
     @dappfile = %{
       app 'parent' do
         app 'subparent' do
@@ -168,7 +172,7 @@ describe Dapp::Config::Main do
         end
       end
     }
-    expect(apps.map(&:_name)).to eq ['basename-second']
+    expect { apps }.to raise_error NoMethodError
   end
 
   it '#app inherit' do
