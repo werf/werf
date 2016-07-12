@@ -8,6 +8,7 @@ module Dapp
         @_infra_setup   = []
         @_app_install   = []
         @_app_setup     = []
+        super
       end
 
       def infra_install(*args, cache_version: nil)

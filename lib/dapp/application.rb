@@ -31,7 +31,7 @@ module Dapp
 
       tags.each do |tag_name|
         image_with_tag = [image_name, tag_name].join(':')
-        show_only ? log(image_with_tag) : last_stage.image.pushing!(image_with_tag)
+        show_only ? log(image_with_tag) : last_stage.image.export!(image_with_tag)
       end
     end
 
@@ -93,7 +93,7 @@ module Dapp
     end
 
     def builder
-      @builder ||= case conf.builder
+      @builder ||= case conf._builder
         when :chef then Builder::Chef.new(self)
         else Builder::Shell.new(self)
       end

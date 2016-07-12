@@ -9,19 +9,24 @@ module Dapp
     attr_reader :options
     attr_reader :application
 
-    def initialize(application, name:, from: nil)
+    def initialize(application, name:, id: nil, from: nil)
       @application = application
 
       @from = from
       @bash_commands = []
       @options = {}
       @name = name
+      @id = id
       @container_name = SecureRandom.hex
     end
 
-    # FIXME remove
-    def built_id
-      @built_id ||= id
+    def id
+      @id || self.class.image_id(name)
+    end
+
+    def self.image_id(name)
+      raise "Image name isn't defined!" if name.nil?
+      shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
     end
 
     def add_expose(value)
@@ -48,15 +53,9 @@ module Dapp
       !id.empty?
     end
 
-    # FIXME remove?
-    def pull_and_set!
-      pull!
-      @built_id = id
-    end
-
     def build!
-      @built_id = if bash_commands.empty?
-        from.built_id
+      @id = if bash_commands.empty?
+        from.id
       else
         begin
           run!
@@ -68,33 +67,31 @@ module Dapp
     end
 
     def rmi!
-      # FIXME do nothing if no such name
-      # FIXME raise if name != id
+      return unless self.class.image_id(name)
       shellout!("docker rmi #{name}")
     end
 
-    # FIXME remove tag_name argument
-    # FIXME 
-    def tag!(tag_name = name)
-      # FIXME do nothing if image with this id already tagged
-      # FIXME raise if image with OTHER id already tagged
-      raise '`built_id` is not defined!' if built_id.empty?
-      shellout!("docker tag #{built_id} #{tag_name}")
+    def tag!
+      if (existed_id = self.class.image_id(name))
+        raise 'Image with other id has already tagged' if id != existed_id
+        return
+      end
+      shellout!("docker tag #{id} #{name}")
     end
 
-    def export!(tag_name)
-      image = self.class.new(id: self.id, name: name)
+    def pull!
+      shellout!("docker pull #{name}")
+    end
+
+    def export!(image_name)
+      image = self.class.new(id: id, name: image_name)
       image.tag!
       image.push!
       image.rmi!
-
-      tag!(tag_name)
-      push!(tag_name)
-      rmi!(tag_name)
     end
 
     def info
-      raise "Image `#{name}` doesn't exist!" unless exist?
+      raise "Image `#{name}` doesn't exist!" unless self.class.image_id(name)
       date, bytesize = shellout!("docker inspect --format='{{.Created}} {{.Size}}' #{name}").stdout.strip.split
       ["date: #{Time.parse(date)}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
     end
@@ -107,21 +104,13 @@ module Dapp
 
     private
 
-    def id
-      shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
-    end
-
-    def push!(tag_name)
-      shellout!("docker push #{tag_name}")
+    def push!
+      shellout!("docker push #{name}")
     end
 
     def run!
       raise '`from.built_id` is not defined!' if from.built_id.empty?
       shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}")
-    end
-
-    def pull!
-      shellout!("docker pull #{name}")
     end
 
     def commit!
