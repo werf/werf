@@ -46,11 +46,12 @@ describe Dapp::Builder::Chef do
 
   def config
     @config ||= RecursiveOpenStruct.new(
-      _name: 'testproject',
+      _name: 'test',
       _builder: :chef,
       _home_path: testproject_path.to_s,
       _docker: {_from: 'ubuntu:14.04'},
-      _chef: {_module: ['testproject', 'mdapp-test']},
+      _chef: {_module: ['mdapp-test', 'mdapp-test2']},
+      _git_artifact: {},
     )
   end
 
@@ -70,6 +71,10 @@ describe Dapp::Builder::Chef do
     project_path.join('mdapp-test')
   end
 
+  def mdapp_test2_path
+    project_path.join('mdapp-test2')
+  end
+
   def template_testproject_path
     @template_testproject_path ||= Pathname('spec/chef/testproject')
   end
@@ -78,9 +83,14 @@ describe Dapp::Builder::Chef do
     @template_mdapp_test_path ||= Pathname('spec/chef/mdapp-test')
   end
 
+  def template_mdapp_test2_path
+    @template_mdapp_test2_path ||= Pathname('spec/chef/mdapp-test2')
+  end
+
   def init_project
     FileUtils.cp_r template_testproject_path, testproject_path.tap {|p| p.parent.mkpath}
     FileUtils.cp_r template_mdapp_test_path, mdapp_test_path.tap {|p| p.parent.mkpath}
+    FileUtils.cp_r template_mdapp_test2_path, mdapp_test2_path.tap {|p| p.parent.mkpath}
   end
 
   TEST_FILE_NAMES = %i(foo bar baz qux burger pizza taco pelmeni
