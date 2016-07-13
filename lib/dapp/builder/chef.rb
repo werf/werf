@@ -52,8 +52,8 @@ module Dapp
       end
 
       def local_cookbooks
-        @local_cookbooks ||= [*application.conf._chef._module,
-                              application.conf._root_app._name].map do |name|
+        @local_cookbooks ||= [*application.config._chef._module,
+                              application.config._root_app._name].map do |name|
           next unless cookbook = berksfile.local_cookbook(name)
           [name, cookbook]
         end.compact.to_h
@@ -79,13 +79,13 @@ module Dapp
             "#{name}::#{entrypoint}"
           end
 
-          res.push(*application.conf._chef._module.map do |name|
+          res.push(*application.config._chef._module.map do |name|
             to_runlist_entrypoint[name, stage]
           end.compact)
 
-          res.push(*application.conf._app_runlist.map(&:_name).map do |name|
-            app, subname_parts = name.split('-')
-            to_runlist_entrypoint[name, [*subname_parts, stage].join('_')]
+          res.push(*application.config._app_runlist.map(&:_name).map do |name|
+            basename, *subname_parts = name.split('-')
+            to_runlist_entrypoint[basename, [*subname_parts, stage].join('_')]
           end.compact)
         end
       end
@@ -183,11 +183,11 @@ module Dapp
 
 
       def cookbooks_vendor_path(*path)
-        application.build_path('chef', 'vendored_cookbooks', *path)
+        application.build_path('chef', 'vendored_cookbooks').join(*path)
       end
 
       def stage_build_path(stage, *path)
-        application.build_path('chef', stage, *path)
+        application.build_path('chef', stage).join(*path)
       end
 
       def container_stage_build_path(stage, *path)
