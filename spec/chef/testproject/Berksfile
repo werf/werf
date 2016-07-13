@@ -1,5 +1,5 @@
 source 'https://supermarket.chef.io'
 
-cookbook 'testproject', path: '.'
+cookbook 'test', path: '.'
 cookbook 'mdapp-test', path: '../mdapp-test'
 cookbook 'mdapp-test2', path: '../mdapp-test2'
