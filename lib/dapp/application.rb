@@ -32,7 +32,7 @@ module Dapp
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
-        show_only ? log(image_with_tag) : last_stage.image.export!(image_name)
+        show_only ? log(image_name) : last_stage.image.export!(image_name)
       end
     end
 
@@ -41,14 +41,14 @@ module Dapp
     end
 
     def local_git_artifacts
-      @local_git_artifact_list ||= Array(config._git_artifact._local).map do |ga_config|
+      @local_git_artifact_list ||= config._git_artifact._local.map do |ga_config|
         repo = GitRepo::Own.new(self)
         GitArtifact.new(repo, **ga_config._artifact_options)
       end
     end
 
     def remote_git_artifacts
-      @remote_git_artifact_list ||= Array(config._git_artifact._remote).map do |ga_config|
+      @remote_git_artifact_list ||= config._git_artifact._remote.map do |ga_config|
         repo = GitRepo::Remote.new(self, ga_config._name, url: ga_config._url, ssh_key_path: ga_config._ssh_key_path)
         repo.fetch!(ga_config._branch)
         GitArtifact.new(repo, **ga_config._artifact_options)
@@ -98,19 +98,19 @@ module Dapp
     end
 
     def branch_tags
-      return [] if cli_options[:tag_branch]
+      return [] unless cli_options[:tag_branch]
       raise "Application has specific revision that isn't associated with a branch name!" if (branch = git_repo.branch) == 'HEAD'
       [branch]
     end
 
     def commit_tags
-      return [] if cli_options[:tag_commit]
+      return [] unless cli_options[:tag_commit]
       commit = git_repo.latest_commit
       [commit]
     end
 
     def build_tags
-      return [] if cli_options[:tag_build_id]
+      return [] unless cli_options[:tag_build_id]
 
       if ENV['GITLAB_CI']
         build_id = ENV['CI_BUILD_ID']
@@ -124,7 +124,7 @@ module Dapp
     end
 
     def ci_tags
-      return [] if cli_options[:tag_ci]
+      return [] unless cli_options[:tag_ci]
 
       if ENV['GITLAB_CI']
         branch = ENV['CI_BUILD_REF_NAME']

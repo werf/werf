@@ -22,7 +22,7 @@ module Dapp
       end
 
       def clone
-        { local: _local.map(&:clone), remote: _remote.map(&:clone) }
+        Marshal.load(Marshal.dump(self))
       end
 
       class Local
@@ -42,10 +42,6 @@ module Dapp
         end
 
         def _artifact_options
-          to_h
-        end
-
-        def to_h
           {
               where_to_add: _where_to_add,
               cwd:          _cwd,
@@ -53,6 +49,10 @@ module Dapp
               owner:        _owner,
               group:        _group
           }
+        end
+
+        def to_h
+          _artifact_options.select { |_k, v| !v.nil? and !v.empty? }
         end
 
         def clone
@@ -79,6 +79,10 @@ module Dapp
 
         def _artifact_options
           super.merge({ name: _name, branch: _branch })
+        end
+
+        def to_h
+          super.merge({ url: _url, name: _name, branch: _branch, ssh_key_path: _ssh_key_path}).select { |_k, v| !v.nil? and !v.empty? }
         end
       end
     end

@@ -23,7 +23,7 @@ module Dapp
           from:               _from,
           from_cache_version: _from_cache_version,
           expose:             _expose
-        }
+        }.select { |_k, v| !v.nil? and !v.empty? }
       end
 
       def clone

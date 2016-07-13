@@ -41,7 +41,7 @@ module Dapp
           app_install_cache_version:   _app_install_cache_version,
           app_setup:                   _app_setup,
           app_setup_cache_version:     _app_setup_cache_version
-        }.select { |_k, v| !v.nil? }
+        }.select { |_k, v| !v.nil? and !v.empty? }
       end
 
       def clone
