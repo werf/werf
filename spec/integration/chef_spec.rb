@@ -49,10 +49,18 @@ describe Dapp::Builder::Chef do
       _name: 'test',
       _builder: :chef,
       _home_path: testproject_path.to_s,
-      _docker: {_from: 'ubuntu:14.04'},
+      _docker: {_from: 'ubuntu:14.04', _expose: []},
       _chef: {_module: ['mdapp-test', 'mdapp-test2']},
       _git_artifact: {},
-    )
+    ).tap do |obj|
+      def obj._app_runlist
+        [self]
+      end
+
+      def obj._root_app
+        _app_runlist.first
+      end
+    end
   end
 
   def cli_options
