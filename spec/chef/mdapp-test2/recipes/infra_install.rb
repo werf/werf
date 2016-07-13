@@ -1,4 +1,8 @@
-apt_package 'sl'
+execute 'apt-get update' do
+  command 'apt-get update'
+end
+
+apt_package 'tor'
 
 cookbook_file "/#{cookbook_name.to_s.gsub('-', '_')}_infra_install.txt" do
   source 'infra_install/batareika.txt'

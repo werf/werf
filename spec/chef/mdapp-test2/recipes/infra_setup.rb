@@ -1,4 +1,4 @@
-apt_package 'gcc'
+apt_package 'iotop'
 
 cookbook_file "/#{cookbook_name.to_s.gsub('-', '_')}_infra_setup.txt" do
   source 'infra_setup/kolokolchik.txt'

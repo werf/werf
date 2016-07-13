@@ -1,4 +1,4 @@
-apt_package 'automake'
+apt_package 'cmake'
 
 cookbook_file "/#{cookbook_name.to_s.gsub('-', '_')}_app_setup.txt" do
   source 'app_setup/taburetka.txt'
