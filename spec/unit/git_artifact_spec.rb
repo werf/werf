@@ -18,7 +18,7 @@ describe Dapp::GitArtifact do
   def config
     RecursiveOpenStruct.new(
         _name: 'test', _builder: :shell, _home_path: '',
-        _docker: { _from: :'ubuntu:16.04' },
+        _docker: { _from: :'ubuntu:16.04', _expose: [] },
         _shell: {},
         _git_artifact: { _local: { _artifact_options: git_artifact_local_options } }
     )

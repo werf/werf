@@ -15,7 +15,7 @@ module Dapp
         end
 
         def should_be_built?
-          !image.exist? and !application.show_only
+          !image.tagged? and !application.show_only
         end
 
         def build!
@@ -26,7 +26,7 @@ module Dapp
         end
 
         def save_in_cache!
-          return if image.exist?
+          return if image.tagged?
           prev_stage.save_in_cache! if prev_stage
           image.tag! unless application.show_only
         end
@@ -37,7 +37,7 @@ module Dapp
 
         def image
           @image ||= begin
-            DockerImage.new(self.application, name: image_name, from: from_image).tap do |image|
+            StageImage.new(name: image_name, from: from_image).tap do |image|
               image.add_volume "#{application.build_path}:#{application.container_build_path}"
               yield image if block_given?
             end
@@ -61,8 +61,8 @@ module Dapp
         end
 
         def build_log
-          application.log "#{name} #{"[#{ image.exist? ? image_name : '×' }]" if application.show_only}"
-          application.with_log_indent(application.show_only) { application.log "#{image.info}" if image.exist? }
+          application.log "#{name} #{"[#{ image.tagged? ? image_name : '×' }]" if application.show_only}"
+          application.with_log_indent(application.show_only) { application.log "#{image.info}" if image.tagged? }
         end
       end # Base
     end # Stage

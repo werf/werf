@@ -10,7 +10,7 @@ describe Dapp::Builder::Chef do
 
   it "builds project" do
     application_build!
-    stages.each {|_, stage| expect(stage.image.exist?).to be(true)}
+    stages.each {|_, stage| expect(stage.image.tagged?).to be(true)}
     TEST_FILE_NAMES.each {|name| expect(send("#{name}_exist?")).to be(true)}
   end
 

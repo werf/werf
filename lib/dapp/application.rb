@@ -28,7 +28,7 @@ module Dapp
     end
 
     def export!(repo)
-      raise "Application isn't built yet!" unless last_stage.image.exist? or show_only
+      raise "Application isn't built yet!" unless last_stage.image.tagged? or show_only
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
@@ -73,6 +73,10 @@ module Dapp
 
     def container_build_path(*path)
       path.compact.map(&:to_s).inject(Pathname.new('/.build'), &:+)
+    end
+
+    def builder
+      @builder ||= Builder.const_get(config._builder.capitalize).new(self)
     end
 
     protected
@@ -133,10 +137,6 @@ module Dapp
       end
 
       [branch, tag].compact
-    end
-
-    def builder
-      @builder ||= Builder.const_get(config._builder.capitalize).new(self)
     end
   end # Application
 end # Dapp

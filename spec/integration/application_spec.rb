@@ -37,7 +37,7 @@ describe Dapp::Application do
         _shell: { _infra_install: ['apt-get update', 'apt-get -y dist-upgrade',
                                  'apt-get -y install apt-utils curl apt-transport-https git'],
                   _infra_setup: [], _app_install: [], _app_setup: [] },
-        _docker: { _from: :'ubuntu:16.04' },
+        _docker: { _from: :'ubuntu:16.04', _expose: [] },
         _git_artifact: { _local: { _artifact_options: { where_to_add: '/app' } } }
     )
   end
@@ -77,7 +77,7 @@ describe Dapp::Application do
   end
 
   def check_image_command(stage_name, command)
-    expect(stages[stage_name].send(:image).bash_commands.join =~ Regexp.new(command)).to be
+    expect(stages[stage_name].send(:image).send(:bash_commands).join =~ Regexp.new(command)).to be
   end
 
   def change_from

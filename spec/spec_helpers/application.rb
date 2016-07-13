@@ -64,12 +64,12 @@ module SpecHelpers
 
     def stub_docker_image
       images_cash = []
-      stub_instance(Dapp::DockerImage) do |instance|
+      stub_instance(Dapp::StageImage) do |instance|
         allow(instance).to receive(:build!)
-        allow(instance).to receive(:exist?)  { images_cash.include? instance.name }
+        allow(instance).to receive(:tagged?)  { images_cash.include? instance.name }
         allow(instance).to receive(:tag!)    { images_cash << instance.name }
         allow(instance).to receive(:pull!)   { images_cash << instance.name }
-        allow(instance).to receive(:rmi!)    { images_cash.delete(instance.name) }
+        allow(instance).to receive(:untag!)    { images_cash.delete(instance.name) }
         allow(instance).to receive(:built_id)
       end
     end

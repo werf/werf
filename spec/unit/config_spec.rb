@@ -203,10 +203,8 @@ describe Dapp::Config::Main do
 
   it '#cache_version' do
     @dappfile = %{
-      cache_version from: 'cache_key1'
-      cache_version 'cache_key2'
+      docker.from :image, cache_version: 'cache_key'
     }
-    expect(app._cache_version).to eq 'cache_key2'
-    expect(app._cache_version(:from)).to eq 'cache_key1'
+    expect(app.docker._from_cache_version).to eq 'cache_key'
   end
 end

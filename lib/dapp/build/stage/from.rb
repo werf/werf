@@ -18,7 +18,7 @@ module Dapp
 
         def save_in_cache!
           super
-          from_image.rmi! if from_image.pulled? && from_image.exist? && !application.show_only
+          from_image.untag! if from_image.pulled? && from_image.tagged? && !application.show_only
         end
 
         private
@@ -28,7 +28,7 @@ module Dapp
         end
 
         def from_image
-          DockerImage.new(self.application, name: from_image_name)
+          StageImage.new(name: from_image_name)
         end
       end # Prepare
     end # Stage
