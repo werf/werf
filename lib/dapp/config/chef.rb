@@ -1,11 +1,10 @@
 module Dapp
   module Config
-    class Chef < Base
+    class Chef
       attr_reader :_module
 
       def initialize
         @_module = []
-        super
       end
 
       def module(*args)
@@ -15,7 +14,11 @@ module Dapp
       def to_h
         {
           module: _module
-        }
+        }.select { |_k, v| !v.nil? and !v.empty? }
+      end
+
+      def clone
+        Marshal.load(Marshal.dump(self))
       end
     end
   end

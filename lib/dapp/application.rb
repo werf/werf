@@ -3,73 +3,70 @@ module Dapp
     include CommonHelper
     include Dapp::Filelock
 
-    attr_reader :conf
-    attr_reader :opts
-    attr_reader :last_stage
-    attr_reader :show_only
+    attr_reader :config
+    attr_reader :cli_options
     attr_reader :ignore_git_fetch
 
-    def initialize(conf:, opts:, ignore_git_fetch: false)
-      @conf = conf
-      @opts = opts
+    def initialize(config:, cli_options:, ignore_git_fetch: false)
+      @config = config
+      @cli_options = cli_options
 
-      opts[:build_path] = opts[:build_dir] || home_path('build')
-      opts[:build_cache_path] = opts[:build_cache_dir] || home_path('build_cache')
+      @build_path = cli_options[:build_dir] || home_path('build')
+      @build_cache_path = cli_options[:build_cache_dir] || home_path('build_cache')
 
       @last_stage = Build::Stage::Source5.new(self)
-      @show_only = !!opts[:show_only]
       @ignore_git_fetch = ignore_git_fetch
     end
 
-    def build_and_fixate!
+    def show_only
+      !!cli_options[:show_only]
+    end
+
+    def build!
       last_stage.build!
-      last_stage.fixate!
+      last_stage.save_in_cache!
     end
 
-    def push!(image_name)
-      raise "Application isn't built yet!" unless last_stage.image.exist? or show_only
+    def export!(repo)
+      raise "Application isn't built yet!" unless last_stage.image.tagged? or show_only
 
-      tags.each do |tag_name|
-        image_with_tag = [image_name, tag_name].join(':')
-        show_only ? log(image_with_tag) : last_stage.image.pushing!(image_with_tag)
+      tags.each do |tag|
+        image_name = [repo, tag].join(':')
+        show_only ? log(image_name) : last_stage.image.export!(image_name)
       end
     end
 
-    def local_git_artifact
-      local_git_artifact_list.first
+    def git_artifacts
+      [*local_git_artifacts, *remote_git_artifacts].compact
     end
 
-    def git_artifact_list
-      [*local_git_artifact_list, *remote_git_artifact_list].compact
-    end
-
-    def local_git_artifact_list
-      @local_git_artifact_list ||= Array(conf._git_artifact._local).map do |ga_conf|
+    def local_git_artifacts
+      @local_git_artifact_list ||= config._git_artifact._local.map do |ga_config|
         repo = GitRepo::Own.new(self)
-        GitArtifact.new(repo, **ga_conf._artifact_options)
+        GitArtifact.new(repo, **ga_config._artifact_options)
       end
     end
 
-    def remote_git_artifact_list
-      @remote_git_artifact_list ||= Array(conf._git_artifact._remote).map do |ga_conf|
-        repo = GitRepo::Remote.new(self, ga_conf._name, url: ga_conf._url, ssh_key_path: ga_conf._ssh_key_path)
-        repo.fetch!(ga_conf._branch)
-        GitArtifact.new(repo, **ga_conf._artifact_options)
+    def remote_git_artifacts
+      @remote_git_artifact_list ||= config._git_artifact._remote.map do |ga_config|
+        repo = GitRepo::Remote.new(self, ga_config._name, url: ga_config._url, ssh_key_path: ga_config._ssh_key_path)
+        repo.fetch!(ga_config._branch)
+        GitArtifact.new(repo, **ga_config._artifact_options)
       end
     end
 
     def build_cache_path(*path)
-      path.compact.map(&:to_s).inject(Pathname.new(opts[:build_cache_path]), &:+).expand_path.tap do |p|
+      path.compact.map(&:to_s).inject(Pathname.new(@build_cache_path), &:+).expand_path.tap do |p|
         FileUtils.mkdir_p p.parent
       end
     end
 
     def home_path(*path)
-      path.compact.map(&:to_s).inject(Pathname.new(conf._home_path), &:+).expand_path
+      path.compact.map(&:to_s).inject(Pathname.new(config._home_path), &:+).expand_path
     end
 
     def build_path(*path)
-      path.compact.map(&:to_s).inject(Pathname.new(opts[:build_path]), &:+).expand_path.tap do |p|
+      path.compact.map(&:to_s).inject(Pathname.new(@build_path), &:+).expand_path.tap do |p|
         FileUtils.mkdir_p p.parent
       end
     end
@@ -78,25 +75,68 @@ module Dapp
       path.compact.map(&:to_s).inject(Pathname.new('/.build'), &:+)
     end
 
+    def builder
+      @builder ||= Builder.const_get(config._builder.capitalize).new(self)
+    end
+
+    protected
+
+    attr_reader :last_stage
+
+    def git_repo
+      @git_repo ||= GitRepo::Own.new(self)
+    end
+
     def tags
-      tags = []
-      tags += opts[:tag]
-      tags << local_git_artifact.latest_commit if opts[:tag_commit]
-      if opts[:tag_branch] and !(branch = local_git_artifact.repo.branch).nil?
-        raise "Application has specific revision that isn't associated with a branch name!" if branch == 'HEAD'
-        tags << branch
-      end
-      # tags << nil if opts[:tag_build_id] TODO
-      # tags << nil if opts[:tag_ci] TODO
+      tags = simple_tags + branch_tags + commit_tags + build_tags + ci_tags
       tags << :latest if tags.empty?
       tags
     end
 
-    def builder
-      @builder ||= case conf._builder
-        when :chef then Builder::Chef.new(self)
-        else Builder::Shell.new(self)
+    def simple_tags
+      cli_options[:tag]
+    end
+
+    def branch_tags
+      return [] unless cli_options[:tag_branch]
+      raise "Application has specific revision that isn't associated with a branch name!" if (branch = git_repo.branch) == 'HEAD'
+      [branch]
+    end
+
+    def commit_tags
+      return [] unless cli_options[:tag_commit]
+      commit = git_repo.latest_commit
+      [commit]
+    end
+
+    def build_tags
+      return [] unless cli_options[:tag_build_id]
+
+      if ENV['GITLAB_CI']
+        build_id = ENV['CI_BUILD_ID']
+      elsif ENV['TRAVIS']
+        build_id = ENV['TRAVIS_BUILD_NUMBER']
+      else
+        raise 'CI environment required (Travis or GitLab CI)'
       end
+
+      [build_id]
+    end
+
+    def ci_tags
+      return [] unless cli_options[:tag_ci]
+
+      if ENV['GITLAB_CI']
+        branch = ENV['CI_BUILD_REF_NAME']
+        tag = ENV['CI_BUILD_TAG']
+      elsif ENV['TRAVIS']
+        branch = ENV['TRAVIS_BRANCH']
+        tag = ENV['TRAVIS_TAG']
+      else
+        raise 'CI environment required (Travis or GitLab CI)'
+      end
+
+      [branch, tag].compact
     end
   end # Application
 end # Dapp

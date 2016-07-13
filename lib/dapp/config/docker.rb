@@ -1,17 +1,17 @@
 module Dapp
   module Config
-    class Docker < Base
+    class Docker
       attr_reader :_from
       attr_reader :_expose
+      attr_reader :_from_cache_version
 
       def initialize
         @_expose = []
-        super
       end
 
-      def from(image_name, pull_always: false, cache_version: nil)
+      def from(image_name, cache_version: nil)
         @_from = image_name
-        cache_version(from: cache_version) unless cache_version.nil?
+        @_from_cache_version = cache_version
       end
 
       def expose(*args)
@@ -20,9 +20,14 @@ module Dapp
 
       def to_h
         {
-          from:   _from,
-          expose: _expose
-        }
+          from:               _from,
+          from_cache_version: _from_cache_version,
+          expose:             _expose
+        }.select { |_k, v| !v.nil? and !v.empty? }
+      end
+
+      def clone
+        Marshal.load(Marshal.dump(self))
       end
     end
   end

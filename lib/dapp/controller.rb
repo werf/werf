@@ -2,11 +2,11 @@ module Dapp
   class Controller
     include CommonHelper
 
-    attr_reader :opts, :patterns
+    attr_reader :cli_options, :patterns
 
     def initialize(cli_options:, patterns: nil)
-      @opts = cli_options
-      @opts[:log_indent] = 0
+      @cli_options = cli_options
+      @cli_options[:log_indent] = 0
 
       @patterns = patterns || []
       @patterns << '*' unless @patterns.any?
@@ -17,7 +17,7 @@ module Dapp
     def build
       @build_confs.each { |build_conf|
         log build_conf._name
-        with_log_indent { Application.new(conf: build_conf, opts: opts).build_and_fixate! }
+        with_log_indent { Application.new(config: build_conf, cli_options: cli_options).build! }
       }
     end
 
@@ -36,22 +36,22 @@ module Dapp
 
     def push(repo)
       raise "Several applications isn't available for push command!" unless @build_confs.one?
-      log @build_confs.first.name
-      with_log_indent { Application.new(conf: @build_confs.first, opts: opts, ignore_git_fetch: true).push!(repo) }
+      log @build_confs.first._name
+      with_log_indent { Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo) }
     end
 
     def smartpush(repo_prefix)
       @build_confs.each do |build_conf|
         log build_conf._name
-        tag_name = File.join(repo_prefix, build_conf._name)
-        with_log_indent { Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true).push!(tag_name) }
+        repo = File.join(repo_prefix, build_conf._name)
+        with_log_indent { Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true).export!(repo) }
       end
     end
 
     def flush_build_cache
       @build_confs.each do |build_conf|
         log build_conf._name
-        app = Application.new(conf: build_conf, opts: opts, ignore_git_fetch: true)
+        app = Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true)
         FileUtils.rm_rf app.build_cache_path
       end
     end
@@ -92,11 +92,11 @@ module Dapp
     end
 
     def dappfile_path
-      @dappfile_path ||= File.join [opts[:dir], 'Dappfile'].compact
+      @dappfile_path ||= File.join [cli_options[:dir], 'Dappfile'].compact
     end
 
     def dapps_path
-      @dapps_path ||= File.join [opts[:dir], '.dapps'].compact
+      @dapps_path ||= File.join [cli_options[:dir], '.dapps'].compact
     end
   end # Controller
 end # Dapp

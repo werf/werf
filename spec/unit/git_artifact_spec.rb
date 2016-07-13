@@ -9,7 +9,6 @@ describe Dapp::GitArtifact do
   before :each do
     stub_application
     stub_docker_image
-    stub_r_open_struct
     stub_git_repo_own
 
     git_init!
@@ -19,7 +18,7 @@ describe Dapp::GitArtifact do
   def config
     RecursiveOpenStruct.new(
         _name: 'test', _builder: :shell, _home_path: '',
-        _docker: { _from: :'ubuntu:16.04' },
+        _docker: { _from: :'ubuntu:16.04', _expose: [] },
         _shell: {},
         _git_artifact: { _local: { _artifact_options: git_artifact_local_options } }
     )

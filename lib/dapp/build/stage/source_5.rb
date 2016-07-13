@@ -21,14 +21,14 @@ module Dapp
 
         def image
           super do |image|
-            image.add_expose(exposes) unless exposes.nil?
+            image.add_expose(exposes) unless exposes.empty?
           end
         end
 
         protected
 
         def exposes
-          application.conf._docker._expose
+          application.config._docker._expose
         end
 
         def layers_commits_write!

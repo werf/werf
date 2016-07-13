@@ -8,13 +8,9 @@ describe Dapp::Builder::Chef do
     init_project
   end
 
-  before :each do
-    stub_r_open_struct
-  end
-
   it "builds project" do
     application_build!
-    stages.each {|_, stage| expect(stage.image.exist?).to be(true)}
+    stages.each {|_, stage| expect(stage.image.tagged?).to be(true)}
     TEST_FILE_NAMES.each {|name| expect(send("#{name}_exist?")).to be(true)}
   end
 
@@ -58,7 +54,7 @@ describe Dapp::Builder::Chef do
     )
   end
 
-  def opts
+  def cli_options
     {log_quiet: true}
   end
 
@@ -97,11 +93,11 @@ describe Dapp::Builder::Chef do
     define_method(name) do |reload: false|
       (!reload && instance_variable_get("@#{name}")) ||
         instance_variable_set("@#{name}",
-          shellout!("docker run --rm #{application.last_stage.image.name} cat /#{name}.txt").stdout.strip)
+          shellout!("docker run --rm #{application.send(:last_stage).image.name} cat /#{name}.txt").stdout.strip)
     end
 
     define_method("#{name}_exist?") do
-      res = shellout("docker run --rm #{application.last_stage.image.name} ls /#{name}.txt")
+      res = shellout("docker run --rm #{application.send(:last_stage).image.name} ls /#{name}.txt")
       return true if res.exitstatus == 0
       return false if res.exitstatus == 2
       res.error!

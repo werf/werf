@@ -12,7 +12,7 @@ module Dapp
           next_stage.next_stage
         end
 
-        def fixate!
+        def save_in_cache!
           super
           layers_commits_write!
         end
@@ -23,7 +23,7 @@ module Dapp
 
         def image
           super do |image|
-            application.git_artifact_list.each do |git_artifact|
+            application.git_artifacts.each do |git_artifact|
               image.add_volume "#{git_artifact.repo.dir_path}:#{git_artifact.repo.container_build_dir_path}"
               image.add_commands git_artifact.send(apply_command_method, self)
             end
@@ -52,11 +52,11 @@ module Dapp
         end
 
         def commit_list
-          application.git_artifact_list.map { |git_artifact| layer_commit(git_artifact) }
+          application.git_artifacts.map { |git_artifact| layer_commit(git_artifact) }
         end
 
         def layers_commits_write!
-          application.git_artifact_list.each { |git_artifact| layer_commit_file_path(git_artifact).write(layer_commit(git_artifact)) }
+          application.git_artifacts.each { |git_artifact| layer_commit_file_path(git_artifact).write(layer_commit(git_artifact)) }
         end
 
         def layer_commit_file_path(git_artifact)
