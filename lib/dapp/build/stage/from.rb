@@ -8,12 +8,9 @@ module Dapp
 
         def build!
           return unless should_be_built?
-          if application.show_only
-            build_log
-          else
-            from_image.pull!
-            image.build!
-          end
+          from_image.pull! unless application.show_only
+          build_log
+          image.build! unless application.show_only
         end
 
         def save_in_cache!

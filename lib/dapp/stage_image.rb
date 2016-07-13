@@ -80,7 +80,7 @@ module Dapp
     end
 
     def prepared_bash_command
-      "bash #{ "-lec echo #{Base64.strict_encode64(bash_commands.join('; '))} | base64 --decode" unless bash_commands.empty? }"
+      "bash #{ "-lec \"eval $(echo #{Base64.strict_encode64(bash_commands.join('; '))} | base64 --decode)\"" unless bash_commands.empty? }"
     end
   end # StageImage
 end # Dapp
