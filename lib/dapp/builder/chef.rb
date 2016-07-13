@@ -52,7 +52,7 @@ module Dapp
       end
 
       def local_cookbooks
-        @local_cookbooks ||= [*application.conf._chef._module.map(&:_name),
+        @local_cookbooks ||= [*application.conf._chef._module,
                               application.conf._root_app._name].map do |name|
           next unless cookbook = berksfile.local_cookbook(name)
           [name, cookbook]
