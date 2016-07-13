@@ -69,7 +69,7 @@ module Dapp
       path
         .compact
         .map(&:to_s)
-        .inject(Pathname.new(@build_path).join(config._name), &:+)
+        .inject(Pathname.new(@build_path), &:+)
         .expand_path.tap {|p| FileUtils.mkdir_p p.parent}
     end
 

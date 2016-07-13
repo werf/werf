@@ -181,7 +181,7 @@ module Dapp
       end
 
       def stage_build_path(stage, *path)
-        application.build_path('chef', stage).join(*path)
+        application.build_path(application.config._name, stage).join(*path)
       end
 
       def container_stage_build_path(stage, *path)

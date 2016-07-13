@@ -11,7 +11,7 @@ module Dapp
     end
 
     def id
-      @id ||= shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
+      @id || shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
     end
 
     def untag!

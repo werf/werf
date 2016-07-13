@@ -39,7 +39,7 @@ describe Dapp::Builder::Chef do
       expect(send(file1, reload: true)).not_to eq(old_template_file_values[file1])
       expect(send(file2, reload: true)).not_to eq(old_template_file_values[file2])
 
-      expect(send("testproject_#{stage}", reload: true)).to eq(new_file_values[file1])
+      expect(send("test_#{stage}", reload: true)).to eq(new_file_values[file1])
       expect(send("mdapp_test_#{stage}", reload: true)).to eq(new_file_values[file2])
     end
   end
@@ -102,8 +102,8 @@ describe Dapp::Builder::Chef do
   end
 
   TEST_FILE_NAMES = %i(foo bar baz qux burger pizza taco pelmeni
-                       testproject_infra_install testproject_app_install
-                       testproject_infra_setup testproject_app_setup
+                       test_infra_install test_app_install
+                       test_infra_setup test_app_setup
                        mdapp_test_infra_install mdapp_test_app_install
                        mdapp_test_infra_setup mdapp_test_app_setup)
 
