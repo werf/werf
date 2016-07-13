@@ -34,7 +34,10 @@ module Dapp
         end
 
         def add_local_cookbook_path(name, path)
-          @local_cookbooks[name] = application.home_path(path)
+          @local_cookbooks[name] = {
+            name: name,
+            path: application.home_path(path),
+          }
         end
 
         def local_cookbook?(name)
@@ -42,8 +45,7 @@ module Dapp
         end
 
         def local_cookbook(name)
-          return unless local_cookbook? name
-          {name: name, path: local_cookbooks[name]}
+          local_cookbooks[name]
         end
       end # Berksfile
     end # Chef

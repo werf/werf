@@ -51,16 +51,8 @@ module Dapp
         application.hashsum path.read if path.exist?
       end
 
-      def local_cookbooks
-        @local_cookbooks ||= [*application.config._chef._module,
-                              application.config._root_app._name].map do |name|
-          next unless cookbook = berksfile.local_cookbook(name)
-          [name, cookbook]
-        end.compact.to_h
-      end
-
       def local_cookbook_paths
-        @local_cookbook_paths ||= local_cookbooks
+        @local_cookbook_paths ||= berksfile.local_cookbooks
           .values
           .map {|cookbook| cookbook[:path]}
           .product(LOCAL_COOKBOOK_PATTERNS)
@@ -148,7 +140,9 @@ module Dapp
             ["docker run --rm",
              "--volumes-from #{chefdk_container}",
              "--volume #{cookbooks_vendor_path.tap(&:mkpath)}:#{cookbooks_vendor_path}",
-             *berksfile.local_cookbooks.values.map {|path| "--volume #{path}:#{path}"},
+             *berksfile.local_cookbooks
+                       .values
+                       .map {|cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}"},
              "ubuntu:14.04 bash -lec '#{["cd #{berksfile_path.parent}",
                                          "/opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}",
                                         ].join(' && ')}'",
