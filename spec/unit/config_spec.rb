@@ -6,8 +6,8 @@ describe Dapp::Config::Main do
   end
 
   def apps
-    Dapp::Config::Main.new(dappfile_path: File.join(Dir.getwd, 'Dappfile')) do |conf|
-      conf.instance_eval(dappfile)
+    Dapp::Config::Main.new(dappfile_path: File.join(Dir.getwd, 'Dappfile')) do |config|
+      config.instance_eval(dappfile)
     end._apps
   end
 

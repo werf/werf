@@ -1,7 +1,7 @@
 module SpecHelpers
   module Application
     def application_build!
-      application.build_and_fixate!
+      application.build!
     end
 
     def application
@@ -10,7 +10,7 @@ module SpecHelpers
 
     def application_renew
       @application = begin
-        options = { conf: config, opts: opts }
+        options = { config: config, cli_options: cli_options }
         Dapp::Application.new(**options)
       end
     end
@@ -24,7 +24,7 @@ module SpecHelpers
       raise
     end
 
-    def opts
+    def cli_options
       { log_quiet: true, build_dir: '' }
     end
 
@@ -34,7 +34,7 @@ module SpecHelpers
 
     def stages
       hash = {}
-      s = application.last_stage
+      s = application.send(:last_stage)
       while s.respond_to? :prev_stage
         hash[s.send(:name)] = s
         s = s.prev_stage
@@ -79,7 +79,7 @@ module SpecHelpers
 
       application = class_double(Dapp::Application).as_stubbed_const
       allow(application).to receive(:new) do |*args, &block|
-        args.first[:conf] = args.first[:conf].to_h.empty? ? RecursiveOpenStruct.new(_home_path: '') : args.first[:conf] if args.first.is_a? Hash
+        args.first[:config] = args.first[:config].to_h.empty? ? RecursiveOpenStruct.new(_home_path: '') : args.first[:config] if args.first.is_a? Hash
 
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:build_path) { |*args| Pathname(File.absolute_path(File.join(*args))) }

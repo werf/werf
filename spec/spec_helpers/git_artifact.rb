@@ -1,7 +1,7 @@
 module SpecHelpers
   module GitArtifact
     def git_artifact
-      application.local_git_artifact_list.first
+      application.local_git_artifacts.first
     end
 
     def stub_git_repo_own

@@ -11,7 +11,6 @@ describe Dapp::Application do
 
   before :each do
     stub_docker_image
-    stub_r_open_struct
     application_build!
   end
 
@@ -43,8 +42,8 @@ describe Dapp::Application do
     )
   end
 
-  def opts
-    @opts ||= { log_indent: 0, log_quiet: true, build_dir: project_dapp_path.join('build') }
+  def cli_options
+    @cli_options ||= { log_indent: 0, log_quiet: true, build_dir: project_dapp_path.join('build') }
   end
 
 

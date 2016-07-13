@@ -25,17 +25,6 @@ module SpecHelpers
       end
     end
 
-    def stub_r_open_struct
-      stub_instance(RecursiveOpenStruct) do |instance|
-        allow(instance).to receive(:_cache_version)
-        instance.to_h.keys.each do |key|
-          if (sub_instance = instance.send(key)).is_a? OpenStruct
-            allow(sub_instance).to receive(:_cache_version)
-          end
-        end
-      end
-    end
-
     def self.included(base)
       base.extend(self)
     end
