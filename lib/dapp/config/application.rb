@@ -1,6 +1,6 @@
 module Dapp
   module Config
-    class Application < Base
+    class Application
       attr_reader :_name
       attr_reader :_builder
       attr_reader :_home_path
@@ -13,7 +13,8 @@ module Dapp
       def initialize(parent)
         @_apps      = []
         @_parent    = parent
-        super()
+
+        yield self if block_given?
       end
 
       def chef
@@ -37,7 +38,7 @@ module Dapp
       def builder(type)
         raise "Builder type `#{type}` isn't supported!" unless [:chef, :shell].include?((type = type.to_sym))
         another_builder = [:chef, :shell].find { |t| t != type }
-        instance_variable_set(:"@_#{another_builder}") # FIXME empty object
+        instance_variable_set(:"@_#{another_builder}", Config.const_get(another_builder.capitalize).new)
         @_builder = type
       end
 
@@ -62,10 +63,10 @@ module Dapp
         Application.new(self).tap do |app|
           app.instance_variable_set(:'@_builder', _builder)
           app.instance_variable_set(:'@_home_path', _home_path)
-          app.instance_variable_set(:'@_docker', _docker.clone_with_marshal)             unless @_docker.nil?
-          app.instance_variable_set(:'@_git_artifact', _git_artifact.clone_with_marshal) unless @_git_artifact.nil?
-          app.instance_variable_set(:'@_chef', _chef.clone_with_marshal)                 unless @_chef.nil?
-          app.instance_variable_set(:'@_shell', _shell.clone_with_marshal)               unless @_shell.nil?
+          app.instance_variable_set(:'@_docker', _docker.clone)             unless @_docker.nil?
+          app.instance_variable_set(:'@_git_artifact', _git_artifact.clone) unless @_git_artifact.nil?
+          app.instance_variable_set(:'@_chef', _chef.clone)                 unless @_chef.nil?
+          app.instance_variable_set(:'@_shell', _shell.clone)               unless @_shell.nil?
         end
       end
 

@@ -1,13 +1,12 @@
 module Dapp
   module Config
-    class GitArtifact < Base
+    class GitArtifact
       attr_reader :_local
       attr_reader :_remote
 
       def initialize
         @_local  = []
         @_remote = []
-        super
       end
 
       def local(*args)
@@ -22,7 +21,11 @@ module Dapp
         { local: _local.map(&:to_h), remote: _remote.map(&:to_h) }
       end
 
-      class Local < Base
+      def clone
+        { local: _local.map(&:clone), remote: _remote.map(&:clone) }
+      end
+
+      class Local
         attr_accessor :_where_to_add, :_cwd, :_paths, :_owner, :_group
 
         def initialize(where_to_add, **options)
@@ -36,7 +39,6 @@ module Dapp
               raise "'#{object_name}' git artifact doesn't have attribute '#{k}'!"
             end
           end
-          super()
         end
 
         def _artifact_options
@@ -45,12 +47,16 @@ module Dapp
 
         def to_h
           {
-            where_to_add: _where_to_add,
-            cwd:          _cwd,
-            paths:        _paths,
-            owner:        _owner,
-            group:        _group
+              where_to_add: _where_to_add,
+              cwd:          _cwd,
+              paths:        _paths,
+              owner:        _owner,
+              group:        _group
           }
+        end
+
+        def clone
+          Marshal.load(Marshal.dump(self))
         end
 
         protected
