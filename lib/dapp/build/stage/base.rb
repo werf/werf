@@ -25,10 +25,9 @@ module Dapp
           image.build! unless application.show_only
         end
 
-        # FIXME fixate! -> save_in_cache!
-        def fixate!
+        def save_in_cache!
           return if image.exist?
-          prev_stage.fixate! if prev_stage
+          prev_stage.save_in_cache! if prev_stage
           image.tag! unless application.show_only
         end
 

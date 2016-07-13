@@ -3,26 +3,28 @@ module Dapp
     module Stage
       class From < Base
         def signature
-          hashsum [from_image_name, application.conf._docker._cache_version(:from)]
+          hashsum [from_image_name, application.config._docker._from_cache_version]
         end
 
         def build!
           return unless should_be_built?
-          from_image.pull! if !from_image.exist? and !application.show_only
-          build_log
-          image.build! unless application.show_only
+          if application.show_only
+            build_log
+          else
+            from_image.pull!
+            image.build!
+          end
         end
 
-        def fixate!
+        def save_in_cache!
           super
-          # FIXME remove image only if it was not exist before build!
-          from_image.rmi! if from_image.exist? and !application.show_only
+          from_image.rmi! if from_image.pulled? && from_image.exist? && !application.show_only
         end
 
         private
 
         def from_image_name
-          application.conf._docker._from.to_s # FIXME config should do this
+          application.config._docker._from
         end
 
         def from_image
