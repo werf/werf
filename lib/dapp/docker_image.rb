@@ -3,11 +3,11 @@ module Dapp
     include CommonHelper
 
     attr_reader :from
-    attr_reader :container_name
+    attr_reader :container_name # FIXME private
     attr_reader :name
     attr_reader :bash_commands
     attr_reader :options
-    attr_reader :application
+    attr_reader :application # FIXME remove
 
     def initialize(application, name:, built_id: nil, from: nil)
       @application = application
@@ -65,7 +65,7 @@ module Dapp
       end
     end
 
-    def rmi!
+    def rmi! # FIXME ??? untag!
       return unless exist?
       shellout!("docker rmi #{name}")
     end
@@ -82,6 +82,7 @@ module Dapp
       shellout!("docker pull #{name}")
     end
 
+    # FIXME image_name -> name
     def export!(image_name)
       image = self.class.new(built_id: built_id, name: image_name)
       image.tag!
@@ -124,6 +125,7 @@ module Dapp
       "bash #{ "-lec #{prepared_script}" unless bash_commands.empty? }"
     end
 
+    # FIXME use base64
     def prepared_script
       application.build_path("#{name}.sh").tap do |path|
         path.write <<BODY

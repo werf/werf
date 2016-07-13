@@ -1,6 +1,8 @@
 module Dapp
   module Config
     class Shell < Base
+      # FIXME attr_reader
+      # FIXME 4 variables for cache version
       attr_accessor :_infra_install, :_infra_setup, :_app_install, :_app_setup
 
       def initialize
@@ -32,6 +34,7 @@ module Dapp
       end
 
       def to_h
+        # FIXME add cache versions (if not nil)
         {
           infra_install: _infra_install,
           infra_setup:   _infra_setup,

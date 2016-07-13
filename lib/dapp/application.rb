@@ -3,16 +3,18 @@ module Dapp
     include CommonHelper
     include Dapp::Filelock
 
-    attr_reader :conf
-    attr_reader :opts
+    attr_reader :conf # FIXME conf -> config
+    attr_reader :opts # FIXME opts -> cli_options
     attr_reader :last_stage
-    attr_reader :show_only
     attr_reader :ignore_git_fetch
+    attr_reader :show_only # FIXME remove, use cli_options
 
     def initialize(conf:, opts:, ignore_git_fetch: false)
       @conf = conf
       @opts = opts
 
+      # FIXME @build_path
+      # FIXME @build_cache_path
       opts[:build_path] = opts[:build_dir] || home_path('build')
       opts[:build_cache_path] = opts[:build_cache_dir] || home_path('build_cache')
 
@@ -21,28 +23,34 @@ module Dapp
       @ignore_git_fetch = ignore_git_fetch
     end
 
+    # FIXME rename to build!
     def build_and_fixate!
       last_stage.build!
       last_stage.fixate!
     end
 
+    # FIXME push! -> export!
     def push!(image_name)
       raise "Application isn't built yet!" unless last_stage.image.exist? or show_only
 
       tags.each do |tag_name|
+        # FIXME image_name -> repo, tag_name -> tag, image_with_tag -> image_name
         image_with_tag = [image_name, tag_name].join(':')
         show_only ? log(image_with_tag) : last_stage.image.export!(image_with_tag)
       end
     end
 
+    # FIXME very very very bad
     def local_git_artifact
       local_git_artifact_list.first
     end
 
+    # FIXME _list -> s
     def git_artifact_list
       [*local_git_artifact_list, *remote_git_artifact_list].compact
     end
 
+    # FIXME _list -> s
     def local_git_artifact_list
       @local_git_artifact_list ||= Array(conf._git_artifact._local).map do |ga_conf|
         repo = GitRepo::Own.new(self)
@@ -50,6 +58,7 @@ module Dapp
       end
     end
 
+    # FIXME _list -> s
     def remote_git_artifact_list
       @remote_git_artifact_list ||= Array(conf._git_artifact._remote).map do |ga_conf|
         repo = GitRepo::Remote.new(self, ga_conf._name, url: ga_conf._url, ssh_key_path: ga_conf._ssh_key_path)
@@ -78,10 +87,11 @@ module Dapp
       path.compact.map(&:to_s).inject(Pathname.new('/.build'), &:+)
     end
 
+    # FIXME separate in several functions
     def tags
       tags = []
       tags += opts[:tag]
-      tags << local_git_artifact.latest_commit if opts[:tag_commit]
+      tags << local_git_artifact.latest_commit if opts[:tag_commit] # FIXME
       if opts[:tag_branch] and !(branch = local_git_artifact.repo.branch).nil?
         raise "Application has specific revision that isn't associated with a branch name!" if branch == 'HEAD'
         tags << branch

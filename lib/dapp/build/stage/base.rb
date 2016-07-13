@@ -14,13 +14,18 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
+        def should_be_built?
+          !image.exist? and !application.show_only
+        end
+
         def build!
-          return if image.exist? and !application.show_only
+          return unless should_be_built?
           prev_stage.build! if prev_stage
           build_log
           image.build! unless application.show_only
         end
 
+        # FIXME fixate! -> save_in_cache!
         def fixate!
           return if image.exist?
           prev_stage.fixate! if prev_stage

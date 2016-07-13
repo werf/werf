@@ -9,6 +9,9 @@ module Dapp
         super
       end
 
+      # FIXME pull_always bye-bye
+      # FIXME cache_version
+
       def from(image_name, pull_always: false, cache_version: nil)
         @_from = image_name
         cache_version(from: cache_version) unless cache_version.nil?

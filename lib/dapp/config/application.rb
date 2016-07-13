@@ -37,7 +37,7 @@ module Dapp
       def builder(type)
         raise "Builder type `#{type}` isn't supported!" unless [:chef, :shell].include?((type = type.to_sym))
         another_builder = [:chef, :shell].find { |t| t != type }
-        instance_variable_set(:"@_#{another_builder}", nil)
+        instance_variable_set(:"@_#{another_builder}") # FIXME empty object
         @_builder = type
       end
 
