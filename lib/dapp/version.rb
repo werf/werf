@@ -1,3 +1,3 @@
 module Dapp
-  VERSION = '0.0.22'.freeze
+  VERSION = '0.1.0'.freeze
 end
