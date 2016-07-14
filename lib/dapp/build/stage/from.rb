@@ -7,7 +7,7 @@ module Dapp
         end
 
         def build!
-          return unless should_be_built?
+          return if image.tagged? and !application.show_only
           from_image.pull! unless application.show_only
           build_log
           image.build! unless application.show_only

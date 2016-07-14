@@ -14,12 +14,8 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
-        def should_be_built?
-          !image.tagged? and !application.show_only
-        end
-
         def build!
-          return unless should_be_built?
+          return if image.tagged? and !application.show_only
           prev_stage.build! if prev_stage
           build_log
           image.build! unless application.show_only
