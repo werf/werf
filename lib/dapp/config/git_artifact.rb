@@ -52,7 +52,7 @@ module Dapp
         end
 
         def to_h
-          _artifact_options.select { |_k, v| !v.nil? and !v.empty? }
+          _artifact_options
         end
 
         def clone
@@ -82,7 +82,7 @@ module Dapp
         end
 
         def to_h
-          super.merge({ url: _url, name: _name, branch: _branch, ssh_key_path: _ssh_key_path}).select { |_k, v| !v.nil? and !v.empty? }
+          super.merge({ url: _url, name: _name, branch: _branch, ssh_key_path: _ssh_key_path})
         end
       end
     end

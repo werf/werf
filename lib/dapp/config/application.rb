@@ -47,14 +47,14 @@ module Dapp
       end
 
       def to_h
-        {
+        compact({
             name:         _name,
             builder:      _builder,
             docker:       @_docker.to_h,
             git_artifact: @_git_artifact.to_h,
             shell:        @_shell.to_h,
             chef:         @_chef.to_h
-        }
+        })
       end
 
       private
@@ -75,6 +75,17 @@ module Dapp
           app.instance_variable_set(:'@_name', [_name, sub_name].compact.join('-'))
           app.instance_eval(&blk) if block_given?
           @_apps += app._apps
+        end
+      end
+
+      def compact(hash)
+        hash.delete_if do |_key, val|
+          case val
+            when Hash   then compact(val).empty?
+            when Array  then val.map { |v| v.is_a?(Hash) ? compact(v) : v  }.empty?
+            when String then val.empty?
+            else val.nil?
+          end
         end
       end
     end
