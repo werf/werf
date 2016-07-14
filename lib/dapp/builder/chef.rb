@@ -38,6 +38,11 @@ module Dapp
 
       private
 
+      def application_runlist
+        [*application.config._chef._module,
+         *application.config._app_runlist.map(&:_name)]
+      end
+
       def berksfile_path
         application.home_path('Berksfile')
       end
@@ -108,7 +113,8 @@ module Dapp
           install_cookbooks
 
           application.hashsum([*stage_cookbooks_vendor_paths(stage).map(&:to_s),
-                               *stage_cookbooks_vendor_paths(stage).reject(&:directory?).map(&:read)
+                               *stage_cookbooks_vendor_paths(stage).reject(&:directory?).map(&:read),
+                               *application_runlist,
                               ]).tap do |checksum|
             stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
           end
@@ -120,6 +126,7 @@ module Dapp
           berksfile_lock_checksum,
           *local_cookbook_paths.map(&:to_s),
           *local_cookbook_paths.reject(&:directory?).map(&:read),
+          *application_runlist,
         ]
       end
 
