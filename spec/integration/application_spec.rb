@@ -136,7 +136,6 @@ describe Dapp::Application do
   def build_and_check(stage_name)
     check_signatures_and_build(stage_name)
     expect_built_stages(stage_name)
-    expect_tagged_stages(stage_name)
     send("expect_#{stage_name}_image")
   end
 
@@ -150,15 +149,14 @@ describe Dapp::Application do
 
   def expect_built_stages(stage_name)
     parted_stages_signatures(stage_name) do |built_stages, not_built_stages|
-      not_built_stages.each { |s| expect(s.send(:image)).to_not have_received(:build!) }
-      built_stages.each { |s| expect(s.send(:image)).to have_received(:build!) }
-    end
-  end
-
-  def expect_tagged_stages(stage_name)
-    parted_stages_signatures(stage_name) do |built_stages, not_built_stages|
-      not_built_stages.each { |s| expect(s.send(:image)).to_not have_received(:tag!) }
-      built_stages.each { |s| expect(s.send(:image)).to have_received(:tag!) }
+      not_built_stages.each do |s|
+        expect(s.send(:image)).to_not have_received(:build!)
+        expect(s.send(:image)).to_not have_received(:tag!)
+      end
+      built_stages.each do |s|
+        expect(s.send(:image)).to have_received(:build!)
+        expect(s.send(:image)).to have_received(:tag!)
+      end
     end
   end
 

@@ -76,22 +76,21 @@ describe Dapp::Config::Main do
   remote_attributes = local_attributes + [:branch, :ssh_key_path]
   dappfile_local_options = local_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')
   dappfile_remote_options = remote_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')
+  dappfile_ga_local = "git_artifact.local 'where_to_add', #{dappfile_local_options}"
+  dappfile_ga_remote = "git_artifact.remote 'url', 'where_to_add', #{dappfile_remote_options}"
 
-  it '#git_artifact local' do
-    @dappfile = "git_artifact.local 'where_to_add', #{dappfile_local_options}"
-    local_attributes << :where_to_add
-    local_attributes.each { |attr| expect(app.git_artifact.local.first.public_send("_#{attr}")).to eq attr.to_s }
+  [:local, :remote].each do |ga|
+    it "#git_artifact #{ga}" do
+      attributes = binding.local_variable_get(:"#{ga}_attributes")
+      @dappfile = binding.local_variable_get(:"dappfile_ga_#{ga}")
+      attributes << :where_to_add
+      attributes.each { |attr| expect(app.git_artifact.public_send(ga).first.public_send("_#{attr}")).to eq attr.to_s }
+    end
   end
 
   it '#git_artifact local with remote options' do
     @dappfile = "git_artifact.local 'where_to_add', #{dappfile_remote_options}"
     expect { apps }.to raise_error RuntimeError
-  end
-
-  it '#git_artifact remote' do
-    @dappfile = "git_artifact.remote 'url', 'where_to_add', #{dappfile_remote_options}"
-    remote_attributes << :where_to_add
-    remote_attributes.each { |attr| expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq attr.to_s }
   end
 
   it '#git_artifact name from url' do
