@@ -3,4 +3,3 @@
 .tags
 /.bundle
 /.vendor
-/spec/chef/testproject/Berksfile.lock
