@@ -63,7 +63,7 @@ describe Dapp::Builder::Chef do
   end
 
   def cli_options
-    { log_quiet: true }
+    { log_indent: 0, log_quiet: true }
   end
 
   def project_path
