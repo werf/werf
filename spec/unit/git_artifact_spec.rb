@@ -64,7 +64,7 @@ describe Dapp::GitArtifact do
 
   def patch_command
     git_artifact.apply_patch_command(stages[:source_5])
-    stages[:source_5].image.send(:prepared_bash_command)
+    # stages[:source_5].image.send(:prepared_bash_command)
   end
 
   def command_apply(command)
