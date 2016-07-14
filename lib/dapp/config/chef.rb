@@ -5,7 +5,7 @@ module Dapp
       attr_reader :_module
 
       def initialize
-        @_module = []
+        @_module = [] # FIXME -> modules
       end
 
       def module(*args)

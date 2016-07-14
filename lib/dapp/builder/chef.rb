@@ -16,8 +16,10 @@ module Dapp
         templates/%{stage}/*
       ).freeze
 
-      CHEFDK_IMAGE = 'dapp2/chefdk:0.15.16-1'.freeze
-      CHEFDK_CONTAINER = 'dapp2_chefdk_0.15.16-1'.freeze
+      CHEFDK_IMAGE = 'dapp2/chefdk:0.15.16-1'.freeze # TODO config, DSL, DEFAULT_CHEFDK_IMAGE
+      CHEFDK_CONTAINER = 'dapp2_chefdk_0.15.16-1'.freeze # FIXME hashsum(image) or dockersafe()
+
+      # FIXME add chefdk_image to infra_install signature
 
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
         define_method(:"#{stage}_checksum") { stage_cookbooks_checksum(stage) }
@@ -82,12 +84,6 @@ module Dapp
         end
       end
 
-      def stage_cookbook_entrypoint(name, stage)
-        entrypoint_file = stage_cookbooks_path(stage, name, 'recipes', "#{entrypoint}.rb")
-        return unless entrypoint_file.exist?
-        "#{name}::#{entrypoint}"
-      end
-
       def stage_cookbooks_vendor_paths(stage)
         @stage_cookbooks_vendor_paths ||= {}
         @stage_cookbooks_vendor_paths[stage] ||= STAGE_COOKBOOK_PATTERNS
@@ -136,6 +132,8 @@ module Dapp
       end
 
       def install_cookbooks
+        # TODO howto remove root files?
+
         @install_cookbooks ||= begin
           application.shellout!(
             ['docker run --rm',

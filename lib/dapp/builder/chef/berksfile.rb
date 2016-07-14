@@ -24,7 +24,7 @@ module Dapp
           end
         end # Parser
 
-        attr_reader :application
+        attr_reader :application # FIXME remove
         attr_reader :path
         attr_reader :local_cookbooks
 
