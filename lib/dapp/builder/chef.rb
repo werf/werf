@@ -115,8 +115,8 @@ module Dapp
           application.hashsum([*stage_cookbooks_vendor_paths(stage).map(&:to_s),
                                *stage_cookbooks_vendor_paths(stage).reject(&:directory?).map(&:read),
                                *application_runlist]).tap do |checksum|
-                                                            stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
-                                                          end
+            stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
+          end
         end
       end
 
@@ -209,4 +209,3 @@ module Dapp
     end
   end
 end
-
