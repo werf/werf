@@ -4,6 +4,9 @@ rvm:
 - 2.2.4
 - 2.1.8
 
+services:
+  - docker
+
 deploy:
   provider: rubygems
   api_key:
