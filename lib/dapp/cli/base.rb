@@ -2,6 +2,7 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
+    # Base of CLI subcommands
     class Base < CLI
       option :dir,
              long: '--dir PATH',

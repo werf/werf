@@ -1,18 +1,20 @@
 module Dapp
   module Builder
     class Chef < Base
+      # Berksfile
       class Berksfile
+        # Parser
         class Parser
           def initialize(berksfile)
             @berksfile = berksfile
             parse
           end
 
-          def cookbook(name, path: nil, **kwargs)
+          def cookbook(name, path: nil, **_kwargs)
             @berksfile.add_local_cookbook_path(name, path) if path
           end
 
-          def method_missing(*a, &blk)
+          def method_missing(*_a, &blk)
           end
 
           private
@@ -36,7 +38,7 @@ module Dapp
         def add_local_cookbook_path(name, path)
           @local_cookbooks[name] = {
             name: name,
-            path: application.home_path(path),
+            path: application.home_path(path)
           }
         end
 

@@ -28,7 +28,7 @@ module Dapp
     protected
 
     def filelock_lockfile(filelock, error_message: 'Already in use!', timeout: 10)
-      File.open(build_path(filelock), File::RDWR | File::CREAT, 0644) do |file|
+      File.open(build_path(filelock), File::RDWR | File::CREAT, 0o644) do |file|
         Timeout.timeout(timeout) do
           file.flock(File::LOCK_EX)
         end

@@ -3,6 +3,7 @@ require 'mixlib/cli'
 module Dapp
   class CLI
     class Flush
+      # Flush stage cache subcommand
       class StageCache < Flush
         banner <<BANNER.freeze
 Version: #{Dapp::VERSION}

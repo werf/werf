@@ -18,7 +18,7 @@ module SpecHelpers
     end
 
     def stub_instance(klass, &blk)
-      method_new  = klass.method(:new)
+      method_new = klass.method(:new)
       stubbed_klass = class_double(klass).as_stubbed_const
       allow(stubbed_klass).to receive(:new) do |*args, &block|
         method_new.call(*args, &block).tap(&blk)

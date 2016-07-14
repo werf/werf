@@ -1,4 +1,5 @@
 module Dapp
+  # StageImage
   class StageImage < DockerImage
     def initialize(name:, built_id: nil, from: nil)
       @bash_commands = []
@@ -33,12 +34,10 @@ module Dapp
     end
 
     def build!(log_verbose)
-      begin
-        run!(log_verbose)
-        @built_id = commit!
-      ensure
-        shellout("docker rm #{container_name}")
-      end
+      run!(log_verbose)
+      @built_id = commit!
+    ensure
+      shellout("docker rm #{container_name}")
     end
 
     def export!(name)
@@ -76,11 +75,11 @@ module Dapp
     end
 
     def prepared_options
-      options.map { |k, vals| Array(vals).map{|v| "--#{k}=#{v}" }.join(' ') }.join(' ')
+      options.map { |k, vals| Array(vals).map { |v| "--#{k}=#{v}" }.join(' ') }.join(' ')
     end
 
     def prepared_bash_command
-      "bash #{ "-lec \"eval $(echo #{Base64.strict_encode64(bash_commands.join('; '))} | base64 --decode)\"" unless bash_commands.empty? }"
+      "bash #{"-lec \"eval $(echo #{Base64.strict_encode64(bash_commands.join('; '))} | base64 --decode)\"" unless bash_commands.empty?}"
     end
   end # StageImage
 end # Dapp

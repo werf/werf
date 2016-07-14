@@ -1,6 +1,6 @@
 apt_package 'cmake'
 
-cookbook_file "/#{cookbook_name.to_s.gsub('-', '_')}_app_setup.txt" do
+cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_app_setup.txt" do
   source 'app_setup/taburetka.txt'
   owner 'root'
   group 'root'

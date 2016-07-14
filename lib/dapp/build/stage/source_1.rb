@@ -1,6 +1,7 @@
 module Dapp
   module Build
     module Stage
+      # Source1
       class Source1 < SourceBase
         def initialize(application, next_stage)
           @prev_stage = Source1Archive.new(application, self)
@@ -23,7 +24,7 @@ module Dapp
 
         def dependency_file
           @dependency_file ||= begin
-            file_path = Dir[application.build_path('*')].detect {|x| x =~ dependency_file_regex }
+            file_path = Dir[application.build_path('*')].detect { |x| x =~ dependency_file_regex }
             File.read(file_path) unless file_path.nil?
           end
         end
@@ -33,7 +34,7 @@ module Dapp
         end
 
         def dependency_file_regex
-          /.*\/(Gemfile|composer.json|requirement_file.txt)$/
+          %r{.*/(Gemfile|composer.json|requirement_file.txt)}
         end
       end # Source1
     end # Stage

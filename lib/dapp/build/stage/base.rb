@@ -1,6 +1,7 @@
 module Dapp
   module Build
     module Stage
+      # Base of all stages
       class Base
         include CommonHelper
 
@@ -15,7 +16,7 @@ module Dapp
         end
 
         def build!
-          return if image.tagged? and !application.show_only
+          return if image.tagged? && !application.show_only
           prev_stage.build! if prev_stage
           build_log
           image.build!(application.logging?) unless application.show_only
@@ -43,7 +44,7 @@ module Dapp
         protected
 
         def name
-          self.class.to_s.split('::').last.split(/(?=[[:upper:]]|[0-9])/).join(?_).downcase.to_sym
+          self.class.to_s.split('::').last.split(/(?=[[:upper:]]|[0-9])/).join('_').downcase.to_sym
         end
 
         def from_image
@@ -56,15 +57,17 @@ module Dapp
           "dapp:#{signature}"
         end
 
+        # rubocop:disable Metrics/AbcSize
         def build_log
-          application.log "#{name} #{"[#{ image.tagged? ? image_name : '×' }]" if application.show_only}"
-          application.with_log_indent(application.show_only) { application.log "#{image.info}" if image.tagged? }
+          application.log "#{name} #{"[#{image.tagged? ? image_name : '×'}]" if application.show_only}"
+          application.with_log_indent(application.show_only) { application.log image.info if image.tagged? }
           bash_commands = image.send(:bash_commands)
           application.with_log_indent do
             application.log('commands:')
-            application.with_log_indent { application.log "#{bash_commands.join("\n")}" }
+            application.with_log_indent { application.log bash_commands.join("\n") }
           end unless bash_commands.empty?
         end
+        # rubocop:enable Metrics/AbcSize
       end # Base
     end # Stage
   end # Build

@@ -9,7 +9,7 @@ describe Dapp::GitRepo do
     stub_application
   end
 
-  def init!(git_dir=nil)
+  def init!(git_dir = nil)
     git_init!(git_dir: git_dir)
     expect(File.exist?(file_path(git_dir, '.git'))).to be_truthy
   end
@@ -18,7 +18,7 @@ describe Dapp::GitRepo do
     {}
   end
 
-  def commit!(data, git_dir=nil)
+  def commit!(data, git_dir = nil)
     @commit_counter ||= 1
     text_txt = file_path(git_dir, 'test.txt')
 

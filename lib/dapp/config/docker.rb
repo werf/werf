@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # Docker
     class Docker
       attr_reader :_expose
       attr_reader :_from_cache_version
@@ -14,11 +15,11 @@ module Dapp
       end
 
       def expose(*args)
-        @_expose.push(*args.flatten)
+        @_expose.concat(args)
       end
 
       def _from
-        @_from || raise("Docker from isn't defined!")
+        @_from || raise("Docker `from` isn't defined!")
       end
 
       def to_h

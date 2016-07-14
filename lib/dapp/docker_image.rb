@@ -1,4 +1,5 @@
 module Dapp
+  # DockerImage
   class DockerImage
     include CommonHelper
 

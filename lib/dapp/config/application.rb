@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # Application
     class Application
       attr_reader :_name
       attr_reader :_builder
@@ -47,14 +48,12 @@ module Dapp
       end
 
       def to_h
-        compact({
-            name:         _name,
-            builder:      _builder,
-            docker:       @_docker.to_h,
-            git_artifact: @_git_artifact.to_h,
-            shell:        @_shell.to_h,
-            chef:         @_chef.to_h
-        })
+        compact(name:         _name,
+                builder:      _builder,
+                docker:       @_docker.to_h,
+                git_artifact: @_git_artifact.to_h,
+                shell:        @_shell.to_h,
+                chef:         @_chef.to_h)
       end
 
       def _app_runlist
@@ -62,7 +61,7 @@ module Dapp
           conf = self
           loop do
             res.unshift conf
-            break unless conf = conf._parent
+            break unless (conf = conf._parent)
           end
         end
       end
@@ -95,10 +94,10 @@ module Dapp
       def compact(hash)
         hash.delete_if do |_key, val|
           case val
-            when Hash   then compact(val).empty?
-            when Array  then val.map { |v| v.is_a?(Hash) ? compact(v) : v  }.empty?
-            when String then val.empty?
-            else val.nil?
+          when Hash   then compact(val).empty?
+          when Array  then val.map { |v| v.is_a?(Hash) ? compact(v) : v }.empty?
+          when String then val.empty?
+          else val.nil?
           end
         end
       end

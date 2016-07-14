@@ -4,7 +4,7 @@ end
 
 apt_package 'tor'
 
-cookbook_file "/#{cookbook_name.to_s.gsub('-', '_')}_infra_install.txt" do
+cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_infra_install.txt" do
   source 'infra_install/batareika.txt'
   owner 'root'
   group 'root'

@@ -2,6 +2,7 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
+    # CLI flush subcommand
     class Flush < CLI
       SUBCOMMANDS = ['stage cache', 'build cache'].freeze
 
@@ -13,7 +14,6 @@ Available subcommands: (for details, dapp SUB-COMMAND --help)
 dapp flush stage cache
 dapp flush build cache
 BANNER
-
     end
   end
 end

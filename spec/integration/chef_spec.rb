@@ -8,17 +8,16 @@ describe Dapp::Builder::Chef do
     init_project
   end
 
-  it "builds project" do
+  it 'builds project' do
     application_build!
-    stages.each {|_, stage| expect(stage.image.tagged?).to be(true)}
-    TEST_FILE_NAMES.each {|name| expect(send("#{name}_exist?")).to be(true)}
+    stages.each { |_, stage| expect(stage.image.tagged?).to be(true) }
+    TEST_FILE_NAMES.each { |name| expect(send("#{name}_exist?")).to be(true) }
   end
 
   [%i(infra_install foo pizza),
    %i(app_install bar taco),
    %i(infra_setup baz burger),
-   %i(app_setup qux pelmeni),
-  ].each do |stage, file1, file2|
+   %i(app_setup qux pelmeni)].each do |stage, file1, file2|
     it "rebuilds from stage #{stage}" do
       old_template_file_values = {}
       old_template_file_values[file1] = send(file1)
@@ -49,9 +48,9 @@ describe Dapp::Builder::Chef do
       _name: 'test',
       _builder: :chef,
       _home_path: testproject_path.to_s,
-      _docker: {_from: 'ubuntu:14.04', _expose: []},
-      _chef: {_module: ['mdapp-test', 'mdapp-test2']},
-      _git_artifact: {},
+      _docker: { _from: 'ubuntu:14.04', _expose: [] },
+      _chef: { _module: ['mdapp-test', 'mdapp-test2'] },
+      _git_artifact: {}
     ).tap do |obj|
       def obj._app_runlist
         [self]
@@ -64,7 +63,7 @@ describe Dapp::Builder::Chef do
   end
 
   def cli_options
-    {log_quiet: true}
+    { log_quiet: true }
   end
 
   def project_path
@@ -96,22 +95,22 @@ describe Dapp::Builder::Chef do
   end
 
   def init_project
-    FileUtils.cp_r template_testproject_path, testproject_path.tap {|p| p.parent.mkpath}
-    FileUtils.cp_r template_mdapp_test_path, mdapp_test_path.tap {|p| p.parent.mkpath}
-    FileUtils.cp_r template_mdapp_test2_path, mdapp_test2_path.tap {|p| p.parent.mkpath}
+    FileUtils.cp_r template_testproject_path, testproject_path.tap { |p| p.parent.mkpath }
+    FileUtils.cp_r template_mdapp_test_path, mdapp_test_path.tap { |p| p.parent.mkpath }
+    FileUtils.cp_r template_mdapp_test2_path, mdapp_test2_path.tap { |p| p.parent.mkpath }
   end
 
   TEST_FILE_NAMES = %i(foo bar baz qux burger pizza taco pelmeni
                        test_infra_install test_app_install
                        test_infra_setup test_app_setup
                        mdapp_test_infra_install mdapp_test_app_install
-                       mdapp_test_infra_setup mdapp_test_app_setup)
+                       mdapp_test_infra_setup mdapp_test_app_setup).freeze
 
   TEST_FILE_NAMES.each do |name|
     define_method(name) do |reload: false|
       (!reload && instance_variable_get("@#{name}")) ||
         instance_variable_set("@#{name}",
-          shellout!("docker run --rm #{application.send(:last_stage).image.name} cat /#{name}.txt").stdout.strip)
+                              shellout!("docker run --rm #{application.send(:last_stage).image.name} cat /#{name}.txt").stdout.strip)
     end
 
     define_method("#{name}_exist?") do

@@ -1,6 +1,6 @@
 apt_package 'jnettop'
 
-cookbook_file "/#{cookbook_name.to_s.gsub('-', '_')}_app_install.txt" do
+cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_app_install.txt" do
   source 'app_install/koromyslo.txt'
   owner 'root'
   group 'root'

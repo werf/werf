@@ -3,6 +3,7 @@ require 'mixlib/cli'
 module Dapp
   class CLI
     class Flush
+      # Flush build cache subcommand
       class BuildCache < Base
         banner <<BANNER.freeze
 Version: #{Dapp::VERSION}

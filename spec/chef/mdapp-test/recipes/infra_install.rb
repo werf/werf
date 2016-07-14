@@ -4,7 +4,7 @@ end
 
 apt_package 'sl'
 
-cookbook_file "/#{cookbook_name.to_s.gsub('-', '_')}_infra_install.txt" do
+cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_infra_install.txt" do
   source 'infra_install/pizza.txt'
   owner 'root'
   group 'root'

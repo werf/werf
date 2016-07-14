@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # Shell
     class Shell
       attr_reader :_infra_install, :_infra_setup, :_app_install, :_app_setup
       attr_reader :_infra_install_cache_version, :_infra_setup_cache_version, :_app_install_cache_version, :_app_setup_cache_version
@@ -12,22 +13,22 @@ module Dapp
       end
 
       def infra_install(*args, cache_version: nil)
-        @_infra_install.push(*args.flatten)
+        @_infra_install.concat(args)
         @_infra_install_cache_version = cache_version
       end
 
       def infra_setup(*args, cache_version: nil)
-        @_infra_setup.push(*args.flatten)
+        @_infra_setup.concat(args)
         @_infra_setup_cache_version = cache_version
       end
 
       def app_install(*args, cache_version: nil)
-        _app_install.push(*args.flatten)
+        _app_install.concat(args)
         @_app_install_cache_version = cache_version
       end
 
       def app_setup(*args, cache_version: nil)
-        _app_setup.push(*args.flatten)
+        _app_setup.concat(args)
         @_app_setup_cache_version = cache_version
       end
 

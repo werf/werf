@@ -2,8 +2,8 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
+    # CLI build subcommand
     class Build < Base
-
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 

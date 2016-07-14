@@ -2,6 +2,7 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
+    # CLI show subcommand
     class Show < Base
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
@@ -13,7 +14,6 @@ Usage:
 
 Options:
 BANNER
-
     end
   end
 end

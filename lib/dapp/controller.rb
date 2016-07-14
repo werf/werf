@@ -1,4 +1,5 @@
 module Dapp
+  # Controller
   class Controller
     include CommonHelper
 
@@ -15,12 +16,12 @@ module Dapp
     end
 
     def build
-      @build_confs.each { |build_conf|
+      @build_confs.each do |build_conf|
         log build_conf._name
         log_build_time(!cli_options[:show_only]) do
           with_log_indent { Application.new(config: build_conf, cli_options: cli_options).build! }
         end
-      }
+      end
     end
 
     def list
@@ -74,13 +75,11 @@ module Dapp
           dappfiles += Dir.glob(File.join([dapps_path, '*', 'Dappfile'].compact))
         end
         dappfiles.flatten.uniq!
-        apps = dappfiles.map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten
-
-        if apps.empty?
-          STDERR.puts "Error: No such app: '#{patterns.join(', ')}' in #{dappfile_path}"
-          exit 1
-        else
-          apps
+        dappfiles.map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten.tap do |apps|
+          if apps.empty?
+            STDERR.puts "Error: No such app: '#{patterns.join(', ')}' in #{dappfile_path}"
+            exit 1
+          end
         end
       end
     end

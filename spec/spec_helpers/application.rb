@@ -25,7 +25,7 @@ module SpecHelpers
     end
 
     def cli_options
-      { log_quiet: true, build_dir: '' }
+      { log_quiet: true, build_dir: '', log_indent: 0 }
     end
 
     def stages_names
@@ -62,14 +62,15 @@ module SpecHelpers
       stages[s].prev_stage.send(:name)
     end
 
+    # rubocop:disable Metrics/AbcSize
     def stub_docker_image
       images_cash = []
       stub_instance(Dapp::StageImage) do |instance|
         allow(instance).to receive(:build!)
-        allow(instance).to receive(:tagged?)  { images_cash.include? instance.name }
+        allow(instance).to receive(:tagged?) { images_cash.include? instance.name }
         allow(instance).to receive(:tag!)    { images_cash << instance.name }
         allow(instance).to receive(:pull!)   { images_cash << instance.name }
-        allow(instance).to receive(:untag!)    { images_cash.delete(instance.name) }
+        allow(instance).to receive(:untag!)  { images_cash.delete(instance.name) }
         allow(instance).to receive(:built_id)
       end
     end
@@ -79,15 +80,18 @@ module SpecHelpers
 
       application = class_double(Dapp::Application).as_stubbed_const
       allow(application).to receive(:new) do |*args, &block|
-        args.first[:config] = args.first[:config].to_h.empty? ? RecursiveOpenStruct.new(_home_path: '') : args.first[:config] if args.first.is_a? Hash
+        if args.first.is_a? Hash
+          args.first[:config] = args.first[:config].to_h.empty? ? RecursiveOpenStruct.new(_home_path: '') : args.first[:config]
+        end
 
         method_new.call(*args, &block).tap do |instance|
-          allow(instance).to receive(:build_path) { |*args| Pathname(File.absolute_path(File.join(*args))) }
-          allow(instance).to receive(:container_build_path) { |*args| instance.build_path(*args) }
-          allow(instance).to receive(:home_path)  { |*args| Pathname(File.absolute_path(File.join(*args))) }
+          allow(instance).to receive(:build_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
+          allow(instance).to receive(:container_build_path) { |*m_args| instance.build_path(*m_args) }
+          allow(instance).to receive(:home_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
           allow(instance).to receive(:filelock)
         end
       end
     end
+    # rubocop:enable Metrics/AbcSize
   end
 end

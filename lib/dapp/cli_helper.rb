@@ -1,9 +1,11 @@
 module Dapp
+  # CliHelper
   module CliHelper
     def method_name
       self.class.to_s.split('::').last.downcase.to_s
     end
 
+    # ClassMethods
     module ClassMethods
       def parse_options(cli, argv)
         cli.parse_options(argv)
@@ -23,6 +25,7 @@ module Dapp
         arg
       end
 
+      # rubocop:disable Metrics/MethodLength
       def parse_subcommand(cli, args)
         argv = args
         divided_subcommand = []
@@ -44,6 +47,7 @@ module Dapp
 
         [argv, divided_subcommand, subcommand_argv]
       end
+      # rubocop:enable Metrics/MethodLength
 
       def run_subcommand(cli, divided_subcommand, subcommand_argv)
         if !divided_subcommand.empty?

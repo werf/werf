@@ -1,6 +1,7 @@
 module Dapp
   module Build
     module Stage
+      # Source1Archive
       class Source1Archive < SourceBase
         def initialize(application, next_stage)
           @prev_stage = InfraInstall.new(application, self)

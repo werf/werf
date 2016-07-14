@@ -14,7 +14,6 @@ describe Dapp::Application do
     application_build!
   end
 
-
   def init
     FileUtils.rm_rf project_path
     FileUtils.mkpath project_path
@@ -30,15 +29,14 @@ describe Dapp::Application do
     project_path.join('.dapps/dapp')
   end
 
-
   def config
     @config ||= RecursiveOpenStruct.new(
-        _name: 'test', _builder: :shell, _home_path: project_path,
-        _shell: { _infra_install: ['apt-get update', 'apt-get -y dist-upgrade',
+      _name: 'test', _builder: :shell, _home_path: project_path,
+      _shell: { _infra_install: ['apt-get update', 'apt-get -y dist-upgrade',
                                  'apt-get -y install apt-utils curl apt-transport-https git'],
-                  _infra_setup: [], _app_install: [], _app_setup: [] },
-        _docker: { _from: :'ubuntu:16.04', _expose: [] },
-        _git_artifact: { _local: { _artifact_options: { where_to_add: '/app' } } }
+                _infra_setup: [], _app_install: [], _app_setup: [] },
+      _docker: { _from: :'ubuntu:16.04', _expose: [] },
+      _git_artifact: { _local: { _artifact_options: { where_to_add: '/app' } } }
     )
   end
 
@@ -46,14 +44,13 @@ describe Dapp::Application do
     @cli_options ||= { log_indent: 0, log_quiet: true, build_dir: project_dapp_path.join('build') }
   end
 
-
   [:from, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage_name|
     define_method "#{stage_name}_modified_signatures" do
-      stages_names[stages_names.index(stage_name)-1..-1]
+      stages_names[stages_names.index(stage_name) - 1..-1]
     end
 
     define_method "#{stage_name}_saved_signatures" do
-      stages_names[0..stages_names.index(stage_name)-2]
+      stages_names[0..stages_names.index(stage_name) - 2]
     end
   end
 
@@ -116,7 +113,7 @@ describe Dapp::Application do
       FileUtils.rm file_path
       git_commit!
     else
-      git_change_and_commit!('large_file', ?x*1024*1024)
+      git_change_and_commit!('large_file', 'x' * 1024 * 1024)
     end
   end
 
@@ -135,7 +132,6 @@ describe Dapp::Application do
   def source_5_modified_signatures
     [:source_5]
   end
-
 
   def build_and_check(stage_name)
     check_signatures_and_build(stage_name)
@@ -177,7 +173,6 @@ describe Dapp::Application do
     send("#{stage_name}_saved_signatures").each { |s| expect(saved_keys).to include s => new_keys[s] }
     send("#{stage_name}_modified_signatures").each { |s| expect(saved_keys).to_not include s => new_keys[s] }
   end
-
 
   def source_5
     build_and_check(:source_5)
@@ -227,7 +222,6 @@ describe Dapp::Application do
     app_install
     infra_install
   end
-
 
   [:source_5, :source_4, :app_setup, :infra_setup, :app_install, :infra_install, :from].each do |stage|
     it "test #{stage}" do

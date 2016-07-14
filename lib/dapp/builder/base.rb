@@ -1,5 +1,6 @@
 module Dapp
   module Builder
+    # Base
     class Base
       attr_reader :application
 

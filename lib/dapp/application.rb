@@ -1,4 +1,5 @@
 module Dapp
+  # Application
   class Application
     include CommonHelper
     include Dapp::Filelock
@@ -32,7 +33,7 @@ module Dapp
     end
 
     def export!(repo)
-      raise "Application isn't built yet!" unless last_stage.image.tagged? or show_only
+      raise "Application isn't built yet!" unless last_stage.image.tagged? || show_only
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
@@ -74,7 +75,7 @@ module Dapp
         .compact
         .map(&:to_s)
         .inject(Pathname.new(@build_path), &:+)
-        .expand_path.tap {|p| FileUtils.mkdir_p p.parent}
+        .expand_path.tap { |p| FileUtils.mkdir_p p.parent }
     end
 
     def container_build_path(*path)

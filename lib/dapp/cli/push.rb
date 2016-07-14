@@ -2,6 +2,7 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
+    # CLI push subcommand
     class Push < Base
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}

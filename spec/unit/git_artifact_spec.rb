@@ -14,13 +14,12 @@ describe Dapp::GitArtifact do
     git_init!
   end
 
-
   def config
     RecursiveOpenStruct.new(
-        _name: 'test', _builder: :shell, _home_path: '',
-        _docker: { _from: :'ubuntu:16.04', _expose: [] },
-        _shell: {},
-        _git_artifact: { _local: { _artifact_options: git_artifact_local_options } }
+      _name: 'test', _builder: :shell, _home_path: '',
+      _docker: { _from: :'ubuntu:16.04', _expose: [] },
+      _shell: {},
+      _git_artifact: { _local: { _artifact_options: git_artifact_local_options } }
     )
   end
 
@@ -30,29 +29,28 @@ describe Dapp::GitArtifact do
 
   def git_artifact_local_options
     {
-        cwd: (@cwd ||= ''),
-        paths: (@paths ||= []),
-        branch: (@branch ||= 'master'),
-        where_to_add: (@where_to_add ||= 'dest'),
-        group: (@group ||= 'root'),
-        owner: (@owner ||= 'root')
+      cwd: (@cwd ||= ''),
+      paths: (@paths ||= []),
+      branch: (@branch ||= 'master'),
+      where_to_add: (@where_to_add ||= 'dest'),
+      group: (@group ||= 'root'),
+      owner: (@owner ||= 'root')
     }
   end
-
 
   [:patch, :archive].each do |type|
     define_method "#{type}_apply" do |add_files: ['data.txt'], added_files: add_files, not_added_files: [], **kvargs, &blk|
       [:cwd, :paths, :branch, :where_to_add, :group, :owner].each { |opt| instance_variable_set(:"@#{opt}", kvargs[opt]) unless kvargs[opt].nil? }
 
-      application_build! if type == :patch and !kvargs[:ignore_build]
+      application_build! if type == :patch && !kvargs[:ignore_build]
       add_files.each { |file_path| git_change_and_commit!(file_path, branch: @branch) }
       application_renew
 
       command_apply(send("#{type}_command"))
 
-      expect(File.exist? @where_to_add).to be_truthy
-      added_files.each { |file_path| expect(File.exist? File.join(@where_to_add, file_path)).to be_truthy }
-      not_added_files.each { |file_path| expect(File.exist? File.join(@where_to_add, file_path)).to be_falsey }
+      expect(File.exist?(@where_to_add)).to be_truthy
+      added_files.each { |file_path| expect(File.exist?(File.join(@where_to_add, file_path))).to be_truthy }
+      not_added_files.each { |file_path| expect(File.exist?(File.join(@where_to_add, file_path))).to be_falsey }
 
       blk.call unless blk.nil? # expectation
       clear_where_to_add
@@ -107,20 +105,20 @@ describe Dapp::GitArtifact do
 
     it "##{type} cwd", test_construct: true do
       send("#{type}_apply", add_files: %w(master.txt a/master2.txt),
-           added_files: ['master2.txt'], not_added_files: %w(a master.txt),
-           cwd: 'a')
+                            added_files: ['master2.txt'], not_added_files: %w(a master.txt),
+                            cwd: 'a')
     end
 
     it "##{type} paths", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
-           added_files: %w(x/y/data.txt z/data.txt), not_added_files: ['x/data.txt'],
-           paths: %w(x/y z))
+                            added_files: %w(x/y/data.txt z/data.txt), not_added_files: ['x/data.txt'],
+                            paths: %w(x/y z))
     end
 
     it "##{type} cwd_and_paths", test_construct: true do
       send("#{type}_apply", add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
-           added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(a data.txt),
-           cwd: 'a', paths: %w(x/y z))
+                            added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(a data.txt),
+                            cwd: 'a', paths: %w(x/y z))
     end
   end
 
@@ -137,7 +135,7 @@ describe Dapp::GitArtifact do
   end
 
   it '#patch owner_and_group', test_construct: true do
-    with_credentials(owner, group) do |&blk|
+    with_credentials(owner, group) do
       archive_apply(owner: owner, group: group) do
         application_build!
         patch_apply(add_files: [file_name], owner: owner, group: group, ignore_build: true) do

@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # Main
     class Main < Application
       def initialize(**options)
         @_home_path    = Pathname.new(options[:dappfile_path]).parent.expand_path.to_s

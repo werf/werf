@@ -9,13 +9,11 @@ module Dapp
         @ssh_key_path = File.expand_path(ssh_key_path, application.home_path) if ssh_key_path
 
         @use_ssh_key = false
-        File.chmod(0600, @ssh_key_path) if @ssh_key_path
+        File.chmod(0o600, @ssh_key_path) if @ssh_key_path
 
-        unless File.directory? dir_path
-          with_ssh_key do
-            git "clone --bare --depth 1 #{url} #{dir_path}", log_verbose: true
-          end
-        end
+        with_ssh_key do
+          git "clone --bare --depth 1 #{url} #{dir_path}", log_verbose: true
+        end unless File.directory? dir_path
       end
 
       def fetch!(branch = 'master')

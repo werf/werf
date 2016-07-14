@@ -1,8 +1,9 @@
 module Dapp
   module Build
     module Stage
+      # Source4
       class Source4 < SourceBase
-        MAX_PATCH_SIZE = 1024*1024
+        MAX_PATCH_SIZE = 1024 * 1024
 
         def initialize(application, next_stage)
           @prev_stage = AppSetup.new(application, self)

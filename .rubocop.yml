@@ -12,3 +12,10 @@ Metrics/MethodLength:
 
 Metrics/ClassLength:
   Max: 300
+
+Style/DoubleNegation:
+  Enabled: false
+
+Style/FileName:
+  Exclude:
+    - 'spec/chef/testproject/recipes/*'

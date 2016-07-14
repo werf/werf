@@ -1,6 +1,7 @@
 module Dapp
   module Build
     module Stage
+      # Source2
       class Source2 < SourceBase
         def initialize(application, next_stage)
           @prev_stage = AppInstall.new(application, self)

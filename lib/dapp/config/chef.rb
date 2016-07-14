@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # Chef
     class Chef
       attr_reader :_module
 
@@ -8,7 +9,7 @@ module Dapp
       end
 
       def module(*args)
-        @_module.push(*args.flatten)
+        @_module.concat(args)
       end
 
       def to_h

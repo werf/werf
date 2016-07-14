@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # GitArtifact
     class GitArtifact
       attr_reader :_local
       attr_reader :_remote
@@ -25,6 +26,7 @@ module Dapp
         Marshal.load(Marshal.dump(self))
       end
 
+      # Local
       class Local
         attr_accessor :_where_to_add, :_cwd, :_paths, :_owner, :_group
 
@@ -33,21 +35,17 @@ module Dapp
           @_where_to_add = where_to_add
 
           options.each do |k, v|
-            if respond_to? "_#{k}="
-              send(:"_#{k}=", v)
-            else
-              raise "'#{object_name}' git artifact doesn't have attribute '#{k}'!"
-            end
+            respond_to?("_#{k}=") ? send(:"_#{k}=", v) : raise("'#{object_name}' git artifact doesn't have attribute '#{k}'!")
           end
         end
 
         def _artifact_options
           {
-              where_to_add: _where_to_add,
-              cwd:          _cwd,
-              paths:        _paths,
-              owner:        _owner,
-              group:        _group
+            where_to_add: _where_to_add,
+            cwd:          _cwd,
+            paths:        _paths,
+            owner:        _owner,
+            group:        _group
           }
         end
 
@@ -66,6 +64,7 @@ module Dapp
         end
       end
 
+      # Remote
       class Remote < Local
         attr_accessor :_url, :_name, :_branch, :_ssh_key_path
 
@@ -78,11 +77,11 @@ module Dapp
         end
 
         def _artifact_options
-          super.merge({ name: _name, branch: _branch })
+          super.merge(name: _name, branch: _branch)
         end
 
         def to_h
-          super.merge({ url: _url, name: _name, branch: _branch, ssh_key_path: _ssh_key_path})
+          super.merge(url: _url, name: _name, branch: _branch, ssh_key_path: _ssh_key_path)
         end
       end
     end

@@ -1,13 +1,14 @@
 module Dapp
   module Build
     module Stage
+      # From
       class From < Base
         def signature
           hashsum [from_image_name, application.config._docker._from_cache_version]
         end
 
         def build!
-          return if image.tagged? and !application.show_only
+          return if image.tagged? && !application.show_only
           from_image.pull! unless application.show_only
           build_log
           image.build!(application.logging?) unless application.show_only
