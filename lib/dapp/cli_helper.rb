@@ -23,31 +23,41 @@ module Dapp
         arg
       end
 
-      def parse_subcommand(cli, argv)
-        if (index = argv.find_index { |v| cli.class::SUBCOMMANDS.include? v })
-          return [
-              argv[0...index],
-              argv[index],
-              argv[index.next..-1]
-          ]
-        else
-          return [
-              argv,
-              nil,
-              []
-          ]
+      def parse_subcommand(cli, args)
+        argv = args
+        divided_subcommand = []
+        subcommand_argv = []
+
+        cmd_arr = args.dup
+        loop do
+          if cli.class::SUBCOMMANDS.include? cmd_arr.join(' ')
+            argv = args[0...args.index(cmd_arr.first)]
+            divided_subcommand = cmd_arr
+            index = cmd_arr.one? ? args.index(cmd_arr.first).next : args.index(cmd_arr.last).next
+            subcommand_argv = args[index..-1]
+          elsif !cmd_arr.empty?
+            cmd_arr.pop
+            next
+          end
+          break
         end
+
+        [argv, divided_subcommand, subcommand_argv]
       end
 
-      def run_subcommand(cli, subcommand, subcommand_argv)
-        if subcommand
-          cli.class.const_get(subcommand.capitalize).new.run(subcommand_argv)
+      def run_subcommand(cli, divided_subcommand, subcommand_argv)
+        if !divided_subcommand.empty?
+          cli.class.const_get(prepare_subcommand(divided_subcommand)).new.run(subcommand_argv)
         else
           STDERR.puts 'Error: subcommand not passed'
           puts
           puts cli.opt_parser
           exit 1
         end
+      end
+
+      def prepare_subcommand(divided_subcommand)
+        Array(divided_subcommand).map(&:capitalize).join
       end
 
       def composite_options(opt)
