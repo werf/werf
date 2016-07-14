@@ -32,9 +32,9 @@ module Dapp
       @built_id ||= id
     end
 
-    def build!
+    def build!(log_verbose)
       begin
-        run!
+        run!(log_verbose)
         @built_id = commit!
       ensure
         shellout("docker rm #{container_name}")
@@ -66,9 +66,9 @@ module Dapp
       options[key] = (options[key].nil? ? value : (Array(options[key]) << value).flatten)
     end
 
-    def run!
+    def run!(log_verbose)
       raise '`from.built_id` is not defined!' if from.built_id.empty?
-      shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}")
+      shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}", log_verbose: log_verbose)
     end
 
     def commit!

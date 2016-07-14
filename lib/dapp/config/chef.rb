@@ -14,7 +14,7 @@ module Dapp
       def to_h
         {
           module: _module
-        }.select { |_k, v| !v.nil? and !v.empty? }
+        }
       end
 
       def clone

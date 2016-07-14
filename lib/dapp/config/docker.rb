@@ -1,7 +1,6 @@
 module Dapp
   module Config
     class Docker
-      attr_reader :_from
       attr_reader :_expose
       attr_reader :_from_cache_version
 
@@ -18,12 +17,16 @@ module Dapp
         @_expose.push(*args.flatten)
       end
 
+      def _from
+        @_from || raise("Docker from isn't defined!")
+      end
+
       def to_h
         {
           from:               _from,
           from_cache_version: _from_cache_version,
           expose:             _expose
-        }.select { |_k, v| !v.nil? and !v.empty? }
+        }
       end
 
       def clone
