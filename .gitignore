@@ -3,6 +3,3 @@
 .tags
 /.bundle
 /.vendor
-/spec/chef/testproject/build
-/spec/chef/testproject/build_cache
-/spec/chef/testproject/Berksfile.lock
