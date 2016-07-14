@@ -3,15 +3,12 @@ DOCKER_IMAGE_NAME=dapp2/env:$(ENV_VERSION)
 
 all: build/hub_image
 
-build:
-	@mkdir -p build
-
-build/git: build
-	@mkdir -p build/git/aaa
+build/git:
+	@mkdir -p build/git
 	@echo build/git #TODO
 
-build/sudo: build
-	@mkdir -p build/sudo/aaa
+build/sudo:
+	@mkdir -p build/sudo
 	@echo build/sudo #TODO
 
 build/Dockerfile: build/git build/sudo
