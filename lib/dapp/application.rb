@@ -22,6 +22,10 @@ module Dapp
       !!cli_options[:show_only]
     end
 
+    def logging?
+      cli_options[:log_verbose] || !cli_options[:log_quiet]
+    end
+
     def build!
       last_stage.build!
       last_stage.save_in_cache!

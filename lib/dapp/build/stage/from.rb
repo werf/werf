@@ -10,7 +10,7 @@ module Dapp
           return if image.tagged? and !application.show_only
           from_image.pull! unless application.show_only
           build_log
-          image.build! unless application.show_only
+          image.build!(application.logging?) unless application.show_only
         end
 
         def save_in_cache!

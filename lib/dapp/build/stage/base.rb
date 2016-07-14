@@ -18,7 +18,7 @@ module Dapp
           return if image.tagged? and !application.show_only
           prev_stage.build! if prev_stage
           build_log
-          image.build! unless application.show_only
+          image.build!(application.logging?) unless application.show_only
         end
 
         def save_in_cache!
@@ -59,6 +59,11 @@ module Dapp
         def build_log
           application.log "#{name} #{"[#{ image.tagged? ? image_name : '×' }]" if application.show_only}"
           application.with_log_indent(application.show_only) { application.log "#{image.info}" if image.tagged? }
+          bash_commands = image.send(:bash_commands)
+          application.with_log_indent do
+            application.log('commands:')
+            application.with_log_indent { application.log "#{bash_commands.join("\n")}" }
+          end unless bash_commands.empty?
         end
       end # Base
     end # Stage

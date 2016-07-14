@@ -55,7 +55,7 @@ module Dapp
     end
 
     def to_mb(bytes)
-      bytes / 1024.0 / 1024.0
+      (bytes / 1024.0 / 1024.0).round(2)
     end
 
     def self.included(base)
