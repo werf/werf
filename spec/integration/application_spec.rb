@@ -6,12 +6,17 @@ describe Dapp::Application do
   include SpecHelpers::Git
 
   before :all do
+    @wd = Dir.pwd
     init
   end
 
   before :each do
     stub_docker_image
     application_build!
+  end
+
+  after :all do
+    Dir.chdir @wd
   end
 
   def init
