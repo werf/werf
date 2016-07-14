@@ -70,9 +70,11 @@ module Dapp
     end
 
     def build_path(*path)
-      path.compact.map(&:to_s).inject(Pathname.new(@build_path), &:+).expand_path.tap do |p|
-        FileUtils.mkdir_p p.parent
-      end
+      path
+        .compact
+        .map(&:to_s)
+        .inject(Pathname.new(@build_path), &:+)
+        .expand_path.tap {|p| FileUtils.mkdir_p p.parent}
     end
 
     def container_build_path(*path)

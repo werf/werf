@@ -10,6 +10,7 @@ module Dapp
       STAGE_COOKBOOK_PATTERNS = %w(
         recipes/%{stage}.rb
         recipes/%{stage}-*.rb
+        recipes/*_%{stage}.rb
         files/%{stage}/*
         templates/%{stage}/*
       )
@@ -37,8 +38,12 @@ module Dapp
 
       private
 
+      def berksfile_path
+        application.home_path('Berksfile')
+      end
+
       def berksfile
-        @berksfile ||= Berksfile.new(application, application.home_path('Berksfile'))
+        @berksfile ||= Berksfile.new(application, berksfile_path)
       end
 
       def berksfile_lock_checksum
@@ -47,7 +52,9 @@ module Dapp
       end
 
       def local_cookbook_paths
-        @local_cookbook_paths ||= berksfile.local_cookbooks.values
+        @local_cookbook_paths ||= berksfile.local_cookbooks
+          .values
+          .map {|cookbook| cookbook[:path]}
           .product(LOCAL_COOKBOOK_PATTERNS)
           .map {|cb, dir| Dir[cb.join(dir)]}
           .flatten
@@ -56,13 +63,35 @@ module Dapp
       end
 
       def stage_cookbooks_runlist(stage)
-        berksfile.local_cookbooks.map {|name, _| "#{name}::#{stage}"}
+        @stage_cookbooks_runlist ||= {}
+        @stage_cookbooks_runlist[stage] ||= [].tap do |res|
+          to_runlist_entrypoint = proc do |name, entrypoint|
+            entrypoint_file = stage_cookbooks_path(stage, name, 'recipes', "#{entrypoint}.rb")
+            next unless entrypoint_file.exist?
+            "#{name}::#{entrypoint}"
+          end
+
+          res.push(*application.config._chef._module.map do |name|
+            to_runlist_entrypoint[name, stage]
+          end.compact)
+
+          res.push(*application.config._app_runlist.map(&:_name).map do |name|
+            basename, *subname_parts = name.split('-')
+            to_runlist_entrypoint[basename, [*subname_parts, stage].join('_')]
+          end.compact)
+        end
+      end
+
+      def stage_cookbook_entrypoint(name, stage)
+        entrypoint_file = stage_cookbooks_path(stage, name, 'recipes', "#{entrypoint}.rb")
+        return unless entrypoint_file.exist?
+        "#{name}::#{entrypoint}"
       end
 
       def stage_cookbooks_vendor_paths(stage)
         @stage_cookbooks_vendor_paths ||= {}
         @stage_cookbooks_vendor_paths[stage] ||= STAGE_COOKBOOK_PATTERNS
-          .map {|pattern| Dir[cookbooks_path('*', pattern % {stage: stage})]}
+          .map {|pattern| Dir[cookbooks_vendor_path('*', pattern % {stage: stage})]}
           .flatten
           .map(&Pathname.method(:new))
           .sort
@@ -110,10 +139,12 @@ module Dapp
           application.shellout!(
             ["docker run --rm",
              "--volumes-from #{chefdk_container}",
-             "--volume #{cookbooks_path.tap(&:mkpath)}:#{cookbooks_path}",
-             *berksfile.local_cookbooks.values.map {|path| "--volume #{path}:#{path}"},
-             "ubuntu:14.04 bash -lec '#{["cd #{application.home_path}",
-                                         "/opt/chefdk/bin/berks vendor #{cookbooks_path}",
+             "--volume #{cookbooks_vendor_path.tap(&:mkpath)}:#{cookbooks_vendor_path}",
+             *berksfile.local_cookbooks
+                       .values
+                       .map {|cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}"},
+             "ubuntu:14.04 bash -lec '#{["cd #{berksfile_path.parent}",
+                                         "/opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}",
                                         ].join(' && ')}'",
             ].join(' '),
             log_verbose: true
@@ -126,7 +157,7 @@ module Dapp
       def install_stage_cookbooks(stage)
         stage_cookbooks_path(stage).mkpath
         stage_cookbooks_vendor_paths(stage).each do |path|
-          new_path = stage_cookbooks_path(stage, path.relative_path_from(cookbooks_path))
+          new_path = stage_cookbooks_path(stage, path.relative_path_from(cookbooks_vendor_path))
           new_path.parent.mkpath
           FileUtils.cp path, new_path
         end
@@ -145,12 +176,12 @@ module Dapp
       end
 
 
-      def cookbooks_path(*path)
-        application.build_path('chef', 'vendored_cookbooks', *path)
+      def cookbooks_vendor_path(*path)
+        application.build_path('chef', 'vendored_cookbooks').join(*path)
       end
 
       def stage_build_path(stage, *path)
-        application.build_path('chef', stage, *path)
+        application.build_path(application.config._name, stage).join(*path)
       end
 
       def container_stage_build_path(stage, *path)

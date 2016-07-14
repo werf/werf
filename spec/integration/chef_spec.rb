@@ -39,19 +39,28 @@ describe Dapp::Builder::Chef do
       expect(send(file1, reload: true)).not_to eq(old_template_file_values[file1])
       expect(send(file2, reload: true)).not_to eq(old_template_file_values[file2])
 
-      expect(send("testproject_#{stage}", reload: true)).to eq(new_file_values[file1])
+      expect(send("test_#{stage}", reload: true)).to eq(new_file_values[file1])
       expect(send("mdapp_test_#{stage}", reload: true)).to eq(new_file_values[file2])
     end
   end
 
   def config
     @config ||= RecursiveOpenStruct.new(
-      _name: 'testproject',
+      _name: 'test',
       _builder: :chef,
       _home_path: testproject_path.to_s,
-      _docker: {_from: 'ubuntu:14.04'},
-      _chef: {_module: ['testproject', 'mdapp-test']},
-    )
+      _docker: {_from: 'ubuntu:14.04', _expose: []},
+      _chef: {_module: ['mdapp-test', 'mdapp-test2']},
+      _git_artifact: {},
+    ).tap do |obj|
+      def obj._app_runlist
+        [self]
+      end
+
+      def obj._root_app
+        _app_runlist.first
+      end
+    end
   end
 
   def cli_options
@@ -70,6 +79,10 @@ describe Dapp::Builder::Chef do
     project_path.join('mdapp-test')
   end
 
+  def mdapp_test2_path
+    project_path.join('mdapp-test2')
+  end
+
   def template_testproject_path
     @template_testproject_path ||= Pathname('spec/chef/testproject')
   end
@@ -78,14 +91,19 @@ describe Dapp::Builder::Chef do
     @template_mdapp_test_path ||= Pathname('spec/chef/mdapp-test')
   end
 
+  def template_mdapp_test2_path
+    @template_mdapp_test2_path ||= Pathname('spec/chef/mdapp-test2')
+  end
+
   def init_project
     FileUtils.cp_r template_testproject_path, testproject_path.tap {|p| p.parent.mkpath}
     FileUtils.cp_r template_mdapp_test_path, mdapp_test_path.tap {|p| p.parent.mkpath}
+    FileUtils.cp_r template_mdapp_test2_path, mdapp_test2_path.tap {|p| p.parent.mkpath}
   end
 
   TEST_FILE_NAMES = %i(foo bar baz qux burger pizza taco pelmeni
-                       testproject_infra_install testproject_app_install
-                       testproject_infra_setup testproject_app_setup
+                       test_infra_install test_app_install
+                       test_infra_setup test_app_setup
                        mdapp_test_infra_install mdapp_test_app_install
                        mdapp_test_infra_setup mdapp_test_app_setup)
 

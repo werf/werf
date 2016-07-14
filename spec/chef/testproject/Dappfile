@@ -1,6 +1,15 @@
 builder :chef
 
-docker.from = 'ubuntu:14.04'
+docker.from 'ubuntu:14.04'
 
-chef.module 'testproject'
+name 'test'
+
 chef.module 'mdapp-test'
+
+app 'X' do
+  app 'Y'
+end
+
+app 'Z' do
+  chef.module 'mdapp-test2'
+end

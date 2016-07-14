@@ -57,6 +57,20 @@ module Dapp
         })
       end
 
+      def _app_runlist
+        @_app_runlist ||= [].tap do |res|
+          conf = self
+          loop do
+            res.unshift conf
+            break unless conf = conf._parent
+          end
+        end
+      end
+
+      def _root_app
+        _app_runlist.first
+      end
+
       private
 
       def clone
