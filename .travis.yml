@@ -1,13 +1,13 @@
+dist: trusty
+sudo: required
+cache: apt
 language: ruby
 rvm:
 - 2.3.0
 - 2.2.4
 - 2.1.8
-
 services:
 - docker
-
-sudo: required
 
 deploy:
   provider: rubygems
@@ -17,4 +17,3 @@ deploy:
   on:
     tags: true
     repo: flant/dapp
-
