@@ -25,7 +25,11 @@ module SpecHelpers
     end
 
     def cli_options
-      { log_quiet: true, build_dir: '', log_indent: 0 }
+      default_cli_options
+    end
+
+    def default_cli_options
+      { log_quiet: false, log_indent: 0 }
     end
 
     def stages_names

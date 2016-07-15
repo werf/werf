@@ -46,7 +46,7 @@ describe Dapp::Application do
   end
 
   def cli_options
-    @cli_options ||= { log_indent: 0, log_quiet: true, build_dir: project_dapp_path.join('build') }
+    @cli_options ||= default_cli_options.merge(build_dir: project_dapp_path.join('build'))
   end
 
   [:from, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage_name|
