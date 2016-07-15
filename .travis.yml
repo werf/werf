@@ -9,9 +9,6 @@ rvm:
 services:
 - docker
 
-script:
-- sudo -E su --preserve-environment -lc 'bundle exec rake spec'
-
 deploy:
   provider: rubygems
   api_key:
@@ -20,4 +17,3 @@ deploy:
   on:
     tags: true
     repo: flant/dapp
-
