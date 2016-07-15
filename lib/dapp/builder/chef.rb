@@ -135,8 +135,6 @@ module Dapp
       end
 
       def install_cookbooks
-        # TODO howto remove root files?
-
         @install_cookbooks ||= begin
           user = Etc.getpwnam(Etc.getlogin)
           group = Etc.getgrgid(user.gid)
