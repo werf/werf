@@ -59,7 +59,7 @@ describe Dapp::Builder::Chef do
     @config ||= default_config.merge(
       _builder: :chef,
       _home_path: testproject_path.to_s,
-      _chef: { _module: %w(mdapp-test mdapp-test2) }
+      _chef: { _modules: %w(mdapp-test mdapp-test2) }
     )
   end
 
