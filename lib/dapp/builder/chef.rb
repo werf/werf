@@ -43,7 +43,7 @@ module Dapp
       end
 
       def berksfile
-        @berksfile ||= Berksfile.new(application, berksfile_path)
+        @berksfile ||= Berksfile.new(application.home_path, berksfile_path)
       end
 
       def berksfile_lock_checksum

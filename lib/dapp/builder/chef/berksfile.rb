@@ -24,12 +24,11 @@ module Dapp
           end
         end # Parser
 
-        attr_reader :application # FIXME remove
         attr_reader :path
         attr_reader :local_cookbooks
 
-        def initialize(application, path)
-          @application = application
+        def initialize(home_path, path)
+          @home_path = home_path
           @path = path
           @local_cookbooks = {}
           @parser = Parser.new(self)
@@ -38,7 +37,7 @@ module Dapp
         def add_local_cookbook_path(name, path)
           @local_cookbooks[name] = {
             name: name,
-            path: application.home_path(path)
+            path: @home_path.join(path)
           }
         end
 
