@@ -138,6 +138,9 @@ module Dapp
         # TODO howto remove root files?
 
         @install_cookbooks ||= begin
+          user = Etc.getpwnam(Etc.getlogin)
+          group = Etc.getgrgid(user.gid)
+
           application.shellout!(
             ['docker run --rm',
              "--volumes-from #{chefdk_container}",
@@ -145,8 +148,13 @@ module Dapp
              *berksfile.local_cookbooks
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-             "ubuntu:14.04 bash -lec '#{["cd #{berksfile_path.parent}",
-                                         "/opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"].join(' && ')}'"].join(' '),
+             "ubuntu:14.04 bash -lec '#{["groupadd #{group.name} -f -g #{group.gid}",
+                                         "useradd #{user.name} -u #{user.uid} -g #{user.gid} -d #{user.dir}",
+                                         "mkdir -p #{user.dir}",
+                                         "chown -R #{user.name}:#{group.name} #{user.dir}",
+                                         "su #{user.name} -c \"#{["cd #{berksfile_path.parent}",
+                                                                  "/opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"].join(' && ')}\""
+                                         ].join(' && ')}'"].join(' '),
             log_verbose: true
           )
 
