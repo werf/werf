@@ -39,8 +39,7 @@ module Dapp
 
     def push(repo)
       raise "Several applications isn't available for push command!" unless @build_confs.one?
-      log @build_confs.first._name
-      with_log_indent { Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo) }
+      Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
     end
 
     def smartpush(repo_prefix)
