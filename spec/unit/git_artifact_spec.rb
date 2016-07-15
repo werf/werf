@@ -15,20 +15,15 @@ describe Dapp::GitArtifact do
   end
 
   def config
-    RecursiveOpenStruct.new(
-      _name: 'test', _builder: :shell, _home_path: '',
-      _docker: { _from: :'ubuntu:16.04', _expose: [] },
-      _shell: {},
-      _git_artifact: { _local: { _artifact_options: git_artifact_local_options } }
+    default_config.merge(
+      _builder: :shell,
+      _home_path: '',
+      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: git_artifact_local_options })
     )
   end
 
   def cli_options
     @cli_options ||= default_cli_options.merge(build: '')
-  end
-
-  def change_artifact_branch(branch = 'master')
-    config[:git_artifact][:local][:branch] = branch
   end
 
   def git_artifact_local_options

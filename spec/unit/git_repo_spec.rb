@@ -15,7 +15,7 @@ describe Dapp::GitRepo do
   end
 
   def config
-    {}
+    @config ||= default_config.merge(_home_path: '')
   end
 
   def commit!(data, git_dir = nil)

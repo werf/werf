@@ -35,13 +35,14 @@ describe Dapp::Application do
   end
 
   def config
-    @config ||= RecursiveOpenStruct.new(
-      _name: 'test', _builder: :shell, _home_path: project_path,
-      _shell: { _infra_install: ['apt-get update', 'apt-get -y dist-upgrade',
-                                 'apt-get -y install apt-utils curl apt-transport-https git'],
-                _infra_setup: [], _app_install: [], _app_setup: [] },
-      _docker: { _from: :'ubuntu:16.04', _expose: [] },
-      _git_artifact: { _local: { _artifact_options: { where_to_add: '/app' } } }
+    @config ||= default_config.merge(
+      _builder: :shell,
+      _home_path: project_path,
+      _docker: default_config[:_docker].merge(_from: :'ubuntu:16.04'),
+      _shell: default_config[:_shell].merge(_infra_install: ['apt-get update',
+                                                             'apt-get -y dist-upgrade',
+                                                             'apt-get -y install apt-utils curl apt-transport-https git']),
+      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { where_to_add: '/app' } })
     )
   end
 
@@ -61,13 +62,13 @@ describe Dapp::Application do
 
   [:infra_install, :app_install, :infra_setup, :app_setup].each do |stage_name|
     define_method :"change_#{stage_name}" do
-      config._shell.send("_#{stage_name}") << generate_command
+      config[:_shell][:"_#{stage_name}"] << generate_command
     end
   end
 
   [:app_install, :infra_setup, :app_setup].each do |stage_name|
     define_method "expect_#{stage_name}_image" do
-      check_image_command(stage_name, config._shell.send("_#{stage_name}").last)
+      check_image_command(stage_name, config[:_shell][:"_#{stage_name}"].last)
       check_image_command(prev_stage(stage_name), 'apply')
     end
   end
@@ -83,7 +84,7 @@ describe Dapp::Application do
   end
 
   def change_from
-    config._docker._from = 'ubuntu:14.04'
+    config[:_docker][:_from] = :'ubuntu:14.04'
   end
 
   def expect_from_image
@@ -108,7 +109,7 @@ describe Dapp::Application do
   end
 
   def expect_infra_install_image
-    check_image_command(:infra_install, config._shell._infra_install.last)
+    check_image_command(:infra_install, config[:_shell][:_infra_install].last)
     check_image_command(:source_1_archive, 'tar -x')
   end
 

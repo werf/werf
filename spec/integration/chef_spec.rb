@@ -43,15 +43,8 @@ describe Dapp::Builder::Chef do
     end
   end
 
-  def config
-    @config ||= RecursiveOpenStruct.new(
-      _name: 'test',
-      _builder: :chef,
-      _home_path: testproject_path.to_s,
-      _docker: { _from: 'ubuntu:14.04', _expose: [] },
-      _chef: { _module: ['mdapp-test', 'mdapp-test2'] },
-      _git_artifact: {}
-    ).tap do |obj|
+  def openstruct_config
+    RecursiveOpenStruct.new(config).tap do |obj|
       def obj._app_runlist
         [self]
       end
@@ -60,6 +53,14 @@ describe Dapp::Builder::Chef do
         _app_runlist.first
       end
     end
+  end
+
+  def config
+    @config ||= default_config.merge(
+      _builder: :chef,
+      _home_path: testproject_path.to_s,
+      _chef: { _module: %w(mdapp-test mdapp-test2) }
+    )
   end
 
   def project_path

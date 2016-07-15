@@ -9,8 +9,9 @@ module SpecHelpers
     end
 
     def application_renew
+      @openstruct_config = nil
       @application = begin
-        options = { config: config, cli_options: cli_options }
+        options = { config: openstruct_config, cli_options: cli_options }
         Dapp::Application.new(**options)
       end
     end
@@ -20,8 +21,22 @@ module SpecHelpers
       application_build!
     end
 
+    def openstruct_config
+      @openstruct_config ||= RecursiveOpenStruct.new(config)
+    end
+
     def config
-      raise
+      default_config
+    end
+
+    def default_config
+      {
+        _name: 'test',
+        _chef: {},
+        _shell: { _infra_install: [], _infra_setup: [], _app_install: [], _app_setup: []},
+        _docker: { _from: :'ubuntu:14.04', _expose: [] },
+        _git_artifact: { _local: [], _remote: [] }
+      }
     end
 
     def cli_options
