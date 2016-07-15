@@ -23,6 +23,10 @@ describe Dapp::GitArtifact do
     )
   end
 
+  def cli_options
+    @cli_options ||= default_cli_options.merge(build: '')
+  end
+
   def change_artifact_branch(branch = 'master')
     config[:git_artifact][:local][:branch] = branch
   end
@@ -64,7 +68,7 @@ describe Dapp::GitArtifact do
 
   def patch_command
     git_artifact.apply_patch_command(stages[:source_5])
-    # stages[:source_5].image.send(:prepared_bash_command)
+    stages[:source_5].image.send(:prepared_bash_command)
   end
 
   def command_apply(command)
