@@ -6,8 +6,12 @@ rvm:
 
 services:
 - docker
-
 sudo: required
+
+script:
+- docker run -d ubuntu:14.04 bash -lec "while true ; do sleep 1 ; done"
+- docker images
+- docker ps -a
 
 deploy:
   provider: rubygems
