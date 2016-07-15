@@ -57,10 +57,21 @@ module Dapp
           "dapp:#{signature}"
         end
 
+        def image_info
+          date, bytesize = image.info
+          _date, from_bytesize = from_image.info
+          [date, (from_bytesize.to_i - bytesize.to_i).abs]
+        end
+
+        def format_image_info
+          date, bytesize = image_info
+          ["date: #{Time.parse(date)}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
+        end
+
         # rubocop:disable Metrics/AbcSize
         def build_log
           application.log "#{name} #{"[#{image.tagged? ? image_name : '×'}]" if application.show_only}"
-          application.with_log_indent(application.show_only) { application.log image.info if image.tagged? }
+          application.with_log_indent(application.show_only) { application.log format_image_info if image.tagged? }
           bash_commands = image.send(:bash_commands)
           application.with_log_indent do
             application.log('commands:')

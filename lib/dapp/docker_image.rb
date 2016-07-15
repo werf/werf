@@ -41,8 +41,7 @@ module Dapp
 
     def info
       raise "Image `#{name}` doesn't exist!" unless tagged?
-      date, bytesize = shellout!("docker inspect --format='{{.Created}} {{.Size}}' #{name}").stdout.strip.split
-      ["date: #{Time.parse(date)}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
+      shellout!("docker inspect --format='{{.Created}} {{.Size}}' #{name}").stdout.strip.split
     end
   end # DockerImage
 end # Dapp
