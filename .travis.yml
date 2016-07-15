@@ -1,12 +1,13 @@
+dist: trusty
+sudo: required
+cache: apt
 language: ruby
 rvm:
 - 2.3.0
 - 2.2.4
 - 2.1.8
-
 services:
 - docker
-sudo: required
 
 script:
 - sudo -E su --preserve-environment -lc 'bundle exec rake spec'
