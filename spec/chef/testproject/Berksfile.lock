@@ -1,0 +1,12 @@
+DEPENDENCIES
+  mdapp-test
+    path: ../mdapp-test
+  mdapp-test2
+    path: ../mdapp-test2
+  test
+    path: .
+
+GRAPH
+  mdapp-test (0.0.1)
+  mdapp-test2 (0.0.1)
+  test (0.0.1)
