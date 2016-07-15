@@ -9,9 +9,7 @@ services:
 sudo: required
 
 script:
-- docker run -d ubuntu:14.04 bash -lec "while true ; do sleep 1 ; done"
-- docker images
-- docker ps -a
+- sudo -E su --preserve-environment -lc 'bundle exec rake spec'
 
 deploy:
   provider: rubygems
