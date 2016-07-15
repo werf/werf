@@ -19,8 +19,6 @@ module Dapp
       CHEFDK_IMAGE = 'dapp2/chefdk:0.15.16-1'.freeze # TODO config, DSL, DEFAULT_CHEFDK_IMAGE
       CHEFDK_CONTAINER = 'dapp2_chefdk_0.15.16-1'.freeze # FIXME hashsum(image) or dockersafe()
 
-      # FIXME add chefdk_image to infra_install signature
-
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
         define_method(:"#{stage}_checksum") { stage_cookbooks_checksum(stage) }
 
@@ -73,7 +71,7 @@ module Dapp
             "#{name}::#{entrypoint}"
           end
 
-          res.concat(application.config._chef._module.map do |name|
+          res.concat(application.config._chef._modules.map do |name|
             to_runlist_entrypoint[name, stage]
           end.compact)
 
@@ -105,7 +103,8 @@ module Dapp
 
           application.hashsum([*stage_cookbooks_vendor_paths(stage).map(&:to_s),
                                *stage_cookbooks_vendor_paths(stage).reject(&:directory?).map(&:read),
-                               *application.config._chef._module]).tap do |checksum|
+                               *application.config._chef._modules,
+                               (stage == :infra_install) ? chefdk_image : nil].compact).tap do |checksum|
             stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
           end
         end
@@ -116,8 +115,12 @@ module Dapp
           berksfile_lock_checksum,
           *local_cookbook_paths.map(&:to_s),
           *local_cookbook_paths.reject(&:directory?).map(&:read),
-          *application.config._chef._module,
+          *application.config._chef._modules,
         ]
+      end
+
+      def chefdk_image
+        CHEFDK_IMAGE
       end
 
       def chefdk_container
@@ -125,7 +128,7 @@ module Dapp
           if application.shellout("docker inspect #{CHEFDK_CONTAINER}").exitstatus != 0
             application.shellout ['docker run',
                                   "--name #{CHEFDK_CONTAINER}",
-                                  "--volume /opt/chefdk #{CHEFDK_IMAGE}"].join(' ')
+                                  "--volume /opt/chefdk #{chefdk_image}"].join(' ')
           end
           CHEFDK_CONTAINER
         end

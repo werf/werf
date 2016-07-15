@@ -2,19 +2,19 @@ module Dapp
   module Config
     # Chef
     class Chef
-      attr_reader :_module
+      attr_reader :_modules
 
       def initialize
-        @_module = [] # FIXME -> modules
+        @_modules = []
       end
 
       def module(*args)
-        @_module.concat(args)
+        @_modules.concat(args)
       end
 
       def to_h
         {
-          module: _module
+          modules: _modules
         }
       end
 

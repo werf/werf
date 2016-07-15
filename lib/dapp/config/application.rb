@@ -57,7 +57,7 @@ module Dapp
       end
 
       def _app_runlist
-        @_app_runlist ||= (conf._parent ? conf._parent._app_runlist : []) + [self]
+        @_app_runlist ||= (_parent ? _parent._app_runlist : []) + [self]
       end
 
       def _root_app
