@@ -15,20 +15,20 @@ describe Dapp::Config::Main do
     apps.first
   end
 
-  def expect_special_attribute(obj, attribute)
+  def expect_special_attribute(obj, attribute, config_attribute="_#{attribute}")
     builder = "builder #{obj == :chef ? ':chef' : ':shell'}"
     attribute_path = "#{obj}.#{attribute}"
     @dappfile = %(
       #{builder}
       #{attribute_path} 'a', 'b', 'c'
     )
-    expect(app.public_send(obj).public_send("_#{attribute}")).to eq %w(a b c)
+    expect(app.public_send(obj).public_send(config_attribute)).to eq %w(a b c)
     @dappfile = %(
       #{builder}
       #{attribute_path} 'a', 'b', 'c'
       #{attribute_path} 'd', 'e'
     )
-    expect(app.public_send(obj).public_send("_#{attribute}")).to eq %w(a b c d e)
+    expect(app.public_send(obj).public_send(config_attribute)).to eq %w(a b c d e)
   end
 
   it '#builder' do
@@ -62,7 +62,7 @@ describe Dapp::Config::Main do
   end
 
   it '#chef module' do
-    expect_special_attribute(:chef, :module)
+    expect_special_attribute(:chef, :module, :_modules)
   end
 
   it '#shell attributes' do
