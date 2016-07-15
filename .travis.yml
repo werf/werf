@@ -5,7 +5,9 @@ rvm:
 - 2.1.8
 
 services:
-  - docker
+- docker
+
+sudo: required
 
 deploy:
   provider: rubygems
