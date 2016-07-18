@@ -75,8 +75,8 @@ module Dapp
           end.compact)
 
           res.concat(application.config._app_runlist.map(&:_name).map do |name|
-            basename, *subname_parts = name.split('-') # FIXME: use project_name instead for basename
-            to_runlist_entrypoint[basename, [*subname_parts, stage].join('_')]
+            subname_parts = name.split(project_name).reject(&:empty?)
+            to_runlist_entrypoint[project_name, [*subname_parts, stage].join('_')]
           end.compact)
         end
       end
