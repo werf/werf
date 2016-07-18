@@ -4,7 +4,7 @@ module Dapp
   # CLI
   class CLI
     include Mixlib::CLI
-    include CliHelper
+    include Helper::Cli
 
     SUBCOMMANDS = %w(build smartpush push list flush).freeze
 

@@ -1,7 +1,7 @@
 module Dapp
   # DockerImage
   class DockerImage
-    include CommonHelper
+    include Helper::Shellout
 
     attr_reader :from
     attr_reader :name

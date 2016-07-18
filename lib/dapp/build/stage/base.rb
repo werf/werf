@@ -3,7 +3,9 @@ module Dapp
     module Stage
       # Base of all stages
       class Base
-        include CommonHelper
+        include Helper::Log
+        include Helper::Sha256
+        include Helper::Trivia
 
         attr_accessor :prev_stage, :next_stage
         attr_reader :application
@@ -93,7 +95,7 @@ module Dapp
 
         def log_build_time(log_it, &blk)
           time = run_time(&blk)
-          application.log_with_indent("build time: #{time.round(2)}") if application.log? && log_it
+          application.log("build time: #{time.round(2)}", indent: true) if application.log? && log_it
         end
 
         def run_time

@@ -1,7 +1,8 @@
 module Dapp
   # Application
   class Application
-    include CommonHelper
+    include Helper::Log
+    include Helper::Shellout
     include Dapp::Filelock
 
     attr_reader :config

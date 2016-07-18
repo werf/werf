@@ -1,7 +1,9 @@
 module Dapp
   # Controller
   class Controller
-    include CommonHelper
+    include Helper::Log
+    include Helper::Shellout
+    include Helper::I18n
 
     attr_reader :cli_options, :patterns
 
@@ -86,12 +88,6 @@ module Dapp
 
     def dapps_path
       @dapps_path ||= File.join [cli_options[:dir], '.dapps'].compact
-    end
-
-    def i18n_initialize
-      ::I18n.load_path << Dir[File.join(Dapp.root, 'config', 'net_status', '*')]
-      ::I18n.reload!
-      ::I18n.locale = :en
     end
   end # Controller
 end # Dapp
