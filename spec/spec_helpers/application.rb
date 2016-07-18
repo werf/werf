@@ -26,7 +26,7 @@ module SpecHelpers
     end
 
     def config
-      default_config
+      @config ||= default_config
     end
 
     def default_config
@@ -99,10 +99,6 @@ module SpecHelpers
 
       application = class_double(Dapp::Application).as_stubbed_const
       allow(application).to receive(:new) do |*args, &block|
-        if args.first.is_a? Hash
-          args.first[:config] = args.first[:config].to_h.empty? ? RecursiveOpenStruct.new(_home_path: '') : args.first[:config]
-        end
-
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:build_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
           allow(instance).to receive(:container_build_path) { |*m_args| instance.build_path(*m_args) }
