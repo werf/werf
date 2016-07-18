@@ -59,7 +59,7 @@ module Dapp
 
         def from_image
           prev_stage.image if prev_stage || begin
-            raise 'missing from_image'
+            raise Error::Build, code: :from_image_required
           end
         end
 
