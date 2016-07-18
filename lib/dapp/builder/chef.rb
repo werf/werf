@@ -208,7 +208,7 @@ module Dapp
         stage_cookbooks_files_vendored_paths(stage).each do |path|
           new_path = stage_cookbooks_path(stage, path.relative_path_from(cookbooks_vendor_path))
           new_path.parent.mkpath
-          FileUtils.cp path, new_path
+          FileUtils.cp_r path, new_path
         end
       end
 
