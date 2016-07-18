@@ -154,8 +154,9 @@ module Dapp
              *berksfile.local_cookbooks
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-             "--user=#{Process.uid}:#{Process.gid}",
-             "--workdir=#{berksfile_path.parent}",
+             "--user #{Process.uid}:#{Process.gid}",
+             "--workdir #{berksfile_path.parent}",
+             "--env BERKSHELF_PATH=/tmp/berkshelf",
              "ubuntu:14.04 /opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
             ].join(' '),
             log_verbose: true
