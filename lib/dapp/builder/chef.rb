@@ -8,7 +8,7 @@ module Dapp
         templates/**/*
       ).freeze
 
-      STAGE_NON_VENDOR_COOKBOOK_PATTERNS = %w(
+      STAGE_LOCAL_COOKBOOK_PATTERNS = %w(
         recipes/%{stage}.rb
         recipes/*_%{stage}.rb
         files/%{stage}/*
@@ -37,6 +37,10 @@ module Dapp
 
       private
 
+      def project_name
+        application.config._root_app._name # FIXME: parse name from metadata.rb
+      end
+
       def berksfile_path
         application.home_path('Berksfile')
       end
@@ -48,17 +52,6 @@ module Dapp
       def berksfile_lock_checksum
         path = application.home_path('Berksfile.lock')
         application.hashsum path.read if path.exist?
-      end
-
-      def local_cookbook_paths
-        @local_cookbook_paths ||= berksfile.local_cookbooks
-                                           .values
-                                           .map { |cookbook| cookbook[:path] }
-                                           .product(LOCAL_COOKBOOK_PATTERNS)
-                                           .map { |cb, dir| Dir[cb.join(dir)] }
-                                           .flatten
-                                           .map(&Pathname.method(:new))
-                                           .sort
       end
 
       def stage_cookbooks_runlist(stage)
@@ -81,18 +74,25 @@ module Dapp
         end
       end
 
-      def project_name
-        application.config._root_app._name # FIXME: parse name from metadata.rb
+      def local_cookbook_paths
+        @local_cookbook_paths ||= berksfile.local_cookbooks
+                                           .values
+                                           .map { |cookbook| cookbook[:path] }
+                                           .product(LOCAL_COOKBOOK_PATTERNS)
+                                           .map { |cb, dir| Dir[cb.join(dir)] }
+                                           .flatten
+                                           .map(&Pathname.method(:new))
       end
 
-      def stage_cookbooks_vendored_paths(stage)
-        @stage_cookbooks_vendored_paths ||= {}
-        @stage_cookbooks_vendored_paths[stage] ||= Dir[cookbooks_vendor_path('*')]
+      def stage_cookbooks_vendored_paths(stage, with_files: false)
+        Dir[cookbooks_vendor_path('*')]
           .map {|cookbook_path|
             if ['mdapp-*', project_name].any? {|pattern| File.fnmatch(pattern, File.basename(cookbook_path))}
-              STAGE_NON_VENDOR_COOKBOOK_PATTERNS.map do |pattern|
+              STAGE_LOCAL_COOKBOOK_PATTERNS.map do |pattern|
                 Dir[File.join(cookbook_path, pattern % { stage: stage })]
               end
+            elsif with_files
+              Dir[File.join(cookbook_path, '**/*')]
             else
               cookbook_path
             end
@@ -111,8 +111,7 @@ module Dapp
         else
           install_cookbooks
 
-          application.hashsum([*stage_cookbooks_vendored_paths(stage).map(&:to_s).sort,
-                               *stage_cookbooks_vendored_paths(stage).reject(&:directory?).sort.map(&:read),
+          application.hashsum([_paths_checksum(stage_cookbooks_vendored_paths(stage, with_files: true)),
                                *application.config._chef._modules,
                                (stage == :infra_install) ? chefdk_image : nil].compact).tap do |checksum|
             stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
@@ -123,9 +122,8 @@ module Dapp
       def cookbooks_checksum
         @cookbooks_checksum ||= application.hashsum [
           berksfile_lock_checksum,
-          *local_cookbook_paths.map(&:to_s).sort,
-          *local_cookbook_paths.reject(&:directory?).sort.map(&:read),
-          *application.config._chef._modules
+          _paths_checksum(local_cookbook_paths),
+          *application.config._chef._modules,
         ]
       end
 
@@ -213,6 +211,15 @@ module Dapp
 
       def container_stage_config_path(stage, *path)
         container_stage_build_path(stage, 'config.rb', *path)
+      end
+
+      def _paths_checksum(paths)
+        application.hashsum [
+          *paths.map(&:to_s).sort,
+          *paths.reject(&:directory?)
+                .sort
+                .reduce(nil) { |hash, path| application.hashsum [hash, path.read].compact }
+        ]
       end
     end
   end
