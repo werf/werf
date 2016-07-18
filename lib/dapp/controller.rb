@@ -30,13 +30,6 @@ module Dapp
       end
     end
 
-    def show
-      @build_confs.each do |build_conf|
-        log build_conf._name
-        with_log_indent { log JSON.pretty_generate(build_conf.to_h) }
-      end
-    end
-
     def push(repo)
       raise "Several applications isn't available for push command!" unless @build_confs.one?
       Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)

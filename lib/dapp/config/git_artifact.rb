@@ -18,10 +18,6 @@ module Dapp
         @_remote.tap { |remote| remote << Remote.new(*args) unless args.empty? }
       end
 
-      def to_h
-        { local: _local.map(&:to_h), remote: _remote.map(&:to_h) }
-      end
-
       def clone
         Marshal.load(Marshal.dump(self))
       end
@@ -49,10 +45,6 @@ module Dapp
           }
         end
 
-        def to_h
-          _artifact_options
-        end
-
         def clone
           Marshal.load(Marshal.dump(self))
         end
@@ -78,10 +70,6 @@ module Dapp
 
         def _artifact_options
           super.merge(name: _name, branch: _branch)
-        end
-
-        def to_h
-          super.merge(url: _url, name: _name, branch: _branch, ssh_key_path: _ssh_key_path)
         end
       end
     end

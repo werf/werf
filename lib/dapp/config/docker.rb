@@ -22,14 +22,6 @@ module Dapp
         @_from || raise("Docker `from` isn't defined!")
       end
 
-      def to_h
-        {
-          from:               _from,
-          from_cache_version: _from_cache_version,
-          expose:             _expose
-        }
-      end
-
       def clone
         Marshal.load(Marshal.dump(self))
       end

@@ -6,7 +6,7 @@ module Dapp
     include Mixlib::CLI
     include CliHelper
 
-    SUBCOMMANDS = %w(build smartpush push list show flush).freeze
+    SUBCOMMANDS = %w(build smartpush push list flush).freeze
 
     banner <<BANNER.freeze
 Usage: dapp [options] sub-command [sub-command options]
@@ -17,7 +17,6 @@ dapp build [options] [PATTERN ...]
 dapp push [options] [PATTERN] REPO
 dapp smartpush [options] [PATTERN ...] REPOPREFIX
 dapp list [options] [PATTERN ...]
-dapp show [options] [PATTERN ...]
 dapp flush
 
 Options:

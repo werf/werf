@@ -32,19 +32,6 @@ module Dapp
         @_app_setup_cache_version = cache_version
       end
 
-      def to_h
-        {
-          infra_install:               _infra_install,
-          infra_install_cache_version: _infra_install_cache_version,
-          infra_setup:                 _infra_setup,
-          infra_setup_cache_version:   _infra_setup_cache_version,
-          app_install:                 _app_install,
-          app_install_cache_version:   _app_install_cache_version,
-          app_setup:                   _app_setup,
-          app_setup_cache_version:     _app_setup_cache_version
-        }
-      end
-
       def clone
         Marshal.load(Marshal.dump(self))
       end

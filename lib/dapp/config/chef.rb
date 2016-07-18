@@ -12,12 +12,6 @@ module Dapp
         @_modules.concat(args)
       end
 
-      def to_h
-        {
-          modules: _modules
-        }
-      end
-
       def clone
         Marshal.load(Marshal.dump(self))
       end
