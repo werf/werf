@@ -18,10 +18,6 @@ before_script:
 - USER_NAME=$(id -un) && sudo gpasswd -a $USER_NAME docker
 - sudo service docker restart
 
-script:
-- docker version
-- docker ps
-
 deploy:
   provider: rubygems
   api_key:
