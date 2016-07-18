@@ -9,6 +9,9 @@ rvm:
 services:
 - docker
 
+script:
+- docker version
+
 deploy:
   provider: rubygems
   api_key:
