@@ -68,7 +68,7 @@ describe Dapp::GitArtifact do
 
   def command_apply(command)
     expect(command).to_not be_empty
-    expect { application.shellout!(command) }.to_not raise_error
+    expect { application.shellout!(command, live_stdout: STDOUT, live_stderr: STDERR) }.to_not raise_error
   end
 
   def clear_where_to_add
@@ -76,7 +76,7 @@ describe Dapp::GitArtifact do
   end
 
   def with_credentials(owner_name, group_name)
-    shellout! "groupadd #{group_name}; useradd #{owner_name} -g #{group_name}"
+    shellout! "groupadd #{group_name} && useradd #{owner_name} -g #{group_name}"
     yield
   ensure
     shellout "userdel #{owner_name}"
