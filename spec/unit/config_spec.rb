@@ -15,7 +15,7 @@ describe Dapp::Config::Main do
     apps.first
   end
 
-  def expect_special_attribute(obj, attribute, config_attribute="_#{attribute}")
+  def expect_special_attribute(obj, attribute, config_attribute = "_#{attribute}")
     builder = "builder #{obj == :chef ? ':chef' : ':shell'}"
     attribute_path = "#{obj}.#{attribute}"
     @dappfile = %(

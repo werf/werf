@@ -7,18 +7,16 @@ module Dapp
           hashsum [from_image_name, application.config._docker._from_cache_version]
         end
 
-        def build!
-          return if image.tagged? && !application.dry_run
-          log_build_time do
-            from_image.pull! unless application.dry_run
-            log_build
-            image.build!(application.logging?) unless application.dry_run
-          end
+        def save_in_cache!
+          from_image.untag! if from_image.pulled?
+          super
         end
 
-        def save_in_cache!
+        protected
+
+        def image_build!
+          from_image.pull!(application.log_verbose)
           super
-          from_image.untag! if from_image.pulled? && from_image.tagged? && !application.dry_run
         end
 
         private

@@ -33,7 +33,7 @@ module SpecHelpers
       {
         _name: 'test',
         _chef: { _modules: [] },
-        _shell: { _infra_install: [], _infra_setup: [], _app_install: [], _app_setup: []},
+        _shell: { _infra_install: [], _infra_setup: [], _app_install: [], _app_setup: [] },
         _docker: { _from: :'ubuntu:14.04', _expose: [] },
         _git_artifact: { _local: [], _remote: [] }
       }

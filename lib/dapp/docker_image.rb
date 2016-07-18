@@ -24,14 +24,14 @@ module Dapp
       shellout!("docker rmi #{name}")
     end
 
-    def push!
+    def push!(log_verbose = false)
       raise "Image `#{name}` is not exist!" unless tagged?
-      shellout!("docker push #{name}")
+      shellout!("docker push #{name}", log_verbose: log_verbose)
     end
 
-    def pull!
+    def pull!(log_verbose = false)
       return if tagged?
-      shellout!("docker pull #{name}")
+      shellout!("docker pull #{name}", log_verbose: log_verbose)
       @pulled = true
     end
 

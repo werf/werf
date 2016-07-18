@@ -3,8 +3,12 @@ module Dapp
   module CommonHelper
     def log(message = '')
       return unless defined? cli_options
-      if cli_options[:log_verbose] || !cli_options[:log_quiet]
-        puts message.to_s.lines.map { |line| ' ' * 2 * cli_options[:log_indent].to_i + line }.join
+      puts message.to_s.lines.map { |line| ' ' * 2 * cli_options[:log_indent].to_i + line }.join unless cli_options[:log_quiet]
+    end
+
+    def log_with_indent(message = '')
+      with_log_indent do
+        log(message)
       end
     end
 

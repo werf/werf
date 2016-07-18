@@ -15,7 +15,7 @@ module Dapp
         templates/%{stage}/*
       ).freeze
 
-      CHEFDK_IMAGE = 'dapp2/chefdk:0.15.16-1'.freeze # TODO config, DSL, DEFAULT_CHEFDK_IMAGE
+      CHEFDK_IMAGE = 'dapp2/chefdk:0.15.16-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
       CHEFDK_CONTAINER = 'dapp2_chefdk_0.15.16-1'.freeze # FIXME hashsum(image) or dockersafe()
 
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
@@ -85,15 +85,14 @@ module Dapp
         application.config._root_app._name # FIXME: parse name from metadata.rb
       end
 
-
       def non_vendor_cookbooks_patterns
         ['mdapp-*', project_name]
       end
 
       def cookbooks_vendored_paths
         @cookbooks_vendored_paths ||= Dir[cookbooks_vendor_path('*')]
-          .map(&Pathname.method(:new))
-          .sort
+                                      .map(&Pathname.method(:new))
+                                      .sort
       end
 
       def vendor_cookbooks_vendored_paths
@@ -102,28 +101,28 @@ module Dapp
 
       def vendor_cookbooks_files_vendored_paths
         @vendor_cookbooks_files_vendored_paths ||= vendor_cookbooks_vendored_paths
-          .map { |path| Dir[path.join('**/*')] }
-          .flatten
-          .map(&Pathname.method(:new))
-          .sort
+                                                   .map { |path| Dir[path.join('**/*')] }
+                                                   .flatten
+                                                   .map(&Pathname.method(:new))
+                                                   .sort
       end
 
       def non_vendor_cookbooks_vendored_paths
         @non_vendor_cookbooks_vendored_paths ||= non_vendor_cookbooks_patterns
-          .map { |cookbook_pattern| Dir[cookbooks_vendor_path(cookbook_pattern)] }
-          .flatten
-          .map(&Pathname.method(:new))
-          .sort
+                                                 .map { |cookbook_pattern| Dir[cookbooks_vendor_path(cookbook_pattern)] }
+                                                 .flatten
+                                                 .map(&Pathname.method(:new))
+                                                 .sort
       end
 
       def stage_non_vendor_cookbooks_files_vendored_paths(stage)
         @stage_non_vendor_cookbooks_files_vendored_paths ||= {}
         @stage_non_vendor_cookbooks_files_vendored_paths[stage] ||= non_vendor_cookbooks_vendored_paths
-          .product(STAGE_NON_VENDOR_COOKBOOK_PATTERNS)
-          .map { |path, pattern| Dir[path.join(pattern % { stage: stage })] }
-          .flatten
-          .map(&Pathname.method(:new))
-          .sort
+                                                                    .product(STAGE_NON_VENDOR_COOKBOOK_PATTERNS)
+                                                                    .map { |path, pattern| Dir[path.join(pattern % { stage: stage })] }
+                                                                    .flatten
+                                                                    .map(&Pathname.method(:new))
+                                                                    .sort
       end
 
       def stage_cookbooks_files_vendored_paths(stage)
@@ -158,7 +157,7 @@ module Dapp
           berksfile_lock_checksum,
           *local_cookbook_paths.map(&:to_s),
           *local_cookbook_paths.reject(&:directory?).map(&:read),
-          *application.config._chef._modules,
+          *application.config._chef._modules
         ]
       end
 
@@ -177,6 +176,7 @@ module Dapp
         end
       end
 
+      # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/LineLength
       def install_cookbooks
         @install_cookbooks ||= begin
           user = Etc.getpwnam(Etc.getlogin)
@@ -194,14 +194,14 @@ module Dapp
                                          "mkdir -p #{user.dir}",
                                          "chown -R #{user.name}:#{group.name} #{user.dir}",
                                          "su #{user.name} -c \"#{["cd #{berksfile_path.parent}",
-                                                                  "/opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"].join(' && ')}\""
-                                         ].join(' && ')}'"].join(' '),
+                                                                  "/opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"].join(' && ')}\""].join(' && ')}'"].join(' '),
             log_verbose: true
           )
 
           true
         end
       end
+      # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/LineLength
 
       def install_stage_cookbooks(stage)
         stage_cookbooks_path(stage).mkpath

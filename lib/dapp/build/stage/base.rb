@@ -16,18 +16,18 @@ module Dapp
         end
 
         def build!
-          return if image.tagged? && !application.dry_run
+          return if image.tagged? && !application.log_verbose
           prev_stage.build! if prev_stage
-          log_build_time do
-            log_build
-            image.build!(application.logging?) unless application.dry_run
+          log_build_time(should_be_built?) do
+            log_build    if application.log?
+            image_build! if should_be_built?
           end
         end
 
         def save_in_cache!
           return if image.tagged?
           prev_stage.save_in_cache! if prev_stage
-          image.tag! unless application.dry_run
+          image.tag!                unless application.dry_run
         end
 
         def signature
@@ -49,6 +49,14 @@ module Dapp
           self.class.to_s.split('::').last.split(/(?=[[:upper:]]|[0-9])/).join('_').downcase.to_sym
         end
 
+        def should_be_built?
+          !image.tagged? && !application.dry_run
+        end
+
+        def image_build!
+          image.build!(application.log_verbose)
+        end
+
         def from_image
           prev_stage.image if prev_stage || begin
             raise 'missing from_image'
@@ -67,24 +75,25 @@ module Dapp
 
         def format_image_info
           date, bytesize = image_info
-          ["date: #{Time.parse(date)}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
+          ["date: #{Time.parse(date).localtime}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
         end
 
         # rubocop:disable Metrics/AbcSize
         def log_build
-          application.log "#{name} #{"[#{image.tagged? ? image_name : '×'}]" if application.dry_run}"
-          application.with_log_indent(application.dry_run) { application.log format_image_info if image.tagged? }
-          bash_commands = image.send(:bash_commands)
+          application.log "#{name} #{"[#{image_name}]" if image.tagged? && application.log_verbose}"
           application.with_log_indent do
-            application.log('commands:')
-            application.with_log_indent { application.log bash_commands.join("\n") }
-          end unless bash_commands.empty?
+            application.log format_image_info if image.tagged? && application.log_verbose
+            unless (bash_commands = image.send(:bash_commands)).empty?
+              application.log('commands:')
+              application.with_log_indent { application.log bash_commands.join("\n") }
+            end
+          end
         end
         # rubocop:enable Metrics/AbcSize
 
-        def log_build_time(&blk)
+        def log_build_time(log_it, &blk)
           time = run_time(&blk)
-          application.log("build time: #{time.round(2)}") if application.logging? and !application.dry_run
+          application.log_with_indent("build time: #{time.round(2)}") if application.log? && log_it
         end
 
         def run_time

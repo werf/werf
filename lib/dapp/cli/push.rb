@@ -49,10 +49,6 @@ BANNER
              description: 'Tag by git commit',
              boolean: true
 
-      option :dry_run,
-             long: '--dry_run',
-             boolean: true
-
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         repo = self.class.required_argument(self)

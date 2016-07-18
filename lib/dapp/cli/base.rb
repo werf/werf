@@ -14,15 +14,27 @@ module Dapp
              long: '--quiet',
              description: 'Suppress logging',
              on: :tail,
-             boolean: true,
-             builder_opt: true
+             default: false,
+             boolean: true
 
       option :log_verbose,
              long: '--verbose',
              description: 'Enable verbose output',
              on: :tail,
-             boolean: true,
-             builder_opt: true
+             default: false,
+             boolean: true
+
+      option :log_debug,
+             long: '--debug',
+             description: 'Enable debug',
+             on: :tail,
+             default: false,
+             boolean: true
+
+      option :dry_run,
+             long: '--dry-run',
+             default: false,
+             boolean: true
 
       def initialize
         self.class.options.merge!(Base.options)

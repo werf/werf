@@ -40,19 +40,19 @@ module Dapp
       shellout("docker rm #{container_name}")
     end
 
-    def export!(name)
+    def export!(name, log_verbose: false)
       image = self.class.new(built_id: built_id, name: name)
       image.tag!
-      image.push!
+      image.push!(log_verbose)
       image.untag!
     end
 
-    def tag!
+    def tag!(log_verbose = false)
       unless (existed_id = id).nil?
         raise 'Image with other id has already tagged' if built_id != existed_id
         return
       end
-      shellout!("docker tag #{built_id} #{name}")
+      shellout!("docker tag #{built_id} #{name}", log_verbose: log_verbose)
     end
 
     protected
@@ -65,7 +65,7 @@ module Dapp
       options[key] = (options[key].nil? ? value : (Array(options[key]) << value).flatten)
     end
 
-    def run!(log_verbose)
+    def run!(log_verbose = false)
       raise '`from.built_id` is not defined!' if from.built_id.nil?
       shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}", log_verbose: log_verbose)
     end

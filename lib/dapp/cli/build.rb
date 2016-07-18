@@ -26,10 +26,6 @@ BANNER
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
              description: 'Default branch to archive artifacts from'
-
-      option :dry_run,
-             long: '--dry_run',
-             boolean: true
     end
   end
 end

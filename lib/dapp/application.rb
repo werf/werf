@@ -19,14 +19,6 @@ module Dapp
       @ignore_git_fetch = ignore_git_fetch
     end
 
-    def dry_run
-      !!cli_options[:dry_run]
-    end
-
-    def logging?
-      cli_options[:log_verbose] || !cli_options[:log_quiet]
-    end
-
     def build!
       last_stage.build!
       last_stage.save_in_cache!
@@ -37,7 +29,8 @@ module Dapp
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
-        dry_run ? log(image_name) : last_stage.image.export!(image_name)
+        log(image_name)                                                if log_verbose
+        last_stage.image.export!(image_name, log_verbose: log_verbose) unless dry_run
       end
     end
 
@@ -84,6 +77,26 @@ module Dapp
 
     def builder
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
+    end
+
+    def log?
+      !log_quiet
+    end
+
+    def log_quiet
+      cli_options[:log_quiet]
+    end
+
+    def log_verbose
+      cli_options[:log_verbose]
+    end
+
+    def log_debug
+      cli_options[:log_debug]
+    end
+
+    def dry_run
+      cli_options[:dry_run]
     end
 
     protected
