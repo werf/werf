@@ -3,8 +3,10 @@ PATH
   specs:
     dapp (0.1.0)
       excon (>= 0.45.4, < 1.0)
+      i18n (~> 0.7)
       mixlib-cli (>= 1.0, < 3.0)
       mixlib-shellout (>= 1.0, < 3.0)
+      net_status (>= 0.0.1, < 1.0)
 
 GEM
   remote: https://rubygems.org/
@@ -53,6 +55,8 @@ GEM
     multipart-post (2.0.0)
     net-http-persistent (2.9.4)
     net-http-pipeline (1.0.1)
+    net_status (0.1.0)
+      i18n (~> 0.7)
     pry (0.10.4)
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
@@ -118,3 +122,6 @@ DEPENDENCIES
   test_construct (~> 2)
   timecop (~> 0.8)
   travis (~> 1.8, >= 1.8.2)
+
+BUNDLED WITH
+   1.12.5
