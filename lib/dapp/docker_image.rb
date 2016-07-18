@@ -12,7 +12,11 @@ module Dapp
     end
 
     def id
-      @id || shellout!("docker images -q --no-trunc=true #{name}").stdout.strip
+      @id || begin
+        unless (output = shellout!("docker images -q --no-trunc=true #{name}").stdout.strip).empty?
+          output
+        end
+      end
     end
 
     def untag!
@@ -32,7 +36,7 @@ module Dapp
     end
 
     def tagged?
-      !id.empty?
+      !!id
     end
 
     def pulled?

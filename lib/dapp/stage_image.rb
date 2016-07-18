@@ -66,7 +66,7 @@ module Dapp
     end
 
     def run!(log_verbose)
-      raise '`from.built_id` is not defined!' if from.built_id.empty?
+      raise '`from.built_id` is not defined!' if from.built_id.nil?
       shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}", log_verbose: log_verbose)
     end
 
