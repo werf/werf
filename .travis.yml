@@ -11,7 +11,7 @@ services:
 
 before_script:
 - sudo tee 'deb https://apt.dockerproject.org/repo ubuntu-trusty main' \
-    | /etc/apt/sources.list.d/docker.list
+    /etc/apt/sources.list.d/docker.list
 - sudo apt-get update -qq
 - sudo apt-get install -y docker-engine
 - USER_NAME=$(id -un) && sudo gpasswd -a $USER_NAME docker
