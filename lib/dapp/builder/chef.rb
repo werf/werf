@@ -89,9 +89,9 @@ module Dapp
         @stage_cookbooks_vendored_paths ||= {}
         @stage_cookbooks_vendored_paths[stage] ||= Dir[cookbooks_vendor_path('*')]
           .map {|cookbook_path|
-            if ['mdapp-*', project_name].any? {|pattern| File.fnmatch(pattern, cookbook_path)}
+            if ['mdapp-*', project_name].any? {|pattern| File.fnmatch(pattern, File.basename(cookbook_path))}
               STAGE_NON_VENDOR_COOKBOOK_PATTERNS.map do |pattern|
-                Dir[cookbook_path.join(pattern % { stage: stage })]
+                Dir[File.join(cookbook_path, pattern % { stage: stage })]
               end
             else
               cookbook_path
