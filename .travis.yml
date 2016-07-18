@@ -6,8 +6,6 @@ rvm:
 - 2.3.0
 - 2.2.4
 - 2.1.8
-services:
-- docker
 
 before_script:
 - sudo mkdir -p /etc/apt/sources.list.d/ &&
