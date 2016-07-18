@@ -10,7 +10,6 @@ module Dapp
 
       STAGE_NON_VENDOR_COOKBOOK_PATTERNS = %w(
         recipes/%{stage}.rb
-        recipes/%{stage}-*.rb
         recipes/*_%{stage}.rb
         files/%{stage}/*
         templates/%{stage}/*
