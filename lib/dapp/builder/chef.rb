@@ -177,9 +177,7 @@ module Dapp
       end
 
       def stage_empty?(stage)
-        !stage_cookbooks_path(stage).exist? ||
-          stage_cookbooks_path(stage).entries.size <= 2 ||
-            stage_cookbooks_runlist(stage).empty?
+        stage_cookbooks_runlist(stage).empty?
       end
 
       def install_chef_solo_stage_config(stage)
