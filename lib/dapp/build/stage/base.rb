@@ -16,18 +16,18 @@ module Dapp
         end
 
         def build!
-          return if image.tagged? && !application.show_only
+          return if image.tagged? && !application.dry_run
           prev_stage.build! if prev_stage
           log_build_time do
             log_build
-            image.build!(application.logging?) unless application.show_only
+            image.build!(application.logging?) unless application.dry_run
           end
         end
 
         def save_in_cache!
           return if image.tagged?
           prev_stage.save_in_cache! if prev_stage
-          image.tag! unless application.show_only
+          image.tag! unless application.dry_run
         end
 
         def signature
@@ -72,8 +72,8 @@ module Dapp
 
         # rubocop:disable Metrics/AbcSize
         def log_build
-          application.log "#{name} #{"[#{image.tagged? ? image_name : '×'}]" if application.show_only}"
-          application.with_log_indent(application.show_only) { application.log format_image_info if image.tagged? }
+          application.log "#{name} #{"[#{image.tagged? ? image_name : '×'}]" if application.dry_run}"
+          application.with_log_indent(application.dry_run) { application.log format_image_info if image.tagged? }
           bash_commands = image.send(:bash_commands)
           application.with_log_indent do
             application.log('commands:')
@@ -84,7 +84,7 @@ module Dapp
 
         def log_build_time(&blk)
           time = run_time(&blk)
-          application.log("build time: #{time.round(2)}") if application.logging? and !application.show_only
+          application.log("build time: #{time.round(2)}") if application.logging? and !application.dry_run
         end
 
         def run_time

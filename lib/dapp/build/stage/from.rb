@@ -8,17 +8,17 @@ module Dapp
         end
 
         def build!
-          return if image.tagged? && !application.show_only
+          return if image.tagged? && !application.dry_run
           log_build_time do
-            from_image.pull! unless application.show_only
+            from_image.pull! unless application.dry_run
             log_build
-            image.build!(application.logging?) unless application.show_only
+            image.build!(application.logging?) unless application.dry_run
           end
         end
 
         def save_in_cache!
           super
-          from_image.untag! if from_image.pulled? && from_image.tagged? && !application.show_only
+          from_image.untag! if from_image.pulled? && from_image.tagged? && !application.dry_run
         end
 
         private

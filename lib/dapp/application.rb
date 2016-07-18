@@ -19,8 +19,8 @@ module Dapp
       @ignore_git_fetch = ignore_git_fetch
     end
 
-    def show_only
-      !!cli_options[:show_only]
+    def dry_run
+      !!cli_options[:dry_run]
     end
 
     def logging?
@@ -33,11 +33,11 @@ module Dapp
     end
 
     def export!(repo)
-      raise "Application isn't built yet!" unless last_stage.image.tagged? || show_only
+      raise "Application isn't built yet!" unless last_stage.image.tagged? || dry_run
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
-        show_only ? log(image_name) : last_stage.image.export!(image_name)
+        dry_run ? log(image_name) : last_stage.image.export!(image_name)
       end
     end
 

@@ -49,8 +49,8 @@ BANNER
              description: 'Tag by git commit',
              boolean: true
 
-      option :show_only,
-             long: '--show-only',
+      option :dry_run,
+             long: '--dry_run',
              boolean: true
 
       def run(argv = ARGV)
