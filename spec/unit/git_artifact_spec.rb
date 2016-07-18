@@ -57,13 +57,13 @@ describe Dapp::GitArtifact do
   end
 
   def archive_command
-    git_artifact.archive_apply_command(stages[:source_1_archive]).join('; ')
-    # stages[:source_1_archive].image.send(:prepared_bash_command)
+    git_artifact.archive_apply_command(stages[:source_1_archive])
+    stages[:source_1_archive].image.send(:prepared_bash_command)
   end
 
   def patch_command
-    git_artifact.apply_patch_command(stages[:source_5]).join('; ')
-    # stages[:source_5].image.send(:prepared_bash_command)
+    git_artifact.apply_patch_command(stages[:source_5])
+    stages[:source_5].image.send(:prepared_bash_command)
   end
 
   def command_apply(command)
@@ -76,7 +76,7 @@ describe Dapp::GitArtifact do
   end
 
   def with_credentials(owner_name, group_name)
-    shellout "groupadd #{group_name}; useradd #{owner_name} -g #{group_name}"
+    shellout! "groupadd #{group_name}; useradd #{owner_name} -g #{group_name}"
     yield
   ensure
     shellout "userdel #{owner_name}"
