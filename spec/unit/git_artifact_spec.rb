@@ -57,18 +57,18 @@ describe Dapp::GitArtifact do
   end
 
   def archive_command
-    git_artifact.archive_apply_command(stages[:source_1_archive])
-    stages[:source_1_archive].image.send(:prepared_bash_command)
+    git_artifact.archive_apply_command(stages[:source_1_archive]).join('; ')
+    # stages[:source_1_archive].image.send(:prepared_bash_command)
   end
 
   def patch_command
-    git_artifact.apply_patch_command(stages[:source_5])
-    stages[:source_5].image.send(:prepared_bash_command)
+    git_artifact.apply_patch_command(stages[:source_5]).join('; ')
+    # stages[:source_5].image.send(:prepared_bash_command)
   end
 
   def command_apply(command)
     expect(command).to_not be_empty
-    expect { application.shellout! command }.to_not raise_error
+    expect { application.shellout(command, live_stdout: STDOUT, live_stderr: STDERR) }.to_not raise_error
   end
 
   def clear_where_to_add
