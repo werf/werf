@@ -48,7 +48,7 @@ module Dapp
     end
 
     def tag!
-      unless (existed_id = id).empty?
+      unless (existed_id = id).nil?
         raise 'Image with other id has already tagged' if built_id != existed_id
         return
       end

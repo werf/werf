@@ -18,9 +18,7 @@ module Dapp
     def build
       @build_confs.each do |build_conf|
         log build_conf._name
-        log_build_time(!cli_options[:show_only]) do
-          with_log_indent { Application.new(config: build_conf, cli_options: cli_options).build! }
-        end
+        with_log_indent { Application.new(config: build_conf, cli_options: cli_options).build! }
       end
     end
 
@@ -90,17 +88,6 @@ module Dapp
 
     def dapps_path
       @dapps_path ||= File.join [cli_options[:dir], '.dapps'].compact
-    end
-
-    def log_build_time(log, &blk)
-      time = run_time(&blk)
-      log("build time: #{time.round(2)}") if log
-    end
-
-    def run_time
-      start = Time.now
-      yield
-      Time.now - start
     end
   end # Controller
 end # Dapp

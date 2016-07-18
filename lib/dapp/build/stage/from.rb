@@ -9,9 +9,11 @@ module Dapp
 
         def build!
           return if image.tagged? && !application.show_only
-          from_image.pull! unless application.show_only
-          build_log
-          image.build!(application.logging?) unless application.show_only
+          log_build_time do
+            from_image.pull! unless application.show_only
+            log_build
+            image.build!(application.logging?) unless application.show_only
+          end
         end
 
         def save_in_cache!

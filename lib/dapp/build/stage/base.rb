@@ -18,8 +18,10 @@ module Dapp
         def build!
           return if image.tagged? && !application.show_only
           prev_stage.build! if prev_stage
-          build_log
-          image.build!(application.logging?) unless application.show_only
+          log_build_time do
+            log_build
+            image.build!(application.logging?) unless application.show_only
+          end
         end
 
         def save_in_cache!
@@ -69,7 +71,7 @@ module Dapp
         end
 
         # rubocop:disable Metrics/AbcSize
-        def build_log
+        def log_build
           application.log "#{name} #{"[#{image.tagged? ? image_name : '×'}]" if application.show_only}"
           application.with_log_indent(application.show_only) { application.log format_image_info if image.tagged? }
           bash_commands = image.send(:bash_commands)
@@ -79,6 +81,17 @@ module Dapp
           end unless bash_commands.empty?
         end
         # rubocop:enable Metrics/AbcSize
+
+        def log_build_time(&blk)
+          time = run_time(&blk)
+          application.log("build time: #{time.round(2)}") if application.logging? and !application.show_only
+        end
+
+        def run_time
+          start = Time.now
+          yield
+          Time.now - start
+        end
       end # Base
     end # Stage
   end # Build
