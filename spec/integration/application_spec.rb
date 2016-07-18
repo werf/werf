@@ -155,13 +155,9 @@ describe Dapp::Application do
 
   def expect_built_stages(stage_name)
     parted_stages_signatures(stage_name) do |built_stages, not_built_stages|
-      not_built_stages.each do |s|
-        expect(s.send(:image)).to_not have_received(:build!)
-        expect(s.send(:image)).to_not have_received(:tag!)
-      end
-      built_stages.each do |s|
-        expect(s.send(:image)).to have_received(:build!)
-        expect(s.send(:image)).to have_received(:tag!)
+      [:build!, :tag!].each do |method|
+        not_built_stages.each { |s| expect(s.send(:image)).to_not have_received(method) }
+        built_stages.each { |s| expect(s.send(:image)).to have_received(method) }
       end
     end
   end
