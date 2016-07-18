@@ -85,52 +85,20 @@ module Dapp
         application.config._root_app._name # FIXME: parse name from metadata.rb
       end
 
-      def non_vendor_cookbooks_patterns
-        ['mdapp-*', project_name]
-      end
-
-      def cookbooks_vendored_paths
-        @cookbooks_vendored_paths ||= Dir[cookbooks_vendor_path('*')]
-                                      .map(&Pathname.method(:new))
-                                      .sort
-      end
-
-      def vendor_cookbooks_vendored_paths
-        @vendor_cookbooks_vendored_paths ||= (cookbooks_vendored_paths - non_vendor_cookbooks_vendored_paths)
-      end
-
-      def vendor_cookbooks_files_vendored_paths
-        @vendor_cookbooks_files_vendored_paths ||= vendor_cookbooks_vendored_paths
-                                                   .map { |path| Dir[path.join('**/*')] }
-                                                   .flatten
-                                                   .map(&Pathname.method(:new))
-                                                   .sort
-      end
-
-      def non_vendor_cookbooks_vendored_paths
-        @non_vendor_cookbooks_vendored_paths ||= non_vendor_cookbooks_patterns
-                                                 .map { |cookbook_pattern| Dir[cookbooks_vendor_path(cookbook_pattern)] }
-                                                 .flatten
-                                                 .map(&Pathname.method(:new))
-                                                 .sort
-      end
-
-      def stage_non_vendor_cookbooks_files_vendored_paths(stage)
-        @stage_non_vendor_cookbooks_files_vendored_paths ||= {}
-        @stage_non_vendor_cookbooks_files_vendored_paths[stage] ||= non_vendor_cookbooks_vendored_paths
-                                                                    .product(STAGE_NON_VENDOR_COOKBOOK_PATTERNS)
-                                                                    .map { |path, pattern| Dir[path.join(pattern % { stage: stage })] }
-                                                                    .flatten
-                                                                    .map(&Pathname.method(:new))
-                                                                    .sort
-      end
-
-      def stage_cookbooks_files_vendored_paths(stage)
-        @stage_cookbooks_files_vendored_paths ||= {}
-        @stage_cookbooks_files_vendored_paths[stage] ||= [
-          *vendor_cookbooks_files_vendored_paths,
-          *stage_non_vendor_cookbooks_files_vendored_paths(stage)
-        ].sort
+      def stage_cookbooks_vendored_paths(stage)
+        @stage_cookbooks_vendored_paths ||= {}
+        @stage_cookbooks_vendored_paths[stage] ||= Dir[cookbooks_vendor_path('*')]
+          .map {|cookbook_path|
+            if ['mdapp-*', project_name].any? {|pattern| File.fnmatch(pattern, cookbook_path)}
+              STAGE_NON_VENDOR_COOKBOOK_PATTERNS.map do |pattern|
+                Dir[cookbook_path.join(pattern % { stage: stage })]
+              end
+            else
+              cookbook_path
+            end
+          }
+          .flatten
+          .map(&Pathname.method(:new))
       end
 
       def stage_cookbooks_checksum_path(stage)
@@ -143,8 +111,8 @@ module Dapp
         else
           install_cookbooks
 
-          application.hashsum([*stage_cookbooks_files_vendored_paths(stage).map(&:to_s),
-                               *stage_cookbooks_files_vendored_paths(stage).reject(&:directory?).map(&:read),
+          application.hashsum([*stage_cookbooks_vendored_paths(stage).map(&:to_s).sort,
+                               *stage_cookbooks_vendored_paths(stage).reject(&:directory?).sort.map(&:read),
                                *application.config._chef._modules,
                                (stage == :infra_install) ? chefdk_image : nil].compact).tap do |checksum|
             stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
@@ -155,8 +123,8 @@ module Dapp
       def cookbooks_checksum
         @cookbooks_checksum ||= application.hashsum [
           berksfile_lock_checksum,
-          *local_cookbook_paths.map(&:to_s),
-          *local_cookbook_paths.reject(&:directory?).map(&:read),
+          *local_cookbook_paths.map(&:to_s).sort,
+          *local_cookbook_paths.reject(&:directory?).sort.map(&:read),
           *application.config._chef._modules
         ]
       end
@@ -179,9 +147,6 @@ module Dapp
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/LineLength
       def install_cookbooks
         @install_cookbooks ||= begin
-          user = Etc.getpwnam(Etc.getlogin)
-          group = Etc.getgrgid(user.gid)
-
           application.shellout!(
             ['docker run --rm',
              "--volumes-from #{chefdk_container}",
@@ -189,12 +154,10 @@ module Dapp
              *berksfile.local_cookbooks
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-             "ubuntu:14.04 bash -lec '#{["groupadd #{group.name} -f -g #{group.gid}",
-                                         "useradd #{user.name} -u #{user.uid} -g #{user.gid} -d #{user.dir}",
-                                         "mkdir -p #{user.dir}",
-                                         "chown -R #{user.name}:#{group.name} #{user.dir}",
-                                         "su #{user.name} -c \"#{["cd #{berksfile_path.parent}",
-                                                                  "/opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"].join(' && ')}\""].join(' && ')}'"].join(' '),
+             "--user=#{Process.uid}:#{Process.gid}",
+             "--workdir=#{berksfile_path.parent}",
+             "ubuntu:14.04 /opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
+            ].join(' '),
             log_verbose: true
           )
 
@@ -205,7 +168,7 @@ module Dapp
 
       def install_stage_cookbooks(stage)
         stage_cookbooks_path(stage).mkpath
-        stage_cookbooks_files_vendored_paths(stage).each do |path|
+        stage_cookbooks_vendored_paths(stage).each do |path|
           new_path = stage_cookbooks_path(stage, path.relative_path_from(cookbooks_vendor_path))
           new_path.parent.mkpath
           FileUtils.cp_r path, new_path
