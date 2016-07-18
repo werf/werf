@@ -10,6 +10,9 @@ require 'excon'
 require 'json'
 require 'ostruct'
 require 'time'
+require 'i18n'
+
+require 'net_status'
 
 require 'dapp/version'
 require 'dapp/cli_helper'
@@ -55,3 +58,15 @@ require 'dapp/git_repo/base'
 require 'dapp/git_repo/own'
 require 'dapp/git_repo/remote'
 require 'dapp/git_artifact'
+require 'dapp/error/base'
+require 'dapp/error/application'
+require 'dapp/error/build'
+require 'dapp/error/config'
+require 'dapp/error/controller'
+require 'dapp/patches/format_string'
+
+module Dapp
+  def self.root
+    File.expand_path('../..', __FILE__)
+  end
+end
