@@ -82,20 +82,20 @@ module Dapp
 
         # rubocop:disable Metrics/AbcSize
         def log_build
-          application.log "#{name} #{"[#{image_name}]" if image.tagged? && application.log_verbose}"
+          application.log "#{name.to_s.base} #{"[#{image_name}]".verbose if image.tagged? && application.log_verbose}"
           application.with_log_indent do
-            application.log format_image_info if image.tagged? && application.log_verbose
+            application.log format_image_info.verbose if image.tagged?
             unless (bash_commands = image.send(:bash_commands)).empty?
-              application.log('commands:')
-              application.with_log_indent { application.log bash_commands.join("\n") }
+              application.log('commands:'.verbose)
+              application.with_log_indent { application.log bash_commands.join("\n").verbose }
             end
-          end
+          end if application.log_verbose
         end
         # rubocop:enable Metrics/AbcSize
 
         def log_build_time(log_it, &blk)
           time = run_time(&blk)
-          application.log("build time: #{time.round(2)}", indent: true) if application.log? && log_it
+          application.log("build time: #{time.round(2)}".base, indent: true) if application.log? && log_it
         end
 
         def run_time

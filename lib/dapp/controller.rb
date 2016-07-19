@@ -20,14 +20,14 @@ module Dapp
 
     def build
       @build_confs.each do |build_conf|
-        log build_conf._name
+        log build_conf._name.base
         with_log_indent { Application.new(config: build_conf, cli_options: cli_options).build! }
       end
     end
 
     def list
       @build_confs.each do |build_conf|
-        log build_conf._name
+        log build_conf._name.base
       end
     end
 
@@ -38,7 +38,7 @@ module Dapp
 
     def smartpush(repo_prefix)
       @build_confs.each do |build_conf|
-        log build_conf._name
+        log build_conf._name.base
         repo = File.join(repo_prefix, build_conf._name)
         with_log_indent { Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true).export!(repo) }
       end
@@ -46,7 +46,7 @@ module Dapp
 
     def flush_build_cache
       @build_confs.each do |build_conf|
-        log build_conf._name
+        log build_conf._name.base
         app = Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true)
         FileUtils.rm_rf app.build_cache_path
       end
@@ -66,17 +66,19 @@ module Dapp
           dappfiles << dappfile_path
         elsif File.exist? dapps_path
           dappfiles += Dir.glob(File.join([dapps_path, '*', 'Dappfile'].compact))
+        else
+          raise Error::Controller, code: :dappfile_not_found
         end
         dappfiles.flatten.uniq!
         dappfiles.map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten.tap do |apps|
-          raise Error::Controller, code: :not_such_app, data: { path: dappfile_path, patterns: patterns.join(', ') } if apps.empty?
+          raise Error::Controller, code: :no_such_app, data: { path: dappfile_path, patterns: patterns.join(', ') } if apps.empty?
         end
       end
     end
 
     def apps(dappfile_path, app_filters:)
       config = Config::Main.new(dappfile_path: dappfile_path) do |conf|
-        log "Processing dappfile '#{dappfile_path}'" if !!cli_options[:log_debug]
+        log "Processing dappfile '#{dappfile_path}'".debug if !!cli_options[:log_debug]
         conf.instance_eval File.read(dappfile_path), dappfile_path
       end
       config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }

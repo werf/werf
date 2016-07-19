@@ -13,7 +13,8 @@ en:
       built_id_is_not_defined: '`from.built_id` is not defined!'
     controller:
       one_application_expected: "Several applications isn't available for push command!"
-      no_such_app: "Error: No such app: '%{patterns}' in '%{path}'!"
+      no_such_app: "No such app: '%{patterns}' in '%{path}'!"
+      dappfile_not_found: "Dappfile isn't found!"
     config:
       another_builder_defined: 'Already defined another builder type!'
       builder_type_is_not_supported: "Builder type `%{type}` isn't supported!"

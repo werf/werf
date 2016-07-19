@@ -1,6 +1,11 @@
 module Dapp
   module Patches
     module FormatString
+      def base; self.bold.brown end
+      def verbose; self.gray end
+      def debug; self.cyan end
+      def error; self.bold.red end
+
       def black;          "\e[30m#{self}\e[0m" end
       def red;            "\e[31m#{self}\e[0m" end
       def green;          "\e[32m#{self}\e[0m" end

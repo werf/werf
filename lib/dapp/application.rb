@@ -30,7 +30,7 @@ module Dapp
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
-        log(image_name)                                                if log_verbose
+        log(image_name.verbose)                           if log_verbose
         last_stage.image.export!(image_name, log_verbose: log_verbose) unless dry_run
       end
     end
