@@ -93,6 +93,9 @@ describe Dapp::Builder::Chef do
 
   def init_project
     FileUtils.cp_r template_testproject_path, testproject_path.tap { |p| p.parent.mkpath }
+    testproject_path.join('build').rmtree
+    testproject_path.join('build_cache').rmtree
+
     FileUtils.cp_r template_mdapp_test_path, mdapp_test_path.tap { |p| p.parent.mkpath }
     FileUtils.cp_r template_mdapp_test2_path, mdapp_test2_path.tap { |p| p.parent.mkpath }
   end
