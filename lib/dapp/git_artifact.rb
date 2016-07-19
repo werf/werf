@@ -1,8 +1,6 @@
 module Dapp
   # Artifact from Git repo
   class GitArtifact
-    include Dapp::CommonHelper
-
     attr_reader :repo
     attr_reader :name
 

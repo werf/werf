@@ -3,7 +3,9 @@ module Dapp
     module Stage
       # Base of all stages
       class Base
-        include CommonHelper
+        include Helper::Log
+        include Helper::Sha256
+        include Helper::Trivia
 
         attr_accessor :prev_stage, :next_stage
         attr_reader :application
@@ -59,7 +61,7 @@ module Dapp
 
         def from_image
           prev_stage.image if prev_stage || begin
-            application.error! 'missing from_image'
+            raise Error::Build, code: :from_image_required
           end
         end
 
@@ -80,20 +82,20 @@ module Dapp
 
         # rubocop:disable Metrics/AbcSize
         def log_build
-          application.log "#{name} #{"[#{image_name}]" if image.tagged? && application.log_verbose}"
+          application.log "#{name.to_s.base} #{"[#{image_name}]".verbose if image.tagged? && application.log_verbose}"
           application.with_log_indent do
-            application.log format_image_info if image.tagged? && application.log_verbose
+            application.log format_image_info.verbose if image.tagged?
             unless (bash_commands = image.send(:bash_commands)).empty?
-              application.log('commands:')
-              application.with_log_indent { application.log bash_commands.join("\n") }
+              application.log('commands:'.verbose)
+              application.with_log_indent { application.log bash_commands.join("\n").verbose }
             end
-          end
+          end if application.log_verbose
         end
         # rubocop:enable Metrics/AbcSize
 
         def log_build_time(log_it, &blk)
           time = run_time(&blk)
-          application.log_with_indent("build time: #{time.round(2)}") if application.log? && log_it
+          application.log("build time: #{time.round(2)}".verbose, indent: true) if application.log? && log_it
         end
 
         def run_time

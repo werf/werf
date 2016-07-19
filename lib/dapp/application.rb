@@ -1,7 +1,9 @@
 module Dapp
   # Application
   class Application
-    include CommonHelper
+    include Helper::Log
+    include Helper::Shellout
+    include Helper::Sha256
     include Dapp::Filelock
 
     attr_reader :config
@@ -25,11 +27,11 @@ module Dapp
     end
 
     def export!(repo)
-      error! "Application isn't built yet!" unless last_stage.image.tagged? || dry_run
+      raise Error::Application, code: :application_is_not_built unless last_stage.image.tagged? || dry_run
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
-        log(image_name)                                                if log_verbose
+        log(image_name.verbose)                                        if log_verbose
         last_stage.image.export!(image_name, log_verbose: log_verbose) unless dry_run
       end
     end
@@ -115,7 +117,7 @@ module Dapp
 
     def branch_tags
       return [] unless cli_options[:tag_branch]
-      error! "Application has specific revision that isn't associated with a branch name!" if (branch = git_repo.branch) == 'HEAD'
+      raise Error::Application, code: :git_branch_without_name if (branch = git_repo.branch) == 'HEAD'
       [branch]
     end
 
@@ -133,7 +135,7 @@ module Dapp
       elsif ENV['TRAVIS']
         build_id = ENV['TRAVIS_BUILD_NUMBER']
       else
-        error! 'CI environment required (Travis or GitLab CI)'
+        raise Error::Application, code: :ci_environment_required
       end
 
       [build_id]
@@ -149,7 +151,7 @@ module Dapp
         branch = ENV['TRAVIS_BRANCH']
         tag = ENV['TRAVIS_TAG']
       else
-        error! 'CI environment required (Travis or GitLab CI)'
+        raise Error::Application, code: :ci_environment_required
       end
 
       [branch, tag].compact

@@ -15,6 +15,7 @@ require 'spec_helpers/common'
 require 'spec_helpers/application'
 require 'spec_helpers/git'
 require 'spec_helpers/git_artifact'
+require 'spec_helpers/expect'
 
 RSpec.configure do |config|
   config.mock_with :rspec do |mocks|

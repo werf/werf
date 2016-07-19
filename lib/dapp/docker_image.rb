@@ -1,7 +1,7 @@
 module Dapp
   # DockerImage
   class DockerImage
-    include CommonHelper
+    include Helper::Shellout
 
     attr_reader :from
     attr_reader :name
@@ -20,12 +20,12 @@ module Dapp
     end
 
     def untag!
-      ::Dapp::Application.error! "Image `#{name}` is already untagged!" unless tagged?
+      raise Error::Build, code: :image_is_already_untagged, data: { name: name } unless tagged?
       shellout!("docker rmi #{name}")
     end
 
     def push!(log_verbose = false)
-      ::Dapp::Application.error! "Image `#{name}` is not exist!" unless tagged?
+      raise Error::Build, code: :image_is_not_exist, data: { name: name } unless tagged?
       shellout!("docker push #{name}", log_verbose: log_verbose)
     end
 
@@ -44,7 +44,7 @@ module Dapp
     end
 
     def info
-      ::Dapp::Application.error! "Image `#{name}` doesn't exist!" unless tagged?
+      raise Error::Build, code: :image_is_not_exist, data: { name: name } unless tagged?
       shellout!("docker inspect --format='{{.Created}} {{.Size}}' #{name}").stdout.strip.split
     end
   end # DockerImage

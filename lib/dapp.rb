@@ -10,10 +10,17 @@ require 'excon'
 require 'json'
 require 'ostruct'
 require 'time'
+require 'i18n'
+
+require 'net_status'
 
 require 'dapp/version'
-require 'dapp/error'
-require 'dapp/cli_helper'
+require 'dapp/helper/cli'
+require 'dapp/helper/trivia'
+require 'dapp/helper/sha256'
+require 'dapp/helper/i18n'
+require 'dapp/helper/log'
+require 'dapp/helper/shellout'
 require 'dapp/cli'
 require 'dapp/cli/base'
 require 'dapp/cli/build'
@@ -23,7 +30,6 @@ require 'dapp/cli/list'
 require 'dapp/cli/flush'
 require 'dapp/cli/flush/stage_cache'
 require 'dapp/cli/flush/build_cache'
-require 'dapp/common_helper'
 require 'dapp/filelock'
 require 'dapp/config/application'
 require 'dapp/config/main'
@@ -56,3 +62,15 @@ require 'dapp/git_repo/base'
 require 'dapp/git_repo/own'
 require 'dapp/git_repo/remote'
 require 'dapp/git_artifact'
+require 'dapp/error/base'
+require 'dapp/error/application'
+require 'dapp/error/build'
+require 'dapp/error/config'
+require 'dapp/error/controller'
+require 'dapp/patches/format_string'
+
+module Dapp
+  def self.root
+    File.expand_path('../..', __FILE__)
+  end
+end
