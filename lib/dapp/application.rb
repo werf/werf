@@ -25,7 +25,7 @@ module Dapp
     end
 
     def export!(repo)
-      raise "Application isn't built yet!" unless last_stage.image.tagged? || dry_run
+      error! "Application isn't built yet!" unless last_stage.image.tagged? || dry_run
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
@@ -115,7 +115,7 @@ module Dapp
 
     def branch_tags
       return [] unless cli_options[:tag_branch]
-      raise "Application has specific revision that isn't associated with a branch name!" if (branch = git_repo.branch) == 'HEAD'
+      error! "Application has specific revision that isn't associated with a branch name!" if (branch = git_repo.branch) == 'HEAD'
       [branch]
     end
 
@@ -133,7 +133,7 @@ module Dapp
       elsif ENV['TRAVIS']
         build_id = ENV['TRAVIS_BUILD_NUMBER']
       else
-        raise 'CI environment required (Travis or GitLab CI)'
+        error! 'CI environment required (Travis or GitLab CI)'
       end
 
       [build_id]
@@ -149,7 +149,7 @@ module Dapp
         branch = ENV['TRAVIS_BRANCH']
         tag = ENV['TRAVIS_TAG']
       else
-        raise 'CI environment required (Travis or GitLab CI)'
+        error! 'CI environment required (Travis or GitLab CI)'
       end
 
       [branch, tag].compact

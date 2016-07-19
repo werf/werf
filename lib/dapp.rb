@@ -12,6 +12,7 @@ require 'ostruct'
 require 'time'
 
 require 'dapp/version'
+require 'dapp/error'
 require 'dapp/cli_helper'
 require 'dapp/cli'
 require 'dapp/cli/base'

@@ -65,6 +65,10 @@ module Dapp
       (bytes / 1024.0 / 1024.0).round(2)
     end
 
+    def error!(*args)
+      raise(::Dapp::Error, *args)
+    end
+
     def self.included(base)
       base.extend(self)
     end

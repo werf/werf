@@ -20,12 +20,12 @@ module Dapp
     end
 
     def untag!
-      raise "Image `#{name}` is already untagged!" unless tagged?
+      ::Dapp::Application.error! "Image `#{name}` is already untagged!" unless tagged?
       shellout!("docker rmi #{name}")
     end
 
     def push!(log_verbose = false)
-      raise "Image `#{name}` is not exist!" unless tagged?
+      ::Dapp::Application.error! "Image `#{name}` is not exist!" unless tagged?
       shellout!("docker push #{name}", log_verbose: log_verbose)
     end
 
@@ -44,7 +44,7 @@ module Dapp
     end
 
     def info
-      raise "Image `#{name}` doesn't exist!" unless tagged?
+      ::Dapp::Application.error! "Image `#{name}` doesn't exist!" unless tagged?
       shellout!("docker inspect --format='{{.Created}} {{.Size}}' #{name}").stdout.strip.split
     end
   end # DockerImage

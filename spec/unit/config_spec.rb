@@ -41,7 +41,7 @@ describe Dapp::Config::Main do
       shell.infra_install 'a'
       chef.module 'a'
     )
-    expect { apps }.to raise_error RuntimeError, 'Already defined another builder type!'
+    expect { apps }.to raise_error ::Dapp::Error, 'chef is not available for shell builder'
   end
 
   it '#builder chef already used' do
@@ -49,7 +49,7 @@ describe Dapp::Config::Main do
       builder :chef
       shell.infra_install 'a'
     )
-    expect { apps }.to raise_error RuntimeError, 'Already defined another builder type!'
+    expect { apps }.to raise_error ::Dapp::Error, 'shell is not available for chef builder'
   end
 
   it '#docker from' do
@@ -90,7 +90,7 @@ describe Dapp::Config::Main do
 
   it '#git_artifact local with remote options' do
     @dappfile = "git_artifact.local 'where_to_add', #{dappfile_remote_options}"
-    expect { apps }.to raise_error RuntimeError
+    expect { apps }.to raise_error ::Dapp::Error
   end
 
   it '#git_artifact name from url' do
@@ -192,7 +192,7 @@ describe Dapp::Config::Main do
       app 'first'
       docker.from :image_1
     )
-    expect { app.docker._from }.to raise_error RuntimeError, "Docker `from` isn't defined!"
+    expect { app.docker._from }.to raise_error ::Dapp::Error, "Docker `from` isn't defined!"
   end
 
   it '#cache_version' do

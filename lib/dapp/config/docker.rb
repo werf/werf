@@ -19,7 +19,7 @@ module Dapp
       end
 
       def _from
-        @_from || raise("Docker `from` isn't defined!")
+        @_from || ::Dapp::Application.error!("Docker `from` isn't defined!")
       end
 
       def clone

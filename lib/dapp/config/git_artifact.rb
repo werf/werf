@@ -31,7 +31,7 @@ module Dapp
           @_where_to_add = where_to_add
 
           options.each do |k, v|
-            respond_to?("_#{k}=") ? send(:"_#{k}=", v) : raise("'#{object_name}' git artifact doesn't have attribute '#{k}'!")
+            respond_to?("_#{k}=") ? send(:"_#{k}=", v) : ::Dapp::Application.error!("'#{object_name}' git artifact doesn't have attribute '#{k}'!")
           end
         end
 

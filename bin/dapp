@@ -5,4 +5,9 @@
 require 'rubygems'
 require 'dapp'
 
-Dapp::CLI.new.run
+begin
+  Dapp::CLI.new.run
+rescue Dapp::Error => e
+  STDERR.puts "[ERROR] #{e.message}"
+  exit 1
+end

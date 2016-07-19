@@ -19,12 +19,12 @@ module Dapp
       end
 
       def chef
-        raise 'Already defined another builder type!' unless _builder == :chef
+        ::Dapp::Application.error! "chef is not available for #{_builder} builder" unless _builder == :chef
         @_chef ||= Chef.new
       end
 
       def shell
-        raise 'Already defined another builder type!' unless _builder == :shell
+        ::Dapp::Application.error! "shell is not available for #{_builder} builder" unless _builder == :shell
         @_shell ||= Shell.new
       end
 
@@ -37,7 +37,7 @@ module Dapp
       end
 
       def builder(type)
-        raise "Builder type `#{type}` isn't supported!" unless [:chef, :shell].include?((type = type.to_sym))
+        ::Dapp::Application.error! "Builder type `#{type}` isn't supported!" unless [:chef, :shell].include?((type = type.to_sym))
         another_builder = [:chef, :shell].find { |t| t != type }
         instance_variable_set(:"@_#{another_builder}", Config.const_get(another_builder.capitalize).new)
         @_builder = type

@@ -59,7 +59,7 @@ module Dapp
 
         def from_image
           prev_stage.image if prev_stage || begin
-            raise 'missing from_image'
+            application.error! 'missing from_image'
           end
         end
 
