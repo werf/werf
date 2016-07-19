@@ -4,7 +4,9 @@ module Dapp
       # From
       class From < Base
         def signature
-          hashsum [from_image_name, application.config._docker._from_cache_version]
+          hashsum [from_image_name,
+                   application.config._docker._from_cache_version,
+                   Dapp::BUILD_CACHE_VERSION]
         end
 
         def save_in_cache!
