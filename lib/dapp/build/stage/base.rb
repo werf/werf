@@ -95,7 +95,7 @@ module Dapp
 
         def log_build_time(log_it, &blk)
           time = run_time(&blk)
-          application.log("build time: #{time.round(2)}".base, indent: true) if application.log? && log_it
+          application.log("build time: #{time.round(2)}".verbose, indent: true) if application.log? && log_it
         end
 
         def run_time
