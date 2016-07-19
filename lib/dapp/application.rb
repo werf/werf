@@ -3,6 +3,7 @@ module Dapp
   class Application
     include Helper::Log
     include Helper::Shellout
+    include Helper::Sha256
     include Dapp::Filelock
 
     attr_reader :config
