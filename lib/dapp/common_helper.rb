@@ -35,7 +35,7 @@ module Dapp
     def shellout(*args, log_verbose: false, **kwargs)
       do_shellout = proc do
         log_verbose = (log_verbose && cli_options[:log_verbose]) if defined? cli_options
-        kwargs[:live_stream] = STDOUT if log_verbose
+        kwargs[:live_stream] = STDOUT #if log_verbose # TRAVISTEST
         Mixlib::ShellOut.new(*args, timeout: 3600, **kwargs).run_command
       end
 
