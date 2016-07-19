@@ -68,7 +68,7 @@ describe Dapp::GitArtifact do
 
   def command_apply(command)
     expect(command).to_not be_empty
-    p [:COMMAND, command]
+    p [:COMMAND, command] # TRAVISTEST
     expect { application.shellout!(command) }.to_not raise_error
   end
 
