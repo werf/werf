@@ -58,17 +58,19 @@ describe Dapp::GitArtifact do
 
   def archive_command
     git_artifact.archive_apply_command(stages[:source_1_archive])
-    stages[:source_1_archive].image.send(:prepared_bash_command)
+    # stages[:source_1_archive].image.send(:prepared_bash_command)
   end
 
   def patch_command
     git_artifact.apply_patch_command(stages[:source_5])
-    stages[:source_5].image.send(:prepared_bash_command)
+    # stages[:source_5].image.send(:prepared_bash_command)
   end
 
-  def command_apply(command)
-    expect(command).to_not be_empty
-    expect { application.shellout!(command, live_stdout: STDOUT, live_stderr: STDERR) }.to_not raise_error
+  def command_apply(commands)
+    expect(commands).to_not be_empty
+    commands.each do |cmd|
+      expect { application.shellout!("bash -lec \"#{cmd}\"", live_stdout: STDOUT, live_stderr: STDERR) }.to_not raise_error
+    end
   end
 
   def clear_where_to_add
@@ -76,10 +78,10 @@ describe Dapp::GitArtifact do
   end
 
   def with_credentials(owner_name, group_name)
-    shellout! "groupadd #{group_name} && useradd #{owner_name} -g #{group_name}"
+    shellout! "sudo groupadd #{group_name} && sudo useradd #{owner_name} -g #{group_name}"
     yield
   ensure
-    shellout "userdel #{owner_name}"
+    shellout "sudo userdel #{owner_name}"
   end
 
   def expect_file_credentials(file_path, group_name, user_name)
