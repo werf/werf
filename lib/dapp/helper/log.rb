@@ -14,8 +14,9 @@ module Dapp
         log(message, *args, style: :secondary)
       end
 
+      # rubocop:disable Metrics/ParameterLists
       def log(message = '', desc: nil, style: nil, indent: false, ignore_indent: false, new_line: true)
-        return unless defined?(cli_options) and !cli_options[:log_quiet]
+        return unless defined?(cli_options) && !cli_options[:log_quiet]
         unless desc.nil?
           (desc[:data] ||= {})[:msg] = message
           message = t(desc: desc)
@@ -28,6 +29,7 @@ module Dapp
           print "\n" if new_line
         end
       end
+      # rubocop:enable Metrics/ParameterLists
 
       def log_with_indent(message = '', **kvargs)
         with_log_indent do

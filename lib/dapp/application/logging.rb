@@ -1,6 +1,7 @@
 module Dapp
   # Application
   class Application
+    # Logging
     module Logging
       def log?
         !log_quiet
@@ -15,8 +16,8 @@ module Dapp
       end
 
       def log_state(message, status, indent: false, styles: {})
-        styles[:message]  ||= :step
-        styles[:status]   ||= :secondary
+        styles[:message] ||= :step
+        styles[:status] ||= :secondary
 
         status            = rjust("[#{status}]", message)
         formatted_message = paint_string(message, styles[:message])
@@ -25,12 +26,12 @@ module Dapp
         log "#{formatted_message} #{formatted_status}", indent: indent
       end
 
-      def log_process(message, process: 'RUNNING', indent: false, statuses: {}, styles: {})
+      def log_process(message, process:, indent: false, statuses: {}, styles: {})
         styles[:message] ||= :step
         styles[:process] ||= :secondary
         styles[:success] ||= :success
-        styles[:failed]  ||= :failed
-        styles[:time]    ||= :default
+        styles[:failed] ||= :failed
+        styles[:time] ||= :default
 
         message           = "#{message} ... " unless log_verbose
         status            = rjust("[#{statuses[:success] || 'OK'}]", message)
@@ -47,8 +48,8 @@ module Dapp
 
         start = Time.now
         yield
-      rescue Exception => _e
-        status  = rjust("[#{statuses[:failed] || 'FAILED'}]", message)
+      rescue StandardError => _e
+        status = rjust("[#{statuses[:failed] || 'FAILED'}]", message)
         formatted_status = paint_string(status, styles[:failed])
         raise
       ensure
@@ -62,8 +63,8 @@ module Dapp
       end
 
       def log_secondary_proccess(message, **kvargs, &blk)
-        styles = { styles: { message: :secondary, success: :secondary } }
-        log_process(message, **kvargs.merge(styles), &blk)
+        log_process(message, **kvargs.merge(process: 'RUNNING',
+                                            styles: { message: :secondary, success: :secondary }), &blk)
       end
 
       def rjust(string, start_string)

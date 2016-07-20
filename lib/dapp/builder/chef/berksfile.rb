@@ -14,7 +14,7 @@ module Dapp
             @berksfile.add_local_cookbook_path(name, path) if path
           end
 
-          def method_missing(*_a, &blk)
+          def method_missing(*_a, &_blk)
           end
 
           private

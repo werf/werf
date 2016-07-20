@@ -1,6 +1,7 @@
 module Dapp
   # Application
   class Application
+    # GitArtifact
     module GitArtifact
       def git_artifacts
         [*local_git_artifacts, *remote_git_artifacts].compact

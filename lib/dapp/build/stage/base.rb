@@ -70,7 +70,7 @@ module Dapp
 
         def from_image
           prev_stage.image if prev_stage || begin
-            raise Error::Build, code: :from_image_required
+            fail Error::Build, code: :from_image_required
           end
         end
 
@@ -89,7 +89,6 @@ module Dapp
           ["date: #{Time.parse(date).localtime}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
         end
 
-        # rubocop:disable Metrics/AbcSize
         def log_build
           application.with_log_indent do
             application.log_info "signature: #{image_name}"
@@ -100,7 +99,6 @@ module Dapp
             end
           end if application.log_verbose
         end
-        # rubocop:enable Metrics/AbcSize
       end # Base
     end # Stage
   end # Build

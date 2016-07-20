@@ -33,7 +33,7 @@ module Dapp
     end
 
     def push(repo)
-      raise Error::Controller, code: :one_application_expected unless @build_confs.one?
+      fail Error::Controller, code: :one_application_expected unless @build_confs.one?
       Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
     end
 
@@ -68,11 +68,11 @@ module Dapp
         elsif File.exist? dapps_path
           dappfiles += Dir.glob(File.join([dapps_path, '*', 'Dappfile'].compact))
         else
-          raise Error::Controller, code: :dappfile_not_found
+          fail Error::Controller, code: :dappfile_not_found
         end
         dappfiles.flatten.uniq!
         dappfiles.map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten.tap do |apps|
-          raise Error::Controller, code: :no_such_app, data: { path: dappfile_path, patterns: patterns.join(', ') } if apps.empty?
+          fail Error::Controller, code: :no_such_app, data: { path: dappfile_path, patterns: patterns.join(', ') } if apps.empty?
         end
       end
     end

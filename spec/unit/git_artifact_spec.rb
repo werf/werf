@@ -90,7 +90,7 @@ describe Dapp::GitArtifact do
     expect(file_user_name).to eq user_name.to_s
   end
 
- [:patch, :archive].each do |type|
+  [:patch, :archive].each do |type|
     it "##{type}", test_construct: true do
       send("#{type}_apply")
     end

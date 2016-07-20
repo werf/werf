@@ -72,6 +72,7 @@ require 'dapp/error/build'
 require 'dapp/error/config'
 require 'dapp/error/controller'
 
+# Dapp
 module Dapp
   def self.root
     File.expand_path('../..', __FILE__)

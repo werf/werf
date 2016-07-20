@@ -76,18 +76,18 @@ module Dapp
 
       def local_cookbook_paths
         @local_cookbook_paths ||= berksfile.local_cookbooks
-                                           .values
-                                           .map { |cookbook| cookbook[:path] }
-                                           .product(LOCAL_COOKBOOK_PATTERNS)
-                                           .map { |cb, dir| Dir[cb.join(dir)] }
-                                           .flatten
-                                           .map(&Pathname.method(:new))
+                                  .values
+                                  .map { |cookbook| cookbook[:path] }
+                                  .product(LOCAL_COOKBOOK_PATTERNS)
+                                  .map { |cb, dir| Dir[cb.join(dir)] }
+                                  .flatten
+                                  .map(&Pathname.method(:new))
       end
 
       def stage_cookbooks_vendored_paths(stage, with_files: false)
         Dir[cookbooks_vendor_path('*')]
-          .map {|cookbook_path|
-            if ['mdapp-*', project_name].any? {|pattern| File.fnmatch(pattern, File.basename(cookbook_path))}
+          .map do|cookbook_path|
+            if ['mdapp-*', project_name].any? { |pattern| File.fnmatch(pattern, File.basename(cookbook_path)) }
               STAGE_LOCAL_COOKBOOK_PATTERNS.map do |pattern|
                 Dir[File.join(cookbook_path, pattern % { stage: stage })]
               end
@@ -96,7 +96,7 @@ module Dapp
             else
               cookbook_path
             end
-          }
+          end
           .flatten
           .map(&Pathname.method(:new))
       end
@@ -123,7 +123,7 @@ module Dapp
         @cookbooks_checksum ||= application.hashsum [
           berksfile_lock_checksum,
           _paths_checksum(local_cookbook_paths),
-          *application.config._chef._modules,
+          *application.config._chef._modules
         ]
       end
 
@@ -138,14 +138,14 @@ module Dapp
               application.shellout ['docker run',
                                     "--name #{CHEFDK_CONTAINER}",
                                     "--volume /opt/chefdk #{chefdk_image}"].join(' '),
-                                    log_verbose: true
+                                   log_verbose: true
             end
           end
           CHEFDK_CONTAINER
         end
       end
 
-      # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/LineLength
+      # rubocop:disable Metrics/MethodLength
       def install_cookbooks
         @install_cookbooks ||= begin
           volumes_from = chefdk_container
@@ -159,7 +159,7 @@ module Dapp
                          .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
                "--user #{Process.uid}:#{Process.gid}",
                "--workdir #{berksfile_path.parent}",
-               "--env BERKSHELF_PATH=/tmp/berkshelf",
+               '--env BERKSHELF_PATH=/tmp/berkshelf',
                "ubuntu:14.04 /opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
               ].join(' '),
               log_verbose: true
@@ -169,7 +169,7 @@ module Dapp
           end
         end
       end
-      # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/LineLength
+      # rubocop:enable Metrics/MethodLength
 
       def install_stage_cookbooks(stage)
         stage_cookbooks_path(stage).mkpath
@@ -223,8 +223,8 @@ module Dapp
         application.hashsum [
           *paths.map(&:to_s).sort,
           *paths.reject(&:directory?)
-                .sort
-                .reduce(nil) { |hash, path| application.hashsum [hash, path.read].compact }
+            .sort
+            .reduce(nil) { |hash, path| application.hashsum [hash, path.read].compact }
         ]
       end
     end

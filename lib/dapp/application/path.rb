@@ -1,6 +1,7 @@
 module Dapp
   # Application
   class Application
+    # Path
     module Path
       def build_cache_path(*path)
         make_path(@build_cache_path, *path).expand_path.tap do |p|
