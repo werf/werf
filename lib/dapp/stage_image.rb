@@ -80,8 +80,8 @@ module Dapp
 
     def prepared_bash_command
       p bash_commands # TRAVISTEST
-      return prepared_commands.join(' && ')
-      "bash #{"-lec \"eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)\"" unless bash_commands.empty?}"
+      #"bash #{"-lec \"eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)\"" unless bash_commands.empty?}" # TRAVISTEST
+      "bash -lec '#{prepared_commands.join(' && ')}'"
     end
 
     def prepared_commands
