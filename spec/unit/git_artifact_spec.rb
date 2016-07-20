@@ -68,7 +68,7 @@ describe Dapp::GitArtifact do
 
   def command_apply(command)
     expect(command).to_not be_empty
-    expect { application.shellout(command, live_stream: STDOUT).tap { |r| [:RESULT, r] } }.to_not raise_error # TRAVISTEST
+    expect { application.shellout(p(command), live_stream: STDOUT).tap { |r| [:RESULT, r] }.error! }.to_not raise_error # TRAVISTEST
   end
 
   def clear_where_to_add
