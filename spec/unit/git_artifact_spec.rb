@@ -68,7 +68,7 @@ describe Dapp::GitArtifact do
 
   def command_apply(command)
     expect(command).to_not be_empty
-    expect { application.shellout!(command) }.to_not raise_error
+    expect { application.shellout(command).tap { |r| p [:RESULT, r] }.to_not raise_error
   end
 
   def clear_where_to_add
