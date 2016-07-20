@@ -126,7 +126,7 @@ describe Dapp::GitArtifact do
   owner = :git_artifact
   group = :git_artifact
 
-  it '#archive owner_and_group', test_construct: true do
+  xit '#archive owner_and_group', test_construct: true do
     with_credentials(owner, group) do
       archive_apply(add_files: [file_name], owner: owner, group: group) do
         expect_file_credentials(File.join(@where_to_add, file_name), owner, group)
@@ -134,7 +134,7 @@ describe Dapp::GitArtifact do
     end
   end
 
-  it '#patch owner_and_group', test_construct: true do
+  xit '#patch owner_and_group', test_construct: true do
     with_credentials(owner, group) do
       archive_apply(owner: owner, group: group) do
         application_build!
