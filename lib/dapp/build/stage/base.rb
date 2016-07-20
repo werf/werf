@@ -20,9 +20,18 @@ module Dapp
         def build!
           return if image.tagged? && !application.log_verbose
           prev_stage.build! if prev_stage
-          log_build_time(should_be_built?) do
-            log_build    if application.log?
-            image_build! if should_be_built?
+          begin
+            if image.tagged?
+              application.log_state(name, 'USING CACHE')
+            elsif application.dry_run
+              application.log_state(name, 'BUILD', styles: { status: :success })
+            else
+              application.log_process(name, process: 'BUILDING') do
+                image_build! if should_be_built?
+              end
+            end
+          ensure
+            log_build if application.log?
           end
         end
 
@@ -82,27 +91,16 @@ module Dapp
 
         # rubocop:disable Metrics/AbcSize
         def log_build
-          application.log "#{name.to_s.base} #{"[#{image_name}]".verbose if image.tagged? && application.log_verbose}"
           application.with_log_indent do
-            application.log format_image_info.verbose if image.tagged?
+            application.log_info "signature: #{image_name}"
+            application.log_info format_image_info if image.tagged?
             unless (bash_commands = image.send(:bash_commands)).empty?
-              application.log('commands:'.verbose)
-              application.with_log_indent { application.log bash_commands.join("\n").verbose }
+              application.log_info 'commands:'
+              application.with_log_indent { application.log_info bash_commands.join("\n") }
             end
           end if application.log_verbose
         end
         # rubocop:enable Metrics/AbcSize
-
-        def log_build_time(log_it, &blk)
-          time = run_time(&blk)
-          application.log("build time: #{time.round(2)}".verbose, indent: true) if application.log? && log_it
-        end
-
-        def run_time
-          start = Time.now
-          yield
-          Time.now - start
-        end
       end # Base
     end # Stage
   end # Build

@@ -12,13 +12,13 @@ module Dapp
         File.chmod(0o600, @ssh_key_path) if @ssh_key_path
 
         with_ssh_key do
-          git "clone --bare --depth 1 #{url} #{dir_path}", log_verbose: true
+          git "clone --bare --depth 1 #{url} #{dir_path}"
         end unless File.directory? dir_path
       end
 
       def fetch!(branch = 'master')
         with_ssh_key do
-          git_bare "fetch origin #{branch}:#{branch}", log_verbose: true
+          git_bare "fetch origin #{branch}:#{branch}"
         end unless application.ignore_git_fetch
       end
 

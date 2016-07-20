@@ -6,7 +6,8 @@ PATH
       i18n (~> 0.7)
       mixlib-cli (>= 1.0, < 3.0)
       mixlib-shellout (>= 1.0, < 3.0)
-      net_status (>= 0.0.1, < 1.0)
+      net_status (>= 0.1.2, < 1.0)
+      paint (~> 1.0, >= 1.0.1)
 
 GEM
   remote: https://rubygems.org/
@@ -55,8 +56,9 @@ GEM
     multipart-post (2.0.0)
     net-http-persistent (2.9.4)
     net-http-pipeline (1.0.1)
-    net_status (0.1.0)
+    net_status (0.1.2)
       i18n (~> 0.7)
+    paint (1.0.1)
     pry (0.10.4)
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)

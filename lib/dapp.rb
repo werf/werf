@@ -11,6 +11,7 @@ require 'json'
 require 'ostruct'
 require 'time'
 require 'i18n'
+require 'paint'
 
 require 'net_status'
 
@@ -55,6 +56,9 @@ require 'dapp/build/stage/source_3'
 require 'dapp/build/stage/source_4'
 require 'dapp/build/stage/source_5'
 require 'dapp/controller'
+require 'dapp/application/git_artifact'
+require 'dapp/application/logging'
+require 'dapp/application/path'
 require 'dapp/application'
 require 'dapp/docker_image'
 require 'dapp/stage_image'
@@ -67,7 +71,6 @@ require 'dapp/error/application'
 require 'dapp/error/build'
 require 'dapp/error/config'
 require 'dapp/error/controller'
-require 'dapp/patches/format_string'
 
 module Dapp
   def self.root

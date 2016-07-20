@@ -134,9 +134,12 @@ module Dapp
       def chefdk_container
         @chefdk_container ||= begin
           if application.shellout("docker inspect #{CHEFDK_CONTAINER}").exitstatus != 0
-            application.shellout ['docker run',
-                                  "--name #{CHEFDK_CONTAINER}",
-                                  "--volume /opt/chefdk #{chefdk_image}"].join(' ')
+            application.log_secondary_proccess('loading chefdk') do
+              application.shellout ['docker run',
+                                    "--name #{CHEFDK_CONTAINER}",
+                                    "--volume /opt/chefdk #{chefdk_image}"].join(' '),
+                                    log_verbose: true
+            end
           end
           CHEFDK_CONTAINER
         end
@@ -145,22 +148,25 @@ module Dapp
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/LineLength
       def install_cookbooks
         @install_cookbooks ||= begin
-          application.shellout!(
-            ['docker run --rm',
-             "--volumes-from #{chefdk_container}",
-             "--volume #{cookbooks_vendor_path.tap(&:mkpath)}:#{cookbooks_vendor_path}",
-             *berksfile.local_cookbooks
-                       .values
-                       .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-             "--user #{Process.uid}:#{Process.gid}",
-             "--workdir #{berksfile_path.parent}",
-             "--env BERKSHELF_PATH=/tmp/berkshelf",
-             "ubuntu:14.04 /opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
-            ].join(' '),
-            log_verbose: true
-          )
+          volumes_from = chefdk_container
+          application.log_secondary_proccess('berks vendor') do
+            application.shellout!(
+              ['docker run --rm',
+               "--volumes-from #{volumes_from}",
+               "--volume #{cookbooks_vendor_path.tap(&:mkpath)}:#{cookbooks_vendor_path}",
+               *berksfile.local_cookbooks
+                         .values
+                         .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
+               "--user #{Process.uid}:#{Process.gid}",
+               "--workdir #{berksfile_path.parent}",
+               "--env BERKSHELF_PATH=/tmp/berkshelf",
+               "ubuntu:14.04 /opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
+              ].join(' '),
+              log_verbose: true
+            )
 
-          true
+            true
+          end
         end
       end
       # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/LineLength

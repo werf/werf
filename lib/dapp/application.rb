@@ -4,6 +4,9 @@ module Dapp
     include Helper::Log
     include Helper::Shellout
     include Helper::Sha256
+    include Logging
+    include GitArtifact
+    include Path
     include Dapp::Filelock
 
     attr_reader :config
@@ -31,66 +34,18 @@ module Dapp
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
-        log(image_name.verbose)                                        if log_verbose
-        last_stage.image.export!(image_name, log_verbose: log_verbose) unless dry_run
+        if dry_run
+          log_state(image_name, 'PUSH', styles: { status: :success })
+        else
+          log_process(image_name, process: 'PUSHING') do
+            last_stage.image.export!(image_name, log_verbose: log_verbose)
+          end
+        end
       end
-    end
-
-    def git_artifacts
-      [*local_git_artifacts, *remote_git_artifacts].compact
-    end
-
-    def local_git_artifacts
-      @local_git_artifact_list ||= Array(config._git_artifact._local).map do |ga_config|
-        repo = GitRepo::Own.new(self)
-        GitArtifact.new(repo, **ga_config._artifact_options)
-      end
-    end
-
-    def remote_git_artifacts
-      @remote_git_artifact_list ||= Array(config._git_artifact._remote).map do |ga_config|
-        repo = GitRepo::Remote.new(self, ga_config._name, url: ga_config._url, ssh_key_path: ga_config._ssh_key_path)
-        repo.fetch!(ga_config._branch)
-        GitArtifact.new(repo, **ga_config._artifact_options)
-      end
-    end
-
-    def build_cache_path(*path)
-      make_path(@build_cache_path, *path).expand_path.tap do |p|
-        FileUtils.mkdir_p p.parent
-      end
-    end
-
-    def home_path(*path)
-      make_path(config._home_path, *path).expand_path
-    end
-
-    def build_path(*path)
-      make_path(@build_path, *path).expand_path.tap { |p| FileUtils.mkdir_p p.parent }
-    end
-
-    def container_build_path(*path)
-      make_path('/.build', *path)
     end
 
     def builder
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
-    end
-
-    def log?
-      !log_quiet
-    end
-
-    def log_quiet
-      cli_options[:log_quiet]
-    end
-
-    def log_verbose
-      cli_options[:log_verbose]
-    end
-
-    def log_debug
-      cli_options[:log_debug]
     end
 
     def dry_run
@@ -155,12 +110,6 @@ module Dapp
       end
 
       [branch, tag].compact
-    end
-
-    private
-
-    def make_path(base, *path)
-      path.compact.map(&:to_s).inject(Pathname.new(base), &:+)
     end
   end # Application
 end # Dapp

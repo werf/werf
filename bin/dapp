@@ -9,10 +9,10 @@ begin
   Dapp::CLI.new.run
 rescue NetStatus::Exception => e
   net_status = e.net_status.net_status_normalize(context: e.net_status.delete(:context))
-  message = (net_status[:message] || [net_status[:error], net_status[:code]].compact.join(': ')).error
-  $stderr.puts(message)
+  message = net_status[:message] || [net_status[:error], net_status[:code]].compact.join(': ')
+  $stderr.puts(Dapp::Helper::Log.error_colorize(message))
   exit 1
 rescue Interrupt => _e
-  $stderr.puts('Interrupted'.error)
+  $stderr.puts(Dapp::Helper::Log.error_colorize('Interrupted'))
   exit 1
 end

@@ -24,6 +24,11 @@ module Dapp
              default: false,
              boolean: true
 
+      option :log_colorless,
+             long: '--colorless',
+             default: false,
+             boolean: true
+
       option :dry_run,
              long: '--dry-run',
              default: false,
