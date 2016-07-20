@@ -79,11 +79,6 @@ module Dapp
     end
 
     def prepared_bash_command
-      if $TRAVISTEST
-        p [:PREPARED_COMMANDS, prepared_commands] # TRAVISTEST
-        p [:PREPARED_COMMANDS2, %x( echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode ) ] # TRAVISTEST
-        p [:PREPARED_COMMANDS3, Base64.strict_encode64(prepared_commands.join(' && '))] # TRAVISTEST
-      end # TRAVISTEST
       "bash #{"-lec \"eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)\"" unless bash_commands.empty?}"
     end
 
