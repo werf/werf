@@ -6,6 +6,8 @@ rvm:
 - 2.3.0
 - 2.2.4
 - 2.1.8
+install:
+- sudo -E su --preserve-environment -lc 'bundle install'
 
 before_script:
 - sudo mkdir -p /etc/apt/sources.list.d/ &&
