@@ -80,7 +80,7 @@ module Dapp
 
     def prepared_bash_command
       if bash_commands.empty?
-        "echo"
+        'true'
       else
         "bash -ec 'eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)'"
       end

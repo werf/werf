@@ -27,7 +27,7 @@ module Dapp
               application.log_state(name, 'BUILD', styles: { status: :success })
             else
               application.log_process(name, process: 'BUILDING') do
-                image_build! if should_be_built?
+                image_build!
               end
             end
           ensure
@@ -58,10 +58,6 @@ module Dapp
 
         def name
           self.class.to_s.split('::').last.split(/(?=[[:upper:]]|[0-9])/).join('_').downcase.to_sym
-        end
-
-        def should_be_built?
-          !image.tagged? && !application.dry_run
         end
 
         def image_build!
