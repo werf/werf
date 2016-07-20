@@ -79,7 +79,7 @@ module Dapp
     end
 
     def prepared_bash_command
-      p [:COMMAND, :STAGE, name, prepared_commands] # TRAVISTEST
+      p [:PREPARED_COMMANDS, prepared_commands] # TRAVISTEST
       "bash #{"-lec \"eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)\"" unless bash_commands.empty?}"
     end
 

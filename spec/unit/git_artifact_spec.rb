@@ -45,6 +45,7 @@ describe Dapp::GitArtifact do
       add_files.each { |file_path| git_change_and_commit!(file_path, branch: @branch) }
       application_renew
 
+      p [:TYPE=, TYPE] # TRAVISTEST
       command_apply(send("#{type}_command"))
 
       expect(File.exist?(@where_to_add)).to be_truthy
@@ -68,7 +69,9 @@ describe Dapp::GitArtifact do
 
   def command_apply(command)
     expect(command).to_not be_empty
-    p [:COMMAND, command] # TRAVISTEST
+    p [:COMMAND=, command] # TRAVISTEST
+    p [:ENV, ENV.to_h] # TRAVISTEST
+    p [:PWD, Pathname.new('.').expand_path.to_s] # TRAVISTEST
     expect { application.shellout!(command) }.to_not raise_error
   end
 
