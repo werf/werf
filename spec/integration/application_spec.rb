@@ -224,7 +224,7 @@ describe Dapp::Application do
   end
 
   [:source_5, :source_4, :app_setup, :infra_setup, :app_install, :infra_install, :from].each do |stage|
-    it "test #{stage}" do
+    xit "test #{stage}" do
       send(stage)
     end
   end
