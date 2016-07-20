@@ -24,13 +24,6 @@ module Dapp
              default: false,
              boolean: true
 
-      option :log_debug,
-             long: '--debug',
-             description: 'Enable debug',
-             on: :tail,
-             default: false,
-             boolean: true
-
       option :dry_run,
              long: '--dry-run',
              default: false,

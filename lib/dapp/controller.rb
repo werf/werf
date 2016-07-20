@@ -78,7 +78,6 @@ module Dapp
 
     def apps(dappfile_path, app_filters:)
       config = Config::Main.new(dappfile_path: dappfile_path) do |conf|
-        log "Processing dappfile '#{dappfile_path}'".debug if !!cli_options[:log_debug]
         conf.instance_eval File.read(dappfile_path), dappfile_path
       end
       config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }
