@@ -15,29 +15,29 @@ module Dapp
       end
 
       def log_state(message, status, indent: false, styles: {})
-        styles[:message]  = style(styles[:message] || :step)
-        styles[:status]   = style(styles[:status]  || :secondary)
+        styles[:message]  ||= :step
+        styles[:status]   ||= :secondary
 
         status            = rjust("[#{status}]", message)
-        formatted_message = Paint[message.to_s, *styles[:message]]
-        formatted_status  = Paint[status, *styles[:status]]
+        formatted_message = paint_string(message, styles[:message])
+        formatted_status  = paint_string(status, styles[:status])
 
         log "#{formatted_message} #{formatted_status}", indent: indent
       end
 
       def log_process(message, process: 'RUNNING', indent: false, statuses: {}, styles: {})
-        styles[:message] = style(styles[:message] || :step)
-        styles[:process] = style(styles[:process] || :secondary)
-        styles[:success] = style(styles[:success] || :success)
-        styles[:failed]  = style(styles[:failed]  || :failed)
-        styles[:time]    = styles[:time] ? style(styles[:time]) : :white
+        styles[:message] ||= :step
+        styles[:process] ||= :secondary
+        styles[:success] ||= :success
+        styles[:failed]  ||= :failed
+        styles[:time]    ||= :default
 
         message           = "#{message} ... " unless log_verbose
         status            = rjust("[#{statuses[:success] || 'OK'}]", message)
         process           = rjust("[#{process}]", message)
-        formatted_message = Paint[message, *styles[:message]]
-        formatted_process = Paint[process, *styles[:process]]
-        formatted_status  = Paint[status, *styles[:success]]
+        formatted_message = paint_string(message, styles[:message])
+        formatted_process = paint_string(process, styles[:process])
+        formatted_status  = paint_string(status, styles[:success])
 
         if log_verbose
           log "#{formatted_message} #{formatted_process}", indent: indent
@@ -49,10 +49,10 @@ module Dapp
         yield
       rescue Exception => _e
         status  = rjust("[#{statuses[:failed] || 'FAILED'}]", message)
-        formatted_status = Paint[status, *styles[:failed]]
+        formatted_status = paint_string(status, styles[:failed])
         raise
       ensure
-        time = Paint["#{(Time.now - start).round(2)} sec", styles[:time]]
+        time = paint_string("#{(Time.now - start).round(2)} sec", styles[:time])
 
         if log_verbose
           log "#{formatted_message} #{formatted_status} #{time}", indent: indent

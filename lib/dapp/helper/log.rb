@@ -83,6 +83,14 @@ module Dapp
         [:white, :bold]
       end
 
+      def log_default_format
+        [:white]
+      end
+
+      def paint_string(object, style_name)
+        Paint[object.to_s, *style(style_name)]
+      end
+
       def self.error_colorize(error_msg)
         Paint[error_msg, :red, :bold]
       end
