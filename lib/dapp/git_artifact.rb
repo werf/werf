@@ -35,8 +35,7 @@ module Dapp
       prev_commit = stage.prev_source_stage.layer_commit(self)
 
       if prev_commit != current_commit || any_changes?(prev_commit, current_commit)
-        ["echo $0 && echo BEGIN && git --git-dir=#{repo.container_build_dir_path} #{diff_command(prev_commit, current_commit)} && echo END", # TRAVISTEST
-         ["git --git-dir=#{repo.container_build_dir_path} #{diff_command(prev_commit, current_commit)}",
+        [["git --git-dir=#{repo.container_build_dir_path} #{diff_command(prev_commit, current_commit)}",
           "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} " \
           '$(if [[ "$(git --version)" != "git version 1."* ]]; then echo "--unsafe-paths"; fi)'].join(' | ')] # FIXME
       else
