@@ -70,9 +70,14 @@ describe Dapp::GitArtifact do
   def command_apply(command)
     expect(command).to_not be_empty
     p [:COMMAND=, command] # TRAVISTEST
-    p [:ENV, ENV.to_h] # TRAVISTEST
     p [:PWD, Pathname.new('.').expand_path.to_s] # TRAVISTEST
-    expect { application.shellout!(command) }.to_not raise_error
+    p [:LS, shellout('ls -la', live_stream: STDOUT)] # TRAVISTEST
+    expect { application.shellout(command).tap { |res|
+      p [:RES, :STDOUT, res.stdout] # TRAVISTEST
+      p [:RES, :STDERR, res.stderr] # TRAVISTEST
+      p [:RES, :EXITSTATUS, res.exitstatus] # TRAVISTEST
+      p [:RES, res] # TRAVISTEST
+    }.error! }.to_not raise_error
   end
 
   def clear_where_to_add
