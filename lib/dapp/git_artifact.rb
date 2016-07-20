@@ -38,7 +38,8 @@ module Dapp
         ["echo BEGIN && git --git-dir=#{repo.container_build_dir_path} #{diff_command(prev_commit, current_commit)} && echo END", # TRAVISTEST
          ["git --git-dir=#{repo.container_build_dir_path} #{diff_command(prev_commit, current_commit)}",
           "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} " \
-        '$(if [[ "$(git --version)" != "git version 1."* ]]; then echo "--unsafe-paths"; fi)'].join(' | ')] # FIXME
+         '--unsafe-paths'].join(' | ')] # FIXME
+#'$(if [[ "$(git --version)" != "git version 1."* ]]; then echo "--unsafe-paths"; fi)'].join(' | ')] # FIXME
       else
         []
       end
