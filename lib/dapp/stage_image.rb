@@ -79,7 +79,11 @@ module Dapp
     end
 
     def prepared_bash_command
-      "bash #{"-lec \"eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)\"" unless bash_commands.empty?}"
+      if bash_commands.empty?
+        "echo"
+      else
+        "bash -ec 'eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)'"
+      end
     end
 
     def prepared_commands
