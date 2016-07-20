@@ -31,7 +31,7 @@ describe Dapp::GitArtifact do
       cwd: (@cwd ||= ''),
       paths: (@paths ||= []),
       branch: (@branch ||= 'master'),
-      where_to_add: (@where_to_add ||= 'dest'),
+      where_to_add: (@where_to_add ||= '/tmp/dapp-git-artifact-where-to-add'),
       group: (@group ||= 'root'),
       owner: (@owner ||= 'root')
     }
@@ -45,6 +45,7 @@ describe Dapp::GitArtifact do
       add_files.each { |file_path| git_change_and_commit!(file_path, branch: @branch) }
       application_renew
 
+      $TRAVISTEST = true
       command_apply(send("#{type}_command"))
 
       expect(File.exist?(@where_to_add)).to be_truthy
@@ -68,14 +69,15 @@ describe Dapp::GitArtifact do
 
   def command_apply(command)
     expect(command).to_not be_empty
-    p [:COMMAND=, command] # TRAVISTEST
-    p [:PWD, Pathname.new('.').expand_path.to_s] # TRAVISTEST
-    p [:LS, shellout('ls -la', live_stream: STDOUT)] # TRAVISTEST
+#    p [:LS, shellout('ls -la', live_stream: STDOUT)] # TRAVISTEST
     expect { application.shellout(command).tap { |res|
+      next if res.exitstatus == 0
+      p [:COMMAND, command] # TRAVISTEST
       p [:RES, :STDOUT, res.stdout] # TRAVISTEST
       p [:RES, :STDERR, res.stderr] # TRAVISTEST
       p [:RES, :EXITSTATUS, res.exitstatus] # TRAVISTEST
-      p [:RES, res] # TRAVISTEST
+      p [:RES, res.to_s] # TRAVISTEST
+      $TRAVISTEST = false
     }.error! }.to_not raise_error
   end
 
