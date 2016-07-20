@@ -16,7 +16,7 @@ describe Dapp::Builder::Shell do
   end
 
   %w(ubuntu:14.04 centos:7).each do |image|
-    xit "build #{image}" do # TRAVISTEST
+    it "build #{image}" do
       config[:_docker][:_from] = image
       config[:_shell].keys.each { |stage| config[:_shell][stage] << "date +%s > /#{stage}" }
       application_build!
