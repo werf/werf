@@ -1,5 +1,8 @@
 name 'dapp-env'
 
+license 'MIT'
+license_file '../LICENSE.txt'
+
 dependency 'git'
 dependency 'sudo'
 

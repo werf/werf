@@ -1,6 +1,5 @@
 name 'libpam'
 default_version '1.3.0'
-license_file 'COPYING'
 
 version '1.3.0' do
   source md5: '642c994edb9cf39b74cb1bca0649613b'

@@ -1,5 +1,7 @@
 name 'sudo'
 default_version '1.8.17p1'
+
+license 'ISC'
 license_file 'doc/LICENSE'
 
 dependency 'zlib'
