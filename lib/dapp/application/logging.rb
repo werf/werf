@@ -103,7 +103,7 @@ module Dapp
       end
 
       def terminal_width
-        @terminal_width ||= STDIN.winsize.last.to_i # columns
+        @terminal_width ||= `tput cols`.strip.to_i
       end
     end # Logging
   end # Application
