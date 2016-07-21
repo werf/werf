@@ -1,5 +1,5 @@
 ENV_VERSION=0.1.0
-DOCKER_IMAGE_NAME=dappdeps/env:$(ENV_VERSION)
+DOCKER_IMAGE_NAME=dappdeps/gitartifact:$(ENV_VERSION)
 
 PKG_BUILD_VERSION = $(shell cat pkg/version-manifest.json | \
 														grep -oP 'build_version":"[0-9.+]+"' | \
