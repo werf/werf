@@ -5,10 +5,10 @@ PKG_BUILD_VERSION = $(shell cat pkg/version-manifest.json | \
 														grep -oP 'build_version":"[0-9.+]+"' | \
 														cut -d'"' -f3)
 PKG_BUILD_ITERATION = $(shell cat config/projects/dapp-gitartifact.rb  | \
-															grep build_iteration | \
-															cut -d' ' -f2)
+                              grep build_iteration | \
+                              cut -d' ' -f2)
 ENV_DEB_PATH = $(shell ls -1 pkg/dapp-gitartifact_$(PKG_BUILD_VERSION)-$(PKG_BUILD_ITERATION)_*.deb | \
-											 tail -n1)
+                       tail -n1)
 
 all: build/hub_image
 
