@@ -4,6 +4,7 @@ module Dapp
     module I18n
       def i18n_initialize
         ::I18n.load_path << Dir[File.join(Dapp.root, 'config', '**', '*')].select { |path| File.file?(path) }
+        raise "OLOLO: #{::I18n.load_path}"
         ::I18n.reload!
         ::I18n.locale = :en
       end
