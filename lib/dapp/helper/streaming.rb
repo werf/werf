@@ -3,12 +3,16 @@ module Dapp
     # Streaming
     module Streaming
       class Stream
+        def buffer
+          @buffer ||= []
+        end
+
         def <<(string)
-          (@buffer ||= []) << string
+          buffer << string
         end
 
         def inspect
-          @buffer.join
+          buffer.join
         end
       end
 
