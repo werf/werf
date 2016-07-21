@@ -7,6 +7,8 @@ module Dapp
         include Helper::Sha256
         include Helper::Trivia
 
+        GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.0'.freeze
+
         attr_accessor :prev_stage, :next_stage
         attr_reader :application
 
@@ -49,12 +51,36 @@ module Dapp
           @image ||= begin
             StageImage.new(name: image_name, from: from_image).tap do |image|
               image.add_volume "#{application.build_path}:#{application.container_build_path}"
+
+              image.add_volumes_from(gitartifact_container)
+              image.add_commands 'export PATH=/opt/dapp-gitartifact/bin:$PATH'
+
               yield image if block_given?
             end
           end
         end
 
         protected
+
+        def gitartifact_container_name # FIXME hashsum(image) or dockersafe()
+          GITARTIFACT_IMAGE.gsub('/', '_').gsub(':', '_')
+        end
+
+        def gitartifact_container
+          @gitartifact_container ||= begin
+            if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus != 0
+              application.log_secondary_proccess('loading gitartifact') do
+                application.shellout ['docker run',
+                                      '--restart=no',
+                                      "--name #{gitartifact_container_name}",
+                                      "--volume /opt/dapp-gitartifact #{GITARTIFACT_IMAGE}",
+                                      '2>/dev/null'].join(' '),
+                                     log_verbose: true
+              end
+            end
+            gitartifact_container_name
+          end
+        end
 
         def name
           class_to_lowercase.to_sym

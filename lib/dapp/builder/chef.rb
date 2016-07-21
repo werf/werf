@@ -15,8 +15,7 @@ module Dapp
         templates/%{stage}/*
       ).freeze
 
-      CHEFDK_IMAGE = 'dapp2/chefdk:0.15.16-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
-      CHEFDK_CONTAINER = 'dapp2_chefdk_0.15.16-1'.freeze # FIXME hashsum(image) or dockersafe()
+      DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.15.16-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
         define_method(:"#{stage}_checksum") { stage_cookbooks_checksum(stage) }
@@ -27,8 +26,10 @@ module Dapp
 
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
+            image.add_commands 'export PATH=/opt/chefdk/bin:$PATH'
+
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}"
-            image.add_commands ['/opt/chefdk/bin/chef-solo',
+            image.add_commands ['chef-solo',
                                 "-c #{container_stage_config_path(stage)}",
                                 "-o #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
           end
@@ -128,20 +129,26 @@ module Dapp
       end
 
       def chefdk_image
-        CHEFDK_IMAGE
+        DEFAULT_CHEFDK_IMAGE # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
+      end
+
+      def chefdk_container_name # FIXME hashsum(image) or dockersafe()
+        chefdk_image.gsub('/', '_').gsub(':', '_')
       end
 
       def chefdk_container
         @chefdk_container ||= begin
-          if application.shellout("docker inspect #{CHEFDK_CONTAINER}").exitstatus != 0
+          if application.shellout("docker inspect #{chefdk_container_name}").exitstatus != 0
             application.log_secondary_proccess('loading chefdk') do
               application.shellout ['docker run',
-                                    "--name #{CHEFDK_CONTAINER}",
-                                    "--volume /opt/chefdk #{chefdk_image}"].join(' '),
+                                    '--restart=no',
+                                    "--name #{chefdk_container_name}",
+                                    "--volume /opt/chefdk #{chefdk_image}",
+                                    '2>/dev/null'].join(' '),
                                    log_verbose: true
             end
           end
-          CHEFDK_CONTAINER
+          chefdk_container_name
         end
       end
 
