@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.email = ['dmitry.stolyarov@flant.com']
   s.license = 'MIT'
 
-  s.files = Dir['lib/**/*']
+  s.files = Dir['lib/**/*', 'config/**/*']
   s.executables = ['dapp']
 
   s.required_ruby_version = '>= 2.1'
