@@ -1,7 +1,7 @@
-name 'dapp-env'
+name 'dapp-gitartifact'
 
 license 'MIT'
-license_file 'https://github.com/flant/dapp-env/blob/master/LICENSE.txt'
+license_file 'https://github.com/flant/dapp-gitartifact/blob/master/LICENSE.txt'
 
 dependency 'git'
 dependency 'sudo'
