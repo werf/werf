@@ -1,6 +1,6 @@
 CHEFDK_VERSION=0.15.16-1
 CHEFDK_DEB_NAME=chefdk_$(CHEFDK_VERSION)_amd64.deb
-DOCKER_IMAGE_NAME=dapp2/chefdk:$(CHEFDK_VERSION)
+DOCKER_IMAGE_NAME=dappdeps/chefdk:$(CHEFDK_VERSION)
 
 all: build/hub_image
 
