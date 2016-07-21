@@ -14,27 +14,29 @@ module Dapp
         log(message, *args, style: :secondary)
       end
 
-      # rubocop:disable Metrics/ParameterLists
-      def log(message = '', desc: nil, style: nil, indent: false, ignore_indent: false, new_line: true)
+      def log(message = '', desc: nil, style: nil, indent: true, inline: false)
         return unless defined?(cli_options) && !cli_options[:log_quiet]
         unless desc.nil?
           (desc[:data] ||= {})[:msg] = message
           message = t(desc: desc)
         end
-        formatted_message = style ? Paint[message, *style(style)] : message
-        if indent
-          log_with_indent(formatted_message)
-        else
-          print formatted_message.to_s.lines.map { |line| ignore_indent ? line : (log_indent + line) }.join
-          print "\n" if new_line
+        formatted_message = begin
+          message = paint_string(message, style) if style
+          message.to_s.lines.map { |line| indent ? (log_indent + line) : line }.join
         end
+        print "#{formatted_message}#{"\n" unless inline}"
       end
-      # rubocop:enable Metrics/ParameterLists
 
       def log_with_indent(message = '', **kvargs)
         with_log_indent do
           log(message, **kvargs)
         end
+      end
+
+      def with_log_indent(with = true)
+        log_indent_next if with
+        yield
+        log_indent_prev if with
       end
 
       def log_indent
@@ -55,46 +57,25 @@ module Dapp
         end
       end
 
-      def with_log_indent(with = true)
-        log_indent_next if with
-        yield
-        log_indent_prev if with
-      end
+      FORMAT = {
+          step: [:yellow, :bold],
+          info: [:blue],
+          success: [:green, :bold],
+          failed: [:red, :bold],
+          secondary: [:white, :bold],
+          default: [:white]
+      }.freeze
 
-      def style(name)
-        public_send("log_#{name}_format")
-      end
-
-      def log_step_format
-        [:yellow, :bold]
-      end
-
-      def log_info_format
-        [:blue]
-      end
-
-      def log_failed_format
-        [:red, :bold]
-      end
-
-      def log_success_format
-        [:green, :bold]
-      end
-
-      def log_secondary_format
-        [:white, :bold]
-      end
-
-      def log_default_format
-        [:white]
+      def log_style(name)
+        FORMAT[name]
       end
 
       def paint_string(object, style_name)
-        Paint[object.to_s, *style(style_name)]
+        Paint[Paint.unpaint(object.to_s), *log_style(style_name)]
       end
 
       def self.error_colorize(error_msg)
-        Paint[error_msg, :red, :bold]
+        Paint[error_msg, :red]
       end
     end # Log
   end # Helper

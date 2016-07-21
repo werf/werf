@@ -48,6 +48,10 @@ module Dapp
 
         protected
 
+        def should_be_not_detailed?
+          true
+        end
+
         def apply_command_method
           :apply_patch_command
         end

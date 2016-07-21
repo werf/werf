@@ -17,7 +17,9 @@ module Dapp
       end
 
       def shellout!(*args, **kwargs)
-        shellout(*args, **kwargs).tap(&:error!)
+        (res = shellout(*args, **kwargs)).tap(&:error!)
+      rescue Mixlib::ShellOut::ShellCommandFailed => e
+        raise Error::Application, e.net_status.merge(code: :shell_command_failed, data: { stdout: res.stdout.strip, stderr: res.stderr.strip })
       end
 
       def self.included(base)

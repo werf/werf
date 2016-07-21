@@ -6,6 +6,10 @@ module Dapp
         args.last.is_a?(Hash) ? args.pop : {}
       end
 
+      def class_to_lowercase(class_name = self.class)
+        Trivia.class_to_lowercase(class_name)
+      end
+
       def delete_file(path)
         path = Pathname(path)
         path.delete if path.exist?
@@ -13,6 +17,10 @@ module Dapp
 
       def to_mb(bytes)
         (bytes / 1024.0 / 1024.0).round(2)
+      end
+
+      def self.class_to_lowercase(class_name = self.class)
+        class_name.to_s.split('::').last.split(/(?=[[:upper:]]|[0-9])/).join('_').downcase.to_s
       end
     end # Trivia
   end # Helper

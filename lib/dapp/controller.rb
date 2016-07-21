@@ -28,7 +28,7 @@ module Dapp
 
     def list
       @build_confs.each do |build_conf|
-        log_step(build_conf._name)
+        log(build_conf._name)
       end
     end
 
@@ -47,7 +47,7 @@ module Dapp
 
     def flush_build_cache
       @build_confs.each do |build_conf|
-        log_step(build_conf._name)
+        log(build_conf._name)
         app = Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true)
         FileUtils.rm_rf app.build_cache_path
       end
@@ -93,7 +93,12 @@ module Dapp
     end
 
     def paint_initialize
-      Paint.mode = cli_options[:log_colorless] ? 0 : 8
+      Paint.mode = case cli_options[:log_color]
+                   when 'auto' then STDOUT.tty? ? 8 : 0
+                   when 'on'   then 8
+                   when 'off'  then 0
+                   else fail
+                   end
     end
   end # Controller
 end # Dapp

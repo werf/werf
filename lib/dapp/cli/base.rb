@@ -24,10 +24,11 @@ module Dapp
              default: false,
              boolean: true
 
-      option :log_colorless,
-             long: '--colorless',
-             default: false,
-             boolean: true
+      option :log_color,
+             long: '--color MODE',
+             description: 'Display output in color on the terminal',
+             in: %w(auto on off),
+             default: 'auto'
 
       option :dry_run,
              long: '--dry-run',
@@ -41,7 +42,7 @@ module Dapp
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        Controller.new(cli_options: config, patterns: cli_arguments).public_send(method_name)
+        Controller.new(cli_options: config, patterns: cli_arguments).public_send(class_to_lowercase)
       end
     end
   end
