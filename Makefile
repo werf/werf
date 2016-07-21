@@ -1,8 +1,17 @@
 ENV_VERSION=0.1.0
 DOCKER_IMAGE_NAME=dapp2/env:$(ENV_VERSION)
 
-all: build/hub_image
+all: omnibus
 
+omnibus:
+	@omnibus build dapp-env
+
+clean:
+	@rm -rf build pkg
+
+.PHONY: all clean
+
+#FIXME >>>
 build/git:
 	@mkdir -p build/git
 	@echo build/git #TODO
@@ -23,8 +32,3 @@ build/image: build/Dockerfile
 build/hub_image: build/image
 	docker push $(DOCKER_IMAGE_NAME)
 	@echo $(DOCKER_IMAGE_NAME) > build/hub_image
-
-clean:
-	@rm -rf build
-
-.PHONY: all clean
