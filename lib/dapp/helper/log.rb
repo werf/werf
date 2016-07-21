@@ -57,25 +57,8 @@ module Dapp
         end
       end
 
-      FORMAT = {
-          step: [:yellow, :bold],
-          info: [:blue],
-          success: [:green, :bold],
-          failed: [:red, :bold],
-          secondary: [:white, :bold],
-          default: [:white]
-      }.freeze
-
-      def log_style(name)
-        FORMAT[name]
-      end
-
-      def paint_string(object, style_name)
-        Paint[Paint.unpaint(object.to_s), *log_style(style_name)]
-      end
-
-      def self.error_colorize(error_msg)
-        Paint[error_msg, :red]
+      def self.included(base)
+        base.include(Paint)
       end
     end # Log
   end # Helper

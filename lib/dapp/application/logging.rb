@@ -24,7 +24,7 @@ module Dapp
         process: :secondary,
         status:  :secondary,
         success: :success,
-        failed:  :failed,
+        failed:  :warning,
         time:    :default
       }.freeze
 
@@ -103,7 +103,7 @@ module Dapp
       end
 
       def terminal_width
-        @terminal_width ||= `tput cols`.strip.to_i
+        @terminal_width ||= STDIN.winsize.last.to_i # columns
       end
     end # Logging
   end # Application
