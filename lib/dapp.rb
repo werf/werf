@@ -21,6 +21,8 @@ require 'dapp/helper/trivia'
 require 'dapp/helper/sha256'
 require 'dapp/helper/i18n'
 require 'dapp/helper/log'
+require 'dapp/helper/paint'
+require 'dapp/helper/streaming'
 require 'dapp/helper/shellout'
 require 'dapp/cli'
 require 'dapp/cli/base'
@@ -72,6 +74,7 @@ require 'dapp/error/application'
 require 'dapp/error/build'
 require 'dapp/error/config'
 require 'dapp/error/controller'
+require 'dapp/error/shellout'
 
 # Dapp
 module Dapp
