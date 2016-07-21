@@ -52,7 +52,7 @@ BANNER
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         repo = self.class.required_argument(self)
-        Controller.new(cli_options: config, patterns: cli_arguments).public_send(method_name, repo)
+        Controller.new(cli_options: config, patterns: cli_arguments).public_send(class_to_lowercase, repo)
       end
     end
   end

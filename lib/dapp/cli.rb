@@ -3,8 +3,9 @@ require 'mixlib/cli'
 module Dapp
   # CLI
   class CLI
+    extend Helper::Cli
     include Mixlib::CLI
-    include Helper::Cli
+    include Helper::Trivia
 
     SUBCOMMANDS = %w(build smartpush push list flush).freeze
 

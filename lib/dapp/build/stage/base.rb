@@ -22,16 +22,16 @@ module Dapp
           prev_stage.build! if prev_stage
           begin
             if image.tagged?
-              application.log_state(name, 'USING CACHE')
+              application.log_state(name, state: 'USING CACHE')
             elsif application.dry_run
-              application.log_state(name, 'BUILD', styles: { status: :success })
+              application.log_state(name, state: 'BUILD', styles: { status: :success })
             else
-              application.log_process(name, process: 'BUILDING') do
+              application.log_process(name, process: 'BUILDING', short: should_be_not_detailed?) do
                 image_build!
               end
             end
           ensure
-            log_build if application.log?
+            log_build
           end
         end
 
@@ -57,7 +57,11 @@ module Dapp
         protected
 
         def name
-          self.class.to_s.split('::').last.split(/(?=[[:upper:]]|[0-9])/).join('_').downcase.to_sym
+          class_to_lowercase.to_sym
+        end
+
+        def should_be_not_detailed?
+          image.send(:bash_commands).empty?
         end
 
         def image_build!
@@ -93,7 +97,7 @@ module Dapp
               application.log_info 'commands:'
               application.with_log_indent { application.log_info bash_commands.join("\n") }
             end
-          end if application.log_verbose
+          end if application.log? && application.log_verbose
         end
       end # Base
     end # Stage
