@@ -55,6 +55,7 @@ module Dapp
         application.hashsum path.read if path.exist?
       end
 
+      # rubocop:disable Metrics/AbcSize
       def stage_cookbooks_runlist(stage)
         @stage_cookbooks_runlist ||= {}
         @stage_cookbooks_runlist[stage] ||= [].tap do |res|
@@ -74,6 +75,7 @@ module Dapp
           end.compact)
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
       def local_cookbook_paths
         @local_cookbook_paths ||= berksfile.local_cookbooks
@@ -132,8 +134,8 @@ module Dapp
         DEFAULT_CHEFDK_IMAGE # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
       end
 
-      def chefdk_container_name # FIXME hashsum(image) or dockersafe()
-        chefdk_image.gsub('/', '_').gsub(':', '_')
+      def chefdk_container_name # FIXME: hashsum(image) or dockersafe()
+        chefdk_image.tr('/', '_').tr(':', '_')
       end
 
       def chefdk_container
@@ -231,7 +233,7 @@ module Dapp
           *paths.map(&:to_s).sort,
           *paths.reject(&:directory?)
             .sort
-            .reduce(nil) { |hash, path| application.hashsum [hash, path.read].compact }
+            .reduce(nil) { |a, e| application.hashsum [a, e.read].compact }
         ]
       end
     end

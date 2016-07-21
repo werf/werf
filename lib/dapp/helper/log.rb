@@ -14,6 +14,7 @@ module Dapp
         log(message, *args, style: :secondary)
       end
 
+      # rubocop:disable Metrics/CyclomaticComplexity
       def log(message = '', desc: nil, style: nil, indent: true, inline: false)
         return unless defined?(cli_options) && !cli_options[:log_quiet]
         unless desc.nil?
@@ -26,6 +27,7 @@ module Dapp
         end
         print "#{formatted_message}#{"\n" unless inline}"
       end
+      # rubocop:enable Metrics/CyclomaticComplexity
 
       def log_with_indent(message = '', **kvargs)
         with_log_indent do

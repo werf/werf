@@ -62,8 +62,8 @@ module Dapp
 
         protected
 
-        def gitartifact_container_name # FIXME hashsum(image) or dockersafe()
-          GITARTIFACT_IMAGE.gsub('/', '_').gsub(':', '_')
+        def gitartifact_container_name # FIXME: hashsum(image) or dockersafe()
+          GITARTIFACT_IMAGE.tr('/', '_').tr(':', '_')
         end
 
         def gitartifact_container

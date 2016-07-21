@@ -27,8 +27,8 @@ module Dapp
         end
         kwargs[:live_stderr] ||= Proxy::Error.new(stream)
         shellout(*args, **kwargs).tap(&:error!)
-      rescue => e
-        fail Error::Shellout, code: Trivia.class_to_lowercase(e.class), data: { stream: stream.inspect }
+      rescue ShellCommandFailed => e
+        raise Error::Shellout, code: Trivia.class_to_lowercase(e.class), data: { stream: stream.inspect }
       end
 
       def self.included(base)

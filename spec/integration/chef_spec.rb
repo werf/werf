@@ -91,6 +91,7 @@ describe Dapp::Builder::Chef do
     @template_mdapp_test2_path ||= Pathname('spec/chef/mdapp-test2')
   end
 
+  # rubocop:disable Metrics/AbcSize
   def init_project
     FileUtils.cp_r template_testproject_path, testproject_path.tap { |p| p.parent.mkpath }
     testproject_path.join('build').tap { |p| p.rmtree if p.exist? }
@@ -99,6 +100,7 @@ describe Dapp::Builder::Chef do
     FileUtils.cp_r template_mdapp_test_path, mdapp_test_path.tap { |p| p.parent.mkpath }
     FileUtils.cp_r template_mdapp_test2_path, mdapp_test2_path.tap { |p| p.parent.mkpath }
   end
+  # rubocop:enable Metrics/AbcSize
 
   TEST_FILE_NAMES = %i(foo bar baz qux burger pizza taco pelmeni
                        test_infra_install test_app_install

@@ -3,12 +3,12 @@ module Dapp
     # Paint
     module Paint
       FORMAT = {
-          step: [:yellow, :bold],
-          info: [:blue],
-          success: [:green, :bold],
-          warning: [:red, :bold],
-          secondary: [:white, :bold],
-          default: [:white]
+        step: [:yellow, :bold],
+        info: [:blue],
+        success: [:green, :bold],
+        warning: [:red, :bold],
+        secondary: [:white, :bold],
+        default: [:white]
       }.freeze
 
       def paint_style(name)

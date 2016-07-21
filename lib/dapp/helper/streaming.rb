@@ -2,6 +2,7 @@ module Dapp
   module Helper
     # Streaming
     module Streaming
+      # Stream
       class Stream
         def buffer
           @buffer ||= []
@@ -16,10 +17,10 @@ module Dapp
         end
       end
 
+      # Proxy
       module Proxy
+        # Base
         class Base
-          include Paint
-
           def initialize(*streams)
             @streams = streams
           end
@@ -29,13 +30,14 @@ module Dapp
           end
 
           def format_string(str)
-            str
+            str.strip
           end
         end
 
+        # Error
         class Error < Base
           def format_string(str)
-            Paint.paint_string(str.strip, :warning)
+            Paint.paint_string(super, :warning)
           end
         end
       end

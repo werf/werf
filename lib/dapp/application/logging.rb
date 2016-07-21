@@ -38,13 +38,14 @@ module Dapp
         styles[:message] ||= DEFAULT_STYLE[:message]
         styles[:status] ||= DEFAULT_STYLE[:status]
 
-        state            = rjust("[#{state}]", message)
+        state = rjust("[#{state}]", message)
         formatted_message = paint_string(message, styles[:message])
         formatted_status  = paint_string(state, styles[:status])
 
         log "#{formatted_message}#{formatted_status}"
       end
 
+      # rubocop:disable Metrics/ParameterLists
       def log_process(message, process: nil, short: false, status: {}, style: {}, &blk)
         status[:process]  = "[#{process || DEFAULT_STATUS[:process]}]"
         status[:success]  = "[#{status[:success] || DEFAULT_STATUS[:success]}]"
@@ -60,6 +61,7 @@ module Dapp
           log_process_short(message, statuse: status, style: style, &blk)
         end
       end
+      # rubocop:enable Metrics/ParameterLists
 
       def log_secondary_proccess(message, **kvargs, &blk)
         log_process(message, **kvargs.merge(style: { message: :secondary, success: :secondary }), &blk)
