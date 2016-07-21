@@ -57,32 +57,17 @@ module Dapp
         end
       end
 
+      FORMAT = {
+          step: [:yellow, :bold],
+          info: [:blue],
+          success: [:green, :bold],
+          failed: [:red, :bold],
+          secondary: [:white, :bold],
+          default: [:white]
+      }.freeze
+
       def log_style(name)
-        public_send("log_#{name}_format")
-      end
-
-      def log_step_format
-        [:yellow, :bold]
-      end
-
-      def log_info_format
-        [:blue]
-      end
-
-      def log_failed_format
-        [:red, :bold]
-      end
-
-      def log_success_format
-        [:green, :bold]
-      end
-
-      def log_secondary_format
-        [:white, :bold]
-      end
-
-      def log_default_format
-        [:white]
+        FORMAT[name]
       end
 
       def paint_string(object, style_name)

@@ -32,7 +32,7 @@ module Dapp
         process: 'RUNNING',
         success: 'OK',
         failed: 'FAILED'
-      }
+      }.freeze
 
       def log_state(message, state:, styles: {})
         styles[:message] ||= DEFAULT_STYLE[:message]
