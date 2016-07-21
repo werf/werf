@@ -15,8 +15,8 @@ module Dapp
         templates/%{stage}/*
       ).freeze
 
-      CHEFDK_IMAGE = 'dapp2/chefdk:0.15.16-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
-      CHEFDK_CONTAINER = 'dapp2_chefdk_0.15.16-1'.freeze # FIXME hashsum(image) or dockersafe()
+      CHEFDK_IMAGE = 'dappdeps/chefdk:0.15.16-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
+      CHEFDK_CONTAINER = 'dappdeps_chefdk_0.15.16-1'.freeze # FIXME hashsum(image) or dockersafe()
 
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
         define_method(:"#{stage}_checksum") { stage_cookbooks_checksum(stage) }
