@@ -102,7 +102,8 @@ module Dapp
       end
 
       def slice(str, status)
-        if (index = free_space(status)) > 0
+        index = free_space(status)
+        if index > 0 && str.length > index
           str.slice(0..index)
         else
           str
