@@ -2,7 +2,7 @@ module Dapp
   module Helper
     # I18n
     module I18n
-      def i18n_initialize
+      def self.initialize
         ::I18n.load_path << Dir[File.join(Dapp.root, 'config', '**', '*')].select { |path| File.file?(path) }
         ::I18n.reload!
         ::I18n.locale = :en

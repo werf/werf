@@ -3,7 +3,6 @@ module Dapp
   class Controller
     include Helper::Log
     include Helper::Shellout
-    include Helper::I18n
 
     attr_reader :cli_options, :patterns
 
@@ -15,7 +14,7 @@ module Dapp
       @patterns << '*' unless @patterns.any?
 
       paint_initialize
-      i18n_initialize
+      Helper::I18n.initialize
       build_confs
     end
 

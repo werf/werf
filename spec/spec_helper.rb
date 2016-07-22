@@ -18,6 +18,9 @@ require 'spec_helpers/git_artifact'
 require 'spec_helpers/expect'
 
 RSpec.configure do |config|
+  config.before :all do
+    Dapp::Helper::I18n.initialize
+  end
   config.mock_with :rspec do |mocks|
     mocks.allow_message_expectations_on_nil = true
   end
