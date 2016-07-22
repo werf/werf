@@ -36,7 +36,7 @@ module Dapp
         styles[:message] ||= DEFAULT_STYLE[:message]
         styles[:status] ||= DEFAULT_STYLE[:status]
 
-        message = slice(message, state)
+        message = slice(message)
         state   = rjust(state, message)
         formatted_message = paint_string(message, styles[:message])
         formatted_status  = paint_string(state, styles[:status])
@@ -63,24 +63,17 @@ module Dapp
       end
 
       def log_process_verbose(message, process:, style: {}, &blk)
-        success_status = t('status.success.default')
-        failed_status = t('status.failed.default')
-        message         = paint_string(message, style[:message])
         process         = paint_string(rjust(process, message), style[:process])
-        info            = message + process
-        success_message = slice(message, success_status) + paint_string(rjust(success_status, message), style[:success])
-        failed_message  = paint_string(slice(message, failed_status) + rjust(failed_status, message), style[:failed])
+        info            = paint_string(message, style[:message]) + process
+        success_message = slice(message) + paint_string(rjust(t('status.success.default'), message), style[:success])
+        failed_message  = paint_string(slice(message) + rjust(t('status.failed.default'), message), style[:failed])
         log_process_default(info, success_message, failed_message, &blk)
       end
 
       def log_process_short(message, style: {}, &blk)
-        success_status = t('status.success.default')
-        failed_status = t('status.failed.default')
-        message         = paint_string(message, style[:message])
-        longest_status  = (success_status.length >= failed_status.length) ? success_status : failed_status
-        info            = "#{slice(message, longest_status)} ... "
-        success_message = paint_string(rjust(success_status, info), style[:success])
-        failed_message  = paint_string(rjust(failed_status, info), style[:failed])
+        info            = "#{paint_string(slice(message), style[:message])} ... "
+        success_message = paint_string(rjust(t('status.success.default'), info), style[:success])
+        failed_message  = paint_string(rjust(t('status.failed.default'), info), style[:failed])
         log_process_default(info, success_message, failed_message, inline: true, &blk)
       end
 
@@ -101,13 +94,11 @@ module Dapp
         str.rjust(free_space(start_string))
       end
 
-      def slice(formatted_str, status)
-        index = free_space(status)
-        style_length = paint_style_code(formatted_str).length - 1
-        if index >= 0 && style_length <= index
-          formatted_str.slice(0..index)
+      def slice(str)
+        if (index = free_space(t('state.using_cache'))) >= 0 # free space by longest status
+          str.slice(0..index)
         else
-          formatted_str
+          str.slice(0)
         end
       end
 
