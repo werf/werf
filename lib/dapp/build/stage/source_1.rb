@@ -16,25 +16,14 @@ module Dapp
 
         def dependencies_checksum
           hashsum [prev_stage.signature,
-                   dependency_file, dependency_file_regex,
+                   app_install_files_checksum,
                    *application.builder.app_install_checksum]
         end
 
         private
 
-        def dependency_file
-          @dependency_file ||= begin
-            file_path = Dir[application.build_path('*')].detect { |x| x =~ dependency_file_regex }
-            File.read(file_path) unless file_path.nil?
-          end
-        end
-
-        def dependency_file?
-          !dependency_file.nil?
-        end
-
-        def dependency_file_regex
-          %r{.*/(Gemfile|composer.json|requirement_file.txt)}
+        def app_install_files_checksum
+          @app_install_files_checksum ||= dependency_files_checksum(application.config._app_install_dependencies)
         end
       end # Source1
     end # Stage

@@ -10,12 +10,26 @@ module Dapp
       attr_reader :_chef
       attr_reader :_shell
       attr_reader :_parent
+      attr_reader :_app_install_dependencies
+      attr_reader :_app_setup_dependencies
+      attr_reader :_parent
 
       def initialize(parent)
-        @_apps      = []
-        @_parent    = parent
+        @_apps   = []
+        @_parent = parent
+
+        @_app_install_dependencies = []
+        @_app_setup_dependencies   = []
 
         yield self if block_given?
+      end
+
+      def app_install_depends_on(*args)
+        @_app_install_dependencies.concat(args)
+      end
+
+      def app_setup_depends_on(*args)
+        @_app_setup_dependencies.concat(args)
       end
 
       def chef
@@ -61,6 +75,8 @@ module Dapp
         Application.new(self).tap do |app|
           app.instance_variable_set(:'@_builder', _builder)
           app.instance_variable_set(:'@_home_path', _home_path)
+          app.instance_variable_set(:'@_app_install_dependencies', _app_install_dependencies)
+          app.instance_variable_set(:'@_app_setup_dependencies', _app_setup_dependencies)
           app.instance_variable_set(:'@_docker', _docker.clone)             unless @_docker.nil?
           app.instance_variable_set(:'@_git_artifact', _git_artifact.clone) unless @_git_artifact.nil?
           app.instance_variable_set(:'@_chef', _chef.clone)                 unless @_chef.nil?

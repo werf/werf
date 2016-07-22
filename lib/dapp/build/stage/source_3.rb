@@ -12,24 +12,14 @@ module Dapp
 
         def dependencies_checksum
           hashsum [prev_stage.signature,
-                   app_setup_file,
+                   app_setup_files_checksum,
                    *application.builder.app_setup_checksum]
         end
 
         private
 
-        def app_setup_file
-          @app_setup_file ||= begin
-            File.read(app_setup_file_path) if app_setup_file?
-          end
-        end
-
-        def app_setup_file?
-          File.exist?(app_setup_file_path)
-        end
-
-        def app_setup_file_path
-          application.build_path('.app_setup')
+        def app_setup_files_checksum
+          @app_setup_files_checksum ||= dependency_files_checksum(application.config._app_setup_dependencies)
         end
       end # Source3
     end # Stage

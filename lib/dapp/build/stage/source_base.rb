@@ -92,6 +92,10 @@ module Dapp
           application.build_path git_artifact.filename ".#{name}.#{git_artifact.paramshash}.#{dependencies_checksum}.commit"
         end
 
+        def dependency_files_checksum(regs)
+          hashsum(regs.map { |reg| Dir[File.join(application.home_path, reg)].map { |f| File.read(f) if File.file?(f) } })
+        end
+
         private
 
         def commits
