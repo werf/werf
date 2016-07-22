@@ -28,16 +28,16 @@ omnibus:
 $(GITARTIFACT_DEB_PATH): omnibus
 	@cp $(shell $(FETCH_GITARTIFACT_OMNIBUS_DEB_PATH)) $(GITARTIFACT_DEB_PATH)
 
-build/dapp-gitartifact: $(GITARTIFACT_DEB_PATH)
-	dpkg -x $(GITARTIFACT_DEB_PATH) build/dapp-gitartifact
+build/gitartifact_$(GITARTIFACT_VERSION): $(GITARTIFACT_DEB_PATH)
+	dpkg -x $(GITARTIFACT_DEB_PATH) build/gitartifact_$(GITARTIFACT_VERSION)
 
-build/Dockerfile: build/dapp-gitartifact
-	@echo "FROM scratch" > build/Dockerfile
-	@echo "CMD [\"no_such_command\"]" >> build/Dockerfile
-	@echo "ADD dapp-gitartifact /" >> build/Dockerfile
+build/Dockerfile_$(GITARTIFACT_VERSION): build/gitartifact_$(GITARTIFACT_VERSION)
+	@echo "FROM scratch" > build/Dockerfile_$(GITARTIFACT_VERSION)
+	@echo "CMD [\"no_such_command\"]" >> build/Dockerfile_$(GITARTIFACT_VERSION)
+	@echo "ADD gitartifact_$(GITARTIFACT_VERSION) /" >> build/Dockerfile_$(GITARTIFACT_VERSION)
 
-$(IMAGE_FILE_PATH): build/Dockerfile
-	docker build -t $(DOCKER_IMAGE_NAME) build
+$(IMAGE_FILE_PATH): build/Dockerfile_$(GITARTIFACT_VERSION)
+	docker build -t $(DOCKER_IMAGE_NAME) -f build/Dockerfile_$(GITARTIFACT_VERSION) build
 	@echo $(DOCKER_IMAGE_NAME) > $(IMAGE_FILE_PATH)
 
 $(HUB_IMAGE_FILE_PATH): $(IMAGE_FILE_PATH)
