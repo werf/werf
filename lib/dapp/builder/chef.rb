@@ -143,11 +143,11 @@ module Dapp
           if application.shellout("docker inspect #{chefdk_container_name}").exitstatus != 0
             application.log_secondary_process(application.t('process.chefdk_loading'), short: true) do
               application.shellout(
-                  ['docker run',
-                   '--restart=no',
-                   "--name #{chefdk_container_name}",
-                   "--volume /opt/chefdk #{chefdk_image}",
-                   '2>/dev/null'].join(' ')
+                ['docker run',
+                 '--restart=no',
+                 "--name #{chefdk_container_name}",
+                 "--volume /opt/chefdk #{chefdk_image}",
+                 '2>/dev/null'].join(' ')
               )
             end
           end
