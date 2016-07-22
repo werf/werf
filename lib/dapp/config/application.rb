@@ -71,6 +71,7 @@ module Dapp
 
       private
 
+      # rubocop:disable Metrics/AbcSize
       def clone
         Application.new(self).tap do |app|
           app.instance_variable_set(:'@_builder', _builder)
@@ -83,6 +84,7 @@ module Dapp
           app.instance_variable_set(:'@_shell', _shell.clone)               unless @_shell.nil?
         end
       end
+      # rubocop:enable Metrics/AbcSize
 
       def app(sub_name, &blk)
         clone.tap do |app|
