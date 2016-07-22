@@ -50,7 +50,6 @@ module Dapp
           @image ||= begin
             StageImage.new(name: image_name, from: from_image).tap do |image|
               image.add_volume "#{application.build_path}:#{application.container_build_path}"
-
               yield image if block_given?
             end
           end

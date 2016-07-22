@@ -101,12 +101,13 @@ module Dapp
         str.rjust(free_space(start_string))
       end
 
-      def slice(str, status)
+      def slice(formatted_str, status)
         index = free_space(status)
-        if index > 0 && str.length > index
-          str.slice(0..index)
+        style_length = paint_style_code(formatted_str).length - 1
+        if index >= 0 && style_length <= index
+          formatted_str.slice(0..index)
         else
-          str
+          formatted_str
         end
       end
 
