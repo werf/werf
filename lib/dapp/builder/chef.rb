@@ -146,8 +146,7 @@ module Dapp
                                     '--restart=no',
                                     "--name #{chefdk_container_name}",
                                     "--volume /opt/chefdk #{chefdk_image}",
-                                    '2>/dev/null'].join(' '),
-                                   log_verbose: true
+                                    '2>/dev/null'].join(' ')
             end
           end
           chefdk_container_name
