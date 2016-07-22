@@ -24,14 +24,14 @@ module Dapp
       shellout!("docker rmi #{name}")
     end
 
-    def push!(log_verbose = false)
+    def push!(log_verbose: false, log_time: false)
       fail Error::Build, code: :image_is_not_exist, data: { name: name } unless tagged?
-      shellout!("docker push #{name}", log_verbose: log_verbose)
+      shellout!("docker push #{name}", log_verbose: log_verbose, log_time: log_time)
     end
 
-    def pull!(log_verbose = false)
+    def pull!(log_verbose: false, log_time: false)
       return if tagged?
-      shellout!("docker pull #{name}", log_verbose: log_verbose)
+      shellout!("docker pull #{name}", log_verbose: log_verbose, log_time: log_time)
       @pulled = true
     end
 

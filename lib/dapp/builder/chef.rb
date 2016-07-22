@@ -142,11 +142,14 @@ module Dapp
         @chefdk_container ||= begin
           if application.shellout("docker inspect #{chefdk_container_name}").exitstatus != 0
             application.log_secondary_process(application.t('process.loading_chefdk')) do
-              application.shellout ['docker run',
-                                    '--restart=no',
-                                    "--name #{chefdk_container_name}",
-                                    "--volume /opt/chefdk #{chefdk_image}",
-                                    '2>/dev/null'].join(' ')
+              application.shellout(
+                  ['docker run',
+                   '--restart=no',
+                   "--name #{chefdk_container_name}",
+                   "--volume /opt/chefdk #{chefdk_image}",
+                   '2>/dev/null'].join(' '),
+                  log_verbose: application.log_verbose?
+              )
             end
           end
           chefdk_container_name
@@ -170,7 +173,7 @@ module Dapp
                '--env BERKSHELF_PATH=/tmp/berkshelf',
                "ubuntu:14.04 /opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
               ].join(' '),
-              log_verbose: true
+              log_verbose: application.log_verbose?
             )
 
             true

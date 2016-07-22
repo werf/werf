@@ -18,14 +18,15 @@ module Dapp
         end
       end
 
-      def shellout!(*args, log_verbose: false, **kwargs)
+      def shellout!(*args, log_verbose: false, log_time: false, **kwargs)
         stream = Stream.new
+        log_time = defined?(cli_options) ? cli_options[:log_time] : log_time
         if log_verbose
-          kwargs[:live_stream] = Proxy::Base.new(stream, STDOUT)
+          kwargs[:live_stream] = Proxy::Base.new(stream, STDOUT, with_time: log_time)
         else
-          kwargs[:live_stdout] ||= stream
+          kwargs[:live_stdout] = Proxy::Base.new(stream, with_time: log_time)
         end
-        kwargs[:live_stderr] ||= Proxy::Error.new(stream)
+        kwargs[:live_stderr] = Proxy::Error.new(stream, with_time: log_time)
         shellout(*args, **kwargs).tap(&:error!)
       rescue ::Mixlib::ShellOut::ShellCommandFailed => e
         raise Error::Shellout, code: Trivia.class_to_lowercase(e.class),

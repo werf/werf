@@ -14,20 +14,25 @@ module Dapp
         log(message, *args, style: :secondary)
       end
 
-      # rubocop:disable Metrics/CyclomaticComplexity
-      def log(message = '', desc: nil, style: nil, indent: true, inline: false)
+      def log(message = '', desc: nil, inline: false, **kwargs)
         return unless defined?(cli_options) && !cli_options[:log_quiet]
         unless desc.nil?
           (desc[:data] ||= {})[:msg] = message
           message = t(desc: desc)
         end
-        formatted_message = begin
-          message = paint_string(message, style) if style
-          message.to_s.lines.map { |line| indent ? (log_indent + line) : line }.join
-        end
-        print "#{formatted_message}#{"\n" unless inline}"
+        print "#{log_format_string(message, **kwargs)}#{"\n" unless inline}"
       end
-      # rubocop:enable Metrics/CyclomaticComplexity
+
+      def log_time
+        "#{DateTime.now.strftime('%Y-%m-%dT%T%z')} "
+      end
+
+      def log_format_string(str, time: true, indent: true, style: nil)
+        str.to_s.lines.map do |line|
+          line = paint_string(line, style) if style
+          "#{log_time if time && cli_options[:log_time]}#{indent ? (log_indent + line) : line}"
+        end.join
+      end
 
       def log_with_indent(message = '', **kvargs)
         with_log_indent do

@@ -3,7 +3,6 @@ module Dapp
     module Stage
       # Base of all stages
       class Base
-        include Helper::Log
         include Helper::Sha256
         include Helper::Trivia
 
@@ -17,13 +16,14 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
+        # rubocop:disable Metrics/AbcSize
         def build!
-          return if image.tagged? && !application.log_verbose
+          return if image.tagged? && !application.log_verbose?
           prev_stage.build! if prev_stage
           begin
             if image.tagged?
               application.log_state(name, state: application.t('state.using_cache'))
-            elsif application.dry_run
+            elsif application.dry_run?
               application.log_state(name, state: application.t('state.build'), styles: { status: :success })
             else
               application.log_process(name, process: application.t('status.process.building'), short: should_be_not_detailed?) do
@@ -34,11 +34,12 @@ module Dapp
             log_build
           end
         end
+        # rubocop:enable Metrics/AbcSize
 
         def save_in_cache!
           return if image.tagged?
-          prev_stage.save_in_cache! if prev_stage
-          image.tag!                unless application.dry_run
+          prev_stage.save_in_cache!                                                          if prev_stage
+          image.tag!(log_verbose: application.log_verbose?, log_time: application.log_time?) unless application.dry_run?
         end
 
         def signature
@@ -66,7 +67,7 @@ module Dapp
         end
 
         def image_build!
-          image.build!(application.log_verbose)
+          image.build!(log_verbose: application.log_verbose?, log_time: application.log_time?)
         end
 
         def from_image
@@ -98,7 +99,7 @@ module Dapp
               application.log_info 'commands:'
               application.with_log_indent { application.log_info bash_commands.join("\n") }
             end
-          end if application.log? && application.log_verbose
+          end if application.log? && application.log_verbose?
         end
       end # Base
     end # Stage

@@ -32,15 +32,15 @@ module Dapp
     end
 
     def export!(repo)
-      fail Error::Application, code: :application_is_not_built unless last_stage.image.tagged? || dry_run
+      fail Error::Application, code: :application_is_not_built unless last_stage.image.tagged? || dry_run?
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')
-        if dry_run
+        if dry_run?
           log_state(image_name, state: 'PUSH', styles: { status: :success })
         else
           log_process(image_name, process: t('status.process.pushing')) do
-            last_stage.image.export!(image_name, log_verbose: log_verbose)
+            last_stage.image.export!(image_name, log_verbose: log_verbose?, log_time: log_time?)
           end
         end
       end

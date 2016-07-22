@@ -4,18 +4,22 @@ module Dapp
     # Logging
     module Logging
       def log?
-        !log_quiet
+        !log_quiet?
       end
 
-      def log_quiet
+      def log_quiet?
         cli_options[:log_quiet]
       end
 
-      def log_verbose
+      def log_verbose?
         cli_options[:log_verbose]
       end
 
-      def dry_run
+      def log_time?
+        cli_options[:log_time]
+      end
+
+      def dry_run?
         cli_options[:dry_run]
       end
 
@@ -30,7 +34,7 @@ module Dapp
 
       def log_state(message, state:, styles: {})
         styles[:message] ||= DEFAULT_STYLE[:message]
-        styles[:status]  ||= DEFAULT_STYLE[:status]
+        styles[:status] ||= DEFAULT_STYLE[:status]
 
         message = slice(message, state)
         state   = rjust(state, message)
@@ -43,11 +47,11 @@ module Dapp
       def log_process(message, process: nil, short: false, style: {}, &blk)
         style[:message] ||= DEFAULT_STYLE[:message]
         style[:process] ||= DEFAULT_STYLE[:process]
-        style[:failed]  ||= DEFAULT_STYLE[:failed]
+        style[:failed] ||= DEFAULT_STYLE[:failed]
         style[:success] ||= DEFAULT_STYLE[:success]
 
-        if log_verbose && !short
-          process = process || t('status.process.default')
+        if log_verbose? && !short
+          process ||= t('status.process.default')
           log_process_verbose(message, process: process, style: style, &blk)
         else
           log_process_short(message, style: style, &blk)
@@ -90,7 +94,7 @@ module Dapp
         raise
       ensure
         time = paint_string("#{(Time.now - start).round(2)} sec", DEFAULT_STYLE[:time])
-        log "#{message} #{time}", indent: !inline
+        log "#{message} #{time}", indent: !inline, time: !inline
       end
 
       def rjust(str, start_string)
@@ -102,10 +106,11 @@ module Dapp
       end
 
       def free_space(str)
-        time = 20
+        base_time = log_time? ? log_time.length : 0
         indent = log_indent.length
         str = Paint.unpaint(str.to_s).length
-        terminal_width - str - indent - time
+        time = 15
+        terminal_width - base_time - str - indent - time
       end
 
       def terminal_width

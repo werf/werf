@@ -24,6 +24,12 @@ module Dapp
              default: false,
              boolean: true
 
+      option :log_time,
+             long: '--log-time',
+             description: 'Enable output with time',
+             default: false,
+             boolean: true
+
       option :log_color,
              long: '--color MODE',
              description: 'Display output in color on the terminal',

@@ -33,26 +33,26 @@ module Dapp
       @built_id ||= id
     end
 
-    def build!(log_verbose)
-      run!(log_verbose)
+    def build!(log_verbose: false, log_time: false)
+      run!(log_verbose: log_verbose, log_time: log_time)
       @built_id = commit!
     ensure
       shellout("docker rm #{container_name}")
     end
 
-    def export!(name, log_verbose: false)
+    def export!(name, log_verbose: false, log_time: false)
       image = self.class.new(built_id: built_id, name: name)
-      image.tag!
-      image.push!(log_verbose)
+      image.tag!(log_verbose: log_verbose, log_time: log_time)
+      image.push!(log_verbose: log_verbose, log_time: log_time)
       image.untag!
     end
 
-    def tag!(log_verbose = false)
+    def tag!(log_verbose: false, log_time: false)
       unless (existed_id = id).nil?
         fail Error::Build, code: :image_is_already_tagged if built_id != existed_id
         return
       end
-      shellout!("docker tag #{built_id} #{name}", log_verbose: log_verbose)
+      shellout!("docker tag #{built_id} #{name}", log_verbose: log_verbose, log_time: log_time)
     end
 
     protected
@@ -65,9 +65,10 @@ module Dapp
       options[key] = (options[key].nil? ? value : (Array(options[key]) << value).flatten)
     end
 
-    def run!(log_verbose = false)
+    def run!(log_verbose: false, log_time: false)
       fail Error::Build, code: :built_id_is_not_defined if from.built_id.nil?
-      shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}", log_verbose: log_verbose)
+      shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}",
+                log_verbose: log_verbose, log_time: log_time)
     end
 
     def commit!
