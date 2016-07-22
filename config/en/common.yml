@@ -1,6 +1,18 @@
 en:
   common:
-    application:
-    build:
-    controller:
-    config:
+    process:
+      loading_git_artifact: 'loading gitartifact'
+      loading_chefdk: 'loading chefdk'
+      berks_vendor: 'berks_vendor'
+    status:
+      process:
+        pushing: '[PUSHING]'
+        building: '[BUILDING]'
+        default: '[RUNNING]'
+      success:
+        default: '[OK]'
+      failed:
+        default: '[FAILED]'
+    state:
+      using_cache: '[USING CACHE]'
+      build: '[BUILD]'

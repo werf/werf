@@ -28,59 +28,49 @@ module Dapp
         time:    :default
       }.freeze
 
-      DEFAULT_STATUS = {
-        process: 'RUNNING',
-        success: 'OK',
-        failed: 'FAILED'
-      }.freeze
-
       def log_state(message, state:, styles: {})
         styles[:message] ||= DEFAULT_STYLE[:message]
-        styles[:status] ||= DEFAULT_STYLE[:status]
+        styles[:status]  ||= DEFAULT_STYLE[:status]
 
-        state = rjust("[#{state}]", message)
+        state = rjust(state, message)
         formatted_message = paint_string(message, styles[:message])
         formatted_status  = paint_string(state, styles[:status])
 
         log "#{formatted_message}#{formatted_status}"
       end
 
-      # rubocop:disable Metrics/ParameterLists
-      def log_process(message, process: nil, short: false, status: {}, style: {}, &blk)
-        status[:process]  = "[#{process || DEFAULT_STATUS[:process]}]"
-        status[:success]  = "[#{status[:success] || DEFAULT_STATUS[:success]}]"
-        status[:failed]   = "[#{status[:failed] || DEFAULT_STATUS[:failed]}]"
+      def log_process(message, process: nil, short: false, style: {}, &blk)
         style[:message] ||= DEFAULT_STYLE[:message]
         style[:process] ||= DEFAULT_STYLE[:process]
-        style[:failed] ||= DEFAULT_STYLE[:failed]
+        style[:failed]  ||= DEFAULT_STYLE[:failed]
         style[:success] ||= DEFAULT_STYLE[:success]
 
         if log_verbose && !short
-          log_process_verbose(message, statuse: status, style: style, &blk)
+          process = process || t('status.process.default')
+          log_process_verbose(message, process: process, style: style, &blk)
         else
-          log_process_short(message, statuse: status, style: style, &blk)
+          log_process_short(message, style: style, &blk)
         end
       end
-      # rubocop:enable Metrics/ParameterLists
 
-      def log_secondary_proccess(message, **kvargs, &blk)
+      def log_secondary_process(message, **kvargs, &blk)
         log_process(message, **kvargs.merge(style: { message: :secondary, success: :secondary }), &blk)
       end
 
-      def log_process_verbose(message, statuse: {}, style: {}, &blk)
+      def log_process_verbose(message, process:, style: {}, &blk)
         message         = paint_string(message, style[:message])
-        process         = paint_string(rjust(statuse[:process], message), style[:process])
+        process         = paint_string(rjust(process, message), style[:process])
         info            = message + process
-        success_message = message + paint_string(rjust(statuse[:success], message), style[:success])
-        failed_message  = paint_string(message + rjust(statuse[:failed], message), style[:failed])
+        success_message = message + paint_string(rjust(t('status.success.default'), message), style[:success])
+        failed_message  = paint_string(message + rjust(t('status.failed.default'), message), style[:failed])
         log_process_default(info, success_message, failed_message, &blk)
       end
 
-      def log_process_short(message, statuse: {}, style: {}, &blk)
+      def log_process_short(message, style: {}, &blk)
         message         = paint_string(message, style[:message])
         info            = "#{message} ... "
-        success_message = paint_string(rjust(statuse[:success], info), style[:success])
-        failed_message  = paint_string(rjust(statuse[:failed], info), style[:failed])
+        success_message = paint_string(rjust(t('status.success.default'), info), style[:success])
+        failed_message  = paint_string(rjust(t('status.failed.default'), info), style[:failed])
         log_process_default(info, success_message, failed_message, inline: true, &blk)
       end
 

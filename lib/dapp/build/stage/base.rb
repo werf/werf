@@ -24,11 +24,11 @@ module Dapp
           prev_stage.build! if prev_stage
           begin
             if image.tagged?
-              application.log_state(name, state: 'USING CACHE')
+              application.log_state(name, state: application.t('state.using_cache'))
             elsif application.dry_run
-              application.log_state(name, state: 'BUILD', styles: { status: :success })
+              application.log_state(name, state: application.t('state.build'), styles: { status: :success })
             else
-              application.log_process(name, process: 'BUILDING', short: should_be_not_detailed?) do
+              application.log_process(name, process: application.t('status.process.building'), short: should_be_not_detailed?) do
                 image_build!
               end
             end
@@ -69,7 +69,7 @@ module Dapp
         def gitartifact_container
           @gitartifact_container ||= begin
             if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus != 0
-              application.log_secondary_proccess('loading gitartifact') do
+              application.log_secondary_process(application.t('process.loading_git_artifact')) do
                 application.shellout ['docker run',
                                       '--restart=no',
                                       "--name #{gitartifact_container_name}",

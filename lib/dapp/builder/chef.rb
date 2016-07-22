@@ -141,7 +141,7 @@ module Dapp
       def chefdk_container
         @chefdk_container ||= begin
           if application.shellout("docker inspect #{chefdk_container_name}").exitstatus != 0
-            application.log_secondary_proccess('loading chefdk') do
+            application.log_secondary_process(application.t('process.loading_chefdk')) do
               application.shellout ['docker run',
                                     '--restart=no',
                                     "--name #{chefdk_container_name}",
@@ -158,7 +158,7 @@ module Dapp
       def install_cookbooks
         @install_cookbooks ||= begin
           volumes_from = chefdk_container
-          application.log_secondary_proccess('berks vendor') do
+          application.log_secondary_process(application.t('process.berks_vendor')) do
             application.shellout!(
               ['docker run --rm',
                "--volumes-from #{volumes_from}",

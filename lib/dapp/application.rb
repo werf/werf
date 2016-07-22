@@ -3,6 +3,7 @@ module Dapp
   class Application
     include Helper::Log
     include Helper::Shellout
+    include Helper::I18n
     include Helper::Sha256
     include Logging
     include GitArtifact
@@ -38,7 +39,7 @@ module Dapp
         if dry_run
           log_state(image_name, state: 'PUSH', styles: { status: :success })
         else
-          log_process(image_name, process: 'PUSHING') do
+          log_process(image_name, process: t('status.process.pushing')) do
             last_stage.image.export!(image_name, log_verbose: log_verbose)
           end
         end
