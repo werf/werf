@@ -29,7 +29,8 @@ module Dapp
           end
 
           def <<(str)
-            @streams.each { |s| s << format_string(str) }
+            str = format_string(str)
+            @streams.each { |s| s << "#{str}#{"\n" if s.is_a?(IO)}" }
           end
 
           def format_string(str)
