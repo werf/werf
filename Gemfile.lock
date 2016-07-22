@@ -1,6 +1,6 @@
 GIT
-  remote: git://github.com/flant/omnibus-software.git
-  revision: 6f871e13736fa49d1e5de6b74689977e074b6cfc
+  remote: git://github.com/chef/omnibus-software.git
+  revision: 5e767a6d220f024256439b0a8415eefe923967dc
   specs:
     omnibus-software (4.0.0)
       omnibus (>= 5.2.0)
@@ -66,3 +66,6 @@ PLATFORMS
 DEPENDENCIES
   omnibus (~> 5.4)
   omnibus-software!
+
+BUNDLED WITH
+   1.12.5
