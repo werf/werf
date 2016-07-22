@@ -1,8 +1,8 @@
 en:
   common:
     process:
-      loading_git_artifact: 'loading gitartifact'
-      loading_chefdk: 'loading chefdk'
+      git_artifact_loading: 'loading git_artifact'
+      chefdk_loading: 'loading chefdk'
       berks_vendor: 'berks_vendor'
       git_artifact_fetch: "fetching remote git_artifact '%{name}'"
     status:

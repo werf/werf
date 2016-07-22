@@ -13,7 +13,7 @@ module Dapp
         end
 
         def inspect
-          buffer.join
+          buffer.join("\n")
         end
       end
 
@@ -33,7 +33,7 @@ module Dapp
           end
 
           def format_string(str)
-            str.lines.map { |l| "#{log_time if @with_time}#{l.strip}\n" }.join
+            str.lines.map { |l| "#{log_time if @with_time}#{l.strip}" }.join
           end
         end
 
