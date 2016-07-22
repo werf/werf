@@ -4,6 +4,7 @@ en:
       loading_git_artifact: 'loading gitartifact'
       loading_chefdk: 'loading chefdk'
       berks_vendor: 'berks_vendor'
+      git_artifact_fetch: "fetching remote git_artifact '%{name}'"
     status:
       process:
         pushing: '[PUSHING]'
