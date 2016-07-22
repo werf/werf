@@ -5,7 +5,7 @@ module Dapp
       class SourceBase < Base
         attr_accessor :prev_source_stage, :next_source_stage
 
-        GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.0'.freeze
+        GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.1'.freeze
 
         def prev_source_stage
           prev_stage.prev_stage
@@ -28,7 +28,7 @@ module Dapp
           super do |image|
             application.git_artifacts.each do |git_artifact|
               image.add_volumes_from(gitartifact_container)
-              image.add_commands 'export PATH=/opt/dapp-gitartifact/bin:$PATH'
+              image.add_commands 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
 
               image.add_volume "#{git_artifact.repo.dir_path}:#{git_artifact.repo.container_build_dir_path}"
               image.add_commands git_artifact.send(apply_command_method, self)
@@ -64,7 +64,7 @@ module Dapp
                 application.shellout ['docker run',
                                       '--restart=no',
                                       "--name #{gitartifact_container_name}",
-                                      "--volume /opt/dapp-gitartifact #{GITARTIFACT_IMAGE}",
+                                      "--volume /.dapp/deps/gitartifact #{GITARTIFACT_IMAGE}",
                                       '2>/dev/null'].join(' ')
               end
             end

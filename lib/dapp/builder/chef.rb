@@ -15,7 +15,7 @@ module Dapp
         templates/%{stage}/*
       ).freeze
 
-      DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.15.16-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
+      DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.15.16-1-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
         define_method(:"#{stage}_checksum") { stage_cookbooks_checksum(stage) }
@@ -26,7 +26,7 @@ module Dapp
 
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
-            image.add_commands 'export PATH=/opt/chefdk/bin:$PATH'
+            image.add_commands 'export PATH=/.dapp/deps/chefdk/bin:$PATH'
 
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}"
             image.add_commands ['chef-solo',
@@ -145,7 +145,7 @@ module Dapp
               application.shellout ['docker run',
                                     '--restart=no',
                                     "--name #{chefdk_container_name}",
-                                    "--volume /opt/chefdk #{chefdk_image}",
+                                    "--volume /.dapp/deps/chefdk #{chefdk_image}",
                                     '2>/dev/null'].join(' ')
             end
           end
