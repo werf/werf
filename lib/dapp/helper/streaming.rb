@@ -13,7 +13,7 @@ module Dapp
         end
 
         def inspect
-          buffer.join("\n")
+          buffer.join
         end
       end
 
@@ -29,12 +29,11 @@ module Dapp
           end
 
           def <<(str)
-            str = format_string(str)
-            @streams.each { |s| s << "#{str}#{"\n" if s.is_a?(IO)}" }
+            @streams.each { |s| s << format_string(str) }
           end
 
           def format_string(str)
-            str.lines.map { |l| "#{log_time if @with_time}#{l.strip}" }.join
+            str.lines.map { |l| "#{log_time if @with_time}#{l.strip}\n" }.join
           end
         end
 
