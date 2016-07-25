@@ -39,7 +39,7 @@ module Dapp
       private
 
       def project_name
-        application.config._root_app._name # FIXME: parse name from metadata.rb
+        cookbook_metadata.name
       end
 
       def berksfile_path
@@ -48,6 +48,14 @@ module Dapp
 
       def berksfile
         @berksfile ||= Berksfile.new(application.home_path, berksfile_path)
+      end
+
+      def cookbook_metadata_path
+        application.home_path('metadata.rb')
+      end
+
+      def cookbook_metadata
+        @cookbook_metadata ||= CookbookMetadata.new(cookbook_metadata_path)
       end
 
       def berksfile_lock_checksum
