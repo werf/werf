@@ -61,16 +61,12 @@ module Dapp
 
     def build_confs
       @build_confs ||= begin
-        dappfiles = []
         if File.exist? dappfile_path
-          dappfiles << dappfile_path
-        elsif File.exist? dapps_path
-          dappfiles += Dir.glob(File.join([dapps_path, '*', 'Dappfile'].compact))
-        else
+          dappfiles = dappfile_path
+        elsif (dappfiles = dapps_dappfiles_pathes).empty? && (dappfiles = search_dappfile_up).nil?
           fail Error::Controller, code: :dappfile_not_found
         end
-        dappfiles.flatten.uniq!
-        dappfiles.map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten.tap do |apps|
+        Array(dappfiles).map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten.tap do |apps|
           fail Error::Controller, code: :no_such_app, data: { path: dappfile_path, patterns: patterns.join(', ') } if apps.empty?
         end
       end
@@ -84,11 +80,19 @@ module Dapp
     end
 
     def dappfile_path
-      @dappfile_path ||= File.join [cli_options[:dir], 'Dappfile'].compact
+      File.join [cli_options[:dir], 'Dappfile'].compact
     end
 
-    def dapps_path
-      @dapps_path ||= File.join [cli_options[:dir], '.dapps'].compact
+    def dapps_dappfiles_pathes
+      Dir.glob(File.join [cli_options[:dir], '.dapps', '*', 'Dappfile'].compact)
+    end
+
+    def search_dappfile_up
+      cdir = Pathname(cli_options[:dir] || Dir.pwd)
+      while (cdir = cdir.parent).to_s != '/'
+        next unless (path = cdir.join('Dappfile')).exist?
+        return path.to_s
+      end
     end
 
     def paint_initialize
