@@ -5,31 +5,19 @@ GITARTIFACT_VERSION = $(shell cat config/projects/dapp-gitartifact.rb | \
 DOCKER_IMAGE_VERSION=$(GITARTIFACT_VERSION)
 DOCKER_IMAGE_NAME=dappdeps/gitartifact:$(DOCKER_IMAGE_VERSION)
 
-FETCH_PKG_BUILD_VERSION = cat pkg/version-manifest.json | \
-                          grep -oP 'build_version":"[0-9.+]+"' | \
-                          cut -d'"' -f3 | \
-                          grep -P '^$(DOCKER_IMAGE_VERSION)'
-FETCH_PKG_BUILD_ITERATION = cat config/projects/dapp-gitartifact.rb  | \
-                            grep build_iteration | \
-                            cut -d' ' -f2
-FETCH_GITARTIFACT_OMNIBUS_DEB_PATH = ls -1 pkg/dapp-gitartifact_`$(FETCH_PKG_BUILD_VERSION)`-`$(FETCH_PKG_BUILD_ITERATION)`_*.deb | \
-																		 tail -n1
-
-GITARTIFACT_DEB_PATH=build/gitartifact_$(DOCKER_IMAGE_VERSION).deb
-
 IMAGE_FILE_PATH=build/image_$(DOCKER_IMAGE_VERSION)
 HUB_IMAGE_FILE_PATH=build/hub_image_$(DOCKER_IMAGE_VERSION)
 
 all: $(HUB_IMAGE_FILE_PATH)
 
-omnibus:
-	@bash -ec 'if [ ! -f $(GITARTIFACT_DEB_PATH) ] ; then omnibus build dapp-gitartifact ; fi'
+build/gitartifact_$(GITARTIFACT_VERSION).deb:
+	@rm -f pkg/dapp-gitartifact_$(GITARTIFACT_VERSION)*.deb
+	@omnibus build -o append_timestamp:false dapp-gitartifact
+	@cp pkg/dapp-gitartifact_$(GITARTIFACT_VERSION)-1_amd64.deb \
+      build/gitartifact_$(GITARTIFACT_VERSION).deb
 
-$(GITARTIFACT_DEB_PATH): omnibus
-	@cp $(shell $(FETCH_GITARTIFACT_OMNIBUS_DEB_PATH)) $(GITARTIFACT_DEB_PATH)
-
-build/gitartifact_$(GITARTIFACT_VERSION): $(GITARTIFACT_DEB_PATH)
-	dpkg -x $(GITARTIFACT_DEB_PATH) build/gitartifact_$(GITARTIFACT_VERSION)
+build/gitartifact_$(GITARTIFACT_VERSION): build/gitartifact_$(GITARTIFACT_VERSION).deb
+	dpkg -x build/gitartifact_$(GITARTIFACT_VERSION).deb build/gitartifact_$(GITARTIFACT_VERSION)
 
 build/Dockerfile_$(GITARTIFACT_VERSION): build/gitartifact_$(GITARTIFACT_VERSION)
 	@echo "FROM scratch" > build/Dockerfile_$(GITARTIFACT_VERSION)

@@ -7,7 +7,7 @@ license_file 'LICENSE.txt'
 
 install_dir '/.dapp/deps/gitartifact'
 
-build_version '0.1.1'
+build_version '0.1.3'
 build_iteration 1
 
 dependency 'dapp-gitartifact'
