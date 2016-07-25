@@ -18,7 +18,7 @@ module Dapp
 
       def fetch!(branch = 'master')
         with_ssh_key do
-          application.log_secondary_process(application.t(desc: { code: 'process.git_artifact_fetch', data: { name: name } }), short: true) do
+          application.log_secondary_process(application.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
             git_bare "fetch origin #{branch}:#{branch}"
           end
         end unless application.ignore_git_fetch || application.dry_run?
