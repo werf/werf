@@ -25,6 +25,10 @@ module Dapp
       add_option(:env, value)
     end
 
+    def add_workdir(value)
+      add_option(:workdir, value)
+    end
+
     def add_commands(*commands)
       @bash_commands += commands.flatten
     end

@@ -2,11 +2,12 @@ module Dapp
   module Config
     # Docker
     class Docker
-      attr_reader :_expose
+      attr_reader :_expose, :_workdir, :_env
       attr_reader :_from_cache_version
 
       def initialize
         @_expose = []
+        @_env = []
       end
 
       def from(image_name, cache_version: nil)
@@ -16,6 +17,14 @@ module Dapp
 
       def expose(*args)
         @_expose.concat(args)
+      end
+
+      def workdir(path)
+        @_workdir = path
+      end
+
+      def env(*args)
+        @_env.concat(args)
       end
 
       def _from

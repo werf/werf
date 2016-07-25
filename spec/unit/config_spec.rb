@@ -63,6 +63,18 @@ describe Dapp::Config::Main do
     expect_special_attribute(:docker, :expose)
   end
 
+  it '#docker env' do
+    expect_special_attribute(:docker, :env)
+  end
+
+  it '#docker workdir' do
+    @dappfile = %(
+      docker.workdir 'first_value'
+      docker.workdir 'second_value'
+    )
+    expect(app.docker._workdir).to eq 'second_value'
+  end
+
   it '#chef module' do
     expect_special_attribute(:chef, :module, :_modules)
   end

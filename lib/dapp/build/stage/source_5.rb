@@ -22,7 +22,9 @@ module Dapp
 
         def image
           super do |image|
-            image.add_expose(exposes) unless exposes.empty?
+            image.add_expose(exposes)  unless exposes.empty?
+            image.add_env(envs)        unless envs.empty?
+            image.add_workdir(workdir) unless workdir.nil?
           end
         end
 
@@ -30,6 +32,14 @@ module Dapp
 
         def exposes
           application.config._docker._expose
+        end
+
+        def envs
+          application.config._docker._env
+        end
+
+        def workdir
+          application.config._docker._workdir
         end
 
         def layers_commits_write!
