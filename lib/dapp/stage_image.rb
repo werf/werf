@@ -44,16 +44,16 @@ module Dapp
       shellout("docker rm #{container_name}")
     end
 
-    def export!(name, log_verbose: false, log_time: false)
+    def export!(name, log_verbose: false, log_time: false, force: false)
       image = self.class.new(built_id: built_id, name: name)
-      image.tag!(log_verbose: log_verbose, log_time: log_time)
+      image.tag!(log_verbose: log_verbose, log_time: log_time, force: force)
       image.push!(log_verbose: log_verbose, log_time: log_time)
       image.untag!
     end
 
-    def tag!(log_verbose: false, log_time: false)
-      unless (existed_id = id).nil?
-        fail Error::Build, code: :image_already_tagged if built_id != existed_id
+    def tag!(log_verbose: false, log_time: false, force: false)
+      if !(existed_id = id).nil? && !force
+        fail Error::Build, code: :another_image_already_tagged if built_id != existed_id
         return
       end
       shellout!("docker tag #{built_id} #{name}", log_verbose: log_verbose, log_time: log_time)

@@ -21,3 +21,4 @@ en:
     state:
       using_cache: '[USING CACHE]'
       build: '[BUILD]'
+      push: '[PUSH]'
