@@ -11,10 +11,6 @@ module Dapp
         default: [:white]
       }.freeze
 
-      def paint_style_code(str)
-        str[/\e\[(?:[0-9];?)+m/]
-      end
-
       def paint_style(name)
         FORMAT[name].tap do |format|
           fail if format.nil?
