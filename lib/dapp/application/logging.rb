@@ -51,7 +51,7 @@ module Dapp
         style[:success] ||= DEFAULT_STYLE[:success]
 
         if log_verbose? && !short
-          process ||= t('status.process.default')
+          process ||= t(code: 'status.process.default')
           log_process_verbose(message, process: process, style: style, &blk)
         else
           log_process_short(message, style: style, &blk)
@@ -65,15 +65,15 @@ module Dapp
       def log_process_verbose(message, process:, style: {}, &blk)
         process         = paint_string(rjust(process, message), style[:process])
         info            = paint_string(message, style[:message]) + process
-        success_message = slice(message) + paint_string(rjust(t('status.success.default'), message), style[:success])
-        failed_message  = paint_string(slice(message) + rjust(t('status.failed.default'), message), style[:failed])
+        success_message = slice(message) + paint_string(rjust(t(code: 'status.success.default'), message), style[:success])
+        failed_message  = paint_string(slice(message) + rjust(t(code: 'status.failed.default'), message), style[:failed])
         log_process_default(info, success_message, failed_message, &blk)
       end
 
       def log_process_short(message, style: {}, &blk)
         info            = "#{paint_string(slice(message), style[:message])} ... "
-        success_message = paint_string(rjust(t('status.success.default'), info), style[:success])
-        failed_message  = paint_string(rjust(t('status.failed.default'), info), style[:failed])
+        success_message = paint_string(rjust(t(code: 'status.success.default'), info), style[:success])
+        failed_message  = paint_string(rjust(t(code: 'status.failed.default'), info), style[:failed])
         log_process_default(info, success_message, failed_message, inline: true, &blk)
       end
 
@@ -95,7 +95,7 @@ module Dapp
       end
 
       def slice(str)
-        if (index = free_space(t('state.using_cache'))) >= 0 # free space by longest status
+        if (index = free_space(t(code: 'state.using_cache'))) >= 0 # free space by longest status
           str.slice(0..index)
         else
           str.slice(0)

@@ -22,11 +22,11 @@ module Dapp
           prev_stage.build! if prev_stage
           begin
             if image.tagged?
-              application.log_state(name, state: application.t('state.using_cache'))
+              application.log_state(name, state: application.t(code: 'state.using_cache'))
             elsif application.dry_run?
-              application.log_state(name, state: application.t('state.build'), styles: { status: :success })
+              application.log_state(name, state: application.t(code: 'state.build'), styles: { status: :success })
             else
-              application.log_process(name, process: application.t('status.process.building'), short: should_be_not_detailed?) do
+              application.log_process(name, process: application.t(code: 'status.process.building'), short: should_be_not_detailed?) do
                 image_build!
               end
             end
@@ -87,15 +87,15 @@ module Dapp
 
         def format_image_info
           date, bytesize = image_info
-          ["date: #{Time.parse(date).localtime}", "size: #{to_mb(bytesize.to_i)} MB"].join("\n")
+          application.t(code: 'image.info', data: { date: Time.parse(date).localtime, size: to_mb(bytesize.to_i)})
         end
 
         def log_build
           application.with_log_indent do
-            application.log_info "signature: #{image_name}"
+            application.log_info application.t(code: 'image.signature', data: { signature: image_name})
             application.log_info format_image_info if image.tagged?
             unless (bash_commands = image.send(:bash_commands)).empty?
-              application.log_info 'commands:'
+              application.log_info application.t(code: 'image.commands')
               application.with_log_indent { application.log_info bash_commands.join("\n") }
             end
           end if application.log? && application.log_verbose?

@@ -1,5 +1,9 @@
 en:
   common:
+    image:
+      signature: "signature: %{signature}"
+      info: "date: %{date}\nsize: %{size} MB"
+      commands: "commands:"
     process:
       git_artifact_loading: 'loading git_artifact'
       chefdk_loading: 'loading chefdk'

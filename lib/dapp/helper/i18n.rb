@@ -8,8 +8,8 @@ module Dapp
         ::I18n.locale = :en
       end
 
-      def t(code = nil, desc: {}, context: nil)
-        code ||= desc[:code]
+      def t(context: nil, **desc)
+        code = desc[:code]
         data = desc[:data] || {}
         ::I18n.t [:common, context, code].join('.'), [:common, code].join('.'), **data, raise: true
       rescue ::I18n::MissingTranslationData => _e
