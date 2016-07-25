@@ -53,7 +53,7 @@ module Dapp
 
     def tag!(log_verbose: false, log_time: false)
       unless (existed_id = id).nil?
-        fail Error::Build, code: :image_is_already_tagged if built_id != existed_id
+        fail Error::Build, code: :image_already_tagged if built_id != existed_id
         return
       end
       shellout!("docker tag #{built_id} #{name}", log_verbose: log_verbose, log_time: log_time)
@@ -70,7 +70,7 @@ module Dapp
     end
 
     def run!(log_verbose: false, log_time: false)
-      fail Error::Build, code: :built_id_is_not_defined if from.built_id.nil?
+      fail Error::Build, code: :built_id_not_defined if from.built_id.nil?
       shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}",
                 log_verbose: log_verbose, log_time: log_time)
     end

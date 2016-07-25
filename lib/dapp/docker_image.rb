@@ -20,12 +20,12 @@ module Dapp
     end
 
     def untag!
-      fail Error::Build, code: :image_is_already_untagged, data: { name: name } unless tagged?
+      fail Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
       shellout!("docker rmi #{name}")
     end
 
     def push!(log_verbose: false, log_time: false)
-      fail Error::Build, code: :image_is_not_exist, data: { name: name } unless tagged?
+      fail Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
       shellout!("docker push #{name}", log_verbose: log_verbose, log_time: log_time)
     end
 
@@ -44,7 +44,7 @@ module Dapp
     end
 
     def info
-      fail Error::Build, code: :image_is_not_exist, data: { name: name } unless tagged?
+      fail Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
       shellout!("docker inspect --format='{{.Created}} {{.Size}}' #{name}").stdout.strip.split
     end
   end # DockerImage

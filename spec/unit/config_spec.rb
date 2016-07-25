@@ -43,7 +43,7 @@ describe Dapp::Config::Main do
       shell.infra_install 'a'
       chef.module 'a'
     )
-    expect_exception_code(code: :another_builder_defined) { apps }
+    expect_exception_code(code: :builder_type_conflict) { apps }
   end
 
   it '#builder chef already used' do
@@ -51,7 +51,7 @@ describe Dapp::Config::Main do
       builder :chef
       shell.infra_install 'a'
     )
-    expect_exception_code(code: :another_builder_defined) { apps }
+    expect_exception_code(code: :builder_type_conflict) { apps }
   end
 
   it '#docker from' do
@@ -206,7 +206,7 @@ describe Dapp::Config::Main do
       app 'first'
       docker.from :image_1
     )
-    expect_exception_code(code: :docker_from_is_not_defined) { app.docker._from }
+    expect_exception_code(code: :docker_from_not_defined) { app.docker._from }
   end
 
   it '#cache_version' do

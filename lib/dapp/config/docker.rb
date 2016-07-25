@@ -28,7 +28,7 @@ module Dapp
       end
 
       def _from
-        @_from || fail(Error::Config, code: :docker_from_is_not_defined)
+        @_from || fail(Error::Config, code: :docker_from_not_defined)
       end
 
       def clone

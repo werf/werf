@@ -32,7 +32,7 @@ module Dapp
     end
 
     def push(repo)
-      fail Error::Controller, code: :one_application_expected unless @build_confs.one?
+      fail Error::Controller, code: :push_command_unexpected_apps unless @build_confs.one?
       Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
     end
 
