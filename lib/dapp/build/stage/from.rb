@@ -17,7 +17,7 @@ module Dapp
         protected
 
         def image_build!
-          from_image.pull!(log_verbose: application.log_verbose?, log_time: application.log_time?)
+          from_image.pull!(log_time: application.log_time?)
           super
         end
 

@@ -35,10 +35,6 @@ describe Dapp::GitRepo do
     git_dir.nil? ? arg : File.join(git_dir, arg)
   end
 
-  def latest_commit
-    git_latest_commit
-  end
-
   def remote_init!
     init!('remote')
   end

@@ -30,7 +30,11 @@ module Dapp
     end
 
     def add_commands(*commands)
-      @bash_commands += commands.flatten
+      @bash_commands.concat(commands.flatten)
+    end
+
+    def unshift_commands(*commands)
+      @bash_commands.unshift(*commands.flatten)
     end
 
     def built_id
@@ -38,10 +42,16 @@ module Dapp
     end
 
     def build!(**kvargs)
-      run!(**kvargs)
-      @built_id = commit!
-    ensure
-      shellout("docker rm #{container_name}")
+      @built_id = if should_be_built?
+                    begin
+                      run!(**kvargs)
+                      commit!
+                    ensure
+                      shellout("docker rm #{container_name}")
+                    end
+                  else
+                    from.built_id
+                  end
     end
 
     def export!(name, log_verbose: false, log_time: false, force: false)
@@ -84,16 +94,16 @@ module Dapp
       shellout!("docker commit #{container_name}").stdout.strip
     end
 
+    def should_be_built?
+      !bash_commands.empty?
+    end
+
     def prepared_options
       options.map { |k, vals| Array(vals).map { |v| "--#{k}=#{v}" }.join(' ') }.join(' ')
     end
 
     def prepared_bash_command
-      if bash_commands.empty?
-        'true'
-      else
-        "bash -ec 'eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)'"
-      end
+      "bash -ec 'eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)'"
     end
 
     def prepared_commands
