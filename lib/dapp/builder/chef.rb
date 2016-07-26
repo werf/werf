@@ -15,7 +15,7 @@ module Dapp
         templates/%{stage}/*
       ).freeze
 
-      DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.15.16-1-2'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
+      DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.15.16-3'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
       [:infra_install, :infra_setup, :app_install, :app_setup].each do |stage|
         define_method(:"#{stage}_checksum") { stage_cookbooks_checksum(stage) }
@@ -26,7 +26,7 @@ module Dapp
 
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
-            image.add_commands 'export PATH=/opt/chefdk/bin:$PATH'
+            image.add_commands 'export PATH=/.dapp/deps/chefdk/bin:$PATH'
 
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}"
             image.add_commands ['chef-solo',
@@ -39,7 +39,7 @@ module Dapp
       private
 
       def project_name
-        application.config._root_app._name # FIXME: parse name from metadata.rb
+        cookbook_metadata.name
       end
 
       def berksfile_path
@@ -48,6 +48,14 @@ module Dapp
 
       def berksfile
         @berksfile ||= Berksfile.new(application.home_path, berksfile_path)
+      end
+
+      def cookbook_metadata_path
+        application.home_path('metadata.rb')
+      end
+
+      def cookbook_metadata
+        @cookbook_metadata ||= CookbookMetadata.new(cookbook_metadata_path)
       end
 
       def berksfile_lock_checksum
@@ -146,7 +154,7 @@ module Dapp
                 ['docker run',
                  '--restart=no',
                  "--name #{chefdk_container_name}",
-                 "--volume /opt/chefdk #{chefdk_image}",
+                 "--volume /.dapp/deps/chefdk #{chefdk_image}",
                  '2>/dev/null'].join(' ')
               )
             end
@@ -170,7 +178,7 @@ module Dapp
                "--user #{Process.uid}:#{Process.gid}",
                "--workdir #{berksfile_path.parent}",
                '--env BERKSHELF_PATH=/tmp/berkshelf',
-               "ubuntu:14.04 /opt/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
+               "ubuntu:14.04 /.dapp/deps/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
               ].join(' '),
               log_verbose: application.log_verbose?
             )
