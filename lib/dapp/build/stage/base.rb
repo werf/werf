@@ -16,9 +16,9 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
-        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
         def build!
-          return if image.tagged? && !application.log_verbose?
+          return if image.tagged? && !application.log_verbose? && !should_be_introspected?
           prev_stage.build! if prev_stage
           begin
             if image.tagged?
@@ -33,10 +33,11 @@ module Dapp
           ensure
             log_build
           end
-          raise Exception::IntrospectImage, message: application.t(code: 'introspect.stage', data: { name: name }),
-                data: { built_id: image.built_id, options: image.send(:prepared_options) } if application.cli_options[:introspect_stage] == name
+          fail Exception::IntrospectImage,
+               message: application.t(code: 'introspect.stage', data: { name: name }),
+               data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
         end
-        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
         def save_in_cache!
           return if image.tagged?
@@ -67,6 +68,10 @@ module Dapp
           image.send(:bash_commands).empty?
         end
 
+        def should_be_introspected?
+          application.cli_options[:introspect_stage] == name
+        end
+
         def image_build!
           image.build!(log_verbose: application.log_verbose?,
                        log_time: application.log_time?,
@@ -92,12 +97,13 @@ module Dapp
 
         def format_image_info
           date, bytesize = image_info
-          application.t(code: 'image.info', data: { date: Time.parse(date).localtime, size: to_mb(bytesize.to_i)})
+          application.t(code: 'image.info', data: { date: Time.parse(date).localtime, size: to_mb(bytesize.to_i) })
         end
 
+        # rubocop:disable Metrics/AbcSize
         def log_build
           application.with_log_indent do
-            application.log_info application.t(code: 'image.signature', data: { signature: image_name})
+            application.log_info application.t(code: 'image.signature', data: { signature: image_name })
             application.log_info format_image_info if image.tagged?
             unless (bash_commands = image.send(:bash_commands)).empty?
               application.log_info application.t(code: 'image.commands')

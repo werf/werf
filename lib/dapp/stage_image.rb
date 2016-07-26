@@ -75,13 +75,9 @@ module Dapp
                 log_verbose: log_verbose, log_time: log_time)
     rescue Error::Shellout => e
       raise unless introspect_error || introspect_before_error
-      built_id = if introspect_error
-                   commit!
-                 elsif introspect_before_error
-                   from.built_id
-                 end
+      built_id = introspect_error ? commit! : from.built_id
       raise Exception::IntrospectImage, message: Dapp::Helper::NetStatus.message(e),
-            data: { built_id: built_id, options: prepared_options, rmi: introspect_error }
+                                        data: { built_id: built_id, options: prepared_options, rmi: introspect_error }
     end
 
     def commit!
