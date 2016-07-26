@@ -31,7 +31,7 @@ module Dapp
               image.add_commands git_artifact.send(apply_command_method, self)
             end
 
-            if should_be_with_git?
+            if application.git_artifacts.any? && !image.send(:bash_commands).empty? # should be with git?
               image.add_volumes_from(gitartifact_container)
               image.unshift_commands 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
             end
@@ -76,10 +76,6 @@ module Dapp
 
         def should_be_not_detailed?
           true
-        end
-
-        def should_be_with_git?
-          application.git_artifacts.any? && !image.send(:bash_commands).empty?
         end
 
         def apply_command_method
