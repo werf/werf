@@ -84,7 +84,7 @@ module Dapp
         message = success_message
         start = Time.now
         yield
-      rescue Error::Base, SignalException, StandardError => _e
+      rescue Exception::Base, Error::Base, SignalException, StandardError => _e
         message = failed_message
         raise
       ensure

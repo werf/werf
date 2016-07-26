@@ -33,6 +33,8 @@ module Dapp
           ensure
             log_build
           end
+          raise Exception::IntrospectImage, message: application.t(code: 'introspect.stage', data: { name: name }),
+                data: { built_id: image.built_id, options: image.send(:prepared_options) } if application.cli_options[:introspect_stage] == name
         end
         # rubocop:enable Metrics/AbcSize
 
@@ -66,7 +68,10 @@ module Dapp
         end
 
         def image_build!
-          image.build!(log_verbose: application.log_verbose?, log_time: application.log_time?)
+          image.build!(log_verbose: application.log_verbose?,
+                       log_time: application.log_time?,
+                       introspect_error: application.cli_options[:introspect_error],
+                       introspect_before_error: application.cli_options[:introspect_before_error])
         end
 
         def from_image
