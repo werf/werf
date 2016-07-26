@@ -9,6 +9,7 @@ module Dapp
       ).freeze
 
       STAGE_LOCAL_COOKBOOK_PATTERNS = %w(
+        metadata.json
         recipes/%{stage}.rb
         recipes/*_%{stage}.rb
         files/%{stage}/*

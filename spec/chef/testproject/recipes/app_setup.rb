@@ -1,4 +1,4 @@
-apt_package 'unzip'
+package 'unzip'
 
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_app_setup.txt" do
   source 'app_setup/qux.txt'

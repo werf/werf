@@ -18,6 +18,9 @@ module Dapp
             @cookbook_metadata.version = version
           end
 
+          def method_missing(*_a, &_blk)
+          end
+
           private
 
           def parse

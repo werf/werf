@@ -1,8 +1,6 @@
-execute 'apt-get update' do
-  command 'apt-get update'
-end
+include_recipe 'apt' if node[:platform_family].to_s == 'debian'
 
-apt_package 'sl'
+package 'vim'
 
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_infra_install.txt" do
   source 'infra_install/pizza.txt'
