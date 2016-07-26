@@ -4,7 +4,7 @@ docker.from 'ubuntu:14.04'
 
 name 'test'
 
-git_artifact.local '/myapp', owner: 'hubba', group: 'bubba'
+git_artifact.local '/myapp'
 
 chef.module 'mdapp-test'
 
