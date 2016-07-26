@@ -1,4 +1,4 @@
-apt_package 'tree'
+package 'tree'
 
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_infra_setup.txt" do
   source 'infra_setup/baz.txt'

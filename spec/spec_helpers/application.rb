@@ -30,7 +30,7 @@ module SpecHelpers
     end
 
     def default_config
-      {
+      Marshal.load(Marshal.dump({
         _name: 'test',
         _chef: { _modules: [] },
         _shell: { _infra_install: [], _infra_setup: [], _app_install: [], _app_setup: [] },
@@ -38,7 +38,7 @@ module SpecHelpers
         _git_artifact: { _local: [], _remote: [] },
         _app_install_dependencies: [],
         _app_setup_dependencies: []
-      }
+      }))
     end
 
     def cli_options
