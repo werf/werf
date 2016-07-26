@@ -22,3 +22,5 @@ en:
       using_cache: '[USING CACHE]'
       build: '[BUILD]'
       push: '[PUSH]'
+    introspect:
+      stage: "Introspect stage '%{name}'"

@@ -37,8 +37,8 @@ module Dapp
       @built_id ||= id
     end
 
-    def build!(log_verbose: false, log_time: false)
-      run!(log_verbose: log_verbose, log_time: log_time)
+    def build!(**kvargs)
+      run!(**kvargs)
       @built_id = commit!
     ensure
       shellout("docker rm #{container_name}")
@@ -69,10 +69,19 @@ module Dapp
       options[key] = (options[key].nil? ? value : (Array(options[key]) << value).flatten)
     end
 
-    def run!(log_verbose: false, log_time: false)
+    def run!(log_verbose: false, log_time: false, introspect_error: false, introspect_before_error: false)
       fail Error::Build, code: :built_id_not_defined if from.built_id.nil?
       shellout!("docker run #{prepared_options} --name=#{container_name} #{from.built_id} #{prepared_bash_command}",
                 log_verbose: log_verbose, log_time: log_time)
+    rescue Error::Shellout => e
+      raise unless introspect_error || introspect_before_error
+      built_id = if introspect_error
+                   commit!
+                 elsif introspect_before_error
+                   from.built_id
+                 end
+      raise Exception::IntrospectImage, message: Dapp::Helper::NetStatus.message(e),
+            data: { built_id: built_id, options: prepared_options, rmi: introspect_error }
     end
 
     def commit!
