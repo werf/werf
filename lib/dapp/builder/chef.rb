@@ -178,7 +178,7 @@ module Dapp
                "--user #{Process.uid}:#{Process.gid}",
                "--workdir #{berksfile_path.parent}",
                '--env BERKSHELF_PATH=/tmp/berkshelf',
-               "ubuntu:14.04 /.dapp/deps/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
+               "dappdeps/berksdeps:0.1.0 /.dapp/deps/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
               ].join(' '),
               log_verbose: application.log_verbose?
             )
