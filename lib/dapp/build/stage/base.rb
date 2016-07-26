@@ -16,9 +16,9 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
-        # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+        # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         def build!
-          return if image.tagged? && !application.log_verbose? && !should_be_introspected?
+          return if should_be_skipped?
           prev_stage.build! if prev_stage
           begin
             if image.tagged?
@@ -37,7 +37,7 @@ module Dapp
                message: application.t(code: 'introspect.stage', data: { name: name }),
                data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
         end
-        # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+        # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
         def save_in_cache!
           return if image.tagged?
@@ -68,8 +68,12 @@ module Dapp
           image.send(:bash_commands).empty?
         end
 
+        def should_be_skipped?
+          image.tagged? && !application.log_verbose? && application.cli_options[:introspect_stage].nil?
+        end
+
         def should_be_introspected?
-          application.cli_options[:introspect_stage] == name
+          application.cli_options[:introspect_stage] == name && !application.dry_run?
         end
 
         def image_build!
