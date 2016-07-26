@@ -16,6 +16,7 @@ require 'spec_helpers/application'
 require 'spec_helpers/git'
 require 'spec_helpers/git_artifact'
 require 'spec_helpers/expect'
+require 'spec_helpers/stream'
 
 RSpec.configure do |config|
   config.before :all do

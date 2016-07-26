@@ -19,14 +19,14 @@ module Dapp
     end
 
     def build
-      @build_confs.each do |build_conf|
+      build_confs.each do |build_conf|
         log_step(build_conf._name)
         with_log_indent { Application.new(config: build_conf, cli_options: cli_options).build! }
       end
     end
 
     def list
-      @build_confs.each do |build_conf|
+      build_confs.each do |build_conf|
         log(build_conf._name)
       end
     end
@@ -37,7 +37,7 @@ module Dapp
     end
 
     def smartpush(repo_prefix)
-      @build_confs.each do |build_conf|
+      build_confs.each do |build_conf|
         log_step(build_conf._name)
         repo = File.join(repo_prefix, build_conf._name)
         with_log_indent { Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true).export!(repo) }
@@ -45,7 +45,7 @@ module Dapp
     end
 
     def flush_build_cache
-      @build_confs.each do |build_conf|
+      build_confs.each do |build_conf|
         log(build_conf._name)
         app = Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true)
         FileUtils.rm_rf app.build_cache_path
@@ -100,7 +100,7 @@ module Dapp
                    when 'auto' then STDOUT.tty? ? 8 : 0
                    when 'on'   then 8
                    when 'off'  then 0
-                   else fail
+                   else 0
                    end
     end
   end # Controller
