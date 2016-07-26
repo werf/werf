@@ -168,18 +168,28 @@ module Dapp
         @install_cookbooks ||= begin
           volumes_from = chefdk_container
           application.log_secondary_process(application.t(code: 'process.berks_vendor')) do
+            ssh_auth_socket_path = nil
+            ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] and File.exist?(ENV['SSH_AUTH_SOCK'])
+
             application.shellout!(
               ['docker run --rm',
-               "--volumes-from #{volumes_from}",
+               '--volume /etc:/etc:ro',
+               '--volume /usr:/usr:ro',
+               '--volume /lib:/lib:ro',
+               '--volume /home:/home',
+               '--volume /tmp:/tmp',
+               ("--volume #{ssh_auth_socket_path.dirname}:#{ssh_auth_socket_path.dirname}" if ssh_auth_socket_path),
                "--volume #{cookbooks_vendor_path.tap(&:mkpath)}:#{cookbooks_vendor_path}",
                *berksfile.local_cookbooks
                          .values
                          .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
+               "--volumes-from #{volumes_from}",
                "--user #{Process.uid}:#{Process.gid}",
                "--workdir #{berksfile_path.parent}",
                '--env BERKSHELF_PATH=/tmp/berkshelf',
+               ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
                "dappdeps/berksdeps:0.1.0 /.dapp/deps/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
-              ].join(' '),
+              ].compact.join(' '),
               log_verbose: application.log_verbose?
             )
 
