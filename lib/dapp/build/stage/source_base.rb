@@ -64,7 +64,7 @@ module Dapp
 
         def gitartifact_container
           @gitartifact_container ||= begin
-            if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus != 0
+            if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus.nonzero?
               application.log_secondary_process(application.t(code: 'process.git_artifact_loading'), short: true) do
                 application.shellout ['docker run',
                                       '--restart=no',

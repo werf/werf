@@ -33,9 +33,9 @@ module Dapp
           ensure
             log_build
           end
-          fail Exception::IntrospectImage,
-               message: application.t(code: 'introspect.stage', data: { name: name }),
-               data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
+          raise Exception::IntrospectImage,
+                message: application.t(code: 'introspect.stage', data: { name: name }),
+                data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
         end
         # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
@@ -85,7 +85,7 @@ module Dapp
 
         def from_image
           prev_stage.image if prev_stage || begin
-            fail Error::Build, code: :from_image_required
+            raise Error::Build, code: :from_image_required
           end
         end
 

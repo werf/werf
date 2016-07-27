@@ -21,7 +21,7 @@ module Dapp
 
       def branch_tags
         return [] unless cli_options[:tag_branch]
-        fail Error::Application, code: :git_branch_without_name if (branch = git_repo.branch) == 'HEAD'
+        raise Error::Application, code: :git_branch_without_name if (branch = git_repo.branch) == 'HEAD'
         [branch]
       end
 
@@ -39,7 +39,7 @@ module Dapp
         elsif ENV['TRAVIS']
           build_id = ENV['TRAVIS_BUILD_NUMBER']
         else
-          fail Error::Application, code: :ci_environment_required
+          raise Error::Application, code: :ci_environment_required
         end
 
         [build_id]
@@ -55,7 +55,7 @@ module Dapp
           branch = ENV['TRAVIS_BRANCH']
           tag = ENV['TRAVIS_TAG']
         else
-          fail Error::Application, code: :ci_environment_required
+          raise Error::Application, code: :ci_environment_required
         end
 
         [branch, tag].compact

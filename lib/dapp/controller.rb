@@ -32,7 +32,7 @@ module Dapp
     end
 
     def push(repo)
-      fail Error::Controller, code: :push_command_unexpected_apps unless @build_confs.one?
+      raise Error::Controller, code: :push_command_unexpected_apps unless @build_confs.one?
       Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
     end
 
@@ -64,10 +64,10 @@ module Dapp
         if File.exist? dappfile_path
           dappfiles = dappfile_path
         elsif (dappfiles = dapps_dappfiles_pathes).empty? && (dappfiles = search_dappfile_up).nil?
-          fail Error::Controller, code: :dappfile_not_found
+          raise Error::Controller, code: :dappfile_not_found
         end
         Array(dappfiles).map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten.tap do |apps|
-          fail Error::Controller, code: :no_such_app, data: { path: dappfile_path, patterns: patterns.join(', ') } if apps.empty?
+          raise Error::Controller, code: :no_such_app, data: { path: dappfile_path, patterns: patterns.join(', ') } if apps.empty?
         end
       end
     end
@@ -84,7 +84,7 @@ module Dapp
     end
 
     def dapps_dappfiles_pathes
-      Dir.glob(File.join [cli_options[:dir], '.dapps', '*', 'Dappfile'].compact)
+      Dir.glob(File.join([cli_options[:dir], '.dapps', '*', 'Dappfile'].compact))
     end
 
     def search_dappfile_up

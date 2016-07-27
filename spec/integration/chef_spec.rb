@@ -121,7 +121,7 @@ describe Dapp::Builder::Chef do
 
     define_method("#{name}_exist?") do
       res = shellout("docker run --rm #{application.send(:last_stage).image.name} ls /#{name}.txt")
-      return true if res.exitstatus == 0
+      return true if res.exitstatus.zero?
       return false if res.exitstatus == 2
       res.error!
     end

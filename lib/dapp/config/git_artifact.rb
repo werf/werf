@@ -31,8 +31,8 @@ module Dapp
           @_where_to_add = where_to_add
 
           options.each do |k, v|
-            respond_to?("_#{k}=") ? send(:"_#{k}=", v) : fail(Error::Config, code: :git_artifact_unexpected_attribute,
-                                                                             data: { type: object_name, attr: k })
+            respond_to?("_#{k}=") ? send(:"_#{k}=", v) : raise(Error::Config, code: :git_artifact_unexpected_attribute,
+                                                                              data: { type: object_name, attr: k })
           end
         end
 

@@ -13,7 +13,7 @@ module Dapp
 
       def paint_style(name)
         FORMAT[name].tap do |format|
-          fail if format.nil?
+          raise if format.nil?
         end
       end
 

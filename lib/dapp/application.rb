@@ -32,7 +32,7 @@ module Dapp
     end
 
     def export!(repo)
-      fail Error::Application, code: :application_not_built unless last_stage.image.tagged? || dry_run?
+      raise Error::Application, code: :application_not_built unless last_stage.image.tagged? || dry_run?
 
       tags.each do |tag|
         image_name = [repo, tag].join(':')

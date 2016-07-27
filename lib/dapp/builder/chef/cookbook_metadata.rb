@@ -18,8 +18,10 @@ module Dapp
             @cookbook_metadata.version = version
           end
 
+          # rubocop:disable Style/MethodMissing
           def method_missing(*_a, &_blk)
           end
+          # rubocop:enable Style/MethodMissing
 
           private
 
