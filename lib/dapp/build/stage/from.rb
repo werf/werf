@@ -28,7 +28,7 @@ module Dapp
         end
 
         def from_image
-          StageImage.new(name: from_image_name)
+          @from_image ||= StageImage.new(name: from_image_name)
         end
 
         def image_info
