@@ -78,8 +78,11 @@ module Dapp
             to_runlist_entrypoint[name, stage]
           end.compact)
 
-          res.concat(application.config._app_runlist.map do |app_runlist_name|
-            to_runlist_entrypoint[project_name, app_runlist_name]
+          project_main_entry = to_runlist_entrypoint[project_name, stage]
+          res << project_main_entry if project_main_entry
+
+          res.concat(application.config._app_runlist.map do |app_component|
+            to_runlist_entrypoint[project_name, [app_component, stage].join('_')]
           end.compact)
         end
       end
