@@ -27,11 +27,11 @@ describe Dapp::Builder::Chef do
 
           new_file_values = {}
           new_file_values[file1] = SecureRandom.uuid
-          testproject_path.join("files/#{stage}/#{file1}.txt").tap do |path|
+          testproject_path.join("files/default/#{stage}/#{file1}.txt").tap do |path|
             path.write "#{new_file_values[file1]}\n"
           end
           new_file_values[file2] = SecureRandom.uuid
-          mdapp_test_path.join("files/#{stage}/#{file2}.txt").tap do |path|
+          mdapp_test_path.join("files/default/#{stage}/#{file2}.txt").tap do |path|
             path.write "#{new_file_values[file2]}\n"
           end
 
@@ -57,12 +57,16 @@ describe Dapp::Builder::Chef do
 
   def openstruct_config
     RecursiveOpenStruct.new(config).tap do |obj|
-      def obj._app_runlist
+      def obj._app_chain
         [self]
       end
 
+      def obj._app_runlist
+        []
+      end
+
       def obj._root_app
-        _app_runlist.first
+        _app_chain.first
       end
     end
   end
