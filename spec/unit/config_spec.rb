@@ -38,7 +38,7 @@ describe Dapp::Config::Main do
     expect(app._builder).to eq :chef
   end
 
-  it '#builder shell already used' do
+  it '#builder shell already used (:builder_type_conflict)' do
     @dappfile = %(
       shell.infra_install 'a'
       chef.module 'a'
@@ -46,7 +46,7 @@ describe Dapp::Config::Main do
     expect_exception_code(code: :builder_type_conflict) { apps }
   end
 
-  it '#builder chef already used' do
+  it '#builder chef already used (:builder_type_conflict)' do
     @dappfile = %(
       builder :chef
       shell.infra_install 'a'
@@ -201,7 +201,7 @@ describe Dapp::Config::Main do
     expect(apps.map { |app| app.docker._from }).to eq [:image_1, :image_3, :image_2]
   end
 
-  it '#app does not inherit' do
+  it '#app does not inherit (:docker_from_not_defined)' do
     @dappfile = %(
       app 'first'
       docker.from :image_1

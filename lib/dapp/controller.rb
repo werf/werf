@@ -6,7 +6,7 @@ module Dapp
 
     attr_reader :cli_options, :patterns
 
-    def initialize(cli_options:, patterns: nil)
+    def initialize(cli_options: {}, patterns: nil)
       @cli_options = cli_options
       @cli_options[:log_indent] = 0
 
@@ -88,8 +88,8 @@ module Dapp
     end
 
     def search_dappfile_up
-      cdir = Pathname(cli_options[:dir] || Dir.pwd)
-      while (cdir = cdir.parent).to_s != '/'
+      cdir = Pathname(File.expand_path(cli_options[:dir] || Dir.pwd))
+      until (cdir = cdir.parent).root?
         next unless (path = cdir.join('Dappfile')).exist?
         return path.to_s
       end
@@ -100,7 +100,7 @@ module Dapp
                    when 'auto' then STDOUT.tty? ? 8 : 0
                    when 'on'   then 8
                    when 'off'  then 0
-                   else 0
+                   else raise
                    end
     end
   end # Controller
