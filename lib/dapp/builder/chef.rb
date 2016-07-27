@@ -12,8 +12,8 @@ module Dapp
         metadata.json
         recipes/%{stage}.rb
         recipes/*_%{stage}.rb
-        files/%{stage}/*
-        templates/%{stage}/*
+        files/default/%{stage}/*
+        templates/default/%{stage}/*
       ).freeze
 
       DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.15.16-3'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
