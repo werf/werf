@@ -12,8 +12,7 @@ describe Dapp::CLI do
 
   RSpec.configure do |c|
     c.before(:example, :stub) do
-      allow_any_instance_of(Dapp::Application).to receive(:initialize)
-      allow_any_instance_of(Dapp::Application).to receive(:build!)
+      allow(class_double(Dapp::Application).as_stubbed_const).to receive(:new) { RecursiveOpenStruct.new }
       allow_any_instance_of(Dapp::Controller).to receive(:build_confs) { [RecursiveOpenStruct.new(_name: 'project')] }
     end
   end
