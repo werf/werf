@@ -61,12 +61,21 @@ module Dapp
         @_apps.empty? ? [self] : @_apps.flatten
       end
 
+      def _app_chain
+        @_app_chain ||= (_parent ? _parent._app_chain : []) + [self]
+      end
+
       def _app_runlist
-        @_app_runlist ||= (_parent ? _parent._app_runlist : []) + [self]
+        _app_chain.map(&:_name).map do |name|
+          if subname = name.split("#{_root_app._name}-", 2)[1]
+            subname_parts = subname.split('-')
+            subname_parts.join('_') if subname_parts.any?
+          end
+        end.compact
       end
 
       def _root_app
-        _app_runlist.first
+        _app_chain.first
       end
 
       private

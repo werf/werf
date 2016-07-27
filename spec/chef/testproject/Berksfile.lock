@@ -10,7 +10,7 @@ DEPENDENCIES
 GRAPH
   apt (4.0.1)
     compat_resource (>= 12.10)
-  compat_resource (12.10.6)
+  compat_resource (12.10.7)
   mdapp-test (0.0.1)
   mdapp-test2 (0.0.1)
   test (0.0.1)
