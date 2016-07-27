@@ -71,14 +71,14 @@ require 'dapp/git_repo/base'
 require 'dapp/git_repo/own'
 require 'dapp/git_repo/remote'
 require 'dapp/git_artifact'
-require 'dapp/exception/base'
-require 'dapp/exception/introspect_image'
 require 'dapp/error/base'
 require 'dapp/error/application'
 require 'dapp/error/build'
 require 'dapp/error/config'
 require 'dapp/error/controller'
 require 'dapp/error/shellout'
+require 'dapp/exception/base'
+require 'dapp/exception/introspect_image'
 
 # Dapp
 module Dapp
