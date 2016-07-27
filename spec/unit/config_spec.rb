@@ -59,6 +59,10 @@ describe Dapp::Config::Main do
     expect(app.docker._from).to eq 'sample'
   end
 
+  it '#docker volume' do
+    expect_special_attribute(:docker, :volume)
+  end
+
   it '#docker expose' do
     expect_special_attribute(:docker, :expose)
   end
@@ -67,12 +71,32 @@ describe Dapp::Config::Main do
     expect_special_attribute(:docker, :env)
   end
 
+  it '#docker label' do
+    expect_special_attribute(:docker, :volume)
+  end
+
+  it '#docker cmd' do
+    expect_special_attribute(:docker, :cmd)
+  end
+
+  it '#docker onbuild' do
+    expect_special_attribute(:docker, :onbuild)
+  end
+
   it '#docker workdir' do
     @dappfile = %(
       docker.workdir 'first_value'
       docker.workdir 'second_value'
     )
     expect(app.docker._workdir).to eq 'second_value'
+  end
+
+  it '#docker user' do
+    @dappfile = %(
+      docker.user 'root'
+      docker.user 'root:root'
+    )
+    expect(app.docker._user).to eq 'root:root'
   end
 
   it '#chef module' do
