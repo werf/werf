@@ -1,6 +1,6 @@
 require 'stringio'
 
-module SpecHelpers
+module SpecHelper
   module Stream
     def capture_stdout
       old = $stdout

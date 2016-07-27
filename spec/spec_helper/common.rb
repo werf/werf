@@ -1,4 +1,4 @@
-module SpecHelpers
+module SpecHelper
   module Common
     def shellout(*args, **kwargs)
       kwargs.delete :log_verbose

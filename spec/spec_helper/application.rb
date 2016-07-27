@@ -1,4 +1,4 @@
-module SpecHelpers
+module SpecHelper
   module Application
     def application_build!
       application.build!

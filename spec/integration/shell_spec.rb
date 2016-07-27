@@ -1,8 +1,8 @@
 require_relative '../spec_helper'
 
 describe Dapp::Builder::Shell do
-  include SpecHelpers::Common
-  include SpecHelpers::Application
+  include SpecHelper::Common
+  include SpecHelper::Application
 
   def config
     @config ||= default_config.merge(_builder: :shell, _home_path: '')

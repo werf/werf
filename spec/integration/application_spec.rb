@@ -1,9 +1,9 @@
 require_relative '../spec_helper'
 
 describe Dapp::Application do
-  include SpecHelpers::Common
-  include SpecHelpers::Application
-  include SpecHelpers::Git
+  include SpecHelper::Common
+  include SpecHelper::Application
+  include SpecHelper::Git
 
   before :all do
     @wd = Dir.pwd

@@ -1,7 +1,7 @@
 require_relative '../spec_helper'
 
 describe Dapp::Config::Main do
-  include SpecHelpers::Expect
+  include SpecHelper::Expect
 
   def dappfile
     @dappfile ||= ''

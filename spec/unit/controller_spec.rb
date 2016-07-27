@@ -1,8 +1,8 @@
 require_relative '../spec_helper'
 
 describe Dapp::Controller do
-  include SpecHelpers::Common
-  include SpecHelpers::Expect
+  include SpecHelper::Common
+  include SpecHelper::Expect
 
   before :each do
     FileUtils.mkdir_p('.dapps/project/config/en')

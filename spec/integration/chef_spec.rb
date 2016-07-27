@@ -1,8 +1,8 @@
 require_relative '../spec_helper'
 
 describe Dapp::Builder::Chef do
-  include SpecHelpers::Common
-  include SpecHelpers::Application
+  include SpecHelper::Common
+  include SpecHelper::Application
 
   before :all do
     init_project

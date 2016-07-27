@@ -1,9 +1,9 @@
 require_relative '../spec_helper'
 
 describe Dapp::GitRepo do
-  include SpecHelpers::Common
-  include SpecHelpers::Application
-  include SpecHelpers::Git
+  include SpecHelper::Common
+  include SpecHelper::Application
+  include SpecHelper::Git
 
   before :each do
     stub_application
