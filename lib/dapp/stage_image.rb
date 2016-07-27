@@ -130,15 +130,15 @@ module Dapp
     def prepared_change
       prepared_options_default(change_options) do |k, vals|
         if k == :cmd
-          %Q(-c '#{k.to_s.upcase} #{Array(vals)}')
+          %(-c '#{k.to_s.upcase} #{Array(vals)}')
         else
-          Array(vals).map { |v| %Q(-c "#{k.to_s.upcase} #{v}") }.join(' ')
+          Array(vals).map { |v| %(-c "#{k.to_s.upcase} #{v}") }.join(' ')
         end
       end
     end
 
-    def prepared_options_default(hash, &prepared_vals)
-      hash.map { |k, vals| prepared_vals.call(k, vals) }.join(' ')
+    def prepared_options_default(hash)
+      hash.map { |k, vals| yield(k, vals) }.join(' ')
     end
 
     def prepared_bash_command

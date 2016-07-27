@@ -64,7 +64,7 @@ module Dapp
           cmd: _cmd,
           onbuild: _onbuild,
           workdir: _workdir,
-          user: _user,
+          user: _user
         }
       end
 
