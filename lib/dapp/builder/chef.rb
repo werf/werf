@@ -164,13 +164,13 @@ module Dapp
         end
       end
 
-      # rubocop:disable Metrics/MethodLength
+      # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_cookbooks
         @install_cookbooks ||= begin
           volumes_from = chefdk_container
           application.log_secondary_process(application.t(code: 'process.berks_vendor')) do
             ssh_auth_socket_path = nil
-            ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] and File.exist?(ENV['SSH_AUTH_SOCK'])
+            ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
 
             application.shellout!(
               ['docker run --rm',
@@ -189,8 +189,7 @@ module Dapp
                "--workdir #{berksfile_path.parent}",
                '--env BERKSHELF_PATH=/tmp/berkshelf',
                ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
-               "dappdeps/berksdeps:0.1.0 /.dapp/deps/chefdk/bin/berks vendor #{cookbooks_vendor_path}"
-              ].compact.join(' '),
+               "dappdeps/berksdeps:0.1.0 /.dapp/deps/chefdk/bin/berks vendor #{cookbooks_vendor_path}"].compact.join(' '),
               log_verbose: application.log_verbose?
             )
 
@@ -198,7 +197,7 @@ module Dapp
           end
         end
       end
-      # rubocop:enable Metrics/MethodLength
+      # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
       def install_stage_cookbooks(stage)
         stage_cookbooks_path(stage).mkpath
