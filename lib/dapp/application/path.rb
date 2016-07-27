@@ -3,18 +3,16 @@ module Dapp
   class Application
     # Path
     module Path
-      def build_cache_path(*path)
-        make_path(@build_cache_path, *path).expand_path.tap do |p|
-          FileUtils.mkdir_p p.parent
-        end
-      end
-
       def home_path(*path)
         make_path(config._home_path, *path).expand_path
       end
 
       def build_path(*path)
         make_path(@build_path, *path).expand_path.tap { |p| FileUtils.mkdir_p p.parent }
+      end
+
+      def build_cache_path(*path)
+        make_path(@build_cache_path, *path).expand_path.tap { |p| FileUtils.mkdir_p p.parent }
       end
 
       def container_build_path(*path)
