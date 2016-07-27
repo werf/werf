@@ -100,8 +100,6 @@ module SpecHelper
       application = class_double(Dapp::Application).as_stubbed_const
       allow(application).to receive(:new) do |*args, &block|
         method_new.call(*args, &block).tap do |instance|
-          allow(instance).to receive(:build_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
-          allow(instance).to receive(:container_build_path) { |*m_args| instance.build_path(*m_args) }
           allow(instance).to receive(:home_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
           allow(instance).to receive(:filelock)
         end

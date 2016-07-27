@@ -46,10 +46,6 @@ describe Dapp::Application do
     )
   end
 
-  def cli_options
-    @cli_options ||= default_cli_options.merge(build_dir: project_dapp_path.join('build'))
-  end
-
   [:from, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage_name|
     define_method "#{stage_name}_modified_signatures" do
       stages_names[stages_names.index(stage_name) - 1..-1]

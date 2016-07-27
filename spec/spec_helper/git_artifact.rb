@@ -5,7 +5,10 @@ module SpecHelper
     end
 
     def stub_git_repo_own
-      stub_instance(Dapp::GitRepo::Own) { |instance| instance.instance_variable_set(:@name, '') }
+      stub_instance(Dapp::GitRepo::Own) do |instance|
+        instance.instance_variable_set(:@name, '')
+        allow(instance).to receive(:container_path) { '.git' }
+      end
     end
   end
 end

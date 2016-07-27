@@ -3,7 +3,7 @@ require_relative '../spec_helper'
 describe Dapp::Filelock do
   include Dapp::Filelock
 
-  def build_path(x)
+  def tmp_path(x)
     x
   end
 

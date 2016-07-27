@@ -47,7 +47,8 @@ describe Dapp::GitRepo do
     remote_init!
     remote_commit!('Some text')
     @remote = Dapp::GitRepo::Remote.new(application, 'local_remote', url: 'remote/.git', **kwargs)
-    expect(File.exist?('local_remote.git')).to be_truthy
+    expect(File.exist?(@remote.path)).to be_truthy
+    expect(@remote.path.to_s =~ /local_remote.git$/).to be_truthy
   end
 
   def dapp_remote_cleanup
@@ -71,7 +72,7 @@ describe Dapp::GitRepo do
     dapp_remote_init
     remote_commit!('Some another text')
     @remote.fetch!
-    expect(`git -C local_remote.git rev-list --all --count`).to eq "#{@commit_counter}\n"
+    expect(`git -C #{@remote.path} rev-list --all --count`).to eq "#{@commit_counter}\n"
     dapp_remote_cleanup
   end
 
