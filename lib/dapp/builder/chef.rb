@@ -9,6 +9,7 @@ module Dapp
       ).freeze
 
       STAGE_LOCAL_COOKBOOK_PATTERNS = %w(
+        metadata.json
         recipes/%{stage}.rb
         recipes/*_%{stage}.rb
         files/%{stage}/*
@@ -87,17 +88,17 @@ module Dapp
 
       def local_cookbook_paths
         @local_cookbook_paths ||= berksfile.local_cookbooks
-                                  .values
-                                  .map { |cookbook| cookbook[:path] }
-                                  .product(LOCAL_COOKBOOK_PATTERNS)
-                                  .map { |cb, dir| Dir[cb.join(dir)] }
-                                  .flatten
-                                  .map(&Pathname.method(:new))
+                                           .values
+                                           .map { |cookbook| cookbook[:path] }
+                                           .product(LOCAL_COOKBOOK_PATTERNS)
+                                           .map { |cb, dir| Dir[cb.join(dir)] }
+                                           .flatten
+                                           .map(&Pathname.method(:new))
       end
 
       def stage_cookbooks_vendored_paths(stage, with_files: false)
         Dir[cookbooks_vendor_path('*')]
-          .map do|cookbook_path|
+          .map do |cookbook_path|
             if ['mdapp-*', project_name].any? { |pattern| File.fnmatch(pattern, File.basename(cookbook_path)) }
               STAGE_LOCAL_COOKBOOK_PATTERNS.map do |pattern|
                 Dir[File.join(cookbook_path, pattern % { stage: stage })]
@@ -124,7 +125,7 @@ module Dapp
 
           application.hashsum([_paths_checksum(stage_cookbooks_vendored_paths(stage, with_files: true)),
                                *application.config._chef._modules,
-                               (stage == :infra_install) ? chefdk_image : nil].compact).tap do |checksum|
+                               stage == :infra_install ? chefdk_image : nil].compact).tap do |checksum|
             stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
           end
         end
@@ -148,7 +149,7 @@ module Dapp
 
       def chefdk_container
         @chefdk_container ||= begin
-          if application.shellout("docker inspect #{chefdk_container_name}").exitstatus != 0
+          if application.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
             application.log_secondary_process(application.t(code: 'process.chefdk_loading'), short: true) do
               application.shellout(
                 ['docker run',
@@ -251,8 +252,8 @@ module Dapp
         application.hashsum [
           *paths.map(&:to_s).sort,
           *paths.reject(&:directory?)
-            .sort
-            .reduce(nil) { |a, e| application.hashsum [a, e.read].compact }
+                .sort
+                .reduce(nil) { |a, e| application.hashsum [a, e.read].compact }
         ]
       end
     end

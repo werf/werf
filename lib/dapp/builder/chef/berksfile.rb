@@ -14,8 +14,10 @@ module Dapp
             @berksfile.add_local_cookbook_path(name, path) if path
           end
 
+          # rubocop:disable Style/MethodMissing
           def method_missing(*_a, &_blk)
           end
+          # rubocop:enable Style/MethodMissing
 
           private
 
