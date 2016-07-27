@@ -10,16 +10,16 @@ module Dapp
         @name = name
       end
 
-      def container_build_dir_path
-        application.container_build_path "#{name}.git"
+      def container_path
+        application.container_tmp_path "#{name}.git"
       end
 
-      def dir_path
-        application.build_path "#{name}.git"
+      def path
+        application.tmp_path "#{name}.git"
       end
 
       def git_bare(command, **kwargs)
-        git "--git-dir=#{dir_path} #{command}", **kwargs
+        git "--git-dir=#{path} #{command}", **kwargs
       end
 
       def commit_at(commit)

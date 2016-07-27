@@ -19,8 +19,8 @@ module Dapp
       @config = config
       @cli_options = cli_options
 
-      @build_path = cli_options[:build_dir] || home_path('build')
-      @build_cache_path = cli_options[:build_cache_dir] || home_path('build_cache')
+      @tmp_path = Dir.mktmpdir(cli_options[:tmp_dir_prefix] || 'dapp-')
+      @metadata_path = cli_options[:metadata_dir] || home_path('.dapps_metadata')
 
       @last_stage = Build::Stage::Source5.new(self)
       @ignore_git_fetch = ignore_git_fetch
@@ -29,6 +29,8 @@ module Dapp
     def build!
       last_stage.build!
       last_stage.save_in_cache!
+    ensure
+      FileUtils.rm_rf(tmp_path)
     end
 
     def export!(repo)

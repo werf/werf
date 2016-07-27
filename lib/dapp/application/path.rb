@@ -7,16 +7,20 @@ module Dapp
         make_path(config._home_path, *path).expand_path
       end
 
-      def build_path(*path)
-        make_path(@build_path, *path).expand_path.tap { |p| FileUtils.mkdir_p p.parent }
+      def tmp_path(*path)
+        make_path(@tmp_path, *path).expand_path.tap { |p| FileUtils.mkdir_p p.parent }
       end
 
-      def build_cache_path(*path)
-        make_path(@build_cache_path, *path).expand_path.tap { |p| FileUtils.mkdir_p p.parent }
+      def metadata_path(*path)
+        make_path(@metadata_path, home_path.basename, *path).expand_path.tap { |p| FileUtils.mkdir_p p.parent }
       end
 
-      def container_build_path(*path)
-        make_path('/.build', *path)
+      def container_dapp_path(*path)
+        make_path('/.dapp', *path)
+      end
+
+      def container_tmp_path(*path)
+        container_dapp_path('tmp', *path)
       end
 
       private

@@ -48,7 +48,7 @@ module Dapp
       build_confs.each do |build_conf|
         log(build_conf._name)
         app = Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true)
-        FileUtils.rm_rf app.build_cache_path
+        FileUtils.rm_rf app.metadata_path
       end
     end
 

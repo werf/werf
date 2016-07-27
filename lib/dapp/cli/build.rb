@@ -17,13 +17,13 @@ Usage:
 Options:
 BANNER
 
-      option :build_dir,
-             long: '--build-dir PATH',
-             description: 'Build directory'
+      option :tmp_dir_prefix,
+             long: '--tmp-dir-prefix PREFIX',
+             description: 'Tmp directory prefix'
 
-      option :build_cache_dir,
-             long: '--build-cache-dir PATH',
-             description: 'Build cache directory'
+      option :metadata_dir,
+             long: '--metadata-dir PATH',
+             description: 'Metadata directory'
 
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',

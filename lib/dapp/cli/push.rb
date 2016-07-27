@@ -15,9 +15,9 @@ Usage:
 Options:
 BANNER
 
-      option :build_dir,
-             long: '--build-dir PATH',
-             description: 'Build directory'
+      option :tmp_dir_prefix,
+             long: '--tmp-dir-prefix PREFIX',
+             description: 'Tmp directory prefix'
 
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',

@@ -114,7 +114,7 @@ module Dapp
       end
 
       def stage_cookbooks_checksum_path(stage)
-        application.build_cache_path("#{cookbooks_checksum}.#{stage}.checksum")
+        application.metadata_path("#{cookbooks_checksum}.#{stage}.checksum")
       end
 
       def stage_cookbooks_checksum(stage)
@@ -220,11 +220,11 @@ module Dapp
       end
 
       def cookbooks_vendor_path(*path)
-        application.build_path('chef', 'vendored_cookbooks').join(*path)
+        application.tmp_path('chef', 'vendored_cookbooks').join(*path)
       end
 
       def stage_build_path(stage, *path)
-        application.build_path(application.config._name, stage).join(*path)
+        application.tmp_path(application.config._name, stage).join(*path)
       end
 
       def container_stage_build_path(_stage, *path)

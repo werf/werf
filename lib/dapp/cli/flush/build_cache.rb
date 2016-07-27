@@ -12,9 +12,9 @@ Usage:
   dapp flush build cache
 Options:
 BANNER
-        option :build_cache_dir,
-               long: '--build-cache-dir PATH',
-               description: 'Build cache directory'
+        option :metadata_dir,
+               long: '--metadata-dir PATH',
+               description: 'Metadata directory'
 
         def run(argv = ARGV)
           self.class.parse_options(self, argv)

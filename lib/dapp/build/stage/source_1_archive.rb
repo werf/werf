@@ -16,10 +16,6 @@ module Dapp
           next_stage
         end
 
-        def container_archive_path(git_artifact)
-          application.container_build_path git_artifact.filename '.tar.gz'
-        end
-
         protected
 
         def apply_command_method

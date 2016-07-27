@@ -12,8 +12,8 @@ module Dapp
         File.chmod(0o600, @ssh_key_path) if @ssh_key_path
 
         with_ssh_key do
-          git "clone --bare --depth 1 #{url} #{dir_path}"
-        end unless File.directory? dir_path
+          git "clone --bare --depth 1 #{url} #{path}"
+        end unless File.directory? path
       end
 
       def fetch!(branch = 'master')
@@ -26,7 +26,7 @@ module Dapp
 
       def cleanup!
         super
-        FileUtils.rm_rf dir_path
+        FileUtils.rm_rf path
       end
 
       protected

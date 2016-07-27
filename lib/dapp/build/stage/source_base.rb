@@ -29,7 +29,7 @@ module Dapp
             bash_commands = []
             volumes = []
             application.git_artifacts.each do |git_artifact|
-              volumes << "#{git_artifact.repo.dir_path}:#{git_artifact.repo.container_build_dir_path}"
+              volumes << "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}"
               bash_commands.concat(git_artifact.send(apply_command_method, self))
             end
 
@@ -94,7 +94,7 @@ module Dapp
         end
 
         def layer_commit_file_path(git_artifact)
-          application.build_path git_artifact.filename ".#{name}.#{git_artifact.paramshash}.#{dependencies_checksum}.commit"
+          application.metadata_path git_artifact.filename ".#{name}.#{git_artifact.paramshash}.#{dependencies_checksum}.commit"
         end
 
         def dependency_files_checksum(regs)
