@@ -33,10 +33,6 @@ module Dapp
       @bash_commands.concat(commands.flatten)
     end
 
-    def unshift_commands(*commands)
-      @bash_commands.unshift(*commands.flatten)
-    end
-
     def built_id
       @built_id ||= id
     end
@@ -95,7 +91,7 @@ module Dapp
     end
 
     def should_be_built?
-      !bash_commands.empty?
+      !(bash_commands.empty? && options[:expose].nil? && options[:env].nil? && options[:workdir].nil?)
     end
 
     def prepared_options

@@ -26,14 +26,17 @@ module Dapp
 
         def image
           super do |image|
+            bash_commands = []
+            volumes = []
             application.git_artifacts.each do |git_artifact|
-              image.add_volume "#{git_artifact.repo.dir_path}:#{git_artifact.repo.container_build_dir_path}"
-              image.add_commands git_artifact.send(apply_command_method, self)
+              volumes << "#{git_artifact.repo.dir_path}:#{git_artifact.repo.container_build_dir_path}"
+              bash_commands.concat(git_artifact.send(apply_command_method, self))
             end
 
-            if application.git_artifacts.any? && !image.send(:bash_commands).empty? # should be with git?
+            unless bash_commands.empty?
               image.add_volumes_from(gitartifact_container)
-              image.unshift_commands 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
+              image.add_volume(volumes)
+              image.add_commands 'export PATH=/.dapp/deps/gitartifact/bin:$PATH', *bash_commands
             end
             yield image if block_given?
           end
