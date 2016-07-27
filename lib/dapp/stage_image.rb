@@ -4,13 +4,42 @@ module Dapp
     def initialize(name:, built_id: nil, from: nil)
       @bash_commands = []
       @options = {}
+      @change_options = {}
       @container_name = SecureRandom.hex
       @built_id = built_id
       super(name: name, from: from)
     end
 
-    def add_expose(value)
-      add_option(:expose, value)
+    def add_change_volume(value)
+      add_change_option(:volume, value)
+    end
+
+    def add_change_expose(value)
+      add_change_option(:expose, value)
+    end
+
+    def add_change_env(value)
+      add_change_option(:env, value)
+    end
+
+    def add_change_label(value)
+      add_change_option(:label, value)
+    end
+
+    def add_change_cmd(value)
+      add_change_option(:cmd, value)
+    end
+
+    def add_change_onbuild(value)
+      add_change_option(:onbuild, value)
+    end
+
+    def add_change_workdir(value)
+      add_change_option(:workdir, value)
+    end
+
+    def add_change_user(value)
+      add_change_option(:user, value)
     end
 
     def add_volume(value)
@@ -19,14 +48,6 @@ module Dapp
 
     def add_volumes_from(value)
       add_option(:'volumes-from', value)
-    end
-
-    def add_env(value)
-      add_option(:env, value)
-    end
-
-    def add_workdir(value)
-      add_option(:workdir, value)
     end
 
     def add_commands(*commands)
@@ -69,10 +90,18 @@ module Dapp
 
     attr_reader :container_name
     attr_reader :bash_commands
-    attr_reader :options
+    attr_reader :options, :change_options
 
     def add_option(key, value)
-      options[key] = (options[key].nil? ? value : (Array(options[key]) << value).flatten)
+      add_option_default(options, key, value)
+    end
+
+    def add_change_option(key, value)
+      add_option_default(change_options, key, value)
+    end
+
+    def add_option_default(hash, key, value)
+      hash[key] = (hash[key].nil? ? value : (Array(hash[key]) << value).flatten)
     end
 
     def run!(log_verbose: false, log_time: false, introspect_error: false, introspect_before_error: false)
@@ -87,15 +116,29 @@ module Dapp
     end
 
     def commit!
-      shellout!("docker commit #{container_name}").stdout.strip
+      shellout!("docker commit #{prepared_change} #{container_name}").stdout.strip
     end
 
     def should_be_built?
-      !(bash_commands.empty? && options[:expose].nil? && options[:env].nil? && options[:workdir].nil?)
+      !(bash_commands.empty? && change_options.empty?)
     end
 
     def prepared_options
-      options.map { |k, vals| Array(vals).map { |v| "--#{k}=#{v}" }.join(' ') }.join(' ')
+      prepared_options_default(options) { |k, vals| Array(vals).map { |v| "--#{k}=#{v}" }.join(' ') }
+    end
+
+    def prepared_change
+      prepared_options_default(change_options) do |k, vals|
+        if k == :cmd
+          %Q(-c '#{k.to_s.upcase} #{Array(vals)}')
+        else
+          Array(vals).map { |v| %Q(-c "#{k.to_s.upcase} #{v}") }.join(' ')
+        end
+      end
+    end
+
+    def prepared_options_default(hash, &prepared_vals)
+      hash.map { |k, vals| prepared_vals.call(k, vals) }.join(' ')
     end
 
     def prepared_bash_command

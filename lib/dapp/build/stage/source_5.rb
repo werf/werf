@@ -17,29 +17,22 @@ module Dapp
         end
 
         def signature
-          hashsum [super, *exposes]
+          hashsum [super, change_options]
         end
 
         def image
           super do |image|
-            image.add_expose(exposes)  unless exposes.empty?
-            image.add_env(envs)        unless envs.empty?
-            image.add_workdir(workdir) unless workdir.nil?
+            change_options.each do |k, v|
+              next if v.nil? || v.empty?
+              image.public_send("add_change_#{k}", v)
+            end
           end
         end
 
         protected
 
-        def exposes
-          application.config._docker._expose
-        end
-
-        def envs
-          application.config._docker._env
-        end
-
-        def workdir
-          application.config._docker._workdir
+        def change_options
+          application.config._docker._change_options
         end
 
         def layers_commits_write!
