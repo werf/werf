@@ -47,6 +47,10 @@ module Dapp
         application.home_path('Berksfile')
       end
 
+      def berksfile_lock_path
+        application.home_path('Berksfile.lock')
+      end
+
       def berksfile
         @berksfile ||= Berksfile.new(application.home_path, berksfile_path)
       end
@@ -60,8 +64,7 @@ module Dapp
       end
 
       def berksfile_lock_checksum
-        path = application.home_path('Berksfile.lock')
-        application.hashsum path.read if path.exist?
+        application.hashsum berksfile_lock_path.read if berksfile_lock_path.exist?
       end
 
       # rubocop:disable Metrics/AbcSize
@@ -175,23 +178,19 @@ module Dapp
             ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
 
             application.shellout!(
-              ['docker run --rm',
-               '--volume /etc:/etc:ro',
-               '--volume /usr:/usr:ro',
-               '--volume /lib:/lib:ro',
-               '--volume /home:/home',
-               '--volume /tmp:/tmp',
-               ("--volume #{ssh_auth_socket_path.dirname}:#{ssh_auth_socket_path.dirname}" if ssh_auth_socket_path),
+              p(['docker run --rm',
+               ("--volume #{ssh_auth_socket_path}:#{ssh_auth_socket_path}" if ssh_auth_socket_path),
                "--volume #{cookbooks_vendor_path.tap(&:mkpath)}:#{cookbooks_vendor_path}",
                *berksfile.local_cookbooks
                          .values
                          .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
                "--volumes-from #{volumes_from}",
-               "--user #{Process.uid}:#{Process.gid}",
                "--workdir #{berksfile_path.parent}",
-               '--env BERKSHELF_PATH=/tmp/berkshelf',
                ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
-               "dappdeps/berksdeps:0.1.0 /.dapp/deps/chefdk/bin/berks vendor #{cookbooks_vendor_path}"].compact.join(' '),
+               ["dappdeps/berksdeps:0.1.0 bash -ec '",
+                "/.dapp/deps/chefdk/bin/berks vendor /tmp/vendored_cookbooks && ",
+                "cp -rT /tmp/vendored_cookbooks #{cookbooks_vendor_path} && ",
+                "chown -R #{Process.uid}:#{Process.gid} #{cookbooks_vendor_path} #{berksfile_lock_path}'"].join].compact.join(' ')),
               log_verbose: application.log_verbose?
             )
 
