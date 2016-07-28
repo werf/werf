@@ -12,8 +12,8 @@ module Dapp
           buffer << string
         end
 
-        def inspect
-          buffer.join
+        def show
+          buffer.join.strip
         end
       end
 
@@ -40,7 +40,7 @@ module Dapp
         # Error
         class Error < Base
           def format_string(str)
-            Paint.paint_string(super, :warning)
+            "#{Paint.paint_string(super.strip, :warning)}\n"
           end
         end
       end
