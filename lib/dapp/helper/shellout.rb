@@ -30,7 +30,7 @@ module Dapp
         shellout(*args, **kwargs).tap(&:error!)
       rescue ::Mixlib::ShellOut::ShellCommandFailed => e
         raise Error::Shellout, code: Trivia.class_to_lowercase(e.class),
-                               data: { stream: stream.inspect }
+                               data: { stream: stream.show }
       end
 
       def self.included(base)

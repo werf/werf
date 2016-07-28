@@ -12,8 +12,8 @@ module Dapp
         metadata.json
         recipes/%{stage}.rb
         recipes/*_%{stage}.rb
-        files/%{stage}/*
-        templates/%{stage}/*
+        files/default/%{stage}/*
+        templates/default/%{stage}/*
       ).freeze
 
       DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.15.16-3'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
@@ -78,9 +78,11 @@ module Dapp
             to_runlist_entrypoint[name, stage]
           end.compact)
 
-          res.concat(application.config._app_runlist.map(&:_name).map do |name|
-            subname_parts = name.split(project_name, 2)[1].split('-')
-            to_runlist_entrypoint[project_name, [*subname_parts, stage].join('_')]
+          project_main_entry = to_runlist_entrypoint[project_name, stage]
+          res << project_main_entry if project_main_entry
+
+          res.concat(application.config._app_runlist.map do |app_component|
+            to_runlist_entrypoint[project_name, [app_component, stage].join('_')]
           end.compact)
         end
       end
