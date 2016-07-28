@@ -38,6 +38,10 @@ module Dapp
       add_change_option(:workdir, value)
     end
 
+    def add_change_entrypoint(value)
+      add_change_option(:entrypoint, value)
+    end
+
     def add_change_user(value)
       add_change_option(:user, value)
     end
@@ -129,7 +133,7 @@ module Dapp
 
     def prepared_change
       prepared_options_default(change_options) do |k, vals|
-        if k == :cmd
+        if [:cmd, :entrypoint].include? k
           %(-c '#{k.to_s.upcase} #{Array(vals)}')
         else
           Array(vals).map { |v| %(-c "#{k.to_s.upcase} #{v}") }.join(' ')
