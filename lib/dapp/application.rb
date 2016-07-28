@@ -20,7 +20,7 @@ module Dapp
       @cli_options = cli_options
 
       @tmp_path = Dir.mktmpdir(cli_options[:tmp_dir_prefix] || 'dapp-')
-      @metadata_path = cli_options[:metadata_dir] || home_path('.dapps_metadata')
+      @metadata_path = cli_options[:metadata_dir] || home_path('.dapps-metadata')
 
       @last_stage = Build::Stage::Source5.new(self)
       @ignore_git_fetch = ignore_git_fetch
