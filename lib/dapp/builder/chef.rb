@@ -179,6 +179,7 @@ module Dapp
                '--volume /etc:/etc:ro',
                '--volume /usr:/usr:ro',
                '--volume /lib:/lib:ro',
+               '--volume /lib64:/lib64:ro',
                '--volume /home:/home',
                '--volume /tmp:/tmp',
                ("--volume #{ssh_auth_socket_path.dirname}:#{ssh_auth_socket_path.dirname}" if ssh_auth_socket_path),
