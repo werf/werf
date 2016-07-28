@@ -4,15 +4,15 @@ module Dapp
   class CLI
     # CLI flush subcommand
     class Flush < CLI
-      SUBCOMMANDS = ['stage cache', 'build cache'].freeze
+      SUBCOMMANDS = %w(metadata stages).freeze
 
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-dapp flush stage cache
-dapp flush build cache
+dapp flush metadata
+dapp flush stages
 BANNER
     end
   end

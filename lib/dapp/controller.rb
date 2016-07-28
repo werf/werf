@@ -44,7 +44,7 @@ module Dapp
       end
     end
 
-    def flush_build_cache
+    def flush_metadata
       build_confs.each do |build_conf|
         log(build_conf._name)
         app = Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true)
@@ -52,7 +52,7 @@ module Dapp
       end
     end
 
-    def self.flush_stage_cache
+    def self.flush_stages
       shellout('docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" dapp)')
       shellout('docker rmi $(docker images -f "dangling=true" -q)')
     end

@@ -3,13 +3,13 @@ require 'mixlib/cli'
 module Dapp
   class CLI
     class Flush
-      # Flush build cache subcommand
-      class BuildCache < Base
+      # Flush metadata subcommand
+      class Metadata < Base
         banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp flush build cache
+  dapp flush metadata
 Options:
 BANNER
         option :metadata_dir,
@@ -18,7 +18,7 @@ BANNER
 
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          Controller.new(cli_options: config, patterns: cli_arguments).flush_build_cache
+          Controller.new(cli_options: config, patterns: cli_arguments).flush_metadata
         end
       end
     end
