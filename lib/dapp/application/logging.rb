@@ -58,8 +58,8 @@ module Dapp
         end
       end
 
-      def log_secondary_process(message, **kvargs, &blk)
-        log_process(message, **kvargs.merge(style: { message: :secondary, success: :secondary }), &blk)
+      def log_secondary_process(message, **kwargs, &blk)
+        log_process(message, **kwargs.merge(style: { message: :secondary, success: :secondary }), &blk)
       end
 
       def log_process_verbose(message, process:, style: {}, &blk)

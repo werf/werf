@@ -38,10 +38,10 @@ describe Dapp::GitArtifact do
   end
 
   [:patch, :archive].each do |type|
-    define_method "#{type}_apply" do |add_files: ['data.txt'], added_files: add_files, not_added_files: [], **kvargs, &blk|
-      [:cwd, :paths, :branch, :where_to_add, :group, :owner].each { |opt| instance_variable_set(:"@#{opt}", kvargs[opt]) unless kvargs[opt].nil? }
+    define_method "#{type}_apply" do |add_files: ['data.txt'], added_files: add_files, not_added_files: [], **kwargs, &blk|
+      [:cwd, :paths, :branch, :where_to_add, :group, :owner].each { |opt| instance_variable_set(:"@#{opt}", kwargs[opt]) unless kwargs[opt].nil? }
 
-      application_build! if type == :patch && !kvargs[:ignore_build]
+      application_build! if type == :patch && !kwargs[:ignore_build]
       add_files.each { |file_path| git_change_and_commit!(file_path, branch: @branch) }
       application_renew
 

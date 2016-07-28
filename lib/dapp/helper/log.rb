@@ -34,9 +34,9 @@ module Dapp
         end.join
       end
 
-      def log_with_indent(message = '', **kvargs)
+      def log_with_indent(message = '', **kwargs)
         with_log_indent do
-          log(message, **kvargs)
+          log(message, **kwargs)
         end
       end
 

@@ -58,10 +58,10 @@ module Dapp
       @built_id ||= id
     end
 
-    def build!(**kvargs)
+    def build!(**kwargs)
       @built_id = if should_be_built?
                     begin
-                      run!(**kvargs)
+                      run!(**kwargs)
                       commit!
                     ensure
                       shellout("docker rm #{container_name}")
