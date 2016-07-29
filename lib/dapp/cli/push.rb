@@ -15,9 +15,9 @@ Usage:
 Options:
 BANNER
 
-      option :tmp_dir_prefix,
-             long: '--tmp-dir-prefix PREFIX',
-             description: 'Tmp directory prefix'
+      option :metadata_dir,
+             long: '--metadata-dir PATH',
+             description: 'Metadata directory'
 
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
