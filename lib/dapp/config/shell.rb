@@ -32,6 +32,12 @@ module Dapp
         @_app_setup_cache_version = cache_version
       end
 
+      def reset_infra_install; @_infra_install = [] end
+      def reset_infra_setup; @_infra_setup = [] end
+      def reset_app_install; @_app_install = [] end
+      def reset_app_setup; @_app_setup = [] end
+      def reset_all; methods.tap { |arr| arr.delete(__method__) }.grep(/^reset_/).each(&method(:send)) end
+
       def clone
         Marshal.load(Marshal.dump(self))
       end
