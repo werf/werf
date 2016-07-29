@@ -1,0 +1,17 @@
+DEPENDENCIES
+  apt
+  mdapp-test
+    git: git@github.com:flant/mdapp-test.git
+    revision: 1113f56b8a968d61a13f5c112612e1c54f2b4a56
+  mdapp-test2
+    path: ../mdapp-test2
+  test
+    path: .
+
+GRAPH
+  apt (4.0.1)
+    compat_resource (>= 12.10)
+  compat_resource (12.10.7)
+  mdapp-test (0.0.1)
+  mdapp-test2 (0.0.1)
+  test (0.0.1)
