@@ -139,9 +139,11 @@ module Dapp
           if stage == :chef_cookbooks
             checksum = cookbooks_checksum
           else
-            checksum = [_paths_checksum(stage_cookbooks_vendored_paths(stage, with_files: true)),
-                        *application.config._chef._modules,
-                        stage == :infra_install ? chefdk_image : nil].compact
+            checksum = application.hashsum [
+              _paths_checksum(stage_cookbooks_vendored_paths(stage, with_files: true)),
+              *application.config._chef._modules,
+              stage == :infra_install ? chefdk_image : nil
+            ].compact
           end
 
           stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
