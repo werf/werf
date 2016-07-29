@@ -241,7 +241,7 @@ module Dapp
       end
 
       def container_cookbooks_vendor_path(*path)
-        application.tmp_path('chef', 'vendored_cookbooks').join(*path)
+        application.contianer_tmp_path('chef', 'vendored_cookbooks').join(*path)
       end
 
       def stage_tmp_path(stage, *path)
