@@ -51,7 +51,7 @@ module Dapp
 
         def image
           @image ||= begin
-            StageImage.new(name: image_name, from: from_image).tap do |image|
+            Image::Stage.new(name: image_name, from: from_image).tap do |image|
               image.add_volume "#{application.tmp_path}:#{application.container_tmp_path}"
               yield image if block_given?
             end
@@ -94,14 +94,14 @@ module Dapp
         end
 
         def image_info
-          date, bytesize = image.info
-          _date, from_bytesize = from_image.info
-          [date, (from_bytesize.to_i - bytesize.to_i).abs]
+          date, size = image.info
+          _date, from_size = from_image.info
+          [date, (from_size.to_f - size.to_f).abs]
         end
 
         def format_image_info
-          date, bytesize = image_info
-          application.t(code: 'image.info', data: { date: Time.parse(date).localtime, size: to_mb(bytesize.to_i) })
+          date, size = image_info
+          application.t(code: 'image.info', data: { date: Time.parse(date).localtime, size: size.to_f })
         end
 
         # rubocop:disable Metrics/AbcSize
