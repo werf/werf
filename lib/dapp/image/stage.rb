@@ -42,6 +42,7 @@ module Dapp
           return
         end
         shellout!("docker tag #{built_id} #{name}", log_verbose: log_verbose, log_time: log_time)
+        cache_reset
       end
 
       protected

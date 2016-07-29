@@ -101,7 +101,7 @@ module Dapp
 
         def format_image_info
           date, size = image_info
-          application.t(code: 'image.info', data: { date: Time.parse(date).localtime, size: size.to_f })
+          application.t(code: 'image.info', data: { date: Time.parse(date).localtime, size: size.to_f.round(2) })
         end
 
         # rubocop:disable Metrics/AbcSize

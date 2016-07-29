@@ -90,6 +90,7 @@ module SpecHelper
         allow(instance).to receive(:tag!)    { images_cash << instance.name }
         allow(instance).to receive(:pull!)   { images_cash << instance.name }
         allow(instance).to receive(:untag!)  { images_cash.delete(instance.name) }
+        allow(instance).to receive(:info)    { %w(19700101 99999999) }
         allow(instance).to receive(:built_id)
       end
     end
