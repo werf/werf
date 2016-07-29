@@ -6,8 +6,12 @@ module Dapp
         MAX_PATCH_SIZE = 1024 * 1024
 
         def initialize(application, next_stage)
-          @prev_stage = AppSetup.new(application, self)
+          @prev_stage = ChefCookbooks.new(application, self)
           super
+        end
+
+        def prev_source_stage
+          prev_stage.prev_stage.prev_stage
         end
 
         def next_source_stage
