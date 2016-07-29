@@ -19,8 +19,8 @@ module Dapp
     end
 
     def run(docker_options, command)
-      raise Error::Controller, code: :run_command_unexpected_apps_number unless @build_confs.one?
-      Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).run(docker_options, command)
+      raise Error::Controller, code: :run_command_unexpected_apps_number unless build_confs.one?
+      Application.new(config: build_confs.first, cli_options: cli_options, ignore_git_fetch: true).run(docker_options, command)
     end
 
     def build
@@ -37,8 +37,8 @@ module Dapp
     end
 
     def push(repo)
-      raise Error::Controller, code: :push_command_unexpected_apps_number unless @build_confs.one?
-      Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
+      raise Error::Controller, code: :push_command_unexpected_apps_number unless build_confs.one?
+      Application.new(config: build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
     end
 
     def smartpush(repo_prefix)

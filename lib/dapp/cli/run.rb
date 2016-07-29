@@ -51,7 +51,7 @@ BANNER
         filtered_args = read_cli_options(argv)
         pattern = (filtered_args.any? && !filtered_args.first.start_with?('-')) ? [filtered_args.shift] : []
         index = filtered_args.index('--') || filtered_args.count
-        docker_options = filtered_args.slice(0..index-1)
+        docker_options = (index != 0) ? filtered_args.slice(0..index-1) : []
         command = filtered_args.slice(index+1..-1) || []
         Controller.new(cli_options: config, patterns: pattern).run(docker_options, command)
       end
