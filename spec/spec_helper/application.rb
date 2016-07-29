@@ -84,7 +84,7 @@ module SpecHelper
     # rubocop:disable Metrics/AbcSize
     def stub_docker_image
       images_cash = []
-      stub_instance(Dapp::StageImage) do |instance|
+      stub_instance(Dapp::Image::Stage) do |instance|
         allow(instance).to receive(:build!)
         allow(instance).to receive(:tagged?) { images_cash.include? instance.name }
         allow(instance).to receive(:tag!)    { images_cash << instance.name }
