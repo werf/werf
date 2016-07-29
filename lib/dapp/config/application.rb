@@ -67,7 +67,7 @@ module Dapp
 
       def _app_runlist
         _app_chain.map(&:_name).map do |name|
-          if subname = name.split("#{_root_app._name}-", 2)[1]
+          if (subname = name.split("#{_root_app._name}-", 2)[1])
             subname_parts = subname.split('-')
             subname_parts.join('_') if subname_parts.any?
           end

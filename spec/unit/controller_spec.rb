@@ -16,8 +16,10 @@ describe Dapp::Controller do
   end
 
   def stubbed_controller(cli_options: {}, patterns: nil)
-    allow_any_instance_of(Dapp::Controller).to receive(:build_confs) { [RecursiveOpenStruct.new(_name: 'project'),
-                                                                        RecursiveOpenStruct.new(_name: 'project2')] }
+    allow_any_instance_of(Dapp::Controller).to receive(:build_confs) {
+      [RecursiveOpenStruct.new(_name: 'project'),
+       RecursiveOpenStruct.new(_name: 'project2')]
+    }
     controller(cli_options: cli_options, patterns: patterns)
   end
 

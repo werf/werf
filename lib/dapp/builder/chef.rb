@@ -43,7 +43,7 @@ module Dapp
 
       def chef_cookbooks(image)
         image.add_commands(
-          "mkdir -p /usr/share/dapp/chef_repo",
+          'mkdir -p /usr/share/dapp/chef_repo',
           "cp -a #{container_cookbooks_vendor_path} /usr/share/dapp/chef_repo/cookbooks"
         )
       end
@@ -85,9 +85,7 @@ module Dapp
             "#{name}::#{entrypoint}"
           end
 
-          res.concat(application.config._chef._modules.map do |name|
-            to_runlist_entrypoint[name, stage]
-          end.compact)
+          res.concat(application.config._chef._modules.map { |name| to_runlist_entrypoint[name, stage] }.compact)
 
           project_main_entry = to_runlist_entrypoint[project_name, stage]
           res << project_main_entry if project_main_entry

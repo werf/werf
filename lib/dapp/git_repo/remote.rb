@@ -13,7 +13,7 @@ module Dapp
 
         with_ssh_key do
           git "clone --bare --depth 1 #{url} #{path}"
-        end unless File.directory? path
+        end unless File.directory?(path)
       end
 
       def fetch!(branch = 'master')

@@ -24,16 +24,15 @@ BANNER
         self.class.cli_wrapper(self) do
           args.each_with_index do |arg, i|
             next if arg == '--'
-            unless (key = find_option(arg)).nil?
-              cli_option = []
+            next if (key = find_option(arg)).nil?
+            cli_option = []
+            cli_option << args.slice!(i)
+            if key[:with_arg]
+              raise OptionParser::InvalidOption if args.count < i + 1
               cli_option << args.slice!(i)
-              if key[:with_arg]
-                raise OptionParser::InvalidOption if args.count < i + 1
-                cli_option << args.slice!(i)
-              end
-              parse_options(cli_option)
-              return read_cli_options(args)
             end
+            parse_options(cli_option)
+            return read_cli_options(args)
           end
         end
       end
@@ -49,10 +48,10 @@ BANNER
 
       def run(argv = ARGV)
         filtered_args = read_cli_options(argv)
-        pattern = (filtered_args.any? && !filtered_args.first.start_with?('-')) ? [filtered_args.shift] : []
+        pattern = filtered_args.any? && !filtered_args.first.start_with?('-') ? [filtered_args.shift] : []
         index = filtered_args.index('--') || filtered_args.count
-        docker_options = (index != 0) ? filtered_args.slice(0..index-1) : []
-        command = filtered_args.slice(index+1..-1) || []
+        docker_options = index.nonzero? ? filtered_args.slice(0..index - 1) : []
+        command = filtered_args.slice(index + 1..-1) || []
         Controller.new(cli_options: config, patterns: pattern).run(docker_options, command)
       end
     end

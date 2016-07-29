@@ -1,5 +1,6 @@
 module Dapp
   module Image
+    # Stage
     class Stage
       def add_change_volume(value)
         add_change_option(:volume, value)

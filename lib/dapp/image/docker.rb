@@ -16,7 +16,7 @@ module Dapp
       def id
         @id || begin
           return cache[name][:exist] ? cache[name][:id] : nil if cache.include?(name)
-          if (shellout!("docker images -q --no-trunc=true #{name}").stdout.strip).empty?
+          if shellout!("docker images -q --no-trunc=true #{name}").stdout.strip.empty?
             cache[name] = { exist: false }
           else
             reset_cache

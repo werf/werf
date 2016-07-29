@@ -157,7 +157,7 @@ describe Dapp::Config::Main do
     dappfile_ga_remote = "git_artifact.remote 'url', 'where_to_add', #{dappfile_remote_options}"
 
     [:local, :remote].each do |ga|
-      it "#{ga}" do
+      it ga.to_s do
         attributes = binding.local_variable_get(:"#{ga}_attributes")
         @dappfile = binding.local_variable_get(:"dappfile_ga_#{ga}")
         attributes << :where_to_add
@@ -175,7 +175,7 @@ describe Dapp::Config::Main do
       expect(app.git_artifact.remote.first._name).to eq 'dapp'
     end
   end
-  
+
   context 'app' do
     it 'one' do
       expect(apps.count).to eq 1

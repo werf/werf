@@ -99,7 +99,6 @@ describe Dapp::Builder::Chef do
     @template_mdapp_test2_path ||= Pathname('spec/chef/mdapp-test2')
   end
 
-  # rubocop:disable Metrics/AbcSize
   def init_project
     FileUtils.cp_r template_testproject_path, testproject_path.tap { |p| p.parent.mkpath }
     testproject_path.join('.dapps-metadata').tap { |p| p.rmtree if p.exist? }

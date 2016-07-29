@@ -91,7 +91,7 @@ describe Dapp::GitArtifact do
   end
 
   [:patch, :archive].each do |type|
-    it "#{type}", test_construct: true do
+    it type.to_s, test_construct: true do
       send("#{type}_apply")
     end
 

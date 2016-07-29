@@ -18,15 +18,15 @@ module Dapp
 
       def build!(**kwargs)
         @built_id = if should_be_built?
-          begin
-            run!(**kwargs)
-            commit!
-          ensure
-            shellout("docker rm #{container_name}")
-          end
-        else
-          from.built_id
-        end
+                      begin
+                        run!(**kwargs)
+                        commit!
+                      ensure
+                        shellout("docker rm #{container_name}")
+                      end
+                    else
+                      from.built_id
+                    end
       end
 
       def export!(name, log_verbose: false, log_time: false, force: false)
@@ -56,7 +56,7 @@ module Dapp
         raise unless introspect_error || introspect_before_error
         built_id = introspect_error ? commit! : from.built_id
         raise Exception::IntrospectImage, message: Dapp::Helper::NetStatus.message(e),
-              data: { built_id: built_id, options: prepared_options, rmi: introspect_error }
+                                          data: { built_id: built_id, options: prepared_options, rmi: introspect_error }
       end
 
       def commit!
