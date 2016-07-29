@@ -29,7 +29,7 @@ module Dapp
             image.add_volumes_from(chefdk_container)
             image.add_commands 'export PATH=/.dapp/deps/chefdk/bin:$PATH'
 
-            image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}"
+            image.add_volume "#{stage_tmp_path(stage)}:#{container_stage_tmp_path(stage)}"
             image.add_commands ['chef-solo',
                                 "-c #{container_stage_config_path(stage)}",
                                 "-o #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
@@ -243,31 +243,31 @@ module Dapp
       end
 
       def container_cookbooks_vendor_path(*path)
-        application.container_build_path('chef', 'vendored_cookbooks').join(*path)
+        application.tmp_path('chef', 'vendored_cookbooks').join(*path)
       end
 
-      def stage_build_path(stage, *path)
+      def stage_tmp_path(stage, *path)
         application.tmp_path(application.config._name, stage).join(*path)
       end
 
-      def container_stage_build_path(_stage, *path)
+      def container_stage_tmp_path(_stage, *path)
         path.compact.map(&:to_s).inject(Pathname.new('/chef_build'), &:+)
       end
 
       def stage_cookbooks_path(stage, *path)
-        stage_build_path(stage, 'cookbooks', *path)
+        stage_tmp_path(stage, 'cookbooks', *path)
       end
 
       def container_stage_cookbooks_path(stage, *path)
-        container_stage_build_path(stage, 'cookbooks', *path)
+        container_stage_tmp_path(stage, 'cookbooks', *path)
       end
 
       def stage_config_path(stage, *path)
-        stage_build_path(stage, 'config.rb', *path)
+        stage_tmp_path(stage, 'config.rb', *path)
       end
 
       def container_stage_config_path(stage, *path)
-        container_stage_build_path(stage, 'config.rb', *path)
+        container_stage_tmp_path(stage, 'config.rb', *path)
       end
 
       def _paths_checksum(paths)
