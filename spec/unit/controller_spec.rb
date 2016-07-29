@@ -37,10 +37,10 @@ describe Dapp::Controller do
     expect { controller.push('name') }.to_not raise_error
   end
 
-  it 'push:push_command_unexpected_apps', :push, test_construct: true do
+  it 'push:push_command_unexpected_apps_number', :push, test_construct: true do
     FileUtils.mkdir_p('.dapps/project2/config/en')
     FileUtils.touch('.dapps/project2/Dappfile')
-    expect_exception_code(code: :push_command_unexpected_apps) { controller.push('name') }
+    expect_exception_code(code: :push_command_unexpected_apps_number) { controller.push('name') }
   end
 
   it 'smartpush', :push, test_construct: true do

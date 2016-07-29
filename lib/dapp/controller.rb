@@ -18,6 +18,11 @@ module Dapp
       build_confs
     end
 
+    def run(docker_options, command)
+      raise Error::Controller, code: :run_command_unexpected_apps_number unless @build_confs.one?
+      Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).run(docker_options, command)
+    end
+
     def build
       build_confs.each do |build_conf|
         log_step(build_conf._name)
@@ -32,7 +37,7 @@ module Dapp
     end
 
     def push(repo)
-      raise Error::Controller, code: :push_command_unexpected_apps unless @build_confs.one?
+      raise Error::Controller, code: :push_command_unexpected_apps_number unless @build_confs.one?
       Application.new(config: @build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
     end
 

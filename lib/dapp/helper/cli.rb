@@ -3,7 +3,13 @@ module Dapp
     # Cli
     module Cli
       def parse_options(cli, argv)
-        cli.parse_options(argv)
+        cli_wrapper(cli) do
+          cli.parse_options(argv)
+        end
+      end
+
+      def cli_wrapper(cli)
+        yield
       rescue OptionParser::MissingArgument, OptionParser::InvalidOption, OptionParser::InvalidArgument => e
         STDERR.puts "Error: #{e.message}"
         puts cli.opt_parser

@@ -25,7 +25,7 @@ module Dapp
              boolean: true
 
       option :log_time,
-             long: '--log-time',
+             long: '--time',
              description: 'Enable output with time',
              default: false,
              boolean: true

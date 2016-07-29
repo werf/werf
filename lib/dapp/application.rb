@@ -48,6 +48,16 @@ module Dapp
       end
     end
 
+    def run(docker_options, command)
+      raise Error::Application, code: :application_not_built unless last_stage.image.tagged?
+      cmd = "docker run #{[docker_options, last_stage.image.name, command].flatten.compact.join(' ')}"
+      if dry_run?
+        log_info(cmd)
+      else
+        system(cmd)
+      end
+    end
+
     def builder
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
     end

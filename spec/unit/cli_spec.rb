@@ -29,6 +29,6 @@ describe Dapp::CLI do
 
   it 'log time', :stub, test_construct: true do
     expect { cli('build') }.to_not output(/^[[:digit:]]{4}.[[:digit:]]{2}.[[:digit:]]{2}/).to_stdout_from_any_process
-    expect { cli('build', '--log-time') }.to output(/^[[:digit:]]{4}.[[:digit:]]{2}.[[:digit:]]{2}/).to_stdout_from_any_process
+    expect { cli('build', '--time') }.to output(/^[[:digit:]]{4}.[[:digit:]]{2}.[[:digit:]]{2}/).to_stdout_from_any_process
   end
 end
