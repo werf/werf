@@ -91,30 +91,30 @@ describe Dapp::GitArtifact do
   end
 
   [:patch, :archive].each do |type|
-    it "##{type}", test_construct: true do
+    it "#{type}", test_construct: true do
       send("#{type}_apply")
     end
 
-    it "##{type} branch", test_construct: true do
+    it "#{type} branch", test_construct: true do
       send("#{type}_apply", branch: 'master')
       git_create_branch!('not_master')
       send("#{type}_apply", add_files: ['not_master.txt'], branch: 'not_master')
       send("#{type}_apply", not_added_files: ['not_master.txt'], branch: 'master')
     end
 
-    it "##{type} cwd", test_construct: true do
+    it "#{type} cwd", test_construct: true do
       send("#{type}_apply", add_files: %w(master.txt a/master2.txt),
                             added_files: ['master2.txt'], not_added_files: %w(a master.txt),
                             cwd: 'a')
     end
 
-    it "##{type} paths", test_construct: true do
+    it "#{type} paths", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
                             added_files: %w(x/y/data.txt z/data.txt), not_added_files: ['x/data.txt'],
                             paths: %w(x/y z))
     end
 
-    it "##{type} cwd_and_paths", test_construct: true do
+    it "#{type} cwd_and_paths", test_construct: true do
       send("#{type}_apply", add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
                             added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(a data.txt),
                             cwd: 'a', paths: %w(x/y z))
@@ -125,7 +125,7 @@ describe Dapp::GitArtifact do
   owner = :git_artifact
   group = :git_artifact
 
-  it '#archive owner_and_group', test_construct: true do
+  it 'archive owner_and_group', test_construct: true do
     with_credentials(owner, group) do
       archive_apply(add_files: [file_name], owner: owner, group: group) do
         expect_file_credentials(File.join(@where_to_add, file_name), owner, group)
@@ -133,7 +133,7 @@ describe Dapp::GitArtifact do
     end
   end
 
-  it '#patch owner_and_group', test_construct: true do
+  it 'patch owner_and_group', test_construct: true do
     with_credentials(owner, group) do
       archive_apply(owner: owner, group: group) do
         application_build!

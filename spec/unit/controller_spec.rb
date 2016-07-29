@@ -4,11 +4,6 @@ describe Dapp::Controller do
   include SpecHelper::Common
   include SpecHelper::Expect
 
-  before :each do
-    FileUtils.mkdir_p('.dapps/project/config/en')
-    FileUtils.touch('.dapps/project/Dappfile')
-  end
-
   RSpec.configure do |c|
     c.before(:example, :build) { stub_application(:build!) }
     c.before(:example, :push) { stub_application(:export!) }
@@ -20,58 +15,66 @@ describe Dapp::Controller do
     end
   end
 
+  def stubbed_controller(cli_options: {}, patterns: nil)
+    allow_any_instance_of(Dapp::Controller).to receive(:build_confs) { [RecursiveOpenStruct.new(_name: 'project'),
+                                                                        RecursiveOpenStruct.new(_name: 'project2')] }
+    controller(cli_options: cli_options, patterns: patterns)
+  end
+
   def controller(cli_options: {}, patterns: nil)
-    Dapp::Controller.new(cli_options: { log_color: 'auto' }.merge(cli_options), patterns: patterns)
+    @controller ||= Dapp::Controller.new(cli_options: { log_color: 'auto' }.merge(cli_options), patterns: patterns)
   end
 
   it 'build', :build, test_construct: true do
-    Pathname('.dapps/project/Dappfile').write("docker.from 'ubuntu.16.04'")
+    Pathname('Dappfile').write("docker.from 'ubuntu.16.04'")
     expect { controller.build }.to_not raise_error
   end
 
   it 'build:docker_from_not_defined', test_construct: true do
+    FileUtils.touch('Dappfile')
     expect_exception_code(code: :docker_from_not_defined) { controller.build }
   end
 
-  it 'push', :push, test_construct: true do
-    expect { controller.push('name') }.to_not raise_error
+  it 'push:push_command_unexpected_apps_number', :push do
+    expect_exception_code(code: :push_command_unexpected_apps_number) { stubbed_controller.push('name') }
   end
 
-  it 'push:push_command_unexpected_apps_number', :push, test_construct: true do
-    FileUtils.mkdir_p('.dapps/project2/config/en')
-    FileUtils.touch('.dapps/project2/Dappfile')
-    expect_exception_code(code: :push_command_unexpected_apps_number) { controller.push('name') }
+  it 'run:run_command_unexpected_apps_number', :push do
+    expect_exception_code(code: :run_command_unexpected_apps_number) { stubbed_controller.run([], []) }
   end
 
-  it 'smartpush', :push, test_construct: true do
-    expect { controller.smartpush('name') }.to_not raise_error
-  end
-
-  it 'list', test_construct: true do
-    expect { controller.list }.to_not raise_error
-  end
-
-  it 'build_confs (root)', test_construct: true do
-    expect { controller(cli_options: { dir: '.dapps/project/' }) }.to_not raise_error
-  end
-
-  it 'build_confs (.dapps)', test_construct: true do
-    expect { controller }.to_not raise_error
-  end
-
-  it 'build_confs (search up)', test_construct: true do
-    expect { controller(cli_options: { dir: '.dapps/project/config/en' }) }.to_not raise_error
-  end
-
-  it 'build_confs:dappfile_not_found', test_construct: true do
-    expect_exception_code(code: :dappfile_not_found) { controller(cli_options: { dir: '.dapps' }) }
-  end
-
-  it 'build_confs:no_such_app', test_construct: true do
-    expect_exception_code(code: :no_such_app) { controller(patterns: ['app*']) }
+  it 'list' do
+    expect { stubbed_controller.list }.to_not raise_error
   end
 
   it 'paint_initialize expected cli_options[:log_color] (RuntimeError)' do
     expect { Dapp::Controller.new }.to raise_error RuntimeError
+  end
+
+  context 'build_confs' do
+    before :each do
+      FileUtils.mkdir_p('.dapps/project/config/en')
+      FileUtils.touch('.dapps/project/Dappfile')
+    end
+
+    it '.', test_construct: true do
+      expect { controller(cli_options: { dir: '.dapps/project/' }) }.to_not raise_error
+    end
+
+    it '.dapps', test_construct: true do
+      expect { controller }.to_not raise_error
+    end
+
+    it 'search up', test_construct: true do
+      expect { controller(cli_options: { dir: '.dapps/project/config/en' }) }.to_not raise_error
+    end
+
+    it 'dappfile_not_found', test_construct: true do
+      expect_exception_code(code: :dappfile_not_found) { controller(cli_options: { dir: '.dapps' }) }
+    end
+
+    it 'no_such_app', test_construct: true do
+      expect_exception_code(code: :no_such_app) { controller(patterns: ['app*']) }
+    end
   end
 end
