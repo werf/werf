@@ -37,6 +37,17 @@ module Dapp
         end
       end
 
+      def chef_cookbooks_checksum
+        stage_cookbooks_checksum(:chef_cookbooks)
+      end
+
+      def chef_cookbooks(image)
+        image.add_commands(
+          "mkdir -p /usr/share/dapp/chef_repo",
+          "cp -a #{container_cookbooks_vendor_path} /usr/share/dapp/chef_repo/cookbooks"
+        )
+      end
+
       private
 
       def project_name
@@ -125,11 +136,16 @@ module Dapp
         else
           install_cookbooks
 
-          application.hashsum([_paths_checksum(stage_cookbooks_vendored_paths(stage, with_files: true)),
-                               *application.config._chef._modules,
-                               stage == :infra_install ? chefdk_image : nil].compact).tap do |checksum|
-            stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
+          if stage == :chef_cookbooks
+            checksum = cookbooks_checksum
+          else
+            checksum = [_paths_checksum(stage_cookbooks_vendored_paths(stage, with_files: true)),
+                        *application.config._chef._modules,
+                        stage == :infra_install ? chefdk_image : nil].compact
           end
+
+          stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
+          checksum
         end
       end
 
@@ -224,6 +240,10 @@ module Dapp
 
       def cookbooks_vendor_path(*path)
         application.tmp_path('chef', 'vendored_cookbooks').join(*path)
+      end
+
+      def container_cookbooks_vendor_path(*path)
+        application.container_build_path('chef', 'vendored_cookbooks').join(*path)
       end
 
       def stage_build_path(stage, *path)
