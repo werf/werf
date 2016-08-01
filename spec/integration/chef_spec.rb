@@ -4,6 +4,8 @@ describe Dapp::Builder::Chef do
   include SpecHelper::Common
   include SpecHelper::Application
 
+  CACHE_VERSION = SecureRandom.uuid
+
   before :all do
     init_project
   end
@@ -50,7 +52,10 @@ describe Dapp::Builder::Chef do
           _builder: :chef,
           _home_path: testproject_path.to_s,
           _chef: { _modules: %w(mdapp-test mdapp-test2) }
-        ).tap { |config| config[:_docker][:_from] = os.to_sym }
+        ).tap { |config|
+          config[:_docker][:_from] = os.to_sym
+          config[:_docker][:_from_cache_version] = CACHE_VERSION
+        }
       end
     end # context
   end # each
@@ -72,7 +77,7 @@ describe Dapp::Builder::Chef do
   end
 
   def project_path
-    @project_path ||= Pathname("/tmp/dapp-test-#{SecureRandom.uuid}")
+    @project_path ||= Pathname("/tmp/dapp-test-#{CACHE_VERSION}")
   end
 
   def testproject_path

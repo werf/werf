@@ -33,6 +33,10 @@ module Dapp
                                data: { stream: stream.show }
       end
 
+      def shellout_pack(command)
+        "bash -ec 'eval $(echo #{Base64.strict_encode64(command)} | base64 --decode)'"
+      end
+
       def self.included(base)
         base.extend(self)
       end
