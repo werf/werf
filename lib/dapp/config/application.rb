@@ -7,6 +7,7 @@ module Dapp
       attr_reader :_home_path
       attr_reader :_docker
       attr_reader :_git_artifact
+      attr_reader :_artifact
       attr_reader :_chef
       attr_reader :_shell
       attr_reader :_parent
@@ -18,6 +19,7 @@ module Dapp
         @_apps   = []
         @_parent = parent
 
+        @_artifact = []
         @_app_install_dependencies = []
         @_app_setup_dependencies   = []
 
@@ -40,6 +42,17 @@ module Dapp
       def shell
         raise Error::Config, code: :builder_type_conflict unless _builder == :shell
         @_shell ||= Shell.new
+      end
+
+      def artifact(where_to_add, **options, &blk)
+        @_artifact << begin
+          conf = clone.tap do |app|
+            app.instance_variable_set(:'@_artifact', [])
+            app.instance_variable_set(:'@_name', app_name)
+            app.instance_eval(&blk) if block_given?
+          end
+          Artifact::Stage.new(where_to_add, conf: conf, **options)
+        end
       end
 
       def git_artifact
@@ -87,6 +100,7 @@ module Dapp
           app.instance_variable_set(:'@_home_path', _home_path)
           app.instance_variable_set(:'@_app_install_dependencies', _app_install_dependencies)
           app.instance_variable_set(:'@_app_setup_dependencies', _app_setup_dependencies)
+          app.instance_variable_set(:'@_artifact', Marshal.load(Marshal.dump(_artifact)))
           app.instance_variable_set(:'@_docker', _docker.clone)             unless @_docker.nil?
           app.instance_variable_set(:'@_git_artifact', _git_artifact.clone) unless @_git_artifact.nil?
           app.instance_variable_set(:'@_chef', _chef.clone)                 unless @_chef.nil?
@@ -97,10 +111,14 @@ module Dapp
 
       def app(sub_name, &blk)
         clone.tap do |app|
-          app.instance_variable_set(:'@_name', [_name, sub_name].compact.join('-'))
+          app.instance_variable_set(:'@_name', app_name)
           app.instance_eval(&blk) if block_given?
           @_apps += app._apps
         end
+      end
+
+      def app_name(sub_name = nil)
+        [_name, sub_name || SecureRandom.hex].compact.join('-')
       end
     end
   end
