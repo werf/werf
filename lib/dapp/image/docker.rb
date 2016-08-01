@@ -60,8 +60,6 @@ module Dapp
       end
 
       class << self
-        protected
-
         def cache
           @cache ||= (@cache = {}).tap { cache_reset }
         end
