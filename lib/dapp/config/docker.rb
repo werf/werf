@@ -27,12 +27,12 @@ module Dapp
         @_expose.concat(args)
       end
 
-      def env(*args)
-        @_env.concat(args)
+      def env(**options)
+        @_env.concat(options_to_args(options))
       end
 
-      def label(*args)
-        @_label.concat(args)
+      def label(**options)
+        @_label.concat(options_to_args(options))
       end
 
       def cmd(*args)
@@ -70,6 +70,12 @@ module Dapp
 
       def clone
         Marshal.load(Marshal.dump(self))
+      end
+
+      private
+
+      def options_to_args(options)
+        options.map {|key, value| "#{key.upcase}=#{value}" }
       end
     end
   end
