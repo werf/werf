@@ -1,7 +1,7 @@
 source 'https://supermarket.chef.io'
 
 cookbook 'test', path: '.'
-cookbook 'mdapp-test', git: 'git@github.com:flant/mdapp-test.git'
+cookbook 'mdapp-test', path: '../mdapp-test'
 cookbook 'mdapp-test2', path: '../mdapp-test2'
 
 cookbook 'apt'
