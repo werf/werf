@@ -1,7 +1,7 @@
 require_relative '../spec_helper'
 
 describe Dapp::Config::Main do
-  include SpecHelpers::Expect
+  include SpecHelper::Expect
 
   def dappfile
     @dappfile ||= ''
@@ -38,7 +38,7 @@ describe Dapp::Config::Main do
     expect(app._builder).to eq :chef
   end
 
-  it '#builder shell already used' do
+  it '#builder shell already used (:builder_type_conflict)' do
     @dappfile = %(
       shell.infra_install 'a'
       chef.module 'a'
@@ -46,7 +46,7 @@ describe Dapp::Config::Main do
     expect_exception_code(code: :builder_type_conflict) { apps }
   end
 
-  it '#builder chef already used' do
+  it '#builder chef already used (:builder_type_conflict)' do
     @dappfile = %(
       builder :chef
       shell.infra_install 'a'
@@ -59,6 +59,10 @@ describe Dapp::Config::Main do
     expect(app.docker._from).to eq 'sample'
   end
 
+  it '#docker volume' do
+    expect_special_attribute(:docker, :volume)
+  end
+
   it '#docker expose' do
     expect_special_attribute(:docker, :expose)
   end
@@ -67,12 +71,40 @@ describe Dapp::Config::Main do
     expect_special_attribute(:docker, :env)
   end
 
+  it '#docker label' do
+    expect_special_attribute(:docker, :volume)
+  end
+
+  it '#docker cmd' do
+    expect_special_attribute(:docker, :cmd)
+  end
+
+  it '#docker onbuild' do
+    expect_special_attribute(:docker, :onbuild)
+  end
+
   it '#docker workdir' do
     @dappfile = %(
       docker.workdir 'first_value'
       docker.workdir 'second_value'
     )
     expect(app.docker._workdir).to eq 'second_value'
+  end
+
+  it '#docker user' do
+    @dappfile = %(
+      docker.user 'root'
+      docker.user 'root:root'
+    )
+    expect(app.docker._user).to eq 'root:root'
+  end
+
+  it '#docker entrypoint' do
+    @dappfile = %(
+      docker.entrypoint ['cmd', 'arg1', 'arg2']
+      docker.entrypoint 'cmd2', 'arg1', 'arg2'
+    )
+    expect(app.docker._entrypoint).to eq ['cmd2', 'arg1', 'arg2']
   end
 
   it '#chef module' do
@@ -201,7 +233,7 @@ describe Dapp::Config::Main do
     expect(apps.map { |app| app.docker._from }).to eq [:image_1, :image_3, :image_2]
   end
 
-  it '#app does not inherit' do
+  it '#app does not inherit (:docker_from_not_defined)' do
     @dappfile = %(
       app 'first'
       docker.from :image_1

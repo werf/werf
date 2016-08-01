@@ -1,10 +1,10 @@
 require_relative '../spec_helper'
 
 describe Dapp::GitArtifact do
-  include SpecHelpers::Common
-  include SpecHelpers::Application
-  include SpecHelpers::Git
-  include SpecHelpers::GitArtifact
+  include SpecHelper::Common
+  include SpecHelper::Application
+  include SpecHelper::Git
+  include SpecHelper::GitArtifact
 
   before :each do
     stub_application
@@ -68,7 +68,7 @@ describe Dapp::GitArtifact do
 
   def command_apply(command)
     expect(command).to_not be_empty
-    expect { application.shellout!(command) }.to_not raise_error
+    expect { shellout!(command) }.to_not raise_error
   end
 
   def clear_where_to_add

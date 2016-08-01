@@ -1,4 +1,4 @@
-module SpecHelpers
+module SpecHelper
   module GitArtifact
     def git_artifact
       application.local_git_artifacts.first

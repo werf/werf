@@ -17,7 +17,7 @@ module Dapp
         protected
 
         def image_build!
-          from_image.pull!(log_verbose: application.log_verbose?, log_time: application.log_time?)
+          from_image.pull!(log_time: application.log_time?)
           super
         end
 
@@ -28,7 +28,7 @@ module Dapp
         end
 
         def from_image
-          StageImage.new(name: from_image_name)
+          @from_image ||= StageImage.new(name: from_image_name)
         end
 
         def image_info

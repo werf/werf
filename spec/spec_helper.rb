@@ -11,11 +11,12 @@ Bundler.require :default, :test, :development
 require 'active_support'
 require 'recursive_open_struct'
 
-require 'spec_helpers/common'
-require 'spec_helpers/application'
-require 'spec_helpers/git'
-require 'spec_helpers/git_artifact'
-require 'spec_helpers/expect'
+require 'spec_helper/common'
+require 'spec_helper/application'
+require 'spec_helper/git'
+require 'spec_helper/git_artifact'
+require 'spec_helper/expect'
+require 'spec_helper/stream'
 
 RSpec.configure do |config|
   config.before :all do

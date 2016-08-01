@@ -9,35 +9,35 @@ module Dapp
       end
 
       def infra_install(_image)
-        fail
+        raise
       end
 
       def infra_install_checksum
-        fail
+        raise
       end
 
       def infra_setup(_image)
-        fail
+        raise
       end
 
       def infra_setup_checksum
-        fail
+        raise
       end
 
       def app_install(_image)
-        fail
+        raise
       end
 
       def app_install_checksum
-        fail
+        raise
       end
 
       def app_setup(_image)
-        fail
+        raise
       end
 
       def app_setup_checksum
-        fail
+        raise
       end
     end # Base
   end # Builder

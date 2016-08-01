@@ -1,9 +1,9 @@
 require_relative '../spec_helper'
 
 describe Dapp::GitRepo do
-  include SpecHelpers::Common
-  include SpecHelpers::Application
-  include SpecHelpers::Git
+  include SpecHelper::Common
+  include SpecHelper::Application
+  include SpecHelper::Git
 
   before :each do
     stub_application
@@ -33,10 +33,6 @@ describe Dapp::GitRepo do
 
   def file_path(git_dir, arg)
     git_dir.nil? ? arg : File.join(git_dir, arg)
-  end
-
-  def latest_commit
-    git_latest_commit
   end
 
   def remote_init!

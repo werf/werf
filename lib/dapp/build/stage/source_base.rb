@@ -26,14 +26,17 @@ module Dapp
 
         def image
           super do |image|
-            if application.git_artifacts.any?
-              image.add_volumes_from(gitartifact_container)
-              image.add_commands 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
+            bash_commands = []
+            volumes = []
+            application.git_artifacts.each do |git_artifact|
+              volumes << "#{git_artifact.repo.dir_path}:#{git_artifact.repo.container_build_dir_path}"
+              bash_commands.concat(git_artifact.send(apply_command_method, self))
             end
 
-            application.git_artifacts.each do |git_artifact|
-              image.add_volume "#{git_artifact.repo.dir_path}:#{git_artifact.repo.container_build_dir_path}"
-              image.add_commands git_artifact.send(apply_command_method, self)
+            unless bash_commands.empty?
+              image.add_volumes_from(gitartifact_container)
+              image.add_volume(volumes)
+              image.add_commands 'export PATH=/.dapp/deps/gitartifact/bin:$PATH', *bash_commands
             end
             yield image if block_given?
           end
@@ -61,7 +64,7 @@ module Dapp
 
         def gitartifact_container
           @gitartifact_container ||= begin
-            if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus != 0
+            if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus.nonzero?
               application.log_secondary_process(application.t(code: 'process.git_artifact_loading'), short: true) do
                 application.shellout ['docker run',
                                       '--restart=no',

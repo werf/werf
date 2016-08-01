@@ -1,4 +1,4 @@
-module SpecHelpers
+module SpecHelper
   module Git
     extend ActiveSupport::Concern
 

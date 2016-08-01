@@ -1,8 +1,8 @@
 require_relative '../spec_helper'
 
 describe Dapp::Builder::Chef do
-  include SpecHelpers::Common
-  include SpecHelpers::Application
+  include SpecHelper::Common
+  include SpecHelper::Application
 
   CACHE_VERSION = SecureRandom.uuid
 
@@ -10,40 +10,55 @@ describe Dapp::Builder::Chef do
     init_project
   end
 
-  it 'builds project' do
-    application_build!
-    stages.each { |_, stage| expect(stage.image.tagged?).to be(true) }
-    TEST_FILE_NAMES.each { |name| expect(send("#{name}_exist?")).to be(true) }
-  end
-
-  [%i(infra_install foo pizza),
-   %i(app_install bar taco),
-   %i(infra_setup baz burger),
-   %i(app_setup qux pelmeni)].each do |stage, file1, file2|
-    it "rebuilds from stage #{stage}" do
-      old_template_file_values = {}
-      old_template_file_values[file1] = send(file1)
-      old_template_file_values[file2] = send(file2)
-
-      new_file_values = {}
-      new_file_values[file1] = SecureRandom.uuid
-      testproject_path.join("files/default/#{stage}/#{file1}.txt").tap do |path|
-        path.write "#{new_file_values[file1]}\n"
-      end
-      new_file_values[file2] = SecureRandom.uuid
-      mdapp_test_path.join("files/default/#{stage}/#{file2}.txt").tap do |path|
-        path.write "#{new_file_values[file2]}\n"
+  %w(ubuntu:14.04 centos:7).each do |os|
+    context os do
+      it 'builds project' do
+        application_build!
+        stages.each { |_, stage| expect(stage.image.tagged?).to be(true) }
+        TEST_FILE_NAMES.each { |name| expect(send("#{name}_exist?")).to be(true) }
       end
 
-      application_rebuild!
+      [%i(infra_install foo pizza),
+       %i(app_install bar taco),
+       %i(infra_setup baz burger),
+       %i(app_setup qux pelmeni)].each do |stage, file1, file2|
+        it "rebuilds from stage #{stage}" do
+          old_template_file_values = {}
+          old_template_file_values[file1] = send(file1)
+          old_template_file_values[file2] = send(file2)
 
-      expect(send(file1, reload: true)).not_to eq(old_template_file_values[file1])
-      expect(send(file2, reload: true)).not_to eq(old_template_file_values[file2])
+          new_file_values = {}
+          new_file_values[file1] = SecureRandom.uuid
+          testproject_path.join("files/default/#{stage}/#{file1}.txt").tap do |path|
+            path.write "#{new_file_values[file1]}\n"
+          end
+          new_file_values[file2] = SecureRandom.uuid
+          mdapp_test_path.join("files/default/#{stage}/#{file2}.txt").tap do |path|
+            path.write "#{new_file_values[file2]}\n"
+          end
 
-      expect(send("test_#{stage}", reload: true)).to eq(new_file_values[file1])
-      expect(send("mdapp_test_#{stage}", reload: true)).to eq(new_file_values[file2])
-    end
-  end
+          application_rebuild!
+
+          expect(send(file1, reload: true)).not_to eq(old_template_file_values[file1])
+          expect(send(file2, reload: true)).not_to eq(old_template_file_values[file2])
+
+          expect(send("test_#{stage}", reload: true)).to eq(new_file_values[file1])
+          expect(send("mdapp_test_#{stage}", reload: true)).to eq(new_file_values[file2])
+        end
+      end
+
+      define_method :config do
+        @config ||= default_config.merge(
+          _builder: :chef,
+          _home_path: testproject_path.to_s,
+          _chef: { _modules: %w(mdapp-test mdapp-test2) }
+        ).tap { |config|
+          config[:_docker][:_from] = os.to_sym
+          config[:_docker][:_from_cache_version] = CACHE_VERSION
+        }
+      end
+    end # context
+  end # each
 
   def openstruct_config
     RecursiveOpenStruct.new(config).tap do |obj|
@@ -59,16 +74,6 @@ describe Dapp::Builder::Chef do
         _app_chain.first
       end
     end
-  end
-
-  def config
-    @config ||= default_config.merge(
-      _builder: :chef,
-      _home_path: testproject_path.to_s,
-      _chef: { _modules: %w(mdapp-test mdapp-test2) }
-    ).tap { |config|
-      config[:_docker][:_from_cache_version] = CACHE_VERSION
-    }
   end
 
   def project_path
@@ -125,7 +130,7 @@ describe Dapp::Builder::Chef do
 
     define_method("#{name}_exist?") do
       res = shellout("docker run --rm #{application.send(:last_stage).image.name} ls /#{name}.txt")
-      return true if res.exitstatus == 0
+      return true if res.exitstatus.zero?
       return false if res.exitstatus == 2
       res.error!
     end

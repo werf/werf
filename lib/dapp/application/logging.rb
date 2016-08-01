@@ -66,7 +66,7 @@ module Dapp
         process         = paint_string(rjust(process, message), style[:process])
         info            = paint_string(message, style[:message]) + process
         success_message = paint_string(slice(message), style[:message]) +
-          paint_string(rjust(t(code: 'status.success.default'), message), style[:success])
+                          paint_string(rjust(t(code: 'status.success.default'), message), style[:success])
         failed_message  = paint_string(slice(message) +
           rjust(t(code: 'status.failed.default'), message), style[:failed])
         log_process_default(info, success_message, failed_message, &blk)
@@ -84,7 +84,7 @@ module Dapp
         message = success_message
         start = Time.now
         yield
-      rescue Error::Base, SignalException, StandardError => _e
+      rescue Exception::Base, Error::Base, SignalException, StandardError => _e
         message = failed_message
         raise
       ensure
