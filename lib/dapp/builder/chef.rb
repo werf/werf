@@ -195,8 +195,19 @@ module Dapp
             ssh_auth_socket_path = nil
             ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
 
+            vendor_commands = [
+              'mkdir -p ~/.ssh',
+              'echo "Host *" >> ~/.ssh/config',
+              'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
+              '/.dapp/deps/chefdk/bin/berks vendor /tmp/vendored_cookbooks',
+              ["find /tmp/vendored_cookbooks -type f -exec bash -ec '",
+               "install -D -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
+               "#{cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks\\///g\")' \\;"].join,
+              "chown -R #{Process.uid}:#{Process.gid} #{berksfile_lock_path}",
+            ]
+
             application.shellout!(
-              p(['docker run --rm',
+              ['docker run --rm',
                ("--volume #{ssh_auth_socket_path}:#{ssh_auth_socket_path}" if ssh_auth_socket_path),
                "--volume #{cookbooks_vendor_path.tap(&:mkpath)}:#{cookbooks_vendor_path}",
                *berksfile.local_cookbooks
@@ -205,13 +216,7 @@ module Dapp
                "--volumes-from #{volumes_from}",
                "--workdir #{berksfile_path.parent}",
                ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
-               ["dappdeps/berksdeps:0.1.0 bash -ec '",
-                'mkdir -p ~/.ssh && ',
-                'echo "Host *" >> ~/.ssh/config && ',
-                'echo "    StrictHostKeyChecking no" >> ~/.ssh/config && ',
-                "/.dapp/deps/chefdk/bin/berks vendor /tmp/vendored_cookbooks && ",
-                "cp -rT /tmp/vendored_cookbooks #{cookbooks_vendor_path} && ",
-                "chown -R #{Process.uid}:#{Process.gid} #{cookbooks_vendor_path} #{berksfile_lock_path}'"].join].compact.join(' ')),
+               "dappdeps/berksdeps:0.1.0 #{application.shellout_pack(vendor_commands.join(' && '))}"].compact.join(' '),
               log_verbose: application.log_verbose?
             )
 

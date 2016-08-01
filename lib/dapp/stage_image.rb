@@ -87,7 +87,7 @@ module Dapp
       if bash_commands.empty?
         'true'
       else
-        "bash -ec 'eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)'"
+        shellout_pack prepared_commands.join(' && ')
       end
     end
 
