@@ -31,6 +31,7 @@ module SpecHelper
 
     def default_config
       Marshal.load(Marshal.dump(_name: 'test',
+                                _artifact: [],
                                 _chef: { _modules: [] },
                                 _shell: { _infra_install: [], _infra_setup: [], _app_install: [], _app_setup: [] },
                                 _docker: { _from: :'ubuntu:14.04', _change_options: {} },

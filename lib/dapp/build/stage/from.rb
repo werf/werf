@@ -5,6 +5,7 @@ module Dapp
       class From < Base
         def signature
           hashsum [from_image_name,
+                   artifacts_signatures,
                    application.config._docker._from_cache_version,
                    Dapp::BUILD_CACHE_VERSION]
         end

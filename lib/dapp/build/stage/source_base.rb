@@ -43,7 +43,7 @@ module Dapp
         end
 
         def dependencies_checksum
-          hashsum [prev_stage.signature]
+          hashsum [prev_stage.signature, artifacts_signatures]
         end
 
         def layer_commit(git_artifact)

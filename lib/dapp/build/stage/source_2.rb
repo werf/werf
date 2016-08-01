@@ -11,7 +11,7 @@ module Dapp
         protected
 
         def dependencies_checksum
-          hashsum [prev_stage.signature,
+          hashsum [super,
                    *application.builder.infra_setup_checksum]
         end
       end # Source2

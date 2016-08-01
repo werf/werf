@@ -46,12 +46,12 @@ module Dapp
 
       def artifact(where_to_add, **options, &blk)
         @_artifact << begin
-          conf = clone.tap do |app|
+          config = clone.tap do |app|
             app.instance_variable_set(:'@_artifact', [])
-            app.instance_variable_set(:'@_name', app_name)
+            app.instance_variable_set(:'@_name', app_name("artifact-#{SecureRandom.hex(2)}"))
             app.instance_eval(&blk) if block_given?
           end
-          Artifact::Stage.new(where_to_add, conf: conf, **options)
+          Artifact::Stage.new(where_to_add, config: config, **options)
         end
       end
 
@@ -111,14 +111,14 @@ module Dapp
 
       def app(sub_name, &blk)
         clone.tap do |app|
-          app.instance_variable_set(:'@_name', app_name)
+          app.instance_variable_set(:'@_name', app_name(sub_name))
           app.instance_eval(&blk) if block_given?
           @_apps += app._apps
         end
       end
 
-      def app_name(sub_name = nil)
-        [_name, sub_name || SecureRandom.hex].compact.join('-')
+      def app_name(sub_name)
+        [_name, sub_name].compact.join('-')
       end
     end
   end

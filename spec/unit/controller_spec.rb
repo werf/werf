@@ -16,7 +16,7 @@ describe Dapp::Controller do
   end
 
   def stubbed_controller(cli_options: {}, patterns: nil)
-    allow_any_instance_of(Dapp::Controller).to receive(:build_confs) {
+    allow_any_instance_of(Dapp::Controller).to receive(:build_configs) {
       [RecursiveOpenStruct.new(_name: 'project'),
        RecursiveOpenStruct.new(_name: 'project2')]
     }
@@ -60,23 +60,23 @@ describe Dapp::Controller do
     end
 
     it '.', test_construct: true do
-      expect { controller(cli_options: { dir: '.dapps/project/' }).send(:build_confs) }.to_not raise_error
+      expect { controller(cli_options: { dir: '.dapps/project/' }).send(:build_configs) }.to_not raise_error
     end
 
     it '.dapps', test_construct: true do
-      expect { controller.send(:build_confs) }.to_not raise_error
+      expect { controller.send(:build_configs) }.to_not raise_error
     end
 
     it 'search up', test_construct: true do
-      expect { controller(cli_options: { dir: '.dapps/project/config/en' }).send(:build_confs) }.to_not raise_error
+      expect { controller(cli_options: { dir: '.dapps/project/config/en' }).send(:build_configs) }.to_not raise_error
     end
 
     it 'dappfile_not_found', test_construct: true do
-      expect_exception_code(code: :dappfile_not_found) { controller(cli_options: { dir: '.dapps' }).send(:build_confs) }
+      expect_exception_code(code: :dappfile_not_found) { controller(cli_options: { dir: '.dapps' }).send(:build_configs) }
     end
 
     it 'no_such_app', test_construct: true do
-      expect_exception_code(code: :no_such_app) { controller(patterns: ['app*']).send(:build_confs) }
+      expect_exception_code(code: :no_such_app) { controller(patterns: ['app*']).send(:build_configs) }
     end
   end
 end

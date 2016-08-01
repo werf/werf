@@ -46,14 +46,16 @@ module Dapp
         end
 
         def signature
-          hashsum prev_stage.signature
+          hashsum [prev_stage.signature, artifacts_signatures]
         end
 
         def image
           @image ||= begin
             Image::Stage.new(name: image_name, from: from_image).tap do |image|
               image.add_volume "#{application.tmp_path}:#{application.container_tmp_path}"
+              before_artifacts.each { |artifact| apply_artifact(artifact, image) }
               yield image if block_given?
+              after_artifacts.each { |artifact| apply_artifact(artifact, image) }
             end
           end
         end
@@ -73,7 +75,7 @@ module Dapp
         end
 
         def should_be_introspected?
-          application.cli_options[:introspect_stage] == name && !application.dry_run?
+          application.cli_options[:introspect_stage] == name && !application.dry_run? && !application.is_artifact
         end
 
         def image_build!
@@ -114,6 +116,61 @@ module Dapp
               application.with_log_indent { application.log_info bash_commands.join("\n") }
             end
           end if application.log? && application.log_verbose?
+        end
+
+        def before_artifacts
+          @before_artifacts ||= do_artifacts(application.config._artifact.select { |artifact| artifact._before == name })
+        end
+
+        def after_artifacts
+          @after_artifacts ||= do_artifacts(application.config._artifact.select { |artifact| artifact._after == name })
+        end
+
+        def do_artifacts(artifacts)
+          artifacts.map do |artifact|
+            {
+              name: artifact._config._name,
+              options: artifact._artifact_options,
+              app: Application.new(config: artifact._config, is_artifact: true, **application.meta_options).tap { |app| app.build! }
+            }
+          end
+        end
+
+        def artifacts_signatures
+          (before_artifacts + after_artifacts).map { |artifact| hashsum [artifact[:app].signature, artifact[:options]] }
+        end
+
+        def apply_artifact(artifact, image)
+          cwd = artifact[:options][:cwd]
+          paths = artifact[:options][:paths] || []
+          owner = artifact[:options][:owner]
+          group = artifact[:options][:group]
+          where_to_add = artifact[:options][:where_to_add]
+
+          docker_options = ['--rm', "--volume #{application.tmp_path('artifact', artifact[:name])}:#{artifact[:app].container_tmp_path(artifact[:name])}"]
+          commands = application.shellout_pack(safe_cp(where_to_add, artifact[:app].container_tmp_path(artifact[:name]), Process.uid, Process.gid))
+          artifact[:app].run(docker_options, Array(commands))
+
+          commands = application.shellout_pack(safe_cp(application.container_tmp_path('artifact', artifact[:name]), where_to_add, owner, group, cwd, paths))
+          image.add_commands commands
+        end
+
+        def safe_cp(from, to, owner, group, cwd = '', paths = [])
+          credentials = ''
+          credentials += "-o #{owner} " if owner
+          credentials += "-g #{group} " if group
+
+          commands = []
+          commands << ['install', credentials, '-d', to].join(' ')
+
+          copy_files = ->(from, cwd, path = '') do
+            "find #{File.join(from, cwd, path)} -type f -exec bash -ec 'install -D #{credentials} {} " \
+            "#{File.join(to, "$(echo {} | sed -e \"s/#{File.join(from, cwd).gsub('/', '\\/')}//g\")")}' \\;"
+          end
+
+          commands.concat(paths.empty? ? Array(copy_files.call(from, cwd)) : paths.map { |path| copy_files.call(from, cwd, path) })
+          commands << "find #{to} -type d -exec bash -ec 'install -d #{credentials} {}' \\;"
+          commands.join(' && ')
         end
       end # Base
     end # Stage

@@ -15,7 +15,7 @@ module Dapp
         protected
 
         def dependencies_checksum
-          hashsum [prev_stage.signature,
+          hashsum [super,
                    app_install_files_checksum,
                    *application.builder.app_install_checksum]
         end

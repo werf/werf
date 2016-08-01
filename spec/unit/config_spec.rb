@@ -158,19 +158,29 @@ describe Dapp::Config::Main do
     dappfile_ga_local = "git_artifact.local 'where_to_add', #{dappfile_local_options}"
     dappfile_ga_remote = "git_artifact.remote 'url', 'where_to_add', #{dappfile_remote_options}"
 
-    [:local, :remote].each do |ga|
-      it ga.to_s do
-        attributes = binding.local_variable_get(:"#{ga}_attributes")
-        @dappfile = binding.local_variable_get(:"dappfile_ga_#{ga}")
-        attributes << :where_to_add
-        attributes.each { |attr| expect(app.git_artifact.public_send(ga).first.public_send("_#{attr}")).to eq attr.to_s }
-      end
+    it 'local' do
+      @dappfile = dappfile_ga_local
+      local_attributes.delete(:paths)
+      expect(app.git_artifact.local.first._paths).to eq ['paths']
+      local_attributes.each { |attr| expect(app.git_artifact.local.first.public_send("_#{attr}")).to eq attr.to_s }
+    end
+
+    it 'remote' do
+      @dappfile = dappfile_ga_remote
+      remote_attributes.delete(:paths)
+      expect(app.git_artifact.remote.first._paths).to eq ['paths']
+      local_attributes.each { |attr| expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq attr.to_s }
     end
 
     it 'local with remote options' do
       @dappfile = "git_artifact.local 'where_to_add', #{dappfile_remote_options}"
       expect { apps }.to raise_error Dapp::Error::Config
     end
+
+    it 'git_artifact paths' do
+      @dappfile = %{ git_artifact.local /where_to_add }
+    end
+
 
     it 'name from url' do
       @dappfile = "git_artifact.remote 'https://github.com/flant/dapp.git', 'where_to_add', #{dappfile_remote_options}"

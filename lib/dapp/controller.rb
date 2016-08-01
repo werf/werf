@@ -18,40 +18,35 @@ module Dapp
     end
 
     def run(docker_options, command)
-      raise Error::Controller, code: :run_command_unexpected_apps_number unless build_confs.one?
-      Application.new(config: build_confs.first, cli_options: cli_options, ignore_git_fetch: true).run(docker_options, command)
+      raise Error::Controller, code: :run_command_unexpected_apps_number unless build_configs.one?
+      Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).run(docker_options, command)
     end
 
     def build
-      build_confs.each do |build_conf|
-        log_step(build_conf._name)
-        with_log_indent { Application.new(config: build_conf, cli_options: cli_options).build! }
-      end
+      build_configs.each { |config| Application.new(config: config, cli_options: cli_options).build! }
     end
 
     def list
-      build_confs.each do |build_conf|
-        log(build_conf._name)
-      end
+      build_configs.each { |config| log(config._name) }
     end
 
     def push(repo)
-      raise Error::Controller, code: :push_command_unexpected_apps_number unless build_confs.one?
-      Application.new(config: build_confs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
+      raise Error::Controller, code: :push_command_unexpected_apps_number unless build_configs.one?
+      Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
     end
 
     def smartpush(repo_prefix)
-      build_confs.each do |build_conf|
-        log_step(build_conf._name)
-        repo = File.join(repo_prefix, build_conf._name)
-        with_log_indent { Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true).export!(repo) }
+      build_configs.each do |config|
+        log_step(config._name)
+        repo = File.join(repo_prefix, config._name)
+        with_log_indent { Application.new(config: config, cli_options: cli_options, ignore_git_fetch: true).export!(repo) }
       end
     end
 
     def flush_metadata
-      build_confs.each do |build_conf|
-        log(build_conf._name)
-        app = Application.new(config: build_conf, cli_options: cli_options, ignore_git_fetch: true)
+      build_configs.each do |config|
+        log(config._name)
+        app = Application.new(config: config, cli_options: cli_options, ignore_git_fetch: true)
         FileUtils.rm_rf app.metadata_path
       end
     end
@@ -63,8 +58,8 @@ module Dapp
 
     private
 
-    def build_confs
-      @build_confs ||= begin
+    def build_configs
+      @configs ||= begin
         if File.exist? dappfile_path
           dappfiles = dappfile_path
         elsif (dappfiles = dapps_dappfiles_pathes).empty? && (dappfiles = search_dappfile_up).nil?

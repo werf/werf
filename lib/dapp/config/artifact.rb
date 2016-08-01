@@ -13,35 +13,39 @@ module Dapp
             respond_to?("_#{k}=") ? send(:"_#{k}=", v) : raise(Error::Config, code: code,
                                                                data: { type: object_name, attr: k })
           end
+        end
 
-          def _artifact_options
-            {
-                where_to_add: _where_to_add,
-                cwd:          _cwd,
-                paths:        _paths,
-                owner:        _owner,
-                group:        _group
-            }
-          end
+        def _paths
+          Array(@_paths)
+        end
 
-          def clone
-            Marshal.load(Marshal.dump(self))
-          end
+        def _artifact_options
+          {
+            where_to_add: _where_to_add,
+            cwd:          _cwd,
+            paths:        _paths,
+            owner:        _owner,
+            group:        _group
+          }
+        end
 
-          protected
+        def clone
+          Marshal.load(Marshal.dump(self))
+        end
 
-          def code
-            raise
-          end
+        protected
 
-          def object_name
-            self.class.to_s.split('::').last
-          end
+        def code
+          raise
+        end
+
+        def object_name
+          self.class.to_s.split('::').last
         end
       end
 
       class Stage < Base
-        attr_accessor :_conf
+        attr_accessor :_config
         attr_accessor :_before, :_after
 
         def _before=(stage)

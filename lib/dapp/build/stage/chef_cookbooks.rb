@@ -9,7 +9,7 @@ module Dapp
         end
 
         def signature
-          hashsum [prev_stage.signature, *application.builder.chef_cookbooks_checksum]
+          hashsum [super, *application.builder.chef_cookbooks_checksum]
         end
 
         def image

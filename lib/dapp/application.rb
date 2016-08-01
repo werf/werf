@@ -14,8 +14,9 @@ module Dapp
     attr_reader :config
     attr_reader :cli_options
     attr_reader :ignore_git_fetch
+    attr_reader :is_artifact
 
-    def initialize(config:, cli_options:, ignore_git_fetch: false)
+    def initialize(config:, cli_options:, ignore_git_fetch: false, is_artifact: false)
       @config = config
       @cli_options = cli_options
 
@@ -24,11 +25,15 @@ module Dapp
 
       @last_stage = Build::Stage::Source5.new(self)
       @ignore_git_fetch = ignore_git_fetch
+      @is_artifact = is_artifact
     end
 
     def build!
-      last_stage.build!
-      last_stage.save_in_cache!
+      log_step(config._name)
+      with_log_indent do
+        last_stage.build!
+        last_stage.save_in_cache!
+      end
     ensure
       FileUtils.rm_rf(tmp_path)
     end
@@ -58,8 +63,16 @@ module Dapp
       end
     end
 
+    def signature
+      last_stage.send(:signature)
+    end
+
     def builder
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
+    end
+
+    def meta_options
+      { cli_options: cli_options, ignore_git_fetch: ignore_git_fetch }
     end
 
     protected

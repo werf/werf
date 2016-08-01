@@ -9,7 +9,7 @@ module Dapp
         end
 
         def signature
-          hashsum [prev_stage.signature, *application.builder.infra_install_checksum]
+          hashsum [super, *application.builder.infra_install_checksum]
         end
 
         def image
