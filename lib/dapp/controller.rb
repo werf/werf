@@ -15,7 +15,6 @@ module Dapp
 
       paint_initialize
       Helper::I18n.initialize
-      build_confs
     end
 
     def run(docker_options, command)

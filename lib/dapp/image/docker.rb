@@ -55,18 +55,22 @@ module Dapp
       end
 
       def cache_reset
-        self.cache.delete(name)
+        self.class.cache.delete(name)
         self.class.cache_reset(name)
       end
 
-      def self.cache
-        @cache ||= (@cache = {}).tap { cache_reset }
-      end
+      class << self
+        protected
 
-      def self.cache_reset(name = '')
-        shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' #{name}").stdout.lines.each do |line|
-          name, id, created_at, size = line.split(';')
-          cache[name] = { id: id, created_at: created_at, size: size }
+        def cache
+          @cache ||= (@cache = {}).tap { cache_reset }
+        end
+
+        def cache_reset(name = '')
+          shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' #{name}").stdout.lines.each do |line|
+            name, id, created_at, size = line.split(';')
+            cache[name] = { id: id, created_at: created_at, size: size }
+          end
         end
       end
     end # Docker

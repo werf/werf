@@ -15,14 +15,6 @@ describe Dapp::CLI do
       allow(class_double(Dapp::Application).as_stubbed_const).to receive(:new) { RecursiveOpenStruct.new }
       allow_any_instance_of(Dapp::Controller).to receive(:build_confs) { [RecursiveOpenStruct.new(_name: 'project')] }
     end
-
-    c.before(:example, :stub_controller) do
-      allow_any_instance_of(Dapp::Controller).to receive(:build_confs)
-      stub_instance(Dapp::Controller) do |instance|
-        allow(instance).to receive(:run)
-        @instance = instance
-      end
-    end
   end
 
   it 'version' do
@@ -41,24 +33,31 @@ describe Dapp::CLI do
   end
 
   context 'run' do
-    it 'empty', :stub_controller do
+    before :each do
+      stub_instance(Dapp::Controller) do |instance|
+        allow(instance).to receive(:run)
+        @instance = instance
+      end
+    end
+
+    it 'empty' do
       expect_parsed_options('run')
     end
 
-    it 'controller args', :stub_controller do
+    it 'controller args' do
       expect_parsed_options('run --time', cli_options: { log_time: true })
       expect_parsed_options('run app*', patterns: ['app*'])
       expect_parsed_options('run app* --time', cli_options: { log_time: true }, patterns: ['app*'])
       expect_parsed_options('run --time app*', cli_options: { log_time: true }, patterns: ['app*'])
     end
 
-    it 'docker args', :stub_controller do
+    it 'docker args' do
       expect_parsed_options('run -ti --rm', docker_options: %w(-ti --rm))
       expect_parsed_options('run -- bash rm -rf', docker_command: %w(bash rm -rf))
       expect_parsed_options('run -ti --rm -- bash rm -rf', docker_options: %w(-ti --rm), docker_command: %w(bash rm -rf))
     end
 
-    it 'oatmeal', :stub_controller do
+    it 'oatmeal' do
       expect_parsed_options('run --quiet *app* -ti --time --rm -- bash rm -rf',
                             cli_options: { log_quiet: true, log_time: true },
                             patterns: ['*app*'],
