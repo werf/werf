@@ -71,11 +71,13 @@ describe Dapp::Config::Main do
     end
 
     it 'env' do
-      expect_special_attribute(:docker, :env)
+      @dappfile = %(docker.env a: 'b', b: 'c')
+      expect(app.docker._env).to eq %w(A=b B=c)
     end
 
     it 'label' do
-      expect_special_attribute(:docker, :volume)
+      @dappfile = %(docker.label a: 'b', b: 'c')
+      expect(app.docker._label).to eq %w(A=b B=c)
     end
 
     it 'cmd' do
