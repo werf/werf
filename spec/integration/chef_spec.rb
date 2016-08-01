@@ -52,10 +52,10 @@ describe Dapp::Builder::Chef do
           _builder: :chef,
           _home_path: testproject_path.to_s,
           _chef: { _modules: %w(mdapp-test mdapp-test2) }
-        ).tap { |config|
+        ).tap do |config|
           config[:_docker][:_from] = os.to_sym
           config[:_docker][:_from_cache_version] = CACHE_VERSION
-        }
+        end
       end
     end # context
   end # each

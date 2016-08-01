@@ -137,15 +137,13 @@ module Dapp
         else
           install_cookbooks
 
-          if stage == :chef_cookbooks
-            checksum = cookbooks_checksum
-          else
-            checksum = application.hashsum [
-              _paths_checksum(stage_cookbooks_vendored_paths(stage, with_files: true)),
-              *application.config._chef._modules,
-              stage == :infra_install ? chefdk_image : nil
-            ].compact
-          end
+          checksum = if stage == :chef_cookbooks
+                       cookbooks_checksum
+                     else
+                       application.hashsum [_paths_checksum(stage_cookbooks_vendored_paths(stage, with_files: true)),
+                                            *application.config._chef._modules,
+                                            stage == :infra_install ? chefdk_image : nil].compact
+                     end
 
           stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
           checksum
@@ -207,7 +205,7 @@ module Dapp
               ["find /tmp/vendored_cookbooks -type f -exec bash -ec '",
                "install -D -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
                "#{cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks\\///g\")' \\;"].join,
-              "chown -R #{Process.uid}:#{Process.gid} #{berksfile_lock_path}",
+              "chown -R #{Process.uid}:#{Process.gid} #{berksfile_lock_path}"
             ]
 
             application.shellout!(

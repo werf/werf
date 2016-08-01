@@ -2,6 +2,7 @@ module Dapp
   module Config
     # Artifact
     module Artifact
+      # Base
       class Base
         attr_accessor :_where_to_add, :_cwd, :_paths, :_owner, :_group
 
@@ -11,7 +12,7 @@ module Dapp
 
           options.each do |k, v|
             respond_to?("_#{k}=") ? send(:"_#{k}=", v) : raise(Error::Config, code: code,
-                                                               data: { type: object_name, attr: k })
+                                                                              data: { type: object_name, attr: k })
           end
         end
 
@@ -44,6 +45,7 @@ module Dapp
         end
       end
 
+      # Stage
       class Stage < Base
         attr_accessor :_config
         attr_accessor :_before, :_after

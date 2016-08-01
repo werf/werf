@@ -80,7 +80,7 @@ module Dapp
       private
 
       def options_to_args(options)
-        options.map {|key, value| "#{key.upcase}=#{value}" }
+        options.map { |key, value| "#{key.upcase}=#{value}" }
       end
     end
   end

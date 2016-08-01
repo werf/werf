@@ -178,9 +178,8 @@ describe Dapp::Config::Main do
     end
 
     it 'git_artifact paths' do
-      @dappfile = %{ git_artifact.local /where_to_add }
+      @dappfile = %( git_artifact.local /where_to_add )
     end
-
 
     it 'name from url' do
       @dappfile = "git_artifact.remote 'https://github.com/flant/dapp.git', 'where_to_add', #{dappfile_remote_options}"

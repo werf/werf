@@ -131,7 +131,7 @@ module Dapp
             {
               name: artifact._config._name,
               options: artifact._artifact_options,
-              app: Application.new(config: artifact._config, is_artifact: true, **application.meta_options).tap { |app| app.build! }
+              app: Application.new(config: artifact._config, is_artifact: true, **application.meta_options).tap(&:build!)
             }
           end
         end
@@ -147,14 +147,18 @@ module Dapp
           group = artifact[:options][:group]
           where_to_add = artifact[:options][:where_to_add]
 
-          docker_options = ['--rm', "--volume #{application.tmp_path('artifact', artifact[:name])}:#{artifact[:app].container_tmp_path(artifact[:name])}"]
-          commands = application.shellout_pack(safe_cp(where_to_add, artifact[:app].container_tmp_path(artifact[:name]), Process.uid, Process.gid))
+          docker_options = ['--rm',
+                            "--volume #{application.tmp_path('artifact', artifact[:name])}:#{artifact[:app].container_tmp_path(artifact[:name])}"]
+          commands = application.shellout_pack(safe_cp(where_to_add,
+                                                       artifact[:app].container_tmp_path(artifact[:name]), Process.uid, Process.gid))
           artifact[:app].run(docker_options, Array(commands))
 
-          commands = application.shellout_pack(safe_cp(application.container_tmp_path('artifact', artifact[:name]), where_to_add, owner, group, cwd, paths))
+          commands = application.shellout_pack(safe_cp(application.container_tmp_path('artifact', artifact[:name]),
+                                                       where_to_add, owner, group, cwd, paths))
           image.add_commands commands
         end
 
+        # rubocop:disable Metrics/ParameterLists
         def safe_cp(from, to, owner, group, cwd = '', paths = [])
           credentials = ''
           credentials += "-o #{owner} " if owner
@@ -163,15 +167,16 @@ module Dapp
           commands = []
           commands << ['install', credentials, '-d', to].join(' ')
 
-          copy_files = ->(from, cwd, path = '') do
-            "find #{File.join(from, cwd, path)} -type f -exec bash -ec 'install -D #{credentials} {} " \
-            "#{File.join(to, "$(echo {} | sed -e \"s/#{File.join(from, cwd).gsub('/', '\\/')}//g\")")}' \\;"
+          copy_files = lambda do |from_, cwd_, path_ = ''|
+            "find #{File.join(from_, cwd_, path_)} -type f -exec bash -ec 'install -D #{credentials} {} " \
+            "#{File.join(to, "$(echo {} | sed -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
           end
 
           commands.concat(paths.empty? ? Array(copy_files.call(from, cwd)) : paths.map { |path| copy_files.call(from, cwd, path) })
           commands << "find #{to} -type d -exec bash -ec 'install -d #{credentials} {}' \\;"
           commands.join(' && ')
         end
+        # rubocop:enable Metrics/ParameterLists
       end # Base
     end # Stage
   end # Build
