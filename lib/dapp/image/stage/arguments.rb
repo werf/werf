@@ -82,7 +82,7 @@ module Dapp
       end
 
       def prepared_bash_command
-        "bash -ec 'eval $(echo #{Base64.strict_encode64(prepared_commands.join(' && '))} | base64 --decode)'"
+        shellout_pack prepared_commands.join(' && ')
       end
 
       def prepared_commands
