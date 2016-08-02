@@ -12,7 +12,9 @@ module Dapp
         File.chmod(0o600, @ssh_key_path) if @ssh_key_path
 
         with_ssh_key do
-          git "clone --bare --depth 1 #{url} #{path}"
+          application.log_secondary_process(application.t(code: 'process.git_artifact_clone', data: { name: name }), short: true) do
+            git "clone --bare --depth 1 #{url} #{path}"
+          end
         end unless File.directory?(path)
       end
 
