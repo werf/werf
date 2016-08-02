@@ -113,7 +113,55 @@ describe Dapp::Config::Main do
     end
 
     it 'skip_module' do
-      expect_special_attribute(:chef, :skip_module, :_skip_modules)
+      @dappfile = %(
+        builder :chef
+
+        chef.module 'a', 'b', 'c', 'd'
+        chef.skip_module 'a', 'c'
+
+        app 'X' do
+          chef.module 'e', 'f'
+        end
+
+        app 'Y' do
+          chef.module 'g'
+          chef.skip_module 'b'
+        end
+      )
+
+      expect(apps_by_name['dapp-X'].chef._modules).to eq %w(b d e f)
+      expect(apps_by_name['dapp-Y'].chef._modules).to eq %w(d g)
+    end
+
+    it 'reset_modules' do
+      @dappfile = %(
+        builder :chef
+
+        chef.module 'a', 'b', 'c'
+
+        app 'X' do
+          chef.reset_modules
+        end
+
+        app 'Y' do
+          chef.module 'd'
+
+          app 'A' do
+            chef.reset_modules
+          end
+
+          app 'B'
+        end
+
+        chef.reset_modules
+
+        app 'Z'
+      )
+
+      expect(apps_by_name['dapp-X'].chef._modules).to eq %w()
+      expect(apps_by_name['dapp-Y-A'].chef._modules).to eq %w()
+      expect(apps_by_name['dapp-Y-B'].chef._modules).to eq %w(a b c d)
+      expect(apps_by_name['dapp-Z'].chef._modules).to eq %w()
     end
 
     it 'recipe' do
@@ -170,37 +218,6 @@ describe Dapp::Config::Main do
       expect(apps_by_name['dapp-Y-A'].chef._recipes).to eq %w()
       expect(apps_by_name['dapp-Y-B'].chef._recipes).to eq %w(a b c d)
       expect(apps_by_name['dapp-Z'].chef._recipes).to eq %w()
-    end
-
-    it 'reset_modules' do
-      @dappfile = %(
-        builder :chef
-
-        chef.module 'a', 'b', 'c'
-
-        app 'X' do
-          chef.reset_modules
-        end
-
-        app 'Y' do
-          chef.module 'd'
-
-          app 'A' do
-            chef.reset_modules
-          end
-
-          app 'B'
-        end
-
-        chef.reset_modules
-
-        app 'Z'
-      )
-
-      expect(apps_by_name['dapp-X'].chef._modules).to eq %w()
-      expect(apps_by_name['dapp-Y-A'].chef._modules).to eq %w()
-      expect(apps_by_name['dapp-Y-B'].chef._modules).to eq %w(a b c d)
-      expect(apps_by_name['dapp-Z'].chef._modules).to eq %w()
     end
 
     it 'reset_all' do

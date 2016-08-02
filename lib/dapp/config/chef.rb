@@ -3,12 +3,10 @@ module Dapp
     # Chef
     class Chef
       attr_reader :_modules
-      attr_reader :_skip_modules
       attr_reader :_recipes
 
       def initialize
         @_modules = []
-        @_skip_modules = []
         @_recipes = []
       end
 
@@ -21,7 +19,7 @@ module Dapp
       end
 
       def skip_module(*args)
-        @_skip_modules.concat(args)
+        @_modules.reject! { |mod| args.include? mod }
       end
 
       def recipe(*args)
