@@ -6,9 +6,10 @@ en:
       commands: "commands:"
     process:
       git_artifact_loading: 'loading git_artifact'
+      git_artifact_fetch: "fetching remote git_artifact '%{name}'"
+      artifact_copy: "copying artifact '%{name}'"
       chefdk_loading: 'loading chefdk'
       berks_vendor: 'berks_vendor'
-      git_artifact_fetch: "fetching remote git_artifact '%{name}'"
     status:
       process:
         pushing: '[PUSHING]'

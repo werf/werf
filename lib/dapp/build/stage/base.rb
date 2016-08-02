@@ -140,23 +140,25 @@ module Dapp
           (before_artifacts + after_artifacts).map { |artifact| hashsum [artifact[:app].signature, artifact[:options]] }
         end
 
+        # rubocop:disable Metrics/LineLength
         def apply_artifact(artifact, image)
+          return if application.dry_run?
           cwd = artifact[:options][:cwd]
           paths = artifact[:options][:paths] || []
           owner = artifact[:options][:owner]
           group = artifact[:options][:group]
           where_to_add = artifact[:options][:where_to_add]
 
-          docker_options = ['--rm',
-                            "--volume #{application.tmp_path('artifact', artifact[:name])}:#{artifact[:app].container_tmp_path(artifact[:name])}"]
-          commands = application.shellout_pack(safe_cp(where_to_add,
-                                                       artifact[:app].container_tmp_path(artifact[:name]), Process.uid, Process.gid))
-          artifact[:app].run(docker_options, Array(commands))
+          docker_options = ['--rm', "--volume #{application.tmp_path('artifact', artifact[:name])}:#{artifact[:app].container_tmp_path(artifact[:name])}"]
+          commands = application.shellout_pack(safe_cp(where_to_add, artifact[:app].container_tmp_path(artifact[:name]), Process.uid, Process.gid))
+          application.log_secondary_process(application.t(code: 'process.artifact_copy', data: { name: artifact[:name] }), short: true) do
+            artifact[:app].run(docker_options, Array(commands))
+          end
 
-          commands = application.shellout_pack(safe_cp(application.container_tmp_path('artifact', artifact[:name]),
-                                                       where_to_add, owner, group, cwd, paths))
+          commands = application.shellout_pack(safe_cp(application.container_tmp_path('artifact', artifact[:name]), where_to_add, owner, group, cwd, paths))
           image.add_commands commands
         end
+        # rubocop:enable Metrics/LineLength
 
         # rubocop:disable Metrics/ParameterLists
         def safe_cp(from, to, owner, group, cwd = '', paths = [])
