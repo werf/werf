@@ -10,8 +10,7 @@ module Dapp
 
       STAGE_LOCAL_COOKBOOK_PATTERNS = %w(
         metadata.json
-        recipes/%{stage}.rb
-        recipes/*_%{stage}.rb
+        recipes/%{recipe}_%{stage}.rb
         files/default/%{stage}/*
         templates/default/%{stage}/*
       ).freeze
@@ -84,20 +83,17 @@ module Dapp
       def stage_cookbooks_runlist(stage)
         @stage_cookbooks_runlist ||= {}
         @stage_cookbooks_runlist[stage] ||= [].tap do |res|
-          to_runlist_entrypoint = proc do |name, entrypoint|
-            entrypoint_file = stage_cookbooks_path(stage, name, 'recipes', "#{entrypoint}.rb")
+          to_runlist_entrypoint = proc do |mod, entrypoint|
+            entrypoint_file = stage_cookbooks_path(stage, mod, 'recipes', "#{entrypoint}.rb")
             next unless entrypoint_file.exist?
-            "#{name}::#{entrypoint}"
+            "#{mod}::#{entrypoint}"
           end
 
-          res.concat(application.config._chef._modules.map { |name| to_runlist_entrypoint[name, stage] }.compact)
-
-          project_main_entry = to_runlist_entrypoint[project_name, stage]
-          res << project_main_entry if project_main_entry
-
-          res.concat(application.config._app_runlist.map do |app_component|
-            to_runlist_entrypoint[project_name, [app_component, stage].join('_')]
-          end.compact)
+          res.concat application.config._chef._recipes.map do |recipe|
+            application.config._chef._modules.map do |mod|
+              to_runlist_entrypoint[mod, [recipe, stage].join('_')]
+            end
+          end.flatten
         end
       end
       # rubocop:enable Metrics/AbcSize
@@ -115,9 +111,20 @@ module Dapp
       def stage_cookbooks_vendored_paths(stage, with_files: false)
         Dir[cookbooks_vendor_path.join('*')]
           .map do |cookbook_path|
-            if ['mdapp-*', project_name].any? { |pattern| File.fnmatch(pattern, File.basename(cookbook_path)) }
+            cookbook_name = File.basename cookbook_path
+            is_project = (cookbook_name == project_name)
+            is_mdapp = cookbook_name.start_with? 'mdapp-'
+            mdapp_enabled = is_mdapp && application.config
+                                                   ._chef
+                                                   ._modules
+                                                   .include?(cookbook_name.split('mdapp-')[1])
+
+            if is_project or is_mdapp
+              next unless mdapp_enabled
               STAGE_LOCAL_COOKBOOK_PATTERNS.map do |pattern|
-                Dir[File.join(cookbook_path, pattern % { stage: stage })]
+                application.config._chef._recipes.map do |recipe|
+                  Dir[File.join(cookbook_path, pattern % { stage: stage, recipe: recipe })]
+                end
               end
             elsif with_files
               Dir[File.join(cookbook_path, '**/*')]
@@ -125,6 +132,7 @@ module Dapp
               cookbook_path
             end
           end
+          .compact
           .flatten
           .map(&Pathname.method(:new))
       end
