@@ -11,6 +11,13 @@ module Dapp
           image.add_commands(*application.config._shell.public_send("_#{m}"))
         end
       end
+
+      def chef_cookbooks_checksum
+        []
+      end
+
+      def chef_cookbooks(_image)
+      end
     end
   end
 end

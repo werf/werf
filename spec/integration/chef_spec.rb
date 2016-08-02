@@ -4,6 +4,8 @@ describe Dapp::Builder::Chef do
   include SpecHelper::Common
   include SpecHelper::Application
 
+  CACHE_VERSION = SecureRandom.uuid
+
   before :all do
     init_project
   end
@@ -27,11 +29,11 @@ describe Dapp::Builder::Chef do
 
           new_file_values = {}
           new_file_values[file1] = SecureRandom.uuid
-          testproject_path.join("files/#{stage}/#{file1}.txt").tap do |path|
+          testproject_path.join("files/default/#{stage}/#{file1}.txt").tap do |path|
             path.write "#{new_file_values[file1]}\n"
           end
           new_file_values[file2] = SecureRandom.uuid
-          mdapp_test_path.join("files/#{stage}/#{file2}.txt").tap do |path|
+          mdapp_test_path.join("files/default/#{stage}/#{file2}.txt").tap do |path|
             path.write "#{new_file_values[file2]}\n"
           end
 
@@ -50,25 +52,32 @@ describe Dapp::Builder::Chef do
           _builder: :chef,
           _home_path: testproject_path.to_s,
           _chef: { _modules: %w(mdapp-test mdapp-test2) }
-        ).tap { |config| config[:_docker][:_from] = os.to_sym }
+        ).tap { |config|
+          config[:_docker][:_from] = os.to_sym
+          config[:_docker][:_from_cache_version] = CACHE_VERSION
+        }
       end
     end # context
   end # each
 
   def openstruct_config
     RecursiveOpenStruct.new(config).tap do |obj|
-      def obj._app_runlist
+      def obj._app_chain
         [self]
       end
 
+      def obj._app_runlist
+        []
+      end
+
       def obj._root_app
-        _app_runlist.first
+        _app_chain.first
       end
     end
   end
 
   def project_path
-    @project_path ||= Pathname("/tmp/dapp-test-#{SecureRandom.uuid}")
+    @project_path ||= Pathname("/tmp/dapp-test-#{CACHE_VERSION}")
   end
 
   def testproject_path

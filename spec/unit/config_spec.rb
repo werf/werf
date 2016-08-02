@@ -101,6 +101,14 @@ describe Dapp::Config::Main do
     expect(app.docker._user).to eq 'root:root'
   end
 
+  it '#docker entrypoint' do
+    @dappfile = %(
+      docker.entrypoint ['cmd', 'arg1', 'arg2']
+      docker.entrypoint 'cmd2', 'arg1', 'arg2'
+    )
+    expect(app.docker._entrypoint).to eq ['cmd2', 'arg1', 'arg2']
+  end
+
   it '#chef module' do
     expect_special_attribute(:chef, :module, :_modules)
   end

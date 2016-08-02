@@ -30,7 +30,11 @@ module Dapp
         shellout(*args, **kwargs).tap(&:error!)
       rescue ::Mixlib::ShellOut::ShellCommandFailed => e
         raise Error::Shellout, code: Trivia.class_to_lowercase(e.class),
-                               data: { stream: stream.inspect }
+                               data: { stream: stream.show }
+      end
+
+      def shellout_pack(command)
+        "bash -ec 'eval $(echo #{Base64.strict_encode64(command)} | base64 --decode)'"
       end
 
       def self.included(base)
