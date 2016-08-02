@@ -103,11 +103,17 @@ describe Dapp::Config::Main do
       )
       expect(app.docker._user).to eq 'root:root'
     end
-  end
 
-  context 'chef' do
     it 'module' do
       expect_special_attribute(:chef, :module, :_modules)
+    end
+
+    it 'skip_module' do
+      expect_special_attribute(:chef, :skip_module, :_skip_modules)
+    end
+
+    it 'reset_module' do
+      expect_special_attribute(:chef, :reset_module, :_reset_modules)
     end
   end
 
