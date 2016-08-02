@@ -150,12 +150,12 @@ module Dapp
           where_to_add = artifact[:options][:where_to_add]
 
           docker_options = ['--rm', "--volume #{application.tmp_path('artifact', artifact[:name])}:#{artifact[:app].container_tmp_path(artifact[:name])}"]
-          commands = application.shellout_pack(safe_cp(where_to_add, artifact[:app].container_tmp_path(artifact[:name]), Process.uid, Process.gid))
+          commands = application.shellout_pack(safe_cp(where_to_add, artifact[:app].container_tmp_path(artifact[:name]), Process.uid, Process.gid, cwd, paths))
           application.log_secondary_process(application.t(code: 'process.artifact_copy', data: { name: artifact[:name] }), short: true) do
             artifact[:app].run(docker_options, Array(commands))
           end
 
-          commands = application.shellout_pack(safe_cp(application.container_tmp_path('artifact', artifact[:name]), where_to_add, owner, group, cwd, paths))
+          commands = application.shellout_pack(safe_cp(application.container_tmp_path('artifact', artifact[:name]), where_to_add, owner, group))
           image.add_commands commands
         end
         # rubocop:enable Metrics/LineLength
