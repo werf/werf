@@ -164,14 +164,13 @@ module Dapp
           credentials += "-o #{owner} " if owner
           credentials += "-g #{group} " if group
 
-          commands = []
-          commands << ['install', credentials, '-d', to].join(' ')
-
           copy_files = lambda do |from_, cwd_, path_ = ''|
             "find #{File.join(from_, cwd_, path_)} -type f -exec bash -ec 'install -D #{credentials} {} " \
             "#{File.join(to, "$(echo {} | sed -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
           end
 
+          commands = []
+          commands << ['install', credentials, '-d', to].join(' ')
           commands.concat(paths.empty? ? Array(copy_files.call(from, cwd)) : paths.map { |path| copy_files.call(from, cwd, path) })
           commands << "find #{to} -type d -exec bash -ec 'install -d #{credentials} {}' \\;"
           commands.join(' && ')
