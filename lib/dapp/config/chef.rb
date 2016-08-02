@@ -4,24 +4,41 @@ module Dapp
     class Chef
       attr_reader :_modules
       attr_reader :_skip_modules
-      attr_reader :_reset_modules
+      attr_reader :_recipes
 
       def initialize
         @_modules = []
         @_skip_modules = []
-        @_reset_modules = []
+        @_recipes = []
       end
 
       def module(*args)
         @_modules.concat(args)
       end
 
+      def reset_modules
+        @_modules.clear
+      end
+
       def skip_module(*args)
         @_skip_modules.concat(args)
       end
 
-      def reset_module(*args)
-        @_reset_modules.concat(args)
+      def recipe(*args)
+        @_recipes.concat(args)
+      end
+
+      def remove_recipe(*args)
+        @_recipes.reject! { |recipe| args.include? recipe }
+      end
+
+      def reset_recipes
+        @_recipes.clear
+      end
+
+      def reset_all
+        reset_modules
+        reset_recipes
       end
 
       def clone

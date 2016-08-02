@@ -17,6 +17,10 @@ describe Dapp::Config::Main do
     apps.first
   end
 
+  def apps_by_name
+    apps.map { |app| [app._name, app] }.to_h
+  end
+
   def expect_special_attribute(obj, attribute, config_attribute = "_#{attribute}")
     builder = "builder #{obj == :chef ? ':chef' : ':shell'}"
     attribute_setter = "#{obj}.#{attribute}"
@@ -112,8 +116,136 @@ describe Dapp::Config::Main do
       expect_special_attribute(:chef, :skip_module, :_skip_modules)
     end
 
-    it 'reset_module' do
-      expect_special_attribute(:chef, :reset_module, :_reset_modules)
+    it 'recipe' do
+      expect_special_attribute(:chef, :recipe, :_recipes)
+    end
+
+    it 'remove_recipe' do
+      @dappfile = %(
+        builder :chef
+
+        chef.recipe 'a', 'b', 'c', 'd'
+        chef.remove_recipe 'a', 'c'
+
+        app 'X' do
+          chef.recipe 'e', 'f'
+        end
+
+        app 'Y' do
+          chef.recipe 'g'
+          chef.remove_recipe 'b'
+        end
+      )
+
+      expect(apps_by_name['dapp-X'].chef._recipes).to eq %w(b d e f)
+      expect(apps_by_name['dapp-Y'].chef._recipes).to eq %w(d g)
+    end
+
+    it 'reset_recipes' do
+      @dappfile = %(
+        builder :chef
+
+        chef.recipe 'a', 'b', 'c'
+
+        app 'X' do
+          chef.reset_recipes
+        end
+
+        app 'Y' do
+          chef.recipe 'd'
+
+          app 'A' do
+            chef.reset_recipes
+          end
+
+          app 'B'
+        end
+
+        chef.reset_recipes
+
+        app 'Z'
+      )
+
+      expect(apps_by_name['dapp-X'].chef._recipes).to eq %w()
+      expect(apps_by_name['dapp-Y-A'].chef._recipes).to eq %w()
+      expect(apps_by_name['dapp-Y-B'].chef._recipes).to eq %w(a b c d)
+      expect(apps_by_name['dapp-Z'].chef._recipes).to eq %w()
+    end
+
+    it 'reset_modules' do
+      @dappfile = %(
+        builder :chef
+
+        chef.module 'a', 'b', 'c'
+
+        app 'X' do
+          chef.reset_modules
+        end
+
+        app 'Y' do
+          chef.module 'd'
+
+          app 'A' do
+            chef.reset_modules
+          end
+
+          app 'B'
+        end
+
+        chef.reset_modules
+
+        app 'Z'
+      )
+
+      expect(apps_by_name['dapp-X'].chef._modules).to eq %w()
+      expect(apps_by_name['dapp-Y-A'].chef._modules).to eq %w()
+      expect(apps_by_name['dapp-Y-B'].chef._modules).to eq %w(a b c d)
+      expect(apps_by_name['dapp-Z'].chef._modules).to eq %w()
+    end
+
+    it 'reset_all' do
+      @dappfile = %(
+        builder :chef
+
+        chef.module 'ma', 'mb', 'mc'
+        chef.recipe 'ra', 'rb', 'rc'
+
+        app 'X' do
+          chef.module 'md'
+          chef.recipe 'rd'
+
+          app 'A'
+
+          app 'B' do
+            chef.reset_all
+          end
+
+          chef.reset_all
+
+          app 'C'
+        end
+
+        app 'Y'
+
+        chef.reset_all
+
+        app 'Z'
+      )
+
+      expect(apps_by_name['dapp-X-A'].chef._modules).to eq %w(ma mb mc md)
+      expect(apps_by_name['dapp-X-A'].chef._recipes).to eq %w(ra rb rc rd)
+
+      expect(apps_by_name['dapp-X-B'].chef._modules).to eq %w()
+      expect(apps_by_name['dapp-X-B'].chef._recipes).to eq %w()
+
+      expect(apps_by_name['dapp-X-C'].chef._modules).to eq %w()
+      expect(apps_by_name['dapp-X-C'].chef._recipes).to eq %w()
+
+      expect(apps_by_name['dapp-Y'].chef._modules).to eq %w(ma mb mc)
+      expect(apps_by_name['dapp-Y'].chef._recipes).to eq %w(ra rb rc)
+
+      expect(apps_by_name['dapp-Z'].chef._modules).to eq %w()
+      expect(apps_by_name['dapp-Z'].chef._recipes).to eq %w()
     end
   end
 
