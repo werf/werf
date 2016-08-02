@@ -150,26 +150,38 @@ describe Dapp::Config::Main do
     end
   end
 
-  context 'git_artifact' do
-    local_attributes = [:cwd, :paths, :owner, :group]
-    remote_attributes = local_attributes + [:branch, :ssh_key_path]
-    dappfile_local_options = local_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')
-    dappfile_remote_options = remote_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')
-    dappfile_ga_local = "git_artifact.local 'where_to_add', #{dappfile_local_options}"
-    dappfile_ga_remote = "git_artifact.remote 'url', 'where_to_add', #{dappfile_remote_options}"
+  artifact_attributes = [:cwd, :paths, :owner, :group]
 
-    it 'local' do
-      @dappfile = dappfile_ga_local
-      local_attributes.delete(:paths)
-      expect(app.git_artifact.local.first._paths).to eq ['paths']
-      local_attributes.each { |attr| expect(app.git_artifact.local.first.public_send("_#{attr}")).to eq attr.to_s }
+  context 'artifact' do
+    it 'base' do
+      @dappfile = "artifact 'where_to_add', #{artifact_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')}, before: 'source_1'"
+      artifact_attributes.delete(:paths)
+      expect(app._artifact.first._paths).to eq ['paths']
+      artifact_attributes.each { |attr| expect(app._artifact.first.public_send("_#{attr}")).to eq attr.to_s }
     end
 
+    it 'missing one of the following options: before, after (:stage_artifact_not_associated)' do
+      @dappfile = "artifact 'where_to_add'"
+      expect_exception_code(code: :stage_artifact_not_associated) { apps }
+    end
+
+    it 'option before, after with incorrect value (:stage_artifact_incorrect_associated_value)' do
+      @dappfile = "artifact 'where_to_add', before: 'incorrect_stage_name'"
+      expect_exception_code(code: :stage_artifact_incorrect_associated_value) { apps }
+      @dappfile = "artifact 'where_to_add', after: 'incorrect_stage_name'"
+      expect_exception_code(code: :stage_artifact_incorrect_associated_value) { apps }
+    end
+  end
+
+  context 'git_artifact' do
+    remote_attributes = artifact_attributes + [:branch, :ssh_key_path]
+    dappfile_remote_options = remote_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')
+
     it 'remote' do
-      @dappfile = dappfile_ga_remote
+      @dappfile = "git_artifact.remote 'url', 'where_to_add', #{dappfile_remote_options}"
       remote_attributes.delete(:paths)
       expect(app.git_artifact.remote.first._paths).to eq ['paths']
-      local_attributes.each { |attr| expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq attr.to_s }
+      artifact_attributes.each { |attr| expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq attr.to_s }
     end
 
     it 'local with remote options' do

@@ -47,21 +47,38 @@ module Dapp
 
       # Stage
       class Stage < Base
+        STAGES = [:from, :infra_install, :source_1_archive, :source_1, :app_install, :source_2,
+                  :infra_setup, :source_3, :chef_cookbooks, :app_setup, :source_4, :source_5].freeze
+
         attr_accessor :_config
         attr_accessor :_before, :_after
 
+        def initialize(*args)
+          super
+          raise Error::Config, code: :stage_artifact_not_associated if _before.nil? && _after.nil?
+        end
+
         def _before=(stage)
           @_before = stage.to_sym
+          validate_associated_option(option: :before, value: @_before)
         end
 
         def _after=(stage)
           @_after = stage.to_sym
+          validate_associated_option(option: :after, value: @_after)
         end
 
         protected
 
         def code
           :artifact_unexpected_attribute
+        end
+
+        private
+
+        def validate_associated_option(option:, value:)
+          return if STAGES.include? value
+          raise Error::Config, code: :stage_artifact_incorrect_associated_value, data: { option: option, value: value }
         end
       end
     end

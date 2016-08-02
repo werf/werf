@@ -2,7 +2,6 @@ require_relative '../spec_helper'
 
 describe Dapp::CLI do
   include SpecHelper::Common
-  include SpecHelper::Stream
 
   def cli(*args)
     Dapp::CLI.new.run(args)
@@ -19,17 +18,6 @@ describe Dapp::CLI do
 
   it 'version' do
     expect { cli('--version') }.to output("dapp: #{Dapp::VERSION}\n").to_stdout_from_any_process
-  end
-
-  xit 'colorize', :stub do
-    out1 = capture_stdout { cli('build', '--color', 'on') }
-    out2 = capture_stdout { cli('build', '--color', 'off') }
-    expect(out1).to_not eq out2
-  end
-
-  xit 'log time', :stub do
-    expect { cli('build') }.to_not output(/^[[:digit:]]{4}.[[:digit:]]{2}.[[:digit:]]{2}/).to_stdout_from_any_process
-    expect { cli('build', '--time') }.to output(/^[[:digit:]]{4}.[[:digit:]]{2}.[[:digit:]]{2}/).to_stdout_from_any_process
   end
 
   context 'run' do
