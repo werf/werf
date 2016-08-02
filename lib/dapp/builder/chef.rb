@@ -42,9 +42,11 @@ module Dapp
       end
 
       def chef_cookbooks(image)
+        image.add_volume "#{cookbooks_vendor_path}:#{application.container_dapp_path('chef_vendored_cookbooks')}"
         image.add_commands(
           'mkdir -p /usr/share/dapp/chef_repo',
-          "cp -a #{container_cookbooks_vendor_path} /usr/share/dapp/chef_repo/cookbooks"
+          ["cp -a #{application.container_dapp_path('chef_vendored_cookbooks')} ",
+           "/usr/share/dapp/chef_repo/cookbooks"].join
         )
       end
 
@@ -111,7 +113,7 @@ module Dapp
       end
 
       def stage_cookbooks_vendored_paths(stage, with_files: false)
-        Dir[cookbooks_vendor_path('*')]
+        Dir[cookbooks_vendor_path.join('*')]
           .map do |cookbook_path|
             if ['mdapp-*', project_name].any? { |pattern| File.fnmatch(pattern, File.basename(cookbook_path)) }
               STAGE_LOCAL_COOKBOOK_PATTERNS.map do |pattern|
@@ -135,8 +137,6 @@ module Dapp
         if stage_cookbooks_checksum_path(stage).exist?
           stage_cookbooks_checksum_path(stage).read.strip
         else
-          install_cookbooks
-
           checksum = if stage == :chef_cookbooks
                        cookbooks_checksum
                      else
@@ -185,45 +185,43 @@ module Dapp
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_cookbooks
-        @install_cookbooks ||= begin
-          volumes_from = chefdk_container
-          application.log_secondary_process(application.t(code: 'process.berks_vendor')) do
-            ssh_auth_socket_path = nil
-            ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
+        volumes_from = chefdk_container
+        application.log_secondary_process(application.t(code: 'process.berks_vendor')) do
+          ssh_auth_socket_path = nil
+          ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
 
-            vendor_commands = [
-              'mkdir -p ~/.ssh',
-              'echo "Host *" >> ~/.ssh/config',
-              'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
-              'if [ ! -f Berksfile.lock ] ; then echo "Berksfile.lock not found" 1>&2 ; exit 1 ; fi',
-              'cp -a Berksfile.lock /tmp/Berksfile.lock.orig',
-              '/.dapp/deps/chefdk/bin/berks vendor /tmp/vendored_cookbooks',
-              'export LOCKDIFF=$(diff -u0 Berksfile.lock /tmp/Berksfile.lock.orig)',
-              ['if [ "$LOCKDIFF" != "" ] ; then ',
-               'cp -a /tmp/Berksfile.lock.orig Berksfile.lock ; ',
-               'echo -e "Bad Berksfile.lock\n$LOCKDIFF" 1>&2 ; exit 1 ; fi'].join,
-              ["find /tmp/vendored_cookbooks -type f -exec bash -ec '",
-               "install -D -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
-               "#{cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks\\///g\")' \\;"].join,
-              "chown -R #{Process.uid}:#{Process.gid} #{berksfile_lock_path}"
-            ]
+          vendor_commands = [
+            'mkdir -p ~/.ssh',
+            'echo "Host *" >> ~/.ssh/config',
+            'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
+            'if [ ! -f Berksfile.lock ] ; then echo "Berksfile.lock not found" 1>&2 ; exit 1 ; fi',
+            'cp -a Berksfile.lock /tmp/Berksfile.lock.orig',
+            '/.dapp/deps/chefdk/bin/berks vendor /tmp/vendored_cookbooks',
+            'export LOCKDIFF=$(diff -u0 Berksfile.lock /tmp/Berksfile.lock.orig)',
+            ['if [ "$LOCKDIFF" != "" ] ; then ',
+             'cp -a /tmp/Berksfile.lock.orig Berksfile.lock ; ',
+             'echo -e "Bad Berksfile.lock\n$LOCKDIFF" 1>&2 ; exit 1 ; fi'].join,
+            ["find /tmp/vendored_cookbooks -type f -exec bash -ec '",
+             "install -D -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
+             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks\\///g\")' \\;"].join,
+            "chown -R #{Process.uid}:#{Process.gid} #{berksfile_lock_path}"
+          ]
 
-            application.shellout!(
-              ['docker run --rm',
-               ("--volume #{ssh_auth_socket_path}:#{ssh_auth_socket_path}" if ssh_auth_socket_path),
-               "--volume #{cookbooks_vendor_path.tap(&:mkpath)}:#{cookbooks_vendor_path}",
-               *berksfile.local_cookbooks
-                         .values
-                         .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-               "--volumes-from #{volumes_from}",
-               "--workdir #{berksfile_path.parent}",
-               ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
-               "dappdeps/berksdeps:0.1.0 #{application.shellout_pack(vendor_commands.join(' && '))}"].compact.join(' '),
-              log_verbose: application.log_verbose?
-            )
+          application.shellout!(
+            ['docker run --rm',
+             ("--volume #{ssh_auth_socket_path}:#{ssh_auth_socket_path}" if ssh_auth_socket_path),
+             "--volume #{_cookbooks_vendor_path.tap(&:mkpath)}:#{_cookbooks_vendor_path}",
+             *berksfile.local_cookbooks
+                       .values
+                       .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
+             "--volumes-from #{volumes_from}",
+             "--workdir #{berksfile_path.parent}",
+             ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
+             "dappdeps/berksdeps:0.1.0 #{application.shellout_pack(vendor_commands.join(' && '))}"].compact.join(' '),
+            log_verbose: application.log_verbose?
+          )
 
-            true
-          end
+          true
         end
       end
       # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
@@ -248,12 +246,14 @@ module Dapp
         ].join
       end
 
-      def cookbooks_vendor_path(*path)
-        application.tmp_path('chef', 'vendored_cookbooks').join(*path)
+      def _cookbooks_vendor_path
+        application.metadata_path("cookbooks.#{cookbooks_checksum}")
       end
 
-      def container_cookbooks_vendor_path(*path)
-        application.container_tmp_path('chef', 'vendored_cookbooks').join(*path)
+      def cookbooks_vendor_path(*path)
+        _cookbooks_vendor_path.tap do |cookbooks_path|
+          install_cookbooks unless cookbooks_path.exist?
+        end.join(*path)
       end
 
       def stage_tmp_path(stage, *path)
