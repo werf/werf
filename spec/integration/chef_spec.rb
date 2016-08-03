@@ -26,7 +26,7 @@ describe Dapp::Builder::Chef do
           old_template_file_values = {}
           old_template_file_values[project_file] = send(project_file)
           old_template_file_values[mdapp_test_file] = send(mdapp_test_file)
-          old_template_file_values[mdapp_test3_file] = send(mdapp_test2_file)
+          old_template_file_values[mdapp_test2_file] = send(mdapp_test2_file)
 
           new_file_values = {}
 
