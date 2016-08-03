@@ -10,8 +10,7 @@ module Dapp
 
       STAGE_LOCAL_COOKBOOK_PATTERNS = %w(
         metadata.json
-        recipes/%{stage}.rb
-        recipes/*_%{stage}.rb
+        recipes/%{recipe}_%{stage}.rb
         files/default/%{stage}/*
         templates/default/%{stage}/*
       ).freeze
@@ -46,7 +45,7 @@ module Dapp
         image.add_commands(
           'mkdir -p /usr/share/dapp/chef_repo',
           ["cp -a #{application.container_dapp_path('chef_vendored_cookbooks')} ",
-           "/usr/share/dapp/chef_repo/cookbooks"].join
+           '/usr/share/dapp/chef_repo/cookbooks'].join
         )
       end
 
@@ -84,20 +83,22 @@ module Dapp
       def stage_cookbooks_runlist(stage)
         @stage_cookbooks_runlist ||= {}
         @stage_cookbooks_runlist[stage] ||= [].tap do |res|
-          to_runlist_entrypoint = proc do |name, entrypoint|
-            entrypoint_file = stage_cookbooks_path(stage, name, 'recipes', "#{entrypoint}.rb")
+          to_runlist_entrypoint = proc do |cookbook, recipe|
+            entrypoint = [recipe, stage].join('_')
+            entrypoint_file = stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb")
             next unless entrypoint_file.exist?
-            "#{name}::#{entrypoint}"
+            "#{cookbook}::#{entrypoint}"
           end
 
-          res.concat(application.config._chef._modules.map { |name| to_runlist_entrypoint[name, stage] }.compact)
+          res.concat(application.config._chef._recipes.map do |recipe|
+            application.config._chef._modules.map do |mod|
+              to_runlist_entrypoint[mod, recipe]
+            end
+          end.flatten.compact)
 
-          project_main_entry = to_runlist_entrypoint[project_name, stage]
-          res << project_main_entry if project_main_entry
-
-          res.concat(application.config._app_runlist.map do |app_component|
-            to_runlist_entrypoint[project_name, [app_component, stage].join('_')]
-          end.compact)
+          res.concat(application.config._chef._recipes.map do |recipe|
+            to_runlist_entrypoint[project_name, recipe]
+          end.flatten.compact)
         end
       end
       # rubocop:enable Metrics/AbcSize
@@ -115,9 +116,17 @@ module Dapp
       def stage_cookbooks_vendored_paths(stage, with_files: false)
         Dir[cookbooks_vendor_path.join('*')]
           .map do |cookbook_path|
-            if ['mdapp-*', project_name].any? { |pattern| File.fnmatch(pattern, File.basename(cookbook_path)) }
+            cookbook_name = File.basename cookbook_path
+            is_project = (cookbook_name == project_name)
+            is_mdapp = cookbook_name.start_with? 'mdapp-'
+            mdapp_enabled = is_mdapp && application.config._chef._modules.include?(cookbook_name)
+
+            if is_project || is_mdapp
+              next if is_mdapp && !mdapp_enabled
               STAGE_LOCAL_COOKBOOK_PATTERNS.map do |pattern|
-                Dir[File.join(cookbook_path, pattern % { stage: stage })]
+                application.config._chef._recipes.map do |recipe|
+                  Dir[File.join(cookbook_path, pattern % { stage: stage, recipe: recipe })]
+                end
               end
             elsif with_files
               Dir[File.join(cookbook_path, '**/*')]
@@ -125,6 +134,7 @@ module Dapp
               cookbook_path
             end
           end
+          .compact
           .flatten
           .map(&Pathname.method(:new))
       end
@@ -203,8 +213,7 @@ module Dapp
              'echo -e "Bad Berksfile.lock\n$LOCKDIFF" 1>&2 ; exit 1 ; fi'].join,
             ["find /tmp/vendored_cookbooks -type f -exec bash -ec '",
              "install -D -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
-             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks\\///g\")' \\;"].join,
-            "chown -R #{Process.uid}:#{Process.gid} #{berksfile_lock_path}"
+             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks\\///g\")' \\;"].join
           ]
 
           application.shellout!(
@@ -217,7 +226,7 @@ module Dapp
              "--volumes-from #{volumes_from}",
              "--workdir #{berksfile_path.parent}",
              ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
-             "dappdeps/berksdeps:0.1.0 #{application.shellout_pack(vendor_commands.join(' && '))}"].compact.join(' '),
+             "dappdeps/berksdeps:0.1.0 bash #{application.shellout_pack(vendor_commands.join(' && '))}"].compact.join(' '),
             log_verbose: application.log_verbose?
           )
 
