@@ -45,7 +45,7 @@ module Dapp
         image.add_commands(
           'mkdir -p /usr/share/dapp/chef_repo',
           ["cp -a #{application.container_dapp_path('chef_vendored_cookbooks')} ",
-           "/usr/share/dapp/chef_repo/cookbooks"].join
+           '/usr/share/dapp/chef_repo/cookbooks'].join
         )
       end
 
@@ -121,8 +121,8 @@ module Dapp
             is_mdapp = cookbook_name.start_with? 'mdapp-'
             mdapp_enabled = is_mdapp && application.config._chef._modules.include?(cookbook_name)
 
-            if is_project or is_mdapp
-              next if is_mdapp and not mdapp_enabled
+            if is_project || is_mdapp
+              next if is_mdapp && !mdapp_enabled
               STAGE_LOCAL_COOKBOOK_PATTERNS.map do |pattern|
                 application.config._chef._recipes.map do |recipe|
                   Dir[File.join(cookbook_path, pattern % { stage: stage, recipe: recipe })]

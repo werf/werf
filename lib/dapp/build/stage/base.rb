@@ -145,7 +145,7 @@ module Dapp
           return if application.dry_run?
 
           cwd = artifact[:options][:cwd]
-          paths = artifact[:options][:paths] || []
+          paths = artifact[:options][:paths]
           owner = artifact[:options][:owner]
           group = artifact[:options][:group]
           where_to_add = artifact[:options][:where_to_add]
