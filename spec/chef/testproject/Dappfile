@@ -1,13 +1,13 @@
 builder :chef
 
-docker.from 'ubuntu:14.04'
-
 git_artifact.local '/myapp'
 
 chef.module 'mdapp-test'
 chef.recipe 'main'
 
 app 'X' do
+  docker.from 'ubuntu:14.04'
+
   chef.recipe 'X'
 
   app 'Y' do
@@ -16,6 +16,8 @@ app 'X' do
 end
 
 app 'Z' do
+  docker.from 'centos:7'
+
   chef.module 'mdapp-test2'
   chef.recipe 'Z'
 end
