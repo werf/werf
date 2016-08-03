@@ -89,11 +89,11 @@ module Dapp
             "#{mod}::#{entrypoint}"
           end
 
-          res.concat application.config._chef._recipes.map do |recipe|
+          res.concat(application.config._chef._recipes.map do |recipe|
             application.config._chef._modules.map do |mod|
               to_runlist_entrypoint[mod, [recipe, stage].join('_')]
             end
-          end.flatten
+          end.flatten)
         end
       end
       # rubocop:enable Metrics/AbcSize
@@ -114,13 +114,10 @@ module Dapp
             cookbook_name = File.basename cookbook_path
             is_project = (cookbook_name == project_name)
             is_mdapp = cookbook_name.start_with? 'mdapp-'
-            mdapp_enabled = is_mdapp && application.config
-                                                   ._chef
-                                                   ._modules
-                                                   .include?(cookbook_name.split('mdapp-')[1])
+            mdapp_enabled = is_mdapp && application.config._chef._modules.include?(cookbook_name)
 
             if is_project or is_mdapp
-              next unless mdapp_enabled
+              next if is_mdapp and not mdapp_enabled
               STAGE_LOCAL_COOKBOOK_PATTERNS.map do |pattern|
                 application.config._chef._recipes.map do |recipe|
                   Dir[File.join(cookbook_path, pattern % { stage: stage, recipe: recipe })]

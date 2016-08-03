@@ -2,16 +2,20 @@ builder :chef
 
 docker.from 'ubuntu:14.04'
 
-name 'test'
-
 git_artifact.local '/myapp'
 
 chef.module 'mdapp-test'
+chef.recipe 'main'
 
 app 'X' do
-  app 'Y'
+  chef.recipe 'X'
+
+  app 'Y' do
+    chef.recipe 'X_Y'
+  end
 end
 
 app 'Z' do
   chef.module 'mdapp-test2'
+  chef.recipe 'Z'
 end
