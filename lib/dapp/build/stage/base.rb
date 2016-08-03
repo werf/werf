@@ -141,8 +141,10 @@ module Dapp
           (before_artifacts + after_artifacts).map { |artifact| hashsum [artifact[:app].signature, artifact[:options]] }
         end
 
+        # rubocop:disable Metrics/AbcSize
         def apply_artifact(artifact, image)
           return if application.dry_run?
+
           cwd = artifact[:options][:cwd]
           paths = artifact[:options][:paths]
           owner = artifact[:options][:owner]
@@ -158,6 +160,7 @@ module Dapp
           commands = safe_cp(application.container_tmp_path('artifact', artifact[:name]), where_to_add, owner, group, cwd, paths)
           image.add_commands commands
         end
+        # rubocop:enable Metrics/AbcSize
 
         # rubocop:disable Metrics/ParameterLists
         def safe_cp(from, to, owner, group, cwd = '', paths = [])
