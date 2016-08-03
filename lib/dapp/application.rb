@@ -59,7 +59,7 @@ module Dapp
       if dry_run?
         log_info(cmd)
       else
-        system(cmd)
+        system(cmd) || raise(RuntimeError)
       end
     end
 

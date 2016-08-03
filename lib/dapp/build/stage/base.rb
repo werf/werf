@@ -117,6 +117,7 @@ module Dapp
             end
           end if application.log? && application.log_verbose?
         end
+        # rubocop:enable Metrics/AbcSize
 
         def before_artifacts
           @before_artifacts ||= do_artifacts(application.config._artifact.select { |artifact| artifact._before == name })
@@ -141,6 +142,8 @@ module Dapp
         end
 
         def apply_artifact(artifact, image)
+          return if application.dry_run?
+
           cwd = artifact[:options][:cwd]
           paths = artifact[:options][:paths] || []
           owner = artifact[:options][:owner]
@@ -148,13 +151,12 @@ module Dapp
           where_to_add = artifact[:options][:where_to_add]
 
           docker_options = ['--rm',
-                            "--volume #{application.tmp_path('artifact', artifact[:name])}:#{artifact[:app].container_tmp_path(artifact[:name])}"]
-          commands = application.shellout_pack(safe_cp(where_to_add,
-                                                       artifact[:app].container_tmp_path(artifact[:name]), Process.uid, Process.gid))
-          artifact[:app].run(docker_options, Array(commands))
+                            "--volume #{application.tmp_path('artifact', artifact[:name])}:#{artifact[:app].container_tmp_path(artifact[:name])}",
+                            '--entrypoint /bin/sh']
+          commands = safe_cp(where_to_add, artifact[:app].container_tmp_path(artifact[:name]), Process.uid, Process.gid)
+          artifact[:app].run(docker_options, Array(application.shellout_pack(commands)))
 
-          commands = application.shellout_pack(safe_cp(application.container_tmp_path('artifact', artifact[:name]),
-                                                       where_to_add, owner, group, cwd, paths))
+          commands = safe_cp(application.container_tmp_path('artifact', artifact[:name]), where_to_add, owner, group, cwd, paths)
           image.add_commands commands
         end
 

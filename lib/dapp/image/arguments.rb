@@ -1,7 +1,7 @@
 module Dapp
   module Image
-    # Stage
-    class Stage
+    # Arguments
+    module Arguments
       def add_change_volume(value)
         add_change_option(:volume, value)
       end
@@ -22,6 +22,10 @@ module Dapp
         add_change_option(:cmd, value)
       end
 
+      def add_change_entrypoint(value)
+        add_change_option(:entrypoint, value)
+      end
+
       def add_change_onbuild(value)
         add_change_option(:onbuild, value)
       end
@@ -34,12 +38,20 @@ module Dapp
         add_change_option(:user, value)
       end
 
+      def add_cmd(value)
+        add_option(:cmd, value)
+      end
+
       def add_volume(value)
         add_option(:volume, value)
       end
 
       def add_volumes_from(value)
         add_option(:'volumes-from', value)
+      end
+
+      def add_entrypoint(value)
+        add_option(:entrypoint, value)
       end
 
       def add_commands(*commands)
@@ -63,13 +75,22 @@ module Dapp
         hash[key] = (hash[key].nil? ? value : (Array(hash[key]) << value).flatten)
       end
 
+      def from_options
+        return {} if from.nil?
+        [:entrypoint, :cmd].inject({}) do |options, option|
+          output = shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{from.built_id}").stdout.strip
+          options[option] = (output == 'null') ? [] : JSON.parse(output)
+          options
+        end
+      end
+
       def prepared_options
         prepared_options_default(options) { |k, vals| Array(vals).map { |v| "--#{k}=#{v}" }.join(' ') }
       end
 
       def prepared_change
-        prepared_options_default(change_options) do |k, vals|
-          if k == :cmd
+        prepared_options_default(from_options.merge(change_options)) do |k, vals|
+          if [:cmd, :entrypoint].include? k
             %(-c '#{k.to_s.upcase} #{Array(vals)}')
           else
             Array(vals).map { |v| %(-c "#{k.to_s.upcase} #{v}") }.join(' ')
@@ -86,7 +107,8 @@ module Dapp
       end
 
       def prepared_commands
-        bash_commands.map { |command| command.gsub(/^[\ |;]*|[\ |;]*$/, '') } # strip [' ', ';']
+        return ['true'] if bash_commands.empty?
+        bash_commands
       end
     end
   end # Image

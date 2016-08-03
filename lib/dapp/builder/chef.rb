@@ -226,7 +226,7 @@ module Dapp
              "--volumes-from #{volumes_from}",
              "--workdir #{berksfile_path.parent}",
              ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
-             "dappdeps/berksdeps:0.1.0 #{application.shellout_pack(vendor_commands.join(' && '))}"].compact.join(' '),
+             "dappdeps/berksdeps:0.1.0 bash #{application.shellout_pack(vendor_commands.join(' && '))}"].compact.join(' '),
             log_verbose: application.log_verbose?
           )
 

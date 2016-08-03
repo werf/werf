@@ -50,7 +50,7 @@ BANNER
       rescue Exception::IntrospectImage => e
         $stderr.puts(e.net_status[:message])
         data = e.net_status[:data]
-        system("docker run -ti --rm #{data[:options]} #{data[:built_id]} bash")
+        system("docker run -ti --rm #{data[:options]} #{data[:built_id]} bash") || raise(RuntimeError)
         shellout("docker rmi #{data[:built_id]}") if data[:rmi]
       end
     end
