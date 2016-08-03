@@ -7,7 +7,7 @@ chef.recipe 'main'
 
 app 'X' do
   docker.from 'ubuntu:14.04'
-
+  chef.module 'mdapp-test2'
   chef.recipe 'X'
 
   app 'Y' do
@@ -17,7 +17,5 @@ end
 
 app 'Z' do
   docker.from 'centos:7'
-
-  chef.module 'mdapp-test2'
   chef.recipe 'Z'
 end

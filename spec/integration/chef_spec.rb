@@ -15,35 +15,45 @@ describe Dapp::Builder::Chef do
       it 'builds project' do
         application_build!
         stages.each { |_, stage| expect(stage.image.tagged?).to be(true) }
-        TEST_FILE_NAMES.each { |name| expect(send("#{name}_exist?")).to be(true) }
+        TEST_FILE_NAMES.each { |name| expect(send("#{name}_exist?")).to be(true), "#{send("#{name}_path")} does not exist" }
       end
 
-      [%i(infra_install foo pizza),
-       %i(app_install bar taco),
-       %i(infra_setup baz burger),
-       %i(app_setup qux pelmeni)].each do |stage, file1, file2|
+      [%i(infra_install foo pizza batareika),
+       %i(app_install bar taco koromyslo),
+       %i(infra_setup baz burger kolokolchik),
+       %i(app_setup qux pelmeni taburetka)].each do |stage, project_file, mdapp_test_file, mdapp_test2_file|
         it "rebuilds from stage #{stage}" do
           old_template_file_values = {}
-          old_template_file_values[file1] = send(file1)
-          old_template_file_values[file2] = send(file2)
+          old_template_file_values[project_file] = send(project_file)
+          old_template_file_values[mdapp_test_file] = send(mdapp_test_file)
+          old_template_file_values[mdapp_test3_file] = send(mdapp_test2_file)
 
           new_file_values = {}
-          new_file_values[file1] = SecureRandom.uuid
-          testproject_path.join("files/default/#{stage}/#{file1}.txt").tap do |path|
-            path.write "#{new_file_values[file1]}\n"
+
+          new_file_values[project_file] = SecureRandom.uuid
+          testproject_path.join("files/default/#{stage}/#{project_file}.txt").tap do |path|
+            path.write "#{new_file_values[project_file]}\n"
           end
-          new_file_values[file2] = SecureRandom.uuid
-          mdapp_test_path.join("files/default/#{stage}/#{file2}.txt").tap do |path|
-            path.write "#{new_file_values[file2]}\n"
+
+          new_file_values[mdapp_test_file] = SecureRandom.uuid
+          mdapp_test_path.join("files/default/#{stage}/#{mdapp_test_file}.txt").tap do |path|
+            path.write "#{new_file_values[mdapp_test_file]}\n"
+          end
+
+          new_file_values[mdapp_test2_file] = SecureRandom.uuid
+          mdapp_test2_path.join("files/default/#{stage}/#{mdapp_test2_file}.txt").tap do |path|
+            path.write "#{new_file_values[mdapp_test2_file]}\n"
           end
 
           application_rebuild!
 
-          expect(send(file1, reload: true)).not_to eq(old_template_file_values[file1])
-          expect(send(file2, reload: true)).not_to eq(old_template_file_values[file2])
+          expect(send(project_file, reload: true)).not_to eq(old_template_file_values[project_file])
+          expect(send(mdapp_test_file, reload: true)).not_to eq(old_template_file_values[mdapp_test_file])
+          expect(send(mdapp_test2_file, reload: true)).not_to eq(old_template_file_values[mdapp_test2_file])
 
-          expect(send("test_#{stage}", reload: true)).to eq(new_file_values[file1])
-          expect(send("mdapp_test_#{stage}", reload: true)).to eq(new_file_values[file2])
+          expect(send("test_#{stage}", reload: true)).to eq(new_file_values[project_file])
+          expect(send("mdapp_test_#{stage}", reload: true)).to eq(new_file_values[mdapp_test_file])
+          expect(send("mdapp_test2_#{stage}", reload: true)).to eq(new_file_values[mdapp_test2_file])
         end
       end
 
@@ -51,7 +61,11 @@ describe Dapp::Builder::Chef do
         @config ||= default_config.merge(
           _builder: :chef,
           _home_path: testproject_path.to_s,
-          _chef: { _modules: %w(mdapp-test mdapp-test2) }
+          _name: "#{testproject_path.basename.to_s}-X-Y",
+          _chef: {
+            _modules: %w(mdapp-test mdapp-test2),
+            _recipes: %w(main X X_Y)
+          }
         ).tap do |config|
           config[:_docker][:_from] = os.to_sym
           config[:_docker][:_from_cache_version] = CACHE_VERSION
@@ -113,21 +127,30 @@ describe Dapp::Builder::Chef do
   end
   # rubocop:enable Metrics/AbcSize
 
-  TEST_FILE_NAMES = %i(foo bar baz qux burger pizza taco pelmeni
+  TEST_FILE_NAMES = %i(foo X_foo X_Y_foo bar baz qux
+                       burger pizza taco pelmeni
+                       kolokolchik koromyslo taburetka batareika
                        test_infra_install test_app_install
                        test_infra_setup test_app_setup
                        mdapp_test_infra_install mdapp_test_app_install
-                       mdapp_test_infra_setup mdapp_test_app_setup).freeze
+                       mdapp_test_infra_setup mdapp_test_app_setup
+                       mdapp_test2_infra_install mdapp_test2_app_install
+                       mdapp_test2_infra_setup mdapp_test2_app_setup
+                      ).freeze
 
   TEST_FILE_NAMES.each do |name|
+    define_method("#{name}_path") do
+      "/#{name}.txt"
+    end
+
     define_method(name) do |reload: false|
       (!reload && instance_variable_get("@#{name}")) ||
         instance_variable_set("@#{name}",
-                              shellout!("docker run --rm #{application.send(:last_stage).image.name} cat /#{name}.txt").stdout.strip)
+                              shellout!("docker run --rm #{application.send(:last_stage).image.name} cat #{send("#{name}_path")}").stdout.strip)
     end
 
     define_method("#{name}_exist?") do
-      res = shellout("docker run --rm #{application.send(:last_stage).image.name} ls /#{name}.txt")
+      res = shellout("docker run --rm #{application.send(:last_stage).image.name} ls #{send("#{name}_path")}")
       return true if res.exitstatus.zero?
       return false if res.exitstatus == 2
       res.error!

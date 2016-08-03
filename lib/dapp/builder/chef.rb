@@ -83,17 +83,22 @@ module Dapp
       def stage_cookbooks_runlist(stage)
         @stage_cookbooks_runlist ||= {}
         @stage_cookbooks_runlist[stage] ||= [].tap do |res|
-          to_runlist_entrypoint = proc do |mod, entrypoint|
-            entrypoint_file = stage_cookbooks_path(stage, mod, 'recipes', "#{entrypoint}.rb")
+          to_runlist_entrypoint = proc do |cookbook, recipe|
+            entrypoint = [recipe, stage].join('_')
+            entrypoint_file = stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb")
             next unless entrypoint_file.exist?
-            "#{mod}::#{entrypoint}"
+            "#{cookbook}::#{entrypoint}"
           end
 
           res.concat(application.config._chef._recipes.map do |recipe|
             application.config._chef._modules.map do |mod|
-              to_runlist_entrypoint[mod, [recipe, stage].join('_')]
+              to_runlist_entrypoint[mod, recipe]
             end
-          end.flatten)
+          end.flatten.compact)
+
+          res.concat(application.config._chef._recipes.map do |recipe|
+            to_runlist_entrypoint[project_name, recipe]
+          end.flatten.compact)
         end
       end
       # rubocop:enable Metrics/AbcSize
@@ -208,8 +213,7 @@ module Dapp
              'echo -e "Bad Berksfile.lock\n$LOCKDIFF" 1>&2 ; exit 1 ; fi'].join,
             ["find /tmp/vendored_cookbooks -type f -exec bash -ec '",
              "install -D -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
-             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks\\///g\")' \\;"].join,
-            "chown -R #{Process.uid}:#{Process.gid} #{berksfile_lock_path}"
+             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks\\///g\")' \\;"].join
           ]
 
           application.shellout!(
