@@ -59,7 +59,7 @@ module Dapp
       if dry_run?
         log_info(cmd)
       else
-        system(cmd) || raise(RuntimeError)
+        system(cmd) || raise(Error::Application, code: :application_not_run)
       end
     end
 
