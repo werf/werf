@@ -1,15 +1,15 @@
-package 'tree'
+package 'gcc'
 
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_infra_setup.txt" do
-  source 'infra_setup/baz.txt'
+  source 'burger.txt'
   owner 'root'
   group 'root'
   mode '0777'
   action :create
 end
 
-template '/baz.txt' do
+template '/burger.txt' do
   require 'securerandom'
-  source 'infra_setup/baz.txt.erb'
+  source 'burger.txt.erb'
   variables(var: SecureRandom.uuid)
 end

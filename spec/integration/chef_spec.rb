@@ -31,17 +31,17 @@ describe Dapp::Builder::Chef do
           new_file_values = {}
 
           new_file_values[project_file] = SecureRandom.uuid
-          testproject_path.join("files/default/#{stage}/#{project_file}.txt").tap do |path|
+          testproject_path.join("files/#{stage}/#{project_file}.txt").tap do |path|
             path.write "#{new_file_values[project_file]}\n"
           end
 
           new_file_values[mdapp_test_file] = SecureRandom.uuid
-          mdapp_test_path.join("files/default/#{stage}/#{mdapp_test_file}.txt").tap do |path|
+          mdapp_test_path.join("files/#{stage}/#{mdapp_test_file}.txt").tap do |path|
             path.write "#{new_file_values[mdapp_test_file]}\n"
           end
 
           new_file_values[mdapp_test2_file] = SecureRandom.uuid
-          mdapp_test2_path.join("files/default/#{stage}/#{mdapp_test2_file}.txt").tap do |path|
+          mdapp_test2_path.join("files/#{stage}/#{mdapp_test2_file}.txt").tap do |path|
             path.write "#{new_file_values[mdapp_test2_file]}\n"
           end
 
