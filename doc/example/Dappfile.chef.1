@@ -1,0 +1,63 @@
+name 'platform'
+builder :chef
+docker.from 'ubuntu:14.04'
+
+git_artifact.local '/app_lib', cwd: 'common/lib',
+
+git_artifact.local '/app_config',
+  cwd: 'config',
+  paths: ['settings.yml', 'antor.yml', 'sentry.yml', 'cassandra.yml', 'mysql.yml'],
+  owner 'platform', group: 'platform'
+
+chef.module 'mdapp-test1'
+
+chef.recipe 'main'
+chef.recipe 'common'
+
+app 'backend' do
+  chef.module 'mdapp-test2'
+  chef.recipe 'backend_common'
+
+  app 'rails' do
+    chef.recipe 'rails'
+
+    git_artifact.local '/app_rails', paths: ['app', 'lib', 'config']
+  end
+
+  app 'antor' do
+    chef.recipe 'antor'
+
+    git_artifact.local '/app_rails', paths: ['app', 'lib', 'config', 'antor']
+  end
+end
+
+app 'frontend' do
+  docker.from 'centos:7'
+
+  chef.skip_module 'mdapp-test1'
+  chef.module 'mdapp-nginx'
+
+  chef.remove_recipe 'main'
+  chef.recipe 'frontend'
+end
+
+chef.reset_modules
+chef.reset_recipes
+
+app 'cassandra' do
+  chef.module 'mdapp-cassandra'
+  chef.recipe 'cassandra'
+end
+
+app 'mysql' do
+  chef.module 'mdapp-mysql'
+  chef.recipe 'mysql'
+
+  app 'master'
+
+  chef.reset_all # == chef.reset_modules + chef.reset_recipes
+
+  app 'slave' do
+    chef.recipe 'mysql-slave'
+  end
+end
