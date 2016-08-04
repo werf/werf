@@ -2,9 +2,9 @@ module Dapp
   module Config
     # Application
     class Application
-      attr_reader :_name
       attr_reader :_builder
       attr_reader :_home_path
+      attr_reader :_basename
       attr_reader :_docker
       attr_reader :_git_artifact
       attr_reader :_artifact
@@ -70,6 +70,10 @@ module Dapp
         @_builder = type
       end
 
+      def _name
+        @_name || @_basename
+      end
+
       def _apps
         @_apps.empty? ? [self] : @_apps.flatten
       end
@@ -98,6 +102,7 @@ module Dapp
         Application.new(self).tap do |app|
           app.instance_variable_set(:'@_builder', _builder)
           app.instance_variable_set(:'@_home_path', _home_path)
+          app.instance_variable_set(:'@_basename', _basename)
           app.instance_variable_set(:'@_app_install_dependencies', _app_install_dependencies)
           app.instance_variable_set(:'@_app_setup_dependencies', _app_setup_dependencies)
           app.instance_variable_set(:'@_artifact', Marshal.load(Marshal.dump(_artifact)))

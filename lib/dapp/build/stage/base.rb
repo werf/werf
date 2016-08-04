@@ -86,7 +86,7 @@ module Dapp
         end
 
         def image_name
-          "dapp:#{signature}"
+          "#{application.config._basename}-dappstage:#{signature}"
         end
       end # Base
     end # Stage

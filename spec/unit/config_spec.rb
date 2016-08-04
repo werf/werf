@@ -453,6 +453,17 @@ describe Dapp::Config::Main do
     end
   end
 
+  context 'basename' do
+    it 'base' do
+      expect(app._basename).to eq 'dapp'
+    end
+
+    it 'name' do
+      @dappfile = "name 'test'"
+      expect(app._basename).to eq 'test'
+    end
+  end
+
   context 'cache_version' do
     it 'base' do
       @dappfile = %(
