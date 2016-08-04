@@ -16,7 +16,6 @@ Usage:
 
 Options:
 BANNER
-
       option :tmp_dir_prefix,
              long: '--tmp-dir-prefix PREFIX',
              description: 'Tmp directory prefix'
@@ -42,8 +41,8 @@ BANNER
       option :introspect_stage,
              long: '--introspect-stage STAGE',
              proc: proc { |v| v.to_sym },
-             in: [nil, :from, :infra_install, :source_1_archive, :source_1, :app_install,
-                  :source_2, :infra_setup, :source_3, :app_setup, :source_4, :source_5]
+             in: [nil, :from, :infra_install, :source_1_archive, :source_1, :app_install, :source_2,
+                  :infra_setup, :source_3, :chef_cookbooks, :app_setup, :source_4, :source_5]
 
       def run(*args)
         super

@@ -47,9 +47,6 @@ module Dapp
 
       # Stage
       class Stage < Base
-        STAGES = [:from, :infra_install, :source_1_archive, :source_1, :app_install, :source_2,
-                  :infra_setup, :source_3, :chef_cookbooks, :app_setup, :source_4, :source_5].freeze
-
         attr_accessor :_config
         attr_accessor :_before, :_after
 
@@ -77,7 +74,7 @@ module Dapp
         private
 
         def validate_associated_option(option:, value:)
-          return if STAGES.include? value
+          return if Dapp::Application::STAGES.include? value
           raise Error::Config, code: :stage_artifact_incorrect_associated_value, data: { option: option, value: value }
         end
       end
