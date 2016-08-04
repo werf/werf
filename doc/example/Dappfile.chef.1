@@ -35,6 +35,7 @@ app 'frontend' do
   docker.from 'centos:7'
 
   chef.skip_module 'mdapp-test1'
+  chef.module 'mdapp-nginx'
 
   chef.remove_recipe 'main'
   chef.recipe 'frontend'
