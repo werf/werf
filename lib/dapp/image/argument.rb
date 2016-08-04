@@ -1,7 +1,7 @@
 module Dapp
   module Image
-    # Arguments
-    module Arguments
+    # Argument
+    module Argument
       def add_change_volume(value)
         add_change_option(:volume, value)
       end
@@ -11,11 +11,11 @@ module Dapp
       end
 
       def add_change_env(**options)
-        add_change_option(:env, options_to_args(options))
+        add_change_option(:env, options)
       end
 
       def add_change_label(**options)
-        add_change_option(:label, options_to_args(options))
+        add_change_option(:label, options)
       end
 
       def add_change_cmd(value)
@@ -72,7 +72,7 @@ module Dapp
       end
 
       def add_option_default(hash, key, value)
-        hash[key] = (hash[key].nil? ? value : (Array(hash[key]) << value).flatten)
+        hash[key] = (hash[key].nil? ? [value] : (hash[key] << value)).flatten
       end
 
       def from_options
@@ -89,21 +89,21 @@ module Dapp
       end
 
       def prepared_options
-        prepared_options_default(options) { |k, vals| Array(vals).map { |v| "--#{k}=#{v}" }.join(' ') }
+        prepared_options_default(options) { |key, vals| Array(vals).map { |val| "--#{key}=#{val}" }.join(' ') }
       end
 
       def prepared_change
-        prepared_options_default(from_options.merge(change_options)) do |k, vals|
-          if [:cmd, :entrypoint].include? k
-            %(-c '#{k.to_s.upcase} #{Array(vals)}')
-          else
-            Array(vals).map { |v| %(-c "#{k.to_s.upcase} #{v}") }.join(' ')
-          end
+        prepared_options_default(from_options.merge(change_options)) do |key, vals|
+          case key
+          when :cmd, :entrypoint then [vals]
+          when :env, :label then vals.map(&method(:options_to_args)).flatten
+          else vals
+          end.map { |val| %(-c '#{key.to_s.upcase} #{val}') }.join(' ')
         end
       end
 
       def prepared_options_default(hash)
-        hash.map { |k, vals| yield(k, vals) }.join(' ')
+        hash.map { |key, vals| yield(key, vals) }.join(' ')
       end
 
       def prepared_bash_command

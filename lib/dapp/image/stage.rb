@@ -3,7 +3,7 @@ module Dapp
   module Image
     # Stage
     class Stage < Docker
-      include Arguments
+      include Argument
 
       def initialize(name:, built_id: nil, from: nil)
         @bash_commands = []
