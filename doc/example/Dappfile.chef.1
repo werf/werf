@@ -6,7 +6,7 @@ git_artifact.local '/app_lib', cwd: 'common/lib',
 
 git_artifact.local '/app_config',
   cwd: 'config',
-  paths: ['settings.yml', 'antor.yml', 'sentry.yml', 'cassandra.yml'],
+  paths: ['settings.yml', 'antor.yml', 'sentry.yml', 'cassandra.yml', 'mysql.yml'],
   owner 'platform', group: 'platform'
 
 chef.module 'mdapp-test1'
