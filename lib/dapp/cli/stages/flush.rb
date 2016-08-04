@@ -2,19 +2,19 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
-    class Flush
+    class Stages
       # Flush stages subcommand
-      class Stages < Base
+      class Flush < Base
         banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp flush stages
+  dapp stages flush
 Options:
 BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          Controller.new(cli_options: config, patterns: cli_arguments).flush_stages
+          Controller.new(cli_options: config, patterns: cli_arguments).stages_flush
         end
       end
     end

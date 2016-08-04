@@ -43,19 +43,11 @@ module Dapp
       end
     end
 
-    def flush_metadata
-      build_configs.each do |config|
-        log(config._name)
-        app = Application.new(config: config, cli_options: cli_options, ignore_git_fetch: true)
-        FileUtils.rm_rf app.metadata_path
-      end
-    end
-
-    def flush_stages
+    def stages_flush
       shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{build_configs.first._basename}-dappstage)})
     end
 
-    def flush_cleanup
+    def stages_cleanup
       shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{build_configs.first._basename}" -q)})
     end
 

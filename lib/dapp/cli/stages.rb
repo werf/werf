@@ -3,17 +3,16 @@ require 'mixlib/cli'
 module Dapp
   class CLI
     # CLI flush subcommand
-    class Flush < CLI
-      SUBCOMMANDS = %w(metadata stages cleanup).freeze
+    class Stages < CLI
+      SUBCOMMANDS = %w(flush cleanup).freeze
 
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-dapp flush metadata
-dapp flush stages
-dapp flush cleanup
+dapp stages flush
+dapp stages cleanup
 BANNER
     end
   end
