@@ -76,12 +76,12 @@ describe Dapp::Config::Main do
 
     it 'env' do
       @dappfile = %(docker.env a: 'b', b: 'c')
-      expect(app.docker._env).to eq %w(A=b B=c)
+      expect(app.docker._env).to eq ({ a: 'b', b: 'c' })
     end
 
     it 'label' do
       @dappfile = %(docker.label a: 'b', b: 'c')
-      expect(app.docker._label).to eq %w(A=b B=c)
+      expect(app.docker._label).to eq ({ a: 'b', b: 'c' })
     end
 
     it 'cmd' do

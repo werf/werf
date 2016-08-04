@@ -8,8 +8,8 @@ module Dapp
       def initialize
         @_volume = []
         @_expose = []
-        @_env = []
-        @_label = []
+        @_env = {}
+        @_label = {}
         @_cmd = []
         @_onbuild = []
       end
@@ -28,11 +28,11 @@ module Dapp
       end
 
       def env(**options)
-        @_env.concat(options_to_args(options))
+        @_env.merge!(options)
       end
 
       def label(**options)
-        @_label.concat(options_to_args(options))
+        @_label.merge!(options)
       end
 
       def cmd(*args)
@@ -75,12 +75,6 @@ module Dapp
 
       def clone
         Marshal.load(Marshal.dump(self))
-      end
-
-      private
-
-      def options_to_args(options)
-        options.map { |key, value| "#{key.upcase}=#{value}" }
       end
     end
   end

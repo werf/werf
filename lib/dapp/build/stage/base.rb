@@ -41,6 +41,7 @@ module Dapp
           @image ||= begin
             Image::Stage.new(name: image_name, from: from_image).tap do |image|
               image.add_volume "#{application.tmp_path}:#{application.container_tmp_path}"
+              image.add_change_label dapp: application.config._basename
               before_artifacts.each { |artifact| apply_artifact(artifact, image) }
               yield image if block_given?
               after_artifacts.each { |artifact| apply_artifact(artifact, image) }

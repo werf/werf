@@ -10,12 +10,12 @@ module Dapp
         add_change_option(:expose, value)
       end
 
-      def add_change_env(value)
-        add_change_option(:env, value)
+      def add_change_env(**options)
+        add_change_option(:env, options_to_args(options))
       end
 
-      def add_change_label(value)
-        add_change_option(:label, value)
+      def add_change_label(**options)
+        add_change_option(:label, options_to_args(options))
       end
 
       def add_change_cmd(value)
@@ -82,6 +82,10 @@ module Dapp
           options[option] = output == 'null' ? [] : JSON.parse(output)
           options
         end
+      end
+
+      def options_to_args(options)
+        options.map { |key, value| "#{key}=#{value}" }
       end
 
       def prepared_options

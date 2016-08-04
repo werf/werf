@@ -55,6 +55,10 @@ module Dapp
       shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{build_configs.first._basename}-dappstage)})
     end
 
+    def flush_cleanup
+      shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{build_configs.first._basename}" -q)})
+    end
+
     private
 
     def build_configs
