@@ -16,30 +16,14 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
-        # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         def build!
           return if should_be_skipped?
           prev_stage.build! if prev_stage
-          begin
-            if image.tagged?
-              application.log_state(name, state: application.t(code: 'state.using_cache'))
-            elsif should_be_not_present?
-              application.log_state(name, state: application.t(code: 'state.not_present'))
-            elsif application.dry_run?
-              application.log_state(name, state: application.t(code: 'state.build'), styles: { status: :success })
-            else
-              application.log_process(name, process: application.t(code: 'status.process.building'), short: should_be_not_detailed?) do
-                image_build!
-              end
-            end
-          ensure
-            log_build
-          end
+          image_build
           raise Exception::IntrospectImage,
                 message: application.t(code: 'introspect.stage', data: { name: name }),
                 data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
         end
-        # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
         def save_in_cache!
           return if image.tagged?
@@ -85,7 +69,25 @@ module Dapp
           application.cli_options[:introspect_stage] == name && !application.dry_run? && !application.is_artifact
         end
 
-        def image_build!
+        # rubocop:disable Metrics/AbcSize
+        def image_build
+          if image.tagged?
+            application.log_state(name, state: application.t(code: 'state.using_cache'))
+          elsif should_be_not_present?
+            application.log_state(name, state: application.t(code: 'state.not_present'))
+          elsif application.dry_run?
+            application.log_state(name, state: application.t(code: 'state.build'), styles: { status: :success })
+          else
+            application.log_process(name, process: application.t(code: 'status.process.building'), short: should_be_not_detailed?) do
+              image_do_build
+            end
+          end
+        ensure
+          log_build
+        end
+        # rubocop:enable Metrics/AbcSize
+
+        def image_do_build
           image.build!(log_verbose: application.log_verbose?,
                        log_time: application.log_time?,
                        introspect_error: application.cli_options[:introspect_error],
@@ -118,14 +120,24 @@ module Dapp
 
         def log_image_info
           return unless image.tagged?
+          date, size = image_info
+          application.log_info application.t(code: 'image.info.date', data: { value: date })
+          size_code = size_difference? ? 'image.info.difference' : 'image.info.size'
+          application.log_info application.t(code: size_code, data: { value: size })
+        end
+
+        def image_info
           date, size = image.info
-          application.log_info application.t(code: 'image.info.dssate', data: { value: Time.parse(date).localtime })
-          if !from_image.tagged? || prev_stage.nil?
-            application.log_info application.t(code: 'image.info.size', data: { value: size.to_f.round(2) })
-          else
+          if size_difference?
             _date, from_size = from_image.info
-            application.log_info application.t(code: 'image.info.difference', data: { value: (from_size.to_f - size.to_f).abs.to_f.round(2) })
+            size = size.to_f - from_size.to_f
           end
+
+          [Time.parse(date).localtime, size.to_f.round(2)]
+        end
+
+        def size_difference?
+          from_image.tagged? && !prev_stage.nil?
         end
 
         def before_artifacts
@@ -150,7 +162,7 @@ module Dapp
           (before_artifacts + after_artifacts).map { |artifact| hashsum [artifact[:app].signature, artifact[:options]] }
         end
 
-        # rubocop:disable Metrics/AbcSize
+        # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         def apply_artifact(artifact, image)
           return if application.dry_run?
 
@@ -173,7 +185,7 @@ module Dapp
           commands = safe_cp(application.container_tmp_path('artifact', artifact_name), where_to_add, owner, group, cwd, paths)
           image.add_commands commands
         end
-        # rubocop:enable Metrics/AbcSize
+        # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
         # rubocop:disable Metrics/ParameterLists
         def safe_cp(from, to, owner, group, cwd = '', paths = [])

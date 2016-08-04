@@ -17,7 +17,7 @@ module Dapp
 
         protected
 
-        def image_build!
+        def image_do_build
           from_image.pull!(log_time: application.log_time?)
           super
         end
