@@ -5,6 +5,8 @@ module Dapp
       class Base
         include Helper::Sha256
         include Helper::Trivia
+        include Mod::Artifact
+        include Mod::Logging
 
         attr_accessor :prev_stage, :next_stage
         attr_reader :application
@@ -52,23 +54,6 @@ module Dapp
           class_to_lowercase.to_sym
         end
 
-        def should_be_not_detailed?
-          image.send(:bash_commands).empty?
-        end
-
-        def should_be_not_present?
-          return false if next_stage.nil?
-          next_stage.image.tagged? || next_stage.should_be_not_present?
-        end
-
-        def should_be_skipped?
-          image.tagged? && !application.log_verbose? && application.cli_options[:introspect_stage].nil?
-        end
-
-        def should_be_introspected?
-          application.cli_options[:introspect_stage] == name && !application.dry_run? && !application.is_artifact
-        end
-
         # rubocop:disable Metrics/AbcSize
         def image_build
           if image.tagged?
@@ -103,108 +88,6 @@ module Dapp
         def image_name
           "dapp:#{signature}"
         end
-
-        def log_build
-          application.with_log_indent do
-            application.log_info application.t(code: 'image.signature', data: { signature: image_name })
-            log_image_info
-            log_image_commands
-          end if application.log? && application.log_verbose?
-        end
-
-        def log_image_commands
-          return if (bash_commands = image.send(:bash_commands)).empty?
-          application.log_info application.t(code: 'image.commands')
-          application.with_log_indent { application.log_info bash_commands.join("\n") }
-        end
-
-        def log_image_info
-          return unless image.tagged?
-          date, size = image_info
-          application.log_info application.t(code: 'image.info.date', data: { value: date })
-          size_code = size_difference? ? 'image.info.difference' : 'image.info.size'
-          application.log_info application.t(code: size_code, data: { value: size })
-        end
-
-        def image_info
-          date, size = image.info
-          if size_difference?
-            _date, from_size = from_image.info
-            size = size.to_f - from_size.to_f
-          end
-
-          [Time.parse(date).localtime, size.to_f.round(2)]
-        end
-
-        def size_difference?
-          from_image.tagged? && !prev_stage.nil?
-        end
-
-        def before_artifacts
-          @before_artifacts ||= do_artifacts(application.config._artifact.select { |artifact| artifact._before == name })
-        end
-
-        def after_artifacts
-          @after_artifacts ||= do_artifacts(application.config._artifact.select { |artifact| artifact._after == name })
-        end
-
-        def do_artifacts(artifacts)
-          artifacts.map do |artifact|
-            {
-              name: artifact._config._name,
-              options: artifact._artifact_options,
-              app: Application.new(config: artifact._config, is_artifact: true, **application.meta_options).tap(&:build!)
-            }
-          end
-        end
-
-        def artifacts_signatures
-          (before_artifacts + after_artifacts).map { |artifact| hashsum [artifact[:app].signature, artifact[:options]] }
-        end
-
-        # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-        def apply_artifact(artifact, image)
-          return if application.dry_run?
-
-          artifact_name = artifact[:name]
-          app = artifact[:app]
-          cwd = artifact[:options][:cwd]
-          paths = artifact[:options][:paths]
-          owner = artifact[:options][:owner]
-          group = artifact[:options][:group]
-          where_to_add = artifact[:options][:where_to_add]
-
-          docker_options = ['--rm',
-                            "--volume #{application.tmp_path('artifact', artifact_name)}:#{app.container_tmp_path(artifact_name)}",
-                            '--entrypoint /bin/sh']
-          commands = safe_cp(where_to_add, app.container_tmp_path(artifact_name), Process.uid, Process.gid)
-          application.log_secondary_process(application.t(code: 'process.artifact_copy', data: { name: artifact_name }), short: true) do
-            app.run(docker_options, Array(application.shellout_pack(commands)))
-          end
-
-          commands = safe_cp(application.container_tmp_path('artifact', artifact_name), where_to_add, owner, group, cwd, paths)
-          image.add_commands commands
-        end
-        # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
-
-        # rubocop:disable Metrics/ParameterLists
-        def safe_cp(from, to, owner, group, cwd = '', paths = [])
-          credentials = ''
-          credentials += "-o #{owner} " if owner
-          credentials += "-g #{group} " if group
-
-          copy_files = lambda do |from_, cwd_, path_ = ''|
-            "find #{File.join(from_, cwd_, path_)} -type f -exec bash -ec 'install -D #{credentials} {} " \
-            "#{File.join(to, "$(echo {} | sed -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
-          end
-
-          commands = []
-          commands << ['install', credentials, '-d', to].join(' ')
-          commands.concat(paths.empty? ? Array(copy_files.call(from, cwd)) : paths.map { |path| copy_files.call(from, cwd, path) })
-          commands << "find #{to} -type d -exec bash -ec 'install -d #{credentials} {}' \\;"
-          commands.join(' && ')
-        end
-        # rubocop:enable Metrics/ParameterLists
       end # Base
     end # Stage
   end # Build
