@@ -19,16 +19,10 @@ module Dapp
       end
 
       def build!(**kwargs)
-        @built_id = if should_be_built?
-                      begin
-                        run!(**kwargs)
-                        commit!
-                      ensure
-                        shellout("docker rm #{container_name}")
-                      end
-                    else
-                      from.built_id
-                    end
+        run!(**kwargs)
+        @built_id = commit!
+      ensure
+        shellout("docker rm #{container_name}")
       end
 
       def export!(name, log_verbose: false, log_time: false, force: false)
@@ -64,10 +58,6 @@ module Dapp
 
       def commit!
         shellout!("docker commit #{prepared_change} #{container_name}").stdout.strip
-      end
-
-      def should_be_built?
-        !(bash_commands.empty? && change_options.empty?)
       end
     end # Stage
   end # Image
