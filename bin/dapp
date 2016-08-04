@@ -10,7 +10,7 @@ begin
 rescue Dapp::Error::Shellout => e
   $stderr.puts(Dapp::Helper::NetStatus.message(e))
   exit 1
-rescue Dapp::Error::Base => e
+rescue Dapp::Error::Base, NetStatus::Exception => e
   $stderr.puts(Dapp::Helper::Paint.paint_string(Dapp::Helper::NetStatus.message(e), :warning))
   exit 1
 rescue Interrupt => _e

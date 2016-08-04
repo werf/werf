@@ -31,10 +31,6 @@ module Dapp
         def from_image
           @from_image ||= Image::Stage.new(name: from_image_name)
         end
-
-        def image_info
-          image.info
-        end
       end # Prepare
     end # Stage
   end # Build

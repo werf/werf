@@ -2,7 +2,10 @@ en:
   common:
     image:
       signature: "signature: %{signature}"
-      info: "date: %{date}\nsize: %{size} MB"
+      info:
+        date: "date: %{value}"
+        size: "size: %{value} MB"
+        difference: "difference: %{value} MB"
       commands: "commands:"
     process:
       artifact_copy: "copying artifact '%{name}'"
@@ -22,6 +25,7 @@ en:
         default: '[FAILED]'
     state:
       using_cache: '[USING CACHE]'
+      not_present: '[NOT PRESENT]'
       build: '[BUILD]'
       push: '[PUSH]'
     introspect:

@@ -23,6 +23,8 @@ module Dapp
           begin
             if image.tagged?
               application.log_state(name, state: application.t(code: 'state.using_cache'))
+            elsif should_be_not_present?
+              application.log_state(name, state: application.t(code: 'state.not_present'))
             elsif application.dry_run?
               application.log_state(name, state: application.t(code: 'state.build'), styles: { status: :success })
             else
@@ -70,6 +72,11 @@ module Dapp
           image.send(:bash_commands).empty?
         end
 
+        def should_be_not_present?
+          return false if next_stage.nil?
+          next_stage.image.tagged? || next_stage.should_be_not_present?
+        end
+
         def should_be_skipped?
           image.tagged? && !application.log_verbose? && application.cli_options[:introspect_stage].nil?
         end
@@ -95,29 +102,31 @@ module Dapp
           "dapp:#{signature}"
         end
 
-        def image_info
-          date, size = image.info
-          _date, from_size = from_image.info
-          [date, (from_size.to_f - size.to_f).abs]
-        end
-
-        def format_image_info
-          date, size = image_info
-          application.t(code: 'image.info', data: { date: Time.parse(date).localtime, size: size.to_f.round(2) })
-        end
-
-        # rubocop:disable Metrics/AbcSize
         def log_build
           application.with_log_indent do
             application.log_info application.t(code: 'image.signature', data: { signature: image_name })
-            application.log_info format_image_info if image.tagged?
-            unless (bash_commands = image.send(:bash_commands)).empty?
-              application.log_info application.t(code: 'image.commands')
-              application.with_log_indent { application.log_info bash_commands.join("\n") }
-            end
+            log_image_info
+            log_image_commands
           end if application.log? && application.log_verbose?
         end
-        # rubocop:enable Metrics/AbcSize
+
+        def log_image_commands
+          return if (bash_commands = image.send(:bash_commands)).empty?
+          application.log_info application.t(code: 'image.commands')
+          application.with_log_indent { application.log_info bash_commands.join("\n") }
+        end
+
+        def log_image_info
+          return unless image.tagged?
+          date, size = image.info
+          application.log_info application.t(code: 'image.info.dssate', data: { value: Time.parse(date).localtime })
+          if !from_image.tagged? || prev_stage.nil?
+            application.log_info application.t(code: 'image.info.size', data: { value: size.to_f.round(2) })
+          else
+            _date, from_size = from_image.info
+            application.log_info application.t(code: 'image.info.difference', data: { value: (from_size.to_f - size.to_f).abs.to_f.round(2) })
+          end
+        end
 
         def before_artifacts
           @before_artifacts ||= do_artifacts(application.config._artifact.select { |artifact| artifact._before == name })
