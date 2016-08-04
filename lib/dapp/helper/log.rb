@@ -43,6 +43,7 @@ module Dapp
       def with_log_indent(with = true)
         log_indent_next if with
         yield
+      ensure
         log_indent_prev if with
       end
 

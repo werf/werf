@@ -29,11 +29,8 @@ module Dapp
     end
 
     def build!
-      log_step(config._name)
-      with_log_indent do
-        last_stage.build!
-        last_stage.save_in_cache!
-      end
+      last_stage.build!
+      last_stage.save_in_cache!
     ensure
       FileUtils.rm_rf(tmp_path)
     end
@@ -69,10 +66,6 @@ module Dapp
 
     def builder
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
-    end
-
-    def meta_options
-      { cli_options: cli_options, ignore_git_fetch: ignore_git_fetch }
     end
 
     protected

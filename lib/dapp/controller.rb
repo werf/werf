@@ -23,7 +23,12 @@ module Dapp
     end
 
     def build
-      build_configs.each { |config| Application.new(config: config, cli_options: cli_options).build! }
+      build_configs.each do |config|
+        log_step(config._name)
+        with_log_indent do
+          Application.new(config: config, cli_options: cli_options).build!
+        end
+      end
     end
 
     def list

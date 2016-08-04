@@ -65,20 +65,19 @@ module Dapp
         @cookbook_metadata ||= CookbookMetadata.new(cookbook_metadata_path)
       end
 
-
       def berksfile_lock_checksum
         application.hashsum berksfile_lock_path.read if berksfile_lock_path.exist?
       end
 
       def local_cookbook_paths_for_checksum
         @local_cookbook_paths_for_checksum ||= berksfile
-          .local_cookbooks
-          .values
-          .map { |cookbook| cookbook[:path] }
-          .product(LOCAL_COOKBOOK_CHECKSUM_PATTERNS)
-          .map { |cb, dir| Dir[cb.join(dir)] }
-          .flatten
-          .map(&Pathname.method(:new))
+                                               .local_cookbooks
+                                               .values
+                                               .map { |cookbook| cookbook[:path] }
+                                               .product(LOCAL_COOKBOOK_CHECKSUM_PATTERNS)
+                                               .map { |cb, dir| Dir[cb.join(dir)] }
+                                               .flatten
+                                               .map(&Pathname.method(:new))
       end
 
       def stage_cookbooks_paths_for_checksum(stage)
@@ -95,14 +94,14 @@ module Dapp
           stage_cookbooks_checksum_path(stage).read.strip
         else
           checksum = if stage == :chef_cookbooks
-            cookbooks_checksum
-          else
-            application.hashsum [
-              _paths_checksum(stage_cookbooks_paths_for_checksum(stage)),
-              *application.config._chef._modules,
-              stage == :infra_install ? chefdk_image : nil
-            ].compact
-          end
+                       cookbooks_checksum
+                     else
+                       application.hashsum [
+                         _paths_checksum(stage_cookbooks_paths_for_checksum(stage)),
+                         *application.config._chef._modules,
+                         stage == :infra_install ? chefdk_image : nil
+                       ].compact
+                     end
 
           stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
           checksum
@@ -116,7 +115,6 @@ module Dapp
           *application.config._chef._modules
         ]
       end
-
 
       def chefdk_image
         DEFAULT_CHEFDK_IMAGE # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
@@ -142,7 +140,6 @@ module Dapp
           chefdk_container_name
         end
       end
-
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_cookbooks
@@ -196,7 +193,6 @@ module Dapp
         end.join(*path)
       end
 
-
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_stage_cookbooks(stage)
         @install_stage_cookbooks ||= {}
@@ -204,36 +200,35 @@ module Dapp
           common_paths = proc do |cookbook_path|
             [['metadata.json', 'metadata.json'],
              ["files/#{stage}", 'files/default'],
-             ["templates/#{stage}", 'templates/default']
-            ].select { |from, _| cookbook_path.join(from).exist? }
+             ["templates/#{stage}", 'templates/default']].select { |from, _| cookbook_path.join(from).exist? }
           end
 
           install_paths = Dir[cookbooks_vendor_path('*')]
-            .map(&Pathname.method(:new))
-            .map { |cookbook_path|
-              cookbook_name = File.basename cookbook_path
-              is_project = (cookbook_name == project_name)
-              is_mdapp = cookbook_name.start_with? 'mdapp-'
-              mdapp_enabled = is_mdapp && application.config._chef._modules.include?(cookbook_name)
+                          .map(&Pathname.method(:new))
+                          .map do |cookbook_path|
+            cookbook_name = File.basename cookbook_path
+            is_project = (cookbook_name == project_name)
+            is_mdapp = cookbook_name.start_with? 'mdapp-'
+            mdapp_enabled = is_mdapp && application.config._chef._modules.include?(cookbook_name)
 
-              paths = if is_project
-                recipe_paths = application.config._chef._recipes
-                  .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
-                  .select { |from, _| cookbook_path.join(from).exist? }
+            paths = if is_project
+                      recipe_paths = application.config._chef._recipes
+                                                .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
+                                                .select { |from, _| cookbook_path.join(from).exist? }
 
-                (recipe_paths + common_paths[cookbook_path]) if recipe_paths.any?
-              elsif is_mdapp and mdapp_enabled
-                recipe_path = "recipes/#{stage}.rb"
-                if cookbook_path.join(recipe_path).exist?
-                  [[recipe_path, recipe_path]] + common_paths[cookbook_path]
-                end
-              else
-                [['.', '.']]
-              end
+                      (recipe_paths + common_paths[cookbook_path]) if recipe_paths.any?
+                    elsif is_mdapp && mdapp_enabled
+                      recipe_path = "recipes/#{stage}.rb"
+                      if cookbook_path.join(recipe_path).exist?
+                        [[recipe_path, recipe_path]] + common_paths[cookbook_path]
+                      end
+                    else
+                      [['.', '.']]
+                    end
 
-              [cookbook_path, paths] if paths and paths.any?
-            }
-            .compact
+            [cookbook_path, paths] if paths && paths.any?
+          end
+                          .compact
 
           stage_cookbooks_path(stage).mkpath
           install_paths.each do |cookbook_path, paths|
@@ -279,7 +274,6 @@ module Dapp
         stage_tmp_path(stage, 'cookbooks', *path)
       end
 
-
       def install_chef_solo_stage_config(stage)
         @install_chef_solo_stage_config ||= {}
         @install_chef_solo_stage_config[stage] ||= true.tap do
@@ -294,7 +288,6 @@ module Dapp
         install_chef_solo_stage_config(stage)
         container_stage_tmp_path(stage, 'config.rb', *path)
       end
-
 
       def stage_tmp_path(stage, *path)
         application.tmp_path(application.config._name, stage).join(*path)

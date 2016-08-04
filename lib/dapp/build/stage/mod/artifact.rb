@@ -14,13 +14,28 @@ module Dapp
           end
 
           def do_artifacts(artifacts)
+            verbose = application.log_verbose?
             artifacts.map do |artifact|
-              {
-                name: artifact._config._name,
-                options: artifact._artifact_options,
-                app: Application.new(config: artifact._config, is_artifact: true, **application.meta_options).tap(&:build!)
-              }
+              process = application.t(code: 'process.artifact_building', data: { name: artifact._config._name })
+              application.log_secondary_process(process, short: !verbose) do
+                application.with_log_indent do
+                  {
+                    name: artifact._config._name,
+                    options: artifact._artifact_options,
+                    app: Application.new(artifact_app_options(artifact, verbose)).tap(&:build!)
+                  }
+                end
+              end
             end
+          end
+
+          def artifact_app_options(artifact, verbose)
+            {
+              config: artifact._config,
+              cli_options: application.cli_options.merge(log_quiet: !verbose),
+              ignore_git_fetch: application.ignore_git_fetch,
+              is_artifact: true
+            }
           end
 
           def artifacts_signatures

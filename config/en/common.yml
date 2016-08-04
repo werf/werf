@@ -9,6 +9,7 @@ en:
       commands: "commands:"
     process:
       artifact_copy: "copying artifact '%{name}'"
+      artifact_building: "building artifact '%{name}'"
       git_artifact_loading: 'loading git_artifact'
       git_artifact_clone: "cloning remote git_artifact '%{name}'"
       git_artifact_fetch: "fetching remote git_artifact '%{name}'"

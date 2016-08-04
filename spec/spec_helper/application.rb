@@ -30,7 +30,8 @@ module SpecHelper
     end
 
     def default_config
-      Marshal.load(Marshal.dump(_name: 'test',
+      Marshal.load(Marshal.dump(_basename: 'dapp',
+                                _name: 'test',
                                 _artifact: [],
                                 _chef: { _modules: [] },
                                 _shell: { _infra_install: [], _infra_setup: [], _app_install: [], _app_setup: [] },

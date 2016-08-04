@@ -79,7 +79,7 @@ module Dapp
         return {} if from.nil?
         [:entrypoint, :cmd].each_with_object({}) do |option, options|
           output = shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{from.built_id}").stdout.strip
-          options[option] = (output == 'null') ? [] : JSON.parse(output)
+          options[option] = output == 'null' ? [] : JSON.parse(output)
           options
         end
       end
