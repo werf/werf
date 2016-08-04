@@ -52,10 +52,7 @@ module Dapp
     end
 
     def flush_stages
-      build_configs.each do |config|
-        log(config._name)
-        shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{config._basename}-dappstage)})
-      end
+      shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{build_configs.first._basename}-dappstage)})
     end
 
     private
