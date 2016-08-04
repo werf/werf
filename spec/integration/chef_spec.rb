@@ -61,7 +61,7 @@ describe Dapp::Builder::Chef do
         @config ||= default_config.merge(
           _builder: :chef,
           _home_path: testproject_path.to_s,
-          _name: "#{testproject_path.basename.to_s}-X-Y",
+          _name: "#{testproject_path.basename}-X-Y",
           _chef: {
             _modules: %w(mdapp-test mdapp-test2),
             _recipes: %w(main X X_Y)
@@ -135,8 +135,7 @@ describe Dapp::Builder::Chef do
                        mdapp_test_infra_install mdapp_test_app_install
                        mdapp_test_infra_setup mdapp_test_app_setup
                        mdapp_test2_infra_install mdapp_test2_app_install
-                       mdapp_test2_infra_setup mdapp_test2_app_setup
-                      ).freeze
+                       mdapp_test2_infra_setup mdapp_test2_app_setup).freeze
 
   TEST_FILE_NAMES.each do |name|
     define_method("#{name}_path") do

@@ -5,6 +5,7 @@ en:
       shell_command_failed: ">>> START STREAM\n%{stream}\n>>> END STREAM"
     application:
       application_not_built: "Application hasn't been built yet!"
+      application_not_run: "Application run failed!"
       git_branch_without_name: "Application has specific revision that isn't associated with a branch name!"
       ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
     build:
