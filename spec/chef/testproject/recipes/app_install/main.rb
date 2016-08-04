@@ -1,7 +1,7 @@
-package 'wget'
+#package 'wget'
 
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_app_install.txt" do
-  source 'app_install/bar.txt'
+  source 'bar.txt'
   owner 'root'
   group 'root'
   mode '0777'
@@ -10,6 +10,6 @@ end
 
 template '/bar.txt' do
   require 'securerandom'
-  source 'app_install/bar.txt.erb'
+  source 'bar.txt.erb'
   variables(var: SecureRandom.uuid)
 end
