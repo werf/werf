@@ -17,3 +17,5 @@ GRAPH
     apt (>= 0.0.0)
   test (0.0.1)
     apt (>= 0.0.0)
+    mdapp-test (>= 0.0.0)
+    mdapp-test2 (>= 0.0.0)
