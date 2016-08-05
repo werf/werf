@@ -16,10 +16,10 @@
 Выключить переданные модули для chef builder в данном контексте.
 
 ### reset_modules
-Выключить все модули chef builder в данном контексте.
+Выключить все модули для chef builder в данном контексте.
 
-### recipe
-Включить переданные рецепты из проекта в chef builder runlist в данном контексте.
+### recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
+Включить переданные рецепты из проекта для chef builder в данном контексте.
 
 * Для каждого преданного рецепта может существовать файл рецепта в проекте на каждый из stage.
 * Файл рецепта для \<stage\>: recipes/\<stage\>/\<recipe\>.rb
@@ -30,6 +30,11 @@
   * templates/\<stage\>/ -> templates/default/
   * metadata.json
 
-### remove_recipe
+### remove_recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
+Выключить переданные рецепты из проекта для chef builder в данном контексте.
+
 ### reset_recipes
+Выключить все рецепты из проекта для chef builder в данном контексте.
+
 ### reset_all
+Выключить все рецепты из проекта и все модули для chef builder в данном контексте.
