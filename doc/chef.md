@@ -1,4 +1,7 @@
 # Chef
+## Примеры
+* [Dappfile](example/Dappfile.chef.1)
+
 ## Dappfile
 ### module \<mod\>[, \<mod\>, \<mod\> ...]
 Включить переданные модули для chef builder в данном контексте.
@@ -38,6 +41,3 @@
 
 ### reset_all
 Выключить все рецепты из проекта и все модули для chef builder в данном контексте.
-
-## Примеры
-* [Dappfile](example/Dappfile.chef.1)
