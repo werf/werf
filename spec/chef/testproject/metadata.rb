@@ -1,3 +1,5 @@
 name 'test'
 version '0.0.1'
 depends 'apt'
+depends 'mdapp-test'
+depends 'mdapp-test2'

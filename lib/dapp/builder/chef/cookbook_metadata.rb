@@ -18,6 +18,10 @@ module Dapp
             @cookbook_metadata.version = version
           end
 
+          def depends(dependency)
+            @cookbook_metadata.depends << dependency
+          end
+
           # rubocop:disable Style/MethodMissing
           def method_missing(*_a, &_blk)
           end
@@ -33,6 +37,10 @@ module Dapp
         attr_reader :path
         attr_accessor :name
         attr_accessor :version
+
+        def depends
+          @depends ||= []
+        end
 
         def initialize(path)
           @path = path
