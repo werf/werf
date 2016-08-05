@@ -160,9 +160,12 @@ module Dapp
             ['if [ "$LOCKDIFF" != "" ] ; then ',
              'cp -a /tmp/Berksfile.lock.orig Berksfile.lock ; ',
              'echo -e "Bad Berksfile.lock\n$LOCKDIFF" 1>&2 ; exit 1 ; fi'].join,
+            ["find /tmp/vendored_cookbooks -type d -exec bash -ec '",
+             "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) -d ",
+             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/^\\/tmp\\/vendored_cookbooks//\")' \\;"].join,
             ["find /tmp/vendored_cookbooks -type f -exec bash -ec '",
-             "install -D -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
-             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks\\///g\")' \\;"].join
+             "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
+             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks//\")' \\;"].join
           ]
 
           application.shellout!(
