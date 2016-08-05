@@ -41,9 +41,6 @@ app 'frontend' do
   chef.recipe 'frontend'
 end
 
-chef.reset_modules
-chef.reset_recipes
-
 app 'cassandra' do
   chef.module 'mdapp-cassandra'
   chef.recipe 'cassandra'
@@ -55,9 +52,21 @@ app 'mysql' do
 
   app 'master'
 
-  chef.reset_all # == chef.reset_modules + chef.reset_recipes
+  chef.reset_modules
+  chef.reset_recipes
 
   app 'slave' do
     chef.recipe 'mysql-slave'
   end
+end
+
+chef.reset_all # == chef.reset_modules + chef.reset_recipes
+
+app 'hello' do
+  git_artifact.remote 'git@github.com:my/app.git', '/hello',
+    branch: '0.9',
+    ssh_key_path: 'config/ssh/hello-id-rsa'
+
+  chef.module 'mdapp-my-app'
+  chef.recipe 'hello'
 end

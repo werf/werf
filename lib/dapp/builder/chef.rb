@@ -3,6 +3,7 @@ module Dapp
     # Chef
     class Chef < Base
       LOCAL_COOKBOOK_CHECKSUM_PATTERNS = %w(
+        attributes/**/*
         recipes/**/*
         files/**/*
         templates/**/*
@@ -184,7 +185,7 @@ module Dapp
       # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
       def _cookbooks_vendor_path
-        application.metadata_path("cookbooks.#{cookbooks_checksum}")
+        application.tmp_path(application.config._name, "cookbooks.#{cookbooks_checksum}")
       end
 
       def cookbooks_vendor_path(*path)
@@ -199,6 +200,7 @@ module Dapp
         @install_stage_cookbooks[stage] ||= true.tap do
           common_paths = proc do |cookbook_path|
             [['metadata.json', 'metadata.json'],
+             ['attributes', 'attributes'],
              ["files/#{stage}", 'files/default'],
              ["templates/#{stage}", 'templates/default']].select { |from, _| cookbook_path.join(from).exist? }
           end
