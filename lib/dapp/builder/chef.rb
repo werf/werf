@@ -3,6 +3,7 @@ module Dapp
     # Chef
     class Chef < Base
       LOCAL_COOKBOOK_CHECKSUM_PATTERNS = %w(
+        attributes/**/*
         recipes/**/*
         files/**/*
         templates/**/*
