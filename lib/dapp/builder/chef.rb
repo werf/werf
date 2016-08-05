@@ -184,7 +184,7 @@ module Dapp
       # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
       def _cookbooks_vendor_path
-        application.metadata_path("cookbooks.#{cookbooks_checksum}")
+        application.tmp_path(application.config._name, "cookbooks.#{cookbooks_checksum}")
       end
 
       def cookbooks_vendor_path(*path)
