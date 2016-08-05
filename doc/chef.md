@@ -40,4 +40,4 @@
 Выключить все рецепты из проекта и все модули для chef builder в данном контексте.
 
 ## Примеры
-* [Dappfile](doc/example/Dappfile.chef.1)
+* [Dappfile](example/Dappfile.chef.1)
