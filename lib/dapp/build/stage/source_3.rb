@@ -12,14 +12,14 @@ module Dapp
 
         def dependencies_checksum
           hashsum [super,
-                   app_setup_files_checksum,
-                   *application.builder.app_setup_checksum]
+                   setup_dependencies_files_checksum,
+                   *application.builder.setup_checksum]
         end
 
         private
 
-        def app_setup_files_checksum
-          @app_setup_files_checksum ||= dependency_files_checksum(application.config._app_setup_dependencies)
+        def setup_dependencies_files_checksum
+          @setup_files_checksum ||= dependencies_files_checksum(application.config._setup_dependencies)
         end
       end # Source3
     end # Stage

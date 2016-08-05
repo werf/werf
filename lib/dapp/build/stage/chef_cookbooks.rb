@@ -4,7 +4,7 @@ module Dapp
       # ChefCookbooks
       class ChefCookbooks < Base
         def initialize(application, next_stage)
-          @prev_stage = AppSetup.new(application, self)
+          @prev_stage = Setup.new(application, self)
           super
         end
 

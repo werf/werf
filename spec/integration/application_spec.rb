@@ -46,7 +46,7 @@ describe Dapp::Application do
     )
   end
 
-  [:from, :infra_install, :app_install, :infra_setup, :app_setup, :source_4, :source_5].each do |stage_name|
+  [:from, :infra_install, :install, :infra_setup, :setup, :source_4, :source_5].each do |stage_name|
     define_method "#{stage_name}_modified_signatures" do
       stages_names[stages_names.index(stage_name) - 1..-1]
     end
@@ -56,13 +56,13 @@ describe Dapp::Application do
     end
   end
 
-  [:infra_install, :app_install, :infra_setup, :app_setup].each do |stage_name|
+  [:infra_install, :install, :infra_setup, :setup].each do |stage_name|
     define_method :"change_#{stage_name}" do
       config[:_shell][:"_#{stage_name}"] << generate_command
     end
   end
 
-  [:app_install, :infra_setup, :app_setup].each do |stage_name|
+  [:install, :infra_setup, :setup].each do |stage_name|
     define_method "expect_#{stage_name}_image" do
       check_image_command(stage_name, config[:_shell][:"_#{stage_name}"].last)
       check_image_command(prev_stage(stage_name), 'apply')
@@ -179,8 +179,8 @@ describe Dapp::Application do
     source_5
   end
 
-  def app_setup
-    build_and_check(:app_setup)
+  def setup
+    build_and_check(:setup)
     source_5
     source_4
   end
@@ -189,14 +189,14 @@ describe Dapp::Application do
     build_and_check(:infra_setup)
     source_5
     source_4
-    app_setup
+    setup
   end
 
-  def app_install
-    build_and_check(:app_install)
+  def install
+    build_and_check(:install)
     source_5
     source_4
-    app_setup
+    setup
     infra_setup
   end
 
@@ -204,22 +204,22 @@ describe Dapp::Application do
     build_and_check(:infra_install)
     source_5
     source_4
-    app_setup
+    setup
     infra_setup
-    app_install
+    install
   end
 
   def from
     build_and_check(:from)
     source_5
     source_4
-    app_setup
+    setup
     infra_setup
-    app_install
+    install
     infra_install
   end
 
-  [:source_5, :source_4, :app_setup, :infra_setup, :app_install, :infra_install, :from].each do |stage|
+  [:source_5, :source_4, :setup, :infra_setup, :install, :infra_install, :from].each do |stage|
     it "test #{stage}" do
       send(stage)
     end

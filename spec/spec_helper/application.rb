@@ -34,11 +34,11 @@ module SpecHelper
                                 _name: 'test',
                                 _artifact: [],
                                 _chef: { _modules: [] },
-                                _shell: { _infra_install: [], _infra_setup: [], _app_install: [], _app_setup: [] },
+                                _shell: { _infra_install: [], _infra_setup: [], _install: [], _setup: [] },
                                 _docker: { _from: :'ubuntu:14.04', _change_options: {} },
                                 _git_artifact: { _local: [], _remote: [] },
-                                _app_install_dependencies: [],
-                                _app_setup_dependencies: []))
+                                _install_dependencies: [],
+                                _setup_dependencies: []))
     end
 
     def cli_options

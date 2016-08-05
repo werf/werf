@@ -1,6 +1,6 @@
 package 'automake'
 
-cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_app_setup.txt" do
+cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_setup.txt" do
   source 'pelmeni.txt'
   owner 'root'
   group 'root'

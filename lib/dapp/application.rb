@@ -16,8 +16,8 @@ module Dapp
     attr_reader :ignore_git_fetch
     attr_reader :is_artifact
 
-    STAGES = [:from, :infra_install, :source_1_archive, :source_1, :app_install, :source_2,
-              :infra_setup, :source_3, :chef_cookbooks, :app_setup, :source_4, :source_5].freeze
+    STAGES = [:from, :infra_install, :source_1_archive, :source_1, :install, :source_2,
+              :infra_setup, :source_3, :chef_cookbooks, :setup, :source_4, :source_5].freeze
 
     def initialize(config:, cli_options:, ignore_git_fetch: false, is_artifact: false)
       @config = config

@@ -1,6 +1,6 @@
 package 'make'
 
-cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_app_install.txt" do
+cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_install.txt" do
   source 'taco.txt'
   owner 'root'
   group 'root'

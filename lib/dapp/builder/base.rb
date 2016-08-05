@@ -24,19 +24,19 @@ module Dapp
         raise
       end
 
-      def app_install(_image)
+      def install(_image)
         raise
       end
 
-      def app_install_checksum
+      def install_checksum
         raise
       end
 
-      def app_setup(_image)
+      def setup(_image)
         raise
       end
 
-      def app_setup_checksum
+      def setup_checksum
         raise
       end
     end # Base

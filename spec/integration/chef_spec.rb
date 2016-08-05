@@ -19,9 +19,9 @@ describe Dapp::Builder::Chef do
       end
 
       [%i(infra_install foo pizza batareika),
-       %i(app_install bar taco koromyslo),
+       %i(install bar taco koromyslo),
        %i(infra_setup baz burger kolokolchik),
-       %i(app_setup qux pelmeni taburetka)].each do |stage, project_file, mdapp_test_file, mdapp_test2_file|
+       %i(setup qux pelmeni taburetka)].each do |stage, project_file, mdapp_test_file, mdapp_test2_file|
         it "rebuilds from stage #{stage}" do
           old_template_file_values = {}
           old_template_file_values[project_file] = send(project_file)
@@ -130,12 +130,12 @@ describe Dapp::Builder::Chef do
   TEST_FILE_NAMES = %i(foo X_foo X_Y_foo bar baz qux
                        burger pizza taco pelmeni
                        kolokolchik koromyslo taburetka batareika
-                       test_infra_install test_app_install
-                       test_infra_setup test_app_setup
-                       mdapp_test_infra_install mdapp_test_app_install
-                       mdapp_test_infra_setup mdapp_test_app_setup
-                       mdapp_test2_infra_install mdapp_test2_app_install
-                       mdapp_test2_infra_setup mdapp_test2_app_setup).freeze
+                       test_infra_install test_install
+                       test_infra_setup test_setup
+                       mdapp_test_infra_install mdapp_test_install
+                       mdapp_test_infra_setup mdapp_test_setup
+                       mdapp_test2_infra_install mdapp_test2_install
+                       mdapp_test2_infra_setup mdapp_test2_setup).freeze
 
   TEST_FILE_NAMES.each do |name|
     define_method("#{name}_path") do
