@@ -48,6 +48,11 @@ module Dapp
         [cache[:created_at], cache[:size]]
       end
 
+      def self.image_config_option(image_id:, option:)
+        output = shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
+        output == 'null' ? [] : JSON.parse(output)
+      end
+
       protected
 
       def cache

@@ -63,8 +63,8 @@ module Dapp
       [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(%r{^\/*|\/*$}, '') }.join(' ') if @paths
     end
 
-    def filename(ending)
-      "#{repo.name}#{name ? "_#{name}" : nil}#{ending}"
+    def full_name
+      "#{repo.name}#{name ? "_#{name}" : nil}"
     end
 
     protected

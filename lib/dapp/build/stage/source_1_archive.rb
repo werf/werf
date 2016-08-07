@@ -4,7 +4,7 @@ module Dapp
       # Source1Archive
       class Source1Archive < SourceBase
         def initialize(application, next_stage)
-          @prev_stage = InfraInstall.new(application, self)
+          @prev_stage = Source1ArchiveDependencies.new(application, self)
           super
         end
 
@@ -13,7 +13,7 @@ module Dapp
         end
 
         def next_source_stage
-          next_stage
+          next_stage.next_stage
         end
 
         protected

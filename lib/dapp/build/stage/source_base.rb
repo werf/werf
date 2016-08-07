@@ -8,20 +8,15 @@ module Dapp
         GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.3'.freeze
 
         def prev_source_stage
-          prev_stage.prev_stage
+          dependencies_stage.prev_stage.prev_stage
         end
 
         def next_source_stage
-          next_stage.next_stage
+          next_stage.next_stage.next_stage
         end
 
-        def save_in_cache!
-          super
-          layers_commits_write!
-        end
-
-        def signature
-          hashsum [dependencies_checksum, *commit_list]
+        def dependencies_stage
+          prev_stage
         end
 
         def image
@@ -42,14 +37,10 @@ module Dapp
           end
         end
 
-        def dependencies_checksum
-          hashsum [prev_stage.signature, artifacts_signatures]
-        end
-
         def layer_commit(git_artifact)
           commits[git_artifact] ||= begin
-            if layer_commit_file_path(git_artifact).exist?
-              layer_commit_file_path(git_artifact).read.strip
+            if dependencies_stage && dependencies_stage.image.tagged?
+              dependencies_stage.image.labels[git_artifact.full_name]
             else
               git_artifact.latest_commit
             end
@@ -83,22 +74,6 @@ module Dapp
 
         def apply_command_method
           :apply_patch_command
-        end
-
-        def commit_list
-          application.git_artifacts.map { |git_artifact| layer_commit(git_artifact) }
-        end
-
-        def layers_commits_write!
-          application.git_artifacts.each { |git_artifact| layer_commit_file_path(git_artifact).write(layer_commit(git_artifact)) }
-        end
-
-        def layer_commit_file_path(git_artifact)
-          application.metadata_path git_artifact.filename ".#{name}.#{git_artifact.paramshash}.#{dependencies_checksum}.commit"
-        end
-
-        def dependencies_files_checksum(regs)
-          hashsum(regs.map { |reg| Dir[File.join(application.home_path, reg)].map { |f| File.read(f) if File.file?(f) } })
         end
 
         private

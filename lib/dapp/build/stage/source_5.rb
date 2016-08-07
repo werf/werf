@@ -16,8 +16,12 @@ module Dapp
           nil
         end
 
+        def dependencies_stage
+          nil
+        end
+
         def signature
-          hashsum [super, change_options]
+          hashsum [super, *commit_list, change_options]
         end
 
         def image
@@ -29,14 +33,20 @@ module Dapp
           end
         end
 
-        protected
+        def layer_commit(git_artifact)
+          commits[git_artifact] ||= begin
+            git_artifact.latest_commit
+          end
+        end
+
+        private
 
         def change_options
           application.config._docker._change_options
         end
 
-        def layers_commits_write!
-          nil
+        def commit_list
+          application.git_artifacts.map { |git_artifact| layer_commit(git_artifact) }
         end
       end # Source5
     end # Stage

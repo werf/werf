@@ -4,15 +4,8 @@ module Dapp
       # Source2
       class Source2 < SourceBase
         def initialize(application, next_stage)
-          @prev_stage = Install.new(application, self)
+          @prev_stage = Source2Dependencies.new(application, self)
           super
-        end
-
-        protected
-
-        def dependencies_checksum
-          hashsum [super,
-                   *application.builder.infra_setup_checksum]
         end
       end # Source2
     end # Stage
