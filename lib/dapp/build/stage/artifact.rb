@@ -10,14 +10,20 @@ module Dapp
           super
         end
 
-        def signature
-          hashsum [super, *artifacts_signatures]
+        def dependencies
+          artifacts_signatures
         end
 
         def image
           super do |image|
             artifacts.each { |artifact| apply_artifact(artifact, image) }
           end
+        end
+
+        protected
+
+        def should_be_not_detailed?
+          true
         end
       end # Artifact
     end # Stage

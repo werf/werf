@@ -11,8 +11,16 @@ module Dapp
           end
         end
 
+        def image_empty?
+          application.git_artifacts.empty? ? true : false
+        end
+
+        protected
+
         def dependencies_files_checksum(regs)
-          hashsum(regs.map { |reg| Dir[File.join(application.home_path, reg)].map { |f| File.read(f) if File.file?(f) } })
+          unless (files = regs.map { |reg| Dir[File.join(application.home_path, reg)].map { |f| File.read(f) if File.file?(f) } }).empty?
+            hashsum files
+          end
         end
       end # SourceBase
     end # Stage

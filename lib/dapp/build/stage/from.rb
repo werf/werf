@@ -4,9 +4,7 @@ module Dapp
       # From
       class From < Base
         def signature
-          hashsum [from_image_name,
-                   application.config._docker._from_cache_version,
-                   Dapp::BUILD_CACHE_VERSION]
+          hashsum [*dependencies.flatten]
         end
 
         def save_in_cache!
@@ -15,6 +13,10 @@ module Dapp
         end
 
         protected
+
+        def dependencies
+          [from_image_name, application.config._docker._from_cache_version, Dapp::BUILD_CACHE_VERSION]
+        end
 
         def image_do_build
           from_image.pull!(log_time: application.log_time?)

@@ -37,6 +37,10 @@ module Dapp
           end
         end
 
+        def image_empty?
+          dependencies_stage.image_empty?
+        end
+
         def layer_commit(git_artifact)
           commits[git_artifact] ||= begin
             if dependencies_stage && dependencies_stage.image.tagged?

@@ -10,8 +10,10 @@ module Dapp
           super
         end
 
-        def signature
-          hashsum [super, (changes_size_since_source3 / MAX_PATCH_SIZE).to_i]
+        protected
+
+        def dependencies
+          [(changes_size_since_source3 / MAX_PATCH_SIZE).to_i]
         end
 
         private

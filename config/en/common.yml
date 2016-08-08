@@ -28,6 +28,7 @@ en:
       using_cache: '[USING CACHE]'
       not_present: '[NOT PRESENT]'
       build: '[BUILD]'
+      empty: '[EMPTY]'
       push: '[PUSH]'
     introspect:
       stage: "Introspect stage '%{name}'"

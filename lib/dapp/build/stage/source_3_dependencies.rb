@@ -8,8 +8,10 @@ module Dapp
           super
         end
 
-        def signature
-          hashsum [super, setup_dependencies_files_checksum, *application.builder.setup_checksum]
+        protected
+
+        def dependencies
+          [setup_dependencies_files_checksum, application.builder.setup_checksum]
         end
 
         private

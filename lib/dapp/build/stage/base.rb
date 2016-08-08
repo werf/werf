@@ -27,34 +27,52 @@ module Dapp
         end
 
         def save_in_cache!
-          return if image.tagged?
           prev_stage.save_in_cache!                                                          if prev_stage
+          return unless should_be_tagged?
           image.tag!(log_verbose: application.log_verbose?, log_time: application.log_time?) unless application.dry_run?
-        end
-
-        def signature
-          hashsum [prev_stage.signature]
         end
 
         def image
           @image ||= begin
-            Image::Stage.new(name: image_name, from: from_image).tap do |image|
-              image.add_volume "#{application.tmp_path}:#{application.container_tmp_path}"
-              image.add_change_label dapp: application.config._basename
-              yield image if block_given?
+            if image_empty?
+              prev_stage.image
+            else
+              Image::Stage.new(name: image_name, from: from_image).tap do |image|
+                image.add_volume "#{application.tmp_path}:#{application.container_tmp_path}"
+                image.add_change_label dapp: application.config._basename
+                yield image if block_given?
+              end
             end
+          end
+        end
+
+        def image_empty?
+          dependencies_empty?
+        end
+
+        def dependencies_empty?
+          dependencies.flatten.compact.empty?
+        end
+
+        def signature
+          if image_empty?
+            prev_stage.signature
+          else
+            hashsum [prev_stage.signature, *dependencies.flatten]
           end
         end
 
         protected
 
-        def name
-          class_to_lowercase.to_sym
+        def dependencies
+          []
         end
 
         # rubocop:disable Metrics/AbcSize
         def image_build
-          if image.tagged?
+          if image_empty?
+            application.log_state(name, state: application.t(code: 'state.empty'))
+          elsif image.tagged?
             application.log_state(name, state: application.t(code: 'state.using_cache'))
           elsif should_be_not_present?
             application.log_state(name, state: application.t(code: 'state.not_present'))
@@ -77,14 +95,22 @@ module Dapp
                        introspect_before_error: application.cli_options[:introspect_before_error])
         end
 
+        def should_be_tagged?
+          !(image.tagged? || image_empty?)
+        end
+
+        def image_name
+          "#{application.config._basename}-dappstage:#{signature}"
+        end
+
         def from_image
           prev_stage.image if prev_stage || begin
             raise Error::Build, code: :from_image_required
           end
         end
 
-        def image_name
-          "#{application.config._basename}-dappstage:#{signature}"
+        def name
+          class_to_lowercase.to_sym
         end
       end # Base
     end # Stage

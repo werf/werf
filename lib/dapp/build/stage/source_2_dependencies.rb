@@ -8,8 +8,10 @@ module Dapp
           super
         end
 
-        def signature
-          hashsum [super, *application.builder.infra_setup_checksum]
+        protected
+
+        def dependencies
+          application.builder.infra_setup_checksum
         end
       end # Source2Dependencies
     end # Stage

@@ -8,8 +8,14 @@ module Dapp
           super
         end
 
-        def signature
-          hashsum [super, install_dependencies_files_checksum, *application.builder.install_checksum]
+        def image_empty?
+          super || dependencies_empty?
+        end
+
+        protected
+
+        def dependencies
+          [install_dependencies_files_checksum, application.builder.install_checksum]
         end
 
         private
