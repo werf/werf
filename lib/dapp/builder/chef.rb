@@ -17,7 +17,8 @@ module Dapp
         define_method(:"#{stage}") do |image|
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
-            image.add_commands 'export PATH=/.dapp/deps/chefdk/bin:$PATH'
+            image.add_commands 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
+                               "export DAPP_BUILD_STAGE=#{stage}"
 
             image.add_volume "#{stage_tmp_path(stage)}:#{container_stage_tmp_path(stage)}"
             image.add_commands ['chef-solo',
