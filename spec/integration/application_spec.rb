@@ -6,23 +6,22 @@ describe Dapp::Application do
   include SpecHelper::Git
 
   before :all do
-    @wd = Dir.pwd
+    # @wd = Dir.pwd
     init
   end
 
   before :each do
-    stub_docker_image
     application_build!
   end
 
   after :all do
-    Dir.chdir @wd
+    # Dir.chdir @wd
   end
 
   def init
-    FileUtils.rm_rf project_path
-    FileUtils.mkpath project_path
-    Dir.chdir project_path
+    # FileUtils.rm_rf project_path
+    # FileUtils.mkpath project_path
+    # Dir.chdir project_path
     git_init!
   end
 
@@ -39,20 +38,17 @@ describe Dapp::Application do
       _builder: :shell,
       _home_path: project_path,
       _docker: default_config[:_docker].merge(_from: :'ubuntu:16.04'),
-      _shell: default_config[:_shell].merge(_infra_install: ['apt-get update',
-                                                             'apt-get -y dist-upgrade',
-                                                             'apt-get -y install apt-utils curl apt-transport-https git']),
       _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { where_to_add: '/app' } })
     )
   end
 
-  [:from, :infra_install, :install, :infra_setup, :setup, :source_4, :source_5].each do |stage_name|
+  [:install, :infra_setup, :setup].each do |stage_name|
     define_method "#{stage_name}_modified_signatures" do
-      stages_names[stages_names.index(stage_name) - 1..-1]
+      stages_names[stages_names.index(stage_name) - 2..-1]
     end
 
     define_method "#{stage_name}_saved_signatures" do
-      stages_names[0..stages_names.index(stage_name) - 2]
+      stages_names[0..stages_names.index(stage_name) - 3]
     end
   end
 
@@ -76,6 +72,9 @@ describe Dapp::Application do
   end
 
   def check_image_command(stage_name, command)
+    if stages[stage_name].send(:image_empty?)
+      puts "$$$$$$$$$$$$$$ #{stage_name}"
+    end
     expect(stages[stage_name].send(:image).send(:bash_commands).join =~ Regexp.new(command)).to be
   end
 
@@ -119,6 +118,10 @@ describe Dapp::Application do
     end
   end
 
+  def source_4_saved_signatures
+    stages_names[0..stages_names.index(:source_4) - 2]
+  end
+
   def source_4_modified_signatures
     stages_names[stages_names.index(:source_4)..-1]
   end
@@ -137,7 +140,6 @@ describe Dapp::Application do
 
   def build_and_check(stage_name)
     check_signatures_and_build(stage_name)
-    expect_built_stages(stage_name)
     send("expect_#{stage_name}_image")
   end
 
@@ -147,22 +149,6 @@ describe Dapp::Application do
     application_renew
     expect_stages_signatures(stage_name, saved_signatures, stages_signatures)
     application_build!
-  end
-
-  def expect_built_stages(stage_name)
-    parted_stages_signatures(stage_name) do |built_stages, not_built_stages|
-      [:build!, :tag!].each do |method|
-        not_built_stages.each { |s| expect(s.send(:image)).to_not have_received(method) }
-        built_stages.each { |s| expect(s.send(:image)).to have_received(method) }
-      end
-    end
-  end
-
-  def parted_stages_signatures(stage_name)
-    built_stages, not_built_stages = stages.values.partition do |s|
-      send("#{stage_name}_modified_signatures").include? s.send(:name)
-    end
-    yield built_stages, not_built_stages
   end
 
   def expect_stages_signatures(stage_name, saved_keys, new_keys)
@@ -219,9 +205,16 @@ describe Dapp::Application do
     infra_install
   end
 
-  [:source_5, :source_4, :setup, :infra_setup, :install, :infra_install, :from].each do |stage|
-    it "test #{stage}" do
-      send(stage)
+  after :all do
+    shellout('docker rm $(docker ps -a | awk "{print \$1}"))')
+    shellout('docker rmi -f $(docker images | grep dapp | awk "{print \$3}")')
+  end
+
+  context test_construct: true do
+    [:source_5, :source_4, :setup, :infra_setup, :install, :infra_install, :from].each do |stage|
+      it "test #{stage}" do
+        send(stage)
+      end
     end
   end
 end

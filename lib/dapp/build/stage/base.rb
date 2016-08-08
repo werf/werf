@@ -62,11 +62,11 @@ module Dapp
           end
         end
 
-        protected
-
         def dependencies
           []
         end
+
+        protected
 
         # rubocop:disable Metrics/AbcSize
         def image_build

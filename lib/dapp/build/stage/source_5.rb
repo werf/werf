@@ -20,6 +20,10 @@ module Dapp
           nil
         end
 
+        def dependencies
+          [commit_list, change_options]
+        end
+
         def image
           super do |image|
             change_options.each do |k, v|
@@ -37,12 +41,6 @@ module Dapp
 
         def image_empty?
           application.git_artifacts.empty? || dependencies_empty?
-        end
-
-        protected
-
-        def dependencies
-          [commit_list, change_options]
         end
 
         private

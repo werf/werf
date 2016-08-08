@@ -8,14 +8,12 @@ module Dapp
           super
         end
 
-        def image_empty?
-          super || dependencies_empty?
-        end
-
-        protected
-
         def dependencies
           [install_dependencies_files_checksum, application.builder.install_checksum]
+        end
+
+        def image_empty?
+          super || dependencies_empty?
         end
 
         private

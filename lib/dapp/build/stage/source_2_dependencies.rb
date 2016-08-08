@@ -8,8 +8,6 @@ module Dapp
           super
         end
 
-        protected
-
         def dependencies
           application.builder.infra_setup_checksum
         end

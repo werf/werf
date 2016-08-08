@@ -10,8 +10,6 @@ module Dapp
           super
         end
 
-        protected
-
         def dependencies
           [(changes_size_since_source3 / MAX_PATCH_SIZE).to_i]
         end

@@ -8,8 +8,6 @@ module Dapp
           super
         end
 
-        protected
-
         def dependencies
           [setup_dependencies_files_checksum, application.builder.setup_checksum]
         end

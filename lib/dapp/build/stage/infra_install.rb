@@ -8,16 +8,14 @@ module Dapp
           super
         end
 
+        def dependencies
+          application.builder.infra_install_checksum
+        end
+
         def image
           super do |image|
             application.builder.infra_install(image)
           end
-        end
-
-        protected
-
-        def dependencies
-          application.builder.infra_install_checksum
         end
       end # InfraInstall
     end # Stage

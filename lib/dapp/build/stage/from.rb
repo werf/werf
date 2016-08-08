@@ -7,16 +7,16 @@ module Dapp
           hashsum [*dependencies.flatten]
         end
 
+        def dependencies
+          [from_image_name, application.config._docker._from_cache_version, Dapp::BUILD_CACHE_VERSION]
+        end
+
         def save_in_cache!
           from_image.untag! if from_image.pulled?
           super
         end
 
         protected
-
-        def dependencies
-          [from_image_name, application.config._docker._from_cache_version, Dapp::BUILD_CACHE_VERSION]
-        end
 
         def image_do_build
           from_image.pull!(log_time: application.log_time?)

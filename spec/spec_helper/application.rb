@@ -46,7 +46,7 @@ module SpecHelper
     end
 
     def default_cli_options
-      { log_quiet: true, log_indent: 0 }
+      { log_quiet: false, log_indent: 0, log_verbose: true }
     end
 
     def stages_names

@@ -8,6 +8,10 @@ module Dapp
           super
         end
 
+        def dependencies
+          prev_stage.prev_stage.dependencies
+        end
+
         def image
           super do |image|
             application.builder.install(image)

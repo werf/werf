@@ -8,16 +8,14 @@ module Dapp
           super
         end
 
+        def dependencies
+          application.builder.chef_cookbooks_checksum
+        end
+
         def image
           super do |image|
             application.builder.chef_cookbooks(image)
           end
-        end
-
-        protected
-
-        def dependencies
-          application.builder.chef_cookbooks_checksum
         end
       end # ChefCookbooks
     end # Stage
