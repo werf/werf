@@ -72,13 +72,13 @@ module Dapp
 
       def local_cookbook_paths_for_checksum
         @local_cookbook_paths_for_checksum ||= berksfile
-          .local_cookbooks
-          .values
-          .map { |cookbook| cookbook[:path] }
-          .product(LOCAL_COOKBOOK_CHECKSUM_PATTERNS)
-          .map { |cb, dir| Dir[cb.join(dir)] }
-          .flatten
-          .map(&Pathname.method(:new))
+                                               .local_cookbooks
+                                               .values
+                                               .map { |cookbook| cookbook[:path] }
+                                               .product(LOCAL_COOKBOOK_CHECKSUM_PATTERNS)
+                                               .map { |cb, dir| Dir[cb.join(dir)] }
+                                               .flatten
+                                               .map(&Pathname.method(:new))
       end
 
       def stage_cookbooks_paths_for_checksum(stage)
@@ -203,40 +203,39 @@ module Dapp
         @install_stage_cookbooks[stage] ||= true.tap do
           common_paths = proc do |cookbook_path|
             [['metadata.json', 'metadata.json'],
-             ['attributes', 'attributes'],
+             %w(attributes attributes),
              ["files/#{stage}", 'files/default'],
-             ["templates/#{stage}", 'templates/default']
-            ].select { |from, _| cookbook_path.join(from).exist? }
+             ["templates/#{stage}", 'templates/default']].select { |from, _| cookbook_path.join(from).exist? }
           end
 
           install_paths = Dir[cookbooks_vendor_path('*')]
-            .map(&Pathname.method(:new))
-            .map do |cookbook_path|
-              cookbook_name = File.basename cookbook_path
-              is_project = (cookbook_name == project_name)
-              is_mdapp = cookbook_name.start_with? 'mdapp-'
-              mdapp_enabled = is_mdapp && application.config._chef._modules.include?(cookbook_name)
+                          .map(&Pathname.method(:new))
+                          .map do |cookbook_path|
+            cookbook_name = File.basename cookbook_path
+            is_project = (cookbook_name == project_name)
+            is_mdapp = cookbook_name.start_with? 'mdapp-'
+            mdapp_enabled = is_mdapp && application.config._chef._modules.include?(cookbook_name)
 
-              paths = if is_project
-                recipe_paths = application.config._chef._recipes
-                  .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
-                  .select { |from, _| cookbook_path.join(from).exist? }
+            paths = if is_project
+                      recipe_paths = application.config._chef._recipes
+                                                .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
+                                                .select { |from, _| cookbook_path.join(from).exist? }
 
-                (recipe_paths + common_paths[cookbook_path]) if recipe_paths.any?
-              elsif is_mdapp && mdapp_enabled
-                recipe_path = "recipes/#{stage}.rb"
-                if cookbook_path.join(recipe_path).exist?
-                  [[recipe_path, recipe_path]] + common_paths[cookbook_path]
-                elsif cookbook_metadata.depends.include? cookbook_name
-                  [['metadata.json', 'metadata.json']]
-                end
-              else
-                [['.', '.']]
-              end
+                      (recipe_paths + common_paths[cookbook_path]) if recipe_paths.any?
+                    elsif is_mdapp && mdapp_enabled
+                      recipe_path = "recipes/#{stage}.rb"
+                      if cookbook_path.join(recipe_path).exist?
+                        [[recipe_path, recipe_path]] + common_paths[cookbook_path]
+                      elsif cookbook_metadata.depends.include? cookbook_name
+                        [['metadata.json', 'metadata.json']]
+                      end
+                    else
+                      [['.', '.']]
+                    end
 
-              [cookbook_path, paths] if paths && paths.any?
-            end
-            .compact
+            [cookbook_path, paths] if paths && paths.any?
+          end
+                          .compact
 
           stage_cookbooks_path(stage).mkpath
           install_paths.each do |cookbook_path, paths|

@@ -6,7 +6,7 @@ module Dapp
         def image
           super do |image|
             application.git_artifacts.each do |git_artifact|
-              image.add_change_label({ git_artifact.full_name.to_sym => git_artifact.latest_commit })
+              image.add_change_label(git_artifact.full_name.to_sym => git_artifact.latest_commit)
             end
           end
         end

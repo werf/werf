@@ -27,7 +27,7 @@ module Dapp
         end
 
         def save_in_cache!
-          prev_stage.save_in_cache!                                                          if prev_stage
+          prev_stage.save_in_cache! if prev_stage
           return unless should_be_tagged?
           image.tag!(log_verbose: application.log_verbose?, log_time: application.log_time?) unless application.dry_run?
         end

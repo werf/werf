@@ -18,7 +18,7 @@ describe Dapp::Build::Stage do
 
     def first_stage
       stage = last_stage
-      while stage.prev_stage; stage = stage.prev_stage end
+      stage = stage.prev_stage while stage.prev_stage
       stage
     end
 
