@@ -4,6 +4,18 @@
 
 ### Dappfile
 
+#### Основное
+*TODO*
+
+#### Артифакты
+*TODO*
+
+#### Docker
+*TODO*
+
+#### Shell
+*TODO*
+
 #### Chef
 
 ##### chef.module \<mod\>[, \<mod\>, \<mod\> ...]
@@ -49,11 +61,20 @@
 * [Dappfile](doc/example/Dappfile.chef.1)
 
 ### Команды
+
 #### dapp build
 *TODO*
+
 #### dapp push
 *TODO*
+
 #### dapp smartpush
 *TODO*
+
 ## Architecture
+
+### Стадии
+*TODO*
+
+### Хранение данных
 *TODO*
