@@ -49,11 +49,17 @@ module Dapp
     end
 
     def stages_flush
-      shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{build_configs.first._basename}-dappstage)})
+      build_configs.map(&:_basename).uniq.each do |basename|
+        log(basename)
+        shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{basename}-dappstage)})
+      end
     end
 
     def stages_cleanup
-      shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{build_configs.first._basename}" -q)})
+      build_configs.map(&:_basename).uniq.each do |basename|
+        log(basename)
+        shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})
+      end
     end
 
     def metadata_flush
