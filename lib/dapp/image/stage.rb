@@ -51,7 +51,7 @@ module Dapp
 
       def run!(log_verbose: false, log_time: false, introspect_error: false, introspect_before_error: false)
         raise Error::Build, code: :built_id_not_defined if from.built_id.nil?
-        shellout!("docker run #{prepared_options} --entrypoint /bin/sh --name=#{container_name} #{from.built_id} -c #{prepared_bash_command}",
+        shellout!("docker run #{prepared_options} --entrypoint /bin/bash --name=#{container_name} #{from.built_id} -ec '#{prepared_bash_command}'",
                   log_verbose: log_verbose, log_time: log_time)
       rescue Error::Shellout => e
         raise unless introspect_error || introspect_before_error

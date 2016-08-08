@@ -56,10 +56,10 @@ module Dapp
 
             docker_options = ['--rm',
                               "--volume #{application.tmp_path('artifact', artifact_name)}:#{app.container_tmp_path(artifact_name)}",
-                              '--entrypoint /bin/sh']
+                              '--entrypoint /bin/bash']
             commands = safe_cp(where_to_add, app.container_tmp_path(artifact_name), Process.uid, Process.gid)
             application.log_secondary_process(application.t(code: 'process.artifact_copy', data: { name: artifact_name }), short: true) do
-              app.run(docker_options, ['-c', application.shellout_pack(commands)])
+              app.run(docker_options, [%{-ec '#{application.shellout_pack(commands)}'}])
             end
 
             commands = safe_cp(application.container_tmp_path('artifact', artifact_name), where_to_add, owner, group, cwd, paths)
