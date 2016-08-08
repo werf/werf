@@ -34,7 +34,7 @@ module Dapp
       end
 
       def shellout_pack(command)
-        "-ec 'eval $(echo #{Base64.strict_encode64(command)} | base64 --decode)'"
+        "bash -ec 'eval $(echo #{Base64.strict_encode64(command)} | base64 --decode)'"
       end
 
       def self.included(base)
