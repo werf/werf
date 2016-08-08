@@ -40,7 +40,7 @@ module Dapp
         end
 
         def image_empty?
-          application.git_artifacts.empty? || dependencies_empty?
+          dependencies_empty?
         end
 
         private

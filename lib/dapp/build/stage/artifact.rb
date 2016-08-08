@@ -25,6 +25,10 @@ module Dapp
         def should_be_not_detailed?
           true
         end
+
+        def ignore_log_commands?
+          true
+        end
       end # Artifact
     end # Stage
   end # Build

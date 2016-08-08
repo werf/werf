@@ -76,6 +76,10 @@ module Dapp
           true
         end
 
+        def ignore_log_commands?
+          true
+        end
+
         def apply_command_method
           :apply_patch_command
         end

@@ -10,7 +10,7 @@ module Dapp
               application.log_info application.t(code: 'image.signature', data: { signature: image_name })
               unless image_empty?
                 log_image_info
-                log_image_commands
+                log_image_commands unless ignore_log_commands?
               end
             end if application.log? && application.log_verbose?
           end
@@ -41,6 +41,10 @@ module Dapp
 
           def size_difference?
             from_image.tagged? && !prev_stage.nil?
+          end
+
+          def ignore_log_commands?
+            false
           end
 
           def should_be_skipped?

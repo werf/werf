@@ -20,7 +20,7 @@ module Dapp
         def build!
           return if should_be_skipped?
           prev_stage.build! if prev_stage
-          image_build
+          image_build unless image_empty? && !application.log_verbose?
           raise Exception::IntrospectImage,
                 message: application.t(code: 'introspect.stage', data: { name: name }),
                 data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
