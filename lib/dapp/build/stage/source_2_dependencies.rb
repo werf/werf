@@ -4,7 +4,7 @@ module Dapp
       # Source2Dependencies
       class Source2Dependencies < SourceDependenciesBase
         def initialize(application, next_stage)
-          @prev_stage = Install.new(application, self)
+          @prev_stage = Artifact.new(application, self)
           super
         end
 

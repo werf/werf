@@ -24,6 +24,4 @@ en:
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
       docker_from_not_defined: "Docker `from` not defined!"
       artifact_unexpected_attribute: "Artifact doesn't has attribute '%{attr}'!"
-      stage_artifact_not_associated: "Artifact not associated with any stage!"
-      stage_artifact_incorrect_associated_value: "Artifact option '%{option}' has incorrect value '%{value}'!"
       git_artifact_unexpected_attribute: "'%{type}' git artifact doesn't has attribute '%{attr}'!"

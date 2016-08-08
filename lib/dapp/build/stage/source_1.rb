@@ -11,6 +11,10 @@ module Dapp
         def prev_source_stage
           dependencies_stage.prev_stage
         end
+
+        def next_source_stage
+          super.next_stage
+        end
       end # Source1
     end # Stage
   end # Build

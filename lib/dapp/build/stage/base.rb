@@ -5,7 +5,6 @@ module Dapp
       class Base
         include Helper::Sha256
         include Helper::Trivia
-        include Mod::Artifact
         include Mod::Logging
 
         attr_accessor :prev_stage, :next_stage
@@ -34,7 +33,7 @@ module Dapp
         end
 
         def signature
-          hashsum [prev_stage.signature, artifacts_signatures]
+          hashsum [prev_stage.signature]
         end
 
         def image
@@ -42,9 +41,7 @@ module Dapp
             Image::Stage.new(name: image_name, from: from_image).tap do |image|
               image.add_volume "#{application.tmp_path}:#{application.container_tmp_path}"
               image.add_change_label dapp: application.config._basename
-              before_artifacts.each { |artifact| apply_artifact(artifact, image) }
               yield image if block_given?
-              after_artifacts.each { |artifact| apply_artifact(artifact, image) }
             end
           end
         end

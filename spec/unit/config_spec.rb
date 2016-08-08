@@ -309,22 +309,15 @@ describe Dapp::Config::Main do
 
   context 'artifact' do
     it 'base' do
-      @dappfile = "artifact 'where_to_add', #{artifact_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')}, before: 'source_1'"
+      @dappfile = "artifact 'where_to_add', #{artifact_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')}"
       artifact_attributes.delete(:paths)
       expect(app._artifact.first._paths).to eq ['paths']
       artifact_attributes.each { |attr| expect(app._artifact.first.public_send("_#{attr}")).to eq attr.to_s }
     end
 
-    it 'missing one of the following options: before, after (:stage_artifact_not_associated)' do
-      @dappfile = "artifact 'where_to_add'"
-      expect_exception_code(code: :stage_artifact_not_associated) { apps }
-    end
-
-    it 'option before, after with incorrect value (:stage_artifact_incorrect_associated_value)' do
-      @dappfile = "artifact 'where_to_add', before: 'incorrect_stage_name'"
-      expect_exception_code(code: :stage_artifact_incorrect_associated_value) { apps }
-      @dappfile = "artifact 'where_to_add', after: 'incorrect_stage_name'"
-      expect_exception_code(code: :stage_artifact_incorrect_associated_value) { apps }
+    it 'local with remote options' do
+      @dappfile = "artifact 'where_to_add', unsupported_key: :value"
+      expect_exception_code(code: :artifact_unexpected_attribute) { apps }
     end
   end
 
@@ -336,12 +329,12 @@ describe Dapp::Config::Main do
       @dappfile = "git_artifact.remote 'url', 'where_to_add', #{dappfile_remote_options}"
       remote_attributes.delete(:paths)
       expect(app.git_artifact.remote.first._paths).to eq ['paths']
-      artifact_attributes.each { |attr| expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq attr.to_s }
+      remote_attributes.each { |attr| expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq attr.to_s }
     end
 
-    it 'local with remote options' do
+    it 'local with remote options (:git_artifact_unexpected_attribute)' do
       @dappfile = "git_artifact.local 'where_to_add', #{dappfile_remote_options}"
-      expect { apps }.to raise_error Dapp::Error::Config
+      expect_exception_code(code: :git_artifact_unexpected_attribute) { apps }
     end
 
     it 'git_artifact paths' do

@@ -12,7 +12,7 @@ describe Dapp::Build::Stage do
   context 'stages' do
     before :each do
       @stages = [:from, :infra_install, :source_1_archive_dependencies, :source_1_archive, :source_1_dependencies,
-                 :source_1, :install, :source_2_dependencies, :source_2, :infra_setup, :source_3_dependencies, :source_3,
+                 :source_1, :install, :artifact, :source_2_dependencies, :source_2, :infra_setup, :source_3_dependencies, :source_3,
                  :setup, :chef_cookbooks, :source_4_dependencies, :source_4, :source_5]
     end
 

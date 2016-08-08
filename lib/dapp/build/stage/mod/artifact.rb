@@ -5,25 +5,19 @@ module Dapp
       module Mod
         # Artifact
         module Artifact
-          def before_artifacts
-            @before_artifacts ||= do_artifacts(application.config._artifact.select { |artifact| artifact._before == name })
-          end
-
-          def after_artifacts
-            @after_artifacts ||= do_artifacts(application.config._artifact.select { |artifact| artifact._after == name })
-          end
-
-          def do_artifacts(artifacts)
-            verbose = application.log_verbose?
-            artifacts.map do |artifact|
-              process = application.t(code: 'process.artifact_building', data: { name: artifact._config._name })
-              application.log_secondary_process(process, short: !verbose) do
-                application.with_log_indent do
-                  {
-                    name: artifact._config._name,
-                    options: artifact._artifact_options,
-                    app: Application.new(artifact_app_options(artifact, verbose)).tap(&:build!)
-                  }
+          def artifacts
+            @artifacts ||= begin
+              verbose = application.log_verbose?
+              application.config._artifact.map do |artifact|
+                process = application.t(code: 'process.artifact_building', data: { name: artifact._config._name })
+                application.log_secondary_process(process, short: !verbose) do
+                  application.with_log_indent do
+                    {
+                        name: artifact._config._name,
+                        options: artifact._artifact_options,
+                        app: Application.new(artifact_app_options(artifact, verbose)).tap(&:build!)
+                    }
+                  end
                 end
               end
             end
@@ -39,7 +33,7 @@ module Dapp
           end
 
           def artifacts_signatures
-            (before_artifacts + after_artifacts).map { |artifact| hashsum [artifact[:app].signature, artifact[:options]] }
+            artifacts.map { |artifact| hashsum [artifact[:app].signature, artifact[:options]] }
           end
 
           # rubocop:disable Metrics/AbcSize, Metrics/MethodLength

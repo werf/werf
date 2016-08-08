@@ -48,34 +48,11 @@ module Dapp
       # Stage
       class Stage < Base
         attr_accessor :_config
-        attr_accessor :_before, :_after
-
-        def initialize(*args)
-          super
-          raise Error::Config, code: :stage_artifact_not_associated if _before.nil? && _after.nil?
-        end
-
-        def _before=(stage)
-          @_before = stage.to_sym
-          validate_associated_option(option: :before, value: @_before)
-        end
-
-        def _after=(stage)
-          @_after = stage.to_sym
-          validate_associated_option(option: :after, value: @_after)
-        end
 
         protected
 
         def code
           :artifact_unexpected_attribute
-        end
-
-        private
-
-        def validate_associated_option(option:, value:)
-          return if Dapp::Application::STAGES.include? value
-          raise Error::Config, code: :stage_artifact_incorrect_associated_value, data: { option: option, value: value }
         end
       end
     end
