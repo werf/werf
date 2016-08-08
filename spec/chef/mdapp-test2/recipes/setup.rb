@@ -1,5 +1,3 @@
-package 'cmake'
-
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_setup.txt" do
   source 'taburetka.txt'
   owner 'root'

@@ -1,7 +1,5 @@
 include_recipe 'apt' if node[:platform_family].to_s == 'debian'
 
-package 'autotrace'
-
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_infra_install.txt" do
   source 'batareika.txt'
   owner 'root'
