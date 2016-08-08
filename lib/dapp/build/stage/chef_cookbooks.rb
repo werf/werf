@@ -9,7 +9,7 @@ module Dapp
         end
 
         def dependencies
-          application.builder.chef_cookbooks_checksum
+          [application.builder.chef_cookbooks_checksum]
         end
 
         def image

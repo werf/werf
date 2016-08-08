@@ -6,7 +6,7 @@ describe Dapp::Application do
   include SpecHelper::Git
 
   before :all do
-    # @wd = Dir.pwd
+    @wd = Dir.pwd
     init
   end
 
@@ -15,13 +15,13 @@ describe Dapp::Application do
   end
 
   after :all do
-    # Dir.chdir @wd
+    Dir.chdir @wd
   end
 
   def init
-    # FileUtils.rm_rf project_path
-    # FileUtils.mkpath project_path
-    # Dir.chdir project_path
+    FileUtils.rm_rf project_path
+    FileUtils.mkpath project_path
+    Dir.chdir project_path
     git_init!
   end
 
@@ -72,9 +72,6 @@ describe Dapp::Application do
   end
 
   def check_image_command(stage_name, command)
-    if stages[stage_name].send(:image_empty?)
-      puts "$$$$$$$$$$$$$$ #{stage_name}"
-    end
     expect(stages[stage_name].send(:image).send(:bash_commands).join =~ Regexp.new(command)).to be
   end
 
@@ -83,7 +80,6 @@ describe Dapp::Application do
   end
 
   def expect_from_image
-    check_image_command(:infra_install, 'update')
     check_image_command(:source_1_archive, 'tar -x')
   end
 
@@ -205,16 +201,9 @@ describe Dapp::Application do
     infra_install
   end
 
-  after :all do
-    shellout('docker rm $(docker ps -a | awk "{print \$1}"))')
-    shellout('docker rmi -f $(docker images | grep dapp | awk "{print \$3}")')
-  end
-
-  context test_construct: true do
-    [:source_5, :source_4, :setup, :infra_setup, :install, :infra_install, :from].each do |stage|
-      it "test #{stage}" do
-        send(stage)
-      end
+  [:source_5, :source_4, :setup, :infra_setup, :install, :infra_install, :from].each do |stage|
+    it "test #{stage}" do
+      send(stage)
     end
   end
 end

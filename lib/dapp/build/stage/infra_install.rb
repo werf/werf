@@ -9,7 +9,7 @@ module Dapp
         end
 
         def dependencies
-          application.builder.infra_install_checksum
+          [application.builder.infra_install_checksum]
         end
 
         def image

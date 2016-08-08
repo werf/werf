@@ -9,7 +9,7 @@ module Dapp
         end
 
         def dependencies
-          application.builder.infra_setup_checksum
+          [application.builder.infra_setup_checksum]
         end
       end # Source2Dependencies
     end # Stage
