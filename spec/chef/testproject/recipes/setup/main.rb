@@ -1,5 +1,3 @@
-# package 'unzip'
-
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_setup.txt" do
   source 'qux.txt'
   owner 'root'
