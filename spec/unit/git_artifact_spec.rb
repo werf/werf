@@ -68,7 +68,7 @@ describe Dapp::GitArtifact do
 
   def command_apply(command)
     expect(command).to_not be_empty
-    expect { shellout!("bash #{command}") }.to_not raise_error
+    expect { shellout!(command) }.to_not raise_error
   end
 
   def clear_where_to_add
