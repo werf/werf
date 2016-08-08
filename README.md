@@ -1,11 +1,12 @@
 # dapp [![Gem Version](https://badge.fury.io/rb/dapp.svg)](https://badge.fury.io/rb/dapp) [![Build Status](https://travis-ci.org/flant/dapp.svg)](https://travis-ci.org/flant/dapp) [![Code Climate](https://codeclimate.com/github/flant/dapp/badges/gpa.svg)](https://codeclimate.com/github/flant/dapp) [![Test Coverage](https://codeclimate.com/github/flant/dapp/badges/coverage.svg)](https://codeclimate.com/github/flant/dapp/coverage)
 
-## Chef
-### Примеры
-* [Dappfile](doc/example/Dappfile.chef.1)
+## Reference
 
 ### Dappfile
-#### module \<mod\>[, \<mod\>, \<mod\> ...]
+
+#### Chef
+
+##### chef.module \<mod\>[, \<mod\>, \<mod\> ...]
 Включить переданные модули для chef builder в данном контексте.
 
 * Для каждого переданного модуля может существовать по одному рецепту на каждый из stage.
@@ -17,13 +18,13 @@
   * templates/\<stage\>/ -> templates/default/
   * metadata.json
 
-#### skip_module \<mod\>[, \<mod\>, \<mod\> ...]
+##### chef.skip_module \<mod\>[, \<mod\>, \<mod\> ...]
 Выключить переданные модули для chef builder в данном контексте.
 
-#### reset_modules
+##### chef.reset_modules
 Выключить все модули для chef builder в данном контексте.
 
-#### recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
+##### chef.recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
 Включить переданные рецепты из проекта для chef builder в данном контексте.
 
 * Для каждого преданного рецепта может существовать файл рецепта в проекте на каждый из stage.
@@ -35,11 +36,24 @@
   * templates/\<stage\>/ -> templates/default/
   * metadata.json
 
-#### remove_recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
+##### chef.remove_recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
 Выключить переданные рецепты из проекта для chef builder в данном контексте.
 
-#### reset_recipes
+##### chef.reset_recipes
 Выключить все рецепты из проекта для chef builder в данном контексте.
 
-#### reset_all
+##### chef.reset_all
 Выключить все рецепты из проекта и все модули для chef builder в данном контексте.
+
+##### Примеры
+* [Dappfile](doc/example/Dappfile.chef.1)
+
+### Команды
+#### dapp build
+*TODO*
+#### dapp push
+*TODO*
+#### dapp smartpush
+*TODO*
+## Architecture
+*TODO*
