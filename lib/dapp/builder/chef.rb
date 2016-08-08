@@ -43,6 +43,12 @@ module Dapp
 
       private
 
+      def enabled_modules
+        application.config._chef._modules.map do |mod|
+          mod.start_with?('mdapp-') ? mod.split('mdapp-')[1] : mod
+        end
+      end
+
       def project_name
         cookbook_metadata.name
       end
@@ -100,7 +106,7 @@ module Dapp
                      else
                        application.hashsum [
                          _paths_checksum(stage_cookbooks_paths_for_checksum(stage)),
-                         *application.config._chef._modules,
+                         *enabled_modules,
                          stage == :infra_install ? chefdk_image : nil
                        ].compact
                      end
@@ -114,7 +120,7 @@ module Dapp
         @cookbooks_checksum ||= application.hashsum [
           berksfile_lock_checksum,
           _paths_checksum(local_cookbook_paths_for_checksum),
-          *application.config._chef._modules
+          *enabled_modules
         ]
       end
 
@@ -216,7 +222,8 @@ module Dapp
               cookbook_name = File.basename cookbook_path
               is_project = (cookbook_name == project_name)
               is_mdapp = cookbook_name.start_with? 'mdapp-'
-              mdapp_enabled = is_mdapp && application.config._chef._modules.include?(cookbook_name)
+              mdapp_name = (is_mdapp ? cookbook_name.split('mdapp-')[1] : nil)
+              mdapp_enabled = is_mdapp && enabled_modules.include?(mdapp_name)
 
               paths = if is_project
                 recipe_paths = application.config._chef._recipes
@@ -266,8 +273,8 @@ module Dapp
             to_runlist_entrypoint[project_name, recipe]
           end.flatten.compact)
 
-          res.concat(application.config._chef._modules.map do |mod|
-            to_runlist_entrypoint[mod, stage]
+          res.concat(enabled_modules.map do |mod|
+            to_runlist_entrypoint["mdapp-#{mod}", stage]
           end.flatten.compact)
         end
       end
