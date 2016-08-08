@@ -227,8 +227,6 @@ module Dapp
                 recipe_path = "recipes/#{stage}.rb"
                 if cookbook_path.join(recipe_path).exist?
                   [[recipe_path, recipe_path]] + common_paths[cookbook_path]
-                elsif cookbook_metadata.depends.include? cookbook_name
-                  [['metadata.json', 'metadata.json']]
                 end
               else
                 [['.', '.']]
