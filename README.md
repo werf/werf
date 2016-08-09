@@ -29,7 +29,28 @@
 ##### builder \<builder\>
 Тип сборки: :chef или :shell.
 * Опционально, по умолчанию будет выбран тот builder, который будет использован первым (см. [Chef](#chef), [Shell](#shell)).
-* В одном Dappfile можно использовать только один builder.
+* При определении типа сборки, объект другого типа сбрасывается. Таким образом, в одной конфигурации можно определять приложения с различным типом сборки.
+* Пример:
+  * Собирать приложения X и Z с :chef сборщиком, а X-Y и X-Y-W c :shell:
+  ```ruby
+  chef.module 'a', 'b'
+  
+  app 'X' do
+    app 'Y' do
+      builder :shell
+   
+      shell.infra_install 'apt-get install service'
+      
+      app 'W' do
+        shell.install 'application install'
+      end
+    end
+  end
+  app 'Z'
+    chef.module 'c'
+  end
+  ```
+    
 
 ##### app \<app\>[, &blk]
 Определяет приложение <app> для сборки.
