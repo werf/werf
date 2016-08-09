@@ -46,7 +46,7 @@
       end
     end
   end
-  app 'Z'
+  app 'Z' do
     chef.module 'c'
   end
   ```
@@ -163,7 +163,7 @@ dapp build [options] [PATTERN ...]
 ##### Опции логирования
 
 ###### --dry-run
-Позволяет запустить сборщик в холостую и посмотреть процесс сборки.
+Позволяет запустить сборщик вхолостую и посмотреть процесс сборки.
 
 ###### --verbose
 Подробный вывод.
@@ -190,6 +190,24 @@ dapp build [options] [PATTERN ...]
 ###### --introspect-error
 После завершения команд стадии с ошибкой.
 
+##### Примеры использования
+* Сборка в текущей директории:
+```bash
+$ dapp build
+```
+* Сборка приложений из соседней директории:
+```bash
+$ dapp build --dir ../project
+```
+* Запуск вхолостую с подробным выводом процесса сборки:
+```bash
+$ dapp build --dry-run --verbose
+```
+* Выполнить сборку, а в случае ошибки, предоставить образ для тестирования:
+```bash
+$ dapp build --introspect-error
+```
+
 #### dapp push
 Выкатить собранное приложение с именем **REPO**.
 
@@ -214,13 +232,29 @@ dapp push [options] [PATTERN...] REPO
 Добавляет тег с именем ветки сборки. 
 
 ###### --tag-commit
-Добавляет тег с комитом сборки. 
+Добавляет тег с коммитом сборки. 
 
 ###### --tag-build-id
 Добавляет тег с идентификатором сборки (CI).
 
 ###### --tag-ci
 Добавляет теги, взятые из переменных окружения CI систем.
+
+##### Примеры использования
+* Выкатить приложение **app** в репозиторий test, именем myapp и тегом latest:
+```bash
+$ dapp push app test/myapp
+```
+* Выкатить приложение с произвольными тегами:
+```bash
+$ dapp push app test/myapp --tag 1 --tag test
+```
+* Запустить вхолостую и посмотреть какие образы могут быть выкачены:
+```bash
+$ dapp push app test/myapp --tag-commit --tag-branch --dry-run
+test/myapp:2c622c16c39d4938dcdf7f5c08f7ed4efa8384c4
+test/myapp:master
+```
 
 #### dapp smartpush
 Выкатить каждое собранное приложение с именем **REPOPREFIX**/имя приложения.
@@ -230,6 +264,22 @@ dapp smartpush [options] [PATTERN ...] REPOPREFIX
 ```
 
 Опции такие же как у **dapp push**.
+
+##### Примеры использования
+* Выкатить все приложения в репозиторий test и тегом latest:
+```bash
+$ dapp smartpush test
+```
+* Запустить вхолостую и посмотреть какие образы могут быть выкачены:
+```bash
+$ dapp smartpush test --tag yellow --tag-branch --dry-run
+backend
+    test/app:yellow
+    test/app:master
+frontend
+    test/app:yellow
+    test/app:0.2
+```
 
 #### dapp list
 Вывести список приложений.
