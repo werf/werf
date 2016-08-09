@@ -234,11 +234,18 @@ module Dapp
                   .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
                   .select { |from, _| cookbook_path.join(from).exist? }
 
-                (recipe_paths + common_paths[cookbook_path]) if recipe_paths.any?
+                if recipe_paths.any?
+                  [*recipe_paths, *common_paths[cookbook_path]]
+                else
+                  [nil, *common_paths[cookbook_path]]
+                end
               elsif is_mdapp && mdapp_enabled
                 recipe_path = "recipes/#{stage}.rb"
+
                 if cookbook_path.join(recipe_path).exist?
-                  [[recipe_path, recipe_path]] + common_paths[cookbook_path]
+                  [[recipe_path, recipe_path], *common_paths[cookbook_path]]
+                else
+                  [nil, *common_paths[cookbook_path]]
                 end
               else
                 [['.', '.']]
@@ -251,10 +258,16 @@ module Dapp
           stage_cookbooks_path(stage).mkpath
           install_paths.each do |cookbook_path, paths|
             paths.each do |from, to|
-              from_path = cookbook_path.join(from)
-              to_path = stage_cookbooks_path(stage, cookbook_path.basename, to)
-              to_path.parent.mkpath
-              FileUtils.cp_r from_path, to_path
+              if from.nil?
+                to_path = stage_cookbooks_path(stage, cookbook_path.basename, 'recipes/void.rb')
+                to_path.parent.mkpath
+                FileUtils.touch to_path
+              else
+                from_path = cookbook_path.join(from)
+                to_path = stage_cookbooks_path(stage, cookbook_path.basename, to)
+                to_path.parent.mkpath
+                FileUtils.cp_r from_path, to_path
+              end
             end
           end
         end
