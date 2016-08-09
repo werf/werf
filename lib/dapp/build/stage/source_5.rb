@@ -39,7 +39,7 @@ module Dapp
           end
         end
 
-        def image_empty?
+        def empty?
           dependencies_empty?
         end
 

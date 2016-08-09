@@ -12,7 +12,7 @@ module Dapp
           [install_dependencies_files_checksum, application.builder.install_checksum]
         end
 
-        def image_empty?
+        def empty?
           super || dependencies_empty?
         end
 

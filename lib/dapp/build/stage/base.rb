@@ -20,7 +20,7 @@ module Dapp
         def build!
           return if should_be_skipped?
           prev_stage.build! if prev_stage
-          image_build unless image_empty? && !application.log_verbose?
+          image_build unless empty? && !application.log_verbose?
           raise Exception::IntrospectImage,
                 message: application.t(code: 'introspect.stage', data: { name: name }),
                 data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
@@ -34,7 +34,7 @@ module Dapp
 
         def image
           @image ||= begin
-            if image_empty?
+            if empty?
               prev_stage.image
             else
               Image::Stage.new(name: image_name, from: from_image).tap do |image|
@@ -46,7 +46,7 @@ module Dapp
           end
         end
 
-        def image_empty?
+        def empty?
           dependencies_empty?
         end
 
@@ -55,7 +55,7 @@ module Dapp
         end
 
         def signature
-          if image_empty?
+          if empty?
             prev_stage.signature
           else
             hashsum [prev_stage.signature, *dependencies.flatten]
@@ -70,7 +70,7 @@ module Dapp
 
         # rubocop:disable Metrics/AbcSize
         def image_build
-          if image_empty?
+          if empty?
             application.log_state(name, state: application.t(code: 'state.empty'))
           elsif image.tagged?
             application.log_state(name, state: application.t(code: 'state.using_cache'))
@@ -96,7 +96,7 @@ module Dapp
         end
 
         def should_be_tagged?
-          !(image.tagged? || image_empty?)
+          !(image.tagged? || empty?)
         end
 
         def image_name

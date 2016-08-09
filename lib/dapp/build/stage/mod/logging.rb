@@ -8,7 +8,7 @@ module Dapp
           def log_build
             application.with_log_indent do
               application.log_info application.t(code: 'image.signature', data: { signature: image_name })
-              unless image_empty?
+              unless empty?
                 log_image_info
                 log_image_commands unless ignore_log_commands?
               end

@@ -37,8 +37,8 @@ module Dapp
           end
         end
 
-        def image_empty?
-          dependencies_stage.image_empty?
+        def empty?
+          dependencies_stage.empty?
         end
 
         def layer_commit(git_artifact)

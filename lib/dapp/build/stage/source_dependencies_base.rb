@@ -11,7 +11,7 @@ module Dapp
           end
         end
 
-        def image_empty?
+        def empty?
           application.git_artifacts.empty? ? true : false
         end
 
