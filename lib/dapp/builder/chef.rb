@@ -49,6 +49,10 @@ module Dapp
         end
       end
 
+      def enabled_recipes
+        application.config._chef._recipes
+      end
+
       def project_name
         cookbook_metadata.name
       end
@@ -226,7 +230,7 @@ module Dapp
               mdapp_enabled = is_mdapp && enabled_modules.include?(mdapp_name)
 
               paths = if is_project
-                recipe_paths = application.config._chef._recipes
+                recipe_paths = enabled_recipes
                   .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
                   .select { |from, _| cookbook_path.join(from).exist? }
 
@@ -263,19 +267,27 @@ module Dapp
 
         @stage_cookbooks_runlist ||= {}
         @stage_cookbooks_runlist[stage] ||= [].tap do |res|
-          to_runlist_entrypoint = proc do |cookbook, entrypoint|
+          to_entry = proc { |cookbook, entrypoint| "#{cookbook}::#{entrypoint}" }
+          to_recipe_entry = proc do |cookbook, entrypoint|
             entrypoint_file = stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb")
             next unless entrypoint_file.exist?
-            "#{cookbook}::#{entrypoint}"
+            to_entry[cookbook, entrypoint]
           end
 
-          res.concat(application.config._chef._recipes.map do |recipe|
-            to_runlist_entrypoint[project_name, recipe]
-          end.flatten.compact)
+          enabled_recipes
+            .map { |recipe| to_recipe_entry[project_name, recipe] }
+            .compact
+            .tap do |entries|
+              if entries.any?
+                res.concat entries
+              else
+                res << to_entry[project_name, 'void']
+              end
+            end
 
-          res.concat(enabled_modules.map do |mod|
-            to_runlist_entrypoint["mdapp-#{mod}", stage]
-          end.flatten.compact)
+          enabled_modules
+            .map { |mod| to_recipe_entry["mdapp-#{mod}", stage] || to_entry["mdapp-#{mod}", 'void'] }
+            .tap { |entries| res.concat entries }
         end
       end
       # rubocop:enable Metrics/AbcSize
