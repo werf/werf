@@ -118,7 +118,6 @@
 #### dapp build
 Собрать приложения, удовлетворяющие хотя бы одному из **PATTERN**-ов (по умолчанию *).
 
-Синопсис:
 ```
 dapp build [options] [PATTERN ...]
 ```
@@ -169,7 +168,6 @@ dapp build [options] [PATTERN ...]
 #### dapp push
 Выкатить собранное приложение с именем **REPO**.
 
-Синопсис:
 ```
 dapp push [options] [PATTERN...] REPO
 ```
@@ -202,7 +200,6 @@ dapp push [options] [PATTERN...] REPO
 #### dapp smartpush
 Выкатить каждое собранное приложение с именем **REPOPREFIX**/имя приложения.
 
-Синопсис:
 ```
 dapp smartpush [options] [PATTERN ...] REPOPREFIX
 ```
@@ -212,7 +209,6 @@ dapp smartpush [options] [PATTERN ...] REPOPREFIX
 #### dapp list
 Вывести список приложений.
 
-Синопсис:
 ```
 dapp list [options] [PATTERN ...]
 ```
@@ -220,7 +216,6 @@ dapp list [options] [PATTERN ...]
 #### dapp run
 Запустить собранное приложение с докерными аргументами **DOCKER ARGS**.
 
-Синопсис:
 ```
 dapp run [options] [PATTERN...] [DOCKER ARGS]
 ```
@@ -237,21 +232,16 @@ dapp run -ti --rm -- bash -ec true
 dapp run -- bash -ec true
 ```
 
-#### dapp stages
-Группа команд для удаления образов из docker-a.
-
-##### dapp stages flush
+#### dapp stages flush
 Удаляет все тегированные образы приложений.
 
-Синопсис:
 ```
 dapp stages flush [options] [PATTERN...]
 ```
 
-##### dapp stages cleanup
+#### dapp stages cleanup
 Удаляет все нетегированные образы приложений.
 
-Синопсис:
 ```
 dapp stages cleanup [options] [PATTERN...]
 ```
@@ -259,7 +249,6 @@ dapp stages cleanup [options] [PATTERN...]
 #### dapp metadata flush
 Удаляет временные папки приложений.
 
-Синопсис:
 ```
 dapp metadata flush [options] [PATTERN...]
 ```
