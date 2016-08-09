@@ -11,7 +11,7 @@ Usage:
   dapp smartpush [options] [PATTERN ...] REPOPREFIX
 
     PATTERN                     Applications to process [default: *].
-
+    REPOPREFIX                  Pushed image name prefix.
 Options:
 BANNER
     end

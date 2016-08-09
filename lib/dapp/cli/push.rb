@@ -11,7 +11,7 @@ Usage:
   dapp push [options] [PATTERN ...] REPO
 
     PATTERN                     Applications to process [default: *].
-
+    REPO                        Pushed image name.
 Options:
 BANNER
 
