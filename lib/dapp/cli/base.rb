@@ -13,14 +13,12 @@ module Dapp
              short: '-q',
              long: '--quiet',
              description: 'Suppress logging',
-             on: :tail,
              default: false,
              boolean: true
 
       option :log_verbose,
              long: '--verbose',
              description: 'Enable verbose output',
-             on: :tail,
              default: false,
              boolean: true
 

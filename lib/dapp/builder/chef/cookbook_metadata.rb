@@ -18,7 +18,7 @@ module Dapp
             @cookbook_metadata.version = version
           end
 
-          def depends(dependency)
+          def depends(dependency, *_a, &_blk)
             @cookbook_metadata.depends << dependency
           end
 

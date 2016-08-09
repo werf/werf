@@ -15,10 +15,10 @@ Usage: dapp [options] sub-command [sub-command options]
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
 dapp build [options] [PATTERN ...]
-dapp push [options] [PATTERN] REPO
+dapp push [options] [PATTERN...] REPO
 dapp smartpush [options] [PATTERN ...] REPOPREFIX
 dapp list [options] [PATTERN ...]
-dapp run [options] [PATTERN] [DOCKER ARGS]
+dapp run [options] [PATTERN...] [DOCKER ARGS]
 dapp stages
 dapp metadata
 

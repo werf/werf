@@ -1,3 +1,5 @@
+name 'test'
+
 builder :chef
 
 git_artifact.local '/myapp'

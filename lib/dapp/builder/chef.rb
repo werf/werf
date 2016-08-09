@@ -17,7 +17,8 @@ module Dapp
         define_method(:"#{stage}") do |image|
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
-            image.add_commands 'export PATH=/.dapp/deps/chefdk/bin:$PATH'
+            image.add_commands 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
+                               "export DAPP_BUILD_STAGE=#{stage}"
 
             image.add_volume "#{stage_tmp_path(stage)}:#{container_stage_tmp_path(stage)}"
             image.add_commands ['chef-solo',
@@ -41,6 +42,16 @@ module Dapp
       end
 
       private
+
+      def enabled_modules
+        application.config._chef._modules.map do |mod|
+          mod.start_with?('mdapp-') ? mod.split('mdapp-')[1] : mod
+        end
+      end
+
+      def enabled_recipes
+        application.config._chef._recipes
+      end
 
       def project_name
         cookbook_metadata.name
@@ -99,7 +110,7 @@ module Dapp
                      else
                        application.hashsum [
                          _paths_checksum(stage_cookbooks_paths_for_checksum(stage)),
-                         *application.config._chef._modules,
+                         *enabled_modules,
                          stage == :infra_install ? chefdk_image : nil
                        ].compact
                      end
@@ -113,7 +124,7 @@ module Dapp
         @cookbooks_checksum ||= application.hashsum [
           berksfile_lock_checksum,
           _paths_checksum(local_cookbook_paths_for_checksum),
-          *application.config._chef._modules
+          *enabled_modules
         ]
       end
 
@@ -203,47 +214,59 @@ module Dapp
         @install_stage_cookbooks[stage] ||= true.tap do
           common_paths = proc do |cookbook_path|
             [['metadata.json', 'metadata.json'],
-             %w(attributes attributes),
+             ["attributes/#{stage}", 'attributes/default'],
              ["files/#{stage}", 'files/default'],
              ["templates/#{stage}", 'templates/default']].select { |from, _| cookbook_path.join(from).exist? }
           end
 
           install_paths = Dir[cookbooks_vendor_path('*')]
-                          .map(&Pathname.method(:new))
-                          .map do |cookbook_path|
-            cookbook_name = File.basename cookbook_path
-            is_project = (cookbook_name == project_name)
-            is_mdapp = cookbook_name.start_with? 'mdapp-'
-            mdapp_enabled = is_mdapp && application.config._chef._modules.include?(cookbook_name)
+            .map(&Pathname.method(:new))
+            .map do |cookbook_path|
+              cookbook_name = File.basename cookbook_path
+              is_project = (cookbook_name == project_name)
+              is_mdapp = cookbook_name.start_with? 'mdapp-'
+              mdapp_name = (is_mdapp ? cookbook_name.split('mdapp-')[1] : nil)
+              mdapp_enabled = is_mdapp && enabled_modules.include?(mdapp_name)
 
-            paths = if is_project
-                      recipe_paths = application.config._chef._recipes
-                                                .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
-                                                .select { |from, _| cookbook_path.join(from).exist? }
+              paths = if is_project
+                recipe_paths = enabled_recipes
+                  .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
+                  .select { |from, _| cookbook_path.join(from).exist? }
 
-                      (recipe_paths + common_paths[cookbook_path]) if recipe_paths.any?
-                    elsif is_mdapp && mdapp_enabled
-                      recipe_path = "recipes/#{stage}.rb"
-                      if cookbook_path.join(recipe_path).exist?
-                        [[recipe_path, recipe_path]] + common_paths[cookbook_path]
-                      elsif cookbook_metadata.depends.include? cookbook_name
-                        [['metadata.json', 'metadata.json']]
-                      end
-                    else
-                      [['.', '.']]
-                    end
+                if recipe_paths.any?
+                  [*recipe_paths, *common_paths[cookbook_path]]
+                else
+                  [nil, *common_paths[cookbook_path]]
+                end
+              elsif is_mdapp && mdapp_enabled
+                recipe_path = "recipes/#{stage}.rb"
 
-            [cookbook_path, paths] if paths && paths.any?
-          end
-                          .compact
+                if cookbook_path.join(recipe_path).exist?
+                  [[recipe_path, recipe_path], *common_paths[cookbook_path]]
+                else
+                  [nil, *common_paths[cookbook_path]]
+                end
+              else
+                [['.', '.']]
+              end
+
+              [cookbook_path, paths] if paths && paths.any?
+            end
+            .compact
 
           stage_cookbooks_path(stage).mkpath
           install_paths.each do |cookbook_path, paths|
             paths.each do |from, to|
-              from_path = cookbook_path.join(from)
-              to_path = stage_cookbooks_path(stage, cookbook_path.basename, to)
-              to_path.parent.mkpath
-              FileUtils.cp_r from_path, to_path
+              if from.nil?
+                to_path = stage_cookbooks_path(stage, cookbook_path.basename, 'recipes/void.rb')
+                to_path.parent.mkpath
+                FileUtils.touch to_path
+              else
+                from_path = cookbook_path.join(from)
+                to_path = stage_cookbooks_path(stage, cookbook_path.basename, to)
+                to_path.parent.mkpath
+                FileUtils.cp_r from_path, to_path
+              end
             end
           end
         end
@@ -256,19 +279,27 @@ module Dapp
 
         @stage_cookbooks_runlist ||= {}
         @stage_cookbooks_runlist[stage] ||= [].tap do |res|
-          to_runlist_entrypoint = proc do |cookbook, entrypoint|
+          to_entry = proc { |cookbook, entrypoint| "#{cookbook}::#{entrypoint}" }
+          to_recipe_entry = proc do |cookbook, entrypoint|
             entrypoint_file = stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb")
             next unless entrypoint_file.exist?
-            "#{cookbook}::#{entrypoint}"
+            to_entry[cookbook, entrypoint]
           end
 
-          res.concat(application.config._chef._recipes.map do |recipe|
-            to_runlist_entrypoint[project_name, recipe]
-          end.flatten.compact)
+          enabled_recipes
+            .map { |recipe| to_recipe_entry[project_name, recipe] }
+            .compact
+            .tap do |entries|
+              if entries.any?
+                res.concat entries
+              else
+                res << to_entry[project_name, 'void']
+              end
+            end
 
-          res.concat(application.config._chef._modules.map do |mod|
-            to_runlist_entrypoint[mod, stage]
-          end.flatten.compact)
+          enabled_modules
+            .map { |mod| to_recipe_entry["mdapp-#{mod}", stage] || to_entry["mdapp-#{mod}", 'void'] }
+            .tap { |entries| res.concat entries }
         end
       end
       # rubocop:enable Metrics/AbcSize
