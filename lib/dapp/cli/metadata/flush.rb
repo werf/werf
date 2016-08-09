@@ -9,7 +9,7 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp metadata flush
+  dapp metadata flush [options] [PATTERN ...]
 Options:
 BANNER
         def run(argv = ARGV)
