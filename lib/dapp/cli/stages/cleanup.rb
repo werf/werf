@@ -9,7 +9,7 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages cleanup
+  dapp stages cleanup [options] [PATTERN ...]
 Options:
 BANNER
         def run(argv = ARGV)

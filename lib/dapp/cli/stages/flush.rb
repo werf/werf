@@ -9,7 +9,7 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages flush
+  dapp stages flush [options] [PATTERN ...]
 Options:
 BANNER
         def run(argv = ARGV)
