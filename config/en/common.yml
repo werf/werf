@@ -30,5 +30,3 @@ en:
       build: '[BUILD]'
       empty: '[EMPTY]'
       push: '[PUSH]'
-    introspect:
-      stage: "Introspect stage '%{name}'"

@@ -29,8 +29,10 @@ module Dapp
     end
 
     def build!
-      last_stage.build!
-      last_stage.save_in_cache!
+      with_introspection do
+        last_stage.build!
+        last_stage.save_in_cache!
+      end
     ensure
       FileUtils.rm_rf(tmp_path)
     end
@@ -69,6 +71,18 @@ module Dapp
     end
 
     protected
+
+    def with_introspection
+      yield
+    rescue Exception::IntrospectImage => e
+      data = e.net_status[:data]
+      cmd = "docker run -ti --rm --entrypoint /bin/bash #{data[:options]} #{data[:built_id]}"
+      system(cmd).tap do |res|
+        shellout!("docker rmi #{data[:built_id]}") if data[:rmi]
+        res || raise(Error::Application, code: :application_not_run)
+      end
+      exit 0
+    end
 
     attr_reader :last_stage
   end # Application

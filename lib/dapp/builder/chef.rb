@@ -44,9 +44,7 @@ module Dapp
       private
 
       def enabled_modules
-        application.config._chef._modules.map do |mod|
-          mod.start_with?('mdapp-') ? mod.split('mdapp-')[1] : mod
-        end
+        application.config._chef._modules
       end
 
       def enabled_recipes
@@ -214,46 +212,45 @@ module Dapp
         @install_stage_cookbooks[stage] ||= true.tap do
           common_paths = proc do |cookbook_path|
             [['metadata.json', 'metadata.json'],
-             ["attributes/common", 'attributes'],
+             ['attributes/common', 'attributes'],
              ["attributes/#{stage}", 'attributes'],
              ["files/#{stage}", 'files/default'],
              ["templates/#{stage}", 'templates/default']].select { |from, _| cookbook_path.join(from).exist? }
           end
 
           install_paths = Dir[cookbooks_vendor_path('*')]
-            .map(&Pathname.method(:new))
-            .map do |cookbook_path|
-              cookbook_name = File.basename cookbook_path
-              is_project = (cookbook_name == project_name)
-              is_mdapp = cookbook_name.start_with? 'mdapp-'
-              mdapp_name = (is_mdapp ? cookbook_name.split('mdapp-')[1] : nil)
-              mdapp_enabled = is_mdapp && enabled_modules.include?(mdapp_name)
+                          .map(&Pathname.method(:new))
+                          .map do |cookbook_path|
+            cookbook_name = File.basename cookbook_path
+            is_project = (cookbook_name == project_name)
+            is_mdapp = cookbook_name.start_with? 'mdapp-'
+            mdapp_name = (is_mdapp ? cookbook_name.split('mdapp-')[1] : nil)
+            mdapp_enabled = is_mdapp && enabled_modules.include?(mdapp_name)
 
-              paths = if is_project
-                recipe_paths = enabled_recipes
-                  .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
-                  .select { |from, _| cookbook_path.join(from).exist? }
+            paths = if is_project
+                      recipe_paths = enabled_recipes
+                                     .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
+                                     .select { |from, _| cookbook_path.join(from).exist? }
 
-                if recipe_paths.any?
-                  [*recipe_paths, *common_paths[cookbook_path]]
-                else
-                  [nil, *common_paths[cookbook_path]]
-                end
-              elsif is_mdapp && mdapp_enabled
-                recipe_path = "recipes/#{stage}.rb"
+                      if recipe_paths.any?
+                        [*recipe_paths, *common_paths[cookbook_path]]
+                      else
+                        [nil, *common_paths[cookbook_path]]
+                      end
+                    elsif is_mdapp && mdapp_enabled
+                      recipe_path = "recipes/#{stage}.rb"
 
-                if cookbook_path.join(recipe_path).exist?
-                  [[recipe_path, recipe_path], *common_paths[cookbook_path]]
-                else
-                  [nil, *common_paths[cookbook_path]]
-                end
-              else
-                [['.', '.']]
-              end
+                      if cookbook_path.join(recipe_path).exist?
+                        [[recipe_path, recipe_path], *common_paths[cookbook_path]]
+                      else
+                        [nil, *common_paths[cookbook_path]]
+                      end
+                    else
+                      [['.', '.']]
+                    end
 
-              [cookbook_path, paths] if paths && paths.any?
-            end
-            .compact
+            [cookbook_path, paths] if paths && paths.any?
+          end.compact
 
           stage_cookbooks_path(stage).mkpath
           install_paths.each do |cookbook_path, paths|
@@ -276,8 +273,7 @@ module Dapp
                                    data: { stage: stage,
                                            cookbook: cookbook,
                                            from: from_subpath.relative_path_from(cookbook_path),
-                                           to: to_subpath.relative_path_from(stage_cookbooks_path(stage, cookbook)),
-                                         } if to_subpath.exist?
+                                           to: to_subpath.relative_path_from(stage_cookbooks_path(stage, cookbook)) } if to_subpath.exist?
 
                       to_subpath.parent.mkpath
                       FileUtils.cp_r from_subpath, to_subpath
