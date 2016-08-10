@@ -1,19 +1,19 @@
 require_relative '../spec_helper'
 
 describe Dapp::Build::Stage do
-  def last_stage
-    Dapp::Build::Stage::Source5.new(nil)
-  end
-
   after :each do
     expect(@stages).to be_empty
+  end
+
+  def last_stage
+    Dapp::Build::Stage::DockerInstructions.new(nil)
   end
 
   context 'stages' do
     before :each do
       @stages = [:from, :infra_install, :source_1_archive_dependencies, :source_1_archive, :source_1_dependencies,
                  :source_1, :install, :artifact, :source_2_dependencies, :source_2, :infra_setup, :source_3_dependencies, :source_3,
-                 :setup, :chef_cookbooks, :source_4_dependencies, :source_4, :source_5]
+                 :setup, :chef_cookbooks, :source_4_dependencies, :source_4, :source_5, :docker_instructions]
     end
 
     def first_stage
@@ -44,14 +44,18 @@ describe Dapp::Build::Stage do
       @stages = [:source_1_archive, :source_1, :source_2, :source_3, :source_4, :source_5]
     end
 
+    def last_source_stage
+      last_stage.prev_stage
+    end
+
     def source_1_archive_stage
-      stage = last_stage
+      stage = last_source_stage
       while stage.send(:name) != :source_1_archive; stage = stage.prev_source_stage end
       stage
     end
 
     it 'prev_source_stage' do
-      stage = last_stage
+      stage = last_source_stage
       while stage.prev_source_stage
         expect(stage.send(:name)).to eq @stages.pop
         stage = stage.prev_source_stage
