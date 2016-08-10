@@ -1,4 +1,4 @@
-log 'TEST MESSAGE' do
+log SecureRandom.uuid do
   message "node['test']['common_attr'] = #{node['test']['common_attr']}"
 end
 

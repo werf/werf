@@ -63,7 +63,7 @@ describe Dapp::Builder::Chef do
           _home_path: testproject_path.to_s,
           _name: "#{testproject_path.basename}-X-Y",
           _chef: {
-            _modules: %w(mdapp-test mdapp-test2),
+            _modules: %w(test test2),
             _recipes: %w(main X X_Y)
           }
         ).tap do |config|
