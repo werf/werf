@@ -1,1 +1,1 @@
-node['test']['common-attr'] = 'value'
+default['test']['common-attr'] = 'value'
