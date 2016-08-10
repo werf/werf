@@ -22,6 +22,7 @@ module Dapp
 
             image.add_volume "#{stage_tmp_path(stage)}:#{container_stage_tmp_path(stage)}"
             image.add_commands ['chef-solo',
+                                '--legacy-mode',
                                 "-c #{container_stage_config_path(stage)}",
                                 "-o #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
           end
