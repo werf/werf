@@ -214,7 +214,7 @@ module Dapp
         @install_stage_cookbooks[stage] ||= true.tap do
           common_paths = proc do |cookbook_path|
             [['metadata.json', 'metadata.json'],
-             ["attributes/#{stage}", 'attributes/default'],
+             ["attributes/#{stage}", 'attributes'],
              ["files/#{stage}", 'files/default'],
              ["templates/#{stage}", 'templates/default']
             ].select { |from, _| cookbook_path.join(from).exist? }
