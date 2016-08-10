@@ -4,12 +4,12 @@ builder :chef
 
 git_artifact.local '/myapp'
 
-chef.module 'mdapp-test'
+chef.module 'test'
 chef.recipe 'main'
 
 app 'X' do
   docker.from 'ubuntu:14.04'
-  chef.module 'mdapp-test2'
+  chef.module 'test2'
   chef.recipe 'X'
 
   app 'Y' do
