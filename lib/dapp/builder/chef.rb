@@ -44,9 +44,7 @@ module Dapp
       private
 
       def enabled_modules
-        application.config._chef._modules.map do |mod|
-          mod.start_with?('mdapp-') ? mod.split('mdapp-')[1] : mod
-        end
+        application.config._chef._modules
       end
 
       def enabled_recipes
@@ -214,7 +212,8 @@ module Dapp
         @install_stage_cookbooks[stage] ||= true.tap do
           common_paths = proc do |cookbook_path|
             [['metadata.json', 'metadata.json'],
-             ["attributes/#{stage}", 'attributes/default'],
+             ["attributes/common", 'attributes'],
+             ["attributes/#{stage}", 'attributes'],
              ["files/#{stage}", 'files/default'],
              ["templates/#{stage}", 'templates/default']].select { |from, _| cookbook_path.join(from).exist? }
           end
@@ -256,16 +255,35 @@ module Dapp
 
           stage_cookbooks_path(stage).mkpath
           install_paths.each do |cookbook_path, paths|
+            cookbook = cookbook_path.basename
+
             paths.each do |from, to|
               if from.nil?
-                to_path = stage_cookbooks_path(stage, cookbook_path.basename, 'recipes/void.rb')
+                to_path = stage_cookbooks_path(stage, cookbook, 'recipes/void.rb')
                 to_path.parent.mkpath
                 FileUtils.touch to_path
               else
                 from_path = cookbook_path.join(from)
-                to_path = stage_cookbooks_path(stage, cookbook_path.basename, to)
-                to_path.parent.mkpath
-                FileUtils.cp_r from_path, to_path
+                to_path = stage_cookbooks_path(stage, cookbook, to)
+                if from_path.directory? && to_path.exist?
+                  Dir[from_path.join('**/*')]
+                    .map(&Pathname.method(:new))
+                    .each do |from_subpath|
+                      to_subpath = to_path.join(from_subpath.relative_path_from(from_path))
+                      raise Error, code: :stage_path_overlap,
+                                   data: { stage: stage,
+                                           cookbook: cookbook,
+                                           from: from_subpath.relative_path_from(cookbook_path),
+                                           to: to_subpath.relative_path_from(stage_cookbooks_path(stage, cookbook)),
+                                         } if to_subpath.exist?
+
+                      to_subpath.parent.mkpath
+                      FileUtils.cp_r from_subpath, to_subpath
+                    end
+                else
+                  to_path.parent.mkpath
+                  FileUtils.cp_r from_path, to_path
+                end
               end
             end
           end
