@@ -17,6 +17,16 @@ module Dapp
             application.builder.chef_cookbooks(image)
           end
         end
+
+        protected
+
+        def should_be_not_detailed?
+          true
+        end
+
+        def ignore_log_commands?
+          true
+        end
       end # ChefCookbooks
     end # Stage
   end # Build

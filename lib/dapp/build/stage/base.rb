@@ -48,7 +48,7 @@ module Dapp
         end
 
         def dependencies_empty?
-          dependencies.flatten.compact.empty?
+          dependencies.flatten.compact.delete_if { |val| val.respond_to?(:empty?) && val.empty? }.empty?
         end
 
         def signature
