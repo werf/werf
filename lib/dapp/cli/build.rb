@@ -43,17 +43,6 @@ BANNER
              proc: proc { |v| v.to_sym },
              in: [nil, :from, :infra_install, :source_1_archive, :source_1, :install, :source_2,
                   :infra_setup, :source_3, :chef_cookbooks, :setup, :source_4, :source_5]
-
-      def run(*args)
-        super
-      rescue Exception::IntrospectImage => e
-        $stderr.puts(e.net_status[:message])
-        data = e.net_status[:data]
-        system("docker run -ti --rm --entrypoint /bin/bash #{data[:options]} #{data[:built_id]}").tap do |res|
-          shellout("docker rmi #{data[:built_id]}") if data[:rmi]
-          res || raise(Dapp::Error::Application, code: :application_not_run)
-        end
-      end
     end
   end
 end

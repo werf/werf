@@ -29,5 +29,3 @@ en:
       not_present: '[NOT PRESENT]'
       build: '[BUILD]'
       push: '[PUSH]'
-    introspect:
-      stage: "Introspect stage '%{name}'"
