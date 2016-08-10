@@ -57,7 +57,7 @@ module Dapp
             end
 
             commands = safe_cp(application.container_tmp_path('artifact', artifact_name), where_to_add, owner, group, cwd, paths)
-            image.add_commands commands
+            image.add_command commands
           end
           # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 

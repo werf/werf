@@ -17,8 +17,8 @@ module Dapp
         define_method(:"#{stage}") do |image|
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
-            image.add_commands 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
-                               "export DAPP_BUILD_STAGE=#{stage}"
+            image.add_command 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
+                              "export DAPP_BUILD_STAGE=#{stage}"
 
             image.add_volume "#{stage_tmp_path(stage)}:#{container_stage_tmp_path(stage)}"
             image.add_commands ['chef-solo',
@@ -34,7 +34,7 @@ module Dapp
 
       def chef_cookbooks(image)
         image.add_volume "#{cookbooks_vendor_path}:#{application.container_dapp_path('chef_vendored_cookbooks')}"
-        image.add_commands(
+        image.add_command(
           'mkdir -p /usr/share/dapp/chef_repo',
           ["cp -a #{application.container_dapp_path('chef_vendored_cookbooks')} ",
            '/usr/share/dapp/chef_repo/cookbooks'].join
