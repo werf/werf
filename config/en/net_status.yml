@@ -27,3 +27,5 @@ en:
       stage_artifact_not_associated: "Artifact not associated with any stage!"
       stage_artifact_incorrect_associated_value: "Artifact option '%{option}' has incorrect value '%{value}'!"
       git_artifact_unexpected_attribute: "'%{type}' git artifact doesn't has attribute '%{attr}'!"
+    chef:
+      stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"

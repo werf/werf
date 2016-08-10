@@ -1,6 +1,10 @@
 include_recipe 'apt' if node[:platform_family].to_s == 'debian'
 
 log "TEST MESSAGE" do
+  message "node['test']['common_attr'] = #{node['test']['common_attr']}"
+end
+
+log "TEST MESSAGE" do
   message "node['test']['hello'] = #{node['test']['hello']}"
 end
 
