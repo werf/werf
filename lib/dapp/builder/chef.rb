@@ -44,9 +44,7 @@ module Dapp
       private
 
       def enabled_modules
-        application.config._chef._modules.map do |mod|
-          mod.start_with?('mdapp-') ? mod.split('mdapp-')[1] : mod
-        end
+        application.config._chef._modules
       end
 
       def enabled_recipes
