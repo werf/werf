@@ -26,7 +26,7 @@ module Dapp
 
             application.git_artifacts.each do |git_artifact|
               image.add_volume "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}:ro"
-              image.add_commands git_artifact.send(apply_command_method, self)
+              image.add_command git_artifact.send(apply_command_method, self)
             end
             yield image if block_given?
           end
