@@ -15,7 +15,7 @@ module Dapp
       end
 
       def stage_empty?(stage)
-        stage_commands(stage).any?
+        stage_commands(stage).empty?
       end
 
       def stage_commands(stage)

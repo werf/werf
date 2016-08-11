@@ -1,5 +1,7 @@
 module SpecHelper
   module Application
+    CACHE_VERSION = SecureRandom.uuid
+
     def application_build!
       application.build!
     end
@@ -35,7 +37,9 @@ module SpecHelper
                                 _artifact: [],
                                 _chef: { _modules: [] },
                                 _shell: { _infra_install: [], _infra_setup: [], _install: [], _setup: [] },
-                                _docker: { _from: :'ubuntu:14.04', _change_options: {} },
+                                _docker: { _from: :'ubuntu:14.04',
+                                           _from_cache_version: CACHE_VERSION,
+                                           _change_options: {} },
                                 _git_artifact: { _local: [], _remote: [] },
                                 _install_dependencies: [],
                                 _setup_dependencies: []))

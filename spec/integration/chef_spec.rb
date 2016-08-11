@@ -4,8 +4,6 @@ describe Dapp::Builder::Chef do
   include SpecHelper::Common
   include SpecHelper::Application
 
-  CACHE_VERSION = SecureRandom.uuid
-
   before :all do
     init_project
   end
@@ -68,7 +66,6 @@ describe Dapp::Builder::Chef do
           }
         ).tap do |config|
           config[:_docker][:_from] = os.to_sym
-          config[:_docker][:_from_cache_version] = CACHE_VERSION
         end
       end
     end # context
