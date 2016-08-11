@@ -41,24 +41,23 @@
     shell.infra_install 'apt-get install service'
   end
   ```
-  * Собирать приложения X и Z с **:chef** сборщиком, а X-Y и X-Y-W c **:shell**:
+  * Собирать приложения X-Y и Z с **:chef** сборщиком, а X-V c **:shell**:
   ```ruby
   chef.module 'a', 'b'
   
   app 'X' do
-    app 'Y' do
-      builder :shell
+    builder :shell
    
-      shell.infra_install 'apt-get install service'
-      
-      app 'W' do
-        shell.install 'application install'
-      end
+    app 'Y' do
+      builder :chef
+      chef.module 'c'
+    end
+    
+    app 'V' do
+      shell.install 'application install'
     end
   end
-  app 'Z' do
-    chef.module 'c'
-  end
+  app 'Z'
   ```
     
 ##### app \<app\>[, &blk]
@@ -317,11 +316,11 @@ $ dapp run -ti --rm
 ```
 * Запустить с опциями и командами:
 ```bash
-dapp run -ti --rm -- bash -ec true
+$ dapp run -ti --rm -- bash -ec true
 ```
 * Запустить, передав только команды:
 ```bash
-dapp run -- bash -ec true
+$ dapp run -- bash -ec true
 ```
 * Посмотреть, что может быть запущено:
 ```bash
