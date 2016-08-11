@@ -50,6 +50,10 @@ describe Dapp::Application do
     stages_names.index(stage_name)
   end
 
+  def prev_stage(s)
+    stages[s].prev_stage.send(:name)
+  end
+
   def stages_signatures
     stages.values.map { |s| [:"#{s.send(:name)}", s.send(:signature)] }.to_h
   end

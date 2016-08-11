@@ -59,6 +59,14 @@ module SpecHelper
       hash
     end
 
+    def stage_signature(stage_name)
+      stages_signatures[stage_name]
+    end
+
+    def next_stage(s)
+      stages[s].next_stage.send(:name)
+    end
+
     def prev_stage(s)
       stages[s].prev_stage.send(:name)
     end
