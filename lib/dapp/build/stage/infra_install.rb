@@ -8,6 +8,10 @@ module Dapp
           super
         end
 
+        def empty?
+          super && !application.builder.infra_install?
+        end
+
         def dependencies
           [application.builder.infra_install_checksum]
         end

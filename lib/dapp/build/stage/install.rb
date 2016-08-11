@@ -8,6 +8,10 @@ module Dapp
           super
         end
 
+        def empty?
+          super && !application.builder.install?
+        end
+
         def dependencies
           prev_stage.prev_stage.dependencies
         end

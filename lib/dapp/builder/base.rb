@@ -8,12 +8,20 @@ module Dapp
         @application = application
       end
 
+      def infra_install?
+        false
+      end
+
       def infra_install(_image)
         raise
       end
 
       def infra_install_checksum
         raise
+      end
+
+      def infra_setup?
+        false
       end
 
       def infra_setup(_image)
@@ -24,12 +32,20 @@ module Dapp
         raise
       end
 
+      def install?
+        false
+      end
+
       def install(_image)
         raise
       end
 
       def install_checksum
         raise
+      end
+
+      def setup?
+        false
       end
 
       def setup(_image)

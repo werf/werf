@@ -12,9 +12,11 @@ module Dapp
       DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.17.3-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
       [:infra_install, :infra_setup, :install, :setup].each do |stage|
-        define_method(:"#{stage}_checksum") { stage_cookbooks_checksum(stage) }
+        define_method("#{stage}_checksum") { stage_cookbooks_checksum(stage) }
 
-        define_method(:"#{stage}") do |image|
+        define_method("#{stage}?") { !stage_empty?(stage) }
+
+        define_method("#{stage}") do |image|
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
             image.add_command 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
@@ -295,28 +297,45 @@ module Dapp
         install_stage_cookbooks(stage)
 
         @stage_cookbooks_runlist ||= {}
-        @stage_cookbooks_runlist[stage] ||= [].tap do |res|
-          to_entry = proc { |cookbook, entrypoint| "#{cookbook}::#{entrypoint}" }
-          to_recipe_entry = proc do |cookbook, entrypoint|
-            entrypoint_file = stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb")
-            next unless entrypoint_file.exist?
-            to_entry[cookbook, entrypoint]
+        @stage_cookbooks_runlist[stage] ||= begin
+          res = []
+
+          does_entry_exist = ->(cookbook, entrypoint) do
+            stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb").exist?
+          end
+
+          format_entry = ->(cookbook, entrypoint) do
+            entrypoint = 'void' if entrypoint.nil?
+            "#{cookbook}::#{entrypoint}"
           end
 
           enabled_recipes
-            .map { |recipe| to_recipe_entry[project_name, recipe] }
-            .compact
+            .map { |recipe| [project_name, recipe] }
+            .select { |entry| does_entry_exist[*entry] }
             .tap do |entries|
               if entries.any?
                 res.concat entries
               else
-                res << to_entry[project_name, 'void']
+                res << [project_name, nil]
               end
             end
 
           enabled_modules
-            .map { |mod| to_recipe_entry["mdapp-#{mod}", stage] || to_entry["mdapp-#{mod}", 'void'] }
+            .map do |mod|
+              cookbook = "mdapp-#{mod}"
+              if does_entry_exist[cookbook, stage]
+                [cookbook, stage]
+              else
+                [cookbook, nil]
+              end
+            end
             .tap { |entries| res.concat entries }
+
+          if res.all? { |_, entrypoint| entrypoint.nil? }
+            []
+          else
+            res.map &format_entry
+          end
         end
       end
       # rubocop:enable Metrics/AbcSize
