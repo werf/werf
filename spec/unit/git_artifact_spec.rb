@@ -1,29 +1,54 @@
 require_relative '../spec_helper'
 
-xdescribe Dapp::GitArtifact do
+describe Dapp::GitArtifact do
   include SpecHelper::Common
-  include SpecHelper::Application
   include SpecHelper::Git
-  include SpecHelper::GitArtifact
 
   before :each do
-    stub_application
-    stub_docker_image
-    stub_git_repo_own
-
+    init
     git_init!
+    stub_stages
   end
 
-  def config
-    default_config.merge(
-      _builder: :shell,
-      _home_path: '',
-      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: git_artifact_local_options })
-    )
+  def init
+    FileUtils.mkdir 'project'
+    @where_to_add = File.expand_path('where-to-add')
+    Dir.chdir File.expand_path('project')
   end
 
-  def cli_options
-    @cli_options ||= default_cli_options.merge(build: '')
+  def stubbed_stage
+    instance_double(Dapp::Build::Stage::Base).tap do |instance|
+      allow(instance).to receive(:prev_stage=)
+    end
+  end
+
+  def stub_stages
+    @stage_commit = {}
+    [Dapp::Build::Stage::Source1Archive, Dapp::Build::Stage::Source5].each do |stage|
+      allow_any_instance_of(stage).to receive(:layer_commit) do
+        @stage_commit[stage.name] ||= {}
+        @stage_commit[stage.name][@branch] ||= git_latest_commit(branch: @branch)
+      end
+    end
+    allow_any_instance_of(Dapp::Build::Stage::Source5).to receive(:prev_source_stage) { source_1_archive_stage }
+  end
+
+  def source_1_archive_stage
+    @source_1_archive_stage ||= Dapp::Build::Stage::Source1Archive.new(nil, stubbed_stage)
+  end
+
+  def source_5_stage
+    @source_5_stage ||= Dapp::Build::Stage::Source5.new(nil, stubbed_stage)
+  end
+
+  def git_artifact
+    Dapp::GitArtifact.new(stubbed_repo, **git_artifact_local_options)
+  end
+
+  def stubbed_repo
+    instance_double(Dapp::GitRepo::Own).tap do |instance|
+      allow(instance).to receive(:container_path) { '.git' }
+    end
   end
 
   def git_artifact_local_options
@@ -31,7 +56,7 @@ xdescribe Dapp::GitArtifact do
       cwd: (@cwd ||= ''),
       paths: (@paths ||= []),
       branch: (@branch ||= 'master'),
-      where_to_add: (@where_to_add ||= '/tmp/dapp-git-artifact-where-to-add'),
+      where_to_add: @where_to_add,
       group: (@group ||= 'root'),
       owner: (@owner ||= 'root')
     }
@@ -39,11 +64,11 @@ xdescribe Dapp::GitArtifact do
 
   [:patch, :archive].each do |type|
     define_method "#{type}_apply" do |add_files: ['data.txt'], added_files: add_files, not_added_files: [], **kwargs, &blk|
-      [:cwd, :paths, :branch, :where_to_add, :group, :owner].each { |opt| instance_variable_set(:"@#{opt}", kwargs[opt]) unless kwargs[opt].nil? }
+      @branch = kwargs[:branch] unless kwargs[:branch].nil?
+      command_apply(archive_command) if type == :patch && !kwargs[:ignore_archive_apply]
 
-      application_build! if type == :patch && !kwargs[:ignore_build]
+      [:cwd, :paths, :where_to_add, :group, :owner].each { |opt| instance_variable_set(:"@#{opt}", kwargs[opt]) unless kwargs[opt].nil? }
       add_files.each { |file_path| git_change_and_commit!(file_path, branch: @branch) }
-      application_renew
 
       command_apply(send("#{type}_command"))
 
@@ -52,26 +77,24 @@ xdescribe Dapp::GitArtifact do
       not_added_files.each { |file_path| expect(File.exist?(File.join(@where_to_add, file_path))).to be_falsey }
 
       blk.call unless blk.nil? # expectation
-      clear_where_to_add
+      remove_where_to_add
     end
   end
 
   def archive_command
-    git_artifact.archive_apply_command(stages[:source_1_archive])
-    stages[:source_1_archive].image.send(:prepared_bash_command)
+    git_artifact.archive_apply_command(source_1_archive_stage)
   end
 
   def patch_command
-    git_artifact.apply_patch_command(stages[:source_5])
-    stages[:source_5].image.send(:prepared_bash_command)
+    git_artifact.apply_patch_command(source_5_stage)
   end
 
   def command_apply(command)
     expect(command).to_not be_empty
-    expect { shellout!(%(bash -ec '#{command}')) }.to_not raise_error
+    expect { shellout!(%(bash -ec '#{command.join(' && ')}')) }.to_not raise_error
   end
 
-  def clear_where_to_add
+  def remove_where_to_add
     FileUtils.rm_rf @where_to_add
   end
 
@@ -136,8 +159,7 @@ xdescribe Dapp::GitArtifact do
   it 'patch owner_and_group', test_construct: true do
     with_credentials(owner, group) do
       archive_apply(owner: owner, group: group) do
-        application_build!
-        patch_apply(add_files: [file_name], owner: owner, group: group, ignore_build: true) do
+        patch_apply(add_files: [file_name], owner: owner, group: group, ignore_archive_apply: true) do
           expect_file_credentials(File.join(@where_to_add, file_name), owner, group)
         end
       end

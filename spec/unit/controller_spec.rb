@@ -2,7 +2,6 @@ require_relative '../spec_helper'
 
 describe Dapp::Controller do
   include SpecHelper::Common
-  include SpecHelper::Expect
 
   RSpec.configure do |c|
     c.before(:example, :build) { stub_application(:build!) }

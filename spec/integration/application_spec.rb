@@ -42,8 +42,20 @@ describe Dapp::Application do
     )
   end
 
+  def stages_names
+    @stages ||= stages.keys.reverse
+  end
+
   def stage_index(stage_name)
     stages_names.index(stage_name)
+  end
+
+  def prev_stage(s)
+    stages[s].prev_stage.send(:name)
+  end
+
+  def stages_signatures
+    stages.values.map { |s| [:"#{s.send(:name)}", s.send(:signature)] }.to_h
   end
 
   def check_image_command(stage_name, command)

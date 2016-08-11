@@ -25,6 +25,10 @@ module SpecHelper
       end
     end
 
+    def expect_exception_code(code:)
+      expect { yield }.to raise_error { |error| expect(error.net_status[:code]).to be(code) }
+    end
+
     def self.included(base)
       base.extend(self)
     end
