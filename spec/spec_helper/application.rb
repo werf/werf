@@ -71,7 +71,6 @@ module SpecHelper
       stages[s].prev_stage.send(:name)
     end
 
-    # rubocop:disable Metrics/AbcSize
     def stub_application
       method_new = Dapp::Application.method(:new)
 

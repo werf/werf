@@ -53,12 +53,12 @@ describe Dapp::GitArtifact do
 
   def git_artifact_local_options
     {
-        cwd: (@cwd ||= ''),
-        paths: (@paths ||= []),
-        branch: (@branch ||= 'master'),
-        where_to_add: @where_to_add,
-        group: (@group ||= 'root'),
-        owner: (@owner ||= 'root')
+      cwd: (@cwd ||= ''),
+      paths: (@paths ||= []),
+      branch: (@branch ||= 'master'),
+      where_to_add: @where_to_add,
+      group: (@group ||= 'root'),
+      owner: (@owner ||= 'root')
     }
   end
 
@@ -127,20 +127,20 @@ describe Dapp::GitArtifact do
 
     it "#{type} cwd", test_construct: true do
       send("#{type}_apply", add_files: %w(master.txt a/master2.txt),
-           added_files: ['master2.txt'], not_added_files: %w(a master.txt),
-           cwd: 'a')
+                            added_files: ['master2.txt'], not_added_files: %w(a master.txt),
+                            cwd: 'a')
     end
 
     it "#{type} paths", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
-           added_files: %w(x/y/data.txt z/data.txt), not_added_files: ['x/data.txt'],
-           paths: %w(x/y z))
+                            added_files: %w(x/y/data.txt z/data.txt), not_added_files: ['x/data.txt'],
+                            paths: %w(x/y z))
     end
 
     it "#{type} cwd_and_paths", test_construct: true do
       send("#{type}_apply", add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
-           added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(a data.txt),
-           cwd: 'a', paths: %w(x/y z))
+                            added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(a data.txt),
+                            cwd: 'a', paths: %w(x/y z))
     end
   end
 
