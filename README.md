@@ -93,7 +93,40 @@
 *TODO*
 
 #### Docker
-*TODO*
+
+##### docker.from \<image\>[, cache_version: \<cache_version\>]
+Определить окружение приложения **\<image\>** (см. [Стадия from](#from)).
+
+**\<image\>** имеет следующий формат 'REPOSITORY:TAG'.
+
+Опциональный параметр **\<cache_version\>** участвует в формировании сигнатуры стадии.
+
+##### docker.cmd \<cmd\>[, \<cmd\> ...]
+Применить dockerfile инструкцию CMD (см. [CMD](https://docs.docker.com/engine/reference/builder/#/cmd "Docker reference")).
+
+##### docker.env \<env_name\>: \<env_value\>[, \<env_name\>: \<env_value\> ...]
+Применить dockerfile инструкцию ENV (см. [ENV](https://docs.docker.com/engine/reference/builder/#/env "Docker reference")).
+
+##### docker.entrypoint \<cmd\>[, \<arg\> ...]
+Применить dockerfile инструкцию ENTRYPOINT (см. [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#/entrypoint "Docker reference")).
+
+##### docker.expose \<expose\>[, \<expose\> ...]
+Применить dockerfile инструкцию EXPOSE (см. [EXPOSE](https://docs.docker.com/engine/reference/builder/#/expose "Docker reference")).
+
+##### docker.label \<label_key\>: \<label_value\>[, \<label_key\>: \<label_value\> ...]
+Применить dockerfile инструкцию LABEL (см. [LABEL](https://docs.docker.com/engine/reference/builder/#/label "Docker reference")).
+
+##### docker.onbuild \<cmd\>[, \<cmd\> ...]
+Применить dockerfile инструкцию ONBUILD (см. [ONBUILD](https://docs.docker.com/engine/reference/builder/#/onbuild "Docker reference")).
+
+##### docker.user \<user\>
+Применить dockerfile инструкцию USER (см. [USER](https://docs.docker.com/engine/reference/builder/#/user "Docker reference")).
+
+##### docker.volume \<volume\>[, \<volume\> ...]
+Применить dockerfile инструкцию VOLUME (см. [VOLUME](https://docs.docker.com/engine/reference/builder/#/volume "Docker reference")).
+
+##### docker.workdir \<path\>
+Применить dockerfile инструкцию WORKDIR (см. [WORKDIR](https://docs.docker.com/engine/reference/builder/#/workdir "Docker reference")).
 
 #### Shell
 *TODO*
@@ -368,6 +401,48 @@ dapp metadata flush [options] [PATTERN...]
 | source_4            | Наложение патча                               															  |
 | source_5            | Наложение патча                               	                                                          |
 | docker_instructions | Применение докерфайловых инструкций (CMD, ENTRYPOINT, ENV, EXPOSE, LABEL, ONBUILD, USER, VOLUME, WORKDIR) |
+
+#### from
+*TODO*
+
+#### infra_install
+*TODO*
+
+#### source_1_archive
+*TODO*
+
+#### source_1
+*TODO*
+
+#### install
+*TODO*
+
+#### artifact
+*TODO*
+
+#### source_2
+*TODO*
+
+#### infra_setup
+*TODO*
+
+#### source_3
+*TODO*
+
+#### chef_cookbooks
+*TODO*
+
+#### setup
+*TODO*
+
+#### source_4
+*TODO*
+
+#### source_5
+*TODO*
+
+#### docker_instructions
+*TODO*
 
 ### Хранение данных
 
