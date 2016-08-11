@@ -20,10 +20,6 @@ BANNER
              long: '--tmp-dir-prefix PREFIX',
              description: 'Tmp directory prefix'
 
-      option :metadata_dir,
-             long: '--metadata-dir PATH',
-             description: 'Metadata directory'
-
       option :build_dir,
              long: '--build-dir PATH',
              description: 'Directory where build cache stored (DIR/.dapps-build by default)'

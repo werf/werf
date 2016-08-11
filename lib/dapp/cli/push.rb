@@ -15,10 +15,6 @@ Usage:
 Options:
 BANNER
 
-      option :metadata_dir,
-             long: '--metadata-dir PATH',
-             description: 'Metadata directory'
-
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
              description: 'Default branch to archive artifacts from'

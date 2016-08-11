@@ -16,9 +16,6 @@ Usage:
 
 Options:
 BANNER
-      option :metadata_dir,
-             long: '--metadata-dir PATH',
-             description: 'Metadata directory'
 
       def read_cli_options(args)
         self.class.cli_wrapper(self) do

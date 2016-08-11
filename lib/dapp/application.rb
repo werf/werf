@@ -21,7 +21,6 @@ module Dapp
       @cli_options = cli_options
 
       @tmp_path = Dir.mktmpdir(cli_options[:tmp_dir_prefix] || 'dapp-')
-      @metadata_path = cli_options[:metadata_dir] || home_path('.dapps-metadata')
       @build_path = cli_options[:build_dir] || home_path('.dapps-build')
 
       @last_stage = Build::Stage::DockerInstructions.new(self)
