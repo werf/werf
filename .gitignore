@@ -3,4 +3,5 @@
 .tags
 /.bundle
 /.vendor
-/spec/chef/testproject/.dapps-metadata/
+/spec/chef/testproject/.dapps-metadata
+/spec/chef/testproject/.dapps-build
