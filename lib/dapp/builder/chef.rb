@@ -21,10 +21,10 @@ module Dapp
                               "export DAPP_BUILD_STAGE=#{stage}"
 
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}"
-            image.add_commands ['chef-solo',
-                                '--legacy-mode',
-                                "-c #{container_stage_config_path(stage)}",
-                                "-o #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
+            image.add_command ['chef-solo',
+                               '--legacy-mode',
+                               "-c #{container_stage_config_path(stage)}",
+                               "-o #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
           end
         end
       end
