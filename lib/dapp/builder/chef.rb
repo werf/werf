@@ -99,7 +99,7 @@ module Dapp
       end
 
       def stage_cookbooks_checksum_path(stage)
-        application.metadata_path("#{cookbooks_checksum}.#{stage}.checksum")
+        application.build_path("#{cookbooks_checksum}.#{stage}.checksum")
       end
 
       def stage_cookbooks_checksum(stage)

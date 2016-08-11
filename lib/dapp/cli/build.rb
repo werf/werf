@@ -26,7 +26,7 @@ BANNER
 
       option :build_dir,
              long: '--build-dir PATH',
-             description: 'Directory where build cache stored'
+             description: 'Directory where build cache stored (DIR/.dapps-build by default)'
 
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
