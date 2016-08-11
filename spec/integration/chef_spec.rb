@@ -88,7 +88,7 @@ describe Dapp::Builder::Chef do
   end
 
   def project_path
-    @project_path ||= Pathname("/tmp/dapp-test-#{CACHE_VERSION}")
+    @project_path ||= Pathname("/tmp/dapp-test-#{SpecHelper::Application::CACHE_VERSION}")
   end
 
   def testproject_path
