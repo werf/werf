@@ -42,20 +42,21 @@ describe Dapp::Application do
     )
   end
 
-  [:install, :infra_setup, :setup].each do |stage_name|
-    define_method "#{stage_name}_modified_signatures" do
-      stages_names[stages_names.index(stage_name) - 2..-1]
-    end
-
-    define_method "#{stage_name}_saved_signatures" do
-      stages_names[0..stages_names.index(stage_name) - 3]
-    end
+  def stage_index(stage_name)
+    stages_names.index(stage_name)
   end
 
-  [:infra_install, :install, :infra_setup, :setup].each do |stage_name|
-    define_method :"change_#{stage_name}" do
-      config[:_shell][:"_#{stage_name}"] << generate_command
-    end
+  def check_image_command(stage_name, command)
+    expect(stages[stage_name].send(:image).send(:bash_commands).join =~ Regexp.new(command)).to be
+  end
+
+  def expect_from_image
+    check_image_command(:source_1_archive, 'tar -x')
+  end
+
+  def expect_infra_install_image
+    check_image_command(:infra_install, config[:_shell][:_infra_install].last)
+    check_image_command(:source_1_archive, 'tar -x')
   end
 
   [:install, :infra_setup, :setup].each do |stage_name|
@@ -71,37 +72,14 @@ describe Dapp::Application do
     end
   end
 
-  def check_image_command(stage_name, command)
-    expect(stages[stage_name].send(:image).send(:bash_commands).join =~ Regexp.new(command)).to be
-  end
-
   def change_from
     config[:_docker][:_from] = :'ubuntu:14.04'
   end
 
-  def expect_from_image
-    check_image_command(:source_1_archive, 'tar -x')
-  end
-
-  def from_modified_signatures
-    stages_names
-  end
-
-  def from_saved_signatures
-    []
-  end
-
-  def infra_install_modified_signatures
-    stages_names[stages_names.index(:infra_install)..-1]
-  end
-
-  def infra_install_saved_signatures
-    [stages_names.first]
-  end
-
-  def expect_infra_install_image
-    check_image_command(:infra_install, config[:_shell][:_infra_install].last)
-    check_image_command(:source_1_archive, 'tar -x')
+  [:infra_install, :install, :infra_setup, :setup].each do |stage_name|
+    define_method :"change_#{stage_name}" do
+      config[:_shell][:"_#{stage_name}"] << generate_command
+    end
   end
 
   def change_source_4
@@ -114,24 +92,50 @@ describe Dapp::Application do
     end
   end
 
-  def source_4_saved_signatures
-    stages_names[0..stages_names.index(:source_4) - 2]
-  end
-
-  def source_4_modified_signatures
-    stages_names[stages_names.index(:source_4)..-1]
-  end
-
   def change_source_5
     git_change_and_commit!
   end
 
-  def source_5_saved_signatures
-    stages_names[0..-2]
+  def from_modified_signatures
+    stages_names
   end
 
-  def source_5_modified_signatures
-    [:source_5]
+  def infra_install_modified_signatures
+    stages_names[stage_index(:infra_install)..-1]
+  end
+
+  [:install, :infra_setup, :setup].each do |stage_name|
+    define_method "#{stage_name}_modified_signatures" do
+      stages_names[stage_index(stage_name) - 2..-1]
+    end
+  end
+
+  [:source_4, :source_5].each do |stage_name|
+    define_method "#{stage_name}_modified_signatures" do
+      stages_names[stage_index(stage_name)..-1]
+    end
+  end
+
+  def from_saved_signatures
+    []
+  end
+
+  def infra_install_saved_signatures
+    [stages_names.first]
+  end
+
+  [:install, :infra_setup, :setup].each do |stage_name|
+    define_method "#{stage_name}_saved_signatures" do
+      stages_names[0..stage_index(stage_name) - 3]
+    end
+  end
+
+  def source_4_saved_signatures
+    stages_names[0..stage_index(:source_4) - 2]
+  end
+
+  def source_5_saved_signatures
+    stages_names[0..stage_index(:source_5) - 1]
   end
 
   def build_and_check(stage_name)

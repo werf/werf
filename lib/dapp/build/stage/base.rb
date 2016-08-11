@@ -36,7 +36,6 @@ module Dapp
               prev_stage.image
             else
               Image::Stage.new(name: image_name, from: from_image).tap do |image|
-                image.add_volume "#{application.tmp_path}:#{application.container_tmp_path}"
                 image.add_change_label dapp: application.config._basename
                 yield image if block_given?
               end
@@ -49,7 +48,7 @@ module Dapp
         end
 
         def dependencies_empty?
-          dependencies.flatten.compact.empty?
+          dependencies.flatten.compact.delete_if { |val| val.respond_to?(:empty?) && val.empty? }.empty?
         end
 
         def signature

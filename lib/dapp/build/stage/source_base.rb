@@ -21,17 +21,12 @@ module Dapp
 
         def image
           super do |image|
-            bash_commands = []
-            volumes = []
-            application.git_artifacts.each do |git_artifact|
-              volumes << "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}"
-              bash_commands.concat(git_artifact.send(apply_command_method, self))
-            end
+            image.add_volumes_from gitartifact_container
+            image.add_command 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
 
-            unless bash_commands.empty?
-              image.add_volumes_from(gitartifact_container)
-              image.add_volume(volumes)
-              image.add_commands 'export PATH=/.dapp/deps/gitartifact/bin:$PATH', *bash_commands
+            application.git_artifacts.each do |git_artifact|
+              image.add_volume "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}:ro"
+              image.add_command git_artifact.send(apply_command_method, self)
             end
             yield image if block_given?
           end

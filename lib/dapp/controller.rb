@@ -87,7 +87,15 @@ module Dapp
 
     def apps(dappfile_path, app_filters:)
       config = Config::Main.new(dappfile_path: dappfile_path) do |conf|
-        conf.instance_eval File.read(dappfile_path), dappfile_path
+        begin
+          conf.instance_eval File.read(dappfile_path), dappfile_path
+        rescue SyntaxError, StandardError => e
+          message = case e
+                    when ArgumentError then "#{e.backtrace.first[/`.*'$/]}: #{e.message}"
+                    else e.message
+                    end
+          raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, path: dappfile_path, message: message }
+        end
       end
       config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }
     end

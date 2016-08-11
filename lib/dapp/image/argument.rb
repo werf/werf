@@ -54,7 +54,7 @@ module Dapp
         add_option(:entrypoint, value)
       end
 
-      def add_commands(*commands)
+      def add_command(*commands)
         @bash_commands.concat(commands.flatten)
       end
 

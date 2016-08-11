@@ -3,9 +3,9 @@ module Dapp
     module Stage
       # Source5
       class Source5 < SourceBase
-        def initialize(application)
+        def initialize(application, next_stage)
           @prev_stage = Source4.new(application, self)
-          @application = application
+          super
         end
 
         def prev_source_stage
@@ -21,16 +21,7 @@ module Dapp
         end
 
         def dependencies
-          [commit_list, change_options]
-        end
-
-        def image
-          super do |image|
-            change_options.each do |k, v|
-              next if v.nil? || v.empty?
-              image.public_send("add_change_#{k}", v)
-            end
-          end
+          [commit_list]
         end
 
         def layer_commit(git_artifact)
@@ -44,10 +35,6 @@ module Dapp
         end
 
         private
-
-        def change_options
-          application.config._docker._change_options
-        end
 
         def commit_list
           application.git_artifacts.map { |git_artifact| layer_commit(git_artifact) }
