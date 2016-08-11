@@ -49,10 +49,6 @@ module SpecHelper
       { log_quiet: true, log_indent: 0 }
     end
 
-    def stages_names
-      @stages ||= stages.keys.reverse
-    end
-
     def stages
       hash = {}
       s = application.send(:last_stage)
@@ -63,40 +59,11 @@ module SpecHelper
       hash
     end
 
-    def stage(stage_name)
-      stages[stage_name]
-    end
-
-    def stages_signatures
-      stages.values.map { |s| [:"#{s.send(:name)}", s.send(:signature)] }.to_h
-    end
-
-    def stage_signature(stage_name)
-      stages_signatures[stage_name]
-    end
-
-    def next_stage(s)
-      stages[s].next_stage.send(:name)
-    end
-
     def prev_stage(s)
       stages[s].prev_stage.send(:name)
     end
 
     # rubocop:disable Metrics/AbcSize
-    def stub_docker_image
-      images_cash = []
-      stub_instance(Dapp::Image::Stage) do |instance|
-        allow(instance).to receive(:build!)
-        allow(instance).to receive(:tagged?) { images_cash.include? instance.name }
-        allow(instance).to receive(:tag!)    { images_cash << instance.name }
-        allow(instance).to receive(:pull!)   { images_cash << instance.name }
-        allow(instance).to receive(:untag!)  { images_cash.delete(instance.name) }
-        allow(instance).to receive(:info)    { %w(19700101 99999999) }
-        allow(instance).to receive(:built_id)
-      end
-    end
-
     def stub_application
       method_new = Dapp::Application.method(:new)
 
