@@ -20,7 +20,7 @@ module Dapp
             image.add_command 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
                               "export DAPP_BUILD_STAGE=#{stage}"
 
-            image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}"
+            image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}:ro"
             image.add_command ['chef-solo',
                                '--legacy-mode',
                                "-c #{container_stage_config_path(stage)}",
