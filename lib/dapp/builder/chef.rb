@@ -302,6 +302,10 @@ module Dapp
             to_entry[cookbook, entrypoint]
           end
 
+          enabled_modules
+            .map { |mod| to_recipe_entry["mdapp-#{mod}", stage] || to_entry["mdapp-#{mod}", 'void'] }
+            .tap { |entries| res.concat entries }
+
           enabled_recipes
             .map { |recipe| to_recipe_entry[project_name, recipe] }
             .compact
@@ -312,10 +316,6 @@ module Dapp
                 res << to_entry[project_name, 'void']
               end
             end
-
-          enabled_modules
-            .map { |mod| to_recipe_entry["mdapp-#{mod}", stage] || to_entry["mdapp-#{mod}", 'void'] }
-            .tap { |entries| res.concat entries }
         end
       end
       # rubocop:enable Metrics/AbcSize
