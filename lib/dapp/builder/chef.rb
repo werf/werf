@@ -20,7 +20,7 @@ module Dapp
             image.add_command 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
                               "export DAPP_BUILD_STAGE=#{stage}"
 
-            image.add_volume "#{stage_tmp_path(stage)}:#{container_stage_tmp_path(stage)}"
+            image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}:ro"
             image.add_command ['chef-solo',
                                '--legacy-mode',
                                "-c #{container_stage_config_path(stage)}",
@@ -326,30 +326,30 @@ module Dapp
       end
 
       def stage_cookbooks_path(stage, *path)
-        stage_tmp_path(stage, 'cookbooks', *path)
+        stage_build_path(stage, 'cookbooks', *path)
       end
 
       def install_chef_solo_stage_config(stage)
         @install_chef_solo_stage_config ||= {}
         @install_chef_solo_stage_config[stage] ||= true.tap do
-          stage_tmp_path(stage, 'config.rb').write [
-            "file_cache_path \"/var/cache/dapp/chef\"\n",
-            "cookbook_path \"#{container_stage_tmp_path(stage, 'cookbooks')}\"\n"
+          stage_build_path(stage, 'config.rb').write [
+            "file_cache_path \"/.dapp/chef/cache\"\n",
+            "cookbook_path \"#{container_stage_build_path(stage, 'cookbooks')}\"\n"
           ].join
         end
       end
 
       def container_stage_config_path(stage, *path)
         install_chef_solo_stage_config(stage)
-        container_stage_tmp_path(stage, 'config.rb', *path)
+        container_stage_build_path(stage, 'config.rb', *path)
       end
 
-      def stage_tmp_path(stage, *path)
+      def stage_build_path(stage, *path)
         application.tmp_path(application.config._name, stage).join(*path)
       end
 
-      def container_stage_tmp_path(_stage, *path)
-        path.compact.map(&:to_s).inject(Pathname.new('/chef_build'), &:+)
+      def container_stage_build_path(_stage, *path)
+        path.compact.map(&:to_s).inject(Pathname.new('/.dapp/chef/build'), &:+)
       end
 
       def _paths_checksum(paths)
