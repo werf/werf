@@ -309,17 +309,6 @@ module Dapp
             "#{cookbook}::#{entrypoint}"
           end
 
-          enabled_recipes
-            .map { |recipe| [project_name, recipe] }
-            .select { |entry| does_entry_exist[*entry] }
-            .tap do |entries|
-              if entries.any?
-                res.concat entries
-              else
-                res << [project_name, nil]
-              end
-            end
-
           enabled_modules
             .map do |mod|
               cookbook = "mdapp-#{mod}"
@@ -330,6 +319,17 @@ module Dapp
               end
             end
             .tap { |entries| res.concat entries }
+
+          enabled_recipes
+            .map { |recipe| [project_name, recipe] }
+            .select { |entry| does_entry_exist[*entry] }
+            .tap do |entries|
+              if entries.any?
+                res.concat entries
+              else
+                res << [project_name, nil]
+              end
+            end
 
           if res.all? { |_, entrypoint| entrypoint.nil? }
             []

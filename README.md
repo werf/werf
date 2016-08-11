@@ -28,8 +28,9 @@
 
 ##### builder \<builder\>
 Тип сборки: **:chef** или **:shell**.
-* Опционально, по умолчанию будет выбран тот builder, который будет использован первым (см. [Chef](#chef), [Shell](#shell)).
-* При определении типа сборки, builder другого типа сбрасывается. Таким образом, в одной конфигурации можно определять приложения с различным типом сборки.
+* Опционально, по умолчанию будет выбран тот сборщик, который будет использован первым (см. [Chef](#chef), [Shell](#shell)).
+* При определении типа сборки, сборщик другого типа сбрасывается.
+* При смене сборщика, необходимо явно изменять тип сборки.
 * Пример:
   * Собирать приложение X с **:chef** сборщиком, а Y c **:shell**:
   ```ruby
@@ -40,24 +41,23 @@
     shell.infra_install 'apt-get install service'
   end
   ```
-  * Собирать приложения X и Z с **:chef** сборщиком, а X-Y и X-Y-W c **:shell**:
+  * Собирать приложения X-Y и Z с **:chef** сборщиком, а X-V c **:shell**:
   ```ruby
   chef.module 'a', 'b'
   
   app 'X' do
-    app 'Y' do
-      builder :shell
+    builder :shell
    
-      shell.infra_install 'apt-get install service'
-      
-      app 'W' do
-        shell.install 'application install'
-      end
+    app 'Y' do
+      builder :chef
+      chef.module 'c'
+    end
+    
+    app 'V' do
+      shell.install 'application install'
     end
   end
-  app 'Z' do
-    chef.module 'c'
-  end
+  app 'Z'
   ```
     
 ##### app \<app\>[, &blk]
@@ -199,7 +199,7 @@ dapp build [options] [PATTERN ...]
 ###### --introspect-error
 После завершения команд стадии с ошибкой.
 
-##### Примеры использования
+##### Примеры
 * Сборка в текущей директории:
 ```bash
 $ dapp build
@@ -249,7 +249,7 @@ dapp push [options] [PATTERN...] REPO
 ###### --tag-ci
 Добавляет теги, взятые из переменных окружения CI систем.
 
-##### Примеры использования
+##### Примеры
 * Выкатить приложение **app** в репозиторий test, именем myapp и тегом latest:
 ```bash
 $ dapp push app test/myapp
@@ -274,7 +274,7 @@ dapp smartpush [options] [PATTERN ...] REPOPREFIX
 
 Опции такие же как у **dapp push**.
 
-##### Примеры использования
+##### Примеры
 * Выкатить все приложения в репозиторий test и тегом latest:
 ```bash
 $ dapp smartpush test
@@ -283,11 +283,11 @@ $ dapp smartpush test
 ```bash
 $ dapp smartpush test --tag yellow --tag-branch --dry-run
 backend
-    test/app:yellow
-    test/app:master
+  test/app:yellow
+  test/app:master
 frontend
-    test/app:yellow
-    test/app:0.2
+  test/app:yellow
+  test/app:0.2
 ```
 
 #### dapp list
@@ -309,22 +309,34 @@ dapp run [options] [PATTERN...] [DOCKER ARGS]
 
 Перед командой необходимо использовать группу символов ' -- '.
 
-###### Примеры использования
+##### Примеры
+* Запустить приложение с опциями:
+```bash
+$ dapp run -ti --rm
 ```
-dapp run -ti --rm
-dapp run -ti --rm -- bash -ec true
-dapp run -- bash -ec true
+* Запустить с опциями и командами:
+```bash
+$ dapp run -ti --rm -- bash -ec true
+```
+* Запустить, передав только команды:
+```bash
+$ dapp run -- bash -ec true
+```
+* Посмотреть, что может быть запущено:
+```bash
+$ dapp run app -ti --rm -- bash -ec true
+docker run -ti --rm app-dappstage:ea5ec7543c809ec7e9fe28181edfcb2ee6f48efaa680f67bf23a0fc0057ea54c bash -ec true
 ```
 
 #### dapp stages flush
-Удаляет все тегированные образы приложений.
+Удаляет весь тегированный кэш приложений (см. [Кэш стадий](#Кэш-стадий)).
 
 ```
 dapp stages flush [options] [PATTERN...]
 ```
 
 #### dapp stages cleanup
-Удаляет все нетегированные образы приложений.
+Удаляет все нетегированный кэш приложений (см. [Кэш стадий](#Кэш-стадий)).
 
 ```
 dapp stages cleanup [options] [PATTERN...]

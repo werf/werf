@@ -80,7 +80,7 @@ module Dapp
           raise Error::Controller, code: :dappfile_not_found
         end
         Array(dappfiles).map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten.tap do |apps|
-          raise Error::Controller, code: :no_such_app, data: { path: dappfile_path, patterns: patterns.join(', ') } if apps.empty?
+          raise Error::Controller, code: :no_such_app, data: { patterns: patterns.join(', ') } if apps.empty?
         end
       end
     end
