@@ -7,7 +7,8 @@
 #### Основное
 
 ##### name \<name\>
-Базовое имя для собираемых docker image`ей: <базовое имя>-dappstage:<signature>
+Базовое имя для собираемых docker image`ей: \<базовое имя\>-dappstage:\<signature\>.
+
 Опционально, по умолчанию определяется исходя из имени директории, в которой находится Dappfile.
 
 ##### install\_depends\_on \<glob\>[,\<glob\>, \<glob\>, ...]
@@ -145,7 +146,9 @@
   * metadata.json
   * files/\<stage\>/ -> files/default/
   * templates/\<stage\>/ -> templates/default/
-  * attributes/\<stage\>/ -> attributes/default/
+  * attributes/common/ -> attributes/
+  * attributes/\<stage\>/ -> attributes/
+* В attributes/common и attributes/\<stage\> не могут быть файлы с одинаковыми именами, т.к. они попадают в одну директорию для запуска стадии.
 
 ##### chef.skip_module \<mod\>[, \<mod\>, \<mod\> ...]
 Выключить переданные модули для chef builder в данном контексте.
@@ -166,7 +169,9 @@
   * metadata.json
   * files/\<stage\> -> files/default/
   * templates/\<stage\>/ -> templates/default/
-  * attributes/\<stage\>/ -> attributes/default/
+  * attributes/common/ -> attributes/
+  * attributes/\<stage\>/ -> attributes/
+* В attributes/common и attributes/\<stage\> не могут быть файлы с одинаковыми именами, т.к. они попадают в одну директорию для запуска стадии.
 
 ##### chef.remove_recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
 Выключить переданные рецепты из проекта для chef builder в данном контексте.
