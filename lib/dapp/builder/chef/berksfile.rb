@@ -26,6 +26,7 @@ module Dapp
           end
         end # Parser
 
+        attr_reader :home_path
         attr_reader :path
         attr_reader :local_cookbooks
 
@@ -39,7 +40,7 @@ module Dapp
         def add_local_cookbook_path(name, path)
           @local_cookbooks[name] = {
             name: name,
-            path: @home_path.join(path)
+            path: home_path.join(path)
           }
         end
 
