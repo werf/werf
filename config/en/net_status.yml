@@ -17,8 +17,8 @@ en:
       another_image_already_tagged: 'Image with other id already tagged!'
       built_id_not_defined: '`from.built_id` not defined!'
     controller:
-      push_command_unexpected_apps_number: "Push command can process only one application!"
-      run_command_unexpected_apps_number: "Run command can process only one application!"
+      spush_command_unexpected_apps_number: "Command 'spush' can process only one application!"
+      run_command_unexpected_apps_number: "Command 'run' can process only one application!"
       no_such_app: "No such app: '%{patterns}'!"
       dappfile_not_found: "Dappfile not found!"
     config:

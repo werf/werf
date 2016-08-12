@@ -37,11 +37,11 @@ module Dapp
       FileUtils.rm_rf(tmp_path)
     end
 
-    def export!(repo)
+    def export!(repo, format:)
       raise Error::Application, code: :application_not_built unless last_stage.image.tagged? || dry_run?
 
       tags.each do |tag|
-        image_name = [repo, tag].join(':')
+        image_name = format % { repo: repo, app_name: config._name, tag: tag }
         if dry_run?
           log_state(image_name, state: t(code: 'state.push'), styles: { status: :success })
         else

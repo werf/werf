@@ -7,18 +7,18 @@ module Dapp
     include Mixlib::CLI
     include Helper::Trivia
 
-    SUBCOMMANDS = %w(build smartpush push list run stages).freeze
+    SUBCOMMANDS = %w(build push spush list run stages metadata).freeze
 
     banner <<BANNER.freeze
 Usage: dapp [options] sub-command [sub-command options]
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-dapp build [options] [PATTERN ...]
-dapp push [options] [PATTERN...] REPO
-dapp smartpush [options] [PATTERN ...] REPOPREFIX
-dapp list [options] [PATTERN ...]
-dapp run [options] [PATTERN...] [DOCKER ARGS]
+dapp build [options] [APPS PATTERN ...]
+dapp push [options] [APP PATTERN] REPO
+dapp spush [options] [APPS PATTERN ...] REPO
+dapp list [options] [APPS PATTERN ...]
+dapp run [options] [APP PATTERN] [DOCKER ARGS]
 dapp stages
 
 Options:

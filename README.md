@@ -150,10 +150,10 @@
 ### Команды
 
 #### dapp build
-Собрать приложения, удовлетворяющие хотя бы одному из **PATTERN**-ов (по умолчанию *).
+Собрать приложения, удовлетворяющие хотя бы одному из **APPS PATTERN**-ов (по умолчанию *).
 
 ```
-dapp build [options] [PATTERN ...]
+dapp build [options] [APPS PATTERN ...]
 ```
 
 ##### Опции среды сборки
@@ -218,10 +218,10 @@ $ dapp build --introspect-error
 ```
 
 #### dapp push
-Выкатить собранное приложение с именем **REPO**.
+Выкатить собранное приложение в репозиторий, в следующем формате **REPO**:**ИМЯ ПРИЛОЖЕНИЯ**-**TAG**.
 
 ```
-dapp push [options] [PATTERN...] REPO
+dapp push [options] [APPS PATTERN ...] REPO
 ```
 
 ##### --force
@@ -250,58 +250,58 @@ dapp push [options] [PATTERN...] REPO
 Добавляет теги, взятые из переменных окружения CI систем.
 
 ##### Примеры
-* Выкатить приложение **app** в репозиторий test, именем myapp и тегом latest:
+* Выкатить все приложения в репозиторий test и тегом latest:
 ```bash
-$ dapp push app test/myapp
-```
-* Выкатить приложение с произвольными тегами:
-```bash
-$ dapp push app test/myapp --tag 1 --tag test
+$ dapp push test
 ```
 * Запустить вхолостую и посмотреть какие образы могут быть выкачены:
 ```bash
-$ dapp push app test/myapp --tag-commit --tag-branch --dry-run
-test/myapp:2c622c16c39d4938dcdf7f5c08f7ed4efa8384c4
-test/myapp:master
+$ dapp push test --tag yellow --tag-branch --dry-run
+backend
+  test:backend-yellow
+  test:backend-master
+frontend
+  test:frontend-yellow
+  test:frontend-0.2
 ```
 
-#### dapp smartpush
-Выкатить каждое собранное приложение с именем **REPOPREFIX**/имя приложения.
+#### dapp spush
+Выкатить собранное приложение в репозиторий, в следующем формате **REPO**:**TAG**.
 
 ```
-dapp smartpush [options] [PATTERN ...] REPOPREFIX
+dapp spush [options] [APP PATTERN] REPO
 ```
 
 Опции такие же как у **dapp push**.
 
 ##### Примеры
-* Выкатить все приложения в репозиторий test и тегом latest:
+* Выкатить приложение **app** в репозиторий test, именем myapp и тегом latest:
 ```bash
-$ dapp smartpush test
+$ dapp spush app test/myapp
+```
+* Выкатить приложение с произвольными тегами:
+```bash
+$ dapp spush app test/myapp --tag 1 --tag test
 ```
 * Запустить вхолостую и посмотреть какие образы могут быть выкачены:
 ```bash
-$ dapp smartpush test --tag yellow --tag-branch --dry-run
-backend
-  test/app:yellow
-  test/app:master
-frontend
-  test/app:yellow
-  test/app:0.2
+$ dapp spush app test/myapp --tag-commit --tag-branch --dry-run
+test/myapp:2c622c16c39d4938dcdf7f5c08f7ed4efa8384c4
+test/myapp:master
 ```
 
 #### dapp list
 Вывести список приложений.
 
 ```
-dapp list [options] [PATTERN ...]
+dapp list [options] [APPS PATTERN ...]
 ```
 
 #### dapp run
 Запустить собранное приложение с докерными аргументами **DOCKER ARGS**.
 
 ```
-dapp run [options] [PATTERN...] [DOCKER ARGS]
+dapp run [options] [APPS PATTERN...] [DOCKER ARGS]
 ```
 
 ##### [DOCKER ARGS]
@@ -332,14 +332,14 @@ docker run -ti --rm app-dappstage:ea5ec7543c809ec7e9fe28181edfcb2ee6f48efaa680f6
 Удаляет весь тегированный кэш приложений (см. [Кэш стадий](#Кэш-стадий)).
 
 ```
-dapp stages flush [options] [PATTERN...]
+dapp stages flush [options] [APPS PATTERN...]
 ```
 
 #### dapp stages cleanup
 Удаляет все нетегированный кэш приложений (см. [Кэш стадий](#Кэш-стадий)).
 
 ```
-dapp stages cleanup [options] [PATTERN...]
+dapp stages cleanup [options] [APPS PATTERN...]
 ```
 
 ## Architecture

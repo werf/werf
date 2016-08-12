@@ -9,7 +9,10 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages flush [options] [PATTERN ...]
+  dapp stages flush [options] [APPS PATTERN ...]
+
+    APPS PATTERN                Applications to process [default: *].
+
 Options:
 BANNER
         def run(argv = ARGV)

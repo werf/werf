@@ -36,8 +36,8 @@ describe Dapp::Controller do
     expect_exception_code(code: :docker_from_not_defined) { controller.build }
   end
 
-  it 'push:push_command_unexpected_apps_number', :push do
-    expect_exception_code(code: :push_command_unexpected_apps_number) { stubbed_controller.push('name') }
+  it 'spush:spush_command_unexpected_apps_number', :push do
+    expect_exception_code(code: :spush_command_unexpected_apps_number) { stubbed_controller.spush('name') }
   end
 
   it 'run:run_command_unexpected_apps_number', :push do

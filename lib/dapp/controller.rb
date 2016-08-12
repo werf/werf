@@ -35,16 +35,21 @@ module Dapp
       build_configs.each { |config| log(config._name) }
     end
 
-    def push(repo)
-      raise Error::Controller, code: :push_command_unexpected_apps_number unless build_configs.one?
-      Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).export!(repo)
+    def spush(repo)
+      raise Error::Controller, code: :spush_command_unexpected_apps_number unless build_configs.one?
+      Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
+        app.export!(repo, format: '%{repo}:%{tag}')
+      end
     end
 
-    def smartpush(repo_prefix)
+    def push(repo)
       build_configs.each do |config|
         log_step(config._name)
-        repo = File.join(repo_prefix, config._name)
-        with_log_indent { Application.new(config: config, cli_options: cli_options, ignore_git_fetch: true).export!(repo) }
+        with_log_indent do
+          Application.new(config: config, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
+            app.export!(repo, format: '%{repo}:%{app_name}-%{tag}')
+          end
+        end
       end
     end
 

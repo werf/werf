@@ -10,9 +10,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp build [options] [PATTERN ...]
+  dapp build [options] [APPS PATTERN ...]
 
-    PATTERN                     Applications to process [default: *].
+    APPS PATTERN                Applications to process [default: *].
 
 Options:
 BANNER
