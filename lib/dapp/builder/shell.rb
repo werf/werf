@@ -8,7 +8,7 @@ module Dapp
            application.config._shell.public_send("_#{stage}_cache_version")].flatten
         end
         define_method("#{stage}?") { !stage_empty?(stage) }
-        define_method("#{stage}") do |image|
+        define_method(stage.to_s) do |image|
           image.add_command("export DAPP_BUILD_STAGE=#{stage}",
                             *stage_commands(stage)) unless stage_empty?(stage)
         end

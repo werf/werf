@@ -16,7 +16,7 @@ module Dapp
 
         define_method("#{stage}?") { !stage_empty?(stage) }
 
-        define_method("#{stage}") do |image|
+        define_method(stage.to_s) do |image|
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
             image.add_command 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
@@ -300,41 +300,41 @@ module Dapp
         @stage_cookbooks_runlist[stage] ||= begin
           res = []
 
-          does_entry_exist = ->(cookbook, entrypoint) do
+          does_entry_exist = lambda do |cookbook, entrypoint|
             stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb").exist?
           end
 
-          format_entry = ->(cookbook, entrypoint) do
+          format_entry = lambda do |cookbook, entrypoint|
             entrypoint = 'void' if entrypoint.nil?
             "#{cookbook}::#{entrypoint}"
           end
 
           enabled_modules
-            .map do |mod|
-              cookbook = "mdapp-#{mod}"
-              if does_entry_exist[cookbook, stage]
-                [cookbook, stage]
-              else
-                [cookbook, nil]
-              end
+                                            .map do |mod|
+            cookbook = "mdapp-#{mod}"
+            if does_entry_exist[cookbook, stage]
+              [cookbook, stage]
+            else
+              [cookbook, nil]
             end
-            .tap { |entries| res.concat entries }
+          end
+                                            .tap { |entries| res.concat entries }
 
           enabled_recipes
-            .map { |recipe| [project_name, recipe] }
-            .select { |entry| does_entry_exist[*entry] }
-            .tap do |entries|
-              if entries.any?
-                res.concat entries
-              else
-                res << [project_name, nil]
-              end
+                                            .map { |recipe| [project_name, recipe] }
+                                            .select { |entry| does_entry_exist[*entry] }
+                                            .tap do |entries|
+            if entries.any?
+              res.concat entries
+            else
+              res << [project_name, nil]
             end
+          end
 
           if res.all? { |_, entrypoint| entrypoint.nil? }
             []
           else
-            res.map &format_entry
+            res.map(&format_entry)
           end
         end
       end
