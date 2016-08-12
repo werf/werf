@@ -373,30 +373,23 @@ docker run -ti --rm app-dappstage:ea5ec7543c809ec7e9fe28181edfcb2ee6f48efaa680f6
 dapp stages flush [options] [APPS PATTERN...]
 ```
 
-#### dapp stages cleanup
-Удаляет все нетегированный кэш приложений (см. [Кэш стадий](#Кэш-стадий)).
-
-```
-dapp stages cleanup [options] [APPS PATTERN...]
-```
-
 ## Architecture
 
 ### Стадии
-| Имя                 | Краткое описание                     															          |
+| Имя                 | Краткое описание                     															                                        |
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
-| from                | Выбор окружения                                 														  |
-| infra_install       | Установка софта инфраструктуры                															  |
-| source_1_archive    | Создание архива                                															  |
-| source_1            | Наложение патча                              															  |
-| install             | Установка софта приложения                    															  |
-| artifact            | Копирование артифакта(ов)                     															  |
-| source_2            | Наложение патча                               															  |
-| infra_setup         | Настройка софта инфраструктуры                															  |
-| source_3            | Наложение патча                               															  |
-| chef_cookbooks      | Установка cookbook`ов         																			  |
-| setup               | Развёртывание приложения                    															  |  
-| source_4            | Наложение патча                               															  |
+| from                | Выбор окружения                                 														                              |
+| infra_install       | Установка софта инфраструктуры                															                              |
+| source_1_archive    | Создание архива                                															                              |
+| source_1            | Наложение патча                              															                                |
+| install             | Установка софта приложения                    															                              |
+| artifact            | Копирование артифакта(ов)                     															                              |
+| source_2            | Наложение патча                               															                              |
+| infra_setup         | Настройка софта инфраструктуры                															                              |
+| source_3            | Наложение патча                               															                              |
+| chef_cookbooks      | Установка cookbook`ов         																			                                      |
+| setup               | Развёртывание приложения                    															                                |  
+| source_4            | Наложение патча                               															                              |
 | source_5            | Наложение патча                               	                                                          |
 | docker_instructions | Применение докерфайловых инструкций (CMD, ENTRYPOINT, ENV, EXPOSE, LABEL, ONBUILD, USER, VOLUME, WORKDIR) |
 

@@ -7,7 +7,7 @@ module Dapp
     include Mixlib::CLI
     include Helper::Trivia
 
-    SUBCOMMANDS = %w(build push spush list run stages metadata).freeze
+    SUBCOMMANDS = %w(build push spush list run stages cleanup).freeze
 
     banner <<BANNER.freeze
 Usage: dapp [options] sub-command [sub-command options]
@@ -19,6 +19,7 @@ dapp push [options] [APP PATTERN] REPO
 dapp spush [options] [APPS PATTERN ...] REPO
 dapp list [options] [APPS PATTERN ...]
 dapp run [options] [APP PATTERN] [DOCKER ARGS]
+dapp cleanup [options] [APPS PATTERN ...]
 dapp stages
 
 Options:

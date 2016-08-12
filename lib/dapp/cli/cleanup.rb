@@ -2,16 +2,15 @@ require 'mixlib/cli'
 
 module Dapp
   class CLI
-    # CLI spush subcommand
-    class Spush < Push
+    # Cleanup subcommand
+    class Cleanup < Base
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp spush [options] [APPS PATTERN ...] REPO
+  dapp cleanup [options] [APPS PATTERN ...]
 
     APPS PATTERN                Applications to process [default: *].
-    REPO                        Pushed image name.
 
 Options:
 BANNER

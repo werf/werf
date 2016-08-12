@@ -60,10 +60,12 @@ module Dapp
       end
     end
 
-    def stages_cleanup
+    def cleanup
       build_configs.map(&:_basename).uniq.each do |basename|
         log(basename)
+        shellout('docker rm -f $(docker ps -a -f "label=dapp-meta" -q)')
         shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})
+        shellout(%{docker rmi $(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}} {{ end }}' -f "label=dapp=#{basename}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
       end
     end
 
