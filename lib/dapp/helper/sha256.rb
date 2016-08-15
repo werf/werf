@@ -8,9 +8,9 @@ module Dapp
 
       def paths_content_hashsum(paths)
         paths.map(&:to_s)
-          .reject { |path| File.directory?(path) }
-          .sort
-          .reduce(nil) { |hash, path| hashsum [hash, File.read(path)].compact }
+             .reject { |path| File.directory?(path) }
+             .sort
+             .reduce(nil) { |hash, path| hashsum [hash, File.read(path)].compact }
       end
 
       def sha256(arg)
