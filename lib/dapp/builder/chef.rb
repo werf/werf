@@ -138,7 +138,7 @@ module Dapp
 
       def chefdk_container
         @chefdk_container ||= begin
-          application.lock("chefdk.#{chefdk_container_name}", default_timeout: 60) do
+          application.lock("container.chefdk.#{chefdk_container_name}", default_timeout: 60) do
             if application.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
               application.log_secondary_process(application.t(code: 'process.chefdk_loading'), short: true) do
                 application.shellout(
