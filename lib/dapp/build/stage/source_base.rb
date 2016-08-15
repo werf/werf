@@ -54,15 +54,13 @@ module Dapp
 
         def gitartifact_container
           @gitartifact_container ||= begin
-            application.lock("container.gitartifact.#{gitartifact_container_name}", default_timeout: 60) do
-              if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus.nonzero?
-                application.log_secondary_process(application.t(code: 'process.git_artifact_loading'), short: true) do
-                  application.shellout ['docker run',
-                                        '--restart=no',
-                                        "--name #{gitartifact_container_name}",
-                                        "--volume /.dapp/deps/gitartifact #{GITARTIFACT_IMAGE}",
-                                        '2>/dev/null'].join(' ')
-                end
+            if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus.nonzero?
+              application.log_secondary_process(application.t(code: 'process.git_artifact_loading'), short: true) do
+                application.shellout ['docker run',
+                                      '--restart=no',
+                                      "--name #{gitartifact_container_name}",
+                                      "--volume /.dapp/deps/gitartifact #{GITARTIFACT_IMAGE}",
+                                      '2>/dev/null'].join(' ')
               end
             end
 
