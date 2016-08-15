@@ -34,7 +34,7 @@ module Dapp
     end
 
     def list
-      build_configs.each { |config| log(config._name) }
+      build_configs.each { |config| puts config._name }
     end
 
     def spush(repo)
