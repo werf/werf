@@ -2,9 +2,11 @@ module Dapp
   # Controller
   class Controller
     include Helper::Log
+    include Helper::I18n
     include Helper::Shellout
 
-    attr_reader :cli_options, :patterns
+    attr_reader :cli_options
+    attr_reader :patterns
 
     def initialize(cli_options: {}, patterns: nil)
       @cli_options = cli_options
@@ -85,7 +87,7 @@ module Dapp
     end
 
     def apps(dappfile_path, app_filters:)
-      config = Config::Main.new(dappfile_path: dappfile_path) do |conf|
+      config = Config::Main.new(dappfile_path: dappfile_path, controller: self) do |conf|
         begin
           conf.instance_eval File.read(dappfile_path), dappfile_path
         rescue SyntaxError, StandardError => e

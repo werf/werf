@@ -2,8 +2,10 @@ module Dapp
   module Config
     # Main
     class Main < Application
-      def initialize(**options)
-        @_home_path    = Pathname.new(options[:dappfile_path]).parent.expand_path.to_s
+      def initialize(dappfile_path:, controller:)
+        @controller    = controller
+
+        @_home_path    = Pathname.new(dappfile_path).parent.expand_path.to_s
         @_basename     = Pathname.new(@_home_path).basename.to_s
         @_builder      = Pathname.new(@_home_path).join('Berksfile').exist? ? :chef : :shell
 
@@ -16,6 +18,7 @@ module Dapp
       end
 
       def name(value)
+        controller.log_warning(desc: { code: 'excess_name_instruction', context: 'warning' }) if @_basename == value.to_s
         @_basename = value
       end
     end

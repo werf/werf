@@ -39,6 +39,10 @@ module Dapp
         reset_recipes
       end
 
+      def empty?
+        @_modules.empty? && @_recipes.empty?
+      end
+
       def clone
         Marshal.load(Marshal.dump(self))
       end

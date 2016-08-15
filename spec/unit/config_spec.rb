@@ -8,9 +8,15 @@ describe Dapp::Config::Main do
   end
 
   def apps
-    Dapp::Config::Main.new(dappfile_path: File.join(Dir.getwd, 'Dappfile')) do |config|
+    Dapp::Config::Main.new(dappfile_path: File.join(Dir.getwd, 'Dappfile'), controller: stubbed_controller) do |config|
       config.instance_eval(dappfile)
     end._apps
+  end
+
+  def stubbed_controller
+    instance_double(Dapp::Controller).tap do |instance|
+      allow(instance).to receive(:log_warning)
+    end
   end
 
   def app

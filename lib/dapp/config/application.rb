@@ -34,6 +34,14 @@ module Dapp
         @_setup_dependencies.concat(args)
       end
 
+      def builder(type)
+        controller.log_warning(desc: { code: 'excess_builder_instruction', context: 'warning' }) if @_chef.empty? && @_shell.empty?
+        raise Error::Config, code: :builder_type_unsupported, data: { type: type } unless [:chef, :shell].include?((type = type.to_sym))
+        another_builder = [:chef, :shell].find { |t| t != type }
+        instance_variable_set(:"@_#{another_builder}", Config.const_get(another_builder.capitalize).new)
+        @_builder = type
+      end
+
       def chef
         raise Error::Config, code: :builder_type_conflict unless _builder == :chef
         @_chef ||= Chef.new
@@ -42,6 +50,10 @@ module Dapp
       def shell
         raise Error::Config, code: :builder_type_conflict unless _builder == :shell
         @_shell ||= Shell.new
+      end
+
+      def docker
+        @_docker ||= Docker.new
       end
 
       def artifact(where_to_add, **options, &blk)
@@ -57,17 +69,6 @@ module Dapp
 
       def git_artifact
         @_git_artifact ||= GitArtifact.new
-      end
-
-      def docker
-        @_docker ||= Docker.new
-      end
-
-      def builder(type)
-        raise Error::Config, code: :builder_type_unsupported, data: { type: type } unless [:chef, :shell].include?((type = type.to_sym))
-        another_builder = [:chef, :shell].find { |t| t != type }
-        instance_variable_set(:"@_#{another_builder}", Config.const_get(another_builder.capitalize).new)
-        @_builder = type
       end
 
       def _name
@@ -95,11 +96,16 @@ module Dapp
         _app_chain.first
       end
 
+      protected
+
+      attr_accessor :controller
+
       private
 
       # rubocop:disable Metrics/AbcSize
       def clone
         Application.new(self).tap do |app|
+          app.instance_variable_set(:'@controller', controller)
           app.instance_variable_set(:'@_builder', _builder)
           app.instance_variable_set(:'@_home_path', _home_path)
           app.instance_variable_set(:'@_basename', _basename)

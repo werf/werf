@@ -8,8 +8,8 @@ module Dapp
       def initialize
         @_infra_install = []
         @_infra_setup   = []
-        @_install   = []
-        @_setup     = []
+        @_install       = []
+        @_setup         = []
       end
 
       def infra_install(*args, cache_version: nil)
@@ -50,6 +50,10 @@ module Dapp
 
       def reset_all
         methods.tap { |arr| arr.delete(__method__) }.grep(/^reset_/).each(&method(:send))
+      end
+
+      def empty?
+        @_infra_install.empty? && @_infra_setup.empty? && @_install.empty? && @_setup.empty?
       end
 
       def clone
