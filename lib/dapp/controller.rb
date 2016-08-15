@@ -58,6 +58,7 @@ module Dapp
     def stages_flush
       build_configs.map(&:_basename).uniq.each do |basename|
         log(basename)
+        containers_flush(basename)
         shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{basename}-dappstage)})
       end
     end
@@ -65,13 +66,17 @@ module Dapp
     def cleanup
       build_configs.map(&:_basename).uniq.each do |basename|
         log(basename)
-        shellout('docker rm -f $(docker ps -a -f "label=dapp-meta" -q)')
+        containers_flush(basename)
         shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})
         shellout(%{docker rmi $(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}} {{ end }}' -f "label=dapp=#{basename}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
       end
     end
 
     private
+
+    def containers_flush(basename)
+      shellout(%{docker rm -f $(docker ps -a -f "label=dapp" -f "name=#{basename}" -q)})
+    end
 
     def build_configs
       @configs ||= begin

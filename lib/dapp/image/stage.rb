@@ -9,7 +9,7 @@ module Dapp
         @bash_commands = []
         @options = {}
         @change_options = {}
-        @container_name = SecureRandom.hex
+        @container_name = "#{name[/[[^:].]*/]}.#{SecureRandom.hex(4)}"
         @built_id = built_id
         super(name: name, from: from)
       end
@@ -60,7 +60,7 @@ module Dapp
       end
 
       def service_options
-        "--entrypoint /bin/bash --name=#{container_name} --label dapp-meta=true"
+        "--entrypoint /bin/bash --name=#{container_name}"
       end
 
       def commit!
