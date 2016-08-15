@@ -16,6 +16,7 @@ en:
       image_not_exist: "Image `%{name}` not exist!"
       another_image_already_tagged: 'Image with other id already tagged!'
       built_id_not_defined: '`from.built_id` not defined!'
+      from_image_not_found: 'Image `%{name}` not found!'
     controller:
       spush_command_unexpected_apps_number: "Command 'spush' can process only one application!"
       run_command_unexpected_apps_number: "Command 'run' can process only one application!"
@@ -24,9 +25,10 @@ en:
     config:
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
-      docker_from_not_defined: "Docker `from` not defined!"
+      docker_from_not_defined: "`docker.from` not defined!"
       artifact_unexpected_attribute: "Artifact doesn't has attribute '%{attr}'!"
       git_artifact_unexpected_attribute: "'%{type}' git artifact doesn't has attribute '%{attr}'!"
+      docker_from_incorrect: "`docker.from` has incorrect value `%{name}`: expected format `image_name:tag`!"
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
     lock:

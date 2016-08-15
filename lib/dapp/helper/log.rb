@@ -2,23 +2,31 @@ module Dapp
   module Helper
     # Log
     module Log
-      def log_info(message, *args)
-        log(message, *args, style: :info)
+      def log_info(*args, **kwargs)
+        kwargs[:style] = :info
+        log(*args, **kwargs)
       end
 
-      def log_step(message, *args)
-        log(message, *args, style: :step)
+      def log_step(*args, **kwargs)
+        kwargs[:style] = :step
+        log(*args, **kwargs)
       end
 
-      def log_secondary(message, *args)
-        log(message, *args, style: :secondary)
+      def log_secondary(*args, **kwargs)
+        kwargs[:style] = :secondary
+        log(*args, **kwargs)
+      end
+
+      def log_warning(*args, **kwargs)
+        kwargs[:style] = :warning
+        log(*args, **kwargs)
       end
 
       def log(message = '', desc: nil, inline: false, **kwargs)
         return unless defined?(cli_options) && !cli_options[:log_quiet]
         unless desc.nil?
           (desc[:data] ||= {})[:msg] = message
-          message = t(desc: desc)
+          message = t(**desc)
         end
         print "#{log_format_string(message, **kwargs)}#{"\n" unless inline}"
       end

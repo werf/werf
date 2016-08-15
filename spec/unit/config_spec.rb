@@ -8,9 +8,15 @@ describe Dapp::Config::Main do
   end
 
   def apps
-    Dapp::Config::Main.new(dappfile_path: File.join(Dir.getwd, 'Dappfile')) do |config|
+    Dapp::Config::Main.new(dappfile_path: File.join(Dir.getwd, 'Dappfile'), controller: stubbed_controller) do |config|
       config.instance_eval(dappfile)
     end._apps
+  end
+
+  def stubbed_controller
+    instance_double(Dapp::Controller).tap do |instance|
+      allow(instance).to receive(:log_warning)
+    end
   end
 
   def app
@@ -60,10 +66,15 @@ describe Dapp::Config::Main do
     end
   end
 
-  context 'chef' do
+  context 'docker' do
     it 'from' do
+      @dappfile = "docker.from 'sample:tag'"
+      expect(app.docker._from).to eq 'sample:tag'
+    end
+
+    it 'from with incorrect image (:docker_from_incorrect)' do
       @dappfile = "docker.from 'sample'"
-      expect(app.docker._from).to eq 'sample'
+      expect_exception_code(code: :docker_from_incorrect) { apps }
     end
 
     it 'volume' do
@@ -107,7 +118,9 @@ describe Dapp::Config::Main do
       )
       expect(app.docker._user).to eq 'root:root'
     end
+  end
 
+  context :chef do
     it 'module' do
       expect_special_attribute(:chef, :module, :_modules)
     end
@@ -422,25 +435,25 @@ describe Dapp::Config::Main do
 
     it 'inherit' do
       @dappfile = %(
-        docker.from :image_1
+        docker.from 'image_1:tag'
 
         app 'first'
         app 'parent' do
-          docker.from :image_2
+          docker.from 'image_2:tag'
 
           app 'subparent' do
-            docker.from :image_3
+            docker.from 'image_3:tag'
           end
           app 'third'
         end
       )
-      expect(apps.map { |app| app.docker._from }).to eq [:image_1, :image_3, :image_2]
+      expect(apps.map { |app| app.docker._from }).to eq %w(image_1:tag image_3:tag image_2:tag)
     end
 
     it 'does not inherit (:docker_from_not_defined)' do
       @dappfile = %(
         app 'first'
-        docker.from :image_1
+        docker.from 'image:tag'
       )
       expect_exception_code(code: :docker_from_not_defined) { app.docker._from }
     end
@@ -460,7 +473,7 @@ describe Dapp::Config::Main do
   context 'cache_version' do
     it 'base' do
       @dappfile = %(
-        docker.from :image, cache_version: 'cache_key'
+        docker.from 'image:tag', cache_version: 'cache_key'
       )
       expect(app.docker._from_cache_version).to eq 'cache_key'
     end

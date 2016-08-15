@@ -111,13 +111,13 @@ module Dapp
       def cookbooks_checksum
         @cookbooks_checksum ||= begin
           paths = berksfile
-            .local_cookbooks
-            .values
-            .map { |cookbook| cookbook[:path] }
-            .product(LOCAL_COOKBOOK_CHECKSUM_PATTERNS)
-            .map { |cb, dir| Dir[cb.join(dir)] }
-            .flatten
-            .map(&Pathname.method(:new))
+                  .local_cookbooks
+                  .values
+                  .map { |cookbook| cookbook[:path] }
+                  .product(LOCAL_COOKBOOK_CHECKSUM_PATTERNS)
+                  .map { |cb, dir| Dir[cb.join(dir)] }
+                  .flatten
+                  .map(&Pathname.method(:new))
 
           application.hashsum [
             application.paths_content_hashsum(paths),
@@ -344,7 +344,7 @@ module Dapp
       end
 
       def stage_cookbooks_path(stage, *path)
-        _stage_cookbooks_path(stage).tap do |cookbooks_path|
+        _stage_cookbooks_path(stage).tap do |_cookbooks_path|
           @install_stage_cookbooks ||= {}
           @install_stage_cookbooks[stage] ||= true.tap { install_stage_cookbooks(stage) }
         end.join(*path)
