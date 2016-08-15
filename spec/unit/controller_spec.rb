@@ -27,7 +27,7 @@ describe Dapp::Controller do
   end
 
   it 'build', :build, test_construct: true do
-    Pathname('Dappfile').write("docker.from 'ubuntu.16.04'")
+    Pathname('Dappfile').write("docker.from 'ubuntu:16.04'")
     expect { controller.build }.to_not raise_error
   end
 

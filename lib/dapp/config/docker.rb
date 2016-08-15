@@ -14,8 +14,9 @@ module Dapp
         @_onbuild = []
       end
 
-      def from(image_name, cache_version: nil)
-        @_from = image_name
+      def from(image, cache_version: nil)
+        raise(Error::Config, code: :docker_from_incorrect, data: { name: image }) unless image.match(/^[[^ ].]+:[[^ ].]+$/)
+        @_from = image
         @_from_cache_version = cache_version
       end
 
