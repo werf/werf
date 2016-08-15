@@ -4,7 +4,8 @@ module Dapp
     # Lock
     module Lock
       def lock(name, *args, default_timeout: 60, &blk)
-        ::Dapp::Lock::File.new(self.lock_path, name, timeout: default_timeout).synchronize(*args, &blk)
+        timeout = @cli_options[:lock_timeout] || default_timeout
+        ::Dapp::Lock::File.new(self.lock_path, name, timeout: timeout).synchronize(*args, &blk)
       end
     end # Lock
   end # Application
