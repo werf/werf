@@ -17,7 +17,7 @@ module Dapp
 
         begin
           mode = (shared ? ::File::LOCK_SH : ::File::LOCK_EX)
-          ::Timeout.timeout(timeout) { @file.flock(mode) }
+          _waiting { @file.flock(mode) } unless @file.flock(mode | ::File::LOCK_NB)
         rescue ::Timeout::Error
           raise Dapp::Lock::Error::Timeout, code: :timeout,
                                             data: { name: name, timeout: timeout }
