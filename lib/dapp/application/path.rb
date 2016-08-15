@@ -15,6 +15,10 @@ module Dapp
         make_path(@build_path, home_path.basename, *path).expand_path.tap { |p| p.parent.mkpath }
       end
 
+      def lock_path(*path)
+        make_path(@lock_path, *path).expand_path
+      end
+
       def container_dapp_path(*path)
         make_path('/.dapp', *path)
       end

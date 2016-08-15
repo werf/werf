@@ -9,7 +9,7 @@ module Dapp
     include GitArtifact
     include Path
     include Tags
-    include Dapp::Filelock
+    include Lock
 
     attr_reader :config
     attr_reader :cli_options
@@ -22,6 +22,7 @@ module Dapp
 
       @tmp_path = Dir.mktmpdir(cli_options[:tmp_dir_prefix] || 'dapp-')
       @build_path = cli_options[:build_dir] || home_path('.dapps-build')
+      @lock_path = cli_options[:lock_dir] || home_path('.dapps-lock')
 
       @last_stage = Build::Stage::DockerInstructions.new(self)
       @ignore_git_fetch = ignore_git_fetch
