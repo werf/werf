@@ -16,7 +16,7 @@ module Dapp
       end
 
       def lock_path(*path)
-        make_path(@lock_path, *path).expand_path
+        make_path(@lock_path, home_path.basename, *path).expand_path
       end
 
       def container_dapp_path(*path)
