@@ -36,8 +36,7 @@ module Dapp
 
       if prev_commit != current_commit || any_changes?(prev_commit, current_commit)
         [["git --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
-          "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} " \
-          '$(if [[ "$(git --version)" != "git version 1."* ]]; then echo "--unsafe-paths"; fi)'].join(' | ')] # FIXME
+          "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} --unsafe-paths"].join(' | ')]
       else
         []
       end
