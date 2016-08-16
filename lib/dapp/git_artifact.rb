@@ -83,7 +83,7 @@ module Dapp
       sudo = ''
 
       if owner || group
-        sudo = 'sudo '
+        sudo = 'sudo -E '
         sudo += "-u #{sudo_format_user(owner)} " if owner
         sudo += "-g #{sudo_format_user(group)} " if group
       end
