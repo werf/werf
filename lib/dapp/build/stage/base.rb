@@ -93,7 +93,12 @@ module Dapp
         end
 
         def should_be_tagged?
-          !(image.tagged? || empty?)
+          !(image.tagged? || empty? || should_be_not_present?)
+        end
+
+        def should_be_not_present?
+          return false if next_stage.nil?
+          next_stage.image.tagged? || next_stage.should_be_not_present?
         end
 
         def image_name
