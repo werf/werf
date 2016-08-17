@@ -94,7 +94,7 @@ module Dapp
           elsif application.dry_run?
             application.log_state(name, state: application.t(code: 'state.build'), styles: { status: :success })
           else
-            application.log_process(name, process: application.t(code: 'status.process.building'), short: should_be_not_detailed?) do
+            application.log_process(name, process: application.t(code: 'status.process.building'), short: should_not_be_detailed?) do
               image_do_build
             end
           end

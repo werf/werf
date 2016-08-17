@@ -99,11 +99,10 @@ module Dapp
         begin
           conf.instance_eval File.read(dappfile_path), dappfile_path
         rescue SyntaxError, StandardError => e
-          message = case e
-                    when ArgumentError then "#{e.backtrace.first[/`.*'$/]}: #{e.message}"
-                    else e.message
-                    end
-          raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, path: dappfile_path, message: message }
+          backtrace = e.backtrace.find { |line| line.start_with?(dappfile_path) }
+          message = e.is_a?(NoMethodError) ? e.message[/.*(?= for)/] : e.message
+          message = "#{backtrace[/.*(?=:in)/]}: #{message}" if backtrace
+          raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
         end
       end
       config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }
