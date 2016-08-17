@@ -27,5 +27,6 @@ en:
       docker_from_not_defined: "Docker `from` not defined!"
       artifact_unexpected_attribute: "Artifact doesn't has attribute '%{attr}'!"
       git_artifact_unexpected_attribute: "'%{type}' git artifact doesn't has attribute '%{attr}'!"
+      app_name_incorrect: "Application has incorrect name '%{name}': doesn't match regex '%{reg}'!"
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
