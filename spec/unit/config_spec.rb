@@ -468,6 +468,11 @@ describe Dapp::Config::Main do
       @dappfile = "name 'test'"
       expect(app._basename).to eq 'test'
     end
+
+    it 'incorrect name (:app_name_incorrect)' do
+      @dappfile = "name 'test;'"
+      expect_exception_code(code: :app_name_incorrect) { app._name }
+    end
   end
 
   context 'cache_version' do
