@@ -5,7 +5,7 @@ module Dapp
       class SourceBase < Base
         attr_accessor :prev_source_stage, :next_source_stage
 
-        GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.3'.freeze
+        GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.5'.freeze
 
         def prev_source_stage
           dependencies_stage.prev_stage.prev_stage
