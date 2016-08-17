@@ -32,8 +32,10 @@ module Dapp
     def build!
       with_introspection do
         lock('images', shared: true) do
-          last_stage.build!
-          last_stage.save_in_cache!
+          last_stage.build_lock! do
+            last_stage.build!
+            last_stage.save_in_cache!
+          end
         end
       end
     ensure
@@ -51,6 +53,7 @@ module Dapp
           else
             lock("image.#{image_name.gsub('/', '__')}") do
               log_process(image_name, process: t(code: 'status.process.pushing')) do
+                last_stage.image.cache_reset
                 last_stage.image.export!(image_name, log_verbose: log_verbose?, log_time: log_time?, force: cli_options[:force])
               end
             end

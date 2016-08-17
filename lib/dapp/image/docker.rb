@@ -55,15 +55,15 @@ module Dapp
         output == 'null' ? [] : JSON.parse(output)
       end
 
+      def cache_reset
+        self.class.cache.delete(name)
+        self.class.cache_reset(name)
+      end
+
       protected
 
       def cache
         self.class.cache[name.to_s] || {}
-      end
-
-      def cache_reset
-        self.class.cache.delete(name)
-        self.class.cache_reset(name)
       end
 
       class << self
