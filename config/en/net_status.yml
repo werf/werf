@@ -9,7 +9,7 @@ en:
       git_branch_without_name: "Application has specific revision that isn't associated with a branch name!"
       ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
     dappfile:
-      incorrect: "Dappfile '%{path}' with '%{error}':\n%{message}"
+      incorrect: "Dappfile with '%{error}':\n%{message}"
     build:
       from_image_required: 'Missing from_image!'
       image_already_untagged: "Image `%{name}` already untagged!"
