@@ -15,7 +15,7 @@ en:
       git_artifact_fetch: "fetching remote git_artifact '%{name}'"
       chefdk_loading: 'loading chefdk'
       berks_vendor: 'berks vendor'
-      waiting_resouce_lock: "waiting for resource '%{basename}/%{name}'"
+      waiting_resouce_lock: "waiting for locked resource '%{basename}/%{name}'"
     status:
       process:
         pushing: '[PUSHING]'

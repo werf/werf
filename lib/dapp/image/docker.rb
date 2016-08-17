@@ -11,6 +11,8 @@ module Dapp
       def initialize(name:, from: nil)
         @from = from
         @name = name
+
+        cache_reset
       end
 
       def id

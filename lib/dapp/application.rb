@@ -49,8 +49,10 @@ module Dapp
           if dry_run?
             log_state(image_name, state: t(code: 'state.push'), styles: { status: :success })
           else
-            log_process(image_name, process: t(code: 'status.process.pushing')) do
-              last_stage.image.export!(image_name, log_verbose: log_verbose?, log_time: log_time?, force: cli_options[:force])
+            lock("image.#{image_name.gsub('/', '__')}") do
+              log_process(image_name, process: t(code: 'status.process.pushing')) do
+                last_stage.image.export!(image_name, log_verbose: log_verbose?, log_time: log_time?, force: cli_options[:force])
+              end
             end
           end
         end
