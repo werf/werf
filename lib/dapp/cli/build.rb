@@ -20,10 +20,6 @@ BANNER
              long: '--tmp-dir-prefix PREFIX',
              description: 'Tmp directory prefix'
 
-      option :build_dir,
-             long: '--build-dir PATH',
-             description: 'Directory where build cache stored (DIR/.dapps-build by default)'
-
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
              description: 'Default branch to archive artifacts from'
