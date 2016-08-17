@@ -3,13 +3,13 @@ require 'mixlib/cli'
 module Dapp
   class CLI
     class Stages
-      # stages flush subcommand
-      class Flush < Base
+      # stages cleanup subcommand
+      class Cleanup < Base
         banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages flush [options] [APPS PATTERN ...]
+  dapp stages cleanup [options] [APPS PATTERN ...] [REPO]
 
     APPS PATTERN                Applications to process [default: *].
 
@@ -17,7 +17,8 @@ Options:
 BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          Controller.new(cli_options: config, patterns: cli_arguments).stages_flush
+          repo = self.class.required_argument(self)
+          Controller.new(cli_options: config, patterns: cli_arguments).stages_cleanup(repo)
         end
       end
     end

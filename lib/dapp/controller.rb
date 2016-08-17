@@ -59,7 +59,24 @@ module Dapp
       build_configs.map(&:_basename).uniq.each do |basename|
         log(basename)
         containers_flush(basename)
-        shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{basename}-dappstage)})
+        with_subquery(%(docker images --format="{{.Repository}}:{{.Tag}}" #{basename}-dappstage)) { |ids| shellout!(%(docker rmi #{ids.join(' ')})) }
+      end
+    end
+
+    def stages_cleanup(repo)
+      build_configs.map(&:_basename).uniq.each do |basename|
+        log(basename)
+        containers_flush(basename)
+        apps, stages = project_images(basename).partition { |_, image_id| repo_apps(repo).values.include?(image_id) }
+        apps = apps.to_h
+        stages = stages.to_h
+        apps.each do |_, aiid|
+          iid = aiid
+          until (iid = image_parent(iid)).empty?
+            stages.delete_if { |_, siid| siid == iid }
+          end
+        end
+        shellout!(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
       end
     end
 
@@ -67,15 +84,40 @@ module Dapp
       build_configs.map(&:_basename).uniq.each do |basename|
         log(basename)
         containers_flush(basename)
-        shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})
-        shellout(%{docker rmi $(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}} {{ end }}' -f "label=dapp=#{basename}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
+        with_subquery(%(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)) { |ids| shellout!(%(docker rmi #{ids.join(' ')})) }
+        with_subquery(%(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}}{{ end }}' -f "label=dapp=#{basename}")) do |ids|
+          shellout!(%(docker rmi #{ids.join(' ')}))
+        end # FIXME: negative filter is not currently supported by the Docker CLI
       end
     end
 
     private
 
+    def repo_apps(repo)
+      registry = DockerRegistry.new(repo)
+      raise Error::Registry, :no_such_app unless registry.repo_exist?
+      registry.repo_apps
+    end
+
     def containers_flush(basename)
-      shellout(%{docker rm -f $(docker ps -a -f "label=dapp" -f "name=#{basename}" -q)})
+      with_subquery(%(docker ps -a -f "label=dapp" -f "name=#{basename}" -q)) do |ids|
+        shellout!(%(docker rm -f #{ids.join(' ')}))
+      end
+    end
+
+    def project_images(basename)
+      shellout!(%(docker images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{basename}-dappstage)).stdout.lines.map do |line|
+        line.strip.split(';')
+      end.to_h
+    end
+
+    def image_parent(image_id)
+      shellout!(%(docker inspect -f {{.Parent}} #{image_id})).stdout.strip
+    end
+
+    def with_subquery(query)
+      return if (res = shellout!(query).stdout.strip.lines.map(&:strip)).empty?
+      yield(res)
     end
 
     def build_configs
