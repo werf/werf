@@ -18,10 +18,6 @@ module Dapp
       catalog['repositories'].include?(repo)
     end
 
-    def tags
-      resp_if_success(api_request("#{repo}/tags/list"))['tags']
-    end
-
     def repo_apps
       tags.select { |tag| !tag.start_with?('dappstage') }.map { |tag| [tag, image_id(tag)] }.to_h
     end
@@ -30,6 +26,10 @@ module Dapp
 
     def catalog
       resp_if_success api_request('_catalog')
+    end
+
+    def tags
+      resp_if_success(api_request("#{repo}/tags/list"))['tags']
     end
 
     def image_id(tag)
@@ -65,10 +65,26 @@ module Dapp
     end
 
     def authorization_options
-      case raw_connection.request(expects: [401], method: :get).headers['Www-Authenticate']
-      when /Bearer/ then raise # TODO
+      case authenticate_header = raw_connection.request(expects: [401], method: :get).headers['Www-Authenticate']
+      when /Bearer/ then { headers: { Authorization: "Bearer #{token(authenticate_header)}" } }
       when /Basic/ then { headers: { Authorization: "Basic #{auth}" } }
       else raise Error::Registry, :authenticate_type_not_supported
+      end
+    end
+
+    def authenticate_options(authenticate_header)
+      [:realm, :service, :scope].map do |option|
+        /#{option}="(?<#{option}>[[^"].]*)/ =~ authenticate_header
+        next unless binding.local_variable_defined?(option)
+        [option, binding.local_variable_get(option)]
+      end.compact.to_h
+    end
+
+    def token(authenticate_header)
+      @token ||= begin
+        options = authenticate_options(authenticate_header)
+        realm = options.delete(:realm)
+        resp_if_success(Excon.new(realm, headers: { Authorization: "Basic #{auth}" }, data: options).get)['token']
       end
     end
 
