@@ -25,7 +25,7 @@ module Dapp
     protected
 
     def catalog
-      resp_if_success api_request('_catalog')
+      resp_if_success(api_request('_catalog'))
     end
 
     def tags
@@ -84,7 +84,7 @@ module Dapp
       @token ||= begin
         options = authenticate_options(authenticate_header)
         realm = options.delete(:realm)
-        resp_if_success(Excon.new(realm, headers: { Authorization: "Basic #{auth}" }, data: options).get)['token']
+        resp_if_success(Excon.new(realm, headers: { Authorization: "Basic #{auth}" }).get(query: options))['token']
       end
     end
 

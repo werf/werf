@@ -64,10 +64,11 @@ module Dapp
     end
 
     def stages_cleanup(repo)
+      repo_apps = repo_apps(repo)
       build_configs.map(&:_basename).uniq.each do |basename|
         log(basename)
         containers_flush(basename)
-        apps, stages = project_images(basename).partition { |_, image_id| repo_apps(repo).values.include?(image_id) }
+        apps, stages = project_images(basename).partition { |_, image_id| repo_apps.values.include?(image_id) }
         apps = apps.to_h
         stages = stages.to_h
         apps.each do |_, aiid|
