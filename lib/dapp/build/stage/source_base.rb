@@ -68,7 +68,7 @@ module Dapp
           end
         end
 
-        def should_not_be_detailed?
+        def should_be_not_detailed?
           true
         end
 
