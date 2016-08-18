@@ -13,7 +13,7 @@ module SpecHelper
     def application_renew
       @openstruct_config = nil
       @application = begin
-        options = { config: openstruct_config, cli_options: cli_options }
+        options = { config: openstruct_config, project: stubbed_project, cli_options: cli_options }
         Dapp::Application.new(**options)
       end
     end
@@ -86,6 +86,12 @@ module SpecHelper
         end
       end
     end
-    # rubocop:enable Metrics/AbcSize
+
+    def stubbed_project
+      instance_double(Dapp::Project).tap do |instance|
+        allow(instance).to receive(:name) { 'test_project' }
+        allow(instance).to receive(:dir) { Dir.pwd }
+      end
+    end
   end
 end

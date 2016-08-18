@@ -1,26 +1,44 @@
 module Dapp
-  # Controller
-  class Controller
+  # Project
+  class Project
     include Helper::Log
     include Helper::I18n
     include Helper::Shellout
 
     attr_reader :cli_options
-    attr_reader :patterns
+    attr_reader :apps_patterns
 
-    def initialize(cli_options: {}, patterns: nil)
+    def initialize(cli_options: {}, apps_patterns: nil)
       @cli_options = cli_options
       @cli_options[:log_indent] = 0
 
-      @patterns = patterns || []
-      @patterns << '*' unless @patterns.any?
+      @apps_patterns = apps_patterns || []
+      @apps_patterns << '*' unless @apps_patterns.any?
 
       paint_initialize
       Helper::I18n.initialize
     end
 
+    def name
+      @name ||= begin
+        shellout!('git config --get remote.origin.url').stdout.strip.split('/').last[/.*(?=.git)/]
+      rescue ::Mixlib::ShellOut::ShellCommandFailed => _e
+        File.basename(dir)
+      end
+    end
+
+    def dir
+      @dir ||= begin
+        case
+        when File.exist?(dappfile_path) then cli_options[:dir] || Dir.pwd
+        when (dapps_path = search_up('.dapps')) then File.expand_path('..', dapps_path)
+        else raise Error::Project, code: :dir_not_defined
+        end
+      end
+    end
+
     def run(docker_options, command)
-      raise Error::Controller, code: :run_command_unexpected_apps_number unless build_configs.one?
+      raise Error::Project, code: :run_command_unexpected_apps_number unless build_configs.one?
       Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).run(docker_options, command)
     end
 
@@ -28,7 +46,7 @@ module Dapp
       build_configs.each do |config|
         log_step(config._name)
         with_log_indent do
-          Application.new(config: config, cli_options: cli_options).build!
+          Application.new(config: config, project: self, cli_options: cli_options).build!
         end
       end
     end
@@ -38,7 +56,7 @@ module Dapp
     end
 
     def spush(repo)
-      raise Error::Controller, code: :spush_command_unexpected_apps_number unless build_configs.one?
+      raise Error::Project, code: :spush_command_unexpected_apps_number unless build_configs.one?
       Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
         app.export!(repo, format: '%{repo}:%{tag}')
       end
@@ -48,7 +66,7 @@ module Dapp
       build_configs.each do |config|
         log_step(config._name)
         with_log_indent do
-          Application.new(config: config, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
+          Application.new(config: config, project: self, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
             app.export!(repo, format: '%{repo}:%{app_name}-%{tag}')
           end
         end
@@ -66,7 +84,7 @@ module Dapp
     def cleanup
       build_configs.uniq { |config| config._basename }.each do |config|
         basename = config._basename
-        Application.new(config: config, cli_options: cli_options).lock('images') do
+        Application.new(config: config, project: self, cli_options: cli_options).lock('images') do
           log(basename)
           containers_flush(basename)
           shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})
@@ -83,19 +101,23 @@ module Dapp
 
     def build_configs
       @configs ||= begin
-        if File.exist? dappfile_path
-          dappfiles = dappfile_path
-        elsif (dappfiles = dapps_dappfiles_pathes).empty? && (dappfiles = search_dappfile_up).nil?
-          raise Error::Controller, code: :dappfile_not_found
-        end
-        Array(dappfiles).map { |dappfile| apps(dappfile, app_filters: patterns) }.flatten.tap do |apps|
-          raise Error::Controller, code: :no_such_app, data: { patterns: patterns.join(', ') } if apps.empty?
+        dappfiles.map { |dappfile| apps(dappfile, app_filters: apps_patterns) }.flatten.tap do |apps|
+          raise Error::Project, code: :no_such_app, data: { apps_patterns: apps_patterns.join(', ') } if apps.empty?
         end
       end
     end
 
+    def dappfiles
+      case
+      when File.exist?(dappfile_path) then [dappfile_path]
+      when !dapps_dappfiles_pathes.empty? then dapps_dappfiles_pathes
+      when dappfile_path = search_up('Dappfile') then [dappfile_path]
+      else raise Error::Project, code: :dappfile_not_found
+      end
+    end
+
     def apps(dappfile_path, app_filters:)
-      config = Config::Main.new(dappfile_path: dappfile_path, controller: self) do |conf|
+      config = Config::Main.new(dappfile_path: dappfile_path, project: self) do |conf|
         begin
           conf.instance_eval File.read(dappfile_path), dappfile_path
         rescue SyntaxError, StandardError => e
@@ -116,11 +138,13 @@ module Dapp
       Dir.glob(File.join([cli_options[:dir], '.dapps', '*', 'Dappfile'].compact))
     end
 
-    def search_dappfile_up
+    def search_up(file)
       cdir = Pathname(File.expand_path(cli_options[:dir] || Dir.pwd))
-      until (cdir = cdir.parent).root?
-        next unless (path = cdir.join('Dappfile')).exist?
-        return path.to_s
+      loop do
+        if (path = cdir.join(file)).exist?
+          return path.to_s
+        end
+        break if (cdir = cdir.parent).root?
       end
     end
 

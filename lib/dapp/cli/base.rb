@@ -50,7 +50,7 @@ module Dapp
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        Controller.new(cli_options: config, patterns: cli_arguments).public_send(class_to_lowercase)
+        Project.new(cli_options: config, apps_patterns: cli_arguments).public_send(class_to_lowercase)
       end
     end
   end
