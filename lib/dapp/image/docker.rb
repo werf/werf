@@ -43,9 +43,14 @@ module Dapp
         !!@pulled
       end
 
-      def info
+      def created_at
         raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
-        [cache[:created_at], cache[:size]]
+        cache[:created_at]
+      end
+
+      def size
+        raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
+        cache[:size]
       end
 
       def self.image_config_option(image_id:, option:)

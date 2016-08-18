@@ -36,7 +36,7 @@ module Dapp
               prev_stage.image
             else
               Image::Stage.new(name: image_name, from: from_image).tap do |image|
-                image.add_change_label dapp: application.config._basename
+                image.add_service_change_label dapp: application.config._basename
                 yield image if block_given?
               end
             end

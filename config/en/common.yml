@@ -3,10 +3,11 @@ en:
     image:
       signature: "signature: %{signature}"
       info:
-        date: "date: %{value}"
+        created_at: "date: %{value}"
         size: "size: %{value} MB"
         difference: "difference: %{value} MB"
       commands: "commands:"
+      instructions: "instructions:"
     process:
       artifact_copy: "copying artifact '%{name}'"
       artifact_building: "building artifact '%{name}'"

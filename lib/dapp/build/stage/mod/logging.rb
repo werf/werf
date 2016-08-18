@@ -8,39 +8,38 @@ module Dapp
           def log_build
             application.with_log_indent do
               application.log_info application.t(code: 'image.signature', data: { signature: image_name })
-              unless empty?
-                log_image_info
-                log_image_commands unless ignore_log_commands?
-              end
+              log_image_details unless empty?
             end if application.log? && application.log_verbose?
+          end
+
+          def log_image_details
+            if image.tagged?
+              log_image_created_at
+              log_image_size
+            end
+            log_image_commands unless ignore_log_commands?
+          end
+
+          def log_image_created_at
+            application.log_info application.t(code: 'image.info.created_at',
+                                               data: { value: Time.parse(image.created_at).localtime })
+          end
+
+          def log_image_size
+            if from_image.tagged? && !prev_stage.nil?
+              size = image.size.to_f - from_image.size.to_f
+              code = 'image.info.difference'
+            else
+              size = image.size
+              code = 'image.info.size'
+            end
+            application.log_info application.t(code: code, data: { value: size.to_f.round(2) })
           end
 
           def log_image_commands
             return if (bash_commands = image.send(:bash_commands)).empty?
             application.log_info application.t(code: 'image.commands')
             application.with_log_indent { application.log_info bash_commands.join("\n") }
-          end
-
-          def log_image_info
-            return unless image.tagged?
-            date, size = image_info
-            application.log_info application.t(code: 'image.info.date', data: { value: date })
-            size_code = size_difference? ? 'image.info.difference' : 'image.info.size'
-            application.log_info application.t(code: size_code, data: { value: size })
-          end
-
-          def image_info
-            date, size = image.info
-            if size_difference?
-              _date, from_size = from_image.info
-              size = size.to_f - from_size.to_f
-            end
-
-            [Time.parse(date).localtime, size.to_f.round(2)]
-          end
-
-          def size_difference?
-            from_image.tagged? && !prev_stage.nil?
           end
 
           def ignore_log_commands?

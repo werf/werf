@@ -38,8 +38,8 @@ module Dapp
         add_change_option(:user, value)
       end
 
-      def add_cmd(value)
-        add_option(:cmd, value)
+      def add_service_change_label(**options)
+        add_service_change_option(:label, options)
       end
 
       def add_volume(value)
@@ -50,18 +50,25 @@ module Dapp
         add_option(:'volumes-from', value)
       end
 
-      def add_entrypoint(value)
-        add_option(:entrypoint, value)
-      end
-
       def add_command(*commands)
         @bash_commands.concat(commands.flatten)
+      end
+
+      def prepare_instructions(options)
+        options.map do |key, vals|
+          case key
+            when :cmd, :entrypoint then [vals]
+            when :env, :label then vals.map(&method(:options_to_args)).flatten
+            else vals
+          end.map { |val| %(#{key.to_s.upcase} #{val}) }
+        end.flatten
       end
 
       protected
 
       attr_reader :bash_commands
-      attr_reader :options, :change_options
+      attr_reader :change_options, :service_change_options
+      attr_reader :options
 
       def add_option(key, value)
         add_option_default(options, key, value)
@@ -71,11 +78,15 @@ module Dapp
         add_option_default(change_options, key, value)
       end
 
+      def add_service_change_option(key, value)
+        add_option_default(service_change_options, key, value)
+      end
+
       def add_option_default(hash, key, value)
         hash[key] = (hash[key].nil? ? [value] : (hash[key] << value)).flatten
       end
 
-      def from_options
+      def from_change_options
         return {} if from.nil?
         [:entrypoint, :cmd].each_with_object({}) do |option, options|
           options[option] = self.class.image_config_option(image_id: from.built_id, option: option)
@@ -87,21 +98,23 @@ module Dapp
       end
 
       def prepared_options
-        prepared_options_default(options) { |key, vals| Array(vals).map { |val| "--#{key}=#{val}" }.join(' ') }
+        all_options.map { |key, vals| Array(vals).map { |val| "--#{key}=#{val}" } }.flatten.join(' ')
+      end
+
+      def all_options
+        service_options.merge(options)
+      end
+
+      def service_options
+        { entrypoint: '/bin/bash', name: container_name }
       end
 
       def prepared_change
-        prepared_options_default(from_options.merge(change_options)) do |key, vals|
-          case key
-          when :cmd, :entrypoint then [vals]
-          when :env, :label then vals.map(&method(:options_to_args)).flatten
-          else vals
-          end.map { |val| %(-c '#{key.to_s.upcase} #{val}') }.join(' ')
-        end
+        prepare_instructions(all_change_options).map { |instruction| %(-c '#{instruction}') }.join(' ')
       end
 
-      def prepared_options_default(hash)
-        hash.map { |key, vals| yield(key, vals) }.join(' ')
+      def all_change_options
+        from_change_options.merge(change_options.merge(service_change_options) { |_,v1,v2| [v1, v2].flatten })
       end
 
       def prepared_bash_command
