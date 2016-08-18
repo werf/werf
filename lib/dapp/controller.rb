@@ -82,13 +82,16 @@ module Dapp
     end
 
     def cleanup
-      build_configs.map(&:_basename).uniq.each do |basename|
-        log(basename)
-        containers_flush(basename)
-        with_subquery(%(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)) { |ids| shellout!(%(docker rmi #{ids.join(' ')})) }
-        with_subquery(%(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}}{{ end }}' -f "label=dapp=#{basename}")) do |ids|
-          shellout!(%(docker rmi #{ids.join(' ')}))
-        end # FIXME: negative filter is not currently supported by the Docker CLI
+      build_configs.uniq { |config| config._basename }.each do |config|
+        basename = config._basename
+        Application.new(config: config, cli_options: cli_options).lock('images') do
+          log(basename)
+          containers_flush(basename)
+          with_subquery(%(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)) { |ids| shellout!(%(docker rmi #{ids.join(' ')})) }
+          with_subquery(%(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}}{{ end }}' -f "label=dapp=#{basename}")) do |ids|
+            shellout!(%(docker rmi #{ids.join(' ')}))
+          end # FIXME: negative filter is not currently supported by the Docker CLI
+        end
       end
     end
 
@@ -139,11 +142,10 @@ module Dapp
         begin
           conf.instance_eval File.read(dappfile_path), dappfile_path
         rescue SyntaxError, StandardError => e
-          message = case e
-                    when ArgumentError then "#{e.backtrace.first[/`.*'$/]}: #{e.message}"
-                    else e.message
-                    end
-          raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, path: dappfile_path, message: message }
+          backtrace = e.backtrace.find { |line| line.start_with?(dappfile_path) }
+          message = e.is_a?(NoMethodError) ? e.message[/.*(?= for)/] : e.message
+          message = "#{backtrace[/.*(?=:in)/]}: #{message}" if backtrace
+          raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
         end
       end
       config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }

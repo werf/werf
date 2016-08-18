@@ -17,6 +17,24 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
+        def build_lock!(&blk)
+          return blk.call if application.dry_run?
+
+          try_lock = -> do
+            next blk.call unless should_be_tagged?
+            application.lock("image.#{image.name}") do
+              image.cache_reset
+              blk.call
+            end
+          end
+
+          if prev_stage
+            prev_stage.build_lock! { try_lock.call }
+          else
+            try_lock.call
+          end
+        end
+
         def build!
           return if should_be_skipped?
           prev_stage.build! if prev_stage
@@ -76,7 +94,7 @@ module Dapp
           elsif application.dry_run?
             application.log_state(name, state: application.t(code: 'state.build'), styles: { status: :success })
           else
-            application.log_process(name, process: application.t(code: 'status.process.building'), short: should_be_not_detailed?) do
+            application.log_process(name, process: application.t(code: 'status.process.building'), short: should_not_be_detailed?) do
               image_do_build
             end
           end
@@ -93,7 +111,7 @@ module Dapp
         end
 
         def should_be_tagged?
-          !(image.tagged? || empty? || should_be_not_present?)
+          !(empty? || image.tagged? || should_be_not_present?)
         end
 
         def should_be_not_present?

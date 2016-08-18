@@ -9,6 +9,10 @@ module Dapp
              description: 'Change to directory',
              on: :head
 
+      option :build_dir,
+             long: '--build-dir PATH',
+             description: 'Directory where build cache stored (DIR/.dapps-build by default)'
+
       option :log_quiet,
              short: '-q',
              long: '--quiet',

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    dapp (0.5.3)
+    dapp (0.5.4)
       excon (>= 0.45.4, < 1.0)
       i18n (~> 0.7)
       mixlib-cli (>= 1.0, < 3.0)
@@ -12,7 +12,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    activesupport (4.2.7)
+    activesupport (4.2.7.1)
       i18n (~> 0.7)
       json (~> 1.7, >= 1.7.7)
       minitest (~> 5.1)
@@ -75,7 +75,7 @@ GEM
       rspec-core (~> 3.5.0)
       rspec-expectations (~> 3.5.0)
       rspec-mocks (~> 3.5.0)
-    rspec-core (3.5.1)
+    rspec-core (3.5.2)
       rspec-support (~> 3.5.0)
     rspec-expectations (3.5.0)
       diff-lcs (>= 1.2.0, < 2.0)
