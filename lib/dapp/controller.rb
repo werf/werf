@@ -64,11 +64,14 @@ module Dapp
     end
 
     def cleanup
-      build_configs.map(&:_basename).uniq.each do |basename|
-        log(basename)
-        containers_flush(basename)
-        shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})
-        shellout(%{docker rmi $(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}} {{ end }}' -f "label=dapp=#{basename}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
+      build_configs.uniq { |config| config._basename }.each do |config|
+        basename = config._basename
+        Application.new(config: config, cli_options: cli_options).lock('images') do
+          log(basename)
+          containers_flush(basename)
+          shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})
+          shellout(%{docker rmi $(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}} {{ end }}' -f "label=dapp=#{basename}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
+        end
       end
     end
 

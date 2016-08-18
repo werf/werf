@@ -149,6 +149,7 @@ module Dapp
               )
             end
           end
+
           chefdk_container_name
         end
       end
@@ -176,7 +177,8 @@ module Dapp
              "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/^\\/tmp\\/vendored_cookbooks//\")' \\;"].join,
             ["find /tmp/vendored_cookbooks -type f -exec bash -ec '",
              "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
-             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks//\")' \\;"].join
+             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks//\")' \\;"].join,
+            "install -o #{Process.uid} -g #{Process.gid} --mode 0644 <(date +%s.%N) #{_cookbooks_vendor_path.join('.created_at')}"
           ]
 
           application.shellout!(
@@ -197,12 +199,14 @@ module Dapp
       # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
       def _cookbooks_vendor_path
-        application.tmp_path(application.config._name, "cookbooks.#{cookbooks_checksum}")
+        application.build_path("cookbooks.#{cookbooks_checksum}")
       end
 
       def cookbooks_vendor_path(*path)
         _cookbooks_vendor_path.tap do |cookbooks_path|
-          install_cookbooks unless cookbooks_path.exist?
+          application.lock("chef.cookbooks.#{cookbooks_checksum}", default_timeout: 300) do
+            install_cookbooks unless cookbooks_path.join('.created_at').exist?
+          end
         end.join(*path)
       end
 

@@ -32,3 +32,5 @@ en:
       app_name_incorrect: "Application has incorrect name '%{name}': doesn't match regex '%{reg}'!"
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
+    lock:
+      timeout: "Could not obtain lock for '%{basename}/%{name}' within %{timeout} seconds"

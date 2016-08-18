@@ -20,6 +20,11 @@ BANNER
              long: '--tmp-dir-prefix PREFIX',
              description: 'Tmp directory prefix'
 
+      option :lock_timeout,
+             long: '--lock-timeout TIMEOUT',
+             description: 'Redefine resource locking timeout (in seconds)',
+             proc: ->(v) { v.to_i }
+
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
              description: 'Default branch to archive artifacts from'

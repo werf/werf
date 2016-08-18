@@ -63,6 +63,7 @@ module Dapp
                                       '2>/dev/null'].join(' ')
               end
             end
+
             gitartifact_container_name
           end
         end
