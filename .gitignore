@@ -3,3 +3,4 @@
 .tags
 /.bundle
 /.vendor
+/spec/chef/testproject/.dapps_build
