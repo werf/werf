@@ -21,7 +21,7 @@ module Dapp
 
     def name
       @name ||= begin
-        shellout!('git config --get remote.origin.url').stdout.strip.split('/').last[/.*(?=.git)/]
+        shellout!("git -C #{dir} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
       rescue ::Mixlib::ShellOut::ShellCommandFailed => _e
         File.basename(dir)
       end
@@ -29,10 +29,11 @@ module Dapp
 
     def dir
       @dir ||= begin
-        case
-        when File.exist?(dappfile_path) then cli_options[:dir] || Dir.pwd
-        when (dapps_path = search_up('.dapps')) then File.expand_path('..', dapps_path)
-        else raise Error::Project, code: :dir_not_defined
+        dappfile_path = dappfiles.first
+        if File.basename(expand_path(dappfile_path, 2)) == '.dapps'
+          expand_path(dappfile_path, 3)
+        else
+          expand_path(dappfile_path)
         end
       end
     end
@@ -146,6 +147,12 @@ module Dapp
         end
         break if (cdir = cdir.parent).root?
       end
+    end
+
+    def expand_path(path, number = 1)
+      path = File.expand_path(path)
+      number.times.each { path = File.dirname(path) }
+      path
     end
 
     def paint_initialize

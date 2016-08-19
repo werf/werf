@@ -124,7 +124,7 @@ module Dapp
         end
 
         def image_name
-          "#{application.project.name}-dappstage:#{signature}"
+          "dappstage-#{application.project.name}-#{application.config._basename}:#{signature}"
         end
 
         def from_image

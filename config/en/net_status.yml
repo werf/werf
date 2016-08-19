@@ -22,7 +22,6 @@ en:
       run_command_unexpected_apps_number: "Command 'run' can process only one application!"
       no_such_app: "No such app: '%{apps_patterns}'!"
       dappfile_not_found: "Dappfile not found!"
-      dir_not_defined: 'Project dir not defined!'
     config:
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
