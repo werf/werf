@@ -7,6 +7,10 @@ module Dapp
           @prev_stage = BeforeInstall.new(application, self)
           super
         end
+
+        def dependencies
+          [application.git_artifacts.map(&:paramshash).join]
+        end
       end # GAArchiveDependencies
     end # Stage
   end # Build
