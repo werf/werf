@@ -71,7 +71,12 @@ describe Dapp::Application do
     check_image_command(:g_a_archive, 'tar -x')
   end
 
-  [:install, :before_setup, :setup].each do |stage_name|
+  def expect_before_setup_image
+    check_image_command(:before_setup, config[:_shell][:_before_setup].last)
+    check_image_command(:g_a_post_install_patch, 'apply')
+  end
+
+  [:install, :setup].each do |stage_name|
     define_method "expect_#{stage_name}_image" do
       check_image_command(stage_name, config[:_shell][:"_#{stage_name}"].last)
       check_image_command(prev_stage(stage_name), 'apply')
@@ -116,10 +121,16 @@ describe Dapp::Application do
     stages_names[stage_index(:before_install)..-1]
   end
 
-  [:install, :before_setup, :setup].each do |stage_name|
-    define_method "#{stage_name}_modified_signatures" do
-      stages_names[stage_index(stage_name) - 2..-1]
-    end
+  def install_modified_signatures
+    stages_names[stage_index(:g_a_pre_install_patch_dependencies)..-1]
+  end
+
+  def before_setup_modified_signatures
+    stages_names[stage_index(:g_a_post_install_patch_dependencies)..-1]
+  end
+
+  def setup_modified_signatures
+    stages_names[stage_index(:g_a_pre_setup_patch_dependencies)..-1]
   end
 
   [:g_a_post_setup_patch, :g_a_latest_patch].each do |stage_name|
@@ -136,18 +147,24 @@ describe Dapp::Application do
     [stages_names.first]
   end
 
-  [:install, :before_setup, :setup].each do |stage_name|
-    define_method "#{stage_name}_saved_signatures" do
-      stages_names[0..stage_index(stage_name) - 3]
-    end
+  def install_saved_signatures
+    stages_names[0..stage_index(:g_a_archive)]
+  end
+
+  def before_setup_saved_signatures
+    stages_names[0..stage_index(:install)]
+  end
+
+  def setup_saved_signatures
+    stages_names[0..stage_index(:before_setup)]
   end
 
   def g_a_post_setup_patch_saved_signatures
-    stages_names[0..stage_index(:g_a_post_setup_patch) - 2]
+    stages_names[0..stage_index(:chef_cookbooks)]
   end
 
   def g_a_latest_patch_saved_signatures
-    stages_names[0..stage_index(:g_a_latest_patch) - 1]
+    stages_names[0..stage_index(:g_a_post_setup_patch)]
   end
 
   def build_and_check(stage_name)

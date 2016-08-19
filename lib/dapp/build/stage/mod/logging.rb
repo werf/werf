@@ -43,11 +43,7 @@ module Dapp
           end
 
           def log_name
-            application.t(code: name_code, context: name_context)
-          end
-
-          def name_code
-            name
+            application.t(code: name, context: name_context)
           end
 
           def name_context

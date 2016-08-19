@@ -2,8 +2,8 @@ module Dapp
   module Build
     module Stage
       module InstallGroup
-        # GAPrePatchDependencies
-        class GAPrePatchDependencies < GADependenciesBase
+        # GAPreInstallPatchDependencies
+        class GAPreInstallPatchDependencies < GADependenciesBase
           include Mod::Group
 
           def initialize(application, next_stage)
@@ -24,7 +24,7 @@ module Dapp
           def install_dependencies_files_checksum
             @install_dependencies_files_checksum ||= dependencies_files_checksum(application.config._install_dependencies)
           end
-        end # GAPrePatchDependencies
+        end # GAPreInstallPatchDependencies
       end
     end # Stage
   end # Build

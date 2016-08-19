@@ -2,19 +2,19 @@ module Dapp
   module Build
     module Stage
       module InstallGroup
-        # GAPostPatch
-        class GAPostPatch < GABase
+        # GAPostInstallPatch
+        class GAPostInstallPatch < GABase
           include Mod::Group
 
           def initialize(application, next_stage)
-            @prev_stage = GAPostPatchDependencies.new(application, self)
+            @prev_stage = GAPostInstallPatchDependencies.new(application, self)
             super
           end
 
           def next_g_a_stage
-            super.next_stage
+            super.next_stage # GAPreSetupPatch
           end
-        end # GAPostPatch
+        end # GAPostInstallPatch
       end
     end # Stage
   end # Build

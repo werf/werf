@@ -13,7 +13,7 @@ module Dapp
         end
 
         def next_g_a_stage
-          next_stage.next_stage
+          next_stage.next_stage # GAPreInstallPatch
         end
 
         protected

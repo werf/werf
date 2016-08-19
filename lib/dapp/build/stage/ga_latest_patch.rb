@@ -4,7 +4,7 @@ module Dapp
       # GALatestPatch
       class GALatestPatch < GABase
         def initialize(application, next_stage)
-          @prev_stage = SetupGroup::GAPostPatch.new(application, self)
+          @prev_stage = SetupGroup::GAPostSetupPatch.new(application, self)
           super
         end
 

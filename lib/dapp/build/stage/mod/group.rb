@@ -31,14 +31,6 @@ module Dapp
             class_to_lowercase(self.class.name.split('::')[-2])
           end
 
-          def name
-            :"#{group_name}/#{super}"
-          end
-
-          def name_code
-            class_to_lowercase.to_sym
-          end
-
           def name_context
             [super, group_name].join('.')
           end

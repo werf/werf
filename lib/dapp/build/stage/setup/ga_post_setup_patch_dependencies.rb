@@ -2,8 +2,8 @@ module Dapp
   module Build
     module Stage
       module SetupGroup
-        # GAPostPatchDependencies
-        class GAPostPatchDependencies < GADependenciesBase
+        # GAPostSetupPatchDependencies
+        class GAPostSetupPatchDependencies < GADependenciesBase
           include Mod::Group
 
           MAX_PATCH_SIZE = 1024 * 1024
@@ -24,7 +24,7 @@ module Dapp
               git_artifact.patch_size(prev_stage.prev_stage.prev_stage.layer_commit(git_artifact), git_artifact.latest_commit)
             end.reduce(0, :+)
           end
-        end # GAPostPatchDependencies
+        end # GAPostSetupPatchDependencies
       end
     end # Stage
   end # Build

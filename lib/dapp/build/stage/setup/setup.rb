@@ -7,7 +7,7 @@ module Dapp
           include Mod::Group
 
           def initialize(application, next_stage)
-            @prev_stage = GAPrePatch.new(application, self)
+            @prev_stage = GAPreSetupPatch.new(application, self)
             super
           end
 
@@ -16,7 +16,7 @@ module Dapp
           end
 
           def dependencies
-            prev_stage.prev_stage.dependencies
+            prev_stage.prev_stage.dependencies # GAPreSetupPatchDependencies
           end
 
           def image

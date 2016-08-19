@@ -13,7 +13,7 @@ module Dapp
         end
 
         def dependencies
-          prev_stage.prev_stage.dependencies
+          prev_stage.prev_stage.prev_stage.dependencies # GAPostInstallPatchDependencies
         end
 
         def image
