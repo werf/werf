@@ -11,8 +11,8 @@ module Dapp
             super
           end
 
-          def prev_g_a_stage
-            super.prev_stage
+          def next_g_a_stage
+            super.next_stage
           end
         end # GAPostPatch
       end

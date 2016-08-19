@@ -14,10 +14,6 @@ module Dapp
           def prev_g_a_stage
             dependencies_stage.prev_stage
           end
-
-          def next_g_a_stage
-            super.next_stage
-          end
         end # GAPrePatch
       end
     end # Stage
