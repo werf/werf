@@ -91,6 +91,7 @@ module SpecHelper
       instance_double(Dapp::Project).tap do |instance|
         allow(instance).to receive(:name) { 'test_project' }
         allow(instance).to receive(:path) { Dir.pwd }
+        allow(instance).to receive(:lock) { |&blk| blk.call }
       end
     end
   end
