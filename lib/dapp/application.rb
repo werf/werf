@@ -51,9 +51,11 @@ module Dapp
             log_state(image_name, state: t(code: 'state.push'), styles: { status: :success })
           else
             project.lock("image.#{image_name.gsub('/', '__')}") do
+              Dapp::Image::Stage.cache_reset(image_name)
               log_process(image_name, process: t(code: 'status.process.pushing')) do
-                last_stage.image.cache_reset
-                last_stage.image.export!(image_name, log_verbose: log_verbose?, log_time: log_time?, force: cli_options[:force])
+                last_stage.image.export!(image_name, log_verbose: log_verbose?,
+                                                     log_time: log_time?,
+                                                     force: cli_options[:force])
               end
             end
           end
