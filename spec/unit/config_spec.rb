@@ -51,7 +51,7 @@ describe Dapp::Config::Main do
 
     it 'shell already used (:builder_type_conflict)' do
       @dappfile = %(
-        shell.infra_install 'a'
+        shell.before_install 'a'
         chef.module 'a'
       )
       expect_exception_code(code: :builder_type_conflict) { apps }
@@ -60,7 +60,7 @@ describe Dapp::Config::Main do
     it 'chef already used (:builder_type_conflict)' do
       @dappfile = %(
         builder :chef
-        shell.infra_install 'a'
+        shell.before_install 'a'
       )
       expect_exception_code(code: :builder_type_conflict) { apps }
     end
@@ -293,28 +293,28 @@ describe Dapp::Config::Main do
     end
 
     it 'attributes' do
-      expect_special_attribute(:shell, :infra_install)
-      expect_special_attribute(:shell, :infra_setup)
+      expect_special_attribute(:shell, :before_install)
+      expect_special_attribute(:shell, :before_setup)
       expect_special_attribute(:shell, :install)
       expect_special_attribute(:shell, :setup)
     end
 
     it 'reset attributes' do
-      expect_reset_attribute(:shell, :infra_install)
-      expect_reset_attribute(:shell, :infra_setup)
+      expect_reset_attribute(:shell, :before_install)
+      expect_reset_attribute(:shell, :before_setup)
       expect_reset_attribute(:shell, :install)
       expect_reset_attribute(:shell, :setup)
     end
 
     it 'reset all attributes' do
       @dappfile = %(
-        shell.infra_install 'a'
-        shell.infra_setup 'b'
+        shell.before_install 'a'
+        shell.before_setup 'b'
         shell.install 'c'
         shell.setup 'd'
         shell.reset_all
       )
-      [:infra_install, :infra_setup, :install, :setup].each { |s| expect(app.shell.public_send("_#{s}")).to be_empty }
+      [:before_install, :before_setup, :install, :setup].each { |s| expect(app.shell.public_send("_#{s}")).to be_empty }
     end
   end
 

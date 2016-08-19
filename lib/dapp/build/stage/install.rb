@@ -4,7 +4,7 @@ module Dapp
       # Install
       class Install < Base
         def initialize(application, next_stage)
-          @prev_stage = Source1.new(application, self)
+          @prev_stage = GAPreInstallPatch.new(application, self)
           super
         end
 

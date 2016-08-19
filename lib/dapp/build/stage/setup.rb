@@ -4,7 +4,7 @@ module Dapp
       # Setup
       class Setup < Base
         def initialize(application, next_stage)
-          @prev_stage = Source3.new(application, self)
+          @prev_stage = GAPreSetupPatch.new(application, self)
           super
         end
 

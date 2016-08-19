@@ -42,8 +42,9 @@ BANNER
       option :introspect_stage,
              long: '--introspect-stage STAGE',
              proc: proc { |v| v.to_sym },
-             in: [nil, :from, :infra_install, :source_1_archive, :source_1, :install, :artifact, :source_2,
-                  :infra_setup, :source_3, :chef_cookbooks, :setup, :source_4, :source_5, :docker_instructions]
+             in: [nil, :from, :before_install, :g_a_archive, :g_a_pre_install_patch, :install, :artifact,
+                  :g_a_post_install_patch, :before_setup, :g_a_pre_setup_patch, :chef_cookbooks, :setup,
+                  :g_a_post_setup_patch, :g_a_latest_patch, :docker_instructions]
     end
   end
 end

@@ -1,10 +1,10 @@
 module Dapp
   module Build
     module Stage
-      # Source3Dependencies
-      class Source3Dependencies < SourceDependenciesBase
+      # GAPreSetupPatchDependencies
+      class GAPreSetupPatchDependencies < GADependenciesBase
         def initialize(application, next_stage)
-          @prev_stage = InfraSetup.new(application, self)
+          @prev_stage = BeforeSetup.new(application, self)
           super
         end
 
@@ -17,7 +17,7 @@ module Dapp
         def setup_dependencies_files_checksum
           @setup_files_checksum ||= dependencies_files_checksum(application.config._setup_dependencies)
         end
-      end # Source3Dependencies
+      end # GAPreSetupPatchDependencies
     end # Stage
   end # Build
 end # Dapp

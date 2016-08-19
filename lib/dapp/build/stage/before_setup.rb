@@ -1,15 +1,15 @@
 module Dapp
   module Build
     module Stage
-      # InfraSetup
-      class InfraSetup < Base
+      # BeforeSetup
+      class BeforeSetup < Base
         def initialize(application, next_stage)
-          @prev_stage = Source2.new(application, self)
+          @prev_stage = GAPostInstallPatch.new(application, self)
           super
         end
 
         def empty?
-          super && !application.builder.infra_setup?
+          super && !application.builder.before_setup?
         end
 
         def dependencies
@@ -18,10 +18,10 @@ module Dapp
 
         def image
           super do |image|
-            application.builder.infra_setup(image)
+            application.builder.before_setup(image)
           end
         end
-      end # InfraSetup
+      end # BeforeSetup
     end # Stage
   end # Build
 end # Dapp

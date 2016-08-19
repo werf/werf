@@ -4,7 +4,7 @@ module Dapp
       # DockerInstructions
       class DockerInstructions < Base
         def initialize(application)
-          @prev_stage = Source5.new(application, self)
+          @prev_stage = GALatestPatch.new(application, self)
           @application = application
         end
 

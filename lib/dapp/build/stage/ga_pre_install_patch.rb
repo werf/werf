@@ -1,21 +1,21 @@
 module Dapp
   module Build
     module Stage
-      # Source1
-      class Source1 < SourceBase
+      # GAPreInstallPatch
+      class GAPreInstallPatch < GABase
         def initialize(application, next_stage)
-          @prev_stage = Source1Dependencies.new(application, self)
+          @prev_stage = GAPreInstallPatchDependencies.new(application, self)
           super
         end
 
-        def prev_source_stage
+        def prev_g_a_stage
           dependencies_stage.prev_stage
         end
 
-        def next_source_stage
+        def next_g_a_stage
           super.next_stage
         end
-      end # Source1
+      end # GAPreInstallPatch
     end # Stage
   end # Build
 end # Dapp

@@ -1,18 +1,18 @@
 module Dapp
   module Build
     module Stage
-      # Source5
-      class Source5 < SourceBase
+      # GALatestPatch
+      class GALatestPatch < GABase
         def initialize(application, next_stage)
-          @prev_stage = Source4.new(application, self)
+          @prev_stage = GAPostSetupPatch.new(application, self)
           super
         end
 
-        def prev_source_stage
+        def prev_g_a_stage
           prev_stage
         end
 
-        def next_source_stage
+        def next_g_a_stage
           nil
         end
 
@@ -39,7 +39,7 @@ module Dapp
         def commit_list
           application.git_artifacts.map { |git_artifact| layer_commit(git_artifact) }
         end
-      end # Source5
+      end # GALatestPatch
     end # Stage
   end # Build
 end # Dapp

@@ -1,17 +1,17 @@
 module Dapp
   module Build
     module Stage
-      # Base of source stages
-      class SourceBase < Base
-        attr_accessor :prev_source_stage, :next_source_stage
+      # GABase
+      class GABase < Base
+        attr_accessor :prev_g_a_stage, :next_g_a_stage
 
         GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.5'.freeze
 
-        def prev_source_stage
+        def prev_g_a_stage
           dependencies_stage.prev_stage.prev_stage
         end
 
-        def next_source_stage
+        def next_g_a_stage
           next_stage.next_stage.next_stage
         end
 
@@ -21,7 +21,7 @@ module Dapp
 
         def image
           super do |image|
-            image.add_volumes_from gitartifact_container
+            image.add_volumes_from g_a_container
             image.add_command 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
 
             application.git_artifacts.each do |git_artifact|
@@ -48,23 +48,23 @@ module Dapp
 
         protected
 
-        def gitartifact_container_name # FIXME: hashsum(image) or dockersafe()
+        def g_a_container_name # FIXME: hashsum(image) or dockersafe()
           GITARTIFACT_IMAGE.tr('/', '_').tr(':', '_')
         end
 
-        def gitartifact_container
+        def g_a_container
           @gitartifact_container ||= begin
-            if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus.nonzero?
+            if application.shellout("docker inspect #{g_a_container_name}").exitstatus.nonzero?
               application.log_secondary_process(application.t(code: 'process.git_artifact_loading'), short: true) do
                 application.shellout ['docker run',
                                       '--restart=no',
-                                      "--name #{gitartifact_container_name}",
+                                      "--name #{g_a_container_name}",
                                       "--volume /.dapp/deps/gitartifact #{GITARTIFACT_IMAGE}",
                                       '2>/dev/null'].join(' ')
               end
             end
 
-            gitartifact_container_name
+            g_a_container_name
           end
         end
 
@@ -85,7 +85,7 @@ module Dapp
         def commits
           @commits ||= {}
         end
-      end # SourceBase
+      end # GABase
     end # Stage
   end # Build
 end # Dapp

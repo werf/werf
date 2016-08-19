@@ -1,18 +1,18 @@
 module Dapp
   module Build
     module Stage
-      # Source1Archive
-      class Source1Archive < SourceBase
+      # GAArchive
+      class GAArchive < GABase
         def initialize(application, next_stage)
-          @prev_stage = Source1ArchiveDependencies.new(application, self)
+          @prev_stage = GAArchiveDependencies.new(application, self)
           super
         end
 
-        def prev_source_stage
+        def prev_g_a_stage
           nil
         end
 
-        def next_source_stage
+        def next_g_a_stage
           next_stage.next_stage
         end
 
@@ -21,7 +21,7 @@ module Dapp
         def apply_command_method
           :archive_apply_command
         end
-      end # Source1Archive
+      end # GAArchive
     end # Stage
   end # Build
 end # Dapp

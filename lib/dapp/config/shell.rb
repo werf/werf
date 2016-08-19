@@ -2,24 +2,24 @@ module Dapp
   module Config
     # Shell
     class Shell
-      attr_reader :_infra_install, :_infra_setup, :_install, :_setup
-      attr_reader :_infra_install_cache_version, :_infra_setup_cache_version, :_install_cache_version, :_setup_cache_version
+      attr_reader :_before_install, :_before_setup, :_install, :_setup
+      attr_reader :_before_install_cache_version, :_before_setup_cache_version, :_install_cache_version, :_setup_cache_version
 
       def initialize
-        @_infra_install = []
-        @_infra_setup   = []
+        @_before_install = []
+        @_before_setup   = []
         @_install       = []
         @_setup         = []
       end
 
-      def infra_install(*args, cache_version: nil)
-        @_infra_install.concat(args)
-        @_infra_install_cache_version = cache_version
+      def before_install(*args, cache_version: nil)
+        @_before_install.concat(args)
+        @_before_install_cache_version = cache_version
       end
 
-      def infra_setup(*args, cache_version: nil)
-        @_infra_setup.concat(args)
-        @_infra_setup_cache_version = cache_version
+      def before_setup(*args, cache_version: nil)
+        @_before_setup.concat(args)
+        @_before_setup_cache_version = cache_version
       end
 
       def install(*args, cache_version: nil)
@@ -32,12 +32,12 @@ module Dapp
         @_setup_cache_version = cache_version
       end
 
-      def reset_infra_install
-        @_infra_install = []
+      def reset_before_install
+        @_before_install = []
       end
 
-      def reset_infra_setup
-        @_infra_setup = []
+      def reset_before_setup
+        @_before_setup = []
       end
 
       def reset_install
@@ -53,7 +53,7 @@ module Dapp
       end
 
       def empty?
-        @_infra_install.empty? && @_infra_setup.empty? && @_install.empty? && @_setup.empty?
+        @_before_install.empty? && @_before_setup.empty? && @_install.empty? && @_setup.empty?
       end
 
       def clone
