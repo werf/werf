@@ -3,5 +3,3 @@
 .tags
 /.bundle
 /.vendor
-/spec/chef/testproject/.dapps-build
-/spec/chef/testproject/.dapps-lock

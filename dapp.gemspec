@@ -37,4 +37,5 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'codeclimate-test-reporter', '~> 0.5'
   s.add_development_dependency 'activesupport', '~> 4.2', '>= 4.2.6'
   s.add_development_dependency 'recursive-open-struct', '~> 1.0', '>= 1.0.1'
+  s.add_development_dependency 'ruby-prof', '>= 0.15.9', '< 1.0'
 end

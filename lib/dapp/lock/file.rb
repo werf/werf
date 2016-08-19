@@ -7,8 +7,7 @@ module Dapp
 
       def initialize(lock_path, name, **kwargs)
         super(name, **kwargs)
-        @lock_path = lock_path
-        @lock_path.mkpath
+        @lock_path = Pathname.new(lock_path).tap(&:mkpath)
       end
 
       def lock(shared: false)
