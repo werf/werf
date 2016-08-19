@@ -23,14 +23,14 @@ module Dapp
 
     def name
       @name ||= begin
-        shellout!("git -C #{dir} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
+        shellout!("git -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
       rescue ::Mixlib::ShellOut::ShellCommandFailed => _e
         File.basename(path)
       end
     end
 
-    def dir
-      @dir ||= begin
+    def path
+      @path ||= begin
         dappfile_path = dappfiles.first
         if File.basename(expand_path(dappfile_path, 2)) == '.dapps'
           expand_path(dappfile_path, 3)
@@ -46,7 +46,7 @@ module Dapp
           Pathname.new(cli_options[:build_dir])
         else
           Pathname.new(path).join('.dapps_build')
-        end.expand_path.tap { |p| p.mkpath }
+        end.expand_path.tap(&:mkpath)
       end
     end
 
