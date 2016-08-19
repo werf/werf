@@ -83,7 +83,7 @@ module Dapp
       end
 
       def stage_cookbooks_checksum_path(stage)
-        application.build_path("#{cookbooks_checksum}.#{stage}.checksum")
+        application.build_path.join("#{cookbooks_checksum}.#{stage}.checksum")
       end
 
       def stage_cookbooks_checksum(stage)
@@ -103,7 +103,11 @@ module Dapp
                        ].compact
                      end
 
-          stage_cookbooks_checksum_path(stage).write "#{checksum}\n"
+          stage_cookbooks_checksum_path(stage).tap do |path|
+            path.parent.mkpath
+            path.write "#{checksum}\n"
+          end
+
           checksum
         end
       end
@@ -199,12 +203,12 @@ module Dapp
       # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
       def _cookbooks_vendor_path
-        application.build_path("cookbooks.#{cookbooks_checksum}")
+        application.build_path.join('cookbooks', cookbooks_checksum)
       end
 
       def cookbooks_vendor_path(*path)
         _cookbooks_vendor_path.tap do |cookbooks_path|
-          application.lock("chef.cookbooks.#{cookbooks_checksum}", default_timeout: 300) do
+          application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 300) do
             install_cookbooks unless cookbooks_path.join('.created_at').exist?
           end
         end.join(*path)

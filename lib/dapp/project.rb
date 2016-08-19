@@ -1,6 +1,8 @@
 module Dapp
   # Project
   class Project
+    include ::Dapp::Application::Logging # FIXME: remove when moved to project
+    include Lock
     include Helper::Log
     include Helper::I18n
     include Helper::Shellout
@@ -23,7 +25,7 @@ module Dapp
       @name ||= begin
         shellout!("git -C #{dir} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
       rescue ::Mixlib::ShellOut::ShellCommandFailed => _e
-        File.basename(dir)
+        File.basename(path)
       end
     end
 
@@ -35,6 +37,16 @@ module Dapp
         else
           expand_path(dappfile_path)
         end
+      end
+    end
+
+    def build_path
+      @build_path ||= begin
+        if cli_options[:build_dir]
+          Pathname.new(cli_options[:build_dir])
+        else
+          Pathname.new(path).join('.dapps_build')
+        end.expand_path.tap { |p| p.mkpath }
       end
     end
 
@@ -83,9 +95,8 @@ module Dapp
     end
 
     def cleanup
-      build_configs.uniq(&:_basename).each do |config|
-        basename = config._basename
-        Application.new(config: config, project: self, cli_options: cli_options).lock('images') do
+      build_configs.map(&:_basename).uniq.each do |basename|
+        lock("#{basename}.images") do
           log(basename)
           containers_flush(basename)
           shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})

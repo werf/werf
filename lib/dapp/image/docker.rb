@@ -11,8 +11,6 @@ module Dapp
       def initialize(name:, from: nil)
         @from = from
         @name = name
-
-        cache_reset
       end
 
       def id
@@ -61,7 +59,6 @@ module Dapp
       end
 
       def cache_reset
-        self.class.cache.delete(name)
         self.class.cache_reset(name)
       end
 
@@ -77,6 +74,7 @@ module Dapp
         end
 
         def cache_reset(name = '')
+          cache.delete(name)
           shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' #{name}").stdout.lines.each do |line|
             name, id, created_at, size = line.split(';')
             cache[name] = { id: id, created_at: created_at, size: size }

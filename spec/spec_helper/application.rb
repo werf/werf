@@ -90,7 +90,10 @@ module SpecHelper
     def stubbed_project
       instance_double(Dapp::Project).tap do |instance|
         allow(instance).to receive(:name) { 'test_project' }
-        allow(instance).to receive(:dir) { Dir.pwd }
+        allow(instance).to receive(:path) { Dir.pwd }
+        allow(instance).to receive(:lock) { |&blk| blk.call }
+        allow(instance).to receive(:build_path) { @build_path ||= Pathname("/tmp/dapps-build-#{SecureRandom.uuid}") }
+        allow(instance).to receive(:log_secondary_process) { |*args, &blk| blk.call(*args) if blk }
       end
     end
   end

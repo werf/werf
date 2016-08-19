@@ -33,4 +33,4 @@ en:
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
     lock:
-      timeout: "Could not obtain lock for '%{basename}/%{name}' within %{timeout} seconds"
+      timeout: "Could not obtain lock for '%{name}' within %{timeout} seconds"
