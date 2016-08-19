@@ -83,7 +83,7 @@ module Dapp
     end
 
     def cleanup
-      build_configs.uniq { |config| config._basename }.each do |config|
+      build_configs.uniq(&:_basename).each do |config|
         basename = config._basename
         Application.new(config: config, project: self, cli_options: cli_options).lock('images') do
           log(basename)
@@ -109,10 +109,9 @@ module Dapp
     end
 
     def dappfiles
-      case
-      when File.exist?(dappfile_path) then [dappfile_path]
-      when !dapps_dappfiles_pathes.empty? then dapps_dappfiles_pathes
-      when dappfile_path = search_up('Dappfile') then [dappfile_path]
+      if File.exist?(dappfile_path) then [dappfile_path]
+      elsif !dapps_dappfiles_pathes.empty? then dapps_dappfiles_pathes
+      elsif (dappfile_path = search_up('Dappfile')) then [dappfile_path]
       else raise Error::Project, code: :dappfile_not_found
       end
     end

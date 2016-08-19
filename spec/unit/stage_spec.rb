@@ -53,7 +53,7 @@ describe Dapp::Build::Stage do
 
     def g_a_archive_stage
       stage = last_g_a_stage
-      while stage.send(:name) != :g_a_archive; stage = stage.prev_g_a_stage end
+      stage = stage.prev_g_a_stage while stage.send(:name) != :g_a_archive
       stage
     end
 

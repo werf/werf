@@ -9,14 +9,14 @@ module Dapp
         ::Dapp::Lock::File.new(
           lock_path, name,
           timeout: timeout,
-          on_wait: ->(&blk) {
+          on_wait: lambda do |&blk|
             log_secondary_process(
-              self.t(code: 'process.waiting_resouce_lock', data: { basename: home_path.basename,
-                                                                   name: name }),
+              t(code: 'process.waiting_resouce_lock', data: { basename: home_path.basename,
+                                                              name: name }),
               short: true,
               &blk
             )
-          }
+          end
         ).synchronize(*args, **kwargs, &blk)
       rescue Dapp::Lock::Error::Timeout => e
         raise Dapp::Lock::Error::Timeout, e.net_status.tap { |err| err[:data][:basename] = home_path.basename }

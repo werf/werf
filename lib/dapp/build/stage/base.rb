@@ -17,14 +17,14 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
-        def build_lock!(&blk)
-          return blk.call if application.dry_run?
+        def build_lock!
+          return yield if application.dry_run?
 
-          try_lock = -> do
-            next blk.call unless should_be_tagged?
+          try_lock = lambda do
+            next yield unless should_be_tagged?
             application.lock("image.#{image.name}") do
               image.cache_reset
-              blk.call
+              yield
             end
           end
 

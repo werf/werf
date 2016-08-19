@@ -57,9 +57,9 @@ module Dapp
       def prepare_instructions(options)
         options.map do |key, vals|
           case key
-            when :cmd, :entrypoint then [vals]
-            when :env, :label then vals.map(&method(:options_to_args)).flatten
-            else vals
+          when :cmd, :entrypoint then [vals]
+          when :env, :label then vals.map(&method(:options_to_args)).flatten
+          else vals
           end.map { |val| %(#{key.to_s.upcase} #{val}) }
         end.flatten
       end
@@ -114,7 +114,7 @@ module Dapp
       end
 
       def all_change_options
-        from_change_options.merge(change_options.merge(service_change_options) { |_,v1,v2| [v1, v2].flatten })
+        from_change_options.merge(change_options.merge(service_change_options) { |_, v1, v2| [v1, v2].flatten })
       end
 
       def prepared_bash_command
