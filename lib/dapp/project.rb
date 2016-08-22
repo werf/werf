@@ -2,7 +2,18 @@ module Dapp
   # Project
   class Project
     include ::Dapp::Application::Logging # FIXME: remove when moved to project
+
     include Lock
+    include Dappfile
+    include Command::Common
+    include Command::Run
+    include Command::Build
+    include Command::Push
+    include Command::Spush
+    include Command::List
+    include Command::Stages
+    include Command::Cleanup
+
     include Helper::Log
     include Helper::I18n
     include Helper::Shellout
@@ -17,7 +28,7 @@ module Dapp
       @apps_patterns = apps_patterns || []
       @apps_patterns << '*' unless @apps_patterns.any?
 
-      paint_initialize
+      Helper::Paint.initialize
       Helper::I18n.initialize
     end
 
@@ -60,198 +71,6 @@ module Dapp
 
     def stage_dapp_label_format
       '%{application_name}'
-    end
-
-    def run(docker_options, command)
-      raise Error::Project, code: :run_command_unexpected_apps_number unless build_configs.one?
-      Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).run(docker_options, command)
-    end
-
-    def build
-      build_configs.each do |config|
-        log_step(config._name)
-        with_log_indent do
-          Application.new(config: config, project: self, cli_options: cli_options).build!
-        end
-      end
-    end
-
-    def list
-      build_configs.each { |config| puts config._name }
-    end
-
-    def spush(repo)
-      raise Error::Project, code: :spush_command_unexpected_apps_number unless build_configs.one?
-      Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
-        app.export!(repo, format: '%{repo}:%{tag}')
-      end
-    end
-
-    def push(repo)
-      build_configs.each do |config|
-        log_step(config._name)
-        with_log_indent do
-          Application.new(config: config, project: self, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
-            app.export!(repo, format: '%{repo}:%{application_name}-%{tag}')
-          end
-        end
-      end
-    end
-
-    def stages_flush
-      build_configs.map(&:_basename).uniq.each do |basename|
-        log(basename)
-        containers_flush(basename)
-        remove_images(%(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache(basename)}))
-      end
-    end
-
-    def stages_cleanup(repo)
-      repo_apps = repo_apps(repo)
-      build_configs.map(&:_basename).uniq.each do |basename|
-        log(basename)
-        containers_flush(basename)
-        apps, stages = project_images(basename).partition { |_, image_id| repo_apps.values.include?(image_id) }
-        apps = apps.to_h
-        stages = stages.to_h
-        apps.each do |_, aiid|
-          iid = aiid
-          until (iid = image_parent(iid)).empty?
-            stages.delete_if { |_, siid| siid == iid }
-          end
-        end
-        run_command(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
-      end
-    end
-
-    def cleanup
-      build_configs.map(&:_basename).uniq.each do |basename|
-        lock("#{basename}.images") do
-          log(basename)
-          containers_flush(basename)
-          remove_images(%(docker images --format '{{if ne "#{stage_cache(basename)}" .Repository }}{{.ID}}{{ end }}' -f "label=dapp=#{stage_dapp_label(basename)}")) # FIXME: negative filter is not currently supported by the Docker CLI
-        end
-      end
-    end
-
-    private
-
-    def run_command(cmd)
-      if @cli_options[:dry_run] # FIXME
-        puts cmd
-      else
-        shellout!(cmd)
-      end
-    end
-
-    def stage_cache(basename)
-      cache_format % { application_name: basename }
-    end
-
-    def stage_dapp_label(basename)
-      stage_dapp_label_format % { application_name: basename }
-    end
-
-    def container_name(basename)
-      basename # FIXME: container_name_format
-    end
-
-    def repo_apps(repo)
-      registry = DockerRegistry.new(repo)
-      raise Error::Registry, :no_such_app unless registry.repo_exist?
-      registry.repo_apps
-    end
-
-    def containers_flush(basename)
-      remove_containers(%(docker ps -a -f "label=dapp" -f "name=#{container_name(basename)}" -q), force: true)
-    end
-
-    def project_images(basename)
-      shellout!(%(docker images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{stage_cache(basename)})).stdout.lines.map do |line|
-        line.strip.split(';')
-      end.to_h
-    end
-
-    def image_parent(image_id)
-      shellout!(%(docker inspect -f {{.Parent}} #{image_id})).stdout.strip
-    end
-
-    def remove_images(images_query, force: false)
-      force_option = force ? '-f' : ''
-      with_subquery(images_query) { |ids| run_command(%(docker rmi #{force_option} #{ids.join(' ')})) }
-    end
-
-    def remove_containers(containers_query, force: false)
-      force_option = force ? '-f' : ''
-      with_subquery(containers_query) { |ids| run_command(%(docker rm #{force_option} #{ids.join(' ')})) }
-    end
-
-    def with_subquery(query)
-      return if (res = shellout!(query).stdout.strip.lines.map(&:strip)).empty?
-      yield(res)
-    end
-
-    def build_configs
-      @configs ||= begin
-        dappfiles.map { |dappfile| apps(dappfile, app_filters: apps_patterns) }.flatten.tap do |apps|
-          raise Error::Project, code: :no_such_app, data: { apps_patterns: apps_patterns.join(', ') } if apps.empty?
-        end
-      end
-    end
-
-    def dappfiles
-      if File.exist?(dappfile_path)                 then [dappfile_path]
-      elsif !dapps_dappfiles_pathes.empty?          then dapps_dappfiles_pathes
-      elsif (dappfile_path = search_up('Dappfile')) then [dappfile_path]
-      else raise Error::Project, code: :dappfile_not_found
-      end
-    end
-
-    def apps(dappfile_path, app_filters:)
-      config = Config::Main.new(dappfile_path: dappfile_path, project: self) do |conf|
-        begin
-          conf.instance_eval File.read(dappfile_path), dappfile_path
-        rescue SyntaxError, StandardError => e
-          backtrace = e.backtrace.find { |line| line.start_with?(dappfile_path) }
-          message = e.is_a?(NoMethodError) ? e.message[/.*(?= for)/] : e.message
-          message = "#{backtrace[/.*(?=:in)/]}: #{message}" if backtrace
-          raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
-        end
-      end
-      config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }
-    end
-
-    def dappfile_path
-      File.join [cli_options[:dir], 'Dappfile'].compact
-    end
-
-    def dapps_dappfiles_pathes
-      Dir.glob(File.join([cli_options[:dir], '.dapps', '*', 'Dappfile'].compact))
-    end
-
-    def search_up(file)
-      cdir = Pathname(File.expand_path(cli_options[:dir] || Dir.pwd))
-      loop do
-        if (path = cdir.join(file)).exist?
-          return path.to_s
-        end
-        break if (cdir = cdir.parent).root?
-      end
-    end
-
-    def expand_path(path, number = 1)
-      path = File.expand_path(path)
-      number.times.each { path = File.dirname(path) }
-      path
-    end
-
-    def paint_initialize
-      Paint.mode = case cli_options[:log_color]
-                   when 'auto' then STDOUT.tty? ? 8 : 0
-                   when 'on'   then 8
-                   when 'off'  then 0
-                   else raise
-                   end
     end
   end # Controller
 end # Dapp

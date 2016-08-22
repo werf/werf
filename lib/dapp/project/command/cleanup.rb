@@ -1,0 +1,24 @@
+module Dapp
+  # Project
+  class Project
+    # Command
+    module Command
+      # Cleanup
+      module Cleanup
+        def cleanup
+          build_configs.map(&:_basename).uniq.each do |basename|
+            lock("#{basename}.images") do
+              log(basename)
+              containers_flush(basename)
+              remove_images([
+                'docker images',
+                %(--format '{{if ne "#{stage_cache(basename)}" .Repository }}{{.ID}}{{ end }}'),
+                %(-f "label=dapp=#{stage_dapp_label(basename)}")
+              ].join(' ')) # FIXME: negative filter is not currently supported by the Docker CLI
+            end
+          end
+        end
+      end
+    end
+  end # Project
+end # Dapp
