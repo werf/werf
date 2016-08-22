@@ -32,5 +32,6 @@ en:
       app_name_incorrect: "Application has incorrect name '%{name}': doesn't match regex '%{reg}'!"
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
+      berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook '%{cookbook}', path: '%{path}')"
     lock:
       timeout: "Could not obtain lock for '%{name}' within %{timeout} seconds"

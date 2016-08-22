@@ -38,6 +38,9 @@ module Dapp
         end
 
         def add_local_cookbook_path(name, path)
+          raise(::Dapp::Builder::Chef::Error, code: :berksfile_absolute_path_forbidden,
+                                              data: { cookbook: name, path: path }) if path.start_with? '/'
+
           @local_cookbooks[name] = {
             name: name,
             path: home_path.join(path)
