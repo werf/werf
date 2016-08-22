@@ -8,9 +8,10 @@ module Dapp
       attr_reader :from
       attr_reader :name
 
-      def initialize(name:, from: nil)
+      def initialize(name:, project:, from: nil)
         @from = from
         @name = name
+        @project = project
       end
 
       def id

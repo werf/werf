@@ -6,21 +6,23 @@ module Dapp
         # Group
         module Group
           def log_image_build
-            log_group_name if group_closed?
-            application.with_log_indent { super }
+            return super if should_be_quiet?
+            log_group_name if group_should_be_opened?
+            application.project.with_log_indent { super }
           end
 
           def log_group_name
-            application.log_step(application.t(code: group_name, context: :group))
+            application.project.log_step(application.project.t(code: group_name, context: :group))
           end
 
-          def group_closed?
-            !group_opened?
+          def group_should_be_opened?
+            return image_should_be_build? if prev_group_stage.nil?
+            !group_opened? && image_should_be_build?
           end
 
           def group_opened?
-            return false if prev_group_stage.nil?
-            prev_group_stage.group_opened? || image_should_be_build?
+            return image_should_be_build? if prev_group_stage.nil?
+            prev_group_stage.group_opened? || prev_group_stage.image_should_be_build?
           end
 
           def prev_group_stage

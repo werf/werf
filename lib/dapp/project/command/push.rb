@@ -9,7 +9,7 @@ module Dapp
           build_configs.each do |config|
             log_step(config._name)
             with_log_indent do
-              Application.new(config: config, project: self, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
+              Application.new(config: config, project: self, ignore_git_fetch: true).tap do |app|
                 app.export!(repo, format: '%{repo}:%{application_name}-%{tag}')
               end
             end

@@ -21,8 +21,6 @@ module Dapp
       module Proxy
         # Base
         class Base
-          include Helper::Log
-
           def initialize(*streams, with_time: false)
             @streams = streams
             @with_time = with_time
@@ -33,7 +31,7 @@ module Dapp
           end
 
           def format_string(str)
-            str.lines.map { |l| "#{log_time if @with_time}#{l.strip}\n" }.join
+            str.lines.map { |l| "#{Project::Logging.log_time if @with_time}#{l.strip}\n" }.join
           end
         end
 

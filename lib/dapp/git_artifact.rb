@@ -12,7 +12,7 @@ module Dapp
 
       @where_to_add = where_to_add
 
-      @branch = branch || repo.application.cli_options[:git_artifact_branch] || repo.branch
+      @branch = branch || repo.application.project.cli_options[:git_artifact_branch] || repo.branch
       @commit = commit
 
       @cwd = cwd

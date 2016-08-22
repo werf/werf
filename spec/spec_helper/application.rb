@@ -13,7 +13,7 @@ module SpecHelper
     def application_renew
       @openstruct_config = nil
       @application = begin
-        options = { config: openstruct_config, project: stubbed_project, cli_options: cli_options }
+        options = { config: openstruct_config, project: project }
         Dapp::Application.new(**options)
       end
     end
@@ -21,6 +21,10 @@ module SpecHelper
     def application_rebuild!
       application_renew
       application_build!
+    end
+
+    def project
+      @project ||= Dapp::Project.new(cli_options: cli_options)
     end
 
     def openstruct_config
@@ -50,7 +54,7 @@ module SpecHelper
     end
 
     def default_cli_options
-      { log_quiet: true, log_indent: 0 }
+      { log_quiet: true, log_color: 'off' }
     end
 
     def stages
@@ -84,16 +88,6 @@ module SpecHelper
           allow(instance).to receive(:home_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
           allow(instance).to receive(:filelock)
         end
-      end
-    end
-
-    def stubbed_project
-      instance_double(Dapp::Project).tap do |instance|
-        allow(instance).to receive(:name) { 'test_project' }
-        allow(instance).to receive(:path) { Dir.pwd }
-        allow(instance).to receive(:lock) { |&blk| blk.call }
-        allow(instance).to receive(:build_path) { @build_path ||= Pathname("/tmp/dapps-build-#{SecureRandom.uuid}") }
-        allow(instance).to receive(:log_secondary_process) { |*args, &blk| blk.call(*args) if blk }
       end
     end
   end

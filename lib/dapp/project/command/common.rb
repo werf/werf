@@ -43,7 +43,7 @@ module Dapp
         end
 
         def container_name(basename)
-          basename # FIXME: container_name_format
+          basename
         end
       end
     end

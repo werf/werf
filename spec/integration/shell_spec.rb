@@ -4,6 +4,11 @@ describe Dapp::Builder::Shell do
   include SpecHelper::Common
   include SpecHelper::Application
 
+  def project
+    allow_any_instance_of(Dapp::Project).to receive(:dappfiles) { ['project_dir/.dapps/mdapp/Dappfile'] }
+    super
+  end
+
   def config
     @config ||= default_config.merge(_builder: :shell, _home_path: '')
   end

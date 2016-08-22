@@ -9,7 +9,7 @@ module Dapp
           build_configs.each do |config|
             log_step(config._name)
             with_log_indent do
-              Application.new(config: config, project: self, cli_options: cli_options).build!
+              Application.new(config: config, project: self).build!
             end
           end
         end

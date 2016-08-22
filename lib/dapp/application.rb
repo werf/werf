@@ -1,27 +1,20 @@
 module Dapp
   # Application
   class Application
-    include Helper::Log
-    include Helper::Shellout
-    include Helper::I18n
-    include Helper::Sha256
-    include Logging
     include GitArtifact
     include Path
     include Tags
 
     attr_reader :config
-    attr_reader :cli_options
     attr_reader :ignore_git_fetch
     attr_reader :is_artifact
     attr_reader :project
 
-    def initialize(config:, project:, cli_options:, ignore_git_fetch: false, is_artifact: false)
+    def initialize(config:, project:, ignore_git_fetch: false, is_artifact: false)
       @config = config
       @project = project
-      @cli_options = cli_options
 
-      @tmp_path = Dir.mktmpdir(cli_options[:tmp_dir_prefix] || 'dapp-')
+      @tmp_path = Dir.mktmpdir(project.cli_options[:tmp_dir_prefix] || 'dapp-')
 
       @last_stage = Build::Stage::DockerInstructions.new(self)
       @ignore_git_fetch = ignore_git_fetch
@@ -42,20 +35,20 @@ module Dapp
     end
 
     def export!(repo, format:)
-      raise Error::Application, code: :application_not_built unless last_stage.image.tagged? || dry_run?
+      raise Error::Application, code: :application_not_built unless last_stage.image.tagged? || project.dry_run?
 
       project.lock("#{config._basename}.images", shared: true) do
         tags.each do |tag|
           image_name = format % { repo: repo, application_name: config._name, tag: tag }
-          if dry_run?
-            log_state(image_name, state: t(code: 'state.push'), styles: { status: :success })
+          if project.dry_run?
+            project.log_state(image_name, state: t(code: 'state.push'), styles: { status: :success })
           else
             project.lock("image.#{image_name.gsub('/', '__')}") do
               Dapp::Image::Stage.cache_reset(image_name)
-              log_process(image_name, process: t(code: 'status.process.pushing')) do
-                last_stage.image.export!(image_name, log_verbose: log_verbose?,
-                                                     log_time: log_time?,
-                                                     force: cli_options[:force])
+              project.log_process(image_name, process: t(code: 'status.process.pushing')) do
+                last_stage.image.export!(image_name, log_verbose: project.log_verbose?,
+                                                     log_time: project.log_time?,
+                                                     force: project.cli_options[:force])
               end
             end
           end
@@ -66,8 +59,8 @@ module Dapp
     def run(docker_options, command)
       raise Error::Application, code: :application_not_built unless last_stage.image.tagged?
       cmd = "docker run #{[docker_options, last_stage.image.name, command].flatten.compact.join(' ')}"
-      if dry_run?
-        log_info(cmd)
+      if project.dry_run?
+        project.log_info(cmd)
       else
         system(cmd) || raise(Error::Application, code: :application_not_run)
       end
@@ -85,6 +78,10 @@ module Dapp
       project.stage_dapp_label_format % { application_name: config._basename }
     end
 
+    def artifact(config)
+      self.class.new(config: config, project: project, ignore_git_fetch: ignore_git_fetch, is_artifact: true)
+    end
+
     def builder
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
     end
@@ -97,7 +94,7 @@ module Dapp
       data = e.net_status[:data]
       cmd = "docker run -ti --rm --entrypoint /bin/bash #{data[:options]} #{data[:built_id]}"
       system(cmd).tap do |res|
-        shellout!("docker rmi #{data[:built_id]}") if data[:rmi]
+        project.shellout!("docker rmi #{data[:built_id]}") if data[:rmi]
         res || raise(Error::Application, code: :application_not_run)
       end
       exit 0

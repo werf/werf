@@ -143,7 +143,7 @@ module Dapp
       def chefdk_container
         @chefdk_container ||= begin
           if application.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
-            application.log_secondary_process(application.t(code: 'process.chefdk_loading'), short: true) do
+            application.project.log_secondary_process(application.t(code: 'process.chefdk_loading'), short: true) do
               application.shellout(
                 ['docker run',
                  '--restart=no',
@@ -161,7 +161,7 @@ module Dapp
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_cookbooks
         volumes_from = chefdk_container
-        application.log_secondary_process(application.t(code: 'process.berks_vendor')) do
+        application.project.log_secondary_process(application.t(code: 'process.berks_vendor')) do
           ssh_auth_socket_path = nil
           ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
 
@@ -196,7 +196,7 @@ module Dapp
              "--workdir #{berksfile_path.parent}",
              ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
              "dappdeps/berksdeps:0.1.0 bash -ec '#{application.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
-            log_verbose: application.log_verbose?
+            verbose: application.project.log_verbose?
           )
         end
       end

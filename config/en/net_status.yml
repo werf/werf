@@ -14,7 +14,6 @@ en:
       from_image_required: 'Missing from_image!'
       image_already_untagged: "Image `%{name}` already untagged!"
       image_not_exist: "Image `%{name}` not exist!"
-      another_image_already_tagged: 'Image with other id already tagged!'
       built_id_not_defined: '`from.built_id` not defined!'
       from_image_not_found: 'Image `%{name}` not found!'
     project:

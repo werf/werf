@@ -19,7 +19,7 @@ module Dapp
         protected
 
         def image_build
-          from_image.pull!(log_time: application.log_time?)
+          from_image.pull!(log_time: application.project.log_time?)
           raise Error::Build, code: :from_image_not_found, data: { name: from_image_name } if from_image.built_id.nil?
           super
         end
@@ -31,7 +31,7 @@ module Dapp
         end
 
         def from_image
-          @from_image ||= Image::Stage.new(name: from_image_name)
+          @from_image ||= Image::Stage.new(name: from_image_name, project: application.project)
         end
       end # Prepare
     end # Stage

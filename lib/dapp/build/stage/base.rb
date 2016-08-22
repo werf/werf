@@ -18,7 +18,7 @@ module Dapp
         end
 
         def build_lock!
-          return yield if application.dry_run?
+          return yield if application.project.dry_run?
 
           try_lock = lambda do
             next yield unless should_be_tagged?
@@ -45,7 +45,8 @@ module Dapp
         def save_in_cache!
           prev_stage.save_in_cache! if prev_stage
           return unless should_be_tagged?
-          image.tag!(log_verbose: application.log_verbose?, log_time: application.log_time?) unless application.dry_run?
+          image.tag!(log_verbose: application.project.log_verbose?,
+                     log_time: application.project.log_time?) unless application.project.dry_run?
         end
 
         def image
@@ -53,7 +54,7 @@ module Dapp
             if empty?
               prev_stage.image
             else
-              Image::Stage.new(name: image_name, from: from_image).tap do |image|
+              Image::Stage.new(name: image_name, from: from_image, project: application.project).tap do |image|
                 image.add_service_change_label dapp: application.stage_dapp_label
                 yield image if block_given?
               end
@@ -62,7 +63,7 @@ module Dapp
         end
 
         def image_should_be_build?
-          !empty? || application.log_verbose?
+          !empty? || application.project.log_verbose?
         end
 
         def empty?
@@ -88,10 +89,10 @@ module Dapp
         protected
 
         def image_build
-          image.build!(log_verbose: application.log_verbose?,
-                       log_time: application.log_time?,
-                       introspect_error: application.cli_options[:introspect_error],
-                       introspect_before_error: application.cli_options[:introspect_before_error])
+          image.build!(log_verbose: application.project.log_verbose?,
+                       log_time: application.project.log_time?,
+                       introspect_error: application.project.cli_options[:introspect_error],
+                       introspect_before_error: application.project.cli_options[:introspect_before_error])
         end
 
         def should_be_tagged?

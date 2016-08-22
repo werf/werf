@@ -1,10 +1,9 @@
 module Dapp
   # Project
   class Project
-    include ::Dapp::Application::Logging # FIXME: remove when moved to project
-
     include Lock
     include Dappfile
+    include Paint
     include Command::Common
     include Command::Run
     include Command::Build
@@ -13,29 +12,29 @@ module Dapp
     include Command::List
     include Command::Stages
     include Command::Cleanup
+    include Logging::Base
+    include Logging::Process
 
-    include Helper::Log
     include Helper::I18n
     include Helper::Shellout
+    include Helper::Paint
 
     attr_reader :cli_options
     attr_reader :apps_patterns
 
     def initialize(cli_options: {}, apps_patterns: nil)
       @cli_options = cli_options
-      @cli_options[:log_indent] = 0
-
       @apps_patterns = apps_patterns || []
       @apps_patterns << '*' unless @apps_patterns.any?
 
-      Helper::Paint.initialize
+      paint_initialize
       Helper::I18n.initialize
     end
 
     def name
       @name ||= begin
         shellout!("git -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
-      rescue ::Mixlib::ShellOut::ShellCommandFailed => _e
+      rescue Error::Shellout => _e
         File.basename(path)
       end
     end
@@ -59,10 +58,6 @@ module Dapp
           Pathname.new(path).join('.dapps_build')
         end.expand_path.tap(&:mkpath)
       end
-    end
-
-    def container_name_format
-      # TODO
     end
 
     def cache_format

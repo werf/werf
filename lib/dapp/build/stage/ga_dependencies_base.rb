@@ -22,10 +22,6 @@ module Dapp
             hashsum files
           end
         end
-
-        def should_be_quiet?
-          true
-        end
       end # GADependenciesBase
     end # Stage
   end # Build

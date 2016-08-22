@@ -5,14 +5,14 @@ module Dapp
     class Stage < Docker
       include Argument
 
-      def initialize(name:, built_id: nil, from: nil)
+      def initialize(name:, project:, built_id: nil, from: nil)
         @bash_commands = []
         @options = {}
         @change_options = {}
         @service_change_options = {}
         @container_name = "#{name[/[[^:].]*/]}.#{SecureRandom.hex(4)}"
         @built_id = built_id
-        super(name: name, from: from)
+        super(name: name, project: project, from: from)
       end
 
       def labels
@@ -30,18 +30,15 @@ module Dapp
         shellout("docker rm #{container_name}")
       end
 
-      def export!(name, log_verbose: false, log_time: false, force: false)
+      def export!(name, log_verbose: false, log_time: false)
         image = self.class.new(built_id: built_id, name: name)
-        image.tag!(log_verbose: log_verbose, log_time: log_time, force: force)
+        image.tag!(log_verbose: log_verbose, log_time: log_time)
         image.push!(log_verbose: log_verbose, log_time: log_time)
         image.untag!
       end
 
       def tag!(log_verbose: false, log_time: false, force: false)
-        if !(existed_id = id).nil? && !force
-          raise Error::Build, code: :another_image_already_tagged if built_id != existed_id
-          return
-        end
+        project.log_warning(desc: { code: :another_image_already_tagged, context: 'warning' }) if !(existed_id = id).nil? && built_id != existed_id
         shellout!("docker tag #{built_id} #{name}", log_verbose: log_verbose, log_time: log_time)
         cache_reset
       end

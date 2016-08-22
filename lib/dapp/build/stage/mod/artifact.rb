@@ -7,29 +7,19 @@ module Dapp
         module Artifact
           def artifacts
             @artifacts ||= begin
-              verbose = application.log_verbose?
               application.config._artifact.map do |artifact|
-                process = application.t(code: 'process.artifact_building', data: { name: artifact._config._name })
-                application.log_secondary_process(process, short: !verbose) do
-                  application.with_log_indent do
+                process = application.project.t(code: 'process.artifact_building', data: { name: artifact._config._name })
+                application.project.log_secondary_process(process, short: !application.project.log_verbose?) do
+                  application.project.with_log_indent do
                     {
                       name: artifact._config._name,
                       options: artifact._artifact_options,
-                      app: Application.new(artifact_app_options(artifact, verbose)).tap(&:build!)
+                      app: application.artifact(artifact._config).tap(&:build!)
                     }
                   end
                 end
               end
             end
-          end
-
-          def artifact_app_options(artifact, verbose)
-            {
-              config: artifact._config,
-              cli_options: application.cli_options.merge(log_quiet: !verbose),
-              ignore_git_fetch: application.ignore_git_fetch,
-              is_artifact: true
-            }
           end
 
           def artifacts_signatures
@@ -38,7 +28,7 @@ module Dapp
 
           # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
           def apply_artifact(artifact, image)
-            return if application.dry_run?
+            return if application.project.dry_run?
 
             artifact_name = artifact[:name]
             app = artifact[:app]
@@ -52,8 +42,8 @@ module Dapp
                               "--volume #{application.tmp_path('artifact', artifact_name)}:#{app.container_tmp_path(artifact_name)}",
                               '--entrypoint /bin/bash']
             commands = safe_cp(where_to_add, app.container_tmp_path(artifact_name), Process.uid, Process.gid)
-            application.log_secondary_process(application.t(code: 'process.artifact_copy', data: { name: artifact_name }), short: true) do
-              app.run(docker_options, [%(-ec '#{application.shellout_pack(commands)}')])
+            application.project.log_secondary_process(application.project.t(code: 'process.artifact_copy', data: { name: artifact_name }), short: true) do
+              app.run(docker_options, [%(-ec '#{application.project.shellout_pack(commands)}')])
             end
 
             commands = safe_cp(application.container_tmp_path('artifact', artifact_name), where_to_add, owner, group, cwd, paths)

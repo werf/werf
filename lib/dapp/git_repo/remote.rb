@@ -12,7 +12,7 @@ module Dapp
         File.chmod(0o600, @ssh_key_path) if @ssh_key_path
 
         with_ssh_key do
-          application.log_secondary_process(application.t(code: 'process.git_artifact_clone', data: { name: name }), short: true) do
+          application.project.log_secondary_process(application.project.t(code: 'process.git_artifact_clone', data: { name: name }), short: true) do
             git "clone --bare --depth 1 #{url} #{path}"
           end
         end unless File.directory?(path)
@@ -20,10 +20,10 @@ module Dapp
 
       def fetch!(branch = 'master')
         with_ssh_key do
-          application.log_secondary_process(application.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
+          application.project.log_secondary_process(application.project.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
             git_bare "fetch origin #{branch}:#{branch}"
           end
-        end unless application.ignore_git_fetch || application.dry_run?
+        end unless application.ignore_git_fetch || application.project.dry_run?
       end
 
       def cleanup!
@@ -52,7 +52,7 @@ module Dapp
 
       def git(command, **kwargs)
         if use_ssh_key && ssh_key_path
-          application.shellout!("ssh-agent bash -ec 'ssh-add #{ssh_key_path}; git #{command}'", **kwargs)
+          application.project.shellout!("ssh-agent bash -ec 'ssh-add #{ssh_key_path}; git #{command}'", **kwargs)
         else
           super
         end
