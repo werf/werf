@@ -25,11 +25,6 @@ describe Dapp::Application do
     git_init!
   end
 
-  def project
-    allow_any_instance_of(Dapp::Project).to receive(:dappfiles) { ['project_dir/.dapps/mdapp/Dappfile'] }
-    super
-  end
-
   def project_path
     Pathname('/tmp/dapp/test')
   end

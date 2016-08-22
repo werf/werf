@@ -24,7 +24,10 @@ module SpecHelper
     end
 
     def project
-      @project ||= Dapp::Project.new(cli_options: cli_options)
+      @project ||= begin
+        allow_any_instance_of(Dapp::Project).to receive(:dappfiles) { ['test_project/.dapps/test_dapp/Dappfile'] }
+        Dapp::Project.new(cli_options: cli_options)
+      end
     end
 
     def openstruct_config
