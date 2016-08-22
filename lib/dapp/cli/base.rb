@@ -43,6 +43,11 @@ module Dapp
              default: false,
              boolean: true
 
+      option :dev,
+             long: '--dev',
+             default: false,
+             boolean: true
+
       def initialize
         self.class.options.merge!(Base.options)
         super()

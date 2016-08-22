@@ -1,6 +1,7 @@
 module Dapp
   # Project
   class Project
+    include ::Dapp::Application::Logging # FIXME: remove when moved to project
     include Lock
     include Dappfile
     include Paint

@@ -11,7 +11,7 @@ module Dapp
 
       DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.17.3-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
-      [:before_install, :before_setup, :install, :setup].each do |stage|
+      %i(before_install install before_setup setup).each do |stage|
         define_method("#{stage}_checksum") { stage_cookbooks_checksum(stage) }
 
         define_method("#{stage}?") { !stage_empty?(stage) }
@@ -36,10 +36,10 @@ module Dapp
       end
 
       def chef_cookbooks(image)
-        image.add_volume "#{cookbooks_vendor_path}:#{application.container_dapp_path('chef_vendored_cookbooks')}"
+        image.add_volume "#{cookbooks_vendor_path}:#{application.container_dapp_path('chef_cookbooks')}"
         image.add_command(
           'mkdir -p /usr/share/dapp/chef_repo',
-          ["cp -a #{application.container_dapp_path('chef_vendored_cookbooks')} ",
+          ["cp -a #{application.container_dapp_path('chef_cookbooks')} ",
            '/usr/share/dapp/chef_repo/cookbooks'].join
         )
       end
@@ -79,7 +79,7 @@ module Dapp
       end
 
       def berksfile_lock_checksum
-        application.hashsum berksfile_lock_path.read if berksfile_lock_path.exist?
+        application.hashsum(berksfile_lock_path.read) if berksfile_lock_path.exist?
       end
 
       def stage_cookbooks_checksum_path(stage)
@@ -91,7 +91,12 @@ module Dapp
           stage_cookbooks_checksum_path(stage).read.strip
         else
           checksum = if stage == :chef_cookbooks
-                       cookbooks_checksum
+                       paths = Dir[cookbooks_vendor_path('**/*')].map(&Pathname.method(:new))
+
+                       application.hashsum [
+                         application.paths_content_hashsum(paths),
+                         *paths.map { |p| p.relative_path_from(cookbooks_vendor_path).to_s }.sort
+                       ]
                      else
                        paths = Dir[stage_cookbooks_path(stage, '**/*')].map(&Pathname.method(:new))
 
@@ -126,9 +131,9 @@ module Dapp
           application.hashsum [
             application.paths_content_hashsum(paths),
             *paths.map { |p| p.relative_path_from(berksfile.home_path).to_s }.sort,
-            berksfile_lock_checksum,
+            (berksfile_lock_checksum unless application.cli_options[:dev]),
             *enabled_modules
-          ]
+          ].compact
         end
       end
 
@@ -165,35 +170,62 @@ module Dapp
           ssh_auth_socket_path = nil
           ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
 
+          before_vendor_commands = [].tap do |commands|
+            unless application.cli_options[:dev]
+              commands.push(
+                ['if [ ! -f Berksfile.lock ] ; then ',
+                 'echo "Berksfile.lock not found" 1>&2 ; ',
+                 'exit 1 ; ',
+                 'fi'].join
+              )
+            end
+          end
+
+          after_vendor_commands = [].tap do |commands|
+            if application.cli_options[:dev]
+              commands.push(
+                ["install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a Berksfile.lock) ",
+                 "Berksfile.lock #{berksfile_lock_path}"].join
+              )
+            else
+              commands.push(
+                "export LOCKDIFF=$(diff -u1 Berksfile.lock #{berksfile_lock_path})",
+                ['if [ "$LOCKDIFF" != "" ] ; then ',
+                 'echo -e "Bad Berksfile.lock\n$LOCKDIFF" 1>&2 ; ',
+                 'exit 1 ; ',
+                 'fi'].join
+              )
+            end
+          end
+
           vendor_commands = [
             'mkdir -p ~/.ssh',
             'echo "Host *" >> ~/.ssh/config',
             'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
-            'if [ ! -f Berksfile.lock ] ; then echo "Berksfile.lock not found" 1>&2 ; exit 1 ; fi',
-            'cp -a Berksfile.lock /tmp/Berksfile.lock.orig',
-            '/.dapp/deps/chefdk/bin/berks vendor /tmp/vendored_cookbooks',
-            'export LOCKDIFF=$(diff -u0 Berksfile.lock /tmp/Berksfile.lock.orig)',
-            ['if [ "$LOCKDIFF" != "" ] ; then ',
-             'cp -a /tmp/Berksfile.lock.orig Berksfile.lock ; ',
-             'echo -e "Bad Berksfile.lock\n$LOCKDIFF" 1>&2 ; exit 1 ; fi'].join,
-            ["find /tmp/vendored_cookbooks -type d -exec bash -ec '",
+            *berksfile.local_cookbooks
+                      .values
+                      .map { |cookbook| "rsync --archive --relative #{cookbook[:path]} /tmp/local_cookbooks" },
+            "cd /tmp/local_cookbooks/#{berksfile_path.parent}",
+            *before_vendor_commands,
+            '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
+            *after_vendor_commands,
+            ["find /tmp/cookbooks -type d -exec bash -ec '",
              "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) -d ",
-             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/^\\/tmp\\/vendored_cookbooks//\")' \\;"].join,
-            ["find /tmp/vendored_cookbooks -type f -exec bash -ec '",
+             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
+            ["find /tmp/cookbooks -type f -exec bash -ec '",
              "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
-             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/vendored_cookbooks//\")' \\;"].join,
+             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
             "install -o #{Process.uid} -g #{Process.gid} --mode 0644 <(date +%s.%N) #{_cookbooks_vendor_path.join('.created_at')}"
           ]
 
           application.shellout!(
             ['docker run --rm',
-             ("--volume #{ssh_auth_socket_path}:#{ssh_auth_socket_path}" if ssh_auth_socket_path),
-             "--volume #{_cookbooks_vendor_path.tap(&:mkpath)}:#{_cookbooks_vendor_path}",
+             "--volumes-from #{volumes_from}",
              *berksfile.local_cookbooks
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-             "--volumes-from #{volumes_from}",
-             "--workdir #{berksfile_path.parent}",
+             ("--volume #{ssh_auth_socket_path}:#{ssh_auth_socket_path}" if ssh_auth_socket_path),
+             "--volume #{_cookbooks_vendor_path.tap(&:mkpath)}:#{_cookbooks_vendor_path}",
              ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
              "dappdeps/berksdeps:0.1.0 bash -ec '#{application.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
             verbose: application.project.log_verbose?
@@ -209,7 +241,10 @@ module Dapp
       def cookbooks_vendor_path(*path)
         _cookbooks_vendor_path.tap do |cookbooks_path|
           application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 300) do
-            install_cookbooks unless cookbooks_path.join('.created_at').exist?
+            @install_cookbooks ||= begin
+              install_cookbooks unless cookbooks_path.join('.created_at').exist? && !application.cli_options[:dev]
+              true
+            end
           end
         end.join(*path)
       end
@@ -234,9 +269,8 @@ module Dapp
           mdapp_enabled = is_mdapp && enabled_modules.include?(mdapp_name)
 
           paths = if is_project
-                    recipe_paths = enabled_recipes
-                                   .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
-                                   .select { |from, _| cookbook_path.join(from).exist? }
+                    recipe_paths = enabled_recipes.map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
+                                                  .select { |from, _| cookbook_path.join(from).exist? }
 
                     if recipe_paths.any?
                       [*recipe_paths, *common_paths[cookbook_path]]
@@ -309,21 +343,18 @@ module Dapp
             "#{cookbook}::#{entrypoint}"
           end
 
-          enabled_modules
-                                            .map do |mod|
+          enabled_modules.map do |mod|
             cookbook = "mdapp-#{mod}"
             if does_entry_exist[cookbook, stage]
               [cookbook, stage]
             else
               [cookbook, nil]
             end
-          end
-                                            .tap { |entries| res.concat entries }
+          end.tap { |entries| res.concat entries }
 
-          enabled_recipes
-                                            .map { |recipe| [project_name, recipe] }
-                                            .select { |entry| does_entry_exist[*entry] }
-                                            .tap do |entries|
+          enabled_recipes.map { |recipe| [project_name, recipe] }
+                         .select { |entry| does_entry_exist[*entry] }
+                         .tap do |entries|
             if entries.any?
               res.concat entries
             else

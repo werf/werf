@@ -39,5 +39,6 @@ en:
       not_found: 'Registry not found!'
       user_not_authorized: 'User not authorized!'
       response_with_error_status: 'Response with error status!'
+      berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook '%{cookbook}', path: '%{path}')"
     lock:
       timeout: "Could not obtain lock for '%{name}' within %{timeout} seconds"
