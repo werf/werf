@@ -50,6 +50,14 @@ module Dapp
       end
     end
 
+    def cache_format
+      "dappstage-#{name}-%{application_name}"
+    end
+
+    def stage_dapp_label_format
+      '%{application_name}'
+    end
+
     def run(docker_options, command)
       raise Error::Project, code: :run_command_unexpected_apps_number unless build_configs.one?
       Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).run(docker_options, command)
@@ -80,7 +88,7 @@ module Dapp
         log_step(config._name)
         with_log_indent do
           Application.new(config: config, project: self, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
-            app.export!(repo, format: '%{repo}:%{app_name}-%{tag}')
+            app.export!(repo, format: '%{repo}:%{application_name}-%{tag}')
           end
         end
       end
@@ -131,6 +139,22 @@ module Dapp
       registry = DockerRegistry.new(repo)
       raise Error::Registry, :no_such_app unless registry.repo_exist?
       registry.repo_apps
+    end
+
+    def run_command(cmd)
+      if @cli_options[:dry_run]
+        puts cmd
+      else
+        shellout!(cmd)
+      end
+    end
+
+    def stage_cache(basename)
+      cache_format % { application_name: basename }
+    end
+
+    def stage_dapp_label(basename)
+      stage_dapp_label_format % { application_name: basename }
     end
 
     def containers_flush(basename)

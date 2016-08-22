@@ -54,7 +54,7 @@ module Dapp
               prev_stage.image
             else
               Image::Stage.new(name: image_name, from: from_image).tap do |image|
-                image.add_service_change_label dapp: application.config._basename
+                image.add_service_change_label dapp: application.stage_dapp_label
                 yield image if block_given?
               end
             end
@@ -104,7 +104,7 @@ module Dapp
         end
 
         def image_name
-          "dappstage-#{application.project.name}-#{application.config._basename}:#{signature}"
+          application.stage_cache_format % { signature: signature }
         end
 
         def from_image

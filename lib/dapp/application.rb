@@ -46,7 +46,7 @@ module Dapp
 
       project.lock("#{config._basename}.images", shared: true) do
         tags.each do |tag|
-          image_name = format % { repo: repo, app_name: config._name, tag: tag }
+          image_name = format % { repo: repo, application_name: config._name, tag: tag }
           if dry_run?
             log_state(image_name, state: t(code: 'state.push'), styles: { status: :success })
           else
@@ -75,6 +75,14 @@ module Dapp
 
     def signature
       last_stage.send(:signature)
+    end
+
+    def stage_cache_format
+      "#{project.cache_format % { application_name: config._basename }}:%{signature}"
+    end
+
+    def stage_dapp_label
+      project.stage_dapp_label_format % { application_name: config._basename }
     end
 
     def builder
