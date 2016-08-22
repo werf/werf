@@ -108,9 +108,7 @@ module Dapp
           log(basename)
           containers_flush(basename)
           run_command(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{stage_dapp_label(basename)}" -q)})
-          run_command(%{docker rmi $(docker images
-                                     --format '{{if ne "#{stage_cache(basename)}" .Repository }}{{.ID}} {{ end }}'
-                                     -f "label=dapp=#{stage_dapp_label(basename)}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
+          run_command(%{docker rmi $(docker images --format '{{if ne "#{stage_cache(basename)}" .Repository }}{{.ID}} {{ end }}' -f "label=dapp=#{stage_dapp_label(basename)}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
         end
       end
     end
