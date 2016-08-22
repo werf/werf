@@ -50,6 +50,10 @@ module Dapp
       end
     end
 
+    def container_name_format
+      # TODO
+    end
+
     def cache_format
       "dappstage-#{name}-%{application_name}"
     end
@@ -98,7 +102,7 @@ module Dapp
       build_configs.map(&:_basename).uniq.each do |basename|
         log(basename)
         containers_flush(basename)
-        with_subquery(%(docker images --format="{{.Repository}}:{{.Tag}}" #{basename}-dappstage)) { |ids| shellout!(%(docker rmi #{ids.join(' ')})) }
+        remove_images(%(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache(basename)}))
       end
     end
 
@@ -116,7 +120,7 @@ module Dapp
             stages.delete_if { |_, siid| siid == iid }
           end
         end
-        shellout!(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
+        run_command(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
       end
     end
 
@@ -125,24 +129,15 @@ module Dapp
         lock("#{basename}.images") do
           log(basename)
           containers_flush(basename)
-          with_subquery(%(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)) { |ids| shellout!(%(docker rmi #{ids.join(' ')})) }
-          with_subquery(%(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}}{{ end }}' -f "label=dapp=#{basename}")) do |ids|
-            shellout!(%(docker rmi #{ids.join(' ')}))
-          end # FIXME: negative filter is not currently supported by the Docker CLI
+          remove_images(%(docker images --format '{{if ne "#{stage_cache(basename)}" .Repository }}{{.ID}}{{ end }}' -f "label=dapp=#{stage_dapp_label(basename)}")) # FIXME: negative filter is not currently supported by the Docker CLI
         end
       end
     end
 
     private
 
-    def repo_apps(repo)
-      registry = DockerRegistry.new(repo)
-      raise Error::Registry, :no_such_app unless registry.repo_exist?
-      registry.repo_apps
-    end
-
     def run_command(cmd)
-      if @cli_options[:dry_run]
+      if @cli_options[:dry_run] # FIXME
         puts cmd
       else
         shellout!(cmd)
@@ -157,20 +152,38 @@ module Dapp
       stage_dapp_label_format % { application_name: basename }
     end
 
+    def container_name(basename)
+      basename # FIXME: container_name_format
+    end
+
+    def repo_apps(repo)
+      registry = DockerRegistry.new(repo)
+      raise Error::Registry, :no_such_app unless registry.repo_exist?
+      registry.repo_apps
+    end
+
     def containers_flush(basename)
-      with_subquery(%(docker ps -a -f "label=dapp" -f "name=#{basename}" -q)) do |ids|
-        shellout!(%(docker rm -f #{ids.join(' ')}))
-      end
+      remove_containers(%(docker ps -a -f "label=dapp" -f "name=#{container_name(basename)}" -q), force: true)
     end
 
     def project_images(basename)
-      shellout!(%(docker images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{basename}-dappstage)).stdout.lines.map do |line|
+      shellout!(%(docker images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{stage_cache(basename)})).stdout.lines.map do |line|
         line.strip.split(';')
       end.to_h
     end
 
     def image_parent(image_id)
       shellout!(%(docker inspect -f {{.Parent}} #{image_id})).stdout.strip
+    end
+
+    def remove_images(images_query, force: false)
+      force_option = force ? '-f' : ''
+      with_subquery(images_query) { |ids| run_command(%(docker rmi #{force_option} #{ids.join(' ')})) }
+    end
+
+    def remove_containers(containers_query, force: false)
+      force_option = force ? '-f' : ''
+      with_subquery(containers_query) { |ids| run_command(%(docker rm #{force_option} #{ids.join(' ')})) }
     end
 
     def with_subquery(query)
