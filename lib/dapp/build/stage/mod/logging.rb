@@ -6,12 +6,11 @@ module Dapp
         # Logging
         module Logging
           def log_image_build(&image_build)
-            case
-            when empty?                 then log_state(:empty)
-            when image.tagged?          then log_state(:using_cache)
-            when should_be_not_present? then log_state(:not_present)
-            when application.dry_run?   then log_state(:build, styles: { status: :success })
-            else                             log_image_build_process(&image_build)
+            if empty?                    then log_state(:empty)
+            elsif image.tagged?          then log_state(:using_cache)
+            elsif should_be_not_present? then log_state(:not_present)
+            elsif application.dry_run?   then log_state(:build, styles: { status: :success })
+            else log_image_build_process(&image_build)
             end
           ensure
             log_build

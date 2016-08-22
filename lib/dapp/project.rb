@@ -163,8 +163,8 @@ module Dapp
     end
 
     def dappfiles
-      if File.exist?(dappfile_path) then [dappfile_path]
-      elsif !dapps_dappfiles_pathes.empty? then dapps_dappfiles_pathes
+      if File.exist?(dappfile_path)                 then [dappfile_path]
+      elsif !dapps_dappfiles_pathes.empty?          then dapps_dappfiles_pathes
       elsif (dappfile_path = search_up('Dappfile')) then [dappfile_path]
       else raise Error::Project, code: :dappfile_not_found
       end
