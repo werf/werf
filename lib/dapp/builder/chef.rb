@@ -94,14 +94,14 @@ module Dapp
                        paths = Dir[cookbooks_vendor_path('**/*')].map(&Pathname.method(:new))
 
                        application.hashsum [
-                         application.paths_content_hashsum(paths),
+                         application.project.paths_content_hashsum(paths),
                          *paths.map { |p| p.relative_path_from(cookbooks_vendor_path).to_s }.sort
                        ]
                      else
                        paths = Dir[stage_cookbooks_path(stage, '**/*')].map(&Pathname.method(:new))
 
                        application.hashsum [
-                         application.paths_content_hashsum(paths),
+                         application.project.paths_content_hashsum(paths),
                          *paths.map { |p| p.relative_path_from(stage_cookbooks_path(stage)).to_s }.sort,
                          *enabled_modules,
                          stage == :before_install ? chefdk_image : nil
