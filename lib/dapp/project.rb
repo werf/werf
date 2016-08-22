@@ -50,6 +50,14 @@ module Dapp
       end
     end
 
+    def cache_format
+      "dappstage-#{name}-%{application_name}"
+    end
+
+    def stage_dapp_label_format
+      '%{application_name}'
+    end
+
     def run(docker_options, command)
       raise Error::Project, code: :run_command_unexpected_apps_number unless build_configs.one?
       Application.new(config: build_configs.first, cli_options: cli_options, ignore_git_fetch: true).run(docker_options, command)
@@ -80,7 +88,7 @@ module Dapp
         log_step(config._name)
         with_log_indent do
           Application.new(config: config, project: self, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
-            app.export!(repo, format: '%{repo}:%{app_name}-%{tag}')
+            app.export!(repo, format: '%{repo}:%{application_name}-%{tag}')
           end
         end
       end
@@ -90,7 +98,7 @@ module Dapp
       build_configs.map(&:_basename).uniq.each do |basename|
         log(basename)
         containers_flush(basename)
-        shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{basename}-dappstage)})
+        run_command(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache(basename)})})
       end
     end
 
@@ -99,13 +107,31 @@ module Dapp
         lock("#{basename}.images") do
           log(basename)
           containers_flush(basename)
-          shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})
-          shellout(%{docker rmi $(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}} {{ end }}' -f "label=dapp=#{basename}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
+          run_command(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{stage_dapp_label(basename)}" -q)})
+          run_command(%{docker rmi $(docker images
+                                     --format '{{if ne "#{stage_cache(basename)}" .Repository }}{{.ID}} {{ end }}'
+                                     -f "label=dapp=#{stage_dapp_label(basename)}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
         end
       end
     end
 
     private
+
+    def run_command(cmd)
+      if @cli_options[:dry_run]
+        puts cmd
+      else
+        shellout!(cmd)
+      end
+    end
+
+    def stage_cache(basename)
+      cache_format % { application_name: basename }
+    end
+
+    def stage_dapp_label(basename)
+      stage_dapp_label_format % { application_name: basename }
+    end
 
     def containers_flush(basename)
       shellout(%{docker rm -f $(docker ps -a -f "label=dapp" -f "name=#{basename}" -q)})
