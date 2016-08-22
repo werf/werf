@@ -8,7 +8,7 @@ DEPENDENCIES
     path: .
 
 GRAPH
-  apt (4.0.1)
+  apt (4.0.2)
     compat_resource (>= 12.10)
   compat_resource (12.10.7)
   mdapp-test (0.0.1)
