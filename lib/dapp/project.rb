@@ -18,6 +18,7 @@ module Dapp
     include Helper::I18n
     include Helper::Shellout
     include Helper::Paint
+    include Helper::Sha256
 
     attr_reader :cli_options
     attr_reader :apps_patterns
