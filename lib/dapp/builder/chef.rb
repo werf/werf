@@ -240,7 +240,7 @@ module Dapp
 
       def cookbooks_vendor_path(*path)
         _cookbooks_vendor_path.tap do |cookbooks_path|
-          application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 300) do
+          application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 120) do
             @install_cookbooks ||= begin
               install_cookbooks unless cookbooks_path.join('.created_at').exist? && !application.cli_options[:dev]
               true

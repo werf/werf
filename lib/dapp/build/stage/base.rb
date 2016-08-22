@@ -22,10 +22,20 @@ module Dapp
 
           try_lock = lambda do
             next yield unless should_be_tagged?
+
+            no_lock = false
+
             application.project.lock("#{application.config._basename}.image.#{image.name}") do
               image.cache_reset
-              yield
+
+              if should_be_tagged?
+                yield
+              else
+                no_lock = true
+              end
             end
+
+            yield if no_lock
           end
 
           if prev_stage
