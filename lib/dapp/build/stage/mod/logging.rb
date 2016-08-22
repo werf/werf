@@ -42,6 +42,14 @@ module Dapp
             application.with_log_indent { application.log_info bash_commands.join("\n") }
           end
 
+          def log_name
+            application.t(code: name, context: name_context)
+          end
+
+          def name_context
+            :stage
+          end
+
           def ignore_log_commands?
             false
           end

@@ -32,7 +32,7 @@ module Dapp
 
     def apply_patch_command(stage)
       current_commit = stage.layer_commit(self)
-      prev_commit = stage.prev_source_stage.layer_commit(self)
+      prev_commit = stage.prev_g_a_stage.layer_commit(self)
 
       if prev_commit != current_commit || any_changes?(prev_commit, current_commit)
         [["git --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",

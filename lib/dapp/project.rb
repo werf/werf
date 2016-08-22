@@ -23,7 +23,7 @@ module Dapp
 
     def name
       @name ||= begin
-        shellout!('git config --get remote.origin.url').stdout.strip.split('/').last[/.*(?=.git)/]
+        shellout!("git -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
       rescue ::Mixlib::ShellOut::ShellCommandFailed => _e
         File.basename(path)
       end
@@ -31,10 +31,11 @@ module Dapp
 
     def path
       @path ||= begin
-        case
-        when (dapps_path = search_up('.dapps')) then File.expand_path('..', dapps_path)
-        when File.exist?(dappfile_path) then cli_options[:dir] || Dir.pwd
-        else raise Error::Project, code: :dir_not_defined
+        dappfile_path = dappfiles.first
+        if File.basename(expand_path(dappfile_path, 2)) == '.dapps'
+          expand_path(dappfile_path, 3)
+        else
+          expand_path(dappfile_path)
         end
       end
     end
@@ -45,8 +46,16 @@ module Dapp
           Pathname.new(cli_options[:build_dir])
         else
           Pathname.new(path).join('.dapps_build')
-        end.expand_path.tap { |p| p.mkpath }
+        end.expand_path.tap(&:mkpath)
       end
+    end
+
+    def cache_format
+      "dappstage-#{name}-%{application_name}"
+    end
+
+    def stage_dapp_label_format
+      '%{application_name}'
     end
 
     def run(docker_options, command)
@@ -79,7 +88,7 @@ module Dapp
         log_step(config._name)
         with_log_indent do
           Application.new(config: config, project: self, cli_options: cli_options, ignore_git_fetch: true).tap do |app|
-            app.export!(repo, format: '%{repo}:%{app_name}-%{tag}')
+            app.export!(repo, format: '%{repo}:%{application_name}-%{tag}')
           end
         end
       end
@@ -89,7 +98,7 @@ module Dapp
       build_configs.map(&:_basename).uniq.each do |basename|
         log(basename)
         containers_flush(basename)
-        shellout(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{basename}-dappstage)})
+        run_command(%{docker rmi $(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache(basename)})})
       end
     end
 
@@ -98,13 +107,29 @@ module Dapp
         lock("#{basename}.images") do
           log(basename)
           containers_flush(basename)
-          shellout(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{basename}" -q)})
-          shellout(%{docker rmi $(docker images --format '{{if ne "#{basename}-dappstage" .Repository }}{{.ID}} {{ end }}' -f "label=dapp=#{basename}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
+          run_command(%{docker rmi $(docker images -f "dangling=true" -f "label=dapp=#{stage_dapp_label(basename)}" -q)})
+          run_command(%{docker rmi $(docker images --format '{{if ne "#{stage_cache(basename)}" .Repository }}{{.ID}} {{ end }}' -f "label=dapp=#{stage_dapp_label(basename)}" | sed '/^$/d')}) # FIXME: negative filter is not currently supported by the Docker CLI
         end
       end
     end
 
     private
+
+    def run_command(cmd)
+      if @cli_options[:dry_run]
+        puts cmd
+      else
+        shellout!(cmd)
+      end
+    end
+
+    def stage_cache(basename)
+      cache_format % { application_name: basename }
+    end
+
+    def stage_dapp_label(basename)
+      stage_dapp_label_format % { application_name: basename }
+    end
 
     def containers_flush(basename)
       shellout(%{docker rm -f $(docker ps -a -f "label=dapp" -f "name=#{basename}" -q)})
@@ -119,10 +144,9 @@ module Dapp
     end
 
     def dappfiles
-      case
-      when File.exist?(dappfile_path) then [dappfile_path]
-      when !dapps_dappfiles_pathes.empty? then dapps_dappfiles_pathes
-      when dappfile_path = search_up('Dappfile') then [dappfile_path]
+      if File.exist?(dappfile_path) then [dappfile_path]
+      elsif !dapps_dappfiles_pathes.empty? then dapps_dappfiles_pathes
+      elsif (dappfile_path = search_up('Dappfile')) then [dappfile_path]
       else raise Error::Project, code: :dappfile_not_found
       end
     end
@@ -157,6 +181,12 @@ module Dapp
         end
         break if (cdir = cdir.parent).root?
       end
+    end
+
+    def expand_path(path, number = 1)
+      path = File.expand_path(path)
+      number.times.each { path = File.dirname(path) }
+      path
     end
 
     def paint_initialize

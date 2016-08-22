@@ -1,4 +1,4 @@
-cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_infra_setup.txt" do
+cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_before_setup.txt" do
   source 'burger.txt'
   owner 'root'
   group 'root'

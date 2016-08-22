@@ -36,7 +36,7 @@ module SpecHelper
                                 _name: 'test',
                                 _artifact: [],
                                 _chef: { _modules: [] },
-                                _shell: { _infra_install: [], _infra_setup: [], _install: [], _setup: [] },
+                                _shell: { _before_install: [], _before_setup: [], _install: [], _setup: [] },
                                 _docker: { _from: :'ubuntu:14.04',
                                            _from_cache_version: CACHE_VERSION,
                                            _change_options: {} },

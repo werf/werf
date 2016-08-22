@@ -13,13 +13,13 @@ module Dapp
         ::Dapp::Lock::File.new(
           lock_path, name,
           timeout: timeout,
-          on_wait: ->(&blk) {
+          on_wait: lambda do |&blk|
             log_secondary_process(
-              self.t(code: 'process.waiting_resouce_lock', data: { name: name }),
+              t(code: 'process.waiting_resouce_lock', data: { name: name }),
               short: true,
               &blk
             )
-          }
+          end
         ).synchronize(*args, **kwargs, &blk)
       end
     end # Lock
