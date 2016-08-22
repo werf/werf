@@ -17,14 +17,14 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
-        def build_lock!(&blk)
-          return blk.call if application.dry_run?
+        def build_lock!
+          return yield if application.dry_run?
 
-          try_lock = -> do
-            next blk.call unless should_be_tagged?
-            application.lock("image.#{image.name}") do
+          try_lock = lambda do
+            next yield unless should_be_tagged?
+            application.project.lock("#{application.config._basename}.image.#{image.name}") do
               image.cache_reset
-              blk.call
+              yield
             end
           end
 
@@ -38,7 +38,7 @@ module Dapp
         def build!
           return if should_be_skipped?
           prev_stage.build! if prev_stage
-          image_build unless empty? && !application.log_verbose?
+          image_build if image_should_be_build?
           raise Exception::IntrospectImage, data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
         end
 
@@ -54,11 +54,15 @@ module Dapp
               prev_stage.image
             else
               Image::Stage.new(name: image_name, from: from_image).tap do |image|
-                image.add_change_label dapp: application.config._basename
+                image.add_service_change_label dapp: application.config._basename
                 yield image if block_given?
               end
             end
           end
+        end
+
+        def image_should_be_build?
+          !empty? || application.log_verbose?
         end
 
         def empty?
@@ -86,15 +90,15 @@ module Dapp
         # rubocop:disable Metrics/AbcSize
         def image_build
           if empty?
-            application.log_state(name, state: application.t(code: 'state.empty'))
+            application.log_state(log_name, state: application.t(code: 'state.empty'))
           elsif image.tagged?
-            application.log_state(name, state: application.t(code: 'state.using_cache'))
+            application.log_state(log_name, state: application.t(code: 'state.using_cache'))
           elsif should_be_not_present?
-            application.log_state(name, state: application.t(code: 'state.not_present'))
+            application.log_state(log_name, state: application.t(code: 'state.not_present'))
           elsif application.dry_run?
-            application.log_state(name, state: application.t(code: 'state.build'), styles: { status: :success })
+            application.log_state(log_name, state: application.t(code: 'state.build'), styles: { status: :success })
           else
-            application.log_process(name, process: application.t(code: 'status.process.building'), short: should_be_not_detailed?) do
+            application.log_process(log_name, process: application.t(code: 'status.process.building'), short: should_not_be_detailed?) do
               image_do_build
             end
           end
@@ -120,7 +124,7 @@ module Dapp
         end
 
         def image_name
-          "#{application.config._basename}-dappstage:#{signature}"
+          "dappstage-#{application.project.name}-#{application.config._basename}:#{signature}"
         end
 
         def from_image

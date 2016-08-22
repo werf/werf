@@ -4,7 +4,7 @@ module Dapp
       # DockerInstructions
       class DockerInstructions < Base
         def initialize(application)
-          @prev_stage = Source5.new(application, self)
+          @prev_stage = GALatestPatch.new(application, self)
           @application = application
         end
 
@@ -18,6 +18,17 @@ module Dapp
               image.public_send("add_change_#{k}", v)
             end
           end
+        end
+
+        def log_image_details
+          super
+          log_image_instructions
+        end
+
+        def log_image_instructions
+          return if (instructions = image.prepare_instructions(image.send(:change_options))).empty?
+          application.log_info application.t(code: 'image.instructions')
+          application.with_log_indent { application.log_info instructions.join("\n") }
         end
 
         private

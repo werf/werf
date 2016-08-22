@@ -7,13 +7,12 @@ module Dapp
 
       def initialize(lock_path, name, **kwargs)
         super(name, **kwargs)
-        @lock_path = lock_path
-        @lock_path.mkpath
+        @lock_path = Pathname.new(lock_path).tap(&:mkpath)
       end
 
       def lock(shared: false)
         return if @file
-        @file = ::File.open(lock_path.join(name), ::File::RDWR | ::File::CREAT, 0644)
+        @file = ::File.open(lock_path.join(name), ::File::RDWR | ::File::CREAT, 0o644)
 
         begin
           mode = (shared ? ::File::LOCK_SH : ::File::LOCK_EX)

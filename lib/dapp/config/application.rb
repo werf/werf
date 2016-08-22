@@ -35,7 +35,7 @@ module Dapp
       end
 
       def builder(type)
-        controller.log_warning(desc: { code: 'excess_builder_instruction', context: 'warning' }) if @_chef.empty? && @_shell.empty?
+        project.log_warning(desc: { code: 'excess_builder_instruction', context: 'warning' }) if @_chef.empty? && @_shell.empty?
         raise Error::Config, code: :builder_type_unsupported, data: { type: type } unless [:chef, :shell].include?((type = type.to_sym))
         another_builder = [:chef, :shell].find { |t| t != type }
         instance_variable_set(:"@_#{another_builder}", Config.const_get(another_builder.capitalize).new)
@@ -101,14 +101,14 @@ module Dapp
 
       protected
 
-      attr_accessor :controller
+      attr_accessor :project
 
       private
 
       # rubocop:disable Metrics/AbcSize
       def clone
         Application.new(self).tap do |app|
-          app.instance_variable_set(:'@controller', controller)
+          app.instance_variable_set(:'@project', project)
           app.instance_variable_set(:'@_builder', _builder)
           app.instance_variable_set(:'@_home_path', _home_path)
           app.instance_variable_set(:'@_basename', _basename)

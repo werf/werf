@@ -6,7 +6,7 @@ module Dapp
         include Mod::Artifact
 
         def initialize(application, next_stage)
-          @prev_stage = Install.new(application, self)
+          @prev_stage = InstallGroup::GAPostInstallPatch.new(application, self)
           super
         end
 

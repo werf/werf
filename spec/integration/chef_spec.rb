@@ -16,9 +16,9 @@ describe Dapp::Builder::Chef do
         TEST_FILE_NAMES.each { |name| expect(send("#{name}_exist?")).to be(true), "#{send("#{name}_path")} does not exist" }
       end
 
-      [%i(infra_install foo pizza batareika),
+      [%i(before_install foo pizza batareika),
        %i(install bar taco koromyslo),
-       %i(infra_setup baz burger kolokolchik),
+       %i(before_setup baz burger kolokolchik),
        %i(setup qux pelmeni taburetka)].each do |stage, project_file, mdapp_test_file, mdapp_test2_file|
         it "rebuilds from stage #{stage}" do
           old_template_file_values = {}
@@ -127,12 +127,12 @@ describe Dapp::Builder::Chef do
   TEST_FILE_NAMES = %i(foo X_foo X_Y_foo bar baz qux
                        burger pizza taco pelmeni
                        kolokolchik koromyslo taburetka batareika
-                       test_infra_install test_install
-                       test_infra_setup test_setup
-                       mdapp_test_infra_install mdapp_test_install
-                       mdapp_test_infra_setup mdapp_test_setup
-                       mdapp_test2_infra_install mdapp_test2_install
-                       mdapp_test2_infra_setup mdapp_test2_setup).freeze
+                       test_before_install test_install
+                       test_before_setup test_setup
+                       mdapp_test_before_install mdapp_test_install
+                       mdapp_test_before_setup mdapp_test_setup
+                       mdapp_test2_before_install mdapp_test2_install
+                       mdapp_test2_before_setup mdapp_test2_setup).freeze
 
   TEST_FILE_NAMES.each do |name|
     define_method("#{name}_path") do

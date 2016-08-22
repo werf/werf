@@ -8,7 +8,7 @@ log SecureRandom.uuid do
   message "node['test']['hello'] = #{node['test']['hello']}"
 end
 
-cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_infra_install.txt" do
+cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_before_install.txt" do
   source 'foo.txt'
   owner 'root'
   group 'root'

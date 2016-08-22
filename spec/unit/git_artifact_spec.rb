@@ -24,21 +24,21 @@ describe Dapp::GitArtifact do
 
   def stub_stages
     @stage_commit = {}
-    [Dapp::Build::Stage::Source1Archive, Dapp::Build::Stage::Source5].each do |stage|
+    [Dapp::Build::Stage::GAArchive, Dapp::Build::Stage::GALatestPatch].each do |stage|
       allow_any_instance_of(stage).to receive(:layer_commit) do
         @stage_commit[stage.name] ||= {}
         @stage_commit[stage.name][@branch] ||= git_latest_commit(branch: @branch)
       end
     end
-    allow_any_instance_of(Dapp::Build::Stage::Source5).to receive(:prev_source_stage) { source_1_archive_stage }
+    allow_any_instance_of(Dapp::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
   end
 
-  def source_1_archive_stage
-    @source_1_archive_stage ||= Dapp::Build::Stage::Source1Archive.new(nil, stubbed_stage)
+  def g_a_archive_stage
+    @g_a_archive_stage ||= Dapp::Build::Stage::GAArchive.new(nil, stubbed_stage)
   end
 
-  def source_5_stage
-    @source_5_stage ||= Dapp::Build::Stage::Source5.new(nil, stubbed_stage)
+  def g_a_latest_patch_stage
+    @g_a_latest_patch_stage ||= Dapp::Build::Stage::GALatestPatch.new(nil, stubbed_stage)
   end
 
   def git_artifact
@@ -82,11 +82,11 @@ describe Dapp::GitArtifact do
   end
 
   def archive_command
-    git_artifact.archive_apply_command(source_1_archive_stage)
+    git_artifact.archive_apply_command(g_a_archive_stage)
   end
 
   def patch_command
-    git_artifact.apply_patch_command(source_5_stage)
+    git_artifact.apply_patch_command(g_a_latest_patch_stage)
   end
 
   def command_apply(command)

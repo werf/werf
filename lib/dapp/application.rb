@@ -9,20 +9,19 @@ module Dapp
     include GitArtifact
     include Path
     include Tags
-    include Lock
 
     attr_reader :config
     attr_reader :cli_options
     attr_reader :ignore_git_fetch
     attr_reader :is_artifact
+    attr_reader :project
 
-    def initialize(config:, cli_options:, ignore_git_fetch: false, is_artifact: false)
+    def initialize(config:, project:, cli_options:, ignore_git_fetch: false, is_artifact: false)
       @config = config
+      @project = project
       @cli_options = cli_options
 
       @tmp_path = Dir.mktmpdir(cli_options[:tmp_dir_prefix] || 'dapp-')
-      @build_path = cli_options[:build_dir] || home_path('.dapps-build')
-      @lock_path = cli_options[:lock_dir] || home_path('.dapps-lock')
 
       @last_stage = Build::Stage::DockerInstructions.new(self)
       @ignore_git_fetch = ignore_git_fetch
@@ -31,7 +30,7 @@ module Dapp
 
     def build!
       with_introspection do
-        lock('images', shared: true) do
+        project.lock("#{config._basename}.images", shared: true) do
           last_stage.build_lock! do
             last_stage.build!
             last_stage.save_in_cache!
@@ -45,16 +44,18 @@ module Dapp
     def export!(repo, format:)
       raise Error::Application, code: :application_not_built unless last_stage.image.tagged? || dry_run?
 
-      lock('images', shared: true) do
+      project.lock("#{config._basename}.images", shared: true) do
         tags.each do |tag|
           image_name = format % { repo: repo, app_name: config._name, tag: tag }
           if dry_run?
             log_state(image_name, state: t(code: 'state.push'), styles: { status: :success })
           else
-            lock("image.#{image_name.gsub('/', '__')}") do
+            project.lock("image.#{image_name.gsub('/', '__')}") do
+              Dapp::Image::Stage.cache_reset(image_name)
               log_process(image_name, process: t(code: 'status.process.pushing')) do
-                last_stage.image.cache_reset
-                last_stage.image.export!(image_name, log_verbose: log_verbose?, log_time: log_time?, force: cli_options[:force])
+                last_stage.image.export!(image_name, log_verbose: log_verbose?,
+                                                     log_time: log_time?,
+                                                     force: cli_options[:force])
               end
             end
           end

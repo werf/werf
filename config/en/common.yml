@@ -3,10 +3,11 @@ en:
     image:
       signature: "signature: %{signature}"
       info:
-        date: "date: %{value}"
+        created_at: "date: %{value}"
         size: "size: %{value} MB"
         difference: "difference: %{value} MB"
       commands: "commands:"
+      instructions: "instructions:"
     process:
       artifact_copy: "copying artifact '%{name}'"
       artifact_building: "building artifact '%{name}'"
@@ -15,7 +16,7 @@ en:
       git_artifact_fetch: "fetching remote git_artifact '%{name}'"
       chefdk_loading: 'loading chefdk'
       berks_vendor: 'berks vendor'
-      waiting_resouce_lock: "waiting for locked resource '%{basename}/%{name}'"
+      waiting_resouce_lock: "waiting for locked resource '%{name}'"
     status:
       process:
         pushing: '[PUSHING]'
@@ -34,3 +35,28 @@ en:
     warning:
       excess_builder_instruction: "WARNING: Excessive use of the 'builder' instruction. Builder type will be automatically determined by the first use of any builder."
       excess_name_instruction: "WARNING: Excessive use of the 'name' instruction. Given name corresponds to default name."
+    group:
+      install_group: 'Install group'
+      setup_group: 'Setup group'
+    stage:
+      from: 'From'
+      before_install: 'Before install'
+      g_a_archive_dependencies: 'Git artifacts dependencies'
+      g_a_archive: 'Git artifacts: create archive'
+      install_group:
+        g_a_pre_install_patch_dependencies: 'Git artifacts dependencies'
+        g_a_pre_install_patch: 'Git artifacts: apply patches (before install)'
+        install: 'Install'
+        g_a_post_install_patch_dependencies: 'Git artifacts dependencies'
+        g_a_post_install_patch: 'Git artifacts: apply patches (after install)'
+      artifact: 'Artifact'
+      before_setup: 'Before setup'
+      setup_group:
+        g_a_pre_setup_patch_dependencies: 'Git artifacts dependencies'
+        g_a_pre_setup_patch: 'Git artifacts: apply patches (before setup)'
+        setup: 'Setup'
+        chef_cookbooks: 'Сhef сookbooks'
+        g_a_post_setup_patch_dependencies: 'Git artifacts dependencies'
+        g_a_post_setup_patch: 'Git artifacts: apply patches (after setup)'
+      g_a_latest_patch: 'Git artifacts: latest patch'
+      docker_instructions: 'Docker instructions'

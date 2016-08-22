@@ -1,12 +1,12 @@
 module Dapp
   module Build
     module Stage
-      # base of source dependencies stages
-      class SourceDependenciesBase < Base
+      # GADependenciesBase
+      class GADependenciesBase < Base
         def image
           super do |image|
             application.git_artifacts.each do |git_artifact|
-              image.add_change_label(git_artifact.full_name.to_sym => git_artifact.latest_commit)
+              image.add_service_change_label(git_artifact.full_name.to_sym => git_artifact.latest_commit)
             end
           end
         end
@@ -22,7 +22,7 @@ module Dapp
             hashsum files
           end
         end
-      end # SourceBase
+      end # GADependenciesBase
     end # Stage
   end # Build
 end # Dapp

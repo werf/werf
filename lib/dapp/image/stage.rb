@@ -9,6 +9,7 @@ module Dapp
         @bash_commands = []
         @options = {}
         @change_options = {}
+        @service_change_options = {}
         @container_name = "#{name[/[[^:].]*/]}.#{SecureRandom.hex(4)}"
         @built_id = built_id
         super(name: name, from: from)
@@ -51,16 +52,12 @@ module Dapp
 
       def run!(log_verbose: false, log_time: false, introspect_error: false, introspect_before_error: false)
         raise Error::Build, code: :built_id_not_defined if from.built_id.nil?
-        shellout!("docker run #{service_options} #{prepared_options} #{from.built_id} -ec '#{prepared_bash_command}'",
+        shellout!("docker run #{prepared_options} #{from.built_id} -ec '#{prepared_bash_command}'",
                   log_verbose: log_verbose, log_time: log_time)
       rescue Error::Shellout => _e
         raise unless introspect_error || introspect_before_error
         built_id = introspect_error ? commit! : from.built_id
         raise Exception::IntrospectImage, data: { built_id: built_id, options: prepared_options, rmi: introspect_error }
-      end
-
-      def service_options
-        "--entrypoint /bin/bash --name=#{container_name}"
       end
 
       def commit!

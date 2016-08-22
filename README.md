@@ -39,7 +39,7 @@
     chef.module 'a', 'b'
   end
   app 'Y' do
-    shell.infra_install 'apt-get install service'
+    shell.before_install 'apt-get install service'
   end
   ```
   * Собирать приложения X-Y и Z с **:chef** сборщиком, а X-V c **:shell**:
@@ -379,30 +379,30 @@ dapp stages flush [options] [APPS PATTERN...]
 | Имя                 | Краткое описание                     															                                        |
 | ------------------- | --------------------------------------------------------------------------------------------------------- |
 | from                | Выбор окружения                                 														                              |
-| infra_install       | Установка софта инфраструктуры                															                              |
-| source_1_archive    | Создание архива                                															                              |
-| source_1            | Наложение патча                              															                                |
+| before_install       | Установка софта инфраструктуры                															                              |
+| git_artifact_archive    | Создание архива                                															                              |
+| git_artifact_pre_install_patch            | Наложение патча                              															                                |
 | install             | Установка софта приложения                    															                              |
 | artifact            | Копирование артефакта(ов)                     															                              |
-| source_2            | Наложение патча                               															                              |
-| infra_setup         | Настройка софта инфраструктуры                															                              |
-| source_3            | Наложение патча                               															                              |
+| git_artifact_post_install_patch            | Наложение патча                               															                              |
+| before_setup         | Настройка софта инфраструктуры                															                              |
+| git_artifact_pre_setup_patch            | Наложение патча                               															                              |
 | chef_cookbooks      | Установка cookbook`ов         																			                                      |
 | setup               | Развёртывание приложения                    															                                |  
-| source_4            | Наложение патча                               															                              |
-| source_5            | Наложение патча                               	                                                          |
+| git_artifact_post_setup_patch            | Наложение патча                               															                              |
+| git_artifact_latest_patch            | Наложение патча                               	                                                          |
 | docker_instructions | Применение докерфайловых инструкций (CMD, ENTRYPOINT, ENV, EXPOSE, LABEL, ONBUILD, USER, VOLUME, WORKDIR) |
 
 #### from
 *TODO*
 
-#### infra_install
+#### before_install
 *TODO*
 
-#### source_1_archive
+#### git_artifact_archive
 *TODO*
 
-#### source_1
+#### git_artifact_pre_install_patch
 *TODO*
 
 #### install
@@ -411,13 +411,13 @@ dapp stages flush [options] [APPS PATTERN...]
 #### artifact
 *TODO*
 
-#### source_2
+#### git_artifact_post_install_patch
 *TODO*
 
-#### infra_setup
+#### before_setup
 *TODO*
 
-#### source_3
+#### git_artifact_pre_setup_patch
 *TODO*
 
 #### chef_cookbooks
@@ -426,10 +426,10 @@ dapp stages flush [options] [APPS PATTERN...]
 #### setup
 *TODO*
 
-#### source_4
+#### git_artifact_post_setup_patch
 *TODO*
 
-#### source_5
+#### git_artifact_latest_patch
 *TODO*
 
 #### docker_instructions

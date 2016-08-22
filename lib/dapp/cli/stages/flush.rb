@@ -17,7 +17,7 @@ Options:
 BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          Controller.new(cli_options: config, patterns: cli_arguments).stages_flush
+          Project.new(cli_options: config, apps_patterns: cli_arguments).stages_flush
         end
       end
     end
