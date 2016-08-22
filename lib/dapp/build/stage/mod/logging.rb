@@ -58,7 +58,7 @@ module Dapp
             image.tagged? && !application.log_verbose? && application.cli_options[:introspect_stage].nil?
           end
 
-          def should_be_not_detailed?
+          def should_not_be_detailed?
             image.send(:bash_commands).empty?
           end
 
