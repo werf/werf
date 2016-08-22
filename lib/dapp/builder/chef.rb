@@ -126,7 +126,7 @@ module Dapp
           application.hashsum [
             application.paths_content_hashsum(paths),
             *paths.map { |p| p.relative_path_from(berksfile.home_path).to_s }.sort,
-            (berksfile_lock_checksum unless application.project.cli_options[:dev]),
+            (berksfile_lock_checksum unless application.cli_options[:dev]),
             *enabled_modules
           ].compact
         end
@@ -166,7 +166,7 @@ module Dapp
           ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
 
           before_vendor_commands = [].tap do |commands|
-            unless application.project.cli_options[:dev]
+            unless application.cli_options[:dev]
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
                  'echo "Berksfile.lock not found" 1>&2 ; ',
@@ -177,7 +177,7 @@ module Dapp
           end
 
           after_vendor_commands = [].tap do |commands|
-            if application.project.cli_options[:dev]
+            if application.cli_options[:dev]
               commands.push(
                 ["install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a Berksfile.lock) ",
                  "Berksfile.lock #{berksfile_lock_path}"].join
@@ -237,7 +237,7 @@ module Dapp
         _cookbooks_vendor_path.tap do |cookbooks_path|
           application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 300) do
             @install_cookbooks ||= begin
-              install_cookbooks unless cookbooks_path.join('.created_at').exist? && !application.project.cli_options[:dev]
+              install_cookbooks unless cookbooks_path.join('.created_at').exist? && !application.cli_options[:dev]
               true
             end
           end
