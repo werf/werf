@@ -5,7 +5,7 @@ module Dapp
       module Mod
         # Group
         module Group
-          def image_build
+          def log_image_build
             log_group_name if group_closed?
             application.with_log_indent { super }
           end

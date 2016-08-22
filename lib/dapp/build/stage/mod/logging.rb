@@ -5,11 +5,23 @@ module Dapp
       module Mod
         # Logging
         module Logging
+          def log_image_build(&image_build)
+            case
+            when empty?                 then log_state(:empty)
+            when image.tagged?          then log_state(:using_cache)
+            when should_be_not_present? then log_state(:not_present)
+            when application.dry_run?   then log_state(:build, styles: { status: :success })
+            else                             log_image_build_process(&image_build)
+            end
+          ensure
+            log_build
+          end
+
           def log_build
             application.with_log_indent do
               application.log_info application.t(code: 'image.signature', data: { signature: image_name })
               log_image_details unless empty?
-            end if application.log? && application.log_verbose?
+            end if application.log? && application.log_verbose? && !should_be_quiet?
           end
 
           def log_image_details
@@ -46,6 +58,17 @@ module Dapp
             application.t(code: name, context: name_context)
           end
 
+          def log_state(state_code, styles: {})
+            application.log_state(log_name, state: application.t(code: state_code, context: 'state'), **styles) unless should_be_quiet?
+          end
+
+          def log_image_build_process
+            return yield if should_be_quiet?
+            application.log_process(log_name, process: application.t(code: 'status.process.building'), short: should_not_be_detailed?) do
+              yield
+            end
+          end
+
           def name_context
             :stage
           end
@@ -64,6 +87,10 @@ module Dapp
 
           def should_be_introspected?
             application.cli_options[:introspect_stage] == name && !application.dry_run? && !application.is_artifact
+          end
+
+          def should_be_quiet?
+            false
           end
         end
       end # Mod

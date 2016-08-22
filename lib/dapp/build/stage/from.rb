@@ -18,7 +18,7 @@ module Dapp
 
         protected
 
-        def image_do_build
+        def image_build
           from_image.pull!(log_time: application.log_time?)
           raise Error::Build, code: :from_image_not_found, data: { name: from_image_name } if from_image.built_id.nil?
           super

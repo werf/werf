@@ -38,7 +38,7 @@ module Dapp
         def build!
           return if should_be_skipped?
           prev_stage.build! if prev_stage
-          image_build if image_should_be_build?
+          log_image_build(&method(:image_build)) if image_should_be_build?
           raise Exception::IntrospectImage, data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
         end
 
@@ -87,27 +87,7 @@ module Dapp
 
         protected
 
-        # rubocop:disable Metrics/AbcSize
         def image_build
-          if empty?
-            application.log_state(log_name, state: application.t(code: 'state.empty'))
-          elsif image.tagged?
-            application.log_state(log_name, state: application.t(code: 'state.using_cache'))
-          elsif should_be_not_present?
-            application.log_state(log_name, state: application.t(code: 'state.not_present'))
-          elsif application.dry_run?
-            application.log_state(log_name, state: application.t(code: 'state.build'), styles: { status: :success })
-          else
-            application.log_process(log_name, process: application.t(code: 'status.process.building'), short: should_not_be_detailed?) do
-              image_do_build
-            end
-          end
-        ensure
-          log_build
-        end
-        # rubocop:enable Metrics/AbcSize
-
-        def image_do_build
           image.build!(log_verbose: application.log_verbose?,
                        log_time: application.log_time?,
                        introspect_error: application.cli_options[:introspect_error],
