@@ -69,5 +69,5 @@ module Dapp
     def stage_dapp_label_format
       '%{application_name}'
     end
-  end # Controller
+  end # Project
 end # Dapp

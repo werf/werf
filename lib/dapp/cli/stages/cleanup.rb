@@ -18,7 +18,7 @@ BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
           repo = self.class.required_argument(self)
-          Controller.new(cli_options: config, patterns: cli_arguments).stages_cleanup(repo)
+          Project.new(cli_options: config, apps_patterns: cli_arguments).stages_cleanup(repo)
         end
       end
     end
