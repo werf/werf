@@ -11,6 +11,7 @@ module Dapp
     include Command::Spush
     include Command::List
     include Command::StagesFlush
+    include Command::StagesCleanup
     include Command::Cleanup
     include Logging::Base
     include Logging::Process
