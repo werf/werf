@@ -3,15 +3,13 @@ module Dapp
   class DockerRegistry
     API_VERSION = 'v2'.freeze
 
-    attr_reader :registry_with_repo
-    attr_reader :registry_url
     attr_reader :repo
+    attr_accessor :hostname
+    attr_accessor :repo_suffix
 
-    def initialize(registry_with_repo)
-      @registry_with_repo = registry_with_repo
-      raise Error::Registry, code: :incorrect_repo if (parts = registry_with_repo.split('/')).one?
-      @registry_url = File.join('http://', parts.shift)
-      @repo = parts.join('/')
+    def initialize(repo)
+      @repo = repo
+      initialize_base
     end
 
     def catalog
@@ -19,19 +17,46 @@ module Dapp
     end
 
     def tags
-      resp_if_success(api_request("#{repo}/tags/list"))['tags']
+      resp_if_success(api_request("#{repo_suffix}/tags/list"))['tags']
     end
 
     def image_id_by_tag(tag)
-      resp = resp_if_success(api_request("#{repo}/manifests/#{tag}", headers: { Accept: 'application/vnd.docker.distribution.manifest.v2+json' }))
+      resp = resp_if_success(api_request("#{repo_suffix}/manifests/#{tag}", headers: { Accept: 'application/vnd.docker.distribution.manifest.v2+json' }))
       resp['config']['digest']
     end
 
-    def exist?
-      catalog['repositories'].include?(repo)
+    def repo_exist?
+      catalog['repositories'].include?(repo_suffix)
     end
 
     protected
+
+    def initialize_base # FIXME
+      expected_hostname, expected_repo_suffix = parse_repo
+      raise Exception::Registry if expected_hostname.nil?
+      expected_hostname_url = "http://#{expected_hostname}"
+      raw_request(expected_hostname_url, expects: [200])
+      self.hostname = expected_hostname_url
+      self.repo_suffix = expected_repo_suffix
+    rescue Excon::Error, Exception::Registry => _e
+      self.hostname = default_hostname
+      self.repo_suffix = File.join(*[expected_hostname, expected_repo_suffix].compact)
+    end
+
+    def parse_repo
+      separator = /[_.]|__|[-]*/
+      alpha_numeric = /[[:alnum:]]*/
+      component = /#{alpha_numeric}[#{separator}#{alpha_numeric}]*/
+      port_number = /[0-9]+/
+      hostcomponent = /[[:alnum:]-]*[[:alnum:]]/
+      hostname = /#{hostcomponent}[\.#{hostcomponent}]*[:#{port_number}]?/
+      /^(#{hostname}\/)?(#{component}[\/#{component}]*)$/.match(repo)
+      [$1, $2]
+    end
+
+    def default_hostname
+      'https://registry-1.docker.io'
+    end
 
     def resp_if_success(resp)
       raise Error::Registry, code: :response_with_error_status unless resp.status == 200
@@ -52,12 +77,12 @@ module Dapp
         rescue Excon::Error => e
           raise Error::Registry, e.net_status
         end
-        Excon.new(api_url, **options)
+        Excon.new(api_url, **default_connection_options.merge(options))
       end
     end
 
     def check_registry
-      check_url(registry_url, :not_found)
+      check_url(hostname, :not_found)
       check_url(api_url, :api_version_not_supported)
     end
 
@@ -70,7 +95,7 @@ module Dapp
     end
 
     def raw_request(url, method: :get, **kwargs)
-      Excon.new(url).request(method: method, **kwargs)
+      Excon.new(url).request(method: method, **default_connection_options, **kwargs)
     end
 
     def authorization_options
@@ -91,16 +116,16 @@ module Dapp
 
     def parse_authenticate_header(header)
       [:realm, :service, :scope].map do |option|
-        /#{option}="(?<#{option}>[[^"].]*)/ =~ header
-        next unless binding.local_variable_defined?(option)
-        [option, binding.local_variable_get(option)]
+        /#{option}="([[^"].]*)/ =~ header
+        next unless $1
+        [option, $1]
       end.compact.to_h
     end
 
     def authorization_auth
       @authorization_auth ||= begin
         auths = auths_section_from_docker_config
-        r = registry_with_repo
+        r = repo
         loop do
           break unless r.include?('/') && !auths.keys.any? { |auth| auth.start_with?(r) }
           r = chomp_name(r)
@@ -120,11 +145,15 @@ module Dapp
     end
 
     def api_url
-      File.join(registry_url, api_uri)
+      File.join(hostname, api_uri)
     end
 
     def api_uri(*uri)
       File.join(API_VERSION, '/', *uri)
+    end
+
+    def default_connection_options
+      { omit_default_port: true }
     end
 
     private

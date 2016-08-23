@@ -24,7 +24,7 @@ module Dapp
         protected
 
         def registry(repo)
-          @registry ||= DockerRegistry.new(repo).tap { |registry| raise Error::Registry, :no_such_app unless registry.exist? }
+          @registry ||= DockerRegistry.new(repo).tap { |registry| raise Error::Registry, code: :no_such_app unless registry.repo_exist? }
         end
 
         def repo_applications(repo)

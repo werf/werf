@@ -31,7 +31,7 @@ module Dapp
       end
 
       def export!(name, log_verbose: false, log_time: false)
-        image = self.class.new(built_id: built_id, name: name)
+        image = self.class.new(name: name, project: project, built_id: built_id)
         image.tag!(log_verbose: log_verbose, log_time: log_time)
         image.push!(log_verbose: log_verbose, log_time: log_time)
         image.untag!

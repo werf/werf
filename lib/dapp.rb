@@ -32,6 +32,9 @@ require 'dapp/error/config'
 require 'dapp/error/project'
 require 'dapp/error/shellout'
 require 'dapp/error/registry'
+require 'dapp/exception/base'
+require 'dapp/exception/introspect_image'
+require 'dapp/exception/registry'
 require 'dapp/lock/error'
 require 'dapp/lock/base'
 require 'dapp/lock/file'
@@ -112,8 +115,6 @@ require 'dapp/git_repo/base'
 require 'dapp/git_repo/own'
 require 'dapp/git_repo/remote'
 require 'dapp/git_artifact'
-require 'dapp/exception/base'
-require 'dapp/exception/introspect_image'
 
 # Dapp
 module Dapp
