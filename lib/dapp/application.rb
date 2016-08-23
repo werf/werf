@@ -5,6 +5,8 @@ module Dapp
     include Path
     include Tags
 
+    include Helper::Sha256
+
     attr_reader :config
     attr_reader :ignore_git_fetch
     attr_reader :is_artifact
@@ -47,8 +49,7 @@ module Dapp
               Dapp::Image::Stage.cache_reset(image_name)
               project.log_process(image_name, process: t(code: 'status.process.pushing')) do
                 last_stage.image.export!(image_name, log_verbose: project.log_verbose?,
-                                                     log_time: project.log_time?,
-                                                     force: project.cli_options[:force])
+                                                     log_time: project.log_time?)
               end
             end
           end

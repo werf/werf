@@ -94,14 +94,14 @@ module Dapp
                        paths = Dir[cookbooks_vendor_path('**/*')].map(&Pathname.method(:new))
 
                        application.hashsum [
-                         application.project.paths_content_hashsum(paths),
+                         application.paths_content_hashsum(paths),
                          *paths.map { |p| p.relative_path_from(cookbooks_vendor_path).to_s }.sort
                        ]
                      else
                        paths = Dir[stage_cookbooks_path(stage, '**/*')].map(&Pathname.method(:new))
 
                        application.hashsum [
-                         application.project.paths_content_hashsum(paths),
+                         application.paths_content_hashsum(paths),
                          *paths.map { |p| p.relative_path_from(stage_cookbooks_path(stage)).to_s }.sort,
                          *enabled_modules,
                          stage == :before_install ? chefdk_image : nil
@@ -131,7 +131,7 @@ module Dapp
           application.hashsum [
             application.paths_content_hashsum(paths),
             *paths.map { |p| p.relative_path_from(berksfile.home_path).to_s }.sort,
-            (berksfile_lock_checksum unless application.cli_options[:dev]),
+            (berksfile_lock_checksum unless application.project.cli_options[:dev]),
             *enabled_modules
           ].compact
         end
@@ -147,9 +147,9 @@ module Dapp
 
       def chefdk_container
         @chefdk_container ||= begin
-          if application.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
-            application.project.log_secondary_process(application.t(code: 'process.chefdk_loading'), short: true) do
-              application.shellout(
+          if application.project.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
+            application.project.log_secondary_process(application.project.t(code: 'process.chefdk_loading'), short: true) do
+              application.project.shellout(
                 ['docker run',
                  '--restart=no',
                  "--name #{chefdk_container_name}",
@@ -166,12 +166,12 @@ module Dapp
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_cookbooks
         volumes_from = chefdk_container
-        application.project.log_secondary_process(application.t(code: 'process.berks_vendor')) do
+        application.project.log_secondary_process(application.project.t(code: 'process.berks_vendor')) do
           ssh_auth_socket_path = nil
           ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
 
           before_vendor_commands = [].tap do |commands|
-            unless application.cli_options[:dev]
+            unless application.project.cli_options[:dev]
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
                  'echo "Berksfile.lock not found" 1>&2 ; ',
@@ -182,7 +182,7 @@ module Dapp
           end
 
           after_vendor_commands = [].tap do |commands|
-            if application.cli_options[:dev]
+            if application.project.cli_options[:dev]
               commands.push(
                 ["install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a Berksfile.lock) ",
                  "Berksfile.lock #{berksfile_lock_path}"].join
@@ -218,7 +218,7 @@ module Dapp
             "install -o #{Process.uid} -g #{Process.gid} --mode 0644 <(date +%s.%N) #{_cookbooks_vendor_path.join('.created_at')}"
           ]
 
-          application.shellout!(
+          application.project.shellout!(
             ['docker run --rm',
              "--volumes-from #{volumes_from}",
              *berksfile.local_cookbooks
@@ -227,8 +227,8 @@ module Dapp
              ("--volume #{ssh_auth_socket_path}:#{ssh_auth_socket_path}" if ssh_auth_socket_path),
              "--volume #{_cookbooks_vendor_path.tap(&:mkpath)}:#{_cookbooks_vendor_path}",
              ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
-             "dappdeps/berksdeps:0.1.0 bash -ec '#{application.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
-            verbose: application.project.log_verbose?
+             "dappdeps/berksdeps:0.1.0 bash -ec '#{application.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
+            log_verbose: application.project.log_verbose?
           )
         end
       end
@@ -242,7 +242,7 @@ module Dapp
         _cookbooks_vendor_path.tap do |cookbooks_path|
           application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 300) do
             @install_cookbooks ||= begin
-              install_cookbooks unless cookbooks_path.join('.created_at').exist? && !application.cli_options[:dev]
+              install_cookbooks unless cookbooks_path.join('.created_at').exist? && !application.project.cli_options[:dev]
               true
             end
           end

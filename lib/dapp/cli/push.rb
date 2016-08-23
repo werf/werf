@@ -51,12 +51,6 @@ BANNER
              description: 'Tag by git commit',
              boolean: true
 
-      option :force,
-             long: '--force',
-             description: 'Override existing image',
-             default: false,
-             boolean: true
-
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         repo = self.class.required_argument(self)
