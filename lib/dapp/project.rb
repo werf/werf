@@ -10,7 +10,7 @@ module Dapp
     include Command::Push
     include Command::Spush
     include Command::List
-    include Command::Stages
+    include Command::StagesFlush
     include Command::Cleanup
     include Logging::Base
     include Logging::Process
