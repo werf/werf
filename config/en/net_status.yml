@@ -8,6 +8,7 @@ en:
       application_not_run: "Application run failed!"
       git_branch_without_name: "Application has specific revision that isn't associated with a branch name!"
       ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
+      cookbooks_stage_checksum_not_caclculated: "Cookbooks checksum not calculated for stage '%{stage}', run build first"
     dappfile:
       incorrect: "Dappfile with '%{error}':\n%{message}"
     build:

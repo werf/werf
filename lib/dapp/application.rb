@@ -42,6 +42,8 @@ module Dapp
     end
 
     def export!(repo, format:)
+      builder.before_application_export
+
       raise Error::Application, code: :application_not_built unless last_stage.image.tagged? || dry_run?
 
       project.lock("#{config._basename}.images", shared: true) do

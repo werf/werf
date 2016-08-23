@@ -8,6 +8,9 @@ module Dapp
         @application = application
       end
 
+      def before_application_export
+      end
+
       def before_install?
         false
       end
