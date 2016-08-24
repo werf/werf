@@ -45,6 +45,13 @@ BANNER
              in: [nil, :from, :before_install, :g_a_archive, :g_a_pre_install_patch, :install, :g_a_post_install_patch,
                   :artifact, :before_setup, :g_a_pre_setup_patch, :chef_cookbooks, :setup, :g_a_post_setup_patch,
                   :g_a_latest_patch, :docker_instructions]
+
+      option :ssh_key,
+             long: '--ssh-key SSH_KEY',
+             description: ['Enable only specified ssh keys ',
+                           '(use system ssh-agent by default)'].join,
+             default: nil,
+             proc: ->(v) { composite_options(:ssh_key) << v }
     end
   end
 end

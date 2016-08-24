@@ -11,6 +11,15 @@ module Dapp
 
       DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.17.3-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
+      def before_application_export
+        super
+
+        %i(before_install install before_setup setup chef_cookbooks).each do |stage|
+          raise ::Dapp::Error::Application, code: :cookbooks_stage_checksum_not_caclculated,
+                                            data: { stage: stage } unless stage_cookbooks_checksum_path(stage).exist?
+        end
+      end
+
       %i(before_install install before_setup setup).each do |stage|
         define_method("#{stage}_checksum") { stage_cookbooks_checksum(stage) }
 
@@ -167,9 +176,6 @@ module Dapp
       def install_cookbooks
         volumes_from = chefdk_container
         application.project.log_secondary_process(application.project.t(code: 'process.berks_vendor')) do
-          ssh_auth_socket_path = nil
-          ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
-
           before_vendor_commands = [].tap do |commands|
             unless application.project.cli_options[:dev]
               commands.push(
@@ -224,9 +230,9 @@ module Dapp
              *berksfile.local_cookbooks
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-             ("--volume #{ssh_auth_socket_path}:#{ssh_auth_socket_path}" if ssh_auth_socket_path),
+             ("--volume #{application.project.ssh_auth_sock}:#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
              "--volume #{_cookbooks_vendor_path.tap(&:mkpath)}:#{_cookbooks_vendor_path}",
-             ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
+             ("--env SSH_AUTH_SOCK=#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
              "dappdeps/berksdeps:0.1.0 bash -ec '#{application.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
             log_verbose: application.project.log_verbose?
           )
@@ -240,9 +246,9 @@ module Dapp
 
       def cookbooks_vendor_path(*path)
         _cookbooks_vendor_path.tap do |cookbooks_path|
-          application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 300) do
+          application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 120) do
             @install_cookbooks ||= begin
-              install_cookbooks unless cookbooks_path.join('.created_at').exist? && !application.project.cli_options[:dev]
+              install_cookbooks unless _cookbooks_vendor_path.join('.created_at').exist? && !application.project.cli_options[:dev]
               true
             end
           end

@@ -16,6 +16,7 @@ module Dapp
     include Logging::Base
     include Logging::Process
 
+    include SshAgent
     include Helper::I18n
     include Helper::Shellout
     include Helper::Paint

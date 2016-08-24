@@ -7,7 +7,7 @@ module Dapp
         build_path.join('locks')
       end
 
-      def lock(name, *args, default_timeout: 60, **kwargs, &blk)
+      def lock(name, *args, default_timeout: 300, **kwargs, &blk)
         timeout = cli_options[:lock_timeout] || default_timeout
 
         ::Dapp::Lock::File.new(
