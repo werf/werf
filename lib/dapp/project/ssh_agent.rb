@@ -43,7 +43,9 @@ module Dapp
           if cli_options[:ssh_key]
             run_ssh_agent.tap do |ssh_auth_sock|
               ENV['SSH_AUTH_SOCK'] = ssh_auth_sock
-              cli_options[:ssh_key].each { |ssh_key| shellout! "ssh-add #{ssh_key}" }
+              cli_options[:ssh_key].each do |ssh_key|
+                shellout! "ssh-add #{ssh_key}", env: {SSH_AUTH_SOCK: ssh_auth_sock}
+              end
             end
           elsif ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
             File.expand_path(ENV['SSH_AUTH_SOCK'])
