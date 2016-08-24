@@ -71,7 +71,7 @@ describe Dapp::Project do
     end
 
     it 'dappfile_not_found', test_construct: true do
-      expect_exception_code(code: :dappfile_not_found) { project(cli_options: { dir: '.dapps' }).send(:build_configs) }
+      expect_exception_code(code: :dappfile_not_found) { project(cli_options: { dir: '..' }).send(:build_configs) }
     end
 
     it 'no_such_app', test_construct: true do

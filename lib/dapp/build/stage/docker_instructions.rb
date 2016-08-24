@@ -27,8 +27,8 @@ module Dapp
 
         def log_image_instructions
           return if (instructions = image.prepare_instructions(image.send(:change_options))).empty?
-          application.log_info application.t(code: 'image.instructions')
-          application.with_log_indent { application.log_info instructions.join("\n") }
+          application.project.log_info application.project.t(code: 'image.instructions')
+          application.project.with_log_indent { application.project.log_info instructions.join("\n") }
         end
 
         private

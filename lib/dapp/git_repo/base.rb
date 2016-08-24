@@ -44,7 +44,7 @@ module Dapp
       protected
 
       def git(command, **kwargs)
-        application.shellout!("git #{command}", **kwargs)
+        application.project.shellout!("git #{command}", **kwargs)
       end
     end
   end

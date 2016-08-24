@@ -18,7 +18,7 @@ module Dapp
         end
 
         def build_lock!
-          return yield if application.dry_run?
+          return yield if application.project.dry_run?
 
           try_lock = lambda do
             next yield unless should_be_tagged?
@@ -48,14 +48,15 @@ module Dapp
         def build!
           return if should_be_skipped?
           prev_stage.build! if prev_stage
-          image_build if image_should_be_build?
+          log_image_build(&method(:image_build)) if image_should_be_build?
           raise Exception::IntrospectImage, data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
         end
 
         def save_in_cache!
           prev_stage.save_in_cache! if prev_stage
           return unless should_be_tagged?
-          image.tag!(log_verbose: application.log_verbose?, log_time: application.log_time?) unless application.dry_run?
+          image.tag!(log_verbose: application.project.log_verbose?,
+                     log_time: application.project.log_time?) unless application.project.dry_run?
         end
 
         def image
@@ -63,7 +64,7 @@ module Dapp
             if empty?
               prev_stage.image
             else
-              Image::Stage.new(name: image_name, from: from_image).tap do |image|
+              Image::Stage.new(name: image_name, from: from_image, project: application.project).tap do |image|
                 image.add_service_change_label dapp: application.stage_dapp_label
                 yield image if block_given?
               end
@@ -72,7 +73,7 @@ module Dapp
         end
 
         def image_should_be_build?
-          !empty? || application.log_verbose?
+          !empty? || application.project.log_verbose?
         end
 
         def empty?
@@ -97,31 +98,11 @@ module Dapp
 
         protected
 
-        # rubocop:disable Metrics/AbcSize
         def image_build
-          if empty?
-            application.log_state(log_name, state: application.t(code: 'state.empty'))
-          elsif image.tagged?
-            application.log_state(log_name, state: application.t(code: 'state.using_cache'))
-          elsif should_be_not_present?
-            application.log_state(log_name, state: application.t(code: 'state.not_present'))
-          elsif application.dry_run?
-            application.log_state(log_name, state: application.t(code: 'state.build'), styles: { status: :success })
-          else
-            application.log_process(log_name, process: application.t(code: 'status.process.building'), short: should_not_be_detailed?) do
-              image_do_build
-            end
-          end
-        ensure
-          log_build
-        end
-        # rubocop:enable Metrics/AbcSize
-
-        def image_do_build
-          image.build!(log_verbose: application.log_verbose?,
-                       log_time: application.log_time?,
-                       introspect_error: application.cli_options[:introspect_error],
-                       introspect_before_error: application.cli_options[:introspect_before_error])
+          image.build!(log_verbose: application.project.log_verbose?,
+                       log_time: application.project.log_time?,
+                       introspect_error: application.project.cli_options[:introspect_error],
+                       introspect_before_error: application.project.cli_options[:introspect_before_error])
         end
 
         def should_be_tagged?

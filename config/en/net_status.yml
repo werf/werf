@@ -15,7 +15,6 @@ en:
       from_image_required: 'Missing from_image!'
       image_already_untagged: "Image `%{name}` already untagged!"
       image_not_exist: "Image `%{name}` not exist!"
-      another_image_already_tagged: 'Image with other id already tagged!'
       built_id_not_defined: '`from.built_id` not defined!'
       from_image_not_found: 'Image `%{name}` not found!'
     project:
@@ -34,6 +33,13 @@ en:
       app_name_incorrect: "Application has incorrect name '%{name}': doesn't match regex '%{reg}'!"
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
+    registry:
+      incorrect_repo: 'Incorrect repository!'
+      no_such_app: 'No such app in registry!'
+      authenticate_type_not_supported: 'Registry authenticate type not supported!'
+      not_found: 'Registry not found!'
+      user_not_authorized: 'User not authorized!'
+      response_with_error_status: 'Response with error status!'
       berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook '%{cookbook}', path: '%{path}')"
     lock:
       timeout: "Could not obtain lock for '%{name}' within %{timeout} seconds"

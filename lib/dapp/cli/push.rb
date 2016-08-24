@@ -15,7 +15,6 @@ Usage:
 
 Options:
 BANNER
-
       option :lock_timeout,
              long: '--lock-timeout TIMEOUT',
              description: 'Redefine resource locking timeout (in seconds)',
@@ -49,12 +48,6 @@ BANNER
       option :tag_commit,
              long: '--tag-commit',
              description: 'Tag by git commit',
-             boolean: true
-
-      option :force,
-             long: '--force',
-             description: 'Override existing image',
-             default: false,
              boolean: true
 
       def run(argv = ARGV)

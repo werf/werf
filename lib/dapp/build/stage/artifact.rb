@@ -16,13 +16,18 @@ module Dapp
 
         def image
           super do |image|
-            artifacts.each { |artifact| apply_artifact(artifact, image) }
+            artifacts_labels = {}
+            artifacts.each do |artifact|
+              apply_artifact(artifact, image)
+              artifacts_labels["dapp-artifact-#{artifact[:name]}".to_sym] = artifact[:app].send(:last_stage).image.built_id
+            end
+            image.add_service_change_label artifacts_labels
           end
         end
 
         protected
 
-        def should_be_not_detailed?
+        def should_not_be_detailed?
           true
         end
 
