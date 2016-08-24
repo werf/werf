@@ -21,7 +21,7 @@ module Dapp
       port_number = /[0-9]+/
       hostcomponent = /[[:alnum:]-]*[[:alnum:]]/
       hostname = /#{hostcomponent}[\.#{hostcomponent}]*[:#{port_number}]?/
-      /^(#{hostname}\/)?(#{component}[\/#{component}]*)$/
+      %r{^(#{hostname}/)?(#{component}[/#{component}]*)$}
     end
 
     def self.hostname_exist?(url)
