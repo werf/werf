@@ -176,9 +176,6 @@ module Dapp
       def install_cookbooks
         volumes_from = chefdk_container
         application.log_secondary_process(application.t(code: 'process.berks_vendor')) do
-          ssh_auth_socket_path = nil
-          ssh_auth_socket_path = Pathname.new(ENV['SSH_AUTH_SOCK']).expand_path if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
-
           before_vendor_commands = [].tap do |commands|
             unless application.cli_options[:dev]
               commands.push(
@@ -233,9 +230,9 @@ module Dapp
              *berksfile.local_cookbooks
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-             ("--volume #{ssh_auth_socket_path}:#{ssh_auth_socket_path}" if ssh_auth_socket_path),
+             ("--volume #{application.project.ssh_auth_sock}:#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
              "--volume #{_cookbooks_vendor_path.tap(&:mkpath)}:#{_cookbooks_vendor_path}",
-             ("--env SSH_AUTH_SOCK=#{ssh_auth_socket_path}" if ssh_auth_socket_path),
+             ("--env SSH_AUTH_SOCK=#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
              "dappdeps/berksdeps:0.1.0 bash -ec '#{application.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
             log_verbose: application.log_verbose?
           )
