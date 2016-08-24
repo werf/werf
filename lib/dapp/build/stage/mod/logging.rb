@@ -54,7 +54,11 @@ module Dapp
           end
 
           def log_name
-            application.project.t(code: name, context: name_context)
+            application.project.t(code: name, context: log_name_context)
+          end
+
+          def log_name_context
+            :stage
           end
 
           def log_state(state_code, styles: {})
@@ -66,10 +70,6 @@ module Dapp
             application.project.log_process(log_name, process: application.project.t(code: 'status.process.building'), short: should_not_be_detailed?) do
               yield
             end
-          end
-
-          def name_context
-            :stage
           end
 
           def ignore_log_commands?
