@@ -6,6 +6,8 @@ module Dapp
       # Build
       module Build
         def build
+          setup_ssh_agent
+
           build_configs.each do |config|
             log_step(config._name)
             with_log_indent do
