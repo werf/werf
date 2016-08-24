@@ -2,6 +2,7 @@ module Dapp
   # DockerRegistry
   module DockerRegistry
     module Mod
+      # Request
       module Request
         def request(url, **options)
           raw_request(url, deep_merge(options, authorization_options(url)))

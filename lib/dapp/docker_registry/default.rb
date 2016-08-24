@@ -1,6 +1,7 @@
 module Dapp
   # DockerRegistry
   module DockerRegistry
+    # Default
     class Default < Base
       DEFAULT_HOSTNAME_URL = 'https://registry.hub.docker.com'.freeze
 
@@ -13,7 +14,7 @@ module Dapp
         super(val)
       end
 
-      def image_id_by_tag(tag)
+      def image_id_by_tag(_tag)
         raise
       end
     end

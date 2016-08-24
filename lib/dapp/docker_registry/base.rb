@@ -1,6 +1,7 @@
 module Dapp
   # DockerRegistry
   module DockerRegistry
+    # Base
     class Base
       include Mod::Request
       include Mod::Authorization

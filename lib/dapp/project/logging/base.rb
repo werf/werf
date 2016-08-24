@@ -3,6 +3,7 @@ module Dapp
   class Project
     # Logging
     module Logging
+      # Base
       module Base
         def log_quiet?
           cli_options[:log_quiet]

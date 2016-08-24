@@ -3,8 +3,8 @@ module Dapp
   module DockerRegistry
     def self.new(repo)
       repo_regex =~ repo
-      expected_hostname = $1
-      expected_repo_suffix = $2
+      expected_hostname = Regexp.last_match(1)
+      expected_repo_suffix = Regexp.last_match(2)
       expected_hostname_url = expected_hostname ? "http://#{expected_hostname}" : nil
 
       if hostname_exist?(expected_hostname_url)

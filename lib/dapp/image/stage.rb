@@ -37,7 +37,7 @@ module Dapp
         image.untag!
       end
 
-      def tag!(log_verbose: false, log_time: false, force: false)
+      def tag!(log_verbose: false, log_time: false)
         project.log_warning(desc: { code: :another_image_already_tagged, context: 'warning' }) if !(existed_id = id).nil? && built_id != existed_id
         shellout!("docker tag #{built_id} #{name}", log_verbose: log_verbose, log_time: log_time)
         cache_reset

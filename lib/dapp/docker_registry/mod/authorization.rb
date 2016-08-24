@@ -2,6 +2,7 @@ module Dapp
   # DockerRegistry
   module DockerRegistry
     module Mod
+      # Authorization
       module Authorization
         def authorization_options(url)
           @authorization_options ||= begin
@@ -27,8 +28,8 @@ module Dapp
         def parse_authenticate_header(header)
           [:realm, :service, :scope].map do |option|
             /#{option}="([[^"].]*)/ =~ header
-            next unless $1
-            [option, $1]
+            next unless Regexp.last_match(1)
+            [option, Regexp.last_match(1)]
           end.compact.to_h
         end
 

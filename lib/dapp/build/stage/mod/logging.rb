@@ -62,12 +62,15 @@ module Dapp
           end
 
           def log_state(state_code, styles: {})
-            application.project.log_state(log_name, state: application.project.t(code: state_code, context: 'state'), styles: styles) unless should_be_quiet?
+            application.project.log_state(log_name,
+                                          state: application.project.t(code: state_code, context: 'state'),
+                                          styles: styles) unless should_be_quiet?
           end
 
           def log_image_build_process
             return yield if should_be_quiet?
-            application.project.log_process(log_name, process: application.project.t(code: 'status.process.building'), short: should_not_be_detailed?) do
+            application.project.log_process(log_name, process: application.project.t(code: 'status.process.building'),
+                                                      short: should_not_be_detailed?) do
               yield
             end
           end
