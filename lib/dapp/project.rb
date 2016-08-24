@@ -3,6 +3,7 @@ module Dapp
   class Project
     include ::Dapp::Application::Logging # FIXME: remove when moved to project
     include Lock
+    include SshAgent
     include Helper::Log
     include Helper::I18n
     include Helper::Shellout
@@ -64,6 +65,8 @@ module Dapp
     end
 
     def build
+      setup_ssh_agent
+
       build_configs.each do |config|
         log_step(config._name)
         with_log_indent do
