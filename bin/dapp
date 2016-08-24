@@ -16,4 +16,7 @@ rescue Dapp::Error::Base, NetStatus::Exception => e
 rescue Interrupt => _e
   $stderr.puts(Dapp::Helper::Paint.paint_string('Interrupted', :warning))
   exit 1
+rescue Errno::EACCES => _e
+  $stderr.puts(Dapp::Helper::Paint.paint_string('Permission denied!', :warning))
+  exit 1
 end

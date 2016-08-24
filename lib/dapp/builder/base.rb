@@ -8,27 +8,30 @@ module Dapp
         @application = application
       end
 
-      def infra_install?
+      def before_application_export
+      end
+
+      def before_install?
         false
       end
 
-      def infra_install(_image)
+      def before_install(_image)
         raise
       end
 
-      def infra_install_checksum
+      def before_install_checksum
         raise
       end
 
-      def infra_setup?
+      def before_setup?
         false
       end
 
-      def infra_setup(_image)
+      def before_setup(_image)
         raise
       end
 
-      def infra_setup_checksum
+      def before_setup_checksum
         raise
       end
 

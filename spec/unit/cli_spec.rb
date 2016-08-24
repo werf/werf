@@ -12,7 +12,7 @@ describe Dapp::CLI do
   RSpec.configure do |c|
     c.before(:example, :stub) do
       allow(class_double(Dapp::Application).as_stubbed_const).to receive(:new) { RecursiveOpenStruct.new }
-      allow_any_instance_of(Dapp::Controller).to receive(:build_configs) { [RecursiveOpenStruct.new(_name: 'project')] }
+      allow_any_instance_of(Dapp::Project).to receive(:build_configs) { [RecursiveOpenStruct.new(_name: 'project')] }
     end
   end
 
@@ -22,7 +22,7 @@ describe Dapp::CLI do
 
   context 'run' do
     before :each do
-      stub_instance(Dapp::Controller) do |instance|
+      stub_instance(Dapp::Project) do |instance|
         allow(instance).to receive(:run)
         @instance = instance
       end
@@ -32,11 +32,11 @@ describe Dapp::CLI do
       expect_parsed_options('run')
     end
 
-    it 'controller args' do
+    it 'project args' do
       expect_parsed_options('run --time', cli_options: { log_time: true })
-      expect_parsed_options('run app*', patterns: ['app*'])
-      expect_parsed_options('run app* --time', cli_options: { log_time: true }, patterns: ['app*'])
-      expect_parsed_options('run --time app*', cli_options: { log_time: true }, patterns: ['app*'])
+      expect_parsed_options('run app*', apps_patterns: ['app*'])
+      expect_parsed_options('run app* --time', cli_options: { log_time: true }, apps_patterns: ['app*'])
+      expect_parsed_options('run --time app*', cli_options: { log_time: true }, apps_patterns: ['app*'])
     end
 
     it 'docker args' do
@@ -48,15 +48,15 @@ describe Dapp::CLI do
     it 'oatmeal' do
       expect_parsed_options('run --quiet *app* -ti --time --rm -- bash rm -rf',
                             cli_options: { log_quiet: true, log_time: true },
-                            patterns: ['*app*'],
+                            apps_patterns: ['*app*'],
                             docker_options: %w(-ti --rm),
                             docker_command: %w(bash rm -rf))
     end
 
-    def expect_parsed_options(cmd, cli_options: {}, patterns: ['*'], docker_options: [], docker_command: [])
+    def expect_parsed_options(cmd, cli_options: {}, apps_patterns: ['*'], docker_options: [], docker_command: [])
       expect { cli(*cmd.split) }.to_not raise_error
       expect(@instance.instance_variable_get(:'@cli_options')).to include(cli_options)
-      expect(@instance.instance_variable_get(:'@patterns')).to eq patterns
+      expect(@instance.instance_variable_get(:'@apps_patterns')).to eq apps_patterns
       expect(@instance).to have_received(:run).with(docker_options, docker_command)
     end
   end

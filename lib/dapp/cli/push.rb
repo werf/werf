@@ -16,9 +16,10 @@ Usage:
 Options:
 BANNER
 
-      option :build_dir,
-             long: '--build-dir PATH',
-             description: 'Directory where build cache stored (DIR/.dapps-build by default)'
+      option :lock_timeout,
+             long: '--lock-timeout TIMEOUT',
+             description: 'Redefine resource locking timeout (in seconds)',
+             proc: ->(v) { v.to_i }
 
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
@@ -59,7 +60,7 @@ BANNER
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         repo = self.class.required_argument(self)
-        Controller.new(cli_options: config, patterns: cli_arguments).public_send(class_to_lowercase, repo)
+        Project.new(cli_options: config, apps_patterns: cli_arguments).public_send(class_to_lowercase, repo)
       end
     end
   end

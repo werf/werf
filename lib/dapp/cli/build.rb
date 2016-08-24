@@ -20,9 +20,10 @@ BANNER
              long: '--tmp-dir-prefix PREFIX',
              description: 'Tmp directory prefix'
 
-      option :build_dir,
-             long: '--build-dir PATH',
-             description: 'Directory where build cache stored (DIR/.dapps-build by default)'
+      option :lock_timeout,
+             long: '--lock-timeout TIMEOUT',
+             description: 'Redefine resource locking timeout (in seconds)',
+             proc: ->(v) { v.to_i }
 
       option :git_artifact_branch,
              long: '--git-artifact-branch BRANCH',
@@ -41,8 +42,16 @@ BANNER
       option :introspect_stage,
              long: '--introspect-stage STAGE',
              proc: proc { |v| v.to_sym },
-             in: [nil, :from, :infra_install, :source_1_archive, :source_1, :install, :artifact, :source_2,
-                  :infra_setup, :source_3, :chef_cookbooks, :setup, :source_4, :source_5, :docker_instructions]
+             in: [nil, :from, :before_install, :g_a_archive, :g_a_pre_install_patch, :install, :g_a_post_install_patch,
+                  :artifact, :before_setup, :g_a_pre_setup_patch, :chef_cookbooks, :setup, :g_a_post_setup_patch,
+                  :g_a_latest_patch, :docker_instructions]
+
+      option :ssh_key,
+             long: '--ssh-key SSH_KEY',
+             description: ['Enable only specified ssh keys ',
+                           '(use system ssh-agent by default)'].join,
+             default: nil,
+             proc: ->(v) { composite_options(:ssh_key) << v }
     end
   end
 end

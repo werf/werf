@@ -9,6 +9,10 @@ module Dapp
              description: 'Change to directory',
              on: :head
 
+      option :build_dir,
+             long: '--build-dir PATH',
+             description: 'Directory where build cache stored (DIR/.dapps-build by default)'
+
       option :log_quiet,
              short: '-q',
              long: '--quiet',
@@ -39,6 +43,11 @@ module Dapp
              default: false,
              boolean: true
 
+      option :dev,
+             long: '--dev',
+             default: false,
+             boolean: true
+
       def initialize
         self.class.options.merge!(Base.options)
         super()
@@ -46,7 +55,7 @@ module Dapp
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        Controller.new(cli_options: config, patterns: cli_arguments).public_send(class_to_lowercase)
+        Project.new(cli_options: config, apps_patterns: cli_arguments).public_send(class_to_lowercase)
       end
     end
   end

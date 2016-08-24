@@ -8,8 +8,9 @@ en:
       application_not_run: "Application run failed!"
       git_branch_without_name: "Application has specific revision that isn't associated with a branch name!"
       ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
+      cookbooks_stage_checksum_not_caclculated: "Cookbooks checksum not calculated for stage '%{stage}', run build first"
     dappfile:
-      incorrect: "Dappfile '%{path}' with '%{error}':\n%{message}"
+      incorrect: "Dappfile with '%{error}':\n%{message}"
     build:
       from_image_required: 'Missing from_image!'
       image_already_untagged: "Image `%{name}` already untagged!"
@@ -17,11 +18,12 @@ en:
       another_image_already_tagged: 'Image with other id already tagged!'
       built_id_not_defined: '`from.built_id` not defined!'
       from_image_not_found: 'Image `%{name}` not found!'
-    controller:
+    project:
       spush_command_unexpected_apps_number: "Command 'spush' can process only one application!"
       run_command_unexpected_apps_number: "Command 'run' can process only one application!"
-      no_such_app: "No such app: '%{patterns}'!"
+      no_such_app: "No such app: '%{apps_patterns}'!"
       dappfile_not_found: "Dappfile not found!"
+      cannot_run_ssh_agent: "Cannot run ssh-agent"
     config:
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
@@ -29,5 +31,9 @@ en:
       artifact_unexpected_attribute: "Artifact doesn't has attribute '%{attr}'!"
       git_artifact_unexpected_attribute: "'%{type}' git artifact doesn't has attribute '%{attr}'!"
       docker_from_incorrect: "`docker.from` has incorrect value `%{name}`: expected format `image_name:tag`!"
+      app_name_incorrect: "Application has incorrect name '%{name}': doesn't match regex '%{reg}'!"
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
+      berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook '%{cookbook}', path: '%{path}')"
+    lock:
+      timeout: "Could not obtain lock for '%{name}' within %{timeout} seconds"

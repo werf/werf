@@ -63,22 +63,27 @@ describe Dapp::Application do
   end
 
   def expect_from_image
-    check_image_command(:source_1_archive, 'tar -x')
+    check_image_command(:g_a_archive, 'tar -x')
   end
 
-  def expect_infra_install_image
-    check_image_command(:infra_install, config[:_shell][:_infra_install].last)
-    check_image_command(:source_1_archive, 'tar -x')
+  def expect_before_install_image
+    check_image_command(:before_install, config[:_shell][:_before_install].last)
+    check_image_command(:g_a_archive, 'tar -x')
   end
 
-  [:install, :infra_setup, :setup].each do |stage_name|
+  def expect_before_setup_image
+    check_image_command(:before_setup, config[:_shell][:_before_setup].last)
+    check_image_command(:g_a_post_install_patch, 'apply')
+  end
+
+  [:install, :setup].each do |stage_name|
     define_method "expect_#{stage_name}_image" do
       check_image_command(stage_name, config[:_shell][:"_#{stage_name}"].last)
       check_image_command(prev_stage(stage_name), 'apply')
     end
   end
 
-  [:source_4, :source_5].each do |stage_name|
+  [:g_a_post_setup_patch, :g_a_latest_patch].each do |stage_name|
     define_method "expect_#{stage_name}_image" do
       check_image_command(stage_name, 'apply')
     end
@@ -88,13 +93,13 @@ describe Dapp::Application do
     config[:_docker][:_from] = :'ubuntu:14.04'
   end
 
-  [:infra_install, :install, :infra_setup, :setup].each do |stage_name|
+  [:before_install, :install, :before_setup, :setup].each do |stage_name|
     define_method :"change_#{stage_name}" do
       config[:_shell][:"_#{stage_name}"] << generate_command
     end
   end
 
-  def change_source_4
+  def change_g_a_post_setup_patch
     file_path = project_path.join('large_file')
     if File.exist? file_path
       FileUtils.rm file_path
@@ -104,7 +109,7 @@ describe Dapp::Application do
     end
   end
 
-  def change_source_5
+  def change_g_a_latest_patch
     git_change_and_commit!
   end
 
@@ -112,17 +117,23 @@ describe Dapp::Application do
     stages_names
   end
 
-  def infra_install_modified_signatures
-    stages_names[stage_index(:infra_install)..-1]
+  def before_install_modified_signatures
+    stages_names[stage_index(:before_install)..-1]
   end
 
-  [:install, :infra_setup, :setup].each do |stage_name|
-    define_method "#{stage_name}_modified_signatures" do
-      stages_names[stage_index(stage_name) - 2..-1]
-    end
+  def install_modified_signatures
+    stages_names[stage_index(:g_a_pre_install_patch_dependencies)..-1]
   end
 
-  [:source_4, :source_5].each do |stage_name|
+  def before_setup_modified_signatures
+    stages_names[stage_index(:g_a_post_install_patch_dependencies)..-1]
+  end
+
+  def setup_modified_signatures
+    stages_names[stage_index(:g_a_pre_setup_patch_dependencies)..-1]
+  end
+
+  [:g_a_post_setup_patch, :g_a_latest_patch].each do |stage_name|
     define_method "#{stage_name}_modified_signatures" do
       stages_names[stage_index(stage_name)..-1]
     end
@@ -132,22 +143,28 @@ describe Dapp::Application do
     []
   end
 
-  def infra_install_saved_signatures
+  def before_install_saved_signatures
     [stages_names.first]
   end
 
-  [:install, :infra_setup, :setup].each do |stage_name|
-    define_method "#{stage_name}_saved_signatures" do
-      stages_names[0..stage_index(stage_name) - 3]
-    end
+  def install_saved_signatures
+    stages_names[0..stage_index(:g_a_archive)]
   end
 
-  def source_4_saved_signatures
-    stages_names[0..stage_index(:source_4) - 2]
+  def before_setup_saved_signatures
+    stages_names[0..stage_index(:install)]
   end
 
-  def source_5_saved_signatures
-    stages_names[0..stage_index(:source_5) - 1]
+  def setup_saved_signatures
+    stages_names[0..stage_index(:before_setup)]
+  end
+
+  def g_a_post_setup_patch_saved_signatures
+    stages_names[0..stage_index(:chef_cookbooks)]
+  end
+
+  def g_a_latest_patch_saved_signatures
+    stages_names[0..stage_index(:g_a_post_setup_patch)]
   end
 
   def build_and_check(stage_name)
@@ -168,56 +185,56 @@ describe Dapp::Application do
     send("#{stage_name}_modified_signatures").each { |s| expect(saved_keys).to_not include s => new_keys[s] }
   end
 
-  def source_5
-    build_and_check(:source_5)
+  def g_a_latest_patch
+    build_and_check(:g_a_latest_patch)
   end
 
-  def source_4
-    build_and_check(:source_4)
-    source_5
+  def g_a_post_setup_patch
+    build_and_check(:g_a_post_setup_patch)
+    g_a_latest_patch
   end
 
   def setup
     build_and_check(:setup)
-    source_5
-    source_4
+    g_a_latest_patch
+    g_a_post_setup_patch
   end
 
-  def infra_setup
-    build_and_check(:infra_setup)
-    source_5
-    source_4
+  def before_setup
+    build_and_check(:before_setup)
+    g_a_latest_patch
+    g_a_post_setup_patch
     setup
   end
 
   def install
     build_and_check(:install)
-    source_5
-    source_4
+    g_a_latest_patch
+    g_a_post_setup_patch
     setup
-    infra_setup
+    before_setup
   end
 
-  def infra_install
-    build_and_check(:infra_install)
-    source_5
-    source_4
+  def before_install
+    build_and_check(:before_install)
+    g_a_latest_patch
+    g_a_post_setup_patch
     setup
-    infra_setup
+    before_setup
     install
   end
 
   def from
     build_and_check(:from)
-    source_5
-    source_4
+    g_a_latest_patch
+    g_a_post_setup_patch
     setup
-    infra_setup
+    before_setup
     install
-    infra_install
+    before_install
   end
 
-  [:source_5, :source_4, :setup, :infra_setup, :install, :infra_install, :from].each do |stage|
+  [:g_a_latest_patch, :g_a_post_setup_patch, :setup, :before_setup, :install, :before_install, :from].each do |stage|
     it "test #{stage}" do
       send(stage)
     end

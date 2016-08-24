@@ -43,14 +43,23 @@ module Dapp
         !!@pulled
       end
 
-      def info
+      def created_at
         raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
-        [cache[:created_at], cache[:size]]
+        cache[:created_at]
+      end
+
+      def size
+        raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
+        cache[:size]
       end
 
       def self.image_config_option(image_id:, option:)
         output = shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
         output == 'null' ? [] : JSON.parse(output)
+      end
+
+      def cache_reset
+        self.class.cache_reset(name)
       end
 
       protected
@@ -59,17 +68,13 @@ module Dapp
         self.class.cache[name.to_s] || {}
       end
 
-      def cache_reset
-        self.class.cache.delete(name)
-        self.class.cache_reset(name)
-      end
-
       class << self
         def cache
           @cache ||= (@cache = {}).tap { cache_reset }
         end
 
         def cache_reset(name = '')
+          cache.delete(name)
           shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' #{name}").stdout.lines.each do |line|
             name, id, created_at, size = line.split(';')
             cache[name] = { id: id, created_at: created_at, size: size }

@@ -9,7 +9,7 @@ describe Dapp::Builder::Shell do
   end
 
   def expect_files
-    image_name = stages[:source_5].send(:image_name)
+    image_name = stages[:g_a_latest_patch].send(:image_name)
     config[:_shell].keys.each do |stage|
       expect { shellout!("docker run --rm #{image_name} bash -lec 'cat /#{stage}'") }.to_not raise_error
     end
