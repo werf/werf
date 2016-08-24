@@ -11,14 +11,24 @@ module Dapp
             log(basename)
             containers_flush(basename)
             apps, stages = project_images(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
-            apps = apps.to_h
-            stages = stages.to_h
-            apps.each do |_, aiid|
-              iid = aiid
-              stages.delete_if { |_, siid| siid == iid } until (iid = image_parent(iid)).empty?
-            end
+            apps, stages = apps.to_h, stages.to_h
+            apps.each { |_, aiid| stages = clear_stages(aiid, stages) }
             run_command(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
           end
+        end
+
+        def clear_stages(image_id, stages)
+          if image_exist?(image_id)
+            image_dapp_artifacts_label(image_id).each { |aiid| clear_stages(aiid, stages) }
+            iid = image_id
+            loop do
+              stages.delete_if { |_, siid| siid == iid }
+              break if (iid = image_parent(iid)).empty?
+            end
+          else
+            stages.delete_if { |_, siid| siid == iid }
+          end
+          stages
         end
 
         protected
@@ -42,6 +52,17 @@ module Dapp
 
         def image_parent(image_id)
           shellout!(%(docker inspect -f {{.Parent}} #{image_id})).stdout.strip
+        end
+
+        def image_dapp_artifacts_label(image_id)
+          Image::Docker.image_config_option(image_id: image_id, option: 'labels').select { |k, _v| k.start_with?('dapp-artifact') }.values
+        end
+
+        def image_exist?(image_id)
+          shellout!(%(docker inspect #{image_id}))
+          true
+        rescue Error::Shellout
+          false
         end
       end
     end

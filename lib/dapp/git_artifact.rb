@@ -55,7 +55,7 @@ module Dapp
     end
 
     def paramshash
-      Digest::SHA256.hexdigest [cwd, paths, owner, group].map(&:to_s).join(':::')
+      Digest::SHA256.hexdigest [where_to_add, cwd, paths, owner, group].map(&:to_s).join(':::')
     end
 
     def paths(with_cwd = false)
