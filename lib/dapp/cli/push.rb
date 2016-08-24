@@ -15,7 +15,6 @@ Usage:
 
 Options:
 BANNER
-
       option :lock_timeout,
              long: '--lock-timeout TIMEOUT',
              description: 'Redefine resource locking timeout (in seconds)',

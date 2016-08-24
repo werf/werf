@@ -7,6 +7,7 @@ module Dapp
     include Command::Common
     include Command::Run
     include Command::Build
+    include Command::Bp
     include Command::Push
     include Command::Spush
     include Command::List
