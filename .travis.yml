@@ -19,7 +19,7 @@ before_script:
 - sudo service docker restart
 - sudo --version
 script:
-- sudo -E su --preserve-environment -lc 'bundle exec rake spec'
+- sudo -E su --preserve-environment -lc 'bundle exec rake spec SPEC_OPTS="--format documentation"'
 
 deploy:
   provider: rubygems
