@@ -92,7 +92,7 @@ module Dapp
     end
 
     def diff_command(from, to, quiet: false)
-      "diff #{'--quiet' if quiet} #{from}..#{to} #{"--relative=#{cwd}" if cwd} -- #{paths(true)}"
+      "diff --binary --full-index #{'--quiet' if quiet} #{from}..#{to} #{"--relative=#{cwd}" if cwd} -- #{paths(true)}"
     end
   end
 end
