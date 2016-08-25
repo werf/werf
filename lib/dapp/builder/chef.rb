@@ -208,13 +208,13 @@ module Dapp
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_stage_cookbooks(stage)
-        common_paths = proc do |cookbook_path|
-          [['metadata.json', 'metadata.json'],
-           ['attributes/common', 'attributes'],
-           ["attributes/#{stage}", 'attributes'],
-           ["files/#{stage}", 'files/default'],
-           ["templates/#{stage}", 'templates/default']].select { |from, _| cookbook_path.join(from).exist? }
+        select_existing_paths = ->(cookbook_path, paths) do
+          paths.select { |from, _| cookbook_path.join(from).exist? }
         end
+
+        common_paths = [['metadata.json', 'metadata.json'],
+                        ["files/#{stage}", 'files/default'],
+                        ["templates/#{stage}", 'templates/default']]
 
         install_paths = Dir[cookbooks_vendor_path('*')]
                         .map(&Pathname.method(:new))
@@ -230,18 +230,30 @@ module Dapp
                                    .map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
                                    .select { |from, _| cookbook_path.join(from).exist? }
 
+                    common_project_paths = select_existing_paths.call(
+                      cookbook_path, [*common_paths,
+                                      ['attributes/common', 'attributes'],
+                                      ["attributes/#{stage}", 'attributes']]
+                    )
+
                     if recipe_paths.any?
-                      [*recipe_paths, *common_paths[cookbook_path]]
+                      [*recipe_paths, *common_project_paths]
                     else
-                      [nil, *common_paths[cookbook_path]]
+                      [nil, *common_project_paths]
                     end
                   elsif is_mdapp && mdapp_enabled
                     recipe_path = "recipes/#{stage}.rb"
 
+                    common_mdapp_paths = select_existing_paths.call(
+                      cookbook_path, [*common_paths,
+                                      ['attributes/common.rb', 'attributes/common.rb'],
+                                      ["attributes/#{stage}.rb", "attributes/#{stage}.rb"]]
+                    )
+
                     if cookbook_path.join(recipe_path).exist?
-                      [[recipe_path, recipe_path], *common_paths[cookbook_path]]
+                      [[recipe_path, recipe_path], *common_mdapp_paths]
                     else
-                      [nil, *common_paths[cookbook_path]]
+                      [nil, *common_mdapp_paths]
                     end
                   else
                     [['.', '.']]
@@ -252,7 +264,7 @@ module Dapp
 
         _stage_cookbooks_path(stage).mkpath
         install_paths.each do |cookbook_path, paths|
-          cookbook = cookbook_path.basename
+          cookbook = cookbook_path.basename.to_s
 
           paths.each do |from, to|
             if from.nil?
