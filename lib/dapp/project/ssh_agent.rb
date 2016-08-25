@@ -44,8 +44,8 @@ module Dapp
         end # sock_path
       end
 
-      def add_ssh_key(ssh_key_path, **kwargs)
-        shellout! "ssh-add #{ssh_key_path}", env: {SSH_AUTH_SOCK: ssh_auth_sock(**kwargs)}
+      def add_ssh_key(ssh_key_path)
+        shellout! "ssh-add #{ssh_key_path}", env: {SSH_AUTH_SOCK: ssh_auth_sock(force_run_agent: true)}
       end
 
       def ssh_auth_sock(force_run_agent: false)
@@ -53,7 +53,7 @@ module Dapp
           system_ssh_auth_sock = nil
           system_ssh_auth_sock = File.expand_path(ENV['SSH_AUTH_SOCK']) if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
 
-          if force_run_agent || !system_ssh_auth_sock
+          if force_run_agent
             run_ssh_agent.tap { |ssh_auth_sock| ENV['SSH_AUTH_SOCK'] = ssh_auth_sock }
           else
             system_ssh_auth_sock
@@ -69,7 +69,7 @@ module Dapp
                                         data: { path: ssh_key } unless File.exist? ssh_key
 
           File.chmod 0600, ssh_key
-          add_ssh_key ssh_key, force_run_agent: true
+          add_ssh_key ssh_key
         end
       end
     end # SshAgent
