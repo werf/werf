@@ -12,7 +12,7 @@ module Dapp
 
       def lock(shared: false)
         return if @file
-        @file = ::File.open(lock_path.join(name), ::File::RDWR | ::File::CREAT, 0o644)
+        @file = ::File.open(lock_path.join(name), ::File::RDWR | ::File::CREAT, 0644)
 
         begin
           mode = (shared ? ::File::LOCK_SH : ::File::LOCK_EX)
@@ -24,6 +24,7 @@ module Dapp
       end
 
       def unlock
+        @file.flock(::File::LOCK_UN)
         @file.close
         @file = nil
       end
