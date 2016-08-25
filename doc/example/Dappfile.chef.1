@@ -63,9 +63,7 @@ end
 chef.reset_all # == chef.reset_modules + chef.reset_recipes
 
 app 'hello' do
-  git_artifact.remote 'git@github.com:my/app.git', '/hello',
-    branch: '0.9',
-    ssh_key_path: 'config/ssh/hello-id-rsa'
+  git_artifact.remote 'git@github.com:my/app.git', '/hello', branch: '0.9',
 
   chef.module 'mdapp-my-app'
   chef.recipe 'hello'

@@ -62,12 +62,6 @@ describe Dapp::GitRepo do
     dapp_remote_cleanup
   end
 
-  it 'Remote#ssh', test_construct: true do
-    shellout 'ssh-keygen -b 1024 -f key -P ""'
-    dapp_remote_init ssh_key_path: 'key'
-    dapp_remote_cleanup
-  end
-
   it 'Remote#fetch', test_construct: true do
     dapp_remote_init
     remote_commit!('Some another text')

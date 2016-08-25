@@ -3,6 +3,12 @@ module Dapp
   class Project
     # SshAgent
     module SshAgent
+      class << self
+        def included(_base)
+          ::Dapp::Helper::Shellout.default_env_keys << 'SSH_AUTH_SOCK'
+        end
+      end # << self
+
       def run_ssh_agent
         sock_name = "dapp-ssh-#{SecureRandom.uuid}"
 
@@ -38,23 +44,33 @@ module Dapp
         end # sock_path
       end
 
-      def ssh_auth_sock
+      def add_ssh_key(ssh_key_path, **kwargs)
+        shellout! "ssh-add #{ssh_key_path}", env: {SSH_AUTH_SOCK: ssh_auth_sock(**kwargs)}
+      end
+
+      def ssh_auth_sock(force_run_agent: false)
         @ssh_auth_sock ||= begin
-          if cli_options[:ssh_key]
-            run_ssh_agent.tap do |ssh_auth_sock|
-              ENV['SSH_AUTH_SOCK'] = ssh_auth_sock
-              cli_options[:ssh_key].each do |ssh_key|
-                shellout! "ssh-add #{ssh_key}", env: {SSH_AUTH_SOCK: ssh_auth_sock}
-              end
-            end
-          elsif ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
-            File.expand_path(ENV['SSH_AUTH_SOCK'])
+          system_ssh_auth_sock = nil
+          system_ssh_auth_sock = File.expand_path(ENV['SSH_AUTH_SOCK']) if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
+
+          if force_run_agent || !system_ssh_auth_sock
+            run_ssh_agent.tap { |ssh_auth_sock| ENV['SSH_AUTH_SOCK'] = ssh_auth_sock }
+          else
+            system_ssh_auth_sock
           end
         end
       end
 
       def setup_ssh_agent
-        ssh_auth_sock
+        return unless cli_options[:ssh_key]
+
+        cli_options[:ssh_key].each do |ssh_key|
+          raise ::Dapp::Error::Project, code: :ssh_key_not_found,
+                                        data: { path: ssh_key } unless File.exist? ssh_key
+
+          File.chmod 0600, ssh_key
+          add_ssh_key ssh_key, force_run_agent: true
+        end
       end
     end # SshAgent
   end # Project

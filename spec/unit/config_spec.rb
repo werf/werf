@@ -335,7 +335,7 @@ describe Dapp::Config::Main do
   end
 
   context 'git_artifact' do
-    remote_attributes = artifact_attributes + [:branch, :ssh_key_path]
+    remote_attributes = artifact_attributes + [:branch]
     dappfile_remote_options = remote_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')
 
     it 'remote' do
