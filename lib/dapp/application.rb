@@ -9,10 +9,11 @@ module Dapp
 
     attr_reader :config
     attr_reader :ignore_git_fetch
+    attr_reader :should_be_built
     attr_reader :is_artifact
     attr_reader :project
 
-    def initialize(config:, project:, ignore_git_fetch: false, is_artifact: false)
+    def initialize(config:, project:, should_be_built: false, ignore_git_fetch: false, is_artifact: false)
       @config = config
       @project = project
 
@@ -20,10 +21,13 @@ module Dapp
 
       @last_stage = Build::Stage::DockerInstructions.new(self)
       @ignore_git_fetch = ignore_git_fetch
+      @should_be_built = should_be_built
       @is_artifact = is_artifact
     end
 
     def build!
+      raise Error::Application, code: :application_not_built if should_be_built && !last_stage.image.tagged?
+
       with_introspection do
         project.lock("#{config._basename}.images", shared: true) do
           last_stage.build_lock! do
@@ -82,7 +86,7 @@ module Dapp
     end
 
     def artifact(config)
-      self.class.new(config: config, project: project, ignore_git_fetch: ignore_git_fetch, is_artifact: true)
+      self.class.new(config: config, project: project, ignore_git_fetch: ignore_git_fetch, is_artifact: true, should_be_built: should_be_built)
     end
 
     def builder
