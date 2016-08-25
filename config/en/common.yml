@@ -36,6 +36,7 @@ en:
       excess_builder_instruction: "WARNING: Excessive use of the 'builder' instruction. Builder type will be automatically determined by the first use of any builder."
       excess_name_instruction: "WARNING: Excessive use of the 'name' instruction. Given name corresponds to default name."
       another_image_already_tagged: 'WARNING: image with other id already exist.'
+      tag_ignored: "WARNING: tag '%{tag}' ignored."
     group:
       install_group: 'Install group'
       setup_group: 'Setup group'

@@ -31,8 +31,10 @@ module Dapp
           hash1.merge(hash2) do |_, v1, v2|
             if v1.is_a?(Hash) && v2.is_a?(Hash)
               v1.merge(v2)
-            else
+            elsif v1.is_a?(Array) || v2.is_a?(Array)
               [v1, v2].flatten
+            else
+              v2
             end
           end
         end

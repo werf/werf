@@ -27,8 +27,8 @@ module Dapp
         end
 
         def run_command(cmd)
-          if @cli_options[:dry_run] # FIXME
-            puts cmd
+          if dry_run?
+            log(cmd)
           else
             shellout!(cmd)
           end

@@ -1,5 +1,3 @@
-require 'mixlib/cli'
-
 module Dapp
   class CLI
     # Cleanup subcommand

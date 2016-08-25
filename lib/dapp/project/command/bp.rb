@@ -8,7 +8,7 @@ module Dapp
         def bp(repo)
           bp_step(:build)
           bp_step(:push, repo)
-          bp_step(:stages_cleanup, repo)
+          bp_step(:stages_cleanup_local, repo)
           bp_step(:cleanup)
         end
 
