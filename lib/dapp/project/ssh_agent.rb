@@ -3,6 +3,12 @@ module Dapp
   class Project
     # SshAgent
     module SshAgent
+      class << self
+        def included(_base)
+          ::Dapp::Helper::Shellout.default_env_keys << 'SSH_AUTH_SOCK'
+        end
+      end # << self
+
       def run_ssh_agent
         sock_name = "dapp-ssh-#{SecureRandom.uuid}"
 
@@ -59,6 +65,10 @@ module Dapp
         return unless cli_options[:ssh_key]
 
         cli_options[:ssh_key].each do |ssh_key|
+          raise ::Dapp::Error::Project, code: :ssh_key_not_found,
+                                        data: { path: ssh_key } unless File.exist? ssh_key
+
+          File.chmod 0600, ssh_key
           add_ssh_key ssh_key, force_run_agent: true
         end
       end

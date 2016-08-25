@@ -33,13 +33,12 @@ module Dapp
 
       # Remote
       class Remote < Local
-        attr_accessor :_url, :_name, :_branch, :_ssh_key_path
+        attr_accessor :_url, :_name, :_branch
 
         def initialize(url, where_to_add, **options)
           @_url          = url
           @_name         = url.gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
           @_branch       = options.delete(:branch)
-          @_ssg_key_path = options.delete(:ssg_key_path)
           super(where_to_add, **options)
         end
 
