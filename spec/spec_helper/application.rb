@@ -25,9 +25,12 @@ module SpecHelper
 
     def project
       @project ||= begin
-        allow_any_instance_of(Dapp::Project).to receive(:dappfiles) { ['test_project/.dapps/test_dapp/Dappfile'] }
+        allow_any_instance_of(Dapp::Project).to receive(:dappfiles) { [File.join(project_path || Dir.mktmpdir, 'Dappfile')] }
         Dapp::Project.new(cli_options: cli_options)
       end
+    end
+
+    def project_path
     end
 
     def openstruct_config
