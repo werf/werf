@@ -28,7 +28,7 @@ module Dapp
 
       def image_id_by_tag(tag)
         response = api_request(repo_suffix, "/manifests/#{tag}", headers: { Accept: 'application/vnd.docker.distribution.manifest.v2+json' })
-        response['config']['digest']
+        response['config']['digest'] if response['schemaVersion'] == 2
       end
 
       protected

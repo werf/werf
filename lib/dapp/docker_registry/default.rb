@@ -13,10 +13,6 @@ module Dapp
         val = "library/#{val}" if val.split('/').one?
         super(val)
       end
-
-      def image_id_by_tag(_tag)
-        raise
-      end
     end
   end
 end # Dapp
