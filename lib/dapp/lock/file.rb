@@ -21,13 +21,23 @@ module Dapp
           raise Dapp::Lock::Error::Timeout, code: :timeout,
                                             data: { name: name, timeout: timeout }
         end
+
+        self.class.counter += 1
       end
 
       def unlock
-        @file.flock(::File::LOCK_UN)
         @file.close
         @file = nil
+        self.class.counter -= 1
       end
+
+      class << self
+        attr_writer :counter
+
+        def counter
+          @counter ||= 0
+        end
+      end # << self
     end # File
   end # Lock
 end # Dapp
