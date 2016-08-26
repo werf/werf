@@ -25,7 +25,7 @@ module Dapp
             [format.call(applications), format.call(stages)]
           end
 
-          def image_delete(registry, image_tag)
+          def repo_image_delete(registry, image_tag)
             if dry_run?
               log(image_tag)
             else

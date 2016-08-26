@@ -29,7 +29,7 @@ module Dapp
                 break if (iid = image_parent(iid)).empty?
               end
             else
-              stages.delete_if { |_, siid| siid == iid }
+              stages.delete_if { |_, siid| siid == image_id }
             end
           end
 
