@@ -2,7 +2,7 @@ module Dapp
   class CLI
     # CLI stages subcommand
     class Stages < CLI
-      SUBCOMMANDS = ['flush local', 'flush repo', 'cleanup local', 'cleanup repo'].freeze
+      SUBCOMMANDS = ['flush local', 'flush repo', 'cleanup local', 'cleanup repo', 'push'].freeze
 
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
@@ -13,6 +13,7 @@ dapp stages cleanup local
 dapp stages cleanup repo
 dapp stages flush local
 dapp stages flush repo
+dapp stages push
 
 Options:
 BANNER

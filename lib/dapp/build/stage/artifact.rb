@@ -25,6 +25,10 @@ module Dapp
           end
         end
 
+        def images
+          [image].concat(artifacts.map { |artifact| artifact[:app].images }.flatten)
+        end
+
         protected
 
         def should_not_be_detailed?

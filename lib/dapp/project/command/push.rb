@@ -6,6 +6,10 @@ module Dapp
       # Push
       module Push
         def push(repo)
+          if with_stages?
+            log_step('stages')
+            with_log_indent { stages_push(repo) }
+          end
           build_configs.each do |config|
             log_step(config._name)
             with_log_indent do
@@ -14,6 +18,10 @@ module Dapp
               end
             end
           end
+        end
+
+        def with_stages?
+          !!cli_options[:with_stages]
         end
       end
     end

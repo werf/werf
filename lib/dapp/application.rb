@@ -23,11 +23,11 @@ module Dapp
       @ignore_git_fetch = ignore_git_fetch
       @should_be_built = should_be_built
       @is_artifact = is_artifact
+
+      raise Error::Application, code: :application_not_built if should_be_built?
     end
 
     def build!
-      raise Error::Application, code: :application_not_built if should_be_built && !last_stage.image.tagged?
-
       with_introspection do
         project.lock("#{config._basename}.images", shared: true) do
           last_stage.build_lock! do
@@ -43,21 +43,33 @@ module Dapp
     def export!(repo, format:)
       builder.before_application_export
 
-      raise Error::Application, code: :application_not_built unless last_stage.image.tagged? || project.dry_run?
-
       project.lock("#{config._basename}.images", shared: true) do
         tags.each do |tag|
           image_name = format % { repo: repo, application_name: config._name, tag: tag }
-          if project.dry_run?
-            project.log_state(image_name, state: project.t(code: 'state.push'), styles: { status: :success })
-          else
-            project.lock("image.#{image_name.gsub('/', '__')}") do
-              Dapp::Image::Stage.cache_reset(image_name)
-              project.log_process(image_name, process: project.t(code: 'status.process.pushing')) do
-                last_stage.image.export!(image_name, log_verbose: project.log_verbose?,
-                                                     log_time: project.log_time?)
-              end
-            end
+          export_base!(last_stage.image, image_name)
+        end
+      end
+    end
+
+    def export_stages!(repo, format:)
+      builder.before_application_export
+
+      project.lock("#{config._basename}.images", shared: true) do
+        images.each do |image|
+          image_name = format % { repo: repo, signature: image.name.split(':').last }
+          export_base!(image, image_name)
+        end
+      end
+    end
+
+    def export_base!(image, image_name)
+      if project.dry_run?
+        project.log_state(image_name, state: project.t(code: 'state.push'), styles: { status: :success })
+      else
+        project.lock("image.#{image_name.gsub('/', '__')}") do
+          Dapp::Image::Stage.cache_reset(image_name)
+          project.log_process(image_name, process: project.t(code: 'status.process.pushing')) do
+            image.export!(image_name, log_verbose: project.log_verbose?, log_time: project.log_time?)
           end
         end
       end
@@ -91,6 +103,24 @@ module Dapp
 
     def builder
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
+    end
+
+    def images
+      (@images ||= []).tap do |images|
+        stage = last_stage
+        loop do
+          if stage.respond_to?(:images)
+            images.concat(stage.images)
+          else
+            images << stage.image if stage.image.tagged?
+          end
+          break if (stage = stage.prev_stage).nil?
+        end
+      end.uniq { |image| image.name }
+    end
+
+    def should_be_built?
+      should_be_built && !last_stage.image.tagged?
     end
 
     protected

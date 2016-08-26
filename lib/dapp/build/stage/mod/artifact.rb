@@ -9,12 +9,13 @@ module Dapp
             @artifacts ||= begin
               application.config._artifact.map do |artifact|
                 process = application.project.t(code: 'process.artifact_building', data: { name: artifact._config._name })
+                app = application.artifact(artifact._config)
                 application.project.log_secondary_process(process, short: !application.project.log_verbose?) do
                   application.project.with_log_indent do
                     {
                       name: artifact._config._name,
                       options: artifact._artifact_options,
-                      app: application.artifact(artifact._config).tap(&:build!)
+                      app: app.tap(&:build!)
                     }
                   end
                 end
