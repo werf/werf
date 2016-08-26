@@ -10,6 +10,8 @@ module Dapp
       end # << self
 
       def run_ssh_agent
+        raise "Cannot fork dapp process: there are active file locks" unless ::Dapp::Lock::File.counter == 0
+
         sock_name = "dapp-ssh-#{SecureRandom.uuid}"
 
         "/tmp/#{sock_name}".tap do |sock_path|
