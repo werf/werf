@@ -77,8 +77,12 @@ module Dapp
 
     def import_stages!(repo, format:)
       import_images.each do |image|
-        image_name = format % { repo: repo, signature: image.name.split(':').last }
-        import_base!(image, image_name)
+        begin
+        . image_name = format % { repo: repo, signature: image.name.split(':').last }
+      .   import_base!(image, image_name)
+        rescue Error::Shelout
+          next
+      . end
         break unless project.pull_all_stages?
       end
     end
@@ -87,15 +91,11 @@ module Dapp
       if project.dry_run?
         project.log_state(image_name, state: project.t(code: 'state.pull'), styles: { status: :success })
       else
-        begin
-          project.log_process(image_name,
-                              process: project.t(code: 'status.process.pulling'),
-                              status: { failed: project.t(code: 'status.failed.not_pulled') },
-                              style: { failed: :secondary }) do
+      . project.log_process(image_name,
+                            process: project.t(code: 'status.process.pulling'),
+                            status: { failed: project.t(code: 'status.failed.not_pulled') },
+                          . style: { failed: :secondary }) do
             image.import!(image_name, log_verbose: project.log_verbose?, log_time: project.log_time?)
-          end
-        rescue Error::Shellout
-          next
         end
       end
     end
