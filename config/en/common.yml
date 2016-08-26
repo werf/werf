@@ -20,11 +20,13 @@ en:
     status:
       process:
         pushing: '[PUSHING]'
+        pulling: '[PULLING]'
         building: '[BUILDING]'
         default: '[RUNNING]'
       success:
         default: '[OK]'
       failed:
+        not_pulled: '[NOT PULLED]'
         default: '[FAILED]'
     state:
       using_cache: '[USING CACHE]'
@@ -32,6 +34,7 @@ en:
       build: '[BUILD]'
       empty: '[EMPTY]'
       push: '[PUSH]'
+      pull: '[PULL]'
     warning:
       excess_builder_instruction: "WARNING: Excessive use of the 'builder' instruction. Builder type will be automatically determined by the first use of any builder."
       excess_name_instruction: "WARNING: Excessive use of the 'name' instruction. Given name corresponds to default name."

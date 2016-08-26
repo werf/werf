@@ -20,10 +20,10 @@ module Dapp
 
             @ssh_agent_pid = nil
 
-            Signal.trap('INT') {  }
+            Signal.trap('INT') {}
             Signal.trap('TERM') { Process.kill('TERM', @ssh_agent_pid) if @ssh_agent_pid }
 
-            @ssh_agent_pid =  Process.fork do
+            @ssh_agent_pid = Process.fork do
               STDOUT.reopen '/dev/null', 'a'
               STDERR.reopen '/dev/null', 'a'
               exec 'ssh-agent', '-d', '-a', sock_path
@@ -34,9 +34,7 @@ module Dapp
 
           begin
             ::Timeout.timeout(10) do
-              until File.exist? sock_path
-                sleep 0.001
-              end
+              sleep 0.001 until File.exist? sock_path
             end
           rescue ::Timeout::Error
             raise ::Dapp::Error::Project, code: :cannot_run_ssh_agent
@@ -45,7 +43,7 @@ module Dapp
       end
 
       def add_ssh_key(ssh_key_path)
-        shellout! "ssh-add #{ssh_key_path}", env: {SSH_AUTH_SOCK: ssh_auth_sock(force_run_agent: true)}
+        shellout! "ssh-add #{ssh_key_path}", env: { SSH_AUTH_SOCK: ssh_auth_sock(force_run_agent: true) }
       end
 
       def ssh_auth_sock(force_run_agent: false)
@@ -68,7 +66,7 @@ module Dapp
           raise ::Dapp::Error::Project, code: :ssh_key_not_found,
                                         data: { path: ssh_key } unless File.exist? ssh_key
 
-          File.chmod 0600, ssh_key
+          File.chmod 0o600, ssh_key
           add_ssh_key ssh_key
         end
       end

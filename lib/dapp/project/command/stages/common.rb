@@ -4,6 +4,7 @@ module Dapp
     # Command
     module Command
       module Stages
+        # Common
         module Common
           protected
 
@@ -12,7 +13,7 @@ module Dapp
           end
 
           def repo_images(registry)
-            format = ->(arr) do
+            format = lambda do |arr|
               arr.map do |tag|
                 if (id = registry.image_id(tag)).nil?
                   log_warning(desc: { code: 'tag_ignored', context: 'warning', data: { tag: tag } })

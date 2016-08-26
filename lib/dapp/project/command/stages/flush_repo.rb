@@ -4,6 +4,7 @@ module Dapp
     # Command
     module Command
       module Stages
+        # FlushRepo
         module FlushRepo
           def stages_flush_repo(repo)
             log_step(repo)

@@ -4,6 +4,7 @@ module Dapp
     # Command
     module Command
       module Stages
+        # CleanupLocal
         module CleanupLocal
           def stages_cleanup_local(repo)
             registry = registry(repo)
@@ -13,7 +14,8 @@ module Dapp
               with_log_indent do
                 containers_flush(basename)
                 apps, stages = project_images(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
-                apps, stages = apps.to_h, stages.to_h
+                apps = apps.to_h
+                stages = stages.to_h
                 apps.each { |_, aiid| clear_stages(aiid, stages) }
                 run_command(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
               end

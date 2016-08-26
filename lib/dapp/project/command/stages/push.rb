@@ -4,6 +4,7 @@ module Dapp
     # Command
     module Command
       module Stages
+        # Push
         module Push
           def stages_push(repo)
             build_configs.each do |config|

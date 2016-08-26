@@ -55,7 +55,7 @@ module Dapp
       builder.before_application_export
 
       project.lock("#{config._basename}.images", shared: true) do
-        images.each do |image|
+        export_images.each do |image|
           image_name = format % { repo: repo, signature: image.name.split(':').last }
           export_base!(image, image_name)
         end
@@ -71,6 +71,31 @@ module Dapp
           project.log_process(image_name, process: project.t(code: 'status.process.pushing')) do
             image.export!(image_name, log_verbose: project.log_verbose?, log_time: project.log_time?)
           end
+        end
+      end
+    end
+
+    def import_stages!(repo, format:)
+      import_images.each do |image|
+        image_name = format % { repo: repo, signature: image.name.split(':').last }
+        import_base!(image, image_name)
+        break unless project.pull_all_stages?
+      end
+    end
+
+    def import_base!(image, image_name)
+      if project.dry_run?
+        project.log_state(image_name, state: project.t(code: 'state.pull'), styles: { status: :success })
+      else
+        begin
+          project.log_process(image_name,
+                              process: project.t(code: 'status.process.pulling'),
+                              status: { failed: project.t(code: 'status.failed.not_pulled') },
+                              style: { failed: :secondary }) do
+            image.import!(image_name, log_verbose: project.log_verbose?, log_time: project.log_time?)
+          end
+        rescue Error::Shellout
+          next
         end
       end
     end
@@ -105,6 +130,14 @@ module Dapp
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
     end
 
+    def export_images
+      images.select(&:tagged?)
+    end
+
+    def import_images
+      images.select { |image| !image.tagged? }
+    end
+
     def images
       (@images ||= []).tap do |images|
         stage = last_stage
@@ -112,11 +145,11 @@ module Dapp
           if stage.respond_to?(:images)
             images.concat(stage.images)
           else
-            images << stage.image if stage.image.tagged?
+            images << stage.image
           end
           break if (stage = stage.prev_stage).nil?
         end
-      end.uniq { |image| image.name }
+      end.uniq(&:name)
     end
 
     def should_be_built?
