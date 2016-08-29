@@ -86,6 +86,8 @@ module Dapp
         request(url, **default_api_options.merge(options))
       rescue Excon::Error::NotFound
         raise Error::Registry, code: :page_not_found, data: { url: url }
+      rescue Excon::Error::Unauthorized
+        raise Error::Registry, code: :user_not_authorized
       end
 
       def api_url(*uri)

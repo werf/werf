@@ -243,7 +243,7 @@ module Dapp
       end
 
       def cookbooks_vendor_path(*path)
-        _cookbooks_vendor_path.tap do |cookbooks_path|
+        _cookbooks_vendor_path.tap do |_cookbooks_path|
           application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 120) do
             @install_cookbooks ||= begin
               install_cookbooks unless _cookbooks_vendor_path.join('.created_at').exist? && !application.project.cli_options[:dev]
@@ -255,7 +255,7 @@ module Dapp
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_stage_cookbooks(stage)
-        select_existing_paths = ->(cookbook_path, paths) do
+        select_existing_paths = lambda do |cookbook_path, paths|
           paths.select { |from, _| cookbook_path.join(from).exist? }
         end
 

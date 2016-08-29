@@ -4,6 +4,7 @@ module Dapp
     # Command
     module Command
       module Stages
+        # FlushLocal
         module FlushLocal
           def stages_flush_local
             build_configs.map(&:_basename).uniq.each do |basename|

@@ -9,7 +9,6 @@ Usage:
   dapp push [options] [APP PATTERN] REPO
 
     APP PATTERN                 Applications to process [default: *].
-    REPO                        Pushed image name.
 
 Options:
 BANNER
@@ -46,6 +45,10 @@ BANNER
       option :tag_commit,
              long: '--tag-commit',
              description: 'Tag by git commit',
+             boolean: true
+
+      option :with_stages,
+             long: '--with-stages',
              boolean: true
 
       def run(argv = ARGV)
