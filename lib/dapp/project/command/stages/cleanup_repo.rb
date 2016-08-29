@@ -6,12 +6,14 @@ module Dapp
       module Stages
         module CleanupRepo
           def stages_cleanup_repo(repo)
-            log_step(repo)
-            with_log_indent do
-              registry = registry(repo)
-              repo_applications, repo_stages = repo_images(registry)
-              repo_applications.keys.each { |image_tag| clear_repo_stages(registry, repo_stages, image_tag) }
-              repo_stages.keys.each { |image_tag| image_delete(registry, image_tag) }
+            lock(repo.to_s) do
+              log_step(repo)
+              with_log_indent do
+                registry = registry(repo)
+                repo_applications, repo_stages = repo_images(registry)
+                repo_applications.keys.each { |image_tag| clear_repo_stages(registry, repo_stages, image_tag) }
+                repo_stages.keys.each { |image_tag| image_delete(registry, image_tag) }
+              end
             end
           end
 

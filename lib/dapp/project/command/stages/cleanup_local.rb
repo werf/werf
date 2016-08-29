@@ -6,16 +6,20 @@ module Dapp
       module Stages
         module CleanupLocal
           def stages_cleanup_local(repo)
-            registry = registry(repo)
-            repo_applications = repo_applications_images(registry)
-            build_configs.map(&:_basename).uniq.each do |basename|
-              log(basename)
-              with_log_indent do
-                containers_flush(basename)
-                apps, stages = project_images(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
-                apps, stages = apps.to_h, stages.to_h
-                apps.each { |_, aiid| clear_stages(aiid, stages) }
-                run_command(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
+            lock(repo.to_s, readonly: true) do
+              registry = registry(repo)
+              repo_applications = repo_applications_images(registry)
+              build_configs.map(&:_basename).uniq.each do |basename|
+                lock("#{basename}.images") do
+                  log(basename)
+                  with_log_indent do
+                    containers_flush(basename)
+                    apps, stages = project_images(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
+                    apps, stages = apps.to_h, stages.to_h
+                    apps.each { |_, aiid| clear_stages(aiid, stages) }
+                    run_command(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
+                  end
+                end
               end
             end
           end
@@ -29,7 +33,7 @@ module Dapp
                 break if (iid = image_parent(iid)).empty?
               end
             else
-              stages.delete_if { |_, siid| siid == iid }
+              stages.delete_if { |_, siid| siid == image_id }
             end
           end
 

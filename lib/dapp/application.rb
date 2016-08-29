@@ -29,7 +29,7 @@ module Dapp
       raise Error::Application, code: :application_not_built if should_be_built && !last_stage.image.tagged?
 
       with_introspection do
-        project.lock("#{config._basename}.images", shared: true) do
+        project.lock("#{config._basename}.images", readonly: true) do
           last_stage.build_lock! do
             last_stage.build!
             last_stage.save_in_cache!
@@ -45,7 +45,7 @@ module Dapp
 
       raise Error::Application, code: :application_not_built unless last_stage.image.tagged? || project.dry_run?
 
-      project.lock("#{config._basename}.images", shared: true) do
+      project.lock("#{config._basename}.images", readonly: true) do
         tags.each do |tag|
           image_name = format % { repo: repo, application_name: config._name, tag: tag }
           if project.dry_run?

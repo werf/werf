@@ -13,7 +13,7 @@ module Dapp
         @timeout = timeout
       end
 
-      def lock(shared: false)
+      def lock(readonly: false)
         raise
       end
 
