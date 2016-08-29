@@ -69,6 +69,7 @@ module Dapp
             credentials += "-g #{group} " if group
 
             copy_files = lambda do |from_, cwd_, path_ = ''|
+              cwd_ = File.expand_path(File.join('/', cwd_))
               "find #{File.join(from_, cwd_, path_)} -type f -exec bash -ec 'install -D #{credentials} {} " \
             "#{File.join(to, "$(echo {} | sed -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
             end
