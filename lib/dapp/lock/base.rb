@@ -4,21 +4,20 @@ module Dapp
     # Base
     class Base
       attr_reader :name
-      attr_reader :on_wait
-      attr_reader :timeout
 
-      def initialize(name, timeout: 60, on_wait: nil)
+      def initialize(name)
         @name = name
-        @on_wait = on_wait
-        @timeout = timeout
+        @active_locks = 0
       end
 
-      def lock(shared: false)
-        raise
+      def lock(timeout: 60, on_wait: nil, readonly: false)
+        _do_lock(timeout, on_wait, readonly) unless @active_locks > 0
+        @active_locks += 1
       end
 
       def unlock
-        raise
+        @active_locks -= 1
+        _do_unlock if @active_locks == 0
       end
 
       def synchronize(*args)
@@ -32,9 +31,17 @@ module Dapp
 
       protected
 
-      def _waiting(&blk)
-        if @on_wait
-          @on_wait.call { ::Timeout.timeout(timeout, &blk) }
+      def _do_lock(timeout, on_wait, readonly)
+        raise
+      end
+
+      def _do_unlock
+        raise
+      end
+
+      def _waiting(timeout, on_wait, &blk)
+        if on_wait
+          on_wait.call { ::Timeout.timeout(timeout, &blk) }
         else
           ::Timeout.timeout(timeout, &blk)
         end
