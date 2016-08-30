@@ -84,7 +84,7 @@ module Dapp
           end
 
           def should_not_be_detailed?
-            image.send(:bash_commands).empty?
+            false
           end
 
           def should_be_introspected?
