@@ -3,20 +3,30 @@ module Dapp
   module Lock
     # File
     class File < Base
+      class << self
+        attr_writer :counter
+
+        def counter
+          @counter ||= 0
+        end
+      end # << self
+
       attr_reader :lock_path
 
-      def initialize(lock_path, name, **kwargs)
-        super(name, **kwargs)
+      def initialize(lock_path, name)
+        super(name)
+
         @lock_path = Pathname.new(lock_path).tap(&:mkpath)
       end
 
-      def lock(readonly: false)
-        return if @file
+      protected
+
+      def _do_lock(timeout, on_wait, readonly)
         @file = ::File.open(lock_path.join(name), ::File::RDWR | ::File::CREAT, 0o644)
 
         begin
           mode = (readonly ? ::File::LOCK_SH : ::File::LOCK_EX)
-          _waiting { @file.flock(mode) } unless @file.flock(mode | ::File::LOCK_NB)
+          _waiting(timeout, on_wait) { @file.flock(mode) } unless @file.flock(mode | ::File::LOCK_NB)
         rescue ::Timeout::Error
           raise Dapp::Lock::Error::Timeout, code: :timeout,
                                             data: { name: name, timeout: timeout }
@@ -25,19 +35,11 @@ module Dapp
         self.class.counter += 1
       end
 
-      def unlock
+      def _do_unlock
         @file.close
         @file = nil
         self.class.counter -= 1
       end
-
-      class << self
-        attr_writer :counter
-
-        def counter
-          @counter ||= 0
-        end
-      end # << self
     end # File
   end # Lock
 end # Dapp
