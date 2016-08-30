@@ -43,8 +43,6 @@ module Dapp
     def export!(repo, format:)
       builder.before_application_export
 
-      raise Error::Application, code: :application_not_built unless last_stage.image.tagged? || project.dry_run?
-
       project.lock("#{config._basename}.images", readonly: true) do
         tags.each do |tag|
           image_name = format % { repo: repo, application_name: config._name, tag: tag }
@@ -107,7 +105,6 @@ module Dapp
     end
 
     def run(docker_options, command)
-      raise Error::Application, code: :application_not_built unless last_stage.image.tagged?
       cmd = "docker run #{[docker_options, last_stage.image.name, command].flatten.compact.join(' ')}"
       if project.dry_run?
         project.log_info(cmd)
