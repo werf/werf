@@ -107,7 +107,10 @@ module Dapp
     end
 
     def run(docker_options, command)
+      builder.before_application_run
+
       raise Error::Application, code: :application_not_built unless last_stage.image.tagged?
+
       cmd = "docker run #{[docker_options, last_stage.image.name, command].flatten.compact.join(' ')}"
       if project.dry_run?
         project.log_info(cmd)
