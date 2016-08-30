@@ -10,6 +10,7 @@ module Dapp
             lock_repo(repo) do
               registry = registry(repo)
               repo_applications, repo_stages = repo_images(registry)
+              repo_stages.delete_if { |_, siid| repo_applications.values.include?(siid) } # ignoring stages with apps ids (v2)
               proper_repo_cache(registry, repo_stages) if proper_cache_version?
               log_step_with_indent(repo) do
                 repo_applications.each { |image_tag, image_id| clear_repo_stages(registry, repo_stages, image_tag, image_id) }
