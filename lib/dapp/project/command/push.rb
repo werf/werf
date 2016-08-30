@@ -6,9 +6,7 @@ module Dapp
       # Push
       module Push
         def push(repo)
-          if with_stages?
-            log_step_with_indent(:stages) { stages_push(repo) }
-          end
+          log_step_with_indent(:stages) { stages_push(repo) } if with_stages?
           build_configs.each do |config|
             log_step_with_indent(config._name) do
               Application.new(config: config, project: self, ignore_git_fetch: true, should_be_built: true).tap do |app|
@@ -17,6 +15,8 @@ module Dapp
             end
           end
         end
+
+        protected
 
         def with_stages?
           !!cli_options[:with_stages]

@@ -12,21 +12,25 @@ module Dapp
               repo_applications = repo_applications_images(registry)
               proper_cache if proper_cache_version?
               build_configs.map(&:_basename).uniq.each do |basename|
-                lock("#{basename}.images") do
-                  log_step_with_indent(basename) do
-                    project_containers_flush(basename)
-                    apps, stages = project_images_hash(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
-                    apps = apps.to_h
-                    stages = stages.to_h
-                    apps.each { |_, aiid| clear_stages(aiid, stages) }
-                    run_command(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
-                  end
-                end
+                cleanup_project(basename, repo_applications)
               end
             end
           end
 
           protected
+
+          def cleanup_project(basename, repo_applications)
+            lock("#{basename}.images") do
+              log_step_with_indent(basename) do
+                project_containers_flush(basename)
+                apps, stages = project_images_hash(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
+                apps = apps.to_h
+                stages = stages.to_h
+                apps.each { |_, aiid| clear_stages(aiid, stages) }
+                run_command(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
+              end
+            end
+          end
 
           def repo_applications_images(registry)
             repo_images(registry).first
