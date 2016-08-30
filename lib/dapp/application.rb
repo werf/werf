@@ -162,7 +162,10 @@ module Dapp
     end
 
     def should_be_built?
-      should_be_built && !last_stage.image.tagged?
+      should_be_built && begin
+        builder.before_application_should_be_built_check
+        !last_stage.image.tagged?
+      end
     end
 
     protected

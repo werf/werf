@@ -44,6 +44,11 @@ module Dapp
         )
       end
 
+      def before_application_should_be_built_check
+        super
+        _cookbooks_stages_checksum_should_be_calculated!
+      end
+
       def before_application_export
         super
         _cookbooks_stages_checksum_should_be_calculated!
