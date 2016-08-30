@@ -11,15 +11,6 @@ module Dapp
 
       DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.17.3-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
-      def before_application_export
-        super
-
-        %i(before_install install before_setup setup chef_cookbooks).each do |stage|
-          raise ::Dapp::Error::Application, code: :cookbooks_stage_checksum_not_caclculated,
-                                            data: { stage: stage } unless stage_cookbooks_checksum_path(stage).exist?
-        end
-      end
-
       %i(before_install install before_setup setup).each do |stage|
         define_method("#{stage}_checksum") { stage_cookbooks_checksum(stage) }
 
@@ -53,7 +44,24 @@ module Dapp
         )
       end
 
+      def before_application_export
+        super
+        _cookbooks_stages_checksum_should_be_calculated!
+      end
+
+      def before_application_run
+        super
+        _cookbooks_stages_checksum_should_be_calculated!
+      end
+
       private
+
+      def _cookbooks_stages_checksum_should_be_calculated!
+        %i(before_install install before_setup setup chef_cookbooks).each do |stage|
+          raise ::Dapp::Error::Application, code: :cookbooks_stage_checksum_not_caclculated,
+                                            data: { stage: stage } unless stage_cookbooks_checksum_path(stage).exist?
+        end
+      end
 
       def enabled_modules
         application.config._chef._modules
