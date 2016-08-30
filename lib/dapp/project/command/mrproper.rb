@@ -6,10 +6,10 @@ module Dapp
       # Mrproper
       module Mrproper
         def mrproper
-          log_step_with_indent('mrproper') do
+          log_step_with_indent(:mrproper) do
             if proper_all?
-              log_step_with_indent('containers') { remove_containers_by_query('docker ps -a -f "label=dapp" -q', force: true) }
-              log_step_with_indent('images') { remove_images(dapp_images.lines.map(&:strip), force: true) }
+              log_step_with_indent(:containers) { remove_containers_by_query('docker ps -a -f "label=dapp" -q', force: true) }
+              log_step_with_indent(:images) { remove_images(dapp_images.lines.map(&:strip), force: true) }
             elsif proper_cache_version?
               log_proper_cache do
                 all_images = dapp_images

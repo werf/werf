@@ -11,7 +11,7 @@ module Dapp
           shellout!(%(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache(basename)})).stdout.strip
         end
 
-        def containers_flush(basename)
+        def project_containers_flush(basename)
           remove_containers_by_query(%(docker ps -a -f "label=dapp" -f "name=#{container_name(basename)}" -q), force: true)
         end
 
@@ -67,7 +67,7 @@ module Dapp
         end
 
         def log_proper_cache(&blk)
-          log_step_with_indent('proper cache', &blk)
+          log_step_with_indent(:'proper cache', &blk)
         end
       end
     end

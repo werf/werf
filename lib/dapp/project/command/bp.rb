@@ -13,10 +13,7 @@ module Dapp
         end
 
         def bp_step(step, *args)
-          log_step(step)
-          with_log_indent do
-            public_send(step, *args)
-          end
+          log_step_with_indent(step) { public_send(step, *args) }
         end
       end
     end

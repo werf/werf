@@ -8,11 +8,10 @@ module Dapp
         module FlushRepo
           def stages_flush_repo(repo)
             lock_repo(repo) do
-              log_step(repo)
-              with_log_indent do
+              log_step_with_indent(repo) do
                 registry = registry(repo)
                 repo_applications, repo_stages = repo_images(registry)
-                repo_applications.merge(repo_stages).keys.each { |image_tag| repo_image_delete(registry, image_tag) }
+                repo_applications.merge(repo_stages).keys.each { |image_tag| delete_repo_image(registry, image_tag) }
               end
             end
           end

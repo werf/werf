@@ -13,10 +13,9 @@ module Dapp
               proper_cache if proper_cache_version?
               build_configs.map(&:_basename).uniq.each do |basename|
                 lock("#{basename}.images") do
-                  log(basename)
-                  with_log_indent do
-                    containers_flush(basename)
-                    apps, stages = project_images(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
+                  log_step_with_indent(basename) do
+                    project_containers_flush(basename)
+                    apps, stages = project_images_hash(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
                     apps = apps.to_h
                     stages = stages.to_h
                     apps.each { |_, aiid| clear_stages(aiid, stages) }
@@ -37,19 +36,17 @@ module Dapp
             log_proper_cache do
               build_configs.map(&:_basename).uniq.each do |basename|
                 lock("#{basename}.images") do
-                  log(basename)
-                  with_log_indent do
-                    containers_flush(basename)
-                    project_cache = project_images_hash(basename)
-                    proper_cache_images = proper_cache_images(basename)
-                    remove_images(project_cache.lines.select { |id| !proper_cache_images.lines.include?(id) }.map(&:strip))
+                  log_step_with_indent(basename) do
+                    project_containers_flush(basename)
+                    actual_cache_images = actual_cache_images(basename)
+                    remove_images(project_images(basename).lines.select { |id| !actual_cache_images.lines.include?(id) }.map(&:strip))
                   end
                 end
               end
             end
           end
 
-          def proper_cache_images(basename)
+          def actual_cache_images(basename)
             shellout!([
               'docker images',
               '--format="{{.Repository}}:{{.Tag}}"',

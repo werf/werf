@@ -9,8 +9,7 @@ module Dapp
           setup_ssh_agent
 
           build_configs.each do |config|
-            log_step(config._name)
-            with_log_indent do
+            log_step_with_indent(config._name) do
               Application.new(config: config, project: self).build!
             end
           end

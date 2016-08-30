@@ -9,9 +9,10 @@ module Dapp
           def stages_flush_local
             build_configs.map(&:_basename).uniq.each do |basename|
               lock("#{basename}.images") do
-                log(basename)
-                containers_flush(basename)
-                remove_images_by_query(%(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache(basename)}))
+                log_step_with_indent(basename) do
+                  project_containers_flush(basename)
+                  remove_images_by_query(project_images(basename))
+                end
               end
             end
           end

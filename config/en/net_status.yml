@@ -24,7 +24,7 @@ en:
       dappfile_not_found: "Dappfile not found!"
       cannot_run_ssh_agent: "Cannot run ssh-agent"
       ssh_key_not_found: "Ssh key '%{path}' not exist!"
-      mrproper_required_option: "Expect command option '--all' or '--improper-cache-version-stages'!"
+      mrproper_required_option: "Expected command option '--all' or '--improper-cache-version-stages'!"
     config:
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
