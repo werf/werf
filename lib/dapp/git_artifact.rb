@@ -15,7 +15,8 @@ module Dapp
       @branch = branch || repo.application.project.cli_options[:git_artifact_branch] || repo.branch
       @commit = commit
 
-      @cwd = !(cwd.nil? || cwd.empty?) ? File.expand_path(File.join('/', cwd)) : cwd
+      cwd = File.expand_path(File.join('/', cwd))[1..-1] unless cwd.nil? || cwd.empty?
+      @cwd = cwd
       @paths = paths
       @owner = owner
       @group = group
