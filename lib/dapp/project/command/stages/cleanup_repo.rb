@@ -50,9 +50,9 @@ module Dapp
 
           def proper_repo_cache(registry, repo_stages)
             log_proper_cache do
-              repo_stages.each do |image_tag, _|
-                delete_repo_image(registry, image_tag) if repo_image_dapp_cache_version_label(registry, image_tag) != Dapp::BUILD_CACHE_VERSION.to_s
-              end
+              wrong_cache_images = repo_stages.select { |image_tag, _| repo_image_dapp_cache_version_label(registry, image_tag) != Dapp::BUILD_CACHE_VERSION.to_s }
+              wrong_cache_images.each { |image_tag, _| delete_repo_image(registry, image_tag) }
+              repo_stages.delete_if { |image_tag, _| wrong_cache_images.keys.include?(image_tag) }
             end
           end
         end

@@ -27,7 +27,7 @@ module Dapp
                 apps = apps.to_h
                 stages = stages.to_h
                 apps.each { |_, aiid| clear_stages(aiid, stages) }
-                run_command(%(docker rmi #{stages.keys.join(' ')})) unless stages.keys.empty?
+                remove_images(stages.keys)
               end
             end
           end
