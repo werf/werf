@@ -8,10 +8,11 @@ module Dapp
         module CleanupRepo
           def stages_cleanup_repo(repo)
             lock_repo(repo) do
+              registry = registry(repo)
+              repo_applications, repo_stages = repo_images(registry)
+              proper_repo_cache(registry, repo_stages) if improper_cache_version?
               log_step(repo)
               with_log_indent do
-                registry = registry(repo)
-                repo_applications, repo_stages = repo_images(registry)
                 repo_applications.each { |image_tag, image_id| clear_repo_stages(registry, repo_stages, image_tag, image_id) }
                 repo_stages.keys.each { |image_tag| repo_image_delete(registry, image_tag) }
               end
@@ -39,9 +40,21 @@ module Dapp
             select_dapp_artifacts_ids(registry.image_labels(image_tag))
           end
 
+          def repo_image_dapp_cache_version_label(registry, image_tag)
+            registry.image_labels(image_tag)['dapp-cache-version']
+          end
+
           def find_image_tag_by_id(images, image_id)
             images.each { |tag, id| return tag if id == image_id }
             nil
+          end
+
+          def proper_repo_cache(registry, repo_stages)
+            proper_base do
+              repo_stages.each do |image_tag, _|
+                repo_image_delete(registry, image_tag) if repo_image_dapp_cache_version_label(registry, image_tag) != Dapp::BUILD_CACHE_VERSION.to_s
+              end
+            end
           end
         end
       end

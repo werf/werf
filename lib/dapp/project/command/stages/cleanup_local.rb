@@ -10,6 +10,7 @@ module Dapp
             lock_repo(repo, readonly: true) do
               registry = registry(repo)
               repo_applications = repo_applications_images(registry)
+              proper_cache if improper_cache_version?
               build_configs.map(&:_basename).uniq.each do |basename|
                 lock("#{basename}.images") do
                   log(basename)

@@ -10,7 +10,7 @@ module Dapp
             lock("#{basename}.images") do
               log(basename)
               containers_flush(basename)
-              remove_images([
+              remove_images_by_query([
                 'docker images',
                 %(--format '{{if ne "#{stage_cache(basename)}" .Repository }}{{.ID}}{{ end }}'),
                 %(-f "label=dapp=#{stage_dapp_label(basename)}")

@@ -38,6 +38,38 @@ module Dapp
             hash.select { |k, _v| k.start_with?('dapp-artifact') }.values
           end
 
+          def proper_cache
+            proper_base do
+              build_configs.map(&:_basename).uniq.each do |basename|
+                lock("#{basename}.images") do
+                  log(basename)
+                  with_log_indent do
+                    containers_flush(basename)
+                    project_cache = project_images(basename)
+                    proper_cache_images = proper_cache_images(basename)
+                    remove_images(project_cache.lines.select { |id| !proper_cache_images.lines.include?(id) }.map(&:strip))
+                  end
+                end
+              end
+            end
+          end
+
+          def proper_base
+            log_step('proper cache')
+            with_log_indent do
+              yield
+            end
+          end
+
+          def proper_cache_images(basename)
+            shellout!([
+              'docker images',
+              '--format="{{.Repository}}:{{.Tag}}"',
+              %(-f "label=dapp-cache-version=#{Dapp::BUILD_CACHE_VERSION}"),
+              stage_cache(basename)
+            ].join(' ')).stdout.strip
+          end
+
           def lock_repo(repo, *args, &blk)
             lock("repo.#{hashsum repo}", *args, &blk)
           end

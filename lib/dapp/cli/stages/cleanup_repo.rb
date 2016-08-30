@@ -2,7 +2,7 @@ module Dapp
   class CLI
     class Stages
       # stages cleanup repo subcommand
-      class CleanupRepo < Base
+      class CleanupRepo < CleanupLocal
         banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 

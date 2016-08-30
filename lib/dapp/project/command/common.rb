@@ -7,18 +7,34 @@ module Dapp
       module Common
         protected
 
+        def project_images(basename)
+          shellout!(%(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache(basename)})).stdout.strip
+        end
+
         def containers_flush(basename)
-          remove_containers(%(docker ps -a -f "label=dapp" -f "name=#{container_name(basename)}" -q), force: true)
+          remove_containers_by_query(%(docker ps -a -f "label=dapp" -f "name=#{container_name(basename)}" -q), force: true)
         end
 
-        def remove_images(images_query, force: false)
-          force_option = force ? ' -f' : ''
-          with_subquery(images_query) { |ids| run_command(%(docker rmi#{force_option} #{ids.join(' ')})) }
+        def remove_images_by_query(images_query, force: false)
+          with_subquery(images_query) { |ids| remove_images(ids, force: force) }
         end
 
-        def remove_containers(containers_query, force: false)
+        def remove_images(ids, force: false)
+          remove_base('docker rmi%{force_option} %{ids}', ids, force: force)
+        end
+
+        def remove_containers_by_query(containers_query, force: false)
+          with_subquery(containers_query) { |ids| remove_containers(ids, force: force) }
+        end
+
+        def remove_containers(ids, force: false)
+          remove_base('docker rm%{force_option} %{ids}', ids, force: force)
+        end
+
+        def remove_base(query_format, ids, force: false)
+          return if ids.empty?
           force_option = force ? ' -f' : ''
-          with_subquery(containers_query) { |ids| run_command(%(docker rm#{force_option} #{ids.join(' ')})) }
+          run_command(query_format % ({ force_option: force_option, ids: ids.join(' ') }))
         end
 
         def with_subquery(query)
@@ -44,6 +60,10 @@ module Dapp
 
         def container_name(basename)
           basename
+        end
+
+        def improper_cache_version?
+          !!cli_options[:improper_cache_version]
         end
       end
     end

@@ -66,6 +66,7 @@ module Dapp
             else
               Image::Stage.new(name: image_name, from: from_image, project: application.project).tap do |image|
                 image.add_service_change_label dapp: application.stage_dapp_label
+                image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
                 yield image if block_given?
               end
             end

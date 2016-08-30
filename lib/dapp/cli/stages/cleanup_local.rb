@@ -13,6 +13,10 @@ Usage:
 
 Options:
 BANNER
+        option :improper_cache_version,
+               long: '--improper-cache-version',
+               boolean: true
+
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
           repo = self.class.required_argument(self)
