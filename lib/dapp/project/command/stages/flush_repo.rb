@@ -7,7 +7,7 @@ module Dapp
         # FlushRepo
         module FlushRepo
           def stages_flush_repo(repo)
-            lock(repo.to_s) do
+            lock_repo(repo) do
               log_step(repo)
               with_log_indent do
                 registry = registry(repo)

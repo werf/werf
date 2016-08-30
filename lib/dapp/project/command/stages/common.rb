@@ -37,6 +37,10 @@ module Dapp
           def select_dapp_artifacts_ids(hash)
             hash.select { |k, _v| k.start_with?('dapp-artifact') }.values
           end
+
+          def lock_repo(repo, *args, &blk)
+            lock("repo.#{hashsum repo}", *args, &blk)
+          end
         end
       end
     end

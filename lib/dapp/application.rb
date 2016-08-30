@@ -68,7 +68,7 @@ module Dapp
       if project.dry_run?
         project.log_state(image_name, state: project.t(code: 'state.push'), styles: { status: :success })
       else
-        project.lock("image.#{image_name.gsub('/', '__')}") do
+        project.lock("image.#{hashsum image_name}") do
           Dapp::Image::Stage.cache_reset(image_name)
           project.log_process(image_name, process: project.t(code: 'status.process.pushing')) do
             image.export!(image_name, log_verbose: project.log_verbose?, log_time: project.log_time?)
@@ -95,7 +95,7 @@ module Dapp
       if project.dry_run?
         project.log_state(image_name, state: project.t(code: 'state.pull'), styles: { status: :success })
       else
-        project.lock("image.#{image_name.gsub('/', '__')}") do
+        project.lock("image.#{hashsum image_name}") do
           project.log_process(image_name,
                               process: project.t(code: 'status.process.pulling'),
                               status: { failed: project.t(code: 'status.failed.not_pulled') },
