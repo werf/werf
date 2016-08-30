@@ -26,6 +26,13 @@ module Dapp
           log(*args, **kwargs)
         end
 
+        def log_step_with_indent(step)
+          log_step(step)
+          with_log_indent do
+            yield
+          end
+        end
+
         def log_step(*args, **kwargs)
           kwargs[:style] = :step
           log(*args, **kwargs)

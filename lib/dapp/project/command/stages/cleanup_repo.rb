@@ -10,7 +10,7 @@ module Dapp
             lock_repo(repo) do
               registry = registry(repo)
               repo_applications, repo_stages = repo_images(registry)
-              proper_repo_cache(registry, repo_stages) if improper_cache_version?
+              proper_repo_cache(registry, repo_stages) if proper_cache_version?
               log_step(repo)
               with_log_indent do
                 repo_applications.each { |image_tag, image_id| clear_repo_stages(registry, repo_stages, image_tag, image_id) }
@@ -50,7 +50,7 @@ module Dapp
           end
 
           def proper_repo_cache(registry, repo_stages)
-            proper_base do
+            log_proper_cache do
               repo_stages.each do |image_tag, _|
                 repo_image_delete(registry, image_tag) if repo_image_dapp_cache_version_label(registry, image_tag) != Dapp::BUILD_CACHE_VERSION.to_s
               end

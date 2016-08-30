@@ -13,7 +13,7 @@ Usage:
 
 Options:
 BANNER
-        option :improper_cache_version,
+        option :proper_cache_version,
                long: '--improper-cache-version',
                boolean: true
 

@@ -62,8 +62,12 @@ module Dapp
           basename
         end
 
-        def improper_cache_version?
-          !!cli_options[:improper_cache_version]
+        def proper_cache_version?
+          !!cli_options[:proper_cache_version]
+        end
+
+        def log_proper_cache(&blk)
+          log_step_with_indent('proper cache', &blk)
         end
       end
     end

@@ -19,6 +19,7 @@ module Dapp
     include Command::Stages::Pull
     include Command::Stages::Common
     include Command::Cleanup
+    include Command::Mrproper
     include Logging::Base
     include Logging::Process
 

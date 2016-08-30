@@ -10,7 +10,7 @@ module Dapp
             lock_repo(repo, readonly: true) do
               registry = registry(repo)
               repo_applications = repo_applications_images(registry)
-              proper_cache if improper_cache_version?
+              proper_cache if proper_cache_version?
               build_configs.map(&:_basename).uniq.each do |basename|
                 lock("#{basename}.images") do
                   log(basename)
@@ -27,6 +27,43 @@ module Dapp
             end
           end
 
+          protected
+
+          def repo_applications_images(registry)
+            repo_images(registry).first
+          end
+
+          def proper_cache
+            log_proper_cache do
+              build_configs.map(&:_basename).uniq.each do |basename|
+                lock("#{basename}.images") do
+                  log(basename)
+                  with_log_indent do
+                    containers_flush(basename)
+                    project_cache = project_images_hash(basename)
+                    proper_cache_images = proper_cache_images(basename)
+                    remove_images(project_cache.lines.select { |id| !proper_cache_images.lines.include?(id) }.map(&:strip))
+                  end
+                end
+              end
+            end
+          end
+
+          def proper_cache_images(basename)
+            shellout!([
+              'docker images',
+              '--format="{{.Repository}}:{{.Tag}}"',
+              %(-f "label=dapp-cache-version=#{Dapp::BUILD_CACHE_VERSION}"),
+              stage_cache(basename)
+            ].join(' ')).stdout.strip
+          end
+
+          def project_images_hash(basename)
+            shellout!(%(docker images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{stage_cache(basename)})).stdout.lines.map do |line|
+              line.strip.split(';')
+            end.to_h
+          end
+
           def clear_stages(image_id, stages)
             if image_exist?(image_id)
               image_dapp_artifacts_label(image_id).each { |aiid| clear_stages(aiid, stages) }
@@ -40,31 +77,19 @@ module Dapp
             end
           end
 
-          protected
-
-          def repo_applications_images(registry)
-            repo_images(registry).first
-          end
-
-          def project_images(basename)
-            shellout!(%(docker images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{stage_cache(basename)})).stdout.lines.map do |line|
-              line.strip.split(';')
-            end.to_h
-          end
-
-          def image_parent(image_id)
-            shellout!(%(docker inspect -f {{.Parent}} #{image_id})).stdout.strip
+          def image_exist?(image_id)
+            shellout!(%(docker inspect #{image_id}))
+            true
+          rescue Error::Shellout
+            false
           end
 
           def image_dapp_artifacts_label(image_id)
             select_dapp_artifacts_ids(Image::Docker.image_config_option(image_id: image_id, option: 'labels'))
           end
 
-          def image_exist?(image_id)
-            shellout!(%(docker inspect #{image_id}))
-            true
-          rescue Error::Shellout
-            false
+          def image_parent(image_id)
+            shellout!(%(docker inspect -f {{.Parent}} #{image_id})).stdout.strip
           end
         end
       end
