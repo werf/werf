@@ -7,7 +7,7 @@ module Dapp
         # CleanupLocal
         module CleanupLocal
           def stages_cleanup_local(repo)
-            lock(repo.to_s, readonly: true) do
+            lock_repo(repo, readonly: true) do
               registry = registry(repo)
               repo_applications = repo_applications_images(registry)
               build_configs.map(&:_basename).uniq.each do |basename|
