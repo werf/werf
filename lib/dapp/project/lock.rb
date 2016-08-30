@@ -7,23 +7,26 @@ module Dapp
         build_path.join('locks')
       end
 
+      def _lock(name)
+        @_locks ||= {}
+        @_locks[name] ||= ::Dapp::Lock::File.new(lock_path, name)
+      end
+
       def lock(name, *args, default_timeout: 300, **kwargs, &blk)
         if dry_run?
           yield if block_given?
         else
           timeout = cli_options[:lock_timeout] || default_timeout
-
-          ::Dapp::Lock::File.new(
-            lock_path, name,
+          _lock(name).synchronize(
             timeout: timeout,
-            on_wait: lambda do |&blk|
+            on_wait: lambda do |&do_wait|
               log_secondary_process(
                 t(code: 'process.waiting_resouce_lock', data: { name: name }),
                 short: true,
-                &blk
+                &do_wait
               )
-            end
-          ).synchronize(*args, **kwargs, &blk)
+            end, **kwargs, &blk
+          )
         end
       end
     end # Lock
