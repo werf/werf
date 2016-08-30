@@ -19,16 +19,14 @@ module Dapp
           prev_stage
         end
 
-        def image
-          super do |image|
-            image.add_volumes_from g_a_container
-            image.add_command 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
+        def prepare_image
+          super
+          image.add_volumes_from g_a_container
+          image.add_command 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
 
-            application.git_artifacts.each do |git_artifact|
-              image.add_volume "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}:ro"
-              image.add_command git_artifact.send(apply_command_method, self)
-            end
-            yield image if block_given?
+          application.git_artifacts.each do |git_artifact|
+            image.add_volume "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}:ro"
+            image.add_command git_artifact.send(apply_command_method, self)
           end
         end
 

@@ -15,10 +15,9 @@ module Dapp
             [application.builder.chef_cookbooks_checksum]
           end
 
-          def image
-            super do |image|
-              application.builder.chef_cookbooks(image)
-            end
+          def prepare_image
+            super
+            application.builder.chef_cookbooks(image)
           end
 
           protected

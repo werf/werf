@@ -16,10 +16,9 @@ module Dapp
           prev_stage.prev_stage.prev_stage.dependencies # GAPostInstallPatchDependencies
         end
 
-        def image
-          super do |image|
-            application.builder.before_setup(image)
-          end
+        def prepare_image
+          super
+          application.builder.before_setup(image)
         end
       end # BeforeSetup
     end # Stage

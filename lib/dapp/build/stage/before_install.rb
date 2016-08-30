@@ -16,10 +16,9 @@ module Dapp
           [application.builder.before_install_checksum]
         end
 
-        def image
-          super do |image|
-            application.builder.before_install(image)
-          end
+        def prepare_image
+          super
+          application.builder.before_install(image)
         end
       end # BeforeInstall
     end # Stage

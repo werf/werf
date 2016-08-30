@@ -48,7 +48,10 @@ module Dapp
         def build!
           return if should_be_skipped?
           prev_stage.build! if prev_stage
-          log_image_build(&method(:image_build)) if image_should_be_build?
+          if image_should_be_build?
+            prepare_image
+            log_image_build(&method(:image_build))
+          end
           raise Exception::IntrospectImage, data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
         end
 
@@ -64,13 +67,14 @@ module Dapp
             if empty?
               prev_stage.image
             else
-              Image::Stage.new(name: image_name, from: from_image, project: application.project).tap do |image|
-                image.add_service_change_label dapp: application.stage_dapp_label
-                image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
-                yield image if block_given?
-              end
+              Image::Stage.new(name: image_name, from: from_image, project: application.project)
             end
           end
+        end
+
+        def prepare_image
+          image.add_service_change_label dapp: application.stage_dapp_label
+          image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
         end
 
         def image_should_be_build?

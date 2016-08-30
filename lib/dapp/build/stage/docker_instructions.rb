@@ -12,11 +12,10 @@ module Dapp
           [change_options]
         end
 
-        def image
-          super do |image|
-            change_options.each do |k, v|
-              image.public_send("add_change_#{k}", v)
-            end
+        def prepare_image
+          super
+          change_options.each do |k, v|
+            image.public_send("add_change_#{k}", v)
           end
         end
 

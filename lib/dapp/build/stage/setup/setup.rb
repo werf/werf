@@ -19,10 +19,9 @@ module Dapp
             prev_stage.prev_stage.dependencies # GAPreSetupPatchDependencies
           end
 
-          def image
-            super do |image|
-              application.builder.setup(image)
-            end
+          def prepare_image
+            super
+            application.builder.setup(image)
           end
         end # Setup
       end

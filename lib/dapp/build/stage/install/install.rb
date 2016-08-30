@@ -19,10 +19,9 @@ module Dapp
             prev_stage.prev_stage.dependencies # GAPreInstallPatchDependencies
           end
 
-          def image
-            super do |image|
-              application.builder.install(image)
-            end
+          def prepare_image
+            super
+            application.builder.install(image)
           end
         end # Install
       end

@@ -83,7 +83,7 @@ module Dapp
           begin
             image_name = format % { repo: repo, signature: image.name.split(':').last }
             import_base!(image, image_name)
-          rescue Error::Shelout
+          rescue Error::Shellout
             next
           end
           break unless project.pull_all_stages?

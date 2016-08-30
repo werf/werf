@@ -12,16 +12,15 @@ module Dapp
           artifacts_signatures
         end
 
-        def image
-          super do |image|
-            artifacts_applications_build!
-            artifacts_labels = {}
-            artifacts.each do |artifact|
-              apply_artifact(artifact, image)
-              artifacts_labels["dapp-artifact-#{artifact[:name]}".to_sym] = artifact[:app].send(:last_stage).image.built_id
-            end
-            image.add_service_change_label artifacts_labels
+        def prepare_image
+          super
+          artifacts_applications_build!
+          artifacts_labels = {}
+          artifacts.each do |artifact|
+            apply_artifact(artifact, image)
+            artifacts_labels["dapp-artifact-#{artifact[:name]}".to_sym] = artifact[:app].send(:last_stage).image.built_id
           end
+          image.add_service_change_label artifacts_labels
         end
 
         def images

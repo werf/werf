@@ -3,11 +3,10 @@ module Dapp
     module Stage
       # GADependenciesBase
       class GADependenciesBase < Base
-        def image
-          super do |image|
-            application.git_artifacts.each do |git_artifact|
-              image.add_service_change_label(git_artifact.full_name.to_sym => git_artifact.latest_commit)
-            end
+        def prepare_image
+          super
+          application.git_artifacts.each do |git_artifact|
+            image.add_service_change_label(git_artifact.full_name.to_sym => git_artifact.latest_commit)
           end
         end
 
