@@ -123,6 +123,7 @@ module Dapp
             application.paths_content_hashsum(paths),
             *paths.map { |p| p.relative_path_from(berksfile.home_path).to_s }.sort,
             berksfile_lock_checksum,
+            *enabled_recipes,
             *enabled_modules
           ]
         end
