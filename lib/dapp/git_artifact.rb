@@ -15,6 +15,7 @@ module Dapp
       @branch = branch || repo.application.cli_options[:git_artifact_branch] || repo.branch
       @commit = commit
 
+      cwd = File.expand_path(File.join('/', cwd))[1..-1] unless cwd.nil? || cwd.empty?
       @cwd = cwd
       @paths = paths
       @owner = owner
@@ -55,7 +56,7 @@ module Dapp
     end
 
     def paramshash
-      Digest::SHA256.hexdigest [cwd, paths, owner, group].map(&:to_s).join(':::')
+      Digest::SHA256.hexdigest [where_to_add, cwd, paths, owner, group].map(&:to_s).join(':::')
     end
 
     def paths(with_cwd = false)
