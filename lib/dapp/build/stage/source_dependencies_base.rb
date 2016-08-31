@@ -18,6 +18,7 @@ module Dapp
         protected
 
         def dependencies_files_checksum(regs)
+          regs.map { |reg| File.directory?(File.join(application.home_path, reg)) ? File.join(reg, '*') : reg }
           unless (files = regs.map { |reg| Dir[File.join(application.home_path, reg)].map { |f| File.read(f) if File.file?(f) } }).empty?
             hashsum files
           end
