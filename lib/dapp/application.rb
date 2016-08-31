@@ -103,7 +103,7 @@ module Dapp
     def run(docker_options, command)
       cmd = "docker run #{[docker_options, last_stage.image.name, command].flatten.compact.join(' ')}"
       if project.dry_run?
-        project.log_info(cmd)
+        project.log(cmd)
       else
         system(cmd) || raise(Error::Application, code: :application_not_run)
       end
@@ -152,7 +152,7 @@ module Dapp
     end
 
     def should_be_built?
-      should_be_built && begin
+      should_be_built && !is_artifact && begin
         builder.before_application_should_be_built_check
         !last_stage.image.tagged?
       end
