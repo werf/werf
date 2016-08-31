@@ -208,7 +208,7 @@ module Dapp
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_stage_cookbooks(stage)
-        select_existing_paths = ->(cookbook_path, paths) do
+        select_existing_paths = proc do |cookbook_path, paths|
           paths.select { |from, _| cookbook_path.join(from).exist? }
         end
 
@@ -304,11 +304,11 @@ module Dapp
         @stage_cookbooks_runlist[stage] ||= begin
           res = []
 
-          does_entry_exist = ->(cookbook, entrypoint) do
+          does_entry_exist = proc do |cookbook, entrypoint|
             stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb").exist?
           end
 
-          format_entry = ->(cookbook, entrypoint) do
+          format_entry = proc do |cookbook, entrypoint|
             entrypoint = 'void' if entrypoint.nil?
             "#{cookbook}::#{entrypoint}"
           end
