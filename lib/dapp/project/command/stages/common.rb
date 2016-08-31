@@ -13,7 +13,7 @@ module Dapp
           end
 
           def repo_images(registry)
-            format = lambda do |arr|
+            format = proc do |arr|
               arr.map do |tag|
                 if (id = registry.image_id(tag)).nil?
                   log_warning(desc: { code: 'tag_ignored', context: 'warning', data: { tag: tag } })
