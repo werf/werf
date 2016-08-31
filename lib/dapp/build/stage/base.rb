@@ -20,7 +20,7 @@ module Dapp
         def build_lock!
           return yield if application.project.dry_run?
 
-          try_lock = lambda do
+          try_lock = proc do
             next yield unless should_be_tagged?
 
             no_lock = false
