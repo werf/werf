@@ -22,8 +22,6 @@ module Dapp
         def image
           super do |image|
             image.add_volumes_from gitartifact_container
-            image.add_command 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
-
             application.git_artifacts.each do |git_artifact|
               image.add_volume "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}:ro"
               image.add_command git_artifact.send(apply_command_method, self)
@@ -44,6 +42,10 @@ module Dapp
               git_artifact.latest_commit
             end
           end
+        end
+
+        def git_dappdeps_path
+          '/.dapp/deps/gitartifact/bin/git'
         end
 
         protected

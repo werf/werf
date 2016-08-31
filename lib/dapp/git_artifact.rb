@@ -27,7 +27,7 @@ module Dapp
       credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
       ["install #{credentials.join(' ')} -d #{where_to_add}",
-       ["git --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths}",
+       ["#{stage.git_dappdeps_path} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths}",
         "#{sudo}tar -x -C #{where_to_add}"].join(' | ')]
     end
 
@@ -36,8 +36,8 @@ module Dapp
       prev_commit = stage.prev_source_stage.layer_commit(self)
 
       if prev_commit != current_commit || any_changes?(prev_commit, current_commit)
-        [["git --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
-          "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} --unsafe-paths"].join(' | ')]
+        [["#{stage.git_dappdeps_path} --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
+          "#{sudo}#{stage.git_dappdeps_path} apply --whitespace=nowarn --directory=#{where_to_add} --unsafe-paths"].join(' | ')]
       else
         []
       end
