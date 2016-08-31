@@ -51,12 +51,7 @@ module Dapp
             image.tagged? && !application.log_verbose? && application.cli_options[:introspect_stage].nil?
           end
 
-          def should_be_not_present?
-            return false if next_stage.nil?
-            next_stage.image.tagged? || next_stage.should_be_not_present?
-          end
-
-          def should_be_not_detailed?
+          def should_not_be_detailed?
             image.send(:bash_commands).empty?
           end
 

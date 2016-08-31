@@ -76,7 +76,7 @@ module Dapp
           elsif application.dry_run?
             application.log_state(name, state: application.t(code: 'state.build'), styles: { status: :success })
           else
-            application.log_process(name, process: application.t(code: 'status.process.building'), short: should_be_not_detailed?) do
+            application.log_process(name, process: application.t(code: 'status.process.building'), short: should_not_be_detailed?) do
               image_do_build
             end
           end
@@ -93,7 +93,12 @@ module Dapp
         end
 
         def should_be_tagged?
-          !(image.tagged? || empty?)
+          !(image.tagged? || empty? || should_be_not_present?)
+        end
+
+        def should_be_not_present?
+          return false if next_stage.nil?
+          next_stage.image.tagged? || next_stage.should_be_not_present?
         end
 
         def image_name
