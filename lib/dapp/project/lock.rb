@@ -19,7 +19,7 @@ module Dapp
           timeout = cli_options[:lock_timeout] || default_timeout
           _lock(name).synchronize(
             timeout: timeout,
-            on_wait: lambda do |&do_wait|
+            on_wait: proc do |&do_wait|
               log_secondary_process(
                 t(code: 'process.waiting_resouce_lock', data: { name: name }),
                 short: true,
