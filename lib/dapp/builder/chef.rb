@@ -46,27 +46,14 @@ module Dapp
 
       def before_application_should_be_built_check
         super
-        _cookbooks_stages_checksum_should_be_calculated!
-      end
 
-      def before_application_export
-        super
-        _cookbooks_stages_checksum_should_be_calculated!
-      end
-
-      def before_application_run
-        super
-        _cookbooks_stages_checksum_should_be_calculated!
-      end
-
-      private
-
-      def _cookbooks_stages_checksum_should_be_calculated!
         %i(before_install install before_setup setup chef_cookbooks).each do |stage|
           raise ::Dapp::Error::Application, code: :cookbooks_stage_checksum_not_caclculated,
                                             data: { stage: stage } unless stage_cookbooks_checksum_path(stage).exist?
         end
       end
+
+      private
 
       def enabled_modules
         application.config._chef._modules

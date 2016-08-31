@@ -11,12 +11,6 @@ module Dapp
       def before_application_should_be_built_check
       end
 
-      def before_application_export
-      end
-
-      def before_application_run
-      end
-
       def before_install?
         false
       end

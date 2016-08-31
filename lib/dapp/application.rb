@@ -41,8 +41,6 @@ module Dapp
     end
 
     def export!(repo, format:)
-      builder.before_application_export
-
       project.lock("#{config._basename}.images", readonly: true) do
         tags.each do |tag|
           image_name = format % { repo: repo, application_name: config._name, tag: tag }
@@ -52,8 +50,6 @@ module Dapp
     end
 
     def export_stages!(repo, format:)
-      builder.before_application_export
-
       project.lock("#{config._basename}.images", readonly: true) do
         export_images.each do |image|
           image_name = format % { repo: repo, signature: image.name.split(':').last }
@@ -105,8 +101,6 @@ module Dapp
     end
 
     def run(docker_options, command)
-      builder.before_application_run
-
       cmd = "docker run #{[docker_options, last_stage.image.name, command].flatten.compact.join(' ')}"
       if project.dry_run?
         project.log_info(cmd)
