@@ -19,11 +19,10 @@ module Dapp
         define_method("#{stage}") do |image|
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
-            image.add_command 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
-                              "export DAPP_BUILD_STAGE=#{stage}"
+            image.add_command "export DAPP_BUILD_STAGE=#{stage}"
 
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}:ro"
-            image.add_command ['chef-solo',
+            image.add_command [chef_solo_dappdeps_path,
                                '--legacy-mode',
                                "-c #{container_stage_config_path(stage)}",
                                "-o #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
@@ -167,7 +166,7 @@ module Dapp
             'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
             'if [ ! -f Berksfile.lock ] ; then echo "Berksfile.lock not found" 1>&2 ; exit 1 ; fi',
             'cp -a Berksfile.lock /tmp/Berksfile.lock.orig',
-            '/.dapp/deps/chefdk/bin/berks vendor /tmp/vendored_cookbooks',
+            "#{berks_dappdeps_path} vendor /tmp/vendored_cookbooks",
             'export LOCKDIFF=$(diff -u0 Berksfile.lock /tmp/Berksfile.lock.orig)',
             ['if [ "$LOCKDIFF" != "" ] ; then ',
              'cp -a /tmp/Berksfile.lock.orig Berksfile.lock ; ',
@@ -381,6 +380,14 @@ module Dapp
 
       def container_stage_build_path(_stage, *path)
         path.compact.map(&:to_s).inject(Pathname.new('/.dapp/chef/build'), &:+)
+      end
+
+      def chef_solo_dappdeps_path
+        '/.dapp/deps/chefdk/bin/chef-solo'
+      end
+
+      def berks_dappdeps_path
+        '/.dapp/deps/chefdk/bin/berks'
       end
     end
   end
