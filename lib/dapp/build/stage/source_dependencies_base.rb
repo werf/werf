@@ -18,10 +18,7 @@ module Dapp
         protected
 
         def dependencies_files_checksum(regs)
-          regs.map do |reg|
-            reg = reg.gsub(/\/(?![.***.*\/.**.*]$)[*|\/]*$/, '')
-            File.directory?(File.join(application.project_path, reg)) ? File.join(reg, '**', '*') : reg
-          end
+          regs.map! { |reg| File.directory?(File.join(application.project_path, reg)) ? File.join(reg, '**', '*') : reg }
           unless (files = regs.map { |reg| Dir[File.join(application.project_path, reg)].map { |f| File.read(f) if File.file?(f) } }).empty?
             hashsum files
           end
