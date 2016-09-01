@@ -19,7 +19,7 @@ module Dapp
         protected
 
         def apply_command_method
-          :archive_apply_command
+          :apply_archive_command
         end
       end # GAArchive
     end # Stage

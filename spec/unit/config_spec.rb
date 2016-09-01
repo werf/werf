@@ -318,12 +318,15 @@ describe Dapp::Config::Main do
     end
   end
 
-  artifact_attributes = [:cwd, :paths, :owner, :group]
+  artifact_attributes = [:cwd, :paths, :exclude_paths, :owner, :group]
 
   context 'artifact' do
-    it 'base' do
+    xit 'base' do
       @dappfile = "artifact 'where_to_add', #{artifact_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')}"
-      artifact_attributes.delete(:paths)
+      [:paths, :exclude_paths].each do |attr|
+        artifact_attributes.delete(:attr)
+        expect(app.artifact.first.public_send("_#{attr}")).to eq [attr.to_s]
+      end
       expect(app._artifact.first._paths).to eq ['paths']
       artifact_attributes.each { |attr| expect(app._artifact.first.public_send("_#{attr}")).to eq attr.to_s }
     end
@@ -340,8 +343,10 @@ describe Dapp::Config::Main do
 
     it 'remote' do
       @dappfile = "git_artifact.remote 'url', 'where_to_add', #{dappfile_remote_options}"
-      remote_attributes.delete(:paths)
-      expect(app.git_artifact.remote.first._paths).to eq ['paths']
+      [:paths, :exclude_paths].each do |attr|
+        remote_attributes.delete(attr)
+        expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq [attr.to_s]
+      end
       remote_attributes.each { |attr| expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq attr.to_s }
     end
 

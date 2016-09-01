@@ -6,7 +6,7 @@ module Dapp
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(repo, where_to_add:, name: nil, branch: nil, commit: nil,
-                   cwd: nil, paths: nil, owner: nil, group: nil)
+                   cwd: nil, paths: nil, exclude_paths: nil, owner: nil, group: nil)
       @repo = repo
       @name = name
 
@@ -18,17 +18,18 @@ module Dapp
       cwd = File.expand_path(File.join('/', cwd))[1..-1] unless cwd.nil? || cwd.empty?
       @cwd = cwd
       @paths = paths
+      @exclude_paths = exclude_paths
       @owner = owner
       @group = group
     end
     # rubocop:enable Metrics/ParameterLists
 
-    def archive_apply_command(stage)
+    def apply_archive_command(stage)
       credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
       ["install #{credentials.join(' ')} -d #{where_to_add}",
-       ["git --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths}",
-        "#{sudo}tar -x -C #{where_to_add}"].join(' | ')]
+       ["git --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths.join(' ')}",
+        "#{sudo}tar -x -C #{where_to_add} #{archive_command_excludes.join(' ')}"].join(' | ')]
     end
 
     def apply_patch_command(stage)
@@ -37,9 +38,20 @@ module Dapp
 
       if prev_commit != current_commit || any_changes?(prev_commit, current_commit)
         [["git --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
-          "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} --unsafe-paths"].join(' | ')]
+          "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} #{patch_command_excludes.join(' ')} --unsafe-paths"].join(' | ')]
       else
         []
+      end
+    end
+
+    def archive_command_excludes
+      exclude_paths.map { |path| %(--exclude=#{path}) }
+    end
+
+    def patch_command_excludes
+      exclude_paths.map do |path|
+        base = File.join(where_to_add, path)
+        (path =~ /[\*\?\[\]\{\}]/) ? %(--exclude=#{base} ) : %(--exclude=#{base} --exclude=#{File.join(base, '*')})
       end
     end
 
@@ -56,11 +68,19 @@ module Dapp
     end
 
     def paramshash
-      Digest::SHA256.hexdigest [where_to_add, cwd, paths, owner, group].map(&:to_s).join(':::')
+      Digest::SHA256.hexdigest [where_to_add, cwd, *paths, owner, group].map(&:to_s).join(':::')
+    end
+
+    def exclude_paths(with_cwd = false)
+      base_paths(@exclude_paths, with_cwd = with_cwd)
     end
 
     def paths(with_cwd = false)
-      [@paths].flatten.compact.map { |path| (with_cwd && cwd ? "#{cwd}/#{path}" : path).gsub(%r{^\/*|\/*$}, '') }.join(' ') if @paths
+      base_paths(@paths, with_cwd = with_cwd)
+    end
+
+    def base_paths(paths, with_cwd = false)
+      [paths].flatten.compact.map { |path| (with_cwd && cwd ? File.join(cwd, path) : path).gsub(%r{^\/*|\/*$}, '') }
     end
 
     def full_name
@@ -93,7 +113,7 @@ module Dapp
     end
 
     def diff_command(from, to, quiet: false)
-      "diff --binary #{'--quiet' if quiet} #{from}..#{to} #{"--relative=#{cwd}" if cwd} -- #{paths(true)}"
+      "diff --binary #{'--quiet' if quiet} #{from}..#{to} #{"--relative=#{cwd}" if cwd} -- #{paths(true).join(' ')}"
     end
   end
 end

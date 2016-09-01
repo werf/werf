@@ -4,7 +4,7 @@ module Dapp
     module Artifact
       # Base
       class Base
-        attr_accessor :_where_to_add, :_cwd, :_paths, :_owner, :_group
+        attr_accessor :_where_to_add, :_cwd, :_paths, :_exclude_paths, :_owner, :_group
 
         def initialize(where_to_add, **options)
           @_cwd          = ''
@@ -17,16 +17,21 @@ module Dapp
         end
 
         def _paths
-          Array(@_paths)
+          base_paths(@_paths)
+        end
+
+        def _exclude_paths
+          base_paths(@_exclude_paths)
         end
 
         def _artifact_options
           {
-            where_to_add: _where_to_add,
-            cwd:          _cwd,
-            paths:        _paths,
-            owner:        _owner,
-            group:        _group
+            where_to_add:  _where_to_add,
+            cwd:           _cwd,
+            paths:         _paths,
+            exclude_paths: _exclude_paths,
+            owner:         _owner,
+            group:         _group
           }
         end
 
@@ -35,6 +40,10 @@ module Dapp
         end
 
         protected
+
+        def base_paths(paths)
+          Array(paths)
+        end
 
         def code
           raise
