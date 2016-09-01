@@ -321,11 +321,11 @@ describe Dapp::Config::Main do
   artifact_attributes = [:cwd, :paths, :exclude_paths, :owner, :group]
 
   context 'artifact' do
-    xit 'base' do
+    it 'base' do
       @dappfile = "artifact 'where_to_add', #{artifact_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')}"
       [:paths, :exclude_paths].each do |attr|
-        artifact_attributes.delete(:attr)
-        expect(app.artifact.first.public_send("_#{attr}")).to eq [attr.to_s]
+        artifact_attributes.delete(attr)
+        expect(app._artifact.first.public_send("_#{attr}")).to eq [attr.to_s]
       end
       expect(app._artifact.first._paths).to eq ['paths']
       artifact_attributes.each { |attr| expect(app._artifact.first.public_send("_#{attr}")).to eq attr.to_s }

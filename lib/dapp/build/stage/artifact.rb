@@ -68,6 +68,7 @@ module Dapp
           app = artifact[:app]
           cwd = artifact[:options][:cwd]
           paths = artifact[:options][:paths]
+          exclude_paths = artifact[:options][:exclude_paths]
           owner = artifact[:options][:owner]
           group = artifact[:options][:group]
           where_to_add = artifact[:options][:where_to_add]
@@ -81,7 +82,7 @@ module Dapp
             app.run(docker_options, [%(-ec '#{application.project.shellout_pack(commands)}')])
           end
 
-          commands = safe_cp(application.container_tmp_path('artifact', artifact_name), where_to_add, owner, group, cwd, paths)
+          commands = safe_cp(application.container_tmp_path('artifact', artifact_name), where_to_add, owner, group, cwd, paths, exclude_paths)
           image.add_command commands
           image.add_volume "#{application.tmp_path('artifact', artifact_name)}:#{application.container_tmp_path('artifact', artifact_name)}:ro"
         end
@@ -90,14 +91,15 @@ module Dapp
         private
 
         # rubocop:disable Metrics/ParameterLists
-        def safe_cp(from, to, owner, group, cwd = '', paths = [])
+        def safe_cp(from, to, owner, group, cwd = '', paths = [], exclude_paths = [])
           credentials = ''
           credentials += "-o #{owner} " if owner
           credentials += "-g #{group} " if group
+          excludes = find_command_excludes(from, cwd, exclude_paths).join(' ')
 
           copy_files = proc do |from_, cwd_, path_ = ''|
             cwd_ = File.expand_path(File.join('/', cwd_))
-            "find #{File.join(from_, cwd_, path_)} -type f -exec bash -ec 'install -D #{credentials} {} " \
+            "find #{File.join(from_, cwd_, path_)} #{excludes} -type f -exec bash -ec 'install -D #{credentials} {} " \
             "#{File.join(to, "$(echo {} | sed -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
           end
 
@@ -108,6 +110,10 @@ module Dapp
           commands.join(' && ')
         end
         # rubocop:enable Metrics/ParameterLists
+
+        def find_command_excludes(from, cwd, exclude_paths)
+          exclude_paths.map { |path| "-not \\( -path #{File.join(from, cwd, path)} -prune \\)" }
+        end
       end # Artifact
     end # Stage
   end # Build
