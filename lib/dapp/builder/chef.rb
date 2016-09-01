@@ -22,7 +22,7 @@ module Dapp
             image.add_command "export DAPP_BUILD_STAGE=#{stage}"
 
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}:ro"
-            image.add_command [chef_solo_dappdeps_path,
+            image.add_command ['/.dapp/deps/chefdk/bin/chef-solo',
                                '--legacy-mode',
                                "-c #{container_stage_config_path(stage)}",
                                "-o #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
@@ -139,7 +139,7 @@ module Dapp
       def chefdk_container
         @chefdk_container ||= begin
           if application.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
-            application.log_secondary_process(application.t(code: 'process.chefdk_loading'), short: true) do
+            application.log_secondary_process(application.t(code: 'process.chefdk_container_loading'), short: true) do
               application.shellout(
                 ['docker run',
                  '--restart=no',
@@ -166,7 +166,7 @@ module Dapp
             'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
             'if [ ! -f Berksfile.lock ] ; then echo "Berksfile.lock not found" 1>&2 ; exit 1 ; fi',
             'cp -a Berksfile.lock /tmp/Berksfile.lock.orig',
-            "#{berks_dappdeps_path} vendor /tmp/vendored_cookbooks",
+            "/.dapp/deps/chefdk/bin/berks vendor /tmp/vendored_cookbooks",
             'export LOCKDIFF=$(diff -u0 Berksfile.lock /tmp/Berksfile.lock.orig)',
             ['if [ "$LOCKDIFF" != "" ] ; then ',
              'cp -a /tmp/Berksfile.lock.orig Berksfile.lock ; ',
@@ -380,14 +380,6 @@ module Dapp
 
       def container_stage_build_path(_stage, *path)
         path.compact.map(&:to_s).inject(Pathname.new('/.dapp/chef/build'), &:+)
-      end
-
-      def chef_solo_dappdeps_path
-        '/.dapp/deps/chefdk/bin/chef-solo'
-      end
-
-      def berks_dappdeps_path
-        '/.dapp/deps/chefdk/bin/berks'
       end
     end
   end

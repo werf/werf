@@ -5,8 +5,6 @@ module Dapp
       class SourceBase < Base
         attr_accessor :prev_source_stage, :next_source_stage
 
-        GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.5'.freeze
-
         def prev_source_stage
           dependencies_stage.prev_stage.prev_stage
         end
@@ -21,7 +19,7 @@ module Dapp
 
         def image
           super do |image|
-            image.add_volumes_from gitartifact_container
+            image.add_volumes_from application.gitartifact_container
             application.git_artifacts.each do |git_artifact|
               image.add_volume "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}:ro"
               image.add_command git_artifact.send(apply_command_method, self)
@@ -44,30 +42,7 @@ module Dapp
           end
         end
 
-        def git_dappdeps_path
-          '/.dapp/deps/gitartifact/bin/git'
-        end
-
         protected
-
-        def gitartifact_container_name # FIXME: hashsum(image) or dockersafe()
-          GITARTIFACT_IMAGE.tr('/', '_').tr(':', '_')
-        end
-
-        def gitartifact_container
-          @gitartifact_container ||= begin
-            if application.shellout("docker inspect #{gitartifact_container_name}").exitstatus.nonzero?
-              application.log_secondary_process(application.t(code: 'process.git_artifact_loading'), short: true) do
-                application.shellout ['docker run',
-                                      '--restart=no',
-                                      "--name #{gitartifact_container_name}",
-                                      "--volume /.dapp/deps/gitartifact #{GITARTIFACT_IMAGE}",
-                                      '2>/dev/null'].join(' ')
-              end
-            end
-            gitartifact_container_name
-          end
-        end
 
         def should_not_be_detailed?
           true

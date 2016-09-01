@@ -9,6 +9,8 @@ module Dapp
     include GitArtifact
     include Path
     include Tags
+    include Deps::Gitartifact
+    include SystemShellout
     include Dapp::Filelock
 
     attr_reader :config

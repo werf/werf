@@ -29,7 +29,7 @@ describe Dapp::GitArtifact do
         @stage_commit[stage.name] ||= {}
         @stage_commit[stage.name][@branch] ||= git_latest_commit(branch: @branch)
       end
-      allow_any_instance_of(stage).to receive(:git_dappdeps_path) { 'git' }
+      #allow_any_instance_of(stage).to receive(:git_dappdeps_path) { 'git' } # FIXME: stub Application#git_path
     end
     allow_any_instance_of(Dapp::Build::Stage::Source5).to receive(:prev_source_stage) { source_1_archive_stage }
   end
