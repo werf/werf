@@ -62,10 +62,11 @@ module Dapp
         @_docker ||= Docker.new
       end
 
-      [:before_install_artifact, :before_setup_artifact, :after_install_artifact, :after_setup_artifact].each do |artifact|
-        define_method artifact do |where_to_add, **options, &blk|
-          artifact_base(instance_variable_get(:"@_#{artifact}"), where_to_add, **options, &blk)
-        end
+      def artifact(where_to_add, before: nil, after: nil, **options, &blk)
+        raise Error::Config, code: :stage_artifact_not_associated if before.nil? && after.nil?
+        raise Error::Config, code: :stage_artifact_double_associate unless before.nil? || after.nil?
+        stage = before.nil? ? artifact_stage_name(after, prefix: :after) : artifact_stage_name(before, prefix: :before)
+        artifact_base(instance_variable_get(:"@_#{stage}"), where_to_add, **options, &blk)
       end
 
       def git_artifact
@@ -138,6 +139,11 @@ module Dapp
 
       def app_name(sub_name)
         [_name, sub_name].compact.join('-')
+      end
+
+      def artifact_stage_name(stage, prefix:)
+        raise Error::Config, code: :stage_artifact_not_supported_associated_stage, data: { stage: stage } unless [:install, :setup].include? stage.to_sym
+        [prefix, stage, :artifact].join('_')
       end
 
       def artifact_base(artifact, where_to_add, **options, &blk)
