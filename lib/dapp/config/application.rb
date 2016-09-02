@@ -7,7 +7,10 @@ module Dapp
       attr_reader :_basename
       attr_reader :_docker
       attr_reader :_git_artifact
-      attr_reader :_artifact
+      attr_reader :_before_install_artifact
+      attr_reader :_before_setup_artifact
+      attr_reader :_after_install_artifact
+      attr_reader :_after_setup_artifact
       attr_reader :_chef
       attr_reader :_shell
       attr_reader :_parent
@@ -19,7 +22,10 @@ module Dapp
         @_apps   = []
         @_parent = parent
 
-        @_artifact = []
+        @_before_install_artifact = []
+        @_before_setup_artifact = []
+        @_after_install_artifact = []
+        @_after_setup_artifact = []
         @_install_dependencies = []
         @_setup_dependencies   = []
 
@@ -56,13 +62,9 @@ module Dapp
         @_docker ||= Docker.new
       end
 
-      def artifact(where_to_add, **options, &blk)
-        @_artifact << begin
-          config = clone(artifact: false).tap do |app|
-            app.instance_variable_set(:'@_name', app_name("artifact-#{SecureRandom.hex(2)}"))
-            app.instance_eval(&blk) if block_given?
-          end
-          Artifact::Stage.new(where_to_add, config: config, **options)
+      [:before_install_artifact, :before_setup_artifact, :after_install_artifact, :after_setup_artifact].each do |artifact|
+        define_method artifact do |where_to_add, **options, &blk|
+          artifact_base(instance_variable_get(:"@_#{artifact}"), where_to_add, **options, &blk)
         end
       end
 
@@ -108,7 +110,7 @@ module Dapp
       attr_accessor :project
 
       # rubocop:disable Metrics/AbcSize
-      def clone(artifact: true)
+      def clone(artifacts: true)
         Application.new(self).tap do |app|
           app.instance_variable_set(:'@project', project)
           app.instance_variable_set(:'@_builder', _builder)
@@ -116,7 +118,9 @@ module Dapp
           app.instance_variable_set(:'@_basename', _basename)
           app.instance_variable_set(:'@_install_dependencies', _install_dependencies)
           app.instance_variable_set(:'@_setup_dependencies', _setup_dependencies)
-          app.instance_variable_set(:'@_artifact', Marshal.load(Marshal.dump(_artifact))) if artifact
+          [:_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact].each do |artifact|
+            app.instance_variable_set(:"@#{artifact}", Marshal.load(Marshal.dump(instance_variable_get(:"@#{artifact}"))))
+          end if artifacts
           app.instance_variable_set(:'@_docker', _docker.clone)             unless @_docker.nil?
           app.instance_variable_set(:'@_git_artifact', _git_artifact.clone) unless @_git_artifact.nil?
           app.instance_variable_set(:'@_chef', _chef.clone)                 unless @_chef.nil?
@@ -137,8 +141,20 @@ module Dapp
         [_name, sub_name].compact.join('-')
       end
 
+      def artifact_base(artifact, where_to_add, **options, &blk)
+        artifact << begin
+          config = clone(artifacts: false).tap do |app|
+            app.instance_variable_set(:'@_name', app_name("artifact-#{SecureRandom.hex(2)}"))
+            app.instance_eval(&blk) if block_given?
+          end
+          Artifact::Stage.new(where_to_add, config: config, **options)
+        end
+      end
+
       def validate_artifacts!
-        artifacts = validate_artifact_format(_artifact + _git_artifact._remote + _git_artifact._local)
+        artifacts = validate_artifact_format(_before_install_artifact + _before_setup_artifact +
+                                               _after_install_artifact + _after_setup_artifact +
+                                               _git_artifact._remote + _git_artifact._local)
         loop do
           break if artifacts.empty?
           verifiable_artifact = artifacts.shift

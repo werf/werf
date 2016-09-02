@@ -318,50 +318,58 @@ describe Dapp::Config::Main do
     end
   end
 
-  artifact_attributes = [:cwd, :paths, :exclude_paths, :owner, :group]
-
   context 'artifact' do
-    it 'base' do
-      @dappfile = "artifact 'where_to_add', #{artifact_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')}"
-      [:paths, :exclude_paths].each do |attr|
-        artifact_attributes.delete(attr)
-        expect(app._artifact.first.public_send("_#{attr}")).to eq [attr.to_s]
+    before :each do
+      @artifact_attributes = [:cwd, :paths, :exclude_paths, :owner, :group]
+    end
+
+    [:before_install_artifact, :before_setup_artifact, :after_install_artifact, :after_setup_artifact].each do |artifact|
+      context artifact do
+        it "base #{artifact}" do
+          @dappfile = "#{artifact} 'where_to_add', #{@artifact_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')}"
+          [:paths, :exclude_paths].each do |attr|
+            @artifact_attributes.delete(attr)
+            expect(app.public_send(:"_#{artifact}").first.public_send("_#{attr}")).to eq [attr.to_s]
+          end
+          expect(app.public_send(:"_#{artifact}").first._paths).to eq ['paths']
+          @artifact_attributes.each { |attr| expect(app.public_send(:"_#{artifact}").first.public_send("_#{attr}")).to eq attr.to_s }
+        end
+
+        it "unsupported key #{artifact}" do
+          @dappfile = "#{artifact} 'where_to_add', unsupported_key: :value"
+          expect_exception_code(code: :artifact_unexpected_attribute) { apps }
+        end
       end
-      expect(app._artifact.first._paths).to eq ['paths']
-      artifact_attributes.each { |attr| expect(app._artifact.first.public_send("_#{attr}")).to eq attr.to_s }
     end
 
-    it 'local with remote options' do
-      @dappfile = "artifact 'where_to_add', unsupported_key: :value"
-      expect_exception_code(code: :artifact_unexpected_attribute) { apps }
-    end
-  end
-
-  context 'git_artifact' do
-    remote_attributes = artifact_attributes + [:branch]
-    dappfile_remote_options = remote_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')
-
-    it 'remote' do
-      @dappfile = "git_artifact.remote 'url', 'where_to_add', #{dappfile_remote_options}"
-      [:paths, :exclude_paths].each do |attr|
-        remote_attributes.delete(attr)
-        expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq [attr.to_s]
+    context 'git_artifact' do
+      before :each do
+        @remote_attributes = @artifact_attributes + [:branch]
+        @dappfile_remote_options = @remote_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')
       end
-      remote_attributes.each { |attr| expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq attr.to_s }
-    end
 
-    it 'local with remote options (:git_artifact_unexpected_attribute)' do
-      @dappfile = "git_artifact.local 'where_to_add', #{dappfile_remote_options}"
-      expect_exception_code(code: :git_artifact_unexpected_attribute) { apps }
-    end
+      it 'remote' do
+        @dappfile = "git_artifact.remote 'url', 'where_to_add', #{@dappfile_remote_options}"
+        [:paths, :exclude_paths].each do |attr|
+          @remote_attributes.delete(attr)
+          expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq [attr.to_s]
+        end
+        @remote_attributes.each { |attr| expect(app.git_artifact.remote.first.public_send("_#{attr}")).to eq attr.to_s }
+      end
 
-    it 'git_artifact paths' do
-      @dappfile = %( git_artifact.local /where_to_add )
-    end
+      it 'local with remote options (:git_artifact_unexpected_attribute)' do
+        @dappfile = "git_artifact.local 'where_to_add', #{@dappfile_remote_options}"
+        expect_exception_code(code: :git_artifact_unexpected_attribute) { apps }
+      end
 
-    it 'name from url' do
-      @dappfile = "git_artifact.remote 'https://github.com/flant/dapp.git', 'where_to_add', #{dappfile_remote_options}"
-      expect(app.git_artifact.remote.first._name).to eq 'dapp'
+      it 'git_artifact paths' do
+        @dappfile = %( git_artifact.local /where_to_add )
+      end
+
+      it 'name from url' do
+        @dappfile = "git_artifact.remote 'https://github.com/flant/dapp.git', 'where_to_add', #{@dappfile_remote_options}"
+        expect(app.git_artifact.remote.first._name).to eq 'dapp'
+      end
     end
   end
 
@@ -500,8 +508,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            artifact 'where_to_add1'
-            artifact 'where_to_add2'
+            before_install_artifact 'where_to_add1'
+            before_setup_artifact 'where_to_add2'
           )
           expect { app.send(:validate!) }.to_not raise_error
         end
@@ -510,8 +518,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            artifact 'where_to_add', paths: "c"
-            artifact 'where_to_add', paths: "d"
+            before_install_artifact 'where_to_add', paths: "c"
+            before_setup_artifact 'where_to_add', paths: "d"
           )
           expect { app.send(:validate!) }.to_not raise_error
         end
@@ -520,8 +528,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            artifact 'where_to_add', paths: "c"
-            artifact 'where_to_add', exclude_paths: "c"
+            before_install_artifact 'where_to_add', paths: "c"
+            before_setup_artifact 'where_to_add', exclude_paths: "c"
           )
           expect { app.send(:validate!) }.to_not raise_error
         end
@@ -530,8 +538,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            artifact 'where_to_add', paths: "c/d/e"
-            artifact 'where_to_add', paths: "c", exclude_paths: "c/d"
+            before_install_artifact 'where_to_add', paths: "c/d/e"
+            before_setup_artifact 'where_to_add', paths: "c", exclude_paths: "c/d"
           )
           expect { app.send(:validate!) }.to_not raise_error
         end
@@ -542,20 +550,20 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            artifact 'where_to_add'
-            artifact 'where_to_add'
+            before_install_artifact 'where_to_add'
+            before_setup_artifact 'where_to_add'
           )
-          expect_exception_code(code: :artifacts_conflict) { app.send(:validate!) }
+          expect_exception_code(code: :artifact_conflict) { app.send(:validate!) }
         end
 
         it 'conflict between paths and exclude_paths' do
           @dappfile = %(
             docker.from 'image:tag'
 
-            artifact 'where_to_add', paths: "c"
-            artifact 'where_to_add', exclude_paths: "d"
+            before_install_artifact 'where_to_add', paths: "c"
+            before_setup_artifact 'where_to_add', exclude_paths: "d"
           )
-          expect_exception_code(code: :artifacts_conflict) { app.send(:validate!) }
+          expect_exception_code(code: :artifact_conflict) { app.send(:validate!) }
         end
       end
     end

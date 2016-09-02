@@ -1,13 +1,8 @@
 module Dapp
   module Build
     module Stage
-      # Artifact
-      class Artifact < Base
-        def initialize(application, next_stage)
-          @prev_stage = InstallGroup::GAPostInstallPatch.new(application, self)
-          super
-        end
-
+      # ArtifactBase
+      class ArtifactBase < Base
         def dependencies
           artifacts_signatures
         end
@@ -39,7 +34,7 @@ module Dapp
 
         def artifacts
           @artifacts ||= begin
-            application.config._artifact.map do |artifact|
+            application.config.public_send("_#{name}").map do |artifact|
               { name: artifact._config._name, options: artifact._artifact_options, app: application.artifact(artifact._config) }
             end
           end
@@ -114,7 +109,7 @@ module Dapp
         def find_command_excludes(from, cwd, exclude_paths)
           exclude_paths.map { |path| "-not \\( -path #{File.join(from, cwd, path)} -prune \\)" }
         end
-      end # Artifact
+      end # ArtifactBase
     end # Stage
   end # Build
 end # Dapp

@@ -46,6 +46,7 @@ en:
     stage:
       from: 'From'
       before_install: 'Before install'
+      before_install_artifact: 'Before install artifact'
       g_a_archive_dependencies: 'Git artifacts dependencies'
       g_a_archive: 'Git artifacts: create archive'
       install_group:
@@ -54,8 +55,9 @@ en:
         install: 'Install'
         g_a_post_install_patch_dependencies: 'Git artifacts dependencies'
         g_a_post_install_patch: 'Git artifacts: apply patches (after install)'
-      artifact: 'Artifact'
+      after_install_artifact: 'After install artifact'
       before_setup: 'Before setup'
+      before_setup_artifact: 'Before setup artifact'
       setup_group:
         g_a_pre_setup_patch_dependencies: 'Git artifacts dependencies'
         g_a_pre_setup_patch: 'Git artifacts: apply patches (before setup)'
@@ -63,5 +65,6 @@ en:
         chef_cookbooks: 'Сhef сookbooks'
         g_a_post_setup_patch_dependencies: 'Git artifacts dependencies'
         g_a_post_setup_patch: 'Git artifacts: apply patches (after setup)'
+      after_setup_artifact: 'After setup artifact'
       g_a_latest_patch: 'Git artifacts: latest patch'
       docker_instructions: 'Docker instructions'

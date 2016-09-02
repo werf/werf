@@ -4,7 +4,7 @@ module Dapp
       # BeforeSetup
       class BeforeSetup < Base
         def initialize(application, next_stage)
-          @prev_stage = Artifact.new(application, self)
+          @prev_stage = AfterInstallArtifact.new(application, self)
           super
         end
 

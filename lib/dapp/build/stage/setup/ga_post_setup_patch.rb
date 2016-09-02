@@ -16,7 +16,7 @@ module Dapp
           end
 
           def next_g_a_stage
-            next_stage # GALatestPatch
+            next_stage.next_stage
           end
         end # GAPostSetupPatch
       end

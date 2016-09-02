@@ -7,7 +7,7 @@ module Dapp
           include Mod::Group
 
           def initialize(application, next_stage)
-            @prev_stage = BeforeSetup.new(application, self)
+            @prev_stage = BeforeSetupArtifact.new(application, self)
             super
           end
 

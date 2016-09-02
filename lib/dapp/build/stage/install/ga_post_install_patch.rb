@@ -12,7 +12,7 @@ module Dapp
           end
 
           def next_g_a_stage
-            super.next_stage # GAPreSetupPatch
+            super.next_stage.next_stage # GAPreSetupPatch
           end
         end # GAPostInstallPatch
       end

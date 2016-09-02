@@ -11,10 +11,10 @@ describe Dapp::Build::Stage do
 
   context 'stages' do
     before :each do
-      @stages = [:from, :before_install, :g_a_archive_dependencies, :g_a_archive, :g_a_pre_install_patch_dependencies,
-                 :g_a_pre_install_patch, :install, :g_a_post_install_patch_dependencies, :g_a_post_install_patch, :artifact,
-                 :before_setup, :g_a_pre_setup_patch_dependencies, :g_a_pre_setup_patch, :setup, :chef_cookbooks,
-                 :g_a_post_setup_patch_dependencies, :g_a_post_setup_patch, :g_a_latest_patch, :docker_instructions]
+      @stages = [:from, :before_install, :before_install_artifact, :g_a_archive_dependencies, :g_a_archive, :g_a_pre_install_patch_dependencies,
+                 :g_a_pre_install_patch, :install, :g_a_post_install_patch_dependencies, :g_a_post_install_patch, :after_install_artifact,
+                 :before_setup, :before_setup_artifact, :g_a_pre_setup_patch_dependencies, :g_a_pre_setup_patch, :setup, :chef_cookbooks,
+                 :g_a_post_setup_patch_dependencies, :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions]
     end
 
     def first_stage

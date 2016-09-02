@@ -4,12 +4,12 @@ module Dapp
       # GALatestPatch
       class GALatestPatch < GABase
         def initialize(application, next_stage)
-          @prev_stage = SetupGroup::GAPostSetupPatch.new(application, self)
+          @prev_stage = AfterSetupArtifact.new(application, self)
           super
         end
 
         def prev_g_a_stage
-          prev_stage
+          prev_stage.prev_stage # GAPostSetupPatch
         end
 
         def next_g_a_stage

@@ -4,7 +4,7 @@ module Dapp
       # GAArchiveDependencies
       class GAArchiveDependencies < GADependenciesBase
         def initialize(application, next_stage)
-          @prev_stage = BeforeInstall.new(application, self)
+          @prev_stage = BeforeInstallArtifact.new(application, self)
           super
         end
 
