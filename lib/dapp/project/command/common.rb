@@ -34,7 +34,7 @@ module Dapp
         def remove_base(query_format, ids, force: false)
           return if ids.empty?
           force_option = force ? ' -f' : ''
-          run_command(query_format % ({ force_option: force_option, ids: ids.join(' ') }))
+          ids.each_slice(50) { |chunk| run_command(query_format % ({ force_option: force_option, ids: chunk.join(' ') })) }
         end
 
         def with_subquery(query)
