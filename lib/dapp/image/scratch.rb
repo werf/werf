@@ -18,7 +18,7 @@ module Dapp
       end
 
       def pulled?
-        true
+        false
       end
     end # Stage
   end # Image
