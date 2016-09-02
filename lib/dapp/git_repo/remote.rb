@@ -52,12 +52,8 @@ module Dapp
 
       def git(command, **kwargs)
         if use_ssh_key && ssh_key_path
-          cmd = [
-            'apt-get update -qq',
-            'apt-get install -qq openssh-client',
-            "ssh-agent bash -ec 'ssh-add #{ssh_key_path}; #{application.git_path} #{command}'"
-          ].join(' && ')
-          application.system_shellout!("bash -ec '#{application.shellout_pack(cmd)}'")
+          cmd = application.shellout_pack("ssh-agent bash -ec 'ssh-add #{ssh_key_path}; #{application.git_path} #{command}'")
+          application.system_shellout!("bash -ec '#{cmd}'")
         else
           super
         end

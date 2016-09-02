@@ -24,6 +24,8 @@ module Dapp
                          "#{SYSTEM_SHELLOUT_IMAGE} bash -ec '#{[
                            'mkdir -p /.system_shellout_root/.dapp',
                            'mount --rbind /.dapp /.system_shellout_root/.dapp',
+                           'apt-get update -qq',
+                           'apt-get install -qq openssh-client',
                            'while true ; do sleep 1 ; done'
                          ].join(' && ')}'"].join(' ')
             end
