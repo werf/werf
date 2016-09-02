@@ -28,7 +28,6 @@ en:
     config:
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
-      docker_from_not_defined: "`docker.from` not defined!"
       artifact_unexpected_attribute: "Artifact doesn't has attribute '%{attr}'!"
       artifact_conflict: "Conflict between artifacts paths!"
       git_artifact_unexpected_attribute: "'%{type}' git artifact doesn't has attribute '%{attr}'!"

@@ -101,7 +101,6 @@ module Dapp
       end
 
       def validate!
-        validate_docker_from!
         validate_artifacts!
       end
 
@@ -193,10 +192,6 @@ module Dapp
           end
           verifiable_artifact[:excludes].include?(path)
         end.tap { |res| res || raise(Error::Config, code: :artifact_conflict) }
-      end
-
-      def validate_docker_from!
-        docker._from || raise(Error::Config, code: :docker_from_not_defined)
       end
     end
   end

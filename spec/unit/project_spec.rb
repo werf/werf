@@ -31,11 +31,6 @@ describe Dapp::Project do
     expect { project.build }.to_not raise_error
   end
 
-  it 'build:docker_from_not_defined', test_construct: true do
-    FileUtils.touch('Dappfile')
-    expect_exception_code(code: :docker_from_not_defined) { project.build }
-  end
-
   it 'spush:spush_command_unexpected_apps_number', :push do
     expect_exception_code(code: :spush_command_unexpected_apps_number) { stubbed_project.spush('name') }
   end

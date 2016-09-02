@@ -463,12 +463,12 @@ describe Dapp::Config::Main do
       expect(apps.map { |app| app.docker._from }).to eq %w(image_1:tag image_3:tag image_2:tag)
     end
 
-    it 'does not inherit (:docker_from_not_defined)' do
+    it 'does not inherit' do
       @dappfile = %(
         app 'first'
         docker.from 'image:tag'
       )
-      expect_exception_code(code: :docker_from_not_defined) { app.send(:validate!) }
+      expect(app.docker._from).to be_nil
     end
   end
 
@@ -498,10 +498,6 @@ describe Dapp::Config::Main do
   end
 
   context 'validate' do
-    it ':docker_from_not_defined' do
-      expect_exception_code(code: :docker_from_not_defined) { app.send(:validate!) }
-    end
-
     context 'artifacts' do
       context 'positive' do
         it 'different where_to_add' do
