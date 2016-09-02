@@ -54,10 +54,10 @@ module Dapp
         if use_ssh_key && ssh_key_path
           cmd = [
             'apt-get update -qq',
-            'apt-get install -qq ssh-agent',
+            'apt-get install -qq openssh-client',
             "ssh-agent bash -ec 'ssh-add #{ssh_key_path}; #{application.git_path} #{command}'"
           ].join(' && ')
-          application.system_shellout!(application.shellout_pack(cmd))
+          application.system_shellout!("bash -ec '#{application.shellout_pack(cmd)}'")
         else
           super
         end
