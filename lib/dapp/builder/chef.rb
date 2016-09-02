@@ -157,7 +157,7 @@ module Dapp
       def chefdk_container
         @chefdk_container ||= begin
           if application.project.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
-            application.project.log_secondary_process(application.project.t(code: 'process.chefdk_loading'), short: true) do
+            application.project.log_secondary_process(application.project.t(code: 'process.chefdk_container_loading'), short: true) do
               application.project.shellout!(
                 ['docker create',
                  "--name #{chefdk_container_name}",
