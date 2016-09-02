@@ -52,7 +52,7 @@ module Dapp
 
       def git(command, **kwargs)
         if use_ssh_key && ssh_key_path
-          cmd = application.shellout_pack("ssh-agent bash -ec 'ssh-add #{ssh_key_path}; #{application.git_path} #{command}'")
+          cmd = application.shellout_pack("/usr/bin/ssh-agent bash -ec '/usr/bin/ssh-add #{ssh_key_path}; #{application.git_path} #{command}'")
           application.system_shellout!("bash -ec '#{cmd}'")
         else
           super

@@ -21,15 +21,19 @@ module Dapp
                          "--name #{system_shellout_container_name}",
                          *volumes_from.map { |container| "--volumes-from #{container}" },
                          '--volume /:/.system_shellout_root',
-                         "#{SYSTEM_SHELLOUT_IMAGE} bash -ec '#{[
+                         "#{SYSTEM_SHELLOUT_IMAGE} bash -ec 'while true ; do sleep 1 ; done'"].join(' ')
+
+              shellout! ["docker exec #{system_shellout_container_name}",
+                         "bash -ec '#{[
                            'mkdir -p /.system_shellout_root/.dapp',
                            'mount --rbind /.dapp /.system_shellout_root/.dapp',
+                           'mount --rbind /usr/bin /.system_shellout_root/usr/bin',
                            'apt-get update -qq',
                            'apt-get install -qq openssh-client',
-                           'while true ; do sleep 1 ; done'
                          ].join(' && ')}'"].join(' ')
             end
           end
+
           system_shellout_container_name
         end
       end
