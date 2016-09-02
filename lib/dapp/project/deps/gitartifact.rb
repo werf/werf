@@ -1,6 +1,6 @@
 module Dapp
-  # Application
-  class Application
+  # Project
+  class Project
     # Deps
     module Deps
       # Gitartifact
@@ -35,5 +35,5 @@ module Dapp
         end
       end # Gitartifact
     end # Deps
-  end # Application
+  end # Project
 end # Dapp

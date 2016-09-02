@@ -39,10 +39,10 @@ describe Dapp::GitArtifact do
     allow_any_instance_of(Dapp::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
   end
 
-  def stub_application
-    super do |instance|
-      allow(instance).to receive(:git_path) {'git'}
-      allow(instance).to receive(:sudo_path) {'sudo'}
+  def project
+    super do
+      allow_any_instance_of(Dapp::Project).to receive(:git_path) { 'git' }
+      allow_any_instance_of(Dapp::Project).to receive(:sudo_path) { 'sudo' }
     end
   end
 
