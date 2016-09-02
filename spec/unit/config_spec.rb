@@ -460,7 +460,7 @@ describe Dapp::Config::Main do
         app 'first'
         docker.from 'image:tag'
       )
-      expect_exception_code(code: :docker_from_not_defined) { app.docker._from }
+      expect_exception_code(code: :docker_from_not_defined) { app.send(:validate!) }
     end
   end
 
@@ -486,6 +486,78 @@ describe Dapp::Config::Main do
         docker.from 'image:tag', cache_version: 'cache_key'
       )
       expect(app.docker._from_cache_version).to eq 'cache_key'
+    end
+  end
+
+  context 'validate' do
+    it ':docker_from_not_defined' do
+      expect_exception_code(code: :docker_from_not_defined) { app.send(:validate!) }
+    end
+
+    context 'artifacts' do
+      context 'positive' do
+        it 'different where_to_add' do
+          @dappfile = %(
+            docker.from 'image:tag'
+
+            artifact 'where_to_add1'
+            artifact 'where_to_add2'
+          )
+          expect { app.send(:validate!) }.to_not raise_error
+        end
+
+        it 'different paths' do
+          @dappfile = %(
+            docker.from 'image:tag'
+
+            artifact 'where_to_add', paths: "c"
+            artifact 'where_to_add', paths: "d"
+          )
+          expect { app.send(:validate!) }.to_not raise_error
+        end
+
+        it 'paths with same exclude_paths' do
+          @dappfile = %(
+            docker.from 'image:tag'
+
+            artifact 'where_to_add', paths: "c"
+            artifact 'where_to_add', exclude_paths: "c"
+          )
+          expect { app.send(:validate!) }.to_not raise_error
+        end
+
+        it 'paths with exclude_paths' do
+          @dappfile = %(
+            docker.from 'image:tag'
+
+            artifact 'where_to_add', paths: "c/d/e"
+            artifact 'where_to_add', paths: "c", exclude_paths: "c/d"
+          )
+          expect { app.send(:validate!) }.to_not raise_error
+        end
+      end
+
+      context 'negative' do
+        it 'same where_to_add' do
+          @dappfile = %(
+            docker.from 'image:tag'
+
+            artifact 'where_to_add'
+            artifact 'where_to_add'
+          )
+          expect_exception_code(code: :artifacts_conflict) { app.send(:validate!) }
+        end
+
+        it 'conflict between paths and exclude_paths' do
+          @dappfile = %(
+            docker.from 'image:tag'
+
+            artifact 'where_to_add', paths: "c"
+            artifact 'where_to_add', exclude_paths: "d"
+          )
+          expect_exception_code(code: :artifacts_conflict) { app.send(:validate!) }
+        end
+      end
     end
   end
 end

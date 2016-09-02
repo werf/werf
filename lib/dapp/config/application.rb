@@ -58,8 +58,7 @@ module Dapp
 
       def artifact(where_to_add, **options, &blk)
         @_artifact << begin
-          config = clone.tap do |app|
-            app.instance_variable_set(:'@_artifact', [])
+          config = clone(artifact: false).tap do |app|
             app.instance_variable_set(:'@_name', app_name("artifact-#{SecureRandom.hex(2)}"))
             app.instance_eval(&blk) if block_given?
           end
@@ -99,14 +98,17 @@ module Dapp
         _app_chain.first
       end
 
+      def validate!
+        validate_docker_from!
+        validate_artifacts!
+      end
+
       protected
 
       attr_accessor :project
 
-      private
-
       # rubocop:disable Metrics/AbcSize
-      def clone
+      def clone(artifact: true)
         Application.new(self).tap do |app|
           app.instance_variable_set(:'@project', project)
           app.instance_variable_set(:'@_builder', _builder)
@@ -114,7 +116,7 @@ module Dapp
           app.instance_variable_set(:'@_basename', _basename)
           app.instance_variable_set(:'@_install_dependencies', _install_dependencies)
           app.instance_variable_set(:'@_setup_dependencies', _setup_dependencies)
-          app.instance_variable_set(:'@_artifact', Marshal.load(Marshal.dump(_artifact)))
+          app.instance_variable_set(:'@_artifact', Marshal.load(Marshal.dump(_artifact))) if artifact
           app.instance_variable_set(:'@_docker', _docker.clone)             unless @_docker.nil?
           app.instance_variable_set(:'@_git_artifact', _git_artifact.clone) unless @_git_artifact.nil?
           app.instance_variable_set(:'@_chef', _chef.clone)                 unless @_chef.nil?
@@ -133,6 +135,52 @@ module Dapp
 
       def app_name(sub_name)
         [_name, sub_name].compact.join('-')
+      end
+
+      def validate_artifacts!
+        artifacts = validate_artifact_format(_artifact + _git_artifact._remote + _git_artifact._local)
+        loop do
+          break if artifacts.empty?
+          verifiable_artifact = artifacts.shift
+          artifacts.select { |artifact| artifact[:where_to_add] == verifiable_artifact[:where_to_add] }.each do |artifact|
+            next if verifiable_artifact[:index] == artifact[:index]
+            validate_artifact!(verifiable_artifact, artifact)
+            validate_artifact!(artifact, verifiable_artifact)
+          end
+        end
+      end
+
+      def validate_artifact_format(artifacts)
+        artifacts.map do |a|
+          path_format = proc { |path| File.expand_path(File.join('/', path, '/'))[1..-1] }
+          {
+            index: artifacts.index(a),
+            where_to_add: path_format.call(a._where_to_add),
+            includes: a._paths.map(&path_format),
+            excludes: a._exclude_paths.map(&path_format)
+          }
+        end
+      end
+
+      def validate_artifact!(verifiable_artifact, artifact)
+        verifiable_artifact[:includes].each do |verifiable_path|
+          potential_conflicts = artifact[:includes].select { |path| path.start_with?(verifiable_path) }
+          validate_artifact_path!(verifiable_artifact, potential_conflicts)
+        end.empty? && verifiable_artifact[:excludes].empty? && raise(Error::Config, code: :artifact_conflict)
+        validate_artifact_path!(verifiable_artifact, artifact[:includes]) if verifiable_artifact[:includes].empty?
+      end
+
+      def validate_artifact_path!(verifiable_artifact, potential_conflicts)
+        potential_conflicts.all? do |path|
+          loop do
+            break if verifiable_artifact[:excludes].include?(path) || ((path = File.dirname(path)) == '.')
+          end
+          verifiable_artifact[:excludes].include?(path)
+        end.tap { |res| res || raise(Error::Config, code: :artifact_conflict) }
+      end
+
+      def validate_docker_from!
+        docker._from || raise(Error::Config, code: :docker_from_not_defined)
       end
     end
   end

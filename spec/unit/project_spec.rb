@@ -56,6 +56,7 @@ describe Dapp::Project do
     before :each do
       FileUtils.mkdir_p('.dapps/project/config/en')
       FileUtils.touch('.dapps/project/Dappfile')
+      allow_any_instance_of(Dapp::Config::Application).to receive(:validate!)
     end
 
     it '.', test_construct: true do

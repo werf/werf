@@ -63,7 +63,7 @@ module Dapp
             raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
           end
         end
-        config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }
+        config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }.tap { |apps| apps.each(&:validate!) }
       end
     end # Dappfile
   end # Project

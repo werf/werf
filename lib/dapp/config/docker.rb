@@ -2,7 +2,7 @@ module Dapp
   module Config
     # Docker
     class Docker
-      attr_reader :_volume, :_expose, :_env, :_label, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint
+      attr_reader :_from, :_volume, :_expose, :_env, :_label, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint
       attr_reader :_from_cache_version
 
       def initialize
@@ -54,10 +54,6 @@ module Dapp
 
       def entrypoint(*cmd_with_args)
         @_entrypoint = cmd_with_args.flatten
-      end
-
-      def _from
-        @_from || raise(Error::Config, code: :docker_from_not_defined)
       end
 
       def _change_options
