@@ -3,17 +3,23 @@ require_relative '../spec_helper'
 describe Dapp::GitArtifact do
   include SpecHelper::Common
   include SpecHelper::Git
+  include SpecHelper::Application
 
   before :each do
     init
     git_init!
     stub_stages
+    stub_application
   end
 
   def init
     FileUtils.mkdir 'project'
     @where_to_add = File.expand_path('where-to-add')
     Dir.chdir File.expand_path('project')
+  end
+
+  def config
+    @config ||= default_config.merge(_home_path: '')
   end
 
   def stubbed_stage
@@ -33,6 +39,13 @@ describe Dapp::GitArtifact do
     allow_any_instance_of(Dapp::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
   end
 
+  def stub_application
+    super do |instance|
+      allow(instance).to receive(:git_path) {'git'}
+      allow(instance).to receive(:sudo_path) {'sudo'}
+    end
+  end
+
   def g_a_archive_stage
     @g_a_archive_stage ||= Dapp::Build::Stage::GAArchive.new(nil, stubbed_stage)
   end
@@ -48,6 +61,7 @@ describe Dapp::GitArtifact do
   def stubbed_repo
     instance_double(Dapp::GitRepo::Own).tap do |instance|
       allow(instance).to receive(:container_path) { '.git' }
+      allow(instance).to receive(:application) { application }
     end
   end
 
@@ -92,7 +106,9 @@ describe Dapp::GitArtifact do
 
   def command_apply(command)
     expect(command).to_not be_empty
-    expect { shellout!(%(bash -ec '#{command.join(' && ')}')) }.to_not raise_error
+    shellout(%(bash -ec '#{command.join(' && ')}')).tap do |res|
+      expect { res.error! }.to_not raise_error, res.inspect
+    end
   end
 
   def remove_where_to_add

@@ -19,11 +19,10 @@ module Dapp
         define_method(stage.to_s) do |image|
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
-            image.add_command 'export PATH=/.dapp/deps/chefdk/bin:$PATH',
-                              "export DAPP_BUILD_STAGE=#{stage}"
+            image.add_command "export DAPP_BUILD_STAGE=#{stage}"
 
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}:ro"
-            image.add_command ['chef-solo',
+            image.add_command ['/.dapp/deps/chefdk/bin/chef-solo',
                                '--legacy-mode',
                                "-c #{container_stage_config_path(stage)}",
                                "-o #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
@@ -48,7 +47,7 @@ module Dapp
         super
 
         %i(before_install install before_setup setup chef_cookbooks).each do |stage|
-          raise ::Dapp::Error::Application, code: :cookbooks_stage_checksum_not_caclculated,
+          raise ::Dapp::Error::Application, code: :cookbooks_stage_checksum_not_calculated,
                                             data: { stage: stage } unless stage_cookbooks_checksum_path(stage).exist?
         end
       end
@@ -159,7 +158,7 @@ module Dapp
         @chefdk_container ||= begin
           if application.project.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
             application.project.log_secondary_process(application.project.t(code: 'process.chefdk_loading'), short: true) do
-              application.project.shellout(
+              application.project.shellout!(
                 ['docker create',
                  "--name #{chefdk_container_name}",
                  "--volume /.dapp/deps/chefdk #{chefdk_image}"].join(' ')

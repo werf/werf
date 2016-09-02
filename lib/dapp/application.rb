@@ -5,6 +5,9 @@ module Dapp
     include Path
     include Tags
 
+    include Deps::Gitartifact
+    include SystemShellout
+
     include Helper::Sha256
 
     attr_reader :config
