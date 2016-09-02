@@ -83,6 +83,9 @@ module SpecHelper
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:home_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
           allow(instance).to receive(:filelock)
+          allow(instance).to receive(:git_path) {'/.dapp/deps/gitartifact/bin/git'}
+          allow(instance).to receive(:sudo_path) {'/.dapp/deps/gitartifact/bin/sudo'}
+          yield instance if block_given?
         end
       end
     end

@@ -49,7 +49,8 @@ module Dapp
       private
 
       def _to_system_shellout_command(command)
-        "docker exec #{system_shellout_container} chroot /.system_shellout_root #{command}"
+        cmd = shellout_pack ["cd #{Dir.pwd}", command].join(' && ')
+        "docker exec #{system_shellout_container} chroot /.system_shellout_root bash -ec '#{cmd}'"
       end
     end # SystemShellout
   end # Application
