@@ -41,30 +41,32 @@ Dappfile — это файл, содержащий инструкции по с�
 * Собранное приложение представляет собой цепочку связанных стадий.
 * Имя docker образа стадии формируется по шаблону: dappstage-\<[имя проекта](#Имя-проекта)\>-\<[базовое имя приложения](#Базовое-имя-приложения)\>:\<[сигнатура стадии](#Сигнатура-стадии)\>
 
-#### Сигнатура-стадии
+#### Сигнатура стадии
+Сигнатура стадии — это контрольная сумма правил сборки и зависимостей стадии.
+* Изменение сигнатуры стадии ведет к пересборке этой стадии.
 
 #### Стадии
-TODO
-from
-before install
-before install artifact
-git artifact archive
-install
+* from
+* before install
+* before install artifact
+* git artifact archive
+* install
   * git artifact pre install patch dependencies
   * git artifact pre install patch
   * install
+  * git artifact post install patch dependencies
   * git artifact post install patch
-after install artifact
-before setup
-before setup artifact
-setup
-git artifact pre setup patch
-setup
-chef cookbooks
-git artifact post setup patch
-after setup artifact
-git artifact latest patch
-docker instructions
+* after install artifact
+* before setup
+* before setup artifact
+* setup
+* git artifact pre setup patch
+* setup
+* chef cookbooks
+* git artifact post setup patch
+* after setup artifact
+* git artifact latest patch
+* docker instructions
 
 ### Dappfile
 
