@@ -8,16 +8,12 @@ module Dapp
         def mrproper
           log_step_with_indent(:mrproper) do
             if proper_all?
-              log_step_with_indent(:containers) { remove_containers_by_query('docker ps -a -f "label=dapp" -q', force: true) }
-              log_step_with_indent('non tagged images') { remove_images(dapp_non_tagged_images.lines.map(&:strip), force: true) }
-              log_step_with_indent(:images) do
-                remove_images(dapp_images.lines.map(&:strip), force: true)
-              end
+              log_step_with_indent(:containers) { dapp_containers_flush }
+              log_step_with_indent(:images) { dapp_images_flush }
             elsif proper_cache_version?
               log_proper_cache do
-                all_images = dapp_images
                 proper_cache_images = proper_cache_all_images
-                remove_images(all_images.lines.select { |id| !proper_cache_images.lines.include?(id) }.map(&:strip))
+                remove_images(dapp_images.lines.select { |id| !proper_cache_images.lines.include?(id) }.map(&:strip))
               end
             else
               raise Error::Project, code: :mrproper_required_option
@@ -31,12 +27,21 @@ module Dapp
           !!cli_options[:proper_all]
         end
 
-        def dapp_non_tagged_images
-          shellout!('docker images -f "dangling=true" -f "label=dapp" -q').stdout.strip
+        def dapp_containers_flush
+          remove_containers_by_query('docker ps -a -f "label=dapp" -q', force: true)
+        end
+
+        def dapp_dangling_images_flush
+          remove_images_by_query('docker images -f "dangling=true" -f "label=dapp" -q', force: true)
+        end
+
+        def dapp_images_flush
+          dapp_dangling_images_flush
+          remove_images(dapp_images.lines.map(&:strip), force: true)
         end
 
         def dapp_images
-          shellout!('docker images -f "dangling=false" --format="{{.Repository}}:{{.Tag}}" -f "label=dapp"').stdout.strip
+          @dapp_images ||= shellout!('docker images -f "dangling=false" --format="{{.Repository}}:{{.Tag}}" -f "label=dapp"').stdout.strip
         end
 
         def proper_cache_all_images

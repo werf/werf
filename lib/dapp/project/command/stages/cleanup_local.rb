@@ -23,6 +23,7 @@ module Dapp
             lock("#{basename}.images") do
               log_step_with_indent(basename) do
                 project_containers_flush(basename)
+                project_dangling_images_flush(basename)
                 apps, stages = project_images_hash(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
                 apps = apps.to_h
                 stages = stages.to_h

@@ -15,6 +15,10 @@ module Dapp
           remove_containers_by_query(%(docker ps -a -f "label=dapp" -f "name=#{container_name(basename)}" -q), force: true)
         end
 
+        def project_dangling_images_flush(basename)
+          remove_images_by_query(%(docker images -f "dangling=true" -f "label=dapp=#{stage_dapp_label(basename)}" -q), force: true)
+        end
+
         def remove_images_by_query(images_query, force: false)
           with_subquery(images_query) { |ids| remove_images(ids, force: force) }
         end

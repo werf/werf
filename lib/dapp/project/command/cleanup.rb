@@ -10,6 +10,7 @@ module Dapp
             lock("#{basename}.images") do
               log_step_with_indent(basename) do
                 project_containers_flush(basename)
+                project_dangling_images_flush(basename)
                 remove_images_by_query([
                   'docker images',
                   %(--format '{{if ne "#{stage_cache(basename)}" .Repository }}{{.ID}}{{ end }}'),

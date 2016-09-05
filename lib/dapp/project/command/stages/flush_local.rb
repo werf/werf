@@ -11,6 +11,7 @@ module Dapp
               lock("#{basename}.images") do
                 log_step_with_indent(basename) do
                   project_containers_flush(basename)
+                  project_dangling_images_flush(basename)
                   remove_images(project_images(basename).lines.map(&:strip))
                 end
               end
