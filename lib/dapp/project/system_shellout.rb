@@ -48,10 +48,22 @@ module Dapp
       private
 
       def _to_system_shellout_command(command)
-        #TODO: env + SSH_AUTH_SOCK
         cmd = shellout_pack ["cd #{Dir.pwd}", command].join(' && ')
-        "docker exec #{system_shellout_container} chroot /.system_shellout_root bash -ec '#{cmd}'"
+        "docker exec #{system_shellout_container} chroot /.system_shellout_root bash -ec '#{[
+          *SystemShellout.default_env_keys.map { |env_key|
+            env_key = env_key.to_s.upcase
+            "export #{env_key}=#{ENV[env_key]}"
+          }, cmd
+        ].join(' && ')}'"
       end
+
+      public
+
+      class << self
+        def default_env_keys
+          @default_env_keys ||= []
+        end
+      end # << self
     end # SystemShellout
   end # Project
 end # Dapp
