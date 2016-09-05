@@ -323,21 +323,41 @@ describe Dapp::Config::Main do
       @artifact_attributes = [:cwd, :paths, :exclude_paths, :owner, :group]
     end
 
-    [:before_install_artifact, :before_setup_artifact, :after_install_artifact, :after_setup_artifact].each do |artifact|
-      context artifact do
-        it "base #{artifact}" do
-          @dappfile = "#{artifact} 'where_to_add', #{@artifact_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')}"
-          [:paths, :exclude_paths].each do |attr|
-            @artifact_attributes.delete(attr)
-            expect(app.public_send(:"_#{artifact}").first.public_send("_#{attr}")).to eq [attr.to_s]
-          end
-          expect(app.public_send(:"_#{artifact}").first._paths).to eq ['paths']
-          @artifact_attributes.each { |attr| expect(app.public_send(:"_#{artifact}").first.public_send("_#{attr}")).to eq attr.to_s }
-        end
+    context 'base' do
+      it 'not associated (:stage_artifact_not_associated)' do
+        @dappfile = "artifact 'where_to_add'"
+        expect_exception_code(code: :stage_artifact_not_associated) { apps }
+      end
 
-        it "unsupported key #{artifact}" do
-          @dappfile = "#{artifact} 'where_to_add', unsupported_key: :value"
-          expect_exception_code(code: :artifact_unexpected_attribute) { apps }
+      it 'double associated (:stage_artifact_double_associate)' do
+        @dappfile = "artifact 'where_to_add', before: :setup, after: :setup"
+        expect_exception_code(code: :stage_artifact_double_associate) { apps }
+      end
+
+      it 'not supported associated stage (:stage_artifact_not_supported_associated_stage)' do
+        @dappfile = "artifact 'where_to_add', before: :from"
+        expect_exception_code(code: :stage_artifact_not_supported_associated_stage) { apps }
+      end
+
+      it 'unsupported key (:artifact_unexpected_attribute)' do
+        @dappfile = "artifact 'where_to_add', before: :setup, unsupported_key: :value"
+        expect_exception_code(code: :artifact_unexpected_attribute) { apps }
+      end
+    end
+
+    [:before, :after].each do |order|
+      [:setup, :install].each do |stage|
+        artifact = "#{order}_#{stage}_artifact"
+        context artifact do
+          it 'base' do
+            @dappfile = "artifact 'where_to_add', #{order}: :#{stage}, #{@artifact_attributes.map { |attr| "#{attr}: '#{attr}'" }.join(', ')}"
+            [:paths, :exclude_paths].each do |attr|
+              @artifact_attributes.delete(attr)
+              expect(app.public_send(:"_#{artifact}").first.public_send("_#{attr}")).to eq [attr.to_s]
+            end
+            expect(app.public_send(:"_#{artifact}").first._paths).to eq ['paths']
+            @artifact_attributes.each { |attr| expect(app.public_send(:"_#{artifact}").first.public_send("_#{attr}")).to eq attr.to_s }
+          end
         end
       end
     end
@@ -504,8 +524,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            before_install_artifact 'where_to_add1'
-            before_setup_artifact 'where_to_add2'
+            artifact 'where_to_add1', before: :setup
+            artifact 'where_to_add2', after: :install
           )
           expect { app.send(:validate!) }.to_not raise_error
         end
@@ -514,8 +534,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            before_install_artifact 'where_to_add', paths: "c"
-            before_setup_artifact 'where_to_add', paths: "d"
+            artifact 'where_to_add', paths: "c", before: :setup
+            artifact 'where_to_add', paths: "d", after: :install
           )
           expect { app.send(:validate!) }.to_not raise_error
         end
@@ -524,8 +544,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            before_install_artifact 'where_to_add', paths: "c"
-            before_setup_artifact 'where_to_add', exclude_paths: "c"
+            artifact 'where_to_add', paths: "c", before: :setup
+            artifact 'where_to_add', exclude_paths: "c", after: :install
           )
           expect { app.send(:validate!) }.to_not raise_error
         end
@@ -534,8 +554,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            before_install_artifact 'where_to_add', paths: "c/d/e"
-            before_setup_artifact 'where_to_add', paths: "c", exclude_paths: "c/d"
+            artifact 'where_to_add', paths: "c/d/e", before: :setup
+            artifact 'where_to_add', paths: "c", exclude_paths: "c/d", after: :install
           )
           expect { app.send(:validate!) }.to_not raise_error
         end
@@ -546,8 +566,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            before_install_artifact 'where_to_add'
-            before_setup_artifact 'where_to_add'
+            artifact 'where_to_add', before: :setup
+            artifact 'where_to_add', after: :install
           )
           expect_exception_code(code: :artifact_conflict) { app.send(:validate!) }
         end
@@ -556,8 +576,8 @@ describe Dapp::Config::Main do
           @dappfile = %(
             docker.from 'image:tag'
 
-            before_install_artifact 'where_to_add', paths: "c"
-            before_setup_artifact 'where_to_add', exclude_paths: "d"
+            artifact 'where_to_add', paths: "c", before: :setup
+            artifact 'where_to_add', exclude_paths: "d", after: :install
           )
           expect_exception_code(code: :artifact_conflict) { app.send(:validate!) }
         end
