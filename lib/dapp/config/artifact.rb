@@ -35,11 +35,11 @@ module Dapp
           }
         end
 
+        protected
+
         def clone
           Marshal.load(Marshal.dump(self))
         end
-
-        protected
 
         def base_paths(paths)
           Array(paths)
@@ -59,6 +59,12 @@ module Dapp
         attr_accessor :_config
 
         protected
+
+        def clone
+          artifact_options = Marshal.load(Marshal.dump(_artifact_options))
+          where_to_add = artifact_options.delete(:where_to_add)
+          self.class.new(where_to_add, config: _config.send(:clone), **artifact_options)
+        end
 
         def code
           :artifact_unexpected_attribute

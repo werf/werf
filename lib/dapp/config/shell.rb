@@ -52,12 +52,14 @@ module Dapp
         methods.tap { |arr| arr.delete(__method__) }.grep(/^reset_/).each(&method(:send))
       end
 
-      def empty?
-        @_before_install.empty? && @_before_setup.empty? && @_install.empty? && @_setup.empty?
-      end
+      protected
 
       def clone
         Marshal.load(Marshal.dump(self))
+      end
+
+      def empty?
+        @_before_install.empty? && @_before_setup.empty? && @_install.empty? && @_setup.empty?
       end
     end
   end

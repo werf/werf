@@ -39,12 +39,14 @@ module Dapp
         reset_recipes
       end
 
-      def empty?
-        @_modules.empty? && @_recipes.empty?
-      end
+      protected
 
       def clone
         Marshal.load(Marshal.dump(self))
+      end
+
+      def empty?
+        @_modules.empty? && @_recipes.empty?
       end
     end
   end

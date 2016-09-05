@@ -18,6 +18,8 @@ module Dapp
         @_remote.tap { |remote| remote << Remote.new(*args) unless args.empty? }
       end
 
+      protected
+
       def clone
         Marshal.load(Marshal.dump(self))
       end

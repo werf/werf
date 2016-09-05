@@ -70,6 +70,8 @@ module Dapp
         }
       end
 
+      protected
+
       def clone
         Marshal.load(Marshal.dump(self))
       end
