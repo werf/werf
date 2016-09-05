@@ -28,7 +28,7 @@ module Dapp
       credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
       ["install #{credentials.join(' ')} -d #{where_to_add}",
-       ["git --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths.join(' ')}",
+       ["#{repo.application.project.git_path} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths.join(' ')}",
         "#{sudo}tar -x -C #{where_to_add} #{archive_command_excludes.join(' ')}"].join(' | ')]
     end
 
@@ -37,8 +37,8 @@ module Dapp
       prev_commit = stage.prev_g_a_stage.layer_commit(self)
 
       if prev_commit != current_commit || any_changes?(prev_commit, current_commit)
-        [["git --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
-          "#{sudo}git apply --whitespace=nowarn --directory=#{where_to_add} #{patch_command_excludes.join(' ')} --unsafe-paths"].join(' | ')]
+        [["#{repo.application.project.git_path} --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
+          "#{sudo}#{repo.application.project.git_path} apply --whitespace=nowarn --directory=#{where_to_add} #{patch_command_excludes.join(' ')} --unsafe-paths"].join(' | ')]
       else
         []
       end
@@ -104,7 +104,7 @@ module Dapp
       sudo = ''
 
       if owner || group
-        sudo = 'sudo -E '
+        sudo = "#{repo.application.project.sudo_path} -E "
         sudo += "-u #{sudo_format_user(owner)} " if owner
         sudo += "-g #{sudo_format_user(group)} " if group
       end

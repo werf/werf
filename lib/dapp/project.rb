@@ -29,6 +29,9 @@ module Dapp
     include Helper::Paint
     include Helper::Sha256
 
+    include Deps::Gitartifact
+    include SystemShellout
+
     attr_reader :cli_options
     attr_reader :apps_patterns
 
