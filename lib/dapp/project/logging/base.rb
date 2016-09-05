@@ -58,7 +58,7 @@ module Dapp
         end
 
         def log_time
-          self.class.log_time
+          Logging::Base.log_time
         end
 
         def log_format_string(str, time: true, indent: true, style: nil)

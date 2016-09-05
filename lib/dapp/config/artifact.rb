@@ -63,7 +63,7 @@ module Dapp
         def clone
           artifact_options = Marshal.load(Marshal.dump(_artifact_options))
           where_to_add = artifact_options.delete(:where_to_add)
-          self.class.new(where_to_add, config: _config.send(:clone), **artifact_options)
+          self.class.new(where_to_add, config: _config, **artifact_options)
         end
 
         def code

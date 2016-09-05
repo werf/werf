@@ -18,6 +18,7 @@ en:
       gitartifact_container_loading: 'loading dappdeps/gitartifact container'
       chefdk_container_loading: 'loading dappdeps/chefdk container'
       system_shellout_container_loading: 'loading system shellout container'
+      image_pull: "pulling image '%{name}'"
     status:
       process:
         pushing: '[PUSHING]'

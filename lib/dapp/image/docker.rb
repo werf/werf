@@ -32,7 +32,11 @@ module Dapp
 
       def pull!(log_verbose: false, log_time: false)
         return if tagged?
-        shellout!("docker pull #{name}", log_verbose: log_verbose, log_time: log_time)
+        project.with_log_indent do
+          project.log_secondary_process(project.t(code: 'process.image_pull', data: { name: name }), short: !log_verbose) do
+            shellout!("docker pull #{name}", log_verbose: log_verbose, log_time: log_time)
+          end
+        end
         cache_reset
       end
 
