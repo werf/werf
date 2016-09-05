@@ -101,10 +101,6 @@ module Dapp
         _app_chain.first
       end
 
-      def validate!
-        validate_artifacts!
-      end
-
       protected
 
       attr_accessor :project
@@ -119,7 +115,7 @@ module Dapp
           app.instance_variable_set(:'@_install_dependencies', _install_dependencies)
           app.instance_variable_set(:'@_setup_dependencies', _setup_dependencies)
           [:_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact].each do |artifact|
-            app.instance_variable_set(:"@#{artifact}", instance_variable_get(:"@#{artifact}").map(&:clone))
+            app.instance_variable_set(:"@#{artifact}", instance_variable_get(:"@#{artifact}").map { |artifact| artifact.send(:clone) })
           end
           app.instance_variable_set(:'@_docker', _docker.send(:clone))             unless @_docker.nil?
           app.instance_variable_set(:'@_git_artifact', _git_artifact.send(:clone)) unless @_git_artifact.nil?
@@ -154,6 +150,10 @@ module Dapp
           end
           Artifact::Stage.new(where_to_add, config: config, **options)
         end
+      end
+
+      def validate!
+        validate_artifacts!
       end
 
       def validate_artifacts!
