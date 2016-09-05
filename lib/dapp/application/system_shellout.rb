@@ -4,7 +4,7 @@ module Dapp
     # SystemShellout
     module SystemShellout
       SYSTEM_SHELLOUT_IMAGE = 'ubuntu:14.04'
-      SYSTEM_SHELLOUT_VERSION = 3
+      SYSTEM_SHELLOUT_VERSION = 4
 
       def system_shellout_container_name
         "dapp_system_shellout_#{hashsum [SYSTEM_SHELLOUT_VERSION,
@@ -29,7 +29,8 @@ module Dapp
                            'mkdir -p /.system_shellout_root/.dapp',
                            'mount --rbind /.dapp /.system_shellout_root/.dapp',
                            # KOSTYL 0.5 only {
-                           'mount --rbind /usr/bin /.system_shellout_root/usr/bin',
+                           "mkdir -p /.system_shellout_root/tmp/dapp_system_shellout/usr/bin",
+                           'mount --rbind /usr/bin /.system_shellout_root/tmp/dapp_system_shellout/usr/bin',
                            'mount --rbind /.system_shellout_root/sys /sys',
                            'if [ -d /sys/fs/selinux ] ; then mount -o remount,ro,bind /sys/fs/selinux ; fi',
                            'apt-get update -qq',
