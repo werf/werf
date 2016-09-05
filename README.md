@@ -42,32 +42,51 @@ Dappfile — это файл, содержащий инструкции по с�
 * Имя docker образа стадии формируется по шаблону: dappstage-\<[имя проекта](#Имя-проекта)\>-\<[базовое имя приложения](#Базовое-имя-приложения)\>:\<[сигнатура стадии](#Сигнатура-стадии)\>.
 
 #### Сигнатура стадии
-Сигнатура стадии — это контрольная сумма правил сборки, зависимостей стадии и сигнатуры предыдущей стадии, если она существует.
+Сигнатура стадии (signature) — это контрольная сумма правил сборки, зависимостей стадии и сигнатуры предыдущей стадии, если она существует.
 * Изменение сигнатуры стадии ведет к пересборке этой стадии.
 * При отсутствии правил и зависимостей, стадия игнорируется, используется сигнатура предыдущей стадии.
 
 #### Стадии
-* from
-* before install
-* before install artifact
-* git artifact archive
-* install
-  * git artifact pre install patch dependencies
-  * git artifact pre install patch
-  * install
-  * git artifact post install patch dependencies
-  * git artifact post install patch
-* after install artifact
-* before setup
-* before setup artifact
-* setup
-* git artifact pre setup patch
-* setup
-* chef cookbooks
-* git artifact post setup patch
-* after setup artifact
-* git artifact latest patch
-* docker instructions
+
+| Имя                               | Краткое описание | Зависимости |
+| --------------------------------- | ---------------- | ----------- |
+| from                              |                  |             |
+| before_install                    |                  |             |
+| before_install_artifact           |                  |             |
+| git_artifact_archive              |                  |             |
+| git_artifact_pre_install_patch    |                  |             |
+| install                           |                  |             |
+| git_artifact_post_install_patch   |                  |             |
+| after_install_artifact            |                  |             |
+| before_setup                      |                  |             |
+| before_setup_artifact             |                  |             |
+| git_artifact_pre_setup_patch      |                  |             |
+| setup                             |                  |             |
+| chef_cookbooks                    |                  |             |
+| git_artifact_post_setup_patch     |                  |             |
+| after_setup_artifact              |                  |             |
+| git_artifact_latest_patch         |                  |             |
+| docker_instructions               |                  |             |
+
+##### from
+##### before install
+##### before install artifact
+##### git artifact archive
+##### Группа install
+###### git artifact pre install patch
+###### install
+###### git artifact post install patch
+##### after install artifact
+##### before setup
+##### before setup artifact
+##### Группа setup
+###### git artifact pre setup patch
+###### setup
+###### chef cookbooks
+###### git artifact post setup patch
+##### after setup artifact
+##### git artifact latest patch
+##### docker instructions
 
 ### Dappfile
 
@@ -443,22 +462,6 @@ dapp stages flush [options] [APPS PATTERN...]
 ## Architecture
 
 ### Стадии
-| Имя                 | Краткое описание                     															                                        |
-| ------------------- | --------------------------------------------------------------------------------------------------------- |
-| from                | Выбор окружения                                 														                              |
-| before_install       | Установка софта инфраструктуры                															                              |
-| git_artifact_archive    | Создание архива                                															                              |
-| git_artifact_pre_install_patch            | Наложение патча                              															                                |
-| install             | Установка софта приложения                    															                              |
-| artifact            | Копирование артефакта(ов)                     															                              |
-| git_artifact_post_install_patch            | Наложение патча                               															                              |
-| before_setup         | Настройка софта инфраструктуры                															                              |
-| git_artifact_pre_setup_patch            | Наложение патча                               															                              |
-| chef_cookbooks      | Установка cookbook`ов         																			                                      |
-| setup               | Развёртывание приложения                    															                                |  
-| git_artifact_post_setup_patch            | Наложение патча                               															                              |
-| git_artifact_latest_patch            | Наложение патча                               	                                                          |
-| docker_instructions | Применение докерфайловых инструкций (CMD, ENTRYPOINT, ENV, EXPOSE, LABEL, ONBUILD, USER, VOLUME, WORKDIR) |
 
 #### from
 *TODO*
