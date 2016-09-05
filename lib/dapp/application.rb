@@ -17,8 +17,6 @@ module Dapp
       @config = config
       @project = project
 
-      @tmp_path = Dir.mktmpdir(project.cli_options[:tmp_dir_prefix] || 'dapp-')
-
       @last_stage = Build::Stage::DockerInstructions.new(self)
       @ignore_git_fetch = ignore_git_fetch
       @should_be_built = should_be_built
