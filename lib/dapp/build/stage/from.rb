@@ -14,9 +14,13 @@ module Dapp
         protected
 
         def image_build
-          from_image.pull!(log_time: application.project.log_time?)
-          raise Error::Build, code: :from_image_not_found, data: { name: from_image_name } if from_image.built_id.nil?
+          from_image.pull!(log_verbose: application.project.log_verbose?, log_time: application.project.log_time?)
+          raise Error::Build, code: :from_image_not_found, data: { name: from_image_name } unless from_image.tagged?
           super
+        end
+
+        def should_not_be_detailed?
+          from_image.tagged?
         end
 
         private

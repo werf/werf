@@ -70,7 +70,7 @@ module Dapp
           def log_image_build_process
             return yield if should_be_quiet?
             application.project.log_process(log_name, process: application.project.t(code: 'status.process.building'),
-                                                      short: should_not_be_detailed? || image.send(:bash_commands).empty?) do
+                                                      short: should_not_be_detailed?) do
               yield
             end
           end
@@ -84,7 +84,7 @@ module Dapp
           end
 
           def should_not_be_detailed?
-            false
+            image.send(:bash_commands).empty?
           end
 
           def should_be_introspected?

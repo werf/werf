@@ -31,7 +31,7 @@ module Dapp
           end
 
           def format_string(str)
-            str.lines.map { |l| "#{Project::Logging.log_time if @with_time}#{l.strip}\n" }.join
+            str.lines.map { |l| "#{Project::Logging::Base.log_time if @with_time}#{l.strip}\n" }.join
           end
         end
 
