@@ -76,7 +76,7 @@ module Dapp
           end
 
           def ignore_log_commands?
-            image.send(:bash_commands).empty?
+            false
           end
 
           def should_be_skipped?
@@ -84,7 +84,7 @@ module Dapp
           end
 
           def should_not_be_detailed?
-            false
+            image.send(:bash_commands).empty?
           end
 
           def should_be_introspected?
