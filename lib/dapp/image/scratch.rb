@@ -16,10 +16,6 @@ module Dapp
 
       def pull!(*_args)
       end
-
-      def pulled?
-        false
-      end
     end # Stage
   end # Image
 end # Dapp

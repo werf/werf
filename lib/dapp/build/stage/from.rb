@@ -11,11 +11,6 @@ module Dapp
           [from_image_name, application.config._docker._from_cache_version, Dapp::BUILD_CACHE_VERSION]
         end
 
-        def save_in_cache!
-          from_image.untag! if from_image.pulled?
-          super
-        end
-
         protected
 
         def image_build

@@ -33,16 +33,11 @@ module Dapp
       def pull!(log_verbose: false, log_time: false)
         return if tagged?
         shellout!("docker pull #{name}", log_verbose: log_verbose, log_time: log_time)
-        @pulled = true
         cache_reset
       end
 
       def tagged?
         !!id
-      end
-
-      def pulled?
-        !!@pulled
       end
 
       def created_at
