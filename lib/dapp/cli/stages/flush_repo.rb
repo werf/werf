@@ -7,7 +7,7 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages flush repo [options] [APPS PATTERN ...] [REPO]
+  dapp stages flush repo [options] [APPS PATTERN ...] REPO
 
     APPS PATTERN                Applications to process [default: *].
 

@@ -7,7 +7,7 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages cleanup local [options] [APPS PATTERN ...] [REPO]
+  dapp stages cleanup local [options] [APPS PATTERN ...] REPO
 
     APPS PATTERN                Applications to process [default: *].
 

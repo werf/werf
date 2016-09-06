@@ -80,7 +80,7 @@ module Dapp
           end
 
           def should_be_skipped?
-            image.tagged? && !application.project.log_verbose? && application.project.cli_options[:introspect_stage].nil?
+            image.tagged? && !application.project.log_verbose? && !should_be_introspected?
           end
 
           def should_not_be_detailed?
