@@ -13,15 +13,6 @@ module Dapp
         def empty?
           application.git_artifacts.empty? ? true : false
         end
-
-        protected
-
-        def dependencies_files_checksum(regs)
-          regs.map! { |reg| File.directory?(File.join(application.project.path, reg)) ? File.join(reg, '**', '*') : reg }
-          unless (files = regs.map { |reg| Dir[File.join(application.project.path, reg)].map { |f| File.read(f) if File.file?(f) } }).empty?
-            hashsum files
-          end
-        end
       end # GADependenciesBase
     end # Stage
   end # Build

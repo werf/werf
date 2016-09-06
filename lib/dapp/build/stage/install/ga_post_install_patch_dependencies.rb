@@ -12,7 +12,7 @@ module Dapp
           end
 
           def dependencies
-            [application.builder.before_setup_checksum]
+            next_stage.next_stage.next_stage.dependencies # BeforeSetup
           end
         end # GAPostInstallPatchDependencies
       end

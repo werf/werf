@@ -132,6 +132,13 @@ module Dapp
         def name
           class_to_lowercase.to_sym
         end
+
+        def dependencies_files_checksum(regs)
+          regs.map! { |reg| File.directory?(File.join(application.project.path, reg)) ? File.join(reg, '**', '*') : reg }
+          unless (files = regs.map { |reg| Dir[File.join(application.project.path, reg)].map { |f| File.read(f) if File.file?(f) } }).empty?
+            hashsum files
+          end
+        end
       end # Base
     end # Stage
   end # Build

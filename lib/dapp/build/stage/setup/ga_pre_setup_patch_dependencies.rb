@@ -12,13 +12,7 @@ module Dapp
           end
 
           def dependencies
-            [setup_dependencies_files_checksum, application.builder.setup_checksum]
-          end
-
-          private
-
-          def setup_dependencies_files_checksum
-            @setup_files_checksum ||= dependencies_files_checksum(application.config._setup_dependencies)
+            next_stage.next_stage.dependencies # Setup
           end
         end # GAPreSetupPatchDependencies
       end
