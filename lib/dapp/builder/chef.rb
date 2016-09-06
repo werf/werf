@@ -13,7 +13,7 @@ module Dapp
 
       %i(before_install install before_setup setup).each do |stage|
         define_method("#{stage}_checksum") do
-          hashsum [stage_cookbooks_checksum(stage), *stage_cookbooks_runlist(stage)]
+          application.hashsum [stage_cookbooks_checksum(stage), *stage_cookbooks_runlist(stage)]
         end
 
         define_method("#{stage}?") { !stage_empty?(stage) }
