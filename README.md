@@ -445,7 +445,7 @@ dapp push [options] [APPS PATTERN ...] REPO
 ```bash
 $ dapp push localhost:5000/test
 ```
-* Запустить вхолостую и посмотреть какие образы могут быть выкачены:
+* Посмотреть, какие образы могут быть добавлены в репозиторий:
 ```bash
 $ dapp push localhost:5000/test --tag yellow --tag-branch --dry-run
 backend
@@ -474,7 +474,7 @@ $ dapp spush app localhost:5000/test
 ```bash
 $ dapp spush app localhost:5000/test --tag 1 --tag test
 ```
-* Запустить вхолостую и посмотреть какие образы могут быть выкачены:
+* Посмотреть, какие образы могут быть добавлены в репозиторий:
 ```bash
 $ dapp spush app localhost:5000/test --tag-commit --tag-branch --dry-run
 localhost:5000/test:2c622c16c39d4938dcdf7f5c08f7ed4efa8384c4
@@ -493,7 +493,7 @@ dapp stages push [options] [APP PATTERN] REPO
 ```bash
 $ dapp stages push localhost:5000/test
 ```
-* Запустить вхолостую и посмотреть какие образы могут быть выкачены:
+* Посмотреть, какие образы могут быть добавлены в репозиторий:
 ```bash
 $ dapp stages push localhost:5000/test --dry-run
 backend
@@ -528,7 +528,7 @@ dapp stages pull [options] [APP PATTERN] REPO
 ```bash
 $ dapp stages pull localhost:5000/test
 ```
-* Запустить вхолостую и посмотреть какие образы будут искаться в репозитории localhost:5000/test:
+* Посмотреть, поиск каких образов в репозитории localhost:5000/test может быть выполен:
 ```bash
 $ dapp stages pull localhost:5000/test --all --dry-run
 backend
@@ -622,7 +622,7 @@ dapp mrproper [options]
 ```bash
 $ dapp mrproper --all
 ```
-* Посмотреть, версия каких образов устарела, какие команды могут быть выполнены:
+* Посмотреть, версия кэша каких образов устарела, какие команды могут быть выполнены:
 ```bash
 $ dapp mrproper --improper-cache-version-stages --dry-run
 mrproper
