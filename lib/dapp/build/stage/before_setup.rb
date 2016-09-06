@@ -13,7 +13,7 @@ module Dapp
         end
 
         def dependencies
-          prev_stage.prev_stage.prev_stage.dependencies # GAPostInstallPatchDependencies
+          [application.builder.before_setup_checksum]
         end
 
         def prepare_image

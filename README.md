@@ -152,6 +152,11 @@ Build директория — это директория для хранени
 | git_artifact_latest_patch         | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | docker_instructions               | Применение докерфайловых инструкций | docker.cmd, docker.env, docker.entrypoint, docker.expose, docker.label, docker.onbuild, docker.user, docker.volume, docker.workdir |
 
+##### Особенности
+* Сигнатуры стадий git_artifact_pre_install_patch, git_artifact_post_install_patch, git_artifact_pre_setup_patch, помимо обратной зависимости от сигнатур стадий, имеют зависимость от install, before_setup и setup сигнатур соответственно. 
+  * К примеру: изменения зависимостей стадии install приведёт к пересборке стадии git_artifact_pre_install_patch.
+* Сигнатура стадии git_artifact_post_setup_patch зависит от размера патчей git-артефактов и будет пересобрана, если их сумма превысит лимит (10 MB).
+
 ##### from
 ##### before install
 ##### before install artifact
@@ -372,7 +377,7 @@ dapp build [options] [APPS PATTERN ...]
 По умолчанию поиск ведётся в текущей папке пользователя.
 
 ###### --build-dir PATH
-Переопределяет директорию хранения кеша, который может использоваться между сборками.
+Переопределяет директорию хранения кэша, который может использоваться между сборками.
 
 ###### --tmp-dir-prefix PREFIX
 Переопределяет префикс временной директории, файлы которой используются только во время сборки.
@@ -432,6 +437,9 @@ $ dapp build --introspect-error
 dapp push [options] [APPS PATTERN ...] REPO
 ```
 
+##### --with-stages
+Также выкатить кэш стадий.
+
 ##### --force
 Позволяет перезаписывать существующие образы.
 
@@ -458,19 +466,19 @@ dapp push [options] [APPS PATTERN ...] REPO
 Добавляет теги, взятые из переменных окружения CI систем.
 
 ##### Примеры
-* Выкатить все приложения в репозиторий test и тегом latest:
+* Выкатить все приложения в репозиторий localhost:5000/test и тегом latest:
 ```bash
-$ dapp push test
+$ dapp push localhost:5000/test
 ```
 * Запустить вхолостую и посмотреть какие образы могут быть выкачены:
 ```bash
-$ dapp push test --tag yellow --tag-branch --dry-run
+$ dapp push localhost:5000/test --tag yellow --tag-branch --dry-run
 backend
-  test:backend-yellow
-  test:backend-master
+  localhost:5000/test:backend-yellow
+  localhost:5000/test:backend-master
 frontend
-  test:frontend-yellow
-  test:frontend-0.2
+  localhost:5000/test:frontend-yellow
+  localhost:5000/test:frontend-0.2
 ```
 
 #### dapp spush
@@ -485,17 +493,82 @@ dapp spush [options] [APP PATTERN] REPO
 ##### Примеры
 * Выкатить приложение **app** в репозиторий test, именем myapp и тегом latest:
 ```bash
-$ dapp spush app test/myapp
+$ dapp spush app localhost:5000/test
 ```
 * Выкатить приложение с произвольными тегами:
 ```bash
-$ dapp spush app test/myapp --tag 1 --tag test
+$ dapp spush app localhost:5000/test --tag 1 --tag test
 ```
 * Запустить вхолостую и посмотреть какие образы могут быть выкачены:
 ```bash
-$ dapp spush app test/myapp --tag-commit --tag-branch --dry-run
-test/myapp:2c622c16c39d4938dcdf7f5c08f7ed4efa8384c4
-test/myapp:master
+$ dapp spush app localhost:5000/test --tag-commit --tag-branch --dry-run
+localhost:5000/test:2c622c16c39d4938dcdf7f5c08f7ed4efa8384c4
+localhost:5000/test:master
+```
+
+#### dapp stages push
+Выкатить кэш собранных приложений в репозиторий.
+
+```
+dapp stages push [options] [APP PATTERN] REPO
+```
+
+##### Примеры
+* Выкатить кэш приложений проекта в репозиторий localhost:5000/test:
+```bash
+$ dapp stages push localhost:5000/test
+```
+* Запустить вхолостую и посмотреть какие образы могут быть выкачены:
+```bash
+$ dapp stages push localhost:5000/test --dry-run
+backend
+  localhost:5000/test:dappstage-be032ed31bd96506d0ed550fa914017452b553c7f1ecbb136216b2dd2d3d1623
+  localhost:5000/test:dappstage-2183f7db73687e727d9841594e30d8cb200312290a0a967ef214fe3771224ee2
+  localhost:5000/test:dappstage-f7d4c5c420f29b7b419f070ca45f899d2c65227bde1944f7d340d6e37087c68d
+  localhost:5000/test:dappstage-256f03ccf980b805d0e5944ab83a28c2374fbb69ef62b8d2a52f32adef91692f
+  localhost:5000/test:dappstage-31ed444b92690451e7fa889a137ffc4c3d4a128cb5a7e9578414abf107af13ee
+  localhost:5000/test:dappstage-02b636d9316012880e40da44ee5da3f1067cedd66caa3bf89572716cd1f894da
+frontend
+  localhost:5000/test:dappstage-192c0e9d588a51747ce757e61be13acb4802dc2cdefbeec53ca254d014560d46
+  localhost:5000/test:dappstage-427b999000024f9268a46b889d66dae999efbfe04037fb6fc0b1cd7ebb4600b0
+  localhost:5000/test:dappstage-07fe13aec1e9ce0fe2d2890af4e4f81aaa984c89a2b91fbd0e164468a1394d46
+  localhost:5000/test:dappstage-ba95ec8a00638ddac413a13e303715dd2c93b80295c832af440c04a46f3e8555
+  localhost:5000/test:dappstage-02b636d9316012880e40da44ee5da3f1067cedd66caa3bf89572716cd1f894da
+```
+
+#### dapp stages pull
+Импортировать необходимый кэш приложений проекта, если он присутствует в репозитории **REPO**.
+
+Если не указана опция **--all**, импорт будет выполнен до первого найденного кэша для каждого приложения.
+
+```
+dapp stages pull [options] [APP PATTERN] REPO
+```
+
+##### --all
+Попробовать импортировать весь необходимый кэш.
+
+##### Примеры
+* Импортировать кэш приложений проекта из репозитория localhost:5000/test:
+```bash
+$ dapp stages pull localhost:5000/test
+```
+* Запустить вхолостую и посмотреть какие образы будут искаться в репозитории localhost:5000/test:
+```bash
+$ dapp stages pull localhost:5000/test --all --dry-run
+backend
+  localhost:5000/test:dappstage-be032ed31bd96506d0ed550fa914017452b553c7f1ecbb136216b2dd2d3d1623
+  localhost:5000/test:dappstage-2183f7db73687e727d9841594e30d8cb200312290a0a967ef214fe3771224ee2
+  localhost:5000/test:dappstage-f7d4c5c420f29b7b419f070ca45f899d2c65227bde1944f7d340d6e37087c68d
+  localhost:5000/test:dappstage-256f03ccf980b805d0e5944ab83a28c2374fbb69ef62b8d2a52f32adef91692f
+  localhost:5000/test:dappstage-31ed444b92690451e7fa889a137ffc4c3d4a128cb5a7e9578414abf107af13ee
+  localhost:5000/test:dappstage-02b636d9316012880e40da44ee5da3f1067cedd66caa3bf89572716cd1f894da
+frontend
+  localhost:5000/test:dappstage-192c0e9d588a51747ce757e61be13acb4802dc2cdefbeec53ca254d014560d46
+  localhost:5000/test:dappstage-427b999000024f9268a46b889d66dae999efbfe04037fb6fc0b1cd7ebb4600b0
+  localhost:5000/test:dappstage-07fe13aec1e9ce0fe2d2890af4e4f81aaa984c89a2b91fbd0e164468a1394d46
+  localhost:5000/test:dappstage-ba95ec8a00638ddac413a13e303715dd2c93b80295c832af440c04a46f3e8555
+  localhost:5000/test:dappstage-02b636d9316012880e40da44ee5da3f1067cedd66caa3bf89572716cd1f894da
 ```
 
 #### dapp list
@@ -536,69 +609,48 @@ $ dapp run app -ti --rm -- bash -ec true
 docker run -ti --rm app-dappstage:ea5ec7543c809ec7e9fe28181edfcb2ee6f48efaa680f67bf23a0fc0057ea54c bash -ec true
 ```
 
-#### dapp stages flush
-Удаляет весь тегированный кэш приложений (см. [Кэш стадий](#Кэш-стадий)).
+#### dapp cleanup
+Убраться в системе после некорректного завершения работы dapp, удалить нетеггированные docker-образы и docker-контейнеры проекта.
 
 ```
-dapp stages flush [options] [APPS PATTERN...]
+dapp cleanup [options] [APPS PATTERN ...]
 ```
 
-## Architecture
+##### Примеры
+* Запустить:
+```bash
+$ dapp cleanup
+```
+* Посмотреть, какие команды могут быть выполнены:
+```bash
+$ dapp cleanup --dry-run
+backend
+  docker rm -f dd4ec7v33
+  docker rmi ea5ec7543 c809ec7e9f ee6f48efa6
+```
 
-### Стадии
+#### dapp mrproper
+Очистить систему.
 
-#### from
-*TODO*
+```
+dapp mrproper [options]
+```
 
-#### before_install
-*TODO*
+##### --all
+Удалить docker-образы и docker-контейнеры связанные с dapp.
 
-#### git_artifact_archive
-*TODO*
+##### --improper-cache-version-stages
+Удалить устаревший кэш.
 
-#### git_artifact_pre_install_patch
-*TODO*
-
-#### install
-*TODO*
-
-#### artifact
-*TODO*
-
-#### git_artifact_post_install_patch
-*TODO*
-
-#### before_setup
-*TODO*
-
-#### git_artifact_pre_setup_patch
-*TODO*
-
-#### chef_cookbooks
-*TODO*
-
-#### setup
-*TODO*
-
-#### git_artifact_post_setup_patch
-*TODO*
-
-#### git_artifact_latest_patch
-*TODO*
-
-#### docker_instructions
-*TODO*
-
-### Хранение данных
-
-#### Кэш стадий
-*TODO*
-
-#### Временное
-*TODO*
-
-#### Метаданные
-*TODO*
-
-#### Кэш сборки
-*TODO*
+##### Примеры
+* Запустить очистку:
+```bash
+$ dapp mrproper --all
+```
+* Посмотреть, версия каких образов устарела, какие команды могут быть выполнены:
+```bash
+$ dapp mrproper --improper-cache-version-stages --dry-run
+mrproper
+  proper cache
+    docker rmi dappstage-dapp-test-project-services-stats:ba95ec8a00638ddac413a13e303715dd2c93b80295c832af440c04a46f3e8555 dappstage-dapp-test-project-services-stats:f53af70566ec23fb634800d159425da6e7e61937afa95e4ed8bf531f3503daa6
+```

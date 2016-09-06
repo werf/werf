@@ -12,17 +12,11 @@ module Dapp
           end
 
           def dependencies
-            [install_dependencies_files_checksum, application.builder.install_checksum]
+            next_stage.next_stage.dependencies # Install
           end
 
           def empty?
             super || dependencies_empty?
-          end
-
-          private
-
-          def install_dependencies_files_checksum
-            @install_dependencies_files_checksum ||= dependencies_files_checksum(application.config._install_dependencies)
           end
         end # GAPreInstallPatchDependencies
       end

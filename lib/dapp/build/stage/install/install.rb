@@ -16,12 +16,18 @@ module Dapp
           end
 
           def dependencies
-            prev_stage.prev_stage.dependencies # GAPreInstallPatchDependencies
+            [install_dependencies_files_checksum, application.builder.install_checksum]
           end
 
           def prepare_image
             super
             application.builder.install(image)
+          end
+
+          private
+
+          def install_dependencies_files_checksum
+            @install_dependencies_files_checksum ||= dependencies_files_checksum(application.config._install_dependencies)
           end
         end # Install
       end
