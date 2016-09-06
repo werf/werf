@@ -132,23 +132,23 @@ Build директория — это директория для хранени
 
 #### Стадии
 
-| Имя                               | Краткое описание 					  | Зависимость от директив                            |
+| Имя                               | Краткое описание 					          | Зависимость от директив                            |
 | --------------------------------- | ----------------------------------- | -------------------------------------------------- |
-| from                              | Выбор окружения  					  | docker.from 			   						   |
+| from                              | Выбор окружения  					          | docker.from 			   						                   |
 | before_install                    | Установка софта инфраструктуры      | shell.before_install / chef.module, chef.recipe    |
-| before_install_artifact           | Наложение артефактов 				  | artifact (с before: :install) 			   		   |
-| git_artifact_archive              | Наложение git-артефактов            | git_artifact.local и git_artifact.remote 		   |
+| before_install_artifact           | Наложение артефактов 				  | artifact (с before: :install) 			   		               |
+| git_artifact_archive              | Наложение git-артефактов            | git_artifact.local и git_artifact.remote 		       |
 | git_artifact_pre_install_patch    | Наложение патчей git-артефактов 	  | git_artifact.local и git_artifact.remote           |
 | install                           | Установка софта приложения          | shell.install / chef.module, chef.recipe           |
 | git_artifact_post_install_patch   | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
-| after_install_artifact            | Наложение артефактов                | artifact (с after: :install)               		   |
+| after_install_artifact            | Наложение артефактов                | artifact (с after: :install)               		     |
 | before_setup                      | Настройка софта инфраструктуры      | shell.before_setup / chef.module, chef.recipe      |
-| before_setup_artifact             | Наложение артефактов                | artifact (с before: :setup)                		   |
+| before_setup_artifact             | Наложение артефактов                | artifact (с before: :setup)                		     |
 | git_artifact_pre_setup_patch      | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | setup                             | Развёртывание приложения            | shell.setup / chef.module, chef.recipe             |
-| chef_cookbooks                    | Установка cookbook`ов               | -             		       						   |
+| chef_cookbooks                    | Установка cookbook`ов               | -             		       						               |
 | git_artifact_post_setup_patch     | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
-| after_setup_artifact              | Наложение артефактов                | artifact (с after: :setup)            	   		   |
+| after_setup_artifact              | Наложение артефактов                | artifact (с after: :setup)            	   		     |
 | git_artifact_latest_patch         | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | docker_instructions               | Применение докерфайловых инструкций | docker.cmd, docker.env, docker.entrypoint, docker.expose, docker.label, docker.onbuild, docker.user, docker.volume, docker.workdir |
 
@@ -609,6 +609,64 @@ $ dapp run app -ti --rm -- bash -ec true
 docker run -ti --rm app-dappstage:ea5ec7543c809ec7e9fe28181edfcb2ee6f48efaa680f67bf23a0fc0057ea54c bash -ec true
 ```
 
+#### dapp stages cleanup local
+Удалить неактуальный локальный кэш приложений проекта, опираясь на приложения в репозитории **REPO**.
+
+```
+dapp stages cleanup local [options] [APPS PATTERN ...] REPO
+```
+
+##### --improper-cache-version
+Удалить устаревший кэш приложений проекта.
+
+##### Примеры
+* Удалить неактуальный кэш приложений:
+```bash
+$ dapp stages cleanup local localhost:5000/test --improper-cache-version
+```
+
+#### dapp stages cleanup repo
+Удалить неиспользуемый кэш приложений в репозитории **REPO**.
+
+```
+dapp stages cleanup repo [options] [APPS PATTERN ...] REPO
+```
+
+##### --improper-cache-version
+Удалить устаревший кэш приложений проекта.
+
+##### Примеры
+* Удалить неактуальный кэш приложений в репозитории localhost:5000/test:
+```bash
+$ dapp stages cleanup repo localhost:5000/test
+```
+
+#### dapp stages flush local
+Удалить кэш приложений проекта.
+
+```
+dapp stages flush local [options] [APPS PATTERN ...]
+```
+
+##### Примеры
+* Удалить кэш приложений:
+```bash
+$ dapp stages flush local
+```
+
+#### dapp stages flush repo
+Удалить приложения и кэш приложений проекта в репозитории **REPO**.
+
+```
+dapp stages flush repo [options] [APPS PATTERN ...] REPO
+```
+
+##### Примеры
+* Удалить весь кэш приложений в репозитории localhost:5000/test:
+```bash
+$ dapp stages flush repo localhost:5000/test
+```
+
 #### dapp cleanup
 Убраться в системе после некорректного завершения работы dapp, удалить нетеггированные docker-образы и docker-контейнеры проекта.
 
@@ -640,7 +698,7 @@ dapp mrproper [options]
 Удалить docker-образы и docker-контейнеры связанные с dapp.
 
 ##### --improper-cache-version-stages
-Удалить устаревший кэш.
+Удалить устаревший кэш приложений.
 
 ##### Примеры
 * Запустить очистку:
