@@ -107,25 +107,25 @@ Build директория — это директория для хранени
 
 #### Стадии
 
-| Имя                               | Краткое описание | Зависимости |
-| --------------------------------- | ---------------- | ----------- |
-| from                              |                  |             |
-| before_install                    |                  |             |
-| before_install_artifact           |                  |             |
-| git_artifact_archive              |                  |             |
-| git_artifact_pre_install_patch    |                  |             |
-| install                           |                  |             |
-| git_artifact_post_install_patch   |                  |             |
-| after_install_artifact            |                  |             |
-| before_setup                      |                  |             |
-| before_setup_artifact             |                  |             |
-| git_artifact_pre_setup_patch      |                  |             |
-| setup                             |                  |             |
-| chef_cookbooks                    |                  |             |
-| git_artifact_post_setup_patch     |                  |             |
-| after_setup_artifact              |                  |             |
-| git_artifact_latest_patch         |                  |             |
-| docker_instructions               |                  |             |
+| Имя                               | Краткое описание 					  | Зависимость от директив                            |
+| --------------------------------- | ----------------------------------- | -------------------------------------------------- |
+| from                              | Выбор окружения  					  | docker.from 			   						   |
+| before_install                    | Установка софта инфраструктуры      | shell.before_install / chef.module, chef.recipe    |
+| before_install_artifact           | Наложение артефактов 				  | artifact (с before: :install) 			   		   |
+| git_artifact_archive              | Наложение git-артефактов            | git_artifact.local и git_artifact.remote 		   |
+| git_artifact_pre_install_patch    | Наложение патчей git-артефактов 	  | git_artifact.local и git_artifact.remote           |
+| install                           | Установка софта приложения          | shell.install / chef.module, chef.recipe           |
+| git_artifact_post_install_patch   | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
+| after_install_artifact            | Наложение артефактов                | artifact (с after: :install)               		   |
+| before_setup                      | Настройка софта инфраструктуры      | shell.before_setup / chef.module, chef.recipe      |
+| before_setup_artifact             | Наложение артефактов                | artifact (с before: :setup)                		   |
+| git_artifact_pre_setup_patch      | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
+| setup                             | Развёртывание приложения            | shell.setup / chef.module, chef.recipe             |
+| chef_cookbooks                    | Установка cookbook`ов               | -             		       						   |
+| git_artifact_post_setup_patch     | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
+| after_setup_artifact              | Наложение артефактов                | artifact (с after: :setup)            	   		   |
+| git_artifact_latest_patch         | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
+| docker_instructions               | Применение докерфайловых инструкций | docker.cmd, docker.env, docker.entrypoint, docker.expose, docker.label, docker.onbuild, docker.user, docker.volume, docker.workdir |
 
 ##### from
 ##### before install
