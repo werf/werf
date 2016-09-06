@@ -12,7 +12,9 @@ module Dapp
       DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.17.3-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
       %i(before_install install before_setup setup).each do |stage|
-        define_method("#{stage}_checksum") { stage_cookbooks_checksum(stage) }
+        define_method("#{stage}_checksum") do
+          hashsum [stage_cookbooks_checksum(stage), *stage_cookbooks_runlist(stage)]
+        end
 
         define_method("#{stage}?") { !stage_empty?(stage) }
 
@@ -111,7 +113,6 @@ module Dapp
                        application.hashsum [
                          application.paths_content_hashsum(paths),
                          *paths.map { |p| p.relative_path_from(stage_cookbooks_path(stage)).to_s }.sort,
-                         *enabled_modules,
                          stage == :before_install ? chefdk_image : nil
                        ].compact
                      end
@@ -301,7 +302,7 @@ module Dapp
                     else
                       [nil, *common_mdapp_paths]
                     end
-                  else
+                  elsif !is_mdapp
                     [['.', '.']]
                   end
 
