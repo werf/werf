@@ -12,7 +12,9 @@ module Dapp
       DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.17.3-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
       [:infra_install, :infra_setup, :install, :setup].each do |stage|
-        define_method("#{stage}_checksum") { stage_cookbooks_checksum(stage) }
+        define_method("#{stage}_checksum") do
+          hashsum [stage_cookbooks_checksum(stage), *stage_cookbooks_runlist(stage)]
+        end
 
         define_method("#{stage}?") { !stage_empty?(stage) }
 
