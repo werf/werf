@@ -97,7 +97,6 @@ module Dapp
                        application.hashsum [
                          application.paths_content_hashsum(paths),
                          *paths.map { |p| p.relative_path_from(stage_cookbooks_path(stage)).to_s }.sort,
-                         *enabled_modules,
                          stage == :infra_install ? chefdk_image : nil
                        ].compact
                      end
@@ -255,7 +254,7 @@ module Dapp
                     else
                       [nil, *common_mdapp_paths]
                     end
-                  else
+                  elsif !is_mdapp
                     [['.', '.']]
                   end
 
