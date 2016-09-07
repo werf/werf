@@ -4,6 +4,7 @@ module Dapp
     include GitArtifact
     include Path
     include Tags
+    include Stages
 
     include Helper::Sha256
 
@@ -107,16 +108,8 @@ module Dapp
       end
     end
 
-    def signature
-      last_stage.send(:signature)
-    end
-
-    def stage_cache_format
-      "#{project.cache_format % { application_name: config._basename }}:%{signature}"
-    end
-
-    def stage_dapp_label
-      project.stage_dapp_label_format % { application_name: config._basename }
+    def stage_image_name(stage_name)
+      stages.find { |stage| stage.send(:name) == stage_name }.image.name
     end
 
     def artifact(config)
@@ -127,27 +120,7 @@ module Dapp
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
     end
 
-    def export_images
-      images.select(&:tagged?)
-    end
-
-    def import_images
-      images.select { |image| !image.tagged? }
-    end
-
-    def images
-      (@images ||= []).tap do |images|
-        stage = last_stage
-        loop do
-          if stage.respond_to?(:images)
-            images.concat(stage.images)
-          else
-            images << stage.image
-          end
-          break if (stage = stage.prev_stage).nil?
-        end
-      end.uniq(&:name)
-    end
+    protected
 
     def should_be_built?
       should_be_built && !is_artifact && begin
@@ -155,8 +128,6 @@ module Dapp
         !last_stage.image.tagged?
       end
     end
-
-    protected
 
     def with_introspection
       yield
@@ -169,7 +140,5 @@ module Dapp
       end
       exit 0
     end
-
-    attr_reader :last_stage
   end # Application
 end # Dapp

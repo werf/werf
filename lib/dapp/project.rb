@@ -20,6 +20,7 @@ module Dapp
     include Command::Stages::Common
     include Command::Cleanup
     include Command::Mrproper
+    include Command::StageImage
     include Logging::Base
     include Logging::Process
 

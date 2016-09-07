@@ -35,8 +35,8 @@ describe Dapp::Project do
     expect_exception_code(code: :spush_command_unexpected_apps_number) { stubbed_project.spush('name') }
   end
 
-  it 'run:run_command_unexpected_apps_number', :push do
-    expect_exception_code(code: :run_command_unexpected_apps_number) { stubbed_project.run([], []) }
+  it 'run:command_unexpected_apps_number', :push do
+    expect_exception_code(code: :command_unexpected_apps_number) { stubbed_project.run([], []) }
   end
 
   it 'list' do

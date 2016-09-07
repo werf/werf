@@ -19,7 +19,7 @@ en:
       from_image_not_found: 'Image `%{name}` not found!'
     project:
       spush_command_unexpected_apps_number: "Command 'spush' can process only one application!"
-      run_command_unexpected_apps_number: "Command 'run' can process only one application!"
+      command_unexpected_apps_number: "Command can process only one application!"
       no_such_app: "No such app: '%{apps_patterns}'!"
       dappfile_not_found: "Dappfile not found!"
       cannot_run_ssh_agent: "Cannot run ssh-agent"
