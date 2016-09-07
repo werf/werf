@@ -6,7 +6,7 @@ module Dapp
       def initialize(project:)
         @project = project
         build!
-        super(name: 'dappdeps/scratch', project: project, built_id: built_id, from: nil)
+        super(name: 'dappdeps/scratch:latest', project: project, built_id: built_id)
       end
 
       def build!
