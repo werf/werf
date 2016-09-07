@@ -14,6 +14,7 @@ module Dapp
       end
 
       undef_method :app
+      undef_method :artifact
     end
   end
 end

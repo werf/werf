@@ -21,7 +21,7 @@ module Dapp
       def initialize(parent)
         @_parent = parent
 
-        @_docker       = Directive::Docker.new
+        @_docker       = Directive::Docker::Base.new
         @_git_artifact = Directive::GitArtifact.new
         @_shell        = Directive::Shell::Base.new
         @_chef         = Directive::Chef.new
@@ -54,17 +54,15 @@ module Dapp
       end
 
       def chef
-        raise Error::Config, code: :builder_type_conflict unless _builder == :chef
-        @_chef ||= Directive::Chef.new
+        @_chef.tap { raise Error::Config, code: :builder_type_conflict unless _builder == :chef }
       end
 
       def shell
-        raise Error::Config, code: :builder_type_conflict unless _builder == :shell
-        @_shell ||= @_shell.class.new
+        @_shell.tap { raise Error::Config, code: :builder_type_conflict unless _builder == :shell }
       end
 
       def docker
-        @_docker ||= Directive::Docker.new
+        @_docker
       end
 
       def artifact(where_to_add, before: nil, after: nil, **options, &blk)
@@ -158,6 +156,7 @@ module Dapp
         artifact << begin
           config = clone_to_artifact.tap do |app|
             app.instance_variable_set(:'@_shell', _shell.send(:clone_to_artifact))
+            app.instance_variable_set(:'@_docker', _docker.send(:clone_to_artifact))
             app.instance_variable_set(:'@_name', app_name("artifact-#{SecureRandom.hex(2)}"))
             app.instance_eval(&blk) if block_given?
           end

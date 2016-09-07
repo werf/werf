@@ -17,7 +17,7 @@ module Dapp
           end
 
           def reset_build_artifact
-            @_before_install = []
+            @_build_artifact = []
           end
 
           def reset_all
