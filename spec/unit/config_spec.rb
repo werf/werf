@@ -343,6 +343,29 @@ describe Dapp::Config::Main do
         @dappfile = "artifact 'where_to_add', before: :setup, unsupported_key: :value"
         expect_exception_code(code: :artifact_unexpected_attribute) { apps }
       end
+
+      it 'unsupported app method in artifact body' do
+        @dappfile = "artifact('where_to_add', before: :setup, unsupported_key: :value) { app }"
+        expect { apps }.to raise_error NameError
+      end
+
+      it 'artifact_dependencies' do
+        @dappfile = %(
+          artifact 'where_to_add', before: :install do
+            artifact_depends_on 'depends'
+          end
+        )
+        expect(app._before_install_artifact.first._config._artifact_dependencies).to eq ['depends']
+      end
+
+      it 'shell.build_artifact' do
+        @dappfile = %(
+          artifact 'where_to_add', before: :install do
+            shell.build_artifact 'cmd'
+          end
+        )
+        expect(app._before_install_artifact.first._config._shell._build_artifact).to eq ['cmd']
+      end
     end
 
     [:before, :after].each do |order|

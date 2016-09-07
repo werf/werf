@@ -19,15 +19,20 @@ module Dapp
       attr_reader :_parent
 
       def initialize(parent)
-        @_apps   = []
         @_parent = parent
 
+        @_docker       = Directive::Docker.new
+        @_git_artifact = Directive::GitArtifact.new
+        @_shell        = Directive::Shell::Base.new
+        @_chef         = Directive::Chef.new
+
+        @_apps                    = []
         @_before_install_artifact = []
-        @_before_setup_artifact = []
-        @_after_install_artifact = []
-        @_after_setup_artifact = []
-        @_install_dependencies = []
-        @_setup_dependencies   = []
+        @_before_setup_artifact   = []
+        @_after_install_artifact  = []
+        @_after_setup_artifact    = []
+        @_install_dependencies    = []
+        @_setup_dependencies      = []
 
         yield self if block_given?
       end
@@ -44,22 +49,22 @@ module Dapp
         project.log_warning(desc: { code: 'excess_builder_instruction', context: 'warning' }) if @_chef.send(:empty?) && @_shell.send(:empty?)
         raise Error::Config, code: :builder_type_unsupported, data: { type: type } unless [:chef, :shell].include?((type = type.to_sym))
         another_builder = [:chef, :shell].find { |t| t != type }
-        instance_variable_set(:"@_#{another_builder}", Config.const_get(another_builder.capitalize).new)
+        instance_variable_set(:"@_#{another_builder}", instance_variable_get(:"@_#{another_builder}").class.new)
         @_builder = type
       end
 
       def chef
         raise Error::Config, code: :builder_type_conflict unless _builder == :chef
-        @_chef ||= Chef.new
+        @_chef ||= Directive::Chef.new
       end
 
       def shell
         raise Error::Config, code: :builder_type_conflict unless _builder == :shell
-        @_shell ||= Shell.new
+        @_shell ||= @_shell.class.new
       end
 
       def docker
-        @_docker ||= Docker.new
+        @_docker ||= Directive::Docker.new
       end
 
       def artifact(where_to_add, before: nil, after: nil, **options, &blk)
@@ -70,7 +75,7 @@ module Dapp
       end
 
       def git_artifact
-        @_git_artifact ||= GitArtifact.new
+        @_git_artifact ||= Directive::GitArtifact.new
       end
 
       def _name
@@ -105,28 +110,35 @@ module Dapp
 
       attr_accessor :project
 
+      def clone_to_application
+        clone_to(Application.new(self))
+      end
+
+      def clone_to_artifact
+        clone_to(Artifact.new(self))
+      end
+
       # rubocop:disable Metrics/AbcSize
-      def clone
-        Application.new(self).tap do |app|
-          app.instance_variable_set(:'@project', project)
-          app.instance_variable_set(:'@_builder', _builder)
-          app.instance_variable_set(:'@_home_path', _home_path)
-          app.instance_variable_set(:'@_basename', _basename)
-          app.instance_variable_set(:'@_install_dependencies', _install_dependencies)
-          app.instance_variable_set(:'@_setup_dependencies', _setup_dependencies)
-          [:_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact].each do |artifact|
-            app.instance_variable_set(:"@#{artifact}", instance_variable_get(:"@#{artifact}").map { |artifact| artifact.send(:clone) })
-          end
-          app.instance_variable_set(:'@_docker', _docker.send(:clone))             unless @_docker.nil?
-          app.instance_variable_set(:'@_git_artifact', _git_artifact.send(:clone)) unless @_git_artifact.nil?
-          app.instance_variable_set(:'@_chef', _chef.send(:clone))                 unless @_chef.nil?
-          app.instance_variable_set(:'@_shell', _shell.send(:clone))               unless @_shell.nil?
+      def clone_to(app)
+        app.instance_variable_set(:'@project', project)
+        app.instance_variable_set(:'@_builder', _builder)
+        app.instance_variable_set(:'@_home_path', _home_path)
+        app.instance_variable_set(:'@_basename', _basename)
+        app.instance_variable_set(:'@_install_dependencies', _install_dependencies)
+        app.instance_variable_set(:'@_setup_dependencies', _setup_dependencies)
+        [:_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact].each do |artifact|
+          app.instance_variable_set(:"@#{artifact}", instance_variable_get(:"@#{artifact}").map { |artifact| artifact.send(:clone) })
         end
+        app.instance_variable_set(:'@_docker', _docker.send(:clone))
+        app.instance_variable_set(:'@_git_artifact', _git_artifact.send(:clone))
+        app.instance_variable_set(:'@_chef', _chef.send(:clone))
+        app.instance_variable_set(:'@_shell', _shell.send(:clone))
+        app
       end
       # rubocop:enable Metrics/AbcSize
 
       def app(sub_name, &blk)
-        clone.tap do |app|
+        clone_to_application.tap do |app|
           app.instance_variable_set(:'@_name', app_name(sub_name))
           app.instance_eval(&blk) if block_given?
           @_apps += app._apps
@@ -144,11 +156,12 @@ module Dapp
 
       def artifact_base(artifact, where_to_add, **options, &blk)
         artifact << begin
-          config = clone.tap do |app|
+          config = clone_to_artifact.tap do |app|
+            app.instance_variable_set(:'@_shell', _shell.send(:clone_to_artifact))
             app.instance_variable_set(:'@_name', app_name("artifact-#{SecureRandom.hex(2)}"))
             app.instance_eval(&blk) if block_given?
           end
-          Artifact::Stage.new(where_to_add, config: config, **options)
+          Directive::Artifact::Stage.new(where_to_add, config: config, **options)
         end
       end
 
