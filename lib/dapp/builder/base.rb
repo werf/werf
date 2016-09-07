@@ -59,6 +59,18 @@ module Dapp
         raise
       end
 
+      def build_artifact?
+        false
+      end
+
+      def build_artifact(_image)
+        raise
+      end
+
+      def build_artifact_checksum
+        raise
+      end
+
       def chef_cookbooks(_image)
       end
 

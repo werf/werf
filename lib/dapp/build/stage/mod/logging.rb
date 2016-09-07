@@ -79,20 +79,16 @@ module Dapp
             false
           end
 
-          def should_be_skipped?
-            image.tagged? && !application.project.log_verbose? && !should_be_introspected?
-          end
-
           def should_not_be_detailed?
             image.send(:bash_commands).empty?
           end
 
           def should_be_introspected?
-            application.project.cli_options[:introspect_stage] == name && !application.project.dry_run? && !application.is_artifact
+            application.project.cli_options[:introspect_stage] == name && !application.project.dry_run? && !application.artifact?
           end
 
           def should_be_quiet?
-            application.is_artifact && !application.project.log_verbose?
+            application.artifact? && !application.project.log_verbose?
           end
         end
       end # Mod

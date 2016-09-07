@@ -35,7 +35,10 @@ module Dapp
         def artifacts
           @artifacts ||= begin
             application.config.public_send("_#{name}").map do |artifact|
-              { name: artifact._config._name, options: artifact._artifact_options, app: application.artifact(artifact._config) }
+              app = Dapp::Artifact.new(config: artifact._config,
+                                       project: application.project,
+                                       ignore_git_fetch: application.ignore_git_fetch)
+              { name: artifact._config._name, options: artifact._artifact_options, app: app }
             end
           end
         end

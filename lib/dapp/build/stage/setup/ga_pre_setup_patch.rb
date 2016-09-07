@@ -16,7 +16,7 @@ module Dapp
           end
 
           def next_g_a_stage
-            super.next_stage # GAPostSetupPatch
+            super.next_stage # GAPostSetupPatch || GAArtifactPatch
           end
         end # GAPrePatch
       end

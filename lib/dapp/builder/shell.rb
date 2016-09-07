@@ -2,7 +2,7 @@ module Dapp
   module Builder
     # Shell
     class Shell < Base
-      [:before_install, :before_setup, :install, :setup].each do |stage|
+      [:before_install, :before_setup, :install, :setup, :build_artifact].each do |stage|
         define_method("#{stage}_checksum") do
           [application.config._shell.public_send("_#{stage}"),
            application.config._shell.public_send("_#{stage}_cache_version")].flatten

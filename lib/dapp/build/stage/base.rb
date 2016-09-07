@@ -110,6 +110,10 @@ module Dapp
                        introspect_before_error: application.project.cli_options[:introspect_before_error])
         end
 
+        def should_be_skipped?
+          image.tagged? && !application.project.log_verbose? && !should_be_introspected?
+        end
+
         def should_be_tagged?
           !(empty? || image.tagged? || should_be_not_present?)
         end

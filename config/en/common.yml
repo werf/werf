@@ -70,3 +70,5 @@ en:
       after_setup_artifact: 'After setup artifact'
       g_a_latest_patch: 'Git artifacts: latest patch'
       docker_instructions: 'Docker instructions'
+      g_a_artifact_patch: 'Git artifacts: artifact patch'
+      build_artifact: 'Build artifact'

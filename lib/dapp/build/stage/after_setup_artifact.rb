@@ -4,7 +4,11 @@ module Dapp
       # AfterSetupArtifact
       class AfterSetupArtifact < ArtifactBase
         def initialize(application, next_stage)
-          @prev_stage = SetupGroup::GAPostSetupPatch.new(application, self)
+          @prev_stage = if application.artifact?
+                          SetupGroup::ChefCookbooks.new(application, self)
+                        else
+                          SetupGroup::GAPostSetupPatch.new(application, self)
+                        end
           super
         end
       end # AfterSetupArtifact
