@@ -47,11 +47,11 @@ describe Dapp::GitArtifact do
   end
 
   def g_a_archive_stage
-    @g_a_archive_stage ||= Dapp::Build::Stage::GAArchive.new(nil, stubbed_stage)
+    @g_a_archive_stage ||= Dapp::Build::Stage::GAArchive.new(empty_application, stubbed_stage)
   end
 
   def g_a_latest_patch_stage
-    @g_a_latest_patch_stage ||= Dapp::Build::Stage::GALatestPatch.new(nil, stubbed_stage)
+    @g_a_latest_patch_stage ||= Dapp::Build::Stage::GALatestPatch.new(empty_application, stubbed_stage)
   end
 
   def git_artifact

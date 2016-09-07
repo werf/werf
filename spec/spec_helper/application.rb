@@ -102,5 +102,13 @@ module SpecHelper
         end
       end
     end
+
+    def empty_application
+      Dapp::Application.new(project: nil, config: nil)
+    end
+
+    def empty_artifact
+      Dapp::Artifact.new(project: nil, config: nil)
+    end
   end
 end

@@ -339,6 +339,11 @@ describe Dapp::Config::Main do
         expect_exception_code(code: :stage_artifact_not_supported_associated_stage) { apps }
       end
 
+      it 'unsupported inherited artifact' do
+        @dappfile = "artifact('where_to_add', before: :setup) { artifact 'where_to_add', before: :setup }"
+        expect { apps }.to raise_error NameError
+      end
+
       it 'unsupported key (:artifact_unexpected_attribute)' do
         @dappfile = "artifact 'where_to_add', before: :setup, unsupported_key: :value"
         expect_exception_code(code: :artifact_unexpected_attribute) { apps }
@@ -347,6 +352,13 @@ describe Dapp::Config::Main do
       it 'unsupported app method in artifact body' do
         @dappfile = "artifact('where_to_add', before: :setup, unsupported_key: :value) { app }"
         expect { apps }.to raise_error NameError
+      end
+
+      [:volume, :expose, :env, :label, :cmd, :onbuild, :workdir, :user, :entrypoint].each do |instruction|
+        it "unsupported docker.#{instruction} in artifact body" do
+          @dappfile = "artifact('where_to_add', before: :setup, unsupported_key: :value) { docker.#{instruction} }"
+          expect { apps }.to raise_error NoMethodError
+        end
       end
 
       it 'artifact_dependencies' do
