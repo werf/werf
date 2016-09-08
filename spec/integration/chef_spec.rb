@@ -91,9 +91,9 @@ describe Dapp::Builder::Chef do
       end
 
       it 'rebuilds artifact from before_install stage' do
-        new_note_content = "#{SecureRandom.uuid}\n"
+        new_note_content = SecureRandom.uuid
         mdapp_testartifact_path.join("files/before_install/note.txt").tap do |path|
-          path.write new_note_content
+          path.write "#{new_note_content}\n"
         end
 
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
