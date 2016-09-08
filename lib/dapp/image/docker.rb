@@ -7,10 +7,12 @@ module Dapp
 
       attr_reader :from
       attr_reader :name
+      attr_reader :project
 
-      def initialize(name:, from: nil)
+      def initialize(name:, project:, from: nil)
         @from = from
         @name = name
+        @project = project
       end
 
       def id
@@ -30,10 +32,8 @@ module Dapp
 
       def pull!(log_verbose: false, log_time: false)
         return if tagged?
-        project.with_log_indent do
-          project.log_secondary_process(project.t(code: 'process.image_pull', data: { name: name }), short: !log_verbose) do
-            shellout!("docker pull #{name}", log_verbose: log_verbose, log_time: log_time)
-          end
+        project.log_secondary_process(project.t(code: 'process.image_pull', data: { name: name }), short: !log_verbose) do
+          shellout!("docker pull #{name}", log_verbose: log_verbose, log_time: log_time)
         end
         cache_reset
       end

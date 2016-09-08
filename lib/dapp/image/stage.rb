@@ -5,11 +5,7 @@ module Dapp
     class Stage < Docker
       include Argument
 
-      attr_reader :project
-
       def initialize(name:, project:, built_id: nil, from: nil)
-        @project = project
-
         @container_name = "#{name[/[[^:].]*/]}.#{SecureRandom.hex(4)}"
         @built_id = built_id
 
@@ -18,7 +14,7 @@ module Dapp
         @change_options         = {}
         @service_change_options = {}
 
-        super(name: name, from: from)
+        super(name: name, project: project, from: from)
       end
 
       def built_id
