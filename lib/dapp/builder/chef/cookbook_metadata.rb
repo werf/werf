@@ -19,7 +19,7 @@ module Dapp
           end
 
           def depends(dependency, *_a, &_blk)
-            @cookbook_metadata.depends << dependency
+            @cookbook_metadata.depends << dependency.to_s
           end
 
           # rubocop:disable Style/MethodMissing
