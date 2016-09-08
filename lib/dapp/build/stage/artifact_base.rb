@@ -50,7 +50,9 @@ module Dapp
         def artifacts_applications_build!
           artifacts.each do |artifact|
             process = application.project.t(code: 'process.artifact_building', data: { name: artifact[:name] })
-            application.project.log_secondary_process(process, short: !application.project.log_verbose?) do
+            application.project.log_secondary_process(process,
+                                                      short: !application.project.log_verbose?,
+                                                      quiet: application.artifact? && !application.project.log_verbose?) do
               application.project.with_log_indent do
                 artifact[:app].build!
               end
@@ -76,7 +78,9 @@ module Dapp
                             '--entrypoint /bin/bash']
           commands = safe_cp(where_to_add, app.container_tmp_path(artifact_name), Process.uid, Process.gid)
           application.project.log_secondary_process(application.project.t(code: 'process.artifact_copy',
-                                                                          data: { name: artifact_name }), short: true) do
+                                                                          data: { name: artifact_name }),
+                                                                          short: true,
+                                                                          quiet: application.artifact? && !application.project.log_verbose?) do
             app.run(docker_options, [%(-ec '#{application.project.shellout_pack(commands)}')])
           end
 
