@@ -13,5 +13,9 @@ module Dapp
     def should_be_built?
       false
     end
+
+    def with_introspection
+      yield
+    end
   end # Artifact
 end # Dapp
