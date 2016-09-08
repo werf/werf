@@ -4,18 +4,19 @@ DEPENDENCIES
     path: ../mdapp-test
   mdapp-test2
     path: ../mdapp-test2
+  mdapp-testartifact
+    path: ../mdapp-testartifact
   test
     path: .
 
 GRAPH
   apt (4.0.2)
     compat_resource (>= 12.10)
-  compat_resource (12.10.7)
+  compat_resource (12.14.1)
   mdapp-test (0.0.1)
     apt (>= 0.0.0)
   mdapp-test2 (0.0.1)
     apt (>= 0.0.0)
+  mdapp-testartifact (0.0.1)
   test (0.0.1)
     apt (>= 0.0.0)
-    mdapp-test (>= 0.0.0)
-    mdapp-test2 (>= 0.0.0)
