@@ -85,7 +85,12 @@ module Dapp
       end
 
       def cookbook_metadata
-        @cookbook_metadata ||= CookbookMetadata.new(cookbook_metadata_path)
+        @cookbook_metadata ||= CookbookMetadata.new(cookbook_metadata_path).tap do |metadata|
+          metadata.depends.each do |dependency|
+            raise Error, code: :mdapp_in_metadata_depends_forbidden,
+                         data: { dependency: dependency } if dependency.start_with? 'mdapp-'
+          end
+        end
       end
 
       def berksfile_lock_checksum
