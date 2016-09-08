@@ -12,7 +12,7 @@ build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb:
 	@rm -f pkg/dappdeps-base_$(DOCKER_IMAGE_VERSION)*.deb
 	@omnibus build -o append_timestamp:false dappdeps-base
 	@cp pkg/dappdeps-base_$(DOCKER_IMAGE_VERSION)-1_amd64.deb \
-      build/base_$(DOCKER_IMAGE_VERSION).deb
+      build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb
 
 build/dappdeps-base_$(DOCKER_IMAGE_VERSION): build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb
 	dpkg -x build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb build/dappdeps-base_$(DOCKER_IMAGE_VERSION)
