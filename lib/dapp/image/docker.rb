@@ -79,7 +79,7 @@ module Dapp
 
         def cache_reset(name = '')
           cache.delete(name)
-          shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' #{name}").stdout.lines.each do |line|
+          shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}").stdout.lines.each do |line|
             name, id, created_at, size = line.split(';')
             cache[name] = { id: id, created_at: created_at, size: size }
           end
