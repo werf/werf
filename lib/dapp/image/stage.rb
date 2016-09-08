@@ -5,18 +5,20 @@ module Dapp
     class Stage < Docker
       include Argument
 
+      attr_reader :project
+
       def initialize(name:, project:, built_id: nil, from: nil)
-        @bash_commands = []
-        @options = {}
-        @change_options = {}
-        @service_change_options = {}
+        @project = project
+
         @container_name = "#{name[/[[^:].]*/]}.#{SecureRandom.hex(4)}"
         @built_id = built_id
-        super(name: name, project: project, from: from)
-      end
 
-      def labels
-        self.class.image_config_option(image_id: built_id, option: 'labels')
+        @bash_commands          = []
+        @options                = {}
+        @change_options         = {}
+        @service_change_options = {}
+
+        super(name: name, from: from)
       end
 
       def built_id

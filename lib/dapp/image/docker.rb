@@ -7,16 +7,14 @@ module Dapp
 
       attr_reader :from
       attr_reader :name
-      attr_reader :project
 
-      def initialize(name:, project:, from: nil)
+      def initialize(name:, from: nil)
         @from = from
         @name = name
-        @project = project
       end
 
       def id
-        @id || cache[:id]
+        cache[:id]
       end
 
       def untag!
@@ -52,6 +50,11 @@ module Dapp
       def size
         raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
         cache[:size]
+      end
+
+      def labels
+        raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
+        self.class.image_config_option(image_id: id, option: 'labels')
       end
 
       def self.image_config_option(image_id:, option:)
