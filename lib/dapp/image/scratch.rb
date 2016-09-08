@@ -4,14 +4,16 @@ module Dapp
     # Stage
     class Scratch < Stage
       def initialize(project:)
+        @name = 'dappdeps/scratch:latest'
         @project = project
-        build!
-        super(name: 'dappdeps/scratch', project: project, built_id: built_id, from: nil)
+        id || build!
+        super(name: name, project: project)
       end
 
       def build!
         return if project.dry_run?
-        @built_id = project.shellout!('tar c --files-from /dev/null | docker import - dappdeps/scratch').stdout.strip
+        project.shellout!('tar c --files-from /dev/null | docker import - dappdeps/scratch').stdout.strip
+        cache_reset
       end
 
       def pull!(*_args)
