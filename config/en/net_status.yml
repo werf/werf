@@ -38,6 +38,7 @@ en:
       app_name_incorrect: "Application has incorrect name '%{name}': doesn't match regex '%{reg}'!"
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
+      mdapp_in_metadata_depends_forbidden: "Using mdapp as dependency in metadata.rb forbidden: detected '%{dependency}'"
     registry:
       incorrect_repo: 'Incorrect repository!'
       no_such_app: 'No such app in registry!'
