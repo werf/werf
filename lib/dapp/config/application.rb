@@ -2,21 +2,15 @@ module Dapp
   module Config
     # Application
     class Application
-      attr_reader :_builder
       attr_reader :_home_path
       attr_reader :_basename
+      attr_reader :_parent
+      attr_reader :_builder, :_chef, :_shell
+      attr_reader :_install_dependencies, :_setup_dependencies
       attr_reader :_docker
       attr_reader :_git_artifact
-      attr_reader :_before_install_artifact
-      attr_reader :_before_setup_artifact
-      attr_reader :_after_install_artifact
-      attr_reader :_after_setup_artifact
-      attr_reader :_chef
-      attr_reader :_shell
-      attr_reader :_parent
-      attr_reader :_install_dependencies
-      attr_reader :_setup_dependencies
-      attr_reader :_parent
+      attr_reader :_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact
+      attr_reader :_tmp_dir, :_build_dir
 
       def initialize(parent)
         @_parent = parent
@@ -25,6 +19,8 @@ module Dapp
         @_git_artifact = Directive::GitArtifact.new
         @_shell        = Directive::Shell::Base.new
         @_chef         = Directive::Chef.new
+        @_tmp_dir      = Directive::TmpDir.new
+        @_build_dir    = Directive::BuildDir.new
 
         @_apps                    = []
         @_before_install_artifact = []
@@ -74,6 +70,14 @@ module Dapp
 
       def git_artifact
         @_git_artifact ||= Directive::GitArtifact.new
+      end
+
+      def tmp_dir
+        @_tmp_dir
+      end
+
+      def build_dir
+        @_build_dir
       end
 
       def _name
@@ -131,6 +135,8 @@ module Dapp
         app.instance_variable_set(:'@_git_artifact', _git_artifact.send(:clone))
         app.instance_variable_set(:'@_chef', _chef.send(:clone))
         app.instance_variable_set(:'@_shell', _shell.send(:clone))
+        app.instance_variable_set(:'@_tmp_dir', _tmp_dir.send(:clone))
+        app.instance_variable_set(:'@_build_dir', _build_dir.send(:clone))
         app
       end
       # rubocop:enable Metrics/AbcSize
