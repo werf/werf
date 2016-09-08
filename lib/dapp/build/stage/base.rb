@@ -73,8 +73,19 @@ module Dapp
         end
 
         def prepare_image
+          image_add_tmp_volumes(:tmp)
+          image_add_tmp_volumes(:build)
           image.add_service_change_label dapp: application.stage_dapp_label
           image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
+        end
+
+        def image_add_tmp_volumes(type)
+          (application.config.public_send("_#{type}_dir")._store +
+            from_image.labels.select { |l, _| l == "dapp-#{type}-dir" }.map { |_, value| value.split(';') }.flatten).each do |path|
+            absolute_path = File.expand_path(File.join('/', path))
+            tmp_path = application.send("#{type}_path", absolute_path[1..-1]).tap { |p| p.mkpath }
+            image.add_volume "#{tmp_path}:#{absolute_path}"
+          end
         end
 
         def image_should_be_build?

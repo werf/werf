@@ -52,11 +52,6 @@ module Dapp
         cache[:size]
       end
 
-      def labels
-        raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
-        self.class.image_config_option(image_id: id, option: 'labels')
-      end
-
       def self.image_config_option(image_id:, option:)
         output = shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
         output == 'null' ? [] : JSON.parse(output)
