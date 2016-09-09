@@ -212,7 +212,7 @@ Shell проект — это проект, для сборки которого
 | after_setup_artifact              | Наложение артефактов                | artifact (с after: :setup)            	   		     |
 | git_artifact_latest_patch         | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | docker_instructions               | Применение докерфайловых инструкций | docker.cmd, docker.env, docker.entrypoint, docker.expose, docker.label, docker.onbuild, docker.user, docker.volume, docker.workdir |
-| git_artifact_latest_patch         | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
+| git_artifact_artifact_patch       | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | build_artifact                    | Сборка артефакта                    | shell.build_artifact / chef.module, chef.recipe    |
 
 ##### Особенности
@@ -239,7 +239,7 @@ Shell проект — это проект, для сборки которого
 ##### after setup artifact
 ##### git artifact latest patch
 ##### docker instructions
-##### git_artifact_latest_patch
+##### git_artifact_artifact_patch
 ##### build_artifact
 
 ### Dappfile
