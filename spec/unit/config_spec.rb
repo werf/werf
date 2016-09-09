@@ -619,6 +619,26 @@ describe Dapp::Config::Main do
           )
           expect { app.send(:validate!) }.to_not raise_error
         end
+
+        it 'where_to_add with paths' do
+          @dappfile = %(
+            docker.from 'image:tag'
+
+            artifact 'where_to_add', paths: "c", before: :setup
+            artifact 'where_to_add/ddd', after: :install
+          )
+          expect { app.send(:validate!) }.to_not raise_error
+        end
+
+        it 'where_to_add with exclude_paths' do
+          @dappfile = %(
+            docker.from 'image:tag'
+
+            artifact 'where_to_add', exclude_paths: "ddd", before: :setup
+            artifact 'where_to_add/ddd', after: :install
+          )
+          expect { app.send(:validate!) }.to_not raise_error
+        end
       end
 
       context 'negative' do
@@ -628,6 +648,16 @@ describe Dapp::Config::Main do
 
             artifact 'where_to_add', before: :setup
             artifact 'where_to_add', after: :install
+          )
+          expect_exception_code(code: :artifact_conflict) { app.send(:validate!) }
+        end
+
+        it 'conflict between where_to_add' do
+          @dappfile = %(
+            docker.from 'image:tag'
+
+            artifact 'where_to_add', before: :setup
+            artifact 'where_to_add/ddd', after: :install
           )
           expect_exception_code(code: :artifact_conflict) { app.send(:validate!) }
         end

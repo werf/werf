@@ -172,12 +172,19 @@ module Dapp
 
       def validate!
         validate_artifacts!
+        validate_artifacts_artifacts!
+      end
+
+      def validate_artifacts_artifacts!
+        stage_artifacts.each { |artifact| artifact._config.validate! }
+      end
+
+      def stage_artifacts
+        _before_install_artifact + _before_setup_artifact + _after_install_artifact + _after_setup_artifact
       end
 
       def validate_artifacts!
-        artifacts = validate_artifact_format(_before_install_artifact + _before_setup_artifact +
-                                               _after_install_artifact + _after_setup_artifact +
-                                               _git_artifact._remote + _git_artifact._local)
+        artifacts = validate_artifact_format(stage_artifacts + _git_artifact._remote + _git_artifact._local)
         loop do
           break if artifacts.empty?
           verifiable_artifact = artifacts.shift
@@ -192,11 +199,18 @@ module Dapp
       def validate_artifact_format(artifacts)
         artifacts.map do |a|
           path_format = proc { |path| File.expand_path(File.join('/', path, '/'))[1..-1] }
+
+          path_format.call(a._where_to_add) =~ /^([^\/]*)\/?(.*)$/
+          where_to_add = Regexp.last_match(1)
+          includes = a._paths
+          includes << Regexp.last_match(2) unless Regexp.last_match(2).empty?
+          excludes = a._exclude_paths
+
           {
             index: artifacts.index(a),
-            where_to_add: path_format.call(a._where_to_add),
-            includes: a._paths.map(&path_format),
-            excludes: a._exclude_paths.map(&path_format)
+            where_to_add: where_to_add,
+            includes: includes.map(&path_format),
+            excludes: excludes.map(&path_format)
           }
         end
       end
