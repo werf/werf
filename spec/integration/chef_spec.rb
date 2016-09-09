@@ -11,7 +11,7 @@ describe Dapp::Builder::Chef do
   %w(ubuntu:14.04 centos:7).each do |os|
     context os do
       it 'builds project' do
-        mdapp_testartifact_path.join('attributes/build_artifact/build_artifact.rb').tap do |path|
+        mdapp_testartifact_path.join('attributes/build_artifact.rb').tap do |path|
           path.write "default['mdapp-testartifact']['target_filename'] = 'note.txt'\n"
         end
 
@@ -71,7 +71,7 @@ describe Dapp::Builder::Chef do
       end
 
       it 'rebuilds artifact from build_artifact stage' do
-        mdapp_testartifact_path.join('attributes/build_artifact/build_artifact.rb').tap do |path|
+        mdapp_testartifact_path.join('attributes/build_artifact.rb').tap do |path|
           path.write "default['mdapp-testartifact']['target_filename'] = 'mynote.txt'\n"
         end
 
