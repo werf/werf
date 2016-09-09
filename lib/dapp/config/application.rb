@@ -172,12 +172,19 @@ module Dapp
 
       def validate!
         validate_artifacts!
+        validate_artifacts_artifacts!
+      end
+
+      def validate_artifacts_artifacts!
+        stage_artifacts.each { |artifact| artifact._config.validate! }
+      end
+
+      def stage_artifacts
+        _before_install_artifact + _before_setup_artifact + _after_install_artifact + _after_setup_artifact
       end
 
       def validate_artifacts!
-        artifacts = validate_artifact_format(_before_install_artifact + _before_setup_artifact +
-                                               _after_install_artifact + _after_setup_artifact +
-                                               _git_artifact._remote + _git_artifact._local)
+        artifacts = validate_artifact_format(stage_artifacts + _git_artifact._remote + _git_artifact._local)
         loop do
           break if artifacts.empty?
           verifiable_artifact = artifacts.shift
