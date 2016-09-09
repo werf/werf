@@ -72,8 +72,12 @@ module SpecHelper
     end
 
     def stages
+      _stages_of_app(application)
+    end
+
+    def _stages_of_app(app)
       hash = {}
-      s = application.send(:last_stage)
+      s = app.send(:last_stage)
       while s.respond_to? :prev_stage
         hash[s.send(:name)] = s
         s = s.prev_stage

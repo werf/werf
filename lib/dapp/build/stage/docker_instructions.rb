@@ -33,7 +33,7 @@ module Dapp
         private
 
         def change_options
-          @change_options ||= application.config._docker._change_options.delete_if { |_, val| val.nil? || (val.respond_to?(:empty?) && val.empty?) }
+          @change_options ||= application.config._docker._change_options.to_h.delete_if { |_, val| val.nil? || (val.respond_to?(:empty?) && val.empty?) }
         end
       end # DockerInstructions
     end # Stage

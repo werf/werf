@@ -11,7 +11,10 @@ module Dapp
       def t(context: nil, **desc)
         code = desc[:code]
         data = desc[:data] || {}
-        ::I18n.t [:common, context, code].join('.'), [:common, code].join('.'), **data, raise: true
+        paths = []
+        paths << [:common, context, code].join('.') if context
+        paths << [:common, code].join('.')
+        ::I18n.t *paths, **data, raise: true
       rescue ::I18n::MissingTranslationData => _e
         raise ::NetStatus::Exception, code: :missing_translation, data: { code: code }
       end

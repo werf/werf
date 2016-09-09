@@ -7,6 +7,12 @@ git_artifact.local '/myapp'
 chef.module 'test'
 chef.recipe 'main'
 
+artifact '/myartifact', before: :install do
+  docker.from 'ubuntu:14.04'
+  chef.module 'testartifact'
+  chef.recipe 'myartifact'
+end
+
 app 'X' do
   docker.from 'ubuntu:14.04'
   chef.module 'test2'
