@@ -2,6 +2,7 @@ module Dapp
   module Config
     module Directive
       module Shell
+        # Base
         class Base
           attr_reader :_before_install, :_before_setup, :_install, :_setup
           attr_reader :_before_install_cache_version, :_before_setup_cache_version, :_install_cache_version, :_setup_cache_version
@@ -61,9 +62,9 @@ module Dapp
 
           def clone_to_artifact
             Artifact.new.tap do |shell|
-              self.instance_variables.each do |variable|
-                shell.instance_variable_set(variable, marshal_dup(self.instance_variable_get(variable)))
-                shell.instance_variable_set("#{variable}_cache_version", marshal_dup(self.instance_variable_get("#{variable}_cache_version")))
+              instance_variables.each do |variable|
+                shell.instance_variable_set(variable, marshal_dup(instance_variable_get(variable)))
+                shell.instance_variable_set("#{variable}_cache_version", marshal_dup(instance_variable_get("#{variable}_cache_version")))
               end
             end
           end

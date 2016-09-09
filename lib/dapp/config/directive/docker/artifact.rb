@@ -3,6 +3,7 @@ module Dapp
     module Directive
       # Docker
       module Docker
+        # Artifact
         class Artifact
           attr_reader :_from
           attr_reader :_from_cache_version

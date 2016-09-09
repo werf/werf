@@ -79,8 +79,8 @@ module Dapp
           commands = safe_cp(where_to_add, app.container_tmp_path(artifact_name), Process.uid, Process.gid)
           application.project.log_secondary_process(application.project.t(code: 'process.artifact_copy',
                                                                           data: { name: artifact_name }),
-                                                                          short: true,
-                                                                          quiet: application.artifact? && !application.project.log_verbose?) do
+                                                    short: true,
+                                                    quiet: application.artifact? && !application.project.log_verbose?) do
             app.run(docker_options, [%(-ec '#{application.project.shellout_pack(commands)}')])
           end
 

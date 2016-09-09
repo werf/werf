@@ -17,7 +17,7 @@ module Dapp
 
       def unlock
         @active_locks -= 1
-        _do_unlock if @active_locks == 0
+        _do_unlock if @active_locks.zero?
       end
 
       def synchronize(*args)
@@ -31,7 +31,7 @@ module Dapp
 
       protected
 
-      def _do_lock(timeout, on_wait, readonly)
+      def _do_lock(_timeout, _on_wait, _readonly)
         raise
       end
 

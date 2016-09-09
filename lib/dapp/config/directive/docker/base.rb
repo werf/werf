@@ -3,6 +3,7 @@ module Dapp
     module Directive
       # Docker
       module Docker
+        # Base
         class Base
           attr_reader :_from, :_volume, :_expose, :_env, :_label, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint
           attr_reader :_from_cache_version

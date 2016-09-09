@@ -3,7 +3,7 @@ module Dapp
   class Project
     # SystemShellout
     module SystemShellout
-      SYSTEM_SHELLOUT_IMAGE = 'ubuntu:14.04'
+      SYSTEM_SHELLOUT_IMAGE = 'ubuntu:14.04'.freeze
       SYSTEM_SHELLOUT_VERSION = 2
 
       def system_shellout_container_name
@@ -27,7 +27,7 @@ module Dapp
                 shellout! ["docker exec #{system_shellout_container_name}",
                            "bash -ec '#{[
                              'mkdir -p /.system_shellout_root/.dapp',
-                             'mount --rbind /.dapp /.system_shellout_root/.dapp',
+                             'mount --rbind /.dapp /.system_shellout_root/.dapp'
                            ].join(' && ')}'"].join(' ')
               end
             end
@@ -50,10 +50,10 @@ module Dapp
       def _to_system_shellout_command(command)
         cmd = shellout_pack ["cd #{Dir.pwd}", command].join(' && ')
         "docker exec #{system_shellout_container} chroot /.system_shellout_root bash -ec '#{[
-          *SystemShellout.default_env_keys.map { |env_key|
+          *SystemShellout.default_env_keys.map do |env_key|
             env_key = env_key.to_s.upcase
             "export #{env_key}=#{ENV[env_key]}"
-          }, cmd
+          end, cmd
         ].join(' && ')}'"
       end
 

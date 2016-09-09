@@ -13,7 +13,7 @@ module Dapp
 
             options.each do |k, v|
               respond_to?("_#{k}=") ? send(:"_#{k}=", v) : raise(Error::Config, code: code,
-                                                                 data: { type: object_name, attr: k })
+                                                                                data: { type: object_name, attr: k })
             end
           end
 

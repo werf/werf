@@ -30,7 +30,7 @@ describe Dapp::Artifact do
   end
 
   def expect_stage
-    (@order == :before) ? @stage : next_stage(@artifact)
+    @order == :before ? @stage : next_stage(@artifact)
   end
 
   [:before, :after].each do |order|

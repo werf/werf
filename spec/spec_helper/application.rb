@@ -47,20 +47,15 @@ module SpecHelper
     def default_config
       Marshal.load(Marshal.dump(_basename: 'dapp',
                                 _name: 'test',
-                                _before_install_artifact: [],
-                                _before_setup_artifact: [],
-                                _after_install_artifact: [],
-                                _after_setup_artifact: [],
-                                _tmp_dir: { _store: [] },
-                                _build_dir: { _store: [] },
+                                _before_install_artifact: [], _before_setup_artifact: [], _after_install_artifact: [], _after_setup_artifact: [],
+                                _tmp_dir: { _store: [] }, _build_dir: { _store: [] },
                                 _chef: { _modules: [] },
                                 _shell: { _before_install: [], _before_setup: [], _install: [], _setup: [] },
                                 _docker: { _from: :'ubuntu:14.04',
                                            _from_cache_version: CACHE_VERSION,
                                            _change_options: {} },
                                 _git_artifact: { _local: [], _remote: [] },
-                                _install_dependencies: [],
-                                _setup_dependencies: []))
+                                _install_dependencies: [], _setup_dependencies: []))
     end
 
     def cli_options

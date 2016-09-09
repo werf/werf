@@ -11,7 +11,7 @@ describe Dapp::Builder::Chef do
   %w(ubuntu:14.04 centos:7).each do |os|
     context os do
       it 'builds project' do
-        testproject_path.join("attributes/build_artifact/build_artifact.rb").tap do |path|
+        testproject_path.join('attributes/build_artifact/build_artifact.rb').tap do |path|
           path.write "default['test']['myartifact_note_filename'] = 'note.txt'\n"
         end
 
@@ -28,7 +28,7 @@ describe Dapp::Builder::Chef do
           read_file_in_image('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)
         ).to eq(
           read_file_in_image('/myartifact/note.txt', application.send(:last_stage).image.name)
-        ), "/testartifact/note.txt inc artifact image does not equal /myartifact/note.txt in result image"
+        ), '/testartifact/note.txt inc artifact image does not equal /myartifact/note.txt in result image'
       end
 
       [%i(before_install foo pizza batareika),
@@ -71,7 +71,7 @@ describe Dapp::Builder::Chef do
       end
 
       it 'rebuilds artifact from build_artifact stage' do
-        testproject_path.join("attributes/build_artifact/build_artifact.rb").tap do |path|
+        testproject_path.join('attributes/build_artifact/build_artifact.rb').tap do |path|
           path.write "default['test']['myartifact_note_filename'] = 'mynote.txt'\n"
         end
 
@@ -96,7 +96,7 @@ describe Dapp::Builder::Chef do
 
       it 'rebuilds artifact from before_install stage' do
         new_note_content = SecureRandom.uuid
-        mdapp_testartifact_path.join("files/before_install/note.txt").tap do |path|
+        mdapp_testartifact_path.join('files/before_install/note.txt').tap do |path|
           path.write "#{new_note_content}\n"
         end
 
@@ -136,16 +136,16 @@ describe Dapp::Builder::Chef do
             ::Dapp::Config::Directive::Artifact::Stage.new(
               '/myartifact',
               config: RecursiveOpenStruct.new(default_config.merge(
-                _builder: :chef,
-                _home_path: testproject_path.to_s,
-                _artifact_dependencies: [],
-                _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
-                _chef: {
-                  _modules: %w(testartifact),
-                  _recipes: %w(myartifact)
-                }
-              )
-            ))
+                                                _builder: :chef,
+                                                _home_path: testproject_path.to_s,
+                                                _artifact_dependencies: [],
+                                                _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
+                                                _chef: {
+                                                  _modules: %w(testartifact),
+                                                  _recipes: %w(myartifact)
+                                                }
+              ))
+            )
           ]
         )
       end

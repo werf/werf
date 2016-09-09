@@ -51,7 +51,7 @@ module Dapp
     def patch_command_excludes
       exclude_paths.map do |path|
         base = File.join(where_to_add, path)
-        (path =~ /[\*\?\[\]\{\}]/) ? %(--exclude=#{base} ) : %(--exclude=#{base} --exclude=#{File.join(base, '*')})
+        path =~ /[\*\?\[\]\{\}]/ ? %(--exclude=#{base} ) : %(--exclude=#{base} --exclude=#{File.join(base, '*')})
       end
     end
 
@@ -72,11 +72,11 @@ module Dapp
     end
 
     def exclude_paths(with_cwd = false)
-      base_paths(@exclude_paths, with_cwd = with_cwd)
+      base_paths(@exclude_paths, with_cwd)
     end
 
     def paths(with_cwd = false)
-      base_paths(@paths, with_cwd = with_cwd)
+      base_paths(@paths, with_cwd)
     end
 
     def base_paths(paths, with_cwd = false)

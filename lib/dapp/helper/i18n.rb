@@ -14,7 +14,7 @@ module Dapp
         paths = []
         paths << [:common, context, code].join('.') if context
         paths << [:common, code].join('.')
-        ::I18n.t *paths, **data, raise: true
+        ::I18n.t(*paths, **data, raise: true)
       rescue ::I18n::MissingTranslationData => _e
         raise ::NetStatus::Exception, code: :missing_translation, data: { code: code }
       end

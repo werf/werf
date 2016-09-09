@@ -28,7 +28,7 @@ module Dapp
 
         # rubocop:disable Metrics/ParameterLists
         def log_process(message, process: nil, short: false, quiet: false, style: {}, status: {}, &blk)
-          return blk.call if quiet
+          return yield if quiet
 
           style[:message] ||= DEFAULT_STYLE[:message]
           style[:process] ||= DEFAULT_STYLE[:process]

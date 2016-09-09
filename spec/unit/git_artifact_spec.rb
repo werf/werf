@@ -82,7 +82,9 @@ describe Dapp::GitArtifact do
       @branch = kwargs[:branch] unless kwargs[:branch].nil?
       command_apply(archive_command) if type == :patch && !kwargs[:ignore_archive_apply]
 
-      [:cwd, :paths, :exclude_paths, :where_to_add, :group, :owner].each { |opt| instance_variable_set(:"@#{opt}", kwargs[opt]) unless kwargs[opt].nil? }
+      [:cwd, :paths, :exclude_paths, :where_to_add, :group, :owner].each do |opt|
+        instance_variable_set(:"@#{opt}", kwargs[opt]) unless kwargs[opt].nil?
+      end
       add_files.each { |file_path| git_change_and_commit!(file_path, branch: @branch) }
 
       command_apply(send("#{type}_command"))
@@ -156,14 +158,14 @@ describe Dapp::GitArtifact do
 
     it "#{type} paths (files)", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
-           added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(x/data.txt),
-           paths: %w(x/y/data.txt z/data.txt))
+                            added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(x/data.txt),
+                            paths: %w(x/y/data.txt z/data.txt))
     end
 
     it "#{type} paths (globs)", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
-           added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(x/data.txt),
-           paths: %w(x/y/* z/[asdf]ata.txt))
+                            added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(x/data.txt),
+                            paths: %w(x/y/* z/[asdf]ata.txt))
     end
 
     it "#{type} cwd and paths", test_construct: true do
@@ -174,32 +176,32 @@ describe Dapp::GitArtifact do
 
     it "#{type} exclude_paths", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
-           added_files: %w(z/data.txt), not_added_files: %w(x/data.txt x/y/data.txt),
-           exclude_paths: %w(x))
+                            added_files: %w(z/data.txt), not_added_files: %w(x/data.txt x/y/data.txt),
+                            exclude_paths: %w(x))
     end
 
     it "#{type} exclude_paths (files)", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
-           added_files: %w(x/data.txt), not_added_files: %w(x/y/data.txt z/data.txt),
-           exclude_paths: %w(x/y/data.txt z/data.txt))
+                            added_files: %w(x/data.txt), not_added_files: %w(x/y/data.txt z/data.txt),
+                            exclude_paths: %w(x/y/data.txt z/data.txt))
     end
 
     it "#{type} exclude_paths (globs)", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
-           added_files: %w(x/data.txt), not_added_files: %w(x/y/data.txt z/data.txt),
-           exclude_paths: %w(x/y/* z/[asdf]*ta.txt))
+                            added_files: %w(x/data.txt), not_added_files: %w(x/y/data.txt z/data.txt),
+                            exclude_paths: %w(x/y/* z/[asdf]*ta.txt))
     end
 
     it "#{type} cwd and exclude_paths", test_construct: true do
       send("#{type}_apply", add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
-           added_files: %w(data.txt z/data.txt), not_added_files: %w(a x/y/data.txt),
-           cwd: 'a', exclude_paths: %w(x))
+                            added_files: %w(data.txt z/data.txt), not_added_files: %w(a x/y/data.txt),
+                            cwd: 'a', exclude_paths: %w(x))
     end
 
     it "#{type} cwd, paths and exclude_paths", test_construct: true do
       send("#{type}_apply", add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
-           added_files: %w(x/data.txt z/data.txt), not_added_files: %w(a data.txt x/y/data.txt),
-           cwd: 'a', paths: [%w(x z)], exclude_paths: %w(x/y))
+                            added_files: %w(x/data.txt z/data.txt), not_added_files: %w(a data.txt x/y/data.txt),
+                            cwd: 'a', paths: [%w(x z)], exclude_paths: %w(x/y))
     end
   end
 

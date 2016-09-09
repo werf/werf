@@ -12,7 +12,7 @@ module Dapp
         @_locks[name] ||= ::Dapp::Lock::File.new(lock_path, name)
       end
 
-      def lock(name, *args, default_timeout: 300, **kwargs, &blk)
+      def lock(name, *_args, default_timeout: 300, **kwargs, &blk)
         if dry_run?
           yield if block_given?
         else

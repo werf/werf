@@ -129,7 +129,7 @@ module Dapp
         app.instance_variable_set(:'@_install_dependencies', _install_dependencies)
         app.instance_variable_set(:'@_setup_dependencies', _setup_dependencies)
         [:_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact].each do |artifact|
-          app.instance_variable_set(:"@#{artifact}", instance_variable_get(:"@#{artifact}").map { |artifact| artifact.send(:clone) })
+          app.instance_variable_set(:"@#{artifact}", instance_variable_get(:"@#{artifact}").map { |a| a.send(:clone) })
         end
         app.instance_variable_set(:'@_docker', _docker.send(:clone))
         app.instance_variable_set(:'@_git_artifact', _git_artifact.send(:clone))
@@ -154,8 +154,8 @@ module Dapp
       end
 
       def artifact_stage_name(stage, prefix:)
-        raise Error::Config, code: :stage_artifact_not_supported_associated_stage, data: { stage: stage } unless [:install, :setup].include? stage.to_sym
-        [prefix, stage, :artifact].join('_')
+        return [prefix, stage, :artifact].join('_') if [:install, :setup].include?(stage.to_sym)
+        raise Error::Config, code: :stage_artifact_not_supported_associated_stage, data: { stage: stage }
       end
 
       def artifact_base(artifact, where_to_add, **options, &blk)
@@ -200,7 +200,7 @@ module Dapp
         artifacts.map do |a|
           path_format = proc { |path| File.expand_path(File.join('/', path, '/'))[1..-1] }
 
-          path_format.call(a._where_to_add) =~ /^([^\/]*)\/?(.*)$/
+          path_format.call(a._where_to_add) =~ %r{^([^\/]*)\/?(.*)$}
           where_to_add = Regexp.last_match(1)
           includes = a._paths
           includes << Regexp.last_match(2) unless Regexp.last_match(2).empty?

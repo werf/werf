@@ -2,6 +2,7 @@ module Dapp
   module Config
     module Directive
       module Shell
+        # Artifact
         class Artifact < Base
           attr_reader :_build_artifact
           attr_reader :_build_artifact_cache_version
