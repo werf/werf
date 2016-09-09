@@ -219,10 +219,10 @@ module Dapp
             *before_vendor_commands,
             '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
             *after_vendor_commands,
-            ["find /tmp/cookbooks -type d -exec bash -ec '",
+            ["find /tmp/cookbooks -type d -exec #{application.project.bash_path} -ec '",
              "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) -d ",
              "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
-            ["find /tmp/cookbooks -type f -exec bash -ec '",
+            ["find /tmp/cookbooks -type f -exec #{application.project.bash_path} -ec '",
              "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
              "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
             "install -o #{Process.uid} -g #{Process.gid} --mode 0644 <(date +%s.%N) #{_cookbooks_vendor_path.join('.created_at')}"
@@ -237,7 +237,7 @@ module Dapp
              ("--volume #{application.project.ssh_auth_sock}:#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
              "--volume #{_cookbooks_vendor_path.tap(&:mkpath)}:#{_cookbooks_vendor_path}",
              ("--env SSH_AUTH_SOCK=#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
-             "dappdeps/berksdeps:0.1.0 bash -ec '#{application.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
+             "dappdeps/berksdeps:0.1.0 #{application.project.bash_path} -ec '#{application.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
             log_verbose: application.project.log_verbose?
           )
         end

@@ -31,6 +31,7 @@ module Dapp
     include Helper::Sha256
 
     include Deps::Gitartifact
+    include Deps::Base
     include SystemShellout
 
     attr_reader :cli_options

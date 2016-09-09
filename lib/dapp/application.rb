@@ -131,7 +131,7 @@ module Dapp
       yield
     rescue Exception::IntrospectImage => e
       data = e.net_status[:data]
-      cmd = "docker run -ti --rm --entrypoint /bin/bash #{data[:options]} #{data[:built_id]}"
+      cmd = "docker run -ti --rm --entrypoint #{project.bash_path} #{data[:options]} #{data[:built_id]}"
       system(cmd).tap do |res|
         project.shellout!("docker rmi #{data[:built_id]}") if data[:rmi]
         res || raise(Error::Application, code: :application_not_run)

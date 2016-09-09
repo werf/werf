@@ -75,7 +75,8 @@ module Dapp
 
           docker_options = ['--rm',
                             "--volume #{application.tmp_path('artifact', artifact_name)}:#{app.container_tmp_path(artifact_name)}",
-                            '--entrypoint /bin/bash']
+                            "--volumes-from #{application.project.base_container}",
+                            "--entrypoint #{application.project.bash_path}"]
           commands = safe_cp(where_to_add, app.container_tmp_path(artifact_name), Process.uid, Process.gid)
           application.project.log_secondary_process(application.project.t(code: 'process.artifact_copy',
                                                                           data: { name: artifact_name }),
@@ -101,14 +102,15 @@ module Dapp
 
           copy_files = proc do |from_, cwd_, path_ = ''|
             cwd_ = File.expand_path(File.join('/', cwd_))
-            "find #{File.join(from_, cwd_, path_)} #{excludes} -type f -exec bash -ec 'install -D #{credentials} {} " \
+            "find #{File.join(from_, cwd_, path_)} #{excludes} -type f " \
+            "-exec #{application.project.bash_path} -ec 'install -D #{credentials} {} " \
             "#{File.join(to, "$(echo {} | sed -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
           end
 
           commands = []
           commands << ['install', credentials, '-d', to].join(' ')
           commands.concat(paths.empty? ? Array(copy_files.call(from, cwd)) : paths.map { |path| copy_files.call(from, cwd, path) })
-          commands << "find #{to} -type d -exec bash -ec 'install -d #{credentials} {}' \\;"
+          commands << "find #{to} -type d -exec #{application.project.bash_path} -ec 'install -d #{credentials} {}' \\;"
           commands.join(' && ')
         end
         # rubocop:enable Metrics/ParameterLists

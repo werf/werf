@@ -9,20 +9,21 @@ module Dapp
       def system_shellout_container_name
         "dapp_system_shellout_#{hashsum [SYSTEM_SHELLOUT_VERSION,
                                          SYSTEM_SHELLOUT_IMAGE,
-                                         Deps::Gitartifact::GITARTIFACT_IMAGE]}"
+                                         Deps::Gitartifact::GITARTIFACT_IMAGE,
+                                         Deps::Base::BASE_IMAGE]}"
       end
 
       def system_shellout_container
         @system_shellout_container ||= begin
           lock(system_shellout_container_name) do
             if shellout("docker inspect #{system_shellout_container_name}").exitstatus.nonzero?
-              volumes_from = [gitartifact_container]
+              volumes_from = [base_container, gitartifact_container]
               log_secondary_process(t(code: 'process.system_shellout_container_loading'), short: true) do
                 shellout! ['docker run --detach --privileged', '--restart always',
                            "--name #{system_shellout_container_name}",
                            *volumes_from.map { |container| "--volumes-from #{container}" },
                            '--volume /:/.system_shellout_root',
-                           "#{SYSTEM_SHELLOUT_IMAGE} bash -ec 'while true ; do sleep 1 ; done'"].join(' ')
+                           "#{SYSTEM_SHELLOUT_IMAGE} #{bash_path} -ec 'while true ; do sleep 1 ; done'"].join(' ')
 
                 shellout! ["docker exec #{system_shellout_container_name}",
                            "bash -ec '#{[

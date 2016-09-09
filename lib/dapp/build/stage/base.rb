@@ -73,6 +73,7 @@ module Dapp
         end
 
         def prepare_image
+          image.add_volumes_from application.project.base_container
           image_add_tmp_volumes(:tmp)
           image_add_tmp_volumes(:build)
           image.add_service_change_label dapp: application.stage_dapp_label
