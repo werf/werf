@@ -47,7 +47,7 @@ module Dapp
 
     def name
       @name ||= begin
-        shellout!("git -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
+        system_shellout!("#{git_path} -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
       rescue Error::Shellout
         File.basename(path)
       end
