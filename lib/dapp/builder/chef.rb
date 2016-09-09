@@ -282,11 +282,7 @@ module Dapp
                     recipe_paths = enabled_recipes.map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
                                                   .select { |from, _| cookbook_path.join(from).exist? }
 
-                    common_project_paths = select_existing_paths.call(
-                      cookbook_path, [*common_paths,
-                                      ['attributes/common', 'attributes'],
-                                      ["attributes/#{stage}", 'attributes']]
-                    )
+                    common_project_paths = select_existing_paths.call(cookbook_path, common_paths)
 
                     if recipe_paths.any?
                       [*recipe_paths, *common_project_paths]
