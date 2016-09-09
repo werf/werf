@@ -18,7 +18,7 @@ module Dapp
             if shellout("docker inspect #{system_shellout_container_name}").exitstatus.nonzero?
               volumes_from = [gitartifact_container]
               log_secondary_process(t(code: 'process.system_shellout_container_loading'), short: true) do
-                shellout! ['docker run --detach --privileged',
+                shellout! ['docker run --detach --privileged', '--restart always',
                            "--name #{system_shellout_container_name}",
                            *volumes_from.map { |container| "--volumes-from #{container}" },
                            '--volume /:/.system_shellout_root',
