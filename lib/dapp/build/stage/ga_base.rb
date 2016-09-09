@@ -20,7 +20,6 @@ module Dapp
         def prepare_image
           super
           image.add_volumes_from application.project.gitartifact_container
-          image.add_command 'export PATH=/.dapp/deps/gitartifact/bin:$PATH'
 
           application.git_artifacts.each do |git_artifact|
             image.add_volume "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}:ro"
