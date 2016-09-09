@@ -26,7 +26,11 @@ describe Dapp::Builder::Chef do
           read_file_in_image('/myartifact/note.txt', application.send(:last_stage).image.name)
         ), "/testartifact/note.txt inc artifact image does not equal /myartifact/note.txt in result image"
       end
+    end # context
+  end # each
 
+  %w(ubuntu:14.04 centos:7).each do |os|
+    context os do
       [%i(before_install foo pizza batareika),
        %i(install bar taco koromyslo),
        %i(before_setup baz burger kolokolchik),
