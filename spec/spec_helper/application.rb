@@ -51,6 +51,8 @@ module SpecHelper
                                 _before_setup_artifact: [],
                                 _after_install_artifact: [],
                                 _after_setup_artifact: [],
+                                _tmp_dir: { _store: [] },
+                                _build_dir: { _store: [] },
                                 _chef: { _modules: [] },
                                 _shell: { _before_install: [], _before_setup: [], _install: [], _setup: [] },
                                 _docker: { _from: :'ubuntu:14.04',

@@ -27,7 +27,9 @@ module Dapp
         end
 
         # rubocop:disable Metrics/ParameterLists
-        def log_process(message, process: nil, short: false, style: {}, status: {}, &blk)
+        def log_process(message, process: nil, short: false, quiet: false, style: {}, status: {}, &blk)
+          return blk.call if quiet
+
           style[:message] ||= DEFAULT_STYLE[:message]
           style[:process] ||= DEFAULT_STYLE[:process]
           style[:failed] ||= DEFAULT_STYLE[:failed]

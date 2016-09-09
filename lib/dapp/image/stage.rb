@@ -6,17 +6,15 @@ module Dapp
       include Argument
 
       def initialize(name:, project:, built_id: nil, from: nil)
-        @bash_commands = []
-        @options = {}
-        @change_options = {}
-        @service_change_options = {}
         @container_name = "#{name[/[[^:].]*/]}.#{SecureRandom.hex(4)}"
         @built_id = built_id
-        super(name: name, project: project, from: from)
-      end
 
-      def labels
-        self.class.image_config_option(image_id: built_id, option: 'labels')
+        @bash_commands          = []
+        @options                = {}
+        @change_options         = {}
+        @service_change_options = {}
+
+        super(name: name, project: project, from: from)
       end
 
       def built_id
@@ -49,6 +47,11 @@ module Dapp
         project.log_warning(desc: { code: :another_image_already_tagged, context: 'warning' }) if !(existed_id = id).nil? && built_id != existed_id
         shellout!("docker tag #{built_id} #{name}", log_verbose: log_verbose, log_time: log_time)
         cache_reset
+      end
+
+      def labels
+        raise Error::Build, code: :image_not_exist, data: { name: name } if built_id.nil?
+        self.class.image_config_option(image_id: built_id, option: 'labels')
       end
 
       protected

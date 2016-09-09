@@ -16,7 +16,7 @@ module Dapp
       end
 
       def id
-        @id || cache[:id]
+        cache[:id]
       end
 
       def untag!
@@ -32,10 +32,8 @@ module Dapp
 
       def pull!(log_verbose: false, log_time: false)
         return if tagged?
-        project.with_log_indent do
-          project.log_secondary_process(project.t(code: 'process.image_pull', data: { name: name }), short: !log_verbose) do
-            shellout!("docker pull #{name}", log_verbose: log_verbose, log_time: log_time)
-          end
+        project.log_secondary_process(project.t(code: 'process.image_pull', data: { name: name }), short: !log_verbose) do
+          shellout!("docker pull #{name}", log_verbose: log_verbose, log_time: log_time)
         end
         cache_reset
       end
@@ -76,7 +74,7 @@ module Dapp
 
         def cache_reset(name = '')
           cache.delete(name)
-          shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' #{name}").stdout.lines.each do |line|
+          shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}").stdout.lines.each do |line|
             name, id, created_at, size = line.split(';')
             cache[name] = { id: id, created_at: created_at, size: size }
           end

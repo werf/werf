@@ -543,6 +543,31 @@ describe Dapp::Config::Main do
     end
   end
 
+  [:tmp_dir, :build_dir].each do |dir|
+    context dir do
+      it 'base' do
+        @dappfile = "#{dir}.store 'test'"
+        expect(app.public_send("_#{dir}")._store).to eq ['test']
+      end
+
+      it 'unstore' do
+        @dappfile = %(
+          #{dir}.store 'test', 'test2'
+          #{dir}.unstore 'test'
+        )
+        expect(app.public_send("_#{dir}")._store).to eq ['test2']
+      end
+
+      it 'reset' do
+        @dappfile = %(
+          #{dir}.store 'test', 'test2'
+          #{dir}.reset
+        )
+        expect(app.public_send("_#{dir}")._store).to be_empty
+      end
+    end
+  end
+
   context 'cache_version' do
     it 'base' do
       @dappfile = %(
