@@ -5,7 +5,7 @@ directory '/myartifact' do
   action :create
 end
 
-file "/myartifact/#{node['test']['myartifact_note_filename']}" do
+file "/myartifact/#{node['mdapp-testartifact']['target_filename']}" do
   owner 'root'
   group 'root'
   mode '0777'

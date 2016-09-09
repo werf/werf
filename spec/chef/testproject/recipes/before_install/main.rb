@@ -1,13 +1,5 @@
 include_recipe 'apt' if node[:platform_family].to_s == 'debian'
 
-log SecureRandom.uuid do
-  message "node['test']['common_attr'] = #{node['test']['common_attr']}"
-end
-
-log SecureRandom.uuid do
-  message "node['test']['hello'] = #{node['test']['hello']}"
-end
-
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_before_install.txt" do
   source 'foo.txt'
   owner 'root'

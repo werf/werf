@@ -1,7 +1,3 @@
-log SecureRandom.uuid do
-  message "node['test']['common_attr'] = #{node['test']['common_attr']}"
-end
-
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_before_setup.txt" do
   source 'baz.txt'
   owner 'root'

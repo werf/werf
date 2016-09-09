@@ -1,7 +1,3 @@
-log SecureRandom.uuid do
-  message "node['test']['common_attr'] = #{node['test']['common_attr']}"
-end
-
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_setup.txt" do
   source 'qux.txt'
   owner 'root'
