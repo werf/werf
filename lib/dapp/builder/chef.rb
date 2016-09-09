@@ -64,6 +64,10 @@ module Dapp
         application.config._chef._recipes
       end
 
+      def enabled_attributes
+        application.config._chef._attributes
+      end
+
       def project_name
         cookbook_metadata.name
       end

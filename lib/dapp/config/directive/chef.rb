@@ -5,10 +5,12 @@ module Dapp
       class Chef
         attr_reader :_modules
         attr_reader :_recipes
+        attr_reader :_attributes
 
         def initialize
           @_modules = []
           @_recipes = []
+          @_attributes = []
         end
 
         def module(*args)
@@ -35,9 +37,22 @@ module Dapp
           @_recipes.clear
         end
 
+        def attribute(*args)
+          @_attributes.concat(args)
+        end
+
+        def remove_attribute(*args)
+          @_attributes.reject! { |attribute| args.include? attribute }
+        end
+
+        def reset_attributes
+          @_attributes.clear
+        end
+
         def reset_all
           reset_modules
           reset_recipes
+          reset_attributes
         end
 
         protected
