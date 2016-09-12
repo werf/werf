@@ -178,7 +178,7 @@ module Dapp
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_cookbooks
-        volumes_from = chefdk_container
+        volumes_from = [application.project.base_container, chefdk_container]
         application.project.log_secondary_process(application.project.t(code: 'process.berks_vendor')) do
           before_vendor_commands = [].tap do |commands|
             unless application.project.cli_options[:dev]
@@ -230,7 +230,7 @@ module Dapp
 
           application.project.shellout!(
             ['docker run --rm',
-             "--volumes-from #{volumes_from}",
+             volumes_from.map { |container| "--volumes-from #{container}" }.join(' '),
              *berksfile.local_cookbooks
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
