@@ -11,9 +11,7 @@ describe Dapp::Builder::Chef do
   %w(ubuntu:14.04 centos:7).each do |os|
     context os do
       it 'builds project' do
-        mdapp_testartifact_path.join('attributes/build_artifact.rb').tap do |path|
-          path.write "default['mdapp-testartifact']['target_filename'] = 'note.txt'\n"
-        end
+        application.config._chef._build_artifact_attributes['mdapp-testartifact']['target_filename'] = 'note.txt'
 
         application_build!
 
@@ -71,9 +69,7 @@ describe Dapp::Builder::Chef do
       end
 
       it 'rebuilds artifact from build_artifact stage' do
-        mdapp_testartifact_path.join('attributes/build_artifact.rb').tap do |path|
-          path.write "default['mdapp-testartifact']['target_filename'] = 'mynote.txt'\n"
-        end
+        application.config._chef._build_artifact_attributes['mdapp-testartifact']['target_filename'] = 'mynote.txt'
 
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
         old_artifact_last_stage_id = artifact_application.send(:last_stage).image.id
@@ -130,19 +126,57 @@ describe Dapp::Builder::Chef do
           _docker: default_config[:_docker].merge(_from: os.to_sym),
           _chef: {
             _modules: %w(test test2),
-            _recipes: %w(main X X_Y)
+            _recipes: %w(main X X_Y),
+            _before_install_attributes: {
+              'mdapp-test2' => {
+                'sayhello' => 'hello',
+                'sayhelloagain' => 'helloagain'
+              }
+            },
+            _install_attributes: {
+              'mdapp-test2' => { 'sayhello' => 'hello' }
+            },
+            _before_setup_attributes: {
+              'mdapp-test2' => { 'sayhello' => 'hello' }
+            },
+            _setup_attributes: {
+              'mdapp-test2' => { 'sayhello' => 'hello' }
+            },
+            _build_artifact_attributes: {
+              'mdapp-test2' => { 'sayhello' => 'hello' },
+              'mdapp-testartifact' => { 'target_filename' => 'note.txt' }
+            }
           },
           _before_install_artifact: [
             ::Dapp::Config::Directive::Artifact::Stage.new(
               '/myartifact',
-              config: RecursiveOpenStruct.new(default_config.merge(
+              config: ConfigRecursiveOpenStruct.new(default_config.merge(
                                                 _builder: :chef,
                                                 _home_path: testproject_path.to_s,
                                                 _artifact_dependencies: [],
                                                 _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
                                                 _chef: {
                                                   _modules: %w(testartifact),
-                                                  _recipes: %w(myartifact)
+                                                  _recipes: %w(myartifact),
+                                                  _before_install_attributes: {
+                                                    'mdapp-test2' => {
+                                                      'sayhello' => 'hello',
+                                                      'sayhelloagain' => 'helloagain'
+                                                    }
+                                                  },
+                                                  _install_attributes: {
+                                                    'mdapp-test2' => { 'sayhello' => 'hello' }
+                                                  },
+                                                  _before_setup_attributes: {
+                                                    'mdapp-test2' => { 'sayhello' => 'hello' }
+                                                  },
+                                                  _setup_attributes: {
+                                                    'mdapp-test2' => { 'sayhello' => 'hello' }
+                                                  },
+                                                  _build_artifact_attributes: {
+                                                    'mdapp-test2' => { 'sayhello' => 'hello' },
+                                                    'mdapp-testartifact' => { 'target_filename' => 'note.txt' }
+                                                  }
                                                 }
               ))
             )
@@ -153,19 +187,7 @@ describe Dapp::Builder::Chef do
   end # each
 
   def openstruct_config
-    RecursiveOpenStruct.new(config).tap do |obj|
-      def obj._app_chain
-        [self]
-      end
-
-      def obj._app_runlist
-        []
-      end
-
-      def obj._root_app
-        _app_chain.first
-      end
-    end
+    ConfigRecursiveOpenStruct.new(config)
   end
 
   def project_path
@@ -256,5 +278,23 @@ describe Dapp::Builder::Chef do
     return true if res.exitstatus.zero?
     return false if res.exitstatus == 2
     res.error!
+  end
+
+  class ConfigRecursiveOpenStruct < RecursiveOpenStruct
+    def _app_chain
+      [self]
+    end
+
+    def _app_runlist
+      []
+    end
+
+    def _root_app
+      _app_chain.first
+    end
+
+    def to_json(*a)
+      self.to_h.to_json(*a)
+    end
   end
 end

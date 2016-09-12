@@ -35,9 +35,40 @@ module Dapp
           @_recipes.clear
         end
 
+        def attributes
+          @attributes ||= Attributes.new
+        end
+
+        %i(before_install install before_setup setup build_artifact).each do |stage|
+          define_method("#{stage}_attributes") do
+            var = "@#{stage}_attributes"
+            instance_variable_get(var) || instance_variable_set(var, Attributes.new)
+          end
+
+          define_method("_#{stage}_attributes") do
+            attributes.in_depth_merge send("#{stage}_attributes")
+          end
+
+          define_method("reset_#{stage}_attributes") do
+            instance_variable_set("@#{stage}_attributes", nil)
+          end
+        end
+
+        def reset_attributes
+          @attributes = nil
+        end
+
+        def reset_all_attributes
+          reset_attributes
+          %i(before_install install before_setup setup build_artifact).each do |stage|
+            send("reset_#{stage}_attributes")
+          end
+        end
+
         def reset_all
           reset_modules
           reset_recipes
+          reset_all_attributes
         end
 
         protected
@@ -49,6 +80,15 @@ module Dapp
         def empty?
           @_modules.empty? && @_recipes.empty?
         end
+
+        # Attributes
+        class Attributes < Hash
+          def [](key)
+            super || begin
+              self[key] = self.class.new
+            end
+          end
+        end # Attributes
       end
     end
   end

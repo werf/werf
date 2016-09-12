@@ -17,6 +17,7 @@ require 'paint'
 require 'net_status'
 
 require 'dapp/version'
+require 'dapp/core_ext/hash'
 require 'dapp/helper/cli'
 require 'dapp/helper/trivia'
 require 'dapp/helper/sha256'

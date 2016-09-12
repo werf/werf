@@ -5,11 +5,11 @@ module Dapp
       # Request
       module Request
         def request(url, **options)
-          raw_request(url, deep_merge(options, authorization_options(url)))
+          raw_request(url, options.in_depth_merge(authorization_options(url)))
         end
 
         def raw_request(url, **options)
-          Excon.new(url).request(deep_merge(default_request_options, options))
+          Excon.new(url).request(default_request_options.in_depth_merge(options))
         end
 
         def url_available?(url)
@@ -23,20 +23,6 @@ module Dapp
 
         def default_request_options
           { method: :get, omit_default_port: true }
-        end
-
-        private
-
-        def deep_merge(hash1, hash2)
-          hash1.merge(hash2) do |_, v1, v2|
-            if v1.is_a?(Hash) && v2.is_a?(Hash)
-              v1.merge(v2)
-            elsif v1.is_a?(Array) || v2.is_a?(Array)
-              [v1, v2].flatten
-            else
-              v2
-            end
-          end
         end
       end
     end # Mod
