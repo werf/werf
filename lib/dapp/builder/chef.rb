@@ -13,7 +13,9 @@ module Dapp
 
       %i(before_install install before_setup setup build_artifact).each do |stage|
         define_method("#{stage}_checksum") do
-          application.hashsum [stage_cookbooks_checksum(stage), *stage_cookbooks_runlist(stage)]
+          application.hashsum [stage_cookbooks_checksum(stage),
+                               stage_attributes_raw(stage),
+                               *stage_cookbooks_runlist(stage)]
         end
 
         define_method("#{stage}?") { !stage_empty?(stage) }
@@ -26,8 +28,9 @@ module Dapp
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}:ro"
             image.add_command ['/.dapp/deps/chefdk/bin/chef-solo',
                                '--legacy-mode',
-                               "-c #{container_stage_config_path(stage)}",
-                               "-o #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
+                               "--config #{container_stage_config_path(stage)}",
+                               "--json-attributes #{container_stage_json_attributes_path(stage)}",
+                               "--override-runlist #{stage_cookbooks_runlist(stage).join(',')}"].join(' ')
           end
         end
       end
@@ -64,8 +67,12 @@ module Dapp
         application.config._chef._recipes
       end
 
-      def enabled_attributes
-        application.config._chef._attributes
+      def stage_attributes(stage)
+        application.config._chef.send("_#{stage}_attributes")
+      end
+
+      def stage_attributes_raw(stage)
+        JSON.dump stage_attributes(stage)
       end
 
       def project_name
@@ -91,7 +98,7 @@ module Dapp
       def cookbook_metadata
         @cookbook_metadata ||= CookbookMetadata.new(cookbook_metadata_path).tap do |metadata|
           metadata.depends.each do |dependency|
-            raise Error, code: :mdapp_in_metadata_depends_forbidden,
+            raise Error, code: :mdapp_dependency_in_metadata_forbidden,
                          data: { dependency: dependency } if dependency.start_with? 'mdapp-'
           end
         end
@@ -283,27 +290,19 @@ module Dapp
           mdapp_enabled = is_mdapp && enabled_modules.include?(mdapp_name)
 
           paths = if is_project
-                    recipe_paths = enabled_recipes.map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
-                                                  .select { |from, _| cookbook_path.join(from).exist? }
-
                     common_dapp_paths = select_existing_paths.call(cookbook_path, common_paths)
 
+                    recipe_paths = enabled_recipes.map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
+                                                  .select { |from, _| cookbook_path.join(from).exist? }
                     if recipe_paths.any?
                       [*recipe_paths, *common_dapp_paths]
                     else
                       [nil, *common_dapp_paths]
                     end
                   elsif is_mdapp && mdapp_enabled
+                    common_mdapp_paths = select_existing_paths.call(cookbook_path, common_paths)
+
                     recipe_path = "recipes/#{stage}.rb"
-
-                    common_mdapp_paths = select_existing_paths.call(cookbook_path, [
-                      *common_paths,
-                      *enabled_attributes.map do |attr|
-                        [["attributes/common/#{attr}.rb", "attributes/#{attr}.rb"],
-                         ["attributes/#{stage}/#{attr}.rb", "attributes/#{attr}.rb"]]
-                      end.flatten(1)
-                    ])
-
                     if cookbook_path.join(recipe_path).exist?
                       [[recipe_path, recipe_path], *common_mdapp_paths]
                     else
@@ -423,6 +422,18 @@ module Dapp
       def container_stage_config_path(stage, *path)
         install_chef_solo_stage_config(stage)
         container_stage_build_path(stage, 'config.rb', *path)
+      end
+
+      def install_json_attributes(stage)
+        @install_json_attributes ||= {}
+        @install_json_attributes[stage] ||= true.tap do
+          stage_build_path(stage, 'attributes.json').write "#{stage_attributes_raw(stage)}\n"
+        end
+      end
+
+      def container_stage_json_attributes_path(stage, *path)
+        install_json_attributes(stage)
+        container_stage_build_path(stage, 'attributes.json', *path)
       end
 
       def stage_build_path(stage, *path)
