@@ -106,7 +106,7 @@ module Dapp
       end
 
       def service_options
-        { entrypoint: '/bin/bash', name: container_name }
+        { entrypoint: project.bash_path, name: container_name }
       end
 
       def prepared_change
