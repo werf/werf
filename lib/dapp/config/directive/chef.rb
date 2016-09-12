@@ -36,14 +36,13 @@ module Dapp
         end
 
         def attributes
-          @attributes ||= new_attributes
+          @attributes ||= Attributes.new
         end
 
         %i(before_install install before_setup setup build_artifact).each do |stage|
           define_method("#{stage}_attributes") do
-            "@#{stage}_attributes".tap do |var|
-              instance_variable_get(var) || instance_variable_set(var, new_attributes)
-            end
+            var = "@#{stage}_attributes"
+            instance_variable_get(var) || instance_variable_set(var, Attributes.new)
           end
 
           define_method("_#{stage}_attributes") do
@@ -82,9 +81,14 @@ module Dapp
           @_modules.empty? && @_recipes.empty?
         end
 
-        def new_attributes
-          Hash.new { |hash, key| hash[key] = Hash.new &hash.default_proc }
-        end
+        # Attributes
+        class Attributes < Hash
+          def [](key)
+            super || begin
+              self[key] = self.class.new
+            end
+          end
+        end # Attributes
       end
     end
   end
