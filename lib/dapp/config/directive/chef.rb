@@ -5,12 +5,10 @@ module Dapp
       class Chef
         attr_reader :_modules
         attr_reader :_recipes
-        attr_reader :_attributes
 
         def initialize
           @_modules = []
           @_recipes = []
-          @_attributes = []
         end
 
         def module(*args)
@@ -37,22 +35,41 @@ module Dapp
           @_recipes.clear
         end
 
-        def attribute(*args)
-          @_attributes.concat(args)
+        def attributes
+          @attributes ||= new_attributes
         end
 
-        def remove_attribute(*args)
-          @_attributes.reject! { |attribute| args.include? attribute }
+        %i(before_install install before_setup setup build_artifact).each do |stage|
+          define_method("#{stage}_attributes") do
+            "@#{stage}_attributes".tap do |var|
+              instance_variable_get(var) || instance_variable_set(var, new_attributes)
+            end
+          end
+
+          define_method("_#{stage}_attributes") do
+            attributes.in_depth_merge send("#{stage}_attributes")
+          end
+
+          define_method("reset_#{stage}_attributes") do
+            instance_variable_set("@#{stage}_attributes", nil)
+          end
         end
 
         def reset_attributes
-          @_attributes.clear
+          @attributes = nil
+        end
+
+        def reset_all_attributes
+          reset_attributes
+          %i(before_install install before_setup setup build_artifact).each do |stage|
+            send("reset_#{stage}_attributes")
+          end
         end
 
         def reset_all
           reset_modules
           reset_recipes
-          reset_attributes
+          reset_all_attributes
         end
 
         protected
@@ -63,6 +80,10 @@ module Dapp
 
         def empty?
           @_modules.empty? && @_recipes.empty?
+        end
+
+        def new_attributes
+          Hash.new { |hash, key| hash[key] = Hash.new &hash.default_proc }
         end
       end
     end

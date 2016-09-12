@@ -233,74 +233,103 @@ describe Dapp::Config::Main do
       expect(apps_by_name['dapp-Z'].chef._recipes).to eq %w()
     end
 
-    it 'attribute' do
-      expect_special_attribute(:chef, :attribute, :_attributes)
-    end
-
-    it 'remove_attribute' do
+    it 'attributes' do
       @dappfile = %(
         builder :chef
 
-        chef.attribute 'a', 'b', 'c', 'd'
-        chef.remove_attribute 'a', 'c'
+        chef.attributes['k1']['k2'] = 'k1k2value'
+        chef.attributes['k1']['k3'] = 'k1k3value'
+#{%i(before_install install before_setup setup build_artifact).map do |stage|
+  "chef.#{stage}_attributes['k1']['#{stage}'] = 'k1#{stage}value'"
+end.join("\n")}
 
         app 'X' do
-          chef.attribute 'e', 'f'
+          chef.attributes['k1'].delete('k2', 'k3')
+          chef.attributes['k1']['k4']['k5'] = 'k1k4k5value'
+          chef.before_install_attributes['k1']['before_install'] = 'k1before_installchangedvalue'
         end
 
         app 'Y' do
-          chef.attribute 'g'
-          chef.remove_attribute 'b'
+          chef.attributes['k1']['k2'] = 'k1k2changedvalue'
+          chef.attributes['k1']['k4'] = 'k1k4value'
+
+          app 'A' do
+            chef.attributes['k1']['k5'] = 'k1k5value'
+          end
         end
-      )
 
-      expect(apps_by_name['dapp-X'].chef._attributes).to eq %w(b d e f)
-      expect(apps_by_name['dapp-Y'].chef._attributes).to eq %w(d g)
-    end
+        app 'Z'
 
-    it 'reset_attributes' do
-      @dappfile = %(
-        builder :chef
-
-        chef.attribute 'a', 'b', 'c'
-
-        app 'X' do
+        app 'E' do
           chef.reset_attributes
         end
 
-        app 'Y' do
-          chef.attribute 'd'
-
-          app 'A' do
-            chef.reset_attributes
-          end
-
-          app 'B'
+        app 'T' do
+          chef.reset_before_install_attributes
         end
 
-        chef.reset_attributes
+        app 'S' do
+          chef.reset_all
+        end
 
-        app 'Z'
+        app 'Q' do
+          chef.reset_all_attributes
+        end
       )
 
-      expect(apps_by_name['dapp-X'].chef._attributes).to eq %w()
-      expect(apps_by_name['dapp-Y-A'].chef._attributes).to eq %w()
-      expect(apps_by_name['dapp-Y-B'].chef._attributes).to eq %w(a b c d)
-      expect(apps_by_name['dapp-Z'].chef._attributes).to eq %w()
+      %i(before_install install before_setup setup build_artifact).each do |stage|
+        expect(apps_by_name['dapp-X'].chef.send("_#{stage}_attributes")).to eq({
+          'k1' => {
+            'k4' => { 'k5' => 'k1k4k5value' },
+            stage => (stage == :before_install ? "k1#{stage}changedvalue" : "k1#{stage}value")
+          }
+        })
+        expect(apps_by_name['dapp-Y-A'].chef.send("_#{stage}_attributes")).to eq({
+          'k1' => {
+            'k2' => 'k1k2changedvalue',
+            'k3' => 'k1k3value',
+            'k4' => 'k1k4value',
+            'k5' => 'k1k5value',
+            stage => "k1#{stage}value"
+          }
+        })
+        expect(apps_by_name['dapp-Z'].chef.send("_#{stage}_attributes")).to eq({
+          'k1' => {
+            'k2' => 'k1k2value',
+            'k3' => 'k1k3value',
+            stage => "k1#{stage}value"
+          }
+        })
+        expect(apps_by_name['dapp-E'].chef.send("_#{stage}_attributes")).to eq({
+          'k1' => {
+            stage => "k1#{stage}value"
+          }
+        })
+        expect(apps_by_name['dapp-T'].chef.send("_#{stage}_attributes")).to eq({
+          'k1' => {
+            'k2' => 'k1k2value',
+            'k3' => 'k1k3value'
+          }.tap { |obj|
+            obj[stge] = "k1#{stage}value" if stage != :before_install
+          }
+        })
+        expect(apps_by_name['dapp-S'].chef.send("_#{stage}_attributes")).to eq {}
+        expect(apps_by_name['dapp-Q'].chef.send("_#{stage}_attributes")).to eq {}
+      end
     end
 
-    it 'reset_all' do
+    it 'reset_all' do # FIXME attributes
       @dappfile = %(
         builder :chef
 
         chef.module 'ma', 'mb', 'mc'
         chef.recipe 'ra', 'rb', 'rc'
-        chef.attribute 'aa', 'ab', 'ac'
+        chef.attributes['k1']['k2'] = 'k1k2value'
 
         app 'X' do
           chef.module 'md'
           chef.recipe 'rd'
-          chef.attribute 'ad'
+          chef.attributes['k1']['k3'] = 'k1k3value'
 
           app 'A'
 
@@ -322,23 +351,32 @@ describe Dapp::Config::Main do
 
       expect(apps_by_name['dapp-X-A'].chef._modules).to eq %w(ma mb mc md)
       expect(apps_by_name['dapp-X-A'].chef._recipes).to eq %w(ra rb rc rd)
-      expect(apps_by_name['dapp-X-A'].chef._attributes).to eq %w(aa ab ac ad)
+      expect(apps_by_name['dapp-X-A'].chef._before_install_attributes).to eq({
+        'k1' => {
+          'k2' => 'k1k2value',
+          'k3' => 'k1k3value'
+        }
+      })
 
       expect(apps_by_name['dapp-X-B'].chef._modules).to eq %w()
       expect(apps_by_name['dapp-X-B'].chef._recipes).to eq %w()
-      expect(apps_by_name['dapp-X-B'].chef._attributes).to eq %w()
+      expect(apps_by_name['dapp-X-B'].chef._before_install_attributes).to eq {}
 
       expect(apps_by_name['dapp-X-C'].chef._modules).to eq %w()
       expect(apps_by_name['dapp-X-C'].chef._recipes).to eq %w()
-      expect(apps_by_name['dapp-X-C'].chef._attributes).to eq %w()
+      expect(apps_by_name['dapp-X-C'].chef._before_install_attributes).to eq {}
 
       expect(apps_by_name['dapp-Y'].chef._modules).to eq %w(ma mb mc)
       expect(apps_by_name['dapp-Y'].chef._recipes).to eq %w(ra rb rc)
-      expect(apps_by_name['dapp-Y'].chef._attributes).to eq %w(aa ab ac)
+      expect(apps_by_name['dapp-Y'].chef._before_install_attributes).to eq({
+        'k1' => {
+          'k2' => 'k1k2value'
+        }
+      })
 
       expect(apps_by_name['dapp-Z'].chef._modules).to eq %w()
       expect(apps_by_name['dapp-Z'].chef._recipes).to eq %w()
-      expect(apps_by_name['dapp-Z'].chef._attributes).to eq %w()
+      expect(apps_by_name['dapp-Z'].chef._before_install_attributes).to eq {}
     end
   end
 
