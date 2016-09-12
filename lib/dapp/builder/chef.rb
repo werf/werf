@@ -286,21 +286,23 @@ module Dapp
                     recipe_paths = enabled_recipes.map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
                                                   .select { |from, _| cookbook_path.join(from).exist? }
 
-                    common_project_paths = select_existing_paths.call(cookbook_path, common_paths)
+                    common_dapp_paths = select_existing_paths.call(cookbook_path, common_paths)
 
                     if recipe_paths.any?
-                      [*recipe_paths, *common_project_paths]
+                      [*recipe_paths, *common_dapp_paths]
                     else
-                      [nil, *common_project_paths]
+                      [nil, *common_dapp_paths]
                     end
                   elsif is_mdapp && mdapp_enabled
                     recipe_path = "recipes/#{stage}.rb"
 
-                    common_mdapp_paths = select_existing_paths.call(
-                      cookbook_path, [*common_paths,
-                                      ['attributes/common.rb', 'attributes/common.rb'],
-                                      ["attributes/#{stage}.rb", "attributes/#{stage}.rb"]]
-                    )
+                    common_mdapp_paths = select_existing_paths.call(cookbook_path, [
+                      *common_paths,
+                      *enabled_attributes.map do |attr|
+                        [["attributes/common/#{attr}.rb", "attributes/#{attr}.rb"],
+                         ["attributes/#{stage}/#{attr}.rb", "attributes/#{attr}.rb"]]
+                      end.flatten(1)
+                    ])
 
                     if cookbook_path.join(recipe_path).exist?
                       [[recipe_path, recipe_path], *common_mdapp_paths]
