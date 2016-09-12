@@ -25,12 +25,12 @@ module Dapp
           end
 
           def install(*args, cache_version: nil)
-            _install.concat(args)
+            @_install.concat(args)
             @_install_cache_version = cache_version
           end
 
           def setup(*args, cache_version: nil)
-            _setup.concat(args)
+            @_setup.concat(args)
             @_setup_cache_version = cache_version
           end
 
