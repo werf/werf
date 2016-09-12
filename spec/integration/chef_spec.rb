@@ -69,10 +69,10 @@ describe Dapp::Builder::Chef do
       end
 
       it 'rebuilds artifact from build_artifact stage' do
-        application.config._chef._build_artifact_attributes['mdapp-testartifact']['target_filename'] = 'mynote.txt'
-
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
         old_artifact_last_stage_id = artifact_application.send(:last_stage).image.id
+
+        application.config._chef._build_artifact_attributes['mdapp-testartifact']['target_filename'] = 'mynote.txt'
 
         application_rebuild!
 
@@ -81,7 +81,7 @@ describe Dapp::Builder::Chef do
 
         expect(file_exist_in_image?('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/note.txt does not exist in artifact image'
         expect(file_exist_in_image?('/myartifact/note.txt', application.send(:last_stage).image.name)).to be(false), '/myartifact/note.txt does exist in result image'
-        expect(file_exist_in_image?('/myartifact/mynote.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/mynote.txt does exist in result image'
+        expect(file_exist_in_image?('/myartifact/mynote.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/mynote.txt does not exist in result image'
 
         expect(
           read_file_in_image('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)
