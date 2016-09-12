@@ -86,7 +86,7 @@ Cookbook приложения (cookbook dapp) — это основной chef c
 * Структура файлов.
   * Атрибуты.
     * Файлы атрибутов не поддерживаются.
-    * Хэш атрибутов задается через [Dappfile](#dappfile), см. [chef.attribute](#chefattribute), [chef.\<стадия\>\_attribute](#chefстадия_attribute).
+    * Хэш normal-атрибутов задается через [Dappfile](#dappfile), см. [chef.attribute](#chefattribute), [chef.\<стадия\>\_attribute](#chefстадия_attribute).
   * Файлы.
     * Директория files/\<стадия\>/\<рецепт\> — содержит файлы рецепта для стадии, опциональна.
     * Директория files/\<стадия\>/common — содержит общие файлы для стадии, опциональна.
