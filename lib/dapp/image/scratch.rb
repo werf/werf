@@ -12,7 +12,7 @@ module Dapp
 
       def build!
         return if project.dry_run?
-        project.shellout!('tar c --files-from /dev/null | docker import - dappdeps/scratch').stdout.strip
+        project.shellout!("#{project.tar_path} c --files-from /dev/null | docker import - dappdeps/scratch").stdout.strip
         cache_reset
       end
 

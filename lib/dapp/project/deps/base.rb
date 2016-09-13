@@ -5,7 +5,7 @@ module Dapp
     module Deps
       # Base
       module Base
-        BASE_IMAGE = 'dappdeps/base:0.1.0'.freeze
+        BASE_IMAGE = 'dappdeps/base:0.1.1'.freeze
 
         def base_container_name # FIXME: hashsum(image) or dockersafe()
           BASE_IMAGE.tr('/', '_').tr(':', '_')
@@ -28,6 +28,10 @@ module Dapp
 
         def bash_path
           '/.dapp/deps/base/bin/bash'
+        end
+
+        def tar_path
+          '/.dapp/deps/base/bin/tar'
         end
       end # Base
     end # Deps

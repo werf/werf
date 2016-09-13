@@ -29,7 +29,7 @@ module Dapp
 
       ["install #{credentials.join(' ')} -d #{where_to_add}",
        ["#{repo.application.project.git_path} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths.join(' ')}",
-        "#{sudo}tar -x -C #{where_to_add} #{archive_command_excludes.join(' ')}"].join(' | ')]
+        "#{sudo}#{repo.application.project.tar_path} -x -C #{where_to_add} #{archive_command_excludes.join(' ')}"].join(' | ')]
     end
 
     def apply_patch_command(stage)
