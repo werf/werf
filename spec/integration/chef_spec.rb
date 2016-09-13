@@ -100,6 +100,10 @@ describe Dapp::Builder::Chef do
           path.write "#{new_note_content}\n"
         end
 
+        [application, artifact_application].each do |app|
+          app.config._chef._build_artifact_attributes['mdapp-testartifact']['target_filename'] = 'mynote.txt'
+        end
+
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
         old_artifact_last_stage_id = artifact_application.send(:last_stage).image.id
 
@@ -109,7 +113,7 @@ describe Dapp::Builder::Chef do
         expect(artifact_application.send(:last_stage).image.id).not_to eq(old_artifact_last_stage_id)
 
         expect(file_exist_in_image?('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/note.txt does not exist in artifact image'
-        expect(file_exist_in_image?('/myartifact/mynote.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/mynote.txt does exist in result image'
+        expect(file_exist_in_image?('/myartifact/mynote.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/mynote.txt does not exist in result image'
 
         expect(
           read_file_in_image('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)
