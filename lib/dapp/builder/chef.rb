@@ -290,11 +290,11 @@ module Dapp
           paths = if is_project
                     common_dapp_paths = select_existing_paths.call(cookbook_path, [
                       *common_paths,
+                      ["files/#{stage}/common", 'files/default'],
+                      ["templates/#{stage}/common", 'templates/default'],
                       *enabled_recipes.map do |recipe|
                         [["files/#{stage}/#{recipe}", 'files/default'],
-                         ["files/#{stage}/common", 'files/default'],
-                         ["templates/#{stage}/#{recipe}", 'templates/default'],
-                         ["templates/#{stage}/common", 'templates/default']]
+                         ["templates/#{stage}/#{recipe}", 'templates/default']]
                       end.flatten(1)
                     ])
 
