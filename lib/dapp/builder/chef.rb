@@ -276,9 +276,7 @@ module Dapp
           paths.select { |from, _| cookbook_path.join(from).exist? }
         end
 
-        common_paths = [['metadata.json', 'metadata.json'],
-                        ["files/#{stage}", 'files/default'],
-                        ["templates/#{stage}", 'templates/default']]
+        common_paths = [['metadata.json', 'metadata.json']]
 
         install_paths = Dir[cookbooks_vendor_path('*')]
                         .map(&Pathname.method(:new))
@@ -290,7 +288,15 @@ module Dapp
           mdapp_enabled = is_mdapp && enabled_modules.include?(mdapp_name)
 
           paths = if is_project
-                    common_dapp_paths = select_existing_paths.call(cookbook_path, common_paths)
+                    common_dapp_paths = select_existing_paths.call(cookbook_path, [
+                      *common_paths,
+                      ["files/#{stage}/common", 'files/default'],
+                      ["templates/#{stage}/common", 'templates/default'],
+                      *enabled_recipes.map do |recipe|
+                        [["files/#{stage}/#{recipe}", 'files/default'],
+                         ["templates/#{stage}/#{recipe}", 'templates/default']]
+                      end.flatten(1)
+                    ])
 
                     recipe_paths = enabled_recipes.map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
                                                   .select { |from, _| cookbook_path.join(from).exist? }
@@ -300,7 +306,13 @@ module Dapp
                       [nil, *common_dapp_paths]
                     end
                   elsif is_mdapp && mdapp_enabled
-                    common_mdapp_paths = select_existing_paths.call(cookbook_path, common_paths)
+                    common_mdapp_paths = select_existing_paths.call(cookbook_path, [
+                      *common_paths,
+                      ["files/#{stage}", 'files/default'],
+                      ['files/common', 'files/default'],
+                      ["templates/#{stage}", 'templates/default'],
+                      ['templates/common', 'templates/default']
+                    ])
 
                     recipe_path = "recipes/#{stage}.rb"
                     if cookbook_path.join(recipe_path).exist?
