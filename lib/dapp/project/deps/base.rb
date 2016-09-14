@@ -17,10 +17,8 @@ module Dapp
               log_secondary_process(t(code: 'process.base_container_loading'), short: true) do
                 shellout!(
                   ['docker create',
-                   '--restart=no',
                    "--name #{base_container_name}",
-                   "--volume /.dapp/deps/base #{BASE_IMAGE}",
-                   '2>/dev/null'].join(' ')
+                   "--volume /.dapp/deps/base #{BASE_IMAGE}"].join(' ')
                 )
               end
             end
