@@ -38,7 +38,7 @@ module Dapp
       end
 
       def chef_cookbooks(image)
-        image.add_volume "#{cookbooks_vendor_path}:#{application.container_dapp_path('chef_cookbooks')}"
+        image.add_volume "#{cookbooks_vendor_path(chef_cookbooks_stage: true)}:#{application.container_dapp_path('chef_cookbooks')}"
         image.add_command(
           'mkdir -p /usr/share/dapp/chef_repo',
           ["cp -a #{application.container_dapp_path('chef_cookbooks')} ",
@@ -115,11 +115,11 @@ module Dapp
           stage_cookbooks_checksum_path(stage).read.strip
         else
           checksum = if stage == :chef_cookbooks
-                       paths = Dir[cookbooks_vendor_path('**/*')].map(&Pathname.method(:new))
+                       paths = Dir[cookbooks_vendor_path('**/*', chef_cookbooks_stage: true)].map(&Pathname.method(:new))
 
                        application.hashsum [
                          application.paths_content_hashsum(paths),
-                         *paths.map { |p| p.relative_path_from(cookbooks_vendor_path).to_s }.sort
+                         *paths.map { |p| p.relative_path_from(cookbooks_vendor_path(chef_cookbooks_stage: true)).to_s }.sort
                        ]
                      else
                        paths = Dir[stage_cookbooks_path(stage, '**/*')].map(&Pathname.method(:new))
@@ -186,11 +186,16 @@ module Dapp
       end
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
-      def install_cookbooks
+      def install_cookbooks(dest_path, chef_cookbooks_stage: false)
         volumes_from = [application.project.base_container, chefdk_container]
-        application.project.log_secondary_process(application.project.t(code: 'process.berks_vendor')) do
+        process_code = [
+          'process',
+          chef_cookbooks_stage ? 'chef_cookbooks_stage_berks_vendor' : 'berks_vendor'
+        ].compact.join('.')
+
+        application.project.log_secondary_process(application.project.t(code: process_code)) do
           before_vendor_commands = [].tap do |commands|
-            unless application.project.cli_options[:dev]
+            unless application.project.cli_options[:dev] or chef_cookbooks_stage
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
                  'echo "Berksfile.lock not found" 1>&2 ; ',
@@ -206,7 +211,7 @@ module Dapp
                 ["install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a Berksfile.lock) ",
                  "Berksfile.lock #{berksfile_lock_path}"].join
               )
-            else
+            elsif not chef_cookbooks_stage
               commands.push(
                 "export LOCKDIFF=$(diff -u1 Berksfile.lock #{berksfile_lock_path})",
                 ['if [ "$LOCKDIFF" != "" ] ; then ',
@@ -230,11 +235,11 @@ module Dapp
             *after_vendor_commands,
             ["find /tmp/cookbooks -type d -exec #{application.project.bash_path} -ec '",
              "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) -d ",
-             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
+             "#{dest_path}/$(echo {} | sed -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
             ["find /tmp/cookbooks -type f -exec #{application.project.bash_path} -ec '",
              "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
-             "#{_cookbooks_vendor_path}/$(echo {} | sed -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
-            "install -o #{Process.uid} -g #{Process.gid} --mode 0644 <(date +%s.%N) #{_cookbooks_vendor_path.join('.created_at')}"
+             "#{dest_path}/$(echo {} | sed -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
+            "install -o #{Process.uid} -g #{Process.gid} --mode 0644 <(date +%s.%N) #{dest_path.join('.created_at')}"
           ]
 
           application.project.shellout!(
@@ -244,8 +249,9 @@ module Dapp
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
              ("--volume #{application.project.ssh_auth_sock}:#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
-             "--volume #{_cookbooks_vendor_path.tap(&:mkpath)}:#{_cookbooks_vendor_path}",
+             "--volume #{dest_path.tap(&:mkpath)}:#{dest_path}",
              ("--env SSH_AUTH_SOCK=#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
+             ('--env DAPP_CHEF_COOKBOOKS_VENDORING=1' if chef_cookbooks_stage),
              "dappdeps/berksdeps:0.1.0 #{application.project.bash_path} -ec '#{application.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
             log_verbose: application.project.log_verbose?
           )
@@ -253,15 +259,26 @@ module Dapp
       end
       # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
-      def _cookbooks_vendor_path
-        application.build_path.join('cookbooks', cookbooks_checksum)
+      def _cookbooks_vendor_path(chef_cookbooks_stage: false)
+        application.build_path.join(
+          ['cookbooks', chef_cookbooks_stage ? 'chef_cookbooks_stage' : nil].compact.join('.'),
+          cookbooks_checksum
+        )
       end
 
-      def cookbooks_vendor_path(*path)
-        _cookbooks_vendor_path.tap do |_cookbooks_path|
-          application.project.lock("#{application.config._basename}.cookbooks.#{cookbooks_checksum}", default_timeout: 120) do
-            @install_cookbooks ||= begin
-              install_cookbooks unless _cookbooks_vendor_path.join('.created_at').exist? && !application.project.cli_options[:dev]
+      def cookbooks_vendor_path(*path, chef_cookbooks_stage: false)
+        _cookbooks_vendor_path(chef_cookbooks_stage: chef_cookbooks_stage).tap do |_cookbooks_path|
+          lock_name = [
+            application.config._basename,
+            'cookbooks',
+            chef_cookbooks_stage ? 'chef_cookbooks_stage' : nil,
+            cookbooks_checksum
+          ].compact.join('.')
+
+          application.project.lock(lock_name, default_timeout: 120) do
+            @install_cookbooks ||= {}
+            @install_cookbooks[chef_cookbooks_stage] ||= begin
+              install_cookbooks(_cookbooks_path, chef_cookbooks_stage: chef_cookbooks_stage) unless _cookbooks_path.join('.created_at').exist? && !application.project.cli_options[:dev]
               true
             end
           end

@@ -13,7 +13,8 @@ en:
       artifact_building: "building artifact '%{name}'"
       git_artifact_clone: "cloning remote git_artifact '%{name}'"
       git_artifact_fetch: "fetching remote git_artifact '%{name}'"
-      berks_vendor: 'berks vendor'
+      berks_vendor: 'vendoring cookbooks'
+      chef_cookbooks_stage_berks_vendor: 'vendoring cookbooks for chef cookbooks stage'
       waiting_resouce_lock: "waiting for locked resource '%{name}'"
       gitartifact_container_loading: 'loading dappdeps/gitartifact container'
       base_container_loading: 'loading dappdeps/base container'
