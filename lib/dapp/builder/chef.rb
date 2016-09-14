@@ -23,8 +23,6 @@ module Dapp
         define_method(stage.to_s) do |image|
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
-            image.add_command "export DAPP_BUILD_STAGE=#{stage}"
-
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}:ro"
             image.add_command ['/.dapp/deps/chefdk/bin/chef-solo',
                                '--legacy-mode',
