@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    dapp (0.5.12)
+    dapp (0.5.13)
       excon (>= 0.45.4, < 1.0)
       i18n (~> 0.7)
       mixlib-cli (>= 1.0, < 3.0)
@@ -51,7 +51,7 @@ GEM
     method_source (0.8.2)
     minitest (5.9.0)
     mixlib-cli (1.7.0)
-    mixlib-shellout (2.2.6)
+    mixlib-shellout (2.2.7)
     multi_json (1.12.1)
     multipart-post (2.0.0)
     net-http-persistent (2.9.4)
