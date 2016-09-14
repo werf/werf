@@ -681,7 +681,7 @@ localhost:5000/test:master
 ```
 
 #### dapp stages push
-Выкатить кэш собранных приложений в репозиторий.
+Выкатить [кэш собранных приложений](#Кэш-приложения) [проекта](#Проект) в репозиторий.
 
 ```
 dapp stages push [options] [APP PATTERN] REPO
@@ -711,9 +711,9 @@ frontend
 ```
 
 #### dapp stages pull
-Импортировать необходимый кэш приложений проекта, если он присутствует в репозитории **REPO**.
+Импортировать необходимый [кэш приложений](#Кэш-приложения) [проекта](#Проект), если он присутствует в репозитории **REPO**.
 
-Если не указана опция **--all**, импорт будет выполнен до первого найденного кэша для каждого приложения.
+Если не указана опция **--all**, импорт будет выполнен до первого найденного кэша стейджа для каждого приложения.
 
 ```
 dapp stages pull [options] [APP PATTERN] REPO
@@ -784,7 +784,7 @@ docker run -ti --rm app-dappstage:ea5ec7543c809ec7e9fe28181edfcb2ee6f48efaa680f6
 ```
 
 #### dapp stages cleanup local
-Удалить неактуальный локальный кэш приложений проекта, опираясь на приложения в репозитории **REPO**.
+Удалить неактуальный локальный [кэш приложений](#Кэш-приложения) [проекта](#Проект), опираясь на приложения в репозитории **REPO**.
 
 ```
 dapp stages cleanup local [options] [APPS PATTERN ...] REPO
@@ -800,7 +800,7 @@ $ dapp stages cleanup local localhost:5000/test --improper-cache-version
 ```
 
 #### dapp stages cleanup repo
-Удалить неиспользуемый кэш приложений в репозитории **REPO**.
+Удалить неиспользуемый [кэш приложений](#Кэш-приложения) в репозитории **REPO**.
 
 ```
 dapp stages cleanup repo [options] [APPS PATTERN ...] REPO
@@ -816,7 +816,7 @@ $ dapp stages cleanup repo localhost:5000/test
 ```
 
 #### dapp stages flush local
-Удалить кэш приложений проекта.
+Удалить [кэш приложений](#Кэш-приложения) [проекта](#Проект).
 
 ```
 dapp stages flush local [options] [APPS PATTERN ...]
@@ -829,7 +829,7 @@ $ dapp stages flush local
 ```
 
 #### dapp stages flush repo
-Удалить приложения и кэш приложений проекта в репозитории **REPO**.
+Удалить приложения и [кэш приложений](#Кэш-приложения) [проекта](#Проект) в репозитории **REPO**.
 
 ```
 dapp stages flush repo [options] [APPS PATTERN ...] REPO
@@ -842,7 +842,7 @@ $ dapp stages flush repo localhost:5000/test
 ```
 
 #### dapp cleanup
-Убраться в системе после некорректного завершения работы dapp, удалить нетеггированные docker-образы и docker-контейнеры проекта.
+Убраться в системе после некорректного завершения работы dapp, удалить нетеггированные docker-образы и docker-контейнеры [проекта](#Проект).
 
 ```
 dapp cleanup [options] [APPS PATTERN ...]
@@ -862,7 +862,7 @@ backend
 ```
 
 #### dapp mrproper
-Очистить систему.
+Очистить docker в соответствии с переданным параметром.
 
 ```
 dapp mrproper [options]
