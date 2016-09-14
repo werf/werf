@@ -9,8 +9,7 @@ module Dapp
         end
         define_method("#{stage}?") { !stage_empty?(stage) }
         define_method("#{stage}") do |image|
-          image.add_command("export DAPP_BUILD_STAGE=#{stage}",
-                            *stage_commands(stage)) unless stage_empty?(stage)
+          image.add_command(*stage_commands(stage)) unless stage_empty?(stage)
         end
       end
 
