@@ -15,11 +15,13 @@ module Dapp
           @gitartifact_container ||= begin
             if shellout("docker inspect #{gitartifact_container_name}").exitstatus.nonzero?
               log_secondary_process(t(code: 'process.gitartifact_container_loading'), short: true) do
-                shellout ['docker run',
-                          '--restart=no',
-                          "--name #{gitartifact_container_name}",
-                          "--volume /.dapp/deps/gitartifact #{GITARTIFACT_IMAGE}",
-                          '2>/dev/null'].join(' ')
+                shellout!(
+                  ['docker create',
+                   '--restart=no',
+                   "--name #{gitartifact_container_name}",
+                   "--volume /.dapp/deps/gitartifact #{GITARTIFACT_IMAGE}",
+                   '2>/dev/null'].join(' ')
+                )
               end
             end
             gitartifact_container_name

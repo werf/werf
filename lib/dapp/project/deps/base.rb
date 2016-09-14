@@ -15,11 +15,13 @@ module Dapp
           @base_container ||= begin
             if shellout("docker inspect #{base_container_name}").exitstatus.nonzero?
               log_secondary_process(t(code: 'process.base_container_loading'), short: true) do
-                shellout ['docker run',
-                          '--restart=no',
-                          "--name #{base_container_name}",
-                          "--volume /.dapp/deps/base #{BASE_IMAGE}",
-                          '2>/dev/null'].join(' ')
+                shellout!(
+                  ['docker create',
+                   '--restart=no',
+                   "--name #{base_container_name}",
+                   "--volume /.dapp/deps/base #{BASE_IMAGE}",
+                   '2>/dev/null'].join(' ')
+                )
               end
             end
             base_container_name
