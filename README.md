@@ -449,13 +449,13 @@ tar c --files-from /dev/null | docker import - dappdeps/scratch
 
 #### Shell
 
-##### shell.before_install, shell.before_setup, shell.install, shell.setup [, cache_version: \<cache_version\>]
+##### shell.before_install, shell.before_setup, shell.install, shell.setup \<cmd\>\[, \<cmd\>, cache_version: \<cache_version\>\]
 
 Директивы позволяют добавить bash-комманды для выполнения на соответствующих стадиях [shell приложения](#Shell-приложение).
 
 * Опциональный параметр **\<cache_version\>** участвует в формировании сигнатуры стадии.
 
-##### shell.build_artifact [, cache_version: \<cache_version\>]
+##### shell.build_artifact \<cmd\>\[, \<cmd\>, cache_version: \<cache_version\>\]
 
 Позволяет добавить bash-комманды для выполнения на соответствующей стадии [артефакта](#Артефакт).
 
