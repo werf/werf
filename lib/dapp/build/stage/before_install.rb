@@ -12,7 +12,7 @@ module Dapp
           super && !application.builder.before_install?
         end
 
-        def dependencies
+        def context
           [application.builder.before_install_checksum]
         end
 
@@ -20,6 +20,8 @@ module Dapp
           super
           application.builder.before_install(image)
         end
+
+        alias_method :dependencies, :context
       end # BeforeInstall
     end # Stage
   end # Build

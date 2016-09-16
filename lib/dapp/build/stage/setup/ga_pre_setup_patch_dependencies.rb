@@ -12,7 +12,7 @@ module Dapp
           end
 
           def dependencies
-            next_stage.next_stage.dependencies # Setup
+            next_stage.next_stage.context # Setup
           end
         end # GAPreSetupPatchDependencies
       end

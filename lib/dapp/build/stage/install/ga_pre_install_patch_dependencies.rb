@@ -12,7 +12,7 @@ module Dapp
           end
 
           def dependencies
-            next_stage.next_stage.dependencies # Install
+            next_stage.next_stage.context # Install
           end
 
           def empty?

@@ -12,7 +12,7 @@ module Dapp
           end
 
           def dependencies
-            next_stage.next_stage.next_stage.dependencies # BeforeSetup
+            next_stage.next_stage.next_stage.context # BeforeSetup
           end
         end # GAPostInstallPatchDependencies
       end

@@ -9,7 +9,7 @@ module Dapp
         end
 
         def dependencies
-          next_stage.dependencies # BuildArtifact
+          next_stage.context # BuildArtifact
         end
 
         def prev_g_a_stage

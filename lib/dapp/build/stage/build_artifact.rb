@@ -9,10 +9,10 @@ module Dapp
         end
 
         def empty?
-          super && !application.builder.build_artifact?
+          !application.builder.build_artifact?
         end
 
-        def dependencies
+        def context
           [artifact_dependencies_files_checksum, application.builder.build_artifact_checksum]
         end
 

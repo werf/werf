@@ -73,6 +73,7 @@ module Dapp
         end
 
         def prepare_image
+          return if application.project.dry_run?
           image.add_volumes_from application.project.base_container
           image_add_tmp_volumes(:tmp)
           image_add_tmp_volumes(:build)

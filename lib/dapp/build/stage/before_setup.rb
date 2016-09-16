@@ -9,10 +9,10 @@ module Dapp
         end
 
         def empty?
-          super && !application.builder.before_setup?
+          !application.builder.before_setup?
         end
 
-        def dependencies
+        def context
           [application.builder.before_setup_checksum]
         end
 
