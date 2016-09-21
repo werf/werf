@@ -7,7 +7,7 @@ license_file 'LICENSE.txt'
 
 install_dir '/.dapp/deps/base'
 
-build_version '0.1.8'
+build_version '0.1.9'
 build_iteration 1
 
 dependency 'dappdeps-base'
