@@ -6,6 +6,7 @@ license_file 'https://github.com/flant/dappdeps-base/blob/master/LICENSE.txt'
 dependency 'bash'
 dependency 'gtar'
 dependency 'sudo'
+dependency 'coreutils'
 dependency 'findutils'
 dependency 'sed'
 
