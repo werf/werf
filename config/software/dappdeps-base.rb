@@ -7,6 +7,7 @@ dependency 'bash'
 dependency 'gtar'
 dependency 'sudo'
 dependency 'findutils'
+dependency 'sed'
 
 build do
   link "#{install_dir}/embedded/bin", "#{install_dir}/bin"
