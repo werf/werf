@@ -1,0 +1,45 @@
+---
+title: Диаграмма стадий
+sidebar: doc_sidebar
+permalink: stages_diagram.html
+---
+
+<div class="stages">
+  {% for stage in site.data.stages.entries %}
+    <div class="stage">
+      <div class="stage-base">
+        {{ stage.name | escape }}
+
+        {% if stage.signatures %}
+          <div class="signature">
+            signature <br />
+
+            {% for signature in stage.signatures %}
+                <div> {{ signature | escape }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% if stage.context %}
+          <div class="context">
+            context <br />
+
+            {% for context in stage.context %}
+              <div> {{ context | escape }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+      {% if stage.dappfile %}
+        <div class="dappfile">
+          Dappfile
+          <div>
+            {% for line in stage.dappfile %}
+              {{ line | escape }}
+              <br />
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>

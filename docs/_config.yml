@@ -1,0 +1,32 @@
+output: web
+
+site_title: Документация Dapp
+company_name: Flant
+
+exclude:
+  - .idea/
+  - .gitignore
+
+highlighter: rouge
+
+markdown: kramdown
+kramdown:
+ input: GFM
+ auto_ids: false
+ hard_wrap: false
+ syntax_highlighter: rouge
+
+collections:
+  tooltips:
+    output: false
+
+defaults:
+  -
+    scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "page"
+      comments: true
+      search: true
+      sidebar: sidebar

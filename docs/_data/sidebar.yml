@@ -1,0 +1,51 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+- title: sidebar
+  folders:
+
+  - title: Обзор
+    folderitems:
+
+    - title: Начало работы
+      url: /index.html
+      type: homepage
+
+  - title: Определения
+    folderitems:
+
+    - title: Базовые
+      url: /definitions.html
+
+    - title: Стадии
+      url: /stages.html
+
+  - title: Директивы Dappfile
+    folderitems:
+
+    - title: Базовые
+      url: /base_directives.html
+
+    - title: Артефакты
+      url: /artifact_directives.html
+
+    - title: Shell
+      url: /shell_directives.html
+
+    - title: Chef
+      url: /chef_directives.html
+
+    - title: Docker
+      url: /docker_directives.html
+
+  - title: Комманды
+    folderitems:
+
+    - title: Основные
+      url: /base_commands.html
+
+    - title: Чистка
+      url: /clean_commands.html
+
+    - title: Отладка
+      url: /debugging_commands.html

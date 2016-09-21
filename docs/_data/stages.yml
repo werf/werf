@@ -1,0 +1,133 @@
+entries:
+- name: from
+  signatures:
+  - from <image>
+  - from <cache_version>
+  dappfile:
+  - "docker.from <image>[, cache_version: <cache_version>]"
+- name: before_install
+  signatures:
+  - from.signature
+  - before_install.context
+  context:
+  - before install <cmd>
+  dappfile:
+  - shell.before_install <cmd>[, <cmd> ...]
+- name: before_install_artifact
+  signatures:
+  - before_install.signature
+  - before install artifacts signatures
+  - before install artifacts parameters
+  dappfile:
+  - "artifact <where_to_add>, before: \"install\"[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>] do"
+  - "  ..."
+  - "end"
+- name: git_artifact_archive
+  signatures:
+  - before_install_artifact.signature
+  - git artifacts parameters
+  dappfile:
+  - "git_artifact.local <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+  - "git_artifact.remote <url>, <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+- name: git_artifact_pre_install_patch
+  signatures:
+  - git_artifact_archive.signature
+  - install.context
+  dappfile:
+  - "git_artifact.local <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+  - "git_artifact.remote <url>, <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+- name: install
+  signatures:
+  - git_artifact_pre_install_patch.signature
+  - install.context
+  context:
+  - install dependencies by <glob>s
+  - install <cmd>
+  dappfile:
+  - install_depends_on <glob>[,<glob>, <glob>, ...]
+  - shell.install <cmd>[, <cmd> ...]
+- name: git_artifact_post_install_patch
+  signatures:
+  - install.signature
+  - before_setup.context
+  dappfile:
+  - "git_artifact.local <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+  - "git_artifact.remote <url>, <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+- name: after_install_artifact
+  signatures:
+  - git_artifact_post_install_patch.signature
+  - after install artifacts signatures
+  - after install artifacts parameters
+  dappfile:
+  - "artifact <where_to_add>, after: \"install\"[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>] do"
+  - "  ..."
+  - "end"
+- name: before_setup
+  signatures:
+  - after_install_artifact.signature
+  context:
+  - before_setup <cmd>
+  dappfile:
+  - shell.before_setup <cmd>[, <cmd> ...]
+- name: before_setup_artifact
+  signatures:
+  - before_setup.signature
+  - before setup artifacts signatures
+  - before setup artifacts parameters
+  dappfile:
+  - "artifact <where_to_add>, before: \"setup\"[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>] do"
+  - "  ..."
+  - "end"
+- name: git_artifact_pre_setup_patch
+  signatures:
+  - before_setup_artifact.signature
+  - setup.context
+  dappfile:
+  - "git_artifact.local <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+  - "git_artifact.remote <url>, <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+- name: setup
+  signatures:
+  - git_artifact_pre_setup_patch.signature
+  context:
+  - setup dependencies by <glob>s
+  - setup <cmd>
+  dappfile:
+  - setup_depends_on <glob>[,<glob>, <glob>, ...]
+  - shell.setup <cmd>[, <cmd> ...]
+- name: git_artifact_post_setup_patch
+  signatures:
+  - setup.signature
+  - git artifacts patch size
+  dappfile:
+  - "git_artifact.local <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+  - "git_artifact.remote <url>, <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+- name: after_setup_artifact
+  signatures:
+  - git_artifact_post_setup_patch.signature
+  - after setup artifacts signatures
+  - after setup artifacts parameters
+  dappfile:
+  - "artifact <where_to_add>, after: \"setup\"[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>] do"
+  - "  ..."
+  - "end"
+- name: git_artifact_latest_patch
+  signatures:
+  - after_setup_artifact.signature
+  - git artifacts latest patches
+  dappfile:
+  - "git_artifact.local <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+  - "git_artifact.remote <url>, <where_to_add>[, cwd: <cwd>, paths: <paths>, exclude_paths: <exclude_paths>, owner: <owner>, group: <group>]"
+- name: docker_instructions
+  signatures:
+  - git_artifact_latest_patch.signature
+  - docker instructions
+  dappfile:
+  - "docker.cmd <cmd>[, <cmd> ...]"
+  - "docker.env <env_name>: <env_value>[, <env_name>: <env_value> ...]"
+  - "docker.entrypoint <cmd>[, <arg> ...]"
+  - "docker.expose <expose>[, <expose> ...]"
+  - "docker.label <label_key>: <label_value>[, <label_key>: <label_value> ...]"
+  - "docker.onbuild <cmd>[, <cmd> ...]"
+  - "docker.user <user>"
+  - "docker.volume <volume>[, <volume> ...]"
+  - "docker.workdir <path>"
