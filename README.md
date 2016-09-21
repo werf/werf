@@ -1,1 +1,1 @@
-# dapp-gitartifact
+# dappdeps-gitartifact

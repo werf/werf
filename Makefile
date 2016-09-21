@@ -1,4 +1,4 @@
-DOCKER_IMAGE_VERSION = $(shell cat config/projects/dapp-gitartifact.rb | \
+DOCKER_IMAGE_VERSION = $(shell cat config/projects/dappdeps-gitartifact.rb | \
                                grep build_version | \
                                grep -oP '[0-9.]+')
 DOCKER_IMAGE_NAME=dappdeps/gitartifact:$(DOCKER_IMAGE_VERSION)
@@ -9,9 +9,9 @@ HUB_IMAGE_FILE_PATH=build/hub_image_$(DOCKER_IMAGE_VERSION)
 all: $(HUB_IMAGE_FILE_PATH)
 
 build/gitartifact_$(DOCKER_IMAGE_VERSION).deb:
-	@rm -f pkg/dapp-gitartifact_$(DOCKER_IMAGE_VERSION)*.deb
-	@omnibus build -o append_timestamp:false dapp-gitartifact
-	@cp pkg/dapp-gitartifact_$(DOCKER_IMAGE_VERSION)-1_amd64.deb \
+	@rm -f pkg/dappdeps-gitartifact_$(DOCKER_IMAGE_VERSION)*.deb
+	@omnibus build -o append_timestamp:false dappdeps-gitartifact
+	@cp pkg/dappdeps-gitartifact_$(DOCKER_IMAGE_VERSION)-1_amd64.deb \
       build/gitartifact_$(DOCKER_IMAGE_VERSION).deb
 
 build/gitartifact_$(DOCKER_IMAGE_VERSION): build/gitartifact_$(DOCKER_IMAGE_VERSION).deb
