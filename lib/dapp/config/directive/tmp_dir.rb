@@ -23,6 +23,10 @@ module Dapp
 
         protected
 
+        def empty?
+          _store.empty?
+        end
+
         def clone
           Marshal.load(Marshal.dump(self))
         end

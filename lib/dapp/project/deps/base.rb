@@ -74,16 +74,30 @@ module Dapp
           '/.dapp/deps/base/bin/true'
         end
 
-        def sudo_path
-          '/.dapp/deps/base/bin/sudo'
-        end
-
         def bash_path
           '/.dapp/deps/base/bin/bash'
         end
 
         def tar_path
           '/.dapp/deps/base/bin/tar'
+        end
+
+        def sudo_path
+          '/.dapp/deps/base/bin/sudo'
+        end
+
+        def sudo_command(owner: nil, group: nil)
+          sudo = ''
+          if owner || group
+            sudo = "#{sudo_path} -E "
+            sudo += "-u #{sudo_format_user(owner)} " if owner
+            sudo += "-g #{sudo_format_user(group)} " if group
+          end
+          sudo
+        end
+
+        def sudo_format_user(user)
+          user.to_s.to_i.to_s == user.to_s ? "\\\##{user}" : user
         end
       end # Base
     end # Deps

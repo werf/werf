@@ -50,6 +50,7 @@ en:
       setup_group: 'Setup group'
     stage:
       from: 'From'
+      import_artifact: 'Import Artifact'
       before_install: 'Before install'
       before_install_artifact: 'Before install artifact'
       g_a_archive_dependencies: 'Git artifacts dependencies'

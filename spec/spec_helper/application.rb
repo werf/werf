@@ -105,11 +105,11 @@ module SpecHelper
     end
 
     def empty_application
-      Dapp::Application.new(project: nil, config: nil)
+      Dapp::Application.new(project: nil, config: openstruct_config)
     end
 
     def empty_artifact
-      Dapp::Artifact.new(project: nil, config: nil)
+      Dapp::Artifact.new(project: nil, config: openstruct_config)
     end
   end
 end

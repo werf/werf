@@ -49,7 +49,7 @@ module Dapp
           return if should_be_skipped?
           prev_stage.build! if prev_stage
           if image_should_be_build?
-            prepare_image
+            prepare_image unless image.tagged?
             log_image_build(&method(:image_build))
           end
           raise Exception::IntrospectImage, data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?

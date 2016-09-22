@@ -9,7 +9,7 @@ module Dapp
       attr_reader :_install_dependencies, :_setup_dependencies
       attr_reader :_docker
       attr_reader :_git_artifact
-      attr_reader :_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact
+      attr_reader :_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact, :_import_artifact
       attr_reader :_tmp_dir, :_build_dir
 
       def initialize(parent)
@@ -23,10 +23,13 @@ module Dapp
         @_build_dir    = Directive::BuildDir.new
 
         @_apps                    = []
+
         @_before_install_artifact = []
         @_before_setup_artifact   = []
         @_after_install_artifact  = []
         @_after_setup_artifact    = []
+        @_import_artifact         = []
+
         @_install_dependencies    = []
         @_setup_dependencies      = []
 
@@ -62,10 +65,8 @@ module Dapp
       end
 
       def artifact(where_to_add, before: nil, after: nil, **options, &blk)
-        raise Error::Config, code: :stage_artifact_not_associated if before.nil? && after.nil?
         raise Error::Config, code: :stage_artifact_double_associate unless before.nil? || after.nil?
-        stage = before.nil? ? artifact_stage_name(after, prefix: :after) : artifact_stage_name(before, prefix: :before)
-        artifact_base(instance_variable_get(:"@_#{stage}"), where_to_add, **options, &blk)
+        artifact_base(instance_variable_get(:"@_#{artifact_variable_name(before, after)}"), where_to_add, **options, &blk)
       end
 
       def git_artifact
@@ -128,7 +129,7 @@ module Dapp
         app.instance_variable_set(:'@_basename', _basename)
         app.instance_variable_set(:'@_install_dependencies', _install_dependencies)
         app.instance_variable_set(:'@_setup_dependencies', _setup_dependencies)
-        [:_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact].each do |artifact|
+        [:_before_install_artifact, :_before_setup_artifact, :_after_install_artifact, :_after_setup_artifact, :_import_artifact].each do |artifact|
           app.instance_variable_set(:"@#{artifact}", instance_variable_get(:"@#{artifact}").map { |a| a.send(:clone) })
         end
         app.instance_variable_set(:'@_docker', _docker.send(:clone))
@@ -153,7 +154,17 @@ module Dapp
         [_name, sub_name].compact.join('-')
       end
 
-      def artifact_stage_name(stage, prefix:)
+      def artifact_variable_name(before, after)
+        return :import_artifact if before.nil? && after.nil?
+
+        if before.nil?
+          prefix = :after
+          stage  = after
+        else
+          prefix = :before
+          stage  = before
+        end
+
         return [prefix, stage, :artifact].join('_') if [:install, :setup].include?(stage.to_sym)
         raise Error::Config, code: :stage_artifact_not_supported_associated_stage, data: { stage: stage }
       end
@@ -171,20 +182,53 @@ module Dapp
       end
 
       def validate!
+        if _docker._from.nil?
+          validate_scratch_directives!
+          validate_scratch_artifacts!
+        else
+          raise Error::Config, code: :stage_artifact_not_associated unless _import_artifact.empty?
+        end
         validate_artifacts!
         validate_artifacts_artifacts!
       end
 
-      def validate_artifacts_artifacts!
-        stage_artifacts.each { |artifact| artifact._config.validate! }
+      def validate_scratch_directives!
+        raise Error::Config, code: :scratch_unsupported_directive, data: { directive: :app } unless _apps.length == 1
+
+        directives = [:_shell, :_chef, :_git_artifact, :_install_dependencies, :_setup_dependencies, :_tmp_dir, :_build_dir]
+        directives.each do |directive|
+          raise Error::Config,
+                code: :scratch_unsupported_directive,
+                data: { directive: directive[1..-1] } unless public_send(directive).send(:empty?)
+        end
+
+        docker_directives = [:_volume, :_expose, :_env, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint]
+        docker_directives.each do |directive|
+          value = _docker.public_send(directive)
+          raise Error::Config,
+                code: :scratch_unsupported_directive,
+                data: { directive: "docker.#{directive[1..-1]}" } unless value.nil? || value.send(:empty?)
+        end
       end
 
-      def stage_artifacts
+      def validate_scratch_artifacts!
+        raise Error::Config, code: :scratch_artifact_associated unless associated_artifacts.empty?
+        raise Error::Config, code: :scratch_artifact_required if _import_artifact.empty?
+        _import_artifact.each do |artifact|
+          raise Error::Config, code: :scratch_artifact_docker_from if artifact._config._docker._from.nil?
+        end
+      end
+
+      def validate_artifacts_artifacts!
+        associated_artifacts.each { |artifact| artifact._config.validate! }
+      end
+
+      def associated_artifacts
         _before_install_artifact + _before_setup_artifact + _after_install_artifact + _after_setup_artifact
       end
 
       def validate_artifacts!
-        artifacts = validate_artifact_format(stage_artifacts + _git_artifact._remote + _git_artifact._local)
+        artifacts = validate_artifact_format(associated_artifacts + _import_artifact + _git_artifact._remote + _git_artifact._local)
         loop do
           break if artifacts.empty?
           verifiable_artifact = artifacts.shift

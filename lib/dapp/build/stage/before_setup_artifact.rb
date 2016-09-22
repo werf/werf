@@ -2,7 +2,7 @@ module Dapp
   module Build
     module Stage
       # BeforeSetupArtifact
-      class BeforeSetupArtifact < ArtifactBase
+      class BeforeSetupArtifact < ArtifactDefault
         def initialize(application, next_stage)
           @prev_stage = BeforeSetup.new(application, self)
           super

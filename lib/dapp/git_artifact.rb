@@ -96,20 +96,8 @@ module Dapp
     attr_reader :owner
     attr_reader :group
 
-    def sudo_format_user(user)
-      user.to_s.to_i.to_s == user ? "\\\##{user}" : user
-    end
-
     def sudo
-      sudo = ''
-
-      if owner || group
-        sudo = "#{repo.application.project.sudo_path} -E "
-        sudo += "-u #{sudo_format_user(owner)} " if owner
-        sudo += "-g #{sudo_format_user(group)} " if group
-      end
-
-      sudo
+      repo.application.project.sudo_command(owner: owner, group: group)
     end
 
     def diff_command(from, to, quiet: false)

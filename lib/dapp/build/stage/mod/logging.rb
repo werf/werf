@@ -37,7 +37,7 @@ module Dapp
           end
 
           def log_image_size
-            if from_image.tagged? && !prev_stage.nil?
+            if !prev_stage.nil? && from_image.tagged?
               size = image.size.to_f - from_image.size.to_f
               code = 'image.info.difference'
             else

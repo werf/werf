@@ -4,7 +4,11 @@ module Dapp
       # DockerInstructions
       class DockerInstructions < Base
         def initialize(application)
-          @prev_stage = GALatestPatch.new(application, self)
+          @prev_stage = if application.config._docker._from.nil?
+                          ImportArtifact.new(application, self)
+                        else
+                          GALatestPatch.new(application, self)
+                        end
           @application = application
         end
 

@@ -26,7 +26,7 @@ module Dapp
         def artifact_dependencies_files_checksum
           @artifact_files_checksum ||= dependencies_files_checksum(application.config._artifact_dependencies)
         end
-      end # GAArchive
+      end # BuildArtifact
     end # Stage
   end # Build
 end # Dapp

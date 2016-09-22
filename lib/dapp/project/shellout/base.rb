@@ -54,17 +54,19 @@ module Dapp
         def shellout_with_logging(log_verbose: false, **kwargs)
           return yield(**kwargs) unless self.instance_of? Project
 
-          stream = Stream.new
-          if log_verbose && log_verbose?
-            kwargs[:live_stream] = Proxy::Base.new(stream, STDOUT, with_time: log_time?)
-          else
-            kwargs[:live_stdout] = Proxy::Base.new(stream, with_time: log_time?)
-          end
-          kwargs[:live_stderr] = Proxy::Error.new(stream, with_time: log_time?)
+          begin
+            stream = Stream.new
+            if log_verbose && log_verbose?
+              kwargs[:live_stream] = Proxy::Base.new(stream, STDOUT, with_time: log_time?)
+            else
+              kwargs[:live_stdout] = Proxy::Base.new(stream, with_time: log_time?)
+            end
+            kwargs[:live_stderr] = Proxy::Error.new(stream, with_time: log_time?)
 
-          yield(**kwargs)
-        rescue ::Mixlib::ShellOut::ShellCommandFailed => e
-          raise Error::Shellout, code: class_to_lowercase(e.class), data: { stream: stream.show }
+            yield(**kwargs)
+          rescue ::Mixlib::ShellOut::ShellCommandFailed => e
+            raise Error::Shellout, code: class_to_lowercase(e.class), data: { stream: stream.show }
+          end
         end
       end
     end

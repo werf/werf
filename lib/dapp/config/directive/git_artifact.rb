@@ -25,6 +25,10 @@ module Dapp
           Marshal.load(Marshal.dump(self))
         end
 
+        def empty?
+          _local.empty? && _remote.empty?
+        end
+
         # Local
         class Local < Artifact::Base
           protected

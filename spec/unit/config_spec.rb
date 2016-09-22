@@ -426,59 +426,60 @@ end.join("\n")}
     end
 
     context 'base' do
-      it 'not associated (:stage_artifact_not_associated)' do
-        @dappfile = "artifact 'where_to_add'"
-        expect_exception_code(code: :stage_artifact_not_associated) { apps }
-      end
-
-      it 'double associated (:stage_artifact_double_associate)' do
-        @dappfile = "artifact 'where_to_add', before: :setup, after: :setup"
-        expect_exception_code(code: :stage_artifact_double_associate) { apps }
-      end
-
-      it 'not supported associated stage (:stage_artifact_not_supported_associated_stage)' do
-        @dappfile = "artifact 'where_to_add', before: :from"
-        expect_exception_code(code: :stage_artifact_not_supported_associated_stage) { apps }
-      end
-
       it 'unsupported inherited artifact' do
-        @dappfile = "artifact('where_to_add', before: :setup) { artifact 'where_to_add', before: :setup }"
+        @dappfile = "artifact('where_to_add') { artifact 'where_to_add' }"
         expect { apps }.to raise_error NameError
       end
 
       it 'unsupported key (:artifact_unexpected_attribute)' do
-        @dappfile = "artifact 'where_to_add', before: :setup, unsupported_key: :value"
+        @dappfile = "artifact 'where_to_add', unsupported_key: :value"
         expect_exception_code(code: :artifact_unexpected_attribute) { apps }
       end
 
       it 'unsupported app method in artifact body' do
-        @dappfile = "artifact('where_to_add', before: :setup, unsupported_key: :value) { app }"
+        @dappfile = "artifact('where_to_add', unsupported_key: :value) { app }"
         expect { apps }.to raise_error NameError
       end
 
       [:volume, :expose, :env, :label, :cmd, :onbuild, :workdir, :user, :entrypoint].each do |instruction|
         it "unsupported docker.#{instruction} in artifact body" do
-          @dappfile = "artifact('where_to_add', before: :setup, unsupported_key: :value) { docker.#{instruction} }"
+          @dappfile = "artifact('where_to_add', unsupported_key: :value) { docker.#{instruction} }"
           expect { apps }.to raise_error NoMethodError
         end
       end
 
       it 'artifact_dependencies' do
         @dappfile = %(
-          artifact 'where_to_add', before: :install do
+          artifact 'where_to_add' do
             artifact_depends_on 'depends'
           end
         )
-        expect(app._before_install_artifact.first._config._artifact_dependencies).to eq ['depends']
+        expect(app._import_artifact.first._config._artifact_dependencies).to eq ['depends']
       end
 
       it 'shell.build_artifact' do
         @dappfile = %(
-          artifact 'where_to_add', before: :install do
+          artifact 'where_to_add' do
             shell.build_artifact 'cmd'
           end
         )
-        expect(app._before_install_artifact.first._config._shell._build_artifact).to eq ['cmd']
+        expect(app._import_artifact.first._config._shell._build_artifact).to eq ['cmd']
+      end
+
+      context 'not scratch' do
+        before :each do
+          @dappfile = "docker.from 'image:tag'\n"
+        end
+
+        it 'double associated (:stage_artifact_double_associate)' do
+          @dappfile << "artifact 'where_to_add', before: :setup, after: :setup"
+          expect_exception_code(code: :stage_artifact_double_associate) { apps }
+        end
+
+        it 'not supported associated stage (:stage_artifact_not_supported_associated_stage)' do
+          @dappfile << "artifact 'where_to_add', before: :from"
+          expect_exception_code(code: :stage_artifact_not_supported_associated_stage) { apps }
+        end
       end
     end
 
@@ -680,6 +681,25 @@ end.join("\n")}
   end
 
   context 'validate' do
+    context 'artifact' do
+      context 'scratch' do
+        it 'associated (:scratch_artifact_associated)' do
+          @dappfile = "artifact 'where_to_add', before: :setup"
+          expect_exception_code(code: :scratch_artifact_associated) { app.send(:validate!) }
+        end
+      end
+
+      context 'not scratch' do
+        it 'not associated (:stage_artifact_not_associated)' do
+          @dappfile = %(
+            docker.from 'image:tag'
+            artifact 'where_to_add'
+          )
+          expect_exception_code(code: :stage_artifact_not_associated) { app.send(:validate!) }
+        end
+      end
+    end
+
     context 'artifacts' do
       context 'positive' do
         it 'different where_to_add' do

@@ -30,13 +30,7 @@ module Dapp
         end
 
         def from_image
-          @from_image ||= begin
-            if from_image_name.nil?
-              Image::Scratch.new(project: application.project)
-            else
-              Image::Stage.new(name: from_image_name, project: application.project)
-            end
-          end
+          @from_image ||= Image::Stage.new(name: from_image_name, project: application.project)
         end
       end # Prepare
     end # Stage

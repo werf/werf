@@ -3,21 +3,27 @@ module Dapp
   module Image
     # Stage
     class Scratch < Stage
-      def initialize(project:)
-        @name = 'dappdeps/scratch:latest'
-        @project = project
-        id || build!
-        super(name: name, project: project)
+      def initialize(**_kwargs)
+        super
+        @from_archives = []
       end
 
-      def build!
-        return if project.dry_run?
-        project.shellout!("#{project.tar_path} c --files-from /dev/null | docker import - dappdeps/scratch").stdout.strip
-        cache_reset
+      def add_archive(*archives)
+        @from_archives.concat(archives.flatten)
       end
 
-      def pull!
+      def build!(**_kwargs)
+        build_from_command = if from_archives.empty?
+                               "#{project.tar_path} c --files-from /dev/null"
+                             else
+                               "#{project.tar_path} c #{from_archives.join(' ')}"
+                             end
+        @built_id = project.system_shellout!("#{build_from_command} | docker import #{prepared_change} - ").stdout.strip
       end
+
+      protected
+
+      attr_accessor :from_archives
     end # Stage
   end # Image
 end # Dapp

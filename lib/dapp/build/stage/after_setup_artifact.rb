@@ -2,7 +2,7 @@ module Dapp
   module Build
     module Stage
       # AfterSetupArtifact
-      class AfterSetupArtifact < ArtifactBase
+      class AfterSetupArtifact < ArtifactDefault
         def initialize(application, next_stage)
           @prev_stage = if application.artifact?
                           SetupGroup::ChefCookbooks.new(application, self)
