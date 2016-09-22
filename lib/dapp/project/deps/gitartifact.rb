@@ -29,10 +29,6 @@ module Dapp
         def git_path
           '/.dapp/deps/gitartifact/bin/git'
         end
-
-        def sudo_path
-          '/.dapp/deps/gitartifact/bin/sudo'
-        end
       end # Gitartifact
     end # Deps
   end # Project

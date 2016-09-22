@@ -97,7 +97,7 @@ module Dapp
         def free_space(str)
           base_time = log_time? ? log_time.length : 0
           indent = log_indent.length
-          str = ::Paint.unpaint(str.to_s).length
+          str = unpaint(str.to_s).length
           time = 15
           terminal_width - base_time - str - indent - time
         end

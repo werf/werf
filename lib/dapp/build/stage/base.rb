@@ -58,8 +58,7 @@ module Dapp
         def save_in_cache!
           prev_stage.save_in_cache! if prev_stage
           return unless should_be_tagged?
-          image.tag!(log_verbose: application.project.log_verbose?,
-                     log_time: application.project.log_time?) unless application.project.dry_run?
+          image.tag! unless application.project.dry_run?
         end
 
         def image
@@ -117,10 +116,7 @@ module Dapp
         protected
 
         def image_build
-          image.build!(log_verbose: application.project.log_verbose?,
-                       log_time: application.project.log_time?,
-                       introspect_error: application.project.cli_options[:introspect_error],
-                       introspect_before_error: application.project.cli_options[:introspect_before_error])
+          image.build!
         end
 
         def should_be_skipped?

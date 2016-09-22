@@ -102,15 +102,15 @@ module Dapp
 
           copy_files = proc do |from_, cwd_, path_ = ''|
             cwd_ = File.expand_path(File.join('/', cwd_))
-            "find #{File.join(from_, cwd_, path_)} #{excludes} -type f " \
-            "-exec #{application.project.bash_path} -ec 'install -D #{credentials} {} " \
-            "#{File.join(to, "$(echo {} | sed -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
+            "#{application.project.find_path} #{File.join(from_, cwd_, path_)} #{excludes} -type f " \
+            "-exec #{application.project.bash_path} -ec '#{application.project.install_path} -D #{credentials} {} " \
+            "#{File.join(to, "$(#{application.project.echo_path} {} | #{application.project.sed_path} -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
           end
 
           commands = []
-          commands << ['install', credentials, '-d', to].join(' ')
+          commands << [application.project.install_path, credentials, '-d', to].join(' ')
           commands.concat(paths.empty? ? Array(copy_files.call(from, cwd)) : paths.map { |path| copy_files.call(from, cwd, path) })
-          commands << "find #{to} -type d -exec #{application.project.bash_path} -ec 'install -d #{credentials} {}' \\;"
+          commands << "#{application.project.find_path} #{to} -type d -exec #{application.project.bash_path} -ec '#{application.project.install_path} -d #{credentials} {}' \\;"
           commands.join(' && ')
         end
         # rubocop:enable Metrics/ParameterLists

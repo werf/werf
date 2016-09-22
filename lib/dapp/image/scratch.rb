@@ -16,7 +16,7 @@ module Dapp
         cache_reset
       end
 
-      def pull!(*_args)
+      def pull!
       end
     end # Stage
   end # Image

@@ -2,8 +2,6 @@ module Dapp
   class CLI
     # CLI build subcommand
     class Build < Base
-      include Dapp::Helper::Shellout
-
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 

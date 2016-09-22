@@ -3,8 +3,6 @@ module Dapp
   module Image
     # Docker
     class Docker
-      include Helper::Shellout
-
       attr_reader :from
       attr_reader :name
       attr_reader :project
@@ -21,19 +19,21 @@ module Dapp
 
       def untag!
         raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
-        shellout!("docker rmi #{name}")
+        project.shellout!("docker rmi #{name}")
         cache_reset
       end
 
-      def push!(log_verbose: false, log_time: false)
+      def push!
         raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
-        shellout!("docker push #{name}", log_verbose: log_verbose, log_time: log_time)
+        project.log_secondary_process(project.t(code: 'process.image_push', data: { name: name })) do
+          project.shellout!("docker push #{name}", log_verbose: true)
+        end
       end
 
-      def pull!(log_verbose: false, log_time: false)
+      def pull!
         return if tagged?
-        project.log_secondary_process(project.t(code: 'process.image_pull', data: { name: name }), short: !log_verbose) do
-          shellout!("docker pull #{name}", log_verbose: log_verbose, log_time: log_time)
+        project.log_secondary_process(project.t(code: 'process.image_pull', data: { name: name })) do
+          project.shellout!("docker pull #{name}", log_verbose: true)
         end
         cache_reset
       end
@@ -53,7 +53,7 @@ module Dapp
       end
 
       def self.image_config_option(image_id:, option:)
-        output = shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
+        output = Project.shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
         output == 'null' ? [] : JSON.parse(output)
       end
 
@@ -74,7 +74,7 @@ module Dapp
 
         def cache_reset(name = '')
           cache.delete(name)
-          shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}").stdout.lines.each do |l|
+          Project.shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}").stdout.lines.each do |l|
             name, id, created_at, size = l.split(';')
             cache[name] = { id: id, created_at: created_at, size: size }
           end

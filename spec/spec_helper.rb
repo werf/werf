@@ -17,7 +17,7 @@ require 'spec_helper/git'
 
 RSpec.configure do |config|
   config.before :all do
-    Dapp::Helper::I18n.initialize
+    Dapp::Project::Logging::I18n.initialize
   end
   config.mock_with :rspec do |mocks|
     mocks.allow_message_expectations_on_nil = true

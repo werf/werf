@@ -27,7 +27,7 @@ module Dapp
     def apply_archive_command(stage)
       credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
-      ["install #{credentials.join(' ')} -d #{where_to_add}",
+      ["#{repo.application.project.install_path} #{credentials.join(' ')} -d #{where_to_add}",
        ["#{repo.application.project.git_path} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths.join(' ')}",
         "#{sudo}#{repo.application.project.tar_path} -x -C #{where_to_add} #{archive_command_excludes.join(' ')}"].join(' | ')]
     end

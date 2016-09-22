@@ -3,7 +3,7 @@ module Dapp
   class Project
     include Lock
     include Dappfile
-    include Paint
+
     include Command::Common
     include Command::Run
     include Command::Build
@@ -23,16 +23,18 @@ module Dapp
     include Command::StageImage
     include Logging::Base
     include Logging::Process
+    include Logging::I18n
+    include Logging::Paint
 
     include SshAgent
-    include Helper::I18n
-    include Helper::Shellout
-    include Helper::Paint
     include Helper::Sha256
+    include Helper::Trivia
 
     include Deps::Gitartifact
     include Deps::Base
-    include SystemShellout
+
+    include Shellout::Base
+    include Shellout::System
 
     attr_reader :cli_options
     attr_reader :apps_patterns
@@ -42,8 +44,8 @@ module Dapp
       @apps_patterns = apps_patterns || []
       @apps_patterns << '*' unless @apps_patterns.any?
 
-      paint_initialize
-      Helper::I18n.initialize
+      Logging::Paint.initialize(cli_options[:log_color])
+      Logging::I18n.initialize
     end
 
     def name

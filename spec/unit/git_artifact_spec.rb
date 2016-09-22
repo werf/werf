@@ -44,6 +44,7 @@ describe Dapp::GitArtifact do
       allow_any_instance_of(Dapp::Project).to receive(:git_path) { 'git' }
       allow_any_instance_of(Dapp::Project).to receive(:tar_path) { 'tar' }
       allow_any_instance_of(Dapp::Project).to receive(:sudo_path) { 'sudo' }
+      allow_any_instance_of(Dapp::Project).to receive(:install_path) { 'install' }
     end
   end
 

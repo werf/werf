@@ -21,6 +21,7 @@ en:
       chefdk_container_loading: 'loading dappdeps/chefdk container'
       system_shellout_container_loading: 'loading system shellout container'
       image_pull: "pulling image '%{name}'"
+      image_push: "pushing image '%{name}'"
     status:
       process:
         pushing: '[PUSHING]'

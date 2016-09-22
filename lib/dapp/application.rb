@@ -62,7 +62,9 @@ module Dapp
         project.lock("image.#{hashsum image_name}") do
           Dapp::Image::Stage.cache_reset(image_name)
           project.log_process(image_name, process: project.t(code: 'status.process.pushing')) do
-            image.export!(image_name, log_verbose: project.log_verbose?, log_time: project.log_time?)
+            project.with_log_indent do
+              image.export!(image_name)
+            end
           end
         end
       end
@@ -91,7 +93,7 @@ module Dapp
                               process: project.t(code: 'status.process.pulling'),
                               status: { failed: project.t(code: 'status.failed.not_pulled') },
                               style: { failed: :secondary }) do
-            image.import!(image_name, log_verbose: project.log_verbose?, log_time: project.log_time?)
+            image.import!(image_name)
           end
         end
       end

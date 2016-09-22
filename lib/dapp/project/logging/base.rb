@@ -17,6 +17,14 @@ module Dapp
           cli_options[:log_verbose]
         end
 
+        def introspect_error?
+          cli_options[:introspect_error]
+        end
+
+        def introspect_before_error?
+          cli_options[:introspect_before_error]
+        end
+
         def dry_run?
           cli_options[:dry_run]
         end
@@ -58,7 +66,7 @@ module Dapp
         end
 
         def log_time
-          Logging::Base.log_time
+          "#{DateTime.now.strftime('%Y-%m-%dT%T%z')} "
         end
 
         def log_format_string(str, time: true, indent: true, style: nil)
@@ -97,8 +105,10 @@ module Dapp
           end
         end
 
-        def self.log_time
-          "#{DateTime.now.strftime('%Y-%m-%dT%T%z')} "
+        class << self
+          def included(base)
+            base.extend(self)
+          end
         end
 
         protected

@@ -14,7 +14,7 @@ module Dapp
         protected
 
         def prepare_image
-          from_image.pull!(log_verbose: application.project.log_verbose?, log_time: application.project.log_time?)
+          from_image.pull!
           raise Error::Build, code: :from_image_not_found, data: { name: from_image_name } unless from_image.tagged?
           super
         end

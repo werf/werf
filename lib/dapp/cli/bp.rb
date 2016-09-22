@@ -2,8 +2,6 @@ module Dapp
   class CLI
     # CLI bp subcommand
     class Bp < Push
-      include Dapp::Helper::Shellout
-
       banner <<BANNER.freeze
 Version: #{Dapp::VERSION}
 

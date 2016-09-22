@@ -5,8 +5,8 @@ module Dapp
     module SshAgent
       class << self
         def included(_base)
-          ::Dapp::Helper::Shellout.default_env_keys << 'SSH_AUTH_SOCK'
-          ::Dapp::Project::SystemShellout.default_env_keys << 'SSH_AUTH_SOCK'
+          ::Dapp::Project::Shellout::Base.default_env_keys << 'SSH_AUTH_SOCK'
+          ::Dapp::Project::Shellout::System.default_env_keys << 'SSH_AUTH_SOCK'
         end
       end # << self
 

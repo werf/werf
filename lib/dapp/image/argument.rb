@@ -118,11 +118,11 @@ module Dapp
       end
 
       def prepared_bash_command
-        shellout_pack prepared_commands.join(' && ')
+        project.shellout_pack prepared_commands.join(' && ')
       end
 
       def prepared_commands
-        return ['true'] if bash_commands.empty?
+        return [project.true_path] if bash_commands.empty?
         bash_commands
       end
     end

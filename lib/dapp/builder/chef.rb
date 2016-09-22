@@ -40,8 +40,8 @@ module Dapp
       def chef_cookbooks(image)
         image.add_volume "#{cookbooks_vendor_path(chef_cookbooks_stage: true)}:#{application.container_dapp_path('chef_cookbooks')}"
         image.add_command(
-          'mkdir -p /usr/share/dapp/chef_repo',
-          ["cp -a #{application.container_dapp_path('chef_cookbooks')} ",
+          "#{application.project.mkdir_path} -p /usr/share/dapp/chef_repo",
+          ["#{application.project.cp_path} -a #{application.container_dapp_path('chef_cookbooks')} ",
            '/usr/share/dapp/chef_repo/cookbooks'].join
         )
       end
@@ -198,7 +198,7 @@ module Dapp
             unless application.project.cli_options[:dev] or chef_cookbooks_stage
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
-                 'echo "Berksfile.lock not found" 1>&2 ; ',
+                 "#{application.project.echo_path} \"Berksfile.lock not found\" 1>&2 ; ",
                  'exit 1 ; ',
                  'fi'].join
               )
@@ -208,14 +208,15 @@ module Dapp
           after_vendor_commands = [].tap do |commands|
             if application.project.cli_options[:dev]
               commands.push(
-                ["install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a Berksfile.lock) ",
+                ["#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} ",
+                 "--mode $(#{application.project.stat_path} -c %a Berksfile.lock) ",
                  "Berksfile.lock #{berksfile_lock_path}"].join
               )
             elsif not chef_cookbooks_stage
               commands.push(
-                "export LOCKDIFF=$(diff -u1 Berksfile.lock #{berksfile_lock_path})",
+                "export LOCKDIFF=$(#{application.project.diff_path} -u1 Berksfile.lock #{berksfile_lock_path})",
                 ['if [ "$LOCKDIFF" != "" ] ; then ',
-                 'echo -e "Bad Berksfile.lock\n$LOCKDIFF" 1>&2 ; ',
+                 "#{application.project.echo_path} -e \"Bad Berksfile.lock\n$LOCKDIFF\" 1>&2 ; ",
                  'exit 1 ; ',
                  'fi'].join
               )
@@ -223,23 +224,23 @@ module Dapp
           end
 
           vendor_commands = [
-            'mkdir -p ~/.ssh',
-            'echo "Host *" >> ~/.ssh/config',
-            'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
+            "#{application.project.mkdir_path} -p ~/.ssh",
+            "#{application.project.echo_path} \"Host *\" >> ~/.ssh/config",
+            "#{application.project.echo_path} \"    StrictHostKeyChecking no\" >> ~/.ssh/config",
             *berksfile.local_cookbooks
                       .values
-                      .map { |cookbook| "rsync --archive --relative #{cookbook[:path]} /tmp/local_cookbooks" },
+                      .map { |cookbook| "#{application.project.rsync_path} --archive --relative #{cookbook[:path]} /tmp/local_cookbooks" },
             "cd /tmp/local_cookbooks/#{berksfile_path.parent}",
             *before_vendor_commands,
             '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
             *after_vendor_commands,
-            ["find /tmp/cookbooks -type d -exec #{application.project.bash_path} -ec '",
-             "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) -d ",
-             "#{dest_path}/$(echo {} | sed -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
-            ["find /tmp/cookbooks -type f -exec #{application.project.bash_path} -ec '",
-             "install -o #{Process.uid} -g #{Process.gid} --mode $(stat -c %a {}) {} ",
-             "#{dest_path}/$(echo {} | sed -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
-            "install -o #{Process.uid} -g #{Process.gid} --mode 0644 <(date +%s.%N) #{dest_path.join('.created_at')}"
+            ["#{application.project.find_path} /tmp/cookbooks -type d -exec #{application.project.bash_path} -ec '",
+             "#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{application.project.stat_path} -c %a {}) -d ",
+             "#{dest_path}/$(#{application.project.echo_path} {} | #{application.project.sed_path} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
+            ["#{application.project.find_path} /tmp/cookbooks -type f -exec #{application.project.bash_path} -ec '",
+             "#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{application.project.stat_path} -c %a {}) {} ",
+             "#{dest_path}/$(#{application.project.echo_path} {} | #{application.project.sed_path} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
+            "#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode 0644 <(#{application.project.date_path} +%s.%N) #{dest_path.join('.created_at')}"
           ]
 
           application.project.shellout!(
@@ -252,8 +253,7 @@ module Dapp
              "--volume #{dest_path.tap(&:mkpath)}:#{dest_path}",
              ("--env SSH_AUTH_SOCK=#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
              ('--env DAPP_CHEF_COOKBOOKS_VENDORING=1' if chef_cookbooks_stage),
-             "dappdeps/berksdeps:0.1.0 #{application.project.bash_path} -ec '#{application.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
-            log_verbose: application.project.log_verbose?
+             "dappdeps/berksdeps:0.1.0 #{application.project.bash_path} -ec '#{application.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' ')
           )
         end
       end

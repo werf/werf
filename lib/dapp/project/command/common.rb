@@ -47,11 +47,8 @@ module Dapp
         end
 
         def run_command(cmd)
-          if dry_run?
-            log(cmd)
-          else
-            shellout!(cmd)
-          end
+          log(cmd) if log_verbose? || dry_run?
+          shellout!(cmd) unless dry_run?
         end
 
         def stage_cache(basename)
