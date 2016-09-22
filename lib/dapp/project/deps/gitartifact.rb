@@ -5,7 +5,7 @@ module Dapp
     module Deps
       # Gitartifact
       module Gitartifact
-        GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.5'.freeze
+        GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.6'.freeze
 
         def gitartifact_container_name # FIXME: hashsum(image) or dockersafe()
           GITARTIFACT_IMAGE.tr('/', '_').tr(':', '_')
