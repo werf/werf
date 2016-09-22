@@ -5,7 +5,7 @@ module Dapp
       class ArtifactDefault < ArtifactBase
         protected
 
-        # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+        # rubocop:disable Metrics/AbcSize
         def apply_artifact(artifact, image)
           return if application.project.dry_run?
 
@@ -29,7 +29,7 @@ module Dapp
 
         private
 
-        # rubocop:disable Metrics/ParameterLists
+        # rubocop:disable Metrics/ParameterLists, Metrics/AbcSize, Metrics/MethodLength
         def safe_cp(from, to, owner, group, cwd = '', paths = [], exclude_paths = [])
           credentials = ''
           credentials += "-o #{owner} " if owner
@@ -38,18 +38,20 @@ module Dapp
 
           copy_files = proc do |from_, cwd_, path_ = ''|
             cwd_ = File.expand_path(File.join('/', cwd_))
-            "#{application.project.find_path} #{File.join(from_, cwd_, path_)} #{excludes} -type f " \
-            "-exec #{application.project.bash_path} -ec '#{application.project.install_path} -D #{credentials} {} " \
-            "#{File.join(to, "$(#{application.project.echo_path} {} | #{application.project.sed_path} -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
+            "#{application.project.find_path} #{File.join(from_, cwd_, path_)} #{excludes} -type f -exec " \
+            "#{application.project.bash_path} -ec '#{application.project.install_path} -D #{credentials} {} " \
+            "#{File.join(to, "$(#{application.project.echo_path} {} | " \
+            "#{application.project.sed_path} -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
           end
 
           commands = []
           commands << [application.project.install_path, credentials, '-d', to].join(' ')
           commands.concat(paths.empty? ? Array(copy_files.call(from, cwd)) : paths.map { |path| copy_files.call(from, cwd, path) })
-          commands << "#{application.project.find_path} #{to} -type d -exec #{application.project.bash_path} -ec '#{application.project.install_path} -d #{credentials} {}' \\;"
+          commands << "#{application.project.find_path} #{to} -type d -exec " \
+                      "#{application.project.bash_path} -ec '#{application.project.install_path} -d #{credentials} {}' \\;"
           commands.join(' && ')
         end
-        # rubocop:enable Metrics/ParameterLists
+        # rubocop:enable Metrics/ParameterLists, Metrics/AbcSize, Metrics/MethodLength
 
         def find_command_excludes(from, cwd, exclude_paths)
           exclude_paths.map { |path| "-not \\( -path #{File.join(from, cwd, path)} -prune \\)" }

@@ -30,8 +30,8 @@ module Dapp
         end
 
         def shellout!(*args, **kwargs)
-          shellout_with_logging(**kwargs) do |kwargs|
-            shellout(*args, **kwargs).tap(&:error!)
+          shellout_with_logging(**kwargs) do |options|
+            shellout(*args, **options).tap(&:error!)
           end
         end
 
@@ -52,7 +52,7 @@ module Dapp
         protected
 
         def shellout_with_logging(log_verbose: false, **kwargs)
-          return yield(**kwargs) unless self.instance_of? Project
+          return yield(**kwargs) unless instance_of? Project
 
           begin
             stream = Stream.new

@@ -319,7 +319,7 @@ end.join("\n")}
       end
     end
 
-    it 'reset_all' do # FIXME attributes
+    it 'reset_all' do # FIXME: attributes
       @dappfile = %(
         builder :chef
 

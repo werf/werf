@@ -17,6 +17,7 @@ module Dapp
           @next_stage.prev_stage = self
         end
 
+        # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity
         def build_lock!
           return yield if application.project.dry_run?
 
@@ -44,6 +45,7 @@ module Dapp
             try_lock.call
           end
         end
+        # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity
 
         def build!
           return if should_be_skipped?

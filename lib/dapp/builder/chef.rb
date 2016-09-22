@@ -195,7 +195,7 @@ module Dapp
 
         application.project.log_secondary_process(application.project.t(code: process_code)) do
           before_vendor_commands = [].tap do |commands|
-            unless application.project.cli_options[:dev] or chef_cookbooks_stage
+            unless application.project.cli_options[:dev] || chef_cookbooks_stage
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
                  "#{application.project.echo_path} \"Berksfile.lock not found\" 1>&2 ; ",
@@ -212,7 +212,7 @@ module Dapp
                  "--mode $(#{application.project.stat_path} -c %a Berksfile.lock) ",
                  "Berksfile.lock #{berksfile_lock_path}"].join
               )
-            elsif not chef_cookbooks_stage
+            elsif !chef_cookbooks_stage
               commands.push(
                 "export LOCKDIFF=$(#{application.project.diff_path} -u1 Berksfile.lock #{berksfile_lock_path})",
                 ['if [ "$LOCKDIFF" != "" ] ; then ',
@@ -304,14 +304,14 @@ module Dapp
 
           paths = if is_project
                     common_dapp_paths = select_existing_paths.call(cookbook_path, [
-                      *common_paths,
-                      ["files/#{stage}/common", 'files/default'],
-                      ["templates/#{stage}/common", 'templates/default'],
-                      *enabled_recipes.map do |recipe|
-                        [["files/#{stage}/#{recipe}", 'files/default'],
-                         ["templates/#{stage}/#{recipe}", 'templates/default']]
-                      end.flatten(1)
-                    ])
+                                                                     *common_paths,
+                                                                     ["files/#{stage}/common", 'files/default'],
+                                                                     ["templates/#{stage}/common", 'templates/default'],
+                                                                     *enabled_recipes.flat_map do |recipe|
+                                                                       [["files/#{stage}/#{recipe}", 'files/default'],
+                                                                        ["templates/#{stage}/#{recipe}", 'templates/default']]
+                                                                     end
+                                                                   ])
 
                     recipe_paths = enabled_recipes.map { |recipe| ["recipes/#{stage}/#{recipe}.rb", "recipes/#{recipe}.rb"] }
                                                   .select { |from, _| cookbook_path.join(from).exist? }
@@ -322,12 +322,12 @@ module Dapp
                     end
                   elsif is_mdapp && mdapp_enabled
                     common_mdapp_paths = select_existing_paths.call(cookbook_path, [
-                      *common_paths,
-                      ["files/#{stage}", 'files/default'],
-                      ['files/common', 'files/default'],
-                      ["templates/#{stage}", 'templates/default'],
-                      ['templates/common', 'templates/default']
-                    ])
+                                                                      *common_paths,
+                                                                      ["files/#{stage}", 'files/default'],
+                                                                      ['files/common', 'files/default'],
+                                                                      ["templates/#{stage}", 'templates/default'],
+                                                                      ['templates/common', 'templates/default']
+                                                                    ])
 
                     recipe_path = "recipes/#{stage}.rb"
                     if cookbook_path.join(recipe_path).exist?

@@ -21,7 +21,7 @@ module Dapp
           application.builder.before_install(image)
         end
 
-        alias_method :dependencies, :context
+        alias dependencies context
       end # BeforeInstall
     end # Stage
   end # Build

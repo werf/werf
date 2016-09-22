@@ -60,6 +60,7 @@ module Dapp
           end
         end
 
+        # rubocop:disable Metrics/AbcSize
         def run_artifact_app(app, artifact_name, commands)
           docker_options = ['--rm',
                             "--volume #{application.tmp_path('artifact', artifact_name)}:#{app.container_tmp_path(artifact_name)}",
@@ -72,6 +73,7 @@ module Dapp
             app.run(docker_options, [%(-ec '#{application.project.shellout_pack(commands)}')])
           end
         end
+        # rubocop:enable Metrics/AbcSize
       end # ArtifactBase
     end # Stage
   end # Build

@@ -16,6 +16,7 @@ module Dapp
 
         protected
 
+        # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         def apply_artifact(artifact, image)
           return if application.project.dry_run?
 
@@ -38,15 +39,19 @@ module Dapp
           container_archive_path = File.join(app.container_tmp_path(artifact_name), 'archive.tar.gz')
 
           exclude_paths = artifact[:options][:exclude_paths].map { |path| "--exclude=#{path}" }.join(' ')
-          paths = (paths.empty? ?
-            [File.join(where_to_add, cwd, '*')] :
-            paths.map { |path| File.join(where_to_add, cwd, path, '*') }).map! { |path| path[1..-1] } # relative path
+          paths = if paths.empty?
+                    [File.join(where_to_add, cwd, '*')]
+                  else
+                    paths.map { |path| File.join(where_to_add, cwd, path, '*') }
+                  end
+          paths.map! { |path| path[1..-1] } # relative path
 
           command = "#{sudo} #{application.project.tar_path} -czf #{container_archive_path} #{exclude_paths} #{paths.join(' ')} #{credentials}"
           run_artifact_app(app, artifact_name, command)
 
           image.add_archive archive_path
         end
+        # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
       end # ImportArtifact
     end # Stage
   end # Build
