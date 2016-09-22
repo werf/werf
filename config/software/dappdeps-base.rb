@@ -8,6 +8,7 @@ dependency 'gtar'
 dependency 'sudo'
 dependency 'coreutils'
 dependency 'findutils'
+dependency 'diffutils'
 dependency 'sed'
 
 build do
