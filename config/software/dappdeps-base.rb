@@ -10,6 +10,7 @@ dependency 'coreutils'
 dependency 'findutils'
 dependency 'diffutils'
 dependency 'sed'
+dependency 'rsync'
 
 build do
   link "#{install_dir}/embedded/bin", "#{install_dir}/bin"
