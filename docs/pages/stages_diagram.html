@@ -93,8 +93,8 @@ permalink: stages_diagram.html
 <script>
 $(".dappfile > div > span").each(function (){
   var stage = $(this).first().parent().parent().prev().attr('id')
-  $(this).html( $(this).text().replace(/&lt;(.*?)&gt;/g, function(_, match) {
-    return "<span id=" + slugify(stage + ' dappfile ' + match) + ">" + match + "</span>"
+  $(this).html( $(this).text().replace(/&lt;(.*?)&gt;/g, function(full, match) {
+    return "<span id=" + slugify(stage + ' dappfile ' + match) + ">" + full + "</span>"
   }))
 })
 
