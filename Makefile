@@ -1,5 +1,5 @@
 DOCKER_IMAGE_VERSION = $(shell cat config/projects/dappdeps-base.rb | \
-                               grep build_version | \
+                               grep 'DOCKER_IMAGE_VERSION =' | \
                                grep -oP '[0-9.]+')
 DOCKER_IMAGE_NAME=dappdeps/base:$(DOCKER_IMAGE_VERSION)
 
