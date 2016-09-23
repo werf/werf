@@ -5,9 +5,9 @@ homepage 'https://github.com/flant/dappdeps-base'
 license 'MIT'
 license_file 'LICENSE.txt'
 
-install_dir '/.dapp/deps/base'
-
-build_version '0.1.13'
+build_version '0.1.14'
 build_iteration 1
+
+install_dir "/.dapp/deps/base/#{build_version}"
 
 dependency 'dappdeps-base'
