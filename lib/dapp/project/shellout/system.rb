@@ -10,8 +10,8 @@ module Dapp
         def system_shellout_container_name
           "dapp_system_shellout_#{hashsum [SYSTEM_SHELLOUT_VERSION,
                                            SYSTEM_SHELLOUT_IMAGE,
-                                           Deps::Gitartifact::GITARTIFACT_IMAGE,
-                                           Deps::Base::BASE_VERSION]}"
+                                           Deps::Base::BASE_VERSION,
+                                           Deps::Gitartifact::GITARTIFACT_VERSION]}"
         end
 
         def system_shellout_container

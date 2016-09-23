@@ -5,10 +5,10 @@ module Dapp
     module Deps
       # Gitartifact
       module Gitartifact
-        GITARTIFACT_IMAGE = 'dappdeps/gitartifact:0.1.6'.freeze
+        GITARTIFACT_VERSION = '0.1.7'.freeze
 
         def gitartifact_container_name # FIXME: hashsum(image) or dockersafe()
-          GITARTIFACT_IMAGE.tr('/', '_').tr(':', '_')
+          "dappdeps_gitartifact_#{GITARTIFACT_VERSION}"
         end
 
         def gitartifact_container
@@ -18,7 +18,8 @@ module Dapp
                 shellout!(
                   ['docker create',
                    "--name #{gitartifact_container_name}",
-                   "--volume /.dapp/deps/gitartifact #{GITARTIFACT_IMAGE}"].join(' ')
+                   "--volume /.dapp/deps/gitartifact/#{GITARTIFACT_VERSION}",
+                   "dappdeps/gitartifact:#{GITARTIFACT_VERSION}"].join(' ')
                 )
               end
             end
@@ -27,7 +28,7 @@ module Dapp
         end
 
         def git_path
-          '/.dapp/deps/gitartifact/bin/git'
+          "/.dapp/deps/gitartifact/#{GITARTIFACT_VERSION}/bin/git"
         end
       end # Gitartifact
     end # Deps
