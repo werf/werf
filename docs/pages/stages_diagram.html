@@ -4,42 +4,172 @@ sidebar: doc_sidebar
 permalink: stages_diagram.html
 ---
 
+<p>Тип приложения</p>
+<div class="radio">
+  <input type="radio" name="type" id="type-application" value="app" checked/>
+  <label for="type-application">Приложение</label>
+  <input type="radio" name="type" id="type-artifact" value="artifact"/>
+  <label for="type-artifact">Артефакт</label>
+  <input type="radio" name="type" id="type-scratch" value="scratch"/>
+  <label for="type-scratch">Скретч</label>
+</div>
+
+<p>Тип сборщика</p>
+<div class="radio">
+  <input type="radio" name="builder" id="builder-shell" value="shell" checked/>
+  <label for="builder-shell">Shell</label>
+  <input type="radio" name="builder" id="builder-chef" value="chef" />
+  <label for="builder-chef">Chef</label>
+</div>
+
 <div class="stages">
   {% for stage in site.data.stages.entries %}
-    <div class="stage">
-      <div class="stage-base">
+    <div class="stage {{stage.type}}">
+      <div class="stage-base" id="{{ stage.name | slugify }}">
         {{ stage.name | escape }}
 
         {% if stage.signatures %}
-          <div class="signature">
+          <div class="signature" id="{{ stage.name | append: ' signature' | slugify }}">
             signature <br />
 
             {% for signature in stage.signatures %}
-                <div> {{ signature | escape }}</div>
+                <div id="{{ stage.name | append: ' signature ' | append: signature.name | slugify }}">
+                  {{ signature.name | escape }}
+                </div>
             {% endfor %}
           </div>
         {% endif %}
-        {% if stage.context %}
-          <div class="context">
+        {% if stage.context_base or stage.context_chef or stage.context_shell %}
+          <div class="context" id="{{ stage.name | append: ' context' | slugify }}">
             context <br />
 
-            {% for context in stage.context %}
-              <div> {{ context | escape }}</div>
-            {% endfor %}
+            {% if stage.context_base %}
+              {% for context in stage.context_base %}
+                <div class="" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
+                  {{ context.name | escape }}
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            {% if stage.context_shell %}
+              {% for context in stage.context_shell %}
+                <div class="shell" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
+                  {{ context.name | escape }}
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            {% if stage.context_chef %}
+              {% for context in stage.context_chef %}
+                <div class="chef" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
+                  {{ context.name | escape }}
+                </div>
+              {% endfor %}
+            {% endif %}
           </div>
         {% endif %}
       </div>
-      {% if stage.dappfile %}
+      {% if stage.dappfile_base or stage.dappfile_chef or stage.dappfile_shell %}
         <div class="dappfile">
-          Dappfile
+          Dappfile <br />
+
           <div>
-            {% for line in stage.dappfile %}
-              {{ line | escape }}
-              <br />
-            {% endfor %}
+            {% if stage.dappfile_base %}
+              {{ stage.dappfile_base | dappfile: stage.name }}
+            {% endif %}
+              {% if stage.dappfile_chef %}
+              <span class="chef">{{ stage.dappfile_chef | dappfile: stage.name }}</span>
+            {% endif %}
+            {% if stage.dappfile_shell %}
+              <span class="shell">{{ stage.dappfile_shell | dappfile: stage.name }}</span>
+            {% endif %}
           </div>
         </div>
       {% endif %}
     </div>
   {% endfor %}
 </div>
+
+
+<script>
+function builder() {
+  if ($("input[value=chef]").is(':checked')) {
+    $(".shell").addClass('hidden')
+    $(".chef").removeClass('hidden')
+  }
+  else {
+    $(".chef").addClass('hidden')
+    $(".shell").removeClass('hidden')
+  }
+}
+
+function application() {
+  if ($("input[value=app]").is(':checked')) {
+    $(".scratch").addClass('hidden')
+    $(".artifact").addClass('hidden')
+    $(".app").removeClass('hidden')
+  }
+  else if ($("input[value=artifact]").is(':checked')) {
+    $(".app").addClass('hidden')
+    $(".scratch").addClass('hidden')
+    $(".artifact").removeClass('hidden')
+  }
+  else {
+    $(".app").addClass('hidden')
+    $(".artifact").addClass('hidden')
+    $(".scratch").removeClass('hidden')
+  }
+}
+
+builder()
+application()
+
+$("input[name=builder]").change(builder);
+$("input[name=type]").change(application);
+
+{% for stage in site.data.stages.entries %}
+  {% if stage.signatures %}
+    {% for signature in stage.signatures %}
+      $("#{{ stage.name | append: ' signature ' | append: signature.name | slugify }}").hover(function() {
+        {% if signature.dependence %}
+          $("[id^='{{signature.dependence}}']").addClass('dependence')
+        {% endif %}
+      }, function() {
+        {% if signature.dependence %}
+          $("[id^='{{signature.dependence}}']").removeClass('dependence')
+        {% endif %}
+      })
+    {% endfor %}
+  {% endif %}
+  {% if stage.context_base or stage.context_chef or stage.context_shell %}
+    {% if stage.context_base %}
+      {% for context in stage.context_base %}
+        $("#{{ stage.name | append: ' context ' | append: context.name | slugify }}").hover(function() {
+          $("[id^='{{context.dependence}}']").addClass('dependence')
+      }, function() {
+        $("[id^='{{context.dependence}}']").removeClass('dependence')
+      })
+      {% endfor %}
+    {% endif %}
+    {% if stage.context_shell %}
+    {% for context in stage.context_shell %}
+    $("#{{ stage.name | append: ' context ' | append: context.name | slugify }}").hover(function() {
+      $("[id^='{{context.dependence}}']").addClass('dependence')
+    }, function() {
+      $("[id^='{{context.dependence}}']").removeClass('dependence')
+    })
+    {% endfor %}
+    {% endif %}
+    {% if stage.context_chef %}
+    {% for context in stage.context_chef %}
+    $("#{{ stage.name | append: ' context ' | append: context.name | slugify }}").hover(function() {
+      $("[id^='{{context.dependence}}']").addClass('dependence')
+    }, function() {
+      $("[id^='{{context.dependence}}']").removeClass('dependence')
+    })
+    {% endfor %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+$.noConflict();
+</script>
