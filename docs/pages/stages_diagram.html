@@ -75,13 +75,13 @@ permalink: stages_diagram.html
 
           <div>
             {% if stage.dappfile_base %}
-              {{ stage.dappfile_base | dappfile: stage.name }}
+              <span>{{ stage.dappfile_base | escape }}</span>
             {% endif %}
-              {% if stage.dappfile_chef %}
-              <span class="chef">{{ stage.dappfile_chef | dappfile: stage.name }}</span>
+            {% if stage.dappfile_chef %}
+              <span class="chef">{{ stage.dappfile_chef | escape}}</span>
             {% endif %}
             {% if stage.dappfile_shell %}
-              <span class="shell">{{ stage.dappfile_shell | dappfile: stage.name }}</span>
+              <span class="shell">{{ stage.dappfile_shell | escape}}</span>
             {% endif %}
           </div>
         </div>
@@ -90,8 +90,24 @@ permalink: stages_diagram.html
   {% endfor %}
 </div>
 
-
 <script>
+$(".dappfile > div > span").each(function (){
+  var stage = $(this).first().parent().parent().prev().attr('id')
+  $(this).html( $(this).text().replace(/&lt;(.*?)&gt;/g, function(_, match) {
+    return "<span id=" + slugify(stage + ' dappfile ' + match) + ">" + match + "</span>"
+  }))
+})
+
+function slugify(text) {
+  return text.toString().toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/_/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+}
+
 function builder() {
   if ($("input[value=chef]").is(':checked')) {
     $(".shell").addClass('hidden')
