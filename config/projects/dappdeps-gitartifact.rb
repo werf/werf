@@ -5,9 +5,11 @@ homepage 'https://github.com/flant/dappdeps-gitartifact'
 license 'MIT'
 license_file 'LICENSE.txt'
 
-install_dir '/.dapp/deps/gitartifact'
+DOCKER_IMAGE_VERSION = '0.1.7'
 
-build_version '0.1.6'
+install_dir "/.dapp/deps/gitartifact/#{DOCKER_IMAGE_VERSION}"
+
+build_version DOCKER_IMAGE_VERSION
 build_iteration 1
 
 dependency 'dappdeps-gitartifact'
