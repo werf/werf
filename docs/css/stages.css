@@ -21,11 +21,6 @@ div.stage-base > div, div.dappfile span > span { cursor: pointer }
 
 /* other */
 div.stages { font-size: 12px; }
-div.stage-tips > div {
-  border-left: 1px solid;
-  border-right: 1px solid;
-
-}
 div.stage > div.stage-body div, div.stage-tips > div {
   padding: 5px 10px;
 }

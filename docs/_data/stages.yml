@@ -60,7 +60,8 @@ entries:
   context_chef:
   - name: реклама
     dependence: install-dappfile
-  dappfile_shell: "install_depends_on &lt;glob&gt;[,&lt;glob&gt;, &lt;glob&gt;, ...]<br />shell.install &lt;cmd&gt;[, &lt;cmd&gt; ...]"
+  dappfile_base: "install_depends_on &lt;glob&gt;[,&lt;glob&gt;, &lt;glob&gt;, ...]"
+  dappfile_shell: "shell.install &lt;cmd&gt;[, &lt;cmd&gt; ...]"
   dappfile_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
 - name: git_artifact_post_install_patch
   type: "app artifact"
