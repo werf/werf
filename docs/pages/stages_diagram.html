@@ -178,22 +178,30 @@ $("input[name=type]").change(application);
 {% for stage in site.data.stages.entries %}
   {% if stage.signatures %}
     {% for signature in stage.signatures %}
-      add_dependencies("{{ stage.name | append: ' signature ' | append: signature.name | slugify }}", '{{signature.dependence}}');
+      {% for dependence in signature.dependence %}
+        add_dependencies("{{ stage.name | append: ' signature ' | append: signature.name | slugify }}", '{{dependence}}');
+      {% endfor %}
     {% endfor %}
   {% endif %}
   {% if stage.context_base %}
     {% for context in stage.context_base %}
-      add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{context.dependence}}');
+      {% for dependence in context.dependence %}
+        add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{dependence}}');
+      {% endfor %}
     {% endfor %}
   {% endif %}
   {% if stage.context_shell %}
     {% for context in stage.context_shell %}
-      add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{context.dependence}}');
+      {% for dependence in context.dependence %}
+        add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{dependence}}');
+      {% endfor %}
     {% endfor %}
   {% endif %}
   {% if stage.context_chef %}
     {% for context in stage.context_chef %}
-      add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{context.dependence}}');
+      {% for dependence in context.dependence %}
+        add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{dependence}}');
+      {% endfor %}
     {% endfor %}
   {% endif %}
 
