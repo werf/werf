@@ -24,7 +24,7 @@ permalink: stages_diagram.html
 
 <div class="stages">
   {% for stage in site.data.stages.entries %}
-    <div class="stage {{stage.type}}">
+    <div class="stage {{stage.type}} hidden">
       <div class="stage-base" id="{{ stage.name | slugify }}">
         {{ stage.name | escape }}
 
@@ -45,7 +45,7 @@ permalink: stages_diagram.html
 
             {% if stage.context_base %}
               {% for context in stage.context_base %}
-                <div class="" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
+                <div id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
                   {{ context.name | escape }}
                 </div>
               {% endfor %}
@@ -53,7 +53,7 @@ permalink: stages_diagram.html
 
             {% if stage.context_shell %}
               {% for context in stage.context_shell %}
-                <div class="shell" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
+                <div class="shell hidden" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
                   {{ context.name | escape }}
                 </div>
               {% endfor %}
@@ -61,7 +61,7 @@ permalink: stages_diagram.html
 
             {% if stage.context_chef %}
               {% for context in stage.context_chef %}
-                <div class="chef" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
+                <div class="chef hidden" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
                   {{ context.name | escape }}
                 </div>
               {% endfor %}
@@ -78,10 +78,10 @@ permalink: stages_diagram.html
               <span>{{ stage.dappfile_base | escape }}</span>
             {% endif %}
             {% if stage.dappfile_chef %}
-              <span class="chef">{{ stage.dappfile_chef | escape}}</span>
+              <span class="chef hidden">{{ stage.dappfile_chef | escape}}</span>
             {% endif %}
             {% if stage.dappfile_shell %}
-              <span class="shell">{{ stage.dappfile_shell | escape}}</span>
+              <span class="shell hidden">{{ stage.dappfile_shell | escape}}</span>
             {% endif %}
           </div>
         </div>
