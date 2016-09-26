@@ -5,15 +5,17 @@ div.context { background-color: #a4c2f4; }
 div.dappfile { background-color: #efefef; }
 div.dappfile > div { background-color: #cccccc; }
 div.signature > div:hover, div.context > div:hover { background-color: #3d85c6; }
+div.dappfile span > span:hover { background-color: grey; }
 div.stages .dependence { background-color: yellow; }
-div.signature > div, div.stages div.signature.dependence > div { background-color: #9fc5e8; }
-div.context > div, div.stages div.context.dependence > div { background-color: #6998e2; }
+div.stages .inverse-dependence { background-color: orange; }
+div.signature > div, div.stages div.signature.dependence > div, div.context > div, div.stages div.context.dependence > div { background-color: #9fc5e8; }
 
 /* display */
 div.stage { display: flex; }
 div.stage > div { display: inline-block; }
-div.stage > div { cursor: pointer }
+div.stage > div.dappfile div > span { display: block }
 .hidden { display: none }
+div.stage > div { cursor: pointer }
 
 /* other */
 div.stage { font-size: 12px; }

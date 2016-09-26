@@ -191,10 +191,10 @@ entries:
     dependence: git-artifact-artifact-patch-signature
   context_base:
   - name: build artifact dependencies by <glob>s
-    dependence: build_artifact-dappfile-glob
+    dependence: build-artifact-dappfile-glob
   context_shell:
   - name: shell.build_artifact <cmd>
-    dependence: build_artifact-dappfile-cmd
+    dependence: build-artifact-dappfile-cmd
   context_chef:
   - name: реклама
     dependence: build_artifact-dappfile

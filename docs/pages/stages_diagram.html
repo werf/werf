@@ -22,7 +22,7 @@ permalink: stages_diagram.html
   <label for="builder-chef">Chef</label>
 </div>
 
-<div class="stages">
+<div class="stages" id="stages">
   {% for stage in site.data.stages.entries %}
     <div class="stage {{stage.type}} hidden">
       <div class="stage-base" id="{{ stage.name | slugify }}">
@@ -90,11 +90,13 @@ permalink: stages_diagram.html
   {% endfor %}
 </div>
 
+<script src="{{ "js/jquery-3.1.0.min.js" }}"></script>
 <script>
+
 $(".dappfile > div > span").each(function (){
   var stage = $(this).first().parent().parent().prev().attr('id')
   $(this).html( $(this).text().replace(/&lt;(.*?)&gt;/g, function(full, match) {
-    return "<span id=" + slugify(stage + ' dappfile ' + match) + ">" + full + "</span>"
+    return "<span id=" + slugify(stage + ' dappfile ' + match + Math.random(1000)) + ">" + full + "</span>"
   }))
 })
 
@@ -137,6 +139,19 @@ function application() {
   }
 }
 
+function add_dependence(elm, dependence_selector, klass) {
+  $("#" + elm).hover(function() {
+    $("[id^='" + dependence_selector + "']").addClass(klass);
+  }, function () {
+    $("[id^='" + dependence_selector + "']").removeClass(klass)
+  })
+}
+
+function add_dependencies(elm, dependence_selector) {
+  add_dependence(elm, dependence_selector, 'dependence')
+  $("[id^='" + dependence_selector + "']").each(function(_, dependence) { add_dependence($(dependence).attr('id'), elm, 'inverse-dependence') });
+}
+
 builder()
 application()
 
@@ -146,45 +161,23 @@ $("input[name=type]").change(application);
 {% for stage in site.data.stages.entries %}
   {% if stage.signatures %}
     {% for signature in stage.signatures %}
-      $("#{{ stage.name | append: ' signature ' | append: signature.name | slugify }}").hover(function() {
-        {% if signature.dependence %}
-          $("[id^='{{signature.dependence}}']").addClass('dependence')
-        {% endif %}
-      }, function() {
-        {% if signature.dependence %}
-          $("[id^='{{signature.dependence}}']").removeClass('dependence')
-        {% endif %}
-      })
+      add_dependencies("{{ stage.name | append: ' signature ' | append: signature.name | slugify }}", '{{signature.dependence}}');
     {% endfor %}
   {% endif %}
-  {% if stage.context_base or stage.context_chef or stage.context_shell %}
-    {% if stage.context_base %}
-      {% for context in stage.context_base %}
-        $("#{{ stage.name | append: ' context ' | append: context.name | slugify }}").hover(function() {
-          $("[id^='{{context.dependence}}']").addClass('dependence')
-      }, function() {
-        $("[id^='{{context.dependence}}']").removeClass('dependence')
-      })
-      {% endfor %}
-    {% endif %}
-    {% if stage.context_shell %}
+  {% if stage.context_base %}
+    {% for context in stage.context_base %}
+      add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{context.dependence}}');
+    {% endfor %}
+  {% endif %}
+  {% if stage.context_shell %}
     {% for context in stage.context_shell %}
-    $("#{{ stage.name | append: ' context ' | append: context.name | slugify }}").hover(function() {
-      $("[id^='{{context.dependence}}']").addClass('dependence')
-    }, function() {
-      $("[id^='{{context.dependence}}']").removeClass('dependence')
-    })
+      add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{context.dependence}}');
     {% endfor %}
-    {% endif %}
-    {% if stage.context_chef %}
+  {% endif %}
+  {% if stage.context_chef %}
     {% for context in stage.context_chef %}
-    $("#{{ stage.name | append: ' context ' | append: context.name | slugify }}").hover(function() {
-      $("[id^='{{context.dependence}}']").addClass('dependence')
-    }, function() {
-      $("[id^='{{context.dependence}}']").removeClass('dependence')
-    })
+      add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{context.dependence}}');
     {% endfor %}
-    {% endif %}
   {% endif %}
 {% endfor %}
 $.noConflict();
