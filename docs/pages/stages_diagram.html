@@ -24,68 +24,85 @@ permalink: stages_diagram.html
 
 <div class="stages" id="stages">
   {% for stage in site.data.stages.entries %}
-    <div class="stage {{stage.type}} hidden">
-      <div class="stage-base" id="{{ stage.name | slugify }}">
-        {{ stage.name | escape }}
+    <div class="stage {{stage.type}} hidden" id="{{ stage.name | slugify }}">
+      <div class="stage-body">
+        <div class="stage-base">
+          {{ stage.name | escape }}
 
-        {% if stage.signatures %}
+          {% if stage.signatures %}
           <div class="signature" id="{{ stage.name | append: ' signature' | slugify }}">
             signature <br />
 
             {% for signature in stage.signatures %}
-                <div id="{{ stage.name | append: ' signature ' | append: signature.name | slugify }}">
-                  {{ signature.name | escape }}
-                </div>
+            <div id="{{ stage.name | append: ' signature ' | append: signature.name | slugify }}">
+              {{ signature.name | escape }}
+            </div>
             {% endfor %}
           </div>
-        {% endif %}
-        {% if stage.context_base or stage.context_chef or stage.context_shell %}
+          {% endif %}
+          {% if stage.context_base or stage.context_chef or stage.context_shell %}
           <div class="context" id="{{ stage.name | append: ' context' | slugify }}">
             context <br />
 
             {% if stage.context_base %}
-              {% for context in stage.context_base %}
-                <div id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
-                  {{ context.name | escape }}
-                </div>
-              {% endfor %}
+            {% for context in stage.context_base %}
+            <div id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
+              {{ context.name | escape }}
+            </div>
+            {% endfor %}
             {% endif %}
 
             {% if stage.context_shell %}
-              {% for context in stage.context_shell %}
-                <div class="shell hidden" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
-                  {{ context.name | escape }}
-                </div>
-              {% endfor %}
+            {% for context in stage.context_shell %}
+            <div class="shell hidden" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
+              {{ context.name | escape }}
+            </div>
+            {% endfor %}
             {% endif %}
 
             {% if stage.context_chef %}
-              {% for context in stage.context_chef %}
-                <div class="chef hidden" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
-                  {{ context.name | escape }}
-                </div>
-              {% endfor %}
+            {% for context in stage.context_chef %}
+            <div class="chef hidden" id="{{ stage.name | append: ' context ' | append: context.name | slugify }}">
+              {{ context.name | escape }}
+            </div>
+            {% endfor %}
             {% endif %}
           </div>
-        {% endif %}
-      </div>
-      {% if stage.dappfile_base or stage.dappfile_chef or stage.dappfile_shell %}
+          {% endif %}
+        </div>
+        {% if stage.dappfile_base or stage.dappfile_chef or stage.dappfile_shell %}
         <div class="dappfile">
           Dappfile <br />
 
           <div>
             {% if stage.dappfile_base %}
-              <span>{{ stage.dappfile_base | escape }}</span>
+            <span>{{ stage.dappfile_base | escape }}</span>
             {% endif %}
             {% if stage.dappfile_chef %}
-              <span class="chef hidden">{{ stage.dappfile_chef | escape}}</span>
+            <span class="chef hidden">{{ stage.dappfile_chef | escape}}</span>
             {% endif %}
             {% if stage.dappfile_shell %}
-              <span class="shell hidden">{{ stage.dappfile_shell | escape}}</span>
+            <span class="shell hidden">{{ stage.dappfile_shell | escape}}</span>
             {% endif %}
           </div>
         </div>
-      {% endif %}
+        {% endif %}
+      </div>
+      <!--<div class="stage-tips">-->
+        <!--{% for tip in stage.tips %}-->
+          <!--<div class="tip">-->
+            <!--{{ tip | escape }}-->
+          <!--</div>-->
+        <!--{% endfor %}-->
+      <!--</div>-->
+      <div class="stage-tips">
+        <div class="tip">
+          <a href="definitions.html">Базовые определения</a>.
+        </div>
+        <div class="tip">
+          При изменении сигнатуры все последующие стадии будут пересобраны.
+        </div>
+      </div>
     </div>
   {% endfor %}
 </div>
@@ -94,7 +111,7 @@ permalink: stages_diagram.html
 <script>
 
 $(".dappfile > div > span").each(function (){
-  var stage = $(this).first().parent().parent().prev().attr('id')
+  var stage = $(this).closest( ".stage" ).attr('id')
   $(this).html( $(this).text().replace(/&lt;(.*?)&gt;/g, function(full, match) {
     return "<span id=" + slugify(stage + ' dappfile ' + match + Math.random(1000)) + ">" + full + "</span>"
   }))
@@ -179,6 +196,13 @@ $("input[name=type]").change(application);
       add_dependencies("{{ stage.name | append: ' context ' | append: context.name | slugify }}", '{{context.dependence}}');
     {% endfor %}
   {% endif %}
+
+  // tips
+  $("#{{ stage.name | slugify }}").hover(function() {
+    $(this).find('.stage-tips div').show('slow');
+  }, function () {
+    $(this).find('.stage-tips div').hide('fast');
+  })
 {% endfor %}
 $.noConflict();
 </script>

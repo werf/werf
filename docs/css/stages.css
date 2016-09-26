@@ -1,5 +1,6 @@
 /* colors */
 div.stage-base { background-color: #cfe2f3; }
+div.stage-tips { background-color: darkseagreen; }
 div.signature { background-color: #6fa8dc; }
 div.context { background-color: #a4c2f4; }
 div.dappfile { background-color: #efefef; }
@@ -11,22 +12,30 @@ div.stages .inverse-dependence { background-color: orange; }
 div.signature > div, div.stages div.signature.dependence > div, div.context > div, div.stages div.context.dependence > div { background-color: #9fc5e8; }
 
 /* display */
-div.stage { display: flex; }
-div.stage > div { display: inline-block; }
-div.stage > div.dappfile div > span { display: block }
+div.stage > div.stage-body { display: flex; }
+div.stage > div.stage-body > div { display: inline-block; }
+div.stage > div.stage-body > div.dappfile div > span { display: block }
 .hidden { display: none }
-div.stage > div { cursor: pointer }
+div.stage-tips div { display: none }
+div.stage-base > div, div.dappfile span > span { cursor: pointer }
 
 /* other */
-div.stage { font-size: 12px; }
+div.stages { font-size: 12px; }
+div.stage-tips > div {
+  border-left: 1px solid;
+  border-right: 1px solid;
 
-div.stage div {
-  border: 1px solid;
+}
+div.stage > div.stage-body div, div.stage-tips > div {
   padding: 5px 10px;
-  margin-bottom: 5px;
 }
 
-div.stage > div {
+div.stage > div.stage-body div {
+  margin-bottom: 5px;
+  border: 1px solid;
+}
+
+div.stage > div.stage-body > div {
   width: 50%;
   margin: 0;
 }
