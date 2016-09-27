@@ -209,19 +209,26 @@ entries:
   signatures:
   - name: import artifact artifacts signatures
   - name: import artifact artifacts parameters
-    dependence: 
-    - import-artifact-dappfile
-  dappfile_base: "artifact &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
-- name: docker_instructions (not app)
-  type: "scratch"
-  signatures:
-  - name: import_artifact.signature
-    dependence: 
-    - import-artifact-signature
+    dependence:
+    - import-artifact-dappfile-where-to-add
+    - import-artifact-dappfile-cwd
+    - import-artifact-dappfile-paths
+    - import-artifact-dappfile-exclude-paths
+    - import-artifact-dappfile-owner
+    - import-artifact-dappfile-group
   - name: docker instructions
-    dependence: 
-    - docker-instructions-not-app-dappfile
-  dappfile_base: "docker.cmd &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.env &lt;env_name&gt;: &lt;env_value&gt;[, &lt;env_name&gt;: &lt;env_value&gt; ...]<br />docker.entrypoint &lt;cmd&gt;[, &lt;arg&gt; ...]<br />docker.expose &lt;expose&gt;[, &lt;expose&gt; ...]<br />docker.label &lt;label_key&gt;: &lt;label_value&gt;[, &lt;label_key&gt;: &lt;label_value&gt; ...]<br />docker.onbuild &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.user &lt;user&gt;<br />docker.volume &lt;volume&gt;[, &lt;volume&gt; ...]<br />docker.workdir &lt;path&gt;"
+    dependence:
+    - import-artifact-dappfile-cmd
+    - import-artifact-dappfile-arg
+    - import-artifact-dappfile-env-name
+    - import-artifact-dappfile-env-value
+    - import-artifact-dappfile-expose
+    - import-artifact-dappfile-label-key
+    - import-artifact-dappfile-label-value
+    - import-artifact-dappfile-user
+    - import-artifact-dappfile-volume
+    - import-artifact-dappfile-path-26
+  dappfile_base: "artifact &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]<br />docker.cmd &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.env &lt;env_name&gt;: &lt;env_value&gt;[, &lt;env_name&gt;: &lt;env_value&gt; ...]<br />docker.entrypoint &lt;cmd&gt;[, &lt;arg&gt; ...]<br />docker.expose &lt;expose&gt;[, &lt;expose&gt; ...]<br />docker.label &lt;label_key&gt;: &lt;label_value&gt;[, &lt;label_key&gt;: &lt;label_value&gt; ...]<br />docker.onbuild &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.user &lt;user&gt;<br />docker.volume &lt;volume&gt;[, &lt;volume&gt; ...]<br />docker.workdir &lt;path&gt;"
 - name: git_artifact_artifact_patch
   type: "artifact"
   signatures:
