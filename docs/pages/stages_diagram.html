@@ -88,20 +88,12 @@ permalink: stages_diagram.html
         </div>
         {% endif %}
       </div>
-      <!--<div class="stage-tips">-->
-        <!--{% for tip in stage.tips %}-->
-          <!--<div class="tip">-->
-            <!--{{ tip | escape }}-->
-          <!--</div>-->
-        <!--{% endfor %}-->
-      <!--</div>-->
       <div class="stage-tips">
-        <div class="tip">
-          <a href="definitions.html">Базовые определения</a>.
-        </div>
-        <div class="tip">
-          При изменении сигнатуры все последующие стадии будут пересобраны.
-        </div>
+        {% for tip in stage.tips %}
+          <div class="tip">
+            {{ tip | escape }}
+          </div>
+        {% endfor %}
       </div>
     </div>
   {% endfor %}
@@ -111,12 +103,12 @@ permalink: stages_diagram.html
 <script>
 
 $(".dappfile > div > span").each(function (){
-  var stage = $(this).closest( ".stage" ).attr('id')
+  var stage = $(this).closest( ".stage" ).attr('id');
   var index = 0;
   $(this).html( $(this).text().replace(/&lt;(.*?)&gt;/g, function(full, match) {
-    return "<span id=" + slugify(stage + ' dappfile ' + match + '-' + (index += 1)) + ">" + full + "</span>"
-  }))
-})
+    return "<span id=" + slugify(stage + ' dappfile ' + match + '-' + (index += 1)) + ">" + full + "</span>";
+  }));
+});
 
 function slugify(text) {
   return text.toString().toLowerCase()

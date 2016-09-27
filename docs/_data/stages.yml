@@ -234,7 +234,7 @@ entries:
   signatures:
   - name: after_setup_artifact.signature
     dependence: 
-    - after-setup-artifact-signature
+    - after-setup-artifact-not-app-signature
   - name: build_artifact.context
     dependence: 
     - build-artifact-context
