@@ -24,25 +24,48 @@ describe Dapp::Artifact do
     artifact
   end
 
-  def expect_file
-    image_name = stages[expect_stage].send(:image_name)
-    expect { shellout!("docker run --rm #{image_name} bash -lec 'cat /#{@artifact}/test'") }.to_not raise_error
+  context :application do
+    def expect_file
+      image_name = stages[expect_stage].send(:image_name)
+      expect { shellout!("docker run --rm #{image_name} bash -lec 'cat /#{@artifact}/test'") }.to_not raise_error
+    end
+
+    def expect_stage
+      @order == :before ? @stage : next_stage(@artifact)
+    end
+
+    [:before, :after].each do |order|
+      [:setup, :install].each do |stage|
+        it "build with #{order}_#{stage}_artifact" do
+          @artifact = :"#{order}_#{stage}_artifact"
+          @order = order
+          @stage = stage
+
+          config[:"_#{@artifact}"] = [artifact_config]
+          application_build!
+          expect_file
+        end
+      end
+    end
   end
 
-  def expect_stage
-    @order == :before ? @stage : next_stage(@artifact)
-  end
+  context :scratch do
+    it 'build with import_artifact' do
+      @artifact = :import_artifact
+      config[:_import_artifact] = [artifact_config]
+      config[:_docker][:_from] = nil
+      application_build!
 
-  [:before, :after].each do |order|
-    [:setup, :install].each do |stage|
-      it "build with #{order}_#{stage}_artifact" do
-        @artifact = :"#{order}_#{stage}_artifact"
-        @order = order
-        @stage = stage
+      image_name = stages[:import_artifact].send(:image_name)
+      container_name = image_name.sub(':', '.')
 
-        config[:"_#{@artifact}"] = [artifact_config]
-        application_build!
-        expect_file
+      begin
+        expect {
+          shellout!("docker create --name #{container_name} --volume /#{@artifact} #{image_name} no_such_command")
+          shellout!("docker run --rm --volumes-from #{container_name} ubuntu:14.04 bash -lec 'cat /#{@artifact}/test'")
+        }.to_not raise_error
+      ensure
+        shellout("docker rm -f #{container_name}")
       end
     end
   end
