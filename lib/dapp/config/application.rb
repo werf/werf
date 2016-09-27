@@ -202,7 +202,7 @@ module Dapp
                 data: { directive: directive[1..-1] } unless public_send(directive).send(:empty?)
         end
 
-        docker_directives = [:_volume, :_expose, :_env, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint]
+        docker_directives = [:_expose, :_env, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint]
         docker_directives.each do |directive|
           value = _docker.public_send(directive)
           raise Error::Config,

@@ -154,6 +154,14 @@ module Dapp
             hashsum files
           end
         end
+
+        def change_options
+          @change_options ||= begin
+            application.config._docker._change_options.to_h.delete_if do |_, val|
+              val.nil? || (val.respond_to?(:empty?) && val.empty?)
+            end
+          end
+        end
       end # Base
     end # Stage
   end # Build

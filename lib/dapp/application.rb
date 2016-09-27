@@ -17,7 +17,6 @@ module Dapp
       @config = config
       @project = project
 
-      @last_stage = Build::Stage::DockerInstructions.new(self)
       @ignore_git_fetch = ignore_git_fetch
       @should_be_built = should_be_built
 
@@ -118,6 +117,10 @@ module Dapp
 
     def artifact?
       false
+    end
+
+    def scratch?
+      config._docker._from.nil?
     end
 
     protected

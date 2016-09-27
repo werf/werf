@@ -29,6 +29,13 @@ module Dapp
               log_image_size
             end
             log_image_commands unless ignore_log_commands?
+            log_image_instructions
+          end
+
+          def log_image_instructions
+            return if (instructions = image.prepare_instructions(image.send(:change_options))).empty?
+            application.project.log_info application.project.t(code: 'image.instructions')
+            application.project.with_log_indent { application.project.log_info instructions.join("\n") }
           end
 
           def log_image_created_at

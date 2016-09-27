@@ -26,8 +26,6 @@ module SpecHelper
     def project
       @project ||= begin
         allow_any_instance_of(Dapp::Project).to receive(:dappfiles) { [File.join(project_path || Dir.mktmpdir, 'Dappfile')] }
-        allow_any_instance_of(Dapp::Project).to receive(:git_path) { '/.dapp/deps/gitartifact/bin/git' }
-        allow_any_instance_of(Dapp::Project).to receive(:sudo_path) { '/.dapp/deps/gitartifact/bin/sudo' }
         yield if block_given?
         Dapp::Project.new(cli_options: cli_options)
       end
@@ -47,7 +45,9 @@ module SpecHelper
     def default_config
       Marshal.load(Marshal.dump(_basename: 'dapp',
                                 _name: 'test',
-                                _before_install_artifact: [], _before_setup_artifact: [], _after_install_artifact: [], _after_setup_artifact: [],
+                                _import_artifact: [],
+                                _before_install_artifact: [], _before_setup_artifact: [],
+                                _after_install_artifact: [], _after_setup_artifact: [],
                                 _tmp_dir: { _store: [] }, _build_dir: { _store: [] },
                                 _chef: { _modules: [] },
                                 _shell: { _before_install: [], _before_setup: [], _install: [], _setup: [] },

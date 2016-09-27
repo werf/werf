@@ -1,11 +1,6 @@
 module Dapp
   # Artifact
   class Artifact < Application
-    def initialize(*args)
-      super
-      @last_stage = Build::Stage::BuildArtifact.new(self)
-    end
-
     def artifact?
       true
     end
@@ -16,6 +11,12 @@ module Dapp
 
     def with_introspection
       yield
+    end
+
+    protected
+
+    def last_stage
+      @last_stage ||= Build::Stage::BuildArtifact.new(self)
     end
   end # Artifact
 end # Dapp

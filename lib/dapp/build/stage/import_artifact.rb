@@ -3,8 +3,12 @@ module Dapp
     module Stage
       # ImportArtifact
       class ImportArtifact < ArtifactBase
+        def initialize(application)
+          @application = application
+        end
+
         def signature
-          hashsum [*dependencies.flatten]
+          hashsum [*dependencies.flatten, change_options]
         end
 
         def image
@@ -12,6 +16,13 @@ module Dapp
         end
 
         def image_add_tmp_volumes(_type)
+        end
+
+        def prepare_image
+          super
+          change_options.each do |k, v|
+            image.public_send("add_change_#{k}", v)
+          end
         end
 
         protected

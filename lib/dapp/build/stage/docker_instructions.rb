@@ -4,11 +4,7 @@ module Dapp
       # DockerInstructions
       class DockerInstructions < Base
         def initialize(application)
-          @prev_stage = if application.config._docker._from.nil?
-                          ImportArtifact.new(application, self)
-                        else
-                          GALatestPatch.new(application, self)
-                        end
+          @prev_stage = GALatestPatch.new(application, self)
           @application = application
         end
 
@@ -20,27 +16,6 @@ module Dapp
           super
           change_options.each do |k, v|
             image.public_send("add_change_#{k}", v)
-          end
-        end
-
-        def log_image_details
-          super
-          log_image_instructions
-        end
-
-        def log_image_instructions
-          return if (instructions = image.prepare_instructions(image.send(:change_options))).empty?
-          application.project.log_info application.project.t(code: 'image.instructions')
-          application.project.with_log_indent { application.project.log_info instructions.join("\n") }
-        end
-
-        private
-
-        def change_options
-          @change_options ||= begin
-            application.config._docker._change_options.to_h.delete_if do |_, val|
-              val.nil? || (val.respond_to?(:empty?) && val.empty?)
-            end
           end
         end
       end # DockerInstructions

@@ -29,7 +29,13 @@ module Dapp
 
       protected
 
-      attr_reader :last_stage
+      def last_stage
+        @last_stage ||= if scratch?
+                          Build::Stage::ImportArtifact.new(self)
+                        else
+                          Build::Stage::DockerInstructions.new(self)
+                        end
+      end
 
       def export_images
         images.select(&:tagged?)
