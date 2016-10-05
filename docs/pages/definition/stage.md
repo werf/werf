@@ -85,13 +85,6 @@ if ENV['DAPP_CHEF_COOKBOOKS_VENDORING']
 end
 ```
 
-внутрь контейнера
-DAPP_CHEF_COOKBOOKS_VENDORING означает вендоринг cookbook`ов в стадии chef_cookbooks. Эта стадия устанавливает кукбуки внутрь контейнера, это используется только chefinit`ом.
-
-Соответственно кукбуки, добавляемые под if DAPP_CHEF_COOKBOOKS_VENDORING, нужны только для chefinit.
-
-
-
 #### git artifact post setup patch
 
 ### after setup artifact
