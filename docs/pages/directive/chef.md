@@ -11,7 +11,7 @@ folder: directive
 * Для каждого переданного модуля может существовать по одному рецепту на каждую из стадий.
 * При отсутствии файла рецепта в runlist для данной стадии используется пустой рецепт \<mod\>::void.
 
-Подробнее см.: [mdapp модуль](definitions.html#mdapp-модуль) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbookа).
+Подробнее см.: [mdapp модуль](definitions.html#mdapp-модуль) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
 
 ### chef.skip_module \<mod\>[, \<mod\>, \<mod\> ...]
 Выключить переданные модули для chef builder в данном контексте.
@@ -26,7 +26,7 @@ folder: directive
 * При отсутствии хотя бы одного файла рецепта из включенных, в runlist для данной стадии используется пустой рецепт \<projectname\>::void.
 * Порядок вызова рецептов в runlist совпадает порядком их описания в конфиге.
 
-Подробнее см.: [cookbook приложения](definitions.html#cookbook-приложения) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbookа).
+Подробнее см.: [cookbook приложения](definitions.html#cookbook-приложения) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
 
 ### chef.remove_recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
 Выключить переданные рецепты из [приложения](definitions.html#cookbook-приложения) для chef builder в данном контексте.
@@ -50,12 +50,12 @@ app 'X' do
 end
 ```
 
-См.: [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbookа).
+См.: [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
 
 ### chef.\<стадия\>_attributes
 Хэш атрибутов, доступных на стадии сборки, для chef builder в данном контексте.
 
-См.: [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbookа).
+См.: [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
 
 ### chef.reset_attributes
 Выключить атрибуты, доступные на всех стадиях сборки, для chef builder в данном контексте.
