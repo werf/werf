@@ -38,7 +38,9 @@ folder: directive
 Хэш атрибутов, доступных на всех стадиях сборки, для chef builder в данном контексте.
 
 * Вложенные хэши создаются автоматически при первом обращении к методу доступа по ключу (см. пример).
-* Пример использования:
+
+#### Пример
+
 ```ruby
 chef.attributes['mdapp-test']['nginx']['package_name'] = 'nginx-common'
 chef.attributes['mdapp-test']['nginx']['package_version'] = '1.4.6-1ubuntu3.5'
