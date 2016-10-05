@@ -64,6 +64,33 @@ folder: definition
 #### setup
 
 #### chef cookbooks
+Стадия устанавливает cookbook`и, указанные в Berksfile проекта, в собираемый образ.
+
+* Во время установки cookbook`ов в данной стадии, устанавливается переменная окружения DAPP_CHEF_COOKBOOKS_VENDORING=1.
+* Для cookbook`ов, нужных в собираемом образе, но не нужных для сборки самого образа с помощью chef-сборщика можно использовать проверку в Berksfile, например:
+
+```ruby
+source 'https://supermarket.chef.io'
+
+cookbook 'test', path: '.'
+cookbook 'mdapp-test', path: '../mdapp-test'
+cookbook 'mdapp-test2', path: '../mdapp-test2'
+cookbook 'mdapp-testartifact', path: '../mdapp-testartifact'
+
+cookbook 'apt'
+
+if ENV['DAPP_CHEF_COOKBOOKS_VENDORING']
+  cookbook 'mdapp-nginx'
+  cookbook 'mdapp-init'
+end
+```
+
+внутрь контейнера
+DAPP_CHEF_COOKBOOKS_VENDORING означает вендоринг cookbook`ов в стадии chef_cookbooks. Эта стадия устанавливает кукбуки внутрь контейнера, это используется только chefinit`ом.
+
+Соответственно кукбуки, добавляемые под if DAPP_CHEF_COOKBOOKS_VENDORING, нужны только для chefinit.
+
+
 
 #### git artifact post setup patch
 
