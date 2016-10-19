@@ -42,6 +42,10 @@ module Dapp
         add_service_change_option(:label, options)
       end
 
+      def add_env(var, value)
+        add_option(:env, "#{var}=#{value}")
+      end
+
       def add_volume(value)
         add_option(:volume, value)
       end

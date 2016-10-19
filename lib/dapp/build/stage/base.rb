@@ -80,6 +80,11 @@ module Dapp
           image_add_tmp_volumes(:build)
           image.add_service_change_label dapp: application.stage_dapp_label
           image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
+
+          if application.project.ssh_auth_sock
+            image.add_volume "#{application.project.ssh_auth_sock}:#{application.project.ssh_auth_sock}"
+            image.add_env 'SSH_AUTH_SOCK', application.project.ssh_auth_sock
+          end
         end
 
         def image_add_tmp_volumes(type)
