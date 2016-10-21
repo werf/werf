@@ -49,7 +49,7 @@ module Dapp
       def before_application_should_be_built_check
         super
 
-        %i(before_install install before_setup setup build_artifact chef_cookbooks).each do |stage|
+        %i(before_install install before_setup setup chef_cookbooks).each do |stage|
           raise ::Dapp::Error::Application, code: :cookbooks_stage_checksum_not_calculated,
                                             data: { stage: stage } unless stage_cookbooks_checksum_path(stage).exist?
         end
