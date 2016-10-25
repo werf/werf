@@ -61,10 +61,13 @@ module Dapp
       def run!
         raise Error::Build, code: :built_id_not_defined if from.built_id.nil?
         project.shellout!("docker run #{prepared_options} #{from.built_id} -ec '#{prepared_bash_command}'", log_verbose: true)
-      rescue Error::Shellout => _e
+      rescue Error::Shellout => error
         raise unless project.introspect_error? || project.introspect_before_error?
         built_id = project.introspect_error? ? commit! : from.built_id
-        raise Exception::IntrospectImage, data: { built_id: built_id, options: prepared_options, rmi: project.introspect_error? }
+        raise Exception::IntrospectImage, data: { built_id: built_id,
+                                                  options: prepared_options,
+                                                  rmi: project.introspect_error?,
+                                                  error: error }
       end
 
       def commit!

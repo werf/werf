@@ -9,10 +9,6 @@ module Dapp
       false
     end
 
-    def with_introspection
-      yield
-    end
-
     protected
 
     def last_stage

@@ -137,11 +137,9 @@ module Dapp
     rescue Exception::IntrospectImage => e
       data = e.net_status[:data]
       cmd = "docker run -ti --rm --entrypoint #{project.bash_path} #{data[:options]} #{data[:built_id]}"
-      system(cmd).tap do |res|
-        project.shellout!("docker rmi #{data[:built_id]}") if data[:rmi]
-        res || raise(Error::Application, code: :application_not_run)
-      end
-      exit 0
+      system(cmd)
+      project.shellout!("docker rmi #{data[:built_id]}") if data[:rmi]
+      raise data[:error]
     end
   end # Application
 end # Dapp
