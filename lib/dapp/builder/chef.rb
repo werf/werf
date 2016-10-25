@@ -323,12 +323,14 @@ module Dapp
                     end
                   elsif is_mdapp && mdapp_enabled
                     common_mdapp_paths = select_existing_paths.call(cookbook_path, [
-                                                                      *common_paths,
-                                                                      ["files/#{stage}", 'files/default'],
-                                                                      ['files/common', 'files/default'],
-                                                                      ["templates/#{stage}", 'templates/default'],
-                                                                      ['templates/common', 'templates/default']
-                                                                    ])
+                      *common_paths,
+                      ["files/#{stage}", 'files/default'],
+                      ['files/common', 'files/default'],
+                      ["templates/#{stage}", 'templates/default'],
+                      ['templates/common', 'templates/default'],
+                      ["attributes/#{stage}.rb", "attributes/#{stage}.rb"],
+                      ['attributes/common.rb', 'attributes/common.rb'],
+                    ])
 
                     recipe_path = "recipes/#{stage}.rb"
                     if cookbook_path.join(recipe_path).exist?
