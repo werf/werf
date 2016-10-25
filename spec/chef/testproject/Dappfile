@@ -5,8 +5,8 @@ builder :chef
 git_artifact.local '/myapp'
 
 chef.attributes['mdapp-test2']['sayhello'] = 'hello'
+chef.attributes['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_DAPPFILE.txt'
 chef.before_install_attributes['mdapp-test2']['sayhelloagain'] = 'helloagain'
-chef.build_artifact_attributes['mdapp-testartifact']['target_filename'] = 'note.txt'
 
 artifact '/myartifact', before: :install do
   docker.from 'ubuntu:14.04'
