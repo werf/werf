@@ -12,7 +12,9 @@ describe Dapp::Builder::Chef do
     context os do
       it 'builds project' do
         [application, artifact_application].each do |app|
-          app.config._chef._build_artifact_attributes['mdapp-testartifact']['target_filename'] = 'note.txt'
+          %i(before_install install before_setup setup build_artifact).each do |stage|
+            app.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+          end
         end
 
         application_build!
@@ -21,14 +23,14 @@ describe Dapp::Builder::Chef do
 
         TEST_FILE_NAMES.each { |name| expect(send("#{name}_exist?")).to be(true), "#{send("#{name}_path")} does not exist" }
 
-        expect(file_exist_in_image?('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/note.txt does not exist in artifact image'
-        expect(file_exist_in_image?('/myartifact/note.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/note.txt does not exist in result image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
+        expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)
         ).to eq(
-          read_file_in_image('/myartifact/note.txt', application.send(:last_stage).image.name)
-        ), '/testartifact/note.txt inc artifact image does not equal /myartifact/note.txt in result image'
+          read_file_in_image('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)
+        ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt in artifact image does not equal /myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
       [%i(before_install foo pizza batareika),
@@ -75,7 +77,9 @@ describe Dapp::Builder::Chef do
         old_artifact_last_stage_id = artifact_application.send(:last_stage).image.id
 
         [application, artifact_application].each do |app|
-          app.config._chef._build_artifact_attributes['mdapp-testartifact']['target_filename'] = 'mynote.txt'
+          %i(before_install install before_setup setup build_artifact).each do |stage|
+            app.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+          end
         end
 
         application_rebuild!
@@ -83,25 +87,27 @@ describe Dapp::Builder::Chef do
         expect(artifact_stages[:before_install].image.id).to eq(old_artifact_before_install_stage_id)
         expect(artifact_application.send(:last_stage).image.id).not_to eq(old_artifact_last_stage_id)
 
-        expect(file_exist_in_image?('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/note.txt does not exist in artifact image'
-        expect(file_exist_in_image?('/myartifact/note.txt', application.send(:last_stage).image.name)).to be(false), '/myartifact/note.txt does exist in result image'
-        expect(file_exist_in_image?('/myartifact/mynote.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/mynote.txt does not exist in result image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
+        expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)).to be(false), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does exist in result image'
+        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)
         ).to eq(
-          read_file_in_image('/myartifact/mynote.txt', application.send(:last_stage).image.name)
-        ), '/testartifact/note.txt inc artifact image does not equal /myartifact/mynote.txt in result image'
+          read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)
+        ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
       it 'rebuilds artifact from before_install stage' do
         new_note_content = SecureRandom.uuid
-        mdapp_testartifact_path.join('files/before_install/note.txt').tap do |path|
+        mdapp_testartifact_path.join('files/before_install/CUSTOM_NAME_FROM_CHEF_SPEC.txt').tap do |path|
           path.write "#{new_note_content}\n"
         end
 
         [application, artifact_application].each do |app|
-          app.config._chef._build_artifact_attributes['mdapp-testartifact']['target_filename'] = 'mynote.txt'
+          %i(before_install install before_setup setup build_artifact).each do |stage|
+            app.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+          end
         end
 
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
@@ -112,18 +118,18 @@ describe Dapp::Builder::Chef do
         expect(artifact_stages[:before_install].image.id).not_to eq(old_artifact_before_install_stage_id)
         expect(artifact_application.send(:last_stage).image.id).not_to eq(old_artifact_last_stage_id)
 
-        expect(file_exist_in_image?('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/note.txt does not exist in artifact image'
-        expect(file_exist_in_image?('/myartifact/mynote.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/mynote.txt does not exist in result image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
+        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)
         ).to eq(new_note_content)
 
         expect(
-          read_file_in_image('/testartifact/note.txt', artifact_application.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)
         ).to eq(
-          read_file_in_image('/myartifact/mynote.txt', application.send(:last_stage).image.name)
-        ), '/testartifact/note.txt inc artifact image does not equal /myartifact/mynote.txt in result image'
+          read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)
+        ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
       define_method :config do
@@ -139,20 +145,24 @@ describe Dapp::Builder::Chef do
               'mdapp-test2' => {
                 'sayhello' => 'hello',
                 'sayhelloagain' => 'helloagain'
-              }
+              },
+              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
             _install_attributes: {
-              'mdapp-test2' => { 'sayhello' => 'hello' }
+              'mdapp-test2' => { 'sayhello' => 'hello' },
+              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
             _before_setup_attributes: {
-              'mdapp-test2' => { 'sayhello' => 'hello' }
+              'mdapp-test2' => { 'sayhello' => 'hello' },
+              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
             _setup_attributes: {
-              'mdapp-test2' => { 'sayhello' => 'hello' }
+              'mdapp-test2' => { 'sayhello' => 'hello' },
+              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
             _build_artifact_attributes: {
               'mdapp-test2' => { 'sayhello' => 'hello' },
-              'mdapp-testartifact' => { 'target_filename' => 'note.txt' }
+              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             }
           },
           _before_install_artifact: [
@@ -170,20 +180,24 @@ describe Dapp::Builder::Chef do
                                                           'mdapp-test2' => {
                                                             'sayhello' => 'hello',
                                                             'sayhelloagain' => 'helloagain'
-                                                          }
+                                                          },
+                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                                                         },
                                                         _install_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' }
+                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
+                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                                                         },
                                                         _before_setup_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' }
+                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
+                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                                                         },
                                                         _setup_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' }
+                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
+                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                                                         },
                                                         _build_artifact_attributes: {
                                                           'mdapp-test2' => { 'sayhello' => 'hello' },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'note.txt' }
+                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                                                         }
                                                       }
               ))
