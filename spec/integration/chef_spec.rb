@@ -10,7 +10,7 @@ describe Dapp::Builder::Chef do
 
   %w(ubuntu:14.04 centos:7).each do |os|
     context os do
-      it 'builds project' do
+      xit 'builds project' do
         [application, artifact_application].each do |app|
           %i(before_install install before_setup setup build_artifact).each do |stage|
             app.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
@@ -37,7 +37,7 @@ describe Dapp::Builder::Chef do
        %i(install bar taco koromyslo),
        %i(before_setup baz burger kolokolchik),
        %i(setup qux pelmeni taburetka)].each do |stage, project_file, mdapp_test_file, mdapp_test2_file|
-        it "rebuilds from stage #{stage}" do
+        xit "rebuilds from stage #{stage}" do
           old_template_file_values = {}
           old_template_file_values[project_file] = send(project_file)
           old_template_file_values[mdapp_test_file] = send(mdapp_test_file)
@@ -72,7 +72,7 @@ describe Dapp::Builder::Chef do
         end
       end
 
-      it 'rebuilds artifact from build_artifact stage' do
+      xit 'rebuilds artifact from build_artifact stage' do
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
         old_artifact_last_stage_id = artifact_application.send(:last_stage).image.id
 
@@ -98,7 +98,7 @@ describe Dapp::Builder::Chef do
         ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
-      it 'rebuilds artifact from before_install stage' do
+      xit 'rebuilds artifact from before_install stage' do
         new_note_content = SecureRandom.uuid
         mdapp_testartifact_path.join('files/before_install/CUSTOM_NAME_FROM_CHEF_SPEC.txt').tap do |path|
           path.write "#{new_note_content}\n"
