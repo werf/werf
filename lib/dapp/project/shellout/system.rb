@@ -39,19 +39,23 @@ module Dapp
           end
         end
 
-        def system_shellout(command, **kwargs)
-          shellout _to_system_shellout_command(command), **kwargs
+        def system_shellout(command, raise_error: false, **kwargs)
+          if raise_error
+            shellout! _to_system_shellout_command(command), **kwargs
+          else
+            shellout _to_system_shellout_command(command), **kwargs
+          end
         end
 
         def system_shellout!(command, **kwargs)
-          shellout! _to_system_shellout_command(command), **kwargs
+          system_shellout(command, raise_error: true, **kwargs)
         end
 
         private
 
         def _to_system_shellout_command(command)
           cmd = shellout_pack ["cd #{Dir.pwd}", command].join(' && ')
-          "docker exec #{system_shellout_container} chroot /.system_shellout_root bash -ec '#{[
+          "docker exec #{system_shellout_container} chroot /.system_shellout_root #{bash_path} -ec '#{[
             *System.default_env_keys.map do |env_key|
               env_key = env_key.to_s.upcase
               "export #{env_key}=#{ENV[env_key]}"

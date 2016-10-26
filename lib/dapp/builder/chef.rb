@@ -198,7 +198,7 @@ module Dapp
             unless application.project.cli_options[:dev] || chef_cookbooks_stage
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
-                 "#{application.project.echo_path} \"Berksfile.lock not found\" 1>&2 ; ",
+                 "echo \"Berksfile.lock not found\" 1>&2 ; ",
                  'exit 1 ; ',
                  'fi'].join
               )
@@ -216,7 +216,7 @@ module Dapp
               commands.push(
                 "export LOCKDIFF=$(#{application.project.diff_path} -u1 Berksfile.lock #{berksfile_lock_path})",
                 ['if [ "$LOCKDIFF" != "" ] ; then ',
-                 "#{application.project.echo_path} -e \"Bad Berksfile.lock\n$LOCKDIFF\" 1>&2 ; ",
+                 "echo -e \"Bad Berksfile.lock\n$LOCKDIFF\" 1>&2 ; ",
                  'exit 1 ; ',
                  'fi'].join
               )
@@ -225,8 +225,8 @@ module Dapp
 
           vendor_commands = [
             "#{application.project.mkdir_path} -p ~/.ssh",
-            "#{application.project.echo_path} \"Host *\" >> ~/.ssh/config",
-            "#{application.project.echo_path} \"    StrictHostKeyChecking no\" >> ~/.ssh/config",
+            "echo \"Host *\" >> ~/.ssh/config",
+            "echo \"    StrictHostKeyChecking no\" >> ~/.ssh/config",
             *berksfile.local_cookbooks
                       .values
                       .map { |cookbook| "#{application.project.rsync_path} --archive --relative #{cookbook[:path]} /tmp/local_cookbooks" },
@@ -236,10 +236,10 @@ module Dapp
             *after_vendor_commands,
             ["#{application.project.find_path} /tmp/cookbooks -type d -exec #{application.project.bash_path} -ec '",
              "#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{application.project.stat_path} -c %a {}) -d ",
-             "#{dest_path}/$(#{application.project.echo_path} {} | #{application.project.sed_path} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
+             "#{dest_path}/$(echo {} | #{application.project.sed_path} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
             ["#{application.project.find_path} /tmp/cookbooks -type f -exec #{application.project.bash_path} -ec '",
              "#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{application.project.stat_path} -c %a {}) {} ",
-             "#{dest_path}/$(#{application.project.echo_path} {} | #{application.project.sed_path} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
+             "#{dest_path}/$(echo {} | #{application.project.sed_path} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
             "#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode 0644 <(#{application.project.date_path} +%s.%N) #{dest_path.join('.created_at')}"
           ]
 

@@ -40,7 +40,7 @@ module Dapp
             cwd_ = File.expand_path(File.join('/', cwd_))
             "#{application.project.find_path} #{File.join(from_, cwd_, path_)} #{excludes} -type f -exec " \
             "#{application.project.bash_path} -ec '#{application.project.install_path} -D #{credentials} {} " \
-            "#{File.join(to, "$(#{application.project.echo_path} {} | " \
+            "#{File.join(to, "$(echo {} | " \
             "#{application.project.sed_path} -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
           end
 
