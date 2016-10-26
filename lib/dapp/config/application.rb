@@ -246,9 +246,9 @@ module Dapp
 
           path_format.call(a._where_to_add) =~ %r{^([^\/]*)\/?(.*)$}
           where_to_add = Regexp.last_match(1)
-          includes = a._paths
+          includes = a._paths.dup
           includes << Regexp.last_match(2) unless Regexp.last_match(2).empty?
-          excludes = a._exclude_paths
+          excludes = a._exclude_paths.dup
 
           {
             index: artifacts.index(a),
