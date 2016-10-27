@@ -45,6 +45,8 @@ module Dapp
           else
             shellout _to_system_shellout_command(command), **kwargs
           end
+        rescue Error::Shellout => err
+          raise Error::Shellout.new(code: :system_shell_command_failed, **err.net_status)
         end
 
         def system_shellout!(command, **kwargs)

@@ -65,7 +65,7 @@ module Dapp
 
             yield(**kwargs)
           rescue ::Mixlib::ShellOut::ShellCommandFailed => e
-            raise Error::Shellout, code: class_to_lowercase(e.class), data: { stream: stream.show }
+            raise Error::Shellout, code: class_to_lowercase(e.class), data: { stream: stream.show, backtrace: e.backtrace.join("\n") }
           end
         end
       end

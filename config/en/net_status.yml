@@ -3,6 +3,7 @@ en:
     missing_translation: "Missing translation for code: '%{code}'!"
     shellout:
       shell_command_failed: ">>> START STREAM\n%{stream}\n>>> END STREAM"
+      system_shell_command_failed: ">>> START STREAM\n%{stream}\n>>> END STREAM%{backtrace}"
     application:
       application_not_built: "Application hasn't been built yet!"
       application_not_run: "Application run failed!"

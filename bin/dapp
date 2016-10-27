@@ -9,7 +9,6 @@ begin
   Dapp::CLI.new.run
 rescue Dapp::Error::Shellout => e
   $stderr.puts(Dapp::Helper::NetStatus.message(e))
-  $stderr.puts(e.backtrace)
   exit 1
 rescue Dapp::Error::Base, NetStatus::Exception => e
   $stderr.puts(Dapp::Project.paint_string(Dapp::Helper::NetStatus.message(e), :warning))

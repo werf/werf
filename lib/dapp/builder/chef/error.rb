@@ -4,7 +4,7 @@ module Dapp
       # Error
       class Error < ::Dapp::Error::Base
         def initialize(**net_status)
-          super(context: :chef, **net_status)
+          super(context: 'chef', **net_status)
         end
       end
     end # Chef
