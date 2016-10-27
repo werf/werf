@@ -46,6 +46,10 @@ module Dapp
             shellout _to_system_shellout_command(command), **kwargs
           end
         rescue Error::Shellout => err
+          $stderr.puts "\033[1m\033[31mWARNING: System shellout container failure, " +
+                       "try to remove if error persists: " +
+                       "docker rm -f #{system_shellout_container_name}\033[0m"
+
           raise Error::Shellout.new(code: :system_shell_command_failed, **err.net_status)
         end
 
