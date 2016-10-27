@@ -50,8 +50,10 @@ module Dapp
         super
 
         %i(before_install install before_setup setup chef_cookbooks).each do |stage|
-          raise ::Dapp::Error::Application, code: :cookbooks_stage_checksum_not_calculated,
-                                            data: { stage: stage } unless stage_cookbooks_checksum_path(stage).exist?
+          unless stage_empty?(stage) or stage_cookbooks_checksum_path(stage).exist?
+            raise ::Dapp::Error::Application, code: :chef_stage_checksum_not_calculated,
+                                              data: { stage: stage }
+          end
         end
       end
 
