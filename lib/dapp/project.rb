@@ -51,7 +51,7 @@ module Dapp
     def name
       @name ||= begin
         if File.exist? File.join(path, '.git')
-          system_shellout!("#{git_path} -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
+          system_shellout("#{git_path} -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/] rescue File.basename(path)
         else
           File.basename(path)
         end
