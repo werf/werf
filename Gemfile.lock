@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    dapp (0.6.8)
+    dapp (0.6.9)
       excon (>= 0.45.4, < 1.0)
       i18n (~> 0.7)
       mixlib-cli (>= 1.0, < 3.0)
