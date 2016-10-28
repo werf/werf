@@ -10,7 +10,7 @@ module Dapp
             parse
           end
 
-          def cookbook(name, path: nil, **_kwargs)
+          def cookbook(name, *_args, path: nil, **_kwargs)
             @berksfile.add_local_cookbook_path(name, path) if path
           end
 
