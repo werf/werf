@@ -6,7 +6,15 @@ require 'rubygems'
 require 'dapp'
 
 begin
-  Dapp::CLI.new.run
+  begin
+    Dapp::CLI.new.run
+  rescue ::Exception => e
+    ::File.open('/tmp/dapp-stacktrace.out', 'a') do |dapp_stacktrace|
+      dapp_stacktrace.write [*e.backtrace, "\n"].join("\n")
+    end
+    $stderr.puts "\033[1m\033[31mStacktrace dumped to /tmp/dapp-stacktrace.out\033[0m"
+    raise
+  end
 rescue Dapp::Error::Shellout => e
   $stderr.puts(Dapp::Helper::NetStatus.message(e))
   exit 1

@@ -7,6 +7,15 @@ module Dapp
         SYSTEM_SHELLOUT_IMAGE = 'ubuntu:14.04'.freeze
         SYSTEM_SHELLOUT_VERSION = 2
 
+        def system_shellout_initialize
+          system_shellout! 'true'
+        rescue Error::Shellout
+          $stderr.puts "\033[1m\033[31mSystem shellout container failure, " +
+                       "try to remove if error persists: " +
+                       "docker rm -f #{system_shellout_container_name}\033[0m"
+          raise
+        end
+
         def system_shellout_container_name
           "dapp_system_shellout_#{hashsum [SYSTEM_SHELLOUT_VERSION,
                                            SYSTEM_SHELLOUT_IMAGE,
@@ -45,12 +54,6 @@ module Dapp
           else
             shellout _to_system_shellout_command(command), **kwargs
           end
-        rescue Error::Shellout => err
-          $stderr.puts "\033[1m\033[31mWARNING: System shellout container failure, " +
-                       "try to remove if error persists: " +
-                       "docker rm -f #{system_shellout_container_name}\033[0m"
-
-          raise Error::Shellout.new(code: :system_shell_command_failed, **err.net_status)
         end
 
         def system_shellout!(command, **kwargs)
