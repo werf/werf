@@ -8,6 +8,7 @@ module Dapp
         SYSTEM_SHELLOUT_VERSION = 2
 
         def system_shellout_initialize
+          # This is stupid container "live check" for now
           system_shellout! 'true'
         rescue Error::Shellout
           $stderr.puts "\033[1m\033[31mSystem shellout container failure, " +
