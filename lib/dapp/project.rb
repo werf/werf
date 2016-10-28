@@ -46,8 +46,6 @@ module Dapp
 
       Logging::Paint.initialize(cli_options[:log_color])
       Logging::I18n.initialize
-
-      system_shellout_initialize
     end
 
     def name

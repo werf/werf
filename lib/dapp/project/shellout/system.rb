@@ -7,16 +7,6 @@ module Dapp
         SYSTEM_SHELLOUT_IMAGE = 'ubuntu:14.04'.freeze
         SYSTEM_SHELLOUT_VERSION = 2
 
-        def system_shellout_initialize
-          # This is stupid container "live check" for now
-          system_shellout! 'true'
-        rescue Error::Shellout
-          $stderr.puts "\033[1m\033[31mSystem shellout container failure, " +
-                       "try to remove if error persists: " +
-                       "docker rm -f #{system_shellout_container_name}\033[0m"
-          raise
-        end
-
         def system_shellout_container_name
           "dapp_system_shellout_#{hashsum [SYSTEM_SHELLOUT_VERSION,
                                            SYSTEM_SHELLOUT_IMAGE,
@@ -25,6 +15,8 @@ module Dapp
         end
 
         def system_shellout_container
+          do_livecheck = false
+
           @system_shellout_container ||= begin
             lock(system_shellout_container_name) do
               if shellout("docker inspect #{system_shellout_container_name}").exitstatus.nonzero?
@@ -45,8 +37,13 @@ module Dapp
               end
             end
 
+            do_livecheck = true
             system_shellout_container_name
           end
+
+          system_shellout_livecheck! if do_livecheck
+
+          @system_shellout_container
         end
 
         def system_shellout(command, raise_error: false, **kwargs)
@@ -62,6 +59,16 @@ module Dapp
         end
 
         private
+
+        def system_shellout_livecheck!
+          # This is stupid container "live check" for now
+          system_shellout! 'true'
+        rescue Error::Shellout
+          $stderr.puts "\033[1m\033[31mSystem shellout container failure, " +
+                       "try to remove if error persists: " +
+                       "docker rm -f #{system_shellout_container_name}\033[0m"
+          raise
+        end
 
         def _to_system_shellout_command(command)
           cmd = shellout_pack ["cd #{Dir.pwd}", command].join(' && ')
