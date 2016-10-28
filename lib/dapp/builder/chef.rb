@@ -251,9 +251,9 @@ module Dapp
              *berksfile.local_cookbooks
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-             ("--volume #{application.project.ssh_auth_sock}:#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
+             ("--volume #{application.project.ssh_auth_sock}:/tmp/dapp-ssh-agent" if application.project.ssh_auth_sock),
              "--volume #{dest_path.tap(&:mkpath)}:#{dest_path}",
-             ("--env SSH_AUTH_SOCK=#{application.project.ssh_auth_sock}" if application.project.ssh_auth_sock),
+             ("--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent" if application.project.ssh_auth_sock),
              ('--env DAPP_CHEF_COOKBOOKS_VENDORING=1' if chef_cookbooks_stage),
              "dappdeps/berksdeps:0.1.0 #{application.project.bash_path} -ec '#{application.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
              log_verbose: application.project.log_verbose?

@@ -82,8 +82,8 @@ module Dapp
           image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
 
           if application.project.ssh_auth_sock
-            image.add_volume "#{application.project.ssh_auth_sock}:#{application.project.ssh_auth_sock}"
-            image.add_env 'SSH_AUTH_SOCK', application.project.ssh_auth_sock
+            image.add_volume "#{application.project.ssh_auth_sock}:/tmp/dapp-ssh-agent"
+            image.add_env 'SSH_AUTH_SOCK', '/tmp/dapp-ssh-agent'
           end
         end
 
