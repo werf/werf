@@ -2,12 +2,20 @@ module SpecHelper
   # Config
   module Config
     def dappfile(&blk)
-      @dappfile ||= ConfigDsl.new.instance_eval(&blk).config
+      @dappfile = ConfigDsl.new.instance_eval(&blk).config
+    end
+
+    def dimgs_by_name
+      dimgs.map { |dimg| [dimg._name, dimg] }.to_h
+    end
+
+    def dimg
+      dimgs.first
     end
 
     def dimgs
       Dapp::Config::DimgGroupMain.new(dappfile_path: File.join(Dir.getwd, 'Dappfile'), project: stubbed_project).tap do |config|
-        config.instance_eval(dappfile)
+        config.instance_eval(@dappfile) unless @dappfile.nil?
       end._dimgs
     end
 
@@ -15,10 +23,6 @@ module SpecHelper
       instance_double(Dapp::Project).tap do |instance|
         allow(instance).to receive(:log_warning)
       end
-    end
-
-    def dimg
-      dimgs.first
     end
 
     class ConfigDsl
@@ -31,7 +35,7 @@ module SpecHelper
       end
 
       def method_missing(name, *args, &blk)
-        @config << line("#{name} #{args.map(&:inspect).join(', ')} #{ 'do' if block_given? }")
+        @config << line("#{name}(#{args.map(&:inspect).join(', ')}) #{ 'do' if block_given? }")
         if block_given?
           with_indent(&blk)
           @config << line("end")
