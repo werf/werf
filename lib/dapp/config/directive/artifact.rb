@@ -1,74 +1,35 @@
 module Dapp
   module Config
     module Directive
-      # Artifact
-      module Artifact
-        # Base
-        class Base
-          attr_accessor :_where_to_add, :_cwd, :_paths, :_exclude_paths, :_owner, :_group
+      class Artifact < Directive::GitArtifactLocal
+        attr_accessor :_before, :_after
 
-          def initialize(where_to_add, **options)
-            @_cwd          = ''
-            @_where_to_add = where_to_add
+        def before(stage)
+          @_before = stage
+        end
 
-            options.each do |k, v|
-              respond_to?("_#{k}=") ? send(:"_#{k}=", v) : raise(Error::Config, code: code,
-                                                                                data: { type: object_name, attr: k })
-            end
-          end
+        def after(stage)
+          @_after = stage
+        end
 
-          def _paths
-            base_paths(@_paths)
-          end
+        protected
 
-          def _exclude_paths
-            base_paths(@_exclude_paths)
-          end
-
-          def _artifact_options
-            {
-              where_to_add:  _where_to_add,
-              cwd:           _cwd,
-              paths:         _paths,
-              exclude_paths: _exclude_paths,
-              owner:         _owner,
-              group:         _group
-            }
-          end
-
-          protected
-
-          def clone
-            Marshal.load(Marshal.dump(self))
-          end
-
-          def base_paths(paths)
-            Array(paths)
-          end
-
-          def code
-            raise
-          end
-
-          def object_name
-            self.class.to_s.split('::').last
+        def _artifacts
+          super do |export|
+            export._before ||= @_before
+            export._after ||= @_after
           end
         end
 
-        # Stage
-        class Stage < Base
-          attr_accessor :_config
+        class Export < Directive::GitArtifactLocal::Export
+          attr_accessor :_before, :_after
 
-          protected
-
-          def clone
-            artifact_options = Marshal.load(Marshal.dump(_artifact_options))
-            where_to_add = artifact_options.delete(:where_to_add)
-            self.class.new(where_to_add, config: _config, **artifact_options)
+          def before(stage)
+            @_before = stage
           end
 
-          def code
-            :artifact_unexpected_attribute
+          def after(stage)
+            @_after = stage
           end
         end
       end

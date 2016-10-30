@@ -1,20 +1,16 @@
 module Dapp
   module Config
-    # Artifact
-    class Artifact < Application
+    class Artifact < Dimg
       attr_reader :_artifact_dependencies
 
-      def initialize(parent)
+      def initialize(project)
         @_artifact_dependencies = []
-        super
+        super(project: project)
       end
 
       def artifact_depends_on(*args)
         @_artifact_dependencies.concat(args)
       end
-
-      undef_method :app
-      undef_method :artifact
     end
   end
 end
