@@ -14,6 +14,7 @@ require 'recursive_open_struct'
 require 'spec_helper/common'
 require 'spec_helper/application'
 require 'spec_helper/git'
+require 'spec_helper/config'
 
 RSpec.configure do |config|
   config.before :all do
