@@ -8,6 +8,8 @@ require 'dapp'
 begin
   begin
     Dapp::CLI.new.run
+  rescue ::SystemExit
+    raise
   rescue ::Exception => e
     ::File.open('/tmp/dapp-stacktrace.out', 'a') do |dapp_stacktrace|
       dapp_stacktrace.write [*e.backtrace, "\n"].join("\n")
