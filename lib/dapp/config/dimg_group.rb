@@ -3,12 +3,6 @@ module Dapp
     class DimgGroup < DimgGroupBase
       include Dimg::InstanceMethods
 
-      def dimg(_name = nil, &_blk)
-        super.tap do |dimg|
-          pass_to_default(dimg)
-        end
-      end
-
       def chef(&blk)
         check_dimg_directive_order
         super
@@ -41,24 +35,26 @@ module Dapp
 
       protected
 
+      def before_dimg_eval(dimg)
+        pass_to_default(dimg)
+      end
+
       def pass_to_default(dimg)
         pass_to_custom(dimg, :clone)
       end
 
       def pass_to_custom(obj, clone_method)
         passing_directives.each do |directive|
-          directive_value = if (variable = instance_variable_get(directive)).is_a? Directive::Base
-                              variable.send(clone_method)
-                            else
-                              marshal_dup(variable)
-                            end
-          obj.instance_variable_set(directive, directive_value) unless directive_value.nil?
+          next if (variable = instance_variable_get(directive)).nil?
+          obj.instance_variable_set(directive, variable.send(clone_method))
         end
+        obj.instance_variable_set(:@_artifact, _artifact)
+        obj.instance_variable_set(:@_builder, _builder)
         obj
       end
 
       def passing_directives
-        [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount, :@_artifact]
+        [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount]
       end
 
       def check_dimg_directive_order

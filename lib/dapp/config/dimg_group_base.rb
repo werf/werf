@@ -11,7 +11,9 @@ module Dapp
       end
 
       def dimg(name, &blk)
-        Config::Dimg.new(name, project: project, &blk).tap do |dimg|
+        Config::Dimg.new(name, project: project).tap do |dimg|
+          before_dimg_eval(dimg)
+          dimg.instance_eval(&blk) if block_given?
           @_dimg << dimg
         end
       end
@@ -22,6 +24,11 @@ module Dapp
 
       def _dimg
         (@_dimg + @_dimg_group.map(&:_dimg)).flatten
+      end
+
+      protected
+
+      def before_dimg_eval(_dimg)
       end
     end
   end
