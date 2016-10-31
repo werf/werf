@@ -13,7 +13,7 @@ module Dapp
       end
 
       module InstanceMethods
-        attr_accessor :_chef, :_shell, :_docker, :_git_artifacts, :_mounts
+        attr_accessor :_chef, :_shell, :_docker, :_git_artifact, :_mounts
 
         def chef(&blk)
           _chef(&blk)
@@ -27,15 +27,9 @@ module Dapp
           _docker(&blk)
         end
 
-        def git_artifact(type_or_git_repo, &blk)
-          type = (type_or_git_repo == :local) ? type_or_git_repo : :remote
-          _git_artifacts[type] << begin
-            if type == :local
-              Directive::GitArtifactLocal.new(project: _project, &blk)
-            elsif type == :remote
-              Directive::GitArtifactRemote.new(type_or_git_repo, project: _project, &blk)
-            end
-          end
+        def git_artifact(type_or_repo_url, &blk)
+          type = (type_or_repo_url.to_sym == :local) ? :local : :remote
+          (@_git_artifact ||= GitArtifact.new(project: _project)).send(type, type_or_repo_url, &blk)
         end
 
         def mount(to, &blk)
@@ -54,12 +48,35 @@ module Dapp
           @_docker ||= Directive::Docker.new(project: _project, &blk)
         end
 
-        def _git_artifacts
-          @_git_artifacts ||= { local: [], remote: [] }
-        end
-
         def _mounts
           @_mounts ||= []
+        end
+
+        class GitArtifact < Base
+          attr_reader :_local, :_remote
+
+          def initialize(project:)
+            @_local = []
+            @_remote = []
+
+            super
+          end
+
+          def local(_, &blk)
+            @_local << Directive::GitArtifactLocal.new(project: _project, &blk)
+          end
+
+          def remote(repo_url, &blk)
+            @_remote << Directive::GitArtifactRemote.new(repo_url, project: _project, &blk)
+          end
+
+          def _local
+            @_local.map(&:_exports).flatten
+          end
+
+          def _remote
+            @_remote.map(&:_exports).flatten
+          end
         end
       end
       include InstanceMethods

@@ -19,9 +19,7 @@ module Dapp
           @_commit = value
         end
 
-        protected
-
-        def _artifacts
+        def _exports
           super do |export|
             export._url    = @_url
             export._name   = @_name
@@ -30,8 +28,10 @@ module Dapp
           end
         end
 
+        protected
+
         class Export < GitArtifactLocal::Export
-          attr_reader :_url, :_name, :_branch, :_commit
+          attr_accessor :_url, :_name, :_branch, :_commit
 
           def branch(value)
             @_branch = value

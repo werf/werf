@@ -12,14 +12,14 @@ module Dapp
           @_after = stage
         end
 
-        protected
-
-        def _artifacts
+        def _exports
           super do |export|
             export._before ||= @_before
             export._after ||= @_after
           end
         end
+
+        protected
 
         class Export < Directive::GitArtifactLocal::Export
           attr_accessor :_before, :_after

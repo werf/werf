@@ -16,7 +16,7 @@ module Dapp
             @_type = path_or_type.to_sym
           else
             @_type = :base
-            raise if Pathname(path_or_type).absolute? # TODO: absolute required
+            raise unless Pathname(path_or_type).absolute? # TODO: absolute required
             @_from = path_or_type
           end
         end
