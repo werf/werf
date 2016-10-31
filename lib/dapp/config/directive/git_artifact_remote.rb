@@ -4,11 +4,11 @@ module Dapp
       class GitArtifactRemote < GitArtifactLocal
         attr_reader :_url, :_name, :_branch, :_commit
 
-        def initialize(url, project:)
+        def initialize(url)
           @_url  = url
           @_name = url.gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
 
-          super(project: project)
+          super()
         end
 
         def branch(value)
@@ -19,7 +19,7 @@ module Dapp
           @_commit = value
         end
 
-        def _exports
+        def _export
           super do |export|
             export._url    = @_url
             export._name   = @_name

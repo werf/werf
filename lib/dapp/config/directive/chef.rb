@@ -2,21 +2,21 @@ module Dapp
   module Config
     module Directive
       class Chef < Base
-        attr_accessor :_modules, :_recipes
+        attr_accessor :_module, :_recipe
 
-        def initialize(project:)
-          @_modules = []
-          @_recipes = []
+        def initialize
+          @_module = []
+          @_recipe = []
 
           super
         end
 
         def module(*args)
-          @_modules.concat(args)
+          @_module.concat(args)
         end
 
         def recipe(*args)
-          @_recipes.concat(args)
+          @_recipe.concat(args)
         end
 
         def attributes

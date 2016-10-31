@@ -5,9 +5,9 @@ module Dapp
         attr_reader :_from, :_to
         attr_reader :_type
 
-        def initialize(to, project:)
+        def initialize(to)
           @_to = to.to_s
-          super(project: project)
+          super()
         end
 
         def from(path_or_type)

@@ -8,12 +8,17 @@ module Dapp
         super(project: project)
       end
 
-      def _name
-        File.join(*[_project.name, @_name].compact)
-      end
-
       module InstanceMethods
-        attr_accessor :_chef, :_shell, :_docker, :_git_artifact, :_mounts
+        attr_reader :_chef, :_shell, :_docker, :_git_artifact, :_mount, :_artifact
+        attr_reader :_install_dependencies, :_setup_dependencies
+
+        def install_depends_on(*args)
+          @_install_dependencies.concat(args)
+        end
+
+        def setup_depends_on(*args)
+          @_setup_dependencies.concat(args)
+        end
 
         def chef(&blk)
           _chef(&blk)
@@ -27,55 +32,83 @@ module Dapp
           _docker(&blk)
         end
 
+        def artifact(&blk)
+          _artifact.concat begin
+                             pass_to_custom(ArtifactGroup.new(project: project), :clone_to_artifact).tap do |artifact_group|
+                               artifact_group.instance_eval(&blk) if block_given?
+                             end._export
+                           end
+        end
+
+        [:before, :after].each do |order|
+          [:setup, :install].each do |stage|
+            define_method "_#{order}_#{stage}_artifact" do
+              _artifact.select do |art|
+                art.public_send("_#{order}") == stage
+              end
+            end
+          end
+        end
+
         def git_artifact(type_or_repo_url, &blk)
           type = (type_or_repo_url.to_sym == :local) ? :local : :remote
-          (@_git_artifact ||= GitArtifact.new(project: _project)).send(type, type_or_repo_url, &blk)
+          (@_git_artifact ||= GitArtifact.new).send(type, type_or_repo_url, &blk)
         end
 
         def mount(to, &blk)
-          _mounts << Directive.Mount.new(to, project: _project, &blk)
+          _mount << Directive::Mount.new(to, &blk)
         end
 
         def _chef(&blk)
-          @_chef ||= Directive::Chef.new(project: _project, &blk)
+          @_chef ||= Directive::Chef.new(&blk)
         end
 
         def _shell(&blk)
-          @_shell ||= Directive::Shell.new(project: _project, &blk)
+          @_shell ||= Directive::Shell::Dimg.new(&blk)
         end
 
         def _docker(&blk)
-          @_docker ||= Directive::Docker.new(project: _project, &blk)
+          @_docker ||= Directive::Docker::Dimg.new(&blk)
         end
 
-        def _mounts
-          @_mounts ||= []
+        def _mount
+          @_mount ||= []
         end
 
-        class GitArtifact < Base
+        def _install_dependencies
+          @_install_dependencies ||= []
+        end
+
+        def _setup_dependencies
+          @_setup_dependencies ||= []
+        end
+
+        def _artifact
+          @_artifact ||= []
+        end
+
+        class GitArtifact
           attr_reader :_local, :_remote
 
-          def initialize(project:)
+          def initialize
             @_local = []
             @_remote = []
-
-            super
           end
 
           def local(_, &blk)
-            @_local << Directive::GitArtifactLocal.new(project: _project, &blk)
+            @_local << Directive::GitArtifactLocal.new(&blk)
           end
 
           def remote(repo_url, &blk)
-            @_remote << Directive::GitArtifactRemote.new(repo_url, project: _project, &blk)
+            @_remote << Directive::GitArtifactRemote.new(repo_url, &blk)
           end
 
           def _local
-            @_local.map(&:_exports).flatten
+            @_local.map(&:_export).flatten
           end
 
           def _remote
-            @_remote.map(&:_exports).flatten
+            @_remote.map(&:_export).flatten
           end
         end
       end

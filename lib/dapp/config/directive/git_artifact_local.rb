@@ -3,10 +3,9 @@ module Dapp
     module Directive
       class GitArtifactLocal < Base
         attr_reader :_owner, :_group
-        attr_reader :_exports
 
-        def initialize(project:)
-          @_exports = []
+        def initialize
+          @_export = []
           super
         end
 
@@ -19,11 +18,11 @@ module Dapp
         end
 
         def export(absolute_dir_path = '/', &blk)
-          @_exports << self.class.const_get('Export').new(absolute_dir_path, project: _project, &blk)
+          @_export << self.class.const_get('Export').new(absolute_dir_path, &blk)
         end
 
-        def _exports
-          @_exports.each do |export|
+        def _export
+          @_export.each do |export|
             export._owner ||= @_owner
             export._group ||= @_group
 
@@ -36,13 +35,13 @@ module Dapp
         class Export < Directive::Base
           attr_accessor :_cwd, :_include_paths, :_exclude_paths, :_owner, :_group
 
-          def initialize(cwd, project:)
+          def initialize(cwd)
             raise unless Pathname(cwd).absolute? # TODO: absolute required
             @_cwd = cwd
             @_include_paths ||= []
             @_exclude_paths ||= []
 
-            super(project: project)
+            super()
           end
 
           def to(absolute_path)

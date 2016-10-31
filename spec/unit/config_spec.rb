@@ -66,63 +66,9 @@ describe Dapp::Config::Main do
     end
   end
 
-  context 'docker' do
-    it 'from' do
-      @dappfile = "docker.from 'sample:tag'"
-      expect(app.docker._from).to eq 'sample:tag'
-    end
-
-    it 'from with incorrect image (:docker_from_incorrect)' do
-      @dappfile = "docker.from 'sample'"
-      expect_exception_code(code: :docker_from_incorrect) { apps }
-    end
-
-    it 'volume' do
-      expect_special_attribute(:docker, :volume)
-    end
-
-    it 'expose' do
-      expect_special_attribute(:docker, :expose)
-    end
-
-    it 'env' do
-      @dappfile = %(docker.env a: 'b', b: 'c')
-      expect(app.docker._env).to eq(a: 'b', b: 'c')
-    end
-
-    it 'label' do
-      @dappfile = %(docker.label a: 'b', b: 'c')
-      expect(app.docker._label).to eq(a: 'b', b: 'c')
-    end
-
-    it 'cmd' do
-      expect_special_attribute(:docker, :cmd)
-    end
-
-    it 'onbuild' do
-      expect_special_attribute(:docker, :onbuild)
-    end
-
-    it 'workdir' do
-      @dappfile = %(
-        docker.workdir 'first_value'
-        docker.workdir 'second_value'
-      )
-      expect(app.docker._workdir).to eq 'second_value'
-    end
-
-    it 'user' do
-      @dappfile = %(
-        docker.user 'root'
-        docker.user 'root:root'
-      )
-      expect(app.docker._user).to eq 'root:root'
-    end
-  end
-
   context :chef do
     it 'module' do
-      expect_special_attribute(:chef, :module, :_modules)
+      expect_special_attribute(:chef, :module, :_module)
     end
 
     it 'skip_module' do
@@ -142,8 +88,8 @@ describe Dapp::Config::Main do
         end
       )
 
-      expect(apps_by_name['dapp-X'].chef._modules).to eq %w(b d e f)
-      expect(apps_by_name['dapp-Y'].chef._modules).to eq %w(d g)
+      expect(apps_by_name['dapp-X'].chef._module).to eq %w(b d e f)
+      expect(apps_by_name['dapp-Y'].chef._module).to eq %w(d g)
     end
 
     it 'reset_modules' do
@@ -171,14 +117,14 @@ describe Dapp::Config::Main do
         app 'Z'
       )
 
-      expect(apps_by_name['dapp-X'].chef._modules).to eq %w()
-      expect(apps_by_name['dapp-Y-A'].chef._modules).to eq %w()
-      expect(apps_by_name['dapp-Y-B'].chef._modules).to eq %w(a b c d)
-      expect(apps_by_name['dapp-Z'].chef._modules).to eq %w()
+      expect(apps_by_name['dapp-X'].chef._module).to eq %w()
+      expect(apps_by_name['dapp-Y-A'].chef._module).to eq %w()
+      expect(apps_by_name['dapp-Y-B'].chef._module).to eq %w(a b c d)
+      expect(apps_by_name['dapp-Z'].chef._module).to eq %w()
     end
 
     it 'recipe' do
-      expect_special_attribute(:chef, :recipe, :_recipes)
+      expect_special_attribute(:chef, :recipe, :_recipe)
     end
 
     it 'remove_recipe' do
@@ -198,8 +144,8 @@ describe Dapp::Config::Main do
         end
       )
 
-      expect(apps_by_name['dapp-X'].chef._recipes).to eq %w(b d e f)
-      expect(apps_by_name['dapp-Y'].chef._recipes).to eq %w(d g)
+      expect(apps_by_name['dapp-X'].chef._recipe).to eq %w(b d e f)
+      expect(apps_by_name['dapp-Y'].chef._recipe).to eq %w(d g)
     end
 
     it 'reset_recipes' do
@@ -227,10 +173,10 @@ describe Dapp::Config::Main do
         app 'Z'
       )
 
-      expect(apps_by_name['dapp-X'].chef._recipes).to eq %w()
-      expect(apps_by_name['dapp-Y-A'].chef._recipes).to eq %w()
-      expect(apps_by_name['dapp-Y-B'].chef._recipes).to eq %w(a b c d)
-      expect(apps_by_name['dapp-Z'].chef._recipes).to eq %w()
+      expect(apps_by_name['dapp-X'].chef._recipe).to eq %w()
+      expect(apps_by_name['dapp-Y-A'].chef._recipe).to eq %w()
+      expect(apps_by_name['dapp-Y-B'].chef._recipe).to eq %w(a b c d)
+      expect(apps_by_name['dapp-Z'].chef._recipe).to eq %w()
     end
 
     it 'attributes' do
@@ -350,8 +296,8 @@ end.join("\n")}
         app 'Z'
       )
 
-      expect(apps_by_name['dapp-X-A'].chef._modules).to eq %w(ma mb mc md)
-      expect(apps_by_name['dapp-X-A'].chef._recipes).to eq %w(ra rb rc rd)
+      expect(apps_by_name['dapp-X-A'].chef._module).to eq %w(ma mb mc md)
+      expect(apps_by_name['dapp-X-A'].chef._recipe).to eq %w(ra rb rc rd)
       expect(apps_by_name['dapp-X-A'].chef._before_install_attributes).to eq({
         'k1' => {
           'k2' => 'k1k2value',
@@ -359,72 +305,29 @@ end.join("\n")}
         }
       })
 
-      expect(apps_by_name['dapp-X-B'].chef._modules).to eq %w()
-      expect(apps_by_name['dapp-X-B'].chef._recipes).to eq %w()
+      expect(apps_by_name['dapp-X-B'].chef._module).to eq %w()
+      expect(apps_by_name['dapp-X-B'].chef._recipe).to eq %w()
       expect(apps_by_name['dapp-X-B'].chef._before_install_attributes).to eq({})
 
-      expect(apps_by_name['dapp-X-C'].chef._modules).to eq %w()
-      expect(apps_by_name['dapp-X-C'].chef._recipes).to eq %w()
+      expect(apps_by_name['dapp-X-C'].chef._module).to eq %w()
+      expect(apps_by_name['dapp-X-C'].chef._recipe).to eq %w()
       expect(apps_by_name['dapp-X-C'].chef._before_install_attributes).to eq({})
 
-      expect(apps_by_name['dapp-Y'].chef._modules).to eq %w(ma mb mc)
-      expect(apps_by_name['dapp-Y'].chef._recipes).to eq %w(ra rb rc)
+      expect(apps_by_name['dapp-Y'].chef._module).to eq %w(ma mb mc)
+      expect(apps_by_name['dapp-Y'].chef._recipe).to eq %w(ra rb rc)
       expect(apps_by_name['dapp-Y'].chef._before_install_attributes).to eq({
         'k1' => {
           'k2' => 'k1k2value'
         }
       })
 
-      expect(apps_by_name['dapp-Z'].chef._modules).to eq %w()
-      expect(apps_by_name['dapp-Z'].chef._recipes).to eq %w()
+      expect(apps_by_name['dapp-Z'].chef._module).to eq %w()
+      expect(apps_by_name['dapp-Z'].chef._recipe).to eq %w()
       expect(apps_by_name['dapp-Z'].chef._before_install_attributes).to eq({})
     end
   end
 
-  context 'shell' do
-    def expect_reset_attribute(obj, attribute, config_attribute = "_#{attribute}")
-      builder = "builder #{obj == :chef ? ':chef' : ':shell'}"
-      attribute_setter = "#{obj}.#{attribute}"
-      reset_attribute = "#{obj}.reset_#{attribute}"
-      @dappfile = %(
-        #{builder}
-        #{attribute_setter} 'a', 'b', 'c'
-        #{reset_attribute}
-      )
-      expect(app.public_send(obj).public_send(config_attribute)).to be_empty
-    end
-
-    it 'attributes' do
-      expect_special_attribute(:shell, :before_install)
-      expect_special_attribute(:shell, :before_setup)
-      expect_special_attribute(:shell, :install)
-      expect_special_attribute(:shell, :setup)
-    end
-
-    it 'reset attributes' do
-      expect_reset_attribute(:shell, :before_install)
-      expect_reset_attribute(:shell, :before_setup)
-      expect_reset_attribute(:shell, :install)
-      expect_reset_attribute(:shell, :setup)
-    end
-
-    it 'reset all attributes' do
-      @dappfile = %(
-        shell.before_install 'a'
-        shell.before_setup 'b'
-        shell.install 'c'
-        shell.setup 'd'
-        shell.reset_all
-      )
-      [:before_install, :before_setup, :install, :setup].each { |s| expect(app.shell.public_send("_#{s}")).to be_empty }
-    end
-  end
-
   context 'artifact' do
-    before :each do
-      @artifact_attributes = [:cwd, :paths, :exclude_paths, :owner, :group]
-    end
-
     context 'base' do
       it 'unsupported inherited artifact' do
         @dappfile = "artifact('where_to_add') { artifact 'where_to_add' }"

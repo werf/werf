@@ -1,11 +1,17 @@
 module Dapp
   module Config
     class Base
-      attr_reader :_project
-
       def initialize(project:, &blk)
-        @_project = project
+        @project = project
         instance_eval(&blk) unless blk.nil?
+      end
+
+      protected
+
+      attr_reader :project
+
+      def marshal_dup(obj)
+        Marshal.load(Marshal.dump(obj))
       end
     end
   end
