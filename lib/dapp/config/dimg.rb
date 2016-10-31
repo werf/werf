@@ -62,6 +62,16 @@ module Dapp
           _mount << Directive::Mount.new(to, &blk)
         end
 
+        [:build_dir, :tmp_dir].each do |mount_type|
+          define_method "_#{mount_type}_mount" do
+            _mount.select { |m| m._type == mount_type }
+          end
+        end
+
+        define_method "_custom_mount" do
+          _mount.select { |m| m._type.nil? }
+        end
+
         def _chef(&blk)
           @_chef ||= Directive::Chef.new(&blk)
         end
