@@ -157,5 +157,48 @@ describe Dapp::Config::DimgGroupMain do
         end
       end
     end
+
+    context 'shell' do
+      def dappfile_dimg_shell(&blk)
+        dappfile do
+          dimg do
+            shell do
+              instance_eval(&blk)
+            end
+          end
+        end
+      end
+
+      [:before_install, :before_setup, :install, :setup].each do |attr|
+        it attr do
+          dappfile_dimg_shell do
+            send(attr) do
+              command 'cmd'
+            end
+          end
+
+          expect(dimg.shell.send("_#{attr}")._command).to eq ['cmd']
+
+          dappfile_dimg_shell do
+            send(attr) do
+              command 'cmd1'
+              command 'cmd2', 'cmd3'
+            end
+          end
+
+          expect(dimg.shell.send("_#{attr}")._command).to eq %w(cmd1 cmd2 cmd3)
+        end
+
+        it "#{attr} version" do
+          dappfile_dimg_shell do
+            send(attr) do
+              version 'version'
+            end
+          end
+
+          expect(dimg.shell.send("_#{attr}")._version).to eq 'version'
+        end
+      end
+    end
   end
 end
