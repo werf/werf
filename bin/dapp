@@ -11,11 +11,12 @@ begin
   rescue ::SystemExit
     raise
   rescue ::Exception => e
-    ::File.open("/tmp/dapp-stacktrace-#{SecureRandom.uuid}.out", 'w') do |dapp_stacktrace|
-      dapp_stacktrace.write [*e.backtrace, "\n"].join("\n")
+    "/tmp/dapp-stacktrace-#{SecureRandom.uuid}.out".tap do |filename|
+      ::File.open(filename, 'w') do |dapp_stacktrace|
+        dapp_stacktrace.write "#{e.backtrace.join("\n")}\n"
+      end
+      $stderr.puts "\033[1m\033[31mStacktrace dumped to #{filename}\033[0m"
     end
-
-    $stderr.puts "\033[1m\033[31mStacktrace dumped to /tmp/dapp-stacktrace.out\033[0m"
 
     raise
   end
