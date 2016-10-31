@@ -11,14 +11,9 @@ begin
   rescue ::SystemExit
     raise
   rescue ::Exception => e
-    old_umask = ::File.umask(0)
-
-    ::File.open('/tmp/dapp-stacktrace.out', 'a', 0666) do |dapp_stacktrace|
-      dapp_stacktrace.flock(File::LOCK_EX)
+    ::File.open("/tmp/dapp-stacktrace-#{SecureRandom.uuid}.out", 'w') do |dapp_stacktrace|
       dapp_stacktrace.write [*e.backtrace, "\n"].join("\n")
     end
-
-    ::File.umask(old_umask)
 
     $stderr.puts "\033[1m\033[31mStacktrace dumped to /tmp/dapp-stacktrace.out\033[0m"
 
