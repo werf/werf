@@ -8,6 +8,10 @@ module Dapp
         super(project: project)
       end
 
+      def _name
+        File.join(*[_project.name, @_name].compact)
+      end
+
       module InstanceMethods
         attr_accessor :_chef, :_shell, :_docker, :_git_artifacts, :_mounts
 

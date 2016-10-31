@@ -5,7 +5,7 @@ module Dapp
 
       attr_reader :_artifacts
 
-      def initialize(project:, basename:)
+      def initialize(project:)
         @_artifacts ||= []
         super
       end
