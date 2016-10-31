@@ -33,12 +33,11 @@ module Dapp
 
           def initialize(project:)
             @_command = []
-
             super
           end
 
           def command(*args)
-            @_before_setup.concat(args)
+            @_command.concat(args)
           end
 
           def version(value)
