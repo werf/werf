@@ -21,15 +21,6 @@ describe Dapp::Config::DimgGroupMain do
         expect(dimg._name).to eq project_name
       end
 
-      it 'dimg without name (2)' do
-        dappfile do
-          dimg_group do
-            dimg
-          end
-        end
-        expect(dimg._name).to eq project_name
-      end
-
       it 'dimg name' do
         dappfile do
           dimg 'sample'
@@ -39,10 +30,32 @@ describe Dapp::Config::DimgGroupMain do
     end
 
     context 'negative' do
-      it 'dimg without name' do
+      it 'dimg without name (1)' do
         dappfile do
           dimg
           dimg
+        end
+        expect { dimgs }.to raise_error RuntimeError
+      end
+
+      it 'dimg without name (2)' do
+        dappfile do
+          dimg_group do
+            dimg
+            dimg
+          end
+        end
+        expect { dimgs }.to raise_error RuntimeError
+      end
+
+      it 'dimg without name (3)' do
+        dappfile do
+          dimg_group do
+            dimg
+          end
+          dimg_group do
+            dimg
+          end
         end
         expect { dimgs }.to raise_error RuntimeError
       end
