@@ -5,6 +5,10 @@ module SpecHelper
       @dappfile = ConfigDsl.new.instance_eval(&blk).config
     end
 
+    def dimg_by_name(name)
+      dimgs_by_name[name] || raise
+    end
+
     def dimgs_by_name
       dimgs.map { |dimg| [dimg._name, dimg] }.to_h
     end
@@ -14,9 +18,9 @@ module SpecHelper
     end
 
     def dimgs
-      Dapp::Config::DimgGroupMain.new(dappfile_path: File.join(Dir.getwd, 'Dappfile'), project: stubbed_project).tap do |config|
+      Dapp::Config::DimgGroupMain.new(project: stubbed_project).tap do |config|
         config.instance_eval(@dappfile) unless @dappfile.nil?
-      end._dimgs
+      end._dimg
     end
 
     def stubbed_project
