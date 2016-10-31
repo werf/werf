@@ -40,10 +40,10 @@ module SpecHelper
       end
 
       def method_missing(name, *args, &blk)
-        @config << line("#{name}(#{args.map(&:inspect).join(', ')}) #{ 'do' if block_given? }")
+        line("#{name}(#{args.map(&:inspect).join(', ')}) #{ 'do' if block_given? }")
         if block_given?
           with_indent(&blk)
-          @config << line("end")
+          line('end')
         end
         self
       end
@@ -55,7 +55,7 @@ module SpecHelper
       end
 
       def line(msg)
-        "#{'  ' * (@indent ||= 0)}#{msg}\n"
+        @config << "#{'  ' * (@indent ||= 0)}#{msg}\n"
       end
 
       def next_indent
