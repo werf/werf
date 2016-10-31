@@ -2,17 +2,17 @@ module Dapp
   module Config
     module Directive
       class Chef < Base
-        attr_accessor :_module, :_recipe
+        attr_accessor :_dimod, :_recipe, :_attributes
 
         def initialize
-          @_module = []
+          @_dimod = []
           @_recipe = []
 
           super
         end
 
-        def module(*args)
-          @_module.concat(args)
+        def dimod(*args)
+          @_dimod.concat(args)
         end
 
         def recipe(*args)
@@ -20,11 +20,11 @@ module Dapp
         end
 
         def attributes
-          @attributes ||= Attributes.new
+          @_attributes ||= Attributes.new
         end
 
         %i(before_install install before_setup setup build_artifact).each do |stage|
-          define_method("_#{stage}_attributes") do
+          define_method("#{stage}_attributes") do
             var = "@#{stage}_attributes"
             instance_variable_get(var) || instance_variable_set(var, Attributes.new)
           end
@@ -33,7 +33,7 @@ module Dapp
         protected
 
         %i(before_install install before_setup setup build_artifact).each do |stage|
-          define_method("#{stage}_attributes") do
+          define_method("_#{stage}_attributes") do
             attributes.in_depth_merge send("#{stage}_attributes")
           end
         end
