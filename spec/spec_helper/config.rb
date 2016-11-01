@@ -30,6 +30,21 @@ module SpecHelper
       end
     end
 
+    def expect_array_attribute(attribute, dappfile_block, &expect_block)
+      dappfile_block.call do
+        send(attribute, 'value')
+      end
+
+      expect_block.call('value')
+
+      dappfile_block.call do
+        send(attribute, 'value4')
+        send(attribute, 'value1', 'value2', 'value3')
+      end
+
+      expect_block.call('value4', 'value1', 'value2', 'value3')
+    end
+
     class ConfigDsl
       def initialize
         @config = []
