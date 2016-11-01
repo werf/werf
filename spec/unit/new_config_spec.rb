@@ -673,7 +673,7 @@ describe Dapp::Config::DimgGroupMain do
   context 'warning' do
     def stubbed_project
       super.tap do |instance|
-        allow(instance).to receive(:log_warning) { |*args, **kwargs| puts kwargs[:desc][:code] }
+        allow(instance).to receive(:log_config_warning) { |*args, **kwargs| puts kwargs[:desc][:code] }
       end
     end
 

@@ -17,6 +17,10 @@ module Dapp
           cli_options[:log_verbose]
         end
 
+        def ignore_config_warning?
+          cli_options[:ignore_config_warning]
+        end
+
         def introspect_error?
           cli_options[:introspect_error]
         end
@@ -54,6 +58,11 @@ module Dapp
         def log_warning(*args, **kwargs)
           kwargs[:style] = :warning
           log(*args, **kwargs)
+        end
+
+        def log_config_warning(*args, **kwargs)
+          return if ignore_config_warning?
+          log_warning(*args, **kwargs)
         end
 
         def log(message = '', desc: nil, inline: false, **kwargs)

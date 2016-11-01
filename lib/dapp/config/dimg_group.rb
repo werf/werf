@@ -58,15 +58,15 @@ module Dapp
       end
 
       def check_dimg_directive_order(directive)
-        project.log_warning(desc: { code: 'wrong_using_base_directive',
-                                    data: { directive: directive },
-                                    context: 'warning' }) if _dimg.any? or _dimg_group.any? or _artifact.any?
+        project.log_config_warning(desc: { code: 'wrong_using_base_directive',
+                                           data: { directive: directive },
+                                           context: 'warning' }) if _dimg.any? or _dimg_group.any? or _artifact.any?
       end
 
       def check_dimg_group_directive_order(directive)
-        project.log_warning(desc: { code: 'wrong_using_directive',
-                                    data: { directive: directive },
-                                    context: 'warning' }) if _dimg.any? or _dimg_group.any?
+        project.log_config_warning(desc: { code: 'wrong_using_directive',
+                                           data: { directive: directive },
+                                           context: 'warning' }) if _dimg.any? or _dimg_group.any?
       end
     end
   end

@@ -30,6 +30,11 @@ module Dapp
              default: false,
              boolean: true
 
+      option :ignore_config_warning,
+             long: '--ignore-config-sequential-processing-warnings',
+             default: false,
+             boolean: true
+
       option :log_color,
              long: '--color MODE',
              description: 'Display output in color on the terminal',
