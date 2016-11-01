@@ -26,20 +26,26 @@ en:
       ssh_key_not_found: "Ssh key '%{path}' not exist!"
       mrproper_required_option: "Expected command option '--all' or '--improper-cache-version-stages'!"
     config:
+      dimg_name_required: 'Dimg name required!'
+      dimg_name_incorrect: "Application has incorrect name '%{name}': doesn't match regex '%{reg}'!"
+      export_cwd_absolute_path_required: "Export: given cwd path must be absolute!"
+      export_to_absolute_path_required: "Export: given 'to' path must be absolute!"
+      export_include_paths_relative_path_required: "Export: given 'include_paths' path must be relative!"
+      export_exclude_paths_relative_path_required: "Export: given 'exclude_paths' path must be relative!"
+      mount_from_absolute_path_required: "Mount: given 'from' path must be absolute!"
+      mount_to_absolute_path_required: "Mount: given 'to' path must be absolute!"
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
-      artifact_unexpected_attribute: "Artifact doesn't has attribute '%{attr}'!"
+      docker_from_incorrect: "`docker.from` has incorrect value `%{name}`: expected format `image_name:tag`!"
+      stage_artifact_not_associated: "Artifact not associated with any stage: expected 'before' or 'after' option!"
+      stage_artifact_double_associate: "Artifact cannot use with both associated options 'before' and 'after'!"
+      stage_artifact_not_supported_associated_stage: "Artifact not supported associated stage '%{stage}'!"
+
       artifact_conflict: "Conflict between artifacts paths!"
       scratch_unsupported_directive: "Scratch application has unsupported directive '%{directive}'!"
       scratch_artifact_required: "Scratch application without artifacts!"
       scratch_artifact_associated: "Scratch artifact cannot be associated: not expected 'before'/'after' option!"
       scratch_artifact_docker_from: "Scratch artifact must have directive 'docker.from'!"
-      stage_artifact_not_associated: "Artifact not associated with any stage: expected 'before' or 'after' option!"
-      stage_artifact_double_associate: "Artifact cannot use with both associated options 'before' and 'after'!"
-      stage_artifact_not_supported_associated_stage: "Artifact not supported associated stage '%{stage}'!"
-      git_artifact_unexpected_attribute: "'%{type}' git artifact doesn't has attribute '%{attr}'!"
-      docker_from_incorrect: "`docker.from` has incorrect value `%{name}`: expected format `image_name:tag`!"
-      app_name_incorrect: "Application has incorrect name '%{name}': doesn't match regex '%{reg}'!"
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
       mdapp_dependency_in_metadata_forbidden: "Using mdapp as dependency in metadata.rb forbidden: detected '%{dependency}'"

@@ -10,7 +10,7 @@ module Dapp
         super(project: project)
       end
 
-      def dimg(name, &blk)
+      def dimg(name = nil, &blk)
         Config::Dimg.new(name, project: project).tap do |dimg|
           before_dimg_eval(dimg)
           dimg.instance_eval(&blk) if block_given?

@@ -6,7 +6,7 @@ module Dapp
         attr_reader :_type
 
         def initialize(to)
-          raise unless Pathname(to).absolute? # TODO: absolute required
+          raise Error::Config, code: :mount_to_absolute_path_required unless Pathname(to).absolute?
           @_to = to.to_s
           super()
         end
@@ -16,7 +16,7 @@ module Dapp
           if [:tmp_dir, :build_dir].include? path_or_type.to_sym
             @_type = path_or_type.to_sym
           else
-            raise unless Pathname(path_or_type).absolute? # TODO: absolute required
+            raise Error::Config, code: :mount_from_absolute_path_required unless Pathname(path_or_type).absolute?
             @_from = path_or_type
           end
         end

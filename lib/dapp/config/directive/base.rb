@@ -13,7 +13,7 @@ module Dapp
         end
 
         def clone_to_artifact
-          raise
+          clone
         end
       end
     end

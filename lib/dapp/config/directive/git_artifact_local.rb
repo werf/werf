@@ -36,7 +36,7 @@ module Dapp
           attr_accessor :_cwd, :_include_paths, :_exclude_paths, :_owner, :_group
 
           def initialize(cwd)
-            raise unless Pathname(cwd).absolute? # TODO: absolute required
+            raise Error::Config, code: :export_cwd_absolute_path_required unless Pathname(cwd).absolute?
             @_cwd = cwd
             @_include_paths ||= []
             @_exclude_paths ||= []
@@ -45,17 +45,17 @@ module Dapp
           end
 
           def to(absolute_path)
-            raise unless Pathname(absolute_path).absolute? # TODO: absolute required
+            raise Error::Config, code: :export_to_absolute_path_required unless Pathname(absolute_path).absolute?
             @_to = absolute_path
           end
 
           def include_paths(*relative_paths)
-            raise unless relative_paths.all? { |path| Pathname(path).relative? } # TODO: relative required
+            raise Error::Config, code: :export_include_paths_relative_path_required unless relative_paths.all? { |path| Pathname(path).relative? }
             _include_paths.concat(relative_paths)
           end
 
           def exclude_paths(*relative_paths)
-            raise unless relative_paths.all? { |path| Pathname(path).relative? } # TODO: relative required
+            raise Error::Config, code: :export_exclude_paths_relative_path_required unless relative_paths.all? { |path| Pathname(path).relative? }
             _exclude_paths.concat(relative_paths)
           end
 

@@ -11,7 +11,7 @@ module Dapp
 
       def with_dimg_validation
         yield
-        raise if _dimg.any? { |dimg| dimg.instance_variable_get(:@_name).nil? } && _dimg.size > 1 # TODO: only dimg without name
+        raise Error::Config, code: :dimg_name_required if _dimg.any? { |dimg| dimg._name.nil? } && _dimg.size > 1
       end
     end
   end
