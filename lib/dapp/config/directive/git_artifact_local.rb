@@ -33,9 +33,9 @@ module Dapp
         protected
 
         class Export < Directive::Base
-          attr_accessor :_cwd, :_include_paths, :_exclude_paths, :_owner, :_group
+          attr_accessor :_cwd, :_to, :_include_paths, :_exclude_paths, :_owner, :_group
 
-          def initialize(cwd)
+          def initialize(cwd = '/')
             raise Error::Config, code: :export_cwd_absolute_path_required unless Pathname(cwd).absolute?
             @_cwd = cwd
             @_include_paths ||= []
@@ -65,6 +65,12 @@ module Dapp
 
           def group(group)
             @_group = group
+          end
+
+          protected
+
+          def validate!
+            raise Error::Config, code: :export_to_required if _to.nil?
           end
         end
       end

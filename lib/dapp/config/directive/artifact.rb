@@ -24,18 +24,22 @@ module Dapp
           attr_accessor :_before, :_after
 
           def before(stage)
-            validation(:before, stage)
+            associate_validation!(:before, stage)
             @_before = stage
           end
 
           def after(stage)
-            validation(:after, stage)
+            associate_validation!(:after, stage)
             @_after = stage
+          end
+
+          def not_associated?
+            (_before || _after).nil?
           end
 
           protected
 
-          def validation(type, stage)
+          def associate_validation!(type, stage)
             another = [:before, :after].find { |t| t != type }
             raise Error::Config, code: :stage_artifact_double_associate unless send("_#{another}").nil?
             raise Error::Config, code: :stage_artifact_not_supported_associated_stage unless [:install, :setup].include? stage

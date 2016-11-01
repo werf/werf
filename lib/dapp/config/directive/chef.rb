@@ -24,17 +24,21 @@ module Dapp
         end
 
         %i(before_install install before_setup setup build_artifact).each do |stage|
-          define_method("#{stage}_attributes") do
-            var = "@#{stage}_attributes"
+          define_method("_#{stage}_attributes") do
+            var = "@__#{stage}_attributes"
             instance_variable_get(var) || instance_variable_set(var, Attributes.new)
           end
         end
 
         protected
 
+        def empty?
+          (@_dimod + @_recipe).empty? && attributes.empty?
+        end
+
         %i(before_install install before_setup setup build_artifact).each do |stage|
-          define_method("_#{stage}_attributes") do
-            attributes.in_depth_merge send("#{stage}_attributes")
+          define_method("__#{stage}_attributes") do
+            attributes.in_depth_merge send("_#{stage}_attributes")
           end
         end
 

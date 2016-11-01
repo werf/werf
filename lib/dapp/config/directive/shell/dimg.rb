@@ -12,6 +12,10 @@ module Dapp
 
           protected
 
+          def empty?
+            (_before_install_command + _before_setup_command + _install_command + _setup_command).empty?
+          end
+
           class StageCommand < Directive::Base
             attr_reader :_version
             attr_reader :_command
