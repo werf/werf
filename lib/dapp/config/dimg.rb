@@ -142,6 +142,24 @@ module Dapp
         def directive_eval(directive, &blk)
           directive.instance_eval(&blk) if block_given?
         end
+
+        def pass_to_default(dimg)
+          pass_to_custom(dimg, :clone)
+        end
+
+        def pass_to_custom(obj, clone_method)
+          passing_directives.each do |directive|
+            next if (variable = instance_variable_get(directive)).nil?
+            obj.instance_variable_set(directive, variable.send(clone_method))
+          end
+          obj.instance_variable_set(:@_artifact, _artifact)
+          obj.instance_variable_set(:@_builder, _builder)
+          obj
+        end
+
+        def passing_directives
+          [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount]
+        end
       end
       include InstanceMethods
     end

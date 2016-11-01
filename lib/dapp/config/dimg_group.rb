@@ -39,24 +39,6 @@ module Dapp
         pass_to_default(dimg)
       end
 
-      def pass_to_default(dimg)
-        pass_to_custom(dimg, :clone)
-      end
-
-      def pass_to_custom(obj, clone_method)
-        passing_directives.each do |directive|
-          next if (variable = instance_variable_get(directive)).nil?
-          obj.instance_variable_set(directive, variable.send(clone_method))
-        end
-        obj.instance_variable_set(:@_artifact, _artifact)
-        obj.instance_variable_set(:@_builder, _builder)
-        obj
-      end
-
-      def passing_directives
-        [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount]
-      end
-
       def check_dimg_directive_order(directive)
         project.log_config_warning(desc: { code: 'wrong_using_base_directive',
                                            data: { directive: directive },
