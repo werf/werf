@@ -668,6 +668,42 @@ describe Dapp::Config::DimgGroupMain do
         end
       end
     end
+
+    it 'mount' do
+      dappfile_dimg_group do
+        mount '/to' do
+          '/from'
+        end
+
+        dimg 'name' do
+          mount '/to' do
+            '/from'
+          end
+        end
+      end
+
+      expect(dimg._mount.size).to eq 2
+    end
+
+    it 'artifact' do
+      dappfile_dimg_group do
+        artifact do
+          export do
+            to '/to_path2'
+          end
+        end
+
+        dimg 'name' do
+          artifact do
+            export do
+              to '/to_path2'
+            end
+          end
+        end
+      end
+
+      expect(dimg._artifact.size).to eq 2
+    end
   end
 
   context 'warning' do
