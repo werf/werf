@@ -23,16 +23,16 @@ module Dapp
 
         def chef(&blk)
           builder_validation(:chef)
-          _chef(&blk)
+          directive_eval(_chef, &blk)
         end
 
         def shell(&blk)
           builder_validation(:shell)
-          _shell(&blk)
+          directive_eval(_shell, &blk)
         end
 
         def docker(&blk)
-          _docker(&blk)
+          directive_eval(_docker, &blk)
         end
 
         def artifact(&blk)
@@ -43,16 +43,6 @@ module Dapp
                            end
         end
 
-        [:before, :after].each do |order|
-          [:setup, :install].each do |stage|
-            define_method "_#{order}_#{stage}_artifact" do
-              _artifact.select do |art|
-                art.public_send("_#{order}") == stage
-              end
-            end
-          end
-        end
-
         def git_artifact(type_or_repo_url, &blk)
           type = (type_or_repo_url.to_sym == :local) ? :local : :remote
           (@_git_artifact ||= GitArtifact.new).send(type, type_or_repo_url, &blk)
@@ -60,6 +50,22 @@ module Dapp
 
         def mount(to, &blk)
           _mount << Directive::Mount.new(to, &blk)
+        end
+
+        def _chef
+          @_chef ||= Directive::Chef.new
+        end
+
+        def _shell
+          @_shell ||= Directive::Shell::Dimg.new
+        end
+
+        def _docker
+          @_docker ||= Directive::Docker::Dimg.new
+        end
+
+        def _mount
+          @_mount ||= []
         end
 
         [:build_dir, :tmp_dir].each do |mount_type|
@@ -72,22 +78,6 @@ module Dapp
           _mount.select { |m| m._type.nil? }
         end
 
-        def _chef(&blk)
-          @_chef ||= Directive::Chef.new(&blk)
-        end
-
-        def _shell(&blk)
-          @_shell ||= Directive::Shell::Dimg.new(&blk)
-        end
-
-        def _docker(&blk)
-          @_docker ||= Directive::Docker::Dimg.new(&blk)
-        end
-
-        def _mount
-          @_mount ||= []
-        end
-
         def _install_dependencies
           @_install_dependencies ||= []
         end
@@ -98,6 +88,16 @@ module Dapp
 
         def _artifact
           @_artifact ||= []
+        end
+
+        [:before, :after].each do |order|
+          [:setup, :install].each do |stage|
+            define_method "_#{order}_#{stage}_artifact" do
+              _artifact.select do |art|
+                art.public_send("_#{order}") == stage
+              end
+            end
+          end
         end
 
         class GitArtifact
@@ -130,6 +130,10 @@ module Dapp
         def builder_validation(type)
           @_builder ||= type
           raise Error::Config, code: :builder_type_conflict unless _builder == type
+        end
+
+        def directive_eval(directive, &blk)
+          directive.instance_eval(&blk) if block_given?
         end
       end
       include InstanceMethods

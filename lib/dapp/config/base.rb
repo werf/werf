@@ -3,7 +3,7 @@ module Dapp
     class Base
       def initialize(project:, &blk)
         @project = project
-        instance_eval(&blk) unless blk.nil?
+        instance_eval(&blk) if block_given?
       end
 
       protected
