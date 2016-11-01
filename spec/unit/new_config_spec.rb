@@ -42,7 +42,7 @@ describe Dapp::Config::DimgGroupMain do
           dimg
           dimg
         end
-        expect { dimgs }.to raise_error RuntimeError
+        expect_exception_code(:dimg_name_required) { dimg }
       end
 
       it 'dimg without name (2)' do
@@ -52,7 +52,7 @@ describe Dapp::Config::DimgGroupMain do
             dimg
           end
         end
-        expect { dimgs }.to raise_error ArgumentError
+        expect_exception_code(:dimg_name_required) { dimg }
       end
 
       it 'dimg without name (3)' do
@@ -64,7 +64,14 @@ describe Dapp::Config::DimgGroupMain do
             dimg
           end
         end
-        expect { dimgs }.to raise_error ArgumentError
+        expect_exception_code(:dimg_name_required) { dimg }
+      end
+
+      it 'dimg incorrect name' do
+        dappfile do
+          dimg 'test;'
+        end
+        expect_exception_code(:dimg_name_incorrect) { dimg }
       end
     end
   end
@@ -98,7 +105,7 @@ describe Dapp::Config::DimgGroupMain do
           end
         end
 
-        expect_exception_code(code: :builder_type_conflict) { dimg }
+        expect_exception_code(:builder_type_conflict) { dimg }
       end
 
       it 'builder_type_conflict (2)' do
@@ -109,7 +116,7 @@ describe Dapp::Config::DimgGroupMain do
           end
         end
 
-        expect_exception_code(code: :builder_type_conflict) { dimg }
+        expect_exception_code(:builder_type_conflict) { dimg }
       end
 
       it 'builder_type_conflict (3)' do
@@ -120,7 +127,7 @@ describe Dapp::Config::DimgGroupMain do
           end
         end
 
-        expect_exception_code(code: :builder_type_conflict) { dimg }
+        expect_exception_code(:builder_type_conflict) { dimg }
       end
 
       it 'builder_type_conflict (4)' do
@@ -134,7 +141,7 @@ describe Dapp::Config::DimgGroupMain do
           end
         end
 
-        expect_exception_code(code: :builder_type_conflict) { dimg }
+        expect_exception_code(:builder_type_conflict) { dimg }
       end
     end
   end
@@ -202,7 +209,7 @@ describe Dapp::Config::DimgGroupMain do
           from "docker.from 'sample'"
         end
 
-        expect_exception_code(code: :docker_from_incorrect) { dimgs }
+        expect_exception_code(:docker_from_incorrect) { dimgs }
       end
 
       [:env, :label].each do |attr|
@@ -378,7 +385,7 @@ describe Dapp::Config::DimgGroupMain do
         dappfile_dimg_git_artifact(:local) do
           export 'cwd'
         end
-        expect { dimgs }.to raise_error
+        expect_exception_code(:export_cwd_absolute_path_required) { dimg }
       end
 
       it 'to absolute path required' do
@@ -387,17 +394,17 @@ describe Dapp::Config::DimgGroupMain do
             to 'to'
           end
         end
-        expect { dimgs }.to raise_error
+        expect_exception_code(:export_to_absolute_path_required) { dimg }
       end
 
       [:exclude_paths, :include_paths].each do |attr|
         it "#{attr} relative path required (1)" do
           dappfile_dimg_git_artifact(:local) do
             export '/cwd' do
-              send('/path1')
+              send(attr, '/path1')
             end
           end
-          expect { dimgs }.to raise_error
+          expect_exception_code(:"export_#{attr}_relative_path_required") { dimg }
         end
 
         it "#{attr} relative path required (2)" do
@@ -406,7 +413,7 @@ describe Dapp::Config::DimgGroupMain do
               send(attr, 'path1', '/path2')
             end
           end
-          expect { dimgs }.to raise_error
+          expect_exception_code(:"export_#{attr}_relative_path_required") { dimg }
         end
       end
 
@@ -500,7 +507,7 @@ describe Dapp::Config::DimgGroupMain do
           end
         end
 
-        expect_exception_code(code: :stage_artifact_double_associate) { dimgs }
+        expect_exception_code(:stage_artifact_double_associate) { dimgs }
       end
 
       it 'not supported associated stage (:stage_artifact_not_supported_associated_stage)' do
@@ -510,7 +517,7 @@ describe Dapp::Config::DimgGroupMain do
           end
         end
 
-        expect_exception_code(code: :stage_artifact_not_supported_associated_stage) { dimgs }
+        expect_exception_code(:stage_artifact_not_supported_associated_stage) { dimgs }
       end
     end
   end
@@ -543,12 +550,12 @@ describe Dapp::Config::DimgGroupMain do
     context 'negative' do
       it 'absolute path required (1)' do
         dappfile_dimg_mount('from', '/to')
-        expect { dimgs }.to raise_error RuntimeError
+        expect_exception_code(:mount_from_absolute_path_required) { dimg }
       end
 
       it 'absolute path required (2)' do
         dappfile_dimg_mount('/from', 'to')
-        expect { dimgs }.to raise_error RuntimeError
+        expect_exception_code(:mount_to_absolute_path_required) { dimg }
       end
     end
   end
@@ -659,6 +666,38 @@ describe Dapp::Config::DimgGroupMain do
 
           expect(dimg._docker.send("_#{attr}")).to eq 'value2'
         end
+      end
+    end
+  end
+
+  context 'warning' do
+    def stubbed_project
+      super.tap do |instance|
+        allow(instance).to receive(:log_warning) { |*args, **kwargs| puts kwargs[:desc][:code] }
+      end
+    end
+
+    it 'artifact after dimg' do
+      dappfile do
+        dimg_group do
+          dimg 'name'
+          artifact
+        end
+      end
+
+      expect { dimg }.to output("wrong_using_directive\n").to_stdout_from_any_process
+    end
+
+    [:docker, :shell, :chef].each do |directive|
+      it "#{directive} after dimg" do
+        dappfile do
+          dimg_group do
+            dimg 'name'
+            send(directive)
+          end
+        end
+
+        expect { dimg }.to output("wrong_using_base_directive\n").to_stdout_from_any_process
       end
     end
   end
