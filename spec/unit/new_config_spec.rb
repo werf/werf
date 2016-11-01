@@ -156,13 +156,13 @@ describe Dapp::Config::DimgGroupMain do
           from 'sample:tag'
         end
 
-        expect(dimg.docker._from).to eq 'sample:tag'
+        expect(dimg._docker._from).to eq 'sample:tag'
       end
 
       [:volume, :expose, :cmd, :onbuild].each do |attr|
         it attr do
           expect_array_attribute(attr, method(:dappfile_dimg_docker)) do |*args|
-            expect(dimg.docker.send("_#{attr}")).to eq args
+            expect(dimg._docker.send("_#{attr}")).to eq args
           end
         end
       end
@@ -173,14 +173,14 @@ describe Dapp::Config::DimgGroupMain do
             send(attr, v1: 1)
           end
 
-          expect(dimg.docker.send("_#{attr}")).to eq ({v1: 1})
+          expect(dimg._docker.send("_#{attr}")).to eq ({v1: 1})
 
           dappfile_dimg_docker do
             send(attr, v3: 1)
             send(attr, v2: 1, v1: 1)
           end
 
-          expect(dimg.docker.send("_#{attr}")).to eq({ v1: 1, v2: 1, v3: 1 })
+          expect(dimg._docker.send("_#{attr}")).to eq({ v1: 1, v2: 1, v3: 1 })
         end
       end
 
@@ -191,7 +191,7 @@ describe Dapp::Config::DimgGroupMain do
             send(attr, 'value2')
           end
 
-          expect(dimg.docker.send("_#{attr}")).to eq 'value2'
+          expect(dimg._docker.send("_#{attr}")).to eq 'value2'
         end
       end
     end
@@ -249,7 +249,7 @@ describe Dapp::Config::DimgGroupMain do
 
       it attr do
         expect_array_attribute(:command, method("dappfile_dimg_shell_#{attr}")) do |*args|
-          expect(dimg.shell.send("_#{attr}_command")).to eq args
+          expect(dimg._shell.send("_#{attr}_command")).to eq args
         end
       end
 
@@ -260,7 +260,7 @@ describe Dapp::Config::DimgGroupMain do
           end
         end
 
-        expect(dimg.shell.send("_#{attr}_version")).to eq 'version'
+        expect(dimg._shell.send("_#{attr}_version")).to eq 'version'
       end
     end
   end
@@ -549,6 +549,116 @@ describe Dapp::Config::DimgGroupMain do
       it 'absolute path required (2)' do
         dappfile_dimg_mount('/from', 'to')
         expect { dimgs }.to raise_error RuntimeError
+      end
+    end
+  end
+
+  context 'inheritance' do
+    def dappfile_dimg_group(&blk)
+      dappfile do
+        dimg_group do
+          instance_eval(&blk)
+        end
+      end
+    end
+
+    context 'shell' do
+      [:install, :setup, :before_install, :before_setup].each do |stage|
+        it "#{stage}_command" do
+          dappfile_dimg_group do
+            shell do
+              send(stage) do
+                command 'cmd1'
+              end
+            end
+
+            dimg 'name' do
+              shell do
+                send(stage) do
+                  command 'cmd2'
+                end
+              end
+            end
+          end
+
+          expect(dimg._shell.public_send("_#{stage}_command")).to eq %w(cmd1 cmd2)
+        end
+
+        it "#{stage}_version" do
+          dappfile_dimg_group do
+            shell do
+              send(stage) do
+                version 'version1'
+              end
+            end
+
+            dimg 'name' do
+              shell do
+                send(stage) do
+                  version 'version2'
+                end
+              end
+            end
+          end
+
+          expect(dimg._shell.public_send("_#{stage}_version")).to eq 'version2'
+        end
+      end
+    end
+
+    context 'docker' do
+      [:volume, :expose, :cmd, :onbuild].each do |attr|
+        it attr do
+          dappfile_dimg_group do
+            docker do
+              send(attr, 'value1')
+            end
+
+            dimg 'name' do
+              docker do
+                send(attr, 'value2')
+              end
+            end
+          end
+
+          expect(dimg._docker.send("_#{attr}")).to eq %w(value1 value2)
+        end
+      end
+
+      [:env, :label].each do |attr|
+        it attr do
+          dappfile_dimg_group do
+            docker do
+              send(attr, v1: 1, v2: 1)
+            end
+
+            dimg 'name' do
+              docker do
+                send(attr, v2: 2, v3: 2)
+              end
+            end
+          end
+
+          expect(dimg._docker.send("_#{attr}")).to eq ({ v1: 1, v2: 2, v3: 2 })
+        end
+      end
+
+      [:workdir, :user].each do |attr|
+        it attr do
+          dappfile_dimg_group do
+            docker do
+              send(attr, 'value1')
+            end
+
+            dimg 'name' do
+              docker do
+                send(attr, 'value2')
+              end
+            end
+          end
+
+          expect(dimg._docker.send("_#{attr}")).to eq 'value2'
+        end
       end
     end
   end
