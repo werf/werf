@@ -54,7 +54,7 @@ describe Dapp::Config::Main do
         shell.before_install 'a'
         chef.module 'a'
       )
-      expect_exception_code(code: :builder_type_conflict) { apps }
+      expect_exception_code(:builder_type_conflict) { apps }
     end
 
     it 'chef already used (:builder_type_conflict)' do
@@ -62,7 +62,7 @@ describe Dapp::Config::Main do
         builder :chef
         shell.before_install 'a'
       )
-      expect_exception_code(code: :builder_type_conflict) { apps }
+      expect_exception_code(:builder_type_conflict) { apps }
     end
   end
 
@@ -336,7 +336,7 @@ end.join("\n")}
 
       it 'unsupported key (:artifact_unexpected_attribute)' do
         @dappfile = "artifact 'where_to_add', unsupported_key: :value"
-        expect_exception_code(code: :artifact_unexpected_attribute) { apps }
+        expect_exception_code(:artifact_unexpected_attribute) { apps }
       end
 
       it 'unsupported app method in artifact body' do
@@ -376,12 +376,12 @@ end.join("\n")}
 
         it 'double associated (:stage_artifact_double_associate)' do
           @dappfile << "artifact 'where_to_add', before: :setup, after: :setup"
-          expect_exception_code(code: :stage_artifact_double_associate) { apps }
+          expect_exception_code(:stage_artifact_double_associate) { apps }
         end
 
         it 'not supported associated stage (:stage_artifact_not_supported_associated_stage)' do
           @dappfile << "artifact 'where_to_add', before: :from"
-          expect_exception_code(code: :stage_artifact_not_supported_associated_stage) { apps }
+          expect_exception_code(:stage_artifact_not_supported_associated_stage) { apps }
         end
       end
     end
@@ -420,7 +420,7 @@ end.join("\n")}
 
       it 'local with remote options (:git_artifact_unexpected_attribute)' do
         @dappfile = "git_artifact.local 'where_to_add', #{@dappfile_remote_options}"
-        expect_exception_code(code: :git_artifact_unexpected_attribute) { apps }
+        expect_exception_code(:git_artifact_unexpected_attribute) { apps }
       end
 
       it 'git_artifact paths' do
@@ -545,7 +545,7 @@ end.join("\n")}
 
     it 'incorrect name (:app_name_incorrect)' do
       @dappfile = "name 'test;'"
-      expect_exception_code(code: :app_name_incorrect) { app._name }
+      expect_exception_code(:app_name_incorrect) { app._name }
     end
   end
 
@@ -588,7 +588,7 @@ end.join("\n")}
       context 'scratch' do
         it 'associated (:scratch_artifact_associated)' do
           @dappfile = "artifact 'where_to_add', before: :setup"
-          expect_exception_code(code: :scratch_artifact_associated) { app.send(:validate!) }
+          expect_exception_code(:scratch_artifact_associated) { app.send(:validate!) }
         end
       end
 
@@ -598,7 +598,7 @@ end.join("\n")}
             docker.from 'image:tag'
             artifact 'where_to_add'
           )
-          expect_exception_code(code: :stage_artifact_not_associated) { app.send(:validate!) }
+          expect_exception_code(:stage_artifact_not_associated) { app.send(:validate!) }
         end
       end
     end
@@ -674,7 +674,7 @@ end.join("\n")}
             artifact 'where_to_add', before: :setup
             artifact 'where_to_add', after: :install
           )
-          expect_exception_code(code: :artifact_conflict) { app.send(:validate!) }
+          expect_exception_code(:artifact_conflict) { app.send(:validate!) }
         end
 
         it 'conflict between where_to_add' do
@@ -684,7 +684,7 @@ end.join("\n")}
             artifact 'where_to_add', before: :setup
             artifact 'where_to_add/ddd', after: :install
           )
-          expect_exception_code(code: :artifact_conflict) { app.send(:validate!) }
+          expect_exception_code(:artifact_conflict) { app.send(:validate!) }
         end
 
         it 'conflict between paths and exclude_paths' do
@@ -694,7 +694,7 @@ end.join("\n")}
             artifact 'where_to_add', paths: "c", before: :setup
             artifact 'where_to_add', exclude_paths: "d", after: :install
           )
-          expect_exception_code(code: :artifact_conflict) { app.send(:validate!) }
+          expect_exception_code(:artifact_conflict) { app.send(:validate!) }
         end
       end
     end

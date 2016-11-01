@@ -32,11 +32,11 @@ describe Dapp::Project do
   end
 
   it 'spush:spush_command_unexpected_apps_number', :push do
-    expect_exception_code(code: :spush_command_unexpected_apps_number) { stubbed_project.spush('name') }
+    expect_exception_code(:spush_command_unexpected_apps_number) { stubbed_project.spush('name') }
   end
 
   it 'run:command_unexpected_apps_number', :push do
-    expect_exception_code(code: :command_unexpected_apps_number) { stubbed_project.run([], []) }
+    expect_exception_code(:command_unexpected_apps_number) { stubbed_project.run([], []) }
   end
 
   it 'list' do
@@ -67,11 +67,11 @@ describe Dapp::Project do
     end
 
     it 'dappfile_not_found', test_construct: true do
-      expect_exception_code(code: :dappfile_not_found) { project(cli_options: { dir: '..' }).send(:build_configs) }
+      expect_exception_code(:dappfile_not_found) { project(cli_options: { dir: '..' }).send(:build_configs) }
     end
 
     it 'no_such_app', test_construct: true do
-      expect_exception_code(code: :no_such_app) { project(apps_patterns: ['app*']).send(:build_configs) }
+      expect_exception_code(:no_such_app) { project(apps_patterns: ['app*']).send(:build_configs) }
     end
   end
 end
