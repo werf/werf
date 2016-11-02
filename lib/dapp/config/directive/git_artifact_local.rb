@@ -67,6 +67,17 @@ module Dapp
             @_group = group
           end
 
+          def _artifact_options
+            {
+              to:            _to,
+              cwd:           _cwd,
+              include_paths: _paths,
+              exclude_paths: _exclude_paths,
+              owner:         _owner,
+              group:         _group
+            }
+          end
+
           protected
 
           def validate!

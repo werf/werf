@@ -36,8 +36,8 @@ module Dapp
           @artifacts ||= begin
             dimg.config.public_send("_#{name}").map do |artifact|
               artifact_dimg = Dapp::Artifact.new(config: artifact._config,
-                                                 project: artifact_dimg.project,
-                                                 ignore_git_fetch: artifact_dimg.ignore_git_fetch)
+                                                 project: dimg.project,
+                                                 ignore_git_fetch: dimg.ignore_git_fetch)
               { name: artifact._config._name, options: artifact._artifact_options, dimg: artifact_dimg }
             end
           end
