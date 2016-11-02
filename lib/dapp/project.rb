@@ -37,12 +37,12 @@ module Dapp
     include Shellout::System
 
     attr_reader :cli_options
-    attr_reader :apps_patterns
+    attr_reader :dimgs_patterns
 
-    def initialize(cli_options: {}, apps_patterns: nil)
+    def initialize(cli_options: {}, dimgs_patterns: nil)
       @cli_options = cli_options
-      @apps_patterns = apps_patterns || []
-      @apps_patterns << '*' unless @apps_patterns.any?
+      @dimgs_patterns = dimgs_patterns || []
+      @dimgs_patterns << '*' unless @dimgs_patterns.any?
 
       Logging::Paint.initialize(cli_options[:log_color])
       Logging::I18n.initialize
@@ -80,11 +80,11 @@ module Dapp
     end
 
     def cache_format
-      "dappstage-#{name}-%{application_name}"
+      "dimgstage-#{name}-%{dimg_name}"
     end
 
     def stage_dapp_label_format
-      '%{application_name}'
+      '%{dimg_name}'
     end
   end # Project
 end # Dapp

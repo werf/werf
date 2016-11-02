@@ -1,26 +1,26 @@
 module SpecHelper
-  module Application
+  module Dimg
     CACHE_VERSION = SecureRandom.uuid
 
-    def application_build!
-      application.build!
+    def dimg_build!
+      dimg.build!
     end
 
-    def application
-      @application || application_renew
+    def dimg
+      @dimg || dimg_renew
     end
 
-    def application_renew
+    def dimg_renew
       @openstruct_config = nil
-      @application = begin
+      @dimg = begin
         options = { config: openstruct_config, project: project }
-        Dapp::Application.new(**options)
+        Dapp::Dimg.new(**options)
       end
     end
 
-    def application_rebuild!
-      application_renew
-      application_build!
+    def dimg_rebuild!
+      dimg_renew
+      dimg_build!
     end
 
     def project
@@ -67,12 +67,12 @@ module SpecHelper
     end
 
     def stages
-      _stages_of_app(application)
+      _stages_of_dimg(dimg)
     end
 
-    def _stages_of_app(app)
+    def _stages_of_dimg(dimg)
       hash = {}
-      s = app.send(:last_stage)
+      s = dimg.send(:last_stage)
       while s.respond_to? :prev_stage
         hash[s.send(:name)] = s
         s = s.prev_stage
@@ -92,11 +92,11 @@ module SpecHelper
       stages[s].prev_stage.send(:name)
     end
 
-    def stub_application
-      method_new = Dapp::Application.method(:new)
+    def stub_dimg
+      method_new = Dapp::Dimg.method(:new)
 
-      application = class_double(Dapp::Application).as_stubbed_const
-      allow(application).to receive(:new) do |*args, &block|
+      dimg = class_double(Dapp::Dimg).as_stubbed_const
+      allow(dimg).to receive(:new) do |*args, &block|
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:home_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
           allow(instance).to receive(:filelock)
@@ -104,8 +104,8 @@ module SpecHelper
       end
     end
 
-    def empty_application
-      Dapp::Application.new(project: nil, config: openstruct_config)
+    def empty_dimg
+      Dapp::Dimg.new(project: nil, config: openstruct_config)
     end
 
     def empty_artifact

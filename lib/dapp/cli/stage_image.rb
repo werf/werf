@@ -6,9 +6,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stage image [options] [APP PATTERN ...]
+  dapp stage image [options] [DIMG PATTERN ...]
 
-    APP PATTERN                Application to process [default: *].
+    DIMG PATTERN                Dapp image to process [default: *].
 
 Options:
 BANNER

@@ -6,8 +6,8 @@ module Dapp
         class GAPreInstallPatch < GABase
           include Mod::Group
 
-          def initialize(application, next_stage)
-            @prev_stage = GAPreInstallPatchDependencies.new(application, self)
+          def initialize(dimg, next_stage)
+            @prev_stage = GAPreInstallPatchDependencies.new(dimg, self)
             super
           end
 

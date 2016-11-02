@@ -9,7 +9,7 @@ module Dapp
             if empty?                            then log_state(:empty)
             elsif image.tagged?                  then log_state(:using_cache)
             elsif should_be_not_present?         then log_state(:not_present)
-            elsif application.project.dry_run?   then log_state(:build, styles: { status: :success })
+            elsif dimg.project.dry_run?          then log_state(:build, styles: { status: :success })
             else log_image_build_process(&image_build)
             end
           ensure
@@ -17,10 +17,10 @@ module Dapp
           end
 
           def log_build
-            application.project.with_log_indent do
-              application.project.log_info application.project.t(code: 'image.signature', data: { signature: image_name })
+            dimg.project.with_log_indent do
+              dimg.project.log_info dimg.project.t(code: 'image.signature', data: { signature: image_name })
               log_image_details unless empty?
-            end if application.project.log_verbose? && !should_be_quiet?
+            end if dimg.project.log_verbose? && !should_be_quiet?
           end
 
           def log_image_details
@@ -34,13 +34,13 @@ module Dapp
 
           def log_image_instructions
             return if (instructions = image.prepare_instructions(image.send(:change_options))).empty?
-            application.project.log_info application.project.t(code: 'image.instructions')
-            application.project.with_log_indent { application.project.log_info instructions.join("\n") }
+            dimg.project.log_info dimg.project.t(code: 'image.instructions')
+            dimg.project.with_log_indent { dimg.project.log_info instructions.join("\n") }
           end
 
           def log_image_created_at
-            application.project.log_info application.project.t(code: 'image.info.created_at',
-                                                               data: { value: Time.parse(image.created_at).localtime })
+            dimg.project.log_info dimg.project.t(code: 'image.info.created_at',
+                                                 data: { value: Time.parse(image.created_at).localtime })
           end
 
           def log_image_size
@@ -51,17 +51,17 @@ module Dapp
               size = image.size
               code = 'image.info.size'
             end
-            application.project.log_info application.project.t(code: code, data: { value: size.to_f.round(2) })
+            dimg.project.log_info dimg.project.t(code: code, data: { value: size.to_f.round(2) })
           end
 
           def log_image_commands
             return if (bash_commands = image.send(:bash_commands)).empty?
-            application.project.log_info application.project.t(code: 'image.commands')
-            application.project.with_log_indent { application.project.log_info bash_commands.join("\n") }
+            dimg.project.log_info dimg.project.t(code: 'image.commands')
+            dimg.project.with_log_indent { dimg.project.log_info bash_commands.join("\n") }
           end
 
           def log_name
-            application.project.t(code: name, context: log_name_context)
+            dimg.project.t(code: name, context: log_name_context)
           end
 
           def log_name_context
@@ -69,15 +69,15 @@ module Dapp
           end
 
           def log_state(state_code, styles: {})
-            application.project.log_state(log_name,
-                                          state: application.project.t(code: state_code, context: 'state'),
-                                          styles: styles) unless should_be_quiet?
+            dimg.project.log_state(log_name,
+                                   state: dimg.project.t(code: state_code, context: 'state'),
+                                   styles: styles) unless should_be_quiet?
           end
 
           def log_image_build_process
             return yield if should_be_quiet?
-            application.project.log_process(log_name, process: application.project.t(code: 'status.process.building'),
-                                                      short: should_not_be_detailed?) do
+            dimg.project.log_process(log_name, process: dimg.project.t(code: 'status.process.building'),
+                                     short: should_not_be_detailed?) do
               yield
             end
           end
@@ -91,11 +91,11 @@ module Dapp
           end
 
           def should_be_introspected?
-            application.project.cli_options[:introspect_stage] == name && !application.project.dry_run? && !application.artifact?
+            dimg.project.cli_options[:introspect_stage] == name && !dimg.project.dry_run? && !dimg.artifact?
           end
 
           def should_be_quiet?
-            application.artifact? && !application.project.log_verbose?
+            dimg.artifact? && !dimg.project.log_verbose?
           end
         end
       end # Mod

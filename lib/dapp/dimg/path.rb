@@ -1,6 +1,6 @@
 module Dapp
-  # Application
-  class Application
+  # Dimg
+  class Dimg
     # Path
     module Path
       def home_path(*path)
@@ -30,5 +30,5 @@ module Dapp
         path.compact.map(&:to_s).inject(Pathname.new(base), &:+)
       end
     end # Path
-  end # Application
+  end # Dimg
 end # Dapp

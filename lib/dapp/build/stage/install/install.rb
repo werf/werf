@@ -6,28 +6,28 @@ module Dapp
         class Install < Base
           include Mod::Group
 
-          def initialize(application, next_stage)
-            @prev_stage = GAPreInstallPatch.new(application, self)
+          def initialize(dimg, next_stage)
+            @prev_stage = GAPreInstallPatch.new(dimg, self)
             super
           end
 
           def empty?
-            !application.builder.install?
+            !dimg.builder.install?
           end
 
           def context
-            [install_dependencies_files_checksum, application.builder.install_checksum]
+            [install_dependencies_files_checksum, dimg.builder.install_checksum]
           end
 
           def prepare_image
             super
-            application.builder.install(image)
+            dimg.builder.install(image)
           end
 
           private
 
           def install_dependencies_files_checksum
-            @install_dependencies_files_checksum ||= dependencies_files_checksum(application.config._install_dependencies)
+            @install_dependencies_files_checksum ||= dependencies_files_checksum(dimg.config._install_dependencies)
           end
         end # Install
       end

@@ -3,9 +3,9 @@ module Dapp
     module Stage
       # DockerInstructions
       class DockerInstructions < Base
-        def initialize(application)
-          @prev_stage = GALatestPatch.new(application, self)
-          @application = application
+        def initialize(dimg)
+          @prev_stage = GALatestPatch.new(dimg, self)
+          @dimg = dimg
         end
 
         def dependencies

@@ -3,10 +3,10 @@ en:
     missing_translation: "Missing translation for code: '%{code}'!"
     shellout:
       shell_command_failed: ">>> START STREAM\n%{stream}\n>>> END STREAM"
-    application:
-      application_not_built: "Application hasn't been built yet!"
-      application_not_run: "Application run failed!"
-      git_branch_without_name: "Application has specific revision that isn't associated with a branch name!"
+    dimg:
+      dimg_not_built: "Dimg hasn't been built yet!"
+      dimg_not_run: "Dimg run failed!"
+      git_branch_without_name: "Dimg has specific revision that isn't associated with a branch name!"
       ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
       chef_stage_checksum_not_calculated: "Chef stage '%{stage}' checksum is not calculated yet, run build first"
     dappfile:
@@ -18,16 +18,16 @@ en:
       built_id_not_defined: '`from.built_id` not defined!'
       from_image_not_found: 'Image `%{name}` not found!'
     project:
-      spush_command_unexpected_apps_number: "Command 'spush' can process only one application!"
-      command_unexpected_apps_number: "Command can process only one application!"
-      no_such_app: "No such app: '%{apps_patterns}'!"
+      spush_command_unexpected_dimgs_number: "Command 'spush' can process only one dimg!"
+      command_unexpected_dimgs_number: "Command can process only one dimg!"
+      no_such_dimg: "No such dimg: '%{dimgs_patterns}'!"
       dappfile_not_found: "Dappfile not found!"
       cannot_run_ssh_agent: "Cannot run ssh-agent"
       ssh_key_not_found: "Ssh key '%{path}' not exist!"
       mrproper_required_option: "Expected command option '--all' or '--improper-cache-version-stages'!"
     config:
       dimg_name_required: 'Dimg name required!'
-      dimg_name_incorrect: "Application has incorrect name '%{name}': doesn't match regex '%{reg}'!"
+      dimg_name_incorrect: "Dimg has incorrect name '%{name}': doesn't match regex '%{reg}'!"
       export_to_required: "Export: 'to' directive required!"
       export_cwd_absolute_path_required: "Export: given cwd path must be absolute!"
       export_to_absolute_path_required: "Export: given 'to' path must be absolute!"
@@ -42,8 +42,8 @@ en:
       stage_artifact_double_associate: "Artifact cannot use with both associated options 'before' and 'after'!"
       stage_artifact_not_supported_associated_stage: "Artifact not supported associated stage '%{stage}'!"
       artifact_conflict: "Conflict between artifacts paths!"
-      scratch_unsupported_directive: "Scratch application has unsupported directive '%{directive}'!"
-      scratch_artifact_required: "Scratch application without artifacts!"
+      scratch_unsupported_directive: "Scratch dimg has unsupported directive '%{directive}'!"
+      scratch_artifact_required: "Scratch dimg without artifacts!"
       scratch_artifact_associated: "Scratch artifact cannot be associated: not expected 'before'/'after' option!"
       scratch_artifact_docker_from: "Scratch artifact must have directive 'docker.from'!"
     chef:
@@ -51,7 +51,7 @@ en:
       mdapp_dependency_in_metadata_forbidden: "Using mdapp as dependency in metadata.rb forbidden: detected '%{dependency}'"
     registry:
       incorrect_repo: 'Incorrect repository!'
-      no_such_app: 'No such app in registry!'
+      no_such_dimg: 'No such dimg in registry!'
       authenticate_type_not_supported: 'Registry authenticate type not supported!'
       page_not_found: "Page '%{url}' not found!"
       user_not_authorized: 'User not authorized!'

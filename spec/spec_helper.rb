@@ -12,7 +12,7 @@ require 'active_support'
 require 'recursive_open_struct'
 
 require 'spec_helper/common'
-require 'spec_helper/application'
+require 'spec_helper/dimg'
 require 'spec_helper/git'
 require 'spec_helper/config'
 

@@ -2,20 +2,20 @@ module Dapp
   module GitRepo
     # Normal Git repo
     class Remote < Base
-      def initialize(application, name, url:)
-        super(application, name)
+      def initialize(dimg, name, url:)
+        super(dimg, name)
 
         @url = url
 
-        application.project.log_secondary_process(application.project.t(code: 'process.git_artifact_clone', data: { name: name }), short: true) do
+        dimg.project.log_secondary_process(dimg.project.t(code: 'process.git_artifact_clone', data: { name: name }), short: true) do
           git "clone --bare --depth 1 #{url} #{path}"
         end unless File.directory?(path)
       end
 
       def fetch!(branch = 'master')
-        application.project.log_secondary_process(application.project.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
+        dimg.project.log_secondary_process(dimg.project.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
           git_bare "fetch origin #{branch}:#{branch}"
-        end unless application.ignore_git_fetch || application.project.dry_run?
+        end unless dimg.ignore_git_fetch || dimg.project.dry_run?
       end
 
       def cleanup!

@@ -9,31 +9,31 @@ module Dapp
           def stages_cleanup_local(repo)
             lock_repo(repo, readonly: true) do
               registry = registry(repo)
-              repo_applications = repo_applications_images(registry)
+              repo_dimgs = repo_dimgs_images(registry)
               proper_cache if proper_cache_version?
               build_configs.map(&:_basename).uniq.each do |basename|
-                cleanup_project(basename, repo_applications)
+                cleanup_project(basename, repo_dimgs)
               end
             end
           end
 
           protected
 
-          def cleanup_project(basename, repo_applications)
+          def cleanup_project(basename, repo_dimgs)
             lock("#{basename}.images") do
               log_step_with_indent(basename) do
                 project_containers_flush(basename)
                 project_dangling_images_flush(basename)
-                apps, stages = project_images_hash(basename).partition { |_, image_id| repo_applications.values.include?(image_id) }
-                apps = apps.to_h
+                dimgs, stages = project_images_hash(basename).partition { |_, image_id| repo_dimgs.values.include?(image_id) }
+                dimgs = dimgs.to_h
                 stages = stages.to_h
-                apps.each { |_, aiid| clear_stages(aiid, stages) }
+                dimgs.each { |_, aiid| clear_stages(aiid, stages) }
                 remove_images(stages.keys)
               end
             end
           end
 
-          def repo_applications_images(registry)
+          def repo_dimgs_images(registry)
             repo_images(registry).first
           end
 

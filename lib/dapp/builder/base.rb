@@ -2,13 +2,13 @@ module Dapp
   module Builder
     # Base
     class Base
-      attr_reader :application
+      attr_reader :dimg
 
-      def initialize(application)
-        @application = application
+      def initialize(dimg)
+        @dimg = dimg
       end
 
-      def before_application_should_be_built_check
+      def before_dimg_should_be_built_check
       end
 
       def before_install?

@@ -52,11 +52,11 @@ module Dapp
         end
 
         def stage_cache(basename)
-          cache_format % { application_name: basename }
+          cache_format % { dimg_name: basename }
         end
 
         def stage_dapp_label(basename)
-          stage_dapp_label_format % { application_name: basename }
+          stage_dapp_label_format % { dimg_name: basename }
         end
 
         def container_name(basename)

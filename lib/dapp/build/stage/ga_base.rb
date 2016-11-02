@@ -19,9 +19,9 @@ module Dapp
 
         def prepare_image
           super
-          image.add_volumes_from application.project.gitartifact_container
+          image.add_volumes_from dimg.project.gitartifact_container
 
-          application.git_artifacts.each do |git_artifact|
+          dimg.git_artifacts.each do |git_artifact|
             image.add_volume "#{git_artifact.repo.path}:#{git_artifact.repo.container_path}:ro"
             image.add_command git_artifact.send(apply_command_method, self)
           end

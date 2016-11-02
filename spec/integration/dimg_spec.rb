@@ -1,8 +1,8 @@
 require_relative '../spec_helper'
 
-describe Dapp::Application do
+describe Dapp::Dimg do
   include SpecHelper::Common
-  include SpecHelper::Application
+  include SpecHelper::Dimg
   include SpecHelper::Git
 
   before :all do
@@ -11,7 +11,7 @@ describe Dapp::Application do
   end
 
   before :each do
-    application_build!
+    dimg_build!
   end
 
   after :all do
@@ -175,9 +175,9 @@ describe Dapp::Application do
   def check_signatures_and_build(stage_name)
     saved_signatures = stages_signatures
     send(:"change_#{stage_name}")
-    application_renew
+    dimg_renew
     expect_stages_signatures(stage_name, saved_signatures, stages_signatures)
-    application_build!
+    dimg_build!
   end
 
   def expect_stages_signatures(stage_name, saved_keys, new_keys)

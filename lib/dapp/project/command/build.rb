@@ -10,7 +10,7 @@ module Dapp
 
           build_configs.each do |config|
             log_step_with_indent(config._name) do
-              Application.new(config: config, project: self).build!
+              Dimg.new(config: config, project: self).build!
             end
           end
         end

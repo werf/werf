@@ -4,8 +4,8 @@ module Dapp
     class Shell < Base
       [:before_install, :before_setup, :install, :setup, :build_artifact].each do |stage|
         define_method("#{stage}_checksum") do
-          [application.config._shell.public_send("_#{stage}"),
-           application.config._shell.public_send("_#{stage}_cache_version")].flatten
+          [dimg.config._shell.public_send("_#{stage}"),
+           dimg.config._shell.public_send("_#{stage}_cache_version")].flatten
         end
         define_method("#{stage}?") { !stage_empty?(stage) }
         define_method(stage.to_s) do |image|
@@ -18,7 +18,7 @@ module Dapp
       end
 
       def stage_commands(stage)
-        application.config._shell.public_send("_#{stage}")
+        dimg.config._shell.public_send("_#{stage}")
       end
     end
   end

@@ -6,9 +6,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp run [options] [APP PATTERN] [DOCKER ARGS]
+  dapp run [options] [DIMG PATTERN] [DOCKER ARGS]
 
-    APP PATTERN                 Application to process [default: *].
+    DIMG PATTERN                Dapp image to process [default: *].
     DOCKER ARGS                 Docker run options and command separated by '--'
 
 Options:
@@ -46,7 +46,7 @@ BANNER
         index = filtered_args.index('--') || filtered_args.count
         docker_options = index.nonzero? ? filtered_args.slice(0..index - 1) : []
         command = filtered_args.slice(index + 1..-1) || []
-        Project.new(cli_options: config, apps_patterns: pattern).run(docker_options, command)
+        Project.new(cli_options: config, dimgs_patterns: pattern).run(docker_options, command)
       end
     end
   end

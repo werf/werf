@@ -5,15 +5,15 @@ module Dapp
     module Dappfile
       def build_configs
         @configs ||= begin
-          dappfiles.map { |dappfile| apps(dappfile, app_filters: apps_patterns) }.flatten.tap do |apps|
-            raise Error::Project, code: :no_such_app, data: { apps_patterns: apps_patterns.join(', ') } if apps.empty?
+          dappfiles.map { |dappfile| dimgs(dappfile, dimgs_filters: dimgs_patterns) }.flatten.tap do |dimgs|
+            raise Error::Project, code: :no_such_dimg, data: { dimgs_patterns: dimgs_patterns.join(', ') } if dimgs.empty?
           end
         end
       end
 
       def dappfiles
         if File.exist?(dappfile_path)                 then [dappfile_path]
-        elsif !dapps_dappfiles_pathes.empty?          then dapps_dappfiles_pathes
+        elsif !dimgs_dappfiles_pathes.empty?          then dimgs_dappfiles_pathes
         elsif (dappfile_path = search_up('Dappfile')) then [dappfile_path]
         else raise Error::Project, code: :dappfile_not_found
         end
@@ -23,7 +23,7 @@ module Dapp
         File.join [cli_options[:dir], 'Dappfile'].compact
       end
 
-      def dapps_dappfiles_pathes
+      def dimgs_dappfiles_pathes
         path = []
         path << cli_options[:dir]
         path << '.dapps' unless File.basename(work_dir) == '.dapps'
@@ -52,8 +52,8 @@ module Dapp
         path
       end
 
-      def apps(dappfile_path, app_filters:)
-        config = Config::Main.new(dappfile_path: dappfile_path, project: self) do |conf|
+      def dimgs(dappfile_path, dimgs_filters:)
+        Config::DimgGroupMain.new(project: self) do |conf|
           begin
             conf.instance_eval File.read(dappfile_path), dappfile_path
           rescue SyntaxError, StandardError => e
@@ -63,8 +63,8 @@ module Dapp
             raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
           end
         end
-        config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }.tap do |apps|
-          apps.each { |app| app.send(:validate!) }
+        ._dimg.select { |dimg| dimgs_filters.any? { |pattern| File.fnmatch(pattern, dimg._name.to_s) } }.tap do |dimgs|
+          dimgs.each { |dimg| dimg.send(:validate!) }
         end
       end
     end # Dappfile

@@ -1,6 +1,6 @@
 module Dapp
-  # Application
-  class Application
+  # Dimg
+  class Dimg
     # GitArtifact
     module GitArtifact
       def git_artifacts
@@ -22,5 +22,5 @@ module Dapp
         end
       end
     end # GitArtifact
-  end # Application
+  end # Dimg
 end # Dapp

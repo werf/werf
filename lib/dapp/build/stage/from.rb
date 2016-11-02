@@ -8,7 +8,7 @@ module Dapp
         end
 
         def dependencies
-          [from_image_name, application.config._docker._from_cache_version, Dapp::BUILD_CACHE_VERSION]
+          [from_image_name, dimg.config._docker._from_cache_version, Dapp::BUILD_CACHE_VERSION]
         end
 
         protected
@@ -26,11 +26,11 @@ module Dapp
         private
 
         def from_image_name
-          application.config._docker._from
+          dimg.config._docker._from
         end
 
         def from_image
-          @from_image ||= Image::Stage.new(name: from_image_name, project: application.project)
+          @from_image ||= Image::Stage.new(name: from_image_name, project: dimg.project)
         end
       end # Prepare
     end # Stage

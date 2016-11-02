@@ -3,13 +3,13 @@ require_relative '../spec_helper'
 describe Dapp::GitArtifact do
   include SpecHelper::Common
   include SpecHelper::Git
-  include SpecHelper::Application
+  include SpecHelper::Dimg
 
   before :each do
     init
     git_init!
     stub_stages
-    stub_application
+    stub_dimg
   end
 
   def init
@@ -49,11 +49,11 @@ describe Dapp::GitArtifact do
   end
 
   def g_a_archive_stage
-    @g_a_archive_stage ||= Dapp::Build::Stage::GAArchive.new(empty_application, stubbed_stage)
+    @g_a_archive_stage ||= Dapp::Build::Stage::GAArchive.new(empty_dimg, stubbed_stage)
   end
 
   def g_a_latest_patch_stage
-    @g_a_latest_patch_stage ||= Dapp::Build::Stage::GALatestPatch.new(empty_application, stubbed_stage)
+    @g_a_latest_patch_stage ||= Dapp::Build::Stage::GALatestPatch.new(empty_dimg, stubbed_stage)
   end
 
   def git_artifact
@@ -63,7 +63,7 @@ describe Dapp::GitArtifact do
   def stubbed_repo
     instance_double(Dapp::GitRepo::Own).tap do |instance|
       allow(instance).to receive(:container_path) { '.git' }
-      allow(instance).to receive(:application) { application }
+      allow(instance).to receive(:dimg) { dimg }
     end
   end
 

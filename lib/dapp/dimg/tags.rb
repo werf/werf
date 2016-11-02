@@ -1,6 +1,6 @@
 module Dapp
-  # Application
-  class Application
+  # Dimg
+  class Dimg
     # Tags
     module Tags
       protected
@@ -21,7 +21,7 @@ module Dapp
 
       def branch_tags
         return [] unless project.cli_options[:tag_branch]
-        raise Error::Application, code: :git_branch_without_name if (branch = git_repo.branch) == 'HEAD'
+        raise Error::Dimg, code: :git_branch_without_name if (branch = git_repo.branch) == 'HEAD'
         [branch]
       end
 
@@ -39,7 +39,7 @@ module Dapp
         elsif ENV['TRAVIS']
           build_id = ENV['TRAVIS_BUILD_NUMBER']
         else
-          raise Error::Application, code: :ci_environment_required
+          raise Error::Dimg, code: :ci_environment_required
         end
 
         [build_id]
@@ -55,11 +55,11 @@ module Dapp
           branch = ENV['TRAVIS_BRANCH']
           tag = ENV['TRAVIS_TAG']
         else
-          raise Error::Application, code: :ci_environment_required
+          raise Error::Dimg, code: :ci_environment_required
         end
 
         [branch, tag].compact
       end
     end # Tags
-  end # Application
+  end # Dimg
 end # Dapp

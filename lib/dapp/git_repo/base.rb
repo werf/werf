@@ -2,20 +2,20 @@ module Dapp
   module GitRepo
     # Base class for any Git repo (remote, gitkeeper, etc)
     class Base
-      attr_reader :application
+      attr_reader :dimg
       attr_reader :name
 
-      def initialize(application, name)
-        @application = application
+      def initialize(dimg, name)
+        @dimg = dimg
         @name = name
       end
 
       def container_path
-        application.container_tmp_path "#{name}.git"
+        dimg.container_tmp_path "#{name}.git"
       end
 
       def path
-        application.tmp_path "#{name}.git"
+        dimg.tmp_path "#{name}.git"
       end
 
       def git_bare(command, **kwargs)
@@ -44,7 +44,7 @@ module Dapp
       protected
 
       def git(command, **kwargs)
-        application.project.system_shellout! "#{application.project.git_path} #{command}", **kwargs
+        dimg.project.system_shellout! "#{dimg.project.git_path} #{command}", **kwargs
       end
     end
   end

@@ -8,10 +8,10 @@ module Dapp
         include Mod::Logging
 
         attr_accessor :prev_stage, :next_stage
-        attr_reader :application
+        attr_reader :dimg
 
-        def initialize(application, next_stage)
-          @application = application
+        def initialize(dimg, next_stage)
+          @dimg = dimg
 
           @next_stage = next_stage
           @next_stage.prev_stage = self
@@ -19,14 +19,14 @@ module Dapp
 
         # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity
         def build_lock!
-          return yield if application.project.dry_run?
+          return yield if dimg.project.dry_run?
 
           try_lock = proc do
             next yield unless should_be_tagged?
 
             no_lock = false
 
-            application.project.lock("#{application.config._basename}.image.#{image.name}") do
+            dimg.project.lock("#{dimg.config._basename}.image.#{image.name}") do
               image.cache_reset
 
               if should_be_tagged?
@@ -60,7 +60,7 @@ module Dapp
         def save_in_cache!
           prev_stage.save_in_cache! if prev_stage
           return unless should_be_tagged?
-          image.tag! unless application.project.dry_run?
+          image.tag! unless dimg.project.dry_run?
         end
 
         def image
@@ -68,36 +68,36 @@ module Dapp
             if empty?
               prev_stage.image
             else
-              Image::Stage.new(name: image_name, from: from_image, project: application.project)
+              Image::Stage.new(name: image_name, from: from_image, project: dimg.project)
             end
           end
         end
 
         def prepare_image
-          return if application.project.dry_run?
-          image.add_volumes_from application.project.base_container
+          return if dimg.project.dry_run?
+          image.add_volumes_from dimg.project.base_container
           image_add_tmp_volumes(:tmp)
           image_add_tmp_volumes(:build)
-          image.add_service_change_label dapp: application.stage_dapp_label
+          image.add_service_change_label dapp: dimg.stage_dapp_label
           image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
 
-          if application.project.ssh_auth_sock
-            image.add_volume "#{application.project.ssh_auth_sock}:/tmp/dapp-ssh-agent"
+          if dimg.project.ssh_auth_sock
+            image.add_volume "#{dimg.project.ssh_auth_sock}:/tmp/dapp-ssh-agent"
             image.add_env 'SSH_AUTH_SOCK', '/tmp/dapp-ssh-agent'
           end
         end
 
         def image_add_tmp_volumes(type)
-          (application.config.public_send("_#{type}_dir")._store +
+          (dimg.config.public_send("_#{type}_dir")._store +
             from_image.labels.select { |l, _| l == "dapp-#{type}-dir" }.map { |_, value| value.split(';') }.flatten).each do |path|
             absolute_path = File.expand_path(File.join('/', path))
-            tmp_path = application.send("#{type}_path", absolute_path[1..-1]).tap(&:mkpath)
+            tmp_path = dimg.send("#{type}_path", absolute_path[1..-1]).tap(&:mkpath)
             image.add_volume "#{tmp_path}:#{absolute_path}"
           end
         end
 
         def image_should_be_build?
-          !empty? || application.project.log_verbose?
+          !empty? || dimg.project.log_verbose?
         end
 
         def empty?
@@ -127,7 +127,7 @@ module Dapp
         end
 
         def should_be_skipped?
-          image.tagged? && !application.project.log_verbose? && !should_be_introspected?
+          image.tagged? && !dimg.project.log_verbose? && !should_be_introspected?
         end
 
         def should_be_tagged?
@@ -140,7 +140,7 @@ module Dapp
         end
 
         def image_name
-          application.stage_cache_format % { signature: signature }
+          dimg.stage_cache_format % { signature: signature }
         end
 
         def from_image
@@ -154,15 +154,15 @@ module Dapp
         end
 
         def dependencies_files_checksum(regs)
-          regs.map! { |reg| File.directory?(File.join(application.project.path, reg)) ? File.join(reg, '**', '*') : reg }
-          unless (files = regs.map { |reg| Dir[File.join(application.project.path, reg)].map { |f| File.read(f) if File.file?(f) } }).empty?
+          regs.map! { |reg| File.directory?(File.join(dimg.project.path, reg)) ? File.join(reg, '**', '*') : reg }
+          unless (files = regs.map { |reg| Dir[File.join(dimg.project.path, reg)].map { |f| File.read(f) if File.file?(f) } }).empty?
             hashsum files
           end
         end
 
         def change_options
           @change_options ||= begin
-            application.config._docker._change_options.to_h.delete_if do |_, val|
+            dimg.config._docker._change_options.to_h.delete_if do |_, val|
               val.nil? || (val.respond_to?(:empty?) && val.empty?)
             end
           end

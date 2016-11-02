@@ -7,16 +7,16 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages cleanup repo [options] [APPS PATTERN ...] REPO
+  dapp stages cleanup repo [options] [DIMGS PATTERN ...] REPO
 
-    APPS PATTERN                Applications to process [default: *].
+    DIMGS PATTERN               Dapp images to process [default: *].
 
 Options:
 BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
           repo = self.class.required_argument(self)
-          Project.new(cli_options: config, apps_patterns: cli_arguments).stages_cleanup_repo(repo)
+          Project.new(cli_options: config, dimgs_patterns: cli_arguments).stages_cleanup_repo(repo)
         end
       end
     end

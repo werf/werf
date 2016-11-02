@@ -12,7 +12,7 @@ module Dapp
 
       @where_to_add = where_to_add
 
-      @branch = branch || repo.application.project.cli_options[:git_artifact_branch] || repo.branch
+      @branch = branch || repo.dimg.project.cli_options[:git_artifact_branch] || repo.branch
       @commit = commit
 
       cwd = File.expand_path(File.join('/', cwd))[1..-1] unless cwd.nil? || cwd.empty?
@@ -27,9 +27,9 @@ module Dapp
     def apply_archive_command(stage)
       credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
-      ["#{repo.application.project.install_path} #{credentials.join(' ')} -d #{where_to_add}",
-       ["#{repo.application.project.git_path} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths.join(' ')}",
-        "#{sudo}#{repo.application.project.tar_path} -x -C #{where_to_add} #{archive_command_excludes.join(' ')}"].join(' | ')]
+      ["#{repo.dimg.project.install_path} #{credentials.join(' ')} -d #{where_to_add}",
+       ["#{repo.dimg.project.git_path} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{paths.join(' ')}",
+        "#{sudo}#{repo.dimg.project.tar_path} -x -C #{where_to_add} #{archive_command_excludes.join(' ')}"].join(' | ')]
     end
 
     def apply_patch_command(stage)
@@ -37,8 +37,8 @@ module Dapp
       prev_commit = stage.prev_g_a_stage.layer_commit(self)
 
       if prev_commit != current_commit || any_changes?(prev_commit, current_commit)
-        [["#{repo.application.project.git_path} --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
-          "#{sudo}#{repo.application.project.git_path} apply --whitespace=nowarn --directory=#{where_to_add} #{patch_command_excludes.join(' ')} --unsafe-paths"].join(' | ')]
+        [["#{repo.dimg.project.git_path} --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
+          "#{sudo}#{repo.dimg.project.git_path} apply --whitespace=nowarn --directory=#{where_to_add} #{patch_command_excludes.join(' ')} --unsafe-paths"].join(' | ')]
       else
         []
       end
@@ -97,7 +97,7 @@ module Dapp
     attr_reader :group
 
     def sudo
-      repo.application.project.sudo_command(owner: owner, group: group)
+      repo.dimg.project.sudo_command(owner: owner, group: group)
     end
 
     def diff_command(from, to, quiet: false)

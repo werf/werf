@@ -3,13 +3,13 @@ module Dapp
     module Stage
       # GAArchiveDependencies
       class GAArchiveDependencies < GADependenciesBase
-        def initialize(application, next_stage)
-          @prev_stage = BeforeInstallArtifact.new(application, self)
+        def initialize(dimg, next_stage)
+          @prev_stage = BeforeInstallArtifact.new(dimg, self)
           super
         end
 
         def dependencies
-          [application.git_artifacts.map(&:paramshash).join]
+          [dimg.git_artifacts.map(&:paramshash).join]
         end
       end # GAArchiveDependencies
     end # Stage

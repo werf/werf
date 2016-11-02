@@ -3,11 +3,11 @@ module Dapp
     module Stage
       # AfterSetupArtifact
       class AfterSetupArtifact < ArtifactDefault
-        def initialize(application, next_stage)
-          @prev_stage = if application.artifact?
-                          SetupGroup::ChefCookbooks.new(application, self)
+        def initialize(dimg, next_stage)
+          @prev_stage = if dimg.artifact?
+                          SetupGroup::ChefCookbooks.new(dimg, self)
                         else
-                          SetupGroup::GAPostSetupPatch.new(application, self)
+                          SetupGroup::GAPostSetupPatch.new(dimg, self)
                         end
           super
         end

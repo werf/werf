@@ -2,7 +2,7 @@ require_relative '../spec_helper'
 
 describe Dapp::Artifact do
   include SpecHelper::Common
-  include SpecHelper::Application
+  include SpecHelper::Dimg
 
   def openstruct_config
     @openstruct_config ||= begin
@@ -24,7 +24,7 @@ describe Dapp::Artifact do
     artifact
   end
 
-  context :application do
+  context :dimg do
     def expect_file
       image_name = stages[expect_stage].send(:image_name)
       expect { shellout!("docker run --rm #{image_name} bash -lec 'cat /#{@artifact}/test'") }.to_not raise_error
@@ -42,7 +42,7 @@ describe Dapp::Artifact do
           @stage = stage
 
           config[:"_#{@artifact}"] = [artifact_config]
-          application_build!
+          dimg_build!
           expect_file
         end
       end
@@ -54,7 +54,7 @@ describe Dapp::Artifact do
       @artifact = :import_artifact
       config[:_import_artifact] = [artifact_config]
       config[:_docker][:_from] = nil
-      application_build!
+      dimg_build!
 
       image_name = stages[:import_artifact].send(:image_name)
       container_name = image_name.sub(':', '.')
