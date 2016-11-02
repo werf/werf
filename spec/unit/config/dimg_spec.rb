@@ -227,7 +227,7 @@ describe Dapp::Config::Dimg do
       end
 
       context 'positive' do
-        it 'different where_to_add' do
+        it 'different to' do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup
@@ -294,7 +294,7 @@ describe Dapp::Config::Dimg do
           expect { dimg.send(:validate!) }.to_not raise_error
         end
 
-        it 'where_to_add with paths' do
+        it 'to with paths' do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup
@@ -310,7 +310,7 @@ describe Dapp::Config::Dimg do
           expect { dimg.send(:validate!) }.to_not raise_error
         end
 
-        it 'where_to_add with exclude_paths' do
+        it 'to with exclude_paths' do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup
@@ -328,7 +328,7 @@ describe Dapp::Config::Dimg do
       end
 
       context 'negative' do
-        it 'same where_to_add' do
+        it 'same to' do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup
@@ -343,7 +343,7 @@ describe Dapp::Config::Dimg do
           expect_exception_code(:artifact_conflict) { dimg.send(:validate!) }
         end
 
-        it 'conflict between where_to_add' do
+        it 'conflict between to' do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup

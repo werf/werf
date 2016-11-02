@@ -15,7 +15,7 @@ module Dapp
           @image ||= Image::Scratch.new(name: image_name, project: dimg.project)
         end
 
-        def image_add_tmp_volumes(_type)
+        def image_add_volumes
         end
 
         def prepare_image
@@ -34,10 +34,10 @@ module Dapp
           artifact_name = artifact[:name]
           artifact_dimg = artifact[:dimg]
           cwd = artifact[:options][:cwd]
-          paths = artifact[:options][:paths]
+          include_paths = artifact[:options][:include_paths]
           owner = artifact[:options][:owner]
           group = artifact[:options][:group]
-          where_to_add = artifact[:options][:where_to_add]
+          to = artifact[:options][:to]
 
           sudo = dimg.project.sudo_command(owner: Process.uid, group: Process.gid)
 
@@ -50,15 +50,18 @@ module Dapp
           container_archive_path = File.join(artifact_dimg.container_tmp_path(artifact_name), 'archive.tar.gz')
 
           exclude_paths = artifact[:options][:exclude_paths].map { |path| "--exclude=#{path}" }.join(' ')
-          paths = if paths.empty?
-                    [File.join(where_to_add, cwd, '*')]
-                  else
-                    paths.map { |path| File.join(where_to_add, cwd, path, '*') }
-                  end
-          paths.map! { |path| path[1..-1] } # relative path
+          include_paths = if include_paths.empty?
+                    [File.join(to, cwd, '*')]
+                          else
+                    include_paths.map { |path| File.join(to, cwd, path, '*') }
+                          end
+          include_paths.map! { |path| path[1..-1] } # relative path
 
-          command = "#{sudo} #{dimg.project.tar_path} -czf #{container_archive_path} #{exclude_paths} #{paths.join(' ')} #{credentials}"
+          command = "#{sudo} #{dimg.project.tar_path} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
           run_artifact_dimg(artifact_dimg, artifact_name, command)
+
+          puts command
+          puts archive_path
 
           image.add_archive archive_path
         end

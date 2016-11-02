@@ -5,7 +5,7 @@ describe Dapp::Builder::Shell do
   include SpecHelper::Dimg
 
   def config
-    @config ||= default_config.merge(_builder: :shell, _home_path: '')
+    @config ||= default_config.merge(_builder: :shell)
   end
 
   def expect_files

@@ -14,12 +14,8 @@ describe Dapp::GitArtifact do
 
   def init
     FileUtils.mkdir 'project'
-    @where_to_add = File.expand_path('where-to-add')
+    @to = File.expand_path('to')
     Dir.chdir File.expand_path('project')
-  end
-
-  def config
-    @config ||= default_config.merge(_home_path: '')
   end
 
   def stubbed_stage
@@ -70,10 +66,10 @@ describe Dapp::GitArtifact do
   def git_artifact_local_options
     {
       cwd: (@cwd ||= ''),
-      paths: (@paths ||= []),
+      include_paths: (@include_paths ||= []),
       exclude_paths: (@exclude_paths ||= []),
       branch: (@branch ||= 'master'),
-      where_to_add: @where_to_add,
+      to: @to,
       group: (@group ||= 'root'),
       owner: (@owner ||= 'root')
     }
@@ -84,19 +80,19 @@ describe Dapp::GitArtifact do
       @branch = kwargs[:branch] unless kwargs[:branch].nil?
       command_apply(archive_command) if type == :patch && !kwargs[:ignore_archive_apply]
 
-      [:cwd, :paths, :exclude_paths, :where_to_add, :group, :owner].each do |opt|
+      [:cwd, :include_paths, :exclude_paths, :to, :group, :owner].each do |opt|
         instance_variable_set(:"@#{opt}", kwargs[opt]) unless kwargs[opt].nil?
       end
       add_files.each { |file_path| git_change_and_commit!(file_path, branch: @branch) }
 
       command_apply(send("#{type}_command"))
 
-      expect(File.exist?(@where_to_add)).to be_truthy
-      added_files.each { |file_path| expect(File.exist?(File.join(@where_to_add, file_path))).to be_truthy }
-      not_added_files.each { |file_path| expect(File.exist?(File.join(@where_to_add, file_path))).to be_falsey }
+      expect(File.exist?(@to)).to be_truthy
+      added_files.each { |file_path| expect(File.exist?(File.join(@to, file_path))).to be_truthy }
+      not_added_files.each { |file_path| expect(File.exist?(File.join(@to, file_path))).to be_falsey }
 
       blk.call unless blk.nil? # expectation
-      remove_where_to_add
+      remove_to
     end
   end
 
@@ -115,8 +111,8 @@ describe Dapp::GitArtifact do
     end
   end
 
-  def remove_where_to_add
-    FileUtils.rm_rf @where_to_add
+  def remove_to
+    FileUtils.rm_rf @to
   end
 
   def with_credentials(owner_name, group_name)
@@ -155,25 +151,25 @@ describe Dapp::GitArtifact do
     it "#{type} paths", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
                             added_files: %w(x/y/data.txt z/data.txt), not_added_files: ['x/data.txt'],
-                            paths: %w(x/y z))
+                            include_paths: %w(x/y z))
     end
 
     it "#{type} paths (files)", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
                             added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(x/data.txt),
-                            paths: %w(x/y/data.txt z/data.txt))
+                            include_paths: %w(x/y/data.txt z/data.txt))
     end
 
     it "#{type} paths (globs)", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
                             added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(x/data.txt),
-                            paths: %w(x/y/* z/[asdf]ata.txt))
+                            include_paths: %w(x/y/* z/[asdf]ata.txt))
     end
 
     it "#{type} cwd and paths", test_construct: true do
       send("#{type}_apply", add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
                             added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(a data.txt),
-                            cwd: 'a', paths: %w(x/y z))
+                            cwd: 'a', include_paths: %w(x/y z))
     end
 
     it "#{type} exclude_paths", test_construct: true do
@@ -203,7 +199,7 @@ describe Dapp::GitArtifact do
     it "#{type} cwd, paths and exclude_paths", test_construct: true do
       send("#{type}_apply", add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
                             added_files: %w(x/data.txt z/data.txt), not_added_files: %w(a data.txt x/y/data.txt),
-                            cwd: 'a', paths: [%w(x z)], exclude_paths: %w(x/y))
+                            cwd: 'a', include_paths: [%w(x z)], exclude_paths: %w(x/y))
     end
   end
 
@@ -214,7 +210,7 @@ describe Dapp::GitArtifact do
   it 'archive owner_and_group', test_construct: true do
     with_credentials(owner, group) do
       archive_apply(add_files: [file_name], owner: owner, group: group) do
-        expect_file_credentials(File.join(@where_to_add, file_name), owner, group)
+        expect_file_credentials(File.join(@to, file_name), owner, group)
       end
     end
   end
@@ -223,7 +219,7 @@ describe Dapp::GitArtifact do
     with_credentials(owner, group) do
       archive_apply(owner: owner, group: group) do
         patch_apply(add_files: [file_name], owner: owner, group: group, ignore_archive_apply: true) do
-          expect_file_credentials(File.join(@where_to_add, file_name), owner, group)
+          expect_file_credentials(File.join(@to, file_name), owner, group)
         end
       end
     end

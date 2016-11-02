@@ -60,15 +60,15 @@ module Dapp
       private
 
       def enabled_modules
-        dimg.config._chef._modules
+        dimg.config._chef._module
       end
 
       def enabled_recipes
-        dimg.config._chef._recipes
+        dimg.config._chef._recipe
       end
 
       def stage_attributes(stage)
-        dimg.config._chef.send("_#{stage}_attributes")
+        dimg.config._chef.send("__#{stage}_attributes")
       end
 
       def stage_attributes_raw(stage)

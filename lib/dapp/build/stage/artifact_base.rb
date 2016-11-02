@@ -61,16 +61,16 @@ module Dapp
         end
 
         # rubocop:disable Metrics/AbcSize
-        def run_artifact_dimg(dimg, artifact_name, commands)
+        def run_artifact_dimg(artifact_dimg, artifact_name, commands)
           docker_options = ['--rm',
-                            "--volume #{dimg.tmp_path('artifact', artifact_name)}:#{dimg.container_tmp_path(artifact_name)}",
+                            "--volume #{dimg.tmp_path('artifact', artifact_name)}:#{artifact_dimg.container_tmp_path(artifact_name)}",
                             "--volumes-from #{dimg.project.base_container}",
                             "--entrypoint #{dimg.project.bash_path}"]
           dimg.project.log_secondary_process(dimg.project.t(code: 'process.artifact_copy',
                                                             data: { name: artifact_name }),
                                              short: true,
                                              quiet: dimg.artifact? && !dimg.project.log_verbose?) do
-            dimg.run(docker_options, [%(-ec '#{dimg.project.shellout_pack(commands)}')])
+            artifact_dimg.run(docker_options, [%(-ec '#{dimg.project.shellout_pack(commands)}')])
           end
         end
         # rubocop:enable Metrics/AbcSize

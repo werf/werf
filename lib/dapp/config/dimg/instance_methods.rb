@@ -45,6 +45,10 @@ module Dapp
           _mount << Directive::Mount.new(to, &blk)
         end
 
+        def _builder
+          @_builder || :none
+        end
+
         def _chef
           @_chef ||= Directive::Chef.new
         end
@@ -139,8 +143,8 @@ module Dapp
         protected
 
         def builder_validation(type)
-          @_builder ||= type
-          raise Error::Config, code: :builder_type_conflict unless _builder == type
+          @_builder = type if _builder == :none
+          raise Error::Config, code: :builder_type_conflict unless @_builder == type
         end
 
         def directive_eval(directive, &blk)

@@ -40,6 +40,10 @@ module Dapp
           def commit(value)
             @_commit = value
           end
+
+          def _artifact_options
+            super.merge(name: _name, branch: _branch)
+          end
         end
       end
     end

@@ -4,7 +4,7 @@ module Dapp
     # Path
     module Path
       def home_path(*path)
-        make_path(config._home_path, *path).expand_path
+        make_path(project.path, *path).expand_path
       end
 
       def tmp_path(*path)

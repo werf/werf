@@ -76,8 +76,7 @@ module Dapp
         def prepare_image
           return if dimg.project.dry_run?
           image.add_volumes_from dimg.project.base_container
-          image_add_tmp_volumes(:tmp)
-          image_add_tmp_volumes(:build)
+          image_add_volumes
           image.add_service_change_label dapp: dimg.stage_dapp_label
           image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
 
@@ -87,8 +86,22 @@ module Dapp
           end
         end
 
-        def image_add_tmp_volumes(type)
-          (dimg.config.public_send("_#{type}_dir")._store +
+        def image_add_volumes
+          image_add_tmp_volumes
+          image_add_build_volumes
+          # TODO: image_add_custom_volumes
+        end
+
+        def image_add_tmp_volumes
+          image_add_default_volumes(:tmp_dir)
+        end
+
+        def image_add_build_volumes
+          image_add_default_volumes(:build_dir)
+        end
+
+        def image_add_default_volumes(type)
+          (dimg.config.public_send("_#{type}_mount").map(&:to) +
             from_image.labels.select { |l, _| l == "dapp-#{type}-dir" }.map { |_, value| value.split(';') }.flatten).each do |path|
             absolute_path = File.expand_path(File.join('/', path))
             tmp_path = dimg.send("#{type}_path", absolute_path[1..-1]).tap(&:mkpath)

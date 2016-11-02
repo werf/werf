@@ -38,7 +38,7 @@ describe Dapp::Dimg do
       _builder: :shell,
       _home_path: project_path,
       _docker: default_config[:_docker].merge(_from: :'ubuntu:16.04'),
-      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { where_to_add: '/app' } })
+      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { to: '/app' } })
     )
   end
 
@@ -67,18 +67,18 @@ describe Dapp::Dimg do
   end
 
   def expect_before_install_image
-    check_image_command(:before_install, config[:_shell][:_before_install].last)
+    check_image_command(:before_install, config[:_shell][:_before_install_command].last)
     check_image_command(:g_a_archive, 'tar -x')
   end
 
   def expect_before_setup_image
-    check_image_command(:before_setup, config[:_shell][:_before_setup].last)
+    check_image_command(:before_setup, config[:_shell][:_before_setup_command].last)
     check_image_command(:g_a_post_install_patch, 'apply')
   end
 
   [:install, :setup].each do |stage_name|
     define_method "expect_#{stage_name}_image" do
-      check_image_command(stage_name, config[:_shell][:"_#{stage_name}"].last)
+      check_image_command(stage_name, config[:_shell][:"_#{stage_name}_command"].last)
       check_image_command(prev_stage(stage_name), 'apply')
     end
   end
@@ -95,7 +95,7 @@ describe Dapp::Dimg do
 
   [:before_install, :install, :before_setup, :setup].each do |stage_name|
     define_method :"change_#{stage_name}" do
-      config[:_shell][:"_#{stage_name}"] << generate_command
+      config[:_shell][:"_#{stage_name}_command"] << generate_command
     end
   end
 
