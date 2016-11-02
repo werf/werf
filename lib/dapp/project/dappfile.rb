@@ -5,31 +5,15 @@ module Dapp
     module Dappfile
       def build_configs
         @configs ||= begin
-          dappfiles.map { |dappfile| dimgs(dappfile, dimgs_filters: dimgs_patterns) }.flatten.tap do |dimgs|
+          dimgs(dappfile_path, dimgs_filters: dimgs_patterns).flatten.tap do |dimgs|
             raise Error::Project, code: :no_such_dimg, data: { dimgs_patterns: dimgs_patterns.join(', ') } if dimgs.empty?
           end
         end
       end
 
-      def dappfiles
-        if File.exist?(dappfile_path)                 then [dappfile_path]
-        elsif !dimgs_dappfiles_pathes.empty?          then dimgs_dappfiles_pathes
-        elsif (dappfile_path = search_up('Dappfile')) then [dappfile_path]
-        else raise Error::Project, code: :dappfile_not_found
-        end
-      end
-
       def dappfile_path
-        File.join [cli_options[:dir], 'Dappfile'].compact
-      end
-
-      def dimgs_dappfiles_pathes
-        path = []
-        path << cli_options[:dir]
-        path << '.dapps' unless File.basename(work_dir) == '.dapps'
-        path << '*'
-        path << 'Dappfile'
-        Dir.glob(File.join(path.compact))
+        raise Error::Project, code: :dappfile_not_found unless (dappfile_path = search_up('Dappfile'))
+        dappfile_path
       end
 
       def search_up(file)

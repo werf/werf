@@ -25,7 +25,7 @@ module Dapp
 
     def build!
       with_introspection do
-        project.lock("#{config._basename}.images", readonly: true) do
+        project.lock("#{project.name}.images", readonly: true) do
           last_stage.build_lock! do
             last_stage.build!
             last_stage.save_in_cache!
@@ -37,7 +37,7 @@ module Dapp
     end
 
     def export!(repo, format:)
-      project.lock("#{config._basename}.images", readonly: true) do
+      project.lock("#{project.name}.images", readonly: true) do
         tags.each do |tag|
           image_name = format % { repo: repo, dimg_name: config._name, tag: tag }
           export_base!(last_stage.image, image_name)
@@ -46,7 +46,7 @@ module Dapp
     end
 
     def export_stages!(repo, format:)
-      project.lock("#{config._basename}.images", readonly: true) do
+      project.lock("#{project.name}.images", readonly: true) do
         export_images.each do |image|
           image_name = format % { repo: repo, signature: image.name.split(':').last }
           export_base!(image, image_name)
@@ -70,7 +70,7 @@ module Dapp
     end
 
     def import_stages!(repo, format:)
-      project.lock("#{config._basename}.images", readonly: true) do
+      project.lock("#{project.name}.images", readonly: true) do
         import_images.each do |image|
           begin
             image_name = format % { repo: repo, signature: image.name.split(':').last }

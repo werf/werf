@@ -11,20 +11,18 @@ module Dapp
               registry = registry(repo)
               repo_dimgs = repo_dimgs_images(registry)
               proper_cache if proper_cache_version?
-              build_configs.map(&:_basename).uniq.each do |basename|
-                cleanup_project(basename, repo_dimgs)
-              end
+              cleanup_project(repo_dimgs)
             end
           end
 
           protected
 
-          def cleanup_project(basename, repo_dimgs)
-            lock("#{basename}.images") do
-              log_step_with_indent(basename) do
-                project_containers_flush(basename)
-                project_dangling_images_flush(basename)
-                dimgs, stages = project_images_hash(basename).partition { |_, image_id| repo_dimgs.values.include?(image_id) }
+          def cleanup_project(repo_dimgs)
+            lock("#{name}.images") do
+              log_step_with_indent(name) do
+                project_containers_flush
+                project_dangling_images_flush
+                dimgs, stages = project_images_hash.partition { |_, image_id| repo_dimgs.values.include?(image_id) }
                 dimgs = dimgs.to_h
                 stages = stages.to_h
                 dimgs.each { |_, aiid| clear_stages(aiid, stages) }
@@ -39,29 +37,27 @@ module Dapp
 
           def proper_cache
             log_proper_cache do
-              build_configs.map(&:_basename).uniq.each do |basename|
-                lock("#{basename}.images") do
-                  log_step_with_indent(basename) do
-                    project_containers_flush(basename)
-                    actual_cache_images = actual_cache_images(basename)
-                    remove_images(project_images(basename).lines.select { |id| !actual_cache_images.lines.include?(id) }.map(&:strip))
-                  end
+              lock("#{name}.images") do
+                log_step_with_indent(name) do
+                  project_containers_flush
+                  actual_cache_images = actual_cache_images
+                  remove_images(project_images.lines.select { |id| !actual_cache_images.lines.include?(id) }.map(&:strip))
                 end
               end
             end
           end
 
-          def actual_cache_images(basename)
+          def actual_cache_images
             shellout!([
               'docker images',
               '--format="{{.Repository}}:{{.Tag}}"',
               %(-f "label=dapp-cache-version=#{Dapp::BUILD_CACHE_VERSION}"),
-              stage_cache(basename)
+              stage_cache
             ].join(' ')).stdout.strip
           end
 
-          def project_images_hash(basename)
-            shellout!(%(docker images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{stage_cache(basename)})).stdout.lines.map do |line|
+          def project_images_hash
+            shellout!(%(docker images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{stage_cache})).stdout.lines.map do |line|
               line.strip.split(';')
             end.to_h
           end

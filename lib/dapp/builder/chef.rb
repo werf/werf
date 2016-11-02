@@ -272,7 +272,7 @@ module Dapp
       def cookbooks_vendor_path(*path, chef_cookbooks_stage: false)
         _cookbooks_vendor_path(chef_cookbooks_stage: chef_cookbooks_stage).tap do |_cookbooks_path|
           lock_name = [
-            dimg.config._basename,
+            dimg.project.name,
             'cookbooks',
             chef_cookbooks_stage ? 'chef_cookbooks_stage' : nil,
             cookbooks_checksum

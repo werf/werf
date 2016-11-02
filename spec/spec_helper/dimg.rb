@@ -25,7 +25,7 @@ module SpecHelper
 
     def project
       @project ||= begin
-        allow_any_instance_of(Dapp::Project).to receive(:dappfiles) { [File.join(project_path || Dir.mktmpdir, 'Dappfile')] }
+        allow_any_instance_of(Dapp::Project).to receive(:dappfile_path) { File.join(project_path || Dir.mktmpdir, 'Dappfile') }
         yield if block_given?
         Dapp::Project.new(cli_options: cli_options)
       end
@@ -43,8 +43,7 @@ module SpecHelper
     end
 
     def default_config
-      Marshal.load(Marshal.dump(_basename: 'dapp',
-                                _name: 'test',
+      Marshal.load(Marshal.dump(_name: 'test',
                                 _import_artifact: [],
                                 _before_install_artifact: [], _before_setup_artifact: [],
                                 _after_install_artifact: [], _after_setup_artifact: [],

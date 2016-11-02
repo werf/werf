@@ -26,7 +26,7 @@ module Dapp
 
             no_lock = false
 
-            dimg.project.lock("#{dimg.config._basename}.image.#{image.name}") do
+            dimg.project.lock("#{dimg.project.name}.image.#{image.name}") do
               image.cache_reset
 
               if should_be_tagged?

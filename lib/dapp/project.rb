@@ -59,14 +59,7 @@ module Dapp
     end
 
     def path
-      @path ||= begin
-        dappfile_path = dappfiles.first
-        if File.basename(expand_path(dappfile_path, 2)) == '.dapps'
-          expand_path(dappfile_path, 3)
-        else
-          expand_path(dappfile_path)
-        end
-      end
+      @path ||= expand_path(dappfile_path)
     end
 
     def build_path
@@ -79,12 +72,12 @@ module Dapp
       end
     end
 
-    def cache_format
-      "dimgstage-#{name}-%{dimg_name}"
+    def stage_cache
+      "dimgstage-#{name}"
     end
 
-    def stage_dapp_label_format
-      '%{dimg_name}'
+    def stage_dapp_label
+      name
     end
   end # Project
 end # Dapp

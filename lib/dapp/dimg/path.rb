@@ -13,7 +13,7 @@ module Dapp
       end
 
       def build_path(*path)
-        make_path(project.build_path.join(config._basename), *path).expand_path.tap { |p| p.parent.mkpath }
+        make_path(project.build_path, *path).expand_path.tap { |p| p.parent.mkpath }
       end
 
       def container_dapp_path(*path)

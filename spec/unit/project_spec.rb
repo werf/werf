@@ -49,21 +49,17 @@ describe Dapp::Project do
 
   context 'build_confs' do
     before :each do
-      FileUtils.mkdir_p('.dapps/project/config/en')
-      Pathname('.dapps/project/Dappfile').write("dimg { docker { from 'ubuntu:16.04' } }")
+      FileUtils.mkdir_p('dir1/dir2')
+      Pathname('Dappfile').write("dimg { docker { from 'ubuntu:16.04' } }")
       allow_any_instance_of(Dapp::Config::Dimg).to receive(:validate!)
     end
 
     it '.', test_construct: true do
-      expect { project(cli_options: { dir: '.dapps/project/' }).send(:build_configs) }.to_not raise_error
-    end
-
-    it '.dapps', test_construct: true do
       expect { project.send(:build_configs) }.to_not raise_error
     end
 
     it 'search up', test_construct: true do
-      expect { project(cli_options: { dir: '.dapps/project/config/en' }).send(:build_configs) }.to_not raise_error
+      expect { project(cli_options: { dir: 'dir1/dir2' }).send(:build_configs) }.to_not raise_error
     end
 
     it 'dappfile_not_found', test_construct: true do
