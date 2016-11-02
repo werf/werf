@@ -5,12 +5,19 @@ module Dapp
         protected
 
         def validate!
+          directives_validate!
+
           if _docker._from.nil?
             validate_scratch_directives!
             validate_scratch_artifacts!
           else
             raise Error::Config, code: :stage_artifact_not_associated unless _import_artifact.empty?
           end
+
+          validate_artifacts!
+        end
+
+        def directives_validate!
           instance_variables.each do |v|
             unless (value = instance_variable_get(v)).nil?
               Array(value).each do |elm|
@@ -18,7 +25,6 @@ module Dapp
               end
             end
           end
-          validate_artifacts!
         end
 
         def validate_scratch_directives!
