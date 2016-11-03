@@ -51,6 +51,16 @@ module Dapp
             end
           end
           [:before_install, :before_setup, :install, :setup].each(&method(:stage_command_generator))
+
+          protected
+
+          def clone_to_artifact
+            Artifact.new.tap do |shell|
+              instance_variables.each do |variable|
+                shell.instance_variable_set(variable, instance_variable_get(marshal_dup(variable)))
+              end
+            end
+          end
         end
       end
     end

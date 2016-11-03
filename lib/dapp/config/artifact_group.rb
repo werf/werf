@@ -16,11 +16,11 @@ module Dapp
 
       def export(*args, &blk)
         @_export.concat begin
-          artifact_config = pass_to_default(ArtifactDimg.new("artifact-#{SecureRandom.hex(2)}", project: project))
-          artifact = Directive::Artifact.new(config: artifact_config)
-          artifact.export(*args, &blk)
-          artifact._export
-        end
+                          artifact_config = pass_to_default(ArtifactDimg.new("artifact-#{SecureRandom.hex(2)}", project: project))
+                          artifact = Directive::Artifact.new(config: artifact_config)
+                          artifact.export(*args, &blk)
+                          artifact._export
+                        end
       end
 
       def _shell(&blk)

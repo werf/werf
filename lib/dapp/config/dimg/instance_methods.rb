@@ -157,17 +157,24 @@ module Dapp
         end
 
         def pass_to_custom(obj, clone_method)
-          passing_directives.each do |directive|
+          passed_directives.each do |directive|
             next if (variable = instance_variable_get(directive)).nil?
-            obj.instance_variable_set(directive, variable.send(clone_method)) if variable.methods.include?(clone_method)
+
+            obj.instance_variable_set(directive, begin
+              case variable
+              when Directive::Base, GitArtifact then variable.send(clone_method)
+              when Symbol then variable
+              when Array then variable.dup
+              else
+                raise
+              end
+            end)
           end
-          obj.instance_variable_set(:@_artifact, _artifact)
-          obj.instance_variable_set(:@_builder, _builder)
           obj
         end
 
-        def passing_directives
-          [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount]
+        def passed_directives
+          [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount, :@_artifact, :@_builder]
         end
       end
     end

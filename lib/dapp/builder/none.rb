@@ -1,6 +1,6 @@
 module Dapp
   module Builder
-    # Base
+    # None
     class None < Base
       def before_dimg_should_be_built_check
       end
