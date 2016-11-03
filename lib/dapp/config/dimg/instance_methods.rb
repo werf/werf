@@ -2,7 +2,6 @@ module Dapp
   module Config
     class Dimg < Base
       module InstanceMethods
-        attr_reader :_name
         attr_reader :_builder
         attr_reader :_chef, :_shell, :_docker, :_git_artifact, :_mount, :_artifact
         attr_reader :_install_dependencies, :_setup_dependencies
