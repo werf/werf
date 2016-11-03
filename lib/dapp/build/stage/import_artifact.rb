@@ -60,9 +60,6 @@ module Dapp
           command = "#{sudo} #{dimg.project.tar_path} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
           run_artifact_dimg(artifact_dimg, artifact_name, command)
 
-          puts command
-          puts archive_path
-
           image.add_archive archive_path
         end
         # rubocop:enable Metrics/AbcSize, Metrics/MethodLength

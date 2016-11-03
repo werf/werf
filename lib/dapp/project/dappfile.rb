@@ -5,7 +5,7 @@ module Dapp
     module Dappfile
       def build_configs
         @configs ||= begin
-          dimgs(dappfile_path, dimgs_filters: dimgs_patterns).flatten.tap do |dimgs|
+          dimgs(dappfile_path).flatten.tap do |dimgs|
             raise Error::Project, code: :no_such_dimg, data: { dimgs_patterns: dimgs_patterns.join(', ') } if dimgs.empty?
           end
         end
@@ -36,18 +36,18 @@ module Dapp
         path
       end
 
-      def dimgs(dappfile_path, dimgs_filters:)
+      def dimgs(dappfile_path)
         Config::DimgGroupMain.new(project: self) do |conf|
           begin
             conf.instance_eval File.read(dappfile_path), dappfile_path
           rescue SyntaxError, StandardError => e
             backtrace = e.backtrace.find { |line| line.start_with?(dappfile_path) }
-            message = e.is_a?(NoMethodError) ? e.message[/.*(?= for)/] : e.message
+            message = [NoMethodError, NameError].any? { |err| e.is_a?(err) } ? e.message[/.*(?= for)/] : e.message
             message = "#{backtrace[/.*(?=:in)/]}: #{message}" if backtrace
             raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
           end
         end
-        ._dimg.select { |dimg| dimgs_filters.any? { |pattern| File.fnmatch(pattern, dimg._name.to_s) } }.tap do |dimgs|
+        ._dimg.select { |dimg| dimgs_patterns.any? { |pattern| dimg._name.nil? || File.fnmatch(pattern, dimg._name) } }.tap do |dimgs|
           dimgs.each { |dimg| dimg.send(:validate!) }
         end
       end

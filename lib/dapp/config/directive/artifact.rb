@@ -1,7 +1,7 @@
 module Dapp
   module Config
     module Directive
-      class Artifact < Directive::GitArtifactLocal
+      class Artifact < ArtifactBase
         attr_reader :_config
 
         def initialize(config:)
@@ -19,7 +19,7 @@ module Dapp
 
         protected
 
-        class Export < Directive::GitArtifactLocal::Export
+        class Export < ArtifactBase::Export
           attr_accessor :_config
           attr_accessor :_before, :_after
 
