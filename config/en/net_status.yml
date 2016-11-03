@@ -38,13 +38,13 @@ en:
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
       docker_from_incorrect: "`docker.from` has incorrect value `%{name}`: expected format `image_name:tag`!"
-      stage_artifact_not_associated: "Artifact not associated with any stage: expected 'before' or 'after' option!"
-      stage_artifact_double_associate: "Artifact cannot use with both associated options 'before' and 'after'!"
+      stage_artifact_not_associated: "Artifact not associated with any stage: expected 'before' or 'after' attribute!"
+      stage_artifact_double_associate: "Artifact cannot use with both associated attributes 'before' and 'after'!"
       stage_artifact_not_supported_associated_stage: "Artifact not supported associated stage '%{stage}'!"
       artifact_conflict: "Conflict between artifacts paths!"
       scratch_unsupported_directive: "Scratch dimg has unsupported directive '%{directive}'!"
       scratch_artifact_required: "Scratch dimg without artifacts!"
-      scratch_artifact_associated: "Scratch artifact cannot be associated: not expected 'before'/'after' option!"
+      scratch_artifact_associated: "Scratch artifact cannot be associated: not expected 'before'/'after' attribute!"
       scratch_artifact_docker_from: "Scratch artifact must have directive 'docker.from'!"
     chef:
       stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
