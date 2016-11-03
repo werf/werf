@@ -15,8 +15,12 @@ module Dapp
             !application.builder.install?
           end
 
+          def builder_checksum
+            application.builder.install_checksum
+          end
+
           def context
-            [install_dependencies_files_checksum, application.builder.install_checksum]
+            [install_dependencies_files_checksum, builder_checksum]
           end
 
           def prepare_image

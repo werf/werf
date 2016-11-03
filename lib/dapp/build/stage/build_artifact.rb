@@ -12,8 +12,12 @@ module Dapp
           !application.builder.build_artifact?
         end
 
+        def builder_checksum
+          application.builder.build_artifact_checksum
+        end
+
         def context
-          [artifact_dependencies_files_checksum, application.builder.build_artifact_checksum]
+          [artifact_dependencies_files_checksum, builder_checksum]
         end
 
         def prepare_image

@@ -12,8 +12,12 @@ module Dapp
           super && !application.builder.before_install?
         end
 
+        def builder_checksum
+          application.builder.before_install_checksum
+        end
+
         def context
-          [application.builder.before_install_checksum]
+          [builder_checksum]
         end
 
         def prepare_image

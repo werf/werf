@@ -112,8 +112,11 @@ module Dapp
           if empty?
             prev_stage.signature
           else
-            hashsum [prev_stage.signature, *dependencies.flatten]
+            hashsum [prev_stage.signature, builder_checksum, *dependencies.flatten]
           end
+        end
+
+        def builder_checksum
         end
 
         def dependencies
