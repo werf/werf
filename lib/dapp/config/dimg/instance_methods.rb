@@ -76,10 +76,6 @@ module Dapp
           end
         end
 
-        def _custom_mount
-          _mount.select { |m| m._type.nil? }
-        end
-
         def _install_dependencies
           @_install_dependencies ||= []
         end

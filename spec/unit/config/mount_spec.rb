@@ -21,22 +21,12 @@ describe Dapp::Config::Directive::Mount do
         expect(dimg.public_send("_#{type}_mount").size).to eq 1
       end
     end
-
-    it 'custom' do
-      dappfile_dimg_mount('/from', '/to')
-      expect(dimg.public_send('_custom_mount').size).to eq 1
-    end
   end
 
   context 'negative' do
-    it 'absolute path required (1)' do
-      dappfile_dimg_mount('from', '/to')
-      expect_exception_code(:mount_from_absolute_path_required) { dimg }
-    end
-
-    it 'absolute path required (2)' do
-      dappfile_dimg_mount('/from', 'to')
-      expect_exception_code(:mount_to_absolute_path_required) { dimg }
+    it 'type required' do
+      dappfile_dimg_mount('/from', '/to')
+      expect_exception_code(:mount_from_type_required) { dimg }
     end
   end
 end

@@ -89,7 +89,6 @@ module Dapp
         def image_add_volumes
           image_add_tmp_volumes
           image_add_build_volumes
-          # TODO: image_add_custom_volumes
         end
 
         def image_add_tmp_volumes

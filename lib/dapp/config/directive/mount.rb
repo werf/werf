@@ -13,13 +13,9 @@ module Dapp
         end
 
         def from(path_or_type)
-          path_or_type = path_or_type.to_s
-          if [:tmp_dir, :build_dir].include? path_or_type.to_sym
-            @_type = path_or_type.to_sym
-          else
-            raise Error::Config, code: :mount_from_absolute_path_required unless Pathname(path_or_type).absolute?
-            @_from = path_or_type
-          end
+          path_or_type = path_or_type.to_sym
+          raise Error::Config, code: :mount_from_type_required unless [:tmp_dir, :build_dir].include? path_or_type
+          @_type = path_or_type
         end
       end
     end

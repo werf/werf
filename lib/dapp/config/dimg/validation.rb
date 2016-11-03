@@ -32,7 +32,7 @@ module Dapp
 
         def validate_scratch_directives!
           directives = [:_shell, :_chef, :_git_artifact, :_install_dependencies, :_setup_dependencies,
-                        :_tmp_dir_mount, :_build_dir_mount, :_custom_mount]
+                        :_tmp_dir_mount, :_build_dir_mount]
           directives.each do |directive|
             raise Error::Config,
                   code: :scratch_unsupported_directive,

@@ -34,7 +34,7 @@ en:
       export_include_paths_relative_path_required: "Export: given 'include_paths' path must be relative!"
       export_exclude_paths_relative_path_required: "Export: given 'exclude_paths' path must be relative!"
       mount_from_absolute_path_required: "Mount: given 'from' path must be absolute!"
-      mount_to_absolute_path_required: "Mount: given 'to' path must be absolute!"
+      mount_from_type_required: "Mount: 'from' directive expect 'build_dir' or 'tmp_dir' type!"
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
       docker_from_incorrect: "`docker.from` has incorrect value `%{name}`: expected format `image_name:tag`!"
