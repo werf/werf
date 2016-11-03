@@ -9,6 +9,7 @@ module Dapp
             case authenticate_header = raw_request(url).headers['Www-Authenticate']
             when /Bearer/ then { headers: { Authorization: "Bearer #{authorization_token(authenticate_header)}" } }
             when /Basic/ then { headers: { Authorization: "Basic #{authorization_auth}" } }
+            when nil then {}
             else raise Error::Registry, code: :authenticate_type_not_supported
             end
           end
