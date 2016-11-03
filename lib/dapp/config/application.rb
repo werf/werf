@@ -45,7 +45,7 @@ module Dapp
       end
 
       def builder(type)
-        project.log_warning(desc: { code: 'excess_builder_instruction', context: 'warning' }) if @_chef.send(:empty?) && @_shell.send(:empty?)
+        project.log_warning(desc: { code: 'excess_builder_instruction' }) if @_chef.send(:empty?) && @_shell.send(:empty?)
         raise Error::Config, code: :builder_type_unsupported, data: { type: type } unless [:chef, :shell].include?((type = type.to_sym))
         another_builder = [:chef, :shell].find { |t| t != type }
         instance_variable_set(:"@_#{another_builder}", instance_variable_get(:"@_#{another_builder}").class.new)

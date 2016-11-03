@@ -44,7 +44,7 @@ module Dapp
       end
 
       def tag!
-        project.log_warning(desc: { code: :another_image_already_tagged, context: 'warning' }) if !(existed_id = id).nil? && built_id != existed_id
+        project.log_warning(desc: { code: :another_image_already_tagged }) if !(existed_id = id).nil? && built_id != existed_id
         project.shellout!("docker tag #{built_id} #{name}")
         cache_reset
       end

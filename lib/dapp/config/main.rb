@@ -12,7 +12,7 @@ module Dapp
       end
 
       def name(value)
-        project.log_warning(desc: { code: 'excess_name_instruction', context: 'warning' }) if @_basename == value.to_s
+        project.log_warning(desc: { code: 'excess_name_instruction' }) if @_basename == value.to_s
         @_basename = value
       end
     end

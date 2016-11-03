@@ -53,6 +53,8 @@ module Dapp
 
         def log_warning(*args, **kwargs)
           kwargs[:style] = :warning
+          kwargs[:desc] ||= {}
+          kwargs[:desc][:context] ||= :warning
           log(*args, **kwargs)
         end
 
