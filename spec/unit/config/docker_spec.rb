@@ -37,14 +37,14 @@ describe Dapp::Config::Directive::Docker do
           send(attr, v1: 1)
         end
 
-        expect(dimg._docker.send("_#{attr}")).to eq ({v1: 1})
+        expect(dimg._docker.send("_#{attr}")).to eq(v1: 1)
 
         dappfile_dimg_docker do
           send(attr, v3: 1)
           send(attr, v2: 1, v1: 1)
         end
 
-        expect(dimg._docker.send("_#{attr}")).to eq({ v1: 1, v2: 1, v3: 1 })
+        expect(dimg._docker.send("_#{attr}")).to eq(v1: 1, v2: 1, v3: 1)
       end
     end
 

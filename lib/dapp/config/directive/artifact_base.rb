@@ -1,6 +1,7 @@
 module Dapp
   module Config
     module Directive
+      # ArtifactBase
       class ArtifactBase < Base
         attr_reader :_owner, :_group
 
@@ -30,8 +31,7 @@ module Dapp
           end
         end
 
-        protected
-
+        # Export
         class Export < Directive::Base
           attr_accessor :_cwd, :_to, :_include_paths, :_exclude_paths, :_owner, :_group
 

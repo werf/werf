@@ -30,19 +30,19 @@ module SpecHelper
       end
     end
 
-    def expect_array_attribute(attribute, dappfile_block, &expect_block)
+    def expect_array_attribute(attribute, dappfile_block)
       dappfile_block.call do
         send(attribute, 'value')
       end
 
-      expect_block.call('value')
+      yield('value')
 
       dappfile_block.call do
         send(attribute, 'value4')
         send(attribute, 'value1', 'value2', 'value3')
       end
 
-      expect_block.call('value4', 'value1', 'value2', 'value3')
+      yield('value4', 'value1', 'value2', 'value3')
     end
 
     class ConfigDsl
@@ -55,7 +55,7 @@ module SpecHelper
       end
 
       def method_missing(name, *args, &blk)
-        line("#{name}(#{args.map(&:inspect).join(', ')}) #{ 'do' if block_given? }")
+        line("#{name}(#{args.map(&:inspect).join(', ')}) #{'do' if block_given?}")
         if block_given?
           with_indent(&blk)
           line('end')

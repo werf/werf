@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # DimgGroup
     class DimgGroup < DimgGroupBase
       include Dimg::InstanceMethods
 
@@ -42,13 +43,13 @@ module Dapp
       def check_dimg_directive_order(directive)
         project.log_config_warning(desc: { code: 'wrong_using_base_directive',
                                            data: { directive: directive },
-                                           context: 'warning' }) if _dimg.any? or _dimg_group.any? or _artifact.any?
+                                           context: 'warning' }) if _dimg.any? || _dimg_group.any? || _artifact.any?
       end
 
       def check_dimg_group_directive_order(directive)
         project.log_config_warning(desc: { code: 'wrong_using_directive',
                                            data: { directive: directive },
-                                           context: 'warning' }) if _dimg.any? or _dimg_group.any?
+                                           context: 'warning' }) if _dimg.any? || _dimg_group.any?
       end
     end
   end

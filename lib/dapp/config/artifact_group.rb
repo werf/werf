@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # ArtifactGroup
     class ArtifactGroup < DimgGroup
       attr_reader :_artifact_dependencies, :_export
 

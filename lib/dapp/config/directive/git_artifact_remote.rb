@@ -1,6 +1,7 @@
 module Dapp
   module Config
     module Directive
+      # GitArtifactRemote
       class GitArtifactRemote < GitArtifactLocal
         attr_reader :_url, :_name, :_branch, :_commit
 
@@ -28,8 +29,7 @@ module Dapp
           end
         end
 
-        protected
-
+        # Export
         class Export < GitArtifactLocal::Export
           attr_accessor :_url, :_name, :_branch, :_commit
 

@@ -51,9 +51,9 @@ module Dapp
 
           exclude_paths = artifact[:options][:exclude_paths].map { |path| "--exclude=#{path}" }.join(' ')
           include_paths = if include_paths.empty?
-                    [File.join(to, cwd, '*')]
+                            [File.join(to, cwd, '*')]
                           else
-                    include_paths.map { |path| File.join(to, cwd, path, '*') }
+                            include_paths.map { |path| File.join(to, cwd, path, '*') }
                           end
           include_paths.map! { |path| path[1..-1] } # relative path
 

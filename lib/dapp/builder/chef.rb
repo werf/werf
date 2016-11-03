@@ -50,7 +50,7 @@ module Dapp
         super
 
         %i(before_install install before_setup setup chef_cookbooks).each do |stage|
-          unless stage_empty?(stage) or stage_cookbooks_checksum_path(stage).exist?
+          unless stage_empty?(stage) || stage_cookbooks_checksum_path(stage).exist?
             raise ::Dapp::Error::Dimg, code: :chef_stage_checksum_not_calculated,
                                        data: { stage: stage }
           end
@@ -200,7 +200,7 @@ module Dapp
             unless dimg.project.cli_options[:dev] || chef_cookbooks_stage
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
-                 "echo \"Berksfile.lock not found\" 1>&2 ; ",
+                 'echo "Berksfile.lock not found" 1>&2 ; ',
                  'exit 1 ; ',
                  'fi'].join
               )
@@ -227,8 +227,8 @@ module Dapp
 
           vendor_commands = [
             "#{dimg.project.mkdir_path} -p ~/.ssh",
-            "echo \"Host *\" >> ~/.ssh/config",
-            "echo \"    StrictHostKeyChecking no\" >> ~/.ssh/config",
+            'echo "Host *" >> ~/.ssh/config',
+            'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
             *berksfile.local_cookbooks
                       .values
                       .map { |cookbook| "#{dimg.project.rsync_path} --archive --relative #{cookbook[:path]} /tmp/local_cookbooks" },
@@ -253,10 +253,10 @@ module Dapp
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
              ("--volume #{dimg.project.ssh_auth_sock}:/tmp/dapp-ssh-agent" if dimg.project.ssh_auth_sock),
              "--volume #{dest_path.tap(&:mkpath)}:#{dest_path}",
-             ("--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent" if dimg.project.ssh_auth_sock),
+             ('--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent' if dimg.project.ssh_auth_sock),
              ('--env DAPP_CHEF_COOKBOOKS_VENDORING=1' if chef_cookbooks_stage),
              "dappdeps/berksdeps:0.1.0 #{dimg.project.bash_path} -ec '#{dimg.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
-             log_verbose: dimg.project.log_verbose?
+            log_verbose: dimg.project.log_verbose?
           )
         end
       end
@@ -325,14 +325,14 @@ module Dapp
                     end
                   elsif is_mdapp && mdapp_enabled
                     common_mdapp_paths = select_existing_paths.call(cookbook_path, [
-                      *common_paths,
-                      ["files/#{stage}", 'files/default'],
-                      ['files/common', 'files/default'],
-                      ["templates/#{stage}", 'templates/default'],
-                      ['templates/common', 'templates/default'],
-                      ["attributes/#{stage}.rb", "attributes/#{stage}.rb"],
-                      ['attributes/common.rb', 'attributes/common.rb'],
-                    ])
+                                                                      *common_paths,
+                                                                      ["files/#{stage}", 'files/default'],
+                                                                      ['files/common', 'files/default'],
+                                                                      ["templates/#{stage}", 'templates/default'],
+                                                                      ['templates/common', 'templates/default'],
+                                                                      ["attributes/#{stage}.rb", "attributes/#{stage}.rb"],
+                                                                      ['attributes/common.rb', 'attributes/common.rb']
+                                                                    ])
 
                     recipe_path = "recipes/#{stage}.rb"
                     if cookbook_path.join(recipe_path).exist?

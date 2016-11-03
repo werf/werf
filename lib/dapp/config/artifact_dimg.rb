@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # ArtifactDimg
     class ArtifactDimg < Dimg
       attr_reader :_artifact_dependencies
 

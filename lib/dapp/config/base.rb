@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # Base
     class Base
       def initialize(project:, &blk)
         @project = project

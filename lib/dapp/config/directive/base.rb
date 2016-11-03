@@ -1,6 +1,7 @@
 module Dapp
   module Config
     module Directive
+      # Base
       class Base < Config::Base
         def initialize(&blk)
           instance_eval(&blk) unless blk.nil?

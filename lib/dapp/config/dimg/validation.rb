@@ -1,6 +1,7 @@
 module Dapp
   module Config
     class Dimg < Base
+      # Validation
       module Validation
         protected
 
@@ -22,16 +23,16 @@ module Dapp
 
         def directives_validate!
           passed_directives.each do |v|
-            unless (value = instance_variable_get(v)).nil?
-              Array(value).each do |elm|
-                elm.send(:validate!) if elm.methods.include?(:validate!)
-              end
+            next if (value = instance_variable_get(v)).nil?
+            Array(value).each do |elm|
+              elm.send(:validate!) if elm.methods.include?(:validate!)
             end
           end
         end
 
         def validate_scratch_directives!
-          directives = [:_shell, :_chef, :_git_artifact, :_install_dependencies, :_setup_dependencies, :_tmp_dir_mount, :_build_dir_mount, :_custom_mount]
+          directives = [:_shell, :_chef, :_git_artifact, :_install_dependencies, :_setup_dependencies,
+                        :_tmp_dir_mount, :_build_dir_mount, :_custom_mount]
           directives.each do |directive|
             raise Error::Config,
                   code: :scratch_unsupported_directive,

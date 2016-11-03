@@ -64,10 +64,10 @@ describe Dapp::Artifact do
       container_name = image_name.sub(':', '.')
 
       begin
-        expect {
+        expect do
           shellout!("docker create --name #{container_name} --volume /#{@artifact} #{image_name} no_such_command")
           shellout!("docker run --rm --volumes-from #{container_name} ubuntu:14.04 bash -lec 'cat /#{@artifact}/test'")
-        }.to_not raise_error
+        end.to_not raise_error
       ensure
         shellout("docker rm -f #{container_name}")
       end

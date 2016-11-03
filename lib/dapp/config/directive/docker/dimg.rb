@@ -2,6 +2,7 @@ module Dapp
   module Config
     module Directive
       module Docker
+        # Dimg
         class Dimg < Base
           attr_reader :_volume, :_expose, :_env, :_label, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint
 

@@ -77,7 +77,7 @@ module Dapp
           def log_image_build_process
             return yield if should_be_quiet?
             dimg.project.log_process(log_name, process: dimg.project.t(code: 'status.process.building'),
-                                     short: should_not_be_detailed?) do
+                                               short: should_not_be_detailed?) do
               yield
             end
           end

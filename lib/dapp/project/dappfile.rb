@@ -46,8 +46,7 @@ module Dapp
             message = "#{backtrace[/.*(?=:in)/]}: #{message}" if backtrace
             raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
           end
-        end
-        ._dimg.select { |dimg| dimgs_patterns.any? { |pattern| dimg._name.nil? || File.fnmatch(pattern, dimg._name) } }.tap do |dimgs|
+        end._dimg.select { |dimg| dimgs_patterns.any? { |pattern| dimg._name.nil? || File.fnmatch(pattern, dimg._name) } }.tap do |dimgs|
           dimgs.each { |dimg| dimg.send(:validate!) }
         end
       end

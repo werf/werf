@@ -90,7 +90,7 @@ describe Dapp::Config::DimgGroup do
             end
           end
 
-          expect(dimg._docker.send("_#{attr}")).to eq ({ v1: 1, v2: 2, v3: 2 })
+          expect(dimg._docker.send("_#{attr}")).to eq(v1: 1, v2: 2, v3: 2)
         end
       end
 
@@ -153,7 +153,7 @@ describe Dapp::Config::DimgGroup do
   context 'warning' do
     def stubbed_project
       super.tap do |instance|
-        allow(instance).to receive(:log_config_warning) { |*args, **kwargs| puts kwargs[:desc][:code] }
+        allow(instance).to receive(:log_config_warning) { |*_args, **kwargs| puts kwargs[:desc][:code] }
       end
     end
 

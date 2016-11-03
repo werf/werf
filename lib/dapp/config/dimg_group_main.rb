@@ -1,5 +1,6 @@
 module Dapp
   module Config
+    # DimgGroupMain
     class DimgGroupMain < DimgGroupBase
       def dimg(name = nil)
         with_dimg_validation { super }

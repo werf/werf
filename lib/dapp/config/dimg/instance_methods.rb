@@ -1,6 +1,7 @@
 module Dapp
   module Config
     class Dimg < Base
+      # InstanceMethods
       module InstanceMethods
         attr_reader :_builder
         attr_reader :_chef, :_shell, :_docker, :_git_artifact, :_mount, :_artifact
@@ -37,7 +38,7 @@ module Dapp
         end
 
         def git_artifact(type_or_repo_url, &blk)
-          type = (type_or_repo_url.to_sym == :local) ? :local : :remote
+          type = type_or_repo_url.to_sym == :local ? :local : :remote
           _git_artifact.send(type, type_or_repo_url, &blk)
         end
 
@@ -105,6 +106,7 @@ module Dapp
           _artifact.select(&:not_associated?)
         end
 
+        # GitArtifact
         class GitArtifact
           attr_reader :_local, :_remote
 

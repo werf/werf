@@ -2,6 +2,7 @@ module Dapp
   module Config
     module Directive
       module Shell
+        # Artifact
         class Artifact < Dimg
           attr_reader :_build_artifact
           stage_command_generator(:build_artifact)

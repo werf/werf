@@ -39,7 +39,7 @@ module Dapp
         end
 
         def log_dimg_name_with_indent(dimg, &blk)
-          return blk.call if dimg._name.nil?
+          return yield if dimg._name.nil?
           log_step_with_indent(dimg._name, &blk)
         end
 

@@ -32,7 +32,7 @@ describe Dapp::Config::Directive::Chef do
       line("attributes['k1']['k3'] = 'k1k3value'")
     end
 
-    expect(dimg._chef._attributes).to eq({ 'k1' => { 'k2' => 'k1k2value', 'k3' => 'k1k3value'} })
+    expect(dimg._chef._attributes).to eq('k1' => { 'k2' => 'k1k2value', 'k3' => 'k1k3value' })
   end
 
   [:before_install, :install, :before_setup, :setup, :build_artifact].map do |key|
@@ -41,7 +41,7 @@ describe Dapp::Config::Directive::Chef do
         line("attributes['k1']['#{key}'] = 'k1#{key}value'")
       end
 
-      expect(dimg._chef.send("__#{key}_attributes")).to eq({ 'k1' => { key.to_s => "k1#{key}value" } })
+      expect(dimg._chef.send("__#{key}_attributes")).to eq('k1' => { key.to_s => "k1#{key}value" })
     end
   end
 end

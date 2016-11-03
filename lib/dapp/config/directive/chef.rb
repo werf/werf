@@ -1,6 +1,7 @@
 module Dapp
   module Config
     module Directive
+      # Chef
       class Chef < Base
         attr_accessor :_dimod, :_recipe, :_attributes
 
@@ -30,18 +31,6 @@ module Dapp
           end
         end
 
-        protected
-
-        def empty?
-          (@_dimod + @_recipe).empty? && attributes.empty?
-        end
-
-        %i(before_install install before_setup setup build_artifact).each do |stage|
-          define_method("__#{stage}_attributes") do
-            attributes.in_depth_merge send("_#{stage}_attributes")
-          end
-        end
-
         # Attributes
         class Attributes < Hash
           def [](key)
@@ -50,6 +39,18 @@ module Dapp
             end
           end
         end # Attributes
+
+        %i(before_install install before_setup setup build_artifact).each do |stage|
+          define_method("__#{stage}_attributes") do
+            attributes.in_depth_merge send("_#{stage}_attributes")
+          end
+        end
+
+        protected
+
+        def empty?
+          (@_dimod + @_recipe).empty? && attributes.empty?
+        end
       end
     end
   end

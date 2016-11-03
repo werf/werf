@@ -1,6 +1,7 @@
 module Dapp
   module Config
     module Directive
+      # Mount
       class Mount < Base
         attr_reader :_from, :_to
         attr_reader :_type
