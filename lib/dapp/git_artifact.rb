@@ -14,6 +14,7 @@ module Dapp
       @commit = commit
 
       @to = to
+      cwd = File.expand_path(File.join('/', cwd))[1..-1] unless cwd.nil? || cwd.empty? # must be relative!!!
       @cwd = cwd
       @include_paths = include_paths
       @exclude_paths = exclude_paths
