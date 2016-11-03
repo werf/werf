@@ -6,15 +6,18 @@ module Dapp
 
         def validate!
           directives_validate!
+          validate_scratch!
+          validate_artifacts!
+          validate_artifacts_artifacts!
+        end
 
+        def validate_scratch!
           if _docker._from.nil?
             validate_scratch_directives!
             validate_scratch_artifacts!
           else
             raise Error::Config, code: :stage_artifact_not_associated unless _import_artifact.empty?
           end
-
-          validate_artifacts!
         end
 
         def directives_validate!
@@ -52,8 +55,12 @@ module Dapp
           end
         end
 
+        def validate_artifacts_artifacts!
+          _artifact.each { |artifact_dimg| artifact_dimg._config.validate! }
+        end
+
         def validate_artifacts!
-          artifacts = validate_artifact_format(_artifacts)
+          artifacts = validate_artifact_format(validated_artifacts)
           loop do
             break if artifacts.empty?
             verifiable_artifact = artifacts.shift
@@ -107,7 +114,7 @@ module Dapp
           end
         end
 
-        def _artifacts
+        def validated_artifacts
           _artifact + _git_artifact._local + _git_artifact._remote
         end
       end

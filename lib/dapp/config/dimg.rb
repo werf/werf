@@ -4,8 +4,6 @@ module Dapp
       include Validation
       include InstanceMethods
 
-      attr_reader :_name
-
       def initialize(name, project:)
         self._name = name
         super(project: project)
