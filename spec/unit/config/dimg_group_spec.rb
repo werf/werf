@@ -19,14 +19,14 @@ describe Dapp::Config::DimgGroup do
           dappfile_dimg_group do
             shell do
               send(stage) do
-                command 'cmd1'
+                run 'cmd1'
               end
             end
 
             dimg 'name' do
               shell do
                 send(stage) do
-                  command 'cmd2'
+                  run 'cmd2'
                 end
               end
             end

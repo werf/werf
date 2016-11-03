@@ -24,7 +24,7 @@ describe Dapp::Config::Directive::Shell do
     end
 
     it attr do
-      expect_array_attribute(:command, method("dappfile_dimg_shell_#{attr}")) do |*args|
+      expect_array_attribute(:run, method("dappfile_dimg_shell_#{attr}")) do |*args|
         expect(dimg._shell.send("_#{attr}_command")).to eq args
       end
     end

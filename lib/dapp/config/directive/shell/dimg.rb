@@ -18,15 +18,15 @@ module Dapp
 
           class StageCommand < Directive::Base
             attr_reader :_version
-            attr_reader :_command
+            attr_reader :_run
 
             def initialize
-              @_command = []
+              @_run = []
               super
             end
 
-            def command(*args)
-              @_command.concat(args)
+            def run(*args)
+              @_run.concat(args)
             end
 
             def version(value)
@@ -42,7 +42,7 @@ module Dapp
 
             define_method "_#{stage}_command" do
               return [] if (variable = instance_variable_get("@_#{stage}")).nil?
-              variable._command
+              variable._run
             end
 
             define_method "_#{stage}_version" do

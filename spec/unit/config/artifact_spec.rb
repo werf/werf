@@ -30,7 +30,7 @@ describe Dapp::Config::Directive::Artifact do
       dappfile_dimg_with_artifact do
         shell do
           build_artifact do
-            command 'cmd'
+            run 'cmd'
           end
         end
         export '/cwd'
