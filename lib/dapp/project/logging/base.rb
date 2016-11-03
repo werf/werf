@@ -38,6 +38,11 @@ module Dapp
           log(*args, **kwargs)
         end
 
+        def log_dimg_name_with_indent(dimg, &blk)
+          return blk.call if dimg._name.nil?
+          log_step_with_indent(dimg._name, &blk)
+        end
+
         def log_step_with_indent(step)
           log_step(step)
           with_log_indent do
