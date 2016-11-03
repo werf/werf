@@ -2,6 +2,7 @@ require_relative '../spec_helper'
 
 describe Dapp::Project do
   include SpecHelper::Common
+  include SpecHelper::Config
 
   RSpec.configure do |c|
     c.before(:example, :build) { stub_dimg(:build!) }
@@ -50,7 +51,15 @@ describe Dapp::Project do
   context 'build_confs' do
     before :each do
       FileUtils.mkdir_p('dir1/dir2')
-      Pathname('Dappfile').write("dimg { docker { from 'ubuntu:16.04' } }")
+      Pathname('Dappfile').write begin
+                                   dappfile do
+                                     dimg('name') do
+                                       docker do
+                                         from 'ubuntu:16.04'
+                                       end
+                                     end
+                                   end
+                                 end
       allow_any_instance_of(Dapp::Config::Dimg).to receive(:validate!)
     end
 

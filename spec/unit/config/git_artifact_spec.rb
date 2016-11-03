@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Dapp::Config::Directive::GitArtifactLocal do
+describe Dapp::Config::Directive::GitArtifactRemote do
   include SpecHelper::Common
   include SpecHelper::Config
 
@@ -76,7 +76,7 @@ describe Dapp::Config::Directive::GitArtifactLocal do
       expect_exception_code(:export_cwd_absolute_path_required) { dimg }
     end
 
-    it 'to absolute path required' do
+    it 'to absolute path required (2)' do
       dappfile_dimg_git_artifact(:local) do
         export '/cwd' do
           to 'to'
