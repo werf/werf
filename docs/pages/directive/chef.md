@@ -5,19 +5,13 @@ permalink: chef_directives.html
 folder: directive
 ---
 
-### chef.module \<mod\>[, \<mod\>, \<mod\> ...]
+### chef.dimod \<mod\>[, \<mod\>, \<mod\> ...]
 Включить переданные [модули](definitions.html#mdapp-модуль) для chef builder в данном контексте.
 
 * Для каждого переданного модуля может существовать по одному рецепту на каждую из стадий.
 * При отсутствии файла рецепта в runlist для данной стадии используется пустой рецепт \<mod\>::void.
 
 Подробнее см.: [mdapp модуль](definitions.html#mdapp-модуль) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
-
-### chef.skip_module \<mod\>[, \<mod\>, \<mod\> ...]
-Выключить переданные модули для chef builder в данном контексте.
-
-### chef.reset_modules
-Выключить все модули для chef builder в данном контексте.
 
 ### chef.recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
 Включить переданные рецепты из [приложения](definitions.html#cookbook-приложения) для chef builder в данном контексте.
@@ -28,25 +22,21 @@ folder: directive
 
 Подробнее см.: [cookbook приложения](definitions.html#cookbook-приложения) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
 
-### chef.remove_recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
-Выключить переданные рецепты из [приложения](definitions.html#cookbook-приложения) для chef builder в данном контексте.
-
-### chef.reset_recipes
-Выключить все рецепты из проекта для chef builder в данном контексте.
-
 ### chef.attributes
 Хэш атрибутов, доступных на всех стадиях сборки, для chef builder в данном контексте.
 
 * Вложенные хэши создаются автоматически при первом обращении к методу доступа по ключу (см. пример).
 
-#### Пример
+#### Пример (строчная запись)
 
 ```ruby
-chef.attributes['mdapp-test']['nginx']['package_name'] = 'nginx-common'
-chef.attributes['mdapp-test']['nginx']['package_version'] = '1.4.6-1ubuntu3.5'
+dimg_group do
+  chef.attributes['mdapp-test']['nginx']['package_name'] = 'nginx-common'
+  chef.attributes['mdapp-test']['nginx']['package_version'] = '1.4.6-1ubuntu3.5'
 
-app 'X' do
-  chef.attributes['mdapp-test']['nginx']['package_version'] = '1.4.6-1ubuntu3'
+  dimg 'X' do
+    chef.attributes['mdapp-test']['nginx']['package_version'] = '1.4.6-1ubuntu3'
+  end
 end
 ```
 
@@ -56,15 +46,3 @@ end
 Хэш атрибутов, доступных на стадии сборки, для chef builder в данном контексте.
 
 См.: [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
-
-### chef.reset_attributes
-Выключить атрибуты, доступные на всех стадиях сборки, для chef builder в данном контексте.
-
-### chef.reset_\<стадия\>_attributes
-Выключить атрибуты, доступные на стадии сборки, для chef builder в данном контексте.
-
-### chef.reset_all_attributes
-Выключить все атрибуты для chef builder в данном контексте.
-
-### chef.reset_all
-Выключить все рецепты из [приложения](definitions.html#cookbook-приложения), все модули для chef builder и все атрибуты в данном контексте.

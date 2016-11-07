@@ -5,22 +5,46 @@ permalink: shell_directives.html
 folder: directive
 ---
 
-### shell.before_install, shell.before_setup, shell.install, shell.setup \<cmd\>\[, \<cmd\>, cache_version: \<cache_version\>\]
+### shell
+Следующие поддирективы позволяют добавить bash-комманды для выполнения на соответствующих стадиях [shell образа](definitions.html#shell-приложение):
 
-Директивы позволяют добавить bash-комманды для выполнения на соответствующих стадиях [shell приложения](definitions.html#shell-приложение).
+* before_install.
+* before_setup.
+* install.
+* setup.
+* build_artifact (в случае, если директива используется в артефакте).
 
-* Опциональный параметр **\<cache_version\>** участвует в формировании сигнатуры стадии.
+Можно определить version, который участвует в формировании сигнатуры стадии.
 
-### shell.build_artifact \<cmd\>\[, \<cmd\>, cache_version: \<cache_version\>\]
+* Указать базовый, для всех стадий, можно в контекте shell.
+* Указать или переопределить базовый можно в контексте соответствующем стадии.
 
-Позволяет добавить bash-комманды для выполнения на соответствующей стадии [артефакта](definitions.html#артефакт).
+### Примеры
 
-* Опциональный параметр **\<cache_version\>** участвует в формировании сигнатуры стадии.
+#### Собрать с bash-коммандами на стадиях before_install и setup, указав версию для всех и переопределив для setup
+```ruby
+dimg do
+  shell do
+    version '1'
 
-### shell.reset_before_install, shell.reset_before_setup, shell.reset_setup, shell.reset_install, shell.reset_build_artifact
+    before_install do
+      run 'command1', 'command2'
+    end
 
-Позволяет сбросить объявленные ранее bash-комманды соответсвующей стадии.
+    setup do
+      run 'command3', 'command4'
+      version '2'
+    end
+  end
+end
+```
 
-### shell.reset_all
-
-Позволяет сбросить все объявленные ранее bash-комманды стадий.
+#### Собрать с bash-коммандами на стадиях before_install и setup, указав версию для всех и переопределив для setup (строчная запись)
+```ruby
+dimg do
+  shell.version '1'
+  shell.before_install.run 'command1', 'command2'
+  shell.setup.run 'command3', 'command4'
+  shell.setup.version '2'
+end
+```
