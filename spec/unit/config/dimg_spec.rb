@@ -140,7 +140,7 @@ describe Dapp::Config::Dimg do
               from 'image:tag'
             end
 
-            git_artifact :local do
+            git :local do
               instance_eval(&blk) if block_given?
             end
 
@@ -151,7 +151,7 @@ describe Dapp::Config::Dimg do
 
       it 'to required' do
         dappfile_dimg_group_git_artifact do
-          export '/cwd'
+          add '/cwd'
         end
         expect_exception_code(:export_to_required) { dimg.send(:validate!) }
       end

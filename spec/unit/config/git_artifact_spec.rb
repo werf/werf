@@ -7,7 +7,7 @@ describe Dapp::Config::Directive::GitArtifactRemote do
   def dappfile_dimg_git_artifact(type_or_git_repo, &blk)
     dappfile do
       dimg do
-        git_artifact type_or_git_repo do
+        git type_or_git_repo do
           instance_eval(&blk) if block_given?
         end
       end
@@ -22,7 +22,7 @@ describe Dapp::Config::Directive::GitArtifactRemote do
       it type do
         attributes = binding.local_variable_get("#{type}_artifact_attributes")
         dappfile_dimg_git_artifact(type == :local ? :local : 'url') do
-          export '/cwd' do
+          add '/cwd' do
             attributes.each do |attr|
               next if attr == :cwd
               send(attr, attr.to_s)
@@ -43,14 +43,14 @@ describe Dapp::Config::Directive::GitArtifactRemote do
 
     it 'remote name from url' do
       dappfile_dimg_git_artifact('https://github.com/flant/dapp.git') do
-        export '/cwd'
+        add '/cwd'
       end
       expect(dimg._git_artifact._remote.first._name).to eq 'dapp'
     end
 
     it 'cwd, to absolute path required' do
       dappfile_dimg_git_artifact(:local) do
-        export '/cwd' do
+        add '/cwd' do
           to '/to'
         end
       end
@@ -59,7 +59,7 @@ describe Dapp::Config::Directive::GitArtifactRemote do
 
     it 'include_paths, exclude_paths relative path required' do
       dappfile_dimg_git_artifact(:local) do
-        export '/cwd' do
+        add '/cwd' do
           include_paths 'path1', 'path2'
           exclude_paths 'path1', 'path2'
         end
@@ -71,14 +71,14 @@ describe Dapp::Config::Directive::GitArtifactRemote do
   context 'negative' do
     it 'cwd absolute path required' do
       dappfile_dimg_git_artifact(:local) do
-        export 'cwd'
+        add 'cwd'
       end
       expect_exception_code(:export_cwd_absolute_path_required) { dimg }
     end
 
     it 'to absolute path required (2)' do
       dappfile_dimg_git_artifact(:local) do
-        export '/cwd' do
+        add '/cwd' do
           to 'to'
         end
       end
@@ -88,7 +88,7 @@ describe Dapp::Config::Directive::GitArtifactRemote do
     [:exclude_paths, :include_paths].each do |attr|
       it "#{attr} relative path required (1)" do
         dappfile_dimg_git_artifact(:local) do
-          export '/cwd' do
+          add '/cwd' do
             send(attr, '/path1')
           end
         end
@@ -97,7 +97,7 @@ describe Dapp::Config::Directive::GitArtifactRemote do
 
       it "#{attr} relative path required (2)" do
         dappfile_dimg_git_artifact(:local) do
-          export '/cwd' do
+          add '/cwd' do
             send(attr, 'path1', '/path2')
           end
         end
