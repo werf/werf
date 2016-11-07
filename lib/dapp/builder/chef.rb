@@ -80,19 +80,19 @@ module Dapp
       end
 
       def berksfile_path
-        dimg.home_path('Berksfile')
+        dimg.chef_path('Berksfile')
       end
 
       def berksfile_lock_path
-        dimg.home_path('Berksfile.lock')
+        dimg.chef_path('Berksfile.lock')
       end
 
       def berksfile
-        @berksfile ||= Berksfile.new(dimg.home_path, berksfile_path)
+        @berksfile ||= Berksfile.new(dimg.chef_path, berksfile_path)
       end
 
       def cookbook_metadata_path
-        dimg.home_path('metadata.rb')
+        dimg.chef_path('metadata.rb')
       end
 
       def cookbook_metadata
