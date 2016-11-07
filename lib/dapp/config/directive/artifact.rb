@@ -24,6 +24,12 @@ module Dapp
           attr_accessor :_config
           attr_accessor :_before, :_after
 
+          def not_associated?
+            (_before || _after).nil?
+          end
+
+          protected
+
           def before(stage)
             associate_validation!(:before, stage)
             @_before = stage
@@ -33,12 +39,6 @@ module Dapp
             associate_validation!(:after, stage)
             @_after = stage
           end
-
-          def not_associated?
-            (_before || _after).nil?
-          end
-
-          protected
 
           def associate_validation!(type, stage)
             another = [:before, :after].find { |t| t != type }

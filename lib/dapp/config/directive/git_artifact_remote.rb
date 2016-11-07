@@ -12,14 +12,6 @@ module Dapp
           super()
         end
 
-        def branch(value)
-          @_branch = value
-        end
-
-        def commit(value)
-          @_commit = value
-        end
-
         def _export
           super do |export|
             export._url    = @_url
@@ -33,6 +25,12 @@ module Dapp
         class Export < GitArtifactLocal::Export
           attr_accessor :_url, :_name, :_branch, :_commit
 
+          def _artifact_options
+            super.merge(name: _name, branch: _branch)
+          end
+
+          protected
+
           def branch(value)
             @_branch = value
           end
@@ -40,10 +38,16 @@ module Dapp
           def commit(value)
             @_commit = value
           end
+        end
 
-          def _artifact_options
-            super.merge(name: _name, branch: _branch)
-          end
+        protected
+
+        def branch(value)
+          @_branch = value
+        end
+
+        def commit(value)
+          @_commit = value
         end
       end
     end

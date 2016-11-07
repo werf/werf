@@ -10,18 +10,6 @@ module Dapp
           super
         end
 
-        def owner(owner)
-          @_owner = owner
-        end
-
-        def group(group)
-          @_group = group
-        end
-
-        def export(absolute_dir_path = '/', &blk)
-          @_export << self.class.const_get('Export').new(absolute_dir_path, &blk)
-        end
-
         def _export
           @_export.each do |export|
             export._owner ||= @_owner
@@ -43,6 +31,19 @@ module Dapp
 
             super()
           end
+
+          def _artifact_options
+            {
+              to:            _to,
+              cwd:           _cwd,
+              include_paths: _include_paths,
+              exclude_paths: _exclude_paths,
+              owner:         _owner,
+              group:         _group
+            }
+          end
+
+          protected
 
           def to(absolute_path)
             raise Error::Config, code: :export_to_absolute_path_required unless Pathname(absolute_path).absolute?
@@ -67,22 +68,23 @@ module Dapp
             @_group = group
           end
 
-          def _artifact_options
-            {
-              to:            _to,
-              cwd:           _cwd,
-              include_paths: _include_paths,
-              exclude_paths: _exclude_paths,
-              owner:         _owner,
-              group:         _group
-            }
-          end
-
-          protected
-
           def validate!
             raise Error::Config, code: :export_to_required if _to.nil?
           end
+        end
+
+        protected
+
+        def owner(owner)
+          @_owner = owner
+        end
+
+        def group(group)
+          @_group = group
+        end
+
+        def export(absolute_dir_path = '/', &blk)
+          @_export << self.class.const_get('Export').new(absolute_dir_path, &blk)
         end
       end
     end

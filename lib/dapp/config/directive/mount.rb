@@ -12,6 +12,8 @@ module Dapp
           super()
         end
 
+        protected
+
         def from(path_or_type)
           path_or_type = path_or_type.to_sym
           raise Error::Config, code: :mount_from_type_required unless [:tmp_dir, :build_dir].include? path_or_type
