@@ -37,7 +37,7 @@ module Dapp
                            end
         end
 
-        def git_artifact(type_or_repo_url, &blk)
+        def git(type_or_repo_url, &blk)
           type = type_or_repo_url.to_sym == :local ? :local : :remote
           _git_artifact.send(type, type_or_repo_url, &blk)
         end

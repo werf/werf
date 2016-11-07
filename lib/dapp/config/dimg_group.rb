@@ -24,8 +24,8 @@ module Dapp
         super
       end
 
-      def git_artifact(type_or_git_repo, &blk)
-        check_dimg_directive_order(:git_artifact)
+      def git(type_or_git_repo, &blk)
+        check_dimg_directive_order(:git)
         super
       end
 
