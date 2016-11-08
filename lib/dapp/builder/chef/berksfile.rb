@@ -41,10 +41,19 @@ module Dapp
           raise(::Dapp::Builder::Chef::Error, code: :berksfile_absolute_path_forbidden,
                                               data: { cookbook: name, path: path }) if path.start_with? '/'
 
-          @local_cookbooks[name] = {
+          desc = {
             name: name,
-            path: home_path.join(path)
+            path: home_path.join(path),
+            chefignore: [],
           }
+
+          if desc[:path].join('chefignore').exist?
+            chefignore_patterns = desc[:path].join('chefignore').read.split("\n").map(&:strip)
+            desc[:chefignore] = Dir[*chefignore_patterns.map {|pattern| desc[:path].join(pattern)}]
+              .map(&Pathname.method(:new))
+          end
+
+          @local_cookbooks[name] = desc
         end
 
         def local_cookbook?(name)

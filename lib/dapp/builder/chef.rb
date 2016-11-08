@@ -229,9 +229,15 @@ module Dapp
             "#{application.project.mkdir_path} -p ~/.ssh",
             "echo \"Host *\" >> ~/.ssh/config",
             "echo \"    StrictHostKeyChecking no\" >> ~/.ssh/config",
-            *berksfile.local_cookbooks
-                      .values
-                      .map { |cookbook| "#{application.project.rsync_path} --archive --relative #{cookbook[:path]} /tmp/local_cookbooks" },
+            *berksfile
+              .local_cookbooks
+              .values
+              .map {|cookbook|
+                ["#{application.project.rsync_path} --archive",
+                 *cookbook[:chefignore].map {|path| "--exclude #{path}"},
+                 "--relative #{cookbook[:path]} /tmp/local_cookbooks",
+                ].join(' ')
+              },
             "cd /tmp/local_cookbooks/#{berksfile_path.parent}",
             *before_vendor_commands,
             '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
