@@ -5,7 +5,7 @@ module Dapp
       # System
       module System
         SYSTEM_SHELLOUT_IMAGE = 'ubuntu:14.04'.freeze
-        SYSTEM_SHELLOUT_VERSION = 2
+        SYSTEM_SHELLOUT_VERSION = 3
 
         def system_shellout_container_name
           "dapp_system_shellout_#{hashsum [SYSTEM_SHELLOUT_VERSION,
