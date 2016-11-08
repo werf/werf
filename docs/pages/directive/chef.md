@@ -31,10 +31,12 @@ folder: directive
 
 ```ruby
 dimg_group do
+  docker.from 'image:tag'
+  
   chef.attributes['mdapp-test']['nginx']['package_name'] = 'nginx-common'
   chef.attributes['mdapp-test']['nginx']['package_version'] = '1.4.6-1ubuntu3.5'
 
-  dimg 'X' do
+  dimg do
     chef.attributes['mdapp-test']['nginx']['package_version'] = '1.4.6-1ubuntu3'
   end
 end
@@ -46,3 +48,41 @@ end
 Хэш атрибутов, доступных на стадии сборки, для chef builder в данном контексте.
 
 См.: [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
+
+### Примеры
+
+#### Собрать с несколькими модулями и рецептами
+
+```ruby
+dimg_group do
+  docker.from 'image:tag'
+  
+  chef do
+    dimod 'mod1', 'mod2'
+    recipe 'recipe1'
+  end 
+
+  dimg do
+    chef do
+      dimod 'mod3'
+      recipe 'recipe2', 'recipe3'
+    end 
+  end
+end
+```
+
+#### Собрать с несколькими модулями и рецептами (строчная запись)
+
+```ruby
+dimg_group do
+  docker.from 'image:tag'
+  
+  chef.dimod 'mod1', 'mod2'
+  chef.recipe 'recipe1'
+  
+  dimg do
+    chef.dimod 'mod3'
+    chef.recipe 'recipe2', 'recipe3'
+  end
+end
+```

@@ -24,6 +24,8 @@ folder: directive
 #### Собрать с bash-коммандами на стадиях before_install и setup, указав версию для всех и переопределив для setup
 ```ruby
 dimg do
+  docker.from 'image:tag'
+  
   shell do
     version '1'
 
@@ -42,6 +44,8 @@ end
 #### Собрать с bash-коммандами на стадиях before_install и setup, указав версию для всех и переопределив для setup (строчная запись)
 ```ruby
 dimg do
+  docker.from 'image:tag'
+  
   shell.version '1'
   shell.before_install.run 'command1', 'command2'
   shell.setup.run 'command3', 'command4'

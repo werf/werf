@@ -13,12 +13,15 @@ folder: directive
 
 ### Параметры артефакта
 
+#### Общие
 * to: абсолютный путь, в который будут копироваться ресурсы.
 * cwd: абсолютный путь, определяет рабочую директорию.
 * include_paths: добавить только указанные относительные пути.
 * exclude_paths: игнорировать указанные относительные пути.
 * owner: определить пользователя.
 * group: определить группу.
+
+#### Дополнительные для remote git-артефакта
 * branch: определить branch.
 * commit: определить commit.
 
@@ -32,7 +35,7 @@ folder: directive
   * Принимает параметр \<cwd\>.
   * Параметры \<include_paths\>, \<exclude_paths\>, \<owner\>, \<group\>, \<to\> определяются в контексте.
   * Параметры \<branch\>, \<commit\> могут быть определены в контексте remote git-артефакта.
-* В контексте директивы можно указать базовые параметры артефактов, которые могут быть переопределены в контексте каждого артефакта.
+* В контексте директивы можно указать базовые параметры git-артефактов, которые могут быть переопределены в контексте каждого из них.
   * \<owner\>.
   * \<group\>.
   * \<branch\>.
@@ -43,6 +46,8 @@ folder: directive
 ##### Собрать с несколькими git-артефактами
 ```ruby
 dimg do
+  docker.from 'image:tag'
+
   git 'local' do
     add '/' do
       exclude_paths 'assets'
@@ -68,27 +73,56 @@ end
 ### artifact
 Директива позволяет определить один или несколько [артефактов](definitions.html#артефакт).
 
-* Для добавления git-артефакта необходимо использовать поддирективу export.
+* Для добавления артефакта необходимо использовать поддирективу export.
   * Принимает параметр \<cwd\>.
   * Параметры \<include_paths\>, \<exclude_paths\>, \<owner\>, \<group\>, \<to\> определяются в контексте.
-  * В контексте обязательно использование хотя бы одной из директив **before** или **after**, где:
+  * Если собирается не scratch: в контексте обязательно использование хотя бы одной из директив **before** или **after**, где:
     * директива определяет порядок применения артефакта (до или после);
     * значение определяет стадию (install или setup).
 
 #### Примеры
 
-##### Собрать с артефактом
+##### Собрать с артефактами
 ```ruby
-dimg_group do
+dimg do
+  docker.from 'image:tag'
+  
   artifact do
     shell.build_artifact.run 'command1', 'command2'
 
     export '/' do
+      exclude_paths 'assets'
+      
+      before 'install'
       to '/app'
-      after 'setup'
     end
   end
+  
+  artifact do
+    shell.build_artifact.run 'command3', 'command4'
 
+    export '/' do
+      include_paths 'assets'
+    
+      after 'setup'
+      to '/app'
+    end
+  end
+end
+```
+
+##### Собрать scratch образ
+```ruby
+dimg_group do
+  artifact do
+    docker.from 'image:tag'
+    shell.build_artifact.run 'command1', 'command2'
+
+    export '/' do
+      to '/app'
+    end
+  end
+      
   dimg
 end
 ```

@@ -19,6 +19,8 @@ folder: directive
 ##### Собрать с несколькими внешними директориями
 ```ruby
 dimg do
+  docker.from 'image:tag'
+  
   mount '/any_path' do
     from 'tmp_dir'
   end
