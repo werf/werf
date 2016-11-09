@@ -38,10 +38,12 @@ module Dapp
 
           copy_files = proc do |from_, cwd_, path_ = ''|
             cwd_ = File.expand_path(File.join('/', cwd_))
+            "if [[ -d #{File.join(from_, cwd_, path_)} ]]; then " \
             "#{application.project.find_path} #{File.join(from_, cwd_, path_)} #{excludes} -type f -exec " \
             "#{application.project.bash_path} -ec '#{application.project.install_path} -D #{credentials} {} " \
-            "#{File.join(to, "$(echo {} | " \
-            "#{application.project.sed_path} -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\;"
+            "#{File.join(to, '$(echo {} | ' \
+            "#{application.project.sed_path} -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\; ;" \
+            'fi'
           end
 
           commands = []
