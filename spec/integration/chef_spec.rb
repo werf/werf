@@ -72,7 +72,7 @@ describe Dapp::Builder::Chef do
         end
       end
 
-      it 'rebuilds artifact from build_artifact stage' do
+      xit 'rebuilds artifact from build_artifact stage' do
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
         old_artifact_last_stage_id = artifact_application.send(:last_stage).image.id
 
@@ -98,7 +98,7 @@ describe Dapp::Builder::Chef do
         ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
-      it 'rebuilds artifact from before_install stage' do
+      xit 'rebuilds artifact from before_install stage' do
         new_note_content = SecureRandom.uuid
         mdapp_testartifact_path.join('files/before_install/CUSTOM_NAME_FROM_CHEF_SPEC.txt').tap do |path|
           path.write "#{new_note_content}\n"
