@@ -24,6 +24,9 @@ module Dapp
 
       def tags
         @tags ||= api_request(repo_suffix, 'tags/list')['tags'] || []
+      rescue Error::Registry => e
+        raise Exception::Registry, code: :dimg_not_found_in_registry if e.net_status[:code] == :page_not_found
+        raise
       end
 
       def image_id(tag)

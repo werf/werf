@@ -13,7 +13,11 @@ module Dapp
         end
 
         def context
-          [dimg.builder.before_install_checksum]
+          [builder_checksum]
+        end
+
+        def builder_checksum
+          dimg.builder.before_install_checksum
         end
 
         def prepare_image

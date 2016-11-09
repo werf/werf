@@ -47,6 +47,7 @@ en:
       excess_name_instruction: "WARNING: Excessive use of the 'name' instruction. Given name corresponds to default name."
       another_image_already_tagged: 'WARNING: image with other id already exist.'
       tag_ignored: "WARNING: tag '%{tag}' ignored."
+      dimg_not_found_in_registry: "WARNING: Dimg not found in registry."
     group:
       install_group: 'Install group'
       setup_group: 'Setup group'

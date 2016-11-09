@@ -16,7 +16,7 @@ module Dapp
             format = proc do |arr|
               arr.map do |tag|
                 if (id = registry.image_id(tag)).nil?
-                  log_warning(desc: { code: 'tag_ignored', context: 'warning', data: { tag: tag } })
+                  log_warning(desc: { code: 'tag_ignored', data: { tag: tag } })
                 else
                   [tag, id]
                 end
@@ -24,6 +24,14 @@ module Dapp
             end
             dimgs, stages = registry.tags.partition { |tag| !tag.start_with?('dimgstage') }
             [format.call(dimgs), format.call(stages)]
+          end
+
+          def registry_tags(registry)
+            registry.tags
+          rescue Exception::Registry => e
+            raise unless e.net_status[:code] == :dimg_not_found_in_registry
+            log_warning(desc: { code: 'dimg_not_found_in_registry' })
+            []
           end
 
           def delete_repo_image(registry, image_tag)
