@@ -23,7 +23,9 @@ folder: directive
 
 ##### Собирать образ, не указывая имени
 ```ruby
-dimg
+dimg do
+  docker.from 'image:tag'
+end
 ```
 
 ##### Собирать образы X и Y
