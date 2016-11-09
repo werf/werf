@@ -28,6 +28,10 @@ module Dapp
         project.shellout("docker rm #{container_name}")
       end
 
+      def built?
+        !@built_id.nil?
+      end
+
       def export!(name)
         image = self.class.new(name: name, project: project, built_id: built_id)
         image.tag!

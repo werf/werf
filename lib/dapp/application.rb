@@ -27,8 +27,11 @@ module Dapp
       with_introspection do
         project.lock("#{config._basename}.images", readonly: true) do
           last_stage.build_lock! do
-            last_stage.build!
-            last_stage.save_in_cache!
+            begin
+              last_stage.build!
+            ensure
+              last_stage.save_in_cache! if last_stage.image.built? || project.dev_mode?
+            end
           end
         end
       end

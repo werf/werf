@@ -134,7 +134,7 @@ module Dapp
         end
 
         def should_be_tagged?
-          !(empty? || image.tagged? || should_be_not_present?)
+          !(empty? || image.tagged? || should_be_not_present?) && image.built?
         end
 
         def should_be_not_present?
