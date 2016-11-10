@@ -10,7 +10,7 @@ describe Dapp::Builder::Chef do
 
   %w(ubuntu:14.04 centos:7).each do |os|
     context os do
-      xit 'builds project' do
+      it 'builds project' do
         [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
             d.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
@@ -37,7 +37,7 @@ describe Dapp::Builder::Chef do
        %i(install bar taco koromyslo),
        %i(before_setup baz burger kolokolchik),
        %i(setup qux pelmeni taburetka)].each do |stage, project_file, mdapp_test_file, mdapp_test2_file|
-        xit "rebuilds from stage #{stage}" do
+        it "rebuilds from stage #{stage}" do
           old_template_file_values = {}
           old_template_file_values[project_file] = send(project_file)
           old_template_file_values[mdapp_test_file] = send(mdapp_test_file)

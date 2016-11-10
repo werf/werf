@@ -83,5 +83,9 @@ module Dapp
     def stage_dapp_label
       name
     end
+
+    def dev_mode?
+      !!cli_options[:dev]
+    end
   end # Project
 end # Dapp

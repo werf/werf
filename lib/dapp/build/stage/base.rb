@@ -103,7 +103,7 @@ module Dapp
           (dimg.config.public_send("_#{type}_mount").map(&:to) +
             from_image.labels.select { |l, _| l == "dapp-#{type}-dir" }.map { |_, value| value.split(';') }.flatten).each do |path|
             absolute_path = File.expand_path(File.join('/', path))
-            tmp_path = dimg.send("#{type}_path", absolute_path[1..-1]).tap(&:mkpath)
+            tmp_path = dimg.send("#{type}_path", 'mount', absolute_path[1..-1]).tap(&:mkpath)
             image.add_volume "#{tmp_path}:#{absolute_path}"
           end
         end
@@ -146,7 +146,7 @@ module Dapp
         end
 
         def should_be_tagged?
-          !(empty? || image.tagged? || should_be_not_present?)
+          !(empty? || image.tagged? || should_be_not_present?) && image.built?
         end
 
         def should_be_not_present?

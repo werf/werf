@@ -5,7 +5,7 @@ module Dapp
       # System
       module System
         SYSTEM_SHELLOUT_IMAGE = 'ubuntu:14.04'.freeze
-        SYSTEM_SHELLOUT_VERSION = 2
+        SYSTEM_SHELLOUT_VERSION = 3
 
         def system_shellout_container_name
           "dapp_system_shellout_#{hashsum [SYSTEM_SHELLOUT_VERSION,
@@ -19,10 +19,20 @@ module Dapp
 
           @system_shellout_container ||= begin
             lock(system_shellout_container_name) do
-              if shellout("docker inspect #{system_shellout_container_name}").exitstatus.nonzero?
+              cmd = shellout("docker inspect -f {{.State.Running}} #{system_shellout_container_name}")
+              if cmd.exitstatus.nonzero?
+                start_container = true
+              elsif cmd.stdout.strip == 'false'
+                shellout!("docker rm -f #{system_shellout_container_name}")
+                start_container = true
+              else
+                start_container = false
+              end
+
+              if start_container
                 volumes_from = [base_container, gitartifact_container]
                 log_secondary_process(t(code: 'process.system_shellout_container_loading'), short: true) do
-                  shellout! ['docker run --detach --privileged', '--restart always',
+                  shellout! ['docker run --detach --privileged',
                              "--name #{system_shellout_container_name}",
                              *volumes_from.map { |container| "--volumes-from #{container}" },
                              '--volume /:/.system_shellout_root',

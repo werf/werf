@@ -156,7 +156,7 @@ module Dapp
           dimg.hashsum [
             dimg.paths_content_hashsum(paths),
             *paths.map { |p| p.relative_path_from(berksfile.home_path).to_s }.sort,
-            (berksfile_lock_checksum unless dimg.project.cli_options[:dev]),
+            (berksfile_lock_checksum unless dimg.project.dev_mode?),
             *enabled_recipes,
             *enabled_modules
           ].compact
@@ -197,7 +197,7 @@ module Dapp
 
         dimg.project.log_secondary_process(dimg.project.t(code: process_code)) do
           before_vendor_commands = [].tap do |commands|
-            unless dimg.project.cli_options[:dev] || chef_cookbooks_stage
+            unless dimg.project.dev_mode? || chef_cookbooks_stage
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
                  'echo "Berksfile.lock not found" 1>&2 ; ',
@@ -208,7 +208,7 @@ module Dapp
           end
 
           after_vendor_commands = [].tap do |commands|
-            if dimg.project.cli_options[:dev]
+            if dimg.project.dev_mode?
               commands.push(
                 ["#{dimg.project.install_path} -o #{Process.uid} -g #{Process.gid} ",
                  "--mode $(#{dimg.project.stat_path} -c %a Berksfile.lock) ",
@@ -227,11 +227,17 @@ module Dapp
 
           vendor_commands = [
             "#{dimg.project.mkdir_path} -p ~/.ssh",
-            'echo "Host *" >> ~/.ssh/config',
-            'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
-            *berksfile.local_cookbooks
-                      .values
-                      .map { |cookbook| "#{dimg.project.rsync_path} --archive --relative #{cookbook[:path]} /tmp/local_cookbooks" },
+            "echo \"Host *\" >> ~/.ssh/config",
+            "echo \"    StrictHostKeyChecking no\" >> ~/.ssh/config",
+            *berksfile
+              .local_cookbooks
+              .values
+              .map {|cookbook|
+                ["#{dimg.project.rsync_path} --archive",
+                 *cookbook[:chefignore].map {|path| "--exclude #{path}"},
+                 "--relative #{cookbook[:path]} /tmp/local_cookbooks",
+                ].join(' ')
+              },
             "cd /tmp/local_cookbooks/#{berksfile_path.parent}",
             *before_vendor_commands,
             '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
@@ -281,7 +287,7 @@ module Dapp
           dimg.project.lock(lock_name, default_timeout: 120) do
             @install_cookbooks ||= {}
             @install_cookbooks[chef_cookbooks_stage] ||= begin
-              install_cookbooks(_cookbooks_path, chef_cookbooks_stage: chef_cookbooks_stage) unless _cookbooks_path.join('.created_at').exist? && !dimg.project.cli_options[:dev]
+              install_cookbooks(_cookbooks_path, chef_cookbooks_stage: chef_cookbooks_stage) unless _cookbooks_path.join('.created_at').exist? && !dimg.project.dev_mode?
               true
             end
           end
