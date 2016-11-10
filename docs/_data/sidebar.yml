@@ -21,7 +21,7 @@ entries:
       url: /stages.html
 
     - title: Таблица стадий
-      url: /stages_diagram.html
+      url: /stages_table.html
 
     - title: Диаграмма зависимостей chef-сборщика
       url: /chef_dependencies.html
