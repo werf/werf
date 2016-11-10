@@ -20,7 +20,7 @@ entries:
     - title: Стадии
       url: /stages.html
 
-    - title: Диаграмма стадий
+    - title: Таблица стадий
       url: /stages_diagram.html
 
     - title: Диаграмма зависимостей chef-сборщика
