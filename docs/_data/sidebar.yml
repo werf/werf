@@ -20,6 +20,12 @@ entries:
     - title: Стадии
       url: /stages.html
 
+    - title: Диаграмма стадий
+      url: /stages_diagram.html
+
+    - title: Диаграмма зависимостей chef-сборщика
+      url: /chef_dependencies.html
+
   - title: Директивы Dappfile
     folderitems:
 
