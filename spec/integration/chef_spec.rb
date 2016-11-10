@@ -13,7 +13,7 @@ describe Dapp::Builder::Chef do
       it 'builds project' do
         [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
-            d.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+            d.config._chef.send("__#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
           end
         end
 
@@ -46,7 +46,7 @@ describe Dapp::Builder::Chef do
           new_file_values = {}
 
           new_file_values[project_file] = SecureRandom.uuid
-          testproject_path.join("files/#{stage}/common/#{project_file}.txt").tap do |path|
+          testproject_chef_path.join("files/#{stage}/common/#{project_file}.txt").tap do |path|
             path.write "#{new_file_values[project_file]}\n"
           end
 
@@ -78,7 +78,7 @@ describe Dapp::Builder::Chef do
 
         [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
-            d.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+            d.config._chef.send("__#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
           end
         end
 
@@ -106,7 +106,7 @@ describe Dapp::Builder::Chef do
 
         [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
-            d.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+            d.config._chef.send("__#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
           end
         end
 
@@ -135,72 +135,75 @@ describe Dapp::Builder::Chef do
       define_method :config do
         @config ||= default_config.merge(
           _builder: :chef,
-          _home_path: testproject_path.to_s,
           _name: "#{testproject_path.basename}-X-Y",
           _docker: default_config[:_docker].merge(_from: os.to_sym),
           _chef: {
-            _modules: %w(test test2),
-            _recipes: %w(main X X_Y),
-            _before_install_attributes: {
+            _module: %w(test test2),
+            _recipe: %w(main X X_Y),
+            __before_install_attributes: {
               'mdapp-test2' => {
                 'sayhello' => 'hello',
                 'sayhelloagain' => 'helloagain'
               },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
-            _install_attributes: {
+            __install_attributes: {
               'mdapp-test2' => { 'sayhello' => 'hello' },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
-            _before_setup_attributes: {
+            __before_setup_attributes: {
               'mdapp-test2' => { 'sayhello' => 'hello' },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
-            _setup_attributes: {
+            __setup_attributes: {
               'mdapp-test2' => { 'sayhello' => 'hello' },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
-            _build_artifact_attributes: {
+            __build_artifact_attributes: {
               'mdapp-test2' => { 'sayhello' => 'hello' },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             }
           },
           _before_install_artifact: [
-            ::Dapp::Config::Directive::Artifact::Stage.new(
-              '/myartifact',
-              config: ConfigRecursiveOpenStruct.new(default_config.merge(
-                                                      _builder: :chef,
-                                                      _home_path: testproject_path.to_s,
-                                                      _artifact_dependencies: [],
-                                                      _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
-                                                      _chef: {
-                                                        _modules: %w(testartifact),
-                                                        _recipes: %w(myartifact),
-                                                        _before_install_attributes: {
-                                                          'mdapp-test2' => {
-                                                            'sayhello' => 'hello',
-                                                            'sayhelloagain' => 'helloagain'
-                                                          },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        },
-                                                        _install_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        },
-                                                        _before_setup_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        },
-                                                        _setup_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        },
-                                                        _build_artifact_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        }
-                                                      }
-              ))
+            ConfigRecursiveOpenStruct.new(
+              _config: ConfigRecursiveOpenStruct.new(default_config.merge(
+                _builder: :chef,
+                _artifact_dependencies: [],
+                _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
+                _chef: {
+                  _module: %w(testartifact),
+                  _recipe: %w(myartifact),
+                  __before_install_attributes: {
+                    'mdapp-test2' => {
+                      'sayhello' => 'hello',
+                      'sayhelloagain' => 'helloagain'
+                    },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  },
+                  __install_attributes: {
+                    'mdapp-test2' => { 'sayhello' => 'hello' },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  },
+                  __before_setup_attributes: {
+                    'mdapp-test2' => { 'sayhello' => 'hello' },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  },
+                  __setup_attributes: {
+                    'mdapp-test2' => { 'sayhello' => 'hello' },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  },
+                  __build_artifact_attributes: {
+                    'mdapp-test2' => { 'sayhello' => 'hello' },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  }
+                }
+              )),
+              _artifact_options: {
+                cwd: '/',
+                to: '/myartifact',
+                exclude_paths: [],
+                include_paths: []
+              }
             )
           ]
         )
@@ -217,7 +220,11 @@ describe Dapp::Builder::Chef do
   end
 
   def testproject_path
-    project_path.join('testproject')
+    project_path
+  end
+
+  def testproject_chef_path
+    project_path.join('.dapp_chef')
   end
 
   def mdapp_test_path
