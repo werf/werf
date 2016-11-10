@@ -91,7 +91,7 @@ module Dapp
           (application.config.public_send("_#{type}_dir")._store +
             from_image.labels.select { |l, _| l == "dapp-#{type}-dir" }.map { |_, value| value.split(';') }.flatten).each do |path|
             absolute_path = File.expand_path(File.join('/', path))
-            tmp_path = application.send("#{type}_path", absolute_path[1..-1]).tap(&:mkpath)
+            tmp_path = application.send("#{type}_path", 'mount', absolute_path[1..-1]).tap(&:mkpath)
             image.add_volume "#{tmp_path}:#{absolute_path}"
           end
         end
