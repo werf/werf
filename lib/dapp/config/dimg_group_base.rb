@@ -11,6 +11,10 @@ module Dapp
         super(project: project)
       end
 
+      def dev_mode
+        @_dev_mode = true
+      end
+
       def dimg(name = nil, &blk)
         Config::Dimg.new(name, project: project).tap do |dimg|
           before_dimg_eval(dimg)
@@ -29,7 +33,8 @@ module Dapp
 
       protected
 
-      def before_dimg_eval(_dimg)
+      def before_dimg_eval(dimg)
+        dimg.instance_variable_set(:@_dev_mode, @_dev_mode)
       end
     end
   end
