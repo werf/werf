@@ -1,5 +1,5 @@
 ---
-title: Базовые комманды
+title: Базовые команды
 sidebar: doc_sidebar
 permalink: base_commands.html
 folder: command
@@ -134,7 +134,7 @@ frontend
 Выкатить собранное приложение в репозиторий, в следующем формате **REPO**:**TAG**.
 
 ```
-dapp spush [options] [APP PATTERN] REPO
+dapp spush [options] [APPS PATTERN] REPO
 ```
 
 Опции такие же как у **dapp push**.
@@ -162,7 +162,7 @@ localhost:5000/test:master
 Выкатить [кэш собранных приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект) в репозиторий.
 
 ```
-dapp stages push [options] [APP PATTERN] REPO
+dapp stages push [options] [APPS PATTERN] REPO
 ```
 
 #### Примеры
@@ -196,7 +196,7 @@ frontend
 Если не указана опция **--all**, импорт будет выполнен до первого найденного кэша стейджа для каждого приложения.
 
 ```
-dapp stages pull [options] [APP PATTERN] REPO
+dapp stages pull [options] [APPS PATTERN] REPO
 ```
 
 #### --all

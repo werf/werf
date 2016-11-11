@@ -1,5 +1,5 @@
 ---
-title: Комманды отладки
+title: Команды отладки
 sidebar: doc_sidebar
 permalink: debugging_commands.html
 folder: command

@@ -6,9 +6,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp run [options] [APP PATTERN] [DOCKER ARGS]
+  dapp run [options] [APPS PATTERN] [DOCKER ARGS]
 
-    APP PATTERN                 Application to process [default: *].
+    APPS PATTERN                 Application to process [default: *].
     DOCKER ARGS                 Docker run options and command separated by '--'
 
 Options:

@@ -1,5 +1,5 @@
 ---
-title: Комманды очистки
+title: Команды очистки
 sidebar: doc_sidebar
 permalink: clean_commands.html
 folder: command
@@ -68,7 +68,7 @@ $ dapp stages flush repo localhost:5000/test
 ```
 
 ### dapp cleanup
-Убраться в системе после некорректного завершения работы dapp, удалить нетеггированные docker-образы и docker-контейнеры [проекта](definitions.html#проект).
+Убраться в системе после некорректного завершения работы dapp, удалить нетегированные docker-образы и docker-контейнеры [проекта](definitions.html#проект).
 
 ```
 dapp cleanup [options] [APPS PATTERN ...]

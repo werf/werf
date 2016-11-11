@@ -44,7 +44,7 @@ entries:
     - title: Docker
       url: /docker_directives.html
 
-  - title: Комманды
+  - title: Команды
     folderitems:
 
     - title: Основные

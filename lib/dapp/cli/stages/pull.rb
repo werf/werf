@@ -7,9 +7,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages pull [options] [APP PATTERN] REPO
+  dapp stages pull [options] [APPS PATTERN] REPO
 
-    APP PATTERN                 Applications to process [default: *].
+    APPS PATTERN                 Applications to process [default: *].
 
 Options:
 BANNER

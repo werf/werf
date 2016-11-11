@@ -14,13 +14,13 @@ Available subcommands: (for details, dapp SUB-COMMAND --help)
 
 dapp build [options] [APPS PATTERN ...]
 dapp bp [options] [APPS PATTERN ...] REPO
-dapp push [options] [APP PATTERN] REPO
+dapp push [options] [APPS PATTERN] REPO
 dapp spush [options] [APPS PATTERN ...] REPO
 dapp list [options] [APPS PATTERN ...]
-dapp run [options] [APP PATTERN] [DOCKER ARGS]
+dapp run [options] [APPS PATTERN] [DOCKER ARGS]
 dapp cleanup [options] [APPS PATTERN ...]
 dapp mrproper [options]
-dapp stage image [options] [APP PATTERN]
+dapp stage image [options] [APPS PATTERN]
 dapp stages
 
 Options:
