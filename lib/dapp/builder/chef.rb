@@ -234,7 +234,6 @@ module Dapp
               .values
               .map {|cookbook|
                 ["#{application.project.rsync_path} --archive",
-                 *cookbook[:chefignore].map {|path| "--exclude #{path}"},
                  "--relative #{cookbook[:path]} /tmp/local_cookbooks",
                 ].join(' ')
               },
