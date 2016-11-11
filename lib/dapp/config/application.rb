@@ -81,11 +81,19 @@ module Dapp
         @_build_dir
       end
 
+      def dev_mode
+        @_dev_mode = true
+      end
+
       def _name
         (@_name || @_basename).tap do |name|
           reg = '^[[[:alnum:]]_.-]*$'
           raise Error::Config, code: :app_name_incorrect, data: { name: name, reg: reg } unless name =~ /#{reg}/
         end
+      end
+
+      def _dev_mode
+        !!@_dev_mode
       end
 
       def _apps

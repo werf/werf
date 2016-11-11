@@ -126,6 +126,10 @@ module Dapp
       config._docker._from.nil?
     end
 
+    def build_cache_version
+      [Dapp::BUILD_CACHE_VERSION, (config._dev_mode || project.dev_mode?) ? 1 : 0]
+    end
+
     protected
 
     def should_be_built?
