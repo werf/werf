@@ -7,6 +7,10 @@ module Dapp
         attr_reader :_chef, :_shell, :_docker, :_git_artifact, :_mount, :_artifact
         attr_reader :_install_dependencies, :_setup_dependencies
 
+        def dev_mode
+          @_dev_mode = true
+        end
+
         def install_depends_on(*args)
           @_install_dependencies.concat(args)
         end
@@ -44,6 +48,10 @@ module Dapp
 
         def mount(to, &blk)
           _mount << Directive::Mount.new(to, &blk)
+        end
+
+        def _dev_mode
+          !!@_dev_mode
         end
 
         def _builder
