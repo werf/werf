@@ -42,7 +42,16 @@ module Dapp
             conf.instance_eval File.read(dappfile_path), dappfile_path
           rescue SyntaxError, StandardError => e
             backtrace = e.backtrace.find { |line| line.start_with?(dappfile_path) }
-            message = [NoMethodError, NameError].any? { |err| e.is_a?(err) } ? e.message[/.*(?= for)/] : e.message
+            message = begin
+              case e
+              when NoMethodError
+                e.message =~ /`.*'/
+                "undefined method #{Regexp.last_match}"
+              when NameError then e.message[/.*(?= for)/]
+              else
+                e.message
+              end
+            end
             message = "#{backtrace[/.*(?=:in)/]}: #{message}" if backtrace
             raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
           end
