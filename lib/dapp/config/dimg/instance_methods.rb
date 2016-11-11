@@ -155,6 +155,7 @@ module Dapp
 
         def directive_eval(directive, &blk)
           directive.instance_eval(&blk) if block_given?
+          directive
         end
 
         def pass_to_default(dimg)
@@ -179,7 +180,7 @@ module Dapp
         end
 
         def passed_directives
-          [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount, :@_artifact, :@_builder, @_dev_mode]
+          [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount, :@_artifact, :@_builder, :@_dev_mode]
         end
       end
     end

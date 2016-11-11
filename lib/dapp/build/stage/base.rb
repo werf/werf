@@ -79,7 +79,7 @@ module Dapp
           image_add_volumes
           image.add_service_change_label dapp: dimg.stage_dapp_label
           image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
-          image.add_service_change_label 'dapp-dev-mode'.to_sym => true if application.dev_mode?
+          image.add_service_change_label 'dapp-dev-mode'.to_sym => true if dimg.dev_mode?
 
           if dimg.project.ssh_auth_sock
             image.add_volume "#{dimg.project.ssh_auth_sock}:/tmp/dapp-ssh-agent"
@@ -127,7 +127,7 @@ module Dapp
           else
             args = []
             args << prev_stage.signature unless prev_stage.nil?
-            args << application.build_cache_version
+            args << dimg.build_cache_version
             args << builder_checksum
             args.concat(dependencies.flatten)
 
