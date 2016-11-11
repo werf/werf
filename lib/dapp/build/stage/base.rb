@@ -124,7 +124,13 @@ module Dapp
           if empty?
             prev_stage.signature
           else
-            hashsum [prev_stage.signature, builder_checksum, *dependencies.flatten]
+            args = []
+            args << prev_stage.signature unless prev_stage.nil?
+            args << application.build_cache_version
+            args << builder_checksum
+            args.concat(dependencies.flatten)
+
+            hashsum args
           end
         end
 
