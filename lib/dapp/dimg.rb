@@ -30,7 +30,7 @@ module Dapp
             begin
               last_stage.build!
             ensure
-              last_stage.save_in_cache! if last_stage.image.built? || project.dev_mode?
+              last_stage.save_in_cache! if last_stage.image.built? || dev_mode?
             end
           end
         end
@@ -126,8 +126,12 @@ module Dapp
       config._docker._from.nil?
     end
 
+    def dev_mode?
+      config._dev_mode || project.dev_mode?
+    end
+
     def build_cache_version
-      [Dapp::BUILD_CACHE_VERSION, (config._dev_mode || project.dev_mode?) ? 1 : 0]
+      [Dapp::BUILD_CACHE_VERSION, dev_mode? ? 1 : 0]
     end
 
     protected
