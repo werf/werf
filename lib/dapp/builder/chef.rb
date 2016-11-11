@@ -156,7 +156,7 @@ module Dapp
           application.hashsum [
             application.paths_content_hashsum(paths),
             *paths.map { |p| p.relative_path_from(berksfile.home_path).to_s }.sort,
-            (berksfile_lock_checksum unless application.project.dev_mode?),
+            (berksfile_lock_checksum unless application.dev_mode?),
             *enabled_recipes,
             *enabled_modules
           ].compact
@@ -197,7 +197,7 @@ module Dapp
 
         application.project.log_secondary_process(application.project.t(code: process_code)) do
           before_vendor_commands = [].tap do |commands|
-            unless application.project.dev_mode? || chef_cookbooks_stage
+            unless application.dev_mode? || chef_cookbooks_stage
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
                  "echo \"Berksfile.lock not found\" 1>&2 ; ",
@@ -208,7 +208,7 @@ module Dapp
           end
 
           after_vendor_commands = [].tap do |commands|
-            if application.project.dev_mode?
+            if application.dev_mode?
               commands.push(
                 ["#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} ",
                  "--mode $(#{application.project.stat_path} -c %a Berksfile.lock) ",
@@ -287,7 +287,7 @@ module Dapp
           application.project.lock(lock_name, default_timeout: 120) do
             @install_cookbooks ||= {}
             @install_cookbooks[chef_cookbooks_stage] ||= begin
-              install_cookbooks(_cookbooks_path, chef_cookbooks_stage: chef_cookbooks_stage) unless _cookbooks_path.join('.created_at').exist? && !application.project.dev_mode?
+              install_cookbooks(_cookbooks_path, chef_cookbooks_stage: chef_cookbooks_stage) unless _cookbooks_path.join('.created_at').exist? && !application.dev_mode?
               true
             end
           end
