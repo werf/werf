@@ -4,6 +4,32 @@ describe Dapp::Config::Dimg do
   include SpecHelper::Common
   include SpecHelper::Config
 
+  context 'dev_mode' do
+    it 'base (1)' do
+      dappfile do
+        dimg
+      end
+      expect(dimg._dev_mode).to eq false
+    end
+
+    it 'base (2)' do
+      dappfile do
+        dev_mode
+        dimg
+      end
+      expect(dimg._dev_mode).to eq true
+    end
+
+    it 'base (3)' do
+      dappfile do
+        dimg do
+          dev_mode
+        end
+      end
+      expect(dimg._dev_mode).to eq true
+    end
+  end
+
   context 'naming' do
     context 'positive' do
       it 'dimg without name (1)' do
