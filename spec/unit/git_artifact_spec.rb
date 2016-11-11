@@ -64,6 +64,7 @@ describe Dapp::GitArtifact do
     instance_double(Dapp::GitRepo::Own).tap do |instance|
       allow(instance).to receive(:container_path) { '.git' }
       allow(instance).to receive(:application) { application }
+      allow(instance).to receive(:git_bare) { |command| git(command) }
     end
   end
 
