@@ -17,6 +17,10 @@ BANNER
       option :proper_cache_version,
              long: '--improper-cache-version-stages',
              boolean: true
+
+      option :proper_dev_mode_cache,
+             long: '--improper-dev-mode-cache',
+             boolean: true
     end
   end
 end
