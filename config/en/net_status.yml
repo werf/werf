@@ -19,6 +19,8 @@ en:
       from_image_not_found: 'Image `%{name}` not found!'
     project:
       spush_command_unexpected_apps_number: "Command 'spush' can process only one application!"
+      tag_command_unexpected_apps_number: "Command 'tag' can process only one application!"
+      tag_command_incorrect_tag: "Incorrect tag given!"
       command_unexpected_apps_number: "Command can process only one application!"
       no_such_app: "No such app: '%{apps_patterns}'!"
       dappfile_not_found: "Dappfile not found!"

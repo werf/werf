@@ -33,24 +33,30 @@ module Dapp
       end
 
       def export!(name)
-        image = self.class.new(name: name, project: project, built_id: built_id)
-        image.tag!
-        image.push!
-        image.untag!
+        tag!(name).tap do |image|
+          image.push!
+          image.untag!
+        end
+      end
+
+      def tag!(name)
+        clone!(name).tap do |image|
+          self.class.tag!(id: image.built_id, tag: image.name)
+        end
       end
 
       def import!(name)
-        image = self.class.new(name: name, project: project)
-        image.pull!
-        @built_id = image.built_id
-        tag!
-        image.untag!
+        clone!(name).tap do |image|
+          image.pull!
+          @built_id = image.built_id
+          save_in_cache!
+          image.untag!
+        end
       end
 
-      def tag!
+      def save_in_cache!
         project.log_warning(desc: { code: :another_image_already_tagged }) if !(existed_id = id).nil? && built_id != existed_id
-        project.shellout!("docker tag #{built_id} #{name}")
-        cache_reset
+        self.class.tag!(id: built_id, tag: name)
       end
 
       def labels
@@ -76,6 +82,10 @@ module Dapp
 
       def commit!
         project.shellout!("docker commit #{prepared_change} #{container_name}").stdout.strip
+      end
+
+      def clone!(name)
+        self.class.new(name: name, project: project, built_id: built_id)
       end
     end # Stage
   end # Image

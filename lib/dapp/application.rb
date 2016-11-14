@@ -39,6 +39,19 @@ module Dapp
       FileUtils.rm_rf(tmp_path)
     end
 
+    def tag!(tag)
+      project.lock("#{config._basename}.images", readonly: true) do
+        applicaion_name = config._name
+        if project.dry_run?
+          project.log_state(applicaion_name, state: project.t(code: 'state.tag'), styles: { status: :success })
+        else
+          project.log_process(applicaion_name, process: project.t(code: 'status.process.tagging')) do
+            last_stage.image.tag!(tag)
+          end
+        end
+      end
+    end
+
     def export!(repo, format:)
       project.lock("#{config._basename}.images", readonly: true) do
         tags.each do |tag|

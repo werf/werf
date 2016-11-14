@@ -68,6 +68,11 @@ module Dapp
       end
 
       class << self
+        def tag!(id:, tag:)
+          Project.shellout!("docker tag #{id} #{tag}")
+          cache_reset
+        end
+
         def cache
           @cache ||= (@cache = {}).tap { cache_reset }
         end

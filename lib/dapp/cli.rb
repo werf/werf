@@ -5,7 +5,7 @@ module Dapp
     include Mixlib::CLI
     include Helper::Trivia
 
-    SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image'].freeze
+    SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image', 'tag'].freeze
 
     banner <<BANNER.freeze
 Usage: dapp [options] sub-command [sub-command options]
@@ -16,6 +16,7 @@ dapp build [options] [APPS PATTERN ...]
 dapp bp [options] [APPS PATTERN ...] REPO
 dapp push [options] [APP PATTERN] REPO
 dapp spush [options] [APPS PATTERN ...] REPO
+dapp tag [options] [APP PATTERN ...] TAG
 dapp list [options] [APPS PATTERN ...]
 dapp run [options] [APP PATTERN] [DOCKER ARGS]
 dapp cleanup [options] [APPS PATTERN ...]

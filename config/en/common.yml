@@ -28,6 +28,7 @@ en:
         pulling: '[PULLING]'
         building: '[BUILDING]'
         default: '[RUNNING]'
+        tagging: '[TAGGING]'
       success:
         default: '[OK]'
       failed:
@@ -40,6 +41,7 @@ en:
       empty: '[EMPTY]'
       push: '[PUSH]'
       pull: '[PULL]'
+      tag: '[TAG]'
     warning:
       excess_builder_instruction: "WARNING: Excessive use of the 'builder' instruction. Builder type will be automatically determined by the first use of any builder."
       excess_name_instruction: "WARNING: Excessive use of the 'name' instruction. Given name corresponds to default name."
