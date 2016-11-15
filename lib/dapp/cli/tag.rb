@@ -6,9 +6,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp tag [options] [APP PATTERN ...] TAG
+  dapp tag [options] [DIMG PATTERN ...] TAG
 
-    APP PATTERN                 Application to process [default: *].
+    DIMG PATTERN                Dapp image to process [default: *].
     REPO                        Pushed image name.
 
 Options:
@@ -17,7 +17,7 @@ BANNER
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         tag = self.class.required_argument(self)
-        Project.new(cli_options: config, apps_patterns: cli_arguments).public_send(class_to_lowercase, tag)
+        Project.new(cli_options: config, dimgs_patterns: cli_arguments).public_send(class_to_lowercase, tag)
       end
     end
   end

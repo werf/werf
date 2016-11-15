@@ -21,7 +21,7 @@ en:
       spush_command_unexpected_dimgs_number: "Command 'spush' can process only one dimg!"
       command_unexpected_dimgs_number: "Command can process only one dimg!"
       no_such_dimg: "No such dimg: '%{dimgs_patterns}'!"
-      tag_command_unexpected_apps_number: "Command 'tag' can process only one dimg!"
+      tag_command_unexpected_dimgs_number: "Command 'tag' can process only one dimg!"
       tag_command_incorrect_tag: "Incorrect tag ('%{name}') given!"
       repo_name_incorrect: "Incorrect repo ('%{name}') given!"
       dappfile_not_found: "Dappfile not found!"

@@ -41,11 +41,11 @@ module Dapp
 
     def tag!(tag)
       project.lock("#{config._basename}.images", readonly: true) do
-        applicaion_name = config._name
+        dimg_name = config._name
         if project.dry_run?
-          project.log_state(applicaion_name, state: project.t(code: 'state.tag'), styles: { status: :success })
+          project.log_state(dimg_name, state: project.t(code: 'state.tag'), styles: { status: :success })
         else
-          project.log_process(applicaion_name, process: project.t(code: 'status.process.tagging')) do
+          project.log_process(dimg_name, process: project.t(code: 'status.process.tagging')) do
             last_stage.image.tag!(tag)
           end
         end

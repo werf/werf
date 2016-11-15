@@ -60,7 +60,7 @@ module Dapp
         def save_in_cache!
           prev_stage.save_in_cache! if prev_stage
           return unless should_be_tagged?
-          image.tag! unless dimg.project.dry_run?
+          image.save_in_cache! unless dimg.project.dry_run?
         end
 
         def image
