@@ -56,7 +56,7 @@ module Dapp
         end
 
         def validate_repo_name(repo)
-          raise(Error::Project, code: :repo_name_incorrect, data: { name: repo }) unless repo =~ DockerRegistry.repo_regex
+          raise(Error::Project, code: :repo_name_incorrect, data: { name: repo }) unless Dapp::DockerRegistry.repo_name?(repo)
         end
 
         def proper_cache_version?

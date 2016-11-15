@@ -68,8 +68,14 @@ module Dapp
       end
 
       class << self
-        def image_regex
-          /^[a-z0-9]+(?:[._-][a-z0-9]+)*(:[\w][\w.-]{0,127})?$/
+        def image_name_format
+          separator = '[_.]|__|[-]*'
+          tag = "[[:alnum:]][[[:alnum:]]#{separator}]{0,127}"
+          "#{DockerRegistry.repo_name_format}(:(?<tag>#{tag}))?"
+        end
+
+        def image_name?(name)
+          !(/^#{image_name_format}$/ =~ name).nil?
         end
 
         def tag!(id:, tag:)
