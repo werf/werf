@@ -10,6 +10,7 @@ module Dapp
     include Command::Bp
     include Command::Push
     include Command::Spush
+    include Command::Tag
     include Command::List
     include Command::Stages::CleanupLocal
     include Command::Stages::CleanupRepo

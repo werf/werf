@@ -48,7 +48,7 @@ module Dapp
         # rubocop:enable Metrics/ParameterLists
 
         def log_secondary_process(message, **kwargs, &blk)
-          log_process(message, **kwargs.merge(style: { message: :secondary, success: :secondary }), &blk)
+          log_process(message, **kwargs.merge(style: { message: :secondary, success: :secondary }, quiet: !log_verbose?), &blk)
         end
 
         protected
