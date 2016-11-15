@@ -227,7 +227,7 @@ module Dapp
     end
 
     def sudo_format_user(user)
-      user.to_i.to_s == user.to_s ? "\\\##{user}" : user
+      user.to_i.to_s == user.to_s ? "\\##{user}" : user
     end
 
     def sudo
