@@ -101,10 +101,10 @@ module Dapp
         end
 
         def image_add_default_volumes(type)
-          (dimg.config.public_send("_#{type}_mount").map(&:to) +
+          (dimg.config.public_send("_#{type}_mount").map(&:_to) +
             from_image.labels.select { |l, _| l == "dapp-#{type}-dir" }.map { |_, value| value.split(';') }.flatten).each do |path|
             absolute_path = File.expand_path(File.join('/', path))
-            tmp_path = dimg.send("#{type}_path", 'mount', absolute_path[1..-1]).tap(&:mkpath)
+            tmp_path = dimg.send(type, 'mount', absolute_path[1..-1]).tap(&:mkpath)
             image.add_volume "#{tmp_path}:#{absolute_path}"
           end
         end

@@ -28,6 +28,9 @@ module Dapp
         container_dapp_path('tmp', *path)
       end
 
+      alias_method :build_dir, :build_path
+      alias_method :tmp_dir, :tmp_path
+
       private
 
       def make_path(base, *path)
