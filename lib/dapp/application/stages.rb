@@ -17,14 +17,14 @@ module Dapp
 
       def images
         (@images ||= []).tap do |images|
-          stages.map do |stage|
+          stages.each do |stage|
             if stage.respond_to?(:images)
               images.concat(stage.images)
             else
               images << stage.image
             end
-          end.uniq(&:name)
-        end
+          end
+        end.uniq!(&:name)
       end
 
       protected
