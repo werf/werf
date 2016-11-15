@@ -8,7 +8,7 @@ describe Dapp::DockerRegistry do
       %w(subdomain.hostname:1234/sub_repo/repo sub_repo/repo subdomain.hostname:1234/)
     ].each do |str, repo_suffix, hostname|
       it "#{str}" do
-        str =~ Dapp::DockerRegistry.repo_regex
+        str =~ %r{^#{Dapp::DockerRegistry.repo_name_format}$}
         expect(hostname).to eq Regexp.last_match(:hostname)
         expect(repo_suffix).to eq Regexp.last_match(:repo_suffix)
       end
@@ -18,7 +18,7 @@ describe Dapp::DockerRegistry do
   context 'negative' do
     %w(hostname.ru:6000 hostname:/repo).each do |str|
       it "#{str}" do
-        expect(str =~ Dapp::DockerRegistry.repo_regex).to be_nil
+        expect(Dapp::DockerRegistry.repo_name?(str)).to be_falsey
       end
     end
   end

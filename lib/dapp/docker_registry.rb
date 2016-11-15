@@ -2,7 +2,7 @@ module Dapp
   # DockerRegistry
   module DockerRegistry
     def self.new(repo)
-      repo_regex =~ repo
+      /^#{repo_name_format}$/ =~ repo
       expected_hostname = Regexp.last_match(:hostname)
       expected_repo_suffix = Regexp.last_match(:repo_suffix)
       expected_hostname_url = expected_hostname ? "http://#{expected_hostname}" : nil
@@ -14,14 +14,18 @@ module Dapp
       end
     end
 
-    def self.repo_regex
+    def self.repo_name_format
       separator = '[_.]|__|[-]*'
       alpha_numeric = '[[:alnum:]]*'
       component = "#{alpha_numeric}[#{separator}#{alpha_numeric}]*"
       port_number = '[[:digit:]]+'
-      hostcomponent = '[[:alnum:]-]*[[:alnum:]]'
-      hostname = "#{hostcomponent}[\.#{hostcomponent}]*(?<port>:#{port_number})?"
-      %r{^(?<hostname>#{hostname}/)?(?<repo_suffix>#{component}[/#{component}]*)$}
+      hostcomponent = '[[:alnum:]_-]*[[:alnum:]]'
+      hostname = "#{hostcomponent}[\\.#{hostcomponent}]*(?<port>:#{port_number})?"
+      "(?<hostname>#{hostname}/)?(?<repo_suffix>#{component}[/#{component}]*)"
+    end
+
+    def self.repo_name?(name)
+      !(/^#{repo_name_format}$/ =~ name).nil?
     end
 
     def self.hostname_exist?(url)
