@@ -138,7 +138,7 @@ describe Dapp::Builder::Chef do
           _name: "#{testproject_path.basename}-X-Y",
           _docker: default_config[:_docker].merge(_from: os.to_sym),
           _chef: {
-            _module: %w(test test2),
+            _dimod: %w(test test2),
             _recipe: %w(main X X_Y),
             __before_install_attributes: {
               'mdapp-test2' => {
@@ -171,7 +171,7 @@ describe Dapp::Builder::Chef do
                 _artifact_dependencies: [],
                 _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
                 _chef: {
-                  _module: %w(testartifact),
+                  _dimod: %w(testartifact),
                   _recipe: %w(myartifact),
                   __before_install_attributes: {
                     'mdapp-test2' => {

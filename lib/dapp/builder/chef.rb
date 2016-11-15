@@ -60,7 +60,7 @@ module Dapp
       private
 
       def enabled_modules
-        dimg.config._chef._module
+        dimg.config._chef._dimod
       end
 
       def enabled_recipes
