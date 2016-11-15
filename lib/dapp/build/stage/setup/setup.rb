@@ -6,32 +6,32 @@ module Dapp
         class Setup < Base
           include Mod::Group
 
-          def initialize(application, next_stage)
-            @prev_stage = GAPreSetupPatch.new(application, self)
+          def initialize(dimg, next_stage)
+            @prev_stage = GAPreSetupPatch.new(dimg, self)
             super
           end
 
           def empty?
-            !application.builder.setup?
-          end
-
-          def builder_checksum
-            application.builder.setup_checksum
+            !dimg.builder.setup?
           end
 
           def context
             [setup_dependencies_files_checksum, builder_checksum]
           end
 
+          def builder_checksum
+            dimg.builder.setup_checksum
+          end
+
           def prepare_image
             super
-            application.builder.setup(image)
+            dimg.builder.setup(image)
           end
 
           private
 
           def setup_dependencies_files_checksum
-            @setup_files_checksum ||= dependencies_files_checksum(application.config._setup_dependencies)
+            @setup_files_checksum ||= dependencies_files_checksum(dimg.config._setup_dependencies)
           end
         end # Setup
       end

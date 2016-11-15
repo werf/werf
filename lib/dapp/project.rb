@@ -37,12 +37,12 @@ module Dapp
     include Shellout::System
 
     attr_reader :cli_options
-    attr_reader :apps_patterns
+    attr_reader :dimgs_patterns
 
-    def initialize(cli_options: {}, apps_patterns: nil)
+    def initialize(cli_options: {}, dimgs_patterns: nil)
       @cli_options = cli_options
-      @apps_patterns = apps_patterns || []
-      @apps_patterns << '*' unless @apps_patterns.any?
+      @dimgs_patterns = dimgs_patterns || []
+      @dimgs_patterns << '*' unless @dimgs_patterns.any?
 
       Logging::Paint.initialize(cli_options[:log_color])
       Logging::I18n.initialize
@@ -51,7 +51,11 @@ module Dapp
     def name
       @name ||= begin
         if File.exist? File.join(path, '.git')
-          system_shellout("#{git_path} -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/] rescue File.basename(path)
+          begin
+            system_shellout("#{git_path} -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
+          rescue
+            File.basename(path)
+          end
         else
           File.basename(path)
         end
@@ -59,14 +63,7 @@ module Dapp
     end
 
     def path
-      @path ||= begin
-        dappfile_path = dappfiles.first
-        if File.basename(expand_path(dappfile_path, 2)) == '.dapps'
-          expand_path(dappfile_path, 3)
-        else
-          expand_path(dappfile_path)
-        end
-      end
+      @path ||= expand_path(dappfile_path)
     end
 
     def build_path
@@ -79,12 +76,12 @@ module Dapp
       end
     end
 
-    def cache_format
-      "dappstage-#{name}-%{application_name}"
+    def stage_cache
+      "dimgstage-#{name}"
     end
 
-    def stage_dapp_label_format
-      '%{application_name}'
+    def stage_dapp_label
+      name
     end
 
     def dev_mode?

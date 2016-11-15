@@ -22,8 +22,8 @@ module Dapp
                 end
               end.compact.to_h
             end
-            applications, stages = registry_tags(registry).partition { |tag| !tag.start_with?('dappstage') }
-            [format.call(applications), format.call(stages)]
+            dimgs, stages = registry.tags.partition { |tag| !tag.start_with?('dimgstage') }
+            [format.call(dimgs), format.call(stages)]
           end
 
           def registry_tags(registry)

@@ -1,6 +1,6 @@
 module Dapp
-  # Application
-  class Application
+  # Dimg
+  class Dimg
     include GitArtifact
     include Path
     include Tags
@@ -20,12 +20,12 @@ module Dapp
       @ignore_git_fetch = ignore_git_fetch
       @should_be_built = should_be_built
 
-      raise Error::Application, code: :application_not_built if should_be_built?
+      raise Error::Dimg, code: :dimg_not_built if should_be_built?
     end
 
     def build!
       with_introspection do
-        project.lock("#{config._basename}.images", readonly: true) do
+        project.lock("#{project.name}.images", readonly: true) do
           last_stage.build_lock! do
             begin
               last_stage.build!
@@ -40,16 +40,16 @@ module Dapp
     end
 
     def export!(repo, format:)
-      project.lock("#{config._basename}.images", readonly: true) do
+      project.lock("#{project.name}.images", readonly: true) do
         tags.each do |tag|
-          image_name = format % { repo: repo, application_name: config._name, tag: tag }
+          image_name = format % { repo: repo, dimg_name: config._name, tag: tag }
           export_base!(last_stage.image, image_name)
         end
       end
     end
 
     def export_stages!(repo, format:)
-      project.lock("#{config._basename}.images", readonly: true) do
+      project.lock("#{project.name}.images", readonly: true) do
         export_images.each do |image|
           image_name = format % { repo: repo, signature: image.name.split(':').last }
           export_base!(image, image_name)
@@ -73,7 +73,7 @@ module Dapp
     end
 
     def import_stages!(repo, format:)
-      project.lock("#{config._basename}.images", readonly: true) do
+      project.lock("#{project.name}.images", readonly: true) do
         import_images.each do |image|
           begin
             image_name = format % { repo: repo, signature: image.name.split(':').last }
@@ -106,7 +106,7 @@ module Dapp
       if project.dry_run?
         project.log(cmd)
       else
-        system(cmd) || raise(Error::Application, code: :application_not_run)
+        system(cmd) || raise(Error::Dimg, code: :dimg_not_run)
       end
     end
 
@@ -138,7 +138,7 @@ module Dapp
 
     def should_be_built?
       should_be_built && begin
-        builder.before_application_should_be_built_check
+        builder.before_dimg_should_be_built_check
         !last_stage.image.tagged?
       end
     end
@@ -152,5 +152,5 @@ module Dapp
       project.shellout!("docker rmi #{data[:built_id]}") if data[:rmi]
       raise data[:error]
     end
-  end # Application
+  end # Dimg
 end # Dapp

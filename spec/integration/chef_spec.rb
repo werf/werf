@@ -2,7 +2,7 @@ require_relative '../spec_helper'
 
 describe Dapp::Builder::Chef do
   include SpecHelper::Common
-  include SpecHelper::Application
+  include SpecHelper::Dimg
 
   before :all do
     init_project
@@ -11,25 +11,25 @@ describe Dapp::Builder::Chef do
   %w(ubuntu:14.04 centos:7).each do |os|
     context os do
       it 'builds project' do
-        [application, artifact_application].each do |app|
+        [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
-            app.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+            d.config._chef.send("__#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
           end
         end
 
-        application_build!
+        dimg_build!
 
         stages.each { |_, stage| expect(stage.image.tagged?).to be(true) }
 
         TEST_FILE_NAMES.each { |name| expect(send("#{name}_exist?")).to be(true), "#{send("#{name}_path")} does not exist" }
 
-        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
-        expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
+        expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)
         ).to eq(
-          read_file_in_image('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)
+          read_file_in_image('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)
         ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt in artifact image does not equal /myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
@@ -46,7 +46,7 @@ describe Dapp::Builder::Chef do
           new_file_values = {}
 
           new_file_values[project_file] = SecureRandom.uuid
-          testproject_path.join("files/#{stage}/common/#{project_file}.txt").tap do |path|
+          testproject_chef_path.join("files/#{stage}/common/#{project_file}.txt").tap do |path|
             path.write "#{new_file_values[project_file]}\n"
           end
 
@@ -60,7 +60,7 @@ describe Dapp::Builder::Chef do
             path.write "#{new_file_values[mdapp_test2_file]}\n"
           end
 
-          application_rebuild!
+          dimg_rebuild!
 
           expect(send(project_file, reload: true)).not_to eq(old_template_file_values[project_file])
           expect(send(mdapp_test_file, reload: true)).not_to eq(old_template_file_values[mdapp_test_file])
@@ -74,27 +74,27 @@ describe Dapp::Builder::Chef do
 
       xit 'rebuilds artifact from build_artifact stage' do
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
-        old_artifact_last_stage_id = artifact_application.send(:last_stage).image.id
+        old_artifact_last_stage_id = artifact_dimg.send(:last_stage).image.id
 
-        [application, artifact_application].each do |app|
+        [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
-            app.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+            d.config._chef.send("__#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
           end
         end
 
-        application_rebuild!
+        dimg_rebuild!
 
         expect(artifact_stages[:before_install].image.id).to eq(old_artifact_before_install_stage_id)
-        expect(artifact_application.send(:last_stage).image.id).not_to eq(old_artifact_last_stage_id)
+        expect(artifact_dimg.send(:last_stage).image.id).not_to eq(old_artifact_last_stage_id)
 
-        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
-        expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)).to be(false), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does exist in result image'
-        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
+        expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(false), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does exist in result image'
+        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)
         ).to eq(
-          read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)
+          read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)
         ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
@@ -104,103 +104,106 @@ describe Dapp::Builder::Chef do
           path.write "#{new_note_content}\n"
         end
 
-        [application, artifact_application].each do |app|
+        [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
-            app.config._chef.send("_#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+            d.config._chef.send("__#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
           end
         end
 
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
-        old_artifact_last_stage_id = artifact_application.send(:last_stage).image.id
+        old_artifact_last_stage_id = artifact_dimg.send(:last_stage).image.id
 
-        application_rebuild!
+        dimg_rebuild!
 
         expect(artifact_stages[:before_install].image.id).not_to eq(old_artifact_before_install_stage_id)
-        expect(artifact_application.send(:last_stage).image.id).not_to eq(old_artifact_last_stage_id)
+        expect(artifact_dimg.send(:last_stage).image.id).not_to eq(old_artifact_last_stage_id)
 
-        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
-        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
+        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)
         ).to eq(new_note_content)
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_application.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)
         ).to eq(
-          read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', application.send(:last_stage).image.name)
+          read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)
         ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
       define_method :config do
         @config ||= default_config.merge(
           _builder: :chef,
-          _home_path: testproject_path.to_s,
           _name: "#{testproject_path.basename}-X-Y",
           _docker: default_config[:_docker].merge(_from: os.to_sym),
           _chef: {
-            _modules: %w(test test2),
-            _recipes: %w(main X X_Y),
-            _before_install_attributes: {
+            _module: %w(test test2),
+            _recipe: %w(main X X_Y),
+            __before_install_attributes: {
               'mdapp-test2' => {
                 'sayhello' => 'hello',
                 'sayhelloagain' => 'helloagain'
               },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
-            _install_attributes: {
+            __install_attributes: {
               'mdapp-test2' => { 'sayhello' => 'hello' },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
-            _before_setup_attributes: {
+            __before_setup_attributes: {
               'mdapp-test2' => { 'sayhello' => 'hello' },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
-            _setup_attributes: {
+            __setup_attributes: {
               'mdapp-test2' => { 'sayhello' => 'hello' },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
-            _build_artifact_attributes: {
+            __build_artifact_attributes: {
               'mdapp-test2' => { 'sayhello' => 'hello' },
               'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             }
           },
           _before_install_artifact: [
-            ::Dapp::Config::Directive::Artifact::Stage.new(
-              '/myartifact',
-              config: ConfigRecursiveOpenStruct.new(default_config.merge(
-                                                      _builder: :chef,
-                                                      _home_path: testproject_path.to_s,
-                                                      _artifact_dependencies: [],
-                                                      _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
-                                                      _chef: {
-                                                        _modules: %w(testartifact),
-                                                        _recipes: %w(myartifact),
-                                                        _before_install_attributes: {
-                                                          'mdapp-test2' => {
-                                                            'sayhello' => 'hello',
-                                                            'sayhelloagain' => 'helloagain'
-                                                          },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        },
-                                                        _install_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        },
-                                                        _before_setup_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        },
-                                                        _setup_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        },
-                                                        _build_artifact_attributes: {
-                                                          'mdapp-test2' => { 'sayhello' => 'hello' },
-                                                          'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
-                                                        }
-                                                      }
-              ))
+            ConfigRecursiveOpenStruct.new(
+              _config: ConfigRecursiveOpenStruct.new(default_config.merge(
+                _builder: :chef,
+                _artifact_dependencies: [],
+                _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
+                _chef: {
+                  _module: %w(testartifact),
+                  _recipe: %w(myartifact),
+                  __before_install_attributes: {
+                    'mdapp-test2' => {
+                      'sayhello' => 'hello',
+                      'sayhelloagain' => 'helloagain'
+                    },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  },
+                  __install_attributes: {
+                    'mdapp-test2' => { 'sayhello' => 'hello' },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  },
+                  __before_setup_attributes: {
+                    'mdapp-test2' => { 'sayhello' => 'hello' },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  },
+                  __setup_attributes: {
+                    'mdapp-test2' => { 'sayhello' => 'hello' },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  },
+                  __build_artifact_attributes: {
+                    'mdapp-test2' => { 'sayhello' => 'hello' },
+                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                  }
+                }
+              )),
+              _artifact_options: {
+                cwd: '/',
+                to: '/myartifact',
+                exclude_paths: [],
+                include_paths: []
+              }
             )
           ]
         )
@@ -213,11 +216,15 @@ describe Dapp::Builder::Chef do
   end
 
   def project_path
-    @project_path ||= Pathname("/tmp/dapp-test-#{SpecHelper::Application::CACHE_VERSION}")
+    @project_path ||= Pathname("/tmp/dapp-test-#{SpecHelper::Dimg::CACHE_VERSION}")
   end
 
   def testproject_path
-    project_path.join('testproject')
+    project_path
+  end
+
+  def testproject_chef_path
+    project_path.join('.dapp_chef')
   end
 
   def mdapp_test_path
@@ -258,12 +265,12 @@ describe Dapp::Builder::Chef do
   end
   # rubocop:enable Metrics/AbcSize
 
-  def artifact_application
-    stages[:before_install_artifact].send(:artifacts).first[:app]
+  def artifact_dimg
+    stages[:before_install_artifact].send(:artifacts).first[:dimg]
   end
 
   def artifact_stages
-    _stages_of_app(artifact_application)
+    _stages_of_dimg(artifact_dimg)
   end
 
   TEST_FILE_NAMES = %i(foo X_foo X_Y_foo bar baz qux
@@ -283,11 +290,11 @@ describe Dapp::Builder::Chef do
 
     define_method(name) do |reload: false|
       (!reload && instance_variable_get("@#{name}")) ||
-        instance_variable_set("@#{name}", read_file_in_image(send("#{name}_path"), application.send(:last_stage).image.name))
+        instance_variable_set("@#{name}", read_file_in_image(send("#{name}_path"), dimg.send(:last_stage).image.name))
     end
 
     define_method("#{name}_exist?") do
-      file_exist_in_image? send("#{name}_path"), application.send(:last_stage).image.name
+      file_exist_in_image? send("#{name}_path"), dimg.send(:last_stage).image.name
     end
   end
 
@@ -303,16 +310,16 @@ describe Dapp::Builder::Chef do
   end
 
   class ConfigRecursiveOpenStruct < RecursiveOpenStruct
-    def _app_chain
+    def _dimg_chain
       [self]
     end
 
-    def _app_runlist
+    def _dimg_runlist
       []
     end
 
-    def _root_app
-      _app_chain.first
+    def _root_dimg
+      _dimg_chain.first
     end
 
     def to_json(*a)

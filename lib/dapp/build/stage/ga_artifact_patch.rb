@@ -3,8 +3,8 @@ module Dapp
     module Stage
       # GAArtifactPatch
       class GAArtifactPatch < GALatestPatch
-        def initialize(application, next_stage)
-          @prev_stage = SetupGroup::ChefCookbooks.new(application, self)
+        def initialize(dimg, next_stage)
+          @prev_stage = SetupGroup::ChefCookbooks.new(dimg, self)
           super
         end
 

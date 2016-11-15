@@ -17,6 +17,9 @@ entries:
     - title: Базовые
       url: /definitions.html
 
+    - title: Chef сборщик
+      url: /chef.html
+
     - title: Стадии
       url: /stages.html
 
@@ -32,7 +35,7 @@ entries:
     - title: Базовые
       url: /base_directives.html
 
-    - title: Артефакты
+    - title: Artifact / Git
       url: /artifact_directives.html
 
     - title: Shell
@@ -43,6 +46,9 @@ entries:
 
     - title: Docker
       url: /docker_directives.html
+
+    - title: Mount
+      url: /mount_directives.html
 
   - title: Команды
     folderitems:

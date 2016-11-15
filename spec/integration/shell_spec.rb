@@ -2,10 +2,10 @@ require_relative '../spec_helper'
 
 describe Dapp::Builder::Shell do
   include SpecHelper::Common
-  include SpecHelper::Application
+  include SpecHelper::Dimg
 
   def config
-    @config ||= default_config.merge(_builder: :shell, _home_path: '')
+    @config ||= default_config.merge(_builder: :shell)
   end
 
   def expect_files
@@ -19,7 +19,7 @@ describe Dapp::Builder::Shell do
     it "build #{image}" do
       config[:_docker][:_from] = image
       config[:_shell].keys.each { |stage| config[:_shell][stage] << "date +%s > /#{stage}" }
-      application_build!
+      dimg_build!
 
       expect_files
     end

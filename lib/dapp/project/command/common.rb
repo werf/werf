@@ -7,16 +7,16 @@ module Dapp
       module Common
         protected
 
-        def project_images(basename)
-          shellout!(%(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache(basename)})).stdout.strip
+        def project_images
+          shellout!(%(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache})).stdout.strip
         end
 
-        def project_containers_flush(basename)
-          remove_containers_by_query(%(docker ps -a -f "label=dapp" -f "name=#{container_name(basename)}" -q), force: true)
+        def project_containers_flush
+          remove_containers_by_query(%(docker ps -a -f "label=dapp" -f "name=#{container_name_prefix}" -q), force: true)
         end
 
-        def project_dangling_images_flush(basename)
-          remove_images_by_query(%(docker images -f "dangling=true" -f "label=dapp=#{stage_dapp_label(basename)}" -q), force: true)
+        def project_dangling_images_flush
+          remove_images_by_query(%(docker images -f "dangling=true" -f "label=dapp=#{stage_dapp_label}" -q), force: true)
         end
 
         def remove_images_by_query(images_query, force: false)
@@ -51,16 +51,8 @@ module Dapp
           shellout!(cmd) unless dry_run?
         end
 
-        def stage_cache(basename)
-          cache_format % { application_name: basename }
-        end
-
-        def stage_dapp_label(basename)
-          stage_dapp_label_format % { application_name: basename }
-        end
-
-        def container_name(basename)
-          basename
+        def container_name_prefix
+          name
         end
 
         def proper_cache_version?

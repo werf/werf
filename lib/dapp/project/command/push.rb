@@ -8,9 +8,9 @@ module Dapp
         def push(repo)
           log_step_with_indent(:stages) { stages_push(repo) } if with_stages?
           build_configs.each do |config|
-            log_step_with_indent(config._name) do
-              Application.new(config: config, project: self, ignore_git_fetch: true, should_be_built: true).tap do |app|
-                app.export!(repo, format: '%{repo}:%{application_name}-%{tag}')
+            log_dimg_name_with_indent(config) do
+              Dimg.new(config: config, project: self, ignore_git_fetch: true, should_be_built: true).tap do |dimg|
+                dimg.export!(repo, format: '%{repo}:%{dimg_name}-%{tag}')
               end
             end
           end

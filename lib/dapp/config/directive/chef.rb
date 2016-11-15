@@ -2,83 +2,33 @@ module Dapp
   module Config
     module Directive
       # Chef
-      class Chef
-        attr_reader :_modules
-        attr_reader :_recipes
+      class Chef < Base
+        attr_accessor :_dimod, :_recipe, :_attributes
 
         def initialize
-          @_modules = []
-          @_recipes = []
+          @_dimod = []
+          @_recipe = []
+
+          super
         end
 
-        def module(*args)
-          @_modules.concat(args)
-        end
-
-        def reset_modules
-          @_modules.clear
-        end
-
-        def skip_module(*args)
-          @_modules.reject! { |mod| args.include? mod }
+        def dimod(*args)
+          @_dimod.concat(args)
         end
 
         def recipe(*args)
-          @_recipes.concat(args)
-        end
-
-        def remove_recipe(*args)
-          @_recipes.reject! { |recipe| args.include? recipe }
-        end
-
-        def reset_recipes
-          @_recipes.clear
+          @_recipe.concat(args)
         end
 
         def attributes
-          @attributes ||= Attributes.new
+          @_attributes ||= Attributes.new
         end
 
         %i(before_install install before_setup setup build_artifact).each do |stage|
-          define_method("#{stage}_attributes") do
-            var = "@#{stage}_attributes"
+          define_method("_#{stage}_attributes") do
+            var = "@__#{stage}_attributes"
             instance_variable_get(var) || instance_variable_set(var, Attributes.new)
           end
-
-          define_method("_#{stage}_attributes") do
-            attributes.in_depth_merge send("#{stage}_attributes")
-          end
-
-          define_method("reset_#{stage}_attributes") do
-            instance_variable_set("@#{stage}_attributes", nil)
-          end
-        end
-
-        def reset_attributes
-          @attributes = nil
-        end
-
-        def reset_all_attributes
-          reset_attributes
-          %i(before_install install before_setup setup build_artifact).each do |stage|
-            send("reset_#{stage}_attributes")
-          end
-        end
-
-        def reset_all
-          reset_modules
-          reset_recipes
-          reset_all_attributes
-        end
-
-        protected
-
-        def clone
-          Marshal.load(Marshal.dump(self))
-        end
-
-        def empty?
-          @_modules.empty? && @_recipes.empty?
         end
 
         # Attributes
@@ -89,6 +39,18 @@ module Dapp
             end
           end
         end # Attributes
+
+        %i(before_install install before_setup setup build_artifact).each do |stage|
+          define_method("__#{stage}_attributes") do
+            attributes.in_depth_merge send("_#{stage}_attributes")
+          end
+        end
+
+        protected
+
+        def empty?
+          (@_dimod + @_recipe).empty? && attributes.empty?
+        end
       end
     end
   end

@@ -8,9 +8,9 @@ module Dapp
         module Push
           def stages_push(repo)
             build_configs.each do |config|
-              log_step_with_indent(config._name) do
-                Application.new(config: config, project: self, ignore_git_fetch: true, should_be_built: true).tap do |app|
-                  app.export_stages!(repo, format: '%{repo}:dappstage-%{signature}')
+              log_dimg_name_with_indent(config) do
+                Dimg.new(config: config, project: self, ignore_git_fetch: true, should_be_built: true).tap do |dimg|
+                  dimg.export_stages!(repo, format: '%{repo}:dimgstage-%{signature}')
                 end
               end
             end

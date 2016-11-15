@@ -1,8 +1,8 @@
 require_relative '../spec_helper'
 
-describe Dapp::Application do
+describe Dapp::Dimg do
   include SpecHelper::Common
-  include SpecHelper::Application
+  include SpecHelper::Dimg
   include SpecHelper::Git
 
   before :all do
@@ -11,7 +11,7 @@ describe Dapp::Application do
   end
 
   before :each do
-    application_build!
+    dimg_build!
   end
 
   after :all do
@@ -38,7 +38,7 @@ describe Dapp::Application do
       _builder: :shell,
       _home_path: project_path,
       _docker: default_config[:_docker].merge(_from: :'ubuntu:16.04'),
-      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { where_to_add: '/app' } })
+      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { to: '/to' } })
     )
   end
 
@@ -67,18 +67,18 @@ describe Dapp::Application do
   end
 
   def expect_before_install_image
-    check_image_command(:before_install, config[:_shell][:_before_install].last)
+    check_image_command(:before_install, config[:_shell][:_before_install_command].last)
     check_image_command(:g_a_archive, 'tar -x')
   end
 
   def expect_before_setup_image
-    check_image_command(:before_setup, config[:_shell][:_before_setup].last)
+    check_image_command(:before_setup, config[:_shell][:_before_setup_command].last)
     check_image_command(:g_a_post_install_patch, 'apply')
   end
 
   [:install, :setup].each do |stage_name|
     define_method "expect_#{stage_name}_image" do
-      check_image_command(stage_name, config[:_shell][:"_#{stage_name}"].last)
+      check_image_command(stage_name, config[:_shell][:"_#{stage_name}_command"].last)
       check_image_command(prev_stage(stage_name), 'apply')
     end
   end
@@ -95,7 +95,7 @@ describe Dapp::Application do
 
   [:before_install, :install, :before_setup, :setup].each do |stage_name|
     define_method :"change_#{stage_name}" do
-      config[:_shell][:"_#{stage_name}"] << generate_command
+      config[:_shell][:"_#{stage_name}_command"] << generate_command
     end
   end
 
@@ -175,9 +175,9 @@ describe Dapp::Application do
   def check_signatures_and_build(stage_name)
     saved_signatures = stages_signatures
     send(:"change_#{stage_name}")
-    application_renew
+    dimg_renew
     expect_stages_signatures(stage_name, saved_signatures, stages_signatures)
-    application_build!
+    dimg_build!
   end
 
   def expect_stages_signatures(stage_name, saved_keys, new_keys)

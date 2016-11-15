@@ -7,15 +7,15 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages flush local [options] [APPS PATTERN ...]
+  dapp stages flush local [options] [DIMGS PATTERN ...]
 
-    APPS PATTERN                Applications to process [default: *].
+    DIMGS PATTERN               Dapp images to process [default: *].
 
 Options:
 BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          Project.new(cli_options: config, apps_patterns: cli_arguments).stages_flush_local
+          Project.new(cli_options: config, dimgs_patterns: cli_arguments).stages_flush_local
         end
       end
     end

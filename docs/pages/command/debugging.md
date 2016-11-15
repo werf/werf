@@ -44,5 +44,5 @@ $ dapp run -- bash -ec true
 ##### Посмотреть, что может быть запущено
 ```bash
 $ dapp run app -ti --rm -- bash -ec true --dry-run
-docker run -ti --rm app-dappstage:ea5ec7543c809ec7e9fe28181edfcb2ee6f48efaa680f67bf23a0fc0057ea54c bash -ec true
+docker run -ti --rm app-dimgstage:ea5ec7543c809ec7e9fe28181edfcb2ee6f48efaa680f67bf23a0fc0057ea54c bash -ec true
 ```

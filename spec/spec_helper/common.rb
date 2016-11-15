@@ -25,7 +25,8 @@ module SpecHelper
       end
     end
 
-    def expect_exception_code(code:)
+    def expect_exception_code(code)
+      raise unless block_given?
       expect { yield }.to raise_error { |error| expect(error.net_status[:code]).to be(code) }
     end
 

@@ -37,3 +37,27 @@ folder: directive
 
 ### docker.workdir \<path\>
 Применить dockerfile инструкцию WORKDIR (см. [WORKDIR](https://docs.docker.com/engine/reference/builder/#/workdir "Docker reference")).
+
+### Примеры
+
+#### Собрать с базовым образом "ubuntu:16.04" и несколькими dockerfile-инструкциями
+```ruby
+dimg do
+  docker do
+    from 'ubuntu:16.04'
+
+    env EDITOR: 'vim', LANG: 'he_IL.UTF-8'
+    user 'user3:stuff'
+  end
+end
+```
+
+#### Собрать с базовым образом "ubuntu:16.04" и несколькими dockerfile-инструкциями (строчная запись)
+```ruby
+dimg do
+  docker.from 'ubuntu:16.04'
+
+  docker.env EDITOR: 'vim', LANG: 'he_IL.UTF-8'
+  docker.user 'user3:stuff'
+end
+```

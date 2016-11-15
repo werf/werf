@@ -35,34 +35,6 @@ folder: definition
   * git_artifact_artifact_patch зависит от build_artifact.
 * Сигнатура стадии git_artifact_post_setup_patch зависит от размера патчей git-артефактов и будет пересобрана, если их сумма превысит лимит (10 MB).
 
-### from
-
-### before install
-
-### before install artifact
-
-### git artifact archive
-
-### Группа install
-
-#### git artifact pre install patch
-
-#### install
-
-#### git artifact post install patch
-
-### after install artifact
-
-### before setup
-
-### before setup artifact
-
-### Группа setup
-
-#### git artifact pre setup patch
-
-#### setup
-
 #### chef cookbooks
 Стадия устанавливает cookbook`и, указанные в Berksfile проекта, в собираемый образ.
 
@@ -84,15 +56,3 @@ if ENV['DAPP_CHEF_COOKBOOKS_VENDORING']
   cookbook 'mdapp-init'
 end
 ```
-
-#### git artifact post setup patch
-
-### after setup artifact
-
-### git artifact latest patch
-
-### docker instructions
-
-### git_artifact_artifact_patch
-
-### build_artifact

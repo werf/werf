@@ -3,8 +3,8 @@ module Dapp
     module Stage
       # GAArchive
       class GAArchive < GABase
-        def initialize(application, next_stage)
-          @prev_stage = GAArchiveDependencies.new(application, self)
+        def initialize(dimg, next_stage)
+          @prev_stage = GAArchiveDependencies.new(dimg, self)
           super
         end
 

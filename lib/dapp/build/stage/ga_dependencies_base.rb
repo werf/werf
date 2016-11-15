@@ -5,13 +5,13 @@ module Dapp
       class GADependenciesBase < Base
         def prepare_image
           super
-          application.git_artifacts.each do |git_artifact|
+          dimg.git_artifacts.each do |git_artifact|
             image.add_service_change_label(git_artifact.full_name.to_sym => git_artifact.latest_commit)
           end
         end
 
         def empty?
-          application.git_artifacts.empty? ? true : false
+          dimg.git_artifacts.empty? ? true : false
         end
       end # GADependenciesBase
     end # Stage

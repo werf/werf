@@ -6,9 +6,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp build [options] [APPS PATTERN ...]
+  dapp build [options] [DIMGS PATTERN ...]
 
-    APPS PATTERN                Applications to process [default: *].
+    DIMGS PATTERN               Dapp images to process [default: *].
 
 Options:
 BANNER

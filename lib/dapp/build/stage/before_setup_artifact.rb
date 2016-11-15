@@ -3,8 +3,8 @@ module Dapp
     module Stage
       # BeforeSetupArtifact
       class BeforeSetupArtifact < ArtifactDefault
-        def initialize(application, next_stage)
-          @prev_stage = BeforeSetup.new(application, self)
+        def initialize(dimg, next_stage)
+          @prev_stage = BeforeSetup.new(dimg, self)
           super
         end
       end # BeforeSetupArtifact

@@ -2,7 +2,7 @@ require_relative '../spec_helper'
 
 describe Dapp::Artifact do
   include SpecHelper::Common
-  include SpecHelper::Application
+  include SpecHelper::Dimg
 
   def openstruct_config
     @openstruct_config ||= begin
@@ -12,19 +12,23 @@ describe Dapp::Artifact do
   end
 
   def config
-    @config ||= default_config.merge(_builder: :shell)
+    @config ||= begin
+      config = default_config.merge(_builder: :shell)
+      config[:_shell][:_build_artifact_command] = []
+      config
+    end
   end
 
   def artifact_config
     artifact = { _config: Marshal.load(Marshal.dump(config)),
-                 _artifact_options: { cwd: '', where_to_add: "/#{@artifact}", exclude_paths: [], paths: [] } }
+                 _artifact_options: { cwd: '', to: "/#{@artifact}", exclude_paths: [], include_paths: [] } }
     artifact[:_config][:_name] = @artifact
     artifact[:_config][:_artifact_dependencies] = []
-    artifact[:_config][:_shell][:_build_artifact] = ["mkdir /#{@artifact} && date +%s > /#{@artifact}/test"]
+    artifact[:_config][:_shell][:_build_artifact_command] = ["mkdir /#{@artifact} && date +%s > /#{@artifact}/test"]
     artifact
   end
 
-  context :application do
+  context :dimg do
     def expect_file
       image_name = stages[expect_stage].send(:image_name)
       expect { shellout!("docker run --rm #{image_name} bash -lec 'cat /#{@artifact}/test'") }.to_not raise_error
@@ -42,7 +46,7 @@ describe Dapp::Artifact do
           @stage = stage
 
           config[:"_#{@artifact}"] = [artifact_config]
-          application_build!
+          dimg_build!
           expect_file
         end
       end
@@ -54,16 +58,16 @@ describe Dapp::Artifact do
       @artifact = :import_artifact
       config[:_import_artifact] = [artifact_config]
       config[:_docker][:_from] = nil
-      application_build!
+      dimg_build!
 
       image_name = stages[:import_artifact].send(:image_name)
       container_name = image_name.sub(':', '.')
 
       begin
-        expect {
+        expect do
           shellout!("docker create --name #{container_name} --volume /#{@artifact} #{image_name} no_such_command")
           shellout!("docker run --rm --volumes-from #{container_name} ubuntu:14.04 bash -lec 'cat /#{@artifact}/test'")
-        }.to_not raise_error
+        end.to_not raise_error
       ensure
         shellout("docker rm -f #{container_name}")
       end

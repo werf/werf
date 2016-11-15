@@ -4,20 +4,9 @@ module Dapp
       # Docker
       module Docker
         # Artifact
-        class Artifact
-          attr_reader :_from
-          attr_reader :_from_cache_version
-
-          def from(image, cache_version: nil)
-            raise(Error::Config, code: :docker_from_incorrect, data: { name: image }) unless image =~ /^[[^ ].]+:[[^ ].]+$/
-            @_from = image
-            @_from_cache_version = cache_version
-          end
-
-          protected
-
-          def clone
-            Marshal.load(Marshal.dump(self))
+        class Artifact < Base
+          def _change_options
+            {}
           end
         end
       end

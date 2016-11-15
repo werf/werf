@@ -3,26 +3,26 @@ module Dapp
     module Stage
       # BeforeInstall
       class BeforeInstall < Base
-        def initialize(application, next_stage)
-          @prev_stage = From.new(application, self)
+        def initialize(dimg, next_stage)
+          @prev_stage = From.new(dimg, self)
           super
         end
 
         def empty?
-          super && !application.builder.before_install?
-        end
-
-        def builder_checksum
-          application.builder.before_install_checksum
+          super && !dimg.builder.before_install?
         end
 
         def context
           [builder_checksum]
         end
 
+        def builder_checksum
+          dimg.builder.before_install_checksum
+        end
+
         def prepare_image
           super
-          application.builder.before_install(image)
+          dimg.builder.before_install(image)
         end
 
         alias dependencies context

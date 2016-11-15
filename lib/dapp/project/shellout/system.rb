@@ -74,8 +74,8 @@ module Dapp
           # This is stupid container "live check" for now
           system_shellout! 'true'
         rescue Error::Shellout
-          $stderr.puts "\033[1m\033[31mSystem shellout container failure, " +
-                       "try to remove if error persists: " +
+          $stderr.puts "\033[1m\033[31mSystem shellout container failure, " \
+                       'try to remove if error persists: ' \
                        "docker rm -f #{system_shellout_container_name}\033[0m"
           raise
         end
@@ -89,8 +89,6 @@ module Dapp
             end, cmd
           ].join(' && ')}'"
         end
-
-        public
 
         class << self
           def default_env_keys

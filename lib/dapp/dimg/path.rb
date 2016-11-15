@@ -1,10 +1,14 @@
 module Dapp
-  # Application
-  class Application
+  # Dimg
+  class Dimg
     # Path
     module Path
       def home_path(*path)
-        make_path(config._home_path, *path).expand_path
+        make_path(project.path, *path).expand_path
+      end
+
+      def chef_path(*path)
+        home_path('.dapp_chef', *path)
       end
 
       def tmp_path(*path)
@@ -13,7 +17,7 @@ module Dapp
       end
 
       def build_path(*path)
-        make_path(project.build_path.join(config._basename), *path).expand_path.tap { |p| p.parent.mkpath }
+        make_path(project.build_path, *path).expand_path.tap { |p| p.parent.mkpath }
       end
 
       def container_dapp_path(*path)
@@ -30,5 +34,5 @@ module Dapp
         path.compact.map(&:to_s).inject(Pathname.new(base), &:+)
       end
     end # Path
-  end # Application
+  end # Dimg
 end # Dapp

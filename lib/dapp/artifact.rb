@@ -1,6 +1,6 @@
 module Dapp
   # Artifact
-  class Artifact < Application
+  class Artifact < Dimg
     def artifact?
       true
     end

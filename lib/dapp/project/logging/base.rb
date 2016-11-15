@@ -17,6 +17,10 @@ module Dapp
           cli_options[:log_verbose]
         end
 
+        def ignore_config_warning?
+          cli_options[:ignore_config_warning]
+        end
+
         def introspect_error?
           cli_options[:introspect_error]
         end
@@ -32,6 +36,11 @@ module Dapp
         def log_info(*args, **kwargs)
           kwargs[:style] = :info
           log(*args, **kwargs)
+        end
+
+        def log_dimg_name_with_indent(dimg, &blk)
+          return yield if dimg._name.nil?
+          log_step_with_indent(dimg._name, &blk)
         end
 
         def log_step_with_indent(step)
@@ -56,6 +65,11 @@ module Dapp
           kwargs[:desc] ||= {}
           kwargs[:desc][:context] ||= :warning
           log(*args, **kwargs)
+        end
+
+        def log_config_warning(*args, **kwargs)
+          return if ignore_config_warning?
+          log_warning(*args, **kwargs)
         end
 
         def log(message = '', desc: nil, inline: false, **kwargs)

@@ -13,9 +13,9 @@ module Dapp
 
       %i(before_install install before_setup setup build_artifact).each do |stage|
         define_method("#{stage}_checksum") do
-          application.hashsum [stage_cookbooks_checksum(stage),
-                               stage_attributes_raw(stage),
-                               *stage_cookbooks_runlist(stage)]
+          dimg.hashsum [stage_cookbooks_checksum(stage),
+                        stage_attributes_raw(stage),
+                        *stage_cookbooks_runlist(stage)]
         end
 
         define_method("#{stage}?") { !stage_empty?(stage) }
@@ -38,21 +38,21 @@ module Dapp
       end
 
       def chef_cookbooks(image)
-        image.add_volume "#{cookbooks_vendor_path(chef_cookbooks_stage: true)}:#{application.container_dapp_path('chef_cookbooks')}"
+        image.add_volume "#{cookbooks_vendor_path(chef_cookbooks_stage: true)}:#{dimg.container_dapp_path('chef_cookbooks')}"
         image.add_command(
-          "#{application.project.mkdir_path} -p /usr/share/dapp/chef_repo",
-          ["#{application.project.cp_path} -a #{application.container_dapp_path('chef_cookbooks')} ",
+          "#{dimg.project.mkdir_path} -p /usr/share/dapp/chef_repo",
+          ["#{dimg.project.cp_path} -a #{dimg.container_dapp_path('chef_cookbooks')} ",
            '/usr/share/dapp/chef_repo/cookbooks'].join
         )
       end
 
-      def before_application_should_be_built_check
+      def before_dimg_should_be_built_check
         super
 
         %i(before_install install before_setup setup chef_cookbooks).each do |stage|
-          unless stage_empty?(stage) or stage_cookbooks_checksum_path(stage).exist?
-            raise ::Dapp::Error::Application, code: :chef_stage_checksum_not_calculated,
-                                              data: { stage: stage }
+          unless stage_empty?(stage) || stage_cookbooks_checksum_path(stage).exist?
+            raise ::Dapp::Error::Dimg, code: :chef_stage_checksum_not_calculated,
+                                       data: { stage: stage }
           end
         end
       end
@@ -60,15 +60,15 @@ module Dapp
       private
 
       def enabled_modules
-        application.config._chef._modules
+        dimg.config._chef._module
       end
 
       def enabled_recipes
-        application.config._chef._recipes
+        dimg.config._chef._recipe
       end
 
       def stage_attributes(stage)
-        application.config._chef.send("_#{stage}_attributes")
+        dimg.config._chef.send("__#{stage}_attributes")
       end
 
       def stage_attributes_raw(stage)
@@ -80,19 +80,19 @@ module Dapp
       end
 
       def berksfile_path
-        application.home_path('Berksfile')
+        dimg.chef_path('Berksfile')
       end
 
       def berksfile_lock_path
-        application.home_path('Berksfile.lock')
+        dimg.chef_path('Berksfile.lock')
       end
 
       def berksfile
-        @berksfile ||= Berksfile.new(application.home_path, berksfile_path)
+        @berksfile ||= Berksfile.new(dimg.chef_path, berksfile_path)
       end
 
       def cookbook_metadata_path
-        application.home_path('metadata.rb')
+        dimg.chef_path('metadata.rb')
       end
 
       def cookbook_metadata
@@ -105,11 +105,11 @@ module Dapp
       end
 
       def berksfile_lock_checksum
-        application.hashsum(berksfile_lock_path.read) if berksfile_lock_path.exist?
+        dimg.hashsum(berksfile_lock_path.read) if berksfile_lock_path.exist?
       end
 
       def stage_cookbooks_checksum_path(stage)
-        application.build_path.join("#{cookbooks_checksum}.#{stage}.checksum")
+        dimg.build_path.join("#{cookbooks_checksum}.#{stage}.checksum")
       end
 
       def stage_cookbooks_checksum(stage)
@@ -119,15 +119,15 @@ module Dapp
           checksum = if stage == :chef_cookbooks
                        paths = Dir[cookbooks_vendor_path('**/*', chef_cookbooks_stage: true)].map(&Pathname.method(:new))
 
-                       application.hashsum [
-                         application.paths_content_hashsum(paths),
+                       dimg.hashsum [
+                         dimg.paths_content_hashsum(paths),
                          *paths.map { |p| p.relative_path_from(cookbooks_vendor_path(chef_cookbooks_stage: true)).to_s }.sort
                        ]
                      else
                        paths = Dir[stage_cookbooks_path(stage, '**/*')].map(&Pathname.method(:new))
 
-                       application.hashsum [
-                         application.paths_content_hashsum(paths),
+                       dimg.hashsum [
+                         dimg.paths_content_hashsum(paths),
                          *paths.map { |p| p.relative_path_from(stage_cookbooks_path(stage)).to_s }.sort,
                          stage == :before_install ? chefdk_image : nil
                        ].compact
@@ -153,10 +153,10 @@ module Dapp
                   .flatten
                   .map(&Pathname.method(:new))
 
-          application.hashsum [
-            application.paths_content_hashsum(paths),
+          dimg.hashsum [
+            dimg.paths_content_hashsum(paths),
             *paths.map { |p| p.relative_path_from(berksfile.home_path).to_s }.sort,
-            (berksfile_lock_checksum unless application.dev_mode?),
+            (berksfile_lock_checksum unless dimg.project.dev_mode?),
             *enabled_recipes,
             *enabled_modules
           ].compact
@@ -173,9 +173,9 @@ module Dapp
 
       def chefdk_container
         @chefdk_container ||= begin
-          if application.project.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
-            application.project.log_secondary_process(application.project.t(code: 'process.chefdk_container_loading'), short: true) do
-              application.project.shellout!(
+          if dimg.project.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
+            dimg.project.log_secondary_process(dimg.project.t(code: 'process.chefdk_container_loading'), short: true) do
+              dimg.project.shellout!(
                 ['docker create',
                  "--name #{chefdk_container_name}",
                  "--volume /.dapp/deps/chefdk #{chefdk_image}"].join(' ')
@@ -189,18 +189,18 @@ module Dapp
 
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_cookbooks(dest_path, chef_cookbooks_stage: false)
-        volumes_from = [application.project.base_container, chefdk_container]
+        volumes_from = [dimg.project.base_container, chefdk_container]
         process_code = [
           'process',
           chef_cookbooks_stage ? 'chef_cookbooks_stage_berks_vendor' : 'berks_vendor'
         ].compact.join('.')
 
-        application.project.log_secondary_process(application.project.t(code: process_code)) do
+        dimg.project.log_secondary_process(dimg.project.t(code: process_code)) do
           before_vendor_commands = [].tap do |commands|
-            unless application.dev_mode? || chef_cookbooks_stage
+            unless dimg.project.dev_mode? || chef_cookbooks_stage
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
-                 "echo \"Berksfile.lock not found\" 1>&2 ; ",
+                 'echo "Berksfile.lock not found" 1>&2 ; ',
                  'exit 1 ; ',
                  'fi'].join
               )
@@ -208,15 +208,15 @@ module Dapp
           end
 
           after_vendor_commands = [].tap do |commands|
-            if application.dev_mode?
+            if dimg.project.dev_mode?
               commands.push(
-                ["#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} ",
-                 "--mode $(#{application.project.stat_path} -c %a Berksfile.lock) ",
+                ["#{dimg.project.install_path} -o #{Process.uid} -g #{Process.gid} ",
+                 "--mode $(#{dimg.project.stat_path} -c %a Berksfile.lock) ",
                  "Berksfile.lock #{berksfile_lock_path}"].join
               )
             elsif !chef_cookbooks_stage
               commands.push(
-                "export LOCKDIFF=$(#{application.project.diff_path} -u1 Berksfile.lock #{berksfile_lock_path})",
+                "export LOCKDIFF=$(#{dimg.project.diff_path} -u1 Berksfile.lock #{berksfile_lock_path})",
                 ['if [ "$LOCKDIFF" != "" ] ; then ',
                  "echo -e \"Bad Berksfile.lock\n$LOCKDIFF\" 1>&2 ; ",
                  'exit 1 ; ',
@@ -226,14 +226,15 @@ module Dapp
           end
 
           vendor_commands = [
-            "#{application.project.mkdir_path} -p ~/.ssh",
+            "#{dimg.project.mkdir_path} -p ~/.ssh",
             "echo \"Host *\" >> ~/.ssh/config",
             "echo \"    StrictHostKeyChecking no\" >> ~/.ssh/config",
             *berksfile
               .local_cookbooks
               .values
               .map {|cookbook|
-                ["#{application.project.rsync_path} --archive",
+                ["#{dimg.project.rsync_path} --archive",
+                 *cookbook[:chefignore].map {|path| "--exclude #{path}"},
                  "--relative #{cookbook[:path]} /tmp/local_cookbooks",
                 ].join(' ')
               },
@@ -241,34 +242,34 @@ module Dapp
             *before_vendor_commands,
             '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
             *after_vendor_commands,
-            ["#{application.project.find_path} /tmp/cookbooks -type d -exec #{application.project.bash_path} -ec '",
-             "#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{application.project.stat_path} -c %a {}) -d ",
-             "#{dest_path}/$(echo {} | #{application.project.sed_path} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
-            ["#{application.project.find_path} /tmp/cookbooks -type f -exec #{application.project.bash_path} -ec '",
-             "#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{application.project.stat_path} -c %a {}) {} ",
-             "#{dest_path}/$(echo {} | #{application.project.sed_path} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
-            "#{application.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode 0644 <(#{application.project.date_path} +%s.%N) #{dest_path.join('.created_at')}"
+            ["#{dimg.project.find_path} /tmp/cookbooks -type d -exec #{dimg.project.bash_path} -ec '",
+             "#{dimg.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{dimg.project.stat_path} -c %a {}) -d ",
+             "#{dest_path}/$(echo {} | #{dimg.project.sed_path} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
+            ["#{dimg.project.find_path} /tmp/cookbooks -type f -exec #{dimg.project.bash_path} -ec '",
+             "#{dimg.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{dimg.project.stat_path} -c %a {}) {} ",
+             "#{dest_path}/$(echo {} | #{dimg.project.sed_path} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
+            "#{dimg.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode 0644 <(#{dimg.project.date_path} +%s.%N) #{dest_path.join('.created_at')}"
           ]
 
-          application.project.shellout!(
+          dimg.project.shellout!(
             ['docker run --rm',
              volumes_from.map { |container| "--volumes-from #{container}" }.join(' '),
              *berksfile.local_cookbooks
                        .values
                        .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
-             ("--volume #{application.project.ssh_auth_sock}:/tmp/dapp-ssh-agent" if application.project.ssh_auth_sock),
+             ("--volume #{dimg.project.ssh_auth_sock}:/tmp/dapp-ssh-agent" if dimg.project.ssh_auth_sock),
              "--volume #{dest_path.tap(&:mkpath)}:#{dest_path}",
-             ("--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent" if application.project.ssh_auth_sock),
+             ('--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent' if dimg.project.ssh_auth_sock),
              ('--env DAPP_CHEF_COOKBOOKS_VENDORING=1' if chef_cookbooks_stage),
-             "dappdeps/berksdeps:0.1.0 #{application.project.bash_path} -ec '#{application.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
-             log_verbose: application.project.log_verbose?
+             "dappdeps/berksdeps:0.1.0 #{dimg.project.bash_path} -ec '#{dimg.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
+            log_verbose: dimg.project.log_verbose?
           )
         end
       end
       # rubocop:enable Metrics/MethodLength, Metrics/AbcSize
 
       def _cookbooks_vendor_path(chef_cookbooks_stage: false)
-        application.build_path.join(
+        dimg.build_path.join(
           ['cookbooks', chef_cookbooks_stage ? 'chef_cookbooks_stage' : nil].compact.join('.'),
           cookbooks_checksum
         )
@@ -277,16 +278,16 @@ module Dapp
       def cookbooks_vendor_path(*path, chef_cookbooks_stage: false)
         _cookbooks_vendor_path(chef_cookbooks_stage: chef_cookbooks_stage).tap do |_cookbooks_path|
           lock_name = [
-            application.config._basename,
+            dimg.project.name,
             'cookbooks',
             chef_cookbooks_stage ? 'chef_cookbooks_stage' : nil,
             cookbooks_checksum
           ].compact.join('.')
 
-          application.project.lock(lock_name, default_timeout: 120) do
+          dimg.project.lock(lock_name, default_timeout: 120) do
             @install_cookbooks ||= {}
             @install_cookbooks[chef_cookbooks_stage] ||= begin
-              install_cookbooks(_cookbooks_path, chef_cookbooks_stage: chef_cookbooks_stage) unless _cookbooks_path.join('.created_at').exist? && !application.dev_mode?
+              install_cookbooks(_cookbooks_path, chef_cookbooks_stage: chef_cookbooks_stage) unless _cookbooks_path.join('.created_at').exist? && !dimg.project.dev_mode?
               true
             end
           end
@@ -330,14 +331,14 @@ module Dapp
                     end
                   elsif is_mdapp && mdapp_enabled
                     common_mdapp_paths = select_existing_paths.call(cookbook_path, [
-                      *common_paths,
-                      ["files/#{stage}", 'files/default'],
-                      ['files/common', 'files/default'],
-                      ["templates/#{stage}", 'templates/default'],
-                      ['templates/common', 'templates/default'],
-                      ["attributes/#{stage}.rb", "attributes/#{stage}.rb"],
-                      ['attributes/common.rb', 'attributes/common.rb'],
-                    ])
+                                                                      *common_paths,
+                                                                      ["files/#{stage}", 'files/default'],
+                                                                      ['files/common', 'files/default'],
+                                                                      ["templates/#{stage}", 'templates/default'],
+                                                                      ['templates/common', 'templates/default'],
+                                                                      ["attributes/#{stage}.rb", "attributes/#{stage}.rb"],
+                                                                      ['attributes/common.rb', 'attributes/common.rb']
+                                                                    ])
 
                     recipe_path = "recipes/#{stage}.rb"
                     if cookbook_path.join(recipe_path).exist?
@@ -474,7 +475,7 @@ module Dapp
       end
 
       def stage_build_path(stage, *path)
-        application.tmp_path(application.config._name, stage).join(*path)
+        dimg.tmp_path(dimg.config._name, stage).join(*path)
       end
 
       def container_stage_build_path(_stage, *path)

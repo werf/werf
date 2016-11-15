@@ -5,31 +5,15 @@ module Dapp
     module Dappfile
       def build_configs
         @configs ||= begin
-          dappfiles.map { |dappfile| apps(dappfile, app_filters: apps_patterns) }.flatten.tap do |apps|
-            raise Error::Project, code: :no_such_app, data: { apps_patterns: apps_patterns.join(', ') } if apps.empty?
+          dimgs(dappfile_path).flatten.tap do |dimgs|
+            raise Error::Project, code: :no_such_dimg, data: { dimgs_patterns: dimgs_patterns.join(', ') } if dimgs.empty?
           end
         end
       end
 
-      def dappfiles
-        if File.exist?(dappfile_path)                 then [dappfile_path]
-        elsif !dapps_dappfiles_pathes.empty?          then dapps_dappfiles_pathes
-        elsif (dappfile_path = search_up('Dappfile')) then [dappfile_path]
-        else raise Error::Project, code: :dappfile_not_found
-        end
-      end
-
       def dappfile_path
-        File.join [cli_options[:dir], 'Dappfile'].compact
-      end
-
-      def dapps_dappfiles_pathes
-        path = []
-        path << cli_options[:dir]
-        path << '.dapps' unless File.basename(work_dir) == '.dapps'
-        path << '*'
-        path << 'Dappfile'
-        Dir.glob(File.join(path.compact))
+        raise Error::Project, code: :dappfile_not_found unless (dappfile_path = search_up('Dappfile'))
+        dappfile_path
       end
 
       def search_up(file)
@@ -52,19 +36,27 @@ module Dapp
         path
       end
 
-      def apps(dappfile_path, app_filters:)
-        config = Config::Main.new(dappfile_path: dappfile_path, project: self) do |conf|
+      def dimgs(dappfile_path)
+        Config::DimgGroupMain.new(project: self) do |conf|
           begin
             conf.instance_eval File.read(dappfile_path), dappfile_path
           rescue SyntaxError, StandardError => e
             backtrace = e.backtrace.find { |line| line.start_with?(dappfile_path) }
-            message = e.is_a?(NoMethodError) ? e.message[/.*(?= for)/] : e.message
+            message = begin
+              case e
+              when NoMethodError
+                e.message =~ /`.*'/
+                "undefined method #{Regexp.last_match}"
+              when NameError then e.message[/.*(?= for)/]
+              else
+                e.message
+              end
+            end
             message = "#{backtrace[/.*(?=:in)/]}: #{message}" if backtrace
             raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
           end
-        end
-        config._apps.select { |app| app_filters.any? { |pattern| File.fnmatch(pattern, app._name) } }.tap do |apps|
-          apps.each { |app| app.send(:validate!) }
+        end._dimg.select { |dimg| dimgs_patterns.any? { |pattern| dimg._name.nil? || File.fnmatch(pattern, dimg._name) } }.tap do |dimgs|
+          dimgs.each { |dimg| dimg.send(:validate!) }
         end
       end
     end # Dappfile

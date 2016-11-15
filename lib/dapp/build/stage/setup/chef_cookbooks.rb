@@ -6,18 +6,18 @@ module Dapp
         class ChefCookbooks < Base
           include Mod::Group
 
-          def initialize(application, next_stage)
-            @prev_stage = Setup.new(application, self)
+          def initialize(dimg, next_stage)
+            @prev_stage = Setup.new(dimg, self)
             super
           end
 
           def dependencies
-            [application.builder.chef_cookbooks_checksum]
+            [dimg.builder.chef_cookbooks_checksum]
           end
 
           def prepare_image
             super
-            application.builder.chef_cookbooks(image)
+            dimg.builder.chef_cookbooks(image)
           end
 
           protected

@@ -1,24 +1,24 @@
 require_relative '../spec_helper'
 
 describe Dapp::Build::Stage do
-  include SpecHelper::Application
+  include SpecHelper::Dimg
 
   after :each do
     expect(@stages).to be_empty
   end
 
-  def application_last_stage
-    empty_application.send(:last_stage)
+  def dimg_last_stage
+    empty_dimg.send(:last_stage)
   end
 
-  def application_stages
+  def dimg_stages
     [:from, :before_install, :before_install_artifact, :g_a_archive_dependencies, :g_a_archive, :g_a_pre_install_patch_dependencies,
      :g_a_pre_install_patch, :install, :g_a_post_install_patch_dependencies, :g_a_post_install_patch, :after_install_artifact,
      :before_setup, :before_setup_artifact, :g_a_pre_setup_patch_dependencies, :g_a_pre_setup_patch, :setup, :chef_cookbooks,
      :g_a_post_setup_patch_dependencies, :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions]
   end
 
-  def application_g_a_stages
+  def dimg_g_a_stages
     [:g_a_archive, :g_a_pre_install_patch, :g_a_post_install_patch, :g_a_pre_setup_patch, :g_a_post_setup_patch, :g_a_latest_patch]
   end
 
@@ -37,25 +37,25 @@ describe Dapp::Build::Stage do
     [:g_a_archive, :g_a_pre_install_patch, :g_a_post_install_patch, :g_a_pre_setup_patch, :g_a_artifact_patch]
   end
 
-  [:application, :artifact].each do |app|
-    context app do
+  [:dimg, :artifact].each do |dimg|
+    context dimg do
       before :each do
-        @app = app
+        @dimg = dimg
       end
 
       context :stages do
         before :each do
-          @stages = send("#{app}_stages")
+          @stages = send("#{dimg}_stages")
         end
 
         def first_stage
-          stage = send("#{@app}_last_stage")
+          stage = send("#{@dimg}_last_stage")
           stage = stage.prev_stage while stage.prev_stage
           stage
         end
 
         it 'prev_stage' do
-          stage = send("#{@app}_last_stage")
+          stage = send("#{@dimg}_last_stage")
           while stage
             expect(stage.send(:name)).to eq @stages.pop
             stage = stage.prev_stage
@@ -73,11 +73,11 @@ describe Dapp::Build::Stage do
 
       context :git_artifact_stages do
         before :each do
-          @stages = send("#{app}_g_a_stages")
+          @stages = send("#{dimg}_g_a_stages")
         end
 
         def last_g_a_stage
-          send("#{@app}_last_stage").prev_stage
+          send("#{@dimg}_last_stage").prev_stage
         end
 
         def g_a_archive_stage

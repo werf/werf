@@ -3,8 +3,8 @@ module Dapp
     module Stage
       # GALatestPatch
       class GALatestPatch < GABase
-        def initialize(application, next_stage)
-          @prev_stage = AfterSetupArtifact.new(application, self)
+        def initialize(dimg, next_stage)
+          @prev_stage = AfterSetupArtifact.new(dimg, self)
           super
         end
 
@@ -37,7 +37,7 @@ module Dapp
         private
 
         def commit_list
-          application.git_artifacts.map { |git_artifact| layer_commit(git_artifact) }
+          dimg.git_artifacts.map { |git_artifact| layer_commit(git_artifact) }
         end
       end # GALatestPatch
     end # Stage

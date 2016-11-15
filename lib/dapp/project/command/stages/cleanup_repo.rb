@@ -9,11 +9,11 @@ module Dapp
           def stages_cleanup_repo(repo)
             lock_repo(repo) do
               registry = registry(repo)
-              repo_applications, repo_stages = repo_images(registry)
-              repo_stages.delete_if { |_, siid| repo_applications.values.include?(siid) } # ignoring stages with apps ids (v2)
+              repo_dimgs, repo_stages = repo_images(registry)
+              repo_stages.delete_if { |_, siid| repo_dimgs.values.include?(siid) } # ignoring stages with dimgs ids (v2)
               proper_repo_cache(registry, repo_stages) if proper_cache_version?
               log_step_with_indent(repo) do
-                repo_applications.each { |image_tag, image_id| clear_repo_stages(registry, repo_stages, image_tag, image_id) }
+                repo_dimgs.each { |image_tag, image_id| clear_repo_stages(registry, repo_stages, image_tag, image_id) }
                 repo_stages.keys.each { |image_tag| delete_repo_image(registry, image_tag) }
               end
             end

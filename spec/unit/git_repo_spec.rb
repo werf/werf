@@ -2,20 +2,16 @@ require_relative '../spec_helper'
 
 describe Dapp::GitRepo do
   include SpecHelper::Common
-  include SpecHelper::Application
+  include SpecHelper::Dimg
   include SpecHelper::Git
 
   before :each do
-    stub_application
+    stub_dimg
   end
 
   def init!(git_dir = nil)
     git_init!(git_dir: git_dir)
     expect(File.exist?(file_path(git_dir, '.git'))).to be_truthy
-  end
-
-  def config
-    @config ||= default_config.merge(_home_path: '')
   end
 
   def commit!(data, git_dir = nil)
@@ -46,7 +42,7 @@ describe Dapp::GitRepo do
   def dapp_remote_init(**kwargs)
     remote_init!
     remote_commit!('Some text')
-    @remote = Dapp::GitRepo::Remote.new(application, 'local_remote', url: 'remote/.git', **kwargs)
+    @remote = Dapp::GitRepo::Remote.new(dimg, 'local_remote', url: 'remote/.git', **kwargs)
     expect(File.exist?(@remote.path)).to be_truthy
     expect(@remote.path.to_s =~ /local_remote.git$/).to be_truthy
   end
@@ -74,7 +70,7 @@ describe Dapp::GitRepo do
     init!
     commit!('Some text')
 
-    own = Dapp::GitRepo::Own.new(application)
+    own = Dapp::GitRepo::Own.new(dimg)
     expect(own.latest_commit).to eq git_latest_commit
 
     commit!('Some another text')

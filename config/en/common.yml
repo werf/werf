@@ -41,6 +41,8 @@ en:
       push: '[PUSH]'
       pull: '[PULL]'
     warning:
+      wrong_using_base_directive: "WARNING: Directive '%{directive}' has declared after dimg_group|dimg|artifact!"
+      wrong_using_directive: "WARNING: Directive '%{directive}' has declared after dimg_group|dimg!"
       excess_builder_instruction: "WARNING: Excessive use of the 'builder' instruction. Builder type will be automatically determined by the first use of any builder."
       excess_name_instruction: "WARNING: Excessive use of the 'name' instruction. Given name corresponds to default name."
       another_image_already_tagged: 'WARNING: image with other id already exist.'

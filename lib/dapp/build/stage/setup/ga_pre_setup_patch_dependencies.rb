@@ -6,8 +6,8 @@ module Dapp
         class GAPreSetupPatchDependencies < GADependenciesBase
           include Mod::Group
 
-          def initialize(application, next_stage)
-            @prev_stage = BeforeSetupArtifact.new(application, self)
+          def initialize(dimg, next_stage)
+            @prev_stage = BeforeSetupArtifact.new(dimg, self)
             super
           end
 

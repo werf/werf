@@ -8,8 +8,8 @@ module Dapp
 
           MAX_PATCH_SIZE = 1024 * 1024
 
-          def initialize(application, next_stage)
-            @prev_stage = ChefCookbooks.new(application, self)
+          def initialize(dimg, next_stage)
+            @prev_stage = ChefCookbooks.new(dimg, self)
             super
           end
 
@@ -20,7 +20,7 @@ module Dapp
           private
 
           def changes_size_since_g_a_pre_setup_patch
-            application.git_artifacts.map do |git_artifact|
+            dimg.git_artifacts.map do |git_artifact|
               git_artifact.patch_size(prev_stage.prev_stage.prev_stage.layer_commit(git_artifact), git_artifact.latest_commit)
             end.reduce(0, :+)
           end
