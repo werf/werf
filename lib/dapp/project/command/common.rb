@@ -63,6 +63,10 @@ module Dapp
           basename
         end
 
+        def validate_repo_name(repo)
+          raise(Error::Project, code: :repo_name_incorrect, data: { name: repo }) unless repo =~ DockerRegistry.repo_regex
+        end
+
         def proper_cache_version?
           !!cli_options[:proper_cache_version]
         end

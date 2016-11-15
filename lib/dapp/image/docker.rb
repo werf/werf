@@ -68,6 +68,10 @@ module Dapp
       end
 
       class << self
+        def image_regex
+          /^[a-z0-9]+(?:[._-][a-z0-9]+)*(:[\w][\w.-]{0,127})?$/
+        end
+
         def tag!(id:, tag:)
           Project.shellout!("docker tag #{id} #{tag}")
           cache_reset
