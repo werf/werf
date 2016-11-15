@@ -150,8 +150,9 @@ describe Dapp::GitArtifact do
         step: step
       )
       { owner: 'u', group: 'g' }.each do |subj, flag|
-        if artifact(id: id).send(subj)
-          expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-#{flag} #{artifact(id: id).send(subj)}.*git apply/, any_args)
+        if (value = artifact(id: id).send(subj))
+          value = "\\\\##{value}" if value.to_i.to_s == value.to_s
+          expect(@docker).to have_received(:run).with(/#{patch_filename_esc} \| sudo.*-#{flag} #{value}.*git apply/, any_args)
         end
       end
       expect(File.read(commit_filename).strip).to eq(@repo.latest_commit(artifact(id: id).branch))
