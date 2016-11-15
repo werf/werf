@@ -74,7 +74,7 @@ describe Dapp::Config::Main do
 
     it 'from with incorrect image (:docker_from_incorrect)' do
       @dappfile = "docker.from 'sample'"
-      expect_exception_code(code: :docker_from_incorrect) { apps }
+      expect_exception_code(code: :docker_from_without_tag) { apps }
     end
 
     it 'volume' do
