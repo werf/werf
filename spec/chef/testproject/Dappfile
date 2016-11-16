@@ -1,6 +1,8 @@
 dimg_group do
   git :local do
-    add '/myapp'
+    add do
+      to '/myapp'
+    end
   end
 
   chef.attributes['mdapp-test2']['sayhello'] = 'hello'
@@ -13,8 +15,9 @@ dimg_group do
     chef.dimod 'testartifact'
     chef.recipe 'myartifact'
 
-    export '/myartifact' do
+    export do
       before :install
+      to '/myartifact'
     end
   end
 
