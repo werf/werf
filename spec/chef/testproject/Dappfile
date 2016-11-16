@@ -12,7 +12,7 @@ dimg_group do
   artifact do
     docker.from 'ubuntu:14.04'
 
-    chef.dimod 'testartifact'
+    chef.dimod 'mdapp-testartifact'
     chef.recipe 'myartifact'
 
     export do
@@ -21,13 +21,11 @@ dimg_group do
     end
   end
 
-  chef.dimod 'test'
+  chef.dimod 'mdapp-test', 'mdapp-test2'
   chef.recipe 'main'
 
   dimg_group do
     docker.from 'ubuntu:14.04'
-
-    chef.dimod 'test2'
     chef.recipe 'X'
 
     dimg 'X_Y' do

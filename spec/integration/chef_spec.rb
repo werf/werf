@@ -138,7 +138,7 @@ describe Dapp::Builder::Chef do
           _name: "#{testproject_path.basename}-X-Y",
           _docker: default_config[:_docker].merge(_from: os.to_sym),
           _chef: {
-            _dimod: %w(test test2),
+            _dimod: %w(mdapp-test mdapp-test2),
             _recipe: %w(main X X_Y),
             __before_install_attributes: {
               'mdapp-test2' => {
@@ -171,7 +171,7 @@ describe Dapp::Builder::Chef do
                 _artifact_dependencies: [],
                 _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
                 _chef: {
-                  _dimod: %w(testartifact),
+                  _dimod: %w(mdapp-testartifact),
                   _recipe: %w(myartifact),
                   __before_install_attributes: {
                     'mdapp-test2' => {
@@ -243,25 +243,9 @@ describe Dapp::Builder::Chef do
     @template_testproject_path ||= Pathname('spec/chef/testproject')
   end
 
-  def template_mdapp_test_path
-    @template_mdapp_test_path ||= Pathname('spec/chef/mdapp-test')
-  end
-
-  def template_mdapp_test2_path
-    @template_mdapp_test2_path ||= Pathname('spec/chef/mdapp-test2')
-  end
-
-  def template_mdapp_testartifact_path
-    @template_mdapp_testartifact_path ||= Pathname('spec/chef/mdapp-testartifact')
-  end
-
   def init_project
     FileUtils.cp_r template_testproject_path, testproject_path.tap { |p| p.parent.mkpath }
     testproject_path.join('.dapp_build').tap { |p| p.rmtree if p.exist? }
-
-    FileUtils.cp_r template_mdapp_test_path, mdapp_test_path.tap { |p| p.parent.mkpath }
-    FileUtils.cp_r template_mdapp_test2_path, mdapp_test2_path.tap { |p| p.parent.mkpath }
-    FileUtils.cp_r template_mdapp_testartifact_path, mdapp_testartifact_path.tap { |p| p.parent.mkpath }
   end
   # rubocop:enable Metrics/AbcSize
 
