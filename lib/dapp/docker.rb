@@ -96,7 +96,9 @@ module Dapp
 
     # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def tag(origin, new, force: true)
-      cmd = "tag#{' -f' if force} "
+      # FIXME -f flag was removed since docker v 1.10
+      # cmd = "tag#{' -f' if force} "
+      cmd = "tag "
 
       if origin.is_a?(String)
         origin_image_id = origin
