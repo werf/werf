@@ -79,27 +79,61 @@ module Dapp
         cookbook_metadata.name
       end
 
+      def cookbook_path(*path)
+        dimg.cookbook_path.tap do |cookbook_path|
+          unless cookbook_path.exist?
+            raise Error, code: :cookbook_path_not_found,
+                         data: { path: cookbook_path }
+          end
+        end.join(*path)
+      end
+
       def berksfile_path
-        dimg.chef_path('Berksfile')
+        cookbook_path('Berksfile')
       end
 
       def berksfile_lock_path
-        dimg.chef_path('Berksfile.lock')
+        cookbook_path('Berksfile.lock')
       end
 
       def berksfile
-        @berksfile ||= Berksfile.new(dimg.chef_path, berksfile_path)
+        @berksfile ||= begin
+          unless berksfile_path.exist?
+            raise Error, code: :cookbook_berksfile_not_found,
+                         data: { path: berksfile_path.to_s }
+          end
+
+          Berksfile.new(cookbook_path, berksfile_path).tap do |berksfile|
+            unless berksfile.local_cookbook? project_name
+              raise Error, code: :cookbook_not_specified_in_berksfile,
+                           data: { name: project_name, path: berksfile_path.to_s }
+            end
+          end
+        end
       end
 
       def cookbook_metadata_path
-        dimg.chef_path('metadata.rb')
+        cookbook_path('metadata.rb')
+      end
+
+      def check_cookbook_metadata_path_exist!
+        unless cookbook_metadata_path.exist?
+          raise Error, code: :cookbook_metadata_not_found,
+                       data: { path: cookbook_metadata_path }
+        end
       end
 
       def cookbook_metadata
-        @cookbook_metadata ||= CookbookMetadata.new(cookbook_metadata_path).tap do |metadata|
-          metadata.depends.each do |dependency|
-            raise Error, code: :mdapp_dependency_in_metadata_forbidden,
-                         data: { dependency: dependency } if dependency.start_with? 'mdapp-'
+        @cookbook_metadata ||= begin
+          check_cookbook_metadata_path_exist!
+
+          CookbookMetadata.new(cookbook_metadata_path).tap do |metadata|
+            metadata.depends.each do |dependency|
+              if dependency.start_with? 'mdapp-'
+                raise Error, code: :mdapp_dependency_in_metadata_forbidden,
+                             data: { dependency: dependency }
+              end
+            end
           end
         end
       end
@@ -187,8 +221,17 @@ module Dapp
         end
       end
 
+      def _update_berksfile_lock_cmd
+        vendor_tmp = SecureRandom.uuid
+
+        ["berks vendor -b #{berksfile_path} /tmp/#{vendor_tmp}",
+         "rm -rf /tmp/#{vendor_tmp}"].join(' && ')
+      end
+
       # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       def install_cookbooks(dest_path, chef_cookbooks_stage: false)
+        check_cookbook_metadata_path_exist!
+
         volumes_from = [dimg.project.base_container, chefdk_container]
         process_code = [
           'process',
@@ -200,7 +243,7 @@ module Dapp
             unless dimg.project.dev_mode? || chef_cookbooks_stage
               commands.push(
                 ['if [ ! -f Berksfile.lock ] ; then ',
-                 'echo "Berksfile.lock not found" 1>&2 ; ',
+                 "echo \"Berksfile.lock not found, to create run '#{_update_berksfile_lock_cmd}'\" 1>&2 ; ",
                  'exit 1 ; ',
                  'fi'].join
               )
@@ -216,9 +259,11 @@ module Dapp
               )
             elsif !chef_cookbooks_stage
               commands.push(
-                "export LOCKDIFF=$(#{dimg.project.diff_path} -u1 Berksfile.lock #{berksfile_lock_path})",
+                "export LOCKDIFF=$(#{dimg.project.diff_path} -u1 #{berksfile_lock_path} Berksfile.lock)",
                 ['if [ "$LOCKDIFF" != "" ] ; then ',
-                 "echo -e \"Bad Berksfile.lock\n$LOCKDIFF\" 1>&2 ; ",
+                 "echo -e \"",
+                 "Bad Berksfile.lock, run '#{_update_berksfile_lock_cmd}' ",
+                 "or manually apply change:\\n$LOCKDIFF\" 1>&2 ; ",
                  'exit 1 ; ',
                  'fi'].join
               )
@@ -234,7 +279,7 @@ module Dapp
               .values
               .map {|cookbook|
                 ["#{dimg.project.rsync_path} --archive",
-                 *cookbook[:chefignore].map {|path| "--exclude #{path}"},
+                 #*cookbook[:chefignore].map {|path| "--exclude #{path}"}, # FIXME
                  "--relative #{cookbook[:path]} /tmp/local_cookbooks",
                 ].join(' ')
               },
@@ -254,9 +299,10 @@ module Dapp
           dimg.project.shellout!(
             ['docker run --rm',
              volumes_from.map { |container| "--volumes-from #{container}" }.join(' '),
-             *berksfile.local_cookbooks
-                       .values
-                       .map { |cookbook| "--volume #{cookbook[:path]}:#{cookbook[:path]}" },
+             *berksfile
+              .local_cookbooks
+              .values
+              .map { |desc| "--volume #{desc[:path]}:#{desc[:path]}" },
              ("--volume #{dimg.project.ssh_auth_sock}:/tmp/dapp-ssh-agent" if dimg.project.ssh_auth_sock),
              "--volume #{dest_path.tap(&:mkpath)}:#{dest_path}",
              ('--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent' if dimg.project.ssh_auth_sock),
