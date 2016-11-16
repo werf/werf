@@ -54,7 +54,7 @@ module Dapp
             prepare_image unless image.tagged?
             log_image_build(&method(:image_build))
           end
-          raise Exception::IntrospectImage, data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
+          application.introspect_image!(image: image.built_id, options: image.send(:prepared_options)) if should_be_introspected?
         end
 
         def save_in_cache!
