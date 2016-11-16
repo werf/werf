@@ -147,6 +147,11 @@ module Dapp
       [Dapp::BUILD_CACHE_VERSION, dev_mode? ? 1 : 0]
     end
 
+    def introspect_image!(image:, options:)
+      cmd = "docker run -ti --rm --entrypoint #{project.bash_path} #{options} #{image}"
+      system(cmd)
+    end
+
     protected
 
     def should_be_built?
@@ -160,9 +165,7 @@ module Dapp
       yield
     rescue Exception::IntrospectImage => e
       data = e.net_status[:data]
-      cmd = "docker run -ti --rm --entrypoint #{project.bash_path} #{data[:options]} #{data[:built_id]}"
-      system(cmd)
-      project.shellout!("docker rmi #{data[:built_id]}") if data[:rmi]
+      introspect_image!(image: data[:built_id], options: data[:options])
       raise data[:error]
     end
   end # Dimg
