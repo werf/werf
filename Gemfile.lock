@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    dapp (0.0.22)
+    dapp (0.0.23)
       mixlib-cli (>= 1.0, < 3.0)
       mixlib-shellout (>= 1.0, < 3.0)
 
@@ -37,8 +37,8 @@ GEM
     launchy (2.4.3)
       addressable (~> 2.3)
     method_source (0.8.2)
-    mixlib-cli (1.5.0)
-    mixlib-shellout (2.2.6)
+    mixlib-cli (1.7.0)
+    mixlib-shellout (2.2.7)
     multi_json (1.11.3)
     multipart-post (2.0.0)
     net-http-persistent (2.9.4)
@@ -102,3 +102,6 @@ DEPENDENCIES
   test_construct (~> 2)
   timecop (~> 0.8)
   travis (~> 1.8, >= 1.8.2)
+
+BUNDLED WITH
+   1.13.6
