@@ -72,7 +72,7 @@ module Dapp
         if cli_options[:build_dir]
           Pathname.new(cli_options[:build_dir])
         else
-          Pathname.new(path).join('.dapps_build')
+          Pathname.new(path).join('.dapp_build')
         end.expand_path.tap(&:mkpath)
       end
     end

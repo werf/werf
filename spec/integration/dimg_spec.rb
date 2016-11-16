@@ -29,10 +29,6 @@ describe Dapp::Dimg do
     Pathname('/tmp/dapp/test')
   end
 
-  def project_dapp_path
-    project_path.join('.dapps/dapp')
-  end
-
   def config
     @config ||= default_config.merge(
       _builder: :shell,
