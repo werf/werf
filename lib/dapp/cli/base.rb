@@ -9,7 +9,7 @@ module Dapp
 
       option :build_dir,
              long: '--build-dir PATH',
-             description: 'Directory where build cache stored (DIR/.dapp-build by default)'
+             description: 'Directory where build cache stored (DIR/.dapp_build by default)'
 
       option :log_quiet,
              short: '-q',
