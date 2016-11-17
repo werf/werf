@@ -21,7 +21,7 @@ dimg_group do
     end
   end
 
-  chef.dimod 'mdapp-test', 'mdapp-test2'
+  chef.dimod 'mdapp-test', 'mdapp-test2' # FIXME: mdapp-test2 should be only in X_Y
   chef.recipe 'main'
 
   dimg_group do
