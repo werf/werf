@@ -3,7 +3,7 @@ module Dapp
     # DimgGroupMain
     class DimgGroupMain < DimgGroupBase
       def dimg(name = nil, &blk)
-        with_dimg_validation { super(&blk) }
+        with_dimg_validation { super(name, &blk) }
       end
 
       def dimg_group(&blk)
