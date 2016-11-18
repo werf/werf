@@ -232,15 +232,15 @@ describe Dapp::Builder::Chef do
   end
 
   def mdapp_test_path
-    project_path.join('mdapp-test')
+    _base_path.join('mdapp-test')
   end
 
   def mdapp_test2_path
-    project_path.join('mdapp-test2')
+    _base_path.join('mdapp-test2')
   end
 
   def mdapp_testartifact_path
-    project_path.join('mdapp-testartifact')
+    _base_path.join('mdapp-testartifact')
   end
 
   def template_testproject_path
