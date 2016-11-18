@@ -81,7 +81,7 @@ module Dapp
       def _to_system_shellout_command(command)
         cmd = shellout_pack ["cd #{Dir.pwd}", command].join(' && ')
         "docker exec #{system_shellout_container} chroot /.system_shellout_root #{bash_path} -ec '#{[
-          *System.default_env_keys.map do |env_key|
+          *SystemShellout.default_env_keys.map do |env_key|
             env_key = env_key.to_s.upcase
             "export #{env_key}=#{ENV[env_key]}"
           end, cmd
