@@ -6,7 +6,6 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-
   dapp stage image [options] [DIMG PATTERN ...]
 
     DIMG PATTERN                Dapp image to process [default: *].

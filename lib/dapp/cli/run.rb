@@ -6,7 +6,6 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-
   dapp run [options] [DIMG PATTERN] [DOCKER ARGS]
 
     DIMG PATTERN                Dapp image to process [default: *].
