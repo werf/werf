@@ -21,12 +21,14 @@ dimg_group do
     end
   end
 
-  chef.dimod 'mdapp-test', 'mdapp-test2' # FIXME: mdapp-test2 should be only in X_Y
+  chef.dimod 'mdapp-test'
   chef.recipe 'main'
 
   dimg_group do
     docker.from 'ubuntu:14.04'
+
     chef.recipe 'X'
+    chef.dimod 'mdapp-test2'
 
     dimg 'X_Y' do
       chef.recipe 'X_Y'

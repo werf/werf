@@ -215,16 +215,20 @@ describe Dapp::Builder::Chef do
     ConfigRecursiveOpenStruct.new(config)
   end
 
+  def _base_path
+    @_base_path ||= Pathname("/tmp/dapp-test-#{SpecHelper::Dimg::CACHE_VERSION}")
+  end
+
   def project_path
-    @project_path ||= Pathname("/tmp/dapp-test-#{SpecHelper::Dimg::CACHE_VERSION}")
+    testproject_path
   end
 
   def testproject_path
-    project_path
+    _base_path.join('testproject')
   end
 
   def testproject_chef_path
-    project_path.join('.dapp_chef')
+    testproject_path.join('.dapp_chef')
   end
 
   def mdapp_test_path
@@ -243,9 +247,25 @@ describe Dapp::Builder::Chef do
     @template_testproject_path ||= Pathname('spec/chef/testproject')
   end
 
+  def template_mdapp_test_path
+    @template_mdapp_test_path ||= Pathname('spec/chef/mdapp-test')
+  end
+
+  def template_mdapp_test2_path
+    @template_mdapp_test2_path ||= Pathname('spec/chef/mdapp-test2')
+  end
+
+  def template_mdapp_testartifact_path
+    @template_mdapp_testartifact_path ||= Pathname('spec/chef/mdapp-testartifact')
+  end
+
   def init_project
     FileUtils.cp_r template_testproject_path, testproject_path.tap { |p| p.parent.mkpath }
     testproject_path.join('.dapp_build').tap { |p| p.rmtree if p.exist? }
+
+    FileUtils.cp_r template_mdapp_test_path, mdapp_test_path.tap { |p| p.parent.mkpath }
+    FileUtils.cp_r template_mdapp_test2_path, mdapp_test2_path.tap { |p| p.parent.mkpath }
+    FileUtils.cp_r template_mdapp_testartifact_path, mdapp_testartifact_path.tap { |p| p.parent.mkpath }
   end
   # rubocop:enable Metrics/AbcSize
 
