@@ -171,6 +171,7 @@ module Dapp
               when Directive::Base, GitArtifact then variable.send(clone_method)
               when Symbol then variable
               when Array then variable.dup
+              when TrueClass, FalseClass then variable
               else
                 raise
               end
@@ -180,7 +181,9 @@ module Dapp
         end
 
         def passed_directives
-          [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount, :@_artifact, :@_builder, :@_dev_mode]
+          [:@_chef, :@_shell, :@_docker,
+           :@_git_artifact, :@_mount,
+           :@_artifact, :@_builder, :@_dev_mode]
         end
       end
     end

@@ -2,12 +2,12 @@ module Dapp
   module Config
     # DimgGroupMain
     class DimgGroupMain < DimgGroupBase
-      def dimg(name = nil)
-        with_dimg_validation { super }
+      def dimg(name = nil, &blk)
+        with_dimg_validation { super(&blk) }
       end
 
-      def dimg_group
-        with_dimg_validation { super }
+      def dimg_group(&blk)
+        with_dimg_validation { super(&blk) }
       end
 
       protected

@@ -24,7 +24,11 @@ module Dapp
       end
 
       def dimg_group(&blk)
-        Config::DimgGroup.new(project: project, &blk).tap { |dimg_group| @_dimg_group << dimg_group }
+        Config::DimgGroup.new(project: project).tap do |dimg_group|
+          before_dimg_group_eval(dimg_group)
+          dimg_group.instance_eval(&blk) if block_given?
+          @_dimg_group << dimg_group
+        end
       end
 
       def _dimg
@@ -34,7 +38,15 @@ module Dapp
       protected
 
       def before_dimg_eval(dimg)
-        dimg.instance_variable_set(:@_dev_mode, @_dev_mode)
+        pass_to_default(dimg)
+      end
+
+      def before_dimg_group_eval(dimg_group)
+        pass_to_default(dimg_group)
+      end
+
+      def pass_to_default(obj)
+        obj.instance_variable_set(:@_dev_mode, @_dev_mode)
       end
     end
   end

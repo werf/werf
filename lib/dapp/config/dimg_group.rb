@@ -40,6 +40,10 @@ module Dapp
         pass_to_default(dimg)
       end
 
+      def before_dimg_group_eval(dimg_group)
+        pass_to_default(dimg_group)
+      end
+
       def check_dimg_directive_order(directive)
         project.log_config_warning(desc: { code: 'wrong_using_base_directive',
                                            data: { directive: directive },
