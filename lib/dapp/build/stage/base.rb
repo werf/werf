@@ -54,13 +54,13 @@ module Dapp
             prepare_image unless image.tagged?
             log_image_build(&method(:image_build))
           end
-          raise Exception::IntrospectImage, data: { built_id: image.built_id, options: image.send(:prepared_options) } if should_be_introspected?
+          dimg.introspect_image!(image: image.built_id, options: image.send(:prepared_options)) if should_be_introspected?
         end
 
         def save_in_cache!
           prev_stage.save_in_cache! if prev_stage
           return unless should_be_tagged?
-          image.tag! unless dimg.project.dry_run?
+          image.save_in_cache! unless dimg.project.dry_run?
         end
 
         def image
@@ -101,10 +101,10 @@ module Dapp
         end
 
         def image_add_default_volumes(type)
-          (dimg.config.public_send("_#{type}_mount").map(&:to) +
+          (dimg.config.public_send("_#{type}_mount").map(&:_to) +
             from_image.labels.select { |l, _| l == "dapp-#{type}-dir" }.map { |_, value| value.split(';') }.flatten).each do |path|
             absolute_path = File.expand_path(File.join('/', path))
-            tmp_path = dimg.send("#{type}_path", 'mount', absolute_path[1..-1]).tap(&:mkpath)
+            tmp_path = dimg.send(type, 'mount', absolute_path[1..-1]).tap(&:mkpath)
             image.add_volume "#{tmp_path}:#{absolute_path}"
           end
         end

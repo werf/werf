@@ -15,7 +15,7 @@ begin
       ::File.open(filename, 'w') do |dapp_stacktrace|
         dapp_stacktrace.write "#{e.backtrace.join("\n")}\n"
       end
-      $stderr.puts "\033[1m\033[31mStacktrace dumped to #{filename}\033[0m"
+      $stderr.puts "\033[1m\033[90mStacktrace dumped to #{filename}\033[0m"
     end
 
     raise

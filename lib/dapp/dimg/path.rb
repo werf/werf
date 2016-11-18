@@ -7,7 +7,7 @@ module Dapp
         make_path(project.path, *path).expand_path
       end
 
-      def chef_path(*path)
+      def cookbook_path(*path)
         home_path('.dapp_chef', *path)
       end
 
@@ -27,6 +27,9 @@ module Dapp
       def container_tmp_path(*path)
         container_dapp_path('tmp', *path)
       end
+
+      alias_method :build_dir, :build_path
+      alias_method :tmp_dir, :tmp_path
 
       private
 

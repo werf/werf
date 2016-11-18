@@ -39,6 +39,19 @@ module Dapp
       FileUtils.rm_rf(tmp_path)
     end
 
+    def tag!(tag)
+      project.lock("#{config._basename}.images", readonly: true) do
+        dimg_name = config._name
+        if project.dry_run?
+          project.log_state(dimg_name, state: project.t(code: 'state.tag'), styles: { status: :success })
+        else
+          project.log_process(dimg_name, process: project.t(code: 'status.process.tagging')) do
+            last_stage.image.tag!(tag)
+          end
+        end
+      end
+    end
+
     def export!(repo, format:)
       project.lock("#{project.name}.images", readonly: true) do
         tags.each do |tag|
@@ -134,6 +147,11 @@ module Dapp
       [Dapp::BUILD_CACHE_VERSION, dev_mode? ? 1 : 0]
     end
 
+    def introspect_image!(image:, options:)
+      cmd = "docker run -ti --rm --entrypoint #{project.bash_path} #{options} #{image}"
+      system(cmd)
+    end
+
     protected
 
     def should_be_built?
@@ -147,9 +165,7 @@ module Dapp
       yield
     rescue Exception::IntrospectImage => e
       data = e.net_status[:data]
-      cmd = "docker run -ti --rm --entrypoint #{project.bash_path} #{data[:options]} #{data[:built_id]}"
-      system(cmd)
-      project.shellout!("docker rmi #{data[:built_id]}") if data[:rmi]
+      introspect_image!(image: data[:built_id], options: data[:options])
       raise data[:error]
     end
   end # Dimg

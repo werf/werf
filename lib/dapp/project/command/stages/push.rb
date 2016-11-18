@@ -7,6 +7,7 @@ module Dapp
         # Push
         module Push
           def stages_push(repo)
+            validate_repo_name(repo)
             build_configs.each do |config|
               log_dimg_name_with_indent(config) do
                 Dimg.new(config: config, project: self, ignore_git_fetch: true, should_be_built: true).tap do |dimg|

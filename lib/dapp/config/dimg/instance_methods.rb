@@ -111,7 +111,7 @@ module Dapp
         end
 
         # GitArtifact
-        class GitArtifact
+        class GitArtifact < Directive::Base
           attr_reader :_local, :_remote
 
           def initialize

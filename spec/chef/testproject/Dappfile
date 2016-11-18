@@ -1,0 +1,40 @@
+dimg_group do
+  git :local do
+    add do
+      to '/myapp'
+    end
+  end
+
+  chef.attributes['mdapp-test2']['sayhello'] = 'hello'
+  chef.attributes['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_DAPPFILE.txt'
+  chef.attributes['mdapp-test2']['sayhelloagain'] = 'helloagain'
+
+  artifact do
+    docker.from 'ubuntu:14.04'
+
+    chef.dimod 'mdapp-testartifact'
+    chef.recipe 'myartifact'
+
+    export do
+      before :install
+      to '/myartifact'
+    end
+  end
+
+  chef.dimod 'mdapp-test', 'mdapp-test2' # FIXME: mdapp-test2 should be only in X_Y
+  chef.recipe 'main'
+
+  dimg_group do
+    docker.from 'ubuntu:14.04'
+    chef.recipe 'X'
+
+    dimg 'X_Y' do
+      chef.recipe 'X_Y'
+    end
+  end
+
+  dimg 'Z' do
+    docker.from 'centos:7'
+    chef.recipe 'Z'
+  end
+end

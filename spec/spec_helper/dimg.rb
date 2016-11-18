@@ -48,7 +48,7 @@ module SpecHelper
                                 _before_install_artifact: [], _before_setup_artifact: [],
                                 _after_install_artifact: [], _after_setup_artifact: [],
                                 _tmp_dir_mount: [], _build_dir_mount: [],
-                                _chef: { _module: [], _recipe: [] },
+                                _chef: { _dimod: [], _recipe: [] },
                                 _shell: { _before_install_command: [], _before_setup_command: [],
                                           _install_command: [], _setup_command: [] },
                                 _docker: { _from: :'ubuntu:14.04',
