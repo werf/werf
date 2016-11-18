@@ -1,5 +1,5 @@
 ---
-title: Базовые комманды
+title: Базовые команды
 sidebar: doc_sidebar
 permalink: base_commands.html
 folder: command
