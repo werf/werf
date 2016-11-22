@@ -13,6 +13,7 @@ require 'ostruct'
 require 'time'
 require 'i18n'
 require 'paint'
+require 'inifile'
 
 require 'net_status'
 
