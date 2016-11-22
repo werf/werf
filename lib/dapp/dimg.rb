@@ -148,7 +148,7 @@ module Dapp
     end
 
     def introspect_image!(image:, options:)
-      cmd = "docker run -ti --rm --entrypoint #{project.bash_path} #{options} #{image}"
+      cmd = "docker run -ti --rm --entrypoint #{project.bash_bin} #{options} #{image}"
       system(cmd)
     end
 

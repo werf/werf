@@ -14,9 +14,9 @@ module Dapp
 
       def build!(**_kwargs)
         build_from_command = if from_archives.empty?
-                               "#{project.tar_path} c --files-from /dev/null"
+                               "#{project.tar_bin} c --files-from /dev/null"
                              else
-                               "#{project.cat_path} #{from_archives.join(' ')}"
+                               "#{project.cat_bin} #{from_archives.join(' ')}"
                              end
         @built_id = project.system_shellout!("#{build_from_command} | docker import #{prepared_change} - ").stdout.strip
       end

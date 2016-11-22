@@ -14,7 +14,7 @@ module Dapp
         def gitartifact_container
           @gitartifact_container ||= begin
             if shellout("docker inspect #{gitartifact_container_name}").exitstatus.nonzero?
-              log_secondary_process(t(code: 'process.gitartifact_container_loading'), short: true) do
+              log_secondary_process(t(code: 'process.gitartifact_container_creating'), short: true) do
                 shellout!(
                   ['docker create',
                    "--name #{gitartifact_container_name}",
@@ -27,7 +27,7 @@ module Dapp
           end
         end
 
-        def git_path
+        def git_bin
           "/.dapp/deps/gitartifact/#{GITARTIFACT_VERSION}/bin/git"
         end
       end # Gitartifact

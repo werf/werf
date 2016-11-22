@@ -14,7 +14,7 @@ module Dapp
         def base_container
           @base_container ||= begin
             if shellout("docker inspect #{base_container_name}").exitstatus.nonzero?
-              log_secondary_process(t(code: 'process.base_container_loading'), short: true) do
+              log_secondary_process(t(code: 'process.base_container_creating'), short: true) do
                 shellout!(
                   ['docker create',
                    "--name #{base_container_name}",
@@ -26,17 +26,17 @@ module Dapp
           end
         end
 
-        %w(rsync diff date echo cat
+        %w(rsync diff date cat
            stat sleep mkdir find
            install sed cp true
            bash tar sudo).each do |cmd|
-          define_method("#{cmd}_path") { "/.dapp/deps/base/#{BASE_VERSION}/bin/#{cmd}" }
+          define_method("#{cmd}_bin") { "/.dapp/deps/base/#{BASE_VERSION}/bin/#{cmd}" }
         end
 
         def sudo_command(owner: nil, group: nil)
           sudo = ''
           if owner || group
-            sudo = "#{sudo_path} -E "
+            sudo = "#{sudo_bin} -E "
             sudo += "-u #{sudo_format_user(owner)} " if owner
             sudo += "-g #{sudo_format_user(group)} " if group
           end

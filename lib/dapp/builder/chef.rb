@@ -40,8 +40,8 @@ module Dapp
       def chef_cookbooks(image)
         image.add_volume "#{cookbooks_vendor_path(chef_cookbooks_stage: true)}:#{dimg.container_dapp_path('chef_cookbooks')}"
         image.add_command(
-          "#{dimg.project.mkdir_path} -p /usr/share/dapp/chef_repo",
-          ["#{dimg.project.cp_path} -a #{dimg.container_dapp_path('chef_cookbooks')} ",
+          "#{dimg.project.mkdir_bin} -p /usr/share/dapp/chef_repo",
+          ["#{dimg.project.cp_bin} -a #{dimg.container_dapp_path('chef_cookbooks')} ",
            '/usr/share/dapp/chef_repo/cookbooks'].join
         )
       end
@@ -208,7 +208,7 @@ module Dapp
       def chefdk_container
         @chefdk_container ||= begin
           if dimg.project.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
-            dimg.project.log_secondary_process(dimg.project.t(code: 'process.chefdk_container_loading'), short: true) do
+            dimg.project.log_secondary_process(dimg.project.t(code: 'process.chefdk_container_creating'), short: true) do
               dimg.project.shellout!(
                 ['docker create',
                  "--name #{chefdk_container_name}",
@@ -253,13 +253,13 @@ module Dapp
           after_vendor_commands = [].tap do |commands|
             if dimg.project.dev_mode?
               commands.push(
-                ["#{dimg.project.install_path} -o #{Process.uid} -g #{Process.gid} ",
-                 "--mode $(#{dimg.project.stat_path} -c %a Berksfile.lock) ",
+                ["#{dimg.project.install_bin} -o #{Process.uid} -g #{Process.gid} ",
+                 "--mode $(#{dimg.project.stat_bin} -c %a Berksfile.lock) ",
                  "Berksfile.lock #{berksfile_lock_path}"].join
               )
             elsif !chef_cookbooks_stage
               commands.push(
-                "export LOCKDIFF=$(#{dimg.project.diff_path} -u1 #{berksfile_lock_path} Berksfile.lock)",
+                "export LOCKDIFF=$(#{dimg.project.diff_bin} -u1 #{berksfile_lock_path} Berksfile.lock)",
                 ['if [ "$LOCKDIFF" != "" ] ; then ',
                  "echo -e \"",
                  "Bad Berksfile.lock, run '#{_update_berksfile_lock_cmd}' ",
@@ -271,14 +271,14 @@ module Dapp
           end
 
           vendor_commands = [
-            "#{dimg.project.mkdir_path} -p ~/.ssh",
+            "#{dimg.project.mkdir_bin} -p ~/.ssh",
             "echo \"Host *\" >> ~/.ssh/config",
             "echo \"    StrictHostKeyChecking no\" >> ~/.ssh/config",
             *berksfile
               .local_cookbooks
               .values
               .map {|cookbook|
-                ["#{dimg.project.rsync_path} --archive",
+                ["#{dimg.project.rsync_bin} --archive",
                  #*cookbook[:chefignore].map {|path| "--exclude #{path}"}, # FIXME
                  "--relative #{cookbook[:path]} /tmp/local_cookbooks",
                 ].join(' ')
@@ -287,13 +287,13 @@ module Dapp
             *before_vendor_commands,
             '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
             *after_vendor_commands,
-            ["#{dimg.project.find_path} /tmp/cookbooks -type d -exec #{dimg.project.bash_path} -ec '",
-             "#{dimg.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{dimg.project.stat_path} -c %a {}) -d ",
-             "#{dest_path}/$(echo {} | #{dimg.project.sed_path} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
-            ["#{dimg.project.find_path} /tmp/cookbooks -type f -exec #{dimg.project.bash_path} -ec '",
-             "#{dimg.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode $(#{dimg.project.stat_path} -c %a {}) {} ",
-             "#{dest_path}/$(echo {} | #{dimg.project.sed_path} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
-            "#{dimg.project.install_path} -o #{Process.uid} -g #{Process.gid} --mode 0644 <(#{dimg.project.date_path} +%s.%N) #{dest_path.join('.created_at')}"
+            ["#{dimg.project.find_bin} /tmp/cookbooks -type d -exec #{dimg.project.bash_bin} -ec '",
+             "#{dimg.project.install_bin} -o #{Process.uid} -g #{Process.gid} --mode $(#{dimg.project.stat_bin} -c %a {}) -d ",
+             "#{dest_path}/$(echo {} | #{dimg.project.sed_bin} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
+            ["#{dimg.project.find_bin} /tmp/cookbooks -type f -exec #{dimg.project.bash_bin} -ec '",
+             "#{dimg.project.install_bin} -o #{Process.uid} -g #{Process.gid} --mode $(#{dimg.project.stat_bin} -c %a {}) {} ",
+             "#{dest_path}/$(echo {} | #{dimg.project.sed_bin} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
+            "#{dimg.project.install_bin} -o #{Process.uid} -g #{Process.gid} --mode 0644 <(#{dimg.project.date_bin} +%s.%N) #{dest_path.join('.created_at')}"
           ]
 
           dimg.project.shellout!(
@@ -307,7 +307,7 @@ module Dapp
              "--volume #{dest_path.tap(&:mkpath)}:#{dest_path}",
              ('--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent' if dimg.project.ssh_auth_sock),
              ('--env DAPP_CHEF_COOKBOOKS_VENDORING=1' if chef_cookbooks_stage),
-             "dappdeps/berksdeps:0.1.0 #{dimg.project.bash_path} -ec '#{dimg.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
+             "dappdeps/berksdeps:0.1.0 #{dimg.project.bash_bin} -ec '#{dimg.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
             log_verbose: dimg.project.log_verbose?
           )
         end
