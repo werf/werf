@@ -354,7 +354,8 @@ module Dapp
           cookbook_name = File.basename cookbook_path
           is_project = (cookbook_name == project_name)
           is_mdapp = cookbook_name.start_with? 'mdapp-'
-          mdapp_enabled = is_mdapp && enabled_modules.include?(cookbook_name)
+          mdapp_name = (is_mdapp ? cookbook_name.split('mdapp-')[1] : nil)
+          mdapp_enabled = is_mdapp && enabled_modules.include?(mdapp_name)
 
           paths = if is_project
                     common_dapp_paths = select_existing_paths.call(cookbook_path, [
@@ -449,7 +450,8 @@ module Dapp
             "#{cookbook}::#{entrypoint}"
           end
 
-          enabled_modules.map do |cookbook|
+          enabled_modules.map do |mod|
+            cookbook = "mdapp-#{mod}"
             if does_entry_exist[cookbook, stage]
               [cookbook, stage]
             else
