@@ -12,11 +12,11 @@ module Dapp
         end
 
         def install_depends_on(*args)
-          @_install_dependencies.concat(args)
+          _install_dependencies.concat(args)
         end
 
         def setup_depends_on(*args)
-          @_setup_dependencies.concat(args)
+          _setup_dependencies.concat(args)
         end
 
         def chef(&blk)
