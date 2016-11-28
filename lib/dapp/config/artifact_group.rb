@@ -12,11 +12,11 @@ module Dapp
       end
 
       def _shell(&blk)
-        @_shell ||= Directive::Shell::Artifact.new(&blk)
+        @_shell ||= Directive::Shell::Artifact.new(project: project, &blk)
       end
 
       def _docker(&blk)
-        @_docker ||= Directive::Docker::Artifact.new(&blk)
+        @_docker ||= Directive::Docker::Artifact.new(project: project, &blk)
       end
 
       undef :artifact
@@ -32,7 +32,7 @@ module Dapp
       def export(*args, &blk)
         @_export.concat begin
                           artifact_config = pass_to_default(ArtifactDimg.new("artifact-#{SecureRandom.hex(2)}", project: project))
-                          artifact = Directive::Artifact.new(config: artifact_config)
+                          artifact = Directive::Artifact.new(project: project, config: artifact_config)
                           artifact.send(:export, *args, &blk)
                           artifact._export
                         end
@@ -46,7 +46,7 @@ module Dapp
 
       def pass_to_default(obj)
         super(obj).tap do |artifact_dimg|
-          artifact_dimg.instance_variable_set(:@_artifact_dependencies, marshal_dup(_artifact_dependencies))
+          artifact_dimg.instance_variable_set(:@_artifact_dependencies, _artifact_dependencies.dup)
         end
       end
     end

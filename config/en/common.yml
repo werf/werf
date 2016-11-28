@@ -8,6 +8,8 @@ en:
         difference: "difference: %{value} MB"
       commands: "commands:"
       instructions: "instructions:"
+    container:
+      launched_command: "Launched command: '%{command}'"
     process:
       artifact_copy: "copying artifact '%{name}'"
       artifact_building: "building artifact '%{name}'"
@@ -50,6 +52,7 @@ en:
       another_image_already_tagged: 'WARNING: image with other id already exist.'
       tag_ignored: "WARNING: tag '%{tag}' ignored."
       dimg_not_found_in_registry: "WARNING: Dimg not found in registry."
+      stage_artifact_rewritten: "WARNING: Artifact stage rewritten from %{conflict_stage} to %{stage}."
     group:
       install_group: 'Install group'
       setup_group: 'Setup group'

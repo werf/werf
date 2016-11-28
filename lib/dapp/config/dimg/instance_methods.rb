@@ -12,11 +12,11 @@ module Dapp
         end
 
         def install_depends_on(*args)
-          @_install_dependencies.concat(args)
+          _install_dependencies.concat(args)
         end
 
         def setup_depends_on(*args)
-          @_setup_dependencies.concat(args)
+          _setup_dependencies.concat(args)
         end
 
         def chef(&blk)
@@ -47,7 +47,7 @@ module Dapp
         end
 
         def mount(to, &blk)
-          _mount << Directive::Mount.new(to, &blk)
+          _mount << Directive::Mount.new(to, project: project, &blk)
         end
 
         def _dev_mode
@@ -59,15 +59,15 @@ module Dapp
         end
 
         def _chef
-          @_chef ||= Directive::Chef.new
+          @_chef ||= Directive::Chef.new(project: project)
         end
 
         def _shell
-          @_shell ||= Directive::Shell::Dimg.new
+          @_shell ||= Directive::Shell::Dimg.new(project: project)
         end
 
         def _docker
-          @_docker ||= Directive::Docker::Dimg.new
+          @_docker ||= Directive::Docker::Dimg.new(project: project)
         end
 
         def _mount
@@ -75,7 +75,7 @@ module Dapp
         end
 
         def _git_artifact
-          @_git_artifact ||= GitArtifact.new
+          @_git_artifact ||= GitArtifact.new(project: project)
         end
 
         [:build_dir, :tmp_dir].each do |mount_type|
@@ -114,17 +114,19 @@ module Dapp
         class GitArtifact < Directive::Base
           attr_reader :_local, :_remote
 
-          def initialize
+          def initialize(**kwargs, &blk)
             @_local = []
             @_remote = []
+
+            super(**kwargs, &blk)
           end
 
           def local(_, &blk)
-            @_local << Directive::GitArtifactLocal.new(&blk)
+            @_local << Directive::GitArtifactLocal.new(project: project, &blk)
           end
 
           def remote(repo_url, &blk)
-            @_remote << Directive::GitArtifactRemote.new(repo_url, &blk)
+            @_remote << Directive::GitArtifactRemote.new(repo_url, project: project, &blk)
           end
 
           def _local

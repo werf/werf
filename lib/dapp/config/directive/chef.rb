@@ -5,11 +5,11 @@ module Dapp
       class Chef < Base
         attr_accessor :_dimod, :_recipe, :_attributes
 
-        def initialize
+        def initialize(**kwargs, &blk)
           @_dimod = []
           @_recipe = []
 
-          super
+          super(**kwargs, &blk)
         end
 
         def dimod(*args)

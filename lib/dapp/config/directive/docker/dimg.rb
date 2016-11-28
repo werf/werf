@@ -6,7 +6,7 @@ module Dapp
         class Dimg < Base
           attr_reader :_volume, :_expose, :_env, :_label, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint
 
-          def initialize
+          def initialize(**kwargs, &blk)
             @_volume = []
             @_expose = []
             @_env = {}
@@ -14,7 +14,7 @@ module Dapp
             @_cmd = []
             @_onbuild = []
 
-            super
+            super(**kwargs, &blk)
           end
 
           def volume(*args)
@@ -70,7 +70,7 @@ module Dapp
           protected
 
           def clone_to_artifact
-            Artifact.new.tap do |docker|
+            Artifact.new(project: project).tap do |docker|
               docker.instance_variable_set('@_from', @_from)
             end
           end
