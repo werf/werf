@@ -7,7 +7,7 @@ module Dapp
       module Spush
         def spush(repo)
           validate_repo_name(repo)
-          raise Error::Project, code: :spush_command_unexpected_dimgs_number unless build_configs.one?
+          one_dimg!
           Dimg.new(config: build_configs.first, project: self, ignore_git_fetch: true, should_be_built: true).tap do |dimg|
             dimg.export!(repo, format: '%{repo}:%{tag}')
           end

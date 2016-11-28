@@ -1,6 +1,6 @@
 en:
   net_status:
-    missing_translation: "Missing translation for code: '%{code}'!"
+    missing_translation: "Missing translation for code: `%{code}`!"
     shellout:
       shell_command_failed: ">>> START STREAM\n%{stream}\n>>> END STREAM"
     dimg:
@@ -8,9 +8,9 @@ en:
       dimg_not_run: "Dimg run failed!"
       git_branch_without_name: "Dimg has specific revision that isn't associated with a branch name!"
       ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
-      chef_stage_checksum_not_calculated: "Chef stage '%{stage}' checksum is not calculated yet, run build first"
+      chef_stage_checksum_not_calculated: "Chef stage `%{stage}` checksum is not calculated yet, run build first"
     dappfile:
-      incorrect: "Dappfile with '%{error}':\n%{message}"
+      incorrect: "Dappfile with `%{error}`:\n%{message}"
     build:
       from_image_required: 'Missing from_image!'
       image_already_untagged: "Image `%{name}` already untagged!"
@@ -18,51 +18,49 @@ en:
       built_id_not_defined: '`from.built_id` not defined!'
       from_image_not_found: 'Image `%{name}` not found!'
     project:
-      spush_command_unexpected_dimgs_number: "Command 'spush' can process only one dimg!"
-      command_unexpected_dimgs_number: "Command can process only one dimg!"
-      no_such_dimg: "No such dimg: '%{dimgs_patterns}'!"
-      tag_command_unexpected_dimgs_number: "Command 'tag' can process only one dimg!"
-      tag_command_incorrect_tag: "Incorrect tag ('%{name}') given!"
-      repo_name_incorrect: "Incorrect repo ('%{name}') given!"
+      command_unexpected_dimgs_number: "Command can process only one dimg!\nAmbiguous dimg pattern: `%{dimgs_names}`!"
+      no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
+      tag_command_incorrect_tag: "Incorrect tag (`%{name}`) given!"
+      repo_name_incorrect: "Incorrect repo (`%{name}`) given!"
       dappfile_not_found: "Dappfile not found!"
       cannot_run_ssh_agent: "Cannot run ssh-agent"
-      ssh_key_not_found: "Ssh key '%{path}' not exist!"
-      mrproper_required_option: "Expected command option '--improper-dev-mode-cache', '--improper-cache-version-stages' or '--all'!"
+      ssh_key_not_found: "Ssh key `%{path}` not exist!"
+      mrproper_required_option: "Expected command option `--improper-dev-mode-cache`, `--improper-cache-version-stages` or `--all`!"
     config:
       dimg_name_required: 'Dimg name required!'
-      dimg_name_incorrect: "Dimg has incorrect name '%{name}': doesn't match regex '%{reg}'!"
-      export_to_required: "Export: 'to' directive required!"
+      dimg_name_incorrect: "Dimg has incorrect name `%{name}`: doesn't match regex `%{reg}`!"
+      export_to_required: "Export: `to` directive required!"
       export_cwd_absolute_path_required: "Export: given cwd path must be absolute!"
-      export_to_absolute_path_required: "Export: given 'to' path must be absolute!"
-      export_include_paths_relative_path_required: "Export: given 'include_paths' path must be relative!"
-      export_exclude_paths_relative_path_required: "Export: given 'exclude_paths' path must be relative!"
-      mount_from_absolute_path_required: "Mount: given 'from' path must be absolute!"
-      mount_from_type_required: "Mount: 'from' directive expect 'build_dir' or 'tmp_dir' type!"
+      export_to_absolute_path_required: "Export: given `to` path must be absolute!"
+      export_include_paths_relative_path_required: "Export: given `include_paths` path must be relative!"
+      export_exclude_paths_relative_path_required: "Export: given `exclude_paths` path must be relative!"
+      mount_from_absolute_path_required: "Mount: given `from` path must be absolute!"
+      mount_from_type_required: "Mount: `from` directive expect `build_dir` or `tmp_dir` type!"
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
       docker_from_incorrect: "`docker.from` has incorrect value `%{name}`!"
-      stage_artifact_not_associated: "Artifact not associated with any stage: expected 'before' or 'after' attribute!"
-      stage_artifact_double_associate: "Cannot use %{stage} stage for artifact, already used in %{conflict_stage} stage!"
-      stage_artifact_not_supported_associated_stage: "Bad artifact stage %{stage}!"
+      stage_artifact_not_associated: "Artifact not associated with any stage: expected `before` or `after` attribute!"
+      stage_artifact_double_associate: "Cannot use `%{stage}` stage for artifact, already used in `%{conflict_stage}` stage!"
+      stage_artifact_not_supported_associated_stage: "Bad artifact stage `%{stage}`!"
       artifact_conflict: "Conflict between artifacts paths!"
-      scratch_unsupported_directive: "Scratch dimg has unsupported directive '%{directive}'!"
+      scratch_unsupported_directive: "Scratch dimg has unsupported directive `%{directive}`!"
       scratch_artifact_required: "Scratch dimg without artifacts!"
-      scratch_artifact_associated: "Scratch artifact cannot be associated: not expected 'before'/'after' attribute!"
-      scratch_artifact_docker_from: "Scratch artifact must have directive 'docker.from'!"
+      scratch_artifact_associated: "Scratch artifact cannot be associated: not expected `before`/`after` attribute!"
+      scratch_artifact_docker_from: "Scratch artifact must have directive `docker.from`!"
     chef:
-      stage_path_overlap: "Cannot install '%{cookbook}' cookbook's path %{from} into %{to}: already exists"
-      mdapp_dependency_in_metadata_forbidden: "Using mdapp as dependency in metadata.rb forbidden: detected '%{dependency}'"
+      stage_path_overlap: "Cannot install `%{cookbook}` cookbook's path %{from} into %{to}: already exists"
+      mdapp_dependency_in_metadata_forbidden: "Using mdapp as dependency in metadata.rb forbidden: detected `%{dependency}`"
       cookbook_path_not_found: "Dapp cookbook directory not found at %{path}"
       cookbook_berksfile_not_found: "Dapp cookbook Berksfile not found at %{path}"
       cookbook_metadata_not_found: "Dapp cookbook metadata.rb file not found at %{path}"
-      cookbook_not_specified_in_berksfile: "Dapp cookbook '%{name}' not specified in Berksfile at %{path}"
+      cookbook_not_specified_in_berksfile: "Dapp cookbook `%{name}` not specified in Berksfile at %{path}"
     registry:
       incorrect_repo: 'Incorrect repository!'
       no_such_dimg: 'No such dimg in registry!'
       authenticate_type_not_supported: 'Registry authenticate type not supported!'
-      page_not_found: "Page '%{url}' not found!"
+      page_not_found: "Page `%{url}` not found!"
       user_not_authorized: 'User not authorized!'
       response_with_error_status: 'Response with error status!'
-      berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook '%{cookbook}', path: '%{path}')"
+      berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook `%{cookbook}`, path: `%{path}`)"
     lock:
-      timeout: "Could not obtain lock for '%{name}' within %{timeout} seconds"
+      timeout: "Could not obtain lock for `%{name}` within %{timeout} seconds"
