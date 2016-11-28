@@ -14,14 +14,14 @@ Available subcommands: (for details, dapp SUB-COMMAND --help)
 
 dapp build [options] [DIMGS PATTERN ...]
 dapp bp [options] [DIMGS PATTERN ...] REPO
-dapp push [options] [DIMGS PATTERN] REPO
+dapp push [options] [DIMGS PATTERN ...] REPO
 dapp spush [options] [DIMG PATTERN ...] REPO
 dapp tag [options] [DIMG PATTERN ...] TAG
 dapp list [options] [DIMGS PATTERN ...]
-dapp run [options] [DIMG PATTERN] [DOCKER ARGS]
+dapp run [options] [DIMG PATTERN ...] [DOCKER ARGS]
 dapp cleanup [options] [DIMGS PATTERN ...]
 dapp mrproper [options]
-dapp stage image [options] [DIMG PATTERN]
+dapp stage image [options] [DIMG PATTERN ...]
 dapp stages
 
 Options:

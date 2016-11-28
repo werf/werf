@@ -6,7 +6,7 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp run [options] [DIMG PATTERN] [DOCKER ARGS]
+  dapp run [options] [DIMG PATTERN ...] [DOCKER ARGS]
 
     DIMG PATTERN                Dapp image to process [default: *].
     DOCKER ARGS                 Docker run options and command separated by '--'

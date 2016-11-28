@@ -66,6 +66,10 @@ module Dapp
         def log_proper_cache(&blk)
           log_step_with_indent(:'proper cache', &blk)
         end
+
+        def one_dimg!
+          raise Error::Project, code: :command_unexpected_dimgs_number, data: { dimgs_names: build_configs.map(&:_name).join(' ') } unless build_configs.one?
+        end
       end
     end
   end # Project
