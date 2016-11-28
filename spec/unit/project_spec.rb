@@ -33,7 +33,7 @@ describe Dapp::Project do
   end
 
   it 'spush:spush_command_unexpected_dimgs_number', :push do
-    expect_exception_code(:spush_command_unexpected_dimgs_number) { stubbed_project.spush('name') }
+    expect_exception_code(:command_unexpected_dimgs_number) { stubbed_project.spush('name') }
   end
 
   it 'run:command_unexpected_dimgs_number', :push do

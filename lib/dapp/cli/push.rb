@@ -6,9 +6,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp push [options] [DIMG PATTERN] REPO
+  dapp push [options] [DIMGS PATTERN ...] REPO
 
-    DIMG PATTERN                Dapp images to process [default: *].
+    DIMGS PATTERN               Dapp images to process [default: *].
 
 Options:
 BANNER
