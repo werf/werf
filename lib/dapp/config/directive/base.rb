@@ -3,11 +3,15 @@ module Dapp
     module Directive
       # Base
       class Base < Config::Base
-        def initialize(&blk)
+        def initialize(project:, &blk)
+          @project = project
+
           instance_eval(&blk) unless blk.nil?
         end
 
         protected
+
+        attr_reader :project
 
         def clone
           marshal_dup(self)

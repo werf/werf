@@ -34,9 +34,10 @@ module Dapp
             attr_reader :_version
             attr_reader :_run
 
-            def initialize
+            def initialize(**kwargs, &blk)
               @_run = []
-              super
+
+              super(**kwargs, &blk)
             end
 
             def run(*args)

@@ -6,10 +6,11 @@ module Dapp
         attr_reader :_from, :_to
         attr_reader :_type
 
-        def initialize(to)
+        def initialize(to, **kwargs, &blk)
           raise Error::Config, code: :mount_to_absolute_path_required unless Pathname((to = to.to_s)).absolute?
           @_to = to
-          super()
+
+          super(**kwargs, &blk)
         end
 
         protected

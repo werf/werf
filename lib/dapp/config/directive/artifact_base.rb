@@ -5,9 +5,10 @@ module Dapp
       class ArtifactBase < Base
         attr_reader :_owner, :_group
 
-        def initialize
+        def initialize(**kwargs, &blk)
           @_export = []
-          super
+
+          super(**kwargs, &blk)
         end
 
         def _export
@@ -23,13 +24,13 @@ module Dapp
         class Export < Directive::Base
           attr_accessor :_cwd, :_to, :_include_paths, :_exclude_paths, :_owner, :_group
 
-          def initialize(cwd = '/')
+          def initialize(cwd = '/', **kwargs, &blk)
             raise Error::Config, code: :export_cwd_absolute_path_required unless Pathname(cwd).absolute?
             @_cwd = cwd
             @_include_paths ||= []
             @_exclude_paths ||= []
 
-            super()
+            super(**kwargs, &blk)
           end
 
           def _artifact_options
@@ -84,7 +85,7 @@ module Dapp
         end
 
         def export(absolute_dir_path = '/', &blk)
-          @_export << self.class.const_get('Export').new(absolute_dir_path, &blk)
+          @_export << self.class.const_get('Export').new(absolute_dir_path, project: project, &blk)
         end
       end
     end
