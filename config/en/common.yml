@@ -8,6 +8,8 @@ en:
         difference: "difference: %{value} MB"
       commands: "commands:"
       instructions: "instructions:"
+    container:
+      launched_command: "Launched command: '%{command}'"
     process:
       artifact_copy: "copying artifact '%{name}'"
       artifact_building: "building artifact '%{name}'"
