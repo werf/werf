@@ -70,7 +70,7 @@ module Dapp
           protected
 
           def clone_to_artifact
-            Artifact.new.tap do |docker|
+            Artifact.new(project: project).tap do |docker|
               docker.instance_variable_set('@_from', @_from)
             end
           end

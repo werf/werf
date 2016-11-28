@@ -13,7 +13,7 @@ module Dapp
 
           def self.stage_command_generator(stage)
             define_method stage do |&blk|
-              (variable = instance_variable_get("@_#{stage}") || StageCommand.new).instance_eval(&blk)
+              (variable = instance_variable_get("@_#{stage}") || StageCommand.new(project: project)).instance_eval(&blk)
               instance_variable_set("@_#{stage}", variable)
             end
 
@@ -56,11 +56,7 @@ module Dapp
           end
 
           def clone_to_artifact
-            Artifact.new.tap do |shell|
-              instance_variables.each do |variable|
-                shell.instance_variable_set(variable, instance_variable_get(marshal_dup(variable)))
-              end
-            end
+            _clone_to Artifact.new(project: project)
           end
         end
       end

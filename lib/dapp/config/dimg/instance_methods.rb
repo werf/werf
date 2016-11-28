@@ -115,10 +115,10 @@ module Dapp
           attr_reader :_local, :_remote
 
           def initialize(**kwargs, &blk)
-            super(**kwargs, &blk)
-
             @_local = []
             @_remote = []
+
+            super(**kwargs, &blk)
           end
 
           def local(_, &blk)

@@ -46,7 +46,7 @@ module Dapp
 
       def pass_to_default(obj)
         super(obj).tap do |artifact_dimg|
-          artifact_dimg.instance_variable_set(:@_artifact_dependencies, marshal_dup(_artifact_dependencies))
+          artifact_dimg.instance_variable_set(:@_artifact_dependencies, _artifact_dependencies.dup)
         end
       end
     end
