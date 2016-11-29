@@ -238,5 +238,5 @@ dapp tag [options] [DIMG] TAG
 
 ##### Протегировать собранный dimg тегом test:111.
 ```bash
-$ dapp tag test:111 --verbose
+$ dapp tag test:111
 ```
