@@ -110,7 +110,7 @@ module Dapp
       end
 
       def service_options
-        { entrypoint: project.bash_path, name: container_name }
+        { entrypoint: project.bash_bin, name: container_name }
       end
 
       def prepared_change
@@ -126,7 +126,7 @@ module Dapp
       end
 
       def prepared_commands
-        return [project.true_path] if bash_commands.empty?
+        return [project.true_bin] if bash_commands.empty?
         bash_commands
       end
     end

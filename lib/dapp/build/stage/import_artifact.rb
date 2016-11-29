@@ -57,7 +57,7 @@ module Dapp
                           end
           include_paths.map! { |path| path[1..-1] } # relative path
 
-          command = "#{sudo} #{dimg.project.tar_path} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
+          command = "#{sudo} #{dimg.project.tar_bin} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
           run_artifact_dimg(artifact_dimg, artifact_name, command)
 
           image.add_archive archive_path

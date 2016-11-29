@@ -12,18 +12,8 @@ module Dapp
       end
 
       def dappfile_path
-        raise Error::Project, code: :dappfile_not_found unless (dappfile_path = search_up('Dappfile'))
+        raise Error::Project, code: :dappfile_not_found unless (dappfile_path = search_file_upward('Dappfile'))
         dappfile_path
-      end
-
-      def search_up(file)
-        cdir = Pathname(work_dir)
-        loop do
-          if (path = cdir.join(file)).exist?
-            return path.to_s
-          end
-          break if (cdir = cdir.parent).root?
-        end
       end
 
       def work_dir

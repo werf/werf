@@ -18,10 +18,10 @@ en:
       berks_vendor: 'vendoring cookbooks'
       chef_cookbooks_stage_berks_vendor: 'vendoring cookbooks for chef cookbooks stage'
       waiting_resouce_lock: "waiting for locked resource '%{name}'"
-      gitartifact_container_loading: 'loading dappdeps/gitartifact container'
-      base_container_loading: 'loading dappdeps/base container'
-      chefdk_container_loading: 'loading dappdeps/chefdk container'
-      system_shellout_container_loading: 'loading system shellout container'
+      gitartifact_container_creating: 'creating dappdeps/gitartifact container'
+      base_container_creating: 'creating dappdeps/base container'
+      chefdk_container_creating: 'creating dappdeps/chefdk container'
+      system_shellout_container_starting: 'starting system-shellout container'
       image_pull: "pulling image '%{name}'"
       image_push: "pushing image '%{name}'"
     status:

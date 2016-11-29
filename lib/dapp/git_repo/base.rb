@@ -44,7 +44,7 @@ module Dapp
       protected
 
       def git(command, **kwargs)
-        dimg.project.system_shellout! "#{dimg.project.git_path} #{command}", **kwargs
+        dimg.system_shellout! "#{dimg.project.git_bin} #{command}", **kwargs
       end
     end
   end

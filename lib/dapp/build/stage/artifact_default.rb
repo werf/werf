@@ -39,18 +39,18 @@ module Dapp
           copy_files = proc do |from_, cwd_, path_ = ''|
             cwd_ = File.expand_path(File.join('/', cwd_))
             "if [[ -d #{File.join(from_, cwd_, path_)} ]]; then " \
-            "#{dimg.project.find_path} #{File.join(from_, cwd_, path_)} #{excludes} -type f -exec " \
-            "#{dimg.project.bash_path} -ec '#{dimg.project.install_path} -D #{credentials} {} " \
+            "#{dimg.project.find_bin} #{File.join(from_, cwd_, path_)} #{excludes} -type f -exec " \
+            "#{dimg.project.bash_bin} -ec '#{dimg.project.install_bin} -D #{credentials} {} " \
             "#{File.join(to, '$(echo {} | ' \
-            "#{dimg.project.sed_path} -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\; ;" \
+            "#{dimg.project.sed_bin} -e \"s/#{File.join(from_, cwd_).gsub('/', '\\/')}//g\")")}' \\; ;" \
             'fi'
           end
 
           commands = []
-          commands << [dimg.project.install_path, credentials, '-d', to].join(' ')
+          commands << [dimg.project.install_bin, credentials, '-d', to].join(' ')
           commands.concat(include_paths.empty? ? Array(copy_files.call(from, cwd)) : include_paths.map { |path| copy_files.call(from, cwd, path) })
-          commands << "#{dimg.project.find_path} #{to} -type d -exec " \
-                      "#{dimg.project.bash_path} -ec '#{dimg.project.install_path} -d #{credentials} {}' \\;"
+          commands << "#{dimg.project.find_bin} #{to} -type d -exec " \
+                      "#{dimg.project.bash_bin} -ec '#{dimg.project.install_bin} -d #{credentials} {}' \\;"
           commands.join(' && ')
         end
         # rubocop:enable Metrics/ParameterLists, Metrics/AbcSize, Metrics/MethodLength

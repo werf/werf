@@ -51,15 +51,32 @@ module Dapp
 
     def name
       @name ||= begin
-        if File.exist? File.join(path, '.git')
-          begin
-            system_shellout("#{git_path} -C #{path} config --get remote.origin.url").stdout.strip.split('/').last[/.*(?=.git)/]
-          rescue
-            File.basename(path)
-          end
+        if git_url
+          repo_name = git_url.split('/').last
+          repo_name = repo_name[/.*(?=\.git)/] if repo_name.end_with? '.git'
+          repo_name
+        elsif git_path
+          File.basename(File.dirname(git_path))
         else
           File.basename(path)
         end
+      end
+    end
+
+    def git_url
+      return unless git_config
+      (git_config['remote "origin"'] || {})['url']
+    end
+
+    def git_config
+      @git_config ||= begin
+        IniFile.load(File.join(git_path, 'config')) if git_path
+      end
+    end
+
+    def git_path
+      defined?(@git_path) ? @git_path : begin
+        @git_path = search_file_upward('.git')
       end
     end
 

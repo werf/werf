@@ -26,9 +26,9 @@ module Dapp
     def apply_archive_command(stage)
       credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
-      ["#{repo.dimg.project.install_path} #{credentials.join(' ')} -d #{to}",
-       ["#{repo.dimg.project.git_path} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{include_paths.join(' ')}",
-        "#{sudo}#{repo.dimg.project.tar_path} -x -C #{to} #{archive_command_excludes.join(' ')}"].join(' | ')]
+      ["#{repo.dimg.project.install_bin} #{credentials.join(' ')} -d #{to}",
+       ["#{repo.dimg.project.git_bin} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{include_paths.join(' ')}",
+        "#{sudo}#{repo.dimg.project.tar_bin} -x -C #{to} #{archive_command_excludes.join(' ')}"].join(' | ')]
     end
 
     def apply_patch_command(stage)
@@ -36,8 +36,8 @@ module Dapp
       prev_commit = stage.prev_g_a_stage.layer_commit(self)
 
       if prev_commit != current_commit || any_changes?(prev_commit, current_commit)
-        [["#{repo.dimg.project.git_path} --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
-          "#{sudo}#{repo.dimg.project.git_path} apply --whitespace=nowarn --directory=#{to} #{patch_command_excludes.join(' ')} --unsafe-paths"].join(' | ')]
+        [["#{repo.dimg.project.git_bin} --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
+          "#{sudo}#{repo.dimg.project.git_bin} apply --whitespace=nowarn --directory=#{to} #{patch_command_excludes.join(' ')} --unsafe-paths"].join(' | ')]
       else
         []
       end

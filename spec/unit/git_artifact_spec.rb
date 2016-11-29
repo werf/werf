@@ -37,10 +37,10 @@ describe Dapp::GitArtifact do
 
   def project
     super do
-      allow_any_instance_of(Dapp::Project).to receive(:git_path) { 'git' }
-      allow_any_instance_of(Dapp::Project).to receive(:tar_path) { 'tar' }
-      allow_any_instance_of(Dapp::Project).to receive(:sudo_path) { 'sudo' }
-      allow_any_instance_of(Dapp::Project).to receive(:install_path) { 'install' }
+      allow_any_instance_of(Dapp::Project).to receive(:git_bin) { 'git' }
+      allow_any_instance_of(Dapp::Project).to receive(:tar_bin) { 'tar' }
+      allow_any_instance_of(Dapp::Project).to receive(:sudo_bin) { 'sudo' }
+      allow_any_instance_of(Dapp::Project).to receive(:install_bin) { 'install' }
     end
   end
 
