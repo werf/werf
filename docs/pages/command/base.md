@@ -6,10 +6,10 @@ folder: command
 ---
 
 ### dapp build
-Собрать приложения, удовлетворяющие хотя бы одному из **APPS PATTERN**-ов (по умолчанию *).
+Собрать dimg-ы, удовлетворяющие хотя бы одному из **DIMG**-ов (по умолчанию *).
 
 ```
-dapp build [options] [APPS PATTERN ...]
+dapp build [options] [DIMG ...]
 ```
 
 #### Опции среды сборки
@@ -62,7 +62,7 @@ dapp build [options] [APPS PATTERN ...]
 $ dapp build
 ```
 
-##### Сборка приложений из соседней директории
+##### Сборка dimg-ей из соседней директории
 ```bash
 $ dapp build --dir ../project
 ```
@@ -78,10 +78,10 @@ $ dapp build --introspect-error
 ```
 
 ### dapp push
-Выкатить собранное приложение в репозиторий, в следующем формате **REPO**:**ИМЯ ПРИЛОЖЕНИЯ**-**TAG**.
+Выкатить собранные dimg-ы в репозиторий, в следующем формате **REPO**:**ИМЯ DIMG**-**TAG**. В случае, если **ИМЯ DIMG** отсутствует, формат следующий **REPO**:**TAG**.
 
 ```
-dapp push [options] [APPS PATTERN ...] REPO
+dapp push [options] [DIMG ...] REPO
 ```
 
 #### --with-stages
@@ -91,7 +91,7 @@ dapp push [options] [APPS PATTERN ...] REPO
 Позволяет перезаписывать существующие образы.
 
 #### Опции тегирования
-Отвечают за тег(и), с которыми выкатывается приложение.
+Отвечают за тег(и), с которыми выкатывается собранные dimg-ы.
 
 Могут быть использованы совместно и по несколько раз.
 
@@ -114,7 +114,7 @@ dapp push [options] [APPS PATTERN ...] REPO
 
 #### Примеры
 
-##### Выкатить все приложения в репозиторий localhost:5000/test и тегом latest
+##### Выкатить все dimg-ы в репозиторий localhost:5000/test и тегом latest
 ```bash
 $ dapp push localhost:5000/test
 ```
@@ -131,22 +131,22 @@ frontend
 ```
 
 ### dapp spush
-Выкатить собранное приложение в репозиторий, в следующем формате **REPO**:**TAG**.
+Выкатить собранный dimg в репозиторий, в следующем формате **REPO**:**TAG**.
 
 ```
-dapp spush [options] [APP PATTERN] REPO
+dapp spush [options] [DIMG] REPO
 ```
 
 Опции такие же как у **dapp push**.
 
 #### Примеры
 
-##### Выкатить приложение **app** в репозиторий test, именем myapp и тегом latest
+##### Выкатить собранный dimg **app** в репозиторий test, именем myapp и тегом latest
 ```bash
 $ dapp spush app localhost:5000/test
 ```
 
-##### Выкатить приложение с произвольными тегами
+##### Выкатить собранный dimg с произвольными тегами
 ```bash
 $ dapp spush app localhost:5000/test --tag 1 --tag test
 ```
@@ -162,12 +162,12 @@ localhost:5000/test:master
 Выкатить [кэш собранных приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект) в репозиторий.
 
 ```
-dapp stages push [options] [APP PATTERN] REPO
+dapp stages push [options] [DIMG ...] REPO
 ```
 
 #### Примеры
 
-##### Выкатить кэш приложений проекта в репозиторий localhost:5000/test
+##### Выкатить кэш собранных dimg-ей проекта в репозиторий localhost:5000/test
 ```bash
 $ dapp stages push localhost:5000/test
 ```
@@ -193,10 +193,10 @@ frontend
 ### dapp stages pull
 Импортировать необходимый [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект), если он присутствует в репозитории **REPO**.
 
-Если не указана опция **--all**, импорт будет выполнен до первого найденного кэша стейджа для каждого приложения.
+Если не указана опция **--all**, импорт будет выполнен до первого найденного кэша стейджа для каждого dimg-a.
 
 ```
-dapp stages pull [options] [APP PATTERN] REPO
+dapp stages pull [options] [DIMG ...] REPO
 ```
 
 #### --all
@@ -204,7 +204,7 @@ dapp stages pull [options] [APP PATTERN] REPO
 
 #### Примеры
 
-##### Импортировать кэш приложений проекта из репозитория localhost:5000/test
+##### Импортировать кэш dimg-ей проекта из репозитория localhost:5000/test
 ```bash
 $ dapp stages pull localhost:5000/test
 ```
@@ -225,4 +225,18 @@ frontend
   localhost:5000/test:dimgstage-07fe13aec1e9ce0fe2d2890af4e4f81aaa984c89a2b91fbd0e164468a1394d46
   localhost:5000/test:dimgstage-ba95ec8a00638ddac413a13e303715dd2c93b80295c832af440c04a46f3e8555
   localhost:5000/test:dimgstage-02b636d9316012880e40da44ee5da3f1067cedd66caa3bf89572716cd1f894da
+```
+
+### dapp tag
+Протегировать собранный dimg тегом **TAG**.
+
+```
+dapp tag [options] [DIMG] TAG
+```
+
+#### Примеры
+
+##### Протегировать собранный dimg тегом test:111.
+```bash
+$ dapp tag test:111 --verbose
 ```

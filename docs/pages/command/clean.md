@@ -9,7 +9,7 @@ folder: command
 Удалить неактуальный локальный [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект), опираясь на приложения в репозитории **REPO**.
 
 ```
-dapp stages cleanup local [options] [APPS PATTERN ...] REPO
+dapp stages cleanup local [options] [DIMG ...] REPO
 ```
 
 #### --improper-cache-version
@@ -26,7 +26,7 @@ $ dapp stages cleanup local localhost:5000/test --improper-cache-version
 Удалить неиспользуемый [кэш приложений](definitions.html#кэш-приложения) в репозитории **REPO**.
 
 ```
-dapp stages cleanup repo [options] [APPS PATTERN ...] REPO
+dapp stages cleanup repo [options] [DIMG ...] REPO
 ```
 
 #### --improper-cache-version
@@ -43,7 +43,7 @@ $ dapp stages cleanup repo localhost:5000/test
 Удалить [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект).
 
 ```
-dapp stages flush local [options] [APPS PATTERN ...]
+dapp stages flush local [options] [DIMG ...]
 ```
 
 #### Примеры
@@ -57,7 +57,7 @@ $ dapp stages flush local
 Удалить приложения и [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект) в репозитории **REPO**.
 
 ```
-dapp stages flush repo [options] [APPS PATTERN ...] REPO
+dapp stages flush repo [options] [DIMG ...] REPO
 ```
 
 #### Примеры
@@ -71,7 +71,7 @@ $ dapp stages flush repo localhost:5000/test
 Убраться в системе после некорректного завершения работы dapp, удалить нетегированные docker-образы и docker-контейнеры [проекта](definitions.html#проект).
 
 ```
-dapp cleanup [options] [APPS PATTERN ...]
+dapp cleanup [options] [DIMG ...]
 ```
 
 #### Примеры
