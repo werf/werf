@@ -1,5 +1,5 @@
 dimg_group do
-  git :local do
+  git do
     add do
       to '/myapp'
     end
