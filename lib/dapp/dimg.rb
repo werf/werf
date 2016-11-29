@@ -40,7 +40,7 @@ module Dapp
     end
 
     def tag!(tag)
-      project.lock("#{config._basename}.images", readonly: true) do
+      project.lock("#{project.name}.images", readonly: true) do
         dimg_name = config._name
         if project.dry_run?
           project.log_state(dimg_name, state: project.t(code: 'state.tag'), styles: { status: :success })

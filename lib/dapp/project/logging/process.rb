@@ -40,9 +40,9 @@ module Dapp
 
           if log_verbose? && !short
             process ||= t(code: 'status.process.default')
-            log_process_verbose(message, process: process, style: style, status: status, &blk)
+            log_process_verbose(message.to_s, process: process, style: style, status: status, &blk)
           else
-            log_process_short(message, style: style, status: status, &blk)
+            log_process_short(message.to_s, style: style, status: status, &blk)
           end
         end
         # rubocop:enable Metrics/ParameterLists
