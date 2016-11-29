@@ -72,7 +72,8 @@ module Dapp
         raise Error::Build, code: :built_id_not_defined if from.built_id.nil?
         project.shellout!("docker run #{prepared_options} #{from.built_id} -ec '#{prepared_bash_command}'", log_verbose: true)
       rescue Error::Shellout => error
-        project.log_warning(desc: { code: :launched_command, data: { command: prepared_commands.join(' && ') }, context: :container })
+        project.log_info(desc: { code: :launched_command, data: { command: prepared_commands.join(' && ') }, context: :container },
+                         quiet: !project.log_verbose?)
 
         raise unless project.introspect_error? || project.introspect_before_error?
         built_id = project.introspect_error? ? commit! : from.built_id
