@@ -6,17 +6,17 @@ folder: command
 ---
 
 ### dapp list
-Вывести список приложений.
+Вывести список dimg-ей.
 
 ```
-dapp list [options] [APPS PATTERN ...]
+dapp list [options] [DIMG ...]
 ```
 
 ### dapp run
-Запустить собранное приложение с докерными аргументами **DOCKER ARGS**.
+Запустить собранный dimg с докерными аргументами **DOCKER ARGS**.
 
 ```
-dapp run [options] [APPS PATTERN...] [DOCKER ARGS]
+dapp run [options] [DIMG] [DOCKER ARGS]
 ```
 
 #### [DOCKER ARGS]
@@ -26,7 +26,7 @@ dapp run [options] [APPS PATTERN...] [DOCKER ARGS]
 
 #### Примеры
 
-##### Запустить приложение с опциями
+##### Запустить собранный dimg с опциями
 ```bash
 $ dapp run -ti --rm
 ```

@@ -70,6 +70,18 @@ module Dapp
         def one_dimg!
           raise Error::Project, code: :command_unexpected_dimgs_number, data: { dimgs_names: build_configs.map(&:_name).join(' ') } unless build_configs.one?
         end
+
+        def push_format(dimg_name)
+          if dimg_name.nil?
+            spush_format
+          else
+            '%{repo}:%{dimg_name}-%{tag}'
+          end
+        end
+
+        def spush_format
+          '%{repo}:%{tag}'
+        end
       end
     end
   end # Project

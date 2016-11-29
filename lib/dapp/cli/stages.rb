@@ -9,12 +9,12 @@ Version: #{Dapp::VERSION}
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-dapp stages cleanup local [options] [DIMGS PATTERN ...] REPO
-dapp stages cleanup repo [options] [DIMGS PATTERN ...] REPO
-dapp stages flush local [options] [DIMGS PATTERN ...]
-dapp stages flush repo [options] [DIMGS PATTERN ...] REPO
-dapp stages push [options] [DIMGS PATTERN ...] REPO
-dapp stages pull [options] [DIMGS PATTERN ...] REPO
+dapp stages cleanup local [options] [DIMG ...] REPO
+dapp stages cleanup repo [options] [DIMG ...] REPO
+dapp stages flush local [options] [DIMG ...]
+dapp stages flush repo [options] [DIMG ...] REPO
+dapp stages push [options] [DIMG ...] REPO
+dapp stages pull [options] [DIMG ...] REPO
 
 Options:
 BANNER

@@ -7,9 +7,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages pull [options] [DIMGS PATTERN ...] REPO
+  dapp stages pull [options] [DIMG ...] REPO
 
-    DIMGS PATTERN               Dapp images to process [default: *].
+    DIMG                        Dapp image to process [default: *].
 
 Options:
 BANNER

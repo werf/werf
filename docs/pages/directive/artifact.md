@@ -25,12 +25,11 @@ folder: directive
 * branch: определить branch.
 * commit: определить commit.
 
-### git \<type_or_url\>
+### git \[\<url\>\]
 Директива позволяет определить один или несколько git-артефактов.
 
-* Поддерживается два типа git-артефактов, local и remote, которые задаются параметром \<type_or_url\>.
-  * Строка 'local'.
-  * Url адрес удалённого git-репозитория.
+* Поддерживается два типа git-артефактов, local и remote.
+* Необязательный параметр \<url\> соответствует адресу удалённого git-репозитория (remote).
 * Для добавления git-артефакта необходимо использовать поддирективу add.
   * Принимает параметр \<cwd\>.
   * Параметры \<include_paths\>, \<exclude_paths\>, \<owner\>, \<group\>, \<to\> определяются в контексте.
@@ -48,7 +47,7 @@ folder: directive
 dimg do
   docker.from 'image:tag'
 
-  git 'local' do
+  git do
     add '/' do
       exclude_paths 'assets'
       to '/app'

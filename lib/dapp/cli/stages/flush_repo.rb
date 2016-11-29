@@ -7,9 +7,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages flush repo [options] [DIMGS PATTERN ...] REPO
+  dapp stages flush repo [options] [DIMG ...] REPO
 
-    DIMGS PATTERN               Dapp images to process [default: *].
+    DIMG                        Dapp image to process [default: *].
 
 Options:
 BANNER

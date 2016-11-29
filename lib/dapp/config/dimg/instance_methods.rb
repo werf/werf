@@ -41,9 +41,9 @@ module Dapp
                            end
         end
 
-        def git(type_or_repo_url, &blk)
-          type = type_or_repo_url.to_sym == :local ? :local : :remote
-          _git_artifact.send(type, type_or_repo_url, &blk)
+        def git(url = nil, &blk)
+          type = url.nil? ? :local : :remote
+          _git_artifact.send(type, url, &blk)
         end
 
         def mount(to, &blk)

@@ -6,9 +6,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp tag [options] [DIMG PATTERN ...] TAG
+  dapp tag [options] [DIMG] TAG
 
-    DIMG PATTERN                Dapp image to process [default: *].
+    DIMG                        Dapp image to process [default: *].
     REPO                        Pushed image name.
 
 Options:

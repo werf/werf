@@ -72,8 +72,8 @@ module Dapp
           log_warning(*args, **kwargs)
         end
 
-        def log(message = '', desc: nil, inline: false, **kwargs)
-          return if log_quiet?
+        def log(message = '', desc: nil, inline: false, quiet: false, **kwargs)
+          return if quiet || log_quiet?
           unless desc.nil?
             (desc[:data] ||= {})[:msg] = message
             message = t(**desc)

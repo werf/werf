@@ -7,7 +7,7 @@ describe Dapp::Config::Directive::GitArtifactRemote do
   def dappfile_dimg_git_artifact(type_or_git_repo, &blk)
     dappfile do
       dimg do
-        git type_or_git_repo do
+        git type_or_git_repo == :local ? nil : type_or_git_repo do
           instance_eval(&blk) if block_given?
         end
       end

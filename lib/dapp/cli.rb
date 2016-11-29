@@ -12,16 +12,16 @@ Usage: dapp [options] sub-command [sub-command options]
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-dapp build [options] [DIMGS PATTERN ...]
-dapp bp [options] [DIMGS PATTERN ...] REPO
-dapp push [options] [DIMGS PATTERN ...] REPO
-dapp spush [options] [DIMG PATTERN ...] REPO
-dapp tag [options] [DIMG PATTERN ...] TAG
-dapp list [options] [DIMGS PATTERN ...]
-dapp run [options] [DIMG PATTERN ...] [DOCKER ARGS]
-dapp cleanup [options] [DIMGS PATTERN ...]
+dapp build [options] [DIMG ...]
+dapp bp [options] [DIMG ...] REPO
+dapp push [options] [DIMG ...] REPO
+dapp spush [options] [DIMG] REPO
+dapp tag [options] [DIMG] TAG
+dapp list [options] [DIMG ...]
+dapp run [options] [DIMG] [DOCKER ARGS]
+dapp cleanup [options] [DIMG ...]
 dapp mrproper [options]
-dapp stage image [options] [DIMG PATTERN ...]
+dapp stage image [options] [DIMG]
 dapp stages
 
 Options:
