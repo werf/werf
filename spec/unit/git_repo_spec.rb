@@ -7,6 +7,7 @@ describe Dapp::GitRepo do
 
   before :each do
     stub_dimg
+    Dir.chdir project_path
   end
 
   def init!(git_dir = nil)

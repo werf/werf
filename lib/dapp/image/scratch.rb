@@ -18,6 +18,7 @@ module Dapp
                              else
                                "#{project.cat_bin} #{from_archives.join(' ')}"
                              end
+        #FIXME: do not use docker import from system-shellout
         @built_id = project.system_shellout!("#{build_from_command} | docker import #{prepared_change} - ").stdout.strip
       end
 
