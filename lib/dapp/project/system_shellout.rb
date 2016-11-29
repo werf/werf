@@ -6,10 +6,20 @@ module Dapp
 
       def system_shellout(command, raise_error: false, **kwargs)
         system_shellout_extra(volume: (git_path ? File.dirname(git_path) : path)) do
-          if raise_error
-            shellout! _to_system_shellout_command(command), **kwargs
-          else
-            shellout _to_system_shellout_command(command), **kwargs
+          begin
+            if raise_error
+              shellout! _to_system_shellout_command(command), **kwargs
+            else
+              shellout _to_system_shellout_command(command), **kwargs
+            end
+          rescue Error::Shellout
+            log_warning(
+              desc: { code: :launched_command,
+                      data: { command: _to_system_shellout_command(command) },
+                      context: :system_shellout },
+              quiet: !log_verbose?
+            )
+            raise
           end
         end
       end
