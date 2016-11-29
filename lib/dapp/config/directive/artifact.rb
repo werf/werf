@@ -6,9 +6,10 @@ module Dapp
       class Artifact < ArtifactBase
         attr_reader :_config
 
-        def initialize(config:)
+        def initialize(config:, **kwargs, &blk)
           @_config = config
-          super()
+
+          super(**kwargs, &blk)
         end
 
         def _export
@@ -31,19 +32,35 @@ module Dapp
           protected
 
           def before(stage)
-            associate_validation!(:before, stage)
+            stage = stage.to_sym
+            associate_validation!(:before, stage, @_before)
             @_before = stage
           end
 
           def after(stage)
-            associate_validation!(:after, stage)
+            stage = stage.to_sym
+            associate_validation!(:after, stage, @_after)
             @_after = stage
           end
 
-          def associate_validation!(type, stage)
-            another = [:before, :after].find { |t| t != type }
-            raise Error::Config, code: :stage_artifact_double_associate unless send("_#{another}").nil?
-            raise Error::Config, code: :stage_artifact_not_supported_associated_stage unless [:install, :setup].include? stage
+          def associate_validation!(type, stage, old_stage)
+            conflict_type = [:before, :after].find { |t| t != type }
+            conflict_stage = send("_#{conflict_type}")
+
+            raise Error::Config, code: :stage_artifact_not_supported_associated_stage,
+                                 data: { stage: "#{type} #{stage.inspect}" }  unless [:install, :setup].include? stage
+
+            raise Error::Config, code: :stage_artifact_double_associate,
+                                 data: { stage: "#{type} #{stage.inspect}",
+                                         conflict_stage: "#{conflict_type} #{conflict_stage.inspect}" } if conflict_stage
+
+            defined_stage = send("_#{type}")
+            project.log_config_warning(desc: {
+              code: :stage_artifact_rewritten,
+              context: :warning,
+              data: { stage: "#{type} #{stage.inspect}",
+                      conflict_stage: "#{type} #{defined_stage.inspect}" }
+            }) if defined_stage
           end
         end
       end
