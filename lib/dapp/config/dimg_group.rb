@@ -24,7 +24,7 @@ module Dapp
         super
       end
 
-      def git(type_or_git_repo, &blk)
+      def git(url = nil, &blk)
         check_dimg_directive_order(:git)
         super
       end
