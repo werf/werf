@@ -6,9 +6,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp bp [options] [DIMGS PATTERNS ...] REPO
+  dapp bp [options] [DIMG ...] REPO
 
-    DIMGS PATTERN               Dapp images to process [default: *].
+    DIMG                        Dapp image to process [default: *].
     REPO                        Pushed image name.
 
 Options:

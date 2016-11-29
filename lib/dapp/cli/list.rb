@@ -6,9 +6,9 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp list [options] [DIMGS PATTERN ...]
+  dapp list [options] [DIMG ...]
 
-    DIMGS PATTERN               Dapp images to process [default: *].
+    DIMG                        Dapp image to process [default: *].
 
 Options:
 BANNER
