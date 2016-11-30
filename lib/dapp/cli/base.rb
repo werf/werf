@@ -51,6 +51,10 @@ module Dapp
              default: false,
              boolean: true
 
+      option :tmp_dir_prefix,
+             long: '--tmp-dir-prefix PREFIX',
+             description: 'Tmp directory prefix (/tmp by default). Used for build process service directories and stacktrace debug dumps.'
+
       def initialize
         self.class.options.merge!(Base.options)
         super()
