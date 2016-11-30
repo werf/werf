@@ -17,7 +17,7 @@ module Dapp
               desc: { code: :launched_command,
                       data: { command: _to_system_shellout_command(command) },
                       context: :system_shellout },
-              quiet: !log_verbose?
+              quiet: false
             )
             raise
           end
