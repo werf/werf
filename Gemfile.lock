@@ -9,6 +9,7 @@ PATH
       mixlib-shellout (>= 1.0, < 3.0)
       net_status (>= 0.1.2, < 1.0)
       paint (~> 1.0, >= 1.0.1)
+      rugged (~> 0.24.0)
 
 GEM
   remote: https://rubygems.org/
@@ -87,6 +88,7 @@ GEM
       rspec-support (~> 3.5.0)
     rspec-support (3.5.0)
     ruby-prof (0.15.9)
+    rugged (0.24.0)
     simplecov (0.12.0)
       docile (~> 1.1.0)
       json (>= 1.8, < 3)

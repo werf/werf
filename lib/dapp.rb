@@ -14,6 +14,7 @@ require 'time'
 require 'i18n'
 require 'paint'
 require 'inifile'
+require 'rugged'
 
 require 'net_status'
 

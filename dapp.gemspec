@@ -26,6 +26,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'i18n', '~> 0.7'
   s.add_dependency 'paint', '~> 1.0', '>= 1.0.1'
   s.add_dependency 'inifile', '~> 3.0.0'
+  s.add_dependency 'rugged', '~> 0.24.0'
 
   s.add_development_dependency 'bundler', '~> 1.7'
   s.add_development_dependency 'rake', '~> 10.0'

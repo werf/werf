@@ -11,14 +11,7 @@ module Dapp
       end
 
       def path
-        @path ||= begin
-          git_repo_path = Pathname(git("-C #{dimg.home_path} rev-parse --git-dir").stdout.strip)
-          if git_repo_path.relative?
-            File.join(dimg.home_path, git_repo_path)
-          else
-            git_repo_path
-          end
-        end
+        @path ||= Rugged::Repository.discover(dimg.home_path.to_s).path
       end
 
       def latest_commit(branch = nil)

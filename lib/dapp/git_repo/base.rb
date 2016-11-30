@@ -15,35 +15,40 @@ module Dapp
       end
 
       def path
-        dimg.tmp_path "#{name}.git"
+        dimg.tmp_path("#{name}.git").to_s
       end
 
-      def git_bare(command, **kwargs)
-        git "--git-dir=#{path} #{command}", **kwargs
+      def git_bare
+        @git_bare ||= Rugged::Repository.new(path, bare: true)
+      end
+
+      def old_git_bare(command, **kwargs)
+        old_git "--git-dir=#{path} #{command}", **kwargs
       end
 
       def commit_at(commit)
-        Time.at Integer git_bare("show -s --format=%ct #{commit}").stdout.strip
+        git_bare.lookup(commit).time.to_i
       end
 
       def latest_commit(branch)
-        git_bare("rev-parse #{branch}").stdout.strip
-      end
-
-      def exist_in_commit?(path, commit)
-        git_bare("cat-file -e #{commit}:#{path}", returns: [0, 128]).status.success?
+        return git_bare.head.target_id if branch == 'HEAD'
+        git_bare.branches[branch].target_id
       end
 
       def cleanup!
       end
 
       def branch
-        git_bare('rev-parse --abbrev-ref HEAD').stdout.strip
+        git_bare.head.name.sub(/^refs\/heads\//, '')
       end
 
       protected
 
-      def git(command, **kwargs)
+      def git
+        @git ||= Rugged::Repository.new(path)
+      end
+
+      def old_git(command, **kwargs)
         dimg.system_shellout! "#{dimg.project.git_bin} #{command}", **kwargs
       end
     end

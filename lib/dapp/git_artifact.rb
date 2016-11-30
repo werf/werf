@@ -55,11 +55,11 @@ module Dapp
     end
 
     def any_changes?(from, to = latest_commit)
-      !repo.git_bare(diff_command(from, to, quiet: true), returns: [0, 1]).status.success?
+      !repo.old_git_bare(diff_command(from, to, quiet: true), returns: [0, 1]).status.success?
     end
 
     def patch_size(from, to)
-      repo.git_bare("#{diff_command(from, to)} | wc -c").stdout.strip.to_i
+      repo.old_git_bare("#{diff_command(from, to)} | wc -c").stdout.strip.to_i
     end
 
     def latest_commit
