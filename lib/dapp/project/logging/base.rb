@@ -64,6 +64,7 @@ module Dapp
           kwargs[:style] = :warning
           kwargs[:desc] ||= {}
           kwargs[:desc][:context] ||= :warning
+          kwargs[:stream] ||= $stderr
           log(*args, **kwargs)
         end
 
@@ -72,13 +73,13 @@ module Dapp
           log_warning(*args, **kwargs)
         end
 
-        def log(message = '', desc: nil, inline: false, quiet: false, **kwargs)
-          return if quiet || log_quiet?
+        def log(message = '', desc: nil, inline: false, stream: $stdout, **kwargs)
+          return if log_quiet?
           unless desc.nil?
             (desc[:data] ||= {})[:msg] = message
             message = t(**desc)
           end
-          print "#{log_format_string(message, **kwargs)}#{"\n" unless inline}"
+          stream.print "#{log_format_string(message, **kwargs)}#{"\n" unless inline}"
         end
 
         def log_time
