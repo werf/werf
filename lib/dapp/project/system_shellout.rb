@@ -13,7 +13,7 @@ module Dapp
               shellout _to_system_shellout_command(command), **kwargs
             end
           rescue Error::Shellout
-            log_warning(
+            log_info(
               desc: { code: :launched_command,
                       data: { command: _to_system_shellout_command(command) },
                       context: :system_shellout },
