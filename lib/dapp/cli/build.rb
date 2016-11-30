@@ -12,6 +12,10 @@ Usage:
 
 Options:
 BANNER
+      option :tmp_dir_prefix,
+             long: '--tmp-dir-prefix PREFIX',
+             description: 'Tmp directory prefix (/tmp by default). Used for build process service directories.'
+
       option :lock_timeout,
              long: '--lock-timeout TIMEOUT',
              description: 'Redefine resource locking timeout (in seconds)',
