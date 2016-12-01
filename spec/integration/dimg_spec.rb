@@ -231,7 +231,7 @@ describe Dapp::Dimg do
   end
 
   [:g_a_latest_patch, :g_a_post_setup_patch, :setup, :before_setup, :install, :before_install, :from].each do |stage|
-    xit "test #{stage}" do
+    it "test #{stage}" do
       send(stage)
     end
   end
