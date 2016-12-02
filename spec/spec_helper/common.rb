@@ -1,5 +1,13 @@
 module SpecHelper
   module Common
+    extend ActiveSupport::Concern
+
+    included do
+      before :each do
+        @test_dir = Dir.pwd
+      end
+    end
+
     def shellout(*args, **kwargs)
       kwargs.delete :log_verbose
       Mixlib::ShellOut.new(*args, timeout: 20, **kwargs).run_command

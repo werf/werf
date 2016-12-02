@@ -13,8 +13,6 @@ describe Dapp::GitArtifact do
   end
 
   def init
-    @test_dir = Dir.pwd
-
     FileUtils.mkdir 'project'
     @to = File.expand_path('to')
     Dir.chdir File.expand_path('project')
