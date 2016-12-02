@@ -13,6 +13,8 @@ describe Dapp::GitArtifact do
   end
 
   def init
+    @test_dir = Dir.pwd
+
     FileUtils.mkdir 'project'
     @to = File.expand_path('to')
     Dir.chdir File.expand_path('project')
@@ -33,15 +35,6 @@ describe Dapp::GitArtifact do
       end
     end
     allow_any_instance_of(Dapp::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
-  end
-
-  def project
-    super do
-      allow_any_instance_of(Dapp::Project).to receive(:git_bin) { 'git' }
-      allow_any_instance_of(Dapp::Project).to receive(:tar_bin) { 'tar' }
-      allow_any_instance_of(Dapp::Project).to receive(:sudo_bin) { 'sudo' }
-      allow_any_instance_of(Dapp::Project).to receive(:install_bin) { 'install' }
-    end
   end
 
   def g_a_archive_stage
@@ -105,9 +98,18 @@ describe Dapp::GitArtifact do
   end
 
   def command_apply(command)
+    command = Array(command)
     expect(command).to_not be_empty
-    shellout(%(bash -ec '#{command.join(' && ')}')).tap do |res|
-      expect { res.error! }.to_not raise_error, res.inspect
+
+    command.unshift(
+      "groupadd #{@credentials[:group_name]} --gid #{@credentials[:gid]}",
+      "useradd #{@credentials[:owner_name]} --gid #{@credentials[:gid]} --uid #{@credentials[:uid]}"
+    ) if @credentials
+
+    dimg.project.system_shellout_extra(volume: @test_dir) do
+      dimg.system_shellout(command.join(' && ')).tap do |res|
+        expect { res.error! }.to_not raise_error, res.inspect
+      end
     end
   end
 
@@ -115,19 +117,22 @@ describe Dapp::GitArtifact do
     FileUtils.rm_rf @to
   end
 
-  def with_credentials(owner_name, group_name)
-    shellout! "sudo groupadd #{group_name}; sudo useradd #{owner_name} -g #{group_name}"
+  def with_credentials(owner_name, group_name, uid, gid)
+    @credentials = {
+      owner_name: owner_name,
+      group_name: group_name,
+      uid: uid,
+      gid: gid,
+    }
     yield
   ensure
-    shellout "sudo userdel #{owner_name}"
+    @credentials = nil
   end
 
-  def expect_file_credentials(file_path, group_name, user_name)
+  def expect_file_credentials(file_path, uid, gid)
     file_stat = File.stat(file_path)
-    file_group_name = Etc.getgrgid(file_stat.gid).name
-    file_user_name  = Etc.getpwuid(file_stat.uid).name
-    expect(file_group_name).to eq group_name.to_s
-    expect(file_user_name).to eq user_name.to_s
+    expect(uid).to eq file_stat.uid
+    expect(gid).to eq file_stat.gid
   end
 
   [:patch, :archive].each do |type|
@@ -206,20 +211,22 @@ describe Dapp::GitArtifact do
   file_name = 'test_file.txt'
   owner = :git_artifact
   group = :git_artifact
+  uid = 1100 + (rand * 1000).to_i
+  gid = 1100 + (rand * 1000).to_i
 
   it 'archive owner_and_group', test_construct: true do
-    with_credentials(owner, group) do
+    with_credentials(owner, group, uid, gid) do
       archive_apply(add_files: [file_name], owner: owner, group: group) do
-        expect_file_credentials(File.join(@to, file_name), owner, group)
+        expect_file_credentials(File.join(@to, file_name), uid, gid)
       end
     end
   end
 
   it 'patch owner_and_group', test_construct: true do
-    with_credentials(owner, group) do
+    with_credentials(owner, group, uid, gid) do
       archive_apply(owner: owner, group: group) do
         patch_apply(add_files: [file_name], owner: owner, group: group, ignore_archive_apply: true) do
-          expect_file_credentials(File.join(@to, file_name), owner, group)
+          expect_file_credentials(File.join(@to, file_name), uid, gid)
         end
       end
     end
