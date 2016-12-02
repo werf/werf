@@ -12,7 +12,7 @@ module Dapp
         end unless File.directory?(path)
       end
 
-      def fetch!(branch)
+      def fetch!(branch = nil)
         branch ||= self.branch
         dimg.project.log_secondary_process(dimg.project.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
           git_bare.fetch('origin', [branch])
