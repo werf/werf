@@ -11,6 +11,15 @@ describe Dapp::Dimg do
   end
 
   before :each do
+    # git_init! works only in test case context,
+    # because of using project and dimg objects for system-shellout.
+    # But git should only be initialized once.
+    # Earlier git_init! was in before :all, but that is not possible now.
+    self.class.instance_variable_get(:@git_initialized) || begin
+      git_init!
+      self.class.instance_variable_set(:@git_initialized, true)
+    end
+
     dimg_build!
   end
 
@@ -22,7 +31,6 @@ describe Dapp::Dimg do
     FileUtils.rm_rf project_path
     FileUtils.mkpath project_path
     Dir.chdir project_path
-    git_init!
   end
 
   def project_path
@@ -232,7 +240,18 @@ describe Dapp::Dimg do
 
   [:g_a_latest_patch, :g_a_post_setup_patch, :setup, :before_setup, :install, :before_install, :from].each do |stage|
     it "test #{stage}" do
-      send(stage)
+      progress_thr = nil
+      progress_thr = Thread.new {
+        STDOUT.sync = true
+        STDERR.sync = true
+        loop { sleep(60); puts '.' }
+      } if ENV['TRAVIS']
+
+      begin
+        send(stage)
+      ensure
+        progress_thr.kill if progress_thr
+      end
     end
   end
 end

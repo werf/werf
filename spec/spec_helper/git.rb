@@ -30,13 +30,14 @@ module SpecHelper
     end
 
     def git(command, git_dir: nil, **kwargs)
-      shellout "git #{"-C #{git_dir}" unless git_dir.nil?} #{command}", **kwargs
-    end
+      commands = [
+        "#{dimg.project.git_bin} config -l | grep 'user.email' || #{dimg.project.git_bin} config --global user.email 'dapp@flant.com'",
+        "#{dimg.project.git_bin} config -l | grep 'user.name' || #{dimg.project.git_bin} config --global user.name 'Dapp Dapp'",
+        "#{dimg.project.git_bin} #{"-C #{git_dir}" unless git_dir.nil?} #{command}"
+      ]
 
-    included do
-      before :all do
-        shellout 'git config -l | grep "user.email" || git config --global user.email "dapp@flant.com"'
-        shellout 'git config -l | grep "user.name" || git config --global user.name "Dapp Dapp"'
+      dimg.project.system_shellout_extra(volume: @test_dir) do
+        dimg.system_shellout!(commands.join(' && '), **kwargs)
       end
     end
   end
