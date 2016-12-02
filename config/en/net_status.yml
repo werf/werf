@@ -26,6 +26,7 @@ en:
       cannot_run_ssh_agent: "Cannot run ssh-agent"
       ssh_key_not_found: "Ssh key `%{path}` not exist!"
       mrproper_required_option: "Expected command option `--improper-dev-mode-cache`, `--improper-cache-version-stages` or `--all`!"
+      stages_cleanup_required_option: "Expected command option `--improper-cache-version`, `--improper-git_commit` or `--improper-repo_cache`!"
     config:
       dimg_name_required: 'Dimg name required!'
       dimg_name_incorrect: "Dimg has incorrect name `%{name}`: doesn't match regex `%{reg}`!"

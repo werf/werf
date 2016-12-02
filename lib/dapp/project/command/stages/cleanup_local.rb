@@ -8,40 +8,65 @@ module Dapp
         module CleanupLocal
           def stages_cleanup_local(repo)
             lock_repo(repo, readonly: true) do
-              registry = registry(repo)
-              repo_dimgs = repo_dimgs_images(registry)
-              proper_cache if proper_cache_version?
-              cleanup_project(repo_dimgs)
+              raise Error::Project, code: :stages_cleanup_required_option unless stages_cleanup_option?
+
+              project_containers_flush
+
+              proper_git_commit     if proper_git_commit?
+              proper_cache          if proper_cache_version?
+              cleanup_project(repo) if proper_repo_cache?
             end
           end
 
           protected
 
-          def cleanup_project(repo_dimgs)
+          def proper_git_commit
+            log_proper_git_commit do
+              build_configs.each do |config|
+                log_dimg_name_with_indent(config) do
+                  Dimg.new(config: config, project: self).tap do |dimg|
+                    repos = [dimg, dimg.artifacts].flatten
+                              .map(&:git_artifacts).flatten
+                              .map { |ga_artifact| [ga_artifact.full_name, ga_artifact.repo] }.to_h
+
+                    project_images_detailed.each do |_, attrs|
+                      attrs['Config']['Labels'].each do |repo_name, commit|
+                        next if (repo = repos[repo_name]).nil?
+                        git = repo.name == 'own' ? :git : :git_bare
+                        remove_images(image_hierarchy(attrs['Id'])) unless repo.send(git).exists?(commit)
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+
+          def cleanup_project(repo)
+            registry = registry(repo)
+            repo_dimgs = repo_dimgs_images(registry)
+
             lock("#{name}.images") do
               log_step_with_indent(name) do
-                project_containers_flush
                 project_dangling_images_flush
                 dimgs, stages = project_images_hash.partition { |_, image_id| repo_dimgs.values.include?(image_id) }
                 dimgs = dimgs.to_h
                 stages = stages.to_h
-                dimgs.each { |_, aiid| clear_stages(aiid, stages) }
+                dimgs.each { |_, aiid| except_image_with_parents(aiid, stages) }
                 remove_images(stages.keys)
               end
             end
           end
 
           def repo_dimgs_images(registry)
-            repo_images(registry).first
+            repo_dimgs_and_cache(registry).first
           end
 
           def proper_cache
             log_proper_cache do
               lock("#{name}.images") do
                 log_step_with_indent(name) do
-                  project_containers_flush
-                  actual_cache_images = actual_cache_images
-                  remove_images(project_images.lines.select { |id| !actual_cache_images.lines.include?(id) }.map(&:strip))
+                  remove_images(project_images_names.select { |image_name| !actual_cache_images.include?(image_name) })
                 end
               end
             end
@@ -53,7 +78,7 @@ module Dapp
               '--format="{{.Repository}}:{{.Tag}}"',
               %(-f "label=dapp-cache-version=#{Dapp::BUILD_CACHE_VERSION}"),
               stage_cache
-            ].join(' ')).stdout.strip
+            ].join(' ')).stdout.lines.map(&:strip)
           end
 
           def project_images_hash
@@ -62,9 +87,9 @@ module Dapp
             end.to_h
           end
 
-          def clear_stages(image_id, stages)
+          def except_image_with_parents(image_id, stages)
             if image_exist?(image_id)
-              image_dapp_artifacts_label(image_id).each { |aiid| clear_stages(aiid, stages) }
+              image_dapp_artifacts_label(image_id).each { |aiid| except_image_with_parents(aiid, stages) }
               iid = image_id
               loop do
                 stages.delete_if { |_, siid| siid == iid }
@@ -88,6 +113,48 @@ module Dapp
 
           def image_parent(image_id)
             shellout!(%(docker inspect -f {{.Parent}} #{image_id})).stdout.strip
+          end
+
+          def image_hierarchy(image_id)
+            hierarchy = []
+            iids = [image_id]
+
+            loop do
+              hierarchy.concat(iids)
+              break if begin
+                iids.map! do |iid|
+                  project_images_detailed.map { |_, attrs| attrs['Id'] if attrs['Parent'] == iid }.compact
+                end.flatten!.empty?
+              end
+            end
+
+            hierarchy
+          end
+
+          def project_images_detailed
+            @project_images_detailed ||= {}.tap do |images|
+              project_images_names.each do |image_name|
+                shellout!(%(docker inspect --format='{{json .}}' #{image_name})).stdout.strip.tap do |output|
+                  images[image_name] = output == 'null' ? {} : JSON.parse(output)
+                end
+              end
+            end
+          end
+
+          def stages_cleanup_option?
+            proper_git_commit? || proper_cache_version? || proper_repo_cache?
+          end
+
+          def proper_repo_cache?
+            !!cli_options[:proper_repo_cache]
+          end
+
+          def proper_git_commit?
+            !!cli_options[:proper_git_commit]
+          end
+
+          def log_proper_git_commit(&blk)
+            log_step_with_indent(:'proper git commit', &blk)
           end
         end
       end

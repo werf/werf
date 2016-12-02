@@ -7,7 +7,7 @@ module Dapp
 Version: #{Dapp::VERSION}
 
 Usage:
-  dapp stages cleanup local [options] [DIMG ...] REPO
+  dapp stages cleanup local [options] [DIMG ...] [REPO]
 
     DIMG                        Dapp image to process [default: *].
 
@@ -17,9 +17,17 @@ BANNER
                long: '--improper-cache-version',
                boolean: true
 
+        option :proper_git_commit,
+               long: '--improper-git-commit',
+               boolean: true
+
+        option :proper_repo_cache,
+               long: '--improper-repo-cache',
+               boolean: true
+
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          repo = self.class.required_argument(self)
+          repo = config[:proper_repo_cache] ? self.class.required_argument(self) : nil
           Project.new(cli_options: config, dimgs_patterns: cli_arguments).stages_cleanup_local(repo)
         end
       end
