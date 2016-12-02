@@ -13,7 +13,7 @@ module Dapp
             DockerRegistry.new(repo)
           end
 
-          def repo_images(registry)
+          def repo_dimgs_and_cache(registry)
             format = proc do |arr|
               arr.map do |tag|
                 if (id = registry.image_id(tag)).nil?
@@ -30,8 +30,8 @@ module Dapp
           def registry_tags(registry)
             registry.tags
           rescue Exception::Registry => e
-            raise unless e.net_status[:code] == :dimg_not_found_in_registry
-            log_warning(desc: { code: 'dimg_not_found_in_registry' })
+            raise unless e.net_status[:code] == :no_such_dimg
+            log_warning(desc: { code: :dimg_not_found_in_registry })
             []
           end
 

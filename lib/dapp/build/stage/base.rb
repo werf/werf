@@ -142,6 +142,10 @@ module Dapp
           []
         end
 
+        def artifact?
+          false
+        end
+
         protected
 
         def image_build

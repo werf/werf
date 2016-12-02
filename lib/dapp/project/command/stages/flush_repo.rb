@@ -10,7 +10,7 @@ module Dapp
             lock_repo(repo) do
               log_step_with_indent(repo) do
                 registry = registry(repo)
-                repo_dimgs, repo_stages = repo_images(registry)
+                repo_dimgs, repo_stages = repo_dimgs_and_cache(registry)
                 repo_dimgs.merge(repo_stages).keys.each { |image_tag| delete_repo_image(registry, image_tag) }
               end
             end

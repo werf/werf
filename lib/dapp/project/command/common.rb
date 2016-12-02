@@ -7,8 +7,12 @@ module Dapp
       module Common
         protected
 
-        def project_images
-          shellout!(%(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache})).stdout.strip
+        def project_images_names
+          shellout!(%(docker images --format="{{.Repository}}:{{.Tag}}" #{stage_cache})).stdout.lines.map(&:strip)
+        end
+
+        def project_images_ids
+          shellout!(%(docker images #{stage_cache} -q --no-trunc)).stdout.lines.map(&:strip)
         end
 
         def project_containers_flush
@@ -44,6 +48,10 @@ module Dapp
         def with_subquery(query)
           return if (res = shellout!(query).stdout.strip.lines.map(&:strip)).empty?
           yield(res)
+        end
+
+        def image_labels(image_id)
+          Image::Stage.image_config_option(image_id: image_id, option: 'labels')
         end
 
         def run_command(cmd)

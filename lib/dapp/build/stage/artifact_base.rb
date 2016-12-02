@@ -18,8 +18,19 @@ module Dapp
           image.add_service_change_label artifacts_labels
         end
 
-        def images
-          [image].concat(artifacts.map { |artifact| artifact[:dimg].images }.flatten)
+        def artifacts
+          @artifacts ||= begin
+            dimg.config.public_send("_#{name}").map do |artifact|
+              artifact_dimg = Dapp::Artifact.new(config: artifact._config,
+                                                 project: dimg.project,
+                                                 ignore_git_fetch: dimg.ignore_git_fetch)
+              { name: artifact._config._name, options: artifact._artifact_options, dimg: artifact_dimg }
+            end
+          end
+        end
+
+        def artifact?
+          true
         end
 
         protected
@@ -30,17 +41,6 @@ module Dapp
 
         def ignore_log_commands?
           true
-        end
-
-        def artifacts
-          @artifacts ||= begin
-            dimg.config.public_send("_#{name}").map do |artifact|
-              artifact_dimg = Dapp::Artifact.new(config: artifact._config,
-                                                 project: dimg.project,
-                                                 ignore_git_fetch: dimg.ignore_git_fetch)
-              { name: artifact._config._name, options: artifact._artifact_options, dimg: artifact_dimg }
-            end
-          end
         end
 
         def artifacts_signatures

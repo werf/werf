@@ -14,7 +14,7 @@ module Dapp
             elsif proper_cache_version?
               log_proper_cache do
                 proper_cache_images = proper_cache_all_images
-                remove_images(dapp_images_by_label('dapp').lines.select { |id| !proper_cache_images.lines.include?(id) }.map(&:strip))
+                remove_images(dapp_images_by_label('dapp').select { |id| !proper_cache_images.include?(id) }.map(&:strip))
               end
             else
               raise Error::Project, code: :mrproper_required_option
@@ -26,7 +26,7 @@ module Dapp
 
         def flush_by_label(label)
           log_step_with_indent(:containers) { dapp_containers_flush_by_label(label) }
-          log_step_with_indent(:images) { dapp_images_flush_be_label(label) }
+          log_step_with_indent(:images) { dapp_images_flush_by_label(label) }
         end
 
         def proper_all?
@@ -45,13 +45,13 @@ module Dapp
           remove_images_by_query(%(docker images -f "dangling=true" -f "label=#{label}" -q), force: true)
         end
 
-        def dapp_images_flush_be_label(label)
+        def dapp_images_flush_by_label(label)
           dapp_dangling_images_flush_by_label(label)
-          remove_images(dapp_images_by_label(label).lines.map(&:strip), force: true)
+          remove_images(dapp_images_by_label(label), force: true)
         end
 
         def dapp_images_by_label(label)
-          @dapp_images ||= shellout!(%(docker images -f "dangling=false" --format="{{.Repository}}:{{.Tag}}" -f "label=#{label}")).stdout.strip
+          @dapp_images ||= shellout!(%(docker images -f "dangling=false" --format="{{.Repository}}:{{.Tag}}" -f "label=#{label}")).stdout.lines.map(&:strip)
         end
 
         def proper_cache_all_images
@@ -59,7 +59,7 @@ module Dapp
             'docker images',
             '--format="{{.Repository}}:{{.Tag}}"',
             %(-f "label=dapp-cache-version=#{Dapp::BUILD_CACHE_VERSION}" -f "dangling=false")
-          ].join(' ')).stdout.strip
+          ].join(' ')).stdout.lines.map(&:strip)
         end
       end
     end

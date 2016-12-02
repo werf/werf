@@ -9,7 +9,7 @@ module Dapp
           def stages_cleanup_repo(repo)
             lock_repo(repo) do
               registry = registry(repo)
-              repo_dimgs, repo_stages = repo_images(registry)
+              repo_dimgs, repo_stages = repo_dimgs_and_cache(registry)
               repo_stages.delete_if { |_, siid| repo_dimgs.values.include?(siid) } # ignoring stages with dimgs ids (v2)
               proper_repo_cache(registry, repo_stages) if proper_cache_version?
               log_step_with_indent(repo) do

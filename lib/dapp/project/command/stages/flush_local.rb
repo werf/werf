@@ -11,7 +11,7 @@ module Dapp
               log_step_with_indent(name) do
                 project_containers_flush
                 project_dangling_images_flush
-                remove_images(project_images.lines.map(&:strip))
+                remove_images(project_images_names)
               end
             end
           end

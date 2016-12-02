@@ -132,6 +132,10 @@ module Dapp
       @builder ||= Builder.const_get(config._builder.capitalize).new(self)
     end
 
+    def artifacts
+      @artifacts ||= artifacts_stages.map { |stage| stage.artifacts.map { |artifact| artifact[:dimg] } }.flatten
+    end
+
     def artifact?
       false
     end
@@ -172,9 +176,7 @@ module Dapp
 
     def cleanup_tmp
       FileUtils.rm_rf(tmp_path)
-      stages.select { |stage| stage.respond_to?(:artifacts, true) }.each do |stage|
-        stage.send(:artifacts).each { |artifact| artifact[:dimg].cleanup_tmp }
-      end
+      artifacts.each(&:cleanup_tmp)
     end
   end # Dimg
 end # Dapp

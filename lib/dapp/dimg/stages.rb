@@ -15,16 +15,8 @@ module Dapp
         project.stage_dapp_label
       end
 
-      def images
-        (@images ||= []).tap do |images|
-          stages.each do |stage|
-            if stage.respond_to?(:images)
-              images.concat(stage.images)
-            else
-              images << stage.image
-            end
-          end
-        end.uniq!(&:name)
+      def all_images
+        @all_images ||= all_stages.map(&:image).uniq!(&:name)
       end
 
       protected
@@ -38,11 +30,11 @@ module Dapp
       end
 
       def export_images
-        images.select(&:tagged?)
+        all_images.select(&:tagged?)
       end
 
       def import_images
-        images.select { |image| !image.tagged? }
+        all_images.select { |image| !image.tagged? }
       end
 
       def stages
@@ -53,6 +45,14 @@ module Dapp
             break if (stage = stage.prev_stage).nil?
           end
         end
+      end
+
+      def artifacts_stages
+        @artifacts_stages ||= stages.select { |stage| stage.artifact? }
+      end
+
+      def all_stages
+        stages + artifacts.map(&:all_stages).flatten
       end
     end # Stages
   end # Dimg
