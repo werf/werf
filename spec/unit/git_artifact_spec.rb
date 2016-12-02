@@ -131,8 +131,8 @@ describe Dapp::GitArtifact do
 
   def expect_file_credentials(file_path, uid, gid)
     file_stat = File.stat(file_path)
-    expect(uid).to eq file_stat.uid
-    expect(gid).to eq file_stat.gid
+    expect(file_stat.uid).to eq uid
+    expect(file_stat.gid).to eq gid
   end
 
   [:patch, :archive].each do |type|
