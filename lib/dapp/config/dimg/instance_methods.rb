@@ -43,7 +43,7 @@ module Dapp
 
         def git(url = nil, &blk)
           type = url.nil? ? :local : :remote
-          _git_artifact.send(type, url, &blk)
+          _git_artifact.send(type, url.to_s, &blk)
         end
 
         def mount(to, &blk)
