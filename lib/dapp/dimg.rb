@@ -37,7 +37,7 @@ module Dapp
         end
       end
     ensure
-      FileUtils.rm_rf(tmp_path)
+      cleanup_tmp
     end
 
     def tag!(tag)
@@ -168,6 +168,13 @@ module Dapp
       data = e.net_status[:data]
       introspect_image!(image: data[:built_id], options: data[:options])
       raise data[:error]
+    end
+
+    def cleanup_tmp
+      FileUtils.rm_rf(tmp_path)
+      stages.select { |stage| stage.respond_to?(:artifacts, true) }.each do |stage|
+        stage.send(:artifacts).each { |artifact| artifact[:dimg].cleanup_tmp }
+      end
     end
   end # Dimg
 end # Dapp
