@@ -9,7 +9,7 @@ Version: #{Dapp::VERSION}
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-dapp stages cleanup local [options] [DIMG ...] REPO
+dapp stages cleanup local [options] [DIMG ...] [REPO]
 dapp stages cleanup repo [options] [DIMG ...] REPO
 dapp stages flush local [options] [DIMG ...]
 dapp stages flush repo [options] [DIMG ...] REPO

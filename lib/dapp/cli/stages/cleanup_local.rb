@@ -27,8 +27,16 @@ BANNER
 
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          repo = config[:proper_repo_cache] ? self.class.required_argument(self) : nil
-          Project.new(cli_options: config, dimgs_patterns: cli_arguments).stages_cleanup_local(repo)
+          repository = repo
+          Project.new(cli_options: config, dimgs_patterns: cli_arguments).send(run_method, repository)
+        end
+
+        def repo
+          config[:proper_repo_cache] ? self.class.required_argument(self) : nil
+        end
+
+        def run_method
+          :stages_cleanup_local
         end
       end
     end

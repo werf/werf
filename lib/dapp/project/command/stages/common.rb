@@ -47,6 +47,35 @@ module Dapp
             hash.select { |k, _v| k.start_with?('dapp-artifact') }.values
           end
 
+          def project_git_repositories
+            @project_git_repositories ||= begin
+              {}.tap do |repositories|
+                dimgs = build_configs.map { |config| Dimg.new(config: config, project: self, ignore_git_fetch: true) }
+                dimgs.each do |dimg|
+                  [dimg, dimg.artifacts].flatten
+                    .map(&:git_artifacts).flatten
+                    .map { |ga_artifact| repositories[ga_artifact.full_name] = ga_artifact.repo }
+                end
+              end
+            end
+          end
+
+          def proper_repo_cache?
+            !!cli_options[:proper_repo_cache]
+          end
+
+          def proper_git_commit?
+            !!cli_options[:proper_git_commit]
+          end
+
+          def stages_cleanup_option?
+            proper_git_commit? || proper_cache_version? || proper_repo_cache?
+          end
+
+          def log_proper_git_commit(&blk)
+            log_step_with_indent(:'proper git commit', &blk)
+          end
+
           def lock_repo(repo, *args, &blk)
             lock("repo.#{hashsum repo}", *args, &blk)
           end

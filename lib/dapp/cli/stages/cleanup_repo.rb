@@ -13,10 +13,12 @@ Usage:
 
 Options:
 BANNER
-        def run(argv = ARGV)
-          self.class.parse_options(self, argv)
-          repo = self.class.required_argument(self)
-          Project.new(cli_options: config, dimgs_patterns: cli_arguments).stages_cleanup_repo(repo)
+        def run_method
+          :stages_cleanup_repo
+        end
+
+        def repo
+          self.class.required_argument(self)
         end
       end
     end

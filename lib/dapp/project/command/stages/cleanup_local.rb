@@ -12,37 +12,25 @@ module Dapp
 
               project_containers_flush
 
-              proper_git_commit     if proper_git_commit?
-              proper_cache          if proper_cache_version?
-              cleanup_project(repo) if proper_repo_cache?
+              proper_cache                 if proper_cache_version?
+              stages_cleanup_by_repo(repo) if proper_repo_cache?
+              proper_git_commit            if proper_git_commit?
             end
           end
 
           protected
 
-          def proper_git_commit
-            log_proper_git_commit do
-              build_configs.each do |config|
-                log_dimg_name_with_indent(config) do
-                  Dimg.new(config: config, project: self).tap do |dimg|
-                    repos = [dimg, dimg.artifacts].flatten
-                              .map(&:git_artifacts).flatten
-                              .map { |ga_artifact| [ga_artifact.full_name, ga_artifact.repo] }.to_h
-
-                    project_images_detailed.each do |_, attrs|
-                      attrs['Config']['Labels'].each do |repo_name, commit|
-                        next if (repo = repos[repo_name]).nil?
-                        git = repo.name == 'own' ? :git : :git_bare
-                        remove_images(image_hierarchy(attrs['Id'])) unless repo.send(git).exists?(commit)
-                      end
-                    end
-                  end
+          def proper_cache
+            log_proper_cache do
+              lock("#{name}.images") do
+                log_step_with_indent(name) do
+                  remove_images(project_images_names.select { |image_name| !actual_cache_images.include?(image_name) })
                 end
               end
             end
           end
 
-          def cleanup_project(repo)
+          def stages_cleanup_by_repo(repo)
             registry = registry(repo)
             repo_dimgs = repo_dimgs_images(registry)
 
@@ -60,16 +48,6 @@ module Dapp
 
           def repo_dimgs_images(registry)
             repo_dimgs_and_cache(registry).first
-          end
-
-          def proper_cache
-            log_proper_cache do
-              lock("#{name}.images") do
-                log_step_with_indent(name) do
-                  remove_images(project_images_names.select { |image_name| !actual_cache_images.include?(image_name) })
-                end
-              end
-            end
           end
 
           def actual_cache_images
@@ -115,6 +93,30 @@ module Dapp
             shellout!(%(docker inspect -f {{.Parent}} #{image_id})).stdout.strip
           end
 
+          def proper_git_commit
+            log_proper_git_commit do
+              unproper_images = []
+              project_images_detailed.each do |_, attrs|
+                attrs['Config']['Labels'].each do |repo_name, commit|
+                  next if (repo = project_git_repositories[repo_name]).nil?
+                  git = repo.name == 'own' ? :git : :git_bare
+                  unproper_images.concat(image_hierarchy(attrs['Id'])) unless repo.send(git).exists?(commit)
+                end
+              end
+              remove_images(unproper_images.uniq)
+            end
+          end
+
+          def project_images_detailed
+            @project_images_detailed ||= {}.tap do |images|
+              project_images_names.each do |image_name|
+                shellout!(%(docker inspect --format='{{json .}}' #{image_name})).stdout.strip.tap do |output|
+                  images[image_name] = output == 'null' ? {} : JSON.parse(output)
+                end
+              end
+            end
+          end
+
           def image_hierarchy(image_id)
             hierarchy = []
             iids = [image_id]
@@ -129,32 +131,6 @@ module Dapp
             end
 
             hierarchy
-          end
-
-          def project_images_detailed
-            @project_images_detailed ||= {}.tap do |images|
-              project_images_names.each do |image_name|
-                shellout!(%(docker inspect --format='{{json .}}' #{image_name})).stdout.strip.tap do |output|
-                  images[image_name] = output == 'null' ? {} : JSON.parse(output)
-                end
-              end
-            end
-          end
-
-          def stages_cleanup_option?
-            proper_git_commit? || proper_cache_version? || proper_repo_cache?
-          end
-
-          def proper_repo_cache?
-            !!cli_options[:proper_repo_cache]
-          end
-
-          def proper_git_commit?
-            !!cli_options[:proper_git_commit]
-          end
-
-          def log_proper_git_commit(&blk)
-            log_step_with_indent(:'proper git commit', &blk)
           end
         end
       end
