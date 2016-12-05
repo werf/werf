@@ -43,6 +43,7 @@ en:
       stage_artifact_not_associated: "Artifact not associated with any stage: expected `before` or `after` attribute!"
       stage_artifact_double_associate: "Cannot use `%{stage}` stage for artifact, already used in `%{conflict_stage}` stage!"
       stage_artifact_not_supported_associated_stage: "Bad artifact stage `%{stage}`!"
+      git_artifact_remote_unsupported_protocol: "Remote git repo `%{url}`: unsupported protocol!"
       artifact_conflict: "Conflict between artifacts paths!"
       scratch_unsupported_directive: "Scratch dimg has unsupported directive `%{directive}`!"
       scratch_artifact_required: "Scratch dimg without artifacts!"
