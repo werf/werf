@@ -21,7 +21,7 @@ describe Dapp::Config::Directive::GitArtifactRemote do
     [:local, :remote].each do |type|
       it type do
         attributes = binding.local_variable_get("#{type}_artifact_attributes")
-        dappfile_dimg_git_artifact(type == :local ? :local : 'url') do
+        dappfile_dimg_git_artifact(type == :local ? :local : 'https://url') do
           add '/cwd' do
             attributes.each do |attr|
               next if attr == :cwd
@@ -115,6 +115,11 @@ describe Dapp::Config::Directive::GitArtifactRemote do
         end
       end
       expect { dimgs }.to raise_error NoMethodError
+    end
+
+    it 'remote incorrect url (:git_artifact_remote_unsupported_protocol)' do
+      dappfile_dimg_git_artifact('url')
+      expect_exception_code(:git_artifact_remote_unsupported_protocol) { dimg }
     end
   end
 end
