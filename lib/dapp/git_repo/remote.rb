@@ -8,7 +8,11 @@ module Dapp
         @url = url
 
         dimg.project.log_secondary_process(dimg.project.t(code: 'process.git_artifact_clone', data: { name: name }), short: true) do
-          Rugged::Repository.clone_at(url, path, bare: true)
+          begin
+            Rugged::Repository.clone_at(url, path, bare: true)
+          rescue Rugged::NetworkError => e
+            raise Error::Rugged, code: :rugged_network_error, data: { message: e.message, url: url }
+          end
         end unless File.directory?(path)
       end
 
