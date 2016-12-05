@@ -31,12 +31,13 @@ module Dapp
         end
 
         def validate_scratch_directives!
-          directives = [:_shell, :_chef, :_git_artifact, :_install_dependencies, :_setup_dependencies,
-                        :_tmp_dir_mount, :_build_dir_mount]
-          directives.each do |directive|
+          directives = [[:_shell, :shell], [:_chef, :chef], [:_git_artifact, :git],
+                        [:_install_dependencies, :install_depends_on], [:_setup_dependencies, :setup_depends_on],
+                        [:_tmp_dir_mount, :mount], [:_build_dir_mount, :mount]]
+          directives.each do |name, user_name|
             raise Error::Config,
                   code: :scratch_unsupported_directive,
-                  data: { directive: directive[1..-1] } unless public_send(directive).send(:empty?)
+                  data: { directive: user_name } unless public_send(name).send(:empty?)
           end
 
           docker_directives = [:_expose, :_env, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint]

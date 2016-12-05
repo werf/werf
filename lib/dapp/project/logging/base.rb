@@ -62,9 +62,11 @@ module Dapp
 
         def log_warning(*args, **kwargs)
           kwargs[:style] = :warning
-          kwargs[:desc] ||= {}
-          kwargs[:desc][:context] ||= :warning
           kwargs[:stream] ||= $stderr
+          if args.empty?
+            kwargs[:desc] ||= {}
+            kwargs[:desc][:context] ||= :warning
+          end
           log(*args, **kwargs)
         end
 
