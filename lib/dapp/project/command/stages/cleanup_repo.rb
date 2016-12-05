@@ -70,7 +70,7 @@ module Dapp
           def proper_repo_git_commit(registry)
             log_proper_git_commit do
               unproper_images = []
-              repo_project_images_detailed(registry).each do |_, attrs|
+              repo_project_dappstage_images_detailed(registry).each do |_, attrs|
                 attrs[:labels].each do |repo_name, commit|
                   next if (repo = project_git_repositories[repo_name]).nil?
                   git = repo.name == 'own' ? :git : :git_bare
@@ -81,9 +81,11 @@ module Dapp
             end
           end
 
-          def repo_project_images_detailed(registry)
+          def repo_project_dappstage_images_detailed(registry)
             @repo_project_images_detailed ||= begin
               registry.tags.map do |tag|
+                next unless tag.start_with?('dimgstage')
+
                 image_history = registry.image_history(tag)
                 attrs = {
                   id: registry.image_id(tag),
@@ -91,7 +93,7 @@ module Dapp
                   labels: image_history['config']['Labels']
                 }
                 [tag, attrs]
-              end
+              end.compact
             end
           end
 
@@ -103,12 +105,12 @@ module Dapp
               hierarchy.concat(iids)
               break if begin
                 iids.map! do |iid|
-                  repo_project_images_detailed(registry).map { |_, attrs| attrs[:id] if attrs[:parent] == iid }.compact
+                  repo_project_dappstage_images_detailed(registry).map { |_, attrs| attrs[:id] if attrs[:parent] == iid }.compact
                 end.flatten!.empty?
               end
             end
 
-            repo_project_images_detailed(registry).map { |tag, attrs| tag if hierarchy.include? attrs[:id] }.compact
+            repo_project_dappstage_images_detailed(registry).map { |tag, attrs| tag if hierarchy.include? attrs[:id] }.compact
           end
 
           def remove_repo_images(registry, tags)
