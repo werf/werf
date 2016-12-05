@@ -25,7 +25,7 @@ module Dapp
       def tags
         @tags ||= api_request(repo_suffix, 'tags/list')['tags'] || []
       rescue Error::Registry => e
-        raise Exception::Registry, code: :no_such_dimg if e.net_status[:code] == :page_not_found
+        raise Exception::Registry, code: :no_such_dimg, data: { registry: api_url } if e.net_status[:code] == :page_not_found
         raise
       end
 
@@ -50,6 +50,11 @@ module Dapp
                     headers: { Accept: 'Accept: application/vnd.docker.distribution.manifest.v2+json' })
       end
 
+      def image_history(tag)
+        response = manifest_v1(tag)
+        JSON.load(response['history'].first['v1Compatibility'])
+      end
+
       protected
 
       def image_digest(tag)
@@ -70,11 +75,6 @@ module Dapp
                     headers: { Accept: 'application/vnd.docker.distribution.manifest.v2+json' })
       end
 
-      def image_history(tag)
-        response = manifest_v1(tag)
-        JSON.load(response['history'].first['v1Compatibility'])
-      end
-
       def blob_delete(id)
         api_request(repo_suffix, "/blobs/#{id}",
                     method: :delete, expects: [202, 404])
@@ -88,9 +88,9 @@ module Dapp
         url = api_url(*uri)
         request(url, **default_api_options.merge(options))
       rescue Excon::Error::NotFound
-        raise Error::Registry, code: :page_not_found, data: { url: url }
+        raise Error::Registry, code: :page_not_found, data: { url: url, registry: api_url }
       rescue Excon::Error::Unauthorized
-        raise Error::Registry, code: :user_not_authorized
+        user_not_authorized!
       end
 
       def api_url(*uri)
@@ -99,6 +99,10 @@ module Dapp
 
       def default_api_options
         { expects: [200] }
+      end
+
+      def user_not_authorized!
+        raise Error::Registry, code: :user_not_authorized, data: { registry: api_url }
       end
     end
   end # DockerRegistry

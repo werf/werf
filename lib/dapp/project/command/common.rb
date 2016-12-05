@@ -28,7 +28,7 @@ module Dapp
         end
 
         def remove_images(ids, force: false)
-          remove_base('docker rmi%{force_option} %{ids}', ids, force: force)
+          remove_base('docker rmi%{force_option} %{ids}', ids.uniq, force: force)
         end
 
         def remove_containers_by_query(containers_query, force: false)
@@ -36,7 +36,7 @@ module Dapp
         end
 
         def remove_containers(ids, force: false)
-          remove_base('docker rm%{force_option} %{ids}', ids, force: force)
+          remove_base('docker rm%{force_option} %{ids}', ids.uniq, force: force)
         end
 
         def remove_base(query_format, ids, force: false)

@@ -10,7 +10,7 @@ module Dapp
             when /Bearer/ then { headers: { Authorization: "Bearer #{authorization_token(authenticate_header)}" } }
             when /Basic/ then { headers: { Authorization: "Basic #{authorization_auth}" } }
             when nil then {}
-            else raise Error::Registry, code: :authenticate_type_not_supported
+            else raise Error::Registry, code: :authenticate_type_not_supported, data: { registry: api_url }
             end
           end
         end
@@ -42,14 +42,14 @@ module Dapp
             r = chomp_name(r)
           end
           credential = (auths[r] || auths.find { |repo, _| repo == r })
-          raise Error::Registry, code: :user_not_authorized if credential.nil?
+          user_not_authorized! if credential.nil?
           credential['auth']
         end
 
         def auths_section_from_docker_config
           file = Pathname(File.join(Dir.home, '.docker', 'config.json'))
-          raise Error::Registry, code: :user_not_authorized unless file.exist?
-          JSON.load(file.read)['auths'].tap { |auths| raise Error::Registry, code: :user_not_authorized if auths.nil? }
+          user_not_authorized! unless file.exist?
+          JSON.load(file.read)['auths'].tap { |auths| user_not_authorized! if auths.nil? }
         end
 
         private

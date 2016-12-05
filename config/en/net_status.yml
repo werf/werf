@@ -26,7 +26,7 @@ en:
       cannot_run_ssh_agent: "Cannot run ssh-agent"
       ssh_key_not_found: "Ssh key `%{path}` not exist!"
       mrproper_required_option: "Expected command option `--improper-dev-mode-cache`, `--improper-cache-version-stages` or `--all`!"
-      stages_cleanup_required_option: "Expected command option `--improper-cache-version`, `--improper-git_commit` or `--improper-repo_cache`!"
+      stages_cleanup_required_option: "Expected command option `--improper-cache-version`, `--improper-git-commit` or `--improper-repo-cache`!"
     config:
       dimg_name_required: 'Dimg name required!'
       dimg_name_incorrect: "Dimg has incorrect name `%{name}`: doesn't match regex `%{reg}`!"
@@ -56,14 +56,12 @@ en:
       cookbook_berksfile_not_found: "Dapp cookbook Berksfile not found at %{path}"
       cookbook_metadata_not_found: "Dapp cookbook metadata.rb file not found at %{path}"
       cookbook_not_specified_in_berksfile: "Dapp cookbook `%{name}` not specified in Berksfile at %{path}"
-    registry:
-      incorrect_repo: 'Incorrect repository!'
-      no_such_dimg: 'No such dimg in registry!'
-      authenticate_type_not_supported: 'Registry authenticate type not supported!'
-      page_not_found: "Page `%{url}` not found!"
-      user_not_authorized: 'User not authorized!'
-      response_with_error_status: 'Response with error status!'
       berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook `%{cookbook}`, path: `%{path}`)"
+    registry:
+      no_such_dimg: 'Registry `%{registry}`: no such dimg in registry!'
+      authenticate_type_not_supported: 'Registry `%{registry}`: authenticate type not supported!'
+      page_not_found: "Registry `%{registry}`: page `%{url}` not found!"
+      user_not_authorized: 'Registry `%{registry}`: user not authorized!'
     rugged:
       rugged_network_error: "Remote git repo `%{url}`: `%{message}`!"
     lock:
