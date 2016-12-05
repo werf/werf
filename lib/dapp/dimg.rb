@@ -157,6 +157,11 @@ module Dapp
       system(cmd)
     end
 
+    def cleanup_tmp
+      FileUtils.rm_rf(tmp_path)
+      artifacts.each(&:cleanup_tmp)
+    end
+
     protected
 
     def should_be_built?
@@ -172,11 +177,6 @@ module Dapp
       data = e.net_status[:data]
       introspect_image!(image: data[:built_id], options: data[:options])
       raise data[:error]
-    end
-
-    def cleanup_tmp
-      FileUtils.rm_rf(tmp_path)
-      artifacts.each(&:cleanup_tmp)
     end
   end # Dimg
 end # Dapp
