@@ -45,14 +45,25 @@ $ dapp stages cleanup local --improper-git-commit
 dapp stages cleanup repo [options] [DIMG ...] REPO
 ```
 
+#### --improper-repo-cache
+Удалить кэш, который не использовался при сборке приложений в репозитории **REPO**.
+
+#### --improper-git-commit
+Удалить кэш, связанный с отсутствующими в git-репозиториях коммитами.
+
 #### --improper-cache-version
 Удалить устаревший кэш приложений проекта.
 
 #### Примеры
 
-##### Удалить неактуальный кэш приложений в репозитории localhost:5000/test
+##### Удалить неактуальный кэш в репозитории localhost:5000/test, где:
+
+* Версия кэша не соответствует текущей.
+* Не связан с приложениями в репозитории.
+* Собран из коммитов, которые в данный момент отсутствуют в git-репозиториях проекта.
+
 ```bash
-$ dapp stages cleanup repo localhost:5000/test
+$ dapp stages cleanup repo localhost:5000/test --improper-cache-version --improper-repo-cache --improper-git-commit
 ```
 
 ### dapp stages flush local
