@@ -67,7 +67,7 @@ module Dapp
     end
 
     def paramshash
-      Digest::SHA256.hexdigest [to, cwd, *include_paths, *exclude_paths, owner, group].map(&:to_s).join(':::')
+      Digest::SHA256.hexdigest [full_name, to, cwd, *include_paths, *exclude_paths, owner, group].map(&:to_s).join(':::')
     end
 
     def exclude_paths(with_cwd = false)
