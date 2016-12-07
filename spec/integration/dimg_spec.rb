@@ -42,7 +42,7 @@ describe Dapp::Dimg do
       _builder: :shell,
       _home_path: project_path,
       _docker: default_config[:_docker].merge(_from: :'ubuntu:16.04'),
-      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { to: '/to' } })
+      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { to: '/to', exclude_paths: [] } })
     )
   end
 
