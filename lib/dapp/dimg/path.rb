@@ -8,7 +8,7 @@ module Dapp
       end
 
       def cookbook_path(*path)
-        home_path('.dapp_chef', *path)
+        make_path(project.cookbook_path, *path)
       end
 
       def tmp_path(*path)

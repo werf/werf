@@ -84,6 +84,10 @@ module Dapp
       @path ||= expand_path(dappfile_path)
     end
 
+    def cookbook_path
+      File.join(path, '.dapp_chef')
+    end
+
     def build_path
       @build_path ||= begin
         if cli_options[:build_dir]
@@ -92,6 +96,10 @@ module Dapp
           Pathname.new(path).join('.dapp_build')
         end.expand_path.tap(&:mkpath)
       end
+    end
+
+    def system_files
+      [dappfile_path, cookbook_path, build_path].map { |p| File.basename(p) }
     end
 
     def stage_cache
