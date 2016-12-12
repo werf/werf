@@ -185,7 +185,8 @@ module Dapp
         def passed_directives
           [:@_chef, :@_shell, :@_docker,
            :@_git_artifact, :@_mount,
-           :@_artifact, :@_builder, :@_dev_mode]
+           :@_artifact, :@_builder, :@_dev_mode,
+           :@_install_dependencies, :@_setup_dependencies]
         end
       end
     end
