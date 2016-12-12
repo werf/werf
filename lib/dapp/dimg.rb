@@ -165,10 +165,8 @@ module Dapp
     protected
 
     def should_be_built?
-      should_be_built && begin
-        builder.before_dimg_should_be_built_check
-        !last_stage.image.tagged?
-      end
+      builder.before_dimg_should_be_built_check
+      should_be_built && !last_stage.image.tagged?
     end
 
     def with_introspection

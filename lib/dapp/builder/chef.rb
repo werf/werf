@@ -49,15 +49,31 @@ module Dapp
       def before_dimg_should_be_built_check
         super
 
-        %i(before_install install before_setup setup chef_cookbooks).each do |stage|
-          unless stage_empty?(stage) || stage_cookbooks_checksum_path(stage).exist?
-            raise ::Dapp::Error::Dimg, code: :chef_stage_checksum_not_calculated,
-                                       data: { stage: stage }
+        %i(before_install install before_setup setup chef_cookbooks).tap do |stages|
+          stages.each do |stage|
+            unless stage_empty?(stage) || stage_cookbooks_checksum_path(stage).exist?
+              raise ::Dapp::Error::Dimg, code: :chef_stage_checksum_not_calculated,
+                                         data: { stage: stage }
+            end
+          end
+
+          (enabled_recipes - stages.map { |stage| stage_enabled_recipes(stage) }.flatten.uniq).each do |recipe|
+            dimg.project.log_warning(desc: { code: :recipe_does_not_used, data: { recipe: recipe } })
           end
         end
       end
 
       private
+
+      def stage_enabled_modules(stage)
+        @stage_enabled_modules ||= {}
+        @stage_enabled_modules[stage] ||= enabled_modules.select { |cookbook| stage_entry_exist?(stage, cookbook, stage) }
+      end
+
+      def stage_enabled_recipes(stage)
+        @stage_enabled_recipes ||= {}
+        @stage_enabled_recipes[stage] ||= enabled_recipes.select { |recipe| stage_entry_exist?(stage, project_name, recipe) }
+      end
 
       def enabled_modules
         dimg.config._chef._dimod
@@ -440,26 +456,21 @@ module Dapp
         @stage_cookbooks_runlist[stage] ||= begin
           res = []
 
-          does_entry_exist = proc do |cookbook, entrypoint|
-            stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb").exist?
-          end
-
           format_entry = proc do |cookbook, entrypoint|
             entrypoint = 'void' if entrypoint.nil?
             "#{cookbook}::#{entrypoint}"
           end
 
           enabled_modules.map do |cookbook|
-            if does_entry_exist[cookbook, stage]
+            if stage_enabled_modules(stage).include? cookbook
               [cookbook, stage]
             else
               [cookbook, nil]
             end
           end.tap { |entries| res.concat entries }
 
-          enabled_recipes.map { |recipe| [project_name, recipe] }
-                         .select { |entry| does_entry_exist[*entry] }
-                         .tap do |entries|
+          stage_enabled_recipes(stage).map { |recipe| [project_name, recipe] }
+                                      .tap do |entries|
             if entries.any?
               res.concat entries
             else
@@ -478,6 +489,10 @@ module Dapp
 
       def stage_empty?(stage)
         stage_cookbooks_runlist(stage).empty?
+      end
+
+      def stage_entry_exist?(stage, cookbook, entrypoint)
+        stage_cookbooks_path(stage, cookbook, 'recipes', "#{entrypoint}.rb").exist?
       end
 
       def _stage_cookbooks_path(stage)

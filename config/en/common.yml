@@ -55,6 +55,7 @@ en:
       tag_ignored: "WARNING: tag `%{tag}` ignored."
       dimg_not_found_in_registry: "WARNING: Dimg not found in registry."
       stage_artifact_rewritten: "WARNING: Artifact stage rewritten from %{conflict_stage} to %{stage}."
+      recipe_does_not_used: "WARNING: Recipe `%{recipe}` doesn't used in any stage."
     group:
       install_group: 'Install group'
       setup_group: 'Setup group'
