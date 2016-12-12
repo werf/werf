@@ -8,6 +8,9 @@ module Dapp
         @dimg = dimg
       end
 
+      def before_build_check
+      end
+
       def before_dimg_should_be_built_check
       end
 

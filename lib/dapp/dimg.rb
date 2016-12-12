@@ -29,6 +29,7 @@ module Dapp
         project.lock("#{project.name}.images", readonly: true) do
           last_stage.build_lock! do
             begin
+              builder.before_build_check
               last_stage.build!
             ensure
               last_stage.save_in_cache! if last_stage.image.built? || dev_mode?
@@ -165,8 +166,10 @@ module Dapp
     protected
 
     def should_be_built?
-      builder.before_dimg_should_be_built_check
-      should_be_built && !last_stage.image.tagged?
+      should_be_built && begin
+        builder.before_dimg_should_be_built_check
+        !last_stage.image.tagged?
+      end
     end
 
     def with_introspection

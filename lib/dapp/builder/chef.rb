@@ -49,14 +49,16 @@ module Dapp
       def before_dimg_should_be_built_check
         super
 
-        %i(before_install install before_setup setup chef_cookbooks).tap do |stages|
-          stages.each do |stage|
-            unless stage_empty?(stage) || stage_cookbooks_checksum_path(stage).exist?
-              raise ::Dapp::Error::Dimg, code: :chef_stage_checksum_not_calculated,
-                                         data: { stage: stage }
-            end
+        %i(before_install install before_setup setup chef_cookbooks).each do |stage|
+          unless stage_empty?(stage) || stage_cookbooks_checksum_path(stage).exist?
+            raise ::Dapp::Error::Dimg, code: :chef_stage_checksum_not_calculated,
+                                       data: { stage: stage }
           end
+        end
+      end
 
+      def before_build_check
+        %i(before_install install before_setup setup build_artifact).tap do |stages|
           (enabled_recipes - stages.map { |stage| stage_enabled_recipes(stage) }.flatten.uniq).each do |recipe|
             dimg.project.log_warning(desc: { code: :recipe_does_not_used, data: { recipe: recipe } })
           end
