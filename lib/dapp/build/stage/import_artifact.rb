@@ -50,11 +50,7 @@ module Dapp
           container_archive_path = File.join(artifact_dimg.container_tmp_path(artifact_name), 'archive.tar.gz')
 
           exclude_paths = artifact[:options][:exclude_paths].map { |path| "--exclude=#{path}" }.join(' ')
-          include_paths = if include_paths.empty?
-                            [File.join(to, cwd, '*')]
-                          else
-                            include_paths.map { |path| File.join(to, cwd, path, '*') }
-                          end
+          include_paths = include_paths.empty? ? [File.join(cwd, '*')] : include_paths.map { |path| File.join(cwd, path, '*') }
           include_paths.map! { |path| path[1..-1] } # relative path
 
           command = "#{sudo} #{dimg.project.tar_bin} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
