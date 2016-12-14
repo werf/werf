@@ -199,7 +199,7 @@ describe Dapp::Builder::Chef do
                 }
               )),
               _artifact_options: {
-                cwd: '/',
+                cwd: '/myartifact',
                 to: '/myartifact',
                 exclude_paths: [],
                 include_paths: []

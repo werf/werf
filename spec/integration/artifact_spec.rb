@@ -21,7 +21,7 @@ describe Dapp::Artifact do
 
   def artifact_config
     artifact = { _config: Marshal.load(Marshal.dump(config)),
-                 _artifact_options: { cwd: '', to: "/#{@artifact}", exclude_paths: [], include_paths: [] } }
+                 _artifact_options: { cwd: "/#{@artifact}", to: "/#{@artifact}", exclude_paths: [], include_paths: [] } }
     artifact[:_config][:_name] = @artifact
     artifact[:_config][:_artifact_dependencies] = []
     artifact[:_config][:_shell][:_build_artifact_command] = ["mkdir /#{@artifact} && date +%s > /#{@artifact}/test"]
