@@ -17,13 +17,21 @@ describe Dapp::Config::Directive::Artifact do
   end
 
   context 'positive' do
-    it 'artifact_dependencies' do
+    it 'artifact_dependencies (1)' do
       dappfile_dimg_with_artifact do
         artifact_depends_on 'depends'
         export '/cwd'
       end
 
       expect(dimg._artifact.first._config._artifact_dependencies).to eq ['depends']
+    end
+
+    it 'artifact_dependencies (2)' do
+      dappfile_dimg_with_artifact do
+        export '/cwd'
+      end
+
+      expect(dimg._artifact.first._config._artifact_dependencies).to eq []
     end
 
     it 'shell.build_artifact' do
