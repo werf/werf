@@ -30,14 +30,9 @@ module Dapp
 
       def export(*args, &blk)
         _export.concat begin
-          artifact_config = pass_to_default(ArtifactDimg.new(
-            "artifact-#{SecureRandom.hex(2)}",
-            project: project
-          ))
-
+          artifact_config = pass_to(ArtifactDimg.new("artifact-#{SecureRandom.hex(2)}", project: project))
           artifact = Directive::Artifact.new(project: project, config: artifact_config)
           artifact.send(:export, *args, &blk)
-
           artifact._export
         end
       end
@@ -48,10 +43,8 @@ module Dapp
       def check_dimg_group_directive_order(_directive)
       end
 
-      def pass_to_default(obj)
-        super(obj).tap do |artifact_dimg|
-          artifact_dimg.instance_variable_set(:@_artifact_dependencies, _artifact_dependencies.dup)
-        end
+      def passed_directives
+        super << :artifact_dependencies
       end
     end
   end

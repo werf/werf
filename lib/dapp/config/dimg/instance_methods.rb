@@ -20,12 +20,12 @@ module Dapp
         end
 
         def chef(&blk)
-          builder_validation(:chef)
+          builder(:chef)
           directive_eval(_chef, &blk)
         end
 
         def shell(&blk)
-          builder_validation(:shell)
+          builder(:shell)
           directive_eval(_shell, &blk)
         end
 
@@ -35,7 +35,7 @@ module Dapp
 
         def artifact(&blk)
           _artifact.concat begin
-                             pass_to_custom(ArtifactGroup.new(project: project), :clone_to_artifact).tap do |artifact_group|
+                             pass_to(ArtifactGroup.new(project: project)).tap do |artifact_group|
                                artifact_group.instance_eval(&blk) if block_given?
                              end._export
                            end
@@ -150,7 +150,7 @@ module Dapp
 
         protected
 
-        def builder_validation(type)
+        def builder(type)
           @_builder = type if _builder == :none
           raise Error::Config, code: :builder_type_conflict unless @_builder == type
         end
@@ -160,33 +160,34 @@ module Dapp
           directive
         end
 
-        def pass_to_default(dimg)
-          pass_to_custom(dimg, :clone)
-        end
-
-        def pass_to_custom(obj, clone_method)
+        def pass_to(obj)
           passed_directives.each do |directive|
-            next if (variable = instance_variable_get(directive)).nil?
+            directive_variable_name = :"@_#{directive}"
 
-            obj.instance_variable_set(directive, begin
-              case variable
-              when Directive::Base, GitArtifact then variable.send(clone_method)
-              when Symbol then variable
-              when Array then variable.dup
-              when TrueClass, FalseClass then variable
+            next if (value = instance_variable_get(directive_variable_name)).nil?
+            obj_value = obj.instance_variable_get(directive_variable_name)
+
+            if value.is_a?(Directive::Base)
+              obj.builder(directive) if [:chef, :shell].include? directive
+              if obj_value.nil?
+                obj.instance_variable_set(directive_variable_name, value.send(:_clone))
               else
-                raise
+                obj_value.send(:merge, value)
               end
-            end)
+            elsif respond_to?(:"merge_#{directive}", true)
+              obj.instance_variable_set(directive_variable_name, send(:"merge_#{directive}", obj_value, value))
+            else
+              raise
+            end
           end
           obj
         end
 
         def passed_directives
-          [:@_chef, :@_shell, :@_docker,
-           :@_git_artifact, :@_mount,
-           :@_artifact, :@_builder, :@_dev_mode,
-           :@_install_dependencies, :@_setup_dependencies]
+          [:chef, :shell, :docker,
+           :git_artifact, :mount,
+           :artifact, :builder, :dev_mode,
+           :install_dependencies, :setup_dependencies]
         end
       end
     end

@@ -28,10 +28,6 @@ module Dapp
       def _clone
         Marshal.load Marshal.dump(self)
       end
-
-      def _clone_to(obj)
-        obj.marshal_load marshal_dump
-      end
     end
   end
 end

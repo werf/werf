@@ -4,6 +4,7 @@ module Dapp
     class Dimg < Base
       include Validation
       include InstanceMethods
+      include Merging
 
       attr_reader :_name
 

@@ -22,8 +22,9 @@ module Dapp
         end
 
         def directives_validate!
-          passed_directives.each do |v|
-            next if (value = instance_variable_get(v)).nil?
+          passed_directives.each do |directive|
+            directive_variable_name = :"@_#{directive}"
+            next if (value = instance_variable_get(directive_variable_name)).nil?
             Array(value).each do |elm|
               elm.send(:validate!) if elm.methods.include?(:validate!)
             end

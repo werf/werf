@@ -54,10 +54,6 @@ module Dapp
           def empty?
             (_before_install_command + _before_setup_command + _install_command + _setup_command).empty?
           end
-
-          def clone_to_artifact
-            _clone_to Artifact.new(project: project)
-          end
         end
       end
     end

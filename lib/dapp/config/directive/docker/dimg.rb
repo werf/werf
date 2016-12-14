@@ -66,14 +66,6 @@ module Dapp
               entrypoint: _entrypoint
             }
           end
-
-          protected
-
-          def clone_to_artifact
-            Artifact.new(project: project).tap do |docker|
-              docker.instance_variable_set('@_from', @_from)
-            end
-          end
         end
       end
     end

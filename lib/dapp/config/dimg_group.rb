@@ -3,6 +3,7 @@ module Dapp
     # DimgGroup
     class DimgGroup < DimgGroupBase
       include Dimg::InstanceMethods
+      include Dimg::Merging
 
       def chef(&blk)
         check_dimg_directive_order(:chef)
@@ -37,11 +38,11 @@ module Dapp
       protected
 
       def before_dimg_eval(dimg)
-        pass_to_default(dimg)
+        pass_to(dimg)
       end
 
       def before_dimg_group_eval(dimg_group)
-        pass_to_default(dimg_group)
+        pass_to(dimg_group)
       end
 
       def check_dimg_directive_order(directive)

@@ -2,7 +2,9 @@ module Dapp
   module Config
     # ArtifactDimg
     class ArtifactDimg < Dimg
-      attr_reader :_artifact_dependencies
+      def _artifact_dependencies
+        @_artifact_dependencies ||= []
+      end
 
       def validate_scratch!
       end
