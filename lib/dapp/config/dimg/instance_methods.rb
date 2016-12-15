@@ -20,12 +20,12 @@ module Dapp
         end
 
         def chef(&blk)
-          builder_validation(:chef)
+          builder(:chef)
           directive_eval(_chef, &blk)
         end
 
         def shell(&blk)
-          builder_validation(:shell)
+          builder(:shell)
           directive_eval(_shell, &blk)
         end
 
@@ -150,7 +150,7 @@ module Dapp
 
         protected
 
-        def builder_validation(type)
+        def builder(type)
           @_builder = type if _builder == :none
           raise Error::Config, code: :builder_type_conflict unless @_builder == type
         end

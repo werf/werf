@@ -48,10 +48,8 @@ module Dapp
       def check_dimg_group_directive_order(_directive)
       end
 
-      def pass_to_default(obj)
-        super(obj).tap do |artifact_dimg|
-          artifact_dimg.instance_variable_set(:@_artifact_dependencies, _artifact_dependencies.dup)
-        end
+      def passed_directives
+        super << :@_artifact_dependencies
       end
     end
   end
