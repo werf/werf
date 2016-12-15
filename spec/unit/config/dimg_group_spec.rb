@@ -13,6 +13,43 @@ describe Dapp::Config::DimgGroup do
   end
 
   context 'inheritance' do
+    context 'chef' do
+      [:dimod, :recipe].each do |directive|
+        it directive do
+          dappfile_dimg_group do
+            chef do
+              send(directive, 'value1')
+            end
+
+            dimg 'name' do
+              chef do
+                send(directive, 'value2')
+              end
+            end
+          end
+
+          expect(dimg._chef.public_send("_#{directive}")).to eq %w(value1 value2)
+        end
+      end
+
+      it 'attributes' do
+        dappfile_dimg_group do
+          chef do
+            line("attributes['k1']['k2'] = 'k1k2value'")
+            line("attributes['k1']['k3'] = 'k1k3value'")
+          end
+
+          dimg 'name' do
+            chef do
+              line("attributes['k1']['k2'] = 'k1k2newvalue'")
+            end
+          end
+        end
+
+        expect(dimg._chef._attributes).to eq('k1' => { 'k2' => 'k1k2newvalue', 'k3' => 'k1k3value' })
+      end
+    end
+
     context 'shell' do
       [:install, :setup, :before_install, :before_setup].each do |stage|
         it "#{stage}_command" do
