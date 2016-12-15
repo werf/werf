@@ -37,7 +37,7 @@ module Dapp
           excludes = find_command_excludes(from, exclude_paths).join(' ')
 
           copy_files = proc do |from_, path_ = ''|
-            "if [[ -d #{File.join(from_, path_)} ]]; then " \
+            "if [[ -d #{File.join(from_, path_)} ]] || [[ -f #{File.join(from_, path_)} ]]; then " \
             "#{dimg.project.find_bin} #{File.join(from_, path_)} #{excludes} -type f -exec " \
             "#{dimg.project.bash_bin} -ec '#{dimg.project.install_bin} -D #{credentials} {} " \
             "#{File.join(to, '$(echo {} | ' \
