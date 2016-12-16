@@ -65,5 +65,6 @@ en:
       user_not_authorized: 'Registry `%{registry}`: user not authorized!'
     rugged:
       rugged_network_error: "Remote git repo `%{url}`: `%{message}`!"
+      local_git_repository_does_not_exist: "Local git repo: doesn't exist!"
     lock:
       timeout: "Could not obtain lock for `%{name}` within %{timeout} seconds"
