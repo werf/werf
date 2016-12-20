@@ -90,7 +90,18 @@ module Dapp
         def cache_reset(name = '')
           cache.delete(name)
           Project.shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}").stdout.lines.each do |l|
-            name, id, created_at, size = l.split(';')
+            name, id, created_at, size_field = l.split(';')
+            size = begin
+              number, unit = size_field.split
+              coef = case unit.to_s.downcase
+                     when 'b'  then return number.to_f
+                     when 'kb' then 1
+                     when 'mb' then 2
+                     when 'gb' then 3
+                     when 'tb' then 4
+                     end
+              number.to_f * (1000 ** coef)
+            end
             cache[name] = { id: id, created_at: created_at, size: size }
           end
         end

@@ -45,13 +45,13 @@ module Dapp
 
           def log_image_size
             if !prev_stage.nil? && from_image.tagged?
-              size = image.size.to_f - from_image.size.to_f
+              bytes = image.size - from_image.size
               code = 'image.info.difference'
             else
-              size = image.size
-              code = 'image.info.size'
+              bytes = image.size
+              code = 'image.info.mb_size'
             end
-            dimg.project.log_info dimg.project.t(code: code, data: { value: size.to_f.round(2) })
+            dimg.project.log_info dimg.project.t(code: code, data: { mb: (bytes / 1000 / 1000).round(3) })
           end
 
           def log_image_commands

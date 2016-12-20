@@ -4,8 +4,8 @@ en:
       signature: "signature: %{signature}"
       info:
         created_at: "date: %{value}"
-        size: "size: %{value} MB"
-        difference: "difference: %{value} MB"
+        mb_size: "size: %{mb} MB"
+        difference: "difference: %{mb} MB"
       commands: "commands:"
       instructions: "instructions:"
     container:
