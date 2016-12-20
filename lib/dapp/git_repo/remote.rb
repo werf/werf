@@ -11,7 +11,9 @@ module Dapp
           begin
             Rugged::Repository.clone_at(url, path, bare: true)
           rescue Rugged::NetworkError => e
-            raise Error::Rugged, code: :rugged_network_error, data: { message: e.message, url: url }
+            raise Error::Rugged, code: :rugged_remote_error, data: { message: e.message, url: url }
+          rescue Rugged::SslError => e
+            raise Error::Rugged, code: :rugged_remote_error, data: { message: e.message, url: url }
           end
         end unless File.directory?(path)
       end
