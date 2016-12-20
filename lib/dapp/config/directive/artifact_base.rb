@@ -26,7 +26,7 @@ module Dapp
 
           def initialize(cwd = '/', **kwargs, &blk)
             raise Error::Config, code: :export_cwd_absolute_path_required unless Pathname(cwd).absolute?
-            @_cwd = cwd
+            @_cwd = path_format(cwd)
             @_include_paths ||= []
             @_exclude_paths ||= []
 
@@ -48,17 +48,17 @@ module Dapp
 
           def to(absolute_path)
             raise Error::Config, code: :export_to_absolute_path_required unless Pathname(absolute_path).absolute?
-            @_to = absolute_path
+            @_to = path_format(absolute_path)
           end
 
           def include_paths(*relative_paths)
             raise Error::Config, code: :export_include_paths_relative_path_required unless relative_paths.all? { |path| Pathname(path).relative? }
-            _include_paths.concat(relative_paths)
+            _include_paths.concat(relative_paths.map(&method(:path_format)))
           end
 
           def exclude_paths(*relative_paths)
             raise Error::Config, code: :export_exclude_paths_relative_path_required unless relative_paths.all? { |path| Pathname(path).relative? }
-            _exclude_paths.concat(relative_paths)
+            _exclude_paths.concat(relative_paths.map(&method(:path_format)))
           end
 
           def owner(owner)
@@ -71,6 +71,10 @@ module Dapp
 
           def validate!
             raise Error::Config, code: :export_to_required if _to.nil?
+          end
+
+          def path_format(path)
+            path.chomp('/')
           end
         end
 
