@@ -8,17 +8,17 @@ module Dapp
 
         def initialize(to, **kwargs, &blk)
           raise Error::Config, code: :mount_to_absolute_path_required unless Pathname((to = to.to_s)).absolute?
-          @_to = to
+          @_to = path_format(to)
 
           super(**kwargs, &blk)
         end
 
         protected
 
-        def from(path_or_type)
-          path_or_type = path_or_type.to_sym
-          raise Error::Config, code: :mount_from_type_required unless [:tmp_dir, :build_dir].include? path_or_type
-          @_type = path_or_type
+        def from(type)
+          type = type.to_sym
+          raise Error::Config, code: :mount_from_type_required unless [:tmp_dir, :build_dir].include? type
+          @_type = type
         end
       end
     end

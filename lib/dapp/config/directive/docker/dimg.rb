@@ -41,8 +41,8 @@ module Dapp
             @_onbuild.concat(args)
           end
 
-          def workdir(val)
-            @_workdir = val
+          def workdir(path)
+            @_workdir = path_format(path)
           end
 
           def user(val)

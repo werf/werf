@@ -72,10 +72,6 @@ module Dapp
           def validate!
             raise Error::Config, code: :export_to_required if _to.nil?
           end
-
-          def path_format(path)
-            path.chomp('/')
-          end
         end
 
         protected

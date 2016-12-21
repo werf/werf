@@ -12,6 +12,10 @@ module Dapp
         def clone_to_artifact
           clone
         end
+
+        def path_format(path)
+          path.to_s.chomp('/')
+        end
       end
     end
   end
