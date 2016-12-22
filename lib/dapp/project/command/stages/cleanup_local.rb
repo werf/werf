@@ -95,15 +95,15 @@ module Dapp
 
           def proper_git_commit
             log_proper_git_commit do
-              unproper_images = []
+              unproper_images_names = []
               project_images_detailed.each do |_, attrs|
                 attrs['Config']['Labels'].each do |repo_name, commit|
                   next if (repo = project_git_repositories[repo_name]).nil?
                   git = repo.name == 'own' ? :git : :git_bare
-                  unproper_images.concat(image_hierarchy(attrs['Id'])) unless repo.send(git).exists?(commit)
+                  unproper_images_names.concat(image_hierarchy_by_id(attrs['Id'])) unless repo.send(git).exists?(commit)
                 end
               end
-              remove_images(unproper_images.uniq)
+              remove_images(unproper_images_names.uniq)
             end
           end
 
@@ -117,12 +117,12 @@ module Dapp
             end
           end
 
-          def image_hierarchy(image_id)
+          def image_hierarchy_by_id(image_id)
             hierarchy = []
             iids = [image_id]
 
             loop do
-              hierarchy.concat(iids)
+              hierarchy.concat(project_images_detailed.map { |name, attrs| name if iids.include?(attrs['Id']) }.compact)
               break if begin
                 iids.map! do |iid|
                   project_images_detailed.map { |_, attrs| attrs['Id'] if attrs['Parent'] == iid }.compact
