@@ -19,6 +19,12 @@ module Dapp
       def latest_commit(branch = nil)
         super(branch || 'HEAD')
       end
+
+      def lookup_commit(commit)
+        super
+      rescue Rugged::OdbError => _e
+        raise Error::Rugged, code: :commit_not_found_in_local_git_repository, data: { commit: commit }
+      end
     end
   end
 end

@@ -22,12 +22,12 @@ module Dapp
         @git_bare ||= Rugged::Repository.new(path, bare: true)
       end
 
-      def old_git_bare(command, **kwargs)
-        old_git "--git-dir=#{path} #{command}", **kwargs
+      def diff(from, to, **kwargs)
+        lookup_commit(from).diff(lookup_commit(to), **kwargs)
       end
 
       def commit_at(commit)
-        git_bare.lookup(commit).time.to_i
+        lookup_commit(commit).time.to_i
       end
 
       def latest_commit(branch)
@@ -42,14 +42,22 @@ module Dapp
         git_bare.head.name.sub(/^refs\/heads\//, '')
       end
 
+      def file_exist_in_tree?(tree, paths)
+        path = paths.shift
+        paths.empty? ?
+          tree.each { |obj| return true if obj[:name] == path } :
+          tree.each_tree { |tree| return file_exist_in_tree?(tree, paths) if tree[:name] == path }
+        false
+      end
+
+      def lookup_commit(commit)
+        git_bare.lookup(commit)
+      end
+
       protected
 
       def git
         @git ||= Rugged::Repository.new(path)
-      end
-
-      def old_git(command, **kwargs)
-        dimg.system_shellout! "#{dimg.project.git_bin} #{command}", **kwargs
       end
     end
   end

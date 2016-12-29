@@ -30,6 +30,12 @@ module Dapp
         FileUtils.rm_rf path
       end
 
+      def lookup_commit(commit)
+        super
+      rescue Rugged::OdbError => _e
+        raise Error::Rugged, code: :commit_not_found_in_remote_git_repository, data: { commit: commit, url: url }
+      end
+
       protected
 
       attr_reader :url
