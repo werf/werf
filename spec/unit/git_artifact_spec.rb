@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe Dapp::GitArtifact do
+xdescribe Dapp::GitArtifact do
   include SpecHelper::Common
   include SpecHelper::Git
   include SpecHelper::Dimg
