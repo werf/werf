@@ -5,7 +5,20 @@
 require 'rubygems'
 require 'dapp'
 
+def check_docker_version
+  required_docker_version = '1.10.0'
+  if Gem::Version.new(required_docker_version) >= Gem::Version.new(`docker --version`[/(\d+\.)+\d+/])
+    $stderr.puts(Dapp::Project.paint_string("Required docker version: >= #{required_docker_version}!", :warning))
+    exit 1
+  end
+rescue Errno::ENOENT => e
+  $stderr.puts(Dapp::Project.paint_string(e.message, :warning))
+  exit 1
+end
+
 begin
+  check_docker_version
+
   begin
     Dapp::CLI.new.run
   rescue ::SystemExit
