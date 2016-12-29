@@ -31,7 +31,9 @@ module Dapp
               builder.before_build_check
               last_stage.build!
             ensure
-              last_stage.save_in_cache! if last_stage.image.built? || dev_mode?
+              last_stage.save_in_cache! if last_stage.image.built? ||    # after all stages built
+                                             last_stage.image.tagged? || # some stage cache wasn't presented
+                                             dev_mode?
             end
           end
         end
