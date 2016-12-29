@@ -35,7 +35,6 @@ module Dapp
     include Deps::Base
 
     include Shellout::Base
-    include SystemShellout
 
     attr_reader :cli_options
     attr_reader :dimgs_patterns

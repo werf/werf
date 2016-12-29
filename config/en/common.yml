@@ -10,8 +10,6 @@ en:
       instructions: "instructions:"
     container:
       launched_command: "Launched command: `%{command}`"
-    system_shellout:
-      launched_command: "Launched system-shellout command: `%{command}`"
     process:
       artifact_copy: "copying artifact `%{name}`"
       artifact_building: "building artifact `%{name}`"
@@ -23,7 +21,6 @@ en:
       gitartifact_container_creating: 'creating dappdeps/gitartifact container'
       base_container_creating: 'creating dappdeps/base container'
       chefdk_container_creating: 'creating dappdeps/chefdk container'
-      system_shellout_container_starting: 'starting system-shellout container'
       image_pull: "pulling image `%{name}`"
       image_push: "pushing image `%{name}`"
     status:

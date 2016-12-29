@@ -5,7 +5,6 @@ module Dapp
     include Path
     include Tags
     include Stages
-    include SystemShellout
 
     include Helper::Sha256
 
