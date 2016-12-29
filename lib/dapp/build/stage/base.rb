@@ -59,7 +59,8 @@ module Dapp
 
         def save_in_cache!
           prev_stage.save_in_cache! if prev_stage
-          image.save_in_cache! if should_be_tagged? && !dimg.project.dry_run?
+          return unless should_be_tagged?
+          image.save_in_cache! unless dimg.project.dry_run?
         end
 
         def image
@@ -156,7 +157,12 @@ module Dapp
         end
 
         def should_be_tagged?
-          !(empty? || image.tagged?) && image.built?
+          !(empty? || image.tagged? || should_be_not_present?) && image.built?
+        end
+
+        def should_be_not_present?
+          return false if next_stage.nil?
+          next_stage.image.tagged? || next_stage.should_be_not_present?
         end
 
         def image_name
