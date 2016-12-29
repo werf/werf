@@ -11,20 +11,24 @@ module Dapp
 
             project_dangling_images_flush
 
-            flush_by_label('dapp') if proper_all?
-            flush_by_label('dapp-dev-mode', adding_message: '(dev)') if proper_all? || proper_dev_mode_cache?
-            log_proper_cache do
-              proper_cache_images = proper_cache_all_images
-              remove_images(dapp_images_by_label('dapp').select { |id| !proper_cache_images.include?(id) }.map(&:strip))
-            end if proper_cache_version?
+            if proper_all?
+              flush_by_label('dapp')
+            elsif proper_dev_mode_cache?
+              flush_by_label('dapp-dev-mode')
+            elsif proper_cache_version?
+              log_proper_cache do
+                proper_cache_images = proper_cache_all_images
+                remove_images(dapp_images_by_label('dapp').select { |id| !proper_cache_images.include?(id) }.map(&:strip))
+              end
+            end
           end
         end
 
         protected
 
-        def flush_by_label(label, adding_message: nil)
-          log_step_with_indent([:containers, adding_message].compact.join(' ')) { dapp_containers_flush_by_label(label) }
-          log_step_with_indent([:images, adding_message].compact.join(' ')) { dapp_images_flush_by_label(label) }
+        def flush_by_label(label)
+          log_step_with_indent(:containers) { dapp_containers_flush_by_label(label) }
+          log_step_with_indent(:images) { dapp_images_flush_by_label(label) }
         end
 
         def proper_all?
