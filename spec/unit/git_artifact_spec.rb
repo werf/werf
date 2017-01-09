@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-xdescribe Dapp::GitArtifact do
+describe Dapp::GitArtifact do
   include SpecHelper::Common
   include SpecHelper::Git
   include SpecHelper::Dimg
@@ -35,6 +35,15 @@ xdescribe Dapp::GitArtifact do
     allow_any_instance_of(Dapp::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
   end
 
+  def project
+    super do
+      allow_any_instance_of(Dapp::Project).to receive(:git_bin) { 'git' }
+      allow_any_instance_of(Dapp::Project).to receive(:tar_bin) { 'tar' }
+      allow_any_instance_of(Dapp::Project).to receive(:sudo_bin) { 'sudo' }
+      allow_any_instance_of(Dapp::Project).to receive(:install_bin) { 'install' }
+    end
+  end
+
   def g_a_archive_stage
     @g_a_archive_stage ||= Dapp::Build::Stage::GAArchive.new(empty_dimg, stubbed_stage)
   end
@@ -48,9 +57,9 @@ xdescribe Dapp::GitArtifact do
   end
 
   def stubbed_repo
-    instance_double(Dapp::GitRepo::Own).tap do |instance|
-      allow(instance).to receive(:container_path) { '.git' }
-      allow(instance).to receive(:dimg) { dimg }
+    @stubbed_repo ||= begin
+      allow_any_instance_of(Dapp::GitRepo::Own).to receive(:container_path) { '.git' }
+      Dapp::GitRepo::Own.new(dimg)
     end
   end
 
@@ -98,16 +107,8 @@ xdescribe Dapp::GitArtifact do
   def command_apply(command)
     command = Array(command)
     expect(command).to_not be_empty
-
-    command.unshift(
-      "groupadd #{@credentials[:group_name]} --gid #{@credentials[:gid]}",
-      "useradd #{@credentials[:owner_name]} --gid #{@credentials[:gid]} --uid #{@credentials[:uid]}"
-    ) if @credentials
-
-    dimg.project.system_shellout_extra(volume: @test_dir) do
-      dimg.system_shellout(command.join(' && ')).tap do |res|
-        expect { res.error! }.to_not raise_error, res.inspect
-      end
+    shellout(%(bash -ec '#{command.join(' && ')}')).tap do |res|
+      expect { res.error! }.to_not raise_error, res.inspect
     end
   end
 
@@ -116,15 +117,11 @@ xdescribe Dapp::GitArtifact do
   end
 
   def with_credentials(owner_name, group_name, uid, gid)
-    @credentials = {
-      owner_name: owner_name,
-      group_name: group_name,
-      uid: uid,
-      gid: gid,
-    }
+    shellout "groupadd #{group_name} --gid #{gid}"
+    shellout "useradd #{owner_name} --gid #{gid} --uid #{uid}"
     yield
   ensure
-    @credentials = nil
+    shellout "sudo userdel #{owner_name}"
   end
 
   def expect_file_credentials(file_path, uid, gid)
@@ -207,8 +204,8 @@ xdescribe Dapp::GitArtifact do
   end
 
   file_name = 'test_file.txt'
-  owner = :git_artifact
-  group = :git_artifact
+  owner = :dapp_git_artifact
+  group = :dapp_git_artifact
   uid = 1100 + (rand * 1000).to_i
   gid = 1100 + (rand * 1000).to_i
 
