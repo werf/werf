@@ -45,9 +45,13 @@ module Dapp
       def file_exist_in_tree?(tree, paths)
         path = paths.shift
         paths.empty? ?
-          tree.each { |obj| return true if obj[:name] == path } :
-          tree.each_tree { |tree| return file_exist_in_tree?(tree, paths) if tree[:name] == path }
+          tree.each { |obj| return true if File.fnmatch(path, obj[:name]) } :
+          tree.each_tree { |tree_obj| return file_exist_in_tree?(lookup_object(tree_obj[:oid]), paths) if File.fnmatch(path, tree_obj[:name]) }
         false
+      end
+
+      def lookup_object(oid)
+        git_bare.lookup(oid)
       end
 
       def lookup_commit(commit)
