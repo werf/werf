@@ -281,7 +281,7 @@ module Dapp
     end
 
     def layers
-      Dir.glob(layer_commitfile_path('*')).map { |path| Integer(path.gsub(/.*_(\d+)\.commit$/, '\\1')) }.sort
+      Dir.glob(layer_commitfile_path('*')).map { |path| path.gsub(/.*_(\d+)\.commit$/, '\\1').to_i }.sort
     end
 
     def create_layer_patch!(from, layer)
