@@ -162,6 +162,10 @@ module Dapp
       artifacts.each(&:cleanup_tmp)
     end
 
+    def stage_should_be_introspected?(name)
+      project.cli_options[:introspect_stage] == name
+    end
+
     protected
 
     def should_be_built?
