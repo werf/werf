@@ -76,7 +76,9 @@ module Dapp
         def prepare_image
           return if dimg.project.dry_run?
           image.add_volumes_from dimg.project.base_container
-          image_add_volumes
+
+          image_add_mounts
+
           image.add_service_change_label dapp: dimg.stage_dapp_label
           image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
           image.add_service_change_label 'dapp-dev-mode'.to_sym => true if dimg.dev_mode?
@@ -87,26 +89,23 @@ module Dapp
           end
         end
 
-        def image_add_volumes
-          image_add_tmp_volumes
-          image_add_build_volumes
-        end
+        def image_add_mounts
+          [:tmp_dir, :build_dir].each do |type|
+            next if (mounts = mounts_by_type(type)).empty?
 
-        def image_add_tmp_volumes
-          image_add_default_volumes(:tmp_dir)
-        end
+            mounts.each do |path|
+              absolute_path = File.expand_path(File.join('/', path))
+              tmp_path = dimg.send(type, 'mount', absolute_path[1..-1]).tap(&:mkpath)
+              image.add_volume "#{tmp_path}:#{absolute_path}"
+            end
 
-        def image_add_build_volumes
-          image_add_default_volumes(:build_dir)
-        end
-
-        def image_add_default_volumes(type)
-          (dimg.config.public_send("_#{type}_mount").map(&:_to) +
-            from_image.labels.select { |l, _| l == "dapp-#{type}-dir" }.map { |_, value| value.split(';') }.flatten).each do |path|
-            absolute_path = File.expand_path(File.join('/', path))
-            tmp_path = dimg.send(type, 'mount', absolute_path[1..-1]).tap(&:mkpath)
-            image.add_volume "#{tmp_path}:#{absolute_path}"
+            image.add_service_change_label :"dapp-mount-#{type.to_s.tr('_', '-')}" => mounts.join(';')
           end
+        end
+
+        def mounts_by_type(type)
+          (dimg.config.public_send("_#{type}_mount").map(&:_to) +
+            from_image.labels.select { |l, _| l == "dapp-mount-#{type.to_s.tr('_', '-')}" }.map { |_, value| value.split(';') }.flatten).uniq
         end
 
         def image_should_be_build?
