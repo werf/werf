@@ -147,8 +147,8 @@ module Dapp
 
           CookbookMetadata.new(cookbook_metadata_path).tap do |metadata|
             metadata.depends.each do |dependency|
-              if dependency.start_with? 'mdapp-'
-                raise Error, code: :mdapp_dependency_in_metadata_forbidden,
+              if dependency.start_with? 'dimod-'
+                raise Error, code: :dimod_dependency_in_metadata_forbidden,
                              data: { dependency: dependency }
               end
             end
@@ -371,8 +371,8 @@ module Dapp
                         .map do |cookbook_path|
           cookbook_name = File.basename cookbook_path
           is_project = (cookbook_name == project_name)
-          is_mdapp = cookbook_name.start_with? 'mdapp-'
-          mdapp_enabled = is_mdapp && enabled_modules.include?(cookbook_name)
+          is_dimod = cookbook_name.start_with? 'dimod-'
+          dimod_enabled = is_dimod && enabled_modules.include?(cookbook_name)
 
           paths = if is_project
                     common_dapp_paths = select_existing_paths.call(cookbook_path, [
@@ -392,8 +392,8 @@ module Dapp
                     else
                       [nil, *common_dapp_paths]
                     end
-                  elsif is_mdapp && mdapp_enabled
-                    common_mdapp_paths = select_existing_paths.call(cookbook_path, [
+                  elsif is_dimod && dimod_enabled
+                    common_dimod_paths = select_existing_paths.call(cookbook_path, [
                                                                       *common_paths,
                                                                       ["files/#{stage}", 'files/default'],
                                                                       ['files/common', 'files/default'],
@@ -405,11 +405,11 @@ module Dapp
 
                     recipe_path = "recipes/#{stage}.rb"
                     if cookbook_path.join(recipe_path).exist?
-                      [[recipe_path, recipe_path], *common_mdapp_paths]
+                      [[recipe_path, recipe_path], *common_dimod_paths]
                     else
-                      [nil, *common_mdapp_paths]
+                      [nil, *common_dimod_paths]
                     end
-                  elsif !is_mdapp
+                  elsif !is_dimod
                     [['.', '.']]
                   end
 

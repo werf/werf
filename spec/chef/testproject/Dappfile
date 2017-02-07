@@ -5,14 +5,14 @@ dimg_group do
     end
   end
 
-  chef.attributes['mdapp-test2']['sayhello'] = 'hello'
-  chef.attributes['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_DAPPFILE.txt'
-  chef.attributes['mdapp-test2']['sayhelloagain'] = 'helloagain'
+  chef.attributes['dimod-test2']['sayhello'] = 'hello'
+  chef.attributes['dimod-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_DAPPFILE.txt'
+  chef.attributes['dimod-test2']['sayhelloagain'] = 'helloagain'
 
   artifact do
     docker.from 'ubuntu:14.04'
 
-    chef.dimod 'mdapp-testartifact'
+    chef.dimod 'dimod-testartifact'
     chef.recipe 'myartifact'
 
     export do
@@ -21,14 +21,14 @@ dimg_group do
     end
   end
 
-  chef.dimod 'mdapp-test'
+  chef.dimod 'dimod-test'
   chef.recipe 'main'
 
   dimg_group do
     docker.from 'ubuntu:14.04'
 
     chef.recipe 'X'
-    chef.dimod 'mdapp-test2'
+    chef.dimod 'dimod-test2'
 
     dimg 'X_Y' do
       chef.recipe 'X_Y'

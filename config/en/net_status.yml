@@ -52,7 +52,7 @@ en:
       scratch_artifact_docker_from: "Scratch artifact must have directive `docker.from`!"
     chef:
       stage_path_overlap: "Cannot install `%{cookbook}` cookbook's path %{from} into %{to}: already exists"
-      mdapp_dependency_in_metadata_forbidden: "Using mdapp as dependency in metadata.rb forbidden: detected `%{dependency}`"
+      dimod_dependency_in_metadata_forbidden: "Using dimod as dependency in metadata.rb forbidden: detected `%{dependency}`"
       cookbook_path_not_found: "Dapp cookbook directory not found at %{path}"
       cookbook_berksfile_not_found: "Dapp cookbook Berksfile not found at %{path}"
       cookbook_metadata_not_found: "Dapp cookbook metadata.rb file not found at %{path}"
