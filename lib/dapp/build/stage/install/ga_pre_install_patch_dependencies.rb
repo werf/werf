@@ -14,10 +14,6 @@ module Dapp
           def dependencies
             next_stage.next_stage.context # Install
           end
-
-          def empty?
-            super || dependencies_empty?
-          end
         end # GAPreInstallPatchDependencies
       end
     end # Stage

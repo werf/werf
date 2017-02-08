@@ -17,8 +17,8 @@ module SpecHelper
       shellout(*args, **kwargs).tap(&:error!)
     end
 
-    def random_string
-      (('a'..'z').to_a * 10).sample(100).join
+    def random_string(n = 10)
+      (('a'..'z').to_a * n).sample(n).join
     end
 
     def generate_command
