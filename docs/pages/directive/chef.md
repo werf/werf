@@ -6,12 +6,13 @@ folder: directive
 ---
 
 ### chef.dimod \<mod\>[, \<mod\>, \<mod\> ...]
-Включить переданные [модули](definitions.html#mdapp-модуль) для chef builder в данном контексте.
+Включить переданные [модули](definitions.html#dimod-модуль) для chef builder в данном контексте.
 
+* Название модулей должно включать в себя префикс 'dimod-'. Примеры: dimod-php, dimod-nginx.
 * Для каждого переданного модуля может существовать по одному рецепту на каждую из стадий.
 * При отсутствии файла рецепта в runlist для данной стадии используется пустой рецепт \<mod\>::void.
 
-Подробнее см.: [mdapp модуль](definitions.html#mdapp-модуль) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
+Подробнее см.: [dimod модуль](definitions.html#dimod-модуль) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
 
 ### chef.recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
 Включить переданные рецепты из [приложения](definitions.html#cookbook-приложения) для chef builder в данном контексте.
@@ -33,11 +34,11 @@ folder: directive
 dimg_group do
   docker.from 'image:tag'
   
-  chef.attributes['mdapp-test']['nginx']['package_name'] = 'nginx-common'
-  chef.attributes['mdapp-test']['nginx']['package_version'] = '1.4.6-1ubuntu3.5'
+  chef.attributes['dimod-test']['nginx']['package_name'] = 'nginx-common'
+  chef.attributes['dimod-test']['nginx']['package_version'] = '1.4.6-1ubuntu3.5'
 
   dimg do
-    chef.attributes['mdapp-test']['nginx']['package_version'] = '1.4.6-1ubuntu3'
+    chef.attributes['dimod-test']['nginx']['package_version'] = '1.4.6-1ubuntu3'
   end
 end
 ```

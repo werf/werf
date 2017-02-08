@@ -13,7 +13,7 @@ describe Dapp::Builder::Chef do
       it 'builds project' do
         [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
-            d.config._chef.send("__#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+            d.config._chef.send("__#{stage}_attributes")['dimod-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
           end
         end
 
@@ -36,12 +36,12 @@ describe Dapp::Builder::Chef do
       [%i(before_install foo pizza batareika),
        %i(install bar taco koromyslo),
        %i(before_setup baz burger kolokolchik),
-       %i(setup qux pelmeni taburetka)].each do |stage, project_file, mdapp_test_file, mdapp_test2_file|
+       %i(setup qux pelmeni taburetka)].each do |stage, project_file, dimod_test_file, dimod_test2_file|
         it "rebuilds from stage #{stage}" do
           old_template_file_values = {}
           old_template_file_values[project_file] = send(project_file)
-          old_template_file_values[mdapp_test_file] = send(mdapp_test_file)
-          old_template_file_values[mdapp_test2_file] = send(mdapp_test2_file)
+          old_template_file_values[dimod_test_file] = send(dimod_test_file)
+          old_template_file_values[dimod_test2_file] = send(dimod_test2_file)
 
           new_file_values = {}
 
@@ -50,25 +50,25 @@ describe Dapp::Builder::Chef do
             path.write "#{new_file_values[project_file]}\n"
           end
 
-          new_file_values[mdapp_test_file] = SecureRandom.uuid
-          mdapp_test_path.join("files/#{stage}/#{mdapp_test_file}.txt").tap do |path|
-            path.write "#{new_file_values[mdapp_test_file]}\n"
+          new_file_values[dimod_test_file] = SecureRandom.uuid
+          dimod_test_path.join("files/#{stage}/#{dimod_test_file}.txt").tap do |path|
+            path.write "#{new_file_values[dimod_test_file]}\n"
           end
 
-          new_file_values[mdapp_test2_file] = SecureRandom.uuid
-          mdapp_test2_path.join("files/#{stage}/#{mdapp_test2_file}.txt").tap do |path|
-            path.write "#{new_file_values[mdapp_test2_file]}\n"
+          new_file_values[dimod_test2_file] = SecureRandom.uuid
+          dimod_test2_path.join("files/#{stage}/#{dimod_test2_file}.txt").tap do |path|
+            path.write "#{new_file_values[dimod_test2_file]}\n"
           end
 
           dimg_rebuild!
 
           expect(send(project_file, reload: true)).not_to eq(old_template_file_values[project_file])
-          expect(send(mdapp_test_file, reload: true)).not_to eq(old_template_file_values[mdapp_test_file])
-          expect(send(mdapp_test2_file, reload: true)).not_to eq(old_template_file_values[mdapp_test2_file])
+          expect(send(dimod_test_file, reload: true)).not_to eq(old_template_file_values[dimod_test_file])
+          expect(send(dimod_test2_file, reload: true)).not_to eq(old_template_file_values[dimod_test2_file])
 
           expect(send("test_#{stage}", reload: true)).to eq(new_file_values[project_file])
-          expect(send("mdapp_test_#{stage}", reload: true)).to eq(new_file_values[mdapp_test_file])
-          expect(send("mdapp_test2_#{stage}", reload: true)).to eq(new_file_values[mdapp_test2_file])
+          expect(send("dimod_test_#{stage}", reload: true)).to eq(new_file_values[dimod_test_file])
+          expect(send("dimod_test2_#{stage}", reload: true)).to eq(new_file_values[dimod_test2_file])
         end
       end
 
@@ -78,7 +78,7 @@ describe Dapp::Builder::Chef do
 
         [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
-            d.config._chef.send("__#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+            d.config._chef.send("__#{stage}_attributes")['dimod-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
           end
         end
 
@@ -100,13 +100,13 @@ describe Dapp::Builder::Chef do
 
       xit 'rebuilds artifact from before_install stage' do
         new_note_content = SecureRandom.uuid
-        mdapp_testartifact_path.join('files/before_install/CUSTOM_NAME_FROM_CHEF_SPEC.txt').tap do |path|
+        dimod_testartifact_path.join('files/before_install/CUSTOM_NAME_FROM_CHEF_SPEC.txt').tap do |path|
           path.write "#{new_note_content}\n"
         end
 
         [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
-            d.config._chef.send("__#{stage}_attributes")['mdapp-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+            d.config._chef.send("__#{stage}_attributes")['dimod-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
           end
         end
 
@@ -138,30 +138,30 @@ describe Dapp::Builder::Chef do
           _name: "#{testproject_path.basename}-X-Y",
           _docker: default_config[:_docker].merge(_from: os.to_sym),
           _chef: {
-            _dimod: %w(mdapp-test mdapp-test2),
+            _dimod: %w(dimod-test dimod-test2),
             _recipe: %w(main X X_Y),
             __before_install_attributes: {
-              'mdapp-test2' => {
+              'dimod-test2' => {
                 'sayhello' => 'hello',
                 'sayhelloagain' => 'helloagain'
               },
-              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+              'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
             __install_attributes: {
-              'mdapp-test2' => { 'sayhello' => 'hello' },
-              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+              'dimod-test2' => { 'sayhello' => 'hello' },
+              'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
             __before_setup_attributes: {
-              'mdapp-test2' => { 'sayhello' => 'hello' },
-              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+              'dimod-test2' => { 'sayhello' => 'hello' },
+              'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
             __setup_attributes: {
-              'mdapp-test2' => { 'sayhello' => 'hello' },
-              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+              'dimod-test2' => { 'sayhello' => 'hello' },
+              'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             },
             __build_artifact_attributes: {
-              'mdapp-test2' => { 'sayhello' => 'hello' },
-              'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+              'dimod-test2' => { 'sayhello' => 'hello' },
+              'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
             }
           },
           _before_install_artifact: [
@@ -171,30 +171,30 @@ describe Dapp::Builder::Chef do
                 _artifact_dependencies: [],
                 _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
                 _chef: {
-                  _dimod: %w(mdapp-testartifact),
+                  _dimod: %w(dimod-testartifact),
                   _recipe: %w(myartifact),
                   __before_install_attributes: {
-                    'mdapp-test2' => {
+                    'dimod-test2' => {
                       'sayhello' => 'hello',
                       'sayhelloagain' => 'helloagain'
                     },
-                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                    'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                   },
                   __install_attributes: {
-                    'mdapp-test2' => { 'sayhello' => 'hello' },
-                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                    'dimod-test2' => { 'sayhello' => 'hello' },
+                    'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                   },
                   __before_setup_attributes: {
-                    'mdapp-test2' => { 'sayhello' => 'hello' },
-                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                    'dimod-test2' => { 'sayhello' => 'hello' },
+                    'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                   },
                   __setup_attributes: {
-                    'mdapp-test2' => { 'sayhello' => 'hello' },
-                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                    'dimod-test2' => { 'sayhello' => 'hello' },
+                    'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                   },
                   __build_artifact_attributes: {
-                    'mdapp-test2' => { 'sayhello' => 'hello' },
-                    'mdapp-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                    'dimod-test2' => { 'sayhello' => 'hello' },
+                    'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
                   }
                 }
               )),
@@ -231,41 +231,41 @@ describe Dapp::Builder::Chef do
     testproject_path.join('.dapp_chef')
   end
 
-  def mdapp_test_path
-    _base_path.join('mdapp-test')
+  def dimod_test_path
+    _base_path.join('dimod-test')
   end
 
-  def mdapp_test2_path
-    _base_path.join('mdapp-test2')
+  def dimod_test2_path
+    _base_path.join('dimod-test2')
   end
 
-  def mdapp_testartifact_path
-    _base_path.join('mdapp-testartifact')
+  def dimod_testartifact_path
+    _base_path.join('dimod-testartifact')
   end
 
   def template_testproject_path
     @template_testproject_path ||= Pathname('spec/chef/testproject')
   end
 
-  def template_mdapp_test_path
-    @template_mdapp_test_path ||= Pathname('spec/chef/mdapp-test')
+  def template_dimod_test_path
+    @template_dimod_test_path ||= Pathname('spec/chef/dimod-test')
   end
 
-  def template_mdapp_test2_path
-    @template_mdapp_test2_path ||= Pathname('spec/chef/mdapp-test2')
+  def template_dimod_test2_path
+    @template_dimod_test2_path ||= Pathname('spec/chef/dimod-test2')
   end
 
-  def template_mdapp_testartifact_path
-    @template_mdapp_testartifact_path ||= Pathname('spec/chef/mdapp-testartifact')
+  def template_dimod_testartifact_path
+    @template_dimod_testartifact_path ||= Pathname('spec/chef/dimod-testartifact')
   end
 
   def init_project
     FileUtils.cp_r template_testproject_path, testproject_path.tap { |p| p.parent.mkpath }
     testproject_path.join('.dapp_build').tap { |p| p.rmtree if p.exist? }
 
-    FileUtils.cp_r template_mdapp_test_path, mdapp_test_path.tap { |p| p.parent.mkpath }
-    FileUtils.cp_r template_mdapp_test2_path, mdapp_test2_path.tap { |p| p.parent.mkpath }
-    FileUtils.cp_r template_mdapp_testartifact_path, mdapp_testartifact_path.tap { |p| p.parent.mkpath }
+    FileUtils.cp_r template_dimod_test_path, dimod_test_path.tap { |p| p.parent.mkpath }
+    FileUtils.cp_r template_dimod_test2_path, dimod_test2_path.tap { |p| p.parent.mkpath }
+    FileUtils.cp_r template_dimod_testartifact_path, dimod_testartifact_path.tap { |p| p.parent.mkpath }
   end
   # rubocop:enable Metrics/AbcSize
 
@@ -282,10 +282,10 @@ describe Dapp::Builder::Chef do
                        kolokolchik koromyslo taburetka batareika
                        test_before_install test_install
                        test_before_setup test_setup
-                       mdapp_test_before_install mdapp_test_install
-                       mdapp_test_before_setup mdapp_test_setup
-                       mdapp_test2_before_install mdapp_test2_install
-                       mdapp_test2_before_setup mdapp_test2_setup).freeze
+                       dimod_test_before_install dimod_test_install
+                       dimod_test_before_setup dimod_test_setup
+                       dimod_test2_before_install dimod_test2_install
+                       dimod_test2_before_setup dimod_test2_setup).freeze
 
   TEST_FILE_NAMES.each do |name|
     define_method("#{name}_path") do

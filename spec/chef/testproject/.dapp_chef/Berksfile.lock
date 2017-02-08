@@ -1,11 +1,11 @@
 DEPENDENCIES
   apt
-  mdapp-test
-    path: ../../mdapp-test
-  mdapp-test2
-    path: ../../mdapp-test2
-  mdapp-testartifact
-    path: ../../mdapp-testartifact
+  dimod-test
+    path: ../../dimod-test
+  dimod-test2
+    path: ../../dimod-test2
+  dimod-testartifact
+    path: ../../dimod-testartifact
   test
     path: .
 
@@ -13,10 +13,10 @@ GRAPH
   apt (5.0.0)
     compat_resource (>= 12.14.7)
   compat_resource (12.16.2)
-  mdapp-test (0.0.1)
+  dimod-test (0.0.1)
     apt (>= 0.0.0)
-  mdapp-test2 (0.0.1)
+  dimod-test2 (0.0.1)
     apt (>= 0.0.0)
-  mdapp-testartifact (0.0.1)
+  dimod-testartifact (0.0.1)
   test (0.0.1)
     apt (>= 0.0.0)

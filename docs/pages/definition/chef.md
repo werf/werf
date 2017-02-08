@@ -49,7 +49,10 @@ Cookbook dapp — это основной chef cookbook, связанный с [
 
 ### Dimod
 
-Dimod — это модуль dimg. Дополнительный chef cookbook, который подключается к сборке [chef dimg](#chef-dimg).
+Dimod — это модуль dimg.
+
+* Дополнительный chef cookbook, который подключается к сборке [chef dimg](#chef-dimg).
+* Имя cookbook'а должно начинаться с префикса 'dimod-'.
 
 #### Включение в dapp
 

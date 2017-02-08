@@ -5,7 +5,7 @@ directory '/testartifact' do
   action :create
 end
 
-cookbook_file "/testartifact/#{node.read('mdapp-testartifact', 'target_filename')}" do
+cookbook_file "/testartifact/#{node.read('dimod-testartifact', 'target_filename')}" do
   source 'note.txt'
   owner 'root'
   group 'root'
