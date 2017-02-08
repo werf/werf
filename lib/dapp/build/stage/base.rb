@@ -78,6 +78,7 @@ module Dapp
           image.add_volumes_from dimg.project.base_container
           image_add_volumes
           image.add_service_change_label dapp: dimg.stage_dapp_label
+          image.add_service_change_label 'dapp-version'.to_sym => Dapp::VERSION
           image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
           image.add_service_change_label 'dapp-dev-mode'.to_sym => true if dimg.dev_mode?
 
