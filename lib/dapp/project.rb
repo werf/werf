@@ -2,7 +2,9 @@ module Dapp
   # Project
   class Project
     include Lock
+    include GitArtifact
     include Dappfile
+    include Chef
 
     include Command::Common
     include Command::Run
@@ -83,10 +85,6 @@ module Dapp
       @path ||= expand_path(dappfile_path)
     end
 
-    def cookbook_path
-      File.join(path, '.dapp_chef')
-    end
-
     def build_path
       @build_path ||= begin
         if cli_options[:build_dir]
@@ -97,8 +95,13 @@ module Dapp
       end
     end
 
-    def system_files
-      [dappfile_path, cookbook_path, build_path].map { |p| File.basename(p) }
+    def local_git_artifact_exclude_paths(&blk)
+      super do |exclude_paths|
+        build_path_relpath = Pathname.new(build_path).subpath_of(path)
+        exclude_paths << build_path_relpath.to_s if build_path_relpath
+
+        yield exclude_paths if block_given?
+      end
     end
 
     def stage_cache

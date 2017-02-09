@@ -3,6 +3,14 @@ module Dapp
   class Project
     # Dappfile
     module Dappfile
+      def local_git_artifact_exclude_paths(&blk)
+        super do |exclude_paths|
+          exclude_paths << 'Dappfile'
+
+          yield exclude_paths if block_given?
+        end
+      end
+
       def build_configs
         @configs ||= begin
           dimgs(dappfile_path).flatten.tap do |dimgs|

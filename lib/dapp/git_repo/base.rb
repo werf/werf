@@ -10,6 +10,10 @@ module Dapp
         @name = name
       end
 
+      def exclude_paths
+        []
+      end
+
       def container_path
         dimg.container_tmp_path "#{name}.git"
       end

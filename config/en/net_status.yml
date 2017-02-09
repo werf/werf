@@ -53,7 +53,7 @@ en:
     chef:
       stage_path_overlap: "Cannot install `%{cookbook}` cookbook's path %{from} into %{to}: already exists"
       dimod_dependency_in_metadata_forbidden: "Using dimod as dependency in metadata.rb forbidden: detected `%{dependency}`"
-      cookbook_path_not_found: "Dapp cookbook directory not found at %{path}"
+      local_cookbook_path_not_found: "Dapp cookbook directory not found at %{path}"
       cookbook_berksfile_not_found: "Dapp cookbook Berksfile not found at %{path}"
       cookbook_metadata_not_found: "Dapp cookbook metadata.rb file not found at %{path}"
       cookbook_not_specified_in_berksfile: "Dapp cookbook `%{name}` not specified in Berksfile at %{path}"
