@@ -67,6 +67,9 @@ describe Dapp::Dimg do
   end
 
   def expect_from_image
+  end
+
+  def expect_g_a_archive_image
     check_image_command(:g_a_archive, 'tar -x')
   end
 
@@ -103,6 +106,10 @@ describe Dapp::Dimg do
     end
   end
 
+  def change_g_a_archive
+    git_change_and_commit!(message: Dapp::Build::Stage::GAArchiveDependencies::RESET_COMMIT_MESSAGES.sample)
+  end
+
   def change_g_a_post_setup_patch
     file_path = project_path.join('large_file')
     if File.exist? file_path
@@ -121,10 +128,6 @@ describe Dapp::Dimg do
     stages_names
   end
 
-  def before_install_modified_signatures
-    stages_names[stage_index(:before_install)..-1]
-  end
-
   def install_modified_signatures
     stages_names[stage_index(:g_a_pre_install_patch_dependencies)..-1]
   end
@@ -137,7 +140,7 @@ describe Dapp::Dimg do
     stages_names[stage_index(:g_a_pre_setup_patch_dependencies)..-1]
   end
 
-  [:g_a_post_setup_patch, :g_a_latest_patch].each do |stage_name|
+  [:before_install, :g_a_archive, :g_a_post_setup_patch, :g_a_latest_patch].each do |stage_name|
     define_method "#{stage_name}_modified_signatures" do
       stages_names[stage_index(stage_name)..-1]
     end
@@ -149,6 +152,10 @@ describe Dapp::Dimg do
 
   def before_install_saved_signatures
     [stages_names.first]
+  end
+
+  def g_a_archive_saved_signatures
+    stages_names[0..stage_index(:before_install)]
   end
 
   def install_saved_signatures
@@ -219,6 +226,15 @@ describe Dapp::Dimg do
     before_setup
   end
 
+  def g_a_archive
+    build_and_check(:g_a_archive)
+    g_a_latest_patch
+    g_a_post_setup_patch
+    setup
+    before_setup
+    install
+  end
+
   def before_install
     build_and_check(:before_install)
     g_a_latest_patch
@@ -226,6 +242,7 @@ describe Dapp::Dimg do
     setup
     before_setup
     install
+    g_a_archive
   end
 
   def from
@@ -235,10 +252,11 @@ describe Dapp::Dimg do
     setup
     before_setup
     install
+    g_a_archive
     before_install
   end
 
-  [:g_a_latest_patch, :g_a_post_setup_patch, :setup, :before_setup, :install, :before_install, :from].each do |stage|
+  [:g_a_latest_patch, :g_a_post_setup_patch, :setup, :before_setup, :install, :g_a_archive, :before_install, :from].each do |stage|
     it "test #{stage}" do
       progress_thr = nil
       progress_thr = Thread.new {

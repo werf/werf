@@ -12,17 +12,17 @@ module SpecHelper
       git("branch #{branch}", git_dir: git_dir)
     end
 
-    def git_change_and_commit!(changefile = 'data.txt', changedata = random_string, branch: 'master', git_dir: nil)
+    def git_change_and_commit!(changefile = 'data.txt', changedata = random_string, message: '+', branch: 'master', git_dir: nil)
       git("checkout #{branch}", git_dir: git_dir)
       changefile = File.join([git_dir, changefile].compact)
       FileUtils.mkdir_p File.split(changefile)[0]
       File.write changefile, changedata
-      git_commit!(git_dir: git_dir)
+      git_commit!(message: message, git_dir: git_dir)
     end
 
-    def git_commit!(git_dir: nil)
+    def git_commit!(message: '+', git_dir: nil)
       git('add --all', git_dir: git_dir)
-      git('commit -m +', git_dir: git_dir) unless git('diff --cached --quiet', returns: [0, 1], git_dir: git_dir).status.success?
+      git("commit -m \"#{message}\"", git_dir: git_dir) unless git('diff --cached --quiet', returns: [0, 1], git_dir: git_dir).status.success?
     end
 
     def git_latest_commit(git_dir: nil, branch: 'master')

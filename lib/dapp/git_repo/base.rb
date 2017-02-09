@@ -42,6 +42,19 @@ module Dapp
         git_bare.head.name.sub(/^refs\/heads\//, '')
       end
 
+      def find_commit_id_by_message(regex)
+        walker.each do |commit|
+          next unless commit.message =~ regex
+          return commit.oid
+        end
+      end
+
+      def walker
+        walker = Rugged::Walker.new(git_bare)
+        walker.push(git_bare.head.target_id)
+        walker
+      end
+
       def file_exist_in_tree?(tree, paths)
         path = paths.shift
         paths.empty? ?
