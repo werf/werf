@@ -22,8 +22,18 @@ module Dapp
         @git_bare ||= Rugged::Repository.new(path, bare: true)
       end
 
-      def diff(from, to, **kwargs)
-        lookup_commit(from).diff(lookup_commit(to), **kwargs)
+      def diff(from = nil, to, **kwargs)
+        if from.nil?
+          Rugged::Tree.diff(git_bare, nil, to, **kwargs)
+        else
+          lookup_commit(from).diff(lookup_commit(to), **kwargs)
+        end
+      end
+
+      def patches(from = nil, to, exclude_paths: [], **kwargs)
+        diff(from, to, **kwargs).patches.select do |patch|
+          !exclude_paths.any? { |p| check_path?(patch.delta.new_file[:path], p) }
+        end
       end
 
       def commit_at(commit)
@@ -55,14 +65,6 @@ module Dapp
         walker
       end
 
-      def file_exist_in_tree?(tree, paths)
-        path = paths.shift
-        paths.empty? ?
-          tree.each { |obj| return true if File.fnmatch(path, obj[:name]) } :
-          tree.each_tree { |tree_obj| return file_exist_in_tree?(lookup_object(tree_obj[:oid]), paths) if File.fnmatch(path, tree_obj[:name]) }
-        false
-      end
-
       def lookup_object(oid)
         git_bare.lookup(oid)
       end
@@ -75,6 +77,19 @@ module Dapp
 
       def git
         @git ||= Rugged::Repository.new(path)
+      end
+
+      private
+
+      def check_path?(path, format)
+        path_parts = path.split('/')
+        checking_path = nil
+
+        until path_parts.empty?
+          checking_path = [checking_path, path_parts.shift].compact.join('/')
+          return true if File.fnmatch(format, checking_path)
+        end
+        false
       end
     end
   end
