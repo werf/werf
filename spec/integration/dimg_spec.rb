@@ -16,7 +16,7 @@ describe Dapp::Dimg do
     # But git should only be initialized once.
     # Earlier git_init! was in before :all, but that is not possible now.
     self.class.instance_variable_get(:@git_initialized) || begin
-      git_init!
+      git_init
       self.class.instance_variable_set(:@git_initialized, true)
     end
 
@@ -42,7 +42,7 @@ describe Dapp::Dimg do
       _builder: :shell,
       _home_path: project_path,
       _docker: default_config[:_docker].merge(_from: :'ubuntu:16.04'),
-      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { cwd: '/', to: '/to', exclude_paths: [] } })
+      _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { to: '/to', exclude_paths: [] } })
     )
   end
 
@@ -107,15 +107,15 @@ describe Dapp::Dimg do
   end
 
   def change_g_a_archive
-    git_change_and_commit!(message: Dapp::Build::Stage::GAArchiveDependencies::RESET_COMMIT_MESSAGES.sample)
+    git_change_and_commit(msg: Dapp::Build::Stage::GAArchiveDependencies::RESET_COMMIT_MESSAGES.sample)
   end
 
   def change_g_a_post_setup_patch
-    git_change_and_commit!('large_file', random_string(Dapp::Build::Stage::SetupGroup::GAPostSetupPatchDependencies::MAX_PATCH_SIZE))
+    git_change_and_commit('large_file', random_string(Dapp::Build::Stage::SetupGroup::GAPostSetupPatchDependencies::MAX_PATCH_SIZE))
   end
 
   def change_g_a_latest_patch
-    git_change_and_commit!
+    git_change_and_commit
   end
 
   def from_modified_signatures
