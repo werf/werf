@@ -16,6 +16,14 @@ module Dapp
         raise Error::Rugged, code: :local_git_repository_does_not_exist
       end
 
+      def diff(from, to, **kwargs)
+        if to.nil?
+          git.lookup(from).diff_workdir
+        else
+          super
+        end
+      end
+
       def latest_commit(_branch = nil)
         git.head.target_id
       end

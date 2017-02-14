@@ -39,15 +39,11 @@ module Dapp
     end
 
     def apply_patch_command(stage)
-      current_commit = stage.layer_commit(self)
-      prev_commit = stage.prev_g_a_stage.layer_commit(self)
+      patch_command(stage.prev_g_a_stage.layer_commit(self), stage.layer_commit(self))
+    end
 
-      [].tap do |commands|
-        if any_changes?(prev_commit, current_commit)
-          commands << "#{sudo}#{repo.dimg.project.git_bin} apply --whitespace=nowarn --directory=#{to} --unsafe-paths " \
-                      "#{patch_file(prev_commit, current_commit)}"
-        end
-      end
+    def apply_dev_patch_command(stage)
+      patch_command(stage.prev_g_a_stage.layer_commit(self), nil)
     end
 
     def patch_size(from, to)
@@ -65,6 +61,10 @@ module Dapp
         end
         bytes
       end
+    end
+
+    def dev_patch_hash(stage)
+      Digest::SHA256.hexdigest diff_patches(stage.prev_g_a_stage.layer_commit(self), nil).map(&:to_s).join(':::')
     end
 
     def latest_commit
@@ -103,6 +103,15 @@ module Dapp
     attr_reader :cwd
     attr_reader :owner
     attr_reader :group
+
+    def patch_command(prev_commit, current_commit)
+      [].tap do |commands|
+        if any_changes?(prev_commit, current_commit)
+          commands << "#{sudo}#{repo.dimg.project.git_bin} apply --whitespace=nowarn --directory=#{to} --unsafe-paths " \
+                      "#{patch_file(prev_commit, current_commit)}"
+        end
+      end
+    end
 
     def sudo
       repo.dimg.project.sudo_command(owner: owner, group: group)

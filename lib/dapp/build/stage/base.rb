@@ -88,6 +88,8 @@ module Dapp
             image.add_volume "#{dimg.project.ssh_auth_sock}:/tmp/dapp-ssh-agent"
             image.add_env 'SSH_AUTH_SOCK', '/tmp/dapp-ssh-agent'
           end
+
+          yield if block_given?
         end
 
         def image_add_mounts
