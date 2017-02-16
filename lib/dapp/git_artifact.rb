@@ -14,8 +14,14 @@ module Dapp
       @commit = commit
 
       @to = to
-      cwd = File.expand_path(File.join('/', cwd))[1..-1] unless cwd.nil? || cwd.empty? # must be relative!!!
-      @cwd = cwd
+      @cwd = begin
+        if cwd.nil? || cwd.empty?
+          ''
+        else
+          cwd = File.expand_path(File.join('/', cwd))[1..-1] # must be relative
+          "#{cwd.chomp('/')}/"
+        end
+      end
       @include_paths = include_paths
       @exclude_paths = exclude_paths
       @owner = owner
@@ -73,6 +79,10 @@ module Dapp
       "#{repo.name}#{name ? "_#{name}" : nil}"
     end
 
+    def any_changes?(from, to = latest_commit)
+      diff_patches(from, to).any?
+    end
+
     protected
 
     attr_reader :to
@@ -108,7 +118,10 @@ module Dapp
 
     def slice_cwd(path)
       return path if cwd.empty?
-      path.gsub(/#{Regexp.escape(cwd)}\//, '')
+      path
+        .reverse
+        .chomp(cwd.reverse)
+        .reverse
     end
 
     def archive_file_name(commit)
@@ -117,30 +130,49 @@ module Dapp
 
     def patch_file(from, to)
       create_file(repo.dimg.tmp_path('patches', patch_file_name(from, to))) do |f|
-        diff_patches(from, to).each do |patch|
-          f.write change_patch_new_file_path(patch.to_s)
-        end
+        diff_patches(from, to).each { |patch| f.write change_patch_new_file_path(patch) }
       end
       repo.dimg.container_tmp_path('patches', patch_file_name(from, to))
     end
 
     def change_patch_new_file_path(patch)
-      patch.lines.tap do |lines|
-        [0, 4].each do |ind|
-          lines[ind] = begin
-            line = lines[ind]
-            new_path = line.split.last
-
-            if !new_path.start_with?('/') && !cwd.empty?
-              default_prefix = 'b'
-              regex = /(?<=^#{default_prefix})\/#{Regexp.escape(cwd)}/
-              new_path.gsub!(regex, '')
+      patch.to_s.lines.tap do |lines|
+        modify_patch_line = proc do |line_number, path_char|
+          action_part, path_part = lines[line_number].split
+          if (path_with_cwd = path_part.partition("#{path_char}/").last).start_with?(cwd)
+            path_with_cwd.sub(cwd, '').tap do |native_path|
+              expected_path = File.join(path_char, native_path)
+              lines[line_number] = [action_part, expected_path].join(' ') + "\n"
             end
-
-            [line.split[0..-2], new_path].flatten.join(' ') + "\n"
           end
         end
+
+        modify_patch = proc do |*modify_patch_line_args|
+          native_paths = modify_patch_line_args.map { |args| modify_patch_line.call(*args) }
+          unless (native_paths = native_paths.compact.uniq).empty?
+            raise Error::Build, code: :unsupported_patch_format, data: { patch: patch.to_s } unless native_paths.one?
+            native_path = native_paths.first
+            lines[0] = ['diff --git', File.join('a', native_path), File.join('b', native_path)].join(' ') + "\n"
+          end
+        end
+
+        case
+        when patch.delta.deleted? then modify_patch.call([3, 'a'])
+        when patch.delta.added? then modify_patch.call([4, 'b'])
+        when patch.delta.modified?
+          if patch_file_mode_changed?(patch)
+            modify_patch.call([4, 'a'], [5, 'b'])
+          else
+            modify_patch.call([2, 'a'], [3, 'b'])
+          end
+        else
+          raise
+        end
       end.join
+    end
+
+    def patch_file_mode_changed?(patch)
+      patch.delta.old_file[:mode] != patch.delta.new_file[:mode]
     end
 
     def patch_file_name(from, to)
@@ -153,10 +185,6 @@ module Dapp
 
     def create_file(file_path, &blk)
       File.open(file_path, File::RDWR|File::CREAT, &blk)
-    end
-
-    def any_changes?(from, to = latest_commit)
-      diff_patches(from, to).any?
     end
 
     def diff_patches(from, to)
@@ -181,7 +209,16 @@ module Dapp
     end
 
     def base_paths(paths, with_cwd = false)
-      [paths].flatten.compact.map { |path| (with_cwd && cwd ? File.join(cwd, path) : path).gsub(%r{^\/*|\/*$}, '') }
+      [paths].flatten.compact.map do |path|
+        if with_cwd && !cwd.empty?
+          File.join(cwd, path)
+        else
+          path
+        end
+          .chomp('/')
+          .reverse.chomp('/')
+          .reverse
+      end
     end
   end
 end
