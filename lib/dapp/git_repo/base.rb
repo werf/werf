@@ -10,46 +10,34 @@ module Dapp
         @name = name
       end
 
-      def container_path
-        dimg.container_tmp_path "#{name}.git"
-      end
-
-      def path
-        dimg.tmp_path("#{name}.git").to_s
-      end
-
-      def git_bare
-        @git_bare ||= Rugged::Repository.new(path, bare: true)
-      end
-
-      def diff(from = nil, to, **kwargs)
-        if from.nil?
-          Rugged::Tree.diff(git_bare, nil, to, **kwargs)
-        else
-          lookup_commit(from).diff(lookup_commit(to), **kwargs)
-        end
-      end
-
-      def patches(from = nil, to, exclude_paths: [], **kwargs)
+      def patches(from, to, exclude_paths: [], **kwargs)
         diff(from, to, **kwargs).patches.select do |patch|
           !exclude_paths.any? { |p| check_path?(patch.delta.new_file[:path], p) }
         end
       end
 
-      def commit_at(commit)
-        lookup_commit(commit).time.to_i
+      def diff(from, to, **kwargs)
+        if from.nil?
+          Rugged::Tree.diff(git, nil, to, **kwargs)
+        else
+          lookup_commit(from).diff(lookup_commit(to), **kwargs)
+        end
       end
 
-      def latest_commit(branch)
-        return git_bare.head.target_id if branch == 'HEAD'
-        git_bare.branches[branch].target_id
+      def commit_exists?(commit)
+        git.exists?(commit)
       end
 
-      def cleanup!
+      def latest_commit(_branch)
+        raise
       end
 
       def branch
-        git_bare.head.name.sub(/^refs\/heads\//, '')
+        git.head.name.sub(/^refs\/heads\//, '')
+      end
+
+      def commit_at(commit)
+        lookup_commit(commit).time.to_i
       end
 
       def find_commit_id_by_message(regex)
@@ -60,23 +48,23 @@ module Dapp
       end
 
       def walker
-        walker = Rugged::Walker.new(git_bare)
-        walker.push(git_bare.head.target_id)
+        walker = Rugged::Walker.new(git)
+        walker.push(git.head.target_id)
         walker
       end
 
       def lookup_object(oid)
-        git_bare.lookup(oid)
+        git.lookup(oid)
       end
 
       def lookup_commit(commit)
-        git_bare.lookup(commit)
+        git.lookup(commit)
       end
 
       protected
 
-      def git
-        @git ||= Rugged::Repository.new(path)
+      def git(**kwargs)
+        @git ||= Rugged::Repository.new(path, **kwargs)
       end
 
       private
