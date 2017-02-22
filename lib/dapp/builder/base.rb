@@ -73,13 +73,6 @@ module Dapp
       def build_artifact_checksum
         raise
       end
-
-      def chef_cookbooks(_image)
-      end
-
-      def chef_cookbooks_checksum
-        []
-      end
     end # Base
   end # Builder
 end # Dapp

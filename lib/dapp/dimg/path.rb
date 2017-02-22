@@ -7,10 +7,6 @@ module Dapp
         make_path(project.path, *path).expand_path
       end
 
-      def local_cookbook_path(*path)
-        make_path(project.local_cookbook_path, *path)
-      end
-
       def tmp_path(*path)
         @tmp_path ||= Dir.mktmpdir('dapp-', project.cli_options[:tmp_dir_prefix] || '/tmp')
         make_path(@tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }

@@ -14,7 +14,7 @@ describe Dapp::Build::Stage do
   def dimg_stages
     [:from, :before_install, :before_install_artifact, :g_a_archive_dependencies, :g_a_archive, :g_a_pre_install_patch_dependencies,
      :g_a_pre_install_patch, :install, :g_a_post_install_patch_dependencies, :g_a_post_install_patch, :after_install_artifact,
-     :before_setup, :before_setup_artifact, :g_a_pre_setup_patch_dependencies, :g_a_pre_setup_patch, :setup, :chef_cookbooks,
+     :before_setup, :before_setup_artifact, :g_a_pre_setup_patch_dependencies, :g_a_pre_setup_patch, :setup,
      :g_a_post_setup_patch_dependencies, :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions]
   end
 
@@ -29,7 +29,7 @@ describe Dapp::Build::Stage do
   def artifact_stages
     [:from, :before_install, :before_install_artifact, :g_a_archive_dependencies, :g_a_archive, :g_a_pre_install_patch_dependencies,
      :g_a_pre_install_patch, :install, :g_a_post_install_patch_dependencies, :g_a_post_install_patch, :after_install_artifact,
-     :before_setup, :before_setup_artifact, :g_a_pre_setup_patch_dependencies, :g_a_pre_setup_patch, :setup, :chef_cookbooks,
+     :before_setup, :before_setup_artifact, :g_a_pre_setup_patch_dependencies, :g_a_pre_setup_patch, :setup,
      :after_setup_artifact, :g_a_artifact_patch, :build_artifact]
   end
 

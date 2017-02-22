@@ -1,52 +1,54 @@
-module Dapp
-  module Builder
-    class Chef < Base
-      # CookbookMetadata
-      class CookbookMetadata
-        # Parser
-        class Parser
-          def initialize(cookbook_metadata)
-            @cookbook_metadata = cookbook_metadata
-            parse
-          end
+module Dapp::Builder
+  class Chef::CookbookMetadata
+    class << self
+      def from_file(metadata_file_path)
+        metadata = self.new
+        FileParser.new(metadata_file_path, metadata)
+        metadata
+      end
 
-          def name(name)
-            @cookbook_metadata.name = name
-          end
+      def from_conf(conf)
+        # TODO
+      end
+    end # << self
 
-          def version(version)
-            @cookbook_metadata.version = version
-          end
+    class FileParser
+      def initialize(metadata_file_path, metadata)
+        @metadata_file_path = metadata_file_path
+        @metadata = metadata
 
-          def depends(dependency, *_a, &_blk)
-            @cookbook_metadata.depends << dependency.to_s
-          end
+        parse
+      end
 
-          # rubocop:disable Style/MethodMissing
-          def method_missing(*_a, &_blk)
-          end
-          # rubocop:enable Style/MethodMissing
+      def name(name)
+        @metadata.name = name
+      end
 
-          private
+      def version(version)
+        @metadata.version = version
+      end
 
-          def parse
-            instance_eval(@cookbook_metadata.path.read, @cookbook_metadata.path.to_s)
-          end
-        end # Parser
+      def depends(dependency, *_a, &_blk)
+        @metadata.depends << dependency.to_s
+      end
 
-        attr_reader :path
-        attr_accessor :name
-        attr_accessor :version
+      # rubocop:disable Style/MethodMissing
+      def method_missing(*_a, &_blk)
+      end
+      # rubocop:enable Style/MethodMissing
 
-        def depends
-          @depends ||= []
-        end
+      private
 
-        def initialize(path)
-          @path = path
-          @parser = Parser.new(self)
-        end
-      end # CookbookMetadata
-    end # Chef
-  end # Builder
-end # Dapp
+      def parse
+        instance_eval(@metadata_file_path.read, @metadata_file_path.to_s)
+      end
+    end # FileParser
+
+    attr_accessor :name
+    attr_accessor :version
+
+    def depends
+      @depends ||= []
+    end
+  end # Chef::CookbookMetadata
+end # Dapp::Builder
