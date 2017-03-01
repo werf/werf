@@ -11,7 +11,7 @@ describe Dapp::CLI do
 
   RSpec.configure do |c|
     c.before(:example, :stub) do
-      allow(class_double(Dapp::Dimg).as_stubbed_const).to receive(:new) { RecursiveOpenStruct.new }
+      allow(class_double(Dapp::Dimg::Dimg).as_stubbed_const).to receive(:new) { RecursiveOpenStruct.new }
       allow_any_instance_of(Dapp::Dapp).to receive(:build_configs) { [RecursiveOpenStruct.new(_name: 'dapp')] }
     end
   end

@@ -7,7 +7,7 @@ module Dapp
       module StageImage
         def stage_image
           one_dimg!
-          puts Dimg.new(config: build_configs.first, dapp: self, ignore_git_fetch: true).stage_image_name(cli_options[:stage])
+          puts Dimg::Dimg.new(config: build_configs.first, dapp: self, ignore_git_fetch: true).stage_image_name(cli_options[:stage])
         end
       end
     end

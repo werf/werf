@@ -50,7 +50,7 @@ module Dapp
           def dapp_git_repositories
             @dapp_git_repositories ||= begin
               {}.tap do |repositories|
-                dimgs = build_configs.map { |config| Dimg.new(config: config, dapp: self, ignore_git_fetch: true) }
+                dimgs = build_configs.map { |config| Dimg::Dimg.new(config: config, dapp: self, ignore_git_fetch: true) }
                 dimgs.each do |dimg|
                   [dimg, dimg.artifacts].flatten
                     .map(&:git_artifacts).flatten

@@ -8,7 +8,7 @@ module Dapp
         def tag(tag)
           one_dimg!
           raise Error::Dapp, code: :tag_command_incorrect_tag, data: { name: tag } unless Image::Docker.image_name?(tag)
-          Dimg.new(config: build_configs.first, dapp: self, ignore_git_fetch: true, should_be_built: true).tap do |app|
+          Dimg::Dimg.new(config: build_configs.first, dapp: self, ignore_git_fetch: true, should_be_built: true).tap do |app|
             app.tag!(tag)
           end
         end

@@ -107,11 +107,11 @@ describe Dapp::Dimg do
   end
 
   def change_g_a_archive
-    git_change_and_commit(msg: Dapp::Build::Stage::GAArchiveDependencies::RESET_COMMIT_MESSAGES.sample)
+    git_change_and_commit(msg: Dapp::Dimg::Build::Stage::GAArchiveDependencies::RESET_COMMIT_MESSAGES.sample)
   end
 
   def change_g_a_post_setup_patch
-    git_change_and_commit('large_file', random_string(Dapp::Build::Stage::SetupGroup::GAPostSetupPatchDependencies::MAX_PATCH_SIZE))
+    git_change_and_commit('large_file', random_string(Dapp::Dimg::Build::Stage::SetupGroup::GAPostSetupPatchDependencies::MAX_PATCH_SIZE))
   end
 
   def change_g_a_latest_patch

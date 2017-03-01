@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe Dapp::Artifact do
+describe Dapp::Dimg::Artifact do
   include SpecHelper::Common
   include SpecHelper::Dimg
 

@@ -10,7 +10,7 @@ module Dapp
 
           build_configs.each do |config|
             log_dimg_name_with_indent(config) do
-              Dimg.new(config: config, dapp: self).build!
+              Dimg::Dimg.new(config: config, dapp: self).build!
             end
           end
         end
