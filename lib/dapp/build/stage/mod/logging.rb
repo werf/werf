@@ -91,7 +91,7 @@ module Dapp
           end
 
           def should_be_introspected?
-            dimg.project.cli_options[:introspect_stage] == name && !dimg.project.dry_run? && !dimg.artifact?
+            dimg.stage_should_be_introspected?(name) && !dimg.project.dry_run?
           end
 
           def should_be_quiet?
