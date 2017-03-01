@@ -48,10 +48,10 @@ module Dapp
         # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity
 
         def build!
-          return if should_be_skipped?
+          return if build_should_be_skipped?
           prev_stage.build! if prev_stage
           if image_should_be_build?
-            prepare_image if !image.tagged? && !should_be_not_present?
+            prepare_image if !image.built? && !should_be_not_present?
             log_image_build(&method(:image_build))
           end
           dimg.introspect_image!(image: image.built_id, options: image.send(:prepared_options)) if should_be_introspected?
@@ -68,7 +68,7 @@ module Dapp
             if empty?
               prev_stage.image
             else
-              Image::Stage.new(name: image_name, from: from_image, project: dimg.project)
+              Image::Stage.image_by_name(name: image_name, from: from_image, project: dimg.project)
             end
           end
         end
@@ -76,8 +76,11 @@ module Dapp
         def prepare_image
           return if dimg.project.dry_run?
           image.add_volumes_from dimg.project.base_container
-          image_add_volumes
+
+          image_add_mounts
+
           image.add_service_change_label dapp: dimg.stage_dapp_label
+          image.add_service_change_label 'dapp-version'.to_sym => Dapp::VERSION
           image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
           image.add_service_change_label 'dapp-dev-mode'.to_sym => true if dimg.dev_mode?
 
@@ -87,30 +90,27 @@ module Dapp
           end
         end
 
-        def image_add_volumes
-          image_add_tmp_volumes
-          image_add_build_volumes
-        end
+        def image_add_mounts
+          [:tmp_dir, :build_dir].each do |type|
+            next if (mounts = mounts_by_type(type)).empty?
 
-        def image_add_tmp_volumes
-          image_add_default_volumes(:tmp_dir)
-        end
+            mounts.each do |path|
+              absolute_path = File.expand_path(File.join('/', path))
+              tmp_path = dimg.send(type, 'mount', absolute_path[1..-1]).tap(&:mkpath)
+              image.add_volume "#{tmp_path}:#{absolute_path}"
+            end
 
-        def image_add_build_volumes
-          image_add_default_volumes(:build_dir)
-        end
-
-        def image_add_default_volumes(type)
-          (dimg.config.public_send("_#{type}_mount").map(&:_to) +
-            from_image.labels.select { |l, _| l == "dapp-#{type}-dir" }.map { |_, value| value.split(';') }.flatten).each do |path|
-            absolute_path = File.expand_path(File.join('/', path))
-            tmp_path = dimg.send(type, 'mount', absolute_path[1..-1]).tap(&:mkpath)
-            image.add_volume "#{tmp_path}:#{absolute_path}"
+            image.add_service_change_label :"dapp-mount-#{type.to_s.tr('_', '-')}" => mounts.join(';')
           end
         end
 
+        def mounts_by_type(type)
+          (dimg.config.public_send("_#{type}_mount").map(&:_to) +
+            from_image.labels.select { |l, _| l == "dapp-mount-#{type.to_s.tr('_', '-')}" }.map { |_, value| value.split(';') }.flatten).uniq
+        end
+
         def image_should_be_build?
-          !empty? || dimg.project.log_verbose?
+          (!empty? && !image.built?) || dimg.project.log_verbose?
         end
 
         def empty?
@@ -122,16 +122,18 @@ module Dapp
         end
 
         def signature
-          if empty?
-            prev_stage.signature
-          else
-            args = []
-            args << prev_stage.signature unless prev_stage.nil?
-            args << dimg.build_cache_version
-            args << builder_checksum
-            args.concat(dependencies.flatten)
+          @signature ||= begin
+            if empty?
+              prev_stage.signature
+            else
+              args = []
+              args << prev_stage.signature unless prev_stage.nil?
+              args << dimg.build_cache_version
+              args << builder_checksum
+              args.concat(dependencies.flatten)
 
-            hashsum args
+              hashsum args
+            end
           end
         end
 
@@ -152,8 +154,8 @@ module Dapp
           image.build!
         end
 
-        def should_be_skipped?
-          image.tagged? && !dimg.project.log_verbose? && !should_be_introspected?
+        def build_should_be_skipped?
+          image.built? && !dimg.project.log_verbose? && !should_be_introspected?
         end
 
         def should_be_tagged?

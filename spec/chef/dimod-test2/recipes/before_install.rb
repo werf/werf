@@ -1,11 +1,11 @@
 include_recipe 'apt' if node[:platform_family].to_s == 'debian'
 
 log SecureRandom.uuid do
-  message "node['mdapp-test2']['sayhello'] = #{node['mdapp-test2']['sayhello']}"
+  message "node['dimod-test2']['sayhello'] = #{node['dimod-test2']['sayhello']}"
 end
 
 log SecureRandom.uuid do
-  message "node['mdapp-test2']['sayhelloagain'] = #{node['mdapp-test2']['sayhelloagain']}"
+  message "node['dimod-test2']['sayhelloagain'] = #{node['dimod-test2']['sayhelloagain']}"
 end
 
 cookbook_file "/#{cookbook_name.to_s.tr('-', '_')}_before_install.txt" do

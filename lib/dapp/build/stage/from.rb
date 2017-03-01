@@ -26,7 +26,7 @@ module Dapp
         end
 
         def from_image
-          @from_image ||= Image::Stage.new(name: from_image_name, project: dimg.project)
+          @from_image ||= Image::Stage.image_by_name(name: from_image_name, project: dimg.project)
         end
       end # Prepare
     end # Stage

@@ -8,7 +8,7 @@ module Dapp
         end
 
         def signature
-          hashsum [*dependencies.flatten, change_options]
+          @signature ||= hashsum [*dependencies.flatten, change_options]
         end
 
         def image

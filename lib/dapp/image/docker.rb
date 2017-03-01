@@ -7,6 +7,10 @@ module Dapp
       attr_reader :name
       attr_reader :project
 
+      def self.image_by_name(name:, **kwargs)
+        (@images ||= {})[name] ||= new(name: name, **kwargs)
+      end
+
       def initialize(name:, project:, from: nil)
         @from = from
         @name = name

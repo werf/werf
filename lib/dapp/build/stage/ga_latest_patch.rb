@@ -31,7 +31,7 @@ module Dapp
         end
 
         def empty?
-          dependencies_empty?
+          dependencies_empty? || dimg.git_artifacts.all? { |git_artifact| !git_artifact.any_changes?(prev_g_a_stage.layer_commit(git_artifact)) }
         end
 
         private

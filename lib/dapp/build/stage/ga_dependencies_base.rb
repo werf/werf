@@ -11,7 +11,7 @@ module Dapp
         end
 
         def empty?
-          dimg.git_artifacts.empty? ? true : false
+          dimg.git_artifacts.empty? || super
         end
       end # GADependenciesBase
     end # Stage
