@@ -53,8 +53,8 @@ en:
       stage_artifact_rewritten: "WARNING: Artifact stage rewritten from %{conflict_stage} to %{stage}."
       recipe_does_not_used: "WARNING: Recipe `%{recipe}` doesn't used in any stage."
     group:
-      install_group: 'Install group'
-      setup_group: 'Setup group'
+      install: 'Install group'
+      setup: 'Setup group'
     stage:
       from: 'From'
       import_artifact: 'Import Artifact'
@@ -62,7 +62,7 @@ en:
       before_install_artifact: 'Before install artifact'
       g_a_archive_dependencies: 'Git artifacts dependencies'
       g_a_archive: 'Git artifacts: create archive'
-      install_group:
+      install:
         g_a_pre_install_patch_dependencies: 'Git artifacts dependencies'
         g_a_pre_install_patch: 'Git artifacts: apply patches (before install)'
         install: 'Install'
@@ -71,7 +71,7 @@ en:
       after_install_artifact: 'After install artifact'
       before_setup: 'Before setup'
       before_setup_artifact: 'Before setup artifact'
-      setup_group:
+      setup:
         g_a_pre_setup_patch_dependencies: 'Git artifacts dependencies'
         g_a_pre_setup_patch: 'Git artifacts: apply patches (before setup)'
         setup: 'Setup'

@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Dapp::Config::Directive::Mount do
+describe Dapp::Dimg::Config::Directive::Mount do
   include SpecHelper::Common
   include SpecHelper::Config
 

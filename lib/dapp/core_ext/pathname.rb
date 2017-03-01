@@ -10,7 +10,7 @@ module Dapp
         path_descends = []
         cleanpath.descend {|d| path_descends << d}
 
-        (path_descends & another_path_descends) == another_path_descends and
+        (path_descends & another_path_descends) == another_path_descends &&
           (path_descends - another_path_descends).any?
       end
 

@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe Dapp::Builder::Chef do
+describe Dapp::Dimg::Builder::Chef do
   include SpecHelper::Common
   include SpecHelper::Dimg
 

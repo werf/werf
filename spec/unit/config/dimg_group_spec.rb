@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Dapp::Config::DimgGroup do
+describe Dapp::Dimg::Config::DimgGroup do
   include SpecHelper::Common
   include SpecHelper::Config
 
@@ -188,7 +188,7 @@ describe Dapp::Config::DimgGroup do
   end
 
   context 'warning' do
-    def stubbed_project
+    def stubbed_dapp
       super.tap do |instance|
         allow(instance).to receive(:log_config_warning) { |*_args, **kwargs| puts kwargs[:desc][:code] }
       end

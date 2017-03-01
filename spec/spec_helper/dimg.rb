@@ -13,8 +13,8 @@ module SpecHelper
     def dimg_renew
       @openstruct_config = nil
       @dimg = begin
-        options = { config: openstruct_config, project: project }
-        Dapp::Dimg.new(**options)
+        options = { config: openstruct_config, dapp: dapp }
+        Dapp::Dimg::Dimg.new(**options)
       end
     end
 
@@ -23,11 +23,11 @@ module SpecHelper
       dimg_build!
     end
 
-    def project
-      @project ||= begin
-        allow_any_instance_of(Dapp::Project).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
+    def dapp
+      @dapp ||= begin
+        allow_any_instance_of(Dapp::Dapp).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
         yield if block_given?
-        Dapp::Project.new(cli_options: cli_options)
+        Dapp::Dapp.new(cli_options: cli_options)
       end
     end
 
@@ -94,9 +94,9 @@ module SpecHelper
     end
 
     def stub_dimg
-      method_new = Dapp::Dimg.method(:new)
+      method_new = Dapp::Dimg::Dimg.method(:new)
 
-      dimg = class_double(Dapp::Dimg).as_stubbed_const
+      dimg = class_double(Dapp::Dimg::Dimg).as_stubbed_const
       allow(dimg).to receive(:new) do |*args, &block|
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:home_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
@@ -107,11 +107,11 @@ module SpecHelper
     end
 
     def empty_dimg
-      Dapp::Dimg.new(project: nil, config: openstruct_config)
+      Dapp::Dimg::Dimg.new(dapp: nil, config: openstruct_config)
     end
 
     def empty_artifact
-      Dapp::Artifact.new(project: nil, config: openstruct_config)
+      Dapp::Dimg::Artifact.new(dapp: nil, config: openstruct_config)
     end
   end
 end

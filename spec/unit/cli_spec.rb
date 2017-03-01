@@ -11,8 +11,8 @@ describe Dapp::CLI do
 
   RSpec.configure do |c|
     c.before(:example, :stub) do
-      allow(class_double(Dapp::Dimg).as_stubbed_const).to receive(:new) { RecursiveOpenStruct.new }
-      allow_any_instance_of(Dapp::Project).to receive(:build_configs) { [RecursiveOpenStruct.new(_name: 'project')] }
+      allow(class_double(Dapp::Dimg::Dimg).as_stubbed_const).to receive(:new) { RecursiveOpenStruct.new }
+      allow_any_instance_of(Dapp::Dapp).to receive(:build_configs) { [RecursiveOpenStruct.new(_name: 'dapp')] }
     end
   end
 
@@ -22,31 +22,31 @@ describe Dapp::CLI do
 
   context 'run' do
     before :each do
-      stub_instance(Dapp::Project) do |instance|
+      stub_instance(Dapp::Dapp) do |instance|
         allow(instance).to receive(:run)
         @instance = instance
       end
     end
 
     it 'empty' do
-      expect_parsed_options('run')
+      expect_parsed_options('dimg run')
     end
 
-    it 'project args' do
-      expect_parsed_options('run --time', cli_options: { log_time: true })
-      expect_parsed_options('run dimg*', dimgs_patterns: ['dimg*'])
-      expect_parsed_options('run dimg* --time', cli_options: { log_time: true }, dimgs_patterns: ['dimg*'])
-      expect_parsed_options('run --time dimg*', cli_options: { log_time: true }, dimgs_patterns: ['dimg*'])
+    it 'dapp args' do
+      expect_parsed_options('dimg run --time', cli_options: { log_time: true })
+      expect_parsed_options('dimg run dimg*', dimgs_patterns: ['dimg*'])
+      expect_parsed_options('dimg run dimg* --time', cli_options: { log_time: true }, dimgs_patterns: ['dimg*'])
+      expect_parsed_options('dimg run --time dimg*', cli_options: { log_time: true }, dimgs_patterns: ['dimg*'])
     end
 
     it 'docker args' do
-      expect_parsed_options('run -ti --rm', docker_options: %w(-ti --rm))
-      expect_parsed_options('run -- bash rm -rf', docker_command: %w(bash rm -rf))
-      expect_parsed_options('run -ti --rm -- bash rm -rf', docker_options: %w(-ti --rm), docker_command: %w(bash rm -rf))
+      expect_parsed_options('dimg run -ti --rm', docker_options: %w(-ti --rm))
+      expect_parsed_options('dimg run -- bash rm -rf', docker_command: %w(bash rm -rf))
+      expect_parsed_options('dimg run -ti --rm -- bash rm -rf', docker_options: %w(-ti --rm), docker_command: %w(bash rm -rf))
     end
 
     it 'oatmeal' do
-      expect_parsed_options('run --quiet *dimg* -ti --time --rm -- bash rm -rf',
+      expect_parsed_options('dimg run --quiet *dimg* -ti --time --rm -- bash rm -rf',
                             cli_options: { log_quiet: true, log_time: true },
                             dimgs_patterns: ['*dimg*'],
                             docker_options: %w(-ti --rm),

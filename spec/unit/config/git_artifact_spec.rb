@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Dapp::Config::Directive::GitArtifactRemote do
+describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
   include SpecHelper::Common
   include SpecHelper::Config
 

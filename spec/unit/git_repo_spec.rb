@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe Dapp::GitRepo do
+describe Dapp::Dimg::GitRepo do
   include SpecHelper::Common
   include SpecHelper::Dimg
   include SpecHelper::Git
@@ -25,7 +25,7 @@ describe Dapp::GitRepo do
   def dapp_remote_init
     git_init(git_dir: 'remote')
 
-    @remote = Dapp::GitRepo::Remote.new(dimg, 'local_remote', url: 'remote/.git')
+    @remote = Dapp::Dimg::GitRepo::Remote.new(dimg, 'local_remote', url: 'remote/.git')
 
     expect(File.exist?(@remote.path)).to be_truthy
     expect(File.basename(@remote.path)).to eq 'local_remote.git'
@@ -45,7 +45,7 @@ describe Dapp::GitRepo do
   it 'Own', test_construct: true do
     git_init
 
-    own = Dapp::GitRepo::Own.new(dimg)
+    own = Dapp::Dimg::GitRepo::Own.new(dimg)
     expect(own.latest_commit).to eq git_latest_commit
 
     git_change_and_commit

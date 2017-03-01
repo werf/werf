@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe Dapp::Dimg do
+describe Dapp::Dimg::Dimg do
   include SpecHelper::Common
   include SpecHelper::Dimg
   include SpecHelper::Git
@@ -12,7 +12,7 @@ describe Dapp::Dimg do
 
   before :each do
     # git_init works only in test case context,
-    # because of using project and dimg objects for system-shellout.
+    # because of using dapp and dimg objects for system-shellout.
     # But git should only be initialized once.
     # Earlier git_init was in before :all, but that is not possible now.
     self.class.instance_variable_get(:@git_initialized) || begin
@@ -107,11 +107,11 @@ describe Dapp::Dimg do
   end
 
   def change_g_a_archive
-    git_change_and_commit(msg: Dapp::Build::Stage::GAArchiveDependencies::RESET_COMMIT_MESSAGES.sample)
+    git_change_and_commit(msg: Dapp::Dimg::Build::Stage::GAArchiveDependencies::RESET_COMMIT_MESSAGES.sample)
   end
 
   def change_g_a_post_setup_patch
-    git_change_and_commit('large_file', random_string(Dapp::Build::Stage::SetupGroup::GAPostSetupPatchDependencies::MAX_PATCH_SIZE))
+    git_change_and_commit('large_file', random_string(Dapp::Dimg::Build::Stage::Setup::GAPostSetupPatchDependencies::MAX_PATCH_SIZE))
   end
 
   def change_g_a_latest_patch
@@ -253,11 +253,11 @@ describe Dapp::Dimg do
   [:g_a_latest_patch, :g_a_post_setup_patch, :setup, :before_setup, :install, :g_a_archive, :before_install, :from].each do |stage|
     it "test #{stage}" do
       progress_thr = nil
-      progress_thr = Thread.new {
+      progress_thr = Thread.new do
         STDOUT.sync = true
         STDERR.sync = true
         loop { sleep(60); puts '.' }
-      } if ENV['TRAVIS']
+      end if ENV['TRAVIS']
 
       begin
         send(stage)
