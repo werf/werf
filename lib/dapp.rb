@@ -16,7 +16,6 @@ require 'i18n'
 require 'paint'
 require 'inifile'
 require 'rugged'
-require 'stringio'
 require 'rubygems/package'
 
 require 'net_status'
