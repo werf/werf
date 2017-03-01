@@ -29,7 +29,7 @@ module Dapp
       end
 
       def built?
-        !@built_id.nil?
+        !built_id.nil?
       end
 
       def export!(name)
