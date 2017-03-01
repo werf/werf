@@ -73,8 +73,7 @@ module Dapp
               repo_project_dappstage_images_detailed(registry).each do |_, attrs|
                 attrs[:labels].each do |repo_name, commit|
                   next if (repo = project_git_repositories[repo_name]).nil?
-                  git = repo.name == 'own' ? :git : :git_bare
-                  unproper_images.concat(repo_image_tags_hierarchy(registry, attrs[:id])) unless repo.send(git).exists?(commit)
+                  unproper_images.concat(repo_image_tags_hierarchy(registry, attrs[:id])) unless repo.commit_exists?(commit)
                 end
               end
               remove_repo_images(registry, unproper_images.uniq)
