@@ -14,8 +14,14 @@ module Dapp
       @commit = commit
 
       @to = to
-      cwd = File.expand_path(File.join('/', cwd))[1..-1] unless cwd.nil? || cwd.empty? # must be relative!!!
-      @cwd = cwd
+      @cwd = begin
+        if cwd.nil? || cwd.empty?
+          ''
+        else
+          cwd = File.expand_path(File.join('/', cwd))[1..-1] # must be relative
+          "#{cwd.chomp('/')}/"
+        end
+      end
       @include_paths = include_paths
       @exclude_paths = exclude_paths
       @owner = owner
@@ -28,11 +34,7 @@ module Dapp
 
       [].tap do |commands|
         commands << "#{repo.dimg.project.install_bin} #{credentials.join(' ')} -d #{to}"
-
-        if include_paths_or_cwd.empty? || include_paths_or_cwd.any? { |path| file_exist_in_repo?(stage.layer_commit(self), path) }
-          commands << ["#{repo.dimg.project.git_bin} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{include_paths.join(' ')}",
-                       "#{sudo}#{repo.dimg.project.tar_bin} -x -C #{to} #{archive_command_excludes.join(' ')}"].join(' | ')
-        end
+        commands << "#{sudo}#{repo.dimg.project.tar_bin} -xf #{archive_file(stage.layer_commit(self))} -C #{to}" if any_changes?(nil, stage.layer_commit(self))
       end
     end
 
@@ -40,27 +42,12 @@ module Dapp
       current_commit = stage.layer_commit(self)
       prev_commit = stage.prev_g_a_stage.layer_commit(self)
 
-      if any_changes?(prev_commit, current_commit)
-        [["#{repo.dimg.project.git_bin} --git-dir=#{repo.container_path} #{diff_command(prev_commit, current_commit)}",
-          "#{sudo}#{repo.dimg.project.git_bin} apply --whitespace=nowarn --directory=#{to} #{patch_command_excludes.join(' ')} --unsafe-paths"].join(' | ')]
-      else
-        []
+      [].tap do |commands|
+        if any_changes?(prev_commit, current_commit)
+          commands << "#{sudo}#{repo.dimg.project.git_bin} apply --whitespace=nowarn --directory=#{to} --unsafe-paths " \
+                      "#{patch_file(prev_commit, current_commit)}"
+        end
       end
-    end
-
-    def archive_command_excludes
-      exclude_paths.map { |path| %(--exclude=#{path}) }
-    end
-
-    def patch_command_excludes
-      exclude_paths.map do |path|
-        base = File.join(to, path)
-        path =~ /[\*\?\[\]\{\}]/ ? %(--exclude=#{base} ) : %(--exclude=#{base} --exclude=#{File.join(base, '*')})
-      end
-    end
-
-    def any_changes?(from, to = latest_commit)
-      diff_patches(from, to).any?
     end
 
     def patch_size(from, to)
@@ -104,6 +91,10 @@ module Dapp
       "#{repo.name}#{name ? "_#{name}" : nil}"
     end
 
+    def any_changes?(from, to = latest_commit)
+      diff_patches(from, to).any?
+    end
+
     protected
 
     attr_reader :to
@@ -117,8 +108,99 @@ module Dapp
       repo.dimg.project.sudo_command(owner: owner, group: group)
     end
 
-    def diff_command(from, to, quiet: false)
-      "diff --binary #{'--quiet' if quiet} #{from}..#{to} #{"--relative=#{cwd}" if cwd} -- #{include_paths(true).join(' ')}"
+    def archive_file(commit)
+      create_file(repo.dimg.tmp_path('archives', archive_file_name(commit))) do |f|
+        f.write begin
+          StringIO.new.tap do |tar_stream|
+            Gem::Package::TarWriter.new(tar_stream) do |tar|
+              diff_patches(nil, commit).each do |patch|
+                entry = patch.delta.new_file
+                tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
+                  tf.write repo.lookup_object(entry[:oid]).content
+                end
+              end
+            end
+          end.string
+        end
+      end
+      repo.dimg.container_tmp_path('archives', archive_file_name(commit))
+    rescue Gem::Package::TooLongFileName => e
+      raise Error::TarWriter, message: e.message
+    end
+
+    def slice_cwd(path)
+      return path if cwd.empty?
+      path
+        .reverse
+        .chomp(cwd.reverse)
+        .reverse
+    end
+
+    def archive_file_name(commit)
+      file_name(commit, 'tar')
+    end
+
+    def patch_file(from, to)
+      create_file(repo.dimg.tmp_path('patches', patch_file_name(from, to))) do |f|
+        diff_patches(from, to).each { |patch| f.write change_patch_new_file_path(patch) }
+      end
+      repo.dimg.container_tmp_path('patches', patch_file_name(from, to))
+    end
+
+    def change_patch_new_file_path(patch)
+      patch.to_s.lines.tap do |lines|
+        modify_patch_line = proc do |line_number, path_char|
+          action_part, path_part = lines[line_number].split
+          if (path_with_cwd = path_part.partition("#{path_char}/").last).start_with?(cwd)
+            path_with_cwd.sub(cwd, '').tap do |native_path|
+              expected_path = File.join(path_char, native_path)
+              lines[line_number] = [action_part, expected_path].join(' ') + "\n"
+            end
+          end
+        end
+
+        modify_patch = proc do |*modify_patch_line_args|
+          native_paths = modify_patch_line_args.map { |args| modify_patch_line.call(*args) }
+          unless (native_paths = native_paths.compact.uniq).empty?
+            raise Error::Build, code: :unsupported_patch_format, data: { patch: patch.to_s } unless native_paths.one?
+            native_path = native_paths.first
+            lines[0] = ['diff --git', File.join('a', native_path), File.join('b', native_path)].join(' ') + "\n"
+          end
+        end
+
+        case
+        when patch.delta.deleted? then modify_patch.call([3, 'a'])
+        when patch.delta.added? then modify_patch.call([4, 'b'])
+        when patch.delta.modified?
+          if patch_file_mode_changed?(patch)
+            modify_patch.call([4, 'a'], [5, 'b'])
+          else
+            modify_patch.call([2, 'a'], [3, 'b'])
+          end
+        else
+          raise
+        end
+      end.join
+    end
+
+    def patch_file_mode_changed?(patch)
+      patch.delta.old_file[:mode] != patch.delta.new_file[:mode]
+    end
+
+    def patch_file_name(from, to)
+      file_name(from, to, 'patch')
+    end
+
+    def file_name(*args, ext)
+      "#{[full_name, args].flatten.join('_')}.#{ext}"
+    end
+
+    def create_file(file_path, &blk)
+      File.open(file_path, File::RDWR|File::CREAT, &blk)
+    end
+
+    def diff_patches(from, to)
+      (@diff_patches ||= {})[[from, to]] = repo.patches(from, to, paths: include_paths_or_cwd, exclude_paths: exclude_paths(true))
     end
 
     def include_paths_or_cwd
@@ -130,14 +212,25 @@ module Dapp
       end
     end
 
-    def diff_patches(from, to)
-      repo.diff(from, to, paths: include_paths_or_cwd).patches.select do |p|
-        exclude_paths(true).any? { |path| !p.delta.new_file[:path].start_with?(path) }
-      end
+    def exclude_paths(with_cwd = false)
+      base_paths(repo.dimg.project.system_files.concat(@exclude_paths), with_cwd)
     end
 
-    def file_exist_in_repo?(from, path)
-      repo.file_exist_in_tree?(repo.lookup_commit(from).tree, path.split('/'))
+    def include_paths(with_cwd = false)
+      base_paths(@include_paths, with_cwd)
+    end
+
+    def base_paths(paths, with_cwd = false)
+      [paths].flatten.compact.map do |path|
+        if with_cwd && !cwd.empty?
+          File.join(cwd, path)
+        else
+          path
+        end
+          .chomp('/')
+          .reverse.chomp('/')
+          .reverse
+      end
     end
   end
 end

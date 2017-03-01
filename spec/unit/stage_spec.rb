@@ -23,7 +23,7 @@ describe Dapp::Build::Stage do
   end
 
   def artifact_last_stage
-    empty_artifact.send(:last_stage)
+    empty_artifact.last_stage
   end
 
   def artifact_stages

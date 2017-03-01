@@ -23,11 +23,11 @@ describe Dapp::Builder::Chef do
 
         TEST_FILE_NAMES.each { |name| expect(send("#{name}_exist?")).to be(true), "#{send("#{name}_path")} does not exist" }
 
-        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
         expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
         ).to eq(
           read_file_in_image('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)
         ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt in artifact image does not equal /myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
@@ -74,7 +74,7 @@ describe Dapp::Builder::Chef do
 
       xit 'rebuilds artifact from build_artifact stage' do
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
-        old_artifact_last_stage_id = artifact_dimg.send(:last_stage).image.id
+        old_artifact_last_stage_id = artifact_dimg.last_stage.image.id
 
         [dimg, artifact_dimg].each do |d|
           %i(before_install install before_setup setup build_artifact).each do |stage|
@@ -85,14 +85,14 @@ describe Dapp::Builder::Chef do
         dimg_rebuild!
 
         expect(artifact_stages[:before_install].image.id).to eq(old_artifact_before_install_stage_id)
-        expect(artifact_dimg.send(:last_stage).image.id).not_to eq(old_artifact_last_stage_id)
+        expect(artifact_dimg.last_stage.image.id).not_to eq(old_artifact_last_stage_id)
 
-        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
         expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(false), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does exist in result image'
         expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
         ).to eq(
           read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)
         ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
@@ -111,22 +111,22 @@ describe Dapp::Builder::Chef do
         end
 
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
-        old_artifact_last_stage_id = artifact_dimg.send(:last_stage).image.id
+        old_artifact_last_stage_id = artifact_dimg.last_stage.image.id
 
         dimg_rebuild!
 
         expect(artifact_stages[:before_install].image.id).not_to eq(old_artifact_before_install_stage_id)
-        expect(artifact_dimg.send(:last_stage).image.id).not_to eq(old_artifact_last_stage_id)
+        expect(artifact_dimg.last_stage.image.id).not_to eq(old_artifact_last_stage_id)
 
-        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
         expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
         ).to eq(new_note_content)
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.send(:last_stage).image.name)
+          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
         ).to eq(
           read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)
         ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'

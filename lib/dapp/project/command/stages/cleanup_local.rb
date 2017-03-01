@@ -99,8 +99,7 @@ module Dapp
               project_images_detailed.each do |_, attrs|
                 attrs['Config']['Labels'].each do |repo_name, commit|
                   next if (repo = project_git_repositories[repo_name]).nil?
-                  git = repo.name == 'own' ? :git : :git_bare
-                  unproper_images_names.concat(image_hierarchy_by_id(attrs['Id'])) unless repo.send(git).exists?(commit)
+                  unproper_images_names.concat(image_hierarchy_by_id(attrs['Id'])) unless repo.commit_exists?(commit)
                 end
               end
               remove_images(unproper_images_names.uniq)

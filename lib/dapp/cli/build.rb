@@ -42,6 +42,13 @@ BANNER
                   :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact, :g_a_pre_setup_patch,
                   :setup, :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions]
 
+      option :introspect_artifact_stage,
+             long: '--introspect-artifact-stage STAGE',
+             proc: proc { |v| v.to_sym },
+             in: [nil, :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
+                  :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact, :g_a_pre_setup_patch,
+                  :setup, :after_setup_artifact, :g_a_artifact_patch, :build_artifact]
+
       option :ssh_key,
              long: '--ssh-key SSH_KEY',
              description: ['Enable only specified ssh keys ',

@@ -101,6 +101,7 @@ module SpecHelper
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:home_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
           allow(instance).to receive(:filelock)
+          yield instance if block_given?
         end
       end
     end
