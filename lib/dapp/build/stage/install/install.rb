@@ -31,7 +31,7 @@ module Dapp
           private
 
           def install_dependencies_files_checksum
-            @install_dependencies_files_checksum ||= dependencies_files_checksum(dimg.config._install_dependencies)
+            dependencies_files_checksum(dimg.config._install_dependencies)
           end
         end # Install
       end

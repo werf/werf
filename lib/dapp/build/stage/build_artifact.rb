@@ -28,7 +28,7 @@ module Dapp
         private
 
         def artifact_dependencies_files_checksum
-          @artifact_files_checksum ||= dependencies_files_checksum(dimg.config._artifact_dependencies)
+          dependencies_files_checksum(dimg.config._artifact_dependencies)
         end
       end # BuildArtifact
     end # Stage
