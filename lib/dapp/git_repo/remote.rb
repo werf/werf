@@ -7,7 +7,7 @@ module Dapp
 
         @url = url
 
-        dimg.project.log_secondary_process(dimg.project.t(code: 'process.git_artifact_clone', data: { name: name }), short: true) do
+        dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.git_artifact_clone', data: { name: name }), short: true) do
           begin
             Rugged::Repository.clone_at(url, path, bare: true)
           rescue Rugged::NetworkError, Rugged::SslError => e
@@ -22,9 +22,9 @@ module Dapp
 
       def fetch!(branch = nil)
         branch ||= self.branch
-        dimg.project.log_secondary_process(dimg.project.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
+        dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
           git.fetch('origin', [branch])
-        end unless dimg.ignore_git_fetch || dimg.project.dry_run?
+        end unless dimg.ignore_git_fetch || dimg.dapp.dry_run?
       end
 
       def latest_commit(branch)

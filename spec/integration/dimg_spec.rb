@@ -12,7 +12,7 @@ describe Dapp::Dimg do
 
   before :each do
     # git_init works only in test case context,
-    # because of using project and dimg objects for system-shellout.
+    # because of using dapp and dimg objects for system-shellout.
     # But git should only be initialized once.
     # Earlier git_init was in before :all, but that is not possible now.
     self.class.instance_variable_get(:@git_initialized) || begin

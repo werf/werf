@@ -19,14 +19,14 @@ module Dapp
 
         # rubocop:disable Metrics/MethodLength, Metrics/PerceivedComplexity
         def build_lock!
-          return yield if dimg.project.dry_run?
+          return yield if dimg.dapp.dry_run?
 
           try_lock = proc do
             next yield unless should_be_tagged?
 
             no_lock = false
 
-            dimg.project.lock("#{dimg.project.name}.image.#{image.name}") do
+            dimg.dapp.lock("#{dimg.dapp.name}.image.#{image.name}") do
               image.cache_reset
 
               if should_be_tagged?
@@ -60,7 +60,7 @@ module Dapp
         def save_in_cache!
           prev_stage.save_in_cache! if prev_stage
           return unless should_be_tagged?
-          image.save_in_cache! unless dimg.project.dry_run?
+          image.save_in_cache! unless dimg.dapp.dry_run?
         end
 
         def image
@@ -68,24 +68,24 @@ module Dapp
             if empty?
               prev_stage.image
             else
-              Image::Stage.image_by_name(name: image_name, from: from_image, project: dimg.project)
+              Image::Stage.image_by_name(name: image_name, from: from_image, dapp: dimg.dapp)
             end
           end
         end
 
         def prepare_image
-          return if dimg.project.dry_run?
-          image.add_volumes_from dimg.project.base_container
+          return if dimg.dapp.dry_run?
+          image.add_volumes_from dimg.dapp.base_container
 
           image_add_mounts
 
           image.add_service_change_label dapp: dimg.stage_dapp_label
-          image.add_service_change_label 'dapp-version'.to_sym => Dapp::VERSION
-          image.add_service_change_label 'dapp-cache-version'.to_sym => Dapp::BUILD_CACHE_VERSION
+          image.add_service_change_label 'dapp-version'.to_sym => ::Dapp::VERSION
+          image.add_service_change_label 'dapp-cache-version'.to_sym => ::Dapp::BUILD_CACHE_VERSION
           image.add_service_change_label 'dapp-dev-mode'.to_sym => true if dimg.dev_mode?
 
-          if dimg.project.ssh_auth_sock
-            image.add_volume "#{dimg.project.ssh_auth_sock}:/tmp/dapp-ssh-agent"
+          if dimg.dapp.ssh_auth_sock
+            image.add_volume "#{dimg.dapp.ssh_auth_sock}:/tmp/dapp-ssh-agent"
             image.add_env 'SSH_AUTH_SOCK', '/tmp/dapp-ssh-agent'
           end
 
@@ -112,7 +112,7 @@ module Dapp
         end
 
         def image_should_be_build?
-          (!empty? && !image.built?) || dimg.project.log_verbose?
+          (!empty? && !image.built?) || dimg.dapp.log_verbose?
         end
 
         def empty?
@@ -157,7 +157,7 @@ module Dapp
         end
 
         def build_should_be_skipped?
-          image.built? && !dimg.project.log_verbose? && !should_be_introspected?
+          image.built? && !dimg.dapp.log_verbose? && !should_be_introspected?
         end
 
         def should_be_tagged?
@@ -184,8 +184,8 @@ module Dapp
         end
 
         def dependencies_files_checksum(regs)
-          regs.map! { |reg| File.directory?(File.join(dimg.project.path, reg)) ? File.join(reg, '**', '*') : reg }
-          unless (files = regs.map { |reg| Dir[File.join(dimg.project.path, reg)].map { |f| File.read(f) if File.file?(f) } }).empty?
+          regs.map! { |reg| File.directory?(File.join(dimg.dapp.path, reg)) ? File.join(reg, '**', '*') : reg }
+          unless (files = regs.map { |reg| Dir[File.join(dimg.dapp.path, reg)].map { |f| File.read(f) if File.file?(f) } }).empty?
             hashsum files
           end
         end

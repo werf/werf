@@ -32,7 +32,7 @@ BANNER
            description: 'Show version',
            on: :tail,
            boolean: true,
-           proc: proc { puts "dapp: #{Dapp::VERSION}" },
+           proc: proc { puts "dapp: #{::Dapp::VERSION}" },
            exit: 0
 
     option :help,
@@ -48,7 +48,7 @@ BANNER
       super(*args)
 
       opt_parser.program_name = 'dapp'
-      opt_parser.version = Dapp::VERSION
+      opt_parser.version = ::Dapp::VERSION
     end
 
     def run(argv = ARGV)

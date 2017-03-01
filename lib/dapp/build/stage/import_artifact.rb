@@ -12,7 +12,7 @@ module Dapp
         end
 
         def image
-          @image ||= Image::Scratch.new(name: image_name, project: dimg.project)
+          @image ||= Image::Scratch.new(name: image_name, dapp: dimg.dapp)
         end
 
         def image_add_volumes
@@ -29,7 +29,7 @@ module Dapp
 
         # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
         def apply_artifact(artifact, image)
-          return if dimg.project.dry_run?
+          return if dimg.dapp.dry_run?
 
           artifact_name = artifact[:name]
           artifact_dimg = artifact[:dimg]
@@ -39,7 +39,7 @@ module Dapp
           group = artifact[:options][:group]
           to = artifact[:options][:to]
 
-          sudo = dimg.project.sudo_command(owner: Process.uid, group: Process.gid)
+          sudo = dimg.dapp.sudo_command(owner: Process.uid, group: Process.gid)
 
           credentials = ''
           credentials += "--owner=#{owner} " if owner
@@ -53,7 +53,7 @@ module Dapp
           include_paths = include_paths.empty? ? [File.join(cwd, '*')] : include_paths.map { |path| File.join(cwd, path, '*') }
           include_paths.map! { |path| path[1..-1] } # relative path
 
-          command = "#{sudo} #{dimg.project.tar_bin} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
+          command = "#{sudo} #{dimg.dapp.tar_bin} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
           run_artifact_dimg(artifact_dimg, artifact_name, command)
 
           image.add_archive archive_path

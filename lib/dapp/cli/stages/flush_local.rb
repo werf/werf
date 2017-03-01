@@ -15,7 +15,7 @@ Options:
 BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          Project.new(cli_options: config, dimgs_patterns: cli_arguments).stages_flush_local
+          Dapp.new(cli_options: config, dimgs_patterns: cli_arguments).stages_flush_local
         end
       end
     end

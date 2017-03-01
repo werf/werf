@@ -28,7 +28,7 @@ BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
           repository = repo
-          Project.new(cli_options: config, dimgs_patterns: cli_arguments).send(run_method, repository)
+          Dapp.new(cli_options: config, dimgs_patterns: cli_arguments).send(run_method, repository)
         end
 
         def repo

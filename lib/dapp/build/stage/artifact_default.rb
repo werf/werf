@@ -7,7 +7,7 @@ module Dapp
 
         # rubocop:disable Metrics/AbcSize
         def apply_artifact(artifact, image)
-          return if dimg.project.dry_run?
+          return if dimg.dapp.dry_run?
 
           artifact_name = artifact[:name]
           artifact_dimg = artifact[:dimg]
@@ -38,18 +38,18 @@ module Dapp
 
           copy_files = proc do |from_, path_ = ''|
             "if [[ -d #{File.join(from_, path_)} ]] || [[ -f #{File.join(from_, path_)} ]]; then " \
-            "#{dimg.project.find_bin} #{File.join(from_, path_)} #{excludes} -type f -exec " \
-            "#{dimg.project.bash_bin} -ec '#{dimg.project.install_bin} -D #{credentials} \"{}\" " \
+            "#{dimg.dapp.find_bin} #{File.join(from_, path_)} #{excludes} -type f -exec " \
+            "#{dimg.dapp.bash_bin} -ec '#{dimg.dapp.install_bin} -D #{credentials} \"{}\" " \
             "\"#{File.join(to, "$(echo \"{}\" | " \
-            "#{dimg.project.sed_bin} -e \"s/^#{from_.gsub('/', '\\/')}\\///g\")")}\"' \\; ;" \
+            "#{dimg.dapp.sed_bin} -e \"s/^#{from_.gsub('/', '\\/')}\\///g\")")}\"' \\; ;" \
             'fi'
           end
 
           commands = []
-          commands << [dimg.project.install_bin, credentials, '-d', to].join(' ')
+          commands << [dimg.dapp.install_bin, credentials, '-d', to].join(' ')
           commands.concat(include_paths.empty? ? Array(copy_files.call(from)) : include_paths.map { |path| copy_files.call(from, path) })
-          commands << "#{dimg.project.find_bin} #{to} -type d -exec " \
-                      "#{dimg.project.bash_bin} -ec '#{dimg.project.install_bin} -d #{credentials} {}' \\;"
+          commands << "#{dimg.dapp.find_bin} #{to} -type d -exec " \
+                      "#{dimg.dapp.bash_bin} -ec '#{dimg.dapp.install_bin} -d #{credentials} {}' \\;"
           commands.join(' && ')
         end
         # rubocop:enable Metrics/ParameterLists, Metrics/AbcSize, Metrics/MethodLength

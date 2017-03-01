@@ -17,7 +17,7 @@ BANNER
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         tag = self.class.required_argument(self)
-        Project.new(cli_options: config, dimgs_patterns: cli_arguments).public_send(class_to_lowercase, tag)
+        Dapp.new(cli_options: config, dimgs_patterns: cli_arguments).public_send(class_to_lowercase, tag)
       end
     end
   end

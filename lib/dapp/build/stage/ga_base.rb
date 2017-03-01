@@ -19,7 +19,7 @@ module Dapp
 
         def prepare_image
           super do
-            image.add_volumes_from dimg.project.gitartifact_container
+            image.add_volumes_from dimg.dapp.gitartifact_container
             image.add_volume "#{dimg.tmp_path('archives')}:#{dimg.container_tmp_path('archives')}:ro"
             image.add_volume "#{dimg.tmp_path('patches')}:#{dimg.container_tmp_path('patches')}:ro"
 

@@ -39,7 +39,7 @@ module Dapp
       def before_build_check
         %i(before_install install before_setup setup build_artifact).tap do |stages|
           (builder_cookbook.enabled_recipes - stages.map {|stage| builder_cookbook.stage_enabled_recipes(stage)}.flatten.uniq).each do |recipe|
-            dimg.project.log_warning(desc: {code: :recipe_does_not_used, data: {recipe: recipe}})
+            dimg.dapp.log_warning(desc: {code: :recipe_does_not_used, data: {recipe: recipe}})
           end
         end
       end
@@ -54,9 +54,9 @@ module Dapp
 
       def chefdk_container
         @chefdk_container ||= begin
-          if dimg.project.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
-            dimg.project.log_secondary_process(dimg.project.t(code: 'process.chefdk_container_creating'), short: true) do
-              dimg.project.shellout!(
+          if dimg.dapp.shellout("docker inspect #{chefdk_container_name}").exitstatus.nonzero?
+            dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.chefdk_container_creating'), short: true) do
+              dimg.dapp.shellout!(
                 ['docker create',
                  "--name #{chefdk_container_name}",
                  "--volume /.dapp/deps/chefdk #{chefdk_image}"].join(' ')
@@ -70,26 +70,26 @@ module Dapp
 
       def builder_cookbook
         @builder_cookbook ||= begin
-          unless dimg.project.builder_cookbook_path.exist?
+          unless dimg.dapp.builder_cookbook_path.exist?
             raise Error, code: :builder_cookbook_not_found,
-                         data: {path: dimg.project.builder_cookbook_path.to_s}
+                         data: {path: dimg.dapp.builder_cookbook_path.to_s}
           end
 
-          unless dimg.project.builder_cookbook_path.join('Berksfile').exist?
+          unless dimg.dapp.builder_cookbook_path.join('Berksfile').exist?
             raise Error, code: :builder_cookbook_berksfile_not_found,
-                         data: {path: dimg.project.builder_cookbook_path.join('Berksfile').to_s}
+                         data: {path: dimg.dapp.builder_cookbook_path.join('Berksfile').to_s}
           end
 
-          unless dimg.project.builder_cookbook_path.join('metadata.rb').exist?
+          unless dimg.dapp.builder_cookbook_path.join('metadata.rb').exist?
             raise Error, code: :builder_cookbook_metadata_not_found,
-                         data: {path: dimg.project.builder_cookbook_path.join('metadata.rb').to_s}
+                         data: {path: dimg.dapp.builder_cookbook_path.join('metadata.rb').to_s}
           end
 
-          berksfile = Berksfile.from_file(dimg.project.builder_cookbook_path, dimg.project.builder_cookbook_path.join('Berksfile'))
-          metadata = CookbookMetadata.from_file(dimg.project.builder_cookbook_path.join('metadata.rb'))
+          berksfile = Berksfile.from_file(dimg.dapp.builder_cookbook_path, dimg.dapp.builder_cookbook_path.join('Berksfile'))
+          metadata = CookbookMetadata.from_file(dimg.dapp.builder_cookbook_path.join('metadata.rb'))
 
           Cookbook.new(self,
-            path: dimg.project.builder_cookbook_path,
+            path: dimg.dapp.builder_cookbook_path,
             berksfile: berksfile,
             metadata: metadata,
             enabled_recipes: dimg.config._chef._recipe,

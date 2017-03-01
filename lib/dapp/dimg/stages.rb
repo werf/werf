@@ -8,11 +8,11 @@ module Dapp
       end
 
       def stage_cache_format
-        "#{project.stage_cache}:%{signature}"
+        "#{dapp.stage_cache}:%{signature}"
       end
 
       def stage_dapp_label
-        project.stage_dapp_label
+        dapp.stage_dapp_label
       end
 
       def all_images

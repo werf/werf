@@ -52,12 +52,12 @@ describe Dapp::GitArtifact do
     allow_any_instance_of(Dapp::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
   end
 
-  def project
+  def dapp
     super do
-      allow_any_instance_of(Dapp::Project).to receive(:git_bin) { 'git' }
-      allow_any_instance_of(Dapp::Project).to receive(:tar_bin) { 'tar' }
-      allow_any_instance_of(Dapp::Project).to receive(:sudo_bin) { 'sudo' }
-      allow_any_instance_of(Dapp::Project).to receive(:install_bin) { 'install' }
+      allow_any_instance_of(Dapp::Dapp).to receive(:git_bin) { 'git' }
+      allow_any_instance_of(Dapp::Dapp).to receive(:tar_bin) { 'tar' }
+      allow_any_instance_of(Dapp::Dapp).to receive(:sudo_bin) { 'sudo' }
+      allow_any_instance_of(Dapp::Dapp).to receive(:install_bin) { 'install' }
     end
   end
 

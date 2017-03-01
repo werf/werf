@@ -3,11 +3,11 @@ module Dapp
     # ArtifactGroup
     class ArtifactGroup < DimgGroup
       def _shell(&blk)
-        @_shell ||= Directive::Shell::Artifact.new(project: project, &blk)
+        @_shell ||= Directive::Shell::Artifact.new(dapp: dapp, &blk)
       end
 
       def _docker(&blk)
-        @_docker ||= Directive::Docker::Artifact.new(project: project, &blk)
+        @_docker ||= Directive::Docker::Artifact.new(dapp: dapp, &blk)
       end
 
       def _export
@@ -32,10 +32,10 @@ module Dapp
         _export.concat begin
           artifact_config = pass_to_default(ArtifactDimg.new(
             "artifact-#{SecureRandom.hex(2)}",
-            project: project
+            dapp: dapp
           ))
 
-          artifact = Directive::Artifact.new(project: project, config: artifact_config)
+          artifact = Directive::Artifact.new(dapp: dapp, config: artifact_config)
           artifact.send(:export, *args, &blk)
 
           artifact._export

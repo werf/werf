@@ -11,11 +11,11 @@ module Dapp
     attr_reader :config
     attr_reader :ignore_git_fetch
     attr_reader :should_be_built
-    attr_reader :project
+    attr_reader :dapp
 
-    def initialize(config:, project:, should_be_built: false, ignore_git_fetch: false)
+    def initialize(config:, dapp:, should_be_built: false, ignore_git_fetch: false)
       @config = config
-      @project = project
+      @dapp = dapp
 
       @ignore_git_fetch = ignore_git_fetch
       @should_be_built = should_be_built
@@ -25,7 +25,7 @@ module Dapp
 
     def build!
       with_introspection do
-        project.lock("#{project.name}.images", readonly: true) do
+        dapp.lock("#{dapp.name}.images", readonly: true) do
           last_stage.build_lock! do
             begin
               builder.before_build_check
@@ -47,12 +47,12 @@ module Dapp
     end
 
     def tag!(tag)
-      project.lock("#{project.name}.images", readonly: true) do
+      dapp.lock("#{dapp.name}.images", readonly: true) do
         dimg_name = config._name
-        if project.dry_run?
-          project.log_state(dimg_name, state: project.t(code: 'state.tag'), styles: { status: :success })
+        if dapp.dry_run?
+          dapp.log_state(dimg_name, state: dapp.t(code: 'state.tag'), styles: { status: :success })
         else
-          project.log_process(dimg_name, process: project.t(code: 'status.process.tagging')) do
+          dapp.log_process(dimg_name, process: dapp.t(code: 'status.process.tagging')) do
             last_stage.image.tag!(tag)
           end
         end
@@ -60,7 +60,7 @@ module Dapp
     end
 
     def export!(repo, format:)
-      project.lock("#{project.name}.images", readonly: true) do
+      dapp.lock("#{dapp.name}.images", readonly: true) do
         tags.each do |tag|
           image_name = format % { repo: repo, dimg_name: config._name, tag: tag }
           export_base!(last_stage.image, image_name)
@@ -69,7 +69,7 @@ module Dapp
     end
 
     def export_stages!(repo, format:)
-      project.lock("#{project.name}.images", readonly: true) do
+      dapp.lock("#{dapp.name}.images", readonly: true) do
         export_images.each do |image|
           image_name = format % { repo: repo, signature: image.name.split(':').last }
           export_base!(image, image_name)
@@ -78,13 +78,13 @@ module Dapp
     end
 
     def export_base!(image, image_name)
-      if project.dry_run?
-        project.log_state(image_name, state: project.t(code: 'state.push'), styles: { status: :success })
+      if dapp.dry_run?
+        dapp.log_state(image_name, state: dapp.t(code: 'state.push'), styles: { status: :success })
       else
-        project.lock("image.#{hashsum image_name}") do
-          Dapp::Image::Stage.cache_reset(image_name)
-          project.log_process(image_name, process: project.t(code: 'status.process.pushing')) do
-            project.with_log_indent do
+        dapp.lock("image.#{hashsum image_name}") do
+          ::Dapp::Image::Stage.cache_reset(image_name)
+          dapp.log_process(image_name, process: dapp.t(code: 'status.process.pushing')) do
+            dapp.with_log_indent do
               image.export!(image_name)
             end
           end
@@ -93,7 +93,7 @@ module Dapp
     end
 
     def import_stages!(repo, format:)
-      project.lock("#{project.name}.images", readonly: true) do
+      dapp.lock("#{dapp.name}.images", readonly: true) do
         import_images.each do |image|
           begin
             image_name = format % { repo: repo, signature: image.name.split(':').last }
@@ -101,19 +101,19 @@ module Dapp
           rescue Error::Shellout
             next
           end
-          break unless project.pull_all_stages?
+          break unless dapp.pull_all_stages?
         end
       end
     end
 
     def import_base!(image, image_name)
-      if project.dry_run?
-        project.log_state(image_name, state: project.t(code: 'state.pull'), styles: { status: :success })
+      if dapp.dry_run?
+        dapp.log_state(image_name, state: dapp.t(code: 'state.pull'), styles: { status: :success })
       else
-        project.lock("image.#{hashsum image_name}") do
-          project.log_process(image_name,
-                              process: project.t(code: 'status.process.pulling'),
-                              status: { failed: project.t(code: 'status.failed.not_pulled') },
+        dapp.lock("image.#{hashsum image_name}") do
+          dapp.log_process(image_name,
+                              process: dapp.t(code: 'status.process.pulling'),
+                              status: { failed: dapp.t(code: 'status.failed.not_pulled') },
                               style: { failed: :secondary }) do
             image.import!(image_name)
           end
@@ -123,8 +123,8 @@ module Dapp
 
     def run(docker_options, command)
       cmd = "docker run #{[docker_options, last_stage.image.built_id, command].flatten.compact.join(' ')}"
-      if project.dry_run?
-        project.log(cmd)
+      if dapp.dry_run?
+        dapp.log(cmd)
       else
         system(cmd) || raise(Error::Dimg, code: :dimg_not_run)
       end
@@ -151,15 +151,15 @@ module Dapp
     end
 
     def dev_mode?
-      config._dev_mode || project.dev_mode?
+      config._dev_mode || dapp.dev_mode?
     end
 
     def build_cache_version
-      [Dapp::BUILD_CACHE_VERSION, dev_mode? ? 1 : 0]
+      [::Dapp::BUILD_CACHE_VERSION, dev_mode? ? 1 : 0]
     end
 
     def introspect_image!(image:, options:)
-      cmd = "docker run -ti --rm --entrypoint #{project.bash_bin} #{options} #{image}"
+      cmd = "docker run -ti --rm --entrypoint #{dapp.bash_bin} #{options} #{image}"
       system(cmd)
     end
 
@@ -169,7 +169,7 @@ module Dapp
     end
 
     def stage_should_be_introspected?(name)
-      project.cli_options[:introspect_stage] == name
+      dapp.cli_options[:introspect_stage] == name
     end
 
     protected

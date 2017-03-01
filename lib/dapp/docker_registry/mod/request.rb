@@ -29,4 +29,4 @@ module Dapp
   end # DockerRegistry
 end # Dapp
 
-Dapp::DockerRegistry::Mod::Request.extend Dapp::DockerRegistry::Mod::Request
+::Dapp::DockerRegistry::Mod::Request.extend ::Dapp::DockerRegistry::Mod::Request

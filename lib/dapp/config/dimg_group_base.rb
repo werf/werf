@@ -4,11 +4,11 @@ module Dapp
     class DimgGroupBase < Base
       attr_reader :_dimg_group
 
-      def initialize(project:)
+      def initialize(dapp:)
         @_dimg = []
         @_dimg_group = []
 
-        super(project: project)
+        super(dapp: dapp)
       end
 
       def dev_mode
@@ -16,7 +16,7 @@ module Dapp
       end
 
       def dimg(name = nil, &blk)
-        Config::Dimg.new(name, project: project).tap do |dimg|
+        Config::Dimg.new(name, dapp: dapp).tap do |dimg|
           before_dimg_eval(dimg)
           dimg.instance_eval(&blk) if block_given?
           @_dimg << dimg
@@ -24,7 +24,7 @@ module Dapp
       end
 
       def dimg_group(&blk)
-        Config::DimgGroup.new(project: project).tap do |dimg_group|
+        Config::DimgGroup.new(dapp: dapp).tap do |dimg_group|
           before_dimg_group_eval(dimg_group)
           dimg_group.instance_eval(&blk) if block_given?
           @_dimg_group << dimg_group

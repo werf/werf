@@ -5,16 +5,16 @@ module Dapp
     class Docker
       attr_reader :from
       attr_reader :name
-      attr_reader :project
+      attr_reader :dapp
 
       def self.image_by_name(name:, **kwargs)
         (@images ||= {})[name] ||= new(name: name, **kwargs)
       end
 
-      def initialize(name:, project:, from: nil)
+      def initialize(name:, dapp:, from: nil)
         @from = from
         @name = name
-        @project = project
+        @dapp = dapp
       end
 
       def id
@@ -23,21 +23,21 @@ module Dapp
 
       def untag!
         raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
-        project.shellout!("docker rmi #{name}")
+        dapp.shellout!("docker rmi #{name}")
         cache_reset
       end
 
       def push!
         raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
-        project.log_secondary_process(project.t(code: 'process.image_push', data: { name: name })) do
-          project.shellout!("docker push #{name}", log_verbose: true)
+        dapp.log_secondary_process(dapp.t(code: 'process.image_push', data: { name: name })) do
+          dapp.shellout!("docker push #{name}", log_verbose: true)
         end
       end
 
       def pull!
         return if tagged?
-        project.log_secondary_process(project.t(code: 'process.image_pull', data: { name: name })) do
-          project.shellout!("docker pull #{name}", log_verbose: true)
+        dapp.log_secondary_process(dapp.t(code: 'process.image_pull', data: { name: name })) do
+          dapp.shellout!("docker pull #{name}", log_verbose: true)
         end
         cache_reset
       end
@@ -57,7 +57,7 @@ module Dapp
       end
 
       def self.image_config_option(image_id:, option:)
-        output = Project.shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
+        output = Dapp.shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
         output == 'null' ? [] : JSON.parse(output)
       end
 
@@ -83,7 +83,7 @@ module Dapp
         end
 
         def tag!(id:, tag:)
-          Project.shellout!("docker tag #{id} #{tag}")
+          Dapp.shellout!("docker tag #{id} #{tag}")
           cache_reset
         end
 
@@ -93,7 +93,7 @@ module Dapp
 
         def cache_reset(name = '')
           cache.delete(name)
-          Project.shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}").stdout.lines.each do |l|
+          Dapp.shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}").stdout.lines.each do |l|
             name, id, created_at, size_field = l.split(';')
             size = begin
               number, unit = size_field.split

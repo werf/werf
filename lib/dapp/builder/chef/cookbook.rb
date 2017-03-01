@@ -58,43 +58,43 @@ module Dapp::Builder
     end
 
     def vendor_path
-      builder.dimg.project.lock(_vendor_lock_name, default_timeout: 120) do
+      builder.dimg.dapp.lock(_vendor_lock_name, default_timeout: 120) do
         vendor! unless _vendor_path.join('.created_at').exist?
       end
       _vendor_path
     end
 
     def vendor!
-      volumes_from = [builder.dimg.project.base_container, builder.chefdk_container]
+      volumes_from = [builder.dimg.dapp.base_container, builder.chefdk_container]
 
-      builder.dimg.project.log_secondary_process(builder.dimg.project.t(code: _vendor_process_name)) do
-        volumes_from = [builder.dimg.project.base_container, builder.chefdk_container]
+      builder.dimg.dapp.log_secondary_process(builder.dimg.dapp.t(code: _vendor_process_name)) do
+        volumes_from = [builder.dimg.dapp.base_container, builder.chefdk_container]
 
         vendor_commands = [
-          "#{builder.dimg.project.mkdir_bin} -p ~/.ssh",
+          "#{builder.dimg.dapp.mkdir_bin} -p ~/.ssh",
           "echo \"Host *\" >> ~/.ssh/config",
           "echo \"    StrictHostKeyChecking no\" >> ~/.ssh/config",
-          *local_paths.map {|path| "#{builder.dimg.project.rsync_bin} --archive --relative #{path} /tmp/local_cookbooks"},
+          *local_paths.map {|path| "#{builder.dimg.dapp.rsync_bin} --archive --relative #{path} /tmp/local_cookbooks"},
           "cd /tmp/local_cookbooks/#{path}",
           '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
-          ["#{builder.dimg.project.find_bin} /tmp/cookbooks -type d -exec #{builder.dimg.project.bash_bin} -ec '",
-           "#{builder.dimg.project.install_bin} -o #{Process.uid} -g #{Process.gid} --mode $(#{builder.dimg.project.stat_bin} -c %a {}) -d ",
-           "#{_vendor_path}/$(echo {} | #{builder.dimg.project.sed_bin} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
-          ["#{builder.dimg.project.find_bin} /tmp/cookbooks -type f -exec #{builder.dimg.project.bash_bin} -ec '",
-           "#{builder.dimg.project.install_bin} -o #{Process.uid} -g #{Process.gid} --mode $(#{builder.dimg.project.stat_bin} -c %a {}) {} ",
-           "#{_vendor_path}/$(echo {} | #{builder.dimg.project.sed_bin} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
-          "#{builder.dimg.project.install_bin} -o #{Process.uid} -g #{Process.gid} --mode 0644 <(#{builder.dimg.project.date_bin} +%s.%N) #{_vendor_path.join('.created_at')}"
+          ["#{builder.dimg.dapp.find_bin} /tmp/cookbooks -type d -exec #{builder.dimg.dapp.bash_bin} -ec '",
+           "#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} --mode $(#{builder.dimg.dapp.stat_bin} -c %a {}) -d ",
+           "#{_vendor_path}/$(echo {} | #{builder.dimg.dapp.sed_bin} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
+          ["#{builder.dimg.dapp.find_bin} /tmp/cookbooks -type f -exec #{builder.dimg.dapp.bash_bin} -ec '",
+           "#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} --mode $(#{builder.dimg.dapp.stat_bin} -c %a {}) {} ",
+           "#{_vendor_path}/$(echo {} | #{builder.dimg.dapp.sed_bin} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
+          "#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} --mode 0644 <(#{builder.dimg.dapp.date_bin} +%s.%N) #{_vendor_path.join('.created_at')}"
         ]
 
-        builder.dimg.project.shellout!(
+        builder.dimg.dapp.shellout!(
           ['docker run --rm',
            volumes_from.map {|container| "--volumes-from #{container}"}.join(' '),
            *local_paths.map {|path| "--volume #{path}:#{path}"},
-           ("--volume #{builder.dimg.project.ssh_auth_sock}:/tmp/dapp-ssh-agent" if builder.dimg.project.ssh_auth_sock),
+           ("--volume #{builder.dimg.dapp.ssh_auth_sock}:/tmp/dapp-ssh-agent" if builder.dimg.dapp.ssh_auth_sock),
            "--volume #{_vendor_path.tap(&:mkpath)}:#{_vendor_path}",
-           ('--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent' if builder.dimg.project.ssh_auth_sock),
-           "dappdeps/berksdeps:0.1.0 #{builder.dimg.project.bash_bin} -ec '#{builder.dimg.project.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
-          log_verbose: builder.dimg.project.log_verbose?
+           ('--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent' if builder.dimg.dapp.ssh_auth_sock),
+           "dappdeps/berksdeps:0.1.0 #{builder.dimg.dapp.bash_bin} -ec '#{builder.dimg.dapp.shellout_pack(vendor_commands.join(' && '))}'"].compact.join(' '),
+          log_verbose: builder.dimg.dapp.log_verbose?
         )
       end
     end
@@ -137,7 +137,7 @@ module Dapp::Builder
     end
 
     def _vendor_lock_name
-      "#{builder.dimg.project.name}.cookbooks.#{checksum}"
+      "#{builder.dimg.dapp.name}.cookbooks.#{checksum}"
     end
 
     def stage_entry_exist?(stage, cookbook, entrypoint)

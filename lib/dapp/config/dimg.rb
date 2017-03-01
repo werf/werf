@@ -7,9 +7,9 @@ module Dapp
 
       attr_reader :_name
 
-      def initialize(name, project:)
+      def initialize(name, dapp:)
         self._name = name
-        super(project: project)
+        super(dapp: dapp)
       end
 
       def _name=(name)

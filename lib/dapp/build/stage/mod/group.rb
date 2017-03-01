@@ -8,11 +8,11 @@ module Dapp
           def log_image_build
             return super if should_be_quiet?
             log_group_name if group_should_be_opened?
-            dimg.project.with_log_indent { super }
+            dimg.dapp.with_log_indent { super }
           end
 
           def log_group_name
-            dimg.project.log_step(dimg.project.t(code: group_name, context: :group))
+            dimg.dapp.log_step(dimg.dapp.t(code: group_name, context: :group))
           end
 
           def group_name

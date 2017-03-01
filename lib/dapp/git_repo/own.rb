@@ -7,7 +7,7 @@ module Dapp
       end
 
       def exclude_paths
-        dimg.project.local_git_artifact_exclude_paths
+        dimg.dapp.local_git_artifact_exclude_paths
       end
 
       def path

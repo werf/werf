@@ -10,7 +10,7 @@ module Dapp
       @repo = repo
       @name = name
 
-      @branch = branch || repo.dimg.project.cli_options[:git_artifact_branch] || repo.branch
+      @branch = branch || repo.dimg.dapp.cli_options[:git_artifact_branch] || repo.branch
       @commit = commit
 
       @to = to
@@ -33,8 +33,8 @@ module Dapp
       credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
 
       [].tap do |commands|
-        commands << "#{repo.dimg.project.install_bin} #{credentials.join(' ')} -d #{to}"
-        commands << "#{sudo}#{repo.dimg.project.tar_bin} -xf #{archive_file(stage.layer_commit(self))} -C #{to}" if any_changes?(nil, stage.layer_commit(self))
+        commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d #{to}"
+        commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage.layer_commit(self))} -C #{to}" if any_changes?(nil, stage.layer_commit(self))
       end
     end
 
@@ -107,14 +107,14 @@ module Dapp
     def patch_command(prev_commit, current_commit)
       [].tap do |commands|
         if any_changes?(prev_commit, current_commit)
-          commands << "#{sudo}#{repo.dimg.project.git_bin} apply --whitespace=nowarn --directory=#{to} --unsafe-paths " \
+          commands << "#{sudo}#{repo.dimg.dapp.git_bin} apply --whitespace=nowarn --directory=#{to} --unsafe-paths " \
                       "#{patch_file(prev_commit, current_commit)}"
         end
       end
     end
 
     def sudo
-      repo.dimg.project.sudo_command(owner: owner, group: group)
+      repo.dimg.dapp.sudo_command(owner: owner, group: group)
     end
 
     def archive_file(commit)

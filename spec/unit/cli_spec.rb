@@ -12,7 +12,7 @@ describe Dapp::CLI do
   RSpec.configure do |c|
     c.before(:example, :stub) do
       allow(class_double(Dapp::Dimg).as_stubbed_const).to receive(:new) { RecursiveOpenStruct.new }
-      allow_any_instance_of(Dapp::Project).to receive(:build_configs) { [RecursiveOpenStruct.new(_name: 'project')] }
+      allow_any_instance_of(Dapp::Dapp).to receive(:build_configs) { [RecursiveOpenStruct.new(_name: 'dapp')] }
     end
   end
 
@@ -22,7 +22,7 @@ describe Dapp::CLI do
 
   context 'run' do
     before :each do
-      stub_instance(Dapp::Project) do |instance|
+      stub_instance(Dapp::Dapp) do |instance|
         allow(instance).to receive(:run)
         @instance = instance
       end
@@ -32,7 +32,7 @@ describe Dapp::CLI do
       expect_parsed_options('run')
     end
 
-    it 'project args' do
+    it 'dapp args' do
       expect_parsed_options('run --time', cli_options: { log_time: true })
       expect_parsed_options('run dimg*', dimgs_patterns: ['dimg*'])
       expect_parsed_options('run dimg* --time', cli_options: { log_time: true }, dimgs_patterns: ['dimg*'])

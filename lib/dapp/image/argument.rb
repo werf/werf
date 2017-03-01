@@ -110,7 +110,7 @@ module Dapp
       end
 
       def service_options
-        { entrypoint: project.bash_bin, name: container_name }
+        { entrypoint: dapp.bash_bin, name: container_name }
       end
 
       def prepared_change
@@ -122,11 +122,11 @@ module Dapp
       end
 
       def prepared_bash_command
-        project.shellout_pack prepared_commands.join(' && ')
+        dapp.shellout_pack prepared_commands.join(' && ')
       end
 
       def prepared_commands
-        return [project.true_bin] if bash_commands.empty?
+        return [dapp.true_bin] if bash_commands.empty?
         bash_commands
       end
     end

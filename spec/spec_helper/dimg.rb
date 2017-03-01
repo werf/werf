@@ -13,7 +13,7 @@ module SpecHelper
     def dimg_renew
       @openstruct_config = nil
       @dimg = begin
-        options = { config: openstruct_config, project: project }
+        options = { config: openstruct_config, dapp: dapp }
         Dapp::Dimg.new(**options)
       end
     end
@@ -23,11 +23,11 @@ module SpecHelper
       dimg_build!
     end
 
-    def project
-      @project ||= begin
-        allow_any_instance_of(Dapp::Project).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
+    def dapp
+      @dapp ||= begin
+        allow_any_instance_of(Dapp::Dapp).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
         yield if block_given?
-        Dapp::Project.new(cli_options: cli_options)
+        Dapp::Dapp.new(cli_options: cli_options)
       end
     end
 
@@ -107,11 +107,11 @@ module SpecHelper
     end
 
     def empty_dimg
-      Dapp::Dimg.new(project: nil, config: openstruct_config)
+      Dapp::Dimg.new(dapp: nil, config: openstruct_config)
     end
 
     def empty_artifact
-      Dapp::Artifact.new(project: nil, config: openstruct_config)
+      Dapp::Artifact.new(dapp: nil, config: openstruct_config)
     end
   end
 end

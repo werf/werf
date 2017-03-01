@@ -5,7 +5,7 @@ module Dapp
       SUBCOMMANDS = ['flush local', 'flush repo', 'cleanup local', 'cleanup repo', 'push', 'pull'].freeze
 
       banner <<BANNER.freeze
-Version: #{Dapp::VERSION}
+Version: #{::Dapp::VERSION}
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
