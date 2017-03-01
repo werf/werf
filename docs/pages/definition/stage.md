@@ -101,24 +101,24 @@ folder: definition
 | Имя                               | Краткое описание 					          | Зависимость от директив                            |
 | --------------------------------- | ----------------------------------- | -------------------------------------------------- |
 | from                              | Выбор базового образа  					    | docker.from 			   						                   |
-| before install                    | Установка софта инфраструктуры      | shell.before install / chef.module, chef.recipe    |
+| before install                    | Установка софта инфраструктуры      | shell.before install / chef.dimod, chef.recipe     |
 | before install artifact           | Наложение артефактов 				        | artifact (с before: :install) 			   		         |
 | git artifact archive              | Наложение git-артефактов            | git_artifact.local`` и git_artifact.remote 		     |
 | git artifact pre install patch    | Наложение патчей git-артефактов 	  | git_artifact.local и git_artifact.remote           |
-| install                           | Установка софта приложения          | shell.install / chef.module, chef.recipe           |
+| install                           | Установка софта приложения          | shell.install / chef.dimod, chef.recipe            |
 | git artifact post install patch   | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | after install artifact            | Наложение артефактов                | artifact (с after: :install)               		     |
-| before setup                      | Настройка софта инфраструктуры      | shell.before_setup / chef.module, chef.recipe      |
+| before setup                      | Настройка софта инфраструктуры      | shell.before_setup / chef.dimod, chef.recipe       |
 | before setup artifact             | Наложение артефактов                | artifact (с before: :setup)                		     |
 | git artifact pre setup patch      | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
-| setup                             | Развёртывание приложения            | shell.setup / chef.module, chef.recipe             |
+| setup                             | Развёртывание приложения            | shell.setup / chef.dimod, chef.recipe              |
 | chef cookbooks                    | Установка cookbook\`ов              | -             		       						               |
 | git artifact post setup patch     | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | after setup artifact              | Наложение артефактов                | artifact (с after: :setup)            	   		     |
 | git artifact latest patch         | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | docker instructions               | Применение докерфайловых инструкций | docker.cmd, docker.env, docker.entrypoint, docker.expose, docker.label, docker.onbuild, docker.user, docker.volume, docker.workdir |
 | git artifact artifact patch       | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
-| build artifact                    | Сборка артефакта                    | shell.build_artifact / chef.module, chef.recipe    |
+| build artifact                    | Сборка артефакта                    | shell.build_artifact / chef.dimod, chef.recipe     |
 | import artifacts                  | Установка артефактов при сборке [scratch dimg](base.html#scratch-dimg) | |
 
 ### Особенности
@@ -154,14 +154,14 @@ folder: definition
 source 'https://supermarket.chef.io'
 
 cookbook 'test', path: '.'
-cookbook 'mdapp-test', path: '../mdapp-test'
-cookbook 'mdapp-test2', path: '../mdapp-test2'
-cookbook 'mdapp-testartifact', path: '../mdapp-testartifact'
+cookbook 'dimod-test', path: '../dimod-test'
+cookbook 'dimod-test2', path: '../dimod-test2'
+cookbook 'dimod-testartifact', path: '../dimod-testartifact'
 
 cookbook 'apt'
 
 if ENV['DAPP_CHEF_COOKBOOKS_VENDORING']
-  cookbook 'mdapp-nginx'
-  cookbook 'mdapp-init'
+  cookbook 'dimod-nginx'
+  cookbook 'dimod-init'
 end
 ```

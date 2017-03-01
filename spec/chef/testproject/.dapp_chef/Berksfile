@@ -1,8 +1,8 @@
 source 'https://supermarket.chef.io'
 
 cookbook 'test', path: '.'
-cookbook 'mdapp-test', path: '../../mdapp-test'
-cookbook 'mdapp-test2', path: '../../mdapp-test2'
-cookbook 'mdapp-testartifact', path: '../../mdapp-testartifact'
+cookbook 'dimod-test', path: '../../dimod-test'
+cookbook 'dimod-test2', path: '../../dimod-test2'
+cookbook 'dimod-testartifact', path: '../../dimod-testartifact'
 
 cookbook 'apt'
