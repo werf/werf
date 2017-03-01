@@ -31,13 +31,19 @@ module Dapp
               builder.before_build_check
               last_stage.build!
             ensure
-              last_stage.save_in_cache! if last_stage.image.built? || dev_mode?
+              after_stages_build!
             end
           end
         end
       end
     ensure
       cleanup_tmp
+    end
+
+    def after_stages_build!
+      return unless last_stage.image.built? || dev_mode?
+      last_stage.save_in_cache!
+      artifacts.each { |artifact| artifact.last_stage.save_in_cache! }
     end
 
     def tag!(tag)
@@ -116,7 +122,7 @@ module Dapp
     end
 
     def run(docker_options, command)
-      cmd = "docker run #{[docker_options, last_stage.image.name, command].flatten.compact.join(' ')}"
+      cmd = "docker run #{[docker_options, last_stage.image.built_id, command].flatten.compact.join(' ')}"
       if project.dry_run?
         project.log(cmd)
       else

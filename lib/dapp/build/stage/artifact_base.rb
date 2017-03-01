@@ -13,7 +13,7 @@ module Dapp
           artifacts_labels = {}
           artifacts.each do |artifact|
             apply_artifact(artifact, image)
-            artifacts_labels["dapp-artifact-#{artifact[:name]}".to_sym] = artifact[:dimg].send(:last_stage).image.built_id
+            artifacts_labels["dapp-artifact-#{artifact[:name]}".to_sym] = artifact[:dimg].last_stage.image.built_id
           end
           image.add_service_change_label artifacts_labels
         end
