@@ -119,17 +119,13 @@ module Dapp
 
     def archive_file(commit)
       create_file(repo.dimg.tmp_path('archives', archive_file_name(commit))) do |f|
-        f.write begin
-          StringIO.new.tap do |tar_stream|
-            Gem::Package::TarWriter.new(tar_stream) do |tar|
-              diff_patches(nil, commit).each do |patch|
-                entry = patch.delta.new_file
-                tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
-                  tf.write repo.lookup_object(entry[:oid]).content
-                end
-              end
+        Gem::Package::TarWriter.new(f) do |tar|
+          diff_patches(nil, commit).each do |patch|
+            entry = patch.delta.new_file
+            tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
+              tf.write repo.lookup_object(entry[:oid]).content
             end
-          end.string
+          end
         end
       end
       repo.dimg.container_tmp_path('archives', archive_file_name(commit))
