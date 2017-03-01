@@ -14,10 +14,6 @@ module Dapp
           def prev_g_a_stage
             super.prev_stage.prev_stage # GAPostInstallPatch
           end
-
-          def next_g_a_stage
-            super.next_stage # GAPostSetupPatch || GAArtifactPatch
-          end
         end # GAPrePatch
       end
     end # Stage

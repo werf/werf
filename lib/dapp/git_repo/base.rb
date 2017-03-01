@@ -10,6 +10,10 @@ module Dapp
         @name = name
       end
 
+      def exclude_paths
+        []
+      end
+
       def patches(from, to, exclude_paths: [], **kwargs)
         diff(from, to, **kwargs).patches.select do |patch|
           !exclude_paths.any? { |p| check_path?(patch.delta.new_file[:path], p) }

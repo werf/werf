@@ -5,7 +5,7 @@ module Dapp
       class AfterSetupArtifact < ArtifactDefault
         def initialize(dimg, next_stage)
           @prev_stage = if dimg.artifact?
-                          SetupGroup::ChefCookbooks.new(dimg, self)
+                          SetupGroup::Setup.new(dimg, self)
                         else
                           SetupGroup::GAPostSetupPatch.new(dimg, self)
                         end

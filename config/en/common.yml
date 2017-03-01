@@ -15,8 +15,7 @@ en:
       artifact_building: "building artifact `%{name}`"
       git_artifact_clone: "cloning remote git_artifact `%{name}`"
       git_artifact_fetch: "fetching remote git_artifact `%{name}`"
-      berks_vendor: 'vendoring cookbooks'
-      chef_cookbooks_stage_berks_vendor: 'vendoring cookbooks for chef cookbooks stage'
+      vendoring_builder_cookbooks: 'vendoring builder cookbooks'
       waiting_resouce_lock: "waiting for locked resource `%{name}`"
       gitartifact_container_creating: 'creating dappdeps/gitartifact container'
       base_container_creating: 'creating dappdeps/base container'
@@ -76,7 +75,6 @@ en:
         g_a_pre_setup_patch_dependencies: 'Git artifacts dependencies'
         g_a_pre_setup_patch: 'Git artifacts: apply patches (before setup)'
         setup: 'Setup'
-        chef_cookbooks: 'Сhef сookbooks'
         g_a_post_setup_patch_dependencies: 'Git artifacts dependencies'
         g_a_post_setup_patch: 'Git artifacts: apply patches (after setup)'
       after_setup_artifact: 'After setup artifact'

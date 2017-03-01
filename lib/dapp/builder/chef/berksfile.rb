@@ -1,69 +1,78 @@
-module Dapp
-  module Builder
-    class Chef < Base
-      # Berksfile
-      class Berksfile
-        # Parser
-        class Parser
-          def initialize(berksfile)
-            @berksfile = berksfile
-            parse
-          end
+module Dapp::Builder
+  class Chef::Berksfile
+    class << self
+      def from_file(cookbook_path, berksfile_file_path)
+        berksfile = self.new(cookbook_path)
+        FileParser.new(berksfile_file_path, berksfile)
+        berksfile
+      end
 
-          def cookbook(name, *_args, path: nil, **_kwargs)
-            @berksfile.add_local_cookbook_path(name, path) if path
-          end
+      def from_conf(cookbook_path, conf)
+        # TODO
+      end
+    end # << self
 
-          # rubocop:disable Style/MethodMissing
-          def method_missing(*_a, &_blk)
-          end
-          # rubocop:enable Style/MethodMissing
+    class FileParser
+      def initialize(berksfile_file_path, berksfile)
+        @berksfile_file_path = berksfile_file_path
+        @berksfile = berksfile
 
-          private
+        parse
+      end
 
-          def parse
-            instance_eval(@berksfile.path.read, @berksfile.path.to_s)
-          end
-        end # Parser
+      def cookbook(name, *_args, path: nil, **_kwargs)
+        @berksfile.add_local_cookbook_path(name, path) if path
+      end
 
-        attr_reader :home_path
-        attr_reader :path
-        attr_reader :local_cookbooks
+      # rubocop:disable Style/MethodMissing
+      def method_missing(*_a, &_blk)
+      end
+      # rubocop:enable Style/MethodMissing
 
-        def initialize(home_path, path)
-          @home_path = home_path
-          @path = path
-          @local_cookbooks = {}
-          @parser = Parser.new(self)
-        end
+      private
 
-        def add_local_cookbook_path(name, path)
-          raise(::Dapp::Builder::Chef::Error, code: :berksfile_absolute_path_forbidden,
-                                              data: { cookbook: name, path: path }) if path.start_with? '/'
+      def parse
+        instance_eval(@berksfile_file_path.read, @berksfile_file_path.to_s)
+      end
+    end # FileParser
 
-          desc = {
-            name: name,
-            path: home_path.join(path),
-            chefignore: [],
-          }
+    attr_reader :cookbook_path
+    attr_reader :local_cookbooks
 
-          if desc[:path].join('chefignore').exist?
-            chefignore_patterns = desc[:path].join('chefignore').read.split("\n").map(&:strip)
-            desc[:chefignore] = Dir[*chefignore_patterns.map {|pattern| desc[:path].join(pattern)}]
-              .map(&Pathname.method(:new))
-          end
+    def initialize(cookbook_path)
+      @cookbook_path = Pathname.new(cookbook_path)
+      @local_cookbooks = {}
+    end
 
-          @local_cookbooks[name] = desc
-        end
+    def dump
+      #FIXME
+    end
 
-        def local_cookbook?(name)
-          local_cookbooks.key? name
-        end
+    def add_local_cookbook_path(name, path)
+      raise(::Dapp::Builder::Chef::Error, code: :berksfile_absolute_path_forbidden,
+                                          data: { cookbook: name, path: path }) if path.start_with? '/'
 
-        def local_cookbook(name)
-          local_cookbooks[name]
-        end
-      end # Berksfile
-    end # Chef
-  end # Builder
-end # Dapp
+      desc = {
+        name: name,
+        path: cookbook_path.join(path),
+        chefignore: [],
+      }
+
+      if desc[:path].join('chefignore').exist?
+        chefignore_patterns = desc[:path].join('chefignore').read.split("\n").map(&:strip)
+        desc[:chefignore] = Dir[*chefignore_patterns.map {|pattern| desc[:path].join(pattern)}]
+          .map(&Pathname.method(:new))
+      end
+
+      @local_cookbooks[name] = desc
+    end
+
+    def local_cookbook?(name)
+      local_cookbooks.key? name
+    end
+
+    def local_cookbook(name)
+      local_cookbooks[name]
+    end
+  end # Chef::Berksfile
+end # Dapp::Builder

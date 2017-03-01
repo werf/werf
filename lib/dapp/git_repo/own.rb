@@ -6,6 +6,10 @@ module Dapp
         super(dimg, 'own')
       end
 
+      def exclude_paths
+        dimg.project.local_git_artifact_exclude_paths
+      end
+
       def path
         @path ||= Rugged::Repository.discover(dimg.home_path.to_s).path
       rescue Rugged::RepositoryError => _e

@@ -75,6 +75,18 @@ module Dapp
       Digest::SHA256.hexdigest [full_name, to, cwd, *include_paths, *exclude_paths, owner, group].map(&:to_s).join(':::')
     end
 
+    def exclude_paths(with_cwd = false)
+      base_paths(repo.exclude_paths + @exclude_paths, with_cwd)
+    end
+
+    def include_paths(with_cwd = false)
+      base_paths(@include_paths, with_cwd)
+    end
+
+    def base_paths(paths, with_cwd = false)
+      [paths].flatten.compact.map { |path| (with_cwd && cwd ? File.join(cwd, path) : path).gsub(%r{^\/*|\/*$}, '') }
+    end
+
     def full_name
       "#{repo.name}#{name ? "_#{name}" : nil}"
     end

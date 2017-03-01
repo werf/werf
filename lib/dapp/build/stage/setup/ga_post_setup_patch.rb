@@ -11,10 +11,6 @@ module Dapp
             super
           end
 
-          def prev_g_a_stage
-            super.prev_stage # GAPreSetupPatch
-          end
-
           def next_g_a_stage
             next_stage.next_stage
           end

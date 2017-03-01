@@ -165,7 +165,7 @@ describe Dapp::Dimg do
   end
 
   def g_a_post_setup_patch_saved_signatures
-    stages_names[0..stage_index(:chef_cookbooks)]
+    stages_names[0..stage_index(:setup)]
   end
 
   def g_a_latest_patch_saved_signatures
