@@ -111,13 +111,7 @@ describe Dapp::Dimg do
   end
 
   def change_g_a_post_setup_patch
-    file_path = project_path.join('large_file')
-    if File.exist? file_path
-      FileUtils.rm file_path
-      git_commit!
-    else
-      git_change_and_commit!('large_file', 'x' * 1024 * 1024)
-    end
+    git_change_and_commit!('large_file', random_string(Dapp::Build::Stage::SetupGroup::GAPostSetupPatchDependencies::MAX_PATCH_SIZE))
   end
 
   def change_g_a_latest_patch
