@@ -10,7 +10,7 @@ describe Dapp::Dapp do
   end
 
   def stub_dimg(method)
-    stub_instance(Dapp::Dimg) do |instance|
+    stub_instance(Dapp::Dimg::Dimg) do |instance|
       allow(instance).to receive(method)
     end
   end
