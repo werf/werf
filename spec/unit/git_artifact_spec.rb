@@ -75,7 +75,7 @@ describe Dapp::Dimg::GitArtifact do
 
   def stubbed_repo
     @stubbed_repo ||= begin
-      Dapp::GitRepo::Own.new(dimg)
+      Dapp::Dimg::GitRepo::Own.new(dimg)
     end
   end
 
