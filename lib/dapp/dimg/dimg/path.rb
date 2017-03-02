@@ -1,7 +1,7 @@
 module Dapp
   # Dimg
   module Dimg
-    module Mod
+    class Dimg
       # Path
       module Path
         def home_path(*path)

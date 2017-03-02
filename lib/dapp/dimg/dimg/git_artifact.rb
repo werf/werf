@@ -1,7 +1,7 @@
 module Dapp
   # Dimg
   module Dimg
-    module Mod
+    class Dimg
       # GitArtifact
       module GitArtifact
         def git_artifacts

@@ -1,7 +1,7 @@
 module Dapp
   # Dimg
   module Dimg
-    module Mod
+    class Dimg
       # Stages
       module Stages
         def signature

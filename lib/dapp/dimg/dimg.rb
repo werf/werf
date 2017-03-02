@@ -2,10 +2,10 @@ module Dapp
   module Dimg
     # Dimg
     class Dimg
-      include Mod::GitArtifact
-      include Mod::Path
-      include Mod::Tags
-      include Mod::Stages
+      include GitArtifact
+      include Path
+      include Tags
+      include Stages
 
       include Helper::Sha256
 
