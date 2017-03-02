@@ -165,7 +165,7 @@ module Dapp
                     .map(&Pathname.method(:new))
                     .each do |from_subpath|
                       to_subpath = to_path.join(from_subpath.relative_path_from(from_path))
-                      raise(::Dapp::Builder::Chef::Error,
+                      raise(Error::Chef,
                         code: :stage_path_overlap,
                         data: { stage: stage,
                                 cookbook: cookbook,

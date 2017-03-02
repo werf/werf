@@ -31,8 +31,7 @@ module Dapp
 
           %i(before_install install before_setup setup).each do |stage|
             unless stage_empty?(stage) || stage_cookbooks_checksum_path(stage).exist?
-              raise ::Dapp::Error::Dimg, code: :chef_stage_checksum_not_calculated,
-                                         data: {stage: stage}
+              raise Error::Dimg, code: :chef_stage_checksum_not_calculated, data: { stage: stage }
             end
           end
         end
