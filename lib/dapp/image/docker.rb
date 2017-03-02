@@ -75,7 +75,7 @@ module Dapp
         def image_name_format
           separator = '[_.]|__|[-]*'
           tag = "[[:alnum:]][[[:alnum:]]#{separator}]{0,127}"
-          "#{DockerRegistry.repo_name_format}(:(?<tag>#{tag}))?"
+          "#{::Dapp::Dimg::DockerRegistry.repo_name_format}(:(?<tag>#{tag}))?"
         end
 
         def image_name?(name)

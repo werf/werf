@@ -10,7 +10,7 @@ module Dapp
 
           def registry(repo)
             validate_repo_name(repo)
-            DockerRegistry.new(repo)
+            ::Dapp::Dimg::DockerRegistry.new(repo)
           end
 
           def repo_dimgs_and_cache(registry)
