@@ -5,11 +5,11 @@ permalink: base_commands.html
 folder: command
 ---
 
-### dapp build
+### dapp dimg build
 Собрать dimg-ы, удовлетворяющие хотя бы одному из **DIMG**-ов (по умолчанию *).
 
 ```
-dapp build [options] [DIMG ...]
+dapp dimg build [options] [DIMG ...]
 ```
 
 #### Опции среды сборки
@@ -59,29 +59,29 @@ dapp build [options] [DIMG ...]
 
 ##### Сборка в текущей директории
 ```bash
-$ dapp build
+$ dapp dimg build
 ```
 
 ##### Сборка dimg-ей из соседней директории
 ```bash
-$ dapp build --dir ../project
+$ dapp dimg build --dir ../project
 ```
 
 ##### Запуск вхолостую с подробным выводом процесса сборки
 ```bash
-$ dapp build --dry-run --verbose
+$ dapp dimg build --dry-run --verbose
 ```
 
 ##### Выполнить сборку, а в случае ошибки, предоставить образ для тестирования
 ```bash
-$ dapp build --introspect-error
+$ dapp dimg build --introspect-error
 ```
 
-### dapp push
+### dapp dimg push
 Выкатить собранные dimg-ы в репозиторий, в следующем формате **REPO**:**ИМЯ DIMG**-**TAG**. В случае, если **ИМЯ DIMG** отсутствует, формат следующий **REPO**:**TAG**.
 
 ```
-dapp push [options] [DIMG ...] REPO
+dapp dimg push [options] [DIMG ...] REPO
 ```
 
 #### --with-stages
@@ -116,12 +116,12 @@ dapp push [options] [DIMG ...] REPO
 
 ##### Выкатить все dimg-ы в репозиторий localhost:5000/test и тегом latest
 ```bash
-$ dapp push localhost:5000/test
+$ dapp dimg push localhost:5000/test
 ```
 
 ##### Посмотреть, какие образы могут быть добавлены в репозиторий
 ```bash
-$ dapp push localhost:5000/test --tag yellow --tag-branch --dry-run
+$ dapp dimg push localhost:5000/test --tag yellow --tag-branch --dry-run
 backend
   localhost:5000/test:backend-yellow
   localhost:5000/test:backend-master
@@ -130,51 +130,51 @@ frontend
   localhost:5000/test:frontend-0.2
 ```
 
-### dapp spush
+### dapp dimg spush
 Выкатить собранный dimg в репозиторий, в следующем формате **REPO**:**TAG**.
 
 ```
-dapp spush [options] [DIMG] REPO
+dapp dimg spush [options] [DIMG] REPO
 ```
 
-Опции такие же как у **dapp push**.
+Опции такие же как у **dapp dimg push**.
 
 #### Примеры
 
 ##### Выкатить собранный dimg **app** в репозиторий test, именем myapp и тегом latest
 ```bash
-$ dapp spush app localhost:5000/test
+$ dapp dimg spush app localhost:5000/test
 ```
 
 ##### Выкатить собранный dimg с произвольными тегами
 ```bash
-$ dapp spush app localhost:5000/test --tag 1 --tag test
+$ dapp dimg spush app localhost:5000/test --tag 1 --tag test
 ```
 
 ##### Посмотреть, какие образы могут быть добавлены в репозиторий
 ```bash
-$ dapp spush app localhost:5000/test --tag-commit --tag-branch --dry-run
+$ dapp dimg spush app localhost:5000/test --tag-commit --tag-branch --dry-run
 localhost:5000/test:2c622c16c39d4938dcdf7f5c08f7ed4efa8384c4
 localhost:5000/test:master
 ```
 
-### dapp stages push
+### dapp dimg stages push
 Выкатить [кэш собранных приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект) в репозиторий.
 
 ```
-dapp stages push [options] [DIMG ...] REPO
+dapp dimg stages push [options] [DIMG ...] REPO
 ```
 
 #### Примеры
 
 ##### Выкатить кэш собранных dimg-ей проекта в репозиторий localhost:5000/test
 ```bash
-$ dapp stages push localhost:5000/test
+$ dapp dimg stages push localhost:5000/test
 ```
 
 ##### Посмотреть, какие образы могут быть добавлены в репозиторий
 ```bash
-$ dapp stages push localhost:5000/test --dry-run
+$ dapp dimg stages push localhost:5000/test --dry-run
 backend
   localhost:5000/test:dimgstage-be032ed31bd96506d0ed550fa914017452b553c7f1ecbb136216b2dd2d3d1623
   localhost:5000/test:dimgstage-2183f7db73687e727d9841594e30d8cb200312290a0a967ef214fe3771224ee2
@@ -190,13 +190,13 @@ frontend
   localhost:5000/test:dimgstage-02b636d9316012880e40da44ee5da3f1067cedd66caa3bf89572716cd1f894da
 ```
 
-### dapp stages pull
+### dapp dimg stages pull
 Импортировать необходимый [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект), если он присутствует в репозитории **REPO**.
 
 Если не указана опция **--all**, импорт будет выполнен до первого найденного кэша стейджа для каждого dimg-a.
 
 ```
-dapp stages pull [options] [DIMG ...] REPO
+dapp dimg stages pull [options] [DIMG ...] REPO
 ```
 
 #### --all
@@ -206,12 +206,12 @@ dapp stages pull [options] [DIMG ...] REPO
 
 ##### Импортировать кэш dimg-ей проекта из репозитория localhost:5000/test
 ```bash
-$ dapp stages pull localhost:5000/test
+$ dapp dimg stages pull localhost:5000/test
 ```
 
 ##### Посмотреть, поиск каких образов в репозитории localhost:5000/test может быть выполен
 ```bash
-$ dapp stages pull localhost:5000/test --all --dry-run
+$ dapp dimg stages pull localhost:5000/test --all --dry-run
 backend
   localhost:5000/test:dimgstage-be032ed31bd96506d0ed550fa914017452b553c7f1ecbb136216b2dd2d3d1623
   localhost:5000/test:dimgstage-2183f7db73687e727d9841594e30d8cb200312290a0a967ef214fe3771224ee2
@@ -227,16 +227,16 @@ frontend
   localhost:5000/test:dimgstage-02b636d9316012880e40da44ee5da3f1067cedd66caa3bf89572716cd1f894da
 ```
 
-### dapp tag
+### dapp dimg tag
 Протегировать собранный dimg тегом **TAG**.
 
 ```
-dapp tag [options] [DIMG] TAG
+dapp dimg tag [options] [DIMG] TAG
 ```
 
 #### Примеры
 
 ##### Протегировать собранный dimg тегом test:111.
 ```bash
-$ dapp tag test:111
+$ dapp dimg tag test:111
 ```
