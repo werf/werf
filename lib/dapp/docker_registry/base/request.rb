@@ -1,7 +1,7 @@
 module Dapp
   # DockerRegistry
   module DockerRegistry
-    module Mod
+    class Base
       # Request
       module Request
         def request(url, **options)
@@ -24,9 +24,11 @@ module Dapp
         def default_request_options
           { method: :get, omit_default_port: true }
         end
+
+        def self.included(base)
+          base.extend(self)
+        end
       end
-    end # Mod
+    end # Base
   end # DockerRegistry
 end # Dapp
-
-::Dapp::DockerRegistry::Mod::Request.extend ::Dapp::DockerRegistry::Mod::Request

@@ -3,8 +3,8 @@ module Dapp
   module DockerRegistry
     # Base
     class Base
-      include Mod::Request
-      include Mod::Authorization
+      include Request
+      include Authorization
 
       API_VERSION = 'v2'.freeze
 

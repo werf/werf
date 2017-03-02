@@ -1,7 +1,7 @@
 module Dapp
   # DockerRegistry
   module DockerRegistry
-    module Mod
+    class Base
       # Authorization
       module Authorization
         def authorization_options(url)
@@ -58,6 +58,6 @@ module Dapp
           r.split('/')[0..-2].join('/')
         end
       end
-    end # Mod
+    end # Base
   end # DockerRegistry
 end # Dapp
