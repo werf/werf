@@ -1,36 +1,38 @@
-module Dapp::Dimg::Builder
-  class None < Base
-    def before_dimg_should_be_built_check
-    end
+module Dapp
+  module Dimg::Builder
+    class None < Base
+      def before_dimg_should_be_built_check
+      end
 
-    def before_install(_image)
-    end
+      def before_install(_image)
+      end
 
-    def before_install_checksum
-    end
+      def before_install_checksum
+      end
 
-    def before_setup(_image)
-    end
+      def before_setup(_image)
+      end
 
-    def before_setup_checksum
-    end
+      def before_setup_checksum
+      end
 
-    def install(_image)
-    end
+      def install(_image)
+      end
 
-    def install_checksum
-    end
+      def install_checksum
+      end
 
-    def setup(_image)
-    end
+      def setup(_image)
+      end
 
-    def setup_checksum
-    end
+      def setup_checksum
+      end
 
-    def build_artifact(_image)
-    end
+      def build_artifact(_image)
+      end
 
-    def build_artifact_checksum
-    end
-  end # None
-end # Dapp::Dimg::Builder
+      def build_artifact_checksum
+      end
+    end # None
+  end # Dimg::Builder
+end # Dapp

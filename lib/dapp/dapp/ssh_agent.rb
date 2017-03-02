@@ -65,8 +65,8 @@ module Dapp
         return unless cli_options[:ssh_key]
 
         cli_options[:ssh_key].each do |ssh_key|
-          raise ::Dapp::Error::Dapp, code: :ssh_key_not_found,
-                                        data: { path: ssh_key } unless File.exist? ssh_key
+          raise ::Dapp::Dapp::Error::Dapp, code: :ssh_key_not_found,
+                                           data: { path: ssh_key } unless File.exist? ssh_key
 
           File.chmod 0o600, ssh_key
           add_ssh_key ssh_key

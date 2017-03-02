@@ -2,10 +2,10 @@ module Dapp
   module Dimg
     # Dimg
     class Dimg
-      include Mod::GitArtifact
-      include Mod::Path
-      include Mod::Tags
-      include Mod::Stages
+      include GitArtifact
+      include Path
+      include Tags
+      include Stages
 
       include Helper::Sha256
 
@@ -83,7 +83,7 @@ module Dapp
           dapp.log_state(image_name, state: dapp.t(code: 'state.push'), styles: { status: :success })
         else
           dapp.lock("image.#{hashsum image_name}") do
-            ::Dapp::Image::Stage.cache_reset(image_name)
+            ::Dapp::Dimg::Image::Stage.cache_reset(image_name)
             dapp.log_process(image_name, process: dapp.t(code: 'status.process.pushing')) do
               dapp.with_log_indent do
                 image.export!(image_name)

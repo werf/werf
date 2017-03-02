@@ -1,28 +1,19 @@
 module Dapp
   # CLI
   class CLI
-    extend Helper::Cli
     include Mixlib::CLI
+
+    extend Helper::Cli
     include Helper::Trivia
 
-    SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image', 'tag'].freeze
+    SUBCOMMANDS = ['dimg'].freeze
 
     banner <<BANNER.freeze
 Usage: dapp [options] sub-command [sub-command options]
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-dapp build [options] [DIMG ...]
-dapp bp [options] [DIMG ...] REPO
-dapp push [options] [DIMG ...] REPO
-dapp spush [options] [DIMG] REPO
-dapp tag [options] [DIMG] TAG
-dapp list [options] [DIMG ...]
-dapp run [options] [DIMG] [DOCKER ARGS]
-dapp cleanup [options] [DIMG ...]
-dapp mrproper [options]
-dapp stage image [options] [DIMG]
-dapp stages
+dapp dimg
 
 Options:
 BANNER
