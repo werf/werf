@@ -52,8 +52,6 @@ module Dapp
         if !divided_subcommand.empty?
           cli.class.const_get(prepare_subcommand(divided_subcommand)).new.run(subcommand_argv)
         else
-          STDERR.puts 'Error: subcommand not passed'
-          puts
           puts cli.opt_parser
           exit 1
         end

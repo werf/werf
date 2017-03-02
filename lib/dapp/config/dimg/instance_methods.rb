@@ -35,7 +35,7 @@ module Dapp
 
         def artifact(&blk)
           _artifact.concat begin
-                             pass_to_custom(ArtifactGroup.new(project: project), :clone_to_artifact).tap do |artifact_group|
+                             pass_to_custom(ArtifactGroup.new(dapp: dapp), :clone_to_artifact).tap do |artifact_group|
                                artifact_group.instance_eval(&blk) if block_given?
                              end._export
                            end
@@ -47,7 +47,7 @@ module Dapp
         end
 
         def mount(to, &blk)
-          _mount << Directive::Mount.new(to, project: project, &blk)
+          _mount << Directive::Mount.new(to, dapp: dapp, &blk)
         end
 
         def _dev_mode
@@ -59,15 +59,15 @@ module Dapp
         end
 
         def _chef
-          @_chef ||= Directive::Chef.new(project: project)
+          @_chef ||= Directive::Chef.new(dapp: dapp)
         end
 
         def _shell
-          @_shell ||= Directive::Shell::Dimg.new(project: project)
+          @_shell ||= Directive::Shell::Dimg.new(dapp: dapp)
         end
 
         def _docker
-          @_docker ||= Directive::Docker::Dimg.new(project: project)
+          @_docker ||= Directive::Docker::Dimg.new(dapp: dapp)
         end
 
         def _mount
@@ -75,7 +75,7 @@ module Dapp
         end
 
         def _git_artifact
-          @_git_artifact ||= GitArtifact.new(project: project)
+          @_git_artifact ||= GitArtifact.new(dapp: dapp)
         end
 
         [:build_dir, :tmp_dir].each do |mount_type|
@@ -122,11 +122,11 @@ module Dapp
           end
 
           def local(_, &blk)
-            @_local << Directive::GitArtifactLocal.new(project: project, &blk)
+            @_local << Directive::GitArtifactLocal.new(dapp: dapp, &blk)
           end
 
           def remote(repo_url, &blk)
-            @_remote << Directive::GitArtifactRemote.new(repo_url, project: project, &blk)
+            @_remote << Directive::GitArtifactRemote.new(repo_url, dapp: dapp, &blk)
           end
 
           def _local

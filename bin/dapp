@@ -8,11 +8,11 @@ require 'dapp'
 def check_docker_version
   required_docker_version = '1.10.0'
   if Gem::Version.new(required_docker_version) >= Gem::Version.new(`docker --version`[/(\d+\.)+\d+/])
-    $stderr.puts(Dapp::Project.paint_string("Required docker version: >= #{required_docker_version}!", :warning))
+    $stderr.puts(Dapp::Dapp.paint_string("Required docker version: >= #{required_docker_version}!", :warning))
     exit 1
   end
 rescue Errno::ENOENT => e
-  $stderr.puts(Dapp::Project.paint_string(e.message, :warning))
+  $stderr.puts(Dapp::Dapp.paint_string(e.message, :warning))
   exit 1
 end
 
@@ -33,16 +33,16 @@ begin
 
     raise
   end
-rescue Dapp::Error::Shellout => e
+rescue Dapp::Dapp::Error::Shellout => e
   $stderr.puts(Dapp::Helper::NetStatus.message(e))
   exit 1
 rescue Dapp::Error::Base, NetStatus::Exception => e
-  $stderr.puts(Dapp::Project.paint_string(Dapp::Helper::NetStatus.message(e), :warning))
+  $stderr.puts(Dapp::Dapp.paint_string(Dapp::Helper::NetStatus.message(e), :warning))
   exit 1
 rescue Interrupt => _e
-  $stderr.puts(Dapp::Project.paint_string('Interrupted', :warning))
+  $stderr.puts(Dapp::Dapp.paint_string('Interrupted', :warning))
   exit 1
 rescue Errno::EACCES => _e
-  $stderr.puts(Dapp::Project.paint_string('Permission denied!', :warning))
+  $stderr.puts(Dapp::Dapp.paint_string('Permission denied!', :warning))
   exit 1
 end

@@ -188,7 +188,7 @@ describe Dapp::Config::DimgGroup do
   end
 
   context 'warning' do
-    def stubbed_project
+    def stubbed_dapp
       super.tap do |instance|
         allow(instance).to receive(:log_config_warning) { |*_args, **kwargs| puts kwargs[:desc][:code] }
       end

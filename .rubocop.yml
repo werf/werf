@@ -2,13 +2,13 @@ AllCops:
   TargetRubyVersion: 2.1
 
 Metrics/LineLength:
-  Max: 150
+  Max: 130
 
 Metrics/AbcSize:
-  Max: 25
+  Max: 85
 
 Metrics/MethodLength:
-  Max: 15
+  Max: 50
 
 Metrics/ClassLength:
   Max: 300
@@ -19,3 +19,27 @@ Style/DoubleNegation:
 Style/FileName:
   Exclude:
     - 'spec/chef/testproject/recipes/**/*'
+
+Style/SpaceInside:
+  Enabled: false
+
+Style/SpaceInsideParens:
+  Enabled: false
+
+Style/SpaceInsideBrackets:
+  Enabled: false
+
+Style/SpaceInsideBlockBraces:
+  Enabled: false
+
+Style/SpaceInsideHashLiteralBraces:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Documentation:
+  Enabled: false
+
+EmptyMethod:
+  Enabled: false

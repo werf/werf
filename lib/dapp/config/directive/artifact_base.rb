@@ -85,7 +85,7 @@ module Dapp
         end
 
         def export(absolute_dir_path = '/', &blk)
-          @_export << self.class.const_get('Export').new(absolute_dir_path, project: project, &blk)
+          @_export << self.class.const_get('Export').new(absolute_dir_path, dapp: dapp, &blk)
         end
       end
     end

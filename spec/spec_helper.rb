@@ -19,7 +19,7 @@ require 'spec_helper/config'
 
 RSpec.configure do |config|
   config.before :all do
-    Dapp::Project::Logging::I18n.initialize
+    Dapp::Dapp::Logging::I18n.initialize
 
     # Force /tmp as base dir for all mktmpdir calls.
     # Needed to enable macos rspec tests.

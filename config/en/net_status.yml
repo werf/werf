@@ -18,7 +18,7 @@ en:
       built_id_not_defined: '`from.built_id` not defined!'
       from_image_not_found: 'Image `%{name}` not found!'
       unsupported_patch_format: "Unsupported patch format:\n\n%{patch}"
-    project:
+    dapp:
       command_unexpected_dimgs_number: "Command can process only one dimg!\nAmbiguous dimg pattern: `%{dimgs_names}`!"
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       tag_command_incorrect_tag: "Incorrect tag (`%{name}`) given!"

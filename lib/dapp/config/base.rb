@@ -2,18 +2,18 @@ module Dapp
   module Config
     # Base
     class Base
-      def initialize(project:, &blk)
-        @project = project
+      def initialize(dapp:, &blk)
+        @dapp = dapp
         instance_eval(&blk) if block_given?
       end
 
       protected
 
-      attr_reader :project
+      attr_reader :dapp
 
       def marshal_dump
         instance_variables
-          .reject {|variable| variable == :@project}
+          .reject {|variable| variable == :@dapp}
           .map {|variable| [variable, instance_variable_get(variable)]}
       end
 

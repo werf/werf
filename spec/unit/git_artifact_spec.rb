@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe Dapp::GitArtifact do
+describe Dapp::Dimg::GitArtifact do
   include SpecHelper::Common
   include SpecHelper::Git
   include SpecHelper::Dimg
@@ -30,7 +30,7 @@ describe Dapp::GitArtifact do
   end
 
   def stubbed_stage
-    instance_double(Dapp::Build::Stage::Base).tap do |instance|
+    instance_double(Dapp::Dimg::Build::Stage::Base).tap do |instance|
       allow(instance).to receive(:prev_stage=)
     end
   end
@@ -43,39 +43,39 @@ describe Dapp::GitArtifact do
 
   def stub_stages
     @stage_commit = {}
-    [Dapp::Build::Stage::GAArchive, Dapp::Build::Stage::GALatestPatch].each do |stage|
+    [Dapp::Dimg::Build::Stage::GAArchive, Dapp::Dimg::Build::Stage::GALatestPatch].each do |stage|
       allow_any_instance_of(stage).to receive(:layer_commit) do
         @stage_commit[stage.name] ||= {}
         @stage_commit[stage.name][@branch] ||= git_latest_commit(branch: @branch)
       end
     end
-    allow_any_instance_of(Dapp::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
+    allow_any_instance_of(Dapp::Dimg::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
   end
 
-  def project
+  def dapp
     super do
-      allow_any_instance_of(Dapp::Project).to receive(:git_bin) { 'git' }
-      allow_any_instance_of(Dapp::Project).to receive(:tar_bin) { 'tar' }
-      allow_any_instance_of(Dapp::Project).to receive(:sudo_bin) { 'sudo' }
-      allow_any_instance_of(Dapp::Project).to receive(:install_bin) { 'install' }
+      allow_any_instance_of(Dapp::Dapp).to receive(:git_bin) { 'git' }
+      allow_any_instance_of(Dapp::Dapp).to receive(:tar_bin) { 'tar' }
+      allow_any_instance_of(Dapp::Dapp).to receive(:sudo_bin) { 'sudo' }
+      allow_any_instance_of(Dapp::Dapp).to receive(:install_bin) { 'install' }
     end
   end
 
   def g_a_archive_stage
-    @g_a_archive_stage ||= Dapp::Build::Stage::GAArchive.new(empty_dimg, stubbed_stage)
+    @g_a_archive_stage ||= Dapp::Dimg::Build::Stage::GAArchive.new(empty_dimg, stubbed_stage)
   end
 
   def g_a_latest_patch_stage
-    @g_a_latest_patch_stage ||= Dapp::Build::Stage::GALatestPatch.new(empty_dimg, stubbed_stage)
+    @g_a_latest_patch_stage ||= Dapp::Dimg::Build::Stage::GALatestPatch.new(empty_dimg, stubbed_stage)
   end
 
   def git_artifact
-    Dapp::GitArtifact.new(stubbed_repo, **git_artifact_local_options)
+    Dapp::Dimg::GitArtifact.new(stubbed_repo, **git_artifact_local_options)
   end
 
   def stubbed_repo
     @stubbed_repo ||= begin
-      Dapp::GitRepo::Own.new(dimg)
+      Dapp::Dimg::GitRepo::Own.new(dimg)
     end
   end
 

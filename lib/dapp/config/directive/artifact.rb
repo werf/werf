@@ -55,7 +55,7 @@ module Dapp
                                          conflict_stage: "#{conflict_type} #{conflict_stage.inspect}" } if conflict_stage
 
             defined_stage = send("_#{type}")
-            project.log_config_warning(desc: {
+            dapp.log_config_warning(desc: {
               code: :stage_artifact_rewritten,
               context: :warning,
               data: { stage: "#{type} #{stage.inspect}",
