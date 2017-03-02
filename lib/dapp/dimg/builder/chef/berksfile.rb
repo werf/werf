@@ -3,7 +3,7 @@ module Dapp
     class Chef::Berksfile
       class << self
         def from_file(cookbook_path, berksfile_file_path)
-          berksfile = self.new(cookbook_path)
+          berksfile = new(cookbook_path)
           FileParser.new(berksfile_file_path, berksfile)
           berksfile
         end

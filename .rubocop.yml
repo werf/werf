@@ -20,7 +20,19 @@ Style/FileName:
   Exclude:
     - 'spec/chef/testproject/recipes/**/*'
 
+Style/SpaceInside:
+  Enabled: false
+
+Style/SpaceInsideParens:
+  Enabled: false
+
+Style/SpaceInsideBrackets:
+  Enabled: false
+
 Style/SpaceInsideBlockBraces:
+  Enabled: false
+
+Style/SpaceInsideHashLiteralBraces:
   Enabled: false
 
 Style/ClassAndModuleChildren:

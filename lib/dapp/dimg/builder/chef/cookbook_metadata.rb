@@ -3,7 +3,7 @@ module Dapp
     class Chef::CookbookMetadata
       class << self
         def from_file(metadata_file_path)
-          metadata = self.new
+          metadata = new
           FileParser.new(metadata_file_path, metadata)
           metadata
         end
