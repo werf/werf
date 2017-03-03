@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module Config
-      # ArtifactGroup
       class ArtifactGroup < DimgGroup
         def _shell(&blk)
           @_shell ||= Directive::Shell::Artifact.new(dapp: dapp, &blk)

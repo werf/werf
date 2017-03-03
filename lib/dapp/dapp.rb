@@ -1,5 +1,4 @@
 module Dapp
-  # Dapp
   class Dapp
     include Lock
     include GitArtifact

@@ -1,7 +1,5 @@
 module Dapp
-  # Dapp
   class Dapp
-    # Lock
     module Lock
       def lock_path
         build_path.join('locks')

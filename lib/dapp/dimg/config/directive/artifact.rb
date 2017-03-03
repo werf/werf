@@ -1,9 +1,7 @@
 module Dapp
   module Dimg
     module Config
-      # Directive
       module Directive
-        # Artifact
         class Artifact < ArtifactBase
           attr_reader :_config
 
@@ -21,7 +19,6 @@ module Dapp
             end
           end
 
-          # Export
           class Export < ArtifactBase::Export
             attr_accessor :_config
             attr_accessor :_before, :_after

@@ -1,10 +1,7 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
-        # StageImage
         module StageImage
           def stage_image
             one_dimg!

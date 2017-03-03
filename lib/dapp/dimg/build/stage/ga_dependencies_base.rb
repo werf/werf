@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # GADependenciesBase
         class GADependenciesBase < Base
           def prepare_image
             super

@@ -1,6 +1,5 @@
 module Dapp
   module Helper
-    # Trivia
     module Trivia
       def kwargs(args)
         args.last.is_a?(Hash) ? args.pop : {}

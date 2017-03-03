@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # GALatestPatch
         class GALatestPatch < GABase
           def initialize(dimg, next_stage)
             @prev_stage = AfterSetupArtifact.new(dimg, self)

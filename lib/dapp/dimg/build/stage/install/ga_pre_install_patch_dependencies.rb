@@ -3,7 +3,6 @@ module Dapp
     module Build
       module Stage
         module Install
-          # GAPreInstallPatchDependencies
           class GAPreInstallPatchDependencies < GADependenciesBase
             include Mod::Group
 

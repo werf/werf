@@ -189,7 +189,6 @@ require 'dapp/dimg/dimg/stages'
 require 'dapp/dimg/dimg'
 require 'dapp/dimg/artifact'
 
-# Dapp
 module Dapp
   def self.root
     File.expand_path('../..', __FILE__)

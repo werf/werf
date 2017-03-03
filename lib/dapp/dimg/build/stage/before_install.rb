@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # BeforeInstall
         class BeforeInstall < Base
           def initialize(dimg, next_stage)
             @prev_stage = From.new(dimg, self)

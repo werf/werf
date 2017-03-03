@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # AfterSetupArtifact
         class AfterSetupArtifact < ArtifactDefault
           def initialize(dimg, next_stage)
             @prev_stage = if dimg.artifact?

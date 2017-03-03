@@ -1,11 +1,8 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
         module Stages
-          # Pull
           module Pull
             def stages_pull(repo)
               validate_repo_name(repo)

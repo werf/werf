@@ -1,8 +1,6 @@
 module Dapp
-  # Dimg
   module Dimg
     class Dimg
-      # Stages
       module Stages
         def signature
           last_stage.send(:signature)

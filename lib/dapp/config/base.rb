@@ -1,6 +1,5 @@
 module Dapp
   module Config
-    # Base
     class Base
       def initialize(dapp:, &blk)
         @dapp = dapp

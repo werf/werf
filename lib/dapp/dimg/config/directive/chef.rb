@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Config
       module Directive
-        # Chef
         class Chef < Base
           attr_accessor :_dimod, :_recipe, :_attributes
 
@@ -32,7 +31,6 @@ module Dapp
             end
           end
 
-          # Attributes
           class Attributes < Hash
             def [](key)
               super || begin

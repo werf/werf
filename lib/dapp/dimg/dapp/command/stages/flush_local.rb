@@ -1,11 +1,8 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
         module Stages
-          # FlushLocal
           module FlushLocal
             def stages_flush_local
               lock("#{name}.images") do

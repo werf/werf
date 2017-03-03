@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module GitRepo
-      # Own Git repo
       class Own < Base
         def initialize(dimg)
           super(dimg, 'own')

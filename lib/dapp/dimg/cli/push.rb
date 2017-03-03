@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module CLI
-      # CLI push subcommand
       class Push < Base
         banner <<BANNER.freeze
 Usage:

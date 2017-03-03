@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # GABase
         class GABase < Base
           attr_accessor :prev_g_a_stage, :next_g_a_stage
 

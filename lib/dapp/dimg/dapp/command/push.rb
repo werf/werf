@@ -1,10 +1,7 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
-        # Push
         module Push
           def push(repo)
             validate_repo_name(repo)

@@ -1,7 +1,6 @@
 module Dapp
   class Dapp
     module Logging
-      # I18n
       module I18n
         def self.initialize
           ::I18n.load_path << Dir[File.join(::Dapp.root, 'config', '**', '*')].select { |path| File.file?(path) }

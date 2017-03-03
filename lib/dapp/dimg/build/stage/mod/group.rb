@@ -2,9 +2,7 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # Mod
         module Mod
-          # Group
           module Group
             def log_image_build
               return super if should_be_quiet?

@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module Config
-      # DimgGroup
       class DimgGroup < DimgGroupBase
         include Dimg::InstanceMethods
 

@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # Base of all stages
         class Base
           include Helper::Sha256
           include Helper::Trivia

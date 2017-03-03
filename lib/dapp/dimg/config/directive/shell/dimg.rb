@@ -3,7 +3,6 @@ module Dapp
     module Config
       module Directive
         module Shell
-          # Dimg
           class Dimg < Directive::Base
             attr_reader :_version
             attr_reader :_before_install, :_before_setup, :_install, :_setup
@@ -30,7 +29,6 @@ module Dapp
             end
             [:before_install, :before_setup, :install, :setup].each(&method(:stage_command_generator))
 
-            # StageCommand
             class StageCommand < Directive::Base
               attr_reader :_version
               attr_reader :_run

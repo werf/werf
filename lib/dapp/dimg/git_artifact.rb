@@ -1,6 +1,6 @@
 module Dapp
   module Dimg
-    # Artifact from Git repo
+    # Git repo artifact
     class GitArtifact
       attr_reader :repo
       attr_reader :name

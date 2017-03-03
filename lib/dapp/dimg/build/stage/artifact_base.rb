@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # ArtifactBase
         class ArtifactBase < Base
           def dependencies
             artifacts_signatures

@@ -1,9 +1,7 @@
 module Dapp
   module Dimg
-    # DockerRegistry
     module DockerRegistry
       class Base
-        # Authorization
         module Authorization
           def authorization_options(url)
             @authorization_options ||= begin

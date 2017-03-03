@@ -1,8 +1,6 @@
 module Dapp
   module Dimg
-    # Image
     module Image
-      # Docker
       class Docker
         attr_reader :from
         attr_reader :name
@@ -95,9 +93,9 @@ module Dapp
           def cache_reset(name = '')
             cache.delete(name)
             ::Dapp::Dapp.shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}")
-              .stdout
-              .lines
-              .each do |l|
+                        .stdout
+                        .lines
+                        .each do |l|
               name, id, created_at, size_field = l.split(';')
               size = begin
                 number, unit = size_field.split

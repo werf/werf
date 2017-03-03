@@ -1,7 +1,5 @@
 module Dapp
-  # Dapp
   class Dapp
-    # SshAgent
     module SshAgent
       class << self
         def included(_base)

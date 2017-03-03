@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module Config
-      # ArtifactDimg
       class ArtifactDimg < Dimg
         def _artifact_dependencies
           @_artifact_dependencies ||= []

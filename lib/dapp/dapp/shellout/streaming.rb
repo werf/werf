@@ -1,9 +1,7 @@
 module Dapp
   class Dapp
     module Shellout
-      # Streaming
       module Streaming
-        # Stream
         class Stream
           def buffer
             @buffer ||= []
@@ -18,9 +16,7 @@ module Dapp
           end
         end
 
-        # Proxy
         module Proxy
-          # Base
           class Base
             def initialize(*streams, with_time: false)
               @streams = streams
@@ -36,7 +32,6 @@ module Dapp
             end
           end
 
-          # Error
           class Error < Base
             def format_string(str)
               "#{Dapp.paint_string(super.strip, :warning)}\n"

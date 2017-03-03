@@ -1,6 +1,5 @@
 module Dapp
   class CLI
-    # Base of CLI subcommands
     class Base < ::Dapp::CLI
       option :dir,
              long: '--dir PATH',

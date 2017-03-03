@@ -110,7 +110,6 @@ module Dapp
             _artifact.select(&:not_associated?)
           end
 
-          # GitArtifact
           class GitArtifact < Directive::Base
             attr_reader :_local, :_remote
 

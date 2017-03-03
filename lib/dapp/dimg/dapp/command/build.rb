@@ -1,10 +1,7 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
-        # Build
         module Build
           def build
             setup_ssh_agent

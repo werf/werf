@@ -1,9 +1,6 @@
 module Dapp
-  # Dapp
   class Dapp
-    # Deps
     module Deps
-      # Base
       module Base
         BASE_VERSION = '0.1.14'.freeze
 

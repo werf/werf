@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # From
         class From < Base
           def dependencies
             [from_image_name, dimg.config._docker._from_cache_version]

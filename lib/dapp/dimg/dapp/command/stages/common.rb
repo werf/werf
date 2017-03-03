@@ -1,11 +1,8 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
         module Stages
-          # Common
           module Common
             protected
 

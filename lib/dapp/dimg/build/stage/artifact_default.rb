@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # ArtifactDefault
         class ArtifactDefault < ArtifactBase
           protected
 

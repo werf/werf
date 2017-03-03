@@ -1,10 +1,7 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
-        # Spush
         module Spush
           def spush(repo)
             validate_repo_name(repo)

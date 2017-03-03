@@ -1,7 +1,5 @@
 module Dapp
-  # Dapp
   class Dapp
-    # Dappfile
     module Dappfile
       def local_git_artifact_exclude_paths(&blk)
         super do |exclude_paths|

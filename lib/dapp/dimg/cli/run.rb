@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module CLI
-      # CLI run subcommand
       class Run < Base
         banner <<BANNER.freeze
 Usage:

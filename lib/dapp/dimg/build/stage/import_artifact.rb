@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # ImportArtifact
         class ImportArtifact < ArtifactBase
           def initialize(dimg)
             @dimg = dimg

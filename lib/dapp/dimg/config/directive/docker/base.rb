@@ -3,7 +3,6 @@ module Dapp
     module Config
       module Directive
         module Docker
-          # Base
           class Base < Directive::Base
             attr_reader :_from, :_from_cache_version
 

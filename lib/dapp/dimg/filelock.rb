@@ -1,12 +1,10 @@
 module Dapp
   module Dimg
-    # File Monitor
     module Filelock
       def self.included(base)
         base.extend(ClassMethods)
       end
 
-      # ClassMethods
       module ClassMethods
         def filelocks
           @filelocks ||= Hash.new(false)

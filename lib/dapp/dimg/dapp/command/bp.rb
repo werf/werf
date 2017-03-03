@@ -1,10 +1,7 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
-        # Build
         module Bp
           def bp(repo)
             bp_step(:build)

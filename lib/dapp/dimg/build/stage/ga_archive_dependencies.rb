@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # GAArchiveDependencies
         class GAArchiveDependencies < GADependenciesBase
           RESET_COMMIT_MESSAGES = ['[dapp reset]', '[reset dapp]'].freeze
 

@@ -3,7 +3,6 @@ module Dapp
     module Build
       module Stage
         module Setup
-          # Setup
           class Setup < Base
             include Mod::Group
 

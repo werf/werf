@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # DockerInstructions
         class DockerInstructions < Base
           def initialize(dimg)
             @prev_stage = GALatestPatch.new(dimg, self)

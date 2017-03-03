@@ -1,6 +1,5 @@
 module Dapp
   module Helper
-    # Cli
     module Cli
       def parse_options(cli, argv)
         cli_wrapper(cli) do

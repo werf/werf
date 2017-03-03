@@ -1,5 +1,4 @@
 module SpecHelper
-  # Config
   module Config
     def dappfile(&blk)
       @dappfile = ConfigDsl.new.instance_eval(&blk).config

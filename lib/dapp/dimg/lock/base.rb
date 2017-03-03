@@ -1,8 +1,6 @@
 module Dapp
   module Dimg
-    # Lock
     module Lock
-      # Base
       class Base
         attr_reader :name
 

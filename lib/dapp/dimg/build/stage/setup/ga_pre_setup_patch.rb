@@ -3,7 +3,6 @@ module Dapp
     module Build
       module Stage
         module Setup
-          # GAPrePatch
           class GAPreSetupPatch < GABase
             include Mod::Group
 

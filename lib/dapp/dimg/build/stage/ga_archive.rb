@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # GAArchive
         class GAArchive < GABase
           def initialize(dimg, next_stage)
             @prev_stage = GAArchiveDependencies.new(dimg, self)

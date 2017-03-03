@@ -1,8 +1,6 @@
 module Dapp
-  # Dapp
   class Dapp
     module Logging
-      # Paint
       module Paint
         FORMAT = {
           step: [:yellow, :bold],

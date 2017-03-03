@@ -1,8 +1,6 @@
 module Dapp
-  # Dimg
   module Dimg
     class Dimg
-      # GitArtifact
       module GitArtifact
         def git_artifacts
           [*local_git_artifacts, *remote_git_artifacts].compact

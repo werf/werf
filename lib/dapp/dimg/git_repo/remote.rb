@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module GitRepo
-      # Normal Git repo
       class Remote < Base
         def initialize(dimg, name, url:)
           super(dimg, name)

@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module Config
-      # Dimg
       class Dimg < Base
         include Validation
         include InstanceMethods

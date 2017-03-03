@@ -1,6 +1,5 @@
 module Dapp
   module Dimg
-    # Dimg
     class Dimg
       include GitArtifact
       include Path

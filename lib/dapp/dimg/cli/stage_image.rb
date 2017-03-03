@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module CLI
-      # CLI stage image subcommand
       class StageImage < Base
         banner <<BANNER.freeze
 Usage:

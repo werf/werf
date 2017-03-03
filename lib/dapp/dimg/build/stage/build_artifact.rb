@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # BuildArtifact
         class BuildArtifact < Base
           def initialize(dimg)
             @prev_stage = GAArtifactPatch.new(dimg, self)

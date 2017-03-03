@@ -1,6 +1,5 @@
 module Dapp
   module Dimg
-    # Artifact
     class Artifact < Dimg
       def after_stages_build!
       end

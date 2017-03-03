@@ -3,7 +3,6 @@ module Dapp
     module Build
       module Stage
         module Install
-          # Install
           class Install < Base
             include Mod::Group
 

@@ -1,7 +1,5 @@
 module Dapp
-  # CoreExt
   module CoreExt
-    # Pathname
     module Pathname
       def subpath_of?(another_path)
         another_path_descends = []

@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module Config
-      # DimgGroupBase
       class DimgGroupBase < Base
         attr_reader :_dimg_group
 

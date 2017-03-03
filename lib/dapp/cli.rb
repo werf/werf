@@ -1,5 +1,4 @@
 module Dapp
-  # CLI
   class CLI
     include Mixlib::CLI
 

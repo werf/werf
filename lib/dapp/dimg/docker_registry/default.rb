@@ -1,8 +1,6 @@
 module Dapp
   module Dimg
-    # DockerRegistry
     module DockerRegistry
-      # Default
       class Default < Base
         DEFAULT_HOSTNAME_URL = 'https://registry.hub.docker.com'.freeze
 

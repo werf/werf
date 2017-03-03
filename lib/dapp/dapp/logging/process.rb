@@ -1,9 +1,6 @@
 module Dapp
-  # Dapp
   class Dapp
-    # Logging
     module Logging
-      # Process
       module Process
         DEFAULT_STYLE = {
           message: :step,

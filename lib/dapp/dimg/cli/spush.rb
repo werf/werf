@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module CLI
-      # CLI spush subcommand
       class Spush < Push
         banner <<BANNER.freeze
 Usage:

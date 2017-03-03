@@ -1,8 +1,6 @@
 module Dapp
   module Dimg
-    # DockerRegistry
     module DockerRegistry
-      # Base
       class Base
         include Request
         include Authorization

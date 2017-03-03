@@ -1,9 +1,6 @@
 module Dapp
-  # Dapp
   class Dapp
-    # Deps
     module Deps
-      # Gitartifact
       module Gitartifact
         GITARTIFACT_VERSION = '0.1.7'.freeze
 

@@ -1,8 +1,6 @@
 module Dapp
-  # Dimg
   module Dimg
     class Dimg
-      # Tags
       module Tags
         protected
 

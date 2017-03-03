@@ -1,6 +1,5 @@
 module Dapp
   module Helper
-    # Sha256
     module Sha256
       def hashsum(arg)
         sha256(arg)

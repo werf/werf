@@ -1,6 +1,5 @@
 module Dapp
   module Dimg
-    # DockerRegistry
     module DockerRegistry
       def self.new(repo)
         /^#{repo_name_format}$/ =~ repo

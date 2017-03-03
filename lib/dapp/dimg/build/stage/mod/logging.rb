@@ -2,9 +2,7 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # Mod
         module Mod
-          # Logging
           module Logging
             def log_image_build(&image_build)
               if empty?                    then log_state(:empty)

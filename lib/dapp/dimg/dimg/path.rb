@@ -1,8 +1,6 @@
 module Dapp
-  # Dimg
   module Dimg
     class Dimg
-      # Path
       module Path
         def home_path(*path)
           make_path(dapp.path, *path).expand_path

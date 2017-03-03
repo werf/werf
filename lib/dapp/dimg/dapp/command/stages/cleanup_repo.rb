@@ -1,11 +1,8 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
         module Stages
-          # CleanupRepo
           module CleanupRepo
             def stages_cleanup_repo(repo)
               lock_repo(repo) do

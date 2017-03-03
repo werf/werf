@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module CLI
-      # CLI mrprooper subcommand
       class Mrproper < Base
         banner <<BANNER.freeze
 Usage:

@@ -1,8 +1,6 @@
 module Dapp
   module Dimg
-    # Image
     module Image
-      # Stage
       class Stage < Docker
         include Argument
 

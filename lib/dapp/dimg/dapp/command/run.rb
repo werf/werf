@@ -1,10 +1,7 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
-        # Run
         module Run
           def run(docker_options, command)
             one_dimg!

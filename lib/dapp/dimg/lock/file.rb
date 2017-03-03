@@ -1,8 +1,6 @@
 module Dapp
   module Dimg
-    # Lock
     module Lock
-      # File
       class File < Base
         class << self
           attr_writer :counter

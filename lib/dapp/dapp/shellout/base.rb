@@ -1,8 +1,6 @@
 module Dapp
   class Dapp
-    # Shellout
     module Shellout
-      # Base
       module Base
         include Streaming
 

@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module Image
-      # Argument
       module Argument
         def add_change_volume(value)
           add_change_option(:volume, value)

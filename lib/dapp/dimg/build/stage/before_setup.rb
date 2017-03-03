@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        # BeforeSetup
         class BeforeSetup < Base
           def initialize(dimg, next_stage)
             @prev_stage = AfterInstallArtifact.new(dimg, self)

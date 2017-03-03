@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module CLI
-      # CLI tag subcommand
       class Tag < Base
         banner <<BANNER.freeze
 Usage:

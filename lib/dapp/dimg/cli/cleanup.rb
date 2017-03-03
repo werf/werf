@@ -1,7 +1,6 @@
 module Dapp
   module Dimg
     module CLI
-      # Cleanup subcommand
       class Cleanup < Base
         banner <<BANNER.freeze
 Usage:

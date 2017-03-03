@@ -1,10 +1,7 @@
 module Dapp
   module Dimg
-    # Dapp
     class Dapp
-      # Command
       module Command
-        # Cleanup
         module Cleanup
           def cleanup
             lock("#{name}.images") do
