@@ -15,15 +15,45 @@ describe Dapp::Dimg::Config::Directive::Chef do
   end
 
   it 'dimod' do
-    expect_array_attribute(:dimod, method(:dappfile_dimg_chef)) do |*args|
-      expect(dimg._chef._dimod).to eq args
+    dappfile_dimg_chef do
+      line("dimod 'dimod-common'")
+      line("dimod 'dimod-nginx'")
+      line("dimod 'dimod-extra', '~> 0.1.0', git: 'https://github.com/flant/dimod-extra'")
+      line("dimod 'dimod-example', path: '../dimod-example'")
     end
+
+    expect(dimg._chef._dimod).to eq(['dimod-common', 'dimod-nginx', 'dimod-extra', 'dimod-example'])
+
+    expect(dimg._chef._cookbook).to eq({
+      'dimod-common' => {name: 'dimod-common'},
+      'dimod-nginx' => {name: 'dimod-nginx'},
+      'dimod-extra' => {name: 'dimod-extra', version_constraint: '~> 0.1.0', git: 'https://github.com/flant/dimod-extra'},
+      'dimod-example' => {name: 'dimod-example', path: '../dimod-example'}
+    })
+  end
+
+  it 'cookbook' do
+    dappfile_dimg_chef do
+      line("cookbook 'apt'")
+      line("cookbook 'ehlo', '~> 0.1.0', git: 'https://github.com/flant/ehlo'")
+      line("cookbook 'wrld', path: '../wrld'")
+    end
+
+    expect(dimg._chef._cookbook).to eq({
+      'apt' => {name: 'apt'},
+      'ehlo' => {name: 'ehlo', version_constraint: '~> 0.1.0', git: 'https://github.com/flant/ehlo'},
+      'wrld' => {name: 'wrld', path: '../wrld'}
+    })
   end
 
   it 'recipe' do
-    expect_array_attribute(:recipe, method(:dappfile_dimg_chef)) do |*args|
-      expect(dimg._chef._recipe).to eq args
+    dappfile_dimg_chef do
+      line("recipe 'main'")
+      line("recipe 'hello'")
+      line("recipe 'world'")
     end
+
+    expect(dimg._chef._recipe).to eq(['main', 'hello', 'world'])
   end
 
   it 'attributes' do
