@@ -4,9 +4,8 @@ module Dapp
       # CLI tag subcommand
       class Tag < Base
         banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg tag [options] [DIMG] TAG
 
     DIMG                        Dapp image to process [default: *].

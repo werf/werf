@@ -5,9 +5,8 @@ module Dapp
         # stages flush repo subcommand
         class FlushRepo < Base
           banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg stages flush repo [options] [DIMG ...] REPO
 
     DIMG                        Dapp image to process [default: *].

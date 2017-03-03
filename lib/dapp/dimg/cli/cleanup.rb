@@ -4,9 +4,8 @@ module Dapp
       # Cleanup subcommand
       class Cleanup < Base
         banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg cleanup [options] [DIMG ...]
 
     DIMG                        Dapp image to process [default: *].

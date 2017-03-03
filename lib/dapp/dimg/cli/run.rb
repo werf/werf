@@ -4,9 +4,8 @@ module Dapp
       # CLI run subcommand
       class Run < Base
         banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg run [options] [DIMG] [DOCKER ARGS]
 
     DIMG                        Dapp image to process [default: *].

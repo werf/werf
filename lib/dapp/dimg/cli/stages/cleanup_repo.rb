@@ -5,9 +5,8 @@ module Dapp
         # stages cleanup repo subcommand
         class CleanupRepo < CleanupLocal
           banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg stages cleanup repo [options] [DIMG ...] REPO
 
     DIMG                        Dapp image to process [default: *].

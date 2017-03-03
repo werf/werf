@@ -4,9 +4,8 @@ module Dapp
       # CLI mrprooper subcommand
       class Mrproper < Base
         banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg mrprooper [options]
 
 Options:

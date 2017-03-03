@@ -4,9 +4,8 @@ module Dapp
       # CLI stage image subcommand
       class StageImage < Base
         banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg stage image [options] [DIMG]
 
     DIMG                        Dapp image to process [default: *].

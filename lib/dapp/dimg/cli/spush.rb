@@ -4,9 +4,8 @@ module Dapp
       # CLI spush subcommand
       class Spush < Push
         banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg spush [options] [DIMG] REPO
 
     DIMG                        Dapp image to process [default: *].

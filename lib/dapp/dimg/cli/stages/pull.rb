@@ -5,9 +5,8 @@ module Dapp
         # stages pull subcommand
         class Pull < Base
           banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg stages pull [options] [DIMG ...] REPO
 
     DIMG                        Dapp image to process [default: *].

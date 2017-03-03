@@ -5,9 +5,8 @@ module Dapp
         # stages push subcommand
         class Push < Base
           banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg stages push [options] [DIMG ...] REPO
 
     DIMG                        Dapp image to process [default: *].

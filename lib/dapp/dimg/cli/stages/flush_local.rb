@@ -5,9 +5,8 @@ module Dapp
         # stages flush local subcommand
         class FlushLocal < Base
           banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg stages flush local [options] [DIMG ...]
 
     DIMG                        Dapp image to process [default: *].

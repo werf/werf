@@ -4,9 +4,8 @@ module Dapp
       # CLI build subcommand
       class Build < Base
         banner <<BANNER.freeze
-Version: #{::Dapp::VERSION}
-
 Usage:
+
   dapp dimg build [options] [DIMG ...]
 
     DIMG                        Dapp image to process [default: *].
