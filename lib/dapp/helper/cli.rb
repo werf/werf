@@ -55,7 +55,11 @@ module Dapp
       end
 
       def prepare_subcommand(divided_subcommand)
-        Array(divided_subcommand).map(&:capitalize).join
+        Array(divided_subcommand)
+          .map { |c| c.split(/[-_]/) }
+          .flatten
+          .map(&:capitalize)
+          .join
       end
 
       def composite_options(opt)

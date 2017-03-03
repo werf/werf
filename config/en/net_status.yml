@@ -24,6 +24,8 @@ en:
       stages_cleanup_required_option: "Expected command option `--improper-cache-version`, `--improper-git-commit` or `--improper-repo-cache`!"
       tag_command_incorrect_tag: "Incorrect tag (`%{name}`) given!"
       repo_name_incorrect: "Incorrect repo (`%{name}`) given!"
+      context_directory_not_found: "Context directory `%{path}` not found!"
+      stored_build_dir_already_exist: "Cannot store current build_dir `%{path}`: restore or delete old build_dir!"
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       dappfile_not_found: "Dappfile not found!"

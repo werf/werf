@@ -2,7 +2,7 @@ module Dapp
   module Dimg
     module CLI
       class Dimg < ::Dapp::CLI
-        SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image', 'tag'].freeze
+        SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image', 'tag', 'build-context'].freeze
 
         banner <<BANNER.freeze
 Usage: dapp dimg [options] sub-command [sub-command options]
@@ -20,6 +20,7 @@ dapp dimg cleanup [options] [DIMG ...]
 dapp dimg mrproper [options]
 dapp dimg stage image [options] [DIMG]
 dapp dimg stages
+dapp dimg build-context
 
 Options:
 BANNER
