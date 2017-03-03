@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     module Exception
-      class Base < Error::Base; end
+      class Base < ::Dapp::Exception::Base; end
     end
   end
 end
