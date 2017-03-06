@@ -5,11 +5,11 @@ permalink: clean_commands.html
 folder: command
 ---
 
-### dapp stages cleanup local
+### dapp dimg stages cleanup local
 Удалить неактуальный локальный [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект).
 
 ```
-dapp stages cleanup local [options] [DIMG ...] [REPO]
+dapp dimg stages cleanup local [options] [DIMG ...] [REPO]
 ```
 
 #### --improper-repo-cache
@@ -25,24 +25,24 @@ dapp stages cleanup local [options] [DIMG ...] [REPO]
 
 ##### Оставить только актуальный кэш, исходя из приложений в localhost:5000/test
 ```bash
-$ dapp stages cleanup local localhost:5000/test
+$ dapp dimg stages cleanup local localhost:5000/test
 ```
 
 ##### Удалить кэш, версия которого не совпадает с текущей
 ```bash
-$ dapp stages cleanup local --improper-cache-version
+$ dapp dimg stages cleanup local --improper-cache-version
 ```
 
 ##### Почистить кэш после rebase в одном из связанных git-репозиториев
 ```bash
-$ dapp stages cleanup local --improper-git-commit
+$ dapp dimg stages cleanup local --improper-git-commit
 ```
 
-### dapp stages cleanup repo
+### dapp dimg stages cleanup repo
 Удалить неиспользуемый [кэш приложений](definitions.html#кэш-приложения) в репозитории **REPO**.
 
 ```
-dapp stages cleanup repo [options] [DIMG ...] REPO
+dapp dimg stages cleanup repo [options] [DIMG ...] REPO
 ```
 
 #### --improper-repo-cache
@@ -63,64 +63,64 @@ dapp stages cleanup repo [options] [DIMG ...] REPO
 * Собран из коммитов, которые в данный момент отсутствуют в git-репозиториях проекта.
 
 ```bash
-$ dapp stages cleanup repo localhost:5000/test --improper-cache-version --improper-repo-cache --improper-git-commit
+$ dapp dimg stages cleanup repo localhost:5000/test --improper-cache-version --improper-repo-cache --improper-git-commit
 ```
 
-### dapp stages flush local
+### dapp dimg stages flush local
 Удалить [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект).
 
 ```
-dapp stages flush local [options] [DIMG ...]
+dapp dimg stages flush local [options] [DIMG ...]
 ```
 
 #### Примеры
 
 ##### Удалить кэш приложений
 ```bash
-$ dapp stages flush local
+$ dapp dimg stages flush local
 ```
 
-### dapp stages flush repo
+### dapp dimg stages flush repo
 Удалить приложения и [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект) в репозитории **REPO**.
 
 ```
-dapp stages flush repo [options] [DIMG ...] REPO
+dapp dimg stages flush repo [options] [DIMG ...] REPO
 ```
 
 #### Примеры
 
 ##### Удалить весь кэш приложений в репозитории localhost:5000/test
 ```bash
-$ dapp stages flush repo localhost:5000/test
+$ dapp dimg stages flush repo localhost:5000/test
 ```
 
-### dapp cleanup
+### dapp dimg cleanup
 Убраться в системе после некорректного завершения работы dapp, удалить нетегированные docker-образы и docker-контейнеры [проекта](definitions.html#проект).
 
 ```
-dapp cleanup [options] [DIMG ...]
+dapp dimg cleanup [options] [DIMG ...]
 ```
 
 #### Примеры
 
 ##### Запустить
 ```bash
-$ dapp cleanup
+$ dapp dimg cleanup
 ```
 
 ##### Посмотреть, какие команды могут быть выполнены
 ```bash
-$ dapp cleanup --dry-run
+$ dapp dimg cleanup --dry-run
 backend
   docker rm -f dd4ec7v33
   docker rmi ea5ec7543 c809ec7e9f ee6f48efa6
 ```
 
-### dapp mrproper
+### dapp dimg mrproper
 Очистить docker в соответствии с переданным параметром.
 
 ```
-dapp mrproper [options]
+dapp dimg mrproper [options]
 ```
 
 #### --all
@@ -133,12 +133,12 @@ dapp mrproper [options]
 
 ##### Запустить очистку
 ```bash
-$ dapp mrproper --all
+$ dapp dimg mrproper --all
 ```
 
 ##### Посмотреть, версия кэша каких образов устарела, какие команды могут быть выполнены:
 ```bash
-$ dapp mrproper --improper-cache-version-stages --dry-run
+$ dapp dimg mrproper --improper-cache-version-stages --dry-run
 mrproper
   proper cache
     docker rmi dimgstage-dapp-test-project-services-stats:ba95ec8a00638ddac413a13e303715dd2c93b80295c832af440c04a46f3e8555 dimgstage-dapp-test-project-services-stats:f53af70566ec23fb634800d159425da6e7e61937afa95e4ed8bf531f3503daa6

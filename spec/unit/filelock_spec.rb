@@ -1,7 +1,7 @@
 require_relative '../spec_helper'
 
-describe Dapp::Filelock do
-  include Dapp::Filelock
+describe Dapp::Dimg::Filelock do
+  include Dapp::Dimg::Filelock
 
   def home_path(x)
     x

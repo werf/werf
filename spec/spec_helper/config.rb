@@ -1,5 +1,4 @@
 module SpecHelper
-  # Config
   module Config
     def dappfile(&blk)
       @dappfile = ConfigDsl.new.instance_eval(&blk).config
@@ -18,13 +17,13 @@ module SpecHelper
     end
 
     def dimgs
-      Dapp::Config::DimgGroupMain.new(project: stubbed_project).tap do |config|
+      Dapp::Dimg::Config::DimgGroupMain.new(dapp: stubbed_dapp).tap do |config|
         config.instance_eval(@dappfile) unless @dappfile.nil?
       end._dimg
     end
 
-    def stubbed_project
-      instance_double(Dapp::Project).tap do |instance|
+    def stubbed_dapp
+      instance_double(Dapp::Dapp).tap do |instance|
         allow(instance).to receive(:name) { File.basename(Dir.getwd) }
         allow(instance).to receive(:log_warning)
       end

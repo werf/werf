@@ -1,6 +1,5 @@
 module Dapp
   module Helper
-    # Cli
     module Cli
       def parse_options(cli, argv)
         cli_wrapper(cli) do
@@ -24,7 +23,6 @@ module Dapp
         arg
       end
 
-      # rubocop:disable Metrics/MethodLength
       def parse_subcommand(cli, args)
         argv = args
         divided_subcommand = []
@@ -46,14 +44,11 @@ module Dapp
 
         [argv, divided_subcommand, subcommand_argv]
       end
-      # rubocop:enable Metrics/MethodLength
 
       def run_subcommand(cli, divided_subcommand, subcommand_argv)
         if !divided_subcommand.empty?
           cli.class.const_get(prepare_subcommand(divided_subcommand)).new.run(subcommand_argv)
         else
-          STDERR.puts 'Error: subcommand not passed'
-          puts
           puts cli.opt_parser
           exit 1
         end

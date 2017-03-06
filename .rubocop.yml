@@ -5,17 +5,71 @@ Metrics/LineLength:
   Max: 150
 
 Metrics/AbcSize:
-  Max: 25
+  Max: 85
 
 Metrics/MethodLength:
-  Max: 15
+  Max: 50
+
+Metrics/ModuleLength:
+  Max: 150
 
 Metrics/ClassLength:
   Max: 300
 
-Style/DoubleNegation:
+Metrics/BlockLength:
+  Max: 50
+
+Security/MarshalLoad:
+  Enabled: false
+
+Security/JSONLoad:
   Enabled: false
 
 Style/FileName:
   Exclude:
     - 'spec/chef/testproject/recipes/**/*'
+
+Style/DoubleNegation:
+  Enabled: false
+
+Style/MultilineIfModifier:
+  Enabled: false
+
+Style/SpaceInsideParens:
+  Enabled: false
+
+Style/SpaceInsideBrackets:
+  Enabled: false
+
+Style/SpaceInsideBlockBraces:
+  Enabled: false
+
+Style/SpaceInsideHashLiteralBraces:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/MultilineBlockChain:
+  Enabled: false
+
+Style/AsciiComments:
+  Enabled: false
+
+Style/CaseIndentation:
+  Enabled: false
+
+Style/RegexpLiteral:
+  Enabled: false
+
+Style/EmptyCaseCondition:
+  Enabled: false
+
+Lint/EndAlignment:
+  EnforcedStyleAlignWith: variable
+
+Documentation:
+  Enabled: false
+
+EmptyMethod:
+  Enabled: false

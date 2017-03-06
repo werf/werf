@@ -1,7 +1,6 @@
 module Dapp
   module Config
     module Directive
-      # Base
       class Base < Config::Base
         protected
 

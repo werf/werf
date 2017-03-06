@@ -1,6 +1,6 @@
 require_relative '../spec_helper'
 
-describe Dapp::Build::Stage do
+describe Dapp::Dimg::Build::Stage do
   include SpecHelper::Dimg
 
   after :each do

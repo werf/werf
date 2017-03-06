@@ -1,6 +1,5 @@
 module Dapp
   module Error
-    # Base
     class Base < NetStatus::Exception
       def initialize(net_status = {})
         super({ context: self.class.to_s.split('::').last.downcase }.merge(net_status))

@@ -1,7 +1,6 @@
 module Dapp
   class CLI
-    # Base of CLI subcommands
-    class Base < CLI
+    class Base < ::Dapp::CLI
       option :dir,
              long: '--dir PATH',
              description: 'Change to directory',
@@ -56,9 +55,8 @@ module Dapp
         super()
       end
 
-      def run(argv = ARGV)
-        self.class.parse_options(self, argv)
-        Project.new(cli_options: config, dimgs_patterns: cli_arguments).public_send(class_to_lowercase)
+      def run(_argv = ARGV)
+        raise
       end
     end
   end

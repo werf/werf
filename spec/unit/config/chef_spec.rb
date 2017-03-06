@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Dapp::Config::Directive::Chef do
+describe Dapp::Dimg::Config::Directive::Chef do
   include SpecHelper::Common
   include SpecHelper::Config
 
