@@ -28,9 +28,10 @@ module Dapp
 
           def cookbook(name, version_constraint=nil, **kwargs)
             @_cookbook[name] = {}.tap do |desc|
-              desc.update(**kwargs)
+              desc.update(kwargs)
               desc[:name] = name
               desc[:version_constraint] = version_constraint if version_constraint
+              desc[:path] = File.expand_path(desc[:path], dapp.path) if desc.key? :path
             end
           end
 

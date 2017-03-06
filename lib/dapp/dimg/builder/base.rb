@@ -1,6 +1,6 @@
 module Dapp
-  module Dimg::Builder
-    class Base
+  module Dimg
+    class Builder::Base
       attr_reader :dimg
 
       def initialize(dimg)
@@ -72,6 +72,6 @@ module Dapp
       def build_artifact_checksum
         raise
       end
-    end # Base
-  end # Dimg::Builder
+    end # Builder::Base
+  end # Dimg
 end # Dapp

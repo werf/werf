@@ -1,6 +1,6 @@
 module Dapp
-  module Dimg::Builder
-    class Shell < Base
+  module Dimg
+    class Builder::Shell < Builder::Base
       [:before_install, :before_setup, :install, :setup, :build_artifact].each do |stage|
         define_method("#{stage}_checksum") do
           [dimg.config._shell.public_send("_#{stage}_command"),
@@ -19,6 +19,6 @@ module Dapp
       def stage_commands(stage)
         dimg.config._shell.public_send("_#{stage}_command")
       end
-    end # Shell
-  end # Dimg::Builder
+    end # Builder::Shell
+  end # Dimg
 end # Dapp

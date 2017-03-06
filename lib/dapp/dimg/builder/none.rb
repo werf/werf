@@ -1,6 +1,6 @@
 module Dapp
-  module Dimg::Builder
-    class None < Base
+  module Dimg
+    class Builder::None < Builder::Base
       def before_dimg_should_be_built_check
       end
 
@@ -33,6 +33,6 @@ module Dapp
 
       def build_artifact_checksum
       end
-    end # None
-  end # Dimg::Builder
+    end # Builder::None
+  end # Dimg
 end # Dapp

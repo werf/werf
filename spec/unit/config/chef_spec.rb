@@ -28,7 +28,7 @@ describe Dapp::Dimg::Config::Directive::Chef do
       'dimod-common' => {name: 'dimod-common'},
       'dimod-nginx' => {name: 'dimod-nginx'},
       'dimod-extra' => {name: 'dimod-extra', version_constraint: '~> 0.1.0', git: 'https://github.com/flant/dimod-extra'},
-      'dimod-example' => {name: 'dimod-example', path: '../dimod-example'}
+      'dimod-example' => {name: 'dimod-example', path: File.expand_path('../dimod-example', dimg.send(:dapp).path)}
     })
   end
 
@@ -42,7 +42,7 @@ describe Dapp::Dimg::Config::Directive::Chef do
     expect(dimg._chef._cookbook).to eq({
       'apt' => {name: 'apt'},
       'ehlo' => {name: 'ehlo', version_constraint: '~> 0.1.0', git: 'https://github.com/flant/ehlo'},
-      'wrld' => {name: 'wrld', path: '../wrld'}
+      'wrld' => {name: 'wrld', path: File.expand_path('../wrld', dimg.send(:dapp).path)}
     })
   end
 

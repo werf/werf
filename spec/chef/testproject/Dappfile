@@ -9,10 +9,12 @@ dimg_group do
   chef.attributes['dimod-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_DAPPFILE.txt'
   chef.attributes['dimod-test2']['sayhelloagain'] = 'helloagain'
 
+  chef.cookbook 'build-essential', '~> 8.0.0'
+
   artifact do
     docker.from 'ubuntu:14.04'
 
-    chef.dimod 'dimod-testartifact'
+    chef.dimod 'dimod-testartifact', path: '../dimod-testartifact'
     chef.recipe 'myartifact'
 
     export '/myartifact_testproject' do
@@ -21,14 +23,14 @@ dimg_group do
     end
   end
 
-  chef.dimod 'dimod-test'
+  chef.dimod 'dimod-test', path: '../dimod-test'
   chef.recipe 'main'
 
   dimg_group do
     docker.from 'ubuntu:14.04'
 
     chef.recipe 'X'
-    chef.dimod 'dimod-test2'
+    chef.dimod 'dimod-test2', path: '../dimod-test2'
 
     dimg 'X_Y' do
       chef.recipe 'X_Y'
