@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module CLI
       class Stages
-        # stages flush local subcommand
         class FlushLocal < Base
           banner <<BANNER.freeze
 Usage:
