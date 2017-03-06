@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module CLI
       class Stages
-        # stages flush repo subcommand
         class FlushRepo < Base
           banner <<BANNER.freeze
 Usage:

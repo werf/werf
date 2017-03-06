@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module CLI
       class Stages
-        # stages pull subcommand
         class Pull < Base
           banner <<BANNER.freeze
 Usage:
