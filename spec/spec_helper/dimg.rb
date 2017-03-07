@@ -55,8 +55,7 @@ module SpecHelper
                                 _docker: { _from: :'ubuntu:14.04',
                                            _from_cache_version: CACHE_VERSION,
                                            _change_options: {} },
-                                _git_artifact: { _local: [], _remote: [] },
-                                _install_dependencies: [], _setup_dependencies: []))
+                                _git_artifact: { _local: [], _remote: [] }))
     end
 
     def cli_options

@@ -141,7 +141,15 @@ module Dapp
             end
           end
 
+          def name
+            class_to_lowercase.to_sym
+          end
+
           def builder_checksum
+          end
+
+          def git_artifacts_dependencies
+            dimg.git_artifacts.map { |git_artifact| git_artifact.stage_dependencies_checksum(self) }
           end
 
           def dependencies
@@ -179,16 +187,6 @@ module Dapp
             prev_stage.image if prev_stage || begin
               raise Error::Build, code: :from_image_required
             end
-          end
-
-          def name
-            class_to_lowercase.to_sym
-          end
-
-          def dependencies_files_checksum(regs)
-            regs.map! { |reg| File.directory?(File.join(dimg.dapp.path, reg)) ? File.join(reg, '**', '*') : reg }
-            files = regs.map { |reg| Dir[File.join(dimg.dapp.path, reg)].map { |f| File.read(f) if File.file?(f) } }
-            hashsum files unless files.empty?
           end
 
           def change_options

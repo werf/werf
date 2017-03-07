@@ -14,19 +14,11 @@ module Dapp
           @_export ||= []
         end
 
-        def _artifact_dependencies
-          @_artifact_dependencies ||= []
-        end
-
         undef :artifact
         undef :dimg
         undef :dimg_group
 
         protected
-
-        def artifact_depends_on(*args)
-          _artifact_dependencies.concat(args)
-        end
 
         def export(*args, &blk)
           _export.concat begin
@@ -48,10 +40,6 @@ module Dapp
         end
 
         def check_dimg_group_directive_order(_directive)
-        end
-
-        def passed_directives
-          super << :@_artifact_dependencies
         end
       end
     end

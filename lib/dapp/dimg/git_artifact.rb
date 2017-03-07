@@ -7,7 +7,8 @@ module Dapp
 
       # rubocop:disable Metrics/ParameterLists
       def initialize(repo, to:, name: nil, branch: nil, commit: nil,
-                     cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil)
+                     cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil,
+                     stages_dependencies: {})
         @repo = repo
         @name = name
 
@@ -27,6 +28,8 @@ module Dapp
         @exclude_paths = exclude_paths
         @owner = owner
         @group = group
+
+        @stages_dependencies = stages_dependencies
       end
       # rubocop:enable Metrics/ParameterLists
 
@@ -47,6 +50,16 @@ module Dapp
 
       def apply_dev_patch_command(stage)
         patch_command(stage.prev_g_a_stage.layer_commit(self), nil)
+      end
+
+      def stage_dependencies_checksum(stage)
+        return [] if (stage_dependencies = stages_dependencies[stage.name]).empty?
+
+        paths = include_paths_or_cwd + base_paths(stage_dependencies, true)
+        diff_patches(nil, latest_commit, paths: paths).map do |patch|
+          delta_new_file = patch.delta.new_file
+          Digest::SHA256.hexdigest [delta_new_file[:path], repo.lookup_object(delta_new_file[:oid]).content].join(':::')
+        end
       end
 
       def patch_size(from, to)
@@ -94,6 +107,7 @@ module Dapp
       attr_reader :cwd
       attr_reader :owner
       attr_reader :group
+      attr_reader :stages_dependencies
 
       def patch_command(prev_commit, current_commit)
         [].tap do |commands|
@@ -197,8 +211,8 @@ module Dapp
         File.open(file_path, File::RDWR | File::CREAT, &blk)
       end
 
-      def diff_patches(from, to)
-        (@diff_patches ||= {})[[from, to]] = repo.patches(from, to, paths: include_paths_or_cwd, exclude_paths: exclude_paths(true))
+      def diff_patches(from, to, paths: include_paths_or_cwd)
+        (@diff_patches ||= {})[[from, to, paths]] = repo.patches(from, to, paths: paths, exclude_paths: exclude_paths(true))
       end
 
       def include_paths_or_cwd
