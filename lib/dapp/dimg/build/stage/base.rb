@@ -96,7 +96,7 @@ module Dapp
 
           def image_add_mounts
             [:tmp_dir, :build_dir].each do |type|
-              next if (mounts = mounts_by_type(type)).empty?
+              next if (mounts = adding_mounts_by_type(type)).empty?
 
               mounts.each do |path|
                 absolute_path = File.expand_path(File.join('/', path))
@@ -108,9 +108,16 @@ module Dapp
             end
           end
 
-          def mounts_by_type(type)
-            (dimg.config.public_send("_#{type}_mount").map(&:_to) +
-              from_image.labels.select { |l, _| l == "dapp-mount-#{type.to_s.tr('_', '-')}" }.map { |_, value| value.split(';') }.flatten).uniq
+          def adding_mounts_by_type(type)
+            (config_mounts_by_type(type) + labels_mounts_by_type(type)).uniq
+          end
+
+          def config_mounts_by_type(type)
+            dimg.config.public_send("_#{type}_mount").map(&:_to)
+          end
+
+          def labels_mounts_by_type(type)
+            from_image.labels.select { |l, _| l == "dapp-mount-#{type.to_s.tr('_', '-')}" }.map { |_, value| value.split(';') }.flatten
           end
 
           def image_should_be_build?
