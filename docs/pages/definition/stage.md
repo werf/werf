@@ -112,7 +112,6 @@ folder: definition
 | before setup artifact             | Наложение артефактов                | artifact (с before: :setup)                		     |
 | git artifact pre setup patch      | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | setup                             | Развёртывание приложения            | shell.setup / chef.dimod, chef.recipe              |
-| chef cookbooks                    | Установка cookbook\`ов              | -             		       						               |
 | git artifact post setup patch     | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | after setup artifact              | Наложение артефактов                | artifact (с after: :setup)            	   		     |
 | git artifact latest patch         | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
@@ -143,25 +142,3 @@ folder: definition
 Сборка scratch dimg предполагает создание образа только путем импорта в итоговый образ файловых ресурсов описанных пользователем артефактов.
 
 Порядок сборки: собирается каждый из описанных артефактов, отрабатывает стадия import artifacts, добавляя все описанные артефакты в итоговый образ (фактически с помощью docker import). При этом сборка каждого из артефактов идет изолированно и проходит через все стандартные стадии сборки артефактов.
-
-#### chef cookbooks
-Стадия устанавливает cookbook`и, указанные в Berksfile проекта, в собираемый образ.
-
-* Во время установки cookbook`ов в данной стадии, устанавливается переменная окружения DAPP_CHEF_COOKBOOKS_VENDORING=1.
-* Для cookbook`ов, нужных в собираемом образе, но не нужных для сборки самого образа с помощью chef-сборщика можно использовать проверку в Berksfile, например:
-
-```ruby
-source 'https://supermarket.chef.io'
-
-cookbook 'test', path: '.'
-cookbook 'dimod-test', path: '../dimod-test'
-cookbook 'dimod-test2', path: '../dimod-test2'
-cookbook 'dimod-testartifact', path: '../dimod-testartifact'
-
-cookbook 'apt'
-
-if ENV['DAPP_CHEF_COOKBOOKS_VENDORING']
-  cookbook 'dimod-nginx'
-  cookbook 'dimod-init'
-end
-```
