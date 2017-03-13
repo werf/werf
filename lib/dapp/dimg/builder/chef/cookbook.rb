@@ -1,8 +1,10 @@
 module Dapp
-  module Dimg::Builder
+  module Dimg
     # Локальный cookbook сборщик с правилами
     # сборки dimg образов для chef сборщика.
-    class Chef::Cookbook
+    class Builder::Chef::Cookbook
+      CACHE_VERSION = 1
+
       CHECKSUM_PATTERNS = %w(
         attributes/**/*
         recipes/**/*
@@ -43,8 +45,8 @@ module Dapp
       end
 
       # TODO: Сookbook'и зависимости на локальной файловой системе
-      # TODO должны обрабатываться рекурсивно. Чтобы контрольная сумма
-      # TODO учитывала все зависимости всех зависимых локальных cookbook'ов.
+      # TODO: должны обрабатываться рекурсивно. Чтобы контрольная сумма
+      # TODO: учитывала все зависимости всех зависимых локальных cookbook'ов.
       def checksum
         @checksum ||= begin
           all_local_paths = local_paths
@@ -54,8 +56,11 @@ module Dapp
                             .map(&Pathname.method(:new))
 
           builder.dimg.hashsum [
+            CACHE_VERSION,
             builder.dimg.paths_content_hashsum(all_local_paths),
-            *all_local_paths.map {|p| p.relative_path_from(path).to_s}.sort
+            *all_local_paths.map {|p| p.relative_path_from(path).to_s}.sort,
+            berksfile.dump,
+            metadata.dump
           ].compact
         end
       end
@@ -74,12 +79,20 @@ module Dapp
         builder.dimg.dapp.log_secondary_process(builder.dimg.dapp.t(code: _vendor_process_name)) do
           volumes_from = [builder.dimg.dapp.base_container, builder.chefdk_container]
 
+          tmp_berksfile_path = builder.dimg.tmp_path.join("Berksfile.#{SecureRandom.uuid}")
+          File.open(tmp_berksfile_path, 'w') {|file| file.write berksfile.dump}
+
+          tmp_metadata_path = builder.dimg.tmp_path.join("metadata.rb.#{SecureRandom.uuid}")
+          File.open(tmp_metadata_path, 'w') {|file| file.write metadata.dump}
+
           vendor_commands = [
             "#{builder.dimg.dapp.mkdir_bin} -p ~/.ssh",
             'echo "Host *" >> ~/.ssh/config',
             'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
             *local_paths.map {|path| "#{builder.dimg.dapp.rsync_bin} --archive --relative #{path} /tmp/local_cookbooks"},
             "cd /tmp/local_cookbooks/#{path}",
+            "cp #{tmp_berksfile_path} Berksfile",
+            "cp #{tmp_metadata_path} metadata.rb",
             '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
             ["#{builder.dimg.dapp.find_bin} /tmp/cookbooks -type d -exec #{builder.dimg.dapp.bash_bin} -ec '",
              "#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} ",
@@ -97,6 +110,7 @@ module Dapp
             [ 'docker run --rm',
               volumes_from.map {|container| "--volumes-from #{container}"}.join(' '),
               *local_paths.map {|path| "--volume #{path}:#{path}"},
+              "--volume #{builder.dimg.tmp_path}:#{builder.dimg.tmp_path}",
               ("--volume #{builder.dimg.dapp.ssh_auth_sock}:/tmp/dapp-ssh-agent" if builder.dimg.dapp.ssh_auth_sock),
               "--volume #{_vendor_path.tap(&:mkpath)}:#{_vendor_path}",
               ('--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent' if builder.dimg.dapp.ssh_auth_sock),
@@ -266,6 +280,6 @@ module Dapp
       def _stage_cookbooks_path(stage)
         builder.stage_build_path(stage).join('cookbooks')
       end
-    end # Chef::Cookbook
-  end # Dimg::Builder
+    end # Builder::Chef::Cookbook
+  end # Dimg
 end # Dapp

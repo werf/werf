@@ -1,7 +1,0 @@
-source 'https://supermarket.chef.io'
-
-cookbook 'test', path: '.'
-cookbook 'dimod-test', path: '../../dimod-test'
-cookbook 'dimod-test2', path: '../../dimod-test2'
-cookbook 'dimod-testartifact', path: '../../dimod-testartifact'
-cookbook 'git'

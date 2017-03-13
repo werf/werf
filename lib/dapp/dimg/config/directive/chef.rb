@@ -3,25 +3,36 @@ module Dapp
     module Config
       module Directive
         class Chef < Base
-          attr_accessor :_dimod, :_recipe, :_attributes
+          attr_accessor :_dimod, :_cookbook, :_recipe, :_attributes
 
           def initialize(**kwargs, &blk)
             @_dimod = []
             @_recipe = []
+            @_cookbook = {}
 
             super(**kwargs, &blk)
           end
 
-          def dimod(*args)
-            @_dimod.concat(args)
+          def dimod(name, *args)
+            @_dimod << name
+            cookbook(name, *args)
           end
 
-          def recipe(*args)
-            @_recipe.concat(args)
+          def recipe(name)
+            @_recipe << name
           end
 
           def attributes
             @_attributes ||= Attributes.new
+          end
+
+          def cookbook(name, version_constraint=nil, **kwargs)
+            @_cookbook[name] = {}.tap do |desc|
+              desc.update(kwargs)
+              desc[:name] = name
+              desc[:version_constraint] = version_constraint if version_constraint
+              desc[:path] = File.expand_path(desc[:path], dapp.path) if desc.key? :path
+            end
           end
 
           %i(before_install install before_setup setup build_artifact).each do |stage|

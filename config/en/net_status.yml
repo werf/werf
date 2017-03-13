@@ -55,9 +55,6 @@ en:
     chef:
       stage_path_overlap: "Cannot install `%{cookbook}` cookbook's path %{from} into %{to}: already exists"
       builder_cookbook_not_found: "Dapp cookbook directory not found at %{path}"
-      builder_cookbook_berksfile_not_found: "Dapp local cookbook Berksfile not found at %{path}"
-      builder_cookbook_metadata_not_found: "Dapp local cookbook metadata.rb file not found at %{path}"
-      cookbook_not_specified_in_berksfile: "Dapp cookbook `%{name}` not specified in Berksfile at %{path}"
       berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook `%{cookbook}`, path: `%{path}`)"
     registry:
       no_such_dimg: 'Registry `%{registry}`: no such dimg in registry!'

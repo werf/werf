@@ -66,7 +66,7 @@ describe Dapp::Dimg::Builder::Chef do
           expect(send(dimod_test_file, reload: true)).not_to eq(old_template_file_values[dimod_test_file])
           expect(send(dimod_test2_file, reload: true)).not_to eq(old_template_file_values[dimod_test2_file])
 
-          expect(send("test_#{stage}", reload: true)).to eq(new_file_values[project_file])
+          expect(send("dapp_#{stage}", reload: true)).to eq(new_file_values[project_file])
           expect(send("dimod_test_#{stage}", reload: true)).to eq(new_file_values[dimod_test_file])
           expect(send("dimod_test2_#{stage}", reload: true)).to eq(new_file_values[dimod_test2_file])
         end
@@ -138,8 +138,13 @@ describe Dapp::Dimg::Builder::Chef do
           _name: "#{testproject_path.basename}-X-Y",
           _docker: default_config[:_docker].merge(_from: os.to_sym),
           _chef: {
-            _dimod: %w(dimod-test dimod-test2),
+            _dimod: ['dimod-test', 'dimod-test2'],
             _recipe: %w(main X X_Y),
+            _cookbook: ConfigHash.new(
+              'build-essential' => {name: 'build-essential', version_constraint: '~> 8.0.0'},
+              'dimod-test' => {name: 'dimod-test', path: File.expand_path('../dimod-test', dapp.path)},
+              'dimod-test2' => {name: 'dimod-test2', path: File.expand_path('../dimod-test2', dapp.path)}
+            ),
             __before_install_attributes: {
               'dimod-test2' => {
                 'sayhello' => 'hello',
@@ -170,8 +175,12 @@ describe Dapp::Dimg::Builder::Chef do
                 _builder: :chef,
                 _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
                 _chef: {
-                  _dimod: %w(dimod-testartifact),
+                  _dimod: ['dimod-testartifact'],
                   _recipe: %w(myartifact),
+                  _cookbook: ConfigHash.new(
+                    'build-essential' => {name: 'build-essential', version_constraint: '~> 8.0.0'},
+                    'dimod-testartifact' => {name: 'dimod-testartifact', path: File.expand_path('../dimod-testartifact', dapp.path)}
+                  ),
                   __before_install_attributes: {
                     'dimod-test2' => {
                       'sayhello' => 'hello',
@@ -279,8 +288,8 @@ describe Dapp::Dimg::Builder::Chef do
   TEST_FILE_NAMES = %i(foo X_foo X_Y_foo bar baz qux
                        burger pizza taco pelmeni
                        kolokolchik koromyslo taburetka batareika
-                       test_before_install test_install
-                       test_before_setup test_setup
+                       dapp_before_install dapp_install
+                       dapp_before_setup dapp_setup
                        dimod_test_before_install dimod_test_install
                        dimod_test_before_setup dimod_test_setup
                        dimod_test2_before_install dimod_test2_install
@@ -327,6 +336,16 @@ describe Dapp::Dimg::Builder::Chef do
 
     def to_json(*a)
       to_h.to_json(*a)
+    end
+  end
+
+  class ConfigHash
+    def initialize(hash)
+      @data = hash
+    end
+
+    def method_missing(*args, &blk)
+      @data.send(*args, &blk)
     end
   end
 end

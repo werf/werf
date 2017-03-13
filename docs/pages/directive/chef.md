@@ -5,17 +5,24 @@ permalink: chef_directives.html
 folder: directive
 ---
 
-### chef.dimod \<mod\>[, \<mod\>, \<mod\> ...]
-Включить переданные [модули](definitions.html#dimod-модуль) для chef builder в данном контексте.
+### chef.dimod \<mod\>[[, \<version-constraint\>,] \<cookbook-opts\>]
+Включить указанный [модуль](definitions.html#dimod) для chef builder в данном контексте.
 
-* Название модулей должно включать в себя префикс 'dimod-'. Примеры: dimod-php, dimod-nginx.
+* Название модуля должно включать в себя префикс 'dimod-' (dimod-php, dimod-nginx).
 * Для каждого переданного модуля может существовать по одному рецепту на каждую из стадий.
 * При отсутствии файла рецепта в runlist для данной стадии используется пустой рецепт \<mod\>::void.
+* Параметры \<version-constraint\> и \<cookbook-opts\> определяют опции cookbook'а, соответствуют параметрам директивы chef.cookbook.
 
-Подробнее см.: [dimod модуль](definitions.html#dimod-модуль) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
+Подробнее см.: [dimod модуль](definitions.html#dimod) и [установка стадии cookbook\`а](definitions.html#установка-стадии-cookbook-а).
+
+### chef.cookbook \<cookbook\>[[, \<version-constraint\>,] \<cookbook-opts\>]
+Включить указанный cookbook в зависимость для сборочного cookbook'а.
+
+* Опциональный параметр \<version-constraint\> определяет ограничение на версию cookbook'а.
+* Опции \<cookbook-opts\> соответствуют опциям cookbook'ов из Berksfile.
 
 ### chef.recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
-Включить переданные рецепты из [приложения](definitions.html#cookbook-приложения) для chef builder в данном контексте.
+Включить переданные рецепты из [cookbook'а dapp](definitions.html#cookbook-dapp) для chef builder в данном контексте.
 
 * Для каждого преданного рецепта может существовать файл рецепта в проекте на каждую из стадий.
 * При отсутствии хотя бы одного файла рецепта из включенных, в runlist для данной стадии используется пустой рецепт \<projectname\>::void.

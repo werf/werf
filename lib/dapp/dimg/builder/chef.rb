@@ -1,6 +1,6 @@
 module Dapp
-  module Dimg::Builder
-    class Chef < Base
+  module Dimg
+    class Builder::Chef < Builder::Base
       DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.17.3-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
       %i(before_install install before_setup setup build_artifact).each do |stage|
@@ -76,20 +76,26 @@ module Dapp
                   data: {path: dimg.dapp.builder_cookbook_path.to_s}
           end
 
-          unless dimg.dapp.builder_cookbook_path.join('Berksfile').exist?
-            raise Error,
-                  code: :builder_cookbook_berksfile_not_found,
-                  data: {path: dimg.dapp.builder_cookbook_path.join('Berksfile').to_s}
+          cookbooks = Marshal.load Marshal.dump(dimg.config._chef._cookbook)
+
+          cookbooks.each do |_name, desc|
+            # Получение относительного пути из директории .dapp_chef до указанной зависимости.
+            # В Dappfile указываются пути относительно самого Dappfile либо абсолютные пути.
+            # В объекте конфига должны лежать абсолютные пути по ключу :path.
+            if desc[:path]
+              relative_from_cookbook_path = Pathname.new(desc[:path]).relative_path_from(dimg.dapp.builder_cookbook_path).to_s
+              desc[:path] = relative_from_cookbook_path
+            end
           end
 
-          unless dimg.dapp.builder_cookbook_path.join('metadata.rb').exist?
-            raise Error,
-                  code: :builder_cookbook_metadata_not_found,
-                  data: {path: dimg.dapp.builder_cookbook_path.join('metadata.rb').to_s}
-          end
+          # Добавление самого cookbook'а builder'а.
+          cookbooks[dimg.dapp.name] = {
+            name: dimg.dapp.name,
+            path: '.'
+          }
 
-          berksfile = Berksfile.from_file(dimg.dapp.builder_cookbook_path, dimg.dapp.builder_cookbook_path.join('Berksfile'))
-          metadata = CookbookMetadata.from_file(dimg.dapp.builder_cookbook_path.join('metadata.rb'))
+          berksfile = Berksfile.from_conf(cookbook_path: dimg.dapp.builder_cookbook_path.to_s, cookbooks: cookbooks)
+          metadata = CookbookMetadata.from_conf(name: dimg.dapp.name, version: '1.0.0', cookbooks: cookbooks)
 
           Cookbook.new(self,
                        path: dimg.dapp.builder_cookbook_path,
@@ -203,6 +209,6 @@ module Dapp
       def container_stage_build_path(_stage)
         Pathname.new('/.dapp/chef/build')
       end
-    end # Chef
-  end # Dimg::Builder
+    end # Builder::Chef
+  end # Dimg
 end # Dapp

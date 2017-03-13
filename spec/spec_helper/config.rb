@@ -25,6 +25,7 @@ module SpecHelper
     def stubbed_dapp
       instance_double(Dapp::Dapp).tap do |instance|
         allow(instance).to receive(:name) { File.basename(Dir.getwd) }
+        allow(instance).to receive(:path) { Dir.getwd }
         allow(instance).to receive(:log_warning)
       end
     end

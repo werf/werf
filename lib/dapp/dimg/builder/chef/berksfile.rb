@@ -1,42 +1,7 @@
 module Dapp
-  module Dimg::Builder
-    class Chef::Berksfile
-      class << self
-        def from_file(cookbook_path, berksfile_file_path)
-          berksfile = new(cookbook_path)
-          FileParser.new(berksfile_file_path, berksfile)
-          berksfile
-        end
-
-        def from_conf(cookbook_path, conf)
-          # TODO
-        end
-      end # << self
-
-      class FileParser
-        def initialize(berksfile_file_path, berksfile)
-          @berksfile_file_path = berksfile_file_path
-          @berksfile = berksfile
-
-          parse
-        end
-
-        def cookbook(name, *_args, path: nil, **_kwargs)
-          @berksfile.add_local_cookbook_path(name, path) if path
-        end
-
-        # rubocop:disable Style/MethodMissing
-        def method_missing(*_a, &_blk)
-        end
-        # rubocop:enable Style/MethodMissing
-
-        private
-
-        def parse
-          instance_eval(@berksfile_file_path.read, @berksfile_file_path.to_s)
-        end
-      end # FileParser
-
+  module Dimg
+    class Builder::Chef::Berksfile
+      attr_accessor :builder
       attr_reader :cookbook_path
       attr_reader :local_cookbooks
 
@@ -46,7 +11,7 @@ module Dapp
       end
 
       def dump
-        # TODO
+        builder.send(:dump) # "friend class"
       end
 
       def add_local_cookbook_path(name, path)
@@ -74,6 +39,83 @@ module Dapp
       def local_cookbook(name)
         local_cookbooks[name]
       end
-    end # Chef::Berksfile
-  end # Dimg::Builder
+
+      class << self
+        def from_file(cookbook_path:, berksfile_file_path:)
+          new(cookbook_path).tap do |berksfile|
+            berksfile.builder = FromFileBuilder.new(berksfile, berksfile_file_path)
+          end
+        end
+
+        def from_conf(cookbook_path:, cookbooks:)
+          new(cookbook_path).tap do |berksfile|
+            berksfile.builder = FromConfBuilder.new(berksfile, cookbooks)
+          end
+        end
+
+        protected
+
+        def new(*args, &blk)
+          super(*args, &blk)
+        end
+      end # << self
+
+      class Builder
+        def initialize(berksfile)
+          @berksfile = berksfile
+        end
+
+        def cookbook(name, *_args, path: nil, **_kwargs)
+          @berksfile.add_local_cookbook_path(name, path) if path
+        end
+
+        # rubocop:disable Style/MethodMissing
+        def method_missing(*_a, &_blk)
+        end
+        # rubocop:enable Style/MethodMissing
+
+        protected
+
+        def dump
+          raise
+        end
+      end # Builder
+
+      class FromConfBuilder < Builder
+        def initialize(berksfile, cookbooks)
+          super(berksfile)
+
+          @cookbooks = cookbooks
+
+          @cookbooks.each do |name, desc|
+            cookbook(name, desc[:version_constraint], **desc)
+          end
+        end
+
+        def dump
+          [].tap do |lines|
+            lines << "source 'https://supermarket.chef.io'\n\n "
+            @cookbooks.each do |name, desc|
+              params = desc.reject {|key, _value| [:name, :version_constraint].include? key}
+              lines << "cookbook #{name.inspect}, #{desc[:version_constraint].inspect}, #{params.inspect}\n"
+            end
+          end.join
+        end
+      end # FromConfBuilder
+
+      class FromFileBuilder < Builder
+        def initialize(berksfile, berksfile_file_path)
+          super(berksfile)
+
+          @berksfile_file_path = berksfile_file_path
+
+          instance_eval(@berksfile_file_path.read, @berksfile_file_path.to_s)
+        end
+
+        def dump
+          @berksfile_file_path.read
+        end
+      end # FileParser
+    end # Builder::Chef::Berksfile
+  end # Dimg
 end # Dapp
