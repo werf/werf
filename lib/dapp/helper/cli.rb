@@ -9,8 +9,9 @@ module Dapp
 
       def cli_wrapper(cli)
         yield
-      rescue OptionParser::MissingArgument, OptionParser::InvalidOption, OptionParser::InvalidArgument => e
+      rescue OptionParser::MissingArgument, OptionParser::InvalidOption, OptionParser::InvalidArgument, OptionParser::AmbiguousOption => e
         STDERR.puts "Error: #{e.message}"
+        puts
         puts cli.opt_parser
         exit 1
       end
