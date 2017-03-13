@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module CLI
       class Stages
-        # stages push subcommand
         class Push < Base
           banner <<BANNER.freeze
 Usage:

@@ -2,7 +2,6 @@ module Dapp
   module Dimg
     module CLI
       class Stages
-        # stages cleanup repo subcommand
         class CleanupRepo < CleanupLocal
           banner <<BANNER.freeze
 Usage:
