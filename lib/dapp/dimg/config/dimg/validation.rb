@@ -32,7 +32,6 @@ module Dapp
 
           def validate_scratch_directives!
             directives = [[:_shell, :shell], [:_chef, :chef], [:_git_artifact, :git],
-                          [:_install_dependencies, :install_depends_on], [:_setup_dependencies, :setup_depends_on],
                           [:_tmp_dir_mount, :mount], [:_build_dir_mount, :mount]]
             directives.each do |name, user_name|
               raise Error::Config,

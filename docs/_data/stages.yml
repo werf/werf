@@ -69,9 +69,7 @@ entries:
     dependence: 
     - git-artifact-pre-install-patch-signature
   context_base:
-  - name: install dependencies by <glob>s
-    dependence: 
-    - install-dappfile-glob
+  - name: install git dependencies
   context_shell:
   - name: install <cmd>
     dependence: 
@@ -81,7 +79,6 @@ entries:
     dependence: 
     - install-dappfile-mod
     - install-dappfile-recipe
-  dappfile_base: "install_depends_on &lt;glob&gt;[,&lt;glob&gt;, &lt;glob&gt;, ...]"
   dappfile_shell: "shell.install &lt;cmd&gt;[, &lt;cmd&gt; ...]"
   dappfile_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
 - name: git_artifact_post_install_patch
@@ -147,9 +144,7 @@ entries:
     dependence: 
     - git-artifact-pre-setup-patch-signature
   context_base:
-  - name: setup dependencies by <glob>s
-    dependence: 
-    - setup-dappfile-glob
+  - name: setup git dependencies
   context_shell:
   - name: setup <cmd>
     dependence: 
@@ -159,7 +154,6 @@ entries:
     dependence: 
     - setup-dappfile-mod
     - setup-dappfile-recipe
-  dappfile_base: "setup_depends_on &lt;glob&gt;[,&lt;glob&gt;, &lt;glob&gt;, ...]"
   dappfile_shell: "shell.setup &lt;cmd&gt;[, &lt;cmd&gt; ...]"
   dappfile_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
 - name: git_artifact_post_setup_patch
@@ -249,9 +243,7 @@ entries:
     dependence: 
     - git-artifact-artifact-patch-signature
   context_base:
-  - name: build artifact dependencies by <glob>s
-    dependence: 
-    - build-artifact-dappfile-glob
+  - name: build artifact git dependencies
   context_shell:
   - name: shell.build_artifact <cmd>
     dependence: 
@@ -261,6 +253,5 @@ entries:
     dependence: 
     - build_artifact-dappfile-mod
     - build_artifact-dappfile-recipe
-  dappfile_base: "artifact_depends_on &lt;glob&gt;[,&lt;glob&gt;, &lt;glob&gt;, ...]"
   dappfile_shell: "shell.build_artifact &lt;cmd&gt;[, &lt;cmd&gt; ...]"
   dappfile_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"

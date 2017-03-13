@@ -39,6 +39,22 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
                                                                                                  end)
         end
       end
+
+      it "stage_dependencies (#{type})" do
+        dappfile_dimg_git_artifact(type == :local ? :local : 'https://url') do
+          add '/cwd' do
+            stage_dependencies do
+              install 'a'
+              setup 'b'
+              build_artifact 'c'
+            end
+          end
+        end
+
+        expect(dimg._git_artifact.send("_#{type}").first.send(:stage_dependencies).to_h).to eq({ install: ['a'],
+                                                                                                 setup: ['b'],
+                                                                                                 build_artifact: ['c']})
+      end
     end
 
     it 'remote name from url' do
@@ -120,6 +136,19 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
     it 'remote incorrect url (:git_artifact_remote_unsupported_protocol)' do
       dappfile_dimg_git_artifact('url')
       expect_exception_code(:git_artifact_remote_unsupported_protocol) { dimg }
+    end
+
+    [:local, :remote].each do |type|
+      it "stage_dependencies unsupported stage (#{type})" do
+        dappfile_dimg_git_artifact(type == :local ? :local : 'https://url') do
+          add '/cwd' do
+            stage_dependencies do
+              unsupported_stage 'a'
+            end
+          end
+        end
+        expect { dimgs }.to raise_error NoMethodError
+      end
     end
   end
 end

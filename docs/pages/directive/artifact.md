@@ -40,9 +40,19 @@ folder: directive
   * \<branch\>.
   * \<commit\>.
 
-#### Примеры
+#### git.add.stage_directives
+Директива позволяет определить для стадий install, setup и build_artifact зависимости от файлов git-артефакта.
 
-##### Собрать с несколькими git-артефактами
+* При изменении содержимого указанных файлов, произойдет пересборка зависимой стадии.
+* Учитывается содержимое и имена файлов.
+* Поддерживаются glob-паттерны.
+* Пути в \<glob\> указываются относительно cwd git-артефакта.
+* Директории игнорируются.
+* \<glob\> чувствителен к регистру.  
+
+##### Примеры
+
+###### Собрать с несколькими git-артефактами
 ```ruby
 dimg do
   docker.from 'image:tag'
@@ -64,6 +74,28 @@ dimg do
 
     add '/' do
       to '/project'
+    end
+  end
+end
+```
+
+###### Определить зависимости для нескольких git-артефактов
+```ruby
+dimg do
+  docker.from 'image:tag'
+
+  git do
+    add '/' do
+      to '/app'
+      
+      stage_dependencies do
+        install 'flag'
+      end
+    end
+
+    add '/assets' do
+      to '/web/site.narod.ru/assets_with_strange_name'
+      stage_dependencies.setup '*.less'
     end
   end
 end
@@ -125,11 +157,3 @@ dimg_group do
   dimg
 end
 ```
-
-### artifact\_depends\_on \<glob\>\[,\<glob\>, \<glob\>, ...]
-Список файлов зависимостей для стадии [build_artifact](shell_directives.html#shell-build_artifact-<cmd>-<cmd>-cache_version-<cache_version>) [артефакта](definitions.html#артефакт).
-
-* При изменении содержимого указанных файлов, произойдет пересборка стадии build_artifact.
-* Учитывается лишь содержимое файлов и порядок в котором они указаны (имена файлов не учитываются).
-* Поддерживаются glob-паттерны.
-* Директории игнорируются.

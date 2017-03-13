@@ -2,10 +2,6 @@ module Dapp
   module Dimg
     module Config
       class ArtifactDimg < Dimg
-        def _artifact_dependencies
-          @_artifact_dependencies ||= []
-        end
-
         def validate_scratch!
         end
 

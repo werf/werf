@@ -168,7 +168,6 @@ describe Dapp::Dimg::Builder::Chef do
             ConfigRecursiveOpenStruct.new(
               _config: ConfigRecursiveOpenStruct.new(default_config.merge(
                 _builder: :chef,
-                _artifact_dependencies: [],
                 _docker: default_config[:_docker].merge(_from: :'ubuntu:14.04'),
                 _chef: {
                   _dimod: %w(dimod-testartifact),

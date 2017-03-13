@@ -16,7 +16,7 @@ module Dapp
             end
 
             def context
-              [setup_dependencies_files_checksum, builder_checksum]
+              [git_artifacts_dependencies, builder_checksum]
             end
 
             def builder_checksum
@@ -27,14 +27,8 @@ module Dapp
               super
               dimg.builder.setup(image)
             end
-
-            private
-
-            def setup_dependencies_files_checksum
-              dependencies_files_checksum(dimg.config._setup_dependencies)
-            end
           end # Setup
-        end
+        end # Setup
       end # Stage
     end # Build
   end # Dimg
