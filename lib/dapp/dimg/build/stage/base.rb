@@ -52,7 +52,7 @@ module Dapp
             return if build_should_be_skipped?
             prev_stage.build! if prev_stage
             if image_should_be_build?
-              prepare_image if !image.built? && !should_be_not_present?
+              prepare_image if !image.built? && !should_be_not_present? || should_be_introspected?
               log_image_build(&method(:image_build))
             end
             dimg.introspect_image!(image: image.built_id, options: image.send(:prepared_options)) if should_be_introspected?
