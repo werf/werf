@@ -52,7 +52,7 @@ module Dapp
         patch_command(stage.prev_g_a_stage.layer_commit(self), nil)
       end
 
-      def stage_dependencies_checksum(stage)
+      def stage_dependencies_checksums(stage)
         return [] if (stage_dependencies = stages_dependencies[stage.name]).empty?
 
         paths = include_paths_or_cwd + base_paths(stage_dependencies, true)

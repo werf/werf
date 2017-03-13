@@ -107,6 +107,8 @@ entries:
   - name: after_install_artifact.signature
     dependence: 
     - after-install-artifact-signature
+  context_base:
+  - name: before_setup git dependencies
   context_shell:
   - name: before_setup <cmd>
     dependence: 

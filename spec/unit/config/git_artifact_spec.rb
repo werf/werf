@@ -46,14 +46,16 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
             stage_dependencies do
               install 'a'
               setup 'b'
-              build_artifact 'c'
+              before_setup 'c'
+              build_artifact 'd'
             end
           end
         end
 
         expect(dimg._git_artifact.send("_#{type}").first.send(:stage_dependencies).to_h).to eq({ install: ['a'],
                                                                                                  setup: ['b'],
-                                                                                                 build_artifact: ['c']})
+                                                                                                 before_setup: ['c'],
+                                                                                                 build_artifact: ['d']})
       end
     end
 
@@ -148,6 +150,18 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
           end
         end
         expect { dimgs }.to raise_error NoMethodError
+      end
+
+      it "stage_dependencies dependencies must be relative (#{type})" do
+        dappfile_dimg_git_artifact(type == :local ? :local : 'https://url') do
+          add '/cwd' do
+            stage_dependencies do
+              install '/a'
+            end
+          end
+        end
+
+        expect_exception_code(:stages_dependencies_paths_relative_path_required) { dimg }
       end
     end
   end

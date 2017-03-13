@@ -40,8 +40,8 @@ folder: directive
   * \<branch\>.
   * \<commit\>.
 
-#### git.add.stage_directives
-Директива позволяет определить для стадий install, setup и build_artifact зависимости от файлов git-артефакта.
+#### git.add.stage_dependencies
+Директива позволяет определить для стадий install, before_setup, setup и build_artifact зависимости от файлов git-артефакта.
 
 * При изменении содержимого указанных файлов, произойдет пересборка зависимой стадии.
 * Учитывается содержимое и имена файлов.
