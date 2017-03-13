@@ -13,7 +13,7 @@ module Dapp
 
         def self.initialize(mode)
           ::Paint.mode = case mode
-                         when 'auto' then STDOUT.tty? ? 8 : 0
+                         when 'auto' then (ENV['TRAVIS'] || ENV['GITLAB_CI'] || STDOUT.tty?) ? 8 : 0
                          when 'on'   then 8
                          when 'off'  then 0
                          else raise
