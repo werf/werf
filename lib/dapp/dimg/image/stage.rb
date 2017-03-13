@@ -9,6 +9,7 @@ module Dapp
           @built_id = built_id
 
           @bash_commands          = []
+          @service_bash_commands  = []
           @options                = {}
           @change_options         = {}
           @service_change_options = {}

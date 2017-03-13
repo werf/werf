@@ -58,6 +58,10 @@ module Dapp
           @bash_commands.concat(commands.flatten)
         end
 
+        def add_service_command(*commands)
+          @service_bash_commands.concat(commands.flatten)
+        end
+
         def prepare_instructions(options)
           options.map do |key, vals|
             case key
@@ -70,7 +74,7 @@ module Dapp
 
         protected
 
-        attr_reader :bash_commands
+        attr_reader :bash_commands, :service_bash_commands
         attr_reader :change_options, :service_change_options
         attr_reader :options
 
@@ -109,6 +113,10 @@ module Dapp
           service_options.merge(options)
         end
 
+        def all_bash_commands
+          Array(bash_commands) + Array(service_bash_commands)
+        end
+
         def service_options
           { entrypoint: dapp.bash_bin, name: container_name }
         end
@@ -126,8 +134,8 @@ module Dapp
         end
 
         def prepared_commands
-          return [dapp.true_bin] if bash_commands.empty?
-          bash_commands
+          return [dapp.true_bin] if all_bash_commands.empty?
+          all_bash_commands
         end
       end
     end # Image

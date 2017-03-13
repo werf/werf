@@ -23,7 +23,7 @@ module Dapp
           end
         end
 
-        %w(rsync diff date cat
+        %w(rm rsync diff date cat
            stat sleep mkdir find
            install sed cp true
            bash tar sudo).each do |cmd|
