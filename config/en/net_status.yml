@@ -45,7 +45,7 @@ en:
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
       docker_from_incorrect: "`docker.from` has incorrect value `%{name}`!"
-      docker_from_without_tag: "`docker.from`: image `%{name}` without !"
+      docker_from_without_tag: "`docker.from`: image `%{name}` without tag!"
       stage_artifact_not_associated: "Artifact not associated with any stage: expected `before` or `after` attribute!"
       stage_artifact_double_associate: "Cannot use `%{stage}` stage for artifact, already used in `%{conflict_stage}` stage!"
       stage_artifact_not_supported_associated_stage: "Bad artifact stage `%{stage}`!"
