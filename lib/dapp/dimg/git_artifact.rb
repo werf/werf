@@ -225,7 +225,7 @@ module Dapp
       end
 
       def exclude_paths(with_cwd = false)
-        base_paths(repo.exclude_paths + @exclude_paths, with_cwd)
+        repo.exclude_paths + base_paths(@exclude_paths, with_cwd)
       end
 
       def include_paths(with_cwd = false)
