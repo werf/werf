@@ -52,10 +52,10 @@ module Dapp
         patch_command(stage.prev_g_a_stage.layer_commit(self), nil)
       end
 
-      def stage_dependencies_checksum(stage)
+      def stage_dependencies_checksums(stage)
         return [] if (stage_dependencies = stages_dependencies[stage.name]).empty?
 
-        paths = include_paths_or_cwd + base_paths(stage_dependencies, true)
+        paths = include_paths(true) + base_paths(stage_dependencies, true)
         diff_patches(nil, latest_commit, paths: paths).map do |patch|
           delta_new_file = patch.delta.new_file
           Digest::SHA256.hexdigest [delta_new_file[:path], repo.lookup_object(delta_new_file[:oid]).content].join(':::')

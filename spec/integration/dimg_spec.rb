@@ -45,6 +45,7 @@ describe Dapp::Dimg::Dimg do
       _git_artifact: default_config[:_git_artifact].merge(_local: { _artifact_options: { to: '/to',
                                                                                          exclude_paths: [],
                                                                                          stages_dependencies: { install: [],
+                                                                                                                before_setup: [],
                                                                                                                 setup: [],
                                                                                                                 build_artifact: [] } } })
     )

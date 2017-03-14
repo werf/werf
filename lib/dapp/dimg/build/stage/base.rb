@@ -156,7 +156,7 @@ module Dapp
           end
 
           def git_artifacts_dependencies
-            dimg.git_artifacts.map { |git_artifact| git_artifact.stage_dependencies_checksum(self) }
+            dimg.git_artifacts.map { |git_artifact| git_artifact.stage_dependencies_checksums(self) }
           end
 
           def dependencies

@@ -13,7 +13,7 @@ module Dapp
           end
 
           def context
-            [builder_checksum]
+            [git_artifacts_dependencies, builder_checksum]
           end
 
           def builder_checksum
