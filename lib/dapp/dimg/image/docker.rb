@@ -97,6 +97,7 @@ module Dapp
                         .lines
                         .each do |l|
               name, id, created_at, size_field = l.split(';')
+              name = name.reverse.chomp('docker.io/'.reverse).reverse
               size = begin
                 number, unit = size_field.split
                 coef = case unit.to_s.downcase
