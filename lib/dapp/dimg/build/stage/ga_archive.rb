@@ -8,14 +8,6 @@ module Dapp
             super
           end
 
-          def prev_g_a_stage
-            nil
-          end
-
-          def next_g_a_stage
-            next_stage.next_stage # GAPreInstallPatch
-          end
-
           protected
 
           def apply_command_method

@@ -8,14 +8,6 @@ module Dapp
             super
           end
 
-          def prev_g_a_stage
-            prev_stage.prev_stage
-          end
-
-          def next_g_a_stage
-            nil
-          end
-
           def dependencies_stage
             nil
           end

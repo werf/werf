@@ -9,11 +9,7 @@ module Dapp
           end
 
           def dependencies
-            next_stage.context # BuildArtifact
-          end
-
-          def prev_g_a_stage
-            super.prev_stage # GAPreSetupPatch
+            dimg.stage_by_name(:build_artifact).context
           end
         end # GAArtifactPatch
       end # Stage
