@@ -16,3 +16,6 @@
 ::Dapp::Dapp.send(:include, Dapp::Dimg::Dapp::Command::Cleanup)
 ::Dapp::Dapp.send(:include, Dapp::Dimg::Dapp::Command::Mrproper)
 ::Dapp::Dapp.send(:include, Dapp::Dimg::Dapp::Command::StageImage)
+::Dapp::Dapp.send(:include, Dapp::Dimg::Dapp::Command::BuildContext::Import)
+::Dapp::Dapp.send(:include, Dapp::Dimg::Dapp::Command::BuildContext::Export)
+::Dapp::Dapp.send(:include, Dapp::Dimg::Dapp::Command::BuildContext::Common)

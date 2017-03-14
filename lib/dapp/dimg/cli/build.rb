@@ -54,6 +54,10 @@ BANNER
                              '(use system ssh-agent by default)'].join,
                default: nil,
                proc: ->(v) { composite_options(:ssh_key) << v }
+
+        option :build_context_directory,
+               long: '--build-context-directory DIR_PATH',
+               default: nil
       end
     end
   end

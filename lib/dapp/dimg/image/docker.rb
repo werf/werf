@@ -86,6 +86,15 @@ module Dapp
             cache_reset
           end
 
+          def save!(image_or_images, file_path)
+            images = Array(image_or_images).join(' ')
+            ::Dapp::Dapp.shellout!("docker save -o #{file_path} #{images}", log_verbose: true)
+          end
+
+          def load!(file_path)
+            ::Dapp::Dapp.shellout!("docker load -i #{file_path}", log_verbose: true)
+          end
+
           def cache
             @cache ||= (@cache = {}).tap { cache_reset }
           end

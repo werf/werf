@@ -20,8 +20,12 @@ module Dapp
 
         protected
 
+        def lock_file_path
+          lock_path.join(name.slice(0, 32))
+        end
+
         def _do_lock(timeout, on_wait, readonly)
-          @file = ::File.open(lock_path.join(name), ::File::RDWR | ::File::CREAT, 0o644)
+          @file = ::File.open(lock_file_path, ::File::RDWR | ::File::CREAT, 0o644)
 
           begin
             mode = (readonly ? ::File::LOCK_SH : ::File::LOCK_EX)

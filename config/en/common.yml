@@ -22,6 +22,7 @@ en:
       chefdk_container_creating: 'creating dappdeps/chefdk container'
       image_pull: "pulling image `%{name}`"
       image_push: "pushing image `%{name}`"
+      image_save: "saving image `%{name}`"
     status:
       process:
         pushing: '[PUSHING]'
@@ -52,6 +53,7 @@ en:
       dimg_not_found_in_registry: "WARNING: Dimg not found in registry."
       stage_artifact_rewritten: "WARNING: Artifact stage rewritten from %{conflict_stage} to %{stage}."
       recipe_does_not_used: "WARNING: Recipe `%{recipe}` doesn't used in any stage."
+      context_archive_not_found: "WARNING: context archive `%{path}` not found!"
     group:
       install: 'Install group'
       setup: 'Setup group'
