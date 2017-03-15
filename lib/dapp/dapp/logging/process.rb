@@ -2,6 +2,7 @@ module Dapp
   class Dapp
     module Logging
       module Process
+        DEFAULT_TERMINAL_WIDTH = 120
         DEFAULT_STYLE = {
           message: :step,
           process: :secondary,
@@ -100,7 +101,10 @@ module Dapp
         end
 
         def terminal_width
-          @terminal_width ||= `tput cols`.strip.to_i
+          @terminal_width ||= begin
+            tputs_cols = `tput cols`.strip.to_i
+            (tputs_cols == 0) ? DEFAULT_TERMINAL_WIDTH : tputs_cols
+          end
         end
       end
     end # Logging
