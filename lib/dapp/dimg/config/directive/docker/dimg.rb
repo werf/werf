@@ -18,39 +18,39 @@ module Dapp
             end
 
             def volume(*args)
-              @_volume.concat(args)
+              sub_directive_eval { @_volume.concat(args) }
             end
 
             def expose(*args)
-              @_expose.concat(args)
+              sub_directive_eval { @_expose.concat(args) }
             end
 
             def env(**options)
-              @_env.merge!(options)
+              sub_directive_eval { @_env.merge!(options) }
             end
 
             def label(**options)
-              @_label.merge!(options)
+              sub_directive_eval { @_label.merge!(options) }
             end
 
             def cmd(*args)
-              @_cmd.concat(args)
+              sub_directive_eval { @_cmd.concat(args) }
             end
 
             def onbuild(*args)
-              @_onbuild.concat(args)
+              sub_directive_eval { @_onbuild.concat(args) }
             end
 
             def workdir(path)
-              @_workdir = path_format(path)
+              sub_directive_eval { @_workdir = path_format(path) }
             end
 
             def user(val)
-              @_user = val
+              sub_directive_eval { @_user = val }
             end
 
             def entrypoint(*cmd_with_args)
-              @_entrypoint = cmd_with_args.flatten
+              sub_directive_eval { @_entrypoint = cmd_with_args.flatten }
             end
 
             def _change_options
@@ -66,8 +66,6 @@ module Dapp
                 entrypoint: _entrypoint
               }
             end
-
-            protected
 
             def clone_to_artifact
               Artifact.new(dapp: dapp).tap do |docker|

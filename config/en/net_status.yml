@@ -34,7 +34,9 @@ en:
     config:
       dimg_name_required: 'Dimg name required!'
       dimg_name_incorrect: "Dimg has incorrect name `%{name}`: doesn't match regex `%{reg}`!"
+      mount_from_required: "Mount: `from` directive required!"
       export_to_required: "Export: `to` directive required!"
+      add_to_required: "Add: `to` directive required!"
       export_cwd_absolute_path_required: "Export: given cwd path must be absolute!"
       export_to_absolute_path_required: "Export: given `to` path must be absolute!"
       export_include_paths_relative_path_required: "Export: given `include_paths` path must be relative!"

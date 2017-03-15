@@ -14,24 +14,28 @@ module Dapp
           end
 
           def dimod(name, *args)
-            @_dimod << name
-            cookbook(name, *args)
+            sub_directive_eval do
+              @_dimod << name
+              cookbook(name, *args)
+            end
           end
 
           def recipe(name)
-            @_recipe << name
+            sub_directive_eval { @_recipe << name }
           end
 
           def attributes
             @_attributes ||= Attributes.new
           end
 
-          def cookbook(name, version_constraint=nil, **kwargs)
-            @_cookbook[name] = {}.tap do |desc|
-              desc.update(kwargs)
-              desc[:name] = name
-              desc[:version_constraint] = version_constraint if version_constraint
-              desc[:path] = File.expand_path(desc[:path], dapp.path) if desc.key? :path
+          def cookbook(name, version_constraint = nil, **kwargs)
+            sub_directive_eval do
+              @_cookbook[name] = {}.tap do |desc|
+                desc.update(kwargs)
+                desc[:name] = name
+                desc[:version_constraint] = version_constraint if version_constraint
+                desc[:path] = File.expand_path(desc[:path], dapp.path) if desc.key? :path
+              end
             end
           end
 
@@ -52,11 +56,9 @@ module Dapp
 
           %i(before_install install before_setup setup build_artifact).each do |stage|
             define_method("__#{stage}_attributes") do
-              attributes.in_depth_merge send("_#{stage}_attributes")
+              attributes.in_depth_merge public_send("_#{stage}_attributes")
             end
           end
-
-          protected
 
           def empty?
             (@_dimod + @_recipe).empty? && attributes.empty?

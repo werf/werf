@@ -15,6 +15,14 @@ module Dapp
             super(**kwargs, &blk)
           end
 
+          def branch(value)
+            sub_directive_eval { @_branch = value }
+          end
+
+          def commit(value)
+            sub_directive_eval { @_commit = value }
+          end
+
           def _export
             super do |export|
               export._url    = @_url
@@ -31,25 +39,13 @@ module Dapp
               super.merge(name: _name, branch: _branch)
             end
 
-            protected
-
             def branch(value)
-              @_branch = value
+              sub_directive_eval { @_branch = value }
             end
 
             def commit(value)
-              @_commit = value
+              sub_directive_eval { @_commit = value }
             end
-          end
-
-          protected
-
-          def branch(value)
-            @_branch = value
-          end
-
-          def commit(value)
-            @_commit = value
           end
         end
       end
