@@ -39,6 +39,8 @@ module Dapp
 
         def branch
           git.head.name.sub(/^refs\/heads\//, '')
+        rescue Rugged::ReferenceError => e
+          raise Error::Rugged, code: :git_repository_reference_error, data: { name: name, message: e.message.downcase }
         end
 
         def commit_at(commit)

@@ -65,6 +65,7 @@ en:
       page_not_found: "Registry `%{registry}`: page `%{url}` not found!"
       user_not_authorized: 'Registry `%{registry}`: user not authorized!'
     rugged:
+      git_repository_reference_error: "Git repo `%{name}`: %{message}!"
       rugged_remote_error: "Remote git repo `%{url}`: `%{message}`!"
       local_git_repository_does_not_exist: "Local git repo: doesn't exist!"
       commit_not_found_in_local_git_repository: "Local git repo: commit `%{commit}` not found (run command `dapp stages cleanup local --improper-git-commit`)!"
