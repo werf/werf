@@ -74,8 +74,10 @@ module Dapp
             end
 
             def log_image_build_process
-              return yield if should_be_quiet?
-              dimg.dapp.log_process(log_name, process: dimg.dapp.t(code: 'status.process.building'), short: should_not_be_detailed?) { yield }
+              dimg.dapp.log_process(log_name,
+                                    process: dimg.dapp.t(code: 'status.process.building'),
+                                    short: should_not_be_detailed?,
+                                    quiet: should_be_quiet?) { yield }
             end
 
             def ignore_log_commands?
