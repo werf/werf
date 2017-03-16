@@ -6,22 +6,19 @@ describe Dapp::Dimg::GitArtifact do
   include SpecHelper::Dimg
 
   before :each do
-    init
+    init_git_artifact_local_options
     git_init
     stub_stages
     stub_dimg
   end
 
-  def init
-    FileUtils.mkdir 'project'
-    @to = File.expand_path('dist')
-    Dir.chdir File.expand_path('project')
-
-    init_git_artifact_local_options
+  after :each do
+    docker_cleanup
   end
 
   def init_git_artifact_local_options
     @cwd           = ''
+    @to            = 'dist'
     @include_paths = []
     @exclude_paths = []
     @branch        = 'master'
@@ -32,12 +29,6 @@ describe Dapp::Dimg::GitArtifact do
   def stubbed_stage
     instance_double(Dapp::Dimg::Build::Stage::Base).tap do |instance|
       allow(instance).to receive(:prev_stage=)
-    end
-  end
-
-  def stub_dimg
-    super do |instance|
-      allow(instance).to receive(:container_tmp_path) { |*m_args| instance.tmp_path(*m_args) }
     end
   end
 
@@ -52,13 +43,48 @@ describe Dapp::Dimg::GitArtifact do
     allow_any_instance_of(Dapp::Dimg::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
   end
 
-  def dapp
-    super do
-      allow_any_instance_of(Dapp::Dapp).to receive(:git_bin) { 'git' }
-      allow_any_instance_of(Dapp::Dapp).to receive(:tar_bin) { 'tar' }
-      allow_any_instance_of(Dapp::Dapp).to receive(:sudo_bin) { 'sudo' }
-      allow_any_instance_of(Dapp::Dapp).to receive(:install_bin) { 'install' }
+  def image_build(*cmds)
+    container_run(*cmds, rm: false).tap do
+      shellout("docker commit #{containter_name} #{containter_name}:latest")
+      shellout("docker rm #{containter_name}")
+      @spec_image_name = "#{containter_name}:latest"
     end
+  end
+
+  def container_run(*cmds, rm: true)
+    shellout(["docker run",
+              "#{'--rm' if rm}",
+              "--entrypoint #{dimg.dapp.bash_bin}",
+              "--name #{containter_name}",
+              "--volume #{dimg.tmp_path('archives')}:#{dimg.container_tmp_path('archives')}:ro",
+              "--volume #{dimg.tmp_path('patches')}:#{dimg.container_tmp_path('patches')}:ro",
+              "--volumes-from #{dimg.dapp.gitartifact_container}",
+              "--volumes-from #{dimg.dapp.base_container}",
+              "--label dapp=#{dimg.dapp.name}",
+              "--label dapp-test=true",
+              "#{image_name}",
+              "#{prepare_container_command(*cmds)}"].join(' '))
+  end
+
+  def prepare_container_command(*cmds)
+    "-ec '#{dimg.dapp.shellout_pack cmds.join(' && ')}'"
+  end
+
+  def docker_cleanup
+    dimg.dapp.send(:dapp_containers_flush_by_label, 'dapp-test')
+    dimg.dapp.send(:dapp_images_flush_by_label, 'dapp-test')
+  end
+
+  def containter_name
+    @spec_containter_name ||= SecureRandom.uuid
+  end
+
+  def image_name
+    @spec_image_name ||= reset_image_name
+  end
+
+  def reset_image_name
+    @spec_image_name = 'ubuntu:16.04'
   end
 
   def g_a_archive_stage
@@ -74,9 +100,7 @@ describe Dapp::Dimg::GitArtifact do
   end
 
   def stubbed_repo
-    @stubbed_repo ||= begin
-      Dapp::Dimg::GitRepo::Own.new(dimg)
-    end
+    @stubbed_repo ||= Dapp::Dimg::GitRepo::Own.new(dimg)
   end
 
   def git_artifact_local_options
@@ -97,22 +121,40 @@ describe Dapp::Dimg::GitArtifact do
   end
 
   def apply_archive
-    apply_command(git_artifact.apply_archive_command(g_a_archive_stage))
+    apply_command(*git_artifact.apply_archive_command(g_a_archive_stage))
   end
 
   def apply_patch
-    apply_command(git_artifact.apply_patch_command(g_a_latest_patch_stage))
+    apply_command(*git_artifact.apply_patch_command(g_a_latest_patch_stage))
   end
 
-  def apply_command(command)
-    command = Array(command)
-    shellout(%(bash -ec '#{command.join(' && ')}')).tap do |res|
-      expect { res.error! }.to_not raise_error, res.inspect
+  def apply_command(*cmds)
+    image_build(*cmds).tap do |res|
+      expect { res.error! }.to_not raise_error
     end
   end
 
-  def file_exist_at_dist?(file_path)
-    File.exist?(File.join(@to, file_path))
+  def expect_existing_container_file(path)
+    expect { check_container_file(path).error! }.to_not raise_error
+  end
+
+  def expect_not_existing_container_file(path)
+    expect { check_container_file(path).error! }.to raise_error ::Mixlib::ShellOut::ShellCommandFailed
+  end
+
+  def check_container_file(path)
+    container_run("#{dimg.dapp.test_bin} -f #{path}")
+  end
+
+  def container_file_path(path)
+    File.join(@to, path)
+  end
+
+  def container_file_stat(path)
+    res = container_run("#{dimg.dapp.stat_bin} -c '%a %u %g' #{path}")
+    expect { res.error! }.to_not raise_error
+    mode, uid, gid = res.stdout.strip.split
+    { mode: mode, uid: uid, gid: gid }
   end
 
   context 'base' do
@@ -135,15 +177,12 @@ describe Dapp::Dimg::GitArtifact do
 
       send("apply_#{type}")
 
-      expect(File.exist?(@to)).to be_truthy
-      added_files.each { |file_path| expect(file_exist_at_dist?(file_path)).to be_truthy }
-      not_added_files.each { |file_path| expect(file_exist_at_dist?(file_path)).to be_falsey }
-
-      yield if block_given?
+      added_files.each { |file_path| expect_existing_container_file(container_file_path(file_path)) }
+      not_added_files.each { |file_path| expect_not_existing_container_file(container_file_path(file_path)) }
     end
 
-    def cleanup_dist
-      FileUtils.rm_rf @to
+    def reset_image
+      reset_image_name
     end
 
     [:patch, :archive].each do |type|
@@ -153,9 +192,9 @@ describe Dapp::Dimg::GitArtifact do
 
       it "#{type} branch", test_construct: true do
         send("check_#{type}", branch: 'master')
-        cleanup_dist
+        reset_image
         send("check_#{type}", add_files: ['not_master.txt'], branch: 'not_master')
-        cleanup_dist
+        reset_image
         send("check_#{type}", not_added_files: ['not_master.txt'], branch: 'master')
       end
 
@@ -226,55 +265,41 @@ describe Dapp::Dimg::GitArtifact do
       end
     end
 
-    xcontext 'owner and group' do
-      def with_credentials(owner_name, group_name, uid, gid)
-        shellout "groupadd #{group_name} --gid #{gid}"
-        shellout "useradd #{owner_name} --gid #{gid} --uid #{uid}"
-        yield
-      ensure
-        shellout "userdel #{owner_name}"
-      end
-
-      def expect_file_credentials(file_path, uid, gid)
-        file_stat = File.stat(file_path)
-        expect(file_stat.uid).to eq uid
-        expect(file_stat.gid).to eq gid
+    context 'owner and group' do
+      def expect_container_file_credentials(path, uid, gid)
+        file_stat = container_file_stat(path)
+        expect(file_stat[:uid]).to eq uid
+        expect(file_stat[:gid]).to eq gid
       end
 
       file_name = 'test_file.txt'
-      owner = :dapp_git_artifact
-      group = :dapp_git_artifact
-      uid = 1100 + (rand * 1000).to_i
-      gid = 1100 + (rand * 1000).to_i
+      uid = '1111'
+      gid = '1111'
 
-      xit 'archive owner_and_group', test_construct: true do
-        with_credentials(owner, group, uid, gid) do
-          check_archive(add_files: [file_name], owner: owner, group: group) do
-            expect_file_credentials(File.join(@to, file_name), uid, gid)
-          end
-        end
+      it 'archive owner_and_group', test_construct: true do
+        check_archive(add_files: [file_name], owner: uid, group: gid)
+        expect_container_file_credentials(container_file_path(file_name), uid, gid)
       end
 
-      xit 'patch owner_and_group', test_construct: true do
-        with_credentials(owner, group, uid, gid) do
-          check_archive(owner: owner, group: group) do
-            check_patch(add_files: [file_name], owner: owner, group: group, ignore_init_build: true) do
-              expect_file_credentials(File.join(@to, file_name), uid, gid)
-            end
-          end
-        end
+      it 'patch owner_and_group', test_construct: true do
+        check_archive(owner: uid, group: gid)
+        check_patch(add_files: [file_name], owner: uid, group: gid, ignore_init_build: true)
+        expect_container_file_credentials(container_file_path(file_name), uid, gid)
       end
     end
   end
 
   context 'file cycle with cwd' do
-    def file_change_mode(file_path)
-      file_mode = File.stat(file_path).mode
-      available_permissions = [0o100644, 0o100755]
+    def expect_container_file_mode(path, mode)
+      expect(mode).to eq container_file_stat(path)[:mode]
+    end
 
-      available_permissions[available_permissions.index(file_mode) - 1].tap do |permission|
-        File.chmod(permission, file_path)
-      end
+    def change_file_mode(path)
+      file_mode = File.stat(path).mode
+      available_permissions = { 0o100644 => '644', 0o100755 => '755' }
+      permission = available_permissions.keys[available_permissions.keys.index(file_mode) - 1]
+      File.chmod(permission, path)
+      available_permissions[permission]
     end
 
     file_path = 'a/data.txt'
@@ -291,24 +316,24 @@ describe Dapp::Dimg::GitArtifact do
     end
 
     it 'change_mode', test_construct: true do
-      expected_permission = file_change_mode(file_path)
+      expected_permission = change_file_mode(file_path)
       git_add_and_commit(file_path)
       apply_patch
-      expect(File.stat(file_path).mode).to eq expected_permission
+      expect_container_file_mode(container_file_path('data.txt'), expected_permission)
     end
 
     it 'modified and change mode', test_construct: true do
-      expected_permission = file_change_mode(file_path)
+      expected_permission = change_file_mode(file_path)
       git_change_and_commit(file_path)
       apply_patch
-      expect(File.stat(file_path).mode).to eq expected_permission
+      expect_container_file_mode(container_file_path('data.txt'), expected_permission)
     end
 
     it 'delete', test_construct: true do
       FileUtils.rm_rf file_path
       git_rm_and_commit file_path
       apply_patch
-      expect(file_exist_at_dist?(file_path)).to be_falsey
+      expect_not_existing_container_file(container_file_path('data.txt'))
     end
   end
 end
