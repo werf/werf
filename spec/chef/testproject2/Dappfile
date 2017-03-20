@@ -1,0 +1,32 @@
+dimg do
+  docker.from 'centos:7'
+
+  artifact do
+    docker.from 'spheromak/docker-chefdk:latest'
+
+    git do
+      add '/spec/chef/testproject2/.chefinit' do
+        to '/chefinit'
+
+        stage_dependencies do
+          build_artifact '/spec/chef/testproject2/Berksfile'
+        end
+      end
+    end
+
+    shell do
+      build_artifact do
+        run 'cd /chefinit && /opt/chefdk/bin/berks vendor /cookbooks'
+      end
+    end
+
+    export '/cookbooks' do
+      before :install
+      to '/cookbooks'
+    end
+  end
+
+  git do
+    add { to '/app' }
+  end
+end

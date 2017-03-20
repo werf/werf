@@ -4,3 +4,4 @@
 /.bundle
 /.vendor
 /spec/chef/testproject/.dapp_build
+/spec/chef/testproject2/.dapp_build

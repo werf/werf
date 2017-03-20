@@ -78,7 +78,7 @@ module Dapp
 
     def local_git_artifact_exclude_paths(&blk)
       super do |exclude_paths|
-        build_path_relpath = Pathname.new(build_path).subpath_of(path)
+        build_path_relpath = Pathname.new(build_path).subpath_of(File.dirname(git_path))
         exclude_paths << build_path_relpath.to_s if build_path_relpath
 
         yield exclude_paths if block_given?

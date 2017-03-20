@@ -18,7 +18,7 @@ module Dapp
 
         def diff(from, to, **kwargs)
           if to.nil?
-            git.lookup(from).diff_workdir
+            git.lookup(from).diff_workdir(**kwargs)
           else
             super
           end
