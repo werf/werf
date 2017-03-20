@@ -98,7 +98,7 @@ module Dapp
             begin
               image_name = format(format, repo: repo, signature: image.name.split(':').last)
               import_base!(image, image_name)
-            rescue Error::Shellout
+            rescue ::Dapp::Error::Shellout
               next
             end
             break unless dapp.pull_all_stages?

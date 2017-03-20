@@ -20,7 +20,15 @@ begin
   check_docker_version
 
   begin
-    Dapp::CLI.new.run
+    begin
+      Dapp::CLI.new.run
+    rescue Dapp::Error::Base => e
+      unless (message = Dapp::Helper::NetStatus.before_error_message(e)).empty?
+        $stderr.puts(message)
+      end
+
+      raise
+    end
   rescue ::SystemExit
     raise
   rescue ::Exception => e

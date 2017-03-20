@@ -2,6 +2,7 @@ module Dapp
   class Dapp
     module Logging
       module Process
+        DEFAULT_TERMINAL_WIDTH = 120
         DEFAULT_STYLE = {
           message: :step,
           process: :secondary,
@@ -25,8 +26,6 @@ module Dapp
 
         # rubocop:disable Metrics/ParameterLists
         def log_process(message, process: nil, short: false, quiet: false, style: {}, status: {}, &blk)
-          return yield if quiet
-
           style[:message] ||= DEFAULT_STYLE[:message]
           style[:process] ||= DEFAULT_STYLE[:process]
           style[:failed] ||= DEFAULT_STYLE[:failed]
@@ -35,7 +34,9 @@ module Dapp
           status[:success] ||= t(code: 'status.success.default')
           status[:failed] ||= t(code: 'status.failed.default')
 
-          if log_verbose? && !short
+          if quiet
+            log_process_quiet(message.to_s, style: style, status: status, &blk)
+          elsif log_verbose? && !short
             process ||= t(code: 'status.process.default')
             log_process_verbose(message.to_s, process: process, style: style, status: status, &blk)
           else
@@ -49,6 +50,15 @@ module Dapp
         end
 
         protected
+
+        def log_process_quiet(message, style: {}, status: {})
+          yield
+        rescue Error::Base => e
+          info                  = paint_string(slice(message), style[:message])
+          failed_message        = paint_string(rjust(status[:failed], info), style[:failed])
+          before_error_messages = [log_indent + info + failed_message, e.net_status[:data][:before_error_messages]].flatten
+          raise e.class, **e.net_status.merge(data: e.net_status[:data].merge(before_error_messages: before_error_messages))
+        end
 
         def log_process_verbose(message, process:, style: {}, status: {}, &blk)
           process         = paint_string(rjust(process, message), style[:process])
@@ -71,7 +81,7 @@ module Dapp
           message = success_message
           start = Time.now
           yield
-        rescue Exception::Base, Error::Base, SignalException, StandardError => _e
+        rescue Error::Base, SignalException, StandardError => _e
           message = failed_message
           raise
         ensure
@@ -100,7 +110,10 @@ module Dapp
         end
 
         def terminal_width
-          @terminal_width ||= `tput cols`.strip.to_i
+          @terminal_width ||= begin
+            tputs_cols = `tput cols`.strip.to_i
+            (tputs_cols == 0) ? DEFAULT_TERMINAL_WIDTH : tputs_cols
+          end
         end
       end
     end # Logging

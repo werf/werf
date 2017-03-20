@@ -24,7 +24,7 @@ module Dapp
 
             def group_opened?
               return false if prev_group_stage.nil?
-              prev_group_stage.group_opened? || !prev_group_stage.empty?
+              prev_group_stage.group_opened? || prev_group_stage.image_should_be_build?
             end
 
             def prev_group_stage

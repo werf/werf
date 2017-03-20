@@ -79,7 +79,7 @@ module Dapp
             def image_exist?(image_id)
               shellout!(%(docker inspect #{image_id}))
               true
-            rescue Error::Shellout
+            rescue ::Dapp::Error::Shellout
               false
             end
 

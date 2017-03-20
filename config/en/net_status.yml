@@ -47,7 +47,7 @@ en:
       builder_type_conflict: 'Conflict between builder types!'
       builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
       docker_from_incorrect: "`docker.from` has incorrect value `%{name}`!"
-      docker_from_without_tag: "`docker.from`: image `%{name}` without !"
+      docker_from_without_tag: "`docker.from`: image `%{name}` without tag!"
       stage_artifact_not_associated: "Artifact not associated with any stage: expected `before` or `after` attribute!"
       stage_artifact_double_associate: "Cannot use `%{stage}` stage for artifact, already used in `%{conflict_stage}` stage!"
       stage_artifact_not_supported_associated_stage: "Bad artifact stage `%{stage}`!"
@@ -67,6 +67,7 @@ en:
       page_not_found: "Registry `%{registry}`: page `%{url}` not found!"
       user_not_authorized: 'Registry `%{registry}`: user not authorized!'
     rugged:
+      git_repository_reference_error: "Git repo `%{name}`: %{message}!"
       rugged_remote_error: "Remote git repo `%{url}`: `%{message}`!"
       local_git_repository_does_not_exist: "Local git repo: doesn't exist!"
       commit_not_found_in_local_git_repository: "Local git repo: commit `%{commit}` not found (run command `dapp stages cleanup local --improper-git-commit`)!"
