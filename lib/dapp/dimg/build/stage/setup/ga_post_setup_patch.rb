@@ -10,10 +10,6 @@ module Dapp
               @prev_stage = GAPostSetupPatchDependencies.new(dimg, self)
               super
             end
-
-            def next_g_a_stage
-              next_stage.next_stage
-            end
           end # GAPostSetupPatch
         end
       end # Stage

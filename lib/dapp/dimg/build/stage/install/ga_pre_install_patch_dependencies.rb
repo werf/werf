@@ -12,7 +12,7 @@ module Dapp
             end
 
             def dependencies
-              next_stage.next_stage.context # Install
+              dimg.stage_by_name(:install).context
             end
           end # GAPreInstallPatchDependencies
         end

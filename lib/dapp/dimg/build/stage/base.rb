@@ -167,6 +167,24 @@ module Dapp
             false
           end
 
+          def g_a_stage?
+            false
+          end
+
+          def prev_g_a_stage
+            stage = self
+            until (stage = stage.prev_stage).nil?
+              return stage if stage.g_a_stage?
+            end
+          end
+
+          def next_g_a_stage
+            stage = self
+            until (stage = stage.next_stage).nil?
+              return stage if stage.g_a_stage?
+            end
+          end
+
           protected
 
           def image_build

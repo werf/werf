@@ -3,16 +3,6 @@ module Dapp
     module Build
       module Stage
         class GABase < Base
-          attr_accessor :prev_g_a_stage, :next_g_a_stage
-
-          def prev_g_a_stage
-            dependencies_stage.prev_stage.prev_stage
-          end
-
-          def next_g_a_stage
-            next_stage.next_stage.next_stage
-          end
-
           def dependencies_stage
             prev_stage
           end
@@ -42,6 +32,10 @@ module Dapp
 
           def empty?
             dependencies_stage.empty?
+          end
+
+          def g_a_stage?
+            true
           end
 
           def layer_commit(git_artifact)

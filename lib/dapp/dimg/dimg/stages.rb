@@ -6,6 +6,10 @@ module Dapp
           last_stage.send(:signature)
         end
 
+        def stage_by_name(name)
+          stages.find { |s| s.name == name }
+        end
+
         def stage_cache_format
           "#{dapp.stage_cache}:%{signature}"
         end
@@ -46,7 +50,7 @@ module Dapp
         end
 
         def stages
-          (@stages ||= []).tap do |stages|
+          @stages ||= [].tap do |stages|
             stage = last_stage
             loop do
               stages << stage
