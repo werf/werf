@@ -22,14 +22,14 @@ module Dapp
             return yield if dimg.dapp.dry_run?
 
             try_lock = proc do
-              next yield unless should_be_tagged?
+              next yield unless image_should_be_locked?
 
               no_lock = false
 
               dimg.dapp.lock("#{dimg.dapp.name}.image.#{image.name}") do
                 image.cache_reset
 
-                if should_be_tagged?
+                if image_should_be_locked?
                   yield
                 else
                   no_lock = true
@@ -178,7 +178,11 @@ module Dapp
           end
 
           def should_be_tagged?
-            !(empty? || image.tagged? || should_be_not_present?) && image.built?
+            image.built? && !image.tagged?
+          end
+
+          def image_should_be_locked?
+            !(empty? || image.tagged? || should_be_not_present?)
           end
 
           def should_be_not_present?
