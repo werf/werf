@@ -10,6 +10,11 @@ module Dapp
 
       attr_reader :dapp
 
+      def directive_eval(directive, &blk)
+        directive.instance_eval(&blk) if block_given?
+        directive
+      end
+
       def ref_variables
         [:@dapp]
       end

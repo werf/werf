@@ -3,14 +3,14 @@ module Dapp
     module Config
       class Dimg < Base
         module Validation
-          protected
-
           def validate!
             directives_validate!
             validate_scratch!
             validate_artifacts!
             validate_artifacts_artifacts!
           end
+
+          protected
 
           def validate_scratch!
             if _docker._from.nil?
@@ -25,7 +25,7 @@ module Dapp
             passed_directives.each do |v|
               next if (value = instance_variable_get(v)).nil?
               Array(value).each do |elm|
-                elm.send(:validate!) if elm.methods.include?(:validate!)
+                elm.validate! if elm.respond_to?(:validate!)
               end
             end
           end
@@ -36,7 +36,7 @@ module Dapp
             directives.each do |name, user_name|
               raise Error::Config,
                     code: :scratch_unsupported_directive,
-                    data: { directive: user_name } unless public_send(name).send(:empty?)
+                    data: { directive: user_name } unless public_send(name).empty?
             end
 
             docker_directives = [:_expose, :_env, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint]
@@ -44,7 +44,7 @@ module Dapp
               value = _docker.public_send(directive)
               raise Error::Config,
                     code: :scratch_unsupported_directive,
-                    data: { directive: "docker.#{directive}" } unless value.nil? || value.send(:empty?)
+                    data: { directive: "docker.#{directive}" } unless value.nil? || value.empty?
             end
           end
 

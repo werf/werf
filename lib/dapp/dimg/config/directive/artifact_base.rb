@@ -7,8 +7,21 @@ module Dapp
 
           def initialize(**kwargs, &blk)
             @_export = []
-
             super(**kwargs, &blk)
+          end
+
+          def owner(owner)
+            sub_directive_eval { @_owner = owner }
+          end
+
+          def group(group)
+            sub_directive_eval { @_group = group }
+          end
+
+          def export(absolute_dir_path = '/', &blk)
+            self.class.const_get('Export').new(absolute_dir_path, dapp: dapp, &blk).tap do |export|
+              @_export << export
+            end
           end
 
           def _export
@@ -43,52 +56,42 @@ module Dapp
               }
             end
 
-            protected
-
             def to(absolute_path)
-              raise Error::Config, code: :export_to_absolute_path_required unless Pathname(absolute_path).absolute?
-              @_to = path_format(absolute_path)
+              sub_directive_eval do
+                raise Error::Config, code: :export_to_absolute_path_required unless Pathname(absolute_path).absolute?
+                @_to = path_format(absolute_path)
+              end
             end
 
             def include_paths(*relative_paths)
-              unless relative_paths.all? { |path| Pathname(path).relative? }
-                raise Error::Config, code: :export_include_paths_relative_path_required
+              sub_directive_eval do
+                unless relative_paths.all? { |path| Pathname(path).relative? }
+                  raise Error::Config, code: :export_include_paths_relative_path_required
+                end
+                _include_paths.concat(relative_paths.map(&method(:path_format)))
               end
-              _include_paths.concat(relative_paths.map(&method(:path_format)))
             end
 
             def exclude_paths(*relative_paths)
-              unless relative_paths.all? { |path| Pathname(path).relative? }
-                raise Error::Config, code: :export_exclude_paths_relative_path_required
+              sub_directive_eval do
+                unless relative_paths.all? { |path| Pathname(path).relative? }
+                  raise Error::Config, code: :export_exclude_paths_relative_path_required
+                end
+                _exclude_paths.concat(relative_paths.map(&method(:path_format)))
               end
-              _exclude_paths.concat(relative_paths.map(&method(:path_format)))
             end
 
             def owner(owner)
-              @_owner = owner
+              sub_directive_eval { @_owner = owner }
             end
 
             def group(group)
-              @_group = group
+              sub_directive_eval { @_group = group }
             end
 
             def validate!
               raise Error::Config, code: :export_to_required if _to.nil?
             end
-          end
-
-          protected
-
-          def owner(owner)
-            @_owner = owner
-          end
-
-          def group(group)
-            @_group = group
-          end
-
-          def export(absolute_dir_path = '/', &blk)
-            @_export << self.class.const_get('Export').new(absolute_dir_path, dapp: dapp, &blk)
           end
         end
       end

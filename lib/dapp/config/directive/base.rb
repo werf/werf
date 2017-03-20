@@ -2,14 +2,15 @@ module Dapp
   module Config
     module Directive
       class Base < Config::Base
-        protected
-
         def clone
           _clone
         end
 
-        def clone_to_artifact
-          clone
+        protected
+
+        def sub_directive_eval
+          yield if block_given?
+          self
         end
 
         def path_format(path)

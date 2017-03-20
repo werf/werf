@@ -180,7 +180,7 @@ describe Dapp::Dimg::Config::Dimg do
           add '/cwd'
         end
 
-        expect_exception_code(:export_to_required) { dimg.send(:validate!) }
+        expect_exception_code(:add_to_required) { dimg.send(:validate!) }
       end
     end
 

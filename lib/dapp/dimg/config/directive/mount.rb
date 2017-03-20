@@ -3,7 +3,7 @@ module Dapp
     module Config
       module Directive
         class Mount < Base
-          attr_reader :_from, :_to
+          attr_reader :_to
           attr_reader :_type
 
           def initialize(to, **kwargs, &blk)
@@ -13,12 +13,16 @@ module Dapp
             super(**kwargs, &blk)
           end
 
-          protected
-
           def from(type)
-            type = type.to_sym
-            raise Error::Config, code: :mount_from_type_required unless [:tmp_dir, :build_dir].include? type
-            @_type = type
+            sub_directive_eval do
+              type = type.to_sym
+              raise Error::Config, code: :mount_from_type_required unless [:tmp_dir, :build_dir].include? type
+              @_type = type
+            end
+          end
+
+          def validate!
+            raise Error::Config, code: :mount_from_required if _type.nil?
           end
         end
       end

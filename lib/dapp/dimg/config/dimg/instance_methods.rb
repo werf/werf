@@ -5,6 +5,7 @@ module Dapp
         module InstanceMethods
           attr_reader :_builder
           attr_reader :_chef, :_shell, :_docker, :_git_artifact, :_mount, :_artifact
+          attr_reader :_artifact_groups
 
           def dev_mode
             @_dev_mode = true
@@ -25,20 +26,20 @@ module Dapp
           end
 
           def artifact(&blk)
-            _artifact.concat begin
-                               pass_to_custom(ArtifactGroup.new(dapp: dapp), :clone_to_artifact).tap do |artifact_group|
-                                 artifact_group.instance_eval(&blk) if block_given?
-                               end._export
-                             end
+            pass_to_custom(ArtifactGroup.new(dapp: dapp), :clone_to_artifact).tap do |artifact_group|
+              _artifact_groups << directive_eval(artifact_group, &blk)
+            end
           end
 
           def git(url = nil, &blk)
             type = url.nil? ? :local : :remote
-            _git_artifact.send(type, url.to_s, &blk)
+            _git_artifact.public_send(type, url.to_s, &blk)
           end
 
           def mount(to, &blk)
-            _mount << Directive::Mount.new(to, dapp: dapp, &blk)
+            Directive::Mount.new(to, dapp: dapp, &blk).tap do |mount|
+              _mount << mount
+            end
           end
 
           def _dev_mode
@@ -75,8 +76,12 @@ module Dapp
             end
           end
 
+          def _artifact_groups
+            @_artifact_groups ||= []
+          end
+
           def _artifact
-            @_artifact ||= []
+            _artifact_groups.map(&:_export).flatten
           end
 
           [:before, :after].each do |order|
@@ -104,11 +109,15 @@ module Dapp
             end
 
             def local(_, &blk)
-              @_local << Directive::GitArtifactLocal.new(dapp: dapp, &blk)
+              Directive::GitArtifactLocal.new(dapp: dapp, &blk).tap do |git|
+                @_local << git
+              end
             end
 
             def remote(repo_url, &blk)
-              @_remote << Directive::GitArtifactRemote.new(repo_url, dapp: dapp, &blk)
+              Directive::GitArtifactRemote.new(repo_url, dapp: dapp, &blk).tap do |git|
+                @_remote << git
+              end
             end
 
             def _local
@@ -119,14 +128,12 @@ module Dapp
               @_remote.map(&:_export).flatten
             end
 
-            protected
-
             def empty?
               (_local + _remote).empty?
             end
 
             def validate!
-              (_local + _remote).each { |exp| exp.send(:validate!) }
+              (_local + _remote).each(&:validate!)
             end
           end
 
@@ -135,11 +142,6 @@ module Dapp
           def builder(type)
             @_builder = type if _builder == :none
             raise Error::Config, code: :builder_type_conflict unless @_builder == type
-          end
-
-          def directive_eval(directive, &blk)
-            directive.instance_eval(&blk) if block_given?
-            directive
           end
 
           def pass_to_default(dimg)
@@ -152,7 +154,7 @@ module Dapp
 
               obj.instance_variable_set(directive, begin
                 case variable
-                when Directive::Base, GitArtifact then variable.send(clone_method)
+                when Directive::Base, GitArtifact then variable.public_send(clone_method)
                 when Symbol then variable
                 when Array then variable.dup
                 when TrueClass, FalseClass then variable
@@ -167,7 +169,7 @@ module Dapp
           def passed_directives
             [:@_chef, :@_shell, :@_docker,
              :@_git_artifact, :@_mount,
-             :@_artifact, :@_builder, :@_dev_mode]
+             :@_artifact_groups, :@_builder, :@_dev_mode]
           end
         end # InstanceMethods
         # rubocop:enable Metrics/ModuleLength
