@@ -9,7 +9,7 @@ dimg do
         to '/chefinit'
 
         stage_dependencies do
-          build_artifact '/spec/chef/testproject2/Berksfile'
+          build_artifact 'Berksfile', 'Berksfile.lock'
         end
       end
     end
@@ -22,11 +22,7 @@ dimg do
 
     export '/cookbooks' do
       before :install
-      to '/cookbooks'
+      to '/usr/share/dapp/chef_repo/cookbooks'
     end
-  end
-
-  git do
-    add { to '/app' }
   end
 end
