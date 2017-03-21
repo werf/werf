@@ -3,6 +3,7 @@ name 'dappdeps-base'
 license 'MIT'
 license_file 'https://github.com/flant/dappdeps-base/blob/master/LICENSE.txt'
 
+dependency 'termcap'
 dependency 'bash'
 dependency 'gtar'
 dependency 'sudo'

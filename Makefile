@@ -6,11 +6,31 @@ DOCKER_IMAGE_NAME=dappdeps/base:$(DOCKER_IMAGE_VERSION)
 IMAGE_FILE_PATH=build/image_$(DOCKER_IMAGE_VERSION)
 HUB_IMAGE_FILE_PATH=build/hub_image_$(DOCKER_IMAGE_VERSION)
 
+BUILDENV_DOCKER_IMAGE=centos:5
+
 all: $(HUB_IMAGE_FILE_PATH)
 
 build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb:
 	@rm -f pkg/dappdeps-base_$(DOCKER_IMAGE_VERSION)*.deb
-	@omnibus build -o append_timestamp:false dappdeps-base
+	@docker run -ti --rm --volume `pwd`:/app $(BUILDENV_DOCKER_IMAGE) bash -ec '\
+		yum install -y epel-release.noarch && \
+		yum install -y gpg git curl which file gettext-devel libattr-devel sudo man unzip gcc-c++ screen rpm-build libtermcap && \
+		mkdir -p /usr/src/redhat/SOURCES && \
+		mkdir -p /usr/src/redhat/SPECS && \
+		cp /app/centos-extras/tar.spec /usr/src/redhat/SPECS/tar.spec && \
+		curl -sR -o /usr/src/redhat/SOURCES/tar-1.26.tar.bz2 ftp://ftp.gnu.org/gnu/tar/tar-1.26.tar.bz2 && \
+		rpmbuild -ba /usr/src/redhat/SPECS/tar.spec && \
+		rpm -ivh --replacefiles --replacepkgs --oldpackage /usr/src/redhat/RPMS/x86_64/tar-1.26-1.x86_64.rpm && \
+		git config --global user.email $(shell git config --global user.email) && \
+		git config --global user.name $(shell git config --global user.name) && \
+		gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 && \
+		curl -sSL https://get.rvm.io | bash && \
+		source /etc/profile.d/rvm.sh && \
+		rvm install 2.3.1 && \
+		gem install bundler && \
+		cd /app && \
+		bundle install --without development && \
+		bundle exec omnibus build -o append_timestamp:false dappdeps-base'
 	@cp pkg/dappdeps-base_$(DOCKER_IMAGE_VERSION)-1_amd64.deb \
       build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb
 
