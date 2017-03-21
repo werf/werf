@@ -3,6 +3,8 @@ module Dapp
     module Build
       module Stage
         class BuildArtifact < Base
+          include Mod::GitArtifactsDependencies
+
           def initialize(dimg)
             @prev_stage = GAArtifactPatch.new(dimg, self)
             @dimg = dimg

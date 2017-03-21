@@ -52,13 +52,14 @@ module Dapp
         patch_command(stage.prev_g_a_stage.layer_commit(self), nil)
       end
 
-      def stage_dependencies_checksums(stage)
+      def stage_dependencies_checksums(stage, from_commit = nil, to_commit = latest_commit)
         return [] if (stage_dependencies = stages_dependencies[stage.name]).empty?
 
         paths = include_paths(true) + base_paths(stage_dependencies, true)
-        diff_patches(nil, latest_commit, paths: paths).map do |patch|
+        diff_patches(from_commit, to_commit, paths: paths).map do |patch|
           delta_new_file = patch.delta.new_file
-          Digest::SHA256.hexdigest [delta_new_file[:path], repo.lookup_object(delta_new_file[:oid]).content].join(':::')
+          content = patch.hunks.map { |h| h.lines.select { |l| l.line_origin == :context }.map(&:content).join }.join
+          Digest::SHA256.hexdigest [delta_new_file[:path], content].join(':::')
         end
       end
 
@@ -122,10 +123,10 @@ module Dapp
         repo.dimg.dapp.sudo_command(owner: owner, group: group)
       end
 
-      def archive_file(commit)
-        create_file(repo.dimg.tmp_path('archives', archive_file_name(commit))) do |f|
+      def archive_file(to_commit)
+        create_file(repo.dimg.tmp_path('archives', archive_file_name(to_commit))) do |f|
           Gem::Package::TarWriter.new(f) do |tar|
-            diff_patches(nil, commit).each do |patch|
+            diff_patches(nil, to_commit).each do |patch|
               entry = patch.delta.new_file
               tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
                 tf.write repo.lookup_object(entry[:oid]).content
@@ -133,7 +134,7 @@ module Dapp
             end
           end
         end
-        repo.dimg.container_tmp_path('archives', archive_file_name(commit))
+        repo.dimg.container_tmp_path('archives', archive_file_name(to_commit))
       rescue Gem::Package::TooLongFileName => e
         raise Error::TarWriter, message: e.message
       end
