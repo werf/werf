@@ -14,7 +14,7 @@ build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb:
 	@rm -f pkg/dappdeps-base_$(DOCKER_IMAGE_VERSION)*.deb
 	@docker run -ti --rm --volume `pwd`:/app $(BUILDENV_DOCKER_IMAGE) bash -ec '\
 		yum install -y epel-release.noarch && \
-		yum install -y gpg git curl which file gettext-devel libattr-devel sudo man unzip gcc-c++ screen rpm-build libtermcap && \
+		yum install -y make gpg git curl which file gettext-devel libattr-devel sudo man unzip gcc-c++ screen rpm-build libtermcap && \
 		mkdir -p /usr/src/redhat/SOURCES && \
 		mkdir -p /usr/src/redhat/SPECS && \
 		cp /app/centos-extras/tar.spec /usr/src/redhat/SPECS/tar.spec && \
