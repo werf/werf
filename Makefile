@@ -6,13 +6,11 @@ DOCKER_IMAGE_NAME=dappdeps/base:$(DOCKER_IMAGE_VERSION)
 IMAGE_FILE_PATH=build/image_$(DOCKER_IMAGE_VERSION)
 HUB_IMAGE_FILE_PATH=build/hub_image_$(DOCKER_IMAGE_VERSION)
 
-BUILDENV_DOCKER_IMAGE=centos:5
-
 all: $(HUB_IMAGE_FILE_PATH)
 
 build/dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm:
 	@rm -f pkg/dappdeps-base-$(DOCKER_IMAGE_VERSION)*.rpm
-	@docker run --rm --volume `pwd`:/app $(BUILDENV_DOCKER_IMAGE) bash -ec '\
+	@docker run --rm --volume `pwd`:/app centos:5 bash -c '\
 		yum install -y epel-release.noarch && \
 		yum install -y make gpg git curl which file gettext-devel libattr-devel sudo man unzip gcc-c++ screen rpm-build libtermcap && \
 		mkdir -p /usr/src/redhat/SOURCES && \
@@ -25,7 +23,7 @@ build/dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm:
 		git config --global user.name $(shell git config --global user.name) && \
 		gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 && \
 		curl -sSL https://get.rvm.io | bash && \
-		source /etc/profile.d/rvm.sh && \
+		. /etc/profile.d/rvm.sh && \
 		rvm install 2.3.1 && \
 		gem install bundler && \
 		cd /app && \
