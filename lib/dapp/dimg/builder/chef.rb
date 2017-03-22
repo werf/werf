@@ -30,7 +30,7 @@ module Dapp
 
         %i(before_install install before_setup setup).each do |stage|
           unless stage_empty?(stage) || stage_cookbooks_checksum_path(stage).exist?
-            raise Error::Chef, code: :chef_stage_checksum_not_calculated, data: {stage: stage}
+            raise Error::Chef, code: :stage_checksum_not_calculated, data: {stage: stage}
           end
         end
       end
@@ -71,7 +71,7 @@ module Dapp
       def builder_cookbook
         @builder_cookbook ||= begin
           unless dimg.dapp.builder_cookbook_path.exist?
-            raise Error,
+            raise Error::Chef,
                   code: :builder_cookbook_not_found,
                   data: {path: dimg.dapp.builder_cookbook_path.to_s}
           end
