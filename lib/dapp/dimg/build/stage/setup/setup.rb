@@ -5,6 +5,7 @@ module Dapp
         module Setup
           class Setup < Base
             include Mod::Group
+            include Mod::GitArtifactsDependencies
 
             def initialize(dimg, next_stage)
               @prev_stage = GAPreSetupPatch.new(dimg, self)

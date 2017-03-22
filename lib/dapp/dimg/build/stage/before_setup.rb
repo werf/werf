@@ -3,6 +3,8 @@ module Dapp
     module Build
       module Stage
         class BeforeSetup < Base
+          include Mod::GitArtifactsDependencies
+
           def initialize(dimg, next_stage)
             @prev_stage = AfterInstallArtifact.new(dimg, self)
             super
