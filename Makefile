@@ -36,9 +36,7 @@ build/dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm:
 
 build/dappdeps-base_$(DOCKER_IMAGE_VERSION): build/dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm
 	mkdir build/dappdeps-base_$(DOCKER_IMAGE_VERSION)
-	cd build/dappdeps-base_$(DOCKER_IMAGE_VERSION)
-	rpm2cpio build/dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm | cpio -idmv
-	cd -
+	cd build/dappdeps-base_$(DOCKER_IMAGE_VERSION) && rpm2cpio ../dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm | cpio -idmv
 
 build/Dockerfile_$(DOCKER_IMAGE_VERSION): build/dappdeps-base_$(DOCKER_IMAGE_VERSION)
 	@echo "FROM scratch" > build/Dockerfile_$(DOCKER_IMAGE_VERSION)
