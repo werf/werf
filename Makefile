@@ -10,9 +10,9 @@ BUILDENV_DOCKER_IMAGE=centos:5
 
 all: $(HUB_IMAGE_FILE_PATH)
 
-build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb:
-	@rm -f pkg/dappdeps-base_$(DOCKER_IMAGE_VERSION)*.deb
-	@docker run -ti --rm --volume `pwd`:/app $(BUILDENV_DOCKER_IMAGE) bash -ec '\
+build/dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm:
+	@rm -f pkg/dappdeps-base-$(DOCKER_IMAGE_VERSION)*.rpm
+	@docker run --rm --volume `pwd`:/app $(BUILDENV_DOCKER_IMAGE) bash -ec '\
 		yum install -y epel-release.noarch && \
 		yum install -y make gpg git curl which file gettext-devel libattr-devel sudo man unzip gcc-c++ screen rpm-build libtermcap && \
 		mkdir -p /usr/src/redhat/SOURCES && \
@@ -31,11 +31,14 @@ build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb:
 		cd /app && \
 		bundle install --without development && \
 		bundle exec omnibus build -o append_timestamp:false dappdeps-base'
-	@cp pkg/dappdeps-base_$(DOCKER_IMAGE_VERSION)-1_amd64.deb \
-      build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb
+	@cp pkg/dappdeps-base-$(DOCKER_IMAGE_VERSION)-1.el5.x86_64.rpm \
+      build/dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm
 
-build/dappdeps-base_$(DOCKER_IMAGE_VERSION): build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb
-	dpkg -x build/dappdeps-base_$(DOCKER_IMAGE_VERSION).deb build/dappdeps-base_$(DOCKER_IMAGE_VERSION)
+build/dappdeps-base_$(DOCKER_IMAGE_VERSION): build/dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm
+	mkdir build/dappdeps-base_$(DOCKER_IMAGE_VERSION)
+	cd build/dappdeps-base_$(DOCKER_IMAGE_VERSION)
+	rpm2cpio build/dappdeps-base_$(DOCKER_IMAGE_VERSION).rpm | cpio -idmv
+	cd -
 
 build/Dockerfile_$(DOCKER_IMAGE_VERSION): build/dappdeps-base_$(DOCKER_IMAGE_VERSION)
 	@echo "FROM scratch" > build/Dockerfile_$(DOCKER_IMAGE_VERSION)
