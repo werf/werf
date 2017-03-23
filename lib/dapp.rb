@@ -17,6 +17,7 @@ require 'paint'
 require 'inifile'
 require 'rugged'
 require 'rubygems/package'
+require 'murmurhash3'
 
 require 'net_status'
 

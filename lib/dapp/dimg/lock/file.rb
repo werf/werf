@@ -21,7 +21,7 @@ module Dapp
         protected
 
         def lock_file_path
-          lock_path.join(name.slice(0, 32))
+          lock_path.join(MurmurHash3::V32.str_hexdigest(name))
         end
 
         def _do_lock(timeout, on_wait, readonly)
