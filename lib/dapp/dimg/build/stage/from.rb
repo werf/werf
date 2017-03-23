@@ -26,8 +26,8 @@ module Dapp
             [:tmp_dir, :build_dir].map { |type| config_mounts_by_type(type) }.flatten.uniq
           end
 
-          def adding_mounts_by_type(type)
-            labels_mounts_by_type(type)
+          def adding_mounts_by_type(_type)
+            []
           end
 
           def should_not_be_detailed?
