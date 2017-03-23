@@ -115,7 +115,7 @@ module Dapp
       end
 
       def stage_cookbooks_checksum_path(stage)
-        dimg.build_path.join("#{builder_cookbook.checksum}.#{stage}.checksum")
+        dimg.build_path.join("#{builder_cookbook.checksum}.#{dimg.config._name}.#{stage}.checksum")
       end
 
       def stage_cookbooks_checksum(stage)
