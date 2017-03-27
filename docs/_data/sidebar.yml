@@ -3,15 +3,40 @@
 entries:
 - title: sidebar
   folders:
-
   - title: Обзор
+    url: /index.html
+
+  - title: Установка
+    url: /installation.html
+
+  - title: Первое приложение на dapp
+    url: /get_started.html
+
+  - title: Сложная сборка
     folderitems:
 
-    - title: Начало работы
-      url: /index.html
-      type: homepage
+    - title: Уменьшаем размеры образа и включаем кеширование с помощью mount
+      url: /mount_for_advanced_build.html
 
-  - title: Определения
+    - title: Артефакт
+      url: /artifact_for_advanced_build.html
+
+    - title: Сборка с помощью chef
+      url: /chef_for_advanced_build.html
+
+    - title: Dimod — модули сборки для chef
+      url: /chef_dimod_for_advanced_build.html
+
+    - title: Registry
+      url: /registry_for_advanced_build.html
+
+    - title: Сборка через CI
+      url: /ci_for_advanced_build.html
+
+    - title: Debugging
+      url: /debug_for_advanced_build.html
+
+  - title: Архитектура
     folderitems:
 
     - title: Базовые
@@ -50,7 +75,7 @@ entries:
     - title: Mount
       url: /mount_directives.html
 
-  - title: Команды
+  - title: Команды dapp
     folderitems:
 
     - title: Основные

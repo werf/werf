@@ -1,3 +1,9 @@
+---
+title: Первое приложение на dapp
+sidebar: doc_sidebar
+permalink: get_started.html
+---
+
 # Начало работы с dapp
 
 * Быстрый старт на примере простого php приложения
