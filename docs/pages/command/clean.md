@@ -12,13 +12,13 @@ folder: command
 dapp dimg stages cleanup local [options] [DIMG ...] [REPO]
 ```
 
-#### --improper-repo-cache
+#### `--improper-repo-cache`
 Удалить кэш, который не использовался при сборке приложений в репозитории **REPO**.
 
-#### --improper-git-commit
+#### `--improper-git-commit`
 Удалить кэш, связанный с отсутствующими в git-репозиториях коммитами.
 
-#### --improper-cache-version
+#### `--improper-cache-version`
 Удалить устаревший кэш приложений проекта.
 
 #### Примеры
@@ -45,13 +45,13 @@ $ dapp dimg stages cleanup local --improper-git-commit
 dapp dimg stages cleanup repo [options] [DIMG ...] REPO
 ```
 
-#### --improper-repo-cache
+#### `--improper-repo-cache`
 Удалить кэш, который не использовался при сборке приложений в репозитории **REPO**.
 
-#### --improper-git-commit
+#### `--improper-git-commit`
 Удалить кэш, связанный с отсутствующими в git-репозиториях коммитами.
 
-#### --improper-cache-version
+#### `--improper-cache-version`
 Удалить устаревший кэш приложений проекта.
 
 #### Примеры
@@ -123,10 +123,10 @@ backend
 dapp dimg mrproper [options]
 ```
 
-#### --all
+#### `--all`
 Удалить docker-образы и docker-контейнеры связанные с dapp.
 
-#### --improper-cache-version-stages
+#### `--improper-cache-version-stages`
 Удалить устаревший кэш приложений.
 
 #### Примеры

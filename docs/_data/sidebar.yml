@@ -51,7 +51,7 @@ entries:
   - title: Архитектура
     folderitems:
 
-    - title: Базовые
+    - title: Базовые определения
       url: /definitions.html
 
     - title: Chef сборщик
