@@ -2,3 +2,5 @@ source 'https://supermarket.chef.io'
 
 cookbook 'apt'
 cookbook 'git'
+cookbook 'build-essential'
+cookbook '1password'
