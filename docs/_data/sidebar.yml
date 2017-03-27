@@ -3,13 +3,11 @@
 entries:
 - title: sidebar
   folders:
-
   - title: Обзор
-    folderitems:
+    url: /index.html
 
-    - title: Начало работы
-      url: /index.html
-      type: homepage
+  - title: Установка
+    url: /installation.html
 
   - title: Определения
     folderitems:
