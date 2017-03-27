@@ -53,7 +53,7 @@ docker run -ti --rm app-dimgstage:ea5ec7543c809ec7e9fe28181edfcb2ee6f48efaa680f6
 dapp dimg build-context export [options] [DIMG ...]
 ```
 
-#### --build-context-directory DIR_PATH
+#### `--build-context-directory DIR_PATH`
 Определить директорию сохранения контекста.
 
 #### Пример
@@ -71,7 +71,7 @@ $ dapp dimg build-context export --dir ~/workspace/project --build-context-direc
 dapp dimg build-context import [options]
 ```
 
-#### --build-context-directory DIR_PATH
+#### `--build-context-directory DIR_PATH`
 Определить директорию хранения контекста.
 
 #### Пример
