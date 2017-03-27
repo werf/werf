@@ -1,16 +1,10 @@
 ---
-title: Артефакт (#TODO)
+title: Артефакт
 sidebar: doc_sidebar
 permalink: artifact_for_advanced_build.html
 folder: advanced_build
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
-
-* Problem: ok, no packages in image. I don’t need build tools too. Let’s go to artifacts.
-* Example 3: you may want to pack all static failes into scratch volume to mount it into nginx container.
-* directives: artifact.
-
-### Тезисы / проблемы / вопросы
 
 * Ресурсы, которые требуются при сборке не нужны конечному пользователю и занимают лишнее место в образе.
   * компонент приложения из исходных файлов: инструменты сборки и исходные файлы далее не требуются.
@@ -19,14 +13,12 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
   * компиляция должна происходить только при изменении исходных файлов.
 * Часть ресурсов необходимо собирать в среде отличающейся от среды приложения.
 
-### Предметная область
+Для решение этих проблем можно использовать артефакт:
 
 * Приложение артефакта используется для изолирования процесса сборки и инструментов сборки (среды, программного обеспечение, данных) ресурсов от образов, использующих эти ресурсы.
 * Сборка приложения артефакта происходит по тем же правилам, что и сборка приложения, но с другим набором стадий.
 * Артефакт — это набор ресурсов, который импортируется в приложение из приложения артефакта.
 * Приложение может иметь произвольное количество артефактов.
-
-### Раскрытие темы
 
 Предположим, необходимо собрать приложение, в котором конечный пользователь ожидает:
 
@@ -36,11 +28,11 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 ```ruby
 dimg do
-  docker.from ‘ubuntu:16.04’
+  docker.from 'ubuntu:16.04'
 
   # добавление кода проекта и зависимость сборки утилиты от изменений в её исходных файлах
   git.add do
-    to(‘/app’)
+    to('/app')
     stage_dependencies.setup('system/service')
   end
 
@@ -51,13 +43,13 @@ dimg do
   end
 
   # установка пакетов для сборки phantomjs
-  shell.install.run ‘apt-get install build-essential g++ flex \
+  shell.install.run 'apt-get install build-essential g++ flex \
                                      bison gperf ruby perl \
                                      libsqlite3-dev \
                                      libfontconfig1-dev \
                                      libicu-dev libfreetype6 libssl-dev \
                                      libpng-dev libjpeg-dev python \
-                                     libx11-dev libxext-dev’
+                                     libx11-dev libxext-dev'
 
   # компиляция
   shell.setup.run 'python phantomjs/build.py'
@@ -76,7 +68,7 @@ end
 
 ```ruby
 dimg do
- docker.from ‘ubuntu:16.04’
+ docker.from 'ubuntu:16.04'
 
  artifact do
    # добавление исходных файлов phantomjs и зависимость сборки от изменений в директории src
@@ -86,13 +78,13 @@ dimg do
    end
 
    # установка пакетов для сборки phantomjs
-   shell.install.run ‘apt-get install build-essential g++ flex \
+   shell.install.run 'apt-get install build-essential g++ flex \
                                       bison gperf ruby perl \
                                       libsqlite3-dev \
                                       libfontconfig1-dev \
                                       libicu-dev libfreetype6 libssl-dev \
                                       libpng-dev libjpeg-dev python \
-                                      libx11-dev libxext-dev’
+                                      libx11-dev libxext-dev'
 
    # компиляция
    shell.build_artifact.run 'python phantomjs/build.py'
@@ -106,7 +98,7 @@ dimg do
 
  # добавление кода проекта и зависимость сборки утилиты от изменений в её исходных файлах
  git.add do
-   to(‘/app’)
+   to('/app')
    stage_dependencies.setup('system/service')
  end
 
