@@ -1,36 +1,43 @@
 ---
-title: Registry (#TODO)
+title: Registry
 sidebar: doc_sidebar
 permalink: registry_for_advanced_build.html
 folder: advanced_build
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-* Схема именования (совместимая с gitlab)
-* Автоочистка
-* Распределенная сборка и распределенный кеш
+## Авторизация
 
-### Тезисы / проблемы / вопросы
-
-* Какие схемы тегирования поддерживаются?
-* Как синхронизировать данные с registry?
-* Как обеспечить оптимальную работу, имея несколько серверов сборки проекта?
-
-### Предметная область
+Перед тем как начать работу с registry, необходимо авторизоваться.
 
 ```shell
-dapp dimg push
-dapp dimg spush
-dapp dimg bp
-dapp dimg stages push
-dapp dimg stages pull
-dapp dimg stages cleanup local/repo
-dapp dimg stages flush local/repo
+# для работы с Docker Hub
+docker login
 ```
 
-### Раскрытие темы
+```shell
+# для работы с произвольным registry
+docker login REPO
+```
 
-#### Поддерживаемые схемы тегирования
+## Добавление приложений и кэша в registry
+
+После авторизации и сборки можно добавить приложения и связанный кэш проекта в registry для совместной работы.
+
+```
+# добавление приложений
+dapp dimg push REPO
+
+# добавление приложений и кэша
+dapp dimg push --with-stages REPO
+
+# добавление только кэша
+dapp dimg stages push REPO
+```
+
+При таком вызове приложения будут добавляться в registry в следующем формате `REPO:ИМЯ DIMG-TAG`, где:
+* `ИМЯ DIMG`: имя приложение, соответствует указанному в Dappfile.
+* `TAG`: одна из приведённых ниже схем тегирования.
 
 | опция | описание |
 | ----- | -------- |
@@ -40,32 +47,23 @@ dapp dimg stages flush local/repo
 | `--tag-build-id` | тег с идентификатором сборки |
 | `--tag-ci` | тег, собранный из относящихся к сборке переменных окружения CI системы |
 
-#### Синхронизация данных с registry
+В случае, если необходимо опустить имя приложения при тегировании, т.е. использовать формат `REPO:TAG`, можно использовать команду `dapp dimg spush`.
 
-В случае, если в registry данные неактуальные, а локально актуальны: очистить registry и экспортировать локальные кэш и приложения проекта.
+При использовании безымянного приложения, такой формат будет так же использоваться при вызове `dapp dimg push`.
 
-```shell
-dapp dimg stages flush repo REPO
-dapp dimg push --with-stages REPO	
-```
+## Скачивание кэша из registry
 
-Если же в registry данные актуальны, а локально неактуальные: очистить локальный кэш, не связанный ни с одним приложением в registry, и импортировать существующий кэш стадий для текущего состояния проекта из registry.
+Перед тем, как начать сборку приложений, необходимо проверить наличие кэша в registry, чтобы не выполнять сборку повторно.
 
 ```shell
-dapp dimg stages cleanup local --improper-repo-cache REPO
+# скачивание существующего кэша
 dapp dimg stages pull REPO
 ```
 
-#### Распределённая  работа нескольких серверов сборки
+## Удаление всех образов проекта из registry
+
+После того, как проект перестал использоваться, можно удалить данные проекта из registry следующей командой:
 
 ```shell
-dapp dimg stages pull REPO (1)
-dapp dimg build (2)
-dapp dimg push --with-stages REPO (3)
-dapp dimg stages cleanup local --improper-repo-cache REPO (4)
+dapp dimg stages flush repo REPO
 ```
-
-1. импортируется существующий кэш стадий для сборки текущего проекта;
-2. собирается приложения проекта;
-3. экспортируются приложения и кэш стадий;
-4. удаляется кэш, который не связан ни с одним приложением проекта в registry.
