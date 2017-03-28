@@ -122,3 +122,43 @@ E: Unable to locate package nginz
 * after_setup_artifact
 * g_a_artifact_patch
 * build_artifact
+
+### Сборочный кеш и режим разработчика
+
+Сборщик образов в dapp создает промежуточные docker образа после каждой успешной сборки стадии. Однако, создаваемые в процессе сборки образа являются скрытыми от пользователя docker до того момента, как сборка закончится успешно. После успешной сборки все промежуточные образа именуются и попадают тем самым в кеш образов. Образа из кеша используются при повторных сборках, а также их можно интроспектить вручную через docker run.
+
+Минусом данного механизма является то, что если в процессе сборки некоторой стадии произошла ошибка, то при повторном запуске сборка начнется с нуля, несмотря на то, что стадии до ошибочной были собраны успешно, т.к. образа не будут сохранены в кеше. Для приведенного выше примера при каждом повторном запуске сборки стадия Before install будет пересобираться по-новой.
+
+Для разработчика конфигурации Dappfile было бы удобнее, если бы все успешно собранные стадии сразу сохранялись в кеш docker образов. В таком случае, при возникновении ошибки, пересборка бы всегда начиналась с ошибочной стадии. Этой цели служит режим разработчика, включаемый опцией --dev для всех команд, связанных с работой с образами. При этом кеш образов, создаваемых при сборке в режиме разработчика будет отдельным от основного кеша образов. Для приведенного выше примера использование режима разработчика будет выглядеть так:
+
+```shell
+$ dapp dimg build --dev
+Before install ...                                                                                                                                                                                            [OK] 21.8 sec
+Install group
+  Install ...   Launched command: `apt-get install -y nginz`
+                                                                                                                                                                                            [FAILED] 1.83 sec
+Stacktrace dumped to /tmp/dapp-stacktrace-f25448cf-085f-4e1b-8628-7c3288e7a5cf.out
+>>> START STREAM
+Reading package lists...
+
+Building dependency tree...
+
+Reading state information...
+E: Unable to locate package nginz
+>>> END STREAM
+$ dapp dimg build --dev
+Install group
+  Install ...   Launched command: `apt-get install -y nginz`
+                                                                                                                                                                                            [FAILED] 2.03 sec
+Stacktrace dumped to /tmp/dapp-stacktrace-80a0d7a2-7448-4112-85ff-db5da7ba47fb.out
+>>> START STREAM
+Reading package lists...
+
+Building dependency tree...
+
+Reading state information...
+E: Unable to locate package nginz
+>>> END STREAM
+```
+
+Как видим, при повторном запуске стадия Before install более не пересобирается, т.к. была закеширована.
