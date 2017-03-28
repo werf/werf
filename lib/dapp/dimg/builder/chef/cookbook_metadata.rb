@@ -98,6 +98,10 @@ module Dapp
           [].tap do |lines|
             lines << "name #{@metadata.name.inspect}\n"
             lines << "version #{@metadata.version.inspect}\n"
+
+            @cookbooks.keys.each do |cookbook|
+              lines << "depends #{cookbook.inspect}\n" unless cookbook.start_with? 'dimod-'
+            end
           end.join
         end
       end # FromConfBuilder
