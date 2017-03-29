@@ -36,19 +36,19 @@ module Dapp
             excludes = find_command_excludes(from, exclude_paths).join(' ')
 
             copy_files = proc do |from_, path_ = ''|
-              "if [[ -d #{File.join(from_, path_)} ]] || [[ -f #{File.join(from_, path_)} ]]; then " \
-              "#{dimg.dapp.find_bin} #{File.join(from_, path_)} #{excludes} -type f -exec " \
-              "#{dimg.dapp.bash_bin} -ec '#{dimg.dapp.install_bin} -D #{credentials} \"{}\" " \
-              "\"#{File.join(to, '$(echo "{}" | ' \
-              "#{dimg.dapp.sed_bin} -e \"s/^#{from_.gsub('/', '\\/')}\\///g\")")}\"' \\; ;" \
-              'fi'
+              [
+                "if [[ -d #{File.join(from_, path_)} ]] || [[ -f #{File.join(from_, path_)} ]]; then",
+                "#{dimg.dapp.find_bin} #{File.join(from_, path_)} #{excludes} -type f -exec",
+                %Q(#{dimg.dapp.bash_bin} -ec "#{dimg.dapp.install_bin} -D #{credentials} '{}'),
+                %Q('#{File.join(to, "$(echo '{}' | #{dimg.dapp.sed_bin} -e 's/^#{from_.gsub('/', '\\/')}\\///g\')")}'" \\; ;),
+                'fi'
+              ].join(' ')
             end
 
             commands = []
             commands << [dimg.dapp.install_bin, credentials, '-d', to].join(' ')
             commands.concat(include_paths.empty? ? Array(copy_files.call(from)) : include_paths.map { |path| copy_files.call(from, path) })
-            commands << "#{dimg.dapp.find_bin} #{to} -type d -exec " \
-                        "#{dimg.dapp.bash_bin} -ec '#{dimg.dapp.install_bin} -d #{credentials} {}' \\;"
+            commands << %(#{dimg.dapp.find_bin} #{to} -type d -exec #{dimg.dapp.bash_bin} -ec "#{dimg.dapp.install_bin} -d #{credentials} '{}'" \\;)
             commands.join(' && ')
           end
           # rubocop:enable Metrics/ParameterLists
