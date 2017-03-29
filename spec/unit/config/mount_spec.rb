@@ -18,7 +18,7 @@ describe Dapp::Dimg::Config::Directive::Mount do
     [:tmp_dir, :build_dir].each do |type|
       it type do
         dappfile_dimg_mount(type, '/to')
-        expect(dimg.public_send("_#{type}_mount").size).to eq 1
+        expect(dimg_config.public_send("_#{type}_mount").size).to eq 1
       end
     end
   end
@@ -26,7 +26,7 @@ describe Dapp::Dimg::Config::Directive::Mount do
   context 'negative' do
     it 'type required' do
       dappfile_dimg_mount('/from', '/to')
-      expect_exception_code(:mount_from_type_required) { dimg }
+      expect_exception_code(:mount_from_type_required) { dimg_config }
     end
   end
 end

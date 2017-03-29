@@ -26,6 +26,7 @@ module SpecHelper
     def dapp
       @dapp ||= begin
         allow_any_instance_of(Dapp::Dapp).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
+        allow_any_instance_of(Dapp::Dapp).to receive(:config) { config }
         yield if block_given?
         Dapp::Dapp.new(cli_options: cli_options)
       end
@@ -45,17 +46,17 @@ module SpecHelper
 
     def default_config
       Marshal.load(Marshal.dump(_name: 'test',
-                                _import_artifact: [],
-                                _before_install_artifact: [], _before_setup_artifact: [],
-                                _after_install_artifact: [], _after_setup_artifact: [],
-                                _tmp_dir_mount: [], _build_dir_mount: [],
-                                _chef: { _dimod: [], _recipe: [] },
-                                _shell: { _before_install_command: [], _before_setup_command: [],
-                                          _install_command: [], _setup_command: [] },
-                                _docker: { _from: :'ubuntu:14.04',
-                                           _from_cache_version: CACHE_VERSION,
-                                           _change_options: {} },
-                                _git_artifact: { _local: [], _remote: [] }))
+                                      _import_artifact: [],
+                                      _before_install_artifact: [], _before_setup_artifact: [],
+                                      _after_install_artifact: [], _after_setup_artifact: [],
+                                      _tmp_dir_mount: [], _build_dir_mount: [],
+                                      _chef: { _dimod: [], _recipe: [] },
+                                      _shell: { _before_install_command: [], _before_setup_command: [],
+                                                _install_command: [], _setup_command: [] },
+                                      _docker: { _from: :'ubuntu:14.04',
+                                                 _from_cache_version: CACHE_VERSION,
+                                                 _change_options: {} },
+                                      _git_artifact: { _local: [], _remote: [] }))
     end
 
     def cli_options
@@ -63,7 +64,7 @@ module SpecHelper
     end
 
     def default_cli_options
-      { log_quiet: true, log_color: 'off' }
+      { log_quiet: true, log_color: 'off', dev: false }
     end
 
     def stages
