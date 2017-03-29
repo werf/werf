@@ -22,13 +22,13 @@ describe Dapp::Dimg::Config::Directive::Chef do
       line("dimod 'dimod-example', path: '../dimod-example'")
     end
 
-    expect(dimg._chef._dimod).to eq(['dimod-common', 'dimod-nginx', 'dimod-extra', 'dimod-example'])
+    expect(dimg_config._chef._dimod).to eq(['dimod-common', 'dimod-nginx', 'dimod-extra', 'dimod-example'])
 
-    expect(dimg._chef._cookbook).to eq({
+    expect(dimg_config._chef._cookbook).to eq({
       'dimod-common' => {name: 'dimod-common'},
       'dimod-nginx' => {name: 'dimod-nginx'},
       'dimod-extra' => {name: 'dimod-extra', version_constraint: '~> 0.1.0', git: 'https://github.com/flant/dimod-extra'},
-      'dimod-example' => {name: 'dimod-example', path: File.expand_path('../dimod-example', dimg.send(:dapp).path)}
+      'dimod-example' => {name: 'dimod-example', path: File.expand_path('../dimod-example', dimg_config.send(:dapp).path)}
     })
   end
 
@@ -39,10 +39,10 @@ describe Dapp::Dimg::Config::Directive::Chef do
       line("cookbook 'wrld', path: '../wrld'")
     end
 
-    expect(dimg._chef._cookbook).to eq({
+    expect(dimg_config._chef._cookbook).to eq({
       'apt' => {name: 'apt'},
       'ehlo' => {name: 'ehlo', version_constraint: '~> 0.1.0', git: 'https://github.com/flant/ehlo'},
-      'wrld' => {name: 'wrld', path: File.expand_path('../wrld', dimg.send(:dapp).path)}
+      'wrld' => {name: 'wrld', path: File.expand_path('../wrld', dimg_config.send(:dapp).path)}
     })
   end
 
@@ -53,7 +53,7 @@ describe Dapp::Dimg::Config::Directive::Chef do
       line("recipe 'world'")
     end
 
-    expect(dimg._chef._recipe).to eq(['main', 'hello', 'world'])
+    expect(dimg_config._chef._recipe).to eq(['main', 'hello', 'world'])
   end
 
   it 'attributes' do
@@ -62,7 +62,7 @@ describe Dapp::Dimg::Config::Directive::Chef do
       line("attributes['k1']['k3'] = 'k1k3value'")
     end
 
-    expect(dimg._chef._attributes).to eq('k1' => { 'k2' => 'k1k2value', 'k3' => 'k1k3value' })
+    expect(dimg_config._chef._attributes).to eq('k1' => { 'k2' => 'k1k2value', 'k3' => 'k1k3value' })
   end
 
   [:before_install, :install, :before_setup, :setup, :build_artifact].map do |key|
@@ -71,7 +71,7 @@ describe Dapp::Dimg::Config::Directive::Chef do
         line("attributes['k1']['#{key}'] = 'k1#{key}value'")
       end
 
-      expect(dimg._chef.send("__#{key}_attributes")).to eq('k1' => { key.to_s => "k1#{key}value" })
+      expect(dimg_config._chef.send("__#{key}_attributes")).to eq('k1' => { key.to_s => "k1#{key}value" })
     end
   end
 end

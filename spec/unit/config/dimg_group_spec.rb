@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Dapp::Dimg::Config::DimgGroup do
+describe Dapp::Dimg::Config::Directive::DimgGroup do
   include SpecHelper::Common
   include SpecHelper::Config
 
@@ -28,7 +28,7 @@ describe Dapp::Dimg::Config::DimgGroup do
             end
           end
 
-          expect(dimg._chef.public_send("_#{directive}")).to eq %w(value1 value2)
+          expect(dimg_config._chef.public_send("_#{directive}")).to eq %w(value1 value2)
         end
       end
 
@@ -46,7 +46,7 @@ describe Dapp::Dimg::Config::DimgGroup do
           end
         end
 
-        expect(dimg._chef._attributes).to eq('k1' => { 'k2' => 'k1k2newvalue', 'k3' => 'k1k3value' })
+        expect(dimg_config._chef._attributes).to eq('k1' => { 'k2' => 'k1k2newvalue', 'k3' => 'k1k3value' })
       end
     end
 
@@ -69,7 +69,7 @@ describe Dapp::Dimg::Config::DimgGroup do
             end
           end
 
-          expect(dimg._shell.public_send("_#{stage}_command")).to eq %w(cmd1 cmd2)
+          expect(dimg_config._shell.public_send("_#{stage}_command")).to eq %w(cmd1 cmd2)
         end
 
         it "#{stage}_version" do
@@ -89,7 +89,7 @@ describe Dapp::Dimg::Config::DimgGroup do
             end
           end
 
-          expect(dimg._shell.public_send("_#{stage}_version")).to eq 'version2'
+          expect(dimg_config._shell.public_send("_#{stage}_version")).to eq 'version2'
         end
       end
     end
@@ -109,7 +109,7 @@ describe Dapp::Dimg::Config::DimgGroup do
             end
           end
 
-          expect(dimg._docker.send("_#{attr}")).to eq %w(value1 value2)
+          expect(dimg_config._docker.send("_#{attr}")).to eq %w(value1 value2)
         end
       end
 
@@ -127,7 +127,7 @@ describe Dapp::Dimg::Config::DimgGroup do
             end
           end
 
-          expect(dimg._docker.send("_#{attr}")).to eq(v1: 1, v2: 2, v3: 2)
+          expect(dimg_config._docker.send("_#{attr}")).to eq(v1: 1, v2: 2, v3: 2)
         end
       end
 
@@ -145,7 +145,7 @@ describe Dapp::Dimg::Config::DimgGroup do
             end
           end
 
-          expect(dimg._docker.send("_#{attr}")).to eq 'value2'
+          expect(dimg_config._docker.send("_#{attr}")).to eq 'value2'
         end
       end
     end
@@ -163,7 +163,7 @@ describe Dapp::Dimg::Config::DimgGroup do
         end
       end
 
-      expect(dimg._mount.size).to eq 2
+      expect(dimg_config._mount.size).to eq 2
     end
 
     it 'artifact' do
@@ -183,7 +183,7 @@ describe Dapp::Dimg::Config::DimgGroup do
         end
       end
 
-      expect(dimg._artifact.size).to eq 2
+      expect(dimg_config._artifact.size).to eq 2
     end
   end
 
@@ -202,7 +202,7 @@ describe Dapp::Dimg::Config::DimgGroup do
         end
       end
 
-      expect { dimg }.to output("wrong_using_directive\n").to_stdout_from_any_process
+      expect { dimg_config }.to output("wrong_using_directive\n").to_stdout_from_any_process
     end
 
     [:docker, :shell, :chef].each do |directive|
@@ -214,7 +214,7 @@ describe Dapp::Dimg::Config::DimgGroup do
           end
         end
 
-        expect { dimg }.to output("wrong_using_base_directive\n").to_stdout_from_any_process
+        expect { dimg_config }.to output("wrong_using_base_directive\n").to_stdout_from_any_process
       end
     end
   end

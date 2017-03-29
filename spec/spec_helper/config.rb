@@ -4,22 +4,22 @@ module SpecHelper
       @dappfile = ConfigDsl.new.instance_eval(&blk).config
     end
 
-    def dimg_by_name(name)
-      dimgs_by_name[name] || raise
+    def dimg_config_by_name(name)
+      dimgs_configs.find { |dimg_config| dimg_config._name == name } || raise
     end
 
-    def dimgs_by_name
-      dimgs.map { |dimg| [dimg._name, dimg] }.to_h
+    def dimg_config
+      dimgs_configs.first
     end
 
-    def dimg
-      dimgs.first
+    def dimgs_configs
+      config._dimg
     end
-
-    def dimgs
-      Dapp::Dimg::Config::DimgGroupMain.new(dapp: stubbed_dapp).tap do |config|
+    
+    def config
+      Dapp::Config::Config.new(dapp: stubbed_dapp).tap do |config|
         config.instance_eval(@dappfile) unless @dappfile.nil?
-      end._dimg
+      end
     end
 
     def stubbed_dapp

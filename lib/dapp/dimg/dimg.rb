@@ -150,7 +150,7 @@ module Dapp
       end
 
       def dev_mode?
-        config._dev_mode || dapp.dev_mode?
+        dapp.dev_mode?
       end
 
       def build_cache_version

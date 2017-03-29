@@ -15,12 +15,12 @@ module Dapp
           def dependencies
             [].tap do |dependencies|
               dependencies << commit_list
-              dependencies << dimg.local_git_artifacts.map { |git_artifact| git_artifact.dev_patch_hash(self) } if dimg.dapp.dev_mode?
+              dependencies << dimg.local_git_artifacts.map { |git_artifact| git_artifact.dev_patch_hash(self) } if dimg.dev_mode?
             end
           end
 
           def prepare_local_git_artifacts_command
-            return super unless dimg.dapp.dev_mode?
+            return super unless dimg.dev_mode?
             dimg.local_git_artifacts.each { |git_artifact| image.add_command git_artifact.apply_dev_patch_command(self) }
           end
 

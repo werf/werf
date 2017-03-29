@@ -33,7 +33,7 @@ en:
       ssh_key_not_found: "Ssh key `%{path}` not exist!"
     config:
       dimg_name_required: 'Dimg name required!'
-      dimg_name_incorrect: "Dimg has incorrect name `%{name}`: doesn't match regex `%{reg}`!"
+      dimg_name_incorrect: "Dimg has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
       mount_from_required: "Mount: `from` directive required!"
       export_to_required: "Export: `to` directive required!"
       add_to_required: "Add: `to` directive required!"

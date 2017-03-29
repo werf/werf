@@ -20,13 +20,13 @@ describe Dapp::Dimg::Config::Directive::Docker do
         from 'sample:tag'
       end
 
-      expect(dimg._docker._from).to eq 'sample:tag'
+      expect(dimg_config._docker._from).to eq 'sample:tag'
     end
 
     [:volume, :expose, :cmd, :onbuild].each do |attr|
       it attr do
         expect_array_attribute(attr, method(:dappfile_dimg_docker)) do |*args|
-          expect(dimg._docker.send("_#{attr}")).to eq args
+          expect(dimg_config._docker.send("_#{attr}")).to eq args
         end
       end
     end
@@ -37,14 +37,14 @@ describe Dapp::Dimg::Config::Directive::Docker do
           send(attr, v1: 1)
         end
 
-        expect(dimg._docker.send("_#{attr}")).to eq(v1: 1)
+        expect(dimg_config._docker.send("_#{attr}")).to eq(v1: 1)
 
         dappfile_dimg_docker do
           send(attr, v3: 1)
           send(attr, v2: 1, v1: 1)
         end
 
-        expect(dimg._docker.send("_#{attr}")).to eq(v1: 1, v2: 1, v3: 1)
+        expect(dimg_config._docker.send("_#{attr}")).to eq(v1: 1, v2: 1, v3: 1)
       end
     end
 
@@ -55,7 +55,7 @@ describe Dapp::Dimg::Config::Directive::Docker do
           send(attr, 'value2')
         end
 
-        expect(dimg._docker.send("_#{attr}")).to eq 'value2'
+        expect(dimg_config._docker.send("_#{attr}")).to eq 'value2'
       end
     end
   end
@@ -66,7 +66,7 @@ describe Dapp::Dimg::Config::Directive::Docker do
         from "docker.from 'sample'"
       end
 
-      expect_exception_code(:docker_from_incorrect) { dimgs }
+      expect_exception_code(:docker_from_incorrect) { dimgs_configs }
     end
 
     [:env, :label].each do |attr|
@@ -75,7 +75,7 @@ describe Dapp::Dimg::Config::Directive::Docker do
           send(attr, 'value')
         end
 
-        expect { dimgs }.to raise_error ArgumentError
+        expect { dimgs_configs }.to raise_error ArgumentError
       end
     end
 
@@ -85,7 +85,7 @@ describe Dapp::Dimg::Config::Directive::Docker do
           send(attr, 'value1', 'value2')
         end
 
-        expect { dimgs }.to raise_error ArgumentError
+        expect { dimgs_configs }.to raise_error ArgumentError
       end
     end
   end

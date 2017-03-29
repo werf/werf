@@ -1,6 +1,6 @@
 module Dapp
   module Dimg
-    class Dapp
+    module Dapp
       module Command
         module Mrproper
           # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
