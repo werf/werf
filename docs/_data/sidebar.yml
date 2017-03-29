@@ -45,6 +45,9 @@ entries:
     - title: Сборка через CI
       url: /ci_for_advanced_build.html
 
+    - title: Команды очистки кэша и приложений
+      url: /cleanup_commands_for_advanced_build.html
+
     - title: Debugging
       url: /debug_for_advanced_build.html
 
