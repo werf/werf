@@ -32,7 +32,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
 
         attributes.each do |attr|
           next if attr == :cwd
-          expect(dimg._git_artifact.public_send("_#{type}").first.public_send("_#{attr}")).to eq(if [:include_paths, :exclude_paths].include? attr
+          expect(dimg_config._git_artifact.public_send("_#{type}").first.public_send("_#{attr}")).to eq(if [:include_paths, :exclude_paths].include? attr
                                                                                                    [attr.to_s]
                                                                                                  else
                                                                                                    attr.to_s
@@ -52,7 +52,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
           end
         end
 
-        expect(dimg._git_artifact.send("_#{type}").first.send(:stage_dependencies).to_h).to eq({ install: ['a'],
+        expect(dimg_config._git_artifact.send("_#{type}").first.send(:stage_dependencies).to_h).to eq({ install: ['a'],
                                                                                                  setup: ['b'],
                                                                                                  before_setup: ['c'],
                                                                                                  build_artifact: ['d']})
@@ -63,7 +63,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
       dappfile_dimg_git_artifact('https://github.com/flant/dapp.git') do
         add '/cwd'
       end
-      expect(dimg._git_artifact._remote.first._name).to eq 'dapp'
+      expect(dimg_config._git_artifact._remote.first._name).to eq 'dapp'
     end
 
     it 'cwd, to absolute path required' do
@@ -72,7 +72,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
           to '/to'
         end
       end
-      expect { dimgs }.to_not raise_error
+      expect { dimgs_configs }.to_not raise_error
     end
 
     it 'include_paths, exclude_paths relative path required' do
@@ -82,7 +82,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
           exclude_paths 'path1', 'path2'
         end
       end
-      expect { dimgs }.to_not raise_error
+      expect { dimgs_configs }.to_not raise_error
     end
   end
 
@@ -91,7 +91,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
       dappfile_dimg_git_artifact(:local) do
         add 'cwd'
       end
-      expect_exception_code(:export_cwd_absolute_path_required) { dimg }
+      expect_exception_code(:export_cwd_absolute_path_required) { dimg_config }
     end
 
     it 'to absolute path required (2)' do
@@ -100,7 +100,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
           to 'to'
         end
       end
-      expect_exception_code(:export_to_absolute_path_required) { dimg }
+      expect_exception_code(:export_to_absolute_path_required) { dimg_config }
     end
 
     [:exclude_paths, :include_paths].each do |attr|
@@ -110,7 +110,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
             send(attr, '/path1')
           end
         end
-        expect_exception_code(:"export_#{attr}_relative_path_required") { dimg }
+        expect_exception_code(:"export_#{attr}_relative_path_required") { dimg_config }
       end
 
       it "#{attr} relative path required (2)" do
@@ -119,7 +119,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
             send(attr, 'path1', '/path2')
           end
         end
-        expect_exception_code(:"export_#{attr}_relative_path_required") { dimg }
+        expect_exception_code(:"export_#{attr}_relative_path_required") { dimg_config }
       end
     end
 
@@ -132,12 +132,12 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
           end
         end
       end
-      expect { dimgs }.to raise_error NoMethodError
+      expect { dimgs_configs }.to raise_error NoMethodError
     end
 
     it 'remote incorrect url (:git_artifact_remote_unsupported_protocol)' do
       dappfile_dimg_git_artifact('url')
-      expect_exception_code(:git_artifact_remote_unsupported_protocol) { dimg }
+      expect_exception_code(:git_artifact_remote_unsupported_protocol) { dimg_config }
     end
 
     [:local, :remote].each do |type|
@@ -149,7 +149,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
             end
           end
         end
-        expect { dimgs }.to raise_error NoMethodError
+        expect { dimgs_configs }.to raise_error NoMethodError
       end
 
       it "stage_dependencies dependencies must be relative (#{type})" do
@@ -161,7 +161,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
           end
         end
 
-        expect_exception_code(:stages_dependencies_paths_relative_path_required) { dimg }
+        expect_exception_code(:stages_dependencies_paths_relative_path_required) { dimg_config }
       end
     end
   end

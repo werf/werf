@@ -60,7 +60,6 @@ describe Dapp::Dapp do
                                      end
                                    end
                                  end
-      allow_any_instance_of(Dapp::Dimg::Config::Dimg).to receive(:validate!)
     end
 
     it '.', test_construct: true do

@@ -27,7 +27,7 @@ describe Dapp::Dimg::Config::Directive::Artifact do
         export '/cwd'
       end
 
-      expect(dimg._artifact.first._config._shell._build_artifact_command).to eq ['cmd']
+      expect(dimg_config._artifact.first._config._shell._build_artifact_command).to eq ['cmd']
     end
 
     [:before, :after].each do |order|
@@ -39,7 +39,7 @@ describe Dapp::Dimg::Config::Directive::Artifact do
             end
           end
 
-          expect(dimg.public_send(:"_#{order}_#{stage}_artifact").first).to_not be_nil
+          expect(dimg_config.public_send(:"_#{order}_#{stage}_artifact").first).to_not be_nil
         end
       end
     end
@@ -58,7 +58,7 @@ describe Dapp::Dimg::Config::Directive::Artifact do
           end
         end
 
-        expect { dimgs }.to raise_error NoMethodError
+        expect { dimgs_configs }.to raise_error NoMethodError
       end
     end
 
@@ -70,7 +70,7 @@ describe Dapp::Dimg::Config::Directive::Artifact do
         end
       end
 
-      expect_exception_code(:stage_artifact_double_associate) { dimgs }
+      expect_exception_code(:stage_artifact_double_associate) { dimgs_configs }
     end
 
     it 'not supported associated stage (:stage_artifact_not_supported_associated_stage)' do
@@ -80,7 +80,7 @@ describe Dapp::Dimg::Config::Directive::Artifact do
         end
       end
 
-      expect_exception_code(:stage_artifact_not_supported_associated_stage) { dimgs }
+      expect_exception_code(:stage_artifact_not_supported_associated_stage) { dimgs_configs }
     end
   end
 end
