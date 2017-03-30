@@ -9,14 +9,14 @@ describe Dapp::Dimg::DockerRegistry do
     ].each do |str, repo_suffix, hostname|
       it str do
         str =~ %r{^#{Dapp::Dimg::DockerRegistry.repo_name_format}$}
-        expect(hostname).to eq Regexp.last_match(:hostname)
-        expect(repo_suffix).to eq Regexp.last_match(:repo_suffix)
+        expect(Regexp.last_match(:hostname)).to eq hostname
+        expect(Regexp.last_match(:repo_suffix)).to eq repo_suffix
       end
     end
   end
 
   context 'negative' do
-    %w(hostname.ru:6000 hostname:/repo).each do |str|
+    %w(hostname.ru:6000 hostname:/repo hostname- Hostname).each do |str|
       it str do
         expect(Dapp::Dimg::DockerRegistry.repo_name?(str)).to be_falsey
       end
