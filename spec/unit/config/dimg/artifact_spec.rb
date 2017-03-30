@@ -1,8 +1,8 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
 describe Dapp::Dimg::Config::Directive::Artifact do
   include SpecHelper::Common
-  include SpecHelper::Config
+  include SpecHelper::Config::Dimg
 
   def dappfile_dimg_with_artifact(&blk)
     dappfile do
