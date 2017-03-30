@@ -28,7 +28,7 @@ module Dapp
           attr_accessor :_url, :_name, :_branch, :_commit
 
           def _artifact_options
-            super.merge(name: _name, branch: _branch)
+            super.merge(name: _name, branch: _branch, commit: _commit)
           end
 
           protected
@@ -39,6 +39,11 @@ module Dapp
 
           def commit(value)
             @_commit = value
+          end
+
+          def validate!
+            super
+            raise Error::Config, code: :git_artifact_remote_branch_with_commit if !_branch.nil? && !_commit.nil?
           end
         end
 
