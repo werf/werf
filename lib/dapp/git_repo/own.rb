@@ -22,7 +22,7 @@ module Dapp
 
       def lookup_commit(commit)
         super
-      rescue Rugged::OdbError => _e
+      rescue Rugged::OdbError, TypeError => _e
         raise Error::Rugged, code: :commit_not_found_in_local_git_repository, data: { commit: commit }
       end
     end
