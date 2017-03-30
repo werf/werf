@@ -1,19 +1,9 @@
 module SpecHelper
   module Config
     def dappfile(&blk)
-      @dappfile = ConfigDsl.new.instance_eval(&blk).config
-    end
-
-    def dimg_config_by_name(name)
-      dimgs_configs.find { |dimg_config| dimg_config._name == name } || raise
-    end
-
-    def dimg_config
-      dimgs_configs.first
-    end
-
-    def dimgs_configs
-      config._dimg
+      @dappfile = ConfigDsl.new
+                           .tap { |dsl| dsl.instance_eval(&blk) }
+                           .config
     end
     
     def config

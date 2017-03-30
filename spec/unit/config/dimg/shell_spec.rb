@@ -1,8 +1,8 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
 describe Dapp::Dimg::Config::Directive::Shell do
   include SpecHelper::Common
-  include SpecHelper::Config
+  include SpecHelper::Config::Dimg
 
   def dappfile_dimg_shell(&blk)
     dappfile do
