@@ -51,7 +51,7 @@ module Dapp
             obj.instance_variable_set(directive, begin
               case variable
               when Base then variable.public_send(clone_method)
-              when Symbol, Integer, TrueClass, FalseClass then variable
+              when String, Symbol, Integer, TrueClass, FalseClass then variable
               when Array, Hash then marshal_clone(variable)
               else
                 raise

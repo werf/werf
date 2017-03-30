@@ -45,7 +45,6 @@ en:
       mount_from_absolute_path_required: "Mount: given `from` path must be absolute!"
       mount_from_type_required: "Mount: `from` directive expect `build_dir` or `tmp_dir` type!"
       builder_type_conflict: 'Conflict between builder types!'
-      builder_type_unsupported: "Defined unsupported builder type `%{type}`!"
       docker_from_incorrect: "`docker.from` has incorrect value `%{name}`!"
       docker_from_without_tag: "`docker.from`: image `%{name}` without tag!"
       stage_artifact_not_associated: "Artifact not associated with any stage: expected `before` or `after` attribute!"
@@ -58,6 +57,12 @@ en:
       scratch_artifact_required: "Scratch dimg without artifacts!"
       scratch_artifact_associated: "Scratch artifact cannot be associated: not expected `before`/`after` attribute!"
       scratch_artifact_docker_from: "Scratch artifact must have directive `docker.from`!"
+      unsupported_scale_value: "Define unsupported scale value `%{value}`!"
+      app_name_required: 'App name required!'
+      app_dimg_not_found: 'Not found dimg `%{dimg}` for app `%{app}`!'
+      unsupported_port_number: 'Port number `%{port}` doesn`t support!'
+      app_name_incorrect: "App has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
+      namespace_name_incorrect: "Namespace has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
     chef:
       stage_checksum_not_calculated: "Chef stage `%{stage}` checksum is not calculated yet, run build first"
       stage_path_overlap: "Cannot install `%{cookbook}` cookbook's path %{from} into %{to}: already exists"
