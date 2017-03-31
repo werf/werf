@@ -37,10 +37,20 @@ module Dapp
           private
 
           def git_artifacts_without_changes?
-            dimg.git_artifacts.all? do |git_artifact|
+            local_git_artifacts_without_changes? && remote_git_artifacts_without_changes?
+          end
+
+          def local_git_artifacts_without_changes?
+            dimg.local_git_artifacts.all? do |git_artifact|
               from_commit = prev_g_a_stage.layer_commit(git_artifact)
               to_commit = dimg.dev_mode? ? nil : layer_commit(git_artifact)
               !git_artifact.any_changes?(from_commit, to_commit)
+            end
+          end
+
+          def remote_git_artifacts_without_changes?
+            dimg.remote_git_artifacts.all? do |git_artifact|
+              !git_artifact.any_changes?(prev_g_a_stage.layer_commit(git_artifact), layer_commit(git_artifact))
             end
           end
 
