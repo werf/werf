@@ -24,16 +24,21 @@ module Dapp
           branch ||= self.branch
           dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
             git.fetch('origin', [branch])
+            raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } unless branch_exist?(branch)
           end unless dimg.ignore_git_fetch || dimg.dapp.dry_run?
         end
 
-        def latest_commit(branch)
-          git.ref("refs/remotes/origin/#{branch}").target_id
+        def branch_exist?(name)
+          git.branches.exist?(branch_format(name))
+        end
+
+        def latest_commit(name)
+          git.ref("refs/remotes/#{branch_format(name)}").target_id
         end
 
         def lookup_commit(commit)
           super
-        rescue Rugged::OdbError => _e
+        rescue Rugged::OdbError, TypeError => _e
           raise Error::Rugged, code: :commit_not_found_in_remote_git_repository, data: { commit: commit, url: url }
         end
 
@@ -43,6 +48,12 @@ module Dapp
 
         def git
           super(bare: true)
+        end
+
+        private
+
+        def branch_format(name)
+          "origin/#{name.reverse.chomp('origin/'.reverse).reverse}"
         end
       end
     end
