@@ -2,7 +2,7 @@ module Dapp
   class Dapp
     module Deps
       module Base
-        BASE_VERSION = '0.1.14'.freeze
+        BASE_VERSION = '0.1.15'.freeze
 
         def base_container_name # FIXME: hashsum(image) or dockersafe()
           "dappdeps_base_#{BASE_VERSION}"
