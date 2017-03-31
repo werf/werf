@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     class Builder::Chef < Builder::Base
-      DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:0.17.3-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
+      DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:1.2.22-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
 
       %i(before_install install before_setup setup build_artifact).each do |stage|
         define_method("#{stage}?") {!stage_empty?(stage)}
