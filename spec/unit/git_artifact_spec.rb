@@ -289,7 +289,7 @@ describe Dapp::Dimg::GitArtifact do
     end
   end
 
-  context 'file cycle with cwd' do
+  context 'cycle with cwd' do
     def expect_container_file_mode(path, mode)
       expect(mode).to eq container_file_stat(path)[:mode]
     end
@@ -302,38 +302,48 @@ describe Dapp::Dimg::GitArtifact do
       available_permissions[permission]
     end
 
-    file_path = 'a/data.txt'
+    [false, true].each do |binary|
+      context binary ? 'binary file' : 'file' do
+        file_path = 'a/data'
+        file_path_without_cwd = 'data'
 
-    before :each do
-      git_change_and_commit(file_path)
-      @cwd = 'a'
-      apply_archive
-    end
+        before :each do
+          git_change_and_commit(file_path, binary: binary)
+          @cwd = 'a'
+          apply_archive
+        end
 
-    it 'modified', test_construct: true do
-      git_change_and_commit(file_path)
-      apply_patch
-    end
+        it 'added', test_construct: true do
+          git_change_and_commit('a/data2', binary: binary)
+          apply_patch
+        end
 
-    it 'change_mode', test_construct: true do
-      expected_permission = change_file_mode(file_path)
-      git_add_and_commit(file_path)
-      apply_patch
-      expect_container_file_mode(container_file_path('data.txt'), expected_permission)
-    end
+        it 'modified', test_construct: true do
+          git_change_and_commit(file_path, binary: binary)
+          apply_patch
+        end
 
-    it 'modified and change mode', test_construct: true do
-      expected_permission = change_file_mode(file_path)
-      git_change_and_commit(file_path)
-      apply_patch
-      expect_container_file_mode(container_file_path('data.txt'), expected_permission)
-    end
+        it 'change_mode', test_construct: true do
+          expected_permission = change_file_mode(file_path)
+          git_add_and_commit(file_path)
+          apply_patch
+          expect_container_file_mode(container_file_path(file_path_without_cwd), expected_permission)
+        end
 
-    it 'delete', test_construct: true do
-      FileUtils.rm_rf file_path
-      git_rm_and_commit file_path
-      apply_patch
-      expect_not_existing_container_file(container_file_path('data.txt'))
+        it 'modified and change mode', test_construct: true do
+          expected_permission = change_file_mode(file_path)
+          git_change_and_commit(file_path, binary: binary)
+          apply_patch
+          expect_container_file_mode(container_file_path(file_path_without_cwd), expected_permission)
+        end
+
+        it 'delete', test_construct: true do
+          FileUtils.rm_rf file_path
+          git_rm_and_commit file_path
+          apply_patch
+          expect_not_existing_container_file(container_file_path(file_path_without_cwd))
+        end
+      end
     end
   end
 end
