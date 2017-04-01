@@ -213,7 +213,10 @@ module Dapp
       end
 
       def diff_patches(from, to, paths: include_paths_or_cwd)
-        (@diff_patches ||= {})[[from, to, paths]] = repo.patches(from, to, paths: paths, exclude_paths: exclude_paths(true))
+        (@diff_patches ||= {})[[from, to, paths]] = repo.patches(from, to,
+                                                                 paths: paths,
+                                                                 exclude_paths: exclude_paths(true),
+                                                                 force_text: true)
       end
 
       def include_paths_or_cwd
