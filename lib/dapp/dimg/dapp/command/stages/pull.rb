@@ -16,7 +16,7 @@ module Dapp
             end
 
             def pull_all_stages?
-              !!cli_options[:pull_all_stages]
+              !!options[:pull_all_stages]
             end
           end
         end

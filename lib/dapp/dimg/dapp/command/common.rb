@@ -66,7 +66,7 @@ module Dapp
           end
 
           def proper_cache_version?
-            !!cli_options[:proper_cache_version]
+            !!options[:proper_cache_version]
           end
 
           def log_proper_cache(&blk)

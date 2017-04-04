@@ -1,7 +1,7 @@
-module Dapp
-  module Dimg
-    module CLI
-      class BuildContext
+module Dapp::Dimg::CLI
+  module Command
+    class Dimg < ::Dapp::CLI
+      class BuildContext < ::Dapp::CLI
         class Import < Export
           banner <<BANNER.freeze
 Usage:

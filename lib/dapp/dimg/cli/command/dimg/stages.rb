@@ -1,6 +1,6 @@
-module Dapp
-  module Dimg
-    module CLI
+module Dapp::Dimg::CLI
+  module Command
+    class Dimg < ::Dapp::CLI
       class Stages < ::Dapp::CLI
         SUBCOMMANDS = ['flush local', 'flush repo', 'cleanup local', 'cleanup repo', 'push', 'pull'].freeze
 

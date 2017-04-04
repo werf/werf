@@ -1,1 +1,1 @@
-::Dapp::CLI.send(:include, ::Dapp::Dimg::CLI)
+::Dapp::CLI.send(:include, ::Dapp::Dimg::CLI::Command)

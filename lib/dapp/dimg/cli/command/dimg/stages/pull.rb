@@ -1,7 +1,7 @@
-module Dapp
-  module Dimg
-    module CLI
-      class Stages
+module Dapp::Dimg::CLI
+  module Command
+    class Dimg < ::Dapp::CLI
+      class Stages < ::Dapp::CLI
         class Pull < Base
           banner <<BANNER.freeze
 Usage:
@@ -19,7 +19,7 @@ BANNER
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
             repo = self.class.required_argument(self)
-            ::Dapp::Dapp.new(cli_options: config, dimgs_patterns: cli_arguments).stages_pull(repo)
+            ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments)).stages_pull(repo)
           end
         end
       end

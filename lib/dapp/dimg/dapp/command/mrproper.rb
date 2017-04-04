@@ -32,11 +32,11 @@ module Dapp
           end
 
           def proper_all?
-            !!cli_options[:proper_all]
+            !!options[:proper_all]
           end
 
           def proper_dev_mode_cache?
-            !!cli_options[:proper_dev_mode_cache]
+            !!options[:proper_dev_mode_cache]
           end
 
           def dapp_containers_flush_by_label(label)
