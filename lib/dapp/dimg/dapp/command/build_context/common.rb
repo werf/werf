@@ -17,7 +17,7 @@ module Dapp
             end
 
             def build_context_directory
-              File.expand_path(cli_options[:build_context_directory].to_s)
+              File.expand_path(options[:build_context_directory].to_s)
             end
           end
         end

@@ -1,6 +1,6 @@
-module Dapp
-  module Dimg
-    module CLI
+module Dapp::Dimg::CLI
+  module Command
+    class Dimg < ::Dapp::CLI
       class List < Base
         banner <<BANNER.freeze
 Usage:

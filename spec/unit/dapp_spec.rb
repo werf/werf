@@ -15,16 +15,16 @@ describe Dapp::Dapp do
     end
   end
 
-  def stubbed_dapp(cli_options: {}, dimgs_patterns: nil)
+  def stubbed_dapp(options: {})
     allow_any_instance_of(Dapp::Dapp).to receive(:build_configs) {
       [RecursiveOpenStruct.new(_name: 'dapp'),
        RecursiveOpenStruct.new(_name: 'dapp2')]
     }
-    dapp(cli_options: cli_options, dimgs_patterns: dimgs_patterns)
+    dapp(options: options)
   end
 
-  def dapp(cli_options: {}, dimgs_patterns: nil)
-    @dapp ||= Dapp::Dapp.new(cli_options: { log_color: 'auto' }.merge(cli_options), dimgs_patterns: dimgs_patterns)
+  def dapp(options: {})
+    @dapp ||= Dapp::Dapp.new(options: { log_color: 'auto' }.merge(options))
   end
 
   it 'build', :build, test_construct: true do
@@ -44,7 +44,7 @@ describe Dapp::Dapp do
     expect { stubbed_dapp.list }.to_not raise_error
   end
 
-  it 'paint_initialize expected cli_options[:log_color] (RuntimeError)' do
+  it 'paint_initialize expected options[:log_color] (RuntimeError)' do
     expect { Dapp::Dapp.new }.to raise_error RuntimeError
   end
 
@@ -67,15 +67,15 @@ describe Dapp::Dapp do
     end
 
     it 'search up', test_construct: true do
-      expect { dapp(cli_options: { dir: 'dir1/dir2' }).send(:build_configs) }.to_not raise_error
+      expect { dapp(options: { dir: 'dir1/dir2' }).send(:build_configs) }.to_not raise_error
     end
 
     it 'dappfile_not_found', test_construct: true do
-      expect_exception_code(:dappfile_not_found) { dapp(cli_options: { dir: '..' }).send(:build_configs) }
+      expect_exception_code(:dappfile_not_found) { dapp(options: { dir: '..' }).send(:build_configs) }
     end
 
     it 'no_such_dimg', test_construct: true do
-      expect_exception_code(:no_such_dimg) { dapp(dimgs_patterns: ['dimg*']).send(:build_configs) }
+      expect_exception_code(:no_such_dimg) { dapp(options: { dimgs_patterns: ['dimg*'] }).send(:build_configs) }
     end
   end
 end

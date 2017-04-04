@@ -14,7 +14,7 @@ module Dapp
         if dry_run?
           yield if block_given?
         else
-          timeout = cli_options[:lock_timeout] || default_timeout
+          timeout = options[:lock_timeout] || default_timeout
           _lock(name).synchronize(
             timeout: timeout,
             on_wait: proc do |&do_wait|

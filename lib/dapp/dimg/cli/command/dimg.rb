@@ -1,10 +1,9 @@
-module Dapp
-  module Dimg
-    module CLI
-      class Dimg < ::Dapp::CLI
-        SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image', 'tag', 'build-context'].freeze
+module Dapp::Dimg::CLI
+  module Command
+    class Dimg < ::Dapp::CLI
+      SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image', 'tag', 'build-context'].freeze
 
-        banner <<BANNER.freeze
+      banner <<BANNER.freeze
 Usage: dapp dimg [options] sub-command [sub-command options]
 
 Available subcommands: (for details, dapp dimg SUB-COMMAND --help)
@@ -24,7 +23,6 @@ dapp dimg build-context
 
 Options:
 BANNER
-      end
     end
   end
 end

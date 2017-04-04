@@ -19,15 +19,11 @@ module Dapp
 
     include Shellout::Base
 
-    attr_reader :cli_options
-    attr_reader :dimgs_patterns
+    attr_reader :options
 
-    def initialize(cli_options: {}, dimgs_patterns: nil)
-      @cli_options = cli_options
-      @dimgs_patterns = dimgs_patterns || []
-      @dimgs_patterns << '*' unless @dimgs_patterns.any?
-
-      Logging::Paint.initialize(cli_options[:log_color])
+    def initialize(options: {})
+      @options = options
+      Logging::Paint.initialize(options[:log_color])
       Logging::I18n.initialize
     end
 
@@ -68,8 +64,8 @@ module Dapp
 
     def build_path
       @build_path ||= begin
-        if cli_options[:build_dir]
-          Pathname.new(cli_options[:build_dir])
+        if options[:build_dir]
+          Pathname.new(options[:build_dir])
         else
           Pathname.new(path).join('.dapp_build')
         end.expand_path.tap(&:mkpath)

@@ -18,7 +18,7 @@ module Dapp
           protected
 
           def with_stages?
-            !!cli_options[:with_stages]
+            !!options[:with_stages]
           end
         end
       end

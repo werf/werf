@@ -1,11 +1,11 @@
-module Dapp
-  module Dimg
-    module CLI
+module Dapp::Dimg::CLI
+  module Command
+    class Dimg < ::Dapp::CLI
       class Mrproper < Base
         banner <<BANNER.freeze
 Usage:
 
-  dapp dimg mrprooper [options]
+  dapp dimg mrproper [options]
 
 Options:
 BANNER

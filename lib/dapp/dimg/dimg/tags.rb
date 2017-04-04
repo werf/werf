@@ -15,23 +15,23 @@ module Dapp
         end
 
         def simple_tags
-          dapp.cli_options[:tag]
+          dapp.options[:tag]
         end
 
         def branch_tags
-          return [] unless dapp.cli_options[:tag_branch]
+          return [] unless dapp.options[:tag_branch]
           raise Error::Dimg, code: :git_branch_without_name if (branch = git_repo.branch) == 'HEAD'
           [branch]
         end
 
         def commit_tags
-          return [] unless dapp.cli_options[:tag_commit]
+          return [] unless dapp.options[:tag_commit]
           commit = git_repo.latest_commit
           [commit]
         end
 
         def build_tags
-          return [] unless dapp.cli_options[:tag_build_id]
+          return [] unless dapp.options[:tag_build_id]
 
           if ENV['GITLAB_CI']
             build_id = ENV['CI_BUILD_ID']
@@ -45,7 +45,7 @@ module Dapp
         end
 
         def ci_tags
-          return [] unless dapp.cli_options[:tag_ci]
+          return [] unless dapp.options[:tag_ci]
 
           if ENV['GITLAB_CI']
             branch = ENV['CI_BUILD_REF_NAME']

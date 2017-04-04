@@ -33,10 +33,10 @@ describe Dapp::CLI do
     end
 
     it 'dapp args' do
-      expect_parsed_options('dimg run --time', cli_options: { log_time: true })
-      expect_parsed_options('dimg run dimg*', dimgs_patterns: ['dimg*'])
-      expect_parsed_options('dimg run dimg* --time', cli_options: { log_time: true }, dimgs_patterns: ['dimg*'])
-      expect_parsed_options('dimg run --time dimg*', cli_options: { log_time: true }, dimgs_patterns: ['dimg*'])
+      expect_parsed_options('dimg run --time', options: { log_time: true })
+      expect_parsed_options('dimg run dimg*', options: { dimgs_patterns: ['dimg*'] })
+      expect_parsed_options('dimg run dimg* --time', options: { log_time: true, dimgs_patterns: ['dimg*'] })
+      expect_parsed_options('dimg run --time dimg*', options: { log_time: true, dimgs_patterns: ['dimg*'] })
     end
 
     it 'docker args' do
@@ -47,16 +47,15 @@ describe Dapp::CLI do
 
     it 'oatmeal' do
       expect_parsed_options('dimg run --quiet *dimg* -ti --time --rm -- bash rm -rf',
-                            cli_options: { log_quiet: true, log_time: true },
-                            dimgs_patterns: ['*dimg*'],
+                            options: { log_quiet: true, log_time: true, dimgs_patterns: ['*dimg*'] },
                             docker_options: %w(-ti --rm),
                             docker_command: %w(bash rm -rf))
     end
 
-    def expect_parsed_options(cmd, cli_options: {}, dimgs_patterns: ['*'], docker_options: [], docker_command: [])
+    def expect_parsed_options(cmd, options: {}, docker_options: [], docker_command: [])
       expect { cli(*cmd.split) }.to_not raise_error
-      expect(@instance.instance_variable_get(:'@cli_options')).to include(cli_options)
-      expect(@instance.instance_variable_get(:'@dimgs_patterns')).to eq dimgs_patterns
+      expect(@instance.options).to include(options)
+      expect(@instance.dimgs_patterns).to eq options[:dimgs_patterns] || ['*']
       expect(@instance).to have_received(:run).with(docker_options, docker_command)
     end
   end

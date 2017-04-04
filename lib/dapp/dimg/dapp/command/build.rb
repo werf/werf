@@ -12,7 +12,7 @@ module Dapp
               end
             end
           rescue ::Dapp::Error::Shellout, Error::Base
-            build_context_export unless cli_options[:build_context_directory].nil?
+            build_context_export unless options[:build_context_directory].nil?
             raise
           end
         end

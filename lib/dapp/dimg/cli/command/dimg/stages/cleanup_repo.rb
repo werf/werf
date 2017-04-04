@@ -1,7 +1,7 @@
-module Dapp
-  module Dimg
-    module CLI
-      class Stages
+module Dapp::Dimg::CLI
+  module Command
+    class Dimg < ::Dapp::CLI
+      class Stages < ::Dapp::CLI
         class CleanupRepo < CleanupLocal
           banner <<BANNER.freeze
 Usage:

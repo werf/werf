@@ -28,7 +28,7 @@ module SpecHelper
         allow_any_instance_of(Dapp::Dapp).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
         allow_any_instance_of(Dapp::Dapp).to receive(:config) { config }
         yield if block_given?
-        Dapp::Dapp.new(cli_options: cli_options)
+        Dapp::Dapp.new(options: dapp_options)
       end
     end
 
@@ -59,11 +59,11 @@ module SpecHelper
                                       _git_artifact: { _local: [], _remote: [] }))
     end
 
-    def cli_options
-      default_cli_options
+    def dapp_options
+      default_dapp_options
     end
 
-    def default_cli_options
+    def default_dapp_options
       { log_quiet: true, log_color: 'off', dev: false }
     end
 
