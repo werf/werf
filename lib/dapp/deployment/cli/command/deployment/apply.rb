@@ -8,6 +8,9 @@ Usage:
 
 Options:
 BANNER
+
+      option :namespace,
+             long: '--namespace NAME'
     end
   end
 end

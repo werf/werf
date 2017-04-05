@@ -82,3 +82,6 @@ en:
       branch_not_exist_in_remote_git_repository: "Remote git repo `%{url}`: branch `%{branch}` not exist!"
     lock:
       timeout: "Could not obtain lock for `%{name}` within %{timeout} seconds"
+    app:
+      namespace_not_found: "App `%{app_name}`: namespace `%{namespace}` not found!"
+      namespace_not_defined: "App `%{app_name}`: namespace not defined!"
