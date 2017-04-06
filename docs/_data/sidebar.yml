@@ -18,6 +18,9 @@ entries:
       - title: Сборка образов по стадиям
         url: /stages_for_build.html
 
+      - title: Shell-сборщик
+        url: /shell_for_build.html
+
       - title: Поддержка git
         url: /git_for_build.html
 
