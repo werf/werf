@@ -17,6 +17,7 @@ en:
       built_id_not_defined: '`from.built_id` not defined!'
       from_image_not_found: 'Image `%{name}` not found!'
       unsupported_patch_format: "Unsupported patch format:\n\n%{patch}"
+      unsupported_docker_image_size_format: "Unsupported docker image size format `%{value}`"
     command:
       command_unexpected_dimgs_number: "Command can process only one dimg!\nAmbiguous dimg pattern: `%{dimgs_names}`!"
       mrproper_required_option: "Expected command option `--improper-dev-mode-cache`, `--improper-cache-version-stages` or `--all`!"

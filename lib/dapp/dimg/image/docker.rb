@@ -105,18 +105,24 @@ module Dapp
                         .stdout
                         .lines
                         .each do |l|
-              name, id, created_at, size_field = l.split(';')
+              name, id, created_at, size_field = l.split(';').map(&:strip)
               name = name.reverse.chomp('docker.io/'.reverse).reverse
               size = begin
-                number, unit = size_field.split
-                coef = case unit.to_s.downcase
-                       when 'b'  then return number.to_f
+                match = size_field.match(/^(\d+(\.\d+)?)\ ?(b|kb|mb|gb|tb)$/i)
+                raise Error::Build, code: :unsupported_docker_image_size_format, data: {value: size_field} unless match and match[1] and match[3]
+
+                number = match[1].to_f
+                unit = match[3].downcase
+
+                coef = case unit
+                       when 'b'  then 0
                        when 'kb' then 1
                        when 'mb' then 2
                        when 'gb' then 3
                        when 'tb' then 4
                        end
-                number.to_f * (1000**coef)
+
+                number * (1000**coef)
               end
               cache[name] = { id: id, created_at: created_at, size: size }
             end
