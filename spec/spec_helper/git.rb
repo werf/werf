@@ -2,11 +2,13 @@ module SpecHelper
   module Git
     extend ActiveSupport::Concern
 
-    def git_change_and_commit(changefile = 'data.txt', changedata = random_string, git_dir: '.', msg: '+')
+    def git_change_and_commit(changefile = 'data.txt', changedata = nil, git_dir: '.', msg: '+', binary: false)
       file_path = File.join(git_repo(git_dir: git_dir).workdir, changefile)
       unless (file_path_parts = File.split(file_path)).one?
         FileUtils.mkdir_p file_path_parts[0..-2].join('/')
       end
+
+      changedata ||= binary ? random_binary_string : random_string
       File.open(file_path, 'w') { |f| f.write changedata }
 
       git_add_and_commit(changefile, git_dir: git_dir, msg: msg)

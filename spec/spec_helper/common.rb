@@ -21,6 +21,10 @@ module SpecHelper
       (('a'..'z').to_a * n).sample(n).join
     end
 
+    def random_binary_string(n=10)
+      ([0, 1] * n).sample(n).map(&:chr).join
+    end
+
     def generate_command
       "echo '#{SecureRandom.hex}'"
     end
