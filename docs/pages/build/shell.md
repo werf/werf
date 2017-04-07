@@ -1,7 +1,7 @@
 ---
 title: Shell сборщик
 sidebar: doc_sidebar
-permalink: stages_for_build.html
+permalink: shell_for_build.html
 folder: build
 ---
 

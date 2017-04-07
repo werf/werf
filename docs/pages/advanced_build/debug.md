@@ -35,11 +35,12 @@ end
 
 ```shell
 $ dapp dimg build
-From ...                                                                                                                                                                                                      [OK] 0.95 sec
-Before install ...                                                                                                                                                                                            [OK] 10.98 sec
+From ...                                                                              [OK] 0.95 sec
+Before install ...                                                                    [OK] 10.98 sec
+
 Install group
   Install ...   Launched command: `apt-get install -y nginz`
-                                                                                                                                                                                            [FAILED] 1.93 sec
+                                                                                      [FAILED] 1.93 sec
 Stacktrace dumped to /tmp/dapp-stacktrace-736a2035-4c8e-4ee3-9b55-8cfe5b4704a0.out
 >>> START STREAM
 Reading package lists...
@@ -55,11 +56,11 @@ E: Unable to locate package nginz
 
 ```shell
 $ dapp dimg build --introspect-error
-From ...                                                                                                                                                                                                      [OK] 0.9 sec
-Before install ...                                                                                                                                                                                            [OK] 10.24 sec
+From ...                                                                              [OK] 0.9 sec
+Before install ...                                                                    [OK] 10.24 sec
 Install group
   Install ...   Launched command: `apt-get install -y nginz`
-                                                                                                                                                                                            [FAILED] 1.91 sec
+                                                                                      [FAILED] 1.91 sec
 root@18ae29cf201a:/# apt-get install -y nginz
 Reading package lists... Done
 Building dependency tree       
@@ -125,7 +126,7 @@ E: Unable to locate package nginz
 
 ### Сборочный кеш и режим разработчика
 
-Сборщик образов в dapp создает промежуточные docker образа после каждой успешной сборки стадии. Однако, создаваемые в процессе сборки образа являются скрытыми от пользователя docker до того момента, как сборка закончится успешно. После успешной сборки все промежуточные образа именуются и попадают тем самым в кеш образов. Образа из кеша используются при повторных сборках, а также их можно интроспектить вручную через docker run.
+Сборщик образов в dapp создает промежуточные docker образа после каждой успешной сборки стадии. Однако, создаваемые в процессе сборки образа являются скрытыми от пользователя dapp до того момента, как сборка закончится успешно. После успешной сборки все промежуточные образа именуются и попадают тем самым в кеш образов. Образа из кеша используются при повторных сборках, а также их можно интроспектить вручную через docker run.
 
 Минусом данного механизма является то, что если в процессе сборки некоторой стадии произошла ошибка, то при повторном запуске сборка начнется с нуля, несмотря на то, что стадии до ошибочной были собраны успешно, т.к. образа не будут сохранены в кеше. Для приведенного выше примера при каждом повторном запуске сборки стадия Before install будет пересобираться по-новой.
 
@@ -133,10 +134,10 @@ E: Unable to locate package nginz
 
 ```shell
 $ dapp dimg build --dev
-Before install ...                                                                                                                                                                                            [OK] 21.8 sec
+Before install ...                                                                    [OK] 21.8 sec
 Install group
   Install ...   Launched command: `apt-get install -y nginz`
-                                                                                                                                                                                            [FAILED] 1.83 sec
+                                                                                      [FAILED] 1.83 sec
 Stacktrace dumped to /tmp/dapp-stacktrace-f25448cf-085f-4e1b-8628-7c3288e7a5cf.out
 >>> START STREAM
 Reading package lists...
@@ -149,7 +150,7 @@ E: Unable to locate package nginz
 $ dapp dimg build --dev
 Install group
   Install ...   Launched command: `apt-get install -y nginz`
-                                                                                                                                                                                            [FAILED] 2.03 sec
+                                                                                      [FAILED] 2.03 sec
 Stacktrace dumped to /tmp/dapp-stacktrace-80a0d7a2-7448-4112-85ff-db5da7ba47fb.out
 >>> START STREAM
 Reading package lists...

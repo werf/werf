@@ -9,18 +9,21 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 ## Схемы тегирования с использованием CI переменных среды
 
 На данный момент поддерживаются следующие CI системы:
-* GitLab CI.
+
+* GitLab CI;
 * Travis CI.
 
 ### Схема тегирования `--tag-ci`
 
 Тег формируется из переменных среды:
+
 * `CI_BUILD_ID`;
 * `TRAVIS_BUILD_NUMBER`.
 
 ### Схема тегирования `--tag-build-id`
 
 Тег формируется из переменных среды:
+
 * `CI_BUILD_REF_NAME`, `CI_BUILD_TAG`;
 * `TRAVIS_BRANCH`, `TRAVIS_TAG`.
 
