@@ -22,6 +22,10 @@ module Dapp
       def namespace
         dapp.options[:namespace] || ENV['DAPP_NAMESPACE']
       end
+
+      def kubernetes
+        @kubernetes ||= Kubernetes.new(namespace: namespace)
+      end
     end
   end
 end
