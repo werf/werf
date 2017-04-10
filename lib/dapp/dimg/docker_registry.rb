@@ -15,13 +15,9 @@ module Dapp
       end
 
       def self.repo_name_format
-        separator = '[_.]|__|[-]*'
-        alpha_numeric = '[[:alnum:]]*'
-        component = "#{alpha_numeric}[#{separator}#{alpha_numeric}]*"
-        port_number = '[[:digit:]]+'
-        hostcomponent = '[[:alnum:]_-]*[[:alnum:]]'
-        hostname = "#{hostcomponent}[\\.#{hostcomponent}]*(?<port>:#{port_number})?"
-        "(?<hostname>#{hostname}/)?(?<repo_suffix>#{component}[/#{component}]*)"
+        rpart = '[a-z0-9]+(([_.]|__|-+)[a-z0-9]+)*'
+        hpart = '(?!-)[a-z0-9-]+(?<!-)'
+        "(?<hostname>#{hpart}(\\.#{hpart})*(?<port>:[0-9]+)?\/)?(?<repo_suffix>#{rpart}(\/#{rpart})*)"
       end
 
       def self.repo_name?(name)
