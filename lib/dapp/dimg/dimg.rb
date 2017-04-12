@@ -130,7 +130,7 @@ module Dapp
       end
 
       def stage_image_name(stage_name)
-        stages.find { |stage| stage.send(:name) == stage_name }.image.name
+        stages.find { |stage| stage.name == stage_name }.image.name
       end
 
       def builder

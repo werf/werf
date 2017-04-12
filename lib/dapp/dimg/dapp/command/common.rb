@@ -61,8 +61,16 @@ module Dapp
             name
           end
 
-          def validate_repo_name(repo)
-            raise(Error::Command, code: :repo_name_incorrect, data: { name: repo }) unless ::Dapp::Dimg::DockerRegistry.repo_name?(repo)
+          def validate_repo_name!(repo)
+            raise Error::Command, code: :repo_name_incorrect, data: { name: repo } unless ::Dapp::Dimg::DockerRegistry.repo_name?(repo)
+          end
+
+          def validate_image_name!(image)
+            raise Error::Command, code: :image_name_incorrect, data: { name: image } unless ::Dapp::Dimg::Image::Docker.image_name?(image)
+          end
+
+          def validate_tag_name!(tag)
+            raise Error::Command, code: :tag_name_incorrect, data: { name: tag } unless ::Dapp::Dimg::Image::Docker.tag?(tag)
           end
 
           def proper_cache_version?

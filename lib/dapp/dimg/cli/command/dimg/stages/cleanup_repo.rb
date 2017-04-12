@@ -17,7 +17,7 @@ BANNER
           end
 
           def repo
-            self.class.required_argument(self)
+            self.class.required_argument(self, 'repo')
           end
         end
       end

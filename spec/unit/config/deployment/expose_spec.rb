@@ -42,17 +42,17 @@ describe Dapp::Deployment::Config::Directive::Expose do
 
       it 'default protocol' do
         dappfile_app_expose_port(80)
-        expect(app_config._expose._port.first._protocol).to be :TCP
+        expect(app_config._expose._port.first._protocol).to eq 'TCP'
       end
 
       it 'udp protocol' do
         dappfile_app_expose_port(80) { udp }
-        expect(app_config._expose._port.first._protocol).to be :UDP
+        expect(app_config._expose._port.first._protocol).to eq 'UDP'
       end
 
       it 'tcp protocol' do
         dappfile_app_expose_port(80) { tcp }
-        expect(app_config._expose._port.first._protocol).to be :TCP
+        expect(app_config._expose._port.first._protocol).to eq 'TCP'
       end
     end
 

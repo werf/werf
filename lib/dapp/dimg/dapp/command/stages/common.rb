@@ -7,7 +7,7 @@ module Dapp
             protected
 
             def registry(repo)
-              validate_repo_name(repo)
+              validate_repo_name!(repo)
               ::Dapp::Dimg::DockerRegistry.new(repo)
             end
 
