@@ -5,6 +5,7 @@ module Dapp
 
       def initialize(namespace: nil)
         @namespace = namespace
+        @query_parameters = {}
         @kube_config = YAML.load_file(File.join(ENV['HOME'], '.kube/config'))
       end
 
@@ -25,64 +26,72 @@ module Dapp
         end
       end
 
+      def with_query(query, &blk)
+        old_query = @query_parameters
+        begin
+          @query_parameters = query
+          return yield
+        ensure
+          @query_parameters = old_query
+        end
+      end
+
       # NOTICE: Название метода аналогично kind'у выдаваемого результата.
       # NOTICE: В данном случае в результате kind=DeploymentList.
       # NOTICE: Методы создания/обновления/удаления сущностей kubernetes заканчиваются на '!'. Например, create_deployment!.
 
-      def deployment_list
-        request!(:get, "/apis/extensions/v1beta1/namespaces/#{namespace}/deployments")
+      # v1
+      [:service, :replicationcontroller, :pod].each do |object|
+        define_method :"#{object}_list" do |**query_parameters|
+          request!(:get, "/api/v1/namespaces/#{namespace}/#{object}s", **query_parameters)
+        end
+
+        define_method object do |name, **query_parameters|
+          request!(:get, "/api/v1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
+        end
+
+        define_method :"create_#{object}!" do |spec, **query_parameters|
+          request!(:post, "/api/v1/namespaces/#{namespace}/#{object}s", body: spec, **query_parameters)
+        end
+
+        define_method :"replace_#{object}!" do |name, spec, **query_parameters|
+          request!(:put, "/api/v1/namespaces/#{namespace}/#{object}s/#{name}", body: spec, **query_parameters)
+        end
+
+        define_method :"delete_#{object}!" do |name, **query_parameters|
+          request!(:delete, "/api/v1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
+        end
+
+        define_method :"#{object}?" do |name, **query_parameters|
+          public_send(:"#{object}_list", **query_parameters)['items'].map { |item| item['metadata']['name'] }.include?(name)
+        end
       end
 
-      # Падает, если объекта нет
-      def deployment(name)
-        request!(:get, "/apis/extensions/v1beta1/namespaces/#{namespace}/deployments/#{name}")
-      end
+      # v1beta1
+      [:deployment].each do |object|
+        define_method :"#{object}_list" do |**query_parameters|
+          request!(:get, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s", **query_parameters)
+        end
 
-      # Возвращает true/false
-      def deployment?(name)
-        service(name)
-        true
-      rescue Error::NotFound
-        false
-      end
+        define_method object do |name, **query_parameters|
+          request!(:get, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
+        end
 
-      def create_deployment!(spec)
-        request!(:post, "/apis/extensions/v1beta1/namespaces/#{namespace}/deployments", body: spec)
-      end
+        define_method :"create_#{object}!" do |spec, **query_parameters|
+          request!(:post, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s", body: spec, **query_parameters)
+        end
 
-      def replace_deployment!(name, spec)
-        request!(:put, "/apis/extensions/v1beta1/namespaces/#{namespace}/deployments/#{name}", body: spec)
-      end
+        define_method :"replace_#{object}!" do |name, spec, **query_parameters|
+          request!(:put, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s/#{name}", body: spec, **query_parameters)
+        end
 
-      def delete_deployment!(name)
-        request!(:delete, "/apis/extensions/v1beta1/namespaces/#{namespace}/deployments/#{name}")
-      end
+        define_method :"delete_#{object}!" do |name, **query_parameters|
+          request!(:delete, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
+        end
 
-      def service_list
-        request!(:get, "/api/v1/namespaces/#{namespace}/services")
-      end
-
-      def service(name)
-        request!(:get, "/api/v1/namespaces/#{namespace}/services/#{name}")
-      end
-
-      def service?(name)
-        service(name)
-        true
-      rescue Error::NotFound
-        false
-      end
-
-      def create_service!(spec)
-        request!(:post, "/api/v1/namespaces/#{namespace}/services", body: spec)
-      end
-
-      def replace_service!(name, spec)
-        request!(:put, "/api/v1/namespaces/#{namespace}/services/#{name}", body: spec)
-      end
-
-      def delete_service!(name)
-        request!(:delete, "/api/v1/namespaces/#{namespace}/services/#{name}")
+        define_method :"#{object}?" do |name, **query_parameters|
+          public_send(:"#{object}_list", **query_parameters)['items'].map { |item| item['metadata']['name'] }.include?(name)
+        end
       end
 
       protected
@@ -91,7 +100,7 @@ module Dapp
       # body — hash для http-body, соответствует 'Body Parameters' в документации kubernetes, опционален
       def request!(method, path, body: nil, **query_parameters)
         with_connection do |conn|
-          request_parameters = {method: method, path: path, query: query_parameters}
+          request_parameters = {method: method, path: path, query: @query_parameters.merge(query_parameters)}
           request_parameters[:body] = JSON.dump(body) if body
           load_body! conn.request(request_parameters)
         end
