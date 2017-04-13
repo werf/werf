@@ -3,6 +3,8 @@ module Dapp
     module Dapp
       module Dapp
         include Command::Apply
+        include Command::SecretKeyGenerate
+        include Command::SecretGenerate
         include Command::Mrproper
         include Command::Common
       end
