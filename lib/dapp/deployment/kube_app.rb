@@ -13,7 +13,10 @@ module Dapp
         end
 
         define_method "existing_#{type}s_names" do
-          filter_items(app.deployment.kubernetes.public_send(:"#{type}_list")['items'])
+          label_selector = app.labels.map { |k,v| "#{k}=#{v}" }.join(',')
+          app.deployment.kubernetes.public_send(:"#{type}_list", labelSelector: label_selector)['items'].map do |item|
+            item['metadata']['name']
+          end
         end
 
         define_method "replace_#{type}!" do |name, spec|
@@ -63,12 +66,6 @@ module Dapp
             end
           end
         end
-      end
-
-      protected
-
-      def filter_items(items)
-        items.map { |item| item['metadata']['name'] if (app.labels.to_a - item['metadata']['labels'].to_a).empty? }.compact
       end
     end
   end
