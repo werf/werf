@@ -53,7 +53,7 @@ BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
           repo = self.class.required_argument(self, 'repo')
-          ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments)).public_send(class_to_lowercase, repo)
+          ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments, repo: repo)).public_send(class_to_lowercase)
         end
       end
     end

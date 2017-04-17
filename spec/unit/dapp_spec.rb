@@ -33,7 +33,7 @@ describe Dapp::Dapp do
   end
 
   it 'spush:spush_command_unexpected_dimgs_number', :push do
-    expect_exception_code(:command_unexpected_dimgs_number) { stubbed_dapp.spush('name') }
+    expect_exception_code(:command_unexpected_dimgs_number) { stubbed_dapp(options: { repo: 'name'}).spush }
   end
 
   it 'run:command_unexpected_dimgs_number', :push do

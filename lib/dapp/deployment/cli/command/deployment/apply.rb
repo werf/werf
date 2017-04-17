@@ -4,7 +4,7 @@ module Dapp::Deployment::CLI::Command
       banner <<BANNER.freeze
 Usage:
 
-  dapp deploy apply [options] REPO IMAGE_VERSION
+  dapp deploy apply [options] [APP ...] REPO
 
 Options:
 BANNER
@@ -12,11 +12,14 @@ BANNER
       option :namespace,
              long: '--namespace NAME'
 
+      option :image_version,
+             long: '--image-version IMAGE_VERSION',
+             default: 'latest'
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        image_version = self.class.required_argument(self, 'image_version')
         repo = self.class.required_argument(self, 'repo')
-        ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments)).deployment_apply(repo, image_version)
+        ::Dapp::Dapp.new(options: cli_options(apps_patterns: cli_arguments, repo: repo)).deployment_apply
       end
     end
   end

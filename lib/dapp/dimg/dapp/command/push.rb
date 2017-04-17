@@ -3,7 +3,8 @@ module Dapp
     module Dapp
       module Command
         module Push
-          def push(repo)
+          def push
+            repo = option_repo
             validate_repo_name!(repo)
             log_step_with_indent(:stages) { stages_push(repo) } if with_stages?
             build_configs.each do |config|

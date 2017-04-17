@@ -8,6 +8,8 @@ module Dapp
         include Command::MinikubeSetup
         include Command::Mrproper
         include Command::Common
+
+        include Dappfile
       end
     end
   end

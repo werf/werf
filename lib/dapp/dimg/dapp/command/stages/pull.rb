@@ -4,7 +4,8 @@ module Dapp
       module Command
         module Stages
           module Pull
-            def stages_pull(repo)
+            def stages_pull
+              repo = option_repo
               validate_repo_name!(repo)
               build_configs.each do |config|
                 log_dimg_name_with_indent(config) do

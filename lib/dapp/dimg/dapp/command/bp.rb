@@ -3,10 +3,10 @@ module Dapp
     module Dapp
       module Command
         module Bp
-          def bp(repo)
+          def bp
             bp_step(:build)
-            bp_step(:push, repo)
-            bp_step(:stages_cleanup_by_repo, repo)
+            bp_step(:push)
+            bp_step(:stages_cleanup_by_repo)
             bp_step(:cleanup)
           end
 

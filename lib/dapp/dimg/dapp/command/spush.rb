@@ -3,7 +3,8 @@ module Dapp
     module Dapp
       module Command
         module Spush
-          def spush(repo)
+          def spush
+            repo = option_repo
             validate_repo_name!(repo)
             one_dimg!
             Dimg.new(config: build_configs.first, dapp: self, ignore_git_fetch: true, should_be_built: true).tap do |dimg|
