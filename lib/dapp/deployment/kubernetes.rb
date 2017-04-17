@@ -1,8 +1,6 @@
 module Dapp
   module Deployment
     class Kubernetes
-      class Error::NotFound < Error::Kubernetes; end
-
       def initialize(namespace: nil)
         @namespace = namespace
         @query_parameters = {}
@@ -62,6 +60,10 @@ module Dapp
           request!(:delete, "/api/v1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
         end
 
+        define_method :"delete_#{object}s!" do |**query_parameters|
+          request!(:delete, "/api/v1/namespaces/#{namespace}/#{object}s", **query_parameters)
+        end
+
         define_method :"#{object}?" do |name, **query_parameters|
           public_send(:"#{object}_list", **query_parameters)['items'].map { |item| item['metadata']['name'] }.include?(name)
         end
@@ -89,6 +91,10 @@ module Dapp
           request!(:delete, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
         end
 
+        define_method :"delete_#{object}s!" do |**query_parameters|
+          request!(:delete, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s", **query_parameters)
+        end
+
         define_method :"#{object}?" do |name, **query_parameters|
           public_send(:"#{object}_list", **query_parameters)['items'].map { |item| item['metadata']['name'] }.include?(name)
         end
@@ -108,24 +114,21 @@ module Dapp
 
       def load_body!(response, request_parameters)
         if response.status.to_s.start_with? '5'
-          raise Error::Kubernetes, code: :server_error, data: {
+          raise Error::Base, code: :server_error, data: {
+            response_http_status: response.status,
+            response_http_body: response.body,
+            request_parameters: request_parameters
+          }
+        elsif response.status.to_s == '404'
+          raise Error::NotFound, data: {request_parameters: request_parameters}
+        elsif not response.status.to_s.start_with? '2'
+          raise Error::Base, code: :bad_request, data: {
             response_http_status: response.status,
             response_http_body: response.body,
             request_parameters: request_parameters
           }
         else
-          body = JSON.load(response.body)
-
-          raise Error::NotFound, data: {
-            request_parameters: request_parameters
-          } if response.status.to_s == '404'
-
-          raise Error::Kubernetes, code: :bad_request, data: {
-            response_body: body,
-            request_parameters: request_parameters
-          } unless response.status.to_s.start_with? '2'
-
-          body
+          JSON.load(response.body)
         end
       end
 

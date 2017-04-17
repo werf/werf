@@ -8,7 +8,11 @@ module Dapp
 
         def message(exception)
           net_status = net_status(exception)
-          net_status[:message] || [net_status[:error], net_status[:code], net_status[:data]].compact.join(': ')
+          net_status[:message] || begin
+            data = net_status[:data].reject {|k, _| k == :backtrace}
+            data = nil if data.empty?
+            [net_status[:error], [net_status[:context], net_status[:code]].compact.join('.'), data].compact.join(': ')
+          end
         end
 
         def before_error_message(exception)
