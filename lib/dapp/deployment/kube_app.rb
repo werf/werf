@@ -7,13 +7,21 @@ module Dapp
         @app = app
       end
 
+      def deployment
+        app.deployment.kube
+      end
+
+      def labels
+        deployment.labels.merge('dapp-app' => app.name)
+      end
+
       [:deployment, :service].each do |type|
         define_method "#{type}_exist?" do |name|
           public_send("existing_#{type}s_names").include?(name)
         end
 
         define_method "existing_#{type}s_names" do
-          label_selector = app.labels.map { |k,v| "#{k}=#{v}" }.join(',')
+          label_selector = labels.map { |k,v| "#{k}=#{v}" }.join(',')
           app.deployment.kubernetes.public_send(:"#{type}_list", labelSelector: label_selector)['items'].map do |item|
             item['metadata']['name']
           end

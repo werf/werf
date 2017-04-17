@@ -16,10 +16,6 @@ module Dapp
         [deployment.dapp.name, app_config._name].compact.join('-').gsub('_', '-')
       end
 
-      def labels
-        { 'dapp-app' => name }
-      end
-
       def kube
         @kube ||= KubeApp.new(self)
       end
@@ -35,7 +31,7 @@ module Dapp
           hash[name] = {}.tap do |deployment|
             deployment['metadata'] = {}.tap do |metadata|
               metadata['name']   = name
-              metadata['labels'] = labels
+              metadata['labels'] = kube.labels
             end
             deployment['spec'] = {}.tap do |spec|
               spec['replicas'] = scale

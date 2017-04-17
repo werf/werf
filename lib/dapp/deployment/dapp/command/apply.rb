@@ -7,6 +7,8 @@ module Dapp
             validate_repo_name!(repo)
             validate_tag_name!(image_version)
 
+            deployment.kube.delete_unknown_resources!
+
             deployment.apps.each do |app|
               (app.kube.existing_deployments_names - app.to_kube_deployments(repo, image_version).keys).each do |deployment_name|
                 app.kube.delete_deployment!(deployment_name)
