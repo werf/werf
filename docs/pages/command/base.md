@@ -53,7 +53,7 @@ dapp dimg build [options] [DIMG ...]
 После успешного прохождения стадии **STAGE**.
 
 ##### `--introspect-before-error`
-Перед выполением команд несобравшейся стадии.
+Перед выполнением команд несобравшейся стадии.
 
 ##### `--introspect-error`
 После завершения команд стадии с ошибкой.
@@ -217,7 +217,7 @@ dapp dimg stages pull [options] [DIMG ...] REPO
 $ dapp dimg stages pull localhost:5000/test
 ```
 
-##### Посмотреть, поиск каких образов в репозитории localhost:5000/test может быть выполен
+##### Посмотреть, поиск каких образов в репозитории localhost:5000/test может быть выполнен
 ```bash
 $ dapp dimg stages pull localhost:5000/test --all --dry-run
 backend
