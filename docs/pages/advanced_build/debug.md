@@ -26,7 +26,7 @@ dimg do
   end
 
   shell.install do
-    run 'apt-get install -y nginx'
+    run 'apt-get install -y nonexistent'
   end
 end
 ```
@@ -39,7 +39,7 @@ From ...                                                                        
 Before install ...                                                                    [OK] 10.98 sec
 
 Install group
-  Install ...   Launched command: `apt-get install -y nginx`
+  Install ...   Launched command: `apt-get install -y nonexistent`
                                                                                       [FAILED] 1.93 sec
 Stacktrace dumped to /tmp/dapp-stacktrace-736a2035-4c8e-4ee3-9b55-8cfe5b4704a0.out
 >>> START STREAM
@@ -48,7 +48,7 @@ Reading package lists...
 Building dependency tree...
 
 Reading state information...
-E: Unable to locate package nginx
+E: Unable to locate package nonexistent
 >>> END STREAM
 ```
 
@@ -59,13 +59,13 @@ $ dapp dimg build --introspect-error
 From ...                                                                              [OK] 0.9 sec
 Before install ...                                                                    [OK] 10.24 sec
 Install group
-  Install ...   Launched command: `apt-get install -y nginx`
+  Install ...   Launched command: `apt-get install -y nonexistent`
                                                                                       [FAILED] 1.91 sec
-root@18ae29cf201a:/# apt-get install -y nginx
+root@18ae29cf201a:/# apt-get install -y nonexistent
 Reading package lists... Done
 Building dependency tree       
 Reading state information... Done
-E: Unable to locate package nginx
+E: Unable to locate package nonexistent
 root@18ae29cf201a:/# apt-get install -y nginx
 ...
 root@18ae29cf201a:/# exit
@@ -76,7 +76,7 @@ Reading package lists...
 Building dependency tree...
 
 Reading state information...
-E: Unable to locate package nginx
+E: Unable to locate package nonexistent
 >>> END STREAM
 ```
 
@@ -136,7 +136,7 @@ E: Unable to locate package nginx
 $ dapp dimg build --dev
 Before install ...                                                                    [OK] 21.8 sec
 Install group
-  Install ...   Launched command: `apt-get install -y nginx`
+  Install ...   Launched command: `apt-get install -y nonexistent`
                                                                                       [FAILED] 1.83 sec
 Stacktrace dumped to /tmp/dapp-stacktrace-f25448cf-085f-4e1b-8628-7c3288e7a5cf.out
 >>> START STREAM
@@ -145,11 +145,11 @@ Reading package lists...
 Building dependency tree...
 
 Reading state information...
-E: Unable to locate package nginx
+E: Unable to locate package nonexistent
 >>> END STREAM
 $ dapp dimg build --dev
 Install group
-  Install ...   Launched command: `apt-get install -y nginx`
+  Install ...   Launched command: `apt-get install -y nonexistent`
                                                                                       [FAILED] 2.03 sec
 Stacktrace dumped to /tmp/dapp-stacktrace-80a0d7a2-7448-4112-85ff-db5da7ba47fb.out
 >>> START STREAM
@@ -158,7 +158,7 @@ Reading package lists...
 Building dependency tree...
 
 Reading state information...
-E: Unable to locate package nginx
+E: Unable to locate package nonexistent
 >>> END STREAM
 ```
 
