@@ -4,6 +4,7 @@ module Dapp
       module Directive
         class App < Base
           include InstanceMethods
+          include Mod::Bootstrap
 
           attr_reader :_name
 

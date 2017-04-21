@@ -86,13 +86,26 @@ describe Dapp::Deployment::Config::Directive::App do
     end
 
     context 'negative' do
-      it 'not identical names (:app_dimg_not_found)' do
+      it 'not identical names (:app_dimg_not_defined)' do
         dappfile do
           dimg 'backend'
 
           deployment do
             app do
               dimg nil
+            end
+          end
+        end
+        expect_exception_code(:app_dimg_not_defined) { deployment_config_validate! }
+      end
+
+      it 'not identical names (:app_dimg_not_found)' do
+        dappfile do
+          dimg 'backend'
+
+          deployment do
+            app do
+              dimg 'frontend'
             end
           end
         end
@@ -111,7 +124,7 @@ describe Dapp::Deployment::Config::Directive::App do
     expect { config }.to_not raise_error
   end
 
-  [:bootstrap, :migrate].each do |sub_directive|
+  [:migrate].each do |sub_directive|
     it sub_directive do
       dappfile_app { send(sub_directive, 'cmd') }
       expect(app_config.send(:"_#{sub_directive}")).to eq 'cmd'

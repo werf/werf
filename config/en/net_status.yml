@@ -65,9 +65,12 @@ en:
       unsupported_scale_value: "Define unsupported scale value `%{value}`!"
       app_name_required: 'App name required!'
       app_dimg_not_found: 'Not found dimg `%{dimg}` for app `%{app}`!'
+      app_dimg_not_defined: 'Not defined dimg for app `%{app}`!'
       unsupported_port_number: 'Port number `%{port}` doesn`t support!'
       app_name_incorrect: "App has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
       namespace_name_incorrect: "Namespace has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
+      deployment_bootstrap_dimg_not_defined: "Not defined dimg for deployment.bootstrap!"
+      deployment_bootstrap_dimg_not_found: "Not found dimg `%{dimg}` for deployment.bootstrap!"
     chef:
       stage_checksum_not_calculated: "Chef stage `%{stage}` checksum is not calculated yet, run build first"
       stage_path_overlap: "Cannot install `%{cookbook}` cookbook's path %{from} into %{to}: already exists"

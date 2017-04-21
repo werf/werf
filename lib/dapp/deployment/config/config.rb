@@ -2,19 +2,31 @@ module Dapp
   module Deployment
     module Config
       module Config
-        def self.included(base)
-          base.include(Directive::GroupBase)
-          base.class_eval do
-            alias_method :deployment, :group
-            undef_method :group
-          end
+        include Directive::Mod::Group
+
+        def deployment(&blk)
+          directive_eval(_deployment, &blk)
+        end
+
+        def _deployment
+          @_deployment ||= Directive::Deployment.new(dapp: dapp).tap { |group| @_group << group }
         end
 
         protected
 
         def deployment_config_validate!
+          unless _deployment._bootstrap.empty?
+            if _deployment._bootstrap._dimg.nil? && !_dimg.map(&:_name).compact.empty?
+              raise Error::Config, code: :deployment_bootstrap_dimg_not_defined
+            end
+            unless _dimg.map(&:_name).include?(_deployment._bootstrap._dimg)
+              raise Error::Config, code: :deployment_bootstrap_dimg_not_found, data: { dimg: _deployment._bootstrap._dimg }
+            end
+          end
+
           raise Error::Config, code: :app_name_required if _app.any? { |app| app._name.nil? } && _app.size > 1
           _app.each do |app|
+            raise Error::Config, code: :app_dimg_not_defined, data: { app: app._name } if app._dimg.nil? && !_dimg.map(&:_name).compact.empty?
             unless _dimg.map(&:_name).include?(app._dimg)
               raise Error::Config, code: :app_dimg_not_found, data: { app: app._name, dimg: app._dimg }
             end
