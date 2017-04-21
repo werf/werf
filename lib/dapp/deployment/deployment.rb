@@ -7,6 +7,10 @@ module Dapp
         @dapp = dapp
       end
 
+      def name(*args)
+        [dapp.name, *args].flatten.compact.join('-').gsub('_', '-')
+      end
+
       def kube
         @kube ||= KubeDeployment.new(self)
       end

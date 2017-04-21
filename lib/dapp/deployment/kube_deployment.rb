@@ -1,6 +1,6 @@
 module Dapp
   module Deployment
-    class KubeDeployment
+    class KubeDeployment < KubeBase
       attr_reader :deployment
 
       def initialize(deployment)

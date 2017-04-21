@@ -38,65 +38,38 @@ module Dapp
       # NOTICE: В данном случае в результате kind=DeploymentList.
       # NOTICE: Методы создания/обновления/удаления сущностей kubernetes заканчиваются на '!'. Например, create_deployment!.
 
-      # v1
-      [:service, :replicationcontroller, :pod].each do |object|
-        define_method :"#{object}_list" do |**query_parameters|
-          request!(:get, "/api/v1/namespaces/#{namespace}/#{object}s", **query_parameters)
-        end
+      {
+        '/api/v1' => [:service, :replicationcontroller, :pod],
+        '/apis/extensions/v1beta1' => [:deployment]
+      }.each do |api, objects|
+        objects.each do |object|
+          define_method :"#{object}_list" do |**query_parameters|
+            request!(:get, "#{api}/namespaces/#{namespace}/#{object}s", **query_parameters)
+          end
 
-        define_method object do |name, **query_parameters|
-          request!(:get, "/api/v1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
-        end
+          define_method object do |name, **query_parameters|
+            request!(:get, "#{api}/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
+          end
 
-        define_method :"create_#{object}!" do |spec, **query_parameters|
-          request!(:post, "/api/v1/namespaces/#{namespace}/#{object}s", body: spec, **query_parameters)
-        end
+          define_method :"create_#{object}!" do |spec, **query_parameters|
+            request!(:post, "#{api}/namespaces/#{namespace}/#{object}s", body: spec, **query_parameters)
+          end
 
-        define_method :"replace_#{object}!" do |name, spec, **query_parameters|
-          request!(:put, "/api/v1/namespaces/#{namespace}/#{object}s/#{name}", body: spec, **query_parameters)
-        end
+          define_method :"replace_#{object}!" do |name, spec, **query_parameters|
+            request!(:put, "#{api}/namespaces/#{namespace}/#{object}s/#{name}", body: spec, **query_parameters)
+          end
 
-        define_method :"delete_#{object}!" do |name, **query_parameters|
-          request!(:delete, "/api/v1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
-        end
+          define_method :"delete_#{object}!" do |name, **query_parameters|
+            request!(:delete, "#{api}/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
+          end
 
-        define_method :"delete_#{object}s!" do |**query_parameters|
-          request!(:delete, "/api/v1/namespaces/#{namespace}/#{object}s", **query_parameters)
-        end
+          define_method :"delete_#{object}s!" do |**query_parameters|
+            request!(:delete, "#{api}/namespaces/#{namespace}/#{object}s", **query_parameters)
+          end
 
-        define_method :"#{object}?" do |name, **query_parameters|
-          public_send(:"#{object}_list", **query_parameters)['items'].map { |item| item['metadata']['name'] }.include?(name)
-        end
-      end
-
-      # v1beta1
-      [:deployment].each do |object|
-        define_method :"#{object}_list" do |**query_parameters|
-          request!(:get, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s", **query_parameters)
-        end
-
-        define_method object do |name, **query_parameters|
-          request!(:get, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
-        end
-
-        define_method :"create_#{object}!" do |spec, **query_parameters|
-          request!(:post, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s", body: spec, **query_parameters)
-        end
-
-        define_method :"replace_#{object}!" do |name, spec, **query_parameters|
-          request!(:put, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s/#{name}", body: spec, **query_parameters)
-        end
-
-        define_method :"delete_#{object}!" do |name, **query_parameters|
-          request!(:delete, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
-        end
-
-        define_method :"delete_#{object}s!" do |**query_parameters|
-          request!(:delete, "/apis/extensions/v1beta1/namespaces/#{namespace}/#{object}s", **query_parameters)
-        end
-
-        define_method :"#{object}?" do |name, **query_parameters|
-          public_send(:"#{object}_list", **query_parameters)['items'].map { |item| item['metadata']['name'] }.include?(name)
+          define_method :"#{object}?" do |name, **query_parameters|
+            public_send(:"#{object}_list", **query_parameters)['items'].map { |item| item['metadata']['name'] }.include?(name)
+          end
         end
       end
 
