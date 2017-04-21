@@ -1,6 +1,8 @@
 module Dapp
   module Deployment
     class Kubernetes
+      class TimeoutError < Error::Kubernetes; end
+
       def initialize(namespace: nil)
         @namespace = namespace
         @query_parameters = {}
@@ -51,6 +53,10 @@ module Dapp
             request!(:get, "#{api}/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
           end
 
+          define_method "#{object}_status" do |name, **query_parameters|
+            request!(:get, "#{api}/namespaces/#{namespace}/#{object}s/#{name}/status", **query_parameters)
+          end
+
           define_method :"create_#{object}!" do |spec, **query_parameters|
             request!(:post, "#{api}/namespaces/#{namespace}/#{object}s", body: spec, **query_parameters)
           end
@@ -73,12 +79,23 @@ module Dapp
         end
       end
 
+      def pod_log(name, follow: false, **query_parameters, &blk)
+        excon_parameters = follow ? { response_block: blk } : {}
+        request!(:get,
+                 "/api/v1/namespaces/#{namespace}/pods/#{name}/log",
+                 excon_parameters: excon_parameters,
+                 **{ follow: follow }.merge(query_parameters))
+      rescue Excon::Error::Timeout
+        raise TimeoutError
+      end
+
       protected
 
       # query_parameters — соответствует 'Query Parameters' в документации kubernetes
+      # excon_parameters — соответствует опциям Excon
       # body — hash для http-body, соответствует 'Body Parameters' в документации kubernetes, опционален
-      def request!(method, path, body: nil, **query_parameters)
-        with_connection do |conn|
+      def request!(method, path, body: nil, excon_parameters: {}, **query_parameters)
+        with_connection(excon_parameters: excon_parameters) do |conn|
           request_parameters = {method: method, path: path, query: @query_parameters.merge(query_parameters)}
           request_parameters[:body] = JSON.dump(body) if body
           load_body! conn.request(request_parameters), request_parameters
@@ -105,7 +122,7 @@ module Dapp
         end
       end
 
-      def with_connection(&blk)
+      def with_connection(excon_parameters: {}, &blk)
         old_ssl_ca_file = Excon.defaults[:ssl_ca_file]
         old_middlewares = Excon.defaults[:middlewares].dup
 
@@ -115,8 +132,8 @@ module Dapp
 
           return yield Excon.new(
             @kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('server', nil),
-            client_cert: @kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-certificate', nil),
-            client_key: @kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key', nil)
+            **{ client_cert: @kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-certificate', nil),
+                client_key: @kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key', nil) }.merge(excon_parameters)
           )
         ensure
           Excon.defaults[:ssl_ca_file] = old_ssl_ca_file

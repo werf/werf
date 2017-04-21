@@ -12,6 +12,16 @@ module Dapp
 
             deployment.kube.delete_unknown_resources!
 
+            deployment.to_kube_bootstrap_pods(repo, image_version).each do |name, spec|
+              next if deployment.kube.bootstrap_succeeded?(name)
+              deployment.kube.delete_pod!(name) if deployment.kube.pod_exist?(name)
+              log_process(:bootstrap, verbose: true) do
+                with_log_indent do
+                  deployment.kube.run_bootstrap!(spec, name)
+                end
+              end
+            end
+
             deployment.apps.each do |app|
               (app.kube.existing_deployments_names - app.to_kube_deployments(repo, image_version).keys).each do |deployment_name|
                 app.kube.delete_deployment!(deployment_name)

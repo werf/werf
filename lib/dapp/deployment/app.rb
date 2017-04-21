@@ -1,11 +1,12 @@
 module Dapp
   module Deployment
     class App
-      include Namespace
-      include SystemEnvironments
+      include Mod::Namespace
+      include Mod::SystemEnvironments
 
-      attr_reader :app_config
       attr_reader :deployment
+      attr_reader :app_config
+      alias config app_config
 
       def initialize(app_config:, deployment:)
         @app_config = app_config
@@ -90,6 +91,14 @@ module Dapp
 
       def service_name
         name('service')
+      end
+
+      def namespace
+        deployment.namespace
+      end
+
+      def secret
+        deployment.dapp.secret
       end
     end
   end

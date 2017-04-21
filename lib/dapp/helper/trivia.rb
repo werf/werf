@@ -24,7 +24,7 @@ module Dapp
         end
       end
 
-      def self.class_to_lowercase(class_name = self.class)
+      def self.class_to_lowercase(class_name = self)
         class_name.to_s.split('::').last.split(/(?=[[:upper:]]|[0-9])/).join('_').downcase.to_s
       end
     end # Trivia
