@@ -10,7 +10,7 @@ module Dapp
             validate_repo_name!(repo)
             validate_tag_name!(image_version)
 
-            log_process(deployment.name, verbose: true) do
+            log_process("Applying deployment #{deployment.name}", verbose: true) do
               with_log_indent do
                 deployment.kube.delete_unknown_resources!
 
@@ -34,7 +34,7 @@ module Dapp
                 end
 
                 deployment.apps.each do |app|
-                  log_process(app.name, verbose: true) do
+                  log_process("Applying app #{app.name}", verbose: true) do
                     with_log_indent do
                       (app.kube.existing_deployments_names - app.to_kube_deployments(repo, image_version).keys).each do |deployment_name|
                         app.kube.delete_deployment!(deployment_name)
@@ -65,13 +65,16 @@ module Dapp
 
                       app.to_kube_deployments(repo, image_version).each do |name, spec|
                         if app.kube.deployment_exist?(name)
-                          app.kube.replace_deployment!(name, spec) if app.kube.deployment_spec_changed?(name, spec)
+                          # TODO: deployment_spec_changed? срабатывает всегда.
+                          # TODO: Хотя сейчас это не так уж и важно, но лучше лишний раз не делать replace в kubernetes.
+                          app.kube.update_deployment!(name, spec) if app.kube.deployment_spec_changed?(name, spec)
                         else
                           app.kube.create_deployment!(spec)
                         end
                       end
 
                       app.to_kube_services.each do |name, spec|
+                        # TODO: Отслеживание статуса kubernetes Service
                         if app.kube.service_exist?(name)
                           app.kube.replace_service!(name, spec) if app.kube.service_spec_changed?(name, spec)
                         else

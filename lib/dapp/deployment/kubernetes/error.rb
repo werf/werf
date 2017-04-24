@@ -8,6 +8,9 @@ module Dapp
       end
 
       class NotFound < Base
+        def initialize(**net_status)
+          super({code: :not_found}.merge(net_status))
+        end
       end
     end
   end
