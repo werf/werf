@@ -3,6 +3,7 @@ module Dapp
     class App
       include Mod::Namespace
       include Mod::SystemEnvironments
+      include Mod::Jobs
 
       attr_reader :deployment
       attr_reader :app_config

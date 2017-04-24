@@ -8,11 +8,11 @@ module Dapp
       end
 
       def deployment
-        app.deployment.kube
+        app.deployment
       end
 
       def labels
-        deployment.labels.merge('dapp-app' => app.name)
+        deployment.kube.labels.merge('dapp-app' => app.name)
       end
 
       [:deployment, :service].each do |type|
@@ -21,25 +21,24 @@ module Dapp
         end
 
         define_method "existing_#{type}s_names" do
-          label_selector = labels.map { |k,v| "#{k}=#{v}" }.join(',')
-          app.deployment.kubernetes.public_send(:"#{type}_list", labelSelector: label_selector)['items'].map do |item|
+          deployment.kubernetes.public_send(:"#{type}_list", labelSelector: labelSelector)['items'].map do |item|
             item['metadata']['name']
           end
         end
 
         define_method "replace_#{type}!" do |name, spec|
-          hash = send(:"merge_kube_#{type}_spec", app.deployment.kubernetes.public_send(type, name), spec)
-          app.deployment.kubernetes.public_send(:"replace_#{type}!", name, hash)
+          hash = send(:"merge_kube_#{type}_spec", deployment.kubernetes.public_send(type, name), spec)
+          deployment.kubernetes.public_send(:"replace_#{type}!", name, hash)
         end
 
         define_method "#{type}_spec_changed?" do |name, spec|
-          current_spec = app.deployment.kubernetes.public_send(type, name)
+          current_spec = deployment.kubernetes.public_send(type, name)
           current_spec != send(:"merge_kube_#{type}_spec", current_spec, spec)
         end
 
         [:create, :delete].each do |method|
           define_method "#{method}_#{type}!" do |*args|
-            app.deployment.kubernetes.public_send(:"#{method}_#{type}!", *args)
+            deployment.kubernetes.public_send(:"#{method}_#{type}!", *args)
           end
         end
       end
