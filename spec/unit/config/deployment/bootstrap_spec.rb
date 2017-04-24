@@ -27,7 +27,7 @@ describe Dapp::Deployment::Config::Directive::Bootstrap do
   end
 
   def deployment_config
-    config
+    config._deployment
   end
 
   context 'bootstrap' do
@@ -36,14 +36,14 @@ describe Dapp::Deployment::Config::Directive::Bootstrap do
         public_send(:"dappfile_#{directive}_bootstrap") do
           run 'cmd'
         end
-        expect(public_send(:"#{directive}_config")._deployment._bootstrap._run).to eq ['cmd']
+        expect(public_send(:"#{directive}_config")._bootstrap._run).to eq ['cmd']
       end
 
       it "#{directive} dimg" do
         public_send(:"dappfile_#{directive}_bootstrap") do
           dimg 'backend'
         end
-        expect(public_send(:"#{directive}_config")._deployment._bootstrap._dimg).to eq 'backend'
+        expect(public_send(:"#{directive}_config")._bootstrap._dimg).to eq 'backend'
       end
     end
   end
