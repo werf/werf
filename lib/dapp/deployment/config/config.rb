@@ -15,12 +15,13 @@ module Dapp
         protected
 
         def deployment_config_validate!
-          unless _deployment._bootstrap.empty?
-            if _deployment._bootstrap._dimg.nil? && !_dimg.map(&:_name).compact.empty?
-              raise Error::Config, code: :deployment_bootstrap_dimg_not_defined
+          [:bootstrap, :before_apply_job].each do |job|
+            next if (directive_config = _deployment.public_send("_#{job}")).empty?
+            if directive_config._dimg.nil? && !_dimg.map(&:_name).compact.empty?
+              raise Error::Config, code: :"deployment_#{job}_dimg_not_defined"
             end
-            unless _dimg.map(&:_name).include?(_deployment._bootstrap._dimg)
-              raise Error::Config, code: :deployment_bootstrap_dimg_not_found, data: { dimg: _deployment._bootstrap._dimg }
+            unless _dimg.map(&:_name).include?(directive_config._dimg)
+              raise Error::Config, code: :"deployment_#{job}_dimg_not_found", data: { dimg: directive_config._dimg }
             end
           end
 

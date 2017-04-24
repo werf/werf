@@ -3,7 +3,7 @@ module Dapp
     module Config
       module Directive
         class Deployment < Group
-          include Mod::Bootstrap
+          include Mod::Jobs
         end
       end
     end

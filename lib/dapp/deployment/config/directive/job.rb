@@ -2,7 +2,7 @@ module Dapp
   module Deployment
     module Config
       module Directive
-        class Bootstrap < Base
+        class Job < Base
           attr_reader :_run, :_dimg
 
           def initialize(*args)
@@ -11,7 +11,7 @@ module Dapp
           end
 
           def run(*args)
-            sub_directive_eval { @_run.concat(args) }
+            sub_directive_eval { @_run.concat(args.flatten) }
           end
 
           def dimg(name)
