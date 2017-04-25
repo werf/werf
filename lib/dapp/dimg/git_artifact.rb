@@ -140,8 +140,12 @@ module Dapp
           Gem::Package::TarWriter.new(f) do |tar|
             diff_patches(nil, to_commit).each do |patch|
               entry = patch.delta.new_file
-              tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
-                tf.write repo.lookup_object(entry[:oid]).content
+              if entry[:mode] == 40960 # symlink
+                tar.add_symlink slice_cwd(entry[:path]), repo.lookup_object(entry[:oid]).content, entry[:mode]
+              else
+                tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
+                  tf.write repo.lookup_object(entry[:oid]).content
+                end
               end
             end
           end
