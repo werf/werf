@@ -31,32 +31,44 @@ module Dapp
 
         # rubocop:disable Metrics/ParameterLists, Metrics/AbcSize, Metrics/MethodLength
         def safe_cp(from, to, owner, group, include_paths = [], exclude_paths = [])
-          credentials = ''
-          credentials += "-o #{owner} " if owner
-          credentials += "-g #{group} " if group
-          excludes = find_command_excludes(from, exclude_paths).join(' ')
+          ''.tap do |cmd|
+            cmd << dimg.project.rsync_bin
+            cmd << ' --archive --links'
+            cmd << " --chown=#{owner}:#{group}" if owner or group
 
-          copy_files = proc do |from_, path_ = ''|
-            "if [[ -d #{File.join(from_, path_)} ]] || [[ -f #{File.join(from_, path_)} ]]; then " \
-            "#{dimg.project.find_bin} #{File.join(from_, path_)} #{excludes} -type f -exec " \
-            "#{dimg.project.bash_bin} -ec '#{dimg.project.install_bin} -D #{credentials} \"{}\" " \
-            "\"#{File.join(to, "$(echo \"{}\" | " \
-            "#{dimg.project.sed_bin} -e \"s/^#{from_.gsub('/', '\\/')}\\///g\")")}\"' \\; ;" \
-            'fi'
+            if include_paths.any?
+              # Если указали include_paths ­— это означает, что надо копировать
+              # только указанные пути. Поэтому exclude_paths в приоритете, т.к. в данном режиме
+              # exclude_paths может относится только к путям, указанным в include_paths.
+              # При этом случай, когда в include_paths указали более специальный путь, чем в exclude_paths,
+              # будет обрабатываться в пользу exclude, этот путь не скопируется.
+              exclude_paths.each do |p|
+                cmd << " --filter='-/ #{File.join(from, p)}'"
+              end
+
+              include_paths.each do |p|
+                # * На данный момент не знаем директорию или файл имел в виду пользователь,
+                #   поэтому подставляем фильтры для обоих возможных случаев.
+                # * Автоматом подставляем паттерн ** для включения файлов, содержащихся в
+                #   директории, которую пользователь указал в include_paths.
+                cmd << " --filter='+/ #{File.join(from, p)}'"
+                cmd << " --filter='+/ #{File.join(from, p, '**')}'"
+              end
+
+              # Все что не подошло по include — исключается
+              cmd << " --filter='-/ #{File.join(from, '**')}'"
+            else
+              exclude_paths.each do |p|
+                cmd << " --filter='-/ #{File.join(from, p)}'"
+              end
+            end
+
+            # Слэш после from — это инструкция rsync'у для копирования
+            # содержимого директории from, а не самой директории.
+            cmd << " #{from}/ #{to}"
           end
-
-          commands = []
-          commands << [dimg.project.install_bin, credentials, '-d', to].join(' ')
-          commands.concat(include_paths.empty? ? Array(copy_files.call(from)) : include_paths.map { |path| copy_files.call(from, path) })
-          commands << "#{dimg.project.find_bin} #{to} -type d -exec " \
-                      "#{dimg.project.bash_bin} -ec '#{dimg.project.install_bin} -d #{credentials} {}' \\;"
-          commands.join(' && ')
         end
         # rubocop:enable Metrics/ParameterLists, Metrics/AbcSize, Metrics/MethodLength
-
-        def find_command_excludes(from, exclude_paths)
-          exclude_paths.map { |path| "-not \\( -path #{File.join(from, path)} -prune \\)" }
-        end
       end # ArtifactDefault
     end # Stage
   end # Build
