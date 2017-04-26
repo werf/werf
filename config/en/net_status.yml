@@ -66,6 +66,10 @@ en:
       app_name_required: 'App name required!'
       app_dimg_not_found: 'Not found dimg `%{dimg}` for app `%{app}`!'
       app_dimg_not_defined: 'Not defined dimg for app `%{app}`!'
+      app_bootstrap_dimg_not_defined: "Not defined dimg for app.bootstrap!"
+      app_bootstrap_dimg_not_found: "Not found dimg `%{dimg}` for app.bootstrap!"
+      app_before_apply_job_dimg_not_defined: "Not defined dimg for app.before_apply_job!"
+      app_before_apply_job_dimg_not_found: "Not found dimg `%{dimg}` for app.before_apply_job!"
       unsupported_port_number: 'Port number `%{port}` doesn`t support!'
       app_name_incorrect: "App has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
       namespace_name_incorrect: "Namespace has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
