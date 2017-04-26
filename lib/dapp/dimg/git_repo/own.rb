@@ -16,8 +16,16 @@ module Dapp
           raise Error::Rugged, code: :local_git_repository_does_not_exist
         end
 
+        # NOTICE: Параметры {from: nil, to: nil} можно указать только для Own repo.
+        # NOTICE: Для Remote repo такой вызов не имеет смысла и это ошибка пользователя класса Remote.
+
         def diff(from, to, **kwargs)
-          if to.nil?
+          if from.nil? and to.nil?
+            mid_commit = latest_commit
+            diff_obj = super(nil, mid_commit, **kwargs)
+            diff_obj.merge! git.lookup(mid_commit).diff_workdir(**kwargs)
+            diff_obj
+          elsif to.nil?
             git.lookup(from).diff_workdir(**kwargs)
           else
             super
