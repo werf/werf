@@ -24,8 +24,8 @@ module Dapp
         end
 
         %w(rm rsync diff date cat
-           stat test sleep mkdir find
-           install sed cp true
+           stat readlink test sleep mkdir
+           install sed cp true find
            bash tar sudo).each do |cmd|
           define_method("#{cmd}_bin") { "/.dapp/deps/base/#{BASE_VERSION}/bin/#{cmd}" }
         end
