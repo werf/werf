@@ -52,15 +52,27 @@ module Dapp
         patch_command(stage.prev_g_a_stage.layer_commit(self), nil)
       end
 
-      def stage_dependencies_checksums(stage, from_commit = nil, to_commit = latest_commit)
+      def stage_dependencies_checksum(stage)
         return [] if (stage_dependencies = stages_dependencies[stage.name]).empty?
 
-        paths = include_paths(true) + base_paths(stage_dependencies, true)
-        diff_patches(from_commit, to_commit, paths: paths).map do |patch|
-          delta_new_file = patch.delta.new_file
-          content = patch.hunks.map { |h| h.lines.select { |l| l.line_origin == :context }.map(&:content).join }.join
-          Digest::SHA256.hexdigest [delta_new_file[:path], content].join(':::')
+        paths = (include_paths(true) + base_paths(stage_dependencies, true)).uniq
+
+        to_commit = if repo.is_a? GitRepo::Own and repo.dimg.dev_mode?
+          nil
+        else
+          latest_commit
         end
+
+        diff_patches(nil, to_commit, paths: paths)
+          .sort_by {|patch| patch.delta.new_file[:path]}
+          .reduce(nil) {|prev_hash, patch|
+            Digest::SHA256.hexdigest [
+              prev_hash,
+              patch.delta.new_file[:path],
+              patch.delta.new_file[:mode].to_s,
+              patch.to_s
+            ].compact.join(':::')
+          }
       end
 
       def patch_size(from, to)
@@ -85,7 +97,7 @@ module Dapp
       end
 
       def latest_commit
-        @latest_commit ||= commit || repo.latest_commit(branch)
+        @latest_commit ||= (commit || repo.latest_commit(branch))
       end
 
       def paramshash
@@ -128,8 +140,12 @@ module Dapp
           Gem::Package::TarWriter.new(f) do |tar|
             diff_patches(nil, to_commit).each do |patch|
               entry = patch.delta.new_file
-              tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
-                tf.write repo.lookup_object(entry[:oid]).content
+              if entry[:mode] == 40960 # symlink
+                tar.add_symlink slice_cwd(entry[:path]), repo.lookup_object(entry[:oid]).content, entry[:mode]
+              else
+                tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
+                  tf.write repo.lookup_object(entry[:oid]).content
+                end
               end
             end
           end
@@ -213,10 +229,10 @@ module Dapp
       end
 
       def diff_patches(from, to, paths: include_paths_or_cwd)
-        (@diff_patches ||= {})[[from, to, paths]] = repo.patches(from, to,
-                                                                 paths: paths,
-                                                                 exclude_paths: exclude_paths(true),
-                                                                 force_text: true)
+        (@diff_patches ||= {})[[from, to, paths]] ||= repo.patches(from, to,
+                                                                   paths: paths,
+                                                                   exclude_paths: exclude_paths(true),
+                                                                   force_text: true)
       end
 
       def include_paths_or_cwd
