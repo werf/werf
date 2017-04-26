@@ -17,6 +17,7 @@ en:
       image_not_exist: "Image `%{name}` not exist!"
       built_id_not_defined: '`from.built_id` not defined!'
       from_image_not_found: 'Image `%{name}` not found!'
+      unsupported_docker_image_size_format: "Unsupported docker image size format `%{value}`"
     project:
       command_unexpected_dimgs_number: "Command can process only one dimg!\nAmbiguous dimg pattern: `%{dimgs_names}`!"
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
