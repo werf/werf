@@ -56,7 +56,7 @@ module Dapp
         end
       end
 
-      def create_service!(conf_spec )
+      def create_service!(conf_spec)
         srv = nil
         app.deployment.dapp.log_process("Creating kubernetes Service #{conf_spec['metadata']['name']}") do
           srv = app.deployment.kubernetes.create_service!(conf_spec)
@@ -75,21 +75,7 @@ module Dapp
       end
 
       def _dump_service_info(srv)
-        now = Time.now
         app.deployment.dapp.with_log_indent do
-          events = app.deployment.kubernetes
-            .event_list(fieldSelector: "involvedObject.uid=#{srv['metadata']['uid']}")['items']
-            .select do |event|
-              Time.parse(event['metadata']['creationTimestamp']) >= now
-            end
-
-          app.deployment.dapp.log_info("Events:") if events.any?
-          events.each do |event|
-            app.deployment.dapp.with_log_indent do
-              app.deployment.dapp.log_info("[#{event['metadata']['creationTimestamp']}] #{event['message']}")
-            end
-          end
-
           app.deployment.dapp.log_info("type: #{srv['spec']['type']}")
           app.deployment.dapp.log_info("clusterIP: #{srv['spec']['clusterIP']}")
 
@@ -259,14 +245,21 @@ module Dapp
 
       def merge_kube_service_spec(spec1, spec2)
         spec1.kube_in_depth_merge(spec2).tap do |spec|
+          spec['spec'] ||= {}
+
+          spec_selector = spec2.fetch('spec', spec1.fetch('spec', {})).fetch('selector', nil)
+          spec['spec']['selector'] = spec_selector if spec_selector
+
           spec['spec']['ports'] = begin
-            ports1 = spec1['spec']['ports']
-            ports2 = spec2['spec']['ports']
+            ports1 = spec1.fetch('spec', {}).fetch('ports', [])
+            ports2 = spec2.fetch('spec', {}).fetch('ports', [])
             ports2.map do |port2|
               if (port1 = ports1.find { |p| p['name'] == port2['name'] }).nil?
                 port2
               else
-                port1.kube_in_depth_merge(port2)
+                port = port1.merge(port2)
+                port.delete('nodePort') if spec['spec']['type'] == 'ClusterIP'
+                port
               end
             end
           end
