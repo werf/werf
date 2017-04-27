@@ -5,7 +5,7 @@ module Dapp
         banner <<BANNER.freeze
 Usage:
 
-  dapp dimg mrprooper [options]
+  dapp dimg mrproper [options]
 
 Options:
 BANNER
