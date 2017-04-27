@@ -42,7 +42,7 @@ module Dapp
           log_thread = Thread.new do
             begin
               deployment.kubernetes.pod_log(name, follow: true) { |chunk| puts chunk }
-            rescue Kubernetes::TimeoutError
+            rescue Kubernetes::Error::Timeout
               deployment.dapp.log_warning('Pod log: read timeout reached!')
             end
           end

@@ -12,6 +12,8 @@ module Dapp
           super({code: :not_found}.merge(net_status))
         end
       end
+
+      class Timeout < Base; end
     end
   end
 end

@@ -106,3 +106,6 @@ en:
       bootstrap_failed: "Bootstrap failed:\n  phase: `%{phase}`\n  message: `%{message}`"
       bootstrap_command_failed: "Bootstrap failed:\n  reason: `%{reason}`\n  message: `%{message}`\n  exit_code: `%{exit_code}`"
       bootstrap_image_not_found: "Bootstrap failed because `%{reason}`: `%{message}`"
+    kubernetes:
+      kube_config_not_found: "Kube config `%{path}` not found!"
+      kube_server_connection_refused: "Kube server `%{url}` connection refused!"
