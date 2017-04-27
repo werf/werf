@@ -57,15 +57,50 @@ module Dapp
       end
 
       def create_service!(conf_spec )
+        srv = nil
         app.deployment.dapp.log_process("Creating kubernetes Service #{conf_spec['metadata']['name']}") do
-          app.deployment.kubernetes.create_service!(conf_spec)
+          srv = app.deployment.kubernetes.create_service!(conf_spec)
         end
+        _dump_service_info srv
       end
 
       def replace_service!(name, conf_spec)
+        srv = nil
         app.deployment.dapp.log_process("Replacing kubernetes Service #{name}") do
-          spec_with_resource_version = merge_kube_service_spec(deployment.kubernetes.service(name), spec)
-          app.deployment.kubernetes.replace_service!(name, spec_with_resource_version)
+          old_spec = deployment.kubernetes.service(name)
+          new_spec = merge_kube_service_spec(old_spec, conf_spec)
+          srv = app.deployment.kubernetes.replace_service!(name, new_spec)
+        end
+        _dump_service_info srv
+      end
+
+      def _dump_service_info(srv)
+        now = Time.now
+        app.deployment.dapp.with_log_indent do
+          events = app.deployment.kubernetes
+            .event_list(fieldSelector: "involvedObject.uid=#{srv['metadata']['uid']}")['items']
+            .select do |event|
+              Time.parse(event['metadata']['creationTimestamp']) >= now
+            end
+
+          app.deployment.dapp.log_info("Events:") if events.any?
+          events.each do |event|
+            app.deployment.dapp.with_log_indent do
+              app.deployment.dapp.log_info("[#{event['metadata']['creationTimestamp']}] #{event['message']}")
+            end
+          end
+
+          app.deployment.dapp.log_info("type: #{srv['spec']['type']}")
+          app.deployment.dapp.log_info("clusterIP: #{srv['spec']['clusterIP']}")
+
+          srv['spec'].fetch('ports', []).each do |port|
+            app.deployment.dapp.log_info("Port #{port['port']}:")
+            app.deployment.dapp.with_log_indent do
+              %w(protocol targetPort nodePort).each do |field_name|
+                app.deployment.dapp.log_info("#{field_name}: #{_field_value_for_log(port[field_name])}")
+              end
+            end
+          end
         end
       end
 
@@ -160,7 +195,7 @@ module Dapp
                         end
                       end
 
-                      ready_condition = pod['status']['conditions'].find {|condition| condition['type'] == 'Ready'}
+                      ready_condition = pod['status'].fetch('conditions', {}).find {|condition| condition['type'] == 'Ready'}
                       next if (not ready_condition) or (ready_condition['status'] == 'True')
 
                       if ready_condition['reason'] == 'ContainersNotReady'

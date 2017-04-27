@@ -3,15 +3,25 @@ module Dapp
     module Config
       module Directive
         class Expose < Base
-          attr_reader :_port, :_cluster_ip
+          attr_reader :_port
+          attr_reader :_type
 
           def initialize(dapp:)
             @_port = []
+            @_type = 'ClusterIP'
             super
           end
 
           def cluster_ip
-            sub_directive_eval { @_cluster_ip = true }
+            sub_directive_eval { @_type = 'ClusterIP' }
+          end
+
+          def load_balancer
+            sub_directive_eval { @_type = 'LoadBalancer' }
+          end
+
+          def node_port
+            sub_directive_eval { @_type = 'NodePort' }
           end
 
           def port(number, &blk)

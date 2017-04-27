@@ -85,6 +85,7 @@ module Dapp
                   h['targetPort'] = port._target unless port._target.nil?
                 end
               end
+              spec['type'] = expose._type
             end
           end
         end
