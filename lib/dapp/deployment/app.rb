@@ -50,11 +50,13 @@ module Dapp
                     container['imagePullPolicy'] = 'Always'
                     container['image']           = [repo, [dimg, image_version].compact.join('-')].join(':')
                     container['name']            = dimg_name
-                    container['ports']           = expose._port.map do |p|
-                      p._list.each_with_index.map do |port, ind|
-                        { "containerPort" => port, 'name' => ['app', ind].join('-'), "protocol" => p._protocol }
-                      end
-                    end.flatten
+                    container['ports']           = expose._port.map do |port|
+                      {
+                        "containerPort" => port._number,
+                        'name' => ['app', port._number].join('-'),
+                        "protocol" => port._protocol
+                      }
+                    end
                   end
                 end
               end
@@ -74,11 +76,15 @@ module Dapp
             end
             service['spec'] = {}.tap do |spec|
               spec['selector'] = kube.labels
-              spec['ports']    = expose._port.map do |p|
-                p._list.each_with_index.map do |port, ind|
-                  { 'port' => port, 'name' => ['service', ind].join('-'), 'protocol' => p._protocol }
+              spec['ports']    = expose._port.map do |port|
+                {
+                  'port' => port._number,
+                  'name' => ['service', port._number].join('-'),
+                  'protocol' => port._protocol
+                }.tap do |h|
+                  h['targetPort'] = port._target unless port._target.nil?
                 end
-              end.flatten
+              end
             end
           end
         end

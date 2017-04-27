@@ -34,10 +34,14 @@ describe Dapp::Deployment::Config::Directive::Expose do
 
     context 'positive' do
       it 'definition' do
-        values = [80, 8080]
-        dappfile_app_expose_port(*values)
+        dappfile_app_expose_port(80)
         expect(app_config._expose._port.length).to be 1
-        expect(app_config._expose._port.first._list).to eq values
+        expect(app_config._expose._port.first._number).to eq 80
+      end
+
+      it 'target port' do
+        dappfile_app_expose_port(80) { target 8080 }
+        expect(app_config._expose._port.first._target).to eq 8080
       end
 
       it 'default protocol' do
@@ -61,6 +65,11 @@ describe Dapp::Deployment::Config::Directive::Expose do
         it "unsupported port value `#{incorrect_value}` (:unsupported_port_number)" do
           dappfile_app_expose_port(incorrect_value)
           expect_exception_code(:unsupported_port_number) { config }
+        end
+
+        it "unsupported target value `#{incorrect_value}` (:unsupported_target_number)" do
+          dappfile_app_expose_port(80) { target incorrect_value }
+          expect_exception_code(:unsupported_target_number) { config }
         end
       end
     end

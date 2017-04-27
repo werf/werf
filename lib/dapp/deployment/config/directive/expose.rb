@@ -14,17 +14,21 @@ module Dapp
             sub_directive_eval { @_cluster_ip = true }
           end
 
-          def port(*args, &blk)
-            sub_directive_eval { @_port << Port.new(*args, dapp: dapp, &blk) }
+          def port(number, &blk)
+            sub_directive_eval { @_port << Port.new(number, dapp: dapp, &blk) }
           end
 
           class Port < Base
-            attr_reader :_list, :_protocol
+            attr_reader :_number, :_target, :_protocol
 
-            def initialize(*args, dapp:, &blk)
-              self._list = args
+            def initialize(number, dapp:, &blk)
+              self._number = number
               @_protocol = 'TCP'
               super(dapp: dapp, &blk)
+            end
+
+            def target(number)
+              @_target = define_number(number, :unsupported_target_number)
             end
 
             def tcp
@@ -35,13 +39,15 @@ module Dapp
               @_protocol = 'UDP'
             end
 
-            def _list=(ports)
-              @_list = begin
-                ports.map do |port|
-                  port.to_i.tap do |p|
-                    raise Error::Config, code: :unsupported_port_number, data: { port: port } unless (0..65536).cover?(p)
-                  end
-                end
+            def _number=(number)
+              @_number = define_number(number, :unsupported_port_number)
+            end
+
+            protected
+
+            def define_number(number, code)
+              number.to_i.tap do |n|
+                raise Error::Config, code: code, data: { number: number } unless (0..65536).cover?(n)
               end
             end
           end
