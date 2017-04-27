@@ -23,7 +23,7 @@ module Dapp
         deployment.kube.labels.merge('dapp-app' => app.name)
       end
 
-      [:deployment, :service].each do |type|
+      [[:deployment, 'Deployment'], [:service, 'Service']].each do |(type, resource_name)|
         define_method "#{type}_exist?" do |name|
           public_send("existing_#{type}s_names").include?(name)
         end
@@ -34,20 +34,38 @@ module Dapp
           end
         end
 
-        define_method "replace_#{type}!" do |name, spec|
-          hash = send(:"merge_kube_#{type}_spec", deployment.kubernetes.public_send(type, name), spec)
-          deployment.kubernetes.public_send(:"replace_#{type}!", name, hash)
-        end
-
         define_method "#{type}_spec_changed?" do |name, spec|
           current_spec = deployment.kubernetes.public_send(type, name)
           current_spec != send(:"merge_kube_#{type}_spec", current_spec, spec)
         end
 
-        [:create, :delete].each do |method|
-          define_method "#{method}_#{type}!" do |*args|
-            deployment.kubernetes.public_send(:"#{method}_#{type}!", *args)
+        define_method "delete_#{type}!" do |*args|
+          deployment.kubernetes.public_send(:"delete_#{type}!", *args)
+        end
+
+        define_method "apply_#{type}!" do |name, spec|
+          if app.kube.send(:"#{type}_exist?", name)
+            if app.kube.send(:"#{type}_spec_changed?", name, spec)
+              app.kube.send(:"replace_#{type}!", name, spec)
+            else
+              app.deployment.dapp.log_step("Kubernetes #{resource_name} #{name} is up to date")
+            end
+          else
+            app.kube.send(:"create_#{type}!", spec)
           end
+        end
+      end
+
+      def create_service!(conf_spec )
+        app.deployment.dapp.log_process("Creating kubernetes Service #{conf_spec['metadata']['name']}") do
+          app.deployment.kubernetes.create_service!(conf_spec)
+        end
+      end
+
+      def replace_service!(name, conf_spec)
+        app.deployment.dapp.log_process("Replacing kubernetes Service #{name}") do
+          spec_with_resource_version = merge_kube_service_spec(deployment.kubernetes.service(name), spec)
+          app.deployment.kubernetes.replace_service!(name, spec_with_resource_version)
         end
       end
 
@@ -59,15 +77,19 @@ module Dapp
         _wait_for_deployment(d)
       end
 
-      def update_deployment!(name, conf_spec)
+      def replace_deployment!(name, conf_spec)
         d = nil
+        old_d_revision = nil
         app.deployment.dapp.log_process("Replacing kubernetes Deployment #{name}") do
-          d = app.deployment.kubernetes.replace_deployment!(name, conf_spec)
+          old_spec = deployment.kubernetes.deployment(name)
+          old_d_revision = old_spec.fetch('metadata', {}).fetch('annotations', {}).fetch('deployment.kubernetes.io/revision', nil)
+          new_spec = merge_kube_deployment_spec(old_spec, conf_spec)
+          d = app.deployment.kubernetes.replace_deployment!(name, new_spec)
         end
-        _wait_for_deployment(d)
+        _wait_for_deployment(d, old_d_revision: old_d_revision)
       end
 
-      def _wait_for_deployment(d)
+      def _wait_for_deployment(d, old_d_revision: nil)
         app.deployment.dapp.log_process("Waiting for kubernetes Deployment #{d['metadata']['name']} readiness", verbose: true) do
           app.deployment.dapp.with_log_indent do
             known_events_by_pod = {}
@@ -77,15 +99,16 @@ module Dapp
 
               app.deployment.dapp.log_step("[#{Time.now}] Poll kubernetes Deployment status")
               app.deployment.dapp.with_log_indent do
-                app.deployment.dapp.log_info("Target replicas: #{d['spec']['replicas']}")
-                app.deployment.dapp.log_info("Updated replicas: #{d['status']['updatedReplicas']} / #{d['spec']['replicas']}")
-                app.deployment.dapp.log_info("Available replicas: #{d['status']['availableReplicas']} / #{d['spec']['replicas']}")
-                app.deployment.dapp.log_info("Ready replicas: #{d['status']['readyReplicas']} / #{d['spec']['replicas']}")
-                app.deployment.dapp.log_info("deployment.kubernetes.io/revision: #{d_revision ? d_revision : '-'}")
+                app.deployment.dapp.log_info("Target replicas: #{_field_value_for_log(d['spec']['replicas'])}")
+                app.deployment.dapp.log_info("Updated replicas: #{_field_value_for_log(d['status']['updatedReplicas'])} / #{_field_value_for_log(d['spec']['replicas'])}")
+                app.deployment.dapp.log_info("Available replicas: #{_field_value_for_log(d['status']['availableReplicas'])} / #{_field_value_for_log(d['spec']['replicas'])}")
+                app.deployment.dapp.log_info("Ready replicas: #{_field_value_for_log(d['status']['readyReplicas'])} / #{_field_value_for_log(d['spec']['replicas'])}")
+                app.deployment.dapp.log_info("Old deployment.kubernetes.io/revision: #{_field_value_for_log(old_d_revision)}")
+                app.deployment.dapp.log_info("Current deployment.kubernetes.io/revision: #{_field_value_for_log(d_revision)}")
               end
 
               rs = nil
-              if d_revision
+              if d_revision and d_revision != old_d_revision
                 # Находим актуальный, текущий ReplicaSet.
                 # Если такая ситуация, когда есть несколько подходящих по revision ReplicaSet, то берем старейший по дате создания.
                 # Также делает kubectl: https://github.com/kubernetes/kubernetes/blob/d86a01570ba243e8d75057415113a0ff4d68c96b/pkg/controller/deployment/util/deployment_util.go#L664
@@ -174,13 +197,14 @@ module Dapp
 
               break if begin
                 d_revision and
-                  d['spec']['replicas'] and
-                    d['status']['updatedReplicas'] and
-                      d['status']['availableReplicas'] and
-                        d['status']['readyReplicas'] and
-                          (d['status']['updatedReplicas'] >= d['spec']['replicas']) and
-                            (d['status']['availableReplicas'] >= d['spec']['replicas']) and
-                              (d['status']['readyReplicas'] >= d['spec']['replicas'])
+                  d_revision != old_d_revision and
+                    d['spec']['replicas'] and
+                      d['status']['updatedReplicas'] and
+                        d['status']['availableReplicas'] and
+                          d['status']['readyReplicas'] and
+                            (d['status']['updatedReplicas'] >= d['spec']['replicas']) and
+                              (d['status']['availableReplicas'] >= d['spec']['replicas']) and
+                                (d['status']['readyReplicas'] >= d['spec']['replicas'])
               end
 
               sleep 1
@@ -188,6 +212,10 @@ module Dapp
             end
           end # with_log_indent
         end
+      end
+
+      def _field_value_for_log(value)
+        value ? value : '-'
       end
 
       def merge_kube_deployment_spec(spec1, spec2)
