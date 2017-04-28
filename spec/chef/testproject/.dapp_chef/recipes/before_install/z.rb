@@ -1,4 +1,4 @@
-template '/X_foo.txt' do
+template '/z_foo.txt' do
   require 'securerandom'
   source 'foo.txt.erb'
   variables(var: SecureRandom.uuid)

@@ -8,7 +8,7 @@ module Dapp
 
         def message(exception)
           net_status = net_status(exception)
-          net_status[:message] || [net_status[:error], net_status[:code]].compact.join(': ')
+          net_status[:message] || [net_status[:error], net_status[:code], net_status[:data]].compact.join(': ')
         end
 
         def before_error_message(exception)

@@ -7,6 +7,10 @@ module Dapp
         @dapp = dapp
       end
 
+      def kube
+        @kube ||= KubeDeployment.new(self)
+      end
+
       def apps
         @apps ||= dapp.config._app.map { |app_config| App.new(app_config: app_config, deployment: self) }
       end

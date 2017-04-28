@@ -135,11 +135,11 @@ describe Dapp::Dimg::Builder::Chef do
       define_method :config do
         @config ||= default_config.merge(
           _builder: :chef,
-          _name: "#{testproject_path.basename}-X-Y",
+          _name: "#{testproject_path.basename}-x-y",
           _docker: default_config[:_docker].merge(_from: os.to_sym),
           _chef: {
             _dimod: ['dimod-test', 'dimod-test2'],
-            _recipe: %w(main X X_Y),
+            _recipe: %w(main x x_y),
             _cookbook: ConfigHash.new(
               'build-essential' => {name: 'build-essential', version_constraint: '~> 8.0.0'},
               'dimod-test' => {name: 'dimod-test', path: File.expand_path('../dimod-test', dapp.path)},
@@ -285,7 +285,7 @@ describe Dapp::Dimg::Builder::Chef do
     _stages_of_dimg(artifact_dimg)
   end
 
-  TEST_FILE_NAMES = %i(foo X_foo X_Y_foo bar baz qux
+  TEST_FILE_NAMES = %i(foo x_foo x_y_foo bar baz qux
                        burger pizza taco pelmeni
                        kolokolchik koromyslo taburetka batareika
                        dapp_before_install dapp_install

@@ -102,17 +102,29 @@ module Dapp
         with_connection do |conn|
           request_parameters = {method: method, path: path, query: @query_parameters.merge(query_parameters)}
           request_parameters[:body] = JSON.dump(body) if body
-          load_body! conn.request(request_parameters)
+          load_body! conn.request(request_parameters), request_parameters
         end
       end
 
-      def load_body!(response)
+      def load_body!(response, request_parameters)
         if response.status.to_s.start_with? '5'
-          raise Error::Kubernetes, code: :server_error, data: {http_status: response.status, http_body: response.body}
+          raise Error::Kubernetes, code: :server_error, data: {
+            response_http_status: response.status,
+            response_http_body: response.body,
+            request_parameters: request_parameters
+          }
         else
           body = JSON.load(response.body)
-          raise Error::NotFound if response.status.to_s == '404'
-          raise Error::Kubernetes, code: :bad_request, data: {body: body} unless response.status.to_s.start_with? '2'
+
+          raise Error::NotFound, data: {
+            request_parameters: request_parameters
+          } if response.status.to_s == '404'
+
+          raise Error::Kubernetes, code: :bad_request, data: {
+            response_body: body,
+            request_parameters: request_parameters
+          } unless response.status.to_s.start_with? '2'
+
           body
         end
       end
