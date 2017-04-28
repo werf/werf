@@ -48,7 +48,7 @@ module Dapp
               end
 
               def run(*args)
-                sub_directive_eval { @_run.concat(args) }
+                sub_directive_eval { @_run.concat(args.flatten) }
               end
 
               def version(value)

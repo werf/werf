@@ -18,11 +18,11 @@ module Dapp
             end
 
             def volume(*args)
-              sub_directive_eval { @_volume.concat(args) }
+              sub_directive_eval { @_volume.concat(args.flatten) }
             end
 
             def expose(*args)
-              sub_directive_eval { @_expose.concat(args) }
+              sub_directive_eval { @_expose.concat(args.flatten) }
             end
 
             def env(**options)
@@ -34,11 +34,11 @@ module Dapp
             end
 
             def cmd(*args)
-              sub_directive_eval { @_cmd.concat(args) }
+              sub_directive_eval { @_cmd.concat(args.flatten) }
             end
 
             def onbuild(*args)
-              sub_directive_eval { @_onbuild.concat(args) }
+              sub_directive_eval { @_onbuild.concat(args.flatten) }
             end
 
             def workdir(path)

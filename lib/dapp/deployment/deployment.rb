@@ -3,6 +3,7 @@ module Dapp
     class Deployment
       include Mod::Namespace
       include Mod::SystemEnvironments
+      include Mod::Jobs
 
       attr_reader :dapp
 
@@ -30,40 +31,7 @@ module Dapp
         @kubernetes ||= Kubernetes.new(namespace: namespace)
       end
 
-      def to_kube_bootstrap_pods(repo, image_version)
-        return {} if deployment_config._bootstrap.empty?
-
-        {}.tap do |hash|
-          hash[bootstrap_pod_name] = {}.tap do |pod|
-            pod['metadata'] = {}.tap do |metadata|
-              metadata['name']   = bootstrap_pod_name
-              metadata['labels'] = kube.labels
-            end
-            pod['spec'] = {}.tap do |spec|
-              spec['restartPolicy'] = 'Never'
-              spec['containers']    = [].tap do |containers|
-                containers << {}.tap do |container|
-                  envs = [environment, secret_environment]
-                           .select { |env| !env.empty? }
-                           .map { |h| h.map { |k, v| { name: k, value: v } } }
-                           .flatten
-                  container['env']             = envs unless envs.empty?
-                  container['imagePullPolicy'] = 'Always'
-                  container['command']         = deployment_config._bootstrap._run
-                  container['image']           = [repo, [dapp.config._bootstrap._dimg, image_version].compact.join('-')].join(':')
-                  container['name']            = bootstrap_pod_name
-                end
-              end
-            end
-          end
-        end
-      end
-
       protected
-
-      def bootstrap_pod_name
-        name('bootstrap')
-      end
 
       def deployment_config
         dapp.config._deployment

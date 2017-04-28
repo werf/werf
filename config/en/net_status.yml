@@ -71,6 +71,8 @@ en:
       namespace_name_incorrect: "Namespace has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
       deployment_bootstrap_dimg_not_defined: "Not defined dimg for deployment.bootstrap!"
       deployment_bootstrap_dimg_not_found: "Not found dimg `%{dimg}` for deployment.bootstrap!"
+      deployment_before_apply_job_dimg_not_defined: "Not defined dimg for deployment.before_apply_job!"
+      deployment_before_apply_job_dimg_not_found: "Not found dimg `%{dimg}` for deployment.before_apply_job!"
     chef:
       stage_checksum_not_calculated: "Chef stage `%{stage}` checksum is not calculated yet, run build first"
       stage_path_overlap: "Cannot install `%{cookbook}` cookbook's path %{from} into %{to}: already exists"
