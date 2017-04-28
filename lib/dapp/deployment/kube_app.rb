@@ -105,11 +105,17 @@ module Dapp
           old_spec = deployment.kubernetes.deployment(name)
           old_d_revision = old_spec.fetch('metadata', {}).fetch('annotations', {}).fetch('deployment.kubernetes.io/revision', nil)
           new_spec = merge_kube_deployment_spec(old_spec, conf_spec)
+          new_spec.fetch('metadata', {}).fetch('annotations', {}).delete('deployment.kubernetes.io/revision')
           d = app.deployment.kubernetes.replace_deployment!(name, new_spec)
         end
         _wait_for_deployment(d, old_d_revision: old_d_revision)
       end
 
+      # NOTICE: old_d_revision на данный момент выводится на экран как информация для дебага.
+      # NOTICE: deployment.kubernetes.io/revision не меняется при изменении количества реплик, поэтому
+      # NOTICE: критерий ожидания по изменению ревизии не верен.
+      # NOTICE: Однако, при обновлении deployment ревизия сбрасывается и ожидание переустановки этой ревизии
+      # NOTICE: является одним из критериев завершения ожидания на данный момент.
       def _wait_for_deployment(d, old_d_revision: nil)
         app.deployment.dapp.log_process("Waiting for kubernetes Deployment #{d['metadata']['name']} readiness", verbose: true) do
           app.deployment.dapp.with_log_indent do
@@ -129,7 +135,7 @@ module Dapp
               end
 
               rs = nil
-              if d_revision and d_revision != old_d_revision
+              if d_revision
                 # Находим актуальный, текущий ReplicaSet.
                 # Если такая ситуация, когда есть несколько подходящих по revision ReplicaSet, то берем старейший по дате создания.
                 # Также делает kubectl: https://github.com/kubernetes/kubernetes/blob/d86a01570ba243e8d75057415113a0ff4d68c96b/pkg/controller/deployment/util/deployment_util.go#L664
@@ -218,14 +224,13 @@ module Dapp
 
               break if begin
                 d_revision and
-                  d_revision != old_d_revision and
-                    d['spec']['replicas'] and
-                      d['status']['updatedReplicas'] and
-                        d['status']['availableReplicas'] and
-                          d['status']['readyReplicas'] and
-                            (d['status']['updatedReplicas'] >= d['spec']['replicas']) and
-                              (d['status']['availableReplicas'] >= d['spec']['replicas']) and
-                                (d['status']['readyReplicas'] >= d['spec']['replicas'])
+                  d['spec']['replicas'] and
+                    d['status']['updatedReplicas'] and
+                      d['status']['availableReplicas'] and
+                        d['status']['readyReplicas'] and
+                          (d['status']['updatedReplicas'] >= d['spec']['replicas']) and
+                            (d['status']['availableReplicas'] >= d['spec']['replicas']) and
+                              (d['status']['readyReplicas'] >= d['spec']['replicas'])
               end
 
               sleep 1
