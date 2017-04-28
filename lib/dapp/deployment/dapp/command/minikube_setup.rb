@@ -113,7 +113,7 @@ module Dapp
               600.times do
                 begin
                   return if _minikube_kubernetes.service?('kube-dns')
-                rescue Excon::Error::Socket
+                rescue Kubernetes::Error::ConnectionRefused
                 end
 
                 sleep 1

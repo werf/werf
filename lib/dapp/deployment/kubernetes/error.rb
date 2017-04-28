@@ -14,6 +14,7 @@ module Dapp
       end
 
       class Timeout < Base; end
+      class ConnectionRefused < Base; end
     end
   end
 end
