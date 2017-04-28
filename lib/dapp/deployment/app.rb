@@ -42,10 +42,6 @@ module Dapp
               spec['template']['spec'] = {}.tap do |template_spec|
                 template_spec['containers'] = [].tap do |containers|
                   containers << {}.tap do |container|
-                    envs = [environment, secret_environment]
-                             .select { |env| !env.empty? }
-                             .map { |h| h.map { |k, v| { name: k, value: v } } }
-                             .flatten
                     ports = expose._port.map do |port|
                       {
                         'containerPort' => port._number,
@@ -58,7 +54,7 @@ module Dapp
                     container['imagePullPolicy'] = 'Always'
                     container['image']           = [repo, [dimg, image_version].compact.join('-')].join(':')
                     container['name']            = dimg_name
-                    container['env']             = envs unless envs.empty?
+                    container['env']             = environments unless environments.empty?
                     container['ports']           = ports unless expose._port.empty?
                     container['volumeMounts']    = volume_mounts
                   end

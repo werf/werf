@@ -20,16 +20,11 @@ module Dapp
                 spec['restartPolicy'] = 'Never'
                 spec['containers'] = [].tap do |containers|
                   containers << {}.tap do |container|
-                    envs = [environment, secret_environment]
-                             .select { |env| !env.empty? }
-                             .map { |h| h.map { |k, v| { name: k, value: v } } }
-                             .flatten
-
                     container['imagePullPolicy'] = 'Always'
                     container['image']           = [repo, [directive_config._dimg || config._dimg, image_version].compact.join('-')].join(':')
                     container['name']            = name(directive)
                     container['command']         = directive_config._run unless directive_config._run.empty?
-                    container['env']             = envs unless envs.empty?
+                    container['env']             = environments unless environments.empty?
                   end
                 end
               end
