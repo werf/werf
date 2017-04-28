@@ -27,7 +27,7 @@ module Dapp
             break if current_spec['status']['phase'] != 'Pending'
             unless current_spec['status']['containerStatuses'].nil?
               current_spec['status']['containerStatuses'].first['state'].each do |_, desc|
-                if desc['reason'] == 'ErrImagePull'
+                if ['ErrImagePull', 'ImagePullBackOff'].include? desc['reason']
                   raise Error::Deployment,
                         code: :bootstrap_image_not_found,
                         data: { reason: desc['reason'], message: desc['message'] }
