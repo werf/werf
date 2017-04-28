@@ -49,12 +49,12 @@ module Dapp
 
         protected
 
-        def shellout_with_logging(log_verbose: false, **kwargs)
+        def shellout_with_logging(log_verbose: false, force_log: false, **kwargs)
           return yield(**kwargs) unless instance_of? Dapp
 
           begin
             stream = Stream.new
-            if log_verbose && log_verbose?
+            if force_log || (log_verbose && log_verbose?)
               kwargs[:live_stream] = Proxy::Base.new(stream, STDOUT, with_time: log_time?)
             else
               kwargs[:live_stdout] = Proxy::Base.new(stream, with_time: log_time?)
