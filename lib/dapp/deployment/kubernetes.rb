@@ -1,12 +1,9 @@
 module Dapp
   module Deployment
     class Kubernetes
-      class TimeoutError < Error::Kubernetes; end
-
       def initialize(namespace: nil)
         @namespace = namespace
         @query_parameters = {}
-        @kube_config = YAML.load_file(File.join(ENV['HOME'], '.kube/config'))
       end
 
       def namespace
@@ -86,7 +83,7 @@ module Dapp
                  excon_parameters: excon_parameters,
                  **{ follow: follow }.merge(query_parameters))
       rescue Excon::Error::Timeout
-        raise TimeoutError
+        raise Error::Timeout
       end
 
       def event_list(**query_parameters)
@@ -131,17 +128,40 @@ module Dapp
         old_middlewares = Excon.defaults[:middlewares].dup
 
         begin
-          Excon.defaults[:ssl_ca_file] = @kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority', nil)
+          Excon.defaults[:ssl_ca_file] = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority', nil)
           Excon.defaults[:middlewares] << Excon::Middleware::RedirectFollower
 
-          return yield Excon.new(
-            @kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('server', nil),
-            **{ client_cert: @kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-certificate', nil),
-                client_key: @kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key', nil) }.merge(excon_parameters)
-          )
+          return yield Excon.new(kube_server_url, **kube_server_options(excon_parameters))
         ensure
           Excon.defaults[:ssl_ca_file] = old_ssl_ca_file
           Excon.defaults[:middlewares] = old_middlewares
+        end
+      end
+
+      def kube_server_url
+        @kube_server_url ||= begin
+          kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('server', nil).tap do |url|
+            begin
+              Excon.new(url, **kube_server_options).get
+            rescue Excon::Error::Socket
+              raise Error::Base, code: :kube_server_connection_refused, data: { url: url }
+            end
+          end
+        end
+      end
+
+      def kube_server_options(excon_parameters = {})
+        { client_cert: kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-certificate', nil),
+          client_key: kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key', nil) }.merge(excon_parameters)
+      end
+
+      def kube_config
+        @kube_config ||= begin
+          if File.exist?((kube_config_path = File.join(ENV['HOME'], '.kube/config')))
+            YAML.load_file(kube_config_path)
+          else
+            raise Error::Base, code: :kube_config_not_found, data: { path: kube_config_path }
+          end
         end
       end
     end
