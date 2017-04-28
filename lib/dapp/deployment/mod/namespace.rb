@@ -15,6 +15,13 @@ module Dapp
             .each_with_object({}) { |(k, v), environments| environments[k] = secret.extract(v) }
         end
 
+        def environments
+          [environment, secret_environment]
+            .select { |env| !env.empty? }
+            .map { |h| h.map { |k, v| { 'name' => k.to_s, 'value' => v.to_s } } }
+            .flatten
+        end
+
         def scale
           namespace_config_directive(:_scale) || config._scale || 1
         end
