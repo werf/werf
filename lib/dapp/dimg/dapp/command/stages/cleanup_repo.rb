@@ -4,8 +4,8 @@ module Dapp
       module Command
         module Stages
           module CleanupRepo
-            def stages_cleanup_repo(repo)
-              lock_repo(repo) do
+            def stages_cleanup_repo
+              lock_repo(repo = option_repo) do
                 raise Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
                 registry = registry(repo)

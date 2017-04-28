@@ -3,7 +3,10 @@ module Dapp
     module Dapp
       module Command
         module Apply
-          def deployment_apply(repo, image_version)
+          def deployment_apply
+            repo = option_repo
+            image_version = options[:image_version]
+
             validate_repo_name!(repo)
             validate_tag_name!(image_version)
 

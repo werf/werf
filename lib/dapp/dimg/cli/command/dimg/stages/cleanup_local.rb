@@ -27,7 +27,7 @@ BANNER
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
             repository = repo
-            ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments)).send(run_method, repository)
+            ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments, repo: repository)).send(run_method)
           end
 
           def repo

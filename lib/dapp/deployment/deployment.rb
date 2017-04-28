@@ -12,7 +12,7 @@ module Dapp
       end
 
       def apps
-        @apps ||= dapp.config._app.map { |app_config| App.new(app_config: app_config, deployment: self) }
+        @apps ||= dapp.apps_configs.map { |app_config| App.new(app_config: app_config, deployment: self) }
       end
 
       def namespace

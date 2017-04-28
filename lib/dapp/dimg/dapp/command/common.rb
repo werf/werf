@@ -97,6 +97,13 @@ module Dapp
           def spush_format
             '%{repo}:%{tag}'
           end
+
+          def option_repo
+            unless options[:repo].nil?
+              return "localhost:5000/#{name}" if options[:repo] == ':minikube'
+              options[:repo]
+            end
+          end
         end
       end
     end

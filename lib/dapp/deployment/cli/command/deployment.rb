@@ -8,7 +8,7 @@ Usage: dapp deployment sub-command [sub-command options]
 
 Available subcommands: (for details, dapp deployment SUB-COMMAND --help)
 
-  dapp deployment apply [options] REPO IMAGE_VERSION
+  dapp deployment apply [options] [APP ...] REPO
   dapp deployment secret key generate
   dapp deployment secret generate
   dapp deployment minikube setup
