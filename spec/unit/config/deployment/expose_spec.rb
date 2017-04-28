@@ -20,7 +20,27 @@ describe Dapp::Deployment::Config::Directive::Expose do
     dappfile_app_expose do
       cluster_ip
     end
-    expect(app_config._expose._cluster_ip).to be_truthy
+    expect(app_config._expose._type).to eq('ClusterIP')
+  end
+
+  it 'load_balancer' do
+    dappfile_app_expose do
+      load_balancer
+    end
+    expect(app_config._expose._type).to eq('LoadBalancer')
+  end
+
+  it 'load_balancer' do
+    dappfile_app_expose do
+      node_port
+    end
+    expect(app_config._expose._type).to eq('NodePort')
+  end
+
+  it 'default type' do
+    dappfile_app_expose do
+    end
+    expect(app_config._expose._type).to eq('ClusterIP')
   end
 
   context 'port' do

@@ -125,7 +125,7 @@ describe Dapp::Deployment::Config::Directive::Group do
           end
           app
         end
-        expect(app_config._expose._cluster_ip).to be_falsey
+        expect(app_config._expose._type).to eq('ClusterIP')
         expect(app_config._expose._port.first._number).to eq(80)
         expect(app_config._expose._port.first._protocol).to eq('UDP')
       end
@@ -144,8 +144,73 @@ describe Dapp::Deployment::Config::Directive::Group do
             end
           end
         end
-        expect(app_config._expose._cluster_ip).to be_truthy
+        expect(app_config._expose._type).to eq('ClusterIP')
         expect(app_config._expose._port.length).to eq(2)
+      end
+
+      it 'redefines default group expose type' do
+        dappfile_deployment_group do
+          expose do
+            port(80)
+          end
+          app 'x' do
+            expose do
+              load_balancer
+            end
+          end
+          app 'y'
+          app 'z' do
+            expose do
+              cluster_ip
+            end
+          end
+        end
+
+        apps_configs.find {|app| app._name == 'x'}.tap do |app|
+          expect(app).not_to be_nil
+          expect(app._expose._type).to eq('LoadBalancer')
+        end
+        apps_configs.find {|app| app._name == 'y'}.tap do |app|
+          expect(app).not_to be_nil
+          expect(app._expose._type).to eq('ClusterIP')
+        end
+        apps_configs.find {|app| app._name == 'z'}.tap do |app|
+          expect(app).not_to be_nil
+          expect(app._expose._type).to eq('ClusterIP')
+        end
+      end
+
+      it 'redefines specified group expose type' do
+        dappfile_deployment_group do
+          expose do
+            load_balancer
+            port(80)
+          end
+          app 'x' do
+            expose do
+              load_balancer
+            end
+          end
+          app 'y'
+          app 'z' do
+            expose do
+              node_port
+            end
+          end
+        end
+
+        apps_configs.find {|app| app._name == 'x'}.tap do |app|
+          expect(app).not_to be_nil
+          expect(app._expose._type).to eq('LoadBalancer')
+        end
+        apps_configs.find {|app| app._name == 'y'}.tap do |app|
+          expect(app).not_to be_nil
+          expect(app._expose._type).to eq('LoadBalancer')
+        end
+        apps_configs.find {|app| app._name == 'z'}.tap do |app|
+          expect(app).not_to be_nil
+          expect(app._expose._type).to eq('NodePort')
+        end
       end
     end
 
