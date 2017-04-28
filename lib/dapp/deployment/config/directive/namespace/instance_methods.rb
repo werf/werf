@@ -28,7 +28,6 @@ module Dapp
             def namespace_init_variables!
               @_environment        = {}
               @_secret_environment = {}
-              @_scale              = 1
             end
           end # InstanceMethods
         end # Namespace
