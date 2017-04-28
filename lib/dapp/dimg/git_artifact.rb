@@ -12,7 +12,7 @@ module Dapp
         @repo = repo
         @name = name
 
-        @branch = branch || repo.dimg.dapp.cli_options[:git_artifact_branch] || repo.branch
+        @branch = branch || repo.dimg.dapp.options[:git_artifact_branch] || repo.branch
         @commit = commit
 
         @to = to

@@ -3,31 +3,35 @@ module Dapp
     module Logging
       module Base
         def log_quiet?
-          cli_options[:log_quiet]
+          options[:log_quiet]
         end
 
         def log_time?
-          cli_options[:log_time]
+          options[:log_time]
         end
 
         def log_verbose?
-          cli_options[:log_verbose]
+          options[:log_verbose]
         end
 
         def ignore_config_warning?
-          cli_options[:ignore_config_warning]
+          options[:ignore_config_warning]
         end
 
         def introspect_error?
-          cli_options[:introspect_error]
+          options[:introspect_error]
         end
 
         def introspect_before_error?
-          cli_options[:introspect_before_error]
+          options[:introspect_before_error]
         end
 
         def dry_run?
-          cli_options[:dry_run]
+          options[:dry_run]
+        end
+
+        def dev_mode?
+          options[:dev].nil? ? config._dev_mode : options[:dev]
         end
 
         def dev_mode?

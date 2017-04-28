@@ -15,7 +15,7 @@ module Dapp
       end
 
       def work_dir
-        File.expand_path(cli_options[:dir] || Dir.pwd)
+        File.expand_path(options[:dir] || Dir.pwd)
       end
 
       def expand_path(path, number = 1)

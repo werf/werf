@@ -5,7 +5,7 @@ module Dapp
       end
 
       def stage_should_be_introspected?(name)
-        dapp.cli_options[:introspect_artifact_stage] == name
+        dapp.options[:introspect_artifact_stage] == name
       end
 
       def artifact?

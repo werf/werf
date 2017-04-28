@@ -1,7 +1,7 @@
-module Dapp
-  module Dimg
-    module CLI
-      class Stages
+module Dapp::Dimg::CLI
+  module Command
+    class Dimg < ::Dapp::CLI
+      class Stages < ::Dapp::CLI
         class CleanupLocal < Base
           banner <<BANNER.freeze
 Usage:
@@ -27,7 +27,7 @@ BANNER
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
             repository = repo
-            ::Dapp::Dapp.new(cli_options: config, dimgs_patterns: cli_arguments).send(run_method, repository)
+            ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments)).send(run_method, repository)
           end
 
           def repo

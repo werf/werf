@@ -59,11 +59,11 @@ module Dapp
             end
 
             def proper_repo_cache?
-              !!cli_options[:proper_repo_cache]
+              !!options[:proper_repo_cache]
             end
 
             def proper_git_commit?
-              !!cli_options[:proper_git_commit]
+              !!options[:proper_git_commit]
             end
 
             def stages_cleanup_option?

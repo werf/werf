@@ -1,6 +1,6 @@
-module Dapp
-  module Dimg
-    module CLI
+module Dapp::Dimg::CLI
+  module Command
+    class Dimg < ::Dapp::CLI
       class BuildContext < ::Dapp::CLI
         SUBCOMMANDS = %w(import export).freeze
 

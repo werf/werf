@@ -11,9 +11,15 @@ module Dapp
             end
           end
         end
+
+        def dimgs_patterns
+          @dimgs_patterns ||= begin
+            (options[:dimgs_patterns] || []).tap do |dimgs_patterns|
+              dimgs_patterns << '*' unless dimgs_patterns.any?
+            end
+          end
+        end
       end # Dappfile
     end # Dapp
   end # Dimg
 end # Dapp
-
-::Dapp::Dapp.send(:include, ::Dapp::Dimg::Dapp::Dappfile)
