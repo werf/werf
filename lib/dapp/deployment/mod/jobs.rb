@@ -27,7 +27,7 @@ module Dapp
                     container['env'] = envs unless envs.empty?
                     container['imagePullPolicy'] = 'Always'
                     container['command'] = directive_config._run
-                    container['image'] = [repo, [directive_config._dimg, image_version].compact.join('-')].join(':')
+                    container['image'] = [repo, [directive_config._dimg || config._dimg, image_version].compact.join('-')].join(':')
                     container['name'] = name(directive)
                   end
                 end

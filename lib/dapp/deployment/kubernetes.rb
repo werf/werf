@@ -42,7 +42,7 @@ module Dapp
 
       {
         '/api/v1' => [:service, :replicationcontroller, :pod],
-        '/apis/extensions/v1beta1' => [:deployment]
+        '/apis/extensions/v1beta1' => [:deployment, :replicaset]
       }.each do |api, objects|
         objects.each do |object|
           define_method :"#{object}_list" do |**query_parameters|
@@ -87,6 +87,10 @@ module Dapp
                  **{ follow: follow }.merge(query_parameters))
       rescue Excon::Error::Timeout
         raise TimeoutError
+      end
+
+      def event_list(**query_parameters)
+        request!(:get, "/api/v1/namespaces/#{namespace}/events", **query_parameters)
       end
 
       protected
