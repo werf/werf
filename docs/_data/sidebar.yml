@@ -30,7 +30,7 @@ entries:
   - title: Сложная сборка
     folderitems:
 
-    - title: Уменьшаем размеры образа и включаем кеширование с помощью mount
+    - title: Уменьшаем размеры образа и включаем кэширование с помощью mount
       url: /mount_for_advanced_build.html
 
     - title: Артефакт

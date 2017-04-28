@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   s.executables = ['dapp']
 
   s.required_ruby_version = '>= 2.1'
+  s.required_rubygems_version = '>= 2.5.0'
 
   s.add_dependency 'mixlib-shellout', '>= 1.0', '< 3.0'
   s.add_dependency 'mixlib-cli', '>= 1.0', '< 3.0'
