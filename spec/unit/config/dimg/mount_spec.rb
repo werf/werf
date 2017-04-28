@@ -1,8 +1,8 @@
-require_relative '../../spec_helper'
+require_relative '../../../spec_helper'
 
 describe Dapp::Dimg::Config::Directive::Mount do
   include SpecHelper::Common
-  include SpecHelper::Config
+  include SpecHelper::Config::Dimg
 
   def dappfile_dimg_mount(type, to)
     dappfile do
