@@ -27,6 +27,7 @@ en:
       tag_name_incorrect: "Incorrect tag name `%{name}` given!"
       context_directory_not_found: "Context directory `%{path}` not found!"
       stored_build_dir_already_exist: "Cannot store current build_dir `%{path}`: restore or delete old build_dir!"
+      secret_key_not_found: "Secret key `DAPP_SECRET_KEY` not found!"
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       dappfile_not_found: "Dappfile not found!"

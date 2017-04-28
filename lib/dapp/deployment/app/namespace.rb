@@ -9,8 +9,11 @@ module Dapp
         end
 
         def secret_environment
+          return {} if deployment.dapp.secret.nil?
           (namespace_config_directive(:_secret_environment) || {})
             .merge(app_config._secret_environment)
+            .map { |k, v| [k, deployment.dapp.secret.extract(v)] }
+            .to_h
         end
 
         def scale
