@@ -126,7 +126,7 @@ describe Dapp::Deployment::Config::Directive::Group do
           app
         end
         expect(app_config._expose._cluster_ip).to be_falsey
-        expect(app_config._expose._port.first._list).to eq([80])
+        expect(app_config._expose._port.first._number).to eq(80)
         expect(app_config._expose._port.first._protocol).to eq('UDP')
       end
 
