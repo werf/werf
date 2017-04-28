@@ -46,17 +46,19 @@ module Dapp
                              .select { |env| !env.empty? }
                              .map { |h| h.map { |k, v| { name: k, value: v } } }
                              .flatten
-                    container['env']             = envs unless envs.empty?
+                    ports = expose._port.map do |port|
+                      {
+                        'containerPort' => port._number,
+                        'name' => ['app', port._number].join('-'),
+                        'protocol' => port._protocol
+                      }
+                    end
+
                     container['imagePullPolicy'] = 'Always'
                     container['image']           = [repo, [dimg, image_version].compact.join('-')].join(':')
                     container['name']            = dimg_name
-                    container['ports']           = expose._port.map do |port|
-                      {
-                        "containerPort" => port._number,
-                        'name' => ['app', port._number].join('-'),
-                        "protocol" => port._protocol
-                      }
-                    end
+                    container['env']             = envs unless envs.empty?
+                    container['ports']           = ports unless expose._port.empty?
                   end
                 end
               end

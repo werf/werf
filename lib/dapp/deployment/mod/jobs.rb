@@ -13,7 +13,7 @@ module Dapp
           {}.tap do |hash|
             hash[name(directive)] = {}.tap do |pod|
               pod['metadata'] = {}.tap do |metadata|
-                metadata['name'] = name(directive)
+                metadata['name']   = name(directive)
                 metadata['labels'] = kube.labels
               end
               pod['spec'] = {}.tap do |spec|
@@ -24,11 +24,12 @@ module Dapp
                              .select { |env| !env.empty? }
                              .map { |h| h.map { |k, v| { name: k, value: v } } }
                              .flatten
-                    container['env'] = envs unless envs.empty?
+
                     container['imagePullPolicy'] = 'Always'
-                    container['command'] = directive_config._run
-                    container['image'] = [repo, [directive_config._dimg || config._dimg, image_version].compact.join('-')].join(':')
-                    container['name'] = name(directive)
+                    container['image']           = [repo, [directive_config._dimg || config._dimg, image_version].compact.join('-')].join(':')
+                    container['name']            = name(directive)
+                    container['command']         = directive_config._run unless directive_config._run.empty?
+                    container['env']             = envs unless envs.empty?
                   end
                 end
               end
