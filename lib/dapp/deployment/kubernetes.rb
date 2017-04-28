@@ -1,11 +1,7 @@
 module Dapp
   module Deployment
     class Kubernetes
-      class Error < ::Dapp::Deployment::Error::Base
-        def initialize(net_status = {})
-          super(net_status.merge(context: 'kubernetes'))
-        end
-      end
+      class Error::NotFound < Error::Kubernetes; end
 
       def initialize(namespace: nil)
         @namespace = namespace
@@ -39,16 +35,54 @@ module Dapp
 
       # Падает, если объекта нет
       def deployment(name)
-        raise
+        request!(:get, "/apis/extensions/v1beta1/namespaces/#{namespace}/deployments/#{name}")
       end
 
       # Возвращает true/false
       def deployment?(name)
-        raise
+        service(name)
+        true
+      rescue Error::NotFound
+        false
       end
 
       def create_deployment!(spec)
         request!(:post, "/apis/extensions/v1beta1/namespaces/#{namespace}/deployments", body: spec)
+      end
+
+      def replace_deployment!(name, spec)
+        request!(:put, "/apis/extensions/v1beta1/namespaces/#{namespace}/deployments/#{name}", body: spec)
+      end
+
+      def delete_deployment!(name)
+        request!(:delete, "/apis/extensions/v1beta1/namespaces/#{namespace}/deployments/#{name}")
+      end
+
+      def service_list
+        request!(:get, "/api/v1/namespaces/#{namespace}/services")
+      end
+
+      def service(name)
+        request!(:get, "/api/v1/namespaces/#{namespace}/services/#{name}")
+      end
+
+      def service?(name)
+        service(name)
+        true
+      rescue Error::NotFound
+        false
+      end
+
+      def create_service!(spec)
+        request!(:post, "/api/v1/namespaces/#{namespace}/services", body: spec)
+      end
+
+      def replace_service!(name, spec)
+        request!(:put, "/api/v1/namespaces/#{namespace}/services/#{name}", body: spec)
+      end
+
+      def delete_service!(name)
+        request!(:delete, "/api/v1/namespaces/#{namespace}/services/#{name}")
       end
 
       protected
@@ -65,10 +99,11 @@ module Dapp
 
       def load_body!(response)
         if response.status.to_s.start_with? '5'
-          raise Error, code: :server_error, data: {http_status: response.status, http_body: response.body}
+          raise Error::Kubernetes, code: :server_error, data: {http_status: response.status, http_body: response.body}
         else
           body = JSON.load(response.body)
-          raise Error, code: :bad_request, data: {body: body} unless response.status.to_s.start_with? '2'
+          raise Error::NotFound if response.status.to_s == '404'
+          raise Error::Kubernetes, code: :bad_request, data: {body: body} unless response.status.to_s.start_with? '2'
           body
         end
       end
