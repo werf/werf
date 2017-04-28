@@ -53,14 +53,23 @@ module Dapp
                         'protocol' => port._protocol
                       }
                     end
+                    volume_mounts = [{'mountPath' => '/.data', 'name' => "volume-#{self.name}"}]
 
                     container['imagePullPolicy'] = 'Always'
                     container['image']           = [repo, [dimg, image_version].compact.join('-')].join(':')
                     container['name']            = dimg_name
                     container['env']             = envs unless envs.empty?
                     container['ports']           = ports unless expose._port.empty?
+                    container['volumeMounts']    = volume_mounts
                   end
                 end
+
+                template_spec['volumes'] = [
+                  {
+                    'name' => "volume-#{name}",
+                    'hostPath' => {'path' => "/var/lib/dapp/deployment/volumes/#{self.deployment.name}/#{self.name}"}
+                  }
+                ]
               end
             end
           end
