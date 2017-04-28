@@ -25,7 +25,7 @@ describe Dapp::Dimg::Config::Directive::Shell do
 
     it attr do
       expect_array_attribute(:run, method("dappfile_dimg_shell_#{attr}")) do |*args|
-        expect(dimg._shell.send("_#{attr}_command")).to eq args
+        expect(dimg_config._shell.send("_#{attr}_command")).to eq args
       end
     end
 
@@ -36,7 +36,7 @@ describe Dapp::Dimg::Config::Directive::Shell do
         end
       end
 
-      expect(dimg._shell.send("_#{attr}_version")).to eq 'version'
+      expect(dimg_config._shell.send("_#{attr}_version")).to eq 'version'
     end
   end
 end

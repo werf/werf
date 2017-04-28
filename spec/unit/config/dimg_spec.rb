@@ -1,6 +1,6 @@
 require_relative '../../spec_helper'
 
-describe Dapp::Dimg::Config::Dimg do
+describe Dapp::Dimg::Config::Directive::Dimg do
   include SpecHelper::Common
   include SpecHelper::Config
 
@@ -9,7 +9,7 @@ describe Dapp::Dimg::Config::Dimg do
       dappfile do
         dimg
       end
-      expect(dimg._dev_mode).to eq false
+      expect(config._dev_mode).to eq false
     end
 
     it 'base (2)' do
@@ -17,16 +17,7 @@ describe Dapp::Dimg::Config::Dimg do
         dev_mode
         dimg
       end
-      expect(dimg._dev_mode).to eq true
-    end
-
-    it 'base (3)' do
-      dappfile do
-        dimg do
-          dev_mode
-        end
-      end
-      expect(dimg._dev_mode).to eq true
+      expect(config._dev_mode).to eq true
     end
   end
 
@@ -36,14 +27,14 @@ describe Dapp::Dimg::Config::Dimg do
         dappfile do
           dimg
         end
-        expect(dimg._name).to eq nil
+        expect(dimg_config._name).to eq nil
       end
 
       it 'dimg name' do
         dappfile do
           dimg 'sample'
         end
-        expect(dimg._name).to eq 'sample'
+        expect(dimg_config._name).to eq 'sample'
       end
     end
 
@@ -53,7 +44,7 @@ describe Dapp::Dimg::Config::Dimg do
           dimg
           dimg
         end
-        expect_exception_code(:dimg_name_required) { dimg }
+        expect_exception_code(:dimg_name_required) { config.send(:dimg_config_validate!) }
       end
 
       it 'dimg without name (2)' do
@@ -63,7 +54,7 @@ describe Dapp::Dimg::Config::Dimg do
             dimg
           end
         end
-        expect_exception_code(:dimg_name_required) { dimg }
+        expect_exception_code(:dimg_name_required) { config.send(:dimg_config_validate!) }
       end
 
       it 'dimg without name (3)' do
@@ -75,14 +66,14 @@ describe Dapp::Dimg::Config::Dimg do
             dimg
           end
         end
-        expect_exception_code(:dimg_name_required) { dimg }
+        expect_exception_code(:dimg_name_required) { config.send(:dimg_config_validate!) }
       end
 
       it 'dimg incorrect name' do
         dappfile do
           dimg 'test;'
         end
-        expect_exception_code(:dimg_name_incorrect) { dimg }
+        expect_exception_code(:dimg_name_incorrect) { dimg_config.validate! }
       end
     end
   end
@@ -102,8 +93,8 @@ describe Dapp::Dimg::Config::Dimg do
           end
         end
 
-        expect(dimg_by_name('1')._builder).to eq :chef
-        expect(dimg_by_name('2')._builder).to eq :shell
+        expect(dimg_config_by_name('1')._builder).to eq :chef
+        expect(dimg_config_by_name('2')._builder).to eq :shell
       end
     end
 
@@ -116,7 +107,7 @@ describe Dapp::Dimg::Config::Dimg do
           end
         end
 
-        expect_exception_code(:builder_type_conflict) { dimg }
+        expect_exception_code(:builder_type_conflict) { dimg_config }
       end
 
       it 'builder_type_conflict (2)' do
@@ -127,7 +118,7 @@ describe Dapp::Dimg::Config::Dimg do
           end
         end
 
-        expect_exception_code(:builder_type_conflict) { dimg }
+        expect_exception_code(:builder_type_conflict) { dimg_config }
       end
 
       it 'builder_type_conflict (3)' do
@@ -138,7 +129,7 @@ describe Dapp::Dimg::Config::Dimg do
           end
         end
 
-        expect_exception_code(:builder_type_conflict) { dimg }
+        expect_exception_code(:builder_type_conflict) { dimg_config }
       end
 
       it 'builder_type_conflict (4)' do
@@ -152,7 +143,7 @@ describe Dapp::Dimg::Config::Dimg do
           end
         end
 
-        expect_exception_code(:builder_type_conflict) { dimg }
+        expect_exception_code(:builder_type_conflict) { dimg_config }
       end
     end
   end
@@ -180,7 +171,7 @@ describe Dapp::Dimg::Config::Dimg do
           add '/cwd'
         end
 
-        expect_exception_code(:add_to_required) { dimg.send(:validate!) }
+        expect_exception_code(:add_to_required) { dimg_config.send(:validate!) }
       end
     end
 
@@ -208,7 +199,7 @@ describe Dapp::Dimg::Config::Dimg do
               before :setup
             end
           end
-          expect_exception_code(:export_to_required) { dimg.send(:validate!) }
+          expect_exception_code(:export_to_required) { dimg_config.send(:validate!) }
         end
 
         context 'scratch' do
@@ -229,7 +220,7 @@ describe Dapp::Dimg::Config::Dimg do
                 dimg
               end
             end
-            expect_exception_code(:scratch_artifact_associated) { dimg.send(:validate!) }
+            expect_exception_code(:scratch_artifact_associated) { dimg_config.send(:validate!) }
           end
         end
 
@@ -249,7 +240,7 @@ describe Dapp::Dimg::Config::Dimg do
               dimg
             end
           end
-          expect_exception_code(:stage_artifact_not_associated) { dimg.send(:validate!) }
+          expect_exception_code(:stage_artifact_not_associated) { dimg_config.send(:validate!) }
         end
       end
 
@@ -266,7 +257,7 @@ describe Dapp::Dimg::Config::Dimg do
               to '/to2'
             end
           end
-          expect { dimg.send(:validate!) }.to_not raise_error
+          expect { dimg_config.send(:validate!) }.to_not raise_error
         end
 
         it 'different paths' do
@@ -283,7 +274,7 @@ describe Dapp::Dimg::Config::Dimg do
               to '/to1'
             end
           end
-          expect { dimg.send(:validate!) }.to_not raise_error
+          expect { dimg_config.send(:validate!) }.to_not raise_error
         end
 
         it 'paths with same exclude_paths' do
@@ -300,7 +291,7 @@ describe Dapp::Dimg::Config::Dimg do
               to '/to1'
             end
           end
-          expect { dimg.send(:validate!) }.to_not raise_error
+          expect { dimg_config.send(:validate!) }.to_not raise_error
         end
 
         it 'paths with exclude_paths' do
@@ -318,7 +309,7 @@ describe Dapp::Dimg::Config::Dimg do
               to '/to1'
             end
           end
-          expect { dimg.send(:validate!) }.to_not raise_error
+          expect { dimg_config.send(:validate!) }.to_not raise_error
         end
 
         it 'to with paths' do
@@ -334,7 +325,7 @@ describe Dapp::Dimg::Config::Dimg do
               to '/to/path'
             end
           end
-          expect { dimg.send(:validate!) }.to_not raise_error
+          expect { dimg_config.send(:validate!) }.to_not raise_error
         end
 
         it 'to with exclude_paths' do
@@ -350,7 +341,7 @@ describe Dapp::Dimg::Config::Dimg do
               to '/to/path'
             end
           end
-          expect { dimg.send(:validate!) }.to_not raise_error
+          expect { dimg_config.send(:validate!) }.to_not raise_error
         end
       end
 
@@ -367,7 +358,7 @@ describe Dapp::Dimg::Config::Dimg do
               to '/to'
             end
           end
-          expect_exception_code(:artifact_conflict) { dimg.send(:validate!) }
+          expect_exception_code(:artifact_conflict) { dimg_config.send(:validate!) }
         end
 
         it 'conflict between to' do
@@ -382,7 +373,7 @@ describe Dapp::Dimg::Config::Dimg do
               to '/to/path'
             end
           end
-          expect_exception_code(:artifact_conflict) { dimg.send(:validate!) }
+          expect_exception_code(:artifact_conflict) { dimg_config.send(:validate!) }
         end
 
         it 'conflict between paths and exclude_paths' do
@@ -399,7 +390,7 @@ describe Dapp::Dimg::Config::Dimg do
               to '/to'
             end
           end
-          expect_exception_code(:artifact_conflict) { dimg.send(:validate!) }
+          expect_exception_code(:artifact_conflict) { dimg_config.send(:validate!) }
         end
       end
     end
