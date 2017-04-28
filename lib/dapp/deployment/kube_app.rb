@@ -141,7 +141,7 @@ module Dapp
                 # Также делает kubectl: https://github.com/kubernetes/kubernetes/blob/d86a01570ba243e8d75057415113a0ff4d68c96b/pkg/controller/deployment/util/deployment_util.go#L664
                 rs = app.deployment.kubernetes.replicaset_list['items']
                   .select do |_rs|
-                    _rs['metadata']['ownerReferences'].any? do |owner_reference|
+                    Array(_rs['metadata']['ownerReferences']).any? do |owner_reference|
                       owner_reference['uid'] == d['metadata']['uid']
                     end
                   end
@@ -159,7 +159,7 @@ module Dapp
                 rs_pods = app.deployment.kubernetes
                   .pod_list(labelSelector: labels.map{|k, v| "#{k}=#{v}"}.join(','))['items']
                   .select do |pod|
-                    pod['metadata']['ownerReferences'].any? do |owner_reference|
+                    Array(pod['metadata']['ownerReferences']).any? do |owner_reference|
                       owner_reference['uid'] == rs['metadata']['uid']
                     end
                   end
