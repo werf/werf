@@ -110,7 +110,7 @@ module Dapp
 
           def _minikube_wait_till_ready
             log_process(:wait_till_minikube_ready) do
-              60.times do
+              600.times do
                 begin
                   return if _minikube_kubernetes.service?('kube-dns')
                 rescue Excon::Error::Socket
@@ -131,7 +131,7 @@ module Dapp
                     _minikube_kubernetes.delete_replicationcontroller! _minikube_registry_replicationcontroller_spec['metadata']['name']
 
                     shutdown_ok = false
-                    60.times do
+                    600.times do
                       unless _minikube_kubernetes.replicationcontroller? _minikube_registry_replicationcontroller_spec['metadata']['name']
                         shutdown_ok = true
                         break
@@ -143,7 +143,7 @@ module Dapp
 
                   _minikube_kubernetes.delete_pods! labelSelector: 'k8s-app=kube-registry'
                   shutdown_ok = false
-                  60.times do
+                  600.times do
                     unless _minikube_find_registry_pod
                       shutdown_ok = true
                       break
@@ -156,7 +156,7 @@ module Dapp
                     _minikube_kubernetes.delete_service! _minikube_registry_service_spec['metadata']['name']
 
                     shutdown_ok = false
-                    60.times do
+                    600.times do
                       unless _minikube_kubernetes.service? _minikube_registry_service_spec['metadata']['name']
                         shutdown_ok = true
                         break
@@ -170,7 +170,7 @@ module Dapp
                     _minikube_kubernetes.delete_pod! _minikube_registry_proxy_pod_spec['metadata']['name']
 
                     shutdown_ok = false
-                    60.times do
+                    600.times do
                       unless _minikube_kubernetes.pod? _minikube_registry_proxy_pod_spec['metadata']['name']
                         shutdown_ok = true
                         break
@@ -182,7 +182,7 @@ module Dapp
 
                   _minikube_kubernetes.create_replicationcontroller!(_minikube_registry_replicationcontroller_spec)
                   registry_pod_ok = false
-                  60.times do
+                  600.times do
                     if registry_pod = _minikube_find_registry_pod
                       if registry_pod['status']['phase'] == 'Running'
                         registry_pod_ok = true
@@ -196,7 +196,7 @@ module Dapp
 
                   _minikube_kubernetes.create_service!(_minikube_registry_service_spec)
                   registry_service_ok = false
-                  60.times do
+                  600.times do
                     if _minikube_kubernetes.service? _minikube_registry_service_spec['metadata']['name']
                       registry_service_ok = true
                       break
@@ -207,7 +207,7 @@ module Dapp
 
                   _minikube_kubernetes.create_pod! _minikube_registry_proxy_pod_spec
                   registry_proxy_pod_ok = false
-                  60.times do
+                  600.times do
                     if _minikube_kubernetes.pod? _minikube_registry_proxy_pod_spec['metadata']['name']
                       registry_proxy_pod = _minikube_kubernetes.pod(_minikube_registry_proxy_pod_spec['metadata']['name'])
                       if registry_proxy_pod['status']['phase'] == 'Running'
