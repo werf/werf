@@ -104,22 +104,27 @@ module Dapp
       end
 
       def load_body!(response, request_parameters)
-        if response.status.to_s.start_with? '5'
-          raise Error::Base, code: :server_error, data: {
-            response_http_status: response.status,
-            response_http_body: response.body,
-            request_parameters: request_parameters
-          }
-        elsif response.status.to_s == '404'
-          raise Error::NotFound, data: {request_parameters: request_parameters}
-        elsif not response.status.to_s.start_with? '2'
-          raise Error::Base, code: :bad_request, data: {
-            response_http_status: response.status,
-            response_http_body: response.body,
-            request_parameters: request_parameters
-          }
+        response_ok = response.status.to_s.start_with? '2'
+
+        if response_ok
+          JSON.parse(response.body)
         else
-          JSON.load(response.body)
+          err_data = {}
+          err_data[:response_http_status] = response.status
+          if response_body = (JSON.parse(response.body) rescue nil)
+            err_data[:response_body] = response_body
+          else
+            err_data[:response_raw_body] = response.body
+          end
+          err_data[:request_parameters] = request_parameters
+
+          if response.status.to_s.start_with? '5'
+            raise Error::Base, code: :server_error, data: err_data
+          elsif response.status.to_s == '404'
+            raise Error::NotFound, data: err_data
+          else not response.status.to_s.start_with? '2'
+            raise Error::Base, code: :bad_request, data: err_data
+          end
         end
       end
 
