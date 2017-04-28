@@ -64,22 +64,11 @@ module Dapp
                       end
 
                       app.to_kube_deployments(repo, image_version).each do |name, spec|
-                        if app.kube.deployment_exist?(name)
-                          # TODO: deployment_spec_changed? срабатывает всегда.
-                          # TODO: Хотя сейчас это не так уж и важно, но лучше лишний раз не делать replace в kubernetes.
-                          app.kube.update_deployment!(name, spec) if app.kube.deployment_spec_changed?(name, spec)
-                        else
-                          app.kube.create_deployment!(spec)
-                        end
+                        app.kube.apply_deployment!(name, spec)
                       end
 
                       app.to_kube_services.each do |name, spec|
-                        # TODO: Отслеживание статуса kubernetes Service
-                        if app.kube.service_exist?(name)
-                          app.kube.replace_service!(name, spec) if app.kube.service_spec_changed?(name, spec)
-                        else
-                          app.kube.create_service!(spec)
-                        end
+                        app.kube.apply_service!(name, spec)
                       end
                     end
                   end
