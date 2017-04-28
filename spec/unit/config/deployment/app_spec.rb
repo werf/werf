@@ -111,7 +111,7 @@ describe Dapp::Deployment::Config::Directive::App do
     expect { config }.to_not raise_error
   end
 
-  [:bootstrap, :migrate, :run].each do |sub_directive|
+  [:bootstrap, :migrate].each do |sub_directive|
     it sub_directive do
       dappfile_app { send(sub_directive, 'cmd') }
       expect(app_config.send(:"_#{sub_directive}")).to eq 'cmd'

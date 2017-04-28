@@ -16,8 +16,10 @@ module Dapp
         exit 1
       end
 
-      def required_argument(cli)
+      def required_argument(cli, argument)
         unless (arg = cli.cli_arguments.pop)
+          STDERR.puts "Error: required argument `#{argument.upcase}`"
+          puts
           puts cli.opt_parser
           exit 1
         end

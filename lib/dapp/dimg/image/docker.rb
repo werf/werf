@@ -72,11 +72,19 @@ module Dapp
 
         class << self
           def image_name_format
-            "#{DockerRegistry.repo_name_format}(:(?<tag>(?![-.])[a-zA-Z0-9_.-]{1,127}))?"
+            "#{DockerRegistry.repo_name_format}(:(?<tag>#{tag_format}))?"
+          end
+
+          def tag_format
+            '(?![-.])[a-zA-Z0-9_.-]{1,127}'
           end
 
           def image_name?(name)
             !(/^#{image_name_format}$/ =~ name).nil?
+          end
+
+          def tag?(name)
+            !(/^#{tag_format}$/ =~ name).nil?
           end
 
           def tag!(id:, tag:)

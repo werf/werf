@@ -3,7 +3,7 @@ module Dapp
     class Dimg
       module Stages
         def signature
-          last_stage.send(:signature)
+          last_stage.signature
         end
 
         def stage_by_name(name)

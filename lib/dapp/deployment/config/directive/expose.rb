@@ -23,16 +23,16 @@ module Dapp
 
             def initialize(*args, dapp:, &blk)
               self._list = args
-              @_protocol = :TCP
+              @_protocol = 'TCP'
               super(dapp: dapp, &blk)
             end
 
             def tcp
-              @_protocol = :TCP
+              @_protocol = 'TCP'
             end
 
             def udp
-              @_protocol = :UDP
+              @_protocol = 'UDP'
             end
 
             def _list=(ports)

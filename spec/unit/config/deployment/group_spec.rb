@@ -61,7 +61,7 @@ describe Dapp::Deployment::Config::Directive::Group do
         expect { config }.to_not raise_error
       end
 
-      [:bootstrap, :migrate, :run].each do |sub_directive|
+      [:bootstrap, :migrate].each do |sub_directive|
         it sub_directive do
           dappfile_deployment_group { send(sub_directive, 'cmd') }
           expect { config }.to_not raise_error
@@ -127,7 +127,7 @@ describe Dapp::Deployment::Config::Directive::Group do
         end
         expect(app_config._expose._cluster_ip).to be_falsey
         expect(app_config._expose._port.first._list).to eq([80])
-        expect(app_config._expose._port.first._protocol).to eq(:UDP)
+        expect(app_config._expose._port.first._protocol).to eq('UDP')
       end
 
       it 'base (2)' do
@@ -149,7 +149,7 @@ describe Dapp::Deployment::Config::Directive::Group do
       end
     end
 
-    [:bootstrap, :migrate, :run].each do |sub_directive|
+    [:bootstrap, :migrate].each do |sub_directive|
       it sub_directive do
         dappfile_deployment_group do
           send(sub_directive, 'cmd')

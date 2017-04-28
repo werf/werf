@@ -3,9 +3,12 @@ module Dapp
     module Dapp
       module Command
         module Apply
-          def deployment_apply
+          def deployment_apply(repo, image_version)
+            validate_repo_name!(repo)
+            validate_tag_name!(image_version)
+
             deployment.apps.each do |app|
-              (app.kube.existing_deployments_names - app.to_kube_deployments.keys).each do |deployment_name|
+              (app.kube.existing_deployments_names - app.to_kube_deployments(repo, image_version).keys).each do |deployment_name|
                 app.kube.delete_deployment!(deployment_name)
               end
 
@@ -13,7 +16,7 @@ module Dapp
                 app.kube.delete_service!(service_name)
               end
 
-              app.to_kube_deployments.each do |name, spec|
+              app.to_kube_deployments(repo, image_version).each do |name, spec|
                 if app.kube.deployment_exist?(name)
                   app.kube.replace_deployment!(name, spec) if app.kube.deployment_spec_changed?(name, spec)
                 else

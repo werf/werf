@@ -31,7 +31,7 @@ BANNER
           end
 
           def repo
-            config[:proper_repo_cache] ? self.class.required_argument(self) : nil
+            config[:proper_repo_cache] ? self.class.required_argument(self, 'repo') : nil
           end
 
           def run_method
