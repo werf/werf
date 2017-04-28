@@ -18,7 +18,7 @@ describe Dapp::Dimg::GitArtifact do
 
   def init_git_artifact_local_options
     @cwd           = ''
-    @to            = 'dist'
+    @to            = '/dist'
     @include_paths = []
     @exclude_paths = []
     @branch        = 'master'
@@ -343,6 +343,56 @@ describe Dapp::Dimg::GitArtifact do
           apply_patch
           expect_not_existing_container_file(container_file_path(file_path_without_cwd))
         end
+      end
+    end
+
+    context 'symlink' do
+      def check_container_symlink(path)
+        container_run("#{dimg.dapp.test_bin} -h #{path}")
+      end
+
+      def expext_container_file_link(path, link)
+        expect { check_container_symlink(path).error! }.to_not raise_error
+        expect(container_run("#{dimg.dapp.readlink_bin} -f #{path}").stdout.strip).to eq link
+      end
+
+      def git_add_symlink_and_commit(file, link)
+        FileUtils.safe_unlink(link) if File.symlink?(link)
+        git_change_and_commit(file)
+        FileUtils.symlink(file, link)
+        git_add_and_commit(link)
+      end
+
+      def git_rm_symlink_and_commit(link)
+        FileUtils.safe_unlink(link)
+        git_rm_and_commit link
+      end
+
+      symlink_file = 'symlink'
+      symlink2_file = 'symlink2'
+
+      before :each do
+        git_add_symlink_and_commit('test', symlink_file)
+        apply_archive
+        expext_container_file_link(container_file_path(symlink_file), container_file_path('test'))
+      end
+
+      it 'added', test_construct: true do
+        git_add_symlink_and_commit('test2', symlink2_file)
+        apply_patch
+        expext_container_file_link(container_file_path(symlink2_file), container_file_path('test2'))
+      end
+
+      it 'modified', test_construct: true do
+        git_add_symlink_and_commit('test2', symlink_file)
+        apply_patch
+        expext_container_file_link(container_file_path(symlink_file), container_file_path('test2'))
+      end
+
+      it 'delete', test_construct: true do
+        git_rm_symlink_and_commit(symlink_file)
+        apply_patch
+        expect { check_container_symlink(container_file_path(symlink_file)).error! }.to raise_error
       end
     end
   end

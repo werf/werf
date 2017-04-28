@@ -15,6 +15,16 @@ module Dapp
           []
         end
 
+        # FIXME: Убрать логику исключения путей exclude_paths из данного класса,
+        # FIXME: т.к. большинство методов не поддерживают инвариант
+        # FIXME "всегда выдавать данные с исключенными путями".
+        # FIXME: Например, метод diff выдает данные без учета exclude_paths.
+        # FIXME: Лучше перенести фильтрацию в GitArtifact::diff_patches.
+        # FIXME: ИЛИ обеспечить этот инвариант, но это ограничит в возможностях
+        # FIXME: использование Rugged извне этого класса и это более сложный путь.
+        # FIXME: Лучше сейчас убрать фильтрацию, а добавить ее когда наберется достаточно
+        # FIXME: примеров использования.
+
         def patches(from, to, exclude_paths: [], **kwargs)
           diff(from, to, **kwargs).patches.select do |patch|
             !exclude_paths.any? { |p| check_path?(patch.delta.new_file[:path], p) }
@@ -22,7 +32,9 @@ module Dapp
         end
 
         def diff(from, to, **kwargs)
-          if from.nil?
+          if to.nil?
+            raise "Workdir diff not supported for #{self.class}"
+          elsif from.nil?
             Rugged::Tree.diff(git, nil, to, **kwargs)
           else
             lookup_commit(from).diff(lookup_commit(to), **kwargs)

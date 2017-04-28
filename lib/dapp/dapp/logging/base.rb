@@ -34,6 +34,10 @@ module Dapp
           options[:dev].nil? ? config._dev_mode : options[:dev]
         end
 
+        def dev_mode?
+          cli_options[:dev].nil? ? config._dev_mode : cli_options[:dev]
+        end
+
         def log_info(*args, **kwargs)
           kwargs[:style] = :info
           log(*args, **kwargs)

@@ -168,7 +168,7 @@ module Dapp
           end
 
           def default_git_artifacts_dependencies(git_artifacts)
-            git_artifacts.map { |git_artifact| git_artifact.stage_dependencies_checksums(self) }
+            git_artifacts.map { |git_artifact| git_artifact.stage_dependencies_checksum(self) }
           end
 
           def dependencies
