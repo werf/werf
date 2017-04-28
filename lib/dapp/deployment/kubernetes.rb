@@ -149,7 +149,7 @@ module Dapp
             begin
               Excon.new(url, **kube_server_options).get
             rescue Excon::Error::Socket
-              raise Error::Base, code: :kube_server_connection_refused, data: { url: url }
+              raise Error::ConnectionRefused, code: :kube_server_connection_refused, data: { url: url }
             end
           end
         end
