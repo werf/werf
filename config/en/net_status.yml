@@ -65,9 +65,12 @@ en:
       unsupported_scale_value: "Define unsupported scale value `%{value}`!"
       app_name_required: 'App name required!'
       app_dimg_not_found: 'Not found dimg `%{dimg}` for app `%{app}`!'
+      app_dimg_not_defined: 'Not defined dimg for app `%{app}`!'
       unsupported_port_number: 'Port number `%{port}` doesn`t support!'
       app_name_incorrect: "App has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
       namespace_name_incorrect: "Namespace has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
+      deployment_bootstrap_dimg_not_defined: "Not defined dimg for deployment.bootstrap!"
+      deployment_bootstrap_dimg_not_found: "Not found dimg `%{dimg}` for deployment.bootstrap!"
     chef:
       stage_checksum_not_calculated: "Chef stage `%{stage}` checksum is not calculated yet, run build first"
       stage_path_overlap: "Cannot install `%{cookbook}` cookbook's path %{from} into %{to}: already exists"
@@ -88,5 +91,11 @@ en:
     lock:
       timeout: "Could not obtain lock for `%{name}` within %{timeout} seconds"
     app:
-      namespace_not_found: "App `%{app_name}`: namespace `%{namespace}` not found!"
-      namespace_not_defined: "App `%{app_name}`: namespace not defined!"
+      namespace_not_found: "App `%{name}`: namespace `%{namespace}` not found!"
+      namespace_not_defined: "App `%{name}`: namespace not defined!"
+    deployment:
+      namespace_not_found: "Deployment `%{name}`: namespace `%{namespace}` not found!"
+      namespace_not_defined: "Deployment `%{name}`: namespace not defined!"
+      bootstrap_failed: "Bootstrap failed:\n  phase: `%{phase}`\n  message: `%{message}`"
+      bootstrap_command_failed: "Bootstrap failed:\n  reason: `%{reason}`\n  message: `%{message}`\n  exit_code: `%{exit_code}`"
+      bootstrap_image_not_found: "Bootstrap failed because `%{reason}`: `%{message}`"

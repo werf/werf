@@ -1,19 +1,20 @@
 module Dapp
   module Deployment
     class App
-      include Namespace
-      include SystemEnvironments
+      include Mod::Namespace
+      include Mod::SystemEnvironments
 
-      attr_reader :app_config
       attr_reader :deployment
+      attr_reader :app_config
+      alias config app_config
 
       def initialize(app_config:, deployment:)
         @app_config = app_config
         @deployment = deployment
       end
 
-      def name
-        [deployment.dapp.name, app_config._name].compact.join('-').gsub('_', '-')
+      def name(*args)
+        deployment.name(app_config._name, *args)
       end
 
       def kube
@@ -68,10 +69,10 @@ module Dapp
           hash[service_name] = {}.tap do |service|
             service['metadata'] = {}.tap do |metadata|
               metadata['name']   = service_name
-              metadata['labels'] = labels
+              metadata['labels'] = kube.labels
             end
             service['spec'] = {}.tap do |spec|
-              spec['selector'] = labels
+              spec['selector'] = kube.labels
               spec['ports']    = expose._port.map do |p|
                 p._list.each_with_index.map do |port, ind|
                   { 'port' => port, 'name' => ['service', ind].join('-'), 'protocol' => p._protocol }
@@ -85,11 +86,19 @@ module Dapp
       protected
 
       def dimg_name
-        [name, dimg].compact.join('-').gsub('_', '-')
+        name(dimg)
       end
 
       def service_name
-        [name, 'service'].join('-')
+        name('service')
+      end
+
+      def namespace
+        deployment.namespace
+      end
+
+      def secret
+        deployment.dapp.secret
       end
     end
   end

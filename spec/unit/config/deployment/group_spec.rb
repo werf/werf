@@ -61,7 +61,7 @@ describe Dapp::Deployment::Config::Directive::Group do
         expect { config }.to_not raise_error
       end
 
-      [:bootstrap, :migrate].each do |sub_directive|
+      [:migrate].each do |sub_directive|
         it sub_directive do
           dappfile_deployment_group { send(sub_directive, 'cmd') }
           expect { config }.to_not raise_error
@@ -149,7 +149,7 @@ describe Dapp::Deployment::Config::Directive::Group do
       end
     end
 
-    [:bootstrap, :migrate].each do |sub_directive|
+    [:migrate].each do |sub_directive|
       it sub_directive do
         dappfile_deployment_group do
           send(sub_directive, 'cmd')

@@ -4,7 +4,7 @@ module Dapp
       module Directive
         class App < Base
           module InstanceMethods
-            attr_reader :_dimg, :_namespace, :_expose, :_bootstrap, :_migrate
+            attr_reader :_dimg, :_namespace, :_expose, :_migrate
 
             def self.included(base)
               base.include(Namespace::InstanceMethods)
@@ -28,10 +28,6 @@ module Dapp
               directive_eval(_expose, &blk)
             end
 
-            def bootstrap(cmd)
-              sub_directive_eval { @_bootstrap = cmd }
-            end
-
             def migrate(cmd)
               sub_directive_eval { @_migrate = cmd }
             end
@@ -45,8 +41,7 @@ module Dapp
             end
 
             def passed_directives
-              [:@_dimg, :@_namespace, :@_expose, :@_bootstrap,
-               :@_migrate, :@_environment, :@_secret_environment, :@_scale]
+              [:@_dimg, :@_namespace, :@_expose, :@_migrate, :@_environment, :@_secret_environment, :@_scale]
             end
           end # InstanceMethods
         end # App
