@@ -245,11 +245,13 @@ module Dapp
 
       def merge_kube_service_spec(spec1, spec2)
         spec1.kube_in_depth_merge(spec2).tap do |spec|
+          spec['metadata'] ||= {}
+          metadata_labels = spec2.fetch('metadata', {}).fetch('labels', nil)
+          spec['metadata']['labels'] = metadata_labels if metadata_labels
+
           spec['spec'] ||= {}
-
-          spec_selector = spec2.fetch('spec', spec1.fetch('spec', {})).fetch('selector', nil)
+          spec_selector = spec2.fetch('spec', {}).fetch('selector', nil)
           spec['spec']['selector'] = spec_selector if spec_selector
-
           spec['spec']['ports'] = begin
             ports1 = spec1.fetch('spec', {}).fetch('ports', [])
             ports2 = spec2.fetch('spec', {}).fetch('ports', [])
