@@ -6,9 +6,6 @@ module Dapp
           attr_reader :_url, :_name, :_branch, :_commit
 
           def initialize(url, **kwargs, &blk)
-            raise Error::Config, code: :git_artifact_remote_unsupported_protocol,
-                                 data: { url: url } unless %w(http https).include? URI(url.to_s).scheme
-
             @_url  = url
             @_name = url.gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
 
