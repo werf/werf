@@ -116,10 +116,5 @@ describe Dapp::Config::Directive::GitArtifactRemote do
       end
       expect { dimgs }.to raise_error NoMethodError
     end
-
-    it 'remote incorrect url (:git_artifact_remote_unsupported_protocol)' do
-      dappfile_dimg_git_artifact('url')
-      expect_exception_code(:git_artifact_remote_unsupported_protocol) { dimg }
-    end
   end
 end
