@@ -135,11 +135,6 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
       expect { dimgs_configs }.to raise_error NoMethodError
     end
 
-    it 'remote incorrect url (:git_artifact_remote_unsupported_protocol)' do
-      dappfile_dimg_git_artifact('url')
-      expect_exception_code(:git_artifact_remote_unsupported_protocol) { dimg_config }
-    end
-
     [:local, :remote].each do |type|
       it "stage_dependencies unsupported stage (#{type})" do
         dappfile_dimg_git_artifact(type == :local ? :local : 'https://url') do
