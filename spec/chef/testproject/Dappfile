@@ -15,7 +15,7 @@ dimg_group do
     chef.dimod 'mdapp-testartifact'
     chef.recipe 'myartifact'
 
-    export do
+    export '/myartifact' do
       before :install
       to '/myartifact'
     end
