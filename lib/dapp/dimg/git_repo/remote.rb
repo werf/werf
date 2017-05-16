@@ -9,21 +9,38 @@ module Dapp
 
           dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.git_artifact_clone', data: { name: name }), short: true) do
             begin
-              Rugged::Repository.clone_at(url, path, bare: true)
+              Rugged::Repository.clone_at(url, path, bare: true, credentials: _rugged_credentials)
             rescue Rugged::NetworkError, Rugged::SslError => e
               raise Error::Rugged, code: :rugged_remote_error, data: { message: e.message, url: url }
             end
           end unless File.directory?(path)
         end
 
+        def _rugged_credentials
+          @_rugged_credentials ||= begin
+            ssh_url = begin
+              URI.parse(@url)
+              false
+            rescue URI::InvalidURIError
+              true
+            end
+
+            if ssh_url
+              host_with_user = @url.split(':', 2).first
+              username = host_with_user.split('@', 2).reverse.last
+              Rugged::Credentials::SshKeyFromAgent.new(username: username)
+            end
+          end
+        end
+
         def path
-          dimg.build_path("#{name}.git").to_s
+          dimg.build_path('git_repo_remote', name, Digest::MD5.hexdigest(@url)).to_s
         end
 
         def fetch!(branch = nil)
           branch ||= self.branch
           dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.git_artifact_fetch', data: { name: name }), short: true) do
-            git.fetch('origin', [branch])
+            git.fetch('origin', [branch], credentials: _rugged_credentials)
             raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } unless branch_exist?(branch)
           end unless dimg.ignore_git_fetch || dimg.dapp.dry_run?
         end
@@ -47,7 +64,7 @@ module Dapp
         attr_reader :url
 
         def git
-          super(bare: true)
+          super(bare: true, credentials: _rugged_credentials)
         end
 
         private
