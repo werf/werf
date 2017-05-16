@@ -45,7 +45,7 @@ describe Dapp::GitRepo do
     remote_commit!('Some text')
     @remote = Dapp::GitRepo::Remote.new(dimg, 'local_remote', url: 'remote/.git', **kwargs)
     expect(File.exist?(@remote.path)).to be_truthy
-    expect(@remote.path.to_s =~ /local_remote.git$/).to be_truthy
+    expect(@remote.path.to_s =~ /local_remote\/#{Digest::MD5.hexdigest('remote/.git')}$/).to be_truthy
   end
 
   def dapp_remote_cleanup
