@@ -5,6 +5,14 @@ dimg_group do
     end
   end
 
+  git 'git@github.com:flant/dapp.git' do
+    add { to '/myapp2' }
+  end
+
+  git 'https://github.com/flant/dapp.git' do
+    add { to '/myapp3' }
+  end
+
   chef.attributes['mdapp-test2']['sayhello'] = 'hello'
   chef.attributes['mdapp-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_DAPPFILE.txt'
   chef.attributes['mdapp-test2']['sayhelloagain'] = 'helloagain'
