@@ -11,11 +11,11 @@ module Dapp
       end
 
       def container_path
-        dimg.container_tmp_path "#{name}.git"
+        raise
       end
 
       def path
-        dimg.tmp_path("#{name}.git").to_s
+        raise
       end
 
       def git_bare

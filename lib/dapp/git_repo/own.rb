@@ -7,7 +7,7 @@ module Dapp
       end
 
       def container_path
-        dimg.container_dapp_path('own', "#{name}.git")
+        dimg.container_dapp_path('git_repo_own', "#{name}.git")
       end
 
       def path

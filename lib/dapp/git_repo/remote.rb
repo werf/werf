@@ -37,6 +37,10 @@ module Dapp
         dimg.build_path('git_repo_remote', name, Digest::MD5.hexdigest(@url)).to_s
       end
 
+      def container_path
+        dimg.container_tmp_path('git_repo_remote', name, Digest::MD5.hexdigest(@url)).to_s
+      end
+
       def git_bare
         @git_bare ||= Rugged::Repository.new(path, bare: true, credentials: _rugged_credentials)
       end
