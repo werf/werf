@@ -92,13 +92,20 @@ module Dapp
         if cli_options[:build_dir]
           Pathname.new(cli_options[:build_dir])
         else
-          Pathname.new(path).join('.dapp_build')
+          default_build_path
         end.expand_path.tap(&:mkpath)
       end
     end
 
+    def default_build_path
+      Pathname.new(path).join('.dapp_build')
+    end
+
     def system_files
-      [dappfile_path, cookbook_path, build_path].map { |p| File.basename(p) }
+      [dappfile_path, cookbook_path].tap do |files|
+        files << default_build_path
+        files << build_path if !build_path.eql?(default_build_path) && build_path.fnmatch?(File.join(path, '**'))
+      end.map { |p| p.to_s.reverse.chomp(File.join(path, '/').reverse).reverse }
     end
 
     def stage_cache
