@@ -28,13 +28,13 @@ module Dapp
             end
 
             def format_string(str)
-              str.lines.map { |l| "#{Dapp.log_time if @with_time}#{l.strip}\n" }.join
+              str.lines.map { |l| "#{Dapp.log_time if @with_time}#{l.chomp}\n" }.join
             end
           end
 
           class Error < Base
             def format_string(str)
-              "#{Dapp.paint_string(super.strip, :warning)}\n"
+              "#{Dapp.paint_string(super.chomp, :warning)}\n"
             end
           end
         end
