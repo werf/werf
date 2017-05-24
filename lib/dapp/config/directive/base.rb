@@ -14,7 +14,9 @@ module Dapp
         end
 
         def path_format(path)
-          path.to_s.chomp('/')
+          path = path.to_s
+          path = path.chomp('/') unless path == '/'
+          path
         end
       end
     end

@@ -33,18 +33,33 @@ dimg_group do
   chef.recipe 'main'
 
   dimg_group do
-    docker.from 'ubuntu:14.04'
+    chef._build_artifact_attributes['ref_name'] = ENV['CI_BUILD_REF_NAME']
+    artifact do
+      docker.from 'ubuntu:14.04'
+      chef.recipe 'install_version'
 
-    chef.recipe 'X'
-    chef.dimod 'mdapp-test2'
+      export '/' do
+        to '/'
+        include_paths 'version.txt'
 
-    dimg 'X_Y' do
-      chef.recipe 'X_Y'
+        after :setup
+      end
     end
-  end
 
-  dimg 'Z' do
-    docker.from 'centos:7'
-    chef.recipe 'Z'
+    dimg_group do
+      docker.from 'ubuntu:14.04'
+
+      chef.recipe 'X'
+      chef.dimod 'mdapp-test2'
+
+      dimg 'X_Y' do
+        chef.recipe 'X_Y'
+      end
+    end
+
+    dimg 'Z' do
+      docker.from 'centos:7'
+      chef.recipe 'Z'
+    end
   end
 end
