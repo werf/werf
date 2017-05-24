@@ -97,21 +97,21 @@ module Dapp
         cookbook_metadata.name
       end
 
-      def cookbook_path(*path)
-        dimg.cookbook_path.tap do |cookbook_path|
-          unless cookbook_path.exist?
-            raise Error, code: :cookbook_path_not_found,
-                         data: { path: cookbook_path }
+      def local_cookbook_path(*path)
+        dimg.local_cookbook_path.tap do |local_cookbook_path|
+          unless local_cookbook_path.exist?
+            raise Error, code: :local_cookbook_path_not_found,
+                         data: { path: local_cookbook_path }
           end
         end.join(*path)
       end
 
       def berksfile_path
-        cookbook_path('Berksfile')
+        local_cookbook_path('Berksfile')
       end
 
       def berksfile_lock_path
-        cookbook_path('Berksfile.lock')
+        local_cookbook_path('Berksfile.lock')
       end
 
       def berksfile
@@ -121,7 +121,7 @@ module Dapp
                          data: { path: berksfile_path.to_s }
           end
 
-          Berksfile.new(cookbook_path, berksfile_path).tap do |berksfile|
+          Berksfile.new(local_cookbook_path, berksfile_path).tap do |berksfile|
             unless berksfile.local_cookbook? project_name
               raise Error, code: :cookbook_not_specified_in_berksfile,
                            data: { name: project_name, path: berksfile_path.to_s }
@@ -131,7 +131,7 @@ module Dapp
       end
 
       def cookbook_metadata_path
-        cookbook_path('metadata.rb')
+        local_cookbook_path('metadata.rb')
       end
 
       def check_cookbook_metadata_path_exist!

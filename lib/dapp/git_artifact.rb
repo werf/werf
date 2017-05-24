@@ -89,7 +89,7 @@ module Dapp
     end
 
     def exclude_paths(with_cwd = false)
-      base_paths(repo.dimg.project.system_files.concat(@exclude_paths), with_cwd)
+      base_paths(repo.exclude_paths + @exclude_paths, with_cwd)
     end
 
     def include_paths(with_cwd = false)
