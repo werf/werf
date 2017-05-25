@@ -30,7 +30,7 @@ module Dapp
         commands << "#{repo.dimg.project.install_bin} #{credentials.join(' ')} -d #{to}"
 
         if include_paths_or_cwd.empty? || include_paths_or_cwd.any? { |path| file_exist_in_repo?(stage.layer_commit(self), path) }
-          commands << ["#{repo.dimg.project.git_bin} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} #{include_paths.join(' ')}",
+          commands << ["#{repo.dimg.project.git_bin} --git-dir=#{repo.container_path} archive #{stage.layer_commit(self)}:#{cwd} --prefix=/ #{include_paths.join(' ')}",
                        "#{sudo}#{repo.dimg.project.tar_bin} -x -C #{to} #{archive_command_excludes.join(' ')}"].join(' | ')
         end
       end
@@ -49,7 +49,7 @@ module Dapp
     end
 
     def archive_command_excludes
-      exclude_paths.map { |path| %(--exclude=#{path}) }
+      exclude_paths.map { |path| %(--exclude=#{File.join('/', path)}) }
     end
 
     def patch_command_excludes
