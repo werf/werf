@@ -16,14 +16,7 @@ module Dapp
         @commit = commit
 
         @to = to
-        @cwd = begin
-          if cwd.nil? || cwd.empty?
-            ''
-          else
-            cwd = File.expand_path(File.join('/', cwd))[1..-1] # must be relative
-            "#{cwd.chomp('/')}/"
-          end
-        end
+        @cwd = (cwd.nil? || cwd.empty? || cwd == '/') ? '' : File.expand_path(File.join('/', cwd, '/'))[1..-1]
         @include_paths = include_paths
         @exclude_paths = exclude_paths
         @owner = owner
