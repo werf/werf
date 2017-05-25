@@ -172,13 +172,13 @@ describe Dapp::GitArtifact do
                             cwd: 'a', include_paths: %w(x/y z))
     end
 
-    it "#{type} exclude_paths", test_construct: true do
-      send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
-                            added_files: %w(z/data.txt), not_added_files: %w(x/data.txt x/y/data.txt),
+    it "#{type} exclude_paths (only file in root)", test_construct: true do
+      send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/x/data.txt),
+                            added_files: %w(z/x/data.txt), not_added_files: %w(x/data.txt x/y/data.txt),
                             exclude_paths: %w(x))
     end
 
-    it "#{type} exclude_paths (files)", test_construct: true do
+    it "#{type} exclude_paths (some files)", test_construct: true do
       send("#{type}_apply", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
                             added_files: %w(x/data.txt), not_added_files: %w(x/y/data.txt z/data.txt),
                             exclude_paths: %w(x/y/data.txt z/data.txt))
