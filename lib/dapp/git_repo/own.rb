@@ -6,6 +6,10 @@ module Dapp
         super(dimg, 'own')
       end
 
+      def exclude_paths
+        dimg.project.local_git_artifact_exclude_paths
+      end
+
       def container_path
         dimg.container_dapp_path('git_repo_own', "#{name}.git")
       end
