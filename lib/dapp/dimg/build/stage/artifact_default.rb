@@ -46,12 +46,19 @@ module Dapp
                 end
 
                 include_paths.each do |p|
+                  target_path = File.join(from, p)
+
+                  # Генерируем разрешающее правило для каждого элемента пути
+                  Pathname.new(target_path).descend do |path_part|
+                    cmd << " --filter='+/ #{path_part}'"
+                  end
+
                   # * На данный момент не знаем директорию или файл имел в виду пользователь,
                   #   поэтому подставляем фильтры для обоих возможных случаев.
                   # * Автоматом подставляем паттерн ** для включения файлов, содержащихся в
                   #   директории, которую пользователь указал в include_paths.
-                  cmd << " --filter='+/ #{File.join(from, p)}'"
-                  cmd << " --filter='+/ #{File.join(from, p, '**')}'"
+                  cmd << " --filter='+/ #{target_path}'"
+                  cmd << " --filter='+/ #{File.join(target_path, '**')}'"
                 end
 
                 # Все что не подошло по include — исключается
