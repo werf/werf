@@ -1,4 +1,4 @@
 module Dapp
-  VERSION = '0.12.5'.freeze
-  BUILD_CACHE_VERSION = 11
+  VERSION = '0.12.6'.freeze
+  BUILD_CACHE_VERSION = 12
 end
