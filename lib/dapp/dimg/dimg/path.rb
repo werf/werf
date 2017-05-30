@@ -6,8 +6,12 @@ module Dapp
           make_path(dapp.path, *path).expand_path
         end
 
+        def tmp_base_dir
+          File.expand_path(dapp.options[:tmp_dir_prefix] || '/tmp')
+        end
+
         def tmp_path(*path)
-          @tmp_path ||= Dir.mktmpdir('dapp-', dapp.options[:tmp_dir_prefix] || '/tmp')
+          @tmp_path ||= Dir.mktmpdir('dapp-', tmp_base_dir)
           make_path(@tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }
         end
 
