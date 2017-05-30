@@ -2,6 +2,9 @@ module Dapp
   module Kube
     module Dapp
       module Dapp
+        include Command::SecretGenerate
+        include Command::SecretKeyGenerate
+        include Command::Common
       end
     end
   end
