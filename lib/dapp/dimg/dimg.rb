@@ -7,6 +7,7 @@ module Dapp
       include Stages
 
       include Helper::Sha256
+      include Helper::Trivia
 
       attr_reader :config
       attr_reader :ignore_git_fetch

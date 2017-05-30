@@ -1,0 +1,25 @@
+module Dapp
+  module Kube
+    module Dapp
+      module Command
+        module Dismiss
+          def kube_dismiss
+            kube_check_helm!
+            kube_check_helm_release!
+            log_process("Delete release #{kube_release_name} ", verbose: true) do
+              with_log_indent do
+                shellout! "helm delete #{kube_release_name} --purge"
+                kubernetes.delete_namespace!(kube_namespace) if options[:with_namespace]
+              end
+            end
+          end
+
+          def kube_check_helm_release!
+            pr = shellout("helm list | grep #{kube_release_name}")
+            raise Error::Command, code: :helm_release_not_exist, data: { name: kube_release_name } if pr.status == 1 || pr.stdout.empty?
+          end
+        end
+      end
+    end
+  end
+end

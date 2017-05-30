@@ -30,6 +30,11 @@ en:
       secret_key_not_found: "Secret key `DAPP_SECRET_KEY` not found!"
       minikube_not_found: "Minikube not found: install minikube (https://github.com/kubernetes/minikube/releases)!"
       minikube_not_started: "Minikube not started!"
+      project_helm_chart_not_found: "Project helm chart `%{path}` not found!"
+      helm_not_found: "Helm not found: install helm (https://github.com/kubernetes/helm/blob/master/docs/install.md)"
+      helm_release_not_exist: "Helm release `%{name}` not exist!"
+      file_not_exist: "File `%{path}` doesn't exist!"
+      helm_directory_not_exist: "Helm directory doesn't exist in project!"
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       no_such_app: "No such app: `%{apps_patterns}`!"

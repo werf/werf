@@ -24,6 +24,10 @@ module Dapp
         end
       end
 
+      def make_path(base, *path)
+        path.compact.map(&:to_s).inject(Pathname.new(base), &:+)
+      end
+
       def self.class_to_lowercase(class_name = self)
         class_name.to_s.split('::').last.split(/(?=[[:upper:]]|[0-9])/).join('_').downcase.to_s
       end

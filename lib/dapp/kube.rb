@@ -1,0 +1,1 @@
+module Dapp::Kube; end

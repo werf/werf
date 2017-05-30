@@ -4,7 +4,7 @@ module Dapp::Deployment::CLI::Command
       banner <<BANNER.freeze
 Usage:
 
-  dapp deploy apply [options] [APP ...] REPO
+  dapp deployment apply [options] [APP ...] REPO
 
 Options:
 BANNER
