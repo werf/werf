@@ -20,6 +20,11 @@ BANNER
              long: '--tmp-dir-prefix PREFIX',
              description: 'Tmp directory prefix (/tmp by default). Used for build process service directories.'
 
+      option :helm_set_options,
+             long: '--set STRING_ARRAY',
+             default: [],
+             proc: proc { |v| composite_options(:helm_set) << v }
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         repo = self.class.required_argument(self, 'repo')
