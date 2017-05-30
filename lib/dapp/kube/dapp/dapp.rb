@@ -4,6 +4,7 @@ module Dapp
       module Dapp
         include Command::SecretGenerate
         include Command::SecretKeyGenerate
+        include Command::SecretFileEncrypt
         include Command::Common
       end
     end
