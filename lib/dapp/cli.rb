@@ -5,7 +5,7 @@ module Dapp
     extend Helper::Cli
     include Helper::Trivia
 
-    SUBCOMMANDS = ['dimg', 'deployment'].freeze
+    SUBCOMMANDS = ['dimg', 'deployment', 'kube'].freeze
 
     banner <<BANNER.freeze
 Usage: dapp sub-command [sub-command options]
@@ -14,6 +14,7 @@ Available subcommands: (for details, dapp SUB-COMMAND --help)
 
 dapp dimg
 dapp deployment
+dapp kube
 
 Options:
 BANNER
