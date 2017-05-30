@@ -158,7 +158,18 @@ module Dapp
     end
 
     def cleanup_tmp
-      FileUtils.rm_rf(tmp_path)
+      # В tmp-директории могли остаться файлы, владельцами которых мы не являемся.
+      # Такие файлы могут попасть туда при экспорте файлов артефакта.
+      # Чтобы от них избавиться — запускаем docker-контейнер под root-пользователем
+      # и удаляем примонтированную tmp-директорию.
+      cmd = "".tap do |cmd|
+        cmd << "docker run --rm"
+        cmd << " --volume #{tmp_base_dir}:#{tmp_base_dir}"
+        cmd << " ubuntu:16.04"
+        cmd << " rm -rf #{tmp_path}"
+      end
+      project.shellout! cmd
+
       artifacts.each(&:cleanup_tmp)
     end
 

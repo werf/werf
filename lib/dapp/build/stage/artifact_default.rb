@@ -18,7 +18,7 @@ module Dapp
           group = artifact[:options][:group]
           to = artifact[:options][:to]
 
-          command = safe_cp(cwd, artifact_dimg.container_tmp_path(artifact_name).to_s, Process.uid, Process.gid, include_paths, exclude_paths)
+          command = safe_cp(cwd, artifact_dimg.container_tmp_path(artifact_name).to_s, nil, nil, include_paths, exclude_paths)
           run_artifact_dimg(artifact_dimg, artifact_name, command)
 
           command = safe_cp(dimg.container_tmp_path('artifact', artifact_name).to_s, to, owner, group, include_paths, exclude_paths)
