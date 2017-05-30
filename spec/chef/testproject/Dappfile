@@ -35,18 +35,33 @@ dimg_group do
   chef.recipe 'main'
 
   dimg_group do
-    docker.from 'ubuntu:14.04'
+    chef._build_artifact_attributes['ref_name'] = ENV['CI_BUILD_REF_NAME']
+    artifact do
+      docker.from 'ubuntu:14.04'
+      chef.recipe 'install_version'
 
-    chef.recipe 'x'
-    chef.dimod 'dimod-test2', path: '../dimod-test2'
+      export '/' do
+        to '/'
+        include_paths 'version.txt'
 
-    dimg 'x_y' do
-      chef.recipe 'x_y'
+        after :setup
+      end
     end
-  end
 
-  dimg 'y' do
-    docker.from 'centos:7'
-    chef.recipe 'y'
+    dimg_group do
+      docker.from 'ubuntu:14.04'
+
+      chef.recipe 'x'
+      chef.dimod 'dimod-test2', path: '../dimod-test2'
+
+      dimg 'x_y' do
+        chef.recipe 'x_y'
+      end
+    end
+
+    dimg 'y' do
+      docker.from 'centos:7'
+      chef.recipe 'y'
+    end
   end
 end

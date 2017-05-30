@@ -17,7 +17,9 @@ module Dapp
         attr_reader :dapp
 
         def path_format(path)
-          path.to_s.chomp('/')
+          path = path.to_s
+          path = path.chomp('/') unless path == '/'
+          path
         end
 
         def validate_compliance!(pattern, value, error_code)
