@@ -32,6 +32,7 @@ en:
       minikube_not_started: "Minikube not started!"
       project_helm_chart_not_found: "Project helm chart `%{path}` not found!"
       helm_not_found: "Helm not found: install helm (https://github.com/kubernetes/helm/blob/master/docs/install.md)"
+      helm_release_not_exist: "Helm release `%{name}` not exist!"
       file_not_exist: "File `%{path}` doesn't exist!"
       helm_directory_not_exist: "Helm directory doesn't exist in project!"
     dapp:
