@@ -25,12 +25,6 @@ module Dapp
 
         alias build_dir build_path
         alias tmp_dir tmp_path
-
-        private
-
-        def make_path(base, *path)
-          path.compact.map(&:to_s).inject(Pathname.new(base), &:+)
-        end
       end # Path
     end
   end # Dimg
