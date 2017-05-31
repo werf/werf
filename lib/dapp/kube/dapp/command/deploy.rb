@@ -103,8 +103,8 @@ module Dapp
 
           def kube_flush_hooks_jobs(additional_values, set_options)
             return if (config_jobs_names = kube_helm_hooks_jobs_to_delete(additional_values, set_options).keys).empty?
-            kube_job_list.reject { |name| config_jobs_names.include? name }.each do
-              log_process("Delete hooks job `#{job_name}` for release #{kube_release_name} ", short: true) { kube_delete_job!(name) }
+            config_jobs_names.select { |name| kube_job_list.include? name }.each do |name|
+              log_process("Delete hooks job `#{name}` for release #{kube_release_name} ", short: true) { kube_delete_job!(name) }
             end
           end
 

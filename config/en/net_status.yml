@@ -112,4 +112,4 @@ en:
       bootstrap_image_not_found: "Bootstrap failed because `%{reason}`: `%{message}`"
     kubernetes:
       kube_config_not_found: "Kube config `%{path}` not found!"
-      kube_server_connection_refused: "Kube server `%{url}` connection refused!"
+      kube_server_connection_refused: "Kube server `%{url}` connection refused: %{error}"

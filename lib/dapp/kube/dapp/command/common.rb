@@ -20,7 +20,7 @@ module Dapp
           end
 
           def kubernetes
-            @kubernetes ||= Kubernetes.new(namespace: kube_namespace)
+            @kubernetes ||= Client.new(namespace: kube_namespace)
           end
         end
       end
