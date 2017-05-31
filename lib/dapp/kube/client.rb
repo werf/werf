@@ -7,7 +7,7 @@ module Dapp
       end
 
       def namespace
-        @namespace || 'default'
+        @namespace || kube_context_config['context']['namespace']
       end
 
       # Чтобы не перегружать методы явной передачей namespace.
@@ -163,9 +163,11 @@ module Dapp
           Excon.defaults[:middlewares] << Excon::Middleware::RedirectFollower
 
           connection = begin
-            Excon.new(kube_server_url, **kube_server_options(excon_parameters)).tap {|c| c.get}
+            Excon.new(kube_cluster_config['cluster']['server'], **kube_server_options(excon_parameters)).tap(&:get)
           rescue Excon::Error::Socket => err
-            raise Error::ConnectionRefused, code: :kube_server_connection_refused, data: { url: kube_server_url, error: err.message }
+            raise Error::ConnectionRefused,
+              code: :kube_server_connection_refused,
+              data: { kube_cluster_config: kube_cluster_config, kube_user_config: kube_user_config, error: err.message }
           end
 
           return yield connection
@@ -174,10 +176,6 @@ module Dapp
           Excon.defaults[:ssl_cert_store] = old_ssl_cert_store
           Excon.defaults[:middlewares] = old_middlewares
         end
-      end
-
-      def kube_server_url
-        kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('server', nil)
       end
 
       def kube_server_options(excon_parameters = {})
@@ -193,6 +191,39 @@ module Dapp
 
           client_key_data = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key-data', nil)
           opts[:client_key_data] = Base64.decode64(client_key_data) if client_key_data
+        end
+      end
+
+      def kube_user_config
+        @kube_user_config ||= begin
+          kube_config.fetch('users', []).find {|user| user['name'] == kube_context_config['context']['user']} || begin
+            raise Error::BadConfig, code: :kube_user_not_found, data: {context: kube_context_config}
+          end
+        end
+      end
+
+      def kube_cluster_config
+        @kube_cluster_config ||= begin
+          kube_config.fetch('clusters', []).find {|cluster| cluster['name'] == kube_context_config['context']['cluster']} || begin
+            raise Error::BadConfig, code: :kube_cluster_not_found, data: {context: kube_context_config}
+          end
+        end
+      end
+
+      def kube_context_config
+        @kube_context_config ||= begin
+          kube_config.fetch('contexts', []).find {|context| context['name'] == kube_context_name} || begin
+            raise Error::BadConfig, code: :kube_context_not_found, data: {context_name: kube_context_name}
+          end
+        end
+      end
+
+      def kube_context_name
+        @kube_context_name ||= kube_config['current-context'] || begin
+          if context = kube_config.fetch('contexts', []).first
+            warn "[WARN] .kube/config current-context is not set, using context '#{context['name']}'"
+            context['name']
+          end
         end
       end
 

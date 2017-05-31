@@ -15,6 +15,7 @@ module Dapp
 
       class Timeout < Base; end
       class ConnectionRefused < Base; end
+      class BadConfig < Base; end
     end
   end
 end
