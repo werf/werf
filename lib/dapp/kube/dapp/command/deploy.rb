@@ -27,7 +27,7 @@ module Dapp
                 options << "--set global.dapp.repo=#{repo}"
                 options << "--set global.dapp.image_version=#{image_version}"
                 options << "--set global.namespace=#{kube_namespace}"
-                options << "--set global.env=#{kube_namespace}"
+                options.concat(self.options[:helm_set_options].map { |opt| "--set #{opt}" })
               end
 
               kube_flush_hooks_jobs(additional_values, set_options)
