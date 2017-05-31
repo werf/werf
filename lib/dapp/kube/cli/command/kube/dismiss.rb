@@ -11,7 +11,7 @@ BANNER
 
       option :namespace,
              long: '--namespace NAME',
-             required: true
+             default: 'default'
 
       option :with_namespace,
              long: '--with-namespace',
