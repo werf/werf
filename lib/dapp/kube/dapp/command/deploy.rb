@@ -86,13 +86,19 @@ module Dapp
             cont = <<-EOF
 {{/* vim: set filetype=mustache: */}}
 
+{{- define "dimg" -}}                                                                               
+{{- $name := index . 0 -}}                                                                          
+{{- $context := index . 1 -}}                                                                       
+{{- printf "%s:%s-%s" $context.Values.global.dapp.repo $name $context.Values.global.dapp.image_version -}}
+{{- end -}}                                                                                         
+
 {{- define "dapp_secret_file" -}}
 {{- $relative_file_path := index . 0 -}}
 {{- $context := index . 1 -}}
 {{- $context.Files.Get (print "#{secret_directory}/" $relative_file_path) -}}
 {{- end -}}
             EOF
-            kube_tmp_chart_path('templates/dapp_secret_file.tpl').write(cont)
+            kube_tmp_chart_path('templates/_dapp_helpers.tpl').write(cont)
           end
 
           def kube_flush_hooks_jobs(additional_values, set_options)
