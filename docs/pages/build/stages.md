@@ -76,4 +76,4 @@ folder: build
 ![Диаграмма пользовательских стадий сборки](images/build/stages_02.png "Диаграмма пользовательских стадий сборки")
 
 
-В дальнейшем эта диаграмма будет расширена, т.к.[артефакт](artifact_for_advanced_build.html) или [dimod (модули chef)](chef_dimod_for_advanced_build.html) добавляют свои стадии. Но пока можно перейти к главе про [shell-сборщик](shell_for_build.md), чтобы увидеть стадии в работе.
+В дальнейшем эта диаграмма будет расширена, т.к.[артефакт](artifact_for_advanced_build.html) или [dimod (модули chef)](chef_dimod_for_advanced_build.html) добавляют свои стадии. Но пока можно перейти к главе про [shell-сборщик](shell_for_build.html), чтобы увидеть стадии в работе.
