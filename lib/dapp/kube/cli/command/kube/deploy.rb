@@ -23,7 +23,7 @@ BANNER
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         repo = self.class.required_argument(self, 'repo')
-        ::Dapp::Dapp.new(options: cli_options(apps_patterns: cli_arguments, repo: repo)).public_send(run_method)
+        ::Dapp::Dapp.new(options: cli_options(repo: repo)).public_send(run_method)
       end
     end
   end
