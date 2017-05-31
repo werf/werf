@@ -10,7 +10,7 @@ Options:
 BANNER
       option :namespace,
              long: '--namespace NAME',
-             default: 'default'
+             default: nil
 
       option :image_version,
              long: '--image-version IMAGE_VERSION',
