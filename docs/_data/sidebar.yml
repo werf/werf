@@ -104,3 +104,6 @@ entries:
 
     - title: Отладка
       url: /debugging_commands.html
+
+    - title: Развёртывание
+      url: /kube_commands.html

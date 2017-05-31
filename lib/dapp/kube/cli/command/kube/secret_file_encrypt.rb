@@ -10,7 +10,7 @@ Options:
 BANNER
 
       option :output_file_path,
-             short: '-o OUTPUt_FILE_PATH',
+             short: '-o OUTPUT_FILE_PATH',
              required: false
 
       def run(argv = ARGV)
