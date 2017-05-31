@@ -147,34 +147,53 @@ module Dapp
 
       def with_connection(excon_parameters: {}, &blk)
         old_ssl_ca_file = Excon.defaults[:ssl_ca_file]
+        old_ssl_cert_store = Excon.defaults[:ssl_cert_store]
         old_middlewares = Excon.defaults[:middlewares].dup
 
         begin
-          Excon.defaults[:ssl_ca_file] = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority', nil)
+          ssl_cert_store = OpenSSL::X509::Store.new
+          if ssl_ca_file = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority', nil)
+            ssl_cert_store.add_file ssl_ca_file
+          elsif ssl_ca_data = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority-data', nil)
+            ssl_cert_store.add_cert OpenSSL::X509::Certificate.new(Base64.decode64(ssl_ca_data))
+          end
+
+          Excon.defaults[:ssl_ca_file] = nil
+          Excon.defaults[:ssl_cert_store] = ssl_cert_store
           Excon.defaults[:middlewares] << Excon::Middleware::RedirectFollower
 
-          return yield Excon.new(kube_server_url, **kube_server_options(excon_parameters))
+          connection = begin
+            Excon.new(kube_server_url, **kube_server_options(excon_parameters)).tap {|c| c.get}
+          rescue Excon::Error::Socket => err
+            raise Error::ConnectionRefused, code: :kube_server_connection_refused, data: { url: kube_server_url, error: err.message }
+          end
+
+          return yield connection
         ensure
           Excon.defaults[:ssl_ca_file] = old_ssl_ca_file
+          Excon.defaults[:ssl_cert_store] = old_ssl_cert_store
           Excon.defaults[:middlewares] = old_middlewares
         end
       end
 
       def kube_server_url
-        @kube_server_url ||= begin
-          kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('server', nil).tap do |url|
-            begin
-              Excon.new(url, **kube_server_options).get
-            rescue Excon::Error::Socket => err
-              raise Error::ConnectionRefused, code: :kube_server_connection_refused, data: { url: url, error: err.message }
-            end
-          end
-        end
+        kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('server', nil)
       end
 
       def kube_server_options(excon_parameters = {})
-        { client_cert: kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-certificate', nil),
-          client_key: kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key', nil) }.merge(excon_parameters)
+        {}.tap do |opts|
+          client_cert = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-certificate', nil)
+          opts[:client_cert] = client_cert if client_cert
+
+          client_cert_data = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-certificate-data', nil)
+          opts[:client_cert_data] = Base64.decode64(client_cert_data) if client_cert_data
+
+          client_key = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key', nil)
+          opts[:client_key] = client_key if client_key
+
+          client_key_data = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key-data', nil)
+          opts[:client_key_data] = Base64.decode64(client_key_data) if client_key_data
+        end
       end
 
       def kube_config
