@@ -1,6 +1,6 @@
 module Dapp
   module Kube
-    class Kubernetes
+    class Client
       def initialize(namespace: nil)
         @namespace = namespace
         @query_parameters = {}
@@ -165,8 +165,8 @@ module Dapp
           kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('server', nil).tap do |url|
             begin
               Excon.new(url, **kube_server_options).get
-            rescue Excon::Error::Socket
-              raise Error::ConnectionRefused, code: :kube_server_connection_refused, data: { url: url }
+            rescue Excon::Error::Socket => err
+              raise Error::ConnectionRefused, code: :kube_server_connection_refused, data: { url: url, error: err.message }
             end
           end
         end
