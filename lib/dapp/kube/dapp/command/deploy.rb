@@ -186,7 +186,7 @@ module Dapp
           end
 
           def kube_chart_path(*path)
-            make_path(self.path, '.helm', *path).expand_path
+            self.path('.helm', *path).expand_path
           end
         end
       end

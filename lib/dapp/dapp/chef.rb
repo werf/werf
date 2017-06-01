@@ -10,7 +10,7 @@ module Dapp
       end
 
       def builder_cookbook_path
-        Pathname.new(path).join('.dapp_chef')
+        path('.dapp_chef')
       end
     end # Chef
   end # Dapp

@@ -3,7 +3,7 @@ module Dapp
     class Dimg
       module Path
         def home_path(*path)
-          make_path(dapp.path, *path).expand_path
+          dapp.path(*path).expand_path
         end
 
         def tmp_base_dir

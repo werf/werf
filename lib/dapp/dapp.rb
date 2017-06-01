@@ -36,7 +36,7 @@ module Dapp
         elsif git_path
           File.basename(File.dirname(git_path))
         else
-          File.basename(path)
+          path.basename
         end
       end
     end
@@ -58,8 +58,9 @@ module Dapp
       end
     end
 
-    def path
+    def path(*path)
       @path ||= expand_path(dappfile_path)
+      make_path(@path, *path)
     end
 
     def build_path
@@ -67,7 +68,7 @@ module Dapp
         if options[:build_dir]
           Pathname.new(options[:build_dir])
         else
-          Pathname.new(path).join('.dapp_build')
+          path('.dapp_build')
         end.expand_path.tap(&:mkpath)
       end
     end

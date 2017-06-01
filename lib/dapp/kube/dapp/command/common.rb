@@ -16,7 +16,11 @@ module Dapp
           end
 
           def secret
-            @secret ||= Secret.new(ENV['DAPP_SECRET_KEY']) if ENV.key?('DAPP_SECRET_KEY')
+            @secret ||= begin
+              secret_key = ENV['DAPP_SECRET_KEY']
+              secret_key ||= path('.dapp_secret_key').read.chomp if path('.dapp_secret_key').file?
+              Secret.new(secret_key) if secret_key
+            end
           end
 
           def kubernetes
