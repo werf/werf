@@ -21,9 +21,6 @@ dapp kube deploy [options] REPO
 #### --tmp_dir_prefix PREFIX
 Переопределяет префикс временной директории, временного chart-a, который удаляется после запуска.
 
-#### --dev
-Сохраняет временный chart и выводит путь до него.
-
 ### dapp kube dismiss
 Удалить релиз.
 
@@ -38,7 +35,7 @@ dapp kube dismiss [options]
 При удалении релиза также удаляет `namespace`.
 
 ### dapp kube secret key generate
-Сгенерировать значение для ключа шифрования (`DAPP_SECRET_KEY`).
+Сгенерировать ключ шифрования.
 
 ```
 dapp kube secret key generate
