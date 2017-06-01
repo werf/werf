@@ -12,7 +12,7 @@ module Dapp
               puts encrypted_data
             else
               FileUtils.mkpath File.dirname(output_file_path)
-              IO.binwrite(output_file_path, encrypted_data)
+              IO.binwrite(output_file_path, "#{encrypted_data}\n")
             end
           end
         end

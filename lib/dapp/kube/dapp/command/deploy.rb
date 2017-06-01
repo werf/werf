@@ -77,7 +77,7 @@ module Dapp
             Dir.glob(kube_chart_secret_path.join('**/*')).each do |entry|
               next unless File.file?(entry)
               secret_relative_path = Pathname(entry).subpath_of(kube_chart_secret_path)
-              IO.binwrite(kube_tmp_chart_secret_path(secret_relative_path), secret.extract(IO.binread(entry)))
+              IO.binwrite(kube_tmp_chart_secret_path(secret_relative_path), secret.extract(IO.binread(entry).chomp("\n")))
             end
           end
 
