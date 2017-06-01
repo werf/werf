@@ -30,17 +30,53 @@ _В планах поддержка полного цикла CI/CD._
 
 ## Установка
 
-Для работы dapp требуется ruby и docker.
+Для работы dapp требуется:
 
-* [Установка ruby с помощью rvm](https://rvm.io/rvm/install)
-* [Установка docker](https://docs.docker.com/engine/installation/)
+#### Ruby
 
-dapp распространяется в виде gem-а. Для установки достаточно набрать:
+Версия >= 2.1.
+
+[Установка ruby с помощью rvm](https://rvm.io/rvm/install)
+
+#### Docker
+
+Версия >= 1.10.0.
+
+[Установка docker](https://docs.docker.com/engine/installation/)
+
+#### Заголовочные файлы libssh2 для работы с git-репозиториями через ssh
+
+###### Ubuntu
+
+```bash
+apt-get install libssh2-1-dev
+```
+
+###### Centos
+
+```bash
+yum install libssh2-devel
+```
+
+#### Cmake для установки зависимого gem rugged
+
+###### Ubuntu
+
+```bash
+apt-get install cmake
+```
+
+###### Centos
+
+```bash
+yum install cmake
+```
+
+#### Gem dapp
 
 ```bash
 gem install dapp
 ```
-
 
 ## Документация
 
