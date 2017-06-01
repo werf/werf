@@ -33,11 +33,7 @@ module Dapp
               kube_flush_hooks_jobs(additional_values, set_options)
               kube_run_deploy(additional_values, set_options)
             ensure
-              if dev_mode?
-                log_info "Temporary chart directory: #{kube_tmp_chart_path}"
-              else
-                FileUtils.rm_rf(kube_tmp_chart_path)
-              end
+              FileUtils.rm_rf(kube_tmp_chart_path)
             end
           end
 
@@ -77,7 +73,8 @@ module Dapp
             Dir.glob(kube_chart_secret_path.join('**/*')).each do |entry|
               next unless File.file?(entry)
               secret_relative_path = Pathname(entry).subpath_of(kube_chart_secret_path)
-              IO.binwrite(kube_tmp_chart_secret_path(secret_relative_path), secret.extract(IO.binread(entry).chomp("\n")))
+              secret_data = secret.extract(IO.binread(entry).chomp("\n"))
+              File.open(kube_tmp_chart_secret_path(secret_relative_path), 'wb:ASCII-8BIT', 0400) {|f| f.write secret_data}
             end
           end
 
@@ -176,7 +173,7 @@ module Dapp
           end
 
           def kube_tmp_chart_path(*path)
-            @kube_tmp_path ||= Dir.mktmpdir('dapp-secret-', options[:tmp_dir_prefix] || '/tmp')
+            @kube_tmp_path ||= Dir.mktmpdir('dapp-helm-chart-', options[:tmp_dir_prefix] || '/tmp')
             make_path(@kube_tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }
           end
 
