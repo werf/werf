@@ -25,6 +25,11 @@ BANNER
              default: [],
              proc: proc { |v| composite_options(:helm_set) << v }
 
+      option :helm_values_options,
+             long: '--values FILE_PATH',
+             default: [],
+             proc: proc { |v| composite_options(:helm_values) << v }
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         repo = self.class.required_argument(self, 'repo')

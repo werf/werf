@@ -19,8 +19,8 @@ module Dapp
               kube_generate_helm_chart_tpl
 
               additional_values = [].tap do |options|
-                options << "--values #{kube_chart_path("values/#{kube_namespace}.yaml")}" if kube_chart_path("values/#{kube_namespace}.yaml").exist?
                 options << "--values #{kube_tmp_chart_secret_values_path.exist? ? kube_tmp_chart_secret_values_path : kube_chart_secret_values_path}" if kube_chart_secret_values_path.exist?
+                options.concat(self.options[:helm_values_options].map { |opt| "--values #{opt}" })
               end
 
               set_options = [].tap do |options|
