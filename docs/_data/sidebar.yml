@@ -54,6 +54,12 @@ entries:
     - title: Debugging
       url: /debug_for_advanced_build.html
 
+  - title: Развёртывание
+    folderitems:
+
+    - title: Секреты
+      url: /secrets_for_deploy.html
+
   - title: Архитектура
     folderitems:
 
