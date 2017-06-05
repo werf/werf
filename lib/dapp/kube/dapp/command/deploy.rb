@@ -19,7 +19,7 @@ module Dapp
               kube_generate_helm_chart_tpl
 
               additional_values = [].tap do |options|
-                options << "--values #{kube_tmp_chart_secret_values_path.exist? ? kube_tmp_chart_secret_values_path : kube_chart_secret_values_path}" if kube_chart_secret_values_path.exist?
+                options << "--values #{kube_tmp_chart_secret_values_path}" if kube_tmp_chart_secret_values_path.exist?
                 options.concat(self.options[:helm_values_options].map { |opt| "--values #{opt}" })
               end
 
@@ -45,13 +45,12 @@ module Dapp
             if secret.nil?
               log_warning(desc: { code: :dapp_secret_key_not_found }) if kube_chart_secret_values_path.file? || kube_chart_secret_path.directory?
             else
-              kube_helm_decode_secret_values
               kube_helm_decode_secret_files
             end
+            kube_helm_decode_secret_values
           end
 
           def kube_helm_decode_secret_values
-            return unless kube_chart_secret_values_path.file?
             decoded_data = kube_helm_decode_json(YAML::load(kube_chart_secret_values_path.read))
             kube_tmp_chart_secret_values_path.write(decoded_data.to_yaml)
           end
@@ -62,7 +61,7 @@ module Dapp
               when Array then value.map { |v| decode_value.call(v) }
               when Hash then kube_helm_decode_json(value)
               else
-                secret.extract(value)
+                secret.nil? ? '' : secret.extract(value)
               end
             end
             json.each { |k, v| json[k] = decode_value.call(v) }
@@ -79,7 +78,6 @@ module Dapp
           end
 
           def kube_generate_helm_chart_tpl
-            secret_directory = secret.nil? ? 'secret' : kube_tmp_chart_secret_path.subpath_of(kube_tmp_chart_path)
             cont = <<-EOF
 {{/* vim: set filetype=mustache: */}}
 
@@ -92,7 +90,7 @@ module Dapp
 {{- define "dapp_secret_file" -}}
 {{- $relative_file_path := index . 0 -}}
 {{- $context := index . 1 -}}
-{{- $context.Files.Get (print "#{secret_directory}/" $relative_file_path) -}}
+{{- $context.Files.Get (print "#{kube_tmp_chart_secret_path.subpath_of(kube_tmp_chart_path)}/" $relative_file_path) -}}
 {{- end -}}
             EOF
             kube_tmp_chart_path('templates/_dapp_helpers.tpl').write(cont)
