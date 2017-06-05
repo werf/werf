@@ -119,7 +119,7 @@ module Dapp
             hook_start_index     = output.lines.index("HOOKS:\n") + 1
             configs = generator.call(output.lines[hook_start_index..manifest_start_index-1].join)
 
-            (configs['Job'] || []).reject do |_, c|
+            (configs['Job'] || {}).reject do |_, c|
               c['metadata'] ||= {}
               c['metadata']['annotations'] ||= {}
               c['metadata']['annotations']['helm.sh/resource-policy'] == 'keep'
