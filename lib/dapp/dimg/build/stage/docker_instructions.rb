@@ -9,7 +9,7 @@ module Dapp
           end
 
           def dependencies
-            [change_options]
+            @dependencies ||= [change_options]
           end
 
           def prepare_image

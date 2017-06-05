@@ -4,7 +4,7 @@ module Dapp
       module Stage
         class ArtifactBase < Base
           def dependencies
-            artifacts_signatures
+            @dependencies ||= artifacts_signatures
           end
 
           def prepare_image

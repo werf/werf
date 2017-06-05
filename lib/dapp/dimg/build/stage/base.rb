@@ -129,18 +129,16 @@ module Dapp
           end
 
           def signature
-            @signature ||= begin
-              if empty?
-                prev_stage.signature
-              else
-                args = []
-                args << prev_stage.signature unless prev_stage.nil?
-                args << dimg.build_cache_version
-                args << builder_checksum
-                args.concat(dependencies.flatten)
+            if empty?
+              prev_stage.signature
+            else
+              args = []
+              args << prev_stage.signature unless prev_stage.nil?
+              args << dimg.build_cache_version
+              args << builder_checksum
+              args.concat(dependencies.flatten)
 
-                hashsum args
-              end
+              hashsum args
             end
           end
 
