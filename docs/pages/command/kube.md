@@ -13,7 +13,7 @@ dapp kube deploy [options] REPO
 ```
 
 #### --namespace NAMESPACE
-Задаёт `namespace`, по умолчанию `default`.
+Задаёт `namespace`, по умолчанию используется context namespace.
 
 #### --image_version VERSION
 Задаёт версию для используемых `dimg`.
@@ -35,7 +35,7 @@ dapp kube dismiss [options]
 ```
 
 #### --namespace NAMESPACE
-Задаёт `namespace`, по умолчанию `default`.
+Задаёт `namespace`, по умолчанию используется context namespace.
 
 #### --with_namespace
 При удалении релиза также удаляет `namespace`.
