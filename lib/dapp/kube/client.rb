@@ -7,7 +7,7 @@ module Dapp
       end
 
       def namespace
-        @namespace || kube_context_config['context']['namespace']
+        @namespace || kube_context_config['context']['namespace'] || 'default'
       end
 
       # Чтобы не перегружать методы явной передачей namespace.

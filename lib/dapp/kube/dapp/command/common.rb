@@ -12,7 +12,7 @@ module Dapp
           end
 
           def kube_namespace
-            options[:namespace].tr('_', '-')
+            kubernetes.namespace
           end
 
           def secret
@@ -24,7 +24,10 @@ module Dapp
           end
 
           def kubernetes
-            @kubernetes ||= Client.new(namespace: kube_namespace)
+            @kubernetes ||= begin
+              namespace = options[:namespace].nil? ? nil : options[:namespace].tr('_', '-')
+              Client.new(namespace: namespace)
+            end
           end
         end
       end
