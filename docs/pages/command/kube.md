@@ -48,7 +48,7 @@ dapp kube secret key generate
 ```
 
 ### dapp kube secret generate
-Зашифровать введённое значение ключом `DAPP_SECRET_KEY`. Для завершения ввода необходимо нажать `Ctrl + D`.
+Зашифровать введённое значение ключом `DAPP_SECRET_KEY`.
 
 ```
 dapp kube secret generate

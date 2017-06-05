@@ -24,10 +24,10 @@ DAPP_SECRET_KEY=c85e100d4ff006b693b0555f09244fdf
 
 Для хранения секретных значений предусмотрен файл `.helm/secret-values.yaml`, который декодируется при развёртывании и используется в helm в качестве [дополнительных значений](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md) (при отсутствии ключа шифрования файл значения декодируются в пустые строки).
 
-При шифрованнии данных используется команда `dapp kube secret generate`. Завершить ввод необходимо нажатием `Ctrl + D`.
+При шифрованнии данных используется команда `dapp kube secret generate`.
 ```
 $ dapp kube secret generate
-1000541517bccae1acce015629f4ec89996e0b4
+Enter secret: 1000541517bccae1acce015629f4ec89996e0b4
 ```
 
 Раздел файла с зашифрованными значениями внешней mysql-базы может быть организован следующим образом:
