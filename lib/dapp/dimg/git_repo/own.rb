@@ -11,7 +11,7 @@ module Dapp
         end
 
         def path
-          @path ||= Rugged::Repository.discover(dimg.home_path.to_s).path
+          @path ||= Pathname(Rugged::Repository.discover(dimg.home_path.to_s).path)
         rescue Rugged::RepositoryError => _e
           raise Error::Rugged, code: :local_git_repository_does_not_exist
         end

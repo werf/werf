@@ -83,7 +83,7 @@ module Dapp
         protected
 
         def git(**kwargs)
-          @git ||= Rugged::Repository.new(path, **kwargs)
+          @git ||= Rugged::Repository.new(path.to_s, **kwargs)
         end
 
         private
