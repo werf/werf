@@ -5,9 +5,9 @@ module Dapp
         module SecretGenerate
           def kube_secret_generate
             raise Error::Command, code: :secret_key_not_found if secret.nil?
-            unless (data = $stdin.noecho { |s| s.gets(nil) }).nil?
-              puts unless data.end_with?("\n")
-              puts secret.generate(data)
+            print 'Enter secret: '
+            unless (data = $stdin.noecho(&:gets)).nil?
+              puts secret.generate(data.chomp)
             end
           end
         end

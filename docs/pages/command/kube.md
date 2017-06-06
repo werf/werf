@@ -13,7 +13,7 @@ dapp kube deploy [options] REPO
 ```
 
 #### --namespace NAMESPACE
-Задаёт `namespace`, по умолчанию `default`.
+Задаёт `namespace`, по умолчанию используется context namespace.
 
 #### --image_version VERSION
 Задаёт версию для используемых `dimg`.
@@ -35,7 +35,7 @@ dapp kube dismiss [options]
 ```
 
 #### --namespace NAMESPACE
-Задаёт `namespace`, по умолчанию `default`.
+Задаёт `namespace`, по умолчанию используется context namespace.
 
 #### --with_namespace
 При удалении релиза также удаляет `namespace`.
@@ -48,7 +48,7 @@ dapp kube secret key generate
 ```
 
 ### dapp kube secret generate
-Зашифровать введённое значение ключом `DAPP_SECRET_KEY`. Для завершения ввода необходимо нажать `Ctrl + D`.
+Зашифровать введённое значение ключом `DAPP_SECRET_KEY`.
 
 ```
 dapp kube secret generate
