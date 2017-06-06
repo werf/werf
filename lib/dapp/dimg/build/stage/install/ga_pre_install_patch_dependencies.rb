@@ -3,7 +3,7 @@ module Dapp
     module Build
       module Stage
         module Install
-          class GAPreInstallPatchDependencies < GADependenciesBase
+          class GAPreInstallPatchDependencies < GARelatedDependenciesBase
             include Mod::Group
 
             def initialize(dimg, next_stage)
@@ -11,8 +11,8 @@ module Dapp
               super
             end
 
-            def dependencies
-              dimg.stage_by_name(:install).context
+            def related_stage_name
+              :install
             end
           end # GAPreInstallPatchDependencies
         end
