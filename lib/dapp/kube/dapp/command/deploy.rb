@@ -19,8 +19,7 @@ module Dapp
               kube_generate_helm_chart_tpl
 
               additional_values = [].tap do |options|
-                options << "--values #{kube_tmp_chart_secret_values_path}" if kube_tmp_chart_secret_values_path.exist?
-                options.concat(self.options[:helm_values_options].map { |opt| "--values #{opt}" })
+                options.concat((kube_values_paths + kube_tmp_chart_secret_values_paths).map { |p| "--values #{p}" })
               end
 
               set_options = [].tap do |options|
@@ -43,7 +42,7 @@ module Dapp
 
           def kube_helm_decode_secrets
             if secret.nil?
-              log_warning(desc: { code: :dapp_secret_key_not_found }) if kube_chart_secret_values_path.file? || kube_chart_secret_path.directory?
+              log_warning(desc: { code: :dapp_secret_key_not_found }) if !kube_secret_values_paths.empty? || kube_chart_secret_path.directory?
             else
               kube_helm_decode_secret_files
             end
@@ -51,8 +50,10 @@ module Dapp
           end
 
           def kube_helm_decode_secret_values
-            decoded_data = kube_helm_decode_json(YAML::load(kube_chart_secret_values_path.read))
-            kube_tmp_chart_secret_values_path.write(decoded_data.to_yaml)
+            kube_secret_values_paths.each_with_index do |secret_values_file, index|
+              decoded_data = kube_helm_decode_json(YAML::load(secret_values_file.read))
+              kube_tmp_chart_secret_values_paths[index].write(decoded_data.to_yaml)
+            end
           end
 
           def kube_helm_decode_json(json)
@@ -162,10 +163,6 @@ module Dapp
             end
           end
 
-          def kube_tmp_chart_secret_values_path
-            kube_tmp_chart_path('decoded-secret-values.yaml')
-          end
-
           def kube_tmp_chart_secret_path(*path)
             kube_tmp_chart_path('decoded-secret', *path).tap { |p| p.parent.mkpath }
           end
@@ -173,6 +170,25 @@ module Dapp
           def kube_tmp_chart_path(*path)
             @kube_tmp_path ||= Dir.mktmpdir('dapp-helm-chart-', options[:tmp_dir_prefix] || '/tmp')
             make_path(@kube_tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }
+          end
+
+          def kube_values_paths
+            self.options[:helm_values_options].map { |p| Pathname(p).expand_path }.each do |f|
+              raise Error::Command, code: :values_file_not_found, data: { path: f } unless f.file?
+            end
+          end
+
+          def kube_tmp_chart_secret_values_paths
+            @kube_tmp_chart_secret_values_paths ||= kube_secret_values_paths.map { |f| kube_tmp_chart_path("#{SecureRandom.uuid}-#{f.basename}") }
+          end
+
+          def kube_secret_values_paths
+            @kube_chart_secret_values_files ||= [].tap do |files|
+              files << kube_chart_secret_values_path if kube_chart_secret_values_path.file?
+              files.concat(options[:helm_secret_values_options].map { |p| Pathname(p).expand_path }.each do |f|
+                raise Error::Command, code: :secret_values_file_not_found, data: { path: f } unless f.file?
+              end)
+            end
           end
 
           def kube_chart_secret_values_path
