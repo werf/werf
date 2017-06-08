@@ -63,7 +63,7 @@ module Dapp
               @_git_artifact ||= GitArtifact.new(dapp: dapp)
             end
 
-            [:build_dir, :tmp_dir].each do |mount_type|
+            [:build_dir, :tmp_dir, :custom_dir].each do |mount_type|
               define_method "_#{mount_type}_mount" do
                 _mount.select { |m| m._type == mount_type }
               end

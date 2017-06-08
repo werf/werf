@@ -4,6 +4,7 @@ module Dapp
       module Directive
         class Mount < Base
           attr_reader :_to
+          attr_reader :_from
           attr_reader :_type
 
           def initialize(to, **kwargs, &blk)
@@ -21,8 +22,15 @@ module Dapp
             end
           end
 
+          def from_path(path)
+            sub_directive_eval do
+              @_from = path_format(path)
+              @_type = :custom_dir
+            end
+          end
+
           def validate!
-            raise Error::Config, code: :mount_from_required if _type.nil?
+            raise Error::Config, code: :mount_from_or_from_path_required if _type.nil?
           end
         end
       end
