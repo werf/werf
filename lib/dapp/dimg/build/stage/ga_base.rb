@@ -13,21 +13,8 @@ module Dapp
               image.add_volume "#{dimg.tmp_path('archives')}:#{dimg.container_tmp_path('archives')}:ro"
               image.add_volume "#{dimg.tmp_path('patches')}:#{dimg.container_tmp_path('patches')}:ro"
 
-              prepare_local_git_artifacts_command
-              prepare_remote_git_artifacts_command
+              dimg.git_artifacts.each { |git_artifact| image.add_command git_artifact.send(apply_command_method, self) }
             end
-          end
-
-          def prepare_local_git_artifacts_command
-            prepare_base_git_artifacts_command(dimg.local_git_artifacts)
-          end
-
-          def prepare_remote_git_artifacts_command
-            prepare_base_git_artifacts_command(dimg.remote_git_artifacts)
-          end
-
-          def prepare_base_git_artifacts_command(git_artifacts)
-            git_artifacts.each { |git_artifact| image.add_command git_artifact.send(apply_command_method, self) }
           end
 
           def empty?

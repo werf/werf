@@ -11,14 +11,14 @@ module Dapp
           end
 
           def dependencies
-            [dimg.git_artifacts.map(&:paramshash).join, reset_commits.sort.uniq.compact]
+            @dependencies ||= [dimg.git_artifacts.map(&:paramshash).join, reset_commits]
           end
 
           protected
 
           def reset_commits
             regex = Regexp.union(RESET_COMMIT_MESSAGES)
-            dimg.git_artifacts.map { |git_artifact| git_artifact.repo.find_commit_id_by_message(regex) }
+            dimg.git_artifacts.map { |git_artifact| git_artifact.repo.find_commit_id_by_message(regex) }.sort.uniq.compact
           end
         end # GAArchiveDependencies
       end # Stage

@@ -31,30 +31,33 @@ module Dapp
 
         [].tap do |commands|
           commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d #{to}"
-          if any_changes?(nil, stage.layer_commit(self))
-            commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage.layer_commit(self))} -C #{to}"
+          if archive_any_changes?(stage)
+            commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(*archive_stage_commits(stage))} -C #{to}"
           end
         end
       end
 
       def apply_patch_command(stage)
-        patch_command(stage.prev_g_a_stage.layer_commit(self), stage.layer_commit(self))
-      end
-
-      def apply_dev_patch_command(stage)
-        patch_command(stage.prev_g_a_stage.layer_commit(self), nil)
+        [].tap do |commands|
+          if dev_mode?
+            if any_changes?(*dev_patch_stage_commits(stage))
+              changed_files = diff_patches(*dev_patch_stage_commits(stage)).map {|p| File.join(to, cwd, p.delta.new_file[:path])}
+              commands << "#{sudo}#{repo.dimg.dapp.rm_bin} -rf #{changed_files.join(' ')}"
+              commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(*dev_patch_stage_commits(stage))} -C #{to}"
+            end
+          else
+            if patch_any_changes?(stage)
+              commands << "#{sudo}#{repo.dimg.dapp.git_bin} apply --whitespace=nowarn --directory=#{to} --unsafe-paths #{patch_file(*patch_stage_commits(stage))}"
+            end
+          end
+        end
       end
 
       def stage_dependencies_checksum(stage)
         return [] if (stage_dependencies = stages_dependencies[stage.name]).empty?
 
         paths = (include_paths(true) + base_paths(stage_dependencies, true)).uniq
-
-        to_commit = if repo.is_a? GitRepo::Own and repo.dimg.dev_mode?
-          nil
-        else
-          latest_commit
-        end
+        to_commit = dev_mode? ? nil : latest_commit
 
         diff_patches(nil, to_commit, paths: paths)
           .sort_by {|patch| patch.delta.new_file[:path]}
@@ -68,8 +71,8 @@ module Dapp
           }
       end
 
-      def patch_size(from, to)
-        diff_patches(from, to).reduce(0) do |bytes, patch|
+      def patch_size(from_commit, to_commit)
+        diff_patches(from_commit, to_commit).reduce(0) do |bytes, patch|
           patch.hunks.each do |hunk|
             hunk.lines.each do |l|
               bytes +=
@@ -85,8 +88,13 @@ module Dapp
         end
       end
 
-      def dev_patch_hash(stage)
-        Digest::SHA256.hexdigest diff_patches(stage.prev_g_a_stage.layer_commit(self), nil).map(&:to_s).join(':::')
+      def dev_patch_hash
+        return unless dev_mode?
+
+        Digest::SHA256.hexdigest(diff_patches(latest_commit, nil).map do |patch|
+          next unless (path = repo.path.dirname.join(patch.delta.new_file[:path])).file?
+          File.read(path)
+        end.join(':::'))
       end
 
       def latest_commit
@@ -101,8 +109,12 @@ module Dapp
         "#{repo.name}#{name ? "_#{name}" : nil}"
       end
 
-      def any_changes?(from, to = latest_commit)
-        diff_patches(from, to).any?
+      def archive_any_changes?(stage)
+        any_changes?(*archive_stage_commits(stage))
+      end
+
+      def patch_any_changes?(stage)
+        any_changes?(*patch_stage_commits(stage))
       end
 
       protected
@@ -115,35 +127,36 @@ module Dapp
       attr_reader :group
       attr_reader :stages_dependencies
 
-      def patch_command(prev_commit, current_commit)
-        [].tap do |commands|
-          if any_changes?(prev_commit, current_commit)
-            commands << "#{sudo}#{repo.dimg.dapp.git_bin} apply --whitespace=nowarn --directory=#{to} --unsafe-paths " \
-                        "#{patch_file(prev_commit, current_commit)}"
-          end
-        end
-      end
-
       def sudo
         repo.dimg.dapp.sudo_command(owner: owner, group: group)
       end
 
-      def archive_file(to_commit)
-        create_file(repo.dimg.tmp_path('archives', archive_file_name(to_commit))) do |f|
+      def archive_file(from_commit, to_commit)
+        create_file(repo.dimg.tmp_path('archives', archive_file_name(from_commit, to_commit))) do |f|
           Gem::Package::TarWriter.new(f) do |tar|
-            diff_patches(nil, to_commit).each do |patch|
+            diff_patches(from_commit, to_commit).each do |patch|
               entry = patch.delta.new_file
+
+              content = begin
+                if to_commit == nil
+                  next unless (path = repo.path.dirname.join(entry[:path])).file?
+                  File.read(path)
+                else
+                  repo.lookup_object(entry[:oid]).content
+                end
+              end
+
               if entry[:mode] == 40960 # symlink
-                tar.add_symlink slice_cwd(entry[:path]), repo.lookup_object(entry[:oid]).content, entry[:mode]
+                tar.add_symlink slice_cwd(entry[:path]), content, entry[:mode]
               else
                 tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
-                  tf.write repo.lookup_object(entry[:oid]).content
+                  tf.write content
                 end
               end
             end
           end
         end
-        repo.dimg.container_tmp_path('archives', archive_file_name(to_commit))
+        repo.dimg.container_tmp_path('archives', archive_file_name(from_commit, to_commit))
       rescue Gem::Package::TooLongFileName => e
         raise Error::TarWriter, message: e.message
       end
@@ -156,15 +169,15 @@ module Dapp
           .reverse
       end
 
-      def archive_file_name(commit)
-        file_name(commit, 'tar')
+      def archive_file_name(from_commit, to_commit)
+        file_name(from_commit, to_commit, 'tar')
       end
 
-      def patch_file(from, to)
-        create_file(repo.dimg.tmp_path('patches', patch_file_name(from, to))) do |f|
-          diff_patches(from, to).each { |patch| f.write change_patch_new_file_path(patch) }
+      def patch_file(from_commit, to_commit)
+        create_file(repo.dimg.tmp_path('patches', patch_file_name(from_commit, to_commit))) do |f|
+          diff_patches(from_commit, to_commit).each { |patch| f.write change_patch_new_file_path(patch) }
         end
-        repo.dimg.container_tmp_path('patches', patch_file_name(from, to))
+        repo.dimg.container_tmp_path('patches', patch_file_name(from_commit, to_commit))
       end
 
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -209,23 +222,29 @@ module Dapp
         patch.delta.old_file[:mode] != patch.delta.new_file[:mode]
       end
 
-      def patch_file_name(from, to)
-        file_name(from, to, 'patch')
+      def patch_file_name(from_commit, to_commit)
+        file_name(from_commit, to_commit, 'patch')
       end
 
       def file_name(*args, ext)
-        "#{[full_name, args].flatten.join('_')}.#{ext}"
+        "#{[paramshash, args].flatten.compact.join('_')}.#{ext}"
       end
 
       def create_file(file_path, &blk)
         File.open(file_path, File::RDWR | File::CREAT, &blk)
       end
 
-      def diff_patches(from, to, paths: include_paths_or_cwd)
-        (@diff_patches ||= {})[[from, to, paths]] ||= repo.patches(from, to,
-                                                                   paths: paths,
-                                                                   exclude_paths: exclude_paths(true),
-                                                                   force_text: true)
+      def diff_patches(from_commit, to_commit, paths: include_paths_or_cwd)
+        (@diff_patches ||= {})[[from_commit, to_commit, paths]] ||= begin
+          options = {}.tap do |opts|
+            opts[:force_text] = true
+            if dev_mode?
+              opts[:include_untracked] = true
+              opts[:recurse_untracked_dirs] = true
+            end
+          end
+          repo.patches(from_commit, to_commit, paths: paths, exclude_paths: exclude_paths(true), **options)
+        end
       end
 
       def include_paths_or_cwd
@@ -256,6 +275,30 @@ module Dapp
             .reverse.chomp('/')
             .reverse
         end
+      end
+
+      def archive_stage_commits(stage)
+        [nil, stage.layer_commit(self)]
+      end
+
+      def patch_stage_commits(stage)
+        [stage.prev_g_a_stage.layer_commit(self), stage.layer_commit(self)]
+      end
+
+      def dev_patch_stage_commits(stage)
+        [stage.prev_g_a_stage.layer_commit(self), nil]
+      end
+
+      def any_changes?(from_commit, to_commit)
+        diff_patches(from_commit, to_commit).any?
+      end
+
+      def dev_mode?
+        local? && repo.dimg.dev_mode?
+      end
+
+      def local?
+        repo.is_a? GitRepo::Own
       end
     end
   end

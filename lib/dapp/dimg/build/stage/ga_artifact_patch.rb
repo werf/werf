@@ -8,10 +8,6 @@ module Dapp
             super
           end
 
-          def empty?
-            dimg.git_artifacts.empty? || dependencies_empty?
-          end
-
           def dependencies
             @dependencies ||= dimg.stage_by_name(:build_artifact).context
           end
