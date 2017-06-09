@@ -3,6 +3,9 @@ module Dapp
     module Config
       module Directive
         class GitArtifactLocal < ArtifactBase
+          def export(absolute_dir_path = '/', &blk)
+            super
+          end
           alias add export
           undef_method :export
 

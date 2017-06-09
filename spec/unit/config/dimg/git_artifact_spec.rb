@@ -84,6 +84,13 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
       end
       expect { dimgs_configs }.to_not raise_error
     end
+
+    it 'default cwd' do
+      dappfile_dimg_git_artifact(:local) do
+        add
+      end
+      expect(dimg_config._git_artifact._local.first._cwd).to eq '/'
+    end
   end
 
   context 'negative' do
