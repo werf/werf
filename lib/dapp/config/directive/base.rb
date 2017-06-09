@@ -92,8 +92,10 @@ module Dapp
         end
 
         def _clone_to(obj)
-          obj.marshal_load(marshal_dump)
-          _set_ref_variables_to(obj)
+          obj.tap do
+            obj.marshal_load(marshal_dump)
+            _set_ref_variables_to(obj)
+          end
         end
 
         def _set_ref_variables_to(obj)
