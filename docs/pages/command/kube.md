@@ -27,6 +27,9 @@ dapp kube deploy [options] REPO
 #### --values FILE_PATH
 Пробрасывает значения описанные в YAML файле в `helm upgrade` (опция может использоваться несколько раз).
 
+#### --secret-values FILE_PATH
+Декодирует значения описанные в YAML файле, используя [ключ шифрования](#dapp-kube-secret-key-generate), затем пробрасывает их в `helm upgrade` (опция может использоваться несколько раз).
+
 ### dapp kube dismiss
 Удалить релиз.
 
