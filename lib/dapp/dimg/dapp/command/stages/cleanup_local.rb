@@ -4,15 +4,15 @@ module Dapp
       module Command
         module Stages
           module CleanupLocal
-            def stages_cleanup_local(repo)
-              lock_repo(repo, readonly: true) do
+            def stages_cleanup_local
+              lock_repo(option_repo, readonly: true) do
                 raise Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
                 dapp_containers_flush
 
-                proper_cache                 if proper_cache_version?
-                stages_cleanup_by_repo(repo) if proper_repo_cache?
-                proper_git_commit            if proper_git_commit?
+                proper_cache           if proper_cache_version?
+                stages_cleanup_by_repo if proper_repo_cache?
+                proper_git_commit      if proper_git_commit?
               end
             end
 
@@ -28,8 +28,8 @@ module Dapp
               end
             end
 
-            def stages_cleanup_by_repo(repo)
-              registry = registry(repo)
+            def stages_cleanup_by_repo
+              registry = registry(option_repo)
               repo_dimgs = repo_dimgs_images(registry)
 
               lock("#{name}.images") do
@@ -49,12 +49,14 @@ module Dapp
             end
 
             def actual_cache_images
-              shellout!([
-                'docker images',
-                '--format="{{.Repository}}:{{.Tag}}"',
-                %(-f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}"),
-                stage_cache
-              ].join(' ')).stdout.lines.map(&:strip)
+              @actual_cache_images ||= begin
+                shellout!([
+                  'docker images',
+                  '--format="{{.Repository}}:{{.Tag}}"',
+                  %(-f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}"),
+                  stage_cache
+                ].join(' ')).stdout.lines.map(&:strip)
+              end
             end
 
             def dapp_images_hash
