@@ -43,6 +43,17 @@ describe Dapp::Dimg::Config::Directive::Artifact do
         end
       end
     end
+
+    it 'default cwd (to)' do
+      dappfile_dimg_with_artifact do
+        export do
+          before :setup
+          to '/a'
+        end
+      end
+
+      expect(dimg_config._before_setup_artifact.first._cwd).to eq '/a'
+    end
   end
 
   context 'negative' do

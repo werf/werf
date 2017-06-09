@@ -18,7 +18,7 @@ module Dapp
             sub_directive_eval { @_group = group }
           end
 
-          def export(absolute_dir_path = '/', &blk)
+          def export(absolute_dir_path = nil, &blk)
             self.class.const_get('Export').new(absolute_dir_path, dapp: dapp, &blk).tap do |export|
               @_export << export
             end
@@ -36,9 +36,8 @@ module Dapp
           class Export < Directive::Base
             attr_accessor :_cwd, :_to, :_include_paths, :_exclude_paths, :_owner, :_group
 
-            def initialize(cwd = '/', **kwargs, &blk)
-              raise Error::Config, code: :export_cwd_absolute_path_required unless Pathname(cwd).absolute?
-              @_cwd = path_format(cwd)
+            def initialize(cwd, **kwargs, &blk)
+              self._cwd = cwd
               @_include_paths ||= []
               @_exclude_paths ||= []
 
@@ -54,6 +53,16 @@ module Dapp
                 owner:         _owner,
                 group:         _group
               }
+            end
+
+            def _cwd
+              @_cwd ||= _to
+            end
+
+            def _cwd=(value)
+              return if value.nil?
+              raise Error::Config, code: :export_cwd_absolute_path_required unless Pathname(value).absolute?
+              @_cwd = path_format(value)
             end
 
             def to(absolute_path)
