@@ -26,7 +26,18 @@ module Dapp
           end
 
           def remove_images(ids, force: false)
-            remove_base('docker rmi%{force_option} %{ids}', ids.uniq, force: force)
+            ids.uniq!
+            check_user_containers!(ids) unless force
+            remove_base('docker rmi%{force_option} %{ids}', ids, force: force)
+          end
+
+          def check_user_containers!(images_ids)
+            return if images_ids.empty?
+            log_step_with_indent(:'check user containers') do
+              run_command(%(docker ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')})).tap do |res|
+                raise Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if !res.stdout.strip.empty? && !dry_run?
+              end
+            end
           end
 
           def remove_containers_by_query(containers_query, force: false)
