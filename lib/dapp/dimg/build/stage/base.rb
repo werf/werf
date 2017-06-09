@@ -47,17 +47,13 @@ module Dapp
           end
           # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity
 
-          # rubocop:disable Metrics/CyclomaticComplexity
           def build!
-            return if build_should_be_skipped?
-            prev_stage.build! if prev_stage
-            if image_should_be_build?
-              prepare_image if !image.built? && !should_be_not_present? || should_be_introspected?
-              log_image_build(&method(:image_build))
-            end
-            dimg.introspect_image!(image: image.built_id, options: image.send(:prepared_options)) if should_be_introspected?
+            return if should_be_skipped?
+
+            prev_stage.build!                                                                     if prev_stage
+            image_build                                                                           if image_should_be_build?
+            dimg.introspect_image!(image: image.built_id, options: image.send(:prepared_options)) if image_should_be_introspected?
           end
-          # rubocop:enable Metrics/CyclomaticComplexity
 
           def save_in_cache!
             prev_stage.save_in_cache! if prev_stage
@@ -163,18 +159,16 @@ module Dapp
           end
 
           def signature
-            @signature ||= begin
-              if empty?
-                prev_stage.signature
-              else
-                args = []
-                args << prev_stage.signature unless prev_stage.nil?
-                args << dimg.build_cache_version
-                args << builder_checksum
-                args.concat(dependencies.flatten)
+            if empty?
+              prev_stage.signature
+            else
+              args = []
+              args << prev_stage.signature unless prev_stage.nil?
+              args << dimg.build_cache_version
+              args << builder_checksum
+              args.concat(dependencies.flatten)
 
-                hashsum args
-              end
+              hashsum args
             end
           end
 
@@ -186,19 +180,7 @@ module Dapp
           end
 
           def git_artifacts_dependencies
-            local_git_artifacts_dependencies + remote_git_artifacts_dependencies
-          end
-
-          def local_git_artifacts_dependencies
-            default_git_artifacts_dependencies(dimg.local_git_artifacts)
-          end
-
-          def remote_git_artifacts_dependencies
-            default_git_artifacts_dependencies(dimg.remote_git_artifacts)
-          end
-
-          def default_git_artifacts_dependencies(git_artifacts)
-            git_artifacts.map { |git_artifact| git_artifact.stage_dependencies_checksum(self) }
+            dimg.git_artifacts.map { |git_artifact| git_artifact.stage_dependencies_checksum(self) }
           end
 
           def dependencies
@@ -230,11 +212,17 @@ module Dapp
           protected
 
           def image_build
-            image.build!
+            prepare_image if image_should_be_prepared?
+            log_image_build do
+              dimg.dapp.log_process(log_name,
+                                    process: dimg.dapp.t(code: 'status.process.building'),
+                                    short: should_not_be_detailed?,
+                                    quiet: should_be_quiet?) { image.build! }
+            end
           end
 
-          def build_should_be_skipped?
-            image.built? && !dimg.dapp.log_verbose? && !should_be_introspected?
+          def should_be_skipped?
+            image.built? && !dimg.dapp.log_verbose? && !image_should_be_introspected?
           end
 
           def should_be_tagged?
@@ -243,6 +231,10 @@ module Dapp
 
           def image_should_be_locked?
             !(empty? || image.tagged? || should_be_not_present?)
+          end
+
+          def image_should_be_prepared?
+            !image.built? && !should_be_not_present? || image_should_be_introspected?
           end
 
           def should_be_not_present?

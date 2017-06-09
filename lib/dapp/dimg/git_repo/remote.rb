@@ -9,11 +9,11 @@ module Dapp
 
           dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
             begin
-              Rugged::Repository.clone_at(url, path, bare: true, credentials: _rugged_credentials)
+              Rugged::Repository.clone_at(url, path.to_s, bare: true, credentials: _rugged_credentials)
             rescue Rugged::NetworkError, Rugged::SslError => e
               raise Error::Rugged, code: :rugged_remote_error, data: { message: e.message, url: url }
             end
-          end unless File.directory?(path)
+          end unless path.directory?
         end
 
         def _rugged_credentials
@@ -34,7 +34,7 @@ module Dapp
         end
 
         def path
-          dimg.build_path('git_repo_remote', name, Digest::MD5.hexdigest(@url)).to_s
+          Pathname(dimg.build_path('git_repo_remote', name, Digest::MD5.hexdigest(@url)).to_s)
         end
 
         def fetch!(branch = nil)

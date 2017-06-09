@@ -4,7 +4,7 @@ module Dapp
       module Stage
         class From < Base
           def dependencies
-            [from_image_name, dimg.config._docker._from_cache_version, config_mounts_dirs]
+            @dependencies ||= [from_image_name, dimg.config._docker._from_cache_version, config_mounts_dirs]
           end
 
           protected
