@@ -29,6 +29,11 @@ module Dapp
                   elm.validate! if elm.respond_to?(:validate!)
                 end
               end
+              _mount.map(&:_to).tap do |mounts_points|
+                mounts_points.each do |path|
+                  raise Error::Config, code: :mount_duplicate_to, data: { path: path } if mounts_points.count(path) > 1
+                end
+              end
             end
 
             def validate_scratch_directives!

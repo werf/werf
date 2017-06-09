@@ -106,10 +106,33 @@ module Dapp
 
               image.add_service_change_label :"dapp-mount-#{type.to_s.tr('_', '-')}" => mounts.join(';')
             end
+
+            image_add_custom_mounts
+          end
+
+          def image_add_custom_mounts
+            adding_custom_dir_mounts.each do |from, to_pathes|
+              FileUtils.mkdir_p(from)
+              to_pathes.tap(&:uniq!).map { |to_path| image.add_volume "#{from}:#{to_path}" }
+              image.add_service_change_label :"dapp-mount-custom-dir-#{from.gsub('/', '--')}" => to_pathes.join(';')
+            end
           end
 
           def adding_mounts_by_type(type)
             (config_mounts_by_type(type) + labels_mounts_by_type(type)).uniq
+          end
+
+          def adding_custom_dir_mounts
+            config_custom_dir_mounts.in_depth_merge(labels_custom_dir_mounts)
+          end
+
+          def config_custom_dir_mounts
+            dimg.config._custom_dir_mount.reduce({}) do |mounts, mount|
+              from_path = File.expand_path(mount._from)
+              mounts[from_path] ||= []
+              mounts[from_path] << mount._to
+              mounts
+            end
           end
 
           def config_mounts_by_type(type)
@@ -118,6 +141,13 @@ module Dapp
 
           def labels_mounts_by_type(type)
             from_image.labels.select { |l, _| l == "dapp-mount-#{type.to_s.tr('_', '-')}" }.map { |_, value| value.split(';') }.flatten
+          end
+
+          def labels_custom_dir_mounts
+            from_image.labels.map do |label, value|
+              next unless label =~ /dapp-mount-custom-dir-(?<from>.+)/
+              [File.expand_path(Regexp.last_match(:from).gsub('--', '/')), value.split(';')]
+            end.compact.to_h
           end
 
           def image_should_be_build?

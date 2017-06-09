@@ -23,10 +23,14 @@ module Dapp
           end
 
           def config_mounts_dirs
-            [:tmp_dir, :build_dir].map { |type| config_mounts_by_type(type) }.flatten.uniq
+            ([:tmp_dir, :build_dir].map { |type| config_mounts_by_type(type) } + config_custom_dir_mounts.map(&:last)).flatten.uniq
           end
 
           def adding_mounts_by_type(_type)
+            []
+          end
+
+          def adding_custom_dir_mounts
             []
           end
 
