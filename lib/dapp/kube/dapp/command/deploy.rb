@@ -82,10 +82,15 @@ module Dapp
             cont = <<-EOF
 {{/* vim: set filetype=mustache: */}}
 
-{{- define "dimg" -}}                                                                               
+{{- define "dimg" -}}
+{{- if (ge (len (index .)) 2) -}}
 {{- $name := index . 0 -}}                                                                          
-{{- $context := index . 1 -}}                                                                       
+{{- $context := index . 1 -}}  
 {{- printf "%s:%s-%s" $context.Values.global.dapp.repo $name $context.Values.global.dapp.image_version -}}
+{{- else -}}
+{{- $context := index . 0 -}}
+{{- printf "%s:%s" $context.Values.global.dapp.repo $context.Values.global.dapp.image_version -}}
+{{- end -}}                                                                               
 {{- end -}}                                                                                         
 
 {{- define "dapp_secret_file" -}}
