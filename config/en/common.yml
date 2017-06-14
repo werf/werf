@@ -39,7 +39,6 @@ en:
       using_cache: '[USING CACHE]'
       not_present: '[NOT PRESENT]'
       build: '[BUILD]'
-      empty: '[EMPTY]'
       push: '[PUSH]'
       pull: '[PULL]'
       tag: '[TAG]'

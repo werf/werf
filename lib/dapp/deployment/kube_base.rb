@@ -38,7 +38,7 @@ module Dapp
           end
         end
 
-        deployment.dapp.log_process(:running, verbose: true) do
+        deployment.dapp.log_process(:running) do
           log_thread = Thread.new do
             begin
               deployment.kubernetes.pod_log(name, follow: true) { |chunk| puts chunk }

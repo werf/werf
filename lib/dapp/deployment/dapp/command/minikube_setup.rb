@@ -33,17 +33,17 @@ module Dapp
           end
 
           def _minikube_restart_minikube
-            log_process(:restart_minikube, verbose: true) do
+            log_process(:restart_minikube) do
               raise MinikubeSetupError, code: :minikube_not_found if shellout('which minikube').exitstatus == 1
 
               Process.fork do
                 _minikube_set_original_sudo_caller_process_user!
 
                 begin
-                  if shellout!('minikube status', force_log: true).stdout.split("\n").map(&:strip).first == 'minikubeVM: Running'
-                    shellout! 'minikube stop', force_log: true
+                  if shellout!('minikube status', verbose: true).stdout.split("\n").map(&:strip).first == 'minikubeVM: Running'
+                    shellout! 'minikube stop', verbose: true
                   end
-                  shellout! 'minikube start --insecure-registry localhost:5000', force_log: true
+                  shellout! 'minikube start --insecure-registry localhost:5000', verbose: true
                 rescue ::Dapp::Error::Shellout
                   exit 1
                 end

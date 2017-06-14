@@ -50,9 +50,7 @@ module Dapp
           def artifacts_dimgs_build!
             artifacts.each do |artifact|
               process = dimg.dapp.t(code: 'process.artifact_building', data: { name: artifact[:name] })
-              dimg.dapp.log_secondary_process(process,
-                                              short: !dimg.dapp.log_verbose?,
-                                              quiet: dimg.artifact? && !dimg.dapp.log_verbose?) do
+              dimg.dapp.log_secondary_process(process) do
                 dimg.dapp.with_log_indent do
                   artifact[:dimg].build!
                 end
@@ -65,10 +63,7 @@ module Dapp
                               "--volume #{dimg.tmp_path('artifact', artifact_name)}:#{artifact_dimg.container_tmp_path(artifact_name)}",
                               "--volumes-from #{dimg.dapp.base_container}",
                               "--entrypoint #{dimg.dapp.bash_bin}"]
-            dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.artifact_copy',
-                                                        data: { name: artifact_name }),
-                                            short: true,
-                                            quiet: dimg.artifact? && !dimg.dapp.log_verbose?) do
+            dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.artifact_copy', data: { name: artifact_name }), short: true) do
               artifact_dimg.run(docker_options, [%(-ec '#{dimg.dapp.shellout_pack(commands)}')])
             end
           end

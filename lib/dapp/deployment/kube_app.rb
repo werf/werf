@@ -117,7 +117,7 @@ module Dapp
       # NOTICE: Однако, при обновлении deployment ревизия сбрасывается и ожидание переустановки этой ревизии
       # NOTICE: является одним из критериев завершения ожидания на данный момент.
       def _wait_for_deployment(d, old_d_revision: nil)
-        app.deployment.dapp.log_process("Waiting for kubernetes Deployment #{d['metadata']['name']} readiness", verbose: true) do
+        app.deployment.dapp.log_process("Waiting for kubernetes Deployment #{d['metadata']['name']} readiness") do
           app.deployment.dapp.with_log_indent do
             known_events_by_pod = {}
 
