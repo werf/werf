@@ -12,6 +12,7 @@ module Dapp
 
               if proper_all?
                 flush_by_label('dapp')
+                remove_build_dir
               elsif proper_dev_mode_cache?
                 flush_by_label('dapp-dev-mode')
               elsif proper_cache_version?
@@ -29,6 +30,10 @@ module Dapp
           def flush_by_label(label)
             log_step_with_indent(:containers) { dapp_containers_flush_by_label(label) }
             log_step_with_indent(:images) { dapp_images_flush_by_label(label) }
+          end
+
+          def remove_build_dir
+            log_step_with_indent(:build_dir) { FileUtils.rm_rf(build_path) }
           end
 
           def proper_all?
