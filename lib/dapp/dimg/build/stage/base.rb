@@ -50,7 +50,15 @@ module Dapp
           def build!
             prev_stage.build!                                                                     if prev_stage
             image_build                                                                           unless empty?
-            dimg.introspect_image!(image: image.built_id, options: image.send(:prepared_options)) if image_should_be_introspected?
+            image_introspect                                                                      if image_should_be_introspected?
+          end
+
+          def image_introspect
+            if image.built?
+              dimg.introspect_image!(image: image.built_id, options: image.send(:prepared_options))
+            else
+              dimg.dapp.log_warning(desc: { code: :introspect_image_impossible, data: { name: name } })
+            end
           end
 
           def save_in_cache!
