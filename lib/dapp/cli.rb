@@ -8,7 +8,7 @@ module Dapp
     SUBCOMMANDS = ['dimg', 'deployment', 'kube'].freeze
 
     banner <<BANNER.freeze
-Usage: dapp sub-command [sub-command options]
+Usage: dapp subcommand [subcommand options]
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
