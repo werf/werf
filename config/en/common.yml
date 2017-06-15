@@ -56,6 +56,7 @@ en:
       dapp_secret_key_not_found: "WARNING: Secrets haven't decoded: set `DAPP_SECRET_KEY`!"
       introspect_image_impossible: "WARNING: You can't introspect stage `%{name}`!"
       stage_dependencies_not_found: "WARNING: Stage dependencies `%{dependencies}` haven't been found in repo `%{repo}`!"
+      unsupported_dapp_config_options: "WARNING: .dapp_config includes unsupported options [%{options}]: use only following options [%{supported_options}]"
     group:
       install: 'Install group'
       setup: 'Setup group'

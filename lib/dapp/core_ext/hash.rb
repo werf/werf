@@ -12,6 +12,20 @@ module Dapp
           end
         end
       end
+
+      def symbolize_keys
+        transform_keys { |key| key.to_sym rescue key }
+      end
+
+      private
+
+      def transform_keys
+        result = {}
+        each_key do |key|
+          result[yield(key)] = self[key]
+        end
+        result
+      end
     end
   end
 end

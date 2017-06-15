@@ -11,20 +11,20 @@ module Dapp
                long: '--build-dir PATH',
                description: 'Directory where build cache stored (DIR/.dapp_build by default)'
 
-        option :log_quiet,
+        option :quiet,
                short: '-q',
                long: '--quiet',
                description: 'Suppress logging',
                default: false,
                boolean: true
 
-        option :log_verbose,
+        option :verbose,
                long: '--verbose',
                description: 'Enable verbose output',
                default: false,
                boolean: true
 
-        option :log_time,
+        option :time,
                long: '--time',
                description: 'Enable output with time',
                default: false,
@@ -35,7 +35,7 @@ module Dapp
                default: false,
                boolean: true
 
-        option :log_color,
+        option :color,
                long: '--color MODE',
                description: 'Display output in color on the terminal',
                in: %w(auto on off),

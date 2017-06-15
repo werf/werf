@@ -392,7 +392,7 @@ describe Dapp::Dimg::GitArtifact do
       it 'delete', test_construct: true do
         git_rm_symlink_and_commit(symlink_file)
         apply_patch
-        expect { check_container_symlink(container_file_path(symlink_file)).error! }.to raise_error
+        expect { check_container_symlink(container_file_path(symlink_file)).error! }.to raise_error ::Mixlib::ShellOut::ShellCommandFailed
       end
     end
   end
