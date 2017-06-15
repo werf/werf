@@ -53,8 +53,9 @@ en:
       stage_artifact_rewritten: "WARNING: Artifact stage rewritten from %{conflict_stage} to %{stage}."
       recipe_does_not_used: "WARNING: Recipe `%{recipe}` doesn't used in any stage."
       context_archive_not_found: "WARNING: context archive `%{path}` not found!"
-      dapp_secret_key_not_found: "Secrets haven't decoded: set `DAPP_SECRET_KEY`!"
-      stage_dependencies_not_found: "Stage dependencies `%{dependencies}` haven't been found in repo `%{repo}`!"
+      dapp_secret_key_not_found: "WARNING: Secrets haven't decoded: set `DAPP_SECRET_KEY`!"
+      introspect_image_impossible: "WARNING: You can't introspect stage `%{name}`!"
+      stage_dependencies_not_found: "WARNING: Stage dependencies `%{dependencies}` haven't been found in repo `%{repo}`!"
     group:
       install: 'Install group'
       setup: 'Setup group'
