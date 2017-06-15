@@ -10,14 +10,14 @@ module Dapp
             validate_repo_name!(repo)
             validate_tag_name!(image_version)
 
-            log_process("Applying deployment #{deployment.name}", verbose: true) do
+            log_process("Applying deployment #{deployment.name}") do
               with_log_indent do
                 deployment.kube.delete_unknown_resources!
 
                 deployment.to_kube_bootstrap_pods(repo, image_version).each do |name, spec|
                   next if deployment.kube.pod_succeeded?(name)
                   deployment.kube.delete_pod!(name) if deployment.kube.pod_exist?(name)
-                  log_process(:bootstrap, verbose: true) do
+                  log_process(:bootstrap) do
                     with_log_indent do
                       deployment.kube.run_job!(spec, name)
                     end
@@ -25,7 +25,7 @@ module Dapp
                 end
 
                 deployment.to_kube_before_apply_job_pods(repo, image_version).each do |name, spec|
-                  log_process(:before_apply_job, verbose: true) do
+                  log_process(:before_apply_job) do
                     deployment.kube.delete_pod!(name) if deployment.kube.pod_exist?(name)
                     with_log_indent do
                       deployment.kube.run_job!(spec, name)
@@ -34,7 +34,7 @@ module Dapp
                 end
 
                 deployment.apps.each do |app|
-                  log_process("Applying app #{app.name}", verbose: true) do
+                  log_process("Applying app #{app.name}") do
                     with_log_indent do
                       (app.kube.existing_deployments_names - app.to_kube_deployments(repo, image_version).keys).each do |deployment_name|
                         app.kube.delete_deployment!(deployment_name)
@@ -47,7 +47,7 @@ module Dapp
                       app.to_kube_bootstrap_pods(repo, image_version).each do |name, spec|
                         next if app.kube.pod_succeeded?(name)
                         app.kube.delete_pod!(name) if app.kube.pod_exist?(name)
-                        log_process(:bootstrap, verbose: true) do
+                        log_process(:bootstrap) do
                           with_log_indent do
                             app.kube.run_job!(spec, name)
                           end
@@ -55,7 +55,7 @@ module Dapp
                       end
 
                       app.to_kube_before_apply_job_pods(repo, image_version).each do |name, spec|
-                        log_process(:before_apply_job, verbose: true) do
+                        log_process(:before_apply_job) do
                           app.kube.delete_pod!(name) if app.kube.pod_exist?(name)
                           with_log_indent do
                             app.kube.run_job!(spec, name)

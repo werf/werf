@@ -114,7 +114,7 @@ module Dapp
             end
 
             args = [kube_release_name, kube_tmp_chart_path, additional_values, set_options, kube_helm_extra_options(dry_run: true)].flatten
-            output = shellout!("helm upgrade #{args.join(' ')}", log_verbose: false).stdout
+            output = shellout!("helm upgrade #{args.join(' ')}").stdout
 
             manifest_start_index = output.lines.index("MANIFEST:\n") + 1
             hook_start_index     = output.lines.index("HOOKS:\n") + 1
@@ -140,10 +140,10 @@ module Dapp
           end
 
           def kube_run_deploy(additional_values, set_options)
-            log_process("Deploy release #{kube_release_name} ", verbose: true) do
+            log_process("Deploy release #{kube_release_name}") do
               args = [kube_release_name, kube_tmp_chart_path, additional_values, set_options, kube_helm_extra_options].flatten
               kubernetes.create_namespace!(kube_namespace) unless kubernetes.namespace?(kube_namespace)
-              shellout! "helm upgrade #{args.join(' ')}", force_log: true
+              shellout! "helm upgrade #{args.join(' ')}", verbose: true
             end
           end
 

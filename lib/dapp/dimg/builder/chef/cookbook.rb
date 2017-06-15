@@ -118,7 +118,7 @@ module Dapp
                 cmd << "dappdeps/berksdeps:0.1.0 #{builder.dimg.dapp.bash_bin}"
                 cmd << " -ec '#{builder.dimg.dapp.shellout_pack(vendor_commands.join(' && '))}'"
               end ].compact.join(' '),
-            log_verbose: builder.dimg.dapp.log_verbose?
+            verbose: true
           )
         end
       end

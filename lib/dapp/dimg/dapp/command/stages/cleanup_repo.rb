@@ -112,7 +112,7 @@ module Dapp
 
             def remove_repo_images(registry, tags)
               tags.each do |tag|
-                log(tag) if dry_run? || log_verbose?
+                log(tag) if log_verbose? || dry_run?
                 registry.image_delete(tag) unless dry_run?
               end
             end

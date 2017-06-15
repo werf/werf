@@ -29,14 +29,14 @@ module Dapp
         def push!
           raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
           dapp.log_secondary_process(dapp.t(code: 'process.image_push', data: { name: name })) do
-            dapp.shellout!("docker push #{name}", log_verbose: true)
+            dapp.shellout!("docker push #{name}", verbose: true)
           end
         end
 
         def pull!
           return if tagged?
           dapp.log_secondary_process(dapp.t(code: 'process.image_pull', data: { name: name })) do
-            dapp.shellout!("docker pull #{name}", log_verbose: true)
+            dapp.shellout!("docker pull #{name}", verbose: true)
           end
           cache_reset
         end
@@ -94,11 +94,11 @@ module Dapp
 
           def save!(image_or_images, file_path)
             images = Array(image_or_images).join(' ')
-            ::Dapp::Dapp.shellout!("docker save -o #{file_path} #{images}", log_verbose: true)
+            ::Dapp::Dapp.shellout!("docker save -o #{file_path} #{images}", verbose: true)
           end
 
           def load!(file_path)
-            ::Dapp::Dapp.shellout!("docker load -i #{file_path}", log_verbose: true)
+            ::Dapp::Dapp.shellout!("docker load -i #{file_path}", verbose: true)
           end
 
           def cache

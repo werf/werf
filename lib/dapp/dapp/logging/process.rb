@@ -25,7 +25,7 @@ module Dapp
         end
 
         # rubocop:disable Metrics/ParameterLists
-        def log_process(message, process: nil, short: false, quiet: false, verbose: nil, style: {}, status: {}, &blk)
+        def log_process(message, process: nil, short: false, quiet: false, style: {}, status: {}, &blk)
           style[:message] ||= DEFAULT_STYLE[:message]
           style[:process] ||= DEFAULT_STYLE[:process]
           style[:failed] ||= DEFAULT_STYLE[:failed]
@@ -34,21 +34,19 @@ module Dapp
           status[:success] ||= t(code: 'status.success.default')
           status[:failed] ||= t(code: 'status.failed.default')
 
-          is_verbose = (verbose.nil? ? log_verbose? : verbose) && !short
-
           if quiet
             log_process_quiet(message.to_s, style: style, status: status, &blk)
-          elsif is_verbose
+          elsif short
+            log_process_short(message.to_s, style: style, status: status, &blk)
+          else
             process ||= t(code: 'status.process.default')
             log_process_verbose(message.to_s, process: process, style: style, status: status, &blk)
-          else
-            log_process_short(message.to_s, style: style, status: status, &blk)
           end
         end
         # rubocop:enable Metrics/ParameterLists
 
         def log_secondary_process(message, **kwargs, &blk)
-          log_process(message, **kwargs.merge(style: { message: :secondary, success: :secondary }, quiet: !log_verbose?), &blk)
+          log_process(message, **kwargs.merge(style: { message: :secondary, success: :secondary }), &blk)
         end
 
         protected

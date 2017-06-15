@@ -48,10 +48,8 @@ module Dapp
           # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity
 
           def build!
-            return if should_be_skipped?
-
             prev_stage.build!                                                                     if prev_stage
-            image_build                                                                           if image_should_be_build?
+            image_build                                                                           unless empty?
             dimg.introspect_image!(image: image.built_id, options: image.send(:prepared_options)) if image_should_be_introspected?
           end
 
@@ -146,10 +144,6 @@ module Dapp
             end.compact.to_h
           end
 
-          def image_should_be_build?
-            (!empty? && !image.built?) || dimg.dapp.log_verbose?
-          end
-
           def empty?
             dependencies_empty?
           end
@@ -216,13 +210,8 @@ module Dapp
             log_image_build do
               dimg.dapp.log_process(log_name,
                                     process: dimg.dapp.t(code: 'status.process.building'),
-                                    short: should_not_be_detailed?,
-                                    quiet: should_be_quiet?) { image.build! }
+                                    short: should_not_be_detailed?) { image.build! }
             end
-          end
-
-          def should_be_skipped?
-            image.built? && !dimg.dapp.log_verbose? && !image_should_be_introspected?
           end
 
           def should_be_tagged?

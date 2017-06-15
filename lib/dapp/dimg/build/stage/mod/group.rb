@@ -5,8 +5,7 @@ module Dapp
         module Mod
           module Group
             def log_image_build
-              return super if should_be_quiet?
-              log_group_name if group_should_be_opened?
+              log_group_name unless group_opened?
               dimg.dapp.with_log_indent { super }
             end
 
@@ -18,13 +17,8 @@ module Dapp
               class_to_lowercase(self.class.name.split('::')[-2])
             end
 
-            def group_should_be_opened?
-              !group_opened? && image_should_be_build?
-            end
-
             def group_opened?
-              return false if prev_group_stage.nil?
-              prev_group_stage.group_opened? || prev_group_stage.image_should_be_build?
+              prev_group_stage.nil? ? false : true
             end
 
             def prev_group_stage

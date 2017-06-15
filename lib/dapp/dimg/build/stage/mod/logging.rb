@@ -5,18 +5,17 @@ module Dapp
         module Mod
           module Logging
             def log_image_build
-              if    empty?                 then log_state(:empty)
-              elsif image.built?           then log_state(:using_cache)
-              elsif should_be_not_present? then log_state(:not_present)
-              elsif dimg.dapp.dry_run?     then log_state(:build, styles: { status: :success })
-              else  yield
+              case
+              when image.built?           then log_state(:using_cache)
+              when should_be_not_present? then log_state(:not_present)
+              when dimg.dapp.dry_run?     then log_state(:build, styles: { status: :success })
+              else yield
               end
             ensure
               log_build
             end
 
             def log_build
-              return unless dimg.dapp.log_verbose? && !should_be_quiet?
               dimg.dapp.with_log_indent do
                 dimg.dapp.log_info dimg.dapp.t(code: 'image.signature', data: { signature: image_name })
                 log_image_details unless empty?
@@ -69,7 +68,6 @@ module Dapp
             end
 
             def log_state(state_code, styles: {})
-              return if should_be_quiet?
               dimg.dapp.log_state(log_name, state: dimg.dapp.t(code: state_code, context: 'state'), styles: styles)
             end
 
@@ -79,10 +77,6 @@ module Dapp
 
             def should_not_be_detailed?
               image.send(:bash_commands).empty?
-            end
-
-            def should_be_quiet?
-              dimg.artifact? && !dimg.dapp.log_verbose?
             end
 
             def image_should_be_introspected?

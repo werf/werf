@@ -6,7 +6,7 @@ module Dapp
           def kube_dismiss
             kube_check_helm!
             kube_check_helm_release!
-            log_process("Delete release #{kube_release_name} ", verbose: true) do
+            log_process("Delete release #{kube_release_name}") do
               with_log_indent do
                 shellout! "helm delete #{kube_release_name} --purge"
                 kubernetes.delete_namespace!(kube_namespace) if options[:with_namespace]
