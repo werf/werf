@@ -4,7 +4,7 @@ module Dapp::Kube::CLI
       SUBCOMMANDS = ['secret generate', 'secret key generate', 'secret file encrypt', 'deploy', 'dismiss'].freeze
 
       banner <<BANNER.freeze
-Usage: dapp kube sub-command [sub-command options]
+Usage: dapp kube subcommand [subcommand options]
 
 Available subcommands: (for details, dapp kube SUB-COMMAND --help)
 

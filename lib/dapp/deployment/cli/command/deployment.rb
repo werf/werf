@@ -4,7 +4,7 @@ module Dapp::Deployment::CLI
       SUBCOMMANDS = ['apply', 'mrproper', 'minikube setup'].freeze
 
       banner <<BANNER.freeze
-Usage: dapp deployment sub-command [sub-command options]
+Usage: dapp deployment subcommand [subcommand options]
 
 Available subcommands: (for details, dapp deployment SUB-COMMAND --help)
 
