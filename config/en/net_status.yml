@@ -60,7 +60,6 @@ en:
       mount_from_type_required: "Mount: `from` directive expect `build_dir` or `tmp_dir` type!"
       builder_type_conflict: 'Conflict between builder types!'
       docker_from_incorrect: "`docker.from` has incorrect value `%{name}`!"
-      docker_from_without_tag: "`docker.from`: image `%{name}` without tag!"
       stage_artifact_not_associated: "Artifact not associated with any stage: expected `before` or `after` attribute!"
       stage_artifact_double_associate: "Cannot use `%{stage}` stage for artifact, already used in `%{conflict_stage}` stage!"
       stage_artifact_not_supported_associated_stage: "Bad artifact stage `%{stage}`!"
@@ -103,6 +102,7 @@ en:
       commit_not_found_in_local_git_repository: "Local git repo: commit `%{commit}` not found!\nIf commit has been rebased: run command `dapp dimg stages cleanup local --improper-git-commit`!"
       commit_not_found_in_remote_git_repository: "Remote git repo `%{url}`: commit `%{commit}` not found!\nIf commit has been rebased: run command `dapp dimg stages cleanup local --improper-git-commit`!"
       branch_not_exist_in_remote_git_repository: "Remote git repo `%{url}`: branch `%{branch}` not exist!"
+      rugged_protocol_not_supported: "Rugged has been compiled without support for `%{protocol}`.\nGit repositories will not be reachable via `%{protocol}` (`%{url}`).\nRugged.features should include `%{protocol}`."
     lock:
       timeout: "Could not obtain lock for `%{name}` within %{timeout} seconds"
     app:

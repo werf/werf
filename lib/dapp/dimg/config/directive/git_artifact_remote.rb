@@ -13,7 +13,7 @@ module Dapp
           end
 
           def branch(value)
-            sub_directive_eval { @_branch = value }
+            sub_directive_eval { @_branch = value.to_s }
           end
 
           def commit(value)

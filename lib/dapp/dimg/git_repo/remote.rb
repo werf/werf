@@ -2,6 +2,8 @@ module Dapp
   module Dimg
     module GitRepo
       class Remote < Base
+        attr_reader :url
+
         def initialize(dimg, name, url:)
           super(dimg, name)
 
@@ -9,6 +11,10 @@ module Dapp
 
           dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
             begin
+              if [:https, :ssh].include?(protocol) && !Rugged.features.include?(protocol)
+                raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, protocol: protocol }
+              end
+
               Rugged::Repository.clone_at(url, path.to_s, bare: true, credentials: _rugged_credentials)
             rescue Rugged::NetworkError, Rugged::SslError => e
               raise Error::Rugged, code: :rugged_remote_error, data: { message: e.message, url: url }
@@ -18,15 +24,8 @@ module Dapp
 
         def _rugged_credentials
           @_rugged_credentials ||= begin
-            ssh_url = begin
-              URI.parse(@url)
-              false
-            rescue URI::InvalidURIError
-              true
-            end
-
-            if ssh_url
-              host_with_user = @url.split(':', 2).first
+            if protocol == :ssh
+              host_with_user = url.split(':', 2).first
               username = host_with_user.split('@', 2).reverse.last
               Rugged::Credentials::SshKeyFromAgent.new(username: username)
             end
@@ -34,7 +33,7 @@ module Dapp
         end
 
         def path
-          Pathname(dimg.build_path('git_repo_remote', name, Digest::MD5.hexdigest(@url)).to_s)
+          Pathname(dimg.build_path('git_repo_remote', name, Digest::MD5.hexdigest(url)).to_s)
         end
 
         def fetch!(branch = nil)
@@ -61,8 +60,6 @@ module Dapp
 
         protected
 
-        attr_reader :url
-
         def git
           super(bare: true, credentials: _rugged_credentials)
         end
@@ -71,6 +68,18 @@ module Dapp
 
         def branch_format(name)
           "origin/#{name.reverse.chomp('origin/'.reverse).reverse}"
+        end
+
+        def protocol
+          @protocol ||= begin
+            if (scheme = URI.parse(url).scheme).nil?
+              :noname
+            else
+              scheme
+            end
+          rescue URI::InvalidURIError
+            :ssh
+          end
         end
       end
     end

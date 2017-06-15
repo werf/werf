@@ -59,16 +59,29 @@ module Dapp
         paths = (include_paths(true) + base_paths(stage_dependencies, true)).uniq
         to_commit = dev_mode? ? nil : latest_commit
 
-        diff_patches(nil, to_commit, paths: paths)
-          .sort_by {|patch| patch.delta.new_file[:path]}
-          .reduce(nil) {|prev_hash, patch|
-            Digest::SHA256.hexdigest [
-              prev_hash,
-              patch.delta.new_file[:path],
-              patch.delta.new_file[:mode].to_s,
-              patch.to_s
-            ].compact.join(':::')
-          }
+        stage_dependencies_key = [stage.name, to_commit]
+        @stage_dependencies_checksums ||= {}
+        @stage_dependencies_checksums[stage_dependencies_key] = begin
+          if @stage_dependencies_checksums.key?(stage_dependencies_key)
+            @stage_dependencies_checksums[stage_dependencies_key]
+          else
+            if (patches = diff_patches(nil, to_commit, paths: paths)).empty?
+              repo.dimg.dapp.log_warning(desc: { code: :stage_dependencies_not_found,
+                                                 data: { repo: repo.respond_to?(:url) ? repo.url : 'local',
+                                                         dependencies: stage_dependencies.join(', ') } })
+            end
+
+            patches.sort_by {|patch| patch.delta.new_file[:path]}
+              .reduce(nil) {|prev_hash, patch|
+              Digest::SHA256.hexdigest [
+                prev_hash,
+                patch.delta.new_file[:path],
+                patch.delta.new_file[:mode].to_s,
+                patch.to_s
+              ].compact.join(':::')
+            }
+          end
+        end
       end
 
       def patch_size(from_commit, to_commit)

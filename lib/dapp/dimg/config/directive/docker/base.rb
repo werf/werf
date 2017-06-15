@@ -10,8 +10,7 @@ module Dapp
               sub_directive_eval do
                 image = image.to_s
                 raise(Error::Config, code: :docker_from_incorrect, data: { name: image }) unless ::Dapp::Dimg::Image::Docker.image_name?(image)
-                raise(Error::Config, code: :docker_from_without_tag, data: { name: image }) unless image.include?(':')
-                @_from = image
+                @_from = image.include?(':') ? image : [image, 'latest'].join(':')
                 @_from_cache_version = cache_version
               end
             end

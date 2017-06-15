@@ -55,6 +55,7 @@ en:
       context_archive_not_found: "WARNING: context archive `%{path}` not found!"
       dapp_secret_key_not_found: "WARNING: Secrets haven't decoded: set `DAPP_SECRET_KEY`!"
       introspect_image_impossible: "WARNING: You can't introspect stage `%{name}`!"
+      stage_dependencies_not_found: "WARNING: Stage dependencies `%{dependencies}` haven't been found in repo `%{repo}`!"
     group:
       install: 'Install group'
       setup: 'Setup group'

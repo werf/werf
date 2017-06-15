@@ -4,7 +4,7 @@ module Dapp::Dimg::CLI
       SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image', 'tag', 'build-context'].freeze
 
       banner <<BANNER.freeze
-Usage: dapp dimg [options] sub-command [sub-command options]
+Usage: dapp dimg [options] subcommand [subcommand options]
 
 Available subcommands: (for details, dapp dimg SUB-COMMAND --help)
 
