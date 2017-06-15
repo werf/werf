@@ -1,5 +1,5 @@
 module Dapp
-  module Deployment
+  module Kube
     module Dapp
       module Command
         module MinikubeSetup
@@ -9,7 +9,7 @@ module Dapp
             end
           end
 
-          def deployment_minikube_setup
+          def kube_minikube_setup
             _minikube_restart_minikube
 
             # NOTICE: На данный момент выключено из-за непригодной
@@ -113,7 +113,7 @@ module Dapp
               600.times do
                 begin
                   return if _minikube_kubernetes.service?('kube-dns')
-                rescue Kubernetes::Error::ConnectionRefused
+                rescue Client::Error::ConnectionRefused
                 end
 
                 sleep 1
@@ -251,7 +251,7 @@ module Dapp
           end
 
           def _minikube_kubernetes
-            @kubernetes ||= Kubernetes.new(namespace: 'kube-system')
+            @_minikube_kubernetes ||= Client.new(namespace: 'kube-system')
           end
 
           def _minikube_registry_replicationcontroller_spec

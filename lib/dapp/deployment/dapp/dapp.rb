@@ -3,7 +3,6 @@ module Dapp
     module Dapp
       module Dapp
         include Command::Apply
-        include Command::MinikubeSetup
         include Command::Mrproper
         include Command::Common
 
