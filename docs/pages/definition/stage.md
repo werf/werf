@@ -72,7 +72,7 @@ folder: definition
 * after-install artifact
 * before setup
 * before-setup artifact
-* git-artifact pre setup patch 
+* git-artifact pre setup patch
 * setup
 * after-setup artifact
 * git-artifact artifact patch
@@ -132,7 +132,7 @@ folder: definition
 
 Данная стадия производит скачивание указанного базового образа (фактически docker pull) и фиксирует его в кэше dapp.
 
-* Стадия используется только при указании базового образа директивой docker.from с аргументом в формате <image:tag>.
+* Стадия используется только при указании базового образа директивой docker.from с аргументом в формате \<image:tag\>.
 * Стадия не будет использоваться, если docker.from не указан — будет собран [scratch dimg](base.html#scratch-dimg)
 
 #### import artifacts
