@@ -2,6 +2,8 @@ module Dapp
   module Dimg
     module GitRepo
       class Remote < Base
+        attr_reader :url
+
         def initialize(dimg, name, url:)
           super(dimg, name)
 
@@ -19,14 +21,14 @@ module Dapp
         def _rugged_credentials
           @_rugged_credentials ||= begin
             ssh_url = begin
-              URI.parse(@url)
+              URI.parse(url)
               false
             rescue URI::InvalidURIError
               true
             end
 
             if ssh_url
-              host_with_user = @url.split(':', 2).first
+              host_with_user = url.split(':', 2).first
               username = host_with_user.split('@', 2).reverse.last
               Rugged::Credentials::SshKeyFromAgent.new(username: username)
             end
@@ -34,7 +36,7 @@ module Dapp
         end
 
         def path
-          Pathname(dimg.build_path('git_repo_remote', name, Digest::MD5.hexdigest(@url)).to_s)
+          Pathname(dimg.build_path('git_repo_remote', name, Digest::MD5.hexdigest(url)).to_s)
         end
 
         def fetch!(branch = nil)
@@ -60,8 +62,6 @@ module Dapp
         end
 
         protected
-
-        attr_reader :url
 
         def git
           super(bare: true, credentials: _rugged_credentials)
