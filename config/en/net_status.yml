@@ -117,3 +117,6 @@ en:
     kubernetes:
       kube_config_not_found: "Kube config `%{path}` not found!"
       kube_server_connection_refused: "Kube server `%{url}` connection refused: %{error}"
+    secret:
+      bad_data: "Data `%{data}` can't be decrypted: check encryption key and data."
+      key_length_too_short: "Encryption key isn't valid (required size `%{required_size}`)!"
