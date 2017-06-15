@@ -31,7 +31,7 @@ $ dapp kube secret generate
 Enter secret: 1000541517bccae1acce015629f4ec89996e0b4
 ```
 
-Также команда поддерживает перенаправленый вывод, результат выполнения других команд.
+Также команда поддерживает перенаправленный вывод, результат выполнения других команд.
 ```
 $ rake magic | dapp kube secret generate
 1000541517bccae1acce015629f4ec89996e0b4
@@ -68,4 +68,24 @@ $ dapp kube secret generate ~/certs/tls.key -o .helm/secret/backend-saml/tls.key
 ...
 data:
   tls.key: {% raw %}{{ tuple "/backend-saml/tls.key" . | include "dapp_secret_file" | b64enc }}{% endraw %}
+```
+
+## Обратное преобразование данных
+
+Используя команду `dapp kube secret extract` можно расшифровать зашифрованные ранее значения.
+
+```
+$ dapp kube secret extract
+Enter secret: 42
+```
+
+Также как и при шифровании поддерживаются перенаправленный вывод и секреты из файлов.
+```
+$ echo "1000541517bccae1acce015629f4ec89996e0b4" | dapp kube secret extract .helm/secret/test_secret
+42
+```
+
+```
+$ dapp kube secret extract .helm/secret/sense_of_life.txt
+42 — ответ на «главный вопрос Жизни, Вселенной и Всего Остального».
 ```
