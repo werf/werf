@@ -51,17 +51,10 @@ dapp kube secret key generate
 ```
 
 ### dapp kube secret generate
-Зашифровать введённое значение ключом `DAPP_SECRET_KEY`.
+Зашифровать данные ключом `DAPP_SECRET_KEY`.
 
 ```
-dapp kube secret generate
-```
-
-### dapp kube secret file encrypt
-Зашифровать данные файла `FILE_PATH`. 
-
-```
-dapp kube secret file encrypt FILE_PATH [options]
+dapp kube secret generate [FILE_PATH] [options]
 ```
 
 #### -o OUTPUT_FILE_PATH
