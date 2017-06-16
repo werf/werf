@@ -84,6 +84,8 @@ gem install dapp
 
 * Вся документация [http://flant.github.io/dapp/](http://flant.github.io/dapp/)
 
+* [Официальная русскоязычная группа поддержки в Telegram](https://t.me/dapp_ru)
+
 
 ## Лицензия
 
