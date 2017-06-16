@@ -1,7 +1,7 @@
 module Dapp
   module Kube
     module Client::Error
-      class Base < ::Dapp::Deployment::Error::Kubernetes
+      class Base < ::Dapp::Kube::Error::Kubernetes
         def initialize(**net_status)
           super(**net_status, context: :kubernetes)
         end
