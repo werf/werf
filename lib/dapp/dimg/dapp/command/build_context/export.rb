@@ -27,20 +27,18 @@ module Dapp
 
             def export_build_context_build_tar
               log_secondary_process(:build_dir, short: true) do
-                File.open(build_context_build_tar, File::RDWR | File::CREAT) do |f|
-                  Gem::Package::TarWriter.new(f) do |tar|
-                    Dir.glob(File.join(build_path, '**/*'), File::FNM_DOTMATCH).each do |path|
-                      archive_file_path = path
-                                            .reverse
-                                            .chomp(build_path.to_s.reverse)
-                                            .chomp('/')
-                                            .reverse
-                      if File.directory?(path)
-                        tar.mkdir archive_file_path, File.stat(path).mode
-                      else
-                        tar.add_file archive_file_path, File.stat(path).mode do |tf|
-                          tf.write File.read(path)
-                        end
+                tar_write(build_context_build_tar) do |tar|
+                  Dir.glob(File.join(build_path, '**/*'), File::FNM_DOTMATCH).each do |path|
+                    archive_file_path = path
+                                          .reverse
+                                          .chomp(build_path.to_s.reverse)
+                                          .chomp('/')
+                                          .reverse
+                    if File.directory?(path)
+                      tar.mkdir archive_file_path, File.stat(path).mode
+                    else
+                      tar.add_file archive_file_path, File.stat(path).mode do |tf|
+                        tf.write File.read(path)
                       end
                     end
                   end

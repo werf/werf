@@ -33,8 +33,8 @@ module Dapp
                 log_secondary_process(:build_dir, short: true) do
                   store_current_build_dir
 
-                  File.open(build_context_build_tar, File::RDONLY) do |f|
-                    Gem::Package::TarReader.new(f).each_entry do |entry|
+                  tar_read(build_context_build_tar) do |tar|
+                    tar.each_entry do |entry|
                       header = entry.header
                       path = File.join(build_path, entry.full_name)
 

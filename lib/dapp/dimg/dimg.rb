@@ -170,7 +170,7 @@ module Dapp
         # и удаляем примонтированную tmp-директорию.
         cmd = "".tap do |cmd|
           cmd << "docker run --rm"
-          cmd << " --volume #{tmp_base_dir}:#{tmp_base_dir}"
+          cmd << " --volume #{dapp.tmp_base_dir}:#{dapp.tmp_base_dir}"
           cmd << " ubuntu:16.04"
           cmd << " rm -rf #{tmp_path}"
         end

@@ -2,6 +2,8 @@ module Dapp
   module Dimg
     # Git repo artifact
     class GitArtifact
+      include Helper::Tar
+
       attr_reader :repo
       attr_reader :name
 
@@ -145,26 +147,24 @@ module Dapp
       end
 
       def archive_file(from_commit, to_commit)
-        create_file(repo.dimg.tmp_path('archives', archive_file_name(from_commit, to_commit))) do |f|
-          Gem::Package::TarWriter.new(f) do |tar|
-            diff_patches(from_commit, to_commit).each do |patch|
-              entry = patch.delta.new_file
+        tar_write(repo.dimg.tmp_path('archives', archive_file_name(from_commit, to_commit))) do |tar|
+          diff_patches(from_commit, to_commit).each do |patch|
+            entry = patch.delta.new_file
 
-              content = begin
-                if to_commit == nil
-                  next unless (path = repo.path.dirname.join(entry[:path])).file?
-                  File.read(path)
-                else
-                  repo.lookup_object(entry[:oid]).content
-                end
-              end
-
-              if entry[:mode] == 40960 # symlink
-                tar.add_symlink slice_cwd(entry[:path]), content, entry[:mode]
+            content = begin
+              if to_commit == nil
+                next unless (path = repo.path.dirname.join(entry[:path])).file?
+                File.read(path)
               else
-                tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
-                  tf.write content
-                end
+                repo.lookup_object(entry[:oid]).content
+              end
+            end
+
+            if entry[:mode] == 40960 # symlink
+              tar.add_symlink slice_cwd(entry[:path]), content, entry[:mode]
+            else
+              tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
+                tf.write content
               end
             end
           end
@@ -187,7 +187,7 @@ module Dapp
       end
 
       def patch_file(from_commit, to_commit)
-        create_file(repo.dimg.tmp_path('patches', patch_file_name(from_commit, to_commit))) do |f|
+        File.open(repo.dimg.tmp_path('patches', patch_file_name(from_commit, to_commit)), File::RDWR | File::CREAT) do |f|
           diff_patches(from_commit, to_commit).each { |patch| f.write change_patch_new_file_path(patch) }
         end
         repo.dimg.container_tmp_path('patches', patch_file_name(from_commit, to_commit))
@@ -241,10 +241,6 @@ module Dapp
 
       def file_name(*args, ext)
         "#{[paramshash, args].flatten.compact.join('_')}.#{ext}"
-      end
-
-      def create_file(file_path, &blk)
-        File.open(file_path, File::RDWR | File::CREAT, &blk)
       end
 
       def diff_patches(from_commit, to_commit, paths: include_paths_or_cwd)
