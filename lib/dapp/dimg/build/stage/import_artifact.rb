@@ -15,7 +15,7 @@ module Dapp
             @image ||= Image::Scratch.new(name: image_name, dapp: dimg.dapp)
           end
 
-          def image_add_volumes
+          def image_add_mounts
           end
 
           def prepare_image
@@ -33,6 +33,7 @@ module Dapp
             artifact_name = artifact[:name]
             artifact_dimg = artifact[:dimg]
             cwd = artifact[:options][:cwd]
+            to = artifact[:options][:to]
             include_paths = artifact[:options][:include_paths]
             owner = artifact[:options][:owner]
             group = artifact[:options][:group]
@@ -51,12 +52,18 @@ module Dapp
             include_paths = include_paths.empty? ? [File.join(cwd, '*')] : include_paths.map { |path| File.join(cwd, path, '*') }
             include_paths.map! { |path| path[1..-1] } # relative path
 
-            command = "#{sudo} #{dimg.dapp.tar_bin} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
+            command = "#{sudo} #{dimg.dapp.tar_bin} #{tar_option_transform(cwd, to)} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
             run_artifact_dimg(artifact_dimg, artifact_name, command)
 
             image.add_archive archive_path
           end
-          # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+          private
+
+          def tar_option_transform(cwd, to)
+            format = proc { |path| path.chomp('/').reverse.chomp('/').reverse }
+            "--transform \"s/^#{format.call(cwd)}/#{format.call(to)}/\""
+          end
         end # ImportArtifact
       end # Stage
     end # Build
