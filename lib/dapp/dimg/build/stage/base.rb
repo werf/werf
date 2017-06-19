@@ -48,9 +48,9 @@ module Dapp
           # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity
 
           def build!
-            prev_stage.build!                                                                     if prev_stage
-            image_build                                                                           unless empty?
-            image_introspect                                                                      if image_should_be_introspected?
+            prev_stage.build! if prev_stage
+            image_build       unless empty?
+            image_introspect  if image_should_be_introspected?
           end
 
           def image_introspect
