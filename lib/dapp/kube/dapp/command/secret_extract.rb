@@ -2,18 +2,18 @@ module Dapp
   module Kube
     module Dapp
       module Command
-        module SecretGenerate
-          def kube_secret_generate(file_path)
+        module SecretExtract
+          def kube_secret_extract(file_path)
             raise Error::Command, code: :secret_key_not_found if secret.nil?
 
             if file_path.nil?
-              kube_secret
+              kube_extract_secret
             else
-              kube_secret_file(file_path)
+              kube_extract_secret_file(file_path)
             end
           end
 
-          def kube_secret
+          def kube_extract_secret
             data = begin
               if $stdin.tty?
                 print 'Enter secret: '
@@ -24,19 +24,19 @@ module Dapp
             end
 
             unless (data = data.to_s.chomp).empty?
-              puts secret.generate(data)
+              puts secret.extract(data)
             end
           end
 
-          def kube_secret_file(file_path)
+          def kube_extract_secret_file(file_path)
             raise Error::Command, code: :file_not_exist, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
 
-            encrypted_data = secret.generate(IO.binread(file_path))
+            decrypted_data = secret.extract(IO.binread(file_path).chomp("\n"))
             if (output_file_path = options[:output_file_path]).nil?
-              puts encrypted_data
+              puts decrypted_data
             else
               FileUtils.mkpath File.dirname(output_file_path)
-              IO.binwrite(output_file_path, "#{encrypted_data}\n")
+              IO.binwrite(output_file_path, "#{decrypted_data}\n")
             end
           end
         end
