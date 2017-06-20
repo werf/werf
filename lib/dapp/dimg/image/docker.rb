@@ -87,18 +87,18 @@ module Dapp
             !(/^#{tag_format}$/ =~ name).nil?
           end
 
-          def tag!(id:, tag:)
-            ::Dapp::Dapp.shellout!("docker tag #{id} #{tag}")
+          def tag!(id:, tag:, verbose: false, quiet: false)
+            ::Dapp::Dapp.shellout!("docker tag #{id} #{tag}", verbose: verbose, quiet: quiet)
             cache_reset
           end
 
-          def save!(image_or_images, file_path)
+          def save!(image_or_images, file_path, verbose: false, quiet: false)
             images = Array(image_or_images).join(' ')
-            ::Dapp::Dapp.shellout!("docker save -o #{file_path} #{images}", verbose: true)
+            ::Dapp::Dapp.shellout!("docker save -o #{file_path} #{images}", verbose: verbose, quiet: quiet)
           end
 
-          def load!(file_path)
-            ::Dapp::Dapp.shellout!("docker load -i #{file_path}", verbose: true)
+          def load!(file_path, verbose: false, quiet: false)
+            ::Dapp::Dapp.shellout!("docker load -i #{file_path}", verbose: verbose, quiet: quiet)
           end
 
           def cache
