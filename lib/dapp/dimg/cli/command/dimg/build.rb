@@ -11,6 +11,17 @@ Usage:
 
 Options:
 BANNER
+        introspected_stages = [
+          :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
+          :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact,
+          :g_a_pre_setup_patch, :setup, :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions
+        ].map! { |s| "'#{s}'"}
+        artifact_introspected_stages = [
+          :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
+          :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact,
+          :g_a_pre_setup_patch, :setup, :after_setup_artifact, :g_a_artifact_patch, :build_artifact
+        ].map! { |s| "'#{s}'"}
+
         option :tmp_dir_prefix,
                long: '--tmp-dir-prefix PREFIX',
                description: 'Tmp directory prefix (/tmp by default). Used for build process service directories.'
@@ -36,17 +47,13 @@ BANNER
 
         option :introspect_stage,
                long: '--introspect-stage STAGE',
-               proc: proc { |v| v.to_sym },
-               in: [nil, :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
-                    :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact, :g_a_pre_setup_patch,
-                    :setup, :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions]
+               description: "Introspect one of the following stages (#{introspected_stages.join(', ')})",
+               proc: proc { |v| in_validate!(v, introspected_stages); v }
 
         option :introspect_artifact_stage,
                long: '--introspect-artifact-stage STAGE',
-               proc: proc { |v| v.to_sym },
-               in: [nil, :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
-                    :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact, :g_a_pre_setup_patch,
-                    :setup, :after_setup_artifact, :g_a_artifact_patch, :build_artifact]
+               description: "Introspect one of the following stages (#{artifact_introspected_stages.join(', ')})",
+               proc: proc { |v| in_validate!(v, artifact_introspected_stages); v }
 
         option :ssh_key,
                long: '--ssh-key SSH_KEY',

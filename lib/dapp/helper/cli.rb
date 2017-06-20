@@ -69,6 +69,10 @@ module Dapp
         @composite_options ||= {}
         @composite_options[opt] ||= []
       end
+
+      def in_validate!(v, list)
+        raise OptionParser::InvalidArgument, "`#{v}` is not included in the list [#{list.join(', ')}]" unless list.include?(v)
+      end
     end
   end # Helper
 end # Dapp
