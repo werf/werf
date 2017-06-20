@@ -17,6 +17,10 @@ module SpecHelper
       shellout(*args, **kwargs).tap(&:error!)
     end
 
+    def host_docker_bin
+      ::Dapp::Dapp.host_docker_bin
+    end
+
     def random_string(n = 10)
       (('a'..'z').to_a * n).sample(n).join
     end

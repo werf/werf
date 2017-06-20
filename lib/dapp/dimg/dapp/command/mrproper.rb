@@ -45,11 +45,11 @@ module Dapp
           end
 
           def dapp_containers_flush_by_label(label)
-            remove_containers_by_query(%(docker ps -a -f "label=#{label}" -q), force: true)
+            remove_containers_by_query(%(#{host_docker_bin} ps -a -f "label=#{label}" -q), force: true)
           end
 
           def dapp_dangling_images_flush_by_label(label)
-            remove_images_by_query(%(docker images -f "dangling=true" -f "label=#{label}" -q), force: true)
+            remove_images_by_query(%(#{host_docker_bin} images -f "dangling=true" -f "label=#{label}" -q), force: true)
           end
 
           def dapp_images_flush_by_label(label)
@@ -59,7 +59,7 @@ module Dapp
 
           def dapp_images_by_label(label)
             @dapp_images ||= begin
-              shellout!(%(docker images -f "dangling=false" --format="{{.Repository}}:{{.Tag}}" -f "label=#{label}"))
+              shellout!(%(#{host_docker_bin} images -f "dangling=false" --format="{{.Repository}}:{{.Tag}}" -f "label=#{label}"))
                 .stdout
                 .lines
                 .map(&:strip)
@@ -68,7 +68,7 @@ module Dapp
 
           def proper_cache_all_images
             shellout!([
-              'docker images',
+              "#{host_docker_bin} images",
               '--format="{{.Repository}}:{{.Tag}}"',
               %(-f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}" -f "dangling=false")
             ].join(' ')).stdout.lines.map(&:strip)

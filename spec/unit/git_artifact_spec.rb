@@ -45,14 +45,14 @@ describe Dapp::Dimg::GitArtifact do
 
   def image_build(*cmds)
     container_run(*cmds, rm: false).tap do
-      shellout("docker commit #{containter_name} #{containter_name}:latest")
-      shellout("docker rm #{containter_name}")
+      shellout("#{host_docker_bin} commit #{containter_name} #{containter_name}:latest")
+      shellout("#{host_docker_bin} rm #{containter_name}")
       @spec_image_name = "#{containter_name}:latest"
     end
   end
 
   def container_run(*cmds, rm: true)
-    shellout(["docker run",
+    shellout(["#{host_docker_bin} run",
               "#{'--rm' if rm}",
               "--entrypoint #{dimg.dapp.bash_bin}",
               "--name #{containter_name}",

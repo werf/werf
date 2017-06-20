@@ -11,7 +11,7 @@ describe Dapp::Dimg::Builder::Shell do
   def expect_files
     image_name = stages[:g_a_latest_patch].send(:image_name)
     config[:_shell].keys.each do |stage|
-      expect { shellout!("docker run --rm #{image_name} bash -lec 'cat /#{stage}'") }.to_not raise_error
+      expect { shellout!("#{host_docker_bin} run --rm #{image_name} bash -lec 'cat /#{stage}'") }.to_not raise_error
     end
   end
 

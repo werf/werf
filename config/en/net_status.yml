@@ -44,6 +44,8 @@ en:
       dappfile_not_found: "Dappfile not found!"
       cannot_run_ssh_agent: "Cannot run ssh-agent"
       ssh_key_not_found: "Ssh key `%{path}` not exist!"
+      docker_not_found: "Docker not found!"
+      docker_version: "Required docker version: >= %{version}!"
       dapp_config_file_incorrect: "%{message}"
       incorrect_dapp_config_option: ".dapp_config includes option `%{option}` with incorrect value `%{value}`: expected one of the following types [%{expected}]"
       incorrect_dapp_config_option_color: ".dapp_config includes option `color` with incorrect value `%{value}`: expected one of the following values [%{expected}]"
