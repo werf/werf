@@ -14,6 +14,7 @@ module Dapp
     include SshAgent
     include Helper::Sha256
     include Helper::Trivia
+    include Helper::Tar
 
     include Deps::Gitartifact
     include Deps::Base
@@ -65,7 +66,11 @@ module Dapp
       make_path(@path, *path)
     end
 
-    def build_path
+    def tmp_base_dir
+      File.expand_path(options[:tmp_dir_prefix] || '/tmp')
+    end
+
+    def build_path(*path)
       @build_path ||= begin
         if option_build_dir
           Pathname.new(option_build_dir)
@@ -73,6 +78,7 @@ module Dapp
           path('.dapp_build')
         end.expand_path.tap(&:mkpath)
       end
+      make_path(@build_path, *path)
     end
 
     def local_git_artifact_exclude_paths(&blk)

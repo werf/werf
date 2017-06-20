@@ -21,16 +21,20 @@ describe Dapp::Dimg::Artifact do
 
   def artifact_config
     artifact = { _config: Marshal.load(Marshal.dump(config)),
-                 _artifact_options: { cwd: "/#{@artifact}", to: "/#{@artifact}", exclude_paths: [], include_paths: [] } }
+                 _artifact_options: { cwd: "/#{@artifact}", to: "/#{to_directory}", exclude_paths: [], include_paths: [] } }
     artifact[:_config][:_name] = @artifact
     artifact[:_config][:_shell][:_build_artifact_command] = ["mkdir /#{@artifact} && date +%s > /#{@artifact}/test"]
     artifact
   end
 
+  def to_directory
+    "#{@artifact}_2"
+  end
+
   context :dimg do
     def expect_file
       image_name = stages[expect_stage].send(:image_name)
-      expect { shellout!("docker run --rm #{image_name} bash -lec 'cat /#{@artifact}/test'") }.to_not raise_error
+      expect { shellout!("docker run --rm #{image_name} bash -lec 'cat /#{to_directory}/test'") }.to_not raise_error
     end
 
     def expect_stage
@@ -53,7 +57,7 @@ describe Dapp::Dimg::Artifact do
   end
 
   context :scratch do
-    xit 'build with import_artifact' do
+    it 'build with import_artifact' do
       @artifact = :import_artifact
       config[:_import_artifact] = [artifact_config]
       config[:_docker][:_from] = nil
@@ -64,8 +68,8 @@ describe Dapp::Dimg::Artifact do
 
       begin
         expect do
-          shellout!("docker create --name #{container_name} --volume /#{@artifact} #{image_name} no_such_command")
-          shellout!("docker run --rm --volumes-from #{container_name} ubuntu:14.04 bash -lec 'cat /#{@artifact}/test'")
+          shellout!("docker create --name #{container_name} --volume /#{to_directory} #{image_name} no_such_command")
+          shellout!("docker run --rm --volumes-from #{container_name} ubuntu:14.04 bash -lec 'cat /#{to_directory}/test'")
         end.to_not raise_error
       ensure
         shellout("docker rm -f #{container_name}")

@@ -173,7 +173,7 @@ module Dapp
           end
 
           def kube_tmp_chart_path(*path)
-            @kube_tmp_path ||= Dir.mktmpdir('dapp-helm-chart-', options[:tmp_dir_prefix] || '/tmp')
+            @kube_tmp_path ||= Dir.mktmpdir('dapp-helm-chart-', tmp_base_dir)
             make_path(@kube_tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }
           end
 
