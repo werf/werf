@@ -29,6 +29,9 @@ RSpec.configure do |config|
     # That causes docker mounts problems with default macos docker file sharing settings.
     ::Dir.define_singleton_method(:tmpdir) {'/tmp'}
   end
+  config.before :each do
+    allow_any_instance_of(Dapp::Dapp).to receive(:config_options) { Hash.new }
+  end
   config.mock_with :rspec do |mocks|
     mocks.allow_message_expectations_on_nil = true
   end
