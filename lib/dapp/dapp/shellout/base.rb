@@ -54,7 +54,7 @@ module Dapp
 
           begin
             stream = Stream.new
-            if verbose
+            if verbose && !log_quiet?
               kwargs[:live_stream] = Proxy::Base.new(stream, STDOUT, with_time: log_time?)
             else
               kwargs[:live_stdout] = Proxy::Base.new(stream, with_time: log_time?)
