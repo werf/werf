@@ -1,10 +1,10 @@
 module Dapp::Kube::CLI::Command
   class Kube < ::Dapp::CLI
-    class SecretFileEncrypt < Base
+    class SecretExtract < Base
       banner <<BANNER.freeze
 Usage:
 
-  dapp kube secret file encrypt FILE [options]
+  dapp kube secret extract [FILE_PATH] [options]
 
 Options:
 BANNER
@@ -15,7 +15,7 @@ BANNER
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        file_path = self.class.required_argument(self, 'file')
+        file_path = cli_arguments.empty? ? nil : cli_arguments.first
         ::Dapp::Dapp.new(options: cli_options).public_send(run_method, file_path)
       end
     end

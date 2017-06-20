@@ -171,7 +171,7 @@ module Dapp
         cmd = "".tap do |cmd|
           cmd << "docker run --rm"
           cmd << " --volume #{dapp.tmp_base_dir}:#{dapp.tmp_base_dir}"
-          cmd << " ubuntu:16.04"
+          cmd << " alpine:3.6"
           cmd << " rm -rf #{tmp_path}"
         end
         dapp.shellout! cmd

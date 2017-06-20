@@ -3,15 +3,15 @@ module Dapp
     module Logging
       module Base
         def log_quiet?
-          options[:log_quiet]
+          option_quiet
         end
 
         def log_time?
-          options[:log_time]
+          option_time
         end
 
         def log_verbose?
-          options[:log_verbose]
+          option_verbose
         end
 
         def ignore_config_warning?
@@ -27,11 +27,11 @@ module Dapp
         end
 
         def dry_run?
-          options[:dry_run]
+          option_dry_run
         end
 
         def dev_mode?
-          options[:dev].nil? ? config._dev_mode : options[:dev]
+          option_dev
         end
 
         def log_info(*args, **kwargs)

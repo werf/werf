@@ -4,6 +4,7 @@ module Dapp
     include GitArtifact
     include Dappfile
     include Chef
+    include DappConfig
 
     include Logging::Base
     include Logging::Process
@@ -24,8 +25,9 @@ module Dapp
 
     def initialize(options: {})
       @options = options
-      Logging::Paint.initialize(options[:log_color])
       Logging::I18n.initialize
+      validate_config_options!
+      Logging::Paint.initialize(option_color)
     end
 
     def name
@@ -70,8 +72,8 @@ module Dapp
 
     def build_path(*path)
       @build_path ||= begin
-        if options[:build_dir]
-          Pathname.new(options[:build_dir])
+        if option_build_dir
+          Pathname.new(option_build_dir)
         else
           path('.dapp_build')
         end.expand_path.tap(&:mkpath)

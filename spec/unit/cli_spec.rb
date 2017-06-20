@@ -33,10 +33,10 @@ describe Dapp::CLI do
     end
 
     it 'dapp args' do
-      expect_parsed_options('dimg run --time', options: { log_time: true })
+      expect_parsed_options('dimg run --time', options: { time: true })
       expect_parsed_options('dimg run dimg*', options: { dimgs_patterns: ['dimg*'] })
-      expect_parsed_options('dimg run dimg* --time', options: { log_time: true, dimgs_patterns: ['dimg*'] })
-      expect_parsed_options('dimg run --time dimg*', options: { log_time: true, dimgs_patterns: ['dimg*'] })
+      expect_parsed_options('dimg run dimg* --time', options: { time: true, dimgs_patterns: ['dimg*'] })
+      expect_parsed_options('dimg run --time dimg*', options: { time: true, dimgs_patterns: ['dimg*'] })
     end
 
     it 'docker args' do
@@ -47,7 +47,7 @@ describe Dapp::CLI do
 
     it 'oatmeal' do
       expect_parsed_options('dimg run --quiet *dimg* -ti --time --rm -- bash rm -rf',
-                            options: { log_quiet: true, log_time: true, dimgs_patterns: ['*dimg*'] },
+                            options: { quiet: true, time: true, dimgs_patterns: ['*dimg*'] },
                             docker_options: %w(-ti --rm),
                             docker_command: %w(bash rm -rf))
     end

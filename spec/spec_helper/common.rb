@@ -9,7 +9,7 @@ module SpecHelper
     end
 
     def shellout(*args, **kwargs)
-      kwargs.delete :log_verbose
+      kwargs.delete :verbose
       Mixlib::ShellOut.new(*args, timeout: 20, **kwargs).run_command
     end
 

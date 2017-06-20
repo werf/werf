@@ -44,6 +44,9 @@ en:
       dappfile_not_found: "Dappfile not found!"
       cannot_run_ssh_agent: "Cannot run ssh-agent"
       ssh_key_not_found: "Ssh key `%{path}` not exist!"
+      dapp_config_file_incorrect: "%{message}"
+      incorrect_dapp_config_option: ".dapp_config includes option `%{option}` with incorrect value `%{value}`: expected one of the following types [%{expected}]"
+      incorrect_dapp_config_option_color: ".dapp_config includes option `color` with incorrect value `%{value}`: expected one of the following values [%{expected}]"
     config:
       dimg_name_required: 'Dimg name required!'
       dimg_name_incorrect: "Dimg has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
@@ -117,3 +120,6 @@ en:
     kubernetes:
       kube_config_not_found: "Kube config `%{path}` not found!"
       kube_server_connection_refused: "Kube server `%{url}` connection refused: %{error}"
+    secret:
+      bad_data: "Data `%{data}` can't be decrypted: check encryption key and data."
+      key_length_too_short: "Encryption key isn't valid (required size `%{required_size}`)!"

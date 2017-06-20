@@ -4,9 +4,9 @@ module Dapp
       module Dapp
         include Command::Deploy
         include Command::Dismiss
-        include Command::SecretGenerate
         include Command::SecretKeyGenerate
-        include Command::SecretFileEncrypt
+        include Command::SecretGenerate
+        include Command::SecretExtract
         include Command::MinikubeSetup
         include Command::Common
       end

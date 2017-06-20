@@ -24,7 +24,7 @@ describe Dapp::Dapp do
   end
 
   def dapp(options: {})
-    @dapp ||= Dapp::Dapp.new(options: { log_color: 'auto' }.merge(options))
+    @dapp ||= Dapp::Dapp.new(options: { color: 'auto' }.merge(options))
   end
 
   it 'build', :build, test_construct: true do
@@ -44,7 +44,7 @@ describe Dapp::Dapp do
     expect { stubbed_dapp.list }.to_not raise_error
   end
 
-  it 'paint_initialize expected options[:log_color] (RuntimeError)' do
+  it 'paint_initialize expected options_color (RuntimeError)' do
     expect { Dapp::Dapp.new }.to raise_error RuntimeError
   end
 
