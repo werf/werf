@@ -311,11 +311,11 @@ describe Dapp::Dimg::Builder::Chef do
   end
 
   def read_file_in_image(path, image_name)
-    shellout!("docker run --rm #{image_name} cat #{path}").stdout.strip
+    shellout!("#{host_docker_bin} run --rm #{image_name} cat #{path}").stdout.strip
   end
 
   def file_exist_in_image?(path, image_name)
-    res = shellout("docker run --rm #{image_name} ls #{path}")
+    res = shellout("#{host_docker_bin} run --rm #{image_name} ls #{path}")
     return true if res.exitstatus.zero?
     return false if res.exitstatus == 2
     res.error!

@@ -9,7 +9,7 @@ module Dapp
                 dapp_containers_flush
                 dapp_dangling_images_flush
                 remove_images_by_query([
-                  'docker images',
+                  "#{host_docker_bin} images",
                   %(--format '{{if ne "#{stage_cache}" .Repository }}{{.Repository}}:{{.Tag}}{{ end }}'),
                   %(-f "label=dapp=#{stage_dapp_label}")
                 ].join(' ')) # FIXME: negative filter is not currently supported by the Docker CLI

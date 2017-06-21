@@ -22,21 +22,21 @@ module Dapp
 
         def untag!
           raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
-          dapp.shellout!("docker rmi #{name}")
+          dapp.shellout!("#{dapp.host_docker_bin} rmi #{name}")
           cache_reset
         end
 
         def push!
           raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
           dapp.log_secondary_process(dapp.t(code: 'process.image_push', data: { name: name })) do
-            dapp.shellout!("docker push #{name}", verbose: true)
+            dapp.shellout!("#{dapp.host_docker_bin} push #{name}", verbose: true)
           end
         end
 
         def pull!
           return if tagged?
           dapp.log_secondary_process(dapp.t(code: 'process.image_pull', data: { name: name })) do
-            dapp.shellout!("docker pull #{name}", verbose: true)
+            dapp.shellout!("#{dapp.host_docker_bin} pull #{name}", verbose: true)
           end
           cache_reset
         end
@@ -56,7 +56,7 @@ module Dapp
         end
 
         def self.image_config_option(image_id:, option:)
-          output = ::Dapp::Dapp.shellout!("docker inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
+          output = ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
           output == 'null' ? [] : JSON.parse(output)
         end
 
@@ -88,17 +88,17 @@ module Dapp
           end
 
           def tag!(id:, tag:)
-            ::Dapp::Dapp.shellout!("docker tag #{id} #{tag}")
+            ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} tag #{id} #{tag}")
             cache_reset
           end
 
           def save!(image_or_images, file_path)
             images = Array(image_or_images).join(' ')
-            ::Dapp::Dapp.shellout!("docker save -o #{file_path} #{images}", verbose: true)
+            ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} save -o #{file_path} #{images}", verbose: true)
           end
 
           def load!(file_path)
-            ::Dapp::Dapp.shellout!("docker load -i #{file_path}", verbose: true)
+            ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} load -i #{file_path}", verbose: true)
           end
 
           def cache
@@ -107,7 +107,7 @@ module Dapp
 
           def cache_reset(name = '')
             cache.delete(name)
-            ::Dapp::Dapp.shellout!("docker images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}")
+            ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}")
                         .stdout
                         .lines
                         .each do |l|
