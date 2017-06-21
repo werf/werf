@@ -97,5 +97,23 @@ module Dapp
     def stage_dapp_label
       name
     end
+
+    def host_docker_bin
+      self.class.host_docker_bin
+    end
+
+    def self.host_docker_bin
+      @host_docker_bin ||= begin
+        raise Error::Dapp, code: :docker_not_found if (res = shellout('which docker')).exitstatus.nonzero?
+        res.stdout.strip.tap do |docker_bin|
+          current_docker_version = shellout!("#{docker_bin} --version").stdout.strip
+          required_docker_version = '1.10.0'
+
+          if Gem::Version.new(required_docker_version) >= Gem::Version.new(current_docker_version[/(\d+\.)+\d+/])
+            raise Error::Dapp, code: :docker_version, data: { version: required_docker_version }
+          end
+        end
+      end
+    end
   end # Dapp
 end # Dapp

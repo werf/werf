@@ -10,10 +10,10 @@ module Dapp
 
         def base_container
           @base_container ||= begin
-            if shellout("docker inspect #{base_container_name}").exitstatus.nonzero?
+            if shellout("#{host_docker_bin} inspect #{base_container_name}").exitstatus.nonzero?
               log_secondary_process(t(code: 'process.base_container_creating'), short: true) do
                 shellout!(
-                  ['docker create',
+                  ["#{host_docker_bin} create",
                    "--name #{base_container_name}",
                    "--volume /.dapp/deps/base/#{BASE_VERSION} dappdeps/base:#{BASE_VERSION}"].join(' ')
                 )
