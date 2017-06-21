@@ -28,9 +28,12 @@ module Dapp
         end
 
         def shellout!(*args, **kwargs)
-          shellout_with_logging(**kwargs) do |options|
-            shellout(*args, **options).tap(&:error!)
+          if instance_of? Dapp
+            default_kwarg = proc { |key, value| kwargs[key] = value unless kwargs.key?(key) }
+            default_kwarg.call(:quiet, log_quiet?)
+            default_kwarg.call(:time, log_time?)
           end
+          _shellout_with_logging!(*args, **kwargs)
         end
 
         def shellout_pack(command)
@@ -49,22 +52,18 @@ module Dapp
 
         protected
 
-        def shellout_with_logging(verbose: false, **kwargs)
-          return yield(**kwargs) unless instance_of? Dapp
-
-          begin
-            stream = Stream.new
-            if verbose && !log_quiet?
-              kwargs[:live_stream] = Proxy::Base.new(stream, STDOUT, with_time: log_time?)
-            else
-              kwargs[:live_stdout] = Proxy::Base.new(stream, with_time: log_time?)
-            end
-            kwargs[:live_stderr] = Proxy::Error.new(stream, with_time: log_time?)
-
-            yield(**kwargs)
-          rescue ::Mixlib::ShellOut::ShellCommandFailed => e
-            raise Error::Shellout, code: class_to_lowercase(e.class), data: { stream: stream.show }
+        def _shellout_with_logging!(*args, verbose: false, quiet: true, time: false, **kwargs)
+          stream = Stream.new
+          if verbose && !quiet
+            kwargs[:live_stream] = Proxy::Base.new(stream, STDOUT, with_time: time)
+          else
+            kwargs[:live_stdout] = Proxy::Base.new(stream, with_time: time)
           end
+          kwargs[:live_stderr] = Proxy::Error.new(stream, with_time: time)
+
+          shellout(*args, **kwargs).tap(&:error!)
+        rescue ::Mixlib::ShellOut::ShellCommandFailed => e
+          raise Error::Shellout, code: Helper::Trivia.class_to_lowercase(e.class), data: { stream: stream.show }
         end
       end
     end
