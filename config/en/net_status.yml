@@ -27,7 +27,7 @@ en:
       tag_name_incorrect: "Incorrect tag name `%{name}` given!"
       context_directory_not_found: "Context directory `%{path}` not found!"
       stored_build_dir_already_exist: "Cannot store current build_dir `%{path}`: restore or delete old build_dir!"
-      secret_key_not_found: "Secret key `DAPP_SECRET_KEY` not found!"
+      secret_key_not_found: "Secret key not found in %{not_found_in}!"
       minikube_not_found: "Minikube not found: install minikube (https://github.com/kubernetes/minikube/releases)!"
       minikube_not_started: "Minikube not started!"
       project_helm_chart_not_found: "Project helm chart `%{path}` not found!"
@@ -124,4 +124,4 @@ en:
       kube_server_connection_refused: "Kube server `%{url}` connection refused: %{error}"
     secret:
       bad_data: "Data `%{data}` can't be decrypted: check encryption key and data."
-      key_length_too_short: "Encryption key isn't valid (required size `%{required_size}`)!"
+      key_length_too_short: "Encryption key isn't valid (required size %{required_size} bytes)!"

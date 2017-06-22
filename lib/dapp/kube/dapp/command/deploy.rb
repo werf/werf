@@ -42,7 +42,10 @@ module Dapp
 
           def kube_helm_decode_secrets
             if secret.nil?
-              log_warning(desc: { code: :dapp_secret_key_not_found }) if !kube_secret_values_paths.empty? || kube_chart_secret_path.directory?
+              log_warning(desc: {
+                code: :dapp_secret_key_not_found,
+                data: {not_found_in: secret_key_not_found_in.join(', ')}
+              }) if !kube_secret_values_paths.empty? || kube_chart_secret_path.directory?
             else
               kube_helm_decode_secret_files
             end

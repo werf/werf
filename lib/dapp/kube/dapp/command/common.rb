@@ -15,12 +15,34 @@ module Dapp
             kubernetes.namespace
           end
 
+          def secret_key_should_exist!
+            raise(Error::Command,
+              code: :secret_key_not_found,
+              data: {not_found_in: secret_key_not_found_in.join(', ')}
+            ) if secret.nil?
+          end
+
           def secret
             @secret ||= begin
-              secret_key = ENV['DAPP_SECRET_KEY']
-              secret_key ||= path('.dapp_secret_key').read.chomp if path('.dapp_secret_key').file?
+              unless secret_key = ENV['DAPP_SECRET_KEY']
+                secret_key_not_found_in << '`DAPP_SECRET_KEY`'
+
+                if dappfile_exists?
+                  file_path = path('.dapp_secret_key')
+                  if file_path.file?
+                    secret_key = path('.dapp_secret_key').read.chomp
+                  else
+                    secret_key_not_found_in << "`#{file_path}`"
+                  end
+                end
+              end
+
               Secret.new(secret_key) if secret_key
             end
+          end
+
+          def secret_key_not_found_in
+            @secret_key_not_found_in ||= []
           end
 
           def kubernetes
