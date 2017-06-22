@@ -17,7 +17,7 @@ module Dapp
             data = begin
               if $stdin.tty?
                 print 'Enter secret: '
-                $stdin.noecho(&:gets)
+                $stdin.noecho(&:gets).tap { print "\n" }
               else
                 $stdin.read
               end
