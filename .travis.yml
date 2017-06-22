@@ -1,4 +1,4 @@
-dist: trusty
+dist: xenial
 sudo: required
 cache: apt
 language: ruby
@@ -10,14 +10,15 @@ install:
 - sudo -E su --preserve-environment -lc 'bundle install'
 
 before_script:
-- sudo mkdir -p /etc/apt/sources.list.d/ &&
-  echo 'deb https://apt.dockerproject.org/repo ubuntu-trusty main' |
-    sudo tee /etc/apt/sources.list.d/docker.list
 - sudo apt-get update -qq
-- sudo apt-get -o dpkg::options::="--force-confnew" install -y docker-engine git
+- sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common git
+- curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+- sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+- sudo apt-get update -qq
+- sudo apt-get -o dpkg::options::="--force-confnew" install -y docker-ce
 - USER_NAME=$(id -un) && sudo gpasswd -a $USER_NAME docker
 - sudo service docker restart
-- sudo --version
+- sudo docker version
 script:
 - sudo -E su --preserve-environment -lc 'bundle exec rake spec SPEC_OPTS="--format documentation"'
 
