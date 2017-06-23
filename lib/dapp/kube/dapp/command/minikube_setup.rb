@@ -33,7 +33,7 @@ module Dapp
           end
 
           def _minikube_restart_minikube
-            log_process(:restart_minikube) do
+            log_process("Restart minikube") do
               raise MinikubeSetupError, code: :minikube_not_found if shellout('which minikube').exitstatus == 1
 
               Process.fork do
@@ -93,7 +93,7 @@ module Dapp
           end
 
           def _minikube_run_minikube_persisted_storage_daemon
-            log_process(:run_minikube_persisted_storage_daemon) do
+            log_process("Run minikube persisted storage daemon") do
               _minikube_run_daemon(:minikube_persisted_storage) do
                 _minikube_set_original_sudo_caller_process_user!
 
@@ -109,7 +109,7 @@ module Dapp
           end
 
           def _minikube_wait_till_ready
-            log_process(:wait_till_minikube_ready) do
+            log_process("Wait till minikube ready") do
               600.times do
                 begin
                   return if _minikube_kubernetes.service?('kube-dns')
@@ -124,7 +124,7 @@ module Dapp
           end
 
           def _minikube_run_registry
-            log_process(:run_registry) do
+            log_process("Run registry") do
               _minikube_kubernetes.with_query(gracePeriodSeconds: 0) do
                 with_log_indent do
                   if _minikube_kubernetes.replicationcontroller? _minikube_registry_replicationcontroller_spec['metadata']['name']
@@ -224,7 +224,7 @@ module Dapp
           end
 
           def _minikube_run_registry_forwarder_daemon
-            log_process(:run_registry_forwarder_daemon) do
+            log_process("Run registry forwarder daemon") do
               registry_port_in_use = begin
                 Socket.tcp('localhost', 5000).close
                 true
