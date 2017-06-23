@@ -54,16 +54,19 @@ module Dapp
 
       def chefdk_container
         @chefdk_container ||= begin
-          if dimg.dapp.shellout("#{dimg.dapp.host_docker_bin} inspect #{chefdk_container_name}").exitstatus.nonzero?
-            dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.chefdk_container_creating'), short: true) do
-              dimg.dapp.shellout!(
-                ["#{dimg.dapp.host_docker_bin} create",
-                 "--name #{chefdk_container_name}",
-                 "--volume /.dapp/deps/chefdk #{chefdk_image}"].join(' ')
-              )
+          unless dimg.dapp.docker_client.container?(chefdk_container_name)
+            dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.chefdk_container_creating')) do
+              dimg.dapp.with_log_indent do
+                hostconfig = {}
+                hostconfig[:mounts] = [{ target: '/.dapp/deps/chefdk', type: :volume }]
+                volumes = { '/.dapp/deps/chefdk' => {} }
+                dimg.dapp.docker_client.container_create(name: chefdk_container_name,
+                                                         image: chefdk_image,
+                                                         volumes: volumes,
+                                                         hostconfig: hostconfig)
+              end
             end
           end
-
           chefdk_container_name
         end
       end

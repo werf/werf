@@ -74,52 +74,58 @@ module Dapp
 
       # rubocop:disable Metrics/AbcSize
       def vendor!
-        volumes_from = [builder.dimg.dapp.base_container, builder.chefdk_container]
-
         builder.dimg.dapp.log_secondary_process(builder.dimg.dapp.t(code: _vendor_process_name)) do
-          volumes_from = [builder.dimg.dapp.base_container, builder.chefdk_container]
+          builder.dimg.dapp.with_log_indent do
+            tmp_berksfile_path = builder.dimg.tmp_path.join("Berksfile.#{SecureRandom.uuid}")
+            File.open(tmp_berksfile_path, 'w') {|file| file.write berksfile.dump}
 
-          tmp_berksfile_path = builder.dimg.tmp_path.join("Berksfile.#{SecureRandom.uuid}")
-          File.open(tmp_berksfile_path, 'w') {|file| file.write berksfile.dump}
+            tmp_metadata_path = builder.dimg.tmp_path.join("metadata.rb.#{SecureRandom.uuid}")
+            File.open(tmp_metadata_path, 'w') {|file| file.write metadata.dump}
 
-          tmp_metadata_path = builder.dimg.tmp_path.join("metadata.rb.#{SecureRandom.uuid}")
-          File.open(tmp_metadata_path, 'w') {|file| file.write metadata.dump}
+            vendor_commands = [
+              "#{builder.dimg.dapp.mkdir_bin} -p ~/.ssh",
+              'echo "Host *" >> ~/.ssh/config',
+              'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
+              *local_paths.map {|path| "#{builder.dimg.dapp.rsync_bin} --archive --relative #{path} /tmp/local_cookbooks"},
+              "cd /tmp/local_cookbooks/#{path}",
+              "cp #{tmp_berksfile_path} Berksfile",
+              "cp #{tmp_metadata_path} metadata.rb",
+              '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
+              ["#{builder.dimg.dapp.find_bin} /tmp/cookbooks -type d -exec #{builder.dimg.dapp.bash_bin} -ec '",
+               "#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} ",
+               "--mode $(#{builder.dimg.dapp.stat_bin} -c %a {}) -d ",
+               "#{_vendor_path}/$(echo {} | #{builder.dimg.dapp.sed_bin} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
+              ["#{builder.dimg.dapp.find_bin} /tmp/cookbooks -type f -exec #{builder.dimg.dapp.bash_bin} -ec '",
+               "#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} ",
+               "--mode $(#{builder.dimg.dapp.stat_bin} -c %a {}) {} ",
+               "#{_vendor_path}/$(echo {} | #{builder.dimg.dapp.sed_bin} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
+              ["#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} ",
+               "--mode 0644 <(#{builder.dimg.dapp.date_bin} +%s.%N) #{_vendor_path.join('.created_at')}"].join
+            ]
 
-          vendor_commands = [
-            "#{builder.dimg.dapp.mkdir_bin} -p ~/.ssh",
-            'echo "Host *" >> ~/.ssh/config',
-            'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
-            *local_paths.map {|path| "#{builder.dimg.dapp.rsync_bin} --archive --relative #{path} /tmp/local_cookbooks"},
-            "cd /tmp/local_cookbooks/#{path}",
-            "cp #{tmp_berksfile_path} Berksfile",
-            "cp #{tmp_metadata_path} metadata.rb",
-            '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
-            ["#{builder.dimg.dapp.find_bin} /tmp/cookbooks -type d -exec #{builder.dimg.dapp.bash_bin} -ec '",
-             "#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} ",
-             "--mode $(#{builder.dimg.dapp.stat_bin} -c %a {}) -d ",
-             "#{_vendor_path}/$(echo {} | #{builder.dimg.dapp.sed_bin} -e \"s/^\\/tmp\\/cookbooks//\")' \\;"].join,
-            ["#{builder.dimg.dapp.find_bin} /tmp/cookbooks -type f -exec #{builder.dimg.dapp.bash_bin} -ec '",
-             "#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} ",
-             "--mode $(#{builder.dimg.dapp.stat_bin} -c %a {}) {} ",
-             "#{_vendor_path}/$(echo {} | #{builder.dimg.dapp.sed_bin} -e \"s/\\/tmp\\/cookbooks//\")' \\;"].join,
-            ["#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} ",
-             "--mode 0644 <(#{builder.dimg.dapp.date_bin} +%s.%N) #{_vendor_path.join('.created_at')}"].join
-          ]
-
-          builder.dimg.dapp.shellout!(
-            [ "#{builder.dimg.dapp.host_docker_bin} run --rm",
-              volumes_from.map {|container| "--volumes-from #{container}"}.join(' '),
-              *local_paths.map {|path| "--volume #{path}:#{path}"},
-              "--volume #{builder.dimg.tmp_path}:#{builder.dimg.tmp_path}",
-              ("--volume #{builder.dimg.dapp.ssh_auth_sock}:/tmp/dapp-ssh-agent" if builder.dimg.dapp.ssh_auth_sock),
-              "--volume #{_vendor_path.tap(&:mkpath)}:#{_vendor_path}",
-              ('--env SSH_AUTH_SOCK=/tmp/dapp-ssh-agent' if builder.dimg.dapp.ssh_auth_sock),
-              ''.tap do |cmd|
-                cmd << "dappdeps/berksdeps:0.1.0 #{builder.dimg.dapp.bash_bin}"
-                cmd << " -ec '#{builder.dimg.dapp.shellout_pack(vendor_commands.join(' && '))}'"
-              end ].compact.join(' '),
-            verbose: true
-          )
+            hostconfig = {}
+            hostconfig[:volumesfrom] = [builder.dimg.dapp.base_container, builder.chefdk_container]
+            hostconfig[:mounts] = [].tap do |mounts|
+              [local_paths, builder.dimg.tmp_path, _vendor_path.tap(&:mkpath)].flatten.compact.each do |path|
+                mounts << { source: path, target: path, type: :bind }
+              end
+              mounts << { source: builder.dimg.dapp.ssh_auth_sock, target: '/tmp/dapp-ssh-agent', type: :bind } if builder.dimg.dapp.ssh_auth_sock
+            end
+            env = [].tap do |env|
+              env << 'SSH_AUTH_SOCK=/tmp/dapp-ssh-agent' if builder.dimg.dapp.ssh_auth_sock
+            end
+            cmd = [].tap do |cmd|
+              cmd << builder.dimg.dapp.bash_bin
+              cmd << '-ec'
+              cmd << builder.dimg.dapp.shellout_pack(vendor_commands.join(' && '))
+            end
+            builder.dimg.dapp.docker_client.container_run(image: 'dappdeps/berksdeps:0.1.0',
+                                                          cmd: cmd,
+                                                          env: env,
+                                                          hostconfig: hostconfig,
+                                                          verbose: true,
+                                                          rm: true)
+          end
         end
       end
       # rubocop:enable Metrics/AbcSize

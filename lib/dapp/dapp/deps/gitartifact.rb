@@ -10,14 +10,17 @@ module Dapp
 
         def gitartifact_container
           @gitartifact_container ||= begin
-            if shellout("#{host_docker_bin} inspect #{gitartifact_container_name}").exitstatus.nonzero?
-              log_secondary_process(t(code: 'process.gitartifact_container_creating'), short: true) do
-                shellout!(
-                  ["#{host_docker_bin} create",
-                   "--name #{gitartifact_container_name}",
-                   "--volume /.dapp/deps/gitartifact/#{GITARTIFACT_VERSION}",
-                   "dappdeps/gitartifact:#{GITARTIFACT_VERSION}"].join(' ')
-                )
+            unless docker_client.container?(gitartifact_container_name)
+              log_secondary_process(t(code: 'process.gitartifact_container_creating')) do
+                with_log_indent do
+                  hostconfig = {}
+                  hostconfig[:mounts] = [{ target: "/.dapp/deps/gitartifact/#{GITARTIFACT_VERSION}", type: :volume }]
+                  volumes = { "/.dapp/deps/gitartifact/#{GITARTIFACT_VERSION}" => {} }
+                  docker_client.container_create(name: gitartifact_container_name,
+                                                 image: "dappdeps/gitartifact:#{GITARTIFACT_VERSION}",
+                                                 volumes: volumes,
+                                                 hostconfig: hostconfig)
+                end
               end
             end
             gitartifact_container_name
