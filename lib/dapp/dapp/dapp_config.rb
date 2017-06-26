@@ -35,7 +35,11 @@ module Dapp
 
       def config_options
         @config_options ||= begin
-          [File.join(Dir.home), path].reduce({}) do |options, dir|
+          config_search_paths = []
+          config_search_paths << File.join(Dir.home)
+          config_search_paths << path if dappfile_exists?
+
+          config_search_paths.reduce({}) do |options, dir|
             if (config_options_path = make_path(dir, '.dapp_config')).file?
               config_options = begin
                 YAML.load_file(config_options_path).tap do |c_options|

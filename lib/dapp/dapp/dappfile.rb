@@ -9,6 +9,10 @@ module Dapp
         end
       end
 
+      def dappfile_exists?
+        !!search_file_upward('Dappfile')
+      end
+
       def dappfile_path
         raise Error::Dapp, code: :dappfile_not_found unless (dappfile_path = search_file_upward('Dappfile'))
         dappfile_path

@@ -53,7 +53,7 @@ en:
       stage_artifact_rewritten: "WARNING: Artifact stage rewritten from %{conflict_stage} to %{stage}."
       recipe_does_not_used: "WARNING: Recipe `%{recipe}` doesn't used in any stage."
       context_archive_not_found: "WARNING: context archive `%{path}` not found!"
-      dapp_secret_key_not_found: "WARNING: Secrets haven't decoded: set `DAPP_SECRET_KEY`!"
+      dapp_secret_key_not_found: "WARNING: Secrets haven't decoded: secret key not found in %{not_found_in}!"
       introspect_image_impossible: "WARNING: You can't introspect stage `%{name}`!"
       stage_dependencies_not_found: "WARNING: Stage dependencies `%{dependencies}` haven't been found in repo `%{repo}`!"
       unsupported_dapp_config_options: "WARNING: .dapp_config includes unsupported options [%{options}]: use only following options [%{supported_options}]"

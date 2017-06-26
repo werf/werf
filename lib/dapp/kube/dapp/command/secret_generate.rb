@@ -4,7 +4,7 @@ module Dapp
       module Command
         module SecretGenerate
           def kube_secret_generate(file_path)
-            raise Error::Command, code: :secret_key_not_found if secret.nil?
+            secret_key_should_exist!
 
             if file_path.nil?
               kube_secret
