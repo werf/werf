@@ -71,7 +71,11 @@ module Dapp
       end
 
       def in_validate!(v, list)
-        raise OptionParser::InvalidArgument, "`#{v}` is not included in the list [#{list.join(', ')}]" unless list.include?(v)
+        raise OptionParser::InvalidArgument, "`#{v}` is not included in the list [#{list_msg_format(list)}]" unless list.include?(v)
+      end
+
+      def list_msg_format(list)
+        list.map { |s| "'#{s}'"}.join(', ')
       end
     end
   end # Helper

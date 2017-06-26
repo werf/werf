@@ -15,12 +15,12 @@ BANNER
           :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
           :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact,
           :g_a_pre_setup_patch, :setup, :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions
-        ].map! { |s| "'#{s}'"}
+        ]
         artifact_introspected_stages = [
           :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
           :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact,
           :g_a_pre_setup_patch, :setup, :after_setup_artifact, :g_a_artifact_patch, :build_artifact
-        ].map! { |s| "'#{s}'"}
+        ]
 
         option :tmp_dir_prefix,
                long: '--tmp-dir-prefix PREFIX',
@@ -47,13 +47,13 @@ BANNER
 
         option :introspect_stage,
                long: '--introspect-stage STAGE',
-               description: "Introspect one of the following stages (#{introspected_stages.join(', ')})",
-               proc: proc { |v| in_validate!(v, introspected_stages); v }
+               description: "Introspect one of the following stages (#{list_msg_format(introspected_stages)})",
+               proc: proc { |val| val.to_sym.tap { |v| in_validate!(v, introspected_stages) } }
 
         option :introspect_artifact_stage,
                long: '--introspect-artifact-stage STAGE',
-               description: "Introspect one of the following stages (#{artifact_introspected_stages.join(', ')})",
-               proc: proc { |v| in_validate!(v, artifact_introspected_stages); v }
+               description: "Introspect one of the following stages (#{list_msg_format(artifact_introspected_stages)})",
+               proc: proc { |val| val.to_sym.tap { |v| in_validate!(v, artifact_introspected_stages) } }
 
         option :ssh_key,
                long: '--ssh-key SSH_KEY',
