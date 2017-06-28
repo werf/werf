@@ -25,9 +25,7 @@ module Dapp
         end
 
         def layer_commit(git_artifact)
-          commits[git_artifact] ||= begin
-            git_artifact.latest_commit
-          end
+          commits[git_artifact.full_name] ||= git_artifact.latest_commit
         end
 
         def empty?

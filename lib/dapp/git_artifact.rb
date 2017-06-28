@@ -80,7 +80,7 @@ module Dapp
     end
 
     def latest_commit
-      @latest_commit ||= commit || repo.latest_commit(branch)
+      @latest_commit ||= (commit || repo.latest_commit(branch))
     end
 
     def paramshash
