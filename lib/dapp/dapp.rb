@@ -37,9 +37,9 @@ module Dapp
           repo_name = repo_name[/.*(?=\.git)/] if repo_name.end_with? '.git'
           repo_name
         elsif git_path
-          File.basename(File.dirname(git_path))
+          File.basename(File.dirname(git_path)).to_s
         else
-          path.basename
+          path.basename.to_s
         end
       end
     end
