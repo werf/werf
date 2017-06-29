@@ -59,18 +59,6 @@ module Dapp
             end
           end
 
-          def kube_helm_decode_json(json)
-            decode_value = proc do |value|
-              case value
-              when Array then value.map { |v| decode_value.call(v) }
-              when Hash then kube_helm_decode_json(value)
-              else
-                secret.nil? ? '' : secret.extract(value)
-              end
-            end
-            json.each { |k, v| json[k] = decode_value.call(v) }
-          end
-
           def kube_helm_decode_secret_files
             return unless kube_chart_secret_path.directory?
             Dir.glob(kube_chart_secret_path.join('**/*')).each do |entry|

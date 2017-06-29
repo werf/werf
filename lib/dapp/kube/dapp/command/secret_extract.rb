@@ -9,7 +9,13 @@ module Dapp
             if file_path.nil?
               kube_extract_secret
             else
-              kube_extract_secret_file(file_path)
+              raise Error::Command, code: :file_not_exist, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
+
+              if options[:values]
+                kube_extract_secret_values(file_path)
+              else
+                kube_extract_secret_file(file_path)
+              end
             end
           end
 
@@ -17,7 +23,7 @@ module Dapp
             data = begin
               if $stdin.tty?
                 print 'Enter secret: '
-                $stdin.noecho(&:gets).tap { print "\n" }
+                $stdin.gets
               else
                 $stdin.read
               end
@@ -28,9 +34,11 @@ module Dapp
             end
           end
 
-          def kube_extract_secret_file(file_path)
-            raise Error::Command, code: :file_not_exist, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
+          def kube_extract_secret_values(file_path)
+            puts JSON.pretty_generate kube_helm_decode_json(YAML::load(File.read(file_path)))
+          end
 
+          def kube_extract_secret_file(file_path)
             decrypted_data = secret.extract(IO.binread(file_path).chomp("\n"))
             if (output_file_path = options[:output_file_path]).nil?
               puts decrypted_data
