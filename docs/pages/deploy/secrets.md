@@ -76,7 +76,8 @@ data:
 
 ```
 $ dapp kube secret extract
-Enter secret: 42
+Enter secret: 1000541517bccae1acce015629f4ec89996e0b4
+42
 ```
 
 Также как и при шифровании поддерживаются перенаправленный вывод и секреты из файлов.
@@ -88,4 +89,13 @@ $ echo "1000541517bccae1acce015629f4ec89996e0b4" | dapp kube secret extract .hel
 ```
 $ dapp kube secret extract .helm/secret/sense_of_life.txt
 42 — ответ на «главный вопрос Жизни, Вселенной и Всего Остального».
+```
+
+Если необходимо расшифровать secret-values файл, то необходимо также указать опцию `--values`.
+```
+$ dapp kube secret extract .helm/secret-values.yaml --values
+sense:
+  of:
+    life: 42
+    lifes: [42, 42, 42]
 ```
