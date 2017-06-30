@@ -2,7 +2,7 @@ en:
   net_status:
     missing_translation: "Missing translation for code: `%{code}`!"
     shellout:
-      shell_command_failed: ">>> START STREAM\n%{stream}\n>>> END STREAM"
+      shell_command_failed: ">>> Shell failed command output begin\n%{stream}\n>>> Shell failed command output end"
     dimg:
       dimg_not_built: "Dimg hasn't been built yet!"
       dimg_not_run: "Dimg run failed!"
@@ -12,6 +12,7 @@ en:
     dappfile:
       incorrect: "Dappfile with `%{error}`:\n%{message}"
     build:
+      image_build_failed: ">>> Failed image build log begin\n%{build_log}\n>>> Failed image build log end"
       from_image_required: 'Missing from_image!'
       image_already_untagged: "Image `%{name}` already untagged!"
       image_not_exist: "Image `%{name}` not exist!"

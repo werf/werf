@@ -24,18 +24,23 @@ module Dapp
     end
 
     def build!
-      with_introspection do
-        project.lock("#{project.name}.images", readonly: true) do
-          last_stage.build_lock! do
-            begin
-              builder.before_build_check
-              last_stage.build!
-            ensure
-              last_stage.save_in_cache! if last_stage.image.built? || dev_mode?
-            end
+      project.lock("#{project.name}.images", readonly: true) do
+        last_stage.build_lock! do
+          begin
+            builder.before_build_check
+            last_stage.build!
+          ensure
+            last_stage.save_in_cache! if last_stage.image.built? || dev_mode?
           end
         end
       end
+    rescue Error::ImageBuildFailed => e
+      if project.introspect_error? || project.introspect_before_error?
+        data = e.net_status[:data]
+        introspect_image!(image: data[:built_id], options: data[:options])
+      end
+
+      raise
     ensure
       cleanup_tmp
     end
@@ -180,14 +185,6 @@ module Dapp
         builder.before_dimg_should_be_built_check
         !last_stage.image.tagged?
       end
-    end
-
-    def with_introspection
-      yield
-    rescue Exception::IntrospectImage => e
-      data = e.net_status[:data]
-      introspect_image!(image: data[:built_id], options: data[:options])
-      raise data[:error]
     end
   end # Dimg
 end # Dapp

@@ -33,7 +33,7 @@ begin
 
     raise
   end
-rescue Dapp::Error::Shellout => e
+rescue Dapp::Error::ImageBuildFailed, Dapp::Error::Shellout => e
   $stderr.puts(Dapp::Helper::NetStatus.message(e))
   exit 1
 rescue Dapp::Error::Base, NetStatus::Exception => e

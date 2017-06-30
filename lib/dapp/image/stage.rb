@@ -74,12 +74,10 @@ module Dapp
       rescue Error::Shellout => error
         project.log_warning(desc: { code: :launched_command, data: { command: prepared_commands.join(' && ') }, context: :container })
 
-        raise unless project.introspect_error? || project.introspect_before_error?
         built_id = project.introspect_error? ? commit! : from.built_id
-        raise Exception::IntrospectImage, data: { built_id: built_id,
-                                                  options: prepared_options,
-                                                  rmi: project.introspect_error?,
-                                                  error: error }
+        raise Error::ImageBuildFailed, data: { built_id: built_id,
+                                               build_log: error.net_status[:data][:stream],
+                                               options: prepared_options }
       end
 
       def commit!
