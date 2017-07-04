@@ -39,7 +39,7 @@ module Dapp
 
             def log_image_created_at
               dimg.dapp.log_info dimg.dapp.t(code: 'image.info.created_at',
-                                             data: { value: Time.parse(image.created_at).localtime })
+                                             data: { value: Time.at(image.created_at).localtime })
             end
 
             def log_image_size
@@ -50,7 +50,7 @@ module Dapp
                 bytes = image.size
                 code = 'image.info.mb_size'
               end
-              dimg.dapp.log_info dimg.dapp.t(code: code, data: { mb: (bytes / 1000 / 1000).round(3) })
+              dimg.dapp.log_info dimg.dapp.t(code: code, data: { mb: (bytes / 1000.0 / 1000.0).round(1) })
             end
 
             def log_image_commands

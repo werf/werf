@@ -10,8 +10,8 @@ module Dapp
           def prepare_image
             super do
               image.add_volumes_from dimg.dapp.gitartifact_container
-              image.add_volume "#{dimg.tmp_path('archives')}:#{dimg.container_tmp_path('archives')}:ro"
-              image.add_volume "#{dimg.tmp_path('patches')}:#{dimg.container_tmp_path('patches')}:ro"
+              image.add_volume "#{dimg.tmp_path('archives').tap { |p| p.mkpath }}:#{dimg.container_tmp_path('archives')}:ro"
+              image.add_volume "#{dimg.tmp_path('patches').tap { |p| p.mkpath }}:#{dimg.container_tmp_path('patches')}:ro"
 
               dimg.git_artifacts.each { |git_artifact| image.add_command git_artifact.send(apply_command_method, self) }
             end

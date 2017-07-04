@@ -6,8 +6,8 @@ module Dapp
       end
     end
 
-    def initialize(dapp)
-      @dapp = dapp
+    def initialize # TODO
+      # @dapp = dapp
       validate!
     end
 
@@ -29,41 +29,40 @@ module Dapp
 
     attr_reader :dapp
 
-    def _images
-      Docker::Image.all
+    def _images(**spec)
+      Docker::Image.all(**spec)
     end
 
     def _image(name)
       Docker::Image.get(name)
     end
 
-    def _image_tag(name:, **spec)
-      _image(name).tag(**spec)
+    def _image_create(**spec, &blk)
+      Docker::Image.create(**spec, &blk)
     end
 
-    def _image_pull(name:)
-      dapp.log_secondary_process(dapp.t(code: 'process.image_pull', data: { name: name })) do
-        repo, tag = name.split
-        kwargs = { fromImage: repo, tag: tag }
-        if verbose?
-          Docker::Image.create(**kwargs) do |chunk|
-            JSON.parse(chunk).tap do |json|
-              msg = []
-              msg << json['id']       if json.key?('id')
-              msg << json['status']   if json.key?('status')
-              msg << json['progress'] if json.key?('progress')
-              puts msg.join(' ')
-            end
+    def _image_pull(name)
+      # ::Dapp.log_secondary_process(dapp.t(code: 'process.image_pull', data: { name: name })) do # TODO
+      repo, tag = name.to_s.split(':')
+      spec = { fromImage: repo, tag: tag || :latest }
+      if verbose?
+        _image_create(**spec) do |chunk|
+          JSON.parse(chunk).tap do |json|
+            puts %w(id status progress).map { |key| json[key] }.compact.join(' ')
           end
-        else
-          Docker::Image.create(**kwargs)
         end
+      else
+        _image_create(**spec)
       end
+      # end
     end
 
     def _image_push(name:, **spec)
-      image = Docker::Image.get(name)
-      image.push(nil, **spec)
+      _image(name).push(nil, **spec)
+    end
+
+    def _image_tag(name:, **spec)
+      _image(name).tag(**spec)
     end
 
     def _images_export(**spec)
@@ -74,8 +73,8 @@ module Dapp
       Docker::Image.import(**spec)
     end
 
-    def _image_remove(**spec)
-      Docker::Image.remove(**spec)
+    def _image_remove(name)
+      _image(name).remove
     end
 
     def _image?(name)
@@ -87,26 +86,43 @@ module Dapp
     end
 
     def _container_create(**spec)
-      _image_pull(name: spec[:image]) unless _image?(spec[:image])
+      _image_pull(spec[:image]) unless _image?(spec[:image])
       Docker::Container.create(**spec)
     end
 
     def _container_run(verbose: false, rm: false, **spec)
-      container = _container_create(**spec)
-      if verbose? && verbose
-        container.tap(&:start).attach { |_, hunk| puts hunk }
-      else
-        container.tap(&:start).attach
+      c = _container_create(**spec)
+      c_id = c.info['id']
+
+      begin
+        code = begin
+          if verbose? && verbose
+            c.tap { c.start.attach { |_, hunk| puts hunk } }
+          else
+            c.tap { c.start.attach }
+          end.wait['StatusCode']
+        end
+
+        unless code.zero?
+          raise Error, code: :container_command_failed, data: { name: spec[:name] || c_id,
+                                                                msg: _container(c_id).logs(stderr: true).strip }
+        end
+      ensure
+        _pretty_container_remove(c_id) if rm
       end
-      _container_remove(name: container.info['id']) if rm
     end
 
     def _container_commit(name:, **spec)
       _container(name).commit(**spec).info['id']
     end
 
-    def _container_remove(name:)
-      _container(name).remove
+    def _container_remove(name, **spec)
+      _container(name).remove(**spec)
+    end
+
+    def _pretty_container_remove(name)
+      return unless _container(name)
+      _container_remove(name, force: true)
     end
 
     def _container?(name)
@@ -116,12 +132,13 @@ module Dapp
       false
     end
 
-    def verbose?
-      !dapp.log_quiet?
+    def _validate! # TODO
+      Docker.validate_version!
     end
 
-    def validate! # TODO
-      Docker.validate_version!
+    def verbose? # TODO
+      true
+      # !dapp.log_quiet?
     end
   end
 end

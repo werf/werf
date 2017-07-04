@@ -127,3 +127,4 @@ en:
       key_length_too_short: "Encryption key isn't valid (required size %{required_size} bytes)!"
     docker:
       exception: "`%{type}`: `%{msg}`"
+      container_command_failed: "Container `%{name}` failed: `%{msg}`"

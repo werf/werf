@@ -117,7 +117,11 @@ module Dapp
     end
 
     def docker_client
-      @docker_client ||= DockerClient.new(self)
+      self.class.docker_client
+    end
+
+    def self.docker_client # TODO
+      @docker_client ||= DockerClient.new
     end
   end # Dapp
 end # Dapp

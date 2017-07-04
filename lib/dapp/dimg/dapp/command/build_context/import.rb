@@ -20,7 +20,7 @@ module Dapp
               if build_context_images_tar.exist?
                 log_secondary_process(:images, short: true) do
                   lock("#{name}.images") do
-                    Image::Docker.load!(build_context_images_tar, verbose: true, quiet: log_quiet?)
+                    docker_client.images_import(tar: build_context_images_tar)
                   end
                 end
               else
