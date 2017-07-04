@@ -15,6 +15,18 @@ module Dapp
             kubernetes.namespace
           end
 
+          def kube_helm_encode_json(json)
+            encode_json = proc do |value|
+              case value
+              when Array then value.map { |v| encode_json.call(v) }
+              when Hash then kube_helm_encode_json(value)
+              else
+                secret.nil? ? '' : secret.generate(value)
+              end
+            end
+            json.each { |k, v| json[k] = encode_json.call(v) }
+          end
+
           def kube_helm_decode_json(json)
             decode_value = proc do |value|
               case value

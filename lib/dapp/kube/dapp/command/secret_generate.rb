@@ -6,10 +6,25 @@ module Dapp
           def kube_secret_generate(file_path)
             secret_key_should_exist!
 
-            if file_path.nil?
-              kube_secret
+            data = begin
+              if file_path
+                raise Error::Command, code: :file_not_exist, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
+
+                if options[:values]
+                  kube_secret_values(file_path)
+                else
+                  kube_secret_file(file_path)
+                end
+              else
+                kube_secret
+              end
+            end
+
+            if (output_file_path = options[:output_file_path])
+              FileUtils.mkpath File.dirname(output_file_path)
+              IO.binwrite(output_file_path, "#{data}\n")
             else
-              kube_secret_file(file_path)
+              puts data
             end
           end
 
@@ -20,24 +35,23 @@ module Dapp
                 $stdin.noecho(&:gets).tap { print "\n" }
               else
                 $stdin.read
-              end
+              end.to_s.chomp
             end
 
-            unless (data = data.to_s.chomp).empty?
-              puts secret.generate(data)
+            if data.empty?
+              exit 0
+            else
+              secret.generate(data)
             end
           end
 
-          def kube_secret_file(file_path)
-            raise Error::Command, code: :file_not_exist, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
+          def kube_secret_values(file_path)
+            raise Error::Command, code: :incorrect_yaml_structure, data: { path: File.expand_path(file_path) } unless (json = YAML::load(File.read(file_path)))
+            kube_helm_encode_json(json).to_yaml
+          end
 
-            encrypted_data = secret.generate(IO.binread(file_path))
-            if (output_file_path = options[:output_file_path]).nil?
-              puts encrypted_data
-            else
-              FileUtils.mkpath File.dirname(output_file_path)
-              IO.binwrite(output_file_path, "#{encrypted_data}\n")
-            end
+          def kube_secret_file(file_path)
+            secret.generate(IO.binread(file_path))
           end
         end
       end
