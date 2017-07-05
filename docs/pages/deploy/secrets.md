@@ -81,7 +81,6 @@ mysql:
   db: 406d3a4d2282ad80161428063803509eba8e9909ddcd0db0ddaab9ee47
 ```
 
-
 ## Обратное преобразование данных
 
 Используя команду `dapp kube secret extract` можно расшифровать зашифрованные ранее значения.
@@ -110,4 +109,17 @@ sense:
   of:
     life: 42
     lifes: [42, 42, 42]
+```
+
+## Регенерация существующих секретов
+
+При запуске команды будут перегенерированы секреты (`.helm/secret/**/*`) и секретные значения (`.helm/secret-values.yaml`). При генерации используется текущий ключ и ключ (`--old-secret-key KEY`), которым были закодированы данные.
+```
+$ dapp kube secret regenerate --old-secret-key c85e100d4ff006b693b0555f09244fdf
+```
+
+В случае, если секретные значения хранятся в нескольких файлах, необходимо добавить пути в качестве аргументов.
+
+```
+$ dapp kube secret regenerate --old-secret-key c85e100d4ff006b693b0555f09244fdf .helm/secret-values2.yaml .helm/secret-staging.yaml
 ```
