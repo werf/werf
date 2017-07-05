@@ -80,7 +80,7 @@ module Dapp
           log info, inline: inline
           message = success_message
           start = Time.now
-          yield
+          with_log_indent { yield }
         rescue Error::Base, SignalException, StandardError => _e
           message = failed_message
           raise

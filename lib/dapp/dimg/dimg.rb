@@ -85,9 +85,7 @@ module Dapp
           dapp.lock("image.#{hashsum image_name}") do
             ::Dapp::Dimg::Image::Stage.cache_reset(image_name)
             dapp.log_process(image_name, process: dapp.t(code: 'status.process.pushing')) do
-              dapp.with_log_indent do
-                image.export!(image_name)
-              end
+              image.export!(image_name)
             end
           end
         end

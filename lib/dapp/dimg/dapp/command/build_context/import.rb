@@ -9,10 +9,8 @@ module Dapp
                                     data: { path: build_context_path } unless build_context_path.exist?
 
               log_process(:'import context') do
-                with_log_indent do
-                  import_build_context_build_tar
-		              import_build_context_image_tar
-                end
+                import_build_context_build_tar
+                import_build_context_image_tar
               end
             end
 

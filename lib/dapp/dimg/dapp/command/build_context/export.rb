@@ -6,10 +6,8 @@ module Dapp
           module Export
             def build_context_export
               log_process(:'export context') do
-                with_log_indent do
-                  export_build_context_image_tar
-                  export_build_context_build_tar
-                end
+                export_build_context_image_tar
+                export_build_context_build_tar
               end
             end
 
