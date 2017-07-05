@@ -7,6 +7,7 @@ module Dapp
         include Command::SecretKeyGenerate
         include Command::SecretGenerate
         include Command::SecretExtract
+        include Command::SecretRegenerate
         include Command::MinikubeSetup
         include Command::Common
       end

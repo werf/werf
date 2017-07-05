@@ -47,7 +47,7 @@ module Dapp
 
           def kube_secret_values(file_path)
             raise Error::Command, code: :incorrect_yaml_structure, data: { path: File.expand_path(file_path) } unless (json = YAML::load(File.read(file_path)))
-            kube_helm_encode_json(json).to_yaml
+            kube_helm_encode_json(secret, json).to_yaml
           end
 
           def kube_secret_file(file_path)
