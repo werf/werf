@@ -32,7 +32,7 @@ module Dapp
         end
 
         def layer_commit(git_artifact)
-          commits[git_artifact] ||= begin
+          commits[git_artifact.full_name] ||= begin
             if dependencies_stage && dependencies_stage.image.tagged?
               dependencies_stage.image.labels[git_artifact.full_name]
             else
