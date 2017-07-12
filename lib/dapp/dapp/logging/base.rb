@@ -46,9 +46,7 @@ module Dapp
 
         def log_step_with_indent(step)
           log_step(step)
-          with_log_indent do
-            yield
-          end
+          with_log_indent { yield }
         end
 
         def log_step(*args, **kwargs)
@@ -94,12 +92,6 @@ module Dapp
             line = paint_string(line, style) if style
             "#{log_time if time && log_time?}#{indent ? (log_indent + line) : line}"
           end.join
-        end
-
-        def log_with_indent(message = '', **kwargs)
-          with_log_indent do
-            log(message, **kwargs)
-          end
         end
 
         def with_log_indent(with = true)

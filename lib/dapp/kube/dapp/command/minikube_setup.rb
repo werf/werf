@@ -126,99 +126,97 @@ module Dapp
           def _minikube_run_registry
             log_process("Run registry") do
               _minikube_kubernetes.with_query(gracePeriodSeconds: 0) do
-                with_log_indent do
-                  if _minikube_kubernetes.replicationcontroller? _minikube_registry_replicationcontroller_spec['metadata']['name']
-                    _minikube_kubernetes.delete_replicationcontroller! _minikube_registry_replicationcontroller_spec['metadata']['name']
+                if _minikube_kubernetes.replicationcontroller? _minikube_registry_replicationcontroller_spec['metadata']['name']
+                  _minikube_kubernetes.delete_replicationcontroller! _minikube_registry_replicationcontroller_spec['metadata']['name']
 
-                    shutdown_ok = false
-                    600.times do
-                      unless _minikube_kubernetes.replicationcontroller? _minikube_registry_replicationcontroller_spec['metadata']['name']
-                        shutdown_ok = true
-                        break
-                      end
-                      sleep 1
-                    end
-                    raise MinikubeSetupError, code: :registry_replicationcontroller_shutdown_failed unless shutdown_ok
-                  end
-
-                  _minikube_kubernetes.delete_pods! labelSelector: 'k8s-app=kube-registry'
                   shutdown_ok = false
                   600.times do
-                    unless _minikube_find_registry_pod
+                    unless _minikube_kubernetes.replicationcontroller? _minikube_registry_replicationcontroller_spec['metadata']['name']
                       shutdown_ok = true
                       break
                     end
                     sleep 1
                   end
-                  raise MinikubeSetupError, code: :registry_pod_shutdown_failed unless shutdown_ok
+                  raise MinikubeSetupError, code: :registry_replicationcontroller_shutdown_failed unless shutdown_ok
+                end
 
-                  if _minikube_kubernetes.service? _minikube_registry_service_spec['metadata']['name']
-                    _minikube_kubernetes.delete_service! _minikube_registry_service_spec['metadata']['name']
-
-                    shutdown_ok = false
-                    600.times do
-                      unless _minikube_kubernetes.service? _minikube_registry_service_spec['metadata']['name']
-                        shutdown_ok = true
-                        break
-                      end
-                      sleep 1
-                    end
-                    raise MinikubeSetupError, code: :registry_service_shutdown_failed unless shutdown_ok
+                _minikube_kubernetes.delete_pods! labelSelector: 'k8s-app=kube-registry'
+                shutdown_ok = false
+                600.times do
+                  unless _minikube_find_registry_pod
+                    shutdown_ok = true
+                    break
                   end
+                  sleep 1
+                end
+                raise MinikubeSetupError, code: :registry_pod_shutdown_failed unless shutdown_ok
 
-                  if _minikube_kubernetes.pod? _minikube_registry_proxy_pod_spec['metadata']['name']
-                    _minikube_kubernetes.delete_pod! _minikube_registry_proxy_pod_spec['metadata']['name']
+                if _minikube_kubernetes.service? _minikube_registry_service_spec['metadata']['name']
+                  _minikube_kubernetes.delete_service! _minikube_registry_service_spec['metadata']['name']
 
-                    shutdown_ok = false
-                    600.times do
-                      unless _minikube_kubernetes.pod? _minikube_registry_proxy_pod_spec['metadata']['name']
-                        shutdown_ok = true
-                        break
-                      end
-                      sleep 1
-                    end
-                    raise MinikubeSetupError, code: :registry_proxy_pod_shutdown_failed unless shutdown_ok
-                  end
-
-                  _minikube_kubernetes.create_replicationcontroller!(_minikube_registry_replicationcontroller_spec)
-                  registry_pod_ok = false
+                  shutdown_ok = false
                   600.times do
-                    if registry_pod = _minikube_find_registry_pod
-                      if registry_pod['status']['phase'] == 'Running'
-                        registry_pod_ok = true
-                        @_minikube_registry_pod_name = registry_pod['metadata']['name']
-                        break
-                      end
-                    end
-                    sleep 1
-                  end
-                  raise MinikubeSetupError, code: :registry_pod_not_ok unless registry_pod_ok
-
-                  _minikube_kubernetes.create_service!(_minikube_registry_service_spec)
-                  registry_service_ok = false
-                  600.times do
-                    if _minikube_kubernetes.service? _minikube_registry_service_spec['metadata']['name']
-                      registry_service_ok = true
+                    unless _minikube_kubernetes.service? _minikube_registry_service_spec['metadata']['name']
+                      shutdown_ok = true
                       break
                     end
                     sleep 1
                   end
-                  raise MinikubeSetupError, code: :registry_service_not_ok unless registry_service_ok
+                  raise MinikubeSetupError, code: :registry_service_shutdown_failed unless shutdown_ok
+                end
 
-                  _minikube_kubernetes.create_pod! _minikube_registry_proxy_pod_spec
-                  registry_proxy_pod_ok = false
+                if _minikube_kubernetes.pod? _minikube_registry_proxy_pod_spec['metadata']['name']
+                  _minikube_kubernetes.delete_pod! _minikube_registry_proxy_pod_spec['metadata']['name']
+
+                  shutdown_ok = false
                   600.times do
-                    if _minikube_kubernetes.pod? _minikube_registry_proxy_pod_spec['metadata']['name']
-                      registry_proxy_pod = _minikube_kubernetes.pod(_minikube_registry_proxy_pod_spec['metadata']['name'])
-                      if registry_proxy_pod['status']['phase'] == 'Running'
-                        registry_proxy_pod_ok = true
-                        break
-                      end
+                    unless _minikube_kubernetes.pod? _minikube_registry_proxy_pod_spec['metadata']['name']
+                      shutdown_ok = true
+                      break
                     end
                     sleep 1
                   end
-                  raise MinikubeSetupError, code: :registry_proxy_pod_not_ok unless registry_proxy_pod_ok
+                  raise MinikubeSetupError, code: :registry_proxy_pod_shutdown_failed unless shutdown_ok
                 end
+
+                _minikube_kubernetes.create_replicationcontroller!(_minikube_registry_replicationcontroller_spec)
+                registry_pod_ok = false
+                600.times do
+                  if registry_pod = _minikube_find_registry_pod
+                    if registry_pod['status']['phase'] == 'Running'
+                      registry_pod_ok = true
+                      @_minikube_registry_pod_name = registry_pod['metadata']['name']
+                      break
+                    end
+                  end
+                  sleep 1
+                end
+                raise MinikubeSetupError, code: :registry_pod_not_ok unless registry_pod_ok
+
+                _minikube_kubernetes.create_service!(_minikube_registry_service_spec)
+                registry_service_ok = false
+                600.times do
+                  if _minikube_kubernetes.service? _minikube_registry_service_spec['metadata']['name']
+                    registry_service_ok = true
+                    break
+                  end
+                  sleep 1
+                end
+                raise MinikubeSetupError, code: :registry_service_not_ok unless registry_service_ok
+
+                _minikube_kubernetes.create_pod! _minikube_registry_proxy_pod_spec
+                registry_proxy_pod_ok = false
+                600.times do
+                  if _minikube_kubernetes.pod? _minikube_registry_proxy_pod_spec['metadata']['name']
+                    registry_proxy_pod = _minikube_kubernetes.pod(_minikube_registry_proxy_pod_spec['metadata']['name'])
+                    if registry_proxy_pod['status']['phase'] == 'Running'
+                      registry_proxy_pod_ok = true
+                      break
+                    end
+                  end
+                  sleep 1
+                end
+                raise MinikubeSetupError, code: :registry_proxy_pod_not_ok unless registry_proxy_pod_ok
               end
             end
           end

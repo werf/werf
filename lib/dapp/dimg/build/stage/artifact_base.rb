@@ -50,11 +50,7 @@ module Dapp
           def artifacts_dimgs_build!
             artifacts.each do |artifact|
               process = dimg.dapp.t(code: 'process.artifact_building', data: { name: artifact[:name] })
-              dimg.dapp.log_secondary_process(process) do
-                dimg.dapp.with_log_indent do
-                  artifact[:dimg].build!
-                end
-              end
+              dimg.dapp.log_secondary_process(process) { artifact[:dimg].build! }
             end
           end
 
