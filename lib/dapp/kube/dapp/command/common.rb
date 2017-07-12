@@ -15,11 +15,39 @@ module Dapp
             kubernetes.namespace
           end
 
+          def kube_helm_encode_json(secret, json)
+            encode_json = proc do |value|
+              case value
+              when Array then value.map { |v| encode_json.call(v) }
+              when Hash then kube_helm_encode_json(secret,value)
+              else
+                secret.nil? ? '' : secret.generate(value)
+              end
+            end
+            json.each { |k, v| json[k] = encode_json.call(v) }
+          end
+
+          def kube_helm_decode_json(secret, json)
+            decode_value = proc do |value|
+              case value
+              when Array then value.map { |v| decode_value.call(v) }
+              when Hash then kube_helm_decode_json(secret,value)
+              else
+                secret.nil? ? '' : secret.extract(value)
+              end
+            end
+            json.each { |k, v| json[k] = decode_value.call(v) }
+          end
+
           def secret_key_should_exist!
             raise(Error::Command,
               code: :secret_key_not_found,
               data: {not_found_in: secret_key_not_found_in.join(', ')}
             ) if secret.nil?
+          end
+
+          def kube_chart_path(*path)
+            self.path('.helm', *path).expand_path
           end
 
           def secret

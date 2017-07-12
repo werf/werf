@@ -54,21 +54,9 @@ module Dapp
 
           def kube_helm_decode_secret_values
             kube_secret_values_paths.each_with_index do |secret_values_file, index|
-              decoded_data = kube_helm_decode_json(YAML::load(secret_values_file.read))
+              decoded_data = kube_helm_decode_json(secret, YAML::load(secret_values_file.read))
               kube_tmp_chart_secret_values_paths[index].write(decoded_data.to_yaml)
             end
-          end
-
-          def kube_helm_decode_json(json)
-            decode_value = proc do |value|
-              case value
-              when Array then value.map { |v| decode_value.call(v) }
-              when Hash then kube_helm_decode_json(value)
-              else
-                secret.nil? ? '' : secret.extract(value)
-              end
-            end
-            json.each { |k, v| json[k] = decode_value.call(v) }
           end
 
           def kube_helm_decode_secret_files
@@ -205,10 +193,6 @@ module Dapp
 
           def kube_chart_secret_path(*path)
             kube_chart_path('secret', *path).expand_path
-          end
-
-          def kube_chart_path(*path)
-            self.path('.helm', *path).expand_path
           end
         end
       end

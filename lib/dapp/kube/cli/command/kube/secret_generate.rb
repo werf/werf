@@ -13,6 +13,11 @@ BANNER
              short: '-o OUTPUT_FILE_PATH',
              required: false
 
+      option :values,
+             long: '--values',
+             description: 'Decode secret values file',
+             default: false
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         file_path = cli_arguments.empty? ? nil : cli_arguments.first

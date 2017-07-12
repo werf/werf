@@ -28,7 +28,8 @@ DAPP_SECRET_KEY=c85e100d4ff006b693b0555f09244fdf
 При шифровании данных используется команда `dapp kube secret generate`.
 ```
 $ dapp kube secret generate
-Enter secret: 1000541517bccae1acce015629f4ec89996e0b4
+Enter secret: 
+1000541517bccae1acce015629f4ec89996e0b4
 ```
 
 Также команда поддерживает перенаправленный вывод, результат выполнения других команд.
@@ -70,13 +71,24 @@ data:
   tls.key: {% raw %}{{ tuple "/backend-saml/tls.key" . | include "dapp_secret_file" | b64enc }}{% endraw %}
 ```
 
+Для шифрования файла с секретными значениями необходимо пробросить путь до файла и опцию `--values`.
+
+```
+$ dapp kube secret generate secret-values.yaml --values
+mysql:
+  user: 2ad80161428063803509eba8e9909ddcd0db0ddaada
+  password: 80161428063803509eba8e9909ddcd0db0ddaab9ee47
+  db: 406d3a4d2282ad80161428063803509eba8e9909ddcd0db0ddaab9ee47
+```
+
 ## Обратное преобразование данных
 
 Используя команду `dapp kube secret extract` можно расшифровать зашифрованные ранее значения.
 
 ```
 $ dapp kube secret extract
-Enter secret: 42
+Enter secret: 1000541517bccae1acce015629f4ec89996e0b4
+42
 ```
 
 Также как и при шифровании поддерживаются перенаправленный вывод и секреты из файлов.
@@ -88,4 +100,26 @@ $ echo "1000541517bccae1acce015629f4ec89996e0b4" | dapp kube secret extract .hel
 ```
 $ dapp kube secret extract .helm/secret/sense_of_life.txt
 42 — ответ на «главный вопрос Жизни, Вселенной и Всего Остального».
+```
+
+Если необходимо расшифровать secret-values файл, то необходимо также указать опцию `--values`.
+```
+$ dapp kube secret extract .helm/secret-values.yaml --values
+sense:
+  of:
+    life: 42
+    lifes: [42, 42, 42]
+```
+
+## Регенерация существующих секретов
+
+При запуске команды будут перегенерированы секреты (`.helm/secret/**/*`) и секретные значения (`.helm/secret-values.yaml`). При генерации используется текущий ключ и ключ (`--old-secret-key KEY`), которым были закодированы данные.
+```
+$ dapp kube secret regenerate --old-secret-key c85e100d4ff006b693b0555f09244fdf
+```
+
+В случае, если секретные значения хранятся в нескольких файлах, необходимо добавить пути в качестве аргументов.
+
+```
+$ dapp kube secret regenerate --old-secret-key c85e100d4ff006b693b0555f09244fdf .helm/secret-values2.yaml .helm/secret-staging.yaml
 ```
