@@ -55,7 +55,15 @@ module Dapp
           end
 
           def _minikube_run_daemon(name, &blk)
-            pid_file_path = "/run/dapp_#{name}_daemon.pid"
+            uid = Process.euid
+            if uid != 0 && File.exists?("/run/user/#{uid}")
+              pid_file_path = "/run/user/#{uid}/dapp_#{name}_daemon.pid"
+            elsif uid != 0
+              pid_file_path = "/tmp/dapp_#{name}_daemon.pid"
+            else
+              pid_file_path = "/run/dapp_#{name}_daemon.pid"
+            end
+
             old_daemon_pid = begin
               File.open(pid_file_path, 'r').read.strip.to_i
             rescue Errno::ENOENT
