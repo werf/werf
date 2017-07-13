@@ -1,13 +1,15 @@
 dist: xenial
 sudo: required
-cache: apt
+cache:
+  apt: true
+  directories: .vendor
 language: ruby
 rvm:
-- 2.3.0
-- 2.2.4
-- 2.1.2
+- 2.3
+- 2.2
+- 2.1
 install:
-- sudo -E su --preserve-environment -lc 'bundle install'
+- sudo -E su --preserve-environment -lc 'bundle install --path .vendor'
 
 before_script:
 - sudo apt-get update -qq
@@ -20,7 +22,7 @@ before_script:
 - sudo service docker restart
 - sudo docker version
 script:
-- sudo -E su --preserve-environment -lc 'bundle exec rake spec SPEC_OPTS="--format documentation"'
+- sudo -E su --preserve-environment -lc 'bundle exec rake parallel_spec'
 
 deploy:
   provider: rubygems
