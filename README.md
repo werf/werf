@@ -78,6 +78,20 @@ yum install cmake
 gem install dapp
 ```
 
+### Установка с автообновлением patch-релизов (экспериментально)
+
+***Предупреждение:*** Будет установлен gem dapp с системными зависимостями и cron-job для автообновления до последнего patch-релиза x.x.**x** в рамках устанавливаемой версии.
+
+```bash
+curl https://raw.githubusercontent.com/flant/dapp/master/install.sh | bash
+```
+
+Установить dapp версии 0.13.5 и cron-job автообновления до последнего патч релиза в рамках версии 0.13.**x**:
+
+```bash
+curl https://raw.githubusercontent.com/flant/dapp/master/install.sh | bash -s 0.13.5
+```
+
 ## Документация
 
 * [Быстрый старт](http://flant.github.io/dapp/get_started.html)
