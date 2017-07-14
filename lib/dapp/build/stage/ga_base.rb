@@ -35,6 +35,7 @@ module Dapp
           commits[git_artifact.full_name] ||= begin
             if dependencies_stage && dependencies_stage.image.tagged?
               dependencies_stage.image.labels[git_artifact.full_name]
+              'cfdc6d8d588f8096e1d2a66ca53a5c82ae4c6f1d' # FIXME1
             else
               git_artifact.latest_commit
             end
