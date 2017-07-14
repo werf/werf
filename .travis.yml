@@ -22,7 +22,7 @@ before_script:
 - sudo service docker restart
 - sudo docker version
 script:
-- sudo -E su --preserve-environment -lc 'bundle exec rake parallel_spec'
+- sudo -E su --preserve-environment -lc 'bundle exec rake spec'
 
 deploy:
   provider: rubygems
