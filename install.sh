@@ -26,12 +26,25 @@ case $DISTRO in
     ;;
 esac
 
+
 echo "# Installing dapp gem"
-gem install dapp $(if [[ $1 ]] ; then echo "--version=$DAPP_VERSION" ; fi)
+
+DAPP_VERSION=$1
+
+gem install dapp $(if [[ $DAPP_VERSION ]] ; then echo "--version=$DAPP_VERSION" ; fi)
 echo
 
-installed_version=$(dapp --version | cut -d' ' -f2)
+if [ -z $DAPP_VERSION ]; then
+  DAPP_VERSION=$(dapp --version)
+fi
+
 
 echo "# Installing dapp update cron job into /etc/cron.d/dapp-update"
+
 sudo mkdir -p /etc/cron.d
-echo "* * * * * $USER /bin/bash -lec 'dapp _${installed_version}_ update'" | sudo tee /etc/cron.d/dapp-update
+
+major_and_minor_version=$(echo $DAPP_VERSION | cut -d'.' -f1,2)
+
+fetch_latest_version_script=$(echo "ruby -e 'puts Gem::Specification.select {|s| s.name == \"dapp\"}.select {|s| s.version.to_s.start_with?(\"$major_and_minor_version\")}.sort_by {|s| s.version}.last.version.to_s'" | base64 -w0)
+
+echo "* * * * * $USER /bin/bash -lec 'dapp _\$(eval \$(echo $fetch_latest_version_script | base64 -d))_ update'" | sudo tee /etc/cron.d/dapp-update
