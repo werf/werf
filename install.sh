@@ -15,13 +15,13 @@ fi
 
 case $DISTRO in
   ubuntu)
-    echo "# Installing dependencies for native extensions: libssh2-1-dev cmake"
-    sudo apt-get install -y libssh2-1-dev cmake
+    echo "# Installing dependencies for native extensions: libssh2-1-dev cmake pkg-config"
+    sudo apt-get install -y libssh2-1-dev cmake pkg-config
     echo
     ;;
   redhat)
-    echo "# Installing dependencies for native extensions: libssh2-devel cmake"
-    sudo yum install -y libssh2-devel cmake
+    echo "# Installing dependencies for native extensions: libssh2-devel cmake pkgconfig"
+    sudo yum install -y libssh2-devel cmake pkgconfig
     echo
     ;;
 esac
