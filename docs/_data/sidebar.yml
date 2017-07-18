@@ -54,7 +54,7 @@ entries:
     - title: Debugging
       url: /debug_for_advanced_build.html
 
-  - title: Развёртывание
+  - title: Выкат
     folderitems:
 
     - title: Управление выкатом
@@ -117,5 +117,5 @@ entries:
     - title: Отладка
       url: /debugging_commands.html
 
-    - title: Развёртывание
+    - title: Выкат
       url: /kube_commands.html
