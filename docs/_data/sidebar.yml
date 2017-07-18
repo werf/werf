@@ -57,8 +57,14 @@ entries:
   - title: Развёртывание
     folderitems:
 
+    - title: Управление выкатом
+      url: /deploy_for_kube.html
+
     - title: Секреты
-      url: /secrets_for_deploy.html
+      url: /secrets_for_kube.html
+
+    - title: Использование minikube
+      url: /minikube_for_kube.html
 
   - title: Архитектура
     folderitems:
