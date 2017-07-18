@@ -103,6 +103,6 @@ curl https://raw.githubusercontent.com/flant/dapp/master/install.sh | bash -s 0.
 
 ## Лицензия
 
-dapp распространяется на условиях лицензии MIT.
+dapp распространяется на условиях лицензии Apache v2.
 
-Подробности в файле [LICENSE](https://github.com/flant/dapp/blob/master/LICENSE.txt)
+Подробности в файле [LICENSE](https://github.com/flant/dapp/blob/master/LICENSE)
