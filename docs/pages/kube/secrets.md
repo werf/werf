@@ -1,8 +1,8 @@
 ---
 title: Работа с секретами
 sidebar: doc_sidebar
-permalink: secrets_for_deploy.html
-folder: deploy
+permalink: secrets_for_kube.html
+folder: kube
 ---
 
 ## Ключ шифрования
@@ -92,8 +92,9 @@ Enter secret: 1000541517bccae1acce015629f4ec89996e0b4
 ```
 
 Также как и при шифровании поддерживаются перенаправленный вывод и секреты из файлов.
+
 ```
-$ echo "1000541517bccae1acce015629f4ec89996e0b4" | dapp kube secret extract .helm/secret/test_secret
+$ echo "1000541517bccae1acce015629f4ec89996e0b4" | dapp kube secret extract
 42
 ```
 
