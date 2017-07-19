@@ -78,6 +78,37 @@ module Dapp
         attr_reader :change_options, :service_change_options
         attr_reader :options
 
+        def image_run_options
+          options.tap do |opts|
+            opts[:image]      = from.built_id
+            opts[:name]       = container_name
+            opts[:entrypoint] = dapp.bash_bin
+            opts[:cmd]        = ['-ec', prepared_bash_command]
+            opts[:hostconfig] = {}.tap do |hostconfig|
+              hostconfig[:env] = Array(opts.delete(:'env'))
+              hostconfig[:mounts] = [].tap do |mounts|
+                Array(opts.delete(:volume)).each do |value|
+                  source, target = value.split(':')
+                  mounts << { source: source, target: target, type: :bind }
+                end
+              end
+
+              hostconfig[:volumesfrom] = Array(opts.delete(:'volumes-from'))
+            end
+          end
+        end
+
+        def image_introspect_options
+          options.map { |key, vals| Array(vals).map { |val| "--#{key}=#{val}" } }.flatten.join(' ')
+        end
+
+        def container_commit_options
+          {
+            name: container_name,
+            changes: prepared_change
+          }
+        end
+
         def add_option(key, value)
           add_option_default(options, key, value)
         end
@@ -105,24 +136,12 @@ module Dapp
           options.map { |key, value| "#{key}=#{value}" }
         end
 
-        def prepared_options
-          all_options.map { |key, vals| Array(vals).map { |val| "--#{key}=#{val}" } }.flatten.join(' ')
-        end
-
-        def all_options
-          service_options.merge(options)
-        end
-
         def all_bash_commands
           Array(bash_commands) + Array(service_bash_commands)
         end
 
-        def service_options
-          { entrypoint: dapp.bash_bin, name: container_name }
-        end
-
         def prepared_change
-          prepare_instructions(all_change_options).map { |instruction| %(-c '#{instruction}') }.join(' ')
+          prepare_instructions(all_change_options).join("\n")
         end
 
         def all_change_options

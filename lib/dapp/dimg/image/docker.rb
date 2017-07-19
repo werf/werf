@@ -22,22 +22,20 @@ module Dapp
 
         def untag!
           raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
-          dapp.shellout!("#{dapp.host_docker_bin} rmi #{name}")
+          dapp.docker_client.image_remove(name)
           cache_reset
         end
 
         def push!
           raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
           dapp.log_secondary_process(dapp.t(code: 'process.image_push', data: { name: name })) do
-            dapp.shellout!("#{dapp.host_docker_bin} push #{name}", verbose: true)
+            dapp.docker_client.image_push(name)
           end
         end
 
         def pull!
           return if tagged?
-          dapp.log_secondary_process(dapp.t(code: 'process.image_pull', data: { name: name })) do
-            dapp.shellout!("#{dapp.host_docker_bin} pull #{name}", verbose: true)
-          end
+          dapp.docker_client.image_pull(name)
           cache_reset
         end
 
@@ -56,8 +54,7 @@ module Dapp
         end
 
         def self.image_config_option(image_id:, option:)
-          output = ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
-          output == 'null' ? [] : JSON.parse(output)
+          ::Dapp::Dapp.docker_client.image(image_id).json['Config'][option.to_s.capitalize] || []
         end
 
         def cache_reset
@@ -88,17 +85,9 @@ module Dapp
           end
 
           def tag!(id:, tag:, verbose: false, quiet: false)
-            ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} tag #{id} #{tag}", verbose: verbose, quiet: quiet)
+            repo, tag = tag.split(':')
+            ::Dapp::Dapp.docker_client.image_tag(verbose: false, quiet: false, name: id, repo: repo, tag: tag)
             cache_reset
-          end
-
-          def save!(image_or_images, file_path, verbose: false, quiet: false)
-            images = Array(image_or_images).join(' ')
-            ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} save -o #{file_path} #{images}", verbose: verbose, quiet: quiet)
-          end
-
-          def load!(file_path, verbose: false, quiet: false)
-            ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} load -i #{file_path}", verbose: verbose, quiet: quiet)
           end
 
           def cache
@@ -107,30 +96,11 @@ module Dapp
 
           def cache_reset(name = '')
             cache.delete(name)
-            ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker_bin} images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}")
-                        .stdout
-                        .lines
-                        .each do |l|
-              name, id, created_at, size_field = l.split(';').map(&:strip)
-              name = name.reverse.chomp('docker.io/'.reverse).reverse
-              size = begin
-                match = size_field.match(/^(\d+(\.\d+)?)\ ?(b|kb|mb|gb|tb)$/i)
-                raise Error::Build, code: :unsupported_docker_image_size_format, data: {value: size_field} unless match and match[1] and match[3]
-
-                number = match[1].to_f
-                unit = match[3].downcase
-
-                coef = case unit
-                       when 'b'  then 0
-                       when 'kb' then 1
-                       when 'mb' then 2
-                       when 'gb' then 3
-                       when 'tb' then 4
-                       end
-
-                number * (1000**coef)
+            ::Dapp::Dapp.docker_client.images.each do |image|
+              image_info = image.info
+              Array(image_info['RepoTags']).each do |repo_tag|
+                cache[repo_tag] = { id: image_info['id'], created_at: image_info['Created'], size: image_info['Size'] }
               end
-              cache[name] = { id: id, created_at: created_at, size: size }
             end
           end
         end

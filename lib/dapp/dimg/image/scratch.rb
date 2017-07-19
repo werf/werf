@@ -50,6 +50,10 @@ module Dapp
           @tmp_path ||= Dir.mktmpdir('dapp-scratch-', dapp.tmp_base_dir)
           dapp.make_path(@tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }
         end
+
+        def prepared_change
+          prepare_instructions(all_change_options).map { |instruction| %(-c '#{instruction}') }.join(' ')
+        end
       end # Stage
     end # Image
   end # Dimg

@@ -55,12 +55,17 @@ module Dapp
           end
 
           def run_artifact_dimg(artifact_dimg, artifact_name, commands)
-            docker_options = ['--rm',
-                              "--volume #{dimg.tmp_path('artifact', artifact_name)}:#{artifact_dimg.container_tmp_path(artifact_name)}",
-                              "--volumes-from #{dimg.dapp.base_container}",
-                              "--entrypoint #{dimg.dapp.bash_bin}"]
             dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.artifact_copy', data: { name: artifact_name }), short: true) do
-              artifact_dimg.run(docker_options, [%(-ec '#{dimg.dapp.shellout_pack(commands)}')])
+              image_run_options = {}.tap do |options|
+                options[:image]      = artifact_dimg.last_stage.image.built_id
+                options[:entrypoint] = dimg.dapp.bash_bin
+                options[:cmd]        = ['-ec', dimg.dapp.shellout_pack(commands)]
+                options[:hostconfig] = {}.tap do |hostconfig|
+                  hostconfig[:mounts] = [{ source: dimg.tmp_path('artifact', artifact_name).tap(&:mkpath), target: artifact_dimg.container_tmp_path(artifact_name), type: :bind }]
+                  hostconfig[:volumesfrom] = [dimg.dapp.base_container]
+                end
+              end
+              dimg.dapp.docker_client.container_run(rm: true, **image_run_options)
             end
           end
           # rubocop:enable Metrics/AbcSize

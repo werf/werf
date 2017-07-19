@@ -156,7 +156,7 @@ module Dapp
         [::Dapp::BUILD_CACHE_VERSION, dev_mode? ? 1 : 0]
       end
 
-      def introspect_image!(image:, options:)
+      def introspect_image(image:, options:)
         cmd = "#{dapp.host_docker_bin} run -ti --rm --entrypoint #{dapp.bash_bin} #{options} #{image}"
         system(cmd)
       end
@@ -166,13 +166,11 @@ module Dapp
         # Такие файлы могут попасть туда при экспорте файлов артефакта.
         # Чтобы от них избавиться — запускаем docker-контейнер под root-пользователем
         # и удаляем примонтированную tmp-директорию.
-        cmd = "".tap do |cmd|
-          cmd << "#{dapp.host_docker_bin} run --rm"
-          cmd << " --volume #{dapp.tmp_base_dir}:#{dapp.tmp_base_dir}"
-          cmd << " alpine:3.6"
-          cmd << " rm -rf #{tmp_path}"
-        end
-        dapp.shellout! cmd
+        image = 'alpine:3.6'
+        hostconfig = {}
+        hostconfig[:mounts] = [{ source: dapp.tmp_base_dir, target: dapp.tmp_base_dir, type: :bind }]
+        cmd = %W(rm -rf #{tmp_path})
+        dapp.docker_client.container_run(image: image, cmd: cmd, hostconfig: hostconfig, rm: true)
 
         artifacts.each(&:cleanup_tmp)
       end
@@ -194,7 +192,7 @@ module Dapp
         yield
       rescue Exception::IntrospectImage => e
         data = e.net_status[:data]
-        introspect_image!(image: data[:built_id], options: data[:options])
+        introspect_image(image: data[:built_id], options: data[:options])
         raise data[:error]
       end
     end # Dimg
