@@ -118,7 +118,7 @@ module Dapp
         end
 
         def service_options
-          { entrypoint: dapp.bash_bin, name: container_name }
+          { entrypoint: dapp.bash_bin, name: container_name, user: '0:0' }
         end
 
         def prepared_change
