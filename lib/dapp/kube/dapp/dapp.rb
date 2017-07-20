@@ -2,6 +2,8 @@ module Dapp
   module Kube
     module Dapp
       module Dapp
+        include Helper::YAML
+
         include Command::Deploy
         include Command::Dismiss
         include Command::SecretKeyGenerate
