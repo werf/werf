@@ -46,8 +46,27 @@ module Dapp
             ) if secret.nil?
           end
 
+          def kube_chart_secret_path(*path)
+            kube_chart_path(kube_chart_secret_dir_name, *path).expand_path
+          end
+
+          def kube_chart_secret_dir_name
+            'secret'
+          end
+
           def kube_chart_path(*path)
             self.path('.helm', *path).expand_path
+          end
+
+          def with_kube_tmp_chart_dir
+            yield if block_given?
+          ensure
+            FileUtils.rm_rf(kube_tmp_chart_path)
+          end
+
+          def kube_tmp_chart_path(*path)
+            @kube_tmp_path ||= Dir.mktmpdir('dapp-helm-chart-', tmp_base_dir)
+            make_path(@kube_tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }
           end
 
           def secret

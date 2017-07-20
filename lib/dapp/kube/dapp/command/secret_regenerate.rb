@@ -12,7 +12,7 @@ module Dapp
               regenerated_data[file_path] = kube_regenerate_secret_values(file_path)
             end
 
-            Dir.glob(kube_chart_path('secret/**/*'), File::FNM_DOTMATCH).each do |file_path|
+            Dir.glob(kube_chart_secret_path('**/*'), File::FNM_DOTMATCH).each do |file_path|
               next if File.directory?(file_path)
               regenerated_data[file_path] = kube_regenerate_secret_file(file_path)
             end
