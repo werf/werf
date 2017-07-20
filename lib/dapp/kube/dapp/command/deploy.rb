@@ -52,7 +52,7 @@ module Dapp
 
           def kube_helm_decode_secret_values
             kube_secret_values_paths.each_with_index do |secret_values_file, index|
-              decoded_data = kube_helm_decode_json(secret, YAML::load(secret_values_file.read))
+              decoded_data = kube_helm_decode_json(secret, yaml_load_file(secret_values_file))
               kube_tmp_chart_secret_values_paths[index].write(decoded_data.to_yaml)
             end
           end
@@ -100,7 +100,7 @@ module Dapp
 
           def kube_helm_hooks_jobs_to_delete(additional_values, set_options)
             generator = proc do |text|
-              text.split(/# Source.*|---/).reject {|c| c.strip.empty? }.map {|c| YAML::load(c) }.reduce({}) do |objects, c|
+              text.split(/# Source.*|---/).reject {|c| c.strip.empty? }.map {|c| yaml_load(c) }.reduce({}) do |objects, c|
                 objects[c['kind']] ||= {}
                 objects[c['kind']][(c['metadata'] || {})['name']] = c
                 objects

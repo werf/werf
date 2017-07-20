@@ -71,7 +71,7 @@ module Dapp
 
           def secret
             @secret ||= begin
-              unless secret_key = ENV['DAPP_SECRET_KEY']
+              unless (secret_key = ENV['DAPP_SECRET_KEY'])
                 secret_key_not_found_in << '`DAPP_SECRET_KEY`'
 
                 if dappfile_exists?

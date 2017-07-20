@@ -48,6 +48,8 @@ en:
       docker_not_found: "Docker not found!"
       docker_version: "Required docker version: >= %{version}!"
       dapp_config_file_incorrect: "%{message}"
+      yaml_file_incorrect: "Yaml file `%{file}`: `%{message}`"
+      yaml_incorrect: "`%{message}`"
       incorrect_dapp_config_option: ".dapp_config includes option `%{option}` with incorrect value `%{value}`: expected one of the following types [%{expected}]"
       incorrect_dapp_config_option_color: ".dapp_config includes option `color` with incorrect value `%{value}`: expected one of the following values [%{expected}]"
     config:
