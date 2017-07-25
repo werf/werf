@@ -95,7 +95,7 @@ module Dapp
           def kubernetes
             @kubernetes ||= begin
               namespace = options[:namespace].nil? ? nil : options[:namespace].tr('_', '-')
-              Client.new(namespace: namespace)
+              Kubernetes::Client.new(namespace: namespace)
             end
           end
         end
