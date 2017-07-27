@@ -39,6 +39,7 @@ en:
       secret_values_file_not_found: "Secret values file `%{path}` not found!"
       user_containers_detected: "User containers have been using images!\n%{ids}"
       incorrect_yaml_structure: "Incorrect YAML structure in `%{path}`!"
+      editor_not_found: "Editor Not found!"
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       no_such_app: "No such app: `%{apps_patterns}`!"
