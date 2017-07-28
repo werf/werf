@@ -2,6 +2,8 @@ module Dapp
   module Kube
     module Dapp
       module Dapp
+        include Helper::YAML
+
         include Command::Deploy
         include Command::Dismiss
         include Command::SecretKeyGenerate
@@ -9,6 +11,7 @@ module Dapp
         include Command::SecretExtract
         include Command::SecretRegenerate
         include Command::MinikubeSetup
+        include Command::ChartCreate
         include Command::Common
       end
     end

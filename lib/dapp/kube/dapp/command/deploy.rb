@@ -13,7 +13,7 @@ module Dapp
             validate_repo_name!(repo)
             validate_tag_name!(image_version)
 
-            begin
+            with_kube_tmp_chart_dir do
               kube_copy_chart
               kube_helm_decode_secrets
               kube_generate_helm_chart_tpl
@@ -31,8 +31,6 @@ module Dapp
 
               kube_flush_hooks_jobs(additional_values, set_options)
               kube_run_deploy(additional_values, set_options)
-            ensure
-              FileUtils.rm_rf(kube_tmp_chart_path)
             end
           end
 
@@ -54,7 +52,7 @@ module Dapp
 
           def kube_helm_decode_secret_values
             kube_secret_values_paths.each_with_index do |secret_values_file, index|
-              decoded_data = kube_helm_decode_json(secret, YAML::load(secret_values_file.read))
+              decoded_data = kube_helm_decode_json(secret, yaml_load_file(secret_values_file))
               kube_tmp_chart_secret_values_paths[index].write(decoded_data.to_yaml)
             end
           end
@@ -102,7 +100,7 @@ module Dapp
 
           def kube_helm_hooks_jobs_to_delete(additional_values, set_options)
             generator = proc do |text|
-              text.split(/# Source.*|---/).reject {|c| c.strip.empty? }.map {|c| YAML::load(c) }.reduce({}) do |objects, c|
+              text.split(/# Source.*|---/).reject {|c| c.strip.empty? }.map {|c| yaml_load(c) }.reduce({}) do |objects, c|
                 objects[c['kind']] ||= {}
                 objects[c['kind']][(c['metadata'] || {})['name']] = c
                 objects
@@ -163,11 +161,6 @@ module Dapp
             kube_tmp_chart_path('decoded-secret', *path).tap { |p| p.parent.mkpath }
           end
 
-          def kube_tmp_chart_path(*path)
-            @kube_tmp_path ||= Dir.mktmpdir('dapp-helm-chart-', tmp_base_dir)
-            make_path(@kube_tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }
-          end
-
           def kube_values_paths
             self.options[:helm_values_options].map { |p| Pathname(p).expand_path }.each do |f|
               raise Error::Command, code: :values_file_not_found, data: { path: f } unless f.file?
@@ -189,10 +182,6 @@ module Dapp
 
           def kube_chart_secret_values_path
             kube_chart_path('secret-values.yaml').expand_path
-          end
-
-          def kube_chart_secret_path(*path)
-            kube_chart_path('secret', *path).expand_path
           end
         end
       end

@@ -85,3 +85,13 @@ dapp kube secret regenerate [SECRET_VALUES_FILE_PATH ...] [options]
 
 #### --old-secret-key KEY
 Использовать ключ `KEY` для декодирования.
+
+### dapp kube create chart
+Сгенерировать helm-chart с частоиспользуемыми файлами и директориями (`.helm`).
+
+```
+dapp kube chart create [options]
+```
+
+#### --force
+Удалить существующий chart (по умолчанию происходит наложение, при этом существующие файлы не перетираются).

@@ -1,6 +1,8 @@
 module Dapp
   module Kube
     class Client
+      include Helper::YAML
+
       def initialize(namespace: nil)
         @namespace = namespace
         @query_parameters = {}
@@ -230,7 +232,7 @@ module Dapp
       def kube_config
         @kube_config ||= begin
           if File.exist?((kube_config_path = File.join(ENV['HOME'], '.kube/config')))
-            YAML.load_file(kube_config_path)
+            yaml_load_file(kube_config_path)
           else
             raise Error::Base, code: :kube_config_not_found, data: { path: kube_config_path }
           end

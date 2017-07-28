@@ -42,7 +42,7 @@ module Dapp
           config_search_paths.reduce({}) do |options, dir|
             if (config_options_path = make_path(dir, '.dapp_config')).file?
               config_options = begin
-                YAML.load_file(config_options_path).tap do |c_options|
+                yaml_load_file(config_options_path).tap do |c_options|
                   c_options.merge!(c_options.in_depth_merge(c_options['ci'] || {})) if ENV['GITLAB_CI'] || ENV['TRAVIS']
                   c_options.delete('ci')
                 end

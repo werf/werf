@@ -12,7 +12,7 @@ module Dapp
               regenerated_data[file_path] = kube_regenerate_secret_values(file_path)
             end
 
-            Dir.glob(kube_chart_path('secret/**/*'), File::FNM_DOTMATCH).each do |file_path|
+            Dir.glob(kube_chart_secret_path('**/*'), File::FNM_DOTMATCH).each do |file_path|
               next if File.directory?(file_path)
               regenerated_data[file_path] = kube_regenerate_secret_file(file_path)
             end
@@ -25,8 +25,7 @@ module Dapp
           end
 
           def kube_regenerate_secret_values(file_path)
-            raise Error::Command, code: :incorrect_yaml_structure, data: { path: File.expand_path(file_path) } unless (json = YAML::load(File.read(file_path)))
-            kube_helm_encode_json(secret, kube_helm_decode_json(old_secret, json)).to_yaml
+            kube_helm_encode_json(secret, kube_helm_decode_json(old_secret, yaml_load_file(file_path))).to_yaml
           end
 
           def old_secret
