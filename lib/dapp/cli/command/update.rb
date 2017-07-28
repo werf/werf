@@ -7,6 +7,8 @@ module Dapp
             File.fnmatch(File.join(s.full_gem_path, '*'), __FILE__)
           end
           Gem.install(spec.name, approximate_recommendation(spec.version))
+        rescue Gem::FilePermissionError => e
+          raise Errno::EACCES, e.message
         end
 
         # get latest beta-version
