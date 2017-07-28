@@ -69,7 +69,7 @@ describe Dapp::Dimg::Config::Directive::Artifact do
           end
         end
 
-        expect { dimgs_configs }.to raise_error NoMethodError
+        expect_exception_code(:docker_artifact_unsupported_directive) { dimgs_configs }
       end
     end
 
