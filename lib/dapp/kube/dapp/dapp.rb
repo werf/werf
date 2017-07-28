@@ -10,6 +10,7 @@ module Dapp
         include Command::SecretGenerate
         include Command::SecretExtract
         include Command::SecretRegenerate
+        include Command::SecretEdit
         include Command::MinikubeSetup
         include Command::ChartCreate
         include Command::Common

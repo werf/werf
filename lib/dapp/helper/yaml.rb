@@ -12,7 +12,7 @@ module Dapp
           if hash && !res.is_a?(Hash)
             raise ::Dapp::Error::Dapp,
                   code: :yaml_incorrect,
-                  data: { message: "unexpected yaml data \n>>> START YAML\n#{string.strip}\n>>> END YAML\n" }
+                  data: { message: "unexpected json data \n>>> START YAML\n#{string.strip}\n>>> END YAML\n" }
           end
         end
       rescue Psych::SyntaxError => e

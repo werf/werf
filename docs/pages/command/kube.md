@@ -76,6 +76,16 @@ dapp kube secret extract [FILE_PATH] [options]
 #### -o OUTPUT_FILE_PATH
 Перенаправляет расшифрованные данные в файл `OUTPUT_FILE_PATH`.
 
+### dapp kube secret edit
+Отредактировать секрет `FILE_PATH`.
+
+```
+dapp kube secret edit `FILE_PATH` [options]
+```
+
+#### --values
+Отредактировать secret-values файл `FILE_PATH`.
+
 ### dapp kube secret regenerate
 Перегенерировать секреты ключом `DAPP_SECRET_KEY`.
 
