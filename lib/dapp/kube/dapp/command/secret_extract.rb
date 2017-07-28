@@ -22,7 +22,7 @@ module Dapp
 
             if (output_file_path = options[:output_file_path])
               FileUtils.mkpath File.dirname(output_file_path)
-              IO.binwrite(output_file_path, "#{data}\n")
+              IO.binwrite(output_file_path, data)
             else
               puts data
             end
