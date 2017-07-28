@@ -29,8 +29,11 @@ module Dapp
                 options.concat(self.options[:helm_set_options].map { |opt| "--set #{opt}" })
               end
 
-              kube_flush_hooks_jobs(additional_values, set_options)
-              kube_run_deploy(additional_values, set_options)
+              hooks_jobs = kube_helm_hooks_jobs(additional_values, set_options)
+
+              kube_flush_hooks_jobs(hooks_jobs)
+
+              kube_run_deploy(additional_values, set_options, hooks_jobs: hooks_jobs)
             end
           end
 
@@ -73,14 +76,14 @@ module Dapp
 
 {{- define "dimg" -}}
 {{- if (ge (len (index .)) 2) -}}
-{{- $name := index . 0 -}}                                                                          
-{{- $context := index . 1 -}}  
+{{- $name := index . 0 -}}
+{{- $context := index . 1 -}}
 {{- printf "%s:%s-%s" $context.Values.global.dapp.repo $name $context.Values.global.dapp.image_version -}}
 {{- else -}}
 {{- $context := index . 0 -}}
 {{- printf "%s:%s" $context.Values.global.dapp.repo $context.Values.global.dapp.image_version -}}
-{{- end -}}                                                                               
-{{- end -}}                                                                                         
+{{- end -}}
+{{- end -}}
 
 {{- define "dapp_secret_file" -}}
 {{- $relative_file_path := index . 0 -}}
@@ -91,14 +94,14 @@ module Dapp
             kube_tmp_chart_path('templates/_dapp_helpers.tpl').write(cont)
           end
 
-          def kube_flush_hooks_jobs(additional_values, set_options)
-            return if (config_jobs_names = kube_helm_hooks_jobs_to_delete(additional_values, set_options).keys).empty?
+          def kube_flush_hooks_jobs(hooks_jobs)
+            return if (config_jobs_names = hooks_jobs.keys).empty?
             config_jobs_names.select { |name| kube_job_list.include? name }.each do |name|
               log_process("Delete hooks job `#{name}` for release #{kube_release_name} ", short: true) { kube_delete_job!(name) }
             end
           end
 
-          def kube_helm_hooks_jobs_to_delete(additional_values, set_options)
+          def kube_helm_hooks_jobs(additional_values, set_options)
             generator = proc do |text|
               text.split(/# Source.*|---/).reject {|c| c.strip.empty? }.map {|c| yaml_load(c) }.reduce({}) do |objects, c|
                 objects[c['kind']] ||= {}
@@ -112,7 +115,7 @@ module Dapp
 
             manifest_start_index = output.lines.index("MANIFEST:\n") + 1
             hook_start_index     = output.lines.index("HOOKS:\n") + 1
-            configs = generator.call(output.lines[hook_start_index..manifest_start_index-1].join)
+            configs = generator.call(output.lines[hook_start_index..manifest_start_index-2].join)
 
             (configs['Job'] || {}).reject do |_, c|
               c['metadata'] ||= {}
@@ -133,11 +136,44 @@ module Dapp
             end
           end
 
-          def kube_run_deploy(additional_values, set_options)
+          def kube_run_deploy(additional_values, set_options, hooks_jobs: {})
             log_process("Deploy release #{kube_release_name}") do
+              release_exists = shellout("helm status #{kube_release_name}").status.success?
+
+              hooks_jobs_by_type = hooks_jobs
+                .reduce({}) do |res, (job_name, job_spec)|
+                  job = Kubernetes::Client::Resource::Job.new(job_spec)
+
+                  if job.annotations['dapp/watch-logs'].to_s == 'true'
+                    job.annotations['helm.sh/hook'].to_s.split(',').each do |hook_type|
+                      res[hook_type] ||= []
+                      res[hook_type] << job
+                    end
+                  end
+
+                  res
+                end
+                .tap do |res|
+                  res.values.each do |jobs|
+                    jobs.sort_by! {|job| job.annotations['helm.sh/hook-weight'].to_i}
+                  end
+                end
+
+              watch_jobs = if release_exists
+                hooks_jobs_by_type['pre-upgrade'].to_a + hooks_jobs_by_type['post-upgrade'].to_a
+              else
+                hooks_jobs_by_type['pre-install'].to_a + hooks_jobs_by_type['post-install'].to_a
+              end
+
+              watch_thr = Thread.new do
+                watch_jobs.each {|job| Kubernetes::Manager::Job.new(self, job.name).watch_till_done!}
+              end
+
               args = [kube_release_name, kube_tmp_chart_path, additional_values, set_options, kube_helm_extra_options].flatten
               kubernetes.create_namespace!(kube_namespace) unless kubernetes.namespace?(kube_namespace)
               shellout! "helm upgrade #{args.join(' ')}", verbose: true
+
+              watch_thr.join
             end
           end
 

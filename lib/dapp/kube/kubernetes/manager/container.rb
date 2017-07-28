@@ -1,0 +1,88 @@
+module Dapp
+  module Kube
+    module Kubernetes::Manager
+      class Container < Base
+        attr_reader :pod_manager
+
+        def initialize(dapp, name, pod_manager)
+          super(dapp, name)
+
+          @pod_manager = pod_manager
+          @processed_containers_ids = []
+          @processed_log_till_time = nil
+          @processed_log_timestamps = Set.new
+        end
+
+        def wait_till_created!
+          pod_manager.wait_till_running!
+
+          loop do
+            pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
+            break unless pod.container_state(name).first == 'waiting'
+            sleep 0.1
+          end
+        end
+
+        def watch_till_terminated!
+          pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
+          _, container_state_data = pod.container_state(name)
+          return if @processed_containers_ids.include? container_state_data['containerID']
+
+          wait_till_created!
+
+          pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
+          container_state, container_state_data = pod.container_state(name)
+
+          dapp.log_process("Watch pod's '#{pod_manager.name}' container '#{name}' log") do
+            loop do
+              pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
+              container_state, container_state_data = pod.container_state(name)
+
+              chunk_lines_by_time = dapp.kubernetes.pod_log(pod_manager.name, container: name, timestamps: true, sinceTime: @processed_log_till_time)
+                .lines
+                .map do |line|
+                  timestamp, _, data = line.partition(' ')
+                  [timestamp, data]
+                end
+                .reject {|timestamp, _| @processed_log_timestamps.include? timestamp}
+
+              chunk_lines_by_time.each do |timestamp, data|
+                puts data
+                @processed_log_timestamps.add timestamp
+              end
+
+              if container_state == 'terminated'
+                failed = (container_state_data['exitCode'].to_i != 0)
+
+                warn("".tap do |msg|
+                  msg << "Pod's '#{pod_manager.name}' container '#{name}' has been terminated unsuccessfuly: "
+                  msg << container_state_data.to_s
+                end) if failed
+
+                @processed_containers_ids << container_state_data['containerID']
+
+                break
+              end
+
+              @processed_log_till_time = chunk_lines_by_time.last.first if chunk_lines_by_time.any?
+
+              sleep 0.1 if chunk_lines_by_time.empty?
+            end
+          end # log_process
+        end
+
+        def done?
+          pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
+          container_state, container_state_data = pod.container_state(name)
+          if container_state == 'terminated'
+            failed = (container_state_data['exitCode'].to_i != 0)
+            return true if pod.restart_policy == 'Never'
+            return true if not failed and pod.restart_policy == 'OnFailure'
+          end
+
+          return false
+        end
+      end # Container
+    end # Kubernetes::Manager
+  end # Kube
+end # Dapp
