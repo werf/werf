@@ -93,7 +93,7 @@ Docker-образы, которые создает dapp могут стать н
 Аналогично, предыдущему разделу, есть 2 команды для удаления локальных образов и образов в registry.
 
 * `dapp dimg stages cleanup local --improper-cache-version` удалит локальные docker-образы более не актуальные для текущей версии dapp.
-* `dapp dimg stages cleanup local --improper-cache-version` удалит docker-образы более не актуальные для текущей версии dapp из registry.
+* `dapp dimg stages cleanup repo --improper-cache-version` удалит docker-образы более не актуальные для текущей версии dapp из registry.
 
 #### Некорректный сборочный кэш из-за использования git rebase
 
@@ -101,8 +101,8 @@ Docker-образы, которые создает dapp могут стать н
 
 Поэтому существуют специальные команды удаления кэша, который более не валиден из-за изменений в связанных git-репозиториях:
 
-* `dapp dimg stages cleanup local --import-git-commit` — локально;
-* `dapp dimg stages cleanup repo --import-git-commit` — в registry.
+* `dapp dimg stages cleanup local --improper-git-commit` — локально;
+* `dapp dimg stages cleanup repo --improper-git-commit` — в registry.
 
 На данный момент автоматической инвалидации подобных образов не предусмотрено.
 

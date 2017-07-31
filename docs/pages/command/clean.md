@@ -25,17 +25,17 @@ dapp dimg stages cleanup local [options] [DIMG ...] [REPO]
 
 ##### Оставить только актуальный кэш, исходя из приложений в localhost:5000/test
 ```bash
-$ dapp dimg stages cleanup local localhost:5000/test
+$ dapp dimg stages cleanup local --improper-repo-cache localhost:5000/test
 ```
 
 ##### Удалить кэш, версия которого не совпадает с текущей
 ```bash
-$ dapp dimg stages cleanup local --improper-cache-version
+$ dapp dimg stages cleanup local --improper-cache-version localhost:5000/test
 ```
 
 ##### Почистить кэш после rebase в одном из связанных git-репозиториев
 ```bash
-$ dapp dimg stages cleanup local --improper-git-commit
+$ dapp dimg stages cleanup local --improper-git-commit localhost:5000/test
 ```
 
 ### dapp dimg stages cleanup repo
