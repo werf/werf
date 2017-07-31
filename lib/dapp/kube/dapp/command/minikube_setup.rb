@@ -121,7 +121,7 @@ module Dapp
               600.times do
                 begin
                   return if _minikube_kubernetes.service?('kube-dns')
-                rescue Client::Error::ConnectionRefused
+                rescue Kubernetes::Client::Error::ConnectionRefused
                 end
 
                 sleep 1
@@ -257,7 +257,7 @@ module Dapp
           end
 
           def _minikube_kubernetes
-            @_minikube_kubernetes ||= Client.new(namespace: 'kube-system')
+            @_minikube_kubernetes ||= Kubernetes::Client.new(namespace: 'kube-system')
           end
 
           def _minikube_registry_replicationcontroller_spec
