@@ -5,13 +5,14 @@ module Dapp
         /^#{repo_name_format}$/ =~ repo
         expected_hostname = Regexp.last_match(:hostname)
         expected_repo_suffix = Regexp.last_match(:repo_suffix)
-        expected_hostname_url = expected_hostname ? "http://#{expected_hostname}" : nil
 
-        if hostname_exist?(expected_hostname_url)
-          Base.new(repo, expected_hostname_url, expected_repo_suffix)
-        else
-          Default.new(repo, File.join(*[expected_hostname, expected_repo_suffix].compact))
+        if expected_hostname
+          %w(https http).each do |protocol|
+            expected_hostname_url = [protocol, expected_hostname].join('://')
+            return Base.new(repo, expected_hostname_url, expected_repo_suffix) if hostname_exist?(expected_hostname_url)
+          end
         end
+        Default.new(repo, File.join(*[expected_hostname, expected_repo_suffix].compact))
       end
 
       def self.repo_name_format
