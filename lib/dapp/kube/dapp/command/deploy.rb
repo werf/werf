@@ -185,8 +185,12 @@ module Dapp
             [].tap do |options|
               options << "--namespace #{kube_namespace}"
               options << '--install'
-              options << '--wait'
-              options << '--timeout 1800'
+
+              unless ['1', 'true'].include? ENV['DAPP_HELM_WAIT_DISABLED'].to_s
+                options << '--wait'
+                timeout = (ENV['DAPP_HELM_WAIT_TIMEOUT'] || 120).to_i
+                options << "--timeout #{timeout}"
+              end
 
               options << '--dry-run' if dry_run
               options << '--debug'   if dry_run || log_verbose?
