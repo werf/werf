@@ -112,6 +112,8 @@ module Dapp
 
                       dapp.with_log_indent do
                         pod.containers_names.each do |container_name|
+                          next if pod.container_state(name).first == 'waiting'
+
                           known_log_timestamps_by_pod_and_container[pod.name] ||= {}
                           known_log_timestamps_by_pod_and_container[pod.name][container_name] ||= Set.new
 
