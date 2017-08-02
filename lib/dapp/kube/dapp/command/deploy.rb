@@ -13,27 +13,26 @@ module Dapp
             validate_repo_name!(repo)
             validate_tag_name!(image_version)
 
+            # TODO: Перенести код процесса выката в Helm::Manager
+
             with_kube_tmp_chart_dir do
               kube_copy_chart
               kube_helm_decode_secrets
               kube_generate_helm_chart_tpl
 
-              additional_values = [].tap do |options|
-                options.concat((kube_values_paths + kube_tmp_chart_secret_values_paths).map { |p| "--values #{p}" })
-              end
+              release = Helm::Release.new(
+                self,
+                name: kube_release_name,
+                repo: repo,
+                image_version: image_version,
+                namespace: kube_namespace,
+                set: self.options[:helm_set_options],
+                values: [*kube_values_paths, *kube_tmp_chart_secret_values_paths],
+                chart_path: kube_tmp_chart_path
+              )
 
-              set_options = [].tap do |options|
-                options << "--set global.dapp.repo=#{repo}"
-                options << "--set global.dapp.image_version=#{image_version}"
-                options << "--set global.namespace=#{kube_namespace}"
-                options.concat(self.options[:helm_set_options].map { |opt| "--set #{opt}" })
-              end
-
-              hooks_jobs = kube_helm_hooks_jobs(additional_values, set_options)
-
-              kube_flush_hooks_jobs(hooks_jobs)
-
-              kube_run_deploy(additional_values, set_options, hooks_jobs: hooks_jobs)
+              kube_flush_hooks_jobs(release)
+              kube_run_deploy(release)
             end
           end
 
@@ -94,34 +93,13 @@ module Dapp
             kube_tmp_chart_path('templates/_dapp_helpers.tpl').write(cont)
           end
 
-          def kube_flush_hooks_jobs(hooks_jobs)
-            return if (config_jobs_names = hooks_jobs.keys).empty?
-            config_jobs_names.select { |name| kube_job_list.include? name }.each do |name|
-              log_process("Delete hooks job `#{name}` for release #{kube_release_name} ", short: true) { kube_delete_job!(name) }
-            end
-          end
-
-          def kube_helm_hooks_jobs(additional_values, set_options)
-            generator = proc do |text|
-              text.split(/# Source.*|---/).reject {|c| c.strip.empty? }.map {|c| yaml_load(c) }.reduce({}) do |objects, c|
-                objects[c['kind']] ||= {}
-                objects[c['kind']][(c['metadata'] || {})['name']] = c
-                objects
+          def kube_flush_hooks_jobs(release)
+            release.hooks.values
+              .reject { |job| ['0', 'false'].include? job.annotations["dapp/recreate"].to_s }
+              .select { |job| kube_job_list.include? job.name }
+              .each do |job|
+                log_process("Delete hooks job `#{job.name}` for release #{release.name}", short: true) { kube_delete_job!(job.name) }
               end
-            end
-
-            args = [kube_release_name, kube_tmp_chart_path, additional_values, set_options, kube_helm_extra_options(dry_run: true)].flatten
-            output = shellout!("helm upgrade #{args.join(' ')}").stdout
-
-            manifest_start_index = output.lines.index("MANIFEST:\n") + 1
-            hook_start_index     = output.lines.index("HOOKS:\n") + 1
-            configs = generator.call(output.lines[hook_start_index..manifest_start_index-2].join)
-
-            (configs['Job'] || {}).reject do |_, c|
-              c['metadata'] ||= {}
-              c['metadata']['annotations'] ||= {}
-              c['metadata']['annotations']['helm.sh/resource-policy'] == 'keep'
-            end
           end
 
           def kube_job_list
@@ -136,14 +114,12 @@ module Dapp
             end
           end
 
-          def kube_run_deploy(additional_values, set_options, hooks_jobs: {})
-            log_process("Deploy release #{kube_release_name}") do
-              release_exists = shellout("helm status #{kube_release_name}").status.success?
+          def kube_run_deploy(release)
+            log_process("Deploy release #{release.name}") do
+              release_exists = shellout("helm status #{release.name}").status.success?
 
-              hooks_jobs_by_type = hooks_jobs
-                .reduce({}) do |res, (job_name, job_spec)|
-                  job = Kubernetes::Client::Resource::Job.new(job_spec)
-
+              watch_hooks_by_type = release.jobs.values
+                .reduce({}) do |res, job|
                   if job.annotations['dapp/watch-logs'].to_s == 'true'
                     job.annotations['helm.sh/hook'].to_s.split(',').each do |hook_type|
                       res[hook_type] ||= []
@@ -159,42 +135,40 @@ module Dapp
                   end
                 end
 
-              watch_jobs = if release_exists
-                hooks_jobs_by_type['pre-upgrade'].to_a + hooks_jobs_by_type['post-upgrade'].to_a
+              watch_hooks = if release_exists
+                watch_hooks_by_type['pre-upgrade'].to_a + watch_hooks_by_type['post-upgrade'].to_a
               else
-                hooks_jobs_by_type['pre-install'].to_a + hooks_jobs_by_type['post-install'].to_a
+                watch_hooks_by_type['pre-install'].to_a + watch_hooks_by_type['post-install'].to_a
               end
 
-              watch_thr = Thread.new do
-                watch_jobs.each {|job| Kubernetes::Manager::Job.new(self, job.name).watch_till_done!}
+              watch_hooks_thr = Thread.new do
+                watch_hooks.each {|job| Kubernetes::Manager::Job.new(self, job.name).watch_till_done!}
+                puts "DONE!"
               end
 
-              args = [kube_release_name, kube_tmp_chart_path, additional_values, set_options, kube_helm_extra_options].flatten
-              kubernetes.create_namespace!(kube_namespace) unless kubernetes.namespace?(kube_namespace)
-              shellout! "helm upgrade #{args.join(' ')}", verbose: true
+              deployment_managers = release.deployments.values
+                .map {|deployment| Kubernetes::Manager::Deployment.new(self, deployment.name)}
 
-              watch_thr.join
+              deployment_managers.each(&:before_deploy)
+
+              release.deploy!
+
+              deployment_managers.each(&:after_deploy)
+
+              begin
+                ::Timeout::timeout(self.options[:timeout] || 300) do
+                  watch_hooks_thr.join
+                  deployment_managers.each {|deployment_manager| deployment_manager.watch_till_ready!}
+                end
+              rescue ::Timeout::Error
+                watch_hooks_thr.kill if watch_hooks_thr.alive?
+                raise Error::Base, code: :deploy_timeout
+              end
             end
           end
 
           def kube_check_helm_chart!
             raise Error::Command, code: :project_helm_chart_not_found, data: { path: kube_chart_path } unless kube_chart_path.exist?
-          end
-
-          def kube_helm_extra_options(dry_run: dry_run?)
-            [].tap do |options|
-              options << "--namespace #{kube_namespace}"
-              options << '--install'
-
-              unless ['1', 'true'].include? ENV['DAPP_HELM_WAIT_DISABLED'].to_s
-                options << '--wait'
-                timeout = (ENV['DAPP_HELM_WAIT_TIMEOUT'] || 120).to_i
-                options << "--timeout #{timeout}"
-              end
-
-              options << '--dry-run' if dry_run
-              options << '--debug'   if dry_run || log_verbose?
-            end
           end
 
           def kube_tmp_chart_secret_path(*path)
@@ -222,6 +196,10 @@ module Dapp
 
           def kube_chart_secret_values_path
             kube_chart_path('secret-values.yaml').expand_path
+          end
+
+          def kube_helm_manager
+            @kube_helm_manager ||= Helm::Manager.new(self)
           end
         end
       end

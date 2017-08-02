@@ -8,12 +8,24 @@ module Dapp
           @spec = spec
         end
 
+        def metadata
+          spec.fetch('metadata', {})
+        end
+
         def name
-          spec.fetch('metadata', {})['name']
+          metadata['name']
+        end
+
+        def uid
+          metadata['uid']
         end
 
         def annotations
-          spec.fetch('metadata', {}).fetch('annotations', {})
+          metadata.fetch('annotations', {})
+        end
+
+        def status
+          spec.fetch('status', {})
         end
       end # Base
     end # Kubernetes::Client::Resource

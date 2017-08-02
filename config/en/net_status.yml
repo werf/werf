@@ -8,6 +8,8 @@ en:
       dimg_not_run: "Dimg run failed!"
       git_branch_without_name: "Dimg has specific revision that isn't associated with a branch name!"
       ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
+    kube:
+      deploy_timeout: "Deploy timeout!"
     dappfile:
       incorrect: "Dappfile with `%{error}`:\n%{message}"
     build:

@@ -35,6 +35,12 @@ BANNER
              default: [],
              proc: proc { |v| composite_options(:helm_secret_values) << v }
 
+      option :timeout,
+             long: '--timeout INTEGER_SECONDS',
+             default: nil,
+             description: 'Default timeout to wait for resources to become ready, 300 seconds by default.',
+             proc: proc {|v| Integer(v)}
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         repo = self.class.required_argument(self, 'repo')
