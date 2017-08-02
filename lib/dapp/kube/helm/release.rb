@@ -12,19 +12,21 @@ module Dapp
       attr_reader :chart_path
       attr_reader :set
       attr_reader :values
+      attr_reader :deploy_timeout
 
       def initialize(dapp,
         name:, repo:, image_version:, namespace:, chart_path:,
-        set: [], values: [])
+        set: [], values: [], deploy_timeout: nil)
         @dapp = dapp
 
         @name = name
         @repo = repo
         @image_version = image_version
         @namespace = namespace
+        @chart_path = chart_path
         @set = set
         @values = values
-        @chart_path = chart_path
+        @deploy_timeout = deploy_timeout
       end
 
       def jobs
@@ -110,6 +112,7 @@ module Dapp
           options << '--install'
           options << '--dry-run' if dry_run
           options << '--debug'   if dry_run || dapp.log_verbose?
+          options << "--timeout #{deploy_timeout}" if deploy_timeout
         end
       end
     end # Helm::Release

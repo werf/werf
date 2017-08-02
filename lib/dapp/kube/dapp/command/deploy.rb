@@ -26,9 +26,10 @@ module Dapp
                 repo: repo,
                 image_version: image_version,
                 namespace: kube_namespace,
+                chart_path: kube_tmp_chart_path,
                 set: self.options[:helm_set_options],
                 values: [*kube_values_paths, *kube_tmp_chart_secret_values_paths],
-                chart_path: kube_tmp_chart_path
+                deploy_timeout: self.options[:timeout] || 300
               )
 
               kube_flush_hooks_jobs(release)
