@@ -15,8 +15,7 @@ module Dapp
         end
 
         def container_state(container_name)
-          container_status = spec
-            .fetch('status', {})
+          container_status = status
             .fetch('containerStatuses', [])
             .find {|cs| cs['name'] == container_name}
 
@@ -29,7 +28,7 @@ module Dapp
         end
 
         def phase
-          spec.fetch('status', {}).fetch('phase', nil)
+          status.fetch('phase', nil)
         end
 
         def containers_names

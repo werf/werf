@@ -40,6 +40,7 @@ module Dapp
 
               chunk_lines_by_time = dapp.kubernetes.pod_log(pod_manager.name, container: name, timestamps: true, sinceTime: @processed_log_till_time)
                 .lines
+                .map(&:strip)
                 .map do |line|
                   timestamp, _, data = line.partition(' ')
                   [timestamp, data]
@@ -47,14 +48,14 @@ module Dapp
                 .reject {|timestamp, _| @processed_log_timestamps.include? timestamp}
 
               chunk_lines_by_time.each do |timestamp, data|
-                puts data
+                dapp.log("[#{timestamp}] #{data}")
                 @processed_log_timestamps.add timestamp
               end
 
               if container_state == 'terminated'
                 failed = (container_state_data['exitCode'].to_i != 0)
 
-                warn("".tap do |msg|
+                dapp.log_warning("".tap do |msg|
                   msg << "Pod's '#{pod_manager.name}' container '#{name}' has been terminated unsuccessfuly: "
                   msg << container_state_data.to_s
                 end) if failed

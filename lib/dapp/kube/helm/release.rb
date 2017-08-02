@@ -9,9 +9,9 @@ module Dapp
       attr_reader :repo
       attr_reader :image_version
       attr_reader :namespace
+      attr_reader :chart_path
       attr_reader :set
       attr_reader :values
-      attr_reader :chart_path
 
       def initialize(dapp,
         name:, repo:, image_version:, namespace:, chart_path:,
@@ -28,7 +28,7 @@ module Dapp
       end
 
       def jobs
-        (resources_configs['Job'] || {}).map do |name, spec|
+        (resources_specs['Job'] || {}).map do |name, spec|
           [name, Kubernetes::Client::Resource::Job.new(spec)]
         end.to_h
       end
@@ -40,7 +40,9 @@ module Dapp
       end
 
       def deployments
-        FIXME
+        (resources_specs['Deployment'] || {}).map do |name, spec|
+          [name, Kubernetes::Client::Resource::Deployment.new(spec)]
+        end.to_h
       end
 
       def deploy!
@@ -67,19 +69,21 @@ module Dapp
         end
       end
 
-      def resources_configs
-        @resources_configs ||= begin
+      def resources_specs
+        @resources_specs ||= {}.tap do |specs|
           generator = proc do |text|
-            text.split(/# Source.*|---/).reject {|c| c.strip.empty? }.map {|c| yaml_load(c) }.reduce({}) do |objects, c|
-              objects[c['kind']] ||= {}
-              objects[c['kind']][(c['metadata'] || {})['name']] = c
-              objects
+            text.split(/# Source.*|---/).reject {|c| c.strip.empty? }.map {|c| yaml_load(c) }.each do |spec|
+              specs[spec['kind']] ||= {}
+              specs[spec['kind']][(spec['metadata'] || {})['name']] = spec
             end
           end
 
           manifest_start_index = evaluation_output.lines.index("MANIFEST:\n") + 1
-          hook_start_index     = evaluation_output.lines.index("HOOKS:\n") + 1
+          hook_start_index = evaluation_output.lines.index("HOOKS:\n") + 1
+          manifest_end_index = evaluation_output.lines.index("Release \"#{name}\" has been upgraded. Happy Helming!\n")
+
           generator.call(evaluation_output.lines[hook_start_index..manifest_start_index-2].join)
+          generator.call(evaluation_output.lines[manifest_start_index..manifest_end_index-2].join)
         end
       end
 

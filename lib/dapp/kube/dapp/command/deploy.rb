@@ -141,17 +141,29 @@ module Dapp
                 watch_hooks_by_type['pre-install'].to_a + watch_hooks_by_type['post-install'].to_a
               end
 
-              watch_thr = Thread.new do
+              watch_hooks_thr = Thread.new do
                 watch_hooks.each {|job| Kubernetes::Manager::Job.new(self, job.name).watch_till_done!}
+                puts "DONE!"
               end
+
+              deployment_managers = release.deployments.values
+                .map {|deployment| Kubernetes::Manager::Deployment.new(self, deployment.name)}
+
+              deployment_managers.each(&:before_deploy)
 
               release.deploy!
 
-              #wait_thr = Thread.new do
-                #deployments.each {|deployment| Kubernetes::Manager::Deployment.new(self, deployment.name).watch_till_ready!}
-              #end
+              deployment_managers.each(&:after_deploy)
 
-              watch_thr.join
+              begin
+                ::Timeout::timeout(self.options[:timeout] || 300) do
+                  watch_hooks_thr.join
+                  deployment_managers.each {|deployment_manager| deployment_manager.watch_till_ready!}
+                end
+              rescue ::Timeout::Error
+                watch_hooks_thr.kill if watch_hooks_thr.alive?
+                raise Error::Base, code: :deploy_timeout
+              end
             end
           end
 
