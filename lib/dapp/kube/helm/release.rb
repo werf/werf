@@ -80,6 +80,11 @@ module Dapp
             end
           end
 
+          if evaluation_output.lines.map(&:strip).grep(/ERROR: Job failed: exit status 1/).any?
+            warn evaluation_output
+            raise Error::Base, code: :helm_failed
+          end
+
           hook_start_index = nil
           if ind = evaluation_output.lines.index("HOOKS:\n")
             hook_start_index =  ind + 1
@@ -93,6 +98,7 @@ module Dapp
           manifest_start_index = nil
           if ind = evaluation_output.lines.index("MANIFEST:\n")
             manifest_start_index = ind + 1
+          else
             warn "[WARN][DEBUG INFO] Cannot find MANIFEST section in helm dry-run output:"
             evaluation_output.lines.each do |line|
               warn "[WARN][DEBUG INFO] #{line.strip}"
