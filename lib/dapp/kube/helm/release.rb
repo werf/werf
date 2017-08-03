@@ -83,14 +83,28 @@ module Dapp
           hook_start_index = nil
           if ind = evaluation_output.lines.index("HOOKS:\n")
             hook_start_index =  ind + 1
+          else
+            warn "[WARN][DEBUG INFO] Cannot find HOOKS section in helm dry-run output:"
+            evaluation_output.lines.each do |line|
+              warn "[WARN][DEBUG INFO] #{line.strip}"
+            end
           end
 
           manifest_start_index = nil
           if ind = evaluation_output.lines.index("MANIFEST:\n")
             manifest_start_index = ind + 1
+            warn "[WARN][DEBUG INFO] Cannot find MANIFEST section in helm dry-run output:"
+            evaluation_output.lines.each do |line|
+              warn "[WARN][DEBUG INFO] #{line.strip}"
+            end
           end
 
-          manifest_end_index = evaluation_output.lines.index("Release \"#{name}\" has been upgraded. Happy Helming!\n")
+          unless manifest_end_index = evaluation_output.lines.index("Release \"#{name}\" has been upgraded. Happy Helming!\n")
+            warn "[WARN][DEBUG INFO] Cannot find end of MANIFEST section in helm dry-run output:"
+            evaluation_output.lines.each do |line|
+              warn "[WARN][DEBUG INFO] #{line.strip}"
+            end
+          end
 
           generator.call(evaluation_output.lines[hook_start_index..manifest_start_index-2].join) if hook_start_index and manifest_start_index
           generator.call(evaluation_output.lines[manifest_start_index..manifest_end_index-2].join) if manifest_start_index and manifest_end_index
