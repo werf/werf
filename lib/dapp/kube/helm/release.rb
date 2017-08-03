@@ -80,10 +80,6 @@ module Dapp
             end
           end
 
-          if evaluation_output.lines.map(&:strip).grep(/ERROR: Job failed: exit status 1/).any?
-            raise Error::Base, code: :helm_failed
-          end
-
           hook_start_index = nil
           if ind = evaluation_output.lines.index("HOOKS:\n")
             hook_start_index =  ind + 1
@@ -98,12 +94,16 @@ module Dapp
             warn "[WARN][DEBUG INFO] Cannot find MANIFEST section in helm dry-run output:"
           end
 
-          unless manifest_end_index = evaluation_output.lines.index("Release \"#{name}\" has been upgraded. Happy Helming!\n")
-            warn "[WARN][DEBUG INFO] Cannot find end of MANIFEST section in helm dry-run output:"
-          end
+          happy_helming_start_index = evaluation_output.lines.index("Release \"#{name}\" has been upgraded. Happy Helming!\n")
 
           generator.call(evaluation_output.lines[hook_start_index..manifest_start_index-2].join) if hook_start_index and manifest_start_index
-          generator.call(evaluation_output.lines[manifest_start_index..manifest_end_index-2].join) if manifest_start_index and manifest_end_index
+          if manifest_start_index
+            if happy_helming_start_index
+              generator.call(evaluation_output.lines[manifest_start_index..happy_helming_start_index-2].join)
+            else
+              generator.call(evaluation_output.lines[manifest_start_index..-1].join)
+            end
+          end
         end
       end
 

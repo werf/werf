@@ -144,7 +144,6 @@ module Dapp
 
               watch_hooks_thr = Thread.new do
                 watch_hooks.each {|job| Kubernetes::Manager::Job.new(self, job.name).watch_till_done!}
-                puts "DONE!"
               end
 
               deployment_managers = release.deployments.values
