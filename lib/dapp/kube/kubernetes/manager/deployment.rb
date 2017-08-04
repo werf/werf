@@ -112,23 +112,26 @@ module Dapp
 
                       dapp.with_log_indent do
                         pod.containers_names.each do |container_name|
-                          next if pod.container_state(name).first == 'waiting'
-
                           known_log_timestamps_by_pod_and_container[pod.name] ||= {}
                           known_log_timestamps_by_pod_and_container[pod.name][container_name] ||= Set.new
 
                           since_time = nil
                           since_time = @deployed_at.utc.iso8601(9) if @deployed_at
 
-                          log_lines_by_time = dapp.kubernetes.pod_log(pod.name, container: container_name, timestamps: true, sinceTime: since_time)
-                            .lines.map(&:strip)
-                            .map {|line|
-                              timestamp, _, data = line.partition(' ')
-                              unless known_log_timestamps_by_pod_and_container[pod.name][container_name].include? timestamp
-                                known_log_timestamps_by_pod_and_container[pod.name][container_name].add timestamp
-                                [timestamp, data]
-                              end
-                            }.compact
+                          log_lines_by_time = []
+                          begin
+                            log_lines_by_time = dapp.kubernetes.pod_log(pod.name, container: container_name, timestamps: true, sinceTime: since_time)
+                              .lines.map(&:strip)
+                              .map {|line|
+                                timestamp, _, data = line.partition(' ')
+                                unless known_log_timestamps_by_pod_and_container[pod.name][container_name].include? timestamp
+                                  known_log_timestamps_by_pod_and_container[pod.name][container_name].add timestamp
+                                  [timestamp, data]
+                                end
+                              }.compact
+                          rescue Kubernetes::Client::Error::Pod::ContainerCreating
+                            next
+                          end
 
                           if log_lines_by_time.any?
                             dapp.log_step("Last container '#{container_name}' log:")

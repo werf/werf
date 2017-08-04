@@ -13,22 +13,12 @@ module Dapp
           @processed_log_timestamps = Set.new
         end
 
-        def wait_till_created!
-          pod_manager.wait_till_running!
-
-          loop do
-            pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
-            break unless pod.container_state(name).first == 'waiting'
-            sleep 0.1
-          end
-        end
-
         def watch_till_terminated!
           pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
           _, container_state_data = pod.container_state(name)
           return if @processed_containers_ids.include? container_state_data['containerID']
 
-          wait_till_created!
+          pod_manager.wait_till_running!
 
           pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
           container_state, container_state_data = pod.container_state(name)
@@ -38,14 +28,20 @@ module Dapp
               pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
               container_state, container_state_data = pod.container_state(name)
 
-              chunk_lines_by_time = dapp.kubernetes.pod_log(pod_manager.name, container: name, timestamps: true, sinceTime: @processed_log_till_time)
-                .lines
-                .map(&:strip)
-                .map do |line|
-                  timestamp, _, data = line.partition(' ')
-                  [timestamp, data]
-                end
-                .reject {|timestamp, _| @processed_log_timestamps.include? timestamp}
+              chunk_lines_by_time = {}
+              begin
+                chunk_lines_by_time = dapp.kubernetes.pod_log(pod_manager.name, container: name, timestamps: true, sinceTime: @processed_log_till_time)
+                  .lines
+                  .map(&:strip)
+                  .map do |line|
+                    timestamp, _, data = line.partition(' ')
+                    [timestamp, data]
+                  end
+                  .reject {|timestamp, _| @processed_log_timestamps.include? timestamp}
+              rescue Kubernetes::Client::Error::Pod::ContainerCreating
+                sleep 0.1
+                next
+              end
 
               chunk_lines_by_time.each do |timestamp, data|
                 dapp.log("[#{timestamp}] #{data}")

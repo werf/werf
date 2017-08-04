@@ -40,7 +40,7 @@ module Dapp
               if job.succeeded?
                 break
               elsif job.failed?
-                warn "Job '#{name}' has been failed: #{job.spec['status']}"
+                dapp.log_warning "Job '#{name}' has been failed: #{job.spec['status']}"
                 break
               end
 
@@ -53,7 +53,7 @@ module Dapp
             begin
               pod_manager.watch_till_done!
             rescue Kubernetes::Client::Error::Pod::NotFound => err
-              warn "Pod '#{err.net_status.fetch(:response_body, {}).fetch('details', {})['name']}' has been deleted"
+              dapp.log_warning "Pod '#{pod_manager.name}' has been deleted"
             ensure
               @processed_pods_names << process_pod.name
             end
