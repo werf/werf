@@ -196,7 +196,7 @@ describe Dapp::Dimg::Config::Directive::Dimg do
 
                   export '/cwd' do
                     before :setup
-                    to '/to'
+                    to '/folder/to'
                   end
                 end
 
@@ -216,7 +216,7 @@ describe Dapp::Dimg::Config::Directive::Dimg do
 
               artifact do
                 export '/cwd' do
-                  to '/to'
+                  to '/folder/to'
                 end
               end
 
@@ -232,12 +232,12 @@ describe Dapp::Dimg::Config::Directive::Dimg do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup
-              to '/to1'
+              to '/folder/to1'
             end
 
             export '/cwd' do
               before :setup
-              to '/to2'
+              to '/folder/to2'
             end
           end
           expect { dimg_config_validate! }.to_not raise_error
@@ -248,13 +248,13 @@ describe Dapp::Dimg::Config::Directive::Dimg do
             export '/cwd' do
               before :setup
               include_paths 'c'
-              to '/to1'
+              to '/folder/to1'
             end
 
             export '/cwd' do
               before :setup
               include_paths 'd'
-              to '/to1'
+              to '/folder/to1'
             end
           end
           expect { dimg_config_validate! }.to_not raise_error
@@ -265,13 +265,13 @@ describe Dapp::Dimg::Config::Directive::Dimg do
             export '/cwd' do
               before :setup
               include_paths 'c'
-              to '/to1'
+              to '/folder/to1'
             end
 
             export '/cwd' do
               before :setup
               exclude_paths 'c'
-              to '/to1'
+              to '/folder/to1'
             end
           end
           expect { dimg_config_validate! }.to_not raise_error
@@ -282,14 +282,14 @@ describe Dapp::Dimg::Config::Directive::Dimg do
             export '/cwd' do
               before :setup
               include_paths 'c/d/e'
-              to '/to1'
+              to '/folder/to1'
             end
 
             export '/cwd' do
               before :setup
               include_paths 'c'
               exclude_paths 'c/d'
-              to '/to1'
+              to '/folder/to1'
             end
           end
           expect { dimg_config_validate! }.to_not raise_error
@@ -300,12 +300,12 @@ describe Dapp::Dimg::Config::Directive::Dimg do
             export '/cwd' do
               before :setup
               include_paths 'c'
-              to '/to'
+              to '/folder/to'
             end
 
             export '/cwd' do
               before :setup
-              to '/to/path'
+              to '/folder/to/path'
             end
           end
           expect { dimg_config_validate! }.to_not raise_error
@@ -316,12 +316,12 @@ describe Dapp::Dimg::Config::Directive::Dimg do
             export '/cwd' do
               before :setup
               exclude_paths 'path'
-              to '/to'
+              to '/folder/to'
             end
 
             export '/cwd' do
               before :setup
-              to '/to/path'
+              to '/folder/to/path'
             end
           end
           expect { dimg_config_validate! }.to_not raise_error
@@ -333,12 +333,12 @@ describe Dapp::Dimg::Config::Directive::Dimg do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup
-              to '/to'
+              to '/folder/to'
             end
 
             export '/cwd' do
               before :setup
-              to '/to'
+              to '/folder/to'
             end
           end
           expect_exception_code(:artifact_conflict) { dimg_config_validate! }
@@ -348,12 +348,12 @@ describe Dapp::Dimg::Config::Directive::Dimg do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup
-              to '/to'
+              to '/folder/to'
             end
 
             export '/cwd' do
               before :setup
-              to '/to/path'
+              to '/folder/to/path'
             end
           end
           expect_exception_code(:artifact_conflict) { dimg_config_validate! }
@@ -364,13 +364,13 @@ describe Dapp::Dimg::Config::Directive::Dimg do
             export '/cwd' do
               before :setup
               include_paths 'c'
-              to '/to'
+              to '/folder/to'
             end
 
             export '/cwd' do
               before :setup
               exclude_paths 'd'
-              to '/to'
+              to '/folder/to'
             end
           end
           expect_exception_code(:artifact_conflict) { dimg_config_validate! }
