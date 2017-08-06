@@ -82,18 +82,31 @@ module Dapp
             def validate_artifact_format(artifacts)
               artifacts.map do |a|
                 path_format = proc { |path| File.expand_path(File.join('/', path, '/'))[1..-1] }
-
                 path_format.call(a._to) =~ %r{^([^\/]*)\/?(.*)$}
+
                 to = Regexp.last_match(1)
-                include_paths = a._include_paths.dup
-                include_paths << Regexp.last_match(2) unless Regexp.last_match(2).empty?
-                exclude_paths = a._exclude_paths.dup
+                include_exclude_path_format = proc do |path|
+                  paths = [].tap do |arr|
+                    arr << Regexp.last_match(2) unless Regexp.last_match(2).empty?
+                    arr << path
+                  end
+                  path_format.call(File.join(*paths))
+                end
+
+                include_paths = [].tap do |arr|
+                  if a._include_paths.empty? && !Regexp.last_match(2).empty?
+                    arr << Regexp.last_match(2)
+                  else
+                    arr.concat(a._include_paths.dup.map(&include_exclude_path_format))
+                  end
+                end
+                exclude_paths = a._exclude_paths.dup.map(&include_exclude_path_format)
 
                 {
                   index: artifacts.index(a),
                   to: to,
-                  include_paths: include_paths.map(&path_format),
-                  exclude_paths: exclude_paths.map(&path_format)
+                  include_paths: include_paths,
+                  exclude_paths: exclude_paths
                 }
               end
             end
