@@ -105,6 +105,14 @@ module Dapp
                    **{ follow: follow }.merge(query_parameters))
         rescue Excon::Error::Timeout
           raise Error::Timeout
+        rescue Error::Base => err
+          if err.net_status[:code] == :bad_request and
+             err.net_status[:data][:response_body] and
+             err.net_status[:data][:response_body]['message'].end_with? 'ContainerCreating'
+             raise Error::Pod::ContainerCreating, data: err.net_status[:data]
+          else
+            raise
+          end
         end
 
         def event_list(**query_parameters)
@@ -152,7 +160,7 @@ module Dapp
               else
                 raise Error::NotFound, data: err_data
               end
-            else not response.status.to_s.start_with? '2'
+            elsif not response.status.to_s.start_with? '2'
               raise Error::Base, code: :bad_request, data: err_data
             end
           end
