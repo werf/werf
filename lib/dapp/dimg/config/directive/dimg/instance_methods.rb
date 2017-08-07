@@ -130,6 +130,10 @@ module Dapp
               end
             end
 
+            def artifacts_after_parsing!
+              _artifacts_auto_excluding!
+            end
+
             protected
 
             def builder(type)
@@ -139,6 +143,42 @@ module Dapp
 
             def passed_directives
               [:@_chef, :@_shell, :@_docker, :@_git_artifact, :@_mount, :@_artifact_groups, :@_builder]
+            end
+
+            def _artifacts_auto_excluding!
+              path_to_relative = proc { |path| path.reverse.chomp('/').reverse }
+
+              all_artifacts.reduce({}) do |hash, artifact|
+                unless artifact._to.nil?
+                  to_common = artifact._to[/^\/[^\/]*/]
+                  hash[to_common] ||= []
+                  hash[to_common] << artifact
+                end
+                hash
+              end.each do |to_common, artifacts|
+                include_paths_common = artifacts.reduce([]) do |arr, artifact|
+                  arr << artifact._to.sub(to_common, '')
+                  arr.concat(artifact._include_paths.map { |path| File.join(artifact._to.sub(to_common, ''), path) } )
+                  arr
+                end.map(&path_to_relative).uniq
+
+                artifacts.each do |artifact|
+                  artifact_include_shift = path_to_relative.call(artifact._to.sub(to_common, ''))
+
+                  include_paths_common.each do |path|
+                    next if artifact_include_shift.start_with? path
+
+                    path = path_to_relative.call(path.sub(artifact_include_shift, ''))
+                    unless artifact._exclude_paths.any? { |epath| path.start_with? epath }
+                      artifact._exclude_paths << path
+                    end
+                  end
+                end
+              end
+            end
+
+            def all_artifacts
+              _artifact + _git_artifact._local + _git_artifact._remote
             end
           end # InstanceMethods
           # rubocop:enable Metrics/ModuleLength
