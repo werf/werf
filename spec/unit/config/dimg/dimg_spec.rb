@@ -343,8 +343,10 @@ describe Dapp::Dimg::Config::Directive::Dimg do
           end
           expect_exception_code(:artifact_conflict) { dimg_config_validate! }
         end
+      end
 
-        it 'conflict between to' do
+      context 'auto excluding' do
+        it 'exclude children folder' do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup
@@ -356,10 +358,10 @@ describe Dapp::Dimg::Config::Directive::Dimg do
               to '/folder/to/path'
             end
           end
-          expect_exception_code(:artifact_conflict) { dimg_config_validate! }
+          expect { dimg_config_validate! }.to_not raise_error
         end
 
-        it 'conflict between paths and exclude_paths' do
+        it 'inherit include' do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup
@@ -373,7 +375,7 @@ describe Dapp::Dimg::Config::Directive::Dimg do
               to '/folder/to'
             end
           end
-          expect_exception_code(:artifact_conflict) { dimg_config_validate! }
+          expect { dimg_config_validate! }.to_not raise_error
         end
       end
     end
