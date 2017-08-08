@@ -48,19 +48,20 @@ module Dapp
 
         def pass_to(obj, clone_method = :clone)
           passed_directives.each do |directive|
-            next if (variable = instance_variable_get(directive)).nil?
-
-            obj.instance_variable_set(directive, begin
-              case variable
-              when Base then variable.public_send(clone_method)
-              when String, Symbol, Integer, TrueClass, FalseClass then variable
-              when Array, Hash then marshal_clone(variable)
-              else
-                raise
-              end
-            end)
+            obj.instance_variable_set(directive, clone_variable(instance_variable_get(directive), clone_method))
           end
           obj
+        end
+
+        def clone_variable(var, clone_method = :clone)
+          case var
+          when Base then var.public_send(clone_method)
+          when String, Symbol, Integer, TrueClass, FalseClass then var
+          when Array, Hash then marshal_clone(var)
+          when NilClass then nil
+          else
+            raise
+          end
         end
 
         def passed_directives
@@ -78,10 +79,7 @@ module Dapp
         end
 
         def marshal_load(variable_values)
-          variable_values.each do |variable, value|
-            instance_variable_set(variable, value)
-          end
-
+          variable_values.each { |variable, value| instance_variable_set(variable, clone_variable(value)) }
           self
         end
 
