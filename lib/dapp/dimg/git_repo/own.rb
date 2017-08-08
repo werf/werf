@@ -10,6 +10,10 @@ module Dapp
           dimg.dapp.local_git_artifact_exclude_paths
         end
 
+        def workdir_path
+          Pathname(git.workdir)
+        end
+
         def path
           @path ||= Pathname(Rugged::Repository.discover(dimg.home_path.to_s).path)
         rescue Rugged::RepositoryError => _e

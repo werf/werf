@@ -43,6 +43,21 @@ describe Dapp::Dimg::GitArtifact do
     allow_any_instance_of(Dapp::Dimg::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
   end
 
+  def stub_image
+    instance_double(Dapp::Dimg::Image::Stage).tap do |obj|
+      allow(obj).to receive(:labels) do
+        obj.instance_variable_get(:@_mock_labels) ||
+          obj.instance_variable_set(:@_mock_labels, Hash.new('directory'))
+      end
+
+      allow(obj).to receive(:add_service_change_label) do |**options|
+        options.each do |k, v|
+          obj.labels[k.to_s] = v
+        end
+      end
+    end
+  end
+
   def image_build(*cmds)
     container_run(*cmds, rm: false).tap do
       shellout("#{host_docker_bin} commit #{containter_name} #{containter_name}:latest")
@@ -54,25 +69,25 @@ describe Dapp::Dimg::GitArtifact do
   def container_run(*cmds, rm: true)
     shellout(["#{host_docker_bin} run",
               "#{'--rm' if rm}",
-              "--entrypoint #{dimg.dapp.bash_bin}",
+              "--entrypoint #{g_a_stubbed_dimg.dapp.bash_bin}",
               "--name #{containter_name}",
-              "--volume #{dimg.tmp_path('archives')}:#{dimg.container_tmp_path('archives')}:ro",
-              "--volume #{dimg.tmp_path('patches')}:#{dimg.container_tmp_path('patches')}:ro",
-              "--volumes-from #{dimg.dapp.gitartifact_container}",
-              "--volumes-from #{dimg.dapp.base_container}",
-              "--label dapp=#{dimg.dapp.name}",
+              "--volume #{g_a_stubbed_dimg.tmp_path('archives')}:#{g_a_stubbed_dimg.container_tmp_path('archives')}:ro",
+              "--volume #{g_a_stubbed_dimg.tmp_path('patches')}:#{g_a_stubbed_dimg.container_tmp_path('patches')}:ro",
+              "--volumes-from #{g_a_stubbed_dimg.dapp.gitartifact_container}",
+              "--volumes-from #{g_a_stubbed_dimg.dapp.base_container}",
+              "--label dapp=#{g_a_stubbed_dimg.dapp.name}",
               "--label dapp-test=true",
               "#{image_name}",
               "#{prepare_container_command(*cmds)}"].join(' '))
   end
 
   def prepare_container_command(*cmds)
-    "-ec '#{dimg.dapp.shellout_pack cmds.join(' && ')}'"
+    "-ec '#{g_a_stubbed_dimg.dapp.shellout_pack cmds.join(' && ')}'"
   end
 
   def docker_cleanup
-    dimg.dapp.send(:dapp_containers_flush_by_label, 'dapp-test')
-    dimg.dapp.send(:dapp_images_flush_by_label, 'dapp-test')
+    g_a_stubbed_dimg.dapp.send(:dapp_containers_flush_by_label, 'dapp-test')
+    g_a_stubbed_dimg.dapp.send(:dapp_images_flush_by_label, 'dapp-test')
   end
 
   def containter_name
@@ -87,12 +102,39 @@ describe Dapp::Dimg::GitArtifact do
     @spec_image_name = 'ubuntu:16.04'
   end
 
+  #def g_a_stubbed_dapp
+    #instance_double(Dapp::Dapp).tap do |obj|
+      #allow(obj).to receive(:dev_mode?).and_return(false)
+    #end
+  #end
+
+  def g_a_stubbed_dimg
+    @g_a_stubbed_dimg ||= Dapp::Dimg::Dimg.new(dapp: dapp, config: openstruct_config).tap do |obj|
+      orig_method = obj.method(:stage_by_name)
+
+      allow(obj).to receive(:stage_by_name) do |name|
+        if name == :g_a_archive
+          g_a_archive_stage
+        else
+          orig_method.call(name)
+        end
+      end
+    end
+  end
+
   def g_a_archive_stage
-    @g_a_archive_stage ||= Dapp::Dimg::Build::Stage::GAArchive.new(empty_dimg, stubbed_stage)
+    @g_a_archive_stage ||= begin
+      Dapp::Dimg::Build::Stage::GAArchive.new(g_a_stubbed_dimg, stubbed_stage).tap do |obj|
+        allow(obj).to receive(:image) do
+          obj.instance_variable_get(:@_stub_image) ||
+            obj.instance_variable_set(:@_stub_image, stub_image)
+        end
+      end
+    end
   end
 
   def g_a_latest_patch_stage
-    @g_a_latest_patch_stage ||= Dapp::Dimg::Build::Stage::GALatestPatch.new(empty_dimg, stubbed_stage)
+    @g_a_latest_patch_stage ||= Dapp::Dimg::Build::Stage::GALatestPatch.new(g_a_stubbed_dimg, stubbed_stage)
   end
 
   def git_artifact
@@ -100,7 +142,7 @@ describe Dapp::Dimg::GitArtifact do
   end
 
   def stubbed_repo
-    @stubbed_repo ||= Dapp::Dimg::GitRepo::Own.new(dimg)
+    @stubbed_repo ||= Dapp::Dimg::GitRepo::Own.new(g_a_stubbed_dimg)
   end
 
   def git_artifact_local_options
@@ -143,7 +185,7 @@ describe Dapp::Dimg::GitArtifact do
   end
 
   def check_container_file(path)
-    container_run("#{dimg.dapp.test_bin} -f #{path}")
+    container_run("#{g_a_stubbed_dimg.dapp.test_bin} -f #{path}")
   end
 
   def container_file_path(path)
@@ -151,7 +193,7 @@ describe Dapp::Dimg::GitArtifact do
   end
 
   def container_file_stat(path)
-    res = container_run("#{dimg.dapp.stat_bin} -c '%a %u %g' #{path}")
+    res = container_run("#{g_a_stubbed_dimg.dapp.stat_bin} -c '%a %u %g' #{path}")
     expect { res.error! }.to_not raise_error
     mode, uid, gid = res.stdout.strip.split
     { mode: mode, uid: uid, gid: gid }
@@ -348,12 +390,12 @@ describe Dapp::Dimg::GitArtifact do
 
     context 'symlink' do
       def check_container_symlink(path)
-        container_run("#{dimg.dapp.test_bin} -h #{path}")
+        container_run("#{g_a_stubbed_dimg.dapp.test_bin} -h #{path}")
       end
 
       def expext_container_file_link(path, link)
         expect { check_container_symlink(path).error! }.to_not raise_error
-        expect(container_run("#{dimg.dapp.readlink_bin} -f #{path}").stdout.strip).to eq link
+        expect(container_run("#{g_a_stubbed_dimg.dapp.readlink_bin} -f #{path}").stdout.strip).to eq link
       end
 
       def git_add_symlink_and_commit(file, link)

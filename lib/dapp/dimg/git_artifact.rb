@@ -7,6 +7,8 @@ module Dapp
       attr_reader :repo
       attr_reader :name
 
+      # FIXME: переименовать cwd в from
+
       # rubocop:disable Metrics/ParameterLists
       def initialize(repo, to:, name: nil, branch: nil, commit: nil,
                      cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil,
@@ -28,28 +30,89 @@ module Dapp
       end
       # rubocop:enable Metrics/ParameterLists
 
-      def apply_archive_command(stage)
-        credentials = [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
+      def cwd_type(stage)
+        if dev_mode?
+          p = repo.workdir_path.join(cwd)
+          if p.exist?
+            if p.directory?
+              :directory
+            else
+              :file
+            end
+          end
+        elsif cwd == ''
+          :directory
+        else
+          commit = repo.lookup_commit(stage.layer_commit(self))
 
-        [].tap do |commands|
-          commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d #{to}"
-          if archive_any_changes?(stage)
-            commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(*archive_stage_commits(stage))} -C #{to}"
+          cwd_entry = begin
+            commit.tree.path(cwd)
+          rescue Rugged::TreeError
+          end
+
+          if cwd_entry
+            if cwd_entry[:type] == :tree
+              :directory
+            else
+              :file
+            end
           end
         end
+      end
+
+      def apply_archive_command(stage)
+        [].tap do |commands|
+          if archive_any_changes?(stage)
+            case cwd_type(stage)
+            when :directory
+              stage.image.add_service_change_label :"dapp-git-#{paramshash}-type" => 'directory'
+
+              commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d #{to}"
+              commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commits(stage))} -C #{to}"
+            when :file
+              stage.image.add_service_change_label :"dapp-git-#{paramshash}-type" => 'file'
+
+              commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d #{File.dirname(to)}"
+              commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commits(stage))} -C #{File.dirname(to)}"
+            end
+          end
+        end
+      end
+
+      def archive_type
+        repo.dimg.stage_by_name(:g_a_archive).image.labels["dapp-git-#{paramshash}-type"].to_s.to_sym
       end
 
       def apply_patch_command(stage)
         [].tap do |commands|
           if dev_mode?
             if any_changes?(*dev_patch_stage_commits(stage))
-              changed_files = diff_patches(*dev_patch_stage_commits(stage)).map {|p| File.join(to, cwd, p.delta.new_file[:path])}
-              commands << "#{sudo}#{repo.dimg.dapp.rm_bin} -rf #{changed_files.join(' ')}"
-              commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(*dev_patch_stage_commits(stage))} -C #{to}"
+              case archive_type
+              when :directory
+                changed_files = diff_patches(*dev_patch_stage_commits(stage)).map {|p| File.join(to, cwd, p.delta.new_file[:path])}
+                commands << "#{repo.dimg.dapp.rm_bin} -rf #{changed_files.join(' ')}"
+                commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d #{to}"
+                commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage, *dev_patch_stage_commits(stage))} -C #{to}"
+              when :file
+                commands << "#{repo.dimg.dapp.rm_bin} -rf #{to}"
+                commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d #{File.dirname(to)}"
+                commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage, *dev_patch_stage_commits(stage))} -C #{File.dirname(to)}"
+              else
+                raise
+              end
             end
           else
             if patch_any_changes?(stage)
-              commands << "#{sudo}#{repo.dimg.dapp.git_bin} apply --whitespace=nowarn --directory=#{to} --unsafe-paths #{patch_file(*patch_stage_commits(stage))}"
+              case archive_type
+              when :directory
+                commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d #{to}"
+                commands << "#{sudo}#{repo.dimg.dapp.git_bin} apply --whitespace=nowarn --directory=#{to} --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
+              when :file
+                commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d #{File.dirname(to)}"
+                commands << "#{sudo}#{repo.dimg.dapp.git_bin} apply --whitespace=nowarn --directory=#{File.dirname(to)} --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
+              else
+                raise
+              end
             end
           end
         end
@@ -103,12 +166,11 @@ module Dapp
         end
       end
 
-      def dev_patch_hash
+      def dev_patch_hash(stage)
         return unless dev_mode?
 
         Digest::SHA256.hexdigest(diff_patches(latest_commit, nil).map do |patch|
-          next unless (path = repo.path.dirname.join(patch.delta.new_file[:path])).file?
-          File.read(path)
+          change_patch_new_file_path(stage, patch)
         end.join(':::'))
       end
 
@@ -146,7 +208,11 @@ module Dapp
         repo.dimg.dapp.sudo_command(owner: owner, group: group)
       end
 
-      def archive_file(from_commit, to_commit)
+      def credentials
+        [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
+      end
+
+      def archive_file(stage, from_commit, to_commit)
         tar_write(repo.dimg.tmp_path('archives', archive_file_name(from_commit, to_commit))) do |tar|
           diff_patches(from_commit, to_commit).each do |patch|
             entry = patch.delta.new_file
@@ -161,9 +227,9 @@ module Dapp
             end
 
             if entry[:mode] == 40960 # symlink
-              tar.add_symlink slice_cwd(entry[:path]), content, entry[:mode]
+              tar.add_symlink slice_cwd(stage, entry[:path]), content, entry[:mode]
             else
-              tar.add_file slice_cwd(entry[:path]), entry[:mode] do |tf|
+              tar.add_file slice_cwd(stage, entry[:path]), entry[:mode] do |tf|
                 tf.write content
               end
             end
@@ -174,35 +240,54 @@ module Dapp
         raise Error::TarWriter, message: e.message
       end
 
-      def slice_cwd(path)
+      def slice_cwd(stage, path)
         return path if cwd.empty?
-        path
-          .reverse
-          .chomp(cwd.reverse)
-          .reverse
+
+        case cwd_type(stage)
+        when :directory
+          path
+            .reverse
+            .chomp(cwd.reverse)
+            .reverse
+        when :file
+          File.basename(to)
+        else
+          raise
+        end
       end
 
       def archive_file_name(from_commit, to_commit)
         file_name(from_commit, to_commit, 'tar')
       end
 
-      def patch_file(from_commit, to_commit)
+      def patch_file(stage, from_commit, to_commit)
         File.open(repo.dimg.tmp_path('patches', patch_file_name(from_commit, to_commit)), File::RDWR | File::CREAT) do |f|
-          diff_patches(from_commit, to_commit).each { |patch| f.write change_patch_new_file_path(patch) }
+          diff_patches(from_commit, to_commit).each { |patch| f.write change_patch_new_file_path(stage, patch) }
         end
         repo.dimg.container_tmp_path('patches', patch_file_name(from_commit, to_commit))
       end
 
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-      def change_patch_new_file_path(patch)
+      def change_patch_new_file_path(stage, patch)
         patch.to_s.lines.tap do |lines|
           modify_patch_line = proc do |line_number, path_char|
             action_part, path_part = lines[line_number].split
             if (path_with_cwd = path_part.partition("#{path_char}/").last).start_with?(cwd)
-              path_with_cwd.sub(cwd, '').tap do |native_path|
+              native_path = case archive_type
+              when :directory
+                path_with_cwd.sub(cwd, '')
+              when :file
+                File.basename(to)
+              else
+                raise
+              end
+
+              if native_path
                 expected_path = File.join(path_char, native_path)
                 lines[line_number] = [action_part, expected_path].join(' ') + "\n"
               end
+
+              native_path
             end
           end
 
