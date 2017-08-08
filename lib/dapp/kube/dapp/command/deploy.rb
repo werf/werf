@@ -155,13 +155,13 @@ module Dapp
 
               deployment_managers.each(&:after_deploy)
 
+              watch_hooks_thr.kill if watch_hooks_thr.alive?
+
               begin
                 ::Timeout::timeout(self.options[:timeout] || 300) do
-                  watch_hooks_thr.join
                   deployment_managers.each {|deployment_manager| deployment_manager.watch_till_ready!}
                 end
               rescue ::Timeout::Error
-                watch_hooks_thr.kill if watch_hooks_thr.alive?
                 raise Error::Base, code: :deploy_timeout
               end
             end
