@@ -106,16 +106,13 @@ module Dapp
         rescue Excon::Error::Timeout
           raise Error::Timeout
         rescue Error::Base => err
-          if err.net_status[:code] == :bad_request and err.net_status[:data][:response_body]
-            msg = err.net_status[:data][:response_body]['message']
-            if msg.end_with? 'ContainerCreating'
-              raise Error::Pod::ContainerCreating, data: err.net_status[:data]
-            elsif msg.end_with? 'PodInitializing'
-              raise Error::Pod::PodInitializing, data: err.net_status[:data]
-            end
+          if err.net_status[:code] == :bad_request and
+             err.net_status[:data][:response_body] and
+             err.net_status[:data][:response_body]['message'].end_with? 'ContainerCreating'
+             raise Error::Pod::ContainerCreating, data: err.net_status[:data]
+          else
+            raise
           end
-
-          raise
         end
 
         def event_list(**query_parameters)

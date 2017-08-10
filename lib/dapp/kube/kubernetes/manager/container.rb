@@ -38,7 +38,7 @@ module Dapp
                     [timestamp, data]
                   end
                   .reject {|timestamp, _| @processed_log_timestamps.include? timestamp}
-              rescue Kubernetes::Client::Error::Pod::ContainerCreating, Kubernetes::Client::Error::Pod::PodInitializing
+              rescue Kubernetes::Client::Error::Pod::ContainerCreating
                 sleep 0.1
                 next
               end

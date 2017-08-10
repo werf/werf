@@ -129,7 +129,7 @@ module Dapp
                                   [timestamp, data]
                                 end
                               }.compact
-                          rescue Kubernetes::Client::Error::Pod::ContainerCreating, Kubernetes::Client::Error::Pod::PodInitializing
+                          rescue Kubernetes::Client::Error::Pod::ContainerCreating
                             next
                           end
 
