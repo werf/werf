@@ -19,9 +19,16 @@ module Dapp
 
       module Pod
         class NotFound < Kubernetes::Client::Error::NotFound ; end
+
         class ContainerCreating < Kubernetes::Client::Error::Base
           def initialize(**net_status)
             super({code: :container_creating}.merge(net_status))
+          end
+        end
+
+        class PodInitializing < Kubernetes::Client::Error::Base
+          def initialize(**net_status)
+            super({code: :pod_initializing}.merge(net_status))
           end
         end
       end # Pod
