@@ -169,7 +169,7 @@ module Dapp
                     next if artifact_include_shift.start_with? path
 
                     path = path_to_relative.call(path.sub(artifact_include_shift, ''))
-                    unless artifact._exclude_paths.any? { |epath| path.start_with? epath }
+                    unless artifact._include_paths.any? { |ipath| ipath.start_with? path } || artifact._exclude_paths.any? { |epath| path.start_with? epath }
                       artifact._exclude_paths << path
                     end
                   end
