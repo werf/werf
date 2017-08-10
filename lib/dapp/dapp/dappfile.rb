@@ -33,7 +33,6 @@ module Dapp
           ::Dapp::Config::Config.new(dapp: self).tap do |config|
             begin
               config.instance_eval File.read(dappfile_path), dappfile_path
-              config.after_parsing!
               config.validate!
             rescue SyntaxError, StandardError => e
               backtrace = e.backtrace.find { |line| line.start_with?(dappfile_path) }

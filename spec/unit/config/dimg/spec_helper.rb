@@ -15,10 +15,7 @@ module SpecHelper
     end
 
     def dimg_config_validate!
-      config.tap do |c|
-        c.send(:after_parsing!)
-        c.send(:dimg_config_validate!)
-      end
+      config.send(:dimg_config_validate!)
     end
   end
 end

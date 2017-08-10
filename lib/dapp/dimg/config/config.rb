@@ -8,10 +8,6 @@ module Dapp
 
         protected
 
-        def dimg_after_parsing!
-          _dimg.each(&:artifacts_after_parsing!)
-        end
-
         def dimg_config_validate!
           raise Error::Config, code: :dimg_name_required if _dimg.any? { |dimg| dimg._name.nil? } && _dimg.size > 1
           _dimg.each(&:validate!)

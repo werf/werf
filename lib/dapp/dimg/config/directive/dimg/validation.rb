@@ -67,7 +67,7 @@ module Dapp
             end
 
             def validate_artifacts!
-              artifacts = validate_artifact_format(all_artifacts)
+              artifacts = validate_artifact_format(validated_artifacts)
               loop do
                 break if artifacts.empty?
                 verifiable_artifact = artifacts.shift
@@ -132,6 +132,10 @@ module Dapp
               _artifact.select do |art|
                 !(art._before.nil? && art._after.nil?)
               end
+            end
+
+            def validated_artifacts
+              _artifact + _git_artifact._local + _git_artifact._remote
             end
           end # Validation
           # rubocop:enable Metrics/ModuleLength

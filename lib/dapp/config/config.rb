@@ -9,10 +9,6 @@ module Dapp
         !!@_dev_mode
       end
 
-      def after_parsing!
-        do_all!('_after_parsing!')
-      end
-
       def validate!
         do_all!('_validate!')
       end
