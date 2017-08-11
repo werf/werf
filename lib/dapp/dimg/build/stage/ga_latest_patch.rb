@@ -31,7 +31,7 @@ module Dapp
           end
 
           def git_artifacts_dev_patch_hashes
-            dimg.git_artifacts.map(&:dev_patch_hash)
+            dimg.git_artifacts.map {|ga| ga.dev_patch_hash(self)}
           end
         end # GALatestPatch
       end # Stage
