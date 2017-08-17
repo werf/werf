@@ -4,6 +4,8 @@ module Dapp
       class Client
         include Helper::YAML
 
+        ::Dapp::Dapp::Shellout::Base.default_env_keys << 'KUBECONFIG'
+
         def initialize(namespace: nil)
           @namespace = namespace
           @query_parameters = {}
