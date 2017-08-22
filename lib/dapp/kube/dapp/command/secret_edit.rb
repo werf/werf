@@ -34,10 +34,8 @@ module Dapp
                       deep_delete_if_key_not_exist(encoded_values, updated_decoded_values)
 
                       modified_decoded_values = deep_select_modified_keys(updated_decoded_values, decoded_values)
-                      encoded_values.in_depth_merge(kube_helm_encode_json(secret, modified_decoded_values))
-                        .sort
-                        .to_h
-                        .to_yaml
+                      updated_encoded_values = encoded_values.in_depth_merge(kube_helm_encode_json(secret, modified_decoded_values))
+                      deep_sort_by_same_structure(updated_encoded_values, updated_decoded_values).to_yaml
                     else
                       kube_secret_file(tmp_file_path)
                     end
@@ -87,6 +85,14 @@ module Dapp
                 false
               else
                 true
+              end
+            end
+          end
+
+          def deep_sort_by_same_structure(hash1, hash2)
+            hash1.sort_by { |k, _| hash2.keys.index(k) }.to_h.tap do |h|
+              h.select { |_, v| v.is_a?(Hash) }.each do |k, _|
+                h[k] = deep_sort_by_same_structure(h[k], hash2[k])
               end
             end
           end
