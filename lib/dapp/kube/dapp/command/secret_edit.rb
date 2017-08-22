@@ -19,17 +19,39 @@ module Dapp
 
               tmp_file_path = kube_tmp_chart_path(file_path)
               tmp_file_path.binwrite(decoded_data)
-              system(kube_secret_editor, tmp_file_path.to_s)
 
-              encoded_data = begin
-                if options[:values]
-                  kube_secret_values(tmp_file_path)
-                else
-                  kube_secret_file(tmp_file_path)
+              loop do
+                begin
+                  system(kube_secret_editor, tmp_file_path.to_s)
+
+                  encoded_data = begin
+                    if options[:values]
+                      encoded_values = yaml_load_file(file_path)
+
+                      decoded_values = kube_helm_decode_json(secret, yaml_load_file(file_path))
+                      updated_decoded_values = yaml_load_file(tmp_file_path)
+
+                      deep_delete_if_key_not_exist(encoded_values, updated_decoded_values)
+
+                      modified_decoded_values = deep_select_modified_keys(updated_decoded_values, decoded_values)
+                      encoded_values.in_depth_merge(kube_helm_encode_json(secret, modified_decoded_values))
+                        .sort
+                        .to_h
+                        .to_yaml
+                    else
+                      kube_secret_file(tmp_file_path)
+                    end
+                  end
+
+                  IO.binwrite(file_path, "#{encoded_data}\n")
+                  break
+                rescue ::Dapp::Error::Base => e
+                  log_warning(e.net_status[:data][:message])
+                  print 'Do you want to change file (Y/n)?'
+                  response = $stdin.noecho(&:gets).tap { print "\n" }
+                  return if response.strip == 'n'
                 end
               end
-
-              IO.binwrite(file_path, "#{encoded_data}\n")
             end
           end
 
@@ -37,6 +59,36 @@ module Dapp
             return ENV['EDITOR'] unless ENV['EDITOR'].nil?
             %w(vim vi nano).each { |editor| return editor unless shellout("which #{editor}").exitstatus.nonzero? }
             raise Error::Command, code: :editor_not_found
+          end
+
+          private
+
+          def deep_select_modified_keys(hash1, hash2)
+            {}.tap do |hash|
+              hash1.each do |k, v|
+                next if hash2[k] == v
+                hash[k] = begin
+                  if hash2[k].is_a?(Hash) && v.is_a?(Hash)
+                    deep_select_modified_keys(v, hash2[k])
+                  else
+                    v
+                  end
+                end
+              end
+            end
+          end
+
+          def deep_delete_if_key_not_exist(hash1, hash2)
+            hash1.delete_if do |k, v|
+              if hash2.key?(k)
+                if hash2[k].is_a?(Hash) && v.is_a?(Hash)
+                  deep_delete_if_key_not_exist(v, hash2[k])
+                end
+                false
+              else
+                true
+              end
+            end
           end
         end
       end
