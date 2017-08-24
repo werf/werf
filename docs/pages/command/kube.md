@@ -63,7 +63,7 @@ dapp kube secret generate [FILE_PATH] [options]
 #### -o OUTPUT_FILE_PATH
 Перенаправляет зашифрованные данные в файл `OUTPUT_FILE_PATH`.
 
-### dapp kube secret generate
+### dapp kube secret extract
 Расшифровать данные ключом `DAPP_SECRET_KEY`.
 
 ```
