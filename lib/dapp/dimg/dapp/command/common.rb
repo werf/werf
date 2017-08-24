@@ -35,7 +35,7 @@ module Dapp
             return if images_ids.empty?
             log_step_with_indent(:'check user containers') do
               run_command(%(#{host_docker_bin} ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')})).tap do |res|
-                raise Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if !res.stdout.strip.empty? && !dry_run?
+                raise Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if res && !res.stdout.strip.empty? && !dry_run?
               end
             end
           end
