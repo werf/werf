@@ -81,6 +81,8 @@ module Dapp
                   else
                     secret_key_not_found_in << "`#{file_path}`"
                   end
+                else
+                  log_warning(desc: { code: :secret_key_dappfile_not_found })
                 end
               end
 
