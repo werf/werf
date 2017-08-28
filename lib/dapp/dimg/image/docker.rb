@@ -114,11 +114,11 @@ module Dapp
               name, id, created_at, size_field = l.split(';').map(&:strip)
               name = name.reverse.chomp('docker.io/'.reverse).reverse
               size = begin
-                match = size_field.match(/^(\d+(\.\d+)?)\ ?(b|kb|mb|gb|tb)$/i)
-                raise Error::Build, code: :unsupported_docker_image_size_format, data: {value: size_field} unless match and match[1] and match[3]
+                match = size_field.match(/^(\S+)\ ?(b|kb|mb|gb|tb)$/i)
+                raise Error::Build, code: :unsupported_docker_image_size_format, data: {value: size_field} unless match and match[1] and match[2]
 
                 number = match[1].to_f
-                unit = match[3].downcase
+                unit = match[2].downcase
 
                 coef = case unit
                        when 'b'  then 0
