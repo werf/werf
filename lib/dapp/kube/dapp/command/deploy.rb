@@ -63,7 +63,8 @@ module Dapp
           def kube_helm_decode_secret_files
             return unless kube_chart_secret_path.directory?
             Dir.glob(kube_chart_secret_path.join('**/*')).each do |entry|
-              next unless File.file?(entry)
+              next if File.directory?(entry)
+              kube_secret_file_validate!(entry)
               secret_relative_path = Pathname(entry).subpath_of(kube_chart_secret_path)
               secret_data = secret.extract(IO.binread(entry).chomp("\n"))
               File.open(kube_tmp_chart_secret_path(secret_relative_path), 'wb:ASCII-8BIT', 0400) {|f| f.write secret_data}
@@ -189,7 +190,7 @@ module Dapp
             @kube_chart_secret_values_files ||= [].tap do |files|
               files << kube_chart_secret_values_path if kube_chart_secret_values_path.file?
               files.concat(options[:helm_secret_values_options].map { |p| Pathname(p).expand_path }.each do |f|
-                raise Error::Command, code: :secret_values_file_not_found, data: { path: f } unless f.file?
+                kube_secret_file_validate!(f)
               end)
             end
           end

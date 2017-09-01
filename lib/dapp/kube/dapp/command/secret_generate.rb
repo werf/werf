@@ -8,7 +8,7 @@ module Dapp
 
             data = begin
               if file_path
-                raise Error::Command, code: :file_not_exist, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
+                kube_secret_file_validate!(file_path)
 
                 if options[:values]
                   kube_secret_values(file_path)

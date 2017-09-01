@@ -8,12 +8,13 @@ module Dapp
 
             secret_values_paths << kube_chart_path('secret-values.yaml') if kube_chart_path('secret-values.yaml').file?
             secret_values_paths.each do |file_path|
-              raise Error::Command, code: :file_not_exist, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
+              kube_secret_file_validate!(file_path)
               regenerated_data[file_path] = kube_regenerate_secret_values(file_path)
             end
 
             Dir.glob(kube_chart_secret_path('**/*'), File::FNM_DOTMATCH).each do |file_path|
               next if File.directory?(file_path)
+              kube_secret_file_validate!(file_path)
               regenerated_data[file_path] = kube_regenerate_secret_file(file_path)
             end
 
