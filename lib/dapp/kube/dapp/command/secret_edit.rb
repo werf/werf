@@ -8,7 +8,7 @@ module Dapp
 
             with_kube_tmp_chart_dir do
               decoded_data = begin
-                raise Error::Command, code: :file_not_exist, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
+                kube_secret_file_validate!(file_path)
 
                 if options[:values]
                   kube_extract_secret_values(file_path)

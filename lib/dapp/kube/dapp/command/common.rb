@@ -15,28 +15,25 @@ module Dapp
             kubernetes.namespace
           end
 
-          def kube_helm_encode_json(secret, json)
-            encode_json = proc do |value|
-              case value
-              when Array then value.map { |v| encode_json.call(v) }
-              when Hash then kube_helm_encode_json(secret,value)
-              else
-                secret.nil? ? '' : secret.generate(value)
+          { encode: :generate, decode: :extract }.each do |type, secret_method|
+            define_method "kube_helm_#{type}_json" do |secret, json|
+              change_json_value = proc do |value|
+                case value
+                when Array then value.map { |v| change_json_value.call(v) }
+                when Hash then send(:"kube_helm_#{type}_json", secret, value)
+                when '' then ''
+                else
+                  secret.nil? ? '' : secret.public_send(secret_method, value)
+                end
+
+                json.each { |k, v| json[k] = change_json_value.call(v) }
               end
             end
-            json.each { |k, v| json[k] = encode_json.call(v) }
           end
 
-          def kube_helm_decode_json(secret, json)
-            decode_value = proc do |value|
-              case value
-              when Array then value.map { |v| decode_value.call(v) }
-              when Hash then kube_helm_decode_json(secret,value)
-              else
-                secret.nil? ? '' : secret.extract(value)
-              end
-            end
-            json.each { |k, v| json[k] = decode_value.call(v) }
+          def kube_secret_file_validate!(file_path)
+            raise Error::Command, code: :secret_file_not_found, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
+            raise Error::Command, code: :secret_file_empty, data: { path: File.expand_path(file_path) } if File.read(file_path).strip.empty?
           end
 
           def secret_key_should_exist!
