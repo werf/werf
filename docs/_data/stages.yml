@@ -11,8 +11,7 @@ entries:
   - name: mount
     dependence:
     - from-dappfile-to
-  dappfile_base:
-  - "docker.from &lt;image&gt;[, cache_version: &lt;cache_version&gt;]<br />mount &lt;to&gt;"
+  dappfile_base: "docker.from &lt;image&gt;[, cache_version: &lt;cache_version&gt;]<br />mount &lt;to&gt;"
 - name: before_install
   type: "app artifact"
   signatures:
