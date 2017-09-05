@@ -8,7 +8,7 @@ module Dapp
           end
 
           def kube_release_name
-            "#{name}-#{kube_namespace}"
+            "#{name}-#{kube_namespace}".slugify
           end
 
           def kube_namespace
