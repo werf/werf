@@ -23,6 +23,7 @@ require 'yaml'
 require 'openssl'
 require 'etc'
 require 'zlib'
+require 'slugify'
 
 require 'dapp/version'
 require 'dapp/core_ext/hash'
