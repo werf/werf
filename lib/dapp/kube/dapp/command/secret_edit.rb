@@ -34,7 +34,7 @@ module Dapp
                       deep_delete_if_key_not_exist(encoded_values, updated_decoded_values)
 
                       modified_decoded_values = deep_select_modified_keys(updated_decoded_values, decoded_values)
-                      updated_encoded_values = encoded_values.in_depth_merge(kube_helm_encode_json(secret, modified_decoded_values))
+                      updated_encoded_values = deep_merge(encoded_values, kube_helm_encode_json(secret, modified_decoded_values))
                       deep_sort_by_same_structure(updated_encoded_values, updated_decoded_values).to_yaml
                     else
                       kube_secret_file(tmp_file_path)
@@ -46,7 +46,7 @@ module Dapp
                 rescue ::Dapp::Error::Base => e
                   log_warning(Helper::NetStatus.message(e))
                   print 'Do you want to change file (Y/n)?'
-                  response = $stdin.noecho(&:gets).tap { print "\n" }
+                  response = $stdin.getch.tap { print "\n" }
                   return if response.strip == 'n'
                 end
               end
@@ -60,6 +60,16 @@ module Dapp
           end
 
           private
+
+          def deep_merge(hash1, hash2)
+            hash1.merge(hash2) do |_, v1, v2|
+              if v1.is_a?(::Hash) && v2.is_a?(::Hash)
+                deep_merge(v1, v2)
+              else
+                v2
+              end
+            end
+          end
 
           def deep_select_modified_keys(hash1, hash2)
             {}.tap do |hash|
