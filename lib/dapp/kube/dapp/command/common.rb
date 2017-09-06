@@ -21,7 +21,7 @@ module Dapp
                 case value
                 when Array then value.map { |v| change_json_value.call(v) }
                 when Hash then send(:"kube_helm_#{type}_json", secret, value)
-                when '' then ''
+                when '', nil then ''
                 else
                   secret.nil? ? '' : secret.public_send(secret_method, value)
                 end
