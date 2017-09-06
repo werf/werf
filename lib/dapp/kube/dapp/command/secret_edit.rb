@@ -17,7 +17,7 @@ module Dapp
                 end
               end
 
-              tmp_file_path = kube_tmp_chart_path(file_path)
+              tmp_file_path = kube_tmp_chart_path(File.basename(file_path))
               tmp_file_path.binwrite(decoded_data)
 
               loop do
@@ -44,7 +44,7 @@ module Dapp
                   IO.binwrite(file_path, "#{encoded_data}\n")
                   break
                 rescue ::Dapp::Error::Base => e
-                  log_warning(e.net_status[:data][:message])
+                  log_warning(Helper::NetStatus.message(e))
                   print 'Do you want to change file (Y/n)?'
                   response = $stdin.noecho(&:gets).tap { print "\n" }
                   return if response.strip == 'n'

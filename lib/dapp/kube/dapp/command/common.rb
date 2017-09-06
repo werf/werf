@@ -25,9 +25,9 @@ module Dapp
                 else
                   secret.nil? ? '' : secret.public_send(secret_method, value)
                 end
-
-                json.each { |k, v| json[k] = change_json_value.call(v) }
               end
+
+              json.each { |k, v| json[k] = change_json_value.call(v) }
             end
           end
 
