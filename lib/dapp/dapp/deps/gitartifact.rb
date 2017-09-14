@@ -10,10 +10,10 @@ module Dapp
 
         def gitartifact_container
           @gitartifact_container ||= begin
-            if shellout("#{host_docker_bin} inspect #{gitartifact_container_name}").exitstatus.nonzero?
+            if shellout("#{host_docker} inspect #{gitartifact_container_name}").exitstatus.nonzero?
               log_secondary_process(t(code: 'process.gitartifact_container_creating'), short: true) do
                 shellout!(
-                  ["#{host_docker_bin} create",
+                  ["#{host_docker} create",
                    "--name #{gitartifact_container_name}",
                    "--volume /.dapp/deps/gitartifact/#{GITARTIFACT_VERSION}",
                    "dappdeps/gitartifact:#{GITARTIFACT_VERSION}"].join(' ')

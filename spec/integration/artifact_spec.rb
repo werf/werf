@@ -34,7 +34,7 @@ describe Dapp::Dimg::Artifact do
   context :dimg do
     def expect_file
       image_name = stages[expect_stage].send(:image_name)
-      expect { shellout!("#{host_docker_bin} run --rm #{image_name} bash -lec 'cat /#{to_directory}/test'") }.to_not raise_error
+      expect { shellout!("#{host_docker} run --rm #{image_name} bash -lec 'cat /#{to_directory}/test'") }.to_not raise_error
     end
 
     def expect_stage
@@ -68,11 +68,11 @@ describe Dapp::Dimg::Artifact do
 
       begin
         expect do
-          shellout!("#{host_docker_bin} create --name #{container_name} --volume /#{to_directory} #{image_name} no_such_command")
-          shellout!("#{host_docker_bin} run --rm --volumes-from #{container_name} ubuntu:14.04 bash -lec 'cat /#{to_directory}/test'")
+          shellout!("#{host_docker} create --name #{container_name} --volume /#{to_directory} #{image_name} no_such_command")
+          shellout!("#{host_docker} run --rm --volumes-from #{container_name} ubuntu:14.04 bash -lec 'cat /#{to_directory}/test'")
         end.to_not raise_error
       ensure
-        shellout("#{host_docker_bin} rm -f #{container_name}")
+        shellout("#{host_docker} rm -f #{container_name}")
       end
     end
   end

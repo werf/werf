@@ -120,7 +120,7 @@ module Dapp
       end
 
       def run(docker_options, command)
-        cmd = "#{dapp.host_docker_bin} run #{[docker_options, last_stage.image.built_id, command].flatten.compact.join(' ')}"
+        cmd = "#{dapp.host_docker} run #{[docker_options, last_stage.image.built_id, command].flatten.compact.join(' ')}"
         if dapp.dry_run?
           dapp.log(cmd)
         else
@@ -157,7 +157,7 @@ module Dapp
       end
 
       def introspect_image!(image:, options:)
-        cmd = "#{dapp.host_docker_bin} run -ti --rm --entrypoint #{dapp.bash_bin} #{options} #{image}"
+        cmd = "#{dapp.host_docker} run -ti --rm --entrypoint #{dapp.bash_bin} #{options} #{image}"
         system(cmd)
       end
 
@@ -167,7 +167,7 @@ module Dapp
         # Чтобы от них избавиться — запускаем docker-контейнер под root-пользователем
         # и удаляем примонтированную tmp-директорию.
         cmd = "".tap do |cmd|
-          cmd << "#{dapp.host_docker_bin} run --rm"
+          cmd << "#{dapp.host_docker} run --rm"
           cmd << " --volume #{dapp.tmp_base_dir}:#{dapp.tmp_base_dir}"
           cmd << " alpine:3.6"
           cmd << " rm -rf #{tmp_path}"
