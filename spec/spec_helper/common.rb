@@ -17,8 +17,8 @@ module SpecHelper
       shellout(*args, **kwargs).tap(&:error!)
     end
 
-    def host_docker_bin
-      ::Dapp::Dapp.host_docker_bin
+    def host_docker
+      ::Dapp::Dapp.host_docker
     end
 
     def random_string(n = 10)

@@ -51,7 +51,7 @@ module Dapp
             def actual_cache_images
               @actual_cache_images ||= begin
                 shellout!([
-                  "#{host_docker_bin} images",
+                  "#{host_docker} images",
                   '--format="{{.Repository}}:{{.Tag}}"',
                   %(-f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}"),
                   stage_cache
@@ -60,7 +60,7 @@ module Dapp
             end
 
             def dapp_images_hash
-              shellout!(%(#{host_docker_bin} images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{stage_cache})).stdout.lines.map do |line|
+              shellout!(%(#{host_docker} images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{stage_cache})).stdout.lines.map do |line|
                 line.strip.split(';')
               end.to_h
             end
@@ -79,7 +79,7 @@ module Dapp
             end
 
             def image_exist?(image_id)
-              shellout!(%(#{host_docker_bin} inspect #{image_id}))
+              shellout!(%(#{host_docker} inspect #{image_id}))
               true
             rescue ::Dapp::Error::Shellout
               false
@@ -90,7 +90,7 @@ module Dapp
             end
 
             def image_parent(image_id)
-              shellout!(%(#{host_docker_bin} inspect -f {{.Parent}} #{image_id})).stdout.strip
+              shellout!(%(#{host_docker} inspect -f {{.Parent}} #{image_id})).stdout.strip
             end
 
             def proper_git_commit
@@ -109,7 +109,7 @@ module Dapp
             def dapp_images_detailed
               @dapp_images_detailed ||= {}.tap do |images|
                 dapp_images_names.each do |image_name|
-                  shellout!(%(#{host_docker_bin} inspect --format='{{json .}}' #{image_name})).stdout.strip.tap do |output|
+                  shellout!(%(#{host_docker} inspect --format='{{json .}}' #{image_name})).stdout.strip.tap do |output|
                     images[image_name] = output == 'null' ? {} : JSON.parse(output)
                   end
                 end

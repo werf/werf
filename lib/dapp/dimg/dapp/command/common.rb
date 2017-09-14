@@ -6,19 +6,19 @@ module Dapp
           protected
 
           def dapp_images_names
-            shellout!(%(#{host_docker_bin} images --format="{{.Repository}}:{{.Tag}}" #{stage_cache})).stdout.lines.map(&:strip)
+            shellout!(%(#{host_docker} images --format="{{.Repository}}:{{.Tag}}" #{stage_cache})).stdout.lines.map(&:strip)
           end
 
           def dapp_images_ids
-            shellout!(%(#{host_docker_bin} images #{stage_cache} -q --no-trunc)).stdout.lines.map(&:strip)
+            shellout!(%(#{host_docker} images #{stage_cache} -q --no-trunc)).stdout.lines.map(&:strip)
           end
 
           def dapp_containers_flush
-            remove_containers_by_query(%(#{host_docker_bin} ps -a -f "label=dapp" -f "name=#{container_name_prefix}" -q), force: true)
+            remove_containers_by_query(%(#{host_docker} ps -a -f "label=dapp" -f "name=#{container_name_prefix}" -q), force: true)
           end
 
           def dapp_dangling_images_flush
-            remove_images_by_query(%(#{host_docker_bin} images -f "dangling=true" -f "label=dapp=#{stage_dapp_label}" -q), force: true)
+            remove_images_by_query(%(#{host_docker} images -f "dangling=true" -f "label=dapp=#{stage_dapp_label}" -q), force: true)
           end
 
           def remove_images_by_query(images_query, force: false)
@@ -28,13 +28,13 @@ module Dapp
           def remove_images(ids, force: false)
             ids.uniq!
             check_user_containers!(ids) unless force
-            remove_base("#{host_docker_bin} rmi%{force_option} %{ids}", ids, force: force)
+            remove_base("#{host_docker} rmi%{force_option} %{ids}", ids, force: force)
           end
 
           def check_user_containers!(images_ids)
             return if images_ids.empty?
             log_step_with_indent(:'check user containers') do
-              run_command(%(#{host_docker_bin} ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')})).tap do |res|
+              run_command(%(#{host_docker} ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')})).tap do |res|
                 raise Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if res && !res.stdout.strip.empty? && !dry_run?
               end
             end
@@ -45,7 +45,7 @@ module Dapp
           end
 
           def remove_containers(ids, force: false)
-            remove_base("#{host_docker_bin} rm%{force_option} %{ids}", ids.uniq, force: force)
+            remove_base("#{host_docker} rm%{force_option} %{ids}", ids.uniq, force: force)
           end
 
           def remove_base(query_format, ids, force: false)

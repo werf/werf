@@ -98,21 +98,26 @@ module Dapp
       name
     end
 
-    def host_docker_bin
-      self.class.host_docker_bin
+    def host_docker
+      self.class.host_docker
     end
 
-    def self.host_docker_bin
-      @host_docker_bin ||= begin
+    def self.host_docker
+      @host_docker ||= begin
         raise Error::Dapp, code: :docker_not_found if (res = shellout('which docker')).exitstatus.nonzero?
-        res.stdout.strip.tap do |docker_bin|
-          current_docker_version = shellout!("#{docker_bin} --version").stdout.strip
-          required_docker_version = '1.10.0'
+        docker_bin = res.stdout.strip
 
-          if Gem::Version.new(required_docker_version) >= Gem::Version.new(current_docker_version[/(\d+\.)+\d+/])
-            raise Error::Dapp, code: :docker_version, data: { version: required_docker_version }
-          end
+        current_docker_version = shellout!("#{docker_bin} --version").stdout.strip
+        required_docker_version = '1.10.0'
+
+        if Gem::Version.new(required_docker_version) >= Gem::Version.new(current_docker_version[/(\d+\.)+\d+/])
+          raise Error::Dapp, code: :docker_version, data: { version: required_docker_version }
         end
+
+        [].tap do |cmd|
+          cmd << docker_bin
+          cmd << "--config #{ENV['DAPP_DOCKER_CONFIG']}" if ENV.key?('DAPP_DOCKER_CONFIG')
+        end.join(' ')
       end
     end
   end # Dapp

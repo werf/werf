@@ -107,7 +107,7 @@ module Dapp
           ]
 
           builder.dimg.dapp.shellout!(
-            [ "#{builder.dimg.dapp.host_docker_bin} run --rm",
+            [ "#{builder.dimg.dapp.host_docker} run --rm",
               volumes_from.map {|container| "--volumes-from #{container}"}.join(' '),
               *local_paths.map {|path| "--volume #{path}:#{path}"},
               "--volume #{builder.dimg.tmp_path}:#{builder.dimg.tmp_path}",
