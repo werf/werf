@@ -213,31 +213,63 @@ module Dapp
       end
 
       def archive_file(stage, from_commit, to_commit)
+        if repo.dimg.dapp.options[:use_system_tar]
+          archive_file_with_system_tar(stage, from_commit, to_commit)
+        else
+          archive_file_with_tar_writer(stage, from_commit, to_commit)
+        end
+        repo.dimg.container_tmp_path('archives', archive_file_name(from_commit, to_commit))
+      end
+
+      def archive_file_with_tar_writer(stage, from_commit, to_commit)
         tar_write(repo.dimg.tmp_path('archives', archive_file_name(from_commit, to_commit))) do |tar|
-          diff_patches(from_commit, to_commit).each do |patch|
-            entry = patch.delta.new_file
-
-            content = begin
-              if to_commit == nil
-                next unless (path = repo.path.dirname.join(entry[:path])).file?
-                File.read(path)
-              else
-                repo.lookup_object(entry[:oid]).content
-              end
-            end
-
-            if entry[:mode] == 40960 # symlink
-              tar.add_symlink slice_cwd(stage, entry[:path]), content, entry[:mode]
+          archive_diff_pathes(stage,from_commit, to_commit) do |path, content, mode|
+            if mode == 40960 # symlink
+              tar.add_symlink path, content, mode
             else
-              tar.add_file slice_cwd(stage, entry[:path]), entry[:mode] do |tf|
+              tar.add_file path, mode do |tf|
                 tf.write content
               end
             end
           end
         end
-        repo.dimg.container_tmp_path('archives', archive_file_name(from_commit, to_commit))
       rescue Gem::Package::TooLongFileName => e
         raise Error::TarWriter, message: e.message
+      end
+
+      def archive_file_with_system_tar(stage, from_commit, to_commit)
+        repo.dimg.tmp_path('archives', archive_file_name(from_commit, to_commit)).tap do |archive_path|
+          relative_archive_file_path = File.join('archives_files', file_name(from_commit, to_commit))
+          archive_diff_pathes(stage, from_commit, to_commit) do |path, content, mode|
+            file_path = repo.dimg.tmp_path(relative_archive_file_path, path)
+
+            if mode == 40960 # symlink
+              FileUtils.symlink(content, file_path)
+            else
+              IO.write(file_path, content)
+              FileUtils.chmod(mode, file_path)
+            end
+          end
+
+          repo.dimg.dapp.shellout!("tar -C #{repo.dimg.tmp_path(relative_archive_file_path)} -cf #{archive_path} .")
+        end
+      end
+
+      def archive_diff_pathes(stage, from_commit, to_commit)
+        diff_patches(from_commit, to_commit).each do |patch|
+          entry = patch.delta.new_file
+
+          content = begin
+            if to_commit == nil
+              next unless (path = repo.path.dirname.join(entry[:path])).file?
+              File.read(path)
+            else
+              repo.lookup_object(entry[:oid]).content
+            end
+          end
+
+          yield slice_cwd(stage, entry[:path]), content, entry[:mode]
+        end
       end
 
       def slice_cwd(stage, path)
@@ -248,6 +280,7 @@ module Dapp
           path
             .reverse
             .chomp(cwd.reverse)
+            .chomp('/')
             .reverse
         when :file
           File.basename(to)
@@ -257,7 +290,7 @@ module Dapp
       end
 
       def archive_file_name(from_commit, to_commit)
-        file_name(from_commit, to_commit, 'tar')
+        file_name(from_commit, to_commit, ext: 'tar')
       end
 
       def patch_file(stage, from_commit, to_commit)
@@ -321,11 +354,11 @@ module Dapp
       end
 
       def patch_file_name(from_commit, to_commit)
-        file_name(from_commit, to_commit, 'patch')
+        file_name(from_commit, to_commit, ext: 'patch')
       end
 
-      def file_name(*args, ext)
-        "#{[paramshash, args].flatten.compact.join('_')}.#{ext}"
+      def file_name(*args, ext: nil)
+        "#{[paramshash, args].flatten.compact.join('_')}#{".#{ext}" unless ext.nil? }"
       end
 
       def diff_patches(from_commit, to_commit, paths: include_paths_or_cwd)
