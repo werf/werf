@@ -64,7 +64,7 @@ spec:
           secretName: {{ .Chart.Name }}-backend
       containers:
       - command: [ '/bin/bash', '-l', '-c', 'bundle exec ctl start' ]
-        image: {{ tuple . 'specific_name' | include "dimg" }} # or nameless dimg {{ tuple . | include "dimg" }}
+        image: {{ tuple "specific-name" . | include "dimg" }} # or nameless dimg {{ tuple . | include "dimg" }}
         imagePullPolicy: Always
         name: {{ .Chart.Name }}-backend
         livenessProbe:
