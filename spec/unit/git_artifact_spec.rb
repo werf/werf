@@ -68,7 +68,7 @@ describe Dapp::Dimg::GitArtifact do
 
   def container_run(*cmds, rm: true)
     shellout(["#{host_docker_bin} run",
-              "#{'--rm' if rm}",
+              ('--rm' if rm).to_s,
               "--entrypoint #{g_a_stubbed_dimg.dapp.bash_bin}",
               "--name #{containter_name}",
               "--volume #{g_a_stubbed_dimg.tmp_path('archives')}:#{g_a_stubbed_dimg.container_tmp_path('archives')}:ro",
@@ -76,9 +76,9 @@ describe Dapp::Dimg::GitArtifact do
               "--volumes-from #{g_a_stubbed_dimg.dapp.gitartifact_container}",
               "--volumes-from #{g_a_stubbed_dimg.dapp.base_container}",
               "--label dapp=#{g_a_stubbed_dimg.dapp.name}",
-              "--label dapp-test=true",
-              "#{image_name}",
-              "#{prepare_container_command(*cmds)}"].join(' '))
+              '--label dapp-test=true',
+              image_name.to_s,
+              prepare_container_command(*cmds).to_s].join(' '))
   end
 
   def prepare_container_command(*cmds)
@@ -102,11 +102,11 @@ describe Dapp::Dimg::GitArtifact do
     @spec_image_name = 'ubuntu:16.04'
   end
 
-  #def g_a_stubbed_dapp
-    #instance_double(Dapp::Dapp).tap do |obj|
-      #allow(obj).to receive(:dev_mode?).and_return(false)
-    #end
-  #end
+  # def g_a_stubbed_dapp
+  #   instance_double(Dapp::Dapp).tap do |obj|
+  #     allow(obj).to receive(:dev_mode?).and_return(false)
+  #   end
+  # end
 
   def g_a_stubbed_dimg
     @g_a_stubbed_dimg ||= Dapp::Dimg::Dimg.new(dapp: dapp, config: openstruct_config).tap do |obj|
@@ -185,7 +185,7 @@ describe Dapp::Dimg::GitArtifact do
   end
 
   def check_container_file(path)
-    container_run("#{g_a_stubbed_dimg.dapp.test_bin} -f #{path}")
+    container_run("#{g_a_stubbed_dimg.dapp.test_bin} -f \"#{path}\"")
   end
 
   def container_file_path(path)
@@ -193,7 +193,7 @@ describe Dapp::Dimg::GitArtifact do
   end
 
   def container_file_stat(path)
-    res = container_run("#{g_a_stubbed_dimg.dapp.stat_bin} -c '%a %u %g' #{path}")
+    res = container_run("#{g_a_stubbed_dimg.dapp.stat_bin} -c '%a %u %g' \"#{path}\"")
     expect { res.error! }.to_not raise_error
     mode, uid, gid = res.stdout.strip.split
     { mode: mode, uid: uid, gid: gid }
@@ -304,6 +304,10 @@ describe Dapp::Dimg::GitArtifact do
         send("check_#{type}", add_files: %w(a/data.txt a/x/data.txt a/x/y/data.txt a/z/data.txt),
                               added_files: %w(x/data.txt z/data.txt), not_added_files: %w(a data.txt x/y/data.txt),
                               cwd: 'a', include_paths: [%w(x z)], exclude_paths: %w(x/y))
+      end
+
+      it "#{type} file with spaces in name", test_construct: true do
+        send("check_#{type}", add_files: ['name with spaces'], added_files: ['name with spaces'])
       end
     end
 
