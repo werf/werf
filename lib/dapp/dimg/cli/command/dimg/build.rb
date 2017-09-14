@@ -65,6 +65,11 @@ BANNER
         option :build_context_directory,
                long: '--build-context-directory DIR_PATH',
                default: nil
+
+        option :use_system_tar,
+               long: '--use-system-tar',
+               boolean: true,
+               default: false
       end
     end
   end
