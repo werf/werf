@@ -32,6 +32,9 @@ RSpec.configure do |config|
   config.before :each do
     allow_any_instance_of(Dapp::Dapp).to receive(:config_options) { Hash.new }
   end
+  config.before :each do
+    Dapp::Dapp.options.clear
+  end
   config.mock_with :rspec do |mocks|
     mocks.allow_message_expectations_on_nil = true
   end
