@@ -13,6 +13,7 @@ module Dapp
 
     include SshAgent
     include Helper::Sha256
+    extend Helper::Trivia
     include Helper::Trivia
     include Helper::Tar
 
@@ -24,10 +25,14 @@ module Dapp
     attr_reader :options
 
     def initialize(options: {})
-      @options = options
+      self.class.options.merge!(options)
       Logging::I18n.initialize
       validate_config_options!
       Logging::Paint.initialize(option_color)
+    end
+
+    def options
+      self.class.options
     end
 
     def name
@@ -67,7 +72,7 @@ module Dapp
     end
 
     def tmp_base_dir
-      File.expand_path(options[:tmp_dir_prefix] || '/tmp')
+      self.class.tmp_base_dir
     end
 
     def build_path(*path)
@@ -98,26 +103,73 @@ module Dapp
       name
     end
 
+    def terminate
+      FileUtils.rmtree(host_docker_tmp_config_dir)
+    end
+
     def host_docker
       self.class.host_docker
     end
 
-    def self.host_docker
-      @host_docker ||= begin
-        raise Error::Dapp, code: :docker_not_found if (res = shellout('which docker')).exitstatus.nonzero?
-        docker_bin = res.stdout.strip
+    def host_docker_tmp_config_dir
+      self.class.host_docker_tmp_config_dir
+    end
 
-        current_docker_version = shellout!("#{docker_bin} --version").stdout.strip
-        required_docker_version = '1.10.0'
+    def host_docker_login
+      return unless option_repo
 
-        if Gem::Version.new(required_docker_version) >= Gem::Version.new(current_docker_version[/(\d+\.)+\d+/])
-          raise Error::Dapp, code: :docker_version, data: { version: required_docker_version }
+      login = proc {|u, p| shellout!("#{host_docker} login #{option_repo} -u #{u} -p #{p}")}
+      if options.key?(:registry_username) && options.key?(:registry_password)
+        login.call(options[:registry_username], options[:registry_password])
+      elsif ENV.key?('CI_JOB_TOKEN')
+        login.call('gitlab-ci-token', ENV['CI_JOB_TOKEN'])
+      end
+    end
+
+    class << self
+      def options
+        @options ||= {}
+      end
+
+      def host_docker
+        @host_docker ||= begin
+          raise Error::Dapp, code: :docker_not_found if (res = shellout('which docker')).exitstatus.nonzero?
+          docker_bin = res.stdout.strip
+
+          current_docker_version = shellout!("#{docker_bin} --version").stdout.strip
+          required_docker_version = '1.10.0'
+
+          if Gem::Version.new(required_docker_version) >= Gem::Version.new(current_docker_version[/(\d+\.)+\d+/])
+            raise Error::Dapp, code: :docker_version, data: { version: required_docker_version }
+          end
+
+          [].tap do |cmd|
+            cmd << docker_bin
+            cmd << "--config #{host_docker_config_dir}"
+          end.join(' ')
         end
+      end
 
-        [].tap do |cmd|
-          cmd << docker_bin
-          cmd << "--config #{ENV['DAPP_DOCKER_CONFIG']}" if ENV.key?('DAPP_DOCKER_CONFIG')
-        end.join(' ')
+      def host_docker_config_dir
+        if options_with_docker_credentials?
+          host_docker_tmp_config_dir
+        elsif ENV.key?('DAPP_DOCKER_CONFIG')
+          ENV['DAPP_DOCKER_CONFIG']
+        else
+          File.join(Dir.home, '.docker')
+        end
+      end
+
+      def options_with_docker_credentials?
+        (options.key?(:registry_username) && options.key?(:registry_password)) || ENV.key?('CI_JOB_TOKEN')
+      end
+
+      def host_docker_tmp_config_dir
+        @host_docker_tmp_config_dir ||= Dir.mktmpdir('dapp-', tmp_base_dir)
+      end
+
+      def tmp_base_dir
+        File.expand_path(options[:tmp_dir_prefix] || '/tmp')
       end
     end
   end # Dapp

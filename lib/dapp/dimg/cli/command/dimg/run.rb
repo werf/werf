@@ -51,7 +51,9 @@ BANNER
           index = filtered_args.index('--') || filtered_args.count
           docker_options = index.nonzero? ? filtered_args.slice(0..index - 1) : []
           command = filtered_args.slice(index + 1..-1) || []
-          ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: patterns)).run(docker_options, command)
+          run_dapp_command(nil, options: cli_options(dimgs_patterns: patterns)) do |dapp|
+            dapp.run(docker_options, command)
+          end
         end
       end
     end

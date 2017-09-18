@@ -16,7 +16,9 @@ BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
           tag = self.class.required_argument(self, 'tag')
-          ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments)).public_send(class_to_lowercase, tag)
+          run_dapp_command(nil, options: cli_options(dimgs_patterns: cli_arguments)) do
+            dapp.public_send(run_method, tag)
+          end
         end
       end
     end
