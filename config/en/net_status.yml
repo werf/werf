@@ -116,6 +116,7 @@ en:
       commit_not_found_in_remote_git_repository: "Remote git repo `%{url}`: commit `%{commit}` not found!\nIf commit has been rebased: run command `dapp dimg stages cleanup local --improper-git-commit`!"
       branch_not_exist_in_remote_git_repository: "Remote git repo `%{url}`: branch `%{branch}` not exist!"
       rugged_protocol_not_supported: "Rugged has been compiled without support for `%{protocol}`.\nGit repositories will not be reachable via `%{protocol}` (`%{url}`).\nRugged.features should include `%{protocol}`."
+      submodule_not_supported: "Git submodules not supported! (`%{path}`)"
     lock:
       timeout: "Could not obtain lock for `%{name}` within %{timeout} seconds"
     app:
