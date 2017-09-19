@@ -46,7 +46,7 @@ module Dapp
           end
 
           def auths_section_from_docker_config
-            file = Pathname(::Dapp::Dapp.host_docker_config_dir, 'config.json')
+            file = Pathname(File.join(::Dapp::Dapp.host_docker_config_dir, 'config.json'))
             user_not_authorized! unless file.exist?
             JSON.load(file.read)['auths'].tap { |auths| user_not_authorized! if auths.nil? }
           end
