@@ -35,10 +35,14 @@ module Dapp
               lock("#{name}.images") do
                 log_step_with_indent(name) do
                   dapp_dangling_images_flush
-                  dimgs, stages = dapp_images_hash.partition { |_, image_id| repo_dimgs.values.include?(image_id) }
-                  dimgs = dimgs.to_h
-                  stages = stages.to_h
-                  dimgs.each { |_, aiid| except_image_with_parents(aiid, stages) }
+                  dimgs, stages = dapp_images_hash.partition { |_, image_spec| repo_dimgs.values.include?(image_spec[:id]) }.map(&:to_h)
+                  dimgs.each { |_, dimg_spec| except_image_with_parents(dimg_spec[:id], stages) }
+
+                  # Удаление только образов старше 2ч
+                  stages.delete_if do |_, stage_spec|
+                    Time.now - stage_spec[:created_at] < 2*60*60
+                  end
+
                   remove_images(stages.keys)
                 end
               end
@@ -60,9 +64,11 @@ module Dapp
             end
 
             def dapp_images_hash
-              shellout!(%(#{host_docker} images --format "{{.Repository}}:{{.Tag}};{{.ID}}" --no-trunc #{stage_cache})).stdout.lines.map do |line|
-                line.strip.split(';')
-              end.to_h
+              shellout!(%(#{host_docker} images --format "{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}}" --no-trunc #{stage_cache}))
+                .stdout.lines.map do |line|
+                  name, id, created_at = line.strip.split(';', 3)
+                  [name, {name: name, id: id, created_at: Time.parse(created_at)}]
+                end.to_h
             end
 
             def except_image_with_parents(image_id, stages)
@@ -70,11 +76,11 @@ module Dapp
                 image_dapp_artifacts_label(image_id).each { |aiid| except_image_with_parents(aiid, stages) }
                 iid = image_id
                 loop do
-                  stages.delete_if { |_, siid| siid == iid }
+                  stages.delete_if { |_, stage_spec| stage_spec[:id] == iid }
                   break if (iid = image_parent(iid)).empty?
                 end
               else
-                stages.delete_if { |_, siid| siid == image_id }
+                stages.delete_if { |_, stage_spec| stage_spec[:id] == image_id }
               end
             end
 
