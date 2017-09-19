@@ -258,7 +258,7 @@ module Dapp
       def archive_diff_pathes(stage, from_commit, to_commit)
         diff_patches(from_commit, to_commit).each do |patch|
           entry = patch.delta.new_file
-
+          raise_if_submodule_patch!(patch)
           content = begin
             if to_commit == nil
               next unless (path = repo.path.dirname.join(entry[:path])).file?
@@ -295,9 +295,19 @@ module Dapp
 
       def patch_file(stage, from_commit, to_commit)
         File.open(repo.dimg.tmp_path('patches', patch_file_name(from_commit, to_commit)), File::RDWR | File::CREAT) do |f|
-          diff_patches(from_commit, to_commit).each { |patch| f.write change_patch_new_file_path(stage, patch) }
+          diff_patches(from_commit, to_commit).each do |patch|
+            raise_if_submodule_patch!(patch)
+            f.write change_patch_new_file_path(stage, patch)
+          end
         end
         repo.dimg.container_tmp_path('patches', patch_file_name(from_commit, to_commit))
+      end
+
+      def raise_if_submodule_patch!(patch) # FIXME
+        entry = patch.delta.new_file
+        if entry[:mode] == 57344 # submodule
+          raise Error::Rugged, code: :submodule_not_supported, data: { path: repo.path.dirname.join(entry[:path]) }
+        end
       end
 
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
