@@ -14,7 +14,7 @@ Options:
 BANNER
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
-            ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments)).stages_flush_local
+            run_dapp_command(:stages_flush_local, options: cli_options(dimgs_patterns: cli_arguments))
           end
         end
       end

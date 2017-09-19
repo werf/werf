@@ -41,10 +41,16 @@ BANNER
              description: 'Default timeout to wait for resources to become ready, 300 seconds by default.',
              proc: proc {|v| Integer(v)}
 
+      option :registry_username,
+             long: '--registry-username USERNAME'
+
+      option :registry_password,
+             long: '--registry-password PASSWORD'
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         repo = self.class.required_argument(self, 'repo')
-        ::Dapp::Dapp.new(options: cli_options(repo: repo)).public_send(run_method)
+        run_dapp_command(run_method, options: cli_options(repo: repo))
       end
     end
   end

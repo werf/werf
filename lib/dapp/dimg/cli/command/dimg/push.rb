@@ -50,10 +50,16 @@ BANNER
                long: '--with-stages',
                boolean: true
 
+        option :registry_username,
+               long: '--registry-username USERNAME'
+
+        option :registry_password,
+               long: '--registry-password PASSWORD'
+
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
           repo = self.class.required_argument(self, 'repo')
-          ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments, repo: repo)).public_send(class_to_lowercase)
+          run_dapp_command(run_method, options: cli_options(dimgs_patterns: cli_arguments, repo: repo))
         end
       end
     end

@@ -16,7 +16,9 @@ BANNER
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        ::Dapp::Dapp.new(options: cli_options).public_send(run_method, *cli_arguments)
+        run_dapp_command(nil, options: cli_options) do |dapp|
+          dapp.public_send(run_method, *cli_arguments)
+        end
       end
     end
   end

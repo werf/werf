@@ -17,7 +17,9 @@ BANNER
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         file_path = self.class.required_argument(self, 'FILE_PATH')
-        ::Dapp::Dapp.new(options: cli_options).public_send(run_method, file_path)
+        run_dapp_command(nil, options: cli_options) do |dapp|
+          dapp.public_send(run_method, file_path)
+        end
       end
     end
   end

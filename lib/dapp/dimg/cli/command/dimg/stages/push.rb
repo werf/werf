@@ -12,10 +12,16 @@ Usage:
 
 Options:
 BANNER
+          option :registry_username,
+                 long: '--registry-username USERNAME'
+
+          option :registry_password,
+                 long: '--registry-password PASSWORD'
+
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
             repo = self.class.required_argument(self, 'repo')
-            ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments, repo: repo)).stages_push
+            run_dapp_command(:stages_push, options: cli_options(dimgs_patterns: cli_arguments, repo: repo))
           end
         end
       end

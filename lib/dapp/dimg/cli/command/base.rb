@@ -3,7 +3,7 @@ module Dapp::Dimg::CLI
     class Base < ::Dapp::CLI::Command::Base
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        ::Dapp::Dapp.new(options: cli_options(dimgs_patterns: cli_arguments)).public_send(run_method)
+        run_dapp_command(run_method, options: cli_options(dimgs_patterns: cli_arguments))
       end
 
       def run_method
