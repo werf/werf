@@ -129,7 +129,7 @@ module Dapp
           options << "--namespace #{namespace}"
           options << '--install'
           options << '--dry-run' if dry_run
-          options << '--debug'   if dry_run || dapp.log_verbose?
+          options << '--debug'   if dry_run
           options << "--timeout #{deploy_timeout}" if deploy_timeout
         end
       end
