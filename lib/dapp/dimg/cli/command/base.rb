@@ -7,10 +7,14 @@ module Dapp::Dimg::CLI
       end
 
       def run_dapp_command(run_method, *args)
-        super(run_method, *args) do |dapp|
+        super(nil, *args) do |dapp|
           begin
             dapp.host_docker_login
-            yield dapp if run_method.nil? && block_given?
+            if block_given?
+              yield dapp
+            elsif run_method.nil?
+              dapp.public_send(run_method)
+            end
           ensure
             dapp.terminate
           end
