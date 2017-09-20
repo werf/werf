@@ -59,11 +59,8 @@ module Dapp
         def run_dapp_command(run_method, *args)
           dapp = ::Dapp::Dapp.new(*args)
           begin
-            if run_method.nil?
-              yield dapp if block_given?
-            else
-              dapp.public_send(run_method)
-            end
+            yield dapp if block_given?
+            dapp.public_send(run_method) unless run_method.nil?
           end
         end
 
