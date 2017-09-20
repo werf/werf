@@ -35,7 +35,7 @@ gem install dapp $(if [[ $DAPP_VERSION ]] ; then echo "--version=$DAPP_VERSION" 
 echo
 
 if [ -z $DAPP_VERSION ]; then
-  DAPP_VERSION=$(dapp --version)
+  DAPP_VERSION=$(dapp --version | cut -d' ' -f2)
 fi
 
 
