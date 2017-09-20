@@ -61,7 +61,7 @@ module Dapp
           begin
             if block_given?
               yield dapp
-            elsif run_method.nil?
+            elsif !run_method.nil?
               dapp.public_send(run_method)
             end
           end

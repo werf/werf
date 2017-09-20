@@ -12,7 +12,7 @@ module Dapp::Dimg::CLI
             dapp.host_docker_login
             if block_given?
               yield dapp
-            elsif run_method.nil?
+            elsif !run_method.nil?
               dapp.public_send(run_method)
             end
           ensure
