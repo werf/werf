@@ -4,7 +4,7 @@ module Dapp::Kube::CLI::Command
       banner <<BANNER.freeze
 Usage:
 
-  dapp deployment deploy [options] REPO
+  dapp deployment deploy [options] [REPO]
 
 Options:
 BANNER
@@ -43,8 +43,18 @@ BANNER
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        repo = self.class.required_argument(self, 'repo')
-        run_dapp_command(run_method, options: cli_options(repo: repo))
+
+        run_dapp_command(nil, options: cli_options) do |dapp|
+          repo = if not cli_arguments[0].nil?
+            self.class.required_argument(self, 'repo')
+          else
+            dapp.name
+          end
+
+          dapp.options[:repo] = repo
+
+          dapp.public_send(run_method)
+        end
       end
     end
   end
