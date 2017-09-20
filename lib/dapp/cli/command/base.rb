@@ -59,14 +59,11 @@ module Dapp
         def run_dapp_command(run_method, *args)
           dapp = ::Dapp::Dapp.new(*args)
           begin
-            dapp.host_docker_login
             if run_method.nil?
               yield dapp if block_given?
             else
               dapp.public_send(run_method)
             end
-          ensure
-            dapp.terminate
           end
         end
 
