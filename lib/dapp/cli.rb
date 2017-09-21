@@ -12,10 +12,10 @@ Usage: dapp subcommand [subcommand options]
 
 Available subcommands: (for details, dapp SUB-COMMAND --help)
 
-dapp dimg
-dapp deployment
-dapp kube
-dapp update
+  dapp dimg
+  dapp deployment
+  dapp kube
+  dapp update
 
 Options:
 BANNER

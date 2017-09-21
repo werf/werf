@@ -7,8 +7,8 @@ module Dapp::Dimg::CLI
         banner <<BANNER.freeze
 Available subcommands: (for details, dapp dimg build-context SUB-COMMAND --help)
 
-dapp dimg build-context export [options] [DIMG ...]
-dapp dimg build-context import [options]
+  dapp dimg build-context export [options] [DIMG ...]
+  dapp dimg build-context import [options]
 
 Options:
 BANNER
