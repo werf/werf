@@ -3,6 +3,8 @@
 # vi: set ft=ruby :
 
 def with_dapp_running_lock(&blk)
+  return yield
+
   file = nil
 
   begin
