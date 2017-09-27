@@ -71,8 +71,8 @@ module Dapp
           raise
         end
 
-        def cli_options(**kvargs)
-          config.merge(**kvargs)
+        def cli_options(**kwargs)
+          config.merge(**kwargs)
         end
       end
     end
