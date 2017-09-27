@@ -6,7 +6,7 @@ def with_dapp_running_lock(&blk)
   file = nil
 
   begin
-    file = ::File.open("/tmp/dapp_running.lock", ::File::RDWR | ::File::CREAT, 0o644)
+    file = ::File.open("/tmp/dapp-running.lock", ::File::RDWR | ::File::CREAT, 0777)
 
     if ARGV[0] == 'update'
       unless file.flock(::File::LOCK_EX | ::File::LOCK_NB)
