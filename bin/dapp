@@ -3,6 +3,8 @@
 # vi: set ft=ruby :
 
 def with_dapp_running_lock(&blk)
+  file = nil
+
   begin
     file = ::File.open("/tmp/dapp_running.lock", ::File::RDWR | ::File::CREAT, 0o644)
 
@@ -17,7 +19,7 @@ def with_dapp_running_lock(&blk)
 
     yield
   ensure
-    file.close
+    file.close if file
   end
 end
 
