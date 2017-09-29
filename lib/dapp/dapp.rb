@@ -120,7 +120,7 @@ module Dapp
 
       validate_repo_name!(option_repo)
 
-      login = proc {|u, p| shellout!("#{host_docker} login '#{option_repo}' -u '#{u}' -p '#{p}'")}
+      login = proc {|u, p| shellout!("#{host_docker} login -u '#{u}' -p '#{p}' '#{option_repo}'")}
       if options.key?(:registry_username) && options.key?(:registry_password)
         login.call(options[:registry_username], options[:registry_password])
       elsif ENV.key?('CI_JOB_TOKEN')
