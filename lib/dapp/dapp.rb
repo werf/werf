@@ -153,7 +153,7 @@ module Dapp
       end
 
       def host_docker_config_dir
-        if options_with_docker_credentials?
+        if options_with_docker_credentials? && !options[:repo].nil?
           host_docker_tmp_config_dir
         elsif ENV.key?('DAPP_DOCKER_CONFIG')
           ENV['DAPP_DOCKER_CONFIG']
