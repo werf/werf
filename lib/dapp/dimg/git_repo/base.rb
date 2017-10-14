@@ -60,7 +60,10 @@ module Dapp
         end
 
         def find_commit_id_by_message(regex)
-          walker.each { |commit| return commit.oid if commit.message.encode('UTF-8', invalid: :replace) =~ regex }
+          walker.each do |commit|
+            msg = commit.message.encode('UTF-8', invalid: :replace, undef: :replace)
+            return commit.oid if msg =~ regex
+          end
         end
 
         def walker
