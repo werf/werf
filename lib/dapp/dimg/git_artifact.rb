@@ -121,7 +121,7 @@ module Dapp
       def stage_dependencies_checksum(stage)
         return [] if (stage_dependencies = stages_dependencies[stage.name]).empty?
 
-        paths = (include_paths(true) + base_paths(stage_dependencies, true)).uniq
+        paths = base_paths(stage_dependencies, true)
         commit = dev_mode? ? nil : latest_commit
 
         stage_dependencies_key = [stage.name, commit]
@@ -130,7 +130,7 @@ module Dapp
           if @stage_dependencies_checksums.key?(stage_dependencies_key)
             @stage_dependencies_checksums[stage_dependencies_key]
           else
-            if (entries = repo_entries(commit)).empty?
+            if (entries = repo_entries(commit, paths: paths)).empty?
               repo.dimg.dapp.log_warning(desc: { code: :stage_dependencies_not_found,
                                                  data: { repo: repo.respond_to?(:url) ? repo.url : 'local',
                                                          dependencies: stage_dependencies.join(', ') } })
