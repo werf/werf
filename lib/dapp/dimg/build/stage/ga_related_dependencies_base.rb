@@ -8,7 +8,7 @@ module Dapp
           end
 
           def empty?
-            dimg.stage_by_name(related_stage_name).empty? || super
+            dimg.stage_by_name(related_stage_name).empty? && super
           end
 
           def related_stage_name
