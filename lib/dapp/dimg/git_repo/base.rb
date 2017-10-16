@@ -31,6 +31,24 @@ module Dapp
           end
         end
 
+        def entries(commit, paths: [], exclude_paths: [])
+          [].tap do |entries|
+            lookup_commit(commit).tree.walk(:preorder) do |root, entry|
+              fullpath = File.join(root, entry[:name]).reverse.chomp('/').reverse
+
+              is_exclude_path = exclude_paths.any? { |p| check_path?(fullpath, p) }
+              is_include_path = begin
+                paths.empty? ||
+                  paths.any? { |p| check_path?(fullpath, p) || check_subpath?(fullpath, p) }
+              end
+
+              next false if is_exclude_path || !is_include_path
+
+              entries << [root, entry]
+            end
+          end
+        end
+
         def diff(from, to, **kwargs)
           if to.nil?
             raise "Workdir diff not supported for #{self.class}"
@@ -89,12 +107,24 @@ module Dapp
         private
 
         def check_path?(path, format)
+          path_checker(path) do |checking_path|
+            File.fnmatch(format, checking_path)
+          end
+        end
+
+        def check_subpath?(path, format)
+          path_checker(format) do |checking_path|
+            File.fnmatch(checking_path, path)
+          end
+        end
+
+        def path_checker(path)
           path_parts = path.split('/')
           checking_path = nil
 
           until path_parts.empty?
             checking_path = [checking_path, path_parts.shift].compact.join('/')
-            return true if File.fnmatch(format, checking_path)
+            return true if yield checking_path
           end
           false
         end
