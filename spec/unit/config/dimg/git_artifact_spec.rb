@@ -40,22 +40,58 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
         end
       end
 
-      it "stage_dependencies (#{type})" do
-        dappfile_dimg_git_artifact(type == :local ? :local : 'https://url') do
-          add '/cwd' do
-            stage_dependencies do
-              install 'a'
-              setup 'b'
-              before_setup 'c'
-              build_artifact 'd'
+      context 'stage_dependencies' do
+        stage_dependencies_stages = [:install, :setup, :before_setup, :build_artifact]
+
+        it type do
+          stages_paths = stage_dependencies_stages.map { |s| [s, %w(a b c).sample] }.to_h
+          to_h_expectation = stages_paths.map { |s, p| [s, Array(p)] }.to_h
+
+          dappfile_dimg_git_artifact(type == :local ? :local : 'https://url') do
+            add '/cwd' do
+              stage_dependencies do
+                stage_dependencies_stages.each do |stage|
+                  send(stage, stages_paths[stage])
+                end
+              end
             end
           end
+
+          expect(dimg_config._git_artifact.send("_#{type}").first.send(:stage_dependencies).to_h).to eq(to_h_expectation)
         end
 
-        expect(dimg_config._git_artifact.send("_#{type}").first.send(:stage_dependencies).to_h).to eq({ install: ['a'],
-                                                                                                 setup: ['b'],
-                                                                                                 before_setup: ['c'],
-                                                                                                 build_artifact: ['d']})
+        stage_dependencies_stages.each do |stage|
+          it "#{stage} (#{type})" do
+            stage_paths = %w(a b)
+            to_h_expectation = stage_dependencies_stages.map { |s| [s, []] }.to_h.tap do |h|
+              h[stage] = Array(stage_paths)
+            end
+
+            dappfile_dimg_git_artifact(type == :local ? :local : 'https://url') do
+              add '/cwd' do
+                stage_dependencies do
+                  send(stage, stage_paths)
+                end
+              end
+            end
+
+            expect(dimg_config._git_artifact.send("_#{type}").first.send(:stage_dependencies).public_send("_#{stage}")).to eq(stage_paths)
+            expect(dimg_config._git_artifact.send("_#{type}").first.send(:stage_dependencies).to_h).to eq(to_h_expectation)
+          end
+
+          it "#{stage} (#{type}) multiple" do
+            dappfile_dimg_git_artifact(type == :local ? :local : 'https://url') do
+              add '/cwd' do
+                stage_dependencies do
+                  send(stage, 'a')
+                  send(stage, 'b')
+                end
+              end
+            end
+
+            expect(dimg_config._git_artifact.send("_#{type}").first.send(:stage_dependencies).public_send("_#{stage}")).to eq(%w(a b))
+          end
+        end
       end
     end
 
