@@ -4,6 +4,8 @@ module Dapp
       module Command
         module Push
           def push
+            #require 'ruby-prof'
+            #RubyProf.start
             repo = option_repo
             validate_repo_name!(repo)
             log_step_with_indent(:stages) { stages_push } if with_stages?
@@ -14,7 +16,12 @@ module Dapp
                 end
               end
             end
+            # FIXME: rework images cache, then profile
+            #result = RubyProf.stop
+            #printer = RubyProf::MultiPrinter.new(result)
+            #printer.print(path: '/tmp/testdapp.push.profile', profile: 'profile')
           end
+
 
           protected
 

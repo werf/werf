@@ -23,7 +23,7 @@ module Dapp
         def untag!
           raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
           dapp.shellout!("#{dapp.host_docker} rmi #{name}")
-          cache_reset
+          cache.delete(name)
         end
 
         def push!
@@ -89,7 +89,12 @@ module Dapp
 
           def tag!(id:, tag:, verbose: false, quiet: false)
             ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker} tag #{id} #{tag}", verbose: verbose, quiet: quiet)
-            cache_reset
+
+            if cache_entry = cache.values.find {|v| v[:id] == id}
+              cache[tag] = cache_entry
+            else
+              cache_reset
+            end
           end
 
           def save!(image_or_images, file_path, verbose: false, quiet: false)
@@ -106,6 +111,8 @@ module Dapp
           end
 
           def cache_reset(name = '')
+            # FIXME: rework images cache, then delete time measure
+            #t = Time.now
             cache.delete(name)
             ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker} images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}")
                         .stdout
@@ -132,6 +139,7 @@ module Dapp
               end
               cache[name] = { id: id, created_at: created_at, size: size }
             end
+            #p [:cache_reset, name, :took, Time.now - t]
           end
         end
       end # Docker
