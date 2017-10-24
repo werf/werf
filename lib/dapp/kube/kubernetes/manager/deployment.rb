@@ -131,6 +131,9 @@ module Dapp
                               }.compact
                           rescue Kubernetes::Client::Error::Pod::ContainerCreating, Kubernetes::Client::Error::Pod::PodInitializing
                             next
+                          rescue Kubernetes::Client::Error::Base => err
+                            dapp.log_warning("Error while fetching pod's #{pod.name} logs: #{err.message}")
+                            next
                           end
 
                           if log_lines_by_time.any?

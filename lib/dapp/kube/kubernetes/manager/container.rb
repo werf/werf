@@ -41,6 +41,9 @@ module Dapp
               rescue Kubernetes::Client::Error::Pod::ContainerCreating, Kubernetes::Client::Error::Pod::PodInitializing
                 sleep 0.1
                 next
+              rescue Kubernetes::Client::Error::Base => err
+                dapp.log_warning("Error while fetching pod's #{pod_manager.name} logs: #{err.message}")
+                break
               end
 
               chunk_lines_by_time.each do |timestamp, data|
