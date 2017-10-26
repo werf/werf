@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'mixlib-shellout', '>= 1.0', '< 3.0'
   s.add_dependency 'mixlib-cli', '>= 1.0', '< 3.0'
   s.add_dependency 'excon', '>= 0.45.4', '< 1.0'
-  s.add_dependency 'net_status', '>= 0.1.2', '< 1.0'
+  s.add_dependency 'net_status', '>= 0.2.0', '< 1.0'
   s.add_dependency 'i18n', '~> 0.7'
   s.add_dependency 'paint', '~> 1.0', '>= 1.0.1'
   s.add_dependency 'inifile', '~> 3.0.0'
