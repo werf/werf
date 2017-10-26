@@ -25,7 +25,7 @@ module Dapp
       end
 
       def make_path(base, *path)
-        path.compact.map(&:to_s).inject(Pathname.new(base), &:+)
+       Pathname.new(File.join(base.to_s, path.compact.map(&:to_s)))
       end
 
       def self.class_to_lowercase(class_name = self)
