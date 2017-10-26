@@ -28,10 +28,10 @@ module Dapp
               STAGES.each do |stage|
                 define_method(stage) do |*glob|
                   sub_directive_eval do
-                    if (globs = glob.map { |g| path_format(g) }).any? { |g| Pathname(g).absolute? }
+                    if (globs = glob.flatten.map { |g| path_format(g) }).any? { |g| Pathname(g).absolute? }
                       raise Error::Config, code: :stages_dependencies_paths_relative_path_required, data: { stage: stage }
                     end
-                    instance_variable_set(:"@#{stage}", globs)
+                    instance_variable_set(:"@#{stage}", public_send("_#{stage}") + globs)
                   end
                 end
 
