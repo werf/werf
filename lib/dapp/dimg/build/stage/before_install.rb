@@ -21,8 +21,9 @@ module Dapp
           end
 
           def prepare_image
-            super
-            dimg.builder.before_install(image)
+            super do
+              dimg.builder.before_install(image)
+            end
           end
 
           alias dependencies context

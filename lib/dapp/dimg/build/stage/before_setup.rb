@@ -21,8 +21,9 @@ module Dapp
           end
 
           def prepare_image
-            super
-            dimg.builder.before_setup(image)
+            super do
+              dimg.builder.before_setup(image)
+            end
           end
         end # BeforeSetup
       end # Stage
