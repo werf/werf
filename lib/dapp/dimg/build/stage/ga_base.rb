@@ -28,7 +28,7 @@ module Dapp
           def layer_commit(git_artifact)
             commits[git_artifact] ||= begin
               if dependencies_stage && dependencies_stage.image.tagged?
-                dependencies_stage.image.labels[git_artifact.full_name]
+                dependencies_stage.image.labels["dapp-git-#{git_artifact.paramshash}-commit"]
               else
                 git_artifact.latest_commit
               end

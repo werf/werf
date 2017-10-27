@@ -4,9 +4,10 @@ module Dapp
       module Stage
         class GADependenciesBase < Base
           def prepare_image
-            super
-            dimg.git_artifacts.each do |git_artifact|
-              image.add_service_change_label(git_artifact.full_name.to_sym => git_artifact.latest_commit)
+            super do
+              dimg.git_artifacts.each do |git_artifact|
+                image.add_service_change_label("dapp-git-#{git_artifact.paramshash}-commit".to_sym => git_artifact.latest_commit)
+              end
             end
           end
 

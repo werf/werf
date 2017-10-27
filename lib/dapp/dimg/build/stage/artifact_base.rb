@@ -8,14 +8,15 @@ module Dapp
           end
 
           def prepare_image
-            super
-            artifacts_dimgs_build!
-            artifacts_labels = {}
-            artifacts.each do |artifact|
-              apply_artifact(artifact, image)
-              artifacts_labels["dapp-artifact-#{artifact[:name]}".to_sym] = artifact[:dimg].last_stage.image.built_id
+            super do
+              artifacts_dimgs_build!
+              artifacts_labels = {}
+              artifacts.each do |artifact|
+                apply_artifact(artifact, image)
+                artifacts_labels["dapp-artifact-#{artifact[:name]}".to_sym] = artifact[:dimg].last_stage.image.built_id
+              end
+              image.add_service_change_label artifacts_labels
             end
-            image.add_service_change_label artifacts_labels
           end
 
           def artifacts

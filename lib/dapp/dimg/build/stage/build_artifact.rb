@@ -21,8 +21,9 @@ module Dapp
           end
 
           def prepare_image
-            super
-            dimg.builder.build_artifact(image)
+            super do
+              dimg.builder.build_artifact(image)
+            end
           end
         end # BuildArtifact
       end # Stage

@@ -13,9 +13,10 @@ module Dapp
           end
 
           def prepare_image
-            super
-            change_options.each do |k, v|
-              image.public_send("add_change_#{k}", v)
+            super do
+              change_options.each do |k, v|
+                image.public_send("add_change_#{k}", v)
+              end
             end
           end
         end # DockerInstructions
