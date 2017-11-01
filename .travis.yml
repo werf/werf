@@ -16,12 +16,12 @@ before_script:
 - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 - sudo apt-get update -qq
-- sudo apt-get -o dpkg::options::="--force-confnew" install -y docker-ce
+- sudo apt-get -o dpkg::options::="--force-confnew" install -y docker-ce=17.09.0~ce-0~ubuntu
 - USER_NAME=$(id -un) && sudo gpasswd -a $USER_NAME docker
 - sudo service docker restart
 - sudo docker version
 script:
-- sudo -E su --preserve-environment -lc 'bundle exec rake parallel_spec'
+- sudo -E su --preserve-environment -lc 'bundle exec rspec spec/integration/shell_spec.rb --example "build ubuntu:14.04"'
 
 deploy:
   provider: rubygems
