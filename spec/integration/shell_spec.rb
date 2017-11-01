@@ -18,7 +18,7 @@ describe Dapp::Dimg::Builder::Shell do
   %w(ubuntu:14.04 centos:7).each do |image|
     it "build #{image}" do
       config[:_docker][:_from] = image
-      config[:_shell].keys.each { |stage| config[:_shell][stage] << "date +%s > /#{stage}" }
+      config[:_shell].keys.each { |stage| config[:_shell][stage] = ["date +%s > /#{stage}", "cat /#{stage}"] }
       dimg_build!
 
       expect_files
