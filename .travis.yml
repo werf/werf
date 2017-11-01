@@ -21,7 +21,7 @@ before_script:
 - sudo service docker restart
 - sudo docker version
 script:
-- sudo -E su --preserve-environment -lc 'bundle exec rake parallel_spec'
+- sudo -E su --preserve-environment -lc 'bundle exec rspec spec/integration/dimg_spec.rb'
 
 deploy:
   provider: rubygems

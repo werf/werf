@@ -65,7 +65,7 @@ module SpecHelper
     end
 
     def default_dapp_options
-      { quiet: true, color: 'off', dev: false }
+      { quiet: false, color: 'off', dev: false }
     end
 
     def stages
