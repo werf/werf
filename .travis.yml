@@ -21,7 +21,7 @@ before_script:
 - sudo service docker restart
 - sudo docker version
 script:
-- sudo -E su --preserve-environment -lc 'bundle exec rspec spec/integration/dimg_spec.rb'
+- sudo -E su --preserve-environment -lc 'bundle exec rspec spec/integration/shell_spec.rb --example "build ubuntu:14.04"'
 
 deploy:
   provider: rubygems
