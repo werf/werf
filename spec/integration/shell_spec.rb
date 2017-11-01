@@ -11,14 +11,14 @@ describe Dapp::Dimg::Builder::Shell do
   def expect_files
     image_name = stages[:g_a_latest_patch].send(:image_name)
     config[:_shell].keys.each do |stage|
-      expect { shellout!("#{host_docker} run --rm #{image_name} bash -lec 'cat /#{stage}'") }.to_not raise_error
+      expect { shellout!("#{host_docker} run --rm #{image_name} bash -lec 'whereis cat'") }.to_not raise_error
     end
   end
 
   %w(ubuntu:14.04 centos:7).each do |image|
     it "build #{image}" do
       config[:_docker][:_from] = image
-      config[:_shell].keys.each { |stage| config[:_shell][stage] = ["date +%s > /#{stage}", "cat /#{stage}"] }
+      config[:_shell].keys.each { |stage| config[:_shell][stage] = ["date +%s > /#{stage}", "whereis cat"] }
       dimg_build!
 
       expect_files
