@@ -139,10 +139,14 @@ module Dapp
           docker_bin = res.stdout.strip
 
           current_docker_version = shellout!("#{docker_bin} --version").stdout.strip
-          required_docker_version = '1.10.0'
+          required_min_docker_version = '1.10.0'
+          required_max_docker_version = '17.09.0'
 
-          if Gem::Version.new(required_docker_version) >= Gem::Version.new(current_docker_version[/(\d+\.)+\d+/])
-            raise Error::Dapp, code: :docker_version, data: { version: required_docker_version }
+          if Gem::Version.new(required_min_docker_version) > Gem::Version.new(current_docker_version[/(\d+\.)+\d+/]) ||
+              Gem::Version.new(required_max_docker_version) < Gem::Version.new(current_docker_version[/(\d+\.)+\d+/])
+            raise Error::Dapp, code: :docker_version, data: { min_version: required_min_docker_version,
+                                                              max_version: required_max_docker_version,
+                                                              version: current_docker_version[/(\d+\.)+\d+/] }
           end
 
           [].tap do |cmd|
