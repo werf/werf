@@ -125,31 +125,23 @@ module Dapp
         commit = dev_mode? ? nil : latest_commit
 
         stage_dependencies_key = [stage.name, commit]
+
         @stage_dependencies_checksums ||= {}
-        @stage_dependencies_checksums[stage_dependencies_key] = begin
-          if @stage_dependencies_checksums.key?(stage_dependencies_key)
-            @stage_dependencies_checksums[stage_dependencies_key]
-          else
-            if (entries = repo_entries(commit, paths: paths)).empty?
-              repo.dimg.dapp.log_warning(desc: { code: :stage_dependencies_not_found,
-                                                 data: { repo: repo.respond_to?(:url) ? repo.url : 'local',
-                                                         dependencies: stage_dependencies.join(', ') } })
-            end
-
-            entries
-              .sort_by {|root, entry| File.join(root, entry[:name])}
-              .reduce(nil) {|prev_hash, (root, entry)|
-                content = nil
-                content = repo.lookup_object(entry[:oid]).content if entry[:type] == :blob
-
-                Digest::SHA256.hexdigest [
-                  prev_hash,
-                  File.join(root, entry[:name]),
-                  entry[:filemode].to_s,
-                  content
-                ].compact.join(':::')
-              }
+        @stage_dependencies_checksums[stage_dependencies_key] ||= begin
+          if (entries = repo_entries(commit, paths: paths)).empty?
+            repo.dimg.dapp.log_warning(desc: { code: :stage_dependencies_not_found,
+                                               data: { repo: repo.respond_to?(:url) ? repo.url : 'local',
+                                                       dependencies: stage_dependencies.join(', ') } })
           end
+
+          entries
+            .sort_by {|root, entry| File.join(root, entry[:name])}
+            .reduce(nil) {|prev_hash, (root, entry)|
+              content = nil
+              content = repo.lookup_object(entry[:oid]).content if entry[:type] == :blob
+
+              hexdigest prev_hash, File.join(root, entry[:name]), entry[:filemode].to_s, content
+            }
         end
       end
 
@@ -173,9 +165,7 @@ module Dapp
       def dev_patch_hash(stage)
         return unless dev_mode?
 
-        Digest::SHA256.hexdigest(diff_patches(latest_commit, nil).map do |patch|
-          change_patch_new_file_path(stage, patch)
-        end.join(':::'))
+        hexdigest *diff_patches(latest_commit, nil).map {|patch| change_patch_new_file_path(stage, patch)}
       end
 
       def latest_commit
@@ -183,7 +173,7 @@ module Dapp
       end
 
       def paramshash
-        Digest::SHA256.hexdigest [full_name, to, cwd, *include_paths, *exclude_paths, owner, group].map(&:to_s).join(':::')
+        hexdigest full_name, to, cwd, *include_paths, *exclude_paths, owner, group
       end
 
       def full_name
@@ -199,6 +189,10 @@ module Dapp
       end
 
       protected
+
+      def hexdigest(*args)
+        Digest::SHA256.hexdigest args.compact.map {|arg| arg.to_s.force_encoding("ASCII-8BIT")}.join(":::")
+      end
 
       attr_reader :to
       attr_reader :commit
