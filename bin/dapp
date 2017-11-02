@@ -2,67 +2,42 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-def with_dapp_running_lock(&blk)
-  return yield
+require 'rubygems'
+require 'dapp'
 
-  file = nil
-
-  begin
-    file = ::File.open("/tmp/dapp-running.lock", ::File::RDWR | ::File::CREAT, 0777)
-
-    if ARGV[0] == 'update'
-      unless file.flock(::File::LOCK_EX | ::File::LOCK_NB)
-        puts "There are other active dapp processes, exiting without update"
-        exit(0)
-      end
-    else
-      file.flock(::File::LOCK_SH)
-    end
-
-    yield
-  ensure
-    file.close if file
-  end
-end
-
-with_dapp_running_lock do
-  require 'rubygems'
-  require 'dapp'
-
+begin
   begin
     begin
-      begin
-        Dapp::CLI.new.run
-      rescue Dapp::Error::Base => e
-        unless (message = Dapp::Helper::NetStatus.before_error_message(e)).empty?
-          $stderr.puts(message)
-        end
-
-        raise
-      end
-    rescue ::SystemExit
-      raise
-    rescue ::Exception => e
-      "/tmp/dapp-stacktrace-#{SecureRandom.uuid}.out".tap do |filename|
-        ::File.open(filename, 'w') do |dapp_stacktrace|
-          dapp_stacktrace.write "#{e.backtrace.join("\n")}\n"
-        end
-        $stderr.puts "\033[1m\033[90mStacktrace dumped to #{filename}\033[0m"
+      Dapp::CLI.new.run
+    rescue Dapp::Error::Base => e
+      unless (message = Dapp::Helper::NetStatus.before_error_message(e)).empty?
+        $stderr.puts(message)
       end
 
       raise
     end
-  rescue Dapp::Error::Shellout => e
-    $stderr.puts(Dapp::Helper::NetStatus.message(e))
-    exit 1
-  rescue Dapp::Error::Base, NetStatus::Exception => e
-    $stderr.puts(Dapp::Dapp.paint_string(Dapp::Helper::NetStatus.message(e), :warning))
-    exit 1
-  rescue Interrupt => _e
-    $stderr.puts(Dapp::Dapp.paint_string('Interrupted', :warning))
-    exit 1
-  rescue Errno::EACCES => _e
-    $stderr.puts(Dapp::Dapp.paint_string('Permission denied!', :warning))
-    exit 1
+  rescue ::SystemExit
+    raise
+  rescue ::Exception => e
+    "/tmp/dapp-stacktrace-#{SecureRandom.uuid}.out".tap do |filename|
+      ::File.open(filename, 'w') do |dapp_stacktrace|
+        dapp_stacktrace.write "#{e.backtrace.join("\n")}\n"
+      end
+      $stderr.puts "\033[1m\033[90mStacktrace dumped to #{filename}\033[0m"
+    end
+
+    raise
   end
+rescue Dapp::Error::Shellout => e
+  $stderr.puts(Dapp::Helper::NetStatus.message(e))
+  exit 1
+rescue Dapp::Error::Base, NetStatus::Exception => e
+  $stderr.puts(Dapp::Dapp.paint_string(Dapp::Helper::NetStatus.message(e), :warning))
+  exit 1
+rescue Interrupt => _e
+  $stderr.puts(Dapp::Dapp.paint_string('Interrupted', :warning))
+  exit 1
+rescue Errno::EACCES => _e
+  $stderr.puts(Dapp::Dapp.paint_string('Permission denied!', :warning))
+  exit 1
 end
