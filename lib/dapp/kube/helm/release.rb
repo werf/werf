@@ -49,8 +49,8 @@ module Dapp
 
       def deploy!
         args = [
-          name, chart_path, additional_values,
-          set_options, extra_options
+          name, chart_path, additional_values_options,
+          set_options, upgrade_extra_options
         ].flatten
 
         dapp.kubernetes.create_namespace!(namespace) unless dapp.kubernetes.namespace?(namespace)
@@ -62,52 +62,31 @@ module Dapp
 
       def evaluation_output
         @evaluation_output ||= begin
-          args = [
-            name, chart_path, additional_values,
-            set_options, extra_options(dry_run: true)
-          ].flatten
+          cmd = dapp.shellout! [
+            "helm",
+            "template",
+            chart_path,
+            additional_values_options,
+            set_options,
+            ("--namespace #{namespace}" if namespace),
+          ].compact.join(" ")
 
-          dapp.shellout!("helm upgrade #{args.join(' ')}").stdout
+          cmd.stdout
         end
       end
 
       def resources_specs
         @resources_specs ||= {}.tap do |specs|
-          generator = proc do |text|
-            text.split(/# Source.*|---/).reject {|c| c.strip.empty? }.map {|c| yaml_load(c) }.each do |spec|
-              specs[spec['kind']] ||= {}
-              specs[spec['kind']][(spec['metadata'] || {})['name']] = spec
-            end
-          end
-
-          hook_start_index = nil
-          if ind = evaluation_output.lines.index("HOOKS:\n")
-            hook_start_index =  ind + 1
-          else
-            warn "[WARN][DEBUG INFO] Cannot find HOOKS section in helm dry-run output:"
-          end
-
-          manifest_start_index = nil
-          if ind = evaluation_output.lines.index("MANIFEST:\n")
-            manifest_start_index = ind + 1
-          else
-            warn "[WARN][DEBUG INFO] Cannot find MANIFEST section in helm dry-run output:"
-          end
-
-          happy_helming_start_index = evaluation_output.lines.index("Release \"#{name}\" has been upgraded. Happy Helming!\n")
-
-          generator.call(evaluation_output.lines[hook_start_index..manifest_start_index-2].join) if hook_start_index and manifest_start_index
-          if manifest_start_index
-            if happy_helming_start_index
-              generator.call(evaluation_output.lines[manifest_start_index..happy_helming_start_index-2].join)
-            else
-              generator.call(evaluation_output.lines[manifest_start_index..-1].join)
-            end
+          evaluation_output.split(/^---$/)
+              .reject {|chunk| chunk.lines.all? {|line| line.strip.empty? or line.strip.start_with? "#"}}
+              .map {|chunk| yaml_load(chunk)}.each do |spec|
+            specs[spec['kind']] ||= {}
+            specs[spec['kind']][(spec['metadata'] || {})['name']] = spec
           end
         end
       end
 
-      def additional_values
+      def additional_values_options
         [].tap do |options|
           options.concat(values.map { |p| "--values #{p}" })
         end
@@ -122,11 +101,11 @@ module Dapp
         end
       end
 
-      def extra_options(dry_run: nil)
+      def upgrade_extra_options(dry_run: nil)
         dry_run = dapp.dry_run? if dry_run.nil?
 
         [].tap do |options|
-          options << "--namespace #{namespace}"
+          options << "--namespace #{namespace}" if namespace
           options << '--install'
           options << '--dry-run' if dry_run
           options << '--debug'   if dry_run
