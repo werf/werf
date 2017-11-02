@@ -23,7 +23,7 @@ module Dapp
         def untag!
           raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
           dapp.shellout!("#{dapp.host_docker} rmi #{name}")
-          self.cache.delete(name)
+          self.class.cache.delete(name)
         end
 
         def push!
