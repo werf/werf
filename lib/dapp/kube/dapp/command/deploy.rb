@@ -26,7 +26,7 @@ module Dapp
                 repo: repo,
                 image_version: image_version,
                 namespace: kube_namespace,
-                chart_path: kube_tmp_chart_path,
+                chart_path: kube_chart_path_for_helm,
                 set: self.options[:helm_set_options],
                 values: [*kube_values_paths, *kube_tmp_chart_secret_values_paths],
                 deploy_timeout: self.options[:timeout] || 300
@@ -38,7 +38,7 @@ module Dapp
           end
 
           def kube_copy_chart
-            FileUtils.cp_r("#{kube_chart_path}/.", kube_tmp_chart_path)
+            FileUtils.cp_r("#{kube_chart_path}/.", kube_chart_path_for_helm)
           end
 
           def kube_helm_decode_secrets
@@ -89,10 +89,10 @@ module Dapp
 {{- define "dapp_secret_file" -}}
 {{- $relative_file_path := index . 0 -}}
 {{- $context := index . 1 -}}
-{{- $context.Files.Get (print "#{kube_tmp_chart_secret_path.subpath_of(kube_tmp_chart_path)}/" $relative_file_path) -}}
+{{- $context.Files.Get (print "#{kube_tmp_chart_secret_path.subpath_of(kube_chart_path_for_helm)}/" $relative_file_path) -}}
 {{- end -}}
             EOF
-            kube_tmp_chart_path('templates/_dapp_helpers.tpl').write(cont)
+            kube_chart_path_for_helm('templates/_dapp_helpers.tpl').write(cont)
           end
 
           def kube_flush_hooks_jobs(release)
@@ -173,7 +173,7 @@ module Dapp
           end
 
           def kube_tmp_chart_secret_path(*path)
-            kube_tmp_chart_path('decoded-secret', *path).tap { |p| p.parent.mkpath }
+            kube_chart_path_for_helm('decoded-secret', *path).tap { |p| p.parent.mkpath }
           end
 
           def kube_values_paths
@@ -183,7 +183,7 @@ module Dapp
           end
 
           def kube_tmp_chart_secret_values_paths
-            @kube_tmp_chart_secret_values_paths ||= kube_secret_values_paths.map { |f| kube_tmp_chart_path("#{SecureRandom.uuid}-#{f.basename}") }
+            @kube_tmp_chart_secret_values_paths ||= kube_secret_values_paths.each_with_index.map { |f, i| kube_chart_path_for_helm( "decoded-secret-values-#{i}.yaml") }
           end
 
           def kube_secret_values_paths
