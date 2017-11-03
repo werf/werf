@@ -7,7 +7,7 @@ module Dapp
             File.fnmatch(File.join(s.full_gem_path, '*'), __FILE__)
           end
           unless (latest_version = latest_beta_version(spec)).nil?
-            with_lock do
+            try_lock do
               Gem.install(spec.name, latest_version)
             end
           end
@@ -25,11 +25,11 @@ module Dapp
               .reject { |spec_version| minor_version != spec_version.approximate_recommendation || current_spec.version >= spec_version }
               .first
           else
-            puts "Cannot get `#{url}`: got bad http status `#{response.status}`"
+            warn "Cannot get `#{url}`: got bad http status `#{response.status}`"
           end
         end
 
-        def with_lock
+        def try_lock
           old_umask = File.umask(0)
           file = nil
 
@@ -43,7 +43,7 @@ module Dapp
             if file.flock(::File::LOCK_EX | ::File::LOCK_NB)
               yield
             else
-              puts 'There are other active dapp processes, exiting without update'
+              puts 'There are other active dapp update process, exiting without update'
             end
           ensure
             file.close unless file.nil?
