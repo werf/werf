@@ -17,7 +17,7 @@ module Dapp
                 end
               end
 
-              tmp_file_path = kube_tmp_chart_path(File.basename(file_path))
+              tmp_file_path = kube_chart_path_for_helm(File.basename(file_path))
               tmp_file_path.binwrite(decoded_data)
 
               loop do

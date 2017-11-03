@@ -5,20 +5,20 @@ module Dapp
         module ChartCreate
           def kube_chart_create
             with_kube_tmp_chart_dir do
-              FileUtils.cp_r kube_chart_path, kube_tmp_chart_path(name) if kube_chart_path.directory? && !options[:force]
+              FileUtils.cp_r kube_chart_path, kube_chart_path_for_helm(name) if kube_chart_path.directory? && !options[:force]
 
-              shellout!("helm create #{name}", cwd: kube_tmp_chart_path)
+              shellout!("helm create #{name}", cwd: kube_chart_path_for_helm)
               kube_create_chart_samples
 
               FileUtils.rm_rf kube_chart_path
-              FileUtils.mv kube_tmp_chart_path(name), kube_chart_path
+              FileUtils.mv kube_chart_path_for_helm(name), kube_chart_path
             end
           end
 
           def kube_create_chart_samples
-            kube_tmp_chart_path(name, 'secret-values.yaml').tap { |f| FileUtils.touch(f) unless f.file? }
-            kube_tmp_chart_path(name, kube_chart_secret_dir_name).tap { |dir| FileUtils.mkdir(dir) unless dir.directory? }
-            kube_tmp_chart_path(name, 'templates',  '_envs.tpl').tap do |f|
+            kube_chart_path_for_helm(name, 'secret-values.yaml').tap { |f| FileUtils.touch(f) unless f.file? }
+            kube_chart_path_for_helm(name, kube_chart_secret_dir_name).tap { |dir| FileUtils.mkdir(dir) unless dir.directory? }
+            kube_chart_path_for_helm(name, 'templates',  '_envs.tpl').tap do |f|
               f.write begin
                 <<-EOF
 {{- define "common_envs" }}
@@ -39,7 +39,7 @@ module Dapp
                 EOF
               end unless f.file?
             end
-            kube_tmp_chart_path(name, 'templates', 'backend.yaml').tap do |f|
+            kube_chart_path_for_helm(name, 'templates', 'backend.yaml').tap do |f|
               f.write begin
                 <<-EOF
 apiVersion: extensions/v1beta1

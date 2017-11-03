@@ -58,12 +58,14 @@ module Dapp
           def with_kube_tmp_chart_dir
             yield if block_given?
           ensure
-            FileUtils.rm_rf(kube_tmp_chart_path)
+            FileUtils.rm_rf(@kube_tmp_helm_chart_dir) if @kube_tmp_helm_chart_dir
           end
 
-          def kube_tmp_chart_path(*path)
-            @kube_tmp_path ||= Dir.mktmpdir('dapp-helm-chart-', tmp_base_dir)
-            make_path(@kube_tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }
+          def kube_chart_path_for_helm(*path)
+            chart_dir = ENV['DAPP_HELM_CHART_DIR'] || begin
+              @kube_tmp_helm_chart_dir ||= Dir.mktmpdir('dapp-helm-chart-', tmp_base_dir)
+            end
+            make_path(chart_dir, *path).expand_path.tap { |p| p.parent.mkpath }
           end
 
           def secret
