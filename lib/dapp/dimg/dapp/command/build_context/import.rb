@@ -19,7 +19,7 @@ module Dapp
                 log_secondary_process(:images, short: true) do
                   lock("#{name}.images") do
                     Image::Docker.load!(build_context_images_tar, verbose: true, quiet: log_quiet?)
-                  end
+                  end unless dry_run?
                 end
               else
                 log_warning(desc: { code: :context_archive_not_found, data: { path: build_context_images_tar } })
@@ -44,7 +44,7 @@ module Dapp
                         File.chmod(header.mode, path)
                       end
                     end
-                  end
+                  end unless dry_run?
                 end
               else
                 log_warning(desc: { code: :context_archive_not_found, data: { path: build_context_build_tar } })
