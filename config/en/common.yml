@@ -38,6 +38,7 @@ en:
     state:
       using_cache: '[USING CACHE]'
       not_present: '[NOT PRESENT]'
+      rebuild: '[REBUILD]'
       build: '[BUILD]'
       push: '[PUSH]'
       pull: '[PULL]'

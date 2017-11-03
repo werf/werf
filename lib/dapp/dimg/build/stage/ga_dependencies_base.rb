@@ -14,6 +14,13 @@ module Dapp
           def empty?
             dimg.git_artifacts.empty? || super
           end
+
+          def image_should_be_untagged_condition
+            return false unless image.tagged?
+            dimg.git_artifacts.any? do |git_artifact|
+              !git_artifact.repo.commit_exists? image.labels["dapp-git-#{git_artifact.paramshash}-commit"]
+            end
+          end
         end # GADependenciesBase
       end # Stage
     end # Build

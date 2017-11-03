@@ -49,6 +49,7 @@ module Dapp
 
           def build!
             prev_stage.build! if prev_stage
+            renew             if should_be_renewed?
             image_build       unless empty?
             image_introspect  if image_should_be_introspected?
           end
@@ -189,6 +190,10 @@ module Dapp
             []
           end
 
+          def dependencies_discard
+            @dependencies = nil
+          end
+
           def artifact?
             false
           end
@@ -213,6 +218,22 @@ module Dapp
 
           protected
 
+          def renew
+            dependencies_discard
+            image_reset
+            image_untag! if image_should_be_untagged?
+          end
+
+          def image_reset
+            Image::Stage.image_reset(image_name)
+            @image = nil
+          end
+
+          def image_untag!
+            return if dimg.dapp.dry_run?
+            image.untag!
+          end
+
           def image_build
             prepare_image if image_should_be_prepared?
             log_image_build do
@@ -234,9 +255,33 @@ module Dapp
             (!image.built? && !should_be_not_present? || image_should_be_introspected?) && !dimg.dapp.dry_run?
           end
 
+          def should_be_renewed?
+            current_or_related_image_should_be_untagged?
+          end
+
+          def image_should_be_untagged?
+            image.tagged? && current_or_related_image_should_be_untagged?
+          end
+
+          def current_or_related_image_should_be_untagged?
+            @current_or_related_image_should_be_untagged ||= begin
+              image_should_be_untagged_condition || begin
+                if prev_stage.nil?
+                  false
+                else
+                  prev_stage.current_or_related_image_should_be_untagged?
+                end
+              end
+            end
+          end
+
+          def image_should_be_untagged_condition
+            false
+          end
+
           def should_be_not_present?
             return false if next_stage.nil?
-            next_stage.image.tagged? || next_stage.should_be_not_present?
+            !current_or_related_image_should_be_untagged? && (next_stage.image.tagged? || next_stage.should_be_not_present?)
           end
 
           def image_name

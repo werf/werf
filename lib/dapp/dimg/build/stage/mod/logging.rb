@@ -6,9 +6,10 @@ module Dapp
           module Logging
             def log_image_build
               case
-              when image.built?           then log_state(:using_cache)
-              when should_be_not_present? then log_state(:not_present)
-              when dimg.dapp.dry_run?     then log_state(:build, styles: { status: :success })
+              when dimg.dapp.dry_run? && image_should_be_untagged? then log_state(:rebuild, styles: { status: :success })
+              when image.built?                                    then log_state(:using_cache)
+              when should_be_not_present?                          then log_state(:not_present)
+              when dimg.dapp.dry_run?                              then log_state(:build, styles: { status: :success })
               else yield
               end
             ensure
