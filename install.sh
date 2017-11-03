@@ -43,8 +43,4 @@ echo "# Installing dapp update cron job into /etc/cron.d/dapp-update"
 
 sudo mkdir -p /etc/cron.d
 
-major_and_minor_version=$(echo $DAPP_VERSION | cut -d'.' -f1,2)
-
-fetch_latest_version_script=$(echo "ruby -e 'puts Gem::Specification.select {|s| s.name == \"dapp\"}.select {|s| s.version.to_s.start_with?(\"$major_and_minor_version\")}.sort_by {|s| s.version}.last.version.to_s'" | base64 -w0)
-
-echo "* * * * * $USER /bin/bash -lec 'dapp _\$(eval \$(echo $fetch_latest_version_script | base64 -d))_ update'" | sudo tee /etc/cron.d/dapp-update
+echo "* * * * * $USER /bin/bash -lec 'dapp update'" | sudo tee /etc/cron.d/dapp-update
