@@ -75,7 +75,7 @@ module Dapp
             if (scheme = URI.parse(url).scheme).nil?
               :noname
             else
-              scheme
+              scheme.to_sym
             end
           rescue URI::InvalidURIError
             :ssh
