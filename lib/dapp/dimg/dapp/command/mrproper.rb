@@ -34,6 +34,8 @@ module Dapp
 
           def remove_build_dir
             log_step_with_indent(:build_dir) { FileUtils.rm_rf(build_path) }
+          rescue ::Dapp::Error::Dapp => e
+            raise unless e.net_status[:code] == :dappfile_not_found
           end
 
           def proper_all?
