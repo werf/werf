@@ -92,7 +92,7 @@ module Dapp
             end
 
             def image_dapp_artifacts_label(image_id)
-              select_dapp_artifacts_ids(::Dapp::Dimg::Image::Docker.image_config_option(image_id: image_id, option: 'labels'))
+              select_dapp_artifacts_ids(::Dapp::Dimg::Image::Docker.image_config_option(image_id: image_id, option: 'Labels') || {})
             end
 
             def image_parent(image_id)

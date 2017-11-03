@@ -60,7 +60,7 @@ module Dapp
           end
 
           def image_labels(image_id)
-            Image::Stage.image_config_option(image_id: image_id, option: 'labels')
+            Image::Stage.image_config_option(image_id: image_id, option: 'Labels') || {}
           end
 
           def run_command(cmd)
