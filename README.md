@@ -55,6 +55,20 @@ apt-get install libssh2-1-dev
 yum install libssh2-devel
 ```
 
+#### Заголовочные файлы libssl для работы с git-репозиториями через ssl
+
+###### Ubuntu
+
+```bash
+apt-get install libssl-dev
+```
+
+###### Centos
+
+```bash
+yum install openssl-devel
+```
+
 #### Cmake для установки зависимого gem rugged
 
 ###### Ubuntu
