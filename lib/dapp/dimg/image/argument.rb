@@ -97,7 +97,7 @@ module Dapp
         def from_change_options
           return {} if from.nil?
           [:entrypoint, :cmd].each_with_object({}) do |option, options|
-            options[option] = self.class.image_config_option(image_id: from.built_id, option: option)
+            options[option] = from.config_option(option.to_s.capitalize) || []
           end
         end
 

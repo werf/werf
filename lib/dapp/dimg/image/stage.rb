@@ -60,8 +60,7 @@ module Dapp
         end
 
         def labels
-          raise Error::Build, code: :image_not_exist, data: { name: name } if built_id.nil?
-          self.class.image_config_option(image_id: built_id, option: 'labels')
+          config_option('Labels')
         end
 
         protected

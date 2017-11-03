@@ -23,6 +23,7 @@ module Dapp
         def untag!
           raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
           dapp.shellout!("#{dapp.host_docker} rmi #{name}")
+          image_config_delete(id)
           self.class.cache.delete(name)
         end
 
@@ -55,13 +56,34 @@ module Dapp
           cache[:size]
         end
 
-        def self.image_config_option(image_id:, option:)
-          output = ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker} inspect --format='{{json .Config.#{option.to_s.capitalize}}}' #{image_id}").stdout.strip
-          output == 'null' ? [] : JSON.parse(output)
+        def config_option(option)
+          raise Error::Build, code: :image_not_exist, data: { name: name } if built_id.nil?
+          self.class.image_config_option(image_id: built_id, option: option)
         end
 
         def cache_reset
           self.class.cache_reset(name)
+        end
+
+        class << self
+          def image_config(image_id)
+            image_configs[image_id] ||= begin
+              output = ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker} inspect --format='{{json .Config}}' #{image_id}").stdout.strip
+              JSON.parse(output)
+            end
+          end
+
+          def image_config_option(image_id:, option:)
+            image_config(image_id)[option]
+          end
+
+          def image_config_delete(image_id)
+            image_configs.delete(image_id)
+          end
+
+          def image_configs
+            @image_configs ||= {}
+          end
         end
 
         protected
@@ -138,6 +160,7 @@ module Dapp
                 number * (1000**coef)
               end
               cache[name] = { id: id, created_at: created_at, size: size }
+              image_config_delete(id)
             end
             #p [:cache_reset, name, :took, Time.now - t]
           end
