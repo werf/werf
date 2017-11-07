@@ -8,7 +8,7 @@ Usage: dapp kube subcommand [subcommand options]
 
 Available subcommands: (for details, dapp kube SUB-COMMAND --help)
 
-  dapp kube deploy [options] REPO
+  dapp kube deploy [options] [REPO]
   dapp kube dismiss [options]
   dapp kube secret key generate [options]
   dapp kube secret generate [FILE_PATH] [options]
