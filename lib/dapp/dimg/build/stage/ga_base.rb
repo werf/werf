@@ -35,6 +35,11 @@ module Dapp
             end
           end
 
+          def renew
+            @commits = {}
+            super
+          end
+
           protected
 
           def should_not_be_detailed?

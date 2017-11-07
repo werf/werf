@@ -6,8 +6,18 @@ module Dapp
         attr_reader :name
         attr_reader :dapp
 
-        def self.image_by_name(name:, **kwargs)
-          (@images ||= {})[name] ||= new(name: name, **kwargs)
+        class << self
+          def image_by_name(name:, **kwargs)
+            images[name] ||= new(name: name, **kwargs)
+          end
+
+          def image_reset(name)
+            images.delete(name)
+          end
+
+          def images
+            @images ||= {}
+          end
         end
 
         def initialize(name:, dapp:, from: nil)
