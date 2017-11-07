@@ -14,8 +14,8 @@ en:
       incorrect: "Dappfile with `%{error}`:\n%{message}"
     build:
       from_image_required: 'Missing from_image!'
-      image_already_untagged: "Image `%{name}` already untagged!"
-      image_not_exist: "Image `%{name}` not exist!"
+      image_already_untagged: "Image `%{name}` untagged already!"
+      image_not_exist: "Image `%{name}` doesn't exist!"
       built_id_not_defined: '`from.built_id` not defined!'
       from_image_not_found: 'Image `%{name}` not found!'
       unsupported_patch_format: "Unsupported patch format:\n\n%{patch}"
@@ -34,21 +34,21 @@ en:
       minikube_not_started: "Minikube not started!"
       project_helm_chart_not_found: "Project helm chart `%{path}` not found!"
       helm_not_found: "Helm not found: install helm (https://github.com/kubernetes/helm/blob/master/docs/install.md)"
-      helm_release_not_exist: "Helm release `%{name}` not exist!"
+      helm_release_not_exist: "Helm release `%{name}` doesn't exist!"
       file_not_exist: "File `%{path}` doesn't exist!"
       helm_directory_not_exist: "Helm directory doesn't exist in project!"
       values_file_not_found: "Values file `%{path}` not found!"
       secret_file_not_found: "Secret file `%{path}` not found!"
       secret_file_empty: "Secret file `%{path}` can't be empty!"
-      user_containers_detected: "User containers have been using images!\n%{ids}"
+      user_containers_detected: "User containers are using these images:\n%{ids}"
       incorrect_yaml_structure: "Incorrect YAML structure in `%{path}`!"
       editor_not_found: "Editor not found!"
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       no_such_app: "No such app: `%{apps_patterns}`!"
       dappfile_not_found: "Dappfile not found!"
-      cannot_run_ssh_agent: "Cannot run ssh-agent"
-      ssh_key_not_found: "Ssh key `%{path}` not exist!"
+      cannot_run_ssh_agent: "Can't run ssh-agent!"
+      ssh_key_not_found: "Ssh key `%{path}` doesn't exist!"
       docker_not_found: "Docker not found!"
       docker_version: "Required docker version (`%{version}`): `%{min_version}` <= VERSION <= `%{max_version}`!"
       dapp_config_file_incorrect: "%{message}"
@@ -74,13 +74,13 @@ en:
       docker_from_incorrect: "`docker.from` has incorrect value `%{name}`!"
       docker_artifact_unsupported_directive: "`artifact.docker` supports only `from` subdirective!"
       stage_artifact_not_associated: "Artifact not associated with any stage: expected `before` or `after` attribute!"
-      stage_artifact_double_associate: "Cannot use `%{stage}` stage for artifact, already used in `%{conflict_stage}` stage!"
+      stage_artifact_double_associate: "Can't use `%{stage}` stage for artifact; already used in `%{conflict_stage}` stage!"
       stage_artifact_not_supported_associated_stage: "Bad artifact stage `%{stage}`!"
       git_artifact_remote_branch_with_commit: "Remote git repo: use `commit` or `branch` directive!"
       artifact_conflict: "Conflict between artifacts paths!"
       scratch_unsupported_directive: "Scratch dimg has unsupported directive `%{directive}`!"
       scratch_artifact_required: "Scratch dimg without artifacts!"
-      scratch_artifact_associated: "Scratch artifact cannot be associated: not expected `before`/`after` attribute!"
+      scratch_artifact_associated: "Scratch artifact can't be associated: not expected `before`/`after` attribute!"
       scratch_artifact_docker_from: "Scratch artifact must have directive `docker.from`!"
       unsupported_scale_value: "Define unsupported scale value `%{value}`!"
       app_name_required: 'App name required!'
@@ -90,8 +90,8 @@ en:
       app_bootstrap_dimg_not_found: "Not found dimg `%{dimg}` for app.bootstrap!"
       app_before_apply_job_dimg_not_defined: "Not defined dimg for app.before_apply_job!"
       app_before_apply_job_dimg_not_found: "Not found dimg `%{dimg}` for app.before_apply_job!"
-      unsupported_port_number: 'Port number `%{number}` doesn`t support!'
-      unsupported_target_number: 'Target number `%{number}` doesn`t support!'
+      unsupported_port_number: "Port number `%{number}` isn't supported!"
+      unsupported_target_number: "Target number `%{number}` isn't supported!"
       app_name_incorrect: "App has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
       namespace_name_incorrect: "Namespace has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
       deployment_bootstrap_dimg_not_defined: "Not defined dimg for deployment.bootstrap!"
@@ -99,13 +99,13 @@ en:
       deployment_before_apply_job_dimg_not_defined: "Not defined dimg for deployment.before_apply_job!"
       deployment_before_apply_job_dimg_not_found: "Not found dimg `%{dimg}` for deployment.before_apply_job!"
     chef:
-      stage_checksum_not_calculated: "Chef stage `%{stage}` checksum is not calculated yet, run build first"
-      stage_path_overlap: "Cannot install `%{cookbook}` cookbook's path %{from} into %{to}: already exists"
+      stage_checksum_not_calculated: "Chef stage `%{stage}` checksum isn't calculated yet, run build first!"
+      stage_path_overlap: "Can't install `%{cookbook}` cookbook's path %{from} into %{to} already exists!"
       builder_cookbook_not_found: "Dapp cookbook directory not found at %{path}"
       berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook `%{cookbook}`, path: `%{path}`)"
     registry:
       no_such_dimg: 'Registry `%{registry}`: no such dimg in registry!'
-      authenticate_type_not_supported: 'Registry `%{registry}`: authenticate type not supported!'
+      authenticate_type_not_supported: 'Registry `%{registry}`: authenticate type is not supported!'
       page_not_found: "Registry `%{registry}`: page `%{url}` not found!"
       user_not_authorized: 'Registry `%{registry}`: user not authorized!'
     rugged:
@@ -118,7 +118,7 @@ en:
       rugged_protocol_not_supported: "Rugged has been compiled without support for `%{protocol}`.\nGit repositories will not be reachable via `%{protocol}` (`%{url}`).\nRugged.features should include `%{protocol}`."
       submodule_not_supported: "Git submodules not supported! (`%{path}`)"
     lock:
-      timeout: "Could not obtain lock for `%{name}` within %{timeout} seconds"
+      timeout: "Could not obtain lock for `%{name}` within %{timeout} seconds!"
     app:
       namespace_not_found: "App `%{name}`: namespace `%{namespace}` not found!"
       namespace_not_defined: "App `%{name}`: namespace not defined!"
@@ -132,5 +132,5 @@ en:
       kube_config_not_found: "Kube config `%{path}` not found!"
       kube_server_connection_refused: "Kube server `%{url}` connection refused: %{error}"
     secret:
-      bad_data: "Data `%{data}` can't be decrypted: check encryption key and data."
+      bad_data: "Data `%{data}` can't be decrypted: check encryption key and data!"
       key_length_too_short: "Encryption key isn't valid (required size %{required_size} bytes)!"
