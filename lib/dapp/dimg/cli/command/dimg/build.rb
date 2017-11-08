@@ -70,6 +70,11 @@ BANNER
                long: '--use-system-tar',
                boolean: true,
                default: false
+
+        option :force_save_cache,
+               long: '--force-save-cache',
+               boolean: true,
+               default: false
       end
     end
   end
