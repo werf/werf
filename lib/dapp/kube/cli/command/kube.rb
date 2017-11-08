@@ -1,7 +1,7 @@
 module Dapp::Kube::CLI
   module Command
     class Kube < ::Dapp::CLI
-      SUBCOMMANDS = ['secret generate', 'secret key generate', 'secret regenerate', 'deploy', 'dismiss', 'secret extract', 'secret edit', 'minikube setup', 'chart create', 'render'].freeze
+      SUBCOMMANDS = ['secret generate', 'secret key generate', 'secret regenerate', 'deploy', 'dismiss', 'secret extract', 'secret edit', 'minikube setup', 'chart create', 'render', 'lint'].freeze
 
       banner <<BANNER.freeze
 Usage: dapp kube subcommand [subcommand options]
@@ -18,6 +18,7 @@ Available subcommands: (for details, dapp kube SUB-COMMAND --help)
   dapp kube minikube setup
   dapp kube chart create [options]
   dapp kube render [options] [REPO]
+  dapp kube lint [options] [REPO]
 
 Options:
 BANNER
