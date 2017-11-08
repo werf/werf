@@ -25,9 +25,9 @@ module Dapp
         # FIXME: Лучше сейчас убрать фильтрацию, а добавить ее когда наберется достаточно
         # FIXME: примеров использования.
 
-        def patches(from, to, exclude_paths: [], **kwargs)
+        def patches(from, to, paths: [], exclude_paths: [], **kwargs)
           diff(from, to, **kwargs).patches.select do |patch|
-            !exclude_paths.any? { |p| check_path?(patch.delta.new_file[:path], p) }
+            !ignore_path?(patch.delta.new_file[:path], paths: paths, exclude_paths: exclude_paths)
           end
         end
 
@@ -35,15 +35,7 @@ module Dapp
           [].tap do |entries|
             lookup_commit(commit).tree.walk(:preorder) do |root, entry|
               fullpath = File.join(root, entry[:name]).reverse.chomp('/').reverse
-
-              is_exclude_path = exclude_paths.any? { |p| check_path?(fullpath, p) }
-              is_include_path = begin
-                paths.empty? ||
-                  paths.any? { |p| check_path?(fullpath, p) || check_subpath?(fullpath, p) }
-              end
-
-              next false if is_exclude_path || !is_include_path
-
+              next if entry[:type] == :tree || ignore_path?(fullpath, paths: paths, exclude_paths: exclude_paths)
               entries << [root, entry]
             end
           end
@@ -106,25 +98,23 @@ module Dapp
 
         private
 
+        def ignore_path?(path, paths: [], exclude_paths: [])
+          is_exclude_path = exclude_paths.any? { |p| check_path?(path, p) }
+          is_include_path = begin
+            paths.empty? ||
+                paths.any? { |p| File.fnmatch?(p, path) || File.fnmatch?(File.join(p, '**'), path) }
+          end
+
+          is_exclude_path || !is_include_path
+        end
+
         def check_path?(path, format)
-          path_checker(path) do |checking_path|
-            File.fnmatch(format, checking_path)
-          end
-        end
-
-        def check_subpath?(path, format)
-          path_checker(format) do |checking_path|
-            File.fnmatch(checking_path, path)
-          end
-        end
-
-        def path_checker(path)
           path_parts = path.split('/')
           checking_path = nil
 
           until path_parts.empty?
             checking_path = [checking_path, path_parts.shift].compact.join('/')
-            return true if yield checking_path
+            return true if File.fnmatch(format, checking_path)
           end
           false
         end
