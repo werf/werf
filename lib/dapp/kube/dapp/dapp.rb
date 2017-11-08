@@ -13,6 +13,7 @@ module Dapp
         include Command::SecretEdit
         include Command::MinikubeSetup
         include Command::ChartCreate
+        include Command::Render
         include Command::Common
       end
     end

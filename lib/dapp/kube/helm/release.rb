@@ -58,6 +58,29 @@ module Dapp
         dapp.shellout! "helm upgrade #{args.join(' ')}", verbose: true
       end
 
+      def templates
+        @templates ||= {}.tap do |t|
+          current_template = nil
+          spec = 0
+          evaluation_output.lines.each do |l|
+            if (match = l[/# Source: #{dapp.name}\/templates\/(.*)/, 1])
+              spec = 0
+              t[current_template = match] ||= []
+            end
+
+            if l[/^---$/]
+              spec += 1
+            elsif current_template
+              (t[current_template][spec] ||= []) << l
+            end
+          end
+
+          t.each do |template, specs|
+            t[template] = "---\n#{specs.map(&:join).join("---\n").strip}"
+          end
+        end
+      end
+
       protected
 
       def evaluation_output
