@@ -123,6 +123,16 @@ module Dapp
           end
         end
 
+        def service_stream
+          @@service_stream ||= begin
+            fd = IO.sysopen("/tmp/dapp-service.log", "a")
+
+            stream = IO.new(fd)
+            stream.sync = true
+            stream
+          end
+        end
+
         protected
 
         attr_writer :log_indent_size

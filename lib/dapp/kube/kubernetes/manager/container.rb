@@ -42,7 +42,7 @@ module Dapp
                 sleep 0.1
                 next
               rescue Kubernetes::Client::Error::Base => err
-                dapp.log_warning("Error while fetching pod's #{pod_manager.name} logs: #{err.message}")
+                dapp.log_warning("#{dapp.log_time}Error while fetching pod's #{pod_manager.name} logs: #{err.message}", stream: dapp.service_stream)
                 break
               end
 

@@ -132,7 +132,7 @@ module Dapp
                           rescue Kubernetes::Client::Error::Pod::ContainerCreating, Kubernetes::Client::Error::Pod::PodInitializing
                             next
                           rescue Kubernetes::Client::Error::Base => err
-                            dapp.log_warning("Error while fetching pod's #{pod.name} logs: #{err.message}")
+                            dapp.log_warning("#{dapp.log_time}Error while fetching pod's #{pod.name} logs: #{err.message}", stream: dapp.service_stream)
                             next
                           end
 
@@ -172,7 +172,7 @@ module Dapp
                         end
                       else
                         dapp.with_log_indent do
-                          dapp.log_warning("Unknown pod readiness condition reason '#{ready_condition['reason']}': #{ready_condition}")
+                          dapp.log_warning("#{dapp.log_time}Unknown pod readiness condition reason '#{ready_condition['reason']}': #{ready_condition}", stream: dapp.service_stream)
                         end
                       end
                     end # with_log_indent
