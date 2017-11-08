@@ -14,6 +14,7 @@ module Dapp
         include Command::MinikubeSetup
         include Command::ChartCreate
         include Command::Render
+        include Command::Lint
         include Command::Common
       end
     end
