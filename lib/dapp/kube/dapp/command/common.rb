@@ -51,12 +51,12 @@ module Dapp
           def kube_helm_decode_secrets
             if secret.nil?
               log_warning(desc: {
-                  code: :dapp_secret_key_not_found,
-                  data: {not_found_in: secret_key_not_found_in.join(', ')}
+                code: :dapp_secret_key_not_found,
+                data: {not_found_in: secret_key_not_found_in.join(', ')}
               }) if !kube_secret_values_paths.empty? || kube_chart_secret_path.directory?
-            else
-              kube_helm_decode_secret_files
             end
+
+            kube_helm_decode_secret_files
             kube_helm_decode_secret_values
           end
 
@@ -71,10 +71,16 @@ module Dapp
             return unless kube_chart_secret_path.directory?
             Dir.glob(kube_chart_secret_path.join('**/*')).each do |entry|
               next if File.directory?(entry)
-              kube_secret_file_validate!(entry)
+
               secret_relative_path = Pathname(entry).subpath_of(kube_chart_secret_path)
-              secret_data = secret.extract(IO.binread(entry).chomp("\n"))
-              File.open(kube_tmp_chart_secret_path(secret_relative_path), 'wb:ASCII-8BIT', 0400) {|f| f.write secret_data}
+
+              if secret.nil?
+                File.open(kube_tmp_chart_secret_path(secret_relative_path), 'wb:ASCII-8BIT', 0600) {|f| f.write ""}
+              else
+                kube_secret_file_validate!(entry)
+                secret_data = secret.extract(IO.binread(entry).chomp("\n"))
+                File.open(kube_tmp_chart_secret_path(secret_relative_path), 'wb:ASCII-8BIT', 0600) {|f| f.write secret_data}
+              end
             end
           end
 

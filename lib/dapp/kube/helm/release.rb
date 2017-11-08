@@ -117,10 +117,10 @@ module Dapp
 
       def set_options
         [].tap do |options|
+          options.concat(set.map { |opt| "--set #{opt}" })
           options << "--set global.dapp.repo=#{repo}"
           options << "--set global.dapp.image_version=#{image_version}"
           options << "--set global.namespace=#{namespace}"
-          options.concat(set.map { |opt| "--set #{opt}" })
         end
       end
 
