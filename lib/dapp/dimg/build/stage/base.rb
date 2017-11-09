@@ -27,7 +27,7 @@ module Dapp
               no_lock = false
 
               dimg.dapp.lock("#{dimg.dapp.name}.image.#{image.name}") do
-                image.cache_reset
+                image.class.reset_image_inspect(image.name)
 
                 if image_should_be_locked?
                   yield

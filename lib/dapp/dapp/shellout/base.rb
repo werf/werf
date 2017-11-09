@@ -50,6 +50,12 @@ module Dapp
           end
         end # << self
 
+        def shellout_cmd_should_succeed!(cmd)
+          return cmd.tap(&:error!)
+        rescue ::Mixlib::ShellOut::ShellCommandFailed => e
+          raise Error::Shellout, code: Helper::Trivia.class_to_lowercase(e.class), data: { stream: e.message }
+        end
+
         protected
 
         def _shellout_with_logging!(*args, verbose: false, quiet: true, time: false, **kwargs)
