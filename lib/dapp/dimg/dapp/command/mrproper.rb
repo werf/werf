@@ -6,36 +6,25 @@ module Dapp
           # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
           def mrproper
             log_step_with_indent(:mrproper) do
-              raise Error::Command, code: :mrproper_required_option unless proper_all? || proper_dev_mode_cache? || proper_cache_version?
-
-              dapp_dangling_images_flush
+              raise Error::Command, code: :mrproper_required_option if mrproper_command_without_any_option?
 
               if proper_all?
-                flush_by_label('dapp')
-                remove_build_dir
+                proper_all
               elsif proper_dev_mode_cache?
-                flush_by_label('dapp-dev-mode')
+                proper_dev_mode_cache
               elsif proper_cache_version?
-                log_proper_cache do
-                  proper_cache_images = proper_cache_all_images
-                  remove_images(dapp_images_by_label('dapp').select { |id| !proper_cache_images.include?(id) }.map(&:strip))
-                end
+                proper_cache_version
               end
+
+              dapp_dangling_images_flush
             end
           end
           # rubocop:enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
 
           protected
 
-          def flush_by_label(label)
-            log_step_with_indent(:containers) { dapp_containers_flush_by_label(label) }
-            log_step_with_indent(:images) { dapp_images_flush_by_label(label) }
-          end
-
-          def remove_build_dir
-            log_step_with_indent(:build_dir) { FileUtils.rm_rf(build_path) }
-          rescue ::Dapp::Error::Dapp => e
-            raise unless e.net_status[:code] == :dappfile_not_found
+          def mrproper_command_without_any_option?
+            !(proper_all? || proper_dev_mode_cache? || proper_cache_version?)
           end
 
           def proper_all?
@@ -46,34 +35,54 @@ module Dapp
             !!options[:proper_dev_mode_cache]
           end
 
-          def dapp_containers_flush_by_label(label)
-            remove_containers_by_query(%(#{host_docker} ps -a -f "label=#{label}" -q), force: true)
+          def proper_all
+            flush_by_label('dapp')
+            remove_build_dir
           end
 
-          def dapp_dangling_images_flush_by_label(label)
-            remove_images_by_query(%(#{host_docker} images -f "dangling=true" -f "label=#{label}" -q), force: true)
+          def remove_build_dir
+            build_path.tap { |p| log_step_with_indent(:build_dir) { FileUtils.rm_rf(p) } }
+          rescue ::Dapp::Error::Dapp => e
+            raise unless e.net_status[:code] == :dappfile_not_found
+          end
+
+          def proper_dev_mode_cache
+            flush_by_label('dapp-dev-mode')
+          end
+
+          def flush_by_label(label)
+            log_step_with_indent(:containers) { dapp_containers_flush_by_label(label) }
+            log_step_with_indent(:images) { dapp_images_flush_by_label(label) }
+          end
+
+          def dapp_containers_flush_by_label(label)
+            remove_containers_by_query(%(#{host_docker} ps -a -f "label=dapp" -f "label=#{label}" -q --no-trunc))
           end
 
           def dapp_images_flush_by_label(label)
-            dapp_dangling_images_flush_by_label(label)
-            remove_images(dapp_images_by_label(label), force: true)
+            remove_images(dapp_images_names_by_label(label))
           end
 
-          def dapp_images_by_label(label)
-            @dapp_images ||= begin
-              shellout!(%(#{host_docker} images -f "dangling=false" --format="{{.Repository}}:{{.Tag}}" -f "label=#{label}"))
-                .stdout
-                .lines
-                .map(&:strip)
+          def proper_cache_version
+            log_proper_cache do
+              proper_cache_all_images_names.tap do |proper_cache_images|
+                remove_images(dapp_images_names_by_label('dapp').select { |image_name| !proper_cache_images.include?(image_name) })
+              end
             end
           end
 
-          def proper_cache_all_images
-            shellout!([
-              "#{host_docker} images",
-              '--format="{{.Repository}}:{{.Tag}}"',
-              %(-f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}" -f "dangling=false")
-            ].join(' ')).stdout.lines.map(&:strip)
+          def proper_cache_all_images_names
+            shellout!(%(#{host_docker} images --format="{{.Repository}}:{{.Tag}}" -f "dangling=false" -f "label=dapp" -f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}"))
+              .stdout
+              .lines
+              .map(&:strip)
+          end
+
+          def dapp_images_names_by_label(label)
+            shellout!(%(#{host_docker} images --format="{{.Repository}}:{{.Tag}}" -f "dangling=false" -f "label=dapp" -f "label=#{label}"))
+              .stdout
+              .lines
+              .map(&:strip)
           end
         end
       end

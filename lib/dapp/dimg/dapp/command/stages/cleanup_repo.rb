@@ -8,8 +8,10 @@ module Dapp
               lock_repo(repo = option_repo) do
                 raise Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
-                registry = registry(repo)
-                repo_dimgs, repo_stages = repo_dimgs_and_cache(registry)
+                registry    = registry(repo)
+                repo_dimgs  = repo_dimgs_images(registry)
+                repo_stages = repo_stages_images(registry)
+
                 repo_stages.delete_if { |_, siid| repo_dimgs.values.include?(siid) } # ignoring stages with dimgs ids (v2)
 
                 proper_repo_cache(registry, repo_stages)               if proper_cache_version?
@@ -31,7 +33,7 @@ module Dapp
             end
 
             def repo_stages_cleanup(registry, repo_dimgs, repo_stages)
-              log_step_with_indent(repo) do
+              log_step_with_indent(option_repo) do
                 repo_dimgs.each { |image_tag, image_id| clear_repo_stages(registry, repo_stages, image_tag, image_id) }
                 repo_stages.keys.each { |image_tag| delete_repo_image(registry, image_tag) }
               end
@@ -79,7 +81,7 @@ module Dapp
             end
 
             def repo_dapp_dappstage_images_detailed(registry)
-              @repo_dapp_images_detailed ||= begin
+              @repo_dapp_dappstage_images_detailed ||= begin
                 registry.tags.map do |tag|
                   next unless tag.start_with?('dimgstage')
 

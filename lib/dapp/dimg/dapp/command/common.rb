@@ -5,47 +5,109 @@ module Dapp
         module Common
           protected
 
-          def dapp_images_names
-            shellout!(%(#{host_docker} images --format="{{.Repository}}:{{.Tag}}" #{stage_cache})).stdout.lines.map(&:strip)
+          def dapp_project_image_labels(image_id)
+            dapp_project_image_inspect(image_id)['Config']['Labels']
           end
 
-          def dapp_images_ids
-            shellout!(%(#{host_docker} images #{stage_cache} -q --no-trunc)).stdout.lines.map(&:strip)
+          def dapp_project_image_inspect(image_id_or_name)
+            return {} unless dapp_project_image_exist?(image_id_or_name)
+
+            dapp_project_images.find { |img| [img[:name], img[:id]].include?(image_id_or_name) }[:inspect] ||= begin
+              cmd = shellout!("#{::Dapp::Dapp.host_docker} inspect --type=image #{image_id_or_name}")
+              Array(JSON.parse(cmd.stdout.strip)).first || {}
+            end
+          end
+
+          def dapp_project_image_exist?(image_id_or_name)
+            dapp_project_images.any? { |img| [img[:name], img[:id]].include?(image_id_or_name) }
+          end
+
+          def dapp_project_images_ids
+            dapp_project_images.map { |img| img[:id] }
+          end
+
+          def dapp_project_dangling_images
+            dapp_project_images.select { |img| project_dangling_image?(img) }
+          end
+
+          def project_dangling_image?(image)
+            image[:name] == '<none>:<none>'
+          end
+
+          def dapp_project_images
+            @dapp_project_images ||= [].tap do |images|
+              shellout!(%(#{host_docker} images --format="{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}" -f "label=dapp" #{stage_cache} --no-trunc))
+                  .stdout
+                  .lines
+                  .map(&:strip)
+                  .each do |l|
+                id, name, created_at = l.split(';')
+                images << { id: id, name: name, created_at: Time.parse(created_at) }
+              end
+            end
+          end
+
+          def dapp_project_containers_flush
+            remove_containers_by_query(%(#{host_docker} ps -a -f "label=dapp" -f "name=#{container_name_prefix}" -q --no-trunc))
+          end
+
+          def dapp_project_dangling_images_flush
+            remove_project_images(dapp_project_dangling_images.map { |img| img[:id] })
+          end
+
+          def remove_project_images(images_ids_or_names)
+            images_ids_or_names = convert_to_project_images_names(images_ids_or_names)
+            update_project_images(images_ids_or_names)
+            remove_images(images_ids_or_names)
+          end
+
+          def update_project_images(images_ids_or_names)
+            dapp_project_images.delete_if do |img|
+              images_ids_or_names.include?(img[:id]) || images_ids_or_names.include?(img[:name])
+            end
+          end
+
+          def convert_to_project_images_names(images_ids_or_names)
+            dapp_project_images.each_with_object([]) do |image, images|
+              if images_ids_or_names.include?(image[:id]) || images_ids_or_names.include?(image[:name])
+                images << (project_dangling_image?(image) ? image[:id] : image[:name])
+              end
+            end
           end
 
           def dapp_containers_flush
-            remove_containers_by_query(%(#{host_docker} ps -a -f "label=dapp" -f "name=#{container_name_prefix}" -q), force: true)
+            remove_containers_by_query(%(#{host_docker} ps -a -f "label=dapp" -q --no-trunc))
           end
 
           def dapp_dangling_images_flush
-            remove_images_by_query(%(#{host_docker} images -f "dangling=true" -f "label=dapp=#{stage_dapp_label}" -q), force: true)
+            remove_images_by_query(%(#{host_docker} images -f "dangling=true" -f "label=dapp" -q --no-trunc))
           end
 
-          def remove_images_by_query(images_query, force: false)
-            with_subquery(images_query) { |ids| remove_images(ids, force: force) }
+          def remove_images_by_query(images_query)
+            with_subquery(images_query) { |ids| remove_images(ids) }
           end
 
-          def remove_images(ids, force: false)
-            ids.uniq!
-            check_user_containers!(ids) unless force
-            remove_base("#{host_docker} rmi%{force_option} %{ids}", ids, force: force)
+          def remove_images(images_ids_or_names)
+            images_ids_or_names.uniq!
+            check_user_containers!(images_ids_or_names)
+            remove_base("#{host_docker} rmi%{force_option} %{ids}", images_ids_or_names, force: false)
           end
 
           def check_user_containers!(images_ids)
             return if images_ids.empty?
             log_step_with_indent(:'check user containers') do
-              run_command(%(#{host_docker} ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')})).tap do |res|
+              run_command(%(#{host_docker} ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')} --no-trunc)).tap do |res|
                 raise Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if res && !res.stdout.strip.empty? && !dry_run?
               end
             end
           end
 
-          def remove_containers_by_query(containers_query, force: false)
-            with_subquery(containers_query) { |ids| remove_containers(ids, force: force) }
+          def remove_containers_by_query(containers_query)
+            with_subquery(containers_query) { |ids| remove_containers(ids) }
           end
 
-          def remove_containers(ids, force: false)
-            remove_base("#{host_docker} rm%{force_option} %{ids}", ids.uniq, force: force)
+          def remove_containers(ids)
+            remove_base("#{host_docker} rm%{force_option} %{ids}", ids.uniq, force: true)
           end
 
           def remove_base(query_format, ids, force: false)
@@ -57,10 +119,6 @@ module Dapp
           def with_subquery(query)
             return if (res = shellout!(query).stdout.strip.lines.map(&:strip)).empty?
             yield(res)
-          end
-
-          def image_labels(image_id)
-            Image::Stage.image_config_option(image_id: image_id, option: 'Labels') || {}
           end
 
           def run_command(cmd)
