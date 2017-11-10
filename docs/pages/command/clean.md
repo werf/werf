@@ -95,10 +95,10 @@ $ dapp dimg stages flush repo localhost:5000/test
 ```
 
 ### dapp dimg cleanup
-Убраться в системе после некорректного завершения работы dapp, удалить нетегированные docker-образы и docker-контейнеры [проекта](definitions.html#проект).
+Убраться в системе после некорректного завершения работы dapp, удалить нетегированные docker-образы и docker-контейнеры.
 
 ```
-dapp dimg cleanup [options] [DIMG ...]
+dapp dimg cleanup [options]
 ```
 
 #### Примеры
@@ -113,7 +113,7 @@ $ dapp dimg cleanup
 $ dapp dimg cleanup --dry-run
 backend
   docker rm -f dd4ec7v33
-  docker rmi ea5ec7543 c809ec7e9f ee6f48efa6
+  docker rmi dimgstage-dapp-test-project:07758b3ec8aec701a01 dimgstage-dapp-test-project:ec701a0107758b3ec8a
 ```
 
 ### dapp dimg mrproper
