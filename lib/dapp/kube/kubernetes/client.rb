@@ -3,6 +3,7 @@ module Dapp
     module Kubernetes
       class Client
         include Helper::YAML
+        extend Helper::YAML
 
         ::Dapp::Dapp::Shellout::Base.default_env_keys << 'KUBECONFIG'
 
@@ -12,7 +13,7 @@ module Dapp
         end
 
         def namespace
-          @namespace || kube_context_config['context']['namespace'] || 'default'
+          @namespace || self.class.kube_context_namespace(kube_context_config) || "default"
         end
 
         # Чтобы не перегружать методы явной передачей namespace.
@@ -222,47 +223,71 @@ module Dapp
 
         def kube_user_config
           @kube_user_config ||= begin
-            kube_config.fetch('users', []).find {|user| user['name'] == kube_context_config['context']['user']} || begin
-              raise Error::BadConfig, code: :kube_user_not_found, data: {context: kube_context_config}
-            end
+            kube_user_config = self.class.kube_user_config(kube_config, kube_context_config['context']['user'])
+            raise Error::BadConfig, code: :kube_user_not_found, data: {context: kube_context_config} if kube_user_config.nil?
+            kube_user_config
           end
         end
 
         def kube_cluster_config
           @kube_cluster_config ||= begin
-            kube_config.fetch('clusters', []).find {|cluster| cluster['name'] == kube_context_config['context']['cluster']} || begin
-              raise Error::BadConfig, code: :kube_cluster_not_found, data: {context: kube_context_config}
-            end
+            kube_cluster_config = self.class.kube_cluster_config(kube_config, kube_context_config['context']['cluster'])
+            raise Error::BadConfig, code: :kube_cluster_not_found, data: {context: kube_context_config} if kube_cluster_config.nil?
+            kube_cluster_config
           end
         end
 
         def kube_context_config
           @kube_context_config ||= begin
-            kube_config.fetch('contexts', []).find {|context| context['name'] == kube_context_name} || begin
-              raise Error::BadConfig, code: :kube_context_not_found, data: {context_name: kube_context_name}
-            end
-          end
-        end
-
-        def kube_context_name
-          @kube_context_name ||= kube_config['current-context'] || begin
-            if context = kube_config.fetch('contexts', []).first
-              warn "[WARN] .kube/config current-context is not set, using context '#{context['name']}'"
-              context['name']
-            end
+            context_name = self.class.kube_context_name(kube_config)
+            kube_context_config = self.class.kube_context_config(kube_config, context_name)
+            raise Error::BadConfig, code: :kube_context_not_found, data: {context_name: context_name} if kube_context_config.nil?
+            kube_context_config
           end
         end
 
         def kube_config
           @kube_config ||= begin
+            kube_config = self.class.kube_config(self.class.kube_config_path)
+            raise Error::Base, code: :kube_config_not_found, data: { path: self.class.kube_config_path } if kube_config.nil?
+            kube_config
+          end
+        end
+
+        class << self
+          def kube_config_path
             kube_config_path = ENV['KUBECONFIG']
             kube_config_path = File.join(ENV['HOME'], '.kube/config') unless kube_config_path
+            kube_config_path
+          end
 
-            if File.exist?(kube_config_path)
-              yaml_load_file(kube_config_path)
-            else
-              raise Error::Base, code: :kube_config_not_found, data: { path: kube_config_path }
+          def kube_config(kube_config_path)
+            yaml_load_file(kube_config_path) if File.exist?(kube_config_path)
+          end
+
+          def kube_context_name(kube_config)
+            kube_config['current-context'] || begin
+              if context = kube_config.fetch('contexts', []).first
+                warn "[WARN] .kube/config current-context is not set, using context '#{context['name']}'"
+                context['name']
+              end
             end
+          end
+
+          def kube_context_config(kube_config, kube_context_name)
+            kube_config.fetch('contexts', []).find {|context| context['name'] == kube_context_name}
+          end
+
+          def kube_user_config(kube_config, user_name)
+            kube_config.fetch('users', []).find {|user| user['name'] == user_name}
+          end
+
+          def kube_cluster_config(kube_config, cluster_name)
+            kube_config.fetch('clusters', []).find {|cluster| cluster['name'] == cluster_name}
+          end
+
+          def kube_context_namespace(kube_context_config)
+            kube_context_config['context']['namespace']
           end
         end
       end # Client

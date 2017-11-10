@@ -143,10 +143,6 @@ module Dapp
             "#{name}-#{kube_namespace}".slugify
           end
 
-          def kube_namespace
-            kubernetes.namespace
-          end
-
           { encode: :generate, decode: :extract }.each do |type, secret_method|
             define_method "kube_helm_#{type}_json" do |secret, json|
               change_json_value = proc do |value|
@@ -225,11 +221,33 @@ module Dapp
             @secret_key_not_found_in ||= []
           end
 
-          def kubernetes
-            @kubernetes ||= begin
-              namespace = options[:namespace].nil? ? nil : options[:namespace].tr('_', '-')
-              Kubernetes::Client.new(namespace: namespace)
+          def namespace_option
+            options[:namespace].nil? ? nil : options[:namespace].tr('_', '-')
+          end
+
+          def kube_namespace
+            namespace_option || begin
+              namespace = "default"
+
+              Kubernetes::Client.tap do |kube|
+                kube_config = kube.kube_config(kube.kube_config_path)
+                if kube_config
+                  kube_context_name = kube.kube_context_name(kube_config)
+                  kube_context_config = kube.kube_context_config(kube_config, kube_context_name)
+
+                  if kube_context_config
+                    context_namespace = kube.kube_context_namespace(kube_context_config)
+                    namespace = context_namespace if context_namespace
+                  end
+                end
+              end
+
+              namespace
             end
+          end
+
+          def kubernetes
+            @kubernetes ||= Kubernetes::Client.new(namespace: kube_namespace)
           end
         end
       end
