@@ -83,7 +83,8 @@ module Dapp
           dapp.log_state(image_name, state: dapp.t(code: 'state.push'), styles: { status: :success })
         else
           dapp.lock("image.#{hashsum image_name}") do
-            ::Dapp::Dimg::Image::Stage.cache.delete(image_name)
+            ::Dapp::Dimg::Image::Docker.reset_image_inspect(image_name)
+
             dapp.log_process(image_name, process: dapp.t(code: 'status.process.pushing')) do
               image.export!(image_name)
             end

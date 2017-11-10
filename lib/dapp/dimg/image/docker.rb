@@ -27,14 +27,13 @@ module Dapp
         end
 
         def id
-          cache[:id]
+          self.class.image_inspect(self.name)["Id"]
         end
 
         def untag!
           raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
           dapp.shellout!("#{dapp.host_docker} rmi #{name}")
-          self.class.image_config_delete(id)
-          self.class.cache.delete(name)
+          self.class.reset_image_inspect(self.name)
         end
 
         def push!
@@ -49,21 +48,22 @@ module Dapp
           dapp.log_secondary_process(dapp.t(code: 'process.image_pull', data: { name: name })) do
             dapp.shellout!("#{dapp.host_docker} pull #{name}", verbose: true)
           end
-          cache_reset
+
+          self.class.reset_image_inspect(self.name)
         end
 
         def tagged?
-          !!id
+          not self.class.image_inspect(self.name).empty?
         end
 
         def created_at
           raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
-          cache[:created_at]
+          self.class.image_inspect(self.name)["Created"]
         end
 
         def size
           raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
-          cache[:size]
+          Float(self.class.image_inspect(self.name)["Size"])
         end
 
         def config_option(option)
@@ -71,36 +71,41 @@ module Dapp
           self.class.image_config_option(image_id: built_id, option: option)
         end
 
-        def cache_reset
-          self.class.cache_reset(name)
-        end
-
         class << self
-          def image_config(image_id)
-            image_configs[image_id] ||= begin
-              output = ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker} inspect --format='{{json .Config}}' #{image_id}").stdout.strip
-              JSON.parse(output)
+          def image_inspect(image_id)
+            image_inspects[image_id] ||= begin
+              cmd = ::Dapp::Dapp.shellout("#{::Dapp::Dapp.host_docker} inspect --type=image #{image_id}")
+
+              if cmd.exitstatus != 0
+                if cmd.stderr.start_with? "Error: No such image:"
+                  {}
+                else
+                  ::Dapp::Dapp.shellout_cmd_should_succeed! cmd
+                end
+              else
+                Array(JSON.parse(cmd.stdout.strip)).first || {}
+              end
             end
+          end
+
+          def image_config(image_id)
+            image_inspect(image_id)["Config"] || {}
           end
 
           def image_config_option(image_id:, option:)
             image_config(image_id)[option]
           end
 
-          def image_config_delete(image_id)
-            image_configs.delete(image_id)
+          def reset_image_inspect(image_id)
+            image_inspects.delete(image_id)
           end
 
-          def image_configs
-            @image_configs ||= {}
+          def image_inspects
+            @image_inspects ||= {}
           end
         end
 
         protected
-
-        def cache
-          self.class.cache[name.to_s] || {}
-        end
 
         class << self
           def image_name_format
@@ -121,12 +126,7 @@ module Dapp
 
           def tag!(id:, tag:, verbose: false, quiet: false)
             ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker} tag #{id} #{tag}", verbose: verbose, quiet: quiet)
-
-            if cache_entry = cache.values.find {|v| v[:id] == id}
-              cache[tag] = cache_entry
-            else
-              cache_reset
-            end
+            image_inspects[tag] = image_inspect(id)
           end
 
           def save!(image_or_images, file_path, verbose: false, quiet: false)
@@ -136,43 +136,6 @@ module Dapp
 
           def load!(file_path, verbose: false, quiet: false)
             ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker} load -i #{file_path}", verbose: verbose, quiet: quiet)
-          end
-
-          def cache
-            @cache ||= (@cache = {}).tap { cache_reset }
-          end
-
-          def cache_reset(name = '')
-            # FIXME: rework images cache, then delete time measure
-            #t = Time.now
-            cache.delete(name)
-            ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker} images --format='{{.Repository}}:{{.Tag}};{{.ID}};{{.CreatedAt}};{{.Size}}' --no-trunc #{name}")
-                        .stdout
-                        .lines
-                        .each do |l|
-              name, id, created_at, size_field = l.split(';').map(&:strip)
-              name = name.reverse.chomp('docker.io/'.reverse).reverse
-              size = begin
-                match = size_field.match(/^(\S*\d)\ ?(b|kb|mb|gb|tb)$/i)
-                raise Error::Build, code: :unsupported_docker_image_size_format, data: {value: size_field} unless match and match[1] and match[2]
-
-                number = match[1].to_f
-                unit = match[2].downcase
-
-                coef = case unit
-                       when 'b'  then 0
-                       when 'kb' then 1
-                       when 'mb' then 2
-                       when 'gb' then 3
-                       when 'tb' then 4
-                       end
-
-                number * (1000**coef)
-              end
-              cache[name] = { id: id, created_at: created_at, size: size }
-              image_config_delete(id)
-            end
-            #p [:cache_reset, name, :took, Time.now - t]
           end
         end
       end # Docker
