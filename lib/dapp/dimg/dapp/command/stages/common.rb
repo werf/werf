@@ -11,18 +11,30 @@ module Dapp
               ::Dapp::Dimg::DockerRegistry.new(repo)
             end
 
-            def repo_dimgs_and_cache(registry)
-              format = proc do |arr|
-                arr.map do |tag|
-                  if (id = registry.image_id(tag)).nil?
-                    log_warning(desc: { code: 'tag_ignored', data: { tag: tag } })
-                  else
-                    [tag, id]
-                  end
-                end.compact.to_h
+            def repo_dimgs_images(registry)
+              repo_dimgs_and_stages_images(registry)[:dimgs]
+            end
+
+            def repo_stages_images(registry)
+              repo_dimgs_and_stages_images(registry)[:stages]
+            end
+
+            def repo_dimgs_and_stages_images(registry)
+              @repo_dimgs_and_cache_names ||= {}.tap do |images|
+                format = proc do |arr|
+                  arr.map do |tag|
+                    if (id = registry.image_id(tag)).nil?
+                      log_warning(desc: { code: 'tag_ignored', data: { tag: tag } })
+                    else
+                      [tag, id]
+                    end
+                  end.compact.to_h
+                end
+                dimgs, stages = registry_tags(registry).partition { |tag| !tag.start_with?('dimgstage') }
+
+                images[:dimgs] = format.call(dimgs)
+                images[:stages] = format.call(stages)
               end
-              dimgs, stages = registry.tags.partition { |tag| !tag.start_with?('dimgstage') }
-              [format.call(dimgs), format.call(stages)]
             end
 
             def registry_tags(registry)
@@ -41,8 +53,8 @@ module Dapp
               end
             end
 
-            def select_dapp_artifacts_ids(hash)
-              hash.select { |k, _v| k.start_with?('dapp-artifact') }.values
+            def select_dapp_artifacts_ids(labels)
+              labels.select { |k, _v| k.start_with?('dapp-artifact') }.values
             end
 
             def dapp_git_repositories
