@@ -187,6 +187,8 @@ module Dapp
                 Dir[from_path.join('**/*')]
                   .map(&Pathname.method(:new))
                   .each do |from_subpath|
+                    next if from_subpath.directory?
+
                     to_subpath = to_path.join(from_subpath.relative_path_from(from_path))
                     if to_subpath.exist?
                       raise(Error::Chef,
