@@ -126,6 +126,9 @@ dapp dimg mrproper [options]
 #### `--all`
 Удалить docker-образы и docker-контейнеры связанные с dapp.
 
+#### `--improper-dev-mode-cache`
+Удалить docker-образы и docker-контейнеры связанные с dapp, собранные в dev-режиме.
+
 #### `--improper-cache-version-stages`
 Удалить устаревший кэш приложений.
 
