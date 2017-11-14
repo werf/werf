@@ -36,7 +36,7 @@ module Dapp
 
           def dapp_project_images
             @dapp_project_images ||= [].tap do |images|
-              shellout!(%(#{host_docker} images --format="{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}" -f "label=dapp" #{stage_cache} --no-trunc))
+              shellout!(%(#{host_docker} images --format="{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}" -f "label=dapp" --no-trunc #{stage_cache}))
                   .stdout
                   .lines
                   .map(&:strip)
@@ -113,6 +113,7 @@ module Dapp
           def remove_base(query_format, ids, force: false)
             return if ids.empty?
             force_option = force ? ' -f' : ''
+            log(ids.join("\n")) if log_verbose? || dry_run?
             ids.each_slice(50) { |chunk| run_command(format(query_format, force_option: force_option, ids: chunk.join(' '))) }
           end
 
@@ -122,7 +123,6 @@ module Dapp
           end
 
           def run_command(cmd)
-            log(cmd) if log_verbose? || dry_run?
             shellout!(cmd) unless dry_run?
           end
 
