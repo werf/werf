@@ -62,7 +62,11 @@ module Dapp
           private
 
           def tar_option_transform(cwd, to)
-            format = proc { |path| path.chomp('/').reverse.chomp('/').reverse }
+            format = proc do |path|
+              res = path.chomp('/').reverse.chomp('/').reverse
+              res = res.gsub('/', '\/')
+              res
+            end
             "--transform \"s/^#{format.call(cwd)}/#{format.call(to)}/\""
           end
         end # ImportArtifact
