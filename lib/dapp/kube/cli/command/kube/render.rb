@@ -35,6 +35,12 @@ BANNER
              default: [],
              proc: proc { |v| composite_options(:helm_secret_values) << v }
 
+      option :templates,
+             long: '--template GLOB_PATTERN',
+             short: '-t GLOB_PATTERN',
+             default: [],
+             proc: proc { |v| composite_options(:templates) << v }
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
 
