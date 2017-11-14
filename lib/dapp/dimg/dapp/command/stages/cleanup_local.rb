@@ -30,7 +30,7 @@ module Dapp
 
             def actual_cache_project_images_ids
               @actual_cache_project_images_ids ||= begin
-                shellout!(%(#{host_docker} images -f "label=dapp" -f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}" #{stage_cache} -q --no-trunc))
+                shellout!(%(#{host_docker} images -f "label=dapp" -f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}" -q --no-trunc #{stage_cache}))
                   .stdout
                   .lines
                   .map(&:strip)

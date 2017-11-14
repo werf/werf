@@ -36,7 +36,7 @@ module Dapp
 
           def dapp_project_images
             @dapp_project_images ||= [].tap do |images|
-              shellout!(%(#{host_docker} images --format="{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}" -f "label=dapp" #{stage_cache} --no-trunc))
+              shellout!(%(#{host_docker} images --format="{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}" -f "label=dapp" --no-trunc #{stage_cache}))
                   .stdout
                   .lines
                   .map(&:strip)
