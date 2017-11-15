@@ -34,6 +34,8 @@ module Dapp
 
                     if entry.directory?
                       common_tar.mkdir path, mode
+                    elsif entry.symlink?
+                      common_tar.add_symlink path, entry.header.linkname, mode
                     else
                       common_tar.add_file path, mode do |tf|
                         tf.write entry.read
