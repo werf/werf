@@ -63,7 +63,7 @@ module Dapp
           current_template = nil
           spec = 0
           evaluation_output.lines.each do |l|
-            if (match = l[/# Source: #{dapp.name}\/templates\/(.*)/, 1])
+            if (match = l[/# Source: (.*)/, 1])
               spec = 0
               t[current_template = match] ||= []
             end
