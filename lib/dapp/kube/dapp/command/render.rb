@@ -9,9 +9,12 @@ module Dapp
                 if options[:templates].any?
                   release.templates.select do |template_path, _|
                     options[:templates].map { |t| "#{t}*" }.any? do |template_path_pattern|
-                      template_relative_path_pattern = Pathname(File.expand_path(template_path_pattern)).subpath_of(path('.helm', 'templates'))
+                      template_path_without_chart_name = template_path[/.*?\/(.*)/, 1]
+                      template_relative_path_pattern = Pathname(File.expand_path(template_path_pattern)).subpath_of(path('.helm'))
                       template_relative_path_pattern ||= template_path_pattern
-                      File.fnmatch(template_relative_path_pattern, template_path)
+
+                      File.fnmatch(template_relative_path_pattern, template_path_without_chart_name) ||
+                        File.fnmatch(template_relative_path_pattern, template_path)
                     end
                   end
                 else
