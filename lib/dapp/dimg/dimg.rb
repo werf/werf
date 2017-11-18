@@ -42,7 +42,7 @@ module Dapp
       end
 
       def after_stages_build!
-        return unless last_stage.image.built? || dev_mode_cache?
+        return unless last_stage.image.built? || dev_mode? || force_save_cache?
         last_stage.save_in_cache!
         artifacts.each { |artifact| artifact.last_stage.save_in_cache! }
       end
@@ -154,12 +154,12 @@ module Dapp
         dapp.dev_mode?
       end
 
-      def dev_mode_cache?
-        dev_mode? || !!dapp.options[:force_save_cache]
+      def force_save_cache?
+        !!dapp.options[:force_save_cache]
       end
 
       def build_cache_version
-        [::Dapp::BUILD_CACHE_VERSION, dev_mode_cache? ? 1 : 0]
+        [::Dapp::BUILD_CACHE_VERSION, dev_mode? ? 1 : 0]
       end
 
       def introspect_image!(image:, options:)
