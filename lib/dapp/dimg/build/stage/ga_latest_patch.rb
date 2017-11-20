@@ -8,6 +8,11 @@ module Dapp
             super
           end
 
+          def renew
+            dependencies_discard
+            super
+          end
+
           def dependencies_stage
             nil
           end

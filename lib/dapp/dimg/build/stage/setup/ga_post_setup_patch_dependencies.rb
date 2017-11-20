@@ -13,6 +13,11 @@ module Dapp
               super
             end
 
+            def renew
+              dependencies_discard
+              super
+            end
+
             def dependencies
               @dependencies ||= [(changes_size_since_g_a_pre_setup_patch / MAX_PATCH_SIZE).to_i]
             end

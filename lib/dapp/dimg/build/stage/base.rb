@@ -219,7 +219,6 @@ module Dapp
           protected
 
           def renew
-            dependencies_discard
             image_reset
             image_untag! if image_should_be_untagged?
           end

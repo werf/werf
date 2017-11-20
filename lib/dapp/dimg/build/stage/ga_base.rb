@@ -36,7 +36,7 @@ module Dapp
           end
 
           def renew
-            @commits = {}
+            commits_discard
             super
           end
 
@@ -55,6 +55,10 @@ module Dapp
           end
 
           private
+
+          def commits_discard
+            @commits = nil
+          end
 
           def commits
             @commits ||= {}
