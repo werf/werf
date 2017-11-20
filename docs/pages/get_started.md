@@ -107,15 +107,11 @@ docker.expose 443
 $ dapp dimg build
 simple-php-app
   From ...                                                   [OK] 0.55 sec
-  Git artifacts dependencies ...                             [OK] 0.45 sec
   Git artifacts: create archive ...                          [OK] 0.52 sec
   Install group
-    Git artifacts dependencies ...                           [OK] 0.39 sec
     Git artifacts: apply patches (after install) ...         [OK] 0.41 sec
   Setup group
-    Git artifacts dependencies ...                           [OK] 0.42 sec
     Git artifacts: apply patches (before setup) ...          [OK] 0.69 sec
-    Git artifacts dependencies ...                           [OK] 0.41 sec
     Git artifacts: apply patches (after setup) ...           [OK] 0.4 sec
   Git artifacts: latest patch ...                            [OK] 0.39 sec
   Docker instructions ...                                    [OK] 0.42 sec

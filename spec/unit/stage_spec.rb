@@ -12,10 +12,9 @@ describe Dapp::Dimg::Build::Stage do
   end
 
   def dimg_stages
-    [:from, :before_install, :before_install_artifact, :g_a_archive_dependencies, :g_a_archive, :g_a_pre_install_patch_dependencies,
-     :g_a_pre_install_patch, :install, :g_a_post_install_patch_dependencies, :g_a_post_install_patch, :after_install_artifact,
-     :before_setup, :before_setup_artifact, :g_a_pre_setup_patch_dependencies, :g_a_pre_setup_patch, :setup,
-     :g_a_post_setup_patch_dependencies, :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions]
+    [:from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install, :g_a_post_install_patch,
+     :after_install_artifact, :before_setup, :before_setup_artifact, :g_a_pre_setup_patch, :setup,
+     :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions]
   end
 
   def artifact_last_stage
@@ -23,10 +22,9 @@ describe Dapp::Dimg::Build::Stage do
   end
 
   def artifact_stages
-    [:from, :before_install, :before_install_artifact, :g_a_archive_dependencies, :g_a_archive, :g_a_pre_install_patch_dependencies,
-     :g_a_pre_install_patch, :install, :g_a_post_install_patch_dependencies, :g_a_post_install_patch, :after_install_artifact,
-     :before_setup, :before_setup_artifact, :g_a_pre_setup_patch_dependencies, :g_a_pre_setup_patch, :setup,
-     :after_setup_artifact, :g_a_artifact_patch, :build_artifact]
+    [:from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
+     :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact, :g_a_pre_setup_patch,
+     :setup, :after_setup_artifact, :g_a_artifact_patch, :build_artifact]
   end
 
   [:dimg, :artifact].each do |dimg|

@@ -13,20 +13,16 @@ module Dapp
             super
           end
 
-          def dependencies_stage
-            nil
-          end
-
           def dependencies
             @dependencies ||= [commit_list, git_artifacts_dev_patch_hashes]
           end
 
-          def layer_commit(git_artifact)
-            commits[git_artifact] ||= git_artifact.latest_commit
-          end
-
           def empty?
             dimg.git_artifacts.empty? || dependencies_empty?
+          end
+
+          def layer_commit(git_artifact)
+            commits[git_artifact] ||= git_artifact.latest_commit
           end
 
           private

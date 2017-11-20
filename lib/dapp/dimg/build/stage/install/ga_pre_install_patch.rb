@@ -3,12 +3,16 @@ module Dapp
     module Build
       module Stage
         module Install
-          class GAPreInstallPatch < GABase
+          class GAPreInstallPatch < GARelatedBase
             include Mod::Group
 
             def initialize(dimg, next_stage)
-              @prev_stage = GAPreInstallPatchDependencies.new(dimg, self)
+              @prev_stage = GAArchive.new(dimg, self)
               super
+            end
+
+            def related_stage_name
+              :install
             end
           end # GAPostInstallPatch
         end

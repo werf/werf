@@ -91,19 +91,14 @@ end
 $ dapp dimg build
 From ...                                                                              [OK] 1.01 sec
 Before install ...                                                                    [OK] 260.06 sec
-Git artifacts dependencies ...                                                        [OK] 0.96 sec
 Git artifacts: create archive ...                                                     [OK] 0.92 sec
 Install group
-  Git artifacts dependencies ...                                                      [OK] 0.92 sec
   Git artifacts: apply patches (before install) ...                                   [OK] 0.87 sec
   Install ...                                                                         [OK] 15.95 sec
-  Git artifacts dependencies ...                                                      [OK] 0.98 sec
   Git artifacts: apply patches (after install) ...                                    [OK] 0.97 sec
 Setup group
-  Git artifacts dependencies ...                                                      [OK] 0.95 sec
   Git artifacts: apply patches (before setup) ...                                     [OK] 0.98 sec
   Setup ...                                                                           [OK] 3.91 sec
-  Git artifacts dependencies ...                                                      [OK] 0.97 sec
   Git artifacts: apply patches (after setup) ...                                      [OK] 0.98 sec
 Docker instructions ...                                                               [OK] 1.89 sec
 $ dapp dimg run --detach -p 4567:4567 --name dapp-example-chef-for-advanced-build-1
@@ -134,10 +129,8 @@ end
 ```shell
 $ dapp dimg build
 Setup group
-  Git artifacts dependencies ...                                            [OK] 0.88 sec
   Git artifacts: apply patches (before setup) ...                           [OK] 0.96 sec
   Setup ...                                                                 [OK] 3.57 sec
-  Git artifacts dependencies ...                                            [OK] 0.9 sec
   Git artifacts: apply patches (after setup) ...                            [OK] 0.92 sec
 Docker instructions ...                                                     [OK] 0.99 sec
 ```
@@ -195,10 +188,8 @@ end
 ```shell
 $ dapp dimg build
 Setup group
-  Git artifacts dependencies ...                                            [OK] 0.94 sec
   Git artifacts: apply patches (before setup) ...                           [OK] 0.93 sec
   Setup ...                                                                 [OK] 3.64 sec
-  Git artifacts dependencies ...                                            [OK] 0.93 sec
   Git artifacts: apply patches (after setup) ...                            [OK] 0.9 sec
 Docker instructions ...                                                     [OK] 0.95 sec
 $ docker rm -f dapp-example-chef-for-advanced-build-1
