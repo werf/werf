@@ -25,21 +25,6 @@ module Dapp
             true
           end
 
-          def layer_commit(git_artifact)
-            commits[git_artifact] ||= begin
-              if dependencies_stage && dependencies_stage.image.tagged?
-                dependencies_stage.image.labels["dapp-git-#{git_artifact.paramshash}-commit"]
-              else
-                git_artifact.latest_commit
-              end
-            end
-          end
-
-          def renew
-            commits_discard
-            super
-          end
-
           protected
 
           def should_not_be_detailed?
@@ -52,16 +37,6 @@ module Dapp
 
           def apply_command_method
             :apply_patch_command
-          end
-
-          private
-
-          def commits_discard
-            @commits = nil
-          end
-
-          def commits
-            @commits ||= {}
           end
         end # GABase
       end # Stage
