@@ -159,7 +159,7 @@ module Dapp
             if dimg_name.nil?
               spush_format
             else
-              '%{repo}:%{dimg_name}-%{tag}'
+              '%{repo}/%{dimg_name}:%{tag}'
             end
           end
 
