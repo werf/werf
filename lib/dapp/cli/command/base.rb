@@ -56,14 +56,26 @@ module Dapp
           super()
         end
 
-        def run_dapp_command(run_method, *args)
-          dapp = ::Dapp::Dapp.new(*args)
-          begin
+        def run_dapp_command(run_method, options: {}, log_running_time: true)
+          dapp = ::Dapp::Dapp.new(options: options)
+
+          log_dapp_running_time(dapp, ignore: !log_running_time) do
             if block_given?
               yield dapp
             elsif !run_method.nil?
               dapp.public_send(run_method)
             end
+          end
+        end
+
+        def log_dapp_running_time(dapp, ignore: false)
+          return yield if ignore
+
+          begin
+            start_time = Time.now
+            yield
+          ensure
+            dapp.log_step("Running time #{(Time.now - start_time).round(2)} seconds")
           end
         end
 
