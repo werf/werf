@@ -40,7 +40,7 @@ describe Dapp::Dimg::GitArtifact do
         @stage_commit[stage.name][@branch] ||= git_latest_commit(branch: @branch)
       end
     end
-    allow_any_instance_of(Dapp::Dimg::Build::Stage::GALatestPatch).to receive(:prev_g_a_stage) { g_a_archive_stage }
+    allow_any_instance_of(Dapp::Dimg::Build::Stage::GALatestPatch).to receive(:prev_stage) { g_a_archive_stage }
   end
 
   def stub_image

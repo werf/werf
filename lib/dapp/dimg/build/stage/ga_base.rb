@@ -3,41 +3,32 @@ module Dapp
     module Build
       module Stage
         class GABase < Base
-          def dependencies_stage
-            prev_stage
-          end
-
           def prepare_image
             super do
               image.add_volumes_from dimg.dapp.gitartifact_container
               image.add_volume "#{dimg.tmp_path('archives')}:#{dimg.container_tmp_path('archives')}:ro"
               image.add_volume "#{dimg.tmp_path('patches')}:#{dimg.container_tmp_path('patches')}:ro"
 
-              dimg.git_artifacts.each { |git_artifact| image.add_command git_artifact.send(apply_command_method, self) }
+              dimg.git_artifacts.each do |git_artifact|
+                image.add_service_change_label("dapp-git-#{git_artifact.paramshash}-commit".to_sym => git_artifact.latest_commit)
+                image.add_command git_artifact.send(apply_command_method, self)
+              end
             end
           end
 
           def empty?
-            dependencies_stage.empty?
+            dimg.git_artifacts.empty? || super
           end
 
           def g_a_stage?
             true
           end
 
-          def layer_commit(git_artifact)
-            commits[git_artifact] ||= begin
-              if dependencies_stage && dependencies_stage.image.tagged?
-                dependencies_stage.image.labels["dapp-git-#{git_artifact.paramshash}-commit"]
-              else
-                git_artifact.latest_commit
-              end
+          def image_should_be_untagged_condition
+            return false unless image.tagged?
+            dimg.git_artifacts.any? do |git_artifact|
+              !git_artifact.repo.commit_exists? layer_commit(git_artifact)
             end
-          end
-
-          def renew
-            @commits = {}
-            super
           end
 
           protected
@@ -52,12 +43,6 @@ module Dapp
 
           def apply_command_method
             :apply_patch_command
-          end
-
-          private
-
-          def commits
-            @commits ||= {}
           end
         end # GABase
       end # Stage

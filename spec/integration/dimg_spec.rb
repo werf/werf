@@ -112,11 +112,11 @@ describe Dapp::Dimg::Dimg do
   end
 
   def change_g_a_archive
-    git_change_and_commit(msg: Dapp::Dimg::Build::Stage::GAArchiveDependencies::RESET_COMMIT_MESSAGES.sample)
+    git_change_and_commit(msg: Dapp::Dimg::Build::Stage::GAArchive::RESET_COMMIT_MESSAGES.sample)
   end
 
   def change_g_a_post_setup_patch
-    git_change_and_commit('large_file', random_string(Dapp::Dimg::Build::Stage::Setup::GAPostSetupPatchDependencies::MAX_PATCH_SIZE))
+    git_change_and_commit('large_file', random_string(Dapp::Dimg::Build::Stage::Setup::GAPostSetupPatch::MAX_PATCH_SIZE))
   end
 
   def change_g_a_latest_patch
@@ -128,15 +128,15 @@ describe Dapp::Dimg::Dimg do
   end
 
   def install_modified_signatures
-    stages_names[stage_index(:g_a_pre_install_patch_dependencies)..-1]
+    stages_names[stage_index(:g_a_pre_install_patch)..-1]
   end
 
   def before_setup_modified_signatures
-    stages_names[stage_index(:g_a_post_install_patch_dependencies)..-1]
+    stages_names[stage_index(:g_a_post_install_patch)..-1]
   end
 
   def setup_modified_signatures
-    stages_names[stage_index(:g_a_pre_setup_patch_dependencies)..-1]
+    stages_names[stage_index(:g_a_pre_setup_patch)..-1]
   end
 
   [:before_install, :g_a_archive, :g_a_post_setup_patch, :g_a_latest_patch].each do |stage_name|

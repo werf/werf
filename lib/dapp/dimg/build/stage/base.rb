@@ -186,6 +186,16 @@ module Dapp
             dimg.git_artifacts.map { |git_artifact| git_artifact.stage_dependencies_checksum(self) }
           end
 
+          def layer_commit(git_artifact)
+            commits[git_artifact] ||= begin
+              if image.tagged?
+                image.labels["dapp-git-#{git_artifact.paramshash}-commit"]
+              else
+                git_artifact.latest_commit
+              end
+            end
+          end
+
           def dependencies
             []
           end
@@ -202,24 +212,10 @@ module Dapp
             false
           end
 
-          def prev_g_a_stage
-            stage = self
-            until (stage = stage.prev_stage).nil?
-              return stage if stage.g_a_stage?
-            end
-          end
-
-          def next_g_a_stage
-            stage = self
-            until (stage = stage.next_stage).nil?
-              return stage if stage.g_a_stage?
-            end
-          end
-
           protected
 
           def renew
-            dependencies_discard
+            commits_discard
             image_reset
             image_untag! if image_should_be_untagged?
           end
@@ -300,6 +296,14 @@ module Dapp
                 val.nil? || (val.respond_to?(:empty?) && val.empty?)
               end
             end
+          end
+
+          def commits_discard
+            @commits = nil
+          end
+
+          def commits
+            @commits ||= {}
           end
         end # Base
       end # Stage

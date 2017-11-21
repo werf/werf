@@ -2,7 +2,7 @@ module Dapp
   module Dimg
     module Build
       module Stage
-        class GARelatedDependenciesBase < GADependenciesBase
+        class GARelatedBase < GABase
           def dependencies
             @dependencies ||= dimg.stage_by_name(related_stage_name).context
           end
@@ -14,7 +14,7 @@ module Dapp
           def related_stage_name
             raise
           end
-        end # GARelatedDependenciesBase
+        end # GARelatedBase
       end # Stage
     end # Build
   end # Dimg

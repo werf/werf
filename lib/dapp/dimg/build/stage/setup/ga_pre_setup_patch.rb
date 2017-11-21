@@ -3,12 +3,16 @@ module Dapp
     module Build
       module Stage
         module Setup
-          class GAPreSetupPatch < GABase
+          class GAPreSetupPatch < GARelatedBase
             include Mod::Group
 
             def initialize(dimg, next_stage)
-              @prev_stage = GAPreSetupPatchDependencies.new(dimg, self)
+              @prev_stage = BeforeSetupArtifact.new(dimg, self)
               super
+            end
+
+            def related_stage_name
+              :setup
             end
           end # GAPrePatch
         end

@@ -417,11 +417,11 @@ module Dapp
       end
 
       def patch_stage_commits(stage)
-        [stage.prev_g_a_stage.layer_commit(self), stage.layer_commit(self)]
+        [stage.prev_stage.layer_commit(self), stage.layer_commit(self)]
       end
 
       def dev_patch_stage_commits(stage)
-        [stage.prev_g_a_stage.layer_commit(self), nil]
+        [stage.prev_stage.layer_commit(self), nil]
       end
 
       def any_changes?(from_commit, to_commit)
