@@ -9,7 +9,7 @@ folder: definition
 
 Chef сборщик — это тип сборщика, использующий chef рецепты в качестве инструкций для сборки образов. Для организации кода используются cookbook'и:
 
-* один основной [cookbook dapp](#cookbook-приложения);
+* один основной [cookbook dapp](#cookbook-dapp);
 * один или несколько опциональных [dimod](#dimod).
 
 ### Chef dimg
@@ -18,11 +18,11 @@ Chef dimg — это dimg собираемый chef сборщиком.
 
 ### Chef директория
 
-Chef директория — это директория \<[директория dapp](#директория-dapp)\>/.dapp_chef. Содержит файлы [cookbook dapp](#cookbook-dapp).
+Chef директория — это директория \<[директория dapp](definitions.html#директория-dapp)\>/.dapp_chef. Содержит файлы [cookbook dapp](#cookbook-dapp).
 
 ### Cookbook dapp
 
-Cookbook dapp / cookbook сборщика — это основной chef cookbook, связанный с [dapp](#dapp), содержащий инструкции сборки образов.
+Cookbook dapp / cookbook сборщика — это основной chef cookbook, связанный с [dapp](definitions.html#dapp), содержащий инструкции сборки образов.
 
 * Cookbook dapp может подключать [модули](#dimod) для расширения инструкций сборки.
 * Cookbook dapp может объявить в зависимостях обыкновенные cookbook'и.
@@ -32,7 +32,7 @@ Cookbook dapp / cookbook сборщика — это основной chef cookb
 * Структура файлов.
   * Атрибуты.
     * Файлы атрибутов не поддерживаются.
-    * Хеш normal-атрибутов задается через [Dappfile](#dappfile), см. [chef.attribute](chef_directives.html#chef-attributes), [chef.\<стадия\>\_attribute](chef_directives.html#chef-<стадия>_attributes).
+    * Хеш normal-атрибутов задается через [Dappfile](definitions.html#dappfile), см. [chef.attribute](chef_directives.html#chef-attributes), [chef.\<стадия\>\_attribute](chef_directives.html#chef-<стадия>_attributes).
   * Файлы.
     * Директория files/\<стадия\>/\<рецепт\> — содержит файлы рецепта для стадии, опциональна.
     * Директория files/\<стадия\>/common — содержит общие файлы для стадии, опциональна.
@@ -61,7 +61,7 @@ Dimod — это модуль cookbook сборщика.
 
 Чтобы подключить модуль к проекту, надо:
 
-* Включить модуль в [Dappfile](#Dappfile) директивой [chef.dimod](chef_directives.html#chef-dimod-<mod>-<version-constraint>-<cookbook-opts>).
+* Включить модуль в [Dappfile](definitions.html#dappfile) директивой [chef.dimod](chef_directives.html#chef-dimod-<mod>-<version-constraint>-<cookbook-opts>).
   * Т.к. dimod по факту является chef cookbook'ом, директива chef.dimod поддерживает те же опции, что и директива [chef.cookbook](chef_directives.html#chef-cookbook-<cookbook>-<version-constraint>-<cookbook-opts>).
     * Явно указывать chef.cookbook в дополнение к chef.dimod не надо.
 
@@ -91,7 +91,7 @@ Dimod — это модуль cookbook сборщика.
 * Для всех остальных cookbook'ов при сборке стадии используется все файлы cookbook'а без изменений в файловой структуре.
 
 ### Установка стадии cookbook'а
-Установка стадии cookbook'а — это процесс копирования файлов стадии cookbook'а во [временное хранилище](#временная-директория-приложения), подключаемое в дальнейшем в контейнер для сборки стадии.
+Установка стадии cookbook'а — это процесс копирования файлов стадии cookbook'а во [временное хранилище](definitions.html#временная-директория-приложения), подключаемое в дальнейшем в контейнер для сборки стадии.
 
 * Установка [cookbook'а приложения](#cookbook-приложения).
   * Атрибуты.
