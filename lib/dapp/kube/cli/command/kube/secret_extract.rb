@@ -26,7 +26,7 @@ BANNER
             self.class.required_argument(self, 'FILE_PATH')
           end
         end
-        run_dapp_command(nil, options: cli_options) do |dapp|
+        run_dapp_command(nil, options: cli_options, log_running_time: false) do |dapp|
           dapp.public_send(run_method, file_path)
         end
       end
