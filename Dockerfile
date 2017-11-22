@@ -202,4 +202,5 @@ RUN ln -sv gcc $TOOLS/bin/cc
 # Import tools into dappdeps/toolchain scratch
 
 FROM scratch
+CMD ["no-such-command"]
 COPY --from=0 /.dapp/deps/toolchain/0.1.0 /.dapp/deps/toolchain/0.1.0
