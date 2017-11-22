@@ -74,6 +74,7 @@ describe Dapp::Dimg::GitArtifact do
               "--volume #{g_a_stubbed_dimg.tmp_path('archives')}:#{g_a_stubbed_dimg.container_tmp_path('archives')}:ro",
               "--volume #{g_a_stubbed_dimg.tmp_path('patches')}:#{g_a_stubbed_dimg.container_tmp_path('patches')}:ro",
               "--volumes-from #{g_a_stubbed_dimg.dapp.gitartifact_container}",
+              "--volumes-from #{g_a_stubbed_dimg.dapp.toolchain_container}",
               "--volumes-from #{g_a_stubbed_dimg.dapp.base_container}",
               "--label dapp=#{g_a_stubbed_dimg.dapp.name}",
               '--label dapp-test=true',

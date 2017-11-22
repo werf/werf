@@ -17,9 +17,10 @@ en:
       git_artifact_fetch: "fetching remote git_artifact `%{url}`"
       vendoring_builder_cookbooks: 'vendoring builder cookbooks'
       waiting_resouce_lock: "waiting for locked resource `%{name}`"
-      gitartifact_container_creating: 'creating dappdeps/gitartifact container'
-      base_container_creating: 'creating dappdeps/base container'
-      chefdk_container_creating: 'creating dappdeps/chefdk container'
+      gitartifact_container_creating: 'creating dappdeps/gitartifact container `%{name}`'
+      toolchain_container_creating: 'creating dappdeps/toolchain container `%{name}`'
+      base_container_creating: 'creating dappdeps/base container `%{name}`'
+      chefdk_container_creating: 'creating dappdeps/chefdk container `%{name}`'
       image_pull: "pulling image `%{name}`"
       image_push: "pushing image `%{name}`"
       image_save: "saving image `%{name}`"

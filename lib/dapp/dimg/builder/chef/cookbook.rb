@@ -74,11 +74,9 @@ module Dapp
 
       # rubocop:disable Metrics/AbcSize
       def vendor!
-        volumes_from = [builder.dimg.dapp.base_container, builder.chefdk_container]
+        volumes_from = [builder.dimg.dapp.toolchain_container, builder.dimg.dapp.base_container, builder.chefdk_container]
 
         builder.dimg.dapp.log_secondary_process(builder.dimg.dapp.t(code: _vendor_process_name)) do
-          volumes_from = [builder.dimg.dapp.base_container, builder.chefdk_container]
-
           tmp_berksfile_path = builder.dimg.tmp_path.join("Berksfile.#{SecureRandom.uuid}")
           File.open(tmp_berksfile_path, 'w') {|file| file.write berksfile.dump}
 
@@ -93,7 +91,7 @@ module Dapp
             "cd /tmp/local_cookbooks/#{path}",
             "cp #{tmp_berksfile_path} Berksfile",
             "cp #{tmp_metadata_path} metadata.rb",
-            '/.dapp/deps/chefdk/bin/berks vendor /tmp/cookbooks',
+            "#{builder.berks_bin} vendor /tmp/cookbooks",
             ["#{builder.dimg.dapp.find_bin} /tmp/cookbooks -type d -exec #{builder.dimg.dapp.bash_bin} -ec '",
              "#{builder.dimg.dapp.install_bin} -o #{Process.uid} -g #{Process.gid} ",
              "--mode $(#{builder.dimg.dapp.stat_bin} -c %a {}) -d ",

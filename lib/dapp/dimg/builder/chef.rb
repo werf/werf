@@ -1,7 +1,15 @@
 module Dapp
   module Dimg
     class Builder::Chef < Builder::Base
-      DEFAULT_CHEFDK_IMAGE = 'dappdeps/chefdk:1.2.22-1'.freeze # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
+      CHEFDK_VERSION = "2.3.17-2"
+
+      def chef_solo_bin
+        "/.dapp/deps/chefdk/#{CHEFDK_VERSION}/bin/chef-solo"
+      end
+
+      def berks_bin
+        "/.dapp/deps/chefdk/#{CHEFDK_VERSION}/bin/berks"
+      end
 
       %i(before_install install before_setup setup build_artifact).each do |stage|
         define_method("#{stage}?") {!stage_empty?(stage)}
@@ -16,7 +24,7 @@ module Dapp
           unless stage_empty?(stage)
             image.add_volumes_from(chefdk_container)
             image.add_volume "#{stage_build_path(stage)}:#{container_stage_build_path(stage)}:ro"
-            image.add_command ['/.dapp/deps/chefdk/bin/chef-solo',
+            image.add_command [chef_solo_bin,
                                '--legacy-mode',
                                "--config #{container_stage_config_path(stage)}",
                                "--json-attributes #{container_stage_json_attributes_path(stage)}",
@@ -45,25 +53,29 @@ module Dapp
       end
 
       def chefdk_image
-        DEFAULT_CHEFDK_IMAGE # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
+        "dappdeps/chefdk:#{CHEFDK_VERSION}" # TODO: config, DSL, DEFAULT_CHEFDK_IMAGE
       end
 
       def chefdk_container_name # FIXME: hashsum(image) or dockersafe()
-        chefdk_image.tr('/', '_').tr(':', '_')
+        "dappdeps_chefdk_#{CHEFDK_VERSION}"
       end
 
       def chefdk_container
         @chefdk_container ||= begin
-          if dimg.dapp.shellout("#{dimg.dapp.host_docker} inspect #{chefdk_container_name}").exitstatus.nonzero?
-            dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.chefdk_container_creating'), short: true) do
-              dimg.dapp.shellout!(
-                ["#{dimg.dapp.host_docker} create",
-                 "--name #{chefdk_container_name}",
-                 "--volume /.dapp/deps/chefdk #{chefdk_image}"].join(' ')
-              )
+          is_container_exist = proc{dimg.dapp.shellout("#{dimg.dapp.host_docker} inspect #{chefdk_container_name}").exitstatus.zero?}
+          if !is_container_exist.call
+            dimg.dapp.lock("dappdeps.container.#{chefdk_container_name}", default_timeout: 120, type: :global) do
+              if !is_container_exist.call
+                dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.chefdk_container_creating', data: {name: chefdk_container_name}), short: true) do
+                  dimg.dapp.shellout!(
+                    ["#{dimg.dapp.host_docker} create",
+                    "--name #{chefdk_container_name}",
+                    "--volume /.dapp/deps/chefdk/#{CHEFDK_VERSION} #{chefdk_image}"].join(' ')
+                  )
+                end
+              end
             end
           end
-
           chefdk_container_name
         end
       end
