@@ -1,10 +1,11 @@
 name 'diffutils'
-default_version '3.5'
+default_version '3.6'
 
 license 'GPL-3.0'
 license_file 'COPYING'
 
 version('3.5') { source md5: '569354697ff1cfc9a9de3781361015fa' }
+version('3.6') { source md5: '07cf286672ced26fba54cd0313bdc071' }
 
 source url: "https://ftp.gnu.org/gnu/diffutils/diffutils-#{version}.tar.xz"
 
