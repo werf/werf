@@ -15,6 +15,7 @@ build do
 
   command "./configure --prefix=#{install_dir}/embedded", env: env
   command "make -j #{workers}", env: env
-  command 'make install-lib', env: env
-  command 'make install', env: env
+  command "make install", env: env
+  command "make install-lib", env: env
+  command "make install-dev", env: env
 end

@@ -5,7 +5,7 @@ homepage 'https://github.com/flant/dappdeps-base'
 license 'MIT'
 license_file 'LICENSE.txt'
 
-DOCKER_IMAGE_VERSION = '0.1.15'
+DOCKER_IMAGE_VERSION = '0.2.0'
 
 install_dir "/.dapp/deps/base/#{DOCKER_IMAGE_VERSION}"
 
