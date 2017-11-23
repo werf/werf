@@ -7,7 +7,7 @@ module Dapp
 
           def initialize(url, **kwargs, &blk)
             @_url  = url
-            @_name = url.gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
+            @_name = url.gsub(%r{.*?([^\/ ]+\/[^\/ ]+)\.git}, '\\1')
 
             super(**kwargs, &blk)
           end
