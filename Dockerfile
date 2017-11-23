@@ -25,14 +25,14 @@ ENV BUNDLE_GEMFILE=/omnibus/Gemfile
 RUN gem install bundler && \
 bundle install --without development
 
-ENV PATH=/.dapp/deps/toolchain/0.1.0/bin:$PATH
+ENV PATH=/.dapp/deps/toolchain/0.1.1/bin:$PATH
 RUN bundle exec omnibus build -o append_timestamp:false dappdeps-gitartifact
 
 RUN mkdir /tmp/result && \
-dpkg -x /omnibus/pkg/dappdeps-gitartifact_0.2.0-1_amd64.deb /tmp/result
+dpkg -x /omnibus/pkg/dappdeps-gitartifact_0.2.1-1_amd64.deb /tmp/result
 
 # Import tools into dappdeps/gitartifact scratch
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /tmp/result/.dapp/deps/gitartifact/0.2.0 /.dapp/deps/gitartifact/0.2.0
+COPY --from=0 /tmp/result/.dapp/deps/gitartifact/0.2.1 /.dapp/deps/gitartifact/0.2.1
