@@ -6,7 +6,7 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN >/etc/profile && >/root/.profile
 SHELL ["/bin/bash", "-lc"]
 
-RUN apt update && apt install -y build-essential wget curl gawk flex bison bzip2 liblzma5 texinfo file
+RUN apt update && apt install -y build-essential wget curl gawk flex bison bzip2 liblzma5 texinfo file gettext python
 
 ENV LFS=/mnt/lfs
 ENV TOOLS=/.dapp/deps/toolchain/0.1.0
@@ -98,8 +98,6 @@ RUN make mrproper && \
 make INSTALL_HDR_PATH=dest headers_install && \
 cp -rv dest/include/* $TOOLS/include
 
-# glibc pass 1
-
 RUN cd $LFS/sources/ && \
 mkdir glibc && \
 tar xf glibc*.tar.xz -C glibc --strip-components 1 && \
@@ -112,6 +110,7 @@ cd build && \
 --build=$(../scripts/config.guess) \
 --enable-kernel=3.2 \
 --with-headers=$TOOLS/include \
+--enable-obsolete-nsl \
 libc_cv_forced_unwind=yes \
 libc_cv_c_cleanup=yes
 WORKDIR $LFS/sources/glibc/build
