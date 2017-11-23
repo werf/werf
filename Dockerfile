@@ -9,7 +9,7 @@ SHELL ["/bin/bash", "-lc"]
 RUN apt update && apt install -y build-essential wget curl gawk flex bison bzip2 liblzma5 texinfo file gettext python
 
 ENV LFS=/mnt/lfs
-ENV TOOLS=/.dapp/deps/toolchain/0.1.0
+ENV TOOLS=/.dapp/deps/toolchain/0.1.1
 ENV LFS_TGT=x86_64-lfs-linux-gnu
 
 RUN mkdir -pv $LFS$TOOLS && mkdir -pv $LFS/sources && chmod -v a+wt $LFS/sources
@@ -202,4 +202,4 @@ RUN ln -sv gcc $TOOLS/bin/cc
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /.dapp/deps/toolchain/0.1.0 /.dapp/deps/toolchain/0.1.0
+COPY --from=0 /.dapp/deps/toolchain/0.1.1 /.dapp/deps/toolchain/0.1.1
