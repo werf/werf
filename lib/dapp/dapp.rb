@@ -5,6 +5,7 @@ module Dapp
     include Dappfile
     include Chef
     include DappConfig
+    include OptionTags
 
     include Logging::Base
     include Logging::Process

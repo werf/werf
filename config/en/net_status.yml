@@ -6,8 +6,6 @@ en:
     dimg:
       dimg_not_built: "Dimg hasn't been built yet!"
       dimg_not_run: "Dimg run failed!"
-      git_branch_without_name: "Dimg has specific revision that isn't associated with a branch name!"
-      ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
     kube:
       deploy_timeout: "Deploy timeout!"
     dappfile:
@@ -57,6 +55,8 @@ en:
       yaml_incorrect: "`%{message}`"
       incorrect_dapp_config_option: ".dapp_config includes option `%{option}` with incorrect value `%{value}`: expected one of the following types [%{expected}]"
       incorrect_dapp_config_option_color: ".dapp_config includes option `color` with incorrect value `%{value}`: expected one of the following values [%{expected}]"
+      ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
+      git_branch_without_name: "Dimg has specific revision that isn't associated with a branch name!"
     config:
       dimg_name_required: 'Dimg name required!'
       dimg_name_incorrect: "Dimg has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
