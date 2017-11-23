@@ -16,7 +16,7 @@ BANNER
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
           tag = self.class.required_argument(self, 'tag')
-          run_dapp_command(nil, options: cli_options(dimgs_patterns: cli_arguments)) do
+          run_dapp_command(nil, options: cli_options(dimgs_patterns: cli_arguments)) do |dapp|
             dapp.public_send(run_method, tag)
           end
         end
