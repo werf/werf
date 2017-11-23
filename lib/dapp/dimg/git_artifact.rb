@@ -16,7 +16,7 @@ module Dapp
         @repo = repo
         @name = name
 
-        @branch = branch || repo.dimg.dapp.options[:git_artifact_branch] || repo.branch
+        @branch = branch || repo.dapp.options[:git_artifact_branch] || repo.branch
         @commit = commit
 
         @to = to
@@ -67,13 +67,13 @@ module Dapp
             when :directory
               stage.image.add_service_change_label :"dapp-git-#{paramshash}-type" => 'directory'
 
-              commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-              commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{to}\""
+              commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
+              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{to}\""
             when :file
               stage.image.add_service_change_label :"dapp-git-#{paramshash}-type" => 'file'
 
-              commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-              commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{File.dirname(to)}\""
+              commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
+              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{File.dirname(to)}\""
             end
           end
         end
@@ -90,13 +90,13 @@ module Dapp
               case archive_type
               when :directory
                 changed_files = diff_patches(*dev_patch_stage_commits(stage)).map {|p| "\"#{File.join(to, cwd, p.delta.new_file[:path])}\""}
-                commands << "#{repo.dimg.dapp.rm_bin} -rf #{changed_files.join(' ')}"
-                commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-                commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage, *dev_patch_stage_commits(stage))} -C \"#{to}\""
+                commands << "#{repo.dapp.rm_bin} -rf #{changed_files.join(' ')}"
+                commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
+                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *dev_patch_stage_commits(stage))} -C \"#{to}\""
               when :file
-                commands << "#{repo.dimg.dapp.rm_bin} -rf \"#{to}\""
-                commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-                commands << "#{sudo}#{repo.dimg.dapp.tar_bin} -xf #{archive_file(stage, *dev_patch_stage_commits(stage))} -C \"#{File.dirname(to)}\""
+                commands << "#{repo.dapp.rm_bin} -rf \"#{to}\""
+                commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
+                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *dev_patch_stage_commits(stage))} -C \"#{File.dirname(to)}\""
               else
                 raise
               end
@@ -105,11 +105,11 @@ module Dapp
             if patch_any_changes?(stage)
               case archive_type
               when :directory
-                commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-                commands << "#{sudo}#{repo.dimg.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{to}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
+                commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
+                commands << "#{sudo}#{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{to}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
               when :file
-                commands << "#{repo.dimg.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-                commands << "#{sudo}#{repo.dimg.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{File.dirname(to)}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
+                commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
+                commands << "#{sudo}#{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{File.dirname(to)}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
               else
                 raise
               end
@@ -129,9 +129,9 @@ module Dapp
         @stage_dependencies_checksums ||= {}
         @stage_dependencies_checksums[stage_dependencies_key] ||= begin
           if (entries = repo_entries(commit, paths: paths)).empty?
-            repo.dimg.dapp.log_warning(desc: { code: :stage_dependencies_not_found,
-                                               data: { repo: repo.respond_to?(:url) ? repo.url : 'local',
-                                                       dependencies: stage_dependencies.join(', ') } })
+            repo.dapp.log_warning(desc: { code: :stage_dependencies_not_found,
+                                          data: { repo: repo.respond_to?(:url) ? repo.url : 'local',
+                                                  dependencies: stage_dependencies.join(', ') } })
           end
 
           entries
@@ -203,7 +203,7 @@ module Dapp
       attr_reader :stages_dependencies
 
       def sudo
-        repo.dimg.dapp.sudo_command(owner: owner, group: group)
+        repo.dapp.sudo_command(owner: owner, group: group)
       end
 
       def credentials
@@ -211,7 +211,7 @@ module Dapp
       end
 
       def archive_file(stage, commit)
-        if repo.dimg.dapp.options[:use_system_tar]
+        if repo.dapp.options[:use_system_tar]
           archive_file_with_system_tar(stage, commit)
         else
           archive_file_with_tar_writer(stage, commit)
@@ -249,7 +249,7 @@ module Dapp
             end
           end
 
-          repo.dimg.dapp.shellout!("tar -C #{repo.dimg.tmp_path(relative_archive_file_path)} -cf #{archive_path} .")
+          repo.dapp.shellout!("tar -C #{repo.dimg.tmp_path(relative_archive_file_path)} -cf #{archive_path} .")
         end
       end
 

@@ -3,12 +3,31 @@ module Dapp
     module GitRepo
       # Base class for any Git repo (remote, gitkeeper, etc)
       class Base
-        attr_reader :dimg
         attr_reader :name
 
-        def initialize(dimg, name)
-          @dimg = dimg
+        def initialize(manager, name)
+          @manager = manager
           @name = name
+        end
+
+        def dapp
+          @dapp ||= begin
+            if manager.is_a? ::Dapp::Dapp
+              manager
+            else
+              dimg.dapp
+            end
+          end
+        end
+
+        def dimg
+          @dimg ||= begin
+            if manager.is_a? ::Dapp::Dimg::Dimg
+              manager
+            else
+              raise
+            end
+          end
         end
 
         def exclude_paths
@@ -91,6 +110,8 @@ module Dapp
         end
 
         protected
+
+        attr_reader :manager
 
         def git(**kwargs)
           @git ||= Rugged::Repository.new(path.to_s, **kwargs)

@@ -9,7 +9,7 @@ module Dapp
 
           @url = url
 
-          dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
+          dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
             begin
               if [:https, :ssh].include?(protocol) && !Rugged.features.include?(protocol)
                 raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, protocol: protocol }
@@ -38,10 +38,10 @@ module Dapp
 
         def fetch!(branch = nil)
           branch ||= self.branch
-          dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.git_artifact_fetch', data: { url: url }), short: true) do
+          dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_fetch', data: { url: url }), short: true) do
             git.fetch('origin', [branch], credentials: _rugged_credentials)
             raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } unless branch_exist?(branch)
-          end unless dimg.ignore_git_fetch || dimg.dapp.dry_run?
+          end unless dimg.ignore_git_fetch || dapp.dry_run?
         end
 
         def branch_exist?(name)
