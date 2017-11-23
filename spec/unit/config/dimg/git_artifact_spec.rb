@@ -99,7 +99,7 @@ describe Dapp::Dimg::Config::Directive::GitArtifactRemote do
       dappfile_dimg_git_artifact('https://github.com/flant/dapp.git') do
         add '/cwd'
       end
-      expect(dimg_config._git_artifact._remote.first._name).to eq 'dapp'
+      expect(dimg_config._git_artifact._remote.first._name).to eq 'flant/dapp'
     end
 
     it 'cwd, to absolute path required' do
