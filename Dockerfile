@@ -28,20 +28,20 @@ bundle install
 RUN cd /omnibus/omnibus && \
 bundle install
 
-RUN echo 'install_dir "/.dapp/deps/chefdk/2.3.17-1"' >> omnibus_overrides.rb && \
-sed -i -e 's@install_dir: /opt/chefdk@install_dir: /.dapp/deps/chefdk/2.3.17-1@g' omnibus/.kitchen.yml && \
-sed -i -e 's@INSTALLER_DIR=/opt/chefdk@INSTALLER_DIR=/.dapp/deps/chefdk/2.3.17-1@g' omnibus/package-scripts/chefdk/postinst
+RUN echo 'install_dir "/.dapp/deps/chefdk/2.3.17-2"' >> omnibus_overrides.rb && \
+sed -i -e 's@install_dir: /opt/chefdk@install_dir: /.dapp/deps/chefdk/2.3.17-2@g' omnibus/.kitchen.yml && \
+sed -i -e 's@INSTALLER_DIR=/opt/chefdk@INSTALLER_DIR=/.dapp/deps/chefdk/2.3.17-2@g' omnibus/package-scripts/chefdk/postinst
 
-ENV PATH=/.dapp/deps/toolchain/0.1.0/bin:$PATH
+ENV PATH=/.dapp/deps/toolchain/0.1.1/bin:$PATH
 WORKDIR /omnibus/omnibus
 ENV BUNDLE_GEMFILE=/omnibus/omnibus/Gemfile
-RUN bundle exec omnibus build -o install_dir:/.dapp/deps/chefdk/2.3.17-1 -o append_timestamp:false chefdk
+RUN bundle exec omnibus build -o install_dir:/.dapp/deps/chefdk/2.3.17-2 -o append_timestamp:false chefdk
 
 RUN mkdir /tmp/result && \
-dpkg -x /omnibus/omnibus/pkg/chefdk_2.3.17-1_amd64.deb /tmp/result
+dpkg -x /omnibus/omnibus/pkg/chefdk_2.3.17-2_amd64.deb /tmp/result
 
 # Import tools into dappdeps/chefdk scratch
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /tmp/result/.dapp/deps/chefdk/2.3.17-1 /.dapp/deps/chefdk/2.3.17-1
+COPY --from=0 /tmp/result/.dapp/deps/chefdk/2.3.17-2 /.dapp/deps/chefdk/2.3.17-2
