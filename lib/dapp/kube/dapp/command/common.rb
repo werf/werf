@@ -9,9 +9,13 @@ module Dapp
             kube_check_helm_chart!
 
             repo = option_repo
-            image_version = options[:image_version]
+            tag = begin
+              raise Error::Command, code: :expected_only_one_tag,
+                                    data: { tags: option_tags.join(', ') } if option_tags.count > 1
+              option_tags.first
+            end
             validate_repo_name!(repo)
-            validate_tag_name!(image_version)
+            validate_tag_name!(tag)
 
             with_kube_tmp_chart_dir do
               kube_copy_chart
@@ -22,7 +26,7 @@ module Dapp
                   self,
                   name: kube_release_name,
                   repo: repo,
-                  image_version: image_version,
+                  docker_tag: tag,
                   namespace: kube_namespace,
                   chart_path: kube_chart_path_for_helm,
                   set: self.options[:helm_set_options],
@@ -92,10 +96,10 @@ module Dapp
 {{- if (ge (len (index .)) 2) -}}
 {{- $name := index . 0 -}}
 {{- $context := index . 1 -}}
-{{- printf "%v/%v:%v" $context.Values.global.dapp.repo $name $context.Values.global.dapp.image_version -}}
+{{- printf "%v/%v:%v" $context.Values.global.dapp.repo $name $context.Values.global.dapp.docker_tag -}}
 {{- else -}}
 {{- $context := index . 0 -}}
-{{- printf "%v:%v" $context.Values.global.dapp.repo $context.Values.global.dapp.image_version -}}
+{{- printf "%v:%v" $context.Values.global.dapp.repo $context.Values.global.dapp.docker_tag -}}
 {{- end -}}
 {{- end -}}
 

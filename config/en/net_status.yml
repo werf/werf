@@ -42,6 +42,7 @@ en:
       user_containers_detected: "User containers are using these images:\n%{ids}"
       incorrect_yaml_structure: "Incorrect YAML structure in `%{path}`!"
       editor_not_found: "Editor not found!"
+      expected_only_one_tag: 'Expected only one tag (`%{tags}`)!'
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       no_such_app: "No such app: `%{apps_patterns}`!"

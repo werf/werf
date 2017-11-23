@@ -31,7 +31,7 @@ module Dapp
             kube_check_helm_chart!
 
             repo = option_repo
-            image_version = options[:image_version]
+            docker_tag = options[:docker_tag]
 
             with_kube_tmp_lint_chart_dir do
               kube_copy_chart
@@ -61,8 +61,8 @@ module Dapp
               all_values['global'] = {
                 'namespace' => kube_namespace,
                 'dapp' => {
-                  'repo' => option_repo,
-                  'image_version' => options[:image_version]
+                  'repo' => repo,
+                  'docker_tag' => docker_tag
                 }
               }
 
