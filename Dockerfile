@@ -38,7 +38,7 @@ ENV BUNDLE_GEMFILE=/omnibus/omnibus/Gemfile
 RUN bundle exec omnibus build -o install_dir:/.dapp/deps/chefdk/2.3.17-2 -o append_timestamp:false chefdk
 
 RUN mkdir /tmp/result && \
-dpkg -x /omnibus/omnibus/pkg/chefdk_2.3.17-2_amd64.deb /tmp/result
+dpkg -x /omnibus/omnibus/pkg/chefdk_2.3.17-1_amd64.deb /tmp/result
 
 # Import tools into dappdeps/chefdk scratch
 
