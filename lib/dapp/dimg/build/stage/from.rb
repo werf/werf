@@ -34,6 +34,10 @@ module Dapp
             []
           end
 
+          def image_should_be_untagged_condition
+            false
+          end
+
           def should_not_be_detailed?
             from_image.tagged?
           end
