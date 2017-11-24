@@ -58,6 +58,7 @@ module Dapp
           def run_artifact_dimg(artifact_dimg, artifact_name, commands)
             docker_options = ['--rm',
                               "--volume #{dimg.tmp_path('artifact', artifact_name)}:#{artifact_dimg.container_tmp_path(artifact_name)}",
+                              "--volumes-from #{dimg.dapp.toolchain_container}",
                               "--volumes-from #{dimg.dapp.base_container}",
                               "--entrypoint #{dimg.dapp.bash_bin}"]
             dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.artifact_copy', data: { name: artifact_name }), short: true) do

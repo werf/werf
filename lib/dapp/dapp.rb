@@ -17,6 +17,7 @@ module Dapp
     include Helper::Trivia
     include Helper::Tar
 
+    include Deps::Toolchain
     include Deps::Gitartifact
     include Deps::Base
 
