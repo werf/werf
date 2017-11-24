@@ -15,6 +15,7 @@ module Dapp
           def context
             [builder_checksum]
           end
+          alias dependencies context
 
           def builder_checksum
             dimg.builder.before_install_checksum
@@ -26,7 +27,9 @@ module Dapp
             end
           end
 
-          alias dependencies context
+          def image_should_be_untagged_condition
+            false
+          end
         end # BeforeInstall
       end # Stage
     end # Build

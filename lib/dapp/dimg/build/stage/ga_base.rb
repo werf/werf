@@ -24,13 +24,6 @@ module Dapp
             true
           end
 
-          def image_should_be_untagged_condition
-            return false unless image.tagged?
-            dimg.git_artifacts.any? do |git_artifact|
-              !git_artifact.repo.commit_exists? layer_commit(git_artifact)
-            end
-          end
-
           protected
 
           def should_not_be_detailed?
