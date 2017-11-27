@@ -2,7 +2,10 @@ dist: xenial
 sudo: required
 cache:
   apt: true
-  directories: .vendor
+  directories:
+  - .vendor
+  - dappdeps
+
 language: ruby
 rvm:
 - 2.3
@@ -20,6 +23,7 @@ before_script:
 - USER_NAME=$(id -un) && sudo gpasswd -a $USER_NAME docker
 - sudo service docker restart
 - sudo docker version
+- sudo -s source travis_dappdeps_caching.sh
 script:
 - sudo -E su --preserve-environment -lc 'bundle exec rake parallel_spec'
 
