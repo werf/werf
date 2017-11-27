@@ -108,6 +108,7 @@ en:
       no_such_dimg: 'Registry `%{registry}`: no such dimg in registry!'
       authenticate_type_not_supported: 'Registry `%{registry}`: authenticate type is not supported!'
       page_not_found: "Registry `%{registry}`: page `%{url}` not found!"
+      method_not_allowed: "Registry `%{registry}`: method `%{method}` not allowed (`%{url}`)!"
       user_not_authorized: 'Registry `%{registry}`: user not authorized!'
     rugged:
       git_repository_reference_error: "Git repo `%{name}`: %{message}!"

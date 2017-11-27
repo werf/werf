@@ -45,29 +45,29 @@ module Dapp
                 log_step_with_indent(name) do
                   dapp_project_dangling_images_flush
 
-                  dimgs, stages = dapp_project_images.partition { |image| repo_dimgs.values.include?(image[:id]) }
-                  dimgs.each { |dimg_image| except_dapp_project_image_with_parents(dimg_image[:id], stages) }
+                  dimgs, dimgstages = dapp_project_images.partition { |image| repo_dimgs.any? { |dimg| dimg[:id] == image[:id] } }
+                  dimgs.each { |dimg_image| except_dapp_project_image_with_parents(dimg_image[:id], dimgstages) }
 
                   # Удаление только образов старше 2ч
-                  stages.delete_if do |stage_image|
-                    Time.now - stage_image[:created_at] < 2*60*60
+                  dimgstages.delete_if do |dimgstage|
+                    Time.now - dimgstage[:created_at] < 2*60*60
                   end
 
-                  remove_project_images(stages.map { |image| image[:id]} )
+                  remove_project_images(dimgstages.map { |dimgstage| dimgstage[:id]} )
                 end
               end
             end
 
-            def except_dapp_project_image_with_parents(image_id, stages)
+            def except_dapp_project_image_with_parents(image_id, dimgstages)
               if dapp_project_image_exist?(image_id)
-                dapp_project_image_artifacts_ids_in_labels(image_id).each { |aiid| except_dapp_project_image_with_parents(aiid, stages) }
+                dapp_project_image_artifacts_ids_in_labels(image_id).each { |aiid| except_dapp_project_image_with_parents(aiid, dimgstages) }
                 iid = image_id
                 loop do
-                  stages.delete_if { |stage_image| stage_image[:id] == iid }
+                  dimgstages.delete_if { |dimgstage| dimgstage[:id] == iid }
                   break if (iid = dapp_project_image_parent_id(iid)).nil?
                 end
               else
-                stages.delete_if { |stage_image| stage_image[:id] == image_id }
+                dimgstages.delete_if { |dimgstage| dimgstage[:id] == dimgstage }
               end
             end
 

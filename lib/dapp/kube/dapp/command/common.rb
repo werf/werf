@@ -92,7 +92,7 @@ module Dapp
 {{- if (ge (len (index .)) 2) -}}
 {{- $name := index . 0 -}}
 {{- $context := index . 1 -}}
-{{- printf "%v:%v-%v" $context.Values.global.dapp.repo $name $context.Values.global.dapp.image_version -}}
+{{- printf "%v/%v:%v" $context.Values.global.dapp.repo $name $context.Values.global.dapp.image_version -}}
 {{- else -}}
 {{- $context := index . 0 -}}
 {{- printf "%v:%v" $context.Values.global.dapp.repo $context.Values.global.dapp.image_version -}}

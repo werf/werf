@@ -10,7 +10,7 @@ module Dapp
               image.add_volume "#{dimg.tmp_path('patches')}:#{dimg.container_tmp_path('patches')}:ro"
 
               dimg.git_artifacts.each do |git_artifact|
-                image.add_service_change_label("dapp-git-#{git_artifact.paramshash}-commit".to_sym => git_artifact.latest_commit)
+                image.add_service_change_label(dimg.dapp.dimgstage_ga_label(git_artifact.paramshash).to_sym => git_artifact.latest_commit)
                 image.add_command git_artifact.send(apply_command_method, self)
               end
             end

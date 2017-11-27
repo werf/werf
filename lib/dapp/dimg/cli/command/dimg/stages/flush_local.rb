@@ -6,15 +6,13 @@ module Dapp::Dimg::CLI
           banner <<BANNER.freeze
 Usage:
 
-  dapp dimg stages flush local [options] [DIMG ...]
-
-    DIMG                        Dapp image to process [default: *].
+  dapp dimg stages flush local [options]
 
 Options:
 BANNER
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
-            run_dapp_command(:stages_flush_local, options: cli_options(dimgs_patterns: cli_arguments))
+            run_dapp_command(:stages_flush_local, options: cli_options)
           end
         end
       end
