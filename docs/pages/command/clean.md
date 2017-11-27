@@ -9,7 +9,7 @@ folder: command
 Удалить неактуальный локальный [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект).
 
 ```
-dapp dimg stages cleanup local [options] [DIMG ...] [REPO]
+dapp dimg stages cleanup local [options] [REPO]
 ```
 
 #### `--improper-repo-cache`
@@ -42,7 +42,7 @@ $ dapp dimg stages cleanup local --improper-git-commit localhost:5000/test
 Удалить неиспользуемый [кэш приложений](definitions.html#кэш-приложения) в репозитории **REPO**.
 
 ```
-dapp dimg stages cleanup repo [options] [DIMG ...] REPO
+dapp dimg stages cleanup repo [options] REPO
 ```
 
 #### `--improper-repo-cache`
@@ -70,7 +70,7 @@ $ dapp dimg stages cleanup repo localhost:5000/test --improper-cache-version --i
 Удалить [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект).
 
 ```
-dapp dimg stages flush local [options] [DIMG ...]
+dapp dimg stages flush local [options]
 ```
 
 #### Примеры
@@ -84,7 +84,7 @@ $ dapp dimg stages flush local
 Удалить приложения и [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект) в репозитории **REPO**.
 
 ```
-dapp dimg stages flush repo [options] [DIMG ...] REPO
+dapp dimg stages flush repo [options] REPO
 ```
 
 #### Примеры

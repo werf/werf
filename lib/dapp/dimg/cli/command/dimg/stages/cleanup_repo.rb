@@ -6,9 +6,7 @@ module Dapp::Dimg::CLI
           banner <<BANNER.freeze
 Usage:
 
-  dapp dimg stages cleanup repo [options] [DIMG ...] REPO
-
-    DIMG                        Dapp image to process [default: *].
+  dapp dimg stages cleanup repo [options] REPO
 
 Options:
 BANNER

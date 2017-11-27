@@ -6,9 +6,7 @@ module Dapp::Dimg::CLI
           banner <<BANNER.freeze
 Usage:
 
-  dapp dimg stages cleanup local [options] [DIMG ...] [REPO]
-
-    DIMG                        Dapp image to process [default: *].
+  dapp dimg stages cleanup local [options] [REPO]
 
 Options:
 BANNER
@@ -33,7 +31,7 @@ BANNER
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
             repository = repo
-            run_dapp_command(run_method, options: cli_options(dimgs_patterns: cli_arguments, repo: repository))
+            run_dapp_command(run_method, options: cli_options(repo: repository))
           end
 
           def repo
