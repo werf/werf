@@ -7,7 +7,7 @@ module Dapp
 
       attr_reader :name
       attr_reader :repo
-      attr_reader :image_version
+      attr_reader :docker_tag
       attr_reader :namespace
       attr_reader :chart_path
       attr_reader :set
@@ -15,13 +15,13 @@ module Dapp
       attr_reader :deploy_timeout
 
       def initialize(dapp,
-        name:, repo:, image_version:, namespace:, chart_path:,
+        name:, repo:, docker_tag:, namespace:, chart_path:,
         set: [], values: [], deploy_timeout: nil)
         @dapp = dapp
 
         @name = name
         @repo = repo
-        @image_version = image_version
+        @docker_tag = docker_tag
         @namespace = namespace
         @chart_path = chart_path
         @set = set
@@ -119,7 +119,7 @@ module Dapp
         [].tap do |options|
           options.concat(set.map { |opt| "--set #{opt}" })
           options << "--set global.dapp.repo=#{repo}"
-          options << "--set global.dapp.image_version=#{image_version}"
+          options << "--set global.dapp.docker_tag=#{docker_tag}"
           options << "--set global.namespace=#{namespace}"
         end
       end

@@ -3,7 +3,6 @@ module Dapp
     class Dimg
       include GitArtifact
       include Path
-      include Tags
       include Stages
 
       include Helper::Sha256
@@ -62,7 +61,7 @@ module Dapp
 
       def export!(repo, format:)
         dapp.lock("#{dapp.name}.images", readonly: true) do
-          tags.each do |tag|
+          dapp.option_tags.each do |tag|
             image_name = format(format, repo: repo, dimg_name: config._name, tag: tag)
             export_base!(last_stage.image, image_name)
           end

@@ -12,9 +12,31 @@ BANNER
              long: '--namespace NAME',
              default: nil
 
-      option :image_version,
-             long: '--image-version IMAGE_VERSION',
-             default: 'latest'
+      option :tag,
+             long: '--tag TAG',
+             description: 'Custom tag',
+             default: [],
+             proc: proc { |v| composite_options(:tags) << v }
+
+      option :tag_branch,
+             long: '--tag-branch',
+             description: 'Tag by git branch',
+             boolean: true
+
+      option :tag_build_id,
+             long: '--tag-build-id',
+             description: 'Tag by CI build id',
+             boolean: true
+
+      option :tag_ci,
+             long: '--tag-ci',
+             description: 'Tag by CI branch and tag',
+             boolean: true
+
+      option :tag_commit,
+             long: '--tag-commit',
+             description: 'Tag by git commit',
+             boolean: true
 
       option :tmp_dir_prefix,
              long: '--tmp-dir-prefix PREFIX',

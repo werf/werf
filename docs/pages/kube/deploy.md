@@ -36,7 +36,7 @@ folder: kube
 ### dapp kube deploy
 
 ```
-dapp kube deploy REPO [--image-version=IMAGE_VERSION] [--namespace=NAMESPACE] [--set=<value>] [--values=<values-path>] [--secret-values=<secret-values-path>]
+dapp kube deploy REPO [--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci] [--namespace=NAMESPACE] [--set=<value>] [--values=<values-path>] [--secret-values=<secret-values-path>]
 ```
 
 Запускает процесс выката helm-chart'а в kubernetes.
@@ -49,9 +49,9 @@ dapp kube deploy REPO [--image-version=IMAGE_VERSION] [--namespace=NAMESPACE] [-
 
 При указании специального значения `:minikube` будет использован локальный proxy для docker-registry из minikube, см. [использование minikube](minikube_for_kube.html).
 
-##### `--image-version=IMAGE_VERSION`
+##### `--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci`
 
-Версия образа из указанного репозитория. Значение параметра пересекается с параметрами `--tag*`, указываемыми в [`dapp dimg push`](base_commands.html#dapp-dimg-push).
+Версия образа из указанного репозитория. Опции соответствуют указываемым в [`dapp dimg push`](base_commands.html#dapp-dimg-push).
 
 ##### `--namespace=NAMESPACE`
 

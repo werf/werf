@@ -2,12 +2,12 @@ module Dapp
   module Dimg
     module GitRepo
       class Own < Base
-        def initialize(dimg)
-          super(dimg, 'own')
+        def initialize(manager)
+          super(manager, 'own')
         end
 
         def exclude_paths
-          dimg.dapp.local_git_artifact_exclude_paths
+          dapp.local_git_artifact_exclude_paths
         end
 
         def workdir_path
@@ -15,7 +15,7 @@ module Dapp
         end
 
         def path
-          @path ||= Pathname(Rugged::Repository.discover(dimg.home_path.to_s).path)
+          @path ||= Pathname(Rugged::Repository.discover(dapp.path.to_s).path)
         rescue Rugged::RepositoryError => _e
           raise Error::Rugged, code: :local_git_repository_does_not_exist
         end

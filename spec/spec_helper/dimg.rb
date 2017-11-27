@@ -26,14 +26,22 @@ module SpecHelper
     def dapp
       @dapp ||= begin
         allow_any_instance_of(Dapp::Dapp).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
+        allow_any_instance_of(Dapp::Dapp).to receive(:path) { |_, *m_args| Pathname(File.absolute_path(File.join(project_path, *m_args))) }
         allow_any_instance_of(Dapp::Dapp).to receive(:config) { config }
+        allow_any_instance_of(Dapp::Dapp).to receive(:is_a?) do |_, klass|
+          if klass == Dapp::Dapp
+            true
+          else
+            false
+          end
+        end
         yield if block_given?
         Dapp::Dapp.new(options: dapp_options)
       end
     end
 
     def project_path
-      @project_path ||= Dir.mktmpdir
+      Dir.pwd
     end
 
     def openstruct_config
@@ -102,6 +110,13 @@ module SpecHelper
         method_new.call(*args, &block).tap do |instance|
           allow(instance).to receive(:home_path) { |*m_args| Pathname(File.absolute_path(File.join(*m_args))) }
           allow(instance).to receive(:filelock)
+          allow(instance).to receive(:is_a?) do |klass|
+            if klass == Dapp::Dimg::Dimg
+              true
+            else
+              false
+            end
+          end
           yield instance if block_given?
         end
       end
