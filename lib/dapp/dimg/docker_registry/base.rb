@@ -17,12 +17,8 @@ module Dapp
           self.repo_suffix = repo_suffix
         end
 
-        def repo_exist?
-          tags.any?
-        end
-
         def tags
-          @tags ||= api_request(repo_suffix, 'tags/list')['tags'] || []
+          api_request(repo_suffix, 'tags/list')['tags'] || []
         rescue Error::Registry => e
           raise Exception::Registry, code: :no_such_dimg, data: { registry: api_url } if e.net_status[:code] == :page_not_found
           raise
@@ -86,6 +82,8 @@ module Dapp
         def raw_api_request(*uri, **options)
           url = api_url(*uri)
           request(url, **default_api_options.merge(options))
+        rescue Excon::Error::MethodNotAllowed
+          raise Error::Registry, code: :method_not_allowed, data: { url: url, registry: api_url, method: options[:method] }
         rescue Excon::Error::NotFound
           raise Error::Registry, code: :page_not_found, data: { url: url, registry: api_url }
         rescue Excon::Error::Unauthorized

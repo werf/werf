@@ -12,44 +12,52 @@ module Dapp
             end
 
             def repo_dimgs_images(registry)
-              repo_dimgs_and_stages_images(registry)[:dimgs]
-            end
-
-            def repo_stages_images(registry)
-              repo_dimgs_and_stages_images(registry)[:stages]
-            end
-
-            def repo_dimgs_and_stages_images(registry)
-              @repo_dimgs_and_cache_names ||= {}.tap do |images|
-                format = proc do |arr|
-                  arr.map do |tag|
-                    if (id = registry.image_id(tag)).nil?
-                      log_warning(desc: { code: 'tag_ignored', data: { tag: tag } })
-                    else
-                      [tag, id]
-                    end
-                  end.compact.to_h
+              @repo_dimgs_images ||= [].tap do |dimgs_images|
+                with_registry_wrapper do
+                  {}.tap do |dimgs_tags|
+                    dimgs_tags[nil] = registry.nameless_dimg_tags
+                    dimgs_names.each do |dimg_name|
+                      dimgs_tags[dimg_name] = registry.dimg_tags(dimg_name)
+                    end unless nameless_dimg?
+                  end.each do |dimg_name, tags|
+                    dimgs_images.concat(tags_to_repo_images(registry, tags, dimg_name))
+                  end
                 end
-                dimgs, stages = registry_tags(registry).partition { |tag| !tag.start_with?('dimgstage') }
-
-                images[:dimgs] = format.call(dimgs)
-                images[:stages] = format.call(stages)
               end
             end
 
-            def registry_tags(registry)
-              registry.tags
+            def repo_dimgstages_images(registry)
+              with_registry_wrapper do
+                tags_to_repo_images(registry, registry.dimgstages_tags)
+              end
+            end
+
+            def tags_to_repo_images(registry, tags, dimg_name = nil)
+              tags.map { |tag| repo_image_format(registry, tag, dimg_name) }.compact
+            end
+
+            def with_registry_wrapper
+              yield
             rescue Exception::Registry => e
               raise unless e.net_status[:code] == :no_such_dimg
               log_warning(desc: { code: :dimg_not_found_in_registry })
               []
             end
 
-            def delete_repo_image(registry, image_tag)
-              if dry_run?
-                log(image_tag)
+            def repo_image_format(registry, tag, dimg_name = nil)
+              if (id = registry.image_id(tag, dimg_name)).nil?
+                log_warning(desc: { code: 'tag_ignored', data: { tag: tag } })
+                nil
               else
-                registry.image_delete(image_tag)
+                { dimg: dimg_name, tag: tag, id: id }
+              end
+            end
+
+            def delete_repo_image(registry, repo_image)
+              if dry_run?
+                log(repo_image[:tag])
+              else
+                registry.image_delete(repo_image[:tag], repo_image[:dimg])
               end
             end
 
@@ -64,7 +72,7 @@ module Dapp
                   dimgs.each do |dimg|
                     [dimg, dimg.artifacts].flatten
                                           .map(&:git_artifacts).flatten
-                                          .map { |ga_artifact| repositories[ga_artifact.full_name] = ga_artifact.repo }
+                                          .map { |ga_artifact| repositories[dimgstage_ga_label(ga_artifact.paramshash)] = ga_artifact.repo }
                   end
                 end
               end

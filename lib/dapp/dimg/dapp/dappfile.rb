@@ -2,6 +2,14 @@ module Dapp
   module Dimg
     module Dapp
       module Dappfile
+        def nameless_dimg?
+          dimgs_names.first.nil?
+        end
+
+        def dimgs_names
+          build_configs.map(&:_name)
+        end
+
         def build_configs
           @build_configs ||= begin
             config._dimg.select do |dimg|

@@ -189,7 +189,7 @@ module Dapp
           def layer_commit(git_artifact)
             commits[git_artifact] ||= begin
               if image.tagged?
-                image.labels["dapp-git-#{git_artifact.paramshash}-commit"]
+                image.labels[dimg.dapp.dimgstage_ga_label(git_artifact.paramshash)]
               else
                 git_artifact.latest_commit
               end

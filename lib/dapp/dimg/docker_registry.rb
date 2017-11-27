@@ -9,7 +9,7 @@ module Dapp
         if expected_hostname
           %w(https http).each do |protocol|
             expected_hostname_url = [protocol, expected_hostname].join('://')
-            return Base.new(repo, expected_hostname_url, expected_repo_suffix) if hostname_exist?(expected_hostname_url)
+            return Dimg.new(repo, expected_hostname_url, expected_repo_suffix) if hostname_exist?(expected_hostname_url)
           end
         end
         Default.new(repo, File.join(*[expected_hostname, expected_repo_suffix].compact))

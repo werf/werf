@@ -6,6 +6,10 @@ module Dapp
           yield exclude_paths if block_given?
         end
       end
+
+      def dimgstage_ga_label(paramshash)
+        "dapp-git-#{paramshash}-commit"
+      end
     end # GitArtifact
   end # Dapp
 end # Dapp
