@@ -37,7 +37,9 @@ module Dapp
 
     def name
       @name ||= begin
-        if git_url
+        if name = options[:name]
+          name
+        elsif git_url
           repo_name = git_url.split('/').last
           repo_name = repo_name[/.*(?=\.git)/] if repo_name.end_with? '.git'
           repo_name
