@@ -2,6 +2,10 @@
 
 set -e
 
+if echo $TRAVIS_COMMIT_MESSAGE | grep -Pq "\[ci skip tests?\]" ; then
+  exit 0
+fi
+
 dappdeps=(
   dappdeps/chefdk:2.3.17-2
   dappdeps/gitartifact:0.2.1
