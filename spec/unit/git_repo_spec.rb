@@ -28,7 +28,7 @@ describe Dapp::Dimg::GitRepo do
     @remote = Dapp::Dimg::GitRepo::Remote.new(dimg, 'local_remote', url: 'remote/.git')
 
     expect(File.exist?(@remote.path)).to be_truthy
-    expect(@remote.path.to_s.reverse.start_with?("local_remote/#{Digest::MD5.hexdigest('remote/.git')}".reverse)).to be_truthy
+    expect(@remote.path.to_s[/.*\/([^\/]*\/[^\/]*)/, 1]).to eq 'git_repo_remote/local_remote'
   end
 
   it 'Remote#init', test_construct: true do

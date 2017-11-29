@@ -33,7 +33,7 @@ module Dapp
         end
 
         def path
-          Pathname(dimg.build_path('git_repo_remote', name, Digest::MD5.hexdigest(url)).to_s)
+          Pathname(dimg.build_path('git_repo_remote', name).to_s)
         end
 
         def fetch!(branch = nil)
