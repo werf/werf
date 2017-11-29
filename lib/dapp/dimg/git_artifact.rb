@@ -65,12 +65,12 @@ module Dapp
           if archive_any_changes?(stage)
             case cwd_type(stage)
             when :directory
-              stage.image.add_service_change_label :"dapp-git-#{paramshash}-type" => 'directory'
+              stage.image.add_service_change_label repo.dapp.dimgstage_g_a_type_label(paramshash) => 'directory'
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
               commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{to}\""
             when :file
-              stage.image.add_service_change_label :"dapp-git-#{paramshash}-type" => 'file'
+              stage.image.add_service_change_label repo.dapp.dimgstage_g_a_type_label(paramshash) => 'file'
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
               commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{File.dirname(to)}\""
