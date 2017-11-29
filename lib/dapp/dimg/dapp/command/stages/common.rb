@@ -72,7 +72,7 @@ module Dapp
                   dimgs.each do |dimg|
                     [dimg, dimg.artifacts].flatten
                                           .map(&:git_artifacts).flatten
-                                          .map { |ga_artifact| repositories[dimgstage_ga_label(ga_artifact.paramshash)] = ga_artifact.repo }
+                                          .map { |git_artifact| repositories[dimgstage_g_a_commit_label(git_artifact.paramshash)] = git_artifact.repo }
                   end
                 end
               end

@@ -7,8 +7,12 @@ module Dapp
         end
       end
 
-      def dimgstage_ga_label(paramshash)
+      def dimgstage_g_a_commit_label(paramshash)
         "dapp-git-#{paramshash}-commit"
+      end
+
+      def dimgstage_g_a_type_label(paramshash)
+        "dapp-git-#{paramshash}-type"
       end
     end # GitArtifact
   end # Dapp

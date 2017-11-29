@@ -65,12 +65,12 @@ module Dapp
           if archive_any_changes?(stage)
             case cwd_type(stage)
             when :directory
-              stage.image.add_service_change_label :"dapp-git-#{paramshash}-type" => 'directory'
+              stage.image.add_service_change_label(repo.dapp.dimgstage_g_a_type_label(paramshash).to_sym => 'directory')
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
               commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{to}\""
             when :file
-              stage.image.add_service_change_label :"dapp-git-#{paramshash}-type" => 'file'
+              stage.image.add_service_change_label(repo.dapp.dimgstage_g_a_type_label(paramshash).to_sym => 'file')
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
               commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{File.dirname(to)}\""
@@ -79,15 +79,15 @@ module Dapp
         end
       end
 
-      def archive_type
-        repo.dimg.stage_by_name(:g_a_archive).image.labels["dapp-git-#{paramshash}-type"].to_s.to_sym
+      def archive_type(stage)
+        stage.prev_stage.image.labels[repo.dapp.dimgstage_g_a_type_label(paramshash)].to_s.to_sym
       end
 
       def apply_patch_command(stage)
         [].tap do |commands|
           if dev_mode?
             if any_changes?(*dev_patch_stage_commits(stage))
-              case archive_type
+              case archive_type(stage)
               when :directory
                 changed_files = diff_patches(*dev_patch_stage_commits(stage)).map {|p| "\"#{File.join(to, cwd, p.delta.new_file[:path])}\""}
                 commands << "#{repo.dapp.rm_bin} -rf #{changed_files.join(' ')}"
@@ -103,7 +103,7 @@ module Dapp
             end
           else
             if patch_any_changes?(stage)
-              case archive_type
+              case archive_type(stage)
               when :directory
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
                 commands << "#{sudo}#{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{to}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
@@ -296,7 +296,7 @@ module Dapp
           modify_patch_line = proc do |line_number, path_char|
             action_part, path_part = lines[line_number].strip.split(' ', 2)
             if (path_with_cwd = path_part.partition("#{path_char}/").last).start_with?(cwd)
-              native_path = case archive_type
+              native_path = case archive_type(stage)
               when :directory
                 path_with_cwd.sub(cwd, '')
               when :file
