@@ -7,6 +7,8 @@ module Dapp
     include DappConfig
     include OptionTags
 
+    include Command::Common
+
     include Logging::Base
     include Logging::Process
     include Logging::I18n

@@ -13,10 +13,11 @@ module Dapp
       attr_reader :set
       attr_reader :values
       attr_reader :deploy_timeout
+      attr_reader :without_registry
 
       def initialize(dapp,
         name:, repo:, docker_tag:, namespace:, chart_path:,
-        set: [], values: [], deploy_timeout: nil)
+        set: [], values: [], deploy_timeout: nil, without_registry: nil)
         @dapp = dapp
 
         @name = name
@@ -27,6 +28,7 @@ module Dapp
         @set = set
         @values = values
         @deploy_timeout = deploy_timeout
+        @without_registry = (without_registry.nil? ? false : without_registry)
       end
 
       def jobs
@@ -90,7 +92,7 @@ module Dapp
             "template",
             chart_path,
             additional_values_options,
-            set_options,
+            set_options(without_registry: true),
             ("--namespace #{namespace}" if namespace),
           ].compact.join(" ")
 
@@ -115,11 +117,45 @@ module Dapp
         end
       end
 
-      def set_options
+      def dimg_registry
+        @dimg_registry ||= dapp.dimg_registry(repo)
+      end
+
+      def set_options(without_registry: false)
         [].tap do |options|
           options.concat(set.map { |opt| "--set #{opt}" })
           options << "--set global.dapp.repo=#{repo}"
           options << "--set global.dapp.docker_tag=#{docker_tag}"
+
+          if dapp.nameless_dimg?
+            options << "--set global.dapp.docker_image=#{repo}:#{docker_tag}"
+            if self.without_registry || without_registry
+              options << "--set global.dapp.docker_image_id=\\\"-\\\""
+            else
+              options << "--set global.dapp.docker_image_id=#{dimg_registry.image_id(docker_tag, nil)}"
+            end
+          else
+            dapp.dimgs_names.each do |dimg_name|
+              options << "--set global.dapp.docker_image.#{dimg_name}=#{repo}/#{dimg_name}:#{docker_tag}"
+              if self.without_registry || without_registry
+                options << "--set global.dapp.docker_image_id.#{dimg_name}=\\\"-\\\""
+              else
+                options << "--set global.dapp.docker_image_id.#{dimg_name}=#{dimg_registry.image_id(docker_tag, dimg_name)}"
+              end
+            end
+          end
+
+          is_branch = if ENV["CI_COMMIT_TAG"]
+            false
+          elsif ENV["CI_COMMIT_REF_NAME"]
+            true
+          elsif dapp.git_path and dapp.git_local_repo.branch != "HEAD"
+            true
+          else
+            false
+          end
+          options << "--set global.dapp.is_branch=#{is_branch}"
+
           options << "--set global.namespace=#{namespace}"
         end
       end

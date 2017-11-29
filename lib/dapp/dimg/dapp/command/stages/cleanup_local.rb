@@ -38,7 +38,7 @@ module Dapp
             end
 
             def stages_cleanup_by_repo
-              registry   = registry(option_repo)
+              registry   = dimg_registry(option_repo)
               repo_dimgs = repo_dimgs_images(registry)
 
               lock("#{name}.images") do

@@ -6,11 +6,6 @@ module Dapp
           module Common
             protected
 
-            def registry(repo)
-              validate_repo_name!(repo)
-              ::Dapp::Dimg::DockerRegistry.new(repo)
-            end
-
             def repo_dimgs_images(registry)
               [].tap do |dimgs_images|
                 with_registry_wrapper do
