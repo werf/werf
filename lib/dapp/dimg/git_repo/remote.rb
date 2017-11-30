@@ -9,17 +9,23 @@ module Dapp
 
           @url = url
 
-          dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
-            begin
-              if [:https, :ssh].include?(protocol) && !Rugged.features.include?(protocol)
-                raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, protocol: protocol }
-              end
+          _with_lock do
+            dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
+              begin
+                if [:https, :ssh].include?(protocol) && !Rugged.features.include?(protocol)
+                  raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, protocol: protocol }
+                end
 
-              Rugged::Repository.clone_at(url, path.to_s, bare: true, credentials: _rugged_credentials)
-            rescue Rugged::NetworkError, Rugged::SslError, Rugged::OSError => e
-              raise Error::Rugged, code: :rugged_remote_error, data: { message: e.message, url: url }
+                Rugged::Repository.clone_at(url, path.to_s, bare: true, credentials: _rugged_credentials)
+              rescue Rugged::NetworkError, Rugged::SslError, Rugged::OSError => e
+                raise Error::Rugged, code: :rugged_remote_error, data: { message: e.message, url: url }
+              end
             end
           end unless path.directory?
+        end
+
+        def _with_lock(&blk)
+          dapp.lock("remote_git_artifact.#{name}", default_timeout: 120, &blk)
         end
 
         def _rugged_credentials
@@ -37,10 +43,23 @@ module Dapp
         end
 
         def fetch!(branch = nil)
-          branch ||= self.branch
-          dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_fetch', data: { url: url }), short: true) do
-            git.fetch('origin', [branch], credentials: _rugged_credentials)
-            raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } unless branch_exist?(branch)
+          _with_lock do
+            branch ||= self.branch
+
+            cfg_path = path.join("config")
+            cfg = IniFile.load(cfg_path)
+            remote_origin_cfg = cfg['remote "origin"']
+
+            old_url = remote_origin_cfg["url"]
+            if old_url and old_url != url
+              remote_origin_cfg["url"] = url
+              cfg.write(filename: cfg_path)
+            end
+
+            dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_fetch', data: { url: url }), short: true) do
+              git.fetch('origin', [branch], credentials: _rugged_credentials)
+              raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } unless branch_exist?(branch)
+            end
           end unless dimg.ignore_git_fetch || dapp.dry_run?
         end
 
