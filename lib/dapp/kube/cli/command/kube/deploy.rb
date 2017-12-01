@@ -12,6 +12,12 @@ BANNER
              long: '--namespace NAME',
              default: nil
 
+      option :image_version,
+             long: '--image-version TAG',
+             description: "Custom tag (alias for --tag)",
+             default: [],
+             proc: proc { |v| composite_options(:image_versions) << v }
+
       option :tag,
              long: '--tag TAG',
              description: 'Custom tag',
@@ -66,7 +72,10 @@ BANNER
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
 
-        run_dapp_command(nil, options: cli_options) do |dapp|
+        options = cli_options
+        options[:tag] = [*options.delete(:tag), *options.delete(:image_version)]
+
+        run_dapp_command(nil, options: options) do |dapp|
           repo = if not cli_arguments[0].nil?
             self.class.required_argument(self, 'repo')
           else
