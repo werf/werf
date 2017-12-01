@@ -81,9 +81,6 @@ module Dapp
           def prepare_image
             return if dimg.dapp.dry_run?
 
-            image.add_volumes_from dimg.dapp.toolchain_container
-            image.add_volumes_from dimg.dapp.base_container
-
             image_add_mounts
 
             image.add_service_change_label dapp: dimg.stage_dapp_label
