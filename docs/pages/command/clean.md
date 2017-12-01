@@ -81,7 +81,7 @@ $ dapp dimg stages flush local
 ```
 
 ### dapp dimg stages flush repo
-Удалить приложения и [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект) в репозитории **REPO**.
+Удалить [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект) в репозитории **REPO**.
 
 ```
 dapp dimg stages flush repo [options] REPO
