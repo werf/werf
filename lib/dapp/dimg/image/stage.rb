@@ -38,6 +38,15 @@ module Dapp
           !built_id.nil?
         end
 
+        def export_dimg!(name, sheme_name:)
+          self.class.new(name: name, dapp: dapp, from: self).tap do |image|
+            image.add_service_change_label(:'dapp-tag-scheme' => sheme_name)
+            image.add_service_change_label(:'dapp-dimg' => true)
+            image.build!
+            image.export!(name)
+          end
+        end
+
         def export!(name)
           tag!(name).tap do |image|
             image.push!
