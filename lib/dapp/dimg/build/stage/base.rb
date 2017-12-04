@@ -188,7 +188,7 @@ module Dapp
 
           def layer_commit(git_artifact)
             commits[git_artifact] ||= begin
-              if image.tagged?
+              if image.built?
                 image.labels["dapp-git-#{git_artifact.paramshash}-commit"]
               else
                 git_artifact.latest_commit
