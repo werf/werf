@@ -19,6 +19,8 @@ module Dapp
         include Command::Stages::Push
         include Command::Stages::Pull
         include Command::Stages::Common
+        include Command::CleanupRepo
+        include Command::FlushRepo
         include Command::Cleanup
         include Command::Mrproper
         include Command::StageImage

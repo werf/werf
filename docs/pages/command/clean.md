@@ -5,6 +5,29 @@ permalink: clean_commands.html
 folder: command
 ---
 
+### dapp dimg cleanup repo
+Удалить неактуальные теги [приложений](definitions.html#dimg) [проекта](definitions.html#проект).
+```
+dapp dimg cleanup repo [options] [DIMG ...] REPO
+```
+
+#### `--improper-nonexistent-git-tag-branch-commit`
+Удалить теги, имена которых содержат неактуальные данные при соответствующих схемах тегирования:
+* ветка или тег удалены из репозитория (`--tag-branch`, `--tag-ci`);
+* комит отсутсвует в репозитории, был сделан rebase (`--tag-commit`).
+
+#### `--with-stages`
+Соответствует вызову команды `dapp dimg stages cleanup local` с опцией `--improper-repo-cache`.
+
+### dapp dimg flush repo
+Удалить все теги [приложений](definitions.html#dimg) [проекта](definitions.html#проект).
+```
+dapp dimg flush repo [options] [DIMG ...] REPO
+```
+
+#### `--with-stages`
+Соответствует вызову команды `dapp dimg stages cleanup flush`.
+
 ### dapp dimg stages cleanup local
 Удалить неактуальный локальный [кэш приложений](definitions.html#кэш-приложения) [проекта](definitions.html#проект).
 

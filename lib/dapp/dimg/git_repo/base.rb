@@ -84,6 +84,17 @@ module Dapp
           raise Error::Rugged, code: :git_repository_reference_error, data: { name: name, message: e.message.downcase }
         end
 
+        def tags
+          git.tags.map { |t| t.name }
+        end
+
+        def remote_branches
+          git.branches
+            .map { |b| b.name }
+            .select { |b| b.start_with?('origin/') }
+            .map { |b| b.reverse.chomp('origin/'.reverse).reverse }
+        end
+
         def commit_at(commit)
           lookup_commit(commit).time.to_i
         end
