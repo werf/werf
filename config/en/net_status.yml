@@ -21,6 +21,7 @@ en:
     command:
       command_unexpected_dimgs_number: "Command can process only one dimg!\nAmbiguous dimg pattern: `%{dimgs_names}`!"
       mrproper_required_option: "Expected command option `--improper-dev-mode-cache`, `--improper-cache-version-stages` or `--all`!"
+      cleanup_repo_required_option: "Expected command option `--improper-nonexistent-git-tag-branch-commit`!"
       stages_cleanup_required_option: "Expected command option `--improper-cache-version`, `--improper-git-commit` or `--improper-repo-cache`!"
       repo_name_incorrect: "Incorrect repo name `%{name}` given!"
       image_name_incorrect: "Incorrect image name `%{name}` given!"

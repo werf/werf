@@ -43,6 +43,11 @@ module Dapp
           end
         end
 
+        def reset_cache
+          @tags = nil
+          @image_history = nil
+        end
+
         protected
 
         def with_repo_suffix(extra_repo_suffix)

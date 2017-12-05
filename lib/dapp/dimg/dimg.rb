@@ -61,9 +61,13 @@ module Dapp
 
       def export!(repo, format:)
         dapp.lock("#{dapp.name}.images", readonly: true) do
-          dapp.option_tags.each do |tag|
-            image_name = format(format, repo: repo, dimg_name: config._name, tag: tag)
-            export_base!(last_stage.image, image_name)
+          dapp.tags_by_scheme.each do |tag_scheme_name, tags|
+            tags.each do |tag|
+              image_name = format(format, repo: repo, dimg_name: config._name, tag: tag)
+              export_base!(image_name) do
+                last_stage.image.export_dimg!(image_name, sheme_name: tag_scheme_name)
+              end
+            end
           end
         end
       end
@@ -72,12 +76,14 @@ module Dapp
         dapp.lock("#{dapp.name}.images", readonly: true) do
           export_images.each do |image|
             image_name = format(format, repo: repo, signature: image.name.split(':').last)
-            export_base!(image, image_name)
+            export_base!(image_name) do
+              image.export!(image_name)
+            end
           end
         end
       end
 
-      def export_base!(image, image_name)
+      def export_base!(image_name)
         if dapp.dry_run?
           dapp.log_state(image_name, state: dapp.t(code: 'state.push'), styles: { status: :success })
         else
@@ -85,7 +91,7 @@ module Dapp
             ::Dapp::Dimg::Image::Docker.reset_image_inspect(image_name)
 
             dapp.log_process(image_name, process: dapp.t(code: 'status.process.pushing')) do
-              image.export!(image_name)
+              yield
             end
           end
         end

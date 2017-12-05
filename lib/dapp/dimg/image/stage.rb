@@ -22,14 +22,29 @@ module Dapp
         end
 
         def build!
+          add_build_service_volumes
           run!
           @built_id = commit!
         ensure
           dapp.shellout("#{dapp.host_docker} rm #{container_name}")
         end
 
+        def add_build_service_volumes
+          add_volumes_from dapp.toolchain_container
+          add_volumes_from dapp.base_container
+        end
+
         def built?
           !built_id.nil?
+        end
+
+        def export_dimg!(name, sheme_name:)
+          self.class.new(name: name, dapp: dapp, from: self).tap do |image|
+            image.add_service_change_label(:'dapp-tag-scheme' => sheme_name)
+            image.add_service_change_label(:'dapp-dimg' => true)
+            image.build!
+            image.export!(name)
+          end
         end
 
         def export!(name)

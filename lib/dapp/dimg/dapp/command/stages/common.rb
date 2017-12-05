@@ -12,7 +12,7 @@ module Dapp
             end
 
             def repo_dimgs_images(registry)
-              @repo_dimgs_images ||= [].tap do |dimgs_images|
+              [].tap do |dimgs_images|
                 with_registry_wrapper do
                   {}.tap do |dimgs_tags|
                     dimgs_tags[nil] = registry.nameless_dimg_tags

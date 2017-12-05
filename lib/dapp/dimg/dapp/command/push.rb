@@ -21,13 +21,6 @@ module Dapp
             #printer = RubyProf::MultiPrinter.new(result)
             #printer.print(path: '/tmp/testdapp.push.profile', profile: 'profile')
           end
-
-
-          protected
-
-          def with_stages?
-            !!options[:with_stages]
-          end
         end
       end
     end

@@ -8,8 +8,8 @@ module Dapp
               lock_repo(repo = option_repo) do
                 raise Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
-                registry    = registry(repo)
-                repo_dimgs  = repo_dimgs_images(registry)
+                registry        = registry(repo)
+                repo_dimgs      = repo_dimgs_images(registry)
                 repo_dimgstages = repo_dimgstages_images(registry)
 
                 repo_dimgstages.delete_if { |dimgstage| repo_dimgs.any? { |dimg| dimgstage[:id] == dimg[:id] } } # ignoring stages with dimgs ids (v2)
