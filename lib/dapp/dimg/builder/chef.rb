@@ -192,8 +192,9 @@ module Dapp
         @install_chef_solo_stage_config[stage] ||= true.tap do
           stage_build_path(stage).join('config.rb').write [
             "file_cache_path \"/.dapp/chef/cache\"\n",
-            "cookbook_path \"#{container_stage_build_path(stage).join('cookbooks')}\"\n"
-          ].join
+            "cookbook_path \"#{container_stage_build_path(stage).join('cookbooks')}\"\n",
+            ("log_level :debug\n" if ENV["DAPP_CHEF_DEBUG"]),
+          ].compact.join
         end
       end
 
