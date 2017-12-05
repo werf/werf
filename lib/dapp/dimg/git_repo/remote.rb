@@ -2,6 +2,8 @@ module Dapp
   module Dimg
     module GitRepo
       class Remote < Base
+        CACHE_VERSION = 1
+
         attr_reader :url
 
         def initialize(dimg, name, url:)
@@ -39,7 +41,7 @@ module Dapp
         end
 
         def path
-          Pathname(dimg.build_path('git_repo_remote', name).to_s)
+          Pathname(dimg.build_path("remote_git_repo", CACHE_VERSION.to_s, name).to_s)
         end
 
         def fetch!(branch = nil)
