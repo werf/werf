@@ -218,6 +218,8 @@ module Dapp
 
             client_key_data = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key-data', nil)
             opts[:client_key_data] = Base64.decode64(client_key_data) if client_key_data
+
+            opts.merge!(excon_parameters)
           end
         end
 
