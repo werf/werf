@@ -62,7 +62,36 @@ module Dapp
           end
 
           def deployed_docker_images
-            []
+            # open kube client, get all pods and select containers' images
+            ::Dapp::Kube::Kubernetes::Client.tap do |kube|
+              config_file = kube.kube_config_path
+              unless File.exist?(config_file)
+                return []
+              end
+            end
+
+            client = ::Dapp::Kube::Kubernetes::Client.new
+
+            namespaces = []
+            # check connectivity for 2 seconds
+            begin
+              namespaces = client.namespace_list(excon_parameters: {:connect_timeout => 30})
+            rescue Excon::Error::Timeout
+              raise Kube::Error::Base, code: :connect_timeout
+            end
+
+            # get images from containers from pods from all namespaces.
+            @kube_images ||= namespaces['items'].map do |item|
+              item['metadata']['name']
+            end.map do |ns|
+              client.with_namespace(ns) do
+                client.pod_list['items'].map do |pod|
+                  pod['spec']['containers'].map{ |cont| cont['image'] }
+                end
+              end
+            end.flatten.uniq.select do |image|
+              image.start_with?(option_repo)
+            end
           end
         end
       end

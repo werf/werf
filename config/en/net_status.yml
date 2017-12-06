@@ -8,6 +8,7 @@ en:
       dimg_not_run: "Dimg run failed!"
     kube:
       deploy_timeout: "Deploy timeout!"
+      connect_timeout: "Connect timeout when connecting to kube API."
     dappfile:
       incorrect: "Dappfile with `%{error}`:\n%{message}"
     build:
