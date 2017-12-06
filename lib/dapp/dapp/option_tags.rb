@@ -5,6 +5,10 @@ module Dapp
         @git_repo ||= ::Dapp::Dimg::GitRepo::Own.new(self)
       end
 
+      def tagging_schemes
+        %w(git_tag git_branch git_commit custom ci)
+      end
+
       def tags_by_scheme
         @tags_by_scheme_name ||= begin
           [simple_tags, branch_tags, commit_tags, build_tags, ci_tags].reduce({}) do |some_tags_by_scheme, tags_by_scheme|
