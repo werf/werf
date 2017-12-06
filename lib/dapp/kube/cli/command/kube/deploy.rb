@@ -69,6 +69,12 @@ BANNER
              description: 'Default timeout to wait for resources to become ready, 300 seconds by default.',
              proc: proc {|v| Integer(v)}
 
+      option :without_registry,
+             long: "--without-registry",
+             default: false,
+             boolean: true,
+             description: "Do not connect to docker registry to obtain docker image ids of dimgs being deployed."
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
 

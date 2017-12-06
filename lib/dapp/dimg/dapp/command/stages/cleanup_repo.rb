@@ -8,7 +8,7 @@ module Dapp
               lock_repo(repo = option_repo) do
                 raise Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
-                registry        = registry(repo)
+                registry        = dimg_registry(repo)
                 repo_dimgs      = repo_dimgs_images(registry)
                 repo_dimgstages = repo_dimgstages_images(registry)
 
