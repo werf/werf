@@ -17,10 +17,6 @@ module Dapp
           tags.select { |tag| !tag.start_with?('dimgstage') }
         end
 
-        def tags
-          (@tags ||= {})[repo_suffix] ||= super
-        end
-
         def image_id(tag, extra_repo_suffix = nil)
           with_repo_suffix(extra_repo_suffix.to_s) { super(tag) }
         end
@@ -41,11 +37,6 @@ module Dapp
           with_repo_suffix(extra_repo_suffix.to_s) do
             (@image_history ||= {})[[repo_suffix, tag]] ||= super(tag)
           end
-        end
-
-        def reset_cache
-          @tags = nil
-          @image_history = nil
         end
 
         protected
