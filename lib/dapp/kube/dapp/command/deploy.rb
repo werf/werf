@@ -78,7 +78,7 @@ module Dapp
                   deployment_managers.each {|deployment_manager| deployment_manager.watch_till_ready!}
                 end
               rescue ::Timeout::Error
-                raise Error::Base, code: :deploy_timeout
+                raise Kube::Error::Base, code: :deploy_timeout
               end
             end
           end
