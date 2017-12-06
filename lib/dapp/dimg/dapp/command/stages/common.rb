@@ -50,7 +50,7 @@ module Dapp
 
             def delete_repo_image(registry, repo_image)
               if dry_run?
-                log(repo_image[:tag])
+                log([repo_image[:dimg], repo_image[:tag]].compact.join(':'))
               else
                 registry.image_delete(repo_image[:tag], repo_image[:dimg])
               end
