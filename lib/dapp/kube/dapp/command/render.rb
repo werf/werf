@@ -13,8 +13,8 @@ module Dapp
                       template_relative_path_pattern = Pathname(File.expand_path(template_path_pattern)).subpath_of(path('.helm'))
                       template_relative_path_pattern ||= template_path_pattern
 
-                      File.fnmatch(template_relative_path_pattern, template_path_without_chart_name) ||
-                        File.fnmatch(template_relative_path_pattern, template_path)
+                      File.fnmatch?(template_relative_path_pattern, template_path_without_chart_name, File::FNM_PATHNAME) ||
+                        File.fnmatch?(template_relative_path_pattern, template_path, File::FNM_PATHNAME)
                     end
                   end
                 else

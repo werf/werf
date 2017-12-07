@@ -4,7 +4,7 @@ module Dapp
       class Update < ::Dapp::CLI
         def run(_argv)
           spec = Gem::Specification.find do |s|
-            File.fnmatch(File.join(s.full_gem_path, '*'), __FILE__)
+            File.fnmatch?(File.join(s.full_gem_path, '**', '*'), __FILE__, File::FNM_PATHNAME)
           end
           unless (latest_version = latest_beta_version(spec)).nil?
             try_lock do
