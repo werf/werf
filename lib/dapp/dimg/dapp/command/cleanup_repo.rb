@@ -42,8 +42,8 @@ module Dapp
               cleanup_repo_by_nonexistent_git_base(detailed_dimgs_images_by_scheme, scheme) do |detailed_dimg_image|
                 delete_repo_image(registry, detailed_dimg_image) unless begin
                   case scheme
-                    when 'git_tag'    then git_local_repo.tags.include?(detailed_dimg_image[:tag])
-                    when 'git_branch' then git_local_repo.remote_branches.include?(detailed_dimg_image[:tag])
+                    when 'git_tag'    then consistent_git_tags.include?(detailed_dimg_image[:tag])
+                    when 'git_branch' then consistent_git_remote_branches.include?(detailed_dimg_image[:tag])
                     when 'git_commit' then git_local_repo.commit_exists?(detailed_dimg_image[:tag])
                     else
                       raise
@@ -51,6 +51,14 @@ module Dapp
                 end
               end unless detailed_dimgs_images_by_scheme[scheme].empty?
             end
+          end
+
+          def consistent_git_tags
+            git_tag_by_consistent_tag_name.keys
+          end
+
+          def consistent_git_remote_branches
+            @consistent_git_remote_branches ||= git_local_repo.remote_branches.map(&method(:consistent_uniq_slugify))
           end
 
           def cleanup_repo_by_nonexistent_git_base(repo_dimgs_images_by_scheme, dapp_tag_scheme)
@@ -96,6 +104,14 @@ module Dapp
                   end
                 end
               end
+          end
+
+          def git_tag_by_consistent_git_tag(consistent_git_tag)
+            git_tag_by_consistent_tag_name[consistent_git_tag]
+          end
+
+          def git_tag_by_consistent_tag_name
+            @git_consistent_tags ||= git_local_repo.tags.map { |t| [consistent_uniq_slugify(t), t] }.to_h
           end
 
           def repo_detailed_dimgs_images(registry)
