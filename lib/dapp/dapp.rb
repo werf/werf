@@ -9,6 +9,7 @@ module Dapp
     include Slug
 
     include Command::Common
+    include Command::Slug
 
     include Logging::Base
     include Logging::Process
