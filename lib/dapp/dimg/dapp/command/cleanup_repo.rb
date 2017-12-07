@@ -8,7 +8,7 @@ module Dapp
 
           def cleanup_repo
             lock_repo(repo = option_repo) do
-              registry = registry(repo)
+              registry = dimg_registry(repo)
 
               cleanup_repo_by_nonexistent_git_primitive(registry, actual_detailed_dimgs_images_by_scheme(registry))
               cleanup_repo_by_policies(registry, actual_detailed_dimgs_images_by_scheme(registry))
