@@ -6,6 +6,7 @@ module Dapp
     include Chef
     include DappConfig
     include OptionTags
+    include Slug
 
     include Command::Common
 
@@ -41,17 +42,20 @@ module Dapp
 
     def name
       @name ||= begin
-        if name = options[:name]
-          name
-        elsif git_url
-          repo_name = git_url.split('/').last
-          repo_name = repo_name[/.*(?=\.git)/] if repo_name.end_with? '.git'
-          repo_name
-        elsif git_path
-          File.basename(File.dirname(git_path)).to_s
-        else
-          path.basename.to_s
+        n = begin
+          if (name = options[:name])
+            name
+          elsif git_url
+            repo_name = git_url.split('/').last
+            repo_name = repo_name[/.*(?=\.git)/] if repo_name.end_with? '.git'
+            repo_name
+          elsif git_path
+            File.basename(File.dirname(git_path)).to_s
+          else
+            path.basename.to_s
+          end
         end
+        consistent_uniq_slugify(n)
       end
     end
 
