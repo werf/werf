@@ -260,7 +260,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
           end
 
           def kube_release_name
-            "#{name}-#{kube_namespace}".slugify
+            consistent_uniq_slugify("#{name}-#{kube_namespace}")
           end
 
           { encode: :generate, decode: :extract }.each do |type, secret_method|
