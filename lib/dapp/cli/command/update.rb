@@ -2,7 +2,17 @@ module Dapp
   class CLI
     module Command
       class Update < ::Dapp::CLI
-        def run(_argv)
+        banner <<BANNER.freeze
+Usage:
+
+  dapp update
+
+Options:
+BANNER
+
+        def run(argv = ARGV)
+          self.class.parse_options(self, argv)
+
           spec = Gem::Specification.find do |s|
             File.fnmatch?(File.join(s.full_gem_path, '**', '*'), __FILE__, File::FNM_PATHNAME)
           end
