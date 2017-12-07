@@ -265,22 +265,22 @@ describe Dapp::Dimg::GitArtifact do
                               include_paths: %w(x/y/* z/[asdf]ata.txt))
       end
 
-      it "#{type} paths (glob **/*.go)", test_construct: true do
-        send("check_#{type}", add_files: %w(data.go x/data.go z/data.txt),
-             added_files: %w(x/data.go), not_added_files: %w(data.go z/data.txt),
-             include_paths: %w(**/*.go))
+      it "#{type} paths (glob *.rb)", test_construct: true do
+        send("check_#{type}", add_files: %w(data.rb data.txt x/data.rb),
+             added_files: %w(data.rb), not_added_files: %w(data.txt x/data.rb),
+             include_paths: %w(*.rb))
       end
 
-      it "#{type} paths (glob **.go)", test_construct: true do
-        send("check_#{type}", add_files: %w(data.go x/data.go z/data.txt),
-             added_files: %w(data.go x/data.go), not_added_files: %w(z/data.txt),
-             include_paths: %w(**.go))
+      it "#{type} paths (glob **/*.rb)", test_construct: true do
+        send("check_#{type}", add_files: %w(data.rb x/data.rb z/data.txt),
+             added_files: %w(x/data.rb data.rb), not_added_files: %w(z/data.txt),
+             include_paths: %w(**/*.rb))
       end
 
-      it "#{type} paths (glob **/dir)", test_construct: true do
-        send("check_#{type}", add_files: %w(dir/data.go a/dir.txt b/dir/data.txt),
-             added_files: %w(b/dir/data.txt), not_added_files: %w(dir/data.go a/dir.txt),
-             include_paths: %w(**/dir))
+      it "#{type} paths (glob **/dir/**/*)", test_construct: true do
+        send("check_#{type}", add_files: %w(dir/data.rb dir/data/data.rb a/dir.txt b/dir/data.rb b/dir/data.txt),
+             added_files: %w(dir/data.rb dir/data/data.rb b/dir/data.rb), not_added_files: %w(a/dir.txt b/dir/data.txt),
+             include_paths: %w(**/dir/**/*.rb))
       end
 
       it "#{type} (file doesn't exist)", test_construct: true do
@@ -313,22 +313,22 @@ describe Dapp::Dimg::GitArtifact do
                               exclude_paths: %w(x/y/* z/[asdf]*ta.txt))
       end
 
-      it "#{type} exclude_paths (glob **/*.go)", test_construct: true do
-        send("check_#{type}", add_files: %w(data.go x/data.go z/data.txt),
-             added_files: %w(data.go z/data.txt), not_added_files: %w(x/data.go),
-             exclude_paths: %w(**/*.go))
+      it "#{type} exclude_paths (glob *.rb)", test_construct: true do
+        send("check_#{type}", add_files: %w(data.rb data.txt x/data.rb),
+             added_files: %w(data.txt x/data.rb), not_added_files: %w(data.rb),
+             exclude_paths: %w(*.rb))
       end
 
-      it "#{type} exclude_paths (glob **.go)", test_construct: true do
-        send("check_#{type}", add_files: %w(data.go x/data.go z/data.txt),
-             added_files: %w(z/data.txt), not_added_files: %w(data.go x/data.go),
-             exclude_paths: %w(**.go))
+      it "#{type} exclude_paths (glob **/*.rb)", test_construct: true do
+        send("check_#{type}", add_files: %w(data.rb x/data.rb z/data.txt),
+             added_files: %w(z/data.txt), not_added_files: %w(data.rb x/data.rb),
+             exclude_paths: %w(**/*.rb))
       end
 
-      it "#{type} exclude_paths (glob **/dir)", test_construct: true do
-        send("check_#{type}", add_files: %w(dir/data.go a/dir.txt b/dir/data.txt),
-             added_files: %w(dir/data.go a/dir.txt), not_added_files: %w(b/dir/data.txt),
-             exclude_paths: %w(**/dir))
+      it "#{type} exclude_paths (glob **/dir/**/*)", test_construct: true do
+        send("check_#{type}", add_files: %w(dir/data.rb dir/data/data.rb a/dir.txt b/dir/data.rb b/dir/data.txt),
+             added_files: %w(a/dir.txt b/dir/data.txt), not_added_files: %w(dir/data.rb dir/data/data.rb b/dir/data.rb),
+             exclude_paths: %w(**/dir/**/*.rb))
       end
 
       it "#{type} cwd and exclude_paths", test_construct: true do
