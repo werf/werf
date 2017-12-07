@@ -139,7 +139,10 @@ module Dapp
           is_exclude_path = exclude_paths.any? { |p| check_path?(path, p) }
           is_include_path = begin
             paths.empty? ||
-                paths.any? { |p| File.fnmatch?(p, path) || File.fnmatch?(File.join(p, '**'), path) }
+              paths.any? do |p|
+                File.fnmatch?(p, path, File::FNM_PATHNAME) ||
+                  File.fnmatch?(File.join(p, '**', '*'), path, File::FNM_PATHNAME)
+              end
           end
 
           is_exclude_path || !is_include_path
@@ -151,7 +154,7 @@ module Dapp
 
           until path_parts.empty?
             checking_path = [checking_path, path_parts.shift].compact.join('/')
-            return true if File.fnmatch(format, checking_path)
+            return true if File.fnmatch?(format, checking_path, File::FNM_PATHNAME)
           end
           false
         end
