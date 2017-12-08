@@ -14,6 +14,9 @@ module Dapp
           [simple_tags, branch_tags, commit_tags, build_tags, ci_tags].reduce({}) do |some_tags_by_scheme, tags_by_scheme|
             tags_by_scheme.in_depth_merge(some_tags_by_scheme)
           end.tap do |tags_by_scheme|
+            [:git_branch, :git_tag].each do |scheme|
+              tags_by_scheme[scheme].map!(&method(:consistent_uniq_slugify)) unless tags_by_scheme[scheme].nil?
+            end
             tags_by_scheme[:custom] = [:latest] if tags_by_scheme.values.flatten.empty?
           end
         end
