@@ -22,16 +22,10 @@ module Dapp
         end
 
         def build!
-          add_build_service_volumes
           run!
           @built_id = commit!
         ensure
           dapp.shellout("#{dapp.host_docker} rm #{container_name}")
-        end
-
-        def add_build_service_volumes
-          add_volumes_from dapp.toolchain_container
-          add_volumes_from dapp.base_container
         end
 
         def built?
