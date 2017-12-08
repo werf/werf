@@ -110,7 +110,7 @@ module Dapp
         end
 
         def all_options
-          service_options.merge(options)
+          service_options.in_depth_merge(options)
         end
 
         def all_bash_commands
@@ -118,7 +118,12 @@ module Dapp
         end
 
         def service_options
-          { entrypoint: dapp.bash_bin, name: container_name, user: '0:0' }
+          {
+            entrypoint: dapp.bash_bin,
+            name: container_name,
+            user: '0:0',
+            :'volumes-from' => [dapp.base_container, dapp.toolchain_container]
+          }
         end
 
         def prepared_change

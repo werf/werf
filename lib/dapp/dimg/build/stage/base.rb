@@ -247,7 +247,7 @@ module Dapp
           end
 
           def image_should_be_prepared?
-            (!image.built? && !should_be_not_present? || image_should_be_introspected?) && !dimg.dapp.dry_run?
+            (!image.built? && !should_be_not_present? || image_should_be_introspected? && image.tagged?) && !dimg.dapp.dry_run?
           end
 
           def should_be_renewed?
