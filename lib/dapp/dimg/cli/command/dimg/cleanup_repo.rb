@@ -19,6 +19,10 @@ BANNER
                long: '--with-stages',
                boolean: true
 
+        option :without_kube,
+               long: '--without-kube',
+               boolean: true
+
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
           repo = self.class.required_argument(self, 'repo')

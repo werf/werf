@@ -123,6 +123,8 @@ module Dapp
           end
 
           def deployed_docker_images
+            return [] if without_kube?
+
             # open kube client, get all pods and select containers' images
             ::Dapp::Kube::Kubernetes::Client.tap do |kube|
               config_file = kube.kube_config_path
@@ -153,6 +155,10 @@ module Dapp
             end.flatten.uniq.select do |image|
               image.start_with?(option_repo)
             end
+          end
+
+          def without_kube?
+            !!options[:without_kube]
           end
         end
       end
