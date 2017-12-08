@@ -5,8 +5,16 @@ module Dapp
         module Deploy
           def kube_deploy
             helm_release do |release|
-              kube_flush_hooks_jobs(release)
-              kube_run_deploy(release)
+              do_deploy = proc do
+                kube_flush_hooks_jobs(release)
+                kube_run_deploy(release)
+              end
+
+              if dry_run?
+                do_deploy.call
+              else
+                lock_helm_release &do_deploy
+              end
             end
           end
 

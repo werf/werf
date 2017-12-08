@@ -7,9 +7,13 @@ module Dapp
                description: 'Change to directory',
                on: :head
 
-        option :build_dir,
-               long: '--build-dir PATH',
-               description: 'Directory where build cache stored (DIR/.dapp_build by default)'
+        %w(run_dir build_dir deploy_dir).tap do |dirs|
+          dirs.each do |dir|
+            option dir.to_sym,
+                  long: "--#{dir.gsub("_", "-")} PATH",
+                  description: "Directory where reside: build cache, lock files for concurrent dapp operations (DIR/.dapp_build by default). Alias for #{(dirs - [dir]).map{|d| "--" + d.gsub("_", "-")}.join(", ")}."
+          end
+        end
 
         option :name,
                long: "--name NAME",
@@ -88,7 +92,12 @@ module Dapp
         end
 
         def cli_options(**kwargs)
-          config.merge(**kwargs)
+          dirs = [config[:build_dir], config[:run_dir], config[:deploy_dir]]
+          if dirs.compact.size > 1
+            self.class.print_error_with_help_and_die! self, "cannot use alias options --run-dir, --build-dir, --deploy-dir at the same time"
+          end
+
+          config.merge(build_dir: dirs.compact.first, **kwargs)
         end
       end
     end
