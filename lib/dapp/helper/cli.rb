@@ -10,20 +10,21 @@ module Dapp
       def cli_wrapper(cli)
         yield
       rescue OptionParser::MissingArgument, OptionParser::InvalidOption, OptionParser::InvalidArgument, OptionParser::AmbiguousOption => e
-        STDERR.puts "Error: #{e.message}"
-        puts
-        puts cli.opt_parser
-        exit 1
+        print_error_with_help_and_die!(cli, e.message)
       end
 
       def required_argument(cli, argument)
         unless (arg = cli.cli_arguments.pop)
-          STDERR.puts "Error: required argument `#{argument.upcase}`"
-          puts
-          puts cli.opt_parser
-          exit 1
+          print_error_with_help_and_die!(cli, "required argument `#{argument.upcase}`")
         end
         arg
+      end
+
+      def print_error_with_help_and_die!(cli, error_message)
+        STDERR.puts "Error: #{error_message}"
+        puts
+        puts cli.opt_parser
+        exit 1
       end
 
       def parse_subcommand(cli, args)

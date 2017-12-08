@@ -3,6 +3,10 @@ module Dapp
     module Dapp
       module Command
         module Common
+          def lock_helm_release(&blk)
+            lock("helm_release.#{kube_release_name}", &blk)
+          end
+
           def helm_release
             kube_check_helm!
             kube_check_helm_template_plugin!
