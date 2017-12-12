@@ -68,10 +68,16 @@ module Dapp
           dapp = ::Dapp::Dapp.new(options: options)
 
           log_dapp_running_time(dapp, ignore: !log_running_time) do
-            if block_given?
-              yield dapp
-            elsif !run_method.nil?
-              dapp.public_send(run_method)
+            begin
+              before_dapp_run_command(dapp)
+
+              if block_given?
+                yield dapp
+              elsif !run_method.nil?
+                dapp.public_send(run_method)
+              end
+            ensure
+              dapp.terminate
             end
           end
         end
@@ -89,6 +95,11 @@ module Dapp
 
         def run(_argv = ARGV)
           raise
+        end
+
+        def before_dapp_run_command(dapp, &blk)
+          yield if block_given?
+          dapp.try_host_docker_login
         end
 
         def cli_options(**kwargs)

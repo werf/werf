@@ -126,7 +126,8 @@ module Dapp
       self.class.host_docker_tmp_config_dir
     end
 
-    def host_docker_login
+    def try_host_docker_login
+      return if options[:without_registry]
       return unless option_repo
 
       validate_repo_name!(option_repo)

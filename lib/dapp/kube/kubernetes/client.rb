@@ -128,7 +128,7 @@ module Dapp
         protected
 
         # query_parameters — соответствует 'Query Parameters' в документации kubernetes
-        # excon_parameters — соответствует опциям Excon
+        # excon_parameters — соответствует connection-опциям Excon
         # body — hash для http-body, соответствует 'Body Parameters' в документации kubernetes, опционален
         def request!(method, path, body: nil, excon_parameters: {}, response_body_parameters: {}, **query_parameters)
           with_connection(excon_parameters: excon_parameters) do |conn|
@@ -173,36 +173,15 @@ module Dapp
         end
 
         def with_connection(excon_parameters: {}, &blk)
-          old_ssl_ca_file = Excon.defaults[:ssl_ca_file]
-          old_ssl_cert_store = Excon.defaults[:ssl_cert_store]
-          old_middlewares = Excon.defaults[:middlewares].dup
-
-          begin
-            ssl_cert_store = OpenSSL::X509::Store.new
-            if ssl_ca_file = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority', nil)
-              ssl_cert_store.add_file ssl_ca_file
-            elsif ssl_ca_data = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority-data', nil)
-              ssl_cert_store.add_cert OpenSSL::X509::Certificate.new(Base64.decode64(ssl_ca_data))
-            end
-
-            Excon.defaults[:ssl_ca_file] = nil
-            Excon.defaults[:ssl_cert_store] = ssl_cert_store
-            Excon.defaults[:middlewares] << Excon::Middleware::RedirectFollower
-
-            connection = begin
-              Excon.new(kube_cluster_config['cluster']['server'], **kube_server_options(excon_parameters)).tap(&:get)
-            rescue Excon::Error::Socket => err
-              raise Error::ConnectionRefused,
-                code: :kube_server_connection_refused,
-                data: { kube_cluster_config: kube_cluster_config, kube_user_config: kube_user_config, error: err.message }
-            end
-
-            return yield connection
-          ensure
-            Excon.defaults[:ssl_ca_file] = old_ssl_ca_file
-            Excon.defaults[:ssl_cert_store] = old_ssl_cert_store
-            Excon.defaults[:middlewares] = old_middlewares
+          connection = begin
+            Excon.new(kube_cluster_config['cluster']['server'], **kube_server_options(excon_parameters)).tap(&:get)
+          rescue Excon::Error::Socket => err
+            raise Error::ConnectionRefused,
+              code: :kube_server_connection_refused,
+              data: { kube_cluster_config: kube_cluster_config, kube_user_config: kube_user_config, error: err.message }
           end
+
+          return yield connection
         end
 
         def kube_server_options(excon_parameters = {})
@@ -218,6 +197,18 @@ module Dapp
 
             client_key_data = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key-data', nil)
             opts[:client_key_data] = Base64.decode64(client_key_data) if client_key_data
+
+            ssl_cert_store = OpenSSL::X509::Store.new
+            if ssl_ca_file = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority', nil)
+              ssl_cert_store.add_file ssl_ca_file
+            elsif ssl_ca_data = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority-data', nil)
+              ssl_cert_store.add_cert OpenSSL::X509::Certificate.new(Base64.decode64(ssl_ca_data))
+            end
+            opts[:ssl_cert_store] = ssl_cert_store
+
+            opts[:ssl_ca_file] = nil
+
+            opts[:middlewares] = [*Excon.defaults[:middlewares], Excon::Middleware::RedirectFollower]
 
             opts.merge!(excon_parameters)
           end
