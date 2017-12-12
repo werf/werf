@@ -264,7 +264,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
           end
 
           def kube_release_name
-            consistent_uniq_slugify("#{name}-#{kube_namespace}")
+            "#{name}-#{kube_namespace}"
           end
 
           { encode: :generate, decode: :extract }.each do |type, secret_method|
@@ -346,7 +346,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
           end
 
           def namespace_option
-            options[:namespace].nil? ? nil : options[:namespace].tr('_', '-')
+            options[:namespace].nil? ? nil : consistent_uniq_slugify(options[:namespace])
           end
 
           def kube_namespace
