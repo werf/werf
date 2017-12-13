@@ -160,7 +160,11 @@ module Dapp
       end
 
       def force_save_cache?
-        !!dapp.options[:force_save_cache]
+        if ENV.key? "DAPP_FORCE_SAVE_CACHE"
+          %w(yes 1 true).include? ENV["DAPP_FORCE_SAVE_CACHE"].to_s
+        else
+          !!dapp.options[:force_save_cache]
+        end
       end
 
       def build_cache_version
