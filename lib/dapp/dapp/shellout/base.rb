@@ -19,7 +19,7 @@ module Dapp
           env = (env || {}).merge(param_env) if param_env
           kwargs[:env] = env if env
 
-          do_shellout = -> { ::Mixlib::ShellOut.new(*args, timeout: 3600, **kwargs).run_command }
+          do_shellout = -> { ::Mixlib::ShellOut.new(*args, timeout: 86400, **kwargs).run_command }
           if defined? ::Bundler
             ::Bundler.with_clean_env { do_shellout.call }
           else
