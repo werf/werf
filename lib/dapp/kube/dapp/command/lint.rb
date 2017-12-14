@@ -31,7 +31,9 @@ module Dapp
             kube_check_helm_chart!
 
             repo = option_repo
-            docker_tag = consistent_uniq_slugify(options[:docker_tag])
+
+            docker_tag = options[:docker_tag]
+            docker_tag = consistent_uniq_slugify(docker_tag) if docker_tag
 
             with_kube_tmp_lint_chart_dir do
               kube_copy_chart
