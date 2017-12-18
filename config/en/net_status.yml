@@ -113,6 +113,7 @@ en:
       page_not_found: "Registry `%{registry}`: page `%{url}` not found!"
       method_not_allowed: "Registry `%{registry}`: method `%{method}` not allowed (`%{url}`)!"
       user_not_authorized: 'Registry `%{registry}`: user not authorized!'
+      registry_not_available: 'Registry `%{registry}`: not available!'
     rugged:
       git_repository_reference_error: "Git repo `%{name}`: %{message}!"
       rugged_remote_error: "Remote git repo `%{url}`: `%{message}`!"
