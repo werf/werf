@@ -84,6 +84,10 @@ module Dapp
         end
 
         def log_time
+          self.class.log_time
+        end
+
+        def self.log_time
           "#{DateTime.now.strftime('%Y-%m-%dT%T%z')} "
         end
 
@@ -114,12 +118,6 @@ module Dapp
             self.log_indent_size = 0
           else
             self.log_indent_size -= 1
-          end
-        end
-
-        class << self
-          def included(base)
-            base.extend(self)
           end
         end
 
