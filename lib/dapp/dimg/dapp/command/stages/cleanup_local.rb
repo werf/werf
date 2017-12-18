@@ -21,9 +21,7 @@ module Dapp
             def proper_cache
               log_proper_cache do
                 lock("#{name}.images") do
-                  log_step_with_indent(name) do
-                    remove_project_images(dapp_project_images_ids.select { |image_id| !actual_cache_project_images_ids.include?(image_id) })
-                  end
+                  remove_project_images(dapp_project_images_ids.select { |image_id| !actual_cache_project_images_ids.include?(image_id) })
                 end
               end
             end
@@ -38,15 +36,15 @@ module Dapp
             end
 
             def stages_cleanup_by_repo
-              registry   = dimg_registry(option_repo)
-              repo_dimgs = repo_dimgs_images(registry)
+              log_proper_repo_cache do
+                lock("#{name}.images") do
+                  registry   = dimg_registry(option_repo)
+                  repo_dimgs = repo_detailed_dimgs_images(registry)
 
-              lock("#{name}.images") do
-                log_step_with_indent(name) do
                   dapp_project_dangling_images_flush
 
-                  dimgs, dimgstages = dapp_project_images.partition { |image| repo_dimgs.any? { |dimg| dimg[:id] == image[:id] } }
-                  dimgs.each { |dimg_image| except_dapp_project_image_with_parents(dimg_image[:id], dimgstages) }
+                  _, dimgstages = dapp_project_images.partition { |image| repo_dimgs.any? { |dimg| dimg[:id] == image[:id] } }
+                  repo_dimgs.each { |repo_dimg| except_dapp_project_image_with_parents(repo_dimg[:parent], dimgstages) }
 
                   # Удаление только образов старше 2ч
                   dimgstages.delete_if do |dimgstage|

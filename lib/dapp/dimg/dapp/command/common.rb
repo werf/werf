@@ -95,10 +95,8 @@ module Dapp
 
           def check_user_containers!(images_ids)
             return if images_ids.empty?
-            log_step_with_indent(:'check user containers') do
-              run_command(%(#{host_docker} ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')} --no-trunc)).tap do |res|
-                raise Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if res && !res.stdout.strip.empty? && !dry_run?
-              end
+            run_command(%(#{host_docker} ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')} --no-trunc)).tap do |res|
+              raise Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if res && !res.stdout.strip.empty? && !dry_run?
             end
           end
 
@@ -148,6 +146,10 @@ module Dapp
 
           def log_proper_cache(&blk)
             log_step_with_indent(:'proper cache', &blk)
+          end
+
+          def log_proper_repo_cache(&blk)
+            log_step_with_indent(:'proper repo cache', &blk)
           end
 
           def one_dimg!
