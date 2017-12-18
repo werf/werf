@@ -108,7 +108,6 @@ en:
       builder_cookbook_not_found: "Dapp cookbook directory not found at %{path}"
       berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook `%{cookbook}`, path: `%{path}`)"
     registry:
-      no_such_dimg: 'Registry `%{registry}`: no such dimg in registry!'
       authenticate_type_not_supported: 'Registry `%{registry}`: authenticate type is not supported!'
       page_not_found: "Registry `%{registry}`: page `%{url}` not found!"
       method_not_allowed: "Registry `%{registry}`: method `%{method}` not allowed (`%{url}`)!"

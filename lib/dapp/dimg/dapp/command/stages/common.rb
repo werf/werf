@@ -8,35 +8,23 @@ module Dapp
 
             def repo_dimgs_images(registry)
               [].tap do |dimgs_images|
-                with_registry_wrapper do
-                  {}.tap do |dimgs_tags|
-                    dimgs_tags[nil] = registry.nameless_dimg_tags
-                    dimgs_names.each do |dimg_name|
-                      dimgs_tags[dimg_name] = registry.dimg_tags(dimg_name)
-                    end unless nameless_dimg?
-                  end.each do |dimg_name, tags|
-                    dimgs_images.concat(tags_to_repo_images(registry, tags, dimg_name))
-                  end
+                {}.tap do |dimgs_tags|
+                  dimgs_tags[nil] = registry.nameless_dimg_tags
+                  dimgs_names.each do |dimg_name|
+                    dimgs_tags[dimg_name] = registry.dimg_tags(dimg_name)
+                  end unless nameless_dimg?
+                end.each do |dimg_name, tags|
+                  dimgs_images.concat(tags_to_repo_images(registry, tags, dimg_name))
                 end
               end
             end
 
             def repo_dimgstages_images(registry)
-              with_registry_wrapper do
-                tags_to_repo_images(registry, registry.dimgstages_tags)
-              end
+              tags_to_repo_images(registry, registry.dimgstages_tags)
             end
 
             def tags_to_repo_images(registry, tags, dimg_name = nil)
               tags.map { |tag| repo_image_format(registry, tag, dimg_name) }.compact
-            end
-
-            def with_registry_wrapper
-              yield
-            rescue Exception::Registry => e
-              raise unless e.net_status[:code] == :no_such_dimg
-              log_warning(desc: { code: :dimg_not_found_in_registry })
-              []
             end
 
             def repo_image_format(registry, tag, dimg_name = nil)
