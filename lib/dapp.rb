@@ -24,6 +24,7 @@ require 'openssl'
 require 'etc'
 require 'zlib'
 require 'slugify'
+require 'base64'
 
 require 'dapp/version'
 require 'dapp/core_ext/hash'

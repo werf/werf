@@ -83,26 +83,22 @@ BANNER
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        run_dapp_command(run_method, options: cli_options)
-      end
 
-      def before_dapp_run_command(dapp, &blk)
-        super(dapp) do
-          yield if block_given?
+        options = cli_options
+        options[:tag] = [*options.delete(:tag), *options.delete(:image_version)]
 
-          # Опция repo определяется в данном хуке, чтобы установить
-          # значение по умолчанию из объекта dapp: dapp.name
+        run_dapp_command(nil, options: options) do |dapp|
           repo = if not cli_arguments[0].nil?
             self.class.required_argument(self, 'repo')
           else
             dapp.name
           end
+
           dapp.options[:repo] = repo
 
-          dapp.options[:tag] = [*dapp.options.delete(:tag), *dapp.options.delete(:image_version)]
-        end # super
+          dapp.public_send(run_method)
+        end
       end
-
     end
   end
 end
