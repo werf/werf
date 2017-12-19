@@ -1,31 +1,21 @@
 module Dapp
   class Dapp
     module Lock
-      def lock_path(type)
-        case type
-        when :dapp
-          build_path.join('locks')
-        when :global
-          Pathname.new("/tmp/dapp.global.locks").tap do |p|
-            FileUtils.mkdir_p p.to_s
-          end
-        else
-          raise
-        end
+      def locks_dir
+        File.join(self.class.home_dir, "locks")
       end
 
-      def _lock(name, type)
+      def _lock(name)
         @_locks ||= {}
-        @_locks[type] ||= {}
-        @_locks[type][name] ||= ::Dapp::Dimg::Lock::File.new(lock_path(type), name)
+        @_locks[name] ||= ::Dapp::Dimg::Lock::File.new(locks_dir, name)
       end
 
-      def lock(name, *_args, default_timeout: 300, type: :dapp, **kwargs, &blk)
+      def lock(name, *_args, default_timeout: 300, **kwargs, &blk)
         if dry_run?
           yield if block_given?
         else
           timeout = options[:lock_timeout] || default_timeout
-          _lock(name, type).synchronize(
+          _lock(name).synchronize(
             timeout: timeout,
             on_wait: proc do |&do_wait|
               log_secondary_process(

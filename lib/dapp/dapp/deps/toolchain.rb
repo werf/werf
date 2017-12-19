@@ -12,7 +12,7 @@ module Dapp
           @toolchain_container ||= begin
             is_container_exist = proc {shellout("#{host_docker} inspect #{toolchain_container_name}").exitstatus.zero?}
             if !is_container_exist.call
-              lock("dappdeps.container.#{toolchain_container_name}", default_timeout: 300, type: :global) do
+              lock("dappdeps.container.#{toolchain_container_name}", default_timeout: 300) do
                 if !is_container_exist.call
                   log_secondary_process(t(code: 'process.toolchain_container_creating', data: {name: toolchain_container_name}), short: true) do
                     shellout!(

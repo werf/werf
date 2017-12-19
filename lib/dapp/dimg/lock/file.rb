@@ -10,18 +10,18 @@ module Dapp
           end
         end # << self
 
-        attr_reader :lock_path
+        attr_reader :locks_path
 
-        def initialize(lock_path, name)
+        def initialize(locks_path, name)
           super(name)
 
-          @lock_path = Pathname.new(lock_path).tap(&:mkpath)
+          @locks_path = Pathname.new(locks_path).tap(&:mkpath)
         end
 
         protected
 
         def lock_file_path
-          lock_path.join(MurmurHash3::V32.str_hexdigest(name))
+          locks_path.join(MurmurHash3::V32.str_hexdigest(name))
         end
 
         def _do_lock(timeout, on_wait, readonly)

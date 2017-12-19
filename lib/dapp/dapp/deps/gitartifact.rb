@@ -12,7 +12,7 @@ module Dapp
           @gitartifact_container ||= begin
             is_container_exist = proc{shellout("#{host_docker} inspect #{gitartifact_container_name}").exitstatus.zero?}
             if !is_container_exist.call
-              lock("dappdeps.container.#{gitartifact_container_name}", default_timeout: 120, type: :global) do
+              lock("dappdeps.container.#{gitartifact_container_name}", default_timeout: 120) do
                 if !is_container_exist.call
                   log_secondary_process(t(code: 'process.gitartifact_container_creating', data: {name: gitartifact_container_name}), short: true) do
                     shellout!(
