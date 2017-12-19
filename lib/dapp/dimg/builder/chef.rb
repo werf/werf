@@ -64,7 +64,7 @@ module Dapp
         @chefdk_container ||= begin
           is_container_exist = proc{dimg.dapp.shellout("#{dimg.dapp.host_docker} inspect #{chefdk_container_name}").exitstatus.zero?}
           if !is_container_exist.call
-            dimg.dapp.lock("dappdeps.container.#{chefdk_container_name}", default_timeout: 120, type: :global) do
+            dimg.dapp.lock("dappdeps.container.#{chefdk_container_name}", default_timeout: 120) do
               if !is_container_exist.call
                 dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.chefdk_container_creating', data: {name: chefdk_container_name}), short: true) do
                   dimg.dapp.shellout!(

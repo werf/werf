@@ -12,7 +12,7 @@ module Dapp
           @base_container ||= begin
             is_container_exist = proc{shellout("#{host_docker} inspect #{base_container_name}").exitstatus.zero?}
             if !is_container_exist.call
-              lock("dappdeps.container.#{base_container_name}", default_timeout: 120, type: :global) do
+              lock("dappdeps.container.#{base_container_name}", default_timeout: 120) do
                 if !is_container_exist.call
                   log_secondary_process(t(code: 'process.base_container_creating', data: {name: base_container_name}), short: true) do
                     shellout!(

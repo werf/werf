@@ -7,14 +7,6 @@ module Dapp
                description: 'Change to directory',
                on: :head
 
-        %w(run_dir build_dir deploy_dir).tap do |dirs|
-          dirs.each do |dir|
-            option dir.to_sym,
-                  long: "--#{dir.gsub("_", "-")} PATH",
-                  description: "Directory where reside: build cache, lock files for concurrent dapp operations (DIR/.dapp_build by default). Alias for #{(dirs - [dir]).map{|d| "--" + d.gsub("_", "-")}.join(", ")}."
-          end
-        end
-
         option :name,
                long: "--name NAME",
                description: "Use custom dapp name. Chaging default name will cause full cache rebuild. By default dapp name is the last element of remote.origin.url from project git, or it is the name of the directory where Dappfile resides."

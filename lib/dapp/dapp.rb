@@ -91,7 +91,8 @@ module Dapp
         if option_build_dir
           Pathname.new(option_build_dir)
         else
-          path('.dapp_build')
+          dir = File.join(self.class.home_dir, "builds", self.name)
+          Pathname.new(dir)
         end.expand_path.tap(&:mkpath)
       end
       make_path(@build_path, *path)
@@ -138,6 +139,10 @@ module Dapp
     end
 
     class << self
+      def home_dir
+        File.join(Dir.home, ".dapp")
+      end
+
       def options
         @options ||= {}
       end
