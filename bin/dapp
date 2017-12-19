@@ -18,6 +18,9 @@ begin
     end
   rescue ::SystemExit
     raise
+  rescue Errno::EPIPE => _e
+    $stderr.puts(Dapp::Dapp.paint_string('Broken pipe!', :warning))
+    exit 1
   rescue ::Exception => e
     "/tmp/dapp-stacktrace-#{SecureRandom.uuid}.out".tap do |filename|
       ::File.open(filename, 'w') do |dapp_stacktrace|
