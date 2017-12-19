@@ -1,8 +1,9 @@
 module Dapp
   module Helper
     module YAML
-      def yaml_load_file(file_path, hash: true)
-        yaml_load(File.read(file_path), hash: hash)
+      def yaml_load_file(file_path, hash: true, default: {})
+        return default if (context = File.read(file_path).strip).empty?
+        yaml_load(context, hash: hash)
       rescue ::Dapp::Error::Dapp => e
         raise ::Dapp::Error::Dapp, code: :yaml_file_incorrect, data: { file: file_path, message: e.net_status[:data][:message] }
       end
