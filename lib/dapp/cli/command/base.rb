@@ -64,12 +64,12 @@ module Dapp
           super()
         end
 
-        def run_dapp_command(run_method, options: {}, log_running_time: true)
+        def run_dapp_command(run_method, options: {}, log_running_time: true, try_host_docker_login: false)
           dapp = ::Dapp::Dapp.new(options: options)
 
           log_dapp_running_time(dapp, ignore: !log_running_time) do
             begin
-              before_dapp_run_command(dapp)
+              dapp.try_host_docker_login if try_host_docker_login
 
               if block_given?
                 yield dapp
@@ -95,11 +95,6 @@ module Dapp
 
         def run(_argv = ARGV)
           raise
-        end
-
-        def before_dapp_run_command(dapp, &blk)
-          yield if block_given?
-          dapp.try_host_docker_login
         end
 
         def cli_options(**kwargs)

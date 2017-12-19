@@ -127,16 +127,13 @@ module Dapp
     end
 
     def try_host_docker_login
-      return if options[:without_registry]
       return unless option_repo
 
       validate_repo_name!(option_repo)
 
-      login = proc {|u, p| shellout!("#{host_docker} login -u '#{u}' -p '#{p}' '#{option_repo}'")}
-      if options.key?(:registry_username) && options.key?(:registry_password)
-        login.call(options[:registry_username], options[:registry_password])
-      elsif ENV.key?('CI_JOB_TOKEN')
-        login.call('gitlab-ci-token', ENV['CI_JOB_TOKEN'])
+      if self.class.options_with_docker_credentials?
+        username, password = self.class.docker_credentials
+        shellout!("#{host_docker} login -u '#{username}' -p '#{password}' '#{option_repo}'")
       end
     end
 
@@ -180,6 +177,14 @@ module Dapp
 
       def options_with_docker_credentials?
         (options.key?(:registry_username) && options.key?(:registry_password)) || ENV.key?('CI_JOB_TOKEN')
+      end
+
+      def docker_credentials
+        if options.key?(:registry_username) && options.key?(:registry_password)
+          [options[:registry_username], options[:registry_password]]
+        elsif ENV.key?('CI_JOB_TOKEN')
+          ['gitlab-ci-token', ENV['CI_JOB_TOKEN']]
+        end
       end
 
       def host_docker_tmp_config_dir
