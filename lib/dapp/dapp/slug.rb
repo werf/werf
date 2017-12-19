@@ -3,7 +3,7 @@ module Dapp
     module Slug
       def consistent_uniq_slugify(s)
         if should_be_slugged?(s)
-          consistent_uniq_slug_reg =~ s.slugify.squeeze('--')
+          consistent_uniq_slug_reg =~ s.gsub("/", "-").slugify.squeeze('--')
           [].tap do |slug|
             slug << Regexp.last_match(1) unless Regexp.last_match(1).nil?
             slug << MurmurHash3::V32.str_hexdigest(s)
