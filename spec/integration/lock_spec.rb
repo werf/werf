@@ -11,7 +11,7 @@ describe Dapp::Dimg::Filelock do
 
     expect(dimg.tagged_images).to_not be_empty
     dimg.tagged_images.each do |image|
-      path = File.expand_path(File.join(dimg.dapp.build_path, 'locks', MurmurHash3::V32.str_hexdigest("#{dimg.dapp.name}.image.#{image.name}")))
+      path = File.expand_path(File.join(dimg.dapp.class.home_dir, 'locks', MurmurHash3::V32.str_hexdigest("#{dimg.dapp.name}.image.#{image.name}")))
       expect(File.exist?(path)).to be_truthy
     end
   end
