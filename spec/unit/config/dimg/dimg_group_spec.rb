@@ -170,7 +170,7 @@ describe Dapp::Dimg::Config::Directive::DimgGroup do
       dappfile_dimg_group do
         artifact do
           export do
-            to '/to_path2'
+            to '/to_path1'
           end
         end
 

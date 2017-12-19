@@ -39,11 +39,20 @@ module Dapp
           protected
 
           def before_dimg_eval(dimg)
-            pass_to(dimg)
+            before_eval_base(dimg)
           end
 
           def before_dimg_group_eval(dimg_group)
-            pass_to(dimg_group)
+            before_eval_base(dimg_group)
+          end
+
+          def before_eval_base(obj)
+            pass_to(obj)
+            pass_context_artifact_groups_to(obj)
+          end
+
+          def pass_context_artifact_groups_to(obj)
+            obj.instance_variable_set(:@_artifact_groups, [obj._artifact_groups, clone_variable(_context_artifact_groups)].flatten)
           end
 
           def check_dimg_directive_order(directive)

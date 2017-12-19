@@ -24,7 +24,7 @@ module Dapp
 
             def artifact(&blk)
               pass_to(ArtifactGroup.new(dapp: dapp), :clone_to_artifact).tap do |artifact_group|
-                _artifact_groups << directive_eval(artifact_group, &blk)
+                _context_artifact_groups << directive_eval(artifact_group, &blk)
               end
             end
 
@@ -73,8 +73,12 @@ module Dapp
               @_artifact_groups ||= []
             end
 
+            def _context_artifact_groups
+              @_context_artifact_groups ||= []
+            end
+
             def _artifact
-              _artifact_groups.map(&:_export).flatten
+              [_artifact_groups, _context_artifact_groups].flatten.map(&:_export).flatten
             end
 
             [:before, :after].each do |order|
