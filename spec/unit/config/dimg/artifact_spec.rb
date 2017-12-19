@@ -54,6 +54,64 @@ describe Dapp::Dimg::Config::Directive::Artifact do
 
       expect(dimg_config._before_setup_artifact.first._cwd).to eq '/a'
     end
+
+    context 'inheritance' do
+      def dappfile_dimg_group(&blk)
+        dappfile do
+          dimg_group do
+            instance_eval(&blk)
+          end
+        end
+      end
+
+      it 'independence' do
+        dappfile_dimg_group do
+          artifact do
+            export do
+              to '/to_path1'
+            end
+          end
+
+          artifact do
+            export do
+              to '/to_path2'
+            end
+          end
+
+          dimg 'name'
+        end
+
+        expect(dimg_config._artifact.size).to eq 2
+        dimg_config._artifact.each do |artifact|
+          expect(artifact._config._artifact.size).to eq 0
+        end
+      end
+
+      it 'dimg group' do
+        dappfile_dimg_group do
+          artifact do
+            export do
+              to '/to_path1'
+            end
+          end
+
+          dimg_group do
+            artifact do
+              export do
+                to '/to_path2'
+              end
+            end
+
+            dimg 'name'
+          end
+        end
+
+        expect(dimg_config._artifact.size).to eq 2
+        first_artifact, second_artifact = dimg_config._artifact
+        expect(first_artifact._config._artifact.size).to eq 0
+        expect(second_artifact._config._artifact.size).to eq 1
+      end
+    end
   end
 
   context 'negative' do
