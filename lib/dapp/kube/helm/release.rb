@@ -124,6 +124,9 @@ module Dapp
       def set_options(without_registry: false)
         [].tap do |options|
           options.concat(set.map { |opt| "--set #{opt}" })
+
+          options << "--set global.dapp.name=#{dapp.name}"
+          options << "--set global.dapp.branch=#{dapp.name}"
           options << "--set global.dapp.repo=#{repo}"
           options << "--set global.dapp.docker_tag=#{docker_tag}"
 
@@ -145,16 +148,35 @@ module Dapp
             end
           end
 
-          is_branch = if ENV["CI_COMMIT_TAG"]
-            false
+          dapp_git_values = {}
+          if ENV["CI_COMMIT_TAG"]
+            dapp_git_values[:tag] = ENV["CI_COMMIT_TAG"]
+            dapp_git_values[:is_tag] = true
           elsif ENV["CI_COMMIT_REF_NAME"]
-            true
+            dapp_git_values[:branch] = ENV["CI_COMMIT_REF_NAME"]
+            dapp_git_values[:is_branch] = true
           elsif dapp.git_path and dapp.git_local_repo.branch != "HEAD"
-            true
-          else
-            false
+            dapp_git_values[:branch] = dapp.git_local_repo.branch
+            dapp_git_values[:is_branch] = true
+          elsif dapp.git_path
+            tagref = git.references.find do |r|
+              r.name.start_with?("refs/tags/") &&
+                r.target.target_id == git.head.target_id
+            end
+            if tagref
+              dapp_git_values[:tag] = tagref.name.partition("refs/tags/").last
+              dapp_git_values[:is_tag] = true
+            end
           end
-          options << "--set global.dapp.is_branch=#{is_branch}"
+
+          options << "--set global.dapp.is_branch=#{!!dapp_git_values[:is_branch]}"
+          options << "--set global.dapp.is_tag=#{!!dapp_git_values[:is_tag]}"
+          if dapp_git_values[:is_branch]
+            options << "--set global.dapp.branch=#{dapp_git_values[:branch]}"
+          end
+          if dapp_git_values[:is_tag]
+            options << "--set global.dapp.tag=#{dapp_git_values[:tag]}"
+          end
 
           options << "--set global.namespace=#{namespace}"
         end
