@@ -11,8 +11,10 @@ module Dapp
             expected_hostname_url = [protocol, expected_hostname].join('://')
             return Dimg.new(repo, expected_hostname_url, expected_repo_suffix) if hostname_exist?(expected_hostname_url)
           end
+          raise Error::Registry, code: :registry_not_available, data: { registry: repo }
+        else
+          Default.new(repo, expected_repo_suffix)
         end
-        Default.new(repo, File.join(*[expected_hostname, expected_repo_suffix].compact))
       end
 
       def self.repo_name_format

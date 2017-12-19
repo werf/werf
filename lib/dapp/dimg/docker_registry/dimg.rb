@@ -8,13 +8,17 @@ module Dapp
 
         def dimg_tags(dimg_name)
           with_repo_suffix(dimg_name.to_s) { tags }
-        rescue Exception::Registry => e
-          raise unless e.net_status[:code] == :no_such_dimg
-          []
         end
 
         def nameless_dimg_tags
           tags.select { |tag| !tag.start_with?('dimgstage') }
+        end
+
+        def tags
+          super
+        rescue Error::Registry => e
+          raise unless e.net_status[:code] == :page_not_found
+          []
         end
 
         def image_id(tag, extra_repo_suffix = nil)
