@@ -157,17 +157,17 @@ module Dapp
                           waiting_reason = container_status.fetch('state', {}).fetch('waiting', {}).fetch('reason', nil)
                           case waiting_reason
                           when 'ImagePullBackOff', 'ErrImagePull'
-                            raise Error::Default,
-                                  code: :image_not_found,
-                                  data: { pod_name: pod.name,
-                                          reason: waiting_reason,
-                                          message: container_status['state']['waiting']['message'] }
+                            raise Kubernetes::Error::Base,
+                              code: :image_not_found,
+                              data: {pod_name: pod.name,
+                                     reason: waiting_reason,
+                                     message: container_status['state']['waiting']['message']}
                           when 'CrashLoopBackOff'
-                            raise Error::Default,
-                                  code: :container_crash,
-                                  data: { pod_name: pod.name,
-                                          reason: waiting_reason,
-                                          message: container_status['state']['waiting']['message'] }
+                            raise Kubernetes::Error::Base,
+                              code: :container_crash,
+                              data: {pod_name: pod.name,
+                                     reason: waiting_reason,
+                                     message: container_status['state']['waiting']['message']}
                           end
                         end
                       else

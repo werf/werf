@@ -177,7 +177,7 @@ module Dapp
             Excon.new(kube_cluster_config['cluster']['server'], **kube_server_options(excon_parameters)).tap(&:get)
           rescue Excon::Error::Socket => err
             raise Error::ConnectionRefused,
-                  code: :kube_server_connection_refused,
+                  code: :server_connection_refused,
                   data: { kube_cluster_config: kube_cluster_config, kube_user_config: kube_user_config, error: err.message }
           end
 
@@ -217,7 +217,7 @@ module Dapp
         def kube_user_config
           @kube_user_config ||= begin
             kube_user_config = self.class.kube_user_config(kube_config, kube_context_config['context']['user'])
-            raise Error::BadConfig, code: :kube_user_not_found, data: {context: kube_context_config} if kube_user_config.nil?
+            raise Error::BadConfig, code: :user_config_not_found, data: {config_path: self.class.kube_config_path, context: kube_context_config, user: kube_context_config['context']['user']} if kube_user_config.nil?
             kube_user_config
           end
         end
@@ -225,7 +225,7 @@ module Dapp
         def kube_cluster_config
           @kube_cluster_config ||= begin
             kube_cluster_config = self.class.kube_cluster_config(kube_config, kube_context_config['context']['cluster'])
-            raise Error::BadConfig, code: :kube_cluster_not_found, data: {context: kube_context_config} if kube_cluster_config.nil?
+            raise Error::BadConfig, code: :cluster_config_not_found, data: {config_path: self.class.kube_config_path, context: kube_context_config, cluster: kube_context_config['context']['cluster']} if kube_cluster_config.nil?
             kube_cluster_config
           end
         end
@@ -234,7 +234,7 @@ module Dapp
           @kube_context_config ||= begin
             context_name = self.class.kube_context_name(kube_config)
             kube_context_config = self.class.kube_context_config(kube_config, context_name)
-            raise Error::BadConfig, code: :kube_context_not_found, data: {context_name: context_name} if kube_context_config.nil?
+            raise Error::BadConfig, code: :config_context_not_found, data: {config_path: self.class.kube_config_path, config: kube_config, context_name: context_name} if kube_context_config.nil?
             kube_context_config
           end
         end
@@ -242,7 +242,7 @@ module Dapp
         def kube_config
           @kube_config ||= begin
             kube_config = self.class.kube_config(self.class.kube_config_path)
-            raise Error::Default, code: :kube_config_not_found, data: { path: self.class.kube_config_path } if kube_config.nil?
+            raise Error::BadConfig, code: :config_not_found, data: { config_path: self.class.kube_config_path } if kube_config.nil?
             kube_config
           end
         end
