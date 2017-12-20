@@ -56,7 +56,7 @@ module Dapp
           def kube_secret_editor
             return ENV['EDITOR'] unless ENV['EDITOR'].nil?
             %w(vim vi nano).each { |editor| return editor unless shellout("which #{editor}").exitstatus.nonzero? }
-            raise Error::Command, code: :editor_not_found
+            raise ::Dapp::Error::Command, code: :editor_not_found
           end
 
           private

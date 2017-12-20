@@ -3,12 +3,6 @@ module Dapp
     module Dapp
       module Command
         module MinikubeSetup
-          class MinikubeSetupError < Error::Command
-            def initialize(**net_status)
-              super(**net_status, context: :minikube_setup)
-            end
-          end
-
           def kube_minikube_setup
             _minikube_restart_minikube
 
@@ -34,7 +28,7 @@ module Dapp
 
           def _minikube_restart_minikube
             log_process("Restart minikube") do
-              raise MinikubeSetupError, code: :minikube_not_found if shellout('which minikube').exitstatus == 1
+              raise ::Dapp::Error::Command, code: :minikube_not_found if shellout('which minikube').exitstatus == 1
 
               Process.fork do
                 _minikube_set_original_sudo_caller_process_user!
@@ -50,7 +44,7 @@ module Dapp
               end
 
               _, status = Process.wait2
-              raise MinikubeSetupError, code: :cannot_restart_minikube unless status.success?
+              raise ::Dapp::Error::Command, code: :cannot_restart_minikube unless status.success?
             end
           end
 
@@ -97,7 +91,7 @@ module Dapp
             rescue Errno::ESRCH
               daemon_ok = false
             end
-            raise MinikubeSetupError, code: :"#{name}_daemon_failed" unless daemon_ok
+            raise ::Dapp::Error::Command, code: :"#{name}_daemon_failed" unless daemon_ok
           end
 
           def _minikube_run_minikube_persisted_storage_daemon
@@ -127,7 +121,7 @@ module Dapp
                 sleep 1
               end
 
-              raise MinikubeSetupError, code: :minikube_readiness_timeout
+              raise ::Dapp::Error::Command, code: :minikube_readiness_timeout
             end
           end
 
@@ -145,7 +139,7 @@ module Dapp
                     end
                     sleep 1
                   end
-                  raise MinikubeSetupError, code: :registry_replicationcontroller_shutdown_failed unless shutdown_ok
+                  raise ::Dapp::Error::Command, code: :registry_replicationcontroller_shutdown_failed unless shutdown_ok
                 end
 
                 _minikube_kubernetes.delete_pods! labelSelector: 'k8s-app=kube-registry'
@@ -157,7 +151,7 @@ module Dapp
                   end
                   sleep 1
                 end
-                raise MinikubeSetupError, code: :registry_pod_shutdown_failed unless shutdown_ok
+                raise ::Dapp::Error::Command, code: :registry_pod_shutdown_failed unless shutdown_ok
 
                 if _minikube_kubernetes.service? _minikube_registry_service_spec['metadata']['name']
                   _minikube_kubernetes.delete_service! _minikube_registry_service_spec['metadata']['name']
@@ -170,7 +164,7 @@ module Dapp
                     end
                     sleep 1
                   end
-                  raise MinikubeSetupError, code: :registry_service_shutdown_failed unless shutdown_ok
+                  raise ::Dapp::Error::Command, code: :registry_service_shutdown_failed unless shutdown_ok
                 end
 
                 if _minikube_kubernetes.pod? _minikube_registry_proxy_pod_spec['metadata']['name']
@@ -184,7 +178,7 @@ module Dapp
                     end
                     sleep 1
                   end
-                  raise MinikubeSetupError, code: :registry_proxy_pod_shutdown_failed unless shutdown_ok
+                  raise ::Dapp::Error::Command, code: :registry_proxy_pod_shutdown_failed unless shutdown_ok
                 end
 
                 _minikube_kubernetes.create_replicationcontroller!(_minikube_registry_replicationcontroller_spec)
@@ -199,7 +193,7 @@ module Dapp
                   end
                   sleep 1
                 end
-                raise MinikubeSetupError, code: :registry_pod_not_ok unless registry_pod_ok
+                raise ::Dapp::Error::Command, code: :registry_pod_not_ok unless registry_pod_ok
 
                 _minikube_kubernetes.create_service!(_minikube_registry_service_spec)
                 registry_service_ok = false
@@ -210,7 +204,7 @@ module Dapp
                   end
                   sleep 1
                 end
-                raise MinikubeSetupError, code: :registry_service_not_ok unless registry_service_ok
+                raise ::Dapp::Error::Command, code: :registry_service_not_ok unless registry_service_ok
 
                 _minikube_kubernetes.create_pod! _minikube_registry_proxy_pod_spec
                 registry_proxy_pod_ok = false
@@ -224,7 +218,7 @@ module Dapp
                   end
                   sleep 1
                 end
-                raise MinikubeSetupError, code: :registry_proxy_pod_not_ok unless registry_proxy_pod_ok
+                raise ::Dapp::Error::Command, code: :registry_proxy_pod_not_ok unless registry_proxy_pod_ok
               end
             end
           end
@@ -237,7 +231,7 @@ module Dapp
               rescue Errno::ECONNREFUSED
                 false
               end
-              raise MinikubeSetupError, code: :registry_port_in_use, data: {host: 'localhost', port: 5000} if registry_port_in_use
+              raise ::Dapp::Error::Command, code: :registry_port_in_use, data: {host: 'localhost', port: 5000} if registry_port_in_use
 
               _minikube_run_daemon(:registry_forwarder) do
                 STDIN.reopen '/dev/null'

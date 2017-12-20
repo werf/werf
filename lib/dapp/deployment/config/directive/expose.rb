@@ -57,7 +57,7 @@ module Dapp
 
             def define_number(number, code)
               number.to_i.tap do |n|
-                raise Error::Config, code: code, data: { number: number } unless (0..65536).cover?(n)
+                raise ::Dapp::Error::Config, code: code, data: { number: number } unless (0..65536).cover?(n)
               end
             end
           end

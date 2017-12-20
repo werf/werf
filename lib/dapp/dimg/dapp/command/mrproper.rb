@@ -6,7 +6,7 @@ module Dapp
           # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
           def mrproper
             log_step_with_indent(:mrproper) do
-              raise Error::Command, code: :mrproper_required_option if mrproper_command_without_any_option?
+              raise ::Dapp::Error::Command, code: :mrproper_required_option if mrproper_command_without_any_option?
 
               if proper_all?
                 proper_all

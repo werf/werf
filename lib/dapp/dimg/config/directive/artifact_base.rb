@@ -61,13 +61,13 @@ module Dapp
 
             def _cwd=(value)
               return if value.nil?
-              raise Error::Config, code: :export_cwd_absolute_path_required unless Pathname(value).absolute?
+              raise ::Dapp::Error::Config, code: :export_cwd_absolute_path_required unless Pathname(value).absolute?
               @_cwd = path_format(value)
             end
 
             def to(absolute_path)
               sub_directive_eval do
-                raise Error::Config, code: :export_to_absolute_path_required unless Pathname(absolute_path).absolute?
+                raise ::Dapp::Error::Config, code: :export_to_absolute_path_required unless Pathname(absolute_path).absolute?
                 @_to = path_format(absolute_path)
               end
             end
@@ -75,7 +75,7 @@ module Dapp
             def include_paths(*relative_paths)
               sub_directive_eval do
                 unless relative_paths.all? { |path| Pathname(path).relative? }
-                  raise Error::Config, code: :export_include_paths_relative_path_required
+                  raise ::Dapp::Error::Config, code: :export_include_paths_relative_path_required
                 end
                 _include_paths.concat(relative_paths.map(&method(:path_format)))
               end
@@ -84,7 +84,7 @@ module Dapp
             def exclude_paths(*relative_paths)
               sub_directive_eval do
                 unless relative_paths.all? { |path| Pathname(path).relative? }
-                  raise Error::Config, code: :export_exclude_paths_relative_path_required
+                  raise ::Dapp::Error::Config, code: :export_exclude_paths_relative_path_required
                 end
                 _exclude_paths.concat(relative_paths.map(&method(:path_format)))
               end
@@ -99,7 +99,7 @@ module Dapp
             end
 
             def validate!
-              raise Error::Config, code: :export_to_required if _to.nil?
+              raise ::Dapp::Error::Config, code: :export_to_required if _to.nil?
             end
           end
         end

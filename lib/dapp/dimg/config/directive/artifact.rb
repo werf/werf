@@ -48,12 +48,12 @@ module Dapp
               conflict_type = [:before, :after].find { |t| t != type }
               conflict_stage = public_send("_#{conflict_type}")
 
-              raise Error::Config, code: :stage_artifact_not_supported_associated_stage,
-                                   data: { stage: "#{type} #{stage.inspect}" } unless [:install, :setup].include? stage
+              raise ::Dapp::Error::Config, code: :stage_artifact_not_supported_associated_stage,
+                                           data: { stage: "#{type} #{stage.inspect}" } unless [:install, :setup].include? stage
 
-              raise Error::Config, code: :stage_artifact_double_associate,
-                                   data: { stage: "#{type} #{stage.inspect}",
-                                           conflict_stage: "#{conflict_type} #{conflict_stage.inspect}" } if conflict_stage
+              raise ::Dapp::Error::Config, code: :stage_artifact_double_associate,
+                                           data: { stage: "#{type} #{stage.inspect}",
+                                                   conflict_stage: "#{conflict_type} #{conflict_stage.inspect}" } if conflict_stage
 
               defined_stage = public_send("_#{type}")
               dapp.log_config_warning(

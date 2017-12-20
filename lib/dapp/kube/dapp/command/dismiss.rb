@@ -16,7 +16,7 @@ module Dapp
 
           def kube_check_helm_release!
             pr = shellout("helm list | grep #{kube_release_name}")
-            raise Error::Command, code: :helm_release_not_exist, data: { name: kube_release_name } if pr.status == 1 || pr.stdout.empty?
+            raise ::Dapp::Error::Command, code: :helm_release_not_exist, data: { name: kube_release_name } if pr.status == 1 || pr.stdout.empty?
           end
         end
       end
