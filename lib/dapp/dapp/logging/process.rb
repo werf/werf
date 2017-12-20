@@ -53,7 +53,7 @@ module Dapp
 
         def log_process_quiet(message, style: {}, status: {})
           yield
-        rescue Error::Base => e
+        rescue Error::Default => e
           info                  = paint_string(slice(message), style[:message])
           failed_message        = paint_string(rjust(status[:failed], info), style[:failed])
           before_error_messages = [log_indent + info + failed_message, e.net_status[:data][:before_error_messages]].flatten
@@ -81,7 +81,7 @@ module Dapp
           message = success_message
           start = Time.now
           with_log_indent { yield }
-        rescue Error::Base, SignalException, StandardError => _e
+        rescue Error::Default, SignalException, StandardError => _e
           message = failed_message
           raise
         ensure

@@ -1,7 +1,7 @@
 module Dapp
   module Deployment
     module Error
-      class Base < ::Dapp::Error::Base; end
+      class Default < ::Dapp::Error::Default; end
     end
   end
 end

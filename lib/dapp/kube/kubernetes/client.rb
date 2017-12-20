@@ -108,7 +108,7 @@ module Dapp
                    **{ follow: follow }.merge(query_parameters))
         rescue Excon::Error::Timeout
           raise Error::Timeout
-        rescue Error::Base => err
+        rescue Error::Default => err
           if err.net_status[:code] == :bad_request and err.net_status[:data][:response_body]
             msg = err.net_status[:data][:response_body]['message']
             if msg.end_with? 'ContainerCreating'
@@ -158,7 +158,7 @@ module Dapp
             err_data[:request_parameters] = request_parameters
 
             if response.status.to_s.start_with? '5'
-              raise Error::Base, code: :server_error, data: err_data
+              raise Error::Default, code: :server_error, data: err_data
             elsif response.status.to_s == '404'
               case err_data.fetch(:response_body, {}).fetch('details', {})['kind']
               when 'pods'
@@ -167,7 +167,7 @@ module Dapp
                 raise Error::NotFound, data: err_data
               end
             elsif not response.status.to_s.start_with? '2'
-              raise Error::Base, code: :bad_request, data: err_data
+              raise Error::Default, code: :bad_request, data: err_data
             end
           end
         end
@@ -177,8 +177,8 @@ module Dapp
             Excon.new(kube_cluster_config['cluster']['server'], **kube_server_options(excon_parameters)).tap(&:get)
           rescue Excon::Error::Socket => err
             raise Error::ConnectionRefused,
-              code: :kube_server_connection_refused,
-              data: { kube_cluster_config: kube_cluster_config, kube_user_config: kube_user_config, error: err.message }
+                  code: :kube_server_connection_refused,
+                  data: { kube_cluster_config: kube_cluster_config, kube_user_config: kube_user_config, error: err.message }
           end
 
           return yield connection
@@ -242,7 +242,7 @@ module Dapp
         def kube_config
           @kube_config ||= begin
             kube_config = self.class.kube_config(self.class.kube_config_path)
-            raise Error::Base, code: :kube_config_not_found, data: { path: self.class.kube_config_path } if kube_config.nil?
+            raise Error::Default, code: :kube_config_not_found, data: { path: self.class.kube_config_path } if kube_config.nil?
             kube_config
           end
         end
@@ -260,7 +260,7 @@ module Dapp
 
           def kube_context_name(kube_config)
             kube_config['current-context'] || begin
-              if context = kube_config.fetch('contexts', []).first
+              if (context = kube_config.fetch('contexts', []).first)
                 warn "[WARN] .kube/config current-context is not set, using context '#{context['name']}'"
                 context['name']
               end

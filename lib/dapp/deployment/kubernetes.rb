@@ -119,11 +119,11 @@ module Dapp
           err_data[:request_parameters] = request_parameters
 
           if response.status.to_s.start_with? '5'
-            raise Error::Base, code: :server_error, data: err_data
+            raise Error::Default, code: :server_error, data: err_data
           elsif response.status.to_s == '404'
             raise Error::NotFound, data: err_data
           else not response.status.to_s.start_with? '2'
-            raise Error::Base, code: :bad_request, data: err_data
+            raise Error::Default, code: :bad_request, data: err_data
           end
         end
       end
@@ -165,7 +165,7 @@ module Dapp
           if File.exist?((kube_config_path = File.join(ENV['HOME'], '.kube/config')))
             yaml_load_file(kube_config_path)
           else
-            raise Error::Base, code: :kube_config_not_found, data: { path: kube_config_path }
+            raise Error::Default, code: :kube_config_not_found, data: { path: kube_config_path }
           end
         end
       end

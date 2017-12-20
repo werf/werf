@@ -1,7 +1,7 @@
 module Dapp
   module Kube
     module Error
-      class Kubernetes < Base; end
+      class Kubernetes < Default; end
     end
   end
 end
