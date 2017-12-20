@@ -4,12 +4,18 @@ module Dapp
       class Base < Kubernetes::Error::Base
       end
 
-      class Default < Kubernetes::Error::Default
+      class Default < Base
+        include ::Dapp::Error::Mod::User
       end
 
-      class Timeout < Default; end
-      class ConnectionRefused < Default; end
-      class BadConfig < Default; end
+      class Timeout < Default
+      end
+
+      class ConnectionRefused < Default
+      end
+
+      class BadConfig < Default
+      end
 
       class NotFound < Base
         def initialize(**net_status)
