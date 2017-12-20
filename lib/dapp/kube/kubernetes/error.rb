@@ -7,10 +7,8 @@ module Dapp
         end
       end
 
-      class Default ::Dapp::Error::Default
-        def initialize(**net_status)
-          super(**net_status, context: :kubernetes)
-        end
+      class Default < Base
+        include ::Dapp::Error::Mod::User
       end
     end # Kubernetes::Error
   end # Kube

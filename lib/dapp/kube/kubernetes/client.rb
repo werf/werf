@@ -108,7 +108,7 @@ module Dapp
                    **{ follow: follow }.merge(query_parameters))
         rescue Excon::Error::Timeout
           raise Error::Timeout
-        rescue Error::Default => err
+        rescue Error::Base => err
           if err.net_status[:code] == :bad_request and err.net_status[:data][:response_body]
             msg = err.net_status[:data][:response_body]['message']
             if msg.end_with? 'ContainerCreating'
@@ -150,10 +150,9 @@ module Dapp
           else
             err_data = {}
             err_data[:response_http_status] = response.status
+            err_data[:response_raw_body] = response.body
             if response_body = (JSON.parse(response.body) rescue nil)
               err_data[:response_body] = response_body
-            else
-              err_data[:response_raw_body] = response.body
             end
             err_data[:request_parameters] = request_parameters
 
@@ -167,7 +166,7 @@ module Dapp
                 raise Error::NotFound, data: err_data
               end
             elsif not response.status.to_s.start_with? '2'
-              raise Error::Default, code: :bad_request, data: err_data
+              raise Error::Base, code: :bad_request, data: err_data
             end
           end
         end

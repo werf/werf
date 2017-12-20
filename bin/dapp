@@ -9,7 +9,7 @@ begin
   begin
     begin
       Dapp::CLI.new.run
-    rescue Dapp::Error::Default => e
+    rescue Dapp::Error::Base => e
       unless (message = Dapp::Helper::NetStatus.before_error_message(e)).empty?
         $stderr.puts(message)
       end
@@ -31,7 +31,7 @@ begin
 rescue Dapp::Error::Shellout => e
   $stderr.puts(Dapp::Helper::NetStatus.message(e))
   exit 1
-rescue Dapp::Error::Default, Dapp::Dapp::Logging::I18n::I18nError => e
+rescue Dapp::Error::Base, Dapp::Dapp::Logging::I18n::I18nError => e
   if e.respond_to?(:user?) && e.user?
     $stderr.puts(Dapp::Dapp.paint_string(Dapp::Helper::NetStatus.message(e), :warning))
     exit 1
