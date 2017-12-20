@@ -5,8 +5,8 @@ module Dapp
         module BuildContext
           module Import
             def build_context_import
-              raise Error::Command, code: :context_directory_not_found,
-                                    data: { path: build_context_path } unless build_context_path.exist?
+              raise ::Dapp::Error::Command, code: :context_directory_not_found,
+                                            data: { path: build_context_path } unless build_context_path.exist?
 
               log_process(:'import context') do
                 import_build_context_build_tar
@@ -53,8 +53,8 @@ module Dapp
 
             def store_current_build_dir
               return if build_path_empty?
-              raise Error::Command, code: :stored_build_dir_already_exist,
-                                    data: { path: "#{build_path}.old" } if File.exist?("#{build_path}.old")
+              raise ::Dapp::Error::Command, code: :stored_build_dir_already_exist,
+                                            data: { path: "#{build_path}.old" } if File.exist?("#{build_path}.old")
               FileUtils.mv(build_path, "#{build_path}.old")
             end
 

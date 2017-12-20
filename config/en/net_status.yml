@@ -6,9 +6,6 @@ en:
     dimg:
       dimg_not_built: "Dimg hasn't been built yet!"
       dimg_not_run: "Dimg run failed!"
-    kube:
-      deploy_timeout: "Deploy timeout!"
-      connect_timeout: "Connect timeout when connecting to kube API."
     dappfile:
       incorrect: "Dappfile with `%{error}`:\n%{message}"
     build:
@@ -45,6 +42,8 @@ en:
       incorrect_yaml_structure: "Incorrect YAML structure in `%{path}`!"
       editor_not_found: "Editor not found!"
       expected_only_one_tag: 'Expected only one tag (`%{tags}`)!'
+      kube_deploy_timeout: "Deploy timeout!"
+      kube_connect_timeout: "Connect timeout when connecting to kube API."
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       no_such_app: "No such app: `%{apps_patterns}`!"
