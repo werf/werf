@@ -2,7 +2,9 @@ module Dapp
   class Dapp
     module Logging
       module I18n
-        class I18nError < ::NetStatus::Exception; end
+        class I18nError < ::NetStatus::Exception
+          include ::Dapp::Error::Mod::User
+        end
 
         def self.initialize
           ::I18n.load_path << Dir[File.join(::Dapp.root, 'config', '**', '*')].select { |path| File.file?(path) }
