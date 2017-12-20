@@ -39,7 +39,7 @@ module Dapp
           api_request(repo_suffix, "/manifests/#{image_digest(tag)}",
                       method: :delete,
                       expects: [202, 404],
-                      headers: { Accept: 'Accept: application/vnd.docker.distribution.manifest.v2+json' })
+                      headers: { Accept: 'application/vnd.docker.distribution.manifest.v2+json' })
         end
 
         def image_history(tag)

@@ -8,7 +8,7 @@ module Dapp
           end
 
           def request(url, **options)
-            raw_request(url, options.in_depth_merge(authorization_options(url)))
+            raw_request(url, options.in_depth_merge(authorization_options(url, method: options[:method] || :get)))
           end
 
           def raw_request(url, **options)
