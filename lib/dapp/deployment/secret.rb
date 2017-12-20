@@ -77,7 +77,7 @@ module Dapp
         end
       end
 
-      class Error < ::Dapp::Deployment::Error::Base
+      class Error < ::Dapp::Deployment::Error::Default
         def initialize(**net_status)
           super(net_status.merge(context: :secret))
         end

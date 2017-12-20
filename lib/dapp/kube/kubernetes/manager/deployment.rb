@@ -131,7 +131,7 @@ module Dapp
                               }.compact
                           rescue Kubernetes::Client::Error::Pod::ContainerCreating, Kubernetes::Client::Error::Pod::PodInitializing
                             next
-                          rescue Kubernetes::Client::Error::Base => err
+                          rescue Kubernetes::Client::Error::Default => err
                             dapp.log_warning("#{dapp.log_time}Error while fetching pod's #{pod.name} logs: #{err.message}", stream: dapp.service_stream)
                             next
                           end
@@ -157,17 +157,17 @@ module Dapp
                           waiting_reason = container_status.fetch('state', {}).fetch('waiting', {}).fetch('reason', nil)
                           case waiting_reason
                           when 'ImagePullBackOff', 'ErrImagePull'
-                            raise Error::Base,
-                              code: :image_not_found,
-                              data: {pod_name: pod.name,
-                                     reason: waiting_reason,
-                                     message: container_status['state']['waiting']['message']}
+                            raise Error::Default,
+                                  code: :image_not_found,
+                                  data: { pod_name: pod.name,
+                                          reason: waiting_reason,
+                                          message: container_status['state']['waiting']['message'] }
                           when 'CrashLoopBackOff'
-                            raise Error::Base,
-                              code: :container_crash,
-                              data: {pod_name: pod.name,
-                                     reason: waiting_reason,
-                                     message: container_status['state']['waiting']['message']}
+                            raise Error::Default,
+                                  code: :container_crash,
+                                  data: { pod_name: pod.name,
+                                          reason: waiting_reason,
+                                          message: container_status['state']['waiting']['message'] }
                           end
                         end
                       else

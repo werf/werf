@@ -11,7 +11,7 @@ module Dapp
                 Dimg.new(config: config, dapp: self).build!
               end
             end
-          rescue ::Dapp::Error::Shellout, Error::Base
+          rescue ::Dapp::Error::Shellout, Error::Default
             build_context_export unless options[:build_context_directory].nil?
             raise
           end

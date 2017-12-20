@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     module Error
-      class TarWriter < Base; end
+      class TarWriter < Default; end
     end
   end
 end

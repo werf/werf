@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     module Error
-      class Rugged < Base; end
+      class Rugged < Default; end
     end
   end
 end

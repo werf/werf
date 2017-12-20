@@ -1,7 +1,7 @@
 module Dapp
   module Deployment
     module Error
-      class App < Base; end
+      class App < Default; end
     end
   end
 end

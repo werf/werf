@@ -41,7 +41,7 @@ module Dapp
               rescue Kubernetes::Client::Error::Pod::ContainerCreating, Kubernetes::Client::Error::Pod::PodInitializing
                 sleep 0.1
                 next
-              rescue Kubernetes::Client::Error::Base => err
+              rescue Kubernetes::Client::Error::Default => err
                 dapp.log_warning("#{dapp.log_time}Error while fetching pod's #{pod_manager.name} logs: #{err.message}", stream: dapp.service_stream)
                 break
               end

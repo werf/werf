@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     module Error
-      class Registry < Base; end
+      class Registry < Default; end
     end
   end
 end

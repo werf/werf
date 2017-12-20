@@ -140,7 +140,7 @@ module Dapp
             begin
               namespaces = client.namespace_list(excon_parameters: {:connect_timeout => 30})
             rescue Excon::Error::Timeout
-              raise ::Dapp::Error::Base, code: :kube_connect_timeout
+              raise ::Dapp::Error::Default, code: :kube_connect_timeout
             end
 
             # get images from containers from pods from all namespaces.

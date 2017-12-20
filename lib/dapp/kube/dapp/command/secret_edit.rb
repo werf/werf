@@ -43,7 +43,7 @@ module Dapp
 
                   IO.binwrite(file_path, "#{encoded_data}\n")
                   break
-                rescue ::Dapp::Error::Base => e
+                rescue ::Dapp::Error::Default => e
                   log_warning(Helper::NetStatus.message(e))
                   print 'Do you want to change file (Y/n)?'
                   response = $stdin.getch.tap { print "\n" }
