@@ -60,13 +60,9 @@ module Dapp
                 end
               end
 
-              all_values['global'] = {
-                'namespace' => kube_namespace,
-                'dapp' => {
-                  'repo' => repo,
-                  'docker_tag' => docker_tag
-                }
-              }
+              all_values['global'] ||= {}
+              all_values['global']['namespace'] = kube_namespace
+              all_values['global']['dapp'] = { 'repo' => repo, 'docker_tag' => docker_tag }
 
               kube_chart_path_for_helm.join("values.yaml").write YAML.dump(all_values)
 
