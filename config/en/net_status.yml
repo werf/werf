@@ -51,7 +51,7 @@ en:
       cannot_run_ssh_agent: "Can't run ssh-agent!"
       ssh_key_not_found: "Ssh key `%{path}` doesn't exist!"
       docker_not_found: "Docker not found!"
-      docker_version: "Required docker version (`%{version}`): `%{min_version}` <= VERSION <= `%{max_version}`!"
+      docker_version: "Required docker version (`%{version}`): VERSION must be newer than `%{min_version}`!"
       dapp_config_file_incorrect: "%{message}"
       yaml_file_incorrect: "Yaml file `%{file}`: `%{message}`"
       yaml_incorrect: "`%{message}`"

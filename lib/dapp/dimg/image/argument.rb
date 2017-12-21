@@ -65,7 +65,9 @@ module Dapp
         def prepare_instructions(options)
           options.map do |key, vals|
             case key
-            when :cmd, :entrypoint then [vals]
+            when :cmd, :entrypoint
+              vals = [''] if vals == []
+              [vals]
             when :env, :label then vals.map(&method(:options_to_args)).flatten
             else vals
             end.map { |val| %(#{key.to_s.upcase} #{val}) }
