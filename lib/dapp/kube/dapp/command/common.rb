@@ -102,19 +102,19 @@ module Dapp
 
 {{- define "_dimg" -}}
 {{-   $context := index . 0 -}}
-{{-   if eq (typeOf $context.Values.global.dapp.docker_image) "map[string]interface {}" -}}
+{{-   if not $context.Values.global.dapp.is_nameless_dimg -}}
 {{-     required "No dimg specified for template" nil -}}
 {{-   end -}}
-{{    $context.Values.global.dapp.docker_image }}
+{{    $context.Values.global.dapp.dimg.docker_image }}
 {{- end -}}
 
 {{- define "_dimg2" -}}
 {{-   $name := index . 0 -}}
 {{-   $context := index . 1 -}}
-{{-   if ne (typeOf $context.Values.global.dapp.docker_image) "map[string]interface {}" -}}
+{{-   if $context.Values.global.dapp.is_nameless_dimg -}}
 {{-     required (printf "No dimg should be specified for template, got `%s`" $name) nil -}}
 {{-   end -}}
-{{    required (printf "Unknown dimg `%s` specified for template" $name) (pluck $name $context.Values.global.dapp.docker_image | first) }}
+{{    index (required (printf "Unknown dimg `%s` specified for template" $name) (pluck $name $context.Values.global.dapp.dimg | first)) "docker_image" }}
 {{- end -}}
 
 {{- define "dimg" -}}
@@ -133,7 +133,7 @@ module Dapp
 
 {{- define "_dapp_container__imagePullPolicy" -}}
 {{-   $context := index . 0 -}}
-{{-   if $context.Values.global.dapp.is_branch -}}
+{{-   if $context.Values.global.dapp.ci.is_branch -}}
 imagePullPolicy: Always
 {{-   end -}}
 {{- end -}}
@@ -168,19 +168,19 @@ image: {{ tuple $name $context | include "_dimg2" }}
 
 {{- define "_dimg_id" -}}
 {{-   $context := index . 0 -}}
-{{-   if eq (typeOf $context.Values.global.dapp.docker_image_id) "map[string]interface {}" -}}
+{{-   if not $context.Values.global.dapp.is_nameless_dimg -}}
 {{-     required "No dimg specified for template" nil -}}
 {{-   end -}}
-{{    $context.Values.global.dapp.docker_image_id }}
+{{    $context.Values.global.dapp.dimg.docker_image_id }}
 {{- end -}}
 
 {{- define "_dimg_id2" -}}
 {{-   $name := index . 0 -}}
 {{-   $context := index . 1 -}}
-{{-   if ne (typeOf $context.Values.global.dapp.docker_image_id) "map[string]interface {}" -}}
+{{-   if $context.Values.global.dapp.is_nameless_dimg -}}
 {{-     required (printf "No dimg should be specified for template, got `%s`" $name) nil -}}
 {{-   end -}}
-{{    required (printf "Unknown dimg `%s` specified for template" $name) (pluck $name $context.Values.global.dapp.docker_image_id | first) }}
+{{    index (required (printf "Unknown dimg `%s` specified for template" $name) (pluck $name $context.Values.global.dapp.dimg | first)) "docker_image_id" }}
 {{- end -}}
 
 {{- define "dimg_id" -}}
@@ -199,7 +199,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
 
 {{- define "_dapp_container_env" -}}
 {{-   $context := index . 0 -}}
-{{-   if $context.Values.global.dapp.is_branch -}}
+{{-   if $context.Values.global.dapp.ci.is_branch -}}
 - name: DOCKER_IMAGE_ID
   value: {{ tuple $context | include "_dimg_id" }}
 {{-   end -}}
@@ -208,7 +208,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
 {{- define "_dapp_container_env2" -}}
 {{-   $name := index . 0 -}}
 {{-   $context := index . 1 -}}
-{{-   if $context.Values.global.dapp.is_branch -}}
+{{-   if $context.Values.global.dapp.ci.is_branch -}}
 - name: DOCKER_IMAGE_ID
   value: {{ tuple $name $context | include "_dimg_id2" }}
 {{-   end -}}

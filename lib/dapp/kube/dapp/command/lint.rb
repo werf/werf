@@ -32,8 +32,7 @@ module Dapp
 
             repo = option_repo
 
-            docker_tag = options[:docker_tag]
-            docker_tag = consistent_uniq_slugify(docker_tag) if docker_tag
+            docker_tag = option_tags.first
 
             with_kube_tmp_lint_chart_dir do
               kube_copy_chart
@@ -60,9 +59,8 @@ module Dapp
                 end
               end
 
-              all_values['global'] ||= {}
-              all_values['global']['namespace'] = kube_namespace
-              all_values['global']['dapp'] = { 'repo' => repo, 'docker_tag' => docker_tag }
+              service_values = Helm::Values.service_values_hash(self, repo, kube_namespace, docker_tag, fake: true)
+              all_values = all_values.in_depth_merge service_values
 
               kube_chart_path_for_helm.join("values.yaml").write YAML.dump(all_values)
 

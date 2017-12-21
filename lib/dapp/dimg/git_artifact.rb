@@ -6,12 +6,13 @@ module Dapp
 
       attr_reader :repo
       attr_reader :name
+      attr_reader :as
 
       # FIXME: переименовать cwd в from
 
       # rubocop:disable Metrics/ParameterLists
       def initialize(repo, to:, name: nil, branch: nil, commit: nil,
-                     cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil,
+                     cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil, as: nil,
                      stages_dependencies: {})
         @repo = repo
         @name = name
@@ -25,6 +26,7 @@ module Dapp
         @exclude_paths = exclude_paths
         @owner = owner
         @group = group
+        @as = as
 
         @stages_dependencies = stages_dependencies
       end

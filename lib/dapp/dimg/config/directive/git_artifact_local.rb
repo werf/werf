@@ -3,13 +3,29 @@ module Dapp
     module Config
       module Directive
         class GitArtifactLocal < ArtifactBase
+          attr_reader :_as
+
+          def as(value)
+            @_as = value
+          end
+
           def export(absolute_dir_path = '/', &blk)
             super
           end
           alias add export
           undef_method :export
 
+          def _export
+            super do |export|
+              export._as    = @_as
+
+              yield(export) if block_given?
+            end
+          end
+
           class Export < ArtifactBase::Export
+            attr_accessor :_as
+
             def stage_dependencies(&blk)
               @stage_dependencies ||= StageDependencies.new(&blk)
             end
@@ -19,7 +35,7 @@ module Dapp
             end
 
             def _artifact_options
-              super.merge(stages_dependencies: stage_dependencies.to_h)
+              super.merge(stages_dependencies: stage_dependencies.to_h, as: _as)
             end
 
             class StageDependencies < Directive::Base

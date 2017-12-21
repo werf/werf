@@ -23,7 +23,9 @@ module Dapp
               .reject { |job| ['0', 'false'].include? job.annotations["dapp/recreate"].to_s }
               .select { |job| kube_job_list.include? job.name }
               .each do |job|
-                log_process("Delete hooks job `#{job.name}` for release #{release.name}", short: true) { kube_delete_job!(job.name) }
+                log_process("Delete hooks job `#{job.name}` for release #{release.name}", short: true) do
+                  kube_delete_job!(job.name) unless dry_run?
+                end
               end
           end
 
@@ -66,8 +68,11 @@ module Dapp
                 watch_hooks_by_type['pre-install'].to_a + watch_hooks_by_type['post-install'].to_a
               end
 
-              watch_hooks_thr = Thread.new do
-                watch_hooks.each {|job| Kubernetes::Manager::Job.new(self, job.name).watch_till_done!}
+              watch_hooks_thr = nil
+              unless dry_run?
+                watch_hooks_thr = Thread.new do
+                  watch_hooks.each {|job| Kubernetes::Manager::Job.new(self, job.name).watch_till_done!}
+                end
               end
 
               deployment_managers = release.deployments.values
@@ -79,14 +84,16 @@ module Dapp
 
               deployment_managers.each(&:after_deploy)
 
-              watch_hooks_thr.kill if watch_hooks_thr.alive?
+              watch_hooks_thr.kill if !dry_run? && watch_hooks_thr && watch_hooks_thr.alive?
 
-              begin
-                ::Timeout::timeout(self.options[:timeout] || 300) do
-                  deployment_managers.each {|deployment_manager| deployment_manager.watch_till_ready!}
+              unless dry_run?
+                begin
+                  ::Timeout::timeout(self.options[:timeout] || 300) do
+                    deployment_managers.each {|deployment_manager| deployment_manager.watch_till_ready!}
+                  end
+                rescue ::Timeout::Error
+                  raise ::Dapp::Error::Command, code: :kube_deploy_timeout
                 end
-              rescue ::Timeout::Error
-                raise ::Dapp::Error::Command, code: :kube_deploy_timeout
               end
             end
           end
