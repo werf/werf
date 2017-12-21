@@ -32,7 +32,7 @@ module Dapp
           def safe_cp(from, to, owner, group, include_paths = [], exclude_paths = [])
             ''.tap do |cmd|
               cmd << dimg.dapp.rsync_bin
-              cmd << ' --archive --links'
+              cmd << ' --archive --links --inplace'
               cmd << " --chown=#{owner}:#{group}" if owner or group
 
               if include_paths.any?

@@ -87,7 +87,7 @@ module Dapp
             "#{builder.dimg.dapp.mkdir_bin} -p ~/.ssh",
             'echo "Host *" >> ~/.ssh/config',
             'echo "    StrictHostKeyChecking no" >> ~/.ssh/config',
-            *local_paths.map {|path| "#{builder.dimg.dapp.rsync_bin} --archive --relative #{path} /tmp/local_cookbooks"},
+            *local_paths.map {|path| "#{builder.dimg.dapp.rsync_bin} --inplace --archive --relative #{path} /tmp/local_cookbooks"},
             "cd /tmp/local_cookbooks/#{path}",
             "cp #{tmp_berksfile_path} Berksfile",
             "cp #{tmp_metadata_path} metadata.rb",
