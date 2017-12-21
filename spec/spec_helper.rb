@@ -16,7 +16,6 @@ require 'spec_helper/common'
 require 'spec_helper/dimg'
 require 'spec_helper/git'
 require 'spec_helper/config'
-require 'unit/config/deployment/spec_helper'
 require 'unit/config/dimg/spec_helper'
 
 RSpec.configure do |config|
