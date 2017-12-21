@@ -11,5 +11,6 @@ plugins:
   rubocop:
     enabled: true
 exclude_patterns:
+- "lib/dapp/deployment/"
 - "spec/"
 - "docs/"
