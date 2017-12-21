@@ -16,7 +16,7 @@ module Dapp
 
             def import_build_context_image_tar
               if build_context_images_tar.exist?
-                log_secondary_process(:images, short: true) do
+                log_secondary_process(:images) do
                   lock("#{name}.images") do
                     Image::Docker.load!(build_context_images_tar, verbose: true, quiet: log_quiet?)
                   end unless dry_run?
@@ -29,22 +29,29 @@ module Dapp
             def import_build_context_build_tar
               if build_context_build_tar.exist?
                 log_secondary_process(:build_dir, short: true) do
-                  store_current_build_dir
+                  unless dry_run?
+                    store_current_build_dir
 
-                  tar_read(build_context_build_tar) do |tar|
-                    tar.each_entry do |entry|
-                      header = entry.header
-                      path = File.join(build_path, entry.full_name)
+                    if !!options[:use_system_tar]
+                      FileUtils.mkpath build_path
+                      shellout!("tar -xf #{build_context_build_tar} -C #{build_path}")
+                    else
+                      tar_read(build_context_build_tar) do |tar|
+                        tar.each_entry do |entry|
+                          header = entry.header
+                          path = File.join(build_path, entry.full_name)
 
-                      if entry.directory?
-                        FileUtils.mkpath path, :mode => entry.header.mode
-                      else
-                        FileUtils.mkpath File.dirname(path)
-                        File.write(path, entry.read)
-                        File.chmod(header.mode, path)
+                          if entry.directory?
+                            FileUtils.mkpath path, :mode => entry.header.mode
+                          else
+                            FileUtils.mkpath File.dirname(path)
+                            File.write(path, entry.read)
+                            File.chmod(header.mode, path)
+                          end
+                        end
                       end
                     end
-                  end unless dry_run?
+                  end
                 end
               else
                 log_warning(desc: { code: :context_archive_not_found, data: { path: build_context_build_tar } })
