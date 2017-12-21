@@ -130,7 +130,7 @@ en:
       config_not_found: "Kube config `%{config_path}` not found!"
       user_config_not_found: "User's `%{user}` config is not found in config %{config_path}"
       cluster_config_not_found: "Cluster's `%{cluster}` config is not found in config %{config_path}"
-      config_context_not_found: "Context `%{context}` is not found in config %{config_path}"
+      config_context_not_found: "Context `%{context_name}` is not found in config %{config_path}"
       server_connection_refused: "Kube server `%{url}` connection refused: %{error}"
       server_error: "Kube respond with server error code %{response_http_status}, request parameters: `%{request_parameters}`, response: `%{response_raw_body}`"
     secret:
