@@ -16,6 +16,11 @@ BANNER
                  long: '--build-context-directory DIR_PATH',
                  description: 'Path to the directory with context'
 
+          option :use_system_tar,
+                 long: '--use-system-tar',
+                 boolean: true,
+                 default: false
+
           def run_method
             :"build_context_#{class_to_lowercase}"
           end

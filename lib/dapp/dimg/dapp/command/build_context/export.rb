@@ -14,7 +14,7 @@ module Dapp
             def export_build_context_image_tar
               lock("#{name}.images", readonly: true) do
                 context_images_names = build_configs.map do |config|
-                  Dimg.new(config: config, dapp: self).tagged_images.map(&:name)
+                  Dimg.new(config: config, dapp: self, ignore_git_fetch: true).tagged_images.map(&:name)
                 end.flatten
 
                 log_secondary_process(:images, short: true) do
@@ -25,18 +25,22 @@ module Dapp
 
             def export_build_context_build_tar
               log_secondary_process(:build_dir, short: true) do
-                tar_write(build_context_build_tar) do |tar|
-                  Dir.glob(File.join(build_path, '**/*'), File::FNM_DOTMATCH).each do |path|
-                    archive_file_path = path
-                                          .reverse
-                                          .chomp(build_path.to_s.reverse)
-                                          .chomp('/')
-                                          .reverse
-                    if File.directory?(path)
-                      tar.mkdir archive_file_path, File.stat(path).mode
-                    else
-                      tar.add_file archive_file_path, File.stat(path).mode do |tf|
-                        tf.write File.read(path)
+                if !!options[:use_system_tar]
+                  shellout!("tar -C #{build_path} -cf #{build_context_build_tar} .")
+                else
+                  tar_write(build_context_build_tar) do |tar|
+                    Dir.glob(File.join(build_path, '**/*'), File::FNM_DOTMATCH).each do |path|
+                      archive_file_path = path
+                        .reverse
+                        .chomp(build_path.to_s.reverse)
+                        .chomp('/')
+                        .reverse
+                      if File.directory?(path)
+                        tar.mkdir archive_file_path, File.stat(path).mode
+                      else
+                        tar.add_file archive_file_path, File.stat(path).mode do |tf|
+                          tf.write File.read(path)
+                        end
                       end
                     end
                   end
