@@ -43,7 +43,7 @@ module Dapp
 
                   IO.binwrite(file_path, "#{encoded_data}\n")
                   break
-                rescue ::Dapp::Error::Base => e
+                rescue ::Dapp::Error::Default => e
                   log_warning(Helper::NetStatus.message(e))
                   print 'Do you want to change file (Y/n)?'
                   response = $stdin.getch.tap { print "\n" }
@@ -56,7 +56,7 @@ module Dapp
           def kube_secret_editor
             return ENV['EDITOR'] unless ENV['EDITOR'].nil?
             %w(vim vi nano).each { |editor| return editor unless shellout("which #{editor}").exitstatus.nonzero? }
-            raise Error::Command, code: :editor_not_found
+            raise ::Dapp::Error::Command, code: :editor_not_found
           end
 
           private

@@ -1,5 +1,5 @@
 module Dapp
   module Exception
-    class Base < Error::Base; end
+    class Base < Error::Default; end
   end
 end

@@ -142,7 +142,7 @@ module Dapp
 
             def builder(type)
               @_builder = type if _builder == :none
-              raise Error::Config, code: :builder_type_conflict unless @_builder == type
+              raise ::Dapp::Error::Config, code: :builder_type_conflict unless @_builder == type
             end
 
             def passed_directives

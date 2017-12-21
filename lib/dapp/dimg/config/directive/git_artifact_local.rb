@@ -15,7 +15,7 @@ module Dapp
             end
 
             def validate!
-              raise Error::Config, code: :add_to_required if _to.nil?
+              raise ::Dapp::Error::Config, code: :add_to_required if _to.nil?
             end
 
             def _artifact_options
@@ -29,7 +29,7 @@ module Dapp
                 define_method(stage) do |*glob|
                   sub_directive_eval do
                     if (globs = glob.flatten.map { |g| path_format(g) }).any? { |g| Pathname(g).absolute? }
-                      raise Error::Config, code: :stages_dependencies_paths_relative_path_required, data: { stage: stage }
+                      raise ::Dapp::Error::Config, code: :stages_dependencies_paths_relative_path_required, data: { stage: stage }
                     end
                     instance_variable_set(:"@#{stage}", public_send("_#{stage}") + globs)
                   end

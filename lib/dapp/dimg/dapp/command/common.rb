@@ -96,7 +96,7 @@ module Dapp
           def check_user_containers!(images_ids)
             return if images_ids.empty?
             run_command(%(#{host_docker} ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')} --no-trunc)).tap do |res|
-              raise Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if res && !res.stdout.strip.empty? && !dry_run?
+              raise ::Dapp::Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if res && !res.stdout.strip.empty? && !dry_run?
             end
           end
 
@@ -129,15 +129,15 @@ module Dapp
           end
 
           def validate_repo_name!(repo)
-            raise Error::Command, code: :repo_name_incorrect, data: { name: repo } unless ::Dapp::Dimg::DockerRegistry.repo_name?(repo)
+            raise ::Dapp::Error::Command, code: :repo_name_incorrect, data: { name: repo } unless ::Dapp::Dimg::DockerRegistry.repo_name?(repo)
           end
 
           def validate_image_name!(image)
-            raise Error::Command, code: :image_name_incorrect, data: { name: image } unless ::Dapp::Dimg::Image::Docker.image_name?(image)
+            raise ::Dapp::Error::Command, code: :image_name_incorrect, data: { name: image } unless ::Dapp::Dimg::Image::Docker.image_name?(image)
           end
 
           def validate_tag_name!(tag)
-            raise Error::Command, code: :tag_name_incorrect, data: { name: tag } unless ::Dapp::Dimg::Image::Docker.tag?(tag)
+            raise ::Dapp::Error::Command, code: :tag_name_incorrect, data: { name: tag } unless ::Dapp::Dimg::Image::Docker.tag?(tag)
           end
 
           def proper_cache_version?
@@ -154,7 +154,7 @@ module Dapp
 
           def one_dimg!
             return if build_configs.one?
-            raise Error::Command, code: :command_unexpected_dimgs_number, data: { dimgs_names: build_configs.map(&:_name).join(' ') }
+            raise ::Dapp::Error::Command, code: :command_unexpected_dimgs_number, data: { dimgs_names: build_configs.map(&:_name).join(' ') }
           end
 
           def push_format(dimg_name)

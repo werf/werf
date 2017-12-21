@@ -1,5 +1,5 @@
 module Dapp
   module Error
-    class Shellout < Base; end
+    class Shellout < Default; end
   end
 end

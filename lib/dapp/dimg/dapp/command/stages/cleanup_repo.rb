@@ -6,7 +6,7 @@ module Dapp
           module CleanupRepo
             def stages_cleanup_repo
               lock_repo(repo = option_repo) do
-                raise Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
+                raise ::Dapp::Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
                 registry        = dimg_registry(repo)
                 repo_dimgs      = repo_dimgs_images(registry)

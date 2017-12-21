@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     module Error
-      class Build < Base; end
+      class Build < Default; end
     end
   end
 end

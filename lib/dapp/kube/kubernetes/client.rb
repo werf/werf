@@ -150,15 +150,14 @@ module Dapp
           else
             err_data = {}
             err_data[:response_http_status] = response.status
+            err_data[:response_raw_body] = response.body
             if response_body = (JSON.parse(response.body) rescue nil)
               err_data[:response_body] = response_body
-            else
-              err_data[:response_raw_body] = response.body
             end
             err_data[:request_parameters] = request_parameters
 
             if response.status.to_s.start_with? '5'
-              raise Error::Base, code: :server_error, data: err_data
+              raise Error::Default, code: :server_error, data: err_data
             elsif response.status.to_s == '404'
               case err_data.fetch(:response_body, {}).fetch('details', {})['kind']
               when 'pods'
@@ -177,8 +176,8 @@ module Dapp
             Excon.new(kube_cluster_config['cluster']['server'], **kube_server_options(excon_parameters)).tap(&:get)
           rescue Excon::Error::Socket => err
             raise Error::ConnectionRefused,
-              code: :kube_server_connection_refused,
-              data: { kube_cluster_config: kube_cluster_config, kube_user_config: kube_user_config, error: err.message }
+                  code: :server_connection_refused,
+                  data: { kube_cluster_config: kube_cluster_config, kube_user_config: kube_user_config, error: err.message }
           end
 
           return yield connection
@@ -217,7 +216,7 @@ module Dapp
         def kube_user_config
           @kube_user_config ||= begin
             kube_user_config = self.class.kube_user_config(kube_config, kube_context_config['context']['user'])
-            raise Error::BadConfig, code: :kube_user_not_found, data: {context: kube_context_config} if kube_user_config.nil?
+            raise Error::BadConfig, code: :user_config_not_found, data: {config_path: self.class.kube_config_path, context: kube_context_config, user: kube_context_config['context']['user']} if kube_user_config.nil?
             kube_user_config
           end
         end
@@ -225,7 +224,7 @@ module Dapp
         def kube_cluster_config
           @kube_cluster_config ||= begin
             kube_cluster_config = self.class.kube_cluster_config(kube_config, kube_context_config['context']['cluster'])
-            raise Error::BadConfig, code: :kube_cluster_not_found, data: {context: kube_context_config} if kube_cluster_config.nil?
+            raise Error::BadConfig, code: :cluster_config_not_found, data: {config_path: self.class.kube_config_path, context: kube_context_config, cluster: kube_context_config['context']['cluster']} if kube_cluster_config.nil?
             kube_cluster_config
           end
         end
@@ -234,7 +233,7 @@ module Dapp
           @kube_context_config ||= begin
             context_name = self.class.kube_context_name(kube_config)
             kube_context_config = self.class.kube_context_config(kube_config, context_name)
-            raise Error::BadConfig, code: :kube_context_not_found, data: {context_name: context_name} if kube_context_config.nil?
+            raise Error::BadConfig, code: :config_context_not_found, data: {config_path: self.class.kube_config_path, config: kube_config, context_name: context_name} if kube_context_config.nil?
             kube_context_config
           end
         end
@@ -242,7 +241,7 @@ module Dapp
         def kube_config
           @kube_config ||= begin
             kube_config = self.class.kube_config(self.class.kube_config_path)
-            raise Error::Base, code: :kube_config_not_found, data: { path: self.class.kube_config_path } if kube_config.nil?
+            raise Error::BadConfig, code: :config_not_found, data: { config_path: self.class.kube_config_path } if kube_config.nil?
             kube_config
           end
         end
@@ -260,7 +259,7 @@ module Dapp
 
           def kube_context_name(kube_config)
             kube_config['current-context'] || begin
-              if context = kube_config.fetch('contexts', []).first
+              if (context = kube_config.fetch('contexts', []).first)
                 warn "[WARN] .kube/config current-context is not set, using context '#{context['name']}'"
                 context['name']
               end

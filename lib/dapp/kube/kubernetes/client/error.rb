@@ -1,10 +1,20 @@
 module Dapp
   module Kube
     module Kubernetes::Client::Error
-      class Base < ::Dapp::Kube::Error::Kubernetes
-        def initialize(**net_status)
-          super(**net_status, context: :kubernetes)
-        end
+      class Base < Kubernetes::Error::Base
+      end
+
+      class Default < Base
+        include ::Dapp::Error::Mod::User
+      end
+
+      class Timeout < Default
+      end
+
+      class ConnectionRefused < Default
+      end
+
+      class BadConfig < Default
       end
 
       class NotFound < Base
@@ -12,10 +22,6 @@ module Dapp
           super({code: :not_found}.merge(net_status))
         end
       end
-
-      class Timeout < Base; end
-      class ConnectionRefused < Base; end
-      class BadConfig < Base; end
 
       module Pod
         class NotFound < Kubernetes::Client::Error::NotFound ; end

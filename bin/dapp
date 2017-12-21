@@ -34,9 +34,13 @@ begin
 rescue Dapp::Error::Shellout => e
   $stderr.puts(Dapp::Helper::NetStatus.message(e))
   exit 1
-rescue Dapp::Error::Base, NetStatus::Exception => e
-  $stderr.puts(Dapp::Dapp.paint_string(Dapp::Helper::NetStatus.message(e), :warning))
-  exit 1
+rescue Dapp::Error::Base, Dapp::Dapp::Logging::I18n::I18nError => e
+  if e.respond_to?(:user?) && e.user?
+    $stderr.puts(Dapp::Dapp.paint_string(Dapp::Helper::NetStatus.message(e), :warning))
+    exit 1
+  else
+    raise
+  end
 rescue Interrupt => _e
   $stderr.puts(Dapp::Dapp.paint_string('Interrupted', :warning))
   exit 1

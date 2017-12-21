@@ -1,7 +1,7 @@
 module Dapp
   module Kube
     module Error
-      class Command < Base; end
+      class Default < ::Dapp::Error::Default; end
     end
   end
 end

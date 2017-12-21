@@ -18,7 +18,7 @@ module Dapp
                 validate_scratch_directives!
                 validate_scratch_artifacts!
               else
-                raise Error::Config, code: :stage_artifact_not_associated unless _import_artifact.empty?
+                raise ::Dapp::Error::Config, code: :stage_artifact_not_associated unless _import_artifact.empty?
               end
             end
 
@@ -31,7 +31,7 @@ module Dapp
               end
               _mount.map(&:_to).tap do |mounts_points|
                 mounts_points.each do |path|
-                  raise Error::Config, code: :mount_duplicate_to, data: { path: path } if mounts_points.count(path) > 1
+                  raise ::Dapp::Error::Config, code: :mount_duplicate_to, data: { path: path } if mounts_points.count(path) > 1
                 end
               end
             end
@@ -40,25 +40,23 @@ module Dapp
               directives = [[:_shell, :shell], [:_chef, :chef], [:_git_artifact, :git],
                             [:_tmp_dir_mount, :mount], [:_build_dir_mount, :mount], [:_custom_dir_mount, :mount]]
               directives.each do |name, user_name|
-                raise Error::Config,
-                      code: :scratch_unsupported_directive,
-                      data: { directive: user_name } unless public_send(name).empty?
+                raise ::Dapp::Error::Config, code: :scratch_unsupported_directive,
+                                             data: { directive: user_name } unless public_send(name).empty?
               end
 
               docker_directives = [:_expose, :_env, :_cmd, :_onbuild, :_workdir, :_user, :_entrypoint]
               docker_directives.each do |directive|
                 value = _docker.public_send(directive)
-                raise Error::Config,
-                      code: :scratch_unsupported_directive,
-                      data: { directive: "docker.#{directive}" } unless value.nil? || value.empty?
+                raise ::Dapp::Error::Config, code: :scratch_unsupported_directive,
+                                             data: { directive: "docker.#{directive}" } unless value.nil? || value.empty?
               end
             end
 
             def validate_scratch_artifacts!
-              raise Error::Config, code: :scratch_artifact_associated unless _associated_artifacts.empty?
-              raise Error::Config, code: :scratch_artifact_required if _import_artifact.empty?
+              raise ::Dapp::Error::Config, code: :scratch_artifact_associated unless _associated_artifacts.empty?
+              raise ::Dapp::Error::Config, code: :scratch_artifact_required if _import_artifact.empty?
               _import_artifact.each do |artifact|
-                raise Error::Config, code: :scratch_artifact_docker_from if artifact._config._docker._from.nil?
+                raise ::Dapp::Error::Config, code: :scratch_artifact_docker_from if artifact._config._docker._from.nil?
               end
             end
 
@@ -115,7 +113,7 @@ module Dapp
               verifiable_artifact[:include_paths].each do |verifiable_path|
                 potential_conflicts = artifact[:include_paths].select { |path| path.start_with?(verifiable_path) }
                 validate_artifact_path!(verifiable_artifact, potential_conflicts)
-              end.empty? && verifiable_artifact[:exclude_paths].empty? && raise(Error::Config, code: :artifact_conflict)
+              end.empty? && verifiable_artifact[:exclude_paths].empty? && raise(::Dapp::Error::Config, code: :artifact_conflict)
               validate_artifact_path!(verifiable_artifact, artifact[:include_paths]) if verifiable_artifact[:include_paths].empty?
             end
 
@@ -125,7 +123,7 @@ module Dapp
                   break if verifiable_artifact[:exclude_paths].include?(path) || ((path = File.dirname(path)) == '.')
                 end
                 verifiable_artifact[:exclude_paths].include?(path)
-              end.tap { |res| res || raise(Error::Config, code: :artifact_conflict) }
+              end.tap { |res| res || raise(::Dapp::Error::Config, code: :artifact_conflict) }
             end
 
             def _associated_artifacts

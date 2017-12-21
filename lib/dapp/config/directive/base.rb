@@ -23,7 +23,8 @@ module Dapp
         end
 
         def validate_compliance!(pattern, value, error_code)
-          raise Error::Config, code: error_code, data: { value: value, pattern: pattern } unless /^#{pattern}$/ =~ value
+          return if /^#{pattern}$/ =~ value
+          raise ::Dapp::Error::Config, code: error_code, data: { value: value, pattern: pattern }
         end
 
         def initialize_variables
