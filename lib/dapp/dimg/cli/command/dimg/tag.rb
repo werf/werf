@@ -8,7 +8,6 @@ Usage:
   dapp dimg tag [options] [DIMG] TAG
   
     DIMG                        Dapp image to process [default: *].
-    REPO                        Pushed image name.
 
 Options:
 BANNER
