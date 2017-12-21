@@ -1,5 +1,5 @@
 module Dapp
   module Error
-    class Dappfile < Default; end
+    class Command < Default; end
   end
 end

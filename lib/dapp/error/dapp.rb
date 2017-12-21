@@ -1,5 +1,5 @@
 module Dapp
   module Error
-    class Dapp < Base; end
+    class Dapp < Default; end
   end
 end

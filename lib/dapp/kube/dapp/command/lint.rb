@@ -8,7 +8,7 @@ module Dapp
             chart_spec = yaml_load_file(chart_yaml_path)
 
             if chart_spec["name"].nil? || chart_spec["name"].empty?
-              raise Error::Command, code: :bad_helm_chart_spec_name, data: { name: chart_spec["name"], path: chart_yaml_path, raw_spec: chart_yaml_path.read.strip }
+              raise ::Dapp::Error::Command, code: :no_helm_chart_spec_name, data: { name: chart_spec["name"], path: chart_yaml_path, raw_spec: chart_yaml_path.read.strip }
             end
 
             chart_spec["name"]

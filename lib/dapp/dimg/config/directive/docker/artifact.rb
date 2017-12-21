@@ -5,7 +5,7 @@ module Dapp
         module Docker
           class Artifact < Base
             def method_missing(m, *args)
-              raise Error::Config, code: :docker_artifact_unsupported_directive if Dimg.instance_methods.include?(m)
+              raise ::Dapp::Error::Config, code: :docker_artifact_unsupported_directive if Dimg.instance_methods.include?(m)
               super
             end
 

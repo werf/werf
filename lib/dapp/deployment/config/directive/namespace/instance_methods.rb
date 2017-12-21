@@ -17,7 +17,7 @@ module Dapp
             def scale(value)
               sub_directive_eval do
                 value.to_i.tap do |v|
-                  raise Error::Config, code: :unsupported_scale_value, data: { value: value } unless v > 0
+                  raise ::Dapp::Error::Config, code: :unsupported_scale_value, data: { value: value } unless v > 0
                   @_scale = v
                 end
               end

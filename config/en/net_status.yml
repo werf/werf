@@ -6,9 +6,6 @@ en:
     dimg:
       dimg_not_built: "Dimg hasn't been built yet!"
       dimg_not_run: "Dimg run failed!"
-    kube:
-      deploy_timeout: "Deploy timeout!"
-      connect_timeout: "Connect timeout when connecting to kube API."
     dappfile:
       incorrect: "Dappfile with `%{error}`:\n%{message}"
     build:
@@ -45,6 +42,8 @@ en:
       incorrect_yaml_structure: "Incorrect YAML structure in `%{path}`!"
       editor_not_found: "Editor not found!"
       expected_only_one_tag: 'Expected only one tag (`%{tags}`)!'
+      kube_deploy_timeout: "Deploy timeout!"
+      kube_connect_timeout: "Connect timeout when connecting to kube API."
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       no_such_app: "No such app: `%{apps_patterns}`!"
@@ -127,15 +126,13 @@ en:
     app:
       namespace_not_found: "App `%{name}`: namespace `%{namespace}` not found!"
       namespace_not_defined: "App `%{name}`: namespace not defined!"
-    deployment:
-      namespace_not_found: "Deployment `%{name}`: namespace `%{namespace}` not found!"
-      namespace_not_defined: "Deployment `%{name}`: namespace not defined!"
-      bootstrap_failed: "Bootstrap failed:\n  phase: `%{phase}`\n  message: `%{message}`"
-      bootstrap_command_failed: "Bootstrap failed:\n  reason: `%{reason}`\n  message: `%{message}`\n  exit_code: `%{exit_code}`"
-      bootstrap_image_not_found: "Bootstrap failed because `%{reason}`: `%{message}`"
     kubernetes:
-      kube_config_not_found: "Kube config `%{path}` not found!"
-      kube_server_connection_refused: "Kube server `%{url}` connection refused: %{error}"
+      config_not_found: "Kube config `%{config_path}` not found!"
+      user_config_not_found: "User's `%{user}` config is not found in config %{config_path}"
+      cluster_config_not_found: "Cluster's `%{cluster}` config is not found in config %{config_path}"
+      config_context_not_found: "Context `%{context_name}` is not found in config %{config_path}"
+      server_connection_refused: "Kube server `%{url}` connection refused: %{error}"
+      server_error: "Kube respond with server error code %{response_http_status}, request parameters: `%{request_parameters}`, response: `%{response_raw_body}`"
     secret:
       bad_data: "Data `%{data}` can't be decrypted: check encryption key and data!"
       key_length_too_short: "Encryption key isn't valid (required size %{required_size} bytes)!"

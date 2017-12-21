@@ -1,7 +1,7 @@
 module Dapp
   module Deployment
     module Error
-      class Config < ::Dapp::Config::Error::Config; end
+      class Default < ::Dapp::Error::Default; end
     end
   end
 end

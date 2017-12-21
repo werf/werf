@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     module Error
-      class Dimg < Base; end
+      class Dimg < Default; end
     end
   end
 end

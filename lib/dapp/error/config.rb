@@ -1,5 +1,5 @@
 module Dapp
   module Error
-    class Dappfile < Default; end
+    class Config < Default; end
   end
 end

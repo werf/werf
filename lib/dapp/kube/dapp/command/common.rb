@@ -14,8 +14,7 @@ module Dapp
 
             repo = option_repo
             tag = begin
-              raise Error::Command, code: :expected_only_one_tag,
-                                    data: { tags: option_tags.join(', ') } if option_tags.count > 1
+              raise ::Dapp::Error::Command, code: :expected_only_one_tag, data: { tags: option_tags.join(', ') } if option_tags.count > 1
               option_tags.first
             end
             validate_repo_name!(repo)
@@ -44,12 +43,12 @@ module Dapp
           end
 
           def kube_check_helm_chart!
-            raise Error::Command, code: :helm_directory_not_exist, data: { path: kube_chart_path } unless kube_chart_path.exist?
+            raise ::Dapp::Error::Command, code: :helm_directory_not_exist, data: { path: kube_chart_path } unless kube_chart_path.exist?
           end
 
           def kube_check_helm_template_plugin!
             unless shellout!("helm plugin list | awk '{print $1}'").stdout.lines.map(&:strip).any? { |plugin| plugin == 'template' }
-              raise Error::Command, code: :helm_template_plugin_not_installed, data: { path: kube_chart_path }
+              raise ::Dapp::Error::Command, code: :helm_template_plugin_not_installed, data: { path: kube_chart_path }
             end
           end
 
@@ -238,7 +237,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
 
           def kube_values_paths
             self.options[:helm_values_options].map { |p| Pathname(p).expand_path }.each do |f|
-              raise Error::Command, code: :values_file_not_found, data: { path: f } unless f.file?
+              raise ::Dapp::Error::Command, code: :values_file_not_found, data: { path: f } unless f.file?
             end
           end
 
@@ -260,7 +259,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
           end
 
           def kube_check_helm!
-            raise Error::Command, code: :helm_not_found if shellout('which helm').exitstatus == 1
+            raise ::Dapp::Error::Command, code: :helm_not_found if shellout('which helm').exitstatus == 1
           end
 
           def kube_release_name
@@ -284,15 +283,12 @@ image: {{ tuple $name $context | include "_dimg2" }}
           end
 
           def kube_secret_file_validate!(file_path)
-            raise Error::Command, code: :secret_file_not_found, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
-            raise Error::Command, code: :secret_file_empty, data: { path: File.expand_path(file_path) } if File.read(file_path).strip.empty?
+            raise ::Dapp::Error::Command, code: :secret_file_not_found, data: { path: File.expand_path(file_path) } unless File.exist?(file_path)
+            raise ::Dapp::Error::Command, code: :secret_file_empty, data: { path: File.expand_path(file_path) }     if File.read(file_path).strip.empty?
           end
 
           def secret_key_should_exist!
-            raise(Error::Command,
-              code: :secret_key_not_found,
-              data: {not_found_in: secret_key_not_found_in.join(', ')}
-            ) if secret.nil?
+            raise ::Dapp::Error::Command, code: :secret_key_not_found, data: { not_found_in: secret_key_not_found_in.join(', ') } if secret.nil?
           end
 
           def kube_chart_secret_path(*path)

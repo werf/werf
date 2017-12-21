@@ -6,7 +6,7 @@ module Dapp
           module CleanupLocal
             def stages_cleanup_local
               lock_repo(option_repo, readonly: true) do
-                raise Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
+                raise ::Dapp::Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
                 dapp_project_containers_flush
 

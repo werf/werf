@@ -8,7 +8,7 @@ module Dapp
           attr_reader :_type
 
           def initialize(to, **kwargs, &blk)
-            raise Error::Config, code: :mount_to_absolute_path_required unless Pathname((to = to.to_s)).absolute?
+            raise ::Dapp::Error::Config, code: :mount_to_absolute_path_required unless Pathname((to = to.to_s)).absolute?
             @_to = path_format(to)
 
             super(**kwargs, &blk)
@@ -17,7 +17,7 @@ module Dapp
           def from(type)
             sub_directive_eval do
               type = type.to_sym
-              raise Error::Config, code: :mount_from_type_required unless [:tmp_dir, :build_dir].include? type
+              raise ::Dapp::Error::Config, code: :mount_from_type_required unless [:tmp_dir, :build_dir].include? type
               @_type = type
             end
           end
@@ -30,7 +30,7 @@ module Dapp
           end
 
           def validate!
-            raise Error::Config, code: :mount_from_or_from_path_required if _type.nil?
+            raise ::Dapp::Error::Config, code: :mount_from_or_from_path_required if _type.nil?
           end
         end
       end

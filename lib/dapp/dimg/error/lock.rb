@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     module Error
-      class Lock < Base; end
+      class Lock < Default; end
     end
   end
 end
