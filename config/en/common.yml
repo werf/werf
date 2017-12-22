@@ -27,6 +27,7 @@ en:
     status:
       process:
         pushing: '[PUSHING]'
+        exporting: '[EXPORTING]'
         pulling: '[PULLING]'
         building: '[BUILDING]'
         default: '[RUNNING]'
@@ -42,6 +43,7 @@ en:
       rebuild: '[REBUILD]'
       build: '[BUILD]'
       push: '[PUSH]'
+      export: '[EXPORT]'
       pull: '[PULL]'
       tag: '[TAG]'
     warning:

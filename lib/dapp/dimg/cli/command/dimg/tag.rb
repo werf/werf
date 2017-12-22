@@ -5,18 +5,26 @@ module Dapp::Dimg::CLI
         banner <<BANNER.freeze
 Usage:
 
-  dapp dimg tag [options] [DIMG] TAG
+  dapp dimg tag [options] [DIMG ...] [REPO]
   
     DIMG                        Dapp image to process [default: *].
 
 Options:
 BANNER
+        extend ::Dapp::CLI::Command::Options::Tag
 
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          tag = self.class.required_argument(self, 'tag')
           run_dapp_command(nil, options: cli_options(dimgs_patterns: cli_arguments)) do |dapp|
-            dapp.public_send(run_method, tag)
+            repo = if not cli_arguments[0].nil?
+              self.class.required_argument(self, 'repo')
+            else
+              dapp.name
+            end
+
+            dapp.options[:repo] = repo
+
+            dapp.public_send(run_method)
           end
         end
       end
