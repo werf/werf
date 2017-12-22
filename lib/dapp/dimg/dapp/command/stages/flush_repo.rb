@@ -5,9 +5,9 @@ module Dapp
         module Stages
           module FlushRepo
             def stages_flush_repo
-              lock_repo(option_repo) do
-                log_step_with_indent(option_repo) do
-                  registry = dimg_registry(option_repo)
+              lock_repo(repo = option_repo) do
+                log_step_with_indent("#{repo} stages") do
+                  registry = dimg_registry(repo)
                   repo_dimgstages_images(registry).each { |repo_image| delete_repo_image(registry, repo_image) }
                 end
               end

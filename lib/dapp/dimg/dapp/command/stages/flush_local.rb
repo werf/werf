@@ -6,11 +6,7 @@ module Dapp
           module FlushLocal
             def stages_flush_local
               lock("#{name}.images") do
-                log_step_with_indent(:flush) do
-                  dapp_project_containers_flush
-                  dapp_project_dangling_images_flush
-                  remove_project_images(dapp_project_dimgstages_ids)
-                end
+                log_step_with_indent('flush stages') { remove_project_images(dapp_project_dimgstages) }
               end
             end
           end
