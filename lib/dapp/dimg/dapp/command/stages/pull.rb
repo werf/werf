@@ -5,19 +5,9 @@ module Dapp
         module Stages
           module Pull
             def stages_pull
-              repo = option_repo
-              validate_repo_name!(repo)
-              build_configs.each do |config|
-                log_dimg_name_with_indent(config) do
-                  Dimg.new(config: config, dapp: self, ignore_git_fetch: true).tap do |dimg|
-                    dimg.import_stages!(repo, format: '%{repo}:dimgstage-%{signature}')
-                  end
-                end
+              dimg_import_export_base(should_be_built: false) do |dimg|
+                dimg.import_stages!(option_repo, format: dimgstage_push_format)
               end
-            end
-
-            def pull_all_stages?
-              !!options[:pull_all_stages]
             end
           end
         end

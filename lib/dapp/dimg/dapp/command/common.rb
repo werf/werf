@@ -124,6 +124,18 @@ module Dapp
             shellout!(cmd) unless dry_run?
           end
 
+          def dimg_import_export_base(should_be_built: true)
+            repo = option_repo
+            validate_repo_name!(repo)
+            build_configs.each do |config|
+              log_dimg_name_with_indent(config) do
+                Dimg.new(config: config, dapp: self, ignore_git_fetch: true, should_be_built: should_be_built).tap do |dimg|
+                  yield dimg
+                end
+              end
+            end
+          end
+
           def container_name_prefix
             name
           end
@@ -162,6 +174,10 @@ module Dapp
 
           def spush_format
             '%{repo}:%{tag}'
+          end
+
+          def dimgstage_push_format
+            '%{repo}:dimgstage-%{signature}'
           end
 
           def with_stages?

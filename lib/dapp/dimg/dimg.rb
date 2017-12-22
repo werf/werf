@@ -107,7 +107,7 @@ module Dapp
               dapp.log_info ::Dapp::Helper::NetStatus.message(e)
               next
             end
-            break unless dapp.pull_all_stages?
+            break unless !!dapp.options[:pull_all_stages]
           end
         end
       end
