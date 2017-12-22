@@ -236,15 +236,8 @@ frontend
 ```
 
 ### dapp dimg tag
-Протегировать собранный dimg тегом **TAG**.
+Повторяет поведение и опции команды [dapp dimg push](#dapp-dimg-push), при этом, сохраняя dimg-ы локально. Если не указать *REPO*, будет использовано [имя проекта](definitions.html#имя-dapp).
 
 ```
-dapp dimg tag [options] [DIMG] TAG
-```
-
-#### Примеры
-
-##### Протегировать собранный dimg тегом test:111.
-```bash
-$ dapp dimg tag test:111
+dapp dimg tag [options] [DIMG...] [REPO]
 ```
