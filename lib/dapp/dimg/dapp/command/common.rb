@@ -152,11 +152,6 @@ module Dapp
             log_step_with_indent(:'proper repo cache', &blk)
           end
 
-          def one_dimg!
-            return if build_configs.one?
-            raise ::Dapp::Error::Command, code: :command_unexpected_dimgs_number, data: { dimgs_names: build_configs.map(&:_name).join(' ') }
-          end
-
           def push_format(dimg_name)
             if dimg_name.nil?
               spush_format
