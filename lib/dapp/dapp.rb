@@ -152,15 +152,12 @@ module Dapp
           raise Error::Dapp, code: :docker_not_found if (res = shellout('which docker')).exitstatus.nonzero?
           docker_bin = res.stdout.strip
 
-          current_docker_version = shellout!("#{docker_bin} --version").stdout.strip
-          required_min_docker_version = '1.10.0'
-          required_max_docker_version = '17.09.0'
+          current_docker_version = Gem::Version.new(shellout!("#{docker_bin} --version").stdout.strip[/(\d+\.)+\d+(?=\.\d+)/])
+          required_min_docker_version = Gem::Version.new('1.10')
 
-          if Gem::Version.new(required_min_docker_version) > Gem::Version.new(current_docker_version[/(\d+\.)+\d+/]) ||
-              Gem::Version.new(required_max_docker_version) < Gem::Version.new(current_docker_version[/(\d+\.)+\d+/])
-            raise Error::Dapp, code: :docker_version, data: { min_version: required_min_docker_version,
-                                                              max_version: required_max_docker_version,
-                                                              version: current_docker_version[/(\d+\.)+\d+/] }
+          if required_min_docker_version >= current_docker_version
+            raise Error::Dapp, code: :docker_version, data: { min_version: required_min_docker_version.to_s,
+                                                              version: current_docker_version.to_s }
           end
 
           [].tap do |cmd|
