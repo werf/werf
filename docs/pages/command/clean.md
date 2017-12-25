@@ -20,6 +20,16 @@ dapp dimg cleanup repo [options] [DIMG ...] REPO
 #### `--with-stages`
 Соответствует вызову команды `dapp dimg stages cleanup local` с опцией `--improper-repo-cache`.
 
+### dapp dimg flush local
+Удалить все теги [приложений](definitions.html#dimg) [проекта](definitions.html#проект) локально.
+
+```
+dapp dimg flush local [options] [DIMG ...]
+```
+
+#### `--with-stages`
+Соответствует вызову команды `dapp dimg stages flush local`.
+
 ### dapp dimg flush repo
 Удалить все теги [приложений](definitions.html#dimg) [проекта](definitions.html#проект).
 ```
