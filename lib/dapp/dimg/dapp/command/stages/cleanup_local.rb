@@ -8,8 +8,6 @@ module Dapp
               lock_repo(option_repo, readonly: true) do
                 raise ::Dapp::Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
-                dapp_project_containers_flush
-
                 proper_cache           if proper_cache_version?
                 stages_cleanup_by_repo if proper_repo_cache?
                 proper_git_commit      if proper_git_commit?
@@ -21,18 +19,13 @@ module Dapp
             def proper_cache
               log_proper_cache do
                 lock("#{name}.images") do
-                  remove_project_images(dapp_project_images_ids.select { |image_id| !actual_cache_project_images_ids.include?(image_id) })
+                  remove_project_images(dapp_project_dimgstages - actual_cache_project_dimgstages)
                 end
               end
             end
 
-            def actual_cache_project_images_ids
-              @actual_cache_project_images_ids ||= begin
-                shellout!(%(#{host_docker} images -f "label=dapp" -f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}" -q --no-trunc #{stage_cache}))
-                  .stdout
-                  .lines
-                  .map(&:strip)
-              end
+            def actual_cache_project_dimgstages
+              @actual_cache_project_images_ids ||= prepare_docker_images("-f \"label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}\" #{stage_cache}")
             end
 
             def stages_cleanup_by_repo
@@ -40,74 +33,76 @@ module Dapp
                 lock("#{name}.images") do
                   registry   = dimg_registry(option_repo)
                   repo_dimgs = repo_detailed_dimgs_images(registry)
+                  dimgstages = clone_dapp_project_dimgstages
 
-                  dapp_project_dangling_images_flush
-
-                  _, dimgstages = dapp_project_images.partition { |image| repo_dimgs.any? { |dimg| dimg[:id] == image[:id] } }
-                  repo_dimgs.each { |repo_dimg| except_dapp_project_image_with_parents(repo_dimg[:parent], dimgstages) }
+                  repo_dimgs.each { |repo_dimg| except_image_id_with_parents(repo_dimg[:parent], dimgstages) }
 
                   # Удаление только образов старше 2ч
                   dimgstages.delete_if do |dimgstage|
                     Time.now - dimgstage[:created_at] < 2*60*60
                   end
 
-                  remove_project_images(dimgstages.map { |dimgstage| dimgstage[:id]} )
+                  remove_project_images(dimgstages)
                 end
               end
             end
 
-            def except_dapp_project_image_with_parents(image_id, dimgstages)
-              if dapp_project_image_exist?(image_id)
-                dapp_project_image_artifacts_ids_in_labels(image_id).each { |aiid| except_dapp_project_image_with_parents(aiid, dimgstages) }
-                iid = image_id
-                loop do
-                  dimgstages.delete_if { |dimgstage| dimgstage[:id] == iid }
-                  break if (iid = dapp_project_image_parent_id(iid)).nil?
-                end
-              else
-                dimgstages.delete_if { |dimgstage| dimgstage[:id] == dimgstage }
+            def clone_dapp_project_dimgstages
+              Marshal.load(Marshal.dump(dapp_project_dimgstages))
+            end
+
+            def except_image_id_with_parents(image_id, dimgstages)
+              return unless (project_image = dapp_project_image_by_id(image_id))
+              except_dapp_project_image_with_parents(project_image, dimgstages)
+            end
+
+            def except_dapp_project_image_with_parents(image, dimgstages)
+              dapp_project_image_artifacts_ids_in_labels(image).each { |aiid| except_image_id_with_parents(aiid, dimgstages) }
+              i = image
+              loop do
+                dimgstages.delete_if { |dimgstage| dimgstage == i }
+                break if (i = dapp_project_image_parent(i)).nil?
               end
             end
 
-            def dapp_project_image_artifacts_ids_in_labels(image_id)
-              select_dapp_artifacts_ids(dapp_project_image_labels(image_id))
+            def dapp_project_image_artifacts_ids_in_labels(image)
+              select_dapp_artifacts_ids(dapp_project_image_labels(image))
             end
 
             def proper_git_commit
               log_proper_git_commit do
                 lock("#{name}.images") do
-                  dapp_project_dangling_images_flush
-
-                  unproper_images_ids = []
-                  dapp_project_images_ids.each do |image_id|
-                    dapp_project_image_labels(image_id).each do |repo_name, commit|
+                  unproper_images = []
+                  dapp_project_dimgstages.each do |dimgstage|
+                    dapp_project_image_labels(dimgstage).each do |repo_name, commit|
                       next if (repo = dapp_git_repositories[repo_name]).nil?
-                      unproper_images_ids.concat(dapp_project_image_hierarchy(image_id)) unless repo.commit_exists?(commit)
+                      unproper_images.concat(dapp_project_image_with_children(dimgstage)) unless repo.commit_exists?(commit)
                     end
                   end
-                  remove_project_images(unproper_images_ids)
+                  remove_project_images(unproper_images)
                 end
               end
             end
 
-            def dapp_project_image_hierarchy(image_id)
-              hierarchy = []
-              iids = [image_id]
+            def dapp_project_image_with_children(image)
+              children = []
+              images   = [image]
 
               loop do
-                hierarchy.concat(dapp_project_images_ids.select { |image_id| iids.include?(image_id) })
-                break if begin
-                  iids.map! do |iid|
-                    dapp_project_images_ids.select { |image_id| dapp_project_image_parent_id(image_id) == iid }
-                  end.flatten!.empty?
+                children.concat(dapp_project_images.select { |project_image| images.include?(project_image) })
+                images.map! do |parent_image|
+                  dapp_project_images
+                    .select { |project_image| dapp_project_image_parent(project_image) == parent_image }
                 end
+                images.flatten!
+                break if images.empty?
               end
 
-              hierarchy
+              children
             end
 
-            def dapp_project_image_parent_id(image_id)
-              dapp_project_image_inspect(image_id)['Parent']
+            def dapp_project_image_parent(image)
+              dapp_project_image_by_id(dapp_project_image_inspect(image)['Parent'])
             end
           end
         end

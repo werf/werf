@@ -20,6 +20,7 @@ module Dapp
         include Command::Stages::Pull
         include Command::Stages::Common
         include Command::CleanupRepo
+        include Command::FlushLocal
         include Command::FlushRepo
         include Command::Cleanup
         include Command::Mrproper

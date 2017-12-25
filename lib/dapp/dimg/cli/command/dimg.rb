@@ -1,7 +1,7 @@
 module Dapp::Dimg::CLI
   module Command
     class Dimg < ::Dapp::CLI
-      SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image', 'tag', 'build-context', 'cleanup repo', 'flush repo'].freeze
+      SUBCOMMANDS = ['build', 'push', 'spush', 'list', 'run', 'stages', 'cleanup', 'bp', 'mrproper', 'stage image', 'tag', 'build-context', 'cleanup repo', 'flush local', 'flush repo'].freeze
 
       banner <<BANNER.freeze
 Usage: dapp dimg [options] subcommand [subcommand options]
@@ -16,6 +16,7 @@ Available subcommands: (for details, dapp dimg SUB-COMMAND --help)
   dapp dimg list [options] [DIMG ...]
   dapp dimg run [options] [DIMG] [DOCKER ARGS]
   dapp dimg cleanup repo [options] [DIMG ...] REPO
+  dapp dimg flush local [options] [DIMG ...]
   dapp dimg flush repo [options] [DIMG ...] REPO
   dapp dimg cleanup [options]
   dapp dimg mrproper [options]

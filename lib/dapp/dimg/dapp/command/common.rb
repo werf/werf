@@ -5,74 +5,60 @@ module Dapp
         module Common
           protected
 
-          def dapp_project_image_labels(image_id)
-            dapp_project_image_inspect(image_id)['Config']['Labels']
+          def dapp_project_dimgstages
+            dapp_project_images.select { |image| image[:dimgstage] }
           end
 
-          def dapp_project_image_inspect(image_id_or_name)
-            return {} unless dapp_project_image_exist?(image_id_or_name)
+          def dapp_project_dimgs
+            dapp_project_images.select { |image| image[:dimg] }
+          end
 
-            dapp_project_images.find { |img| [img[:name], img[:id]].include?(image_id_or_name) }[:inspect] ||= begin
-              cmd = shellout!("#{::Dapp::Dapp.host_docker} inspect --type=image #{image_id_or_name}")
+          def dapp_project_image_by_id(image_id)
+            dapp_project_images.find { |image| image[:id] == image_id }
+          end
+
+          def dapp_project_image_labels(image)
+            dapp_project_image_inspect(image)['Config']['Labels']
+          end
+
+          def dapp_project_image_inspect(image)
+            image[:inspect] ||= begin
+              cmd = shellout!("#{::Dapp::Dapp.host_docker} inspect --type=image #{image[:id]}")
               Array(JSON.parse(cmd.stdout.strip)).first || {}
             end
           end
 
-          def dapp_project_image_exist?(image_id_or_name)
-            dapp_project_images.any? { |img| [img[:name], img[:id]].include?(image_id_or_name) }
-          end
-
-          def dapp_project_images_ids
-            dapp_project_images.map { |img| img[:id] }
-          end
-
-          def dapp_project_dangling_images
-            dapp_project_images.select { |img| project_dangling_image?(img) }
-          end
-
-          def project_dangling_image?(image)
-            image[:name] == '<none>:<none>'
-          end
-
           def dapp_project_images
             @dapp_project_images ||= [].tap do |images|
-              shellout!(%(#{host_docker} images --format="{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}" -f "label=dapp" --no-trunc #{stage_cache}))
-                  .stdout
-                  .lines
-                  .map(&:strip)
-                  .each do |l|
+              images.concat prepare_docker_images(stage_cache, dimgstage: true)
+              images.concat prepare_docker_images('-f label=dapp-dimg=true', dimg: true)
+            end
+          end
+
+          def prepare_docker_images(extra_args, **extra_fields)
+            [].tap do |images|
+              shellout!(%(#{host_docker} images --format="{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}" -f "dangling=false" -f "label=dapp=#{name}" --no-trunc #{extra_args}))
+                .stdout
+                .lines
+                .map(&:strip)
+                .each do |l|
                 id, name, created_at = l.split(';')
-                images << { id: id, name: name, created_at: Time.parse(created_at) }
+                images << { id: id, name: name, created_at: Time.parse(created_at), **extra_fields }
               end
             end
           end
 
-          def dapp_project_containers_flush
-            remove_containers_by_query(%(#{host_docker} ps -a -f "label=dapp" -f "name=#{container_name_prefix}" -q --no-trunc))
+          def remove_project_images(project_images)
+            update_project_images_cache(project_images)
+            remove_images(project_images_to_delete(project_images))
           end
 
-          def dapp_project_dangling_images_flush
-            remove_project_images(dapp_project_dangling_images.map { |img| img[:id] })
+          def update_project_images_cache(project_images)
+            dapp_project_images.delete_if { |image| project_images.include?(image) }
           end
 
-          def remove_project_images(images_ids_or_names)
-            images_ids_or_names = convert_to_project_images_names(images_ids_or_names)
-            update_project_images(images_ids_or_names)
-            remove_images(images_ids_or_names)
-          end
-
-          def update_project_images(images_ids_or_names)
-            dapp_project_images.delete_if do |img|
-              images_ids_or_names.include?(img[:id]) || images_ids_or_names.include?(img[:name])
-            end
-          end
-
-          def convert_to_project_images_names(images_ids_or_names)
-            dapp_project_images.each_with_object([]) do |image, images|
-              if images_ids_or_names.include?(image[:id]) || images_ids_or_names.include?(image[:name])
-                images << (project_dangling_image?(image) ? image[:id] : image[:name])
-              end
-            end
+          def project_images_to_delete(project_images)
+            project_images.map { |image| image[:dangling] ? image[:id] : image[:name] }
           end
 
           def dapp_containers_flush

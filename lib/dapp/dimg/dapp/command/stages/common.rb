@@ -6,6 +6,14 @@ module Dapp
           module Common
             protected
 
+            def repo_detailed_dimgs_images(registry)
+              repo_dimgs_images(registry).each do |dimg|
+                image_history = registry.image_history(dimg[:tag], dimg[:dimg])
+                dimg[:parent] = image_history['container_config']['Image']
+                dimg[:labels] = image_history['config']['Labels']
+              end
+            end
+
             def repo_dimgs_images(registry)
               [].tap do |dimgs_images|
                 {}.tap do |dimgs_tags|
@@ -53,9 +61,11 @@ module Dapp
                 {}.tap do |repositories|
                   dimgs = build_configs.map { |config| Dimg.new(config: config, dapp: self, ignore_git_fetch: true) }
                   dimgs.each do |dimg|
-                    [dimg, dimg.artifacts].flatten
-                                          .map(&:git_artifacts).flatten
-                                          .map { |git_artifact| repositories[dimgstage_g_a_commit_label(git_artifact.paramshash)] = git_artifact.repo }
+                    [dimg, dimg.artifacts]
+                      .flatten
+                      .map(&:git_artifacts)
+                      .flatten
+                      .map { |git_artifact| repositories[dimgstage_g_a_commit_label(git_artifact.paramshash)] = git_artifact.repo }
                   end
                 end
               end

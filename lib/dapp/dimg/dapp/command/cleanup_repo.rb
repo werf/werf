@@ -8,16 +8,18 @@ module Dapp
 
           def cleanup_repo
             lock_repo(repo = option_repo) do
-              registry = dimg_registry(repo)
+              log_step_with_indent(repo) do
+                registry = dimg_registry(repo)
 
-              cleanup_repo_by_nonexistent_git_primitive(registry, actual_detailed_dimgs_images_by_scheme(registry))
-              cleanup_repo_by_policies(registry, actual_detailed_dimgs_images_by_scheme(registry))
+                cleanup_repo_by_nonexistent_git_primitive(registry, actual_detailed_dimgs_images_by_scheme(registry))
+                cleanup_repo_by_policies(registry, actual_detailed_dimgs_images_by_scheme(registry))
 
-              begin
-                repo_dimgs      = repo_dimgs_images(registry)
-                repo_dimgstages = repo_dimgstages_images(registry)
-                repo_dimgstages_cleanup(registry, repo_dimgs, repo_dimgstages)
-              end if with_stages?
+                begin
+                  repo_dimgs      = repo_dimgs_images(registry)
+                  repo_dimgstages = repo_dimgstages_images(registry)
+                  repo_dimgstages_cleanup(registry, repo_dimgs, repo_dimgstages)
+                end if with_stages?
+              end
             end
           end
 
@@ -84,26 +86,25 @@ module Dapp
                   dimg
                 end
               end
-            end
-              .sort_by { |dimg| dimg[:created_at] }
-              .tap do |sorted_dimgs_images|
-                expired_dimgs_images, not_expired_dimgs_images = sorted_dimgs_images.partition do |dimg_image|
-                  dimg_image[:created_at] < DATE_POLICY
-                end
+            end.tap do |detailed_dimgs_images|
+              sorted_detailed_dimgs_images = detailed_dimgs_images.sort_by { |dimg| dimg[:created_at] }
+              expired_dimgs_images, not_expired_dimgs_images = sorted_detailed_dimgs_images.partition do |dimg_image|
+                dimg_image[:created_at] < DATE_POLICY
+              end
 
-                log_step_with_indent(:"date policy (before #{DateTime.strptime(DATE_POLICY.to_s, '%s')})") do
-                  expired_dimgs_images.each { |dimg| delete_repo_image(registry, dimg) }
-                end
+              log_step_with_indent(:"date policy (before #{DateTime.strptime(DATE_POLICY.to_s, '%s')})") do
+                expired_dimgs_images.each { |dimg| delete_repo_image(registry, dimg) }
+              end
 
-                {}.tap do |images_by_dimg|
-                  not_expired_dimgs_images.each { |dimg| (images_by_dimg[dimg[:dimg]] ||= []) << dimg }
-                  images_by_dimg.each do |dimg, images|
-                    log_step_with_indent(:"limit policy (> #{GIT_TAGS_LIMIT_POLICY}) (`#{dimg}`)") do
-                      images[GIT_TAGS_LIMIT_POLICY..-1].each { |dimg| delete_repo_image(registry, dimg) }
-                    end unless images[GIT_TAGS_LIMIT_POLICY..-1].nil?
-                  end
+              {}.tap do |images_by_dimg|
+                not_expired_dimgs_images.each { |dimg| (images_by_dimg[dimg[:dimg]] ||= []) << dimg }
+                images_by_dimg.each do |dimg, images|
+                  log_step_with_indent(:"limit policy (> #{GIT_TAGS_LIMIT_POLICY}) (`#{dimg}`)") do
+                    images[GIT_TAGS_LIMIT_POLICY..-1].each { |dimg| delete_repo_image(registry, dimg) }
+                  end unless images[GIT_TAGS_LIMIT_POLICY..-1].nil?
                 end
               end
+            end
           end
 
           def git_tag_by_consistent_git_tag(consistent_git_tag)
@@ -112,14 +113,6 @@ module Dapp
 
           def git_tag_by_consistent_tag_name
             @git_consistent_tags ||= git_local_repo.tags.map { |t| [consistent_uniq_slugify(t), t] }.to_h
-          end
-
-          def repo_detailed_dimgs_images(registry)
-            repo_dimgs_images(registry).each do |dimg|
-              image_history = registry.image_history(dimg[:tag], dimg[:dimg])
-              dimg[:parent] = image_history['container_config']['Image']
-              dimg[:labels] = image_history['config']['Labels']
-            end
           end
 
           def deployed_docker_images
