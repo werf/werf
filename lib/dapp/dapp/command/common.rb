@@ -3,10 +3,15 @@ module Dapp
     module Command
       module Common
         def option_repo
-          unless options[:repo].nil?
-            return "localhost:5000/#{name}" if options[:repo] == ':minikube'
-            options[:repo]
-          end
+          shortcut_or_key(options[:repo])
+        end
+
+        def shortcut_or_key(key)
+          shortcuts[key] || key
+        end
+
+        def shortcuts
+          { ':minikube' => "localhost:5000/#{name}" }
         end
 
         def dimg_registry(repo)

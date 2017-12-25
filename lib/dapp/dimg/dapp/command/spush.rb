@@ -4,11 +4,9 @@ module Dapp
       module Command
         module Spush
           def spush
-            repo = option_repo
-            validate_repo_name!(repo)
             one_dimg!
-            Dimg.new(config: build_configs.first, dapp: self, ignore_git_fetch: true, should_be_built: true).tap do |dimg|
-              dimg.export!(repo, format: spush_format)
+            dimg_import_export_base do |dimg|
+              dimg.export!(option_repo, format: spush_format)
             end
           end
         end

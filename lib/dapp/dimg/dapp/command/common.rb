@@ -110,6 +110,18 @@ module Dapp
             shellout!(cmd) unless dry_run?
           end
 
+          def dimg_import_export_base(should_be_built: true)
+            repo = option_repo
+            validate_repo_name!(repo)
+            build_configs.each do |config|
+              log_dimg_name_with_indent(config) do
+                Dimg.new(config: config, dapp: self, ignore_git_fetch: true, should_be_built: should_be_built).tap do |dimg|
+                  yield dimg
+                end
+              end
+            end
+          end
+
           def container_name_prefix
             name
           end
@@ -138,11 +150,6 @@ module Dapp
             log_step_with_indent(:'proper repo cache', &blk)
           end
 
-          def one_dimg!
-            return if build_configs.one?
-            raise ::Dapp::Error::Command, code: :command_unexpected_dimgs_number, data: { dimgs_names: build_configs.map(&:_name).join(' ') }
-          end
-
           def push_format(dimg_name)
             if dimg_name.nil?
               spush_format
@@ -153,6 +160,10 @@ module Dapp
 
           def spush_format
             '%{repo}:%{tag}'
+          end
+
+          def dimgstage_push_format
+            '%{repo}:dimgstage-%{signature}'
           end
 
           def with_stages?

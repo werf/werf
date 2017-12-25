@@ -8,36 +8,11 @@ Usage:
 
 Options:
 BANNER
+      extend ::Dapp::CLI::Command::Options::Tag
 
       option :namespace,
              long: '--namespace NAME',
              default: nil
-
-      option :tag,
-             long: '--tag TAG',
-             description: 'Custom tag',
-             default: [],
-             proc: proc { |v| composite_options(:tags) << v }
-
-      option :tag_branch,
-             long: '--tag-branch',
-             description: 'Tag by git branch',
-             boolean: true
-
-      option :tag_build_id,
-             long: '--tag-build-id',
-             description: 'Tag by CI build id',
-             boolean: true
-
-      option :tag_ci,
-             long: '--tag-ci',
-             description: 'Tag by CI branch and tag',
-             boolean: true
-
-      option :tag_commit,
-             long: '--tag-commit',
-             description: 'Tag by git commit',
-             boolean: true
 
       option :helm_set_options,
              long: '--set STRING_ARRAY',

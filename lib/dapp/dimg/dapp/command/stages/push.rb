@@ -5,14 +5,8 @@ module Dapp
         module Stages
           module Push
             def stages_push
-              repo = option_repo
-              validate_repo_name!(repo)
-              build_configs.each do |config|
-                log_dimg_name_with_indent(config) do
-                  Dimg.new(config: config, dapp: self, ignore_git_fetch: true, should_be_built: true).tap do |dimg|
-                    dimg.export_stages!(repo, format: '%{repo}:dimgstage-%{signature}')
-                  end
-                end
+              dimg_import_export_base(should_be_built: false) do |dimg|
+                dimg.export_stages!(option_repo, format: dimgstage_push_format)
               end
             end
           end
