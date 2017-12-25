@@ -123,62 +123,10 @@ module Dapp
 
       def set_options(without_registry: false)
         [].tap do |options|
-          options.concat(set.map { |opt| "--set #{opt}" })
+          options.concat set.map {|opt| "--set #{opt}"}
 
-          options << "--set global.dapp.name=#{dapp.name}"
-          options << "--set global.dapp.branch=#{dapp.name}"
-          options << "--set global.dapp.repo=#{repo}"
-          options << "--set global.dapp.docker_tag=#{docker_tag}"
-
-          if dapp.nameless_dimg?
-            options << "--set global.dapp.docker_image=#{repo}:#{docker_tag}"
-            if self.without_registry || without_registry
-              options << "--set global.dapp.docker_image_id=\\\"-\\\""
-            else
-              options << "--set global.dapp.docker_image_id=#{dimg_registry.image_id(docker_tag, nil)}"
-            end
-          else
-            dapp.dimgs_names.each do |dimg_name|
-              options << "--set global.dapp.docker_image.#{dimg_name}=#{repo}/#{dimg_name}:#{docker_tag}"
-              if self.without_registry || without_registry
-                options << "--set global.dapp.docker_image_id.#{dimg_name}=\\\"-\\\""
-              else
-                options << "--set global.dapp.docker_image_id.#{dimg_name}=#{dimg_registry.image_id(docker_tag, dimg_name)}"
-              end
-            end
-          end
-
-          dapp_git_values = {}
-          if ENV["CI_COMMIT_TAG"]
-            dapp_git_values[:tag] = ENV["CI_COMMIT_TAG"]
-            dapp_git_values[:is_tag] = true
-          elsif ENV["CI_COMMIT_REF_NAME"]
-            dapp_git_values[:branch] = ENV["CI_COMMIT_REF_NAME"]
-            dapp_git_values[:is_branch] = true
-          elsif dapp.git_path and dapp.git_local_repo.branch != "HEAD"
-            dapp_git_values[:branch] = dapp.git_local_repo.branch
-            dapp_git_values[:is_branch] = true
-          elsif dapp.git_path
-            tagref = git.references.find do |r|
-              r.name.start_with?("refs/tags/") &&
-                r.target.target_id == git.head.target_id
-            end
-            if tagref
-              dapp_git_values[:tag] = tagref.name.partition("refs/tags/").last
-              dapp_git_values[:is_tag] = true
-            end
-          end
-
-          options << "--set global.dapp.is_branch=#{!!dapp_git_values[:is_branch]}"
-          options << "--set global.dapp.is_tag=#{!!dapp_git_values[:is_tag]}"
-          if dapp_git_values[:is_branch]
-            options << "--set global.dapp.branch=#{dapp_git_values[:branch]}"
-          end
-          if dapp_git_values[:is_tag]
-            options << "--set global.dapp.tag=#{dapp_git_values[:tag]}"
-          end
-
-          options << "--set global.namespace=#{namespace}"
+          service_values = Helm::Values.service_values(dapp, repo, namespace, docker_tag, without_registry: self.without_registry || without_registry)
+          options.concat service_values.to_set_options
         end
       end
 
@@ -193,6 +141,10 @@ module Dapp
           options << "--timeout #{deploy_timeout}" if deploy_timeout
         end
       end
+
+      class << self
+
+      end # << self
     end # Helm::Release
   end # Kube
 end # Dapp

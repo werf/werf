@@ -29,6 +29,8 @@ module Dapp
               export._name   = @_name
               export._branch ||= @_branch
               export._commit ||= @_commit
+
+              yield(export) if block_given?
             end
           end
 
