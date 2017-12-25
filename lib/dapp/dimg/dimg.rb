@@ -60,26 +60,41 @@ module Dapp
       end
 
       def export!(repo, format:)
+        dimg_export_base!(repo, export_format: format)
+      end
+
+      def export_stages!(repo, format:)
         dapp.lock("#{dapp.name}.images", readonly: true) do
-          dapp.tags_by_scheme.each do |tag_scheme_name, tags|
-            tags.each do |tag|
-              image_name = format(format, repo: repo, dimg_name: config._name, tag: tag)
-              export_base!(image_name) do
-                last_stage.image.export_dimg!(image_name, sheme_name: tag_scheme_name)
-              end
+          export_images.each do |stage_image|
+            image_name = format(format, repo: repo, signature: stage_image.name.split(':').last)
+            export_base!(image_name) do
+              stage_image.export!(image_name)
             end
           end
         end
       end
 
-      def export_stages!(repo, format:)
+      def dimg_export_base!(repo, export_format:)
         dapp.lock("#{dapp.name}.images", readonly: true) do
-          export_images.each do |image|
-            image_name = format(format, repo: repo, signature: image.name.split(':').last)
-            export_base!(image_name) do
-              image.export!(image_name)
-            end
+          dapp.tags_by_scheme.each do |tag_scheme_name, tags|
+            dapp.log_step_with_indent(tag_scheme_name) do
+              tags.each do |tag|
+                image_name = format(export_format, repo: repo, dimg_name: config._name, tag: tag)
+                export_base!(image_name) do
+                  export_image = build_export_image!(image_name, scheme_name: tag_scheme_name)
+                  export_image.export!
+                end
+              end
+            end unless tags.empty?
           end
+        end
+      end
+
+      def build_export_image!(image_name, scheme_name:)
+        Image::Dimg.image_by_name(name: image_name, from: last_stage.image, dapp: dapp).tap do |export_image|
+          export_image.add_service_change_label(:'dapp-tag-scheme' => scheme_name)
+          export_image.add_service_change_label(:'dapp-dimg' => true)
+          export_image.build!
         end
       end
 
@@ -118,8 +133,8 @@ module Dapp
         else
           dapp.lock("image.#{hashsum image_name}") do
             dapp.log_process(image_name, process: dapp.t(code: 'status.process.pulling'),
-                                         status: { failed: dapp.t(code: 'status.failed.not_pulled') },
-                                         style: { failed: :secondary }) do
+                             status: { failed: dapp.t(code: 'status.failed.not_pulled') },
+                             style: { failed: :secondary }) do
               image.import!(image_name)
             end
           end
