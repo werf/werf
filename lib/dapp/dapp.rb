@@ -139,22 +139,26 @@ module Dapp
 
       def host_docker
         @host_docker ||= begin
-          raise Error::Dapp, code: :docker_not_found if (res = shellout('which docker')).exitstatus.nonzero?
-          docker_bin = res.stdout.strip
-
-          current_docker_version = Gem::Version.new(shellout!("#{docker_bin} --version").stdout.strip[/(\d+\.)+\d+(?=\.\d+)/])
-          required_min_docker_version = Gem::Version.new('1.10')
-
-          if required_min_docker_version >= current_docker_version
-            raise Error::Dapp, code: :docker_version, data: { min_version: required_min_docker_version.to_s,
-                                                              version: current_docker_version.to_s }
+          min_docker_minor_version = Gem::Version.new('1.10')
+          unless host_docker_minor_version > min_docker_minor_version
+            raise Error::Dapp, code: :docker_version, data: { min_version: min_docker_minor_version.to_s,
+                                                              version:     host_docker_minor_version.to_s }
           end
 
           [].tap do |cmd|
-            cmd << docker_bin
+            cmd << host_docker_bin
             cmd << "--config #{host_docker_config_dir}"
           end.join(' ')
         end
+      end
+
+      def host_docker_bin
+        raise Error::Dapp, code: :docker_not_found if (res = shellout('which docker')).exitstatus.nonzero?
+        res.stdout.strip
+      end
+
+      def host_docker_minor_version
+        Gem::Version.new(shellout!("#{host_docker_bin} --version").stdout.strip[/\d+\.\d+/])
       end
 
       def host_docker_config_dir

@@ -66,7 +66,7 @@ module Dapp
           options.map do |key, vals|
             case key
             when :cmd, :entrypoint
-              vals = [''] if vals == []
+              vals = [''] if vals == [] && ::Dapp::Dapp.host_docker_minor_version >= Gem::Version.new('17.10')
               [vals]
             when :env, :label then vals.map(&method(:options_to_args)).flatten
             else vals
