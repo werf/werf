@@ -24,10 +24,12 @@ BANNER
                boolean: true
 
         option :registry_username,
-               long: '--registry-username USERNAME'
+               long: '--registry-username USERNAME',
+               default: ENV.key?("DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD") ? : "dapp-cleanup-repo" : nil # FIXME: https://gitlab.com/gitlab-org/gitlab-ce/issues/41384
 
         option :registry_password,
-               long: '--registry-password PASSWORD'
+               long: '--registry-password PASSWORD',
+               default: ENV["DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD"] # FIXME: https://gitlab.com/gitlab-org/gitlab-ce/issues/41384
 
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
