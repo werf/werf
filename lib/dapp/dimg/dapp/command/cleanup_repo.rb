@@ -78,7 +78,7 @@ module Dapp
                 detailed_dimgs_images_by_scheme[scheme].map do |dimg|
                   dimg[:created_at] = begin
                     if scheme == 'git_tag'
-                      git_local_repo.tag_at(dimg[:tag])
+                      git_local_repo.tag_at(git_tag_by_consistent_git_tag(dimg[:tag]))
                     elsif scheme == 'git_commit'
                       git_local_repo.commit_at(dimg[:tag])
                     end
