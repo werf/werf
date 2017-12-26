@@ -25,7 +25,7 @@ BANNER
 
         option :registry_username,
                long: '--registry-username USERNAME',
-               default: ENV.key?("DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD") ? : "dapp-cleanup-repo" : nil # FIXME: https://gitlab.com/gitlab-org/gitlab-ce/issues/41384
+               default: (ENV.key?("DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD") ? "dapp-cleanup-repo" : nil) # FIXME: https://gitlab.com/gitlab-org/gitlab-ce/issues/41384
 
         option :registry_password,
                long: '--registry-password PASSWORD',
