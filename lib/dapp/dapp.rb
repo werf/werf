@@ -178,14 +178,14 @@ module Dapp
       end
 
       def options_with_docker_credentials?
-        (options.key?(:registry_username) && options.key?(:registry_password)) || ENV.key?('CI_JOB_TOKEN')
+        !docker_credentials.nil?
       end
 
       def docker_credentials
         if options.key?(:registry_username) && options.key?(:registry_password)
           [options[:registry_username], options[:registry_password]]
-        elsif ENV.key?('CI_JOB_TOKEN')
-          ['gitlab-ci-token', ENV['CI_JOB_TOKEN']]
+        elsif ENV.key?('DAPP_CI_JOB_TOKEN') || ENV.key?('CI_JOB_TOKEN')
+          ['gitlab-ci-token', ENV['DAPP_CI_JOB_TOKEN'] || ENV['CI_JOB_TOKEN']]
         end
       end
 

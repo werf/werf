@@ -29,6 +29,12 @@ BANNER
              default: [],
              proc: proc { |v| composite_options(:helm_secret_values) << v }
 
+      option :registry_username,
+             long: '--registry-username USERNAME'
+
+      option :registry_password,
+             long: '--registry-password PASSWORD'
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
 

@@ -39,6 +39,12 @@ BANNER
              default: [],
              proc: proc { |v| composite_options(:templates) << v }
 
+      option :registry_username,
+             long: '--registry-username USERNAME'
+
+      option :registry_password,
+             long: '--registry-password PASSWORD'
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         run_dapp_command(nil, options: cli_options, log_running_time: false) do |dapp|

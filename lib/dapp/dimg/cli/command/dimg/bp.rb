@@ -31,6 +31,12 @@ BANNER
                              '(use system ssh-agent by default)'].join,
                default: nil,
                proc: ->(v) { composite_options(:ssh_key) << v }
+
+        option :registry_username,
+               long: '--registry-username USERNAME'
+
+        option :registry_password,
+               long: '--registry-password PASSWORD'
       end
     end
   end

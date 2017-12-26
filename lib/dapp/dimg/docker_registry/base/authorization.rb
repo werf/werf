@@ -3,9 +3,9 @@ module Dapp
     module DockerRegistry
       class Base
         module Authorization
-          def authorization_options(url)
-            (@authorization_options ||= {})[@repo_suffix] ||= begin
-              case authenticate_header = raw_request(url).headers['Www-Authenticate']
+          def authorization_options(url, method:)
+            (@authorization_options ||= {})[[@repo_suffix, method]] ||= begin
+              case authenticate_header = raw_request(url, method: method).headers['Www-Authenticate']
                 when /Bearer/ then { headers: { Authorization: "Bearer #{authorization_token(authenticate_header)}" } }
                 when /Basic/ then { headers: { Authorization: "Basic #{authorization_auth}" } }
                 when nil then {}
@@ -34,18 +34,20 @@ module Dapp
           end
 
           def authorization_auth
-            if ::Dapp::Dapp.options_with_docker_credentials?
-              Base64.strict_encode64(::Dapp::Dapp.docker_credentials.join(':'))
-            else
-              auths = auths_section_from_docker_config
-              r = repo
-              loop do
-                break unless r.include?('/') && !auths.keys.any? { |auth| auth.start_with?(r) }
-                r = chomp_name(r)
+            @authorization_auth ||= begin
+              if ::Dapp::Dapp.options_with_docker_credentials?
+                Base64.strict_encode64(::Dapp::Dapp.docker_credentials.join(':'))
+              else
+                auths = auths_section_from_docker_config
+                r = repo
+                loop do
+                  break unless r.include?('/') && !auths.keys.any? { |auth| auth.start_with?(r) }
+                  r = chomp_name(r)
+                end
+                credential = (auths[r] || auths.find { |repo, _| repo == r })
+                user_not_authorized! if credential.nil?
+                credential['auth']
               end
-              credential = (auths[r] || auths.find { |repo, _| repo == r })
-              user_not_authorized! if credential.nil?
-              credential['auth']
             end
           end
 
