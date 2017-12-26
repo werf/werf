@@ -76,6 +76,14 @@ module Dapp
             %w(git_tag git_commit).each_with_object([]) do |scheme, dimgs_images|
               dimgs_images.concat begin
                 detailed_dimgs_images_by_scheme[scheme].map do |dimg|
+                  next if dry_run? && begin
+                    if scheme == 'git_tag'
+                      !consistent_git_tags.include?(dimg[:tag])
+                    elsif scheme == 'git_commit'
+                      !git_local_repo.commit_exists?(dimg[:tag])
+                    end
+                  end
+
                   dimg[:created_at] = begin
                     if scheme == 'git_tag'
                       git_local_repo.tag_at(git_tag_by_consistent_git_tag(dimg[:tag]))
@@ -84,7 +92,7 @@ module Dapp
                     end
                   end
                   dimg
-                end
+                end.compact
               end
             end.tap do |detailed_dimgs_images|
               sorted_detailed_dimgs_images = detailed_dimgs_images.sort_by { |dimg| dimg[:created_at] }
