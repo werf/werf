@@ -86,7 +86,7 @@ module Dapp
 
         def tag_at(name)
           tag = git.tags.find { |t| t.name == name }
-          commit_at(tag.target)
+          tag.target.time.to_i
         end
 
         def tags
