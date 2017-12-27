@@ -37,7 +37,7 @@ Dapp — это утилита для реализации и сопровожд
 
 #### Docker
 
-Версия >= 1.10.0, <= 17.9.0.
+Версия > 1.10.
 
 [Установка docker](https://docs.docker.com/engine/installation/)
 
