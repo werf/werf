@@ -35,9 +35,10 @@ task :parallel_spec do
   workers = 0
   status = 0
 
-  [[nil, 'spec/integration/chef_spec.rb,spec/integration/dimg_spec.rb'],
+  [[nil, 'spec/integration/chef_spec.rb,spec/integration/dimg_spec.rb,spec/integration/dimg_dev_mod_spec.rb'],
    ['spec/integration/chef_spec.rb', nil],
-   ['spec/integration/dimg_spec.rb', nil]
+   ['spec/integration/dimg_spec.rb', nil],
+   ['spec/integration/dimg_dev_mod_spec.rb', nil],
   ].each do |pattern, exclude_pattern|
     pid = Process.fork
 

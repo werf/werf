@@ -3,6 +3,11 @@ module SpecHelper
     extend ActiveSupport::Concern
 
     def git_change_and_commit(changefile = 'data.txt', changedata = nil, git_dir: '.', msg: '+', binary: false)
+      change_file(changefile, changedata, git_dir: git_dir, binary: binary)
+      git_add_and_commit(changefile, git_dir: git_dir, msg: msg)
+    end
+
+    def change_file(changefile = 'data.txt', changedata = nil, git_dir: '.', binary: false)
       file_path = File.join(git_repo(git_dir: git_dir).workdir, changefile)
       unless (file_path_parts = File.split(file_path)).one?
         FileUtils.mkdir_p file_path_parts[0..-2].join('/')
@@ -10,8 +15,6 @@ module SpecHelper
 
       changedata ||= binary ? random_binary_string : random_string
       File.open(file_path, 'w') { |f| f.write changedata }
-
-      git_add_and_commit(changefile, git_dir: git_dir, msg: msg)
     end
 
     def git_add_and_commit(relative_path, git_dir: '.', msg: '+')
