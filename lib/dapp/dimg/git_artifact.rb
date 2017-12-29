@@ -70,12 +70,12 @@ module Dapp
               stage.image.add_service_change_label(repo.dapp.dimgstage_g_a_type_label(paramshash).to_sym => 'directory')
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{to}\""
+              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
             when :file
               stage.image.add_service_change_label(repo.dapp.dimgstage_g_a_type_label(paramshash).to_sym => 'file')
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *archive_stage_commit(stage))} -C \"#{File.dirname(to)}\""
+              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
             end
           end
         end
@@ -94,11 +94,11 @@ module Dapp
                 changed_files = diff_patches(*dev_patch_stage_commits(stage)).map {|p| "\"#{File.join(to, cwd, p.delta.new_file[:path])}\""}
                 commands << "#{repo.dapp.rm_bin} -rf #{changed_files.join(' ')}"
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *dev_patch_stage_commits(stage))} -C \"#{to}\""
+                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
               when :file
                 commands << "#{repo.dapp.rm_bin} -rf \"#{to}\""
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage, *dev_patch_stage_commits(stage))} -C \"#{File.dirname(to)}\""
+                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
               else
                 raise
               end
@@ -130,44 +130,44 @@ module Dapp
 
         @stage_dependencies_checksums ||= {}
         @stage_dependencies_checksums[stage_dependencies_key] ||= begin
-          if (entries = repo_entries(commit, paths: paths)).empty?
-            repo.dapp.log_warning(desc: { code: :stage_dependencies_not_found,
-                                          data: { repo: repo.respond_to?(:url) ? repo.url : 'local',
-                                                  dependencies: stage_dependencies.join(', ') } })
+          if dev_mode?
+            dev_patch_hash(paths: paths)
+          else
+            if (entries = repo_entries(commit, paths: paths)).empty?
+              repo.dapp.log_warning(desc: { code: :stage_dependencies_not_found,
+                                            data: { repo: repo.respond_to?(:url) ? repo.url : 'local',
+                                                    dependencies: stage_dependencies.join(', ') } })
+            end
+
+            entries
+              .sort_by {|root, entry| File.join(root, entry[:name])}
+              .reduce(nil) {|prev_hash, (root, entry)|
+                content = nil
+                content = repo.lookup_object(entry[:oid]).content if entry[:type] == :blob
+
+                hexdigest prev_hash, File.join(root, entry[:name]), entry[:filemode].to_s, content
+              }
           end
-
-          entries
-            .sort_by {|root, entry| File.join(root, entry[:name])}
-            .reduce(nil) {|prev_hash, (root, entry)|
-              content = nil
-              content = repo.lookup_object(entry[:oid]).content if entry[:type] == :blob
-
-              hexdigest prev_hash, File.join(root, entry[:name]), entry[:filemode].to_s, content
-            }
         end
       end
 
-      def patch_size(from_commit, to_commit)
+      def patch_size(from_commit)
+        to_commit = dev_mode? ? nil : latest_commit
         diff_patches(from_commit, to_commit).reduce(0) do |bytes, patch|
-          patch.hunks.each do |hunk|
-            hunk.lines.each do |l|
-              bytes +=
-                case l.line_origin
-                when :eof_newline_added, :eof_newline_removed then 1
-                when :addition, :deletion, :binary            then l.content.size
-                else # :context, :file_header, :hunk_header, :eof_no_newline
-                  0
-                end
-            end
-          end
+          bytes += patch.delta.deleted? ? patch.delta.old_file[:size] : patch.delta.new_file[:size]
           bytes
         end
       end
 
-      def dev_patch_hash(stage)
+      def dev_patch_hash(**options)
         return unless dev_mode?
-
-        hexdigest *diff_patches(latest_commit, nil).map {|patch| change_patch_new_file_path(stage, patch)}
+        hexdigest begin
+          diff_patches(nil, nil, **options).map do |patch|
+            file = patch.delta.new_file
+            raise_if_submodule!(file[:path], file[:mode])
+            [file[:path], File.read(File.join(repo.workdir_path, file[:path])), file[:mode]]
+          end
+        end
       end
 
       def latest_commit
@@ -183,7 +183,7 @@ module Dapp
       end
 
       def archive_any_changes?(stage)
-        repo_entries(archive_stage_commit(stage)).any?
+        repo_entries(stage_commit(stage)).any?
       end
 
       def patch_any_changes?(stage)
@@ -212,7 +212,8 @@ module Dapp
         [:owner, :group].map { |attr| "--#{attr}=#{send(attr)}" unless send(attr).nil? }.compact
       end
 
-      def archive_file(stage, commit)
+      def archive_file(stage)
+        commit = stage_commit(stage)
         if repo.dapp.options[:use_system_tar]
           archive_file_with_system_tar(stage, commit)
         else
@@ -279,17 +280,17 @@ module Dapp
       def patch_file(stage, from_commit, to_commit)
         File.open(repo.dimg.tmp_path('patches', patch_file_name(from_commit, to_commit)), File::RDWR | File::CREAT) do |f|
           diff_patches(from_commit, to_commit).each do |patch|
-            raise_if_submodule_entry!(patch.delta.new_file)
+            file = patch.delta.new_file
+            raise_if_submodule!(file[:path], file[:mode])
             f.write change_patch_new_file_path(stage, patch)
           end
         end
         repo.dimg.container_tmp_path('patches', patch_file_name(from_commit, to_commit))
       end
 
-      def raise_if_submodule_entry!(entry) # FIXME
-        if entry[:mode] == 57344 # submodule
-          raise Error::Rugged, code: :submodule_not_supported, data: { path: repo.path.dirname.join(entry[:path]) }
-        end
+      def raise_if_submodule!(relative_file_path, mode) # FIXME
+        return unless mode == 57344
+        raise Error::Rugged, code: :submodule_not_supported, data: { path: repo.path.dirname.join(relative_file_path) }
       end
 
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -359,14 +360,28 @@ module Dapp
         end
       end
 
-      def each_archive_entry(stage, commit, &blk)
-        repo_entries(commit).each do |root, entry|
-          raise_if_submodule_entry!(entry)
+      def each_archive_entry(stage, commit)
+        if dev_mode? && stage.name != :g_a_archive
+          diff_patches(commit, nil).each do |patch|
+            file = patch.delta.new_file
+            host_file_path = File.join(repo.workdir_path, file[:path])
 
-          if entry[:type] == :blob
+            next unless File.exist?(host_file_path)
+            raise_if_submodule!(file[:path], file[:mode])
+
+            content = File.read(host_file_path)
+            yield slice_cwd(stage, file[:path]), content, file[:mode]
+          end
+        else
+          repo_entries(commit).each do |root, entry|
+            next unless entry[:type] == :blob
+
+            entry_file_path = File.join(root, entry[:name])
+
+            raise_if_submodule!(entry_file_path, entry[:filemode])
+
             content = repo.lookup_object(entry[:oid]).content
-
-            yield slice_cwd(stage, File.join(root, entry[:name])), content, entry[:filemode]
+            yield slice_cwd(stage, entry_file_path), content, entry[:filemode]
           end
         end
       end
@@ -414,7 +429,7 @@ module Dapp
         end
       end
 
-      def archive_stage_commit(stage)
+      def stage_commit(stage)
         stage.layer_commit(self)
       end
 

@@ -27,7 +27,7 @@ module Dapp
             def changes_size_since_g_a_pre_setup_patch
               dimg.git_artifacts.map do |git_artifact|
                 if git_artifact.repo.commit_exists? prev_stage.layer_commit(git_artifact)
-                  git_artifact.patch_size(prev_stage.layer_commit(git_artifact), git_artifact.latest_commit)
+                  git_artifact.patch_size(prev_stage.layer_commit(git_artifact))
                 else
                   0
                 end
