@@ -11,12 +11,6 @@ describe Dapp::Dimg::Builder::Chef do
   %w(ubuntu:14.04 centos:7).each do |os|
     context os do
       it 'builds project' do
-        [dimg, artifact_dimg].each do |d|
-          %i(before_install install before_setup setup build_artifact).each do |stage|
-            d.config._chef.send("__#{stage}_attributes")['dimod-testartifact']['target_filename'] = 'CUSTOM_NAME_FROM_CHEF_SPEC.txt'
-          end
-        end
-
         dimg_build!
 
         stages.each { |_, stage| expect(stage.image.tagged?).to be(true) }
@@ -72,14 +66,12 @@ describe Dapp::Dimg::Builder::Chef do
         end
       end
 
-      xit 'rebuilds artifact from build_artifact stage' do
+      it 'rebuilds artifact from build_artifact stage' do
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
         old_artifact_last_stage_id = artifact_dimg.last_stage.image.id
 
         [dimg, artifact_dimg].each do |d|
-          %i(before_install install before_setup setup build_artifact).each do |stage|
-            d.config._chef.send("__#{stage}_attributes")['dimod-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
-          end
+          d.config._chef.__build_artifact_attributes['dimod-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
         end
 
         dimg_rebuild!
@@ -87,27 +79,30 @@ describe Dapp::Dimg::Builder::Chef do
         expect(artifact_stages[:before_install].image.id).to eq(old_artifact_before_install_stage_id)
         expect(artifact_dimg.last_stage.image.id).not_to eq(old_artifact_last_stage_id)
 
-        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
-        expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(false), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does exist in result image'
-        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)).to be(false), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt should not exist in artifact image'
+
+        expect(file_exist_in_image?('/testartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)).to be(true), '/testartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt should exist in artifact image'
+
+        expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(false), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt should not exist in result image'
+
+        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt should exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
+          read_file_in_image('/testartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
         ).to eq(
           read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)
-        ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
+        ), '/testartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
-      xit 'rebuilds artifact from before_install stage' do
+      it 'rebuilds artifact from before_install stage' do
         new_note_content = SecureRandom.uuid
-        dimod_testartifact_path.join('files/before_install/CUSTOM_NAME_FROM_CHEF_SPEC.txt').tap do |path|
+        dimod_testartifact_path.join('files/build_artifact/note.txt').tap do |path|
           path.write "#{new_note_content}\n"
         end
 
         [dimg, artifact_dimg].each do |d|
-          %i(before_install install before_setup setup build_artifact).each do |stage|
-            d.config._chef.send("__#{stage}_attributes")['dimod-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
-          end
+          d.config._chef.__before_install_attributes["rebuild"] = true
+          d.config._chef.__build_artifact_attributes['dimod-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
         end
 
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
@@ -118,18 +113,23 @@ describe Dapp::Dimg::Builder::Chef do
         expect(artifact_stages[:before_install].image.id).not_to eq(old_artifact_before_install_stage_id)
         expect(artifact_dimg.last_stage.image.id).not_to eq(old_artifact_last_stage_id)
 
-        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)).to be(true), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in artifact image'
-        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt does not exist in result image'
+        expect(file_exist_in_image?('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)).to be(false), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt should not exist in artifact image'
+
+        expect(file_exist_in_image?('/testartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)).to be(true), '/testartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt should exist in artifact image'
+
+        expect(file_exist_in_image?('/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(false), '/myartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt should exist in result image'
+
+        expect(file_exist_in_image?('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)).to be(true), '/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt should exist in result image'
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
+          read_file_in_image('/testartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
         ).to eq(new_note_content)
 
         expect(
-          read_file_in_image('/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
+          read_file_in_image('/testartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', artifact_dimg.last_stage.image.name)
         ).to eq(
           read_file_in_image('/myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt', dimg.send(:last_stage).image.name)
-        ), '/testartifact/CUSTOM_NAME_FROM_CHEF_SPEC.txt inc artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
+        ), '/testartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in artifact image does not equal /myartifact/SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt in result image'
       end
 
       define_method :config do
@@ -149,20 +149,16 @@ describe Dapp::Dimg::Builder::Chef do
               'dimod-test2' => {
                 'sayhello' => 'hello',
                 'sayhelloagain' => 'helloagain'
-              },
-              'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+              }
             },
             __install_attributes: {
-              'dimod-test2' => { 'sayhello' => 'hello' },
-              'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+              'dimod-test2' => { 'sayhello' => 'hello' }
             },
             __before_setup_attributes: {
-              'dimod-test2' => { 'sayhello' => 'hello' },
-              'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+              'dimod-test2' => { 'sayhello' => 'hello' }
             },
             __setup_attributes: {
-              'dimod-test2' => { 'sayhello' => 'hello' },
-              'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+              'dimod-test2' => { 'sayhello' => 'hello' }
             },
             __build_artifact_attributes: {
               'dimod-test2' => { 'sayhello' => 'hello' },
@@ -185,20 +181,16 @@ describe Dapp::Dimg::Builder::Chef do
                     'dimod-test2' => {
                       'sayhello' => 'hello',
                       'sayhelloagain' => 'helloagain'
-                    },
-                    'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                    }
                   },
                   __install_attributes: {
-                    'dimod-test2' => { 'sayhello' => 'hello' },
-                    'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                    'dimod-test2' => { 'sayhello' => 'hello' }
                   },
                   __before_setup_attributes: {
-                    'dimod-test2' => { 'sayhello' => 'hello' },
-                    'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                    'dimod-test2' => { 'sayhello' => 'hello' }
                   },
                   __setup_attributes: {
-                    'dimod-test2' => { 'sayhello' => 'hello' },
-                    'dimod-testartifact' => { 'target_filename' => 'CUSTOM_NAME_FROM_CHEF_SPEC.txt' }
+                    'dimod-test2' => { 'sayhello' => 'hello' }
                   },
                   __build_artifact_attributes: {
                     'dimod-test2' => { 'sayhello' => 'hello' },
