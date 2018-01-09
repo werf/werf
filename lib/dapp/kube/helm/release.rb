@@ -78,7 +78,7 @@ module Dapp
           end
 
           t.each do |template, specs|
-            t[template] = "---\n#{specs.map(&:join).join("---\n").strip}"
+            t[template] = "---\n#{specs.reject(&:nil?).map(&:join).join("---\n").strip}"
           end
         end
       end
