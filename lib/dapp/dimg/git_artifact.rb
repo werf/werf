@@ -225,7 +225,7 @@ module Dapp
       def archive_file_with_tar_writer(stage, commit)
         tar_write(repo.dimg.tmp_path('archives', archive_file_name(commit))) do |tar|
           each_archive_entry(stage, commit) do |path, content, mode|
-            if mode == 40960 # symlink
+            if mode == 0o120000 # symlink
               tar.add_symlink path, content, mode
             else
               tar.add_file path, mode do |tf|
@@ -244,7 +244,7 @@ module Dapp
           each_archive_entry(stage, commit) do |path, content, mode|
             file_path = repo.dimg.tmp_path(relative_archive_file_path, path)
 
-            if mode == 40960 # symlink
+            if mode == 0o120000 # symlink
               FileUtils.symlink(content, file_path)
             else
               IO.write(file_path, content)
@@ -397,6 +397,10 @@ module Dapp
           end
           repo.patches(from_commit, to_commit, paths: paths, exclude_paths: exclude_paths(true), **options)
         end
+      end
+
+      def submodule_mode?(mode) # FIXME
+        mode == 0o160000
       end
 
       def include_paths_or_cwd

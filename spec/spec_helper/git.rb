@@ -33,7 +33,7 @@ module SpecHelper
       index = git_repo(git_dir: git_dir).index
       index.add path: relative_path,
                 oid: (Rugged::Blob.from_workdir git_repo(git_dir: git_dir), relative_path),
-                mode: File.symlink?(absolute_path) ? 40960 : File.stat(absolute_path).mode
+                mode: File.symlink?(absolute_path) ? 0o120000 : File.stat(absolute_path).mode
     end
 
     def git_rm(relative_path, git_dir: '.')
