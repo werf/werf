@@ -45,6 +45,13 @@ module Dapp
         rescue Rugged::OdbError, TypeError => _e
           raise Error::Rugged, code: :commit_not_found_in_local_git_repository, data: { commit: commit }
         end
+
+        def exist?
+          super
+        rescue Error::Rugged => e
+          return false if e.net_status[:code] == :local_git_repository_does_not_exist
+          raise
+        end
       end
     end
   end

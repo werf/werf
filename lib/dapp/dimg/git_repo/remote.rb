@@ -19,8 +19,8 @@ module Dapp
           _with_lock do
             dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
               begin
-                if [:https, :ssh].include?(protocol) && !Rugged.features.include?(protocol)
-                  raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, protocol: protocol }
+                if [:https, :ssh].include?(remote_origin_url_protocol) && !Rugged.features.include?(remote_origin_url_protocol)
+                  raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, url_protocol: remote_origin_url_protocol }
                 end
 
                 Rugged::Repository.clone_at(url, path.to_s, bare: true, credentials: _rugged_credentials)
@@ -37,7 +37,7 @@ module Dapp
 
         def _rugged_credentials
           @_rugged_credentials ||= begin
-            if protocol == :ssh
+            if remote_origin_url_protocol == :ssh
               host_with_user = url.split(':', 2).first
               username = host_with_user.split('@', 2).reverse.last
               Rugged::Credentials::SshKeyFromAgent.new(username: username)
@@ -94,18 +94,6 @@ module Dapp
 
         def branch_format(name)
           "origin/#{name.reverse.chomp('origin/'.reverse).reverse}"
-        end
-
-        def protocol
-          @protocol ||= begin
-            if (scheme = URI.parse(url).scheme).nil?
-              :noname
-            else
-              scheme.to_sym
-            end
-          rescue URI::InvalidURIError
-            :ssh
-          end
         end
       end
     end

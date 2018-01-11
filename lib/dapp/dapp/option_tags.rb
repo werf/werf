@@ -1,10 +1,6 @@
 module Dapp
   class Dapp
     module OptionTags
-      def git_local_repo
-        @git_repo ||= ::Dapp::Dimg::GitRepo::Own.new(self)
-      end
-
       def tagging_schemes
         %w(git_tag git_branch git_commit custom ci)
       end
@@ -32,13 +28,13 @@ module Dapp
 
       def branch_tags
         return {} unless options[:tag_branch]
-        raise Error::Dapp, code: :git_branch_without_name if (branch = git_local_repo.branch) == 'HEAD'
+        raise Error::Dapp, code: :git_branch_without_name if (branch = git_own_repo.branch) == 'HEAD'
         { git_branch: [branch] }
       end
 
       def commit_tags
         return {} unless options[:tag_commit]
-        { git_commit: [git_local_repo.latest_commit] }
+        { git_commit: [git_own_repo.latest_commit] }
       end
 
       def build_tags

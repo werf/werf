@@ -34,6 +34,56 @@ module Dapp
           []
         end
 
+        def remote_origin_url
+          @remote_origin_url ||= begin
+            ro_url = url
+            while url_protocol(ro_url) == :noname
+              begin
+                parent_git = Rugged::Repository.discover(ro_url)
+              rescue Rugged::OSError
+                parent_git_path = parent_git ? parent_git.path : path
+                raise Error::Rugged, code: :git_repository_not_found, data: { path: ro_url, parent_git_path: parent_git_path }
+              end
+
+              ro_url = begin
+                git_url(parent_git)
+              rescue Error::Rugged => e
+                break if e.net_status[:code] == :git_repository_without_remote_url # local repository
+                raise
+              end
+            end
+
+            ro_url
+          end
+        end
+
+        def remote_origin_url_protocol
+          url_protocol(remote_origin_url)
+        end
+
+        def submodules_params(commit, paths: [], exclude_paths: [])
+          raise "Workdir not supported for #{self.class}" if commit.nil?
+
+          entry = begin
+            lookup_commit(commit).tree.path('.gitmodules')
+          rescue Rugged::TreeError
+            return []
+          end
+
+          submodules_params_base(lookup_object(entry[:oid]).content, paths: paths, exclude_paths: exclude_paths)
+        end
+
+        def submodules_params_base(gitsubmodule_content, paths: [], exclude_paths: [])
+          IniFile.new.parse(gitsubmodule_content)
+            .to_h
+            .select { |_, params| !ignore_directory?(params['path'], paths: paths, exclude_paths: exclude_paths) }
+            .map do |_, params|
+              params = params.symbolize_keys
+              params[:branch] = params[:branch].to_s if params.key?(:branch)
+              params
+            end
+        end
+
         # FIXME: Убрать логику исключения путей exclude_paths из данного класса,
         # FIXME: т.к. большинство методов не поддерживают инвариант
         # FIXME "всегда выдавать данные с исключенными путями".
@@ -125,12 +175,46 @@ module Dapp
           git.lookup(commit)
         end
 
+        def exist?
+          git
+          true
+        rescue Rugged::OSError
+          false
+        end
+
         protected
 
         attr_reader :manager
 
         def git(**kwargs)
           @git ||= Rugged::Repository.new(path.to_s, **kwargs)
+        end
+
+        def url
+          @url ||= git_config_remote_origin_url(git)
+        end
+
+        def git_url(git_repo)
+          git_config_remote_origin_url(git_repo)
+        end
+
+        def git_config_remote_origin_url(git_repo)
+          git_repo.config.to_hash['remote.origin.url'].tap do |url|
+            raise Error::Rugged, code: :git_repository_without_remote_url, data: { name: self.class, path: git_repo.path } if url.nil?
+          end
+        end
+
+        def url_protocol(url)
+          if (scheme = URI.parse(url).scheme).nil?
+            :noname
+          else
+            scheme.to_sym
+          end
+        rescue URI::InvalidURIError
+          :ssh
+        rescue Error::Rugged => e
+          return :none if e.net_status[:code] == :git_repository_without_remote_url
+          raise
         end
 
         private

@@ -11,8 +11,10 @@ module Dapp
               log_step_with_indent(repo) do
                 registry = dimg_registry(repo)
 
-                cleanup_repo_by_nonexistent_git_primitive(registry, actual_detailed_dimgs_images_by_scheme(registry))
-                cleanup_repo_by_policies(registry, actual_detailed_dimgs_images_by_scheme(registry))
+                if git_own_repo_exist?
+                  cleanup_repo_by_nonexistent_git_primitive(registry, actual_detailed_dimgs_images_by_scheme(registry))
+                  cleanup_repo_by_policies(registry, actual_detailed_dimgs_images_by_scheme(registry))
+                end
 
                 begin
                   repo_dimgs      = repo_dimgs_images(registry)
@@ -46,7 +48,7 @@ module Dapp
                   case scheme
                     when 'git_tag'    then consistent_git_tags.include?(detailed_dimg_image[:tag])
                     when 'git_branch' then consistent_git_remote_branches.include?(detailed_dimg_image[:tag])
-                    when 'git_commit' then git_local_repo.commit_exists?(detailed_dimg_image[:tag])
+                    when 'git_commit' then git_own_repo.commit_exists?(detailed_dimg_image[:tag])
                     else
                       raise
                   end
@@ -60,7 +62,7 @@ module Dapp
           end
 
           def consistent_git_remote_branches
-            @consistent_git_remote_branches ||= git_local_repo.remote_branches.map(&method(:consistent_uniq_slugify))
+            @consistent_git_remote_branches ||= git_own_repo.remote_branches.map(&method(:consistent_uniq_slugify))
           end
 
           def cleanup_repo_by_nonexistent_git_base(repo_dimgs_images_by_scheme, dapp_tag_scheme)
@@ -80,15 +82,15 @@ module Dapp
                     if scheme == 'git_tag'
                       !consistent_git_tags.include?(dimg[:tag])
                     elsif scheme == 'git_commit'
-                      !git_local_repo.commit_exists?(dimg[:tag])
+                      !git_own_repo.commit_exists?(dimg[:tag])
                     end
                   end
 
                   dimg[:created_at] = begin
                     if scheme == 'git_tag'
-                      git_local_repo.tag_at(git_tag_by_consistent_git_tag(dimg[:tag]))
+                      git_own_repo.tag_at(git_tag_by_consistent_git_tag(dimg[:tag]))
                     elsif scheme == 'git_commit'
-                      git_local_repo.commit_at(dimg[:tag])
+                      git_own_repo.commit_at(dimg[:tag])
                     end
                   end
                   dimg
@@ -120,7 +122,7 @@ module Dapp
           end
 
           def git_tag_by_consistent_tag_name
-            @git_consistent_tags ||= git_local_repo.tags.map { |t| [consistent_uniq_slugify(t), t] }.to_h
+            @git_consistent_tags ||= git_own_repo.tags.map { |t| [consistent_uniq_slugify(t), t] }.to_h
           end
 
           def deployed_docker_images
