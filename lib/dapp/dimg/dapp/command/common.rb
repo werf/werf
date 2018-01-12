@@ -74,15 +74,19 @@ module Dapp
           end
 
           def remove_images(images_ids_or_names)
-            images_ids_or_names.uniq!
-            check_user_containers!(images_ids_or_names)
+            images_ids_or_names = ignore_used_images(images_ids_or_names.uniq)
             remove_base("#{host_docker} rmi%{force_option} %{ids}", images_ids_or_names, force: false)
           end
 
-          def check_user_containers!(images_ids)
-            return if images_ids.empty?
-            run_command(%(#{host_docker} ps -a -q #{images_ids.uniq.map { |image_id| "--filter=ancestor=#{image_id}" }.join(' ')} --no-trunc)).tap do |res|
-              raise ::Dapp::Error::Command, code: :user_containers_detected, data: { ids: res.stdout.strip } if res && !res.stdout.strip.empty? && !dry_run?
+          def ignore_used_images(images_ids_or_names)
+            images_ids_or_names.select do |image_id_or_name|
+              res = run_command(%(#{host_docker} ps -a -q --filter=ancestor=#{image_id_or_name}))
+              if res && !res.stdout.strip.empty? && !dry_run?
+                log_info("Skip `#{image_id_or_name}` (used by containers: #{res.stdout.strip.split.join(' ')})")
+                false
+              else
+                true
+              end
             end
           end
 
