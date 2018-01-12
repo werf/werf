@@ -39,7 +39,6 @@ en:
       values_file_not_found: "Values file `%{path}` not found!"
       secret_file_not_found: "Secret file `%{path}` not found!"
       secret_file_empty: "Secret file `%{path}` can't be empty!"
-      user_containers_detected: "User containers are using these images:\n%{ids}"
       incorrect_yaml_structure: "Incorrect YAML structure in `%{path}`!"
       editor_not_found: "Editor not found!"
       expected_only_one_tag: 'Expected only one tag (`%{tags}`)!'
