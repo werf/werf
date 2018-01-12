@@ -28,6 +28,21 @@ module Dapp
               pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
               container_state, container_state_data = pod.container_state(name)
 
+              if container_state == "waiting"
+                if container_state_data["reason"] == "RunContainerError"
+                  raise Kubernetes::Error::Default, code: :container_stuck, data: {
+                    state_reason: container_state_data["reason"],
+                    state_message: container_state_data["message"],
+                    state: container_state,
+                    pod_name: pod_manager.name,
+                    container_name: name
+                  }
+                else
+                  sleep 0.1
+                  next
+                end
+              end
+
               chunk_lines_by_time = {}
               begin
                 chunk_lines_by_time = dapp.kubernetes.pod_log(pod_manager.name, container: name, timestamps: true, sinceTime: @processed_log_till_time)
