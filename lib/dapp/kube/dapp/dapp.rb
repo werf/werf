@@ -15,6 +15,7 @@ module Dapp
         include Command::ChartCreate
         include Command::Render
         include Command::Lint
+        include Command::ValueGet
         include Command::Common
       end
     end

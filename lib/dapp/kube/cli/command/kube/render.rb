@@ -45,6 +45,12 @@ BANNER
       option :registry_password,
              long: '--registry-password PASSWORD'
 
+      option :without_registry,
+              long: "--without-registry",
+              default: false,
+              boolean: true,
+              description: "Do not connect to docker registry to obtain docker image ids of dimgs being deployed."
+
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
         run_dapp_command(nil, options: cli_options, log_running_time: false) do |dapp|

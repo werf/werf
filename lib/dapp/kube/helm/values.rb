@@ -8,7 +8,7 @@ module Dapp
           self.new(service_values_hash(*a, &b))
         end
 
-        def service_values_hash(dapp, repo, namespace, docker_tag, fake: false, without_registry: false)
+        def service_values_hash(dapp, repo, namespace, docker_tag, fake: false, without_registry: false, disable_warnings: false)
           res = {
             "global" => {
               "namespace" => namespace,
@@ -86,7 +86,9 @@ module Dapp
                 dimg_labels = dapp.dimg_registry(repo).image_labels(docker_tag, dimg.config._name)
                 docker_image_id = dapp.dimg_registry(repo).image_id(docker_tag, dimg.config._name)
               rescue ::Dapp::Dimg::Error::Registry => err
-                dapp.log_warning "Registry `#{err.net_status[:data][:registry]}` is not availabble: cannot determine <dimg>.docker_image_id and <dimg>.git.<ga>.commit_id helm values of dimg#{dimg.config._name ? " `#{dimg.config._name}`" : nil}"
+                unless disable_warnings
+                  dapp.log_warning "Registry `#{err.net_status[:data][:registry]}` is not availabble: cannot determine <dimg>.docker_image_id and <dimg>.git.<ga>.commit_id helm values of dimg#{dimg.config._name ? " `#{dimg.config._name}`" : nil}"
+                end
               end
             end
 
