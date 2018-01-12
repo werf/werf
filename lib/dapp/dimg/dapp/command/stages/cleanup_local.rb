@@ -38,7 +38,7 @@ module Dapp
             def stages_cleanup_by_repo
               log_proper_repo_cache do
                 lock("#{name}.images") do
-                  registry   = dimg_registry(option_repo)
+                  registry   = registry(option_repo)
                   repo_dimgs = repo_detailed_dimgs_images(registry)
 
                   dapp_project_dangling_images_flush
