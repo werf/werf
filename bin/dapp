@@ -5,6 +5,8 @@
 require 'rubygems'
 require 'dapp'
 
+Thread.abort_on_exception = true
+
 begin
   begin
     begin

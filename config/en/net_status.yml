@@ -134,6 +134,7 @@ en:
       config_context_not_found: "Context `%{context_name}` is not found in config %{config_path}"
       server_connection_refused: "Kube server `%{url}` connection refused: %{error}"
       server_error: "Kube respond with server error code %{response_http_status}, request parameters: `%{request_parameters}`, response: `%{response_raw_body}`"
+      container_stuck: "Pod's `%{pod_name}` container `%{container_name}` stuck in %{state} state: %{state_reason}: %{state_message}"
     secret:
       bad_data: "Data `%{data}` can't be decrypted: check encryption key and data!"
       key_length_too_short: "Encryption key isn't valid (required size %{required_size} bytes)!"

@@ -6,7 +6,6 @@ module Dapp
           def kube_deploy
             helm_release do |release|
               do_deploy = proc do
-                kube_flush_hooks_jobs(release)
                 kube_run_deploy(release)
               end
 
@@ -23,7 +22,7 @@ module Dapp
               .reject { |job| ['0', 'false'].include? job.annotations["dapp/recreate"].to_s }
               .select { |job| kube_job_list.include? job.name }
               .each do |job|
-                log_process("Delete hooks job `#{job.name}` for release #{release.name}", short: true) do
+                log_process("Delete hooks job `#{job.name}`", short: true) do
                   kube_delete_job!(job.name) unless dry_run?
                 end
               end
@@ -43,6 +42,8 @@ module Dapp
 
           def kube_run_deploy(release)
             log_process("Deploy release #{release.name}") do
+              kube_flush_hooks_jobs(release)
+
               release_exists = shellout("helm status #{release.name}").status.success?
 
               watch_hooks_by_type = release.jobs.values
@@ -69,18 +70,49 @@ module Dapp
               end
 
               watch_hooks_thr = nil
-              unless dry_run?
+              watch_hooks_condition_mutex = ::Mutex.new
+              watch_hooks_condition = ::ConditionVariable.new
+              deploy_has_began = false
+              unless dry_run? and watch_hooks.any?
                 watch_hooks_thr = Thread.new do
-                  watch_hooks.each {|job| Kubernetes::Manager::Job.new(self, job.name).watch_till_done!}
-                end
-              end
+                  watch_hooks_condition_mutex.synchronize do
+                    while not deploy_has_began do
+                      watch_hooks_condition.wait(watch_hooks_condition_mutex)
+                    end
+                  end
+
+                  begin
+                    watch_hooks.each do |job|
+                      Kubernetes::Manager::Job.new(self, job.name).watch_till_done!
+                    end # watch_hooks.each
+                  rescue Kubernetes::Error::Default => e
+                    # Default-ошибка -- это ошибка для пользователя которую перехватывает и
+                    # показывает bin/dapp, а затем dapp выходит с ошибкой.
+                    # Нельзя убивать родительский поток по Default-ошибке
+                    # из-за того, что в этот момент в нем вероятно работает helm,
+                    # а процесс деплоя в helm прерывать не стоит.
+                    # Поэтому перехватываем и просто отображаем произошедшую
+                    # ошибку для информации пользователю без завершения работы dapp.
+                    $stderr.puts(::Dapp::Dapp.paint_string(::Dapp::Helper::NetStatus.message(e), :warning))
+                  end
+
+                end # Thread
+              end # unless
 
               deployment_managers = release.deployments.values
                 .map {|deployment| Kubernetes::Manager::Deployment.new(self, deployment.name)}
 
               deployment_managers.each(&:before_deploy)
 
-              release.deploy!
+              log_process("Run helm") do
+                watch_hooks_condition_mutex.synchronize do
+                  deploy_has_began = true
+                  # Фактически гарантируется лишь вывод сообщения log_process перед выводом из потока watch_thr
+                  watch_hooks_condition.signal
+                end
+
+                release.deploy!
+              end
 
               deployment_managers.each(&:after_deploy)
 
