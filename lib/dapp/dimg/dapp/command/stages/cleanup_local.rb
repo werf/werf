@@ -19,7 +19,11 @@ module Dapp
             def proper_cache
               log_proper_cache do
                 lock("#{name}.images") do
-                  remove_project_images(dapp_project_dimgstages - actual_cache_project_dimgstages)
+                  remove_project_images begin
+                    dapp_project_dimgstages.select do |image|
+                      !actual_cache_project_dimgstages.map { |dimgstage| dimgstage[:id] }.include?(image[:id])
+                    end
+                  end
                 end
               end
             end

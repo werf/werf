@@ -54,7 +54,7 @@ module Dapp
           end
 
           def update_project_images_cache(project_images)
-            dapp_project_images.delete_if { |image| project_images.include?(image) }
+            dapp_project_images.delete_if { |image| project_images.map { |i| i[:id] }.include?(image[:id]) }
           end
 
           def project_images_to_delete(project_images)
