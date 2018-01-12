@@ -46,10 +46,24 @@ module Dapp
         shellout! "ssh-add #{ssh_key_path}", env: { SSH_AUTH_SOCK: ssh_auth_sock(force_run_agent: true) }
       end
 
+      def ssh_agent_exist?
+        ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
+      end
+
+      def default_ssh_keys
+        @default_ssh_keys ||= begin
+          %w(id_rsa id_dsa).map do |path|
+            File.join(ENV["HOME"], ".ssh", path)
+          end.select do |path|
+            File.exist? path
+          end
+        end
+      end
+
       def ssh_auth_sock(force_run_agent: false)
         @ssh_auth_sock ||= begin
           system_ssh_auth_sock = nil
-          system_ssh_auth_sock = File.expand_path(ENV['SSH_AUTH_SOCK']) if ENV['SSH_AUTH_SOCK'] && File.exist?(ENV['SSH_AUTH_SOCK'])
+          system_ssh_auth_sock = File.expand_path(ENV['SSH_AUTH_SOCK']) if ssh_agent_exist?
 
           if force_run_agent
             run_ssh_agent.tap { |ssh_auth_sock| ENV['SSH_AUTH_SOCK'] = ssh_auth_sock }
@@ -60,13 +74,17 @@ module Dapp
       end
 
       def setup_ssh_agent
-        return unless options[:ssh_key]
+        if options[:ssh_key]
+          options[:ssh_key].each do |ssh_key|
+            raise Error::Dapp, code: :ssh_key_not_found, data: { path: ssh_key } unless File.exist? ssh_key
 
-        options[:ssh_key].each do |ssh_key|
-          raise Error::Dapp, code: :ssh_key_not_found, data: { path: ssh_key } unless File.exist? ssh_key
-
-          File.chmod 0o600, ssh_key
-          add_ssh_key ssh_key
+            File.chmod 0o600, ssh_key
+            add_ssh_key ssh_key
+          end
+        elsif (not ssh_agent_exist?) and default_ssh_keys.any?
+          default_ssh_keys.each do |ssh_key|
+            add_ssh_key ssh_key
+          end
         end
       end
     end # SshAgent
