@@ -18,24 +18,46 @@ module Dapp
           end
 
           def kube_flush_hooks_jobs(release)
+            all_jobs_names = kube_all_jobs_names
+
+            all_pods_specs = kubernetes.pod_list["items"]
+              .map {|spec| Kubernetes::Client::Resource::Pod.new(spec)}
+
             release.hooks.values
               .reject { |job| ['0', 'false'].include? job.annotations["dapp/recreate"].to_s }
-              .select { |job| kube_job_list.include? job.name }
+              .select { |job| all_jobs_names.include? job.name }
               .each do |job|
                 log_process("Delete hooks job `#{job.name}`", short: true) do
-                  kube_delete_job!(job.name) unless dry_run?
+                  kube_delete_job!(job.name, all_pods_specs) unless dry_run?
                 end
               end
           end
 
-          def kube_job_list
+          def kube_all_jobs_names
             kubernetes.job_list['items'].map { |i| i['metadata']['name'] }
           end
 
-          def kube_delete_job!(name)
-            kubernetes.delete_job!(name)
+          def kube_delete_job!(job_name, all_pods_specs)
+            job_spec = Kubernetes::Client::Resource::Pod.new kubernetes.job(job_name)
+
+            job_pods_specs = all_pods_specs
+              .select do |pod|
+                Array(pod.metadata['ownerReferences']).any? do |owner_reference|
+                  owner_reference['uid'] == job_spec.metadata['uid']
+                end
+              end
+
+            job_pods_specs.each do |job_pod_spec|
+              kubernetes.delete_pod!(job_pod_spec.name)
+            end
+
+            # FIXME: https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/
+            # FIXME: orphanDependents deprecated, should be propagationPolicy=Orphan. But it does not work.
+            # FIXME: Also, kubectl uses the same: https://github.com/kubernetes/kubernetes/blob/master/pkg/kubectl/delete.go#L388
+            # FIXME: https://github.com/kubernetes/kubernetes/issues/46659
+            kubernetes.delete_job!(job_name, orphanDependents: false)
             loop do
-              break unless kubernetes.job?(name)
+              break unless kubernetes.job?(job_name)
               sleep 1
             end
           end
