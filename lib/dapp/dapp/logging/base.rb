@@ -2,6 +2,18 @@ module Dapp
   class Dapp
     module Logging
       module Base
+        class << self
+          def included(base)
+            base.send(:extend, ClassMethods)
+          end
+        end
+
+        module ClassMethods
+          def log_time
+            "#{DateTime.now.strftime('%Y-%m-%dT%T%z')} "
+          end
+        end
+
         def log_quiet?
           option_quiet
         end
@@ -85,10 +97,6 @@ module Dapp
 
         def log_time
           self.class.log_time
-        end
-
-        def self.log_time
-          "#{DateTime.now.strftime('%Y-%m-%dT%T%z')} "
         end
 
         def log_format_string(str, time: true, indent: true, style: nil)
