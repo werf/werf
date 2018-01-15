@@ -54,7 +54,11 @@ module Dapp
           end
 
           def update_project_images_cache(project_images)
-            dapp_project_images.delete_if { |image| project_images.map { |i| i[:id] }.include?(image[:id]) }
+            array_hash_delete_if_by_id(dapp_project_images, project_images)
+          end
+
+          def array_hash_delete_if_by_id(project_images, *images)
+            project_images.delete_if { |image| images.flatten.any? { |i| image[:id] == i[:id] } }
           end
 
           def project_images_to_delete(project_images)

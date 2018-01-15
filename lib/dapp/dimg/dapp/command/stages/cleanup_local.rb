@@ -64,7 +64,7 @@ module Dapp
               dapp_project_image_artifacts_ids_in_labels(image).each { |aiid| except_image_id_with_parents(aiid, dimgstages) }
               i = image
               loop do
-                dimgstages.delete_if { |dimgstage| dimgstage == i }
+                array_hash_delete_if_by_id(dimgstages, i)
                 break if (i = dapp_project_image_parent(i)).nil?
               end
             end
