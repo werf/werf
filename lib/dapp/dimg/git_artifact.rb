@@ -3,6 +3,7 @@ module Dapp
     # Git repo artifact
     class GitArtifact
       include Helper::Tar
+      include Helper::Trivia
 
       attr_reader :repo
       attr_reader :name
@@ -31,6 +32,93 @@ module Dapp
         @stages_dependencies = stages_dependencies
       end
       # rubocop:enable Metrics/ParameterLists
+
+      def submodules_artifacts
+        commit = dev_mode? ? nil : latest_commit
+        repo.submodules_params(commit,
+                               paths: include_paths_or_cwd,
+                               exclude_paths: exclude_paths(true)).map(&method(:submodule_artifact))
+      end
+
+      def submodule_artifact(submodule_params)
+        submodule_rel_path = submodule_params[:path]
+        submodule_repo     = begin
+          GitRepo::Remote.get_or_init(repo.dimg, submodule_rel_path,
+                                      url: submodule_url(submodule_params[:url]),
+                                      branch: submodule_params[:branch])
+        rescue Rugged::InvalidError => e
+          raise Error::Rugged, code: :incorrect_gitmodules_file, data: { error: e.message }
+        end
+
+        self.class.new(submodule_repo, submodule_artifact_options(submodule_params))
+      end
+
+      def submodule_url(url)
+        if url.start_with?('../')
+          case repo.remote_origin_url_protocol
+          when :http, :https, :git
+            uri = URI.parse(repo.remote_origin_url)
+            uri.path = File.expand_path(File.join(uri.path, url))
+            uri.to_s
+          when :ssh
+            host_with_user, group_and_project = repo.remote_origin_url.split(':', 2)
+            group_and_project = File.expand_path(File.join('/', group_and_project, url))[1..-1]
+            [host_with_user, group_and_project].join(':')
+          else
+            raise
+          end
+        else
+          url
+        end
+      end
+
+      def submodule_artifact_options(submodule_params)
+        submodule_rel_path = submodule_params[:path]
+
+        {}.tap do |options|
+          options[:name]                = repo.dapp.consistent_uniq_slugify("submodule-#{submodule_rel_path}")
+          options[:cwd]                 = submodule_inherit_path(cwd, submodule_rel_path).last
+          options[:to]                  = File.join(to, submodule_rel_path)
+          options[:include_paths]       = submodule_inherit_paths(include_paths, submodule_rel_path)
+          options[:exclude_paths]       = submodule_inherit_paths(exclude_paths, submodule_rel_path)
+          options[:stages_dependencies] = begin
+            stages_dependencies
+              .map { |stage, paths| [stage, submodule_inherit_paths(paths, submodule_rel_path)] }
+              .to_h
+          end
+          options[:branch]              = submodule_params[:branch]
+          options[:owner]               = owner
+          options[:group]               = group
+        end
+      end
+
+      def submodule_inherit_paths(paths, submodule_rel_path)
+        paths
+          .select { |path| check_path?(submodule_rel_path, path) || check_subpath?(submodule_rel_path, path) }
+          .map { |path| submodule_inherit_path(path, submodule_rel_path) }
+          .flatten
+          .compact
+      end
+
+      def submodule_inherit_path(path, submodule_rel_path)
+        path_parts      = path.split('/')
+        test_path       = nil
+        inherited_paths = []
+        until path_parts.empty?
+          last_part_path = path_parts.shift
+          test_path      = [test_path, last_part_path].compact.join('/')
+
+          non_match    = !File.fnmatch(test_path, submodule_rel_path, File::FNM_PATHNAME)
+          part_for_all = (last_part_path == '**')
+
+          if non_match || part_for_all
+            inherited_paths << [last_part_path, path_parts].flatten.join('/')
+            break unless part_for_all
+          end
+        end
+
+        inherited_paths
+      end
 
       def cwd_type(stage)
         if dev_mode?
@@ -164,7 +252,6 @@ module Dapp
         hexdigest begin
           diff_patches(nil, nil, **options).map do |patch|
             file = patch.delta.new_file
-            raise_if_submodule!(file[:path], file[:mode])
             [file[:path], File.read(File.join(repo.workdir_path, file[:path])), file[:mode]]
           end
         end
@@ -279,18 +366,9 @@ module Dapp
 
       def patch_file(stage, from_commit, to_commit)
         File.open(repo.dimg.tmp_path('patches', patch_file_name(from_commit, to_commit)), File::RDWR | File::CREAT) do |f|
-          diff_patches(from_commit, to_commit).each do |patch|
-            file = patch.delta.new_file
-            raise_if_submodule!(file[:path], file[:mode])
-            f.write change_patch_new_file_path(stage, patch)
-          end
+          diff_patches(from_commit, to_commit).each { |patch| f.write change_patch_new_file_path(stage, patch) }
         end
         repo.dimg.container_tmp_path('patches', patch_file_name(from_commit, to_commit))
-      end
-
-      def raise_if_submodule!(relative_file_path, mode) # FIXME
-        return unless mode == 57344
-        raise Error::Rugged, code: :submodule_not_supported, data: { path: repo.path.dirname.join(relative_file_path) }
       end
 
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -356,7 +434,9 @@ module Dapp
 
       def repo_entries(commit, paths: include_paths_or_cwd)
         (@repo_entries ||= {})[[commit, paths]] ||= begin
-          repo.entries(commit, paths: paths, exclude_paths: exclude_paths(true))
+          repo
+            .entries(commit, paths: paths, exclude_paths: exclude_paths(true))
+            .select { |_, entry| !submodule_mode?(entry[:filemode]) }
         end
       end
 
@@ -365,9 +445,7 @@ module Dapp
           diff_patches(commit, nil).each do |patch|
             file = patch.delta.new_file
             host_file_path = File.join(repo.workdir_path, file[:path])
-
             next unless File.exist?(host_file_path)
-            raise_if_submodule!(file[:path], file[:mode])
 
             content = File.read(host_file_path)
             yield slice_cwd(stage, file[:path]), content, file[:mode]
@@ -377,9 +455,6 @@ module Dapp
             next unless entry[:type] == :blob
 
             entry_file_path = File.join(root, entry[:name])
-
-            raise_if_submodule!(entry_file_path, entry[:filemode])
-
             content = repo.lookup_object(entry[:oid]).content
             yield slice_cwd(stage, entry_file_path), content, entry[:filemode]
           end
@@ -395,7 +470,9 @@ module Dapp
               opts[:recurse_untracked_dirs] = true
             end
           end
-          repo.patches(from_commit, to_commit, paths: paths, exclude_paths: exclude_paths(true), **options)
+          repo
+            .patches(from_commit, to_commit, paths: paths, exclude_paths: exclude_paths(true), **options)
+            .select { |patch| !submodule_mode?(patch.delta.new_file[:mode]) } # FIXME: https://github.com/libgit2/rugged/issues/727
         end
       end
 

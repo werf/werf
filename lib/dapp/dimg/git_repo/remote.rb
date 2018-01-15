@@ -64,7 +64,11 @@ module Dapp
             end
 
             dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_fetch', data: { url: url }), short: true) do
-              git.fetch('origin', [branch], credentials: _rugged_credentials)
+              begin
+                git.fetch('origin', [branch], credentials: _rugged_credentials)
+              rescue Rugged::SshError => e
+                raise Error::Rugged, code: :rugged_remote_error, data: { url: url, message: e.message.strip }
+              end
               raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } unless branch_exist?(branch)
             end
           end unless dimg.ignore_git_fetch || dapp.dry_run?
