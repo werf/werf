@@ -46,6 +46,10 @@ module SpecHelper
       expect { yield }.to raise_error { |error| expect(error.net_status[:code]).to be(code) }
     end
 
+    def shellout_pack(cmd)
+      "eval $(echo #{Base64.strict_encode64(cmd)} | base64 --decode)"
+    end
+
     def self.included(base)
       base.extend(self)
     end

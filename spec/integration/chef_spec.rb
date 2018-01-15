@@ -60,7 +60,7 @@ describe Dapp::Dimg::Builder::Chef do
           expect(send(dimod_test_file, reload: true)).not_to eq(old_template_file_values[dimod_test_file])
           expect(send(dimod_test2_file, reload: true)).not_to eq(old_template_file_values[dimod_test2_file])
 
-          expect(send("dapp_#{stage}", reload: true)).to eq(new_file_values[project_file])
+          expect(send("testproject_#{stage}", reload: true)).to eq(new_file_values[project_file])
           expect(send("dimod_test_#{stage}", reload: true)).to eq(new_file_values[dimod_test_file])
           expect(send("dimod_test2_#{stage}", reload: true)).to eq(new_file_values[dimod_test2_file])
         end
@@ -280,8 +280,8 @@ describe Dapp::Dimg::Builder::Chef do
   TEST_FILE_NAMES = %i(foo x_foo x_y_foo bar baz qux
                        burger pizza taco pelmeni
                        kolokolchik koromyslo taburetka batareika
-                       dapp_before_install dapp_install
-                       dapp_before_setup dapp_setup
+                       testproject_before_install testproject_install
+                       testproject_before_setup testproject_setup
                        dimod_test_before_install dimod_test_install
                        dimod_test_before_setup dimod_test_setup
                        dimod_test2_before_install dimod_test2_install
