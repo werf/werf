@@ -3,6 +3,8 @@ module Dapp
     module GitRepo
       # Base class for any Git repo (remote, gitkeeper, etc)
       class Base
+        include Helper::Trivia
+
         attr_reader :name
 
         def initialize(manager, name)
@@ -96,7 +98,13 @@ module Dapp
 
         def patches(from, to, paths: [], exclude_paths: [], **kwargs)
           diff(from, to, **kwargs).patches.select do |patch|
-            !ignore_path?(patch.delta.new_file[:path], paths: paths, exclude_paths: exclude_paths)
+            delta_new_file = patch.delta.new_file
+            args = [delta_new_file[:path], paths: paths, exclude_paths: exclude_paths]
+            if delta_new_file[:mode] == 0o040000 # nested git repository in dev mode
+              !ignore_directory?(*args)
+            else
+              !ignore_path?(*args)
+            end
           end
         end
 
@@ -219,28 +227,26 @@ module Dapp
 
         private
 
+        def ignore_directory?(path, paths: [], exclude_paths: [])
+          ignore_path_base(path, exclude_paths: exclude_paths) do
+            paths.empty? || paths.any? { |p| check_path?(path, p) || check_subpath?(path, p) }
+          end
+        end
+
         def ignore_path?(path, paths: [], exclude_paths: [])
-          is_exclude_path = exclude_paths.any? { |p| check_path?(path, p) }
-          is_include_path = begin
+          ignore_path_base(path, exclude_paths: exclude_paths) do
             paths.empty? ||
               paths.any? do |p|
                 File.fnmatch?(p, path, File::FNM_PATHNAME) ||
                   File.fnmatch?(File.join(p, '**', '*'), path, File::FNM_PATHNAME)
               end
           end
-
-          is_exclude_path || !is_include_path
         end
 
-        def check_path?(path, format)
-          path_parts = path.split('/')
-          checking_path = nil
-
-          until path_parts.empty?
-            checking_path = [checking_path, path_parts.shift].compact.join('/')
-            return true if File.fnmatch?(format, checking_path, File::FNM_PATHNAME)
-          end
-          false
+        def ignore_path_base(path, exclude_paths: [])
+          is_exclude_path = exclude_paths.any? { |p| check_path?(path, p) }
+          is_include_path = yield
+          is_exclude_path || !is_include_path
         end
       end
     end
