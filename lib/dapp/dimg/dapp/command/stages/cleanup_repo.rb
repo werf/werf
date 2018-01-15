@@ -13,7 +13,7 @@ module Dapp
                   repo_dimgs      = repo_dimgs_images(registry)
                   repo_dimgstages = repo_dimgstages_images(registry)
 
-                  repo_dimgstages.delete_if { |dimgstage| repo_dimgs.any? { |dimg| dimgstage[:id] == dimg[:id] } } # ignoring stages with dimgs ids (v2)
+                  array_hash_delete_if_by_id(repo_dimgstages, repo_dimgs) # ignoring stages with dimgs ids (v2)
 
                   proper_repo_cache(registry, repo_dimgstages)                   if proper_cache_version?
                   repo_dimgstages_cleanup(registry, repo_dimgs, repo_dimgstages) if proper_repo_cache?
@@ -48,7 +48,7 @@ module Dapp
 
               ri = repo_image
               loop do
-                repo_dimgstages.delete_if { |dimgstage| dimgstage == ri }
+                array_hash_delete_if_by_id(repo_dimgstages, ri)
                 ri_parent_id = registry.image_parent_id(ri[:tag], ri[:dimg])
                 break if ri_parent_id.empty? || (ri = repo_image_by_id(ri_parent_id, repo_dimgstages)).nil?
               end
