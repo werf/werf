@@ -33,6 +33,7 @@ RSpec.configure do |config|
   end
   config.before :each do
     Dapp::Dapp.options.clear
+    Dapp::Dimg::GitRepo::Remote.instance_variable_set(:@repos, nil)
   end
   config.mock_with :rspec do |mocks|
     mocks.allow_message_expectations_on_nil = true

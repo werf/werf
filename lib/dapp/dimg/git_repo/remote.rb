@@ -4,6 +4,11 @@ module Dapp
       class Remote < Base
         CACHE_VERSION = 1
 
+        def self.get_or_init(dimg, name, url:, branch:)
+          key = [url, branch]
+          (@repos ||= {})[key] ||= new(dimg, name, url: url).tap { |repo| repo.fetch!(branch) }
+        end
+
         attr_reader :url
 
         def initialize(dimg, name, url:)
@@ -14,8 +19,8 @@ module Dapp
           _with_lock do
             dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
               begin
-                if [:https, :ssh].include?(protocol) && !Rugged.features.include?(protocol)
-                  raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, protocol: protocol }
+                if [:https, :ssh].include?(remote_origin_url_protocol) && !Rugged.features.include?(remote_origin_url_protocol)
+                  raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, url_protocol: remote_origin_url_protocol }
                 end
 
                 Rugged::Repository.clone_at(url, path.to_s, bare: true, credentials: _rugged_credentials)
@@ -32,7 +37,7 @@ module Dapp
 
         def _rugged_credentials
           @_rugged_credentials ||= begin
-            if protocol == :ssh
+            if remote_origin_url_protocol == :ssh
               host_with_user = url.split(':', 2).first
               username = host_with_user.split('@', 2).reverse.last
               Rugged::Credentials::SshKeyFromAgent.new(username: username)
@@ -59,7 +64,11 @@ module Dapp
             end
 
             dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_fetch', data: { url: url }), short: true) do
-              git.fetch('origin', [branch], credentials: _rugged_credentials)
+              begin
+                git.fetch('origin', [branch], credentials: _rugged_credentials)
+              rescue Rugged::SshError => e
+                raise Error::Rugged, code: :rugged_remote_error, data: { url: url, message: e.message.strip }
+              end
               raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } unless branch_exist?(branch)
             end
           end unless dimg.ignore_git_fetch || dapp.dry_run?
@@ -89,18 +98,6 @@ module Dapp
 
         def branch_format(name)
           "origin/#{name.reverse.chomp('origin/'.reverse).reverse}"
-        end
-
-        def protocol
-          @protocol ||= begin
-            if (scheme = URI.parse(url).scheme).nil?
-              :noname
-            else
-              scheme.to_sym
-            end
-          rescue URI::InvalidURIError
-            :ssh
-          end
         end
       end
     end

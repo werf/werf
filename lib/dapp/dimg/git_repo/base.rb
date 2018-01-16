@@ -3,6 +3,8 @@ module Dapp
     module GitRepo
       # Base class for any Git repo (remote, gitkeeper, etc)
       class Base
+        include Helper::Trivia
+
         attr_reader :name
 
         def initialize(manager, name)
@@ -34,6 +36,56 @@ module Dapp
           []
         end
 
+        def remote_origin_url
+          @remote_origin_url ||= begin
+            ro_url = url
+            while url_protocol(ro_url) == :noname
+              begin
+                parent_git = Rugged::Repository.discover(ro_url)
+              rescue Rugged::OSError
+                parent_git_path = parent_git ? parent_git.path : path
+                raise Error::Rugged, code: :git_repository_not_found, data: { path: ro_url, parent_git_path: parent_git_path }
+              end
+
+              ro_url = begin
+                git_url(parent_git)
+              rescue Error::Rugged => e
+                break if e.net_status[:code] == :git_repository_without_remote_url # local repository
+                raise
+              end
+            end
+
+            ro_url
+          end
+        end
+
+        def remote_origin_url_protocol
+          url_protocol(remote_origin_url)
+        end
+
+        def submodules_params(commit, paths: [], exclude_paths: [])
+          raise "Workdir not supported for #{self.class}" if commit.nil?
+
+          entry = begin
+            lookup_commit(commit).tree.path('.gitmodules')
+          rescue Rugged::TreeError
+            return []
+          end
+
+          submodules_params_base(lookup_object(entry[:oid]).content, paths: paths, exclude_paths: exclude_paths)
+        end
+
+        def submodules_params_base(gitsubmodule_content, paths: [], exclude_paths: [])
+          IniFile.new.parse(gitsubmodule_content)
+            .to_h
+            .select { |_, params| !ignore_directory?(params['path'], paths: paths, exclude_paths: exclude_paths) }
+            .map do |_, params|
+              params = params.symbolize_keys
+              params[:branch] = params[:branch].to_s if params.key?(:branch)
+              params
+            end
+        end
+
         # FIXME: Убрать логику исключения путей exclude_paths из данного класса,
         # FIXME: т.к. большинство методов не поддерживают инвариант
         # FIXME "всегда выдавать данные с исключенными путями".
@@ -46,7 +98,13 @@ module Dapp
 
         def patches(from, to, paths: [], exclude_paths: [], **kwargs)
           diff(from, to, **kwargs).patches.select do |patch|
-            !ignore_path?(patch.delta.new_file[:path], paths: paths, exclude_paths: exclude_paths)
+            delta_new_file = patch.delta.new_file
+            args = [delta_new_file[:path], paths: paths, exclude_paths: exclude_paths]
+            if delta_new_file[:mode] == 0o040000 # nested git repository in dev mode
+              !ignore_directory?(*args)
+            else
+              !ignore_path?(*args)
+            end
           end
         end
 
@@ -125,6 +183,13 @@ module Dapp
           git.lookup(commit)
         end
 
+        def exist?
+          git
+          true
+        rescue Rugged::OSError
+          false
+        end
+
         protected
 
         attr_reader :manager
@@ -133,30 +198,55 @@ module Dapp
           @git ||= Rugged::Repository.new(path.to_s, **kwargs)
         end
 
+        def url
+          @url ||= git_config_remote_origin_url(git)
+        end
+
+        def git_url(git_repo)
+          git_config_remote_origin_url(git_repo)
+        end
+
+        def git_config_remote_origin_url(git_repo)
+          git_repo.config.to_hash['remote.origin.url'].tap do |url|
+            raise Error::Rugged, code: :git_repository_without_remote_url, data: { name: self.class, path: git_repo.path } if url.nil?
+          end
+        end
+
+        def url_protocol(url)
+          if (scheme = URI.parse(url).scheme).nil?
+            :noname
+          else
+            scheme.to_sym
+          end
+        rescue URI::InvalidURIError
+          :ssh
+        rescue Error::Rugged => e
+          return :none if e.net_status[:code] == :git_repository_without_remote_url
+          raise
+        end
+
         private
 
+        def ignore_directory?(path, paths: [], exclude_paths: [])
+          ignore_path_base(path, exclude_paths: exclude_paths) do
+            paths.empty? || paths.any? { |p| check_path?(path, p) || check_subpath?(path, p) }
+          end
+        end
+
         def ignore_path?(path, paths: [], exclude_paths: [])
-          is_exclude_path = exclude_paths.any? { |p| check_path?(path, p) }
-          is_include_path = begin
+          ignore_path_base(path, exclude_paths: exclude_paths) do
             paths.empty? ||
               paths.any? do |p|
                 File.fnmatch?(p, path, File::FNM_PATHNAME) ||
                   File.fnmatch?(File.join(p, '**', '*'), path, File::FNM_PATHNAME)
               end
           end
-
-          is_exclude_path || !is_include_path
         end
 
-        def check_path?(path, format)
-          path_parts = path.split('/')
-          checking_path = nil
-
-          until path_parts.empty?
-            checking_path = [checking_path, path_parts.shift].compact.join('/')
-            return true if File.fnmatch?(format, checking_path, File::FNM_PATHNAME)
-          end
-          false
+        def ignore_path_base(path, exclude_paths: [])
+          is_exclude_path = exclude_paths.any? { |p| check_path?(path, p) }
+          is_include_path = yield
+          is_exclude_path || !is_include_path
         end
       end
     end

@@ -11,9 +11,17 @@ module SpecHelper
     end
 
     def dimg_renew
-      @openstruct_config = nil
       @dimg = begin
-        options = { config: openstruct_config, dapp: dapp }
+        options = {}
+        options[:config] = begin
+          if config.is_a?(Dapp::Dimg::Config::Directive::Dimg)
+            config
+          else
+            @openstruct_config = nil
+            openstruct_config
+          end
+        end
+        options[:dapp] = dapp
         Dapp::Dimg::Dimg.new(**options)
       end
     end

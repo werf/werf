@@ -46,12 +46,14 @@ module Dapp
         n = begin
           if (name = options[:name])
             name
-          elsif git_url
-            repo_name = git_url.split('/').last
-            repo_name = repo_name[/.*(?=\.git)/] if repo_name.end_with? '.git'
-            repo_name
-          elsif git_path
-            File.basename(File.dirname(git_path)).to_s
+          elsif git_own_repo_exist?
+            if git_url
+              repo_name = git_url.split('/').last
+              repo_name = repo_name[/.*(?=\.git)/] if repo_name.end_with? '.git'
+              repo_name
+            else
+              File.basename(File.dirname(git_own_repo.path)).to_s
+            end
           else
             path.basename.to_s
           end
@@ -61,20 +63,19 @@ module Dapp
     end
 
     def git_url
-      return unless git_config
-      (git_config['remote "origin"'] || {})['url']
+      return unless git_own_repo_exist?
+      git_own_repo.remote_origin_url
+    rescue Dimg::Error::Rugged => e
+      return if e.net_status[:code] == :git_repository_without_remote_url
+      raise
     end
 
-    def git_config
-      @git_config ||= begin
-        IniFile.load(File.join(git_path, 'config')) if git_path
-      end
+    def git_own_repo_exist?
+      git_own_repo.exist?
     end
 
-    def git_path
-      defined?(@git_path) ? @git_path : begin
-        @git_path = search_file_upward('.git')
-      end
+    def git_own_repo
+      @git_own_repo ||= Dimg::GitRepo::Own.new(self)
     end
 
     def path(*path)
@@ -100,7 +101,7 @@ module Dapp
 
     def local_git_artifact_exclude_paths(&blk)
       super do |exclude_paths|
-        build_path_relpath = Pathname.new(build_path).subpath_of(File.dirname(git_path))
+        build_path_relpath = Pathname.new(build_path).subpath_of(File.dirname(git_own_repo.path))
         exclude_paths << build_path_relpath.to_s if build_path_relpath
 
         yield exclude_paths if block_given?

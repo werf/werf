@@ -23,6 +23,13 @@ module Dapp
         # NOTICE: Параметры {from: nil, to: nil} можно указать только для Own repo.
         # NOTICE: Для Remote repo такой вызов не имеет смысла и это ошибка пользователя класса Remote.
 
+        def submodules_params(commit, paths: [], exclude_paths: [])
+          return super unless commit.nil?
+          return []    unless File.file?((gitmodules_file_path = File.join(workdir_path, '.gitmodules')))
+
+          submodules_params_base(File.read(gitmodules_file_path), paths: paths, exclude_paths: exclude_paths)
+        end
+
         def diff(from, to, **kwargs)
           if from.nil? and to.nil?
             mid_commit = latest_commit
@@ -44,6 +51,13 @@ module Dapp
           super
         rescue Rugged::OdbError, TypeError => _e
           raise Error::Rugged, code: :commit_not_found_in_local_git_repository, data: { commit: commit }
+        end
+
+        def exist?
+          super
+        rescue Error::Rugged => e
+          return false if e.net_status[:code] == :local_git_repository_does_not_exist
+          raise
         end
       end
     end
