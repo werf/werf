@@ -115,8 +115,15 @@ module Dapp
               verifiable_artifact[:include_paths].each do |verifiable_path|
                 potential_conflicts = artifact[:include_paths].select { |path| path.start_with?(verifiable_path) }
                 validate_artifact_path!(verifiable_artifact, potential_conflicts)
-              end.empty? && verifiable_artifact[:exclude_paths].empty? && raise(Error::Config, code: :artifact_conflict)
-              validate_artifact_path!(verifiable_artifact, artifact[:include_paths]) if verifiable_artifact[:include_paths].empty?
+              end
+
+              if verifiable_artifact[:include_paths].empty?
+                if artifact[:include_paths].empty? || verifiable_artifact[:exclude_paths].empty?
+                  raise Error::Config, code: :artifact_conflict
+                else
+                  validate_artifact_path!(verifiable_artifact, artifact[:include_paths])
+                end
+              end
             end
 
             def validate_artifact_path!(verifiable_artifact, potential_conflicts)
