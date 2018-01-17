@@ -63,6 +63,10 @@ module Dapp
           url_protocol(remote_origin_url)
         end
 
+        def nested_git_directories_patches(*_args)
+          raise
+        end
+
         def submodules_params(commit, paths: [], exclude_paths: [])
           raise "Workdir not supported for #{self.class}" if commit.nil?
 
@@ -82,6 +86,7 @@ module Dapp
             .map do |_, params|
               params = params.symbolize_keys
               params[:branch] = params[:branch].to_s if params.key?(:branch)
+              params[:type] = :remote
               params
             end
         end

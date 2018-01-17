@@ -19,6 +19,13 @@ module Dapp
           Pathname(git.workdir)
         end
 
+        def nested_git_directories_patches(paths: [], exclude_paths: [], **kwargs)
+          patches(nil, nil, paths: paths, exclude_paths: exclude_paths, **kwargs).select do |patch|
+            delta_new_file = patch.delta.new_file
+            nested_git_repository_mode?(delta_new_file[:mode])
+          end
+        end
+
         # NOTICE: Параметры {from: nil, to: nil} можно указать только для Own repo.
         # NOTICE: Для Remote repo такой вызов не имеет смысла и это ошибка пользователя класса Remote.
 

@@ -542,10 +542,10 @@ describe Dapp::Dimg::GitArtifact do
       end
     end
 
-    context 'submodule_inherit_paths' do
-      def git_artifact_submodule_inherit_paths(paths, submodule_rel_path)
+    context 'embedded_inherit_paths' do
+      def git_artifact_embedded_inherit_paths(paths, embedded_rel_path)
         git_artifact = Dapp::Dimg::GitArtifact.new(nil, to: '/app', branch: 'master')
-        git_artifact.submodule_inherit_paths(paths, submodule_rel_path)
+        git_artifact.embedded_inherit_paths(paths, embedded_rel_path)
       end
 
       paths = [
@@ -562,7 +562,7 @@ describe Dapp::Dimg::GitArtifact do
           '**/*.exe', '*.exe', '*.png',
           'subpath'
         ]
-        expect(git_artifact_submodule_inherit_paths(paths, 'path')).to eq expectation
+        expect(git_artifact_embedded_inherit_paths(paths, 'path')).to eq expectation
       end
 
       it 'missing' do
@@ -570,7 +570,7 @@ describe Dapp::Dimg::GitArtifact do
           "**/*.rb", "*.rb"
         ]
 
-        expect(git_artifact_submodule_inherit_paths(paths, 'missing')).to eq expectation
+        expect(git_artifact_embedded_inherit_paths(paths, 'missing')).to eq expectation
       end
     end
   end

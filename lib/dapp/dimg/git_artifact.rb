@@ -33,6 +33,10 @@ module Dapp
       end
       # rubocop:enable Metrics/ParameterLists
 
+      def embedded_artifacts
+        [submodules_artifacts, nested_git_directory_artifacts].flatten
+      end
+
       def submodules_artifacts
         commit = dev_mode? ? nil : latest_commit
         repo.submodules_params(commit,
@@ -41,15 +45,10 @@ module Dapp
       end
 
       def submodule_artifact(submodule_params)
-        submodule_rel_path = submodule_params[:path]
-        submodule_repo     = begin
-          GitRepo::Remote.new(repo.dimg, submodule_rel_path,
-                              url: submodule_url(submodule_params[:url])).tap { |r| r.fetch!(submodule_params[:branch]) }
-        rescue Rugged::InvalidError => e
-          raise Error::Rugged, code: :incorrect_gitmodules_file, data: { error: e.message }
-        end
-
-        self.class.new(submodule_repo, submodule_artifact_options(submodule_params))
+        submodule_params[:url] = submodule_url(submodule_params[:url])
+        embedded_artifact(submodule_params)
+      rescue Rugged::InvalidError => e
+        raise Error::Rugged, code: :incorrect_gitmodules_file, data: { error: e.message }
       end
 
       def submodule_url(url)
@@ -71,35 +70,67 @@ module Dapp
         end
       end
 
-      def submodule_artifact_options(submodule_params)
-        submodule_rel_path = submodule_params[:path]
+      def nested_git_directory_artifacts
+        return [] unless dev_mode?
+        repo
+          .nested_git_directories_patches(paths: include_paths_or_cwd, exclude_paths: exclude_paths(true), **diff_patches_options)
+          .map(&method(:nested_git_directory_artifact))
+      end
+
+      def nested_git_directory_artifact(patch)
+        params = {}.tap do |p|
+          p[:path] = patch.delta.new_file[:path]
+          p[:type] = :local
+        end
+        embedded_artifact(params)
+      end
+
+      def embedded_artifact(embedded_params)
+        embedded_rel_path = embedded_params[:path]
+        embedded_repo     = begin
+          if embedded_params[:type] == :remote
+            GitRepo::Remote.new(repo.dimg, embedded_rel_path,
+                                url: embedded_params[:url]).tap { |r| r.fetch!(embedded_params[:branch]) }
+          elsif embedded_params[:type] == :local
+            embedded_path = File.join(repo.workdir_path, embedded_params[:path])
+            GitRepo::Local.new(repo.dimg, embedded_rel_path, embedded_path)
+          else
+            raise
+          end
+        end
+
+        self.class.new(embedded_repo, embedded_artifact_options(embedded_params))
+      end
+
+      def embedded_artifact_options(embedded_params)
+        embedded_rel_path = embedded_params[:path]
 
         {}.tap do |options|
-          options[:name]                = repo.dapp.consistent_uniq_slugify("submodule-#{submodule_rel_path}")
-          options[:cwd]                 = submodule_inherit_path(cwd, submodule_rel_path).last
-          options[:to]                  = File.join(to, submodule_rel_path)
-          options[:include_paths]       = submodule_inherit_paths(include_paths, submodule_rel_path)
-          options[:exclude_paths]       = submodule_inherit_paths(exclude_paths, submodule_rel_path)
+          options[:name]                = repo.dapp.consistent_uniq_slugify("embedded-#{embedded_rel_path}")
+          options[:cwd]                 = embedded_inherit_path(cwd, embedded_rel_path).last
+          options[:to]                  = File.join(to, embedded_rel_path)
+          options[:include_paths]       = embedded_inherit_paths(include_paths, embedded_rel_path)
+          options[:exclude_paths]       = embedded_inherit_paths(exclude_paths, embedded_rel_path)
           options[:stages_dependencies] = begin
             stages_dependencies
-              .map { |stage, paths| [stage, submodule_inherit_paths(paths, submodule_rel_path)] }
+              .map { |stage, paths| [stage, embedded_inherit_paths(paths, embedded_rel_path)] }
               .to_h
           end
-          options[:branch]              = submodule_params[:branch]
+          options[:branch]              = embedded_params[:branch]
           options[:owner]               = owner
           options[:group]               = group
         end
       end
 
-      def submodule_inherit_paths(paths, submodule_rel_path)
+      def embedded_inherit_paths(paths, embedded_rel_path)
         paths
-          .select { |path| check_path?(submodule_rel_path, path) || check_subpath?(submodule_rel_path, path) }
-          .map { |path| submodule_inherit_path(path, submodule_rel_path) }
+          .select { |path| check_path?(embedded_rel_path, path) || check_subpath?(embedded_rel_path, path) }
+          .map { |path| embedded_inherit_path(path, embedded_rel_path) }
           .flatten
           .compact
       end
 
-      def submodule_inherit_path(path, submodule_rel_path)
+      def embedded_inherit_path(path, embedded_rel_path)
         path_parts      = path.split('/')
         test_path       = nil
         inherited_paths = []
@@ -107,7 +138,7 @@ module Dapp
           last_part_path = path_parts.shift
           test_path      = [test_path, last_part_path].compact.join('/')
 
-          non_match    = !File.fnmatch(test_path, submodule_rel_path, File::FNM_PATHNAME)
+          non_match    = !File.fnmatch(test_path, embedded_rel_path, File::FNM_PATHNAME)
           part_for_all = (last_part_path == '**')
 
           if non_match || part_for_all
@@ -462,21 +493,32 @@ module Dapp
 
       def diff_patches(from_commit, to_commit, paths: include_paths_or_cwd)
         (@diff_patches ||= {})[[from_commit, to_commit, paths]] ||= begin
-          options = {}.tap do |opts|
-            opts[:force_text] = true
-            if dev_mode?
-              opts[:include_untracked] = true
-              opts[:recurse_untracked_dirs] = true
-            end
-          end
           repo
-            .patches(from_commit, to_commit, paths: paths, exclude_paths: exclude_paths(true), **options)
-            .select { |patch| !submodule_mode?(patch.delta.new_file[:mode]) } # FIXME: https://github.com/libgit2/rugged/issues/727
+            .patches(from_commit, to_commit, paths: paths, exclude_paths: exclude_paths(true), **diff_patches_options)
+            .select do |patch|
+              file_mode = patch.delta.new_file[:mode]
+              !(submodule_mode?(file_mode) || # FIXME: https://github.com/libgit2/rugged/issues/727
+                nested_git_directory_mode?(file_mode))
+            end
+        end
+      end
+
+      def diff_patches_options
+        {}.tap do |opts|
+          opts[:force_text] = true
+          if dev_mode?
+            opts[:include_untracked] = true
+            opts[:recurse_untracked_dirs] = true
+          end
         end
       end
 
       def submodule_mode?(mode) # FIXME
         mode == 0o160000
+      end
+
+      def nested_git_directory_mode?(mode)
+        mode == 0o040000
       end
 
       def include_paths_or_cwd
@@ -530,7 +572,7 @@ module Dapp
       end
 
       def local?
-        repo.is_a? GitRepo::Own
+        repo.is_a? GitRepo::Local
       end
     end
   end
