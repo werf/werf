@@ -127,12 +127,14 @@ module Dapp
             end
 
             def validate_artifact_path!(verifiable_artifact, potential_conflicts)
-              potential_conflicts.all? do |path|
-                loop do
-                  break if verifiable_artifact[:exclude_paths].include?(path) || ((path = File.dirname(path)) == '.')
+              raise Error::Config, code: :artifact_conflict unless begin
+                potential_conflicts.all? do |path|
+                  loop do
+                    break if verifiable_artifact[:exclude_paths].include?(path) || ((path = File.dirname(path)) == '.')
+                  end
+                  verifiable_artifact[:exclude_paths].include?(path)
                 end
-                verifiable_artifact[:exclude_paths].include?(path)
-              end.tap { |res| res || raise(Error::Config, code: :artifact_conflict) }
+              end
             end
 
             def _associated_artifacts
