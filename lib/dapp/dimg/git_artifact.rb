@@ -45,29 +45,9 @@ module Dapp
       end
 
       def submodule_artifact(submodule_params)
-        submodule_params[:url] = submodule_url(submodule_params[:url])
         embedded_artifact(submodule_params)
       rescue Rugged::InvalidError => e
         raise Error::Rugged, code: :incorrect_gitmodules_file, data: { error: e.message }
-      end
-
-      def submodule_url(url)
-        if url.start_with?('../')
-          case repo.remote_origin_url_protocol
-          when :http, :https, :git
-            uri = URI.parse(repo.remote_origin_url)
-            uri.path = File.expand_path(File.join(uri.path, url))
-            uri.to_s
-          when :ssh
-            host_with_user, group_and_project = repo.remote_origin_url.split(':', 2)
-            group_and_project = File.expand_path(File.join('/', group_and_project, url))[1..-1]
-            [host_with_user, group_and_project].join(':')
-          else
-            raise
-          end
-        else
-          url
-        end
       end
 
       def nested_git_directory_artifacts

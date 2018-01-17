@@ -33,7 +33,15 @@ module Dapp
           return super unless commit.nil?
           return []    unless File.file?((gitmodules_file_path = File.join(workdir_path, '.gitmodules')))
 
-          submodules_params_base(File.read(gitmodules_file_path), paths: paths, exclude_paths: exclude_paths)
+          submodules_params_base(File.read(gitmodules_file_path),
+                                 paths: paths,
+                                 exclude_paths: exclude_paths).each do |submodule_params|
+            submodule_path = File.join(workdir_path, submodule_params[:path])
+            if git_repo_exist?(submodule_path)
+              dapp.log_info("Using local submodule `#{submodule_path}`!")
+              submodule_params[:type] = :local
+            end
+          end
         end
 
         def ignore_patch?(patch, paths: [], exclude_paths: [])
@@ -71,6 +79,15 @@ module Dapp
           super
         rescue Rugged::OdbError, TypeError => _e
           raise Error::Rugged, code: :commit_not_found_in_local_git_repository, data: { commit: commit }
+        end
+
+        protected
+
+        def git_repo_exist?(path)
+          Rugged::Repository.new(path)
+          true
+        rescue Rugged::RepositoryError, Rugged::OSError => _e
+          false
         end
       end
     end
