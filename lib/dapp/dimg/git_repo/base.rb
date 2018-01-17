@@ -98,14 +98,12 @@ module Dapp
 
         def patches(from, to, paths: [], exclude_paths: [], **kwargs)
           diff(from, to, **kwargs).patches.select do |patch|
-            delta_new_file = patch.delta.new_file
-            args = [delta_new_file[:path], paths: paths, exclude_paths: exclude_paths]
-            if delta_new_file[:mode] == 0o040000 # nested git repository in dev mode
-              !ignore_directory?(*args)
-            else
-              !ignore_path?(*args)
-            end
+            ignore_patch?(patch, paths: paths, exclude_paths: exclude_paths)
           end
+        end
+
+        def ignore_patch?(patch, paths: [], exclude_paths: [])
+          !ignore_path?(patch.delta.new_file[:path], paths: paths, exclude_paths: exclude_paths)
         end
 
         def entries(commit, paths: [], exclude_paths: [])

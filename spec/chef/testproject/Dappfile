@@ -1,10 +1,4 @@
 dimg_group do
-  git do
-    add do
-      to '/myapp'
-    end
-  end
-
   git 'git@github.com:flant/dapp.git' do
     add { to '/myapp2' }
   end

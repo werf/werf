@@ -8,8 +8,9 @@ module Dapp
 
         def local_git_artifacts
           @local_git_artifact_list ||= [].tap do |artifacts|
+            break artifacts if (local_git_artifacts = Array(config._git_artifact._local)).empty?
             repo = GitRepo::Own.new(self)
-            Array(config._git_artifact._local).map do |ga_config|
+            local_git_artifacts.map do |ga_config|
               artifacts.concat(generate_git_artifacts(repo, **ga_config._artifact_options))
             end
           end

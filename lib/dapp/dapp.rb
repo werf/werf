@@ -71,11 +71,14 @@ module Dapp
     end
 
     def git_own_repo_exist?
-      git_own_repo.exist?
+      !git_own_repo.nil?
     end
 
     def git_own_repo
       @git_own_repo ||= Dimg::GitRepo::Own.new(self)
+    rescue Dimg::Error::Rugged => e
+      raise unless e.net_status[:code] == :local_git_repository_does_not_exist
+      nil
     end
 
     def path(*path)
