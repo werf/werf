@@ -43,9 +43,8 @@ module Dapp
       def submodule_artifact(submodule_params)
         submodule_rel_path = submodule_params[:path]
         submodule_repo     = begin
-          GitRepo::Remote.get_or_init(repo.dimg, submodule_rel_path,
-                                      url: submodule_url(submodule_params[:url]),
-                                      branch: submodule_params[:branch])
+          GitRepo::Remote.new(repo.dimg, submodule_rel_path,
+                              url: submodule_url(submodule_params[:url])).tap { |r| r.fetch!(submodule_params[:branch]) }
         rescue Rugged::InvalidError => e
           raise Error::Rugged, code: :incorrect_gitmodules_file, data: { error: e.message }
         end
