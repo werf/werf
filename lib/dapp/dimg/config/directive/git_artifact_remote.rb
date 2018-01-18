@@ -20,7 +20,7 @@ module Dapp
           end
 
           def commit(value)
-            sub_directive_eval { @_commit = value }
+            sub_directive_eval { @_commit = value.to_s }
           end
 
           def _export
@@ -42,11 +42,11 @@ module Dapp
             end
 
             def branch(value)
-              sub_directive_eval { @_branch = value }
+              sub_directive_eval { @_branch = value.to_s }
             end
 
             def commit(value)
-              sub_directive_eval { @_commit = value }
+              sub_directive_eval { @_commit = value.to_s }
             end
 
             def validate!
