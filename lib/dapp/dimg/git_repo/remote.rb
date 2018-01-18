@@ -4,11 +4,6 @@ module Dapp
       class Remote < Base
         CACHE_VERSION = 1
 
-        def self.get_or_init(dimg, name, url:, branch:)
-          key = [url, branch]
-          (@repos ||= {})[key] ||= new(dimg, name, url: url).tap { |repo| repo.fetch!(branch) }
-        end
-
         attr_reader :url
 
         def initialize(dimg, name, url:)
