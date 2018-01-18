@@ -16,11 +16,11 @@ module Dapp
           end
 
           def branch(value)
-            sub_directive_eval { @_branch = value }
+            sub_directive_eval { @_branch = value.to_s }
           end
 
           def commit(value)
-            sub_directive_eval { @_commit = value }
+            sub_directive_eval { @_commit = value.to_s }
           end
 
           def _export
@@ -38,15 +38,15 @@ module Dapp
             attr_accessor :_url, :_name, :_branch, :_commit
 
             def _artifact_options
-              super.merge(name: _name, branch: _branch.to_s, commit: _commit.to_s)
+              super.merge(name: _name, branch: _branch, commit: _commit)
             end
 
             def branch(value)
-              sub_directive_eval { @_branch = value }
+              sub_directive_eval { @_branch = value.to_s }
             end
 
             def commit(value)
-              sub_directive_eval { @_commit = value }
+              sub_directive_eval { @_commit = value.to_s }
             end
 
             def validate!
