@@ -510,68 +510,35 @@ describe Dapp::Dimg::GitArtifact do
     end
   end
 
-  context 'submodule' do
-    context 'submodule_url' do
-      def git_artifact_submodule_url(submodule_url, remote_origin_url = nil, remote_origin_url_protocol = nil)
-        double_repo = double('repo')
-        allow(double_repo).to receive(:remote_origin_url) { remote_origin_url }
-        allow(double_repo).to receive(:remote_origin_url_protocol) { remote_origin_url_protocol }
-        git_artifact = Dapp::Dimg::GitArtifact.new(double_repo, to: '/app', branch: 'master')
-        git_artifact.submodule_url(submodule_url)
-      end
-
-      ['git@github.com:group/submodule.git', 'https://github.com/group/submodule.git', '/local/submodule/path'].each do |submodule_url|
-        it submodule_url do
-          expect(git_artifact_submodule_url(submodule_url)).to eq submodule_url
-        end
-      end
-
-      context 'relative_url' do
-        [
-          ['git@github.com:group/project.git', :ssh, 'git@github.com:group/submodule.git'],
-          ['https://github.com/group/project.git', :https, 'https://github.com/group/submodule.git'],
-        ].each do |remote_origin_url, remote_origin_url_protocol, expectation|
-          it remote_origin_url_protocol do
-            expect(git_artifact_submodule_url('../submodule.git', remote_origin_url, remote_origin_url_protocol)).to eq expectation
-          end
-        end
-
-        it 'local' do
-          expect { git_artifact_submodule_url('../submodule.git','/local/path', :noname) }.to raise_error RuntimeError
-        end
-      end
+  context 'embedded_inherit_paths' do
+    def git_artifact_embedded_inherit_paths(paths, embedded_rel_path)
+      git_artifact = Dapp::Dimg::GitArtifact.new(nil, to: '/app', branch: 'master')
+      git_artifact.embedded_inherit_paths(paths, embedded_rel_path)
     end
 
-    context 'submodule_inherit_paths' do
-      def git_artifact_submodule_inherit_paths(paths, submodule_rel_path)
-        git_artifact = Dapp::Dimg::GitArtifact.new(nil, to: '/app', branch: 'master')
-        git_artifact.submodule_inherit_paths(paths, submodule_rel_path)
-      end
+    paths = [
+      '**/*.rb', '*.txt',
+      'path', 'path2',
+      'path/**/*.exe', 'path/*.png',
+      'path2/**/*.html', 'path2/*.jpg',
+      '*th/subpath'
+    ]
 
-      paths = [
-        '**/*.rb', '*.txt',
-        'path', 'path2',
-        'path/**/*.exe', 'path/*.png',
-        'path2/**/*.html', 'path2/*.jpg',
-        '*th/subpath'
+    it 'path' do
+      expectation = [
+        '**/*.rb', '*.rb',
+        '**/*.exe', '*.exe', '*.png',
+        'subpath'
+      ]
+      expect(git_artifact_embedded_inherit_paths(paths, 'path')).to eq expectation
+    end
+
+    it 'missing' do
+      expectation = [
+        "**/*.rb", "*.rb"
       ]
 
-      it 'path' do
-        expectation = [
-          '**/*.rb', '*.rb',
-          '**/*.exe', '*.exe', '*.png',
-          'subpath'
-        ]
-        expect(git_artifact_submodule_inherit_paths(paths, 'path')).to eq expectation
-      end
-
-      it 'missing' do
-        expectation = [
-          "**/*.rb", "*.rb"
-        ]
-
-        expect(git_artifact_submodule_inherit_paths(paths, 'missing')).to eq expectation
-      end
+      expect(git_artifact_embedded_inherit_paths(paths, 'missing')).to eq expectation
     end
   end
 end

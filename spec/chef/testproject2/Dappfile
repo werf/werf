@@ -4,7 +4,7 @@ dimg do
   artifact do
     docker.from 'spheromak/docker-chefdk:latest'
 
-    git do
+    git('https://github.com/flant/dapp.git') do
       add '/spec/chef/testproject2/.chefinit' do
         to '/chefinit'
 

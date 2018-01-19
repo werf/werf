@@ -51,4 +51,35 @@ describe Dapp::Dimg::GitRepo do
     git_change_and_commit
     expect(own.latest_commit).to eq git_latest_commit
   end
+
+  context 'submodule_url' do
+    def repo_submodule_url(submodule_url, remote_origin_url = nil, remote_origin_url_protocol = nil)
+      dapp_remote_init
+      double_remote_repo = @remote
+      allow(double_remote_repo).to receive(:remote_origin_url) { remote_origin_url }
+      allow(double_remote_repo).to receive(:remote_origin_url_protocol) { remote_origin_url_protocol }
+      double_remote_repo.send(:submodule_url, submodule_url)
+    end
+
+    ['git@github.com:group/submodule.git', 'https://github.com/group/submodule.git', '/local/submodule/path'].each do |submodule_url|
+      it submodule_url, test_construct: true do
+        expect(repo_submodule_url(submodule_url)).to eq submodule_url
+      end
+    end
+
+    context 'relative_url' do
+      [
+        ['git@github.com:group/project.git', :ssh, 'git@github.com:group/submodule.git'],
+        ['https://github.com/group/project.git', :https, 'https://github.com/group/submodule.git'],
+      ].each do |remote_origin_url, remote_origin_url_protocol, expectation|
+        it remote_origin_url_protocol, test_construct: true do
+          expect(repo_submodule_url('../submodule.git', remote_origin_url, remote_origin_url_protocol)).to eq expectation
+        end
+      end
+
+      it 'local', test_construct: true do
+        expect { repo_submodule_url('../submodule.git', '/local/path', :noname) }.to raise_error RuntimeError
+      end
+    end
+  end
 end

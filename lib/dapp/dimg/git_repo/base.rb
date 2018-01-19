@@ -63,6 +63,10 @@ module Dapp
           url_protocol(remote_origin_url)
         end
 
+        def nested_git_directories_patches(*_args)
+          raise
+        end
+
         def submodules_params(commit, paths: [], exclude_paths: [])
           raise "Workdir not supported for #{self.class}" if commit.nil?
 
@@ -82,8 +86,29 @@ module Dapp
             .map do |_, params|
               params = params.symbolize_keys
               params[:branch] = params[:branch].to_s if params.key?(:branch)
+              params[:url] = submodule_url(params[:url])
+              params[:type] = url_protocol(params[:url]) == :noname ? :local : :remote
               params
             end
+        end
+
+        def submodule_url(gitsubmodule_url)
+          if gitsubmodule_url.start_with?('../')
+            case remote_origin_url_protocol
+            when :http, :https, :git
+              uri = URI.parse(remote_origin_url)
+              uri.path = File.expand_path(File.join(uri.path, gitsubmodule_url))
+              uri.to_s
+            when :ssh
+              host_with_user, group_and_project = remote_origin_url.split(':', 2)
+              group_and_project = File.expand_path(File.join('/', group_and_project, gitsubmodule_url))[1..-1]
+              [host_with_user, group_and_project].join(':')
+            else
+              raise
+            end
+          else
+            gitsubmodule_url
+          end
         end
 
         # FIXME: Убрать логику исключения путей exclude_paths из данного класса,
@@ -98,14 +123,12 @@ module Dapp
 
         def patches(from, to, paths: [], exclude_paths: [], **kwargs)
           diff(from, to, **kwargs).patches.select do |patch|
-            delta_new_file = patch.delta.new_file
-            args = [delta_new_file[:path], paths: paths, exclude_paths: exclude_paths]
-            if delta_new_file[:mode] == 0o040000 # nested git repository in dev mode
-              !ignore_directory?(*args)
-            else
-              !ignore_path?(*args)
-            end
+            ignore_patch?(patch, paths: paths, exclude_paths: exclude_paths)
           end
+        end
+
+        def ignore_patch?(patch, paths: [], exclude_paths: [])
+          !ignore_path?(patch.delta.new_file[:path], paths: paths, exclude_paths: exclude_paths)
         end
 
         def entries(commit, paths: [], exclude_paths: [])
@@ -181,13 +204,6 @@ module Dapp
 
         def lookup_commit(commit)
           git.lookup(commit)
-        end
-
-        def exist?
-          git
-          true
-        rescue Rugged::OSError
-          false
         end
 
         protected

@@ -8,8 +8,9 @@ module Dapp
 
         def local_git_artifacts
           @local_git_artifact_list ||= [].tap do |artifacts|
+            break artifacts if (local_git_artifacts = Array(config._git_artifact._local)).empty?
             repo = GitRepo::Own.new(self)
-            Array(config._git_artifact._local).map do |ga_config|
+            local_git_artifacts.map do |ga_config|
               artifacts.concat(generate_git_artifacts(repo, **ga_config._artifact_options))
             end
           end
@@ -27,14 +28,14 @@ module Dapp
         def generate_git_artifacts(repo, **git_artifact_options)
           [].tap do |artifacts|
             artifacts << (artifact = ::Dapp::Dimg::GitArtifact.new(repo, **git_artifact_options))
-            artifacts.concat(generate_git_submodules_artifacts(artifact))
+            artifacts.concat(generate_git_embedded_artifacts(artifact))
           end
         end
 
-        def generate_git_submodules_artifacts(artifact)
+        def generate_git_embedded_artifacts(artifact)
           [].tap do |artifacts|
-            artifacts.concat(submodules_artifacts = artifact.submodules_artifacts)
-            artifacts.concat(submodules_artifacts.map(&method(:generate_git_submodules_artifacts)).flatten)
+            artifacts.concat(submodules_artifacts = artifact.embedded_artifacts)
+            artifacts.concat(submodules_artifacts.map(&method(:generate_git_embedded_artifacts)).flatten)
           end
         end
       end # GitArtifact

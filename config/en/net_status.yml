@@ -115,7 +115,7 @@ en:
     rugged:
       git_repository_reference_error: "Git repo `%{name}`: %{message}!"
       rugged_remote_error: "Remote git repo `%{url}`: `%{message}`!"
-      local_git_repository_does_not_exist: "Local git repo: doesn't exist!"
+      local_git_repository_does_not_exist: "Local git repo (`%{path}`): doesn't exist!"
       commit_not_found_in_local_git_repository: "Local git repo: commit `%{commit}` not found!\nIf commit has been rebased: run command `dapp dimg stages cleanup local --improper-git-commit`!"
       commit_not_found_in_remote_git_repository: "Remote git repo `%{url}`: commit `%{commit}` not found!\nIf commit has been rebased: run command `dapp dimg stages cleanup local --improper-git-commit`!"
       branch_not_exist_in_remote_git_repository: "Remote git repo `%{url}`: branch `%{branch}` not exist!"
