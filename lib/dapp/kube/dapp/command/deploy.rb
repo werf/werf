@@ -27,7 +27,7 @@ module Dapp
               .reject { |job| ['0', 'false'].include? job.annotations["dapp/recreate"].to_s }
               .select { |job| all_jobs_names.include? job.name }
               .each do |job|
-                log_process("Delete hooks job `#{job.name}`", short: true) do
+                log_process("Delete hook job `#{job.name}` (dapp/recreate)", short: true) do
                   kube_delete_job!(job.name, all_pods_specs) unless dry_run?
                 end
               end
@@ -133,12 +133,17 @@ module Dapp
                   watch_hooks_condition.signal
                 end
 
-                release.deploy!
+                cmd_res = release.helm_upgrade!
+
+                if cmd_res.error?
+                  raise ::Dapp::Error::Command, code: :kube_helm_failed, data: {output: (cmd_res.stdout + cmd_res.stderr).strip}
+                else
+                  watch_hooks_thr.join if !dry_run? && watch_hooks_thr && watch_hooks_thr.alive?
+                  log_info((cmd_res.stdout + cmd_res.stderr).strip)
+                end
               end
 
               deployment_managers.each(&:after_deploy)
-
-              watch_hooks_thr.kill if !dry_run? && watch_hooks_thr && watch_hooks_thr.alive?
 
               unless dry_run?
                 begin

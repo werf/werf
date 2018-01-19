@@ -44,6 +44,7 @@ en:
       expected_only_one_tag: 'Expected only one tag (`%{tags}`)!'
       kube_deploy_timeout: "Deploy timeout!"
       kube_connect_timeout: "Connect timeout when connecting to kube API."
+      kube_helm_failed: "Helm failed: %{output}"
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       no_such_app: "No such app: `%{apps_patterns}`!"
@@ -136,6 +137,8 @@ en:
       server_connection_refused: "Kube server `%{url}` connection refused: %{error}"
       server_error: "Kube respond with server error code %{response_http_status}, request parameters: `%{request_parameters}`, response: `%{response_raw_body}`"
       container_stuck: "Pod's `%{pod_name}` container `%{container_name}` stuck in %{state} state: %{state_reason}: %{state_message}"
+      bad_image: "Pod `%{pod_name}` bad image: %{reason}: %{message}"
+      container_crash: "Pod's `%{pod_name}` container crashed: %{reason}: %{message}"
     secret:
       bad_data: "Data `%{data}` can't be decrypted: check encryption key and data!"
       key_length_too_short: "Encryption key isn't valid (required size %{required_size} bytes)!"

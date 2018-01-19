@@ -18,7 +18,7 @@ module Dapp
           _, container_state_data = pod.container_state(name)
           return if @processed_containers_ids.include? container_state_data['containerID']
 
-          pod_manager.wait_till_running!
+          pod_manager.wait_till_launched!
 
           pod = Kubernetes::Client::Resource::Pod.new(dapp.kubernetes.pod(pod_manager.name))
           container_state, container_state_data = pod.container_state(name)
