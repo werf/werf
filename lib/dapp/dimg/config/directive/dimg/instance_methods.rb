@@ -136,6 +136,7 @@ module Dapp
 
             def artifacts_after_parsing!
               _artifacts_auto_excluding!
+              _artifact.map(&:_config).each(&:artifacts_after_parsing!)
             end
 
             protected
