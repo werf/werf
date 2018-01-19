@@ -31,13 +31,25 @@ module Dapp
           stages + artifacts.map(&:all_stages).flatten
         end
 
+        def last_stage
+          @last_stage || begin
+            (self.last_stage = last_stage_class.new(self)).tap do |stage|
+              dapp.log_secondary_process("#{config._name || 'nameless'}: calculating stages signatures") do
+                stage.signature
+              end
+            end
+          end
+        end
+
         protected
 
-        def last_stage
-          @last_stage ||= if scratch?
-            Build::Stage::ImportArtifact.new(self)
+        attr_writer :last_stage
+
+        def last_stage_class
+          if scratch?
+            Build::Stage::ImportArtifact
           else
-            Build::Stage::DockerInstructions.new(self)
+            Build::Stage::DockerInstructions
           end
         end
 
