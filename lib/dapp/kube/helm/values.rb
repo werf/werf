@@ -63,7 +63,7 @@ module Dapp
           end
 
           dimgs = dapp.build_configs.map do |config|
-            ::Dapp::Dimg::Dimg.new(config: config, dapp: dapp, ignore_git_fetch: true)
+            dapp.dimg(config: config, ignore_git_fetch: true)
           end.uniq do |dimg|
             dimg.config._name
           end

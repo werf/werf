@@ -3,6 +3,7 @@ module Dapp
     module Dapp
       module Dapp
         include Dappfile
+        include Dimg
 
         include Command::Common
         include Command::Run

@@ -123,9 +123,7 @@ module Dapp
             validate_repo_name!(repo)
             build_configs.each do |config|
               log_dimg_name_with_indent(config) do
-                Dimg.new(config: config, dapp: self, ignore_git_fetch: true, should_be_built: should_be_built).tap do |dimg|
-                  yield dimg
-                end
+                yield dimg(config: config, ignore_git_fetch: true, should_be_built: should_be_built)
               end
             end
           end
