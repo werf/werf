@@ -83,14 +83,22 @@ module Dapp
           end
 
           def ignore_used_images(images_ids_or_names)
-            images_ids_or_names.select do |image_id_or_name|
-              res = run_command(%(#{host_docker} ps -a -q --filter=ancestor=#{image_id_or_name}))
-              if res && !res.stdout.strip.empty? && !dry_run?
-                log_info("Skip `#{image_id_or_name}` (used by containers: #{res.stdout.strip.split.join(' ')})")
-                false
-              else
+            not_used_images = proc do |*image_id_or_name, log: true|
+              images = image_id_or_name.flatten
+              filters = images.map { |iion| "--filter=ancestor=#{iion}" }.join(' ')
+              res = shellout!(%(#{host_docker} ps -a -q #{filters})).stdout.strip
+              if res.empty?
                 true
+              else
+                log_info("Skip `#{images.join('`, `')}` (used by containers: #{res.split.join(' ')})") if log
+                false
               end
+            end
+
+            if not_used_images.call(images_ids_or_names, log: false)
+              images_ids_or_names
+            else
+              images_ids_or_names.select(&not_used_images)
             end
           end
 
