@@ -22,6 +22,8 @@ module Dapp
               @deployment_before_deploy = Kubernetes::Client::Resource::Deployment.new(dapp.kubernetes.replace_deployment!(name, new_spec))
             end
           end
+
+          @deploy_began_at = Time.now
         end
 
         def after_deploy
@@ -116,7 +118,11 @@ module Dapp
                           known_log_timestamps_by_pod_and_container[pod.name][container_name] ||= Set.new
 
                           since_time = nil
-                          since_time = @deployed_at.utc.iso8601(9) if @deployed_at
+                          # Если под еще не перешел в состоянии готовности, то можно вывести все логи которые имеются.
+                          # Иначе выводим только новые логи с момента начала текущей сессии деплоя.
+                          if [nil, "True"].include? pod.ready_condition_status
+                            since_time = @deploy_began_at.utc.iso8601(9) if @deploy_began_at
+                          end
 
                           log_lines_by_time = []
                           begin
@@ -147,34 +153,8 @@ module Dapp
                         end
                       end
 
-                      ready_condition = pod.status.fetch('conditions', {}).find {|condition| condition['type'] == 'Ready'}
-                      next if (not ready_condition) or (ready_condition['status'] == 'True')
-
-                      if ready_condition['reason'] == 'ContainersNotReady'
-                        Array(pod.status['containerStatuses']).each do |container_status|
-                          next if container_status['ready']
-
-                          waiting_reason = container_status.fetch('state', {}).fetch('waiting', {}).fetch('reason', nil)
-                          case waiting_reason
-                          when 'ImagePullBackOff', 'ErrImagePull'
-                            raise Kubernetes::Error::Base,
-                              code: :image_not_found,
-                              data: {pod_name: pod.name,
-                                     reason: waiting_reason,
-                                     message: container_status['state']['waiting']['message']}
-                          when 'CrashLoopBackOff'
-                            raise Kubernetes::Error::Base,
-                              code: :container_crash,
-                              data: {pod_name: pod.name,
-                                     reason: waiting_reason,
-                                     message: container_status['state']['waiting']['message']}
-                          end
-                        end
-                      else
-                        dapp.with_log_indent do
-                          dapp.log_warning("#{dapp.log_time}Unknown pod readiness condition reason '#{ready_condition['reason']}': #{ready_condition}", stream: dapp.service_stream)
-                        end
-                      end
+                      pod_manager = Kubernetes::Manager::Pod.new(dapp, pod.name)
+                      pod_manager.check_readiness_condition_if_available!(pod)
                     end # with_log_indent
                   end # rs_pods.each
                 end # with_log_indent

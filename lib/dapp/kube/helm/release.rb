@@ -49,7 +49,7 @@ module Dapp
         end.to_h
       end
 
-      def deploy!
+      def helm_upgrade!
         args = [
           name, chart_path, additional_values_options,
           set_options, upgrade_extra_options
@@ -57,7 +57,9 @@ module Dapp
 
         dapp.kubernetes.create_namespace!(namespace) unless dapp.kubernetes.namespace?(namespace)
 
-        dapp.shellout! "helm upgrade #{args.join(' ')}", verbose: true
+        cmd = dapp.shellout "helm upgrade #{args.join(' ')}"
+
+        return cmd
       end
 
       def templates

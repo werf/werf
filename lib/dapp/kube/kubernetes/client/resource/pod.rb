@@ -2,6 +2,20 @@ module Dapp
   module Kube
     module Kubernetes::Client::Resource
       class Pod < Base
+        # Returns:
+        #   nil: no such condition yet
+        #   "True" string: ready
+        #   "False" string: not ready
+        def ready_condition_status
+          rd = self.ready_condition
+          return nil unless rd
+          return rd['status']
+        end
+
+        def ready_condition
+          status.fetch('conditions', {}).find {|condition| condition['type'] == 'Ready'}
+        end
+
         def container_id(container_name)
           container_status = spec.fetch('status', {})
             .fetch('containerStatuses')
