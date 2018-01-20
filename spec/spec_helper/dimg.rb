@@ -21,8 +21,8 @@ module SpecHelper
             openstruct_config
           end
         end
-        options[:dapp] = dapp
-        Dapp::Dimg::Dimg.new(**options)
+        @dapp = nil
+        dapp.dimg(**options)
       end
     end
 
@@ -33,18 +33,19 @@ module SpecHelper
 
     def dapp
       @dapp ||= begin
-        allow_any_instance_of(Dapp::Dapp).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
-        allow_any_instance_of(Dapp::Dapp).to receive(:path) { |_, *m_args| Pathname(File.absolute_path(File.join(project_path, *m_args))) }
-        allow_any_instance_of(Dapp::Dapp).to receive(:config) { config }
-        allow_any_instance_of(Dapp::Dapp).to receive(:is_a?) do |_, klass|
-          if klass == Dapp::Dapp
-            true
-          else
-            false
+        Dapp::Dapp.new(options: dapp_options).tap do |dapp|
+          allow(dapp).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
+          allow(dapp).to receive(:path) { |*m_args| Pathname(File.absolute_path(File.join(project_path, *m_args))) }
+          allow(dapp).to receive(:config) { config }
+          allow(dapp).to receive(:is_a?) do |klass|
+            if klass == ::Dapp::Dapp
+              true
+            else
+              false
+            end
           end
+          yield dapp if block_given?
         end
-        yield if block_given?
-        Dapp::Dapp.new(options: dapp_options)
       end
     end
 
