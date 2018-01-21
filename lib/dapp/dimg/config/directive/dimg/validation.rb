@@ -73,10 +73,37 @@ module Dapp
                 verifiable_artifact = artifacts.shift
                 artifacts.select { |a| a[:to] == verifiable_artifact[:to] }.each do |artifact|
                   next if verifiable_artifact[:index] == artifact[:index]
-                  validate_artifact!(verifiable_artifact, artifact)
-                  validate_artifact!(artifact, verifiable_artifact)
+                  begin
+                    validate_artifact!(verifiable_artifact, artifact)
+                    validate_artifact!(artifact, verifiable_artifact)
+                  rescue Error::Config => e
+                    conflict_between_artifacts!(artifact, verifiable_artifact) if e.net_status[:code] == :artifact_conflict
+                    raise
+                  end
                 end
               end
+            end
+
+            def conflict_between_artifacts!(*formatted_artifacts)
+              artifacts = formatted_artifacts.flatten.map { |formatted_artifact| formatted_artifact[:related_artifact] }
+              dappfile_context = artifacts.map do |artifact|
+                artifact_directive = []
+                artifact_directive << begin
+                  if artifact.is_a? Artifact::Export
+                    "artifact.export('#{artifact._cwd}') do"
+                  else
+                    "git#{"('#{artifact._url}')" if artifact.respond_to?(:_url)}.add('#{artifact._cwd}') do"
+                  end
+                end
+                [:include_paths, :exclude_paths].each do |directive|
+                  next if (paths = artifact.send("_#{directive}")).empty?
+                  artifact_directive << "  #{directive} '#{paths.join("', '")}'"
+                end
+                artifact_directive << "  to '#{artifact._to}'"
+                artifact_directive << 'end'
+                artifact_directive.join("\n")
+              end.join("\n\n")
+              raise Error::Config, code: :artifact_conflict, data: { dappfile_context: dappfile_context }
             end
 
             def validate_artifact_format(artifacts)
@@ -106,7 +133,8 @@ module Dapp
                   index: artifacts.index(a),
                   to: to,
                   include_paths: include_paths,
-                  exclude_paths: exclude_paths
+                  exclude_paths: exclude_paths,
+                  related_artifact: a
                 }
               end
             end
