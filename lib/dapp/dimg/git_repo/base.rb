@@ -6,30 +6,11 @@ module Dapp
         include Helper::Trivia
 
         attr_reader :name
+        attr_reader :dapp
 
-        def initialize(manager, name)
-          @manager = manager
+        def initialize(dapp, name)
+          @dapp = dapp
           @name = name
-        end
-
-        def dapp
-          @dapp ||= begin
-            if manager.is_a? ::Dapp::Dapp
-              manager
-            else
-              dimg.dapp
-            end
-          end
-        end
-
-        def dimg
-          @dimg ||= begin
-            if manager.is_a? ::Dapp::Dimg::Dimg
-              manager
-            else
-              raise
-            end
-          end
         end
 
         def exclude_paths
@@ -207,8 +188,6 @@ module Dapp
         end
 
         protected
-
-        attr_reader :manager
 
         def git(**kwargs)
           @git ||= Rugged::Repository.new(path.to_s, **kwargs)

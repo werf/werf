@@ -134,11 +134,11 @@ describe Dapp::Dimg::GitArtifact do
     end
 
     def git_artifact
-      Dapp::Dimg::GitArtifact.new(stubbed_repo, **git_artifact_local_options)
+      Dapp::Dimg::GitArtifact.new(stubbed_repo, g_a_stubbed_dimg, **git_artifact_local_options)
     end
 
     def stubbed_repo
-      @stubbed_repo ||= Dapp::Dimg::GitRepo::Own.new(g_a_stubbed_dimg)
+      @stubbed_repo ||= Dapp::Dimg::GitRepo::Own.new(dapp)
     end
 
     def git_artifact_local_options
@@ -512,7 +512,7 @@ describe Dapp::Dimg::GitArtifact do
 
   context 'embedded_inherit_paths' do
     def git_artifact_embedded_inherit_paths(paths, embedded_rel_path)
-      git_artifact = Dapp::Dimg::GitArtifact.new(nil, to: '/app', branch: 'master')
+      git_artifact = Dapp::Dimg::GitArtifact.new(nil, nil, to: '/app', branch: 'master')
       git_artifact.embedded_inherit_paths(paths, embedded_rel_path)
     end
 

@@ -5,9 +5,31 @@ module Dapp
         CACHE_VERSION = 1
 
         attr_reader :url
+        attr_reader :path
 
-        def initialize(dimg, name, url:)
-          super(dimg, name)
+        class << self
+          def get_or_create(dapp, name, url:, branch:, ignore_git_fetch: false)
+            key         = [url, branch, ignore_git_fetch]
+            inverse_key = [url, branch, !ignore_git_fetch]
+
+            repositories[key] ||= begin
+              if repositories.key?(inverse_key)
+                repositories[inverse_key]
+              else
+                new(dapp, name, url: url)
+              end.tap do |repo|
+                repo.fetch!(branch, ignore_git_fetch: ignore_git_fetch) unless ignore_git_fetch
+              end
+            end
+          end
+
+          def repositories
+            @repositories ||= {}
+          end
+        end
+
+        def initialize(dapp, name, url:)
+          super(dapp, name)
 
           @url = url
 
@@ -41,10 +63,10 @@ module Dapp
         end
 
         def path
-          Pathname(dimg.build_path("remote_git_repo", CACHE_VERSION.to_s, name).to_s)
+          Pathname(dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, name).to_s)
         end
 
-        def fetch!(branch = nil)
+        def fetch!(branch = nil, ignore_git_fetch: false)
           _with_lock do
             branch ||= self.branch
 
@@ -66,7 +88,7 @@ module Dapp
               end
               raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } unless branch_exist?(branch)
             end
-          end unless dimg.ignore_git_fetch || dapp.dry_run?
+          end unless ignore_git_fetch || dapp.dry_run?
         end
 
         def branch_exist?(name)

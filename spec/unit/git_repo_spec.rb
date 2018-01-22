@@ -5,10 +5,6 @@ describe Dapp::Dimg::GitRepo do
   include SpecHelper::Dimg
   include SpecHelper::Git
 
-  before :each do
-    stub_dimg
-  end
-
   def git_init(git_dir: '.')
     super
     expect(File.exist?(File.join(git_dir, '.git'))).to be_truthy
@@ -25,7 +21,7 @@ describe Dapp::Dimg::GitRepo do
   def dapp_remote_init
     git_init(git_dir: 'remote')
 
-    @remote = Dapp::Dimg::GitRepo::Remote.new(dimg, 'local_remote', url: 'remote/.git')
+    @remote = Dapp::Dimg::GitRepo::Remote.new(dapp, 'local_remote', url: 'remote/.git')
 
     expect(File.exist?(@remote.path)).to be_truthy
     expect(@remote.path.to_s[/.*\/([^\/]*\/[^\/]*\/[^\/]*)/, 1]).to eq "remote_git_repo/#{Dapp::Dimg::GitRepo::Remote::CACHE_VERSION}/local_remote"
@@ -45,7 +41,7 @@ describe Dapp::Dimg::GitRepo do
   it 'Own', test_construct: true do
     git_init
 
-    own = Dapp::Dimg::GitRepo::Own.new(dimg)
+    own = Dapp::Dimg::GitRepo::Own.new(dapp)
     expect(own.latest_commit).to eq git_latest_commit
 
     git_change_and_commit
