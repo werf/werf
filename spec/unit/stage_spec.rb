@@ -8,17 +8,21 @@ describe Dapp::Dimg::Build::Stage do
   end
 
   def dimg_last_stage
-    empty_dimg.send(:last_stage)
+    dimg_base_last_stage(empty_dimg)
+  end
+
+  def artifact_last_stage
+    dimg_base_last_stage(empty_artifact)
+  end
+
+  def dimg_base_last_stage(dimg)
+    dimg.send(:last_stage_class).new(dimg)
   end
 
   def dimg_stages
     [:from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install, :g_a_post_install_patch,
      :after_install_artifact, :before_setup, :before_setup_artifact, :g_a_pre_setup_patch, :setup,
      :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions]
-  end
-
-  def artifact_last_stage
-    empty_artifact.last_stage
   end
 
   def artifact_stages

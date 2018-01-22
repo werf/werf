@@ -16,8 +16,8 @@ module Dapp
         false
       end
 
-      def last_stage
-        @last_stage ||= Build::Stage::BuildArtifact.new(self)
+      def last_stage_class
+        Build::Stage::BuildArtifact
       end
     end # Artifact
   end # Dimg
