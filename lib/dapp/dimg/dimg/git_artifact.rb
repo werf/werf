@@ -9,7 +9,7 @@ module Dapp
         def local_git_artifacts
           @local_git_artifact_list ||= [].tap do |artifacts|
             break artifacts if (local_git_artifacts = Array(config._git_artifact._local)).empty?
-            repo = GitRepo::Own.new(self)
+            repo = GitRepo::Own.new(dapp)
             local_git_artifacts.map do |ga_config|
               artifacts.concat(generate_git_artifacts(repo, **ga_config._artifact_options))
             end
@@ -19,7 +19,10 @@ module Dapp
         def remote_git_artifacts
           @remote_git_artifact_list ||= [].tap do |artifacts|
             Array(config._git_artifact._remote).each do |ga_config|
-              repo = GitRepo::Remote.new(self, ga_config._name, url: ga_config._url).tap { |r| r.fetch!(ga_config._branch) }
+              repo = GitRepo::Remote.get_or_create(dapp, ga_config._name,
+                                                   url: ga_config._url,
+                                                   branch: ga_config._branch,
+                                                   ignore_git_fetch: ignore_git_fetch)
               artifacts.concat(generate_git_artifacts(repo, **ga_config._artifact_options))
             end
           end
@@ -27,7 +30,7 @@ module Dapp
 
         def generate_git_artifacts(repo, **git_artifact_options)
           [].tap do |artifacts|
-            artifacts << (artifact = ::Dapp::Dimg::GitArtifact.new(repo, **git_artifact_options))
+            artifacts << (artifact = ::Dapp::Dimg::GitArtifact.new(repo, self, **git_artifact_options))
             artifacts.concat(generate_git_embedded_artifacts(artifact))
           end
         end

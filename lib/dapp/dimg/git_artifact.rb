@@ -12,10 +12,11 @@ module Dapp
       # FIXME: переименовать cwd в from
 
       # rubocop:disable Metrics/ParameterLists
-      def initialize(repo, to:, name: nil, branch: nil, commit: nil,
+      def initialize(repo, dimg, to:, name: nil, branch: nil, commit: nil,
                      cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil, as: nil,
                      stages_dependencies: {})
         @repo = repo
+        @dimg = dimg
         @name = name
 
         @branch = branch || repo.dapp.options[:git_artifact_branch] || repo.branch
@@ -69,17 +70,19 @@ module Dapp
         embedded_rel_path = embedded_params[:path]
         embedded_repo     = begin
           if embedded_params[:type] == :remote
-            GitRepo::Remote.new(repo.dimg, embedded_rel_path,
-                                url: embedded_params[:url]).tap { |r| r.fetch!(embedded_params[:branch]) }
+            GitRepo::Remote.get_or_create(repo.dapp, embedded_rel_path,
+                                          url: embedded_params[:url],
+                                          branch: embedded_params[:branch],
+                                          ignore_git_fetch: dimg.ignore_git_fetch )
           elsif embedded_params[:type] == :local
             embedded_path = File.join(repo.workdir_path, embedded_params[:path])
-            GitRepo::Local.new(repo.dimg, embedded_rel_path, embedded_path)
+            GitRepo::Local.new(repo.dapp, embedded_rel_path, embedded_path)
           else
             raise
           end
         end
 
-        self.class.new(embedded_repo, embedded_artifact_options(embedded_params))
+        self.class.new(embedded_repo, dimg, embedded_artifact_options(embedded_params))
       end
 
       def embedded_artifact_options(embedded_params)
@@ -293,6 +296,7 @@ module Dapp
         Digest::SHA256.hexdigest args.compact.map {|arg| arg.to_s.force_encoding("ASCII-8BIT")}.join(":::")
       end
 
+      attr_reader :dimg
       attr_reader :to
       attr_reader :commit
       attr_reader :branch
@@ -316,11 +320,11 @@ module Dapp
         else
           archive_file_with_tar_writer(stage, commit)
         end
-        repo.dimg.container_tmp_path('archives', archive_file_name(commit))
+        dimg.container_tmp_path('archives', archive_file_name(commit))
       end
 
       def archive_file_with_tar_writer(stage, commit)
-        tar_write(repo.dimg.tmp_path('archives', archive_file_name(commit))) do |tar|
+        tar_write(dimg.tmp_path('archives', archive_file_name(commit))) do |tar|
           each_archive_entry(stage, commit) do |path, content, mode|
             if mode == 0o120000 # symlink
               tar.add_symlink path, content, mode
@@ -336,10 +340,10 @@ module Dapp
       end
 
       def archive_file_with_system_tar(stage, commit)
-        repo.dimg.tmp_path('archives', archive_file_name(commit)).tap do |archive_path|
+        dimg.tmp_path('archives', archive_file_name(commit)).tap do |archive_path|
           relative_archive_file_path = File.join('archives_files', file_name(commit))
           each_archive_entry(stage, commit) do |path, content, mode|
-            file_path = repo.dimg.tmp_path(relative_archive_file_path, path)
+            file_path = dimg.tmp_path(relative_archive_file_path, path)
 
             if mode == 0o120000 # symlink
               FileUtils.symlink(content, file_path)
@@ -349,7 +353,7 @@ module Dapp
             end
           end
 
-          repo.dapp.shellout!("tar -C #{repo.dimg.tmp_path(relative_archive_file_path)} -cf #{archive_path} .")
+          repo.dapp.shellout!("tar -C #{dimg.tmp_path(relative_archive_file_path)} -cf #{archive_path} .")
         end
       end
 
@@ -375,10 +379,10 @@ module Dapp
       end
 
       def patch_file(stage, from_commit, to_commit)
-        File.open(repo.dimg.tmp_path('patches', patch_file_name(from_commit, to_commit)), File::RDWR | File::CREAT) do |f|
+        File.open(dimg.tmp_path('patches', patch_file_name(from_commit, to_commit)), File::RDWR | File::CREAT) do |f|
           diff_patches(from_commit, to_commit).each { |patch| f.write change_patch_new_file_path(stage, patch) }
         end
-        repo.dimg.container_tmp_path('patches', patch_file_name(from_commit, to_commit))
+        dimg.container_tmp_path('patches', patch_file_name(from_commit, to_commit))
       end
 
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -548,7 +552,7 @@ module Dapp
       end
 
       def dev_mode?
-        local? && repo.dimg.dev_mode?
+        local? && dimg.dev_mode?
       end
 
       def local?

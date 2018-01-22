@@ -4,8 +4,8 @@ module Dapp
       class Local < Base
         attr_reader :path
 
-        def initialize(manager, name, path)
-          super(manager, name)
+        def initialize(dapp, name, path)
+          super(dapp, name)
           self.path = path
         end
 

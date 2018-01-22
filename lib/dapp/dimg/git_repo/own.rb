@@ -2,12 +2,8 @@ module Dapp
   module Dimg
     module GitRepo
       class Own < Local
-        def initialize(manager)
-          super(manager, 'own', nil)
-        end
-
-        def path=(_)
-          super(dapp.path.to_s)
+        def initialize(dapp)
+          super(dapp, 'own', dapp.path.to_s)
         end
 
         def exclude_paths
