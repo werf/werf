@@ -21,3 +21,5 @@ source ./go-env
 ```
 ./go-build.sh
 ```
+
+dappfile-yml binary will be placed into your $GOPATH/bin. To call you can use `$DAPP_BIN_DAPPFILE_YML` (used by ruby-dapp internally) or simply `dappfile-yml`.
