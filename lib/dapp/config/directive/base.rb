@@ -12,6 +12,13 @@ module Dapp
           _clone
         end
 
+        def encode_with(coder)
+          (instance_variables - [:@dapp]).each do |var|
+            var = var.to_s
+            coder[var.gsub('@', '')] = instance_variable_get(var)
+          end
+        end
+
         protected
 
         attr_reader :dapp
