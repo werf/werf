@@ -20,7 +20,7 @@ func (cfg *Dimg) GetRubyTypeTag() string {
 
 type ArtifactDimg struct {
 	Dimg
-	Docker DockerArtifact `yaml:"_shell"`
+	Docker DockerArtifact `yaml:"_docker"`
 	Shell  ShellArtifact  `yaml:"_shell"`
 }
 
