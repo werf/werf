@@ -18,6 +18,16 @@ func (cfg *Dimg) GetRubyTypeTag() string {
 	return "ruby/object:Dapp::Dimg::Config::Directive::Dimg"
 }
 
+type ArtifactDimg struct {
+	Dimg
+	Docker DockerArtifact `yaml:"_shell"`
+	Shell  ShellArtifact  `yaml:"_shell"`
+}
+
+func (cfg *ArtifactDimg) GetRubyTypeTag() string {
+	return "ruby/hash:Dapp::Dimg::Config::Directive::ArtifactDimg"
+}
+
 type DockerDimg struct {
 	DockerBase
 	Volume     []string          `yaml:"_volume"`
@@ -103,14 +113,6 @@ type Artifact struct {
 
 func (cfg *Artifact) GetRubyTypeTag() string {
 	return "ruby/hash:Dapp::Dimg::Config::Directive::Artifact::Export"
-}
-
-type ArtifactDimg struct {
-	Dimg
-}
-
-func (cfg *ArtifactDimg) GetRubyTypeTag() string {
-	return "ruby/hash:Dapp::Dimg::Config::Directive::ArtifactDimg"
 }
 
 type GitArtifact struct {
