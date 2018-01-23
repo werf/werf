@@ -4,7 +4,16 @@ type RubyType interface {
 	GetRubyTypeTag() string
 }
 
+type Config struct {
+	Dimg []Dimg `yaml:"_dimg"`
+}
+
+func (cfg *Config) GetRubyTypeTag() string {
+	return "ruby/object:Dapp::Config::Config"
+}
+
 type Dimg struct {
+	Name        string      `yaml:"_name"`
 	Docker      DockerDimg  `yaml:"_docker"`
 	Builder     string      `yaml:"_builder"`
 	Shell       ShellDimg   `yaml:"_shell"`
@@ -19,9 +28,14 @@ func (cfg *Dimg) GetRubyTypeTag() string {
 }
 
 type ArtifactDimg struct {
-	Dimg
-	Docker DockerArtifact `yaml:"_docker"`
-	Shell  ShellArtifact  `yaml:"_shell"`
+	Name        string         `yaml:"_name"`
+	Docker      DockerArtifact `yaml:"_docker"`
+	Builder     string         `yaml:"_builder"`
+	Shell       ShellArtifact  `yaml:"_shell"`
+	Chef        Chef           `yaml:"_chef"`
+	Artifact    []Artifact     `yaml:"_artifact"`
+	GitArtifact GitArtifact    `yaml:"_git_artifact"`
+	Mount       []Mount        `yaml:"_mount"`
 }
 
 func (cfg *ArtifactDimg) GetRubyTypeTag() string {
@@ -29,16 +43,17 @@ func (cfg *ArtifactDimg) GetRubyTypeTag() string {
 }
 
 type DockerDimg struct {
-	DockerBase
-	Volume     []string          `yaml:"_volume"`
-	Expose     []string          `yaml:"_expose"`
-	Env        map[string]string `yaml:"_env"`
-	Label      map[string]string `yaml:"_label"`
-	Cmd        []string          `yaml:"_cmd"`
-	Onbuild    []string          `yaml:"_onbuild"`
-	Workdir    string            `yaml:"_workdir"`
-	User       string            `yaml:"_user"`
-	Entrypoint []string          `yaml:"_entrypoint"`
+	From             string            `yaml:"_from"`
+	FromCacheVersion string            `yaml:"_from_cache_version"`
+	Volume           []string          `yaml:"_volume"`
+	Expose           []string          `yaml:"_expose"`
+	Env              map[string]string `yaml:"_env"`
+	Label            map[string]string `yaml:"_label"`
+	Cmd              []string          `yaml:"_cmd"`
+	Onbuild          []string          `yaml:"_onbuild"`
+	Workdir          string            `yaml:"_workdir"`
+	User             string            `yaml:"_user"`
+	Entrypoint       []string          `yaml:"_entrypoint"`
 }
 
 func (cfg *DockerDimg) GetRubyTypeTag() string {
@@ -46,16 +61,12 @@ func (cfg *DockerDimg) GetRubyTypeTag() string {
 }
 
 type DockerArtifact struct {
-	DockerBase
+	From             string `yaml:"_from"`
+	FromCacheVersion string `yaml:"_from_cache_version"`
 }
 
 func (cfg *DockerArtifact) GetRubyTypeTag() string {
 	return "ruby/object:Dapp::Dimg::Config::Directive::Docker::Artifact"
-}
-
-type DockerBase struct {
-	From             string `yaml:"_from"`
-	FromCacheVersion string `yaml:"_from_cache_version"`
 }
 
 type ShellDimg struct {
@@ -71,7 +82,11 @@ func (cfg *ShellDimg) GetRubyTypeTag() string {
 }
 
 type ShellArtifact struct {
-	ShellDimg
+	Version       string       `yaml:"_version"`
+	BeforeInstall StageCommand `yaml:"_before_install"`
+	BeforeSetup   StageCommand `yaml:"_before_setup"`
+	Install       StageCommand `yaml:"_install"`
+	Setup         StageCommand `yaml:"_setup"`
 	BuildArtifact StageCommand `yaml:"_build_artifact"`
 }
 
@@ -89,9 +104,9 @@ func (cfg *StageCommand) GetRubyTypeTag() string {
 }
 
 type Chef struct {
-	Dimod      []string         `yaml:"_dimod"`
-	Recipe     []string         `yaml:"_recipe"`
-	Attributes []ChefAttributes `yaml:"_attributes"`
+	Dimod      []string       `yaml:"_dimod"`
+	Recipe     []string       `yaml:"_recipe"`
+	Attributes ChefAttributes `yaml:"_attributes"`
 }
 
 func (cfg *Chef) GetRubyTypeTag() string {
@@ -105,10 +120,15 @@ func (cfg *ChefAttributes) GetRubyTypeTag() string {
 }
 
 type Artifact struct {
-	ArtifactBase
-	Config ArtifactDimg `yaml:"_config"`
-	Before string       `yaml:"_before"`
-	After  string       `yaml:"_after"`
+	Cwd          string       `yaml:"_cwd"`
+	To           string       `yaml:"_to"`
+	IncludePaths []string     `yaml:"_include_paths"`
+	ExcludePaths []string     `yaml:"_exclude_paths"`
+	Owner        string       `yaml:"_owner"`
+	Group        string       `yaml:"_group"`
+	Config       ArtifactDimg `yaml:"_config"`
+	Before       string       `yaml:"_before"`
+	After        string       `yaml:"_after"`
 }
 
 func (cfg *Artifact) GetRubyTypeTag() string {
@@ -125,13 +145,26 @@ func (cfg *GitArtifact) GetRubyTypeTag() string {
 }
 
 type GitArtifactLocal struct {
-	ArtifactBase
-	As                string            `yaml:"_as"`
-	StageDependencies StageDependencies `yaml:"_stage_dependencies"`
+	Export []GitArtifactLocalExport `yaml:"_export"`
 }
 
 func (cfg *GitArtifactLocal) GetRubyTypeTag() string {
 	return "ruby/hash:Dapp::Dimg::Config::Directive::GitArtifactLocal"
+}
+
+type GitArtifactLocalExport struct {
+	Cwd               string            `yaml:"_cwd"`
+	To                string            `yaml:"_to"`
+	IncludePaths      []string          `yaml:"_include_paths"`
+	ExcludePaths      []string          `yaml:"_exclude_paths"`
+	Owner             string            `yaml:"_owner"`
+	Group             string            `yaml:"_group"`
+	As                string            `yaml:"_as"`
+	StageDependencies StageDependencies `yaml:"_stage_dependencies"`
+}
+
+func (cfg *GitArtifactLocalExport) GetRubyTypeTag() string {
+	return "ruby/hash:Dapp::Dimg::Config::Directive::GitArtifactLocal::Export"
 }
 
 type StageDependencies struct {
@@ -146,24 +179,30 @@ func (cfg *StageDependencies) GetRubyTypeTag() string {
 }
 
 type GitArtifactRemote struct {
-	GitArtifactLocal
-	Url    string `yaml:"_url"`
-	Name   string `yaml:"_name"`
-	Branch string `yaml:"_branch"`
-	Commit string `yaml:"_commit"`
+	Export []GitArtifactRemoteExport `yaml:"_export"`
 }
 
 func (cfg *GitArtifactRemote) GetRubyTypeTag() string {
 	return "ruby/hash:Dapp::Dimg::Config::Directive::GitArtifactRemote"
 }
 
-type ArtifactBase struct {
-	Cwd          string   `yaml:"_cwd"`
-	To           string   `yaml:"_to"`
-	IncludePaths []string `yaml:"_include_paths"`
-	ExcludePaths []string `yaml:"_exclude_paths"`
-	Owner        string   `yaml:"_owner"`
-	Group        string   `yaml:"_group"`
+type GitArtifactRemoteExport struct {
+	Cwd               string            `yaml:"_cwd"`
+	To                string            `yaml:"_to"`
+	IncludePaths      []string          `yaml:"_include_paths"`
+	ExcludePaths      []string          `yaml:"_exclude_paths"`
+	Owner             string            `yaml:"_owner"`
+	Group             string            `yaml:"_group"`
+	As                string            `yaml:"_as"`
+	StageDependencies StageDependencies `yaml:"_stage_dependencies"`
+	Url               string            `yaml:"_url"`
+	Name              string            `yaml:"_name"`
+	Branch            string            `yaml:"_branch"`
+	Commit            string            `yaml:"_commit"`
+}
+
+func (cfg *GitArtifactRemoteExport) GetRubyTypeTag() string {
+	return "ruby/hash:Dapp::Dimg::Config::Directive::GitArtifactRemote::Export"
 }
 
 type Mount struct {
