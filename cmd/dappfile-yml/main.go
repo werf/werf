@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	WorkingDir      string
-	DappProjectRoot string
+	WorkingDir   string
+	DappfilePath string
 )
 
 func fprintResponse(w io.Writer, response map[string]string) {
@@ -41,30 +41,41 @@ func main() {
 	}
 
 	flag.Usage = usage
-	flag.StringVar(&DappProjectRoot, "dapp-project-root", WorkingDir, "Directory where dappfile.yml resides")
+	flag.StringVar(&DappfilePath, "dappfile", "", "Full path to dappfile.yml (dappfile.yml or dappfile.yaml from working directory will be used by default)")
 	flag.Parse()
 
-	var dappfilePath string
-	for _, file := range []string{"dappfile.yml", "dappfile.yaml"} {
-		checkPath := filepath.Join(DappProjectRoot, file)
-		if _, err := os.Stat(checkPath); !os.IsNotExist(err) {
-			dappfilePath = checkPath
-			break
+	if DappfilePath == "" {
+		var defaultDappfilePath string
+		for _, file := range []string{"dappfile.yml", "dappfile.yaml"} {
+			checkPath := filepath.Join(WorkingDir, file)
+			if _, err := os.Stat(checkPath); !os.IsNotExist(err) {
+				defaultDappfilePath = checkPath
+				break
+			}
 		}
-	}
-	if dappfilePath == "" {
+
+		if defaultDappfilePath == "" {
+			fprintResponse(os.Stderr, map[string]string{
+				"error":   "dappfile_not_found",
+				"message": fmt.Sprintf("dappfile.yml or dappfile.yaml is not found in %s", WorkingDir),
+			})
+			os.Exit(16)
+		} else {
+			DappfilePath = defaultDappfilePath
+		}
+	} else if _, err := os.Stat(DappfilePath); os.IsNotExist(err) {
 		fprintResponse(os.Stderr, map[string]string{
 			"error":   "dappfile_not_found",
-			"message": fmt.Sprintf("dappfile.yml or dappfile.yaml is not found in %s", DappProjectRoot),
+			"message": fmt.Sprintf("%s is not found", DappfilePath),
 		})
 		os.Exit(16)
 	}
 
-	config, err := config.LoadDappfile(dappfilePath)
+	config, err := config.LoadDappfile(DappfilePath)
 	if err != nil {
 		fprintResponse(os.Stderr, map[string]string{
 			"error":   "bad_dappfile",
-			"message": fmt.Sprintf("Bad dappfile %s: %s", dappfilePath, err),
+			"message": fmt.Sprintf("Bad dappfile %s: %s", DappfilePath, err),
 		})
 		os.Exit(16)
 	}
