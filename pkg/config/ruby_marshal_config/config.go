@@ -1,4 +1,4 @@
-package config
+package ruby_marshal_config
 
 type RubyType interface {
 	TagYAML() string
