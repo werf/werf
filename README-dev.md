@@ -16,7 +16,15 @@ cd $GOPATH/src/github.com/flant/dapp
 source ./go-env
 ```
 
-3. Run build (will install dappfile-yml into $GOROOT/bin):
+This will make ruby-dapp work properly with newly builded dappfile-yml.
+
+3. Download go dependencies:
+
+```
+./go-get.sh
+```
+
+3. Run build:
 
 ```
 ./go-build.sh
