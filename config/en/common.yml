@@ -61,7 +61,6 @@ en:
       introspect_image_impossible: "WARNING: You can't introspect stage `%{name}`!"
       stage_dependencies_not_found: "WARNING: Stage dependencies `%{dependencies}` haven't been found in repo `%{repo}`!"
       unsupported_dapp_config_options: "WARNING: .dapp_config includes unsupported options [%{options}]: use only following options [%{supported_options}]"
-      secret_key_dappfile_not_found: "WARNING: Project root directory can't be initialized: Dappfile not found!"
     group:
       install: 'Install group'
       setup: 'Setup group'
