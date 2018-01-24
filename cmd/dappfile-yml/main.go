@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/flant/yaml.v2"
 
 	"github.com/flant/dapp/pkg/config"
 )
@@ -68,7 +69,7 @@ func main() {
 		os.Exit(16)
 	}
 
-	serializedConfig, err := yaml.Marshal(&config)
+	serializedConfig, err := yaml.Marshal(yaml.MetaConfig{ImplicitDoc: false, Value: &config})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot dump dappConfig yaml data: %s\n", err)
 		os.Exit(1)
