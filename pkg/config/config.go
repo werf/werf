@@ -26,7 +26,7 @@ type Dimg struct {
 	Name        string           `yaml:"_name,omitempty"`
 	Docker      DockerDimg       `yaml:"_docker,omitempty"`
 	Builder     string           `yaml:"_builder,omitempty"`
-	Shell       *ShellDimg       `yaml:"_shell,omitempty"`
+	Shell       ShellDimg        `yaml:"_shell,omitempty"`
 	Chef        Chef             `yaml:"_chef,omitempty"`
 	Artifact    []ArtifactExport `yaml:"_artifact,omitempty"`
 	GitArtifact GitArtifact      `yaml:"_git_artifact,omitempty"`
