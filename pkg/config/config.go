@@ -104,7 +104,7 @@ type StageCommand struct {
 }
 
 func (cfg StageCommand) TagYAML() string {
-	return "!ruby/object:Dapp::Dimg::Config::Directive::GitArtifactLocal::Export::StageDependencies"
+	return "!ruby/hash:Dapp::Dimg::Config::Directive::Shell::Dimg::StageCommand"
 }
 
 type Chef struct {
@@ -169,7 +169,7 @@ type StageDependencies struct {
 }
 
 func (cfg StageDependencies) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::Shell::Dimg::StageCommand"
+	return "!ruby/object:Dapp::Dimg::Config::Directive::GitArtifactLocal::Export::StageDependencies"
 }
 
 type GitArtifactRemote struct {
