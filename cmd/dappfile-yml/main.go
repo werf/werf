@@ -43,8 +43,6 @@ func main() {
 	flag.StringVar(&DappProjectRoot, "dapp-project-root", WorkingDir, "Directory where dappfile.yml resides")
 	flag.Parse()
 
-	fmt.Printf("DappProjectRoot=%s\n", DappProjectRoot)
-
 	var dappfilePath string
 	for _, file := range []string{"dappfile.yml", "dappfile.yaml"} {
 		checkPath := filepath.Join(DappProjectRoot, file)
@@ -61,7 +59,7 @@ func main() {
 		os.Exit(16)
 	}
 
-	config, err := config.LoadConfig(dappfilePath)
+	config, err := config.LoadDappfile(dappfilePath)
 	if err != nil {
 		fprintResponse(os.Stderr, map[string]string{
 			"error":   "bad_dappfile",
