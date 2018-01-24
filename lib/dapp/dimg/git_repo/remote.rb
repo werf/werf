@@ -37,7 +37,7 @@ module Dapp
             dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
               begin
                 if [:https, :ssh].include?(remote_origin_url_protocol) && !Rugged.features.include?(remote_origin_url_protocol)
-                  raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, url_protocol: remote_origin_url_protocol }
+                  raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, protocol: remote_origin_url_protocol }
                 end
 
                 Rugged::Repository.clone_at(url, path.to_s, bare: true, credentials: _rugged_credentials)
