@@ -44,7 +44,7 @@ type ArtifactDimg struct {
 }
 
 func (cfg ArtifactDimg) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::ArtifactDimg"
+	return "!ruby/object:Dapp::Dimg::Config::Directive::ArtifactDimg"
 }
 
 type DockerDimg struct {
@@ -104,7 +104,7 @@ type StageCommand struct {
 }
 
 func (cfg StageCommand) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::Shell::Dimg::StageCommand"
+	return "!ruby/object:Dapp::Dimg::Config::Directive::Shell::Dimg::StageCommand"
 }
 
 type Chef struct {
@@ -131,7 +131,7 @@ type ArtifactExport struct {
 }
 
 func (cfg ArtifactExport) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::Artifact::Export"
+	return "!ruby/object:Dapp::Dimg::Config::Directive::Artifact::Export"
 }
 
 type GitArtifact struct {
@@ -140,7 +140,7 @@ type GitArtifact struct {
 }
 
 func (cfg GitArtifact) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::Dimg::InstanceMethods::GitArtifact"
+	return "!ruby/object:Dapp::Dimg::Config::Directive::Dimg::InstanceMethods::GitArtifact"
 }
 
 type GitArtifactLocal struct {
@@ -148,7 +148,7 @@ type GitArtifactLocal struct {
 }
 
 func (cfg GitArtifactLocal) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::GitArtifactLocal"
+	return "!ruby/object:Dapp::Dimg::Config::Directive::GitArtifactLocal"
 }
 
 type GitArtifactLocalExport struct {
@@ -158,7 +158,7 @@ type GitArtifactLocalExport struct {
 }
 
 func (cfg GitArtifactLocalExport) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::GitArtifactLocal::Export"
+	return "!ruby/object:Dapp::Dimg::Config::Directive::GitArtifactLocal::Export"
 }
 
 type StageDependencies struct {
@@ -177,7 +177,7 @@ type GitArtifactRemote struct {
 }
 
 func (cfg GitArtifactRemote) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::GitArtifactRemote"
+	return "!ruby/object:Dapp::Dimg::Config::Directive::GitArtifactRemote"
 }
 
 type GitArtifactRemoteExport struct {
@@ -189,7 +189,7 @@ type GitArtifactRemoteExport struct {
 }
 
 func (cfg GitArtifactRemoteExport) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::GitArtifactRemote::Export"
+	return "!ruby/object:Dapp::Dimg::Config::Directive::GitArtifactRemote::Export"
 }
 
 type ArtifactBaseExport struct {
