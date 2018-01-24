@@ -20,21 +20,23 @@ func LoadDappfile(dappfilePath string) (interface{}, error) {
 
 	config = &Config{
 		Dimg: []Dimg{
-			Dimg{
+			{
 				Name:    "assets",
 				Builder: "shell",
 				Shell:   nil,
 				GitArtifact: GitArtifact{
 					Local: []GitArtifactLocal{
-						GitArtifactLocal{
+						{
 							Export: []GitArtifactLocalExport{
-								GitArtifactLocalExport{
-									Cwd:   "/",
-									To:    "/app",
-									Owner: "app",
-									ExcludePaths: []string{
-										".helm",
-										"Vagrantfile",
+								{
+									ArtifactBaseExport: ArtifactBaseExport{
+										Cwd:   "/",
+										To:    "/app",
+										Owner: "app",
+										ExcludePaths: []string{
+											".helm",
+											"Vagrantfile",
+										},
 									},
 									StageDependencies: StageDependencies{
 										Install: []string{
