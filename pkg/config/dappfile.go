@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 
 	"gopkg.in/flant/yaml.v2"
+	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
 func LoadDappfile(dappfilePath string) (interface{}, error) {
@@ -12,24 +13,23 @@ func LoadDappfile(dappfilePath string) (interface{}, error) {
 		return nil, err
 	}
 
-	config := &Config{}
+	config := &ruby_marshal_config.Config{}
 	err = yaml.Unmarshal([]byte(data), &config)
 	if err != nil {
 		return nil, err
 	}
 
-	config = &Config{
-		Dimg: []Dimg{
+	config = &ruby_marshal_config.Config{
+		Dimg: []ruby_marshal_config.Dimg{
 			{
 				Name:    "assets",
 				Builder: "shell",
-				Shell:   nil,
-				GitArtifact: GitArtifact{
-					Local: []GitArtifactLocal{
+				GitArtifact: ruby_marshal_config.GitArtifact{
+					Local: []ruby_marshal_config.GitArtifactLocal{
 						{
-							Export: []GitArtifactLocalExport{
+							Export: []ruby_marshal_config.GitArtifactLocalExport{
 								{
-									ArtifactBaseExport: ArtifactBaseExport{
+									ArtifactBaseExport: ruby_marshal_config.ArtifactBaseExport{
 										Cwd:   "/",
 										To:    "/app",
 										Owner: "app",
@@ -38,7 +38,7 @@ func LoadDappfile(dappfilePath string) (interface{}, error) {
 											"Vagrantfile",
 										},
 									},
-									StageDependencies: StageDependencies{
+									StageDependencies: ruby_marshal_config.StageDependencies{
 										Install: []string{
 											"package.json",
 										},
