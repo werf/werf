@@ -111,24 +111,22 @@ module Dapp
       end
 
       def download_dappfile_yml_bin(dappfile_yml_bin_path)
-        # https://github.com/flant/dapp/releases/download/0.24.5/dappfile-yml
-
         lock("downloader.bin.dappfile-yml", default_timeout: 1800) do
           return if File.exists? dappfile_yml_bin_path
 
           log_process("Downloading dappfile-yml dapp dependency") do
-            # location = URI("https://github.com/flant/dapp/releases/download/0.24.5/dappfile-yml")
-            location = URI("https://storage.googleapis.com/kubernetes-helm/helm-v2.8.0-linux-amd64.tar.gz")
+            # FIXME dynamic version from constant ::Dapp::VERSION and flant repo
+            location = URI("https://dl.bintray.com/diafour/dapp/0.24.5/dappfile-yml")
 
             tmp_bin_path = File.join(self.class.tmp_base_dir, "dappfile-yml-#{SecureRandom.uuid}")
             ::Dapp::Downloader.download(location, tmp_bin_path, show_progress: true, progress_titile: dappfile_yml_bin_path)
 
-            checksum_location = URI("https://storage.googleapis.com/kubernetes-helm/helm-v2.8.0-linux-amd64.tar.gz.sha256")
+            checksum_location = URI("https://dl.bintray.com/diafour/dapp/0.24.5/dappfile-yml.sha")
             tmp_bin_checksum_path = tmp_bin_path + ".checksum"
             ::Dapp::Downloader.download(checksum_location, tmp_bin_checksum_path)
 
             if Digest::SHA256.hexdigest(File.read(tmp_bin_path)) != File.read(tmp_bin_checksum_path).strip
-              raise ::Dapp::Error::Dapp, code: :cannot_download_dappfile_yml, data: {url: location.to_s}
+              raise ::Dapp::Error::Dapp, code: :download_failed_bad_dappfile_yml_checksum, data: {url: location.to_s, checksum_url: checksum_location.to_s}
             end
 
             File.chmod(0755, tmp_bin_path)
