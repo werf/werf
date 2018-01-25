@@ -49,7 +49,7 @@ module Dapp
           elsif File.exist? dappfile_ruby
             config = load_dappfile_ruby(dappfile_ruby)
           else
-            raise Error::Dapp, code: :dappfile_not_found
+            raise ::Dapp::Error::Dapp, code: :dappfile_not_found
           end
 
           config
@@ -75,7 +75,7 @@ module Dapp
               end
             end
             message = "#{backtrace[/.*(?=:in)/]}: #{message}" if backtrace
-            raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
+            raise ::Dapp::Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
           end # begin-rescue
         end
       end
@@ -83,7 +83,7 @@ module Dapp
       def load_dappfile_yml(dappfile_path)
         if dappfile_yml_bin_path = ENV["DAPP_BIN_DAPPFILE_YML"]
           unless File.exists? dappfile_yml_bin_path
-            raise Error::Dapp, code: :dappfile_yml_bin_path_not_found, data: {path: dappfile_yml_bin_path}
+            raise ::Dapp::Error::Dapp, code: :dappfile_yml_bin_path_not_found, data: {path: dappfile_yml_bin_path}
           end
         else
           dappfile_yml_bin_path = File.join(::Dapp::Dapp.home_dir, "bin", "dappfile-yml", ::Dapp::VERSION, "dappfile-yml")
@@ -105,7 +105,7 @@ module Dapp
 
         response = JSON.parse(raw_json_response)
 
-        raise Error::DappfileYmlErrorResponse.new(response["error"], response) if response["error"]
+        raise ::Dapp::Dapp::Error::DappfileYmlErrorResponse.new(response["error"], response) if response["error"]
 
         YAML.load response["dappConfig"]
       end
