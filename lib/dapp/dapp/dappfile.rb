@@ -52,6 +52,12 @@ module Dapp
             raise ::Dapp::Error::Dapp, code: :dappfile_not_found
           end
 
+          if ENV["DAPP_DUMP_CONFIG"]
+            puts "-- DAPP_DUMP_CONFIG BEGIN"
+            puts YAML.dump(config)
+            puts "-- DAPP_DUMP_CONFIG END"
+          end
+
           config
         end # begin
       end
