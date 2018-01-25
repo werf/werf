@@ -31,7 +31,8 @@ module Dapp
       def dappfile_exists?
         File.exist?(path("dappfile.yml")) ||
           File.exist?(path("dappfile.yaml")) ||
-            File.exist?(path("Dappfile"))
+            File.exist?(path("Dappfile")) ||
+              ENV["DAPP_LOAD_CONFIG_PATH"]
       end
 
       def config
@@ -42,14 +43,22 @@ module Dapp
           dappfile_yaml = path("dappfile.yaml").to_s
           dappfile_ruby = path("Dappfile").to_s
 
-          if File.exist? dappfile_yml
+          if ENV["DAPP_LOAD_CONFIG_PATH"]
+            config = YAML.load_file ENV["DAPP_LOAD_CONFIG_PATH"]
+          elsif File.exist? dappfile_yml
             config = load_dappfile_yml(dappfile_yml)
           elsif File.exist? dappfile_yaml
             config = load_dappfile_yml(dappfile_yaml)
           elsif File.exist? dappfile_ruby
             config = load_dappfile_ruby(dappfile_ruby)
           else
-            raise Error::Dapp, code: :dappfile_not_found
+            raise ::Dapp::Error::Dapp, code: :dappfile_not_found
+          end
+
+          if ENV["DAPP_DUMP_CONFIG"]
+            puts "-- DAPP_DUMP_CONFIG BEGIN"
+            puts YAML.dump(config)
+            puts "-- DAPP_DUMP_CONFIG END"
           end
 
           config
@@ -75,7 +84,7 @@ module Dapp
               end
             end
             message = "#{backtrace[/.*(?=:in)/]}: #{message}" if backtrace
-            raise Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
+            raise ::Dapp::Error::Dappfile, code: :incorrect, data: { error: e.class.name, message: message }
           end # begin-rescue
         end
       end
@@ -83,7 +92,7 @@ module Dapp
       def load_dappfile_yml(dappfile_path)
         if dappfile_yml_bin_path = ENV["DAPP_BIN_DAPPFILE_YML"]
           unless File.exists? dappfile_yml_bin_path
-            raise Error::Dapp, code: :dappfile_yml_bin_path_not_found, data: {path: dappfile_yml_bin_path}
+            raise ::Dapp::Error::Dapp, code: :dappfile_yml_bin_path_not_found, data: {path: dappfile_yml_bin_path}
           end
         else
           dappfile_yml_bin_path = File.join(::Dapp::Dapp.home_dir, "bin", "dappfile-yml", ::Dapp::VERSION, "dappfile-yml")
@@ -105,30 +114,28 @@ module Dapp
 
         response = JSON.parse(raw_json_response)
 
-        raise Error::DappfileYmlErrorResponse.new(response["error"], response) if response["error"]
+        raise ::Dapp::Dapp::Error::DappfileYmlErrorResponse.new(response["error"], response) if response["error"]
 
         YAML.load response["dappConfig"]
       end
 
       def download_dappfile_yml_bin(dappfile_yml_bin_path)
-        # https://github.com/flant/dapp/releases/download/0.24.5/dappfile-yml
-
         lock("downloader.bin.dappfile-yml", default_timeout: 1800) do
           return if File.exists? dappfile_yml_bin_path
 
           log_process("Downloading dappfile-yml dapp dependency") do
-            # location = URI("https://github.com/flant/dapp/releases/download/0.24.5/dappfile-yml")
-            location = URI("https://storage.googleapis.com/kubernetes-helm/helm-v2.8.0-linux-amd64.tar.gz")
+            # FIXME dynamic version from constant ::Dapp::VERSION and flant repo
+            location = URI("https://dl.bintray.com/diafour/dapp/0.24.5/dappfile-yml")
 
             tmp_bin_path = File.join(self.class.tmp_base_dir, "dappfile-yml-#{SecureRandom.uuid}")
             ::Dapp::Downloader.download(location, tmp_bin_path, show_progress: true, progress_titile: dappfile_yml_bin_path)
 
-            checksum_location = URI("https://storage.googleapis.com/kubernetes-helm/helm-v2.8.0-linux-amd64.tar.gz.sha256")
+            checksum_location = URI("https://dl.bintray.com/diafour/dapp/0.24.5/dappfile-yml.sha")
             tmp_bin_checksum_path = tmp_bin_path + ".checksum"
             ::Dapp::Downloader.download(checksum_location, tmp_bin_checksum_path)
 
             if Digest::SHA256.hexdigest(File.read(tmp_bin_path)) != File.read(tmp_bin_checksum_path).strip
-              raise ::Dapp::Error::Dapp, code: :cannot_download_dappfile_yml, data: {url: location.to_s}
+              raise ::Dapp::Error::Dapp, code: :download_failed_bad_dappfile_yml_checksum, data: {url: location.to_s, checksum_url: checksum_location.to_s}
             end
 
             File.chmod(0755, tmp_bin_path)
