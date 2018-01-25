@@ -40,7 +40,7 @@ func (cfg Dimg) TagYAML() string {
 type ArtifactDimg struct {
 	Dimg   `yaml:",inline"`
 	Docker DockerArtifact `yaml:"_docker,omitempty"`
-	Shell  *ShellArtifact `yaml:"_shell,omitempty"`
+	Shell  ShellArtifact  `yaml:"_shell,omitempty"`
 }
 
 func (cfg ArtifactDimg) TagYAML() string {
