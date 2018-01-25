@@ -26,6 +26,8 @@ require 'zlib'
 require 'slugify'
 require 'base64'
 require 'io/console'
+require 'net/http'
+require 'progressbar'
 
 require 'dapp/version'
 require 'dapp/core_ext/hash'
@@ -269,6 +271,7 @@ require 'dapp/dimg/dimg/path'
 require 'dapp/dimg/dimg/stages'
 require 'dapp/dimg/dimg'
 require 'dapp/dimg/artifact'
+require 'dapp/downloader'
 
 module Dapp
   def self.root
