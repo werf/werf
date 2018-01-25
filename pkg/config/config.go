@@ -24,8 +24,8 @@ type Git struct {
 type StageDependencies struct {
 	Install       interface{} `yaml:"install,omitempty"`
 	Setup         interface{} `yaml:"setup,omitempty"`
-	BeforeSetup   interface{} `yaml:"before_setup,omitempty"`
-	BuildArtifact interface{} `yaml:"build_artifact,omitempty"`
+	BeforeSetup   interface{} `yaml:"beforeSetup,omitempty"`
+	BuildArtifact interface{} `yaml:"buildArtifact,omitempty"`
 }
 
 type ArtifactImport struct {
@@ -57,19 +57,18 @@ type Docker struct {
 }
 
 type Chef struct {
-	Cookbook           string         `yaml:"cookbook,omitempty"`
-	Recipe             interface{}    `yaml:"recipe,omitempty"`
-	AdditionalPackages interface{}    `yaml:"additional_packages,omitempty"`
-	Attributes         ChefAttributes `yaml:"attributes,omitempty"`
+	Cookbook   string         `yaml:"cookbook,omitempty"`
+	Recipe     interface{}    `yaml:"recipe,omitempty"`
+	Attributes ChefAttributes `yaml:"attributes,omitempty"`
 }
 type ChefAttributes map[interface{}]interface{}
 
 type Shell struct {
-	BeforeInstall interface{} `yaml:"before_install,omitempty"`
+	BeforeInstall interface{} `yaml:"beforeInstall,omitempty"`
 	Install       interface{} `yaml:"install,omitempty"`
-	BeforeSetup   interface{} `yaml:"before_setup,omitempty"`
+	BeforeSetup   interface{} `yaml:"beforeSetup,omitempty"`
 	Setup         interface{} `yaml:"setup,omitempty"`
-	BuildArtifact interface{} `yaml:"build_artifact,omitempty"`
+	BuildArtifact interface{} `yaml:"buildArtifact,omitempty"`
 }
 
 type Mount struct {
