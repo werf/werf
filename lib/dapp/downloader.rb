@@ -69,17 +69,26 @@ module Dapp
                 next
               when Net::HTTPSuccess
                 File.open(destination, "wb") do |file|
-                  file_size_mb = nil
-                  file_size_mb = BytesCount.new(resp.to_hash["content-length"].first.to_f) if show_progress
+                  file_size_bytes = nil
+                  file_size_bytes = BytesCount.new(resp.to_hash["content-length"].first.to_f) if show_progress
 
                   if show_progress
                     old_DEFAULT_BEGINNING_POSITION = ProgressBar::Progress.send(:remove_const, :DEFAULT_BEGINNING_POSITION)
-                    ProgressBar::Progress.send(:const_set, :DEFAULT_BEGINNING_POSITION, BytesCount.new(0, total_bytes_count: file_size_mb))
+                    ProgressBar::Progress.send(:const_set, :DEFAULT_BEGINNING_POSITION, BytesCount.new(0, total_bytes_count: file_size_bytes))
                   end
 
                   begin
                     progressbar = nil
-                    progressbar = ProgressBar.create(format: "   %cMB / %CMB   %B  %t", starting_at: BytesCount.new(0, total_bytes_count: file_size_mb), total: file_size_mb, progress_mark: "#", remainder_mark: ".", title: progress_titile, length: 100, autofinish: true) if show_progress
+                    progressbar = ProgressBar.create(
+                      format: "   %cMB / %CMB   %B  %t",
+                      starting_at: BytesCount.new(0, total_bytes_count: file_size_bytes),
+                      total: file_size_bytes,
+                      progress_mark: "#",
+                      remainder_mark: ".",
+                      title: progress_titile,
+                      length: 100,
+                      autofinish: true
+                    ) if show_progress
 
                     resp.read_body do |segment|
                       progressbar.progress = progressbar.progress + segment.bytesize if show_progress
