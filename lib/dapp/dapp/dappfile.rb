@@ -31,7 +31,8 @@ module Dapp
       def dappfile_exists?
         File.exist?(path("dappfile.yml")) ||
           File.exist?(path("dappfile.yaml")) ||
-            File.exist?(path("Dappfile"))
+            File.exist?(path("Dappfile")) ||
+              ENV["DAPP_LOAD_CONFIG_PATH"]
       end
 
       def config
@@ -42,7 +43,9 @@ module Dapp
           dappfile_yaml = path("dappfile.yaml").to_s
           dappfile_ruby = path("Dappfile").to_s
 
-          if File.exist? dappfile_yml
+          if ENV["DAPP_LOAD_CONFIG_PATH"]
+            config = YAML.load_file ENV["DAPP_LOAD_CONFIG_PATH"]
+          elsif File.exist? dappfile_yml
             config = load_dappfile_yml(dappfile_yml)
           elsif File.exist? dappfile_yaml
             config = load_dappfile_yml(dappfile_yaml)
