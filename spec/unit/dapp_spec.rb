@@ -67,7 +67,7 @@ describe Dapp::Dapp do
     end
 
     it 'search up', test_construct: true do
-      expect { dapp(options: { dir: 'dir1/dir2' }).send(:build_configs) }.to_not raise_error
+      expect_exception_code(:dappfile_not_found) { dapp(options: { dir: 'dir1/dir2' }).send(:build_configs) }
     end
 
     it 'dappfile_not_found', test_construct: true do
