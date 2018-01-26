@@ -66,7 +66,7 @@ module Dapp
       end
 
       def vendor_path
-        builder.dimg.dapp.lock(_vendor_lock_name, default_timeout: 120) do
+        builder.dimg.dapp.lock(_vendor_lock_name, default_timeout: 600) do
           vendor! unless _vendor_path.join('.created_at').exist?
         end
         _vendor_path
