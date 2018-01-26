@@ -20,7 +20,13 @@ module Dapp
         @ignore_git_fetch = ignore_git_fetch
         @should_be_built = should_be_built
 
+        @dapp._terminate_dimg_on_terminate(self)
+
         raise Error::Dimg, code: :dimg_not_built if should_be_built?
+      end
+
+      def terminate
+        cleanup_tmp
       end
 
       def build!
@@ -36,8 +42,6 @@ module Dapp
             end
           end
         end
-      ensure
-        cleanup_tmp
       end
 
       def after_stages_build!
@@ -196,8 +200,6 @@ module Dapp
           cmd << " rm -rf #{tmp_path}"
         end
         dapp.shellout! cmd
-
-        artifacts.each(&:cleanup_tmp)
       end
 
       def stage_should_be_introspected?(name)

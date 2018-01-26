@@ -35,6 +35,8 @@ module Dapp
       Logging::I18n.initialize
       validate_config_options!
       Logging::Paint.initialize(option_color)
+
+      @_call_before_terminate = []
     end
 
     def options
@@ -120,6 +122,7 @@ module Dapp
     end
 
     def terminate
+      @_call_before_terminate.each {|on_terminate| on_terminate.call(self)}
       FileUtils.rmtree(host_docker_tmp_config_dir)
     end
 

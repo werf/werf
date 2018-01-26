@@ -132,11 +132,21 @@ module SpecHelper
     end
 
     def empty_dimg
-      Dapp::Dimg::Dimg.new(dapp: nil, config: openstruct_config)
+      Dapp::Dimg::Dimg.new(dapp: dapp_for_empty_dimg, config: openstruct_config)
     end
 
     def empty_artifact
-      Dapp::Dimg::Artifact.new(dapp: nil, config: openstruct_config)
+      Dapp::Dimg::Artifact.new(dapp: dapp_for_empty_dimg, config: openstruct_config)
     end
+
+    def dapp_for_empty_dimg
+      instance_double(Dapp::Dapp).tap do |instance|
+        allow(instance).to receive(:name) { File.basename(Dir.getwd) }
+        allow(instance).to receive(:path) { Dir.getwd }
+        allow(instance).to receive(:log_warning)
+        allow(instance).to receive(:_terminate_dimg_on_terminate)
+      end
+    end
+
   end
 end
