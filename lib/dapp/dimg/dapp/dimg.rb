@@ -9,6 +9,10 @@ module Dapp
         def artifact_dimg(config:, **kwargs)
           (@artifacts_dimgs ||= {})[config._name] ||= ::Dapp::Dimg::Artifact.new(config: config, dapp: self, **kwargs)
         end
+
+        def _terminate_dimg_on_terminate(dimg)
+          @_call_before_terminate << proc{dimg.terminate}
+        end
       end # Dimg
     end # Dapp
   end # Dimg
