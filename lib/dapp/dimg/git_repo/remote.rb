@@ -49,7 +49,7 @@ module Dapp
         end
 
         def _with_lock(&blk)
-          dapp.lock("remote_git_artifact.#{name}", default_timeout: 120, &blk)
+          dapp.lock("remote_git_artifact.#{name}", default_timeout: 600, &blk)
         end
 
         def _rugged_credentials

@@ -10,7 +10,8 @@ module Dapp
         @_locks[name] ||= ::Dapp::Dimg::Lock::File.new(locks_dir, name)
       end
 
-      def lock(name, *_args, default_timeout: 300, **kwargs, &blk)
+      # default_timeout 24 hours
+      def lock(name, *_args, default_timeout: 86400, **kwargs, &blk)
         if dry_run?
           yield if block_given?
         else
