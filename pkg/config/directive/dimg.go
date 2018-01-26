@@ -6,81 +6,35 @@ import (
 )
 
 type Dimg struct {
-	DimgBase
-	Shell *ShellDimg
+	*DimgBase
+	Shell  *ShellDimg
+	Docker *Docker
 }
 
-func (c *Dimg) Names() []string {
-	name, typeDimg := c.Dimg.(string)
-	names, typeDimgArray := c.Dimg.([]string)
-
-	if typeDimg {
-		return []string{name}
-	} else if typeDimgArray {
-		return names
-	}
-	return nil
-}
-
-func (c *Dimg) ValidateDirectives(artifacts []*DimgArtifact) error { // FIXME: переменовать: вызов происходит просле разбиения DimgBase на Dimg и DimgArtifact
-	if err := c.ValidateImports(artifacts); err != nil {
+func (c *Dimg) Validate() error {
+	if err := c.DimgBase.Validate(); err != nil {
 		return err
 	}
 
-	if err := c.Shell.ValidateDirectives(); err != nil {
-		return err
+	if c.Chef != nil && c.Shell != nil {
+		return fmt.Errorf("конфликт между типами сборщиков!") // FIXME
 	}
+
 	return nil
 }
 
-func (c *Dimg) ValidateImports(artifacts []*DimgArtifact) error {
-	if c.ValidateImports(artifacts) != nil {
-		for _, importArtifact := range c.Import {
-			if ArtifactByName(artifacts, importArtifact.ArtifactName) == nil {
-				return fmt.Errorf("нет соответствующего артефакта для импорта!")
-			}
-		}
-	}
-	return nil
-}
+func (c *Dimg) ToRuby() ruby_marshal_config.Dimg {
+	rubyDimg := ruby_marshal_config.Dimg{}
+	rubyDimg.DimgBase = c.DimgBase.ToRuby()
+	rubyDimg.Docker.From = c.From
 
-// TODO
-func (c *Dimg) ToRuby(artifacts []*DimgArtifact) []ruby_marshal_config.Dimg {
-	var rubyDimgs []ruby_marshal_config.Dimg
-
-	for _, dimgName := range c.Names() {
-		rubyDimg := ruby_marshal_config.Dimg{}
-		rubyDimg.Name = dimgName
-
-		if c.Shell != nil {
-			rubyDimg.Shell = c.Shell.ToRuby()
-		}
-
-		//if c.Chef != nil {
-		//	rubyDimg.Chef = c.Chef.ToRuby()
-		//}
-
-		//if c.Docker != nil {
-		//	rubyDimg.Docker = c.Docker.ToRuby()
-		//}
-
-		//if c.Git != nil {
-		//	rubyDimg.GitArtifact = c.Git.ToRuby()
-		//}
-
-		//if c.Mount != nil {
-		//	rubyDimg.Mount = c.Mount.ToRuby()
-		//}
-
-		for _, importArtifact := range c.Import {
-			dimgArtifact := ArtifactByName(artifacts, importArtifact.ArtifactName)
-			artifactExport := ruby_marshal_config.ArtifactExport{}
-			artifactExport.Config = dimgArtifact.ToRuby(artifacts)
-			rubyDimg.Artifact = append(rubyDimg.Artifact)
-		}
-
-		rubyDimgs = append(rubyDimgs, rubyDimg)
+	if c.Shell != nil {
+		rubyDimg.Shell = c.Shell.ToRuby()
 	}
 
-	return rubyDimgs
+	if c.Docker != nil {
+		rubyDimg.Docker = c.Docker.ToRuby()
+	}
+
+	return rubyDimg
 }

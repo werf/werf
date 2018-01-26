@@ -6,58 +6,30 @@ import (
 )
 
 type DimgArtifact struct {
-	Dimg
+	*DimgBase
 	Shell *ShellArtifact
 }
 
-func (c *DimgArtifact) Name() string {
-	return c.Artifact
-}
-
-func (c *DimgArtifact) ValidateDirectives(artifacts []*DimgArtifact) error {
-	if err := c.ValidateImports(artifacts); err != nil {
-		return nil
+func (c *DimgArtifact) Validate() error {
+	if err := c.DimgBase.Validate(); err != nil {
+		return err
 	}
 
-	if c.Shell != nil {
-		if err := c.Shell.ValidateDirectives(); err != nil {
-			return nil
-		}
-	}
-
-	if c.Docker != nil {
-		fmt.Errorf("docker не поддерживается в dimg artifacte") // FIXME
+	if c.Chef != nil && c.Shell != nil {
+		return fmt.Errorf("конфликт между типами сборщиков!") // FIXME
 	}
 
 	return nil
 }
 
-// TODO
-func (c *DimgArtifact) ToRuby(artifacts []*DimgArtifact) ruby_marshal_config.ArtifactDimg {
-	rubyArtifactDimg := ruby_marshal_config.ArtifactDimg{}
-	rubyArtifactDimg.Name = c.Name()
+func (c *DimgArtifact) ToRuby() ruby_marshal_config.DimgArtifact {
+	rubyArtifactDimg := ruby_marshal_config.DimgArtifact{}
+	rubyArtifactDimg.DimgBase = c.DimgBase.ToRuby()
+	rubyArtifactDimg.Name = c.Name
+	rubyArtifactDimg.Docker.From = c.From
 
 	if c.Shell != nil {
 		rubyArtifactDimg.Shell = c.Shell.ToRuby()
-	}
-
-	//if c.Chef != nil {
-	//	rubyArtifactDimg.Chef = c.Chef.ToRuby()
-	//}
-
-	//if c.Git != nil {
-	//	rubyArtifactDimg.GitArtifact = c.Git.ToRuby()
-	//}
-
-	//if c.Mount != nil {
-	//	rubyArtifactDimg.Mount = c.Mount.ToRuby()
-	//}
-
-	for _, importArtifact := range c.Import {
-		dimgArtifact := ArtifactByName(artifacts, importArtifact.ArtifactName)
-		artifactExport := ruby_marshal_config.ArtifactExport{}
-		artifactExport.Config = dimgArtifact.ToRuby(artifacts)
-		rubyArtifactDimg.Artifact = append(rubyArtifactDimg.Artifact)
 	}
 
 	return rubyArtifactDimg

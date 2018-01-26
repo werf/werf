@@ -6,21 +6,22 @@ import (
 	"fmt"
 	"github.com/Masterminds/sprig"
 	"github.com/flant/dapp/pkg/config/directive"
+	raw "github.com/flant/dapp/pkg/config/raw"
 	"gopkg.in/flant/yaml.v2"
 	"io/ioutil"
 	"strings"
 	"text/template"
 )
 
-func ParseDimgs(dappfilePath string) ([]*config.Dimg, []*config.DimgArtifact, error) {
+func ParseDimgs(dappfilePath string) ([]*config.Dimg, error) {
 	dappfileContent, err := parseDappfileYaml(dappfilePath)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	return splitByDimgs(dappfileContent)
 }
 
-// FIXME: переделать на ParseFiles вместо Parse
+// TODO: переделать на ParseFiles вместо Parse
 func parseDappfileYaml(dappfileContent string) (string, error) {
 	data, err := ioutil.ReadFile(dappfileContent)
 	if err != nil {
@@ -51,40 +52,67 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 	return buf.String(), nil
 }
 
-func splitByDimgs(dappfileContent string) ([]*config.Dimg, []*config.DimgArtifact, error) {
-	dimgsBase, err := splitByDimgsBase(dappfileContent)
+func splitByDimgs(dappfileContent string) ([]*config.Dimg, error) {
+	rawDimgs, err := splitByRawDimgs(dappfileContent)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	var dimgs []*config.Dimg
 	var artifacts []*config.DimgArtifact
-	for _, dimgBase := range dimgsBase {
-		dimg := &config.Dimg{DimgBase: *dimgBase} // TODO config.Dimg.New()
-		if dimgBase.Type() == "dimg" {
-			dimg.ValidateDirectives(artifacts)
-			dimgs = append(dimgs, dimg)
+
+	for _, rawDimg := range rawDimgs {
+		if rawDimg.Type() == "dimg" {
+			if dimg, err := rawDimg.ToDimg(); err != nil {
+				return nil, err
+			} else {
+				dimgs = append(dimgs, dimg)
+			}
 		} else {
-			dimgArtifact := &config.DimgArtifact{Dimg: *dimg} // TODO config.DimgArtifact.New()
-			dimgArtifact.ValidateDirectives(artifacts)
-			artifacts = append(artifacts, dimgArtifact)
+			if dimgArtifact, err := rawDimg.ToDimgArtifact(); err != nil {
+				return nil, err
+			} else {
+				artifacts = append(artifacts, dimgArtifact)
+			}
 		}
 	}
 
 	if len(dimgs) == 0 {
-		return nil, nil, fmt.Errorf("ни одного dimgBase не объявлено!") // FIXME
+		return nil, fmt.Errorf("не описано ни одного dimg-а!") // FIXME
 	}
 
-	return dimgs, artifacts, nil
+	if err = associateArtifacts(dimgs, artifacts); err != nil {
+		return nil, err
+	}
+
+	return dimgs, nil
 }
 
-func splitByDimgsBase(dappfileContent string) ([]*config.DimgBase, error) {
+func associateArtifacts(dimgs []*config.Dimg, artifacts []*config.DimgArtifact) error {
+	for _, dimg := range dimgs {
+		for _, importArtifact := range dimg.Import {
+			if err := importArtifact.AssociateArtifact(artifacts); err != nil {
+				return err
+			}
+		}
+	}
+	for _, dimg := range artifacts {
+		for _, importArtifact := range dimg.Import {
+			if err := importArtifact.AssociateArtifact(artifacts); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func splitByRawDimgs(dappfileContent string) ([]*raw.Dimg, error) {
 	scanner := bufio.NewScanner(strings.NewReader(dappfileContent))
 	scanner.Split(splitYAMLDocument)
 
-	var dimgsBase []*config.DimgBase
+	var dimgsBase []*raw.Dimg
 	for scanner.Scan() {
-		dimg := &config.DimgBase{}
+		dimg := &raw.Dimg{}
 		err := yaml.Unmarshal(scanner.Bytes(), &dimg)
 		if err != nil {
 			return nil, err
