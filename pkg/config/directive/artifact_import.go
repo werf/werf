@@ -13,6 +13,8 @@ type ArtifactImport struct {
 	After        string
 }
 
+type Symbol string
+
 func (c *ArtifactImport) Validate() error {
 	if err := c.ExportBase.Validate(); err != nil {
 		return err
@@ -56,13 +58,15 @@ func artifactByName(artifacts []*DimgArtifact, name string) *DimgArtifact {
 
 func (c *ArtifactImport) ToRuby() ruby_marshal_config.ArtifactExport {
 	artifactExport := ruby_marshal_config.ArtifactExport{}
+
 	if c.ExportBase != nil {
 		artifactExport.ArtifactBaseExport = c.ExportBase.ToRuby()
 	}
 	if c.ArtifactDimg != nil {
 		artifactExport.Config = c.ArtifactDimg.ToRuby()
 	}
-	artifactExport.After = c.After
-	artifactExport.Before = c.Before
+
+	artifactExport.After = ruby_marshal_config.Symbol(c.After)
+	artifactExport.Before = ruby_marshal_config.Symbol(c.Before)
 	return artifactExport
 }

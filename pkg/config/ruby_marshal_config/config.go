@@ -129,8 +129,14 @@ func (cfg ChefAttributes) TagYAML() string {
 type ArtifactExport struct {
 	ArtifactBaseExport `yaml:",inline"`
 	Config             DimgArtifact `yaml:"_config,omitempty"`
-	Before             string       `yaml:"_before,omitempty"`
-	After              string       `yaml:"_after,omitempty"`
+	Before             Symbol       `yaml:"_before,omitempty"`
+	After              Symbol       `yaml:"_after,omitempty"`
+}
+
+type Symbol string
+
+func (cfg Symbol) TagYAML() string {
+	return "!ruby/symbol"
 }
 
 func (cfg ArtifactExport) TagYAML() string {
