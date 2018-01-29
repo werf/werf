@@ -62,11 +62,53 @@ module Dapp
             end
           end
 
+          def kube_helm_auto_purge_trigger_file_path(release_name)
+            File.join(self.class.home_dir, "helm", release_name, "auto_purge_failed_release_on_next_deploy")
+          end
+
+          def kube_create_helm_auto_purge_trigger_file(release_name)
+            FileUtils.mkdir_p File.dirname(kube_helm_auto_purge_trigger_file_path(release_name))
+            FileUtils.touch kube_helm_auto_purge_trigger_file_path(release_name)
+          end
+
+          def kube_delete_helm_auto_purge_trigger_file(release_name)
+            if File.exists? kube_helm_auto_purge_trigger_file_path(release_name)
+              FileUtils.rm_rf kube_helm_auto_purge_trigger_file_path(release_name)
+            end
+          end
+
           def kube_run_deploy(release)
             log_process("Deploy release #{release.name}") do
-              kube_flush_hooks_jobs(release)
+              helm_status_res = shellout("helm status #{release.name} --output json")
+              helm_status = {}
+              helm_status = JSON.load(helm_status_res.stdout) if helm_status_res.status.success?
+              release_exists = nil
 
-              release_exists = shellout("helm status #{release.name}").status.success?
+              if not helm_status_res.status.success?
+                # Helm release is not exists.
+                release_exists = false
+
+                # Create purge-trigger for the next run.
+                kube_create_helm_auto_purge_trigger_file(release.name)
+              elsif helm_status.fetch("info", {}).fetch("status", {}).fetch("code", nil) == 4
+                # Helm release is in FAILED state
+                release_exists = true
+
+                if  File.exists? kube_helm_auto_purge_trigger_file_path(release.name)
+                  log_process("Purge helm release #{release.name}") do
+                    shellout!("helm delete --purge #{release.name}")
+                  end
+
+                  # Purge-trigger file remains to exist
+                  release_exists = false
+                end
+              else
+                # Helm release is not in FAILED state
+                release_exists = true
+                kube_delete_helm_auto_purge_trigger_file(release.name)
+              end
+
+              kube_flush_hooks_jobs(release)
 
               watch_hooks_by_type = release.jobs.values
                 .reduce({}) do |res, job|
@@ -126,18 +168,31 @@ module Dapp
 
               deployment_managers.each(&:before_deploy)
 
-              log_process("Run helm") do
+              log_process("#{release_exists ? "Upgrade" : "Install"} helm release #{release.name}") do
                 watch_hooks_condition_mutex.synchronize do
                   deploy_has_began = true
                   # Фактически гарантируется лишь вывод сообщения log_process перед выводом из потока watch_thr
                   watch_hooks_condition.signal
                 end
 
-                cmd_res = release.helm_upgrade!
+                cmd_res = if release_exists
+                  release.upgrade_helm_release
+                else
+                  release.install_helm_release
+                end
 
                 if cmd_res.error?
+                  if cmd_res.stderr.end_with? "has no deployed releases\n"
+                    log_warning "[WARN] Helm release #{release.name} is in improper state: FAILED state and there was no successful releases yet"
+                    log_warning "[WARN] Helm release #{release.name} will be removed with `helm delete --purge` on the next run of `dapp kube deploy`"
+
+                    kube_create_helm_auto_purge_trigger_file(release.name)
+                  end
+
                   raise ::Dapp::Error::Command, code: :kube_helm_failed, data: {output: (cmd_res.stdout + cmd_res.stderr).strip}
                 else
+                  kube_delete_helm_auto_purge_trigger_file(release.name)
+
                   watch_hooks_thr.join if !dry_run? && watch_hooks_thr && watch_hooks_thr.alive?
                   log_info((cmd_res.stdout + cmd_res.stderr).strip)
                 end
