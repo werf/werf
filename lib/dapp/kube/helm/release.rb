@@ -49,15 +49,29 @@ module Dapp
         end.to_h
       end
 
-      def helm_upgrade!
-        args = [
-          name, chart_path, additional_values_options,
-          set_options, upgrade_extra_options
-        ].flatten
+      def install_helm_release
+        unless dapp.dry_run?
+          dapp.kubernetes.create_namespace!(namespace) unless dapp.kubernetes.namespace?(namespace)
+        end
 
-        dapp.kubernetes.create_namespace!(namespace) unless dapp.kubernetes.namespace?(namespace)
+        cmd = dapp.shellout([
+          "helm install #{chart_path}",
+          "--name #{name}",
+          *helm_additional_values_options,
+          *helm_set_options,
+          *helm_common_options,
+        ].join(" "))
 
-        cmd = dapp.shellout "helm upgrade #{args.join(' ')}"
+        return cmd
+      end
+
+      def upgrade_helm_release
+        cmd = dapp.shellout([
+          "helm upgrade #{name} #{chart_path}",
+          *helm_additional_values_options,
+          *helm_set_options,
+          *helm_common_options
+        ].join(" "))
 
         return cmd
       end
@@ -93,8 +107,8 @@ module Dapp
             "helm",
             "template",
             chart_path,
-            additional_values_options,
-            set_options(without_registry: true),
+            helm_additional_values_options,
+            helm_set_options(without_registry: true),
             ("--namespace #{namespace}" if namespace),
           ].compact.join(" ")
 
@@ -113,7 +127,7 @@ module Dapp
         end
       end
 
-      def additional_values_options
+      def helm_additional_values_options
         [].tap do |options|
           options.concat(values.map { |p| "--values #{p}" })
         end
@@ -123,7 +137,7 @@ module Dapp
         @dimg_registry ||= dapp.dimg_registry(repo)
       end
 
-      def set_options(without_registry: false)
+      def helm_set_options(without_registry: false)
         [].tap do |options|
           options.concat set.map {|opt| "--set #{opt}"}
 
@@ -132,21 +146,16 @@ module Dapp
         end
       end
 
-      def upgrade_extra_options(dry_run: nil)
+      def helm_common_options(dry_run: nil)
         dry_run = dapp.dry_run? if dry_run.nil?
 
         [].tap do |options|
           options << "--namespace #{namespace}" if namespace
-          options << '--install'
           options << '--dry-run' if dry_run
           options << '--debug'   if dry_run
           options << "--timeout #{deploy_timeout}" if deploy_timeout
         end
       end
-
-      class << self
-
-      end # << self
     end # Helm::Release
   end # Kube
 end # Dapp
