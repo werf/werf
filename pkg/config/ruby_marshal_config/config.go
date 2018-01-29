@@ -13,8 +13,8 @@ func (cfg Config) TagYAML() string {
 }
 
 type DimgGroup struct {
-	Dimg      []Dimg      `yaml:"_dimg,omitempty"`
-	DimgGroup []DimgGroup `yaml:"_dimg_group,omitempty"`
+	Dimg      []Dimg      `yaml:"_dimg"`
+	DimgGroup []DimgGroup `yaml:"_dimg_group"`
 }
 
 func (cfg DimgGroup) TagYAML() string {
