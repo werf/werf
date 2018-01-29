@@ -6,17 +6,17 @@ import (
 )
 
 func LoadDappfile(dappfilePath string) (interface{}, error) {
-	dimgs, artifacts, err := ParseDimgs(dappfilePath)
+	dimgs, err := ParseDimgs(dappfilePath)
 	if err != nil {
 		return nil, err
 	}
-	return generateRubyConfig(dimgs, artifacts), err
+	return generateRubyConfig(dimgs), err
 }
 
-func generateRubyConfig(dimgs []*config.Dimg, artifacts []*config.DimgArtifact) ruby_marshal_config.Config {
-	c := ruby_marshal_config.Config{}
+func generateRubyConfig(dimgs []*config.Dimg) *ruby_marshal_config.Config {
+	c := &ruby_marshal_config.Config{}
 	for _, dimg := range dimgs {
-		c.Dimg = append(c.Dimg, dimg.ToRuby(artifacts)...)
+		c.Dimg = append(c.Dimg, dimg.ToRuby())
 	}
 	return c
 }

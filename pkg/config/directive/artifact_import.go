@@ -1,31 +1,16 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
+)
 
 type ArtifactImport struct {
-	ExportBase   `yaml:",inline"`
-	ArtifactName string `yaml:"artifact,omitempty"`
-	Before       string `yaml:"before,omitempty"`
-	After        string `yaml:"after,omitempty"`
-
-	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
-}
-
-func (c *ArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain ArtifactImport
-	if err := unmarshal((*plain)(c)); err != nil {
-		return err
-	}
-
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
-		return err
-	}
-
-	if err := c.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	*ExportBase
+	ArtifactName string
+	ArtifactDimg *DimgArtifact
+	Before       string
+	After        string
 }
 
 func (c *ArtifactImport) Validate() error {
@@ -33,25 +18,51 @@ func (c *ArtifactImport) Validate() error {
 		return err
 	}
 
-	if err := c.ValidateRequiredFields(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *ArtifactImport) ValidateRequiredFields() error {
 	if c.ArtifactName == "" {
-		return fmt.Errorf("имя артефакта обязательно") // FIXME
+		return fmt.Errorf("имя артефакта обязательно!") // FIXME
+	} else if c.Before != "" && c.After != "" {
+		return fmt.Errorf("артефакт не может иметь несколько связанных стадий!") // FIXME
 	} else if c.Before == "" && c.After == "" {
-		return fmt.Errorf("артефакт должен иметь связь!") // FIXME
-	} else if c.Before != "" && checkRelation(c.Before) {
-		return fmt.Errorf("артефакт имеет некорректную связь!") // FIXME
-	} else if c.After != "" && checkRelation(c.After) {
-		return fmt.Errorf("артефакт имеет некорректную связь!") // FIXME
+		return fmt.Errorf("артефакт должен иметь связанную стадию!") // FIXME
+	} else if c.Before != "" && checkInvalidRelation(c.Before) {
+		return fmt.Errorf("артефакт имеет некорректную связанную стадию (before)!") // FIXME
+	} else if c.After != "" && checkInvalidRelation(c.After) {
+		return fmt.Errorf("артефакт должен иметь связанную стадию (after)! %s") // FIXME
 	}
 	return nil
 }
 
-func checkRelation(relation string) bool {
-	return relation == "install" || relation == "setup"
+func checkInvalidRelation(rel string) bool {
+	return !(rel == "install" || rel == "setup")
+}
+
+func (c *ArtifactImport) AssociateArtifact(artifacts []*DimgArtifact) error {
+	if artifactDimg := artifactByName(artifacts, c.ArtifactName); artifactDimg != nil {
+		c.ArtifactDimg = artifactDimg
+	} else {
+		return fmt.Errorf("артефакт из импорта не найден!") // FIXME
+	}
+	return nil
+}
+
+func artifactByName(artifacts []*DimgArtifact, name string) *DimgArtifact {
+	for _, artifact := range artifacts {
+		if artifact.Name == name {
+			return artifact
+		}
+	}
+	return nil
+}
+
+func (c *ArtifactImport) ToRuby() ruby_marshal_config.ArtifactExport {
+	artifactExport := ruby_marshal_config.ArtifactExport{}
+	if c.ExportBase != nil {
+		artifactExport.ArtifactBaseExport = c.ExportBase.ToRuby()
+	}
+	if c.ArtifactDimg != nil {
+		artifactExport.Config = c.ArtifactDimg.ToRuby()
+	}
+	artifactExport.After = c.After
+	artifactExport.Before = c.Before
+	return artifactExport
 }

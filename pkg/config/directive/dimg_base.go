@@ -2,79 +2,50 @@ package config
 
 import (
 	"fmt"
+	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
 type DimgBase struct {
-	Dimg     interface{}       `yaml:"dimg,omitempty"`
-	Artifact string            `yaml:"artifact,omitempty"`
-	From     string            `yaml:"from,omitempty"`
-	Git      []*Git            `yaml:"git,omitempty"`
-	Shell    *ShellBase        `yaml:"shell,omitempty"`
-	Chef     *Chef             `yaml:"chef,omitempty"`
-	Mount    []*Mount          `yaml:"mount,omitempty"`
-	Docker   *Docker           `yaml:"docker,omitempty"`
-	Import   []*ArtifactImport `yaml:"import,omitempty"`
-
-	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
-}
-
-func (c *DimgBase) Type() string {
-	_, typeDimg := c.Dimg.(string)
-	_, typeDimgArray := c.Dimg.([]string)
-
-	if typeDimg {
-		return "dimg"
-	} else if typeDimgArray {
-		return "dimgArray"
-	} else {
-		return "artifact"
-	}
-}
-
-func (c *DimgBase) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain DimgBase
-	if err := unmarshal((*plain)(c)); err != nil {
-		return err
-	}
-
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
-		return err
-	}
-
-	if err := c.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	Name   string
+	From   string
+	Bulder string
+	Git    *GitManager
+	Chef   *Chef
+	Mount  []*Mount
+	Import []*ArtifactImport
 }
 
 func (c *DimgBase) Validate() error {
-	if err := c.ValidateRequiredFields(); err != nil {
-		return err
-	}
-
-	if err := c.ValidateType(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *DimgBase) ValidateRequiredFields() error {
-	if c.From != "" {
+	if c.From == "" {
 		return fmt.Errorf("from не может быть пустым!") // FIXME
 	}
+
+	// TODO: валидацию формата `From`
+	// TODO: валидация формата `Name`
+
 	return nil
 }
 
-func (c *DimgBase) ValidateType() error {
-	typeArtifact := c.Artifact != ""
-	_, typeDimg := c.Dimg.(string)
-	_, typeDimgArray := c.Dimg.([]string)
+func (c *DimgBase) ToRuby() ruby_marshal_config.DimgBase {
+	rubyDimg := ruby_marshal_config.DimgBase{}
+	rubyDimg.Name = c.Name
+	rubyDimg.Builder = c.Bulder
 
-	if typeArtifact && (typeDimg || typeDimgArray) {
-		return fmt.Errorf("Conflict between `dimg` and `artifact` directives!") // FIXME
-	} else if !(typeArtifact || typeDimg || typeDimgArray) {
-		return fmt.Errorf("dimg не имеет связи ни с артефактом ни с dimg") // FIXME
+	if c.Chef != nil {
+		rubyDimg.Chef = c.Chef.ToRuby()
 	}
-	return nil
+
+	if c.Git != nil {
+		rubyDimg.GitArtifact = c.Git.ToRuby()
+	}
+
+	for _, mount := range c.Mount {
+		rubyDimg.Mount = append(rubyDimg.Mount, mount.ToRuby())
+	}
+
+	for _, importArtifact := range c.Import {
+		rubyDimg.Artifact = append(rubyDimg.Artifact, importArtifact.ToRuby())
+	}
+
+	return rubyDimg
 }
