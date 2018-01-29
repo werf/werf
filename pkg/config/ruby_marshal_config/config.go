@@ -5,7 +5,7 @@ type RubyType interface {
 }
 
 type Config struct {
-	DimgGroup
+	DimgGroup `yaml:",inline"`
 }
 
 func (cfg Config) TagYAML() string {
