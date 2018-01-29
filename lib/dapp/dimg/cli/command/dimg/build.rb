@@ -22,6 +22,18 @@ BANNER
           :g_a_pre_setup_patch, :setup, :after_setup_artifact, :g_a_artifact_patch, :build_artifact
         ]
 
+        introspect_stage_proc = proc do |stages|
+          proc { |val| val.to_sym.tap { |v| in_validate!(v, stages) } }
+        end
+
+        introspect_before_proc = proc do |stages|
+          proc do |val|
+            val_sym = val.to_sym
+            introspect_stage_proc.call(stages[1..-1]).call(val_sym)
+            stages[stages.index(val_sym) - 1]
+          end
+        end
+
         option :tmp_dir_prefix,
                long: '--tmp-dir-prefix PREFIX',
                description: 'Tmp directory prefix (/tmp by default). Used for build process service directories.'
@@ -48,12 +60,22 @@ BANNER
         option :introspect_stage,
                long: '--introspect-stage STAGE',
                description: "Introspect one of the following stages (#{list_msg_format(introspected_stages)})",
-               proc: proc { |val| val.to_sym.tap { |v| in_validate!(v, introspected_stages) } }
+               proc: introspect_stage_proc.call(introspected_stages)
+
+        option :introspect_before,
+               long: '--introspect-before STAGE',
+               description: "Introspect stage before one of the following stages (#{list_msg_format(introspected_stages[1..-1])})",
+               proc: introspect_before_proc.call(introspected_stages)
 
         option :introspect_artifact_stage,
                long: '--introspect-artifact-stage STAGE',
                description: "Introspect one of the following stages (#{list_msg_format(artifact_introspected_stages)})",
-               proc: proc { |val| val.to_sym.tap { |v| in_validate!(v, artifact_introspected_stages) } }
+               proc: introspect_stage_proc.call(artifact_introspected_stages)
+
+        option :introspect_artifact_before,
+               long: '--introspect-artifact-before STAGE',
+               description: "Introspect stage before one of the following stages (#{list_msg_format(artifact_introspected_stages[1..-1])})",
+               proc: introspect_before_proc.call(artifact_introspected_stages)
 
         option :ssh_key,
                long: '--ssh-key SSH_KEY',
@@ -75,6 +97,13 @@ BANNER
                long: '--force-save-cache',
                boolean: true,
                default: false
+
+        def cli_options(**kwargs)
+          super.tap do |config|
+            config[:introspect_stage] ||= config[:introspect_before]
+            config[:introspect_artifact_stage] ||= config[:introspect_artifact_before]
+          end
+        end
       end
     end
   end
