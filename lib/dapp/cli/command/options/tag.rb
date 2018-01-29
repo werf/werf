@@ -5,11 +5,25 @@ module Dapp
         module Tag
           def self.extended(klass)
             klass.class_eval do
-              option :tag,
-                     long: '--tag TAG',
-                     description: 'Add tag (can be used one or more times)',
+              "Add tag (can be used one or more times), specified text will be slugified".tap do |desc|
+                option :tag,
+                        long: '--tag TAG',
+                        description: desc,
+                        default: [],
+                        proc: proc { |v| composite_options(:tags) << v }
+
+                option :tag_slug,
+                        long: '--tag-slug TAG',
+                        description: desc,
+                        default: [],
+                        proc: proc { |v| composite_options(:slug_tags) << v }
+              end
+
+              option :tag_plain,
+                     long: '--tag-plain TAG',
+                     description: "Add tag (can be used one or more times)",
                      default: [],
-                     proc: proc { |v| composite_options(:tags) << v }
+                     proc: proc { |v| composite_options(:plain_tags) << v }
 
               option :tag_branch,
                      long: '--tag-branch',

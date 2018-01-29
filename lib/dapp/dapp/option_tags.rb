@@ -7,12 +7,21 @@ module Dapp
 
       def tags_by_scheme
         @tags_by_scheme_name ||= begin
-          [simple_tags, branch_tags, commit_tags, build_tags, ci_tags].reduce({}) do |some_tags_by_scheme, tags_by_scheme|
-            tags_by_scheme.in_depth_merge(some_tags_by_scheme)
-          end.tap do |tags_by_scheme|
-            [:git_branch, :git_tag, :custom].each do |scheme|
-              tags_by_scheme[scheme].map!(&method(:consistent_uniq_slugify)) unless tags_by_scheme[scheme].nil?
+          {}.tap do |tags_by_scheme|
+            [slug_tags, branch_tags, ci_tags].each do |_tags_by_scheme|
+              _tags_by_scheme.each do |scheme, tags|
+                tags_by_scheme[scheme] ||= []
+                tags_by_scheme[scheme] += tags.map(&method(:consistent_uniq_slugify))
+              end
             end
+
+            [plain_tags, commit_tags, build_tags].each do |_tags_by_scheme|
+              _tags_by_scheme.each do |scheme, tags|
+                tags_by_scheme[scheme] ||= []
+                tags_by_scheme[scheme] += tags
+              end
+            end
+
             tags_by_scheme[:custom] = [:latest] if tags_by_scheme.values.flatten.empty?
           end
         end
@@ -22,8 +31,12 @@ module Dapp
         tags_by_scheme.values.flatten
       end
 
-      def simple_tags
-        { custom: options[:tag] }
+      def slug_tags
+        { custom: [*options[:tag], *options[:tag_slug]]}
+      end
+
+      def plain_tags
+        { custom: options[:tag_plain] }
       end
 
       def branch_tags
