@@ -15,17 +15,19 @@ type RawDimg struct {
 	RawDocker *RawDocker           `yaml:"docker,omitempty"`
 	RawImport []*RawArtifactImport `yaml:"import,omitempty"`
 
-	Doc *Doc
+	Doc *Doc `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *RawDimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	ParentStack.Push(c)
 	type plain RawDimg
-	if err := unmarshal((*plain)(c)); err != nil {
+	err := unmarshal((*plain)(c))
+	ParentStack.Pop()
+	if err != nil {
 		return err
 	}
-
 	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
 		return err
 	}

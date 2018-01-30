@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/flant/dapp/pkg/util"
 )
 
 type Doc struct {
@@ -44,3 +46,7 @@ func InterfaceToStringArray(stringOrStringArray interface{}) ([]string, error) {
 		return nil, fmt.Errorf("ожидается строка или массив строк: %v", stringOrStringArray) // FIXME
 	}
 }
+
+// Stack for setting parents in UnmarshalYAML calls
+// Set this to util.NewStack before yaml.Unmarshal
+var ParentStack *util.Stack

@@ -11,10 +11,16 @@ type RawDocker struct {
 	User       string            `yaml:"USER,omitempty"`
 	Entrypoint interface{}       `yaml:"ENTRYPOINT,omitempty"`
 
+	RawDimg *RawDimg `yaml:"-"` // parent
+
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *RawDocker) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
+		c.RawDimg = parent
+	}
+
 	type plain RawDocker
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err

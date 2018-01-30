@@ -4,12 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/Masterminds/sprig"
-	"gopkg.in/flant/yaml.v2"
 	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/Masterminds/sprig"
+	"gopkg.in/flant/yaml.v2"
+
+	"github.com/flant/dapp/pkg/util"
 )
 
 func ParseDimgs(dappfilePath string) ([]*Dimg, error) {
@@ -179,6 +182,7 @@ func associateArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 
 func splitByRawDimgs(docs []*Doc) ([]*RawDimg, error) {
 	var rawDimgs []*RawDimg
+	ParentStack = util.NewStack()
 	for _, doc := range docs {
 		dimg := &RawDimg{Doc: doc}
 		err := yaml.Unmarshal(doc.Content, &dimg)
