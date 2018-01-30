@@ -16,12 +16,14 @@ type Dimg struct {
 	Docker   *Docker           `yaml:"docker,omitempty"`
 	Import   []*ArtifactImport `yaml:"import,omitempty"`
 
-	Doc      *Doc
+	Doc *Doc
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *Dimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	YamlParseContext = append(YamlParseContext, c)
+
 	type plain Dimg
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
@@ -34,6 +36,8 @@ func (c *Dimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := c.ValidateType(); err != nil {
 		return err
 	}
+
+	YamlParseContext = YamlParseContext[:len(YamlParseContext)-1]
 
 	return nil
 }
