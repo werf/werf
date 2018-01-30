@@ -2,8 +2,8 @@ package config
 
 import "github.com/flant/dapp/pkg/config/directive"
 
-type GitBase struct {
-	ExportBase        `yaml:",inline"`
+type Git struct {
+	GitExportBase     `yaml:",inline"`
 	As                string             `yaml:"as,omitempty"`
 	Url               string             `yaml:"url,omitempty"`
 	Branch            string             `yaml:"branch,omitempty"`
@@ -13,15 +13,15 @@ type GitBase struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *GitBase) Type() string {
+func (c *Git) Type() string {
 	if c.Url != "" {
 		return "remote"
 	}
 	return "local"
 }
 
-func (c *GitBase) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain GitBase
+func (c *Git) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain Git
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
 	}
@@ -31,6 +31,10 @@ func (c *GitBase) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return nil
+}
+
+type GitExportBase struct {
+	ExportBase `yaml:",inline"`
 }
 
 type StageDependencies struct {
@@ -89,7 +93,7 @@ func (c *StageDependencies) ToDirective() (stageDependencies *config.StageDepend
 	return stageDependencies, nil
 }
 
-func (c *GitBase) ToGitLocalDirective() (gitLocal *config.GitLocal, err error) {
+func (c *Git) ToGitLocalDirective() (gitLocal *config.GitLocal, err error) {
 	gitLocal = &config.GitLocal{}
 
 	if exportBase, err := c.ExportBase.ToDirective(); err != nil {
@@ -111,7 +115,7 @@ func (c *GitBase) ToGitLocalDirective() (gitLocal *config.GitLocal, err error) {
 	return gitLocal, nil
 }
 
-func (c *GitBase) ToGitRemoteDirective() (gitRemote *config.GitRemote, err error) {
+func (c *Git) ToGitRemoteDirective() (gitRemote *config.GitRemote, err error) {
 	gitRemote = &config.GitRemote{}
 
 	if gitLocal, err := c.ToGitLocalDirective(); err != nil {

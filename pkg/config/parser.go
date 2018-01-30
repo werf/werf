@@ -55,8 +55,8 @@ func splitByDocs(dappfilePath string) ([]*raw.Doc, error) {
 
 		content := scanner.Bytes()
 		docs = append(docs, &raw.Doc{
-			Line: line,
-			Content: content,
+			Line:           line,
+			Content:        content,
 			RenderFilePath: dappfileYamlRenderFilePath,
 		})
 

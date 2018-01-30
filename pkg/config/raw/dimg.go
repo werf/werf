@@ -9,14 +9,14 @@ type Dimg struct {
 	Dimg     string            `yaml:"dimg,omitempty"` // TODO: поддержка нескольких имён
 	Artifact string            `yaml:"artifact,omitempty"`
 	From     string            `yaml:"from,omitempty"`
-	Git      []*GitBase        `yaml:"git,omitempty"`
+	Git      []*Git            `yaml:"git,omitempty"`
 	Shell    *Shell            `yaml:"shell,omitempty"`
 	Chef     *Chef             `yaml:"chef,omitempty"`
 	Mount    []*Mount          `yaml:"mount,omitempty"`
 	Docker   *Docker           `yaml:"docker,omitempty"`
 	Import   []*ArtifactImport `yaml:"import,omitempty"`
 
-	Doc      *Doc
+	Doc *Doc
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
