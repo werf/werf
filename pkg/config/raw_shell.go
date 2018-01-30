@@ -2,10 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/flant/dapp/pkg/config/directive"
 )
 
-type Shell struct {
+type RawShell struct {
 	BeforeInstall interface{} `yaml:"beforeInstall,omitempty"`
 	Install       interface{} `yaml:"install,omitempty"`
 	BeforeSetup   interface{} `yaml:"beforeSetup,omitempty"`
@@ -15,8 +14,8 @@ type Shell struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *Shell) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain Shell
+func (c *RawShell) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain RawShell
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
 	}
@@ -28,9 +27,9 @@ func (c *Shell) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (c *Shell) ToDirective() (shell *config.ShellDimg, err error) {
-	shell = &config.ShellDimg{}
-	shell.ShellBase = &config.ShellBase{}
+func (c *RawShell) ToDirective() (shell *ShellDimg, err error) {
+	shell = &ShellDimg{}
+	shell.ShellBase = &ShellBase{}
 
 	if beforeInstall, err := InterfaceToStringArray(c.BeforeInstall); err != nil {
 		return nil, err
@@ -63,8 +62,8 @@ func (c *Shell) ToDirective() (shell *config.ShellDimg, err error) {
 	return shell, nil
 }
 
-func (c *Shell) ToArtifact() (shellArtifact *config.ShellArtifact, err error) {
-	shellArtifact = &config.ShellArtifact{}
+func (c *RawShell) ToArtifact() (shellArtifact *ShellArtifact, err error) {
+	shellArtifact = &ShellArtifact{}
 
 	if shellDimg, err := c.ToDirective(); err != nil {
 		return nil, err

@@ -1,8 +1,6 @@
 package config
 
-import "github.com/flant/dapp/pkg/config/directive"
-
-type Docker struct {
+type RawDocker struct {
 	Volume     interface{}       `yaml:"VOLUME,omitempty"`
 	Expose     interface{}       `yaml:"EXPOSE,omitempty"`
 	Env        map[string]string `yaml:"ENV,omitempty"`
@@ -16,8 +14,8 @@ type Docker struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *Docker) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain Docker
+func (c *RawDocker) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain RawDocker
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
 	}
@@ -29,8 +27,8 @@ func (c *Docker) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (c *Docker) ToDirective() (docker *config.Docker, err error) {
-	docker = &config.Docker{}
+func (c *RawDocker) ToDirective() (docker *Docker, err error) {
+	docker = &Docker{}
 
 	if volume, err := InterfaceToStringArray(c.Volume); err != nil {
 		return nil, err

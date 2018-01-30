@@ -5,16 +5,14 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/Masterminds/sprig"
-	"github.com/flant/dapp/pkg/config/directive"
-	raw "github.com/flant/dapp/pkg/config/raw"
 	"gopkg.in/flant/yaml.v2"
 	"io/ioutil"
+	"os"
 	"strings"
 	"text/template"
-	"os"
 )
 
-func ParseDimgs(dappfilePath string) ([]*config.Dimg, error) {
+func ParseDimgs(dappfilePath string) ([]*Dimg, error) {
 	docs, err := splitByDocs(dappfilePath)
 	if err != nil {
 		return nil, err
@@ -28,7 +26,7 @@ func ParseDimgs(dappfilePath string) ([]*config.Dimg, error) {
 	return dimgs, nil
 }
 
-func splitByDocs(dappfilePath string) ([]*raw.Doc, error) {
+func splitByDocs(dappfilePath string) ([]*Doc, error) {
 	dappfileContent, err := parseDappfileYaml(dappfilePath)
 	if err != nil {
 		return nil, err
@@ -43,7 +41,7 @@ func splitByDocs(dappfilePath string) ([]*raw.Doc, error) {
 		return nil, err
 	}
 
-	var docs []*raw.Doc
+	var docs []*Doc
 	var line int
 	firstScan := true
 	for scanner.Scan() {
@@ -54,7 +52,7 @@ func splitByDocs(dappfilePath string) ([]*raw.Doc, error) {
 		}
 
 		content := scanner.Bytes()
-		docs = append(docs, &raw.Doc{
+		docs = append(docs, &Doc{
 			Line:           line,
 			Content:        content,
 			RenderFilePath: dappfileYamlRenderFilePath,
@@ -125,24 +123,24 @@ func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err 
 	return 0, nil, nil
 }
 
-func splitByDimgs(docs []*raw.Doc) ([]*config.Dimg, error) {
+func splitByDimgs(docs []*Doc) ([]*Dimg, error) {
 	rawDimgs, err := splitByRawDimgs(docs)
 	if err != nil {
 		return nil, err
 	}
 
-	var dimgs []*config.Dimg
-	var artifacts []*config.DimgArtifact
+	var dimgs []*Dimg
+	var artifacts []*DimgArtifact
 
 	for _, rawDimg := range rawDimgs {
 		if rawDimg.Type() == "dimg" {
-			if dimg, err := rawDimg.ToDimg(); err != nil {
+			if dimg, err := rawDimg.ToDirective(); err != nil {
 				return nil, err
 			} else {
 				dimgs = append(dimgs, dimg)
 			}
 		} else {
-			if dimgArtifact, err := rawDimg.ToDimgArtifact(); err != nil {
+			if dimgArtifact, err := rawDimg.ToArtifactDirective(); err != nil {
 				return nil, err
 			} else {
 				artifacts = append(artifacts, dimgArtifact)
@@ -161,7 +159,7 @@ func splitByDimgs(docs []*raw.Doc) ([]*config.Dimg, error) {
 	return dimgs, nil
 }
 
-func associateArtifacts(dimgs []*config.Dimg, artifacts []*config.DimgArtifact) error {
+func associateArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	for _, dimg := range dimgs {
 		for _, importArtifact := range dimg.Import {
 			if err := importArtifact.AssociateArtifact(artifacts); err != nil {
@@ -179,10 +177,10 @@ func associateArtifacts(dimgs []*config.Dimg, artifacts []*config.DimgArtifact) 
 	return nil
 }
 
-func splitByRawDimgs(docs []*raw.Doc) ([]*raw.Dimg, error) {
-	var rawDimgs []*raw.Dimg
+func splitByRawDimgs(docs []*Doc) ([]*RawDimg, error) {
+	var rawDimgs []*RawDimg
 	for _, doc := range docs {
-		dimg := &raw.Dimg{Doc: doc}
+		dimg := &RawDimg{Doc: doc}
 		err := yaml.Unmarshal(doc.Content, &dimg)
 		if err != nil {
 			return nil, err

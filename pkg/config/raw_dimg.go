@@ -2,27 +2,26 @@ package config
 
 import (
 	"fmt"
-	"github.com/flant/dapp/pkg/config/directive"
 )
 
-type Dimg struct {
-	Dimg     string            `yaml:"dimg,omitempty"` // TODO: поддержка нескольких имён
-	Artifact string            `yaml:"artifact,omitempty"`
-	From     string            `yaml:"from,omitempty"`
-	Git      []*Git            `yaml:"git,omitempty"`
-	Shell    *Shell            `yaml:"shell,omitempty"`
-	Chef     *Chef             `yaml:"chef,omitempty"`
-	Mount    []*Mount          `yaml:"mount,omitempty"`
-	Docker   *Docker           `yaml:"docker,omitempty"`
-	Import   []*ArtifactImport `yaml:"import,omitempty"`
+type RawDimg struct {
+	Dimg      string               `yaml:"dimg,omitempty"` // TODO: поддержка нескольких имён
+	Artifact  string               `yaml:"artifact,omitempty"`
+	From      string               `yaml:"from,omitempty"`
+	RawGit    []*RawGit            `yaml:"git,omitempty"`
+	RawShell  *RawShell            `yaml:"shell,omitempty"`
+	RawChef   *RawChef             `yaml:"chef,omitempty"`
+	RawMount  []*RawMount          `yaml:"mount,omitempty"`
+	RawDocker *RawDocker           `yaml:"docker,omitempty"`
+	RawImport []*RawArtifactImport `yaml:"import,omitempty"`
 
 	Doc *Doc
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *Dimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	type plain Dimg
+func (c *RawDimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain RawDimg
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
 	}
@@ -38,7 +37,7 @@ func (c *Dimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (c *Dimg) ValidateType() error {
+func (c *RawDimg) ValidateType() error {
 	isDimg := c.Dimg != ""
 	isArtifact := c.Artifact != ""
 
@@ -51,7 +50,7 @@ func (c *Dimg) ValidateType() error {
 	return nil
 }
 
-func (c *Dimg) Type() string {
+func (c *RawDimg) Type() string {
 	if c.Dimg != "" {
 		return "dimg"
 	} else if c.Artifact != "" {
@@ -61,26 +60,26 @@ func (c *Dimg) Type() string {
 	return ""
 }
 
-func (c *Dimg) ToDimg() (dimg *config.Dimg, err error) {
-	dimg = &config.Dimg{}
+func (c *RawDimg) ToDirective() (dimg *Dimg, err error) {
+	dimg = &Dimg{}
 
-	if dimgBase, err := c.ToDimgBase(c.Dimg); err != nil {
+	if dimgBase, err := c.ToBaseDirective(c.Dimg); err != nil {
 		return nil, err
 	} else {
 		dimg.DimgBase = dimgBase
 	}
 
-	if c.Shell != nil {
+	if c.RawShell != nil {
 		dimg.Bulder = "shell"
-		if shell, err := c.Shell.ToDirective(); err != nil {
+		if shell, err := c.RawShell.ToDirective(); err != nil {
 			return nil, err
 		} else {
 			dimg.Shell = shell
 		}
 	}
 
-	if c.Docker != nil {
-		if docker, err := c.Docker.ToDirective(); err != nil {
+	if c.RawDocker != nil {
+		if docker, err := c.RawDocker.ToDirective(); err != nil {
 			return nil, err
 		} else {
 			dimg.Docker = docker
@@ -94,21 +93,21 @@ func (c *Dimg) ToDimg() (dimg *config.Dimg, err error) {
 	return dimg, nil
 }
 
-func (c *Dimg) ToDimgArtifact() (dimgArtifact *config.DimgArtifact, err error) {
-	dimgArtifact = &config.DimgArtifact{}
+func (c *RawDimg) ToArtifactDirective() (dimgArtifact *DimgArtifact, err error) {
+	dimgArtifact = &DimgArtifact{}
 
-	if dimgArtifact.DimgBase, err = c.ToDimgBase(c.Artifact); err != nil {
+	if dimgArtifact.DimgBase, err = c.ToBaseDirective(c.Artifact); err != nil {
 		return nil, err
 	}
 
-	if c.Shell != nil {
+	if c.RawShell != nil {
 		dimgArtifact.Bulder = "shell"
-		if dimgArtifact.Shell, err = c.Shell.ToArtifact(); err != nil {
+		if dimgArtifact.Shell, err = c.RawShell.ToArtifact(); err != nil {
 			return nil, err
 		}
 	}
 
-	if c.Docker != nil {
+	if c.RawDocker != nil {
 		return nil, fmt.Errorf("docker не поддерживается для артефакта!") // FIXME
 	}
 
@@ -119,13 +118,13 @@ func (c *Dimg) ToDimgArtifact() (dimgArtifact *config.DimgArtifact, err error) {
 	return dimgArtifact, nil
 }
 
-func (c *Dimg) ToDimgBase(name string) (dimgBase *config.DimgBase, err error) {
-	dimgBase = &config.DimgBase{}
+func (c *RawDimg) ToBaseDirective(name string) (dimgBase *DimgBase, err error) {
+	dimgBase = &DimgBase{}
 	dimgBase.Name = name
 	dimgBase.From = c.From
 
-	dimgBase.Git = &config.GitManager{}
-	for _, git := range c.Git {
+	dimgBase.Git = &GitManager{}
+	for _, git := range c.RawGit {
 		if git.Type() == "local" {
 			if gitLocal, err := git.ToGitLocalDirective(); err != nil {
 				return nil, err
@@ -141,14 +140,14 @@ func (c *Dimg) ToDimgBase(name string) (dimgBase *config.DimgBase, err error) {
 		}
 	}
 
-	if c.Chef != nil {
+	if c.RawChef != nil {
 		dimgBase.Bulder = "chef"
-		if dimgBase.Chef, err = c.Chef.ToDirective(); err != nil {
+		if dimgBase.Chef, err = c.RawChef.ToDirective(); err != nil {
 			return nil, err
 		}
 	}
 
-	for _, mount := range c.Mount {
+	for _, mount := range c.RawMount {
 		if dimgMount, err := mount.ToDirective(); err != nil {
 			return nil, err
 		} else {
@@ -156,7 +155,7 @@ func (c *Dimg) ToDimgBase(name string) (dimgBase *config.DimgBase, err error) {
 		}
 	}
 
-	for _, importArtifact := range c.Import {
+	for _, importArtifact := range c.RawImport {
 		if importArtifactDirective, err := importArtifact.ToDirective(); err != nil {
 			return nil, err
 		} else {

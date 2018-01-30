@@ -13,8 +13,6 @@ type ArtifactImport struct {
 	After        string
 }
 
-type Symbol string
-
 func (c *ArtifactImport) Validate() error {
 	if err := c.ExportBase.Validate(); err != nil {
 		return err

@@ -8,7 +8,7 @@ import (
 type Mount struct {
 	From string
 	// TODO: FromPath ?!
-	To   string
+	To string
 	// TODO: Type string
 }
 

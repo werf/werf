@@ -1,10 +1,6 @@
 package config
 
-import (
-	"github.com/flant/dapp/pkg/config/directive"
-)
-
-type ExportBase struct {
+type RawExportBase struct {
 	Add          string      `yaml:"add,omitempty"`
 	To           string      `yaml:"to,omitempty"`
 	IncludePaths interface{} `yaml:"includePaths,omitempty"`
@@ -13,8 +9,8 @@ type ExportBase struct {
 	Group        string      `yaml:"group,omitempty"`
 }
 
-func (c *ExportBase) ToDirective() (exportBase *config.ExportBase, err error) {
-	exportBase = &config.ExportBase{}
+func (c *RawExportBase) ToDirective() (exportBase *ExportBase, err error) {
+	exportBase = &ExportBase{}
 	exportBase.Add = c.Add
 	exportBase.To = c.To
 
