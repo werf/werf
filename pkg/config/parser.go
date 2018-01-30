@@ -52,7 +52,7 @@ func dumpDappfileRender(dappfilePath string, dappfileRenderContent string) (stri
 	dappfileRenderNameParts = append(dappfileRenderNameParts, "render", dappfileNameParts[len(dappfileNameParts)-1])
 	dappfileRenderPath := path.Join(wd, fmt.Sprintf(".%s", strings.Join(dappfileRenderNameParts, ".")))
 
-	dappfileRenderFile, err := os.OpenFile(dappfileRenderPath, os.O_CREATE|os.O_WRONLY, 0644)
+	dappfileRenderFile, err := os.OpenFile(dappfileRenderPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return "", err
 	}
@@ -118,7 +118,7 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 }
 
 func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	yamlSeparator := "\n---"
+	yamlSeparator := "---"
 
 	if atEOF && len(data) == 0 {
 		return 0, nil, nil
