@@ -6,6 +6,12 @@ type Chef struct {
 	Cookbook   string
 	Recipe     []string
 	Attributes map[interface{}]interface{}
+
+	Raw *RawChef
+}
+
+func (c *Chef) Validate() error {
+	return nil
 }
 
 func (c *Chef) ToRuby() ruby_marshal_config.Chef {

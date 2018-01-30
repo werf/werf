@@ -11,10 +11,6 @@ type DimgArtifact struct {
 }
 
 func (c *DimgArtifact) Validate() error {
-	if err := c.DimgBase.Validate(); err != nil {
-		return err
-	}
-
 	if c.Chef != nil && c.Shell != nil {
 		return fmt.Errorf("конфликт между типами сборщиков!") // FIXME
 	}

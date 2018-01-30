@@ -66,5 +66,19 @@ func (c *RawDocker) ToDirective() (docker *Docker, err error) {
 		docker.Entrypoint = entrypoint
 	}
 
+	docker.Raw = c
+
+	if err := c.ValidateDirective(docker); err != nil {
+		return nil, err
+	}
+
 	return docker, nil
+}
+
+func (c *RawDocker) ValidateDirective(docker *Docker) (err error) {
+	if err := docker.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }

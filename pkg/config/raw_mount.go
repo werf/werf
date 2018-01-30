@@ -25,9 +25,19 @@ func (c *RawMount) ToDirective() (mount *Mount, err error) {
 	mount.From = c.From
 	mount.To = c.To
 
-	if err := mount.Validate(); err != nil {
+	mount.Raw = c
+
+	if err := c.ValidateDirective(mount); err != nil {
 		return nil, err
 	}
 
 	return mount, nil
+}
+
+func (c *RawMount) ValidateDirective(mount *Mount) (err error) {
+	if err := mount.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -4,7 +4,13 @@ import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
 
 type GitLocal struct {
 	*GitBase
-	As                string
+	As string
+
+	Raw *RawGit
+}
+
+func (c *GitLocal) Validate() error {
+	return nil
 }
 
 func (c *GitLocal) ToRuby() ruby_marshal_config.GitArtifactLocalExport {

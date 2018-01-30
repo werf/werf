@@ -1,10 +1,10 @@
 package config
 
 type RawArtifactImport struct {
-	RawArtifactExportBase `yaml:",inline"`
-	ArtifactName          string `yaml:"artifact,omitempty"`
-	Before                string `yaml:"before,omitempty"`
-	After                 string `yaml:"after,omitempty"`
+	RawArtifactExport `yaml:",inline"`
+	ArtifactName      string `yaml:"artifact,omitempty"`
+	Before            string `yaml:"before,omitempty"`
+	After             string `yaml:"after,omitempty"`
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -25,19 +25,29 @@ func (c *RawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) err
 func (c *RawArtifactImport) ToDirective() (artifactImport *ArtifactImport, err error) {
 	artifactImport = &ArtifactImport{}
 
-	if exportBase, err := c.RawExportBase.ToDirective(); err != nil {
+	if artifactExport, err := c.RawArtifactExport.ToDirective(); err != nil {
 		return nil, err
 	} else {
-		artifactImport.ExportBase = exportBase
+		artifactImport.ArtifactExport = artifactExport
 	}
 
 	artifactImport.ArtifactName = c.ArtifactName
 	artifactImport.Before = c.Before
 	artifactImport.After = c.After
 
-	if err = artifactImport.Validate(); err != nil {
+	artifactImport.Raw = c
+
+	if err = c.ValidateDirective(artifactImport); err != nil {
 		return nil, err
 	}
 
 	return artifactImport, nil
+}
+
+func (c *RawArtifactImport) ValidateDirective(artifactImport *ArtifactImport) (err error) {
+	if err = artifactImport.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }

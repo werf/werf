@@ -12,6 +12,8 @@ type ExportBase struct {
 	ExcludePaths []string
 	Owner        string
 	Group        string
+
+	Raw *RawExportBase
 }
 
 func (c *ExportBase) Validate() error {

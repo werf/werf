@@ -12,6 +12,12 @@ type Docker struct {
 	Workdir    string
 	User       string
 	Entrypoint []string
+
+	Raw *RawDocker
+}
+
+func (c *Docker) Validate() error {
+	return nil
 }
 
 func (c *Docker) ToRuby() ruby_marshal_config.DockerDimg {

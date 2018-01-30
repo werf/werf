@@ -6,11 +6,13 @@ import (
 )
 
 type ArtifactImport struct {
-	*ExportBase
+	*ArtifactExport
 	ArtifactName string
 	ArtifactDimg *DimgArtifact
 	Before       string
 	After        string
+
+	Raw *RawArtifactImport
 }
 
 func (c *ArtifactImport) Validate() error {

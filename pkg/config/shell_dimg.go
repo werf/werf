@@ -6,6 +6,10 @@ import (
 
 type ShellDimg struct{ *ShellBase }
 
+func (c *ShellDimg) Validate() error {
+	return nil
+}
+
 func (c *ShellDimg) ToRuby() ruby_marshal_config.ShellDimg {
 	shellDimg := ruby_marshal_config.ShellDimg{}
 	shellDimg.BeforeInstall.Run = c.BeforeInstall

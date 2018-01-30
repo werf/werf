@@ -13,7 +13,7 @@ type StageDependencies struct {
 	Raw *RawStageDependencies
 }
 
-func (c *StageDependencies) Validation() error {
+func (c *StageDependencies) Validate() error {
 	// TODO: валидация относительных путей
 	return nil
 }

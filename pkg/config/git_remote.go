@@ -8,9 +8,11 @@ type GitRemote struct {
 	Branch string
 	Commit string
 	Url    string
+
+	Raw *RawGit
 }
 
-func (c *GitLocal) Validation() error {
+func (c *GitRemote) Validate() error {
 	// TODO: валидация одновременного использования `Branch` и `Commit`
 	return nil
 }

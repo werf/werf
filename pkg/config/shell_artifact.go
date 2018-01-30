@@ -9,6 +9,10 @@ type ShellArtifact struct {
 	BuildArtifact []string
 }
 
+func (c *ShellArtifact) Validate() error {
+	return nil
+}
+
 func (c *ShellArtifact) ToRuby() ruby_marshal_config.ShellArtifact {
 	shellArtifact := ruby_marshal_config.ShellArtifact{}
 	shellArtifact.ShellDimg = c.ShellDimg.ToRuby()

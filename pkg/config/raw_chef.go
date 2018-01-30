@@ -32,5 +32,20 @@ func (c *RawChef) ToDirective() (chef *Chef, err error) {
 	}
 
 	chef.Attributes = c.Attributes
+
+	chef.Raw = c
+
+	if err := c.ValidateDirective(chef); err != nil {
+		return nil, err
+	}
+
 	return chef, nil
+}
+
+func (c *RawChef) ValidateDirective(chef *Chef) (err error) {
+	if err := chef.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }

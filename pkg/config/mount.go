@@ -10,6 +10,8 @@ type Mount struct {
 	// TODO: FromPath ?!
 	To string
 	// TODO: Type string
+
+	Raw *RawMount
 }
 
 func (c *Mount) Validate() error {

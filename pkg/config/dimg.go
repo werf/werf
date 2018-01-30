@@ -12,10 +12,6 @@ type Dimg struct {
 }
 
 func (c *Dimg) Validate() error {
-	if err := c.DimgBase.Validate(); err != nil {
-		return err
-	}
-
 	if c.Chef != nil && c.Shell != nil {
 		return fmt.Errorf("конфликт между типами сборщиков!") // FIXME
 	}

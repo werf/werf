@@ -13,6 +13,8 @@ type DimgBase struct {
 	Chef   *Chef
 	Mount  []*Mount
 	Import []*ArtifactImport
+
+	Raw *RawDimg
 }
 
 func (c *DimgBase) Validate() error {

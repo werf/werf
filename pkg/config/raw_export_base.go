@@ -28,5 +28,20 @@ func (c *RawExportBase) ToDirective() (exportBase *ExportBase, err error) {
 
 	exportBase.Owner = c.Owner
 	exportBase.Group = c.Group
+
+	exportBase.Raw = c
+
+	if err := c.ValidateDirective(exportBase); err != nil {
+		return nil, err
+	}
+
 	return exportBase, nil
+}
+
+func (c *RawExportBase) ValidateDirective(exportBase *ExportBase) (err error) {
+	if err := exportBase.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -49,9 +49,19 @@ func (c *RawStageDependencies) ToDirective() (stageDependencies *StageDependenci
 		stageDependencies.BuildArtifact = buildArtifact
 	}
 
-	if err := stageDependencies.Validation(); err != nil {
+	stageDependencies.Raw = c
+
+	if err := c.ValidateDirective(stageDependencies); err != nil {
 		return nil, err
 	}
 
 	return stageDependencies, nil
+}
+
+func (c *RawStageDependencies) ValidateDirective(stageDependencies *StageDependencies) error {
+	if err := stageDependencies.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }

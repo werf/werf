@@ -86,11 +86,19 @@ func (c *RawDimg) ToDirective() (dimg *Dimg, err error) {
 		}
 	}
 
-	if err := dimg.Validate(); err != nil {
+	if err := c.ValidateDirective(dimg); err != nil {
 		return nil, err
 	}
 
 	return dimg, nil
+}
+
+func (c *RawDimg) ValidateDirective(dimg *Dimg) (err error) {
+	if err := dimg.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *RawDimg) ToArtifactDirective() (dimgArtifact *DimgArtifact, err error) {
@@ -102,20 +110,28 @@ func (c *RawDimg) ToArtifactDirective() (dimgArtifact *DimgArtifact, err error) 
 
 	if c.RawShell != nil {
 		dimgArtifact.Bulder = "shell"
-		if dimgArtifact.Shell, err = c.RawShell.ToArtifact(); err != nil {
+		if dimgArtifact.Shell, err = c.RawShell.ToArtifactDirective(); err != nil {
 			return nil, err
 		}
 	}
 
-	if c.RawDocker != nil {
-		return nil, fmt.Errorf("docker не поддерживается для артефакта!") // FIXME
-	}
-
-	if err := dimgArtifact.Validate(); err != nil {
+	if err := c.ValidateArtifactDirective(dimgArtifact); err != nil {
 		return nil, err
 	}
 
 	return dimgArtifact, nil
+}
+
+func (c *RawDimg) ValidateArtifactDirective(dimgArtifact *DimgArtifact) (err error) {
+	if c.RawDocker != nil {
+		return fmt.Errorf("docker не поддерживается для артефакта!") // FIXME
+	}
+
+	if err := dimgArtifact.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *RawDimg) ToBaseDirective(name string) (dimgBase *DimgBase, err error) {
@@ -163,5 +179,19 @@ func (c *RawDimg) ToBaseDirective(name string) (dimgBase *DimgBase, err error) {
 		}
 	}
 
+	dimgBase.Raw = c
+
+	if err := c.ValidateBaseDirective(dimgBase); err != nil {
+		return nil, err
+	}
+
 	return dimgBase, nil
+}
+
+func (c *RawDimg) ValidateBaseDirective(dimgBase *DimgBase) (err error) {
+	if err := dimgBase.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
