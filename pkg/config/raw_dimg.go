@@ -46,7 +46,7 @@ func (c *RawDimg) ValidateType() error {
 	if isDimg && isArtifact {
 		return fmt.Errorf("объект не может быть и артефактом и dimg-ом одновременно!") // FIXME
 	} else if !(isDimg || isArtifact) {
-		return fmt.Errorf("объект не связан ни с dimg-ом ни с артефактом") // FIXME
+		return fmt.Errorf("Unknown doc type: `dimg: NAME` or `artifact: NAME` required!\n\n%s", DumpConfigDoc(c.Doc)) // FIXME
 	}
 
 	return nil

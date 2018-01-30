@@ -19,7 +19,7 @@ type DimgBase struct {
 
 func (c *DimgBase) Validate() error {
 	if c.From == "" {
-		return fmt.Errorf("from не может быть пустым!") // FIXME
+		return fmt.Errorf("`from` required!") // FIXME
 	}
 
 	// TODO: валидацию формата `From`

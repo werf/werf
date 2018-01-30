@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/flant/dapp/pkg/util"
@@ -21,8 +20,8 @@ func CheckOverflow(m map[string]interface{}, config interface{}) error {
 			keys = append(keys, k)
 		}
 
-		val := reflect.Indirect(reflect.ValueOf(config))
-		return fmt.Errorf("в конфиге `%s` содержатся не поддерживаемые поля: `%s`", val.Type().Name(), strings.Join(keys, "`, `")) // FIXME
+		// val := reflect.Indirect(reflect.ValueOf(config))                   // FIXME: access to raw object needed
+		return fmt.Errorf("Unknown fields: `%s`", strings.Join(keys, "`, `")) // FIXME: access to raw object needed
 	}
 	return nil
 }

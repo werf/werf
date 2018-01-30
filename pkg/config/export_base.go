@@ -18,7 +18,7 @@ type ExportBase struct {
 
 func (c *ExportBase) Validate() error {
 	if c.To == "" {
-		return fmt.Errorf("to не может быть пустым!") // FIXME
+		return fmt.Errorf("`to` required!") // FIXME
 	}
 
 	// TODO: валидация `Add`, `To` абсолютные пути
