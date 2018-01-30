@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+type Doc struct {
+	Content        []byte
+	Line           int
+	RenderFilePath string
+}
+
 func CheckOverflow(m map[string]interface{}, config interface{}) error {
 	if len(m) > 0 {
 		var keys []string

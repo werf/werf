@@ -11,14 +11,60 @@ import (
 	"io/ioutil"
 	"strings"
 	"text/template"
+	"os"
 )
 
 func ParseDimgs(dappfilePath string) ([]*config.Dimg, error) {
+	docs, err := splitByDocs(dappfilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	dimgs, err := splitByDimgs(docs)
+	if err != nil {
+		return nil, err
+	}
+
+	return dimgs, nil
+}
+
+func splitByDocs(dappfilePath string) ([]*raw.Doc, error) {
 	dappfileContent, err := parseDappfileYaml(dappfilePath)
 	if err != nil {
 		return nil, err
 	}
-	return splitByDimgs(dappfileContent)
+
+	scanner := bufio.NewScanner(strings.NewReader(dappfileContent))
+	scanner.Split(splitYAMLDocument)
+
+	dappfileYamlRenderFilePath := "dappfile_yaml_render.yaml" // TODO
+	dappfileYamlRenderFile, err := os.Create(dappfileYamlRenderFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var docs []*raw.Doc
+	var line int
+	firstScan := true
+	for scanner.Scan() {
+		if firstScan {
+			firstScan = false
+		} else {
+			dappfileYamlRenderFile.Write([]byte("\n---"))
+		}
+
+		content := scanner.Bytes()
+		docs = append(docs, &raw.Doc{
+			Line: line,
+			Content: content,
+			RenderFilePath: dappfileYamlRenderFilePath,
+		})
+
+		line += len(content)
+		dappfileYamlRenderFile.Write(content)
+	}
+
+	return docs, nil
 }
 
 // TODO: переделать на ParseFiles вместо Parse
@@ -52,8 +98,35 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 	return buf.String(), nil
 }
 
-func splitByDimgs(dappfileContent string) ([]*config.Dimg, error) {
-	rawDimgs, err := splitByRawDimgs(dappfileContent)
+func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	yamlSeparator := "\n---"
+
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+	sep := len([]byte(yamlSeparator))
+	if i := bytes.Index(data, []byte(yamlSeparator)); i >= 0 {
+		i += sep
+		after := data[i:]
+		if len(after) == 0 {
+			if atEOF {
+				return len(data), data[:len(data)-sep], nil
+			}
+			return 0, nil, nil
+		}
+		if j := bytes.IndexByte(after, '\n'); j >= 0 {
+			return i + j + 1, data[0 : i-sep], nil
+		}
+		return 0, nil, nil
+	}
+	if atEOF {
+		return len(data), data, nil
+	}
+	return 0, nil, nil
+}
+
+func splitByDimgs(docs []*raw.Doc) ([]*config.Dimg, error) {
+	rawDimgs, err := splitByRawDimgs(docs)
 	if err != nil {
 		return nil, err
 	}
@@ -106,46 +179,16 @@ func associateArtifacts(dimgs []*config.Dimg, artifacts []*config.DimgArtifact) 
 	return nil
 }
 
-func splitByRawDimgs(dappfileContent string) ([]*raw.Dimg, error) {
-	scanner := bufio.NewScanner(strings.NewReader(dappfileContent))
-	scanner.Split(splitYAMLDocument)
-
-	var dimgsBase []*raw.Dimg
-	for scanner.Scan() {
-		dimg := &raw.Dimg{}
-		err := yaml.Unmarshal(scanner.Bytes(), &dimg)
+func splitByRawDimgs(docs []*raw.Doc) ([]*raw.Dimg, error) {
+	var rawDimgs []*raw.Dimg
+	for _, doc := range docs {
+		dimg := &raw.Dimg{Doc: doc}
+		err := yaml.Unmarshal(doc.Content, &dimg)
 		if err != nil {
 			return nil, err
 		}
-		dimgsBase = append(dimgsBase, dimg)
+		rawDimgs = append(rawDimgs, dimg)
 	}
 
-	return dimgsBase, nil
-}
-
-func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	yamlSeparator := "\n---"
-
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
-	sep := len([]byte(yamlSeparator))
-	if i := bytes.Index(data, []byte(yamlSeparator)); i >= 0 {
-		i += sep
-		after := data[i:]
-		if len(after) == 0 {
-			if atEOF {
-				return len(data), data[:len(data)-sep], nil
-			}
-			return 0, nil, nil
-		}
-		if j := bytes.IndexByte(after, '\n'); j >= 0 {
-			return i + j + 1, data[0 : i-sep], nil
-		}
-		return 0, nil, nil
-	}
-	if atEOF {
-		return len(data), data, nil
-	}
-	return 0, nil, nil
+	return rawDimgs, nil
 }

@@ -16,6 +16,8 @@ type Dimg struct {
 	Docker   *Docker           `yaml:"docker,omitempty"`
 	Import   []*ArtifactImport `yaml:"import,omitempty"`
 
+	Doc      *Doc
+
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
