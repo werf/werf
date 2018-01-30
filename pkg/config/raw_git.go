@@ -8,6 +8,8 @@ type RawGit struct {
 	Commit               string                `yaml:"commit,omitempty"`
 	RawStageDependencies *RawStageDependencies `yaml:"stageDependencies,omitempty"`
 
+	RawDimg *RawDimg `yaml:"-"` // parent
+
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
@@ -19,8 +21,15 @@ func (c *RawGit) Type() string {
 }
 
 func (c *RawGit) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
+		c.RawDimg = parent
+	}
+
+	ParentStack.Push(c)
 	type plain RawGit
-	if err := unmarshal((*plain)(c)); err != nil {
+	err := unmarshal((*plain)(c))
+	ParentStack.Pop()
+	if err != nil {
 		return err
 	}
 

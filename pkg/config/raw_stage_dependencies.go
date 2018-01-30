@@ -6,10 +6,16 @@ type RawStageDependencies struct {
 	BeforeSetup   interface{} `yaml:"beforeSetup,omitempty"`
 	BuildArtifact interface{} `yaml:"buildArtifact,omitempty"`
 
+	RawGit *RawGit `yaml:"-"` // parent
+
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *RawStageDependencies) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := ParentStack.Peek().(*RawGit); ok {
+		c.RawGit = parent
+	}
+
 	type plain RawStageDependencies
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err

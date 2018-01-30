@@ -5,10 +5,16 @@ type RawChef struct {
 	Recipe     interface{}                 `yaml:"recipe,omitempty"`
 	Attributes map[interface{}]interface{} `yaml:"attributes,omitempty"`
 
+	RawDimg *RawDimg `yaml:"-"` // parent
+
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *RawChef) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
+		c.RawDimg = parent
+	}
+
 	type plain RawChef
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err

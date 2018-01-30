@@ -11,10 +11,16 @@ type RawShell struct {
 	Setup         interface{} `yaml:"setup,omitempty"`
 	BuildArtifact interface{} `yaml:"buildArtifact,omitempty"`
 
+	RawDimg *RawDimg `yaml:"-"` // parent
+
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *RawShell) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
+		c.RawDimg = parent
+	}
+
 	type plain RawShell
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
