@@ -1,7 +1,7 @@
 package config
 
 type RawGit struct {
-	*RawGitExport        `yaml:",inline"`
+	RawGitExport         `yaml:",inline"`
 	As                   string                `yaml:"as,omitempty"`
 	Url                  string                `yaml:"url,omitempty"`
 	Branch               string                `yaml:"branch,omitempty"`
