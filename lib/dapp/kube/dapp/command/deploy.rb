@@ -79,9 +79,14 @@ module Dapp
 
           def kube_run_deploy(release)
             log_process("Deploy release #{release.name}") do
-              helm_status_res = shellout("helm status #{release.name} --output json")
-              helm_status = {}
-              helm_status = JSON.load(helm_status_res.stdout) if helm_status_res.status.success?
+              helm_status_res = shellout("helm status #{release.name}")
+
+              release_status = nil
+              if helm_status_res.status.success?
+                status_line = helm_status_res.stdout.lines.find {|l| l.start_with? "STATUS: "}
+                release_status = status_line.partition(": ")[2].strip if status_line
+              end
+
               release_exists = nil
 
               if not helm_status_res.status.success?
@@ -90,11 +95,10 @@ module Dapp
 
                 # Create purge-trigger for the next run.
                 kube_create_helm_auto_purge_trigger_file(release.name)
-              elsif helm_status.fetch("info", {}).fetch("status", {}).fetch("code", nil) == 4
-                # Helm release is in FAILED state
+              elsif release_status == "FAILED"
                 release_exists = true
 
-                if  File.exists? kube_helm_auto_purge_trigger_file_path(release.name)
+                if File.exists? kube_helm_auto_purge_trigger_file_path(release.name)
                   log_process("Purge helm release #{release.name}") do
                     shellout!("helm delete --purge #{release.name}")
                   end
