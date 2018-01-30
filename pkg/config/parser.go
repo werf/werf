@@ -9,9 +9,13 @@ import (
 	raw "github.com/flant/dapp/pkg/config/raw"
 	"gopkg.in/flant/yaml.v2"
 	"io/ioutil"
+	"os"
 	"strings"
 	"text/template"
-	"os"
+)
+
+var (
+	YamlParseContext []interface{}
 )
 
 func ParseDimgs(dappfilePath string) ([]*config.Dimg, error) {
@@ -55,8 +59,8 @@ func splitByDocs(dappfilePath string) ([]*raw.Doc, error) {
 
 		content := scanner.Bytes()
 		docs = append(docs, &raw.Doc{
-			Line: line,
-			Content: content,
+			Line:           line,
+			Content:        content,
 			RenderFilePath: dappfileYamlRenderFilePath,
 		})
 

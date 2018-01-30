@@ -3,6 +3,8 @@ package config
 import "github.com/flant/dapp/pkg/config/directive"
 
 type GitBase struct {
+	dimg *Dimg
+
 	ExportBase        `yaml:",inline"`
 	As                string             `yaml:"as,omitempty"`
 	Url               string             `yaml:"url,omitempty"`
@@ -21,6 +23,10 @@ func (c *GitBase) Type() string {
 }
 
 func (c *GitBase) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	c.dimg = YamlParseContext[-1].(*Dimg)
+
+	YamlParseContext = append(YamlParseContext, c)
+
 	type plain GitBase
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
@@ -29,6 +35,8 @@ func (c *GitBase) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
 		return err
 	}
+
+	YamlParseContext = YamlParseContext[:len(YamlParseContext)-1]
 
 	return nil
 }
