@@ -16,9 +16,9 @@ type Mount struct {
 
 func (c *Mount) Validate() error {
 	if c.From == "" {
-		return fmt.Errorf("from не может быть пустым!") // FIXME
+		return fmt.Errorf("`from` required!") // FIXME
 	} else if c.To == "" {
-		return fmt.Errorf("to не может быть пустым!") // FIXME
+		return fmt.Errorf("`to` required!") // FIXME
 	}
 	// TODO: валидация `To` абсолютный путь
 	// TODO: валидация `From` tmp_dir или build_dir

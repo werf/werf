@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"text/template"
 
@@ -16,12 +17,22 @@ import (
 )
 
 func ParseDimgs(dappfilePath string) ([]*Dimg, error) {
-	docs, err := splitByDocs(dappfilePath)
+	dappfileRenderContent, err := parseDappfileYaml(dappfilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	dimgs, err := splitByDimgs(docs)
+	dappfileRenderPath, err := dumpDappfileRender(dappfilePath, dappfileRenderContent)
+	if err != nil {
+		return nil, err
+	}
+
+	docs, err := splitByDocs(dappfileRenderContent, dappfileRenderPath)
+	if err != nil {
+		return nil, err
+	}
+
+	dimgs, err := splitByDimgs(docs, dappfileRenderContent, dappfileRenderPath)
 	if err != nil {
 		return nil, err
 	}
@@ -29,48 +40,55 @@ func ParseDimgs(dappfilePath string) ([]*Dimg, error) {
 	return dimgs, nil
 }
 
-func splitByDocs(dappfilePath string) ([]*Doc, error) {
-	dappfileContent, err := parseDappfileYaml(dappfilePath)
+func dumpDappfileRender(dappfilePath string, dappfileRenderContent string) (string, error) {
+	wd, err := os.Getwd()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	scanner := bufio.NewScanner(strings.NewReader(dappfileContent))
+	dappfileNameParts := strings.Split(path.Base(dappfilePath), ".")
+	dappfileRenderNameParts := []string{}
+	dappfileRenderNameParts = append(dappfileRenderNameParts, dappfileNameParts[0:len(dappfileNameParts)-1]...)
+	dappfileRenderNameParts = append(dappfileRenderNameParts, "render", dappfileNameParts[len(dappfileNameParts)-1])
+	dappfileRenderPath := path.Join(wd, fmt.Sprintf(".%s", strings.Join(dappfileRenderNameParts, ".")))
+
+	dappfileRenderFile, err := os.OpenFile(dappfileRenderPath, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return "", err
+	}
+	dappfileRenderFile.Write([]byte(dappfileRenderContent))
+	dappfileRenderFile.Close()
+
+	return dappfileRenderPath, nil
+}
+
+func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*Doc, error) {
+	scanner := bufio.NewScanner(strings.NewReader(dappfileRenderContent))
 	scanner.Split(splitYAMLDocument)
-
-	dappfileYamlRenderFilePath := "dappfile_yaml_render.yaml" // TODO
-	dappfileYamlRenderFile, err := os.Create(dappfileYamlRenderFilePath)
-	if err != nil {
-		return nil, err
-	}
 
 	var docs []*Doc
 	var line int
-	firstScan := true
 	for scanner.Scan() {
-		if firstScan {
-			firstScan = false
-		} else {
-			dappfileYamlRenderFile.Write([]byte("\n---"))
-		}
-
 		content := scanner.Bytes()
 		docs = append(docs, &Doc{
 			Line:           line,
 			Content:        content,
-			RenderFilePath: dappfileYamlRenderFilePath,
+			RenderFilePath: dappfileRenderPath,
 		})
 
-		line += len(content)
-		dappfileYamlRenderFile.Write(content)
+		contentLines := bytes.Split(content, []byte("\n"))
+		if string(contentLines[len(contentLines)-1]) == "" {
+			contentLines = contentLines[0 : len(contentLines)-1]
+		}
+		line += len(contentLines) + 1
 	}
 
 	return docs, nil
 }
 
 // TODO: переделать на ParseFiles вместо Parse
-func parseDappfileYaml(dappfileContent string) (string, error) {
-	data, err := ioutil.ReadFile(dappfileContent)
+func parseDappfileYaml(dappfileRenderContent string) (string, error) {
+	data, err := ioutil.ReadFile(dappfileRenderContent)
 	if err != nil {
 		return "", err
 	}
@@ -126,7 +144,7 @@ func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err 
 	return 0, nil, nil
 }
 
-func splitByDimgs(docs []*Doc) ([]*Dimg, error) {
+func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath string) ([]*Dimg, error) {
 	rawDimgs, err := splitByRawDimgs(docs)
 	if err != nil {
 		return nil, err
@@ -152,7 +170,7 @@ func splitByDimgs(docs []*Doc) ([]*Dimg, error) {
 	}
 
 	if len(dimgs) == 0 {
-		return nil, fmt.Errorf("не описано ни одного dimg-а!") // FIXME
+		return nil, fmt.Errorf("No dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent)
 	}
 
 	if err = associateArtifacts(dimgs, artifacts); err != nil {

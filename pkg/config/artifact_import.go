@@ -21,15 +21,15 @@ func (c *ArtifactImport) Validate() error {
 	}
 
 	if c.ArtifactName == "" {
-		return fmt.Errorf("имя артефакта обязательно!") // FIXME
+		return fmt.Errorf("Artifact name required!\n\n", DumpConfigSection(c.Raw)) // FIXME
 	} else if c.Before != "" && c.After != "" {
-		return fmt.Errorf("артефакт не может иметь несколько связанных стадий!") // FIXME
+		return fmt.Errorf("Specify only one artifact stage using `before: <stage>` or `after: <stage>`!") // FIXME
 	} else if c.Before == "" && c.After == "" {
-		return fmt.Errorf("артефакт должен иметь связанную стадию!") // FIXME
+		return fmt.Errorf("Artifact stage is not specified with `before: <stage>` or `after: <stage>`!") // FIXME
 	} else if c.Before != "" && checkInvalidRelation(c.Before) {
-		return fmt.Errorf("артефакт имеет некорректную связанную стадию (before)!") // FIXME
+		return fmt.Errorf("Invalid artifact stage `before: %s`: expected install or setup!", c.Before) // FIXME
 	} else if c.After != "" && checkInvalidRelation(c.After) {
-		return fmt.Errorf("артефакт должен иметь связанную стадию (after)! %s") // FIXME
+		return fmt.Errorf("Invalid artifact stage `after: %s`: expected install or setup!", c.After) // FIXME
 	}
 	return nil
 }
@@ -42,7 +42,7 @@ func (c *ArtifactImport) AssociateArtifact(artifacts []*DimgArtifact) error {
 	if artifactDimg := artifactByName(artifacts, c.ArtifactName); artifactDimg != nil {
 		c.ArtifactDimg = artifactDimg
 	} else {
-		return fmt.Errorf("артефакт из импорта не найден!") // FIXME
+		return fmt.Errorf("No such artifact `%s`!", c.ArtifactName) // FIXME
 	}
 	return nil
 }

@@ -13,7 +13,7 @@ type Dimg struct {
 
 func (c *Dimg) Validate() error {
 	if c.Chef != nil && c.Shell != nil {
-		return fmt.Errorf("конфликт между типами сборщиков!") // FIXME
+		return fmt.Errorf("Cannot use shell and chef builders at the same time!") // FIXME
 	}
 
 	return nil
