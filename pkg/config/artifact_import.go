@@ -16,7 +16,7 @@ type ArtifactImport struct {
 }
 
 func (c *ArtifactImport) Validate() error {
-	if err := c.ExportBase.Validate(); err != nil {
+	if err := c.ArtifactExport.Validate(); err != nil {
 		return err
 	}
 
@@ -25,7 +25,7 @@ func (c *ArtifactImport) Validate() error {
 	} else if c.Before != "" && c.After != "" {
 		return fmt.Errorf("Specify only one artifact stage using `before: <stage>` or `after: <stage>`!") // FIXME
 	} else if c.Before == "" && c.After == "" {
-		return fmt.Errorf("Artifact stage is not specified with `before: <stage>` or `after: <stage>`!") // FIXME
+		return fmt.Errorf("Artifact stage is not specified with `before: STAGE` or `after: STAGE` for import!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
 	} else if c.Before != "" && checkInvalidRelation(c.Before) {
 		return fmt.Errorf("Invalid artifact stage `before: %s`: expected install or setup!", c.Before) // FIXME
 	} else if c.After != "" && checkInvalidRelation(c.After) {

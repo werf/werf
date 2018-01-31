@@ -9,7 +9,7 @@ import (
 
 func DumpConfigSection(config interface{}) string {
 	res := "```\n"
-	d, err := yaml.Marshal(&config)
+	d, err := yaml.Marshal(config)
 	if err != nil {
 		return ""
 	}

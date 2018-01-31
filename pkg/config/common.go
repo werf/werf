@@ -7,6 +7,11 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
+type RawOrigin interface {
+	ConfigSection() interface{}
+	Doc() *Doc
+}
+
 type Doc struct {
 	Content        []byte
 	Line           int
