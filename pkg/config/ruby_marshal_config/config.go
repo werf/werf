@@ -111,10 +111,10 @@ func (cfg StageCommand) TagYAML() string {
 }
 
 type Chef struct {
-	Dimod      []string       `yaml:"_dimod"`
-	Recipe     []string       `yaml:"_recipe"`
-	Attributes ChefAttributes `yaml:"_attributes"`
-	// TODO: Cookbook   []Cookbook     `yaml:"_cookbook"`
+	Dimod      []string                          `yaml:"_dimod"`
+	Recipe     []string                          `yaml:"_recipe"`
+	Attributes ChefAttributes                    `yaml:"_attributes"`
+	Cookbook   map[string]map[Symbol]interface{} `yaml:"_cookbook"`
 }
 
 func (cfg Chef) TagYAML() string {
