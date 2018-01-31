@@ -1,7 +1,7 @@
 package config
 
 type RawChef struct {
-	Cookbook   string                      `yaml:"cookbook,omitempty"`
+	Cookbook   []RawCookbook               `yaml:"cookbook,omitempty"`
 	Recipe     interface{}                 `yaml:"recipe,omitempty"`
 	Attributes map[interface{}]interface{} `yaml:"attributes,omitempty"`
 
@@ -15,8 +15,11 @@ func (c *RawChef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		c.RawDimg = parent
 	}
 
+	ParentStack.Push(c)
 	type plain RawChef
-	if err := unmarshal((*plain)(c)); err != nil {
+	err := unmarshal((*plain)(c))
+	ParentStack.Pop()
+	if err != nil {
 		return err
 	}
 
@@ -29,7 +32,21 @@ func (c *RawChef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (c *RawChef) ToDirective() (chef *Chef, err error) {
 	chef = &Chef{}
-	chef.Cookbook = c.Cookbook
+
+	for _, rawCookbook := range c.Cookbook {
+		cookbook := Cookbook{}
+
+		cookbook.Name = rawCookbook.Name
+		cookbook.VersionConstraint = rawCookbook.VersionConstraint
+		cookbook.Path = rawCookbook.Path
+
+		cookbook.Fields = make(map[string]interface{})
+		for k, v := range rawCookbook.Fields {
+			cookbook.Fields[k] = v
+		}
+
+		chef.Cookbook = append(chef.Cookbook, cookbook)
+	}
 
 	if recipe, err := InterfaceToStringArray(c.Recipe, c, c.RawDimg.Doc); err != nil {
 		return nil, err
