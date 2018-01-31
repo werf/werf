@@ -31,7 +31,7 @@ func (c *DimgBase) Validate() error {
 func (c *DimgBase) ToRuby() ruby_marshal_config.DimgBase {
 	rubyDimg := ruby_marshal_config.DimgBase{}
 	rubyDimg.Name = c.Name
-	rubyDimg.Builder = c.Bulder
+	rubyDimg.Builder = ruby_marshal_config.Symbol(c.Bulder)
 
 	if c.Chef != nil {
 		rubyDimg.Chef = c.Chef.ToRuby()

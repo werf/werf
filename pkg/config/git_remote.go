@@ -1,10 +1,14 @@
 package config
 
-import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
+import (
+	"fmt"
+
+	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
+)
 
 type GitRemote struct {
 	*GitLocal
-	// TODO: Name string
+	Name   string
 	Branch string
 	Commit string
 	Url    string
@@ -13,7 +17,9 @@ type GitRemote struct {
 }
 
 func (c *GitRemote) Validate() error {
-	// TODO: валидация одновременного использования `Branch` и `Commit`
+	if c.Branch != "" && c.Commit != "" {
+		return fmt.Errorf("conflict between `Branch` && `Commit` directives") // FIXME
+	}
 	return nil
 }
 
@@ -23,6 +29,6 @@ func (c *GitRemote) ToRuby() ruby_marshal_config.GitArtifactRemoteExport {
 	rubyGitArtifactRemoteExport.Url = c.Url
 	rubyGitArtifactRemoteExport.Branch = c.Branch
 	rubyGitArtifactRemoteExport.Commit = c.Commit
-	// TODO: rubyGitArtifactRemoteExport.Name = c.Name
+	rubyGitArtifactRemoteExport.Name = c.Name
 	return rubyGitArtifactRemoteExport
 }
