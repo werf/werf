@@ -11,7 +11,16 @@ type RawArtifactImport struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
+func (c *RawArtifactImport) ConfigSection() interface{} {
+	return c
+}
+
+func (c *RawArtifactImport) Doc() *Doc {
+	return c.RawDimg.Doc
+}
+
 func (c *RawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	c.RawArtifactExport.RawExportBase = NewRawExportBase()
 	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
 		c.RawDimg = parent
 	}
@@ -24,7 +33,9 @@ func (c *RawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) err
 		return err
 	}
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
+	c.RawArtifactExport.InlinedIntoRaw(c)
+
+	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
 		return err
 	}
 

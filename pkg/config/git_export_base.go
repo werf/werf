@@ -1,13 +1,12 @@
 package config
 
-type GitBase struct {
+type GitExportBase struct {
 	*GitExport
-	As                string
 	StageDependencies *StageDependencies
 
 	Raw *RawGit
 }
 
-func (c *GitBase) Validate() error {
+func (c *GitExportBase) Validate() error {
 	return nil
 }

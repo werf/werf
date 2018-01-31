@@ -42,25 +42,25 @@ func (cfg DimgArtifact) TagYAML() string {
 }
 
 type DimgBase struct {
-	Name        string           `yaml:"_name,omitempty"`
-	Builder     string           `yaml:"_builder,omitempty"`
-	Chef        Chef             `yaml:"_chef,omitempty"`
-	Artifact    []ArtifactExport `yaml:"_artifact,omitempty"`
-	GitArtifact GitArtifact      `yaml:"_git_artifact,omitempty"`
-	Mount       []Mount          `yaml:"_mount,omitempty"`
+	Name          string          `yaml:"_name,omitempty"`
+	Builder       Symbol          `yaml:"_builder,omitempty"`
+	Chef          Chef            `yaml:"_chef,omitempty"`
+	ArtifactGroup []ArtifactGroup `yaml:"_artifact_groups,omitempty"`
+	GitArtifact   GitArtifact     `yaml:"_git_artifact,omitempty"`
+	Mount         []Mount         `yaml:"_mount,omitempty"`
 }
 
 type DockerDimg struct {
 	DockerBase `yaml:",inline"`
-	Volume     []string          `yaml:"_volume,omitempty"`
-	Expose     []string          `yaml:"_expose,omitempty"`
-	Env        map[string]string `yaml:"_env,omitempty"`
-	Label      map[string]string `yaml:"_label,omitempty"`
-	Cmd        []string          `yaml:"_cmd,omitempty"`
-	Onbuild    []string          `yaml:"_onbuild,omitempty"`
-	Workdir    string            `yaml:"_workdir,omitempty"`
-	User       string            `yaml:"_user,omitempty"`
-	Entrypoint []string          `yaml:"_entrypoint,omitempty"`
+	Volume     []string          `yaml:"_volume"`
+	Expose     []string          `yaml:"_expose"`
+	Env        map[string]string `yaml:"_env"`
+	Label      map[string]string `yaml:"_label"`
+	Cmd        []string          `yaml:"_cmd"`
+	Onbuild    []string          `yaml:"_onbuild"`
+	Workdir    string            `yaml:"_workdir"`
+	User       string            `yaml:"_user"`
+	Entrypoint []string          `yaml:"_entrypoint"`
 }
 
 func (cfg DockerDimg) TagYAML() string {
@@ -76,7 +76,7 @@ func (cfg DockerArtifact) TagYAML() string {
 }
 
 type DockerBase struct {
-	From             string `yaml:"_from,omitempty"`
+	From             string `yaml:"_from"`
 	FromCacheVersion string `yaml:"_from_cache_version,omitempty"`
 }
 
@@ -103,7 +103,7 @@ func (cfg ShellArtifact) TagYAML() string {
 
 type StageCommand struct {
 	Version string   `yaml:"_version,omitempty"`
-	Run     []string `yaml:"_run,omitempty"`
+	Run     []string `yaml:"_run"`
 }
 
 func (cfg StageCommand) TagYAML() string {
@@ -111,9 +111,10 @@ func (cfg StageCommand) TagYAML() string {
 }
 
 type Chef struct {
-	Dimod      []string       `yaml:"_dimod,omitempty"`
-	Recipe     []string       `yaml:"_recipe,omitempty"`
-	Attributes ChefAttributes `yaml:"_attributes,omitempty"`
+	Dimod      []string       `yaml:"_dimod"`
+	Recipe     []string       `yaml:"_recipe"`
+	Attributes ChefAttributes `yaml:"_attributes"`
+	// TODO: Cookbook   []Cookbook     `yaml:"_cookbook"`
 }
 
 func (cfg Chef) TagYAML() string {
@@ -126,6 +127,14 @@ func (cfg ChefAttributes) TagYAML() string {
 	return "!ruby/hash:Dapp::Dimg::Config::Directive::Chef::Attributes"
 }
 
+type ArtifactGroup struct {
+	Export []ArtifactExport `yaml:"_export"`
+}
+
+func (cfg ArtifactGroup) TagYAML() string {
+	return "!ruby/object:Dapp::Dimg::Config::Directive::ArtifactGroup"
+}
+
 type ArtifactExport struct {
 	ArtifactBaseExport `yaml:",inline"`
 	Config             DimgArtifact `yaml:"_config,omitempty"`
@@ -133,19 +142,13 @@ type ArtifactExport struct {
 	After              Symbol       `yaml:"_after,omitempty"`
 }
 
-type Symbol string
-
-func (cfg Symbol) TagYAML() string {
-	return "!ruby/symbol"
-}
-
 func (cfg ArtifactExport) TagYAML() string {
 	return "!ruby/object:Dapp::Dimg::Config::Directive::Artifact::Export"
 }
 
 type GitArtifact struct {
-	Local  []GitArtifactLocal  `yaml:"_local,omitempty"`
-	Remote []GitArtifactRemote `yaml:"_remote,omitempty"`
+	Local  []GitArtifactLocal  `yaml:"_local"`
+	Remote []GitArtifactRemote `yaml:"_remote"`
 }
 
 func (cfg GitArtifact) TagYAML() string {
@@ -153,6 +156,7 @@ func (cfg GitArtifact) TagYAML() string {
 }
 
 type GitArtifactLocal struct {
+	As     string                   `yaml:"_as,omitempty"`
 	Export []GitArtifactLocalExport `yaml:"_export,omitempty"`
 }
 
@@ -162,9 +166,6 @@ func (cfg GitArtifactLocal) TagYAML() string {
 
 type GitArtifactLocalExport struct {
 	ArtifactBaseExport `yaml:",inline"`
-	As                 string            `yaml:"_as,omitempty"`
-	Branch             string            `yaml:"_branch,omitempty"`
-	Commit             string            `yaml:"_commit,omitempty"`
 	StageDependencies  StageDependencies `yaml:"_stage_dependencies,omitempty"`
 }
 
@@ -184,6 +185,9 @@ func (cfg StageDependencies) TagYAML() string {
 }
 
 type GitArtifactRemote struct {
+	Url    string                    `yaml:"_url,omitempty"`
+	Name   string                    `yaml:"_name,omitempty"`
+	As     string                    `yaml:"_as,omitempty"`
 	Export []GitArtifactRemoteExport `yaml:"_export,omitempty"`
 }
 
@@ -193,8 +197,8 @@ func (cfg GitArtifactRemote) TagYAML() string {
 
 type GitArtifactRemoteExport struct {
 	GitArtifactLocalExport `yaml:",inline"`
-	Url                    string `yaml:"_url,omitempty"`
-	Name                   string `yaml:"_name,omitempty"`
+	Branch                 string `yaml:"_branch,omitempty"`
+	Commit                 string `yaml:"_commit,omitempty"`
 }
 
 func (cfg GitArtifactRemoteExport) TagYAML() string {
@@ -213,9 +217,15 @@ type ArtifactBaseExport struct {
 type Mount struct {
 	To   string `yaml:"_to,omitempty"`
 	From string `yaml:"_from,omitempty"`
-	Type string `yaml:"_type,omitempty"`
+	Type Symbol `yaml:"_type,omitempty"`
 }
 
 func (cfg Mount) TagYAML() string {
 	return "!ruby/object:Dapp::Dimg::Config::Directive::Mount"
+}
+
+type Symbol string
+
+func (cfg Symbol) TagYAML() string {
+	return "!ruby/symbol"
 }

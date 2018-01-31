@@ -2,34 +2,33 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
 type Mount struct {
+	To   string
 	From string
-	// TODO: FromPath ?!
-	To string
-	// TODO: Type string
+	Type string
 
 	Raw *RawMount
 }
 
 func (c *Mount) Validate() error {
-	if c.From == "" {
-		return fmt.Errorf("`from` required!") // FIXME
-	} else if c.To == "" {
-		return fmt.Errorf("`to` required!") // FIXME
+	if c.To == "" || !IsAbsolutePath(c.To) {
+		return fmt.Errorf("`to: PATH` absolute path required for mount!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+	} else if c.Type == "custom_dir" && c.From != "" && isRelativePath(c.From) {
+		return fmt.Errorf("`fromPath: PATH` should be absolute path for mount!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+	} else if c.Type != "tmp_dir" && c.Type != "build_dir" {
+		return fmt.Errorf("Invalid `from: %s` for mount: expected `tmp_dir` or `build_dir`!\n\n%s\n%s", c.Type, DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
 	}
-	// TODO: валидация `To` абсолютный путь
-	// TODO: валидация `From` tmp_dir или build_dir
-	// TODO: валидация `FromPath` относительный путь
 	return nil
 }
 
 func (c *Mount) ToRuby() ruby_marshal_config.Mount {
 	rubyMount := ruby_marshal_config.Mount{}
-	rubyMount.From = c.From
 	rubyMount.To = c.To
-	// TODO: rubyMount.Type := c.Type
+	rubyMount.From = c.From
+	rubyMount.Type = ruby_marshal_config.Symbol(c.Type)
 	return rubyMount
 }

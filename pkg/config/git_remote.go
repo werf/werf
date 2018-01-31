@@ -1,28 +1,34 @@
 package config
 
-import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
+import (
+	"fmt"
+
+	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
+)
 
 type GitRemote struct {
-	*GitLocal
-	// TODO: Name string
-	Branch string
-	Commit string
-	Url    string
+	*GitRemoteExport
+	As   string
+	Name string
+	Url  string
 
 	Raw *RawGit
 }
 
 func (c *GitRemote) Validate() error {
-	// TODO: валидация одновременного использования `Branch` и `Commit`
+	if c.Branch != "" && c.Commit != "" {
+		return fmt.Errorf("`branch` and `commit` fields cannot be used at the same time!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+	}
 	return nil
 }
 
-func (c *GitRemote) ToRuby() ruby_marshal_config.GitArtifactRemoteExport {
-	rubyGitArtifactRemoteExport := ruby_marshal_config.GitArtifactRemoteExport{}
-	rubyGitArtifactRemoteExport.GitArtifactLocalExport = c.GitLocal.ToRuby()
-	rubyGitArtifactRemoteExport.Url = c.Url
-	rubyGitArtifactRemoteExport.Branch = c.Branch
-	rubyGitArtifactRemoteExport.Commit = c.Commit
-	// TODO: rubyGitArtifactRemoteExport.Name = c.Name
-	return rubyGitArtifactRemoteExport
+func (c *GitRemote) ToRuby() ruby_marshal_config.GitArtifactRemote {
+	rubyGitArtifactRemote := ruby_marshal_config.GitArtifactRemote{}
+	rubyGitArtifactRemote.Url = c.Url
+	rubyGitArtifactRemote.Name = c.Name
+	rubyGitArtifactRemote.As = c.As
+	if c.GitRemoteExport != nil {
+		rubyGitArtifactRemote.Export = append(rubyGitArtifactRemote.Export, c.GitRemoteExport.ToRuby())
+	}
+	return rubyGitArtifactRemote
 }

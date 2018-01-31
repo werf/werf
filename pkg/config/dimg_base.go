@@ -19,7 +19,7 @@ type DimgBase struct {
 
 func (c *DimgBase) Validate() error {
 	if c.From == "" {
-		return fmt.Errorf("`from` required!") // FIXME
+		return fmt.Errorf("`from: DOCKER_IMAGE` required!\n\n%s", DumpConfigDoc(c.Raw.Doc))
 	}
 
 	// TODO: валидацию формата `From`
@@ -31,7 +31,7 @@ func (c *DimgBase) Validate() error {
 func (c *DimgBase) ToRuby() ruby_marshal_config.DimgBase {
 	rubyDimg := ruby_marshal_config.DimgBase{}
 	rubyDimg.Name = c.Name
-	rubyDimg.Builder = c.Bulder
+	rubyDimg.Builder = ruby_marshal_config.Symbol(c.Bulder)
 
 	if c.Chef != nil {
 		rubyDimg.Chef = c.Chef.ToRuby()
@@ -46,7 +46,9 @@ func (c *DimgBase) ToRuby() ruby_marshal_config.DimgBase {
 	}
 
 	for _, importArtifact := range c.Import {
-		rubyDimg.Artifact = append(rubyDimg.Artifact, importArtifact.ToRuby())
+		artifactGroup := ruby_marshal_config.ArtifactGroup{}
+		artifactGroup.Export = append(artifactGroup.Export, importArtifact.ToRuby())
+		rubyDimg.ArtifactGroup = append(rubyDimg.ArtifactGroup, artifactGroup)
 	}
 
 	return rubyDimg

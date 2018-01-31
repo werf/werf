@@ -2,6 +2,13 @@ package config
 
 type RawGitExport struct {
 	RawExportBase `yaml:",inline"`
+
+	RawOrigin RawOrigin `yaml:"-"` // parent
+}
+
+func (c *RawGitExport) InlinedIntoRaw(RawOrigin RawOrigin) {
+	c.RawOrigin = RawOrigin
+	c.RawExportBase.InlinedIntoRaw(RawOrigin)
 }
 
 func (c *RawGitExport) ToDirective() (gitExport *GitExport, err error) {
@@ -15,17 +22,9 @@ func (c *RawGitExport) ToDirective() (gitExport *GitExport, err error) {
 
 	gitExport.Raw = c
 
-	if err := c.ValidateDirective(gitExport); err != nil {
+	if err := gitExport.Validate(); err != nil {
 		return nil, err
 	}
 
 	return gitExport, nil
-}
-
-func (c *RawGitExport) ValidateDirective(gitExport *GitExport) (err error) {
-	if err := gitExport.Validate(); err != nil {
-		return err
-	}
-
-	return nil
 }

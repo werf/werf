@@ -28,7 +28,7 @@ func (c *RawDimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
+	if err := CheckOverflow(c.UnsupportedAttributes, c, c.Doc); err != nil {
 		return err
 	}
 
@@ -44,9 +44,9 @@ func (c *RawDimg) ValidateType() error {
 	isArtifact := c.Artifact != ""
 
 	if isDimg && isArtifact {
-		return fmt.Errorf("объект не может быть и артефактом и dimg-ом одновременно!") // FIXME
+		return fmt.Errorf("Unknown doc type: one and only one of `dimg: NAME` or `artifact: NAME` non-empty name required!\n\n%s", DumpConfigDoc(c.Doc))
 	} else if !(isDimg || isArtifact) {
-		return fmt.Errorf("Unknown doc type: `dimg: NAME` or `artifact: NAME` required!\n\n%s", DumpConfigDoc(c.Doc)) // FIXME
+		return fmt.Errorf("Unknown doc type: one of `dimg: NAME` or `artifact: NAME` non-empty name required!\n\n%s", DumpConfigDoc(c.Doc))
 	}
 
 	return nil
@@ -126,7 +126,7 @@ func (c *RawDimg) ToArtifactDirective() (dimgArtifact *DimgArtifact, err error) 
 
 func (c *RawDimg) ValidateArtifactDirective(dimgArtifact *DimgArtifact) (err error) {
 	if c.RawDocker != nil {
-		return fmt.Errorf("docker не поддерживается для артефакта!") // FIXME
+		return fmt.Errorf("`docker` section is not supported for artifact!\n\n%s", DumpConfigDoc(c.Doc))
 	}
 
 	if err := dimgArtifact.Validate(); err != nil {
