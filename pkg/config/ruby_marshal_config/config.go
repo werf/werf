@@ -208,8 +208,8 @@ func (cfg GitArtifactRemoteExport) TagYAML() string {
 type ArtifactBaseExport struct {
 	Cwd          string   `yaml:"_cwd,omitempty"`
 	To           string   `yaml:"_to,omitempty"`
-	IncludePaths []string `yaml:"_include_paths,omitempty"`
-	ExcludePaths []string `yaml:"_exclude_paths,omitempty"`
+	IncludePaths []string `yaml:"_include_paths"`
+	ExcludePaths []string `yaml:"_exclude_paths"`
 	Owner        string   `yaml:"_owner,omitempty"`
 	Group        string   `yaml:"_group,omitempty"`
 }
