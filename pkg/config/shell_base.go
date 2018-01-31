@@ -12,4 +12,3 @@ type ShellBase struct {
 func (c *ShellBase) Validate() error {
 	return nil
 }
-

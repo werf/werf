@@ -26,6 +26,31 @@ func CheckOverflow(m map[string]interface{}, config interface{}) error {
 	return nil
 }
 
+func AllRelativePaths(paths []string) bool {
+	if len(paths) == 0 {
+		return true
+	} else {
+		return !AllAbsolutePaths(paths)
+	}
+}
+
+func AllAbsolutePaths(paths []string) bool {
+	for _, path := range paths {
+		if isRelativePath(path) {
+			return false
+		}
+	}
+	return true
+}
+
+func isRelativePath(path string) bool {
+	return !IsAbsolutePath(path)
+}
+
+func IsAbsolutePath(path string) bool {
+	return strings.HasPrefix(path, "/")
+}
+
 func InterfaceToStringArray(stringOrStringArray interface{}) ([]string, error) {
 	if stringOrStringArray == nil {
 		return []string{}, nil

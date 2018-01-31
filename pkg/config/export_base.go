@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
@@ -17,13 +18,15 @@ type ExportBase struct {
 }
 
 func (c *ExportBase) Validate() error {
-	if c.To == "" {
-		return fmt.Errorf("`to` required!") // FIXME
+	if c.Add == "" || !IsAbsolutePath(c.Add) {
+		return fmt.Errorf("`Add` required absolute path") // FIXME
+	} else if c.To == "" || !IsAbsolutePath(c.To) {
+		return fmt.Errorf("`To` required absolute path") // FIXME
+	} else if !AllRelativePaths(c.IncludePaths) {
+		return fmt.Errorf("`IncludePaths` should be relative paths") // FIXME
+	} else if !AllRelativePaths(c.ExcludePaths) {
+		return fmt.Errorf("`ExcludePaths` should be relative paths") // FIXME
 	}
-
-	// TODO: валидация `Add`, `To` абсолютные пути
-	// TODO: валидация `IncludePaths`, `ExcludePaths` относительные
-
 	return nil
 }
 

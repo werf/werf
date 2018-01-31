@@ -213,7 +213,7 @@ type ArtifactBaseExport struct {
 type Mount struct {
 	To   string `yaml:"_to,omitempty"`
 	From string `yaml:"_from,omitempty"`
-	Type string `yaml:"_type,omitempty"`
+	Type Symbol `yaml:"_type,omitempty"`
 }
 
 func (cfg Mount) TagYAML() string {
