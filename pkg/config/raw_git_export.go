@@ -11,6 +11,13 @@ func (c *RawGitExport) InlinedIntoRaw(RawOrigin RawOrigin) {
 	c.RawExportBase.InlinedIntoRaw(RawOrigin)
 }
 
+func NewRawGitExport() RawGitExport {
+	rawGitExport := RawGitExport{}
+	rawGitExport.RawExportBase = RawExportBase{}
+	rawGitExport.RawExportBase.Add = "/"
+	return rawGitExport
+}
+
 func (c *RawGitExport) ToDirective() (gitExport *GitExport, err error) {
 	gitExport = &GitExport{}
 

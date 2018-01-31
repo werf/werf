@@ -34,7 +34,7 @@ func (c *RawGit) Type() string {
 }
 
 func (c *RawGit) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	c.RawGitExport.RawExportBase = NewRawExportBase()
+	c.RawGitExport = NewRawGitExport()
 	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
 		c.RawDimg = parent
 	}
