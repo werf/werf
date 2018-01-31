@@ -139,6 +139,7 @@ func (c *RawDimg) ValidateArtifactDirective(dimgArtifact *DimgArtifact) (err err
 func (c *RawDimg) ToBaseDirective(name string) (dimgBase *DimgBase, err error) {
 	dimgBase = &DimgBase{}
 	dimgBase.Name = name
+	dimgBase.Bulder = "none"
 	dimgBase.From = c.From
 
 	dimgBase.Git = &GitManager{}

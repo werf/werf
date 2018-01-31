@@ -43,7 +43,7 @@ func (cfg DimgArtifact) TagYAML() string {
 
 type DimgBase struct {
 	Name          string          `yaml:"_name,omitempty"`
-	Builder       Symbol          `yaml:"_builder,omitempty"`
+	Builder       Symbol          `yaml:"_builder"`
 	Chef          Chef            `yaml:"_chef,omitempty"`
 	ArtifactGroup []ArtifactGroup `yaml:"_artifact_groups,omitempty"`
 	GitArtifact   GitArtifact     `yaml:"_git_artifact,omitempty"`
