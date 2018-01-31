@@ -7,5 +7,5 @@ type ArtifactExport struct {
 }
 
 func (c *ArtifactExport) Validate() error {
-	return nil
+	return c.ExportBase.Validate()
 }

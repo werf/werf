@@ -7,6 +7,12 @@ type RawExportBase struct {
 	ExcludePaths interface{} `yaml:"excludePaths,omitempty"`
 	Owner        string      `yaml:"owner,omitempty"`
 	Group        string      `yaml:"group,omitempty"`
+
+	RawOrigin RawOrigin `yaml:"-"` // parent
+}
+
+func (c *RawExportBase) InlinedIntoRaw(RawOrigin RawOrigin) {
+	c.RawOrigin = RawOrigin
 }
 
 func NewRawExportBase() RawExportBase {
@@ -37,17 +43,9 @@ func (c *RawExportBase) ToDirective() (exportBase *ExportBase, err error) {
 
 	exportBase.Raw = c
 
-	if err := c.ValidateDirective(exportBase); err != nil {
+	if err := exportBase.Validate(); err != nil {
 		return nil, err
 	}
 
 	return exportBase, nil
-}
-
-func (c *RawExportBase) ValidateDirective(exportBase *ExportBase) (err error) {
-	if err := exportBase.Validate(); err != nil {
-		return err
-	}
-
-	return nil
 }

@@ -18,6 +18,14 @@ type RawGit struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
+func (c *RawGit) ConfigSection() interface{} {
+	return c
+}
+
+func (c *RawGit) Doc() *Doc {
+	return c.RawDimg.Doc
+}
+
 func (c *RawGit) Type() string {
 	if c.Url != "" {
 		return "remote"
@@ -38,6 +46,8 @@ func (c *RawGit) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
+
+	c.RawGitExport.InlinedIntoRaw(c)
 
 	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
 		return err
