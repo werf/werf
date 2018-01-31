@@ -42,7 +42,7 @@ func (cfg DimgArtifact) TagYAML() string {
 }
 
 type DimgBase struct {
-	Name          string          `yaml:"_name,omitempty"`
+	Name          string          `yaml:"_name"`
 	Builder       Symbol          `yaml:"_builder"`
 	Chef          Chef            `yaml:"_chef,omitempty"`
 	ArtifactGroup []ArtifactGroup `yaml:"_artifact_groups,omitempty"`
@@ -157,7 +157,7 @@ func (cfg GitArtifact) TagYAML() string {
 
 type GitArtifactLocal struct {
 	As     string                   `yaml:"_as,omitempty"`
-	Export []GitArtifactLocalExport `yaml:"_export,omitempty"`
+	Export []GitArtifactLocalExport `yaml:"_export"`
 }
 
 func (cfg GitArtifactLocal) TagYAML() string {
@@ -166,7 +166,7 @@ func (cfg GitArtifactLocal) TagYAML() string {
 
 type GitArtifactLocalExport struct {
 	ArtifactBaseExport `yaml:",inline"`
-	StageDependencies  StageDependencies `yaml:"_stage_dependencies,omitempty"`
+	StageDependencies  StageDependencies `yaml:"_stage_dependencies"`
 }
 
 func (cfg GitArtifactLocalExport) TagYAML() string {
@@ -174,10 +174,10 @@ func (cfg GitArtifactLocalExport) TagYAML() string {
 }
 
 type StageDependencies struct {
-	Install       []string `yaml:"_install,omitempty"`
-	Setup         []string `yaml:"_setup,omitempty"`
-	BeforeSetup   []string `yaml:"_before_setup,omitempty"`
-	BuildArtifact []string `yaml:"_build_artifact,omitempty"`
+	Install       []string `yaml:"_install"`
+	Setup         []string `yaml:"_setup"`
+	BeforeSetup   []string `yaml:"_before_setup"`
+	BuildArtifact []string `yaml:"_build_artifact"`
 }
 
 func (cfg StageDependencies) TagYAML() string {
@@ -188,7 +188,7 @@ type GitArtifactRemote struct {
 	Url    string                    `yaml:"_url,omitempty"`
 	Name   string                    `yaml:"_name,omitempty"`
 	As     string                    `yaml:"_as,omitempty"`
-	Export []GitArtifactRemoteExport `yaml:"_export,omitempty"`
+	Export []GitArtifactRemoteExport `yaml:"_export"`
 }
 
 func (cfg GitArtifactRemote) TagYAML() string {
