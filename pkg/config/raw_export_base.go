@@ -15,12 +15,6 @@ func (c *RawExportBase) InlinedIntoRaw(RawOrigin RawOrigin) {
 	c.RawOrigin = RawOrigin
 }
 
-func NewRawExportBase() RawExportBase {
-	rawExportBase := RawExportBase{}
-	rawExportBase.Add = "/"
-	return rawExportBase
-}
-
 func (c *RawExportBase) ToDirective() (exportBase *ExportBase, err error) {
 	exportBase = &ExportBase{}
 	exportBase.Add = c.Add

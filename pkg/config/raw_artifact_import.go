@@ -20,7 +20,6 @@ func (c *RawArtifactImport) Doc() *Doc {
 }
 
 func (c *RawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	c.RawArtifactExport.RawExportBase = NewRawExportBase()
 	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
 		c.RawDimg = parent
 	}
@@ -37,6 +36,10 @@ func (c *RawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) err
 
 	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
 		return err
+	}
+
+	if c.RawArtifactExport.RawExportBase.To == "" {
+		c.RawArtifactExport.RawExportBase.To = c.RawArtifactExport.RawExportBase.Add
 	}
 
 	return nil
