@@ -58,20 +58,11 @@ func (c *RawGit) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (c *RawGit) ToGitLocalDirective() (gitLocal *GitLocal, err error) {
 	gitLocal = &GitLocal{}
-	gitLocal.GitBase = &GitBase{}
 
-	if gitExport, err := c.RawGitExport.ToDirective(); err != nil {
+	if gitLocalExport, err := c.ToGitLocalExportDirective(); err != nil {
 		return nil, err
 	} else {
-		gitLocal.GitBase.GitExport = gitExport
-	}
-
-	if c.RawStageDependencies != nil {
-		if stageDependencies, err := c.RawStageDependencies.ToDirective(); err != nil {
-			return nil, err
-		} else {
-			gitLocal.StageDependencies = stageDependencies
-		}
+		gitLocal.GitLocalExport = gitLocalExport
 	}
 
 	gitLocal.As = c.As
@@ -93,17 +84,52 @@ func (c *RawGit) ValidateGitLocalDirective(gitLocal *GitLocal) (err error) {
 	return nil
 }
 
+func (c *RawGit) ToGitLocalExportDirective() (gitLocalExport *GitLocalExport, err error) {
+	gitLocalExport = &GitLocalExport{}
+
+	gitLocalExport.GitExportBase = &GitExportBase{}
+	if gitExport, err := c.RawGitExport.ToDirective(); err != nil {
+		return nil, err
+	} else {
+		gitLocalExport.GitExportBase.GitExport = gitExport
+	}
+
+	if c.RawStageDependencies != nil {
+		if stageDependencies, err := c.RawStageDependencies.ToDirective(); err != nil {
+			return nil, err
+		} else {
+			gitLocalExport.StageDependencies = stageDependencies
+		}
+	}
+
+	gitLocalExport.Raw = c
+
+	if err := c.ValidateGitLocalExportDirective(gitLocalExport); err != nil {
+		return nil, err
+	}
+
+	return gitLocalExport, nil
+}
+
+func (c *RawGit) ValidateGitLocalExportDirective(gitLocalExport *GitLocalExport) (err error) {
+	if err := gitLocalExport.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	gitRemote = &GitRemote{}
 
-	if gitLocal, err := c.ToGitLocalDirective(); err != nil {
+	gitRemote.GitRemoteExport = &GitRemoteExport{}
+	if gitLocalExport, err := c.ToGitLocalExportDirective(); err != nil {
 		return nil, err
 	} else {
-		gitRemote.GitLocal = gitLocal
+		gitRemote.GitRemoteExport.GitLocalExport = gitLocalExport
 	}
 
-	gitRemote.Branch = c.Branch
-	gitRemote.Commit = c.Commit
+	gitRemote.As = c.As
 	gitRemote.Url = c.Url
 
 	r := regexp.MustCompile(`.*?([^/ ]+/[^/ ]+)(\.git)?`)
@@ -125,6 +151,35 @@ func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 
 func (c *RawGit) ValidateGitRemoteDirective(gitRemote *GitRemote) (err error) {
 	if err := gitRemote.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *RawGit) ToGitLocalRemoteExportDirective() (gitRemoteExport *GitRemoteExport, err error) {
+	gitRemoteExport = &GitRemoteExport{}
+
+	if gitLocalExport, err := c.ToGitLocalExportDirective(); err != nil {
+		return nil, err
+	} else {
+		gitRemoteExport.GitLocalExport = gitLocalExport
+	}
+
+	gitRemoteExport.Branch = c.Branch
+	gitRemoteExport.Commit = c.Commit
+
+	gitRemoteExport.Raw = c
+
+	if err := c.ValidateGitRemoteExportDirective(gitRemoteExport); err != nil {
+		return nil, err
+	}
+
+	return gitRemoteExport, nil
+}
+
+func (c *RawGit) ValidateGitRemoteExportDirective(gitRemoteExport *GitRemoteExport) (err error) {
+	if err := gitRemoteExport.Validate(); err != nil {
 		return err
 	}
 

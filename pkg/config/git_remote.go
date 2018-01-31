@@ -1,34 +1,29 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
 type GitRemote struct {
-	*GitLocal
-	Name   string
-	Branch string
-	Commit string
-	Url    string
+	*GitRemoteExport
+	As   string
+	Name string
+	Url  string
 
 	Raw *RawGit
 }
 
 func (c *GitRemote) Validate() error {
-	if c.Branch != "" && c.Commit != "" {
-		return fmt.Errorf("conflict between `Branch` && `Commit` directives") // FIXME
-	}
 	return nil
 }
 
-func (c *GitRemote) ToRuby() ruby_marshal_config.GitArtifactRemoteExport {
-	rubyGitArtifactRemoteExport := ruby_marshal_config.GitArtifactRemoteExport{}
-	rubyGitArtifactRemoteExport.GitArtifactLocalExport = c.GitLocal.ToRuby()
-	rubyGitArtifactRemoteExport.Url = c.Url
-	rubyGitArtifactRemoteExport.Branch = c.Branch
-	rubyGitArtifactRemoteExport.Commit = c.Commit
-	rubyGitArtifactRemoteExport.Name = c.Name
-	return rubyGitArtifactRemoteExport
+func (c *GitRemote) ToRuby() ruby_marshal_config.GitArtifactRemote {
+	rubyGitArtifactRemote := ruby_marshal_config.GitArtifactRemote{}
+	rubyGitArtifactRemote.Url = c.Url
+	rubyGitArtifactRemote.Name = c.Name
+	rubyGitArtifactRemote.As = c.As
+	if c.GitRemoteExport != nil {
+		rubyGitArtifactRemote.Export = append(rubyGitArtifactRemote.Export, c.GitRemoteExport.ToRuby())
+	}
+	return rubyGitArtifactRemote
 }
