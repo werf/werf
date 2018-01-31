@@ -9,6 +9,12 @@ type RawExportBase struct {
 	Group        string      `yaml:"group,omitempty"`
 }
 
+func NewRawExportBase() RawExportBase {
+	rawExportBase := RawExportBase{}
+	rawExportBase.Add = "/"
+	return rawExportBase
+}
+
 func (c *RawExportBase) ToDirective() (exportBase *ExportBase, err error) {
 	exportBase = &ExportBase{}
 	exportBase.Add = c.Add

@@ -12,6 +12,7 @@ type RawArtifactImport struct {
 }
 
 func (c *RawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	c.RawArtifactExport.RawExportBase = NewRawExportBase()
 	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
 		c.RawDimg = parent
 	}
