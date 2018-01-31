@@ -26,13 +26,13 @@ func (c *RawExportBase) ToDirective() (exportBase *ExportBase, err error) {
 	exportBase.Add = c.Add
 	exportBase.To = c.To
 
-	if includePaths, err := InterfaceToStringArray(c.IncludePaths); err != nil {
+	if includePaths, err := InterfaceToStringArray(c.IncludePaths, c.RawOrigin.ConfigSection(), c.RawOrigin.Doc()); err != nil {
 		return nil, err
 	} else {
 		exportBase.IncludePaths = includePaths
 	}
 
-	if excludePaths, err := InterfaceToStringArray(c.ExcludePaths); err != nil {
+	if excludePaths, err := InterfaceToStringArray(c.ExcludePaths, c.RawOrigin.ConfigSection(), c.RawOrigin.Doc()); err != nil {
 		return nil, err
 	} else {
 		exportBase.ExcludePaths = excludePaths

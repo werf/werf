@@ -26,7 +26,7 @@ func (c *RawDocker) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
+	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
 		return err
 	}
 
@@ -36,13 +36,13 @@ func (c *RawDocker) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (c *RawDocker) ToDirective() (docker *Docker, err error) {
 	docker = &Docker{}
 
-	if volume, err := InterfaceToStringArray(c.Volume); err != nil {
+	if volume, err := InterfaceToStringArray(c.Volume, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		docker.Volume = volume
 	}
 
-	if expose, err := InterfaceToStringArray(c.Expose); err != nil {
+	if expose, err := InterfaceToStringArray(c.Expose, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		docker.Expose = expose
@@ -51,13 +51,13 @@ func (c *RawDocker) ToDirective() (docker *Docker, err error) {
 	docker.Env = c.Env
 	docker.Label = c.Label
 
-	if cmd, err := InterfaceToStringArray(c.Cmd); err != nil {
+	if cmd, err := InterfaceToStringArray(c.Cmd, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		docker.Cmd = cmd
 	}
 
-	if onbuild, err := InterfaceToStringArray(c.Onbuild); err != nil {
+	if onbuild, err := InterfaceToStringArray(c.Onbuild, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		docker.Onbuild = onbuild
@@ -66,7 +66,7 @@ func (c *RawDocker) ToDirective() (docker *Docker, err error) {
 	docker.Workdir = c.Workdir
 	docker.User = c.User
 
-	if entrypoint, err := InterfaceToStringArray(c.Entrypoint); err != nil {
+	if entrypoint, err := InterfaceToStringArray(c.Entrypoint, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		docker.Entrypoint = entrypoint

@@ -35,7 +35,7 @@ func (c *RawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) err
 
 	c.RawArtifactExport.InlinedIntoRaw(c)
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
+	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
 		return err
 	}
 

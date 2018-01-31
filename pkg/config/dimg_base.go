@@ -19,7 +19,7 @@ type DimgBase struct {
 
 func (c *DimgBase) Validate() error {
 	if c.From == "" {
-		return fmt.Errorf("`from` required!") // FIXME
+		return fmt.Errorf("`from: DOCKER_IMAGE` required!\n\n%s", DumpConfigDoc(c.Raw.Doc))
 	}
 
 	// TODO: валидацию формата `From`

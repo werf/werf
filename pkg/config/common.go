@@ -18,15 +18,14 @@ type Doc struct {
 	RenderFilePath string
 }
 
-func CheckOverflow(m map[string]interface{}, config interface{}) error {
+func CheckOverflow(m map[string]interface{}, config interface{}, doc *Doc) error {
 	if len(m) > 0 {
 		var keys []string
 		for k := range m {
 			keys = append(keys, k)
 		}
 
-		// val := reflect.Indirect(reflect.ValueOf(config))                   // FIXME: access to raw object needed
-		return fmt.Errorf("Unknown fields: `%s`", strings.Join(keys, "`, `")) // FIXME: access to raw object needed
+		return fmt.Errorf("Unknown fields: `%s`!\n\n%s\n%s", strings.Join(keys, "`, `"), DumpConfigSection(config), DumpConfigDoc(doc))
 	}
 	return nil
 }
@@ -56,7 +55,7 @@ func IsAbsolutePath(path string) bool {
 	return strings.HasPrefix(path, "/")
 }
 
-func InterfaceToStringArray(stringOrStringArray interface{}) ([]string, error) {
+func InterfaceToStringArray(stringOrStringArray interface{}, configSection interface{}, doc *Doc) ([]string, error) {
 	if stringOrStringArray == nil {
 		return []string{}, nil
 	} else if val, ok := stringOrStringArray.(string); ok {
@@ -67,12 +66,12 @@ func InterfaceToStringArray(stringOrStringArray interface{}) ([]string, error) {
 			if val, ok := interf.(string); ok {
 				stringArray = append(stringArray, val)
 			} else {
-				return nil, fmt.Errorf("ожидается строка или массив строк: %v", stringOrStringArray) // FIXME
+				return nil, fmt.Errorf("Single string or array of strings expected, got `%v`!\n\n%s\n%s", stringOrStringArray, DumpConfigSection(configSection), DumpConfigDoc(doc))
 			}
 		}
 		return stringArray, nil
 	} else {
-		return nil, fmt.Errorf("ожидается строка или массив строк: %v", stringOrStringArray) // FIXME
+		return nil, fmt.Errorf("Single string or array of strings expected, got `%v`!\n\n%s\n%s", stringOrStringArray, DumpConfigSection(configSection), DumpConfigDoc(doc))
 	}
 }
 

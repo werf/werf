@@ -49,7 +49,7 @@ func (c *RawGit) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	c.RawGitExport.InlinedIntoRaw(c)
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
+	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
 		return err
 	}
 
@@ -137,7 +137,7 @@ func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	if len(match) == 3 {
 		gitRemote.Name = match[1]
 	} else {
-		return nil, fmt.Errorf("не удалось вычленить имя из `%s`", c.Url) // FIXME
+		return nil, fmt.Errorf("Cannot determine repo name from `url: %s`: url is not fit `.*?([^/ ]+/[^/ ]+)(.git)?` regex!\n\n%s\n%s", c.Url, DumpConfigSection(c), DumpConfigDoc(c.RawDimg.Doc))
 	}
 
 	gitRemote.Raw = c
