@@ -15,12 +15,10 @@ type Mount struct {
 }
 
 func (c *Mount) Validate() error {
-	if c.From == "" {
-		return fmt.Errorf("`from` required") // FIXME
-	} else if c.To == "" || !IsAbsolutePath(c.To) {
+	if c.To == "" || !IsAbsolutePath(c.To) {
 		return fmt.Errorf("`to` required absolute path") // FIXME
-	} else if c.Type == "custom_dir" && isRelativePath(c.From) {
-		return fmt.Errorf("`fromPath` should be absolute") // FIXME
+	} else if c.Type == "custom_dir" && c.From != "" && isRelativePath(c.From) {
+		return fmt.Errorf("`fromPath` required absolute path") // FIXME
 	} else if c.Type != "tmp_dir" && c.Type != "build_dir" {
 		return fmt.Errorf("`From` should be `tmp_dir` or `build_dir`") // FIXME
 	}
