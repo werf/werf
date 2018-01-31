@@ -158,8 +158,6 @@ func (cfg GitArtifactLocal) TagYAML() string {
 type GitArtifactLocalExport struct {
 	ArtifactBaseExport `yaml:",inline"`
 	As                 string            `yaml:"_as,omitempty"`
-	Branch             string            `yaml:"_branch,omitempty"`
-	Commit             string            `yaml:"_commit,omitempty"`
 	StageDependencies  StageDependencies `yaml:"_stage_dependencies,omitempty"`
 }
 
@@ -188,6 +186,8 @@ func (cfg GitArtifactRemote) TagYAML() string {
 
 type GitArtifactRemoteExport struct {
 	GitArtifactLocalExport `yaml:",inline"`
+	Branch                 string `yaml:"_branch,omitempty"`
+	Commit                 string `yaml:"_commit,omitempty"`
 	Url                    string `yaml:"_url,omitempty"`
 	Name                   string `yaml:"_name,omitempty"`
 }

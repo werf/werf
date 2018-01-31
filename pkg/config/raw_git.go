@@ -99,7 +99,6 @@ func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	r := regexp.MustCompile(`.*?([^/ ]+/[^/ ]+)(\.git)?`)
 	match := r.FindStringSubmatch(c.Url)
 	if len(match) == 3 {
-		fmt.Println(match[1])
 		gitRemote.Name = match[1]
 	} else {
 		return nil, fmt.Errorf("не удалось вычленить имя из `%s`", c.Url) // FIXME
