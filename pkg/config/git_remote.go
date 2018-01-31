@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
