@@ -12,7 +12,7 @@ type DimgArtifact struct {
 
 func (c *DimgArtifact) Validate() error {
 	if c.Chef != nil && c.Shell != nil {
-		return fmt.Errorf("Cannot use shell and chef builders at the same time!") // FIXME
+		return fmt.Errorf("Cannot use shell and chef builders at the same time!\n\n%s", DumpConfigDoc(c.DimgBase.Raw.Doc))
 	}
 
 	return nil

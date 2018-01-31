@@ -20,7 +20,7 @@ func (c *RawChef) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
+	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
 		return err
 	}
 
@@ -31,7 +31,7 @@ func (c *RawChef) ToDirective() (chef *Chef, err error) {
 	chef = &Chef{}
 	chef.Cookbook = c.Cookbook
 
-	if recipe, err := InterfaceToStringArray(c.Recipe); err != nil {
+	if recipe, err := InterfaceToStringArray(c.Recipe, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		chef.Recipe = recipe

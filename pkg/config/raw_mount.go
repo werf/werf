@@ -22,7 +22,7 @@ func (c *RawMount) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
+	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
 		return err
 	}
 
@@ -51,7 +51,7 @@ func (c *RawMount) ToDirective() (mount *Mount, err error) {
 
 func (c *RawMount) ValidateDirective(mount *Mount) (err error) {
 	if c.From != "" && c.FromPath != "" {
-		return fmt.Errorf("conflict between `From` and `FromPath` directives") // FIXME
+		return fmt.Errorf("Cannot use `from: %s` and `fromPath: %s` at the same time for mount!\n\n%s\n%s", c.From, c.FromPath, DumpConfigSection(c), DumpConfigDoc(c.RawDimg.Doc))
 	}
 
 	if err := mount.Validate(); err != nil {

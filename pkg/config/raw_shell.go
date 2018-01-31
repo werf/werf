@@ -26,7 +26,7 @@ func (c *RawShell) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c); err != nil {
+	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
 		return err
 	}
 
@@ -37,25 +37,25 @@ func (c *RawShell) ToDirective() (shellDimg *ShellDimg, err error) {
 	shellDimg = &ShellDimg{}
 	shellDimg.ShellBase = &ShellBase{}
 
-	if beforeInstall, err := InterfaceToStringArray(c.BeforeInstall); err != nil {
+	if beforeInstall, err := InterfaceToStringArray(c.BeforeInstall, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		shellDimg.ShellBase.BeforeInstall = beforeInstall
 	}
 
-	if install, err := InterfaceToStringArray(c.Install); err != nil {
+	if install, err := InterfaceToStringArray(c.Install, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		shellDimg.ShellBase.Install = install
 	}
 
-	if beforeSetup, err := InterfaceToStringArray(c.BeforeSetup); err != nil {
+	if beforeSetup, err := InterfaceToStringArray(c.BeforeSetup, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		shellDimg.ShellBase.BeforeSetup = beforeSetup
 	}
 
-	if setup, err := InterfaceToStringArray(c.Setup); err != nil {
+	if setup, err := InterfaceToStringArray(c.Setup, c, c.RawDimg.Doc); err != nil {
 		return nil, err
 	} else {
 		shellDimg.ShellBase.Setup = setup
@@ -72,7 +72,7 @@ func (c *RawShell) ToDirective() (shellDimg *ShellDimg, err error) {
 
 func (c *RawShell) ValidateDirective(shellDimg *ShellDimg) error {
 	if c.BuildArtifact != nil {
-		return fmt.Errorf("директива buildArtifact не может быть объявлена для dimg-а!") // FIXME
+		return fmt.Errorf("`buildArtifact` stage is not available for dimg, only for artifact!\n\n%s\n%s", DumpConfigSection(c), DumpConfigDoc(c.RawDimg.Doc))
 	}
 
 	if err := shellDimg.Validate(); err != nil {

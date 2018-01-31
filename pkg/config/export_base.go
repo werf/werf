@@ -19,13 +19,13 @@ type ExportBase struct {
 
 func (c *ExportBase) Validate() error {
 	if c.Add == "" || !IsAbsolutePath(c.Add) {
-		return fmt.Errorf("`Add` required absolute path") // FIXME
+		return fmt.Errorf("`add: PATH` absolute path required for import!\n\n%s\n%s", DumpConfigSection(c.Raw.RawOrigin.ConfigSection()), DumpConfigDoc(c.Raw.RawOrigin.Doc()))
 	} else if c.To == "" || !IsAbsolutePath(c.To) {
 		return fmt.Errorf("`to: PATH` absolute path required for import!\n\n%s\n%s", DumpConfigSection(c.Raw.RawOrigin.ConfigSection()), DumpConfigDoc(c.Raw.RawOrigin.Doc()))
 	} else if !AllRelativePaths(c.IncludePaths) {
-		return fmt.Errorf("`IncludePaths` should be relative paths") // FIXME
+		return fmt.Errorf("`includePaths: [PATH, ...]|PATH` should be relative paths\n\n%s\n%s", DumpConfigSection(c.Raw.RawOrigin.ConfigSection()), DumpConfigDoc(c.Raw.RawOrigin.Doc()))
 	} else if !AllRelativePaths(c.ExcludePaths) {
-		return fmt.Errorf("`ExcludePaths` should be relative paths") // FIXME
+		return fmt.Errorf("`excludePaths: [PATH, ...]|PATH` should be relative paths\n\n%s\n%s", DumpConfigSection(c.Raw.RawOrigin.ConfigSection()), DumpConfigDoc(c.Raw.RawOrigin.Doc()))
 	}
 	return nil
 }
