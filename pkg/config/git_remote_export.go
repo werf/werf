@@ -16,7 +16,7 @@ type GitRemoteExport struct {
 
 func (c *GitRemoteExport) Validate() error {
 	if c.Branch != "" && c.Commit != "" {
-		return fmt.Errorf("conflict between `Branch` && `Commit` directives") // FIXME
+		return fmt.Errorf("Specify only `branch: BRANCH` or `commit: COMMIT` for git!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
 	}
 	return nil
 }

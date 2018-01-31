@@ -122,11 +122,10 @@ func (c *RawGit) ValidateGitLocalExportDirective(gitLocalExport *GitLocalExport)
 func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	gitRemote = &GitRemote{}
 
-	gitRemote.GitRemoteExport = &GitRemoteExport{}
-	if gitLocalExport, err := c.ToGitLocalExportDirective(); err != nil {
+	if gitRemoteExport, err := c.ToGitRemoteExportDirective(); err != nil {
 		return nil, err
 	} else {
-		gitRemote.GitRemoteExport.GitLocalExport = gitLocalExport
+		gitRemote.GitRemoteExport = gitRemoteExport
 	}
 
 	gitRemote.As = c.As
@@ -157,7 +156,7 @@ func (c *RawGit) ValidateGitRemoteDirective(gitRemote *GitRemote) (err error) {
 	return nil
 }
 
-func (c *RawGit) ToGitLocalRemoteExportDirective() (gitRemoteExport *GitRemoteExport, err error) {
+func (c *RawGit) ToGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport, err error) {
 	gitRemoteExport = &GitRemoteExport{}
 
 	if gitLocalExport, err := c.ToGitLocalExportDirective(); err != nil {

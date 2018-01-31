@@ -1,8 +1,6 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
@@ -16,9 +14,6 @@ type GitRemote struct {
 }
 
 func (c *GitRemote) Validate() error {
-	if c.Branch != "" && c.Commit != "" {
-		return fmt.Errorf("`branch` and `commit` fields cannot be used at the same time!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
-	}
 	return nil
 }
 
