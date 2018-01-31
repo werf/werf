@@ -131,7 +131,7 @@ func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	gitRemote.As = c.As
 	gitRemote.Url = c.Url
 
-	r := regexp.MustCompile(`.*?([^/ ]+/[^/ ]+)(\.git)?`)
+	r := regexp.MustCompile(`.*?([^/ ]+/[^/ ]+)(\.git?)$`)
 	match := r.FindStringSubmatch(c.Url)
 	if len(match) == 3 {
 		gitRemote.Name = match[1]
