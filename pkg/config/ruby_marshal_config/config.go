@@ -54,8 +54,8 @@ type DockerDimg struct {
 	DockerBase `yaml:",inline"`
 	Volume     []string          `yaml:"_volume"`
 	Expose     []string          `yaml:"_expose"`
-	Env        map[string]string `yaml:"_env"`
-	Label      map[string]string `yaml:"_label"`
+	Env        map[Symbol]string `yaml:"_env"`
+	Label      map[Symbol]string `yaml:"_label"`
 	Cmd        []string          `yaml:"_cmd"`
 	Onbuild    []string          `yaml:"_onbuild"`
 	Workdir    string            `yaml:"_workdir"`
