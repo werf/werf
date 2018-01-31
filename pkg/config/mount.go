@@ -17,8 +17,10 @@ type Mount struct {
 func (c *Mount) Validate() error {
 	if c.To == "" || !IsAbsolutePath(c.To) {
 		return fmt.Errorf("`to: PATH` absolute path required for mount!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
-	} else if c.Type == "custom_dir" && c.From != "" && isRelativePath(c.From) {
-		return fmt.Errorf("`fromPath: PATH` should be absolute path for mount!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+	} else if c.Type == "custom_dir" {
+		if (c.From != "" && isRelativePath(c.From)) || c.From == "" {
+			return fmt.Errorf("`fromPath: PATH` should be absolute path for mount!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+		}
 	} else if c.Type != "tmp_dir" && c.Type != "build_dir" {
 		return fmt.Errorf("Invalid `from: %s` for mount: expected `tmp_dir` or `build_dir`!\n\n%s\n%s", c.Type, DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
 	}
