@@ -46,7 +46,9 @@ func (c *DimgBase) ToRuby() ruby_marshal_config.DimgBase {
 	}
 
 	for _, importArtifact := range c.Import {
-		rubyDimg.Artifact = append(rubyDimg.Artifact, importArtifact.ToRuby())
+		artifactGroup := ruby_marshal_config.ArtifactGroup{}
+		artifactGroup.Export = append(artifactGroup.Export, importArtifact.ToRuby())
+		rubyDimg.ArtifactGroup = append(rubyDimg.ArtifactGroup, artifactGroup)
 	}
 
 	return rubyDimg
