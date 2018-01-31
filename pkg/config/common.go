@@ -31,16 +31,8 @@ func CheckOverflow(m map[string]interface{}, config interface{}, doc *Doc) error
 }
 
 func AllRelativePaths(paths []string) bool {
-	if len(paths) == 0 {
-		return true
-	} else {
-		return !AllAbsolutePaths(paths)
-	}
-}
-
-func AllAbsolutePaths(paths []string) bool {
 	for _, path := range paths {
-		if isRelativePath(path) {
+		if !isRelativePath(path) {
 			return false
 		}
 	}
