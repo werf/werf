@@ -83,7 +83,7 @@ en:
       stage_artifact_not_supported_associated_stage: "Bad artifact stage `%{stage}`!"
       git_artifact_remote_branch_with_commit: "Remote git repo: use `commit` or `branch` directive!"
       artifact_conflict: "Conflict between artifacts!\n\n%{dappfile_context}"
-      artifact_not_found: "Invalid Dappfile: artifact `%{name}` not found!"
+      artifact_not_found: "Invalid Dappfile: artifact `%{name}` should be defined before import directive!"
       artifact_already_exists: "Invalid Dappfile: artifact `%{name}` already exists!"
       scratch_unsupported_directive: "Scratch dimg has unsupported directive `%{directive}`!"
       scratch_artifact_required: "Scratch dimg without artifacts!"
