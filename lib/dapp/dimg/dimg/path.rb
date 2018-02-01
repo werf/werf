@@ -6,6 +6,10 @@ module Dapp
           dapp.path(*path).expand_path
         end
 
+        def tmp_dir_exists?
+          @tmp_path != nil
+        end
+
         def tmp_path(*path)
           @tmp_path ||= Dir.mktmpdir('dapp-', dapp.tmp_base_dir)
           make_path(@tmp_path, *path).expand_path.tap { |p| p.parent.mkpath }
