@@ -1,0 +1,1 @@
+export DAPP_BIN_DAPPFILE_YML=$GOPATH/bin/dappfile-yml

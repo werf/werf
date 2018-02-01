@@ -48,7 +48,7 @@ en:
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       no_such_app: "No such app: `%{apps_patterns}`!"
-      dappfile_not_found: "Dappfile not found!"
+      dappfile_not_found: "dappfile.yml, dappfile.yaml or Dappfile not found!"
       cannot_run_ssh_agent: "Can't run ssh-agent!"
       ssh_key_not_found: "Ssh key `%{path}` doesn't exist!"
       docker_not_found: "Docker not found!"
@@ -60,6 +60,7 @@ en:
       incorrect_dapp_config_option_color: ".dapp_config includes option `color` with incorrect value `%{value}`: expected one of the following values [%{expected}]"
       ci_environment_required: 'CI environment required (Travis or GitLab CI)!'
       git_branch_without_name: "Dimg has specific revision that isn't associated with a branch name!"
+      download_failed_bad_dappfile_yml_checksum: "Cannot download dappfile-yml binary dependency from %{url}: checksum validation failed"
     config:
       dimg_name_required: 'Dimg name required!'
       dimg_name_incorrect: "Dimg has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"

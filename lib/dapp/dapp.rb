@@ -83,8 +83,12 @@ module Dapp
       nil
     end
 
+    def work_dir
+      File.expand_path(options[:dir] || Dir.pwd)
+    end
+
     def path(*path)
-      @path ||= expand_path(dappfile_path)
+      @path ||= make_path(work_dir)
       make_path(@path, *path)
     end
 

@@ -34,7 +34,6 @@ module SpecHelper
     def dapp
       @dapp ||= begin
         Dapp::Dapp.new(options: dapp_options).tap do |dapp|
-          allow(dapp).to receive(:dappfile_path) { File.join(project_path, 'Dappfile') }
           allow(dapp).to receive(:path) { |*m_args| Pathname(File.absolute_path(File.join(project_path, *m_args))) }
           allow(dapp).to receive(:config) { config }
           allow(dapp).to receive(:is_a?) do |klass|

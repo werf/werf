@@ -321,15 +321,11 @@ image: {{ tuple $name $context | include "_dimg2" }}
               unless (secret_key = ENV['DAPP_SECRET_KEY'])
                 secret_key_not_found_in << '`DAPP_SECRET_KEY`'
 
-                if dappfile_exists?
-                  file_path = path('.dapp_secret_key')
-                  if file_path.file?
-                    secret_key = path('.dapp_secret_key').read.chomp
-                  else
-                    secret_key_not_found_in << "`#{file_path}`"
-                  end
+                file_path = path('.dapp_secret_key')
+                if file_path.file?
+                  secret_key = path('.dapp_secret_key').read.chomp
                 else
-                  log_warning(desc: { code: :secret_key_dappfile_not_found })
+                  secret_key_not_found_in << "`#{file_path}`"
                 end
               end
 
