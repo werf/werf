@@ -187,7 +187,7 @@ JSON
 rubygems_upload_gem() {
   curlResponse=$(mktemp)
   status=$(curl -s -w %{http_code} -o $curlResponse \
-      --request POST
+      --request POST \
       --header "Authorization: ${RUBYGEMS_TOKEN}" \
       --header "Content-type: application/octet-stream" \
       --data-binary @${GEM_FILE_PATH} \
