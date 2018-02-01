@@ -104,9 +104,10 @@ end
 ### artifact
 Директива позволяет определить один или несколько [артефактов](definitions.html#артефакт).
 
-* Для добавления артефакта необходимо использовать поддирективу export.
+* Для добавления артефакта можно использовать поддирективу export или директиву import.
   * Принимает параметр \<cwd\> (по умолчанию используется путь \<to\>).
   * Параметры \<include_paths\>, \<exclude_paths\>, \<owner\>, \<group\>, \<to\> определяются в контексте.
+  * Параметр \<to\> по умолчанию соответствует \<cwd\>.
   * Если собирается не scratch: в контексте обязательно использование хотя бы одной из директив **before** или **after**, где:
     * директива определяет порядок применения артефакта (до или после);
     * значение определяет стадию (install или setup).
@@ -114,6 +115,8 @@ end
 #### Примеры
 
 ##### Собрать с артефактами
+
+###### export
 ```ruby
 dimg do
   docker.from 'image:tag'
@@ -121,9 +124,7 @@ dimg do
   artifact do
     shell.build_artifact.run 'command1', 'command2'
 
-    export '/' do
-      exclude_paths 'assets'
-      
+    export '/artifact' do
       before 'install'
       to '/app'
     end
@@ -132,12 +133,35 @@ dimg do
   artifact do
     shell.build_artifact.run 'command3', 'command4'
 
-    export '/' do
-      include_paths 'assets'
-    
+    export '/artifact/assets' do
       after 'setup'
       to '/app'
     end
+  end
+end
+```
+
+###### import
+```ruby
+dimg do
+  docker.from 'image:tag'
+
+  artifact('artifact-a') do
+    shell.build_artifact.run 'command1', 'command2'
+  end
+
+  artifact('artifact-b') do
+    shell.build_artifact.run 'command3', 'command4'
+  end
+
+  import('artifact-a', '/artifact') do
+    before 'install'
+    to '/app'
+  end
+
+  import('artifact-b', '/artifact/assets') do
+    after 'setup'
+    to '/app'
   end
 end
 ```
