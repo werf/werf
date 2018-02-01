@@ -178,7 +178,7 @@ describe Dapp::Dimg::Config::Directive::Dimg do
       context 'artifact' do
         it 'to required' do
           dappfile_dimg_group_artifact do
-            export '/cwd' do
+            export do
               before :setup
             end
           end

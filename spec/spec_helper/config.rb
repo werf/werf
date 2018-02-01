@@ -1,5 +1,7 @@
 module SpecHelper
   module Config
+    include Dimg
+
     def dappfile(&blk)
       @dappfile = ConfigDsl.new
                            .tap { |dsl| dsl.instance_eval(&blk) }
@@ -7,16 +9,8 @@ module SpecHelper
     end
     
     def config
-      Dapp::Config::Config.new(dapp: stubbed_dapp).tap do |config|
+      Dapp::Config::Config.new(dapp: dapp).tap do |config|
         config.instance_eval(@dappfile) unless @dappfile.nil?
-      end
-    end
-
-    def stubbed_dapp
-      instance_double(Dapp::Dapp).tap do |instance|
-        allow(instance).to receive(:name) { File.basename(Dir.getwd) }
-        allow(instance).to receive(:path) { Dir.getwd }
-        allow(instance).to receive(:log_warning)
       end
     end
 

@@ -152,4 +152,88 @@ describe Dapp::Dimg::Config::Directive::Artifact do
       expect_exception_code(:stage_artifact_not_supported_associated_stage) { dimgs_configs }
     end
   end
+
+  context 'import' do
+    context 'positive' do
+      it 'same context' do
+        dappfile do
+          dimg do
+            artifact('name') do
+              shell do
+                build_artifact do
+                  run 'cmd'
+                end
+              end
+            end
+
+            import('name') do
+              to '/to'
+            end
+          end
+        end
+
+        expect(dimg_config._artifact.first._config._shell._build_artifact_command).to eq ['cmd']
+      end
+
+      it 'unrelated context but until using import' do
+        dappfile do
+          dimg_group do
+            dimg_group do
+              artifact('name') do
+                shell do
+                  build_artifact do
+                    run 'cmd'
+                  end
+                end
+              end
+            end
+
+            dimg_group do
+              import('name') do
+                to '/to'
+              end
+
+              dimg
+            end
+          end
+        end
+
+        expect(dimg_config._artifact.first._config._shell._build_artifact_command).to eq ['cmd']
+      end
+    end
+
+    context 'negative' do
+      it 'import nonexistent artifact (:artifact_not_found)' do
+        dappfile do
+          dimg do
+            import('name')
+          end
+        end
+
+        expect_exception_code(:artifact_not_found) { dimgs_configs }
+      end
+
+      it 'artifact defined after import (:artifact_not_found)' do
+        dappfile do
+          dimg do
+            import('name')
+            artifact('name')
+          end
+        end
+
+        expect_exception_code(:artifact_not_found) { dimgs_configs }
+      end
+
+      it 'conflict between artifacts names (:artifact_already_exists)' do
+        dappfile do
+          dimg do
+            artifact('name')
+            artifact('name')
+          end
+        end
+
+        expect_exception_code(:artifact_already_exists) { dimgs_configs }
+      end
+    end
+  end
 end
