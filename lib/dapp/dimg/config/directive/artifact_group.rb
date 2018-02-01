@@ -7,7 +7,7 @@ module Dapp
 
           def initialize(name = nil, dapp:)
             super(dapp: dapp)
-            @_name = name || SecureRandom.hex(2)
+            @_name = name
           end
 
           def export(*args, &blk)
@@ -15,7 +15,7 @@ module Dapp
           end
 
           def _artifact_config
-            artifact_config_name = "artifact-#{[_name, SecureRandom.hex(2)].join('-')}"
+            artifact_config_name = "artifact-#{[_name, SecureRandom.hex(2)].compact.join('-')}"
             pass_to(ArtifactDimg.new(artifact_config_name, dapp: dapp))
           end
 
