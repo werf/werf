@@ -29,7 +29,7 @@ module Dapp
               end
             end
 
-            def import(name, from, &blk)
+            def import(name, from = nil, &blk)
               ArtifactGroup.new(dapp: dapp).tap do |artifact_group|
                 artifact_group._artifact_export(dapp.artifact_config_by_name(name), from, &blk)
                 _context_artifact_groups << artifact_group
