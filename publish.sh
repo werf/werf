@@ -82,7 +82,9 @@ build_gem() {
 build_go() {
   echo "Building dappfile-yml binary"
   rm -f dappfile-yml dappfile-yml.sha
-  go get -v ./...
+
+  source go-get.sh
+
   go build ./cmd/dappfile-yml
 
   sha256sum dappfile-yml | cut -d' ' -f 1 > dappfile-yml.sha
