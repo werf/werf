@@ -55,10 +55,6 @@ module Dapp
               }
             end
 
-            def _cwd
-              @_cwd ||= _to
-            end
-
             def _cwd=(value)
               return if value.nil?
               raise ::Dapp::Error::Config, code: :export_cwd_absolute_path_required unless Pathname(value).absolute?
