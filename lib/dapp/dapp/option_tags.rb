@@ -69,11 +69,17 @@ module Dapp
 
         {}.tap do |tags_by_scheme|
           if ENV['GITLAB_CI']
-            tags_by_scheme[:git_branch] = [ENV['CI_BUILD_REF_NAME']]
-            tags_by_scheme[:git_tag]    = [ENV['CI_BUILD_TAG']]
+            if ENV['CI_BUILD_TAG']
+              tags_by_scheme[:git_tag] = [ENV['CI_BUILD_TAG']]
+            elsif ENV['CI_BUILD_REF_NAME']
+              tags_by_scheme[:git_branch] = [ENV['CI_BUILD_REF_NAME']]
+            end
           elsif ENV['TRAVIS']
-            tags_by_scheme[:git_branch] = [ENV['TRAVIS_BRANCH']]
-            tags_by_scheme[:git_tag]    = [ENV['TRAVIS_TAG']]
+            if ENV['TRAVIS_TAG']
+              tags_by_scheme[:git_tag]    = [ENV['TRAVIS_TAG']]
+            elsif ENV['TRAVIS_BRANCH']
+              tags_by_scheme[:git_branch] = [ENV['TRAVIS_BRANCH']]
+            end
           else
             raise Error::Dapp, code: :ci_environment_required
           end
