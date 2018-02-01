@@ -21,7 +21,7 @@ module Dapp
             super
           end
 
-          def artifact(&blk)
+          def artifact(name = nil, &blk)
             check_dimg_group_directive_order(:artifact)
             super
           end

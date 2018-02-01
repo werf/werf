@@ -22,6 +22,14 @@ module Dapp
             attr_accessor :_config
             attr_accessor :_before, :_after
 
+            def _cwd
+              @_cwd ||= @_to
+            end
+
+            def _to
+              @_to ||= @_cwd
+            end
+
             def before(stage)
               sub_directive_eval do
                 stage = stage.to_sym

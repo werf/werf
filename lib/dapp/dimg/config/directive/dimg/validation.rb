@@ -29,6 +29,7 @@ module Dapp
                   elm.validate! if elm.respond_to?(:validate!)
                 end
               end
+              _context_artifact_groups.each(&:validate!)
               _mount.map(&:_to).tap do |mounts_points|
                 mounts_points.each do |path|
                   raise ::Dapp::Error::Config, code: :mount_duplicate_to, data: { path: path } if mounts_points.count(path) > 1

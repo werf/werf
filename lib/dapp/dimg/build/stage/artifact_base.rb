@@ -48,7 +48,7 @@ module Dapp
           end
 
           def artifacts_dimgs_build!
-            artifacts.each do |artifact|
+            artifacts.uniq { |artifact| artifact[:dimg] }.each do |artifact|
               process = dimg.dapp.t(code: 'process.artifact_building', data: { name: artifact[:name] })
               dimg.dapp.log_secondary_process(process) { artifact[:dimg].build! }
             end

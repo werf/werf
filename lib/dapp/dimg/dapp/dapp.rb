@@ -4,6 +4,7 @@ module Dapp
       module Dapp
         include Dappfile
         include Dimg
+        include ConfigArtifactGroup
 
         include Command::Common
         include Command::Run

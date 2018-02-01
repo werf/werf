@@ -22,9 +22,17 @@ module Dapp
               directive_eval(_docker, &blk)
             end
 
-            def artifact(&blk)
-              pass_to(ArtifactGroup.new(dapp: dapp), :clone_to_artifact).tap do |artifact_group|
+            def artifact(name = nil, &blk)
+              pass_to(ArtifactGroup.new(name, dapp: dapp), :clone_to_artifact).tap do |artifact_group|
                 _context_artifact_groups << directive_eval(artifact_group, &blk)
+                dapp.artifact_config(name, artifact_group._artifact_config) unless name.nil?
+              end
+            end
+
+            def import(name, from = nil, &blk)
+              ArtifactGroup.new(dapp: dapp).tap do |artifact_group|
+                artifact_group._artifact_export(dapp.artifact_config_by_name(name), from, &blk)
+                _context_artifact_groups << artifact_group
               end
             end
 
