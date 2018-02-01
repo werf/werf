@@ -1,0 +1,48 @@
+dimg: one
+from: ubuntu:16.04
+git:
+  - url: https://github.com/flant/buildizer.git
+    to: /buildizer
+import:
+  - artifact: kubectl
+    add: /kubectl
+    to: /usr/local/bin/kubectl
+    before: install
+  - artifact: beanstalkd-build
+    after: setup
+    add: /build/beanstalkd
+    to: /beanstalkd
+  - artifact: myartifact
+    add: /myartifact # to=add=/myartifact by default
+    before: install
+---
+artifact: kubectl
+from: ubuntu:16.04
+shell:
+  beforeInstall:
+    - apt update
+    - apt install -y curl
+    - cd /
+    - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    - chmod +x ./kubectl
+---
+artifact: beanstalkd-build
+from: ubuntu:16.04
+git:
+  - url: https://github.com/kr/beanstalkd.git
+    add: /
+    to: /build
+shell:
+  beforeInstall:
+  - apt update
+  - apt install -y make gcc
+  setup:
+  - cd /build
+  - make
+---
+artifact: myartifact
+from: ubuntu:16.04
+chef:
+  cookbook:
+    - name: apt
+  recipe: main
