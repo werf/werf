@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-BINTRAY_AUTH=          # bintray auth user:TOKEN
+#BINTRAY_AUTH=          # bintray auth user:TOKEN
 BINTRAY_SUBJECT=flant  # bintray organization
 BINTRAY_REPO=dapp      # bintray repository
 BINTRAY_PACKAGE=dappfile-yml  # bintray package in repository
