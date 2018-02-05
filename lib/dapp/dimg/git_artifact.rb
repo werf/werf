@@ -290,6 +290,10 @@ module Dapp
         any_changes?(*patch_stage_commits(stage))
       end
 
+      def empty?
+        repo_entries(latest_commit).empty?
+      end
+
       protected
 
       def hexdigest(*args)
