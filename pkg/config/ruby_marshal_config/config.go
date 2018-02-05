@@ -166,7 +166,7 @@ func (cfg GitArtifactLocal) TagYAML() string {
 
 type GitArtifactLocalExport struct {
 	ArtifactBaseExport `yaml:",inline"`
-	StageDependencies  StageDependencies `yaml:"_stage_dependencies"`
+	StageDependencies  StageDependencies `yaml:"stage_dependencies"`
 }
 
 func (cfg GitArtifactLocalExport) TagYAML() string {
@@ -174,10 +174,10 @@ func (cfg GitArtifactLocalExport) TagYAML() string {
 }
 
 type StageDependencies struct {
-	Install       []string `yaml:"_install"`
-	Setup         []string `yaml:"_setup"`
-	BeforeSetup   []string `yaml:"_before_setup"`
-	BuildArtifact []string `yaml:"_build_artifact"`
+	Install       []string `yaml:"install"`
+	Setup         []string `yaml:"setup"`
+	BeforeSetup   []string `yaml:"before_setup"`
+	BuildArtifact []string `yaml:"build_artifact"`
 }
 
 func (cfg StageDependencies) TagYAML() string {
