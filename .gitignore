@@ -3,3 +3,4 @@ build
 /.bundle
 /.vendor
 /pkg
+/dappdeps-toolchain.tar
