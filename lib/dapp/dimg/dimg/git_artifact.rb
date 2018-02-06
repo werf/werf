@@ -32,6 +32,8 @@ module Dapp
           [].tap do |artifacts|
             artifacts << (artifact = ::Dapp::Dimg::GitArtifact.new(repo, self, **git_artifact_options))
             artifacts.concat(generate_git_embedded_artifacts(artifact))
+          end.select do |artifact|
+            !artifact.empty?
           end
         end
 
