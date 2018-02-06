@@ -21,6 +21,7 @@ en:
       toolchain_container_creating: 'creating dappdeps/toolchain container `%{name}`'
       base_container_creating: 'creating dappdeps/base container `%{name}`'
       chefdk_container_creating: 'creating dappdeps/chefdk container `%{name}`'
+      ansible_container_creating: 'creating dappdeps/ansible container `%{name}`'
       image_pull: "pulling image `%{name}`"
       image_push: "pushing image `%{name}`"
       image_save: "saving image `%{name}`"
