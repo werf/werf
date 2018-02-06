@@ -26,13 +26,21 @@ RUN gem install bundler && \
 bundle install --without development
 
 ENV PATH=/.dapp/deps/toolchain/0.1.1/bin:$PATH
-RUN bundle exec omnibus build -o append_timestamp:false dappdeps-ansible
+# Dpkg-architecture binary will make python-omnibus-package fail to build,
+# because of python setup.py, which hardcodes /usr/include/... into preceeding include paths,
+# in the case dpkg-architecture is available in system: https://github.com/python/cpython/blob/master/setup.py#L485
+# It is needed to remove that binary before omnibus-building.
+RUN \
+export ORIG_DPKG_ARCHITECTURE_PATH=$(which dpkg-architecture) && \
+mv $ORIG_DPKG_ARCHITECTURE_PATH /tmp/dpkg-architecture && \
+bundle exec omnibus build -o append_timestamp:false dappdeps-ansible && \
+mv /tmp/dpkg-architecture $ORIG_DPKG_ARCHITECTURE_PATH
 
 RUN mkdir /tmp/result && \
-dpkg -x /omnibus/pkg/dappdeps-ansible_0.2.1-1_amd64.deb /tmp/result
+dpkg -x /omnibus/pkg/dappdeps-ansible_2.4.1.0-1-1_amd64.deb /tmp/result
 
 # Import tools into dappdeps/ansible scratch
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /tmp/result/.dapp/deps/ansible/0.2.1 /.dapp/deps/ansible/0.2.1
+COPY --from=0 /tmp/result/.dapp/deps/ansible/2.4.1.0-1 /.dapp/deps/ansible/2.4.1.0-1
