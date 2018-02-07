@@ -10,10 +10,20 @@ module Dapp
           protected
 
           def prepare_image
+            try_host_docker_login
             from_image.pull!
             raise Error::Build, code: :from_image_not_found, data: { name: from_image_name } unless from_image.tagged?
             add_cleanup_mounts_dirs_command
             super
+          end
+
+          def try_host_docker_login
+            return unless registry_from_image_name?
+            dimg.dapp.host_docker_login(ENV['CI_REGISTRY'])
+          end
+
+          def registry_from_image_name?
+            ENV['CI_REGISTRY'] && from_image_name.start_with?(ENV['CI_REGISTRY'])
           end
 
           def add_cleanup_mounts_dirs_command
