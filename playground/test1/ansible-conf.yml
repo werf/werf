@@ -1,0 +1,8 @@
+--- !ruby/object:Dapp::Config::Config
+_dimg:
+- !ruby/object:Dapp::Dimg::Config::Directive::Dimg
+  _builder: :ansible
+  _ansible:
+    <stage> => <tasks>
+    - {<key> => <value>}
+    - {<key> => <value>}
