@@ -1,15 +1,47 @@
 module Dapp
   module Kube
     module Kubernetes
+      K8S_API_ENDPOINTS = {
+        '1.6' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1beta1' => [:deployment, :statefulset, ],
+          '/apis/extensions/v1beta1' => [:replicaset, :daemonset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v2aplha1' => [:cronjob, ],
+        },
+        '1.7' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1beta1' => [:deployment, :statefulset, ],
+          '/apis/extensions/v1beta1' => [:replicaset, :daemonset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v2aplha1' => [:cronjob, ],
+        },
+        '1.8' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1beta2' => [:daemonset, :deployment, :replicaset, :statefulset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v1beta1' => [:cronjob, ],
+        },
+        '1.9' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1' => [:daemonset, :deployment, :replicaset, :statefulset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v1beta1' => [:cronjob, ],
+        },
+      }
+
       class Client
         include Helper::YAML
         extend Helper::YAML
 
         ::Dapp::Dapp::Shellout::Base.default_env_keys << 'KUBECONFIG'
 
+
+        #
         def initialize(namespace: nil)
           @namespace = namespace
           @query_parameters = {}
+          @cluster_version
         end
 
         def namespace
@@ -42,46 +74,61 @@ module Dapp
         # NOTICE: Название метода аналогично kind'у выдаваемого результата.
         # NOTICE: В данном случае в результате kind=DeploymentList.
         # NOTICE: Методы создания/обновления/удаления сущностей kubernetes заканчиваются на '!'. Например, create_deployment!.
+        # В каждом методе происходит выбор api на основе версии кластера
 
-        {
-          '/api/v1' => [:service, :replicationcontroller, :pod],
-          '/apis/extensions/v1beta1' => [:deployment, :replicaset],
-          '/apis/batch/v1' => [:job]
-        }.each do |api, objects|
-          objects.each do |object|
-            define_method :"#{object}_list" do |**query_parameters|
-              request!(:get, "#{api}/namespaces/#{namespace}/#{object}s", **query_parameters)
-            end
 
-            define_method object do |name, **query_parameters|
-              request!(:get, "#{api}/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
-            end
+        def resource_endpoint_path(resource)
+          K8S_API_ENDPOINTS[cluster_version()].map do |path, resources|
+            resources.include? (resource) ? path : nil
+          end.compact.first
+        end
 
-            define_method "#{object}_status" do |name, **query_parameters|
-              request!(:get, "#{api}/namespaces/#{namespace}/#{object}s/#{name}/status", **query_parameters)
-            end
+        [
+          :service, :replicationcontroller, :pod, :podtemplate,
+          :daemonset, :deployment, :replicaset, :statefulset,
+          :job,
+          :cronjob,
+        ].each do |resource|
+          define_method :"#{resource}_list" do |**query_parameters|
+            api_path = resource_endpoint_path(resource)
+            request!(:get, "#{api_path}/namespaces/#{namespace}/#{resource}s", **query_parameters)
+          end
 
-            define_method :"create_#{object}!" do |spec, **query_parameters|
-              request!(:post, "#{api}/namespaces/#{namespace}/#{object}s", body: spec, **query_parameters)
-            end
+          define_method resource do |name, **query_parameters|
+            api_path = resource_endpoint_path(resource)
+            request!(:get, "#{api_path}/namespaces/#{namespace}/#{resource}s/#{name}", **query_parameters)
+          end
 
-            define_method :"replace_#{object}!" do |name, spec, **query_parameters|
-              request!(:put, "#{api}/namespaces/#{namespace}/#{object}s/#{name}", body: spec, **query_parameters)
-            end
+          define_method "#{resource}_status" do |name, **query_parameters|
+            api_path = resource_endpoint_path(resource)
+            request!(:get, "#{api_path}/namespaces/#{namespace}/#{resource}s/#{name}/status", **query_parameters)
+          end
 
-            define_method :"delete_#{object}!" do |name, **query_parameters|
-              request!(:delete, "#{api}/namespaces/#{namespace}/#{object}s/#{name}", **query_parameters)
-            end
+          define_method :"create_#{resource}!" do |spec, **query_parameters|
+            api_path = resource_endpoint_path(resource)
+            request!(:post, "#{api_path}/namespaces/#{namespace}/#{resource}s", body: spec, **query_parameters)
+          end
 
-            define_method :"delete_#{object}s!" do |**query_parameters|
-              request!(:delete, "#{api}/namespaces/#{namespace}/#{object}s", **query_parameters)
-            end
+          define_method :"replace_#{resource}!" do |name, spec, **query_parameters|
+            api_path = resource_endpoint_path(resource)
+            request!(:put, "#{api_path}/namespaces/#{namespace}/#{resource}s/#{name}", body: spec, **query_parameters)
+          end
 
-            define_method :"#{object}?" do |name, **query_parameters|
-              public_send(:"#{object}_list", **query_parameters)['items'].map { |item| item['metadata']['name'] }.include?(name)
-            end
+          define_method :"delete_#{resource}!" do |name, **query_parameters|
+            api_path = resource_endpoint_path(resource)
+            request!(:delete, "#{api_path}/namespaces/#{namespace}/#{resource}s/#{name}", **query_parameters)
+          end
+
+          define_method :"delete_#{resource}s!" do |**query_parameters|
+            api_path = resource_endpoint_path(resource)
+            request!(:delete, "#{api_path}/namespaces/#{namespace}/#{resource}s", **query_parameters)
+          end
+
+          define_method :"#{resource}?" do |name, **query_parameters|
+            public_send(:"#{resource}_list", **query_parameters)['items'].map { |item| item['metadata']['name'] }.include?(name)
           end
         end
+
 
         def namespace_list(**query_parameters)
           request!(:get, '/api/v1/namespaces', **query_parameters)
@@ -97,6 +144,11 @@ module Dapp
 
         def delete_namespace!(name, **query_parameters)
           request!(:delete, "/api/v1/namespaces/#{name}", **query_parameters)
+        end
+
+        def cluster_version(**query_parameters)
+          version_obj = request!(:get, "/version", **query_parameters)
+          @cluster_version ||= "#{version_obj['major']}.#{version_obj['minor']}"
         end
 
         def pod_log(name, follow: false, **query_parameters, &blk)

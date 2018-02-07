@@ -150,15 +150,72 @@ module Dapp
             @kube_images ||= namespaces['items'].map do |item|
               item['metadata']['name']
             end.map do |ns|
-              client.with_namespace(ns) do
-                client.pod_list['items'].map do |pod|
-                  pod['spec']['containers'].map{ |cont| cont['image'] }
+              [].tap do |arr|
+                client.with_namespace(ns) do
+                  arr << pod_images(client)
+                  arr << cronjob_images(client)
+                  arr << daemonset_images(client)
+                  arr << deployment_images(client)
+                  arr << job_images(client)
+                  arr << replicaset_images(client)
+                  arr << replicationcontroller_images(client)
                 end
               end
             end.flatten.uniq.select do |image|
               image.start_with?(option_repo)
             end
           end
+
+          # pod items[] spec containers[] image
+          def pod_images(client)
+            client.pod_list['items'].map do |item|
+              item['spec']['containers'].map{ |cont| cont['image'] }
+            end
+          end
+
+          # cronjob items[] spec jobTemplate spec template spec containers[] image
+          def cronjob_images(client)
+            client.cronjob_list['items'].map do |item|
+              item['spec']['jobTemplate']['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+            end
+          end
+
+          # daemonsets   items[] spec template spec containers[] image
+          def daemonset_images(client)
+            client.daemonset_list['items'].map do |item|
+              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+            end
+          end
+
+          # deployment   items[] spec template spec containers[] image
+          def deployment_images(client)
+            client.deployment_list['items'].map do |item|
+              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+            end
+          end
+
+          # job          items[] spec template spec containers[] image
+          def job_images(client)
+            client.job_list['items'].map do |item|
+              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+            end
+          end
+
+          # replicasets  items[] spec template spec containers[] image
+          def replicaset_images(client)
+            client.replicaset_list['items'].map do |item|
+              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+            end
+          end
+
+          # replicationcontroller    items[] spec template spec containers[] image
+          def replicationcontroller_images(client)
+            client.replicationcontroller_list['items'].map do |item|
+              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+            end
+          end
+
+
 
           def without_kube?
             !!options[:without_kube]
