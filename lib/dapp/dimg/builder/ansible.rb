@@ -34,7 +34,11 @@ module Dapp
           ansible_container_name
         end
       end
-
+        
+      def ansible_config
+        # DAPP_LOAD_CONFIG_PATH=https://github.com/flant/dapp/new/dappfile-yml-ansible/playground/test1/ansible-conf.yml
+        dimg.config._ansible
+      end
     end # Builder::Ansible
   end # Dimg
 end # Dapp
