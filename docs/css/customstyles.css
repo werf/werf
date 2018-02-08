@@ -129,7 +129,7 @@ th {
     text-align: left;
 }
 table {
-    max-width: 90%;
+    max-width: 100%;
     margin-bottom: 20px;
     border: 1px solid #dedede;
 }
@@ -145,13 +145,15 @@ table > tfoot > tr > td {
     vertical-align: top;
     border-top: 1px solid #ddd;
 }
-table > thead > tr > th {
-    vertical-align: bottom;
-    border-bottom: 2px solid #ddd;
+table > thead > tr > th, table.tag-scheme tr > td:first-child {
     text-transform: none;
     background-color: #777;
     color: white;
     text-align: left;
+}
+table > thead > tr > th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #ddd;
 }
 table > caption + thead > tr:first-child > th,
 table > colgroup + thead > tr:first-child > th,
@@ -192,6 +194,9 @@ table tr td {
     hyphens: auto;
 }
 
+table.tag-scheme { width: 100% }
+table.tag-scheme tr > td { border: 1px solid #ddd }
+table.tag-scheme tr > td:first-child { font-weight: bold }
 
 p.external a {
     text-align:right;
