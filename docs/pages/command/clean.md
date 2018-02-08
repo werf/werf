@@ -10,7 +10,7 @@ folder: command
 
 <table class="tag-scheme">
   <tr>
-    <td>Тег</td>
+    <td>Опция тегирования</td>
     <td>--tag<br />--tag-slug<br />--tag-plain</td>
     <td>--tag-branch</td>
     <td>--tag-commit</td>
