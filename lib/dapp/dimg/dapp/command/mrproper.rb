@@ -17,6 +17,7 @@ module Dapp
               end
 
               dapp_dangling_images_flush
+              dapp_tagless_images_flush
             end
           end
           # rubocop:enable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
@@ -72,17 +73,19 @@ module Dapp
           end
 
           def proper_cache_all_images_names
-            shellout!(%(#{host_docker} images --format="{{.Repository}}:{{.Tag}}" -f "dangling=false" -f "label=dapp" -f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}"))
+            shellout!(%(#{host_docker} images --format='{{if ne "<none>" .Tag }}{{.Repository}}:{{.Tag}}{{ end }}' -f "label=dapp" -f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}"))
               .stdout
               .lines
               .map(&:strip)
+              .reject(&:empty?)
           end
 
           def dapp_images_names_by_label(label)
-            shellout!(%(#{host_docker} images --format="{{.Repository}}:{{.Tag}}" -f "dangling=false" -f "label=dapp" -f "label=#{label}"))
+            shellout!(%(#{host_docker} images --format='{{if ne "<none>" .Tag }}{{.Repository}}:{{.Tag}}{{ end }}' -f "label=dapp" -f "label=#{label}"))
               .stdout
               .lines
               .map(&:strip)
+              .reject(&:empty?)
           end
         end
       end

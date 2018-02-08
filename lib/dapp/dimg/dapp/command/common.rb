@@ -37,10 +37,11 @@ module Dapp
 
           def prepare_docker_images(extra_args, **extra_fields)
             [].tap do |images|
-              shellout!(%(#{host_docker} images --format="{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}" -f "dangling=false" -f "label=dapp=#{name}" --no-trunc #{extra_args}))
+              shellout!(%(#{host_docker} images --format='{{if ne "<none>" .Tag }}{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}{{ end }}' -f "dangling=false" -f "label=dapp=#{name}" --no-trunc #{extra_args}))
                 .stdout
                 .lines
                 .map(&:strip)
+                .reject(&:empty?)
                 .each do |l|
                 id, name, created_at = l.split(';')
                 images << { id: id, name: name, created_at: Time.parse(created_at), **extra_fields }
@@ -71,6 +72,10 @@ module Dapp
 
           def dapp_dangling_images_flush
             remove_images_by_query(%(#{host_docker} images -f "dangling=true" -f "label=dapp" -q --no-trunc))
+          end
+
+          def dapp_tagless_images_flush
+            remove_images_by_query(%(#{host_docker} images --format='{{if eq "<none>" .Tag }}{{.ID}}{{ end }}' -f "dangling=false" -f "label=dapp" -q --no-trunc))
           end
 
           def remove_images_by_query(images_query)
