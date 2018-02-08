@@ -78,8 +78,10 @@ module Dapp
           end
 
           def remove_images(images_ids_or_names)
-            images_ids_or_names = ignore_used_images(images_ids_or_names.uniq)
-            remove_base("#{host_docker} rmi%{force_option} %{ids}", images_ids_or_names, force: false)
+            ids_chunks(images_ids_or_names) do |chunk|
+              chunk = ignore_used_images(chunk)
+              remove_base("#{host_docker} rmi%{force_option} %{ids}", chunk, force: false)
+            end
           end
 
           def ignore_used_images(images_ids_or_names)
@@ -107,14 +109,20 @@ module Dapp
           end
 
           def remove_containers(ids)
-            remove_base("#{host_docker} rm%{force_option} %{ids}", ids.uniq, force: true)
+            ids_chunks(ids) do |chunk|
+              remove_base("#{host_docker} rm%{force_option} %{ids}", chunk, force: true)
+            end
+          end
+
+          def ids_chunks(ids, &blk)
+            return if ids.empty?
+            ids.uniq.each_slice(50, &blk)
           end
 
           def remove_base(query_format, ids, force: false)
-            return if ids.empty?
             force_option = force ? ' -f' : ''
             log(ids.join("\n")) if log_verbose? || dry_run?
-            ids.each_slice(50) { |chunk| run_command(format(query_format, force_option: force_option, ids: chunk.join(' '))) }
+            run_command(format(query_format, force_option: force_option, ids: ids.join(' ')))
           end
 
           def with_subquery(query)
