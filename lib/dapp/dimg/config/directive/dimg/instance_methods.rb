@@ -5,7 +5,7 @@ module Dapp
         class Dimg < Base
           module InstanceMethods
             attr_reader :_builder
-            attr_reader :_chef, :_shell, :_docker, :_git_artifact, :_mount, :_artifact
+            attr_reader :_chef, :_shell, :_docker, :_git_artifact, :_mount, :_artifact, :_ansible
             attr_reader :_artifact_groups
 
             def chef(&blk)
