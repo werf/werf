@@ -20,11 +20,11 @@ module Dapp
           end
 
           def _dimg
-            (@_dimg + @_dimg_group.map(&:_dimg)).flatten
+            (@_dimg + _dimg_group.map(&:_dimg)).flatten
           end
 
           def _dimg_group
-            @_dimg_group
+            @_dimg_group||[]
           end
 
           protected

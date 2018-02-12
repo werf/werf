@@ -13,7 +13,7 @@ module Dapp
           end
 
           def context
-            [builder_checksum]
+            dimg.builder.before_install? ? [builder_checksum] : []
           end
           alias dependencies context
 
