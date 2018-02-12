@@ -47,6 +47,24 @@ func IsAbsolutePath(path string) bool {
 	return strings.HasPrefix(path, "/")
 }
 
+func OneOrNone(conditions []bool) bool {
+	if len(conditions) == 0 {
+		return true
+	}
+
+	exist := false
+	for _, condition := range conditions {
+		if condition {
+			if exist {
+				return false
+			} else {
+				exist = true
+			}
+		}
+	}
+	return true
+}
+
 func InterfaceToStringArray(stringOrStringArray interface{}, configSection interface{}, doc *Doc) ([]string, error) {
 	if stringOrStringArray == nil {
 		return []string{}, nil

@@ -5,15 +5,16 @@ import (
 )
 
 type RawDimg struct {
-	Dimg      string               `yaml:"dimg,omitempty"` // TODO: поддержка нескольких имён
-	Artifact  string               `yaml:"artifact,omitempty"`
-	From      string               `yaml:"from,omitempty"`
-	RawGit    []*RawGit            `yaml:"git,omitempty"`
-	RawShell  *RawShell            `yaml:"shell,omitempty"`
-	RawChef   *RawChef             `yaml:"chef,omitempty"`
-	RawMount  []*RawMount          `yaml:"mount,omitempty"`
-	RawDocker *RawDocker           `yaml:"docker,omitempty"`
-	RawImport []*RawArtifactImport `yaml:"import,omitempty"`
+	Dimg       string               `yaml:"dimg,omitempty"` // TODO: поддержка нескольких имён
+	Artifact   string               `yaml:"artifact,omitempty"`
+	From       string               `yaml:"from,omitempty"`
+	RawGit     []*RawGit            `yaml:"git,omitempty"`
+	RawShell   *RawShell            `yaml:"shell,omitempty"`
+	RawAnsible *RawAnsible          `yaml:"ansible,omitempty"`
+	RawChef    *RawChef             `yaml:"chef,omitempty"`
+	RawMount   []*RawMount          `yaml:"mount,omitempty"`
+	RawDocker  *RawDocker           `yaml:"docker,omitempty"`
+	RawImport  []*RawArtifactImport `yaml:"import,omitempty"`
 
 	Doc *Doc `yaml:"-"` // parent
 
@@ -163,6 +164,15 @@ func (c *RawDimg) ToBaseDirective(name string) (dimgBase *DimgBase, err error) {
 		dimgBase.Bulder = "chef"
 		if dimgBase.Chef, err = c.RawChef.ToDirective(); err != nil {
 			return nil, err
+		}
+	}
+
+	if c.RawAnsible != nil {
+		dimgBase.Bulder = "ansible"
+		if ansible, err := c.RawAnsible.ToDirective(); err != nil {
+			return nil, err
+		} else {
+			dimgBase.Ansible = ansible
 		}
 	}
 

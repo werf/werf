@@ -6,13 +6,14 @@ import (
 )
 
 type DimgBase struct {
-	Name   string
-	From   string
-	Bulder string
-	Git    *GitManager
-	Chef   *Chef
-	Mount  []*Mount
-	Import []*ArtifactImport
+	Name    string
+	From    string
+	Bulder  string
+	Git     *GitManager
+	Ansible *Ansible
+	Chef    *Chef
+	Mount   []*Mount
+	Import  []*ArtifactImport
 
 	Raw *RawDimg
 }
@@ -35,6 +36,10 @@ func (c *DimgBase) ToRuby() ruby_marshal_config.DimgBase {
 
 	if c.Chef != nil {
 		rubyDimg.Chef = c.Chef.ToRuby()
+	}
+
+	if c.Ansible != nil {
+		rubyDimg.Ansible = c.Ansible.ToRuby()
 	}
 
 	if c.Git != nil {

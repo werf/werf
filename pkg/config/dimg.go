@@ -12,8 +12,8 @@ type Dimg struct {
 }
 
 func (c *Dimg) Validate() error {
-	if c.Chef != nil && c.Shell != nil {
-		return fmt.Errorf("Cannot use shell and chef builders at the same time!\n\n%s", DumpConfigDoc(c.DimgBase.Raw.Doc))
+	if !OneOrNone([]bool{c.Chef != nil, c.Shell != nil, c.Ansible != nil}) {
+		return fmt.Errorf("Cannot use shell, ansible and chef builders at the same time!\n\n%s", DumpConfigDoc(c.DimgBase.Raw.Doc))
 	}
 
 	return nil

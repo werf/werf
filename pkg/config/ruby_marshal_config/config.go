@@ -44,6 +44,7 @@ func (cfg DimgArtifact) TagYAML() string {
 type DimgBase struct {
 	Name          string          `yaml:"_name"`
 	Builder       Symbol          `yaml:"_builder"`
+	Ansible       Ansible         `yaml:"_ansible"`
 	Chef          Chef            `yaml:"_chef,omitempty"`
 	ArtifactGroup []ArtifactGroup `yaml:"_artifact_groups,omitempty"`
 	GitArtifact   GitArtifact     `yaml:"_git_artifact,omitempty"`
@@ -125,6 +126,13 @@ type ChefAttributes map[interface{}]interface{}
 
 func (cfg ChefAttributes) TagYAML() string {
 	return "!ruby/hash:Dapp::Dimg::Config::Directive::Chef::Attributes"
+}
+
+type Ansible struct {
+	BeforeInstall []interface{} `yaml:"before_install"`
+	Install       []interface{} `yaml:"install"`
+	BeforeSetup   []interface{} `yaml:"before_setup"`
+	Setup         []interface{} `yaml:"setup"`
 }
 
 type ArtifactGroup struct {
