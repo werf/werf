@@ -42,7 +42,11 @@ func (c *RawAnsibleTask) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		}
 
 		if !check {
-			return fmt.Errorf("Unsupported ansible task!\n\n%s\n%s", DumpConfigSection(c), DumpConfigDoc(c.RawAnsible.RawDimg.Doc))
+			var supportedModulesString string
+			for _, supportedModule := range supportedModules() {
+				supportedModulesString += fmt.Sprintf("* %s\n", supportedModule)
+			}
+			return fmt.Errorf("Unsupported ansible task!\n\nSupported modules list:\n%s\n\n%s\n%s", supportedModulesString, DumpConfigSection(c), DumpConfigDoc(c.RawAnsible.RawDimg.Doc))
 		}
 	}
 
@@ -54,7 +58,12 @@ func (c *RawAnsibleTask) BlockDefined() bool {
 }
 
 func supportedModules() []string {
-	return []string{"command", "shell", "copy", "debug"}
+	var modules []string
+	modules = append(modules, []string{"command", "shell"}...)
+	modules = append(modules, "copy")
+	modules = append(modules, "debug")
+	modules = append(modules, []string{"apk", "apt", "apt_key", "apt_repository", "yum", "yum_repository"}...)
+	return modules
 }
 
 func (c *RawAnsibleTask) ToDirective() (*AnsibleTask, error) {
