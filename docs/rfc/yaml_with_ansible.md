@@ -1,22 +1,232 @@
-# Builder configuration
+# Proposal: YAML configuration and ansible builder
 
-Builder configuration is a collection of yaml-docs. These yaml-docs could at the same time reside in:
+## YAML configuration
 
-* `dappfile.yml` or `dappfile.yaml` file in the project root;
-* In multiples yaml files from directory `.dappfiles`.
+Configuration is a collection of yaml documents (http://yaml.org/spec/1.2/spec.html#id2800132).
+These yaml documents are searched in following locations:
 
-Dapp will read files from directory `.dappfiles` in the alphabetical order. `dappfile.yml` will preceed any files from `.dappfiles`
+* `REPO_ROOT/dappfile.yml`
+* `REPO_ROOT/dappfile.yaml`
+* `REPO_ROOT/.dappfiles/*.yml`
+* `REPO_ROOT/.dappfiles/*.yaml`
+
+Dapp will read files from directory `.dappfiles` in the alphabetical order.
+`dappfile.yml` will preceed any files from `.dappfiles`
+
+Processing of Yaml configuration consists of several steps:
+
+1. Find and read all available files
+2. Render each file as go-template with sprig functions (https://golang.org/pkg/text/template/, http://masterminds.github.io/sprig/)
+3. Split each file by `---` marker into array of yaml documents
+4. Parse each document in array as yaml description of dimg or artifact
+
+Parsing rules:
+1. Each yaml document must have `dimg` or `artifact` directive with name.
+2. Each document must have `from` directive.
+3. Whole configuration must have at least one dimg.
+4. Whole configuration must have builder instructions of one type: `shell` or `ansible` (`chef` for legacy projects)
+
+Example of minimal configuration:
+
+```
+# dappfile.yml
+dimg: app
+from: alpine:latest
+```
+
+### Differences from Dappfile
+
+1. No equivalent for `dimg_group` and nested `dimg`s and `artifact`s.
+2. No context inheritance because of 1. Use go-template functionality
+   to define common parts.
+3. `chef` directive support is rudimentary and will be dropped in the future releases.
+4. Use `import` in `dimg` for copy artifact results instead of `export`
+5. Each `artifact` must have a name
+
 
 ## Ansible
 
-Supported modules:
+Support for ansible builder divide to this parts:
+
+1. dappdeps-ansible docker image with python and ansible
+2. Dapp::Dimg::Builder::Ansible ruby module. This code converts array of ansible tasks to ansible-playbook
+   and verify checksums
+3. support for `ansible` directive in yaml configuration
+
+### dappfile config
+
+`ansible` directive is similar to `shell`. It has 4 keys: `before_install`, `install`,
+`before_setup`, `setup` for each available stage. Stage description is an array
+of ansible tasks:
+  
+```
+dimg: app
+ansible:
+  install:
+  - debug: msg='Start install'
+  - file: path=/etc mode=0777
+  - copy:
+      src: /bin/sh
+      dest: /bin/sh.orig
+  - apk:
+      name: curl
+      update_cache: yes
+  - command: ls -la /bin
+```
+
+### ansible config and stage playbook
+
+Each stage description array is converted to a playbook:
+
+
+```
+- hosts: all
+  gather_facts: no
+  tasks:
+  - debug: msg='Start install'  -.
+  - file: path=/etc mode=0777    |
+  - copy:                        |> copy from ansible:  
+      src: /bin/sh               |              install:
+      dest: /bin/sh.orig        -'              - debug: ...
+  ...
+```
+
+This playbook is stored into `/.dapp/ansible-playbook-STAGE/playbook.yml` in stage container and thus available
+in introspect mode for debugging purposes.
+
+Default settings for ansible is not suited for dapp, so there are config and inventory files in `/.dapp/ansible-playbook-STAGE`:
+
+`/.dapp/ansible-playbook-STAGE/ansible.cfg`
+
+```
+[defaults]
+inventory = /.dapp/ansible-playbook-STAGE/hosts
+transport = local
+; do not generate retry files in ro volumes
+retry_files_enabled = False
+; more verbose stdout like ad-hoc ansible command
+stdout_callback = minimal
+```
+
+`/.dapp/ansible-playbook-STAGE/hosts`
+
+```
+localhost ansible_python_interpreter=/.dappdeps/ansible/...
+```
+
+After generation of this files dapp plays the stage playbook like this:
+```
+ANSIBLE_CONFIG=/.dapp/ansible-playbook-STAGE/ansible.cfg ansible-playbook /.dapp/ansible-playbook-STAGE/playbook.yml
+```
+
+Notes:
+
+1. stdout_callback set to _minimal_ because of more verbosity.
+2. Ansible has no live stdout. This can be a show stopper for long lasting commands. Quite console is bad for build.
+3. `inventory` and `ansible_python_interpreter` — this can be in dappdeps image
+4. It would be great to create ansible-solo command for local plays with builtin config and inventory
+5. `gather_facts` can be enabled with modules like `setup`, `set_fact`, etc.
+
+### checksums
+
+Dapp calculates checksum for each stage before build. Stage is considered to be rebuild if checksum
+changed. The simplest checksum is a hash over text of stage configuration. More interesting is checksum of
+files involved into build process. But Ansible has rich syntax for modules and dapp should parse
+ansible syntax to get all pathes from `src`, `with_files`, etc.
+
+For the first iteration of builder we implement only text checksum. To calculate checksum for files use go template
+function Files.Get and `content` attribute of modules.
+
+```
+> dappfile.yml
+
+ansible:
+  install:
+  - copy:
+      content: {{ Files.Get '/conf/etc/nginx.conf'}}
+      dest: /etc/nginx
+```
+
+```
+> resulting playbook.yml
+   
+- hosts: all
+  gather_facts: no
+  tasks:   
+    install:
+    - copy:
+        content: |
+          http {
+            sendfile on;
+            tcp_nopush on;
+            tcp_nodelay on;
+            ...
+
+
+```
+
+Files.Get input is path to file in repository. Function returns string with file content. 
+
+Next iteration will implement Files.Path function. Builder can collect all calls to this function
+and generate files structure to mount as volume.
+ 
+```
+> dappfile.yml
+
+ansible:
+  install:
+  - copy:
+      src: {{ Files.Path '/conf/etc/nginx.conf' }}
+      dest: /etc/nginx
+```
+
+```
+> resulting playbook.yml
+   
+- hosts: all
+  gather_facts: no
+  tasks:   
+    install:
+    - copy:
+        src: /.dapp/ansible-files-install/conf--etc--nginx.conf
+        dest: /etc/nginx
+
+```
+
+### modules
+
+Initial ansible builder will support only some modules:
 
 * Command
 * Shell
 * Copy
+* Debug
+* packaging category
 
-### How to create config file in image from ansible jinja-template
+### jinja templating
 
-* Use module `Copy` with `content` directive.
-* Put config template directly into dappfile.
-* Or put config into separate project file, then read content of file into dappfile using go-templates function `.Files.Get <path>`
+Go template and jinja has equal delimeters: `{{` and `}}`. 
+
+First iteration will support only go style escaping:
+
+```
+> dappfile.yml
+
+git:
+- add: '/'
+  to: '/app'
+ansible:
+  install:
+  - copy:
+      src: {{"{{"}} item {{"}}"}} OR src: {{`{{item}}`}}
+      dest: /etc/nginx
+      with_files:
+      - /app/conf/etc/nginx.conf
+      - /app/conf/etc/server.conf
+```
+
+### templates
+
+No templates for first iteration. Templates can be supported when Files.Path will be implemented.
+
+
