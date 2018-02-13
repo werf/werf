@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -90,8 +91,8 @@ func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*Do
 }
 
 // TODO: переделать на ParseFiles вместо Parse
-func parseDappfileYaml(dappfileRenderContent string) (string, error) {
-	data, err := ioutil.ReadFile(dappfileRenderContent)
+func parseDappfileYaml(dappfilePath string) (string, error) {
+	data, err := ioutil.ReadFile(dappfilePath)
 	if err != nil {
 		return "", err
 	}
@@ -101,7 +102,7 @@ func parseDappfileYaml(dappfileRenderContent string) (string, error) {
 	if _, err := tmpl.Parse(string(data)); err != nil {
 		return "", err
 	}
-	return executeTemplate(tmpl, "dappfile", nil)
+	return executeTemplate(tmpl, "dappfile", map[string]interface{}{"Files": Files{filepath.Dir(dappfilePath)}})
 }
 
 func funcMap(tmpl *template.Template) template.FuncMap {
@@ -118,6 +119,18 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 		return "", err
 	}
 	return buf.String(), nil
+}
+
+type Files struct {
+	HomePath string
+}
+
+func (f Files) Get(path string) string {
+	b, err := ioutil.ReadFile(filepath.Join(f.HomePath, path))
+	if err != nil {
+		return ""
+	}
+	return string(b)
 }
 
 func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err error) {
