@@ -57,7 +57,9 @@ func supportedModules() []string {
 	return []string{"command", "shell", "copy", "debug"}
 }
 
-func (c *RawAnsibleTask) ToDirective() (interface{}, error) {
+func (c *RawAnsibleTask) ToDirective() (*AnsibleTask, error) {
+	ansibleTask := &AnsibleTask{}
+
 	marshal, err := yaml.Marshal(c)
 	if err != nil {
 		return nil, err
@@ -69,5 +71,8 @@ func (c *RawAnsibleTask) ToDirective() (interface{}, error) {
 		return nil, err
 	}
 
-	return unmarshal, nil
+	ansibleTask.Config = unmarshal
+	ansibleTask.Raw = c
+
+	return ansibleTask, nil
 }

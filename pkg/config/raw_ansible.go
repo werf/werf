@@ -34,35 +34,35 @@ func (c *RawAnsible) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (c *RawAnsible) ToDirective() (ansible *Ansible, err error) {
 	ansible = &Ansible{}
 
-	for _, someTask := range c.BeforeInstall {
-		if task, err := someTask.ToDirective(); err != nil {
+	for ind := range c.BeforeInstall {
+		if ansibleTask, err := c.BeforeInstall[ind].ToDirective(); err != nil {
 			return nil, err
 		} else {
-			ansible.BeforeInstall = append(ansible.BeforeInstall, task)
+			ansible.BeforeInstall = append(ansible.BeforeInstall, ansibleTask)
 		}
 	}
 
-	for _, someTask := range c.Install {
-		if task, err := someTask.ToDirective(); err != nil {
+	for ind := range c.Install {
+		if ansibleTask, err := c.Install[ind].ToDirective(); err != nil {
 			return nil, err
 		} else {
-			ansible.Install = append(ansible.Install, task)
+			ansible.Install = append(ansible.Install, ansibleTask)
 		}
 	}
 
-	for _, someTask := range c.BeforeSetup {
-		if task, err := someTask.ToDirective(); err != nil {
+	for ind := range c.BeforeSetup {
+		if ansibleTask, err := c.BeforeSetup[ind].ToDirective(); err != nil {
 			return nil, err
 		} else {
-			ansible.BeforeSetup = append(ansible.BeforeSetup, task)
+			ansible.BeforeSetup = append(ansible.BeforeSetup, ansibleTask)
 		}
 	}
 
-	for _, someTask := range c.Setup {
-		if task, err := someTask.ToDirective(); err != nil {
+	for ind := range c.Setup {
+		if ansibleTask, err := c.Setup[ind].ToDirective(); err != nil {
 			return nil, err
 		} else {
-			ansible.Setup = append(ansible.Setup, task)
+			ansible.Setup = append(ansible.Setup, ansibleTask)
 		}
 	}
 

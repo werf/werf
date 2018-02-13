@@ -133,6 +133,12 @@ type Ansible struct {
 	Install       []interface{} `yaml:"install"`
 	BeforeSetup   []interface{} `yaml:"before_setup"`
 	Setup         []interface{} `yaml:"setup"`
+	DumpConfigDoc string        `yaml:"dump_config_doc"`
+}
+
+type AnsibleTask struct {
+	Config            interface{} `yaml:"config"`
+	DumpConfigSection string      `yaml:"dump_config_section"`
 }
 
 type ArtifactGroup struct {

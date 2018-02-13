@@ -54,7 +54,7 @@ module Dapp
 
       def stage_config(stage)
         # DAPP_LOAD_CONFIG_PATH=https://github.com/flant/dapp/new/dappfile-yml-ansible/playground/test1/ansible-conf.yml
-        dimg.config._ansible[stage.to_s] || []
+        dimg.config._ansible[stage.to_s].map { |task| task['config'] } || []
       end
 
       def stage_playbook(stage)
