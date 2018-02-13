@@ -34,7 +34,7 @@ dimg: app
 from: alpine:latest
 ```
 
-### Differences from Dappfile
+### differences from Dappfile
 
 1. No equivalent for `dimg_group` and nested `dimg`s and `artifact`s.
 2. No context inheritance because of 1. Use go-template functionality
@@ -131,10 +131,13 @@ Notes:
 
 Dapp calculates checksum for each stage before build. Stage is considered to be rebuild if checksum
 changed. The simplest checksum is a hash over text of stage configuration. More interesting is checksum of
-files involved into build process. But Ansible has rich syntax for modules and dapp should parse
-ansible syntax to get all pathes from `src`, `with_files`, etc.
+files involved into build process. Files for chef builder have rigid structure in `.dapp_chef` directory.
+That was not a good idea. We don't want to implement ansible support like chef. You can place config files
+everywhere in repository tree. But Ansible has rich syntax for modules and dapp should parse
+ansible syntax to get all pathes from `src`, `with_files`, etc and implement logic for lookup plugins
+to mount that files into stage container. That is very difficult to implement. That's why we come to 2 approaches:
 
-For the first iteration of builder we implement only text checksum. To calculate checksum for files use go template
+The first iteration of Ansible builder will implement only text checksum. To calculate checksum for files use go template
 function Files.Get and `content` attribute of modules.
 
 ```
@@ -230,3 +233,10 @@ ansible:
 No templates for first iteration. Templates can be supported when Files.Path will be implemented.
 
 
+### ansible problems
+
+1. No live stdout. In general we need to implement our stdout callback and connection plugin.
+  stdout callbacks has no pre_* methods for display information about executed task. There are only post_* methods
+  for display information about finished task.
+2. `-c local` may be an overload because of zipping modules. There must be a way to directly start modules.
+  Ansible-solo command with direct modules calls would be a great improvement for building images.
