@@ -202,6 +202,7 @@ module Dapp
                 commands << "#{repo.dapp.rm_bin} -rf $(#{repo.dapp.cat_bin} #{dimg.container_tmp_path('archives', files_to_remove_file_name)})"
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
                 commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
+                commands << "#{repo.dapp.find_bin} \"#{to}\" -empty -type d -delete"
               when :file
                 commands << "#{repo.dapp.rm_bin} -rf \"#{to}\""
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
