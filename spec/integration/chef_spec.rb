@@ -100,13 +100,13 @@ describe Dapp::Dimg::Builder::Chef do
           path.write "#{new_note_content}\n"
         end
 
-        [dimg, artifact_dimg].each do |d|
-          d.config._chef.__before_install_attributes["rebuild"] = true
-          d.config._chef.__build_artifact_attributes['dimod-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
-        end
-
         old_artifact_before_install_stage_id = artifact_stages[:before_install].image.id
         old_artifact_last_stage_id = artifact_dimg.last_stage.image.id
+
+        [dimg, artifact_dimg].each do |d|
+          d.config._chef.__before_install_attributes["rebuilds"] = true
+          d.config._chef.__build_artifact_attributes['dimod-testartifact']['target_filename'] = 'SECOND_CUSTOM_NAME_FROM_CHEF_SPEC.txt'
+        end
 
         dimg_rebuild!
 
