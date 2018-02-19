@@ -18,14 +18,18 @@ type Doc struct {
 	RenderFilePath string
 }
 
-func CheckOverflow(m map[string]interface{}, config interface{}, doc *Doc) error {
+func CheckOverflow(m map[string]interface{}, configSection interface{}, doc *Doc) error {
 	if len(m) > 0 {
 		var keys []string
 		for k := range m {
 			keys = append(keys, k)
 		}
 
-		return fmt.Errorf("Unknown fields: `%s`!\n\n%s\n%s", strings.Join(keys, "`, `"), DumpConfigSection(config), DumpConfigDoc(doc))
+		if configSection == nil {
+			return fmt.Errorf("Unknown fields: `%s`!\n\n%s", strings.Join(keys, "`, `"), DumpConfigDoc(doc))
+		} else {
+			return fmt.Errorf("Unknown fields: `%s`!\n\n%s\n%s", strings.Join(keys, "`, `"), DumpConfigSection(configSection), DumpConfigDoc(doc))
+		}
 	}
 	return nil
 }
