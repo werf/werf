@@ -5,7 +5,7 @@ import (
 )
 
 type RawDimg struct {
-	Dimg      string               `yaml:"dimg,omitempty"` // TODO: поддержка нескольких имён
+	Dimg      interface{}          `yaml:"-"`
 	Artifact  string               `yaml:"artifact,omitempty"`
 	From      string               `yaml:"from,omitempty"`
 	RawGit    []*RawGit            `yaml:"git,omitempty"`
@@ -20,6 +20,24 @@ type RawDimg struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
+func (c *RawDimg) SetAndValidateDimg() error {
+	value, ok := c.UnsupportedAttributes["dimg"]
+	if ok {
+		delete(c.UnsupportedAttributes, "dimg")
+
+		switch t := value.(type) {
+		case string: // TODO: поддержка нескольких имён []string
+			c.Dimg = value
+		case nil:
+			c.Dimg = ""
+		default:
+			return fmt.Errorf("Invalid dimg name `%v`!\n\n%s", t, DumpConfigDoc(c.Doc))
+		}
+	}
+
+	return nil
+}
+
 func (c *RawDimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	ParentStack.Push(c)
 	type plain RawDimg
@@ -28,6 +46,11 @@ func (c *RawDimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err != nil {
 		return err
 	}
+
+	if err := c.SetAndValidateDimg(); err != nil {
+		return err
+	}
+
 	if err := CheckOverflow(c.UnsupportedAttributes, c, c.Doc); err != nil {
 		return err
 	}
@@ -40,7 +63,7 @@ func (c *RawDimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (c *RawDimg) ValidateType() error {
-	isDimg := c.Dimg != ""
+	isDimg := c.Dimg != nil
 	isArtifact := c.Artifact != ""
 
 	if isDimg && isArtifact {
@@ -53,7 +76,7 @@ func (c *RawDimg) ValidateType() error {
 }
 
 func (c *RawDimg) Type() string {
-	if c.Dimg != "" {
+	if c.Dimg != nil {
 		return "dimg"
 	} else if c.Artifact != "" {
 		return "artifact"
@@ -65,7 +88,7 @@ func (c *RawDimg) Type() string {
 func (c *RawDimg) ToDirective() (dimg *Dimg, err error) {
 	dimg = &Dimg{}
 
-	if dimgBase, err := c.ToBaseDirective(c.Dimg); err != nil {
+	if dimgBase, err := c.ToBaseDirective(c.Dimg.(string)); err != nil {
 		return nil, err
 	} else {
 		dimg.DimgBase = dimgBase
