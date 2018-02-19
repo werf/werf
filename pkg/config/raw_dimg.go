@@ -51,7 +51,7 @@ func (c *RawDimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c, c.Doc); err != nil {
+	if err := CheckOverflow(c.UnsupportedAttributes, nil, c.Doc); err != nil {
 		return err
 	}
 
