@@ -62,12 +62,20 @@ func InterfaceToStringArray(stringOrStringArray interface{}, configSection inter
 			if val, ok := interf.(string); ok {
 				stringArray = append(stringArray, val)
 			} else {
-				return nil, fmt.Errorf("Single string or array of strings expected, got `%v`!\n\n%s\n%s", stringOrStringArray, DumpConfigSection(configSection), DumpConfigDoc(doc))
+				return nil, interfaceToStringArrayError(stringOrStringArray, configSection, doc)
 			}
 		}
 		return stringArray, nil
 	} else {
-		return nil, fmt.Errorf("Single string or array of strings expected, got `%v`!\n\n%s\n%s", stringOrStringArray, DumpConfigSection(configSection), DumpConfigDoc(doc))
+		return nil, interfaceToStringArrayError(stringOrStringArray, configSection, doc)
+	}
+}
+
+func interfaceToStringArrayError(stringOrStringArray interface{}, configSection interface{}, doc *Doc) error {
+	if configSection == nil {
+		return fmt.Errorf("Single string or array of strings expected, got `%v`!\n\n%s", stringOrStringArray, DumpConfigDoc(doc))
+	} else {
+		return fmt.Errorf("Single string or array of strings expected, got `%v`!\n\n%s\n%s", stringOrStringArray, DumpConfigSection(configSection), DumpConfigDoc(doc))
 	}
 }
 

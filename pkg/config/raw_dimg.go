@@ -5,7 +5,7 @@ import (
 )
 
 type RawDimg struct {
-	Dimg      interface{}          `yaml:"-"`
+	Dimgs     []string             `yaml:"-"`
 	Artifact  string               `yaml:"artifact,omitempty"`
 	From      string               `yaml:"from,omitempty"`
 	RawGit    []*RawGit            `yaml:"git,omitempty"`
@@ -26,10 +26,16 @@ func (c *RawDimg) SetAndValidateDimg() error {
 		delete(c.UnsupportedAttributes, "dimg")
 
 		switch t := value.(type) {
-		case string: // TODO: поддержка нескольких имён []string
-			c.Dimg = value
+		case []interface{}:
+			if dimgs, err := InterfaceToStringArray(value, nil, c.Doc); err != nil {
+				return err
+			} else {
+				c.Dimgs = dimgs
+			}
+		case string:
+			c.Dimgs = []string{value.(string)}
 		case nil:
-			c.Dimg = ""
+			c.Dimgs = []string{""}
 		default:
 			return fmt.Errorf("Invalid dimg name `%v`!\n\n%s", t, DumpConfigDoc(c.Doc))
 		}
@@ -63,7 +69,7 @@ func (c *RawDimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func (c *RawDimg) ValidateType() error {
-	isDimg := c.Dimg != nil
+	isDimg := len(c.Dimgs) != 0
 	isArtifact := c.Artifact != ""
 
 	if isDimg && isArtifact {
@@ -76,8 +82,8 @@ func (c *RawDimg) ValidateType() error {
 }
 
 func (c *RawDimg) Type() string {
-	if c.Dimg != nil {
-		return "dimg"
+	if len(c.Dimgs) != 0 {
+		return "dimgs"
 	} else if c.Artifact != "" {
 		return "artifact"
 	}
@@ -85,37 +91,41 @@ func (c *RawDimg) Type() string {
 	return ""
 }
 
-func (c *RawDimg) ToDirective() (dimg *Dimg, err error) {
-	dimg = &Dimg{}
+func (c *RawDimg) ToDirectives() (dimgs []*Dimg, err error) {
+	for _, dimgName := range c.Dimgs {
+		dimg := &Dimg{}
 
-	if dimgBase, err := c.ToBaseDirective(c.Dimg.(string)); err != nil {
-		return nil, err
-	} else {
-		dimg.DimgBase = dimgBase
-	}
-
-	if c.RawShell != nil {
-		dimg.Bulder = "shell"
-		if shell, err := c.RawShell.ToDirective(); err != nil {
+		if dimgBase, err := c.ToBaseDirective(dimgName); err != nil {
 			return nil, err
 		} else {
-			dimg.Shell = shell
+			dimg.DimgBase = dimgBase
 		}
-	}
 
-	if c.RawDocker != nil {
-		if docker, err := c.RawDocker.ToDirective(); err != nil {
+		if c.RawShell != nil {
+			dimg.Bulder = "shell"
+			if shell, err := c.RawShell.ToDirective(); err != nil {
+				return nil, err
+			} else {
+				dimg.Shell = shell
+			}
+		}
+
+		if c.RawDocker != nil {
+			if docker, err := c.RawDocker.ToDirective(); err != nil {
+				return nil, err
+			} else {
+				dimg.Docker = docker
+			}
+		}
+
+		if err := c.ValidateDirective(dimg); err != nil {
 			return nil, err
-		} else {
-			dimg.Docker = docker
 		}
+
+		dimgs = append(dimgs, dimg)
 	}
 
-	if err := c.ValidateDirective(dimg); err != nil {
-		return nil, err
-	}
-
-	return dimg, nil
+	return dimgs, nil
 }
 
 func (c *RawDimg) ValidateDirective(dimg *Dimg) (err error) {
