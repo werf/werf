@@ -259,6 +259,12 @@ describe Dapp::Dimg::GitArtifact do
                               include_paths: %w(x/y/data.txt z/data.txt))
       end
 
+      it "#{type} paths (hidden files)", test_construct: true do
+        send("check_#{type}", add_files: %w(x/.hidden x/y/.hidden z/.hidden),
+                              added_files: %w(x/y/.hidden z/.hidden), not_added_files: %w(x/.hidden),
+                              include_paths: %w(x/y/.hidden z/.hidden))
+      end
+
       it "#{type} paths (globs)", test_construct: true do
         send("check_#{type}", add_files: %w(x/data.txt x/y/data.txt z/data.txt),
                               added_files: %w(x/y/data.txt z/data.txt), not_added_files: %w(x/data.txt),

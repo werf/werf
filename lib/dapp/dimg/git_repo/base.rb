@@ -3,6 +3,8 @@ module Dapp
     module GitRepo
       # Base class for any Git repo (remote, gitkeeper, etc)
       class Base
+        include Helper::Trivia
+
         attr_reader :name
 
         def initialize(manager, name)
@@ -126,32 +128,6 @@ module Dapp
 
         def git(**kwargs)
           @git ||= Rugged::Repository.new(path.to_s, **kwargs)
-        end
-
-        private
-
-        def ignore_path?(path, paths: [], exclude_paths: [])
-          is_exclude_path = exclude_paths.any? { |p| check_path?(path, p) }
-          is_include_path = begin
-            paths.empty? ||
-              paths.any? do |p|
-                File.fnmatch?(p, path, File::FNM_PATHNAME) ||
-                  File.fnmatch?(File.join(p, '**', '*'), path, File::FNM_PATHNAME)
-              end
-          end
-
-          is_exclude_path || !is_include_path
-        end
-
-        def check_path?(path, format)
-          path_parts = path.split('/')
-          checking_path = nil
-
-          until path_parts.empty?
-            checking_path = [checking_path, path_parts.shift].compact.join('/')
-            return true if File.fnmatch?(format, checking_path, File::FNM_PATHNAME)
-          end
-          false
         end
       end
     end
