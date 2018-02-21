@@ -4,6 +4,8 @@ module Dapp
       module Directive
         class Dimg < Base
           module Validation
+            include Helper::Trivia
+
             def validate!
               directives_validate!
               validate_scratch!
@@ -138,29 +140,13 @@ module Dapp
             end
 
             def validate_artifact!(verifiable_artifact, artifact)
-              verifiable_artifact[:include_paths].each do |verifiable_path|
-                potential_conflicts = artifact[:include_paths].select { |path| path.start_with?(verifiable_path) }
-                validate_artifact_path!(verifiable_artifact, potential_conflicts)
+              cases = []
+              cases << verifiable_artifact[:include_paths].any? do |verifiable_path|
+                !ignore_path?(verifiable_path, paths: artifact[:include_paths], exclude_paths: artifact[:exclude_paths])
               end
+              cases << verifiable_artifact[:include_paths].empty? && artifact[:include_paths].empty?
 
-              if verifiable_artifact[:include_paths].empty?
-                if artifact[:include_paths].empty? || verifiable_artifact[:exclude_paths].empty?
-                  raise ::Dapp::Error::Config, code: :artifact_conflict
-                else
-                  validate_artifact_path!(verifiable_artifact, artifact[:include_paths])
-                end
-              end
-            end
-
-            def validate_artifact_path!(verifiable_artifact, potential_conflicts)
-              raise ::Dapp::Error::Config, code: :artifact_conflict unless begin
-                potential_conflicts.all? do |path|
-                  loop do
-                    break if verifiable_artifact[:exclude_paths].include?(path) || ((path = File.dirname(path)) == '.')
-                  end
-                  verifiable_artifact[:exclude_paths].include?(path)
-                end
-              end
+              raise ::Dapp::Error::Config, code: :artifact_conflict if cases.any?
             end
 
             def _associated_artifacts
