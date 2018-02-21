@@ -232,8 +232,8 @@ module Dapp
           ignore_path_base(path, exclude_paths: exclude_paths) do
             paths.empty? ||
               paths.any? do |p|
-                File.fnmatch?(p, path, File::FNM_PATHNAME) ||
-                  File.fnmatch?(File.join(p, '**', '*'), path, File::FNM_PATHNAME)
+                File.fnmatch?(p, path, File::FNM_PATHNAME|File::FNM_DOTMATCH) ||
+                  File.fnmatch?(File.join(p, '**', '*'), path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
               end
           end
         end
