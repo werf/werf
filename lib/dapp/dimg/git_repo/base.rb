@@ -135,8 +135,8 @@ module Dapp
           is_include_path = begin
             paths.empty? ||
               paths.any? do |p|
-                File.fnmatch?(p, path, File::FNM_PATHNAME) ||
-                  File.fnmatch?(File.join(p, '**', '*'), path, File::FNM_PATHNAME)
+                File.fnmatch?(p, path, File::FNM_PATHNAME|File::FNM_DOTMATCH) ||
+                  File.fnmatch?(File.join(p, '**', '*'), path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
               end
           end
 
