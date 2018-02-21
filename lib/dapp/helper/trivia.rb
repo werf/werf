@@ -29,11 +29,11 @@ module Dapp
       end
 
       def check_path?(path, format)
-        path_checker(path) { |checking_path| File.fnmatch(format, checking_path, File::FNM_PATHNAME) }
+        path_checker(path) { |checking_path| File.fnmatch(format, checking_path, File::FNM_PATHNAME|File::FNM_DOTMATCH) }
       end
 
       def check_subpath?(path, format)
-        path_checker(format) { |checking_path| File.fnmatch(checking_path, path, File::FNM_PATHNAME) }
+        path_checker(format) { |checking_path| File.fnmatch(checking_path, path, File::FNM_PATHNAME|File::FNM_DOTMATCH) }
       end
 
       def path_checker(path)
