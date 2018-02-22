@@ -66,12 +66,16 @@ module Dapp
             project_images.map { |image| image[:dangling] ? image[:id] : image[:name] }
           end
 
-          def dapp_containers_flush
-            remove_containers_by_query(%(#{host_docker} ps -a -f "label=dapp" -q --no-trunc))
+          def dapp_containers_flush_by_label(label)
+            log_proper_containers do
+              remove_containers_by_query(%(#{host_docker} ps -a -f "label=#{label}" -q --no-trunc))
+            end
           end
 
-          def dapp_dangling_images_flush
-            remove_images_by_query(%(#{host_docker} images -f "dangling=true" -f "label=dapp" -q --no-trunc))
+          def dapp_dangling_images_flush_by_label(label)
+            log_proper_flush_dangling_images do
+              remove_images_by_query(%(#{host_docker} images -f "dangling=true" -f "label=#{label}" -q --no-trunc))
+            end
           end
 
           def dapp_tagless_images_flush
@@ -175,6 +179,14 @@ module Dapp
 
           def log_proper_repo_cache(&blk)
             log_step_with_indent(:'proper repo cache', &blk)
+          end
+
+          def log_proper_containers(&blk)
+            log_step_with_indent(:'proper containers', &blk)
+          end
+
+          def log_proper_flush_dangling_images(&blk)
+            log_step_with_indent(:'proper dangling', &blk)
           end
 
           def push_format(dimg_name)

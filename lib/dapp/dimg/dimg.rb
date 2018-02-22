@@ -198,6 +198,7 @@ module Dapp
         cmd = "".tap do |cmd|
           cmd << "#{dapp.host_docker} run --rm"
           cmd << " --volume #{dapp.tmp_base_dir}:#{dapp.tmp_base_dir}"
+          cmd << " --label dapp=#{dapp.name}"
           cmd << " alpine:3.6"
           cmd << " rm -rf #{tmp_path}"
         end
