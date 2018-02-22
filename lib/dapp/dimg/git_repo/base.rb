@@ -227,6 +227,22 @@ module Dapp
             paths.empty? || paths.any? { |p| check_path?(path, p) || check_subpath?(path, p) }
           end
         end
+
+        def ignore_path?(path, paths: [], exclude_paths: [])
+          ignore_path_base(path, exclude_paths: exclude_paths) do
+            paths.empty? ||
+              paths.any? do |p|
+                File.fnmatch?(p, path, File::FNM_PATHNAME|File::FNM_DOTMATCH) ||
+                  File.fnmatch?(File.join(p, '**', '*'), path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
+              end
+          end
+        end
+
+        def ignore_path_base(path, exclude_paths: [])
+          is_exclude_path = exclude_paths.any? { |p| check_path?(path, p) }
+          is_include_path = yield
+          is_exclude_path || !is_include_path
+        end
       end
     end
   end
