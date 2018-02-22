@@ -146,7 +146,7 @@ module Dapp
               cases << verifiable_artifact[:include_paths].any? do |verifiable_path|
                 !ignore_path?(verifiable_path, paths: artifact[:include_paths], exclude_paths: artifact[:exclude_paths])
               end
-              cases << verifiable_artifact[:include_paths].empty? && artifact[:include_paths].empty?
+              cases << (verifiable_artifact[:include_paths].empty? && artifact[:include_paths].empty?)
 
               raise Error::Config, code: :artifact_conflict if cases.any?
             end
