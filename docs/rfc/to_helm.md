@@ -104,6 +104,8 @@ Done, feedback needed.
 
 Helm PR: https://github.com/kubernetes/helm/pull/3506
 
+Done, feedback needed.
+
 # Helm autorollback
 
 TODO
