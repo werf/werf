@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     class Builder::Ansible < Builder::Base
-      ANSIBLE_IMAGE_VERSION = "2.4.1.0-1"
+      ANSIBLE_IMAGE_VERSION = "2.4.4.0-1"
 
       def ansible_bin
         "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/bin/ansible"
@@ -85,8 +85,8 @@ inventory = #{container_playbook_path}/hosts
 transport = local
 ; do not generate retry files in ro volumes
 retry_files_enabled = False
-; more verbose stdout like ad-hoc ansible command
-stdout_callback = minimal
+; more verbose stdout like ad-hoc ansible command from flant/ansible fork
+stdout_callback = live
 }
         end
       end
