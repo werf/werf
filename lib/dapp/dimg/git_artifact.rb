@@ -121,7 +121,7 @@ module Dapp
           last_part_path = path_parts.shift
           test_path      = [test_path, last_part_path].compact.join('/')
 
-          non_match    = !File.fnmatch(test_path, embedded_rel_path, File::FNM_PATHNAME)
+          non_match    = !File.fnmatch(test_path, embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
           part_for_all = (last_part_path == '**')
 
           if non_match || part_for_all

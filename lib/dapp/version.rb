@@ -1,4 +1,4 @@
 module Dapp
-  VERSION = "0.26.4"
-  BUILD_CACHE_VERSION = 26
+  VERSION = "0.26.9"
+  BUILD_CACHE_VERSION = 27
 end

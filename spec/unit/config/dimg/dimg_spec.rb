@@ -326,10 +326,40 @@ describe Dapp::Dimg::Config::Directive::Dimg do
           end
           expect { dimg_config_validate! }.to_not raise_error
         end
+
+        it 'to with different but similar folders' do
+          dappfile_dimg_group_artifact do
+            export '/cwd' do
+              before :setup
+              to '/folder/frontend'
+            end
+
+            export '/cwd' do
+              before :setup
+              to '/folder/frontend_assets'
+            end
+          end
+          expect { dimg_config_validate! }.to_not raise_error
+        end
       end
 
       context 'negative' do
-        it 'same to' do
+        it 'same to (1)' do
+          dappfile_dimg_group_artifact do
+            export '/cwd' do
+              before :setup
+              to '/to'
+            end
+
+            export '/cwd' do
+              before :setup
+              to '/to'
+            end
+          end
+          expect_exception_code(:artifact_conflict) { dimg_config_validate! }
+        end
+
+        it 'same to (2)' do
           dappfile_dimg_group_artifact do
             export '/cwd' do
               before :setup

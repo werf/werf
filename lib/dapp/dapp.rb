@@ -140,13 +140,14 @@ module Dapp
 
     def try_host_docker_login
       return unless option_repo
-
       validate_repo_name!(option_repo)
+      host_docker_login(option_repo)
+    end
 
-      if self.class.options_with_docker_credentials?
-        username, password = self.class.docker_credentials
-        shellout!("#{host_docker} login -u '#{username}' -p '#{password}' '#{option_repo}'")
-      end
+    def host_docker_login(repo)
+      return unless self.class.options_with_docker_credentials?
+      username, password = self.class.docker_credentials
+      shellout!("#{host_docker} login -u '#{username}' -p '#{password}' '#{repo}'")
     end
 
     class << self

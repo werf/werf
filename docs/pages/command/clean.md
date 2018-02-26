@@ -6,12 +6,32 @@ folder: command
 ---
 
 ### dapp dimg cleanup repo
-Удалить теги [приложений](definitions.html#dimg) [проекта](definitions.html#проект):
-* имена которых содержат неактуальные данные при соответствующих схемах тегирования:
-    * ветка или тег удалены из репозитория (`--tag-branch`, `--tag-ci`);
-    * комит отсутсвует в репозитории, был сделан rebase (`--tag-commit`).
-* комиты которых были созданы более одного месяца назад (`--git-tag`, `--git-commit`);
-* лишние, в случае, если привышен лимит в 10 тегов на [приложение](definitions.html#dimg), исходя из времени создания комитов (`--git-tag`, `--git-commit`).
+Удалить теги [приложений](definitions.html#dimg) [проекта](definitions.html#проект), исходя из соответствующих схем тегирования.
+
+<table class="tag-scheme">
+  <tr>
+    <td>Опция тегирования</td>
+    <td>--tag<br />--tag-slug<br />--tag-plain</td>
+    <td>--tag-branch</td>
+    <td>--tag-commit</td>
+    <td>--tag-build-id</td>
+    <td>--tag-ci</td>
+  </tr>
+  <tr>
+    <td>Схема тегирования</td>
+    <td>custom</td>
+    <td>git_branch</td>
+    <td>git_commit</td>
+    <td>ci</td>
+    <td>git_tag или git_branch</td>
+  </tr>
+</table>
+
+* Имена которых содержат неактуальные данные:
+    * ветка или тег удалены из репозитория (`git_branch`, `git_tag`);
+    * комит отсутсвует в репозитории, был сделан rebase (`git_commit`).
+* Комиты которых были созданы более одного месяца назад (`git_tag`, `git_commit`);
+* Лишние, в случае, если привышен лимит в 10 тегов на [приложение](definitions.html#dimg), исходя из времени создания комитов (`git_tag`, `git_commit`).
 
 ```
 dapp dimg cleanup repo [options] [DIMG ...] REPO
