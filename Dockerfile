@@ -37,10 +37,10 @@ bundle exec omnibus build -o append_timestamp:false dappdeps-ansible && \
 mv /tmp/dpkg-architecture $ORIG_DPKG_ARCHITECTURE_PATH
 
 RUN mkdir /tmp/result && \
-dpkg -x /omnibus/pkg/dappdeps-ansible_2.4.1.0~1-1_amd64.deb /tmp/result
+dpkg -x /omnibus/pkg/dappdeps-ansible*.deb /tmp/result
 
 # Import tools into dappdeps/ansible scratch
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /tmp/result/.dapp/deps/ansible/2.4.1.0-1 /.dapp/deps/ansible/2.4.1.0-1
+COPY --from=0 /tmp/result/.dapp/deps/ansible/2.4.4.0-1 /.dapp/deps/ansible/2.4.4.0-1
