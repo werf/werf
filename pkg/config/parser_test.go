@@ -16,8 +16,6 @@ git:
 shell:
   beforeInstall:
   - apt get update
-chef:
-  recipe: [main]
 mount:
 - from: tmp_dir
   to: '/var/tmp'
@@ -72,11 +70,6 @@ import:
 	// shell:
 	if dimg.RawShell.RawDimg == nil {
 		t.Fatalf("dimg.RawShell.RawDimg should be set\n")
-	}
-
-	// chef:
-	if dimg.RawChef.RawDimg == nil {
-		t.Fatalf("dimg.RawChef.RawDimg should be set\n")
 	}
 
 	// mount:
