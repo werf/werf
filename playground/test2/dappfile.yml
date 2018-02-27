@@ -1,0 +1,16 @@
+dimg: hello
+from: ubuntu:16.04
+ansible:
+  beforeInstall:
+    - debug: msg='Start install'
+    - debug: msg='Hello install'
+    - file: path=/etc mode=0777
+    #- copy:
+        #src: /bin/sh
+        #dest: /bin/sh.orig
+  install:
+    - apk:
+        name: curl
+        update_cache: yes
+  setup:
+    - command: ls -la /bin
