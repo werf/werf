@@ -5,3 +5,5 @@
 /.vendor
 /Gemfile.lock
 /.vscode
+.dappfile.render.yml
+.dappfile.render.yaml
