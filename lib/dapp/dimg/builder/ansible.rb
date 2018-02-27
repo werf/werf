@@ -1,7 +1,7 @@
 module Dapp
   module Dimg
     class Builder::Ansible < Builder::Base
-      ANSIBLE_IMAGE_VERSION = "2.4.4.0-1"
+      ANSIBLE_IMAGE_VERSION = "2.4.4.0-2"
 
       def ansible_bin
         "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/bin/ansible"
@@ -54,7 +54,20 @@ module Dapp
 
       def stage_config(stage)
         # DAPP_LOAD_CONFIG_PATH=https://github.com/flant/dapp/new/dappfile-yml-ansible/playground/test1/ansible-conf.yml
-        dimg.config._ansible[stage.to_s].map { |task| task['config'] } || []
+        dimg.config._ansible[stage.to_s].map do |dapp_task|
+          {}.tap do |task|
+            task.merge!(dapp_task['config'])
+            task['tags'] = [].tap do |tags|
+              tags << dapp_task['config']['tags']
+              tags << stage.to_s
+              tags << dapp_task['dump_config_section']
+            end.flatten.compact
+          end
+        end || []
+      end
+
+      def doc_config
+        dimg.config._ansible['dump_config_doc']
       end
 
       def stage_playbook(stage)
@@ -76,7 +89,7 @@ module Dapp
           stage_tmp_path(stage).join('playbook.yml').write YAML.dump(stage_playbook(stage))
           # generate inventory with localhost and python in dappdeps-ansible
           stage_tmp_path(stage).join('hosts').write %{
-localhost ansible_python_interpreter=#{python_path}
+localhost ansible_raw_live_stdout=yes ansible_script_live_stdout=yes ansible_python_interpreter=#{python_path}
 }
           # generate ansible config for solo mode
           stage_tmp_path(stage).join('ansible.cfg').write %{
@@ -87,7 +100,17 @@ transport = local
 retry_files_enabled = False
 ; more verbose stdout like ad-hoc ansible command from flant/ansible fork
 stdout_callback = live
+; force color
+force_color = 1
+[privilege_escalation]
+become = yes
+become_method = sudo
+become_exe = #{dimg.dapp.sudo_bin}
+become_flags = -E
 }
+
+         # save config dump for pretty errors
+         stage_tmp_path(stage).join('dapp-config.yml').write dimg.config._ansible['dump_config_doc']
         end
       end
 
@@ -108,6 +131,7 @@ stdout_callback = live
         define_method(stage.to_s) do |image|
           unless stage_empty?(stage)
             image.add_env('ANSIBLE_CONFIG', container_playbook_path.join('ansible.cfg'))
+            image.add_env('DAPP_DUMP_CONFIG_DOC_PATH', container_playbook_path.join('dapp-config.yml'))
             image.add_volumes_from("#{ansible_container}:ro")
             image.add_volume "#{stage_tmp_path(stage)}:#{container_playbook_path}:ro"
             image.add_command [ansible_playbook_bin,

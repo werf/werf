@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/flant/yaml.v2"
 )
 
 type RawAnsibleTask struct {
@@ -59,9 +59,15 @@ func (c *RawAnsibleTask) BlockDefined() bool {
 
 func supportedModules() []string {
 	var modules []string
-	modules = append(modules, []string{"command", "shell"}...)
-	modules = append(modules, "copy")
-	modules = append(modules, "debug")
+	// Commands modules
+	modules = append(modules, []string{"command", "shell", "raw", "script"}...)
+	// Files modules
+	modules = append(modules, []string{"blockinfile", "lineinfile", "file", "copy", "acl", "xattr"}...)
+	// Utilities modules
+	modules = append(modules, []string{"assert", "debug", "set_fact"}...)
+	// System modules
+	modules = append(modules, []string{"user", "group", "getent"}...)
+	// Packaging modules
 	modules = append(modules, []string{"apk", "apt", "apt_key", "apt_repository", "yum", "yum_repository"}...)
 	return modules
 }

@@ -1,0 +1,22 @@
+# DAPP_BIN_DAPPFILE_YML=path-to/dappfile-yml bundle exec dapp dimg build --dir=playground/ansible-test
+---
+dimg: app
+from: alpine:latest
+ansible:
+  beforeInstall:
+    - raw: apk update
+    - raw: apk add curl
+    #- group:
+    #    name: apache
+    #- user:
+    #    name: apache
+    #    uid: 48
+    #    group: apache
+    - file:
+        path: /game
+        state: directory
+        owner: games
+    - raw: touch /game/test-file
+      become_user: games
+    - raw: ls -la /game/test-file
+    - debug: msg="prijkjhkvet dapp"
