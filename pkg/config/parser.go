@@ -69,7 +69,8 @@ func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*Do
 	var docs []*Doc
 	var line int
 	for scanner.Scan() {
-		content := scanner.Bytes()
+		content := make([]byte, len(scanner.Bytes()))
+		copy(content, scanner.Bytes())
 
 		if strings.TrimSpace(string(content)) != "" {
 			docs = append(docs, &Doc{
