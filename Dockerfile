@@ -43,4 +43,4 @@ dpkg -x /omnibus/pkg/dappdeps-ansible*.deb /tmp/result
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /tmp/result/.dapp/deps/ansible/2.4.4.0-1 /.dapp/deps/ansible/2.4.4.0-1
+COPY --from=0 /tmp/result/.dapp/deps/ansible/ /.dapp/deps/ansible/
