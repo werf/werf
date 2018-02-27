@@ -11,7 +11,6 @@ type RawDimg struct {
 	RawGit     []*RawGit            `yaml:"git,omitempty"`
 	RawShell   *RawShell            `yaml:"shell,omitempty"`
 	RawAnsible *RawAnsible          `yaml:"ansible,omitempty"`
-	RawChef    *RawChef             `yaml:"chef,omitempty"`
 	RawMount   []*RawMount          `yaml:"mount,omitempty"`
 	RawDocker  *RawDocker           `yaml:"docker,omitempty"`
 	RawImport  []*RawArtifactImport `yaml:"import,omitempty"`
@@ -180,13 +179,6 @@ func (c *RawDimg) ToBaseDirective(name string) (dimgBase *DimgBase, err error) {
 			} else {
 				dimgBase.Git.Remote = append(dimgBase.Git.Remote, gitRemote)
 			}
-		}
-	}
-
-	if c.RawChef != nil {
-		dimgBase.Bulder = "chef"
-		if dimgBase.Chef, err = c.RawChef.ToDirective(); err != nil {
-			return nil, err
 		}
 	}
 

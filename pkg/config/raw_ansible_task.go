@@ -46,7 +46,7 @@ func (c *RawAnsibleTask) UnmarshalYAML(unmarshal func(interface{}) error) error 
 			for _, supportedModule := range supportedModules() {
 				supportedModulesString += fmt.Sprintf("* %s\n", supportedModule)
 			}
-			return fmt.Errorf("Unsupported ansible task!\n\nSupported modules list:\n%s\n\n%s\n%s", supportedModulesString, DumpConfigSection(c), DumpConfigDoc(c.RawAnsible.RawDimg.Doc))
+			return fmt.Errorf("Unsupported ansible task!\n\n%s\nSupported modules list:\n%s\n%s", DumpConfigSection(c), supportedModulesString, DumpConfigDoc(c.RawAnsible.RawDimg.Doc))
 		}
 	}
 

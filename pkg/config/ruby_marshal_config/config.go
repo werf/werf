@@ -45,7 +45,6 @@ type DimgBase struct {
 	Name          string          `yaml:"_name,omitempty"`
 	Builder       Symbol          `yaml:"_builder"`
 	Ansible       Ansible         `yaml:"_ansible"`
-	Chef          Chef            `yaml:"_chef,omitempty"`
 	ArtifactGroup []ArtifactGroup `yaml:"_artifact_groups,omitempty"`
 	GitArtifact   GitArtifact     `yaml:"_git_artifact,omitempty"`
 	Mount         []Mount         `yaml:"_mount,omitempty"`
@@ -109,23 +108,6 @@ type StageCommand struct {
 
 func (cfg StageCommand) TagYAML() string {
 	return "!ruby/object:Dapp::Dimg::Config::Directive::Shell::Dimg::StageCommand"
-}
-
-type Chef struct {
-	Dimod      []string                          `yaml:"_dimod"`
-	Recipe     []string                          `yaml:"_recipe"`
-	Attributes ChefAttributes                    `yaml:"_attributes"`
-	Cookbook   map[string]map[Symbol]interface{} `yaml:"_cookbook"`
-}
-
-func (cfg Chef) TagYAML() string {
-	return "!ruby/object:Dapp::Dimg::Config::Directive::Chef"
-}
-
-type ChefAttributes map[interface{}]interface{}
-
-func (cfg ChefAttributes) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::Chef::Attributes"
 }
 
 type Ansible struct {

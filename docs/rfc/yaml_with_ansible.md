@@ -24,7 +24,7 @@ Parsing rules:
 1. Each yaml document must have `dimg` or `artifact` directive with name.
 2. Each document must have `from` directive.
 3. Whole configuration must have at least one dimg.
-4. Whole configuration must have builder instructions of one type: `shell` or `ansible` (`chef` for legacy projects)
+4. Whole configuration must have builder instructions of one type: `shell` or `ansible`.
 
 Example of minimal configuration:
 
@@ -39,9 +39,8 @@ from: alpine:latest
 1. No equivalent for `dimg_group` and nested `dimg`s and `artifact`s.
 2. No context inheritance because of 1. Use go-template functionality
    to define common parts.
-3. `chef` directive support is rudimentary and will be dropped in the future releases.
-4. Use `import` in `dimg` for copy artifact results instead of `export`
-5. Each `artifact` must have a name
+3. Use `import` in `dimg` for copy artifact results instead of `export`
+4. Each `artifact` must have a name
 
 
 ## Ansible
@@ -55,8 +54,8 @@ Support for ansible builder divide to this parts:
 
 ### dappfile config
 
-`ansible` directive is similar to `shell`. It has 4 keys: `before_install`, `install`,
-`before_setup`, `setup` for each available stage. Stage description is an array
+`ansible` directive is similar to `shell`. It has 4 keys: `beforeInstall`, `install`,
+`beforeSetup`, `setup` for each available stage. Stage description is an array
 of ansible tasks:
   
 ```
@@ -85,7 +84,7 @@ Each stage description array is converted to a playbook:
   tasks:
   - debug: msg='Start install'  -.
   - file: path=/etc mode=0777    |
-  - copy:                        |> copy from ansible:  
+  - copy:                        |> copy from ansible:
       src: /bin/sh               |              install:
       dest: /bin/sh.orig        -'              - debug: ...
   ...
@@ -131,14 +130,13 @@ Notes:
 
 Dapp calculates checksum for each stage before build. Stage is considered to be rebuild if checksum
 changed. The simplest checksum is a hash over text of stage configuration. More interesting is checksum of
-files involved into build process. Files for chef builder have rigid structure in `.dapp_chef` directory.
-That was not a good idea. We don't want to implement ansible support like chef. You can place config files
+files involved into build process. You can place ansible config files
 everywhere in repository tree. But Ansible has rich syntax for modules and dapp should parse
 ansible syntax to get all pathes from `src`, `with_files`, etc and implement logic for lookup plugins
 to mount that files into stage container. That is very difficult to implement. That's why we come to 2 approaches:
 
 The first iteration of Ansible builder will implement only text checksum. To calculate checksum for files use go template
-function Files.Get and `content` attribute of modules.
+function .Files.Get and `content` attribute of modules.
 
 ```
 > dappfile.yml
@@ -146,7 +144,7 @@ function Files.Get and `content` attribute of modules.
 ansible:
   install:
   - copy:
-      content: {{ Files.Get '/conf/etc/nginx.conf'}}
+      content: {{ .Files.Get '/conf/etc/nginx.conf'}}
       dest: /etc/nginx
 ```
 
@@ -168,9 +166,9 @@ ansible:
 
 ```
 
-Files.Get input is path to file in repository. Function returns string with file content. 
+.Files.Get input is path to file in repository. Function returns string with file content.
 
-Next iteration will implement Files.Path function. Builder can collect all calls to this function
+Next iteration will implement .Files.Path function. Builder can collect all calls to this function
 and generate files structure to mount as volume.
  
 ```
@@ -179,7 +177,7 @@ and generate files structure to mount as volume.
 ansible:
   install:
   - copy:
-      src: {{ Files.Path '/conf/etc/nginx.conf' }}
+      src: {{ .Files.Path '/conf/etc/nginx.conf' }}
       dest: /etc/nginx
 ```
 
@@ -230,7 +228,7 @@ ansible:
 
 ### templates
 
-No templates for first iteration. Templates can be supported when Files.Path will be implemented.
+No templates for first iteration. Templates can be supported when .Files.Path will be implemented.
 
 
 ### ansible problems

@@ -11,7 +11,6 @@ type DimgBase struct {
 	Bulder  string
 	Git     *GitManager
 	Ansible *Ansible
-	Chef    *Chef
 	Mount   []*Mount
 	Import  []*ArtifactImport
 
@@ -33,10 +32,6 @@ func (c *DimgBase) ToRuby() ruby_marshal_config.DimgBase {
 	rubyDimg := ruby_marshal_config.DimgBase{}
 	rubyDimg.Name = c.Name
 	rubyDimg.Builder = ruby_marshal_config.Symbol(c.Bulder)
-
-	if c.Chef != nil {
-		rubyDimg.Chef = c.Chef.ToRuby()
-	}
 
 	if c.Ansible != nil {
 		rubyDimg.Ansible = c.Ansible.ToRuby()

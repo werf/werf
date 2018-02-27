@@ -11,8 +11,8 @@ type DimgArtifact struct {
 }
 
 func (c *DimgArtifact) Validate() error {
-	if !OneOrNone([]bool{c.Chef != nil, c.Shell != nil, c.Ansible != nil}) {
-		return fmt.Errorf("Cannot use shell, ansible and chef builders at the same time!\n\n%s", DumpConfigDoc(c.DimgBase.Raw.Doc))
+	if !OneOrNone([]bool{c.Shell != nil, c.Ansible != nil}) {
+		return fmt.Errorf("Cannot use shell and ansible builders at the same time!\n\n%s", DumpConfigDoc(c.DimgBase.Raw.Doc))
 	}
 
 	return nil
