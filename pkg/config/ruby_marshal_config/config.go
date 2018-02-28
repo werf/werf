@@ -115,6 +115,7 @@ type Ansible struct {
 	Install       []interface{} `yaml:"install"`
 	BeforeSetup   []interface{} `yaml:"before_setup"`
 	Setup         []interface{} `yaml:"setup"`
+	BuildArtifact []interface{} `yaml:"build_artifact"`
 	DumpConfigDoc string        `yaml:"dump_config_doc"`
 }
 

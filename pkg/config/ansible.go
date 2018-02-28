@@ -9,6 +9,7 @@ type Ansible struct {
 	Install       []*AnsibleTask
 	BeforeSetup   []*AnsibleTask
 	Setup         []*AnsibleTask
+	BuildArtifact []*AnsibleTask
 
 	Raw *RawAnsible
 }
@@ -34,6 +35,10 @@ func (c *Ansible) ToRuby() ruby_marshal_config.Ansible {
 
 	for _, ansibleTask := range c.Setup {
 		rubyAnsible.Setup = append(rubyAnsible.Setup, ansibleTask.ToRuby())
+	}
+
+	for _, ansibleTask := range c.BuildArtifact {
+		rubyAnsible.BuildArtifact = append(rubyAnsible.BuildArtifact, ansibleTask.ToRuby())
 	}
 
 	rubyAnsible.DumpConfigDoc = DumpConfigDoc(c.Raw.RawDimg.Doc)

@@ -5,6 +5,7 @@ type RawAnsible struct {
 	Install       []RawAnsibleTask `yaml:"install"`
 	BeforeSetup   []RawAnsibleTask `yaml:"beforeSetup"`
 	Setup         []RawAnsibleTask `yaml:"setup"`
+	BuildArtifact []RawAnsibleTask `yaml:"buildArtifact"`
 
 	RawDimg *RawDimg `yaml:"-"` // parent
 
@@ -63,6 +64,14 @@ func (c *RawAnsible) ToDirective() (ansible *Ansible, err error) {
 			return nil, err
 		} else {
 			ansible.Setup = append(ansible.Setup, ansibleTask)
+		}
+	}
+
+	for ind := range c.BuildArtifact {
+		if ansibleTask, err := c.BuildArtifact[ind].ToDirective(); err != nil {
+			return nil, err
+		} else {
+			ansible.BuildArtifact = append(ansible.BuildArtifact, ansibleTask)
 		}
 	}
 
