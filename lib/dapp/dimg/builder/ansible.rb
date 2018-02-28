@@ -86,31 +86,21 @@ module Dapp
       def install_playbook(stage)
         @install_playbooks ||= {}
         @install_playbooks[stage.to_s] ||= true.tap do
+          # playbook with tasks for a stage
           stage_tmp_path(stage).join('playbook.yml').write YAML.dump(stage_playbook(stage))
-          # generate inventory with localhost and python in dappdeps-ansible
-          stage_tmp_path(stage).join('hosts').write %{
-localhost ansible_raw_live_stdout=yes ansible_script_live_stdout=yes ansible_python_interpreter=#{python_path}
-}
-          # generate ansible config for solo mode
-          stage_tmp_path(stage).join('ansible.cfg').write %{
-[defaults]
-inventory = #{container_playbook_path}/hosts
-transport = local
-; do not generate retry files in ro volumes
-retry_files_enabled = False
-; more verbose stdout like ad-hoc ansible command from flant/ansible fork
-stdout_callback = live
-; force color
-force_color = 1
-[privilege_escalation]
-become = yes
-become_method = sudo
-become_exe = #{dimg.dapp.sudo_bin}
-become_flags = -E
-}
 
-         # save config dump for pretty errors
-         stage_tmp_path(stage).join('dapp-config.yml').write dimg.config._ansible['dump_config_doc']
+          # generate inventory with localhost and python in dappdeps-ansible
+          stage_tmp_path(stage).join('hosts').write Assets.hosts(self)
+
+          # generate ansible config for solo mode
+          stage_tmp_path(stage).join('ansible.cfg').write Assets.ansible_cfg(self)
+
+          # add dapp specific stdout callback for ansible
+          stage_tmp_path(stage).join('dapp.py').write Assets.dapp_py(self)
+
+          # save config dump for pretty errors
+          stage_tmp_path(stage).join('dapp-config.yml').write dimg.config._ansible['dump_config_doc']
+
         end
       end
 
