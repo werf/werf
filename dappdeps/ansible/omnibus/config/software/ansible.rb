@@ -1,6 +1,6 @@
 name "ansible"
 
-ANSIBLE_GIT_TAG = "v2.4.4.0+dapp-3"
+ANSIBLE_GIT_TAG = "v2.4.4.0+dapp-5"
 
 dependency "python"
 dependency "pip"
