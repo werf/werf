@@ -139,7 +139,13 @@ module Dapp
       end
 
       def run(docker_options, command)
-        cmd = "#{dapp.host_docker} run #{[docker_options, last_stage.image.built_id, command].flatten.compact.join(' ')}"
+        run_stage(nil, docker_options, command)
+      end
+
+      def run_stage(stage_name, docker_options, command)
+        stage_image = (stage_name.nil? ? last_stage : stage_by_name(stage_name)).image
+        raise Error::Dimg, code: :dimg_stage_not_built, data: { stage_name: stage_name } unless stage_image.built?
+        cmd = "#{dapp.host_docker} run #{[docker_options, stage_image.built_id, command].flatten.compact.join(' ')}"
         if dapp.dry_run?
           dapp.log(cmd)
         else

@@ -13,11 +13,14 @@ dapp dimg list [options] [DIMG ...]
 ```
 
 ### dapp dimg run
-Запустить собранный dimg с докерными аргументами **DOCKER ARGS**.
+Запустить собранную стадию dimg-а с докерными аргументами **DOCKER ARGS**.
 
 ```
 dapp dimg run [options] [DIMG] [DOCKER ARGS]
 ```
+
+#### `--stage STAGE`
+Определить стадию сборки. По умолчанию используется последняя стадия.
 
 #### [DOCKER ARGS]
 Может содержать докерные опции и/или команду.

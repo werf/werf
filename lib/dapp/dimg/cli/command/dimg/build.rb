@@ -11,25 +11,16 @@ Usage:
 
 Options:
 BANNER
-        introspected_stages = [
-          :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
-          :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact,
-          :g_a_pre_setup_patch, :setup, :g_a_post_setup_patch, :after_setup_artifact, :g_a_latest_patch, :docker_instructions
-        ]
-        artifact_introspected_stages = [
+        artifact_stages = [
           :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
           :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact,
           :g_a_pre_setup_patch, :setup, :after_setup_artifact, :g_a_artifact_patch, :build_artifact
         ]
 
-        introspect_stage_proc = proc do |stages|
-          proc { |val| val.to_sym.tap { |v| in_validate!(v, stages) } }
-        end
-
-        introspect_before_proc = proc do |stages|
+        before_stage_proc = proc do |stages|
           proc do |val|
             val_sym = val.to_sym
-            introspect_stage_proc.call(stages[1..-1]).call(val_sym)
+            STAGE_PROC.call(stages[1..-1]).call(val_sym)
             stages[stages.index(val_sym) - 1]
           end
         end
@@ -58,24 +49,24 @@ BANNER
                default: false
 
         option :introspect_stage,
-               long: '--introspect-stage STAGE',
-               description: "Introspect one of the following stages (#{list_msg_format(introspected_stages)})",
-               proc: introspect_stage_proc.call(introspected_stages)
+               long:        '--introspect-stage STAGE',
+               description: "Introspect one of the following stages (#{list_msg_format(DIMG_STAGES)})",
+               proc:        STAGE_PROC.call(DIMG_STAGES)
 
         option :introspect_before,
-               long: '--introspect-before STAGE',
-               description: "Introspect stage before one of the following stages (#{list_msg_format(introspected_stages[1..-1])})",
-               proc: introspect_before_proc.call(introspected_stages)
+               long:        '--introspect-before STAGE',
+               description: "Introspect stage before one of the following stages (#{list_msg_format(DIMG_STAGES[1..-1])})",
+               proc:        before_stage_proc.call(DIMG_STAGES)
 
         option :introspect_artifact_stage,
-               long: '--introspect-artifact-stage STAGE',
-               description: "Introspect one of the following stages (#{list_msg_format(artifact_introspected_stages)})",
-               proc: introspect_stage_proc.call(artifact_introspected_stages)
+               long:        '--introspect-artifact-stage STAGE',
+               description: "Introspect one of the following stages (#{list_msg_format(artifact_stages)})",
+               proc:        STAGE_PROC.call(artifact_stages)
 
         option :introspect_artifact_before,
-               long: '--introspect-artifact-before STAGE',
-               description: "Introspect stage before one of the following stages (#{list_msg_format(artifact_introspected_stages[1..-1])})",
-               proc: introspect_before_proc.call(artifact_introspected_stages)
+               long:        '--introspect-artifact-before STAGE',
+               description: "Introspect stage before one of the following stages (#{list_msg_format(artifact_stages[1..-1])})",
+               proc:        before_stage_proc.call(artifact_stages)
 
         option :ssh_key,
                long: '--ssh-key SSH_KEY',
