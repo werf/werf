@@ -39,6 +39,22 @@ mv /tmp/dpkg-architecture $ORIG_DPKG_ARCHITECTURE_PATH
 RUN mkdir /tmp/result && \
 dpkg -x /omnibus/pkg/dappdeps-ansible*.deb /tmp/result
 
+# `python-apt` package will install all libs in docker.from image.
+# `python-apt` will be installed automatically by ansible apt module on first run.
+# dappdeps/ansible offers support for ansible-apt-module only for ubuntu:14.04 ubuntu:16.04 ubuntu:18.04
+RUN apt install -y python-apt
+RUN \
+cp /usr/lib/x86_64-linux-gnu/libapt-inst.so.2.0 /tmp/result/.dapp/deps/ansible/*/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/libapt-pkg.so.5.0 /tmp/result/.dapp/deps/ansible/*/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/liblz4.so.1 /tmp/result/.dapp/deps/ansible/*/embedded/lib/ && \
+cp /lib/x86_64-linux-gnu/liblzma.so.5 /tmp/result/.dapp/deps/ansible/*/embedded/lib/ && \
+cp /lib/x86_64-linux-gnu/libbz2.so.1.0 /tmp/result/.dapp/deps/ansible/*/embedded/lib/ && \
+cp /usr/lib/python2.7/dist-packages/apt_inst.x86_64-linux-gnu.so /tmp/apt_inst.so && \
+cp /tmp/apt_inst.so /tmp/result/.dapp/deps/ansible/*/embedded/lib/python2.7/ && \
+cp /usr/lib/python2.7/dist-packages/apt_pkg.x86_64-linux-gnu.so /tmp/apt_pkg.so && \
+cp /tmp/apt_pkg.so /tmp/result/.dapp/deps/ansible/*/embedded/lib/python2.7/ && \
+cp -r /usr/lib/python2.7/dist-packages/apt /tmp/result/.dapp/deps/ansible/*/embedded/lib/python2.7/
+
 # Import tools into dappdeps/ansible scratch
 
 FROM scratch
