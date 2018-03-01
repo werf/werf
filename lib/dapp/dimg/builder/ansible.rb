@@ -1,7 +1,8 @@
 module Dapp
   module Dimg
     class Builder::Ansible < Builder::Base
-      ANSIBLE_IMAGE_VERSION = "2.4.4.0-4"
+
+      ANSIBLE_IMAGE_VERSION = "2.4.4.0-8"
 
       def ansible_bin
         "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/embedded/bin/ansible"
@@ -49,6 +50,11 @@ module Dapp
         
       # query tasks from ansible config
       # create dump_config structure
+      # returns structure:
+      # { 'tasks' => [array of tasks for stage],
+      #   'dump_config' => {
+      #      'dump_config_doc' => 'dump of doc',
+      #      'dump_config_sections' => {'task_0'=>'dump for task 0', 'task_1'=>'dump for task 1', ... }}
       def stage_config(stage)
         @stage_configs ||= {}
         @stage_configs[stage.to_s] ||= begin
@@ -136,12 +142,13 @@ module Dapp
             image.add_env('ANSIBLE_CONFIG', container_workdir.join('ansible.cfg'))
             image.add_env('DAPP_DUMP_CONFIG_DOC_PATH', container_workdir.join('dump_config.json'))
             image.add_env('PYTHONPATH', container_workdir.join('lib'))
-            # TODO uncomment when useradd will be in dappdeps
-            # image.add_env('ANSIBLE_PREPEND_SYSTEM_PATH', dappdeps_base_bin_path)
+            image.add_env('ANSIBLE_PREPEND_SYSTEM_PATH', dimg.dapp.dappdeps_base_path)
             image.add_volumes_from("#{ansible_container}:ro")
             image.add_volume "#{host_workdir(stage)}:#{container_workdir}:ro"
             image.add_command [ansible_playbook_bin,
-                               container_workdir.join('playbook.yml')].join(' ')
+                               container_workdir.join('playbook.yml'),
+                               ENV['ANSIBLE_ARGS']
+                              ].join(' ')
           end
         end
       end
@@ -153,13 +160,13 @@ module Dapp
       end
 
       def stage_empty?(stage)
-        stage_config(stage).empty?
+        stage_config(stage)['tasks'].empty?
       end
 
       # host directory in tmp_dir with directories structure
       def host_workdir(stage)
         @host_workdir ||= begin
-          dimg.tmp_path(dimg.config._name, "ansible-workdir-#{stage.to_s}").tap {|p| p.mkpath}
+          dimg.tmp_path(dimg.dapp.consistent_uniq_slugify(dimg.config._name), "ansible-workdir-#{stage.to_s}").tap {|p| p.mkpath}
         end
       end
 
