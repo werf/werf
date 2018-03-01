@@ -8,6 +8,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -187,7 +189,7 @@ func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath 
 	}
 
 	if len(dimgs) == 0 {
-		return nil, fmt.Errorf("No dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent)
+		return nil, NewConfigError(fmt.Sprintf("No dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
 	}
 
 	if err = associateArtifacts(dimgs, artifacts); err != nil {
@@ -222,10 +224,35 @@ func splitByRawDimgs(docs []*Doc) ([]*RawDimg, error) {
 		dimg := &RawDimg{Doc: doc}
 		err := yaml.Unmarshal(doc.Content, &dimg)
 		if err != nil {
-			return nil, err
+			return nil, newYamlUnmarshalError(err, doc)
 		}
 		rawDimgs = append(rawDimgs, dimg)
 	}
 
 	return rawDimgs, nil
+}
+
+func newYamlUnmarshalError(err error, doc *Doc) error {
+	switch err.(type) {
+	case *ConfigError:
+		return err
+	default:
+		message := err.Error()
+		reg, err := regexp.Compile("line ([0-9]+)")
+		if err != nil {
+			return err
+		}
+
+		res := reg.FindStringSubmatch(message)
+
+		if len(res) == 2 {
+			line, err := strconv.Atoi(res[1])
+			if err != nil {
+				return err
+			}
+
+			message = reg.ReplaceAllString(message, fmt.Sprintf("line %d", line+doc.Line))
+		}
+		return NewDetailedConfigError(message, nil, doc)
+	}
 }

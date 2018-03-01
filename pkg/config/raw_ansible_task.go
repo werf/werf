@@ -34,7 +34,7 @@ func (c *RawAnsibleTask) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		for _, supportedModule := range supportedModules() {
 			if c.Fields[supportedModule] != nil {
 				if check {
-					return fmt.Errorf("Invalid ansible task!\n\n%s\n%s", DumpConfigSection(c), DumpConfigDoc(c.RawAnsible.RawDimg.Doc))
+					return NewDetailedConfigError("Invalid ansible task!", c, c.RawAnsible.RawDimg.Doc)
 				} else {
 					check = true
 				}
@@ -46,7 +46,7 @@ func (c *RawAnsibleTask) UnmarshalYAML(unmarshal func(interface{}) error) error 
 			for _, supportedModule := range supportedModules() {
 				supportedModulesString += fmt.Sprintf("* %s\n", supportedModule)
 			}
-			return fmt.Errorf("Unsupported ansible task!\n\n%s\nSupported modules list:\n%s\n%s", DumpConfigSection(c), supportedModulesString, DumpConfigDoc(c.RawAnsible.RawDimg.Doc))
+			return NewConfigError(fmt.Sprintf("Unsupported ansible task!\n\n%s\nSupported modules list:\n%s\n%s", DumpConfigSection(c), supportedModulesString, DumpConfigDoc(c.RawAnsible.RawDimg.Doc)))
 		}
 	}
 

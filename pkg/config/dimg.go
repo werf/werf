@@ -1,9 +1,6 @@
 package config
 
-import (
-	"fmt"
-	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
-)
+import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
 
 type Dimg struct {
 	*DimgBase
@@ -13,7 +10,7 @@ type Dimg struct {
 
 func (c *Dimg) Validate() error {
 	if !OneOrNone([]bool{c.Shell != nil, c.Ansible != nil}) {
-		return fmt.Errorf("Cannot use shell and ansible builders at the same time!\n\n%s", DumpConfigDoc(c.DimgBase.Raw.Doc))
+		return NewDetailedConfigError("Cannot use shell and ansible builders at the same time!", nil, c.DimgBase.Raw.Doc)
 	}
 
 	return nil

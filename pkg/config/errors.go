@@ -7,6 +7,28 @@ import (
 	"gopkg.in/flant/yaml.v2"
 )
 
+type ConfigError struct {
+	s string
+}
+
+func (e *ConfigError) Error() string {
+	return e.s
+}
+
+func NewConfigError(message string) error {
+	return &ConfigError{message}
+}
+
+func NewDetailedConfigError(message string, configSection interface{}, configDoc *Doc) error {
+	var errorString string
+	if configSection != nil {
+		errorString = fmt.Sprintf("%s\n\n%s\n%s", message, DumpConfigSection(configSection), DumpConfigDoc(configDoc))
+	} else {
+		errorString = fmt.Sprintf("%s\n\n%s", message, DumpConfigDoc(configDoc))
+	}
+	return NewConfigError(errorString)
+}
+
 func getLines(data []byte) [][]byte {
 	contentLines := bytes.Split(data, []byte("\n"))
 	if string(contentLines[len(contentLines)-1]) == "" {

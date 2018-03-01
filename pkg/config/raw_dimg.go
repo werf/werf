@@ -31,7 +31,7 @@ func (c *RawDimg) SetAndValidateDimg() error {
 		case nil:
 			c.Dimg = ""
 		default:
-			return fmt.Errorf("Invalid dimg name `%v`!\n\n%s", t, DumpConfigDoc(c.Doc))
+			return NewDetailedConfigError(fmt.Sprintf("Invalid dimg name `%v`!", t), nil, c.Doc)
 		}
 	}
 
@@ -67,9 +67,9 @@ func (c *RawDimg) ValidateType() error {
 	isArtifact := c.Artifact != ""
 
 	if isDimg && isArtifact {
-		return fmt.Errorf("Unknown doc type: one and only one of `dimg: NAME` or `artifact: NAME` non-empty name required!\n\n%s", DumpConfigDoc(c.Doc))
+		return NewDetailedConfigError("Unknown doc type: one and only one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.Doc)
 	} else if !(isDimg || isArtifact) {
-		return fmt.Errorf("Unknown doc type: one of `dimg: NAME` or `artifact: NAME` non-empty name required!\n\n%s", DumpConfigDoc(c.Doc))
+		return NewDetailedConfigError("Unknown doc type: one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.Doc)
 	}
 
 	return nil
@@ -149,7 +149,7 @@ func (c *RawDimg) ToArtifactDirective() (dimgArtifact *DimgArtifact, err error) 
 
 func (c *RawDimg) ValidateArtifactDirective(dimgArtifact *DimgArtifact) (err error) {
 	if c.RawDocker != nil {
-		return fmt.Errorf("`docker` section is not supported for artifact!\n\n%s", DumpConfigDoc(c.Doc))
+		return NewDetailedConfigError("`docker` section is not supported for artifact!", nil, c.Doc)
 	}
 
 	if err := dimgArtifact.Validate(); err != nil {

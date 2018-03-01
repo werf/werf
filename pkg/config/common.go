@@ -25,10 +25,11 @@ func CheckOverflow(m map[string]interface{}, configSection interface{}, doc *Doc
 			keys = append(keys, k)
 		}
 
+		message := fmt.Sprintf("Unknown fields: `%s`!", strings.Join(keys, "`, `"))
 		if configSection == nil {
-			return fmt.Errorf("Unknown fields: `%s`!\n\n%s", strings.Join(keys, "`, `"), DumpConfigDoc(doc))
+			return NewDetailedConfigError(message, nil, doc)
 		} else {
-			return fmt.Errorf("Unknown fields: `%s`!\n\n%s\n%s", strings.Join(keys, "`, `"), DumpConfigSection(configSection), DumpConfigDoc(doc))
+			return NewDetailedConfigError(message, configSection, doc)
 		}
 	}
 	return nil
@@ -80,12 +81,12 @@ func InterfaceToStringArray(stringOrStringArray interface{}, configSection inter
 			if val, ok := interf.(string); ok {
 				stringArray = append(stringArray, val)
 			} else {
-				return nil, fmt.Errorf("Single string or array of strings expected, got `%v`!\n\n%s\n%s", stringOrStringArray, DumpConfigSection(configSection), DumpConfigDoc(doc))
+				return nil, NewDetailedConfigError(fmt.Sprintf("Single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
 			}
 		}
 		return stringArray, nil
 	} else {
-		return nil, fmt.Errorf("Single string or array of strings expected, got `%v`!\n\n%s\n%s", stringOrStringArray, DumpConfigSection(configSection), DumpConfigDoc(doc))
+		return nil, NewDetailedConfigError(fmt.Sprintf("Single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
 	}
 }
 

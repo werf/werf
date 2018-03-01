@@ -1,9 +1,6 @@
 package config
 
-import (
-	"fmt"
-	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
-)
+import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
 
 type DimgBase struct {
 	Name    string
@@ -19,7 +16,7 @@ type DimgBase struct {
 
 func (c *DimgBase) Validate() error {
 	if c.From == "" {
-		return fmt.Errorf("`from: DOCKER_IMAGE` required!\n\n%s", DumpConfigDoc(c.Raw.Doc))
+		return NewDetailedConfigError("`from: DOCKER_IMAGE` required!", nil, c.Raw.Doc)
 	}
 
 	// TODO: валидацию формата `From`
