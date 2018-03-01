@@ -227,185 +227,170 @@ describe Dapp::Dimg::Config::Directive::Dimg do
         end
       end
 
-      context 'positive' do
-        it 'different to' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              to '/folder/to1'
-            end
-
-            export '/cwd' do
-              before :setup
-              to '/folder/to2'
-            end
-          end
-          expect { dimg_config_validate! }.to_not raise_error
+      def expect_artifact_exports(exports, should_raise_config_error: false)
+        [].tap do |sets|
+          sets << exports
+          sets << exports.reverse unless exports.one?
+        end.each do |set|
+          expect_dappfile_dimg_group_artifact_exports(set, should_raise_config_error: should_raise_config_error)
         end
+      end
 
-        it 'different paths' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              include_paths 'c'
-              to '/folder/to1'
-            end
+      def expect_dappfile_dimg_group_artifact_exports(exports, should_raise_config_error: false)
+        dappfile_dimg_group_artifact_exports(exports)
 
-            export '/cwd' do
-              before :setup
-              include_paths 'd'
-              to '/folder/to1'
-            end
-          end
-          expect { dimg_config_validate! }.to_not raise_error
-        end
-
-        it 'paths with same exclude_paths' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              include_paths 'c'
-              to '/folder/to1'
-            end
-
-            export '/cwd' do
-              before :setup
-              exclude_paths 'c'
-              to '/folder/to1'
-            end
-          end
-          expect { dimg_config_validate! }.to_not raise_error
-        end
-
-        it 'paths with exclude_paths' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              include_paths 'c/d/e'
-              to '/folder/to1'
-            end
-
-            export '/cwd' do
-              before :setup
-              include_paths 'c'
-              exclude_paths 'c/d'
-              to '/folder/to1'
-            end
-          end
-          expect { dimg_config_validate! }.to_not raise_error
-        end
-
-        it 'to with paths' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              include_paths 'c'
-              to '/folder/to'
-            end
-
-            export '/cwd' do
-              before :setup
-              to '/folder/to/path'
-            end
-          end
-          expect { dimg_config_validate! }.to_not raise_error
-        end
-
-        it 'to with exclude_paths' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              exclude_paths 'path'
-              to '/folder/to'
-            end
-
-            export '/cwd' do
-              before :setup
-              to '/folder/to/path'
-            end
-          end
-          expect { dimg_config_validate! }.to_not raise_error
-        end
-
-        it 'to with different but similar folders' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              to '/folder/frontend'
-            end
-
-            export '/cwd' do
-              before :setup
-              to '/folder/frontend_assets'
-            end
-          end
+        if should_raise_config_error
+          expect { dimg_config_validate! }.to raise_error Dapp::Error::Config
+        else
           expect { dimg_config_validate! }.to_not raise_error
         end
       end
 
-      context 'negative' do
-        it 'same to (1)' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              to '/to'
-            end
-
-            export '/cwd' do
-              before :setup
-              to '/to'
-            end
+      def dappfile_dimg_group_artifact_exports(exports)
+        config = [].tap do |lines|
+          exports.each do |export|
+            lines << "export '/cwd' do"
+            lines << "  to '#{export[:to]}'"
+            lines << "  include_paths \"#{Array(export[:include_paths]).join('", "')}\"" if export.key?(:include_paths)
+            lines << "  exclude_paths \"#{Array(export[:exclude_paths]).join('", "')}\"" if export.key?(:exclude_paths)
+            lines << '  before :setup'
+            lines << 'end'
           end
-          expect_exception_code(:artifact_conflict) { dimg_config_validate! }
-        end
+        end.join("\n")
 
-        it 'same to (2)' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              to '/folder/to'
+        dappfile do
+          dimg_group do
+            docker do
+              from 'image:tag'
             end
 
-            export '/cwd' do
-              before :setup
-              to '/folder/to'
+            artifact do
+              instance_eval(config)
             end
+
+            dimg
           end
-          expect_exception_code(:artifact_conflict) { dimg_config_validate! }
         end
       end
 
-      context 'auto excluding' do
-        it 'exclude children folder' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              to '/folder/to'
+      [nil, 'folder'].each do |to_base|
+        context "`to` #{to_base.to_s.empty? ? 'without' : 'with'} sub folder" do
+          before :all do
+            @to_base = to_base
+          end
+
+          def to_path(path = nil)
+            File.join(['/', @to_base, 'to', path].compact)
+          end
+
+          context 'positive' do
+            it 'different `to`' do
+              exports = begin
+                [
+                  {
+                    to: to_path('folder')
+                  },
+                  {
+                    to: to_path('folder2')
+                  }
+                ]
+              end
+              expect_artifact_exports(exports)
             end
 
-            export '/cwd' do
-              before :setup
-              to '/folder/to/path'
+            it 'different `include_paths`' do
+              exports = begin
+                [
+                  {
+                    to: to_path,
+                    include_paths: 'folder'
+                  },
+                  {
+                    to: to_path,
+                    include_paths: 'folder2'
+                  }
+                ]
+              end
+              expect_artifact_exports(exports)
+            end
+
+            it '`paths` & `exclude_paths`' do
+              exports = begin
+                [
+                  {
+                    to: to_path,
+                    include_paths: 'folder'
+                  },
+                  {
+                    to: to_path,
+                    exclude_paths: 'folder'
+                  }
+                ]
+              end
+              expect_artifact_exports(exports)
+            end
+
+            it '`to` & `exclude_paths`' do
+              exports = begin
+                [
+                  {
+                    to: to_path,
+                    exclude_paths: 'folder'
+                  },
+                  {
+                    to: to_path('folder')
+                  }
+                ]
+              end
+              expect_artifact_exports(exports)
             end
           end
-          expect { dimg_config_validate! }.to_not raise_error
-        end
 
-        it 'inherit include' do
-          dappfile_dimg_group_artifact do
-            export '/cwd' do
-              before :setup
-              include_paths 'c'
-              to '/folder/to'
-            end
-
-            export '/cwd' do
-              before :setup
-              exclude_paths 'd'
-              to '/folder/to'
+          context 'negative' do
+            it 'conflict between `to`' do
+              exports = begin
+                [
+                  {
+                    to: to_path,
+                  },
+                  {
+                    to: to_path
+                  }
+                ]
+              end
+              expect_artifact_exports(exports, should_raise_config_error: true)
             end
           end
-          expect { dimg_config_validate! }.to_not raise_error
+
+          it 'auto excluding (1)' do
+            exports = begin
+              [
+                {
+                  to: to_path,
+                },
+                {
+                  to: to_path('path')
+                }
+              ]
+            end
+            expect_artifact_exports(exports)
+          end
+
+          it 'auto excluding (2)' do
+            exports = begin
+              [
+                {
+                  to: to_path,
+                  include_paths: 'folder'
+                },
+                {
+                  to: to_path,
+                  exclude_paths: 'folder2'
+                }
+              ]
+            end
+            expect_artifact_exports(exports)
+          end
         end
       end
     end

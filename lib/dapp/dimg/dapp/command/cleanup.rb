@@ -5,8 +5,8 @@ module Dapp
         module Cleanup
           def cleanup
             log_step_with_indent(:cleanup) do
-              dapp_containers_flush
-              dapp_dangling_images_flush
+              dapp_containers_flush_by_label('dapp')
+              dapp_dangling_images_flush_by_label('dapp')
             end
           end
         end

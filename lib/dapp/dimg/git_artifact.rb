@@ -192,10 +192,17 @@ module Dapp
             if any_changes?(*dev_patch_stage_commits(stage))
               case archive_type(stage)
               when :directory
-                changed_files = diff_patches(*dev_patch_stage_commits(stage)).map {|p| "\"#{File.join(to, cwd, p.delta.new_file[:path])}\""}
-                commands << "#{repo.dapp.rm_bin} -rf #{changed_files.join(' ')}"
+                files_to_remove_file_name = file_name('dev_files_to_remove')
+                File.open(dimg.tmp_path('archives', files_to_remove_file_name), File::RDWR | File::CREAT) do |f|
+                  diff_patches(*dev_patch_stage_commits(stage))
+                    .map {|p| File.join(to, cwd, p.delta.new_file[:path])}
+                    .each(&f.method(:puts))
+                end
+
+                commands << "#{repo.dapp.rm_bin} -rf $(#{repo.dapp.cat_bin} #{dimg.container_tmp_path('archives', files_to_remove_file_name)})"
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
                 commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
+                commands << "#{repo.dapp.find_bin} \"#{to}\" -empty -type d -delete"
               when :file
                 commands << "#{repo.dapp.rm_bin} -rf \"#{to}\""
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""

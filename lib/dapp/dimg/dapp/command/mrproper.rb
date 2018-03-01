@@ -16,7 +16,7 @@ module Dapp
                 proper_cache_version
               end
 
-              dapp_dangling_images_flush
+              dapp_dangling_images_flush_by_label('dapp')
               dapp_tagless_images_flush
             end
           end
@@ -52,16 +52,14 @@ module Dapp
           end
 
           def flush_by_label(label)
-            log_step_with_indent(:containers) { dapp_containers_flush_by_label(label) }
-            log_step_with_indent(:images) { dapp_images_flush_by_label(label) }
-          end
-
-          def dapp_containers_flush_by_label(label)
-            remove_containers_by_query(%(#{host_docker} ps -a -f "label=dapp" -f "label=#{label}" -q --no-trunc))
+            dapp_containers_flush_by_label(label)
+            dapp_images_flush_by_label(label)
           end
 
           def dapp_images_flush_by_label(label)
-            remove_images(dapp_images_names_by_label(label))
+            log_step_with_indent('proper images') do
+              remove_images(dapp_images_names_by_label(label))
+            end
           end
 
           def proper_cache_version

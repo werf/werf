@@ -11,6 +11,9 @@ module Dapp
                 proper_cache           if proper_cache_version?
                 stages_cleanup_by_repo if proper_repo_cache?
                 proper_git_commit      if proper_git_commit?
+
+                dapp_containers_flush_by_label("dapp=#{name}")
+                dapp_dangling_images_flush_by_label("dapp=#{name}")
               end
             end
 
