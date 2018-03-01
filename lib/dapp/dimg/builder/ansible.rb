@@ -1,18 +1,18 @@
 module Dapp
   module Dimg
     class Builder::Ansible < Builder::Base
-      ANSIBLE_IMAGE_VERSION = "2.4.4.0-2"
+      ANSIBLE_IMAGE_VERSION = "2.4.4.0-4"
 
       def ansible_bin
-        "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/bin/ansible"
+        "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/embedded/bin/ansible"
       end
 
       def ansible_playbook_bin
-        "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/bin/ansible-playbook"
+        "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/embedded/bin/ansible-playbook"
       end
 
       def python_path
-        "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/bin/python"
+        "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/embedded/bin/python"
       end
 
       def ansible_playbook_solo_cmd
@@ -47,27 +47,29 @@ module Dapp
         end
       end
         
-      def ansible_config
-        # DAPP_LOAD_CONFIG_PATH=https://github.com/flant/dapp/new/dappfile-yml-ansible/playground/test1/ansible-conf.yml
-        dimg.config._ansible
-      end
-
+      # query tasks from ansible config
+      # create dump_config structure
       def stage_config(stage)
-        # DAPP_LOAD_CONFIG_PATH=https://github.com/flant/dapp/new/dappfile-yml-ansible/playground/test1/ansible-conf.yml
-        dimg.config._ansible[stage.to_s].map do |dapp_task|
-          {}.tap do |task|
-            task.merge!(dapp_task['config'])
-            task['tags'] = [].tap do |tags|
-              tags << dapp_task['config']['tags']
-              tags << stage.to_s
-              tags << dapp_task['dump_config_section']
-            end.flatten.compact
+        @stage_configs ||= {}
+        @stage_configs[stage.to_s] ||= begin
+          {}.tap do |stage_config|
+            stage_config['dump_config'] = {
+              'dump_config_doc' => dimg.config._ansible['dump_config_doc'],
+              'dump_config_sections' => {},
+            }
+            stage_config['tasks'] = dimg.config._ansible[stage.to_s].map.with_index do |dapp_task, task_num|
+              {}.tap do |task|
+                task.merge!(dapp_task['config'])
+                task['tags'] = [].tap do |tags|
+                  tags << dapp_task['config']['tags']
+                  dump_tag = "task_#{task_num}"
+                  tags << dump_tag
+                  stage_config['dump_config']['dump_config_sections'][dump_tag] = dapp_task['dump_config_section']
+                end.flatten.compact
+              end
+            end || []
           end
-        end || []
-      end
-
-      def doc_config
-        dimg.config._ansible['dump_config_doc']
+        end
       end
 
       def stage_playbook(stage)
@@ -78,35 +80,45 @@ module Dapp
             'gather_facts' => 'no',
             'tasks' => [],
            }].tap do |playbook|
-            playbook[0]['tasks'].concat(stage_config(stage))
+            playbook[0]['tasks'].concat(stage_config(stage)['tasks'])
           end
         end
       end
 
-      def install_playbook(stage)
-        @install_playbooks ||= {}
-        @install_playbooks[stage.to_s] ||= true.tap do
-          # playbook with tasks for a stage
-          stage_tmp_path(stage).join('playbook.yml').write YAML.dump(stage_playbook(stage))
+      def create_workdir_structure(stage)
+        @workdir_structures ||= {}
+        @workdir_structures[stage.to_s] ||= true.tap do
+          host_workdir(stage).tap do |workdir|
+            # playbook with tasks for a stage
+            workdir.join('playbook.yml').write YAML.dump(stage_playbook(stage))
+            #puts YAML.dump(stage_playbook(stage))
 
-          # generate inventory with localhost and python in dappdeps-ansible
-          stage_tmp_path(stage).join('hosts').write Assets.hosts(self)
+            # generate inventory with localhost and python in dappdeps-ansible
+            workdir.join('hosts').write Assets.hosts(python_path)
 
-          # generate ansible config for solo mode
-          stage_tmp_path(stage).join('ansible.cfg').write Assets.ansible_cfg(self)
+            # generate ansible config for solo mode
+            workdir.join('ansible.cfg').write Assets.ansible_cfg(container_workdir.join('hosts'),
+                                                                 container_workdir.join('lib', 'callback'),
+                                                                 dimg.dapp.sudo_bin
+                                                                )
 
-          # add dapp specific stdout callback for ansible
-          stage_tmp_path(stage).join('dapp.py').write Assets.dapp_py(self)
+            # save config dump for pretty errors
+            workdir.join('dump_config.json').write JSON.generate(stage_config(stage)['dump_config'])
 
-          # save config dump for pretty errors
-          stage_tmp_path(stage).join('dapp-config.yml').write dimg.config._ansible['dump_config_doc']
-
+            # python modules
+            workdir.join('lib').tap do |libdir|
+              libdir.mkpath
+              # crypt.py hack
+              # TODO must be in dappdeps-ansible
+              libdir.join('crypt.py').write Assets.crypt_py
+              libdir.join('callback').tap do |callbackdir|
+                callbackdir.mkpath
+                # add dapp specific stdout callback for ansible
+                callbackdir.join('dapp.py').write Assets.dapp_py
+              end
+            end
+          end
         end
-      end
-
-      def container_playbook_yaml_path(stage)
-        install_playbook(stage)
-        container_playbook_path.join('playbook.yml')
       end
 
       %i(before_install install before_setup setup build_artifact).each do |stage|
@@ -120,12 +132,16 @@ module Dapp
 
         define_method(stage.to_s) do |image|
           unless stage_empty?(stage)
-            image.add_env('ANSIBLE_CONFIG', container_playbook_path.join('ansible.cfg'))
-            image.add_env('DAPP_DUMP_CONFIG_DOC_PATH', container_playbook_path.join('dapp-config.yml'))
+            create_workdir_structure(stage)
+            image.add_env('ANSIBLE_CONFIG', container_workdir.join('ansible.cfg'))
+            image.add_env('DAPP_DUMP_CONFIG_DOC_PATH', container_workdir.join('dump_config.json'))
+            image.add_env('PYTHONPATH', container_workdir.join('lib'))
+            # TODO uncomment when useradd will be in dappdeps
+            # image.add_env('ANSIBLE_PREPEND_SYSTEM_PATH', dappdeps_base_bin_path)
             image.add_volumes_from("#{ansible_container}:ro")
-            image.add_volume "#{stage_tmp_path(stage)}:#{container_playbook_path}:ro"
+            image.add_volume "#{host_workdir(stage)}:#{container_workdir}:ro"
             image.add_command [ansible_playbook_bin,
-                               container_playbook_yaml_path(stage)].join(' ')
+                               container_workdir.join('playbook.yml')].join(' ')
           end
         end
       end
@@ -140,14 +156,16 @@ module Dapp
         stage_config(stage).empty?
       end
 
-      # host directory in tmp_dir
-      def stage_tmp_path(stage)
-        dimg.tmp_path(dimg.config._name, "ansible-playbook-#{stage.to_s}").tap {|p| p.mkpath}
+      # host directory in tmp_dir with directories structure
+      def host_workdir(stage)
+        @host_workdir ||= begin
+          dimg.tmp_path(dimg.config._name, "ansible-workdir-#{stage.to_s}").tap {|p| p.mkpath}
+        end
       end
 
       # directory with playbook in container
-      def container_playbook_path
-        dimg.container_dapp_path("ansible-playbook")
+      def container_workdir
+        dimg.container_dapp_path("ansible-workdir")
       end
 
     end # Builder::Ansible
