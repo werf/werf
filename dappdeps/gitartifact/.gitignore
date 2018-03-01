@@ -1,0 +1,5 @@
+*.swp
+build
+/.bundle
+/.vendor
+/pkg
