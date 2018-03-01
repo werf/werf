@@ -29,10 +29,10 @@ ENV PATH=/.dapp/deps/toolchain/0.1.1/bin:$PATH
 RUN bundle exec omnibus build -o append_timestamp:false dappdeps-base
 
 RUN mkdir /tmp/result && \
-dpkg -x /omnibus/pkg/dappdeps-base_0.2.1-1_amd64.deb /tmp/result
+dpkg -x /omnibus/pkg/dappdeps-base_*.deb /tmp/result
 
 # Import tools into dappdeps/base scratch
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /tmp/result/.dapp/deps/base/0.2.1 /.dapp/deps/base/0.2.1
+COPY --from=0 /tmp/result/.dapp/deps/base/* /.dapp/deps/base/*
