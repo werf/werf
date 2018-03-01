@@ -158,11 +158,11 @@ func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath 
 	var artifacts []*DimgArtifact
 
 	for _, rawDimg := range rawDimgs {
-		if rawDimg.Type() == "dimg" {
-			if dimg, err := rawDimg.ToDirective(); err != nil {
+		if rawDimg.Type() == "dimgs" {
+			if sameDimgs, err := rawDimg.ToDirectives(); err != nil {
 				return nil, err
 			} else {
-				dimgs = append(dimgs, dimg)
+				dimgs = append(dimgs, sameDimgs...)
 			}
 		} else {
 			if dimgArtifact, err := rawDimg.ToArtifactDirective(); err != nil {
