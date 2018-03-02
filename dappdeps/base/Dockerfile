@@ -35,4 +35,4 @@ dpkg -x /omnibus/pkg/dappdeps-base_*.deb /tmp/result
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /tmp/result/.dapp/deps/base/* /.dapp/deps/base/*
+COPY --from=0 /tmp/result/.dapp/deps/base/ /.dapp/deps/base/
