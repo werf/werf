@@ -68,7 +68,7 @@ func supportedModules() []string {
 	// Packaging Modules
 	modules = append(modules, []string{"apk", "apt", "apt_key", "apt_repository", "yum", "yum_repository"}...)
 	// System Modules
-	modules = append(modules, []string{"user", "group", "getent"}...)
+	modules = append(modules, []string{"user", "group", "getent", "locale_gen"}...)
 	// Utilities Modules
 	modules = append(modules, []string{"assert", "debug", "set_fact", "wait_for"}...)
 	return modules
