@@ -166,7 +166,7 @@ module Dapp
       # host directory in tmp_dir with directories structure
       def host_workdir(stage)
         @host_workdir ||= begin
-          dimg.tmp_path(dimg.dapp.consistent_uniq_slugify(dimg.config._name), "ansible-workdir-#{stage.to_s}").tap {|p| p.mkpath}
+          dimg.tmp_path(dimg.dapp.consistent_uniq_slugify(dimg.config._name || "nameless"), "ansible-workdir-#{stage.to_s}").tap {|p| p.mkpath}
         end
       end
 
