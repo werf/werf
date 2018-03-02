@@ -28,11 +28,15 @@ module Dapp
           end
         end
 
+        def dappdeps_base_path
+          "/.dapp/deps/base/#{BASE_VERSION}/embedded/bin:/.dapp/deps/base/#{BASE_VERSION}/embedded/sbin"
+        end
+
         %w(rm rsync diff date cat
            stat readlink test sleep mkdir
            install sed cp true find
            bash tar sudo base64).each do |cmd|
-          define_method("#{cmd}_bin") { "/.dapp/deps/base/#{BASE_VERSION}/bin/#{cmd}" }
+          define_method("#{cmd}_bin") { "/.dapp/deps/base/#{BASE_VERSION}/embedded/bin/#{cmd}" }
         end
 
         def sudo_command(owner: nil, group: nil)
