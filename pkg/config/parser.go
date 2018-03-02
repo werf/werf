@@ -75,7 +75,7 @@ func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*Do
 		content := make([]byte, len(scanner.Bytes()))
 		copy(content, scanner.Bytes())
 
-		if strings.TrimSpace(string(content)) != "" {
+		if !emptyDocContent(content) {
 			docs = append(docs, &Doc{
 				Line:           line,
 				Content:        content,
@@ -137,30 +137,105 @@ func (f Files) Get(path string) string {
 }
 
 func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	yamlSeparator := "---"
+	const (
+		stateLinebegin   = 0
+		stateRegularLine = 1
+		stateDocDash1    = 2
+		stateDocDash2    = 3
+		stateDocDash3    = 4
+		stateDocSpaces   = 5
+		stateDocComment  = 6
+	)
 
 	if atEOF && len(data) == 0 {
 		return 0, nil, nil
 	}
-	sep := len([]byte(yamlSeparator))
-	if i := bytes.Index(data, []byte(yamlSeparator)); i >= 0 {
-		i += sep
-		after := data[i:]
-		if len(after) == 0 {
-			if atEOF {
-				return len(data), data[:len(data)-sep], nil
+
+	state := stateLinebegin
+	var index, docLineSize int
+	var ch byte
+	for index, ch = range data {
+		switch ch {
+		case '-':
+			switch state {
+			case stateLinebegin:
+				docLineSize = 0
+				state = stateDocDash1
+			case stateDocDash1:
+				docLineSize += 1
+				state = stateDocDash2
+			case stateDocDash2:
+				docLineSize += 1
+				state = stateDocDash3
+			default:
+				state = stateRegularLine
 			}
-			return 0, nil, nil
+		case '\n':
+			switch state {
+			case stateDocDash3, stateDocSpaces, stateDocComment:
+				advance = index + 1
+				token = data[0 : index-docLineSize-1]
+				return advance, token, nil
+			default:
+				state = stateLinebegin
+			}
+		case ' ', '\r', '\t':
+			switch state {
+			case stateDocDash3, stateDocSpaces:
+				docLineSize += 1
+				state = stateDocSpaces
+			case stateDocComment:
+				docLineSize += 1
+			}
+		case '#':
+			switch state {
+			case stateDocDash3, stateDocSpaces, stateDocComment:
+				docLineSize += 1
+				state = stateDocComment
+			default:
+				state = stateRegularLine
+			}
+		default:
+			switch state {
+			case stateDocComment:
+				docLineSize += 1
+			default:
+				state = stateRegularLine
+			}
 		}
-		if j := bytes.IndexByte(after, '\n'); j >= 0 {
-			return i + j + 1, data[0 : i-sep], nil
+	}
+
+	switch state {
+	case stateDocDash3, stateDocSpaces, stateDocComment:
+		return index + 1, data[0 : index-docLineSize], nil
+	default:
+		return index + 1, data, nil
+	}
+}
+
+func emptyDocContent(content []byte) bool {
+	const (
+		stateNone    = 0
+		stateComment = 1
+	)
+
+	state := stateNone
+	for _, ch := range content {
+		switch ch {
+		case '#':
+			state = stateComment
+		case '\n':
+			if state == stateComment {
+				state = stateNone
+			}
+		case ' ', '\r', '\t':
+		default:
+			if state != stateComment {
+				return false
+			}
 		}
-		return 0, nil, nil
 	}
-	if atEOF {
-		return len(data), data, nil
-	}
-	return 0, nil, nil
+	return true
 }
 
 func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath string) ([]*Dimg, error) {
