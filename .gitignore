@@ -7,3 +7,5 @@
 /.vscode
 .dappfile.render.yml
 .dappfile.render.yaml
+dappdeps-toolchain.tar
+dappdeps/*/omnibus/build/

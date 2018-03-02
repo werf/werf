@@ -1,0 +1,6 @@
+*.swp
+/build
+/.bundle
+/pkg
+/.vagrant
+/.vscode
