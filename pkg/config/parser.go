@@ -215,22 +215,20 @@ func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err 
 
 func emptyDocContent(content []byte) bool {
 	const (
-		stateNone    = 0
+		stateRegular = 0
 		stateComment = 1
 	)
 
-	state := stateNone
+	state := stateRegular
 	for _, ch := range content {
 		switch ch {
 		case '#':
 			state = stateComment
 		case '\n':
-			if state == stateComment {
-				state = stateNone
-			}
+			state = stateRegular
 		case ' ', '\r', '\t':
 		default:
-			if state != stateComment {
+			if state == stateRegular {
 				return false
 			}
 		}
