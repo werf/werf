@@ -95,7 +95,7 @@ module Dapp
 
                 # Create purge-trigger for the next run.
                 kube_create_helm_auto_purge_trigger_file(release.name)
-              elsif release_status == "FAILED"
+              elsif ["FAILED", "PENDING_INSTALL"].include? release_status
                 release_exists = true
 
                 if File.exists? kube_helm_auto_purge_trigger_file_path(release.name)
@@ -107,7 +107,10 @@ module Dapp
                   release_exists = false
                 end
               else
-                # Helm release is not in FAILED state
+                if File.exists? kube_helm_auto_purge_trigger_file_path(release.name)
+                  log_warning "[WARN] Will not purge helm release #{release.name}: expected FAILED or PENDING_INSTALL release status, got #{release_status}"
+                end
+
                 release_exists = true
                 kube_delete_helm_auto_purge_trigger_file(release.name)
               end
@@ -187,7 +190,7 @@ module Dapp
 
                 if cmd_res.error?
                   if cmd_res.stderr.end_with? "has no deployed releases\n"
-                    log_warning "[WARN] Helm release #{release.name} is in improper state: FAILED state and there was no successful releases yet"
+                    log_warning "[WARN] Helm release #{release.name} is in improper state: #{cmd_res.stderr}"
                     log_warning "[WARN] Helm release #{release.name} will be removed with `helm delete --purge` on the next run of `dapp kube deploy`"
 
                     kube_create_helm_auto_purge_trigger_file(release.name)
