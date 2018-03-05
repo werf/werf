@@ -25,6 +25,10 @@ module Dapp
         raise Error::Dimg, code: :dimg_not_built if should_be_built?
       end
 
+      def name
+        config._name
+      end
+
       def terminate
         cleanup_tmp
       end
@@ -74,7 +78,7 @@ module Dapp
           dapp.tags_by_scheme.each do |tag_scheme_name, tags|
             dapp.log_step_with_indent(tag_scheme_name) do
               tags.each do |tag|
-                image_name = format(export_format, repo: repo, dimg_name: config._name, tag: tag)
+                image_name = format(export_format, repo: repo, dimg_name: name, tag: tag)
                 export_base!(image_name, push: push) do
                   export_image = build_export_image!(image_name, scheme_name: tag_scheme_name)
                   if push

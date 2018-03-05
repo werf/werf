@@ -1,6 +1,10 @@
 module Dapp
   module Dimg
     class Artifact < Dimg
+      def name
+        dapp.consistent_uniq_slugify(config._name) unless config._name.nil?
+      end
+
       def after_stages_build!
       end
 

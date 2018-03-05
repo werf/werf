@@ -22,7 +22,7 @@ describe Dapp::Dimg::Artifact do
   def artifact_config
     artifact = { _config: Marshal.load(Marshal.dump(config)),
                  _artifact_options: { cwd: "/#{@artifact}", to: "/#{to_directory}", exclude_paths: [], include_paths: [] } }
-    artifact[:_config][:_name] = @artifact
+    artifact[:_config][:_name] = @artifact.to_s
     artifact[:_config][:_shell][:_build_artifact_command] = ["mkdir /#{@artifact} && date +%s > /#{@artifact}/test"]
     artifact
   end

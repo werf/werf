@@ -5,7 +5,7 @@ module Dapp
         module Tag
           def tag
             dimg_import_export_base do |dimg|
-              dimg.tag!(option_repo, format: push_format(dimg.config._name))
+              dimg.tag!(option_repo, format: push_format(dimg.name))
             end
           end
         end

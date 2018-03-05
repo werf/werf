@@ -65,15 +65,15 @@ module Dapp
           dimgs = dapp.build_configs.map do |config|
             dapp.dimg(config: config, ignore_git_fetch: true)
           end.uniq do |dimg|
-            dimg.config._name
+            dimg.name
           end
 
           dimgs.each do |dimg|
             dimg_data = {}
-            if dimg.config._name
+            if dimg.name
               res["global"]["dapp"]["is_nameless_dimg"] = false
               res["global"]["dapp"]["dimg"] ||= {}
-              res["global"]["dapp"]["dimg"][dimg.config._name] = dimg_data
+              res["global"]["dapp"]["dimg"][dimg.name] = dimg_data
             else
               res["global"]["dapp"]["is_nameless_dimg"] = true
               res["global"]["dapp"]["dimg"] = dimg_data
@@ -83,16 +83,16 @@ module Dapp
             docker_image_id = TEMPLATE_EMPTY_VALUE
             unless fake || without_registry
               begin
-                dimg_labels = dapp.dimg_registry(repo).image_labels(docker_tag, dimg.config._name)
-                docker_image_id = dapp.dimg_registry(repo).image_id(docker_tag, dimg.config._name)
+                dimg_labels = dapp.dimg_registry(repo).image_labels(docker_tag, dimg.name)
+                docker_image_id = dapp.dimg_registry(repo).image_id(docker_tag, dimg.name)
               rescue ::Dapp::Dimg::Error::Registry => err
                 unless disable_warnings
-                  dapp.log_warning "Registry `#{err.net_status[:data][:registry]}` is not availabble: cannot determine <dimg>.docker_image_id and <dimg>.git.<ga>.commit_id helm values of dimg#{dimg.config._name ? " `#{dimg.config._name}`" : nil}"
+                  dapp.log_warning "Registry `#{err.net_status[:data][:registry]}` is not availabble: cannot determine <dimg>.docker_image_id and <dimg>.git.<ga>.commit_id helm values of dimg#{dimg.name ? " `#{dimg.name}`" : nil}"
                 end
               end
             end
 
-            dimg_data["docker_image"] = [[repo, dimg.config._name].compact.join("/"), docker_tag].join(":")
+            dimg_data["docker_image"] = [[repo, dimg.name].compact.join("/"), docker_tag].join(":")
             dimg_data["docker_image_id"] = docker_image_id
 
             [*dimg.local_git_artifacts, *dimg.remote_git_artifacts].each do |ga|
