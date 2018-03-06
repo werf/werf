@@ -5,6 +5,7 @@ en:
       shell_command_failed: ">>> START STREAM\n%{stream}\n>>> END STREAM"
     dimg:
       dimg_not_built: "Dimg hasn't been built yet!"
+      dimg_stage_not_built: "Dimg stage `%{stage_name}` hasn't been built yet!"
       dimg_not_run: "Dimg run failed!"
     dappfile:
       incorrect: "Dappfile with `%{error}`:\n%{message}"

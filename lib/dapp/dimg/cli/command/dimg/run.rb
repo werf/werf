@@ -12,6 +12,11 @@ Usage:
 
 Options:
 BANNER
+        option :stage,
+               long:        '--stage STAGE',
+               description: "Run one of the following stages (#{list_msg_format(DIMG_STAGES)})",
+               proc:        STAGE_PROC.call(DIMG_STAGES)
+
         option :ssh_key,
                long: '--ssh-key SSH_KEY',
                description: ['Enable only specified ssh keys ',
@@ -51,8 +56,16 @@ BANNER
           index = filtered_args.index('--') || filtered_args.count
           docker_options = index.nonzero? ? filtered_args.slice(0..index - 1) : []
           command = filtered_args.slice(index + 1..-1) || []
+
+          if docker_options.empty? && command.empty?
+            docker_options = %w(-ti --rm)
+            command = %w(/bin/bash)
+          end
+
+          stage_name = config.delete(:stage)
+
           run_dapp_command(nil, options: cli_options(dimgs_patterns: patterns), log_running_time: false) do |dapp|
-            dapp.run(docker_options, command)
+            dapp.run(stage_name, docker_options, command)
           end
         end
       end
