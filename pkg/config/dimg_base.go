@@ -3,19 +3,21 @@ package config
 import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
 
 type DimgBase struct {
-	Name    string
-	From    string
-	Bulder  string
-	Git     *GitManager
-	Ansible *Ansible
-	Mount   []*Mount
-	Import  []*ArtifactImport
+	Name             string
+	From             string
+	FromDimg         *Dimg
+	FromDimgArtifact *DimgArtifact
+	Bulder           string
+	Git              *GitManager
+	Ansible          *Ansible
+	Mount            []*Mount
+	Import           []*ArtifactImport
 
 	Raw *RawDimg
 }
 
 func (c *DimgBase) Validate() error {
-	if c.From == "" {
+	if c.From == "" && c.FromDimg == nil && c.FromDimgArtifact == nil {
 		return NewDetailedConfigError("`from: DOCKER_IMAGE` required!", nil, c.Raw.Doc)
 	}
 
@@ -29,6 +31,14 @@ func (c *DimgBase) ToRuby() ruby_marshal_config.DimgBase {
 	rubyDimg := ruby_marshal_config.DimgBase{}
 	rubyDimg.Name = c.Name
 	rubyDimg.Builder = ruby_marshal_config.Symbol(c.Bulder)
+
+	if c.FromDimg != nil {
+		rubyDimg.FromDimg = c.FromDimg.ToRubyPointer()
+	}
+
+	if c.FromDimgArtifact != nil {
+		rubyDimg.FromDimgArtifact = c.FromDimgArtifact.ToRubyPointer()
+	}
 
 	if c.Ansible != nil {
 		rubyDimg.Ansible = c.Ansible.ToRuby()

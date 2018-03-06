@@ -8,6 +8,17 @@ type Dimg struct {
 	Docker *Docker
 }
 
+func (c *Dimg) RelatedDimgs() (relatedDimgs []interface{}) {
+	relatedDimgs = append(relatedDimgs, c)
+	if c.FromDimg != nil {
+		relatedDimgs = append(relatedDimgs, c.FromDimg.RelatedDimgs()...)
+	}
+	if c.FromDimgArtifact != nil {
+		relatedDimgs = append(relatedDimgs, c.FromDimgArtifact.RelatedDimgs()...)
+	}
+	return
+}
+
 func (c *Dimg) Validate() error {
 	if !OneOrNone([]bool{c.Shell != nil, c.Ansible != nil}) {
 		return NewDetailedConfigError("Cannot use shell and ansible builders at the same time!", nil, c.DimgBase.Raw.Doc)
@@ -17,7 +28,11 @@ func (c *Dimg) Validate() error {
 }
 
 func (c *Dimg) ToRuby() ruby_marshal_config.Dimg {
-	rubyDimg := ruby_marshal_config.Dimg{}
+	return *c.ToRubyPointer()
+}
+
+func (c *Dimg) ToRubyPointer() *ruby_marshal_config.Dimg {
+	rubyDimg := &ruby_marshal_config.Dimg{}
 	rubyDimg.DimgBase = c.DimgBase.ToRuby()
 
 	if c.Shell != nil {

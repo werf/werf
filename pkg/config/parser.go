@@ -256,13 +256,13 @@ func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath 
 
 	for _, rawDimg := range rawDimgs {
 		if rawDimg.Type() == "dimgs" {
-			if sameDimgs, err := rawDimg.ToDirectives(); err != nil {
+			if sameDimgs, err := rawDimg.ToDimgDirectives(); err != nil {
 				return nil, err
 			} else {
 				dimgs = append(dimgs, sameDimgs...)
 			}
 		} else {
-			if dimgArtifact, err := rawDimg.ToArtifactDirective(); err != nil {
+			if dimgArtifact, err := rawDimg.ToDimgArtifactDirective(); err != nil {
 				return nil, err
 			} else {
 				artifacts = append(artifacts, dimgArtifact)
@@ -314,20 +314,36 @@ func validateArtifactsNames(artifacts []*DimgArtifact) error {
 }
 
 func associateArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
+	var artifactImports []*ArtifactImport
+
 	for _, dimg := range dimgs {
-		for _, importArtifact := range dimg.Import {
-			if err := importArtifact.AssociateArtifact(artifacts); err != nil {
-				return err
+		for _, relatedDimgInterface := range dimg.RelatedDimgs() {
+			switch relatedDimgInterface.(type) {
+			case *Dimg:
+				artifactImports = append(artifactImports, relatedDimgInterface.(*Dimg).Import...)
+			case *DimgArtifact:
+				artifactImports = append(artifactImports, relatedDimgInterface.(*DimgArtifact).Import...)
 			}
 		}
 	}
-	for _, dimg := range artifacts {
-		for _, importArtifact := range dimg.Import {
-			if err := importArtifact.AssociateArtifact(artifacts); err != nil {
-				return err
+
+	for _, artifactDimg := range artifacts {
+		for _, relatedDimgInterface := range artifactDimg.RelatedDimgs() {
+			switch relatedDimgInterface.(type) {
+			case *Dimg:
+				artifactImports = append(artifactImports, relatedDimgInterface.(*Dimg).Import...)
+			case *DimgArtifact:
+				artifactImports = append(artifactImports, relatedDimgInterface.(*DimgArtifact).Import...)
 			}
 		}
 	}
+
+	for _, artifactImport := range artifactImports {
+		if err := artifactImport.AssociateArtifact(artifacts); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

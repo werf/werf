@@ -174,7 +174,7 @@ module Dapp
       end
 
       def scratch?
-        config._docker._from.nil?
+        config._docker._from.nil? && config._from_dimg.nil? && config._from_dimg_artifact.nil?
       end
 
       def dev_mode?
