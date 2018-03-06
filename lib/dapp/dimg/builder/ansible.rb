@@ -2,7 +2,7 @@ module Dapp
   module Dimg
     class Builder::Ansible < Builder::Base
 
-      ANSIBLE_IMAGE_VERSION = "2.4.4.0-8"
+      ANSIBLE_IMAGE_VERSION = "2.4.4.0-9"
 
       def ansible_bin
         "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/embedded/bin/ansible"
@@ -47,7 +47,7 @@ module Dapp
           ansible_container_name
         end
       end
-        
+
       # query tasks from ansible config
       # create dump_config structure
       # returns structure:
@@ -133,7 +133,7 @@ module Dapp
         }
 
         define_method("#{stage}_checksum") do
-          dimg.hashsum [JSON.dump(stage_config(stage))]
+          dimg.hashsum [JSON.dump(stage_config(stage)['tasks'])]
         end
 
         define_method(stage.to_s) do |image|

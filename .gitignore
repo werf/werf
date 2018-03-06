@@ -9,3 +9,5 @@
 .dappfile.render.yaml
 dappdeps-toolchain.tar
 dappdeps/*/omnibus/build/
+/dappfile-yml
+/dappfile-yml.sha

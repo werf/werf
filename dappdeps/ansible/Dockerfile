@@ -53,7 +53,8 @@ cp /usr/lib/python2.7/dist-packages/apt_inst.x86_64-linux-gnu.so /tmp/apt_inst.s
 cp /tmp/apt_inst.so /tmp/result/.dapp/deps/ansible/*/embedded/lib/python2.7/ && \
 cp /usr/lib/python2.7/dist-packages/apt_pkg.x86_64-linux-gnu.so /tmp/apt_pkg.so && \
 cp /tmp/apt_pkg.so /tmp/result/.dapp/deps/ansible/*/embedded/lib/python2.7/ && \
-cp -r /usr/lib/python2.7/dist-packages/apt /tmp/result/.dapp/deps/ansible/*/embedded/lib/python2.7/
+cp -r /usr/lib/python2.7/dist-packages/apt /tmp/result/.dapp/deps/ansible/*/embedded/lib/python2.7/ && \
+cp -r /usr/lib/python2.7/dist-packages/aptsources /tmp/result/.dapp/deps/ansible/*/embedded/lib/python2.7/
 
 # Import tools into dappdeps/ansible scratch
 
