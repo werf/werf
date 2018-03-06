@@ -13,7 +13,7 @@ module Dapp
               artifacts_labels = {}
               artifacts.each do |artifact|
                 apply_artifact(artifact, image)
-                artifacts_labels["dapp-artifact-#{artifact[:name]}".to_sym] = artifact[:dimg].last_stage.image.built_id
+                artifacts_labels["dapp-artifact-#{artifact[:dimg].name}".to_sym] = artifact[:dimg].last_stage.image.built_id
               end
               image.add_service_change_label artifacts_labels
             end
@@ -24,7 +24,7 @@ module Dapp
               dimg.config.public_send("_#{name}").map do |artifact|
                 artifact_dimg = dimg.dapp.artifact_dimg(config: artifact._config,
                                                         ignore_git_fetch: dimg.ignore_git_fetch)
-                { name: artifact._config._name, options: artifact._artifact_options, dimg: artifact_dimg }
+                { options: artifact._artifact_options, dimg: artifact_dimg }
               end
             end
           end
@@ -49,7 +49,7 @@ module Dapp
 
           def artifacts_dimgs_build!
             artifacts.uniq { |artifact| artifact[:dimg] }.each do |artifact|
-              process = dimg.dapp.t(code: 'process.artifact_building', data: { name: artifact[:name] })
+              process = dimg.dapp.t(code: 'process.artifact_building', data: { name: artifact[:dimg].name })
               dimg.dapp.log_secondary_process(process) { artifact[:dimg].build! }
             end
           end

@@ -25,6 +25,10 @@ module Dapp
         raise Error::Dimg, code: :dimg_not_built if should_be_built?
       end
 
+      def name
+        config._name
+      end
+
       def terminate
         cleanup_tmp
       end
@@ -74,7 +78,7 @@ module Dapp
           dapp.tags_by_scheme.each do |tag_scheme_name, tags|
             dapp.log_step_with_indent(tag_scheme_name) do
               tags.each do |tag|
-                image_name = format(export_format, repo: repo, dimg_name: config._name, tag: tag)
+                image_name = format(export_format, repo: repo, dimg_name: name, tag: tag)
                 export_base!(image_name, push: push) do
                   export_image = build_export_image!(image_name, scheme_name: tag_scheme_name)
                   if push
@@ -139,7 +143,13 @@ module Dapp
       end
 
       def run(docker_options, command)
-        cmd = "#{dapp.host_docker} run #{[docker_options, last_stage.image.built_id, command].flatten.compact.join(' ')}"
+        run_stage(nil, docker_options, command)
+      end
+
+      def run_stage(stage_name, docker_options, command)
+        stage_image = (stage_name.nil? ? last_stage : stage_by_name(stage_name)).image
+        raise Error::Dimg, code: :dimg_stage_not_built, data: { stage_name: stage_name } unless stage_image.built?
+        cmd = "#{dapp.host_docker} run #{[docker_options, stage_image.built_id, command].flatten.compact.join(' ')}"
         if dapp.dry_run?
           dapp.log(cmd)
         else

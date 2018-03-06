@@ -53,10 +53,15 @@ describe Dapp::CLI do
     end
 
     def expect_parsed_options(cmd, options: {}, docker_options: [], docker_command: [])
+      if docker_options.empty? && docker_command.empty?
+        docker_options = %w(-ti --rm)
+        docker_command = %w(/bin/bash)
+      end
+
       expect { cli(*cmd.split) }.to_not raise_error
       expect(@instance.options).to include(options)
       expect(@instance.dimgs_patterns).to eq options[:dimgs_patterns] || ['*']
-      expect(@instance).to have_received(:run).with(docker_options, docker_command)
+      expect(@instance).to have_received(:run).with(nil, docker_options, docker_command)
     end
   end
 end

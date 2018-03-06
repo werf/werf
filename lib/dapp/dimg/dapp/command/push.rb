@@ -8,7 +8,7 @@ module Dapp
             #RubyProf.start
             log_step_with_indent(:stages) { stages_push } if with_stages?
             dimg_import_export_base do |dimg|
-              dimg.export!(option_repo, format: push_format(dimg.config._name))
+              dimg.export!(option_repo, format: push_format(dimg.name))
             end
             # FIXME: rework images cache, then profile
             #result = RubyProf.stop

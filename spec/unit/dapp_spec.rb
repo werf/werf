@@ -37,7 +37,7 @@ describe Dapp::Dapp do
   end
 
   it 'run:command_unexpected_dimgs_number', :push do
-    expect_exception_code(:command_unexpected_dimgs_number) { stubbed_dapp.run([], []) }
+    expect_exception_code(:command_unexpected_dimgs_number) { stubbed_dapp.run(nil, [], []) }
   end
 
   it 'list' do
