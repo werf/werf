@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io/ioutil"
@@ -66,24 +65,18 @@ func dumpDappfileRender(dappfilePath string, dappfileRenderContent string) (stri
 }
 
 func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*Doc, error) {
-	scanner := bufio.NewScanner(strings.NewReader(dappfileRenderContent))
-	scanner.Split(splitYAMLDocument)
-
 	var docs []*Doc
 	var line int
-	for scanner.Scan() {
-		content := make([]byte, len(scanner.Bytes()))
-		copy(content, scanner.Bytes())
-
-		if !emptyDocContent(content) {
+	for _, docContent := range splitContent([]byte(dappfileRenderContent)) {
+		if !emptyDocContent(docContent) {
 			docs = append(docs, &Doc{
 				Line:           line,
-				Content:        content,
+				Content:        docContent,
 				RenderFilePath: dappfileRenderPath,
 			})
 		}
 
-		contentLines := bytes.Split(content, []byte("\n"))
+		contentLines := bytes.Split(docContent, []byte("\n"))
 		if string(contentLines[len(contentLines)-1]) == "" {
 			contentLines = contentLines[0 : len(contentLines)-1]
 		}
@@ -136,61 +129,68 @@ func (f Files) Get(path string) string {
 	return string(b)
 }
 
-func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func splitContent(content []byte) (docsContents [][]byte) {
 	const (
-		stateLinebegin   = 0
-		stateRegularLine = 1
-		stateDocDash1    = 2
-		stateDocDash2    = 3
-		stateDocDash3    = 4
-		stateDocSpaces   = 5
-		stateDocComment  = 6
+		stateLineBegin   = "stateLineBegin"
+		stateRegularLine = "stateRegularLine"
+		stateDocDash1    = "stateDocDash1"
+		stateDocDash2    = "stateDocDash2"
+		stateDocDash3    = "stateDocDash3"
+		stateDocSpaces   = "stateDocSpaces"
+		stateDocComment  = "stateDocComment"
 	)
 
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
-
-	state := stateLinebegin
-	var index, docLineSize int
+	state := stateLineBegin
+	var docStartIndex, separatorLength int
+	var docContent []byte
+	var index int
 	var ch byte
-	for index, ch = range data {
+	for index, ch = range content {
 		switch ch {
 		case '-':
 			switch state {
-			case stateLinebegin:
-				docLineSize = 0
+			case stateLineBegin:
+				separatorLength = 1
 				state = stateDocDash1
-			case stateDocDash1:
-				docLineSize += 1
-				state = stateDocDash2
-			case stateDocDash2:
-				docLineSize += 1
-				state = stateDocDash3
+			case stateDocDash1, stateDocDash2:
+				separatorLength += 1
+
+				switch state {
+				case stateDocDash1:
+					state = stateDocDash2
+				case stateDocDash2:
+					state = stateDocDash3
+				}
 			default:
 				state = stateRegularLine
 			}
 		case '\n':
 			switch state {
 			case stateDocDash3, stateDocSpaces, stateDocComment:
-				advance = index + 1
-				token = data[0 : index-docLineSize-1]
-				return advance, token, nil
-			default:
-				state = stateLinebegin
+				if docStartIndex == index-separatorLength {
+					docContent = []byte{}
+				} else {
+					docContent = content[docStartIndex : index-separatorLength]
+				}
+				docsContents = append(docsContents, docContent)
+				docStartIndex = index + 1
 			}
+			separatorLength = 0
+			state = stateLineBegin
 		case ' ', '\r', '\t':
 			switch state {
 			case stateDocDash3, stateDocSpaces:
-				docLineSize += 1
+				separatorLength += 1
 				state = stateDocSpaces
 			case stateDocComment:
-				docLineSize += 1
+				separatorLength += 1
+			default:
+				state = stateRegularLine
 			}
 		case '#':
 			switch state {
 			case stateDocDash3, stateDocSpaces, stateDocComment:
-				docLineSize += 1
+				separatorLength += 1
 				state = stateDocComment
 			default:
 				state = stateRegularLine
@@ -198,19 +198,28 @@ func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err 
 		default:
 			switch state {
 			case stateDocComment:
-				docLineSize += 1
+				separatorLength += 1
 			default:
 				state = stateRegularLine
 			}
 		}
 	}
 
-	switch state {
-	case stateDocDash3, stateDocSpaces, stateDocComment:
-		return index + 1, data[0 : index-docLineSize], nil
-	default:
-		return index + 1, data, nil
+	if docStartIndex != index+1 {
+		switch state {
+		case stateDocDash3, stateDocSpaces, stateDocComment:
+			if docStartIndex == index-separatorLength {
+				docContent = []byte{}
+			} else {
+				docContent = content[docStartIndex : index-separatorLength]
+			}
+		default:
+			docContent = content[docStartIndex:]
+		}
+		docsContents = append(docsContents, docContent)
 	}
+
+	return docsContents
 }
 
 func emptyDocContent(content []byte) bool {
