@@ -133,7 +133,7 @@ module Dapp
         }
 
         define_method("#{stage}_checksum") do
-          dimg.hashsum [JSON.dump(stage_config(stage))]
+          dimg.hashsum [JSON.dump(stage_config(stage)['tasks'])]
         end
 
         define_method(stage.to_s) do |image|
