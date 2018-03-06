@@ -54,18 +54,18 @@ module Dapp
             end
           end
 
-          def run_artifact_dimg(artifact_dimg, artifact_name, commands)
+          def run_artifact_dimg(artifact_dimg, commands)
             docker_options = ['--rm',
-                              "--volume #{dimg.tmp_path('artifact', artifact_name)}:#{artifact_dimg.container_tmp_path(artifact_name)}",
+                              "--volume #{dimg.tmp_path('artifact', artifact_dimg.name )}:#{artifact_dimg.container_tmp_path(artifact_dimg.name)}",
                               "--volumes-from #{dimg.dapp.toolchain_container}",
                               "--volumes-from #{dimg.dapp.base_container}",
                               "--entrypoint #{dimg.dapp.bash_bin}"]
-            dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.artifact_copy', data: { name: artifact_name }), short: true) do
+            dimg.dapp.log_secondary_process(dimg.dapp.t(code: 'process.artifact_copy', data: { name: artifact_dimg.name }), short: true) do
               artifact_dimg.run(docker_options, [%(-ec '#{dimg.dapp.shellout_pack(commands)}')])
             end
           rescue Error::Dimg => e
             raise unless e.net_status[:code] == :dimg_not_run
-            raise Error::Build, code: :export_failed, data: { artifact_name: artifact_name }
+            raise Error::Build, code: :export_failed, data: { artifact_name: artifact_dimg.name }
           end
           # rubocop:enable Metrics/AbcSize
         end # ArtifactBase

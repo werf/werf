@@ -31,7 +31,6 @@ module Dapp
           def apply_artifact(artifact, image)
             return if dimg.dapp.dry_run?
 
-            artifact_name = artifact[:name]
             artifact_dimg = artifact[:dimg]
             cwd = artifact[:options][:cwd]
             to = artifact[:options][:to]
@@ -46,15 +45,15 @@ module Dapp
             credentials += "--group=#{group} " if group
             credentials += '--numeric-owner'
 
-            archive_path = dimg.tmp_path('artifact', artifact_name, 'archive.tar.gz')
-            container_archive_path = File.join(artifact_dimg.container_tmp_path(artifact_name), 'archive.tar.gz')
+            archive_path = dimg.tmp_path('artifact', artifact_dimg.name, 'archive.tar.gz')
+            container_archive_path = File.join(artifact_dimg.container_tmp_path(artifact_dimg.name), 'archive.tar.gz')
 
             exclude_paths = artifact[:options][:exclude_paths].map { |path| "--exclude=#{path}" }.join(' ')
             include_paths = include_paths.empty? ? [File.join(cwd, '*')] : include_paths.map { |path| File.join(cwd, path, '*') }
             include_paths.map! { |path| path[1..-1] } # relative path
 
             command = "#{sudo} #{dimg.dapp.tar_bin} #{tar_option_transform(cwd, to)} -czf #{container_archive_path} #{exclude_paths} #{include_paths.join(' ')} #{credentials}"
-            run_artifact_dimg(artifact_dimg, artifact_name, command)
+            run_artifact_dimg(artifact_dimg, command)
 
             image.add_archive archive_path
           end
