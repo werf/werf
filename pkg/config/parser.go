@@ -274,11 +274,43 @@ func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath 
 		return nil, NewConfigError(fmt.Sprintf("No dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
 	}
 
+	if err = validateDimgsNames(dimgs); err != nil {
+		return nil, err
+	}
+
+	if err = validateArtifactsNames(artifacts); err != nil {
+		return nil, err
+	}
+
 	if err = associateArtifacts(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
 	return dimgs, nil
+}
+
+func validateDimgsNames(dimgs []*Dimg) error {
+	dimgNames := map[string]*Dimg{}
+	for _, dimg := range dimgs {
+		if d, ok := dimgNames[dimg.Name]; ok {
+			return NewConfigError(fmt.Sprintf("Conflict between dimgs names!\n\n%s%s\n", DumpConfigDoc(d.Raw.Doc), DumpConfigDoc(dimg.Raw.Doc)))
+		} else {
+			dimgNames[dimg.Name] = dimg
+		}
+	}
+	return nil
+}
+
+func validateArtifactsNames(artifacts []*DimgArtifact) error {
+	artifactsNames := map[string]*DimgArtifact{}
+	for _, artifact := range artifacts {
+		if a, ok := artifactsNames[artifact.Name]; ok {
+			return NewConfigError(fmt.Sprintf("Conflict between artifacts names!\n\n%s%s\n", DumpConfigDoc(a.Raw.Doc), DumpConfigDoc(artifact.Raw.Doc)))
+		} else {
+			artifactsNames[artifact.Name] = artifact
+		}
+	}
+	return nil
 }
 
 func associateArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
