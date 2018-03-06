@@ -8,7 +8,6 @@ module Dapp
           def apply_artifact(artifact, image)
             return if dimg.dapp.dry_run?
 
-            artifact_name = artifact[:name]
             artifact_dimg = artifact[:dimg]
             cwd = artifact[:options][:cwd]
             include_paths = artifact[:options][:include_paths]
@@ -17,12 +16,12 @@ module Dapp
             group = artifact[:options][:group]
             to = artifact[:options][:to]
 
-            command = safe_cp(cwd, artifact_dimg.container_tmp_path(artifact_name, 'data').to_s, nil, nil, include_paths, exclude_paths)
-            run_artifact_dimg(artifact_dimg, artifact_name, command)
+            command = safe_cp(cwd, artifact_dimg.container_tmp_path(artifact_dimg.name, 'data').to_s, nil, nil, include_paths, exclude_paths)
+            run_artifact_dimg(artifact_dimg, command)
 
-            command = safe_cp(dimg.container_tmp_path('artifact', artifact_name, 'data').to_s, to, owner, group, include_paths, exclude_paths)
+            command = safe_cp(dimg.container_tmp_path('artifact', artifact_dimg.name, 'data').to_s, to, owner, group, include_paths, exclude_paths)
             image.add_command command
-            image.add_volume "#{dimg.tmp_path('artifact', artifact_name)}:#{dimg.container_tmp_path('artifact', artifact_name)}:ro"
+            image.add_volume "#{dimg.tmp_path('artifact', artifact_dimg.name)}:#{dimg.container_tmp_path('artifact', artifact_dimg.name)}:ro"
           end
           # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
