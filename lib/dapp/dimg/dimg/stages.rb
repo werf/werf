@@ -34,7 +34,7 @@ module Dapp
         def last_stage
           @last_stage || begin
             (self.last_stage = last_stage_class.new(self)).tap do |stage|
-              dapp.log_secondary_process("#{config._name || 'nameless'}: calculating stages signatures") do
+              dapp.log_secondary_process("#{name || 'nameless'}: calculating stages signatures") do
                 stage.signature
               end
             end
