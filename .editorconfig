@@ -1,0 +1,34 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+
+; golang
+[*.go]
+indent_style = tab
+indent_size = 4
+
+
+; ruby
+[Gemfile]
+indent_size = 2
+indent_style = space
+
+[*.{rb, gemspec}]
+indent_size = 2
+indent_style = space
+
+
+; yaml
+[*.{yml,yaml}]
+indent_size = 2
+indent_style = space
