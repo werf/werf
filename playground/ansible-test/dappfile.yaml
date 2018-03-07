@@ -50,18 +50,34 @@ ansible:
       name: ca-certificates
 
 ---
+{{ $TMPLPASS := "pas sFromT empltae" }}
 # DAPP_BIN_DAPPFILE_YML=path-to/dappfile-yml bundle exec dapp dimg build --dir=playground/ansible-test
 dimg: alp
 from: alpine:latest
 ansible:
   beforeInstall:
-    #- apk: name=python update_cache=yes
-    #- set_fact: ansible_python_interpreter=/usr/bin/python
-    #- command: ls -la
+  #- raw: da
+  #- raw: /bin/ash -lec "for i in 1 2 3 4 5; do date ; sleep 1 ; done"
+  - raw: |
+      echo live stdout example
+      for i in 1 2 3 4 5; do
+        date
+        sleep 1
+      done
+      echo Мой пароль из простой переменной $PASSWORD
+      echo Мой пароль из шаблона $TMPLPASS
+      echo Длина пароля {{`{{'${#PASSWORD} #}'}}`}}
+      echo The end.
+      sleep 0.1
+    args:
+      executable: PASSWORD=secretPass312 TMPLPASS="{{ $TMPLPASS }}" /bin/ash -le
+  # curl можно не ставить, есть get_url
+  # просто пример установки пакета
   - name: install curl
     apk: name=curl update_cache=yes
   - group:
       name: apache
+      gid: 48
   - user:
       name: apache
       uid: 48
@@ -70,24 +86,26 @@ ansible:
       database: passwd
       key: apache
   - debug: var=getent_passwd
-#    - apk:
-#        name: '{{"{{"}} item {{"}}"}}'
-#        update_cache: yes
-#      with_items:
-#        - curl
-
+    #    - apk:
+    #        name: '{{"{{"}} item {{"}}"}}'
+    #        update_cache: yes
+    #      with_items:
+    #        - curl
     #- raw: apk update
     #- raw: apk add curl
-#    - file:
-#        path: /game
-#        state: directory
-#        owner: games
-#    - raw: 'touch {{`{{ item }}`}}'
-#      become_user: game
-#      with_items:
-#      - '/game/test-file'
-#    - raw: ls -la /game/test-file
-#    - debug: msg="prijkjhkvet dapp"
+  - file:
+      path: /game
+      state: directory
+      owner: games
+  - raw: 'touch {{`{{ item }}`}}'
+    become_user: games
+    with_items:
+    - '/game/test-file'
+  - raw: ls -la /game/test-file
+  - copy:
+      src: /game/test-file
+      dest: /game/test-file-2
+    become_user: games
 ---
 dimg: ubu
 from: ubuntu:16.04
@@ -100,7 +118,7 @@ import:
     add: /helm
     to: /usr/bin/helm
     before: install
-# импорт директории не работет почему, пишет
+# импорт директории не работет почему-то, пишет
 #  copying artifact `binary_assets` ... ERROR: destination must be a directory when copying more than 1 file
 # rsync error: errors selecting input/output files, dirs (code 3) at main.c(623) [Receiver=3.1.2]
 # Artifact export failed (`binary_assets`): check artifact.export in Dappfile!
