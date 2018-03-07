@@ -62,7 +62,7 @@ func supportedModules() []string {
 	// Commands Modules
 	modules = append(modules, []string{"command", "shell", "raw", "script"}...)
 	// Files Modules
-	modules = append(modules, []string{"archive", "unarchive", "blockinfile", "lineinfile", "file", "find", "tempfile", "copy", "acl", "xattr"}...)
+	modules = append(modules, []string{"assemble", "archive", "unarchive", "blockinfile", "lineinfile", "file", "find", "tempfile", "copy", "acl", "xattr", "ini_file", "iso_extract"}...)
 	// Net Tools Modules
 	modules = append(modules, []string{"get_url", "slurp", "uri"}...)
 	// Packaging Modules
@@ -71,6 +71,9 @@ func supportedModules() []string {
 	modules = append(modules, []string{"user", "group", "getent", "locale_gen"}...)
 	// Utilities Modules
 	modules = append(modules, []string{"assert", "debug", "set_fact", "wait_for"}...)
+	// Crypto Modules
+	modules = append(modules, []string{"openssl_certificate", "openssl_csr", "openssl_privatekey", "openssl_publickey"}...)
+
 	return modules
 }
 
