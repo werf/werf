@@ -2,7 +2,7 @@ module Dapp
   module Dimg
     class Builder::Ansible < Builder::Base
 
-      ANSIBLE_IMAGE_VERSION = "2.4.4.0-9"
+      ANSIBLE_IMAGE_VERSION = "2.4.4.0-10"
 
       def ansible_bin
         "/.dapp/deps/ansible/#{ANSIBLE_IMAGE_VERSION}/embedded/bin/ansible"
