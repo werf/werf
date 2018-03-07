@@ -1,9 +1,5 @@
 package config
 
-import (
-	"fmt"
-)
-
 type RawShell struct {
 	BeforeInstall interface{} `yaml:"beforeInstall,omitempty"`
 	Install       interface{} `yaml:"install,omitempty"`
@@ -72,7 +68,7 @@ func (c *RawShell) ToDirective() (shellDimg *ShellDimg, err error) {
 
 func (c *RawShell) ValidateDirective(shellDimg *ShellDimg) error {
 	if c.BuildArtifact != nil {
-		return fmt.Errorf("`buildArtifact` stage is not available for dimg, only for artifact!\n\n%s\n%s", DumpConfigSection(c), DumpConfigDoc(c.RawDimg.Doc))
+		return NewDetailedConfigError("`buildArtifact` stage is not available for dimg, only for artifact!", c, c.RawDimg.Doc)
 	}
 
 	if err := shellDimg.Validate(); err != nil {

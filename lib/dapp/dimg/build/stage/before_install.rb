@@ -9,13 +9,12 @@ module Dapp
           end
 
           def empty?
-            super && !dimg.builder.before_install?
+            !dimg.builder.before_install?
           end
 
-          def context
+          def dependencies
             [builder_checksum]
           end
-          alias dependencies context
 
           def builder_checksum
             dimg.builder.before_install_checksum

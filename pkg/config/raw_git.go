@@ -137,7 +137,7 @@ func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	if len(match) == 3 {
 		gitRemote.Name = match[1]
 	} else {
-		return nil, fmt.Errorf("Cannot determine repo name from `url: %s`: url is not fit `.*?([^/ ]+/[^/ ]+)(\\.git?)$` regex!\n\n%s\n%s", c.Url, DumpConfigSection(c), DumpConfigDoc(c.RawDimg.Doc))
+		return nil, NewDetailedConfigError(fmt.Sprintf("Cannot determine repo name from `url: %s`: url is not fit `.*?([^/ ]+/[^/ ]+)(\\.git?)$` regex!", c.Url), c, c.RawDimg.Doc)
 	}
 
 	gitRemote.Raw = c

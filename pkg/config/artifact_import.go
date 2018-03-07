@@ -21,15 +21,15 @@ func (c *ArtifactImport) Validate() error {
 	}
 
 	if c.ArtifactName == "" {
-		return fmt.Errorf("Artifact name `artifact: NAME` required for import!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+		return NewDetailedConfigError("Artifact name `artifact: NAME` required for import!", c.Raw, c.Raw.RawDimg.Doc)
 	} else if c.Before != "" && c.After != "" {
-		return fmt.Errorf("Specify only one artifact stage using `before: install|setup` or `after: install|setup` for import!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+		return NewDetailedConfigError("Specify only one artifact stage using `before: install|setup` or `after: install|setup` for import!", c.Raw, c.Raw.RawDimg.Doc)
 	} else if c.Before == "" && c.After == "" {
-		return fmt.Errorf("Artifact stage is not specified with `before: install|setup` or `after: install|setup` for import!\n\n%s\n%s", DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+		return NewDetailedConfigError("Artifact stage is not specified with `before: install|setup` or `after: install|setup` for import!", c.Raw, c.Raw.RawDimg.Doc)
 	} else if c.Before != "" && checkInvalidRelation(c.Before) {
-		return fmt.Errorf("Invalid artifact stage `before: %s` for import: expected install or setup!\n\n%s\n%s", c.Before, DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+		return NewDetailedConfigError(fmt.Sprintf("Invalid artifact stage `before: %s` for import: expected install or setup!", c.Before), c.Raw, c.Raw.RawDimg.Doc)
 	} else if c.After != "" && checkInvalidRelation(c.After) {
-		return fmt.Errorf("Invalid artifact stage `after: %s` for import: expected install or setup!\n\n%s\n%s", c.After, DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+		return NewDetailedConfigError(fmt.Sprintf("Invalid artifact stage `after: %s` for import: expected install or setup!", c.After), c.Raw, c.Raw.RawDimg.Doc)
 	}
 	return nil
 }
@@ -42,7 +42,7 @@ func (c *ArtifactImport) AssociateArtifact(artifacts []*DimgArtifact) error {
 	if artifactDimg := artifactByName(artifacts, c.ArtifactName); artifactDimg != nil {
 		c.ArtifactDimg = artifactDimg
 	} else {
-		return fmt.Errorf("No such artifact `%s`!\n\n%s\n%s", c.ArtifactName, DumpConfigSection(c.Raw), DumpConfigDoc(c.Raw.RawDimg.Doc))
+		return NewDetailedConfigError(fmt.Sprintf("No such artifact `%s`!", c.ArtifactName), c.Raw, c.Raw.RawDimg.Doc)
 	}
 	return nil
 }

@@ -42,12 +42,14 @@ func (cfg DimgArtifact) TagYAML() string {
 }
 
 type DimgBase struct {
-	Name          string          `yaml:"_name,omitempty"`
-	Builder       Symbol          `yaml:"_builder"`
-	Chef          Chef            `yaml:"_chef,omitempty"`
-	ArtifactGroup []ArtifactGroup `yaml:"_artifact_groups,omitempty"`
-	GitArtifact   GitArtifact     `yaml:"_git_artifact,omitempty"`
-	Mount         []Mount         `yaml:"_mount,omitempty"`
+	Name             string          `yaml:"_name,omitempty"`
+	FromDimg         *Dimg           `yaml:"_from_dimg,omitempty"`
+	FromDimgArtifact *DimgArtifact   `yaml:"_from_dimg_artifact,omitempty"`
+	Builder          Symbol          `yaml:"_builder"`
+	Ansible          Ansible         `yaml:"_ansible,omitempty"`
+	ArtifactGroup    []ArtifactGroup `yaml:"_artifact_groups,omitempty"`
+	GitArtifact      GitArtifact     `yaml:"_git_artifact,omitempty"`
+	Mount            []Mount         `yaml:"_mount,omitempty"`
 }
 
 type DockerDimg struct {
@@ -81,11 +83,11 @@ type DockerBase struct {
 }
 
 type ShellDimg struct {
-	Version       string       `yaml:"_version,omitempty"`
-	BeforeInstall StageCommand `yaml:"_before_install,omitempty"`
-	BeforeSetup   StageCommand `yaml:"_before_setup,omitempty"`
-	Install       StageCommand `yaml:"_install,omitempty"`
-	Setup         StageCommand `yaml:"_setup,omitempty"`
+	Version       string       `yaml:"_version"`
+	BeforeInstall StageCommand `yaml:"_before_install"`
+	BeforeSetup   StageCommand `yaml:"_before_setup"`
+	Install       StageCommand `yaml:"_install"`
+	Setup         StageCommand `yaml:"_setup"`
 }
 
 func (cfg ShellDimg) TagYAML() string {
@@ -94,7 +96,7 @@ func (cfg ShellDimg) TagYAML() string {
 
 type ShellArtifact struct {
 	ShellDimg     `yaml:",inline"`
-	BuildArtifact StageCommand `yaml:"_build_artifact,omitempty"`
+	BuildArtifact StageCommand `yaml:"_build_artifact"`
 }
 
 func (cfg ShellArtifact) TagYAML() string {
@@ -110,21 +112,18 @@ func (cfg StageCommand) TagYAML() string {
 	return "!ruby/object:Dapp::Dimg::Config::Directive::Shell::Dimg::StageCommand"
 }
 
-type Chef struct {
-	Dimod      []string                          `yaml:"_dimod"`
-	Recipe     []string                          `yaml:"_recipe"`
-	Attributes ChefAttributes                    `yaml:"_attributes"`
-	Cookbook   map[string]map[Symbol]interface{} `yaml:"_cookbook"`
+type Ansible struct {
+	BeforeInstall []interface{} `yaml:"before_install"`
+	Install       []interface{} `yaml:"install"`
+	BeforeSetup   []interface{} `yaml:"before_setup"`
+	Setup         []interface{} `yaml:"setup"`
+	BuildArtifact []interface{} `yaml:"build_artifact"`
+	DumpConfigDoc string        `yaml:"dump_config_doc"`
 }
 
-func (cfg Chef) TagYAML() string {
-	return "!ruby/object:Dapp::Dimg::Config::Directive::Chef"
-}
-
-type ChefAttributes map[interface{}]interface{}
-
-func (cfg ChefAttributes) TagYAML() string {
-	return "!ruby/hash:Dapp::Dimg::Config::Directive::Chef::Attributes"
+type AnsibleTask struct {
+	Config            interface{} `yaml:"config"`
+	DumpConfigSection string      `yaml:"dump_config_section"`
 }
 
 type ArtifactGroup struct {

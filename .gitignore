@@ -5,3 +5,11 @@
 /.vendor
 /Gemfile.lock
 /.vscode
+/.idea
+
+.dappfile.render.yml
+.dappfile.render.yaml
+dappdeps-toolchain.tar
+dappdeps/*/omnibus/build/
+/dappfile-yml
+/dappfile-yml.sha
