@@ -10,11 +10,27 @@ module Dapp
           protected
 
           def prepare_image
-            try_host_docker_login
-            from_image.pull!
-            raise Error::Build, code: :from_image_not_found, data: { name: from_image_name } unless from_image.tagged?
+            if !from_dimg.nil?
+              process = dimg.dapp.t(code: 'process.layer_building', data: { name: from_dimg.name })
+              dimg.dapp.log_secondary_process(process) { from_dimg.build! }
+            else
+              try_host_docker_login
+              from_image.pull!
+              raise Error::Build, code: :from_image_not_found, data: { name: from_image_name } unless from_image.tagged?
+            end
+
             add_cleanup_mounts_dirs_command
             super
+          end
+
+          def from_dimg
+            @from_dimg ||= begin
+              if !dimg.config._from_dimg.nil?
+                dimg.dapp.dimg_layer(config: dimg.config._from_dimg, ignore_git_fetch: dimg.ignore_git_fetch)
+              elsif !dimg.config._from_dimg_artifact.nil?
+                dimg.dapp.artifact_dimg_layer(config: dimg.config._from_dimg_artifact, ignore_git_fetch: dimg.ignore_git_fetch)
+              end
+            end
           end
 
           def try_host_docker_login
@@ -55,11 +71,21 @@ module Dapp
           private
 
           def from_image_name
-            dimg.config._docker._from
+            if !from_dimg.nil?
+              from_dimg.signature
+            else
+              dimg.config._docker._from
+            end
           end
 
           def from_image
-            @from_image ||= Image::Stage.image_by_name(name: from_image_name, dapp: dimg.dapp)
+            @from_image ||= begin
+              if !from_dimg.nil?
+                from_dimg.last_stage.image
+              else
+                Image::Stage.image_by_name(name: from_image_name, dapp: dimg.dapp)
+              end
+            end
           end
         end # Prepare
       end # Stage
