@@ -105,8 +105,10 @@ module Dapp
             # generate ansible config for solo mode
             workdir.join('ansible.cfg').write Assets.ansible_cfg(container_workdir.join('hosts'),
                                                                  container_workdir.join('lib', 'callback'),
-                                                                 dimg.dapp.sudo_bin
-                                                                )
+                                                                 dimg.dapp.sudo_bin,
+                                                                 container_tmpdir.join('local'),
+                                                                 container_tmpdir.join('remote'),
+                                                                 )
 
             # save config dump for pretty errors
             workdir.join('dump_config.json').write JSON.generate(stage_config(stage)['dump_config'])
@@ -119,6 +121,8 @@ module Dapp
               libdir.join('crypt.py').write Assets.crypt_py
               libdir.join('callback').tap do |callbackdir|
                 callbackdir.mkpath
+                callbackdir.join('__init__.py').write '# module callback'
+                callbackdir.join('live.py').write Assets.live_py
                 # add dapp specific stdout callback for ansible
                 callbackdir.join('dapp.py').write Assets.dapp_py
               end
@@ -142,9 +146,12 @@ module Dapp
             image.add_env('ANSIBLE_CONFIG', container_workdir.join('ansible.cfg'))
             image.add_env('DAPP_DUMP_CONFIG_DOC_PATH', container_workdir.join('dump_config.json'))
             image.add_env('PYTHONPATH', container_workdir.join('lib'))
+            image.add_env('PYTHONIOENCODING', 'utf-8')
             image.add_env('ANSIBLE_PREPEND_SYSTEM_PATH', dimg.dapp.dappdeps_base_path)
-            image.add_volumes_from("#{ansible_container}:ro")
+            image.add_env('LC_ALL', 'C.UTF-8')
+            image.add_volumes_from("#{ansible_container}:rw")
             image.add_volume "#{host_workdir(stage)}:#{container_workdir}:ro"
+            image.add_volume "#{host_tmpdir(stage)}:#{container_tmpdir}:rw"
             image.add_command [ansible_playbook_bin,
                                container_workdir.join('playbook.yml'),
                                ENV['ANSIBLE_ARGS']
@@ -165,14 +172,32 @@ module Dapp
 
       # host directory in tmp_dir with directories structure
       def host_workdir(stage)
-        @host_workdir ||= begin
+        @host_workdirs ||= {}
+        @host_workdirs[stage.to_s] ||= begin
           dimg.tmp_path(dimg.dapp.consistent_uniq_slugify(dimg.config._name || "nameless"), "ansible-workdir-#{stage.to_s}").tap {|p| p.mkpath}
+        end
+      end
+
+      # temporary directories for ansible
+      def host_tmpdir(stage)
+        @host_tmpdirs ||= {}
+        @host_tmpdirs[stage.to_s] ||= begin
+          dimg.tmp_path(dimg.dapp.consistent_uniq_slugify(dimg.config._name || "nameless"), "ansible-tmpdir-#{stage.to_s}").tap do |p|
+            p.mkpath
+            p.join('local').mkpath
+            p.join('remote').mkpath
+          end
         end
       end
 
       # directory with playbook in container
       def container_workdir
         dimg.container_dapp_path("ansible-workdir")
+      end
+
+      # temporary directory for ansible
+      def container_tmpdir
+        dimg.container_dapp_path("ansible-tmpdir")
       end
 
     end # Builder::Ansible

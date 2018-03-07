@@ -5,6 +5,8 @@
 /.vendor
 /Gemfile.lock
 /.vscode
+/.idea
+
 .dappfile.render.yml
 .dappfile.render.yaml
 dappdeps-toolchain.tar
