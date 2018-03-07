@@ -297,7 +297,7 @@ func (c *RawDimg) toDimgShellLayersByStage(name string, commands []string, stage
 			return nil, err
 		} else {
 			dimgLayer.Bulder = "shell"
-			dimgLayer.Shell = toShellDimgWithCommandByStage(command, stage)
+			dimgLayer.Shell = c.toShellDimgWithCommandByStage(command, stage)
 			dimgLayers = append(dimgLayers, dimgLayer)
 		}
 	}
@@ -305,9 +305,9 @@ func (c *RawDimg) toDimgShellLayersByStage(name string, commands []string, stage
 	return dimgLayers, nil
 }
 
-func toShellDimgWithCommandByStage(command string, stage string) (shellDimg *ShellDimg) {
+func (c *RawDimg) toShellDimgWithCommandByStage(command string, stage string) (shellDimg *ShellDimg) {
 	shellDimg = &ShellDimg{}
-	shellDimg.ShellBase = toShellBaseWithCommandByStage(command, stage)
+	shellDimg.ShellBase = c.toShellBaseWithCommandByStage(command, stage)
 	return
 }
 
@@ -318,7 +318,7 @@ func (c *RawDimg) toDimgAnsibleLayers(name string, tasks []*AnsibleTask, stage s
 			return nil, err
 		} else {
 			dimgLayer.Bulder = "ansible"
-			dimgLayer.Ansible = toAnsibleWithTaskByStage(task, stage)
+			dimgLayer.Ansible = c.toAnsibleWithTaskByStage(task, stage)
 			dimgLayers = append(dimgLayers, dimgLayer)
 		}
 	}
@@ -631,7 +631,7 @@ func (c *RawDimg) toDimgArtifactShellLayers(commands []string, stage string) (di
 			return nil, err
 		} else {
 			dimgArtifactLayer.Bulder = "shell"
-			dimgArtifactLayer.Shell = toShellArtifactWithCommandByStage(command, stage)
+			dimgArtifactLayer.Shell = c.toShellArtifactWithCommandByStage(command, stage)
 			dimgArtifactLayers = append(dimgArtifactLayers, dimgArtifactLayer)
 		}
 	}
@@ -639,17 +639,17 @@ func (c *RawDimg) toDimgArtifactShellLayers(commands []string, stage string) (di
 	return dimgArtifactLayers, nil
 }
 
-func toShellArtifactWithCommandByStage(command string, stage string) (shellArtifact *ShellArtifact) {
+func (c *RawDimg) toShellArtifactWithCommandByStage(command string, stage string) (shellArtifact *ShellArtifact) {
 	shellArtifact = &ShellArtifact{}
 	if stage == "buildArtifact" {
 		shellArtifact.BuildArtifact = []string{command}
 	} else {
-		shellArtifact.ShellDimg = toShellDimgWithCommandByStage(command, stage)
+		shellArtifact.ShellDimg = c.toShellDimgWithCommandByStage(command, stage)
 	}
 	return
 }
 
-func toShellBaseWithCommandByStage(command string, stage string) (shellBase *ShellBase) {
+func (c *RawDimg) toShellBaseWithCommandByStage(command string, stage string) (shellBase *ShellBase) {
 	shellBase = &ShellBase{}
 	switch stage {
 	case "beforeInstall":
@@ -661,6 +661,7 @@ func toShellBaseWithCommandByStage(command string, stage string) (shellBase *She
 	case "setup":
 		shellBase.Setup = []string{command}
 	}
+	shellBase.Raw = c.RawShell
 	return
 }
 
@@ -671,7 +672,7 @@ func (c *RawDimg) toDimgArtifactAnsibleLayers(tasks []*AnsibleTask, stage string
 			return nil, err
 		} else {
 			dimgLayer.Bulder = "ansible"
-			dimgLayer.Ansible = toAnsibleWithTaskByStage(task, stage)
+			dimgLayer.Ansible = c.toAnsibleWithTaskByStage(task, stage)
 			dimgLayers = append(dimgLayers, dimgLayer)
 		}
 	}
@@ -679,7 +680,7 @@ func (c *RawDimg) toDimgArtifactAnsibleLayers(tasks []*AnsibleTask, stage string
 	return dimgLayers, nil
 }
 
-func toAnsibleWithTaskByStage(task *AnsibleTask, stage string) (ansible *Ansible) {
+func (c *RawDimg) toAnsibleWithTaskByStage(task *AnsibleTask, stage string) (ansible *Ansible) {
 	ansible = &Ansible{}
 	switch stage {
 	case "beforeInstall":
@@ -693,6 +694,7 @@ func toAnsibleWithTaskByStage(task *AnsibleTask, stage string) (ansible *Ansible
 	case "buildArtifact":
 		ansible.BuildArtifact = []*AnsibleTask{task}
 	}
+	ansible.Raw = c.RawAnsible
 	return
 }
 
