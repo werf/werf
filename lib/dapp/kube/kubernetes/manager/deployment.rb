@@ -160,15 +160,19 @@ module Dapp
                 end # with_log_indent
               end
 
-              break if begin
-                (d_revision and
-                  d.replicas and
-                    d.status['updatedReplicas'] and
-                      d.status['availableReplicas'] and
-                        d.status['readyReplicas'] and
-                          (d.status['updatedReplicas'] >= d.replicas) and
-                            (d.status['availableReplicas'] >= d.replicas) and
-                              (d.status['readyReplicas'] >= d.replicas))
+              if d_revision && d.replicas
+                if d.replicas == 0
+                  break
+                else
+                  break if begin
+                    d.status['updatedReplicas'] &&
+                      d.status['availableReplicas'] &&
+                        d.status['readyReplicas'] &&
+                          (d.status['updatedReplicas'] >= d.replicas) &&
+                            (d.status['availableReplicas'] >= d.replicas) &&
+                              (d.status['readyReplicas'] >= d.replicas)
+                  end
+                end
               end
 
               sleep 5
