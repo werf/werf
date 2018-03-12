@@ -48,9 +48,9 @@ module Dapp
           delta_new_file = patch.delta.new_file
           args = [delta_new_file[:path], paths: paths, exclude_paths: exclude_paths]
           if nested_git_repository_mode?(delta_new_file[:mode])
-            !ignore_directory?(*args)
+            ignore_directory?(*args)
           else
-            !ignore_path?(*args)
+            ignore_path?(*args)
           end
         end
 
