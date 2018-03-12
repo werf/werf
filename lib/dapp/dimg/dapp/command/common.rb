@@ -125,6 +125,7 @@ module Dapp
           end
 
           def remove_base(query_format, ids, force: false)
+            return if ids.empty?
             force_option = force ? ' -f' : ''
             log(ids.join("\n")) if log_verbose? || dry_run?
             run_command(format(query_format, force_option: force_option, ids: ids.join(' ')))
