@@ -104,12 +104,12 @@ module Dapp
 
         def patches(from, to, paths: [], exclude_paths: [], **kwargs)
           diff(from, to, **kwargs).patches.select do |patch|
-            ignore_patch?(patch, paths: paths, exclude_paths: exclude_paths)
+            !ignore_patch?(patch, paths: paths, exclude_paths: exclude_paths)
           end
         end
 
         def ignore_patch?(patch, paths: [], exclude_paths: [])
-          !ignore_path?(patch.delta.new_file[:path], paths: paths, exclude_paths: exclude_paths)
+          ignore_path?(patch.delta.new_file[:path], paths: paths, exclude_paths: exclude_paths)
         end
 
         def entries(commit, paths: [], exclude_paths: [])
