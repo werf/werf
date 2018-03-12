@@ -189,8 +189,10 @@ module Dapp
             commits[git_artifact] ||= begin
               if image.built?
                 image.labels[dimg.dapp.dimgstage_g_a_commit_label(git_artifact.paramshash)]
-              else
+              elsif g_a_stage? && !empty?
                 git_artifact.latest_commit
+              elsif prev_stage
+                prev_stage.layer_commit(git_artifact)
               end
             end
           end
