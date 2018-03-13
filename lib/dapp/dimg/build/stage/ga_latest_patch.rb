@@ -28,7 +28,9 @@ module Dapp
           private
 
           def commit_list
-            dimg.git_artifacts.map { |git_artifact| layer_commit(git_artifact) }
+            dimg.git_artifacts
+              .map { |git_artifact| layer_commit(git_artifact) if git_artifact.patch_any_changes?(self) }
+              .compact
           end
 
           def git_artifacts_dev_patch_hashes
