@@ -11,6 +11,9 @@ Usage:
 
 Options:
 BANNER
+        def log_running_time
+          false
+        end
       end
     end
   end

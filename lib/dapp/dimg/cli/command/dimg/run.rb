@@ -64,9 +64,13 @@ BANNER
 
           stage_name = config.delete(:stage)
 
-          run_dapp_command(nil, options: cli_options(dimgs_patterns: patterns), log_running_time: false) do |dapp|
+          run_dapp_command(nil, options: cli_options(dimgs_patterns: patterns)) do |dapp|
             dapp.run(stage_name, docker_options, command)
           end
+        end
+
+        def log_running_time
+          false
         end
       end
     end
