@@ -36,7 +36,7 @@ module Dapp
             (self.last_stage = last_stage_class.new(self)).tap do |stage|
               dapp.log_secondary_process("#{name || 'nameless'}: calculating stages signatures") do
                 stage.signature
-              end
+              end unless ignore_signature_auto_calculation
             end
           end
         end
