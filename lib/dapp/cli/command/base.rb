@@ -56,10 +56,10 @@ module Dapp
           super()
         end
 
-        def run_dapp_command(run_method, options: {}, log_running_time: true, try_host_docker_login: false)
+        def run_dapp_command(run_method, options: {}, try_host_docker_login: false)
           dapp = ::Dapp::Dapp.new(options: options)
 
-          log_dapp_running_time(dapp, ignore: !log_running_time) do
+          log_dapp_running_time(dapp) do
             begin
               dapp.try_host_docker_login if try_host_docker_login
 
@@ -74,8 +74,8 @@ module Dapp
           end
         end
 
-        def log_dapp_running_time(dapp, ignore: false)
-          return yield if ignore
+        def log_dapp_running_time(dapp)
+          return yield unless log_running_time
 
           begin
             start_time = Time.now
@@ -83,6 +83,10 @@ module Dapp
           ensure
             dapp.log_step("Running time #{(Time.now - start_time).round(2)} seconds")
           end
+        end
+
+        def log_running_time
+          true
         end
 
         def run(_argv = ARGV)

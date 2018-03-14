@@ -23,7 +23,8 @@ module Dapp
             @artifacts ||= begin
               dimg.config.public_send("_#{name}").map do |artifact|
                 artifact_dimg = dimg.dapp.artifact_dimg(config: artifact._config,
-                                                        ignore_git_fetch: dimg.ignore_git_fetch)
+                                                        ignore_git_fetch: dimg.ignore_git_fetch,
+                                                        ignore_signature_auto_calculation: dimg.ignore_signature_auto_calculation)
                 { options: artifact._artifact_options, dimg: artifact_dimg }
               end
             end

@@ -29,7 +29,7 @@ BANNER
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
 
-        run_dapp_command(nil, options: cli_options, log_running_time: false) do |dapp|
+        run_dapp_command(nil, options: cli_options) do |dapp|
           repo = if not cli_arguments[1].nil?
             self.class.required_argument(self, "repo")
           else
@@ -42,7 +42,10 @@ BANNER
           dapp.public_send(run_method, value_key)
         end
       end
+    end
 
+    def log_running_time
+      false
     end
   end
 end
