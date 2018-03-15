@@ -62,6 +62,7 @@ module Dapp
 
         def run_dapp_command(run_method, options: {}, log_running_time: true)
           dapp = ::Dapp::Dapp.new(options: options)
+          ::Dapp::CLI.dapp_object = dapp
 
           log_dapp_running_time(dapp, ignore: !log_running_time) do
             if block_given?
