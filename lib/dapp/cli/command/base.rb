@@ -58,6 +58,7 @@ module Dapp
 
         def run_dapp_command(run_method, options: {}, try_host_docker_login: false)
           dapp = ::Dapp::Dapp.new(options: options)
+          ::Dapp::CLI.dapp_object = dapp
 
           log_dapp_running_time(dapp) do
             begin
