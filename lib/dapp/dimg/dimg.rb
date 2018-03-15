@@ -81,6 +81,12 @@ module Dapp
             dapp.log_step_with_indent(tag_scheme_name) do
               tags.each do |tag|
                 image_name = format(export_format, repo: repo, dimg_name: name, tag: tag)
+
+                if push && tag_should_not_be_pushed?(tag.to_s)
+                  dapp.log_state(image_name, state: dapp.t(code: 'state.exist'))
+                  next
+                end
+
                 export_base!(image_name, push: push) do
                   export_image = build_export_image!(image_name, scheme_name: tag_scheme_name)
                   if push
@@ -95,7 +101,28 @@ module Dapp
         end
       end
 
-      def build_export_image!(image_name, scheme_name:)
+      def tag_should_not_be_pushed?(tag)
+        registry_tags.include?(tag) && begin
+          registry_tag_parent = registry.image_history(tag, name)['container_config']['Image']
+          registry_tag_parent == last_stage.image.built_id
+        end
+      end
+
+      def registry_tags
+        @registry_tags ||= begin
+          if name.nil?
+            registry.nameless_dimg_tags
+          else
+            registry.dimg_tags(name)
+          end
+        end
+      end
+
+      def registry
+        @registry ||= dapp.dimg_registry
+      end
+
+      def  build_export_image!(image_name, scheme_name:)
         Image::Dimg.image_by_name(name: image_name, from: last_stage.image, dapp: dapp).tap do |export_image|
           export_image.add_service_change_label(:'dapp-tag-scheme' => scheme_name)
           export_image.add_service_change_label(:'dapp-dimg' => true)
