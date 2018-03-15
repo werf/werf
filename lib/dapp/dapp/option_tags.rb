@@ -7,6 +7,12 @@ module Dapp
 
       def tags_by_scheme
         @tags_by_scheme_name ||= begin
+          if slug_tags[:custom].any?
+            if settings.fetch("sentry", {}).fetch("detect-push-tag-usage", false)
+              sentry_message("--tag or --tag-slug usage detected", extra: {"slug_tags" => slug_tags})
+            end
+          end
+
           {}.tap do |tags_by_scheme|
             [slug_tags, branch_tags, ci_tags].each do |_tags_by_scheme|
               _tags_by_scheme.each do |scheme, tags|
