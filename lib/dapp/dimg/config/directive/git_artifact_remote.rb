@@ -3,11 +3,13 @@ module Dapp
     module Config
       module Directive
         class GitArtifactRemote < GitArtifactLocal
+          include ::Dapp::Helper::Url
+
           attr_reader :_url, :_name, :_branch, :_commit
 
           def initialize(url, **kwargs, &blk)
             @_url  = url
-            @_name = url.gsub(%r{.*?([^\/ ]+)\.git}, '\\1')
+            @_name = git_url_to_name(url)
 
             super(**kwargs, &blk)
           end

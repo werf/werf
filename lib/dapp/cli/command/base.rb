@@ -58,6 +58,7 @@ module Dapp
 
         def run_dapp_command(run_method, *args)
           dapp = ::Dapp::Dapp.new(*args)
+          ::Dapp::CLI.dapp_object = dapp
           begin
             if block_given?
               yield dapp
