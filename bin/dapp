@@ -50,6 +50,10 @@ with_dapp_running_lock do
         $stderr.puts "\033[1m\033[90mStacktrace dumped to #{filename}\033[0m"
       end
 
+      if Dapp::CLI.dapp_object
+        Dapp::CLI.dapp_object.sentry_exception(e)
+      end
+
       raise
     end
   rescue Dapp::Error::Shellout => e
