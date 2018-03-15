@@ -35,6 +35,10 @@ BANNER
            show_options: true,
            exit: 0
 
+    class << self
+      attr_accessor :dapp_object
+    end
+
     def initialize(*args)
       super(*args)
 

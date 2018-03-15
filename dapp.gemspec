@@ -29,6 +29,8 @@ Gem::Specification.new do |s|
   s.add_dependency 'inifile', '~> 3.0.0'
   s.add_dependency 'rugged', '~> 0.24.0'
   s.add_dependency 'murmurhash3', '~> 0.1.6'
+  s.add_dependency 'sentry-raven', '~> 2.7.2'
+  s.add_dependency 'toml-rb', '~> 1.1.1'
 
   s.add_development_dependency 'bundler', '~> 1.7'
   s.add_development_dependency 'rake', '~> 10.0'

@@ -27,6 +27,10 @@ begin
         $stderr.puts(message)
       end
 
+      if Dapp::CLI.dapp_object
+        Dapp::CLI.dapp_object.sentry_exception(e)
+      end
+
       raise
     end
   rescue ::SystemExit

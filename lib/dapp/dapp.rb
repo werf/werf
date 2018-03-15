@@ -11,8 +11,12 @@ module Dapp
     include Logging::Paint
 
     include SshAgent
+    include Sentry
+
     include Helper::Sha256
+    extend  Helper::Trivia
     include Helper::Trivia
+    include Helper::Url
 
     include Deps::Gitartifact
     include Deps::Base
@@ -25,6 +29,19 @@ module Dapp
       @options = options
       Logging::Paint.initialize(options[:log_color])
       Logging::I18n.initialize
+      ::Dapp::CLI.dapp_object = self
+    end
+
+    def settings
+      @settings ||= begin
+        settings_path = File.join(self.class.home_dir, "settings.toml")
+
+        if File.exists? settings_path
+          TomlRB.load_file(settings_path)
+        else
+          {}
+        end
+      end
     end
 
     def name
