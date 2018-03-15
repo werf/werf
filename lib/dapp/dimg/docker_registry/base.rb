@@ -35,7 +35,6 @@ module Dapp
         end
 
         def image_delete(tag)
-          image_blobs(tag).each { |hash| blob_delete(hash.values.first) }
           api_request(repo_suffix, "/manifests/#{image_digest(tag)}",
                       method: :delete,
                       expects: [202, 404],
@@ -54,10 +53,6 @@ module Dapp
                           headers: { Accept: 'application/vnd.docker.distribution.manifest.v2+json' }).headers['Docker-Content-Digest']
         end
 
-        def image_blobs(tag)
-          manifest_v1(tag)['fsLayers']
-        end
-
         def manifest_v1(tag)
           api_request(repo_suffix, "/manifests/#{tag}")
         end
@@ -65,11 +60,6 @@ module Dapp
         def manifest_v2(tag)
           api_request(repo_suffix, "/manifests/#{tag}",
                       headers: { Accept: 'application/vnd.docker.distribution.manifest.v2+json' })
-        end
-
-        def blob_delete(id)
-          api_request(repo_suffix, "/blobs/#{id}",
-                      method: :delete, expects: [202, 404])
         end
 
         def api_request(*uri, **options)
