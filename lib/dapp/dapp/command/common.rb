@@ -14,7 +14,7 @@ module Dapp
           { ':minikube' => "localhost:5000/#{name}" }
         end
 
-        def dimg_registry(repo)
+        def dimg_registry(repo = option_repo)
           validate_repo_name!(repo)
           ::Dapp::Dimg::DockerRegistry.new(repo)
         end
