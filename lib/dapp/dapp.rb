@@ -12,9 +12,13 @@ module Dapp
     include Logging::Paint
 
     include SshAgent
+    include Sentry
+
     include Helper::Sha256
+    extend  Helper::Trivia
     include Helper::Trivia
     include Helper::Tar
+    include Helper::Url
 
     include Deps::Gitartifact
     include Deps::Base
@@ -28,6 +32,20 @@ module Dapp
       Logging::I18n.initialize
       validate_config_options!
       Logging::Paint.initialize(option_color)
+
+      ::Dapp::CLI.dapp_object = self
+    end
+
+    def settings
+      @settings ||= begin
+        settings_path = File.join(self.class.home_dir, "settings.toml")
+
+        if File.exists? settings_path
+          TomlRB.load_file(settings_path)
+        else
+          {}
+        end
+      end
     end
 
     def name
@@ -70,15 +88,18 @@ module Dapp
       File.expand_path(options[:tmp_dir_prefix] || '/tmp')
     end
 
-    def build_path(*path)
-      @build_path ||= begin
+    def build_dir
+      @build_dir ||= begin
         if option_build_dir
           Pathname.new(option_build_dir)
         else
           path('.dapp_build')
         end.expand_path.tap(&:mkpath)
       end
-      make_path(@build_path, *path)
+    end
+
+    def build_path(*path)
+      make_path(build_dir, *path)
     end
 
     def local_git_artifact_exclude_paths(&blk)
