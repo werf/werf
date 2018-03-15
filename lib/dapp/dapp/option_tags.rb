@@ -7,6 +7,12 @@ module Dapp
 
       def tags_by_scheme
         @tags_by_scheme_name ||= begin
+          if simple_tags[:custom].any?
+            if settings.fetch("sentry", {}).fetch("detect-push-tag-usage", false)
+              sentry_message("--tag or --tag-slug usage detected", extra: {"slug_tags" => simple_tags})
+            end
+          end
+
           [simple_tags, branch_tags, commit_tags, build_tags, ci_tags].reduce({}) do |some_tags_by_scheme, tags_by_scheme|
             tags_by_scheme.in_depth_merge(some_tags_by_scheme)
           end.tap do |tags_by_scheme|
