@@ -20,10 +20,6 @@ module Dapp::Dimg::CLI
           end
         end
       end
-
-      def run_method
-        class_to_lowercase
-      end
     end
   end
 end
