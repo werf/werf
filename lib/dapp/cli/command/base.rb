@@ -59,7 +59,7 @@ module Dapp
         def run_dapp_command(run_method, *args)
           dapp = ::Dapp::Dapp.new(*args)
           ::Dapp::CLI.dapp_object = dapp
-          dapp.sentry_message("Manual usage: `#{options[:dapp_command]}` command") unless ENV['CI']
+          dapp.sentry_message("Manual usage: `#{self.run_method}` command") unless ENV['CI']
 
           begin
             if block_given?
