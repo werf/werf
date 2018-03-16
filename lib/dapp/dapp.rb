@@ -123,6 +123,10 @@ module Dapp
       self.class.host_docker_bin
     end
 
+    def self.home_dir
+      File.join(Dir.home, ".dapp")
+    end
+
     def self.host_docker_bin
       @host_docker_bin ||= begin
         raise Error::Dapp, code: :docker_not_found if (res = shellout('which docker')).exitstatus.nonzero?
