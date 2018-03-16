@@ -47,7 +47,6 @@ module Dapp
         @_sentry_extra_context ||= {
           "pwd" => Dir.pwd,
           "dapp-dir" => self.work_dir,
-          "build-dir" => self.build_dir,
           "options" => self.options,
           "env-options" => {
             "DAPP_FORCE_SAVE_CACHE" => ENV["DAPP_FORCE_SAVE_CACHE"],
@@ -56,16 +55,6 @@ module Dapp
             "DAPP_CHEF_DEBUG" => ENV["DAPP_CHEF_DEBUG"],
           },
         }.tap {|extra|
-          if git_own_repo_exist?
-            extra["git"] = {
-              "remote_origin_url" => git_own_repo.remote_origin_url, # may contain https token
-              "name" => self.git_url_to_name(git_own_repo.remote_origin_url),
-              "path" => git_own_repo.path,
-              "workdir_path" => git_own_repo.workdir_path,
-              "latest_commit" => git_own_repo.latest_commit,
-            }
-          end
-
           extra["ci-env"] = {"CI" => ENV["CI"]}
           ENV.select {|k, v| k.start_with?("CI_")}.each do |k, v|
             extra["ci-env"][k] = v
@@ -74,21 +63,38 @@ module Dapp
       end
 
       def _sentry_tags_context
+        name = options[:name] || 
         @_sentry_tags_context ||= {
-          "dapp-name" => self.name,
           "dapp-short-version" => ::Dapp::VERSION.split(".")[0..1].join("."),
           "dapp-version" => ::Dapp::VERSION,
           "dapp-build-cache-version" => ::Dapp::BUILD_CACHE_VERSION,
           "dapp-command" => self.options[:dapp_command],
         }.tap {|tags|
-          if git_own_repo_exist?
-            tags["git-host"] = self.get_host_from_git_url(git_own_repo.remote_origin_url)
+          git_config_path = File.join(Dir.pwd, ".git/config")
 
-            git_name = self.git_url_to_name(git_own_repo.remote_origin_url)
+          tags["dapp-name"] = options[:name]
 
-            tags["git-group"] = git_name.partition("/")[0]
-            tags["git-name"] = git_name
+          if File.exists? git_config_path
+            cfg = IniFile.load(File.join(Dir.pwd, ".git/config"))
+            remote_origin_cfg = cfg['remote "origin"']
+            remote_origin_url = remote_origin_cfg["url"]
+            if remote_origin_url
+              tags["dapp-name"] ||= begin
+                repo_name = remote_origin_url.split('/').last
+                repo_name = repo_name[/.*(?=\.git)/] if repo_name.end_with? '.git'
+                repo_name
+              end
+
+              tags["git-host"] = self.get_host_from_git_url(remote_origin_url)
+
+              git_name = self.git_url_to_name(remote_origin_url)
+
+              tags["git-group"] = git_name.partition("/")[0]
+              tags["git-name"] = git_name
+            end
           end
+
+          tags["dapp-name"] ||= File.basename(Dir.pwd)
 
           begin
             ver = self.class.host_docker_minor_version
@@ -99,7 +105,7 @@ module Dapp
       end
 
       def _sentry_user_context
-        @__sentry_user_context ||= {}
+        @_sentry_user_context ||= {}
       end
     end # Sentry
   end # Dapp
