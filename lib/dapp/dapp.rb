@@ -30,6 +30,7 @@ module Dapp
       Logging::Paint.initialize(options[:log_color])
       Logging::I18n.initialize
       ::Dapp::CLI.dapp_object = self
+      sentry_message("Manual usage: `#{options[:dapp_command]}` command") unless ENV['CI']
     end
 
     def settings
