@@ -165,6 +165,7 @@ module Dapp
                     # Поэтому перехватываем и просто отображаем произошедшую
                     # ошибку для информации пользователю без завершения работы dapp.
                     $stderr.puts(::Dapp::Dapp.paint_string(::Dapp::Helper::NetStatus.message(e), :warning))
+                    sentry_exception(e, extra: {"job-spec" => job.spec})
                   end
 
                 end # Thread
