@@ -71,7 +71,14 @@ module Dapp
               watch_hooks_thr = nil
               unless dry_run?
                 watch_hooks_thr = Thread.new do
-                  watch_hooks.each {|job| Kubernetes::Manager::Job.new(self, job.name).watch_till_done!}
+                  watch_hooks.each {|job|
+                    begin
+                      Kubernetes::Manager::Job.new(self, job.name).watch_till_done!
+                    rescue ::Exception => e
+                      sentry_exception(e, extra: {"job-spec" => job.spec})
+                      raise
+                    end
+                  }
                 end
               end
 
