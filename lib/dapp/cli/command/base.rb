@@ -61,7 +61,7 @@ module Dapp
         end
 
         def cli_options(**kvargs)
-          config.merge(**kvargs)
+          config.merge(dapp_command: run_method, **kvargs)
         end
       end
     end
