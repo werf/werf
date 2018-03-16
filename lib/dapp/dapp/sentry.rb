@@ -9,6 +9,10 @@ module Dapp
 
       def sentry_exception(exception, **kwargs)
         return if not ensure_sentry_configured
+        (kwargs[:tags] ||= {})['error-code'] = begin
+          net_status = exception.net_status
+          [net_status[:context], net_status[:code]].compact.join('_')
+        end
         Raven.capture_exception(exception, _make_sentry_params(**kwargs))
       end
 
@@ -75,6 +79,7 @@ module Dapp
           "dapp-short-version" => ::Dapp::VERSION.split(".")[0..1].join("."),
           "dapp-version" => ::Dapp::VERSION,
           "dapp-build-cache-version" => ::Dapp::BUILD_CACHE_VERSION,
+          "dapp-command" => self.options[:dapp_command],
         }.tap {|tags|
           if git_own_repo_exist?
             tags["git-host"] = self.get_host_from_git_url(git_own_repo.remote_origin_url)
