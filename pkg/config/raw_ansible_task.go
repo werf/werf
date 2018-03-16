@@ -62,7 +62,7 @@ func supportedModules() []string {
 	// Commands Modules
 	modules = append(modules, []string{"command", "shell", "raw", "script"}...)
 	// Files Modules
-	modules = append(modules, []string{"assemble", "archive", "unarchive", "blockinfile", "lineinfile", "file", "find", "tempfile", "copy", "acl", "xattr", "ini_file", "iso_extract"}...)
+	modules = append(modules, []string{"assemble", "archive", "unarchive", "blockinfile", "lineinfile", "file", "stat", "find", "tempfile", "copy", "acl", "xattr", "ini_file", "iso_extract"}...)
 	// Net Tools Modules
 	modules = append(modules, []string{"get_url", "slurp", "uri"}...)
 
