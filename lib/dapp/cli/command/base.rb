@@ -59,6 +59,8 @@ module Dapp
         def run_dapp_command(run_method, *args)
           dapp = ::Dapp::Dapp.new(*args)
           ::Dapp::CLI.dapp_object = dapp
+          dapp.sentry_message("Manual usage: `#{options[:dapp_command]}` command") unless ENV['CI']
+
           begin
             if block_given?
               yield dapp
@@ -68,12 +70,16 @@ module Dapp
           end
         end
 
+        def run_method
+          class_to_lowercase
+        end
+
         def run(_argv = ARGV)
           raise
         end
 
         def cli_options(**kwargs)
-          config.merge(**kwargs)
+          config.merge(dapp_command: run_method, **kwargs)
         end
       end
     end
