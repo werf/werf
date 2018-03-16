@@ -56,6 +56,10 @@ module Dapp
           super()
         end
 
+        def run_method
+          class_to_lowercase
+        end
+
         def run(_argv = ARGV)
           raise
         end
