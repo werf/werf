@@ -151,6 +151,10 @@ module Dapp
     end
 
     class << self
+      def home_dir
+        File.join(Dir.home, ".dapp")
+      end
+
       def options
         @options ||= {}
       end
