@@ -122,7 +122,7 @@ module Dapp
         @registry ||= dapp.dimg_registry
       end
 
-      def  build_export_image!(image_name, scheme_name:)
+      def build_export_image!(image_name, scheme_name:)
         Image::Dimg.image_by_name(name: image_name, from: last_stage.image, dapp: dapp).tap do |export_image|
           export_image.add_service_change_label(:'dapp-tag-scheme' => scheme_name)
           export_image.add_service_change_label(:'dapp-dimg' => true)
