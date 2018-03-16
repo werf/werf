@@ -65,8 +65,53 @@ func supportedModules() []string {
 	modules = append(modules, []string{"assemble", "archive", "unarchive", "blockinfile", "lineinfile", "file", "find", "tempfile", "copy", "acl", "xattr", "ini_file", "iso_extract"}...)
 	// Net Tools Modules
 	modules = append(modules, []string{"get_url", "slurp", "uri"}...)
-	// Packaging Modules
-	modules = append(modules, []string{"apk", "apt", "apt_key", "apt_repository", "yum", "yum_repository"}...)
+
+	// Packaging/Language Modules
+	modules = append(modules, []string{"bower", "bundler", "composer", "cpanm", "easy_install", "gem", "maven_artifact", "npm", "pear", "pip"}...)
+
+	// Packagning/Os Modules
+	modules = append(modules, []string{
+		"apk",
+		"apt",
+		"apt_key",
+		"apt_repository",
+		"apt_rpm",
+		"dnf",
+		"dpkg_selections",
+		"homebrew",
+		"homebrew_cask",
+		"homebrew_tap",
+		"layman",
+		"macports",
+		"openbsd_pkg",
+		"opkg",
+		"package",
+		"pacman",
+		"pkg5",
+		"pkg5_publisher",
+		"pkgin",
+		"pkgng",
+		"pkgutil",
+		"portage",
+		"portinstall",
+		"pulp_repo",
+		"redhat_subscription",
+		"rhn_channel",
+		"rhn_register",
+		"rpm_key",
+		"slackpkg",
+		"sorcery",
+		"svr4pkg",
+		"swdepot",
+		"swupd",
+		"urpmi",
+		"xbps",
+		"yum",
+		"yum_repository",
+		"zypper",
+		"zypper_repository",
+	}...)
+
 	// System Modules
 	modules = append(modules, []string{"user", "group", "getent", "locale_gen"}...)
 	// Utilities Modules
