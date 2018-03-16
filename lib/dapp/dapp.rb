@@ -105,5 +105,9 @@ module Dapp
     def stage_dapp_label
       name
     end
+
+    def self.home_dir
+      File.join(Dir.home, ".dapp")
+    end
   end # Dapp
 end # Dapp
