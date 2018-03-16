@@ -63,6 +63,7 @@ module Dapp
         def run_dapp_command(run_method, options: {}, log_running_time: true)
           dapp = ::Dapp::Dapp.new(options: options)
           ::Dapp::CLI.dapp_object = dapp
+          dapp.sentry_message("Manual usage: `#{options[:dapp_command]}` command") unless ENV['CI']
 
           log_dapp_running_time(dapp, ignore: !log_running_time) do
             if block_given?
@@ -71,6 +72,10 @@ module Dapp
               dapp.public_send(run_method)
             end
           end
+        end
+
+        def run_method
+          class_to_lowercase
         end
 
         def log_dapp_running_time(dapp, ignore: false)
@@ -89,7 +94,7 @@ module Dapp
         end
 
         def cli_options(**kwargs)
-          config.merge(**kwargs)
+          config.merge(dapp_command: run_method, **kwargs)
         end
       end
     end
