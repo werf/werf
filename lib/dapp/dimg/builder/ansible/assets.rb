@@ -172,7 +172,7 @@ class CallbackModule(CallbackBase):
         name = task.name
         if not name:
             if task.action in self.FREE_FORM_MODULES:
-                name = task.args.get('_raw_params')
+                name = task.args.get('_raw_params', '')
             if task.action == 'file':
                 name = task.args.get('path')
             if task.action == 'copy':
@@ -200,10 +200,15 @@ class CallbackModule(CallbackBase):
         ''' output the result of a command run '''
 
         self._display.display("%s | rc=%s >>" % (self._task_header(task, caption), result.get('rc', -1)), color)
+        msg = result.get('msg')
+        if msg:
+            self._display.display(msg, color)
         # prevent dublication in case of live_stdout
         if not result.get('live_stdout', False):
-            self._display.display("stdout was:", color=C.COLOR_HIGHLIGHT)
-            self._display.display(result.get('stdout', ''))
+            stdout = result.get('stdout', None)
+            if stdout:
+              self._display.display("stdout was:", color=C.COLOR_HIGHLIGHT)
+              self._display.display(stdout)
         stderr = result.get('stderr', '')
         if stderr:
             self._display.display("stderr was:", color=C.COLOR_HIGHLIGHT)
