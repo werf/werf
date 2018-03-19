@@ -23,7 +23,7 @@ remote_tmp = #{remote_tmp}
 become = yes
 become_method = sudo
 become_exe = #{become_exe}
-become_flags = -E
+become_flags = -E -H
 }
         end
 
@@ -172,13 +172,25 @@ class CallbackModule(CallbackBase):
         name = task.name
         if not name:
             if task.action in self.FREE_FORM_MODULES:
-                name = task.args['_raw_params']
+                name = task.args.get('_raw_params')
+            if task.action == 'file':
+                name = task.args.get('path')
+            if task.action == 'copy':
+                name = task.args.get('dest')
+            if task.action == 'group':
+                name = task.args.get('name')
+            if task.action == 'user':
+                name = task.args.get('name')
+            if task.action == 'get_url':
+                name = task.args.get('url')
             if task.action == 'getent':
                 db = task.args.get('database')
                 key = task.args.get('key')
                 name = '%s %s' % (db, key)
             if task.action == 'apt':
                 name = task.args.get('name')
+            if task.action == 'composer':
+                name = task.args.get('command', 'install')
         name = re.sub(r'\s+', r' ', name)
         if len(name) > 25 :
             name = '%s...' % name[0:22]
