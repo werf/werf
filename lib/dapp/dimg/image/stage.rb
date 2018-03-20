@@ -17,6 +17,11 @@ module Dapp
           super(name: name, dapp: dapp, from: from)
         end
 
+        def built_id_example
+          # FIXME: remove this example
+          self.dapp.ruby2go_image(Hash[instance_variables.map { |name| [name, instance_variable_get(name).to_s] } ])
+        end
+
         def built_id
           @built_id ||= id
         end
