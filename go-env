@@ -1,1 +1,4 @@
 export DAPP_BIN_DAPPFILE_YML=$GOPATH/bin/dappfile-yml
+export DAPP_BIN_BUILDER=$GOPATH/bin/builder
+export DAPP_BIN_GIT_ARTIFACT=$GOPATH/bin/git-artifact
+export DAPP_BIN_IMAGE=$GOPATH/bin/image

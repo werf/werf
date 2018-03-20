@@ -18,6 +18,7 @@ module Dapp
 
     include SshAgent
     include Sentry
+    include Ruby2Go
 
     include Helper::Sha256
     extend  Helper::Trivia
@@ -40,6 +41,8 @@ module Dapp
       Logging::Paint.initialize(option_color)
 
       @_call_before_terminate = []
+
+      ruby2go_init
     end
 
     def options
