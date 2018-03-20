@@ -10,6 +10,7 @@ en:
     dappfile:
       incorrect: "Dappfile with `%{error}`:\n%{message}"
     build:
+      ruby2go_image_command_failed: 'ruby2go_image command `%{command}` failed!'
       from_image_required: 'Missing from_image!'
       image_already_untagged: "Image `%{name}` untagged already!"
       image_not_exist: "Image `%{name}` doesn't exist!"

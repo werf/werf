@@ -27,13 +27,26 @@ module Dapp
         end
 
         def id
-          self.class.image_inspect(self.name)["Id"]
+          image_inspect["Id"]
+        end
+
+        def reset_image_inspect
+          @image_inspect = nil
+        end
+
+        def image_inspect
+          @image_inspect ||= begin
+            res = self.dapp.ruby2go_image(image: JSON.dump(name: name), command: "inspect")
+            raise res["error"] if res["error"]
+            image = JSON.load(res['data']['image'])
+            image['image_inspect'] || {}
+          end
         end
 
         def untag!
           raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
           dapp.shellout!("#{dapp.host_docker} rmi #{name}")
-          self.class.reset_image_inspect(self.name)
+          reset_image_inspect
         end
 
         def push!
@@ -48,61 +61,11 @@ module Dapp
           dapp.log_secondary_process(dapp.t(code: 'process.image_pull', data: { name: name })) do
             dapp.shellout!("#{dapp.host_docker} pull #{name}", verbose: true)
           end
-
-          self.class.reset_image_inspect(self.name)
+          reset_image_inspect
         end
 
         def tagged?
-          not self.class.image_inspect(self.name).empty?
-        end
-
-        def created_at
-          raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
-          self.class.image_inspect(self.name)["Created"]
-        end
-
-        def size
-          raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
-          Float(self.class.image_inspect(self.name)["Size"])
-        end
-
-        def config_option(option)
-          raise Error::Build, code: :image_not_exist, data: { name: name } if built_id.nil?
-          self.class.image_config_option(image_id: built_id, option: option)
-        end
-
-        class << self
-          def image_inspect(image_id)
-            image_inspects[image_id] ||= begin
-              cmd = ::Dapp::Dapp.shellout("#{::Dapp::Dapp.host_docker} inspect --type=image #{image_id}")
-
-              if cmd.exitstatus != 0
-                if cmd.stderr.start_with? "Error: No such image:"
-                  {}
-                else
-                  ::Dapp::Dapp.shellout_cmd_should_succeed! cmd
-                end
-              else
-                Array(JSON.parse(cmd.stdout.strip)).first || {}
-              end
-            end
-          end
-
-          def image_config(image_id)
-            image_inspect(image_id)["Config"] || {}
-          end
-
-          def image_config_option(image_id:, option:)
-            image_config(image_id)[option]
-          end
-
-          def reset_image_inspect(image_id)
-            image_inspects.delete(image_id)
-          end
-
-          def image_inspects
-            @image_inspects ||= {}
-          end
+          not image_inspect.empty?
         end
 
         protected
@@ -126,7 +89,6 @@ module Dapp
 
           def tag!(id:, tag:, verbose: false, quiet: false)
             ::Dapp::Dapp.shellout!("#{::Dapp::Dapp.host_docker} tag #{id} #{tag}", verbose: verbose, quiet: quiet)
-            image_inspects[tag] = image_inspect(id)
           end
 
           def save!(image_or_images, file_path, verbose: false, quiet: false)

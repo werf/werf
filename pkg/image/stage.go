@@ -1,19 +1,61 @@
 package image
 
+import (
+	"github.com/docker/cli/cli/command"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
+	"golang.org/x/net/context"
+)
+
 type Stage struct {
-	*Base
-	From      *Stage
-	BuiltId   string
-	Container *Container
+	Name         string
+	Id           string
+	From         *Stage
+	BuiltId      string
+	Container    *StageContainer
+	BuiltInspect *types.ImageInspect
+	Inspect      *types.ImageInspect
+}
+
+func (i *Stage) ResetBuiltInspect(dockerApiClient *client.Client) error {
+	inspect, err := inspect(dockerApiClient, i.BuiltId)
+	if err != nil {
+		return err
+	}
+
+	i.BuiltInspect = inspect
+	return nil
+}
+
+func (i *Stage) ResetInspect(dockerApiClient *client.Client) error {
+	inspect, err := inspect(dockerApiClient, i.Name)
+	if err != nil {
+		return err
+	}
+
+	i.Inspect = inspect
+	return nil
+}
+
+func inspect(dockerApiClient *client.Client, imageId string) (*types.ImageInspect, error) {
+	ctx := context.Background()
+	inspect, _, err := dockerApiClient.ImageInspectWithRaw(ctx, imageId)
+	if err != nil {
+		if client.IsErrNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &inspect, nil
 }
 
 func NewStageImage(from *Stage, name string, builtId string) *Stage {
 	stage := &Stage{}
-	stage.Name = name
 	stage.From = from
 	stage.BuiltId = builtId
-	stage.Base = NewBaseImage()
-	stage.Container = NewContainer()
+	stage.Name = name
+	stage.Container = NewStageImageContainer()
+	stage.Container.Image = stage
 	return stage
 }
 
@@ -22,77 +64,20 @@ func (i *Stage) NewStageImage(name string) *Stage {
 	return stage
 }
 
-func (i *Stage) IsBuilt() bool {
-	if i.GetBuiltId() != "" {
-		return true
-	}
-	return false
-}
-
-func (i *Stage) GetBuiltId() string {
-	if i.BuiltId != "" {
-		return i.BuiltId
-	} else {
-		return i.GetId()
-	}
-}
-
-func (i *Stage) Build() error {
-	if err := i.Container.Run(); err != nil {
+func (i *Stage) Build(dockerClient *command.DockerCli, dockerApiClient *client.Client) error {
+	if err := i.Container.Run(dockerClient); err != nil {
 		return err
 	}
 
-	if builtId, err := i.Container.CommitAndRm(); err != nil {
+	builtId, err := i.Container.Commit(dockerApiClient)
+	if err != nil {
 		return err
-	} else {
-		i.BuiltId = builtId
 	}
+	i.BuiltId = builtId
 
-	return nil
-}
-
-func (i *Stage) SaveInCache() error {
-	return Tag(i.BuiltId, i.Name)
-}
-
-func (i *Stage) Tag(tag string) error {
-	return Tag(i.BuiltId, tag)
-}
-
-func (i *Stage) Import(name string) error {
-	stage := i.NewStageImage(name)
-
-	if err := stage.Pull(); err != nil {
+	if err := i.Container.Rm(dockerApiClient); err != nil {
 		return err
 	}
 
-	i.BuiltId = stage.BuiltId
-
-	if err := i.SaveInCache(); err != nil {
-		return err
-	}
-
-	if err := stage.Untag(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (i *Stage) Export(name string) error {
-	stage := i.NewStageImage(name)
-
-	if err := stage.Push(); err != nil {
-		return err
-	}
-
-	if err := stage.Untag(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func Tag(builtId string, tag string) error { // TODO
 	return nil
 }
