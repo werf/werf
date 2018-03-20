@@ -23,7 +23,7 @@ remote_tmp = #{remote_tmp}
 become = yes
 become_method = sudo
 become_exe = #{become_exe}
-become_flags = -E
+become_flags = -E -H
 }
         end
 
@@ -172,13 +172,25 @@ class CallbackModule(CallbackBase):
         name = task.name
         if not name:
             if task.action in self.FREE_FORM_MODULES:
-                name = task.args['_raw_params']
+                name = task.args.get('_raw_params', '')
+            if task.action == 'file':
+                name = task.args.get('path')
+            if task.action == 'copy':
+                name = task.args.get('dest')
+            if task.action == 'group':
+                name = task.args.get('name')
+            if task.action == 'user':
+                name = task.args.get('name')
+            if task.action == 'get_url':
+                name = task.args.get('url')
             if task.action == 'getent':
                 db = task.args.get('database')
                 key = task.args.get('key')
                 name = '%s %s' % (db, key)
             if task.action == 'apt':
                 name = task.args.get('name')
+            if task.action == 'composer':
+                name = task.args.get('command', 'install')
         name = re.sub(r'\s+', r' ', name)
         if len(name) > 25 :
             name = '%s...' % name[0:22]
@@ -188,10 +200,15 @@ class CallbackModule(CallbackBase):
         ''' output the result of a command run '''
 
         self._display.display("%s | rc=%s >>" % (self._task_header(task, caption), result.get('rc', -1)), color)
+        msg = result.get('msg')
+        if msg:
+            self._display.display(msg, color)
         # prevent dublication in case of live_stdout
         if not result.get('live_stdout', False):
-            self._display.display("stdout was:", color=C.COLOR_HIGHLIGHT)
-            self._display.display(result.get('stdout', ''))
+            stdout = result.get('stdout', None)
+            if stdout:
+              self._display.display("stdout was:", color=C.COLOR_HIGHLIGHT)
+              self._display.display(stdout)
         stderr = result.get('stderr', '')
         if stderr:
             self._display.display("stderr was:", color=C.COLOR_HIGHLIGHT)
