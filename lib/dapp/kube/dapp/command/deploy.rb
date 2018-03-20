@@ -154,7 +154,12 @@ module Dapp
 
                   begin
                     watch_hooks.each do |job|
-                      Kubernetes::Manager::Job.new(self, job.name).watch_till_done!
+                      begin
+                        Kubernetes::Manager::Job.new(self, job.name).watch_till_done!
+                      rescue ::Exception => e
+                        sentry_exception(e, extra: {"job-spec" => job.spec})
+                        raise
+                      end
                     end # watch_hooks.each
                   rescue Kubernetes::Error::Default => e
                     # Default-ошибка -- это ошибка для пользователя которую перехватывает и
@@ -165,7 +170,6 @@ module Dapp
                     # Поэтому перехватываем и просто отображаем произошедшую
                     # ошибку для информации пользователю без завершения работы dapp.
                     $stderr.puts(::Dapp::Dapp.paint_string(::Dapp::Helper::NetStatus.message(e), :warning))
-                    sentry_exception(e, extra: {"job-spec" => job.spec})
                   end
 
                 end # Thread
