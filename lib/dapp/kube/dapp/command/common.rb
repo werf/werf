@@ -263,7 +263,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
           end
 
           def kube_release_name
-            "#{name}-#{kube_namespace}"
+            ENV["DAPP_HELM_RELEASE_NAME"] || "#{name}-#{kube_namespace}"
           end
 
           { encode: :generate, decode: :extract }.each do |type, secret_method|
