@@ -127,7 +127,16 @@ import:
 
 #### `git: GIT_ARR`
 
-Example, add local git repository:
+Each element of `GIT_ARR` is a separate git-specification:
+
+```
+git:
+- GIT_SPEC
+- GIT_SPEC
+...
+```
+
+Example of `GIT_SPEC` to add local git repository:
 
 ```
 git:
@@ -147,13 +156,35 @@ git:
     - app/assets/*
 ```
 
-Example, add remote git repository:
+Example of `GIT_SPEC` to add remote git repository:
 
 ```
 git:
 - url: https://github.com/kr/beanstalkd.git
   add: /
   to: /build
+```
+
+Example of add multiple mixed local and remote git-repos:
+
+```
+git:
+# remote repo GIT_SPEC
+- url: https://github.com/kr/beanstalkd.git
+  add: /
+  to: /build
+# remote repo GIT_SPEC
+- url: https://github.com/kubernetes/helm
+  add: /
+  to: /helm
+# local repo GIT_SPEC
+- add: /
+  to: /app
+  excludePaths:
+  - app2
+# local repo GIT_SPEC
+- add: /app2
+  to: /app2
 ```
 
 ### Shell
