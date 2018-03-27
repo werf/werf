@@ -35,12 +35,12 @@ module Dapp
       end
 
       def _make_sentry_params(level: nil, tags: {}, extra: {}, user: {})
-        {
+        Marshal.load(Marshal.dump({
           level: level,
           tags:  _sentry_tags_context.merge(tags),
           extra: _sentry_extra_context.merge(extra),
           user:  _sentry_user_context.merge(user),
-        }
+        }))
       end
 
       def _sentry_extra_context
