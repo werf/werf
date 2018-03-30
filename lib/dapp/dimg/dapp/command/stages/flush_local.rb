@@ -8,6 +8,9 @@ module Dapp
               lock("#{name}.images") do
                 log_step_with_indent('flush stages') { remove_project_images(dapp_project_dimgstages) }
               end
+
+              dapp_containers_flush_by_label("dapp=#{name}")
+              dapp_dangling_images_flush_by_label("dapp=#{name}")
             end
           end
         end
