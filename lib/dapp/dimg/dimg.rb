@@ -20,10 +20,18 @@ module Dapp
 
         @ignore_git_fetch                  = ignore_git_fetch
         @ignore_signature_auto_calculation = ignore_signature_auto_calculation
-        @should_be_built                   = should_be_built
 
         @dapp._terminate_dimg_on_terminate(self)
 
+        enable_should_be_built if should_be_built
+        should_be_built!
+      end
+
+      def enable_should_be_built
+        @should_be_built = true
+      end
+
+      def should_be_built!
         raise Error::Dimg, code: :dimg_not_built if should_be_built?
       end
 
@@ -67,7 +75,14 @@ module Dapp
       def export_stages!(repo, format:)
         dapp.lock("#{dapp.name}.images", readonly: true) do
           export_images.each do |stage_image|
-            image_name = format(format, repo: repo, signature: stage_image.name.split(':').last)
+            signature = stage_image.name.split(':').last
+            image_name = format(format, repo: repo, signature: signature)
+
+            if dimgstage_should_not_be_pushed?(format(dapp.dimgstage_push_tag_format, signature: signature))
+              dapp.log_state(image_name, state: dapp.t(code: 'state.exist'))
+              next
+            end
+
             export_base!(image_name, push: true) do
               stage_image.export!(image_name)
             end
@@ -101,6 +116,10 @@ module Dapp
         end
       end
 
+      def dimgstage_should_not_be_pushed?(signature)
+        registry_dimgstages_tags.include?(signature)
+      end
+
       def tag_should_not_be_pushed?(tag)
         registry_tags.include?(tag) && begin
           registry_tag_parent = registry.image_history(tag, name)['container_config']['Image']
@@ -118,12 +137,17 @@ module Dapp
         end
       end
 
+      def registry_dimgstages_tags
+        @registry_dimgstages_tags ||= registry.dimgstages_tags
+      end
+
       def registry
         @registry ||= dapp.dimg_registry
       end
 
       def build_export_image!(image_name, scheme_name:)
         Image::Dimg.image_by_name(name: image_name, from: last_stage.image, dapp: dapp).tap do |export_image|
+          export_image.untag! if export_image.built?
           export_image.add_service_change_label(:'dapp-tag-scheme' => scheme_name)
           export_image.add_service_change_label(:'dapp-dimg' => true)
           export_image.build!
@@ -144,8 +168,15 @@ module Dapp
       def import_stages!(repo, format:)
         dapp.lock("#{dapp.name}.images", readonly: true) do
           import_images.each do |image|
+            signature = image.name.split(':').last
+            image_name = format(format, repo: repo, signature:signature )
+
+            unless dimgstage_should_not_be_pushed?(format(dapp.dimgstage_push_tag_format, signature: signature))
+              dapp.log_state(image_name, state: dapp.t(code: 'state.not_exist'))
+              next
+            end
+
             begin
-              image_name = format(format, repo: repo, signature: image.name.split(':').last)
               import_base!(image, image_name)
             rescue ::Dapp::Error::Shellout => e
               dapp.log_info ::Dapp::Helper::NetStatus.message(e)

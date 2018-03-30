@@ -3,6 +3,10 @@ module Dapp
     module Dapp
       module Command
         module Common
+          def dimgstage_push_tag_format
+            'dimgstage-%{signature}'
+          end
+
           protected
 
           def dapp_project_dimgstages
@@ -203,7 +207,7 @@ module Dapp
           end
 
           def dimgstage_push_format
-            '%{repo}:dimgstage-%{signature}'
+            "%{repo}:#{dimgstage_push_tag_format}"
           end
 
           def with_stages?
