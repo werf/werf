@@ -292,6 +292,10 @@ module Dapp
                           {
                             'name' => 'REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY',
                             'value' => '/var/lib/registry'
+                          },
+                          {
+                            'name' => 'REGISTRY_STORAGE_DELETE_ENABLED',
+                            'value' => 'true',
                           }
                         ],
                         'volumeMounts' => [
