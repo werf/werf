@@ -49,6 +49,7 @@ en:
       pull: '[PULL]'
       tag: '[TAG]'
       exist: '[EXIST]'
+      not_exist: '[NOT EXIST]'
     warning:
       wrong_using_base_directive: "WARNING: Directive `%{directive}` has declared after dimg_group|dimg|artifact!"
       wrong_using_directive: "WARNING: Directive `%{directive}` has declared after dimg_group|dimg!"
