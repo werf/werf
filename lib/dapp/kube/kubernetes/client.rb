@@ -1,6 +1,7 @@
 module Dapp
   module Kube
     module Kubernetes
+      # TODO endpoints can be gathered from api-server by api discovery.
       K8S_API_ENDPOINTS = {
         '1.6' => {
           '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
@@ -28,6 +29,16 @@ module Dapp
           '/apis/batch/v1' => [:job, ],
           '/apis/batch/v1beta1' => [:cronjob, ],
         },
+        '1.10' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1' => [:daemonset, :deployment, :replicaset, :statefulset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v1beta1' => [:cronjob, ],
+        },
+        'stable' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/batch/v1' => [:job, ],
+        },
       }
 
       class Client
@@ -35,7 +46,6 @@ module Dapp
         extend Helper::YAML
 
         ::Dapp::Dapp::Shellout::Base.default_env_keys << 'KUBECONFIG'
-
 
         #
         def initialize(namespace: nil)
@@ -76,10 +86,9 @@ module Dapp
         # NOTICE: Методы создания/обновления/удаления сущностей kubernetes заканчиваются на '!'. Например, create_deployment!.
         # В каждом методе происходит выбор api на основе версии кластера
 
-
         def resource_endpoint_path(resource)
           K8S_API_ENDPOINTS[cluster_version()].map do |path, resources|
-            resources.include? (resource) ? path : nil
+            resources.include?(resource) ? path : nil
           end.compact.first
         end
 
@@ -146,9 +155,19 @@ module Dapp
           request!(:delete, "/api/v1/namespaces/#{name}", **query_parameters)
         end
 
+        # minikube returns empty major and minor. Fallback to stable only apis for minikube setup
         def cluster_version(**query_parameters)
           version_obj = request!(:get, "/version", **query_parameters)
-          @cluster_version ||= "#{version_obj['major']}.#{version_obj['minor']}"
+          @cluster_version ||= begin
+            major = version_obj['major']
+            minor = version_obj['minor']
+            k8s_version = "#{version_obj['major']}.#{version_obj['minor']}"
+            if K8S_API_ENDPOINTS.has_key?(k8s_version)
+              k8s_version
+            else
+              "stable"
+            end
+          end
         end
 
         def pod_log(name, follow: false, **query_parameters, &blk)
