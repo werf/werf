@@ -118,6 +118,8 @@ func supportedModules() []string {
 	modules = append(modules, []string{"assert", "debug", "set_fact", "wait_for"}...)
 	// Crypto Modules
 	modules = append(modules, []string{"openssl_certificate", "openssl_csr", "openssl_privatekey", "openssl_publickey"}...)
+	// Other modules
+	modules = append(modules, []string{"timezone"}...)
 
 	return modules
 }
