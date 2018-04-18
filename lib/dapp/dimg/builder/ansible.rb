@@ -155,7 +155,7 @@ module Dapp
             image.add_command [ansible_playbook_bin,
                                container_workdir.join('playbook.yml'),
                                ENV['ANSIBLE_ARGS']
-                              ].join(' ')
+                              ].compact.join(' ')
           end
         end
       end
