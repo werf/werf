@@ -50,16 +50,7 @@ module Dapp
           def build!
             prev_stage.build! if prev_stage
             renew             if should_be_renewed?
-            image_build       unless empty?
-            image_introspect  if image_should_be_introspected?
-          end
-
-          def image_introspect
-            if image.built?
-              dimg.introspect_image!(image: image.built_id, options: image.send(:prepared_options))
-            else
-              dimg.dapp.log_warning(desc: { code: :introspect_image_impossible, data: { name: name } })
-            end
+            image_build
           end
 
           def save_in_cache!
@@ -233,10 +224,31 @@ module Dapp
 
           def image_build
             prepare_image if image_should_be_prepared?
+
+            introspect_image_before_build if image_should_be_introspected_before_build?
+
             log_image_build do
               dimg.dapp.log_process(log_name,
                                     process: dimg.dapp.t(code: 'status.process.building'),
                                     short: should_not_be_detailed?) { image.build! }
+            end unless empty?
+
+            introspect_image_after_build if image_should_be_introspected_after_build?
+          end
+
+          def introspect_image_before_build
+            introspect_image_default(from_image)
+          end
+
+          def introspect_image_after_build
+            introspect_image_default(image)
+          end
+
+          def introspect_image_default(introspected_image)
+            if introspected_image.built?
+              dimg.introspect_image!(image: introspected_image.built_id, options: image.send(:prepared_options))
+            else
+              dimg.dapp.log_warning(desc: { code: :introspect_image_impossible, data: { name: name } })
             end
           end
 

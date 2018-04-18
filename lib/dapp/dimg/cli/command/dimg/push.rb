@@ -11,7 +11,7 @@ Usage:
 
 Options:
 BANNER
-        extend ::Dapp::CLI::Command::Options::Tag
+        extend ::Dapp::CLI::Options::Tag
 
         option :lock_timeout,
                long: '--lock-timeout TIMEOUT',
