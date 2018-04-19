@@ -81,7 +81,15 @@ module Dapp
             end
 
             def image_should_be_introspected?
-              dimg.stage_should_be_introspected?(name) && !dimg.dapp.dry_run?
+              image_should_be_introspected_after_build? || image_should_be_introspected_before_build?
+            end
+
+            def image_should_be_introspected_before_build?
+              dimg.stage_should_be_introspected_before_build?(name) && !dimg.dapp.dry_run?
+            end
+
+            def image_should_be_introspected_after_build?
+              dimg.stage_should_be_introspected_after_build?(name) && !dimg.dapp.dry_run?
             end
           end
         end # Mod
