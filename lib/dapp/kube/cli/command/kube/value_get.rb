@@ -8,7 +8,7 @@ Usage:
 
 Options:
 BANNER
-      extend ::Dapp::CLI::Command::Options::Tag
+      extend ::Dapp::CLI::Options::Tag
 
       option :namespace,
         long: '--namespace NAME',

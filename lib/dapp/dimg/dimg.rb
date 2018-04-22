@@ -275,7 +275,11 @@ module Dapp
         dapp.shellout! cmd
       end
 
-      def stage_should_be_introspected?(name)
+      def stage_should_be_introspected_before_build?(name)
+        dapp.options[:introspect_before] == name
+      end
+
+      def stage_should_be_introspected_after_build?(name)
         dapp.options[:introspect_stage] == name
       end
 

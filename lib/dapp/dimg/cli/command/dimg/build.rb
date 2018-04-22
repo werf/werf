@@ -11,19 +11,8 @@ Usage:
 
 Options:
 BANNER
-        artifact_stages = [
-          :from, :before_install, :before_install_artifact, :g_a_archive, :g_a_pre_install_patch, :install,
-          :g_a_post_install_patch, :after_install_artifact, :before_setup, :before_setup_artifact,
-          :g_a_pre_setup_patch, :setup, :after_setup_artifact, :g_a_artifact_patch, :build_artifact
-        ]
 
-        before_stage_proc = proc do |stages|
-          proc do |val|
-            val_sym = val.to_sym
-            STAGE_PROC.call(stages[1..-1]).call(val_sym)
-            stages[stages.index(val_sym) - 1]
-          end
-        end
+        extend ::Dapp::Dimg::CLI::Options::Introspection
 
         option :tmp_dir_prefix,
                long: '--tmp-dir-prefix PREFIX',
@@ -37,36 +26,6 @@ BANNER
         option :git_artifact_branch,
                long: '--git-artifact-branch BRANCH',
                description: 'Default branch to archive artifacts from'
-
-        option :introspect_error,
-               long: '--introspect-error',
-               boolean: true,
-               default: false
-
-        option :introspect_before_error,
-               long: '--introspect-before-error',
-               boolean: true,
-               default: false
-
-        option :introspect_stage,
-               long:        '--introspect-stage STAGE',
-               description: "Introspect one of the following stages (#{list_msg_format(DIMG_STAGES)})",
-               proc:        STAGE_PROC.call(DIMG_STAGES)
-
-        option :introspect_before,
-               long:        '--introspect-before STAGE',
-               description: "Introspect stage before one of the following stages (#{list_msg_format(DIMG_STAGES[1..-1])})",
-               proc:        before_stage_proc.call(DIMG_STAGES)
-
-        option :introspect_artifact_stage,
-               long:        '--introspect-artifact-stage STAGE',
-               description: "Introspect one of the following stages (#{list_msg_format(artifact_stages)})",
-               proc:        STAGE_PROC.call(artifact_stages)
-
-        option :introspect_artifact_before,
-               long:        '--introspect-artifact-before STAGE',
-               description: "Introspect stage before one of the following stages (#{list_msg_format(artifact_stages[1..-1])})",
-               proc:        before_stage_proc.call(artifact_stages)
 
         option :ssh_key,
                long: '--ssh-key SSH_KEY',
@@ -88,13 +47,6 @@ BANNER
                long: '--force-save-cache',
                boolean: true,
                default: false
-
-        def cli_options(**kwargs)
-          super.tap do |config|
-            config[:introspect_stage] ||= config[:introspect_before]
-            config[:introspect_artifact_stage] ||= config[:introspect_artifact_before]
-          end
-        end
       end
     end
   end

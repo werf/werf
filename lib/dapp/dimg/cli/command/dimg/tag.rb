@@ -11,7 +11,7 @@ Usage:
 
 Options:
 BANNER
-        extend ::Dapp::CLI::Command::Options::Tag
+        extend ::Dapp::CLI::Options::Tag
 
         def run(argv = ARGV)
           self.class.parse_options(self, argv)

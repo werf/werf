@@ -8,7 +8,11 @@ module Dapp
       def after_stages_build!
       end
 
-      def stage_should_be_introspected?(name)
+      def stage_should_be_introspected_before_build?(name)
+        dapp.options[:introspect_artifact_before] == name
+      end
+
+      def should_be_introspected_after_build?(name)
         dapp.options[:introspect_artifact_stage] == name
       end
 
