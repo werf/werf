@@ -11,7 +11,12 @@ module Dapp
           end
 
           def dependencies
-            @dependencies ||= [dimg.git_artifacts.map(&:paramshash).join, reset_commits]
+            @dependencies ||= [dimg.git_artifacts.map(&:paramshash).join, reset_commits, dev_mode_dependencies]
+          end
+
+          def dev_mode_dependencies
+            return unless dimg.dev_mode?
+            dimg.git_artifacts.map(&:latest_commit)
           end
 
           protected
