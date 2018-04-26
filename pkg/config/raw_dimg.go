@@ -9,6 +9,7 @@ type RawDimg struct {
 	Dimgs      []string             `yaml:"-"`
 	Artifact   string               `yaml:"artifact,omitempty"`
 	From       string               `yaml:"from,omitempty"`
+	FromDimg   string               `yaml:"fromDimg,omitempty"`
 	RawGit     []*RawGit            `yaml:"git,omitempty"`
 	RawShell   *RawShell            `yaml:"shell,omitempty"`
 	RawAnsible *RawAnsible          `yaml:"ansible,omitempty"`

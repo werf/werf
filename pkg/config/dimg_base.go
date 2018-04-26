@@ -1,6 +1,9 @@
 package config
 
-import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
+import (
+	"fmt"
+	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
+)
 
 type DimgBase struct {
 	Name             string
@@ -16,9 +19,40 @@ type DimgBase struct {
 	Raw *RawDimg
 }
 
+func (c *DimgBase) AssociateFromDimg(dimgs []*Dimg) error {
+	if c.Raw.FromDimg != "" {
+		fromDimgName := c.Raw.FromDimg
+
+		if fromDimgName == c.Name {
+			return NewDetailedConfigError(fmt.Sprintf("Cannot use own dimg name as `fromDimg` directive value!"), nil, c.Raw.Doc)
+		}
+
+		if dimg := dimgByName(dimgs, fromDimgName); dimg != nil {
+			c.FromDimg = dimg
+		} else {
+			return NewDetailedConfigError(fmt.Sprintf("No such dimg `%s`!", fromDimgName), c.Raw, c.Raw.Doc)
+		}
+	}
+
+	return nil
+}
+
+func dimgByName(dimgs []*Dimg, name string) *Dimg {
+	for _, dimg := range dimgs {
+		if dimg.Name == name {
+			return dimg
+		}
+	}
+	return nil
+}
+
 func (c *DimgBase) Validate() error {
-	if c.From == "" && c.FromDimg == nil && c.FromDimgArtifact == nil {
-		return NewDetailedConfigError("`from: DOCKER_IMAGE` required!", nil, c.Raw.Doc)
+	if c.From == "" && c.Raw.FromDimg == "" && c.FromDimg == nil && c.FromDimgArtifact == nil {
+		return NewDetailedConfigError("`from: DOCKER_IMAGE` or `fromDimg: DIMG_NAME` required!", nil, c.Raw.Doc)
+	}
+
+	if c.From != "" && c.Raw.FromDimg != "" {
+		return NewDetailedConfigError("`conflict between `from` and `fromDimg` directives!", nil, c.Raw.Doc)
 	}
 
 	// TODO: валидацию формата `From`
