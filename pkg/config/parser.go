@@ -286,6 +286,10 @@ func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath 
 		return nil, err
 	}
 
+	if err = associateFromDimg(dimgs); err != nil {
+		return nil, err
+	}
+
 	return dimgs, nil
 }
 
@@ -340,6 +344,16 @@ func associateArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 
 	for _, artifactImport := range artifactImports {
 		if err := artifactImport.AssociateArtifact(artifacts); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func associateFromDimg(dimgs []*Dimg) error {
+	for _, dimg := range dimgs {
+		if err := dimg.AssociateFromDimg(dimgs); err != nil {
 			return err
 		}
 	}
