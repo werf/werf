@@ -4,6 +4,8 @@ module Dapp
       module Command
         module Deploy
           def kube_deploy
+            setup_ssh_agent
+
             helm_release do |release|
               do_deploy = proc do
                 kube_run_deploy(release)

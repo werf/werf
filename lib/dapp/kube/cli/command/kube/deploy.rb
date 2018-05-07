@@ -8,7 +8,9 @@ Usage:
 
 Options:
 BANNER
+
       extend ::Dapp::CLI::Command::Options::Tag
+      extend ::Dapp::CLI::Options::Ssh
 
       option :namespace,
              long: '--namespace NAME',

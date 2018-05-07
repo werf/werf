@@ -25,6 +25,8 @@ BANNER
           end
         end
 
+        extend ::Dapp::CLI::Options::Ssh
+
         option :tmp_dir_prefix,
                long: '--tmp-dir-prefix PREFIX',
                description: 'Tmp directory prefix (/tmp by default). Used for build process service directories.'
@@ -67,13 +69,6 @@ BANNER
                long:        '--introspect-artifact-before STAGE',
                description: "Introspect stage before one of the following stages (#{list_msg_format(artifact_stages[1..-1])})",
                proc:        before_stage_proc.call(artifact_stages)
-
-        option :ssh_key,
-               long: '--ssh-key SSH_KEY',
-               description: ['Enable only specified ssh keys ',
-                             '(use system ssh-agent by default)'].join,
-               default: nil,
-               proc: ->(v) { composite_options(:ssh_key) << v }
 
         option :build_context_directory,
                long: '--build-context-directory DIR_PATH',
