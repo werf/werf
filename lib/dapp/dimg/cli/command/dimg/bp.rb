@@ -16,6 +16,7 @@ BANNER
         # build options
 
         extend ::Dapp::Dimg::CLI::Options::Introspection
+        extend ::Dapp::CLI::Options::Ssh
 
         option :tmp_dir_prefix,
               long: '--tmp-dir-prefix PREFIX',
@@ -29,13 +30,6 @@ BANNER
         option :git_artifact_branch,
               long: '--git-artifact-branch BRANCH',
               description: 'Default branch to archive artifacts from'
-
-        option :ssh_key,
-              long: '--ssh-key SSH_KEY',
-              description: ['Enable only specified ssh keys ',
-                            '(use system ssh-agent by default)'].join,
-              default: nil,
-              proc: ->(v) { composite_options(:ssh_key) << v }
 
         option :build_context_directory,
               long: '--build-context-directory DIR_PATH',

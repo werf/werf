@@ -12,17 +12,13 @@ Usage:
 
 Options:
 BANNER
+
+        extend ::Dapp::CLI::Options::Ssh
+
         option :stage,
                long:        '--stage STAGE',
                description: "Run one of the following stages (#{list_msg_format(DIMG_STAGES)})",
                proc:        STAGE_PROC.call(DIMG_STAGES)
-
-        option :ssh_key,
-               long: '--ssh-key SSH_KEY',
-               description: ['Enable only specified ssh keys ',
-                             '(use system ssh-agent by default)'].join,
-               default: nil,
-               proc: ->(v) { composite_options(:ssh_key) << v }
 
         def read_options(args)
           self.class.cli_wrapper(self) do
