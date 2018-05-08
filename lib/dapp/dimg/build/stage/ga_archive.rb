@@ -18,7 +18,7 @@ module Dapp
 
           def reset_commits
             regex = Regexp.union(RESET_COMMIT_MESSAGES)
-            dimg.git_artifacts.map { |git_artifact| git_artifact.repo.find_commit_id_by_message(regex) }.sort.uniq.compact
+            dimg.git_artifacts.map { |git_artifact| git_artifact.repo.find_commit_id_by_message(regex) }.compact.sort.uniq
           end
 
           def apply_command_method
