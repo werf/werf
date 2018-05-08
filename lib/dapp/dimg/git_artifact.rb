@@ -91,7 +91,7 @@ module Dapp
         {}.tap do |options|
           options[:name]                = repo.dapp.consistent_uniq_slugify("embedded-#{embedded_rel_path}")
           options[:cwd]                 = embedded_inherit_path(cwd, embedded_rel_path).last
-          options[:to]                  = File.join(to, embedded_rel_path)
+          options[:to]                  = Pathname(cwd).subpath_of?(embedded_rel_path) ? to : File.join(to, embedded_rel_path)
           options[:include_paths]       = embedded_inherit_paths(include_paths, embedded_rel_path)
           options[:exclude_paths]       = embedded_inherit_paths(exclude_paths, embedded_rel_path)
           options[:stages_dependencies] = begin
