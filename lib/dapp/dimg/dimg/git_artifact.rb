@@ -31,7 +31,11 @@ module Dapp
         def generate_git_artifacts(repo, **git_artifact_options)
           [].tap do |artifacts|
             artifacts << (artifact = ::Dapp::Dimg::GitArtifact.new(repo, self, **git_artifact_options))
-            artifacts.concat(generate_git_embedded_artifacts(artifact))
+            if ENV['DAPP_DISABLE_GIT_SUBMODULES']
+              artifacts
+            else
+              artifacts.concat(generate_git_embedded_artifacts(artifact))
+            end
           end.select do |artifact|
             !artifact.empty?
           end
