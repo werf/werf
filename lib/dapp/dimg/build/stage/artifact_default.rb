@@ -16,10 +16,12 @@ module Dapp
             group = artifact[:options][:group]
             to = artifact[:options][:to]
 
-            command = safe_cp(cwd, artifact_dimg.container_tmp_path(artifact_dimg.name, 'data').to_s, nil, nil, include_paths, exclude_paths)
+            export_folder_name = SecureRandom.uuid
+
+            command = safe_cp(cwd, artifact_dimg.container_tmp_path(artifact_dimg.name, export_folder_name).to_s, nil, nil, include_paths, exclude_paths)
             run_artifact_dimg(artifact_dimg, command)
 
-            command = safe_cp(dimg.container_tmp_path('artifact', artifact_dimg.name, 'data').to_s, to, owner, group, include_paths, exclude_paths)
+            command = safe_cp(dimg.container_tmp_path('artifact', artifact_dimg.name, export_folder_name).to_s, to, owner, group, include_paths, exclude_paths)
             image.add_command command
             image.add_volume "#{dimg.tmp_path('artifact', artifact_dimg.name)}:#{dimg.container_tmp_path('artifact', artifact_dimg.name)}:ro"
           end
