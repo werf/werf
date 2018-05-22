@@ -48,7 +48,7 @@ module Dapp
                 .reject(&:empty?)
                 .each do |l|
                 id, name, created_at = l.split(';')
-                images << { id: id, name: name, created_at: Time.parse(created_at), **extra_fields }
+                images << { id: id, name: name, created_at: Time.parse(created_at).to_i, **extra_fields }
               end
             end
           end

@@ -146,11 +146,6 @@ module Dapp
           raise Error::Rugged, code: :git_repository_reference_error, data: { name: name, message: e.message.downcase }
         end
 
-        def tag_at(name)
-          tag = git.tags.find { |t| t.name == name }
-          tag.target.time.to_i
-        end
-
         def tags
           git.tags.map(&:name)
         end
@@ -161,11 +156,7 @@ module Dapp
             .select { |b| b.start_with?('origin/') }
             .map { |b| b.reverse.chomp('origin/'.reverse).reverse }
         end
-
-        def commit_at(commit)
-          lookup_commit(commit).time.to_i
-        end
-
+        
         def find_commit_id_by_message(regex)
           walker.each do |commit|
             msg = commit.message.encode('UTF-8', invalid: :replace, undef: :replace)
