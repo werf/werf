@@ -59,7 +59,7 @@ module Dapp
           "--name #{name}",
           *helm_additional_values_options,
           *helm_set_options,
-          *helm_common_options,
+          *helm_install_options,
         ].join(" "))
 
         return cmd
@@ -70,7 +70,7 @@ module Dapp
           "helm upgrade #{name} #{chart_path}",
           *helm_additional_values_options,
           *helm_set_options,
-          *helm_common_options
+          *helm_install_options
         ].join(" "))
 
         return cmd
@@ -97,6 +97,18 @@ module Dapp
             t[template] = "---\n#{specs.reject(&:nil?).map(&:join).join("---\n").strip}"
           end
         end
+      end
+
+      def lint!
+        dapp.shellout! [
+          'helm',
+          'lint',
+          '--strict',
+          *helm_additional_values_options,
+          *helm_set_options(fake: true),
+          *helm_common_options,
+          chart_path
+        ].compact.join(' ')
       end
 
       protected
@@ -137,12 +149,23 @@ module Dapp
         @dimg_registry ||= dapp.dimg_registry(repo)
       end
 
-      def helm_set_options(without_registry: false)
+      def helm_set_options(without_registry: false, fake: false)
         [].tap do |options|
           options.concat set.map {|opt| "--set #{opt}"}
 
-          service_values = Helm::Values.service_values(dapp, repo, namespace, docker_tag, without_registry: self.without_registry || without_registry)
+          service_values = Helm::Values.service_values(dapp, repo, namespace, docker_tag,
+                                                       without_registry: self.without_registry || without_registry,
+                                                       fake: fake)
           options.concat service_values.to_set_options
+        end
+      end
+
+      def helm_install_options(dry_run: nil)
+        dry_run = dapp.dry_run? if dry_run.nil?
+
+        helm_common_options(dry_run: dry_run).tap do |options|
+          options << '--dry-run' if dry_run
+          options << "--timeout #{deploy_timeout}" if deploy_timeout
         end
       end
 
@@ -151,9 +174,7 @@ module Dapp
 
         [].tap do |options|
           options << "--namespace #{namespace}" if namespace
-          options << '--dry-run' if dry_run
-          options << '--debug'   if dry_run
-          options << "--timeout #{deploy_timeout}" if deploy_timeout
+          options << '--debug'                  if dry_run
         end
       end
     end # Helm::Release
