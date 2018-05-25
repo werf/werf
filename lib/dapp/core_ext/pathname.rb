@@ -8,13 +8,15 @@ module Dapp
         path_descends = []
         cleanpath.descend {|d| path_descends << d}
 
-        (path_descends & another_path_descends) == another_path_descends &&
-          (path_descends - another_path_descends).any?
+        (path_descends & another_path_descends) == another_path_descends
       end
 
       def subpath_of(another_path)
-        return unless subpath_of? another_path
-        cleanpath.to_s.partition(::Pathname.new(another_path).cleanpath.to_s + '/').last
+        another_cleanpath = ::Pathname.new(another_path).cleanpath
+
+        return     unless subpath_of? another_path
+        return '.' if cleanpath.to_s == another_cleanpath.to_s
+        cleanpath.to_s.partition(another_cleanpath.to_s + '/').last
       end
     end # Pathname
   end # CoreExt
