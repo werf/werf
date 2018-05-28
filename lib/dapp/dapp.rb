@@ -164,8 +164,13 @@ module Dapp
 
     def host_docker_login(repo)
       return unless self.class.options_with_docker_credentials?
+
       username, password = self.class.docker_credentials
-      shellout!("#{host_docker} login --username '#{username}' --password-stdin '#{repo}'", input: password)
+      if ::Dapp::Dapp.host_docker_minor_version >= Gem::Version.new('17.07')
+        shellout!("#{host_docker} login --username '#{username}' --password-stdin '#{repo}'", input: password)
+      else
+        shellout!("#{host_docker} login --username '#{username}' --password '#{password}' '#{repo}'")
+      end
     end
 
     class << self
