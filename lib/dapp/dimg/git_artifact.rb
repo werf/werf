@@ -491,7 +491,7 @@ module Dapp
           repo
             .patches(from_commit, to_commit, paths: paths, exclude_paths: exclude_paths(true), **diff_patches_options)
             .select do |patch|
-              file_mode = patch.delta.new_file[:mode]
+              file_mode = patch.delta.status == :deleted ? patch.delta.old_file[:mode] : patch.delta.new_file[:mode]
               !(submodule_mode?(file_mode) || # FIXME: https://github.com/libgit2/rugged/issues/727
                 nested_git_directory_mode?(file_mode))
             end
