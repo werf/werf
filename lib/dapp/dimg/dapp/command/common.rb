@@ -48,14 +48,14 @@ module Dapp
                 .reject(&:empty?)
                 .each do |l|
                 id, name, created_at = l.split(';')
-                images << { id: id, name: name, created_at: Time.parse(created_at), **extra_fields }
+                images << { id: id, name: name, created_at: Time.parse(created_at).to_i, **extra_fields }
               end
             end
           end
 
-          def remove_project_images(project_images)
+          def remove_project_images(project_images, force: false)
             update_project_images_cache(project_images)
-            remove_images(project_images_to_delete(project_images))
+            remove_images(project_images_to_delete(project_images), force: force)
           end
 
           def update_project_images_cache(project_images)
@@ -72,7 +72,7 @@ module Dapp
 
           def dapp_containers_flush_by_label(label)
             log_proper_containers do
-              remove_containers_by_query(%(#{host_docker} ps -a -f "label=#{label}" -q --no-trunc))
+              remove_containers_by_query(%(#{host_docker} ps -a -f "label=#{label}" -f "name=dapp.build." -q --no-trunc))
             end
           end
 
@@ -90,10 +90,10 @@ module Dapp
             with_subquery(images_query) { |ids| remove_images(ids) }
           end
 
-          def remove_images(images_ids_or_names)
+          def remove_images(images_ids_or_names, force: false)
             ids_chunks(images_ids_or_names) do |chunk|
-              chunk = ignore_used_images(chunk)
-              remove_base("#{host_docker} rmi%{force_option} %{ids}", chunk, force: false)
+              chunk = ignore_used_images(chunk) unless force
+              remove_base("#{host_docker} rmi%{force_option} %{ids}", chunk, force: force)
             end
           end
 

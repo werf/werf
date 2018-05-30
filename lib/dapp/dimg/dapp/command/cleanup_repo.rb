@@ -77,27 +77,18 @@ module Dapp
           def cleanup_repo_by_policies(registry, detailed_dimgs_images_by_scheme)
             %w(git_tag git_commit).each_with_object([]) do |scheme, dimgs_images|
               dimgs_images.concat begin
-                detailed_dimgs_images_by_scheme[scheme].map do |dimg|
-                  next if dry_run? && begin
+                detailed_dimgs_images_by_scheme[scheme].select do |dimg|
+                  !dry_run? && begin
                     if scheme == 'git_tag'
-                      !consistent_git_tags.include?(dimg[:tag])
+                      consistent_git_tags.include?(dimg[:tag])
                     elsif scheme == 'git_commit'
-                      !git_own_repo.commit_exists?(dimg[:tag])
+                      git_own_repo.commit_exists?(dimg[:tag])
                     end
                   end
-
-                  dimg[:created_at] = begin
-                    if scheme == 'git_tag'
-                      git_own_repo.tag_at(git_tag_by_consistent_git_tag(dimg[:tag]))
-                    elsif scheme == 'git_commit'
-                      git_own_repo.commit_at(dimg[:tag])
-                    end
-                  end
-                  dimg
-                end.compact
+                end
               end
             end.tap do |detailed_dimgs_images|
-              sorted_detailed_dimgs_images = detailed_dimgs_images.sort_by { |dimg| dimg[:created_at] }
+              sorted_detailed_dimgs_images = detailed_dimgs_images.sort_by { |dimg| dimg[:created_at] }.reverse
               expired_dimgs_images, not_expired_dimgs_images = sorted_detailed_dimgs_images.partition do |dimg_image|
                 dimg_image[:created_at] < DATE_POLICY
               end
