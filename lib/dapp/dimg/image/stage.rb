@@ -5,7 +5,7 @@ module Dapp
         include Argument
 
         def initialize(name:, dapp:, built_id: nil, from: nil)
-          @container_name = "#{dapp.name}.#{SecureRandom.hex(4)}"
+          @container_name = "dapp.build.#{SecureRandom.hex(4)}"
           @built_id = built_id
 
           @bash_commands          = []

@@ -72,7 +72,7 @@ module Dapp
 
           def dapp_containers_flush_by_label(label)
             log_proper_containers do
-              remove_containers_by_query(%(#{host_docker} ps -a -f "label=#{label}" -q --no-trunc))
+              remove_containers_by_query(%(#{host_docker} ps -a -f "label=#{label}" -f "name=dapp.build." -q --no-trunc))
             end
           end
 
