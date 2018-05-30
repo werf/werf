@@ -58,14 +58,14 @@ module Dapp
 
           def dapp_images_flush_by_label(label)
             log_step_with_indent('proper images') do
-              remove_images(dapp_images_names_by_label(label))
+              remove_images(dapp_images_names_by_label(label), force: true)
             end
           end
 
           def proper_cache_version
             log_proper_cache do
               proper_cache_all_images_names.tap do |proper_cache_images|
-                remove_images(dapp_images_names_by_label('dapp').select { |image_name| !proper_cache_images.include?(image_name) })
+                remove_images(dapp_images_names_by_label('dapp').select { |image_name| !proper_cache_images.include?(image_name) }, force: true)
               end
             end
           end
