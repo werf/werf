@@ -46,7 +46,7 @@ module Dapp
 
                   # Удаление только образов старше 2ч
                   dimgstages.delete_if do |dimgstage|
-                    Time.now - dimgstage[:created_at] < 2 * 60 * 60
+                    Time.now.to_i - dimgstage[:created_at] < 2 * 60 * 60
                   end unless ENV['DAPP_STAGES_CLEANUP_LOCAL_DISABLED_DATE_POLICY']
 
                   remove_project_images(dimgstages)
