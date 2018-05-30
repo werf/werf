@@ -7,10 +7,11 @@ module Dapp
             protected
 
             def repo_detailed_dimgs_images(registry)
-              repo_dimgs_images(registry).each do |dimg|
+              repo_dimgs_images(registry).select do |dimg|
                 image_history = registry.image_history(dimg[:tag], dimg[:dimg])
                 dimg[:parent] = image_history['container_config']['Image']
-                dimg[:labels] = image_history['config']['Labels']
+                dimg[:labels] = image_history['config']['Labels'] || {}
+                dimg[:labels]['dapp'] == name
               end
             end
 
