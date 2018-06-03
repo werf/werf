@@ -36,7 +36,7 @@ Dimod — это отдельный chef cookbook, оформленный спе
 
 ### Установка ruby через dimod-example-ruby
 
-В [сборке с помощью chef](/chef_for_advanced_build.html) был приведен [пример](https://github.com/flant/dapp-example-chef-for-advanced-build-1.git), в котором происходит установка rvm и ruby в образ. Вынесем установку ruby в dimod, т.к. этот кусок правил сборки образа нужен для каждого приложения, использующего ruby.
+В [сборке с помощью chef](chef_for_advanced_build.html) был приведен [пример](https://github.com/flant/dapp-example-chef-for-advanced-build-1.git), в котором происходит установка rvm и ruby в образ. Вынесем установку ruby в dimod, т.к. этот кусок правил сборки образа нужен для каждого приложения, использующего ruby.
 
 Рассмотрим подготовленный репозиторий с кодом dimod-example-ruby:
 
