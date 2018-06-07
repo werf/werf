@@ -90,7 +90,11 @@ module Dapp
 
         {}.tap do |options|
           options[:name]                = repo.dapp.consistent_uniq_slugify("embedded-#{embedded_rel_path}")
-          options[:cwd]                 = embedded_inherit_path(cwd, embedded_rel_path).last
+          options[:cwd]                 = begin
+            subpath = Pathname(cwd).subpath_of(embedded_rel_path)
+            subpath = '' if subpath == '.'
+            subpath
+          end
           options[:to]                  = Pathname(cwd).subpath_of?(embedded_rel_path) ? to : File.join(to, embedded_rel_path)
           options[:include_paths]       = embedded_inherit_paths(include_paths, embedded_rel_path)
           options[:exclude_paths]       = embedded_inherit_paths(exclude_paths, embedded_rel_path)
@@ -117,16 +121,22 @@ module Dapp
         path_parts      = path.split('/')
         test_path       = nil
         inherited_paths = []
+
         until path_parts.empty?
-          last_part_path = path_parts.shift
-          test_path      = [test_path, last_part_path].compact.join('/')
+          current_path_part = path_parts.shift
+          test_path         = [test_path, current_path_part].compact.join('/')
 
-          non_match    = !File.fnmatch(test_path, embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
-          part_for_all = (last_part_path == '**')
+          match = File.fnmatch(test_path, embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
+          break unless match || File.fnmatch(File.join(test_path, '**'), embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
 
-          if non_match || part_for_all
-            inherited_paths << [last_part_path, path_parts].flatten.join('/')
-            break unless part_for_all
+          any = (current_path_part == '**')
+
+          if any
+            inherited_paths << [current_path_part, path_parts].flatten.join('/')
+            inherited_paths << path_parts.join('/') unless path_parts.empty?
+          elsif match
+            inherited_paths << (path_parts.empty? ? '**' : path_parts.join('/'))
+            break
           end
         end
 

@@ -516,35 +516,23 @@ describe Dapp::Dimg::GitArtifact do
     end
   end
 
-  context 'embedded_inherit_paths' do
-    def git_artifact_embedded_inherit_paths(paths, embedded_rel_path)
+  context 'embedded_inherit_path' do
+    def git_artifact_embedded_inherit_path(path, embedded_rel_path)
       git_artifact = Dapp::Dimg::GitArtifact.new(nil, nil, to: '/app', branch: 'master')
-      git_artifact.embedded_inherit_paths(paths, embedded_rel_path)
+      git_artifact.embedded_inherit_path(path, embedded_rel_path)
     end
 
-    paths = [
-      '**/*.rb', '*.txt',
-      'path', 'path2',
-      'path/**/*.exe', 'path/*.png',
-      'path2/**/*.html', 'path2/*.jpg',
-      '*th/subpath'
-    ]
-
-    it 'path' do
-      expectation = [
-        '**/*.rb', '*.rb',
-        '**/*.exe', '*.exe', '*.png',
-        'subpath'
-      ]
-      expect(git_artifact_embedded_inherit_paths(paths, 'path')).to eq expectation
-    end
-
-    it 'missing' do
-      expectation = [
-        "**/*.rb", "*.rb"
-      ]
-
-      expect(git_artifact_embedded_inherit_paths(paths, 'missing')).to eq expectation
+    [
+      ['**/*.rb', %w(**/*.rb *.rb)],
+      ['path/subpath', ['**']],
+      ['path/subpath/**/*.exe', %w(**/*.exe)],
+      ['path/*th', ['**']],
+      ['path/subpath2', []],
+      ['path/subpath2/**/*.html', []]
+    ].each do |path, expected|
+      it "#{path} => #{expected}" do
+        expect(git_artifact_embedded_inherit_path(path, 'path/subpath')).to eq expected
+      end
     end
   end
 end
