@@ -87,23 +87,90 @@ module Dapp
 
             def conflict_between_artifacts!(*formatted_artifacts)
               artifacts = formatted_artifacts.flatten.map { |formatted_artifact| formatted_artifact[:related_artifact] }
-              dappfile_context = artifacts.map do |artifact|
-                artifact_directive = []
-                artifact_directive << begin
-                  if artifact.is_a? Artifact::Export
-                    "artifact.export('#{artifact._cwd}') do"
-                  else
-                    "git#{"('#{artifact._url}')" if artifact.respond_to?(:_url)}.add('#{artifact._cwd}') do"
+              artifact_imports = []
+              git_artifacts    = []
+              artifacts.map do |artifact|
+                (artifact.is_a?(Artifact::Export) ? artifact_imports : git_artifacts) << artifact
+              end
+
+              common_artifact_dsl = proc do |a|
+                [].tap do |context|
+                  context << "  to '#{a._to}'"
+                  [:include_paths, :exclude_paths].each do |directive|
+                    next if (paths = a.send("_#{directive}")).empty?
+                    context << "  #{directive} '#{paths.join("', '")}'"
                   end
                 end
-                [:include_paths, :exclude_paths].each do |directive|
-                  next if (paths = artifact.send("_#{directive}")).empty?
-                  artifact_directive << "  #{directive} '#{paths.join("', '")}'"
+              end
+
+              import_dsl = proc do |ga|
+                [].tap do |context|
+                  context << "artifact.export('#{ga._cwd}') do"
+                  context.concat(common_artifact_dsl.call(ga))
+                  context << 'end'
                 end
-                artifact_directive << "  to '#{artifact._to}'"
-                artifact_directive << 'end'
-                artifact_directive.join("\n")
-              end.join("\n\n")
+              end
+
+              git_artifact_dsl = proc do |ga|
+                [].tap do |context|
+                  context << "git#{"('#{ga._url}')" if ga.respond_to?(:_url)}.add('#{ga._cwd}') do"
+                  context.concat(common_artifact_dsl.call(ga))
+                  context << 'end'
+                end
+              end
+
+              common_artifact_yaml = proc do |a|
+                [].tap do |context|
+                  context << "  to: #{a._to}"
+                  {
+                    include_paths: 'includePaths',
+                    exclude_paths: 'excludePaths',
+                  }.each do |directive, yamlDirective|
+                    next if (paths = a.send("_#{directive}")).empty?
+                    context << "  #{yamlDirective}: [#{paths.join(", ")}]"
+                  end
+                end
+              end
+
+              import_yaml = proc do |a|
+                [].tap do |context|
+                  context << "- artifact: #{a._config._name}"
+                  context << "  add: #{a._cwd}"
+                  context.concat(common_artifact_yaml.call(a))
+                end
+              end
+
+              git_artifact_yaml = proc do |ga|
+                [].tap do |context|
+                  if ga.respond_to?(:_url)
+                    context << "- url: #{ga._url}"
+                    context << "  add: #{ga._cwd}"
+                  else
+                    context << "- add: #{ga._cwd}"
+                  end
+                  context.concat(common_artifact_yaml.call(ga))
+                end
+              end
+
+              dappfile_context = [].tap do |msg|
+                if artifact_imports.count != 0
+                  if dapp
+                    artifact_imports.each { |a| msg.concat(import_dsl.call(a)) }
+                  else
+                    msg << 'import:'
+                    artifact_imports.each { |a| msg.concat(import_yaml.call(a)) }
+                  end
+                end
+
+                if git_artifacts.count != 0
+                  if dapp
+                    git_artifacts.each { |a| msg.concat(git_artifact_dsl.call(a)) }
+                  else
+                    msg << 'git:'
+                    git_artifacts.each { |a| msg.concat(git_artifact_yaml.call(a)) }
+                  end
+                end
+              end.join("\n")
               raise ::Dapp::Error::Config, code: :artifact_conflict, data: { dappfile_context: dappfile_context }
             end
 
