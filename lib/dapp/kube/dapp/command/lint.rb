@@ -27,44 +27,9 @@ module Dapp
           end
 
           def kube_lint
-            kube_check_helm_chart!
             kube_check_helm_chart_yaml!
-
-            repo = option_repo
-
-            docker_tag = option_tags.first
-
             with_kube_tmp_lint_chart_dir do
-              kube_copy_chart
-              kube_generate_helm_chart_tpl
-              kube_helm_decode_secrets
-
-              all_values = {}
-              [kube_chart_path('values.yaml').expand_path, *kube_values_paths, *kube_tmp_chart_secret_values_paths].each do |values_path|
-                all_values = all_values.in_depth_merge(yaml_load_file(values_path)) if File.file?(values_path)
-              end
-
-              options[:helm_set_options].each do |opt_spec|
-                name, _, value = opt_spec.partition("=")
-                keys = name.split(".")
-
-                values = all_values
-                keys.each_with_index do |key, ind|
-                  if ind == keys.size - 1
-                    values[key] = YAML.load(value)
-                  else
-                    values[key] ||= {}
-                    values = values[key]
-                  end
-                end
-              end
-
-              service_values = Helm::Values.service_values_hash(self, repo, kube_namespace, docker_tag, fake: true)
-              all_values = all_values.in_depth_merge service_values
-
-              kube_chart_path_for_helm.join("values.yaml").write YAML.dump(all_values)
-
-              shellout! "helm lint --strict #{kube_chart_path_for_helm}"
+              helm_release(&:lint!)
             end
           end
 
