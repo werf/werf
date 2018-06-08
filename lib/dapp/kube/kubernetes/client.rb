@@ -47,15 +47,16 @@ module Dapp
 
         ::Dapp::Dapp::Shellout::Base.default_env_keys << 'KUBECONFIG'
 
-        #
-        def initialize(namespace: nil)
+        attr_reader :config
+        attr_reader :context
+        attr_reader :namespace
+
+        def initialize(config, context, namespace)
+          @config = config
+          @context = context
           @namespace = namespace
           @query_parameters = {}
           @cluster_version
-        end
-
-        def namespace
-          @namespace || self.class.kube_context_namespace(kube_context_config) || "default"
         end
 
         # Чтобы не перегружать методы явной передачей namespace.
@@ -244,11 +245,13 @@ module Dapp
 
         def with_connection(excon_parameters: {}, &blk)
           connection = begin
-            Excon.new(kube_cluster_config['cluster']['server'], **kube_server_options(excon_parameters)).tap(&:get)
+            context_config = config.context_config(context)
+            cluster_config = config.cluster_config(context_config['cluster'])
+            Excon.new(cluster_config['server'], **kube_server_options(excon_parameters)).tap(&:get)
           rescue Excon::Error::Socket => err
             raise Error::ConnectionRefused,
                   code: :server_connection_refused,
-                  data: { kube_cluster_config: kube_cluster_config, kube_user_config: kube_user_config, error: err.message }
+                  data: { url: cluster_config['server'], error: err.message }
           end
 
           return yield connection
@@ -256,22 +259,26 @@ module Dapp
 
         def kube_server_options(excon_parameters = {})
           {}.tap do |opts|
-            client_cert = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-certificate', nil)
+            context_config = config.context_config(context)
+            user_config = config.user_config(context_config['user'])
+            cluster_config = config.cluster_config(context_config['cluster'])
+
+            client_cert = user_config['client-certificate']
             opts[:client_cert] = client_cert if client_cert
 
-            client_cert_data = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-certificate-data', nil)
+            client_cert_data= user_config['client-certificate-data']
             opts[:client_cert_data] = Base64.decode64(client_cert_data) if client_cert_data
 
-            client_key = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key', nil)
+            client_key = user_config['client-key']
             opts[:client_key] = client_key if client_key
 
-            client_key_data = kube_config.fetch('users', [{}]).first.fetch('user', {}).fetch('client-key-data', nil)
+            client_key_data = user_config['client-key-data']
             opts[:client_key_data] = Base64.decode64(client_key_data) if client_key_data
 
             ssl_cert_store = OpenSSL::X509::Store.new
-            if ssl_ca_file = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority', nil)
+            if ssl_ca_file = cluster_config['certificate-authority']
               ssl_cert_store.add_file ssl_ca_file
-            elsif ssl_ca_data = kube_config.fetch('clusters', [{}]).first.fetch('cluster', {}).fetch('certificate-authority-data', nil)
+            elsif ssl_ca_data = cluster_config['certificate-authority-data']
               ssl_cert_store.add_cert OpenSSL::X509::Certificate.new(Base64.decode64(ssl_ca_data))
             end
             opts[:ssl_cert_store] = ssl_cert_store
@@ -281,76 +288,6 @@ module Dapp
             opts[:middlewares] = [*Excon.defaults[:middlewares], Excon::Middleware::RedirectFollower]
 
             opts.merge!(excon_parameters)
-          end
-        end
-
-        def kube_user_config
-          @kube_user_config ||= begin
-            kube_user_config = self.class.kube_user_config(kube_config, kube_context_config['context']['user'])
-            raise Error::BadConfig, code: :user_config_not_found, data: {config_path: self.class.kube_config_path, context: kube_context_config, user: kube_context_config['context']['user']} if kube_user_config.nil?
-            kube_user_config
-          end
-        end
-
-        def kube_cluster_config
-          @kube_cluster_config ||= begin
-            kube_cluster_config = self.class.kube_cluster_config(kube_config, kube_context_config['context']['cluster'])
-            raise Error::BadConfig, code: :cluster_config_not_found, data: {config_path: self.class.kube_config_path, context: kube_context_config, cluster: kube_context_config['context']['cluster']} if kube_cluster_config.nil?
-            kube_cluster_config
-          end
-        end
-
-        def kube_context_config
-          @kube_context_config ||= begin
-            context_name = self.class.kube_context_name(kube_config)
-            kube_context_config = self.class.kube_context_config(kube_config, context_name)
-            raise Error::BadConfig, code: :config_context_not_found, data: {config_path: self.class.kube_config_path, config: kube_config, context_name: context_name} if kube_context_config.nil?
-            kube_context_config
-          end
-        end
-
-        def kube_config
-          @kube_config ||= begin
-            kube_config = self.class.kube_config(self.class.kube_config_path)
-            raise Error::BadConfig, code: :config_not_found, data: { config_path: self.class.kube_config_path } if kube_config.nil?
-            kube_config
-          end
-        end
-
-        class << self
-          def kube_config_path
-            kube_config_path = ENV['KUBECONFIG']
-            kube_config_path = File.join(ENV['HOME'], '.kube/config') unless kube_config_path
-            kube_config_path
-          end
-
-          def kube_config(kube_config_path)
-            yaml_load_file(kube_config_path) if File.exist?(kube_config_path)
-          end
-
-          def kube_context_name(kube_config)
-            kube_config['current-context'] || begin
-              if (context = kube_config.fetch('contexts', []).first)
-                warn "[WARN] .kube/config current-context is not set, using context '#{context['name']}'"
-                context['name']
-              end
-            end
-          end
-
-          def kube_context_config(kube_config, kube_context_name)
-            kube_config.fetch('contexts', []).find {|context| context['name'] == kube_context_name}
-          end
-
-          def kube_user_config(kube_config, user_name)
-            kube_config.fetch('users', []).find {|user| user['name'] == user_name}
-          end
-
-          def kube_cluster_config(kube_config, cluster_name)
-            kube_config.fetch('clusters', []).find {|cluster| cluster['name'] == cluster_name}
-          end
-
-          def kube_context_namespace(kube_context_config)
-            kube_context_config['context']['namespace']
           end
         end
       end # Client

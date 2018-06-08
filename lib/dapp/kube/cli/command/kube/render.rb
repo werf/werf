@@ -14,6 +14,10 @@ BANNER
              long: '--namespace NAME',
              default: nil
 
+      option :context,
+             long: '--context NAME',
+             default: nil
+
       option :tmp_dir_prefix,
              long: '--tmp-dir-prefix PREFIX',
              description: 'Tmp directory prefix (/tmp by default). Used for build process service directories.'

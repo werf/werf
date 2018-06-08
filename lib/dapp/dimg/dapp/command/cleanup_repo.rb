@@ -9,6 +9,12 @@ module Dapp
           def cleanup_repo
             lock_repo(repo = option_repo) do
               log_step_with_indent(repo) do
+                log_step_with_indent("Searching for images being used in kubernetes clusters in one of the kube-config contexts") do
+                  deployed_docker_images.each do |deployed_img|
+                    log(deployed_img)
+                  end
+                end
+
                 registry = dimg_registry(repo)
 
                 if git_own_repo_exist?
@@ -29,16 +35,19 @@ module Dapp
             {}.tap do |detailed_dimgs_images_by_scheme|
               tagging_schemes.each { |scheme| detailed_dimgs_images_by_scheme[scheme] = [] }
               repo_detailed_dimgs_images(registry).each do |image|
-                next unless repo_dimg_image_should_be_ignored?(image)
+                image_repository = [option_repo, image[:dimg]].compact.join('/')
+                image_name = [image_repository, image[:tag]].join(':')
+
+                should_be_ignored = deployed_docker_images.include?(image_name)
+
+                if should_be_ignored
+                  log "Keep in repo image that is being used in kubernetes: #{image_name}"
+                  next
+                end
+
                 (detailed_dimgs_images_by_scheme[image[:labels]['dapp-tag-scheme']] ||= []) << image
               end
             end
-          end
-
-          def repo_dimg_image_should_be_ignored?(image)
-            image_repository = [option_repo, image[:dimg]].compact.join('/')
-            image_name = [image_repository, image[:tag]].join(':')
-            !deployed_docker_images.include?(image_name)
           end
 
           def cleanup_repo_by_nonexistent_git_primitive(registry, detailed_dimgs_images_by_scheme)
@@ -117,18 +126,23 @@ module Dapp
           end
 
           def deployed_docker_images
+            @deployed_docker_images ||= search_deployed_docker_images
+          end
+
+          def search_deployed_docker_images
             return [] if without_kube?
 
-            # open kube client, get all pods and select containers' images
-            ::Dapp::Kube::Kubernetes::Client.tap do |kube|
-              config_file = kube.kube_config_path
-              unless File.exist?(config_file)
-                return []
-              end
-            end
+            config = ::Dapp::Kube::Kubernetes::Config.new_auto_if_available
+            return [] if config.nil?
 
-            client = ::Dapp::Kube::Kubernetes::Client.new
+            config.context_names.
+              map {|context_name|
+                client = ::Dapp::Kube::Kubernetes::Client.new(config, context_name, "default")
+                search_deployed_docker_images_from_kube(client)
+              }.flatten.sort.uniq
+          end
 
+          def search_deployed_docker_images_from_kube(client)
             namespaces = []
             # check connectivity for 2 seconds
             begin
@@ -138,7 +152,7 @@ module Dapp
             end
 
             # get images from containers from pods from all namespaces.
-            @kube_images ||= namespaces['items'].map do |item|
+            namespaces['items'].map do |item|
               item['metadata']['name']
             end.map do |ns|
               [].tap do |arr|
@@ -152,9 +166,9 @@ module Dapp
                   arr << replicationcontroller_images(client)
                 end
               end
-            end.flatten.uniq.select do |image|
-              image.start_with?(option_repo)
-            end
+            end.flatten.select do |img|
+              img.start_with? option_repo
+            end.sort.uniq
           end
 
           # pod items[] spec containers[] image
@@ -205,8 +219,6 @@ module Dapp
               item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
             end
           end
-
-
 
           def without_kube?
             !!options[:without_kube]

@@ -341,29 +341,32 @@ image: {{ tuple $name $context | include "_dimg2" }}
             options[:namespace].nil? ? nil : consistent_uniq_slugify(options[:namespace])
           end
 
+          def context_option
+            options[:context]
+          end
+
+          def kube_context
+            ENV["KUBECONTEXT"] ||
+              context_option ||
+                kubernetes_config.current_context_name
+          end
+
           def kube_namespace
-            namespace_option || begin
-              namespace = "default"
+            namespace_option ||
+              kubernetes_config.namespace(kube_context) ||
+                "default"
+          end
 
-              Kubernetes::Client.tap do |kube|
-                kube_config = kube.kube_config(kube.kube_config_path)
-                if kube_config
-                  kube_context_name = kube.kube_context_name(kube_config)
-                  kube_context_config = kube.kube_context_config(kube_config, kube_context_name)
-
-                  if kube_context_config
-                    context_namespace = kube.kube_context_namespace(kube_context_config)
-                    namespace = context_namespace if context_namespace
-                  end
-                end
-              end
-
-              namespace
-            end
+          def kubernetes_config
+            @kubernetes_config ||= Kubernetes::Config.new_auto
           end
 
           def kubernetes
-            @kubernetes ||= Kubernetes::Client.new(namespace: kube_namespace)
+            @kubernetes ||= Kubernetes::Client.new(
+              kubernetes_config,
+              kube_context,
+              kube_namespace,
+            )
           end
         end
       end
