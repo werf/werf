@@ -1149,3 +1149,17 @@ h4.panel-title {
     padding-top: 0px;
     margin-top: 0px;
 }
+
+.social-icons {
+    margin-top: 5px !important;
+}
+
+.social-icons a {
+  background: transparent !important;
+  display: inline-block !important;
+  margin-right: 5px !important;
+}
+
+.social-icons a:after {
+  display: none !important;
+}
