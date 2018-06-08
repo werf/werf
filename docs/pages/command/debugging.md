@@ -61,7 +61,7 @@ dapp dimg build-context export [options] [DIMG ...]
 
 #### Пример
 
-##### Экспортировать контекст приложения 'frontend' из проекта 'project' в директорию 'context' 
+##### Экспортировать контекст приложения 'frontend' из проекта 'project' в директорию 'context'
 
 ```bash
 $ dapp dimg build-context export --dir ~/workspace/project --build-context-directory context frontend
@@ -79,8 +79,22 @@ dapp dimg build-context import [options]
 
 #### Пример
 
-##### Импортировать контекст приложений проекта 'project' из директории 'context' 
+##### Импортировать контекст приложений проекта 'project' из директории 'context'
 
 ```bash
 $ dapp dimg build-context import --dir ~/workspace/project --build-context-directory context
+```
+
+### dapp slug
+"Слагифицирует" строку (применяется алгоритм slug), добавляет хэш и выводит результат. Слагификация применяется например при указании тегов `--tag`, `--tag-slug` при запуске команд `dapp dimg bp`, `dapp dimg push`, `dapp dimg push`, `dapp kube deploy`  и других.
+
+```
+dapp slug STRING
+```
+
+#### Пример
+
+```bash
+$ $ dapp slug 'Длинный, mixed.language tag with sP3c!AL chars'
+dlinnyj-mixed-language-tag-with-sp3cal-chars-ae959974
 ```

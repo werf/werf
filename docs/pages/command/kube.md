@@ -15,8 +15,8 @@ dapp kube deploy [options] REPO
 #### --namespace NAMESPACE
 Задаёт `namespace`, по умолчанию используется context namespace.
 
-#### --image_version VERSION
-Задаёт версию для используемых `dimg`.
+#### Опции тегирования `--tag TAG`, `--tag-branch`, `--tag-commit`, `--tag-build-id`, `--tag-ci`, `--tag-slug TAG`, `--tag-plain TAG`
+Версия образа из указанного репозитория. Значение опций соответствует указываемым в [dapp dimg push](base_commands.html#dapp-dimg-push).
 
 #### --tmp_dir_prefix PREFIX
 Переопределяет префикс временной директории, временного chart-a, который удаляется после запуска.
@@ -53,8 +53,8 @@ dapp kube lint [options] [REPO]
 #### --namespace NAMESPACE
 Задаёт `namespace`, по умолчанию используется context namespace.
 
-#### --image-version IMAGE_VERSION
-Задаёт версию для используемых `dimg`, по умолчанию используется `latest`.
+#### Опции тегирования `--tag TAG`, `--tag-branch`, `--tag-commit`, `--tag-build-id`, `--tag-ci`, `--tag-slug TAG`, `--tag-plain TAG`
+Влияют на то, что будет в результате использования шаблона `dapp_container_image`. Значение опций соответствует указываемым в [dapp dimg push](base_commands.html#dapp-dimg-push).
 
 #### --set STRING_ARRAY
 Пробрасывает значения в `helm lint` (значения могут передаваться в одной опции, в формате `key1=val1,key2=val2`, или разбиваться на несколько).
@@ -74,6 +74,9 @@ dapp kube render [options] [REPO]
 
 #### --namespace NAMESPACE
 Задаёт `namespace`, по умолчанию используется context namespace.
+
+#### Опции тегирования `--tag TAG`, `--tag-branch`, `--tag-commit`, `--tag-build-id`, `--tag-ci`, `--tag-slug TAG`, `--tag-plain TAG`
+Влияют на то, что будет в результате использования шаблона `dapp_container_image`. Значение опций соответствует указываемым в [dapp dimg push](base_commands.html#dapp-dimg-push).
 
 #### --tmp-dir-prefix PREFIX
 Переопределяет префикс временной директории для размещения временных папок используемых при рендеринге (по умолчанию - /tmp).
