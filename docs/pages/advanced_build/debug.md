@@ -131,49 +131,7 @@ E: Unable to locate package nonexistent
 
 ### Сборочный кэш
 
-Сборщик образов в dapp создает промежуточные docker образы после каждой успешной сборки стадии. Однако, создаваемые в процессе сборки образы являются скрытыми от пользователя dapp до успешного завершения сборки. После успешной сборки все промежуточные образы именуются и попадают в кэш образов. Образы из кэша используются при повторных сборках, а также их можно интроспектить вручную через docker run.
-
-Минусом данного механизма является то, что если в процессе сборки некоторой стадии произошла ошибка, - при повторном запуске сборка начнется с нуля несмотря на то, что стадии до ошибочной были собраны успешно. Это происходит из-за того, что образы стадий не будут сохранены в кэше, если при сборке какой-либо стадии произошла ошибка. Для приведенного выше примера, при каждом повторном запуске сборки стадия Before install будет пересобираться по-новой.
-
-Для разработчика конфигурации было бы удобнее, если бы все успешно собранные стадии сразу сохранялись в кэш docker образов. В таком случае, при возникновении ошибки, пересборка бы всегда начиналась с ошибочной стадии. Для этой цели в dapp предусмотрена возможность принудительного сохранения кэша, включаемая либо опцией `--force-save-cache`, либо наличием переменной окружения `DAPP_FORCE_SAVE_CACHE=1`.
-
-```shell
-$ dapp dimg build --force-save-cache
-nameless: calculating stages signatures                                                            [RUNNING]
-nameless: calculating stages signatures                                                                 [OK] 0.0 sec
-From                                                                                           [USING CACHE]
-  signature: dimgstage-1:32f6cd8e33eef42d20dc8c963a3fd16eb5170dc4376f51ed8667d8f9d15396f3
-  date: 2018-06-05 14:20:53 +0300
-  size: 118.283 MB
-Before install                                                                                 [USING CACHE]
-  signature: dimgstage-1:efe7efc3c232afffbd4d18202833dd9b0d59a034e955f67ed567a8291e2a0314
-  date: 2018-06-05 14:21:10 +0300
-  difference: 40.398 MB
-Install group
-  Install                                                                                         [BUILDING]
-Reading package lists...
-
-Building dependency tree...
-
-Reading state information...
-    Launched command: `apt-get install -y nonexistent`
-  Install                                                                                           [FAILED] 2.29 sec
-    signature: dimgstage-1:be76efbd69f7d66c4a539ae5053943dafb67d1866335c80788dd1c83cda2e331
-    commands:
-      apt-get install -y nonexistent
-Running time 2.51 seconds
-Stacktrace dumped to /tmp/dapp-stacktrace-eabc47ac-4c06-4a42-ab32-086ca5125f2c.out
->>> START STREAM
-Reading package lists...
-
-Building dependency tree...
-
-Reading state information...
-E: Unable to locate package nonexistent
->>> END STREAM
-```
-
-Как видим, при повторном запуске стадия Before install более не пересобирается, т.к. была закэширована.
+Сборщик образов в dapp создает промежуточные docker образы после каждой успешной сборки стадии. Однако, создаваемые в процессе сборки образы являются скрытыми от пользователя dapp до завершения сборки. После сборки все промежуточные образы именуются и попадают в кэш образов. Образы из кэша используются при параллельных и повторных сборках, а также их можно интроспектить вручную через docker run.
 
 ### Альтернативная схема кэширования
 
