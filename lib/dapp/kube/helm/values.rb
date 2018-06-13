@@ -16,7 +16,8 @@ module Dapp
                 "name" => dapp.name,
                 "repo" => repo,
                 "docker_tag" => docker_tag,
-              }
+              },
+              "ci" => ENV.select { |k, _| k.start_with?("CI_") } ,
             }
           }
 
