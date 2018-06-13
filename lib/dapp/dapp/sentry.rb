@@ -50,7 +50,6 @@ module Dapp
           "build-dir" => self.build_dir,
           "options" => self.options,
           "env-options" => {
-            "DAPP_FORCE_SAVE_CACHE" => ENV["DAPP_FORCE_SAVE_CACHE"],
             "DAPP_BIN_DAPPFILE_YML" => ENV["DAPP_BIN_DAPPFILE_YML"],
             "ANSIBLE_ARGS" => ENV["ANSIBLE_ARGS"],
             "DAPP_CHEF_DEBUG" => ENV["DAPP_CHEF_DEBUG"],
