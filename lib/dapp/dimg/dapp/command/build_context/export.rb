@@ -14,7 +14,7 @@ module Dapp
             def export_build_context_image_tar
               lock("#{name}.images", readonly: true) do
                 context_images_names = build_configs.map do |config|
-                  dimg(config: config, ignore_git_fetch: true).tagged_images.map(&:name)
+                  dimg(config: config, ignore_git_fetch: true).all_tagged_images.map(&:name)
                 end.flatten
 
                 log_secondary_process(:images, short: true) do
