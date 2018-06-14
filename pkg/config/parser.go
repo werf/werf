@@ -98,7 +98,10 @@ func parseDappfileYaml(dappfilePath string) (string, error) {
 	if _, err := tmpl.Parse(string(data)); err != nil {
 		return "", err
 	}
-	return executeTemplate(tmpl, "dappfile", map[string]interface{}{"Files": Files{filepath.Dir(dappfilePath)}})
+
+	files := Files{filepath.Dir(dappfilePath)}
+	config, err := executeTemplate(tmpl, "dappfile", map[string]interface{}{"Files": files})
+	return config, err
 }
 
 func funcMap(tmpl *template.Template) template.FuncMap {
@@ -122,7 +125,14 @@ type Files struct {
 }
 
 func (f Files) Get(path string) string {
-	b, err := ioutil.ReadFile(filepath.Join(f.HomePath, path))
+	filePath := filepath.Join(f.HomePath, path)
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		Warnings = append(Warnings, fmt.Sprintf("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!", path, filePath))
+		return ""
+	}
+
+	b, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return ""
 	}
