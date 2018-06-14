@@ -32,6 +32,8 @@ module Dapp
           # rubocop:disable Metrics/ParameterLists
           def safe_cp(from, to, owner, group, include_paths = [], exclude_paths = [])
             ''.tap do |cmd|
+              cmd << "#{dimg.dapp.mkdir_bin} -p #{File.dirname(to)}"
+              cmd << ' && '
               cmd << dimg.dapp.rsync_bin
               cmd << ' --archive --links --inplace'
               cmd << " --chown=#{owner}:#{group}" if owner or group
