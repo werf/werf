@@ -7,7 +7,17 @@ folder: kube
 
 Для деплоя в kubernetes используется [helm](https://helm.sh/) (kubernetes package manager).
 
-В директории `.helm` в корне проекта описывается [helm chart](https://github.com/kubernetes/helm/blob/master/docs/charts.md#charts):
+## Установка helm
+
+Перед тем как использовать dapp для деплоя, необходимо [установить helm](https://docs.helm.sh/using_helm/#installing-helm) и его [серверную часть - tiller](https://docs.helm.sh/using_helm/#installing-tiller). Затем, необходимо установить для helm модуль template:
+
+```
+helm plugin install https://github.com/technosophos/helm-template
+```
+
+## Helm chart
+
+В директории `.helm` в корне проекта описывается [helm chart](https://github.com/kubernetes/helm/blob/master/docs/charts.md#charts) (далее - chart, чарт), который описывает конфигурацию приложения и его компонент для последующего выката в кластер kubernetes средствами helm. Структура chart'а для dapp, т.е. папки `.helm`, следующая:
 
 ```
 .helm/
@@ -21,7 +31,17 @@ folder: kube
   secret-values.yaml
 ```
 
-Структура chart-а включает в себя дополнительные файлы `secret-values.yaml`, директорию и `secret`, подробнее о которых см. в разделе [работа с секретами](secrets_for_kube.html).
+Файл `Chart.yaml` — это описание чарта приложения и в нем как минимум нужно указать имя приложения и его версию. Пример файла `Chart.yaml`:
+```
+apiVersion: v1 [ apiVersion: v1]
+description: Test RabbitMQ chart for Kubernetes
+name: rabbit
+version: 0.1.0
+```
+
+В директории `templates` хранятся шаблоны YAML-файлов - элементов чарта - с описанием ресурсов для их размещения в кластере. Подробнее создание шаблонов рассматривается в отдельном [разделе](templates_for_kube.html). Директория `charts` используется при необходимости работы с внешними чартами.
+
+Структура чарта включает в себя дополнительные элементы которых нет в структуре обычного helm chart, - это файл `secret-values.yaml`, и директория `secret`, подробнее о которых см. в разделе [работа с секретами](secrets_for_kube.html).
 
 ## Настройки подключения к kubernetes
 
