@@ -101,7 +101,8 @@ module Dapp
           [:entrypoint, :cmd].each_with_object({}) do |option, options|
             options[option] = from.config_option(option.to_s.capitalize) || []
           end.tap do |options|
-            options[:workdir] = Array(from.config_option('WorkingDir') || '/')
+            workdir = from.config_option('WorkingDir')
+            options[:workdir] = Array((workdir || '').empty? ? '/' : workdir)
           end
         end
 
