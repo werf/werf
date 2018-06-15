@@ -61,8 +61,7 @@ module Dapp
         end
 
         def submodules_params_base(gitsubmodule_content, paths: [], exclude_paths: [])
-          IniFile.new.parse(gitsubmodule_content)
-            .to_h
+          submodules_file_parse!(gitsubmodule_content)
             .select { |_, params| !ignore_directory?(params['path'], paths: paths, exclude_paths: exclude_paths) }
             .map do |_, params|
               params = params.symbolize_keys
@@ -71,6 +70,29 @@ module Dapp
               params[:type] = url_protocol(params[:url]) == :noname ? :local : :remote
               params
             end
+        end
+
+        def submodules_file_parse!(gitsubmodule_content)
+          raise_error = proc do |error_message|
+            raise Error::Rugged, code: :incorrect_gitmodules_file, data: { name: self.name,
+                                                                           error: error_message,
+                                                                           content: gitsubmodule_content.strip }
+          end
+
+          begin
+            IniFile.new.parse(gitsubmodule_content).to_h.tap do |submodules_params|
+              submodules_params.each do |name, params|
+                %w(path url).each do |field|
+                  next unless params[field].nil? || params[field].empty?
+                  raise_error.call("field `#{field}` required (#{name})")
+                end
+
+                raise_error.call("path should be relative (#{name})") unless Pathname(params['path']).relative?
+              end
+            end
+          rescue IniFile::Error => e
+            raise_error.call(e.message)
+          end
         end
 
         def submodule_url(gitsubmodule_url)
