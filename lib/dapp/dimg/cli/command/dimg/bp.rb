@@ -40,11 +40,6 @@ BANNER
               boolean: true,
               default: false
 
-        option :force_save_cache,
-              long: '--force-save-cache',
-              boolean: true,
-              default: false
-
         # push options
 
         extend ::Dapp::CLI::Options::Tag

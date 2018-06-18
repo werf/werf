@@ -59,7 +59,6 @@ module Dapp
       end
 
       def after_stages_build!
-        return unless last_stage.image.built? || dev_mode? || force_save_cache?
         last_stage.save_in_cache!
         artifacts.each { |artifact| artifact.last_stage.save_in_cache! }
       end
@@ -239,14 +238,6 @@ module Dapp
 
       def dev_mode?
         dapp.dev_mode?
-      end
-
-      def force_save_cache?
-        if ENV.key? "DAPP_FORCE_SAVE_CACHE"
-          %w(yes 1 true).include? ENV["DAPP_FORCE_SAVE_CACHE"].to_s
-        else
-          !!dapp.options[:force_save_cache]
-        end
       end
 
       def build_cache_version
