@@ -30,7 +30,7 @@ module Dapp
 {{-   else }}
 - name: B
   value: value2
-{{-     if or (eq .Values.global.env "staging") (eq .Values.global.env "testing") }}
+{{-     if or (eq .Values.global.env "stage") (eq .Values.global.env "test") }}
 - name: C
   value: value3
 {{-     end }}
@@ -64,8 +64,7 @@ spec:
           secretName: {{ .Chart.Name }}-backend
       containers:
       - command: [ '/bin/bash', '-l', '-c', 'bundle exec ctl start' ]
-        image: {{ tuple "specific-name" . | include "dimg" }} # or nameless dimg {{ tuple . | include "dimg" }}
-        imagePullPolicy: Always
+{{ tuple "dimg-name" . | include "dapp_container_image" | indent 8 }} # or nameless dimg {{ tuple . | include "dapp_container_image" }}
         name: {{ .Chart.Name }}-backend
         livenessProbe:
           httpGet:
@@ -79,7 +78,7 @@ spec:
           name: http
           protocol: TCP
         env:
-{{- include "common_envs" . | indent 8 }}
+{{ tuple "dimg-name" . | include "dapp_container_env" | indent 10 }}
 ---
 apiVersion: v1
 kind: Service
