@@ -360,6 +360,21 @@ describe Dapp::Dimg::Config::Directive::Dimg do
               end
               expect_artifact_exports(exports, should_raise_config_error: true)
             end
+
+            it 'conflict between `to` (/) and `include_paths`' do
+              exports = begin
+                [
+                  {
+                    to: '/folder2'
+                  },
+                  {
+                    to: '/',
+                    include_paths: ['folder2']
+                  }
+                ]
+              end
+              expect_artifact_exports(exports, should_raise_config_error: true)
+            end
           end
 
           it 'auto excluding (1)' do

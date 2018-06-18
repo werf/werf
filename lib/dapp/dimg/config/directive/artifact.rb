@@ -62,16 +62,6 @@ module Dapp
               raise ::Dapp::Error::Config, code: :stage_artifact_double_associate,
                                            data: { stage: "#{type} #{stage.inspect}",
                                                    conflict_stage: "#{conflict_type} #{conflict_stage.inspect}" } if conflict_stage
-
-              defined_stage = public_send("_#{type}")
-              dapp.log_config_warning(
-                desc: {
-                  code: :stage_artifact_rewritten,
-                  context: :warning,
-                  data: { stage: "#{type} #{stage.inspect}",
-                          conflict_stage: "#{type} #{defined_stage.inspect}" }
-                }
-              ) if defined_stage
             end
           end
         end
