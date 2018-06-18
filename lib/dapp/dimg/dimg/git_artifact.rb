@@ -12,7 +12,7 @@ module Dapp
             repo = GitRepo::Own.new(dapp)
             local_git_artifacts.map do |ga_config|
               artifacts.concat(generate_git_artifacts(repo, **ga_config._artifact_options))
-            end
+            end unless repo.empty?
           end
         end
 
@@ -23,7 +23,7 @@ module Dapp
                                                    url: ga_config._url,
                                                    branch: ga_config._branch,
                                                    ignore_git_fetch: ignore_git_fetch)
-              artifacts.concat(generate_git_artifacts(repo, **ga_config._artifact_options))
+              artifacts.concat(generate_git_artifacts(repo, **ga_config._artifact_options)) unless repo.empty?
             end
           end
         end

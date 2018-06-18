@@ -178,6 +178,10 @@ module Dapp
           git.lookup(commit)
         end
 
+        def empty?
+          git.empty?
+        end
+
         protected
 
         def git(**kwargs)
