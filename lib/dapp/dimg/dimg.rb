@@ -86,6 +86,7 @@ module Dapp
               stage_image.export!(image_name)
             end
           end
+          artifacts.each { |artifact| artifact.export_stages!(repo, format: format) }
         end
       end
 
@@ -183,6 +184,7 @@ module Dapp
             end
             break unless !!dapp.options[:pull_all_stages]
           end
+          artifacts.each { |artifact| artifact.import_stages!(repo, format: format) }
         end
       end
 

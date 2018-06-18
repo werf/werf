@@ -18,17 +18,8 @@ module Dapp
           dapp.stage_dapp_label
         end
 
-        def tagged_images
-          all_images.select(&:tagged?)
-        end
-        alias export_images tagged_images
-
-        def all_images
-          @all_images ||= all_stages.map(&:image).uniq!(&:name)
-        end
-
-        def all_stages
-          stages + artifacts.map(&:all_stages).flatten
+        def all_tagged_images
+          tagged_images.concat(artifacts.map(&:all_tagged_images).flatten).uniq(&:name)
         end
 
         def last_stage
@@ -53,8 +44,13 @@ module Dapp
           end
         end
 
+        def tagged_images
+          images.select(&:tagged?)
+        end
+        alias export_images tagged_images
+
         def import_images
-          all_images.select { |image| !image.tagged? }
+          images.select { |image| !image.tagged? }
         end
 
         def artifacts_stages
@@ -69,6 +65,10 @@ module Dapp
               break if (stage = stage.prev_stage).nil?
             end
           end
+        end
+
+        def images
+          stages.map(&:image).uniq(&:name)
         end
       end # Stages
     end # Mod
