@@ -63,6 +63,9 @@ entries:
     - title: Секреты
       url: /secrets_for_kube.html
 
+    - title: Конфигурация выката
+      url: /templates_for_kube.html
+
     - title: Использование minikube
       url: /minikube_for_kube.html
 
