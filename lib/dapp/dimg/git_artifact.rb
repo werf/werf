@@ -48,7 +48,7 @@ module Dapp
       def submodule_artifact(submodule_params)
         embedded_artifact(submodule_params)
       rescue Rugged::InvalidError => e
-        raise Error::Rugged, code: :incorrect_gitmodules_file, data: { error: e.message }
+        raise Error::Rugged, code: :git_local_incorrect_gitmodules_params, data: { error: e.message }
       end
 
       def nested_git_directory_artifacts
