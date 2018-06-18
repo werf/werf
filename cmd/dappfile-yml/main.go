@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/flant/yaml.v2"
 
@@ -71,20 +72,21 @@ func main() {
 		os.Exit(16)
 	}
 
-	config, err := config.LoadDappfile(DappfilePath)
+	conf, err, warns := config.LoadDappfile(DappfilePath)
 	if err != nil {
 		fprintResponse(os.Stderr, map[string]string{
 			"error":   "bad_dappfile",
+			"warning": strings.Join(warns, "\n"),
 			"message": fmt.Sprintf("Bad dappfile %s: %s", DappfilePath, err),
 		})
 		os.Exit(16)
 	}
 
-	serializedConfig, err := yaml.Marshal(yaml.MetaConfig{ImplicitDoc: false, Value: &config})
+	serializedConfig, err := yaml.Marshal(yaml.MetaConfig{ImplicitDoc: false, Value: &conf})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot dump dappConfig yaml data: %s\n", err)
 		os.Exit(1)
 	}
 
-	fprintResponse(os.Stdout, map[string]string{"dappConfig": string(serializedConfig)})
+	fprintResponse(os.Stdout, map[string]string{"dappConfig": string(serializedConfig), "warning": strings.Join(warns, "\n")})
 }
