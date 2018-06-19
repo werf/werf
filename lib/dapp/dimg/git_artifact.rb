@@ -14,10 +14,12 @@ module Dapp
       # rubocop:disable Metrics/ParameterLists
       def initialize(repo, dimg, to:, name: nil, branch: nil, commit: nil,
                      cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil, as: nil,
-                     stages_dependencies: {})
+                     stages_dependencies: {}, ignore_signature_auto_calculation: false)
         @repo = repo
         @dimg = dimg
         @name = name
+
+        @ignore_signature_auto_calculation = ignore_signature_auto_calculation
 
         @branch = branch || repo.dapp.options[:git_artifact_branch] || repo.branch
         @commit = commit
@@ -104,6 +106,8 @@ module Dapp
           options[:commit]              = embedded_params[:commit]
           options[:owner]               = owner
           options[:group]               = group
+
+          options[:ignore_signature_auto_calculation]= ignore_signature_auto_calculation
         end
       end
 
@@ -286,7 +290,11 @@ module Dapp
       end
 
       def latest_commit
-        @latest_commit ||= (commit || repo.latest_commit(branch))
+        @latest_commit ||= begin
+          (commit || repo.latest_commit(branch)).tap do |c|
+            repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
+          end
+        end
       end
 
       def paramshash
@@ -323,6 +331,7 @@ module Dapp
       attr_reader :owner
       attr_reader :group
       attr_reader :stages_dependencies
+      attr_reader :ignore_signature_auto_calculation
 
       def sudo
         repo.dapp.sudo_command(owner: owner, group: group)

@@ -27,7 +27,7 @@ module Dapp
 
         def generate_git_artifacts(repo, **git_artifact_options)
           [].tap do |artifacts|
-            artifacts << (artifact = ::Dapp::Dimg::GitArtifact.new(repo, self, **git_artifact_options))
+            artifacts << (artifact = ::Dapp::Dimg::GitArtifact.new(repo, self, ignore_signature_auto_calculation: ignore_signature_auto_calculation, **git_artifact_options))
             if ENV['DAPP_DISABLE_GIT_SUBMODULES']
               artifacts
             else
