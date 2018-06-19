@@ -21,7 +21,7 @@ module SpecHelper
             openstruct_config
           end
         end
-        @dapp = nil
+        dapp_renew
         dapp.dimg(**options)
       end
     end
@@ -46,6 +46,12 @@ module SpecHelper
           yield dapp if block_given?
         end
       end
+    end
+
+    def dapp_renew
+      return if dapp.nil?
+      dapp.terminate
+      @dapp = nil
     end
 
     def project_path
@@ -146,6 +152,5 @@ module SpecHelper
         allow(instance).to receive(:_terminate_dimg_on_terminate)
       end
     end
-
   end
 end

@@ -24,7 +24,7 @@ describe Dapp::Dimg::GitRepo do
     @remote = Dapp::Dimg::GitRepo::Remote.new(dapp, 'local_remote', url: 'remote/.git')
 
     expect(File.exist?(@remote.path)).to be_truthy
-    expect(@remote.path.to_s[/.*\/([^\/]*\/[^\/]*\/[^\/]*)/, 1]).to eq "remote_git_repo/#{Dapp::Dimg::GitRepo::Remote::CACHE_VERSION}/local_remote"
+    expect(@remote.path.to_s[/.*\/([^\/]*\/[^\/]*\/[^\/]*)/, 1]).to eq "remote_git_repo/#{Dapp::Dimg::GitRepo::Remote::CACHE_VERSION}/#{dapp.consistent_uniq_slugify("local_remote")}"
   end
 
   it 'Remote#init', test_construct: true do

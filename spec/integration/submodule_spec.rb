@@ -11,7 +11,6 @@ describe Dapp::Dimg::Dimg do
       https: 'https://github.com/flant/dapp-submodule-spec-project-https.git',
       relative_path: 'https://github.com/flant/dapp-submodule-spec-project-relative-path.git',
       nested: 'https://github.com/flant/dapp-submodule-spec-project-nested.git',
-      branches: 'https://github.com/flant/dapp-submodule-spec-project-branches.git'
     }
   end
 
@@ -135,9 +134,5 @@ EOF
     project_https_md5sum = calculate_md5sum(project_https_path)
 
     clone_project_and_expect_submodule(projects_origins[:nested], project_https_md5sum)
-  end
-
-  it 'branches', test_construct: true do
-    clone_project_and_expect_submodule(projects_origins[:branches], project_test_md5sum(:feature))
   end
 end
