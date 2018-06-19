@@ -8,9 +8,9 @@ module Dapp
         attr_reader :path
 
         class << self
-          def get_or_create(dapp, name, url:, branch:, ignore_git_fetch: false)
-            key         = [url, branch, ignore_git_fetch]
-            inverse_key = [url, branch, !ignore_git_fetch]
+          def get_or_create(dapp, name, url:, ignore_git_fetch: false)
+            key         = [url, ignore_git_fetch]
+            inverse_key = [url, !ignore_git_fetch]
 
             repositories[key] ||= begin
               if repositories.key?(inverse_key)
@@ -18,7 +18,7 @@ module Dapp
               else
                 new(dapp, name, url: url)
               end.tap do |repo|
-                repo.fetch!(branch, ignore_git_fetch: ignore_git_fetch) unless ignore_git_fetch
+                repo.fetch! unless ignore_git_fetch
               end
             end
           end
@@ -66,10 +66,8 @@ module Dapp
           Pathname(dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, name).to_s)
         end
 
-        def fetch!(branch = nil, ignore_git_fetch: false)
+        def fetch!
           _with_lock do
-            branch ||= self.branch
-
             cfg_path = path.join("config")
             cfg = IniFile.load(cfg_path)
             remote_origin_cfg = cfg['remote "origin"']
@@ -82,17 +80,12 @@ module Dapp
 
             dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_fetch', data: { url: url }), short: true) do
               begin
-                git.fetch('origin', [branch], credentials: _rugged_credentials)
+                git.remotes.each { |remote| remote.fetch(credentials: _rugged_credentials) }
               rescue Rugged::SshError => e
                 raise Error::Rugged, code: :rugged_remote_error, data: { url: url, message: e.message.strip }
               end
-              raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } unless branch_exist?(branch)
             end
-          end unless ignore_git_fetch || dapp.dry_run?
-        end
-
-        def branch_exist?(name)
-          git.branches.exist?(branch_format(name))
+          end unless dapp.dry_run?
         end
 
         def latest_commit(name)
