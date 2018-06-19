@@ -2,10 +2,9 @@ module Dapp
   module Dimg
     module GitRepo
       class Remote < Base
-        CACHE_VERSION = 1
+        CACHE_VERSION = 2
 
         attr_reader :url
-        attr_reader :path
 
         class << self
           def get_or_create(dapp, name, url:, ignore_git_fetch: false)
@@ -63,7 +62,7 @@ module Dapp
         end
 
         def path
-          Pathname(dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, name).to_s)
+          Pathname(dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, dapp.consistent_uniq_slugify(name)).to_s)
         end
 
         def fetch!
@@ -88,14 +87,35 @@ module Dapp
           end unless dapp.dry_run?
         end
 
-        def latest_commit(name)
-          git.ref("refs/remotes/#{branch_format(name)}").target_id
+        def latest_commit(branch)
+          git.ref("refs/remotes/#{branch_format(branch)}").tap do |ref|
+            raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } if ref.nil?
+            break ref.target_id
+          end
         end
 
         def lookup_commit(commit)
           super
         rescue Rugged::OdbError, TypeError => _e
           raise Error::Rugged, code: :commit_not_found_in_remote_git_repository, data: { commit: commit, url: url }
+        end
+
+        def submodules_git(commit)
+          submodules_git_path(commit).tap do |git_path|
+            break begin
+              if git_path.directory?
+                Rugged::Repository.new(git_path.to_s)
+              else
+                Rugged::Repository.clone_at(path.to_s, git_path.to_s).tap do |submodules_git|
+                  submodules_git.checkout(commit)
+                end
+              end
+            end
+          end
+        end
+
+        def submodules_git_path(commit)
+          Pathname(File.join(dapp.host_docker_tmp_config_dir, "submodule", dapp.consistent_uniq_slugify(name), commit).to_s)
         end
 
         protected

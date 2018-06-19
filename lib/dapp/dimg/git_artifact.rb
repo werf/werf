@@ -101,6 +101,7 @@ module Dapp
               .to_h
           end
           options[:branch]              = embedded_params[:branch]
+          options[:commit]              = embedded_params[:commit]
           options[:owner]               = owner
           options[:group]               = group
         end

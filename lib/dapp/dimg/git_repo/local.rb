@@ -26,22 +26,20 @@ module Dapp
           end
         end
 
-        # NOTICE: Параметры {from: nil, to: nil} можно указать только для Own repo.
-        # NOTICE: Для Remote repo такой вызов не имеет смысла и это ошибка пользователя класса Remote.
-
         def submodules_params(commit, paths: [], exclude_paths: [])
-          return super unless commit.nil?
-          return []    unless File.file?((gitmodules_file_path = File.join(workdir_path, '.gitmodules')))
-
-          submodules_params_base(File.read(gitmodules_file_path),
-                                 paths: paths,
-                                 exclude_paths: exclude_paths).each do |submodule_params|
-            submodule_path = File.join(workdir_path, submodule_params[:path])
-            if git_repo_exist?(submodule_path)
-              dapp.log_info("Using local submodule `#{submodule_path}`!")
-              submodule_params[:type] = :local
+          submodules(commit, paths: paths, exclude_paths: exclude_paths).map do |submodule|
+            next if commit.nil? && !submodule.in_config?
+            submodule_params(submodule).tap do |params|
+              if commit.nil?
+                submodule_path = File.join(workdir_path, params[:path])
+                params[:commit] = submodule.workdir_oid || submodule.head_oid
+                if git_repo_exist?(submodule_path)
+                  dapp.log_info("Using local submodule `#{params[:path]}`!")
+                  params[:type] = :local
+                end
+              end
             end
-          end
+          end.compact
         end
 
         def ignore_patch?(patch, paths: [], exclude_paths: [])
@@ -57,6 +55,9 @@ module Dapp
         def nested_git_repository_mode?(mode)
           mode == 0o040000
         end
+
+        # NOTICE: Параметры {from: nil, to: nil} можно указать только для Own repo.
+        # NOTICE: Для Remote repo такой вызов не имеет смысла и это ошибка пользователя класса Remote.
 
         def diff(from, to, **kwargs)
           if from.nil? and to.nil?
