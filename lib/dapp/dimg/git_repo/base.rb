@@ -204,6 +204,10 @@ module Dapp
           git.empty?
         end
 
+        def tracked_remote_repository?
+          !git.remotes.to_a.empty?
+        end
+
         protected
 
         def git(**kwargs)
