@@ -34,7 +34,7 @@ module Dapp
                 _minikube_set_original_sudo_caller_process_user!
 
                 begin
-                  if shellout!('minikube status', verbose: true).stdout.split("\n").map(&:strip).first == 'minikubeVM: Running'
+                  if shellout('minikube status').stdout.split("\n").map(&:strip).first =~ /minikube(VM)?: Running/
                     shellout! 'minikube stop', verbose: true
                   end
                   shellout! 'minikube start --insecure-registry localhost:5000', verbose: true
