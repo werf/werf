@@ -96,7 +96,7 @@ module Dapp
             dimg_data["docker_image"] = [[repo, dimg.name].compact.join("/"), docker_tag].join(":")
             dimg_data["docker_image_id"] = docker_image_id
 
-            [*dimg.local_git_artifacts, *dimg.remote_git_artifacts].each do |ga|
+            dimg.git_artifacts(omit_empty: false).each do |ga|
               if ga.as
                 commit_id = dimg_labels[dapp.dimgstage_g_a_commit_label(ga.paramshash)] || TEMPLATE_EMPTY_VALUE
 
