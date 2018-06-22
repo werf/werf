@@ -18,10 +18,6 @@ BANNER
                description: 'Redefine resource locking timeout (in seconds)',
                proc: ->(v) { v.to_i }
 
-        option :git_artifact_branch,
-               long: '--git-artifact-branch BRANCH',
-               description: 'Default branch to archive artifacts from'
-
         option :with_stages,
                long: '--with-stages',
                boolean: true
