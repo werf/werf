@@ -1,5 +1,5 @@
 ---
-title: Docker директивы
+title: Docker директивы в Dappfile
 sidebar: doc_sidebar
 permalink: docker_directives.html
 folder: directive

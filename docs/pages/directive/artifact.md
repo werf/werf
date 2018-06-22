@@ -1,5 +1,5 @@
 ---
-title: Директивы артефактов и git-артефактов
+title: Директивы артефактов и git-артефактов в Dappfile
 sidebar: doc_sidebar
 permalink: artifact_directives.html
 folder: directive
@@ -87,7 +87,7 @@ dimg do
   git do
     add '/' do
       to '/app'
-      
+
       stage_dependencies do
         install 'flag'
       end
@@ -120,7 +120,7 @@ end
 ```ruby
 dimg do
   docker.from 'image:tag'
-  
+
   artifact do
     shell.build_artifact.run 'command1', 'command2'
 
@@ -129,7 +129,7 @@ dimg do
       to '/app'
     end
   end
-  
+
   artifact do
     shell.build_artifact.run 'command3', 'command4'
 
@@ -177,7 +177,7 @@ dimg_group do
       to '/app'
     end
   end
-      
+
   dimg
 end
 ```

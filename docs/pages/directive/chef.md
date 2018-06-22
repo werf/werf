@@ -1,5 +1,5 @@
 ---
-title: Chef директивы
+title: Chef директивы в Dappfile
 sidebar: doc_sidebar
 permalink: chef_directives.html
 folder: directive
@@ -40,7 +40,7 @@ folder: directive
 ```ruby
 dimg_group do
   docker.from 'image:tag'
-  
+
   chef.attributes['dimod-test']['nginx']['package_name'] = 'nginx-common'
   chef.attributes['dimod-test']['nginx']['package_version'] = '1.4.6-1ubuntu3.5'
 
@@ -64,17 +64,17 @@ end
 ```ruby
 dimg_group do
   docker.from 'image:tag'
-  
+
   chef do
     dimod 'mod1', 'mod2'
     recipe 'recipe1'
-  end 
+  end
 
   dimg do
     chef do
       dimod 'mod3'
       recipe 'recipe2', 'recipe3'
-    end 
+    end
   end
 end
 ```
@@ -84,10 +84,10 @@ end
 ```ruby
 dimg_group do
   docker.from 'image:tag'
-  
+
   chef.dimod 'mod1', 'mod2'
   chef.recipe 'recipe1'
-  
+
   dimg do
     chef.dimod 'mod3'
     chef.recipe 'recipe2', 'recipe3'
