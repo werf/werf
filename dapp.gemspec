@@ -27,7 +27,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'i18n', '~> 0.7'
   s.add_dependency 'paint', '~> 1.0', '>= 1.0.1'
   s.add_dependency 'inifile', '~> 3.0.0'
-  s.add_dependency 'rugged', '~> 0.24.0'
+  s.add_dependency 'rugged', '~> 0.27.0'
   s.add_dependency 'murmurhash3', '~> 0.1.6'
   s.add_dependency 'slugify', '~> 1.0', '>= 1.0.6'
   s.add_dependency 'progressbar', '~> 1.9.0'

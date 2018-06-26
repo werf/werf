@@ -524,11 +524,12 @@ describe Dapp::Dimg::GitArtifact do
 
     [
       ['**/*.rb', %w(**/*.rb *.rb)],
-      ['path/subpath', ['**']],
+      ['path/*', %w(**)],
+      ['path/subpath', %w(**)],
       ['path/subpath/**/*.exe', %w(**/*.exe)],
-      ['path/*th', ['**']],
-      ['path/subpath2', []],
-      ['path/subpath2/**/*.html', []]
+      ['path/*th', %w(**)],
+      ['path/subpath2', %w()],
+      ['path/subpath2/**/*.html', %w()]
     ].each do |path, expected|
       it "#{path} => #{expected}" do
         expect(git_artifact_embedded_inherit_path(path, 'path/subpath')).to eq expected

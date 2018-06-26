@@ -14,10 +14,12 @@ module Dapp
       # rubocop:disable Metrics/ParameterLists
       def initialize(repo, dimg, to:, name: nil, branch: nil, commit: nil,
                      cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil, as: nil,
-                     stages_dependencies: {})
+                     stages_dependencies: {}, ignore_signature_auto_calculation: false)
         @repo = repo
         @dimg = dimg
         @name = name
+
+        @ignore_signature_auto_calculation = ignore_signature_auto_calculation
 
         @branch = branch || repo.dapp.options[:git_artifact_branch] || repo.branch
         @commit = commit
@@ -70,10 +72,7 @@ module Dapp
         embedded_rel_path = embedded_params[:path]
         embedded_repo     = begin
           if embedded_params[:type] == :remote
-            GitRepo::Remote.get_or_create(repo.dapp, embedded_rel_path,
-                                          url: embedded_params[:url],
-                                          branch: embedded_params[:branch],
-                                          ignore_git_fetch: dimg.ignore_git_fetch )
+            GitRepo::Remote.get_or_create(repo.dapp, embedded_rel_path, url: embedded_params[:url], ignore_git_fetch: dimg.ignore_git_fetch)
           elsif embedded_params[:type] == :local
             embedded_path = File.join(repo.workdir_path, embedded_params[:path])
             GitRepo::Local.new(repo.dapp, embedded_rel_path, embedded_path)
@@ -104,8 +103,11 @@ module Dapp
               .to_h
           end
           options[:branch]              = embedded_params[:branch]
+          options[:commit]              = embedded_params[:commit]
           options[:owner]               = owner
           options[:group]               = group
+
+          options[:ignore_signature_auto_calculation]= ignore_signature_auto_calculation
         end
       end
 
@@ -288,7 +290,11 @@ module Dapp
       end
 
       def latest_commit
-        @latest_commit ||= (commit || repo.latest_commit(branch))
+        @latest_commit ||= begin
+          (commit || repo.latest_commit(branch)).tap do |c|
+            repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
+          end
+        end
       end
 
       def paramshash
@@ -325,6 +331,7 @@ module Dapp
       attr_reader :owner
       attr_reader :group
       attr_reader :stages_dependencies
+      attr_reader :ignore_signature_auto_calculation
 
       def sudo
         repo.dapp.sudo_command(owner: owner, group: group)
@@ -409,33 +416,40 @@ module Dapp
       # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       def change_patch_new_file_path(stage, patch)
         patch.to_s.lines.tap do |lines|
+          prepare_native_path = proc do |path_with_cwd|
+            case archive_type(stage)
+            when :directory
+              path_with_cwd.sub(cwd, '')
+            when :file
+              File.basename(to)
+            else
+              raise
+            end
+          end
+
           modify_patch_line = proc do |line_number, path_char|
             action_part, path_part = lines[line_number].strip.split(' ', 2)
             if (path_with_cwd = path_part.partition("#{path_char}/").last).start_with?(cwd)
-              native_path = case archive_type(stage)
-              when :directory
-                path_with_cwd.sub(cwd, '')
-              when :file
-                File.basename(to)
-              else
-                raise
+              prepare_native_path.call(path_with_cwd).tap do |native_path|
+                if native_path
+                  expected_path = File.join(path_char, native_path)
+                  lines[line_number] = [action_part, expected_path].join(' ') + "\n"
+                end
               end
-
-              if native_path
-                expected_path = File.join(path_char, native_path)
-                lines[line_number] = [action_part, expected_path].join(' ') + "\n"
-              end
-
-              native_path
             end
+          end
+
+          modify_patch_first_line = proc do
+            old_file_path = prepare_native_path.call(patch.delta.old_file[:path])
+            new_file_path = prepare_native_path.call(patch.delta.new_file[:path])
+            lines[0] = ['diff --git', File.join('a', old_file_path), File.join('b', new_file_path)].join(' ') + "\n"
           end
 
           modify_patch = proc do |*modify_patch_line_args|
             native_paths = modify_patch_line_args.map { |args| modify_patch_line.call(*args) }
             unless (native_paths = native_paths.compact.uniq).empty?
               raise Error::Build, code: :unsupported_patch_format, data: { patch: patch.to_s } unless native_paths.one?
-              native_path = native_paths.first
-              lines[0] = ['diff --git', File.join('a', native_path), File.join('b', native_path)].join(' ') + "\n"
+              modify_patch_first_line.call
             end
           end
 
@@ -444,7 +458,11 @@ module Dapp
           when patch.delta.added? then modify_patch.call([4, 'b'])
           when patch.delta.modified?
             if patch_file_mode_changed?(patch)
-              modify_patch.call([4, 'a'], [5, 'b'])
+              if patch.changes.zero?
+                modify_patch_first_line.call
+              else
+                modify_patch.call([4, 'a'], [5, 'b'])
+              end
             else
               modify_patch.call([2, 'a'], [3, 'b'])
             end

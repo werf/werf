@@ -49,50 +49,26 @@ module Dapp
         end
 
         def submodules_params(commit, paths: [], exclude_paths: [])
-          raise "Workdir not supported for #{self.class}" if commit.nil?
-
-          entry = begin
-            lookup_commit(commit).tree.path('.gitmodules')
-          rescue Rugged::TreeError
-            return []
-          end
-
-          submodules_params_base(lookup_object(entry[:oid]).content, paths: paths, exclude_paths: exclude_paths)
+          raise "Workdir not supported for `#{self.class}` repository" if commit.nil?
+          submodules(commit, paths: paths, exclude_paths: exclude_paths).map(&method(:submodule_params))
         end
 
-        def submodules_params_base(gitsubmodule_content, paths: [], exclude_paths: [])
-          submodules_file_parse!(gitsubmodule_content)
-            .select { |_, params| !ignore_directory?(params['path'], paths: paths, exclude_paths: exclude_paths) }
-            .map do |_, params|
-              params = params.symbolize_keys
-              params[:branch] = params[:branch].to_s if params.key?(:branch)
-              params[:url] = submodule_url(params[:url])
-              params[:type] = url_protocol(params[:url]) == :noname ? :local : :remote
-              params
-            end
+        def submodule_params(submodule)
+          {}.tap do |params|
+            params[:path]   = submodule.path
+            params[:url]    = submodule_url(submodule.url)
+            params[:type]   = url_protocol(params[:url]) == :noname ? :local : :remote
+            params[:commit] = submodule.head_oid
+          end
         end
 
-        def submodules_file_parse!(gitsubmodule_content)
-          raise_error = proc do |error_message|
-            raise Error::Rugged, code: :incorrect_gitmodules_file, data: { name: self.name,
-                                                                           error: error_message,
-                                                                           content: gitsubmodule_content.strip }
-          end
+        def submodules(commit, paths: [], exclude_paths: [])
+          Rugged::SubmoduleCollection.new(submodules_git(commit))
+            .select { |s| !ignore_directory?(s.path, paths: paths, exclude_paths: exclude_paths) }
+        end
 
-          begin
-            IniFile.new.parse(gitsubmodule_content).to_h.tap do |submodules_params|
-              submodules_params.each do |name, params|
-                %w(path url).each do |field|
-                  next unless params[field].nil? || params[field].empty?
-                  raise_error.call("field `#{field}` required (#{name})")
-                end
-
-                raise_error.call("path should be relative (#{name})") unless Pathname(params['path']).relative?
-              end
-            end
-          rescue IniFile::Error => e
-            raise_error.call(e.message)
-          end
+        def submodules_git(_)
+          git
         end
 
         def submodule_url(gitsubmodule_url)
@@ -178,7 +154,7 @@ module Dapp
             .select { |b| b.start_with?('origin/') }
             .map { |b| b.reverse.chomp('origin/'.reverse).reverse }
         end
-        
+
         def find_commit_id_by_message(regex)
           walker.each do |commit|
             msg = commit.message.encode('UTF-8', invalid: :replace, undef: :replace)
