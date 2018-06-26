@@ -21,7 +21,7 @@ module Dapp
 
         @ignore_signature_auto_calculation = ignore_signature_auto_calculation
 
-        @branch = branch || repo.dapp.options[:git_artifact_branch] || repo.branch
+        @branch = branch || repo.branch
         @commit = commit
 
         @to = to
