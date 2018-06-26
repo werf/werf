@@ -151,7 +151,7 @@ module Dapp
 
       def helm_set_options(without_registry: false, fake: false)
         [].tap do |options|
-          options.concat set.map {|opt| "--set #{opt}"}
+          options.concat set.map {|opt| "--set '#{opt}'"}
 
           service_values = Helm::Values.service_values(dapp, repo, namespace, docker_tag,
                                                        without_registry: self.without_registry || without_registry,

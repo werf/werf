@@ -1,7 +1,7 @@
 module Dapp
   module Kube
     class Helm::Values
-      TEMPLATE_EMPTY_VALUE = "\\\"-\\\""
+      TEMPLATE_EMPTY_VALUE = '"-"'.freeze
 
       class << self
         def service_values(*a, &b)
@@ -17,7 +17,7 @@ module Dapp
                 "repo" => repo,
                 "docker_tag" => docker_tag,
               },
-              "ci" => ENV.select { |k, _| k.start_with?("CI_") } ,
+              "ci" => ENV.select { |k, _| k.start_with?('CI_') },
             }
           }
 
@@ -140,7 +140,7 @@ module Dapp
       end
 
       def to_set_options
-        as_set_options.map {|k, v| "--set #{k}=#{v}"}
+        as_set_options.map {|k, v| "--set '#{k}=#{v}'"}
       end
     end # Helm::ServiceValues
   end # Kube
