@@ -13,6 +13,10 @@ BANNER
              long: '--namespace NAME',
              default: nil
 
+      option :context,
+             long: '--context NAME',
+             default: nil
+
       option :with_namespace,
              long: '--with-namespace',
              default: false

@@ -251,7 +251,11 @@ module Dapp
           end
 
           def _minikube_kubernetes
-            @_minikube_kubernetes ||= Kubernetes::Client.new(namespace: 'kube-system')
+            @_minikube_kubernetes ||= Kubernetes::Client.new(
+              kubernetes_config,
+              kubernetes_config.current_context_name,
+              'kube-system'
+            )
           end
 
           def _minikube_registry_replicationcontroller_spec

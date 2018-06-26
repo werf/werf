@@ -15,6 +15,10 @@ BANNER
              long: '--namespace NAME',
              default: nil
 
+      option :context,
+             long: '--context NAME',
+             default: nil
+
       option :image_version,
              long: '--image-version TAG',
              description: "Custom tag (alias for --tag)",

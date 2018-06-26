@@ -14,6 +14,10 @@ BANNER
         long: '--namespace NAME',
         default: nil
 
+      option :context,
+        long: '--context NAME',
+        default: nil
+
       option :registry_username,
         long: '--registry-username USERNAME'
 

@@ -14,6 +14,10 @@ BANNER
              long: '--namespace NAME',
              default: nil
 
+      option :context,
+             long: '--context NAME',
+             default: nil
+
       option :helm_set_options,
              long: '--set STRING_ARRAY',
              default: [],
