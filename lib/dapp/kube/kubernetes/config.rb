@@ -7,10 +7,10 @@ module Dapp
 
         class << self
           def new_auto_if_available
-            if ENV['KUBECONFIG']
-              Kubernetes::Config.new_from_kubeconfig(ENV['KUBECONFIG'])
-            elsif Kubernetes::Config.kubectl_available?
+            if Kubernetes::Config.kubectl_available?
               Kubernetes::Config.new_from_kubectl
+            elsif ENV['KUBECONFIG']
+              Kubernetes::Config.new_from_kubeconfig(ENV['KUBECONFIG'])
             else
               default_path = File.join(ENV['HOME'], '.kube/config')
               if File.exists? default_path
@@ -43,11 +43,14 @@ module Dapp
           end
 
           def new_from_kubectl
-            cmd_res = shellout("kubectl config view")
+            cmd_res = shellout(
+              "kubectl config view --raw",
+              env: {"KUBECONFIG" => ENV["KUBECONFIG"]}
+            )
 
             shellout_cmd_should_succeed! cmd_res
 
-            self.new YAML.load(cmd_res.stdout), "kubectl config view"
+            self.new YAML.load(cmd_res.stdout), "kubectl config view --raw"
           end
         end # << self
 
