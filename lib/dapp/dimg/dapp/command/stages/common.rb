@@ -8,11 +8,16 @@ module Dapp
 
             def repo_detailed_dimgs_images(registry)
               repo_dimgs_images(registry).select do |dimg|
-                image_history = registry.image_history(dimg[:tag], dimg[:dimg])
-                dimg[:created_at] = Time.parse(image_history['created']).to_i
-                dimg[:parent] = image_history['container_config']['Image']
-                dimg[:labels] = image_history['config']['Labels'] || {}
-                dimg[:labels]['dapp'] == name
+                begin
+                  image_history = registry.image_history(dimg[:tag], dimg[:dimg])
+                  dimg[:created_at] = Time.parse(image_history['created']).to_i
+                  dimg[:parent] = image_history['container_config']['Image']
+                  dimg[:labels] = image_history['config']['Labels'] || {}
+                  dimg[:labels]['dapp'] == name
+                rescue DockerRegistry::Error::ManifestInvalid => err
+                  log_warning "WARNING: Ignore dimg `#{dimg[:dimg]}` tag `#{dimg[:tag]}`: got manifest-invalid-error from docker registry: #{err.message}"
+                  false
+                end
               end
             end
 
@@ -48,7 +53,13 @@ module Dapp
 
             def delete_repo_image(registry, repo_image)
               log([repo_image[:dimg], repo_image[:tag]].compact.join(':')) if dry_run? || log_verbose?
-              registry.image_delete(repo_image[:tag], repo_image[:dimg])           unless dry_run?
+              unless dry_run?
+                begin
+                  registry.image_delete(repo_image[:tag], repo_image[:dimg])
+                rescue DockerRegistry::Error::NotFound => err
+                  log_warning "WARNING: Ignore dimg `#{repo_image[:dimg]}` tag `#{repo_image[:tag]}`: got not-found-error from docker registry: #{err.message}"
+                end
+              end
             end
 
             def select_dapp_artifacts_ids(labels)

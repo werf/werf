@@ -9,7 +9,7 @@ module Dapp
                 when /Bearer/ then { headers: { Authorization: "Bearer #{authorization_token(authenticate_header)}" } }
                 when /Basic/ then { headers: { Authorization: "Basic #{authorization_auth}" } }
                 when nil then {}
-                else raise Error::Registry, code: :authenticate_type_not_supported, data: { registry: api_url }
+                else raise DockerRegistry::Error::Base, code: :authenticate_type_not_supported, data: { registry: api_url }
               end
             end
           end
@@ -19,7 +19,7 @@ module Dapp
             realm = options.delete(:realm)
             begin
               response = raw_request(realm, headers: { Authorization: "Basic #{authorization_auth}" }, query: options, expects: [200])
-            rescue Error::Registry
+            rescue DockerRegistry::Error::Base
               raise unless (response = raw_request(realm, query: options)).status == 200
             end
             JSON.load(response.body)['token']
