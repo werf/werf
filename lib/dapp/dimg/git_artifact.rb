@@ -488,7 +488,7 @@ module Dapp
       def repo_entries(commit, paths: include_paths_or_cwd)
         (@repo_entries ||= {})[[commit, paths]] ||= begin
           repo
-            .entries(commit, paths: paths, exclude_paths: exclude_paths(true))
+            .blobs_entries(commit, paths: paths, exclude_paths: exclude_paths(true))
             .select { |_, entry| !submodule_mode?(entry[:filemode]) }
         end
       end
