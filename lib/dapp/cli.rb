@@ -5,7 +5,7 @@ module Dapp
     extend Helper::Cli
     include Helper::Trivia
 
-    SUBCOMMANDS = ['dimg', 'kube', 'update', 'slug'].freeze
+    SUBCOMMANDS = %w(dimg kube update example slug).freeze
 
     banner <<BANNER.freeze
 Usage: dapp subcommand [subcommand options]
@@ -15,6 +15,7 @@ Available subcommands: (for details, dapp SUB-COMMAND --help)
   dapp dimg
   dapp kube
   dapp update
+  dapp example
   dapp slug STRING
 
 Options:

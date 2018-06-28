@@ -10,6 +10,9 @@ module Dapp
 
     include Command::Common
     include Command::Slug
+    include Command::Example::Common
+    include Command::Example::List
+    include Command::Example::Create
 
     include Logging::Base
     include Logging::Process
