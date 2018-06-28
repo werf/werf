@@ -6,17 +6,18 @@ import (
 )
 
 type RawDimg struct {
-	Dimgs      []string             `yaml:"-"`
-	Artifact   string               `yaml:"artifact,omitempty"`
-	From       string               `yaml:"from,omitempty"`
-	FromDimg   string               `yaml:"fromDimg,omitempty"`
-	RawGit     []*RawGit            `yaml:"git,omitempty"`
-	RawShell   *RawShell            `yaml:"shell,omitempty"`
-	RawAnsible *RawAnsible          `yaml:"ansible,omitempty"`
-	RawMount   []*RawMount          `yaml:"mount,omitempty"`
-	RawDocker  *RawDocker           `yaml:"docker,omitempty"`
-	RawImport  []*RawArtifactImport `yaml:"import,omitempty"`
-	AsLayers   bool                 `yaml:"asLayers,omitempty"`
+	Dimgs            []string             `yaml:"-"`
+	Artifact         string               `yaml:"artifact,omitempty"`
+	From             string               `yaml:"from,omitempty"`
+	FromCacheVersion string               `yaml:"fromCacheVersion,omitempty"`
+	FromDimg         string               `yaml:"fromDimg,omitempty"`
+	RawGit           []*RawGit            `yaml:"git,omitempty"`
+	RawShell         *RawShell            `yaml:"shell,omitempty"`
+	RawAnsible       *RawAnsible          `yaml:"ansible,omitempty"`
+	RawMount         []*RawMount          `yaml:"mount,omitempty"`
+	RawDocker        *RawDocker           `yaml:"docker,omitempty"`
+	RawImport        []*RawArtifactImport `yaml:"import,omitempty"`
+	AsLayers         bool                 `yaml:"asLayers,omitempty"`
 
 	Doc *Doc `yaml:"-"` // parent
 
@@ -278,6 +279,7 @@ func (c *RawDimg) toDimgAsLayersDirective(name string) (dimg *Dimg, err error) {
 	for _, dimgLayer := range dimgLayers {
 		if prevDimgLayer == nil {
 			dimgLayer.From = c.From
+			dimgLayer.FromCacheVersion = c.FromCacheVersion
 		} else {
 			dimgLayer.FromDimg = prevDimgLayer
 		}
@@ -515,6 +517,7 @@ func (c *RawDimg) toDimgArtifactAsLayersDirective() (dimgArtifact *DimgArtifact,
 	for _, dimgArtifactLayer := range dimgArtifactLayers {
 		if prevDimgLayer == nil {
 			dimgArtifactLayer.From = c.From
+			dimgArtifactLayer.FromCacheVersion = c.FromCacheVersion
 		} else {
 			dimgArtifactLayer.FromDimgArtifact = prevDimgLayer
 		}
@@ -735,6 +738,7 @@ func (c *RawDimg) toDimgBaseDirective(name string) (dimgBase *DimgBase, err erro
 	}
 
 	dimgBase.From = c.From
+	dimgBase.FromCacheVersion = c.FromCacheVersion
 
 	dimgBase.Git = &GitManager{}
 	for _, git := range c.RawGit {

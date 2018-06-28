@@ -35,6 +35,7 @@ func (c *DimgArtifact) ToRubyPointer() *ruby_marshal_config.DimgArtifact {
 	rubyArtifactDimg.DimgBase = c.DimgBase.ToRuby()
 	rubyArtifactDimg.Name = c.Name
 	rubyArtifactDimg.Docker.From = c.From
+	rubyArtifactDimg.Docker.From = c.FromCacheVersion
 
 	if c.Shell != nil {
 		rubyArtifactDimg.Shell = c.Shell.ToRuby()
