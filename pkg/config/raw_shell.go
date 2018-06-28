@@ -1,11 +1,17 @@
 package config
 
 type RawShell struct {
-	BeforeInstall interface{} `yaml:"beforeInstall,omitempty"`
-	Install       interface{} `yaml:"install,omitempty"`
-	BeforeSetup   interface{} `yaml:"beforeSetup,omitempty"`
-	Setup         interface{} `yaml:"setup,omitempty"`
-	BuildArtifact interface{} `yaml:"buildArtifact,omitempty"`
+	BeforeInstall             interface{} `yaml:"beforeInstall,omitempty"`
+	Install                   interface{} `yaml:"install,omitempty"`
+	BeforeSetup               interface{} `yaml:"beforeSetup,omitempty"`
+	Setup                     interface{} `yaml:"setup,omitempty"`
+	BuildArtifact             interface{} `yaml:"buildArtifact,omitempty"`
+	CacheVersion              string      `yaml:"cacheVersion"`
+	BeforeInstallCacheVersion string      `yaml:"beforeInstallCacheVersion"`
+	InstallCacheVersion       string      `yaml:"installCacheVersion"`
+	BeforeSetupCacheVersion   string      `yaml:"beforeSetupCacheVersion"`
+	SetupCacheVersion         string      `yaml:"setupCacheVersion"`
+	BuildArtifactCacheVersion string      `yaml:"buildArtifactCacheVersion"`
 
 	RawDimg *RawDimg `yaml:"-"` // parent
 
@@ -32,6 +38,12 @@ func (c *RawShell) UnmarshalYAML(unmarshal func(interface{}) error) error {
 func (c *RawShell) ToDirective() (shellDimg *ShellDimg, err error) {
 	shellDimg = &ShellDimg{}
 	shellDimg.ShellBase = &ShellBase{}
+
+	shellDimg.CacheVersion = c.CacheVersion
+	shellDimg.BeforeInstallCacheVersion = c.BeforeInstallCacheVersion
+	shellDimg.InstallCacheVersion = c.InstallCacheVersion
+	shellDimg.BeforeSetupCacheVersion = c.BeforeSetupCacheVersion
+	shellDimg.SetupCacheVersion = c.SetupCacheVersion
 
 	if beforeInstall, err := InterfaceToStringArray(c.BeforeInstall, c, c.RawDimg.Doc); err != nil {
 		return nil, err
@@ -71,6 +83,10 @@ func (c *RawShell) ValidateDirective(shellDimg *ShellDimg) error {
 		return NewDetailedConfigError("`buildArtifact` stage is not available for dimg, only for artifact!", c, c.RawDimg.Doc)
 	}
 
+	if c.BuildArtifactCacheVersion != "" {
+		return NewDetailedConfigError("`buildArtifactCacheVersion` directive is not available for dimg, only for artifact!", c, c.RawDimg.Doc)
+	}
+
 	if err := shellDimg.Validate(); err != nil {
 		return err
 	}
@@ -86,6 +102,8 @@ func (c *RawShell) ToArtifactDirective() (shellArtifact *ShellArtifact, err erro
 	} else {
 		shellArtifact.ShellDimg = shellDimg
 	}
+
+	shellArtifact.BuildArtifactCacheVersion = c.BuildArtifactCacheVersion
 
 	if err := c.ValidateArtifactDirective(shellArtifact); err != nil {
 		return nil, err

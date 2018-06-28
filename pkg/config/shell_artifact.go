@@ -6,7 +6,8 @@ import (
 
 type ShellArtifact struct {
 	*ShellDimg
-	BuildArtifact []string
+	BuildArtifact             []string
+	BuildArtifactCacheVersion string
 }
 
 func (c *ShellArtifact) Validate() error {
@@ -16,6 +17,7 @@ func (c *ShellArtifact) Validate() error {
 func (c *ShellArtifact) ToRuby() ruby_marshal_config.ShellArtifact {
 	shellArtifact := ruby_marshal_config.ShellArtifact{}
 	shellArtifact.ShellDimg = c.ShellDimg.ToRuby()
+	shellArtifact.BuildArtifact.Version = c.BuildArtifactCacheVersion
 	shellArtifact.BuildArtifact.Run = c.BuildArtifact
 	return shellArtifact
 }
