@@ -15,6 +15,11 @@ BANNER
                description: 'Redefine resource locking timeout (in seconds)',
                proc: ->(v) { v.to_i }
 
+        option :kubernetes_timeout,
+               long: '--kubernetes-timeout TIMEOUT',
+               description: 'Kubernetes api-server tcp connection, read and write timeout (in seconds)',
+               proc: ->(v) { v.to_i }
+
         option :with_stages,
                long: '--with-stages',
                boolean: true

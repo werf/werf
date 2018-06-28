@@ -20,6 +20,12 @@ BANNER
       option :with_namespace,
              long: '--with-namespace',
              default: false
+
+      option :kubernetes_timeout,
+             long: '--kubernetes-timeout TIMEOUT',
+             description: 'Kubernetes api-server tcp connection, read and write timeout (in seconds)',
+             proc: ->(v) { v.to_i }
+
     end
   end
 end

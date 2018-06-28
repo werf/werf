@@ -50,11 +50,13 @@ module Dapp
         attr_reader :config
         attr_reader :context
         attr_reader :namespace
+        attr_reader :timeout
 
-        def initialize(config, context, namespace)
+        def initialize(config, context, namespace, timeout: nil)
           @config = config
           @context = context
           @namespace = namespace
+          @timeout = timeout
           @query_parameters = {}
           @cluster_version
         end
@@ -203,6 +205,16 @@ module Dapp
         # excon_parameters — соответствует connection-опциям Excon
         # body — hash для http-body, соответствует 'Body Parameters' в документации kubernetes, опционален
         def request!(method, path, body: nil, excon_parameters: {}, response_body_parameters: {}, **query_parameters)
+          if method == :get
+            excon_parameters[:idempotent] = true
+            excon_parameters[:retry_limit] = 6
+            excon_parameters[:retry_interval] = 5
+          end
+
+          excon_parameters[:connect_timeout] ||= timeout
+          excon_parameters[:read_timeout] ||= timeout
+          excon_parameters[:write_timeout] ||= timeout
+
           with_connection(excon_parameters: excon_parameters) do |conn|
             request_parameters = {method: method, path: path, query: @query_parameters.merge(query_parameters)}
             request_parameters[:body] = JSON.dump(body) if body
