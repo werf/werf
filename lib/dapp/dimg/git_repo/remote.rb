@@ -80,7 +80,7 @@ module Dapp
             dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_fetch', data: { url: url }), short: true) do
               begin
                 git.remotes.each { |remote| remote.fetch(credentials: _rugged_credentials) }
-              rescue Rugged::SshError => e
+              rescue Rugged::SshError, Rugged::NetworkError => e
                 raise Error::Rugged, code: :rugged_remote_error, data: { url: url, message: e.message.strip }
               end
             end
