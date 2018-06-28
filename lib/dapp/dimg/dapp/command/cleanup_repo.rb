@@ -158,11 +158,12 @@ module Dapp
               [].tap do |arr|
                 client.with_namespace(ns) do
                   arr << pod_images(client)
-                  arr << cronjob_images(client)
-                  arr << daemonset_images(client)
                   arr << deployment_images(client)
-                  arr << job_images(client)
                   arr << replicaset_images(client)
+                  arr << statefulset_images(client)
+                  arr << daemonset_images(client)
+                  arr << job_images(client)
+                  arr << cronjob_images(client)
                   arr << replicationcontroller_images(client)
                 end
               end
@@ -209,6 +210,13 @@ module Dapp
           # replicasets  items[] spec template spec containers[] image
           def replicaset_images(client)
             client.replicaset_list['items'].map do |item|
+              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+            end
+          end
+
+           # replicasets  items[] spec template spec containers[] image
+           def statefulset_images(client)
+            client.statefulset_list['items'].map do |item|
               item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
             end
           end
