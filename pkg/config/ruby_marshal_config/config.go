@@ -113,12 +113,18 @@ func (cfg StageCommand) TagYAML() string {
 }
 
 type Ansible struct {
-	BeforeInstall []interface{} `yaml:"before_install"`
-	Install       []interface{} `yaml:"install"`
-	BeforeSetup   []interface{} `yaml:"before_setup"`
-	Setup         []interface{} `yaml:"setup"`
-	BuildArtifact []interface{} `yaml:"build_artifact"`
-	DumpConfigDoc string        `yaml:"dump_config_doc"`
+	Version              string        `yaml:"version"`
+	BeforeInstallVersion string        `yaml:"before_install_version"`
+	InstallVersion       string        `yaml:"install_version"`
+	BeforeSetupVersion   string        `yaml:"before_setup_version"`
+	SetupVersion         string        `yaml:"setup_version"`
+	BuildArtifactVersion string        `yaml:"build_artifact_version"`
+	BeforeInstall        []AnsibleTask `yaml:"before_install"`
+	Install              []AnsibleTask `yaml:"install"`
+	BeforeSetup          []AnsibleTask `yaml:"before_setup"`
+	Setup                []AnsibleTask `yaml:"setup"`
+	BuildArtifact        []AnsibleTask `yaml:"build_artifact"`
+	DumpConfigDoc        string        `yaml:"dump_config_doc"`
 }
 
 type AnsibleTask struct {

@@ -137,7 +137,11 @@ module Dapp
         }
 
         define_method("#{stage}_checksum") do
-          dimg.hashsum [JSON.dump(stage_config(stage)['tasks'])]
+          dimg.hashsum [
+            JSON.dump(stage_config(stage)['tasks']),
+            dimg.config._ansible["#{stage}_version"],
+            dimg.config._ansible["version"]
+          ]
         end
 
         define_method(stage.to_s) do |image|
