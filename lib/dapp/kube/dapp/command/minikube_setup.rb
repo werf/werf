@@ -254,7 +254,8 @@ module Dapp
             @_minikube_kubernetes ||= Kubernetes::Client.new(
               kubernetes_config,
               kubernetes_config.current_context_name,
-              'kube-system'
+              'kube-system',
+              timeout: options[:kubernetes_timeout],
             )
           end
 

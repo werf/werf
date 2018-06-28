@@ -137,7 +137,12 @@ module Dapp
 
             config.context_names.
               map {|context_name|
-                client = ::Dapp::Kube::Kubernetes::Client.new(config, context_name, "default")
+                client = ::Dapp::Kube::Kubernetes::Client.new(
+                  config,
+                  context_name,
+                  "default",
+                  timeout: options[:kubernetes_timeout],
+                )
                 search_deployed_docker_images_from_kube(client)
               }.flatten.sort.uniq
           end

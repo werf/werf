@@ -50,6 +50,11 @@ BANNER
              description: 'Default timeout to wait for resources to become ready, 300 seconds by default.',
              proc: proc {|v| Integer(v)}
 
+      option :kubernetes_timeout,
+             long: '--kubernetes-timeout TIMEOUT',
+             description: 'Kubernetes api-server tcp connection, read and write timeout (in seconds)',
+             proc: ->(v) { v.to_i }
+
       option :registry_username,
              long: '--registry-username USERNAME'
 

@@ -366,6 +366,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
               kubernetes_config,
               kube_context,
               kube_namespace,
+              timeout: options[:kubernetes_timeout],
             )
           end
         end
