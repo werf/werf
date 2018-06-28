@@ -1,0 +1,171 @@
+dimg: <dimg_name... || ~>
+from: <image>
+fromDimg: <dimg_name>
+git:
+# local git
+- as: <custom_name>
+  add: <absolute_path>
+  to: <absolute_path>
+  owner: <owner>
+  group: <group>
+  includePaths:
+  - <relative_path or glob>
+  excludePaths:
+  - <relative_path or glob>
+  stageDependencies:
+    install:
+    - <relative_path or glob>
+    beforeSetup:
+    - <relative_path or glob>
+    setup:
+    - <relative_path or glob>
+# remote git
+- url: <git_repo_url>
+  branch: <branch_name>
+  commit: <commit>
+  as: <custom_name>
+  add: <absolute_path>
+  to: <absolute_path>
+  owner: <owner>
+  group: <group>
+  includePaths:
+  - <relative_path or glob>
+  excludePaths:
+  - <relative_path or glob>
+  stageDependencies:
+    install:
+    - <relative_path or glob>
+    beforeSetup:
+    - <relative_path or glob>
+    setup:
+    - <relative_path or glob>
+import:
+- artifact: <artifact_name>
+  before: <install || setup>
+  after: <install || setup>
+  add: <absolute_path>
+  to: <absolute_path>
+  owner: <owner>
+  group: <group>
+  includePaths:
+  - <relative_path or glob>
+  excludePaths:
+  - <relative_path or glob>
+shell:
+  beforeInstall:
+  - <cmd>
+  install:
+  - <cmd>
+  beforeSetup:
+  - <cmd>
+  setup:
+  - <cmd>
+ansible:
+  beforeInstall:
+  - <task>
+  install:
+  - <task>
+  beforeSetup:
+  - <task>
+  setup:
+  - <task>
+mount:
+- from: build_dir
+  to: <absolute_path>
+- from: tmp_dir
+  to: <absolute_path>
+- fromPath: <absolute_path>
+  to: <absolute_path>
+docker:
+  VOLUME:
+  - <volume>
+  EXPOSE:
+  - <expose>
+  ENV:
+    <env_name>: <env_value>
+  LABEL:
+    <label_name>: <label_value>
+  ENTRYPOINT:
+  - <entrypoint>
+  CMD:
+  - <cmd>
+  ONBUILD:
+  - <onbuild>
+  WORKDIR: <workdir>
+  USER: <user>
+asLayers: <false || true>
+---
+artifact: <artifact_name>
+from: <image>
+git:
+# local git
+- as: <custom_name>
+  add: <absolute_path>
+  to: <absolute_path>
+  owner: <owner>
+  group: <group>
+  includePaths:
+  - <relative_path or glob>
+  excludePaths:
+  - <relative_path or glob>
+  stageDependencies:
+    install:
+    - <relative_path or glob>
+    beforeSetup:
+    - <relative_path or glob>
+    setup:
+    - <relative_path or glob>
+    buildArtifact:
+    - <relative_path or glob>
+# remote git
+- url: <git_repo_url>
+  branch: <branch_name>
+  commit: <commit>
+  as: <custom_name>
+  add: <absolute_path>
+  to: <absolute_path>
+  owner: <owner>
+  group: <group>
+  includePaths:
+  - <relative_path or glob>
+  excludePaths:
+  - <relative_path or glob>
+  stageDependencies:
+    install:
+    - <relative_path or glob>
+    beforeSetup:
+    - <relative_path or glob>
+    setup:
+    - <relative_path or glob>
+    buildArtifact:
+    - <relative_path or glob>
+shell:
+  beforeInstall:
+  - <cmd>
+  install:
+  - <cmd>
+  beforeSetup:
+  - <cmd>
+  setup:
+  - <cmd>
+  buildArtifact:
+  - <cmd>
+ansible:
+  beforeInstall:
+  - <task>
+  install:
+  - <task>
+  beforeSetup:
+  - <task>
+  setup:
+  - <task>
+  buildArtifact:
+  - <task>
+mount:
+- from: build_dir
+  to: <absolute_path>
+- from: tmp_dir
+  to: <absolute_path>
+- fromPath: <absolute_path>
+  to: <absolute_path>
+asLayers: <false || true>
