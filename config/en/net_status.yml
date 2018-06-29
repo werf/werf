@@ -47,6 +47,8 @@ en:
       kube_deploy_timeout: "Deploy timeout!"
       kube_connect_timeout: "Connect timeout when connecting to kube API."
       kube_helm_failed: "Helm failed: %{output}"
+      samples_directory_not_exist: "Samples directory `%{path}` not exist in repository `%{url}`!"
+      sample_not_exist: "Sample `%{name}` not exist in repository `%{url}` (inside samples directory `%{path}`)!"
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
       no_such_app: "No such app: `%{apps_patterns}`!"

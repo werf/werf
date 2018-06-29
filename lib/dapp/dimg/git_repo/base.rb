@@ -110,11 +110,11 @@ module Dapp
           ignore_path?(patch.delta.new_file[:path], paths: paths, exclude_paths: exclude_paths)
         end
 
-        def entries(commit, paths: [], exclude_paths: [])
+        def blobs_entries(commit, paths: [], exclude_paths: [])
           [].tap do |entries|
-            lookup_commit(commit).tree.walk(:preorder) do |root, entry|
+            lookup_commit(commit).tree.walk_blobs(:preorder) do |root, entry|
               fullpath = File.join(root, entry[:name]).reverse.chomp('/').reverse
-              next if entry[:type] == :tree || ignore_path?(fullpath, paths: paths, exclude_paths: exclude_paths)
+              next if ignore_path?(fullpath, paths: paths, exclude_paths: exclude_paths)
               entries << [root, entry]
             end
           end
