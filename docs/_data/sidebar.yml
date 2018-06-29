@@ -22,7 +22,7 @@ entries:
         url: /shell_for_build.html
 
       - title: Ansible-сборщик
-        url: https://github.com\/flant\/dapp\/blob\/master\/docs\/rfc\/yaml_with_ansible.md
+        external_url: https://github.com/flant/dapp/blob/master/docs/rfc/yaml_with_ansible.md
 
       - title: Поддержка git
         url: /git_for_build.html
@@ -94,7 +94,7 @@ entries:
     folderitems:
 
     - title: "[dappfile.yml] YAML формат"
-      url: https://github.com\/flant\/dapp\/blob\/master\/docs\/yaml.md
+      external_url: https://github.com/flant/dapp/blob/master/docs/yaml.md
 
     - title: "[Dappfile] Базовые"
       url: /base_directives.html
