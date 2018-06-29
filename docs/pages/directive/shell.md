@@ -1,5 +1,5 @@
 ---
-title: Shell директивы
+title: Shell директивы в Dappfile
 sidebar: doc_sidebar
 permalink: shell_directives.html
 folder: directive
@@ -25,7 +25,7 @@ folder: directive
 ```ruby
 dimg do
   docker.from 'image:tag'
-  
+
   shell do
     version '1'
 
@@ -45,7 +45,7 @@ end
 ```ruby
 dimg do
   docker.from 'image:tag'
-  
+
   shell.version '1'
   shell.before_install.run 'command1', 'command2'
   shell.setup.run 'command3', 'command4'

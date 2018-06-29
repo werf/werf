@@ -1,5 +1,5 @@
 ---
-title: Базовые директивы
+title: Базовые директивы в Dappfile
 sidebar: doc_sidebar
 permalink: base_directives.html
 folder: directive
@@ -50,12 +50,12 @@ end
 ```ruby
 dimg_group do
   docker.from 'image:tag'
-  
+
   dimg 'X'
-  
+
   dimg_group do
     dimg 'Y'
-  
+
     dimg_group do
       dimg 'Z'
     end

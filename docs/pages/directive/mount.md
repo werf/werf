@@ -1,5 +1,5 @@
 ---
-title: Директивы монтирования
+title: Директивы монтирования в Dappfile
 sidebar: doc_sidebar
 permalink: mount_directives.html
 folder: directive
@@ -27,7 +27,7 @@ folder: directive
 ```ruby
 dimg do
   docker.from 'image:tag'
-  
+
   mount '/any_path' do
     from 'tmp_dir'
   end
@@ -35,7 +35,7 @@ dimg do
   mount '/cache' do
     from 'build_dir'
   end
-  
+
   mount '/app' do
     from_path '/home/user/test'
   end

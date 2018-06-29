@@ -21,6 +21,9 @@ entries:
       - title: Shell-сборщик
         url: /shell_for_build.html
 
+      - title: Ansible-сборщик
+        url: https://github.com\/flant\/dapp\/blob\/master\/docs\/rfc\/yaml_with_ansible.md
+
       - title: Поддержка git
         url: /git_for_build.html
 
@@ -87,25 +90,28 @@ entries:
     - title: Диаграмма зависимостей chef-сборщика
       url: /chef_dependencies.html
 
-  - title: Директивы Dappfile
+  - title: Директивы dappfile
     folderitems:
 
-    - title: Базовые
+    - title: "[dappfile.yml] YAML формат"
+      url: https://github.com\/flant\/dapp\/blob\/master\/docs\/yaml.md
+
+    - title: "[Dappfile] Базовые"
       url: /base_directives.html
 
-    - title: Artifact / Git
+    - title: "[Dappfile] Artifact / Git"
       url: /artifact_directives.html
 
-    - title: Shell
+    - title: "[Dappfile] Shell"
       url: /shell_directives.html
 
-    - title: Chef
+    - title: "[Dappfile] Chef"
       url: /chef_directives.html
 
-    - title: Docker
+    - title: "[Dappfile] Docker"
       url: /docker_directives.html
 
-    - title: Mount
+    - title: "[Dappfile] Mount"
       url: /mount_directives.html
 
   - title: Команды dapp
