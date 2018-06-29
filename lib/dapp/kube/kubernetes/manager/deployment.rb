@@ -30,6 +30,14 @@ module Dapp
           @deployed_at = Time.now
         end
 
+        def should_watch?
+          d = Kubernetes::Client::Resource::Deployment.new(dapp.kubernetes.deployment(name))
+
+          ["dapp/watch", "dapp/watch-logs"].all? do |anno|
+            d.annotations[anno] != "false"
+          end
+        end
+
         def watch_till_ready!
           dapp.log_process("Watch deployment '#{name}' till ready") do
             known_events_by_pod = {}

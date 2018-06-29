@@ -217,7 +217,11 @@ module Dapp
               unless dry_run?
                 begin
                   ::Timeout::timeout(self.options[:timeout] || 300) do
-                    deployment_managers.each {|deployment_manager| deployment_manager.watch_till_ready!}
+                    deployment_managers.each {|deployment_manager|
+                      if deployment_manager.should_watch?
+                        deployment_manager.watch_till_ready!
+                      end
+                    }
                   end
                 rescue ::Timeout::Error
                   raise ::Dapp::Error::Command, code: :kube_deploy_timeout
