@@ -5,11 +5,17 @@ import (
 )
 
 type Ansible struct {
-	BeforeInstall []*AnsibleTask
-	Install       []*AnsibleTask
-	BeforeSetup   []*AnsibleTask
-	Setup         []*AnsibleTask
-	BuildArtifact []*AnsibleTask
+	BeforeInstall             []*AnsibleTask
+	Install                   []*AnsibleTask
+	BeforeSetup               []*AnsibleTask
+	Setup                     []*AnsibleTask
+	BuildArtifact             []*AnsibleTask
+	CacheVersion              string
+	BeforeInstallCacheVersion string
+	InstallCacheVersion       string
+	BeforeSetupCacheVersion   string
+	SetupCacheVersion         string
+	BuildArtifactCacheVersion string
 
 	Raw *RawAnsible
 }
@@ -20,6 +26,13 @@ func (c *Ansible) Validate() error {
 
 func (c *Ansible) ToRuby() ruby_marshal_config.Ansible {
 	rubyAnsible := ruby_marshal_config.Ansible{}
+
+	rubyAnsible.Version = c.CacheVersion
+	rubyAnsible.BeforeInstallVersion = c.BeforeInstallCacheVersion
+	rubyAnsible.InstallVersion = c.InstallCacheVersion
+	rubyAnsible.BeforeSetupVersion = c.BeforeSetupCacheVersion
+	rubyAnsible.SetupVersion = c.SetupCacheVersion
+	rubyAnsible.BuildArtifactVersion = c.BuildArtifactCacheVersion
 
 	for _, ansibleTask := range c.BeforeInstall {
 		rubyAnsible.BeforeInstall = append(rubyAnsible.BeforeInstall, ansibleTask.ToRuby())

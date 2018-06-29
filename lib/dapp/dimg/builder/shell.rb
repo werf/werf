@@ -4,7 +4,8 @@ module Dapp
       [:before_install, :before_setup, :install, :setup, :build_artifact].each do |stage|
         define_method("#{stage}_checksum") do
           [dimg.config._shell.public_send("_#{stage}_command"),
-           dimg.config._shell.public_send("_#{stage}_version")].flatten
+           dimg.config._shell.public_send("_#{stage}_version"),
+           dimg.config._shell._version].flatten
         end
         define_method("#{stage}?") { !stage_empty?(stage) }
         define_method(stage.to_s) do |image|

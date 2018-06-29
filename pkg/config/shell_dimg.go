@@ -12,9 +12,16 @@ func (c *ShellDimg) Validate() error {
 
 func (c *ShellDimg) ToRuby() ruby_marshal_config.ShellDimg {
 	shellDimg := ruby_marshal_config.ShellDimg{}
+
+	shellDimg.Version = c.CacheVersion
+	shellDimg.BeforeInstall.Version = c.BeforeInstallCacheVersion
 	shellDimg.BeforeInstall.Run = c.BeforeInstall
+	shellDimg.Install.Version = c.InstallCacheVersion
 	shellDimg.Install.Run = c.Install
+	shellDimg.BeforeSetup.Version = c.BeforeSetupCacheVersion
 	shellDimg.BeforeSetup.Run = c.BeforeSetup
+	shellDimg.Setup.Version = c.SetupCacheVersion
 	shellDimg.Setup.Run = c.Setup
+
 	return shellDimg
 }

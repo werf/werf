@@ -8,6 +8,7 @@ import (
 type DimgBase struct {
 	Name             string
 	From             string
+	FromCacheVersion string
 	FromDimg         *Dimg
 	FromDimgArtifact *DimgArtifact
 	Bulder           string

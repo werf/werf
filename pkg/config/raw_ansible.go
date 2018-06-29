@@ -1,11 +1,17 @@
 package config
 
 type RawAnsible struct {
-	BeforeInstall []RawAnsibleTask `yaml:"beforeInstall"`
-	Install       []RawAnsibleTask `yaml:"install"`
-	BeforeSetup   []RawAnsibleTask `yaml:"beforeSetup"`
-	Setup         []RawAnsibleTask `yaml:"setup"`
-	BuildArtifact []RawAnsibleTask `yaml:"buildArtifact"`
+	BeforeInstall             []RawAnsibleTask `yaml:"beforeInstall"`
+	Install                   []RawAnsibleTask `yaml:"install"`
+	BeforeSetup               []RawAnsibleTask `yaml:"beforeSetup"`
+	Setup                     []RawAnsibleTask `yaml:"setup"`
+	BuildArtifact             []RawAnsibleTask `yaml:"buildArtifact"`
+	CacheVersion              string           `yaml:"cacheVersion"`
+	BeforeInstallCacheVersion string           `yaml:"beforeInstallCacheVersion"`
+	InstallCacheVersion       string           `yaml:"installCacheVersion"`
+	BeforeSetupCacheVersion   string           `yaml:"beforeSetupCacheVersion"`
+	SetupCacheVersion         string           `yaml:"setupCacheVersion"`
+	BuildArtifactCacheVersion string           `yaml:"buildArtifactCacheVersion"`
 
 	RawDimg *RawDimg `yaml:"-"` // parent
 
@@ -34,6 +40,13 @@ func (c *RawAnsible) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (c *RawAnsible) ToDirective() (ansible *Ansible, err error) {
 	ansible = &Ansible{}
+
+	ansible.CacheVersion = c.CacheVersion
+	ansible.BeforeInstallCacheVersion = c.BeforeInstallCacheVersion
+	ansible.InstallCacheVersion = c.InstallCacheVersion
+	ansible.BeforeSetupCacheVersion = c.BeforeSetupCacheVersion
+	ansible.SetupCacheVersion = c.SetupCacheVersion
+	ansible.BuildArtifactCacheVersion = c.BuildArtifactCacheVersion
 
 	for ind := range c.BeforeInstall {
 		if ansibleTask, err := c.BeforeInstall[ind].ToDirective(); err != nil {

@@ -43,6 +43,7 @@ func (c *Dimg) ToRubyPointer() *ruby_marshal_config.Dimg {
 		rubyDimg.Docker = c.Docker.ToRuby()
 	}
 	rubyDimg.Docker.From = c.From
+	rubyDimg.Docker.FromCacheVersion = c.FromCacheVersion
 
 	return rubyDimg
 }
