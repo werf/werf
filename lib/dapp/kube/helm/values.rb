@@ -17,7 +17,7 @@ module Dapp
                 "repo" => repo,
                 "docker_tag" => docker_tag,
               },
-              "ci" => ENV.select { |k, _| k.start_with?('CI_') },
+              "ci" => ENV.select { |k, _| k.start_with?('CI_') && k != "CI_ENVIRONMENT_URL" },
             }
           }
 
