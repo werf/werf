@@ -1,8 +1,26 @@
 dist: xenial
 language: ruby
-cache: bundler
+cache:
+  bundler: true
+  directories:
+    - ~/go
 rvm:
-- 2.5
+  - 2.5
+
+before_install:
+  - if [[ "x$TRAVIS_TAG" == "x" ]] ; then exit 0 ; fi
+  - mkdir -p ~/gopath/src/github.com/flant/ && mv $TRAVIS_BUILD_DIR ~/gopath/src/github.com/flant/dapp && ln -fs ~/gopath/src/github.com/flant/dapp $TRAVIS_BUILD_DIR
+  - if [ ! -d ~/go ]; then wget https://dl.google.com/go/go1.10.3.linux-amd64.tar.gz -O /tmp/go.tar.gz ; tar -C ~/ -xzf /tmp/go.tar.gz ; fi
+
+install:
+  - bundle install --jobs=3 --retry=3 --path=${BUNDLE_PATH:-vendor/bundle}
+  - export GOROOT=~/go
+  - export GOPATH=~/gopath
+  - export PATH="$GOROOT/bin:$GOPATH/bin:$PATH"
+  - export CGO_ENABLED=0
+  - export GOOS=linux
+  - ./go-get.sh
+  - ./go-build.sh
 
 deploy:
   provider: script
