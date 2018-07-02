@@ -64,4 +64,7 @@ task :parallel_spec do
   exit status if status != 0
 end
 
-task default: :spec
+task :skip do
+end
+
+task default: :skip
