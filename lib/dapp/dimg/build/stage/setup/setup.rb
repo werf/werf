@@ -3,30 +3,12 @@ module Dapp
     module Build
       module Stage
         module Setup
-          class Setup < Base
+          class Setup < Instructions
             include Mod::Group
 
             def initialize(dimg, next_stage)
               @prev_stage = GAPreSetupPatch.new(dimg, self)
               super
-            end
-
-            def empty?
-              !dimg.builder.setup?
-            end
-
-            def context
-              [git_artifacts_dependencies, builder_checksum]
-            end
-
-            def builder_checksum
-              dimg.builder.setup_checksum
-            end
-
-            def prepare_image
-              super do
-                dimg.builder.setup(image)
-              end
             end
           end # Setup
         end # Setup

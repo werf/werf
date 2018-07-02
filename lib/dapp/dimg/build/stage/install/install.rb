@@ -3,30 +3,12 @@ module Dapp
     module Build
       module Stage
         module Install
-          class Install < Base
+          class Install < Instructions
             include Mod::Group
 
             def initialize(dimg, next_stage)
               @prev_stage = GAPreInstallPatch.new(dimg, self)
               super
-            end
-
-            def empty?
-              !dimg.builder.install?
-            end
-
-            def context
-              [git_artifacts_dependencies, builder_checksum]
-            end
-
-            def builder_checksum
-              dimg.builder.install_checksum
-            end
-
-            def prepare_image
-              super do
-                dimg.builder.install(image)
-              end
             end
           end # Install
         end # Install

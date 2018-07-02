@@ -137,11 +137,14 @@ module Dapp
         }
 
         define_method("#{stage}_checksum") do
-          dimg.hashsum [
-            JSON.dump(stage_config(stage)['tasks']),
-            dimg.config._ansible["#{stage}_version"],
-            dimg.config._ansible["version"]
-          ]
+          checksum_args = []
+          checksum_args << JSON.dump(stage_config(stage)['tasks']) unless stage_config(stage)['tasks'].empty?
+          checksum_args << public_send("#{stage}_version_checksum")
+          _checksum checksum_args
+        end
+
+        define_method("#{stage}_version_checksum") do
+          _checksum(dimg.config._ansible["#{stage}_version"], dimg.config._ansible['version'])
         end
 
         define_method(stage.to_s) do |image|
@@ -171,14 +174,14 @@ module Dapp
       end
 
       def stage_empty?(stage)
-        stage_config(stage)['tasks'].empty?
+        stage_config(stage)['tasks'].empty? && public_send("#{stage}_version_checksum").nil?
       end
 
       # host directory in tmp_dir with directories structure
       def host_workdir(stage)
         @host_workdirs ||= {}
         @host_workdirs[stage.to_s] ||= begin
-          dimg.tmp_path(dimg.dapp.consistent_uniq_slugify(dimg.config._name || "nameless"), "ansible-workdir-#{stage.to_s}").tap {|p| p.mkpath}
+          dimg.tmp_path(dimg.dapp.consistent_uniq_slugify(dimg.config._name || "nameless"), "ansible-workdir-#{stage}").tap {|p| p.mkpath}
         end
       end
 
@@ -186,7 +189,7 @@ module Dapp
       def host_tmpdir(stage)
         @host_tmpdirs ||= {}
         @host_tmpdirs[stage.to_s] ||= begin
-          dimg.tmp_path(dimg.dapp.consistent_uniq_slugify(dimg.config._name || "nameless"), "ansible-tmpdir-#{stage.to_s}").tap do |p|
+          dimg.tmp_path(dimg.dapp.consistent_uniq_slugify(dimg.config._name || "nameless"), "ansible-tmpdir-#{stage}").tap do |p|
             p.mkpath
             p.join('local').mkpath
             p.join('remote').mkpath
