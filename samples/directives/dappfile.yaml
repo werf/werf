@@ -60,6 +60,11 @@ shell:
   - <cmd>
   setup:
   - <cmd>
+  cacheVersion: <version>
+  beforeInstallCacheVersion: <version>
+  installCacheVersion: <version>
+  beforeSetupCacheVersion: <version>
+  setupCacheVersion: <version>
 ansible:
   beforeInstall:
   - <task>
@@ -69,6 +74,11 @@ ansible:
   - <task>
   setup:
   - <task>
+  cacheVersion: <version>
+  beforeInstallCacheVersion: <version>
+  installCacheVersion: <version>
+  beforeSetupCacheVersion: <version>
+  setupCacheVersion: <version>
 mount:
 - from: build_dir
   to: <absolute_path>
@@ -150,6 +160,12 @@ shell:
   - <cmd>
   buildArtifact:
   - <cmd>
+  cacheVersion: <version>
+  beforeInstallCacheVersion: <version>
+  installCacheVersion: <version>
+  beforeSetupCacheVersion: <version>
+  setupCacheVersion: <version>
+  buildArtifactCacheVersion: <version>
 ansible:
   beforeInstall:
   - <task>
@@ -161,6 +177,12 @@ ansible:
   - <task>
   buildArtifact:
   - <task>
+  cacheVersion: <version>
+  beforeInstallCacheVersion: <version>
+  installCacheVersion: <version>
+  beforeSetupCacheVersion: <version>
+  setupCacheVersion: <version>
+  buildArtifactCacheVersion: <version>
 mount:
 - from: build_dir
   to: <absolute_path>
