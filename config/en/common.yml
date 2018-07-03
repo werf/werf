@@ -64,6 +64,7 @@ en:
       dapp_secret_key_not_found: "WARNING: Secrets haven't decoded: secret key not found in %{not_found_in}!"
       introspect_image_impossible: "WARNING: You can't introspect stage `%{name}`!"
       stage_dependencies_not_found: "WARNING: Stage dependencies `%{dependencies}` haven't been found in repo `%{repo}`!"
+      stage_dependencies_file_not_found: "WARNING: Stage dependencies `%{dependencies}` haven't been found in repo `%{repo}`!\nIf you want to consider specific file you should use one of the following git-artifact configuration:\n\n```\ngit:\n- add: /folder/file\n  to: /folder/file\n  stageDependencies:\n    install: ''\n```\n\n```\ngit:\n- add: /folder\n  to: /folder\n  includePaths: file\n  stageDependencies:\n    install: file\n```"
       unsupported_dapp_config_options: "WARNING: .dapp_config includes unsupported options [%{options}]: use only following options [%{supported_options}]"
     group:
       install: 'Install group'
