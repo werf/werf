@@ -2,7 +2,7 @@ module Dapp
   module Dimg
     module GitRepo
       class Remote < Base
-        CACHE_VERSION = 2
+        CACHE_VERSION = 3
 
         attr_reader :url
 
@@ -40,7 +40,7 @@ module Dapp
                 end
 
                 Rugged::Repository.clone_at(url, path.to_s, bare: true, credentials: _rugged_credentials)
-              rescue Rugged::NetworkError, Rugged::SslError, Rugged::OSError => e
+              rescue Rugged::NetworkError, Rugged::SslError, Rugged::OSError, Rugged::SshError => e
                 raise Error::Rugged, code: :rugged_remote_error, data: { message: e.message, url: url }
               end
             end
@@ -62,7 +62,7 @@ module Dapp
         end
 
         def path
-          Pathname(dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, dapp.consistent_uniq_slugify(name)).to_s)
+          Pathname(dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, dapp.consistent_uniq_slugify(name), remote_origin_url_protocol).to_s)
         end
 
         def fetch!
