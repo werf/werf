@@ -67,8 +67,30 @@ module Dapp
             .select { |s| !ignore_directory?(s.path, paths: paths, exclude_paths: exclude_paths) }
         end
 
-        def submodules_git(_)
-          git
+        def submodules_git(commit)
+          submodules_git_path(commit).tap do |git_path|
+            break begin
+              if git_path.directory?
+                Rugged::Repository.new(git_path.to_s)
+              else
+                Rugged::Repository.clone_at(path.to_s, git_path.to_s).tap do |submodules_git|
+                  begin
+                    submodules_git.checkout(commit)
+                  rescue Rugged::ReferenceError
+                    raise_submodule_commit_not_found!(commit)
+                  end
+                end
+              end
+            end
+          end
+        end
+
+        def submodules_git_path(commit)
+          Pathname(File.join(dapp.host_docker_tmp_config_dir, "submodule", dapp.consistent_uniq_slugify(name), commit).to_s)
+        end
+
+        def raise_submodule_commit_not_found!(_)
+          raise
         end
 
         def submodule_url(gitsubmodule_url)
