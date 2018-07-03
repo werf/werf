@@ -62,7 +62,7 @@ module Dapp
         end
 
         def path
-          Pathname(dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, dapp.consistent_uniq_slugify(name)).to_s)
+          Pathname(dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, dapp.consistent_uniq_slugify(name), remote_origin_url_protocol).to_s)
         end
 
         def fetch!
