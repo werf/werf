@@ -2,7 +2,7 @@ module Dapp
   module Dimg
     module GitRepo
       class Remote < Base
-        CACHE_VERSION = 2
+        CACHE_VERSION = 3
 
         attr_reader :url
 
