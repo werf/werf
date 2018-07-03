@@ -100,22 +100,8 @@ module Dapp
           raise Error::Rugged, code: :commit_not_found_in_remote_git_repository, data: { commit: commit, url: url }
         end
 
-        def submodules_git(commit)
-          submodules_git_path(commit).tap do |git_path|
-            break begin
-              if git_path.directory?
-                Rugged::Repository.new(git_path.to_s)
-              else
-                Rugged::Repository.clone_at(path.to_s, git_path.to_s).tap do |submodules_git|
-                  submodules_git.checkout(commit)
-                end
-              end
-            end
-          end
-        end
-
-        def submodules_git_path(commit)
-          Pathname(File.join(dapp.host_docker_tmp_config_dir, "submodule", dapp.consistent_uniq_slugify(name), commit).to_s)
+        def raise_submodule_commit_not_found!(commit)
+          raise Error::Rugged, code: :git_remote_submodule_commit_not_found, data: { commit: commit, url: url }
         end
 
         protected

@@ -158,19 +158,21 @@ module Dapp
         elsif cwd == ''
           :directory
         else
-          commit = repo.lookup_commit(stage.layer_commit(self))
+          cwd_type_by_commit(repo.lookup_commit(stage.layer_commit(self)))
+        end
+      end
 
-          cwd_entry = begin
-            commit.tree.path(cwd)
-          rescue Rugged::TreeError
-          end
+      def cwd_type_by_commit(commit)
+        cwd_entry = begin
+          commit.tree.path(cwd)
+        rescue Rugged::TreeError
+        end
 
-          if cwd_entry
-            if cwd_entry[:type] == :tree
-              :directory
-            else
-              :file
-            end
+        if cwd_entry
+          if cwd_entry[:type] == :tree
+            :directory
+          else
+            :file
           end
         end
       end
@@ -248,13 +250,16 @@ module Dapp
 
         stage_dependencies_key = [stage.name, commit]
 
+        @stage_dependencies_warning ||= {}
         @stage_dependencies_checksums ||= {}
         @stage_dependencies_checksums[stage_dependencies_key] ||= begin
           if dev_mode?
             dev_patch_hash(paths: paths)
           else
-            if (entries = repo_entries(commit, paths: paths)).empty?
-              repo.dapp.log_warning(desc: { code: :stage_dependencies_not_found,
+            if (entries = repo_entries(commit, paths: paths)).empty? && @stage_dependencies_warning[stage.name].nil?
+              @stage_dependencies_warning[stage.name] = true
+              code = cwd_type_by_commit(repo.lookup_commit(commit)) == :file ? :stage_dependencies_file_not_found : :stage_dependencies_not_found
+              repo.dapp.log_warning(desc: { code: code,
                                             data: { repo: repo.respond_to?(:url) ? repo.url : 'local',
                                                     dependencies: stage_dependencies.join(', ') } })
             end

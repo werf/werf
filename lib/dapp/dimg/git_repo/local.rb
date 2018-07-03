@@ -30,16 +30,17 @@ module Dapp
           submodules(commit, paths: paths, exclude_paths: exclude_paths).map do |submodule|
             next if commit.nil? && !submodule.in_config?
             submodule_params(submodule).tap do |params|
-              if commit.nil?
-                submodule_path = File.join(workdir_path, params[:path])
-                params[:commit] = submodule.workdir_oid || submodule.head_oid
-                if git_repo_exist?(submodule_path)
-                  dapp.log_info("Using local submodule `#{params[:path]}`!")
-                  params[:type] = :local
-                end
+              params[:commit] = submodule.workdir_oid || params[:commit] if commit.nil?
+              if submodule.in_workdir? && !submodule.uninitialized?
+                dapp.log_info("Using local submodule repository `#{params[:path]}`!")
+                params[:type] = :local
               end
             end
           end.compact
+        end
+
+        def raise_submodule_commit_not_found!(commit)
+          raise Error::Rugged, code: :git_local_submodule_commit_not_found, data: { commit: commit, path: path }
         end
 
         def ignore_patch?(patch, paths: [], exclude_paths: [])
@@ -79,7 +80,7 @@ module Dapp
         def lookup_commit(commit)
           super
         rescue Rugged::OdbError, TypeError => _e
-          raise Error::Rugged, code: :commit_not_found_in_local_git_repository, data: { commit: commit }
+          raise Error::Rugged, code: :commit_not_found_in_local_git_repository, data: { commit: commit, path: path }
         end
 
         protected
