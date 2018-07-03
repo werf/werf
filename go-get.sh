@@ -9,4 +9,3 @@ path=${GOPATH%%:*}/src
 git -C $path/github.com/satori/go.uuid checkout v1.2.0
 
 go get -v github.com/flant/dapp/...
-
