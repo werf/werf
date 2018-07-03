@@ -9,7 +9,7 @@ BINTRAY_PACKAGE=dappfile-yml  # bintray package in repository
 GITHUB_OWNER=flant     # github user/org
 GITHUB_REPO=dapp       # github repository
 
-UPLOAD_FROM_DIR=.
+UPLOAD_FROM_DIR=$GOPATH/bin
 
 GIT_REMOTE=origin      # can be changed to upstream with env
 
@@ -47,26 +47,26 @@ main() {
   TAG_RELEASE_MESSAGE=$($gitPath for-each-ref --format="%(contents)" refs/tags/$GIT_TAG | jq -R -s '.' )
 
   if [ -e ./dapp.gemspec ] ; then
-    build_gem && echo "Build gem is successful" || (exit 1)
+    build_gem && echo "Build gem is successful" || ( exit 1 )
   fi
   if [ -e ./cmd/dappfile-yml ] ; then
-    build_go && echo "Build go program is successful" || ( exit 1)
+    build_go && echo "Build go program is successful" || ( exit 1 )
   fi
 
 
   echo "Publish version $VERSION from git tag $GIT_TAG"
   if [ -n "$BINTRAY_AUTH" ] ; then
-    bintray_create_version && echo "Bintray: Version $VERSION created"
-    bintray_upload_file dappfile-yml || :
-    bintray_upload_file dappfile-yml.sha || :
+    ( bintray_create_version && echo "Bintray: Version $VERSION created" ) || ( exit 1 )
+    ( bintray_upload_file dappfile-yml ) || ( exit 1 )
+    ( bintray_upload_file dappfile-yml.sha ) || ( exit 1 )
   fi
 
   if [ -n "$GITHUB_TOKEN" ] ; then
-    github_create_release && echo "Github: Release for tag $GIT_TAG created"
+    ( github_create_release && echo "Github: Release for tag $GIT_TAG created" ) || ( exit 1 )
   fi
 
   if [ -n "$RUBYGEMS_TOKEN" ] ; then
-    rubygems_upload_gem && echo "Rubygems: Gem uploaded"
+    ( rubygems_upload_gem && echo "Rubygems: Gem uploaded" ) || ( exit 1 )
   fi
 
 }
@@ -83,11 +83,15 @@ build_go() {
   echo "Building dappfile-yml binary"
   rm -f dappfile-yml dappfile-yml.sha
 
-  source go-get.sh
+  if ! ./go-get.sh ; then
+    return 1
+  fi
 
-  go build ./cmd/dappfile-yml
+  if ! ./go-build.sh ; then
+    return 1
+  fi
 
-  sha256sum dappfile-yml | cut -d' ' -f 1 > dappfile-yml.sha
+  sha256sum $UPLOAD_FROM_DIR/dappfile-yml | cut -d' ' -f 1 > $UPLOAD_FROM_DIR/dappfile-yml.sha
 }
 
 bintray_create_version() {
@@ -107,19 +111,19 @@ JSON
       --data "$PAYLOAD" \
       https://api.bintray.com/packages/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PACKAGE}/versions
   )
-  ret=0
-  if [ "$status" -ne "201" ]
-  then
-    echo "Bintray create version: curl return status $status with response"
-    cat $curlResponse
-    echo
-    ret=1
-  fi
+
+  echo "Bintray create version: curl return status $status with response"
+  cat $curlResponse
+  echo
   rm $curlResponse
 
+  ret=0
+  if [ "x$(echo $status | cut -c1)" != "x2" ]
+  then
+    ret=1
+  fi
+
   return $ret
-  # TODO check error!
-  # Status: 201 Created
 }
 
 # upload file to $GIT_TAG version
@@ -134,18 +138,20 @@ bintray_upload_file() {
       --upload-file $UPLOAD_FROM_DIR/$UPLOAD_FILENAME \
       https://api.bintray.com/content/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PACKAGE}/$VERSION/$VERSION/$UPLOAD_FILENAME
   )
+
+  echo "Bintray upload $UPLOAD_FILENAME: curl return status $status with response"
+  cat $curlResponse
+  echo
+  rm $curlResponse
+
   ret=0
-  if [ "$status" -ne "201" ]
+  if [ "x$(echo $status | cut -c1)" != "x2" ]
   then
-    echo "Bintray upload $UPLOAD_FILENAME: curl return status $status with response"
-    cat $curlResponse
-    echo
     ret=1
   else
     dlUrl="https://dl.bintray.com/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${VERSION}/${UPLOAD_FILENAME}"
     echo "Bintray: $UPLOAD_FILENAME uploaded to ${dlURL}"
   fi
-  rm $curlResponse
 
   return $ret
 }
@@ -171,15 +177,16 @@ JSON
       https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases
   )
 
+  echo "Github create release: curl return status $status with response"
+  cat $curlResponse
+  echo
+  rm $curlResponse
+
   ret=0
-  if [ "$status" -ne "201" ]
+  if [ "x$(echo $status | cut -c1)" != "x2" ]
   then
-    echo "Github create release: curl return status $status with response"
-    cat $curlResponse
-    echo
     ret=1
   fi
-  rm $curlResponse
 
   return $ret
 }
@@ -194,15 +201,16 @@ rubygems_upload_gem() {
       https://rubygems.org/api/v1/gems
   )
 
+  echo "Rubygems upload ${GEM_FILE_PATH}: curl return status $status with response"
+  cat $curlResponse
+  echo
+  rm $curlResponse
+
   ret=0
-  if [ "$status" -ne "201" ]
+  if [ "x$(echo $status | cut -c1)" != "x2" ]
   then
-    echo "Rubygems upload ${GEM_FILE_PATH}: curl return status $status with response"
-    cat $curlResponse
-    echo
     ret=1
   fi
-  rm $curlResponse
 
   return $ret
 }
