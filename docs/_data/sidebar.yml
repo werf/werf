@@ -33,9 +33,6 @@ entries:
   - title: Сложная сборка
     folderitems:
 
-    - title: Уменьшаем размеры образа и включаем кэширование с помощью mount
-      url: /mount_for_advanced_build.html
-
     - title: Артефакт
       url: /artifact_for_advanced_build.html
 
@@ -51,8 +48,11 @@ entries:
     - title: Сборка через CI
       url: /ci_for_advanced_build.html
 
-    - title: Кэширование данных при сборке
+    - title: Кэширование
       url: /cache_for_advanced_build.html
+
+    - title: Очистка
+      url: /cleanup_for_advanced_build.html
 
     - title: Debugging
       url: /debug_for_advanced_build.html
@@ -120,7 +120,7 @@ entries:
     - title: Основные
       url: /base_commands.html
 
-    - title: Чистка
+    - title: Очистка
       url: /clean_commands.html
 
     - title: Отладка
