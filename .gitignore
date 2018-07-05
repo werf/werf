@@ -13,3 +13,6 @@ dappdeps-toolchain.tar
 dappdeps/*/omnibus/build/
 /dappfile-yml
 /dappfile-yml.sha
+
+/osx/.vagrant
+/.vendor_osx

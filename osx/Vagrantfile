@@ -1,0 +1,87 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "https://vagrant-osx.nyc3.digitaloceanspaces.com/osx-sierra-0.3.1.box"
+  config.vm.network "private_network", ip: "172.28.128.3"
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    ## Prepare mount points directories
+
+    set -e
+
+    mkdir -p /Users/vagrant/go-workspace
+  SHELL
+
+  config.vm.provision "shell", run: "always", inline: <<-SHELL
+    ## Mount volumes from host over nfs
+
+    set -e
+
+    ping -c5 172.28.128.1
+    sudo /sbin/mount -t nfs -o 'vers=3,mntudp,resvport,rw' 172.28.128.1:/tmp /tmp
+    sudo /sbin/mount -t nfs -o 'vers=3,mntudp,resvport,rw' 172.28.128.1:#{ENV['GOPATH']} /Users/vagrant/go-workspace
+  SHELL
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    ## Install dapp dependencies
+
+    set -e
+
+    curl -sSL https://get.rvm.io | bash -s stable
+    source $HOME/.rvm/scripts/rvm
+    rvm install 2.4
+    rvm use 2.4 --default
+  SHELL
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    ## Install golang
+
+    set -e
+
+    rm -rf /tmp/go.pkg
+    curl https://dl.google.com/go/go1.10.1.darwin-amd64.pkg --silent -o /tmp/go.pkg
+    sudo installer -pkg /tmp/go.pkg -target /
+  SHELL
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    ## Install docker client
+
+    set -e
+
+    curl https://download.docker.com/mac/static/stable/x86_64/docker-18.03.0-ce.tgz --silent -o /tmp/docker.tgz
+    tar xf /tmp/docker.tgz
+    mv docker/docker /usr/local/bin
+    rmdir docker
+  SHELL
+
+  config.vm.provision "file", source: "provision/dot_bashrc", destination: "/Users/vagrant/.bashrc"
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    ## Install dapp dependencies
+
+    set -e
+
+    # install brew
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+    brew update
+
+    brew install openssl
+    brew install libssh
+    brew install cmake
+    brew install libgit2
+
+    gem install bundler
+
+    cd $GOPATH/src/github.com/flant/dapp
+    bundle install --path .vendor_osx
+  SHELL
+
+  config.vm.provision "shell", privileged: false, inline: <<-SHELL
+    ## Build dapp go-dependencies
+
+    set -e
+
+    cd $GOPATH/src/github.com/flant/dapp
+    ./go-get.sh
+    ./go-build.sh
+  SHELL
+end

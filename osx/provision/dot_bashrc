@@ -1,0 +1,11 @@
+export GOROOT=/usr/local/go
+export GOPATH=/Users/vagrant/go-workspace
+export PATH="/usr/local/go/bin:$GOPATH/bin:$PATH"
+
+export DOCKER_HOST="tcp://172.28.128.1:2375"
+export BUNDLE_GEMFILE="/Users/vagrant/go-workspace/src/github.com/flant/dapp/Gemfile"
+
+source /Users/vagrant/go-workspace/src/github.com/flant/dapp/go-env
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"
