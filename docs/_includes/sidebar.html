@@ -1,45 +1,52 @@
 <ul id="mysidebar" class="nav">
     {% for entry in site.data.sidebar.entries %}
-        {% for folder in entry.folders %}
-    {% if folder.folderitems %}
-    <li>
-        <a href="#">{{ folder.title }}{{ folder.url }}</a>
-        <ul>
-            {% for folderitem in folder.folderitems %}
-            {% if folderitem.external_url %}
-            <li><a href="{{folderitem.external_url}}" target="_blank">{{folderitem.title}}</a></li>
-            {% elsif page.url == folderitem.url %}
-            <li class="active"><a href="{{folderitem.url | remove: "/"}}">{{folderitem.title}}</a></li>
-            {% else %}
-            <li><a href="{{folderitem.url | remove: "/"}}">{{folderitem.title}}</a></li>
-            {% endif %}
-            {% for subfolders in folderitem.subfolders %}
-            <li class="subfolders">
-                <a href="#">{{ subfolders.title }}</a>
+        {% for folder in entry.f %}
+        {% if folder.fi %}
+        <li>
+            <a href="#">{{ folder.title }}{{ folder.url }}</a>
+            <ul>
+            {% for folderitem in folder.fi %}
+                {% if folderitem.external_url %}
+                    <li><a href="{{folderitem.external_url}}" target="_blank">{{folderitem.title}}</a></li>
+                {% elsif page.url == folderitem.url %}
+                    <li class="active"><a href="{{folderitem.url | remove: "/"}}">{{folderitem.title}}</a></li>
+                {% else %}
+                    <li><a href="{{folderitem.url | remove: "/"}}">{{folderitem.title}}</a></li>
+                {% endif %}
+            {% endfor %}
+            </ul>
+        </li>
+        {% elsif folder.sf %}
+            <li>
+                <a href="#">{{ folder.title }}{{ folder.url }}</a>
                 <ul>
-                    {% for subfolderitem in subfolders.subfolderitems %}
-                    {% if subfolderitem.external_url %}
-                    <li><a href="{{subfolderitem.external_url}}" target="_blank">{{subfolderitem.title}}</a></li>
-                    {% elsif page.url == subfolderitem.url %}
-                    <li class="active"><a href="{{subfolderitem.url | remove: "/"}}">{{subfolderitem.title}}</a></li>
-                    {% else %}
-                    <li><a href="{{subfolderitem.url | remove: "/"}}">{{subfolderitem.title}}</a></li>
-                    {% endif %}
-                    {% endfor %}
+                {% for subfolders in folder.sf %}
+                <li class="subfolders">
+                    <a href="#">{{ subfolders.title }}</a>
+                    <ul>
+                        {% for subfolderitem in subfolders.sfi %}
+                        {% if subfolderitem.external_url %}
+                        <li><a href="{{subfolderitem.external_url}}" target="_blank">{{subfolderitem.title}}</a></li>
+                        {% elsif page.url == subfolderitem.url %}
+                        <li class="active"><a href="{{subfolderitem.url | remove: "/"}}">{{subfolderitem.title}}</a></li>
+                        {% else %}
+                        <li><a href="{{subfolderitem.url | remove: "/"}}">{{subfolderitem.title}}</a></li>
+                        {% endif %}
+                        {% endfor %}
+
+                    </ul>
+                </li>
+                {% endfor %}
                 </ul>
             </li>
-            {% endfor %}
-            {% endfor %}
-        </ul>
-    </li>
-    {% elsif folder.external_url %}
-    <li><a href="{{folder.external_url}}" target="_blank">{{folder.title}}</a></li>
-    {% elsif page.url == folder.url %}
-    <li class="active"><a href="{{folder.url | remove: "/"}}">{{folder.title}}</a></li>
-    {% else %}
-    <li><a href="{{folder.url | remove: "/"}}">{{folder.title}}</a></li>
-    {% endif %}
-    {% endfor %}
+        {% elsif folder.external_url %}
+            <li><a href="{{folder.external_url}}" target="_blank">{{folder.title}}</a></li>
+        {% elsif page.url == folder.url %}
+            <li class="active"><a href="{{folder.url | remove: "/"}}">{{folder.title}}</a></li>
+        {% else %}
+            <li><a href="{{folder.url | remove: "/"}}">{{folder.title}}</a></li>
+        {% endif %}
+        {% endfor %}
     {% endfor %}
     <li class="social-icons"><a href="https://t.me/dapp_ru" target="_blank" ><img src="images/telegram.svg"></a></li>
 </ul>
