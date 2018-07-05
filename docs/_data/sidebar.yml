@@ -2,129 +2,142 @@
 
 entries:
 - title: sidebar
-  folders:
+  f:
   - title: Обзор
     url: /index.html
 
-  - title: Установка
-    url: /installation.html
+  - title: How To
+    fi:
 
-  - title: Первое приложение на dapp
-    url: /get_started.html
+      - title: Установка
+        url: /installation.html
 
-  - title: Сборка
-    folderitems:
+      - title: Первое приложение на dapp
+        url: /get_started.html
 
-      - title: Сборка образов по стадиям
-        url: /stages_for_build.html
+#      - title: Ускорение сборки
+#        url: #
 
-      - title: Shell-сборщик
-        url: /shell_for_build.html
+#      - title: Сборка в CI
+#        url: #
 
-      - title: Ansible-сборщик
-        external_url: https://github.com/flant/dapp/blob/master/docs/rfc/yaml_with_ansible.md
 
-      - title: Поддержка git
-        url: /git_for_build.html
+  - title: Reference
+    sf:
 
-      - title: Сборка нескольких образов
-        url: /multiple_images_for_build.html
+      - title: Сборка
+        sfi:
 
-  - title: Сложная сборка
-    folderitems:
+          - title: Сборка образов по стадиям
+            url: /stages_for_build.html
 
-    - title: Артефакт
-      url: /artifact_for_advanced_build.html
+          - title: Shell-сборщик
+            url: /shell_for_build.html
 
-    - title: Сборка с помощью chef
-      url: /chef_for_advanced_build.html
+          - title: Ansible-сборщик
+            external_url: https://github.com/flant/dapp/blob/master/docs/rfc/yaml_with_ansible.md
 
-    - title: Dimod — модули сборки для chef
-      url: /chef_dimod_for_advanced_build.html
+          - title: Поддержка git
+            url: /git_for_build.html
 
-    - title: Registry
-      url: /registry_for_advanced_build.html
+          - title: Сборка нескольких образов
+            url: /multiple_images_for_build.html
 
-    - title: Сборка через CI
-      url: /ci_for_advanced_build.html
+      - title: Сложная сборка
+        sfi:
 
-    - title: Кэширование
-      url: /cache_for_advanced_build.html
+        - title: Артефакт
+          url: /artifact_for_advanced_build.html
 
-    - title: Очистка
-      url: /cleanup_for_advanced_build.html
+        - title: Сборка с помощью chef
+          url: /chef_for_advanced_build.html
 
-    - title: Debugging
-      url: /debug_for_advanced_build.html
+        - title: Dimod — модули сборки для chef
+          url: /chef_dimod_for_advanced_build.html
 
-  - title: Выкат
-    folderitems:
+        - title: Registry
+          url: /registry_for_advanced_build.html
 
-    - title: Управление выкатом
-      url: /deploy_for_kube.html
+        - title: Сборка через CI
+          url: /ci_for_advanced_build.html
 
-    - title: Секреты
-      url: /secrets_for_kube.html
+        - title: Кэширование
+          url: /cache_for_advanced_build.html
 
-    - title: Конфигурация выката
-      url: /templates_for_kube.html
+        - title: Очистка
+          url: /cleanup_for_advanced_build.html
 
-    - title: Использование minikube
-      url: /minikube_for_kube.html
+        - title: Debugging
+          url: /debug_for_advanced_build.html
 
-  - title: Архитектура
-    folderitems:
+      - title: Выкат
+        sfi:
 
-    - title: Базовые определения
-      url: /definitions.html
+        - title: Управление выкатом
+          url: /deploy_for_kube.html
 
-    - title: Chef сборщик
-      url: /chef.html
+        - title: Секреты
+          url: /secrets_for_kube.html
 
-    - title: Стадии
-      url: /stages.html
+        - title: Конфигурация выката
+          url: /templates_for_kube.html
 
-    - title: Таблица стадий
-      url: /stages_table.html
+        - title: Использование minikube
+          url: /minikube_for_kube.html
 
-    - title: Диаграмма зависимостей chef-сборщика
-      url: /chef_dependencies.html
+      - title: Архитектура
+        sfi:
 
-  - title: Директивы dappfile
-    folderitems:
+        - title: Базовые определения
+          url: /definitions.html
 
-    - title: "[dappfile.yml] YAML формат"
-      external_url: https://github.com/flant/dapp/blob/master/docs/yaml.md
+        - title: Chef сборщик
+          url: /chef.html
 
-    - title: "[Dappfile] Базовые"
-      url: /base_directives.html
+        - title: Стадии
+          url: /stages.html
 
-    - title: "[Dappfile] Artifact / Git"
-      url: /artifact_directives.html
+        - title: Таблица стадий
+          url: /stages_table.html
 
-    - title: "[Dappfile] Shell"
-      url: /shell_directives.html
+        - title: Диаграмма зависимостей chef-сборщика
+          url: /chef_dependencies.html
 
-    - title: "[Dappfile] Chef"
-      url: /chef_directives.html
+      - title: Директивы dappfile
+        sfi:
 
-    - title: "[Dappfile] Docker"
-      url: /docker_directives.html
+        - title: "[dappfile.yml] YAML формат"
+          external_url: https://github.com/flant/dapp/blob/master/docs/yaml.md
 
-    - title: "[Dappfile] Mount"
-      url: /mount_directives.html
+        - title: "[Dappfile] Базовые"
+          url: /base_directives.html
 
-  - title: Команды dapp
-    folderitems:
+        - title: "[Dappfile] Artifact / Git"
+          url: /artifact_directives.html
 
-    - title: Основные
-      url: /base_commands.html
+        - title: "[Dappfile] Shell"
+          url: /shell_directives.html
 
-    - title: Очистка
-      url: /clean_commands.html
+        - title: "[Dappfile] Chef"
+          url: /chef_directives.html
 
-    - title: Отладка
-      url: /debugging_commands.html
+        - title: "[Dappfile] Docker"
+          url: /docker_directives.html
 
-    - title: Выкат
-      url: /kube_commands.html
+        - title: "[Dappfile] Mount"
+          url: /mount_directives.html
+
+      - title: Команды dapp
+        sfi:
+
+        - title: Основные
+          url: /base_commands.html
+
+        - title: Очистка
+          url: /clean_commands.html
+
+        - title: Отладка
+          url: /debugging_commands.html
+
+        - title: Выкат
+          url: /kube_commands.html
