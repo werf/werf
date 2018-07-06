@@ -27,34 +27,13 @@ entries:
       - title: Очистка
         url: /cleanup_for_advanced_build.html
 
+      # @todo: ссылки на статьи на Хабре
+
+      - title: Сборка приложения на dapp с помощью Chef
+        url: /get_started_chef.html
+
   - title: Reference
     sf:
-      - title: Устройство dapp
-        sfi:
-
-          - title: Кэширование
-            url: /cache_for_advanced_build.html
-
-      - title: Упрощение разработки
-        sfi:
-
-          - title: Артефакт
-            url: /artifact_for_advanced_build.html
-
-          - title: Debugging
-            url: /debug_for_advanced_build.html
-
-      - title: Ускорение сборки
-        sfi:
-
-          - title: Сборка образов по стадиям
-            url: /stages_for_build.html
-
-          - title: Стадии
-            url: /stages.html
-
-          - title: Таблица стадий
-            url: /stages_table.html
 
       - title: Сборка
         sfi:
@@ -62,11 +41,8 @@ entries:
           - title: Shell-сборщик
             url: /shell_for_build.html
 
-          - title: Chef сборщик
-            url: /chef.html
-
-          - title: Сборка с помощью chef
-            url: /chef_for_advanced_build.html
+          - title: Chef-сборщик
+            url: /build_chef.html
 
           - title: Ansible-сборщик
             external_url: /yaml_with_ansible.html
@@ -74,20 +50,20 @@ entries:
       - title: Директивы сборщиков
         sfi:
 
-          - title: Поддержка git
-            url: /git_for_build.html
+          - title: Проброска кода в образ - git
+            url: /git.html
+
+          - title: Проброска кода в образ - artifact
+            url: /artifact.html
 
           - title: Сборка нескольких образов
             url: /multiple_images_for_build.html
 
           - title: Использование модулей (chef only)
-            url: /chef_dimod_for_advanced_build.html
+            url: /chef_dimod.html
 
-          - title: "[Dappfile] Базовые"
-            url: /base_directives.html
-
-          - title: "[Dappfile] Artifact / Git"
-            url: /artifact_directives.html
+          - title: Выбор базового образа
+            url: /choose_base_image.html
 
           - title: "[Dappfile] Shell"
             url: /shell_directives.html
@@ -104,11 +80,27 @@ entries:
           - title: "[dappfile.yml] YAML формат"
             external_url: /yaml_directives.html
 
-      - title: ХЗ что с этим делать
+      - title: Ускорение сборки
         sfi:
 
-          - title: Базовые определения
-            url: /definitions.html
+          - title: Сборка образов по стадиям
+            url: /stages_for_build.html
+
+          - title: Стадии
+            url: /stages.html
+
+          - title: Таблица стадий
+            url: /stages_table.html
+
+      - title: Упрощение разработки
+        sfi:
+
+          - title: Артефакт
+            url: /artifact_for_advanced_build.html
+
+          - title: Debugging
+            url: /debug_for_advanced_build.html
+
 
       - title: CLI
         sfi:
@@ -142,3 +134,9 @@ entries:
 
         - title: Использование minikube
           url: /minikube_for_kube.html
+
+      - title: Устройство dapp
+        sfi:
+
+          - title: Кэширование
+            url: /cache_for_advanced_build.html

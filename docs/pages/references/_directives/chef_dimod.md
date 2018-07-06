@@ -1,16 +1,23 @@
 ---
 title: Выделение модулей (chef only)
 sidebar: doc_sidebar
-permalink: chef_dimod_for_advanced_build.html
+permalink: chef_dimod.html
 folder: advanced_build
 ---
 
-Dimod — модули сборки для chef
+Dapp is able to use same snippets of code in multiple repos.
 
+Поддержка сборщиками
 
-поддерживается только chef
+- Shell - нет
+- Chef - да
+- Ansible - нет
+
+# Проблематика
 
 В процессе описания правил сборки образов приложений неизбежно образуются общие части, которые необходимо повторять в нескольких приложениях. В chef существует механизм cookbook'ов для решения этой проблемы. Для простоты интеграции с правилами сборки, описываемыми в Dappfile, и для учета особенностей влияния правил сборки на кэширование собираемых образов в dapp сделаны модули chef сборщика на основе chef cookbook'ов, называемые dimod.
+
+# Решение
 
 Dimod — это отдельный chef cookbook, оформленный специальным образом. В названии cookbook'а dimod'а обязателен префикс 'dimod-'. Файловая структура dimod cookbook'а похожа на структуру директории .dapp\_chef, но имеет свои особенности:
 
