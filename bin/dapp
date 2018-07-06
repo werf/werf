@@ -7,6 +7,70 @@ require 'dapp'
 
 Thread.abort_on_exception = true
 
+def get_process_parent_pid(pid)
+  path = File.join("/proc", pid.to_s, "status")
+  if File.exists? path
+    ppid_line = File.read(path).lines.find {|line| line.split("\t").first == "PPid:"}
+    ppid = ppid_line.strip.split("\t").last.to_i
+
+    # zero is nil
+    ppid if ppid != 0
+  end
+end
+
+def process_alive?(pid)
+  begin
+    Process.kill(0, pid)
+    true
+  rescue ::Errno::EPERM
+    true
+  rescue ::Errno::ESRCH
+    # no such process
+    false
+  end
+end
+
+def get_parents
+  pid = Process.pid
+  parents = []
+
+  loop do
+    ppid = get_process_parent_pid(pid)
+    break unless ppid
+    parents << ppid
+    pid = ppid
+  end
+
+  parents
+end
+
+def set_gitlab_cancel_handler
+  parents_pids = get_parents
+
+  Thread.new do
+    loop do
+      cancelled = false
+
+      parents_pids.each do |pid|
+        if not process_alive? pid
+          File.open(File.join(ENV["HOME"], ".dapp", "cancelled"), "a") do |file|
+            file.write "#{Process.pid}\n"
+          end
+
+          Process.kill("INT", Process.pid)
+          cancelled = true
+        end
+      end
+
+      break if cancelled
+
+      sleep 1
+    end
+  end
+end
+
+set_gitlab_cancel_handler if ENV["GITLAB_CI"]
+
 begin
   begin
     begin
