@@ -93,10 +93,7 @@ entries:
       - title: Ускорение сборки
         sfi:
 
-          - title: Сборка образов по стадиям
-            url: /stages_for_build.html
-
-          - title: Стадии
+          - title: Стадии сборки
             url: /stages.html
 
           - title: Таблица стадий
@@ -150,3 +147,6 @@ entries:
 
           - title: Кэширование
             url: /cache_for_advanced_build.html
+
+          - title: Как устроены стадии сборки
+            url: /stages_arhitecture.html
