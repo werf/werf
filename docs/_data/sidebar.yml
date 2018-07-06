@@ -99,16 +99,6 @@ entries:
           - title: Таблица стадий
             url: /stages_table.html
 
-      - title: Упрощение разработки
-        sfi:
-
-          - title: Артефакт
-            url: /artifact_for_advanced_build.html
-
-          - title: Debugging
-            url: /debug_for_advanced_build.html
-
-
       - title: CLI
         sfi:
 
