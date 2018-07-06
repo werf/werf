@@ -5,8 +5,6 @@ permalink: yaml_with_ansible.html
 folder: build
 ---
 
-# Proposal: YAML configuration and ansible builder
-
 ## YAML configuration
 
 Configuration is a collection of yaml documents (http://yaml.org/spec/1.2/spec.html#id2800132).

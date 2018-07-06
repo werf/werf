@@ -13,12 +13,12 @@ Dapp can build multiple images from one repository.
 - Chef - да
 - Ansible - да
 
-# Usage
+## Usage
 
-## Ansible builder
+### Ansible builder
 
 @todo: написать
 
-## Chef builder
+### Chef builder
 
 @todo: написать
