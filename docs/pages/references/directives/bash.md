@@ -1,11 +1,26 @@
 ---
-title: Shell директивы в Dappfile
+title: Выполнение произвольного кода
 sidebar: doc_sidebar
-permalink: shell_directives.html
+permalink: bash.html
 folder: directive
 ---
 
-### shell
+При сборке образов зачастую хочется просто выполнить shell-команду.
+
+Поддержка сборщиками
+
+- Shell - нет
+- Chef - да
+- Ansible - да
+
+## Ansible-сборщик
+
+В Ansible для этого есть директива `raw`.
+
+@todo: добавить короткий пример
+
+## Chef-сборщик
+
 Следующие поддирективы позволяют добавить bash-команды для выполнения на соответствующих стадиях [shell образа](definitions.html#shell-проект):
 
 * before_install.

@@ -1,9 +1,16 @@
 ---
-title: Директивы монтирования в Dappfile
+title: Монтирование директорий
 sidebar: doc_sidebar
 permalink: mount_directives.html
 folder: directive
 ---
+Поддержка сборщиками
+
+- Shell - нет
+- Chef - да
+- Ansible - нет
+
+## Chef-сборщик
 
 ### mount \<to\>
 

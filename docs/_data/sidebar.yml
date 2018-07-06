@@ -27,7 +27,17 @@ entries:
       - title: Очистка
         url: /cleanup_for_advanced_build.html
 
-      # @todo: ссылки на статьи на Хабре
+      - title: Практика с dapp. Часть 1: Сборка простых приложений
+        external_url: https://habr.com/company/flant/blog/336212/
+
+      - title: Практика с dapp. Часть 2. Деплой Docker-образов в Kubernetes с помощью Helm
+        external_url: https://habr.com/company/flant/blog/336170/
+
+      - title: Собираем Docker-образы для CI/CD быстро (+видео)
+        external_url: https://habr.com/company/flant/blog/324274/
+
+      - title: Сборка проектов с dapp. Часть 1: Java
+        external_url: https://habr.com/company/flant/blog/348436/
 
       - title: Сборка приложения на dapp с помощью Chef
         url: /get_started_chef.html
@@ -45,7 +55,7 @@ entries:
             url: /build_chef.html
 
           - title: Ansible-сборщик
-            external_url: /yaml_with_ansible.html
+            url: /yaml_with_ansible.html
 
       - title: Директивы сборщиков
         sfi:
@@ -65,20 +75,20 @@ entries:
           - title: Выбор базового образа
             url: /choose_base_image.html
 
-          - title: "[Dappfile] Shell"
-            url: /shell_directives.html
+          - title: Выполнение произвольного кода
+            url: /bash.html
 
-          - title: "[Dappfile] Chef"
+          - title: Использовать функции chef
             url: /chef_directives.html
 
-          - title: "[Dappfile] Docker"
+          - title: Docker директивы
             url: /docker_directives.html
 
-          - title: "[Dappfile] Mount"
+          - title: Монтирование директорий
             url: /mount_directives.html
 
           - title: "[dappfile.yml] YAML формат"
-            external_url: /yaml_directives.html
+            url: /yaml_directives.html
 
       - title: Ускорение сборки
         sfi:

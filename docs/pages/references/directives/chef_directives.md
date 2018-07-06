@@ -1,9 +1,17 @@
 ---
-title: Chef директивы в Dappfile
+title: Использовать функции chef
 sidebar: doc_sidebar
 permalink: chef_directives.html
 folder: directive
 ---
+
+При сборке образов можно использовать функции chef
+
+Поддержка сборщиками
+
+- Shell - нет
+- Chef - да
+- Ansible - нет
 
 ### chef.dimod \<mod\>[[, \<version-constraint\>,] \<cookbook-opts\>]
 Включить указанный [модуль](chef.html#dimod) для chef builder в данном контексте.

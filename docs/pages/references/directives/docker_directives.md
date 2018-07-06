@@ -1,9 +1,14 @@
 ---
-title: Docker директивы в Dappfile
+title: Docker директивы
 sidebar: doc_sidebar
 permalink: docker_directives.html
 folder: directive
 ---
+Поддержка сборщиками
+
+- Shell - нет
+- Chef - да
+- Ansible - нет
 
 ### docker.from \<image\>[, cache_version: \<cache_version\>]
 Определить окружение приложения **\<image\>**).
