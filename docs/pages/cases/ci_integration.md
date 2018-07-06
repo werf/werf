@@ -1,10 +1,10 @@
 ---
-title: Сборка через CI (#TODO)
+title: Сборка в CI
 sidebar: doc_sidebar
-permalink: ci_for_advanced_build.html
-folder: advanced_build
-author: Alexey Igrychev <alexey.igrychev@flant.com>
+permalink: ci_integration.html
 ---
+
+
 
 ## Схемы тегирования с использованием CI переменных среды
 

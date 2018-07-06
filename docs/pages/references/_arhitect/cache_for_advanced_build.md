@@ -1,5 +1,5 @@
 ---
-title: Кэширование и оптимизация размера образа
+title: Как устроено кэширование
 sidebar: doc_sidebar
 permalink: cache_for_advanced_build.html
 folder: advanced_build

@@ -138,3 +138,14 @@ Dimod — это модуль cookbook сборщика.
 
 ### Дерево cookbooks
 Дерево cookbooks — это результат выполнения berks vendor в chef приложении.
+
+
+
+---
+title: Диаграмма зависимостей chef-сборщика
+sidebar: doc_sidebar
+permalink: chef_dependencies.html
+folder: definition
+---
+
+![Chef dependencies](https://docs.google.com/drawings/d/1zAAmxIqpfONBp9u3kZvd_KpCukvH_htvkd--OWtWt54/pub?w=1440&h=1080)

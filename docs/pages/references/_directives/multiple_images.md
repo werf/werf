@@ -5,6 +5,8 @@ permalink: multiple_images_for_build.html
 folder: build
 ---
 
+Поддерживается и chef и ansible сборщиком
+
 * Problem: one repo has multiple kinds of app.
 * Example: yii app has logic application and worker application.
 * Example 2: several microservices in one repo.

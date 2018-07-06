@@ -1,3 +1,10 @@
+---
+title: Ansible-сборщик
+sidebar: doc_sidebar
+permalink: yaml_with_ansible.html
+folder: build
+---
+
 # Proposal: YAML configuration and ansible builder
 
 ## YAML configuration
