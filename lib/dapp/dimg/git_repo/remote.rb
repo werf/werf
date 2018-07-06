@@ -7,19 +7,8 @@ module Dapp
         attr_reader :url
 
         class << self
-          def get_or_create(dapp, name, url:, ignore_git_fetch: false)
-            key         = [url, ignore_git_fetch]
-            inverse_key = [url, !ignore_git_fetch]
-
-            repositories[key] ||= begin
-              if repositories.key?(inverse_key)
-                repositories[inverse_key]
-              else
-                new(dapp, name, url: url)
-              end.tap do |repo|
-                repo.fetch! unless ignore_git_fetch
-              end
-            end
+          def get_or_create(dapp, name, url:)
+            repositories[url] ||= new(dapp, name, url: url).tap(&:fetch!)
           end
 
           def repositories

@@ -65,7 +65,7 @@ module Dapp
           end
 
           dimgs = dapp.build_configs.map do |config|
-            dapp.dimg(config: config, ignore_git_fetch: true, ignore_signature_auto_calculation: true)
+            dapp.dimg(config: config, ignore_signature_auto_calculation: true)
           end.uniq do |dimg|
             dimg.name
           end

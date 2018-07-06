@@ -153,7 +153,7 @@ module Dapp
             validate_repo_name!(repo)
             build_configs.each do |config|
               log_dimg_name_with_indent(config) do
-                yield dimg(config: config, ignore_git_fetch: true, should_be_built: should_be_built)
+                yield dimg(config: config, should_be_built: should_be_built)
               end
             end
           end

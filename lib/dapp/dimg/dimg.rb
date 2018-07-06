@@ -9,16 +9,14 @@ module Dapp
       include Helper::Trivia
 
       attr_reader :config
-      attr_reader :ignore_git_fetch
       attr_reader :ignore_signature_auto_calculation
       attr_reader :should_be_built
       attr_reader :dapp
 
-      def initialize(config:, dapp:, should_be_built: false, ignore_git_fetch: false, ignore_signature_auto_calculation: false)
+      def initialize(config:, dapp:, should_be_built: false, ignore_signature_auto_calculation: false)
         @config = config
         @dapp = dapp
 
-        @ignore_git_fetch                  = ignore_git_fetch
         @ignore_signature_auto_calculation = ignore_signature_auto_calculation
 
         @dapp._terminate_dimg_on_terminate(self)
