@@ -72,7 +72,7 @@ module Dapp
         embedded_rel_path = embedded_params[:path]
         embedded_repo     = begin
           if embedded_params[:type] == :remote
-            GitRepo::Remote.get_or_create(repo.dapp, embedded_rel_path, url: embedded_params[:url], ignore_git_fetch: dimg.ignore_git_fetch)
+            GitRepo::Remote.get_or_create(repo.dapp, embedded_rel_path, url: embedded_params[:url])
           elsif embedded_params[:type] == :local
             embedded_path = File.join(repo.workdir_path, embedded_params[:path])
             GitRepo::Local.new(repo.dapp, embedded_rel_path, embedded_path)

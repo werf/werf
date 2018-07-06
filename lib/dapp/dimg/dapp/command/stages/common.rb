@@ -69,7 +69,7 @@ module Dapp
             def dapp_git_repositories
               @dapp_git_repositories ||= begin
                 {}.tap do |repositories|
-                  dimgs = build_configs.map { |config| dimg(config: config, ignore_git_fetch: true, ignore_signature_auto_calculation: true) }
+                  dimgs = build_configs.map { |config| dimg(config: config, ignore_signature_auto_calculation: true) }
                   dimgs.each do |dimg|
                     [dimg, dimg.artifacts]
                       .flatten

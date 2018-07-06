@@ -19,7 +19,7 @@ module Dapp
         def remote_git_artifacts(omit_empty: true)
           @remote_git_artifact_list ||= [].tap do |artifacts|
             Array(config._git_artifact._remote).each do |ga_config|
-              repo = GitRepo::Remote.get_or_create(dapp, ga_config._name, url: ga_config._url, ignore_git_fetch: ignore_git_fetch)
+              repo = GitRepo::Remote.get_or_create(dapp, ga_config._name, url: ga_config._url)
               artifacts.concat(generate_git_artifacts(repo, omit_empty: omit_empty, **ga_config._artifact_options)) unless repo.empty?
             end
           end

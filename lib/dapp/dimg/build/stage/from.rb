@@ -26,9 +26,9 @@ module Dapp
           def from_dimg
             @from_dimg ||= begin
               if !dimg.config._from_dimg.nil?
-                dimg.dapp.dimg_layer(config: dimg.config._from_dimg, ignore_git_fetch: dimg.ignore_git_fetch)
+                dimg.dapp.dimg_layer(config: dimg.config._from_dimg)
               elsif !dimg.config._from_dimg_artifact.nil?
-                dimg.dapp.artifact_dimg_layer(config: dimg.config._from_dimg_artifact, ignore_git_fetch: dimg.ignore_git_fetch)
+                dimg.dapp.artifact_dimg_layer(config: dimg.config._from_dimg_artifact)
               end
             end
           end
