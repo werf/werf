@@ -140,3 +140,6 @@ entries:
 
           - title: Как устроены стадии сборки
             url: /stages_arhitecture.html
+
+  - title: FAQ
+    url: /faq.html
