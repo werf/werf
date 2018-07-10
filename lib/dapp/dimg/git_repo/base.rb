@@ -57,7 +57,16 @@ module Dapp
           {}.tap do |params|
             params[:path]   = submodule.path
             params[:url]    = submodule_url(submodule.url)
-            params[:type]   = url_protocol(params[:url]) == :noname ? :local : :remote
+            params[:type]   = begin
+              if url_protocol(params[:url]) == :noname
+                submodule_absolute_path = File.join(File.dirname(path), params[:path])
+                dapp.log_warning(desc: { code: :submodule_url_scheme_not_detected,
+                                         data: { url: params[:url], path: submodule_absolute_path } })
+                :local
+              else
+                :remote
+              end
+            end
             params[:commit] = submodule.head_oid
           end
         end
