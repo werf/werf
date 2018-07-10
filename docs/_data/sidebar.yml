@@ -60,20 +60,20 @@ entries:
       - title: Директивы сборщиков
         sfi:
 
+          - title: Описание образов
+            url: /directives_images.html
+
           - title: Проброска кода в образ - git
             url: /git.html
 
-          - title: Проброска кода в образ - artifact
-            url: /artifact.html
+          - title: Использование артефактов
+            url: /directives_artifact.html
 
           - title: Сборка нескольких образов
             url: /multiple_images_for_build.html
 
           - title: Использование модулей (chef only)
             url: /chef_dimod.html
-
-          - title: Выбор базового образа
-            url: /choose_base_image.html
 
           - title: Выполнение произвольного кода
             url: /bash.html
