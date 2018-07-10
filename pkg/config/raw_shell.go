@@ -35,7 +35,7 @@ func (c *RawShell) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (c *RawShell) ToDirective() (shellDimg *ShellDimg, err error) {
+func (c *RawShell) ToBaseDirective() (shellDimg *ShellDimg, err error) {
 	shellDimg = &ShellDimg{}
 	shellDimg.ShellBase = &ShellBase{}
 
@@ -71,6 +71,15 @@ func (c *RawShell) ToDirective() (shellDimg *ShellDimg, err error) {
 
 	shellDimg.ShellBase.Raw = c
 
+	return shellDimg, nil
+}
+
+func (c *RawShell) ToDirective() (shellDimg *ShellDimg, err error) {
+	shellDimg, err = c.ToBaseDirective()
+	if err != nil {
+		return nil, err
+	}
+
 	if err := c.ValidateDirective(shellDimg); err != nil {
 		return nil, err
 	}
@@ -97,7 +106,7 @@ func (c *RawShell) ValidateDirective(shellDimg *ShellDimg) error {
 func (c *RawShell) ToArtifactDirective() (shellArtifact *ShellArtifact, err error) {
 	shellArtifact = &ShellArtifact{}
 
-	if shellDimg, err := c.ToDirective(); err != nil {
+	if shellDimg, err := c.ToBaseDirective(); err != nil {
 		return nil, err
 	} else {
 		shellArtifact.ShellDimg = shellDimg
