@@ -28,7 +28,6 @@ module Dapp
 
         def submodules_params(commit, paths: [], exclude_paths: [])
           submodules(commit, paths: paths, exclude_paths: exclude_paths).map do |submodule|
-            next if commit.nil? && !submodule.in_config?
             submodule_params(submodule).tap do |params|
               params[:commit] = submodule.workdir_oid || params[:commit] if commit.nil?
               if submodule.in_workdir? && !submodule.uninitialized?
