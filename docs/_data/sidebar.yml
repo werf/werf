@@ -76,7 +76,7 @@ entries:
             url: /chef_dimod.html
 
           - title: Выполнение произвольного кода
-            url: /bash.html
+            url: /shell.html
 
           - title: Использовать функции chef
             url: /chef_directives.html
@@ -102,17 +102,64 @@ entries:
       - title: CLI
         sfi:
 
-          - title: Основные
-            url: /base_commands.html
+          # Build
 
-          - title: Очистка
-            url: /clean_commands.html
+          - title: Cобрать dimg
+            url: /dimg_build.html
 
-          - title: Отладка
-            url: /debugging_commands.html
+          - title: Список dimg-ей
+            url: /dimg_list.html
 
-          - title: Выкат
-            url: /kube_commands.html
+          - title: Создание пустого Helm-чарта
+            url: /kube_create.html
+
+          - title: Управление секретами dapp
+            url: /kube_secret.html
+
+          - title: Работа с переменными dapp
+            url: /kube_value.html
+
+          - title: Превращение строки в уникальный ключ
+            url: /dimg_slug.html
+
+          # Test & Debug
+          - title: Запуск dimg-а
+            url: /dimg_run.html
+
+          - title: Экспорт-импорт контекста приложения
+            url: /dimg_build_context.html
+
+          - title: Управление кешем
+            url: /dimg_stages.html
+
+          - title: Тестирование helm чарта (линтер)
+            url: /kube_lint.html
+
+          - title: Рендеринг helm чарта (локально)
+            url: /kube_render.html
+
+          # Delete
+
+          - title: Команды очистки
+            url: /dimg_cleanup.html
+
+          - title: Удаление тегов
+            url: /dimg_flush.html
+
+          - title: Тотальная очистка всех проектов
+            url: /dimg_mrproper.html
+
+
+          # Deploy
+
+          - title: "Выкатить собранные dimg"
+            url: /dimg_push.html
+
+          - title: Развернуть приложение в Kubernetes
+            url: /kube_deploy.html
+
+          - title: Удалить релиз
+            url: /kube_dismiss.html
 
       - title: Выкат
         sfi:

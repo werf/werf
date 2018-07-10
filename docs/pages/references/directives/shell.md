@@ -1,7 +1,7 @@
 ---
 title: Выполнение произвольного кода
 sidebar: doc_sidebar
-permalink: bash.html
+permalink: shell.html
 folder: directive
 ---
 
