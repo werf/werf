@@ -85,7 +85,7 @@ en:
       stage_artifact_not_associated: "Artifact not associated with any stage: expected `before` or `after` attribute!"
       stage_artifact_double_associate: "Can't use `%{stage}` stage for artifact; already used in `%{conflict_stage}` stage!"
       stage_artifact_not_supported_associated_stage: "Bad artifact stage `%{stage}`!"
-      git_artifact_remote_branch_with_commit: "Remote git repo: use `commit` or `branch` directive!"
+      git_artifact_remote_with_refs: "Remote git repo: use `commit`, `tag` or `branch` directive!"
       artifact_conflict: "Conflict between artifacts!\n\n%{dappfile_context}"
       artifact_not_found: "Invalid Dappfile: artifact `%{name}` should be defined before import directive!"
       artifact_already_exists: "Invalid Dappfile: artifact `%{name}` already exists!"

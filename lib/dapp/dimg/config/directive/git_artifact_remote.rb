@@ -5,7 +5,7 @@ module Dapp
         class GitArtifactRemote < GitArtifactLocal
           include ::Dapp::Helper::Url
 
-          attr_reader :_url, :_name, :_branch, :_commit
+          attr_reader :_url, :_name, :_branch, :_tag, :_commit
 
           def initialize(url, **kwargs, &blk)
             @_url  = url
@@ -18,6 +18,10 @@ module Dapp
             sub_directive_eval { @_branch = value.to_s }
           end
 
+          def tag(value)
+            sub_directive_eval { @_tag = value.to_s }
+          end
+
           def commit(value)
             sub_directive_eval { @_commit = value.to_s }
           end
@@ -27,6 +31,7 @@ module Dapp
               export._url    = @_url
               export._name   = @_name
               export._branch ||= @_branch
+              export._tag    ||= @_tag
               export._commit ||= @_commit
 
               yield(export) if block_given?
@@ -34,14 +39,18 @@ module Dapp
           end
 
           class Export < GitArtifactLocal::Export
-            attr_accessor :_url, :_name, :_branch, :_commit
+            attr_accessor :_url, :_name, :_branch, :_tag, :_commit
 
             def _artifact_options
-              super.merge(name: _name, branch: _branch, commit: _commit)
+              super.merge(name: _name, branch: _branch, tag: _tag, commit: _commit)
             end
 
             def branch(value)
               sub_directive_eval { @_branch = value.to_s }
+            end
+
+            def tag(value)
+              sub_directive_eval { @_tag = value.to_s }
             end
 
             def commit(value)
@@ -50,7 +59,8 @@ module Dapp
 
             def validate!
               super
-              raise ::Dapp::Error::Config, code: :git_artifact_remote_branch_with_commit if !_branch.nil? && !_commit.nil?
+              refs = [_branch, _tag, _commit].compact
+              raise ::Dapp::Error::Config, code: :git_artifact_remote_with_refs if refs.length > 1
             end
           end
         end
