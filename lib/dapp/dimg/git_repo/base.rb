@@ -88,7 +88,7 @@ module Dapp
               else
                 Rugged::Repository.clone_at(path.to_s, git_path.to_s).tap do |submodules_git|
                   begin
-                    submodules_git.checkout_tree(submodules_git.lookup(commit).tree)
+                    submodules_git.checkout(commit, strategy: :force)
                   rescue Rugged::ReferenceError
                     raise_submodule_commit_not_found!(commit)
                   end
