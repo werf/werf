@@ -57,14 +57,27 @@ module Dapp
           {}.tap do |params|
             params[:path]   = submodule.path
             params[:url]    = submodule_url(submodule.url)
-            params[:type]   = url_protocol(params[:url]) == :noname ? :local : :remote
+            params[:type]   = begin
+              if url_protocol(params[:url]) == :noname
+                submodule_absolute_path = File.join(File.dirname(path), params[:path])
+                dapp.log_warning(desc: { code: :submodule_url_scheme_not_detected,
+                                         data: { url: params[:url], path: submodule_absolute_path } })
+                :local
+              else
+                :remote
+              end
+            end
             params[:commit] = submodule.head_oid
           end
         end
 
         def submodules(commit, paths: [], exclude_paths: [])
-          Rugged::SubmoduleCollection.new(submodules_git(commit))
-            .select { |s| !ignore_directory?(s.path, paths: paths, exclude_paths: exclude_paths) }
+          Rugged::SubmoduleCollection.new(submodules_git(commit)).select do |submodule|
+            next false if ignore_directory?(submodule.path, paths: paths, exclude_paths: exclude_paths)
+            next true  if submodule.in_config?
+            dapp.log_warning(desc: { code: :submodule_mapping_not_found,
+                                     data: { path: submodule.path, repo: name } })
+          end
         end
 
         def submodules_git(commit)
