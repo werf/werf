@@ -1,0 +1,15 @@
+dimg: ~
+from: alpine
+import:
+- artifact: "app version"
+  after: setup
+  add: /version
+---
+artifact: "app version"
+from: alpine
+ansible:
+  buildArtifact:
+  - copy:
+      dest: /version
+      content: |
+        {{ env "CI_COMMIT_REF_NAME" }}-{{ env "CI_COMMIT_SHA" }}
