@@ -163,8 +163,8 @@ module Dapp
           version_obj = request!(:get, "/version", **query_parameters)
           @cluster_version ||= begin
             major = version_obj['major']
-            minor = version_obj['minor']
-            k8s_version = "#{version_obj['major']}.#{version_obj['minor']}"
+            minor = version_obj['minor'].gsub(/\+$/,'')
+            k8s_version = "#{major}.#{minor}"
             if K8S_API_ENDPOINTS.has_key?(k8s_version)
               k8s_version
             else
