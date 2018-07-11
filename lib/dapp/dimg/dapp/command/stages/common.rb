@@ -43,11 +43,18 @@ module Dapp
             end
 
             def repo_image_format(registry, tag, dimg_name = nil)
-              if (id = registry.image_id(tag, dimg_name)).nil?
-                log_warning(desc: { code: 'tag_ignored', data: { tag: tag } })
-                nil
-              else
-                { dimg: dimg_name, tag: tag, id: id }
+              begin
+                id = registry.image_id(tag, dimg_name)
+
+                if id.nil?
+                  log_warning(desc: { code: 'tag_ignored', data: { tag: tag } })
+                  return nil
+                end
+
+                return { dimg: dimg_name, tag: tag, id: id }
+              rescue DockerRegistry::Error::NotFound => err
+                log_warning "WARNING: Ignore dimg `#{dimg_name}` tag `#{tag}`: got not-found-error from docker registry on get-image-manifest request: #{err.message}"
+                return nil
               end
             end
 
@@ -57,7 +64,7 @@ module Dapp
                 begin
                   registry.image_delete(repo_image[:tag], repo_image[:dimg])
                 rescue DockerRegistry::Error::NotFound => err
-                  log_warning "WARNING: Ignore dimg `#{repo_image[:dimg]}` tag `#{repo_image[:tag]}`: got not-found-error from docker registry: #{err.message}"
+                  log_warning "WARNING: Ignore dimg `#{repo_image[:dimg]}` tag `#{repo_image[:tag]}`: got not-found-error from docker registry on image-delete request: #{err.message}"
                 end
               end
             end
