@@ -63,8 +63,8 @@ entries:
           - title: Описание образов
             url: /directives_images.html
 
-          - title: Проброска кода в образ - git
-            url: /git.html
+          - title: "[git] Добавление кода в образ"
+            url: /directives_git.html
 
           - title: Использование артефактов
             url: /directives_artifact.html
