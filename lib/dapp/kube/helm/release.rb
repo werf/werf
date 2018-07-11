@@ -122,6 +122,7 @@ module Dapp
             helm_additional_values_options,
             helm_set_options(without_registry: true),
             ("--namespace #{namespace}" if namespace),
+            "--name #{name}",
           ].compact.join(" ")
 
           cmd.stdout
