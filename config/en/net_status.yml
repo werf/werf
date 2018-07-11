@@ -129,6 +129,7 @@ en:
       git_local_submodule_commit_not_found: "Git repo `%{path}`: submodule commit `%{commit}` not found!"
       git_remote_submodule_commit_not_found: "Git repo `%{url}`: submodule commit `%{commit}` not found!"
       branch_not_exist_in_remote_git_repository: "Remote git repo `%{url}`: branch `%{branch}` not exist!"
+      tag_not_exist_in_remote_git_repository: "Remote git repo `%{url}`: tag `%{tag}` not exist!"
       rugged_protocol_not_supported: "Rugged has been compiled without support for `%{protocol}`.\nGit repositories will not be reachable via `%{protocol}` (`%{url}`).\nRugged.features should include `%{protocol}`."
       git_local_incorrect_gitmodules_params: "Local git repo with invalid `.gitmodules` file: %{error}"
       incorrect_gitmodules_file: "Git repo `%{name}` with invalid `.gitmodules` file: %{error}\n\n%{content}"

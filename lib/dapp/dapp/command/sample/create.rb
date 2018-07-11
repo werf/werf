@@ -35,7 +35,7 @@ module Dapp
 
           def _sample_repo_blobs_entries(sample_name)
             _sample_git_repo
-              .blobs_entries(_sample_git_repo.latest_commit(_samples_git_repo_branch), paths: [_sample_directory(sample_name)])
+              .blobs_entries(_sample_git_repo.latest_branch_commit(_samples_git_repo_branch), paths: [_sample_directory(sample_name)])
               .reject { |_, entry| entry[:filemode] == 0o160000 }
           end
 

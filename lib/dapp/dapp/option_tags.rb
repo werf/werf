@@ -53,7 +53,7 @@ module Dapp
 
       def commit_tags
         return {} unless options[:tag_commit]
-        { git_commit: [git_own_repo.latest_commit] }
+        { git_commit: [git_own_repo.head_commit] }
       end
 
       def build_tags
