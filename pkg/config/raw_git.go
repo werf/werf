@@ -10,6 +10,7 @@ type RawGit struct {
 	As                   string                `yaml:"as,omitempty"`
 	Url                  string                `yaml:"url,omitempty"`
 	Branch               string                `yaml:"branch,omitempty"`
+	Tag                  string                `yaml:"tag,omitempty"`
 	Commit               string                `yaml:"commit,omitempty"`
 	RawStageDependencies *RawStageDependencies `yaml:"stageDependencies,omitempty"`
 
@@ -77,6 +78,10 @@ func (c *RawGit) ToGitLocalDirective() (gitLocal *GitLocal, err error) {
 }
 
 func (c *RawGit) ValidateGitLocalDirective(gitLocal *GitLocal) (err error) {
+	if c.Branch != "" || c.Commit != "" || c.Tag != "" {
+		return NewDetailedConfigError("Specify `branch: BRANCH`, `tag: TAG` and `commit: COMMIT` only for remote git!", nil, c.RawDimg.Doc)
+	}
+
 	if err := gitLocal.Validate(); err != nil {
 		return err
 	}
@@ -167,6 +172,7 @@ func (c *RawGit) ToGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport,
 	}
 
 	gitRemoteExport.Branch = c.Branch
+	gitRemoteExport.Tag = c.Tag
 	gitRemoteExport.Commit = c.Commit
 
 	gitRemoteExport.Raw = c

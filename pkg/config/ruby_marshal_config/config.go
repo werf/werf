@@ -203,6 +203,7 @@ func (cfg GitArtifactRemote) TagYAML() string {
 type GitArtifactRemoteExport struct {
 	GitArtifactLocalExport `yaml:",inline"`
 	Branch                 string `yaml:"_branch,omitempty"`
+	Tag                    string `yaml:"_tag,omitempty"`
 	Commit                 string `yaml:"_commit,omitempty"`
 }
 
