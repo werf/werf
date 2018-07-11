@@ -76,10 +76,17 @@ module Dapp
           end unless dapp.dry_run?
         end
 
-        def latest_commit(branch)
+        def latest_branch_commit(branch)
           git.ref("refs/remotes/#{branch_format(branch)}").tap do |ref|
             raise Error::Rugged, code: :branch_not_exist_in_remote_git_repository, data: { branch: branch, url: url } if ref.nil?
             break ref.target_id
+          end
+        end
+
+        def latest_tag_commit(tag)
+          git.tags[tag].tap do |t|
+            raise Error::Rugged, code: :tag_not_exist_in_remote_git_repository, data: { tag: tag, url: url } if t.nil?
+            break t.target_id
           end
         end
 

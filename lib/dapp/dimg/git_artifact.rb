@@ -12,7 +12,7 @@ module Dapp
       # FIXME: переименовать cwd в from
 
       # rubocop:disable Metrics/ParameterLists
-      def initialize(repo, dimg, to:, name: nil, branch: nil, commit: nil,
+      def initialize(repo, dimg, to:, name: nil, branch: nil, tag: nil, commit: nil,
                      cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil, as: nil,
                      stages_dependencies: {}, ignore_signature_auto_calculation: false)
         @repo = repo
@@ -21,7 +21,8 @@ module Dapp
 
         @ignore_signature_auto_calculation = ignore_signature_auto_calculation
 
-        @branch = branch || repo.branch
+        @branch = branch
+        @tag = tag
         @commit = commit
 
         @to = to
@@ -296,7 +297,15 @@ module Dapp
 
       def latest_commit
         @latest_commit ||= begin
-          (commit || repo.latest_commit(branch)).tap do |c|
+          commit || begin
+            if !tag.nil?
+              repo.latest_tag_commit(tag)
+            elsif !branch.nil?
+              repo.latest_branch_commit(branch)
+            else
+              repo.head_commit
+            end
+          end.tap do |c|
             repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
           end
         end
@@ -332,6 +341,7 @@ module Dapp
       attr_reader :to
       attr_reader :commit
       attr_reader :branch
+      attr_reader :tag
       attr_reader :cwd
       attr_reader :owner
       attr_reader :group

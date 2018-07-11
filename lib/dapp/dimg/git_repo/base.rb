@@ -169,7 +169,15 @@ module Dapp
           git.exists?(commit)
         end
 
-        def latest_commit(_branch)
+        def head_commit
+          git.head.target_id
+        end
+
+        def latest_branch_commit(_)
+          raise
+        end
+
+        def latest_tag_commit(_)
           raise
         end
 
