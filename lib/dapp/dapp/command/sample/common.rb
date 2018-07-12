@@ -6,7 +6,7 @@ module Dapp
           def _sample_list
             @sample_list ||= [].tap do |list|
               tree = begin
-                latest_commit = _sample_git_repo.latest_commit(_samples_git_repo_branch)
+                latest_commit = _sample_git_repo.latest_branch_commit(_samples_git_repo_branch)
                 latest_commit_tree = _sample_git_repo.lookup_commit(latest_commit).tree
 
                 if _samples_dir == '.'

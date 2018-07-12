@@ -61,7 +61,7 @@ module Dapp
 
         def diff(from, to, **kwargs)
           if from.nil? and to.nil?
-            mid_commit = latest_commit
+            mid_commit = head_commit
             diff_obj = super(nil, mid_commit, **kwargs)
             diff_obj.merge! git.lookup(mid_commit).diff_workdir(**kwargs)
             diff_obj
@@ -70,10 +70,6 @@ module Dapp
           else
             super
           end
-        end
-
-        def latest_commit(_branch = nil)
-          git.head.target_id
         end
 
         def lookup_commit(commit)

@@ -64,7 +64,7 @@ module Dapp
 
               extra_git["path"] = git_own_repo.path
               extra_git["workdir_path"] = git_own_repo.workdir_path
-              extra_git["latest_commit"] = git_own_repo.latest_commit unless git_own_repo.empty?
+              extra_git["latest_commit"] = git_own_repo.head_commit unless git_own_repo.empty?
             end
           end
 
