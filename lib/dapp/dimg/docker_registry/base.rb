@@ -70,9 +70,9 @@ module Dapp
           url = api_url(*uri)
           request(url, **default_api_options.merge(options))
         rescue Excon::Error::MethodNotAllowed
-          raise DockerRegistry::Error::Base, code: :method_not_allowed, data: { url: url, registry: api_url, method: options[:method] }
+          raise ::Dapp::Dimg::DockerRegistry::Error::Base, code: :method_not_allowed, data: { url: url, registry: api_url, method: options[:method] }
         rescue Excon::Error::NotFound
-          raise DockerRegistry::Error::ImageNotFound.new(url, api_url)
+          raise ::Dapp::Dimg::DockerRegistry::Error::ImageNotFound.new(url, api_url)
         rescue Excon::Error::Unauthorized
           user_not_authorized!
         rescue Excon::Error => err
@@ -81,13 +81,13 @@ module Dapp
             if response_data
               (response_data["errors"] || []).each do |err_data|
                 if err_data["code"] == "MANIFEST_INVALID"
-                  raise DockerRegistry::Error::ManifestInvalid.new(url, api_url, "#{err.response.status_line.strip}: #{err.response.reason_phrase.strip}: #{err.response.body.strip}")
+                  raise ::Dapp::Dimg::DockerRegistry::Error::ManifestInvalid.new(url, api_url, "#{err.response.status_line.strip}: #{err.response.reason_phrase.strip}: #{err.response.body.strip}")
                 end
               end
             end
           end
 
-          raise(DockerRegistry::Error::Base,
+          raise(::Dapp::Dimg::DockerRegistry::Error::Base,
             code: :unknown_error,
             data: { url: url,
                     registry: api_url,
@@ -104,7 +104,7 @@ module Dapp
         end
 
         def user_not_authorized!
-          raise DockerRegistry::Error::Base, code: :user_not_authorized, data: { registry: api_url }
+          raise ::Dapp::Dimg::DockerRegistry::Error::Base, code: :user_not_authorized, data: { registry: api_url }
         end
       end
     end # DockerRegistry

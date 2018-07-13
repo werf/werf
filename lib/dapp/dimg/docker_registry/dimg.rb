@@ -16,7 +16,7 @@ module Dapp
 
         def tags
           super
-        rescue DockerRegistry::Error::Base => e
+        rescue ::Dapp::Dimg::DockerRegistry::Error::Base => e
           raise unless e.net_status[:code] == :page_not_found
           []
         end
