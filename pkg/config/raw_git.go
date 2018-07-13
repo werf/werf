@@ -137,12 +137,10 @@ func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	gitRemote.Url = c.Url
 
 	// FIXME
-	r := regexp.MustCompile(`.*?([^/ ]+/[^/ ]+)(\.git?)$`)
-	match := r.FindStringSubmatch(c.Url)
-	if len(match) == 3 {
-		gitRemote.Name = match[1]
+	if url, err := c.getNameFromUrl(); err != nil {
+		return nil, NewDetailedConfigError(err.Error(), c, c.RawDimg.Doc)
 	} else {
-		return nil, NewDetailedConfigError(fmt.Sprintf("Cannot determine repo name from `url: %s`: url is not fit `.*?([^/ ]+/[^/ ]+)(\\.git?)$` regex!", c.Url), c, c.RawDimg.Doc)
+		gitRemote.Name = url
 	}
 
 	gitRemote.Raw = c
@@ -152,6 +150,16 @@ func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	}
 
 	return gitRemote, nil
+}
+
+func (c *RawGit) getNameFromUrl() (string, error) {
+	r := regexp.MustCompile(`.*?([^:/ ]+/[^/ ]+)\.git$`)
+	match := r.FindStringSubmatch(c.Url)
+	if len(match) == 2 {
+		return match[1], nil
+	} else {
+		return "", fmt.Errorf("Cannot determine repo name from `url: %s`: url is not fit `.*?([^:/ ]+/[^/ ]+)\\.git$` regex!", c.Url)
+	}
 }
 
 func (c *RawGit) ValidateGitRemoteDirective(gitRemote *GitRemote) (err error) {
