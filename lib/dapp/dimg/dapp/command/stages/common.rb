@@ -52,7 +52,7 @@ module Dapp
                 end
 
                 return { dimg: dimg_name, tag: tag, id: id }
-              rescue ::Dapp::Dimg::DockerRegistry::Error::NotFound => err
+              rescue ::Dapp::Dimg::DockerRegistry::Error::ImageNotFound => err
                 log_warning "WARNING: Ignore dimg `#{dimg_name}` tag `#{tag}`: got not-found-error from docker registry on get-image-manifest request: #{err.message}"
                 return nil
               end
@@ -63,7 +63,7 @@ module Dapp
               unless dry_run?
                 begin
                   registry.image_delete(repo_image[:tag], repo_image[:dimg])
-                rescue ::Dapp::Dimg::DockerRegistry::Error::NotFound => err
+                rescue ::Dapp::Dimg::DockerRegistry::Error::ImageNotFound => err
                   log_warning "WARNING: Ignore dimg `#{repo_image[:dimg]}` tag `#{repo_image[:tag]}`: got not-found-error from docker registry on image-delete request: #{err.message}"
                 end
               end
