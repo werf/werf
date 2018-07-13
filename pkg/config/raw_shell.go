@@ -112,6 +112,12 @@ func (c *RawShell) ToArtifactDirective() (shellArtifact *ShellArtifact, err erro
 		shellArtifact.ShellDimg = shellDimg
 	}
 
+	if buildArtifact, err := InterfaceToStringArray(c.BuildArtifact, c, c.RawDimg.Doc); err != nil {
+		return nil, err
+	} else {
+		shellArtifact.BuildArtifact = buildArtifact
+	}
+
 	shellArtifact.BuildArtifactCacheVersion = c.BuildArtifactCacheVersion
 
 	if err := c.ValidateArtifactDirective(shellArtifact); err != nil {
