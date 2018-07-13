@@ -14,7 +14,7 @@ module Dapp
                   dimg[:parent] = image_history['container_config']['Image']
                   dimg[:labels] = image_history['config']['Labels'] || {}
                   dimg[:labels]['dapp'] == name
-                rescue DockerRegistry::Error::ManifestInvalid => err
+                rescue ::Dapp::Dimg::DockerRegistry::Error::ManifestInvalid => err
                   log_warning "WARNING: Ignore dimg `#{dimg[:dimg]}` tag `#{dimg[:tag]}`: got manifest-invalid-error from docker registry: #{err.message}"
                   false
                 end
@@ -52,7 +52,7 @@ module Dapp
                 end
 
                 return { dimg: dimg_name, tag: tag, id: id }
-              rescue DockerRegistry::Error::NotFound => err
+              rescue ::Dapp::Dimg::DockerRegistry::Error::NotFound => err
                 log_warning "WARNING: Ignore dimg `#{dimg_name}` tag `#{tag}`: got not-found-error from docker registry on get-image-manifest request: #{err.message}"
                 return nil
               end
@@ -63,7 +63,7 @@ module Dapp
               unless dry_run?
                 begin
                   registry.image_delete(repo_image[:tag], repo_image[:dimg])
-                rescue DockerRegistry::Error::NotFound => err
+                rescue ::Dapp::Dimg::DockerRegistry::Error::NotFound => err
                   log_warning "WARNING: Ignore dimg `#{repo_image[:dimg]}` tag `#{repo_image[:tag]}`: got not-found-error from docker registry on image-delete request: #{err.message}"
                 end
               end
