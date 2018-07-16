@@ -1,6 +1,6 @@
 ---
 title: Как устроено кэширование
-sidebar: doc_sidebar
+sidebar: reference
 permalink: cache_for_advanced_build.html
 folder: advanced_build
 author: Alexey Igrychev <alexey.igrychev@flant.com>

@@ -1,6 +1,6 @@
 ---
 title: Команды очистки
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_cleanup.html
 folder: command
 ---

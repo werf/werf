@@ -1,6 +1,6 @@
 ---
 title: Работа с секретами
-sidebar: doc_sidebar
+sidebar: reference
 permalink: secrets_for_kube.html
 folder: kube
 ---

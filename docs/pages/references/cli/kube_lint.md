@@ -1,6 +1,6 @@
 ---
 title: Тестирование helm чарта (линтер)
-sidebar: doc_sidebar
+sidebar: reference
 permalink: kube_lint.html
 folder: command
 ---

@@ -1,6 +1,6 @@
 ---
 title: Очистка локального и удаленного хранилищ docker registry
-sidebar: doc_sidebar
+sidebar: how_to
 permalink: cleanup_for_advanced_build.html
 folder: advanced_build
 author: Alexey Igrychev <alexey.igrychev@flant.com>

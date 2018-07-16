@@ -1,6 +1,6 @@
 ---
 title: Первое приложение на dapp
-sidebar: doc_sidebar
+sidebar: how_to
 permalink: get_started.html
 ---
 

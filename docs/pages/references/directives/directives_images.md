@@ -1,6 +1,6 @@
 ---
 title: Описание образов
-sidebar: doc_sidebar
+sidebar: reference
 permalink: directives_images.html
 folder: directive
 ---

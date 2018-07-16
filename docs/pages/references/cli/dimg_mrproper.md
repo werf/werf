@@ -1,6 +1,6 @@
 ---
 title: Тотальная очистка всех проектов
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_mrproper.html
 folder: command
 ---

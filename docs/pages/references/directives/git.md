@@ -1,6 +1,6 @@
 ---
 title: Добавление кода в образ директивой git
-sidebar: doc_sidebar
+sidebar: reference
 permalink: directives_git.html
 folder: directive
 ---

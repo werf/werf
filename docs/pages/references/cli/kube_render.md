@@ -1,6 +1,6 @@
 ---
 title: Рендеринг helm чарта (локально)
-sidebar: doc_sidebar
+sidebar: reference
 permalink: kube_render.html
 folder: command
 ---

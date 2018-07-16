@@ -1,0 +1,148 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+- title: sidebar
+  f:
+
+    - title: Сборка
+      fi:
+
+        - title: Ansible-сборщик
+          url: /build_yaml.html
+
+        - title: Chef-сборщик
+          url: /build_chef.html
+
+        - title: Shell-сборщик
+          url: /build_shell.html
+
+    - title: Директивы сборщиков
+      fi:
+
+        - title: Описание образов
+          url: /directives_images.html
+
+        - title: "[git] Добавление кода в образ"
+          url: /directives_git.html
+
+        - title: Использование артефактов
+          url: /directives_artifact.html
+
+        - title: Сборка нескольких образов
+          url: /multiple_images_for_build.html
+
+        - title: Использование модулей (chef only)
+          url: /chef_dimod.html
+
+        - title: Выполнение произвольного кода
+          url: /shell.html
+
+        - title: Использовать функции chef
+          url: /chef_directives.html
+
+        - title: Docker директивы
+          url: /docker_directives.html
+
+        - title: Монтирование директорий
+          url: /mount_directives.html
+
+        - title: "[dappfile.yml] YAML формат"
+          url: /yaml_directives.html
+
+    - title: Ускорение сборки
+      fi:
+
+        - title: Стадии сборки
+          url: /stages.html
+
+        - title: Таблица стадий
+          url: /stages_table.html
+
+    - title: CLI
+      fi:
+
+        # Build
+
+        - title: Cобрать dimg
+          url: /dimg_build.html
+
+        - title: Список dimg-ей
+          url: /dimg_list.html
+
+        - title: Создание пустого Helm-чарта
+          url: /kube_create.html
+
+        - title: Управление секретами dapp
+          url: /kube_secret.html
+
+        - title: Работа с переменными dapp
+          url: /kube_value.html
+
+        - title: Превращение строки в уникальный ключ
+          url: /dimg_slug.html
+
+        # Test & Debug
+        - title: Запуск dimg-а
+          url: /dimg_run.html
+
+        - title: Экспорт-импорт контекста приложения
+          url: /dimg_build_context.html
+
+        - title: Управление кешем
+          url: /dimg_stages.html
+
+        - title: Тестирование helm чарта (линтер)
+          url: /kube_lint.html
+
+        - title: Рендеринг helm чарта (локально)
+          url: /kube_render.html
+
+        # Delete
+
+        - title: Команды очистки
+          url: /dimg_cleanup.html
+
+        - title: Удаление тегов
+          url: /dimg_flush.html
+
+        - title: Тотальная очистка всех проектов
+          url: /dimg_mrproper.html
+
+
+        # Deploy
+
+        - title: "Выкатить собранные dimg"
+          url: /dimg_push.html
+
+        - title: Развернуть приложение в Kubernetes
+          url: /kube_deploy.html
+
+        - title: Удалить релиз
+          url: /kube_dismiss.html
+
+    - title: Выкат
+      fi:
+
+      - title: Registry
+        url: /registry_for_advanced_build.html
+
+      - title: Управление выкатом
+        url: /deploy_for_kube.html
+
+      - title: Секреты
+        url: /secrets_for_kube.html
+
+      - title: Конфигурация выката
+        url: /templates_for_kube.html
+
+      - title: Использование minikube
+        url: /minikube_for_kube.html
+
+    - title: Устройство dapp
+      fi:
+
+        - title: Кэширование
+          url: /cache_for_advanced_build.html
+
+        - title: Как устроены стадии сборки
+          url: /stages_arhitecture.html

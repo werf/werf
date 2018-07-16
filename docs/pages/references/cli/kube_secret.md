@@ -1,6 +1,6 @@
 ---
 title: Управление секретами dapp
-sidebar: doc_sidebar
+sidebar: reference
 permalink: kube_secret.html
 folder: command
 ---

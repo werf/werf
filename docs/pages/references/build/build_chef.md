@@ -1,6 +1,6 @@
 ---
 title: Chef сборщик 
-sidebar: doc_sidebar
+sidebar: reference
 permalink: build_chef.html
 folder: advanced_build
 ---

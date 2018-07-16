@@ -1,6 +1,6 @@
 ---
 title: Выделение модулей (chef only)
-sidebar: doc_sidebar
+sidebar: reference
 permalink: chef_dimod.html
 folder: advanced_build
 ---

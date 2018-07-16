@@ -1,6 +1,6 @@
 ---
 title: Введение
-sidebar: doc_sidebar
+sidebar: index
 permalink: index.html
 ---
 

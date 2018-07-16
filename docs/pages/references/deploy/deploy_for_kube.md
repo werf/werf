@@ -1,6 +1,6 @@
 ---
 title: Управление выкатом
-sidebar: doc_sidebar
+sidebar: reference
 permalink: deploy_for_kube.html
 folder: kube
 ---

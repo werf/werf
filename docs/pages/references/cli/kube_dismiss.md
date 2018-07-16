@@ -1,6 +1,6 @@
 ---
 title: Удалить релиз
-sidebar: doc_sidebar
+sidebar: reference
 permalink: kube_dismiss.html
 folder: command
 ---

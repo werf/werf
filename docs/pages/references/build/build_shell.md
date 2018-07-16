@@ -1,6 +1,6 @@
 ---
 title: Shell сборщик
-sidebar: doc_sidebar
+sidebar: reference
 permalink: build_shell.html
 folder: build
 ---

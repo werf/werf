@@ -1,6 +1,6 @@
 ---
 title: Использование артефактов
-sidebar: doc_sidebar
+sidebar: reference
 permalink: directives_artifact.html
 folder: directive
 ---

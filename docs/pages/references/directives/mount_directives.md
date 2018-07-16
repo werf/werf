@@ -1,6 +1,6 @@
 ---
 title: Монтирование директорий
-sidebar: doc_sidebar
+sidebar: reference
 permalink: mount_directives.html
 folder: directive
 ---

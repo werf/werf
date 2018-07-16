@@ -1,6 +1,6 @@
 ---
 title: Ansible builder
-sidebar: doc_sidebar
+sidebar: reference
 permalink: build_yaml.html
 folder: build
 ---

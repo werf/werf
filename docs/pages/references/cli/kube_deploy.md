@@ -1,6 +1,6 @@
 ---
 title: Развернуть приложение в Kubernetes
-sidebar: doc_sidebar
+sidebar: reference
 permalink: kube_deploy.html
 folder: command
 ---

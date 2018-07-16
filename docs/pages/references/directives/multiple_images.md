@@ -1,6 +1,6 @@
 ---
 title: Сборка нескольких образов
-sidebar: doc_sidebar
+sidebar: reference
 permalink: multiple_images_for_build.html
 folder: build
 ---

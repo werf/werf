@@ -1,6 +1,6 @@
 ---
 title: Стадии сборки
-sidebar: doc_sidebar
+sidebar: reference
 permalink: stages.html
 folder: build
 ---

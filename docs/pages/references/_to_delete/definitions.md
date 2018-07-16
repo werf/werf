@@ -1,6 +1,6 @@
 ---
 title: Базовые определения
-sidebar: doc_sidebar
+sidebar: reference
 permalink: definitions.html
 folder: definition
 ---

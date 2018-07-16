@@ -1,6 +1,6 @@
 ---
 title: Ускорение сборки
-sidebar: doc_sidebar
+sidebar: how_to
 permalink: speedup.html
 ---
 

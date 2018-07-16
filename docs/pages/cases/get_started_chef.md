@@ -1,6 +1,6 @@
 ---
 title: Сборка приложения на dapp с помощью Chef
-sidebar: doc_sidebar
+sidebar: how_to
 permalink: get_started_chef.html
 ---
 

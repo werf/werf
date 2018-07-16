@@ -1,6 +1,6 @@
 ---
 title: Создание пустого Helm-чарта
-sidebar: doc_sidebar
+sidebar: reference
 permalink: kube_create.html
 folder: command
 ---

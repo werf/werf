@@ -1,6 +1,6 @@
 ---
 title: Выполнение произвольного кода
-sidebar: doc_sidebar
+sidebar: reference
 permalink: shell.html
 folder: directive
 ---

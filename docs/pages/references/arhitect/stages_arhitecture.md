@@ -1,6 +1,6 @@
 ---
 title: Как устроены стадии сборки
-sidebar: doc_sidebar
+sidebar: reference
 permalink: stages_arhitecture.html
 folder: definition
 ---

@@ -1,6 +1,6 @@
 ---
 title: Список dimg-ей
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_list.html
 folder: command
 ---

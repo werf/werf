@@ -1,6 +1,6 @@
 ---
 title: Использование minikube
-sidebar: doc_sidebar
+sidebar: reference
 permalink: minikube_for_kube.html
 folder: kube
 ---

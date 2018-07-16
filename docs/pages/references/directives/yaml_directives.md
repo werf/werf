@@ -1,6 +1,6 @@
 ---
 title: Yaml директивы
-sidebar: doc_sidebar
+sidebar: reference
 permalink: yaml_directives.html
 folder: directive
 ---

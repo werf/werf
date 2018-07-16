@@ -1,6 +1,6 @@
 ---
 title: Установка
-sidebar: doc_sidebar
+sidebar: how_to
 permalink: installation.html
 ---
 

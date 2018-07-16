@@ -1,6 +1,6 @@
 ---
 title: Удаление тегов
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_flush.html
 folder: command
 ---

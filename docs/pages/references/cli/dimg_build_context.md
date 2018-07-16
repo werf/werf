@@ -1,6 +1,6 @@
 ---
 title: Экспорт-импорт контекста приложения
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_build_context.html
 folder: command
 ---

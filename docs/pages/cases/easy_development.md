@@ -1,6 +1,6 @@
 ---
 title: Упрощение разработки
-sidebar: doc_sidebar
+sidebar: how_to
 permalink: easy_development.html
 ---
 

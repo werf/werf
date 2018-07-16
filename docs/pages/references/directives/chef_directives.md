@@ -1,6 +1,6 @@
 ---
 title: Использовать функции chef
-sidebar: doc_sidebar
+sidebar: reference
 permalink: chef_directives.html
 folder: directive
 ---

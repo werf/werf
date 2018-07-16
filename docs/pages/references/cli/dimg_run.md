@@ -1,6 +1,6 @@
 ---
 title: Запуск dimg-а
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_run.html
 folder: command
 ---

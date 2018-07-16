@@ -1,6 +1,6 @@
 ---
 title: Управление кешем (пуш, пулл, удаление)
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_stages.html
 folder: command
 ---

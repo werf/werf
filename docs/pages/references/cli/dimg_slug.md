@@ -1,6 +1,6 @@
 ---
 title: Превращение строки в уникальный ключ
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_slug.html
 folder: command
 ---

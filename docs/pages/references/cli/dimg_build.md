@@ -1,6 +1,6 @@
 ---
 title: Cобрать dimg
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_build.html
 folder: command
 ---

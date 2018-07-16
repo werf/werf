@@ -1,6 +1,6 @@
 ---
 title: Сборка в CI
-sidebar: doc_sidebar
+sidebar: how_to
 permalink: ci_integration.html
 ---
 

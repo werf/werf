@@ -1,6 +1,6 @@
 ---
 title: Выкатить собранные dimg
-sidebar: doc_sidebar
+sidebar: reference
 permalink: dimg_push.html
 folder: command
 ---
