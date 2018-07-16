@@ -1,7 +1,7 @@
 ---
 title: Первое приложение на dapp (shell)
 sidebar: how_to
-permalink: get_started.html
+permalink: get_started_shell.html
 ---
 
 @todo: переписать эту главу
