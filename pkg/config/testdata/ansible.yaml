@@ -1,0 +1,49 @@
+dimg: ~
+from: alpine
+ansible:
+  beforeInstall:
+  - debug:
+      msg: beforeInstall
+  install:
+  - debug:
+      msg: install
+  beforeSetup:
+  - debug:
+      msg: beforeSetup
+  setup:
+  - debug:
+      msg: setup
+  cacheVersion: cacheVersion
+  beforeInstallCacheVersion: beforeInstallCacheVersion
+  installCacheVersion: installCacheVersion
+  beforeSetupCacheVersion: beforeSetupCacheVersion
+  setupCacheVersion: setupCacheVersion
+import:
+- artifact: artifact
+  after: setup
+  add: /tmp
+---
+artifact: artifact
+from: alpine
+ansible:
+  beforeInstall:
+  - debug:
+      msg: beforeInstall
+  install:
+  - debug:
+      msg: install
+  beforeSetup:
+  - debug:
+      msg: beforeSetup
+  setup:
+  - debug:
+      msg: setup
+  buildArtifact:
+  - debug:
+      msg: buildArtifact
+  cacheVersion: cacheVersion
+  beforeInstallCacheVersion: beforeInstallCacheVersion
+  installCacheVersion: installCacheVersion
+  beforeSetupCacheVersion: beforeSetupCacheVersion
+  setupCacheVersion: setupCacheVersion
+  buildArtifactCacheVersion: buildArtifactCacheVersion
