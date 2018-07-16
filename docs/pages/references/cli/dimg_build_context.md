@@ -1,5 +1,5 @@
 ---
-title: Экспорт-импорт контекста приложения
+title: dapp dimg build-context
 sidebar: reference
 permalink: dimg_build_context.html
 folder: command

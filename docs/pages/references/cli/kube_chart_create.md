@@ -1,7 +1,7 @@
 ---
-title: Создание пустого Helm-чарта
+title: dapp kube chart create
 sidebar: reference
-permalink: kube_create.html
+permalink: kube_chart_create.html
 folder: command
 ---
 ### dapp kube create chart

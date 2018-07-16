@@ -1,10 +1,9 @@
 ---
-title: Запуск dimg-а
+title: dapp dimg run
 sidebar: reference
 permalink: dimg_run.html
 folder: command
 ---
-
 
 ### dapp dimg run
 Запустить собранную стадию dimg-а с докерными аргументами **DOCKER ARGS**.

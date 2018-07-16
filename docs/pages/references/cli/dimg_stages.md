@@ -1,5 +1,5 @@
 ---
-title: Управление кешем (пуш, пулл, удаление)
+title: dapp dimg stages
 sidebar: reference
 permalink: dimg_stages.html
 folder: command
