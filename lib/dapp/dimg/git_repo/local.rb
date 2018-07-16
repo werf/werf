@@ -9,6 +9,13 @@ module Dapp
           self.path = path
         end
 
+        def get_ruby2go_state_hash
+          super.tap {|res|
+            p = File.dirname(@path) if File.basename(@path) == ".git"
+            res["Path"] = p
+          }
+        end
+
         def path=(path)
           @path ||= Pathname(Rugged::Repository.new(path).path)
         rescue Rugged::RepositoryError, Rugged::OSError => _e
