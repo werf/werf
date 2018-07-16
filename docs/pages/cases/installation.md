@@ -20,13 +20,13 @@ permalink: installation.html
 
 ## Заголовочные файлы libssh2 для работы с git-репозиториями через ssh
 
-#### Ubuntu
+### Ubuntu
 
 ```bash
 apt-get install libssh2-1-dev
 ```
 
-#### Centos
+### Centos
 
 ```bash
 yum install libssh2-devel
@@ -34,13 +34,13 @@ yum install libssh2-devel
 
 ## Cmake для установки зависимого gem rugged
 
-#### Ubuntu
+### Ubuntu
 
 ```bash
 apt-get install cmake
 ```
 
-#### Centos
+### Centos
 
 ```bash
 yum install cmake

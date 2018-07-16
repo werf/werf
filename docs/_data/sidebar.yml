@@ -15,6 +15,12 @@ entries:
       - title: Первое приложение на dapp
         url: /get_started.html
 
+      - title: Первое приложение на dapp (Chef)
+        url: /get_started_chef.html
+
+      - title: Первое приложение на dapp (Shell)
+        url: /get_started_shell.html
+
       - title: Ускорение сборки
         url: /speedup.html
 
@@ -39,23 +45,20 @@ entries:
       - title: Сборка проектов с dapp. Часть 1. Java
         external_url: https://habr.com/company/flant/blog/348436/
 
-      - title: Сборка приложения на dapp с помощью Chef
-        url: /get_started_chef.html
-
   - title: Reference
     sf:
 
       - title: Сборка
         sfi:
 
-          - title: Shell-сборщик
-            url: /shell_for_build.html
+          - title: Ansible-сборщик
+            url: /build_yaml.html
 
           - title: Chef-сборщик
             url: /build_chef.html
 
-          - title: Ansible-сборщик
-            url: /yaml_with_ansible.html
+          - title: Shell-сборщик
+            url: /build_shell.html
 
       - title: Директивы сборщиков
         sfi:
