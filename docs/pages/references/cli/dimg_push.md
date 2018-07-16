@@ -1,5 +1,5 @@
 ---
-title: Выкатить собранные dimg
+title: dapp dimg push
 sidebar: reference
 permalink: dimg_push.html
 folder: command

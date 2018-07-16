@@ -1,5 +1,5 @@
 ---
-title: Удаление тегов
+title: dapp dimg flush
 sidebar: reference
 permalink: dimg_flush.html
 folder: command

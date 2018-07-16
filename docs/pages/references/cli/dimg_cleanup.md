@@ -1,5 +1,5 @@
 ---
-title: Команды очистки
+title: dapp dimg cleanup
 sidebar: reference
 permalink: dimg_cleanup.html
 folder: command
@@ -63,4 +63,3 @@ dapp dimg cleanup repo [options] [DIMG ...] REPO
 
 #### `--without-kube`
 Отключает проверку использования образов в кластерах. См. подробнее [о работе очистки](cleanup_for_advanced_build.html#автоматическая-очистка-по-политикам).
-

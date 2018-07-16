@@ -1,5 +1,5 @@
 ---
-title: Развернуть приложение в Kubernetes
+title: dapp kube deploy
 sidebar: reference
 permalink: kube_deploy.html
 folder: command

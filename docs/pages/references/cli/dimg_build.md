@@ -1,5 +1,5 @@
 ---
-title: Cобрать dimg
+title: dapp dimg build
 sidebar: reference
 permalink: dimg_build.html
 folder: command

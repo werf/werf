@@ -1,5 +1,5 @@
 ---
-title: Работа с переменными dapp
+title: dapp kube value
 sidebar: reference
 permalink: kube_value.html
 folder: command

@@ -1,5 +1,5 @@
 ---
-title: Удалить релиз
+title: dapp kube dismiss
 sidebar: reference
 permalink: kube_dismiss.html
 folder: command

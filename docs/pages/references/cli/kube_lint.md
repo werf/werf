@@ -1,5 +1,5 @@
 ---
-title: Тестирование helm чарта (линтер)
+title: dapp kube lint
 sidebar: reference
 permalink: kube_lint.html
 folder: command
