@@ -64,12 +64,12 @@ func (c *StageContainer) PreparedRunCommands() []string {
 	if len(runCommands) != 0 {
 		return runCommands
 	} else {
-		return []string{"true"} // TODO dappdeps true
+		return []string{util.DappdepsBaseBin("true")}
 	}
 }
 
 func ShelloutPack(command string) string {
-	return fmt.Sprintf("eval $(echo %s | base64 --decode)", base64.StdEncoding.EncodeToString([]byte(command))) // TODO dappdeps base64
+	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), util.DappdepsBaseBin("base64"))
 }
 
 func (c *StageContainer) introspectArgs() ([]string, error) {
@@ -84,7 +84,7 @@ func (c *StageContainer) introspectArgs() ([]string, error) {
 	args = append(args, []string{"-ti", "--rm"}...)
 	args = append(args, c.Image.BuiltId)
 	args = append(args, "-ec")
-	args = append(args, "/bin/bash") // TODO dappdeps bash
+	args = append(args, util.DappdepsBaseBin("bash"))
 
 	return args, nil
 }
