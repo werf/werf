@@ -155,7 +155,6 @@ module Dapp
             image.add_env('PYTHONPATH', container_workdir.join('lib'))
             image.add_env('PYTHONIOENCODING', 'utf-8')
             image.add_env('ANSIBLE_PREPEND_SYSTEM_PATH', dimg.dapp.dappdeps_base_path)
-            image.add_env('LC_ALL', 'C.UTF-8')
             image.add_volumes_from("#{ansible_container}:rw")
             image.add_volume "#{host_workdir(stage)}:#{container_workdir}:ro"
             image.add_volume "#{host_tmpdir(stage)}:#{container_tmpdir}:rw"

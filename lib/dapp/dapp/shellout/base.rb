@@ -62,10 +62,11 @@ module Dapp
           stream = Stream.new
           if verbose && !quiet
             kwargs[:live_stream] = Proxy::Base.new(stream, STDOUT, with_time: time)
+            kwargs[:live_stderr] = Proxy::Error.new(stream, STDERR, with_time: time)
           else
             kwargs[:live_stdout] = Proxy::Base.new(stream, with_time: time)
+            kwargs[:live_stderr] = Proxy::Error.new(stream, with_time: time)
           end
-          kwargs[:live_stderr] = Proxy::Error.new(stream, with_time: time)
 
           shellout(*args, **kwargs).tap do |res|
             res.error! if raise_on_error
