@@ -1,10 +1,10 @@
 ---
-title: Первое приложение на dapp (shell)
+title: Первое приложение на dapp (Ansible)
 sidebar: how_to
-permalink: get_started_shell.html
+permalink: get_started_ansible.html
 ---
 
-В этой главе описана сборка простого php-приложения [Symfony Demo APP](https://github.com/symfony/demo) с помощью dapp и [shell сборщика](build_shell.html). Перед изучением dapp желательно представлять, что такое Dockerfile и его основные [директивы](https://docs.docker.io/).
+В этой главе описана сборка простого php-приложения [Symfony Demo APP](https://github.com/symfony/demo) с помощью dapp и [Ansible сборщика](build_shell.html). Перед изучением dapp желательно представлять, что такое Dockerfile и его основные [директивы](https://docs.docker.io/).
 
 ## Определение шагов сборки приложения
 
@@ -44,40 +44,92 @@ docker:
   EXPOSE: '80'
   ENV:
     LC_ALL: en_US.UTF-8
-shell:
+ansible:
   beforeInstall:
     #  установка вспомогательных пакетов, добавление репозитория
-    - apt-get update
-    - apt install -y software-properties-common locales curl
-    - locale-gen en_US.UTF-8 && export LC_ALL=en_US.UTF-8
-    - add-apt-repository -yu ppa:ondrej/php
-    - apt-key adv --recv-keys --keyserver keyserver.ubuntu.com `apt-get update 2>&1 | grep -o '[0-9A-Z]\{16\}$' | xargs`
-    # установка php
-    - apt-get install -y php7.2
-    # добавление пользователя и группы phpapp
-    - groupadd -g 242 phpapp
-    - useradd -m  -d /home/phpapp -g 242 -u 242 phpapp
+    - name: "Install additional packages"
+      apt:
+        name: "{{`{{ item }}`}}"
+        state: present
+        update_cache: yes
+      with_items:
+        - software-properties-common
+        - locales
+        - curl
+    - name: "Add PHP apt repository"
+      apt_repository:
+        repo: 'ppa:ondrej/php'
+        codename: 'xenial'
+        update_cache: yes
+    - name: "Generate en_US.UTF-8 default locale"
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
+    - name: "Install PHP"
+      apt:
+        name: "php7.2"
+        state: present
+        update_cache: yes
+      # добавление пользователя и группы phpapp
+    - name: "Create non-root main application group"
+      group:
+        name: phpapp
+        state: present
+        gid: 242
+    - user:
+        name: phpapp
+        comment: "Non-root main application user"
+        uid: 242
+        group: phpapp
+        shell: /bin/bash
+        home: /app
     # создание скрипта запуска /opt/start.sh
-    - echo '#!/bin/bash' > /opt/start.sh && echo 'cd /demo' >> /opt/start.sh
-    - echo su -c \"'php bin/console server:run 0.0.0.0:8000'\" phpapp >> /opt/start.sh
-    - chmod +x /opt/start.sh
+    - name: "Create start script"
+      copy:
+        content: |
+          #!/bin/bash
+          echo 'cd /demo'
+          su -c "php bin/console server:run 0.0.0.0:8000" phpapp
+        dest: /opt/start.sh
+    - file:
+        path: /opt/start.sh
+        owner: phpapp
+        group: phpapp
+        mode: 0755
   install:
-    # установка необходимых для приложения модулей php
-    - apt-get install -y php-sqlite3 php-xml php-zip php-mbstring
-    # установка composer
-    - curl -LsS https://getcomposer.org/download/1.6.5/composer.phar -o /usr/local/bin/composer
-    - chmod a+x /usr/local/bin/composer
+      # установка необходимых для приложения модулей php
+    - name: "Install php moduiles"
+      apt:
+        name: "{{`{{ item }}`}}"
+        state: present
+        update_cache: yes
+      with_items:
+        - php-sqlite3
+        - php-xml
+        - php-zip
+        - php-mbstring
+      # установка composer
+    - raw: curl -LsS https://getcomposer.org/download/1.6.5/composer.phar -o /usr/local/bin/composer
+    - file:
+        path: /usr/local/bin/composer
+        mode: "a+x"
   beforeSetup:
-    # смена прав файлам исходных текстов и запуск composer install
-    - chown phpapp:phpapp -R /demo && cd /demo
-    - su -c 'composer install' phpapp
+      # смена прав файлам исходных текстов и запуск composer install
+    - file:
+        path: /demo
+        state: directory
+        owner: phpapp
+        group: phpapp
+        recurse: yes
+    - raw: cd /demo && su -c 'composer install' phpapp
   setup:
-    # используем текущую дату как версию приложения
-    - echo `date` > /demo/version.txt
-    - chown phpapp:phpapp /demo/version.txt
+      # используем текущую дату как версию приложения
+    - raw: echo `date` > /demo/version.txt
+    - raw: chown phpapp:phpapp /demo/version.txt
 git:
   - add: '/'
     to: '/demo'
+
 ```
 
 
@@ -103,7 +155,7 @@ curl host_ip:8000
 
 ## Что не так?
 
-* Набор команд echo для создания файла start.sh вполне заменим на ещё одну директиву git и хранение файла в репозитории.
+* Набор команд для создания файла start.sh вполне заменим на ещё одну директиву git и хранение файла в репозитории.
 * Если директивой git можно копировать файлы, то почему бы в этой директиве не указать права на эти файлы?
 * composer install требуется не каждый раз, а только при изменении файла package.json, поэтому было бы отлично, если эта команда запускалась только при изменении этого файла.
 
