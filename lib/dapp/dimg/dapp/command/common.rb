@@ -158,10 +158,6 @@ module Dapp
             end
           end
 
-          def container_name_prefix
-            name
-          end
-
           def validate_repo_name!(repo)
             raise ::Dapp::Error::Command, code: :repo_name_incorrect, data: { name: repo } unless ::Dapp::Dimg::DockerRegistry.repo_name?(repo)
           end

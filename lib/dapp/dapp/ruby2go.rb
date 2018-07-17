@@ -44,13 +44,14 @@ module Dapp
           end
         end
 
-        cmd_res = shellout! "#{bin_path} -args-from-file #{args_file} -result-to-file #{res_file}", raise_on_error: false, verbose: true
-        if [0, 16].include? cmd_res.exitstatus
+        system("#{bin_path} -args-from-file #{args_file} -result-to-file #{res_file}")
+        status_code = $?.exitstatus
+        if [0, 16].include?(status_code)
           res = nil
           File.open(res_file, "r") {|f| res = JSON.load(f.read)}
-          return res
+          res
         else
-          shellout_cmd_should_succeed! cmd_res
+          raise ::Dapp::Dimg::Error::Build, code: :ruby2go_image_unexpected_exitstatus, data: { status_code: status_code }
         end
       end
 

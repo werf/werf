@@ -80,6 +80,7 @@ module Dapp
 
         attr_reader :bash_commands, :service_bash_commands
         attr_reader :change_options
+        attr_reader :service_change_options
         attr_reader :options
 
         def add_option(key, value)
@@ -98,64 +99,17 @@ module Dapp
           hash[key] = (hash[key].nil? ? [value] : (hash[key] << value)).flatten
         end
 
-        def service_change_options
-          @service_change_options ||= {}.tap do |options|
-            break options if from.nil?
-            [:entrypoint, :cmd].each do |option|
-              options[option] = from.built_image_inspect!["Config"][option.to_s.capitalize] || []
-            end
-            workdir = from.built_image_inspect!["Config"]['WorkingDir']
-            options[:workdir] = (workdir || '').empty? ? '/' : workdir
-          end
-        end
-
         def options_to_args(options)
           options.map { |key, value| "#{key}=#{value}" }
-        end
-
-        def prepared_options
-          all_options.map do |key, vals|
-            if key == :env
-              vals.map { |k, v| "#{k}=#{v}" }
-            else
-              Array(vals)
-            end.map { |val| "--#{key}=#{val}" }
-          end.flatten.join(' ')
-        end
-
-        def all_options
-          service_options.in_depth_merge(options)
-        end
-
-        def all_bash_commands
-          Array(bash_commands) + Array(service_bash_commands)
         end
 
         def service_options
           {
             workdir: '/',
             entrypoint: [dapp.bash_bin],
-            name: container_name,
             user: '0:0',
             :'volumes-from' => [dapp.base_container, dapp.toolchain_container]
           }
-        end
-
-        def prepared_change
-          prepare_instructions(all_change_options).map { |instruction| %(-c '#{instruction}') }.join(' ')
-        end
-
-        def all_change_options
-          change_options.merge(service_change_options) { |_, v1, v2| [v1, v2].flatten }
-        end
-
-        def prepared_bash_command
-          dapp.shellout_pack prepared_commands.join(' && ')
-        end
-
-        def prepared_commands
-          return [dapp.true_bin] if all_bash_commands.empty?
-          all_bash_commands
         end
       end
     end # Image

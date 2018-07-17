@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/client"
@@ -26,13 +28,43 @@ func main() {
 			})
 		case "build":
 			return imageCommand(args, func(dockerClient *command.DockerCli, dockerApiClient *client.Client, stageImage *image.Stage) error {
-				if err := stageImage.Build(dockerClient, dockerApiClient); err != nil {
+				introspection, err := introspectionOptionFromArgs(args)
+				if err != nil {
 					return err
 				}
+
+				if buildErr := stageImage.Build(dockerClient, dockerApiClient); buildErr != nil {
+					if strings.HasPrefix(buildErr.Error(), "stage build failed: container run failed") {
+						if introspection["before"] {
+							if introspectErr := stageImage.Introspect(dockerClient); introspectErr != nil {
+								return introspectErr
+							}
+						} else if introspection["after"] {
+							if commitErr := stageImage.Commit(dockerApiClient); commitErr != nil {
+								return commitErr
+							}
+							if introspectErr := stageImage.Introspect(dockerClient); introspectErr != nil {
+								return introspectErr
+							}
+						}
+
+						if rmErr := stageImage.Container.Rm(dockerApiClient); rmErr != nil {
+							return rmErr
+						}
+					}
+
+					return buildErr
+				}
+
 				if err := stageImage.ResetBuiltInspect(dockerApiClient); err != nil {
 					return err
 				}
+
 				return nil
+			})
+		case "introspect":
+			return imageCommand(args, func(dockerClient *command.DockerCli, dockerApiClient *client.Client, stageImage *image.Stage) error {
+				return stageImage.Introspect(dockerClient)
 			})
 		default:
 			return nil, fmt.Errorf("command field `%s` isn't supported", cmd)
@@ -70,6 +102,36 @@ func commandFromArgs(args map[string]interface{}) (string, error) {
 	default:
 		return "", fmt.Errorf("command field value `%v` isn't supported", args["command"])
 	}
+}
+
+func introspectionOptionFromArgs(args map[string]interface{}) (map[string]bool, error) {
+	options, err := ruby2go.OptionsFromArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	switch options["introspection"].(type) {
+	case map[string]interface{}:
+		res, err := mapInterfaceToMapBool(options["introspection"].(map[string]interface{}))
+		if err != nil {
+			return nil, fmt.Errorf("introspection option field value `%v` isn't supported: `%s`", options["introspection"], err)
+		}
+		return res, nil
+	default:
+		return nil, fmt.Errorf("introspection option field value `%v` isn't supported", options["introspection"])
+	}
+}
+
+func mapInterfaceToMapBool(req map[string]interface{}) (map[string]bool, error) {
+	res := map[string]bool{}
+	for key, val := range req {
+		if b, ok := val.(bool); !ok {
+			return nil, fmt.Errorf("field value `%v` isn't supported", val)
+		} else {
+			res[key] = b
+		}
+	}
+	return res, nil
 }
 
 func dockerClient() (*command.DockerCli, error) {

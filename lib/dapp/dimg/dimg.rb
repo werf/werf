@@ -42,15 +42,13 @@ module Dapp
       end
 
       def build!
-        with_introspection do
-          dapp.lock("#{dapp.name}.images", readonly: true) do
-            last_stage.build_lock! do
-              begin
-                builder.before_build_check
-                last_stage.build!
-              ensure
-                after_stages_build!
-              end
+        dapp.lock("#{dapp.name}.images", readonly: true) do
+          last_stage.build_lock! do
+            begin
+              builder.before_build_check
+              last_stage.build!
+            ensure
+              after_stages_build!
             end
           end
         end
@@ -244,11 +242,6 @@ module Dapp
         [::Dapp::BUILD_CACHE_VERSION, dev_mode? ? 1 : 0]
       end
 
-      def introspect_image!(image:, options:)
-        cmd = "#{dapp.host_docker} run -ti --rm --entrypoint #{dapp.bash_bin} #{options} #{image}"
-        system(cmd)
-      end
-
       def cleanup_tmp
         return unless tmp_dir_exists?
 
@@ -281,14 +274,6 @@ module Dapp
           builder.before_dimg_should_be_built_check
           !last_stage.image.tagged?
         end
-      end
-
-      def with_introspection
-        yield
-      rescue Exception::IntrospectImage => e
-        data = e.net_status[:data]
-        introspect_image!(image: data[:built_id], options: data[:options])
-        raise data[:error]
       end
     end # Dimg
   end # Dimg

@@ -246,7 +246,7 @@ module Dapp
 
           def introspect_image_default(introspected_image)
             if introspected_image.built?
-              dimg.introspect_image!(image: introspected_image.built_id, options: image.send(:prepared_options))
+              introspected_image.introspect!
             else
               dimg.dapp.log_warning(desc: { code: :introspect_image_impossible, data: { name: name } })
             end

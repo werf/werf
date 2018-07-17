@@ -1,11 +1,15 @@
 package image
 
 import (
+	"encoding/base64"
 	"fmt"
+	"strings"
+
 	dockerClient "github.com/docker/cli/cli/command"
 	dockerClientContainer "github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/flant/dapp/pkg/util"
 	"golang.org/x/net/context"
 )
 
@@ -14,7 +18,6 @@ type StageContainer struct {
 	Name                       string
 	RunCommands                []string
 	ServiceRunCommands         []string
-	PreparedRunCommand         string
 	RunOptions                 *StageContainerOptions
 	ServiceRunOptions          *StageContainerOptions
 	CommitChangeOptions        *StageContainerOptions
@@ -23,11 +26,11 @@ type StageContainer struct {
 
 func NewStageImageContainer() *StageContainer {
 	c := &StageContainer{}
-	//token, err := util.GenerateConsistentRandomString(10) // TODO Name generation (blocked by introspection)
-	//if err != nil {
-	//	panic(err.Error())
-	//}
-	//c.Name = fmt.Sprintf("dapp.%v", token)
+	token, err := util.GenerateConsistentRandomString(10)
+	if err != nil {
+		panic(err.Error())
+	}
+	c.Name = fmt.Sprintf("dapp.build.%v", token)
 	c.RunOptions = NewStageContainerOptions()
 	c.ServiceRunOptions = NewStageContainerOptions()
 	c.CommitChangeOptions = NewStageContainerOptions()
@@ -47,7 +50,41 @@ func (c *StageContainer) runArgs() ([]string, error) {
 	args = append(args, runArgs...)
 	args = append(args, c.Image.From.BuiltId)
 	args = append(args, "-ec")
-	args = append(args, c.PreparedRunCommand) // TODO using RunCommands && ServiceRunCommands (blocked by introspection)
+	args = append(args, c.PreparedRunCommand())
+
+	return args, nil
+}
+
+func (c *StageContainer) PreparedRunCommand() string {
+	return ShelloutPack(strings.Join(c.PreparedRunCommands(), " && "))
+}
+
+func (c *StageContainer) PreparedRunCommands() []string {
+	runCommands := append(c.RunCommands, c.ServiceRunCommands...)
+	if len(runCommands) != 0 {
+		return runCommands
+	} else {
+		return []string{"true"} // TODO dappdeps true
+	}
+}
+
+func ShelloutPack(command string) string {
+	return fmt.Sprintf("eval $(echo %s | base64 --decode)", base64.StdEncoding.EncodeToString([]byte(command))) // TODO dappdeps base64
+}
+
+func (c *StageContainer) introspectArgs() ([]string, error) {
+	var args []string
+
+	runArgs, err := c.introspectOptions().toRunArgs()
+	if err != nil {
+		return nil, err
+	}
+
+	args = append(args, runArgs...)
+	args = append(args, []string{"-ti", "--rm"}...)
+	args = append(args, c.Image.BuiltId)
+	args = append(args, "-ec")
+	args = append(args, "/bin/bash") // TODO dappdeps bash
 
 	return args, nil
 }
@@ -56,31 +93,76 @@ func (c *StageContainer) runOptions() *StageContainerOptions {
 	return c.ServiceRunOptions.merge(c.RunOptions)
 }
 
+func (c *StageContainer) introspectOptions() *StageContainerOptions {
+	return c.runOptions()
+}
+
 func (c *StageContainer) commitChanges(client *client.Client) ([]string, error) {
-	commitChanges, err := c.commitOptions().toCommitChanges(client)
+	commitChanges, err := c.commitOptions(client).toCommitChanges(client)
 	if err != nil {
 		return nil, err
 	}
 	return commitChanges, nil
 }
 
-func (c *StageContainer) commitOptions() *StageContainerOptions {
-	return c.ServiceCommitChangeOptions.merge(c.CommitChangeOptions)
+func (c *StageContainer) commitOptions(client *client.Client) *StageContainerOptions {
+	return c.inheritedCommitOptions(client).merge(c.ServiceCommitChangeOptions.merge(c.CommitChangeOptions))
+}
+
+func (c *StageContainer) inheritedCommitOptions(client *client.Client) *StageContainerOptions {
+	inheritedOptions := NewStageContainerOptions()
+	if c.Image.From != nil {
+		var inspect *types.ImageInspect
+		if c.Image.From.BuiltInspect != nil {
+			inspect = c.Image.From.BuiltInspect
+		} else {
+			inspect = c.Image.From.Inspect
+		}
+
+		inheritedOptions.Entrypoint = inspect.Config.Entrypoint
+		inheritedOptions.Cmd = inspect.Config.Cmd
+		if inspect.Config.WorkingDir != "" {
+			inheritedOptions.Workdir = inspect.Config.WorkingDir
+		} else {
+			inheritedOptions.Workdir = "/"
+		}
+	}
+	return inheritedOptions
 }
 
 func (c *StageContainer) Run(dockerCli *dockerClient.DockerCli) error {
-	command := dockerClientContainer.NewRunCommand(dockerCli)
-
 	runArgs, err := c.runArgs()
 	if err != nil {
 		return err
 	}
 
-	command.SetArgs(runArgs)
+	if err := c.run(runArgs, dockerCli); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *StageContainer) Introspect(dockerCli *dockerClient.DockerCli) error {
+	runArgs, err := c.introspectArgs()
+	if err != nil {
+		return err
+	}
+
+	if err := c.run(runArgs, dockerCli); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *StageContainer) run(args []string, dockerCli *dockerClient.DockerCli) error {
+	command := dockerClientContainer.NewRunCommand(dockerCli)
+	command.SetArgs(args)
 	command.SilenceUsage = true
 	command.SilenceErrors = true
 
-	err = command.Execute()
+	err := command.Execute()
 	if err != nil {
 		return fmt.Errorf("container run failed: %s", err.Error())
 	}

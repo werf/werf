@@ -5,13 +5,13 @@ module Dapp
         include Argument
 
         def initialize(name:, dapp:, built_id: nil, from: nil)
-          @container_name = "dapp.build.#{SecureRandom.hex(4)}"
           @built_id = built_id
 
           @bash_commands          = []
           @service_bash_commands  = []
           @options                = {}
           @change_options         = {}
+          @service_change_options = {}
 
           super(name: name, dapp: dapp, from: from)
         end
@@ -41,11 +41,11 @@ module Dapp
           [
             :name,
             :from,
+            :built_image_inspect,
+            :image_inspect,
             :built_id,
-            :container_name,
-            # :bash_commands, // TODO
-            # :service_bash_commands, // TODO
-            :prepared_bash_command,
+            :bash_commands,
+            :service_bash_commands,
             :options,
             :service_options,
             :change_options,
@@ -62,30 +62,41 @@ module Dapp
         end
 
         def build!
-          res = self.dapp.ruby2go_image(image: JSON.dump(build_options), command: "build")
+          res = self.dapp.ruby2go_image(**ruby2go_image_build_options)
           if res["error"].nil?
             image = JSON.load(res['data']['image'])
             @built_id = image['built_id']
             @built_image_inspect = image['built_image_inspect']
+          elsif res["error"].start_with? "stage build failed: container run failed"
+            raise Error::Build, code: :ruby2go_image_command_failed, data: { command: "build" }
           else
-            begin
-              if res["error"].start_with?("container run failed")
-                dapp.log_warning(desc: { code: :launched_command, data: { command: prepared_commands.join(' && ') }, context: :container })
-
-                error_build_error = Error::Build.new(code: :ruby2go_image_command_failed, data: { command: "build" })
-                raise error_build_error unless dapp.introspect_error? || dapp.introspect_before_error?
-                built_id = dapp.introspect_error? ? commit! : from.built_id
-                raise Exception::IntrospectImage, data: { built_id: built_id,
-                                                          options: prepared_options,
-                                                          rmi: dapp.introspect_error?,
-                                                          error: error_build_error }
-              else
-                raise res["error"]
-              end
-            ensure
-              dapp.shellout("#{dapp.host_docker} rm #{container_name}") # TODO
-            end
+            raise Error::Build, code: :ruby2go_image_command_failed_unexpected_error, data: { command: "build", message: res["error"] }
           end
+        end
+
+        def introspect!
+          res = self.dapp.ruby2go_image(**ruby2go_image_introspect_options)
+          raise Error::Build, code: :ruby2go_image_command_failed_unexpected_error, data: { command: "introspect", message: res["error"] } unless res["error"].nil?
+        end
+
+        def ruby2go_image_build_options
+          {
+            image: JSON.dump(build_options),
+            command: "build",
+            options: {
+              introspection: {
+                before: dapp.introspect_before_error?,
+                after: dapp.introspect_error?
+              }
+            }
+          }
+        end
+
+        def ruby2go_image_introspect_options
+          {
+            image: JSON.dump(build_options),
+            command: "introspect",
+          }
         end
 
         def built_id
@@ -126,12 +137,6 @@ module Dapp
         end
 
         protected
-
-        attr_reader :container_name
-
-        def commit!
-          dapp.shellout!("#{dapp.host_docker} commit #{prepared_change} #{container_name}").stdout.strip
-        end
 
         def clone!(name)
           self.class.new(name: name, dapp: dapp, built_id: built_id)

@@ -120,6 +120,15 @@ func CommandWithImage(args map[string]interface{}, command func(stageImage *imag
 	return resultMap, nil
 }
 
+func OptionsFromArgs(args map[string]interface{}) (map[string]interface{}, error) {
+	switch args["options"].(type) {
+	case map[string]interface{}:
+		return args["options"].(map[string]interface{}), nil
+	default:
+		return nil, fmt.Errorf("options field value `%v` isn't supported", args["options"])
+	}
+}
+
 func stageImageFromArgs(args map[string]interface{}) (*image.Stage, error) {
 	rubyImage := &Stage{}
 

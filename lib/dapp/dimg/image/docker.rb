@@ -37,7 +37,7 @@ module Dapp
         def image_inspect
           @image_inspect ||= begin
             res = self.dapp.ruby2go_image(image: JSON.dump(name: name), command: "inspect")
-            raise res["error"] if res["error"]
+            raise Error::Build, code: :ruby2go_image_command_failed_unexpected_error, data: { command: "inspect", message: res["error"] } unless res["error"].nil?
             image = JSON.load(res['data']['image'])
             image['image_inspect'] || {}
           end
