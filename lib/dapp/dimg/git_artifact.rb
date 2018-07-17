@@ -369,10 +369,11 @@ module Dapp
       def archive_file_with_tar_writer(stage, commit)
         tar_write(dimg.tmp_path('archives', archive_file_name(commit))) do |tar|
           each_archive_entry(stage, commit) do |path, content, mode|
+            relative_path = path[1..-1]
             if mode == 0o120000 # symlink
-              tar.add_symlink path, content, mode
+              tar.add_symlink relative_path, content, mode
             else
-              tar.add_file path, mode do |tf|
+              tar.add_file relative_path, mode do |tf|
                 tf.write content
               end
             end
