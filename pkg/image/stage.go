@@ -62,7 +62,7 @@ func NewStageImage(from *Stage, name string, builtId string) *Stage {
 }
 
 func (i *Stage) Build(dockerClient *command.DockerCli, dockerApiClient *client.Client) error {
-	if err := i.Container.Run(dockerClient); err != nil {
+	if err := i.Container.Run(dockerClient, dockerApiClient); err != nil {
 		return fmt.Errorf("stage build failed: %s", err)
 	}
 
@@ -87,8 +87,8 @@ func (i *Stage) Commit(dockerApiClient *client.Client) error {
 	return nil
 }
 
-func (i *Stage) Introspect(dockerClient *command.DockerCli) error {
-	if err := i.Container.Introspect(dockerClient); err != nil {
+func (i *Stage) Introspect(dockerClient *command.DockerCli, dockerApiClient *client.Client) error {
+	if err := i.Container.Introspect(dockerClient, dockerApiClient); err != nil {
 		return fmt.Errorf("stage introspect failed: %s", err)
 	}
 

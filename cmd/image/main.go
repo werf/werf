@@ -36,14 +36,14 @@ func main() {
 				if buildErr := stageImage.Build(dockerClient, dockerApiClient); buildErr != nil {
 					if strings.HasPrefix(buildErr.Error(), "stage build failed: container run failed") {
 						if introspection["before"] {
-							if introspectErr := stageImage.Introspect(dockerClient); introspectErr != nil {
+							if introspectErr := stageImage.Introspect(dockerClient, dockerApiClient); introspectErr != nil {
 								return introspectErr
 							}
 						} else if introspection["after"] {
 							if commitErr := stageImage.Commit(dockerApiClient); commitErr != nil {
 								return commitErr
 							}
-							if introspectErr := stageImage.Introspect(dockerClient); introspectErr != nil {
+							if introspectErr := stageImage.Introspect(dockerClient, dockerApiClient); introspectErr != nil {
 								return introspectErr
 							}
 						}
@@ -64,7 +64,7 @@ func main() {
 			})
 		case "introspect":
 			return imageCommand(args, func(dockerClient *command.DockerCli, dockerApiClient *client.Client, stageImage *image.Stage) error {
-				return stageImage.Introspect(dockerClient)
+				return stageImage.Introspect(dockerClient, dockerApiClient)
 			})
 		default:
 			return nil, fmt.Errorf("command field `%s` isn't supported", cmd)
@@ -136,7 +136,7 @@ func mapInterfaceToMapBool(req map[string]interface{}) (map[string]bool, error) 
 
 func dockerClient() (*command.DockerCli, error) {
 	stdin, stdout, stderr := term.StdStreams()
-	dockerClient := command.NewDockerCli(stdin, stdout, stderr, true)
+	dockerClient := command.NewDockerCli(stdin, stdout, stderr, false)
 	opts := flags.NewClientOptions()
 	if err := dockerClient.Initialize(opts); err != nil {
 		return nil, err

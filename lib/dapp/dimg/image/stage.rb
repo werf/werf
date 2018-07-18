@@ -47,7 +47,6 @@ module Dapp
             :bash_commands,
             :service_bash_commands,
             :options,
-            :service_options,
             :change_options,
             :service_change_options,
           ].map do |name|

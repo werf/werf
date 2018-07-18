@@ -15,7 +15,6 @@ type CmdStage struct {
 	BashCommands         []string              `json:"bash_commands"`
 	ServiceBashCommands  []string              `json:"service_bash_commands"`
 	Options              StageContainerOptions `json:"options"`
-	ServiceOptions       StageContainerOptions `json:"service_options"`
 	ChangeOptions        StageContainerOptions `json:"change_options"`
 	ServiceChangeOptions StageContainerOptions `json:"service_change_options"`
 	ImageInspect         *types.ImageInspect   `json:"image_inspect"`
@@ -34,7 +33,6 @@ func cmdStageToImageStage(cmdStage *CmdStage) *Stage {
 	stageImage.Container.RunCommands = cmdStage.BashCommands
 	stageImage.Container.ServiceRunCommands = cmdStage.ServiceBashCommands
 	stageImage.Container.RunOptions = &cmdStage.Options
-	stageImage.Container.ServiceRunOptions = &cmdStage.ServiceOptions
 	stageImage.Container.CommitChangeOptions = &cmdStage.ChangeOptions
 	stageImage.Container.ServiceCommitChangeOptions = &cmdStage.ServiceChangeOptions
 	return stageImage
@@ -53,7 +51,6 @@ func imageStageToRubyStage(imageStage *Stage) *CmdStage {
 	cmdImage.BashCommands = imageStage.Container.RunCommands
 	cmdImage.ServiceBashCommands = imageStage.Container.ServiceRunCommands
 	cmdImage.Options = *imageStage.Container.RunOptions
-	cmdImage.ServiceOptions = *imageStage.Container.ServiceRunOptions
 	cmdImage.ChangeOptions = *imageStage.Container.CommitChangeOptions
 	cmdImage.ServiceChangeOptions = *imageStage.Container.ServiceCommitChangeOptions
 	cmdImage.ImageInspect = imageStage.Inspect
