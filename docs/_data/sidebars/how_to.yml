@@ -13,9 +13,6 @@ entries:
     - title: Первое приложение на dapp (Ansible)
       url: /get_started_ansible.html
 
-    - title: Первое приложение на dapp (Chef)
-      url: /get_started_chef.html
-
     - title: Первое приложение на dapp (Shell)
       url: /get_started_shell.html
 
