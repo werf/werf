@@ -16,3 +16,5 @@ dappdeps/*/omnibus/build/
 
 /osx/.vagrant
 /.vendor_osx
+
+main
