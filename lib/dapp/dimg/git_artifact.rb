@@ -130,15 +130,20 @@ module Dapp
           test_path         = [test_path, current_path_part].compact.join('/')
 
           match = File.fnmatch(test_path, embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
-          break unless match || File.fnmatch(File.join(test_path, '**'), embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
+          break unless match ||
+            File.fnmatch(File.join(test_path, '**'), embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH) ||
+            check_subpath?(test_path, embedded_rel_path)
 
           any = (current_path_part == '**')
 
           if any
             inherited_paths << [current_path_part, path_parts].flatten.join('/')
             inherited_paths << path_parts.join('/') unless path_parts.empty?
-          elsif match
-            inherited_paths << (path_parts.empty? ? '**' : path_parts.join('/'))
+          elsif match && !path_parts.empty?
+            inherited_paths << path_parts.join('/')
+            break
+          elsif path_parts.empty?
+            inherited_paths << '**'
             break
           end
         end

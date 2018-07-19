@@ -525,6 +525,8 @@ describe Dapp::Dimg::GitArtifact do
     [
       ['**/*.rb', %w(**/*.rb *.rb)],
       ['path/*', %w(**)],
+      ['path/**', %w(**)],
+      ['path', %w(**)],
       ['path/subpath', %w(**)],
       ['path/subpath/**/*.exe', %w(**/*.exe)],
       ['path/*th', %w(**)],
