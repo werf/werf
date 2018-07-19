@@ -102,15 +102,6 @@ module Dapp
         def options_to_args(options)
           options.map { |key, value| "#{key}=#{value}" }
         end
-
-        def service_options
-          {
-            workdir: '/',
-            entrypoint: [dapp.bash_bin],
-            user: '0:0',
-            :'volumes-from' => [dapp.base_container, dapp.toolchain_container]
-          }
-        end
       end
     end # Image
   end # Dimg

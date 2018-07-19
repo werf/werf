@@ -11,6 +11,8 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/flant/dapp/pkg/util"
 	"golang.org/x/net/context"
+
+	"github.com/flant/dapp/pkg/dappdeps"
 )
 
 type StageContainer struct {
@@ -19,7 +21,6 @@ type StageContainer struct {
 	RunCommands                []string
 	ServiceRunCommands         []string
 	RunOptions                 *StageContainerOptions
-	ServiceRunOptions          *StageContainerOptions
 	CommitChangeOptions        *StageContainerOptions
 	ServiceCommitChangeOptions *StageContainerOptions
 }
@@ -32,17 +33,16 @@ func NewStageImageContainer() *StageContainer {
 	}
 	c.Name = fmt.Sprintf("dapp.build.%v", token)
 	c.RunOptions = NewStageContainerOptions()
-	c.ServiceRunOptions = NewStageContainerOptions()
 	c.CommitChangeOptions = NewStageContainerOptions()
 	c.ServiceCommitChangeOptions = NewStageContainerOptions()
 	return c
 }
 
-func (c *StageContainer) runArgs() ([]string, error) {
+func (c *StageContainer) runArgs(dockerClient *dockerClient.DockerCli, dockerApiClient *client.Client) ([]string, error) {
 	var args []string
 	args = append(args, fmt.Sprintf("--name=%s", c.Name))
 
-	runArgs, err := c.runOptions().toRunArgs()
+	runArgs, err := c.runOptions(dockerClient, dockerApiClient).toRunArgs()
 	if err != nil {
 		return nil, err
 	}
@@ -64,18 +64,18 @@ func (c *StageContainer) PreparedRunCommands() []string {
 	if len(runCommands) != 0 {
 		return runCommands
 	} else {
-		return []string{util.DappdepsBaseBin("true")}
+		return []string{dappdeps.BaseBinPath("true")}
 	}
 }
 
 func ShelloutPack(command string) string {
-	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), util.DappdepsBaseBin("base64"))
+	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), dappdeps.BaseBinPath("base64"))
 }
 
-func (c *StageContainer) introspectArgs() ([]string, error) {
+func (c *StageContainer) introspectArgs(dockerClient *dockerClient.DockerCli, dockerApiClient *client.Client) ([]string, error) {
 	var args []string
 
-	runArgs, err := c.introspectOptions().toRunArgs()
+	runArgs, err := c.introspectOptions(dockerClient, dockerApiClient).toRunArgs()
 	if err != nil {
 		return nil, err
 	}
@@ -84,17 +84,26 @@ func (c *StageContainer) introspectArgs() ([]string, error) {
 	args = append(args, []string{"-ti", "--rm"}...)
 	args = append(args, c.Image.BuiltId)
 	args = append(args, "-ec")
-	args = append(args, util.DappdepsBaseBin("bash"))
+	args = append(args, dappdeps.BaseBinPath("bash"))
 
 	return args, nil
 }
 
-func (c *StageContainer) runOptions() *StageContainerOptions {
-	return c.ServiceRunOptions.merge(c.RunOptions)
+func (c *StageContainer) runOptions(dockerClient *dockerClient.DockerCli, dockerApiClient *client.Client) *StageContainerOptions {
+	return c.ServiceRunOptions(dockerClient, dockerApiClient).merge(c.RunOptions)
 }
 
-func (c *StageContainer) introspectOptions() *StageContainerOptions {
-	return c.runOptions()
+func (c *StageContainer) ServiceRunOptions(dockerClient *dockerClient.DockerCli, dockerApiClient *client.Client) *StageContainerOptions {
+	serviceRunOptions := NewStageContainerOptions()
+	serviceRunOptions.Workdir = "/"
+	serviceRunOptions.Entrypoint = []string{dappdeps.BaseBinPath("bash")}
+	serviceRunOptions.User = "0:0"
+	serviceRunOptions.VolumesFrom = []string{dappdeps.BaseContainer(dockerClient, dockerApiClient), dappdeps.ToolchainContainer(dockerClient, dockerApiClient)}
+	return serviceRunOptions
+}
+
+func (c *StageContainer) introspectOptions(dockerClient *dockerClient.DockerCli, dockerApiClient *client.Client) *StageContainerOptions {
+	return c.runOptions(dockerClient, dockerApiClient)
 }
 
 func (c *StageContainer) commitChanges(client *client.Client) ([]string, error) {
@@ -130,26 +139,26 @@ func (c *StageContainer) inheritedCommitOptions(client *client.Client) *StageCon
 	return inheritedOptions
 }
 
-func (c *StageContainer) Run(dockerCli *dockerClient.DockerCli) error {
-	runArgs, err := c.runArgs()
+func (c *StageContainer) Run(dockerClient *dockerClient.DockerCli, dockerApiClient *client.Client) error {
+	runArgs, err := c.runArgs(dockerClient, dockerApiClient)
 	if err != nil {
 		return err
 	}
 
-	if err := c.run(runArgs, dockerCli); err != nil {
+	if err := c.run(runArgs, dockerClient); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *StageContainer) Introspect(dockerCli *dockerClient.DockerCli) error {
-	runArgs, err := c.introspectArgs()
+func (c *StageContainer) Introspect(dockerClient *dockerClient.DockerCli, dockerApiClient *client.Client) error {
+	runArgs, err := c.introspectArgs(dockerClient, dockerApiClient)
 	if err != nil {
 		return err
 	}
 
-	if err := c.run(runArgs, dockerCli); err != nil {
+	if err := c.run(runArgs, dockerClient); err != nil {
 		return err
 	}
 
@@ -158,9 +167,9 @@ func (c *StageContainer) Introspect(dockerCli *dockerClient.DockerCli) error {
 
 func (c *StageContainer) run(args []string, dockerCli *dockerClient.DockerCli) error {
 	command := dockerClientContainer.NewRunCommand(dockerCli)
-	command.SetArgs(args)
-	command.SilenceUsage = true
 	command.SilenceErrors = true
+	command.SilenceUsage = true
+	command.SetArgs(args)
 
 	err := command.Execute()
 	if err != nil {
