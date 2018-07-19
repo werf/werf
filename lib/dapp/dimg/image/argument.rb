@@ -11,11 +11,11 @@ module Dapp
         end
 
         def add_change_env(**options)
-          add_change_option(:env, options)
+          (change_options[:env] ||= {}).merge!(options)
         end
 
         def add_change_label(**options)
-          add_change_option(:label, options)
+          (change_options[:label] ||= {}).merge!(options)
         end
 
         def add_change_cmd(value)
@@ -31,19 +31,19 @@ module Dapp
         end
 
         def add_change_workdir(value)
-          add_change_option(:workdir, value)
+          change_options[:workdir] = value
         end
 
         def add_change_user(value)
-          add_change_option(:user, value)
+          change_options[:user] = value
         end
 
         def add_service_change_label(**options)
-          add_service_change_option(:label, options)
+          (service_change_options[:label] ||= {}).merge!(options)
         end
 
-        def add_env(var, value)
-          add_option(:env, "#{var}=#{value}")
+        def add_env(**options)
+          (self.options[:env] ||= {}).merge!(options)
         end
 
         def add_volume(value)
@@ -65,10 +65,12 @@ module Dapp
         def prepare_instructions(options)
           options.map do |key, vals|
             case key
+            when :workdir, :user
+              [vals]
             when :cmd, :entrypoint
               vals = [''] if vals == [] && ::Dapp::Dapp.host_docker_minor_version >= Gem::Version.new('17.10')
               [vals]
-            when :env, :label then vals.map(&method(:options_to_args)).flatten
+            when :env, :label then options_to_args(vals)
             else vals
             end.map { |val| %(#{key.to_s.upcase} #{val}) }
           end.flatten
@@ -77,7 +79,8 @@ module Dapp
         protected
 
         attr_reader :bash_commands, :service_bash_commands
-        attr_reader :change_options, :service_change_options
+        attr_reader :change_options
+        attr_reader :service_change_options
         attr_reader :options
 
         def add_option(key, value)
@@ -96,57 +99,17 @@ module Dapp
           hash[key] = (hash[key].nil? ? [value] : (hash[key] << value)).flatten
         end
 
-        def from_change_options
-          return {} if from.nil?
-          [:entrypoint, :cmd].each_with_object({}) do |option, options|
-            options[option] = from.config_option(option.to_s.capitalize) || []
-          end.tap do |options|
-            workdir = from.config_option('WorkingDir')
-            options[:workdir] = Array((workdir || '').empty? ? '/' : workdir)
-          end
-        end
-
         def options_to_args(options)
           options.map { |key, value| "#{key}=#{value}" }
-        end
-
-        def prepared_options
-          all_options.map { |key, vals| Array(vals).map { |val| "--#{key}=#{val}" } }.flatten.join(' ')
-        end
-
-        def all_options
-          service_options.in_depth_merge(options)
-        end
-
-        def all_bash_commands
-          Array(bash_commands) + Array(service_bash_commands)
         end
 
         def service_options
           {
             workdir: '/',
-            entrypoint: dapp.bash_bin,
-            name: container_name,
+            entrypoint: [dapp.bash_bin],
             user: '0:0',
             :'volumes-from' => [dapp.base_container, dapp.toolchain_container]
           }
-        end
-
-        def prepared_change
-          prepare_instructions(all_change_options).map { |instruction| %(-c '#{instruction}') }.join(' ')
-        end
-
-        def all_change_options
-          from_change_options.merge(change_options.merge(service_change_options) { |_, v1, v2| [v1, v2].flatten })
-        end
-
-        def prepared_bash_command
-          dapp.shellout_pack prepared_commands.join(' && ')
-        end
-
-        def prepared_commands
-          return [dapp.true_bin] if all_bash_commands.empty?
-          all_bash_commands
         end
       end
     end # Image

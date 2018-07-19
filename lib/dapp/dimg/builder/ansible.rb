@@ -150,11 +150,11 @@ module Dapp
         define_method(stage.to_s) do |image|
           unless stage_empty?(stage)
             create_workdir_structure(stage)
-            image.add_env('ANSIBLE_CONFIG', container_workdir.join('ansible.cfg'))
-            image.add_env('DAPP_DUMP_CONFIG_DOC_PATH', container_workdir.join('dump_config.json'))
-            image.add_env('PYTHONPATH', container_workdir.join('lib'))
-            image.add_env('PYTHONIOENCODING', 'utf-8')
-            image.add_env('ANSIBLE_PREPEND_SYSTEM_PATH', dimg.dapp.dappdeps_base_path)
+            image.add_env(ANSIBLE_CONFIG: container_workdir.join('ansible.cfg'))
+            image.add_env(DAPP_DUMP_CONFIG_DOC_PATH: container_workdir.join('dump_config.json'))
+            image.add_env(PYTHONPATH: container_workdir.join('lib'))
+            image.add_env(PYTHONIOENCODING: 'utf-8')
+            image.add_env(ANSIBLE_PREPEND_SYSTEM_PATH: dimg.dapp.dappdeps_base_path)
             image.add_volumes_from("#{ansible_container}:rw")
             image.add_volume "#{host_workdir(stage)}:#{container_workdir}:ro"
             image.add_volume "#{host_tmpdir(stage)}:#{container_tmpdir}:rw"

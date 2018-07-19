@@ -27,7 +27,7 @@ module Dapp
               no_lock = false
 
               dimg.dapp.lock("#{dimg.dapp.name}.image.#{image.name}") do
-                image.class.reset_image_inspect(image.name)
+                image.reset_image_inspect
 
                 if image_should_be_locked?
                   yield
@@ -81,7 +81,7 @@ module Dapp
 
             if dimg.dapp.ssh_auth_sock
               image.add_volume "#{dimg.dapp.ssh_auth_sock}:/tmp/dapp-ssh-agent"
-              image.add_env 'SSH_AUTH_SOCK', '/tmp/dapp-ssh-agent'
+              image.add_env SSH_AUTH_SOCK: '/tmp/dapp-ssh-agent'
             end
 
             yield if block_given?
@@ -246,7 +246,7 @@ module Dapp
 
           def introspect_image_default(introspected_image)
             if introspected_image.built?
-              dimg.introspect_image!(image: introspected_image.built_id, options: image.send(:prepared_options))
+              introspected_image.introspect!
             else
               dimg.dapp.log_warning(desc: { code: :introspect_image_impossible, data: { name: name } })
             end

@@ -5,7 +5,6 @@ module Dapp
         include Argument
 
         def initialize(name:, dapp:, built_id: nil, from: nil)
-          @container_name = "dapp.build.#{SecureRandom.hex(4)}"
           @built_id = built_id
 
           @bash_commands          = []
@@ -17,20 +16,91 @@ module Dapp
           super(name: name, dapp: dapp, from: from)
         end
 
-        def built_id_example
-          # FIXME: remove this example
-          self.dapp.ruby2go_image(Hash[instance_variables.map { |name| [name, instance_variable_get(name).to_s] } ])
+        def labels
+          built_image_inspect!['Config']['Labels']
+        end
+
+        def created_at
+          built_image_inspect!["Created"]
+        end
+
+        def size
+          Float(built_image_inspect!["Size"])
+        end
+
+        def built_image_inspect
+          @built_image_inspect || image_inspect
+        end
+
+        def built_image_inspect!
+          raise Error::Build, code: :image_not_exist, data: { name: name } unless built?
+          built_image_inspect
+        end
+
+        def build_options
+          [
+            :name,
+            :from,
+            :built_image_inspect,
+            :image_inspect,
+            :built_id,
+            :bash_commands,
+            :service_bash_commands,
+            :options,
+            :service_options,
+            :change_options,
+            :service_change_options,
+          ].map do |name|
+            if name == :from && !from.nil?
+              [name, from.build_options] unless from.nil?
+            else
+              [name, send(name)]
+            end
+          end
+            .compact
+            .to_h
+        end
+
+        def build!
+          res = self.dapp.ruby2go_image(**ruby2go_image_build_options)
+          if res["error"].nil?
+            image = JSON.load(res['data']['image'])
+            @built_id = image['built_id']
+            @built_image_inspect = image['built_image_inspect']
+          elsif res["error"].start_with? "stage build failed: container run failed"
+            raise Error::Build, code: :ruby2go_image_command_failed, data: { command: "build" }
+          else
+            raise Error::Build, code: :ruby2go_image_command_failed_unexpected_error, data: { command: "build", message: res["error"] }
+          end
+        end
+
+        def introspect!
+          res = self.dapp.ruby2go_image(**ruby2go_image_introspect_options)
+          raise Error::Build, code: :ruby2go_image_command_failed_unexpected_error, data: { command: "introspect", message: res["error"] } unless res["error"].nil?
+        end
+
+        def ruby2go_image_build_options
+          {
+            image: JSON.dump(build_options),
+            command: "build",
+            options: {
+              introspection: {
+                before: dapp.introspect_before_error?,
+                after: dapp.introspect_error?
+              }
+            }
+          }
+        end
+
+        def ruby2go_image_introspect_options
+          {
+            image: JSON.dump(build_options),
+            command: "introspect",
+          }
         end
 
         def built_id
           @built_id ||= id
-        end
-
-        def build!
-          run!
-          @built_id = commit!
-        ensure
-          dapp.shellout("#{dapp.host_docker} rm #{container_name}")
         end
 
         def built?
@@ -47,6 +117,7 @@ module Dapp
         def tag!(name)
           clone!(name).tap do |image|
             self.class.tag!(id: image.built_id, tag: image.name)
+            image.reset_image_inspect
           end
         end
 
@@ -62,33 +133,10 @@ module Dapp
         def save_in_cache!
           dapp.log_warning(desc: { code: :another_image_already_tagged }) if !(existed_id = id).nil? && built_id != existed_id
           self.class.tag!(id: built_id, tag: name)
-        end
-
-        def labels
-          config_option('Labels')
+          reset_image_inspect
         end
 
         protected
-
-        attr_reader :container_name
-
-        def run!
-          raise Error::Build, code: :built_id_not_defined if from.built_id.nil?
-          dapp.shellout!("#{dapp.host_docker} run #{prepared_options} #{from.built_id} -ec '#{prepared_bash_command}'", verbose: true)
-        rescue ::Dapp::Error::Shellout => error
-          dapp.log_warning(desc: { code: :launched_command, data: { command: prepared_commands.join(' && ') }, context: :container })
-
-          raise unless dapp.introspect_error? || dapp.introspect_before_error?
-          built_id = dapp.introspect_error? ? commit! : from.built_id
-          raise Exception::IntrospectImage, data: { built_id: built_id,
-                                                    options: prepared_options,
-                                                    rmi: dapp.introspect_error?,
-                                                    error: error }
-        end
-
-        def commit!
-          dapp.shellout!("#{dapp.host_docker} commit #{prepared_change} #{container_name}").stdout.strip
-        end
 
         def clone!(name)
           self.class.new(name: name, dapp: dapp, built_id: built_id)
