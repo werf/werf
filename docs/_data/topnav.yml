@@ -1,0 +1,17 @@
+## Topnav single links
+## if you want to list an external url, use external_url instead of url. the theme will apply a different link base.
+topnav:
+- title: Topnav
+  items:
+    - title: Обзор
+      url: /index.html
+    - title: How To
+      url: /installation.html
+    - title: Reference
+      url: /build_yaml.html
+    - title: FAQ
+      url: /faq.html
+    - title: GitHub
+      external_url: https://github.com/flant/dapp
+    - title: Telegram
+      external_url: https://t.me/dapp_ru
