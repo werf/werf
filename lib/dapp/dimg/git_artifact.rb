@@ -108,7 +108,7 @@ module Dapp
           options[:owner]               = owner
           options[:group]               = group
 
-          options[:ignore_signature_auto_calculation] = ignore_signature_auto_calculation
+          options[:ignore_signature_auto_calculation]= ignore_signature_auto_calculation
         end
       end
 
@@ -305,9 +305,9 @@ module Dapp
             else
               repo.head_commit
             end
+          end.tap do |c|
+            repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
           end
-        end.tap do |c|
-          repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
         end
       end
 
