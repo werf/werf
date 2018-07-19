@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-
-	"github.com/flant/dapp/pkg/image"
 )
 
 var (
@@ -102,24 +100,6 @@ func RunCli(progname string, runFunc func(map[string]interface{}) (map[string]in
 	os.Exit(exitCode)
 }
 
-func CommandWithImage(args map[string]interface{}, command func(stageImage *image.Stage) error) (map[string]interface{}, error) {
-	stageImage, err := stageImageFromArgs(args)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := command(stageImage); err != nil {
-		return nil, err
-	}
-
-	resultMap, err := stageImageToArgs(stageImage, make(map[string]interface{}))
-	if err != nil {
-		return nil, err
-	}
-
-	return resultMap, nil
-}
-
 func OptionsFromArgs(args map[string]interface{}) (map[string]interface{}, error) {
 	switch args["options"].(type) {
 	case map[string]interface{}:
@@ -127,27 +107,4 @@ func OptionsFromArgs(args map[string]interface{}) (map[string]interface{}, error
 	default:
 		return nil, fmt.Errorf("options field value `%v` isn't supported", args["options"])
 	}
-}
-
-func stageImageFromArgs(args map[string]interface{}) (*image.Stage, error) {
-	rubyImage := &Stage{}
-
-	switch args["image"].(type) {
-	case string:
-		if err := json.Unmarshal([]byte(args["image"].(string)), rubyImage); err != nil {
-			return nil, fmt.Errorf("image field unmarshaling failed: %s", err.Error())
-		}
-		return rubyStageToImageStage(rubyImage), nil
-	default:
-		return nil, fmt.Errorf("image field value `%v` isn't supported", args["image"])
-	}
-}
-
-func stageImageToArgs(stageImage *image.Stage, args map[string]interface{}) (map[string]interface{}, error) {
-	raw, err := json.Marshal(imageStageToRubyStage(stageImage))
-	if err != nil {
-		return nil, fmt.Errorf(fmt.Sprintf("stage marshaling failed: %s", err.Error()))
-	}
-	args["image"] = string(raw)
-	return args, nil
 }

@@ -85,7 +85,7 @@ func imageCommand(args map[string]interface{}, command func(dockerClient *comman
 		return nil, err
 	}
 
-	resultMap, err := ruby2go.CommandWithImage(args, func(stageImage *image.Stage) error {
+	resultMap, err := image.CommandWithImage(args, func(stageImage *image.Stage) error {
 		return command(dockerClient, dockerApiClient, stageImage)
 	})
 	if err != nil {
