@@ -371,11 +371,9 @@ module Dapp
             self.set_ruby2go_state_hash(JSON.load(res["data"]["state"]))
 
             if res["error"]
-              raise res["error"] # FIXME: standard GitArtifact-related exception
+              raise res["error"]
             else
-              res["data"]["result"].tap do |c|
-                repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
-              end
+              res["data"]["result"]
             end
           end
         end.tap do |c|
