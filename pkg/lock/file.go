@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/flant/dapp/pkg/dapp"
 	"github.com/spaolacci/murmur3"
 	"os"
 	"path/filepath"
@@ -12,22 +11,14 @@ import (
 	"time"
 )
 
-var (
-	LocksPath = filepath.Join(dapp.HomeDir, "locks")
-)
-
-func NewFileLock(name string) Lock {
-	err := os.MkdirAll(LocksPath, 0755)
-	if err != nil {
-		panic(fmt.Errorf("cannot create file lock: %s", err))
-	}
-
-	return &File{Base: Base{Name: name}}
+func NewFileLock(name string, locksDir string) LockObject {
+	return &File{Base: Base{Name: name}, LocksDir: locksDir}
 }
 
 type File struct {
 	Base
-	locker *fileLocker
+	LocksDir string
+	locker   *fileLocker
 }
 
 func (lock *File) newLocker(timeout time.Duration, readOnly bool, onWait func(doWait func() error) error) *fileLocker {
@@ -93,7 +84,7 @@ func (locker *fileLocker) lockFilePath() string {
 
 	fileName := fmt.Sprintf("%x", buf.Bytes())
 
-	return filepath.Join(LocksPath, fileName)
+	return filepath.Join(locker.FileLock.LocksDir, fileName)
 }
 
 func (locker *fileLocker) Lock() error {
