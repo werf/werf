@@ -1,6 +1,6 @@
 ---
 title: Работа с секретами
-sidebar: doc_sidebar
+sidebar: reference
 permalink: secrets_for_kube.html
 folder: kube
 ---
@@ -65,11 +65,13 @@ $ dapp kube secret generate ~/certs/tls.key -o .helm/secret/backend-saml/tls.key
 
 Использование секрета в шаблоне может выглядеть следующим образом.
 
+{% raw %}
 ```
 ...
 data:
-  tls.key: {% raw %}{{ tuple "/backend-saml/tls.key" . | include "dapp_secret_file" | b64enc }}{% endraw %}
+  tls.key: {{ tuple "/backend-saml/tls.key" . | include "dapp_secret_file" | b64enc }}
 ```
+{% endraw %}
 
 Для шифрования файла с секретными значениями необходимо пробросить путь до файла и опцию `--values`.
 

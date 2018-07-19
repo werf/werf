@@ -1,14 +1,21 @@
 ---
-title: Ansible-сборщик
-sidebar: doc_sidebar
-permalink: yaml_with_ansible.html
+title: Ansible builder
+sidebar: reference
+permalink: build_yaml.html
 folder: build
 ---
 
-## YAML configuration
+You can use ansible to build your containers.
 
-Configuration is a collection of yaml documents (http://yaml.org/spec/1.2/spec.html#id2800132).
-These yaml documents are searched in following locations:
+## File structure
+
+- `/dappfile.yml` - repository should contain dappfile with build instructions. It may be located in a different way.
+- `/.dappfiles/` - folder for config files for your software and misc.
+- `/.helm/secret/` - folder for [dapp secret files](kube_secret.html)
+
+### dappfile placing
+
+dappfile may be put at different locations:
 
 * `REPO_ROOT/dappfile.yml`
 * `REPO_ROOT/dappfile.yaml`
@@ -17,6 +24,8 @@ These yaml documents are searched in following locations:
 
 Dapp will read files from directory `.dappfiles` in the alphabetical order.
 `dappfile.yml` will preceed any files from `.dappfiles`
+
+## dappfile yaml syntax 
 
 Processing of Yaml configuration consists of several steps:
 
@@ -39,23 +48,20 @@ dimg: app
 from: alpine:latest
 ```
 
-### differences from Dappfile
-
-1. No equivalent for `dimg_group` and nested `dimg`s and `artifact`s.
-2. No context inheritance because of 1. Use go-template functionality
-   to define common parts.
-3. Use `import` in `dimg` for copy artifact results instead of `export`
-4. Each `artifact` must have a name
-
-
-## Ansible
-
 Support for ansible builder divide to this parts:
 
 1. dappdeps-ansible docker image with python and ansible
 2. Dapp::Dimg::Builder::Ansible ruby module. This code converts array of ansible tasks to ansible-playbook
    and verify checksums
 3. support for `ansible` directive in yaml configuration
+
+### differences from [Chef-style dappfile](build_chef.html)
+
+1. No equivalent for `dimg_group` and nested `dimg`s and `artifact`s.
+2. No context inheritance because of 1. Use go-template functionality
+   to define common parts.
+3. Use `import` in `dimg` for copy artifact results instead of `export`
+4. Each `artifact` must have a name
 
 ### dappfile config
 
@@ -143,6 +149,7 @@ to mount that files into stage container. That is very difficult to implement. T
 The first iteration of Ansible builder will implement only text checksum. To calculate checksum for files use go template
 function .Files.Get and `content` attribute of modules.
 
+{% raw %}
 ```
 > dappfile.yml
 
@@ -152,6 +159,7 @@ ansible:
       content: {{ .Files.Get '/conf/etc/nginx.conf'}}
       dest: /etc/nginx
 ```
+{% endraw %}
 
 ```
 > resulting playbook.yml
@@ -176,6 +184,7 @@ ansible:
 Next iteration will implement .Files.Path function. Builder can collect all calls to this function
 and generate files structure to mount as volume.
  
+{% raw %}
 ```
 > dappfile.yml
 
@@ -185,6 +194,7 @@ ansible:
       src: {{ .Files.Path '/conf/etc/nginx.conf' }}
       dest: /etc/nginx
 ```
+{% endraw %}
 
 ```
 > resulting playbook.yml
@@ -209,12 +219,17 @@ Initial ansible builder will support only some modules:
 * Debug
 * packaging category
 
+Other ansible modules are available, but they may be not stable.
+
 ### jinja templating
 
+{% raw %}
 Go template and jinja has equal delimeters: `{{` and `}}`. 
+{% endraw %}
 
 First iteration will support only go style escaping:
 
+{% raw %}
 ```
 > dappfile.yml
 
@@ -230,6 +245,7 @@ ansible:
       - /app/conf/etc/nginx.conf
       - /app/conf/etc/server.conf
 ```
+{% endraw %}
 
 ### templates
 

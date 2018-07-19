@@ -1,6 +1,6 @@
 ---
 title: Registry
-sidebar: doc_sidebar
+sidebar: reference
 permalink: registry_for_advanced_build.html
 folder: advanced_build
 author: Alexey Igrychev <alexey.igrychev@flant.com>

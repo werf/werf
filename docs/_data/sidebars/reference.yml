@@ -1,0 +1,140 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+- title: sidebar
+  f:
+
+    - title: Сборка
+      fi:
+
+        - title: Ansible-сборщик
+          url: /build_yaml.html
+
+        - title: Chef-сборщик
+          url: /build_chef.html
+
+        - title: Shell-сборщик
+          url: /build_shell.html
+
+    - title: Синтаксис dappfile
+      fi:
+
+        - title: Описание образов
+          url: /directives_images.html
+
+        - title: "[git] Добавление кода в образ"
+          url: /git.html
+
+        - title: Использование артефактов
+          url: /artifact.html
+
+        - title: Сборка нескольких образов
+          url: /multiple_images_for_build.html
+
+        - title: Использование модулей (chef only)
+          url: /chef_dimod.html
+
+        - title: Выполнение произвольного кода
+          url: /shell.html
+
+        - title: Использовать функции chef
+          url: /chef_directives.html
+
+        - title: Docker директивы
+          url: /docker_directives.html
+
+        - title: Монтирование директорий
+          url: /mount_directives.html
+
+        - title: "[dappfile.yml] YAML формат"
+          url: /yaml_directives.html
+
+    - title: Ускорение сборки
+      fi:
+
+        - title: Стадии сборки
+          url: /stages.html
+
+        - title: Таблица стадий
+          url: /stages_diagram.html
+
+    - title: CLI
+      fi:
+
+        - title: dimg build
+          url: /dimg_build.html
+
+        - title: dimg build-context
+          url: /dimg_build_context.html
+
+        - title: dimg cleanup
+          url: /dimg_cleanup.html
+
+        - title: dimg flush
+          url: /dimg_flush.html
+
+        - title: dimg list
+          url: /dimg_list.html
+
+        - title: dimg mrproper
+          url: /dimg_mrproper.html
+
+        - title: dimg push
+          url: /dimg_push.html
+
+        - title: dimg run
+          url: /dimg_run.html
+
+        - title: dimg slug
+          url: /dimg_slug.html
+
+        - title: dimg stages
+          url: /dimg_stages.html
+
+        - title: kube chart create
+          url: /kube_chart_create.html
+
+        - title: kube deploy
+          url: /kube_deploy.html
+
+        - title: kube dismiss
+          url: /kube_dismiss.html
+
+        - title: kube lint
+          url: /kube_lint.html
+
+        - title: kube render
+          url: /kube_render.html
+
+        - title: kube secret
+          url: /kube_secret.html
+
+        - title: kube value
+          url: /kube_value.html
+
+    - title: Выкат
+      fi:
+
+      - title: Registry
+        url: /registry_for_advanced_build.html
+
+      - title: Управление выкатом
+        url: /deploy_for_kube.html
+
+      - title: Секреты
+        url: /secrets_for_kube.html
+
+      - title: Конфигурация выката
+        url: /templates_for_kube.html
+
+      - title: Использование minikube
+        url: /minikube_for_kube.html
+
+    - title: Устройство dapp
+      fi:
+
+        - title: Кэширование
+          url: /cache_for_advanced_build.html
+
+        - title: Как устроены стадии сборки
+          url: /stages_arhitecture.html

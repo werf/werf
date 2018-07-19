@@ -1,6 +1,6 @@
 ---
 title: Docker директивы
-sidebar: doc_sidebar
+sidebar: reference
 permalink: docker_directives.html
 folder: directive
 ---

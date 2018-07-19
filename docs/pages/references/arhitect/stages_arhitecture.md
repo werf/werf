@@ -1,6 +1,6 @@
 ---
 title: Как устроены стадии сборки
-sidebar: doc_sidebar
+sidebar: reference
 permalink: stages_arhitecture.html
 folder: definition
 ---
@@ -13,7 +13,7 @@ folder: definition
   * Предопределен порядок следования стадий.
   * См. [конвейер стадий](#конвейер-стадий).
 * В результате сборки стадии создается отдельный docker образ.
-* Имя docker образа стадии формируется по шаблону: dimgstage-\<[имя проекта](definitions.html#имя-dapp)\>:\<[cигнатура стадии](#сигнатура-стадии)\>.
+* Имя docker образа стадии формируется по шаблону: dimgstage-\<имя проекта\>:\<[cигнатура стадии](#сигнатура-стадии)\>.
 * Собранный образ dimg представляет собой связанный список docker образов стадий.
 * Стадия может быть пропущена, если для нее не указано инструкций.
   * Для такой стадии не будет существовать отдельный docker образ.
@@ -22,14 +22,14 @@ folder: definition
 ### Пользовательская стадия
 Пользовательская стадия — это стадия, инструкции для сборки которой задаются пользователем dapp.
 
-Инструкции задаются через [Dappfile](definitions.html#dappfile) или chef-рецепты — зависит от [используемого сборщика](definitions.html#тип-сборщика): shell сборщик или [chef сборщик](chef.html#chef-сборщик).
+Инструкции задаются через dappfile или chef-рецепты — зависит от используемого сборщика: shell сборщик или [chef сборщик](build_chef.html).
 
 ### Конвейер стадий
 Конвейер стадий — это статически определенная последовательность стадий для сборки определенного типа образов. Существуют следующие конвейеры стадий:
 
 * конвейер стадий dimg;
 * конвейер стадий артефакта;
-* конвейер стадий [scratch dimg](definitions.html#scratch-dimg).
+* конвейер стадий scratch dimg.
 
 ### Конвейер стадий dimg
 Конвейер стадий dimg — это стадии, использующиеся для сборки стандартных образов. Последовательность и имена стадий:
@@ -57,7 +57,7 @@ folder: definition
 * before setup
 * setup
 
-Конвейер стадий dimg используется как в shell dimg, так и в [chef dimg](chef.html#chef-dimg).
+Конвейер стадий dimg используется как в shell dimg, так и в chef dimg.
 
 ### Конвейер стадий артефакта
 Конвейер стадий артефакта — это стадии, использующиеся для сборки образов артефактов. Последовательность и имена стадий:
@@ -86,7 +86,7 @@ folder: definition
 * build artifact
 
 ### Конвейер стадий scratch dimg
-Конвейер стадий [scratch dimg](definitions.html#scratch-dimg) — состоит из одной стадии [import artifacts](#import-artifacts).
+Конвейер стадий scratch dimg — состоит из одной стадии [import artifacts](#import-artifacts).
 
 Пользовательских стадий в данном конвейере нет.
 
@@ -118,7 +118,7 @@ folder: definition
 | docker instructions               | Применение докерфайловых инструкций | docker.cmd, docker.env, docker.entrypoint, docker.expose, docker.label, docker.onbuild, docker.user, docker.volume, docker.workdir |
 | git artifact artifact patch       | Наложение патчей git-артефактов     | git_artifact.local и git_artifact.remote           |
 | build artifact                    | Сборка артефакта                    | shell.build_artifact / chef.dimod, chef.recipe     |
-| import artifacts                  | Установка артефактов при сборке [scratch dimg](definitions.html#scratch-dimg) | |
+| import artifacts                  | Установка артефактов при сборке scratch dimg | |
 
 ### Особенности
 * Существуют стадии, в формировании [cигнатур](#сигнатура-стадии) которых используется сигнатура последующей стадии, вдобавок к зависимостям самой стадии. Такие стадии всегда будут пересобираться вместе с зависимой стадией.
@@ -133,13 +133,13 @@ folder: definition
 Данная стадия производит скачивание указанного базового образа (фактически docker pull) и фиксирует его в кэше dapp.
 
 * Стадия используется только при указании базового образа директивой docker.from с аргументом в формате \<image:tag\>.
-* Стадия не будет использоваться, если docker.from не указан — будет собран [scratch dimg](definitions.html#scratch-dimg)
+* Стадия не будет использоваться, если docker.from не указан — будет собран scratch dimg
 
 #### import artifacts
 
-Данная стадия включается только при сборке [scratch dimg](definitions.html#scratch-dimg) и является единственной стадией при сборке scratch dimg.
+Данная стадия включается только при сборке scratch dimg и является единственной стадией при сборке scratch dimg.
 
-Сборка [scratch dimg](definitions.html#scratch-dimg) предполагает создание образа только путем импорта в итоговый образ файловых ресурсов описанных пользователем артефактов.
+Сборка scratch dimg предполагает создание образа только путем импорта в итоговый образ файловых ресурсов описанных пользователем артефактов.
 
 Порядок сборки: собирается каждый из описанных артефактов, отрабатывает стадия import artifacts, добавляя все описанные артефакты в итоговый образ (фактически с помощью docker import). При этом сборка каждого из артефактов идет изолированно и проходит через все стандартные стадии сборки артефактов.
 
@@ -147,9 +147,9 @@ folder: definition
 
 #### EMPTY
 
-Стадия пустая, не используются [связанные директивы](#stages_table.html).
+Стадия пустая, не используются [связанные директивы](stages_diagram.html).
 
-К примеру, git artifact стадии считаются пустыми, если при описании приложения в [Dappfile](definitions.html#dappfile) не были использованы git-artifact-ы ([git](artifact_directives.html#git-<url>)), аналогичная ситуация с artifact-ами ([artifact](artifact_directives.html#artifact)) и пользовательскими стадиями ([shell](shell_directives.html) и [chef](chef_directives.html) директивы).
+К примеру, git artifact стадии считаются пустыми, если при описании приложения в dappfile не были использованы git-artifact-ы ([git](git.html)), аналогичная ситуация с artifact-ами ([artifact](artifact.html)) и пользовательскими стадиями.
 
 #### BUILD
 

@@ -1,6 +1,6 @@
 ---
 title: Использовать функции chef
-sidebar: doc_sidebar
+sidebar: reference
 permalink: chef_directives.html
 folder: directive
 ---
@@ -14,14 +14,14 @@ folder: directive
 - Ansible - нет
 
 ### chef.dimod \<mod\>[[, \<version-constraint\>,] \<cookbook-opts\>]
-Включить указанный [модуль](chef.html#dimod) для chef builder в данном контексте.
+Включить указанный модуль для chef builder в данном контексте.
 
 * Название модуля должно включать в себя префикс 'dimod-' (dimod-php, dimod-nginx).
 * Для каждого переданного модуля может существовать по одному рецепту на каждую из стадий.
 * При отсутствии файла рецепта в runlist для данной стадии используется пустой рецепт \<mod\>::void.
 * Параметры \<version-constraint\> и \<cookbook-opts\> определяют опции cookbook'а, соответствуют параметрам директивы chef.cookbook.
 
-Подробнее см.: [dimod модуль](chef.html#dimod) и [установка стадии cookbook\`а](chef.html#установка-стадии-cookbook’а).
+Подробнее см.: [dimod модуль](chef_dimod.html) и [chef-сборщик](build_chef.html)
 
 ### chef.cookbook \<cookbook\>[[, \<version-constraint\>,] \<cookbook-opts\>]
 Включить указанный cookbook в зависимость для сборочного cookbook'а.
@@ -30,13 +30,11 @@ folder: directive
 * Опции \<cookbook-opts\> соответствуют опциям cookbook'ов из Berksfile.
 
 ### chef.recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
-Включить переданные рецепты из [cookbook'а dapp](chef.html#cookbook-dapp) для chef builder в данном контексте.
+Включить переданные рецепты из cookbook'а dapp для chef builder в данном контексте.
 
 * Для каждого преданного рецепта может существовать файл рецепта в проекте на каждую из стадий.
 * При отсутствии хотя бы одного файла рецепта из включенных, в runlist для данной стадии используется пустой рецепт \<projectname\>::void.
 * Порядок вызова рецептов в runlist совпадает порядком их описания в конфиге.
-
-Подробнее см.: [cookbook приложения](chef.html#cookbook-dapp) и [установка стадии cookbook\`а](chef.html#установка-стадии-cookbook’а).
 
 ### chef.attributes
 Хеш атрибутов, доступных на всех стадиях сборки, для chef builder в данном контексте.
@@ -58,12 +56,9 @@ dimg_group do
 end
 ```
 
-См.: [установка стадии cookbook\`а](chef.html#установка-стадии-cookbook’а).
 
 ### chef.\<стадия\>_attributes
 Хеш атрибутов, доступных на стадии сборки, для chef builder в данном контексте.
-
-См.: [установка стадии cookbook\`а](chef.html#установка-стадии-cookbook’а).
 
 ### Примеры
 

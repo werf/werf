@@ -1,5 +1,6 @@
 output: web
 
+topnav_title: Документация Dapp
 site_title: Документация Dapp
 company_name: Flant
 
@@ -30,3 +31,8 @@ defaults:
       comments: true
       search: true
       sidebar: sidebar
+      topnav: topnav
+
+sidebars:
+- how_to
+- reference

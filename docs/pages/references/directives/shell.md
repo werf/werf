@@ -1,7 +1,7 @@
 ---
 title: Выполнение произвольного кода
-sidebar: doc_sidebar
-permalink: bash.html
+sidebar: reference
+permalink: shell.html
 folder: directive
 ---
 
@@ -13,15 +13,22 @@ folder: directive
 - Chef - да
 - Ansible - да
 
-## Ansible-сборщик
+## YAML синтаксис (dappfile.yml)
 
 В Ansible для этого есть директива `raw`.
 
-@todo: добавить короткий пример
+```
+dimg: "imagename"
+from: "ubuntu:16.04"
+ansible:
+  beforeInstall:
+  - name: "example"
+    raw: echo "hello world!"
+```
 
-## Chef-сборщик
+## Ruby синтаксис (Dappfile)
 
-Следующие поддирективы позволяют добавить bash-команды для выполнения на соответствующих стадиях [shell образа](definitions.html#shell-проект):
+Следующие поддирективы позволяют добавить bash-команды для выполнения на соответствующих стадиях сборки образа:
 
 * before_install.
 * before_setup.

@@ -1,7 +1,7 @@
 ---
 title: Использование артефактов
-sidebar: doc_sidebar
-permalink: directives_artifact.html
+sidebar: reference
+permalink: artifact.html
 folder: directive
 ---
 

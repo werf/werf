@@ -1,6 +1,6 @@
 ---
 title: Управление выкатом
-sidebar: doc_sidebar
+sidebar: reference
 permalink: deploy_for_kube.html
 folder: kube
 ---
@@ -61,17 +61,17 @@ dapp kube deploy REPO [--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-
 
 Запускает процесс выката helm-chart'а в kubernetes.
 
-В helm будет создан или обновлен релиз с именем [`имя dapp`](definitions.html#имя-dapp)-\<NAMESPACE\>.
+В helm будет создан или обновлен релиз с именем `имя dapp`-\<NAMESPACE\>.
 
 ##### `REPO`
 
-Адрес репозитория, из которого будут взяты образы. Данный параметр должен совпадать с параметром, указываемым в [`dapp dimg push`](base_commands.html#dapp-dimg-push).
+Адрес репозитория, из которого будут взяты образы. Данный параметр должен совпадать с параметром, указываемым в [`dapp dimg push`](dimg_push.html).
 
 При указании специального значения `:minikube` будет использован локальный proxy для docker-registry из minikube, см. [использование minikube](minikube_for_kube.html).
 
 ##### `--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci`
 
-Версия образа из указанного репозитория. Опции соответствуют указываемым в [`dapp dimg push`](base_commands.html#dapp-dimg-push).
+Версия образа из указанного репозитория. Опции соответствуют указываемым в [`dapp dimg push`](dimg_push.html).
 
 ##### `--namespace=NAMESPACE`
 
@@ -97,7 +97,7 @@ dapp kube deploy REPO [--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-
 dapp kube dismiss [--namespace=NAMESPACE] [--with-namespace]
 ```
 
-Запускает процесс удаления релиза [`<имя dapp>`](definitions.html#имя-dapp)-`<NAMESPACE>` из helm.
+Запускает процесс удаления релиза `<имя dapp>`-`<NAMESPACE>` из helm.
 
 ##### `--namespace=NAMESPACE`
 

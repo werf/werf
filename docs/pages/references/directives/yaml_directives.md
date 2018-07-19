@@ -1,11 +1,9 @@
 ---
 title: Yaml директивы
-sidebar: doc_sidebar
+sidebar: reference
 permalink: yaml_directives.html
 folder: directive
 ---
-
-Original proposal doc: https://github.com/flant/dapp/blob/master/docs/rfc/yaml_with_ansible.md.
 
 # Yaml dappfile
 

@@ -1,6 +1,6 @@
 ---
 title: Использование minikube
-sidebar: doc_sidebar
+sidebar: reference
 permalink: minikube_for_kube.html
 folder: kube
 ---
@@ -9,8 +9,8 @@ folder: kube
 
 * Собрать требуемые образы на хост-машине.
 * Поднять minikube с docker-registry и proxy на хост-машине, см. [`dapp kube minikube setup`](#dapp-kube-minikube-setup).
-* Загрузить собранные образы в docker-registry, указывая `:minikube` в качестве параметра `REPO`, через [`dapp dimg push :minikube`](base_commands.html#dapp-dimg-push).
-* Применить конфигурацию kubernetes, указывая `:minikube` в качестве параметра `REPO`, через [`dapp kube deploy :minikube`](deploy_for_kube.html#dapp-kube-deploy).
+* Загрузить собранные образы в docker-registry, указывая `:minikube` в качестве параметра `REPO`, через [`dapp dimg push :minikube`](dimg_push.html).
+* Применить конфигурацию kubernetes, указывая `:minikube` в качестве параметра `REPO`, через [`dapp kube deploy :minikube`](kube_deploy.html).
 
 ### dapp kube minikube setup
 

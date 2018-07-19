@@ -1,6 +1,6 @@
 ---
 title: Конфигурация выката
-sidebar: doc_sidebar
+sidebar: reference
 permalink: templates_for_kube.html
 folder: kube
 ---

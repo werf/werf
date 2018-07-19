@@ -1,244 +1,172 @@
 ---
-title: Сборка приложения на dapp с помощью Chef
-sidebar: doc_sidebar
+title: Первое приложение на dapp
+sidebar: how_to
 permalink: get_started_chef.html
 ---
 
-**Внимание, chef-сборщик более активно не развивается. Переходите на ansible.**
+В этой главе описана сборка простейшего приложения с помощью dapp. Перед изучением dapp желательно представлять, что такое Dockerfile и его основные [директивы](https://docs.docker.io/).
 
-Разберем hello-world приложение на ruby, собираемое с помощью chef-сборщика.
+Для запуска примеров понадобятся:
 
-```shell
-git clone https://github.com/flant/dapp-example-chef-for-advanced-build-1.git
-cd dapp-example-chef-for-advanced-build-1
+* dapp (установка описана [здесь](./installation.html))
+* docker версии не ниже 1.10
+* git
+
+## Сборка простого приложения
+
+Начнём с простого приложения на php. Создайте директорию для тестов и склонируйте репозиторий:
+
+```
+git clone https://github.com/awslabs/opsworks-demo-php-simple-app
 ```
 
-Dappfile приложения:
+Это совсем небольшое приложение с одной страницей и статическими файлами. Чтобы приложение можно было запустить, нужно запаковать его в контейнер, например, с php и apache. Для этого достаточно такого Dockerfile.
 
-```ruby
-dimg do
-  docker.from 'ubuntu:16.04'
+```
+$ vi Dockerfile
+FROM php:7.0-apache
 
-  git.add('/').to('/app')
-  docker.workdir '/app'
+COPY . /var/www/html/
 
-  docker.cmd ['/bin/bash', '-lec', 'bundle exec ruby app.rb']
-  docker.expose 4567
-
-  chef do
-    cookbook 'apt'
-    cookbook 'rvm'
-
-    recipe 'ruby'
-    recipe 'bundle_gems'
-    recipe 'app_config'
-  end
-end
+EXPOSE 80
+EXPOSE 443
 ```
 
-В образ на базе ubuntu:16.04 добавляется исходный код приложения в директорию `/app`. Все правила сборки для chef в данном случае описаны в блоке директивы `chef`. Конфигурация chef-сборщика в общем виде представляет собой включение рецептов и модулей, определение атрибутов, определение зависимых cookbook'ов в Dappfile и создание рецептов (recipes), шаблонов (templates) и подготовленных заранее файлов (files) в директории `.dapp_chef`.
+Соберите и запустите приложение:
 
-Для сборки образа включено 3 рецепта: ruby, bundle\_gems и app\_config — директивой `chef.recipe <recipe-name>`.
-
-Один логический рецепт, включенный таким образом через Dappfile, может относиться к нескольким файлам-рецептам для разных стадий сборки.
-
-Например, файл `.dapp_chef/recipes/before_install/ruby.rb` запускается на стадии before\_install, а файл `.dapp_chef/recipes/setup/ruby.rb` — на стадии setup, но оба этих файла включаются одновременно через указание директивы `chef.recipe 'ruby'`. Однако создавать или нет файл рецепта для конкретной стадии решает пользователь. Если для включенного в Dappfile рецепта не нашлось файла в некоторой стадии — этот рецепт просто игнорируется при сборке этой стадии.
-
-Последовательность включения нескольких рецептов в Dappfile определяет последовательность их запуска в рамках одной стадии (опять же, в случае, если файлы рецептов для этой стадии существуют).
-
-Рецепт ruby отвечает за установку rvm, ruby и bundler. Переустановку данного софта не требуется производить часто, и для него не требуется наличие исходного кода приложения в образе. Поэтому логичнее всего запускать рецепт на первичной стадии, в которой еще не добавлен исходный код приложения — на стадии before\_install. Рецепт с именем ruby для стадии before\_install располагается в `.dapp_chef/recipes/before_install/ruby.rb`.
-
-```ruby
-include_recipe 'apt'
-
-node.default['rvm']['gpg'] = {}
-node.default['rvm']['install_rubies'] = true
-node.default['rvm']['rubies'] = ['2.3.1']
-node.default['rvm']['default_ruby'] = node['rvm']['rubies'].first
-node.default['rvm']['global_gems'] = [{name: 'bundler'}]
-include_recipe 'rvm::system'
+```
+$ docker build -t simple-app-v1 .
+$ docker run -d --rm --name simple-app simple-app-v1
 ```
 
-Данный рецепт использует внешние cookbook'и apt и rvm. Для указания внешних зависимостей не требуется создавать Berksfile, Berksfile.lock и metadata.rb. Чтобы эти cookbook'и были доступны, необходимо указать их в Dappfile с помощью директивы `chef.cookbook`. Все параметры директивы полностью совпадают с параметрами директивы `cookbook` из Berksfile. 
+Проверить как работает приложение можно либо зайдя браузером на порт 80, либо выполнив curl внутри контейнера:
 
-Следующий рецепт bundle\_gems используется для установки зависимостей целевого ruby-приложения. Эти зависимости определены в Gemfile и Gemfile.lock, которые располагаются в git-репозитории. Первая пользовательская стадия сборки, в которой доступен описанный в Dappfile git-репозиторий — это стадия install. Рецепт с именем bundle\_gems для стадии install располагается в `.dapp_chef/recipes/install/bundle_gems.rb` и просто запускает bundle install.
-
-```ruby
-execute 'install bundle gems' do
-  cwd '/app'
-  command 'bundle install --deployment --path .vendor'
-end
+```
+$ docker exec -ti simple-app bash
+root@da234e2a7777:/var/www/html# curl 127.0.0.1
+...
+                <h1>Simple PHP App</h1>
+                <h2>Congratulations!</h2>
+...
 ```
 
-Рецепт app\_config отвечает за генерацию конфига приложения. Генерация/установка конфигов как правило происходит на стадии setup. Рецепт с именем app\_config для стадии setup располагается в `.dapp_chef/recipes/setup/app_config.rb`
+Остановите контейнер с приложением:
 
-```ruby
-file "/app/config.yml" do
-  mode 0644
-  action :create
-  content YAML.dump(
-    'message' => "Hello from setup/app_config.rb recipe\n"
-  )
-end
+```
+docker stop simple-app
 ```
 
-Целевое приложение представляет собой web-сервер, который отдает сообщение из конфига по запросу /message.
+## Сборка с dapp
 
-Собираем образ и запускаем контейнер:
+Теперь соберём образ приложения с помощью dapp. Для этого нужно создать dappfile.yaml - который будет содержать команды для сборки образа используя YAML синтаксис.
 
-```shell
+* В репозитории могут находится одновременно и dappfile.yaml и Dockerfile - они друг другу не мешают.
+* Среди директив dappfile.yaml есть семейство docker.* директив, которые повторяют аналогичные из Dockerfile.
+
+Создайте в корневой папке кода приложения фаил `dappfile.yaml` следующего содержания:
+```
+dimg: simple-php-app
+from: php:7.0-apache
+docker:
+  EXPOSE: '80'
+  EXPOSE: '443'
+git:
+- add: '/'
+  to: '/var/www/html'
+  includePaths:
+  - '*.php'
+  - 'assets'
+```
+
+Рассмотрим подробнее этот файл.
+
+`dimg` — эта директива определяет тип и название образа, который будет собран (вместо `dimg` может быть `artifact` для типа образа - артефакт). Аргумент `simple-php-app` — имя этого образа, его можно увидеть, запустив `dapp dimg list`. Блок с остальными директивами определяет шаги для сборки образа.
+
+`from` — аналог директивы `FROM`. Определяет базовый образ, на основе которого будет собираться образ приложения.
+
+ [Подробнее](directives_images.html) про директивы `dimg` и `from`.
+
+`git` — директива, на первый взгляд аналог директив `ADD` или `COPY`, но с более тесной интеграцией с git. Подробнее про то, как dapp работает с git, можно [прочесть](git.html) в отдельной главе, а сейчас главное увидеть, что директива `git` и вложенная директива `add` позволяют копировать содержимое локального git-репозитория в образ. Копирование производится из пути, указанного в `add`. `'/'` означает, что копировать нужно из корня репозитория. `to` задаёт конечную директорию в образе, куда попадут файлы. С помощью `includePaths` и `excludePaths` можно задавать, какие именно файлы нужно скопировать или какие нужно пропустить.
+
+Для сборки выполните команду `dapp dimg build`
+
+```
 $ dapp dimg build
-From ...                                                                              [OK] 1.01 sec
-Before install ...                                                                    [OK] 260.06 sec
-Git artifacts: create archive ...                                                     [OK] 0.92 sec
-Install group
-  Git artifacts: apply patches (before install) ...                                   [OK] 0.87 sec
-  Install ...                                                                         [OK] 15.95 sec
-  Git artifacts: apply patches (after install) ...                                    [OK] 0.97 sec
-Setup group
-  Git artifacts: apply patches (before setup) ...                                     [OK] 0.98 sec
-  Setup ...                                                                           [OK] 3.91 sec
-  Git artifacts: apply patches (after setup) ...                                      [OK] 0.98 sec
-Docker instructions ...                                                               [OK] 1.89 sec
-$ dapp dimg run --detach -p 4567:4567 --name dapp-example-chef-for-advanced-build-1
-f89d8357dd4a9c79076e741a5713a4147f71516651a58318fa9269b4b0f48172
+simple-php-app
+  simple-php-app: calculating stages signatures                                                                      [RUNNING]
+    Repository `own`: latest commit `c24fbabde24014459c907f2e734f701d4506eb08` to `/var/www/html`
+  simple-php-app: calculating stages signatures                                                                           [OK] 0.17 sec
+  From ...                                                                                                                [OK] 0.5 sec
+    signature: dimgstage-opsworks-demo-php-simple-app:7967f820a9118bd7f453ff9ecd611678fcde38afc64be832a021548db6540ed7
+  Git artifacts: create archive ...                                                                                       [OK] 0.4 sec
+    signature: dimgstage-opsworks-demo-php-simple-app:3c0630c7f7b16e7bb99c186af48f5f010d5cf4fc4e8940d003fdc5a6237eb271
+  Setup group
+    Git artifacts: apply patches (after setup) ...                                                                        [OK] 0.39 sec
+      signature: dimgstage-opsworks-demo-php-simple-app:fbda7c00c141bb3991d4695987383d55730b9d52e2e5c4f661c5f5c7d8692421
+  Docker instructions ...                                                                                                 [OK] 0.37 sec
+    signature: dimgstage-opsworks-demo-php-simple-app:7a6dc3b72c3dd76ce2b4201bc4cab86f4907d964f1bab6b1c206a710ac835b25
+    instructions:
+      EXPOSE 443
+Running time 2.85 seconds
 ```
 
-Проверяем работоспособность приложения:
+Запустите контейнер приложения из собранного образа с помощью команды `dapp dimg run`.
 
-```shell
-$ curl localhost:4567/message
-Hello from setup/app_config.rb recipe
+```
+$ dapp dimg run -d --rm
+59ae767d497b4e4fb8c32cd97110cc0f17e67d8e3c7f540cef73b713ef995e5a
 ```
 
-Разделение рецептов и файлов cookbook'а по стадиям в текущей реализации dapp открывает возможность беспроблемного кэширования стадий сборки. Изменение рецептов, шаблонов или файлов связанных со стадией ведет не к полной пересборке, а к пересборке начиная с этой стадии. Поменяем поле конфигурации message в рецепте, который генерирует конфигурационный файл, `.dapp_chef/recipes/setup/app_config.rb`:
+Ключи, передаваемые в конце команды `dapp dimg run` (в примере это ключи `-d` и `--rm`) передаются в docker без изменений ([подробнее](dimg_run.html)).
 
-```ruby
-file "/app/config.yml" do
-  mode 0644
-  action :create
-  content YAML.dump(
-    'message' => "New message\n"
-  )
-end
+Теперь можно проверить работу приложения как и ранее, только указывать контейнер нужно по его ID, а не имени (т.к. dapp не присваивал имя созданному контейнеру приложения). Узнать ID запущенного контейнера можно с помощью команды `docker ps` - ID контейнера будет в колонке с заголовком `CONTAINER_ID`.
+
+Проверяем работу приложения:
+```
+docker exec -ti <CONTAINER_ID> bash
+root@ef6a519b7e9c:/var/www/html# curl 127.0.0.1
+...
+                <h1>Simple PHP App</h1>
+                <h2>Congratulations!</h2>
+...
 ```
 
-Запускаем пересборку:
+Ура! Первая сборка с помощью dapp прошла успешно.
 
-```shell
-$ dapp dimg build
-Setup group
-  Git artifacts: apply patches (before setup) ...                           [OK] 0.96 sec
-  Setup ...                                                                 [OK] 3.57 sec
-  Git artifacts: apply patches (after setup) ...                            [OK] 0.92 sec
-Docker instructions ...                                                     [OK] 0.99 sec
+Остановите контейнер (он должен удалиться после остановки, т.к. при его запуске была указана директива `--rm`):
+```
+docker stop <CONTAINER_ID>
 ```
 
-Пересборка прошла, начиная со стадии setup, что соответствует нашим изменениям в файле `.dapp_chef/recipes/setup/app_config.rb`. Перезапускаем контейнер и проверяем сообщение:
-
-```shell
-$ docker rm -f dapp-example-chef-for-advanced-build-1
-f89d8357dd4a9c79076e741a5713a4147f71516651a58318fa9269b4b0f48172
-$ dapp dimg run --detach -p 4567:4567 --name dapp-example-chef-for-advanced-build-1
-5b34ff3fe4e6f5456f1df3d7c5339566bacf8a0df2225229a542b56f1f6c026e
-$ curl localhost:4567/message
-New message
+Выполните очистку сборочного кэша dapp - это удалит образы на основе которых был собран образ приложения:
+```
+dapp dimg stages flush local
 ```
 
-### Добавление файлов и шаблонов для chef
+## Зачем нужен dapp?
 
-В директории .dapp\_chef можно определять файлы и шаблоны для использования в рецептах. Файлы и шаблоны обязательно привязаны либо к одной стадии — в этом случае они доступны для всех рецептов стадии, либо к одному рецепту стадии — в этом случае они доступны только одному рецепту конкретной стадии. Общая структура файлов:
+Простое приложение показало, что dappfile может использоваться как замена Dockerfile. Но в чём же плюсы, кроме синтаксиса, немного похожего на Vagrantfile? Внутри dapp есть механизмы, которые незаметны на простом приложении, но для активно разрабатываемого приложения dapp может ускорить сборку и уменьшить размер финальных образов.
 
-* files
-  * \<стадия\>
-    * common
-      * \<имя файла\>
-    * \<рецепт\>
-      * \<имя файла\>
-* templates
-  * \<стадия\>
-    * common
-      * \<имя файла шаблона\>
-    * \<рецепт\>
-      * \<имя файла шаблона\>
+Узнать подробнее про возможности dapp можно по ссылками слева, либо продолжить ознакомление со списка возможностей ниже:
 
-В директории common лежат файлы и шаблоны, доступные независимо от включенных рецептов для сборки образа. Файлы и шаблоны из директории рецепта доступны при сборке только если рецепт включен для сборки образа директивой `chef.recipe`.
+### Patch вместо полного копирования
 
-Технически сборщик устроен так, что при сборке стадии файлы из директории common и директории рецепта совмещаются в единую директорию `{files|templates}/default`. Поэтому указывать в рецептах параметр source для ресурсов cookbook\_file и template для простейших случаев не обязательно. Файлы в common и директории рецепта не могут иметь одинаковых имен — это приведет к ошибке сборки.
+В отличие от ADD и COPY dapp переносит изменённые файлы в образ с помощью патчей, а не передачей всех файлов ([подробнее](git.html)).
 
-Для примера, переделаем генерацию конфига /app/config.yml приведенного выше на использование шаблона. Создаем файл шаблона для рецепта app\_config на стадии setup `.dapp_chef/templates/setup/app_config/config.yml.erb`:
+### Сборка образов по стадиям
 
-```yaml
-message: "<%= @message %>\n"
+dapp структурирует сборку, разбивая её на несколько стадий. Такое разбиение позволило ввести зависимости между сборкой стадии и изменениями файлов в репозитории. Например, сборка ассетов на стадии setup будет производиться, если изменились файлы в src, но более ранняя стадия install, где устанавливаются зависимости, будет пересобрана только, если изменился файл package.json ([подробнее](stages.html)).
+
+### Несколько образов в одном Dappfile
+
+Dapp умеет собирать сразу несколько образов по разному описанию в Dappfile. Подробнее в главе [сборка нескольких образов](multiple_images_for_build.html).
+
+### Артефакты
+
+Для уменьшения размера финального образа часто применяется способ использовать скачивание+удаление. Например так:
+
+```
+RUN “download-source && cmd && cmd2 && remove-source”
 ```
 
-Правим рецепт `.dapp_chef/recipes/setup/app_config.rb` на использование этого шаблона:
-
-```ruby
-template '/app/config.yml' do
-  mode 0644
-  action :create
-  variables(message: 'Passed through variable for template')
-end
-```
-
-Собираем новую версию образа, перезапускаем приложение и проверяем сообщение:
-
-```shell
-$ dapp dimg build
-Setup group
-  Git artifacts: apply patches (before setup) ...                           [OK] 0.93 sec
-  Setup ...                                                                 [OK] 3.64 sec
-  Git artifacts: apply patches (after setup) ...                            [OK] 0.9 sec
-Docker instructions ...                                                     [OK] 0.95 sec
-$ docker rm -f dapp-example-chef-for-advanced-build-1
-$ dapp dimg run --detach -p 4567:4567 --name dapp-example-chef-for-advanced-build-1
-be7e96bf0da16a280dac800df76740507dfdaa859eca0c412086e13c1c1c5c9e
-$ curl localhost:4567/message
-Passed through variable for template
-```
-
-### Зачем нужно разделение файлов и шаблонов по рецептам
-
-Разделение файлов по рецептам условно и фактически ничего не дает в случае, если все рецепты включаются одновременно для сборки одного образа. Однако, когда происходит сборка нескольких образов в рамках одного Dappfile, и для сборки разных образов используются разные рецепты — работает разделение файлов по используемым рецептам. Рассмотрим Dappfile:
-
-```ruby
-dimg_group do
-  dimg 'A' do
-    chef.recipe 'X'
-  end
-
-  dimg 'B' do
-    chef.recipe 'Y'
-  end
-end
-```
-
-В данной конфигурации:
-
-* все файлы, определенные, например, для стадии before\_install в `.dapp_chef/{files|templates}/before_install/common` будут доступны при сборкe стадии before\_install обоих образов A и B;
-* файлы, определенные в `.dapp_chef/{files|templates}/before_install/X` будут доступны только при сборке стадии before\_install образа A, т.к. рецепт X используется только для сборки образа A;
-* файлы, определенные в `.dapp_chef/{files|templates}/before_install/Y` будут доступны только при сборке стадии before\_install образа B, т.к. рецепт Y используется только для сборки образа B.
-
-### Атрибуты
-
-Атрибуты для сборочного cookbook'а определяются не через файлы атрибутов, а прямо в Dappfile. Для определения атрибутов пользователь заполняет hash через определенные директивы. Поддерживается автоматическое создание вложенных hash'ей если идет обращение к ранее не существующему ключу (по ключу 'a' в примере ниже автоматически создается hash).
-
-```ruby
-chef do
-  attributes['a']['k1'] = 'value'
-  attributes['a']['k2'] = ['one', 'two', 'three']
-
-  _before_install_attributes['a']['k1'] = 'value_for_before_install'
-  _before_install_attributes['a']['k3'] = 'value'
-  _setup_attributes['b']['c']['d']['e'] = 'value'
-end
-```
-
-Для определения общих атрибутов для всех стадий сборки используется директива `chef.attributes`.
-
-Атрибуты как правило требуются для настройки подключаемых модулей chef сборки — dimod'ов. Об этом — в следующем разделе документации: [Dimod — модули сборки для chef](chef_dimod_for_advanced_build.html).
-
-Чтобы переопределить или дополнить атрибуты для какой-то конкретной стадии используются директивы `chef._before_install_attributes`, `chef._install_attributes`, `chef._before_setup_attributes`, `chef._setup_attributes`. Соответственно эти директивы имеют приоритет и перетирают определенные через директиву `chef.attributes` атрибуты. Однако их использование по умолчанию не рекомендуется. В разделе [Пересборка при изменении атрибутов](chef_dimod_for_advanced_build.html#пересборка-при-изменении-атрибутов) описан пример такого определения атрибутов.
-
-
+Dapp вводит в сборку понятие артефакта, такие вещи, как компиляция ассетов с помощью внешних инструментов, можно выполнить в другом контейнере и импортировать в финальный образ только нужные файлы ([подробнее](directives_artifact.html)).
