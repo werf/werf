@@ -1,8 +1,32 @@
 package lock
 
+import (
+	"fmt"
+	"time"
+)
+
 type Base struct {
 	Name        string
 	ActiveLocks int
+}
+
+type locker interface {
+	Lock() error
+	Unlock() error
+}
+
+type baseLocker struct {
+	Timeout  time.Duration
+	ReadOnly bool
+	OnWait   func(doWait func() error) error
+}
+
+func (locker *baseLocker) Lock() error {
+	return fmt.Errorf("baseLocker.Lock not implemented")
+}
+
+func (locker *baseLocker) Unlock() error {
+	return fmt.Errorf("baseLocker.Unlock not implemented")
 }
 
 func (lock *Base) GetName() string {
