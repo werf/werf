@@ -108,7 +108,7 @@ module Dapp
           options[:owner]               = owner
           options[:group]               = group
 
-          options[:ignore_signature_auto_calculation]= ignore_signature_auto_calculation
+          options[:ignore_signature_auto_calculation] = ignore_signature_auto_calculation
         end
       end
 
@@ -130,15 +130,18 @@ module Dapp
           test_path         = [test_path, current_path_part].compact.join('/')
 
           match = File.fnmatch(test_path, embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
-          break unless match || File.fnmatch(File.join(test_path, '**'), embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
+          break unless match || File.fnmatch(File.join(test_path, '**', '*'), embedded_rel_path, File::FNM_PATHNAME|File::FNM_DOTMATCH)
 
           any = (current_path_part == '**')
 
           if any
             inherited_paths << [current_path_part, path_parts].flatten.join('/')
             inherited_paths << path_parts.join('/') unless path_parts.empty?
-          elsif match
-            inherited_paths << (path_parts.empty? ? '**' : path_parts.join('/'))
+          elsif match && !path_parts.empty?
+            inherited_paths << path_parts.join('/')
+            break
+          elsif path_parts.empty?
+            inherited_paths << '**'
             break
           end
         end
@@ -305,9 +308,9 @@ module Dapp
             else
               repo.head_commit
             end
-          end.tap do |c|
-            repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
           end
+        end.tap do |c|
+          repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
         end
       end
 
@@ -369,7 +372,7 @@ module Dapp
       def archive_file_with_tar_writer(stage, commit)
         tar_write(dimg.tmp_path('archives', archive_file_name(commit))) do |tar|
           each_archive_entry(stage, commit) do |path, content, mode|
-            relative_path = path[1..-1]
+            relative_path = path.reverse.chomp('/').reverse
             if mode == 0o120000 # symlink
               tar.add_symlink relative_path, content, mode
             else
