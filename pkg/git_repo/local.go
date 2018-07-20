@@ -6,7 +6,8 @@ import (
 
 type Local struct {
 	Base
-	Path string
+	Path     string
+	OrigPath string
 }
 
 func (repo *Local) HeadCommit() (string, error) {
