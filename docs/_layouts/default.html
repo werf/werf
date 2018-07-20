@@ -61,18 +61,42 @@
     <div class="col-lg-12">&nbsp;</div>
     <!-- Content Row -->
     <div class="row">
-        <!-- Sidebar Column -->
         <div class="col-md-3">
-
           {% include sidebar.html %}
-    <!-- Content Column -->
-    <div class="col-md-9">
-        {{ content }}
+        </div>
+        <div class="col-md-9 offset-md-3">
+            {{ content }}
+        </div>
     </div>
     <!-- /.row -->
-</div>
-<!-- /.container -->
-    </div>
 
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript" >
+        (function (d, w, c) {
+            (w[c] = w[c] || []).push(function() {
+                try {
+                    w.yaCounter49679848 = new Ya.Metrika2({
+                        id:49679848,
+                        clickmap:true,
+                        trackLinks:true,
+                        accurateTrackBounce:true
+                    });
+                } catch(e) { }
+            });
+
+            var n = d.getElementsByTagName("script")[0],
+                s = d.createElement("script"),
+                f = function () { n.parentNode.insertBefore(s, n); };
+            s.type = "text/javascript";
+            s.async = true;
+            s.src = "https://mc.yandex.ru/metrika/tag.js";
+
+            if (w.opera == "[object Opera]") {
+                d.addEventListener("DOMContentLoaded", f, false);
+            } else { f(); }
+        })(document, window, "yandex_metrika_callbacks2");
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/49679848" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
 </body>
 </html>
