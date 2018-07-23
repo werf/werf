@@ -15,7 +15,7 @@ func main() {
 		panic(err)
 	}
 
-	ruby2go.RunCli("git-repo", func(args map[string]interface{}) (map[string]interface{}, error) {
+	ruby2go.RunCli("git-repo", func(args map[string]interface{}) (interface{}, error) {
 		if state, hasKey := args["LocalGitRepo"]; hasKey {
 			repo := &git_repo.Local{}
 			json.Unmarshal([]byte(state.(string)), repo)

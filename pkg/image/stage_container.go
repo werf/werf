@@ -9,10 +9,10 @@ import (
 	commandContainer "github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/flant/dapp/pkg/util"
 	"golang.org/x/net/context"
 
 	"github.com/flant/dapp/pkg/dappdeps"
+	"github.com/flant/dapp/pkg/util"
 )
 
 type StageContainer struct {
@@ -151,7 +151,18 @@ func (c *StageContainer) ServiceRunOptions(cli *command.DockerCli, apiClient *cl
 	serviceRunOptions.Workdir = "/"
 	serviceRunOptions.Entrypoint = []string{dappdeps.BaseBinPath("bash")}
 	serviceRunOptions.User = "0:0"
-	serviceRunOptions.VolumesFrom = []string{dappdeps.BaseContainer(cli, apiClient), dappdeps.ToolchainContainer(cli, apiClient)}
+
+	baseContainerName, err := dappdeps.BaseContainer(cli, apiClient)
+	if err != nil {
+		return nil, err
+	}
+
+	toolchainContainerName, err := dappdeps.ToolchainContainer(cli, apiClient)
+	if err != nil {
+		return nil, err
+	}
+	serviceRunOptions.VolumesFrom = []string{baseContainerName, toolchainContainerName}
+
 	return serviceRunOptions, nil
 }
 

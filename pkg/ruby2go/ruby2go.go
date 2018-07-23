@@ -54,7 +54,7 @@ func writeJsonObjectToFile(obj map[string]interface{}, path string) error {
 	return nil
 }
 
-func RunCli(progname string, runFunc func(map[string]interface{}) (map[string]interface{}, error)) {
+func RunCli(progname string, runFunc func(map[string]interface{}) (interface{}, error)) {
 	WorkingDir, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot determine working dir: %s\n", err)
@@ -100,11 +100,46 @@ func RunCli(progname string, runFunc func(map[string]interface{}) (map[string]in
 	os.Exit(exitCode)
 }
 
+func CommandFromArgs(args map[string]interface{}) (string, error) {
+	return StringFromMapInterface("command", args)
+}
+
 func OptionsFromArgs(args map[string]interface{}) (map[string]interface{}, error) {
 	switch args["options"].(type) {
 	case map[string]interface{}:
 		return args["options"].(map[string]interface{}), nil
 	default:
 		return nil, fmt.Errorf("options field value `%v` isn't supported", args["options"])
+	}
+}
+
+func SafeStringOptionFromArgs(optionName string, args map[string]interface{}) (string, error) {
+	value, err := StringOptionFromArgs(optionName, args)
+	if err != nil {
+		if err.Error() == fmt.Sprintf("option `%s` not found", optionName) {
+			return "", nil
+		} else {
+			return "", err
+		}
+	}
+	return value, nil
+}
+
+func StringOptionFromArgs(optionName string, args map[string]interface{}) (string, error) {
+	options, err := OptionsFromArgs(args)
+	if err != nil {
+		return "", err
+	}
+	return StringFromMapInterface(optionName, options)
+}
+
+func StringFromMapInterface(key string, options map[string]interface{}) (string, error) {
+	switch options[key].(type) {
+	case string:
+		return options[key].(string), nil
+	case nil:
+		return "", fmt.Errorf("option `%s` not found", key)
+	default:
+		return "", fmt.Errorf("option `%s` field value `%v` isn't supported", key, options[key])
 	}
 }

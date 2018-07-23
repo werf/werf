@@ -9,18 +9,18 @@ import (
 
 const GITARTIFACT_VERSION = "0.2.1"
 
-// TODO lock, logging
-func GitArtifactContainer(dockerClient *command.DockerCli, dockerApiClient *client.Client) string {
-	container := &Container{
-		Ref:       fmt.Sprintf("dappdeps_gitartifact_%s", GITARTIFACT_VERSION),
+func GitArtifactContainer(cli *command.DockerCli, apiClient *client.Client) (string, error) {
+	container := &container{
+		Name:      fmt.Sprintf("dappdeps_gitartifact_%s", GITARTIFACT_VERSION),
 		ImageName: fmt.Sprintf("dappdeps/gitartifact:%s", GITARTIFACT_VERSION),
 		Volume:    fmt.Sprintf("/.dapp/deps/gitartifact/%s", GITARTIFACT_VERSION),
 	}
 
-	if !container.isExist(dockerApiClient) {
-		container.Create(dockerClient)
+	if err := container.CreateIfNotExist(cli, apiClient); err != nil {
+		return "", err
+	} else {
+		return container.Name, nil
 	}
-	return container.Ref
 }
 
 func GitBin() string {

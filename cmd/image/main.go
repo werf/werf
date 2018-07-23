@@ -10,12 +10,18 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ruby2go"
 )
 
 func main() {
-	ruby2go.RunCli("image", func(args map[string]interface{}) (map[string]interface{}, error) {
-		cmd, err := commandFromArgs(args)
+	ruby2go.RunCli("image", func(args map[string]interface{}) (interface{}, error) {
+		err := lock.Init()
+		if err != nil {
+			return nil, err
+		}
+
+		cmd, err := ruby2go.CommandFromArgs(args)
 		if err != nil {
 			return nil, err
 		}
@@ -93,15 +99,6 @@ func imageCommand(args map[string]interface{}, command func(cli *command.DockerC
 	}
 
 	return resultMap, nil
-}
-
-func commandFromArgs(args map[string]interface{}) (string, error) {
-	switch args["command"].(type) {
-	case string:
-		return args["command"].(string), nil
-	default:
-		return "", fmt.Errorf("command field value `%v` isn't supported", args["command"])
-	}
 }
 
 func introspectionOptionFromArgs(args map[string]interface{}) (map[string]bool, error) {

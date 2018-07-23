@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	ruby2go.RunCli("git-artifact", func(args map[string]interface{}) (map[string]interface{}, error) {
+	ruby2go.RunCli("git-artifact", func(args map[string]interface{}) (interface{}, error) {
 		res := make(map[string]interface{})
 
 		ga := &git_artifact.GitArtifact{}

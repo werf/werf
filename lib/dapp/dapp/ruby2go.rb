@@ -13,6 +13,10 @@ module Dapp
         _ruby2go("git-artifact", args_hash)
       end
 
+      def ruby2go_dappdeps(args_hash)
+        _ruby2go("dappdeps", args_hash)
+      end
+
       def ruby2go_git_repo(args_hash)
         _ruby2go("git-repo", args_hash)
       end
@@ -55,7 +59,7 @@ module Dapp
           File.open(res_file, "r") {|f| res = JSON.load(f.read)}
           res
         else
-          raise ::Dapp::Dimg::Error::Build, code: :ruby2go_image_unexpected_exitstatus, data: { status_code: status_code }
+          raise ::Dapp::Error::Base, code: :ruby2go_command_unexpected_exitstatus, data: { progname: progname, status_code: status_code }
         end
       end
 
