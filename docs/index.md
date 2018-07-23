@@ -1,6 +1,6 @@
 ---
 title: Введение
-sidebar: doc_sidebar
+sidebar: index
 permalink: index.html
 ---
 
@@ -23,4 +23,4 @@ Dapp — это утилита для реализации и сопровожд
 ## Что дальше
 
 * [Как установить](installation.html)
-* [Первое приложение на dapp](get_started.html)
+* [Первое приложение на dapp](get_started_ansible.html)

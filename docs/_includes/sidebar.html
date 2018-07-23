@@ -1,5 +1,7 @@
+{% assign sidebar = site.data.sidebars[page.sidebar].entries %}
+
 <ul id="mysidebar" class="nav">
-    {% for entry in site.data.sidebar.entries %}
+    {% for entry in sidebar %}
         {% for folder in entry.f %}
         {% if folder.fi %}
         <li>
@@ -48,9 +50,7 @@
         {% endif %}
         {% endfor %}
     {% endfor %}
-    <li class="social-icons"><a href="https://t.me/dapp_ru" target="_blank" ><img src="images/telegram.svg"></a></li>
 </ul>
-</div>
 
 <!-- this highlights the active parent class in the navgoco sidebar. this is critical so that the parent expands when you're viewing a page. This must appear below the sidebar code above. Otherwise, if placed inside customscripts.js, the script runs before the sidebar code runs and the class never gets inserted.-->
 <script>$("li.active").parents('li').toggleClass("active");</script>
