@@ -1,27 +1,21 @@
 package util
 
-import (
-	"crypto/rand"
-)
+import "crypto/rand"
 
-func GenerateRandomBytes(n int) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
-}
-
-func GenerateConsistentRandomString(n int) (string, error) {
+func GenerateConsistentRandomString(n int) string {
 	const letters = "0123456789abcdefghijklmnopqrstuvwxyz"
-	bytes, err := GenerateRandomBytes(n)
-	if err != nil {
-		return "", err
-	}
+	bytes := generateRandomBytes(n)
 	for i, b := range bytes {
 		bytes[i] = letters[b%byte(len(letters))]
 	}
-	return string(bytes), nil
+	return string(bytes)
+}
+
+func generateRandomBytes(n int) []byte {
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err == nil {
+		return b
+	} else {
+		panic(err)
+	}
 }

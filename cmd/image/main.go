@@ -37,8 +37,8 @@ func main() {
 			})
 		case "inspect":
 			return imageCommand(args, func(cli *command.DockerCli, apiClient *client.Client, stageImage *image.Stage) error {
-				stageImage.GetInspect(apiClient)
-				return nil
+				_, err := stageImage.GetInspect(apiClient)
+				return err
 			})
 		case "build":
 			return imageCommand(args, func(cli *command.DockerCli, apiClient *client.Client, stageImage *image.Stage) error {
@@ -56,9 +56,9 @@ func main() {
 					return err
 				}
 
-				stageImage.BuildImage.MustGetInspect(apiClient)
+				_, err = stageImage.BuildImage.MustGetInspect(apiClient)
 
-				return nil
+				return err
 			})
 		case "introspect":
 			return imageCommand(args, func(cli *command.DockerCli, apiClient *client.Client, stageImage *image.Stage) error {

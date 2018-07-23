@@ -28,11 +28,7 @@ type StageContainer struct {
 func NewStageImageContainer(image *Stage) *StageContainer {
 	c := &StageContainer{}
 	c.Image = image
-	token, err := util.GenerateConsistentRandomString(10)
-	if err != nil {
-		panic(err.Error())
-	}
-	c.Name = fmt.Sprintf("dapp.build.%v", token)
+	c.Name = fmt.Sprintf("dapp.build.%v", util.GenerateConsistentRandomString(10))
 	c.RunOptions = NewStageContainerOptions()
 	c.CommitChangeOptions = NewStageContainerOptions()
 	c.ServiceCommitChangeOptions = NewStageContainerOptions()
