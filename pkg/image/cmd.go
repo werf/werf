@@ -11,7 +11,7 @@ type CmdStage struct {
 	From                 *CmdStage             `json:"from"`
 	Name                 string                `json:"name"`
 	ContainerName        string                `json:"container_name"`
-	BuildId              string                `json:"built_id"`
+	BuiltId              string                `json:"built_id"`
 	BashCommands         []string              `json:"bash_commands"`
 	ServiceBashCommands  []string              `json:"service_bash_commands"`
 	Options              StageContainerOptions `json:"options"`
@@ -27,9 +27,14 @@ func cmdStageToImageStage(cmdStage *CmdStage) *Stage {
 		from = cmdStageToImageStage(cmdStage.From)
 	}
 
-	stageImage := NewStageImage(from, cmdStage.Name, cmdStage.BuildId)
-	stageImage.Inspect = cmdStage.ImageInspect
-	stageImage.BuiltInspect = cmdStage.BuiltImageInspect
+	stageImage := NewStageImage(from, cmdStage.Name)
+	if cmdStage.ImageInspect != nil {
+		stageImage.Inspect = cmdStage.ImageInspect
+	}
+	if cmdStage.BuiltId != "" {
+		stageImage.BuildImage = NewBuildImage(cmdStage.BuiltId)
+		stageImage.BuildImage.Inspect = cmdStage.BuiltImageInspect
+	}
 	stageImage.Container.RunCommands = cmdStage.BashCommands
 	stageImage.Container.ServiceRunCommands = cmdStage.ServiceBashCommands
 	stageImage.Container.RunOptions = &cmdStage.Options
@@ -41,20 +46,24 @@ func cmdStageToImageStage(cmdStage *CmdStage) *Stage {
 func imageStageToRubyStage(imageStage *Stage) *CmdStage {
 	cmdImage := &CmdStage{}
 
-	if imageStage.From != nil {
-		cmdImage.From = imageStageToRubyStage(imageStage.From)
+	if imageStage.FromImage != nil {
+		cmdImage.From = imageStageToRubyStage(imageStage.FromImage)
 	}
 
 	cmdImage.Name = imageStage.Name
-	cmdImage.BuildId = imageStage.BuiltId
 	cmdImage.ContainerName = imageStage.Container.Name
 	cmdImage.BashCommands = imageStage.Container.RunCommands
 	cmdImage.ServiceBashCommands = imageStage.Container.ServiceRunCommands
 	cmdImage.Options = *imageStage.Container.RunOptions
 	cmdImage.ChangeOptions = *imageStage.Container.CommitChangeOptions
 	cmdImage.ServiceChangeOptions = *imageStage.Container.ServiceCommitChangeOptions
-	cmdImage.ImageInspect = imageStage.Inspect
-	cmdImage.BuiltImageInspect = imageStage.BuiltInspect
+	if imageStage.Inspect != nil {
+		cmdImage.ImageInspect = imageStage.Inspect
+	}
+	if imageStage.BuildImage != nil {
+		cmdImage.BuiltId = imageStage.BuildImage.Name
+		cmdImage.BuiltImageInspect = imageStage.BuildImage.Inspect
+	}
 	return cmdImage
 }
 

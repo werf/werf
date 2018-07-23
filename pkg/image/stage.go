@@ -2,95 +2,114 @@ package image
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"golang.org/x/net/context"
 )
 
 type Stage struct {
-	Name         string
-	Id           string
-	From         *Stage
-	BuiltId      string
-	Container    *StageContainer
-	BuiltInspect *types.ImageInspect
-	Inspect      *types.ImageInspect
+	*Base
+	FromImage  *Stage
+	Container  *StageContainer
+	BuildImage *Build
 }
 
-func (i *Stage) ResetBuiltInspect(dockerApiClient *client.Client) error {
-	inspect, err := inspect(dockerApiClient, i.BuiltId)
-	if err != nil {
-		return err
-	}
-
-	i.BuiltInspect = inspect
-	return nil
-}
-
-func (i *Stage) ResetInspect(dockerApiClient *client.Client) error {
-	inspect, err := inspect(dockerApiClient, i.Name)
-	if err != nil {
-		return err
-	}
-
-	i.Inspect = inspect
-	return nil
-}
-
-func inspect(dockerApiClient *client.Client, imageId string) (*types.ImageInspect, error) {
-	ctx := context.Background()
-	inspect, _, err := dockerApiClient.ImageInspectWithRaw(ctx, imageId)
-	if err != nil {
-		if client.IsErrNotFound(err) {
-			return nil, nil
-		}
-		return nil, fmt.Errorf("stage inspect failed: %s", err)
-	}
-	return &inspect, nil
-}
-
-func NewStageImage(from *Stage, name string, builtId string) *Stage {
+func NewStageImage(fromImage *Stage, name string) *Stage {
 	stage := &Stage{}
-	stage.From = from
-	stage.BuiltId = builtId
-	stage.Name = name
-	stage.Container = NewStageImageContainer()
-	stage.Container.Image = stage
+	stage.Base = NewBaseImage(name)
+	stage.FromImage = fromImage
+	stage.Container = NewStageImageContainer(stage)
 	return stage
 }
 
-func (i *Stage) Build(dockerClient *command.DockerCli, dockerApiClient *client.Client) error {
-	if err := i.Container.Run(dockerClient, dockerApiClient); err != nil {
-		return fmt.Errorf("stage build failed: %s", err)
+func (i *Stage) MustGetInspect(apiClient *client.Client) (*types.ImageInspect, error) {
+	if i.BuildImage != nil {
+		return i.BuildImage.MustGetInspect(apiClient)
+	} else {
+		return i.Base.MustGetInspect(apiClient)
+	}
+}
+
+func (i *Stage) MustGetId(apiClient *client.Client) (string, error) {
+	if i.BuildImage != nil {
+		return i.BuildImage.MustGetId(apiClient)
+	} else {
+		return i.Base.MustGetId(apiClient)
+	}
+}
+
+func (i *Stage) Build(options *StageBuildOptions, cli *command.DockerCli, apiClient *client.Client) error {
+	if containerRunErr := i.Container.Run(cli, apiClient); containerRunErr != nil {
+		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
+			if options.IntrospectBeforeError {
+				if err := i.IntrospectBefore(cli, apiClient); err != nil {
+					return fmt.Errorf("introspect error failed: %s", err)
+				}
+			} else if options.IntrospectAfterError {
+				if err := i.Commit(apiClient); err != nil {
+					return fmt.Errorf("introspect error failed: %s", err)
+				}
+				if err := i.Introspect(cli, apiClient); err != nil {
+					return fmt.Errorf("introspect error failed: %s", err)
+				}
+			}
+
+			if err := i.Container.Rm(apiClient); err != nil {
+				return fmt.Errorf("introspect error failed: %s", err)
+			}
+		}
+
+		return containerRunErr
 	}
 
-	if err := i.Commit(dockerApiClient); err != nil {
-		return fmt.Errorf("stage build failed: %s", err)
+	if err := i.Commit(apiClient); err != nil {
+		return err
 	}
 
-	if err := i.Container.Rm(dockerApiClient); err != nil {
-		return fmt.Errorf("stage build failed: %s", err)
+	if err := i.Container.Rm(apiClient); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (i *Stage) Commit(dockerApiClient *client.Client) error {
-	builtId, err := i.Container.Commit(dockerApiClient)
+type StageBuildOptions struct {
+	IntrospectBeforeError bool
+	IntrospectAfterError  bool
+}
+
+func (i *Stage) Commit(apiClient *client.Client) error {
+	builtId, err := i.Container.Commit(apiClient)
 	if err != nil {
-		return fmt.Errorf("stage commit failed: %s", err)
+		return err
 	}
-	i.BuiltId = builtId
+
+	i.BuildImage = NewBuildImage(builtId)
 
 	return nil
 }
 
-func (i *Stage) Introspect(dockerClient *command.DockerCli, dockerApiClient *client.Client) error {
-	if err := i.Container.Introspect(dockerClient, dockerApiClient); err != nil {
-		return fmt.Errorf("stage introspect failed: %s", err)
+func (i *Stage) Introspect(cli *command.DockerCli, apiClient *client.Client) error {
+	if err := i.Container.Introspect(cli, apiClient); err != nil {
+		return err
 	}
 
+	return nil
+}
+
+func (i *Stage) IntrospectBefore(cli *command.DockerCli, apiClient *client.Client) error {
+	if err := i.Container.IntrospectBefore(cli, apiClient); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (i *Stage) SaveInCache(cli *command.DockerCli, apiClient *client.Client) error {
+	if err := i.BuildImage.Tag(i.Name, cli, apiClient); err != nil {
+		return err
+	}
 	return nil
 }
