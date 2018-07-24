@@ -365,7 +365,7 @@ module Dapp
           if commit
             commit
           else
-            res = dimg.dapp.ruby2go_git_artifact("state" => JSON.dump(get_ruby2go_state_hash), "command" => "LatestCommit")
+            res = dimg.dapp.ruby2go_git_artifact("GitArtifact" => JSON.dump(get_ruby2go_state_hash), "method" => "LatestCommit")
             self.set_ruby2go_state_hash(JSON.load(res["data"]["state"]))
 
             if res["error"]
