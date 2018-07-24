@@ -15,8 +15,13 @@ module Dapp
 
         def get_ruby2go_state_hash
           {
+            "Dapp" => dapp.get_ruby2go_state_hash,
             "Name" => @name.to_s,
           }
+        end
+
+        def set_ruby2go_state_hash(state)
+          @name = state["Name"]
         end
 
         def exclude_paths

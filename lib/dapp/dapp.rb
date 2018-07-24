@@ -37,6 +37,13 @@ module Dapp
 
     attr_reader :options
 
+    def get_ruby2go_state_hash
+      {
+        "Name" => name.to_s,
+        "WorkDir" => work_dir.to_s,
+      }
+    end
+
     def initialize(options: {})
       self.class.options.merge!(options)
       Logging::I18n.initialize

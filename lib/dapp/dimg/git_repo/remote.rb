@@ -8,7 +8,7 @@ module Dapp
 
         class << self
           def get_or_create(dapp, name, url:)
-            repositories[url] ||= new(dapp, name, url: url).tap(&:fetch!)
+            repositories[url] ||= new(dapp, name, url: url).tap(&:clone_and_fetch)
           end
 
           def repositories
@@ -20,27 +20,30 @@ module Dapp
           super(dapp, name)
 
           @url = url
+        end
 
-          _with_lock do
-            dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_clone', data: { url: url }), short: true) do
-              begin
-                if [:https, :ssh].include?(remote_origin_url_protocol) && !Rugged.features.include?(remote_origin_url_protocol)
-                  raise Error::Rugged, code: :rugged_protocol_not_supported, data: { url: url, protocol: remote_origin_url_protocol }
-                end
+        def ruby2go_method(method, args_hash={})
+          res = dapp.ruby2go_git_repo(args_hash.merge("RemoteGitRepo" => JSON.dump(get_ruby2go_state_hash), "method" => method))
+          self.set_ruby2go_state_hash(JSON.load(res["data"]["state"]))
 
-                Rugged::Repository.clone_at(url, path.to_s, bare: true, credentials: _rugged_credentials)
-              rescue Rugged::NetworkError, Rugged::SslError, Rugged::OSError, Rugged::SshError => e
-                raise Error::Rugged, code: :rugged_remote_error, data: { message: e.message, url: url }
-              end
-            end
-          end unless path.directory?
+          if res["error"]
+            raise res["error"]
+          else
+            res["data"]["result"]
+          end
         end
 
         def get_ruby2go_state_hash
           super.tap {|res|
             res["Url"] = @url.to_s
             res["ClonePath"] = dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, dapp.consistent_uniq_slugify(name), remote_origin_url_protocol).to_s # FIXME
+            res["IsDryRun"] = dapp.dry_run?
           }
+        end
+
+        def set_ruby2go_state_hash(state)
+          super(state)
+          @url = state["Url"]
         end
 
         def _with_lock(&blk)
@@ -61,26 +64,8 @@ module Dapp
           Pathname(dapp.build_path("remote_git_repo", CACHE_VERSION.to_s, dapp.consistent_uniq_slugify(name), remote_origin_url_protocol).to_s)
         end
 
-        def fetch!
-          _with_lock do
-            cfg_path = path.join("config")
-            cfg = IniFile.load(cfg_path)
-            remote_origin_cfg = cfg['remote "origin"']
-
-            old_url = remote_origin_cfg["url"]
-            if old_url and old_url != url
-              remote_origin_cfg["url"] = url
-              cfg.write(filename: cfg_path)
-            end
-
-            dapp.log_secondary_process(dapp.t(code: 'process.git_artifact_fetch', data: { url: url }), short: true) do
-              begin
-                git.remotes.each { |remote| remote.fetch(credentials: _rugged_credentials) }
-              rescue Rugged::SshError, Rugged::NetworkError => e
-                raise Error::Rugged, code: :rugged_remote_error, data: { url: url, message: e.message.strip }
-              end
-            end
-          end unless dapp.dry_run?
+        def clone_and_fetch
+          return ruby2go_method("CloneAndFetch")
         end
 
         def latest_branch_commit(branch)

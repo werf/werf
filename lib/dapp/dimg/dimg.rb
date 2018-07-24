@@ -13,6 +13,13 @@ module Dapp
       attr_reader :should_be_built
       attr_reader :dapp
 
+      def get_ruby2go_state_hash
+        {
+          "Dapp" => dapp.get_ruby2go_state_hash,
+          "TmpPath" => tmp_path.to_s,
+        }
+      end
+
       def initialize(config:, dapp:, should_be_built: false, ignore_signature_auto_calculation: false)
         @config = config
         @dapp = dapp
