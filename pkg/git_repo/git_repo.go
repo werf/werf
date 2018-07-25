@@ -6,4 +6,6 @@ type GitRepo interface {
 	HeadBranchName() (string, error)
 	LatestBranchCommit(branch string) (string, error)
 	LatestTagCommit(tag string) (string, error)
+	Diff(basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (string, error)
+	IsAnyChanges(basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (bool, error)
 }

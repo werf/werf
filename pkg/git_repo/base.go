@@ -2,9 +2,10 @@ package git_repo
 
 import (
 	"fmt"
+	"strings"
+
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
-	"strings"
 )
 
 type Base struct {
@@ -50,7 +51,7 @@ func (repo *Base) String() string {
 }
 
 func (repo *Base) HeadCommit() (string, error) {
-	return "", fmt.Errorf("not implemented")
+	panic("not implemented")
 }
 
 func (repo *Base) HeadBranchName() (string, error) {
@@ -58,9 +59,68 @@ func (repo *Base) HeadBranchName() (string, error) {
 }
 
 func (repo *Base) LatestBranchCommit(branch string) (string, error) {
-	return "", fmt.Errorf("not implemeneted")
+	panic("not implemented")
 }
 
 func (repo *Base) LatestTagCommit(branch string) (string, error) {
-	return "", fmt.Errorf("not implemeneted")
+	panic("not implemented")
+}
+
+func (repo *Base) Diff(path string, fromCommit, toCommit string, includePaths, excludePaths []string) (string, error) {
+	panic("not implemented")
+}
+
+func (repo *Base) IsAnyChanges(basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (bool, error) {
+	panic("not implemented")
+}
+
+func (repo *Base) makePatch(repoPath string, basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (*RelativeFilteredPatch, error) {
+	repository, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo: %s", err)
+	}
+
+	fromHash := plumbing.NewHash(fromCommit)
+	fromCommitObj, err := repository.CommitObject(fromHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to  `%s`: %s", fromCommit, err)
+	}
+
+	toHash := plumbing.NewHash(toCommit)
+	toCommitObj, err := repository.CommitObject(toHash)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create tree for commit `%s`: %s", toCommit, err)
+	}
+
+	originPatch, err := fromCommitObj.Patch(toCommitObj)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create patch between `%s` and `%s`: %s", fromCommit, toCommit, err)
+	}
+
+	return &RelativeFilteredPatch{
+		OriginPatch:  originPatch,
+		BasePath:     basePath,
+		IncludePaths: includePaths,
+		ExcludePaths: excludePaths,
+	}, nil
+}
+
+func (repo *Base) diff(repoPath string, basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (string, error) {
+	patch, err := repo.makePatch(repoPath, basePath, fromCommit, toCommit, includePaths, excludePaths)
+
+	if err != nil {
+		return "", err
+	}
+
+	return patch.String(), nil
+}
+
+func (repo *Base) isAnyChanges(repoPath string, basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (bool, error) {
+	patch, err := repo.makePatch(repoPath, basePath, fromCommit, toCommit, includePaths, excludePaths)
+
+	if err != nil {
+		return false, err
+	}
+
+	return (len(patch.FilePatches()) != 0), nil
 }

@@ -1,7 +1,6 @@
 package lock
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -22,11 +21,11 @@ type baseLocker struct {
 }
 
 func (locker *baseLocker) Lock() error {
-	return fmt.Errorf("baseLocker.Lock not implemented")
+	panic("not implemented")
 }
 
 func (locker *baseLocker) Unlock() error {
-	return fmt.Errorf("baseLocker.Unlock not implemented")
+	panic("not implemented")
 }
 
 func (lock *Base) GetName() string {
