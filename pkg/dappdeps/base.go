@@ -2,6 +2,7 @@ package dappdeps
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker/client"
@@ -9,20 +10,56 @@ import (
 
 const BASE_VERSION = "0.2.3"
 
-// TODO lock, logging
-func BaseContainer(dockerClient *command.DockerCli, dockerApiClient *client.Client) string {
-	container := &Container{
-		Ref:       fmt.Sprintf("dappdeps_base_%s", BASE_VERSION),
+func BaseContainer(cli *command.DockerCli, apiClient *client.Client) (string, error) {
+	container := &container{
+		Name:      fmt.Sprintf("dappdeps_base_%s", BASE_VERSION),
 		ImageName: fmt.Sprintf("dappdeps/base:%s", BASE_VERSION),
 		Volume:    fmt.Sprintf("/.dapp/deps/base/%s", BASE_VERSION),
 	}
 
-	if !container.isExist(dockerApiClient) {
-		container.Create(dockerClient)
+	if err := container.CreateIfNotExist(cli, apiClient); err != nil {
+		return "", err
+	} else {
+		return container.Name, nil
 	}
-	return container.Ref
 }
 
 func BaseBinPath(bin string) string {
 	return fmt.Sprintf("/.dapp/deps/base/%s/embedded/bin/%s", BASE_VERSION, bin)
+}
+
+func BasePath() string {
+	return fmt.Sprintf("/.dapp/deps/base/%[1]s/embedded/bin:/.dapp/deps/base/%[1]s/embedded/sbin", BASE_VERSION)
+}
+
+func SudoCommand(owner, group string) string {
+	cmd := ""
+
+	if owner != "" || group != "" {
+		cmd += fmt.Sprintf("%s -E", BaseBinPath("sudo"))
+
+		if owner != "" {
+			cmd += fmt.Sprintf(" -u %s", sudoFormatUser(owner))
+		}
+
+		if group != "" {
+			cmd += fmt.Sprintf(" -g %s", sudoFormatUser(group))
+		}
+	}
+
+	return cmd
+}
+
+func sudoFormatUser(user string) string {
+	var userStr string
+	userInt, err := strconv.Atoi(user)
+	if err == nil {
+		userStr = strconv.Itoa(userInt)
+	}
+
+	if user == userStr {
+		return fmt.Sprintf("\\#%s", user)
+	} else {
+		return user
+	}
 }

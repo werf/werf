@@ -29,6 +29,7 @@ module Dapp
     include Helper::Tar
     include Helper::Url
 
+    include Deps::Common
     include Deps::Toolchain
     include Deps::Gitartifact
     include Deps::Base

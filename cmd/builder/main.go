@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	ruby2go.RunCli("builder", func(args map[string]interface{}) (map[string]interface{}, error) {
+	ruby2go.RunCli("builder", func(args map[string]interface{}) (interface{}, error) {
 		fmt.Printf("builder args: %v\n", args)
 
 		return nil, fmt.Errorf("Some error!")

@@ -35,37 +35,60 @@ module Dapp
         end
 
         def image_inspect
-          @image_inspect ||= begin
-            res = self.dapp.ruby2go_image(image: JSON.dump(name: name), command: "inspect")
-            raise Error::Build, code: :ruby2go_image_command_failed_unexpected_error, data: { command: "inspect", message: res["error"] } unless res["error"].nil?
-            image = JSON.load(res['data']['image'])
-            image['image_inspect'] || {}
-          end
+          @image_inspect ||= ruby2go_image_command(:inspect)['image_inspect'] || {}
         end
 
         def untag!
-          raise Error::Build, code: :image_already_untagged, data: { name: name } unless tagged?
-          dapp.shellout!("#{dapp.host_docker} rmi #{name}")
+          ruby2go_image_command(:untag)
           reset_image_inspect
         end
 
         def push!
-          raise Error::Build, code: :image_not_exist, data: { name: name } unless tagged?
           dapp.log_secondary_process(dapp.t(code: 'process.image_push', data: { name: name })) do
-            dapp.shellout!("#{dapp.host_docker} push #{name}", verbose: true)
+            ruby2go_image_command(:push)
           end
         end
 
         def pull!
           return if tagged?
           dapp.log_secondary_process(dapp.t(code: 'process.image_pull', data: { name: name })) do
-            dapp.shellout!("#{dapp.host_docker} pull #{name}", verbose: true)
+            ruby2go_image_command(:pull)
           end
           reset_image_inspect
         end
 
         def tagged?
           not image_inspect.empty?
+        end
+
+        def ruby2go_image_command(cmd, extended_image_option: false)
+          self.dapp.ruby2go_image(**ruby2go_image_command_options(cmd, extended_image_option: extended_image_option)).tap do |res|
+            if block_given?
+              yield res
+            else
+              raise Error::Build, code: :ruby2go_image_command_failed_unexpected_error, data: { command: cmd, message: res["error"] } unless res["error"].nil?
+              break JSON.load(res['data']['image'])
+            end
+          end
+        end
+
+        def ruby2go_image_command_options(cmd, extended_image_option: false)
+          image = begin
+            if extended_image_option
+              ruby2go_image_image_option
+            else
+              JSON.dump({name: name})
+            end
+          end
+
+          {
+            image: image,
+            command: cmd,
+          }
+        end
+
+        def ruby2go_image_image_option
+          raise
         end
 
         protected

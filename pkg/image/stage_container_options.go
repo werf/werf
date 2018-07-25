@@ -141,7 +141,7 @@ func (co *StageContainerOptions) toRunArgs() ([]string, error) {
 	return args, nil
 }
 
-func (co *StageContainerOptions) toCommitChanges(client *client.Client) ([]string, error) {
+func (co *StageContainerOptions) toCommitChanges(apiClient *client.Client) ([]string, error) {
 	var args []string
 
 	for _, volume := range co.Volume {
@@ -161,7 +161,7 @@ func (co *StageContainerOptions) toCommitChanges(client *client.Client) ([]strin
 	}
 
 	if len(co.Cmd) == 0 {
-		cmd, err := getEmptyCmdOrEntrypointInstructionValue(client)
+		cmd, err := getEmptyCmdOrEntrypointInstructionValue(apiClient)
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
@@ -183,7 +183,7 @@ func (co *StageContainerOptions) toCommitChanges(client *client.Client) ([]strin
 	}
 
 	if len(co.Entrypoint) == 0 {
-		entrypoint, err := getEmptyCmdOrEntrypointInstructionValue(client)
+		entrypoint, err := getEmptyCmdOrEntrypointInstructionValue(apiClient)
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
@@ -195,9 +195,9 @@ func (co *StageContainerOptions) toCommitChanges(client *client.Client) ([]strin
 	return args, nil
 }
 
-func getEmptyCmdOrEntrypointInstructionValue(client *client.Client) (string, error) {
+func getEmptyCmdOrEntrypointInstructionValue(apiClient *client.Client) (string, error) {
 	ctx := context.Background()
-	v, err := client.ServerVersion(ctx)
+	v, err := apiClient.ServerVersion(ctx)
 	if err != nil {
 		return "", err
 	}

@@ -189,12 +189,12 @@ module Dapp
               stage.image.add_service_change_label(repo.dapp.dimgstage_g_a_type_label(paramshash).to_sym => 'directory')
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
+              commands << "#{sudo} #{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
             when :file
               stage.image.add_service_change_label(repo.dapp.dimgstage_g_a_type_label(paramshash).to_sym => 'file')
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
+              commands << "#{sudo} #{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
             end
           end
         end
@@ -219,12 +219,12 @@ module Dapp
 
                 commands << "#{repo.dapp.rm_bin} -rf $(#{repo.dapp.cat_bin} #{dimg.container_tmp_path('archives', files_to_remove_file_name)})"
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
+                commands << "#{sudo} #{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
                 commands << "#{repo.dapp.find_bin} \"#{to}\" -empty -type d -delete"
               when :file
                 commands << "#{repo.dapp.rm_bin} -rf \"#{to}\""
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
+                commands << "#{sudo} #{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
               else
                 raise
               end
@@ -234,10 +234,10 @@ module Dapp
               case archive_type(stage)
               when :directory
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-                commands << "#{sudo}#{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{to}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
+                commands << "#{sudo} #{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{to}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
               when :file
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-                commands << "#{sudo}#{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{File.dirname(to)}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
+                commands << "#{sudo} #{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{File.dirname(to)}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
               else
                 raise
               end
