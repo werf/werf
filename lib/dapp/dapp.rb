@@ -198,12 +198,6 @@ module Dapp
 
       def host_docker
         @host_docker ||= begin
-          min_docker_minor_version = Gem::Version.new('1.10')
-          unless host_docker_minor_version > min_docker_minor_version
-            raise Error::Dapp, code: :docker_version, data: { min_version: min_docker_minor_version.to_s,
-                                                              version:     host_docker_minor_version.to_s }
-          end
-
           [].tap do |cmd|
             cmd << host_docker_bin
             cmd << "--config #{host_docker_config_dir}"
