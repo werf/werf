@@ -25,6 +25,10 @@ func (repo *Base) getHeadCommitForRepo(repoPath string) (string, error) {
 	return fmt.Sprintf("%s", ref.Hash()), nil
 }
 
+func (repo *Base) String() string {
+	return repo.Name
+}
+
 func (repo *Base) HeadCommit() (string, error) {
 	return "", fmt.Errorf("not implemented")
 }

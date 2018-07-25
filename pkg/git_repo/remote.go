@@ -74,7 +74,7 @@ func (repo *Remote) Clone() (bool, error) {
 			return nil
 		}
 
-		fmt.Printf("Clone remote git repo `%s` ...\n", repo.Url)
+		fmt.Printf("Clone remote git repo `%s` ...\n", repo.String())
 
 		path := filepath.Join("/tmp", fmt.Sprintf("dapp-git-repo-%s", uuid.NewV4().String()))
 
@@ -83,22 +83,22 @@ func (repo *Remote) Clone() (bool, error) {
 			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
 		if err != nil {
-			return fmt.Errorf("cannot clone git repo: %s", err)
+			return err
 		}
 
 		defer os.RemoveAll(path)
 
 		err = os.MkdirAll(filepath.Dir(repo.ClonePath), 0755)
 		if err != nil {
-			return fmt.Errorf("cannot clone git repo: %s", err)
+			return err
 		}
 
 		err = os.Rename(path, repo.ClonePath)
 		if err != nil {
-			return fmt.Errorf("cannot clone git repo: %s", err)
+			return err
 		}
 
-		fmt.Printf("Clone remote git repo `%s` DONE\n", repo.Url)
+		fmt.Printf("Clone remote git repo `%s` DONE\n", repo.String())
 
 		return nil
 	})
@@ -113,7 +113,7 @@ func (repo *Remote) Fetch() error {
 
 	cfg, err := ini.Load(cfgPath)
 	if err != nil {
-		return fmt.Errorf("cannot load repo `%s` config: %s", repo.Url, err)
+		return fmt.Errorf("cannot load repo `%s` config: %s", repo.String(), err)
 	}
 
 	remoteName := "origin"
@@ -133,14 +133,14 @@ func (repo *Remote) Fetch() error {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
 
-		fmt.Printf("Fetching remote `%s` of repo `%s` ...\n", remoteName, repo.Url)
+		fmt.Printf("Fetching remote `%s` of repo `%s` ...\n", remoteName, repo.String())
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
-			return fmt.Errorf("cannot fetch remote `%s` of repo `%s`: %s", remoteName, repo.Url, err)
+			return fmt.Errorf("cannot fetch remote `%s` of repo `%s`: %s", remoteName, repo.String(), err)
 		}
 
-		fmt.Printf("Fetching remote `%s` of repo `%s` DONE\n", remoteName, repo.Url)
+		fmt.Printf("Fetching remote `%s` of repo `%s` DONE\n", remoteName, repo.String())
 
 		return nil
 	})
@@ -150,7 +150,7 @@ func (repo *Remote) HeadCommit() (string, error) {
 	commit, err := repo.getHeadCommitForRepo(repo.ClonePath)
 
 	if err == nil {
-		fmt.Printf("Using HEAD commit `%s` of repository `%s`\n", commit, repo.Url)
+		fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, repo.String())
 	}
 
 	return commit, err
@@ -192,10 +192,10 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 		return "", err
 	}
 	if res == "" {
-		return "", fmt.Errorf("unknown branch `%s` of repository `%s`", branch, repo.Url)
+		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
 	}
 
-	fmt.Printf("Using commit `%s` of repository `%s` branch `%s`\n", res, repo.Url, branch)
+	fmt.Printf("Using commit `%s` of repo `%s` branch `%s`\n", res, repo.String(), branch)
 
 	return res, nil
 }
@@ -213,10 +213,10 @@ func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 		return "", err
 	}
 	if res == "" {
-		return "", fmt.Errorf("unknown tag `%s` of repository `%s`", tag, repo.Url)
+		return "", fmt.Errorf("unknown tag `%s` of repo `%s`", tag, repo.String())
 	}
 
-	fmt.Printf("Using commit `%s` of repository `%s` tag `%s`\n", res, repo.Url, tag)
+	fmt.Printf("Using commit `%s` of repo `%s` tag `%s`\n", res, repo.String(), tag)
 
 	return res, nil
 }

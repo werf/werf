@@ -13,11 +13,11 @@ func main() {
 		res := make(map[string]interface{})
 
 		ga := &git_artifact.GitArtifact{}
-		if state, hasState := args["state"]; hasState {
+		if state, hasState := args["GitArtifact"]; hasState {
 			json.Unmarshal([]byte(state.(string)), ga)
 		}
 
-		switch command := args["command"]; command {
+		switch method := args["method"]; method {
 		case "LatestCommit":
 			resultValue, resErr := ga.LatestCommit()
 			res["result"] = resultValue
@@ -30,7 +30,7 @@ func main() {
 
 			return res, resErr
 		default:
-			return nil, fmt.Errorf("unknown command \"%s\"", command)
+			return nil, fmt.Errorf("unknown method \"%s\"", method)
 		}
 	})
 }
