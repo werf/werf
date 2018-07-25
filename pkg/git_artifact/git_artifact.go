@@ -38,6 +38,11 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 		return "", err
 	}
 
+	if ga.Commit != "" {
+		fmt.Printf("Using specified commit `%s` of repository `%s`\n", ga.Commit, gitRepo.String())
+		return ga.Commit, nil
+	}
+
 	if ga.Tag != "" {
 		return gitRepo.LatestTagCommit(ga.Tag)
 	}

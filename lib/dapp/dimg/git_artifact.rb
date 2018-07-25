@@ -362,17 +362,13 @@ module Dapp
 
       def latest_commit
         @latest_commit ||= begin
-          if commit
-            commit
-          else
-            res = dimg.dapp.ruby2go_git_artifact("GitArtifact" => JSON.dump(get_ruby2go_state_hash), "method" => "LatestCommit")
-            self.set_ruby2go_state_hash(JSON.load(res["data"]["state"]))
+          res = repo.dapp.ruby2go_git_artifact("GitArtifact" => JSON.dump(get_ruby2go_state_hash), "method" => "LatestCommit")
+          self.set_ruby2go_state_hash(JSON.load(res["data"]["state"]))
 
-            if res["error"]
-              raise res["error"]
-            else
-              res["data"]["result"]
-            end
+          if res["error"]
+            raise res["error"]
+          else
+            res["data"]["result"]
           end
         end.tap do |c|
           repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
