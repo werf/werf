@@ -41,11 +41,19 @@ cd symfony-demo
 dimg: symfony-demo-app
 from: ubuntu:16.04
 docker:
+  # Workdir
+  WORKDIR: /app
+  # Non-root main application user
+  USER: app
   EXPOSE: '80'
   ENV:
     LC_ALL: en_US.UTF-8
 ansible:
   beforeInstall:
+    - name: "Generate en_US.UTF-8 default locale"
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
     #  установка вспомогательных пакетов, добавление репозитория
     - name: "Install additional packages"
       apt:
@@ -56,45 +64,29 @@ ansible:
         - software-properties-common
         - locales
         - curl
+    # Install PHP
     - name: "Add PHP apt repository"
       apt_repository:
         repo: 'ppa:ondrej/php'
         codename: 'xenial'
         update_cache: yes
-    - name: "Generate en_US.UTF-8 default locale"
-      locale_gen:
-        name: en_US.UTF-8
-        state: present
     - name: "Install PHP"
       apt:
         name: "php7.2"
         state: present
         update_cache: yes
-      # добавление пользователя и группы phpapp
-    - name: "Create non-root main application group"
-      group:
-        name: phpapp
-        state: present
-        gid: 242
-    - user:
-        name: phpapp
-        comment: "Non-root main application user"
-        uid: 242
-        group: phpapp
-        shell: /bin/bash
-        home: /app
-    # создание скрипта запуска /opt/start.sh
+    # создание скрипта запуска /opt/start.sh (просто для демонстрации)
     - name: "Create start script"
       copy:
         content: |
           #!/bin/bash
-          echo 'cd /demo'
-          su -c "php bin/console server:run 0.0.0.0:8000" phpapp
+          cd /app
+          su -c "php bin/console server:run 0.0.0.0:8000" app
         dest: /opt/start.sh
     - file:
         path: /opt/start.sh
-        owner: phpapp
-        group: phpapp
+        owner: app
+        group: app
         mode: 0755
   install:
       # установка необходимых для приложения модулей php
@@ -116,19 +108,19 @@ ansible:
   beforeSetup:
       # смена прав файлам исходных текстов и запуск composer install
     - file:
-        path: /demo
+        path: /app
         state: directory
-        owner: phpapp
-        group: phpapp
+        owner: app
+        group: app
         recurse: yes
-    - raw: cd /demo && su -c 'composer install' phpapp
+    - raw: cd /app && su -c 'composer install' app
   setup:
       # используем текущую дату как версию приложения
-    - raw: echo `date` > /demo/version.txt
-    - raw: chown phpapp:phpapp /demo/version.txt
+    - raw: echo `date` > /app/version.txt
+    - raw: chown app:app /app/version.txt
 git:
   - add: '/'
-    to: '/demo'
+    to: '/app'
 
 ```
 {% endraw %}
