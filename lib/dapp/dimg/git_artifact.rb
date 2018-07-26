@@ -306,7 +306,11 @@ module Dapp
             elsif !branch.nil?
               repo.latest_branch_commit(branch)
             else
-              repo.head_commit
+              if local?
+                repo.head_commit
+              else
+                repo.latest_branch_commit(repo.branch)
+              end
             end
           end
         end.tap do |c|
