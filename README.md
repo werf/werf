@@ -105,7 +105,7 @@ curl https://raw.githubusercontent.com/flant/dapp/master/install.sh | bash -s 0.
 
 ## Документация
 
-* [Быстрый старт](http://flant.github.io/dapp/get_started.html)
+* [Быстрый старт](http://flant.github.io/dapp/get_started_ansible.html)
 
 * Вся документация [http://flant.github.io/dapp/](http://flant.github.io/dapp/)
 

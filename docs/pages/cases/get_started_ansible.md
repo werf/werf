@@ -38,15 +38,13 @@ cd symfony-demo
 
 {% raw %}
 ```
-dimg: symfony-demo-app
-from: ubuntu:16.04
-docker:
-  EXPOSE: '80'
-  ENV:
-    LC_ALL: en_US.UTF-8
+{{ $_ := set . "BaseImage" "registry.flant.com/dapp/ubuntu-dimg:10" }}
+
+dimg: "flant-ru-php"
+from: "{{ .BaseImage }}"
+
 ansible:
   beforeInstall:
-    #  установка вспомогательных пакетов, добавление репозитория
     - name: "Install additional packages"
       apt:
         name: "{{`{{ item }}`}}"
@@ -54,23 +52,16 @@ ansible:
         update_cache: yes
       with_items:
         - software-properties-common
-        - locales
-        - curl
-    - name: "Add PHP apt repository"
+    - name: "Add PHP 5.6 apt repository"
       apt_repository:
         repo: 'ppa:ondrej/php'
         codename: 'xenial'
         update_cache: yes
-    - name: "Generate en_US.UTF-8 default locale"
-      locale_gen:
-        name: en_US.UTF-8
-        state: present
     - name: "Install PHP"
       apt:
-        name: "php7.2"
+        name: "php5.6"
         state: present
         update_cache: yes
-      # добавление пользователя и группы phpapp
     - name: "Create non-root main application group"
       group:
         name: phpapp
@@ -83,7 +74,6 @@ ansible:
         group: phpapp
         shell: /bin/bash
         home: /app
-    # создание скрипта запуска /opt/start.sh
     - name: "Create start script"
       copy:
         content: |
@@ -97,17 +87,39 @@ ansible:
         group: phpapp
         mode: 0755
   install:
-      # установка необходимых для приложения модулей php
-    - name: "Install php moduiles"
+    - name: "Add PHP 5.6 apt repository"
+      apt_repository:
+        repo: 'ppa:ondrej/php'
+        codename: 'xenial'
+        update_cache: yes
+    - name: "Install php moduiles"  
       apt:
         name: "{{`{{ item }}`}}"
         state: present
         update_cache: yes
       with_items:
-        - php-sqlite3
-        - php-xml
-        - php-zip
-        - php-mbstring
+      #- newrelic-php5.6
+      #- newrelic-php5.6-common
+      - php5.6-apc
+      - php5.6-openid
+      - php5.6-pear
+      - php5.6-bbcode
+      - php5.6-cgi
+      - php5.6-cli
+      - php5.6-common
+      - php5.6-curl
+      - php5.6-dev
+      - php5.6-gd
+      - php5.6-gmp
+      - php5.6-imagick
+      - php5.6-mcrypt
+      - php5.6-memcache
+      - php5.6-mysql
+      - php5.6-pspell
+      - php5.6-redis
+      - php5.6-tidy
+      - php5.6-xsl
+      - php5.6-yaml
       # установка composer
     - raw: curl -LsS https://getcomposer.org/download/1.6.5/composer.phar -o /usr/local/bin/composer
     - file:
@@ -128,8 +140,7 @@ ansible:
     - raw: chown phpapp:phpapp /demo/version.txt
 git:
   - add: '/'
-    to: '/demo'
-
+    to: '/app'
 ```
 {% endraw %}
 
