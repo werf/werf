@@ -156,6 +156,10 @@ func (repo *Remote) HeadCommit() (string, error) {
 	return commit, err
 }
 
+func (repo *Remote) HeadBranchName() (string, error) {
+	return repo.getHeadBranchNameForRepo(repo.ClonePath)
+}
+
 func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (string, error) {
 	refs, err := rawRepo.References()
 	if err != nil {

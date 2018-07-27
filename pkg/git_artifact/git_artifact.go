@@ -32,6 +32,14 @@ func (ga *GitArtifact) GitRepo() (git_repo.GitRepo, error) {
 	return nil, fmt.Errorf("GitRepo not initialized")
 }
 
+func (ga *GitArtifact) IsLocal() bool {
+	if ga.LocalGitRepo != nil {
+		return true
+	} else {
+		return false
+	}
+}
+
 func (ga *GitArtifact) LatestCommit() (string, error) {
 	gitRepo, err := ga.GitRepo()
 	if err != nil {
@@ -51,5 +59,13 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 		return gitRepo.LatestBranchCommit(ga.Branch)
 	}
 
-	return gitRepo.HeadCommit()
+	if ga.IsLocal() {
+		return gitRepo.HeadCommit()
+	} else {
+		branchName, err := gitRepo.HeadBranchName()
+		if err != nil {
+			return "", err
+		}
+		return gitRepo.LatestBranchCommit(branchName)
+	}
 }
