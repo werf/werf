@@ -20,7 +20,11 @@ type DimgBase struct {
 	Raw *RawDimg
 }
 
-func (c *DimgBase) AssociateFromDimg(dimgs []*Dimg) error {
+func (c *DimgBase) AssociateFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
+	if c.FromDimg != nil || c.FromDimgArtifact != nil { // asLayers
+		return nil
+	}
+
 	if c.Raw.FromDimg != "" {
 		fromDimgName := c.Raw.FromDimg
 
@@ -32,6 +36,18 @@ func (c *DimgBase) AssociateFromDimg(dimgs []*Dimg) error {
 			c.FromDimg = dimg
 		} else {
 			return NewDetailedConfigError(fmt.Sprintf("No such dimg `%s`!", fromDimgName), c.Raw, c.Raw.Doc)
+		}
+	} else if c.Raw.FromDimgArtifact != "" {
+		fromDimgArtifactName := c.Raw.FromDimgArtifact
+
+		if fromDimgArtifactName == c.Name {
+			return NewDetailedConfigError(fmt.Sprintf("Cannot use own dimg name as `fromDimgArtifact` directive value!"), nil, c.Raw.Doc)
+		}
+
+		if dimgArtifact := dimgArtifactByName(artifacts, fromDimgArtifactName); dimgArtifact != nil {
+			c.FromDimgArtifact = dimgArtifact
+		} else {
+			return NewDetailedConfigError(fmt.Sprintf("No such dimg artifact `%s`!", fromDimgArtifactName), c.Raw, c.Raw.Doc)
 		}
 	}
 
@@ -47,13 +63,22 @@ func dimgByName(dimgs []*Dimg, name string) *Dimg {
 	return nil
 }
 
+func dimgArtifactByName(dimgs []*DimgArtifact, name string) *DimgArtifact {
+	for _, dimg := range dimgs {
+		if dimg.Name == name {
+			return dimg
+		}
+	}
+	return nil
+}
+
 func (c *DimgBase) Validate() error {
-	if c.From == "" && c.Raw.FromDimg == "" && c.FromDimg == nil && c.FromDimgArtifact == nil {
-		return NewDetailedConfigError("`from: DOCKER_IMAGE` or `fromDimg: DIMG_NAME` required!", nil, c.Raw.Doc)
+	if c.From == "" && c.Raw.FromDimg == "" && c.Raw.FromDimgArtifact == "" && c.FromDimg == nil && c.FromDimgArtifact == nil {
+		return NewDetailedConfigError("`from: DOCKER_IMAGE`, `fromDimg: DIMG_NAME`, `fromDimgArtifact: ARTIFACT_DIMG_NAME` required!", nil, c.Raw.Doc)
 	}
 
-	if c.From != "" && c.Raw.FromDimg != "" {
-		return NewDetailedConfigError("`conflict between `from` and `fromDimg` directives!", nil, c.Raw.Doc)
+	if !OneOrNone([]bool{c.From != "", c.Raw.FromDimg != "", c.Raw.FromDimgArtifact != ""}) {
+		return NewDetailedConfigError("`conflict between `from`, `fromDimg` and `fromDimgArtifact` directives!", nil, c.Raw.Doc)
 	}
 
 	// TODO: валидацию формата `From`

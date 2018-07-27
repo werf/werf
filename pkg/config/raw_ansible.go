@@ -6,12 +6,12 @@ type RawAnsible struct {
 	BeforeSetup               []RawAnsibleTask `yaml:"beforeSetup"`
 	Setup                     []RawAnsibleTask `yaml:"setup"`
 	BuildArtifact             []RawAnsibleTask `yaml:"buildArtifact"`
-	CacheVersion              string           `yaml:"cacheVersion"`
-	BeforeInstallCacheVersion string           `yaml:"beforeInstallCacheVersion"`
-	InstallCacheVersion       string           `yaml:"installCacheVersion"`
-	BeforeSetupCacheVersion   string           `yaml:"beforeSetupCacheVersion"`
-	SetupCacheVersion         string           `yaml:"setupCacheVersion"`
-	BuildArtifactCacheVersion string           `yaml:"buildArtifactCacheVersion"`
+	CacheVersion              string           `yaml:"cacheVersion,omitempty"`
+	BeforeInstallCacheVersion string           `yaml:"beforeInstallCacheVersion,omitempty"`
+	InstallCacheVersion       string           `yaml:"installCacheVersion,omitempty"`
+	BeforeSetupCacheVersion   string           `yaml:"beforeSetupCacheVersion,omitempty"`
+	SetupCacheVersion         string           `yaml:"setupCacheVersion,omitempty"`
+	BuildArtifactCacheVersion string           `yaml:"buildArtifactCacheVersion,omitempty"`
 
 	RawDimg *RawDimg `yaml:"-"` // parent
 

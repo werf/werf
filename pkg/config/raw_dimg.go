@@ -11,6 +11,7 @@ type RawDimg struct {
 	From             string               `yaml:"from,omitempty"`
 	FromCacheVersion string               `yaml:"fromCacheVersion,omitempty"`
 	FromDimg         string               `yaml:"fromDimg,omitempty"`
+	FromDimgArtifact string               `yaml:"fromDimgArtifact,omitempty"`
 	RawGit           []*RawGit            `yaml:"git,omitempty"`
 	RawShell         *RawShell            `yaml:"shell,omitempty"`
 	RawAnsible       *RawAnsible          `yaml:"ansible,omitempty"`
