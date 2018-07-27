@@ -16,7 +16,7 @@ module Dapp
             protected
 
             def validate_scratch!
-              if _docker._from.nil? && _from_dimg.nil?
+              if _docker._from.nil? && _from_dimg.nil? && _from_dimg_artifact.nil?
                 validate_scratch_directives!
                 validate_scratch_artifacts!
               else
