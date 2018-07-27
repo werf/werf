@@ -38,13 +38,19 @@ cd symfony-demo
 
 {% raw %}
 ```
-{{ $_ := set . "BaseImage" "registry.flant.com/dapp/ubuntu-dimg:10" }}
-
-dimg: "flant-ru-php"
-from: "{{ .BaseImage }}"
-
+dimg: symfony-demo-app
+from: ubuntu:16.04
+docker:
+  # Рабочая директория
+  WORKDIR: /app
+  # Non-root пользователь 
+  USER: app
+  EXPOSE: '80'
+  ENV:
+    LC_ALL: en_US.UTF-8
 ansible:
   beforeInstall:
+    #  установка вспомогательных пакетов, добавление репозитория
     - name: "Install additional packages"
       apt:
         name: "{{`{{ item }}`}}"
@@ -52,74 +58,61 @@ ansible:
         update_cache: yes
       with_items:
         - software-properties-common
-    - name: "Add PHP 5.6 apt repository"
+        - locales
+        - curl
+    # меняем локаль
+    - name: "Generate en_US.UTF-8 default locale"
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
+    # Install PHP
+    - name: "Add PHP apt repository"
       apt_repository:
         repo: 'ppa:ondrej/php'
         codename: 'xenial'
         update_cache: yes
     - name: "Install PHP"
       apt:
-        name: "php5.6"
+        name: "php7.2"
         state: present
         update_cache: yes
+    # добавление пользователя и группы app
     - name: "Create non-root main application group"
       group:
-        name: phpapp
+        name: app
         state: present
         gid: 242
     - user:
-        name: phpapp
+        name: app
         comment: "Non-root main application user"
         uid: 242
-        group: phpapp
+        group: app
         shell: /bin/bash
         home: /app
+    # создание скрипта запуска /opt/start.sh (просто для демонстрации)
     - name: "Create start script"
       copy:
         content: |
           #!/bin/bash
-          echo 'cd /demo'
-          su -c "php bin/console server:run 0.0.0.0:8000" phpapp
-        dest: /opt/start.sh
+          php bin/console server:run 0.0.0.0:8000
+        dest: /app/start.sh
     - file:
-        path: /opt/start.sh
-        owner: phpapp
-        group: phpapp
+        path: /app/start.sh
+        owner: app
+        group: app
         mode: 0755
   install:
-    - name: "Add PHP 5.6 apt repository"
-      apt_repository:
-        repo: 'ppa:ondrej/php'
-        codename: 'xenial'
-        update_cache: yes
-    - name: "Install php moduiles"  
+      # установка необходимых для приложения модулей php
+    - name: "Install php moduiles"
       apt:
         name: "{{`{{ item }}`}}"
         state: present
         update_cache: yes
       with_items:
-      #- newrelic-php5.6
-      #- newrelic-php5.6-common
-      - php5.6-apc
-      - php5.6-openid
-      - php5.6-pear
-      - php5.6-bbcode
-      - php5.6-cgi
-      - php5.6-cli
-      - php5.6-common
-      - php5.6-curl
-      - php5.6-dev
-      - php5.6-gd
-      - php5.6-gmp
-      - php5.6-imagick
-      - php5.6-mcrypt
-      - php5.6-memcache
-      - php5.6-mysql
-      - php5.6-pspell
-      - php5.6-redis
-      - php5.6-tidy
-      - php5.6-xsl
-      - php5.6-yaml
+        - php-sqlite3
+        - php-xml
+        - php-zip
+        - php-mbstring
       # установка composer
     - raw: curl -LsS https://getcomposer.org/download/1.6.5/composer.phar -o /usr/local/bin/composer
     - file:
@@ -128,16 +121,16 @@ ansible:
   beforeSetup:
       # смена прав файлам исходных текстов и запуск composer install
     - file:
-        path: /demo
+        path: /app
         state: directory
-        owner: phpapp
-        group: phpapp
+        owner: app
+        group: app
         recurse: yes
-    - raw: cd /demo && su -c 'composer install' phpapp
+    - raw: cd /app && su -c 'composer install' app
   setup:
       # используем текущую дату как версию приложения
-    - raw: echo `date` > /demo/version.txt
-    - raw: chown phpapp:phpapp /demo/version.txt
+    - raw: echo `date` > /app/version.txt
+    - raw: chown app:app /app/version.txt
 git:
   - add: '/'
     to: '/app'
@@ -156,7 +149,7 @@ dapp dimg build
 Запустите контейнер командой
 
 ```
-dapp dimg run -d -p 8000:8000 -- /opt/start.sh
+dapp dimg run -d -p 8000:8000 -- /app/start.sh
 ```
 
 После чего проверить браузером или в консоли
