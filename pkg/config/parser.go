@@ -292,11 +292,11 @@ func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath 
 		return nil, err
 	}
 
-	if err = associateArtifacts(dimgs, artifacts); err != nil {
+	if err = associateImportsArtifacts(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err = associateFrom(dimgs, artifacts); err != nil {
+	if err = associateDimgsAndArtifactsFrom(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
@@ -327,7 +327,7 @@ func validateArtifactsNames(artifacts []*DimgArtifact) error {
 	return nil
 }
 
-func associateArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
+func associateImportsArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	var artifactImports []*ArtifactImport
 
 	for _, dimg := range dimgs {
@@ -361,20 +361,31 @@ func associateArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	return nil
 }
 
-func associateFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
+func associateDimgsAndArtifactsFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	for _, dimg := range dimgs {
-		if err := dimg.AssociateFrom(dimgs, artifacts); err != nil {
+		if err := associateDimgFrom(dimg.LastLayerOrSelf(), dimgs, artifacts); err != nil {
 			return err
 		}
 	}
 
 	for _, dimg := range artifacts {
-		if err := dimg.AssociateFrom(dimgs, artifacts); err != nil {
+		if err := associateDimgFrom(dimg.LastLayerOrSelf(), dimgs, artifacts); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func associateDimgFrom(dimg interface{}, dimgs []*Dimg, artifacts []*DimgArtifact) error {
+	switch dimg.(type) {
+	case *Dimg:
+		return dimg.(*Dimg).AssociateFrom(dimgs, artifacts)
+	case *DimgArtifact:
+		return dimg.(*DimgArtifact).AssociateFrom(dimgs, artifacts)
+	default:
+		panic("runtime error")
+	}
 }
 
 func splitByRawDimgs(docs []*Doc) ([]*RawDimg, error) {

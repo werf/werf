@@ -21,6 +21,10 @@ type DimgBase struct {
 }
 
 func (c *DimgBase) AssociateFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
+	if c.FromDimg != nil || c.FromDimgArtifact != nil { // asLayers
+		return nil
+	}
+
 	if c.Raw.FromDimg != "" {
 		fromDimgName := c.Raw.FromDimg
 
