@@ -18,7 +18,7 @@ module Dapp
                 end.flatten
 
                 log_secondary_process(:images, short: true) do
-                  Image::Docker.save!(context_images_names, build_context_images_tar, verbose: true, quiet: log_quiet?) unless dry_run?
+                  Image::Stage.save!(self, context_images_names, build_context_images_tar, verbose: true, quiet: log_quiet?) unless dry_run?
                 end unless context_images_names.empty?
               end
             end

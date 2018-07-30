@@ -13,7 +13,7 @@ module Dapp
             if !from_dimg.nil?
               process = dimg.dapp.t(code: 'process.layer_building', data: { name: from_dimg.name })
               dimg.dapp.log_secondary_process(process) { from_dimg.build! }
-            else
+            elsif !from_image.tagged?
               try_host_docker_login
               from_image.pull!
               raise Error::Build, code: :from_image_not_found, data: { name: from_image_name } unless from_image.tagged?

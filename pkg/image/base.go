@@ -3,8 +3,6 @@ package image
 import (
 	"fmt"
 
-	"github.com/docker/cli/cli/command"
-	commandImage "github.com/docker/cli/cli/command/image"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
@@ -65,64 +63,4 @@ func (i *Base) resetInspect(apiClient *client.Client) error {
 
 func (i *Base) UnsetInspect() {
 	i.Inspect = nil
-}
-
-func (i *Base) Pull(cli *command.DockerCli, apiClient *client.Client) error {
-	cmd := commandImage.NewPullCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs([]string{i.Name})
-
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (i *Base) Push(cli *command.DockerCli, apiClient *client.Client) error {
-	cmd := commandImage.NewPushCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs([]string{i.Name})
-
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (i *Base) Tag(tag string, cli *command.DockerCli, apiClient *client.Client) error {
-	cmd := commandImage.NewTagCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs([]string{i.Name, tag})
-
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
-
-	i.UnsetInspect()
-
-	return nil
-}
-
-func (i *Base) Untag(cli *command.DockerCli, apiClient *client.Client) error {
-	cmd := commandImage.NewRemoveCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs([]string{i.Name})
-
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
-
-	i.UnsetInspect()
-
-	return nil
 }
