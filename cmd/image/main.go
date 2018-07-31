@@ -29,7 +29,13 @@ func main() {
 		switch cmd {
 		case "pull":
 			return imageCommand(args, func(cli *command.DockerCli, apiClient *client.Client, stageImage *image.Stage) error {
-				return stageImage.Pull(cli, apiClient)
+				if err := stageImage.Pull(cli, apiClient); err != nil {
+					return err
+				}
+
+				_, err = stageImage.Base.MustGetInspect(apiClient)
+
+				return err
 			})
 		case "push":
 			return imageCommand(args, func(cli *command.DockerCli, apiClient *client.Client, stageImage *image.Stage) error {
@@ -66,12 +72,63 @@ func main() {
 			})
 		case "save_in_cache":
 			return imageCommand(args, func(cli *command.DockerCli, apiClient *client.Client, stageImage *image.Stage) error {
-				return stageImage.SaveInCache(cli, apiClient)
+				if err := stageImage.SaveInCache(cli, apiClient); err != nil {
+					return err
+				}
+
+				_, err = stageImage.Base.MustGetInspect(apiClient)
+
+				return err
 			})
-		case "untag":
+		case "export", "import", "tag":
 			return imageCommand(args, func(cli *command.DockerCli, apiClient *client.Client, stageImage *image.Stage) error {
-				return stageImage.Untag(cli, apiClient)
+				name, err := ruby2go.StringOptionFromArgs("name", args)
+				if err != nil {
+					return err
+				}
+
+				switch cmd {
+				case "export":
+					return stageImage.Export(name, cli, apiClient)
+				case "import":
+					return stageImage.Import(name, cli, apiClient)
+				default: // tag
+					return stageImage.Tag(name, cli, apiClient)
+				}
 			})
+		case "save", "load":
+			cli, err := dockerClient()
+			if err != nil {
+				return nil, err
+			}
+
+			filePath, err := ruby2go.StringOptionFromArgs("file_path", args)
+			if err != nil {
+				return nil, err
+			}
+
+			if cmd == "save" {
+				images, err := arrStringOptionFromArgs("images", args)
+				if err != nil {
+					return nil, err
+				}
+
+				return nil, image.Save(images, filePath, cli)
+			} else {
+				return nil, image.Load(filePath, cli)
+			}
+		case "container_run":
+			cli, err := dockerClient()
+			if err != nil {
+				return nil, err
+			}
+
+			runArgs, err := arrStringOptionFromArgs("args", args)
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, image.ContainerRun(runArgs, cli)
 		default:
 			return nil, fmt.Errorf("command field `%s` isn't supported", cmd)
 		}
@@ -111,11 +168,11 @@ func introspectionOptionFromArgs(args map[string]interface{}) (map[string]bool, 
 	case map[string]interface{}:
 		res, err := mapInterfaceToMapBool(options["introspection"].(map[string]interface{}))
 		if err != nil {
-			return nil, fmt.Errorf("introspection option field value `%v` isn't supported: `%s`", options["introspection"], err)
+			return nil, fmt.Errorf("introspection option field value `%#v` isn't supported: `%s`", options["introspection"], err)
 		}
 		return res, nil
 	default:
-		return nil, fmt.Errorf("introspection option field value `%v` isn't supported", options["introspection"])
+		return nil, fmt.Errorf("introspection option field value `%#v` isn't supported", options["introspection"])
 	}
 }
 
@@ -123,9 +180,39 @@ func mapInterfaceToMapBool(req map[string]interface{}) (map[string]bool, error) 
 	res := map[string]bool{}
 	for key, val := range req {
 		if b, ok := val.(bool); !ok {
-			return nil, fmt.Errorf("field value `%v` isn't supported", val)
+			return nil, fmt.Errorf("field value `%#v` isn't supported", val)
 		} else {
 			res[key] = b
+		}
+	}
+	return res, nil
+}
+
+func arrStringOptionFromArgs(optionName string, args map[string]interface{}) ([]string, error) {
+	options, err := ruby2go.OptionsFromArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	switch options[optionName].(type) {
+	case []interface{}:
+		res, err := arrInterfaceToArrString(options[optionName].([]interface{}))
+		if err != nil {
+			return nil, fmt.Errorf("%s option field value `%#v` isn't supported: `%s`", optionName, options[optionName], err)
+		}
+		return res, nil
+	default:
+		return nil, fmt.Errorf("option `%s` field value `%#v` isn't supported", optionName, options[optionName])
+	}
+}
+
+func arrInterfaceToArrString(req []interface{}) ([]string, error) {
+	var res []string
+	for _, val := range req {
+		if str, ok := val.(string); !ok {
+			return nil, fmt.Errorf("field value `%#v` isn't supported", val)
+		} else {
+			res = append(res, str)
 		}
 	}
 	return res, nil

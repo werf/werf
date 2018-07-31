@@ -22,7 +22,7 @@ module Dapp
       end
 
       def ruby2go_init
-        @_call_before_terminate << proc {
+        @_call_after_before_terminate << proc {
           FileUtils.rmtree(@_ruby2go_tmp_dir) if @_ruby2go_tmp_dir
         }
       end

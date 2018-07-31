@@ -108,8 +108,80 @@ func (i *Stage) IntrospectBefore(cli *command.DockerCli, apiClient *client.Clien
 }
 
 func (i *Stage) SaveInCache(cli *command.DockerCli, apiClient *client.Client) error {
-	if err := i.BuildImage.Tag(i.Name, cli, apiClient); err != nil {
+	buildImageId, err := i.BuildImage.MustGetId(apiClient)
+	if err != nil {
 		return err
 	}
+
+	if err := Tag(buildImageId, i.Name, cli); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (i *Stage) Tag(name string, cli *command.DockerCli, apiClient *client.Client) error {
+	imageId, err := i.MustGetId(apiClient)
+	if err != nil {
+		return err
+	}
+
+	if err := Tag(imageId, name, cli); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (i *Stage) Pull(cli *command.DockerCli, apiClient *client.Client) error {
+	if err := Pull(i.Name, cli); err != nil {
+		return err
+	}
+
+	i.Base.UnsetInspect()
+
+	return nil
+}
+
+func (i *Stage) Push(cli *command.DockerCli, apiClient *client.Client) error {
+	return Push(i.Name, cli)
+}
+
+func (i *Stage) Import(name string, cli *command.DockerCli, apiClient *client.Client) error {
+	importedImage := NewBaseImage(name)
+
+	if err := Pull(name, cli); err != nil {
+		return err
+	}
+
+	importedImageId, err := importedImage.MustGetId(apiClient)
+	if err != nil {
+		return err
+	}
+
+	if err := Tag(importedImageId, i.Name, cli); err != nil {
+		return err
+	}
+
+	if err := Untag(name, cli); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (i *Stage) Export(name string, cli *command.DockerCli, apiClient *client.Client) error {
+	if err := i.Tag(name, cli, apiClient); err != nil {
+		return err
+	}
+
+	if err := Push(name, cli); err != nil {
+		return err
+	}
+
+	if err := Untag(name, cli); err != nil {
+		return err
+	}
+
 	return nil
 }

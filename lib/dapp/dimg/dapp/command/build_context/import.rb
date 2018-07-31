@@ -18,7 +18,7 @@ module Dapp
               if build_context_images_tar.exist?
                 log_secondary_process(:images) do
                   lock("#{name}.images") do
-                    Image::Docker.load!(build_context_images_tar, verbose: true, quiet: log_quiet?)
+                    Image::Stage.load!(self, build_context_images_tar, verbose: true, quiet: log_quiet?)
                   end unless dry_run?
                 end
               else

@@ -162,7 +162,6 @@ module Dapp
           dapp.log_state(image_name, state: dapp.t(code: push ? 'state.push' : 'state.export'), styles: { status: :success })
         else
           dapp.lock("image.#{hashsum image_name}") do
-            ::Dapp::Dimg::Image::Docker.reset_image_inspect(image_name)
             dapp.log_process(image_name, process: dapp.t(code: push ? 'status.process.pushing' : 'status.process.exporting')) { yield }
           end
         end
@@ -213,11 +212,12 @@ module Dapp
       def run_stage(stage_name, docker_options, command)
         stage_image = (stage_name.nil? ? last_stage : stage_by_name(stage_name)).image
         raise Error::Dimg, code: :dimg_stage_not_built, data: { stage_name: stage_name } unless stage_image.built?
-        cmd = "#{dapp.host_docker} run #{[docker_options, stage_image.built_id, command].flatten.compact.join(' ')}"
+
+        args = [docker_options, stage_image.built_id, command].flatten.compact
         if dapp.dry_run?
-          dapp.log(cmd)
+          dapp.log("docker run #{args.join(' ')}")
         else
-          system(cmd) || raise(Error::Dimg, code: :dimg_not_run)
+          Image::Stage.ruby2go_command(dapp, command: :container_run, options: { args: args })
         end
       end
 
@@ -256,14 +256,14 @@ module Dapp
         # Такие файлы могут попасть туда при экспорте файлов артефакта.
         # Чтобы от них избавиться — запускаем docker-контейнер под root-пользователем
         # и удаляем примонтированную tmp-директорию.
-        cmd = "".tap do |cmd|
-          cmd << "#{dapp.host_docker} run --rm"
-          cmd << " --volume #{dapp.tmp_base_dir}:#{dapp.tmp_base_dir}"
-          cmd << " --label dapp=#{dapp.name}"
-          cmd << " alpine:3.6"
-          cmd << " rm -rf #{tmp_path}"
-        end
-        dapp.shellout! cmd
+        args = [
+          "--rm",
+          "--volume=#{dapp.tmp_base_dir}:#{dapp.tmp_base_dir}",
+          "--label=dapp=#{dapp.name}",
+          "alpine:3.6",
+          "rm", "-rf", tmp_path
+        ]
+        Image::Stage.ruby2go_command(dapp, command: :container_run, options: { args: args })
       end
 
       def stage_should_be_introspected_before_build?(name)

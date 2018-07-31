@@ -109,7 +109,7 @@ func OptionsFromArgs(args map[string]interface{}) (map[string]interface{}, error
 	case map[string]interface{}:
 		return args["options"].(map[string]interface{}), nil
 	default:
-		return nil, fmt.Errorf("options field value `%v` isn't supported", args["options"])
+		return nil, fmt.Errorf("options field value `%#v` isn't supported", args["options"])
 	}
 }
 
@@ -140,6 +140,6 @@ func StringFromMapInterface(key string, options map[string]interface{}) (string,
 	case nil:
 		return "", fmt.Errorf("option `%s` not found", key)
 	default:
-		return "", fmt.Errorf("option `%s` field value `%v` isn't supported", key, options[key])
+		return "", fmt.Errorf("option `%s` field value `%#v` isn't supported", key, options[key])
 	}
 }
