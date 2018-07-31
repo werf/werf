@@ -52,6 +52,7 @@ module Dapp
       Logging::Paint.initialize(option_color)
 
       @_call_before_terminate = []
+      @_call_after_before_terminate = []
 
       ruby2go_init
     end
@@ -159,6 +160,7 @@ module Dapp
 
     def terminate
       @_call_before_terminate.each {|on_terminate| on_terminate.call(self)}
+      @_call_after_before_terminate.each {|on_terminate| on_terminate.call(self)}
       FileUtils.rmtree(host_docker_tmp_config_dir)
     end
 

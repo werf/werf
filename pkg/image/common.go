@@ -1,7 +1,10 @@
 package image
 
 import (
+	"fmt"
+
 	"github.com/docker/cli/cli/command"
+	commandContainer "github.com/docker/cli/cli/command/container"
 	commandImage "github.com/docker/cli/cli/command/image"
 )
 
@@ -88,6 +91,20 @@ func Load(filePath string, cli *command.DockerCli) error {
 	err := cmd.Execute()
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func ContainerRun(args []string, cli *command.DockerCli) error {
+	cmd := commandContainer.NewRunCommand(cli)
+	cmd.SilenceErrors = true
+	cmd.SilenceUsage = true
+	cmd.SetArgs(args)
+
+	err := cmd.Execute()
+	if err != nil {
+		return fmt.Errorf("container run failed: %s", err.Error())
 	}
 
 	return nil

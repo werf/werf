@@ -108,7 +108,7 @@ func main() {
 			}
 
 			if cmd == "save" {
-				images, err := imagesOptionFromArgs(args)
+				images, err := arrStringOptionFromArgs("images", args)
 				if err != nil {
 					return nil, err
 				}
@@ -117,6 +117,18 @@ func main() {
 			} else {
 				return nil, image.Load(filePath, cli)
 			}
+		case "container_run":
+			cli, err := dockerClient()
+			if err != nil {
+				return nil, err
+			}
+
+			runArgs, err := arrStringOptionFromArgs("args", args)
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, image.ContainerRun(runArgs, cli)
 		default:
 			return nil, fmt.Errorf("command field `%s` isn't supported", cmd)
 		}
@@ -176,21 +188,21 @@ func mapInterfaceToMapBool(req map[string]interface{}) (map[string]bool, error) 
 	return res, nil
 }
 
-func imagesOptionFromArgs(args map[string]interface{}) ([]string, error) {
+func arrStringOptionFromArgs(optionName string, args map[string]interface{}) ([]string, error) {
 	options, err := ruby2go.OptionsFromArgs(args)
 	if err != nil {
 		return nil, err
 	}
 
-	switch options["images"].(type) {
+	switch options[optionName].(type) {
 	case []interface{}:
-		res, err := arrInterfaceToArrString(options["images"].([]interface{}))
+		res, err := arrInterfaceToArrString(options[optionName].([]interface{}))
 		if err != nil {
-			return nil, fmt.Errorf("images option field value `%#v` isn't supported: `%s`", options["images"], err)
+			return nil, fmt.Errorf("%s option field value `%#v` isn't supported: `%s`", optionName, options[optionName], err)
 		}
 		return res, nil
 	default:
-		return nil, fmt.Errorf("option `images` field value `%#v` isn't supported", options["images"])
+		return nil, fmt.Errorf("option `%s` field value `%#v` isn't supported", optionName, options[optionName])
 	}
 }
 

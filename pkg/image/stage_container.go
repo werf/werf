@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/docker/cli/cli/command"
-	commandContainer "github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
@@ -217,7 +216,7 @@ func (c *StageContainer) Run(cli *command.DockerCli, apiClient *client.Client) e
 		return err
 	}
 
-	if err := c.run(runArgs, cli); err != nil {
+	if err := ContainerRun(runArgs, cli); err != nil {
 		return err
 	}
 
@@ -230,7 +229,7 @@ func (c *StageContainer) Introspect(cli *command.DockerCli, apiClient *client.Cl
 		return err
 	}
 
-	if err := c.run(runArgs, cli); err != nil {
+	if err := ContainerRun(runArgs, cli); err != nil {
 		return err
 	}
 
@@ -243,22 +242,8 @@ func (c *StageContainer) IntrospectBefore(cli *command.DockerCli, apiClient *cli
 		return err
 	}
 
-	if err := c.run(runArgs, cli); err != nil {
+	if err := ContainerRun(runArgs, cli); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func (c *StageContainer) run(args []string, cli *command.DockerCli) error {
-	cmd := commandContainer.NewRunCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs(args)
-
-	err := cmd.Execute()
-	if err != nil {
-		return fmt.Errorf("container run failed: %s", err.Error())
 	}
 
 	return nil
