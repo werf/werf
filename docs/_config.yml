@@ -1,7 +1,7 @@
 output: web
 
-topnav_title: Документация Dapp
-site_title: Документация Dapp
+topnav_title: Dapp Documentation
+site_title: Dapp Documentation
 company_name: Flant
 
 exclude:
