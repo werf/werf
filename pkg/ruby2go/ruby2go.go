@@ -115,18 +115,6 @@ func OptionsFieldFromArgs(args map[string]interface{}) (map[string]interface{}, 
 	}
 }
 
-func SafeStringOptionFromArgs(optionName string, args map[string]interface{}) (string, error) {
-	value, err := StringOptionFromArgs(optionName, args)
-	if err != nil {
-		if err.Error() == fmt.Sprintf("option `%s` not found", optionName) {
-			return "", nil
-		} else {
-			return "", err
-		}
-	}
-	return value, nil
-}
-
 func StringOptionFromArgs(option string, args map[string]interface{}) (string, error) {
 	options, err := OptionsFieldFromArgs(args)
 	if err != nil {

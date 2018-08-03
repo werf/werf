@@ -69,12 +69,12 @@ func main() {
 				return nil, fmt.Errorf("command `%s` isn't supported for dappdeps `%s`", cmd, dappdepsName)
 			}
 		case "sudo_command":
-			ownerOption, err := ruby2go.SafeStringOptionFromArgs("owner", args)
+			ownerOption, err := ownerOrGroupOptionFromArgs("owner", args)
 			if err != nil {
 				return nil, err
 			}
 
-			groupOption, err := ruby2go.SafeStringOptionFromArgs("group", args)
+			groupOption, err := ownerOrGroupOptionFromArgs("group", args)
 			if err != nil {
 				return nil, err
 			}
@@ -90,4 +90,18 @@ func main() {
 
 		return nil, nil
 	})
+}
+
+func ownerOrGroupOptionFromArgs(option string, args map[string]interface{}) (string, error) {
+	options, err := ruby2go.OptionsFieldFromArgs(args)
+	if err != nil {
+		return "", err
+	}
+
+	value, ok := options[option]
+	if !ok || value == nil {
+		return "", nil
+	}
+
+	return fmt.Sprintf("%v", value), nil
 }
