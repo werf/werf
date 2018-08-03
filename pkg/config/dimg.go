@@ -19,6 +19,16 @@ func (c *Dimg) RelatedDimgs() (relatedDimgs []interface{}) {
 	return
 }
 
+func (c *Dimg) LastLayerOrSelf() interface{} {
+	if c.FromDimg != nil {
+		return c.FromDimg.LastLayerOrSelf()
+	}
+	if c.FromDimgArtifact != nil {
+		return c.FromDimgArtifact.LastLayerOrSelf()
+	}
+	return c
+}
+
 func (c *Dimg) Validate() error {
 	if !OneOrNone([]bool{c.Shell != nil, c.Ansible != nil}) {
 		return NewDetailedConfigError("Cannot use shell and ansible builders at the same time!", nil, c.DimgBase.Raw.Doc)
