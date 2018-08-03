@@ -3,21 +3,18 @@ package dappdeps
 import (
 	"fmt"
 	"strconv"
-
-	"github.com/docker/cli/cli/command"
-	"github.com/docker/docker/client"
 )
 
 const BASE_VERSION = "0.2.3"
 
-func BaseContainer(cli *command.DockerCli, apiClient *client.Client) (string, error) {
+func BaseContainer() (string, error) {
 	container := &container{
 		Name:      fmt.Sprintf("dappdeps_base_%s", BASE_VERSION),
 		ImageName: fmt.Sprintf("dappdeps/base:%s", BASE_VERSION),
 		Volume:    fmt.Sprintf("/.dapp/deps/base/%s", BASE_VERSION),
 	}
 
-	if err := container.CreateIfNotExist(cli, apiClient); err != nil {
+	if err := container.CreateIfNotExist(); err != nil {
 		return "", err
 	} else {
 		return container.Name, nil

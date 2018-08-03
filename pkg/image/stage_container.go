@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
-	"golang.org/x/net/context"
 
 	"github.com/flant/dapp/pkg/dappdeps"
+	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -34,11 +32,19 @@ func NewStageImageContainer(image *Stage) *StageContainer {
 	return c
 }
 
-func (c *StageContainer) runArgs(cli *command.DockerCli, apiClient *client.Client) ([]string, error) {
+func (c *StageContainer) AddRunCommands(commands []string) {
+	c.RunCommands = append(c.RunCommands, commands...)
+}
+
+func (c *StageContainer) AddServiceRunCommands(commands []string) {
+	c.ServiceRunCommands = append(c.ServiceRunCommands, commands...)
+}
+
+func (c *StageContainer) runArgs() ([]string, error) {
 	var args []string
 	args = append(args, fmt.Sprintf("--name=%s", c.Name))
 
-	runOptions, err := c.runOptions(cli, apiClient)
+	runOptions, err := c.runOptions()
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +54,7 @@ func (c *StageContainer) runArgs(cli *command.DockerCli, apiClient *client.Clien
 		return nil, err
 	}
 
-	fromImageId, err := c.Image.FromImage.MustGetId(apiClient)
+	fromImageId, err := c.Image.FromImage.MustGetId()
 	if err != nil {
 		return nil, err
 	}
@@ -78,13 +84,13 @@ func ShelloutPack(command string) string {
 	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), dappdeps.BaseBinPath("base64"))
 }
 
-func (c *StageContainer) introspectBeforeArgs(cli *command.DockerCli, apiClient *client.Client) ([]string, error) {
-	args, err := c.introspectArgsBase(cli, apiClient)
+func (c *StageContainer) introspectBeforeArgs() ([]string, error) {
+	args, err := c.introspectArgsBase()
 	if err != nil {
 		return nil, err
 	}
 
-	fromImageId, err := c.Image.FromImage.MustGetId(apiClient)
+	fromImageId, err := c.Image.FromImage.MustGetId()
 	if err != nil {
 		return nil, err
 	}
@@ -96,13 +102,13 @@ func (c *StageContainer) introspectBeforeArgs(cli *command.DockerCli, apiClient 
 	return args, nil
 }
 
-func (c *StageContainer) introspectArgs(cli *command.DockerCli, apiClient *client.Client) ([]string, error) {
-	args, err := c.introspectArgsBase(cli, apiClient)
+func (c *StageContainer) introspectArgs() ([]string, error) {
+	args, err := c.introspectArgsBase()
 	if err != nil {
 		return nil, err
 	}
 
-	imageId, err := c.Image.MustGetId(apiClient)
+	imageId, err := c.Image.MustGetId()
 	if err != nil {
 		return nil, err
 	}
@@ -114,10 +120,10 @@ func (c *StageContainer) introspectArgs(cli *command.DockerCli, apiClient *clien
 	return args, nil
 }
 
-func (c *StageContainer) introspectArgsBase(cli *command.DockerCli, apiClient *client.Client) ([]string, error) {
+func (c *StageContainer) introspectArgsBase() ([]string, error) {
 	var args []string
 
-	runOptions, err := c.introspectOptions(cli, apiClient)
+	runOptions, err := c.introspectOptions()
 	if err != nil {
 		return nil, err
 	}
@@ -133,26 +139,26 @@ func (c *StageContainer) introspectArgsBase(cli *command.DockerCli, apiClient *c
 	return args, nil
 }
 
-func (c *StageContainer) runOptions(cli *command.DockerCli, apiClient *client.Client) (*StageContainerOptions, error) {
-	serviceRunOptions, err := c.ServiceRunOptions(cli, apiClient)
+func (c *StageContainer) runOptions() (*StageContainerOptions, error) {
+	serviceRunOptions, err := c.ServiceRunOptions()
 	if err != nil {
 		return nil, err
 	}
 	return serviceRunOptions.merge(c.RunOptions), nil
 }
 
-func (c *StageContainer) ServiceRunOptions(cli *command.DockerCli, apiClient *client.Client) (*StageContainerOptions, error) {
+func (c *StageContainer) ServiceRunOptions() (*StageContainerOptions, error) {
 	serviceRunOptions := NewStageContainerOptions()
 	serviceRunOptions.Workdir = "/"
 	serviceRunOptions.Entrypoint = []string{dappdeps.BaseBinPath("bash")}
 	serviceRunOptions.User = "0:0"
 
-	baseContainerName, err := dappdeps.BaseContainer(cli, apiClient)
+	baseContainerName, err := dappdeps.BaseContainer()
 	if err != nil {
 		return nil, err
 	}
 
-	toolchainContainerName, err := dappdeps.ToolchainContainer(cli, apiClient)
+	toolchainContainerName, err := dappdeps.ToolchainContainer()
 	if err != nil {
 		return nil, err
 	}
@@ -161,25 +167,25 @@ func (c *StageContainer) ServiceRunOptions(cli *command.DockerCli, apiClient *cl
 	return serviceRunOptions, nil
 }
 
-func (c *StageContainer) introspectOptions(cli *command.DockerCli, apiClient *client.Client) (*StageContainerOptions, error) {
-	return c.runOptions(cli, apiClient)
+func (c *StageContainer) introspectOptions() (*StageContainerOptions, error) {
+	return c.runOptions()
 }
 
-func (c *StageContainer) commitChanges(apiClient *client.Client) ([]string, error) {
-	commitOptions, err := c.commitOptions(apiClient)
+func (c *StageContainer) commitChanges() ([]string, error) {
+	commitOptions, err := c.commitOptions()
 	if err != nil {
 		return nil, err
 	}
 
-	commitChanges, err := commitOptions.toCommitChanges(apiClient)
+	commitChanges, err := commitOptions.toCommitChanges()
 	if err != nil {
 		return nil, err
 	}
 	return commitChanges, nil
 }
 
-func (c *StageContainer) commitOptions(apiClient *client.Client) (*StageContainerOptions, error) {
-	inheritedCommitOptions, err := c.inheritedCommitOptions(apiClient)
+func (c *StageContainer) commitOptions() (*StageContainerOptions, error) {
+	inheritedCommitOptions, err := c.inheritedCommitOptions()
 	if err != nil {
 		return nil, err
 	}
@@ -188,14 +194,14 @@ func (c *StageContainer) commitOptions(apiClient *client.Client) (*StageContaine
 	return commitOptions, nil
 }
 
-func (c *StageContainer) inheritedCommitOptions(apiClient *client.Client) (*StageContainerOptions, error) {
+func (c *StageContainer) inheritedCommitOptions() (*StageContainerOptions, error) {
 	inheritedOptions := NewStageContainerOptions()
 
 	if c.Image.FromImage == nil {
 		panic(fmt.Sprintf("runtime error: FromImage should be (%s)", c.Image.Name))
 	}
 
-	fromImageInspect, err := c.Image.FromImage.MustGetInspect(apiClient)
+	fromImageInspect, err := c.Image.FromImage.MustGetInspect()
 	if err != nil {
 		return nil, err
 	}
@@ -210,64 +216,60 @@ func (c *StageContainer) inheritedCommitOptions(apiClient *client.Client) (*Stag
 	return inheritedOptions, nil
 }
 
-func (c *StageContainer) Run(cli *command.DockerCli, apiClient *client.Client) error {
-	runArgs, err := c.runArgs(cli, apiClient)
+func (c *StageContainer) Run() error {
+	runArgs, err := c.runArgs()
 	if err != nil {
 		return err
 	}
 
-	if err := ContainerRun(runArgs, cli); err != nil {
+	if err := docker.ContainerRun(runArgs); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *StageContainer) Introspect(cli *command.DockerCli, apiClient *client.Client) error {
-	runArgs, err := c.introspectArgs(cli, apiClient)
+func (c *StageContainer) Introspect() error {
+	runArgs, err := c.introspectArgs()
 	if err != nil {
 		return err
 	}
 
-	if err := ContainerRun(runArgs, cli); err != nil {
+	if err := docker.ContainerRun(runArgs); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *StageContainer) IntrospectBefore(cli *command.DockerCli, apiClient *client.Client) error {
-	runArgs, err := c.introspectBeforeArgs(cli, apiClient)
+func (c *StageContainer) IntrospectBefore() error {
+	runArgs, err := c.introspectBeforeArgs()
 	if err != nil {
 		return err
 	}
 
-	if err := ContainerRun(runArgs, cli); err != nil {
+	if err := docker.ContainerRun(runArgs); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *StageContainer) Commit(apiClient *client.Client) (string, error) {
-	commitChanges, err := c.commitChanges(apiClient)
+func (c *StageContainer) Commit() (string, error) {
+	commitChanges, err := c.commitChanges()
 	if err != nil {
 		return "", err
 	}
 
-	ctx := context.Background()
 	commitOptions := types.ContainerCommitOptions{Changes: commitChanges}
-	response, err := apiClient.ContainerCommit(ctx, c.Name, commitOptions)
+	id, err := docker.ContainerCommit(c.Name, commitOptions)
 	if err != nil {
 		return "", err
 	}
-	return response.ID, nil
+
+	return id, nil
 }
 
-func (c *StageContainer) Rm(apiClient *client.Client) error {
-	err := apiClient.ContainerRemove(context.Background(), c.Name, types.ContainerRemoveOptions{})
-	if err != nil {
-		return err
-	}
-	return nil
+func (c *StageContainer) Rm() error {
+	return docker.ContainerRemove(c.Name)
 }

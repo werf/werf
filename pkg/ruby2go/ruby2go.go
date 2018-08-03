@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/flant/dapp/pkg/util"
 )
 
 var (
@@ -100,16 +102,16 @@ func RunCli(progname string, runFunc func(map[string]interface{}) (interface{}, 
 	os.Exit(exitCode)
 }
 
-func CommandFromArgs(args map[string]interface{}) (string, error) {
-	return StringFromMapInterface("command", args)
+func CommandFieldFromArgs(args map[string]interface{}) (string, error) {
+	return StringFieldFromMapInterface("command", args)
 }
 
-func OptionsFromArgs(args map[string]interface{}) (map[string]interface{}, error) {
-	switch args["options"].(type) {
-	case map[string]interface{}:
-		return args["options"].(map[string]interface{}), nil
-	default:
-		return nil, fmt.Errorf("options field value `%#v` isn't supported", args["options"])
+func OptionsFieldFromArgs(args map[string]interface{}) (map[string]interface{}, error) {
+	value, ok := args["options"]
+	if ok {
+		return util.InterfaceToMapStringInterface(value)
+	} else {
+		return nil, fmt.Errorf("options field value `%#v` can't be casting into map[string]interface{}", args["options"])
 	}
 }
 
@@ -125,21 +127,19 @@ func SafeStringOptionFromArgs(optionName string, args map[string]interface{}) (s
 	return value, nil
 }
 
-func StringOptionFromArgs(optionName string, args map[string]interface{}) (string, error) {
-	options, err := OptionsFromArgs(args)
+func StringOptionFromArgs(option string, args map[string]interface{}) (string, error) {
+	options, err := OptionsFieldFromArgs(args)
 	if err != nil {
 		return "", err
 	}
-	return StringFromMapInterface(optionName, options)
+	return StringFieldFromMapInterface(option, options)
 }
 
-func StringFromMapInterface(key string, options map[string]interface{}) (string, error) {
-	switch options[key].(type) {
+func StringFieldFromMapInterface(field string, value map[string]interface{}) (string, error) {
+	switch value[field].(type) {
 	case string:
-		return options[key].(string), nil
-	case nil:
-		return "", fmt.Errorf("option `%s` not found", key)
+		return value[field].(string), nil
 	default:
-		return "", fmt.Errorf("option `%s` field value `%#v` isn't supported", key, options[key])
+		return "", fmt.Errorf("option `%s` field value `%#v` can't be casting into string", field, value[field])
 	}
 }

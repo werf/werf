@@ -7,7 +7,7 @@ module Dapp
         end
 
         def git_bin
-          ruby2go_dappdeps_command(dappdeps_name: :gitartifact, command: :bin)
+          ruby2go_dappdeps_command(dappdeps: :gitartifact, command: :bin)
         end
       end # Gitartifact
     end # Deps

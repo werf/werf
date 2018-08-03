@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/cli/cli/command"
-	commandContainer "github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/client"
-	"golang.org/x/net/context"
 
+	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/lock"
 )
 
@@ -18,9 +16,8 @@ type container struct {
 	Volume    string
 }
 
-func (c *container) isExist(apiClient *client.Client) (bool, error) {
-	ctx := context.Background()
-	if _, err := apiClient.ContainerInspect(ctx, c.Name); err != nil {
+func (c *container) isExist() (bool, error) {
+	if _, err := docker.ContainerInspect(c.Name); err != nil {
 		if client.IsErrNotFound(err) {
 			return false, nil
 		}
@@ -29,37 +26,29 @@ func (c *container) isExist(apiClient *client.Client) (bool, error) {
 	return true, nil
 }
 
-func (c *container) Create(cli *command.DockerCli) error {
-	cmd := commandContainer.NewCreateCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-
+func (c *container) Create() error {
 	name := fmt.Sprintf("--name=%s", c.Name)
 	volume := fmt.Sprintf("--volume=%s", c.Volume)
-	cmd.SetArgs([]string{name, volume, c.ImageName})
+	args := []string{name, volume, c.ImageName}
 
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
-	return nil
+	return docker.ContainerCreate(args)
 }
 
-func (c *container) CreateIfNotExist(cli *command.DockerCli, apiClient *client.Client) error {
-	exist, err := c.isExist(apiClient)
+func (c *container) CreateIfNotExist() error {
+	exist, err := c.isExist()
 	if err != nil {
 		return err
 	}
 
 	if !exist {
 		err := lock.WithLock(fmt.Sprintf("dappdeps.container.%s", c.Name), lock.LockOptions{Timeout: time.Second * 600}, func() error {
-			exist, err := c.isExist(apiClient)
+			exist, err := c.isExist()
 			if err != nil {
 				return err
 			}
 
 			if !exist {
-				if err := c.Create(cli); err != nil {
+				if err := c.Create(); err != nil {
 					return err
 				}
 			}

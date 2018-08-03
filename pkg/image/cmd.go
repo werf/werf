@@ -67,7 +67,18 @@ func imageStageToRubyStage(imageStage *Stage) *CmdStage {
 	return cmdImage
 }
 
-func CommandWithImage(args map[string]interface{}, command func(stageImage *Stage) error) (map[string]interface{}, error) {
+func ImageCommand(args map[string]interface{}, command func(stageImage *Stage) error) (map[string]interface{}, error) {
+	resultMap, err := commandWithImage(args, func(stageImage *Stage) error {
+		return command(stageImage)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return resultMap, nil
+}
+
+func commandWithImage(args map[string]interface{}, command func(stageImage *Stage) error) (map[string]interface{}, error) {
 	stageImage, err := stageImageFromArgs(args)
 	if err != nil {
 		return nil, err

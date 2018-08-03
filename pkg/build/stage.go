@@ -1,7 +1,5 @@
 package build
 
-import ()
-
 type Stage interface {
 	GetPrevStage() Stage
 	GetImage() Image

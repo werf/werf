@@ -7,18 +7,18 @@ module Dapp
         end
 
         def dappdeps_base_path
-          ruby2go_dappdeps_command(dappdeps_name: :base, command: :path)
+          ruby2go_dappdeps_command(dappdeps: :base, command: :path)
         end
 
         %w(rm rsync diff date cat
            stat readlink test sleep mkdir
            install sed cp true find
            bash tar sudo base64).each do |bin|
-          define_method("#{bin}_bin") { ruby2go_dappdeps_command(dappdeps_name: :base, command: :bin, options: { bin: bin }) }
+          define_method("#{bin}_bin") { ruby2go_dappdeps_command(dappdeps: :base, command: :bin, options: { bin: bin }) }
         end
 
         def sudo_command(owner: nil, group: nil)
-          ruby2go_dappdeps_command(dappdeps_name: :base, command: :sudo_command, options: { owner: owner, group: group })
+          ruby2go_dappdeps_command(dappdeps: :base, command: :sudo_command, options: { owner: owner, group: group })
         end
       end # Base
     end # Deps

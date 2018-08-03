@@ -122,5 +122,5 @@ func (repo *Base) isAnyChanges(repoPath string, basePath string, fromCommit, toC
 		return false, err
 	}
 
-	return (len(patch.FilePatches()) != 0), nil
+	return len(patch.FilePatches()) != 0, nil
 }

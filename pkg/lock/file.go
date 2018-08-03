@@ -1,14 +1,13 @@
 package lock
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
-	"github.com/spaolacci/murmur3"
 	"os"
 	"path/filepath"
 	"syscall"
 	"time"
+	
+	"github.com/flant/dapp/pkg/util"
 )
 
 func NewFileLock(name string, locksDir string) LockObject {
@@ -73,17 +72,7 @@ type fileLocker struct {
 }
 
 func (locker *fileLocker) lockFilePath() string {
-	h32 := murmur3.New32()
-	h32.Write([]byte(locker.FileLock.GetName()))
-
-	buf := new(bytes.Buffer)
-	err := binary.Write(buf, binary.LittleEndian, h32.Sum32())
-	if err != nil {
-		panic(fmt.Errorf("cannot make lock file path for lock %s: %s", locker.FileLock.GetName(), err))
-	}
-
-	fileName := fmt.Sprintf("%x", buf.Bytes())
-
+	fileName := util.MurmurHash(locker.FileLock.GetName())
 	return filepath.Join(locker.FileLock.LocksDir, fileName)
 }
 
