@@ -123,7 +123,7 @@ func (repo *Remote) Fetch() error {
 		oldUrlKey.SetValue(repo.Url)
 		err := cfg.SaveTo(cfgPath)
 		if err != nil {
-			return fmt.Errorf("cannot update url of repo `%s`: %s", err)
+			return fmt.Errorf("cannot update url of repo `%s`: %s", repo.String(), err)
 		}
 	}
 
