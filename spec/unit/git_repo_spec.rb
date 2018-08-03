@@ -21,10 +21,11 @@ describe Dapp::Dimg::GitRepo do
   def dapp_remote_init
     git_init(git_dir: 'remote')
 
-    @remote = Dapp::Dimg::GitRepo::Remote.new(dapp, 'local_remote', url: 'remote/.git')
+    remote_name = 'local_remote'
+    @remote = Dapp::Dimg::GitRepo::Remote.new(dapp, remote_name, url: 'remote/.git')
 
     expect(File.exist?(@remote.path)).to be_truthy
-    expect(@remote.path.to_s[/.*\/([^\/]*\/[^\/]*\/[^\/]*)/, 1]).to eq "remote_git_repo/#{Dapp::Dimg::GitRepo::Remote::CACHE_VERSION}/#{dapp.consistent_uniq_slugify("local_remote")}"
+    expect(@remote.path.to_s[/.*\/([^\/]*\/[^\/]*\/[^\/]*)/, 1]).to eq "#{Dapp::Dimg::GitRepo::Remote::CACHE_VERSION}/#{dapp.consistent_uniq_slugify("local_remote")}/noname"
   end
 
   it 'Remote#init', test_construct: true do
@@ -35,17 +36,17 @@ describe Dapp::Dimg::GitRepo do
     dapp_remote_init
     git_change_and_commit(git_dir: 'remote')
     @remote.fetch!
-    expect(@remote.latest_commit('master')).to eq git_latest_commit(git_dir: 'remote')
+    expect(@remote.latest_branch_commit('master')).to eq git_latest_commit(git_dir: 'remote')
   end
 
   it 'Own', test_construct: true do
     git_init
 
     own = Dapp::Dimg::GitRepo::Own.new(dapp)
-    expect(own.latest_commit).to eq git_latest_commit
+    expect(own.head_commit).to eq git_latest_commit
 
     git_change_and_commit
-    expect(own.latest_commit).to eq git_latest_commit
+    expect(own.head_commit).to eq git_latest_commit
   end
 
   context 'submodule_url' do
