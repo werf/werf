@@ -24,6 +24,10 @@ func NewStageImage(fromImage *Stage, name string) *Stage {
 	return stage
 }
 
+func (i *Stage) BuilderContainer() *StageBuilderContainer {
+	return &StageBuilderContainer{i}
+}
+
 func (i *Stage) MustGetInspect() (*types.ImageInspect, error) {
 	if i.BuildImage != nil {
 		return i.BuildImage.MustGetInspect()

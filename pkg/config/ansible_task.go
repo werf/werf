@@ -8,6 +8,8 @@ type AnsibleTask struct {
 	Config interface{}
 
 	Raw *RawAnsibleTask
+
+	DumpConfigSection string // FIXME: reject after a complete transition from ruby to golang
 }
 
 func (c *AnsibleTask) Validate() error {
