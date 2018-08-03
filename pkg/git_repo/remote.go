@@ -147,13 +147,18 @@ func (repo *Remote) Fetch() error {
 }
 
 func (repo *Remote) HeadCommit() (string, error) {
-	commit, err := repo.getHeadCommitForRepo(repo.ClonePath)
-
-	if err == nil {
-		fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, repo.String())
+	branchName, err := repo.HeadBranchName()
+	if err != nil {
+		return "", err
 	}
 
-	return commit, err
+	commit, err := repo.LatestBranchCommit(branchName)
+	if err != nil {
+		return "", err
+	} else {
+		fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, repo.String())
+		return commit, nil
+	}
 }
 
 func (repo *Remote) HeadBranchName() (string, error) {
