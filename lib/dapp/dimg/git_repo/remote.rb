@@ -24,13 +24,12 @@ module Dapp
 
         def ruby2go_method(method, args_hash={})
           res = dapp.ruby2go_git_repo(args_hash.merge("RemoteGitRepo" => JSON.dump(get_ruby2go_state_hash), "method" => method))
-          self.set_ruby2go_state_hash(JSON.load(res["data"]["state"]))
 
-          if res["error"]
-            raise res["error"]
-          else
-            res["data"]["result"]
-          end
+          raise res["error"] if res["error"]
+
+          self.set_ruby2go_state_hash(JSON.load(res["data"]["RemoteGitRepo"]))
+
+          res["data"]["result"]
         end
 
         def get_ruby2go_state_hash

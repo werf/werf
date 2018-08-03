@@ -204,6 +204,32 @@ module Dapp
         stage.prev_stage.image.labels[repo.dapp.dimgstage_g_a_type_label(paramshash)].to_s.to_sym
       end
 
+      def apply_patch_command2(stage)
+        # TODO: call old version in dev-mode
+        stage_state = stage.get_ruby2go_state_hash
+
+        # Data for StubStage specific for ApplyPatchCommand
+        stage_state["LayerCommitMap"] = {
+          paramshash => stage.layer_commit(self),
+        }
+        stage_state["PrevStage"]["LayerCommitMap" ] = {
+          paramshash => stage.prev_stage.layer_commit(self),
+        }
+
+        res = repo.dapp.ruby2go_git_artifact(
+          "GitArtifact" => JSON.dump(get_ruby2go_state_hash),
+          "method" => "ApplyPatchCommand",
+          "Stage" => JSON.dump(stage_state),
+        )
+
+        raise res["error"] if res["error"]
+
+        self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
+        stage.set_ruby2go_state_hash(JSON.load(res["data"]["Stage"]))
+
+        res["data"]["result"]
+      end
+
       def apply_patch_command(stage)
         [].tap do |commands|
           if dev_mode?
@@ -305,13 +331,17 @@ module Dapp
           "Branch" => @branch.to_s,
           "Tag" => @tag.to_s,
           "Commit" => @commit.to_s,
+          "To" => @to.to_s,
           "Cwd" => @cwd.to_s,
+          "RepoPath" => File.join("/", @cwd.to_s),
           "Owner" => @owner.to_s,
           "Group" => @group.to_s,
-          "IncludePaths" => @include_paths,
-          "ExcludePaths" => @exclude_paths,
+          "IncludePaths" => include_paths(true),
+          "ExcludePaths" => exclude_paths(true),
           "StagesDependencies" => @stages_dependencies.map {|k, v| [_stages_map[k], Array(v).map(&:to_s)]}.to_h,
           "Paramshash" => paramshash.to_s,
+          "PatchesDir" => dimg.tmp_path('patches'),
+          "ContainerPatchesDir" => dimg.container_tmp_path('patches'),
         }.tap {|res|
           if repo.is_a? ::Dapp::Dimg::GitRepo::Local
             res["LocalGitRepo"] = repo.get_ruby2go_state_hash
@@ -363,13 +393,12 @@ module Dapp
       def latest_commit
         @latest_commit ||= begin
           res = repo.dapp.ruby2go_git_artifact("GitArtifact" => JSON.dump(get_ruby2go_state_hash), "method" => "LatestCommit")
-          self.set_ruby2go_state_hash(JSON.load(res["data"]["state"]))
 
-          if res["error"]
-            raise res["error"]
-          else
-            res["data"]["result"]
-          end
+          raise res["error"] if res["error"]
+
+          self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
+
+          res["data"]["result"]
         end.tap do |c|
           repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
         end

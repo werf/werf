@@ -37,7 +37,7 @@ func main() {
 				if err != nil {
 					return nil, err
 				}
-				res["state"] = string(newState)
+				res["RemoteGitRepo"] = string(newState)
 
 				return res, resErr
 

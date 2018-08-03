@@ -224,3 +224,11 @@ func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 
 	return res, nil
 }
+
+func (repo *Remote) Diff(basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (string, error) {
+	return repo.diff(repo.ClonePath, basePath, fromCommit, toCommit, includePaths, excludePaths)
+}
+
+func (repo *Remote) IsAnyChanges(basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (bool, error) {
+	return repo.isAnyChanges(repo.ClonePath, basePath, fromCommit, toCommit, includePaths, excludePaths)
+}

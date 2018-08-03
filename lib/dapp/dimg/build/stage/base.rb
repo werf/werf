@@ -17,6 +17,21 @@ module Dapp
             @next_stage.prev_stage = self
           end
 
+          def get_ruby2go_state_hash
+            {}.tap {|hash|
+              hash["Image"] = {
+                "Labels" => image.labels,
+              }
+
+              if prev_stage
+                hash["PrevStage"] = prev_stage.get_ruby2go_state_hash
+              end
+            }
+          end
+
+          def set_ruby2go_state_hash(hash)
+          end
+
           # rubocop:disable Metrics/PerceivedComplexity
           def build_lock!
             return yield if dimg.dapp.dry_run?
