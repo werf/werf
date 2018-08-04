@@ -123,7 +123,7 @@ func (repo *Remote) Fetch() error {
 		oldUrlKey.SetValue(repo.Url)
 		err := cfg.SaveTo(cfgPath)
 		if err != nil {
-			return fmt.Errorf("cannot update url of repo `%s`: %s", err)
+			return fmt.Errorf("cannot update url of repo `%s`: %s", repo.String(), err)
 		}
 	}
 
@@ -147,13 +147,18 @@ func (repo *Remote) Fetch() error {
 }
 
 func (repo *Remote) HeadCommit() (string, error) {
-	commit, err := repo.getHeadCommitForRepo(repo.ClonePath)
-
-	if err == nil {
-		fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, repo.String())
+	branchName, err := repo.HeadBranchName()
+	if err != nil {
+		return "", err
 	}
 
-	return commit, err
+	commit, err := repo.LatestBranchCommit(branchName)
+	if err != nil {
+		return "", err
+	} else {
+		fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, repo.String())
+		return commit, nil
+	}
 }
 
 func (repo *Remote) HeadBranchName() (string, error) {

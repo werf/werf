@@ -64,16 +64,7 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 		return ga.GitRepo().LatestBranchCommit(ga.Branch)
 	}
 
-	// FIXME: different HeadCommit implementation for local & remote
-	if ga.IsLocal() {
-		return ga.GitRepo().HeadCommit()
-	} else {
-		branchName, err := ga.GitRepo().HeadBranchName()
-		if err != nil {
-			return "", err
-		}
-		return ga.GitRepo().LatestBranchCommit(branchName)
-	}
+	return ga.GitRepo().HeadCommit()
 }
 
 func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
