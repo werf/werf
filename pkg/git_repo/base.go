@@ -74,7 +74,7 @@ func (repo *Base) IsAnyChanges(basePath string, fromCommit, toCommit string, inc
 	panic("not implemented")
 }
 
-func (repo *Base) makePatch(repoPath string, basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (*RelativeFilteredPatch, error) {
+func (repo *Base) makePatch(repoPath, basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (*RelativeFilteredPatch, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)

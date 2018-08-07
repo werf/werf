@@ -62,19 +62,12 @@ func IsPathMatchesOneOfPatterns(path string, patterns []string) bool {
 	return false
 }
 
-func (p *RelativeFilteredPatch) GetBasePath() string {
+func (p *RelativeFilteredPatch) GetAbsoluteBasePath() string {
 	return NormalizeAbsolutePath(p.BasePath)
 }
 
 func (p *RelativeFilteredPatch) IsInPath(path string) bool {
-	return strings.HasPrefix(NormalizeAbsolutePath(path), p.GetBasePath())
-}
-
-func (p *RelativeFilteredPatch) GetRelativePath(path string) string {
-	return strings.TrimPrefix(
-		strings.TrimPrefix(NormalizeAbsolutePath(path), p.GetBasePath()),
-		"/",
-	)
+	return strings.HasPrefix(NormalizeAbsolutePath(path), p.GetAbsoluteBasePath())
 }
 
 func (p *RelativeFilteredPatch) FilePatches() []fdiff.FilePatch {
@@ -190,6 +183,24 @@ func (f *RelativeFilteredFile) Mode() filemode.FileMode {
 	return f.OriginFile.Mode()
 }
 
+func (f *RelativeFilteredFile) GetAbsolutePath() string {
+	return NormalizeAbsolutePath(f.OriginFile.Path())
+}
+
 func (f *RelativeFilteredFile) Path() string {
-	return f.FilePatch.Patch.GetRelativePath(f.OriginFile.Path())
+	if !f.FilePatch.Patch.IsInPath(f.GetAbsolutePath()) {
+		panic(fmt.Errorf("failed assertion: patch path `%s` is not in base path `%s`", f.GetAbsolutePath(), f.FilePatch.Patch.GetAbsoluteBasePath()))
+	}
+
+	if f.GetAbsolutePath() == f.FilePatch.Patch.GetAbsoluteBasePath() {
+		// FilePatch path is always a path to a file, not a directory.
+		// Thus if BasePath is equal FilePatch path, then BasePath is a path to the file.
+		// Return file name in this case by convention.
+		return filepath.Base(f.GetAbsolutePath())
+	}
+
+	return strings.TrimPrefix(
+		strings.TrimPrefix(f.GetAbsolutePath(), f.FilePatch.Patch.GetAbsoluteBasePath()),
+		"/",
+	)
 }

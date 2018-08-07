@@ -204,7 +204,9 @@ module Dapp
         stage.prev_stage.image.labels[repo.dapp.dimgstage_g_a_type_label(paramshash)].to_s.to_sym
       end
 
-      def apply_patch_command2(stage)
+      def apply_patch_command(stage)
+        return apply_patch_command_old(stage) if dev_mode?
+
         # TODO: call old version in dev-mode
         stage_state = stage.get_ruby2go_state_hash
 
@@ -230,7 +232,7 @@ module Dapp
         res["data"]["result"]
       end
 
-      def apply_patch_command(stage)
+      def apply_patch_command_old(stage)
         [].tap do |commands|
           if dev_mode?
             if any_changes?(*dev_patch_stage_commits(stage))

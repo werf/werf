@@ -67,6 +67,37 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 	return ga.GitRepo().HeadCommit()
 }
 
+func (ga *GitArtifact) patchCommands(applyPatchDirectory string, fromCommit, toCommit string) ([]string, error) {
+	commands := make([]string, 0)
+
+	commands = append(commands, fmt.Sprintf(
+		"%s %s -d \"%s\"",
+		dappdeps.BaseBinPath("install"),
+		ga.makeCredentialsOpts(),
+		applyPatchDirectory,
+	))
+
+	patch, err := ga.GitRepo().Diff(ga.RepoPath, fromCommit, toCommit, ga.IncludePaths, ga.ExcludePaths)
+	if err != nil {
+		return nil, err
+	}
+
+	containerPatchFilePath, err := ga.makePatchFile(patch, fromCommit, toCommit)
+	if err != nil {
+		return nil, err
+	}
+
+	commands = append(commands, fmt.Sprintf(
+		"%s %s apply --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s",
+		dappdeps.SudoCommand(ga.Owner, ga.Group),
+		dappdeps.GitBin(),
+		applyPatchDirectory,
+		containerPatchFilePath,
+	))
+
+	return commands, nil
+}
+
 func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
 	if err != nil {
@@ -86,28 +117,22 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 	commands := make([]string, 0)
 
 	if anyChanges {
+		var applyPatchDirectory string
+
 		switch archiveType := ga.ArchiveType(stage); archiveType {
 		case "file":
-			panic("not implemented")
-
+			applyPatchDirectory = filepath.Dir(ga.To)
 		case "directory":
-			commands = append(commands, fmt.Sprintf("%s %s -d \"%s\"", dappdeps.BaseBinPath("install"), ga.makeCredentialsOpts(), ga.To))
-
-			patch, err := ga.GitRepo().Diff(ga.RepoPath, fromCommit, toCommit, ga.IncludePaths, ga.ExcludePaths)
-			if err != nil {
-				return []string{}, err
-			}
-
-			containerPatchFilePath, err := ga.makePatchFile(patch, fromCommit, toCommit)
-			if err != nil {
-				return nil, err
-			}
-
-			commands = append(commands, fmt.Sprintf("%s %s apply --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s", dappdeps.SudoCommand(ga.Owner, ga.Group), dappdeps.GitBin(), ga.To, containerPatchFilePath))
-
+			applyPatchDirectory = ga.To
 		default:
 			return []string{}, fmt.Errorf("unknown archive type `%s`", archiveType)
 		}
+
+		patchCommands, err := ga.patchCommands(applyPatchDirectory, fromCommit, toCommit)
+		if err != nil {
+			return nil, err
+		}
+		commands = append(commands, patchCommands...)
 	}
 
 	return commands, nil
