@@ -45,13 +45,15 @@ func (b *Shell) stage(userStageName string, container Container) error {
 
 func (b *Shell) stageChecksum(userStageName string) string {
 	var checksumArgs []string
+
+	checksumArgs = append(checksumArgs, b.stageCommands(userStageName)...)
+
 	if stageVersionChecksum := b.stageVersionChecksum(userStageName); stageVersionChecksum != "" {
 		checksumArgs = append(checksumArgs, stageVersionChecksum)
 	}
-	checksumArgs = append(checksumArgs, b.stageCommands(userStageName)...)
 
 	if len(checksumArgs) != 0 {
-		return util.MurmurHash(strings.Join(checksumArgs, ""))
+		return util.Sha256Hash(checksumArgs...)
 	} else {
 		return ""
 	}
@@ -61,16 +63,8 @@ func (b *Shell) stageVersionChecksum(userStageName string) string {
 	var stageVersionChecksumArgs []string
 
 	cacheVersionFieldName := "CacheVersion"
-	checksum, ok := b.configFieldValue(cacheVersionFieldName).(string)
-	if !ok {
-		panic(fmt.Sprintf("runtime error: %#v", checksum))
-	}
-
-	if checksum != "" {
-		stageVersionChecksumArgs = append(stageVersionChecksumArgs, checksum)
-	}
-
 	stageCacheVersionFieldName := strings.Join([]string{userStageName, cacheVersionFieldName}, "")
+
 	stageChecksum, ok := b.configFieldValue(stageCacheVersionFieldName).(string)
 	if !ok {
 		panic(fmt.Sprintf("runtime error: %#v", stageChecksum))
@@ -80,8 +74,17 @@ func (b *Shell) stageVersionChecksum(userStageName string) string {
 		stageVersionChecksumArgs = append(stageVersionChecksumArgs, stageChecksum)
 	}
 
+	checksum, ok := b.configFieldValue(cacheVersionFieldName).(string)
+	if !ok {
+		panic(fmt.Sprintf("runtime error: %#v", checksum))
+	}
+
+	if checksum != "" {
+		stageVersionChecksumArgs = append(stageVersionChecksumArgs, checksum)
+	}
+
 	if len(stageVersionChecksumArgs) != 0 {
-		return util.MurmurHash(strings.Join(stageVersionChecksumArgs, ""))
+		return util.Sha256Hash(stageVersionChecksumArgs...)
 	} else {
 		return ""
 	}

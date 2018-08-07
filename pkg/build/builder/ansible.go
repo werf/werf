@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	ghodssYaml "github.com/ghodss/yaml"
 	"gopkg.in/oleiade/reflections.v1"
 
 	"github.com/flant/dapp/pkg/config"
@@ -105,20 +106,26 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 
 func (b *Ansible) stageChecksum(userStageName string) string {
 	var checksumArgs []string
-	if stageVersionChecksum := b.stageVersionChecksum(userStageName); stageVersionChecksum != "" {
-		checksumArgs = append(checksumArgs, stageVersionChecksum)
-	}
 
 	for _, task := range b.stageTasks(userStageName) {
 		output, err := yaml.Marshal(task.Config)
 		if err != nil {
 			panic(fmt.Sprintf("runtime err: %s", err))
 		}
-		checksumArgs = append(checksumArgs, string(output))
+
+		jsonOutput, err := ghodssYaml.YAMLToJSON(output)
+		if err != nil {
+			panic(fmt.Sprintf("runtime err: %s", err))
+		}
+		checksumArgs = append(checksumArgs, string(jsonOutput))
+	}
+
+	if stageVersionChecksum := b.stageVersionChecksum(userStageName); stageVersionChecksum != "" {
+		checksumArgs = append(checksumArgs, stageVersionChecksum)
 	}
 
 	if len(checksumArgs) != 0 {
-		return util.MurmurHash(strings.Join(checksumArgs, ""))
+		return util.Sha256Hash(checksumArgs...)
 	} else {
 		return ""
 	}
@@ -128,16 +135,8 @@ func (b *Ansible) stageVersionChecksum(userStageName string) string {
 	var stageVersionChecksumArgs []string
 
 	cacheVersionFieldName := "CacheVersion"
-	checksum, ok := b.configFieldValue(cacheVersionFieldName).(string)
-	if !ok {
-		panic(fmt.Sprintf("runtime error: %#v", checksum))
-	}
-
-	if checksum != "" {
-		stageVersionChecksumArgs = append(stageVersionChecksumArgs, checksum)
-	}
-
 	stageCacheVersionFieldName := strings.Join([]string{userStageName, cacheVersionFieldName}, "")
+
 	stageChecksum, ok := b.configFieldValue(stageCacheVersionFieldName).(string)
 	if !ok {
 		panic(fmt.Sprintf("runtime error: %#v", stageChecksum))
@@ -147,8 +146,17 @@ func (b *Ansible) stageVersionChecksum(userStageName string) string {
 		stageVersionChecksumArgs = append(stageVersionChecksumArgs, stageChecksum)
 	}
 
+	checksum, ok := b.configFieldValue(cacheVersionFieldName).(string)
+	if !ok {
+		panic(fmt.Sprintf("runtime error: %#v", checksum))
+	}
+
+	if checksum != "" {
+		stageVersionChecksumArgs = append(stageVersionChecksumArgs, checksum)
+	}
+
 	if len(stageVersionChecksumArgs) != 0 {
-		return util.MurmurHash(strings.Join(stageVersionChecksumArgs, ""))
+		return util.Sha256Hash(stageVersionChecksumArgs...)
 	} else {
 		return ""
 	}
