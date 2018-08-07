@@ -25,7 +25,7 @@ module Dapp
 
               define_method "_#{stage}_version" do
                 return [] if (variable = instance_variable_get("@_#{stage}")).nil?
-                variable._version || _version
+                variable._version
               end
             end
             [:before_install, :before_setup, :install, :setup].each(&method(:stage_command_generator))

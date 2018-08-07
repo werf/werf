@@ -13,7 +13,7 @@ module Dapp
       end
 
       def sha256(arg)
-        Digest::SHA256.hexdigest Array(arg).compact.map(&:to_s).join(':::')
+        Digest::SHA256.hexdigest Array(arg).flatten.compact.map(&:to_s).join(':::')
       end
     end
   end # Helper

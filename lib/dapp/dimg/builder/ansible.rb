@@ -138,7 +138,9 @@ module Dapp
 
         define_method("#{stage}_checksum") do
           checksum_args = []
-          checksum_args << JSON.dump(stage_config(stage)['tasks']) unless stage_config(stage)['tasks'].empty?
+          (dimg.config._ansible[stage.to_s] || []).each do |task|
+            checksum_args << JSON.dump(task["config"])
+          end
           checksum_args << public_send("#{stage}_version_checksum")
           _checksum checksum_args
         end

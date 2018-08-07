@@ -74,8 +74,8 @@ module Dapp
       end
 
       def _checksum(*args)
-        return if args.flatten.compact.delete_if { |val| val.respond_to?(:empty?) && val.empty? }.empty?
-        dimg.hashsum args
+        return if (format_args = args.flatten.compact.delete_if { |val| val.respond_to?(:empty?) && val.empty? }).empty?
+        dimg.hashsum format_args
       end
     end # Builder::Base
   end # Dimg
