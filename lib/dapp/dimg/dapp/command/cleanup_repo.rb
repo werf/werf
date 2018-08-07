@@ -3,8 +3,8 @@ module Dapp
     module Dapp
       module Command
         module CleanupRepo
-          DATE_POLICY = Time.now.to_i - 60 * 60 * 24 * 30
           GIT_TAGS_LIMIT_POLICY = 10
+          EXPIRY_DATE_PERIOD_POLICY = 60 * 60 * 24 * 30
 
           def cleanup_repo
             lock_repo(repo = option_repo) do
@@ -87,33 +87,53 @@ module Dapp
             %w(git_tag git_commit).each_with_object([]) do |scheme, dimgs_images|
               dimgs_images.concat begin
                 detailed_dimgs_images_by_scheme[scheme].select do |dimg|
-                  !dry_run? && begin
-                    if scheme == 'git_tag'
-                      consistent_git_tags.include?(dimg[:tag])
-                    elsif scheme == 'git_commit'
-                      git_own_repo.commit_exists?(dimg[:tag])
-                    end
+                  if scheme == 'git_tag'
+                    consistent_git_tags.include?(dimg[:tag])
+                  elsif scheme == 'git_commit'
+                    git_own_repo.commit_exists?(dimg[:tag])
                   end
                 end
               end
             end.tap do |detailed_dimgs_images|
               sorted_detailed_dimgs_images = detailed_dimgs_images.sort_by { |dimg| dimg[:created_at] }.reverse
               expired_dimgs_images, not_expired_dimgs_images = sorted_detailed_dimgs_images.partition do |dimg_image|
-                dimg_image[:created_at] < DATE_POLICY
+                dimg_image[:created_at] < expiry_date_policy
               end
 
-              log_step_with_indent(:"date policy (before #{DateTime.strptime(DATE_POLICY.to_s, '%s')})") do
+              log_step_with_indent(:"date policy (before #{DateTime.strptime(expiry_date_policy.to_s, '%s')})") do
                 expired_dimgs_images.each { |dimg| delete_repo_image(registry, dimg) }
               end
 
               {}.tap do |images_by_dimg|
                 not_expired_dimgs_images.each { |dimg| (images_by_dimg[dimg[:dimg]] ||= []) << dimg }
                 images_by_dimg.each do |dimg, images|
-                  log_step_with_indent(:"limit policy (> #{GIT_TAGS_LIMIT_POLICY}) (`#{dimg}`)") do
-                    images[GIT_TAGS_LIMIT_POLICY..-1].each { |dimg| delete_repo_image(registry, dimg) }
-                  end unless images[GIT_TAGS_LIMIT_POLICY..-1].nil?
+                  log_step_with_indent(:"limit policy (> #{git_tag_limit_policy}) (`#{dimg || "nameless"}` dimg)") do
+                    images[git_tag_limit_policy..-1].each { |dimg| delete_repo_image(registry, dimg) }
+                  end unless images[git_tag_limit_policy..-1].nil?
                 end
               end
+            end
+          end
+
+          def expiry_date_policy
+            @expiry_date_policy = begin
+              expiry_date_period_policy = policy_value('EXPIRY_DATE_PERIOD_POLICY', default: EXPIRY_DATE_PERIOD_POLICY)
+              Time.now.to_i - expiry_date_period_policy
+            end
+          end
+
+          def git_tag_limit_policy
+            @git_tag_limit_policy ||= policy_value('GIT_TAGS_LIMIT_POLICY', default: GIT_TAGS_LIMIT_POLICY)
+          end
+
+          def policy_value(env_key, default:)
+            return default if (val = ENV[env_key]).nil?
+
+            if val.to_i.to_s == val
+              val.to_i
+            else
+              log_warning("WARNING: `#{env_key}` value `#{val}` is ignored (using default value `#{default}`)!")
+              default
             end
           end
 
