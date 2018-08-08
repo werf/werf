@@ -18,6 +18,8 @@ type Ansible struct {
 	BuildArtifactCacheVersion string
 
 	Raw *RawAnsible
+
+	DumpConfigSection string // FIXME: reject after a complete transition from ruby to golang
 }
 
 func (c *Ansible) Validate() error {

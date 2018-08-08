@@ -76,7 +76,7 @@ func InterfaceToStringArray(stringOrStringArray interface{}, configSection inter
 	} else if val, ok := stringOrStringArray.(string); ok {
 		return []string{val}, nil
 	} else if interfaceArray, ok := stringOrStringArray.([]interface{}); ok {
-		stringArray := []string{}
+		var stringArray []string
 		for _, interf := range interfaceArray {
 			if val, ok := interf.(string); ok {
 				stringArray = append(stringArray, val)

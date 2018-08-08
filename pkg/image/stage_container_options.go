@@ -2,10 +2,11 @@ package image
 
 import (
 	"fmt"
-	"github.com/docker/docker/client"
-	"github.com/hashicorp/go-version"
-	"golang.org/x/net/context"
 	"strings"
+
+	"github.com/hashicorp/go-version"
+
+	"github.com/flant/dapp/pkg/docker"
 )
 
 type StageContainerOptions struct {
@@ -141,7 +142,7 @@ func (co *StageContainerOptions) toRunArgs() ([]string, error) {
 	return args, nil
 }
 
-func (co *StageContainerOptions) toCommitChanges(apiClient *client.Client) ([]string, error) {
+func (co *StageContainerOptions) toCommitChanges() ([]string, error) {
 	var args []string
 
 	for _, volume := range co.Volume {
@@ -161,7 +162,7 @@ func (co *StageContainerOptions) toCommitChanges(apiClient *client.Client) ([]st
 	}
 
 	if len(co.Cmd) == 0 {
-		cmd, err := getEmptyCmdOrEntrypointInstructionValue(apiClient)
+		cmd, err := getEmptyCmdOrEntrypointInstructionValue()
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
@@ -183,7 +184,7 @@ func (co *StageContainerOptions) toCommitChanges(apiClient *client.Client) ([]st
 	}
 
 	if len(co.Entrypoint) == 0 {
-		entrypoint, err := getEmptyCmdOrEntrypointInstructionValue(apiClient)
+		entrypoint, err := getEmptyCmdOrEntrypointInstructionValue()
 		if err != nil {
 			return nil, fmt.Errorf("container options preparing failed: %s", err.Error())
 		}
@@ -195,9 +196,8 @@ func (co *StageContainerOptions) toCommitChanges(apiClient *client.Client) ([]st
 	return args, nil
 }
 
-func getEmptyCmdOrEntrypointInstructionValue(apiClient *client.Client) (string, error) {
-	ctx := context.Background()
-	v, err := apiClient.ServerVersion(ctx)
+func getEmptyCmdOrEntrypointInstructionValue() (string, error) {
+	v, err := docker.ServerVersion()
 	if err != nil {
 		return "", err
 	}

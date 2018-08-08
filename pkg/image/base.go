@@ -5,7 +5,8 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"golang.org/x/net/context"
+
+	"github.com/flant/dapp/pkg/docker"
 )
 
 type Base struct {
@@ -19,16 +20,16 @@ func NewBaseImage(name string) *Base {
 	return image
 }
 
-func (i *Base) MustGetId(apiClient *client.Client) (string, error) {
-	if inspect, err := i.MustGetInspect(apiClient); err == nil {
+func (i *Base) MustGetId() (string, error) {
+	if inspect, err := i.MustGetInspect(); err == nil {
 		return inspect.ID, nil
 	} else {
 		return "", err
 	}
 }
 
-func (i *Base) MustGetInspect(apiClient *client.Client) (*types.ImageInspect, error) {
-	if inspect, err := i.GetInspect(apiClient); err == nil && inspect != nil {
+func (i *Base) MustGetInspect() (*types.ImageInspect, error) {
+	if inspect, err := i.GetInspect(); err == nil && inspect != nil {
 		return inspect, nil
 	} else if err != nil {
 		return nil, err
@@ -37,9 +38,9 @@ func (i *Base) MustGetInspect(apiClient *client.Client) (*types.ImageInspect, er
 	}
 }
 
-func (i *Base) GetInspect(apiClient *client.Client) (*types.ImageInspect, error) {
+func (i *Base) GetInspect() (*types.ImageInspect, error) {
 	if i.Inspect == nil {
-		if err := i.resetInspect(apiClient); err != nil {
+		if err := i.resetInspect(); err != nil {
 			if client.IsErrNotFound(err) {
 				return nil, nil
 			} else {
@@ -50,14 +51,13 @@ func (i *Base) GetInspect(apiClient *client.Client) (*types.ImageInspect, error)
 	return i.Inspect, nil
 }
 
-func (i *Base) resetInspect(apiClient *client.Client) error {
-	ctx := context.Background()
-	inspect, _, err := apiClient.ImageInspectWithRaw(ctx, i.Name)
+func (i *Base) resetInspect() error {
+	inspect, err := docker.ImageInspectWithRaw(i.Name)
 	if err != nil {
 		return err
 	}
 
-	i.Inspect = &inspect
+	i.Inspect = inspect
 	return nil
 }
 

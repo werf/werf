@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
+
+	"github.com/flant/dapp/pkg/docker"
 )
 
 type Stage struct {
@@ -24,39 +24,43 @@ func NewStageImage(fromImage *Stage, name string) *Stage {
 	return stage
 }
 
-func (i *Stage) MustGetInspect(apiClient *client.Client) (*types.ImageInspect, error) {
+func (i *Stage) BuilderContainer() *StageBuilderContainer {
+	return &StageBuilderContainer{i}
+}
+
+func (i *Stage) MustGetInspect() (*types.ImageInspect, error) {
 	if i.BuildImage != nil {
-		return i.BuildImage.MustGetInspect(apiClient)
+		return i.BuildImage.MustGetInspect()
 	} else {
-		return i.Base.MustGetInspect(apiClient)
+		return i.Base.MustGetInspect()
 	}
 }
 
-func (i *Stage) MustGetId(apiClient *client.Client) (string, error) {
+func (i *Stage) MustGetId() (string, error) {
 	if i.BuildImage != nil {
-		return i.BuildImage.MustGetId(apiClient)
+		return i.BuildImage.MustGetId()
 	} else {
-		return i.Base.MustGetId(apiClient)
+		return i.Base.MustGetId()
 	}
 }
 
-func (i *Stage) Build(options *StageBuildOptions, cli *command.DockerCli, apiClient *client.Client) error {
-	if containerRunErr := i.Container.Run(cli, apiClient); containerRunErr != nil {
+func (i *Stage) Build(options *StageBuildOptions) error {
+	if containerRunErr := i.Container.Run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
-				if err := i.IntrospectBefore(cli, apiClient); err != nil {
+				if err := i.IntrospectBefore(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			} else if options.IntrospectAfterError {
-				if err := i.Commit(apiClient); err != nil {
+				if err := i.Commit(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
-				if err := i.Introspect(cli, apiClient); err != nil {
+				if err := i.Introspect(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			}
 
-			if err := i.Container.Rm(apiClient); err != nil {
+			if err := i.Container.Rm(); err != nil {
 				return fmt.Errorf("introspect error failed: %s", err)
 			}
 		}
@@ -64,11 +68,11 @@ func (i *Stage) Build(options *StageBuildOptions, cli *command.DockerCli, apiCli
 		return containerRunErr
 	}
 
-	if err := i.Commit(apiClient); err != nil {
+	if err := i.Commit(); err != nil {
 		return err
 	}
 
-	if err := i.Container.Rm(apiClient); err != nil {
+	if err := i.Container.Rm(); err != nil {
 		return err
 	}
 
@@ -80,8 +84,8 @@ type StageBuildOptions struct {
 	IntrospectAfterError  bool
 }
 
-func (i *Stage) Commit(apiClient *client.Client) error {
-	builtId, err := i.Container.Commit(apiClient)
+func (i *Stage) Commit() error {
+	builtId, err := i.Container.Commit()
 	if err != nil {
 		return err
 	}
@@ -91,50 +95,50 @@ func (i *Stage) Commit(apiClient *client.Client) error {
 	return nil
 }
 
-func (i *Stage) Introspect(cli *command.DockerCli, apiClient *client.Client) error {
-	if err := i.Container.Introspect(cli, apiClient); err != nil {
+func (i *Stage) Introspect() error {
+	if err := i.Container.Introspect(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *Stage) IntrospectBefore(cli *command.DockerCli, apiClient *client.Client) error {
-	if err := i.Container.IntrospectBefore(cli, apiClient); err != nil {
+func (i *Stage) IntrospectBefore() error {
+	if err := i.Container.IntrospectBefore(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *Stage) SaveInCache(cli *command.DockerCli, apiClient *client.Client) error {
-	buildImageId, err := i.BuildImage.MustGetId(apiClient)
+func (i *Stage) SaveInCache() error {
+	buildImageId, err := i.BuildImage.MustGetId()
 	if err != nil {
 		return err
 	}
 
-	if err := Tag(buildImageId, i.Name, cli); err != nil {
+	if err := docker.ImageTag(buildImageId, i.Name); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *Stage) Tag(name string, cli *command.DockerCli, apiClient *client.Client) error {
-	imageId, err := i.MustGetId(apiClient)
+func (i *Stage) Tag(name string) error {
+	imageId, err := i.MustGetId()
 	if err != nil {
 		return err
 	}
 
-	if err := Tag(imageId, name, cli); err != nil {
+	if err := docker.ImageTag(imageId, name); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *Stage) Pull(cli *command.DockerCli, apiClient *client.Client) error {
-	if err := Pull(i.Name, cli); err != nil {
+func (i *Stage) Pull() error {
+	if err := docker.ImagePull(i.Name); err != nil {
 		return err
 	}
 
@@ -143,43 +147,43 @@ func (i *Stage) Pull(cli *command.DockerCli, apiClient *client.Client) error {
 	return nil
 }
 
-func (i *Stage) Push(cli *command.DockerCli, apiClient *client.Client) error {
-	return Push(i.Name, cli)
+func (i *Stage) Push() error {
+	return docker.ImagePush(i.Name)
 }
 
-func (i *Stage) Import(name string, cli *command.DockerCli, apiClient *client.Client) error {
+func (i *Stage) Import(name string) error {
 	importedImage := NewBaseImage(name)
 
-	if err := Pull(name, cli); err != nil {
+	if err := docker.ImagePull(name); err != nil {
 		return err
 	}
 
-	importedImageId, err := importedImage.MustGetId(apiClient)
+	importedImageId, err := importedImage.MustGetId()
 	if err != nil {
 		return err
 	}
 
-	if err := Tag(importedImageId, i.Name, cli); err != nil {
+	if err := docker.ImageTag(importedImageId, i.Name); err != nil {
 		return err
 	}
 
-	if err := Untag(name, cli); err != nil {
+	if err := docker.ImageUntag(name); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *Stage) Export(name string, cli *command.DockerCli, apiClient *client.Client) error {
-	if err := i.Tag(name, cli, apiClient); err != nil {
+func (i *Stage) Export(name string) error {
+	if err := i.Tag(name); err != nil {
 		return err
 	}
 
-	if err := Push(name, cli); err != nil {
+	if err := docker.ImagePush(name); err != nil {
 		return err
 	}
 
-	if err := Untag(name, cli); err != nil {
+	if err := docker.ImageUntag(name); err != nil {
 		return err
 	}
 

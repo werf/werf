@@ -239,7 +239,7 @@ module Dapp
             when "image_inspect"
               instance_variable_set(variable, (value || {}))
             when "options", "change_options", "service_change_options"
-              instance_variable_set(variable, (value || {}).reject { |_, v| v.nil? || v.empty? })
+              instance_variable_set(variable, (value || {}).reject { |_, v| v.nil? || v.empty? }.symbolize_keys)
             when "bash_commands", "service_bash_commands"
               instance_variable_set(variable, value || [])
             else

@@ -49,7 +49,7 @@ func dumpDappfileRender(dappfilePath string, dappfileRenderContent string) (stri
 	}
 
 	dappfileNameParts := strings.Split(path.Base(dappfilePath), ".")
-	dappfileRenderNameParts := []string{}
+	var dappfileRenderNameParts []string
 	dappfileRenderNameParts = append(dappfileRenderNameParts, dappfileNameParts[0:len(dappfileNameParts)-1]...)
 	dappfileRenderNameParts = append(dappfileRenderNameParts, "render", dappfileNameParts[len(dappfileNameParts)-1])
 	dappfileRenderPath := path.Join(wd, fmt.Sprintf(".%s", strings.Join(dappfileRenderNameParts, ".")))

@@ -1,130 +1,55 @@
-module Dapp
-  module Dimg
-    class Builder::Ansible::Assets
-      class << self
-        def ansible_cfg(inventory, callback_plugins, become_exe, local_tmp, remote_tmp)
-%{
-[defaults]
-inventory = #{inventory}
+package builder
+
+import (
+	"fmt"
+	"path/filepath"
+
+	"github.com/flant/dapp/pkg/dappdeps"
+)
+
+func (b *Ansible) assetsAnsibleCfg() string {
+	hostsPath := filepath.Join(b.containerWorkDir(), "hosts")
+	callbackPluginsPath := filepath.Join(b.containerWorkDir(), "lib", "callback")
+	sudoBinPath := dappdeps.BaseBinPath("sudo")
+	localTmpDirPath := filepath.Join(b.containerTmpDir(), "local")
+	remoteTmpDirPath := filepath.Join(b.containerTmpDir(), "remote")
+
+	format := `[defaults]
+inventory = %[1]s
 transport = local
 ; do not generate retry files in ro volumes
 retry_files_enabled = False
 ; more verbose stdout like ad-hoc ansible command from flant/ansible fork
-callback_plugins = #{callback_plugins}
+callback_plugins = %[2]s
 stdout_callback = dapp
 ; force color
 force_color = 1
 module_compression = 'ZIP_STORED'
-local_tmp = #{local_tmp}
-remote_tmp = #{remote_tmp}
+local_tmp = %[3]s
+remote_tmp = %[4]s
 ; keep ansiballz for debug
 ;keep_remote_files = 1
 [privilege_escalation]
 become = yes
 become_method = sudo
-become_exe = #{become_exe}
-become_flags = -E -H
+become_exe = %[5]s
+become_flags = -E -H`
+
+	return fmt.Sprintf(format, hostsPath, callbackPluginsPath, localTmpDirPath, remoteTmpDirPath, sudoBinPath)
 }
-        end
 
-        def hosts(python_path)
-%{
-localhost ansible_raw_live_stdout=yes ansible_script_live_stdout=yes ansible_python_interpreter=#{python_path}
+func (b *Ansible) assetsHosts() string {
+	format := "localhost ansible_raw_live_stdout=yes ansible_script_live_stdout=yes ansible_python_interpreter=%s"
+	return fmt.Sprintf(format, dappdeps.AnsibleBinPath("python"))
 }
-        end
 
-        # Python script! Do not enable string interpolation!
-        def dapp_py
-%q{
-# (c) 2018, Ivan Mikheykin <ivan.mikheykin@flant.com>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-
-# Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
-
-
-DOCUMENTATION = '''
-    callback: dapp
-    type: stdout
-    short_description: live output for raw and script with dapp specific additions
-    version_added: "2.4"
-    description:
-        - Solo mode with live stdout for raw and script tasks
-        - Dapp specific error messages
-    requirements:
-      - set as stdout callback in configuration
-'''
-
-#from ansible.plugins.callback.live import CallbackModule as CallbackModule_live
-# live.py moved to dapp
-from callback.live import CallbackModule as CallbackModule_live
-from ansible import constants as C
-
-import os
-import json
-
-class CallbackModule(CallbackModule_live):
-
-    CALLBACK_VERSION = 2.0
-    CALLBACK_TYPE = 'stdout'
-    CALLBACK_NAME = 'dapp'
-
-    def __init__(self):
-        self.super_ref = super(CallbackModule, self)
-        self.super_ref.__init__()
-
-    def v2_runner_on_failed(self, result, ignore_errors=False):
-        self.super_ref.v2_runner_on_failed(result, ignore_errors)
-
-        # get config sections from dapp
-        # task config text is in a last tag
-        # doctext is in a file DAPP_DUMP_CONFIG_DOC_PATH
-        self._display_dapp_config(result._task)
-
-    def _read_dump_config_doc(self):
-        # read content from file in DAPP_DUMP_CONFIG_DOC_PATH env
-        if 'DAPP_DUMP_CONFIG_DOC_PATH' not in os.environ:
-            return ''
-        dump_path = os.environ['DAPP_DUMP_CONFIG_DOC_PATH']
-        res = ''
-        try:
-            fh = open(dump_path, 'r')
-            res = json.load(fh) #.read()
-            fh.close()
-        except:
-            pass
-
-        return res
-
-    # dapp_stage_name commented for consistency with dappfile-yml behaviour
-    def _display_dapp_config(self, task):
-        tags = task.tags
-        dump_config_section_key = ''
-        #dapp_stage_name = ''
-        if len(tags) > 0:
-            # stage name appended before dump
-            #dapp_stage_name = tags[-2]
-            # last tag is dump of section
-            dump_config_section_key = tags[-1]
-
-        dump_config = self._read_dump_config_doc()
-        dump_config_doc = dump_config['dump_config_doc']
-        dump_config_section = dump_config['dump_config_sections'][dump_config_section_key]
-        self._display.display("\n\n%s\n%s" % (dump_config_section, dump_config_doc), color=C.COLOR_DEBUG)
-
+func (b *Ansible) assetsCryptPy() string {
+	return `def crypt(word, salt):
+  return "FAKE_CRYPT"`
 }
-        end
 
-        def crypt_py
-%q{
-def crypt(word, salt):
-  return "FAKE_CRYPT"
-}
-        end
-
-        def live_py
-          %{
+func (b *Ansible) assetsLivePy() string {
+	return `
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 # (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -339,11 +264,86 @@ class CallbackModule(CallbackBase):
     def v2_on_file_diff(self, result):
         if 'diff' in result._result and result._result['diff']:
             self._display.display(self._get_diff(result._result['diff']))
+`
+}
 
-          }
-        end
+func (b *Ansible) assetsDappPy() string {
+	return `
+# (c) 2018, Ivan Mikheykin <ivan.mikheykin@flant.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-      end # << self
-    end # Builder::Ansible::Assets
-  end # Dimg
-end # Dapp
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
+DOCUMENTATION = '''
+    callback: dapp
+    type: stdout
+    short_description: live output for raw and script with dapp specific additions
+    version_added: "2.4"
+    description:
+        - Solo mode with live stdout for raw and script tasks
+        - Dapp specific error messages
+    requirements:
+      - set as stdout callback in configuration
+'''
+
+#from ansible.plugins.callback.live import CallbackModule as CallbackModule_live
+# live.py moved to dapp
+from callback.live import CallbackModule as CallbackModule_live
+from ansible import constants as C
+
+import os
+import json
+
+class CallbackModule(CallbackModule_live):
+
+    CALLBACK_VERSION = 2.0
+    CALLBACK_TYPE = 'stdout'
+    CALLBACK_NAME = 'dapp'
+
+    def __init__(self):
+        self.super_ref = super(CallbackModule, self)
+        self.super_ref.__init__()
+
+    def v2_runner_on_failed(self, result, ignore_errors=False):
+        self.super_ref.v2_runner_on_failed(result, ignore_errors)
+
+        # get config sections from dapp
+        # task config text is in a last tag
+        # doctext is in a file DAPP_DUMP_CONFIG_DOC_PATH
+        self._display_dapp_config(result._task)
+
+    def _read_dump_config_doc(self):
+        # read content from file in DAPP_DUMP_CONFIG_DOC_PATH env
+        if 'DAPP_DUMP_CONFIG_DOC_PATH' not in os.environ:
+            return ''
+        dump_path = os.environ['DAPP_DUMP_CONFIG_DOC_PATH']
+        res = ''
+        try:
+            fh = open(dump_path, 'r')
+            res = json.load(fh) #.read()
+            fh.close()
+        except:
+            pass
+
+        return res
+
+    # dapp_stage_name commented for consistency with dappfile-yml behaviour
+    def _display_dapp_config(self, task):
+        tags = task.tags
+        dump_config_section_key = ''
+        #dapp_stage_name = ''
+        if len(tags) > 0:
+            # stage name appended before dump
+            #dapp_stage_name = tags[-2]
+            # last tag is dump of section
+            dump_config_section_key = tags[-1]
+
+        dump_config = self._read_dump_config_doc()
+        dump_config_doc = dump_config['dump_config_doc']
+        dump_config_section = dump_config['dump_config_sections'][dump_config_section_key]
+        self._display.display("\n\n%s\n%s" % (dump_config_section, dump_config_doc), color=C.COLOR_DEBUG)
+`
+}

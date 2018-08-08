@@ -13,6 +13,7 @@ en:
       ruby2go_image_unexpected_exitstatus: 'ruby2go_image exited with unexpected code `%{status_code}`!'
       ruby2go_image_command_failed: 'ruby2go_image command `%{command}` failed!'
       ruby2go_image_command_failed_unexpected_error: 'ruby2go_image command `%{command}` failed: `%{message}`!'
+      ruby2go_builder_command_failed_unexpected_error: 'ruby2go_builder command `%{command}` failed: `%{message}`!'
       from_image_required: 'Missing from_image!'
       image_already_untagged: "Image `%{name}` untagged already!"
       image_not_exist: "Image `%{name}` doesn't exist!"
@@ -69,7 +70,7 @@ en:
       git_branch_without_name: "Dimg has specific revision that isn't associated with a branch name!"
       download_failed_bad_dappfile_yml_checksum: "Cannot download dappfile-yml binary dependency from %{url}: checksum validation failed"
       ruby2go_command_unexpected_exitstatus: 'ruby2go `%{progname}` exited with unexpected code `%{status_code}`!'
-      ruby2go_dappdeps_command_failed_unexpected_error: 'ruby2go_dappdeps command `%{dappdeps_name}`/`%{command}` failed: `%{message}`!'
+      ruby2go_dappdeps_command_failed_unexpected_error: 'ruby2go_dappdeps command `%{dappdeps}`/`%{command}` failed: `%{message}`!'
     config:
       dimg_name_required: 'Dimg name required!'
       dimg_name_incorrect: "Dimg has incorrect name `%{value}`: doesn't match regex `%{pattern}`!"
