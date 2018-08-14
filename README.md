@@ -49,7 +49,7 @@ It is designed to make engineer's work fast end efficient.
 # Requirements and Installation
 
 Dapp requires a Linux operating system.
-Support for macOS is coming soon (see issue #661).
+Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp/issues/661)).
 
 ## Install Dependencies:
 
@@ -110,7 +110,7 @@ Support for macOS is coming soon (see issue #661).
 
 Now you have dapp installed. Check it with `dapp --version`.
 
-Time to [make your first dapp application](get_started_ansible.html)!
+Time to [make your first dapp application](https://flant.github.io/dapp/get_started_ansible.html)!
 
 # Docs and Support
 
