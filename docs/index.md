@@ -1,26 +1,35 @@
 ---
-title: Введение
+title: Introduction
 sidebar: index
 permalink: index.html
 ---
 
-Dapp — это утилита для реализации и сопровождения процессов CI/CD (Continuous Integration и Continuous Delivery). Предназначена для использования DevOps-специалистами в качестве связующего звена между кодом приложений (поддерживается Git), инфраструктурой, описанной кодом (Chef) и используемой PaaS (Kubernetes).  При этом dapp спроектирована с мыслями о быстроте/эффективности работы, её предназначение — упростить DevOps-инженерам разработку кода для сборки, уменьшить время ожидания сборки по очередному коммиту, автоматизировать деплой.
+
+Dapp helps implement and support Continuous Integration and Continuous Delivery (CI/CD).
+
+With dapp, DevOps engineers generate and deploy images by linking together:
+
+- application code (with Git support),
+- infrastructure code (with Ansible or shell scripts), and
+- platform as a service (Kubernetes).
+
+Dapp simplifies development of build scripts, reduces commit build time and automates deployment.
+It is designed to make engineer's work fast end efficient.
 
 
-## Что дает использование dapp?
+## Features
 
-* Уменьшение среднего времени сборки.
-* Использование общего кэша между сборками.
-* Возможность распределённой сборки при использовании общего registry.
-* Уменьшение размера образа, за счёт вынесения исходных данных и инструментов сборки.
-* Возможность сборки образа с помощью chef, ansible.
-* Создание множества образов по одному файлу-описанию.
-* Продвинутые инструменты отладки собираемого образа.
-* Деплой в kubernetes через [helm](https://helm.sh/) (kubernetes package manager).
-* Инструменты очистки кэша как в локальном, так и в удалённом Registry с Docker-образами.
+* Reducing average build time.
+* Sharing a common cache between builds.
+* Running distributed builds with common registry.
+* Reducing image size by detaching source data and build tools.
+* Building images with Ansible or shell scripts.
+* Building multiple images from one description.
+* Advanced tools for debugging built images.
+* Deploying to Kubernetes via [helm](https://helm.sh/), the Kubernetes package manager.
+* Tools for cleaning both local and remote Docker registry caches.
 
+## First Steps
 
-## Что дальше
-
-* [Как установить](installation.html)
-* [Первое приложение на dapp](get_started_ansible.html)
+* [Install dapp and dependencies](installation.html).
+* [Make your first dapp application with Ansible builder](get_started_ansible.html).
