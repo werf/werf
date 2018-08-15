@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func ImageInspectWithRaw(ref string) (*types.ImageInspect, error) {
+func ImageInspect(ref string) (*types.ImageInspect, error) {
 	ctx := context.Background()
 	inspect, _, err := apiClient.ImageInspectWithRaw(ctx, ref)
 	if err != nil {
@@ -16,11 +16,11 @@ func ImageInspectWithRaw(ref string) (*types.ImageInspect, error) {
 	return &inspect, nil
 }
 
-func ImagePull(name string) error {
+func CliPull(args ...string) error {
 	cmd := image.NewPullCommand(cli)
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
-	cmd.SetArgs([]string{name})
+	cmd.SetArgs(args)
 
 	err := cmd.Execute()
 	if err != nil {
@@ -30,11 +30,11 @@ func ImagePull(name string) error {
 	return nil
 }
 
-func ImagePush(name string) error {
+func CliPush(args ...string) error {
 	cmd := image.NewPushCommand(cli)
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
-	cmd.SetArgs([]string{name})
+	cmd.SetArgs(args)
 
 	err := cmd.Execute()
 	if err != nil {
@@ -44,11 +44,11 @@ func ImagePush(name string) error {
 	return nil
 }
 
-func ImageTag(ref, tag string) error {
+func CliTag(args ...string) error {
 	cmd := image.NewTagCommand(cli)
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
-	cmd.SetArgs([]string{ref, tag})
+	cmd.SetArgs(args)
 
 	err := cmd.Execute()
 	if err != nil {
@@ -58,11 +58,11 @@ func ImageTag(ref, tag string) error {
 	return nil
 }
 
-func ImageUntag(tag string) error {
+func CliRmi(args ...string) error {
 	cmd := image.NewRemoveCommand(cli)
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
-	cmd.SetArgs([]string{tag})
+	cmd.SetArgs(args)
 
 	err := cmd.Execute()
 	if err != nil {
@@ -72,11 +72,7 @@ func ImageUntag(tag string) error {
 	return nil
 }
 
-func ImagesSave(images []string, filePath string) error {
-	var args []string
-	args = append(args, []string{"-o", filePath}...)
-	args = append(args, images...)
-
+func CliSave(args ...string) error {
 	cmd := image.NewSaveCommand(cli)
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
@@ -90,11 +86,11 @@ func ImagesSave(images []string, filePath string) error {
 	return nil
 }
 
-func ImagesLoad(filePath string) error {
+func CliLoad(args ...string) error {
 	cmd := image.NewLoadCommand(cli)
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
-	cmd.SetArgs([]string{"-i", filePath})
+	cmd.SetArgs(args)
 
 	err := cmd.Execute()
 	if err != nil {

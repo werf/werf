@@ -222,8 +222,8 @@ func (c *StageContainer) Run() error {
 		return err
 	}
 
-	if err := docker.ContainerRun(runArgs); err != nil {
-		return err
+	if err := docker.CliRun(runArgs...); err != nil {
+		return fmt.Errorf("container run failed: %s", err.Error())
 	}
 
 	return nil
@@ -235,7 +235,7 @@ func (c *StageContainer) Introspect() error {
 		return err
 	}
 
-	if err := docker.ContainerRun(runArgs); err != nil {
+	if err := docker.CliRun(runArgs...); err != nil {
 		return err
 	}
 
@@ -248,7 +248,7 @@ func (c *StageContainer) IntrospectBefore() error {
 		return err
 	}
 
-	if err := docker.ContainerRun(runArgs); err != nil {
+	if err := docker.CliRun(runArgs...); err != nil {
 		return err
 	}
 

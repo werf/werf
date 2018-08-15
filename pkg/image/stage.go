@@ -117,7 +117,7 @@ func (i *Stage) SaveInCache() error {
 		return err
 	}
 
-	if err := docker.ImageTag(buildImageId, i.Name); err != nil {
+	if err := docker.CliTag(buildImageId, i.Name); err != nil {
 		return err
 	}
 
@@ -130,7 +130,7 @@ func (i *Stage) Tag(name string) error {
 		return err
 	}
 
-	if err := docker.ImageTag(imageId, name); err != nil {
+	if err := docker.CliTag(imageId, name); err != nil {
 		return err
 	}
 
@@ -138,7 +138,7 @@ func (i *Stage) Tag(name string) error {
 }
 
 func (i *Stage) Pull() error {
-	if err := docker.ImagePull(i.Name); err != nil {
+	if err := docker.CliPull(i.Name); err != nil {
 		return err
 	}
 
@@ -148,13 +148,13 @@ func (i *Stage) Pull() error {
 }
 
 func (i *Stage) Push() error {
-	return docker.ImagePush(i.Name)
+	return docker.CliPush(i.Name)
 }
 
 func (i *Stage) Import(name string) error {
 	importedImage := NewBaseImage(name)
 
-	if err := docker.ImagePull(name); err != nil {
+	if err := docker.CliPull(name); err != nil {
 		return err
 	}
 
@@ -163,11 +163,11 @@ func (i *Stage) Import(name string) error {
 		return err
 	}
 
-	if err := docker.ImageTag(importedImageId, i.Name); err != nil {
+	if err := docker.CliTag(importedImageId, i.Name); err != nil {
 		return err
 	}
 
-	if err := docker.ImageUntag(name); err != nil {
+	if err := docker.CliRmi(name); err != nil {
 		return err
 	}
 
@@ -179,11 +179,11 @@ func (i *Stage) Export(name string) error {
 		return err
 	}
 
-	if err := docker.ImagePush(name); err != nil {
+	if err := docker.CliPush(name); err != nil {
 		return err
 	}
 
-	if err := docker.ImageUntag(name); err != nil {
+	if err := docker.CliRmi(name); err != nil {
 		return err
 	}
 

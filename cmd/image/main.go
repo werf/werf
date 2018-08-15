@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 
 	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/image"
@@ -110,9 +112,13 @@ func main() {
 						return nil, err
 					}
 
-					return nil, docker.ImagesSave(images, filePath)
+					var args []string
+					args = append(args, []string{"-o", filePath}...)
+					args = append(args, images...)
+
+					return nil, docker.CliSave(args...)
 				} else {
-					return nil, docker.ImagesLoad(filePath)
+					return nil, docker.CliLoad("-i", filePath)
 				}
 			case "container_run":
 				runArgs, err := stringArrayOptionFromArgs("args", args)
@@ -120,7 +126,7 @@ func main() {
 					return nil, err
 				}
 
-				return nil, docker.ContainerRun(runArgs)
+				return nil, docker.CliRun(runArgs...)
 			default:
 				return nil, fmt.Errorf("command `%s` isn't supported", cmd)
 			}
