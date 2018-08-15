@@ -158,7 +158,7 @@ func shellConfigFromArgs(args map[string]interface{}) (config.Shell, error) {
 		return nil, err
 	}
 
-	artifact, err := boolFieldFromMapInterface("artifact", args)
+	artifact, err := ruby2go.BoolFieldFromMapInterface("artifact", args)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func ansibleConfigFromArgs(args map[string]interface{}) (*config.Ansible, error)
 		return nil, err
 	}
 
-	artifact, err := boolFieldFromMapInterface("artifact", args)
+	artifact, err := ruby2go.BoolFieldFromMapInterface("artifact", args)
 	if err != nil {
 		return nil, err
 	}
@@ -268,13 +268,4 @@ func runBuilderMethod(b builder.Builder, command string, args ...interface{}) []
 		inputs[ind] = reflect.ValueOf(args[ind])
 	}
 	return reflect.ValueOf(b).MethodByName(command).Call(inputs)
-}
-
-func boolFieldFromMapInterface(field string, value map[string]interface{}) (bool, error) {
-	switch value[field].(type) {
-	case bool:
-		return value[field].(bool), nil
-	default:
-		return false, fmt.Errorf("option `%s` field value `%#v` can't be casting into bool", field, value[field])
-	}
 }

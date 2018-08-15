@@ -24,7 +24,7 @@ module Dapp
                 lock("#{name}.images") do
                   remove_project_images begin
                     dapp_project_dimgstages.select do |image|
-                      !actual_cache_project_dimgstages.map { |dimgstage| dimgstage[:id] }.include?(image[:id])
+                      !actual_cache_project_dimgstages.map { |dimgstage| dimgstage["Id"] }.include?(image["Id"])
                     end
                   end
                 end
@@ -32,7 +32,10 @@ module Dapp
             end
 
             def actual_cache_project_dimgstages
-              @actual_cache_project_images_ids ||= prepare_docker_images("-f \"label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}\" #{stage_cache}")
+              @actual_cache_project_dimgstages ||= begin
+                filters = [{ label: "dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}", reference: stage_cache }]
+                prepare_docker_images(extra_filters: filters)
+              end
             end
 
             def stages_cleanup_by_repo
@@ -46,7 +49,7 @@ module Dapp
 
                   # Удаление только образов старше 2ч
                   dimgstages.delete_if do |dimgstage|
-                    Time.now.to_i - dimgstage[:created_at] < 2 * 60 * 60
+                    Time.now.to_i - dimgstage["Created"] < 2 * 60 * 60
                   end unless ENV['DAPP_STAGES_CLEANUP_LOCAL_DISABLED_DATE_POLICY']
 
                   remove_project_images(dimgstages)
@@ -73,7 +76,7 @@ module Dapp
             end
 
             def dapp_project_image_artifacts_ids_in_labels(image)
-              select_dapp_artifacts_ids(dapp_project_image_labels(image))
+              select_dapp_artifacts_ids(image['Labels'])
             end
 
             def proper_git_commit
@@ -81,7 +84,7 @@ module Dapp
                 lock("#{name}.images") do
                   unproper_images = []
                   dapp_project_dimgstages.each do |dimgstage|
-                    dapp_project_image_labels(dimgstage).each do |repo_name, commit|
+                    dimgstage["Labels"].each do |repo_name, commit|
                       next if (repo = dapp_git_repositories[repo_name]).nil?
                       unproper_images.concat(dapp_project_image_with_children(dimgstage)) unless repo.commit_exists?(commit)
                     end
@@ -109,7 +112,7 @@ module Dapp
             end
 
             def dapp_project_image_parent(image)
-              dapp_project_image_by_id(dapp_project_image_inspect(image)['Parent'])
+              dapp_project_image_by_id(image['ParentId'])
             end
           end
         end

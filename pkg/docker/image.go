@@ -6,6 +6,16 @@ import (
 	"golang.org/x/net/context"
 )
 
+func Images(options types.ImageListOptions) ([]types.ImageSummary, error) {
+	ctx := context.Background()
+	images, err := apiClient.ImageList(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return images, nil
+}
+
 func ImageInspect(ref string) (*types.ImageInspect, error) {
 	ctx := context.Background()
 	inspect, _, err := apiClient.ImageInspectWithRaw(ctx, ref)

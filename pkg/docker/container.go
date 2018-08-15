@@ -6,6 +6,11 @@ import (
 	"golang.org/x/net/context"
 )
 
+func Containers(options types.ContainerListOptions) ([]types.Container, error) {
+	ctx := context.Background()
+	return apiClient.ContainerList(ctx, options)
+}
+
 func ContainerInspect(ref string) (types.ContainerJSON, error) {
 	ctx := context.Background()
 	return apiClient.ContainerInspect(ctx, ref)
@@ -59,19 +64,13 @@ func CliRun(args ...string) error {
 	return nil
 }
 
-func ContainerCommit(ref string, commitOptions types.ContainerCommitOptions) (string, error) {
-	ctx := context.Background()
-	response, err := apiClient.ContainerCommit(ctx, ref, commitOptions)
-	if err != nil {
-		return "", err
-	}
+func CliRm(args ...string) error {
+	cmd := container.NewRmCommand(cli)
+	cmd.SilenceErrors = true
+	cmd.SilenceUsage = true
+	cmd.SetArgs(args)
 
-	return response.ID, nil
-}
-
-func ContainerRemove(ref string) error {
-	ctx := context.Background()
-	err := apiClient.ContainerRemove(ctx, ref, types.ContainerRemoveOptions{})
+	err := cmd.Execute()
 	if err != nil {
 		return err
 	}
