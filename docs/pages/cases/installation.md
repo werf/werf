@@ -1,53 +1,69 @@
 ---
-title: Установка
+title: Installation
 sidebar: how_to
 permalink: installation.html
 ---
 
-Для работы dapp требуется:
 
-## Ruby
+Dapp requires a Linux operating system.
+Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp/issues/661)).
 
-Версия >= 2.1.
+## Install Dependencies:
 
-[Установка ruby с помощью rvm](https://rvm.io/rvm/install)
+1.  Ruby version 2.1 or later: 
+    [Ruby installation](https://www.ruby-lang.org/en/documentation/installation/).
 
-## Docker
+1.  Docker version 1.10.0 or later:
+    [Docker installation](https://docs.docker.com/engine/installation/).    
 
-Версия >= 1.10.0.
+1.  сmake (required to install `rugged` gem):
 
-[Установка docker](https://docs.docker.com/engine/installation/)
+    on Ubuntu or Debian:
 
-## Заголовочные файлы libssh2 для работы с git-репозиториями через ssh
+    ```bash
+    apt-get install cmake
+    ```
 
-### Ubuntu
+    on CentOS or RHEL:
+    
+    ```bash
+    yum install cmake
+    ```
 
-```bash
-apt-get install libssh2-1-dev
-```
+1.  libssh2 header files to work with git via SSH.
 
-### Centos
+    on Ubuntu or Debian:
 
-```bash
-yum install libssh2-devel
-```
+    ```bash
+    apt-get install libssh2-1-dev
+    ```
 
-## Cmake для установки зависимого gem rugged
+    on CentOS or RHEL:
+    
+    ```bash
+    yum install libssh2-devel
+    ```
 
-### Ubuntu
+1.  libssl header files to work with git via HTTPS.
 
-```bash
-apt-get install cmake
-```
+    on Ubuntu or Debian:
 
-### Centos
+    ```bash
+    apt-get install libssl-dev
+    ```
 
-```bash
-yum install cmake
-```
+    on CentOS or RHEL:
+    
+    ```bash
+    yum install openssl-devel
+    ```
 
-## Gem dapp
+## Install dapp
 
-```bash
-gem install dapp
-```
+    ```bash
+    gem install dapp
+    ```
+
+Now you have dapp installed. Check it with `dapp --version`.
+
+Time to [make your first dapp application](get_started_ansible.html)!

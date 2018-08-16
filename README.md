@@ -10,110 +10,115 @@
 
 ___
 
-Dapp — это утилита для реализации и сопровождения процессов CI/CD (Continuous Integration и Continuous Delivery). Предназначена для использования DevOps-специалистами в качестве связующего звена между кодом приложений (поддерживается Git), инфраструктурой, описанной кодом (Chef) и используемой PaaS (Kubernetes).  При этом dapp спроектирована с мыслями о быстроте/эффективности работы, её предназначение — упростить DevOps-инженерам разработку кода для сборки, уменьшить время ожидания сборки по очередному коммиту, автоматизировать деплой.
+Dapp is made to implement and support Continuous Integration and Continuous Delivery (CI/CD).
+
+It helps DevOps engineers generate and deploy images by linking together:
+
+- application code (with Git support),
+- infrastructure code (with Ansible or shell scripts), and
+- platform as a service (Kubernetes).
+
+Dapp simplifies development of build scripts, reduces commit build time and automates deployment.
+It is designed to make engineer's work fast end efficient.
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Contents**
+
+- [Features](#features)
+- [Requirements and Installation](#requirements-and-installation)
+  - [Install Dependencies:](#install-dependencies)
+  - [Install dapp](#install-dapp)
+- [Docs and Support](#docs-and-support)
+- [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+# Features
+
+* Reducing average build time.
+* Sharing a common cache between builds.
+* Running distributed builds with common registry.
+* Reducing image size by detaching source data and build tools.
+* Building images with Ansible and shell scripts.
+* Building multiple images from one description.
+* Advanced tools for debugging built images.
+* Deploying to Kubernetes via [helm](https://helm.sh/), the Kubernetes package manager.
+* Tools for cleaning both local and remote Docker registry caches.
+
+# Requirements and Installation
+
+Dapp requires a Linux operating system.
+Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp/issues/661)).
+
+## Install Dependencies:
+
+1.  Ruby version 2.1 or later: 
+    [Ruby installation](https://www.ruby-lang.org/en/documentation/installation/).
+
+1.  Docker version 1.10.0 or later:
+    [Docker installation](https://docs.docker.com/engine/installation/).    
+
+1.  сmake (required to install `rugged` gem):
+
+    on Ubuntu:
+
+    ```bash
+    apt-get install cmake
+    ```
+
+    on Centos:
+    
+    ```bash
+    yum install cmake
+    ```
 
 
-## Что дает использование dapp?
+1.  libssh2 header files to work with git via SSH.
 
-* Уменьшение среднего времени сборки.
-* Использование общего кэша между сборками.
-* Возможность распределённой сборки при использовании общего registry.
-* Уменьшение размера образа, за счёт вынесения исходных данных и инструментов сборки.
-* Возможность сборки образа с помощью chef.
-* Создание множества образов по одному файлу-описанию.
-* Продвинутые инструменты отладки собираемого образа.
-* Деплой в kubernetes через [helm](https://helm.sh/) (kubernetes package manager).
+    on Ubuntu:
 
+    ```bash
+    apt-get install libssh2-1-dev
+    ```
 
-## Установка
+    on Centos:
+    
+    ```bash
+    yum install libssh2-devel
+    ```
 
-Для работы dapp требуется:
+1.  libssl header files to work with git via HTTPS.
 
-#### Ruby
+    on Ubuntu:
 
-Версия >= 2.1.
+    ```bash
+    apt-get install libssl-dev
+    ```
 
-[Установка ruby с помощью rvm](https://rvm.io/rvm/install)
+    on Centos:
+    
+    ```bash
+    yum install openssl-devel
+    ```
+      
+## Install dapp
 
-#### Docker
+  ```bash
+  gem install dapp
+  ```
 
-Версия > 1.10.
+Now you have dapp installed. Check it with `dapp --version`.
 
-[Установка docker](https://docs.docker.com/engine/installation/)
+Time to [make your first dapp application](https://flant.github.io/dapp/get_started_ansible.html)!
 
-#### Заголовочные файлы libssh2 для работы с git-репозиториями через ssh
+# Docs and Support
 
-###### Ubuntu
+The dapp documentation is available at [flant.github.io/dapp](https://flant.github.io/dapp/).
 
-```bash
-apt-get install libssh2-1-dev
-```
+You can ask for support in [dapp chat in Telegram](https://t.me/dapp_ru).
 
-###### Centos
+# License
 
-```bash
-yum install libssh2-devel
-```
-
-#### Заголовочные файлы libssl для работы с git-репозиториями через ssl
-
-###### Ubuntu
-
-```bash
-apt-get install libssl-dev
-```
-
-###### Centos
-
-```bash
-yum install openssl-devel
-```
-
-#### Cmake для установки зависимого gem rugged
-
-###### Ubuntu
-
-```bash
-apt-get install cmake
-```
-
-###### Centos
-
-```bash
-yum install cmake
-```
-
-#### Gem dapp
-
-```bash
-gem install dapp
-```
-
-### Установка с автообновлением patch-релизов (экспериментально)
-
-***Предупреждение:*** Будет установлен gem dapp с системными зависимостями и cron-job для автообновления до последнего patch-релиза x.x.**x** в рамках устанавливаемой версии.
-
-```bash
-curl https://raw.githubusercontent.com/flant/dapp/master/install.sh | bash
-```
-
-Установить dapp версии 0.13.5 и cron-job автообновления до последнего патч релиза в рамках версии 0.13.**x**:
-
-```bash
-curl https://raw.githubusercontent.com/flant/dapp/master/install.sh | bash -s 0.13.5
-```
-
-## Документация
-
-* [Быстрый старт](http://flant.github.io/dapp/get_started_ansible.html)
-
-* Вся документация [http://flant.github.io/dapp/](http://flant.github.io/dapp/)
-
-* [Официальная русскоязычная группа поддержки в Telegram](https://t.me/dapp_ru)
-
-
-## Лицензия
-
-Dapp распространяется на условиях лицензии Apache v2.
-
-Подробности в файле [LICENSE](https://github.com/flant/dapp/blob/master/LICENSE)
+Dapp is published under Apache License v2.0.
+See [LICENSE](https://github.com/flant/dapp/blob/master/LICENSE) for details.
