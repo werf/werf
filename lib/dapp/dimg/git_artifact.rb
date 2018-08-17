@@ -385,8 +385,6 @@ module Dapp
           end
         end
 
-        @include_paths = new_state["IncludePaths"]
-        @exclude_paths = new_state["ExcludePaths"]
         @stages_dependencies = new_state["StagesDependencies"].map do |k, v|
           [_stages_map_reversed[k], v]
         end.to_h
