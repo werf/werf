@@ -64,3 +64,13 @@ func (i *Base) resetInspect() error {
 func (i *Base) UnsetInspect() {
 	i.Inspect = nil
 }
+
+func (i *Base) Untag() error {
+	if err := docker.CliRmi(i.Name); err != nil {
+		return err
+	}
+
+	i.UnsetInspect()
+
+	return nil
+}

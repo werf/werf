@@ -223,8 +223,8 @@ module Dapp
 
           def renew
             commits_discard
-            image_reset
             image_untag! if image_should_be_untagged?
+            image_reset
           end
 
           def image_reset

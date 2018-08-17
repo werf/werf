@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
@@ -81,6 +82,10 @@ func main() {
 				_, err = stageImage.Base.MustGetInspect()
 
 				return err
+			})
+		case "untag":
+			return image.ImageCommand(args, func(stageImage *image.Stage) error {
+				return stageImage.Untag()
 			})
 		case "export", "import", "tag":
 			return image.ImageCommand(args, func(stageImage *image.Stage) error {
