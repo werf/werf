@@ -152,7 +152,7 @@ func (b *Ansible) containerTmpDir() string {
 }
 
 func mkdirP(path string) error {
-	return os.MkdirAll(path, os.ModeDir)
+	return os.MkdirAll(path, os.ModePerm)
 }
 
 func writeFile(path string, content string) error {
