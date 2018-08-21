@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"path/filepath"
-	"strings"
 
-	"github.com/bmatcuk/doublestar"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/filemode"
 	fdiff "gopkg.in/src-d/go-git.v4/plumbing/format/diff"
@@ -15,59 +12,8 @@ import (
 )
 
 type RelativeFilteredPatch struct {
-	BasePath     string
-	IncludePaths []string
-	ExcludePaths []string
-	OriginPatch  *object.Patch
-}
-
-func NormalizeAbsolutePath(path string) string {
-	return filepath.Clean(filepath.Join("/", path))
-}
-
-func IsPathMatchesPattern(path, pattern string) bool {
-	path = NormalizeAbsolutePath(path)
-	pattern = NormalizeAbsolutePath(pattern)
-
-	if strings.HasPrefix(path, pattern) {
-		return true
-	}
-
-	matched, err := doublestar.PathMatch(pattern, path)
-	if err != nil {
-		panic(err)
-	}
-	if matched {
-		return true
-	}
-
-	matched, err = doublestar.PathMatch(filepath.Join(pattern, "**", "*"), path)
-	if err != nil {
-		panic(err)
-	}
-	if matched {
-		return true
-	}
-
-	return false
-}
-
-func IsPathMatchesOneOfPatterns(path string, patterns []string) bool {
-	for _, pattern := range patterns {
-		if IsPathMatchesPattern(path, pattern) {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (p *RelativeFilteredPatch) GetAbsoluteBasePath() string {
-	return NormalizeAbsolutePath(p.BasePath)
-}
-
-func (p *RelativeFilteredPatch) IsInPath(path string) bool {
-	return strings.HasPrefix(NormalizeAbsolutePath(path), p.GetAbsoluteBasePath())
+	PathFilter  PathFilter
+	OriginPatch *object.Patch
 }
 
 func (p *RelativeFilteredPatch) FilePatches() []fdiff.FilePatch {
@@ -77,38 +23,14 @@ func (p *RelativeFilteredPatch) FilePatches() []fdiff.FilePatch {
 		from, to := fp.Files()
 
 		if from != nil {
-			if !p.IsInPath(from.Path()) {
+			if !p.PathFilter.IsFilePathValid(from.Path()) {
 				continue
-			}
-
-			if len(p.IncludePaths) > 0 {
-				if !IsPathMatchesOneOfPatterns(from.Path(), p.IncludePaths) {
-					continue
-				}
-			}
-
-			if len(p.ExcludePaths) > 0 {
-				if IsPathMatchesOneOfPatterns(from.Path(), p.ExcludePaths) {
-					continue
-				}
 			}
 		}
 
 		if to != nil {
-			if !p.IsInPath(to.Path()) {
+			if !p.PathFilter.IsFilePathValid(to.Path()) {
 				continue
-			}
-
-			if len(p.IncludePaths) > 0 {
-				if !IsPathMatchesOneOfPatterns(to.Path(), p.IncludePaths) {
-					continue
-				}
-			}
-
-			if len(p.ExcludePaths) > 0 {
-				if IsPathMatchesOneOfPatterns(to.Path(), p.ExcludePaths) {
-					continue
-				}
 			}
 		}
 
@@ -135,7 +57,7 @@ func (p *RelativeFilteredPatch) String() string {
 	buf := bytes.NewBuffer(nil)
 	err := p.Encode(buf)
 	if err != nil {
-		return fmt.Sprintf("malformed patch: %s", err.Error())
+		panic(fmt.Sprintf("malformed patch: %s", err.Error()))
 	}
 
 	return buf.String()
@@ -188,19 +110,10 @@ func (f *RelativeFilteredFile) GetAbsolutePath() string {
 }
 
 func (f *RelativeFilteredFile) Path() string {
-	if !f.FilePatch.Patch.IsInPath(f.GetAbsolutePath()) {
-		panic(fmt.Errorf("failed assertion: patch path `%s` is not in base path `%s`", f.GetAbsolutePath(), f.FilePatch.Patch.GetAbsoluteBasePath()))
+	if !f.FilePatch.Patch.PathFilter.IsFilePathValid(f.OriginFile.Path()) {
+		panic(fmt.Errorf("failed assertion: patch path `%s` is not suitable for patch path filter %+v", f.OriginFile.Path(), f.FilePatch.Patch.PathFilter))
 	}
 
-	if f.GetAbsolutePath() == f.FilePatch.Patch.GetAbsoluteBasePath() {
-		// FilePatch path is always a path to a file, not a directory.
-		// Thus if BasePath is equal FilePatch path, then BasePath is a path to the file.
-		// Return file name in this case by convention.
-		return filepath.Base(f.GetAbsolutePath())
-	}
-
-	return strings.TrimPrefix(
-		strings.TrimPrefix(f.GetAbsolutePath(), f.FilePatch.Patch.GetAbsoluteBasePath()),
-		"/",
-	)
+	// f.OriginFile.Path() should be always a path to the file, not a directory
+	return f.FilePatch.Patch.PathFilter.TrimFileBasePath(f.OriginFile.Path())
 }

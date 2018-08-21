@@ -1,5 +1,7 @@
 package build
 
+import "fmt"
+
 type Stage interface {
 	GetPrevStage() Stage
 	GetImage() Image
@@ -21,5 +23,9 @@ func (stage *StubStage) GetImage() Image {
 }
 
 func (stage *StubStage) LayerCommit(gitArtifact *GitArtifact) (string, error) {
-	return stage.LayerCommitMap[gitArtifact.Paramshash], nil
+	if commit, hasKey := stage.LayerCommitMap[gitArtifact.Paramshash]; hasKey {
+		return commit, nil
+	}
+
+	panic(fmt.Errorf("assertion failed: StubStage layer commit should be present for git `%s`", gitArtifact.Paramshash))
 }
