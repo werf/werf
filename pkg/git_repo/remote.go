@@ -2,15 +2,17 @@ package git_repo
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/flant/dapp/pkg/lock"
 	"gopkg.in/ini.v1"
 	"gopkg.in/satori/go.uuid.v1"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 type Remote struct {
@@ -146,6 +148,10 @@ func (repo *Remote) Fetch() error {
 	})
 }
 
+func (repo *Remote) ArchiveType(opts ArchiveOptions) (ArchiveType, error) {
+	return repo.archiveType(repo.ClonePath, opts)
+}
+
 func (repo *Remote) HeadCommit() (string, error) {
 	branchName, err := repo.HeadBranchName()
 	if err != nil {
@@ -230,10 +236,22 @@ func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 	return res, nil
 }
 
-func (repo *Remote) Diff(basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (string, error) {
-	return repo.diff(repo.ClonePath, basePath, fromCommit, toCommit, includePaths, excludePaths)
+func (repo *Remote) CreatePatch(output io.Writer, opts PatchOptions) error {
+	return repo.createPatch(repo.ClonePath, output, opts)
 }
 
-func (repo *Remote) IsAnyChanges(basePath string, fromCommit, toCommit string, includePaths, excludePaths []string) (bool, error) {
-	return repo.isAnyChanges(repo.ClonePath, basePath, fromCommit, toCommit, includePaths, excludePaths)
+func (repo *Remote) IsAnyChanges(opts PatchOptions) (bool, error) {
+	return repo.isAnyChanges(repo.ClonePath, opts)
+}
+
+func (repo *Remote) IsAnyEntries(opts ArchiveOptions) (bool, error) {
+	return repo.isAnyEntries(repo.ClonePath, opts)
+}
+
+func (repo *Remote) CreateArchiveTar(output io.Writer, opts ArchiveOptions) error {
+	return repo.createArchiveTar(repo.ClonePath, output, opts)
+}
+
+func (repo *Remote) HasBinaryPatches(opts PatchOptions) (bool, error) {
+	return repo.hasBinaryPatches(repo.ClonePath, opts)
 }

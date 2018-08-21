@@ -19,8 +19,17 @@ module Dapp
 
           def get_ruby2go_state_hash
             {}.tap {|hash|
+              # NOTICE: Delete this when stage has been moved to go.
+              # NOTICE: This is data for build.StubStage and build.StubImage.
+
               hash["Image"] = {
-                "Labels" => image.labels,
+                "Labels" => image.labels
+                  .map{|k,v| [k.to_s, v.to_s]}
+                  .to_h,
+                "ServiceChangeLabels" => image.send(:service_change_options)
+                  .fetch(:label, {})
+                  .map{|k,v| [k.to_s, v.to_s]}
+                  .to_h,
               }
 
               if prev_stage
@@ -30,6 +39,15 @@ module Dapp
           end
 
           def set_ruby2go_state_hash(hash)
+            if prev_stage
+              prev_stage.set_ruby2go_state_hash(hash["PrevStage"])
+            end
+
+            # NOTICE: This is data from build.StubImage.
+
+            hash["Image"]["ServiceChangeLabels"].each do |k, v|
+              image.add_service_change_label(k.to_sym => v)
+            end
           end
 
           # rubocop:disable Metrics/PerceivedComplexity

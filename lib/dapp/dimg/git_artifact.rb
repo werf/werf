@@ -181,7 +181,31 @@ module Dapp
         end
       end
 
+      def disable_go_git?
+        dev_mode? || !!ENV["DAPP_DISABLE_GO_GIT"] || begin
+          # TODO: check if has submodules
+          false
+        end
+      end
+
       def apply_archive_command(stage)
+        return apply_archive_command_old(stage) if disable_go_git?
+
+        res = repo.dapp.ruby2go_git_artifact(
+          "GitArtifact" => JSON.dump(get_ruby2go_state_hash),
+          "method" => "ApplyArchiveCommand",
+          "Stage" => JSON.dump(get_stub_stage_state(stage)),
+        )
+
+        raise res["error"] if res["error"]
+
+        self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
+        stage.set_ruby2go_state_hash(JSON.load(res["data"]["Stage"]))
+
+        res["data"]["result"]
+      end
+
+      def apply_archive_command_old(stage)
         [].tap do |commands|
           if archive_any_changes?(stage)
             case cwd_type(stage)
@@ -204,24 +228,25 @@ module Dapp
         stage.prev_stage.image.labels[repo.dapp.dimgstage_g_a_type_label(paramshash)].to_s.to_sym
       end
 
+      def get_stub_stage_state(stage)
+        stage.get_ruby2go_state_hash.tap do |stage_state|
+          # Data for StubStage specific for ApplyPatchCommand
+          stage_state["LayerCommitMap"] = {
+            paramshash => stage.layer_commit(self),
+          }
+          stage_state["PrevStage"]["LayerCommitMap" ] = {
+            paramshash => stage.prev_stage.layer_commit(self),
+          }
+        end
+      end
+
       def apply_patch_command(stage)
-        return apply_patch_command_old(stage) if dev_mode?
-
-        # TODO: call old version in dev-mode
-        stage_state = stage.get_ruby2go_state_hash
-
-        # Data for StubStage specific for ApplyPatchCommand
-        stage_state["LayerCommitMap"] = {
-          paramshash => stage.layer_commit(self),
-        }
-        stage_state["PrevStage"]["LayerCommitMap" ] = {
-          paramshash => stage.prev_stage.layer_commit(self),
-        }
+        return apply_patch_command_old(stage) if disable_go_git?
 
         res = repo.dapp.ruby2go_git_artifact(
           "GitArtifact" => JSON.dump(get_ruby2go_state_hash),
           "method" => "ApplyPatchCommand",
-          "Stage" => JSON.dump(stage_state),
+          "Stage" => JSON.dump(get_stub_stage_state(stage)),
         )
 
         raise res["error"] if res["error"]
@@ -344,6 +369,8 @@ module Dapp
           "Paramshash" => paramshash.to_s,
           "PatchesDir" => dimg.tmp_path('patches'),
           "ContainerPatchesDir" => dimg.container_tmp_path('patches'),
+          "ArchivesDir" => dimg.tmp_path('archives'),
+          "ContainerArchivesDir" => dimg.container_tmp_path('archives'),
         }.tap {|res|
           if repo.is_a? ::Dapp::Dimg::GitRepo::Local
             res["LocalGitRepo"] = repo.get_ruby2go_state_hash
@@ -405,7 +432,7 @@ module Dapp
       end
 
       def paramshash
-        hexdigest full_name, to, cwd, *include_paths, *exclude_paths, owner, group
+        hexdigest full_name, to, cwd, *include_paths(true), *exclude_paths(true), owner, group
       end
 
       def full_name
