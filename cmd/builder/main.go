@@ -76,7 +76,12 @@ func main() {
 						return nil
 					}
 				case "ansible":
-					if err := docker.Init(); err != nil {
+					hostDockerConfigDir, err := ruby2go.StringOptionFromArgs("host_docker_config_dir", args)
+					if err != nil {
+						return err
+					}
+
+					if err := docker.Init(hostDockerConfigDir); err != nil {
 						return err
 					}
 
