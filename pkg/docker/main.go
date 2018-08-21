@@ -2,6 +2,7 @@ package docker
 
 import (
 	"github.com/docker/cli/cli/command"
+	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
@@ -14,7 +15,11 @@ var (
 	apiClient *client.Client
 )
 
-func Init() error {
+func Init(dockerConfigDir string) error {
+	if dockerConfigDir != "" {
+		cliconfig.SetDir(dockerConfigDir)
+	}
+
 	if err := setDockerClient(); err != nil {
 		return err
 	}

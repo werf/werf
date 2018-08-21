@@ -11,6 +11,7 @@ module Dapp
         end
 
         def ruby2go_dappdeps_command(dappdeps:, command:, **options)
+          (options[:options] ||= {}).merge!(host_docker_config_dir: self.class.host_docker_config_dir)
           ruby2go_dappdeps(dappdeps: dappdeps, command: command, **options).tap do |res|
             unless res["error"].nil?
               raise Error::Dapp, code: :ruby2go_dappdeps_command_failed_unexpected_error,

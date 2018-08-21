@@ -21,6 +21,7 @@ module Dapp
       end
 
       def ruby2go_builder_command(command:, **options)
+        (options[:options] ||= {}).merge!(host_docker_config_dir: dimg.dapp.class.host_docker_config_dir)
         builder = self.class.name.split("::").last.downcase
         command_options = {
           builder: builder,
