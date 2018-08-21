@@ -405,7 +405,7 @@ module Dapp
       end
 
       def paramshash
-        hexdigest full_name, to, cwd, *include_paths, *exclude_paths, owner, group
+        hexdigest full_name, to, cwd, *include_paths(true), *exclude_paths(true), owner, group
       end
 
       def full_name
