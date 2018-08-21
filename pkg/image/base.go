@@ -52,7 +52,7 @@ func (i *Base) GetInspect() (*types.ImageInspect, error) {
 }
 
 func (i *Base) resetInspect() error {
-	inspect, err := docker.ImageInspectWithRaw(i.Name)
+	inspect, err := docker.ImageInspect(i.Name)
 	if err != nil {
 		return err
 	}
@@ -63,4 +63,14 @@ func (i *Base) resetInspect() error {
 
 func (i *Base) UnsetInspect() {
 	i.Inspect = nil
+}
+
+func (i *Base) Untag() error {
+	if err := docker.CliRmi(i.Name); err != nil {
+		return err
+	}
+
+	i.UnsetInspect()
+
+	return nil
 }

@@ -38,13 +38,6 @@ module Dapp
 
           def proper_all
             flush_by_label('dapp')
-            remove_build_dir
-          end
-
-          def remove_build_dir
-            build_path.tap { |p| log_step_with_indent(:build_dir) { FileUtils.rm_rf(p) } }
-          rescue ::Dapp::Error::Dapp => e
-            raise unless e.net_status[:code] == :dappfile_not_found
           end
 
           def proper_dev_mode_cache
@@ -71,19 +64,11 @@ module Dapp
           end
 
           def proper_cache_all_images_names
-            shellout!(%(#{host_docker} images --format='{{if ne "<none>" .Tag }}{{.Repository}}:{{.Tag}}{{ end }}' -f "label=dapp" -f "label=dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}"))
-              .stdout
-              .lines
-              .map(&:strip)
-              .reject(&:empty?)
+            ruby2go_image_images([{ label: "dapp" }, { label: "dapp-cache-version=#{::Dapp::BUILD_CACHE_VERSION}" }], ignore_tagless: true).map { |i| i["RepoTags"].empty? ? i["Id"] : i["RepoTags"] }.flatten
           end
 
           def dapp_images_names_by_label(label)
-            shellout!(%(#{host_docker} images --format='{{if ne "<none>" .Tag }}{{.Repository}}:{{.Tag}}{{ end }}' -f "label=dapp" -f "label=#{label}"))
-              .stdout
-              .lines
-              .map(&:strip)
-              .reject(&:empty?)
+            ruby2go_image_images([{ label: "dapp" }, { label: label }], ignore_tagless: true).map { |i| i["RepoTags"].empty? ? i["Id"] : i["RepoTags"] }.flatten
           end
         end
       end

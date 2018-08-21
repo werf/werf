@@ -29,9 +29,7 @@ func (c *container) isExist() (bool, error) {
 func (c *container) Create() error {
 	name := fmt.Sprintf("--name=%s", c.Name)
 	volume := fmt.Sprintf("--volume=%s", c.Volume)
-	args := []string{name, volume, c.ImageName}
-
-	return docker.ContainerCreate(args)
+	return docker.CliCreate(name, volume, c.ImageName)
 }
 
 func (c *container) CreateIfNotExist() error {

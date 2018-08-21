@@ -18,39 +18,46 @@ module Dapp
           end
 
           def dapp_project_image_by_id(image_id)
-            dapp_project_images.find { |image| image[:id] == image_id }
-          end
-
-          def dapp_project_image_labels(image)
-            dapp_project_image_inspect(image)['Config']['Labels']
-          end
-
-          def dapp_project_image_inspect(image)
-            image[:inspect] ||= begin
-              cmd = shellout!("#{::Dapp::Dapp.host_docker} inspect --type=image #{image[:id]}")
-              Array(JSON.parse(cmd.stdout.strip)).first || {}
-            end
+            dapp_project_images.find { |image| image["Id"] == image_id }
           end
 
           def dapp_project_images
             @dapp_project_images ||= [].tap do |images|
-              images.concat prepare_docker_images(stage_cache, dimgstage: true)
-              images.concat prepare_docker_images('-f label=dapp-dimg=true', dimg: true)
+              images.concat prepare_docker_images(extra_filters: [{ reference: stage_cache }], extra_image_fields: { dimgstage: true })
+              images.concat prepare_docker_images(extra_filters: [{ label: "dapp-dimg=true" }], extra_image_fields: { dimg: true })
             end
           end
 
-          def prepare_docker_images(extra_args, **extra_fields)
-            [].tap do |images|
-              shellout!(%(#{host_docker} images --format='{{if ne "<none>" .Tag }}{{.ID}};{{.Repository}}:{{.Tag}};{{.CreatedAt}}{{ end }}' -f "dangling=false" -f "label=dapp=#{name}" --no-trunc #{extra_args}))
-                .stdout
-                .lines
-                .map(&:strip)
-                .reject(&:empty?)
-                .each do |l|
-                id, name, created_at = l.split(';')
-                images << { id: id, name: name, created_at: Time.parse(created_at).to_i, **extra_fields }
+          def prepare_docker_images(extra_filters: [], extra_image_fields: {})
+            filters = []
+            filters << { dangling: "false" }
+            filters << { label: "dapp=#{name}" }
+            filters.concat(extra_filters)
+
+            ruby2go_image_images(filters, ignore_tagless: true).map { |image| image.merge(**extra_image_fields) }
+          end
+
+          def ruby2go_image_images(filters, ignore_tagless:)
+            Image::Stage.ruby2go_command(self, command: :images, options: { filters: filters }).tap do |images|
+              if ignore_tagless
+                break images.select do |image|
+                  image["RepoTags"].reject! { |tag| tag.split(":").last == '<none>' }
+                  !image["RepoTags"].empty?
+                end
               end
             end
+          end
+
+          def ruby2go_image_containers(filters)
+            Image::Stage.ruby2go_command(self, command: :containers, options: { filters: filters })
+          end
+
+          def ruby2go_image_rm(ids, force: false)
+            Image::Stage.ruby2go_command(self, command: :rm, options: { ids: ids, force: force })
+          end
+
+          def ruby2go_image_rmi(ids, force: false)
+            Image::Stage.ruby2go_command(self, command: :rmi, options: { ids: ids, force: force })
           end
 
           def remove_project_images(project_images, force: false)
@@ -63,49 +70,51 @@ module Dapp
           end
 
           def array_hash_delete_if_by_id(project_images, *images)
-            project_images.delete_if { |image| images.flatten.any? { |i| image[:id] == i[:id] } }
+            project_images.delete_if { |image| images.flatten.any? { |i| image["Id"] == i["Id"] } }
           end
 
           def project_images_to_delete(project_images)
-            project_images.map { |image| image[:dangling] ? image[:id] : image[:name] }
+            project_images.map { |i| i["RepoTags"] }.flatten.uniq
           end
 
           def dapp_containers_flush_by_label(label)
             log_proper_containers do
-              remove_containers_by_query(%(#{host_docker} ps -a -f "label=#{label}" -f "name=dapp.build." -q --no-trunc))
+              containers = ruby2go_image_containers([{ name: "dapp.build.", label: label }])
+              remove_containers(containers.map { |c| c["Id"] })
             end
           end
 
           def dapp_dangling_images_flush_by_label(label)
             log_proper_flush_dangling_images do
-              remove_images_by_query(%(#{host_docker} images -f "dangling=true" -f "label=#{label}" -q --no-trunc))
+              images = ruby2go_image_images([{ dangling: "true", label: label }], ignore_tagless: false)
+              remove_images(images.map { |i| i["Id"] })
             end
           end
 
           def dapp_tagless_images_flush
-            remove_images_by_query(%(#{host_docker} images --format='{{if eq "<none>" .Tag }}{{.ID}}{{ end }}' -f "dangling=false" -f "label=dapp" -q --no-trunc))
-          end
-
-          def remove_images_by_query(images_query)
-            with_subquery(images_query) { |ids| remove_images(ids) }
+            remove_images begin
+              ruby2go_image_images([{ dangling: "false", label: "dapp" }], ignore_tagless: false)
+                .map { |image| image["RepoTags"].select { |tag| tag.split(":").last == "<none>" } }
+                .flatten
+            end
           end
 
           def remove_images(images_ids_or_names, force: false)
-            ids_chunks(images_ids_or_names) do |chunk|
-              chunk = ignore_used_images(chunk) unless force
-              remove_base("#{host_docker} rmi%{force_option} %{ids}", chunk, force: force)
-            end
+            proc = proc { |refs| ruby2go_image_rmi(refs, force: force) }
+            images_ids_or_names = ignore_used_images(images_ids_or_names) unless force
+            remove_base(images_ids_or_names, proc: proc)
           end
 
           def ignore_used_images(images_ids_or_names)
             not_used_images = proc do |*image_id_or_name, log: true|
-              images = image_id_or_name.flatten
-              filters = images.map { |iion| "--filter=ancestor=#{iion}" }.join(' ')
-              res = shellout!(%(#{host_docker} ps -a -q #{filters})).stdout.strip
-              if res.empty?
+              images     = image_id_or_name.flatten
+              filters    = images.map { |ref| { ancestor: ref } }
+
+              containers = ruby2go_image_containers(filters).select { |c| images.include?(c["Image"]) || images.include?(c["ImageID"]) } # ancestor filter matches containers based on its image or a descendant of it
+              if containers.empty?
                 true
               else
-                log_info("Skip `#{images.join('`, `')}` (used by containers: #{res.split.join(' ')})") if log
+                log_info("Skip `#{images.join('`, `')}` (used by containers: #{ containers.map { |c| c["Id"] }.join(' ')})") if log
                 false
               end
             end
@@ -117,35 +126,16 @@ module Dapp
             end
           end
 
-          def remove_containers_by_query(containers_query)
-            with_subquery(containers_query) { |ids| remove_containers(ids) }
-          end
-
           def remove_containers(ids)
-            ids_chunks(ids) do |chunk|
-              remove_base("#{host_docker} rm%{force_option} %{ids}", chunk, force: true)
-            end
+            proc = proc { |refs| ruby2go_image_rm(refs, force: true) }
+            remove_base(ids, proc: proc)
           end
 
-          def ids_chunks(ids, &blk)
-            return if ids.empty?
-            ids.uniq.each_slice(50, &blk)
-          end
-
-          def remove_base(query_format, ids, force: false)
-            return if ids.empty?
-            force_option = force ? ' -f' : ''
-            log(ids.join("\n")) if log_verbose? || dry_run?
-            run_command(format(query_format, force_option: force_option, ids: ids.join(' ')))
-          end
-
-          def with_subquery(query)
-            return if (res = shellout!(query).stdout.strip.lines.map(&:strip)).empty?
-            yield(res)
-          end
-
-          def run_command(cmd)
-            shellout!(cmd) unless dry_run?
+          def remove_base(ids, proc:)
+            return              if ids.empty?
+            ids.uniq!
+            log(ids.join("\n")) if dry_run?
+            proc.call(ids)      unless dry_run?
           end
 
           def dimg_import_export_base(should_be_built: true)

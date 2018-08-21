@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+
 	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/lock"
@@ -80,6 +83,10 @@ func main() {
 
 				return err
 			})
+		case "untag":
+			return image.ImageCommand(args, func(stageImage *image.Stage) error {
+				return stageImage.Untag()
+			})
 		case "export", "import", "tag":
 			return image.ImageCommand(args, func(stageImage *image.Stage) error {
 				name, err := ruby2go.StringOptionFromArgs("name", args)
@@ -110,9 +117,13 @@ func main() {
 						return nil, err
 					}
 
-					return nil, docker.ImagesSave(images, filePath)
+					var args []string
+					args = append(args, []string{"-o", filePath}...)
+					args = append(args, images...)
+
+					return nil, docker.CliSave(args...)
 				} else {
-					return nil, docker.ImagesLoad(filePath)
+					return nil, docker.CliLoad("-i", filePath)
 				}
 			case "container_run":
 				runArgs, err := stringArrayOptionFromArgs("args", args)
@@ -120,9 +131,55 @@ func main() {
 					return nil, err
 				}
 
-				return nil, docker.ContainerRun(runArgs)
+				return nil, docker.CliRun(runArgs...)
 			default:
 				return nil, fmt.Errorf("command `%s` isn't supported", cmd)
+			}
+		case "containers", "images":
+			filtersOption, err := filtersOptionFromArgs(args)
+			if err != nil {
+				return nil, err
+			}
+
+			filterSet := filters.NewArgs()
+			for _, set := range filtersOption {
+				for k, v := range set {
+					filterSet.Add(k, v)
+				}
+			}
+
+			switch cmd {
+			case "images":
+				return docker.Images(types.ImageListOptions{Filters: filterSet})
+			default: // "containers"
+				options := types.ContainerListOptions{}
+				options.All = true
+				options.Quiet = true
+				options.Filters = filterSet
+				return docker.Containers(options)
+			}
+		case "rm", "rmi":
+			ids, err := stringArrayOptionFromArgs("ids", args)
+			if err != nil {
+				return nil, err
+			}
+
+			force, err := forceOptionFromArgs(args)
+			if err != nil {
+				return nil, err
+			}
+
+			var args []string
+			if force {
+				args = append(args, fmt.Sprintf("-f"))
+			}
+			args = append(args, ids...)
+
+			switch cmd {
+			case "rm":
+				return nil, docker.CliRm(args...)
+			default: // "rmi"
+				return nil, docker.CliRmi(args...)
 			}
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)
@@ -178,4 +235,55 @@ func stringArrayOptionFromArgs(optionName string, args map[string]interface{}) (
 	default:
 		return nil, fmt.Errorf("option `%s` field value `%#v` can't be casting into []string", optionName, options[optionName])
 	}
+}
+
+func filtersOptionFromArgs(args map[string]interface{}) ([]map[string]string, error) {
+	options, err := ruby2go.OptionsFieldFromArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	filtersOption := options["filters"]
+
+	switch filtersOption.(type) {
+	case []interface{}:
+		var res []map[string]string
+		for _, elm := range filtersOption.([]interface{}) {
+			mapStringInterface, err := util.InterfaceToMapStringInterface(elm)
+			if err != nil {
+				return nil, err
+			}
+
+			mapStringString, err := mapStringInterfaceToMapStringString(mapStringInterface)
+			if err != nil {
+				return nil, fmt.Errorf("option `filters` field value `%#v` can't be casting into map[string]string: %s", filtersOption, err)
+			}
+
+			res = append(res, mapStringString)
+		}
+		return res, nil
+	default:
+		return nil, fmt.Errorf("option `filters` field value `%#v` can't be casting into map[string]string", filtersOption)
+	}
+}
+
+func mapStringInterfaceToMapStringString(req map[string]interface{}) (map[string]string, error) {
+	res := map[string]string{}
+	for key, val := range req {
+		if b, ok := val.(string); !ok {
+			return nil, fmt.Errorf("key `%s` value `%#v` can't be casting into string", key, val)
+		} else {
+			res[key] = b
+		}
+	}
+	return res, nil
+}
+
+func forceOptionFromArgs(args map[string]interface{}) (bool, error) {
+	options, err := ruby2go.OptionsFieldFromArgs(args)
+	if err != nil {
+		return false, err
+	}
+
+	return ruby2go.BoolFieldFromMapInterface("force", options)
 }
