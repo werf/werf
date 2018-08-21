@@ -68,7 +68,28 @@ module Dapp
       end
 
       def _download_ruby2go_bin(progname, bin_path)
-        # TODO
+        lock("downloader.bin.#{progname}", default_timeout: 1800) do
+          return if File.exists? bin_path
+
+          log_process("Downloading #{progname} dapp dependency") do
+            location = URI("https://dl.bintray.com/flant/dapp/#{::Dapp::VERSION}/#{progname}")
+
+            tmp_bin_path = File.join(self.class.tmp_base_dir, "#{progname}-#{SecureRandom.uuid}")
+            ::Dapp::Downloader.download(location, tmp_bin_path, show_progress: true, progress_titile: bin_path)
+
+            checksum_location = URI("https://dl.bintray.com/flant/dapp/#{::Dapp::VERSION}/#{progname}.sha")
+            tmp_bin_checksum_path = tmp_bin_path + ".checksum"
+            ::Dapp::Downloader.download(checksum_location, tmp_bin_checksum_path)
+
+            if Digest::SHA256.hexdigest(File.read(tmp_bin_path)) != File.read(tmp_bin_checksum_path).strip
+              raise ::Dapp::Error::Dapp, code: :ruby2go_download_failed_bad_checksum, data: {url: location.to_s, checksum_url: checksum_location.to_s, progname: progname}
+            end
+
+            File.chmod(0755, tmp_bin_path)
+            FileUtils.mkdir_p File.dirname(bin_path)
+            FileUtils.mv tmp_bin_path, bin_path
+          end # log_process
+        end # lock
       end
     end # Ruby2Go
   end # Dapp
