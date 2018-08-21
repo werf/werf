@@ -14,7 +14,7 @@ module Dapp
       # rubocop:disable Metrics/ParameterLists
       def initialize(repo, dimg, to:, name: nil, branch: nil, tag: nil, commit: nil,
                      cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil, as: nil,
-                     stages_dependencies: {}, ignore_signature_auto_calculation: false)
+                     stages_dependencies: {}, ignore_signature_auto_calculation: false, disable_go_git: nil)
         @repo = repo
         @dimg = dimg
         @name = name
@@ -34,6 +34,7 @@ module Dapp
         @as = as
 
         @stages_dependencies = stages_dependencies
+        @disable_go_git = disable_go_git unless disable_go_git.nil?
       end
       # rubocop:enable Metrics/ParameterLists
 
@@ -49,7 +50,7 @@ module Dapp
       end
 
       def submodule_artifact(submodule_params)
-        embedded_artifact(submodule_params)
+        embedded_artifact(**submodule_params, disable_go_git: true)
       rescue Rugged::InvalidError => e
         raise Error::Rugged, code: :git_local_incorrect_gitmodules_params, data: { error: e.message }
       end
@@ -109,6 +110,7 @@ module Dapp
           options[:group]               = group
 
           options[:ignore_signature_auto_calculation] = ignore_signature_auto_calculation
+          options[:disable_go_git] = embedded_params[:disable_go_git]
         end
       end
 
@@ -182,10 +184,16 @@ module Dapp
       end
 
       def disable_go_git?
-        dev_mode? || !!ENV["DAPP_DISABLE_GO_GIT"] || begin
-          # TODO: check if has submodules
-          false
-        end
+        return @disable_go_git unless @disable_go_git.nil?
+
+        @disable_go_git = (dev_mode? || !!ENV["DAPP_DISABLE_GO_GIT"] || begin
+          commit = dev_mode? ? nil : latest_commit
+          repo.submodules(
+            commit,
+            paths: include_paths_or_cwd,
+            exclude_paths: exclude_paths(true)
+          ).any?
+        end)
       end
 
       def apply_archive_command(stage)
