@@ -17,6 +17,39 @@ module Dapp
             @next_stage.prev_stage = self
           end
 
+          def get_ruby2go_state_hash
+            {}.tap {|hash|
+              # NOTICE: Delete this when stage has been moved to go.
+              # NOTICE: This is data for build.StubStage and build.StubImage.
+
+              hash["Image"] = {
+                "Labels" => image.labels
+                  .map{|k,v| [k.to_s, v.to_s]}
+                  .to_h,
+                "ServiceChangeLabels" => image.send(:service_change_options)
+                  .fetch(:label, {})
+                  .map{|k,v| [k.to_s, v.to_s]}
+                  .to_h,
+              }
+
+              if prev_stage
+                hash["PrevStage"] = prev_stage.get_ruby2go_state_hash
+              end
+            }
+          end
+
+          def set_ruby2go_state_hash(hash)
+            if prev_stage
+              prev_stage.set_ruby2go_state_hash(hash["PrevStage"])
+            end
+
+            # NOTICE: This is data from build.StubImage.
+
+            hash["Image"]["ServiceChangeLabels"].each do |k, v|
+              image.add_service_change_label(k.to_sym => v)
+            end
+          end
+
           # rubocop:disable Metrics/PerceivedComplexity
           def build_lock!
             return yield if dimg.dapp.dry_run?
@@ -27,7 +60,7 @@ module Dapp
               no_lock = false
 
               dimg.dapp.lock("#{dimg.dapp.name}.image.#{image.name}") do
-                image.class.reset_image_inspect(image.name)
+                image.reset_image_inspect
 
                 if image_should_be_locked?
                   yield
@@ -81,7 +114,7 @@ module Dapp
 
             if dimg.dapp.ssh_auth_sock
               image.add_volume "#{dimg.dapp.ssh_auth_sock}:/tmp/dapp-ssh-agent"
-              image.add_env 'SSH_AUTH_SOCK', '/tmp/dapp-ssh-agent'
+              image.add_env SSH_AUTH_SOCK: '/tmp/dapp-ssh-agent'
             end
 
             yield if block_given?
@@ -208,8 +241,8 @@ module Dapp
 
           def renew
             commits_discard
-            image_reset
             image_untag! if image_should_be_untagged?
+            image_reset
           end
 
           def image_reset
@@ -246,7 +279,7 @@ module Dapp
 
           def introspect_image_default(introspected_image)
             if introspected_image.built?
-              dimg.introspect_image!(image: introspected_image.built_id, options: image.send(:prepared_options))
+              introspected_image.introspect!
             else
               dimg.dapp.log_warning(desc: { code: :introspect_image_impossible, data: { name: name } })
             end

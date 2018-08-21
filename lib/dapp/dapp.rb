@@ -21,6 +21,7 @@ module Dapp
 
     include SshAgent
     include Sentry
+    include Ruby2Go
 
     include Helper::Sha256
     extend  Helper::Trivia
@@ -28,6 +29,7 @@ module Dapp
     include Helper::Tar
     include Helper::Url
 
+    include Deps::Common
     include Deps::Toolchain
     include Deps::Gitartifact
     include Deps::Base
@@ -36,6 +38,13 @@ module Dapp
 
     attr_reader :options
 
+    def get_ruby2go_state_hash
+      {
+        "Name" => name.to_s,
+        "WorkDir" => work_dir.to_s,
+      }
+    end
+
     def initialize(options: {})
       self.class.options.merge!(options)
       Logging::I18n.initialize
@@ -43,6 +52,9 @@ module Dapp
       Logging::Paint.initialize(option_color)
 
       @_call_before_terminate = []
+      @_call_after_before_terminate = []
+
+      ruby2go_init
     end
 
     def options
@@ -148,6 +160,7 @@ module Dapp
 
     def terminate
       @_call_before_terminate.each {|on_terminate| on_terminate.call(self)}
+      @_call_after_before_terminate.each {|on_terminate| on_terminate.call(self)}
       FileUtils.rmtree(host_docker_tmp_config_dir)
     end
 

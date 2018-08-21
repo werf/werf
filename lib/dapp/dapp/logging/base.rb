@@ -27,15 +27,15 @@ module Dapp
         end
 
         def ignore_config_warning?
-          options[:ignore_config_warning]
+          !!options[:ignore_config_warning]
         end
 
         def introspect_error?
-          options[:introspect_error]
+          !!options[:introspect_error]
         end
 
         def introspect_before_error?
-          options[:introspect_before_error]
+          !!options[:introspect_before_error]
         end
 
         def dry_run?

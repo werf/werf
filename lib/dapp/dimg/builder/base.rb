@@ -72,11 +72,6 @@ module Dapp
       def build_artifact_checksum
         raise
       end
-
-      def _checksum(*args)
-        return if (format_args = args.flatten.compact.delete_if { |val| val.respond_to?(:empty?) && val.empty? }).empty?
-        dimg.hashsum format_args
-      end
     end # Builder::Base
   end # Dimg
 end # Dapp

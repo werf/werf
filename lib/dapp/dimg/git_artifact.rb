@@ -14,7 +14,7 @@ module Dapp
       # rubocop:disable Metrics/ParameterLists
       def initialize(repo, dimg, to:, name: nil, branch: nil, tag: nil, commit: nil,
                      cwd: nil, include_paths: nil, exclude_paths: nil, owner: nil, group: nil, as: nil,
-                     stages_dependencies: {}, ignore_signature_auto_calculation: false)
+                     stages_dependencies: {}, ignore_signature_auto_calculation: false, disable_go_git: nil)
         @repo = repo
         @dimg = dimg
         @name = name
@@ -34,6 +34,7 @@ module Dapp
         @as = as
 
         @stages_dependencies = stages_dependencies
+        @disable_go_git = disable_go_git unless disable_go_git.nil?
       end
       # rubocop:enable Metrics/ParameterLists
 
@@ -49,7 +50,7 @@ module Dapp
       end
 
       def submodule_artifact(submodule_params)
-        embedded_artifact(submodule_params)
+        embedded_artifact(**submodule_params, disable_go_git: true)
       rescue Rugged::InvalidError => e
         raise Error::Rugged, code: :git_local_incorrect_gitmodules_params, data: { error: e.message }
       end
@@ -109,6 +110,7 @@ module Dapp
           options[:group]               = group
 
           options[:ignore_signature_auto_calculation] = ignore_signature_auto_calculation
+          options[:disable_go_git] = embedded_params[:disable_go_git]
         end
       end
 
@@ -181,7 +183,37 @@ module Dapp
         end
       end
 
+      def disable_go_git?
+        return @disable_go_git unless @disable_go_git.nil?
+
+        @disable_go_git = (dev_mode? || !!ENV["DAPP_DISABLE_GO_GIT"] || begin
+          commit = dev_mode? ? nil : latest_commit
+          repo.submodules(
+            commit,
+            paths: include_paths_or_cwd,
+            exclude_paths: exclude_paths(true)
+          ).any?
+        end)
+      end
+
       def apply_archive_command(stage)
+        return apply_archive_command_old(stage) if disable_go_git?
+
+        res = repo.dapp.ruby2go_git_artifact(
+          "GitArtifact" => JSON.dump(get_ruby2go_state_hash),
+          "method" => "ApplyArchiveCommand",
+          "Stage" => JSON.dump(get_stub_stage_state(stage)),
+        )
+
+        raise res["error"] if res["error"]
+
+        self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
+        stage.set_ruby2go_state_hash(JSON.load(res["data"]["Stage"]))
+
+        res["data"]["result"]
+      end
+
+      def apply_archive_command_old(stage)
         [].tap do |commands|
           if archive_any_changes?(stage)
             case cwd_type(stage)
@@ -189,12 +221,12 @@ module Dapp
               stage.image.add_service_change_label(repo.dapp.dimgstage_g_a_type_label(paramshash).to_sym => 'directory')
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
+              commands << "#{sudo} #{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
             when :file
               stage.image.add_service_change_label(repo.dapp.dimgstage_g_a_type_label(paramshash).to_sym => 'file')
 
               commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-              commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
+              commands << "#{sudo} #{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
             end
           end
         end
@@ -204,7 +236,36 @@ module Dapp
         stage.prev_stage.image.labels[repo.dapp.dimgstage_g_a_type_label(paramshash)].to_s.to_sym
       end
 
+      def get_stub_stage_state(stage)
+        stage.get_ruby2go_state_hash.tap do |stage_state|
+          # Data for StubStage specific for ApplyPatchCommand
+          stage_state["LayerCommitMap"] = {
+            paramshash => stage.layer_commit(self),
+          }
+          stage_state["PrevStage"]["LayerCommitMap" ] = {
+            paramshash => stage.prev_stage.layer_commit(self),
+          }
+        end
+      end
+
       def apply_patch_command(stage)
+        return apply_patch_command_old(stage) if disable_go_git?
+
+        res = repo.dapp.ruby2go_git_artifact(
+          "GitArtifact" => JSON.dump(get_ruby2go_state_hash),
+          "method" => "ApplyPatchCommand",
+          "Stage" => JSON.dump(get_stub_stage_state(stage)),
+        )
+
+        raise res["error"] if res["error"]
+
+        self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
+        stage.set_ruby2go_state_hash(JSON.load(res["data"]["Stage"]))
+
+        res["data"]["result"]
+      end
+
+      def apply_patch_command_old(stage)
         [].tap do |commands|
           if dev_mode?
             if any_changes?(*dev_patch_stage_commits(stage))
@@ -219,12 +280,12 @@ module Dapp
 
                 commands << "#{repo.dapp.rm_bin} -rf $(#{repo.dapp.cat_bin} #{dimg.container_tmp_path('archives', files_to_remove_file_name)})"
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
+                commands << "#{sudo} #{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{to}\""
                 commands << "#{repo.dapp.find_bin} \"#{to}\" -empty -type d -delete"
               when :file
                 commands << "#{repo.dapp.rm_bin} -rf \"#{to}\""
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-                commands << "#{sudo}#{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
+                commands << "#{sudo} #{repo.dapp.tar_bin} -xf #{archive_file(stage)} -C \"#{File.dirname(to)}\""
               else
                 raise
               end
@@ -234,10 +295,10 @@ module Dapp
               case archive_type(stage)
               when :directory
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{to}\""
-                commands << "#{sudo}#{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{to}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
+                commands << "#{sudo} #{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{to}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
               when :file
                 commands << "#{repo.dapp.install_bin} #{credentials.join(' ')} -d \"#{File.dirname(to)}\""
-                commands << "#{sudo}#{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{File.dirname(to)}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
+                commands << "#{sudo} #{repo.dapp.git_bin} apply --whitespace=nowarn --directory=\"#{File.dirname(to)}\" --unsafe-paths #{patch_file(stage, *patch_stage_commits(stage))}"
               else
                 raise
               end
@@ -298,21 +359,81 @@ module Dapp
         end
       end
 
+      def get_ruby2go_state_hash
+        {
+          "Name" => @name.to_s,
+          "As" => @as.to_s,
+          "Branch" => @branch.to_s,
+          "Tag" => @tag.to_s,
+          "Commit" => @commit.to_s,
+          "To" => @to.to_s,
+          "Cwd" => @cwd.to_s,
+          "RepoPath" => File.join("/", @cwd.to_s),
+          "Owner" => @owner.to_s,
+          "Group" => @group.to_s,
+          "IncludePaths" => include_paths(true),
+          "ExcludePaths" => exclude_paths(true),
+          "StagesDependencies" => @stages_dependencies.map {|k, v| [_stages_map[k], Array(v).map(&:to_s)]}.to_h,
+          "Paramshash" => paramshash.to_s,
+          "PatchesDir" => dimg.tmp_path('patches'),
+          "ContainerPatchesDir" => dimg.container_tmp_path('patches'),
+          "ArchivesDir" => dimg.tmp_path('archives'),
+          "ContainerArchivesDir" => dimg.container_tmp_path('archives'),
+        }.tap {|res|
+          if repo.is_a? ::Dapp::Dimg::GitRepo::Local
+            res["LocalGitRepo"] = repo.get_ruby2go_state_hash
+          elsif repo.is_a? ::Dapp::Dimg::GitRepo::Remote
+            res["RemoteGitRepo"] = repo.get_ruby2go_state_hash
+          else
+            raise
+          end
+        }
+      end
+
+      def _stages_map
+        {
+          before_install: "beforeInstall",
+          install: "install",
+          before_setup: "beforeSetup",
+          setup: "setup",
+          build_artifact: "buildArtifact",
+        }
+      end
+
+      def _stages_map_reversed
+        _stages_map.map {|k, v| [v, k]}.to_h
+      end
+
+      def set_ruby2go_state_hash(new_state)
+        [
+          [:@name, new_state["Name"]],
+          [:@as, new_state["As"]],
+          [:@branch, new_state["Branch"]],
+          [:@tag, new_state["Tag"]],
+          [:@commit, new_state["Commit"]],
+          [:@cwd, new_state["Cwd"]],
+          [:@owner, new_state["Owner"]],
+          [:@group, new_state["Group"]],
+        ].each do |var, new_value|
+          if new_value != ""
+            instance_variable_set(var, new_value)
+          end
+        end
+
+        @stages_dependencies = new_state["StagesDependencies"].map do |k, v|
+          [_stages_map_reversed[k], v]
+        end.to_h
+      end
+
       def latest_commit
         @latest_commit ||= begin
-          commit || begin
-            if !tag.nil?
-              repo.latest_tag_commit(tag)
-            elsif !branch.nil?
-              repo.latest_branch_commit(branch)
-            else
-              if local?
-                repo.head_commit
-              else
-                repo.latest_branch_commit(repo.branch)
-              end
-            end
-          end
+          res = repo.dapp.ruby2go_git_artifact("GitArtifact" => JSON.dump(get_ruby2go_state_hash), "method" => "LatestCommit")
+
+          raise res["error"] if res["error"]
+
+          self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
+
+          res["data"]["result"]
         end.tap do |c|
           repo.dapp.log_info("Repository `#{repo.name}`: latest commit `#{c}` to `#{to}`") unless ignore_signature_auto_calculation
         end

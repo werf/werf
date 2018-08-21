@@ -13,6 +13,13 @@ module Dapp
       attr_reader :should_be_built
       attr_reader :dapp
 
+      def get_ruby2go_state_hash
+        {
+          "Dapp" => dapp.get_ruby2go_state_hash,
+          "TmpPath" => tmp_path.to_s,
+        }
+      end
+
       def initialize(config:, dapp:, should_be_built: false, ignore_signature_auto_calculation: false)
         @config = config
         @dapp = dapp
@@ -42,15 +49,13 @@ module Dapp
       end
 
       def build!
-        with_introspection do
-          dapp.lock("#{dapp.name}.images", readonly: true) do
-            last_stage.build_lock! do
-              begin
-                builder.before_build_check
-                last_stage.build!
-              ensure
-                after_stages_build!
-              end
+        dapp.lock("#{dapp.name}.images", readonly: true) do
+          last_stage.build_lock! do
+            begin
+              builder.before_build_check
+              last_stage.build!
+            ensure
+              after_stages_build!
             end
           end
         end
@@ -157,7 +162,6 @@ module Dapp
           dapp.log_state(image_name, state: dapp.t(code: push ? 'state.push' : 'state.export'), styles: { status: :success })
         else
           dapp.lock("image.#{hashsum image_name}") do
-            ::Dapp::Dimg::Image::Docker.reset_image_inspect(image_name)
             dapp.log_process(image_name, process: dapp.t(code: push ? 'status.process.pushing' : 'status.process.exporting')) { yield }
           end
         end
@@ -208,11 +212,12 @@ module Dapp
       def run_stage(stage_name, docker_options, command)
         stage_image = (stage_name.nil? ? last_stage : stage_by_name(stage_name)).image
         raise Error::Dimg, code: :dimg_stage_not_built, data: { stage_name: stage_name } unless stage_image.built?
-        cmd = "#{dapp.host_docker} run #{[docker_options, stage_image.built_id, command].flatten.compact.join(' ')}"
+
+        args = [docker_options, stage_image.built_id, command].flatten.compact
         if dapp.dry_run?
-          dapp.log(cmd)
+          dapp.log("docker run #{args.join(' ')}")
         else
-          system(cmd) || raise(Error::Dimg, code: :dimg_not_run)
+          Image::Stage.ruby2go_command(dapp, command: :container_run, options: { args: args })
         end
       end
 
@@ -244,11 +249,6 @@ module Dapp
         [::Dapp::BUILD_CACHE_VERSION, dev_mode? ? 1 : 0]
       end
 
-      def introspect_image!(image:, options:)
-        cmd = "#{dapp.host_docker} run -ti --rm --entrypoint #{dapp.bash_bin} #{options} #{image}"
-        system(cmd)
-      end
-
       def cleanup_tmp
         return unless tmp_dir_exists?
 
@@ -256,14 +256,14 @@ module Dapp
         # Такие файлы могут попасть туда при экспорте файлов артефакта.
         # Чтобы от них избавиться — запускаем docker-контейнер под root-пользователем
         # и удаляем примонтированную tmp-директорию.
-        cmd = "".tap do |cmd|
-          cmd << "#{dapp.host_docker} run --rm"
-          cmd << " --volume #{dapp.tmp_base_dir}:#{dapp.tmp_base_dir}"
-          cmd << " --label dapp=#{dapp.name}"
-          cmd << " alpine:3.6"
-          cmd << " rm -rf #{tmp_path}"
-        end
-        dapp.shellout! cmd
+        args = [
+          "--rm",
+          "--volume=#{dapp.tmp_base_dir}:#{dapp.tmp_base_dir}",
+          "--label=dapp=#{dapp.name}",
+          "alpine:3.6",
+          "rm", "-rf", tmp_path
+        ]
+        Image::Stage.ruby2go_command(dapp, command: :container_run, options: { args: args })
       end
 
       def stage_should_be_introspected_before_build?(name)
@@ -281,14 +281,6 @@ module Dapp
           builder.before_dimg_should_be_built_check
           !last_stage.image.tagged?
         end
-      end
-
-      def with_introspection
-        yield
-      rescue Exception::IntrospectImage => e
-        data = e.net_status[:data]
-        introspect_image!(image: data[:built_id], options: data[:options])
-        raise data[:error]
       end
     end # Dimg
   end # Dimg
