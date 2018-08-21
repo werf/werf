@@ -1,5 +1,5 @@
 ---
-title: Добавление кода в образ директивой git
+title: Adding source code with `git` directive
 sidebar: reference
 permalink: git.html
 folder: directive
@@ -7,9 +7,29 @@ folder: directive
 
 Для добавления кода в собираемый образ, предусмотрена директива `git`, с помощью которой можно добавить код из локального или удаленного репозитория (включая сабмодули) как в образ приложения так и в образ артефакта.
 
+With `git` directive dapp can add source code from a Git repository to an image.
+It supports both local and remote repositories, including submodules,
+and can build both application and artifact images.
+
 При первой сборке образа с указанием директивы `git`, в него добавляется содержимое git репозитория (стадия `g_a_archive`) согласно соответствующих инструкций. При последующих сборках образа, изменения в git репозитории добавляются отдельным docker-слоем, который содержит git-патч (git patch apply). Содержимое таких docker-слоев с патчами также кешируется, что еще более повышает скорость сборки. В случае отмены сделанных изменений в исходном коде приложения (например, через git revert), при сборке будет накладываться патч с отменой изменений, будет использоваться слой из кеша.
 
+When dapp first builds an image from a dappfile with `git` directive, it adds source code from a Git repository to the image.
+This happens on the `g_a_archive` stage.
+On next builds dapp does not create new images with a full copies of source code.
+Instead, it generates git patches (with `git patch apply`) and applies them as image layers.
+Dapp caches these image layers to boost build speed.
+If changes in source code are undone, for example with `git revert`, dapp detects that and reuses a cached layer.
+
+## Building artifacts
+
 Сборка образов артефактов отличается отсутствием стадии `latest_patch`, т.о. при первой сборке образа артефакта используются текущие состояния git-репозиториев и при последующих сборках образы артефактов не пересобираются (при условии, что отсутствуют зависимости пользовательских стадий от файлов, описанных с помощью директивы `stageDependencies`, о чем см. ниже).
+
+Building artifacts is different from building applications: there is no `latest_patch` stage.
+When dapp first builds an artifact image, it uses the current
+On next builds the artifact images are not rebuilt.
+
+An exception is when user stages are dependent on files, listed in `stageDependencies` directive.
+This will be explained further in TODO.
 
 Система кеширования dapp принимает решение о необходимости повторной сборки стадии или использовании кеша, на основании вычисления [сигнатуры стадии](stages_diagram.html), которая не зависит напрямую от состояния git репозитория. Т.о., если не указать это явно (см далее про директиву `stageDependencies`), то изменения только кода в git репозитории не приведут к повторной сборке пользовательской стадии (`before_install`, `install`, `before_setup`, `setup`, `build_artifact`). Чтобы явно определить зависимость от файлов и папок, при изменении которых сборщику необходимо выполнить принудительную сборку определенных пользовательских стадий, в директиве `git` предусмотрена директива `stageDependencies` (`stage_dependencies` для Ruby синтаксиса).
 
@@ -18,6 +38,8 @@ folder: directive
 Количество указаний директивы `git` в описании образа не ограничено, но нужно стремиться к их уменьшению, путем правильного использования `includePaths` и `excludePaths`.
 
 ## Общие особенности использования
+
+## General Features 
 
 * пути добавления не должны пересекаться между артефактами;
 * описание сборки образа (`dimg` или `artifact`) может содержать любое количество git-директив;
