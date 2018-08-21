@@ -4,11 +4,12 @@ set -e
 #BINTRAY_AUTH=          # bintray auth user:TOKEN
 BINTRAY_SUBJECT=flant  # bintray organization
 BINTRAY_REPO=dapp      # bintray repository
-BINTRAY_PACKAGE=dappfile-yml  # bintray package in repository
+BINTRAY_PACKAGE=ruby2go  # bintray package in repository
 
 GITHUB_OWNER=flant     # github user/org
 GITHUB_REPO=dapp       # github repository
 
+RUBY2GO_BINARIES_NAMES=$(ls cmd)
 UPLOAD_FROM_DIR=$GOPATH/bin
 
 GIT_REMOTE=origin      # can be changed to upstream with env
@@ -46,19 +47,17 @@ main() {
   # change to *contents to get commit message
   TAG_RELEASE_MESSAGE=$($gitPath for-each-ref --format="%(contents)" refs/tags/$GIT_TAG | jq -R -s '.' )
 
-  if [ -e ./dapp.gemspec ] ; then
-    build_gem && echo "Build gem is successful" || ( exit 1 )
-  fi
-  if [ -e ./cmd/dappfile-yml ] ; then
-    build_go && echo "Build go program is successful" || ( exit 1 )
-  fi
-
+  build_gem && echo "Build gem is successful" || ( exit 1 )
+  build_go && echo "Build go program is successful" || ( exit 1 )
 
   echo "Publish version $VERSION from git tag $GIT_TAG"
   if [ -n "$BINTRAY_AUTH" ] ; then
     ( bintray_create_version && echo "Bintray: Version $VERSION created" ) || ( exit 1 )
-    ( bintray_upload_file dappfile-yml ) || ( exit 1 )
-    ( bintray_upload_file dappfile-yml.sha ) || ( exit 1 )
+
+    for bin in $RUBY2GO_BINARIES_NAMES ; do
+      ( bintray_upload_file $bin ) || ( exit 1 )
+      ( bintray_upload_file $bin.sha ) || ( exit 1 )
+    done
   fi
 
   if [ -n "$GITHUB_TOKEN" ] ; then
@@ -80,8 +79,7 @@ build_gem() {
 }
 
 build_go() {
-  echo "Building dappfile-yml binary"
-  rm -f dappfile-yml dappfile-yml.sha
+  echo "Building ruby2go binary dependencies"
 
   if ! ./go-get.sh ; then
     return 1
@@ -91,7 +89,9 @@ build_go() {
     return 1
   fi
 
-  sha256sum $UPLOAD_FROM_DIR/dappfile-yml | cut -d' ' -f 1 > $UPLOAD_FROM_DIR/dappfile-yml.sha
+  for bin in $RUBY2GO_BINARIES_NAMES ; do
+    sha256sum $UPLOAD_FROM_DIR/$bin | cut -d' ' -f 1 > $UPLOAD_FROM_DIR/$bin.sha
+  done
 }
 
 bintray_create_version() {
