@@ -67,8 +67,13 @@ module Dapp
         def submodule_params(submodule)
           {}.tap do |params|
             params[:path]   = submodule.path
-            params[:url]    = submodule_url(submodule.url)
-            params[:type]   = begin
+            params[:url]    = begin
+              params_url = submodule_url(submodule.url)
+              params_url = "#{params_url}.git" if url_protocol(params[:url]) != :noname && !params_url.end_with?('.git')
+              params_url
+            end # https://github.com/libgit2/rugged/issues/761
+
+            params[:type] = begin
               if url_protocol(params[:url]) == :noname
                 submodule_absolute_path = File.join(File.dirname(path), params[:path])
                 dapp.log_warning(desc: { code: :submodule_url_scheme_not_detected,

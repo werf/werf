@@ -52,6 +52,14 @@ module Dapp
           end.compact
         end
 
+        def submodules_git(commit)
+          if commit.nil?
+            git
+          else
+            super
+          end
+        end
+
         def raise_submodule_commit_not_found!(commit)
           raise Error::Rugged, code: :git_local_submodule_commit_not_found, data: { commit: commit, path: path }
         end

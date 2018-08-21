@@ -4,7 +4,7 @@ module Dapp
       module Stage
         class From < Base
           def dependencies
-            @dependencies ||= [from_image_name, dimg.config._docker._from_cache_version, config_mounts_dirs]
+            @dependencies ||= [from_image_name, dimg.config._docker._from_cache_version, config_mounts]
           end
 
           protected
@@ -48,8 +48,15 @@ module Dapp
                                        "#{dimg.dapp.mkdir_bin} -p %s"].map { |c| format(c, config_mounts_dirs.join(' ')) }
           end
 
+          def config_mounts
+            {}.tap do |mounts|
+              [:tmp_dir, :build_dir].map { |type| mounts[type] = config_mounts_by_type(type) }
+              config_custom_dir_mounts.each { |from, to| mounts[from] = to }
+            end
+          end
+
           def config_mounts_dirs
-            ([:tmp_dir, :build_dir].map { |type| config_mounts_by_type(type) } + config_custom_dir_mounts.map(&:last)).flatten.uniq
+            config_mounts.values.flatten.uniq
           end
 
           def adding_mounts_by_type(_type)
