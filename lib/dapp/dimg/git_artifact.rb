@@ -210,7 +210,7 @@ module Dapp
         self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
         stage.set_ruby2go_state_hash(JSON.load(res["data"]["Stage"]))
 
-        res["data"]["result"]
+        Array(res["data"]["result"])
       end
 
       def apply_archive_command_old(stage)
@@ -262,7 +262,7 @@ module Dapp
         self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
         stage.set_ruby2go_state_hash(JSON.load(res["data"]["Stage"]))
 
-        res["data"]["result"]
+        Array(res["data"]["result"])
       end
 
       def apply_patch_command_old(stage)
