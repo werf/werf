@@ -17,6 +17,7 @@ var (
 	WorkingDir       string
 	ArgsFromFilePath string
 	ResultToFilePath string
+	TrapCleanupHooks []func()
 )
 
 func usage(progname string) {
@@ -123,11 +124,17 @@ func Trap() {
 				case os.Interrupt, syscall.SIGTERM:
 					if atomic.LoadUint32(&interruptCount) < 3 {
 						if atomic.AddUint32(&interruptCount, 1) == 1 {
+							for _, trapCleanupHook := range TrapCleanupHooks {
+								trapCleanupHook()
+							}
 							os.Exit(0)
 						} else {
 							return
 						}
 					}
+				}
+				for _, trapCleanupHook := range TrapCleanupHooks {
+					trapCleanupHook()
 				}
 				os.Exit(128 + int(sig.(syscall.Signal)))
 			}(sig)
