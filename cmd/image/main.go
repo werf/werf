@@ -204,11 +204,11 @@ func introspectionOptionFromArgs(args map[string]interface{}) (map[string]bool, 
 	case map[string]interface{}:
 		res, err := mapInterfaceToMapBool(options["introspection"].(map[string]interface{}))
 		if err != nil {
-			return nil, fmt.Errorf("introspection option field value `%#v` can't be casting into map[string]bool: `%s`", options["introspection"], err)
+			return nil, fmt.Errorf("introspection option field value `%#v` can't be casted into map[string]bool: `%s`", options["introspection"], err)
 		}
 		return res, nil
 	default:
-		return nil, fmt.Errorf("introspection option field value `%#v` can't be casting into map[string]bool", options["introspection"])
+		return nil, fmt.Errorf("introspection option field value `%#v` can't be casted into map[string]bool", options["introspection"])
 	}
 }
 
@@ -216,7 +216,7 @@ func mapInterfaceToMapBool(req map[string]interface{}) (map[string]bool, error) 
 	res := map[string]bool{}
 	for key, val := range req {
 		if b, ok := val.(bool); !ok {
-			return nil, fmt.Errorf("key `%s` value `%#v` can't be casting into bool", key, val)
+			return nil, fmt.Errorf("key `%s` value `%#v` can't be casted into bool", key, val)
 		} else {
 			res[key] = b
 		}
@@ -234,11 +234,11 @@ func stringArrayOptionFromArgs(optionName string, args map[string]interface{}) (
 	case []interface{}:
 		res, err := util.InterfaceArrayToStringArray(options[optionName].([]interface{}))
 		if err != nil {
-			return nil, fmt.Errorf("%s option field value `%#v` can't be casting into []string: `%s`", optionName, options[optionName], err)
+			return nil, fmt.Errorf("%s option field value `%#v` can't be casted into []string: `%s`", optionName, options[optionName], err)
 		}
 		return res, nil
 	default:
-		return nil, fmt.Errorf("option `%s` field value `%#v` can't be casting into []string", optionName, options[optionName])
+		return nil, fmt.Errorf("option `%s` field value `%#v` can't be casted into []string", optionName, options[optionName])
 	}
 }
 
@@ -261,14 +261,14 @@ func filtersOptionFromArgs(args map[string]interface{}) ([]map[string]string, er
 
 			mapStringString, err := mapStringInterfaceToMapStringString(mapStringInterface)
 			if err != nil {
-				return nil, fmt.Errorf("option `filters` field value `%#v` can't be casting into map[string]string: %s", filtersOption, err)
+				return nil, fmt.Errorf("option `filters` field value `%#v` can't be casted into map[string]string: %s", filtersOption, err)
 			}
 
 			res = append(res, mapStringString)
 		}
 		return res, nil
 	default:
-		return nil, fmt.Errorf("option `filters` field value `%#v` can't be casting into map[string]string", filtersOption)
+		return nil, fmt.Errorf("option `filters` field value `%#v` can't be casted into map[string]string", filtersOption)
 	}
 }
 
@@ -276,7 +276,7 @@ func mapStringInterfaceToMapStringString(req map[string]interface{}) (map[string
 	res := map[string]string{}
 	for key, val := range req {
 		if b, ok := val.(string); !ok {
-			return nil, fmt.Errorf("key `%s` value `%#v` can't be casting into string", key, val)
+			return nil, fmt.Errorf("key `%s` value `%#v` can't be casted into string", key, val)
 		} else {
 			res[key] = b
 		}

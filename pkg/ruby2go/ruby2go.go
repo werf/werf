@@ -111,7 +111,7 @@ func OptionsFieldFromArgs(args map[string]interface{}) (map[string]interface{}, 
 	if ok {
 		return util.InterfaceToMapStringInterface(value)
 	} else {
-		return nil, fmt.Errorf("options field value `%#v` can't be casting into map[string]interface{}", args["options"])
+		return nil, fmt.Errorf("options field value `%#v` can't be casted into map[string]interface{}", args["options"])
 	}
 }
 
@@ -128,7 +128,7 @@ func StringFieldFromMapInterface(field string, value map[string]interface{}) (st
 	case string:
 		return value[field].(string), nil
 	default:
-		return "", fmt.Errorf("option `%s` field value `%#v` can't be casting into string", field, value[field])
+		return "", fmt.Errorf("option `%s` field value `%#v` can't be casted into string", field, value[field])
 	}
 }
 
@@ -137,6 +137,6 @@ func BoolFieldFromMapInterface(field string, value map[string]interface{}) (bool
 	case bool:
 		return value[field].(bool), nil
 	default:
-		return false, fmt.Errorf("option `%s` field value `%#v` can't be casting into bool", field, value[field])
+		return false, fmt.Errorf("option `%s` field value `%#v` can't be casted into bool", field, value[field])
 	}
 }
