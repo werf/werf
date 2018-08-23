@@ -102,8 +102,9 @@ func (b *Ansible) stageConfig(userStageName string) (map[string]interface{}, err
 
 		var tags []string
 		if _, ok := task["tags"]; ok {
-			tags, err = util.InterfaceToStringArray(task["tags"])
-			if err != nil {
+			if val, ok := task["tags"].(string); ok {
+				tags = append(tags, val)
+			} else if tags, err = util.InterfaceToStringArray(task["tags"]); err != nil {
 				return nil, err
 			}
 		}
