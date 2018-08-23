@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/client"
-
 	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/lock"
 )
@@ -16,16 +14,6 @@ type container struct {
 	Volume    string
 }
 
-func (c *container) isExist() (bool, error) {
-	if _, err := docker.ContainerInspect(c.Name); err != nil {
-		if client.IsErrNotFound(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
 func (c *container) Create() error {
 	name := fmt.Sprintf("--name=%s", c.Name)
 	volume := fmt.Sprintf("--volume=%s", c.Volume)
@@ -33,14 +21,14 @@ func (c *container) Create() error {
 }
 
 func (c *container) CreateIfNotExist() error {
-	exist, err := c.isExist()
+	exist, err := docker.ContainerExist(c.Name)
 	if err != nil {
 		return err
 	}
 
 	if !exist {
 		err := lock.WithLock(fmt.Sprintf("dappdeps.container.%s", c.Name), lock.LockOptions{Timeout: time.Second * 600}, func() error {
-			exist, err := c.isExist()
+			exist, err := docker.ContainerExist(c.Name)
 			if err != nil {
 				return err
 			}
