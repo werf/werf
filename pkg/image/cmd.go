@@ -39,15 +39,15 @@ func cmdStageToImageStage(cmdStage *CmdStage) *Stage {
 	stageImage.Container.ServiceRunCommands = cmdStage.ServiceBashCommands
 
 	if cmdStage.Options != nil {
-		stageImage.Container.RunOptions.merge(cmdStage.Options)
+		stageImage.Container.RunOptions = stageImage.Container.RunOptions.merge(cmdStage.Options)
 	}
 
 	if cmdStage.ChangeOptions != nil {
-		stageImage.Container.CommitChangeOptions.merge(cmdStage.ChangeOptions)
+		stageImage.Container.CommitChangeOptions = stageImage.Container.CommitChangeOptions.merge(cmdStage.ChangeOptions)
 	}
 
 	if cmdStage.ServiceChangeOptions != nil {
-		stageImage.Container.ServiceCommitChangeOptions.merge(cmdStage.ServiceChangeOptions)
+		stageImage.Container.ServiceCommitChangeOptions = stageImage.Container.ServiceCommitChangeOptions.merge(cmdStage.ServiceChangeOptions)
 	}
 
 	return stageImage
