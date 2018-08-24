@@ -8,7 +8,7 @@ topnav:
     - title: How To
       url: /installation.html
     - title: Reference
-      url: /build_yaml.html
+      url: /ansible_builder.html
     - title: FAQ
       url: /faq.html
     - title: GitHub

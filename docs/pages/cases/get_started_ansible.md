@@ -4,7 +4,7 @@ sidebar: how_to
 permalink: get_started_ansible.html
 ---
 
-In this tutorial we will build an image of simple PHP [Symfony application](https://github.com/symfony/demo) with dapp using [Ansible builder](build_yaml.html).
+In this tutorial we will build an image of simple PHP [Symfony application](https://github.com/symfony/demo) with dapp using [Ansible builder](ansible_builder.html).
 
 It's recommended to have basic knowledge of Dockerfile and its [directives](https://docs.docker.com/engine/reference/builder/).
 
