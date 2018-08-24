@@ -5,10 +5,10 @@ import (
 	"io"
 	"strings"
 
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	"gopkg.in/src-d/go-git.v4/storage"
+	git "github.com/flant/go-git"
+	"github.com/flant/go-git/plumbing"
+	"github.com/flant/go-git/plumbing/object"
+	"github.com/flant/go-git/storage"
 )
 
 type Base struct {

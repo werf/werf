@@ -11,10 +11,10 @@ import (
 	"runtime/pprof"
 	"time"
 
+	"github.com/flant/go-git/plumbing/filemode"
+	"github.com/flant/go-git/plumbing/object"
+	"github.com/flant/go-git/storage"
 	uuid "github.com/satori/go.uuid"
-	"gopkg.in/src-d/go-git.v4/plumbing/filemode"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
-	"gopkg.in/src-d/go-git.v4/storage"
 )
 
 type Archive struct {

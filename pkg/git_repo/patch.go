@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/filemode"
-	fdiff "gopkg.in/src-d/go-git.v4/plumbing/format/diff"
-	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"github.com/flant/go-git/plumbing"
+	"github.com/flant/go-git/plumbing/filemode"
+	fdiff "github.com/flant/go-git/plumbing/format/diff"
+	"github.com/flant/go-git/plumbing/object"
 )
 
 type RelativeFilteredPatch struct {
