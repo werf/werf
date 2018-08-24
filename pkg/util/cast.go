@@ -13,7 +13,7 @@ func InterfaceToStringArray(value interface{}) ([]string, error) {
 	case []string:
 		return value.([]string), nil
 	default:
-		return nil, fmt.Errorf("value `%#v` can't be casting into []string", value)
+		return nil, fmt.Errorf("value `%#v` can't be casted into []string", value)
 	}
 }
 
@@ -21,7 +21,7 @@ func InterfaceArrayToStringArray(array []interface{}) ([]string, error) {
 	var result []string
 	for _, value := range array {
 		if str, ok := value.(string); !ok {
-			return nil, fmt.Errorf("value `%#v` can't be casting into string", value)
+			return nil, fmt.Errorf("value `%#v` can't be casted into string", value)
 		} else {
 			result = append(result, str)
 		}
@@ -39,12 +39,12 @@ func InterfaceToMapStringInterface(value interface{}) (map[string]interface{}, e
 		for k, v := range value.(map[interface{}]interface{}) {
 			key, ok := k.(string)
 			if !ok {
-				return nil, fmt.Errorf("key value `%#v` can't be casting into string", key)
+				return nil, fmt.Errorf("key value `%#v` can't be casted into string", key)
 			}
 			result[key] = v
 		}
 		return result, nil
 	default:
-		return nil, fmt.Errorf("value `%#v` can't be casting into map[string]interface{}", value)
+		return nil, fmt.Errorf("value `%#v` can't be casted into map[string]interface{}", value)
 	}
 }
