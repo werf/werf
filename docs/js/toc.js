@@ -53,19 +53,22 @@
       if (!settings.noBackToTopLinks && this_level === highest_level) {
         $(header).addClass('top-level-header').after(return_to_top);
       }
+
+      header_text = header.innerHTML.replace(/<\/?[^>]+(>|$)/g, "")
+
       if (this_level === level) // same level as before; same indenting
-        html += "<li><a href='#" + header.id + "'>" + header.innerHTML + "</a>";
+        html += "<li><a href='#" + header.id + "'>" + header_text + "</a>";
       else if (this_level <= level){ // higher level than before; end parent ol
         for(i = this_level; i < level; i++) {
           html += "</li></"+settings.listType+">"
         }
-        html += "<li><a href='#" + header.id + "'>" + header.innerHTML + "</a>";
+        html += "<li><a href='#" + header.id + "'>" + header_text + "</a>";
       }
       else if (this_level > level) { // lower level than before; expand the previous to contain a ol
         for(i = this_level; i > level; i--) {
           html += "<"+settings.listType+"><li>"
         }
-        html += "<a href='#" + header.id + "'>" + header.innerHTML + "</a>";
+        html += "<a href='#" + header.id + "'>" + header_text + "</a>";
       }
       level = this_level; // update for the next one
     });
