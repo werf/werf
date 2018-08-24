@@ -1,17 +1,11 @@
 ---
 title: Ansible builder
 sidebar: reference
-permalink: build_yaml.html
+permalink: ansible_builder.html
 folder: build
 ---
 
 You can use ansible to build your containers.
-
-## File structure
-
-- `/dappfile.yml` - repository should contain dappfile with build instructions. It may be located in a different way.
-- `/.dappfiles/` - folder for config files for your software and misc.
-- `/.helm/secret/` - folder for [dapp secret files](kube_secret.html)
 
 ### dappfile placing
 
@@ -55,7 +49,7 @@ Support for ansible builder divide to this parts:
    and verify checksums
 3. support for `ansible` directive in yaml configuration
 
-### differences from [Chef-style dappfile](build_chef.html)
+### differences from [Chef-style dappfile](chef_builder.html)
 
 1. No equivalent for `dimg_group` and nested `dimg`s and `artifact`s.
 2. No context inheritance because of 1. Use go-template functionality

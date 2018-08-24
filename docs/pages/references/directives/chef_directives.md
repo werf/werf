@@ -7,12 +7,6 @@ folder: directive
 
 При сборке образов можно использовать функции chef
 
-Поддержка сборщиками
-
-- Shell - нет
-- Chef - да
-- Ansible - нет
-
 ### chef.dimod \<mod\>[[, \<version-constraint\>,] \<cookbook-opts\>]
 Включить указанный модуль для chef builder в данном контексте.
 
@@ -21,7 +15,7 @@ folder: directive
 * При отсутствии файла рецепта в runlist для данной стадии используется пустой рецепт \<mod\>::void.
 * Параметры \<version-constraint\> и \<cookbook-opts\> определяют опции cookbook'а, соответствуют параметрам директивы chef.cookbook.
 
-Подробнее см.: [dimod модуль](chef_dimod.html) и [chef-сборщик](build_chef.html)
+Подробнее см.: [dimod модуль](chef_dimod.html) и [chef-сборщик](chef_builder.html)
 
 ### chef.cookbook \<cookbook\>[[, \<version-constraint\>,] \<cookbook-opts\>]
 Включить указанный cookbook в зависимость для сборочного cookbook'а.

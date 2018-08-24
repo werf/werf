@@ -8,13 +8,13 @@ entries:
       fi:
 
         - title: Ansible-сборщик
-          url: /build_yaml.html
-
-        - title: Chef-сборщик
-          url: /build_chef.html
+          url: /ansible_builder.html
 
         - title: Shell-сборщик
-          url: /build_shell.html
+          url: /shell_builder.html
+
+        - title: Chef-сборщик
+          url: /chef_builder.html
 
     - title: Синтаксис dappfile
       fi:
@@ -33,9 +33,6 @@ entries:
 
         - title: Использование модулей (chef only)
           url: /chef_dimod.html
-
-        - title: Выполнение произвольного кода
-          url: /shell.html
 
         - title: Использовать функции chef
           url: /chef_directives.html

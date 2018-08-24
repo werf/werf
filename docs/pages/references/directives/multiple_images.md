@@ -7,12 +7,6 @@ folder: build
 
 Dapp can build multiple images from one repository.
 
-Поддержка сборщиками
-
-- Shell - нет
-- Chef - да
-- Ansible - да
-
 ## Usage
 
 ### YAML syntax (dappfile.yml)

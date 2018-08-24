@@ -1,24 +1,13 @@
 ---
 title: Chef builder
 sidebar: reference
-permalink: build_chef.html
+permalink: chef_builder.html
 folder: advanced_build
 ---
 
-**Notice! Chef builder is no more updated. Use [Ansible builder](build_yaml.html), Luke!**
+**Notice! Chef builder is no more updated. Use [Ansible builder](ansible_builder.html), Luke!**
 
-## File structure
-
-- `/Dappfile` - Repository should contain dappfile with build instructions.
-- `/.dapp_chef/` - folder for chef recipes, config files for your software and misc 
-- `/.dapp_chef/recipes/` - folder for chef recipes
-- `/.dapp_chef/files/` - folder for config files for your software and misc
-- `/.dapp_chef/chefignore` - chef ignore file
-- `/.helm/secret/` - folder for [dapp secret files](kube_secret.html)
-
-## dappfile syntax
-
-Example of configuration:
+## Dappfile example
 
 ```
 dimg_group do
@@ -47,8 +36,6 @@ dimg_group do
 end
 ```
 
-We use [docker directives](docker_directives.html) here to set base image and work dir.
-
 Chef directive
 ```
   chef do
@@ -65,11 +52,3 @@ tells builder to run chef recipes on [each build stage](stages.html):
 - `.dapp_chef/recipes/before_setup/main.rb`
 - `.dapp_chef/recipes/setup/main.rb`
 - `.dapp_chef/recipes/after_setup/main.rb`
-
-## Additional info
-
-- Use [chef directives](chef_directives.html)
-- Run [shell commands](shell.html)
-- Build [multiple images](multiple_images_for_build.html)
-- [Mount directories](mount_directives.html)
-- Use [chef dimod](chef_dimod.html)

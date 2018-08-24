@@ -1,21 +1,58 @@
 ---
 title: Shell сборщик
 sidebar: reference
-permalink: build_shell.html
+permalink: shell_builder.html
 folder: build
 ---
 
-**Shell сборщик устарел, переходите на Ansible-сборщик**
+Shell-инструкции аналогичны `RUN` в Dockerfile. Главное отличие состоит в том, что в dapp сборка происходит по стадиям (последовательность и их назначение описаны в главе [Стадии сборки](stages.html)).
 
-Shell сборщик это аналог RUN команд из Dockerfile. Главное отличие состоит в том, что в dapp сборка с помощью shell-команд происходит по стадиям (последовательность и их назначение описаны в главе [Стадии сборки](stages.html)).
+## Пример dappfile.yaml для [Java приложения](https://habr.com/company/flant/blog/348436/)
 
-## Структура файлов
+```
+artifact: appserver
+from: maven:latest
+git:
+  - add: '/app'
+    to: '/usr/src/atsea'
+shell:
+  install:
+    - cd /usr/src/atsea
+    - mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:resolve
+    - mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
+---
+artifact: storefront
+from: node:latest
+git:
+  - add: /app/react-app
+    to: /usr/src/atsea/app/react-app
+shell:
+  install:
+    - cd /usr/src/atsea/app/react-app
+    - npm install
+    - npm run build
+---
+dimg: app
+from: java:8-jdk-alpine
+shell:
+  beforeInstall:
+    - mkdir /app
+    - adduser -Dh /home/gordon gordon
+import:
+  - artifact: appserver
+    add: '/usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar'
+    to: '/app/AtSea-0.0.1-SNAPSHOT.jar'
+    after: install
+  - artifact: storefront
+    add: /usr/src/atsea/app/react-app/build
+    to: /static
+    after: install
+docker:
+  ENTRYPOINT: ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
+  CMD: ["--spring.profiles.active=postgres"]
+```
 
-- `/Dappfile` - Инструкции для сборки
-
-## Синтаксист dappfile
-
-Синтаксис dappfile очень похож на [вариант chef-синтаксиса](build_chef.html). Смотрите на пример:
+## Пример Dappfile для [Symfony приложения](https://habr.com/company/flant/blog/336212/)
 
 ```
 dimg 'symfony-demo-app' do

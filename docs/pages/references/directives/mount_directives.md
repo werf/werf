@@ -4,11 +4,6 @@ sidebar: reference
 permalink: mount_directives.html
 folder: directive
 ---
-Поддержка сборщиками
-
-- Shell - нет
-- Chef - да
-- Ansible - нет
 
 ## Ruby синтаксис (Dappfile)
 
