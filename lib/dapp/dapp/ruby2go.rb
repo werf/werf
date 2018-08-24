@@ -52,8 +52,15 @@ module Dapp
           end
         end
 
-        system("#{bin_path} -args-from-file #{args_file} -result-to-file #{res_file}")
-        status_code = $?.exitstatus
+        begin
+          exec("#{bin_path} -args-from-file #{args_file} -result-to-file #{res_file}") unless (pid = fork)
+          pid, status = Process.waitpid2(pid)
+        rescue Interrupt => _e
+          Process.kill('INT', pid)
+          raise
+        end
+
+        status_code = status.exitstatus
         if [0, 16].include?(status_code)
           res = nil
           File.open(res_file, "r") {|f| res = JSON.load(f.read)}

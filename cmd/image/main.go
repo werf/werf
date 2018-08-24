@@ -56,6 +56,19 @@ func main() {
 			})
 		case "build":
 			return image.ImageCommand(args, func(stageImage *image.Stage) error {
+				ruby2go.TrapCleanupHooks = append(ruby2go.TrapCleanupHooks, func() {
+					containerName := stageImage.Container.Name
+					exist, err := docker.ContainerExist(containerName)
+					if err != nil {
+						panic(err)
+					} else if exist {
+						err := docker.CliRm("--force", containerName)
+						if err != nil {
+							panic(err)
+						}
+					}
+				})
+
 				introspection, err := introspectionOptionFromArgs(args)
 				if err != nil {
 					return err

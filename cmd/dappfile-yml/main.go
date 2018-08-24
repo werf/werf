@@ -12,6 +12,7 @@ import (
 	"gopkg.in/flant/yaml.v2"
 
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/ruby2go"
 )
 
 var (
@@ -35,6 +36,8 @@ func usage() {
 }
 
 func main() {
+	ruby2go.Trap()
+
 	WorkingDir, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot determine working dir: %s\n", err)

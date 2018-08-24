@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/signal"
+	"sync/atomic"
+	"syscall"
 
 	"github.com/flant/dapp/pkg/util"
 )
@@ -14,6 +17,7 @@ var (
 	WorkingDir       string
 	ArgsFromFilePath string
 	ResultToFilePath string
+	TrapCleanupHooks []func()
 )
 
 func usage(progname string) {
@@ -57,6 +61,8 @@ func writeJsonObjectToFile(obj map[string]interface{}, path string) error {
 }
 
 func RunCli(progname string, runFunc func(map[string]interface{}) (interface{}, error)) {
+	Trap()
+
 	WorkingDir, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Cannot determine working dir: %s\n", err)
@@ -100,6 +106,40 @@ func RunCli(progname string, runFunc func(map[string]interface{}) (interface{}, 
 	}
 
 	os.Exit(exitCode)
+}
+
+func Trap() {
+	c := make(chan os.Signal, 1)
+	signals := []os.Signal{os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGPIPE}
+	signal.Notify(c, signals...)
+	go func() {
+		interruptCount := uint32(0)
+		for sig := range c {
+			if sig == syscall.SIGPIPE {
+				continue
+			}
+
+			go func(sig os.Signal) {
+				switch sig {
+				case os.Interrupt, syscall.SIGTERM:
+					if atomic.LoadUint32(&interruptCount) < 3 {
+						if atomic.AddUint32(&interruptCount, 1) == 1 {
+							for _, trapCleanupHook := range TrapCleanupHooks {
+								trapCleanupHook()
+							}
+							os.Exit(0)
+						} else {
+							return
+						}
+					}
+				}
+				for _, trapCleanupHook := range TrapCleanupHooks {
+					trapCleanupHook()
+				}
+				os.Exit(128 + int(sig.(syscall.Signal)))
+			}(sig)
+		}
+	}()
 }
 
 func CommandFieldFromArgs(args map[string]interface{}) (string, error) {

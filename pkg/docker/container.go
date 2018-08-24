@@ -3,12 +3,23 @@ package docker
 import (
 	"github.com/docker/cli/cli/command/container"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
 )
 
 func Containers(options types.ContainerListOptions) ([]types.Container, error) {
 	ctx := context.Background()
 	return apiClient.ContainerList(ctx, options)
+}
+
+func ContainerExist(ref string) (bool, error) {
+	if _, err := ContainerInspect(ref); err != nil {
+		if client.IsErrNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func ContainerInspect(ref string) (types.ContainerJSON, error) {
