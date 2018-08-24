@@ -48,7 +48,7 @@ main() {
   TAG_RELEASE_MESSAGE=$($gitPath for-each-ref --format="%(contents)" refs/tags/$GIT_TAG | jq -R -s '.' )
 
   build_gem && echo "Build gem is successful" || ( exit 1 )
-  build_go && echo "Build go program is successful" || ( exit 1 )
+  calculate_binaries_checksums && echo "Binaries checksums calculation is successful" || ( exit 1 )
 
   echo "Publish version $VERSION from git tag $GIT_TAG"
   if [ -n "$BINTRAY_AUTH" ] ; then
@@ -78,16 +78,8 @@ build_gem() {
   GEM_FILE_PATH=$(ls -1 dapp-*.gem | head -n 1)
 }
 
-build_go() {
-  echo "Building ruby2go binary dependencies"
-
-  if ! ./go-get.sh ; then
-    return 1
-  fi
-
-  if ! ./go-build.sh ; then
-    return 1
-  fi
+calculate_binaries_checksums() {
+  echo "Calculating ruby2go binaries checksums"
 
   for bin in $RUBY2GO_BINARIES_NAMES ; do
     sha256sum $UPLOAD_FROM_DIR/$bin | cut -d' ' -f 1 > $UPLOAD_FROM_DIR/$bin.sha

@@ -4,6 +4,7 @@ cache:
   bundler: true
   directories:
     - ~/go
+    - ~/gopath
 rvm:
   - 2.5
 
