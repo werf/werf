@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/flant/dapp/pkg/lock"
+	git "github.com/flant/go-git"
+	"github.com/flant/go-git/plumbing"
+	"github.com/flant/go-git/plumbing/storer"
 	"gopkg.in/ini.v1"
 	"gopkg.in/satori/go.uuid.v1"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/plumbing"
-	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
 type Remote struct {
