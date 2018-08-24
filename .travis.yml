@@ -4,7 +4,6 @@ cache:
   bundler: true
   directories:
     - ~/go
-    - ~/gopath
 rvm:
   - 2.5
 
@@ -19,7 +18,7 @@ install:
   - export GOOS=linux
   - which go
   - go version
-  - ./go-get.sh && ./go-build.sh
+  - if [[ "x$TRAVIS_TAG" != "x" ]] ; then ./go-get.sh && ./go-build.sh ; fi
 
 deploy:
   provider: script
