@@ -37,9 +37,9 @@ func cmdStageToImageStage(cmdStage *CmdStage) *Stage {
 	}
 	stageImage.Container.RunCommands = cmdStage.BashCommands
 	stageImage.Container.ServiceRunCommands = cmdStage.ServiceBashCommands
-	stageImage.Container.RunOptions = cmdStage.Options
-	stageImage.Container.CommitChangeOptions = cmdStage.ChangeOptions
-	stageImage.Container.ServiceCommitChangeOptions = cmdStage.ServiceChangeOptions
+	stageImage.Container.RunOptions.merge(cmdStage.Options)
+	stageImage.Container.CommitChangeOptions.merge(cmdStage.ChangeOptions)
+	stageImage.Container.ServiceCommitChangeOptions.merge(cmdStage.ServiceChangeOptions)
 	return stageImage
 }
 
