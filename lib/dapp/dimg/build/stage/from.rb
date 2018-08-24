@@ -11,7 +11,7 @@ module Dapp
 
           def prepare_image
             if !from_dimg.nil?
-              process = dimg.dapp.t(code: 'process.layer_building', data: { name: from_dimg.name })
+              process = dimg.dapp.t(code: 'process.from_dimg_building', data: { name: from_dimg.name })
               dimg.dapp.log_secondary_process(process) { from_dimg.build! }
             elsif !from_image.tagged?
               try_host_docker_login
