@@ -19,7 +19,7 @@ install:
   - export GOOS=linux
   - which go
   - go version
-  - if [[ "x$TRAVIS_TAG" != "x" ]] ; then ./go-get.sh && ./go-build.sh ; fi
+  - ./go-get.sh && ./go-build.sh
 
 deploy:
   provider: script
