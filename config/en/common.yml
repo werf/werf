@@ -13,7 +13,7 @@ en:
     process:
       artifact_copy: "copying artifact `%{name}`"
       artifact_building: "building artifact `%{name}`"
-      layer_building: "building layer `%{name}`"
+      from_dimg_building: "building from dimg `%{name}`"
       git_artifact_clone: "cloning remote git_artifact `%{url}`"
       git_artifact_fetch: "fetching remote git_artifact `%{url}`"
       vendoring_builder_cookbooks: 'vendoring builder cookbooks'
