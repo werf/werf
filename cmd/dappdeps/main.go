@@ -28,7 +28,12 @@ func main() {
 
 		switch cmd {
 		case "container":
-			if err := docker.Init(); err != nil {
+			hostDockerConfigDir, err := ruby2go.StringOptionFromArgs("host_docker_config_dir", args)
+			if err != nil {
+				return nil, err
+			}
+
+			if err := docker.Init(hostDockerConfigDir); err != nil {
 				return nil, err
 			}
 

@@ -46,6 +46,7 @@ module Dapp
           end
 
           def ruby2go_command(dapp, command:, **options)
+            (options[:options] ||= {}).merge!(host_docker_config_dir: dapp.class.host_docker_config_dir)
             dapp.ruby2go_image({ command: command }.merge(options)).tap do |res|
               raise Error::Build, code: :ruby2go_image_command_failed_unexpected_error, data: { command: command, message: res["error"] } unless res["error"].nil?
               break res['data']
@@ -143,7 +144,8 @@ module Dapp
               introspection: {
                 before: dapp.introspect_before_error?,
                 after: dapp.introspect_error?
-              }
+              },
+              host_docker_config_dir: dapp.class.host_docker_config_dir,
             }
           }
         end
