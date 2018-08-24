@@ -7,7 +7,7 @@ folder: build
 
 You can use ansible to build your containers.
 
-### dappfile placing
+## dappfile placing
 
 dappfile may be put at different locations:
 
