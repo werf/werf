@@ -91,17 +91,16 @@ To implement these steps and requirements with dapp we will add a special file c
             - php-xml
             - php-zip
             - php-mbstring
+            - php-intl
         - name: Install composer
           get_url:
             url: https://getcomposer.org/download/1.6.5/composer.phar
             dest: /usr/local/bin/composer
             mode: a+x
       install:
-        - name: composer install
-          # NOTICE: Use `composer install` command in real world environment!
-          # NOTICE: Update is used here because composer.lock file is not being updated
-          # NOTICE:  properly in symfony/demo repo by maintainers.
-          shell: /usr/local/bin/composer update --no-ansi --no-interaction --prefer-dist --no-progress --optimize-autoloader 2>&1
+        - name: "Install app deps"
+          # NOTICE: Always use `composer install` command in real world environment!
+          shell: composer update
           become: yes
           become_user: app
           args:
@@ -158,6 +157,6 @@ This example has space for further improvement:
 
 *   Set of commands for creating `start.sh` can be easily replaced with a single git command, and the file itself stored in git repository.
 *   As we copy files with a git command, we can set file permissions with the same command.
-*   `composer install` is required only when `package.json` has changed. Thus it's best to first check `package.json` and run `composer install` when needed.
+*   `composer install` should be called when `composer.lock`, `package.json` or `yarn.lock` have changed. Thus it's best to first check these files and run `composer install` when needed.
 
 These issues are further discussed in [Adding source code with `git` directive](git.html).
