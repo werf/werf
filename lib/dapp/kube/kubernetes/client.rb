@@ -302,8 +302,7 @@ module Dapp
             opts[:ssl_cert_store] = ssl_cert_store
 
             opts[:ssl_ca_file] = nil
-            # TODO: Add support for optional disabling ssl checks
-            # Excon.defaults[:ssl_verify_peer] = false
+
             opts[:middlewares] = [*Excon.defaults[:middlewares], Excon::Middleware::RedirectFollower]
 
             opts.merge!(excon_parameters)
