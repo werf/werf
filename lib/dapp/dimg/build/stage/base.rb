@@ -65,6 +65,9 @@ module Dapp
                 if image_should_be_locked?
                   yield
                 else
+                  stage = self
+                  stage.renew until (stage = stage.next_stage).nil?
+
                   no_lock = true
                 end
               end
