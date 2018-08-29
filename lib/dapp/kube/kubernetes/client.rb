@@ -35,6 +35,12 @@ module Dapp
           '/apis/batch/v1' => [:job, ],
           '/apis/batch/v1beta1' => [:cronjob, ],
         },
+        '1.11' => {
+          '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
+          '/apis/apps/v1' => [:daemonset, :deployment, :replicaset, :statefulset, ],
+          '/apis/batch/v1' => [:job, ],
+          '/apis/batch/v1beta1' => [:cronjob, ],
+        },
         'stable' => {
           '/api/v1' => [:service, :replicationcontroller, :pod, :podtemplate, ],
           '/apis/batch/v1' => [:job, ],
