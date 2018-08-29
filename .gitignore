@@ -6,6 +6,7 @@
 /Gemfile.lock
 /.vscode
 /.idea
+/docs/vendor
 
 .dappfile.render.yml
 .dappfile.render.yaml
