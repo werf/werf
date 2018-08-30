@@ -23,7 +23,7 @@ When dapp first builds an image from a dappfile with `git` directive, it adds so
 This happens on the `g_a_archive` stage. (See [build stages](/stages.html) for more details.)
 
 
-On each subsequent build dapp does not create a new image with a full copiy of the source code.
+On each subsequent build dapp does not create a new image with a full copy of the source code.
 Instead, it generates a git patch (with `git patch apply`) and applies it as an image layer.
 Dapp caches these image layers to boost build speed.
 If changes in source code are undone, for example with `git revert`, dapp detects that and reuses a cached layer.

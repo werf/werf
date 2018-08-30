@@ -20,7 +20,7 @@ They can be written in two different syntaxes with corresponding file names:
 
 Указание базового образа, на основе которого будет производиться сборка образа приложения или образа артефакта, осуществляется с помощью директивы `from`.
 
-Both types share some some common features:
+Both types share some common features:
 
 *   Application images are declared with `dimg` directive, and artifact images with `artifact` directive.
 *   Base image for an application or artifact image is declared with `from` directive.
@@ -54,25 +54,19 @@ For more details on this topic, see [Describing Multiple Images](#describing-mul
 
 ### dimg
 
-The dimg directive starts a description for building an application image:
-
 ```yaml
-dimg: [<name>[:<tag>]]
+dimg: [<name>|~]
 ```
 
-Name of an application image is a string, similar to the image name in Docker.
-The part after `:` sets the image tag and is usually used for versioning images.
-If absent, tag defaults to `latest`.
+The dimg directive starts a description for building an application image.
+The image name is a string, similar to the image name in Docker:
 
 ```yaml
-dimg: frontend:latest
-
-# same 
 dimg: frontend
 ```
 
-Name of an application image can be empty or equal to `~`.
-In a dappfile with multiple images only one can have an empty name.
+An image can be nameless: `dimg: ` or `dimg: ~`.
+In a dappfile with multiple images there can be only one nameless application image.
 
 ```yaml
 dimg:
@@ -91,23 +85,24 @@ dimg: [main-front,main-back]
 
 ### artifact
 
-The `artifact` directive starts a description for building an artifact image:
-
 ```yaml
-artifact: <name>[:<tag>]
-from: <image>
+artifact: <name>
 ```
 
-Name of an artifact image is a string, similar to the image name in Docker.
-The part after `:` sets the image tag and is usually used for versioning images.
-If absent, tag defaults to `latest`.
-
-Artifact name is used in `import` directive (see [artifact](artifact.html) for details).
-Thus artifact images must have non-empty names.
+The `artifact` directive starts a description for building an artifact image:
 
 ```
 artifact: hello_world
-from: alpine
+```
+
+Name of an artifact image is a string, similar to the image name in Docker.
+Artifact name is used to `import` artifacts (see [artifact](artifact.html) for details).
+Thus artifact images must have non-empty names.
+
+Artifact images can have multiple names, just like application images:
+
+```yaml
+artifact: [main-front,main-back]
 ```
 
 ### from
@@ -120,7 +115,7 @@ from: <image>[:<tag>]
 
 If absent, tag defaults to `latest`.
 
-### Describing Multiple Images
+### Building Multiple Images
 
 A `dappfile.yml` can describe any number of images, but at least one of them should be an application image.
 To describe several images, separate them with `---`.
