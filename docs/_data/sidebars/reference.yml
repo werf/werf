@@ -22,7 +22,7 @@ entries:
         - title: Dappfile directives
           url: /directives.html
 
-        - title: "[git] Добавление кода в образ"
+        - title: Adding Source Code from Git
           url: /git.html
 
         - title: Использование артефактов
