@@ -1,27 +1,27 @@
 ---
-title: Yaml директивы
+title: YAML directives
 sidebar: reference
 permalink: yaml_directives.html
 folder: directive
 ---
 
-# Yaml dappfile
+# YAML dappfile
 
-Configuration is a collection of yaml documents (http://yaml.org/spec/1.2/spec.html#id2800132). These yaml documents are searched in one of the following files:
+Configuration is a collection of yaml documents (http://yaml.org/spec/1.2/spec.html#id2800132). These yaml documents are searched for in one of the following files:
 
 * `REPO_ROOT/dappfile.yml`
 * `REPO_ROOT/dappfile.yaml`
 
-Yaml configuration file will precede ruby `REPO_ROOT/Dappfile` if the case both files exists. `REPO_ROOT/dappfile.yml` will precede `REPO_ROOT/dappfile.yaml` in case both files exists.
+YAML configuration file will precede ruby `REPO_ROOT/Dappfile` if the case both files exists. `REPO_ROOT/dappfile.yml` will precede `REPO_ROOT/dappfile.yaml` in case both files exists.
 
-Processing of Yaml configuration mainly consists of 2 steps:
+Processing of YAML configuration is done in two steps:
 
 * Rendering go templates into `WORKDIR/.dappfile.render.yml` or `WORKDIR/.dappfile.render.yaml`.
 * Processing the result file as a set of yaml documents.
 
 ## Go templates
 
-Go templates are available within yaml config.
+Go templates are available within YAML config.
 
 * Sprig functions supported: https://golang.org/pkg/text/template/, http://masterminds.github.io/sprig/.
 * `env` sprig fucntion also supported to access build-time environment variables (unlike helm, where `env` function is forbidden).
@@ -46,9 +46,9 @@ YAML_DOC
 ...
 ```
 
-Each YAML_DOC is either `dimg` or `artifact` and contain all instructions to build docker image.
+Each YAML_DOC is either `dimg` or `artifact` and contains all instructions to build docker image.
 
-One of `dimg: NAME` or `artifact: NAME` is a required param for each document.
+One of `dimg: NAME` or `artifact: NAME` is a required parameter for each document.
 
 ## Directives
 
@@ -61,16 +61,16 @@ If doc contains `dimg` key, then dapp will treat this yaml-doc as dimg configura
 `NAME` may be:
 
 * Special value `~` to define unnamed dimg. This should be default choice for dimg name in dappfile.
-* Some string to define named dimg with specified name. The name should contain only those characters, that are valid for docker image name.
-* Array of strings to define multiple dimgs with the same configuration with different names. Different names will affect docker images names.
+* Some string to define named dimg with specified name. The name should be a valid docker image name.
+* Array of strings to define multiple dimgs with the same configuration and different names. The names should be valid docker image names.
 
 Conflicts with `artifact: NAME`.
 
 #### `artifact: NAME` (one of required)
 
-If doc contains `artifact` key, then dapp will treat this yaml-doc as artifact configuration.
+If doc contains `artifact` key, dapp will treat this yaml-doc as artifact configuration.
 
-`NAME` is a string, that defines artifact name. Artifact may be referenced in import by that name.
+`NAME` is a string, that defines the artifact name. Artifact may be referenced in `import` and `fromArtifact` directives by that name.
 
 Conflicts with `dimg: NAME`.
 
@@ -80,7 +80,7 @@ Specify docker image as a base image for current dimg or artifact.
 
 #### `docker: DOCKER_PARAMS_MAP`
 
-Define map with docker image params. Supported params are:
+Define a map with docker image parameters. Supported parameters are:
 
 * CMD (https://docs.docker.com/engine/reference/builder/#/cmd)
 * ENV (https://docs.docker.com/engine/reference/builder/#/env)
@@ -103,7 +103,7 @@ docker:
 
 #### `import: IMPORTS_ARR`
 
-Each element of `IMPORTS_ARR` is a map:
+`IMPORTS_ARR` is an array, where each element is a map:
 
 ```
 artifact: ARTIFACT_NAME
@@ -112,10 +112,10 @@ to: DESTINATION_DIRECTORY # optional
 before: STAGE | after: STAGE
 ```
 
-* `ARTIFACT_NAME` refers to artifact to copy files from.
-* `SOURCE_DIRECTORY_TO_IMPORT` specifies directory/file path in artifact that should be imported.
+* `ARTIFACT_NAME` refers to the artifact to copy files from.
+* `SOURCE_DIRECTORY_TO_IMPORT` specifies a directory/file path in artifact that should be imported.
 * `DESTINATION_DIRECTORY` sets the destination path in current image configuration. Optional the same as `SOURCE_DIRECTORY_TO_IMPORT` by default.
-* `after: STAGE` or `before: STAGE` specifies the stage for artifact import within current image configuration build stages. Allowed options are `install` or `setup`.
+* `after: STAGE` or `before: STAGE` specifies the stage when to import this artifact. The stage should be one of the build stages of current image configuration. Allowed options are `install` or `setup`.
 
 Example:
 
@@ -132,7 +132,7 @@ import:
 
 #### `git: GIT_ARR`
 
-Each element of `GIT_ARR` is a separate git-specification:
+`GIT_ARR` is an array, where each element is a separate git-specification:
 
 ```
 git:
@@ -141,7 +141,7 @@ git:
 ...
 ```
 
-Example of `GIT_SPEC` to add local git repository:
+Example of `GIT_SPEC` to add a local git repository:
 
 ```
 git:
@@ -161,7 +161,7 @@ git:
     - app/assets/*
 ```
 
-Example of `GIT_SPEC` to add remote git repository:
+Example of `GIT_SPEC` to add a remote git repository:
 
 ```
 git:
@@ -170,7 +170,7 @@ git:
   to: /build
 ```
 
-Example of add multiple mixed local and remote git-repos:
+Example of adding multiple local and remote git repositories:
 
 ```
 git:
@@ -243,7 +243,7 @@ ansible:
 * `STAGE` is one of: `beforeInstall`, `install`, `beforeSetup`, `setup`.
 * Each `ANSIBLE_TASK` is an element from ansible `tasks` array, see https://docs.ansible.com/ansible/latest/playbooks_intro.html
 
-Supported ansible modules list:
+List of supported ansible modules:
 
 * Commands Modules (https://docs.ansible.com/ansible/latest/list_of_commands_modules.html)
     * command
