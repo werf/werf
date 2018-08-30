@@ -28,9 +28,6 @@ entries:
         - title: Использование артефактов
           url: /artifact.html
 
-        - title: Сборка нескольких образов
-          url: /multiple_images_for_build.html
-
         - title: Использование модулей (chef only)
           url: /chef_dimod.html
 
