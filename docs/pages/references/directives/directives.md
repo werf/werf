@@ -29,30 +29,31 @@ Both types share some common features:
 
 A major difference is that YAML syntax is linear and has no nesting, while Ruby syntax can describe nested context with `dimg_group` directive.
 
-## YAML синтаксис (dappfile.yml)
-
 ## YAML syntax (dappfile.yml)
 
-### General features
+> YAML синтаксис (dappfile.yml)
 
-This syntax is based on YAML and has much in common with Dockerfiles and Ansible playbooks.
+### Introduction
 
-Here is an example of a minimal `dappfile.yml`:
+Dappfile describes building one or more images.
+Its syntax is based on [YAML](http://yaml.org/spec/1.2/spec.html).
+
+Here's a minimal `dappfile.yml`. It builds an image named `example` from a base image named `alpine`:
 
 ```yaml
 dimg: example
 from: alpine
 ```
 
-An image description should at least include the following:
+An image description requires at least two parameters:
 
 * image type and name, set with `dimg`, or `artifact` directive;
-* base image, set with `from`, `fromDimg`, or `fromDimgArtifact` directive.
+* base image, set with `from`, `fromDimg`, or `fromDimgArtifact` directive.sss
 
-A dappfile can have multiple image descriptions, separated by `---`, as in YAML specification.
-For more details on this topic, see [Describing Multiple Images](#describing-multiple-images).
+A single dappfile can build multiple images.
+For more details on this topic, see [Building Multiple Images](#building-multiple-images).
 
-### dimg
+### `dimg`
 
 ```yaml
 dimg: [<name>|~]
@@ -83,13 +84,13 @@ This is equal to describing similar images with different names.
 dimg: [main-front,main-back]
 ```
 
-### artifact
+### `artifact`
 
 ```yaml
 artifact: <name>
 ```
 
-The `artifact` directive starts a description for building an artifact image:
+The `artifact` directive starts a description for building an [artifact image](artifact.html):
 
 ```
 artifact: hello_world
@@ -105,20 +106,71 @@ Artifact images can have multiple names, just like application images:
 artifact: [main-front,main-back]
 ```
 
-### from
-
-The `from` directive sets the name of a base image to build from.
+### `from`
 
 ```yaml
 from: <image>[:<tag>]
 ```
 
+The `from` directive sets the name and tag of a base image to build from.
 If absent, tag defaults to `latest`.
 
-### Building Multiple Images
+
+### `fromDimg` and `fromDimgArtifact`
+
+```yaml
+fromDimg: <name>
+---
+fromDimgArtifact: <name>
+```
+
+Besides using docker images from a repository, one can refer to images, previously described in the same `dappfile.yml`.
+This can be helpful if default [build stages](/stages.html) are not enough for building an image.
+
+```yaml
+dimg: intermediate
+from: alpine
+...
+---
+dimg: app
+fromDimg: intermediate
+...
+```
+
+If an intermediate image is specific to a particular application,
+it is reasonable to store its description with that application:
+
+```yaml
+artifact: intermediate
+from: ubuntu:16.04
+shell:
+  install: 
+  - rm /etc/apt/apt.conf.d/docker-clean
+  - apt-get update
+mount:
+- from: build_dir
+  to: /var/cache/apt
+---
+dimg: ~
+fromDimgArtifact: intermediate 
+shell:
+  beforeInstall: apt-get install tree
+```
+
+## Building Multiple Images
+
+### General Syntax
 
 A `dappfile.yml` can describe any number of images, but at least one of them should be an application image.
-To describe several images, separate them with `---`.
+To describe several images, separate them with `---`:
+
+```yaml
+<image 1>
+---
+<image 2>
+---
+...
+```
 
 * There should be at least one application image.
 * There can be none or one application image with empty name, others should have non-empty names.
@@ -147,50 +199,86 @@ shell:
     - echo "Setup database"
 ```
 
-Правила описания образов в dappfile.yml:
-* можно описывать несколько образов
-* должен быть описан как минимум один образ приложения
-* образ приложения может быть безымянным, но только один
-* отсутствует вложенность описаний образов и контексты (нет директивы `dimg_group`)
-* при описании нескольких образов они описываются линейно - друг за другом, отделяются строкой состоящей из последовательности `---` (согласно YAML спецификации)
-* артефакты обязаны иметь имя
-* имена образов приложений и образов артефактов должны различаться
-* отсутствует директива `export` в описании образов артефактов
-* описание образа приложения выполняется с помощью директивы `dimg: <name>`, где `<name>` - имя образа
-    * для безымянного образа, имя образа может отсутствовать либо быть равным `~`
-    * имя образа может быть представленно массивом строк (например - `dimg: [main-front,main-back]`), это равнозначно описанию отдельных образов с одинаковой конфигурацией
-* Описание образа артефакта выполняется с помощью директивы `artifact: <name>`, где `<name>` - обязательное имя артефакта, оно используется для указания артефакта по имени, при импорте файлов (директива `import`, см. [подробней](artifact.html) про артефакты)
-* Указание базового образа при описании образа приложения или образа артефакта выполняется с помощью обязательной директивы `from: <DOCKER_IMAGE>`, где `<DOCKER_IMAGE>` - имя образа в формате `image:tag` (tag может отсутствовать, тогда используется latest)
+### Advanced Techniques
 
-### Пример описания минимального dappfile.yml
+В приведённом ниже примере будет собрано два образа: `curl_and_shell` и `nginx`:
 
-```
-dimg:
-from: alpine
-```
+В приведённом примере вы также можете заметить полезные для этого кейса вещи:
 
-### Пример сборки нескольких образов
+- объявление переменной, которую можно повторно использовать в разных image-ах. Делается на основании правил go templates.
+- повторяюшийся блок вынесен в include.
 
-```
-dimg: frontend
-from: nginx:latest
-shell:
-  setup:
-    - echo "Setup NGINX"
+Dapp has two powerful features for describing and building multiple images:
+
+* Templating builds with [Go templates syntax](https://golang.org/pkg/text/template/#hdr-Functions) and [Sprig functions](http://masterminds.github.io/sprig/).
+* Reusing code blocks [with `include`]( faq.html#dappfile-7).
+
+The code below demonstrates Go templates and `include`:
+
+{% raw %}
+```yaml
+# Declaring a "BaseImage" variable
+{{ $_ := set . "BaseImage" "registry.flant.com/dapp/ubuntu-dimg:10" }}
+
+dimg: "curl_and_shell"
+from: "{{ .BaseImage }}"
+docker:
+  WORKDIR: /app
+  USER: app
+  ENV:
+    TERM: xterm
+ansible:
+  beforeInstall:
+  - name: "Install Curl"
+    apt:
+      name: curl
+      state: present
+      update_cache: yes
+git:
+  # Including block "git application files"
+  {{- include "git application files" . }}
+
 ---
-dimg: backend
-from: node:latest
-shell:
-  setup:
-    - echo "Setup NodeJS"
----
-dimg: db
-from: mysql
-shell:
-  setup:
-    - echo "Setup database"
-```
 
+dimg: "nginx"
+from: "{{ .BaseImage }}"
+docker:
+  WORKDIR: /app
+  USER: app
+  ENV:
+    TERM: xterm
+ansible:
+  beforeInstall:
+  - name: "Install nginx"
+    apt:
+      name: nginx
+      state: present
+      update_cache: yes
+git:
+  # Including block "git application files"
+  {{- include "git application files" . }}
+
+###################################################################
+
+# Declaring a reusable code block
+
+{{- define "git application files" }}
+  - add: /
+    to: /app
+    excludePaths:
+    - .helm
+    - .gitlab-ci.yml
+    - .dappfiles
+    - dappfile.yaml
+    owner: app
+    group: app
+    stageDependencies:
+      install:
+      - composer.json
+      - composer.lock
+{{- end }}
+```
+{% endraw %}
 
 ## Ruby синтаксис (Dappfile)
 
