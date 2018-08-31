@@ -105,7 +105,7 @@ Yes, you can.
 
 * [Go template functions](https://golang.org/pkg/text/template/#hdr-Functions).
 
-* [Sprig functions](http://masterminds.github.io/sprig/). 
+* [Sprig functions](http://masterminds.github.io/sprig/).
 
 * `include` function with `define` for reusing configs:
 
@@ -158,7 +158,7 @@ ansible:
 {% endraw %}
 
 
-## Building 
+## Building
 
 [Q: How to specify ssh keys?](#building-1){:id="building-1"}
 
@@ -235,6 +235,10 @@ Running time 2.77 seconds
 [Q: I use dapp 0.7, alpine image and get error **standard_init_linux.go:178: exec user process caused "no such file or directory"** on build](#building-5){:id="building-5"}
 
 Dapp 0.7 doesn't support `alpine` image, so please use latest dapp version.
+
+[Q: Why dapp doesn't save cache on failed builds by default?](#building-6){:id="building-6"}
+
+Saving cache on failed builds may cause an incorrect cache. Explanation [here...](https://flant.github.io/dapp/cache_for_advanced_build.html#почему-dapp-не-сохраняет-кэш-ошибочных-сборок-по-умолчанию)
 
 ## Pushing
 
