@@ -222,5 +222,7 @@ func ReadChunks(chunkBuf []byte, reader io.Reader, handleChunk func(bytes []byte
 		if err != nil {
 			return err
 		}
+
+		//TODO: CLOSE!
 	}
 }
