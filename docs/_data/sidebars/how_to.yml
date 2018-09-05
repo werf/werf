@@ -4,35 +4,17 @@ entries:
 - title: sidebar
   f:
 
-    - title: Установка
+    - title: Installation
       url: /installation.html
 
-    - title: Первое приложение на dapp (Ansible)
-      url: /get_started_ansible.html
+    - title: First dapp application
+      url: /first_application.html
 
-    - title: Первое приложение на dapp (Chef)
-      url: /get_started_chef.html
+    - title: Deploy into kubernetes
+      url: /deploy_into_kubernetes.html
 
-    - title: Ускорение сборки
-      url: /speedup.html
+    - title: Cleanup
+      url: /cleanup.html
 
-    - title: Упрощение разработки
-      url: /easy_development.html
-
-    - title: Сборка в CI
+    - title: CI integration
       url: /ci_integration.html
-
-    - title: Очистка
-      url: /cleanup_for_advanced_build.html
-
-    - title: Практика с dapp. Часть 1. Сборка простых приложений
-      external_url: https://habr.com/company/flant/blog/336212/
-
-    - title: Практика с dapp. Часть 2. Деплой Docker-образов в Kubernetes с помощью Helm
-      external_url: https://habr.com/company/flant/blog/336170/
-
-    - title: Собираем Docker-образы для CI/CD быстро (+видео)
-      external_url: https://habr.com/company/flant/blog/324274/
-
-    - title: Сборка проектов с dapp. Часть 1. Java
-      external_url: https://habr.com/company/flant/blog/348436/

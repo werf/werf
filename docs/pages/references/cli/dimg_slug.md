@@ -2,7 +2,6 @@
 title: dapp slug
 sidebar: reference
 permalink: dimg_slug.html
-folder: command
 ---
 
 

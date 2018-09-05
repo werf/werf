@@ -1,6 +1,5 @@
 ---
 title: Dapp Frequently Asked Questions
-sidebar: faq
 permalink: faq.html
 ---
 

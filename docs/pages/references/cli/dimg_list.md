@@ -2,7 +2,6 @@
 title: dapp dimg list
 sidebar: reference
 permalink: dimg_list.html
-folder: command
 ---
 
 ### dapp dimg list

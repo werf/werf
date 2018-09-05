@@ -2,7 +2,6 @@
 title: dapp kube deploy
 sidebar: reference
 permalink: kube_deploy.html
-folder: command
 ---
 
 ### dapp kube deploy

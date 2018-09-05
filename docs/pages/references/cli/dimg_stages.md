@@ -2,7 +2,6 @@
 title: dapp dimg stages
 sidebar: reference
 permalink: dimg_stages.html
-folder: command
 ---
 
 ### dapp dimg stages push

@@ -110,7 +110,7 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
 
 Now you have dapp installed. Check it with `dapp --version`.
 
-Time to [make your first dapp application](https://flant.github.io/dapp/get_started_ansible.html)!
+Time to [make your first dapp application](https://flant.github.io/dapp/first_application.html)!
 
 # Docs and Support
 

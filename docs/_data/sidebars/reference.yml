@@ -4,56 +4,71 @@ entries:
 - title: sidebar
   f:
 
-    - title: Сборка
+    - title: Dappfile
       fi:
 
-        - title: Ansible-сборщик
-          url: /ansible_builder.html
+        - title: Что такое dappfile?
+          url: /dappfile.html
 
-        - title: Shell-сборщик
-          url: /shell_builder.html
+        - title: Минимальная конфигурация
+          url: /minimal_dappfile.html
 
-        - title: Chef-сборщик
-          url: /chef_builder.html
-
-    - title: Синтаксис dappfile
-      fi:
-
-        - title: Описание образов
-          url: /directives_images.html
-
-        - title: "[git] Добавление кода в образ"
+        - title: Добавление кода в образ
           url: /git.html
 
-        - title: Использование артефактов
+        - title: Выполнение shell-инструкций в образе
+          url: /shell_directive.html
+
+        - title: Выполнение ansible-инструкций в образе
+          url: /ansible_directive.html
+
+        - title: Добавление docker-инструкций
+          url: /docker_directive.html
+
+        - title: Сокращение размера конечного образа за счёт использования артефактов
           url: /artifact.html
 
-        - title: Сборка нескольких образов
-          url: /multiple_images_for_build.html
-
-        - title: Использование модулей (chef only)
-          url: /chef_dimod.html
-
-        - title: Использовать функции chef
-          url: /chef_directives.html
-
-        - title: Docker директивы
-          url: /docker_directives.html
-
         - title: Монтирование директорий
-          url: /mount_directives.html
+          url: /mount_directive.html
 
-        - title: "[dappfile.yml] YAML формат"
-          url: /yaml_directives.html
-
-    - title: Ускорение сборки
+    - title: Stages
       fi:
 
-        - title: Стадии сборки
-          url: /stages.html
+      - title: "?"
+        url:
 
-        - title: Таблица стадий
-          url: /stages_diagram.html
+      - title: "?"
+        url:
+
+      - title: "?"
+        url:
+
+    - title: Работа с registry
+      fi:
+
+      - title: "?"
+        url:
+
+      - title: "?"
+        url:
+
+      - title: "?"
+        url:
+
+    - title: Выкат
+      fi:
+
+      - title: Выкат в kubernetes
+        url: /deploy_for_kube.html
+
+      - title: Секреты
+        url: /secrets_for_kube.html
+
+      - title: Конфигурация выката
+        url: /templates_for_kube.html
+
+      - title: Использование minikube
+        url: /minikube_for_kube.html
 
     - title: CLI
       fi:
@@ -108,30 +123,3 @@ entries:
 
         - title: kube value
           url: /kube_value.html
-
-    - title: Выкат
-      fi:
-
-      - title: Registry
-        url: /registry_for_advanced_build.html
-
-      - title: Управление выкатом
-        url: /deploy_for_kube.html
-
-      - title: Секреты
-        url: /secrets_for_kube.html
-
-      - title: Конфигурация выката
-        url: /templates_for_kube.html
-
-      - title: Использование minikube
-        url: /minikube_for_kube.html
-
-    - title: Устройство dapp
-      fi:
-
-        - title: Кэширование
-          url: /cache_for_advanced_build.html
-
-        - title: Как устроены стадии сборки
-          url: /stages_arhitecture.html
