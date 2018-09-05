@@ -34,26 +34,32 @@ entries:
     - title: Stages
       fi:
 
-      - title: "?"
-        url:
+      - title: What is stage?
+        url: /stage.html
 
-      - title: "?"
-        url:
+      - title: Stage conveyor
+        url: /stage_conveyor.html
 
-      - title: "?"
-        url:
+      - title: User stages
+        url: /user_stages.html
 
-    - title: Работа с registry
+      - title: Git stages
+        url: /git_stages.html
+
+      - title: Artifacts stages
+        url: /artifacts_stages.html
+
+    - title: Registry and stages cache
       fi:
 
-      - title: "?"
-        url:
+      - title: Push
+        url: /push.html
 
-      - title: "?"
-        url:
+      - title: Cleanup local
+        url: /cleanup_local.html
 
-      - title: "?"
-        url:
+      - title: Cleanup registry repositories
+        url: /cleanup_registry_repositories.html
 
     - title: Deploy
       fi:
