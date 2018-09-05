@@ -1,5 +1,5 @@
 ---
-title: Добавление кода в образ директивой git
+title: Add source code to the image with the git directive
 sidebar: reference
 permalink: git.html
 ---

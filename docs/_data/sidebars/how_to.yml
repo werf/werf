@@ -16,5 +16,5 @@ entries:
     - title: Cleanup
       url: /cleanup.html
 
-    - title: CI integration
-      url: /ci_integration.html
+    - title: Gitlab CI integration
+      url: /gitlab_ci_integration.html

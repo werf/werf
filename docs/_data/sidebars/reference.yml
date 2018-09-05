@@ -7,28 +7,28 @@ entries:
     - title: Dappfile
       fi:
 
-        - title: Что такое dappfile?
+        - title: What is dappfile?
           url: /dappfile.html
 
-        - title: Минимальная конфигурация
+        - title: Minimal dappfile
           url: /minimal_dappfile.html
 
-        - title: Добавление кода в образ
+        - title: Add source code to the image with the git directive
           url: /git.html
 
-        - title: Выполнение shell-инструкций в образе
+        - title: Run assembly shell-instructions
           url: /shell_directive.html
 
-        - title: Выполнение ansible-инструкций в образе
+        - title: Run assembly ansible-instructions
           url: /ansible_directive.html
 
-        - title: Добавление docker-инструкций
+        - title: Add docker-instructions
           url: /docker_directive.html
 
-        - title: Сокращение размера конечного образа за счёт использования артефактов
+        - title: Reduce application image size by using artifacts
           url: /artifact.html
 
-        - title: Монтирование директорий
+        - title: Mount directories
           url: /mount_directive.html
 
     - title: Stages
@@ -55,7 +55,7 @@ entries:
       - title: "?"
         url:
 
-    - title: Выкат
+    - title: Deploy
       fi:
 
       - title: Выкат в kubernetes

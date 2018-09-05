@@ -1,7 +1,7 @@
 ---
-title: Сборка в CI
+title: Gitlab CI integration
 sidebar: how_to
-permalink: ci_integration.html
+permalink: gitlab_ci_integration.html
 ---
 
 На данный момент полноценно поддерживается GitLab CI. В Travis CI может не работать часть функционала, но вы всегда можете внести коррективы и прислать Pull Request.

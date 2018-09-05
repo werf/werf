@@ -1,5 +1,5 @@
 ---
-title: Использование артефактов
+title: Reduce application image size by using artifacts
 sidebar: reference
 permalink: artifact.html
 ---
