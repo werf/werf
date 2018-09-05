@@ -3,7 +3,7 @@
 topnav:
 - title: Topnav
   items:
-    - title: Обзор
+    - title: Introduction
       url: /index.html
     - title: How To
       url: /installation.html
