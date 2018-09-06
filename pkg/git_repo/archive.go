@@ -11,6 +11,7 @@ import (
 	"runtime/pprof"
 	"time"
 
+	git_util "github.com/flant/dapp/pkg/git"
 	"github.com/flant/go-git/plumbing/filemode"
 	"github.com/flant/go-git/plumbing/object"
 	"github.com/flant/go-git/storage"
@@ -18,7 +19,7 @@ import (
 )
 
 type Archive struct {
-	PathFilter PathFilter
+	PathFilter git_util.PathFilter
 	Repo       struct {
 		Tree   *object.Tree
 		Storer storage.Storer
@@ -28,7 +29,7 @@ type Archive struct {
 func (a *Archive) Type() (ArchiveType, error) {
 	treeWalker := object.NewTreeWalker(a.Repo.Tree, true, nil)
 
-	basePath := NormalizeAbsolutePath(a.PathFilter.BasePath)
+	basePath := git_util.NormalizeAbsolutePath(a.PathFilter.BasePath)
 
 	if basePath == "/" {
 		return DirectoryArchive, nil
@@ -40,7 +41,7 @@ func (a *Archive) Type() (ArchiveType, error) {
 			break
 		}
 
-		if NormalizeAbsolutePath(name) == basePath {
+		if git_util.NormalizeAbsolutePath(name) == basePath {
 			if entry.Mode == filemode.Dir || entry.Mode == filemode.Submodule {
 				return DirectoryArchive, nil
 			}
@@ -173,6 +174,11 @@ func (a *Archive) writeEntriesToArchive(tw *tar.Writer, treeWalker *object.TreeW
 				return err
 			}
 		}
+
+		err = blobReader.Close()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -222,7 +228,5 @@ func ReadChunks(chunkBuf []byte, reader io.Reader, handleChunk func(bytes []byte
 		if err != nil {
 			return err
 		}
-
-		//TODO: CLOSE!
 	}
 }
