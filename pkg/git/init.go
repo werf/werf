@@ -10,12 +10,15 @@ import (
 )
 
 const (
-	MinGitVersionConstraint               = "1.9.1"
+	MinGitVersionConstraint               = "1.9.0"
 	MinGitVersionWithSubmodulesConstraint = "2.14.0"
 )
 
 var (
-	GitVersion string
+	GitVersion            string
+	RequiredGitVersionMsg = fmt.Sprintf("Git version >= %s required!", MinGitVersionConstraint)
+	// Uncomment when submodules supported by go-dapp
+	// RequiredGitVersionMsg = fmt.Sprintf("Git version >= %s required! To use submodules install git >= %s.", MinGitVersionConstraint, MinGitVersionWithSubmodulesConstraint)
 
 	gitVersionObj                 *semver.Version
 	minVersionConstraintObj       *semver.Constraints
@@ -25,11 +28,16 @@ var (
 func Init() error {
 	var err error
 
-	v, vObj, err := getGitCliVersion()
+	v, err := getGitCliVersion()
 	if err != nil {
 		return err
 	}
 	GitVersion = v
+
+	vObj, err := semver.NewVersion(GitVersion)
+	if err != nil {
+		return fmt.Errorf("unexpected `git --version` spec `%s`: %s\n%s\nYour git version is %s.", GitVersion, err, RequiredGitVersionMsg, GitVersion)
+	}
 	gitVersionObj = vObj
 
 	var c *semver.Constraints
@@ -41,7 +49,7 @@ func Init() error {
 	minVersionConstraintObj = c
 
 	if !minVersionConstraintObj.Check(gitVersionObj) {
-		return fmt.Errorf("Git version >= %s required! To use submodules install git >= %s. Your git version is %s.", MinGitVersionConstraint, MinGitVersionWithSubmodulesConstraint, GitVersion)
+		return fmt.Errorf("%s\nYour git version is %s.", RequiredGitVersionMsg, GitVersion)
 	}
 
 	c, err = semver.NewConstraint(fmt.Sprintf(">= %s", MinGitVersionWithSubmodulesConstraint))
@@ -53,7 +61,7 @@ func Init() error {
 	return nil
 }
 
-func getGitCliVersion() (string, *semver.Version, error) {
+func getGitCliVersion() (string, error) {
 	cmd := exec.Command("git", "--version")
 
 	out := bytes.Buffer{}
@@ -62,19 +70,14 @@ func getGitCliVersion() (string, *semver.Version, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return "", nil, fmt.Errorf("git command is not available")
+		return "", fmt.Errorf("git command is not available")
 	}
 
 	versionParts := strings.Split(out.String(), " ")
 	if len(versionParts) != 3 {
-		return "", nil, fmt.Errorf("unexpected `git --version` output `%s`", out.String())
+		return "", fmt.Errorf("unexpected `git --version` output:\n\n```\n%s\n```\n\n%s", strings.TrimSpace(out.String()), RequiredGitVersionMsg)
 	}
 	rawVersion := strings.TrimSpace(versionParts[2])
 
-	version, err := semver.NewVersion(rawVersion)
-	if err != nil {
-		return "", nil, fmt.Errorf("unexpected version spec `%s`: %s", rawVersion, err)
-	}
-
-	return rawVersion, version, nil
+	return rawVersion, nil
 }
