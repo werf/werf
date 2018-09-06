@@ -32,7 +32,7 @@ func Diff(out io.Writer, repoPath string, opts DiffOptions) error {
 	cmd := exec.Command(
 		"git", "-C", repoPath,
 		"diff", opts.FromCommit, opts.ToCommit,
-		"--binary", submoduleOpt,
+		"--binary", "--no-renames", submoduleOpt,
 	)
 
 	stdoutPipe, err := cmd.StdoutPipe()
