@@ -16,7 +16,7 @@ type DiffOptions struct {
 func Diff(out io.Writer, repoPath string, opts DiffOptions) error {
 	// TODO: Check repoPath exists and valid, run `git -C repoPath log -1`.
 	// TODO: Do not accept anything except commit-id hash.
-	// TODO: What about non-existing commits?
+	// TODO: What about non-existing commits? For now go-git checks commits.
 
 	submoduleOpt := "--submodule=log"
 	if opts.WithSubmodules {
@@ -27,6 +27,8 @@ func Diff(out io.Writer, repoPath string, opts DiffOptions) error {
 		}
 	}
 
+	// TODO: Maybe use git-dir + bare always.
+	// TODO: For now -C is the compatible with go-git solution.
 	cmd := exec.Command(
 		"git", "-C", repoPath,
 		"diff", opts.FromCommit, opts.ToCommit,
