@@ -5,10 +5,24 @@ import (
 	"fmt"
 
 	"github.com/flant/dapp/pkg/build"
+	git_util "github.com/flant/dapp/pkg/git"
+	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ruby2go"
 )
 
 func main() {
+	var err error
+
+	err = lock.Init()
+	if err != nil {
+		panic(err)
+	}
+
+	err = git_util.Init()
+	if err != nil {
+		panic(err)
+	}
+
 	ruby2go.RunCli("git-artifact", func(args map[string]interface{}) (interface{}, error) {
 		res := make(map[string]interface{})
 
@@ -18,7 +32,6 @@ func main() {
 		}
 
 		var state []byte
-		var err error
 
 		switch method := args["method"]; method {
 		case "LatestCommit":
