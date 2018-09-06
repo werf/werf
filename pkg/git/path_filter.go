@@ -1,4 +1,4 @@
-package git_repo
+package git
 
 import (
 	"path/filepath"
@@ -26,14 +26,16 @@ func IsFilePathValid(filePath, basePath string, includePaths, excludePaths []str
 		return false
 	}
 
+	filePathInBasePath := TrimFileBasePath(filePath, basePath)
+
 	if len(includePaths) > 0 {
-		if !IsFilePathMatchesOneOfPatterns(filePath, includePaths) {
+		if !IsFilePathMatchesOneOfPatterns(filePathInBasePath, includePaths) {
 			return false
 		}
 	}
 
 	if len(excludePaths) > 0 {
-		if IsFilePathMatchesOneOfPatterns(filePath, excludePaths) {
+		if IsFilePathMatchesOneOfPatterns(filePathInBasePath, excludePaths) {
 			return false
 		}
 	}

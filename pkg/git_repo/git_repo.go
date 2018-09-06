@@ -26,6 +26,11 @@ const (
 	DirectoryArchive ArchiveType = "directory"
 )
 
+type Patch interface {
+	GetFilePath() string
+	IsEmpty() (bool, error)
+}
+
 type GitRepo interface {
 	String() string
 
@@ -34,10 +39,9 @@ type GitRepo interface {
 	LatestBranchCommit(branch string) (string, error)
 	LatestTagCommit(tag string) (string, error)
 
-	HasBinaryPatches(PatchOptions) (bool, error)
-	IsAnyChanges(PatchOptions) (bool, error)
-	CreatePatch(io.Writer, PatchOptions) error
+	CreatePatch(PatchOptions) (Patch, error)
 
+	// TODO: change main interface to CreateArchive (Archive, error)
 	ArchiveType(ArchiveOptions) (ArchiveType, error)
 	IsAnyEntries(ArchiveOptions) (bool, error)
 	CreateArchiveTar(io.Writer, ArchiveOptions) error

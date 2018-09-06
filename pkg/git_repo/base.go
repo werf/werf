@@ -3,8 +3,10 @@ package git_repo
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
+	git_util "github.com/flant/dapp/pkg/git" // Rename to "git" when go-git deleted
 	git "github.com/flant/go-git"
 	"github.com/flant/go-git/plumbing"
 	"github.com/flant/go-git/plumbing/object"
@@ -12,7 +14,8 @@ import (
 )
 
 type Base struct {
-	Name string
+	Name   string
+	TmpDir string
 }
 
 func (repo *Base) getHeadCommitForRepo(repoPath string) (string, error) {
@@ -102,56 +105,50 @@ func (repo *Base) ArchiveChecksum(ArchiveOptions) (string, error) {
 	panic("not implemented")
 }
 
-func (repo *Base) createPatchObject(repoPath string, opts PatchOptions) (*RelativeFilteredPatch, error) {
+func (repo *Base) createPatch(repoPath string, opts PatchOptions) (Patch, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)
 	}
 
 	fromHash := plumbing.NewHash(opts.FromCommit)
-	fromCommitObj, err := repository.CommitObject(fromHash)
+	_, err = repository.CommitObject(fromHash)
 	if err != nil {
-		return nil, fmt.Errorf("failed to  `%s`: %s", opts.FromCommit, err)
+		return nil, fmt.Errorf("bad `from` commit `%s`: %s", opts.FromCommit, err)
 	}
 
 	toHash := plumbing.NewHash(opts.ToCommit)
-	toCommitObj, err := repository.CommitObject(toHash)
+	_, err = repository.CommitObject(toHash)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create tree for commit `%s`: %s", opts.ToCommit, err)
+		return nil, fmt.Errorf("bad `to` commit `%s`: %s", opts.ToCommit, err)
 	}
 
-	originPatch, err := fromCommitObj.Patch(toCommitObj)
+	patch := NewTmpPatchFile()
+
+	fileFandler, err := os.OpenFile(patch.GetFilePath(), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create patch between `%s` and `%s`: %s", opts.FromCommit, opts.ToCommit, err)
+		return nil, fmt.Errorf("cannot open patch file: %s", err)
 	}
 
-	return &RelativeFilteredPatch{
-		OriginPatch: originPatch,
-		PathFilter: PathFilter{
+	err = git_util.Diff(fileFandler, repoPath, git_util.DiffOptions{
+		FromCommit: opts.FromCommit,
+		ToCommit:   opts.ToCommit,
+		PathFilter: git_util.PathFilter{
 			BasePath:     opts.BasePath,
 			IncludePaths: opts.IncludePaths,
 			ExcludePaths: opts.ExcludePaths,
 		},
-	}, nil
-}
-
-func (repo *Base) createPatch(repoPath string, output io.Writer, opts PatchOptions) error {
-	patchObj, err := repo.createPatchObject(repoPath, opts)
+	})
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("error creating diff between `%s` and `%s` commits: %s", opts.FromCommit, opts.ToCommit, err)
 	}
 
-	return patchObj.Encode(output)
-}
-
-func (repo *Base) isAnyChanges(repoPath string, opts PatchOptions) (bool, error) {
-	patchObj, err := repo.createPatchObject(repoPath, opts)
-
+	err = fileFandler.Close()
 	if err != nil {
-		return false, err
+		return nil, fmt.Errorf("error creating diff file: %s", err)
 	}
 
-	return len(patchObj.FilePatches()) != 0, nil
+	return patch, nil
 }
 
 func (repo *Base) createArchiveObject(repoPath string, opts ArchiveOptions) (*Archive, error) {
@@ -172,7 +169,7 @@ func (repo *Base) createArchiveObject(repoPath string, opts ArchiveOptions) (*Ar
 	}
 
 	archive := &Archive{
-		PathFilter: PathFilter{
+		PathFilter: git_util.PathFilter{
 			BasePath:     opts.BasePath,
 			IncludePaths: opts.IncludePaths,
 			ExcludePaths: opts.ExcludePaths,
@@ -207,19 +204,4 @@ func (repo *Base) createArchiveTar(repoPath string, output io.Writer, opts Archi
 	}
 
 	return archiveObj.CreateTar(output)
-}
-
-func (repo *Base) hasBinaryPatches(repoPath string, opts PatchOptions) (bool, error) {
-	patchObj, err := repo.createPatchObject(repoPath, opts)
-	if err != nil {
-		return false, err
-	}
-
-	for _, fpatch := range patchObj.FilePatches() {
-		if fpatch.IsBinary() {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }

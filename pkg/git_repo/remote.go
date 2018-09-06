@@ -236,12 +236,8 @@ func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 	return res, nil
 }
 
-func (repo *Remote) CreatePatch(output io.Writer, opts PatchOptions) error {
-	return repo.createPatch(repo.ClonePath, output, opts)
-}
-
-func (repo *Remote) IsAnyChanges(opts PatchOptions) (bool, error) {
-	return repo.isAnyChanges(repo.ClonePath, opts)
+func (repo *Remote) CreatePatch(opts PatchOptions) (Patch, error) {
+	return repo.createPatch(repo.ClonePath, opts)
 }
 
 func (repo *Remote) IsAnyEntries(opts ArchiveOptions) (bool, error) {
@@ -250,8 +246,4 @@ func (repo *Remote) IsAnyEntries(opts ArchiveOptions) (bool, error) {
 
 func (repo *Remote) CreateArchiveTar(output io.Writer, opts ArchiveOptions) error {
 	return repo.createArchiveTar(repo.ClonePath, output, opts)
-}
-
-func (repo *Remote) HasBinaryPatches(opts PatchOptions) (bool, error) {
-	return repo.hasBinaryPatches(repo.ClonePath, opts)
 }

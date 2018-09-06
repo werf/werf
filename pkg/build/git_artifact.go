@@ -96,7 +96,7 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 	return ga.GitRepo().HeadCommit()
 }
 
-func (ga *GitArtifact) applyPatchCommand(archiveType git_repo.ArchiveType, fromCommit, toCommit string) ([]string, error) {
+func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
 	commands := make([]string, 0)
 
 	var applyPatchDirectory string
@@ -116,11 +116,6 @@ func (ga *GitArtifact) applyPatchCommand(archiveType git_repo.ArchiveType, fromC
 		ga.makeCredentialsOpts(),
 		applyPatchDirectory,
 	))
-
-	patchFile, err := ga.createPatchFile(fromCommit, toCommit)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create patch between commits `%s` and `%s`: %s", fromCommit, toCommit, err)
-	}
 
 	commands = append(commands, fmt.Sprintf(
 		"%s %s apply --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s",
@@ -149,56 +144,41 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 		FromCommit:    fromCommit,
 		ToCommit:      toCommit,
 	}
-
-	anyChanges, err := ga.GitRepo().IsAnyChanges(patchOpts)
+	patch, err := ga.GitRepo().CreatePatch(patchOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	if anyChanges {
-		archiveType := git_repo.ArchiveType(
-			stage.GetPrevStage().GetImage().
-				GetLabels()[ga.getArchiveTypeLabelName()])
-
-		// Verify archive-type not changed in to-commit repo state
-		currentArchiveType, err := ga.GitRepo().ArchiveType(git_repo.ArchiveOptions{
-			FilterOptions: ga.getRepoFilterOptions(),
-			Commit:        toCommit,
-		})
-		if err != nil {
-			return nil, err
-		}
-		if archiveType != currentArchiveType {
-			return nil, fmt.Errorf("git repo `%s` archive type changed from `%s` to `%s`: reset cache manually and retry!", ga.GitRepo().String(), archiveType, currentArchiveType)
-		}
-
-		hasBinaryPatches, err := ga.GitRepo().HasBinaryPatches(patchOpts)
-		if err != nil {
-			return nil, err
-		}
-
-		if hasBinaryPatches {
-			commands := make([]string, 0)
-
-			commands = append(commands, fmt.Sprintf(
-				"%s -rf %s",
-				dappdeps.BaseBinPath("rm"),
-				ga.To,
-			))
-
-			createArchiveCommands, err := ga.applyArchiveCommand(archiveType, toCommit)
-			if err != nil {
-				return nil, err
-			}
-			commands = append(commands, createArchiveCommands...)
-
-			return commands, nil
-		} else {
-			return ga.applyPatchCommand(archiveType, fromCommit, toCommit)
-		}
+	noChanges, err := patch.IsEmpty()
+	if err != nil {
+		return nil, err
+	}
+	if noChanges {
+		return nil, nil
 	}
 
-	return nil, nil
+	archiveType := git_repo.ArchiveType(
+		stage.GetPrevStage().GetImage().
+			GetLabels()[ga.getArchiveTypeLabelName()])
+
+	// Verify archive-type not changed in to-commit repo state
+	currentArchiveType, err := ga.GitRepo().ArchiveType(git_repo.ArchiveOptions{
+		FilterOptions: ga.getRepoFilterOptions(),
+		Commit:        toCommit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if archiveType != currentArchiveType {
+		return nil, fmt.Errorf("git repo `%s` archive type changed from `%s` to `%s`: reset cache manually and retry!", ga.GitRepo().String(), archiveType, currentArchiveType)
+	}
+
+	patchFile, err := ga.createPatchFile(patch, fromCommit, toCommit)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create patch file: %s", err)
+	}
+
+	return ga.applyPatchCommand(patchFile, archiveType)
 }
 
 func (ga *GitArtifact) applyArchiveCommand(archiveType git_repo.ArchiveType, commit string) ([]string, error) {
@@ -248,31 +228,29 @@ func (ga *GitArtifact) ApplyArchiveCommand(stage Stage) ([]string, error) {
 		FilterOptions: ga.getRepoFilterOptions(),
 		Commit:        commit,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if !anyEntries {
+		return nil, nil
+	}
 
+	archiveType, err := ga.GitRepo().ArchiveType(git_repo.ArchiveOptions{
+		FilterOptions: ga.getRepoFilterOptions(),
+		Commit:        commit,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	if anyEntries {
-		archiveType, err := ga.GitRepo().ArchiveType(git_repo.ArchiveOptions{
-			FilterOptions: ga.getRepoFilterOptions(),
-			Commit:        commit,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		commands, err := ga.applyArchiveCommand(archiveType, commit)
-		if err != nil {
-			return nil, err
-		}
-
-		stage.GetImage().AddServiceChangeLabel(ga.getArchiveTypeLabelName(), string(archiveType))
-
-		return commands, err
+	commands, err := ga.applyArchiveCommand(archiveType, commit)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, nil
+	stage.GetImage().AddServiceChangeLabel(ga.getArchiveTypeLabelName(), string(archiveType))
+
+	return commands, err
 }
 
 func (ga *GitArtifact) getArchiveFileDescriptor(commit string) *ContainerFileDescriptor {
@@ -308,24 +286,17 @@ func (ga *GitArtifact) createArchiveFile(commit string) (*ContainerFileDescripto
 	return fileDesc, nil
 }
 
-func (ga *GitArtifact) createPatchFile(fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
+func (ga *GitArtifact) createPatchFile(patch git_repo.Patch, fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
 	fileDesc := ga.getPatchFileDescriptor(fromCommit, toCommit)
 
-	handler, err := fileDesc.Open(os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open archive file `%s`: %s", fileDesc.FilePath, err)
-	}
+	var err error
 
-	err = ga.GitRepo().CreatePatch(handler, git_repo.PatchOptions{
-		FilterOptions: ga.getRepoFilterOptions(),
-		FromCommit:    fromCommit,
-		ToCommit:      toCommit,
-	})
+	err = os.MkdirAll(filepath.Dir(fileDesc.FilePath), os.ModePerm)
 	if err != nil {
 		return nil, err
 	}
 
-	err = handler.Close()
+	err = os.Rename(patch.GetFilePath(), fileDesc.FilePath)
 	if err != nil {
 		return nil, err
 	}
