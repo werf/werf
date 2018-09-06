@@ -293,7 +293,7 @@ module Dapp
           end
 
           def image_should_be_locked?
-            !(empty? || image.tagged? || should_be_not_present?)
+            !(empty? || image.built? || should_be_not_present?)
           end
 
           def image_should_be_prepared?
