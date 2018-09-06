@@ -4,13 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 
+	git_util "github.com/flant/dapp/pkg/git"
 	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ruby2go"
 )
 
 func main() {
-	err := lock.Init()
+	var err error
+
+	err = lock.Init()
+	if err != nil {
+		panic(err)
+	}
+
+	err = git_util.Init()
 	if err != nil {
 		panic(err)
 	}
