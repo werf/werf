@@ -2,7 +2,6 @@
 title: dapp kube render
 sidebar: reference
 permalink: kube_render.html
-folder: command
 ---
 
 ### dapp kube render

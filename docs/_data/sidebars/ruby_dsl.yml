@@ -1,0 +1,32 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+- title: sidebar
+  f:
+
+  - title: Первое приложение на dapp (Chef)
+    url: /ruby
+
+  - title: Chef сборщик
+    url: /ruby_chef.html
+
+  - title: Директивы
+    fi:
+
+    - title: Добавление кода в образ директивой git
+      url: /ruby_git.html
+
+    - title: Использовать функции chef
+      url: /ruby_chef_directives.html
+
+    - title: Выделение модулей
+      url: /ruby_chef_dimod.html
+
+    - title: Docker директивы
+      url: /ruby_docker_directives.html
+
+    - title: Использование артефактов
+      url: /ruby_artifact.html
+
+    - title: Монтирование директорий
+      url: /ruby_mount_directive.html

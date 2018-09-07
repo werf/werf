@@ -2,7 +2,6 @@
 title: Использование minikube
 sidebar: reference
 permalink: minikube_for_kube.html
-folder: kube
 ---
 
 Чтобы использовать dapp для деплоя образов в minikube:

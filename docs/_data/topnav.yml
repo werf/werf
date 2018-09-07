@@ -3,12 +3,14 @@
 topnav:
 - title: Topnav
   items:
-    - title: Обзор
+    - title: Introduction
       url: /index.html
     - title: How To
       url: /installation.html
     - title: Reference
-      url: /ansible_builder.html
+      url: /dappfile.html
+    - title: Publications
+      url: /publications.html
     - title: FAQ
       url: /faq.html
     - title: GitHub

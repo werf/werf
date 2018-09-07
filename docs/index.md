@@ -32,4 +32,4 @@ It is designed to make engineer's work fast end efficient.
 ## First Steps
 
 * [Install dapp and dependencies](installation.html).
-* [Make your first dapp application with Ansible builder](get_started_ansible.html).
+* [Make your first dapp application with Ansible builder](first_application.html).

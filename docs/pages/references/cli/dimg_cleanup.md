@@ -2,7 +2,6 @@
 title: dapp dimg cleanup
 sidebar: reference
 permalink: dimg_cleanup.html
-folder: command
 ---
 ### dapp dimg cleanup
 Убраться в системе после некорректного завершения работы dapp, удалить нетегированные docker-образы и docker-контейнеры.

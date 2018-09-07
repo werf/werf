@@ -2,7 +2,6 @@
 title: dapp kube dismiss
 sidebar: reference
 permalink: kube_dismiss.html
-folder: command
 ---
 
 ### dapp kube dismiss

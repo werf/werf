@@ -27,7 +27,7 @@ It is designed to make engineer's work fast end efficient.
 
 - [Features](#features)
 - [Requirements and Installation](#requirements-and-installation)
-  - [Install Dependencies:](#install-dependencies)
+  - [Install Dependencies](#install-dependencies)
   - [Install dapp](#install-dapp)
 - [Docs and Support](#docs-and-support)
 - [License](#license)
@@ -51,7 +51,7 @@ It is designed to make engineer's work fast end efficient.
 Dapp requires a Linux operating system.
 Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp/issues/661)).
 
-## Install Dependencies:
+## Install Dependencies
 
 1.  Ruby version 2.1 or later: 
     [Ruby installation](https://www.ruby-lang.org/en/documentation/installation/).
@@ -110,7 +110,7 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
 
 Now you have dapp installed. Check it with `dapp --version`.
 
-Time to [make your first dapp application](https://flant.github.io/dapp/get_started_ansible.html)!
+Time to [make your first dapp application](https://flant.github.io/dapp/first_application.html)!
 
 # Docs and Support
 

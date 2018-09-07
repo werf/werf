@@ -2,7 +2,6 @@
 title: dapp kube secret
 sidebar: reference
 permalink: kube_secret.html
-folder: command
 ---
 
 ### dapp kube secret key generate

@@ -2,7 +2,6 @@
 title: dapp dimg push
 sidebar: reference
 permalink: dimg_push.html
-folder: command
 ---
 
 ### dapp dimg push

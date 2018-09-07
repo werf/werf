@@ -2,7 +2,6 @@
 title: dapp dimg flush
 sidebar: reference
 permalink: dimg_flush.html
-folder: command
 ---
 
 ### dapp dimg flush local

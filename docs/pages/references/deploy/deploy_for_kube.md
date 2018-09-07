@@ -2,7 +2,6 @@
 title: Управление выкатом
 sidebar: reference
 permalink: deploy_for_kube.html
-folder: kube
 ---
 
 Для деплоя в kubernetes используется [helm](https://helm.sh/) (kubernetes package manager).

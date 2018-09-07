@@ -2,7 +2,6 @@
 title: dapp dimg mrproper
 sidebar: reference
 permalink: dimg_mrproper.html
-folder: command
 ---
 
 ### dapp dimg mrproper

@@ -2,7 +2,6 @@
 title: dapp kube value
 sidebar: reference
 permalink: kube_value.html
-folder: command
 ---
 ### dapp kube value get
 

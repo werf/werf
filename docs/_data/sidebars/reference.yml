@@ -4,56 +4,83 @@ entries:
 - title: sidebar
   f:
 
-    - title: Сборка
+    - title: Dappfile
       fi:
 
-        - title: Ansible-сборщик
-          url: /ansible_builder.html
+        - title: What is dappfile?
+          url: /dappfile.html
 
-        - title: Shell-сборщик
-          url: /shell_builder.html
+        - title: Minimal dappfile
+          url: /minimal_dappfile.html
 
-        - title: Chef-сборщик
-          url: /chef_builder.html
-
-    - title: Синтаксис dappfile
-      fi:
-
-        - title: Описание образов
-          url: /directives_images.html
-
-        - title: "[git] Добавление кода в образ"
+        - title: Add source code to the image with the git directive
           url: /git.html
 
-        - title: Использование артефактов
+        - title: Run assembly shell-instructions
+          url: /shell_directive.html
+
+        - title: Run assembly ansible-instructions
+          url: /ansible_directive.html
+
+        - title: Add docker-instructions
+          url: /docker_directive.html
+
+        - title: Reduce application image size by using artifacts
           url: /artifact.html
 
-        - title: Сборка нескольких образов
-          url: /multiple_images_for_build.html
+        - title: Mount directories
+          url: /mount_directive.html
 
-        - title: Использование модулей (chef only)
-          url: /chef_dimod.html
-
-        - title: Использовать функции chef
-          url: /chef_directives.html
-
-        - title: Docker директивы
-          url: /docker_directives.html
-
-        - title: Монтирование директорий
-          url: /mount_directives.html
-
-        - title: "[dappfile.yml] YAML формат"
-          url: /yaml_directives.html
-
-    - title: Ускорение сборки
+    - title: Stages
       fi:
 
-        - title: Стадии сборки
-          url: /stages.html
+      - title: What is stage?
+        url: /stage.html
 
-        - title: Таблица стадий
-          url: /stages_diagram.html
+      - title: Stage conveyor
+        url: /stage_conveyor.html
+
+      - title: User stages
+        url: /user_stages.html
+
+      - title: Git stages
+        url: /git_stages.html
+
+      - title: Artifacts stages
+        url: /artifacts_stages.html
+
+    - title: Registry
+      url: /registry.html
+
+    - title: Cleanup
+      url: /cleanup.html
+
+    - title: Deploy
+      fi:
+
+      - title: Выкат в kubernetes
+        url: /deploy_for_kube.html
+
+      - title: Секреты
+        url: /secrets_for_kube.html
+
+      - title: Конфигурация выката
+        url: /templates_for_kube.html
+
+      - title: Использование minikube
+        url: /minikube_for_kube.html
+
+    - title: Developer tools
+      fi:
+
+      - title: Stage introspection
+        url: /stage_introspection.html
+
+      - title: Work with local changes without commits in dev mode
+        url: /dev_mode.html
+
+      - title: Caching each instruction separately with asLayers
+        url: /as_layers.html
 
     - title: CLI
       fi:
@@ -109,29 +136,6 @@ entries:
         - title: kube value
           url: /kube_value.html
 
-    - title: Выкат
-      fi:
+    - title: Glossary
+      url: /glossary.html
 
-      - title: Registry
-        url: /registry_for_advanced_build.html
-
-      - title: Управление выкатом
-        url: /deploy_for_kube.html
-
-      - title: Секреты
-        url: /secrets_for_kube.html
-
-      - title: Конфигурация выката
-        url: /templates_for_kube.html
-
-      - title: Использование minikube
-        url: /minikube_for_kube.html
-
-    - title: Устройство dapp
-      fi:
-
-        - title: Кэширование
-          url: /cache_for_advanced_build.html
-
-        - title: Как устроены стадии сборки
-          url: /stages_arhitecture.html

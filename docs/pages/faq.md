@@ -1,6 +1,5 @@
 ---
 title: Dapp Frequently Asked Questions
-sidebar: faq
 permalink: faq.html
 ---
 
@@ -13,22 +12,7 @@ In some case, you can and it will work, but please try to avoid this and use lat
 
 ## Dappfile
 
-[Q: How to use **dimg_group** in YAML dappfiles?](#dappfile-1){:id="dappfile-1"}
-
-You can't use `dimg_group` in `dappfile.y[a]ml`.
-
-`dappfile.y[a]ml` don't allow dimg nesting. All of dimgs and artifacts have to be described one by one and have to be separated by `---`.
-
-```yaml
-dimg: app1
-from: alpine
----
-dimg: app2
-from: alpine
-```
-
-
-[Q: How to convert **COPY . /var/app** instruction from Dockerfile to dappfile.yaml?](#dappfile-2){:id="dappfile-2"}
+[Q: How to convert **COPY . /var/app** instruction from Dockerfile to dappfile.yaml?](#dappfile-1){:id="dappfile-1"}
 
 To add files from local git repository you can use the following:
 
@@ -39,12 +23,12 @@ git:
 ```
 
 
-[Q: How to specify stageDependency to all files in all subdirectories?](#dappfile-3){:id="dappfile-3"}
+[Q: How to specify stageDependency to all files in all subdirectories?](#dappfile-2){:id="dappfile-2"}
 
 You can use `**/*` mask.
 
 
-[Q: How can I use environment variable in dappfile?](#dappfile-4){:id="dappfile-4"}
+[Q: How can I use environment variable in dappfile?](#dappfile-3){:id="dappfile-3"}
 
 Use [sprig env function](http://masterminds.github.io/sprig/os.html), `{% raw %}{{ env "ENV_NAME" }}{% endraw %}`, for dappfile.yaml:
 
@@ -66,28 +50,7 @@ git:
 ```
 {% endraw %}
 
-Use ruby environment variables accesor ([ENV](https://ruby-doc.org/core-2.2.0/ENV.html)) for Dappfile, ruby DSL configuration:
-
-```ruby
-git_branch = ENV["SPECIFIC_ENV_HERE"]
-
-dimg do
-  docker.from "alpine"
-
-  git("https://github.com/company/project1.git").add do
-        branch git_branch
-        to "/app/project1"
-  end
-
-  git("https://github.com/company/project2.git").add do
-        branch git_branch
-        to "/app/project2"
-  end
-end
-```
-
-
-[Q: Can I set an environment variable to use it during build?](#dappfile-5){:id="dappfile-5"}
+[Q: Can I set an environment variable to use it during build?](#dappfile-4){:id="dappfile-4"}
 
 We recommend to build an image which building instructions depend on your code but not on an environment in build time. In other words, you better build one image, which you can run in any environment, and this image has to change its logic when it runs rely on environment variables. If building stage will depend on such black box like changing environments you can get an unexpected behavior of dapp builder and unexpected results.
 
@@ -96,12 +59,7 @@ Environment variables which have been set in `docker` dappfile section will be a
 Also, you can use `ANSIBLE_ARGS` env when you use ansible builder. E.g. you can `export ANSIBLE_ARGS=-vvv` and get verbose ansible output.
 
 
-[Q: Can I use different images for artifact and for dimg?](#dappfile-6){:id="dappfile-6"}
-
-Yes, you can.
-
-
-[Q: What functions can I use in dappfile.yaml?](#dappfile-7){:id="dappfile-7"}
+[Q: What functions can I use in dappfile.yaml?](#dappfile-5){:id="dappfile-5"}
 
 * [Go template functions](https://golang.org/pkg/text/template/#hdr-Functions).
 
@@ -252,9 +210,9 @@ In general for authorization in registry dapp use:
 * Docker config of a user running dapp, `~/.docker/config.json`.
 
 
-[Q: How can I push to GCP?](#pushing-2){:id="pushing-2"}
+[Q: How can I push to GCR?](#pushing-2){:id="pushing-2"}
 
-To push to GCP you can use the following workaround:
+To push to GCR you can use the following workaround:
 
 {% raw %}
 ```bash
@@ -266,7 +224,7 @@ dapp dimg flush local
 ```
 {% endraw %}
 
-Dapp support push to public and private repositories, but it doesn't work with some platforms such as GCP.
+Dapp support push to public and private repositories, but it doesn't work with some platforms such as GCR.
 
 
 [Q: Can I use several tags at the same time?](#pushing-3){:id="pushing-3"}
