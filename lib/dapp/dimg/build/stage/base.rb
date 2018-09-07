@@ -329,7 +329,7 @@ module Dapp
 
           def should_be_not_present?
             return false if next_stage.nil?
-            !current_or_related_image_should_be_untagged? && (next_stage.image.tagged? || next_stage.should_be_not_present?)
+            !current_or_related_image_should_be_untagged? && (next_stage.image.tagged? && !next_stage.image_should_be_untagged_condition || next_stage.should_be_not_present?)
           end
 
           def image_name
