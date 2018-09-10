@@ -31,7 +31,7 @@ BANNER
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
             repository = repo
-            run_dapp_command(run_method, options: cli_options(repo: repository))
+            run_dapp_command(run_method, options: cli_options(repo: repository), try_host_docker_login: true)
           end
 
           def repo

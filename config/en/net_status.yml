@@ -122,11 +122,7 @@ en:
       builder_cookbook_not_found: "Dapp cookbook directory not found at %{path}"
       berksfile_absolute_path_forbidden: "Absolute paths in Berksfile are not allowed (cookbook `%{cookbook}`, path: `%{path}`)"
     registry:
-      authenticate_type_not_supported: 'Registry `%{registry}`: authenticate type is not supported!'
-      page_not_found: "Registry `%{registry}`: page `%{url}` not found!"
-      method_not_allowed: "Registry `%{registry}`: method `%{method}` not allowed (`%{url}`)!"
-      user_not_authorized: 'Registry `%{registry}`: user not authorized!'
-      registry_not_available: 'Registry `%{registry}`: not available!'
+      ruby2go_docker_registry_command_failed_unexpected_error: 'ruby2go_docker_registry command `%{command}` failed: `%{message}`!'
     rugged:
       git_repository_reference_error: "Git repo `%{name}`: %{message}!"
       rugged_remote_error: "Remote git repo `%{url}`: `%{message}`!"

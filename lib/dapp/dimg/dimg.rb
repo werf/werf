@@ -126,7 +126,7 @@ module Dapp
 
       def tag_should_not_be_pushed?(tag)
         registry_tags.include?(tag) && begin
-          registry_tag_parent = registry.image_history(tag, name)['container_config']['Image']
+          registry_tag_parent = registry.image_parent_id(tag, name)
           registry_tag_parent == last_stage.image.built_id
         end
       end

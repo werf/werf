@@ -5,6 +5,10 @@ module Dapp
         _ruby2go("image", args_hash)
       end
 
+      def ruby2go_docker_registry(args_hash)
+        _ruby2go("docker_registry", args_hash)
+      end
+
       def ruby2go_builder(args_hash)
         _ruby2go("builder", args_hash)
       end

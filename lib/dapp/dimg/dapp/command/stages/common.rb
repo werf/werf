@@ -9,13 +9,14 @@ module Dapp
             def repo_detailed_dimgs_images(registry)
               repo_dimgs_images(registry).select do |dimg|
                 begin
-                  image_history = registry.image_history(dimg[:tag], dimg[:dimg])
-                  dimg[:created_at] = Time.parse(image_history['created']).to_i
-                  dimg[:parent] = image_history['container_config']['Image']
-                  dimg[:labels] = image_history['config']['Labels'] || {}
+                  image_config = registry.image_config(dimg[:tag], dimg[:dimg])
+                  dimg[:created_at] = Time.parse(image_config["created"]).to_i
+                  dimg[:parent] = image_config["container_config"]["Image"]
+                  dimg[:labels] = image_config["config"]["Labels"]
                   dimg[:labels]['dapp'] == name
-                rescue ::Dapp::Dimg::DockerRegistry::Error::ManifestInvalid => err
-                  log_warning "WARNING: Ignore dimg `#{dimg[:dimg]}` tag `#{dimg[:tag]}`: got manifest-invalid-error from docker registry: #{err.message}"
+                rescue ::Dapp::Dimg::Error::Registry => e
+                  raise unless e.net_status[:data][:message].include?("MANIFEST_UNKNOWN")
+                  log_warning "WARNING: Ignore dimg `#{dimg[:dimg]}` tag `#{dimg[:tag]}`: got manifest-invalid-error from docker registry: #{e.net_status[:data][:message]}"
                   false
                 end
               end
@@ -52,8 +53,9 @@ module Dapp
                 end
 
                 return { dimg: dimg_name, tag: tag, id: id }
-              rescue ::Dapp::Dimg::DockerRegistry::Error::ImageNotFound => err
-                log_warning "WARNING: Ignore dimg `#{dimg_name}` tag `#{tag}`: got not-found-error from docker registry on get-image-manifest request: #{err.message}"
+              rescue ::Dapp::Dimg::Error::Registry => e
+                raise unless e.net_status[:data][:message].include?("MANIFEST_UNKNOWN")
+                log_warning "WARNING: Ignore dimg `#{dimg_name}` tag `#{tag}`: got not-found-error from docker registry on get-image-manifest request: #{e.net_status[:data][:message]}"
                 return nil
               end
             end
@@ -63,8 +65,9 @@ module Dapp
               unless dry_run?
                 begin
                   registry.image_delete(repo_image[:tag], repo_image[:dimg])
-                rescue ::Dapp::Dimg::DockerRegistry::Error::ImageNotFound => err
-                  log_warning "WARNING: Ignore dimg `#{repo_image[:dimg]}` tag `#{repo_image[:tag]}`: got not-found-error from docker registry on image-delete request: #{err.message}"
+                rescue ::Dapp::Dimg::Error::Registry => e
+                  raise unless e.net_status[:data][:message].include?("MANIFEST_UNKNOWN")
+                  log_warning "WARNING: Ignore dimg `#{repo_image[:dimg]}` tag `#{repo_image[:tag]}`: got not-found-error from docker registry on image-delete request: #{e.net_status[:data][:message]}"
                 end
               end
             end
