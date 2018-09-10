@@ -1,0 +1,38 @@
+# This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
+
+entries:
+- title: sidebar
+  f:
+
+  - title: Базовые определения
+    url: /not_used
+
+  - title: Yaml директивы
+    url: /yaml_directives.html
+
+  - title: Описание образов
+    url: /directives_images.html
+
+  - title: Сборка нескольких образов
+    url: /multiple_images_for_build.html
+
+  - title: Ansible builder
+    url: /ansible_builder.html
+
+  - title: Shell сборщик
+    url: /shell_builder.html
+
+  - title: Упрощение разработки
+    url: /easy_development.html
+
+  - title: Стадии сборки
+    url: /stages.html
+
+  - title: Как устроены стадии сборки
+    url: /stages_arhitecture.html
+
+  - title: Таблица стадий
+    url: /stages_diagram.html
+
+  - title: Как устроено кэширование
+    url: /cache_for_advanced_build.html

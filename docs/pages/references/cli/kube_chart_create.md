@@ -2,7 +2,6 @@
 title: dapp kube chart create
 sidebar: reference
 permalink: kube_chart_create.html
-folder: command
 ---
 ### dapp kube create chart
 Создает шаблон чарта в папке `.helm`.

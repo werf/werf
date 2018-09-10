@@ -2,7 +2,6 @@
 title: dapp dimg run
 sidebar: reference
 permalink: dimg_run.html
-folder: command
 ---
 
 ### dapp dimg run
