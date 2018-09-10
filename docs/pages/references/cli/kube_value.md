@@ -13,11 +13,11 @@ dapp kube value get [options] VALUE_KEY [REPO]
 * `global.namespace` - namespace (см. опцию `--namespace`)
 * `global.dapp.name` - имя проекта dapp (см. опцию `--name`)
 * `global.dapp.repo` - имя репозитория
-* `global.dapp.docker_tag` - тэг образа
-* `global.dapp.dimg.[<имя dimg>.]docker_image` - docker-образа включая адрес репозитория и тэг
+* `global.dapp.docker_tag` - тег образа
+* `global.dapp.dimg.[<имя dimg>.]docker_image` - docker-образа включая адрес репозитория и тег
 * `global.dapp.dimg.[<имя dimg>.]docker_image_id` - хэш образа, например - `sha256:cce87e0fe251a295a9ae81c8343b48472a74879cd75a0fbbd035bb50f69a2b02`, либо `-` если docker-registry не доступен
 * `global.dapp.ci.is_branch` - имеет значение `true`, в случае если происходит деплой из ветки (в случае использования dapp только для deploy, будет `false`)
-* `global.dapp.ci.is_tag` - имеет значение `true`, в случае если происходит деплой из тэга
+* `global.dapp.ci.is_tag` - имеет значение `true`, в случае если происходит деплой из тега
 * `global.dapp.ci.tag` - имеет истинное значение только если `is_tag=true`, иначе `-`
 * `global.dapp.ci.branch` - имеет истинное значение только если is_branch=true, иначе `-`
 * `global.dapp.ci.ref` - тоже что tag или branch, - если `is_tag=false` и `is_branch=false`, то имеет значение `-`
