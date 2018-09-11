@@ -113,6 +113,7 @@ module Dapp
             image.add_service_change_label dapp: dimg.stage_dapp_label
             image.add_service_change_label 'dapp-version'.to_sym => ::Dapp::VERSION
             image.add_service_change_label 'dapp-cache-version'.to_sym => ::Dapp::BUILD_CACHE_VERSION
+            image.add_service_change_label 'dapp-dimg'.to_sym => false
             image.add_service_change_label 'dapp-dev-mode'.to_sym => true if dimg.dev_mode?
 
             if dimg.dapp.ssh_auth_sock

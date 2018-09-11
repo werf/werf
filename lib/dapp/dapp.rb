@@ -237,9 +237,10 @@ module Dapp
       end
 
       def docker_credentials
-        if options.key?(:registry_username) && options.key?(:registry_password)
+        if options[:registry_username] && options[:registry_password]
           [options[:registry_username], options[:registry_password]]
-        elsif ENV.key?('CI_JOB_TOKEN')
+        elsif ENV.key?('DAPP_DOCKER_CONFIG')
+        elsif !ENV.key?('DAPP_IGNORE_CI_DOCKER_AUTOLOGIN') && ENV.key?('CI_JOB_TOKEN')
           ['gitlab-ci-token', ENV['CI_JOB_TOKEN']]
         end
       end

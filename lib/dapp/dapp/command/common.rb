@@ -16,7 +16,7 @@ module Dapp
 
         def dimg_registry(repo = option_repo)
           validate_repo_name!(repo)
-          ::Dapp::Dimg::DockerRegistry.new(repo)
+          ::Dapp::Dimg::DockerRegistry.new(self, repo)
         end
       end
     end

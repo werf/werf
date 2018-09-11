@@ -85,7 +85,7 @@ module Dapp
             docker_image_id = TEMPLATE_EMPTY_VALUE
             unless fake || without_registry
               begin
-                dimg_labels = dapp.dimg_registry(repo).image_labels(docker_tag, dimg.name)
+                dimg_labels = dapp.dimg_registry(repo).image_config(docker_tag, dimg.name)["config"]["Labels"]
                 docker_image_id = dapp.dimg_registry(repo).image_id(docker_tag, dimg.name)
               rescue ::Dapp::Dimg::Error::Registry => err
                 unless disable_warnings

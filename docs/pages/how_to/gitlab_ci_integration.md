@@ -95,7 +95,7 @@ Cleanup builder:
 
 для аутентификация docker registry могут использоваться переменные `CI_JOB_TOKEN`, `CI_REGISTRY`, если они не переопределяются пользователем вот так: `docker login --username gitlab-ci-token --password $CI_JOB_TOKEN $CI_REGISTRY`
 
-вместо указания username/password можно указать путь до произвольного docker config-а через `$DAPP_DOCKER_CONFIG`.
+вместо указания username/password можно указать путь до произвольного docker config-а через `DAPP_DOCKER_CONFIG`.
 
 для определения CI проверяется наличие переменной окружения `GITLAB_CI` или `TRAVIS`
 

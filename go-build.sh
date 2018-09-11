@@ -8,3 +8,4 @@ go install github.com/flant/dapp/cmd/git-repo
 go install github.com/flant/dapp/cmd/image
 go install github.com/flant/dapp/cmd/builder
 go install github.com/flant/dapp/cmd/dappdeps
+go install github.com/flant/dapp/cmd/docker_registry

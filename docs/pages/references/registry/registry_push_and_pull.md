@@ -1,22 +1,8 @@
 ---
-title: Registry
+title: Push and pull
 sidebar: reference
-permalink: registry.html
+permalink: registry_push_and_pull.html
 ---
-
-## Авторизация
-
-Перед тем как начать работу с registry, необходимо авторизоваться.
-
-```shell
-# для работы с Docker Hub
-docker login
-```
-
-```shell
-# для работы с произвольным registry
-docker login REPO
-```
 
 ## Добавление приложений и кэша в registry
 
@@ -56,12 +42,4 @@ dapp dimg stages push REPO
 ```shell
 # скачивание существующего кэша
 dapp dimg stages pull REPO
-```
-
-## Удаление всех образов проекта из registry
-
-После того, как проект перестал использоваться, можно удалить данные проекта из registry следующей командой:
-
-```shell
-dapp dimg stages flush repo REPO
 ```

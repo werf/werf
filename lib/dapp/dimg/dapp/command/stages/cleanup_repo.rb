@@ -55,11 +55,11 @@ module Dapp
             end
 
             def repo_image_dapp_artifacts_labels(registry, repo_image)
-              select_dapp_artifacts_ids(registry.image_labels(repo_image[:tag], repo_image[:dimg]))
+              select_dapp_artifacts_ids(registry.image_config(repo_image[:tag], repo_image[:dimg])["config"]["Labels"])
             end
 
             def repo_image_dapp_cache_version_label(registry, repo_image)
-              registry.image_labels(repo_image[:tag], repo_image[:dimg])['dapp-cache-version']
+              registry.image_config(repo_image[:tag], repo_image[:dimg])["config"]["Labels"]['dapp-cache-version']
             end
 
             def repo_image_by_id(repo_image_id, repo_images)
@@ -82,9 +82,9 @@ module Dapp
             def repo_detailed_dimgstage_images(registry)
               @repo_dapp_dimgstage_images_detailed ||= begin
                 repo_dimgstages_images(registry).each do |dimgstage|
-                  image_history = registry.image_history(dimgstage[:tag], nil)
-                  dimgstage[:parent] = image_history['container_config']['Image']
-                  dimgstage[:labels] = image_history['config']['Labels']
+                  image_config = registry.image_config(dimgstage[:tag], nil)
+                  dimgstage[:parent] = image_config["container_config"]["Image"]
+                  dimgstage[:labels] = image_config["config"]["Labels"]
                 end
               end
             end

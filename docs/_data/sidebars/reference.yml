@@ -50,10 +50,16 @@ entries:
         url: /artifacts_stages.html
 
     - title: Registry
-      url: /registry.html
+      fi:
 
-    - title: Cleanup
-      url: /cleanup.html
+      - title: Authorization
+        url: /registry_authorization.html
+
+      - title: Push and pull
+        url: /registry_push_and_pull.html
+
+      - title: Cleanup
+        url: /cleanup.html
 
     - title: Deploy
       fi:

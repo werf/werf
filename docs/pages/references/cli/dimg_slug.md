@@ -15,6 +15,6 @@ dapp slug STRING
 #### Пример
 
 ```bash
-$ $ dapp slug 'Длинный, mixed.language tag with sP3c!AL chars'
+$ dapp slug 'Длинный, mixed.language tag with sP3c!AL chars'
 dlinnyj-mixed-language-tag-with-sp3cal-chars-ae959974
 ```
