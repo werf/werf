@@ -53,11 +53,11 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
 
 ## Install Dependencies
 
-1.  Ruby version 2.1 or later: 
+1.  Ruby version 2.1 or later:
     [Ruby installation](https://www.ruby-lang.org/en/documentation/installation/).
 
 1.  Docker version 1.10.0 or later:
-    [Docker installation](https://docs.docker.com/engine/installation/).    
+    [Docker installation](https://docs.docker.com/engine/installation/).
 
 1.  сmake (required to install `rugged` gem):
 
@@ -68,7 +68,7 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
     ```
 
     on Centos:
-    
+
     ```bash
     yum install cmake
     ```
@@ -83,7 +83,7 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
     ```
 
     on Centos:
-    
+
     ```bash
     yum install libssh2-devel
     ```
@@ -97,11 +97,27 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
     ```
 
     on Centos:
-    
+
     ```bash
     yum install openssl-devel
     ```
-      
+
+1.  Git command line utility.
+
+    Minimal required version is `1.9.0`. To use git submodules minimal version is `2.14.0`.
+
+    on Ubuntu:
+
+    ```bash
+    apt-get install git
+    ```
+
+    on Centos:
+
+    ```bash
+    yum install git
+    ```
+
 ## Install dapp
 
   ```bash
