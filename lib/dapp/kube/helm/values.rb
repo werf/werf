@@ -87,9 +87,9 @@ module Dapp
               begin
                 dimg_labels = dapp.dimg_registry(repo).image_config(docker_tag, dimg.name)["config"]["Labels"]
                 docker_image_id = dapp.dimg_registry(repo).image_id(docker_tag, dimg.name)
-              rescue ::Dapp::Dimg::Error::Registry => err
+              rescue ::Dapp::Dimg::Error::Registry => e
                 unless disable_warnings
-                  dapp.log_warning "Registry `#{err.net_status[:data][:registry]}` is not availabble: cannot determine <dimg>.docker_image_id and <dimg>.git.<ga>.commit_id helm values of dimg#{dimg.name ? " `#{dimg.name}`" : nil}"
+                  dapp.log_warning "Cannot determine <dimg>.docker_image_id and <dimg>.git.<ga>.commit_id helm values of dimg#{dimg.name ? " `#{dimg.name}`" : nil}: #{e.net_status[:data][:message]}"
                 end
               end
             end
