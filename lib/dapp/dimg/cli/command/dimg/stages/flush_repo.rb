@@ -19,7 +19,7 @@ BANNER
           def run(argv = ARGV)
             self.class.parse_options(self, argv)
             repo = self.class.required_argument(self, 'repo')
-            run_dapp_command(:stages_flush_repo, options: cli_options(repo: repo), try_host_docker_login: true)
+            run_dapp_command(:stages_flush_repo, options: cli_options(repo: repo))
           end
         end
       end

@@ -56,15 +56,13 @@ module Dapp
           super()
         end
 
-        def run_dapp_command(run_method, options: {}, try_host_docker_login: false)
+        def run_dapp_command(run_method, options: {})
           dapp = ::Dapp::Dapp.new(options: options)
           ::Dapp::CLI.dapp_object = dapp
           dapp.sentry_message("Manual usage: `#{options[:dapp_command]}` command") unless ENV['CI']
 
           log_dapp_running_time(dapp) do
             begin
-              dapp.try_host_docker_login if try_host_docker_login
-
               if block_given?
                 yield dapp
               elsif !run_method.nil?

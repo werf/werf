@@ -55,6 +55,8 @@ module Dapp
       @_call_after_before_terminate = []
 
       ruby2go_init
+
+      try_host_docker_login
     end
 
     def options
