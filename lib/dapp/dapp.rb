@@ -56,6 +56,7 @@ module Dapp
 
       ruby2go_init
 
+      setup_ssh_agent
       try_host_docker_login
     end
 
