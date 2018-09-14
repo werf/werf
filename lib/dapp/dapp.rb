@@ -36,6 +36,8 @@ module Dapp
 
     include Shellout::Base
 
+    GCR_REGISTRIES = %w(asia.gcr.io eu.gcr.io gcr.io marketplace.gcr.io staging-k8s.gcr.io us.gcr.io)
+
     attr_reader :options
 
     def get_ruby2go_state_hash
@@ -243,9 +245,14 @@ module Dapp
         if options[:registry_username] && options[:registry_password]
           [options[:registry_username], options[:registry_password]]
         elsif ENV.key?('DAPP_DOCKER_CONFIG')
-        elsif !ENV.key?('DAPP_IGNORE_CI_DOCKER_AUTOLOGIN') && ENV.key?('CI_JOB_TOKEN')
+        elsif !gcr_registry? && !ENV.key?('DAPP_IGNORE_CI_DOCKER_AUTOLOGIN') && ENV.key?('CI_JOB_TOKEN')
           ['gitlab-ci-token', ENV['CI_JOB_TOKEN']]
         end
+      end
+
+      def gcr_registry?
+        return false if options[:repo].nil?
+        GCR_REGISTRIES.any? { |registry| options[:repo].to_s.start_with?(registry) }
       end
 
       def host_docker_tmp_config_dir
