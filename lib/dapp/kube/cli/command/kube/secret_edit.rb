@@ -4,7 +4,7 @@ module Dapp::Kube::CLI::Command
       banner <<BANNER.freeze
 Usage:
 
-  dapp kube secret edit [FILE_PATH] [options]
+  dapp kube secret edit FILE_PATH [options]
 
 Options:
 BANNER

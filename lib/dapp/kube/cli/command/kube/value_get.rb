@@ -4,7 +4,7 @@ module Dapp::Kube::CLI::Command
       banner <<BANNER.freeze
 Usage:
 
-  dapp kube value get [options] VALUE_KEY [REPO]
+  dapp kube value get [options] VALUE_KEY REPO
 
 Options:
 BANNER
@@ -32,14 +32,8 @@ BANNER
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)
-        options = cli_options
-        options[:repo] = if not cli_arguments[1].nil?
-                           self.class.required_argument(self, 'repo')
-                         else
-                           dapp.name
-                         end
-
-        run_dapp_command(nil, options: options) do |dapp|
+        repo = self.class.required_argument(self, 'repo')
+        run_dapp_command(nil, options: cli_options(repo: repo)) do |dapp|
           value_key = self.class.required_argument(self, "VALUE_KEY")
           dapp.public_send(run_method, value_key)
         end

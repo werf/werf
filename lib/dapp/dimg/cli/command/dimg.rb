@@ -12,7 +12,7 @@ Available subcommands: (for details, dapp dimg SUB-COMMAND --help)
   dapp dimg bp [options] [DIMG ...] REPO
   dapp dimg push [options] [DIMG ...] REPO
   dapp dimg spush [options] [DIMG] REPO
-  dapp dimg tag [options] [DIMG] TAG
+  dapp dimg tag [options] [DIMG ...] REPO
   dapp dimg list [options] [DIMG ...]
   dapp dimg run [options] [DIMG] [DOCKER ARGS]
   dapp dimg cleanup repo [options] [DIMG ...] REPO
