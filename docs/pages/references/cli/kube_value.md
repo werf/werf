@@ -6,7 +6,7 @@ permalink: kube_value.html
 ### dapp kube value get
 
 ```
-dapp kube value get [options] VALUE_KEY [REPO]
+dapp kube value get [options] VALUE_KEY REPO
 ```
 
 Выводит значение переменных, устанавливаемых dapp. Список некоторых переменных:

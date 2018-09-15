@@ -14,11 +14,11 @@ Available subcommands: (for details, dapp kube SUB-COMMAND --help)
   dapp kube secret generate [FILE_PATH] [options]
   dapp kube secret extract [FILE_PATH] [options]
   dapp kube secret regenerate [SECRET_VALUES_FILE_PATH ...] [options]
-  dapp kube secret edit [FILE_PATH] [options]
+  dapp kube secret edit FILE_PATH [options]
   dapp kube minikube setup
   dapp kube chart create [options]
-  dapp kube render [options] [REPO]
-  dapp kube lint [options] [REPO]
+  dapp kube render [options] REPO
+  dapp kube lint [options] REPO
   dapp kube value get VALUE_KEY
 
 Options:

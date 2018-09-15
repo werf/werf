@@ -8,7 +8,7 @@ permalink: kube_lint.html
 Вызывает [`helm lint`](https://docs.helm.sh/helm/#helm-lint) для helm чарта, - тестирует чарт на возможные ошибки.
 
 ```
-dapp kube lint [options] [REPO]
+dapp kube lint [options] REPO
 ```
 
 #### --namespace NAMESPACE

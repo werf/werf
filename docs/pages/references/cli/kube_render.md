@@ -8,7 +8,7 @@ permalink: kube_render.html
 Вызывает [`helm template`](https://docs.helm.sh/helm/#helm-template) для helm чарта, - выполняет локальный рендеринг чарта и выводит результат.
 
 ```
-dapp kube render [options] [REPO]
+dapp kube render [options] REPO
 ```
 
 #### --namespace NAMESPACE

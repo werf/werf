@@ -5,7 +5,7 @@ module Dapp::Dimg::CLI
         banner <<BANNER.freeze
 Usage:
 
-  dapp dimg tag [options] [DIMG ...] [REPO]
+  dapp dimg tag [options] [DIMG ...] REPO
   
     DIMG                        Dapp image to process [default: *].
 
@@ -15,13 +15,8 @@ BANNER
 
         def run(argv = ARGV)
           self.class.parse_options(self, argv)
-          options = cli_options(dimgs_patterns: cli_arguments)
-          options[:repo] = if not cli_arguments[0].nil?
-                             self.class.required_argument(self, 'repo')
-                           else
-                             dapp.name
-                           end
-          run_dapp_command(run_method, options: options)
+          repo = self.class.required_argument(self, 'repo')
+          run_dapp_command(run_method, options: cli_options(dimgs_patterns: cli_arguments, repo: repo))
         end
       end
     end

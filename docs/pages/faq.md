@@ -136,7 +136,7 @@ dapp dimg build [options] [DIMG ...]
 dapp dimg bp [options] [DIMG ...] REPO
 dapp dimg push [options] [DIMG ...] REPO
 dapp dimg spush [options] [DIMG] REPO
-dapp dimg tag [options] [DIMG] TAG
+dapp dimg tag [options] [DIMG ...] REPO
 dapp dimg run [options] [DIMG] [DOCKER ARGS]
 dapp dimg stage image [options] [DIMG]
 ```

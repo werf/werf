@@ -106,10 +106,10 @@ frontend
 
 
 ### dapp dimg tag
-Повторяет поведение и опции команды [dapp dimg push](#dapp-dimg-push), при этом, сохраняя dimg-ы локально. Если не указать *REPO*, будет использовано имя проекта.
+Повторяет поведение и опции команды [dapp dimg push](#dapp-dimg-push), при этом, сохраняя dimg-ы локально.
 
 ```
-dapp dimg tag [options] [DIMG...] [REPO]
+dapp dimg tag [options] [DIMG ...] REPO
 ```
 
 
