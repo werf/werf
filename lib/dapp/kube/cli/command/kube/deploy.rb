@@ -72,18 +72,12 @@ BANNER
 
         options = cli_options
         options[:tag] = [*options.delete(:tag), *options.delete(:image_version)]
-
-        run_dapp_command(nil, options: options) do |dapp|
-          repo = if not cli_arguments[0].nil?
-            self.class.required_argument(self, 'repo')
-          else
-            dapp.name
-          end
-
-          dapp.options[:repo] = repo
-
-          dapp.public_send(run_method)
-        end
+        options[:repo] = if not cli_arguments[0].nil?
+                           self.class.required_argument(self, 'repo')
+                         else
+                           dapp.name
+                         end
+        run_dapp_command(run_method, options: options)
       end
     end
   end
