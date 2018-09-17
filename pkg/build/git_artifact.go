@@ -149,29 +149,13 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 		return nil, err
 	}
 
-	noChanges, err := patch.IsEmpty()
-	if err != nil {
-		return nil, err
-	}
-	if noChanges {
+	if patch.IsEmpty() {
 		return nil, nil
 	}
 
 	archiveType := git_repo.ArchiveType(
 		stage.GetPrevStage().GetImage().
 			GetLabels()[ga.getArchiveTypeLabelName()])
-
-	// Verify archive-type not changed in to-commit repo state
-	currentArchiveType, err := ga.GitRepo().ArchiveType(git_repo.ArchiveOptions{
-		FilterOptions: ga.getRepoFilterOptions(),
-		Commit:        toCommit,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if archiveType != currentArchiveType {
-		return nil, fmt.Errorf("git repo `%s` archive type changed from `%s` to `%s`: reset cache manually and retry!", ga.GitRepo().String(), archiveType, currentArchiveType)
-	}
 
 	patchFile, err := ga.createPatchFile(patch, fromCommit, toCommit)
 	if err != nil {
@@ -181,7 +165,7 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 	return ga.applyPatchCommand(patchFile, archiveType)
 }
 
-func (ga *GitArtifact) applyArchiveCommand(archiveType git_repo.ArchiveType, commit string) ([]string, error) {
+func (ga *GitArtifact) applyArchiveCommand(archiveFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
 	var unpackArchiveDirectory string
 	commands := make([]string, 0)
 
@@ -201,12 +185,6 @@ func (ga *GitArtifact) applyArchiveCommand(archiveType git_repo.ArchiveType, com
 		unpackArchiveDirectory,
 	))
 
-	// TODO: log create archive operation with time!
-	archiveFile, err := ga.createArchiveFile(commit)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create archive for commit `%s`: %s", commit, err)
-	}
-
 	commands = append(commands, fmt.Sprintf(
 		"%s %s -xf %s -C \"%s\"",
 		dappdeps.SudoCommand(ga.Owner, ga.Group),
@@ -224,26 +202,27 @@ func (ga *GitArtifact) ApplyArchiveCommand(stage Stage) ([]string, error) {
 		return nil, err
 	}
 
-	anyEntries, err := ga.GitRepo().IsAnyEntries(git_repo.ArchiveOptions{
+	archiveOpts := git_repo.ArchiveOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
 		Commit:        commit,
-	})
+	}
+	archive, err := ga.GitRepo().CreateArchive(archiveOpts)
 	if err != nil {
 		return nil, err
 	}
-	if !anyEntries {
+
+	if archive.IsEmpty() {
 		return nil, nil
 	}
 
-	archiveType, err := ga.GitRepo().ArchiveType(git_repo.ArchiveOptions{
-		FilterOptions: ga.getRepoFilterOptions(),
-		Commit:        commit,
-	})
+	archiveFile, err := ga.createArchiveFile(archive, commit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot create archive file: %s", err)
 	}
 
-	commands, err := ga.applyArchiveCommand(archiveType, commit)
+	archiveType := archive.GetType()
+
+	commands, err := ga.applyArchiveCommand(archiveFile, archiveType)
 	if err != nil {
 		return nil, err
 	}
@@ -262,23 +241,26 @@ func (ga *GitArtifact) getArchiveFileDescriptor(commit string) *ContainerFileDes
 	}
 }
 
-func (ga *GitArtifact) createArchiveFile(commit string) (*ContainerFileDescriptor, error) {
+func (ga *GitArtifact) renameFile(fromPath, toPath string) error {
+	var err error
+
+	err = os.MkdirAll(filepath.Dir(toPath), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(fromPath, toPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ga *GitArtifact) createArchiveFile(archive git_repo.Archive, commit string) (*ContainerFileDescriptor, error) {
 	fileDesc := ga.getArchiveFileDescriptor(commit)
 
-	handler, err := fileDesc.Open(os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		return nil, fmt.Errorf("cannot open archive file `%s`: %s", fileDesc.FilePath, err)
-	}
-
-	err = ga.GitRepo().CreateArchiveTar(handler, git_repo.ArchiveOptions{
-		FilterOptions: ga.getRepoFilterOptions(),
-		Commit:        commit,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	err = handler.Close()
+	err := ga.renameFile(archive.GetFilePath(), fileDesc.FilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -289,14 +271,7 @@ func (ga *GitArtifact) createArchiveFile(commit string) (*ContainerFileDescripto
 func (ga *GitArtifact) createPatchFile(patch git_repo.Patch, fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
 	fileDesc := ga.getPatchFileDescriptor(fromCommit, toCommit)
 
-	var err error
-
-	err = os.MkdirAll(filepath.Dir(fileDesc.FilePath), os.ModePerm)
-	if err != nil {
-		return nil, err
-	}
-
-	err = os.Rename(patch.GetFilePath(), fileDesc.FilePath)
+	err := ga.renameFile(patch.GetFilePath(), fileDesc.FilePath)
 	if err != nil {
 		return nil, err
 	}

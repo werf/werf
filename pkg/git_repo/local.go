@@ -2,7 +2,6 @@ package git_repo
 
 import (
 	"fmt"
-	"io"
 )
 
 type Local struct {
@@ -25,14 +24,6 @@ func (repo *Local) CreatePatch(opts PatchOptions) (Patch, error) {
 	return repo.createPatch(repo.Path, opts)
 }
 
-func (repo *Local) ArchiveType(opts ArchiveOptions) (ArchiveType, error) {
-	return repo.archiveType(repo.Path, opts)
-}
-
-func (repo *Local) IsAnyEntries(opts ArchiveOptions) (bool, error) {
-	return repo.isAnyEntries(repo.Path, opts)
-}
-
-func (repo *Local) CreateArchiveTar(output io.Writer, opts ArchiveOptions) error {
-	return repo.createArchiveTar(repo.Path, output, opts)
+func (repo *Local) CreateArchive(opts ArchiveOptions) (Archive, error) {
+	return repo.createArchive(repo.Path, opts)
 }
