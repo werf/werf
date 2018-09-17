@@ -6,26 +6,26 @@ permalink: yaml_directives.html
 
 # YAML dappfile
 
-Configuration is a collection of yaml documents (http://yaml.org/spec/1.2/spec.html#id2800132). These yaml documents are searched for in one of the following files:
+Configuration is a collection of YAML documents (http://yaml.org/spec/1.2/spec.html#id2800132). These YAML documents are searched for in one of the following files:
 
 * `REPO_ROOT/dappfile.yml`
 * `REPO_ROOT/dappfile.yaml`
 
-YAML configuration file will precede ruby `REPO_ROOT/Dappfile` if the case both files exists. `REPO_ROOT/dappfile.yml` will precede `REPO_ROOT/dappfile.yaml` in case both files exists.
+YAML configuration file will precede ruby `REPO_ROOT/Dappfile` if the case both files exist. `REPO_ROOT/dappfile.yml` will precede `REPO_ROOT/dappfile.yaml` in case both files exist.
 
 Processing of YAML configuration is done in two steps:
 
 * Rendering go templates into `WORKDIR/.dappfile.render.yml` or `WORKDIR/.dappfile.render.yaml`.
-* Processing the result file as a set of yaml documents.
+* Processing the result file as a set of YAML documents.
 
 ## Go templates
 
 Go templates are available within YAML config.
 
 * Sprig functions supported: https://golang.org/pkg/text/template/, http://masterminds.github.io/sprig/.
-* `env` sprig fucntion also supported to access build-time environment variables (unlike helm, where `env` function is forbidden).
+* `env` sprig function also supported to access build-time environment variables (unlike helm, where `env` function is forbidden).
 
-Dapp firstly will render go templates into `WORKDIR/.dappfile.render.yml` or `WORKDIR/.dappfile.render.yaml`. That file will remain after build and will be available if some validation or build error occured.
+Dapp firstly will render go templates into `WORKDIR/.dappfile.render.yml` or `WORKDIR/.dappfile.render.yaml`. That file will remain after build and will be available if some validation or build error occurs.
 
 ## Differences from Dappfile
 
@@ -60,7 +60,7 @@ If doc contains `dimg` key, then dapp will treat this yaml-doc as dimg configura
 `NAME` may be:
 
 * Special value `~` to define unnamed dimg. This should be default choice for dimg name in dappfile.
-* Some string to define named dimg with specified name. The name should be a valid docker image name.
+* Some string to define named dimg with the specified name. The name should be a valid docker image name.
 * Array of strings to define multiple dimgs with the same configuration and different names. The names should be valid docker image names.
 
 Conflicts with `artifact: NAME`.
@@ -69,7 +69,7 @@ Conflicts with `artifact: NAME`.
 
 If doc contains `artifact` key, dapp will treat this yaml-doc as artifact configuration.
 
-`NAME` is a string, that defines the artifact name. Artifact may be referenced in `import` and `fromArtifact` directives by that name.
+`NAME` is a string, that defines the artifact name. An artifact may be referenced in `import` and `fromArtifact` directives by that name.
 
 Conflicts with `dimg: NAME`.
 
@@ -112,7 +112,7 @@ before: STAGE | after: STAGE
 ```
 
 * `ARTIFACT_NAME` refers to the artifact to copy files from.
-* `SOURCE_DIRECTORY_TO_IMPORT` specifies a directory/file path in artifact that should be imported.
+* `SOURCE_DIRECTORY_TO_IMPORT` specifies a directory/file path in the artifact that should be imported.
 * `DESTINATION_DIRECTORY` sets the destination path in current image configuration. Optional the same as `SOURCE_DIRECTORY_TO_IMPORT` by default.
 * `after: STAGE` or `before: STAGE` specifies the stage when to import this artifact. The stage should be one of the build stages of current image configuration. Allowed options are `install` or `setup`.
 

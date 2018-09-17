@@ -44,7 +44,7 @@ On next builds it does not rebuild the image from scratch.
 
 Dapp decides whether to rebuild a stage or use a cached result by calculating the [stage signature](stages_diagram.html).
 This signature has no direct connection to the state of the git repository.
-Changing the code in git repository does not result in rebuilding user stages
+Changing the code in the git repository does not result in rebuilding user stages
 (`before_install`, `install`, `before_setup`, `setup`, and `build_artifact`).
 An exception is when user stages are dependent on files, listed in `stageDependencies` directive.
 This will be explained further.
@@ -76,8 +76,8 @@ Correctly installing dependencies is crucial to making an effective build proces
 
 > TODO: уточнить и написать просто.
 
-* When building an application image, changed code in git repository is added as an image layer with a patch.
-* When building an artifact image, changing code in git repository does not .
+* When building an application image, changed code in the git repository is added as an image layer with a patch.
+* When building an artifact image, changing code in git repository does not.
 
 * With git submodule the logic is the same.
 
@@ -93,19 +93,19 @@ It is an array of one or more elements, each specifying a single repository:
 
 ```yaml
 git:
-  - GIT_SPEC
-  - GIT_SPEC
+- GIT_SPEC
+- GIT_SPEC
   ...
 ```
 
 , где `GIT_SPEC` - один или несколько массивов описаний директив добавления кода следующего вида:
 - для работы с локальным репозиторием
 
-In this example all code from local repository will be added to the `/app` directory:
+In this example all code from the local repository will be added to the `/app` directory:
 
 ```yaml
 git:
-  - to: /app
+- to: /app
 
 ```
 
@@ -113,9 +113,9 @@ Minimal specification for a remote repository:
 
 ```yaml
 git:
-  - url: https://github.com/kr/beanstalkd.git
-    add: /
-    to: /build
+- url: https://github.com/kr/beanstalkd.git
+  add: /
+  to: /build
 ```
 
 Описание директив:
@@ -174,16 +174,16 @@ group: <group>
 
 ```yaml
 includePaths:
-  - <path> 
-  - <path> 
-  ...
+- <path> 
+- <path> 
+...
 excludePaths:
-  - <path> 
-  - <path> 
-  ...
+- <path> 
+- <path> 
+...
 ```
 
-Number of repository specifications in a `git` directive is not limited.
+The number of repository specifications in a `git` directive is not limited.
 Indeed, `includePaths` and `excludePaths` can help reduce this number.
 
 For example, this code:
@@ -249,14 +249,14 @@ Here are some examples:
 
 ```yaml
 git:
-    includePaths:
-    - /app/*.py
-    - /otherapp/*.py
-    excludePaths:
-    - /**/test/*.py
-    stageDependencies:
-      install:
-      - *.py
+  includePaths:
+  - /app/*.py
+  - /otherapp/*.py
+  excludePaths:
+  - /**/test/*.py
+  stageDependencies:
+    install:
+    - *.py
 ```
 
 
@@ -275,16 +275,16 @@ Dapp can clone repositories over SSH or HTTPS:
 
 ```yaml
 git:
-  - url: https://github.com/example/https.git
-    to: /example-https
-  - url: git@github.com:example/ssh.git
-    to: /example-ssh
+- url: https://github.com/example/https.git
+  to: /example-https
+- url: git@github.com:example/ssh.git
+  to: /example-ssh
 ```
 > Note: working with remote repositories over HTTPS or SSL requires [installing libssl or libssh2](installation.html#install-dependencies) respectively.
 
 To make SSH connections, dapp will use ssh-agents in the following order, most to least preferred:
 
-* Run a temporary ssh-agent with key, provided with `--ssh-key <path_to_key>` parameter in command line.
+* Run a temporary ssh-agent with the key, provided with `--ssh-key <path_to_key>` parameter in the command line.
 * Use the system ssh-agent if it is available and running.
 * Run a temporary ssh-agent with key at `~/.ssh/id_rsa`
 
@@ -313,7 +313,7 @@ commit: <commit>
 
 Sets the commit in a remote repository
 
-`commmit` is optional and default to the last commit in selected `branch`.
+`commit` is optional and default to the last commit in selected `branch`.
 
 * `commit: <commit>` - определяет используемый коммит внешнего git репозитория, необязательный параметр.
 
@@ -330,22 +330,22 @@ as: <custom_name>
 
 ```yaml
 git:
-  - as: <custom_name>
-    add: <add_absolute_path>
-    to: <to_absolute_path>
-    owner: <owner>
-    group: <group>
-    includePaths:
+- as: <custom_name>
+  add: <add_absolute_path>
+  to: <to_absolute_path>
+  owner: <owner>
+  group: <group>
+  includePaths:
+  - <relative_path_or_mask>
+  excludePaths:
+  - <relative_path_or_mask>
+  stageDependencies:
+    install:
     - <relative_path_or_mask>
-    excludePaths:
+    beforeSetup:
     - <relative_path_or_mask>
-    stageDependencies:
-      install:
-      - <relative_path_or_mask>
-      beforeSetup:
-      - <relative_path_or_mask>
-      setup:
-      - <relative_path_or_mask>
+    setup:
+    - <relative_path_or_mask>
 ```
 
 * для работы с удаленным репозиторием
@@ -354,27 +354,27 @@ And one for a remote repository:
 
 ```yaml
 git:
-  - url: <git_repo_url>
-    branch: <branch_name>
-    commit: <commit>
-    as: <custom_name>
-    add: <add_absolute_path>
-    to: <to_absolute_path>
-    owner: <owner>
-    group: <group>
-    includePaths:
+- url: <git_repo_url>
+  branch: <branch_name>
+  commit: <commit>
+  as: <custom_name>
+  add: <add_absolute_path>
+  to: <to_absolute_path>
+  owner: <owner>
+  group: <group>
+  includePaths:
+  - <relative_path_or_mask>
+  excludePaths:
+  - <relative_path_or_mask>
+  stageDependencies:
+    install:
     - <relative_path_or_mask>
-    excludePaths:
+    beforeSetup:
     - <relative_path_or_mask>
-    stageDependencies:
-      install:
-      - <relative_path_or_mask>
-      beforeSetup:
-      - <relative_path_or_mask>
-      setup:
-      - <relative_path_or_mask>
-      build_artifact:
-      - <relative_path_or_mask>
+    setup:
+    - <relative_path_or_mask>
+    build_artifact:
+    - <relative_path_or_mask>
 ```
 
 

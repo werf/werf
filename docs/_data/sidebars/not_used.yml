@@ -10,6 +10,9 @@ entries:
   - title: Yaml директивы
     url: /yaml_directives.html
 
+  - title: Dappfile directives
+    url: /directives.html
+
   - title: Описание образов
     url: /directives_images.html
 

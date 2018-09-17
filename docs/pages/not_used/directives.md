@@ -1,8 +1,7 @@
 ---
 title: Dappfile directives
-sidebar: reference
+sidebar: not_used
 permalink: directives.html
-folder: directive
 ---
 
 ## Types of dappfile syntax 
