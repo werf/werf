@@ -1,0 +1,46 @@
+---
+title: Publications
+permalink: publications.html
+layout: default
+---
+
+<link rel="stylesheet" href="{{ "css/publications.css" }}">
+
+{% assign publications = site.data.publications | sort: 'created' | reverse %}
+{% assign publications_by_year = publications | group_by_exp: "publication", "publication.created | date: '%Y'" %}
+
+<div class="page">
+  <div class="page__demo">
+    <div class="main-container page__container">
+      <div class="timeline">
+        {% for year in publications_by_year %}
+        <div class="timeline__group">
+          <span class="timeline__year">{{ year.name }}</span>
+          {% for publication in year.items %}
+          <div class="timeline__box">
+            <div class="timeline__date">
+              <span class="timeline__day">{{ publication.created | date: "%d" }}</span>
+              <span class="timeline__month">{{ publication.created | date: "%b" }}</span>
+            </div>
+            <div class="timeline__post">
+              <div class="timeline__content">
+                <a href="{{ publication.url }}">{{ publication.title }}</a>
+              
+                {% if publication.youtube_id %}
+                  <div class="videoWrapper">
+                    <iframe width="560" height="315" src="https://www.youtube.com/embed/{{ publication.youtube_id }}" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
+                  </div>
+                {% endif %}
+                {% if publication.comment %}
+                <p>{{ publication.comment }}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
