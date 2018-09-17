@@ -6,11 +6,10 @@ import (
 	"os"
 	"strings"
 
-	git_util "github.com/flant/dapp/pkg/git" // Rename to "git" when go-git deleted
-	git "github.com/flant/go-git"
-	"github.com/flant/go-git/plumbing"
-	"github.com/flant/go-git/plumbing/object"
-	"github.com/flant/go-git/storage"
+	git_util "github.com/flant/dapp/pkg/git"
+	go_git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
 
 type Base struct {
@@ -44,21 +43,12 @@ func (repo *Base) getHeadBranchNameForRepo(repoPath string) (string, error) {
 func (repo *Base) getReferenceForRepo(repoPath string) (*plumbing.Reference, error) {
 	var err error
 
-	repository, err := git.PlainOpen(repoPath)
+	repository, err := go_git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)
 	}
 
 	return repository.Head()
-}
-
-func (repo *Base) archiveType(repoPath string, opts ArchiveOptions) (ArchiveType, error) {
-	archive, err := repo.createArchiveObject(repoPath, opts)
-	if err != nil {
-		return "", err
-	}
-
-	return archive.Type()
 }
 
 func (repo *Base) String() string {
@@ -106,7 +96,7 @@ func (repo *Base) ArchiveChecksum(ArchiveOptions) (string, error) {
 }
 
 func (repo *Base) createPatch(repoPath string, opts PatchOptions) (Patch, error) {
-	repository, err := git.PlainOpen(repoPath)
+	repository, err := go_git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)
 	}
@@ -118,21 +108,27 @@ func (repo *Base) createPatch(repoPath string, opts PatchOptions) (Patch, error)
 	}
 
 	toHash := plumbing.NewHash(opts.ToCommit)
-	_, err = repository.CommitObject(toHash)
+	toCommit, err := repository.CommitObject(toHash)
 	if err != nil {
 		return nil, fmt.Errorf("bad `to` commit `%s`: %s", opts.ToCommit, err)
 	}
 
+	withSubmodules, err := HasSubmodulesInCommit(toCommit)
+	if err != nil {
+		return nil, err
+	}
+
 	patch := NewTmpPatchFile()
 
-	fileFandler, err := os.OpenFile(patch.GetFilePath(), os.O_RDWR|os.O_CREATE, 0755)
+	fileHandler, err := os.OpenFile(patch.GetFilePath(), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open patch file: %s", err)
 	}
 
-	err = git_util.Diff(fileFandler, repoPath, git_util.DiffOptions{
-		FromCommit: opts.FromCommit,
-		ToCommit:   opts.ToCommit,
+	desc, err := git_util.Patch(fileHandler, repoPath, git_util.DiffOptions{
+		FromCommit:     opts.FromCommit,
+		ToCommit:       opts.ToCommit,
+		WithSubmodules: withSubmodules,
 		PathFilter: git_util.PathFilter{
 			BasePath:     opts.BasePath,
 			IncludePaths: opts.IncludePaths,
@@ -140,68 +136,67 @@ func (repo *Base) createPatch(repoPath string, opts PatchOptions) (Patch, error)
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error creating diff between `%s` and `%s` commits: %s", opts.FromCommit, opts.ToCommit, err)
+		return nil, fmt.Errorf("error creating patch between `%s` and `%s` commits: %s", opts.FromCommit, opts.ToCommit, err)
 	}
+	patch.Descriptor = desc
 
-	err = fileFandler.Close()
+	err = fileHandler.Close()
 	if err != nil {
-		return nil, fmt.Errorf("error creating diff file: %s", err)
+		return nil, fmt.Errorf("error creating patch file: %s", err)
 	}
 
 	return patch, nil
 }
 
-func (repo *Base) createArchiveObject(repoPath string, opts ArchiveOptions) (*Archive, error) {
-	repository, err := git.PlainOpen(repoPath)
+func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
+	_, err := commit.File(".gitmodules")
+	if err == object.ErrFileNotFound {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	// TODO: change return value when submodules support available
+	return false, nil
+}
+
+func (repo *Base) createArchive(repoPath string, opts ArchiveOptions) (Archive, error) {
+	repository, err := go_git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)
 	}
 
 	commitHash := plumbing.NewHash(opts.Commit)
-	commitObj, err := repository.CommitObject(commitHash)
+	commit, err := repository.CommitObject(commitHash)
 	if err != nil {
 		return nil, fmt.Errorf("bad commit `%s`: %s", opts.Commit, err)
 	}
 
-	tree, err := commitObj.Tree()
+	withSubmodules, err := HasSubmodulesInCommit(commit)
 	if err != nil {
 		return nil, err
 	}
 
-	archive := &Archive{
+	archive := NewTmpArchiveFile()
+
+	fileHandler, err := os.OpenFile(archive.GetFilePath(), os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open archive file: %s", err)
+	}
+
+	desc, err := git_util.Archive(fileHandler, repoPath, git_util.ArchiveOptions{
+		Commit: opts.Commit,
 		PathFilter: git_util.PathFilter{
 			BasePath:     opts.BasePath,
 			IncludePaths: opts.IncludePaths,
 			ExcludePaths: opts.ExcludePaths,
 		},
-		Repo: struct {
-			Tree   *object.Tree
-			Storer storage.Storer
-		}{tree, repository.Storer},
+		WithSubmodules: withSubmodules,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating archive for commit `%s`: %s", opts.Commit, err)
 	}
+	archive.Descriptor = desc
 
 	return archive, nil
-}
-
-func (repo *Base) isAnyEntries(repoPath string, opts ArchiveOptions) (bool, error) {
-	archiveObj, err := repo.createArchiveObject(repoPath, opts)
-	if err != nil {
-		return false, err
-	}
-
-	res, err := archiveObj.IsAnyEntries()
-	if err != nil {
-		return false, err
-	}
-
-	return res, nil
-}
-
-func (repo *Base) createArchiveTar(repoPath string, output io.Writer, opts ArchiveOptions) error {
-	archiveObj, err := repo.createArchiveObject(repoPath, opts)
-	if err != nil {
-		return err
-	}
-
-	return archiveObj.CreateTar(output)
 }

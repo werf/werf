@@ -2,17 +2,16 @@ package git_repo
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/flant/dapp/pkg/lock"
-	git "github.com/flant/go-git"
-	"github.com/flant/go-git/plumbing"
-	"github.com/flant/go-git/plumbing/storer"
 	"gopkg.in/ini.v1"
 	"gopkg.in/satori/go.uuid.v1"
+	go_git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
 type Remote struct {
@@ -80,9 +79,9 @@ func (repo *Remote) Clone() (bool, error) {
 
 		path := filepath.Join("/tmp", fmt.Sprintf("dapp-git-repo-%s", uuid.NewV4().String()))
 
-		_, err = git.PlainClone(path, true, &git.CloneOptions{
+		_, err = go_git.PlainClone(path, true, &go_git.CloneOptions{
 			URL:               repo.Url,
-			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+			RecurseSubmodules: go_git.DefaultSubmoduleRecursionDepth,
 		})
 		if err != nil {
 			return err
@@ -130,15 +129,15 @@ func (repo *Remote) Fetch() error {
 	}
 
 	return repo.withLock(func() error {
-		rawRepo, err := git.PlainOpen(repo.ClonePath)
+		rawRepo, err := go_git.PlainOpen(repo.ClonePath)
 		if err != nil {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
 
 		fmt.Printf("Fetching remote `%s` of repo `%s` ...\n", remoteName, repo.String())
 
-		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName})
-		if err != nil && err != git.NoErrAlreadyUpToDate {
+		err = rawRepo.Fetch(&go_git.FetchOptions{RemoteName: remoteName})
+		if err != nil && err != go_git.NoErrAlreadyUpToDate {
 			return fmt.Errorf("cannot fetch remote `%s` of repo `%s`: %s", remoteName, repo.String(), err)
 		}
 
@@ -146,10 +145,6 @@ func (repo *Remote) Fetch() error {
 
 		return nil
 	})
-}
-
-func (repo *Remote) ArchiveType(opts ArchiveOptions) (ArchiveType, error) {
-	return repo.archiveType(repo.ClonePath, opts)
 }
 
 func (repo *Remote) HeadCommit() (string, error) {
@@ -171,7 +166,7 @@ func (repo *Remote) HeadBranchName() (string, error) {
 	return repo.getHeadBranchNameForRepo(repo.ClonePath)
 }
 
-func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (string, error) {
+func (repo *Remote) findReference(rawRepo *go_git.Repository, reference string) (string, error) {
 	refs, err := rawRepo.References()
 	if err != nil {
 		return "", err
@@ -197,7 +192,7 @@ func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (st
 func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 	var err error
 
-	rawRepo, err := git.PlainOpen(repo.ClonePath)
+	rawRepo, err := go_git.PlainOpen(repo.ClonePath)
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %s", err)
 	}
@@ -218,7 +213,7 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 	var err error
 
-	rawRepo, err := git.PlainOpen(repo.ClonePath)
+	rawRepo, err := go_git.PlainOpen(repo.ClonePath)
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %s", err)
 	}
@@ -240,10 +235,6 @@ func (repo *Remote) CreatePatch(opts PatchOptions) (Patch, error) {
 	return repo.createPatch(repo.ClonePath, opts)
 }
 
-func (repo *Remote) IsAnyEntries(opts ArchiveOptions) (bool, error) {
-	return repo.isAnyEntries(repo.ClonePath, opts)
-}
-
-func (repo *Remote) CreateArchiveTar(output io.Writer, opts ArchiveOptions) error {
-	return repo.createArchiveTar(repo.ClonePath, output, opts)
+func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
+	return repo.createArchive(repo.ClonePath, opts)
 }

@@ -10,6 +10,7 @@ import (
 func makeDiffParser(out io.Writer, pathFilter PathFilter) *diffParser {
 	return &diffParser{
 		Out:        out,
+		OutLines:   0,
 		PathFilter: pathFilter,
 		state:      unrecognized,
 		lineBuf:    make([]byte, 0, 4096),
@@ -32,6 +33,7 @@ type diffParser struct {
 	PathFilter PathFilter
 
 	Out                 io.Writer
+	OutLines            uint
 	UnrecognizedCapture bytes.Buffer
 
 	state   parserState
@@ -63,7 +65,10 @@ func (p *diffParser) HandleStderr(data []byte) error {
 }
 
 func (p *diffParser) writeOutLine(line string) error {
+	p.OutLines++
+
 	_, err := p.Out.Write([]byte(line + "\n"))
+
 	return err
 }
 

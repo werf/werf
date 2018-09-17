@@ -13,18 +13,22 @@ type DiffOptions struct {
 	WithSubmodules       bool
 }
 
-func Diff(out io.Writer, repoPath string, opts DiffOptions) error {
+type PatchDescriptor struct {
+	IsEmpty bool
+}
+
+func Patch(out io.Writer, repoPath string, opts DiffOptions) (*PatchDescriptor, error) {
 	// TODO: Check repoPath exists and valid, run `git -C repoPath log -1`.
 	// TODO: Do not accept anything except commit-id hash.
 	// TODO: What about non-existing commits? For now go-git checks commits.
 
 	submoduleOpt := "--submodule=log"
 	if opts.WithSubmodules {
-		submoduleOpt = "--submodule=diff"
-
-		if !submoduleVersionConstraintObj.Check(gitVersionObj) {
-			return fmt.Errorf("To use submodules install git >= %s! Your git version is %s.", MinGitVersionWithSubmodulesConstraint, GitVersion)
+		err := checkSubmoduleConstraint()
+		if err != nil {
+			return nil, err
 		}
+		submoduleOpt = "--submodule=diff"
 	}
 
 	// TODO: Maybe use git-dir + bare always.
@@ -37,16 +41,16 @@ func Diff(out io.Writer, repoPath string, opts DiffOptions) error {
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
-		return fmt.Errorf("error creating git diff stdout pipe: %s", err)
+		return nil, fmt.Errorf("error creating git diff stdout pipe: %s", err)
 	}
 
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		return fmt.Errorf("error creating git diff stderr pipe: %s", err)
+		return nil, fmt.Errorf("error creating git diff stderr pipe: %s", err)
 	}
 
 	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("error starting git diff: %s", err)
+		return nil, fmt.Errorf("error starting git diff: %s", err)
 	}
 
 	outputErrChan := make(chan error)
@@ -101,14 +105,14 @@ WaitForData:
 	for {
 		select {
 		case err := <-outputErrChan:
-			return fmt.Errorf("error getting git diff output: %s\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
+			return nil, fmt.Errorf("error getting git diff output: %s\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 		case stdoutData := <-stdoutChan:
 			if err := p.HandleStdout(stdoutData); err != nil {
-				return err
+				return nil, err
 			}
 		case stderrData := <-stderrChan:
 			if err := p.HandleStderr(stderrData); err != nil {
-				return err
+				return nil, err
 			}
 		case <-doneChan:
 			break WaitForData
@@ -116,10 +120,14 @@ WaitForData:
 	}
 
 	if err := cmd.Wait(); err != nil {
-		return fmt.Errorf("git diff error: %s\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
+		return nil, fmt.Errorf("git diff error: %s\nunrecognized output:\n%s", err, p.UnrecognizedCapture.String())
 	}
 
-	return nil
+	desc := &PatchDescriptor{
+		IsEmpty: (p.OutLines == 0),
+	}
+
+	return desc, nil
 }
 
 func consumePipeOutput(pipe io.ReadCloser, handleChunk func(data []byte) error) error {

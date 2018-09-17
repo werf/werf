@@ -70,7 +70,7 @@ func getGitCliVersion() (string, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("git command is not available")
+		return "", fmt.Errorf("git command is not available!\n%s", RequiredGitVersionMsg)
 	}
 
 	versionParts := strings.Split(out.String(), " ")
@@ -80,4 +80,11 @@ func getGitCliVersion() (string, error) {
 	rawVersion := strings.TrimSpace(versionParts[2])
 
 	return rawVersion, nil
+}
+
+func checkSubmoduleConstraint() error {
+	if !submoduleVersionConstraintObj.Check(gitVersionObj) {
+		return fmt.Errorf("To use submodules install git >= %s! Your git version is %s.", MinGitVersionWithSubmodulesConstraint, GitVersion)
+	}
+	return nil
 }

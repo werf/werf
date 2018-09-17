@@ -2,14 +2,15 @@ package git_repo
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
+	git_util "github.com/flant/dapp/pkg/git"
 	uuid "github.com/satori/go.uuid"
 )
 
 type PatchFile struct {
-	FilePath string
+	FilePath   string
+	Descriptor *git_util.PatchDescriptor
 }
 
 func NewTmpPatchFile() *PatchFile {
@@ -21,13 +22,6 @@ func (p *PatchFile) GetFilePath() string {
 	return p.FilePath
 }
 
-func (p *PatchFile) IsEmpty() (bool, error) {
-	fi, err := os.Stat(p.GetFilePath())
-	if err != nil {
-		return false, err
-	}
-	if fi.Size() > 0 {
-		return false, nil
-	}
-	return true, nil
+func (p *PatchFile) IsEmpty() bool {
+	return p.Descriptor.IsEmpty
 }
