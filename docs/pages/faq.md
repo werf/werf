@@ -1,6 +1,7 @@
 ---
 title: Dapp Frequently Asked Questions
 permalink: faq.html
+layout: page
 ---
 
 ## General
