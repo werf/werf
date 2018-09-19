@@ -59,7 +59,7 @@ module Dapp
       ruby2go_init
 
       setup_ssh_agent
-      try_host_docker_login
+      try_host_docker_login unless !!options[:ignore_try_host_docker_login]
     end
 
     def options
