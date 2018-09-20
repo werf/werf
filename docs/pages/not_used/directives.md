@@ -1,7 +1,7 @@
 ---
 title: Dappfile directives
 sidebar: not_used
-permalink: directives.html
+permalink: not_used/directives.html
 ---
 
 ## Types of dappfile syntax 
@@ -89,14 +89,14 @@ dimg: [main-front,main-back]
 artifact: <name>
 ```
 
-The `artifact` directive starts a description for building an [artifact image](artifact.html):
+The `artifact` directive starts a description for building an [artifact image]({{ site.baseurl }}/reference/dappfile/artifact_directive.html):
 
 ```
 artifact: hello_world
 ```
 
 Name of an artifact image is a string, similar to the image name in Docker.
-Artifact name is used to `import` artifacts (see [artifact](artifact.html) for details).
+Artifact name is used to `import` artifacts (see [artifact]({{ site.baseurl }}/reference/dappfile/artifact_directive.html) for details).
 Thus artifact images must have non-empty names.
 
 Artifact images can have multiple names, just like application images:
@@ -124,7 +124,7 @@ fromDimgArtifact: <name>
 ```
 
 Besides using docker images from a repository, one can refer to images, previously described in the same `dappfile.yml`.
-This can be helpful if default [build stages](/stages.html) are not enough for building an image.
+This can be helpful if default [build stages]({{ site.baseurl }}/reference/stages/stage.html) are not enough for building an image.
 
 ```yaml
 dimg: intermediate
@@ -210,7 +210,7 @@ shell:
 Dapp has two powerful features for describing and building multiple images:
 
 * Templating builds with [Go templates syntax](https://golang.org/pkg/text/template/#hdr-Functions) and [Sprig functions](http://masterminds.github.io/sprig/).
-* Reusing code blocks [with `include`]( faq.html#dappfile-7).
+* Reusing code blocks [with `include`]( {{ site.baseurl }}/faq.html#dappfile-7).
 
 The code below demonstrates Go templates and `include`:
 
@@ -294,7 +294,7 @@ git:
 * артефакты не обязаны иметь имя
 * имена образов приложений и образов артефактов должны различаться
 * описание образа приложения выполняется с помощью директивы `dimg <name> do`, где `<name>` - имя образа (может отсутствовать)
-* описание образа артефакта выполняется с помощью директивы `artifact <name> do`, где `<name>` - имя артефакта (см. [подробней](artifact.html) про артефакты)
+* описание образа артефакта выполняется с помощью директивы `artifact <name> do`, где `<name>` - имя артефакта (см. [подробней]({{ site.baseurl }}/reference/dappfile/artifact_directive.html) про артефакты)
 * Указание базового образа при описании образа приложения или образа артефакта выполняется с помощью обязательной директивы `docker.from <DOCKER_IMAGE>`, где `<DOCKER_IMAGE>` - имя образа в формате `image:tag` (tag может отсутствовать, тогда используется latest)
 
 

@@ -4,38 +4,35 @@ entries:
 - title: sidebar
   f:
 
-  - title: Базовые определения
-    url: /not_used
+  - title: Стадии сборки
+    url: /not_used/
 
   - title: Yaml директивы
-    url: /yaml_directives.html
+    url: /not_used/yaml_directives.html
 
   - title: Dappfile directives
-    url: /directives.html
+    url: /not_used/directives.html
 
   - title: Описание образов
-    url: /directives_images.html
+    url: /not_used/directives_images.html
 
   - title: Сборка нескольких образов
-    url: /multiple_images_for_build.html
+    url: /not_used/multiple_images_for_build.html
 
   - title: Ansible builder
-    url: /ansible_builder.html
+    url: /not_used/ansible_builder.html
 
   - title: Shell сборщик
-    url: /shell_builder.html
+    url: /not_used/shell_builder.html
 
   - title: Упрощение разработки
-    url: /easy_development.html
-
-  - title: Стадии сборки
-    url: /stages.html
+    url: /not_used/easy_development.html
 
   - title: Как устроены стадии сборки
-    url: /stages_arhitecture.html
+    url: /not_used/stages_arhitecture.html
 
   - title: Таблица стадий
-    url: /stages_diagram.html
+    url: /not_used/stages_diagram.html
 
   - title: Как устроено кэширование
-    url: /cache_for_advanced_build.html
+    url: /not_used/cache_for_advanced_build.html

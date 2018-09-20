@@ -5,13 +5,13 @@ entries:
   f:
 
     - title: Installation
-      url: /installation.html
+      url: /how_to/installation.html
 
     - title: Build, run and push
-      url: /first_application.html
+      url: /how_to/build_run_and_push.html
 
     - title: Deploy into kubernetes
-      url: /deploy_into_kubernetes.html
+      url: /how_to/deploy_into_kubernetes.html
 
-    - title: Gitlab CI integration
-      url: /gitlab_ci_integration.html
+    - title: Gitlab CI/CD integration
+      url: /how_to/gitlab_ci_cd_integration.html

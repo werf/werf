@@ -1,11 +1,10 @@
 ---
 title: Shell сборщик
 sidebar: not_used
-permalink: shell_builder.html
+permalink: not_used/shell_builder.html
 ---
 
-Shell-инструкции аналогичны `RUN` в Dockerfile. Главное отличие состоит в том, что в dapp сборка происходит по стадиям (последовательность и их назначение описаны в главе [Стадии сборки](stages.html)).
-
+Shell-инструкции аналогичны `RUN` в Dockerfile. Главное отличие состоит в том, что в dapp сборка происходит по стадиям.
 ## Пример dappfile.yaml для [Java приложения](https://habr.com/company/flant/blog/348436/)
 
 ```

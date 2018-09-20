@@ -1,5 +1,7 @@
 output: web
 
+baseurl: /dapp
+
 topnav_title: Dapp Documentation
 site_title: Dapp Documentation
 company_name: Flant

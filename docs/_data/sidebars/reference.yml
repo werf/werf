@@ -8,140 +8,140 @@ entries:
       fi:
 
         - title: What is dappfile?
-          url: /dappfile.html
+          url: /reference/dappfile/definition.html
 
         - title: Minimal dappfile
-          url: /minimal_dappfile.html
+          url: /reference/dappfile/minimal_dappfile.html
 
-        - title: Add source code to the image with the git directive
-          url: /git.html
+        - title: Adding source code from git repositories
+          url: /reference/dappfile/git_directive.html
 
-        - title: Run assembly shell-instructions
-          url: /shell_directive.html
+        - title: Running assembly shell-instructions
+          url: /reference/dappfile/shell_directive.html
 
-        - title: Run assembly ansible-instructions
-          url: /ansible_directive.html
+        - title: Running assembly ansible-instructions
+          url: /reference/dappfile/ansible_directive.html
 
-        - title: Add docker-instructions
-          url: /docker_directive.html
+        - title: Adding docker-instructions
+          url: /reference/dappfile/docker_directive.html
 
-        - title: Reduce application image size by using artifacts
-          url: /artifact.html
+        - title: Using artifacts
+          url: /reference/dappfile/artifact_directive.html
 
-        - title: Mount directories
-          url: /mount_directive.html
+        - title: Using mounts
+          url: /reference/dappfile/mount_directive.html
 
     - title: Stages
       fi:
 
       - title: What is stage?
-        url: /stage.html
+        url: /reference/stages/stage.html
 
       - title: Stage conveyor
-        url: /stage_conveyor.html
+        url: /reference/stages/stage_conveyor.html
 
       - title: User stages
-        url: /user_stages.html
+        url: /reference/stages/user_stages.html
 
       - title: Git stages
-        url: /git_stages.html
+        url: /reference/stages/git_stages.html
 
       - title: Artifacts stages
-        url: /artifacts_stages.html
+        url: /reference/stages/artifacts_stages.html
 
     - title: Registry
       fi:
 
       - title: Authorization
-        url: /registry_authorization.html
+        url: /reference/registry/authorization.html
 
       - title: Push and pull
-        url: /registry_push_and_pull.html
+        url: /reference/registry/push_and_pull.html
 
       - title: Cleanup
-        url: /cleanup.html
+        url: /reference/registry/cleanup.html
 
     - title: Deploy
       fi:
 
       - title: Выкат в kubernetes
-        url: /deploy_for_kube.html
+        url: /reference/deploy/deploy_for_kube.html
 
       - title: Секреты
-        url: /secrets_for_kube.html
+        url: /reference/deploy/secrets.html
 
       - title: Конфигурация выката
-        url: /templates_for_kube.html
+        url: /reference/deploy/templates.html
 
       - title: Использование minikube
-        url: /minikube_for_kube.html
+        url: /reference/deploy/minikube.html
 
     - title: Developer tools
       fi:
 
       - title: Stage introspection
-        url: /stage_introspection.html
+        url: /reference/developer_tools/stage_introspection.html
 
       - title: Work with local changes without commits in dev mode
-        url: /dev_mode.html
+        url: /reference/developer_tools/dev_mode.html
 
       - title: Caching each instruction separately with asLayers
-        url: /as_layers.html
+        url: /reference/developer_tools/as_layers.html
 
     - title: CLI
       fi:
 
         - title: dimg build
-          url: /dimg_build.html
+          url: /reference/cli/dimg_build.html
 
         - title: dimg build-context
-          url: /dimg_build_context.html
+          url: /reference/cli/dimg_build_context.html
 
         - title: dimg cleanup
-          url: /dimg_cleanup.html
+          url: /reference/cli/dimg_cleanup.html
 
         - title: dimg flush
-          url: /dimg_flush.html
+          url: /reference/cli/dimg_flush.html
 
         - title: dimg list
-          url: /dimg_list.html
+          url: /reference/cli/dimg_list.html
 
         - title: dimg mrproper
-          url: /dimg_mrproper.html
+          url: /reference/cli/dimg_mrproper.html
 
         - title: dimg push
-          url: /dimg_push.html
+          url: /reference/cli/dimg_push.html
 
         - title: dimg run
-          url: /dimg_run.html
+          url: /reference/cli/dimg_run.html
 
         - title: dimg slug
-          url: /dimg_slug.html
+          url: /reference/cli/dimg_slug.html
 
         - title: dimg stages
-          url: /dimg_stages.html
+          url: /reference/cli/dimg_stages.html
 
         - title: kube chart create
-          url: /kube_chart_create.html
+          url: /reference/cli/kube_chart_create.html
 
         - title: kube deploy
-          url: /kube_deploy.html
+          url: /reference/cli/kube_deploy.html
 
         - title: kube dismiss
-          url: /kube_dismiss.html
+          url: /reference/cli/kube_dismiss.html
 
         - title: kube lint
-          url: /kube_lint.html
+          url: /reference/cli/kube_lint.html
 
         - title: kube render
-          url: /kube_render.html
+          url: /reference/cli/kube_render.html
 
         - title: kube secret
-          url: /kube_secret.html
+          url: /reference/cli/kube_secret.html
 
         - title: kube value
-          url: /kube_value.html
+          url: /reference/cli/kube_value.html
 
     - title: Glossary
-      url: /glossary.html
+      url: /reference/glossary.html
 
