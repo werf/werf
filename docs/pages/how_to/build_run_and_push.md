@@ -16,7 +16,7 @@ Let's first take a look at what it takes to build a Symfony application. It incl
 1. Setting up an `app` user and group for the webserver.
 1. Installing composer from a `phar` file, which is first downloaded with `curl`.
 1. Installing other project dependencies with composer.
-1. Adding the application code to the `/demo` directory of the resulting image.
+1. Adding the application code to the `/app` directory of the resulting image.
    This directory and all files in it should belong to `app:app`.
 1. Setting up the IP address that the webserver will listen to. This is done with a setting in `/opt/start.sh`, which will run when the container starts.
 1. Making custom setup actions. As an illustration for the setup stage, we will write current date to `version.txt`.
@@ -34,19 +34,25 @@ To implement these steps and requirements with dapp we will add a special file c
 
 2.  In the project root directory create a `dappfile.yaml` with the following contents:
 
-    {% raw %}
-    ```yaml
-    dimg: ~
-    from: ubuntu:16.04
-    docker:
-      WORKDIR: /app
-      # Non-root user
-      USER: app
-      EXPOSE: "80"
-      ENV:
-        LC_ALL: en_US.UTF-8
-    ansible:
-      beforeInstall:
+    <div class="tab">
+      <button class="tablinks active" onclick="openTab(event, 'Ansible')">Ansible</button>
+      <button class="tablinks" onclick="openTab(event, 'Shell')">Shell</button>
+    </div>
+
+    <div id="Ansible" class="tabcontent active" markdown="1">
+      {% raw %}
+      ```yaml
+      dimg: ~
+      from: ubuntu:16.04
+      docker:
+        WORKDIR: /app
+        # Non-root user
+        USER: app
+        EXPOSE: "80"
+        ENV:
+          LC_ALL: en_US.UTF-8
+      ansible:
+        beforeInstall:
         - name: "Install additional packages"
           apt:
             name: "{{`{{ item }}`}}"
@@ -97,7 +103,7 @@ To implement these steps and requirements with dapp we will add a special file c
             url: https://getcomposer.org/download/1.6.5/composer.phar
             dest: /usr/local/bin/composer
             mode: a+x
-      install:
+        install:
         - name: "Install app deps"
           # NOTICE: Always use `composer install` command in real world environment!
           shell: composer update
@@ -106,7 +112,7 @@ To implement these steps and requirements with dapp we will add a special file c
           args:
             creates: /app/vendor/
             chdir: /app/
-      setup:
+        setup:
         - name: "Create start script"
           copy:
             content: |
@@ -118,14 +124,58 @@ To implement these steps and requirements with dapp we will add a special file c
             mode: 0755
         - raw: echo `date` > /app/version.txt
         - raw: chown app:app /app/version.txt
-    git:
+      git:
       - add: /
         to: /app
         owner: app
         group: app
-    ```
-    {% endraw %}
+      ```   
+      {% endraw %}
+    </div>
 
+    <div id="Shell" class="tabcontent" markdown="1">
+      {% raw %}
+      ```yaml
+      dimg: ~
+      from: ubuntu:16.04
+      docker:
+        WORKDIR: /app
+        # Non-root user
+        USER: app
+        EXPOSE: "80"
+        ENV:
+          LC_ALL: en_US.UTF-8
+      shell:
+        beforeInstall:
+        - apt-get update
+        - apt-get install -y locales ca-certificates curl software-properties-common
+        - locale-gen en_US.UTF-8
+        - groupadd -g 242 app
+        - useradd -m -d /app -g 242 -u 242 -s /bin/bash app
+        # https://askubuntu.com/posts/490910/revisions
+        - LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
+        - apt-get update
+        - apt-get install -y php7.2 php-sqlite3 php-xml php-zip php-mbstring php-intl
+        - curl -LsS https://getcomposer.org/download/1.4.1/composer.phar -o /usr/local/bin/composer
+        - chmod a+x /usr/local/bin/composer
+        install:
+        - cd /app
+        # NOTICE: Always use `composer install` command in real world environment!
+        - su -c 'composer update' app
+        setup:
+        - "echo '#!/bin/bash' >> /app/start.sh"
+        - echo 'php bin/console server:run 0.0.0.0:8000' >> /app/start.sh
+        - echo `date` > /app/version.txt
+        - chown app:app /app/start.sh /app/version.txt
+        - chmod +x /app/start.sh
+      git:
+      - add: /
+        to: /app
+        owner: app
+        group: app
+      ```
+      {% endraw %}
+    </div>
 
 ## Step 2: Build and Run the Application
 
