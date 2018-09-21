@@ -47,7 +47,7 @@ BANNER
       option :timeout,
              long: '--timeout INTEGER_SECONDS',
              default: nil,
-             description: 'Default timeout to wait for resources to become ready, 300 seconds by default.',
+             description: 'Default timeout to wait for resources to become ready, 300 seconds by default',
              proc: proc {|v| Integer(v)}
 
       option :kubernetes_timeout,
@@ -65,7 +65,7 @@ BANNER
              long: "--without-registry",
              default: false,
              boolean: true,
-             description: "Do not connect to docker registry to obtain docker image ids of dimgs being deployed."
+             description: "Do not connect to docker registry to obtain docker image ids of dimgs being deployed"
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)

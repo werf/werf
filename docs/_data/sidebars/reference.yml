@@ -7,29 +7,29 @@ entries:
     - title: Dappfile
       fi:
 
-        - title: What is dappfile?
-          url: /reference/dappfile/definition.html
+      - title: What is dappfile?
+        url: /reference/dappfile/definition.html
 
-        - title: Minimal dappfile
-          url: /reference/dappfile/minimal_dappfile.html
+      - title: Minimal dappfile
+        url: /reference/dappfile/minimal_dappfile.html
 
-        - title: Adding source code from git repositories
-          url: /reference/dappfile/git_directive.html
+      - title: Adding source code from git repositories
+        url: /reference/dappfile/git_directive.html
 
-        - title: Running assembly shell-instructions
-          url: /reference/dappfile/shell_directive.html
+      - title: Running assembly shell-instructions
+        url: /reference/dappfile/shell_directive.html
 
-        - title: Running assembly ansible-instructions
-          url: /reference/dappfile/ansible_directive.html
+      - title: Running assembly ansible-instructions
+        url: /reference/dappfile/ansible_directive.html
 
-        - title: Adding docker-instructions
-          url: /reference/dappfile/docker_directive.html
+      - title: Adding docker-instructions
+        url: /reference/dappfile/docker_directive.html
 
-        - title: Using artifacts
-          url: /reference/dappfile/artifact_directive.html
+      - title: Using artifacts
+        url: /reference/dappfile/artifact_directive.html
 
-        - title: Using mounts
-          url: /reference/dappfile/mount_directive.html
+      - title: Using mounts
+        url: /reference/dappfile/mount_directive.html
 
     - title: Stages
       fi:
@@ -91,57 +91,116 @@ entries:
     - title: CLI
       fi:
 
-        - title: dimg build
-          url: /reference/cli/dimg_build.html
+      - title: dapp dimg bp
+        url: /reference/cli/dapp_dimg_bp.html
+        
+      - title: dapp dimg build
+        url: /reference/cli/dapp_dimg_build.html
 
-        - title: dimg build-context
-          url: /reference/cli/dimg_build_context.html
+      - title: dapp dimg push
+        url: /reference/cli/dapp_dimg_push.html
 
-        - title: dimg cleanup
-          url: /reference/cli/dimg_cleanup.html
+      - title: dapp dimg spush
+        url: /reference/cli/dapp_dimg_spush.html
 
-        - title: dimg flush
-          url: /reference/cli/dimg_flush.html
+      - title: dapp dimg stages pull
+        url: /reference/cli/dapp_dimg_stages_pull.html
 
-        - title: dimg list
-          url: /reference/cli/dimg_list.html
+      - title: dapp dimg stages push
+        url: /reference/cli/dapp_dimg_stages_push.html
 
-        - title: dimg mrproper
-          url: /reference/cli/dimg_mrproper.html
+      - title: dapp dimg tag
+        url: /reference/cli/dapp_dimg_tag.html
 
-        - title: dimg push
-          url: /reference/cli/dimg_push.html
+      - title: dapp dimg run
+        url: /reference/cli/dapp_dimg_run.html
 
-        - title: dimg run
-          url: /reference/cli/dimg_run.html
+      - title: dapp dimg list
+        url: /reference/cli/dapp_dimg_list.html
 
-        - title: dimg slug
-          url: /reference/cli/dimg_slug.html
+      - title: dapp dimg stage image
+        url: /reference/cli/dapp_dimg_stage_image.html
 
-        - title: dimg stages
-          url: /reference/cli/dimg_stages.html
+      - title: dapp dimg cleanup repo
+        url: /reference/cli/dapp_dimg_cleanup_repo.html
 
-        - title: kube chart create
-          url: /reference/cli/kube_chart_create.html
+      - title: dapp dimg flush local
+        url: /reference/cli/dapp_dimg_flush_local.html
 
-        - title: kube deploy
-          url: /reference/cli/kube_deploy.html
+      - title: dapp dimg flush repo
+        url: /reference/cli/dapp_dimg_flush_repo.html
 
-        - title: kube dismiss
-          url: /reference/cli/kube_dismiss.html
+      - title: dapp dimg stages cleanup local
+        url: /reference/cli/dapp_dimg_stages_cleanup_local.html
 
-        - title: kube lint
-          url: /reference/cli/kube_lint.html
+      - title: dapp dimg stages cleanup repo
+        url: /reference/cli/dapp_dimg_stages_cleanup_repo.html
 
-        - title: kube render
-          url: /reference/cli/kube_render.html
+      - title: dapp dimg stages flush local
+        url: /reference/cli/dapp_dimg_stages_flush_local.html
 
-        - title: kube secret
-          url: /reference/cli/kube_secret.html
+      - title: dapp dimg stages flush repo
+        url: /reference/cli/dapp_dimg_stages_flush_repo.html
 
-        - title: kube value
-          url: /reference/cli/kube_value.html
+      - title: dapp dimg cleanup
+        url: /reference/cli/dapp_dimg_cleanup.html
 
+      - title: dapp dimg mrproper
+        url: /reference/cli/dapp_dimg_mrproper.html
+
+      - title: dapp dimg build-context import
+        url: /reference/cli/dapp_dimg_build_context_import.html
+
+      - title: dapp dimg build-context export
+        url: /reference/cli/dapp_dimg_build_context_export.html
+
+      - title: dapp kube deploy
+        url: /reference/cli/dapp_kube_deploy.html
+
+      - title: dapp kube dismiss
+        url: /reference/cli/dapp_kube_dismiss.html
+
+      - title: dapp kube secret key generate
+        url: /reference/cli/dapp_kube_secret_key_generate.html
+
+      - title: dapp kube secret generate
+        url: /reference/cli/dapp_kube_secret_generate.html
+
+      - title: dapp kube secret extract
+        url: /reference/cli/dapp_kube_secret_extract.html
+
+      - title: dapp kube secret regenerate
+        url: /reference/cli/dapp_kube_secret_regenerate.html
+
+      - title: dapp kube secret edit
+        url: /reference/cli/dapp_kube_secret_edit.html
+
+      - title: dapp kube chart create
+        url: /reference/cli/dapp_kube_chart_create.html
+
+      - title: dapp kube value get
+        url: /reference/cli/dapp_kube_value_get.html
+
+      - title: dapp kube lint
+        url: /reference/cli/dapp_kube_lint.html
+
+      - title: dapp kube render
+        url: /reference/cli/dapp_kube_render.html
+
+      - title: dapp kube minikube setup
+        url: /reference/cli/dapp_kube_minikube_setup.html
+
+      - title: dapp sample create
+        url: /reference/cli/dapp_sample_create.html
+
+      - title: dapp sample list
+        url: /reference/cli/dapp_sample_list.html
+
+      - title: dapp slug
+        url: /reference/cli/dapp_slug.html
+
+      - title: dapp update
+        url: /reference/cli/dapp_update.html
     - title: Glossary
       url: /reference/glossary.html
 
