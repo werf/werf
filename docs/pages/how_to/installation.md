@@ -1,7 +1,7 @@
 ---
 title: Installation
 sidebar: how_to
-permalink: installation.html
+permalink: how_to/installation.html
 ---
 
 
@@ -60,10 +60,10 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
 
 ## Install dapp
 
-    ```bash
-    gem install dapp
-    ```
+```bash
+gem install dapp
+```
 
 Now you have dapp installed. Check it with `dapp --version`.
 
-Time to [make your first dapp application](first_application.html)!
+Time to [make your first dapp application]({{ site.baseurl }}/how_to/build_run_and_push.html)!

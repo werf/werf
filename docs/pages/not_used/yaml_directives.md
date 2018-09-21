@@ -1,7 +1,7 @@
 ---
 title: YAML directives
 sidebar: not_used
-permalink: yaml_directives.html
+permalink: not_used/yaml_directives.html
 ---
 
 # YAML dappfile

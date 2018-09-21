@@ -197,7 +197,7 @@ Dapp 0.7 doesn't support `alpine` image, so please use latest dapp version.
 
 [Q: Why dapp doesn't save cache on failed builds by default?](#building-6){:id="building-6"}
 
-Saving cache on failed builds may cause an incorrect cache. Explanation [here...](https://flant.github.io/dapp/cache_for_advanced_build.html#почему-dapp-не-сохраняет-кэш-ошибочных-сборок-по-умолчанию)
+Saving cache on failed builds may cause an incorrect cache. Explanation [here...]({{ site.baseurl }}/not_used/cache_for_advanced_build.html#почему-dapp-не-сохраняет-кэш-ошибочных-сборок-по-умолчанию)
 
 ## Pushing
 

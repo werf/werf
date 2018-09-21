@@ -1,7 +1,7 @@
 ---
 title: Ansible builder
 sidebar: not_used
-permalink: ansible_builder.html
+permalink: not_used/ansible_builder.html
 ---
 
 You can use ansible to build your containers.

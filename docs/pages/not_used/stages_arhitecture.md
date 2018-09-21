@@ -1,7 +1,7 @@
 ---
 title: Как устроены стадии сборки
 sidebar: not_used
-permalink: stages_arhitecture.html
+permalink: not_used/stages_arhitecture.html
 ---
 
 ### Стадия
@@ -21,7 +21,7 @@ permalink: stages_arhitecture.html
 ### Пользовательская стадия
 Пользовательская стадия — это стадия, инструкции для сборки которой задаются пользователем dapp.
 
-Инструкции задаются через dappfile или chef-рецепты — зависит от используемого сборщика: shell сборщик или [chef сборщик](chef_builder.html).
+Инструкции задаются через dappfile или chef-рецепты — зависит от используемого сборщика: shell сборщик или [chef сборщик]({{ site.baseurl }}/ruby/chef.html).
 
 ### Конвейер стадий
 Конвейер стадий — это статически определенная последовательность стадий для сборки определенного типа образов. Существуют следующие конвейеры стадий:
@@ -146,9 +146,9 @@ permalink: stages_arhitecture.html
 
 #### EMPTY
 
-Стадия пустая, не используются [связанные директивы](stages_diagram.html).
+Стадия пустая, не используются [связанные директивы]({{ site.baseurl }}/not_used/stages_diagram.html).
 
-К примеру, git artifact стадии считаются пустыми, если при описании приложения в dappfile не были использованы git-artifact-ы ([git](git.html)), аналогичная ситуация с artifact-ами ([artifact](artifact.html)) и пользовательскими стадиями.
+К примеру, git artifact стадии считаются пустыми, если при описании приложения в dappfile не были использованы git-artifact-ы ([git]({{ site.baseurl }}/reference/dappfile/git_directive.html)), аналогичная ситуация с artifact-ами ([artifact]({{ site.baseurl }}/reference/dappfile/artifact_directive.html)) и пользовательскими стадиями.
 
 #### BUILD
 

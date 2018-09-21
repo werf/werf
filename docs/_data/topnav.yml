@@ -4,11 +4,11 @@ topnav:
 - title: Topnav
   items:
     - title: Introduction
-      url: /index.html
+      url: /
     - title: How To
-      url: /installation.html
+      url: /how_to/installation.html
     - title: Reference
-      url: /dappfile.html
+      url: /reference/dappfile/definition.html
     - title: Publications
       url: /publications.html
     - title: FAQ

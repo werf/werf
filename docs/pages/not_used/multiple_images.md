@@ -1,7 +1,7 @@
 ---
 title: Сборка нескольких образов
 sidebar: not_used
-permalink: multiple_images_for_build.html
+permalink: not_used/multiple_images_for_build.html
 ---
 
 Dapp can build multiple images from one repository.
@@ -130,7 +130,3 @@ dimg_group do
   end
 end
 ```
-
-Также в этом примере вы можете обратить внимание на
-- использование [dimg_group о котором можно почитать дополнительно](directives_images.html)
-- использование [модулей chef](chef_dimod.html), позволяющих более гибко управлять образами  
