@@ -5,7 +5,7 @@ entries:
   f:
 
     - title: Dappfile
-      fi:
+      f:
 
       - title: What is dappfile?
         url: /reference/dappfile/definition.html
@@ -32,7 +32,7 @@ entries:
         url: /reference/dappfile/mount_directive.html
 
     - title: Stages
-      fi:
+      f:
 
       - title: What is stage?
         url: /reference/stages/stage.html
@@ -50,7 +50,7 @@ entries:
         url: /reference/stages/artifacts_stages.html
 
     - title: Registry
-      fi:
+      f:
 
       - title: Authorization
         url: /reference/registry/authorization.html
@@ -62,7 +62,7 @@ entries:
         url: /reference/registry/cleanup.html
 
     - title: Deploy
-      fi:
+      f:
 
       - title: Выкат в kubernetes
         url: /reference/deploy/deploy_for_kube.html
@@ -77,7 +77,7 @@ entries:
         url: /reference/deploy/minikube.html
 
     - title: Developer tools
-      fi:
+      f:
 
       - title: Stage introspection
         url: /reference/developer_tools/stage_introspection.html
@@ -89,118 +89,126 @@ entries:
         url: /reference/developer_tools/as_layers.html
 
     - title: CLI
-      fi:
+      f:
 
-      - title: dapp dimg bp
-        url: /reference/cli/dapp_dimg_bp.html
-        
-      - title: dapp dimg build
-        url: /reference/cli/dapp_dimg_build.html
+      - title: dapp dimg
+        f:
 
-      - title: dapp dimg push
-        url: /reference/cli/dapp_dimg_push.html
+        - title: dapp dimg bp
+          url: /reference/cli/dapp_dimg_bp.html
+        - title: dapp dimg build
+          url: /reference/cli/dapp_dimg_build.html
 
-      - title: dapp dimg spush
-        url: /reference/cli/dapp_dimg_spush.html
+        - title: dapp dimg push
+          url: /reference/cli/dapp_dimg_push.html
 
-      - title: dapp dimg stages pull
-        url: /reference/cli/dapp_dimg_stages_pull.html
+        - title: dapp dimg spush
+          url: /reference/cli/dapp_dimg_spush.html
 
-      - title: dapp dimg stages push
-        url: /reference/cli/dapp_dimg_stages_push.html
+        - title: dapp dimg stages pull
+          url: /reference/cli/dapp_dimg_stages_pull.html
 
-      - title: dapp dimg tag
-        url: /reference/cli/dapp_dimg_tag.html
+        - title: dapp dimg stages push
+          url: /reference/cli/dapp_dimg_stages_push.html
 
-      - title: dapp dimg run
-        url: /reference/cli/dapp_dimg_run.html
+        - title: dapp dimg tag
+          url: /reference/cli/dapp_dimg_tag.html
 
-      - title: dapp dimg list
-        url: /reference/cli/dapp_dimg_list.html
+        - title: dapp dimg run
+          url: /reference/cli/dapp_dimg_run.html
 
-      - title: dapp dimg stage image
-        url: /reference/cli/dapp_dimg_stage_image.html
+        - title: dapp dimg list
+          url: /reference/cli/dapp_dimg_list.html
 
-      - title: dapp dimg cleanup repo
-        url: /reference/cli/dapp_dimg_cleanup_repo.html
+        - title: dapp dimg stage image
+          url: /reference/cli/dapp_dimg_stage_image.html
 
-      - title: dapp dimg flush local
-        url: /reference/cli/dapp_dimg_flush_local.html
+        - title: dapp dimg cleanup repo
+          url: /reference/cli/dapp_dimg_cleanup_repo.html
 
-      - title: dapp dimg flush repo
-        url: /reference/cli/dapp_dimg_flush_repo.html
+        - title: dapp dimg flush local
+          url: /reference/cli/dapp_dimg_flush_local.html
 
-      - title: dapp dimg stages cleanup local
-        url: /reference/cli/dapp_dimg_stages_cleanup_local.html
+        - title: dapp dimg flush repo
+          url: /reference/cli/dapp_dimg_flush_repo.html
 
-      - title: dapp dimg stages cleanup repo
-        url: /reference/cli/dapp_dimg_stages_cleanup_repo.html
+        - title: dapp dimg stages cleanup local
+          url: /reference/cli/dapp_dimg_stages_cleanup_local.html
 
-      - title: dapp dimg stages flush local
-        url: /reference/cli/dapp_dimg_stages_flush_local.html
+        - title: dapp dimg stages cleanup repo
+          url: /reference/cli/dapp_dimg_stages_cleanup_repo.html
 
-      - title: dapp dimg stages flush repo
-        url: /reference/cli/dapp_dimg_stages_flush_repo.html
+        - title: dapp dimg stages flush local
+          url: /reference/cli/dapp_dimg_stages_flush_local.html
 
-      - title: dapp dimg cleanup
-        url: /reference/cli/dapp_dimg_cleanup.html
+        - title: dapp dimg stages flush repo
+          url: /reference/cli/dapp_dimg_stages_flush_repo.html
 
-      - title: dapp dimg mrproper
-        url: /reference/cli/dapp_dimg_mrproper.html
+        - title: dapp dimg cleanup
+          url: /reference/cli/dapp_dimg_cleanup.html
 
-      - title: dapp dimg build-context import
-        url: /reference/cli/dapp_dimg_build_context_import.html
+        - title: dapp dimg mrproper
+          url: /reference/cli/dapp_dimg_mrproper.html
 
-      - title: dapp dimg build-context export
-        url: /reference/cli/dapp_dimg_build_context_export.html
+        - title: dapp dimg build-context import
+          url: /reference/cli/dapp_dimg_build_context_import.html
 
-      - title: dapp kube deploy
-        url: /reference/cli/dapp_kube_deploy.html
+        - title: dapp dimg build-context export
+          url: /reference/cli/dapp_dimg_build_context_export.html
 
-      - title: dapp kube dismiss
-        url: /reference/cli/dapp_kube_dismiss.html
+      - title: dapp kube
+        f:
 
-      - title: dapp kube secret key generate
-        url: /reference/cli/dapp_kube_secret_key_generate.html
+        - title: dapp kube deploy
+          url: /reference/cli/dapp_kube_deploy.html
 
-      - title: dapp kube secret generate
-        url: /reference/cli/dapp_kube_secret_generate.html
+        - title: dapp kube dismiss
+          url: /reference/cli/dapp_kube_dismiss.html
 
-      - title: dapp kube secret extract
-        url: /reference/cli/dapp_kube_secret_extract.html
+        - title: dapp kube secret key generate
+          url: /reference/cli/dapp_kube_secret_key_generate.html
 
-      - title: dapp kube secret regenerate
-        url: /reference/cli/dapp_kube_secret_regenerate.html
+        - title: dapp kube secret generate
+          url: /reference/cli/dapp_kube_secret_generate.html
 
-      - title: dapp kube secret edit
-        url: /reference/cli/dapp_kube_secret_edit.html
+        - title: dapp kube secret extract
+          url: /reference/cli/dapp_kube_secret_extract.html
 
-      - title: dapp kube chart create
-        url: /reference/cli/dapp_kube_chart_create.html
+        - title: dapp kube secret regenerate
+          url: /reference/cli/dapp_kube_secret_regenerate.html
 
-      - title: dapp kube value get
-        url: /reference/cli/dapp_kube_value_get.html
+        - title: dapp kube secret edit
+          url: /reference/cli/dapp_kube_secret_edit.html
 
-      - title: dapp kube lint
-        url: /reference/cli/dapp_kube_lint.html
+        - title: dapp kube chart create
+          url: /reference/cli/dapp_kube_chart_create.html
 
-      - title: dapp kube render
-        url: /reference/cli/dapp_kube_render.html
+        - title: dapp kube value get
+          url: /reference/cli/dapp_kube_value_get.html
 
-      - title: dapp kube minikube setup
-        url: /reference/cli/dapp_kube_minikube_setup.html
+        - title: dapp kube lint
+          url: /reference/cli/dapp_kube_lint.html
 
-      - title: dapp sample create
-        url: /reference/cli/dapp_sample_create.html
+        - title: dapp kube render
+          url: /reference/cli/dapp_kube_render.html
 
-      - title: dapp sample list
-        url: /reference/cli/dapp_sample_list.html
+        - title: dapp kube minikube setup
+          url: /reference/cli/dapp_kube_minikube_setup.html
+
+      - title: dapp sample
+        f:
+
+        - title: dapp sample create
+          url: /reference/cli/dapp_sample_create.html
+
+        - title: dapp sample list
+          url: /reference/cli/dapp_sample_list.html
 
       - title: dapp slug
         url: /reference/cli/dapp_slug.html
 
       - title: dapp update
         url: /reference/cli/dapp_update.html
+
     - title: Glossary
       url: /reference/glossary.html
-

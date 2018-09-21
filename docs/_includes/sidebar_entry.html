@@ -1,0 +1,39 @@
+{% assign folder = include.entry %}
+
+{% if folder.f %}
+<li>
+  <a href="#">{{ folder.title }}{{ folder.url }}</a>
+  <ul>
+    {% for subfolder in folder.f %}
+    {% if subfolder.f %}
+    <li>
+      <a href="#">{{ subfolder.title }}{{ subfolder.url }}</a>
+      <ul>
+        {% for subsubfolder in subfolder.f %}
+        {% if subsubfolder.external_url %}
+        <li><a href="{{ subsubfolder.external_url }}" target="_blank">{{subsubfolder.title}}</a></li>
+        {% elsif page.url == subsubfolder.url %}
+        <li class="active"><a href="{{ site.baseurl }}{{ subsubfolder.url }}">{{subsubfolder.title}}</a></li>
+        {% else %}
+        <li><a href="{{ site.baseurl }}{{ subsubfolder.url }}">{{subsubfolder.title}}</a></li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+    </li>
+    {% elsif subfolder.external_url %}
+    <li><a href="{{ subfolder.external_url }}" target="_blank">{{subfolder.title}}</a></li>
+    {% elsif page.url == subfolder.url %}
+    <li class="active"><a href="{{ site.baseurl }}{{ subfolder.url }}">{{subfolder.title}}</a></li>
+    {% else %}
+    <li><a href="{{ site.baseurl }}{{ subfolder.url }}">{{subfolder.title}}</a></li>
+    {% endif %}
+    {% endfor %}
+  </ul>
+</li>
+{% elsif folder.external_url %}
+<li><a href="{{ folder.external_url }}" target="_blank">{{folder.title}}</a></li>
+{% elsif page.url == folder.url %}
+<li class="active"><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
+{% else %}
+<li><a href="{{ site.baseurl }}{{ folder.url }}">{{folder.title}}</a></li>
+{% endif %}

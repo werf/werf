@@ -3,17 +3,17 @@
 topnav:
 - title: Topnav
   items:
-    - title: Introduction
-      url: /
-    - title: How To
-      url: /how_to/installation.html
-    - title: Reference
-      url: /reference/dappfile/definition.html
-    - title: Publications
-      url: /publications.html
-    - title: FAQ
-      url: /faq.html
-    - title: GitHub
-      external_url: https://github.com/flant/dapp
-    - title: Telegram
-      external_url: https://t.me/dapp_ru
+  - title: Introduction
+    url: /
+  - title: How To
+    url: /how_to/installation.html
+  - title: Reference
+    url: /reference/dappfile/definition.html
+  - title: Publications
+    url: /publications.html
+  - title: FAQ
+    url: /faq.html
+  - title: GitHub
+    external_url: https://github.com/flant/dapp
+  - title: Telegram
+    external_url: https://t.me/dapp_ru

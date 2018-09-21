@@ -11,7 +11,7 @@ entries:
     url: /ruby/chef.html
 
   - title: Директивы
-    fi:
+    f:
 
     - title: Добавление кода в образ директивой git
       url: /ruby/git.html
