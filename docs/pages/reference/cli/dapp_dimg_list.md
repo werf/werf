@@ -1,10 +1,9 @@
 ---
 title: dapp dimg list
 sidebar: reference
-permalink: reference/cli/dimg_list.html
+permalink: reference/cli/dapp_dimg_list.html
 ---
 
-### dapp dimg list
 Вывести список dimg-ей.
 
 ```

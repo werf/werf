@@ -1,13 +1,15 @@
 ---
-title: dapp kube value
+title: dapp kube value get
 sidebar: reference
-permalink: reference/cli/kube_value.html
+permalink: reference/cli/dapp_kube_value_get.html
 ---
-### dapp kube value get
 
 ```
 dapp kube value get [options] VALUE_KEY REPO
 ```
+
+Опции:
+{% include_relative partial/option/tag_options.md %}
 
 Выводит значение переменных, устанавливаемых dapp. Список некоторых переменных:
 * `global.namespace` - namespace (см. опцию `--namespace`)
