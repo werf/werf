@@ -245,7 +245,7 @@ module Dapp
         if options[:registry_username] && options[:registry_password]
           [options[:registry_username], options[:registry_password]]
         elsif ENV.key?('DAPP_DOCKER_CONFIG')
-        elsif !gcr_registry? && !ENV.key?('DAPP_IGNORE_CI_DOCKER_AUTOLOGIN') && ENV.key?('CI_JOB_TOKEN')
+        elsif !gcr_registry? && !ENV.key?('DAPP_IGNORE_CI_DOCKER_AUTOLOGIN') && ENV.key?('CI_REGISTRY') && ENV.key?('CI_JOB_TOKEN')
           ['gitlab-ci-token', ENV['CI_JOB_TOKEN']]
         end
       end
