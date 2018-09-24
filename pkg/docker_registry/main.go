@@ -2,13 +2,16 @@ package docker_registry
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 )
 
 func DimgTags(reference string) ([]string, error) {
@@ -118,10 +121,57 @@ func ImageDelete(reference string) error {
 	}
 
 	if err := remote.Delete(r, auth, http.DefaultTransport, remote.DeleteOptions{}); err != nil {
-		return fmt.Errorf("deleting image %q: %v", r, err)
+		if strings.Contains(err.Error(), "UNAUTHORIZED") {
+			if gitlabRegistryDeleteErr := GitlabRegistryDelete(r, auth, http.DefaultTransport); gitlabRegistryDeleteErr != nil {
+				if strings.Contains(gitlabRegistryDeleteErr.Error(), "UNAUTHORIZED") {
+					return fmt.Errorf("deleting image %q: %v", r, err)
+				}
+				return fmt.Errorf("deleting image %q: %v", r, gitlabRegistryDeleteErr)
+			}
+		} else {
+			return fmt.Errorf("deleting image %q: %v", r, err)
+		}
 	}
 
 	return nil
+}
+
+// TODO https://gitlab.com/gitlab-org/gitlab-ce/issues/48968
+func GitlabRegistryDelete(ref name.Reference, auth authn.Authenticator, t http.RoundTripper) error {
+	scopes := []string{ref.Scope("*")}
+	tr, err := transport.New(ref.Context().Registry, auth, t, scopes)
+	if err != nil {
+		return err
+	}
+	c := &http.Client{Transport: tr}
+
+	u := url.URL{
+		Scheme: ref.Context().Registry.Scheme(),
+		Host:   ref.Context().RegistryStr(),
+		Path:   fmt.Sprintf("/v2/%s/manifests/%s", ref.Context().RepositoryStr(), ref.Identifier()),
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, u.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case http.StatusOK, http.StatusAccepted:
+		return nil
+	default:
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("unrecognized status code during DELETE: %v; %v", resp.Status, string(b))
+	}
 }
 
 func ImageDigest(reference string) (string, error) {
