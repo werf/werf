@@ -64,7 +64,11 @@ module Dapp
               log([repo_image[:dimg], repo_image[:tag]].compact.join(':')) if dry_run? || log_verbose?
               unless dry_run?
                 begin
-                  registry.image_delete(repo_image[:tag], repo_image[:dimg])
+                  if self.class.gcr_registry?
+                    registry.gcr_image_delete(repo_image[:tag], repo_image[:dimg])
+                  else
+                    registry.image_delete(repo_image[:tag], repo_image[:dimg])
+                  end
                 rescue ::Dapp::Dimg::Error::Registry => e
                   raise unless e.net_status[:data][:message].include?("MANIFEST_UNKNOWN")
                   log_warning "WARNING: Ignore dimg `#{repo_image[:dimg]}` tag `#{repo_image[:tag]}`: got not-found-error from docker registry on image-delete request: #{e.net_status[:data][:message]}"

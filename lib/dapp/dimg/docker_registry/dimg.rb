@@ -41,6 +41,10 @@ module Dapp
           with_dimg_repository(dimg_repository.to_s) { super(tag) }
         end
 
+        def gcr_image_delete(tag, dimg_repository = nil)
+          with_dimg_repository(dimg_repository.to_s) { super(tag) }
+        end
+
         def image_delete(tag, dimg_repository = nil)
           with_dimg_repository(dimg_repository.to_s) { super(tag) }
         end
