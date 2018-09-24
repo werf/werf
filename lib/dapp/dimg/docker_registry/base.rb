@@ -22,8 +22,20 @@ module Dapp
           ruby2go_docker_registry_command(command: :image_config, options: { reference: tag_reference(tag) })
         end
 
+        def gcr_image_delete(tag)
+          image_delete_by_tag(tag)
+        end
+
         def image_delete(tag)
           digest = image_digest(tag)
+          image_delete_by_digest(digest)
+        end
+
+        def image_delete_by_tag(tag)
+          ruby2go_docker_registry_command(command: :image_delete, options: { reference: tag_reference(tag) })
+        end
+
+        def image_delete_by_digest(digest)
           ruby2go_docker_registry_command(command: :image_delete, options: { reference: digest_reference(digest) })
         end
 
