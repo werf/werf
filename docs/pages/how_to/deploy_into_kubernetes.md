@@ -12,7 +12,7 @@ Dapp uses helm with some additions to deploy applications into kubernetes. In th
 
 ## Requirements
 
- * Working kubernetes cluster. It may be minikube or regular kubernetes installation. Read [the article about minikube setup](https://flant.github.io/dapp/reference/deploy/minikube.html) to set up local minikube instance with docker-registry.
+ * Working kubernetes cluster. It may be minikube or regular kubernetes installation. Read [the article about minikube setup]({{ site.baseurl }}/reference/deploy/minikube.html) to set up local minikube instance with docker-registry.
 
  * Working docker-registry.
 
@@ -20,7 +20,7 @@ Dapp uses helm with some additions to deploy applications into kubernetes. In th
 
    * Accessible from kubernetes nodes to pull images from the registry.
 
- * Installed `dapp` on a host machine (<https://flant.github.io/dapp/how_to/installation.html>).
+ * Installed `dapp` on a host machine (<{{ site.baseurl }}/how_to/installation.html>).
 
  * Installed `kubectl` on a host machine configured to access your kubernetes cluster (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
@@ -167,9 +167,9 @@ Construction {% raw %}`{{ include "dapp_container_image" . | indent 8 }}`{% endr
 
 * may generate other related fields (such as imagePullPolicy) based on some external conditions.
 
-Go template `dapp_container_image` is the valid way to specify image **from dappfile** in kubernetes resource configuration. There may be multiple images described in dappfile [see the reference for details](https://flant.github.io/dapp/reference/deploy/templates.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD-dapp_container_image).
+Go template `dapp_container_image` is the valid way to specify image **from dappfile** in kubernetes resource configuration. There may be multiple images described in dappfile [see the reference for details]({{ site.baseurl }}/reference/deploy/templates.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD-dapp_container_image).
 
-Construction {% raw %}`{{ include "dapp_container_env" . | indent 8 }}`{% endraw %} is another addition of dapp to helm which *may* generate environment variables section for the kubernetes resource. It is needed for kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details](https://flant.github.io/dapp/reference/deploy/templates.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD-dapp_container_env).
+Construction {% raw %}`{{ include "dapp_container_env" . | indent 8 }}`{% endraw %} is another addition of dapp to helm which *may* generate environment variables section for the kubernetes resource. It is needed for kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details]({{ site.baseurl }}/reference/deploy/templates.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD-dapp_container_env).
 
 Finally, in this configuration Service `myapp-backend` specified to access Pods of Deployment `myapp-backend`.
 
@@ -240,4 +240,4 @@ dapp kube dismiss :minikube --namespace mynamespace --with-namespace
 
 ## See also
 
-For all dapp deploy features such as secrets [take a look at reference](https://flant.github.io/dapp/reference/deploy/deploy_for_kube.html).
+For all dapp deploy features such as secrets [take a look at reference]({{ site.baseurl }}/reference/deploy/deploy_for_kube.html).
