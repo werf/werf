@@ -249,7 +249,7 @@ p:last-child{
 
 /* extra */
 
-a[href^="http://"]:after, a[href^="https://"]:after { display: none }
+.page a[href^="http://"]:after, .page a[href^="https://"]:after { display: none }
 .timeline__content * { max-width: 100% }
 .timeline__content > a:first-child { font-weight: bold }
 

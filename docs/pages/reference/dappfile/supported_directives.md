@@ -1,3 +1,17 @@
+---
+title: Supported directives
+sidebar: reference
+permalink: reference/dappfile/supported_directives.html
+---
+
+<div class="tab">
+  <button class="tablinks active" onclick="openTab(event, 'Dimg')">Dimg</button>
+  <button class="tablinks" onclick="openTab(event, 'Artifact')">Artifact</button>
+</div>
+
+<div id="Dimg" class="tabcontent active" markdown="1">
+
+```yaml
 dimg: <dimg_name... || ~>
 from: <image>
 fromCacheVersion: <version>
@@ -107,7 +121,13 @@ docker:
   WORKDIR: <workdir>
   USER: <user>
 asLayers: <false || true>
----
+```
+
+</div>
+
+<div id="Artifact" class="tabcontent" markdown="1">
+
+```yaml
 artifact: <artifact_name>
 from: <image>
 fromCacheVersion: <version>
@@ -198,3 +218,6 @@ mount:
 - fromPath: <absolute_path>
   to: <absolute_path>
 asLayers: <false || true>
+```
+
+</div>

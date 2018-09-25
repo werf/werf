@@ -31,6 +31,9 @@ entries:
         - title: Using mounts
           url: /reference/dappfile/mount_directive.html
 
+        - title: Supported directives
+          url: /reference/dappfile/supported_directives.html
+
     - title: Stages
       fi:
 
