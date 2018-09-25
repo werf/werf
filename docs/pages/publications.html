@@ -4,7 +4,7 @@ permalink: publications.html
 layout: default
 ---
 
-<link rel="stylesheet" href="{{ "css/publications.css" }}">
+<link rel="stylesheet" href="{{ site.baseurl }}/css/publications.css">
 
 {% assign publications = site.data.publications | sort: 'created' | reverse %}
 {% assign publications_by_year = publications | group_by_exp: "publication", "publication.created | date: '%Y'" %}
