@@ -1,6 +1,8 @@
 dimg: <dimg_name... || ~>
 from: <image>
+fromCacheVersion: <version>
 fromDimg: <dimg_name>
+fromDimgArtifact: <artifact_name>
 git:
 # local git
 - as: <custom_name>
@@ -23,6 +25,7 @@ git:
 - url: <git_repo_url>
   branch: <branch_name>
   commit: <commit>
+  tag: <tag>
   as: <custom_name>
   add: <absolute_path>
   to: <absolute_path>
@@ -107,6 +110,9 @@ asLayers: <false || true>
 ---
 artifact: <artifact_name>
 from: <image>
+fromCacheVersion: <version>
+fromDimg: <dimg_name>
+fromDimgArtifact: <artifact_name>
 git:
 # local git
 - as: <custom_name>
@@ -131,6 +137,7 @@ git:
 - url: <git_repo_url>
   branch: <branch_name>
   commit: <commit>
+  tag: <tag>
   as: <custom_name>
   add: <absolute_path>
   to: <absolute_path>
