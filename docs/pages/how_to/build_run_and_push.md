@@ -4,24 +4,26 @@ sidebar: how_to
 permalink: how_to/build_run_and_push.html
 ---
 
-In this tutorial we will build an image of simple PHP [Symfony application](https://github.com/symfony/demo) with dapp using [Ansible builder]({{ site.baseurl }}/reference/dappfile/ansible_directive.html).
-
-It's recommended to have basic knowledge of Dockerfile and its [directives](https://docs.docker.com/engine/reference/builder/).
-
 ## Task Overview
 
-Let's first take a look at what it takes to build a Symfony application. It includes the following steps:
+In this tutorial, we will build an image of simple PHP [Symfony application](https://github.com/symfony/demo). It includes the following steps:
 
-1. Installing required software and dependencies: `php`, `curl`, `php7.0-sqlite3` for the application,  `php7.0-xml` and `php7.0-zip` for the composer.
-1. Setting up an `app` user and group for the webserver.
-1. Installing composer from a `phar` file, which is first downloaded with `curl`.
-1. Installing other project dependencies with composer.
+1. Installing required software and dependencies: `php`, `curl`, `php-sqlite` for the application,  `php-xml` and `php-zip` for the composer.
+1. Setting up an `app` user and group for the web server.
+1. Installing the composer from a `phar` file, which is first downloaded with `curl`.
+1. Installing other project dependencies with the composer.
 1. Adding the application code to the `/app` directory of the resulting image.
    This directory and all files in it should belong to `app:app`.
-1. Setting up the IP address that the webserver will listen to. This is done with a setting in `/opt/start.sh`, which will run when the container starts.
+1. Setting up the IP address that the web server will listen to. This is done with a setting in `/opt/start.sh`, which will run when the container starts.
 1. Making custom setup actions. As an illustration for the setup stage, we will write current date to `version.txt`.
 
-## Step 1: Add a Dappfile
+Also, we will check that the application works and push the image in a docker registry. 
+
+## Requirements
+
+Minimal knowledge of [docker](https://www.docker.com/) and [Dockerfile directives](https://docs.docker.com/engine/reference/builder/).
+
+## Step 1: Add a dappfile
 
 To implement these steps and requirements with dapp we will add a special file called `dappfile.yaml` to the application's source code.
 
@@ -179,7 +181,7 @@ To implement these steps and requirements with dapp we will add a special file c
 
 ## Step 2: Build and Run the Application
 
-Let's build and run our firs application.
+Let's build and run our first application.
 
 1.  `cd` to the project root directory.
 
@@ -203,7 +205,7 @@ Let's build and run our firs application.
 
 ## Step 3: Push image into docker registry
 
-Dapp can be used to push built image into docker-registry.
+Dapp can be used to push a built image into docker-registry.
 
 1. Run local docker-registry:
 
@@ -221,8 +223,8 @@ Dapp can be used to push built image into docker-registry.
 
 This example has space for further improvement:
 
-* Set of commands for creating `start.sh` can be easily replaced with a single git command, and the file itself stored in git repository.
+* Set of commands for creating `start.sh` can be easily replaced with a single git command, and the file itself stored in the git repository.
 * As we copy files with a git command, we can set file permissions with the same command.
-* `composer install` instead of `composer update` should be used, to install dependencies with versions fixed in files `composer.lock`, `package.json` and `yarn.lock`. Also it's best to first check these files and run `composer install` when needed. To solve this problem dapp have so called `stageDependencies` directive.
+* `composer install` instead of `composer update` should be used to install dependencies with versions fixed in files `composer.lock`, `package.json` and `yarn.lock`. Also, it's best to first check these files and run `composer install` when needed. To solve this problem dapp have so-called `stageDependencies` directive.
 
-These issues are further discussed in [Adding source code from git repositories]({{ site.baseurl }}/reference/dappfile/git_directive.html).
+These issues are further discussed in [reference]({{ site.baseurl }}/reference/dappfile/git_directive.html).
