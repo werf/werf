@@ -9,7 +9,7 @@ module Dapp
 
         option :name,
                long: "--name NAME",
-               description: "Use custom dapp name. Chaging default name will cause full cache rebuild. By default dapp name is the last element of remote.origin.url from project git, or it is the name of the directory where Dappfile resides."
+               description: "Use custom dapp name. Changing default name will cause full cache rebuild. By default dapp name is the last element of remote.origin.url from project git, or it is the name of the directory where Dappfile resides"
 
         option :quiet,
                short: '-q',

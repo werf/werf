@@ -28,7 +28,7 @@ BANNER
         long: "--without-registry",
         default: false,
         boolean: true,
-        description: "Do not connect to docker registry to obtain docker image ids of dimgs being deployed."
+        description: "Do not connect to docker registry to obtain docker image ids of dimgs being deployed"
 
       def run(argv = ARGV)
         self.class.parse_options(self, argv)

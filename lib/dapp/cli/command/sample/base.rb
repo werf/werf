@@ -5,12 +5,12 @@ module Dapp
         class Base < Base
           option :samples_repo,
                  long:        '--samples-repo GIT_REPO',
-                 description: 'Git repository with samples (\'https://github.com/flant/dapp.git\' by default).',
+                 description: 'Git repository with samples (\'https://github.com/flant/dapp.git\' by default)',
                  default:     'https://github.com/flant/dapp.git'
 
           option :samples_branch,
                  long:        '--samples-branch GIT_BRANCH',
-                 description: 'Specific git branch (\'master\' by default).',
+                 description: 'Git branch (\'master\' by default)',
                  default:     'master'
 
           option :samples_dir,

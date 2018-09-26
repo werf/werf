@@ -1,33 +1,32 @@
 ---
 title: dapp dimg mrproper
 sidebar: reference
-permalink: reference/cli/dimg_mrproper.html
+permalink: reference/cli/dapp_dimg_mrproper.html
 ---
 
-### dapp dimg mrproper
 Очистить docker в соответствии с переданным параметром. Команда не ограничивается каким-либо проектом, а влияет на образы **всех проектов**.
 
 ```
 dapp dimg mrproper [options]
 ```
 
-#### `--all`
+### `--all`
 Удалить docker-образы и docker-контейнеры **всех проектов**, связанные с dapp.
 
-#### `--improper-dev-mode-cache`
+### `--improper-dev-mode-cache`
 Удалить docker-образы и docker-контейнеры всех проектов, собранные в dev-режиме и связанные с dapp.
 
-#### `--improper-cache-version-stages`
+### `--improper-cache-version-stages`
 Удалить устаревший кэш приложений, т.е. кэш, версия которого не соответствует версии кэша запущенного dapp, во всех проектах.
 
-#### Примеры
+### Примеры
 
-##### Запустить очистку
+#### Запустить очистку
 ```bash
 $ dapp dimg mrproper --all
 ```
 
-##### Посмотреть, версия кэша каких образов устарела, какие команды могут быть выполнены:
+#### Посмотреть, версия кэша каких образов устарела, какие команды могут быть выполнены:
 ```bash
 $ dapp dimg mrproper --improper-cache-version-stages --dry-run
 mrproper

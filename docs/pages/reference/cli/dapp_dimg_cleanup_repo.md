@@ -1,31 +1,9 @@
 ---
-title: dapp dimg cleanup
+title: dapp dimg cleanup repo
 sidebar: reference
-permalink: reference/cli/dimg_cleanup.html
+permalink: reference/cli/dapp_dimg_cleanup_repo.html
 ---
-### dapp dimg cleanup
-Убраться в системе после некорректного завершения работы dapp, удалить нетегированные docker-образы и docker-контейнеры.
 
-```
-dapp dimg cleanup [options]
-```
-
-#### Примеры
-
-##### Запустить
-```bash
-$ dapp dimg cleanup
-```
-
-##### Посмотреть, какие команды могут быть выполнены
-```bash
-$ dapp dimg cleanup --dry-run
-backend
-  docker rm -f dd4ec7v33
-  docker rmi dimgstage-dapp-test-project:07758b3ec8aec701a01 dimgstage-dapp-test-project:ec701a0107758b3ec8a
-```
-
-### dapp dimg cleanup repo
 Удалить теги приложений проекта, исходя из соответствующих схем тегирования.
 
 <table class="tag-scheme">
@@ -57,8 +35,8 @@ backend
 dapp dimg cleanup repo [options] [DIMG ...] REPO
 ```
 
-#### `--with-stages`
+### `--with-stages`
 Соответствует вызову команды `dapp dimg stages cleanup local` с опцией `--improper-repo-cache`.
 
-#### `--without-kube`
-Отключает проверку использования образов в кластерах. См. подробнее [о работе очистки]({{ site.baseurl }}/reference/registry/cleanup.html#автоматическая-очистка-по-политикам).
+### `--without-kube`
+Отключает проверку использования образов в кластерах. См. подробнее [о работе очистки](cleanup_for_advanced_build.html#автоматическая-очистка-по-политикам).
