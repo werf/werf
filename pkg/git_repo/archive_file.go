@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"path/filepath"
 
-	git_util "github.com/flant/dapp/pkg/git"
+	"github.com/flant/dapp/pkg/true_git"
 	uuid "github.com/satori/go.uuid"
 )
 
 type ArchiveFile struct {
 	FilePath   string
-	Descriptor *git_util.ArchiveDescriptor
+	Descriptor *true_git.ArchiveDescriptor
 }
 
 func NewTmpArchiveFile() *ArchiveFile {

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"path/filepath"
 
-	git_util "github.com/flant/dapp/pkg/git"
+	"github.com/flant/dapp/pkg/true_git"
 	uuid "github.com/satori/go.uuid"
 )
 
 type PatchFile struct {
 	FilePath   string
-	Descriptor *git_util.PatchDescriptor
+	Descriptor *true_git.PatchDescriptor
 }
 
 func NewTmpPatchFile() *PatchFile {
@@ -24,4 +24,8 @@ func (p *PatchFile) GetFilePath() string {
 
 func (p *PatchFile) IsEmpty() bool {
 	return p.Descriptor.IsEmpty
+}
+
+func (p *PatchFile) HasBinary() bool {
+	return p.Descriptor.HasBinary
 }

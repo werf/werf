@@ -1,6 +1,7 @@
-package git
+package true_git
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -19,6 +20,10 @@ func (f *PathFilter) IsFilePathValid(filePath string) bool {
 
 func (f *PathFilter) TrimFileBasePath(filePath string) string {
 	return TrimFileBasePath(filePath, f.BasePath)
+}
+
+func (f *PathFilter) String() string {
+	return fmt.Sprintf("BasePath=`%s`, IncludePaths=%v, ExcludePaths=%v", f.BasePath, f.IncludePaths, f.ExcludePaths)
 }
 
 func IsFilePathValid(filePath, basePath string, includePaths, excludePaths []string) bool {

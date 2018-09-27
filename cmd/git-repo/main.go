@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	git_util "github.com/flant/dapp/pkg/git"
 	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ruby2go"
+	"github.com/flant/dapp/pkg/true_git"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 		panic(err)
 	}
 
-	err = git_util.Init()
+	err = true_git.Init()
 	if err != nil {
 		panic(err)
 	}

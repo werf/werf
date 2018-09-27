@@ -1,43 +1,97 @@
-package git
+package true_git
 
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 )
 
-type DiffOptions struct {
+type PatchOptions struct {
 	FromCommit, ToCommit string
 	PathFilter           PathFilter
-	WithSubmodules       bool
 }
 
 type PatchDescriptor struct {
-	IsEmpty bool
+	IsEmpty   bool
+	HasBinary bool
 }
 
-func Patch(out io.Writer, repoPath string, opts DiffOptions) (*PatchDescriptor, error) {
-	// TODO: Check repoPath exists and valid, run `git -C repoPath log -1`.
-	// TODO: Do not accept anything except commit-id hash.
-	// TODO: What about non-existing commits? For now go-git checks commits.
+func PatchWithSubmodules(out io.Writer, gitDir, workTreeDir string, opts PatchOptions) (*PatchDescriptor, error) {
+	return writePatch(out, gitDir, workTreeDir, true, opts)
+}
 
-	submoduleOpt := "--submodule=log"
-	if opts.WithSubmodules {
+func Patch(out io.Writer, gitDir string, opts PatchOptions) (*PatchDescriptor, error) {
+	return writePatch(out, gitDir, "", false, opts)
+}
+
+func debugPatch() bool {
+	return os.Getenv("DAPP_TRUE_GIT_DEBUG_PATCH") == "1"
+}
+
+func writePatch(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {
+	var err error
+
+	gitDir, err = filepath.Abs(gitDir)
+	if err != nil {
+		return nil, fmt.Errorf("bad git dir `%s`: %s", gitDir, err)
+	}
+
+	workTreeDir, err = filepath.Abs(workTreeDir)
+	if err != nil {
+		return nil, fmt.Errorf("bad work tree dir `%s`: %s", workTreeDir, err)
+	}
+
+	if withSubmodules {
 		err := checkSubmoduleConstraint()
 		if err != nil {
 			return nil, err
 		}
-		submoduleOpt = "--submodule=diff"
+	}
+	if withSubmodules && workTreeDir == "" {
+		return nil, fmt.Errorf("provide work tree directory to enable submodules!")
 	}
 
-	// TODO: Maybe use git-dir + bare always.
-	// TODO: For now -C is the compatible with go-git solution.
-	cmd := exec.Command(
-		"git", "-C", repoPath,
-		"diff", opts.FromCommit, opts.ToCommit,
-		"--binary", "--no-renames", submoduleOpt,
-	)
+	diffOpts := []string{}
+	if withSubmodules {
+		diffOpts = append(diffOpts, "--submodule=diff")
+	} else {
+		diffOpts = append(diffOpts, "--submodule=log")
+	}
+
+	var cmd *exec.Cmd
+
+	if withSubmodules {
+		var err error
+
+		err = SwitchWorkTree(gitDir, workTreeDir, opts.ToCommit)
+		if err != nil {
+			return nil, fmt.Errorf("cannot reset work tree `%s` to commit `%s`: %s", workTreeDir, opts.ToCommit, err)
+		}
+
+		err = UpdateSubmodules(gitDir, workTreeDir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot update submodules: %s", err)
+		}
+
+		gitArgs := []string{
+			"--git-dir", gitDir, "--work-tree", workTreeDir,
+			"-c", "diff.renames=false",
+			"diff",
+		}
+		gitArgs = append(gitArgs, diffOpts...)
+		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)
+		cmd = exec.Command("git", gitArgs...)
+
+		cmd.Dir = workTreeDir // required for `git diff` with submodules
+	} else {
+		gitArgs := []string{"--git-dir", gitDir, "diff"}
+		gitArgs = append(gitArgs, diffOpts...)
+		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)
+		cmd = exec.Command("git", gitArgs...)
+	}
 
 	stdoutPipe, err := cmd.StdoutPipe()
 	if err != nil {
@@ -99,6 +153,10 @@ func Patch(out io.Writer, repoPath string, opts DiffOptions) (*PatchDescriptor, 
 		doneChan <- true
 	}()
 
+	if debugPatch() {
+		out = io.MultiWriter(out, os.Stdout)
+	}
+
 	p := makeDiffParser(out, opts.PathFilter)
 
 WaitForData:
@@ -124,7 +182,8 @@ WaitForData:
 	}
 
 	desc := &PatchDescriptor{
-		IsEmpty: (p.OutLines == 0),
+		IsEmpty:   (p.OutLines == 0),
+		HasBinary: p.HasBinary,
 	}
 
 	return desc, nil

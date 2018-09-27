@@ -9,7 +9,7 @@ import (
 	"github.com/flant/dapp/pkg/lock"
 	"gopkg.in/ini.v1"
 	"gopkg.in/satori/go.uuid.v1"
-	go_git "gopkg.in/src-d/go-git.v4"
+	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
@@ -79,9 +79,9 @@ func (repo *Remote) Clone() (bool, error) {
 
 		path := filepath.Join("/tmp", fmt.Sprintf("dapp-git-repo-%s", uuid.NewV4().String()))
 
-		_, err = go_git.PlainClone(path, true, &go_git.CloneOptions{
+		_, err = git.PlainClone(path, true, &git.CloneOptions{
 			URL:               repo.Url,
-			RecurseSubmodules: go_git.DefaultSubmoduleRecursionDepth,
+			RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
 		})
 		if err != nil {
 			return err
@@ -129,15 +129,15 @@ func (repo *Remote) Fetch() error {
 	}
 
 	return repo.withLock(func() error {
-		rawRepo, err := go_git.PlainOpen(repo.ClonePath)
+		rawRepo, err := git.PlainOpen(repo.ClonePath)
 		if err != nil {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
 
 		fmt.Printf("Fetching remote `%s` of repo `%s` ...\n", remoteName, repo.String())
 
-		err = rawRepo.Fetch(&go_git.FetchOptions{RemoteName: remoteName})
-		if err != nil && err != go_git.NoErrAlreadyUpToDate {
+		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName})
+		if err != nil && err != git.NoErrAlreadyUpToDate {
 			return fmt.Errorf("cannot fetch remote `%s` of repo `%s`: %s", remoteName, repo.String(), err)
 		}
 
@@ -166,7 +166,7 @@ func (repo *Remote) HeadBranchName() (string, error) {
 	return repo.getHeadBranchNameForRepo(repo.ClonePath)
 }
 
-func (repo *Remote) findReference(rawRepo *go_git.Repository, reference string) (string, error) {
+func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (string, error) {
 	refs, err := rawRepo.References()
 	if err != nil {
 		return "", err
@@ -192,7 +192,7 @@ func (repo *Remote) findReference(rawRepo *go_git.Repository, reference string) 
 func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 	var err error
 
-	rawRepo, err := go_git.PlainOpen(repo.ClonePath)
+	rawRepo, err := git.PlainOpen(repo.ClonePath)
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %s", err)
 	}
@@ -213,7 +213,7 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 	var err error
 
-	rawRepo, err := go_git.PlainOpen(repo.ClonePath)
+	rawRepo, err := git.PlainOpen(repo.ClonePath)
 	if err != nil {
 		return "", fmt.Errorf("cannot open repo: %s", err)
 	}

@@ -1,4 +1,4 @@
-package git
+package true_git
 
 import (
 	"bytes"
@@ -10,9 +10,10 @@ import (
 
 func makeDiffParser(out io.Writer, pathFilter PathFilter) *diffParser {
 	return &diffParser{
+		PathFilter: pathFilter,
 		Out:        out,
 		OutLines:   0,
-		PathFilter: pathFilter,
+		HasBinary:  false,
 		state:      unrecognized,
 		lineBuf:    make([]byte, 0, 4096),
 	}
@@ -37,6 +38,7 @@ type diffParser struct {
 	Out                 io.Writer
 	OutLines            uint
 	UnrecognizedCapture bytes.Buffer
+	HasBinary           bool
 
 	state   parserState
 	lineBuf []byte
@@ -124,6 +126,9 @@ func (p *diffParser) handleDiffLine(line string) error {
 		if strings.HasPrefix(line, "GIT binary patch") {
 			return p.handleBinaryBeginHeader(line)
 		}
+		if strings.HasPrefix(line, "Binary files") {
+			return p.handleShortBinaryHeader(line)
+		}
 		return p.writeOutLine(line)
 
 	case modifyFileModeDiff:
@@ -140,6 +145,9 @@ func (p *diffParser) handleDiffLine(line string) error {
 		if strings.HasPrefix(line, "GIT binary patch") {
 			return p.handleBinaryBeginHeader(line)
 		}
+		if strings.HasPrefix(line, "Binary files") {
+			return p.handleShortBinaryHeader(line)
+		}
 		return p.writeOutLine(line)
 
 	case deleteFileDiff:
@@ -148,6 +156,9 @@ func (p *diffParser) handleDiffLine(line string) error {
 		}
 		if strings.HasPrefix(line, "GIT binary patch") {
 			return p.handleBinaryBeginHeader(line)
+		}
+		if strings.HasPrefix(line, "Binary files") {
+			return p.handleShortBinaryHeader(line)
 		}
 		return p.writeOutLine(line)
 
@@ -268,5 +279,12 @@ func (p *diffParser) handleDeleteFilePath(line string) error {
 
 func (p *diffParser) handleBinaryBeginHeader(line string) error {
 	p.state = diffBody
+	p.HasBinary = true
+	return p.writeOutLine(line)
+}
+
+func (p *diffParser) handleShortBinaryHeader(line string) error {
+	p.state = unrecognized
+	p.HasBinary = true
 	return p.writeOutLine(line)
 }
