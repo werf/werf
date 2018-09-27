@@ -2,6 +2,7 @@
 title: Authorization
 sidebar: reference
 permalink: reference/registry/authorization.html
+author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
 Для работы с registry необходимо иметь авторизованного пользователем с достаточным набором прав.

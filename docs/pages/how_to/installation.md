@@ -2,8 +2,8 @@
 title: Installation
 sidebar: how_to
 permalink: how_to/installation.html
+author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
-
 
 Dapp requires a Linux operating system.
 Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp/issues/661)).
