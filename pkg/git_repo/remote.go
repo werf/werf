@@ -12,6 +12,7 @@ import (
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 )
 
 type Remote struct {
@@ -19,11 +20,6 @@ type Remote struct {
 	Url       string
 	ClonePath string // TODO: move CacheVersion & path construction here
 	IsDryRun  bool
-}
-
-func (repo *Remote) withLock(f func() error) error {
-	lockName := fmt.Sprintf("remote_git_artifact.%s", repo.Name)
-	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
 }
 
 func (repo *Remote) CloneAndFetch() error {
@@ -66,7 +62,7 @@ func (repo *Remote) Clone() (bool, error) {
 		return false, nil
 	}
 
-	return true, repo.withLock(func() error {
+	return true, repo.withRemoteRepoLock(func() error {
 		exists, err := repo.isCloneExists()
 		if err != nil {
 			return err
@@ -128,7 +124,7 @@ func (repo *Remote) Fetch() error {
 		}
 	}
 
-	return repo.withLock(func() error {
+	return repo.withRemoteRepoLock(func() error {
 		rawRepo, err := git.PlainOpen(repo.ClonePath)
 		if err != nil {
 			return fmt.Errorf("cannot open repo: %s", err)
@@ -232,9 +228,31 @@ func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 }
 
 func (repo *Remote) CreatePatch(opts PatchOptions) (Patch, error) {
-	return repo.createPatch(repo.ClonePath, opts)
+	workTreeDir, err := repo.getWorkTreeDir()
+	if err != nil {
+		return nil, err
+	}
+	return repo.createPatch(repo.ClonePath, repo.ClonePath, workTreeDir, opts)
 }
 
 func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(repo.ClonePath, opts)
+	workTreeDir, err := repo.getWorkTreeDir()
+	if err != nil {
+		return nil, err
+	}
+	return repo.createArchive(repo.ClonePath, repo.ClonePath, workTreeDir, opts)
+}
+
+func (repo *Remote) getWorkTreeDir() (string, error) {
+	ep, err := transport.NewEndpoint(repo.Url)
+	if err != nil {
+		return "", fmt.Errorf("bad endpoint url `%s`: %s", repo.Url, err)
+	}
+
+	return filepath.Join(GetBaseWorkTreeDir(), "remote", ep.Host, ep.Path), nil
+}
+
+func (repo *Remote) withRemoteRepoLock(f func() error) error {
+	lockName := fmt.Sprintf("remote_git_artifact.%s", repo.Name)
+	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
 }

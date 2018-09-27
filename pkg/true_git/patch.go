@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -61,6 +62,11 @@ func writePatch(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, 
 		diffOpts = append(diffOpts, "--submodule=log")
 	}
 
+	commonGitOpts := []string{
+		"--git-dir", gitDir,
+		"-c", "diff.renames=false",
+	}
+
 	var cmd *exec.Cmd
 
 	if withSubmodules {
@@ -76,20 +82,27 @@ func writePatch(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, 
 			return nil, fmt.Errorf("cannot update submodules: %s", err)
 		}
 
-		gitArgs := []string{
-			"--git-dir", gitDir, "--work-tree", workTreeDir,
-			"-c", "diff.renames=false",
-			"diff",
-		}
+		gitArgs := append(commonGitOpts, "--work-tree", workTreeDir)
+		gitArgs = append(gitArgs, "diff")
 		gitArgs = append(gitArgs, diffOpts...)
 		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)
+
+		if debugPatch() {
+			fmt.Printf("# git %s\n", strings.Join(gitArgs, " "))
+		}
+
 		cmd = exec.Command("git", gitArgs...)
 
 		cmd.Dir = workTreeDir // required for `git diff` with submodules
 	} else {
-		gitArgs := []string{"--git-dir", gitDir, "diff"}
+		gitArgs := append(commonGitOpts, "diff")
 		gitArgs = append(gitArgs, diffOpts...)
 		gitArgs = append(gitArgs, opts.FromCommit, opts.ToCommit)
+
+		if debugPatch() {
+			fmt.Printf("# git %s\n", strings.Join(gitArgs, " "))
+		}
+
 		cmd = exec.Command("git", gitArgs...)
 	}
 

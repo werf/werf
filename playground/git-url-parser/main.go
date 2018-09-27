@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/src-d/go-git/plumbing/transport"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 )
 
 func main() {

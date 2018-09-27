@@ -5,7 +5,9 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/true_git"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -15,6 +17,11 @@ import (
 type Base struct {
 	Name   string
 	TmpDir string
+}
+
+func (repo *Base) withWorkTreeLock(workTree string, f func() error) error {
+	lockName := fmt.Sprintf("git_work_tree %s", workTree)
+	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
 }
 
 func (repo *Base) getHeadCommitForRepo(repoPath string) (string, error) {
@@ -95,7 +102,7 @@ func (repo *Base) ArchiveChecksum(ArchiveOptions) (string, error) {
 	panic("not implemented")
 }
 
-func (repo *Base) createPatch(repoPath string, opts PatchOptions) (Patch, error) {
+func (repo *Base) createPatch(repoPath, gitDir, workTreeDir string, opts PatchOptions) (Patch, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)
@@ -138,9 +145,12 @@ func (repo *Base) createPatch(repoPath string, opts PatchOptions) (Patch, error)
 	var desc *true_git.PatchDescriptor
 
 	if hasSubmodules {
-		desc, err = true_git.PatchWithSubmodules(fileHandler, repoPath, "TODO WORK TREE WITH LOCK!!!", patchOpts)
+		err = repo.withWorkTreeLock(workTreeDir, func() error {
+			desc, err = true_git.PatchWithSubmodules(fileHandler, gitDir, workTreeDir, patchOpts)
+			return err
+		})
 	} else {
-		desc, err = true_git.Patch(fileHandler, repoPath, patchOpts)
+		desc, err = true_git.Patch(fileHandler, gitDir, patchOpts)
 	}
 
 	if err != nil {
@@ -169,7 +179,7 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 	return false, nil
 }
 
-func (repo *Base) createArchive(repoPath string, opts ArchiveOptions) (Archive, error) {
+func (repo *Base) createArchive(repoPath, gitDir, workTreeDir string, opts ArchiveOptions) (Archive, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)
@@ -205,9 +215,15 @@ func (repo *Base) createArchive(repoPath string, opts ArchiveOptions) (Archive, 
 	var desc *true_git.ArchiveDescriptor
 
 	if hasSubmodules {
-		desc, err = true_git.ArchiveWithSubmodules(fileHandler, repoPath, "TODO WORK TREE WITH LOCK", archiveOpts)
+		err = repo.withWorkTreeLock(workTreeDir, func() error {
+			desc, err = true_git.ArchiveWithSubmodules(fileHandler, gitDir, workTreeDir, archiveOpts)
+			return err
+		})
 	} else {
-		desc, err = true_git.Archive(fileHandler, repoPath, "TODO WORK TREE WITH LOCK", archiveOpts)
+		err = repo.withWorkTreeLock(workTreeDir, func() error {
+			desc, err = true_git.Archive(fileHandler, gitDir, workTreeDir, archiveOpts)
+			return err
+		})
 	}
 
 	if err != nil {

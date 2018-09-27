@@ -2,12 +2,13 @@ package git_repo
 
 import (
 	"fmt"
+	"path/filepath"
 )
 
 type Local struct {
 	Base
-	Path     string
-	OrigPath string
+	Path   string
+	GitDir string
 }
 
 func (repo *Local) HeadCommit() (string, error) {
@@ -21,9 +22,28 @@ func (repo *Local) HeadCommit() (string, error) {
 }
 
 func (repo *Local) CreatePatch(opts PatchOptions) (Patch, error) {
-	return repo.createPatch(repo.Path, opts)
+	return repo.createPatch(repo.Path, repo.GitDir, repo.getWorkTreeDir(), opts)
 }
 
 func (repo *Local) CreateArchive(opts ArchiveOptions) (Archive, error) {
-	return repo.createArchive(repo.Path, opts)
+	return repo.createArchive(repo.Path, repo.GitDir, repo.getWorkTreeDir(), opts)
+}
+
+func (repo *Local) getWorkTreeDir() string {
+	pathParts := make([]string, 0)
+
+	path := filepath.Clean(repo.Path)
+	for i := 0; i < 3; i++ {
+		var lastPart string
+		path, lastPart = filepath.Split(filepath.Clean(path))
+		pathParts = append([]string{lastPart}, pathParts...)
+		if path == "/" {
+			break
+		}
+	}
+
+	pathParts = append([]string{"local"}, pathParts...)
+	pathParts = append([]string{GetBaseWorkTreeDir()}, pathParts...)
+
+	return filepath.Join(pathParts...)
 }
