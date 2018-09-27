@@ -2,6 +2,7 @@
 title: Build, run and push
 sidebar: how_to
 permalink: how_to/build_run_and_push.html
+author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 ---
 
 ## Task Overview

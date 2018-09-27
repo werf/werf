@@ -2,6 +2,7 @@
 title: Deploy into kubernetes
 sidebar: how_to
 permalink: how_to/deploy_into_kubernetes.html
+author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 ## Task overview

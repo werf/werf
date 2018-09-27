@@ -2,6 +2,7 @@
 title: Cleanup
 sidebar: reference
 permalink: reference/registry/cleanup.html
+author: Artem Kladov <artem.kladov@flant.com>
 ---
 
 Одни из основных преимуществ использования dapp, - это возможности применения разноуровневого эффективного кэширования и инструментов очистки docker registry. О возможностях кэширования вы можете узнать в соответствующем [разделе]({{ site.baseurl }}/not_used/cache_for_advanced_build.html), а далее будут рассмотрены способы обеспечения очистки docker registry.

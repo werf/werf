@@ -2,6 +2,7 @@
 title: Gitlab CI/CD integration
 sidebar: how_to
 permalink: how_to/gitlab_ci_cd_integration.html
+author: Artem Kladov <artem.kladov@flant.com>
 ---
 
 ## Task Overview

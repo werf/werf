@@ -2,6 +2,7 @@
 title: Работа с секретами
 sidebar: reference
 permalink: reference/deploy/secrets.html
+author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
 Механизм секретов dapp рекомендован для хранения: паролей от базы данных, файлов с сертификатами шифрования и тому подобного.

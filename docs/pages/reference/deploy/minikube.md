@@ -2,6 +2,7 @@
 title: Использование minikube
 sidebar: reference
 permalink: reference/deploy/minikube.html
+author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 Чтобы использовать dapp для деплоя образов в minikube:

@@ -2,6 +2,7 @@
 title: Конфигурация выката
 sidebar: reference
 permalink: reference/deploy/templates.html
+author: Artem Kladov <artem.kladov@flant.com>
 ---
 
 Dapp при выкате вызывает [helm](https://helm.sh/), который использует чарт из папки `.helm` в корне проекта для конфигурации выката. Helm ищет YAML описания для объектов kubernetes в папке `templates` чарта и обрабатывает каждый файл с помощью механизма рендеринга шаблонов [GO](https://golang.org/). Dapp не обрабатывает чарты и шаблоны чарта сам, а использует для этого helm.
