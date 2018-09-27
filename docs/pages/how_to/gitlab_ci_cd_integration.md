@@ -19,10 +19,14 @@ To begin, you'll need the following:
 
 ## Infrastructure
 
+![sdf]({{ site.baseurl }}/images/howto_gitlabci_scheme.png)
+
 * Kubernetes cluster
 * GitLab with docker registry enabled
 * Build node
 * Deployment node
+
+
 
 We don't recommend to run dapp in docker as it can give an unexpected result.
 
