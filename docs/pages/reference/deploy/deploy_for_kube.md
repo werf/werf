@@ -50,6 +50,21 @@ version: 0.1.0
 * Используется тот же kubernetes namespace по умолчанию, что и kubectl: из поля `namespace` активного контекста.
   * Если namespace по умолчанию не указан в `~/.kube/config`, то используется namespace=`default`.
 
+Если вы используете самоподписанный SSL-сертификат, то указать его можно с помощью переменной `SSL_CERT_FILE`.
+* Скопируйте фаил сертификата в какую-либо папку и установите необходимые права доступа. Пример:
+```bash
+cp  CERTFILE.crt ~gitlab-runner/.
+chown -R gitlab-runner:gitlab-runner ~gitlab-runner/CERTFILE.crt
+```
+* Установите переменную окружения `SSL_CERT_FILE=/home/gitlab-runner/<domain>.crt)` (экспортируйте ее, либо установите непосредственно перед вызовом `dapp kube deploy`). Пример
+```bash
+SSL_CERT_FILE=/home/gitlab-runner/CERTFILE.crt dapp kube deploy
+      --namespace ${CI_ENVIRONMENT_SLUG}
+      --tag-ci
+      ${CI_REGISTRY_IMAGE}
+```
+
+
 ## Управление выкатом
 
 ### dapp kube deploy
