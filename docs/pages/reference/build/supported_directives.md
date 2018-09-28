@@ -1,7 +1,7 @@
 ---
 title: Supported directives
 sidebar: reference
-permalink: reference/dappfile/supported_directives.html
+permalink: reference/build/supported_directives.html
 ---
 
 <div class="tab">

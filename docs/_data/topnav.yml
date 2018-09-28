@@ -8,7 +8,7 @@ topnav:
     url: /how_to/installation.html
 
   - title: Reference
-    url: /reference/dappfile/definition.html
+    url: /reference/build/dappfile.html
 
   - title: Publications
     url: /publications.html

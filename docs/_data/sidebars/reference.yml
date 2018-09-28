@@ -4,53 +4,35 @@ entries:
 - title: sidebar
   f:
 
-    - title: Dappfile
+    - title: Build
       fi:
 
-        - title: What is dappfile?
-          url: /reference/dappfile/definition.html
+      - title: Dappfile
+        url: /reference/build/dappfile.html
 
-        - title: Minimal dappfile
-          url: /reference/dappfile/minimal_dappfile.html
+      - title: Stages
+        url: /reference/build/stages.html
 
-        - title: Adding source code from git repositories
-          url: /reference/dappfile/git_directive.html
+      - title: Base directives
+        url: /reference/build/base_directives.html
 
-        - title: Running assembly shell-instructions
-          url: /reference/dappfile/shell_directive.html
+      - title: Adding source code from git repositories
+        url: /reference/build/git_directive.html
 
-        - title: Running assembly ansible-instructions
-          url: /reference/dappfile/ansible_directive.html
+      - title: Running assembly instructions
+        url: /reference/build/assembly_instructions.html
 
-        - title: Adding docker-instructions
-          url: /reference/dappfile/docker_directive.html
+      - title: Adding docker-instructions
+        url: /reference/build/docker_directive.html
 
-        - title: Using artifacts
-          url: /reference/dappfile/artifact_directive.html
+      - title: Using mounts
+        url: /reference/build/mount_directive.html
 
-        - title: Using mounts
-          url: /reference/dappfile/mount_directive.html
+      - title: Using artifacts
+        url: /reference/build/artifact_directive.html
 
-        - title: Supported directives
-          url: /reference/dappfile/supported_directives.html
-
-    - title: Stages
-      fi:
-
-      - title: What is stage?
-        url: /reference/stages/stage.html
-
-      - title: Stage conveyor
-        url: /reference/stages/stage_conveyor.html
-
-      - title: User stages
-        url: /reference/stages/user_stages.html
-
-      - title: Git stages
-        url: /reference/stages/git_stages.html
-
-      - title: Artifacts stages
-        url: /reference/stages/artifacts_stages.html
+      - title: Supported directives
+        url: /reference/build/supported_directives.html
 
     - title: Registry
       fi:
@@ -94,56 +76,56 @@ entries:
     - title: CLI
       fi:
 
-        - title: dimg build
-          url: /reference/cli/dimg_build.html
+      - title: dimg build
+        url: /reference/cli/dimg_build.html
 
-        - title: dimg build-context
-          url: /reference/cli/dimg_build_context.html
+      - title: dimg build-context
+        url: /reference/cli/dimg_build_context.html
 
-        - title: dimg cleanup
-          url: /reference/cli/dimg_cleanup.html
+      - title: dimg cleanup
+        url: /reference/cli/dimg_cleanup.html
 
-        - title: dimg flush
-          url: /reference/cli/dimg_flush.html
+      - title: dimg flush
+        url: /reference/cli/dimg_flush.html
 
-        - title: dimg list
-          url: /reference/cli/dimg_list.html
+      - title: dimg list
+        url: /reference/cli/dimg_list.html
 
-        - title: dimg mrproper
-          url: /reference/cli/dimg_mrproper.html
+      - title: dimg mrproper
+        url: /reference/cli/dimg_mrproper.html
 
-        - title: dimg push
-          url: /reference/cli/dimg_push.html
+      - title: dimg push
+        url: /reference/cli/dimg_push.html
 
-        - title: dimg run
-          url: /reference/cli/dimg_run.html
+      - title: dimg run
+        url: /reference/cli/dimg_run.html
 
-        - title: dimg slug
-          url: /reference/cli/dimg_slug.html
+      - title: dimg slug
+        url: /reference/cli/dimg_slug.html
 
-        - title: dimg stages
-          url: /reference/cli/dimg_stages.html
+      - title: dimg stages
+        url: /reference/cli/dimg_stages.html
 
-        - title: kube chart create
-          url: /reference/cli/kube_chart_create.html
+      - title: kube chart create
+        url: /reference/cli/kube_chart_create.html
 
-        - title: kube deploy
-          url: /reference/cli/kube_deploy.html
+      - title: kube deploy
+        url: /reference/cli/kube_deploy.html
 
-        - title: kube dismiss
-          url: /reference/cli/kube_dismiss.html
+      - title: kube dismiss
+        url: /reference/cli/kube_dismiss.html
 
-        - title: kube lint
-          url: /reference/cli/kube_lint.html
+      - title: kube lint
+        url: /reference/cli/kube_lint.html
 
-        - title: kube render
-          url: /reference/cli/kube_render.html
+      - title: kube render
+        url: /reference/cli/kube_render.html
 
-        - title: kube secret
-          url: /reference/cli/kube_secret.html
+      - title: kube secret
+        url: /reference/cli/kube_secret.html
 
-        - title: kube value
-          url: /reference/cli/kube_value.html
+      - title: kube value
+        url: /reference/cli/kube_value.html
 
     - title: Glossary
       url: /reference/glossary.html

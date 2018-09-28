@@ -4,11 +4,8 @@ entries:
 - title: sidebar
   f:
 
-  - title: Стадии сборки
+  - title: YAML directives
     url: /not_used/
-
-  - title: Yaml директивы
-    url: /not_used/yaml_directives.html
 
   - title: Dappfile directives
     url: /not_used/directives.html
@@ -16,14 +13,8 @@ entries:
   - title: Описание образов
     url: /not_used/directives_images.html
 
-  - title: Сборка нескольких образов
-    url: /not_used/multiple_images_for_build.html
-
   - title: Ansible builder
     url: /not_used/ansible_builder.html
-
-  - title: Shell сборщик
-    url: /not_used/shell_builder.html
 
   - title: Упрощение разработки
     url: /not_used/easy_development.html
