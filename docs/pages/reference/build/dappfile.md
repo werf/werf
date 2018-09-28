@@ -1,9 +1,11 @@
 ---
-title: What is dappfile?
+title: Dappfile
 sidebar: reference
-permalink: reference/dappfile/definition.html
+permalink: reference/build/dappfile.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
+
+## What is dappfile for?
 
 Dapp uses the configuration file called dappfile to build docker images. At present, dapp only support YAML syntax and uses one of the following files in the root folder of your project — `dappfile.yaml` or `dappfile.yml`. 
 

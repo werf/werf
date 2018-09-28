@@ -1,42 +1,55 @@
 ---
 title: Adding source code from git repositories
 sidebar: reference
-permalink: reference/dappfile/git_directive.html
+permalink: reference/build/git_directive.html
 ---
 
-Для добавления кода в собираемый образ, предусмотрена директива `git`, с помощью которой можно добавить код из локального или удаленного репозитория (включая сабмодули) как в образ приложения так и в образ артефакта.
+## Subject matter
 
-При первой сборке образа с указанием директивы `git`, в него добавляется содержимое git репозитория (стадия `g_a_archive`) согласно соответствующих инструкций. При последующих сборках образа, изменения в git репозитории добавляются отдельным docker-слоем, который содержит git-патч (git patch apply). Содержимое таких docker-слоев с патчами также кэшируется, что еще более повышает скорость сборки. В случае отмены сделанных изменений в исходном коде приложения (например, через git revert), при сборке будет накладываться патч с отменой изменений, будет использоваться слой из кэша.
-The `git` directive in `dappfile.yml` adds source code from a Git repository to an application or artifact image.
-It supports local and remote repositories, including submodules.
+* Первая проблема, с которой предстоит столкнуться: как добиться минимальной задержки между коммитом и получением готового образа для дальнейшего тестирования/деплоя. Большая часть коммитов в репозиторий приложения относится к обновлению кода самого самого приложения. В этом случае сборка нового образа должна представлять собой не более, чем применение патча к файлам предыдущего образа.
+* Вторая проблема: если после сделанных изменений в исходном коде приложения и сборки образа эти изменения были отменены (например, через git revert) в следующем коммите — должен сработать кэш сборщика образов. Т.е. собираемые сборщиком образа должны кэшироваться по содержимому изменений в файлах git репозитория, а не по факту наличия этих изменений.
+* Третья проблема: добавлять файлы из git репозитория в образ путем копирования всего дерева исходников необходимо выполнять редко, основным способом добавления изменения должно служить наложение патчей.
+
+Требуется собрать образ с зашитым исходным кодом приложения из git.
+
+## Our decision
+
+Для добавления кода в собираемый образ, предусмотрена директива `git`, с помощью которой можно добавить код из локального или удаленного репозитория (включая сабмодули) в dimg.
+
+The `git` directive in `dappfile.yml` adds source code from a Git repository to an dimg. It supports local and remote repositories, including submodules.
 
 > Note: to work with remote git repositories, dapp requires libssh2 and/or libssl installed.
 > Refer to [Dapp Installation]({{ site.baseurl }}/how_to/installation.html#install-dependencies) for details.
-
-## Introduction
-
-### Optimizing build speed
 
 При первой сборке образа с указанием директивы `git`, в него добавляется содержимое git репозитория (стадия `g_a_archive`) согласно соответствующих инструкций. При последующих сборках образа, изменения в git репозитории добавляются отдельным docker-слоем, который содержит git-патч (git patch apply). Содержимое таких docker-слоев с патчами также кешируется, что еще более повышает скорость сборки. В случае отмены сделанных изменений в исходном коде приложения (например, через git revert), при сборке будет накладываться патч с отменой изменений, будет использоваться слой из кеша.
 
 When dapp first builds an image from a dappfile with `git` directive, it adds source code from a Git repository to the image.
 This happens on the `g_a_archive` stage. (See [build stages]({{ site.baseurl }}/reference/stages/git_stages.html) for more details.)
 
-
 On each subsequent build dapp does not create a new image with a full copy of the source code.
 Instead, it generates a git patch (with `git patch apply`) and applies it as an image layer.
 Dapp caches these image layers to boost build speed.
 If changes in source code are undone, for example with `git revert`, dapp detects that and reuses a cached layer.
 
+### g_a_archive
+### g_a_post_setup_patch
+
+Сигнатура стадии git artifact post setup patch зависит от размера патчей git-артефактов и будет пересобрана, если их сумма превысит лимит (10 MB).
+
+### g_a_latest_patch
+
+
+## Syntax
+
+
+## Introduction
+
+### Optimizing build speed
+
+
 ### Building artifacts
 
 > TODO: Переместить вперёд. Слишком рано для этой инфы, даже про `stageDependencies` ещё не было.
- 
-Сборка образов артефактов отличается отсутствием стадии `latest_patch`, т.о. при первой сборке образа артефакта используются текущие состояния git-репозиториев и при последующих сборках образы артефактов не пересобираются (при условии, что отсутствуют зависимости пользовательских стадий от файлов, описанных с помощью директивы `stageDependencies`, о чем см. ниже).
-
-Unlike with applications, building artifacts does not include the `latest_patch` stage.
-When dapp first builds an artifact image, it uses the current state of the git repository.
-On next builds it does not rebuild the image from scratch.
 
 Система кэширования dapp принимает решение о необходимости повторной сборки стадии или использовании кэша, на основании вычисления [сигнатуры стадии]({{ site.baseurl }}/not_used/stages_diagram.html), которая не зависит напрямую от состояния git репозитория. Т.о., если не указать это явно (см далее про директиву `stageDependencies`), то изменения только кода в git репозитории не приведут к повторной сборке пользовательской стадии (`before_install`, `install`, `before_setup`, `setup`, `build_artifact`). Чтобы явно определить зависимость от файлов и папок, при изменении которых сборщику необходимо выполнить принудительную сборку определенных пользовательских стадий, в директиве `git` предусмотрена директива `stageDependencies` (`stage_dependencies` для Ruby синтаксиса).
 
