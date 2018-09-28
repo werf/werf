@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -160,17 +161,38 @@ func (p *diffParser) handleDiffLine(line string) error {
 
 func (p *diffParser) handleDiffBegin(line string) error {
 	lineParts := strings.Split(line, " ")
-	pathA := strings.TrimPrefix(lineParts[2], "a/")
-	pathB := strings.TrimPrefix(lineParts[3], "b/")
 
-	if !p.PathFilter.IsFilePathValid(pathA) || !p.PathFilter.IsFilePathValid(pathB) {
-		p.state = ignoreDiff
-		return nil
+	a, b := lineParts[2], lineParts[3]
+
+	trimmedPaths := make(map[string]string)
+
+	for _, data := range []struct{ PathWithPrefix, Prefix string }{{a, "a/"}, {b, "b/"}} {
+		if strings.HasPrefix(data.PathWithPrefix, "\"") && strings.HasSuffix(data.PathWithPrefix, "\"") {
+			pathWithPrefix, err := strconv.Unquote(data.PathWithPrefix)
+			if err != nil {
+				return fmt.Errorf("unable to unqoute diff path %#v: %s", data.PathWithPrefix, err)
+			}
+
+			path := strings.TrimPrefix(pathWithPrefix, data.Prefix)
+			if !p.PathFilter.IsFilePathValid(path) {
+				p.state = ignoreDiff
+				return nil
+			}
+			newPath := p.PathFilter.TrimFileBasePath(path)
+			newPathWithPrefix := data.Prefix + newPath
+			trimmedPaths[data.PathWithPrefix] = strconv.Quote(newPathWithPrefix)
+		} else {
+			path := strings.TrimPrefix(data.PathWithPrefix, data.Prefix)
+			if !p.PathFilter.IsFilePathValid(path) {
+				p.state = ignoreDiff
+				return nil
+			}
+			newPath := p.PathFilter.TrimFileBasePath(path)
+			trimmedPaths[data.PathWithPrefix] = data.Prefix + newPath
+		}
 	}
 
-	newPathA := p.PathFilter.TrimFileBasePath(pathA)
-	newPathB := p.PathFilter.TrimFileBasePath(pathB)
-	newLine := fmt.Sprintf("diff --git a/%s b/%s", newPathA, newPathB)
+	newLine := fmt.Sprintf("diff --git %s %s", trimmedPaths[a], trimmedPaths[b])
 
 	p.state = diffBegin
 
