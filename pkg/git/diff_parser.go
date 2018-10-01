@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -20,13 +21,14 @@ func makeDiffParser(out io.Writer, pathFilter PathFilter) *diffParser {
 type parserState string
 
 const (
-	unrecognized   parserState = "unrecognized"
-	diffBegin      parserState = "diffBegin"
-	diffBody       parserState = "diffBody"
-	newFileDiff    parserState = "newFileDiff"
-	deleteFileDiff parserState = "deleteFileDiff"
-	modifyFileDiff parserState = "modifyFileDiff"
-	ignoreDiff     parserState = "ignoreDiff"
+	unrecognized       parserState = "unrecognized"
+	diffBegin          parserState = "diffBegin"
+	diffBody           parserState = "diffBody"
+	newFileDiff        parserState = "newFileDiff"
+	deleteFileDiff     parserState = "deleteFileDiff"
+	modifyFileDiff     parserState = "modifyFileDiff"
+	modifyFileModeDiff parserState = "modifyFileModeDiff"
+	ignoreDiff         parserState = "ignoreDiff"
 )
 
 type diffParser struct {
@@ -98,16 +100,19 @@ func (p *diffParser) handleDiffLine(line string) error {
 		return nil
 
 	case diffBegin:
-		if strings.HasPrefix(line, "deleted file ") {
+		if strings.HasPrefix(line, "deleted file mode ") {
 			return p.handleDeleteFileDiff(line)
 		}
-		if strings.HasPrefix(line, "new file ") {
+		if strings.HasPrefix(line, "new file mode ") {
 			return p.handleNewFileDiff(line)
+		}
+		if strings.HasPrefix(line, "old mode ") {
+			return p.handleModifyFileModeDiff(line)
 		}
 		if strings.HasPrefix(line, "index ") {
 			return p.handleModifyFileDiff(line)
 		}
-		return fmt.Errorf("unexpected diff line: %#v", line)
+		return fmt.Errorf("unexpected diff line in state `%s`: %#v", p.state, line)
 
 	case modifyFileDiff:
 		if strings.HasPrefix(line, "--- ") {
@@ -120,6 +125,13 @@ func (p *diffParser) handleDiffLine(line string) error {
 			return p.handleBinaryBeginHeader(line)
 		}
 		return p.writeOutLine(line)
+
+	case modifyFileModeDiff:
+		if strings.HasPrefix(line, "new mode ") {
+			p.state = unrecognized
+			return p.writeOutLine(line)
+		}
+		return fmt.Errorf("unexpected diff line in state `%s`: %#v", p.state, line)
 
 	case newFileDiff:
 		if strings.HasPrefix(line, "+++ ") {
@@ -154,17 +166,38 @@ func (p *diffParser) handleDiffLine(line string) error {
 
 func (p *diffParser) handleDiffBegin(line string) error {
 	lineParts := strings.Split(line, " ")
-	pathA := strings.TrimPrefix(lineParts[2], "a/")
-	pathB := strings.TrimPrefix(lineParts[3], "b/")
 
-	if !p.PathFilter.IsFilePathValid(pathA) || !p.PathFilter.IsFilePathValid(pathB) {
-		p.state = ignoreDiff
-		return nil
+	a, b := lineParts[2], lineParts[3]
+
+	trimmedPaths := make(map[string]string)
+
+	for _, data := range []struct{ PathWithPrefix, Prefix string }{{a, "a/"}, {b, "b/"}} {
+		if strings.HasPrefix(data.PathWithPrefix, "\"") && strings.HasSuffix(data.PathWithPrefix, "\"") {
+			pathWithPrefix, err := strconv.Unquote(data.PathWithPrefix)
+			if err != nil {
+				return fmt.Errorf("unable to unqoute diff path %#v: %s", data.PathWithPrefix, err)
+			}
+
+			path := strings.TrimPrefix(pathWithPrefix, data.Prefix)
+			if !p.PathFilter.IsFilePathValid(path) {
+				p.state = ignoreDiff
+				return nil
+			}
+			newPath := p.PathFilter.TrimFileBasePath(path)
+			newPathWithPrefix := data.Prefix + newPath
+			trimmedPaths[data.PathWithPrefix] = strconv.Quote(newPathWithPrefix)
+		} else {
+			path := strings.TrimPrefix(data.PathWithPrefix, data.Prefix)
+			if !p.PathFilter.IsFilePathValid(path) {
+				p.state = ignoreDiff
+				return nil
+			}
+			newPath := p.PathFilter.TrimFileBasePath(path)
+			trimmedPaths[data.PathWithPrefix] = data.Prefix + newPath
+		}
 	}
 
-	newPathA := p.PathFilter.TrimFileBasePath(pathA)
-	newPathB := p.PathFilter.TrimFileBasePath(pathB)
-	newLine := fmt.Sprintf("diff --git a/%s b/%s", newPathA, newPathB)
+	newLine := fmt.Sprintf("diff --git %s %s", trimmedPaths[a], trimmedPaths[b])
 
 	p.state = diffBegin
 
@@ -183,6 +216,11 @@ func (p *diffParser) handleNewFileDiff(line string) error {
 
 func (p *diffParser) handleModifyFileDiff(line string) error {
 	p.state = modifyFileDiff
+	return p.writeOutLine(line)
+}
+
+func (p *diffParser) handleModifyFileModeDiff(line string) error {
+	p.state = modifyFileModeDiff
 	return p.writeOutLine(line)
 }
 
