@@ -120,7 +120,7 @@ func ImageDelete(reference string) error {
 		return fmt.Errorf("getting creds for %q: %v", r, err)
 	}
 
-	if err := remote.Delete(r, auth, http.DefaultTransport, remote.DeleteOptions{}); err != nil {
+	if err := remote.Delete(r, auth, http.DefaultTransport); err != nil {
 		if strings.Contains(err.Error(), "UNAUTHORIZED") {
 			if gitlabRegistryDeleteErr := GitlabRegistryDelete(r, auth, http.DefaultTransport); gitlabRegistryDeleteErr != nil {
 				if strings.Contains(gitlabRegistryDeleteErr.Error(), "UNAUTHORIZED") {
