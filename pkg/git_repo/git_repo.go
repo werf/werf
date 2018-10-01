@@ -39,6 +39,7 @@ type GitRepo interface {
 type Patch interface {
 	GetFilePath() string
 	IsEmpty() bool
+	HasBinary() bool
 }
 
 type Archive interface {

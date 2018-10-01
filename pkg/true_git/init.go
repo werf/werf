@@ -1,4 +1,4 @@
-package git
+package true_git
 
 import (
 	"bytes"

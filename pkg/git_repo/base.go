@@ -5,9 +5,11 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
-	git_util "github.com/flant/dapp/pkg/git"
-	go_git "gopkg.in/src-d/go-git.v4"
+	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/dapp/pkg/true_git"
+	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 )
@@ -15,6 +17,11 @@ import (
 type Base struct {
 	Name   string
 	TmpDir string
+}
+
+func (repo *Base) withWorkTreeLock(workTree string, f func() error) error {
+	lockName := fmt.Sprintf("git_work_tree %s", workTree)
+	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
 }
 
 func (repo *Base) getHeadCommitForRepo(repoPath string) (string, error) {
@@ -43,7 +50,7 @@ func (repo *Base) getHeadBranchNameForRepo(repoPath string) (string, error) {
 func (repo *Base) getReferenceForRepo(repoPath string) (*plumbing.Reference, error) {
 	var err error
 
-	repository, err := go_git.PlainOpen(repoPath)
+	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)
 	}
@@ -95,8 +102,8 @@ func (repo *Base) ArchiveChecksum(ArchiveOptions) (string, error) {
 	panic("not implemented")
 }
 
-func (repo *Base) createPatch(repoPath string, opts PatchOptions) (Patch, error) {
-	repository, err := go_git.PlainOpen(repoPath)
+func (repo *Base) createPatch(repoPath, gitDir, workTreeDir string, opts PatchOptions) (Patch, error) {
+	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)
 	}
@@ -113,7 +120,7 @@ func (repo *Base) createPatch(repoPath string, opts PatchOptions) (Patch, error)
 		return nil, fmt.Errorf("bad `to` commit `%s`: %s", opts.ToCommit, err)
 	}
 
-	withSubmodules, err := HasSubmodulesInCommit(toCommit)
+	hasSubmodules, err := HasSubmodulesInCommit(toCommit)
 	if err != nil {
 		return nil, err
 	}
@@ -122,27 +129,39 @@ func (repo *Base) createPatch(repoPath string, opts PatchOptions) (Patch, error)
 
 	fileHandler, err := os.OpenFile(patch.GetFilePath(), os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open patch file: %s", err)
+		return nil, fmt.Errorf("cannot open patch file `%s`: %s", patch.GetFilePath(), err)
 	}
 
-	desc, err := git_util.Patch(fileHandler, repoPath, git_util.DiffOptions{
-		FromCommit:     opts.FromCommit,
-		ToCommit:       opts.ToCommit,
-		WithSubmodules: withSubmodules,
-		PathFilter: git_util.PathFilter{
+	patchOpts := true_git.PatchOptions{
+		FromCommit: opts.FromCommit,
+		ToCommit:   opts.ToCommit,
+		PathFilter: true_git.PathFilter{
 			BasePath:     opts.BasePath,
 			IncludePaths: opts.IncludePaths,
 			ExcludePaths: opts.ExcludePaths,
 		},
-	})
+	}
+
+	var desc *true_git.PatchDescriptor
+
+	if hasSubmodules {
+		err = repo.withWorkTreeLock(workTreeDir, func() error {
+			desc, err = true_git.PatchWithSubmodules(fileHandler, gitDir, workTreeDir, patchOpts)
+			return err
+		})
+	} else {
+		desc, err = true_git.Patch(fileHandler, gitDir, patchOpts)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("error creating patch between `%s` and `%s` commits: %s", opts.FromCommit, opts.ToCommit, err)
 	}
+
 	patch.Descriptor = desc
 
 	err = fileHandler.Close()
 	if err != nil {
-		return nil, fmt.Errorf("error creating patch file: %s", err)
+		return nil, fmt.Errorf("error creating patch file `%s`: %s", patch.GetFilePath(), err)
 	}
 
 	return patch, nil
@@ -160,8 +179,8 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 	return false, nil
 }
 
-func (repo *Base) createArchive(repoPath string, opts ArchiveOptions) (Archive, error) {
-	repository, err := go_git.PlainOpen(repoPath)
+func (repo *Base) createArchive(repoPath, gitDir, workTreeDir string, opts ArchiveOptions) (Archive, error) {
+	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo: %s", err)
 	}
@@ -172,7 +191,7 @@ func (repo *Base) createArchive(repoPath string, opts ArchiveOptions) (Archive, 
 		return nil, fmt.Errorf("bad commit `%s`: %s", opts.Commit, err)
 	}
 
-	withSubmodules, err := HasSubmodulesInCommit(commit)
+	hasSubmodules, err := HasSubmodulesInCommit(commit)
 	if err != nil {
 		return nil, err
 	}
@@ -184,18 +203,33 @@ func (repo *Base) createArchive(repoPath string, opts ArchiveOptions) (Archive, 
 		return nil, fmt.Errorf("cannot open archive file: %s", err)
 	}
 
-	desc, err := git_util.Archive(fileHandler, repoPath, git_util.ArchiveOptions{
+	archiveOpts := true_git.ArchiveOptions{
 		Commit: opts.Commit,
-		PathFilter: git_util.PathFilter{
+		PathFilter: true_git.PathFilter{
 			BasePath:     opts.BasePath,
 			IncludePaths: opts.IncludePaths,
 			ExcludePaths: opts.ExcludePaths,
 		},
-		WithSubmodules: withSubmodules,
-	})
+	}
+
+	var desc *true_git.ArchiveDescriptor
+
+	if hasSubmodules {
+		err = repo.withWorkTreeLock(workTreeDir, func() error {
+			desc, err = true_git.ArchiveWithSubmodules(fileHandler, gitDir, workTreeDir, archiveOpts)
+			return err
+		})
+	} else {
+		err = repo.withWorkTreeLock(workTreeDir, func() error {
+			desc, err = true_git.Archive(fileHandler, gitDir, workTreeDir, archiveOpts)
+			return err
+		})
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("error creating archive for commit `%s`: %s", opts.Commit, err)
 	}
+
 	archive.Descriptor = desc
 
 	return archive, nil

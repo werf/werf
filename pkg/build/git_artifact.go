@@ -139,6 +139,10 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 		return nil, err
 	}
 
+	archiveType := git_repo.ArchiveType(
+		stage.GetPrevStage().GetImage().
+			GetLabels()[ga.getArchiveTypeLabelName()])
+
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
 		FromCommit:    fromCommit,
@@ -153,9 +157,43 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 		return nil, nil
 	}
 
-	archiveType := git_repo.ArchiveType(
-		stage.GetPrevStage().GetImage().
-			GetLabels()[ga.getArchiveTypeLabelName()])
+	if patch.HasBinary() {
+		archiveOpts := git_repo.ArchiveOptions{
+			FilterOptions: ga.getRepoFilterOptions(),
+			Commit:        toCommit,
+		}
+		archive, err := ga.GitRepo().CreateArchive(archiveOpts)
+		if err != nil {
+			return nil, err
+		}
+
+		commands := make([]string, 0)
+
+		commands = append(commands, fmt.Sprintf(
+			"%s -rf %s",
+			dappdeps.BaseBinPath("rm"),
+			ga.To,
+		))
+
+		if archive.IsEmpty() {
+			return commands, nil
+		}
+
+		archiveFile, err := ga.createArchiveFile(archive, toCommit)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create archive file: %s", err)
+		}
+
+		archiveType := archive.GetType()
+
+		applyArchiveCommands, err := ga.applyArchiveCommand(archiveFile, archiveType)
+		if err != nil {
+			return nil, err
+		}
+		commands = append(commands, applyArchiveCommands...)
+
+		return commands, nil
+	}
 
 	patchFile, err := ga.createPatchFile(patch, fromCommit, toCommit)
 	if err != nil {
