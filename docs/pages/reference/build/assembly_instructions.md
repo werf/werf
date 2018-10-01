@@ -59,7 +59,24 @@ TODO
 
 ## Shell
 
-...
+Here is the example of the simple dappfile with the shell assembly:
+
+```yaml
+dimg: ~
+from: alpine:latest
+
+shell:  
+  beforeInstall:
+  - echo "Commands on the Before Install stage"
+  install:
+  - echo "Commands on the Install stage"
+  beforeSetup:
+  - echo "Commands on the Before Setup stage"
+  setup:
+  - echo "Commands on the Setup stage"
+```
+
+### Shell assembly syntax
 
 {% raw %}
 ```yaml
@@ -85,7 +102,7 @@ shell:
 `ansible` directive is similar to `shell`. It has 4 keys: `beforeInstall`, `install`,
 `beforeSetup`, `setup` for each available stage. Stage description is an array
 of ansible tasks:
-  
+
 ```
 dimg: app
 ansible:
@@ -101,7 +118,7 @@ ansible:
   - command: ls -la /bin
 ```
 
-### ansible config and stage playbook
+### Ansible config and stage playbook
 
 Each stage description array is converted to a playbook:
 
@@ -154,7 +171,7 @@ Notes:
 4. It would be great to create ansible-solo command for local plays with builtin config and inventory
 5. `gather_facts` can be enabled with modules like `setup`, `set_fact`, etc.
 
-### checksums
+### Checksums
 
 Dapp calculates checksum for each stage before build. Stage is considered to be rebuild if checksum
 changed. The simplest checksum is a hash over text of stage configuration. More interesting is checksum of
@@ -179,7 +196,7 @@ ansible:
 
 ```
 > resulting playbook.yml
-   
+
 - hosts: all
   gather_facts: no
   tasks:   
@@ -195,7 +212,7 @@ ansible:
 
 .Files.Get input is path to file in repository. Function returns string with file content.
 
-### modules
+### Modules
 
 Initial ansible builder will support only some modules:
 
@@ -207,10 +224,10 @@ Initial ansible builder will support only some modules:
 
 Other ansible modules are available, but they may be not stable.
 
-### jinja templating
+### Jinja templating
 
 {% raw %}
-Go template and jinja has equal delimeters: `{{` and `}}`. 
+Go template and jinja has equal delimeters: `{{` and `}}`.
 {% endraw %}
 
 First iteration will support only go style escaping:
@@ -233,11 +250,11 @@ ansible:
 ```
 {% endraw %}
 
-### templates
+### Templates
 
 No templates for first iteration. Templates can be supported when .Files.Path will be implemented.
 
-### ansible problems
+### Ansible problems
 
 1. No live stdout. In general we need to implement our stdout callback and connection plugin.
   stdout callbacks has no pre_* methods for display information about executed task. There are only post_* methods
@@ -245,7 +262,7 @@ No templates for first iteration. Templates can be supported when .Files.Path wi
 2. `-c local` may be an overload because of zipping modules. There must be a way to directly start modules.
   Ansible-solo command with direct modules calls would be a great improvement for building images.
 
-### Syntax
+### Ansible assembly syntax
 
 {% raw %}
 ```yaml
@@ -266,7 +283,72 @@ ansible:
 ```   
 {% endraw %}
 
-## CacheVersion
+## Forced build (CacheVersion)
+
+If you need to forcibly rebuild some or all of user stages (in case they are not actual) you can use `<stage>cacheVersion` directives. Using any of these directives, give a possibility to force the rebuild of the appropriate stage and all of the subsequent stages when values in used directives have changed.
+
+E.g., you use the following dappfile:
+
+```
+dimg: ~
+from: alpine:latest
+
+shell:
+  installCacheVersion: 1
+  beforeInstall:
+  - echo "Commands on the Before Install stage"
+  install:
+  - echo "Commands on the Install stage"
+  beforeSetup:
+  - echo "Commands on the Before Setup stage"
+  setup:
+  - echo "Commands on the Setup stage"
+```
+
+When you've built this image with `dapp dimg build` command, run it again - dapp will use its build cache and will not rebuild any stages described in the dappfile. But if you'll change `installCacheVersion` value and will run again `dapp dimg build` - the install stage will be forcibly rebuilt in spite of stage commands have no changes.
+
+You can use all of the `<stage>cacheVersion` directives when describing an image in dappfile. E.g.:
+
+{% raw %}
+```
+dimg: ~
+from: alpine:latest
+
+shell:
+  cacheVersion: 1
+  beforeInstallCacheVersion: 1
+  installCacheVersion: 1
+  beforeSetupCacheVersion: 1
+  setupCacheVersion: 1
+  beforeInstall:
+  - echo "Commands on the Before Install stage"
+  install:
+  - echo "Commands on the Install stage"
+  beforeSetup:
+  - echo "Commands on the Before Setup stage"
+  setup:
+  - echo "Commands on the Setup stage"
+```
+{% endraw %}
+
+Pay attention that `cacheVersion` and `beforeInstallCacheVersion` directives have the same effect - when their values have changed, then `beforeInstall` stage and subsequent stages will be rebuilt.
+
+When may you need to forcibly rebuild stage? When may the stage be not actual?
+
+The simple case is, e.g., when you make `apt update` on the `beforeInstall` stage, and you wish that once a month `beforeInstall` stage be rebuilt and APT cache be updated. To achieve this, you can use the following dappfile, using GO templates:
+
+{% raw %}
+```
+dimg: ~
+from: ubuntu:latest
+shell:
+  beforeInstallCacheVersion: {{ now | date "2006-01" }}
+  beforeInstall:
+  - apt update
+```
+{% endraw %}
+
+> Why is it "2006-01" argument in the date function? You can read abolut time format [here](https://golang.org/pkg/time/#pkg-constants).
 
 ## Использование совместно с добавлением исходников
 
