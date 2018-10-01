@@ -16,14 +16,14 @@ entries:
       - title: Base directives
         url: /reference/build/base_directives.html
 
+      - title: Adding docker instructions
+        url: /reference/build/docker_directive.html
+
       - title: Adding source code from git repositories
         url: /reference/build/git_directive.html
 
       - title: Running assembly instructions
         url: /reference/build/assembly_instructions.html
-
-      - title: Adding docker-instructions
-        url: /reference/build/docker_directive.html
 
       - title: Using mounts
         url: /reference/build/mount_directive.html
@@ -33,6 +33,18 @@ entries:
 
       - title: Supported directives
         url: /reference/build/supported_directives.html
+
+      - title: Cache
+        url: /reference/build/cache.html
+
+      - title: Stage introspection
+        url: /reference/build/stage_introspection.html
+
+      - title: Work with local changes without commits in dev mode
+        url: /reference/build/dev_mode.html
+
+      - title: Caching each instruction separately with asLayers
+        url: /reference/build/as_layers.html
 
     - title: Registry
       fi:
@@ -60,18 +72,6 @@ entries:
 
       - title: Использование minikube
         url: /reference/deploy/minikube.html
-
-    - title: Developer tools
-      fi:
-
-      - title: Stage introspection
-        url: /reference/developer_tools/stage_introspection.html
-
-      - title: Work with local changes without commits in dev mode
-        url: /reference/developer_tools/dev_mode.html
-
-      - title: Caching each instruction separately with asLayers
-        url: /reference/developer_tools/as_layers.html
 
     - title: CLI
       fi:
