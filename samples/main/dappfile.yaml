@@ -1,0 +1,210 @@
+dimg: ~
+# dimg: DIMG_NAME
+from: ubuntu:16.04
+# fromDimg: ANOTHER_DIMG_NAME
+
+docker:
+  VOLUME:
+  - VOLUME
+  EXPOSE:
+  - EXPOSE
+  ENV:
+    KEY: VALUE
+  LABEL:
+    KEY: VALUE
+  ENTRYPOINT:
+  - ENTRYPOINT
+  CMD:
+  - CMD
+  ONBUILD:
+  - ONBUILD
+  WORKDIR: WORKDIR
+  USER: USER
+
+git:
+## Local git
+- add: /
+  # add: ABSOLUTE_PATH_FROM_REPO_ROOT
+  to: /app
+  # to: ABSOLUTE_PATH_IN_IMAGE
+  # owner: OWNER
+  # group: GROUP
+  # as: OPTIONAL_NAME_FOR_HELM_VALUES
+  ## RELATIVE_PATH_OR_GLOB is a path relative to `add` directive path
+  # includePaths:
+  # - RELATIVE_PATH_OR_GLOB
+  excludePaths:
+  - /hello
+  # excludePaths:
+  # - RELATIVE_PATH_OR_GLOB
+  # stageDependencies:
+  #   install:
+  #   - RELATIVE_PATH_OR_GLOB
+  #   beforeSetup:
+  #   - RELATIVE_PATH_OR_GLOB
+  #   setup:
+  #   - RELATIVE_PATH_OR_GLOB
+
+## Add remote git within the same gitlab, accessing by https+token
+- url: https://gitlab-ci-token:{{ env "CI_JOB_TOKEN" }}@gitlab.myhost.com/sys/project.git
+  # branch: BRANCH
+  # commit: COMMIT
+  add: /
+  to: /project
+  excludePaths:
+  - docs
+  stageDependencies:
+    install:
+    - "**/*.go"
+    # install:
+    # - RELATIVE_PATH_OR_GLOB
+    # beforeSetup:
+    # - RELATIVE_PATH_OR_GLOB
+    # setup:
+    # - RELATIVE_PATH_OR_GLOB
+
+## Add remote git artifact, accessing by ssh
+- url: git@gitlab.myhost.com:hello/wrld.git
+  add: /
+  # add to the path excluded in local git
+  to: /app/hello
+
+## One of `shell` or `ansible` should be used in one yaml-doc
+# shell:
+#   beforeInstall:
+#   - BASH_CMD
+#   install:
+#   - BASH_CMD
+#   beforeSetup:
+#   - BASH_CMD
+#   setup:
+#   - BASH_CMD
+#   cacheVersion: VERSION
+#   beforeInstallCacheVersion: VERSION
+#   installCacheVersion: VERSION
+#   beforeSetupCacheVersion: VERSION
+#   setupCacheVersion: VERSION
+# ansible:
+#   beforeInstall:
+#   - TASK
+#   install:
+#   - TASK
+#   beforeSetup:
+#   - TASK
+#   setup:
+#   - TASK
+#   cacheVersion: VERSION
+#   beforeInstallCacheVersion: VERSION
+#   installCacheVersion: VERSION
+#   beforeSetupCacheVersion: VERSION
+#   setupCacheVersion: VERSION
+
+import:
+- artifact: promicher builder
+  # artifact: ARTIFACT_NAME
+  after: setup
+  # before: install || setup
+  # after: install || setup
+  add: /go/bin/promicher
+  # add: ABSOLUTE_PATH_IN_ARTIFACT_IMAGE
+  to: /usr/local/bin/promicher
+  # to: ABSOLUTE_PATH_IN_CURRENT_IMAGE
+  # owner: OWNER
+  # group: GROUP
+  # includePaths:
+  # - RELATIVE_PATH_OR_GLOB
+  # excludePaths:
+  # - RELATIVE_PATH_OR_GLOB
+
+# mount:
+# - from: build_dir
+#   to: ABSOLUTE_PATH
+# - from: tmp_dir
+#   to: ABSOLUTE_PATH
+# - fromPath: ABSOLUTE_PATH
+#   to: ABSOLUTE_PATH
+
+## asLayers is false by default
+# asLayers: false|true
+
+---
+## Specified ARTIFACT_NAME is used in `import.artifact` directive to import files from this artifact
+artifact: promicher builder
+# artifact: ARTIFACT_NAME
+from: golang:latest
+# fromDimgArtifact: ANOTHER_DIMG_ARTIFACT_NAME
+git:
+## Add remote git artifact
+- url: https://github.com/flant/promicher.git
+  to: /go/src/github.com/flant/promicher
+  stageDependencies:
+    install:
+    - "**/*.go"
+    # install:
+    # - RELATIVE_PATH_OR_GLOB
+    # beforeSetup:
+    # - RELATIVE_PATH_OR_GLOB
+    # setup:
+    # - RELATIVE_PATH_OR_GLOB
+    ## One more stage available for artifact
+    # buildArtifact:
+    # - RELATIVE_PATH_OR_GLOB
+
+ansible:
+  # beforeInstall:
+  # - TASK
+  # install:
+  # - TASK
+  # beforeSetup:
+  # - TASK
+  # setup:
+  # - TASK
+  ## One more stage available for artifact
+  # buildArtifact:
+  # - TASK
+  # buildArtifact
+  # cacheVersion: VERSION
+  # beforeInstallCacheVersion: VERSION
+  # installCacheVersion: VERSION
+  # beforeSetupCacheVersion: VERSION
+  # setupCacheVersion: VERSION
+  # buildArtifactCacheVersion: VERSION
+  install:
+  - name: Get dependencies
+    shell: ./go-get.sh
+    args:
+      chdir: /go/src/fox.flant.com/sys/gogomonia
+  buildArtifact:
+  - name: Build binary
+    shell: CGO_ENABLED=0 GOOS=linux ./go-install.sh
+    args:
+      chdir: /go/src/fox.flant.com/sys/gogomonia
+# shell:
+#   beforeInstall:
+#   - CMD
+#   install:
+#   - CMD
+#   beforeSetup:
+#   - CMD
+#   setup:
+#   - CMD
+## One more stage available for artifact
+#   buildArtifact:
+#   - CMD
+#   cacheVersion: VERSION
+#   beforeInstallCacheVersion: VERSION
+#   installCacheVersion: VERSION
+#   beforeSetupCacheVersion: VERSION
+#   setupCacheVersion: VERSION
+#   buildArtifactCacheVersion: VERSION
+
+# mount:
+# - from: build_dir
+#   to: ABSOLUTE_PATH
+# - from: tmp_dir
+#   to: ABSOLUTE_PATH
+# - fromPath: ABSOLUTE_PATH
+#   to: ABSOLUTE_PATH
+
+## asLayers is false by default
+# asLayers: false|true
