@@ -1,5 +1,5 @@
 ---
 title: Caching each instruction separately with asLayers
 sidebar: reference
-permalink: reference/developer_tools/as_layers.html
+permalink: reference/build/as_layers.html
 ---
