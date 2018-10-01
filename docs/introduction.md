@@ -1,5 +1,6 @@
 ---
 title: Introduction
+sidebar: how_to
 permalink: /
 ---
 
@@ -30,4 +31,4 @@ It is designed to make engineer's work fast end efficient.
 ## First Steps
 
 * [Install dapp and dependencies]({{ site.baseurl }}/how_to/installation.html).
-* [Make your first dapp application with Ansible builder]({{ site.baseurl }}/how_to/build_run_and_push.html).
+* [Build your first application with dapp]({{ site.baseurl }}/how_to/build_run_and_push.html).
