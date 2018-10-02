@@ -21,8 +21,6 @@ Build-time instructions don't make sense in a dapp build process, therefore, dap
 
 These instructions can be defined in the dappfile `docker` section.
 
-Defined docker instructions are applied on the last stage called `docker_instructions`. Thus instructions don't effect on other stages and a dapp build process in general, they simply will be applied on a final image. But if you need to use special environment variables in build-time of your application image, such as `TERM` environment, you can use a base image with these variables. 
-
 Here are the example of using docker instructions:
 
 ```yaml
@@ -34,6 +32,10 @@ docker:
     TERM: xterm
     LC_ALL: en_US.UTF-8
 ```
+
+Defined docker instructions are applied on the last stage called `docker_instructions`. Thus instructions don't effect on other stages and a dapp build process in general, they simply will be applied on a final image. 
+
+If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ site.baseurl }}/reference/build/base_directives.html#base-image) with these variables.
 
 ## Syntax
 
