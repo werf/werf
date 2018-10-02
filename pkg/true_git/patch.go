@@ -16,8 +16,8 @@ type PatchOptions struct {
 }
 
 type PatchDescriptor struct {
-	IsEmpty   bool
-	HasBinary bool
+	Paths       []string
+	BinaryPaths []string
 }
 
 func PatchWithSubmodules(out io.Writer, gitDir, workTreeDir string, opts PatchOptions) (*PatchDescriptor, error) {
@@ -195,8 +195,18 @@ WaitForData:
 	}
 
 	desc := &PatchDescriptor{
-		IsEmpty:   (p.OutLines == 0),
-		HasBinary: p.HasBinary,
+		Paths:       p.Paths,
+		BinaryPaths: p.BinaryPaths,
+	}
+
+	if debugPatch() {
+		fmt.Printf("Patch paths count is %d, binary paths count is %d\n", len(desc.Paths), len(desc.BinaryPaths))
+		for _, path := range desc.Paths {
+			fmt.Printf("Patch path `%s`\n", path)
+		}
+		for _, path := range desc.BinaryPaths {
+			fmt.Printf("Binary patch path `%s`\n", path)
+		}
 	}
 
 	return desc, nil

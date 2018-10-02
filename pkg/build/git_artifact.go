@@ -158,6 +158,26 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 	}
 
 	if patch.HasBinary() {
+		pathsListFile, err := ga.createPatchPathsListFile(patch.GetPaths(), fromCommit, toCommit)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create patch paths list file: %s", err)
+		}
+
+		commands := make([]string, 0)
+
+		commands = append(commands, fmt.Sprintf(
+			"%s --arg-file=%s --null %s --force",
+			dappdeps.BaseBinPath("xargs"),
+			pathsListFile.ContainerFilePath,
+			dappdeps.BaseBinPath("rm"),
+		))
+
+		commands = append(commands, fmt.Sprintf(
+			"%s %s -type d -empty -delete",
+			dappdeps.BaseBinPath("find"),
+			ga.To,
+		))
+
 		archiveOpts := git_repo.ArchiveOptions{
 			FilterOptions: ga.getRepoFilterOptions(),
 			Commit:        toCommit,
@@ -166,14 +186,6 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		commands := make([]string, 0)
-
-		commands = append(commands, fmt.Sprintf(
-			"%s -rf %s",
-			dappdeps.BaseBinPath("rm"),
-			ga.To,
-		))
 
 		if archive.IsEmpty() {
 			return commands, nil
@@ -279,28 +291,39 @@ func (ga *GitArtifact) getArchiveFileDescriptor(commit string) *ContainerFileDes
 	}
 }
 
-func (ga *GitArtifact) renameFile(fromPath, toPath string) error {
-	var err error
-
-	err = os.MkdirAll(filepath.Dir(toPath), os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	err = os.Rename(fromPath, toPath)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (ga *GitArtifact) createArchiveFile(archive git_repo.Archive, commit string) (*ContainerFileDescriptor, error) {
 	fileDesc := ga.getArchiveFileDescriptor(commit)
 
-	err := ga.renameFile(archive.GetFilePath(), fileDesc.FilePath)
+	err := renameFile(archive.GetFilePath(), fileDesc.FilePath)
 	if err != nil {
 		return nil, err
+	}
+
+	return fileDesc, nil
+}
+
+func (ga *GitArtifact) createPatchPathsListFile(paths []string, fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
+	fileDesc := ga.getPatchPathsListFileDescriptor(fromCommit, toCommit)
+
+	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open file `%s`: %s", fileDesc.FilePath, err)
+	}
+
+	fullPaths := make([]string, 0)
+	for _, path := range paths {
+		fullPaths = append(fullPaths, filepath.Join(ga.To, path))
+	}
+
+	pathsData := strings.Join(fullPaths, "\000")
+	_, err = f.Write([]byte(pathsData))
+	if err != nil {
+		return nil, fmt.Errorf("unable to write file `%s`: %s", fileDesc.FilePath, err)
+	}
+
+	err = f.Close()
+	if err != nil {
+		return nil, fmt.Errorf("unable to close file `%s`: %s", fileDesc.FilePath, err)
 	}
 
 	return fileDesc, nil
@@ -309,12 +332,21 @@ func (ga *GitArtifact) createArchiveFile(archive git_repo.Archive, commit string
 func (ga *GitArtifact) createPatchFile(patch git_repo.Patch, fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
 	fileDesc := ga.getPatchFileDescriptor(fromCommit, toCommit)
 
-	err := ga.renameFile(patch.GetFilePath(), fileDesc.FilePath)
+	err := renameFile(patch.GetFilePath(), fileDesc.FilePath)
 	if err != nil {
 		return nil, err
 	}
 
 	return fileDesc, nil
+}
+
+func (ga *GitArtifact) getPatchPathsListFileDescriptor(fromCommit, toCommit string) *ContainerFileDescriptor {
+	fileName := fmt.Sprintf("%s_%s_%s-paths-list", ga.Paramshash, fromCommit, toCommit)
+
+	return &ContainerFileDescriptor{
+		FilePath:          filepath.Join(ga.PatchesDir, fileName),
+		ContainerFilePath: filepath.Join(ga.ContainerPatchesDir, fileName),
+	}
 }
 
 func (ga *GitArtifact) getPatchFileDescriptor(fromCommit, toCommit string) *ContainerFileDescriptor {
@@ -341,4 +373,20 @@ func (ga *GitArtifact) makeCredentialsOpts() string {
 
 func (ga *GitArtifact) getArchiveTypeLabelName() string {
 	return fmt.Sprintf("dapp-git-%s-type", ga.Paramshash)
+}
+
+func renameFile(fromPath, toPath string) error {
+	var err error
+
+	err = os.MkdirAll(filepath.Dir(toPath), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(fromPath, toPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
