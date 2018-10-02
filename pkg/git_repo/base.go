@@ -52,7 +52,7 @@ func (repo *Base) getReferenceForRepo(repoPath string) (*plumbing.Reference, err
 
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo: %s", err)
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
 
 	return repository.Head()
@@ -105,16 +105,24 @@ func (repo *Base) ArchiveChecksum(ArchiveOptions) (string, error) {
 func (repo *Base) createPatch(repoPath, gitDir, workTreeDir string, opts PatchOptions) (Patch, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo: %s", err)
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
 
-	fromHash := plumbing.NewHash(opts.FromCommit)
+	fromHash, err := newHash(opts.FromCommit)
+	if err != nil {
+		return nil, fmt.Errorf("bad `from` commit hash `%s`: %s", opts.FromCommit, err)
+	}
+
 	_, err = repository.CommitObject(fromHash)
 	if err != nil {
 		return nil, fmt.Errorf("bad `from` commit `%s`: %s", opts.FromCommit, err)
 	}
 
-	toHash := plumbing.NewHash(opts.ToCommit)
+	toHash, err := newHash(opts.ToCommit)
+	if err != nil {
+		return nil, fmt.Errorf("bad `to` commit hash `%s`: %s", opts.ToCommit, err)
+	}
+
 	toCommit, err := repository.CommitObject(toHash)
 	if err != nil {
 		return nil, fmt.Errorf("bad `to` commit `%s`: %s", opts.ToCommit, err)
@@ -182,10 +190,14 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 func (repo *Base) createArchive(repoPath, gitDir, workTreeDir string, opts ArchiveOptions) (Archive, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open repo: %s", err)
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
 
-	commitHash := plumbing.NewHash(opts.Commit)
+	commitHash, err := newHash(opts.Commit)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit hash `%s`: %s", opts.Commit, err)
+	}
+
 	commit, err := repository.CommitObject(commitHash)
 	if err != nil {
 		return nil, fmt.Errorf("bad commit `%s`: %s", opts.Commit, err)
@@ -233,4 +245,69 @@ func (repo *Base) createArchive(repoPath, gitDir, workTreeDir string, opts Archi
 	archive.Descriptor = desc
 
 	return archive, nil
+}
+
+func (repo *Base) isCommitExists(repoPath string, commit string) (bool, error) {
+	repository, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	commitHash, err := newHash(commit)
+	if err != nil {
+		return false, fmt.Errorf("bad commit hash `%s`: %s", commit, err)
+	}
+
+	_, err = repository.CommitObject(commitHash)
+	if err == plumbing.ErrObjectNotFound {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("bad commit `%s`: %s", commit, err)
+	}
+	return true, nil
+}
+
+func (repo *Base) tagsList(repoPath string) ([]string, error) {
+	repository, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	tags, err := repository.TagObjects()
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]string, 0)
+	err = tags.ForEach(func(t *object.Tag) error {
+		res = append(res, t.Name)
+		return nil
+	})
+
+	return res, nil
+}
+
+func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
+	repository, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	branches, err := repository.References()
+	if err != nil {
+		return nil, err
+	}
+
+	remoteBranchPrefix := "refs/remotes/origin/"
+
+	res := make([]string, 0)
+	err = branches.ForEach(func(r *plumbing.Reference) error {
+		refName := r.Name().String()
+		if strings.HasPrefix(refName, remoteBranchPrefix) {
+			res = append(res, strings.TrimPrefix(refName, remoteBranchPrefix))
+		}
+		return nil
+	})
+
+	return res, nil
 }
