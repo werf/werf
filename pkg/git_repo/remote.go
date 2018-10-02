@@ -243,6 +243,10 @@ func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
 	return repo.createArchive(repo.ClonePath, repo.ClonePath, workTreeDir, opts)
 }
 
+func (repo *Remote) IsCommitExists(commit string) (bool, error) {
+	return repo.isCommitExists(repo.ClonePath, commit)
+}
+
 func (repo *Remote) getWorkTreeDir() (string, error) {
 	ep, err := transport.NewEndpoint(repo.Url)
 	if err != nil {
@@ -255,4 +259,12 @@ func (repo *Remote) getWorkTreeDir() (string, error) {
 func (repo *Remote) withRemoteRepoLock(f func() error) error {
 	lockName := fmt.Sprintf("remote_git_artifact.%s", repo.Name)
 	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
+}
+
+func (repo *Remote) TagsList() ([]string, error) {
+	return repo.tagsList(repo.ClonePath)
+}
+
+func (repo *Remote) RemoteBranchesList() ([]string, error) {
+	return repo.remoteBranchesList(repo.ClonePath)
 }
