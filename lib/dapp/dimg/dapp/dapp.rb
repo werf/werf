@@ -30,6 +30,8 @@ module Dapp
         include Command::BuildContext::Import
         include Command::BuildContext::Export
         include Command::BuildContext::Common
+
+        include Command::Ruby2GoCleanup
       end
     end
   end
