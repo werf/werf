@@ -27,5 +27,5 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("Patch is-empty=%v has-binary=%v\n", p.IsEmpty, p.HasBinary)
+	fmt.Printf("Patch paths=%v binary-paths=%v\n", p.Paths, p.BinaryPaths)
 }
