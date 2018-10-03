@@ -10,12 +10,13 @@ import (
 
 func makeDiffParser(out io.Writer, pathFilter PathFilter) *diffParser {
 	return &diffParser{
-		PathFilter: pathFilter,
-		Out:        out,
-		OutLines:   0,
-		HasBinary:  false,
-		state:      unrecognized,
-		lineBuf:    make([]byte, 0, 4096),
+		PathFilter:  pathFilter,
+		Out:         out,
+		OutLines:    0,
+		Paths:       make([]string, 0),
+		BinaryPaths: make([]string, 0),
+		state:       unrecognized,
+		lineBuf:     make([]byte, 0, 4096),
 	}
 }
 
@@ -38,10 +39,22 @@ type diffParser struct {
 	Out                 io.Writer
 	OutLines            uint
 	UnrecognizedCapture bytes.Buffer
-	HasBinary           bool
+
+	Paths         []string
+	BinaryPaths   []string
+	LastSeenPaths []string
 
 	state   parserState
 	lineBuf []byte
+}
+
+func appendUnique(list []string, value string) []string {
+	for _, oldValue := range list {
+		if value == oldValue {
+			return list
+		}
+	}
+	return append(list, value)
 }
 
 func (p *diffParser) HandleStdout(data []byte) error {
@@ -182,6 +195,8 @@ func (p *diffParser) handleDiffBegin(line string) error {
 
 	trimmedPaths := make(map[string]string)
 
+	p.LastSeenPaths = nil
+
 	for _, data := range []struct{ PathWithPrefix, Prefix string }{{a, "a/"}, {b, "b/"}} {
 		if strings.HasPrefix(data.PathWithPrefix, "\"") && strings.HasSuffix(data.PathWithPrefix, "\"") {
 			pathWithPrefix, err := strconv.Unquote(data.PathWithPrefix)
@@ -194,7 +209,11 @@ func (p *diffParser) handleDiffBegin(line string) error {
 				p.state = ignoreDiff
 				return nil
 			}
+
 			newPath := p.PathFilter.TrimFileBasePath(path)
+			p.Paths = appendUnique(p.Paths, newPath)
+			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
+
 			newPathWithPrefix := data.Prefix + newPath
 			trimmedPaths[data.PathWithPrefix] = strconv.Quote(newPathWithPrefix)
 		} else {
@@ -203,7 +222,11 @@ func (p *diffParser) handleDiffBegin(line string) error {
 				p.state = ignoreDiff
 				return nil
 			}
+
 			newPath := p.PathFilter.TrimFileBasePath(path)
+			p.Paths = appendUnique(p.Paths, newPath)
+			p.LastSeenPaths = appendUnique(p.LastSeenPaths, newPath)
+
 			trimmedPaths[data.PathWithPrefix] = data.Prefix + newPath
 		}
 	}
@@ -239,6 +262,7 @@ func (p *diffParser) handleModifyFilePathA(line string) error {
 	path := strings.TrimPrefix(line, "--- a/")
 	newPath := p.PathFilter.TrimFileBasePath(path)
 	newLine := fmt.Sprintf("--- a/%s", newPath)
+
 	return p.writeOutLine(newLine)
 }
 
@@ -278,13 +302,21 @@ func (p *diffParser) handleDeleteFilePath(line string) error {
 }
 
 func (p *diffParser) handleBinaryBeginHeader(line string) error {
+	for _, path := range p.LastSeenPaths {
+		p.BinaryPaths = appendUnique(p.BinaryPaths, path)
+	}
+
 	p.state = diffBody
-	p.HasBinary = true
+
 	return p.writeOutLine(line)
 }
 
 func (p *diffParser) handleShortBinaryHeader(line string) error {
+	for _, path := range p.LastSeenPaths {
+		p.BinaryPaths = appendUnique(p.BinaryPaths, path)
+	}
+
 	p.state = unrecognized
-	p.HasBinary = true
+
 	return p.writeOutLine(line)
 }

@@ -40,6 +40,8 @@ type Patch interface {
 	GetFilePath() string
 	IsEmpty() bool
 	HasBinary() bool
+	GetPaths() []string
+	GetBinaryPaths() []string
 }
 
 type Archive interface {

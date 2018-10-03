@@ -23,9 +23,17 @@ func (p *PatchFile) GetFilePath() string {
 }
 
 func (p *PatchFile) IsEmpty() bool {
-	return p.Descriptor.IsEmpty
+	return len(p.Descriptor.Paths) == 0
 }
 
 func (p *PatchFile) HasBinary() bool {
-	return p.Descriptor.HasBinary
+	return len(p.Descriptor.BinaryPaths) > 0
+}
+
+func (p *PatchFile) GetPaths() []string {
+	return p.Descriptor.Paths
+}
+
+func (p *PatchFile) GetBinaryPaths() []string {
+	return p.Descriptor.BinaryPaths
 }
