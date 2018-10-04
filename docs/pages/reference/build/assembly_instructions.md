@@ -59,22 +59,23 @@ TODO
 
 ## Shell
 
-Here is the example of the simple dappfile with the shell assembly:
+Shell assembly allows executing commands on any user stage. Each described command will be executed with bash in the time of build, so you can use any bash commands to prepare image.
 
 ```yaml
-dimg: ~
-from: alpine:latest
-
-shell:  
+shell:
   beforeInstall:
-  - echo "Commands on the Before Install stage"
+    - apt update
   install:
-  - echo "Commands on the Install stage"
+    - apt install -qy python
   beforeSetup:
-  - echo "Commands on the Before Setup stage"
+    - mkdir -p /app
   setup:
-  - echo "Commands on the Setup stage"
+    - echo 'print "Hello world"' > /app/index.py
 ```
+
+On any user stage you can use any number of commands as you need.
+
+Executing commands with the shell assembly is like using RUN command in a Dockerfile, except dapp will create a new docker layer on each stage.
 
 ### Shell assembly syntax
 
@@ -82,13 +83,13 @@ shell:
 ```yaml
 shell:
   beforeInstall:
-  - <cmd>
+  - <bash_command>
   install:
-  - <cmd>
+  - <bash_command>
   beforeSetup:
-  - <cmd>
+  - <bash_command>
   setup:
-  - <cmd>
+  - <bash_command>
   cacheVersion: <version>
   beforeInstallCacheVersion: <version>
   installCacheVersion: <version>
