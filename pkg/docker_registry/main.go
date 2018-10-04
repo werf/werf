@@ -62,12 +62,16 @@ func DimgstageTags(reference string) ([]string, error) {
 }
 
 func imagesTags(images []RepoImage) []string {
-	var tags []string
-	for _, image := range images {
-		tags = append(tags, image.Tag)
-	}
+	if len(images) == 0 {
+		return []string{}
+	} else {
+		var tags []string
+		for _, image := range images {
+			tags = append(tags, image.Tag)
+		}
 
-	return tags
+		return tags
+	}
 }
 
 func ImagesByDappDimgLabel(reference, labelValue string) ([]RepoImage, error) {
@@ -75,6 +79,9 @@ func ImagesByDappDimgLabel(reference, labelValue string) ([]RepoImage, error) {
 
 	tags, err := Tags(reference)
 	if err != nil {
+		if strings.Contains(err.Error(), "NAME_UNKNOWN") {
+			return []RepoImage{}, nil
+		}
 		return nil, err
 	}
 
