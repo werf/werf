@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/authn"
@@ -14,46 +15,114 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 )
 
+type RepoImage struct {
+	Repository string
+	Tag        string
+	v1.Image
+}
+
+var GCRUrlPatterns = []string{"^container\\.cloud\\.google\\.com", "^gcr\\.io", "^.*\\.gcr\\.io"}
+
+func IsGCR(reference string) (bool, error) {
+	u, err := url.Parse(fmt.Sprintf("scheme://%s", reference))
+	if err != nil {
+		return false, err
+	}
+
+	for _, pattern := range GCRUrlPatterns {
+		matched, err := regexp.MatchString(pattern, u.Host)
+		if err != nil {
+			return false, err
+		}
+
+		if matched {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func DimgTags(reference string) ([]string, error) {
-	return tagsByDappDimgLabel(reference, "true")
-}
-
-func DimgstageTags(reference string) ([]string, error) {
-	return tagsByDappDimgLabel(reference, "false")
-}
-
-func tagsByDappDimgLabel(reference, labelValue string) ([]string, error) {
-	var dimgTags []string
-
-	allTags, err := tags(reference)
+	images, err := ImagesByDappDimgLabel(reference, "true")
 	if err != nil {
 		return nil, err
 	}
 
-	for _, tag := range allTags {
+	return imagesTags(images), nil
+}
+
+func DimgstageTags(reference string) ([]string, error) {
+	images, err := ImagesByDappDimgLabel(reference, "false")
+	if err != nil {
+		return nil, err
+	}
+
+	return imagesTags(images), nil
+}
+
+func imagesTags(images []RepoImage) []string {
+	if len(images) == 0 {
+		return []string{}
+	} else {
+		var tags []string
+		for _, image := range images {
+			tags = append(tags, image.Tag)
+		}
+
+		return tags
+	}
+}
+
+func ImagesByDappDimgLabel(reference, labelValue string) ([]RepoImage, error) {
+	var repoImages []RepoImage
+
+	tags, err := Tags(reference)
+	if err != nil {
+		if strings.Contains(err.Error(), "NAME_UNKNOWN") {
+			return []RepoImage{}, nil
+		}
+		return nil, err
+	}
+
+	for _, tag := range tags {
 		tagReference := strings.Join([]string{reference, tag}, ":")
-		i, _, err := getImage(tagReference)
+		v1Image, _, err := image(tagReference)
 		if err != nil {
+			if strings.Contains(err.Error(), "BLOB_UNKNOWN") {
+				fmt.Printf("Ignore broken tag '%s': %s\n", tag, err)
+				continue
+			}
 			return nil, err
 		}
 
-		configFile, err := i.ConfigFile()
+		configFile, err := v1Image.ConfigFile()
 		if err != nil {
+			if strings.Contains(err.Error(), "MANIFEST_UNKNOWN") {
+				fmt.Printf("Ignore broken tag '%s': %s\n", tag, err)
+				continue
+			}
 			return nil, err
 		}
 
 		for k, v := range configFile.Config.Labels {
 			if k == "dapp-dimg" && v == labelValue {
-				dimgTags = append(dimgTags, tag)
+				repoImage := RepoImage{
+					Repository: reference,
+					Tag:        tag,
+					Image:      v1Image,
+				}
+
+				repoImages = append(repoImages, repoImage)
 				break
 			}
 		}
 	}
 
-	return dimgTags, nil
+	return repoImages, nil
 }
 
-func tags(reference string) ([]string, error) {
+func Tags(reference string) ([]string, error) {
 	repo, err := name.NewRepository(reference, name.WeakValidation)
 	if err != nil {
 		return nil, fmt.Errorf("parsing repo %q: %v", reference, err)
@@ -73,7 +142,7 @@ func tags(reference string) ([]string, error) {
 }
 
 func ImageId(reference string) (string, error) {
-	i, _, err := getImage(reference)
+	i, _, err := image(reference)
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +165,7 @@ func ImageParentId(reference string) (string, error) {
 }
 
 func ImageConfigFile(reference string) (v1.ConfigFile, error) {
-	i, _, err := getImage(reference)
+	i, _, err := image(reference)
 	if err != nil {
 		return v1.ConfigFile{}, err
 	}
@@ -175,7 +244,7 @@ func GitlabRegistryDelete(ref name.Reference, auth authn.Authenticator, t http.R
 }
 
 func ImageDigest(reference string) (string, error) {
-	i, _, err := getImage(reference)
+	i, _, err := image(reference)
 	if err != nil {
 		return "", err
 	}
@@ -188,7 +257,7 @@ func ImageDigest(reference string) (string, error) {
 	return digest.String(), nil
 }
 
-func getImage(reference string) (v1.Image, name.Reference, error) {
+func image(reference string) (v1.Image, name.Reference, error) {
 	ref, err := name.ParseReference(reference, name.WeakValidation)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parsing reference %q: %v", reference, err)

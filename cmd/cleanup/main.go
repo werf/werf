@@ -33,18 +33,31 @@ func main() {
 
 		switch cmd {
 		case "reset":
-			options := &cleanup.ResetOptions{}
 			rawOptions, err := ruby2go.StringFieldFromMapInterface("command_options", args)
 			if err != nil {
 				return nil, err
 			}
 
+			options := &cleanup.ResetOptions{}
 			err = json.Unmarshal([]byte(rawOptions), options)
 			if err != nil {
 				return nil, err
 			}
 
 			return nil, cleanup.Reset(*options)
+		case "flush":
+			rawOptions, err := ruby2go.StringFieldFromMapInterface("command_options", args)
+			if err != nil {
+				return nil, err
+			}
+
+			options := &cleanup.FlushOptions{}
+			err = json.Unmarshal([]byte(rawOptions), options)
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, cleanup.Flush(*options)
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)
 		}

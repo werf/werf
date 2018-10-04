@@ -3,30 +3,17 @@ module Dapp
     module DockerRegistry
       class Dimg < Base
         def dimgstages_tags
-          tags_wrapper do
-            ruby2go_docker_registry_command(command: :dimgstage_tags, options: { reference: tag_reference })
-          end
+          ruby2go_docker_registry_command(command: :dimgstage_tags, options: { reference: tag_reference })
         end
 
         def dimg_tags(dimg_name)
-          tags_wrapper do
-            with_dimg_repository(dimg_name.to_s) do
-              ruby2go_docker_registry_command(command: :dimg_tags, options: { reference: tag_reference })
-            end
-          end
-        end
-
-        def nameless_dimg_tags
-          tags_wrapper do
+          with_dimg_repository(dimg_name.to_s) do
             ruby2go_docker_registry_command(command: :dimg_tags, options: { reference: tag_reference })
           end
         end
 
-        def tags_wrapper
-          yield || []
-        rescue Error::Registry => e
-          raise unless e.net_status[:data][:message].include?("NAME_UNKNOWN")
-          []
+        def nameless_dimg_tags
+          ruby2go_docker_registry_command(command: :dimg_tags, options: { reference: tag_reference })
         end
 
         def image_id(tag, dimg_repository = nil)

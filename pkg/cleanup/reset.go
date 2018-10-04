@@ -6,16 +6,16 @@ import (
 	"github.com/docker/docker/api/types/filters"
 )
 
-type ResetModeOptions struct {
-	All          bool `json:"all"`
-	DevModeCache bool `json:"dev_mode_cache"`
-	CacheVersion bool `json:"cache_version"`
-}
-
 type ResetOptions struct {
 	Mode          ResetModeOptions `json:"mode"`
 	CacheVersion  string           `json:"cache_version"`
 	CommonOptions CommonOptions    `json:"common_options"`
+}
+
+type ResetModeOptions struct {
+	All          bool `json:"all"`
+	DevModeCache bool `json:"dev_mode_cache"`
+	CacheVersion bool `json:"cache_version"`
 }
 
 func Reset(options ResetOptions) error {

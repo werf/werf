@@ -37,9 +37,9 @@ func ContainerCommit(ref string, commitOptions types.ContainerCommitOptions) (st
 	return response.ID, nil
 }
 
-func ContainerRemove(ref string) error {
+func ContainerRemove(ref string, options types.ContainerRemoveOptions) error {
 	ctx := context.Background()
-	err := apiClient.ContainerRemove(ctx, ref, types.ContainerRemoveOptions{})
+	err := apiClient.ContainerRemove(ctx, ref, options)
 	if err != nil {
 		return err
 	}

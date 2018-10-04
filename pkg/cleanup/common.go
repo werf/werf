@@ -12,6 +12,7 @@ import (
 
 type CommonOptions struct {
 	DryRun bool `json:"dry_run"`
+	Force  bool `json:"force"`
 }
 
 func dappImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
@@ -86,12 +87,13 @@ func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
 }
 
 func containersRemove(containers []types.Container, options CommonOptions) error {
+	containerRemoveOptions := types.ContainerRemoveOptions{Force: options.Force}
 	for _, container := range containers {
 		if options.DryRun {
 			fmt.Println(container.ID) // TODO
 			fmt.Println()
 		} else {
-			if err := docker.ContainerRemove(container.ID); err != nil {
+			if err := docker.ContainerRemove(container.ID, containerRemoveOptions); err != nil {
 				return err
 			}
 		}
@@ -106,7 +108,13 @@ func imageReferencesRemove(references []string, options CommonOptions) error {
 			fmt.Printf(strings.Join(references, "\n")) // TODO
 			fmt.Println()
 		} else {
-			if err := docker.CliRmi(references...); err != nil {
+			var args []string
+			if options.Force {
+				args = append(args, "--force")
+			}
+			args = append(args, references...)
+
+			if err := docker.CliRmi(args...); err != nil {
 				return err
 			}
 		}
