@@ -4,11 +4,23 @@ module Dapp
       module Command
         module FlushLocal
           def flush_local
-            lock("#{name}.images") do
-              log_step_with_indent(:flush) do
-                remove_project_images(dapp_project_dimgs, force: true)
-                stages_flush_local if with_stages?
-              end
+            ruby2go_cleanup_command(:flush, ruby2go_cleanup_flush_local_options)
+          end
+
+          def ruby2go_cleanup_flush_local_options
+            {
+              common_project_options: {
+                project_name: name,
+                common_options: {
+                  dry_run: dry_run?,
+                  force: true
+                }
+              },
+              with_dimgs: true,
+              with_stages: with_stages?,
+              only_repo: false,
+            }.tap do |json|
+              break JSON.dump(json)
             end
           end
         end

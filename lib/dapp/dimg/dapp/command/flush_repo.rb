@@ -4,12 +4,21 @@ module Dapp
       module Command
         module FlushRepo
           def flush_repo
-            lock_repo(repo = option_repo) do
-              log_step_with_indent(option_repo) do
-                registry = dimg_registry(repo)
-                repo_dimgs_images(registry).each { |repo_image| delete_repo_image(registry, repo_image) }
-                stages_flush_repo if with_stages?
-              end
+            ruby2go_cleanup_command(:flush, ruby2go_cleanup_flush_repo_options)
+          end
+
+          def ruby2go_cleanup_flush_repo_options
+            {
+              common_repo_options: {
+                repository: option_repo,
+                dimg_names: dimgs_names,
+                dry_run: dry_run?
+              },
+              with_dimgs: true,
+              with_stages: with_stages?,
+              only_repo: true,
+            }.tap do |json|
+              break JSON.dump(json)
             end
           end
         end

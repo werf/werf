@@ -271,5 +271,5 @@ func (c *StageContainer) Commit() (string, error) {
 }
 
 func (c *StageContainer) Rm() error {
-	return docker.ContainerRemove(c.Name)
+	return docker.ContainerRemove(c.Name, types.ContainerRemoveOptions{})
 }
