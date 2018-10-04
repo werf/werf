@@ -25,7 +25,7 @@ entries:
       - title: Running assembly instructions
         url: /reference/build/assembly_instructions.html
 
-      - title: Using mounts
+      - title: Reducing image size and speeding up a build by mounts
         url: /reference/build/mount_directive.html
 
       - title: Using artifacts
@@ -129,4 +129,3 @@ entries:
 
     - title: Glossary
       url: /reference/glossary.html
-
