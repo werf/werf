@@ -89,11 +89,19 @@ func ImagesByDappDimgLabel(reference, labelValue string) ([]RepoImage, error) {
 		tagReference := strings.Join([]string{reference, tag}, ":")
 		v1Image, _, err := image(tagReference)
 		if err != nil {
+			if strings.Contains(err.Error(), "BLOB_UNKNOWN") {
+				fmt.Printf("Ignore broken tag '%s': %s\n", tag, err)
+				continue
+			}
 			return nil, err
 		}
 
 		configFile, err := v1Image.ConfigFile()
 		if err != nil {
+			if strings.Contains(err.Error(), "MANIFEST_UNKNOWN") {
+				fmt.Printf("Ignore broken tag '%s': %s\n", tag, err)
+				continue
+			}
 			return nil, err
 		}
 
