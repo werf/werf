@@ -1,7 +1,7 @@
 ---
-title: Cleanup
+title: Cleaning
 sidebar: reference
-permalink: reference/registry/cleanup.html
+permalink: reference/registry/cleaning.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
@@ -143,7 +143,7 @@ REPOSITORY    TAG         IMAGE ID           CREATED             SIZE
 * создать `Personal Access Tokens` с необходимыми правами и обеспечить его наличие в переменной окружения `DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD` (см. ниже);
 * исправить `.gitlab-ci.yaml` для запуска очистки в два этапа:
     * очистка удаленного docker registry командой `dapp dimg cleanup repo $CI_REGISTRY_IMAGE`;
-    * локальная очистка командой 
+    * локальная очистка командой
 ```
 dapp dimg stages cleanup local \
     --improper-cache-version \

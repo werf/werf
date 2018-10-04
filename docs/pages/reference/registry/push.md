@@ -1,8 +1,10 @@
 ---
-title: Push and pull
+title: Push
 sidebar: reference
-permalink: reference/registry/push_and_pull.html
+permalink: reference/registry/push.html
 ---
+
+TODO
 
 ## Добавление приложений и кэша в registry
 
