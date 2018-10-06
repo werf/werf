@@ -5,7 +5,7 @@ permalink: reference/build/mount_directive.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-Quite often when you build an image, you have auxiliary files that should be excluded from the final image. E.g.:
+Quite often when you build an image, you have auxiliary files that should be excluded from the image. E.g.:
 - Most package managers create a system-wide cache of packages and other files.
   - [APT](https://wiki.debian.org/Apt) saves the package list in the `/var/lib/apt/lists/` directory.
   - APT also saves packages in the `/var/cache/apt/` directory when installs them.
@@ -14,7 +14,7 @@ Quite often when you build an image, you have auxiliary files that should be exc
 - Building C, C++ and similar applications leaves behind itself the object files and other files of the used build systems.
 
 Thus, those files:
-- are useless in the final image;
+- are useless in the image;
 - might enormously increase image size;
 - might be useful in the next image builds.
 
@@ -24,11 +24,11 @@ Mount directive in a dappfile allows defining volumes. Host and assembly contain
 - `tmp_dir` is an individual temporary dimg directory that is created only for one build;
 - `build_dir` is a directory that is saved between builds. All dimgs in dappfile can use the common directory to store and to share assembly data (e.g., cache). The folder `~/.dapp/builds/<project name>/` store directories of this type.
 
-Dapp binds host mount folders for reading/writing on each stage build. If you need to keep assembly data from these directories in the final image, you should copy them to another directory during build.
+Dapp binds host mount folders for reading/writing on each stage build. If you need to keep assembly data from these directories in a image, you should copy them to another directory during build.
 
 On `from` stage dapp adds mount points definitions in stage image labels and then each stage uses theirs to add volumes in an assembly container. This implementation allows inheriting mount points from [base image]({{ site.baseurl }}/reference/build/base_directives.html#base-image). 
 
-Also on `from` stage dapp cleans assembly container mount points in a [base image]({{ site.baseurl }}/reference/build/base_directives.html#base-image). Therefore these folders are empty in a final image. 
+Also on `from` stage dapp cleans assembly container mount points in a [base image]({{ site.baseurl }}/reference/build/base_directives.html#base-image). Therefore these folders are empty in a image. 
 
 ## Syntax
 ```yaml
