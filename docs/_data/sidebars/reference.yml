@@ -61,10 +61,10 @@ entries:
     - title: Deploy
       fi:
 
-      - title: Выкат в kubernetes
-        url: /reference/deploy/deploy_for_kube.html
+      - title: Deployment to kubernetes
+        url: /reference/deploy/deployment_to_kubernetes.html
 
-      - title: Секреты
+      - title: Working with secrets
         url: /reference/deploy/secrets.html
 
       - title: Конфигурация выката
