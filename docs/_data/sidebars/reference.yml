@@ -52,8 +52,17 @@ entries:
       - title: Authorization
         url: /reference/registry/authorization.html
 
-      - title: Push and pull
-        url: /reference/registry/push_and_pull.html
+      - title: Image naming
+        url: /reference/registry/image_naming.html
+
+      - title: Tag
+        url: /reference/registry/tag.html
+
+      - title: Push
+        url: /reference/registry/push.html
+
+      - title: Pull
+        url: /reference/registry/pull.html
 
       - title: Cleanup
         url: /reference/registry/cleanup.html
