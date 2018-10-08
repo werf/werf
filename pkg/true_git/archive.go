@@ -189,6 +189,10 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 		return nil
 	})
 
+	if err != nil {
+		return nil, fmt.Errorf("entries iteration failed in `%s`: %s", workTreeDir, err)
+	}
+
 	err = tw.Close()
 	if err != nil {
 		return nil, fmt.Errorf("cannot write tar archive: %s", err)
