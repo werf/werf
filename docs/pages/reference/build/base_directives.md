@@ -71,7 +71,7 @@ fromDimgArtifact: <name>
 ```
 
 Besides using docker images from a repository, one can refer to images, previously described in the same `dappfile.yml`.
-This can be helpful if default [build stages]({{ site.baseurl }}/reference/stages/stage.html) are not enough for building an image.
+This can be helpful if default build stages are not enough for building an image.
 
 ```yaml
 dimg: intermediate

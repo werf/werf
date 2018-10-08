@@ -148,7 +148,7 @@ permalink: not_used/stages_arhitecture.html
 
 Стадия пустая, не используются [связанные директивы]({{ site.baseurl }}/not_used/stages_diagram.html).
 
-К примеру, git artifact стадии считаются пустыми, если при описании приложения в dappfile не были использованы git-artifact-ы ([git]({{ site.baseurl }}/reference/dappfile/git_directive.html)), аналогичная ситуация с artifact-ами ([artifact]({{ site.baseurl }}/reference/dappfile/artifact_directive.html)) и пользовательскими стадиями.
+К примеру, git artifact стадии считаются пустыми, если при описании приложения в dappfile не были использованы git-artifact-ы (git directive), аналогичная ситуация с artifact-ами и пользовательскими стадиями.
 
 #### BUILD
 

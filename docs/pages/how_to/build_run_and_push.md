@@ -228,4 +228,4 @@ This example has space for further improvement:
 * As we copy files with a git command, we can set file permissions with the same command.
 * `composer install` instead of `composer update` should be used to install dependencies with versions fixed in files `composer.lock`, `package.json` and `yarn.lock`. Also, it's best to first check these files and run `composer install` when needed. To solve this problem dapp have so-called `stageDependencies` directive.
 
-These issues are further discussed in [reference]({{ site.baseurl }}/reference/dappfile/git_directive.html).
+These issues are further discussed in [reference]({{ site.baseurl }}/reference/build/git_directive.html).
