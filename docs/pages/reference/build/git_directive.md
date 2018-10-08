@@ -4,462 +4,349 @@ sidebar: reference
 permalink: reference/build/git_directive.html
 ---
 
-## Subject matter
+## What is git-path? 
 
-* Первая проблема, с которой предстоит столкнуться: как добиться минимальной задержки между коммитом и получением готового образа для дальнейшего тестирования/деплоя. Большая часть коммитов в репозиторий приложения относится к обновлению кода самого самого приложения. В этом случае сборка нового образа должна представлять собой не более, чем применение патча к файлам предыдущего образа.
-* Вторая проблема: если после сделанных изменений в исходном коде приложения и сборки образа эти изменения были отменены (например, через git revert) в следующем коммите — должен сработать кэш сборщика образов. Т.е. собираемые сборщиком образа должны кэшироваться по содержимому изменений в файлах git репозитория, а не по факту наличия этих изменений.
-* Третья проблема: добавлять файлы из git репозитория в образ путем копирования всего дерева исходников необходимо выполнять редко, основным способом добавления изменения должно служить наложение патчей.
+_Git-путь_ описывает файл или директорию из git-репозитория, которую нужно добавить в образ по определённому пути. Репозиторий может быть локальным, в директории, где расположен dappfile, или удалённым, тогда описание git-пути содержит адрес репозитория и версию в дереве коммитов (ветка, тэг или хэш коммита). 
 
-Требуется собрать образ с зашитым исходным кодом приложения из git.
+dapp добавляет файлы в образ из репозитория двумя способами: полным переносом или наложением патчей. Полный перенос обычно происходит не очень часто, а если файлы уже были перенесены, то для сборки следующих коммитов будет использоваться патч. Подробно этот механизм разобран ниже в части More details: archive, g_a_, latest_patch .
 
-## Our decision
+Описание git-пути поддерживает фильтрацию файлов и с помощью набора описаний git-путей можно сформировать практически любую итоговую файловую структуру в образе. Также описание git-пути решает проблему владельца файлов, т.к. можно сразу указать владельца и его группу.
 
-Для добавления кода в собираемый образ, предусмотрена директива `git`, с помощью которой можно добавить код из локального или удаленного репозитория (включая сабмодули) в dimg.
+git-путь может содержать сабмодули — dapp это обнаруживает и делает всё что можно, чтобы правильно обработать изменения в сабмодулях.
 
-The `git` directive in `dappfile.yml` adds source code from a Git repository to an dimg. It supports local and remote repositories, including submodules.
-
-> Note: to work with remote git repositories, dapp requires libssh2 and/or libssl installed.
-> Refer to [Dapp Installation]({{ site.baseurl }}/how_to/installation.html#install-dependencies) for details.
-
-При первой сборке образа с указанием директивы `git`, в него добавляется содержимое git репозитория (стадия `g_a_archive`) согласно соответствующих инструкций. При последующих сборках образа, изменения в git репозитории добавляются отдельным docker-слоем, который содержит git-патч (git patch apply). Содержимое таких docker-слоев с патчами также кешируется, что еще более повышает скорость сборки. В случае отмены сделанных изменений в исходном коде приложения (например, через git revert), при сборке будет накладываться патч с отменой изменений, будет использоваться слой из кеша.
-
-When dapp first builds an image from a dappfile with `git` directive, it adds source code from a Git repository to the image.
-This happens on the `g_a_archive` stage.
-
-On each subsequent build dapp does not create a new image with a full copy of the source code.
-Instead, it generates a git patch (with `git patch apply`) and applies it as an image layer.
-Dapp caches these image layers to boost build speed.
-If changes in source code are undone, for example with `git revert`, dapp detects that and reuses a cached layer.
-
-### g_a_archive
-### g_a_post_setup_patch
-
-Сигнатура стадии git artifact post setup patch зависит от размера патчей git-артефактов и будет пересобрана, если их сумма превысит лимит (10 MB).
-
-### g_a_latest_patch
-
-
-## Syntax
-
-
-## Introduction
-
-### Optimizing build speed
-
-
-### Building artifacts
-
-> TODO: Переместить вперёд. Слишком рано для этой инфы, даже про `stageDependencies` ещё не было.
-
-Система кэширования dapp принимает решение о необходимости повторной сборки стадии или использовании кэша, на основании вычисления [сигнатуры стадии]({{ site.baseurl }}/not_used/stages_diagram.html), которая не зависит напрямую от состояния git репозитория. Т.о., если не указать это явно (см далее про директиву `stageDependencies`), то изменения только кода в git репозитории не приведут к повторной сборке пользовательской стадии (`before_install`, `install`, `before_setup`, `setup`, `build_artifact`). Чтобы явно определить зависимость от файлов и папок, при изменении которых сборщику необходимо выполнить принудительную сборку определенных пользовательских стадий, в директиве `git` предусмотрена директива `stageDependencies` (`stage_dependencies` для Ruby синтаксиса).
-
-> Q: а когда сигнатура всё-таки меняется? От чего зависит? По stages_diagram не очень понятно.
-
-Dapp decides whether to rebuild a stage or use a cached result by calculating the [stage signature]({{ site.baseurl }}/not_used/stages_diagram.html).
-This signature has no direct connection to the state of the git repository.
-Changing the code in the git repository does not result in rebuilding user stages
-(`before_install`, `install`, `before_setup`, `setup`, and `build_artifact`).
-An exception is when user stages are dependent on files, listed in `stageDependencies` directive.
-This will be explained further.
-
-Правильная установка зависимостей - важное условие построения эффективного процесса сборки!
-
-Количество указаний директивы `git` в описании образа не ограничено, но нужно стремиться к их уменьшению, путем правильного использования `includePaths` и `excludePaths`.
-
-Correctly installing dependencies is crucial to making an effective build process.
-
-
-> TODO это дублируется в списке дальше
-
-### General Features 
-
-> Общие особенности использования
-
-* описание сборки образа (`dimg` или `artifact`) может содержать любое количество git-директив;
-* изменение кода в git репозитории который используется при сборке **образа приложения**, накладывается патчем и не ведет к пересборке какой-либо пользовательской стадии (если нет явного указания зависимости через `stageDependencies`);
-* изменение кода в git репозитории который используется при сборке **образа артефакта**, не ведет к пересборке образа артефакта и не накладывается патчем (если нет явного указания зависимости через `stageDependencies`);
-* для пересборки пользовательской стадии в зависимости от изменений в git репозитории нужно описывать зависимости с использованием `stageDependencies`;
-
-* при использовании git submodule-й, логика не меняется - инструкции описываются так же, как в случае с директориями;
-* для исключения избыточного копирования кода в образ, в директиве `git` предусмотрены параметры `includePaths` и `excludePaths`;
-* важно помнить, что код добавленный с помощью директивы `git`, еще не доступен на пользовательской стадии `before install` (см. [подробней]({{ site.baseurl }}/not_used/stages_arhitecture.html) про стадии сборки).
-
-* Destination paths, defined with `to`, should be different between artifact images in one dappfile. 
-* Description of an image (either `dimg` or `artifact`) may have any number of git directives.
-
-> TODO: уточнить и написать просто.
-
-* When building an application image, changed code in the git repository is added as an image layer with a patch.
-* When building an artifact image, changing code in git repository does not.
-
-* With git submodule the logic is the same.
-
-
-## Using `git` Directive
-
-> YAML синтаксис (dappfile.yml)
-
-В dappfile.yml директива `git` применяется следующим образом:
-
-The `git` directive adds source code from git repositories.
-It is an array of one or more elements, each specifying a single repository:
-
-```yaml
-git:
-- GIT_SPEC
-- GIT_SPEC
-  ...
-```
-
-, где `GIT_SPEC` - один или несколько массивов описаний директив добавления кода следующего вида:
-- для работы с локальным репозиторием
-
-In this example all code from the local repository will be added to the `/app` directory:
-
-```yaml
-git:
-- to: /app
+Пример описания для добавления в итоговый образ исходников из /src локального репозитория в директорию /app и исходников phantomjs в директорию /src/phantomjs:
 
 ```
-
-Minimal specification for a remote repository:
-
-```yaml
+dimg: backend-app
 git:
-- url: https://github.com/kr/beanstalkd.git
+- add: /src
+  to: /app
+- url: https://github.com/ariya/phantomjs
   add: /
-  to: /build
+  to: /src/phantomjs
 ```
 
-Описание директив:
+## Motivation for git-paths
 
-## Basic Directives
+Main idea is to bring git history into build process.
 
-### `to`
+### Patching instead of copying
 
-```yaml
-to: <to_absolute_path>
+Большая часть коммитов в репозиторий приложения относится к обновлению кода самого приложения. В этом случае, если не требуется компиляция, сборка нового образа должна представлять собой не более, чем добавление изменений к файлам предыдущего образа.
+
+### Remote repositories
+
+Сборка приложения может зависеть от исходных текстов в других репозиториях. dapp предоставляет возможность добавлять файлы из удалённых репозиториев в итоговый образ, при этом механизм добавления изменений не отличается для локальных и удалённых репозиториев.
+
+## Syntax of a git path
+
+Описание git-пути для локального репозитория имеет следующие параметры:
+
+- add — путь к директории или файлу, содержимое которых нужно скопировать в образ. Путь указывается относительно корня репозитория, но при этом путь абсолютный, т.е. должен начинаться с /. Параметр необязательный, по умолчанию переносится содержимое всего репозитория, т.е. запись add: / эквивалентна отсутствию параметра;
+- to — путь в образе, куда будет скопировано то, что указано в add;
+- owner — идентификатор или имя пользователя, который будет владельцем скопированных файлов;
+- group — идентификатор или имя группы, которая будет владельцем скопированных файлов;
+- excludePaths — набор масок для игнорирования файлов или директорий во время рекурсивного копирования. Пути в масках указываются относительно add;
+- includePaths — набор масок для включения файлов или директорий во время рекурсивного копирования. Пути указываются относительно add;
+- stageDependencies — набор масок, определяющих файлы по пути add, изменение которых приведёт к пересборке пользовательских стадий. Этот механизм рассмотрен подробно в статье  Running assembly instructions.
+
+git-путь для удалённого репозитория имеет дополнительные параметры:
+- url — адрес удалённого репозитория;
+- branch, tag, commit — имя ветки, тэга или хэш коммита, который будет использоваться. Если эти параметры не указаны, то используется ветка master;
+- as — алиас для упрощения получения информации о удалённом репозитории в шаблонах helm. Подробности в статье деплой.
+
+## Uses of git paths
+
+### Простое копирование
+
+Параметр add указывает путь в репозитории, откуда нужно рекурсивно взять все файлы и добавить их по пути to в образе, если параметр не указан, то путь по умолчанию — /, т.е. будет переносится весь репозиторий.
+Например:
+
 ```
-
-Sets the *destination path* — an absolute path in the described image to copy files and directories to.
-Destination paths should not overlap within an image.
-
-`to` is a required directive.
-
-* `to: <to_absolute_path>` -  определяет путь назначения, при копировании файлов из репозитория, где `<to_absolute_path>` - абсолютный путь, в который будут копироваться ресурсы.
-* пути добавления не должны пересекаться между артефактами;
-
-### `add`
-
-
-```yaml
-add: <add_absolute_path>
-```
-
-Sets the *source path* — an absolute path in the source repository.
-Dapp will copy from this path recursively: with all subdirectories and files.
-
-`add` defaults to `/` and can be omitted.
-
-If you need to copy selected directories or files from a repository, consider using `includePaths` and `excludePaths` directives.
-
-* `add: <add_absolute_path>` - определяет путь - источник репозитория, где `<add_absolute_path>` - путь относительно репозитория, из которого будут копироваться ресурсы.
-
-## Advanced Directives
-
-### `owner`
-
-* `owner: <owner>` - определяет пользователя владельца, который будет установлен ресурсам после их копирования.
-
-```yaml
-owner: <owner>
-```
-
-### `group`
-
-* `group: <group` - определяет группу владельца, которая будет установлена ресурсам после их копирования.
-
-```yaml
-group: <group>
-```
-
-### `include_paths` and `exclude_paths`
-
-```yaml
-includePaths:
-- <path> 
-- <path> 
-...
-excludePaths:
-- <path> 
-- <path> 
-...
-```
-
-The number of repository specifications in a `git` directive is not limited.
-Indeed, `includePaths` and `excludePaths` can help reduce this number.
-
-For example, this code:
-
-```yaml
-git:
-- add: /a
-  to: /app/a
-- add: /b 
-  to: /app/b
-```
-
-can be reduced with `includePaths`:
-
-```yaml
+---
+dimg: frontend
 git:
 - add: /
   to: /app
-  includePaths:
-  - a
-  - b
 ```
 
+Это самый простой вариант git-пути, который добавляет всё содержимое из репозитория в директорию /app в образе.
+Если в репозитории такая структура:
 
-* `include_paths: <relative_path_or_mask>` - определяет относительные пути или маски ресурсов которые и только которые будут скопированы.
-* `exclude_paths: <relative_path_or_mask>` - определяет относительные пути или маски ресурсов которые необходимо игнорировать при копировании.
+image1
 
+То в образе будет такая структура:
 
-### `stageDependencies`
+image2
 
-Declares that a user stage
+Можно указывать несколько git-путей:
 
-* `stageDependencies: ` - определяет зависимость пользовательской стадии (`install`, `beforeSetup`, `setup` - для любого типа образов, `buildArtifact` - только для сборки образа артефактов) от файлов и папок, при изменении которых необходимо выполнить принудительную сборку пользовательской стадии. Файлы и папки определяются относительным путем или маской. Учитывается как содержимое так и имена файлов/папок.
-
-### Using Wildcards in Paths
-
-Wildcards can be used in `includePaths`, `excludePaths` and `stageDependencies` directives.
-
-Strictly speaking, wildcards in dapp work like [fnmatch](http://man7.org/linux/man-pages/man3/fnmatch.3.html)
-with `FNM_PATHNAME` and `FNM_PERIOD` flags.
-If that does not explain it, here are the details.
-
-* `*` is any number of characters.
-* `?` is any single character.
-* `[abc]` is one of the given characters.
-* `**` means any number of nested directories.
-* Wildcard paths are case-sensitive.
-
+```
 ---
-
-* Directories will be ignored. TODO: wut?
-* TODO: about adding `**/*` to any path.
-
-
-Правила указания масок:
-
-* поддерживаются glob-паттерны
-* пути в <glob> указываются относительные
-* директории игнорируются
-* маски чувствительны к регистру.
-
-Here are some examples:
-
-```yaml
+dimg: frontend
 git:
-  includePaths:
-  - /app/*.py
-  - /otherapp/*.py
-  excludePaths:
-  - /**/test/*.py
-  stageDependencies:
-    install:
-    - *.py
+- add: /src
+  to: /app/src
+- add: /assets
+  to: /static
 ```
 
+Если в репозитории такая структура:
 
-## Working with Remote Repositories
+image3
 
-### `url`
+То в образе будет такая структура:
 
-```yaml
-url: <git_repo_url>
+image4
+
+Важно понимать, что в директорию образа, указанную в to, из директории репозитория, указанной в add, будет рекурсивно перенесено именно содержимое, а не директория. То есть, если из репозитория нужно перенести директорию /assets в директорию /app/assets, то слово assets придётся написать два раза, либо использовать git-путь с фильтром includePaths.
+
+_Замечание:  В dapp нет соглашения про / на конце, которое есть в rsync, т.е. add: /src и add: /src/ — одно и тоже._
+
+
+
+### Копирование файла
+
+Копирование из add содержимого, а не указанной директории работает и для файлов. Чтобы перенести файл в образ, нужно указать его имя дважды — один раз в add, а другой раз в to. Это даёт дополнительную возможность переименовать файл:
+
 ```
-
-`url` sets the URL of a remote repository to copy files from.
-It is the only required directive for copying from remote repositories.
-
-Dapp can clone repositories over SSH or HTTPS:
-
-```yaml
-git:
-- url: https://github.com/example/https.git
-  to: /example-https
-- url: git@github.com:example/ssh.git
-  to: /example-ssh
-```
-> Note: working with remote repositories over HTTPS or SSL requires [installing libssl or libssh2]({{ site.baseurl }}/how_to/installation.html#install-dependencies) respectively.
-
-To make SSH connections, dapp will use ssh-agents in the following order, most to least preferred:
-
-* Run a temporary ssh-agent with the key, provided with `--ssh-key <path_to_key>` parameter in the command line.
-* Use the system ssh-agent if it is available and running.
-* Run a temporary ssh-agent with key at `~/.ssh/id_rsa`
-
 ---
-
-* `url: <git_repo_url>` - определяет внешний git репозиторий, где `<git_repo_url>` - ssh или https адрес репозитория (в случае использования ssh адреса, ключ `--ssh-key` dapp позволяет указать ssh-ключ для доступа к репозиторию).
-* поддерживается два типа git-директив, local и remote, для использования локального и удаленного репозитория соответственно;
-
-### `branch`
-
-```yaml
-branch: <branch_name>
-```
-
-Sets the branch name in a remote repository.
-
-`branch` is optional and defaults to `master`.
-
-* `branch: <branch_name>` - определяет используемую ветку внешнего git репозитория, необязательный параметр (по умолчанию - master).
-
-### `commit`
-
-```yaml
-commit: <commit>
-```
-
-Sets the commit in a remote repository
-
-`commit` is optional and default to the last commit in selected `branch`.
-
-* `commit: <commit>` - определяет используемый коммит внешнего git репозитория, необязательный параметр.
-
-### `as`
-
-* `as: <custom_name>` - назначает данному описанию git артефакта имя. Используется, например, в helm шаблонах для получения и передачи через переменные окружения в образ id коммита (обратиться можно через `.Values.global.dapp.dimg.DIMG_NAME.git.CUSTOM_NAME.commit_id` для именованного образа и `.Values.global.dapp.dimg.git.CUSTOM_NAME.commit_id` для безымянного образа).
-
-```yaml
-as: <custom_name>
-```
-
-
-## Code examples
-
-```yaml
+dimg: frontend
 git:
-- as: <custom_name>
-  add: <add_absolute_path>
-  to: <to_absolute_path>
-  owner: <owner>
-  group: <group>
+- add: /config/prod.yaml
+  to: /app/conf/production.yaml
+```
+
+### Смена владельца
+Для git-пути предусмотрены параметры `owner` и `group` — это имена или числовые id владельца и группы для всех переносимых в образ файлов и директорий. 
+
+```
+---
+dimg: frontend
+from: ubuntu:18.04
+git:
+- add: /src/index.php
+  to: /app/index.php
+  owner: www-data
+```
+
+image_here
+
+Можно заметить, что при указании только параметра `owner`, группа для файлов будет совпадать с основной группой владельца.
+
+Если указывается строковое имя пользователя или группы, то такой пользователь или группа должны быть в образе к моменту полного добавления файлов, иначе сборка завершится с ошибкой.
+
+```
+---
+dimg: frontend
+from: ubuntu:18.04
+git:
+- add: /src/index.php
+  to: /app/index.php
+  owner: wwwdata
+```
+
+image_here
+
+
+### Копирование с фильтрами
+
+При обработке списка файлов учитываются параметры `excludePaths` и `includePaths` — это наборы масок, которыми можно исключить или включить файлы и директории из списка файлов, которые будут перенесены в образ. Механизм фильтров excludePaths упрощённо работает так: к каждому файлу, найденному в add применяются маски. Если хотя бы одна маска совпадает, то файл игнорируется, а если нет совпадающих масок, значит файл можно добавлять в образ. includePaths работает наоборот: если совпадает хотя бы одна маска, то файл будет добавлен в образ.
+
+Пример:
+
+```
+dimg: frontend
+git:
+- add: /src
+  to: /app
   includePaths:
-  - <relative_path_or_mask>
-  excludePaths:
-  - <relative_path_or_mask>
-  stageDependencies:
-    install:
-    - <relative_path_or_mask>
-    beforeSetup:
-    - <relative_path_or_mask>
-    setup:
-    - <relative_path_or_mask>
+  - **/*.php
 ```
 
-* для работы с удаленным репозиторием
+Чтобы определить, совпадает файл с маской или нет, выполняется такой алгоритм:
+- путь в add склеивается с маской;
+- берётся абсолютный путь к файлу внутри репозитория;
+- два пути сравниваются с помощью fnmatch с флагами FNM_PATHNAME и FNM_PERIOD (в шаблон `*` включается `.`, но исключается `/`);
+- если fnmatch возвращает true, то маска совпадает, алгоритм завершается;
+- путь в add склеивается с маской и с дополнительным шаблоном **/* ;
+- берётся абсолютный путь к файлу внутри репозитория;
+- два пути сравниваются с помощью fnmatch с флагами FNM_PATHNAME и FNM_DOTMATCH (в шаблон `*` включается `.`, но исключается `/`);
+- если fnmatch возвращает true, то маска совпадает, если false, то маска не совпадает;
 
-And one for a remote repository:
+Замечание: второй шаг с добавлением шаблона **/* сделан для удобства: самый частый случай фильтра — указание рекурсивного копирования директории. С добавлением **/* достаточно указать имя директории и в фильтр попадёт всё её содержимое.
 
-```yaml
-git:
-- url: <git_repo_url>
-  branch: <branch_name>
-  commit: <commit>
-  as: <custom_name>
-  add: <add_absolute_path>
-  to: <to_absolute_path>
-  owner: <owner>
-  group: <group>
-  includePaths:
-  - <relative_path_or_mask>
-  excludePaths:
-  - <relative_path_or_mask>
-  stageDependencies:
-    install:
-    - <relative_path_or_mask>
-    beforeSetup:
-    - <relative_path_or_mask>
-    setup:
-    - <relative_path_or_mask>
-    build_artifact:
-    - <relative_path_or_mask>
+В маске можно указать такие шаблоны:   
+- `*` — любые символы, кроме /
+-`**` — рекурсивно учитывать все директории
+- `?` — один любой символ
+- `[a-z]` — один символ из набора
+- `{1, 2, 3, abc, foo, bar}` — любой элемент из набора
+
+Примеры фильтров:
+
+```
+add: /src
+to: /app
+includePaths:
+- *.php — собрать все php файлы, непосредственно расположенные в /src
+- **/*.php — собрать все php файлы рекурсивно из /src (включает маску *.php, т.к. . тоже входит в **)
+- module1/**/{config,view,contoller}/*.php — собрать все php файлы рекурсивно из /src/module1, причём только те, которые находятся непосредственно в директориях config, view или controller
+- module1 — собрать все файлы рекурсивно из /src/module1 — применение неявного добавления **/*.
 ```
 
+Одной маской можно собирать исходные тексты по расширению файлов:
+```
+add: /src
+to: /app
+includePaths: '**/*.{php,css,js}'
+```
 
-### Adding all source code from a remote repository
-
+С помощью includePaths можно cкопировать один файл:
 ```
 git:
-- url: https://github.com/kr/beanstalkd.git
-  add: /
-  to: /build
+- add: /src
+  to: /app
+  includePaths: index.php
+```
+Но конечно переименовать файл в этом случае не получится.
+
+### Внимание: пересечение путей назначения
+Если добавляется несколько git-путей, то нужно помнить, что пересечения путей в to могут приводить к невозможности добавления файлов в образ. Например:
+
+```
+---
+dimg: frontend
+git:
+- add: /src
+  to: /app
+- add: /assets
+  to: /app
 ```
 
 
-### Adding a single file from a local repository
+dapp при обработке dappfile вычисляет возможные пересечения среди всех git-путей с учётом includePaths и excludePaths. В случае пересечения сборка завершится с ошибкой, но в некоторых случаях dapp не будет ругаться на пересечение, а добавит excludePaths в git-путь. Однако предугадать все возможные случаи невозможно, поэтому, при описании нескольких git-путей желательно не допускать конфликтов пересечения путей.
 
-Пример добавления файла `/folder/file` из локального репозитория в папку `/destfolder` собираемого образа, с определением зависимости пересборки пользовательской стадии setup при изменении файла `/folder/file` в репозитории:
+Пример с автодобавлением exludePaths:
+
+```
+dimg: frontend
+git:
+- add: /src
+  to: /app
+  excludePaths:  # dapp при обработке этого git-пути будет
+  - assets       # работать так, как будто есть этот фильтр
+- add: /assets
+  to: /app/assets
+```
+
+> TODO: Пример с неуловимой ошибкой и пример, как устранить проблему.
+
+
+## Working with remote repositories
+
+dapp умеет работать с remote репозиториями, как с источниками файлов. Для этого в описании git-пути есть параметр url, где нужно указать адрес репозитория. dapp поддерживает доступ через https и git+ssh.
+
+### https
+
+```
+Syntax:
+url: https://[USERNAME[:PASSWORD]@]repo_host/repo_path[.git/]
+```
+
+https доступ может требовать логин и пароль, например, вот так выглядит адрес в описании сборки в gitlab-ci:
 
 ```
 git:
-- add: /folder/file
-  to: /destfolder
-  includePaths:
-  - file
-  stageDependencies:
-    setup:
-    - file
+- add: https://{{ env "CI_REGISTRY_USER" }}:{{ env "CI_JOB_TOKEN" }}@registry.gitlab.company.name/common/helper-utils.git
 ```
 
-### Adding several directories and setting permissions
+В этом примере для доступа к переменным окружения на помощь приходит метод env из библиотеки sprig, которая подключена к go-шаблонам dappfile.
 
-Как в предыдущем примере, только добавляется вся папка `/folder`, и зависимость определяется на изменение любого файла в исходной папке.
+
+### git, ssh
+
+dapp поддерживает доступ к репозиторию через протокол git. Доступ по этому протоколу обычно защищается средствами ssh: так делают github, bitbucket, gitlab, gogs, gitolite… Адрес репозитория в большинстве случаев выглядит так:
 
 ```
 git:
-- add: /folder/
-  to: /destfolder
-  stageDependencies:
-    setup:
-    - "*"
+- add: git@gitlab.company.name:project_group/project.git
 ```
 
-### Building an application image
+Для успешной работы с удалёнными репозиториями через ssh важно понять, как dapp ищет ключи доступа.
 
-Пример сборки приложения на nodeJS. Код приложения находится в корне локального репозитория.
+#### Механизм работы с ключами
+Работа с ключами организована через ssh-agent. Ssh-agent это демон, который работает через файловый сокет, путь к которому записывается в переменную среды SSH_AUTH_SOCK. Dapp во все сборочные контейнеры монтирует файловый сокет, и устанавливает переменную окружения SSH_AUTH_SOCK, т.е. подключение к удалённым git-репозиториям устанавливается с ключами, которые зарегистрированы в запущенном ssh-агенте.
 
-```
-dimg: testimage
-from: node:9.11-alpine
-git:
-  - add: /
-    to: /app
-    stageDependencies:
-      install:
-        - package.json
-        - bower.json
-      beforeSetup:
-        - app
-        - gulpfile.js
-shell:
-  beforeInstall:
-  - apk update
-  - apk add git
-  - npm install --global bower
-  - npm install --global gulp
-  install:
-  - cd /app
-  - npm install
-  - bower install --allow-root
-  beforeSetup:
-  - cd /app
-  - gulp build
-docker:
-  WORKDIR: "/app"
-  CMD: ["gulp", "connect"]
-```
+Ssh-агент определяется так:
+- Если переданы опции --ssh-key (их может быть несколько):
+  - Запускается временный ssh-agent с переданными ключами и используется для всех git-операций с удалёнными репозиториями.
+  - Если в окружении есть переменная SSH_AUTH_SOCK и запущен агент, то он игнорируется.
+- Опций --ssh-key не передано, а агент уже запущен в том окружении, где работает dapp:
+  - Будет использована переменная среды SSH_AUTH_SOCK и для git-операций будут использоваться ключи, добавленные в этого агента
+- Опций --ssh-key не передано, ssh-агент не запущен:
+  - Если существует файл ~/.ssh/id_rsa, то dapp автоматом запускает временный ssh-agent с зарегистрированным ключом из файла ~/.ssh/id_rsa
+- Если ничего из предыдущих пунктов не сработало, то ssh-агент не запускается и ключи для работы с git отсутствуют. Сборка с доступом через ssh к удалённому репозиторию завершится с ошибкой.
+
+## More details: archive, git_archive_post_setup_patch, latest_patch
+Рассмотрим более детально механизм добавления файлов в итоговый образ. Как известно, docker-образ состоит из нескольких слоёв. Чтобы понять, какие слои будет создавать dapp, рассмотрим действия по сборке на примере 3-ёх последовательных коммитов: 1, 2 и 3:
+- Сборка коммита №1. В одном слое добавляются все файлы по описаниям git-путей — это делается с помощью git archive. Это слой стадии git_arсhive.
+- Сборка коммита №2. Добавляется ещё один слой, где файлы меняются с помощью наложения патча. Это слой, где накладываются патчи — latest_patch.
+- Сборка коммита №3. Изменит только последний слой — слой стадии latest_patch.
+
+Ситуацию со сборками этих коммитов можно представить так:
+
+table 1
+
+| | git_archive | --- | latest_patch |
+|---|---|---|---|
+| Сделан коммит №1, сборка в 10:00 |  файлы как в коммите №1 | --- | - |
+| Сделан коммит №2, сборка в 10:05 |  файлы как в коммите №1 | --- | файлы как в коммите №2 |
+| Сделан коммит №3, сборка в 10:15 |  файлы как в коммите №1 | --- | файлы как в коммите №3 |
+
+В этой таблице не зря есть пустое место между слоями. Со временем число коммитов увеличится и патч между коммитом №1 и текущим коммитом может стать довольно большим, что увеличит размер последнего слоя и общий размер образа. Чтобы последний слой не увеличивался со временем, в dapp предусмотрена ещё одна промежуточная стадия —  git_archive_post_setup_patch.
+Как dapp работает с тремя стадиями? Теперь для иллюстрации нужно больше коммитов, пусть это будут: 1, 2, 3, 4, 5, 6 и 7.
+
+- Сборка коммита №1. Как и ранее, в одном слое добавляются все файлы по описаниям git-путей — это делается с помощью git archive. Это слой стадии git_arсhive.
+- Сборка коммита №2. Добавляется слой стадии git_archive_post_setup_patch, где файлы меняются с помощью наложения патча между 1 и 2.
+- Сборка коммита №3.  Добавляется слой стадии latest_patch, где будет применён патч между 2 и 3
+- Сборка коммита №4. Размер патча между 1 и 4 не больше 1Mb, поэтому изменяется только слой стадии latest_patch патчем между 2 и 4.
+- Сборка коммита №5. Размер патча между 1 и 5 не больше 1Mb, поэтому изменяется только слой стадии latest_patch патчем между 2 и 5.
+- Сборка коммита №6. Размер патча между 1 и 6 превышает 1Mb. Теперь изменения применяются в слое стадии git_archive_post_setup_patch.
+- Сборка коммита №7. Изменения патчем между 6 и 7 добавляются в слой стадии latest_patch.
+
+То есть, по мере накопления коммитов с момента первой сборки, большие изменения постепенно сбрасываются в слой git_archive_post_setup_patch, а в последний слой попадают относительно небольшие изменения, что сокращает размер кэша и итогового образа.
+
+
+| | git_archive | git_archive_post_setup_patch | latest_patch |
+|---|---:|---:|---:|
+| Сделан коммит №1, сборка в 12:00 |  1 |  - | - |
+| Сделан коммит №2, сборка в 12:05 |  1 |  2 | - |
+| Сделан коммит №3, сборка в 12:15 |  1 |  2 | 3 |
+| Сделан коммит №4, сборка в 12:19 |  1 |  2 | 4 |
+| Сделан коммит №5, сборка в 12:25 |  1 |  2 | 5 |
+| Сделан коммит №6, сборка в 12:45 |  1 | *6 | - |
+| Сделан коммит №7, сборка в 12:57 |  1 |  6 | 7 |
+
+\* — патч для коммита R превысил 1Mb и он применяется не в слое стадии latest_patch, а в слое стадии git_archive_post_setup_patch
+
+
+### Пересборка git_archive
+По разным причинам бывает необходимо сбросить слой стадии git_archive, например, накопилось много изменений и пересборка уменьшит размер сборочного кэша и итогового образа. Есть возможность сбросить эту стадию с помощью указания в сообщении коммита строк "[dapp reset]" или "[reset dapp]". Пусть, например, в предыдущей ситуации коммит 4 содержал бы в своём сообщении [dapp reset], тогда сборки выглядели бы так:
+
+| | git_archive | git_archive_post_setup_patch | latest_patch |
+|---|---:|---:|---:|
+| Сделан коммит №1, сборка в 12:00 |   1 | - | - |
+| Сделан коммит №2, сборка в 12:05 |   1 | 2 | - |
+| Сделан коммит №3, сборка в 12:15 |   1 | 2 | 3 |
+| Сделан коммит №4, сборка в 12:19 |  *4 | - | - |
+| Сделан коммит №5, сборка в 12:25 |   4 | 5 | - |
+| Сделан коммит №6, сборка в 12:45 |   4 | 5 | 6 |
+| Сделан коммит №7, сборка в 12:57 |   4 | 5 | 7 |
+
+\* — коммит 4 содержит в сообщении строку "[dapp reset]", поэтому стадия git_archive пересобирается
+
+
+
+### git_archive and rebase
+В dapp есть механизм для пересборки стадии git_archive в случае ребейза ветки. Коммит, из которого собирался слой git_archive пропадёт и слой автоматически пересоберётся.
