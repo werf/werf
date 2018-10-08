@@ -24,7 +24,7 @@ The `git` directive in `dappfile.yml` adds source code from a Git repository to 
 При первой сборке образа с указанием директивы `git`, в него добавляется содержимое git репозитория (стадия `g_a_archive`) согласно соответствующих инструкций. При последующих сборках образа, изменения в git репозитории добавляются отдельным docker-слоем, который содержит git-патч (git patch apply). Содержимое таких docker-слоев с патчами также кешируется, что еще более повышает скорость сборки. В случае отмены сделанных изменений в исходном коде приложения (например, через git revert), при сборке будет накладываться патч с отменой изменений, будет использоваться слой из кеша.
 
 When dapp first builds an image from a dappfile with `git` directive, it adds source code from a Git repository to the image.
-This happens on the `g_a_archive` stage. (See [build stages]({{ site.baseurl }}/reference/stages/git_stages.html) for more details.)
+This happens on the `g_a_archive` stage.
 
 On each subsequent build dapp does not create a new image with a full copy of the source code.
 Instead, it generates a git patch (with `git patch apply`) and applies it as an image layer.

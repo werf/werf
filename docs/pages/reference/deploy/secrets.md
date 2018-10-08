@@ -1,60 +1,51 @@
 ---
-title: Работа с секретами
+title: Working with secrets
 sidebar: reference
 permalink: reference/deploy/secrets.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-Механизм секретов dapp рекомендован для хранения: паролей от базы данных, файлов с сертификатами шифрования и тому подобного.
+Dapp secrets engine is recommended for storing: database passwords, files with encryption certificates, etc.
 
-Смысл заключается в том, что чувствительные данные должны храниться *в репозитории с приложением* и быть независимыми от конкретных серверов.
+The idea is that sensitive data must be stored in a repository served by an application and remain independent from any specific server.
 
-## Ключ шифрования
+## Encryption key
 
-При шифровании и расшифровке данных необходим ключ. Есть два места из которых dapp может его прочитать:
+A key is required for encryption and decryption of data. There are two locations from which dapp can read the key:
+* from the `DAPP_SECRET_KEY` environment variable
+* from a special `/.dapp_secret_key` file in the project root
 
-- из переменной окружения `DAPP_SECRET_KEY`
-- в специальном файле `/.dapp_secret_key` в корне проекта
-
-Вы можете быстро сгенерировать ключ с помощью команды `dapp kube secret key generate`:
-
+You can promptly generate a key using the `dapp kube secret key generate` command:
 ```
 $ dapp kube secret key generate
 DAPP_SECRET_KEY=c85e100d4ff006b693b0555f09244fdf
 ```
 
-Для удобства вывод команды уже содержит переменную окружения и может использоваться в команде `export`.
+For convenience, the command output already contains an environment variable and can be used in the `export` command.
 
-### Работа с переменной окружения `DAPP_SECRET_KEY`
+### Working with the `DAPP_SECRET_KEY` environment variable
 
-Если переменная окружения доступна в том окружении, где запускается dapp - он сможет ей воспользоваться.
+If an environment variable is available in the environment where dapp is launched, dapp can use it.
 
-На локальном окружении можете её просто объявить в консоли.
+In a local environment, you can declare it from the console.
 
-Для Gitlab CI используйте [CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/#variables) - они видны только мастерам репозитория, и рядовые разработчики не будут их видеть.
+For Gitlab CI, use [CI/CD Variables](https://docs.gitlab.com/ee/ci/variables/#variables) – they are only visible to repository masters, and regular developers will not see them.
 
-### Работа со файлом `/.dapp_secret_key`
+### Working with the `/.dapp_secret_key` file
 
-Использование файла `.dapp_secret_key` удобнее и безопаснее, так как:
-* пользователю/релиз-инженеру не требуется добавлять ключ шифрования при каждом запуске;
-* секретное значение описанное в файле не может попасть в историю cli `~/.bash_history`.
+Using the `.dapp_secret_key` file is much safer and more convenient, because:
+* users or release engineers are not required to add an encryption key for each launch;
+* the secret value described in the file cannot be included into the cli `~/.bash_history` log.
 
-Файл должен выглядить примерно так:
+**Attention! Do not save the file into the git repository. If you do it, the entire sense of encryption is lost, and anyone who has source files at hand can retrieve all the passwords. `/.dapp_secret_key` must be kept in `.gitignore`!**
 
-```
-c85e100d4ff006b693b0555f09244fdf
-```
+## Encryption of values
 
-**Внимание, нельзя сохранять файл в гит-репозитории**. Если вы сделаете это - теряется весь смысл шифрования и любой человек, заполучивший исходники сможет получить все пароли. **`/.dapp_secret_key` должен быть в .gitignore!**
+The `.helm/secret-values.yaml` file is designed for storing secret values.
 
-## Шифрование значений
+It is decoded in the course of deployment and used in helm as [additional values](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md). If no encryption key is available at the moment of dapp launch, the values are decoded into empty strings.
 
-Для хранения секретных значений предусмотрен файл `.helm/secret-values.yaml`.
-
-Он декодируется при развёртывании и используется в helm в качестве [дополнительных значений](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md). В случае отсутствия ключа шифрования в момент запуска dapp - значения декодируются в пустые строки.
-
-Вот так может выглядеть файл с зашифрованными значениями:
-
+This is what a file containing encrypted values may look like:
 ```
 mysql:
   host: 100070c0e52ba2ff965ebd85f5fea9549392294e52aca006cf75
@@ -63,24 +54,24 @@ mysql:
   db: 406d3a4d2282ad80161428063803509eba8e9909ddcd0db0ddaab9ee47
 ```
 
-### Шифрование одиночного значения
+### Encryption of a single value
 
-При шифровании данных используется команда `dapp kube secret generate`.
+For data encryption, a `dapp kube secret generate` command is used.
 ```
 $ dapp kube secret generate
 Enter secret: 
 1000541517bccae1acce015629f4ec89996e0b4
 ```
 
-Также команда поддерживает перенаправленный вывод, результат выполнения других команд.
+The command also supports a redirected output, which is the performance outcome of other commands.
 ```
 $ rake magic | dapp kube secret generate
 1000541517bccae1acce015629f4ec89996e0b4
 ```
-### Шифрование yaml файла
 
-Если у вас уже есть файл вида
+### Encryption of a yaml file
 
+If you already have a prepared file with variables, e.g.:
 ```
 mysql:
   host: 192.168.1.1
@@ -89,8 +80,7 @@ mysql:
   db: dbforapp
 ```
 
-Вы можете зашифровать его с помощью `dapp kube secret generate --values` и он выведет файл с зашифрованными ключами:
-
+You can apply encryption to it using `dapp kube secret VALUES_PATH generate --values`, and it will output the file with encrypted keys:
 ```
 $ dapp kube secret generate .helm/secret-values.yaml --values
 mysql:
@@ -100,26 +90,24 @@ mysql:
   db: 406d3a4d2282ad80161428063803509eba8e9909ddcd0db0ddaab9ee47
 ```
 
-## Шифрование файла целиком
+## Encryption of the entire file
 
-Помимо секретных значений в шаблонах используются файлы, хранение в незащифрованном виде которых, недопустимо в репозитории. Для таких файлов зарезервирована директория `.helm/secret`, в которой должны храниться зашифрованные файлы. Используя метод `dapp_secret_file` (генерирует dapp `_dapp_helpers.tpl` в процессе развёртывания) в шаблоне, можно получить расшифрованное содержимое файла (метод вернёт пустую строку при отсутствии ключа шифрования).
+Besides secret values, templates also use files that may not be stored unencrypted in the repository. For these files, the `.helm/secret` directory is allocated where encrypted files must be stored. Using the `dapp_secret_file` method (that generates dapp `_dapp_helpers.tpl` in the deployment process), you can get decrypted file content in a template (the method returns an empty string if no encryption key is available).
 
-При шифровании файлов необходимо указать путь до файла.
-
+When applying file encryption, you must specify the file path:
 ```
 $ dapp kube secret generate ~/certs/tls.key
 100023b2d1c0ec145681183ec721dc06db34f7ebce9f328739f0350d7f3aea988b6d0b69e9f71ed5e2ad9d79449b7a7d830ee5148a30a50bd43b7e2ecaef1c657199a483f60322cf7727ddf3928b2f51b0fbb0b1cd931489c20061a5071cf4362cb7e91c79fdbfc6d950352535eac28affd47d8ea8af64559fa39d89e815ea2b95cb07e81ddba792bf0e834cbbdc2ef843394a23f0cd44a95a38dd1583c2ae8352af140fc3fcfa6da3485bbf9bd286e2864ad45e31bc8ce4239aa05aaa82beba58c0583d3e93141ae28d87f4ffdb3d089f18b86e42e88a0b065c604f92a1478e0bbaeee46136579895b803a4be80977135979c4022b83fb1787e7b1540ddc07cd287ba5a7442f8a3ce0f5177487751c25767c28fd6eacb7f021036d978301895d6f528f06d555c926ba617669348c7873ba98372ae75ee0fdb730cabe507c576371970a27476e557b8b250f83137535f1d466eb53756986160f75ef78075dd7f63f83d72c1daf04aa026000802d4bbc2832f6d63eb231b8e16af5f44fc2cd79220715cba783a495a9d25e778ec1c2aa8013ccc164b5fc51f3a061c1eeed1228f65867c25f962639c90d2398e48ad93744cab5f8fff1f9988ccdbc5778ff39c31bdd47950759f33bf126509d3105521571252823f523fcd4a478d9bce3ddf923f8f8cbe7bff5edc0e99fe908e8b737a6de2391729e6ada3d8069819a0857ceba1eb5a16ecc81d6bcd16e497c4e60af5d218d2d2e0064c07850e5aa2a8d83e0f0a2
 ```
 
-Для использования этих данных в helm template-ах необходимо сохранить их в соответствующем файле в директории `.helm/secret`.
+To use the data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
-Вызвав команду с опцией `-o OUTPUT_FILE_PATH`, можно cохранить зашифрованные данные в файл.
-
+Calling the command with the `-o OUTPUT_FILE_PATH` option saves encrypted data to the file `OUTPUT_FILE_PATH`:
 ```
 $ dapp kube secret generate ~/certs/tls.key -o .helm/secret/backend-saml/tls.key
 ```
 
-Использование секрета в шаблоне может выглядеть следующим образом.
+Using a secret in a template may appear as follows:
 
 {% raw %}
 ```
@@ -129,14 +117,13 @@ data:
 ```
 {% endraw %}
 
-## Редактирование зашифрованных данных
+## Editing encrypted data
 
-Для редактирования существующих секретов можно воспользоваться командой `dapp kube secret edit`.
-Команда позволяет работать с данными в интерактивном режиме.
+You can edit existing secrets using the `dapp kube secret edit` command. This command means you can work with data interactively.
 
-## Обратное преобразование данных
+## Inverse conversion of data
 
-Используя команду `dapp kube secret extract` можно расшифровать зашифрованные ранее значения.
+You can decrypt previously encrypted values using the `dapp kube secret extract` command.
 
 ```
 $ dapp kube secret extract
@@ -144,7 +131,7 @@ Enter secret: 1000541517bccae1acce015629f4ec89996e0b4
 42
 ```
 
-Также как и при шифровании поддерживаются перенаправленный вывод и секреты из файлов.
+Like with encryption, redirected output and secrets from files are also supported.
 
 ```
 $ echo "1000541517bccae1acce015629f4ec89996e0b4" | dapp kube secret extract
@@ -156,7 +143,8 @@ $ dapp kube secret extract .helm/secret/sense_of_life.txt
 42 — ответ на «главный вопрос Жизни, Вселенной и Всего Остального».
 ```
 
-Если необходимо расшифровать secret-values файл, то необходимо также указать опцию `--values`.
+If you need to decrypt the secret-values file, you must also specify the `--values` option.
+
 ```
 $ dapp kube secret extract .helm/secret-values.yaml --values
 sense:
@@ -165,14 +153,15 @@ sense:
     lifes: [42, 42, 42]
 ```
 
-## Регенерация существующих секретов
+## Regeneration of existing secrets
 
-При запуске команды будут перегенерированы секреты (`.helm/secret/**/*`) и секретные значения (`.helm/secret-values.yaml`). При генерации используется текущий ключ и ключ (`--old-secret-key KEY`), которым были закодированы данные.
+When launching the command, the secrets (`.helm/secret/**/*`) and secret values (`.helm/secret-values.yaml`) will be re-generated. In the course of generation, the current key is used along with the key (`--old-secret-key KEY`) that was used to encrypt the data.
+
 ```
 $ dapp kube secret regenerate --old-secret-key c85e100d4ff006b693b0555f09244fdf
 ```
 
-В случае, если секретные значения хранятся в нескольких файлах, необходимо добавить пути в качестве аргументов.
+If the secret values are stored in multiple files, add paths as arguments.
 
 ```
 $ dapp kube secret regenerate --old-secret-key c85e100d4ff006b693b0555f09244fdf .helm/secret-values2.yaml .helm/secret-staging.yaml
