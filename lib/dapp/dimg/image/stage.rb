@@ -85,7 +85,7 @@ module Dapp
         end
 
         def labels
-          built_image_inspect!.fetch('Config', {}).fetch('Labels', {})
+          built_image_inspect!.fetch('Config', {}).fetch('Labels', {}) || {}
         end
 
         def created_at
