@@ -125,6 +125,13 @@ module Dapp
           end
 
           def image_add_mounts
+            image_add_service_mounts
+            image_add_custom_mounts
+
+            image_add_mounts_labels
+          end
+
+          def image_add_service_mounts
             [:tmp_dir, :build_dir].each do |type|
               next if (mounts = adding_mounts_by_type(type)).empty?
 
@@ -133,17 +140,24 @@ module Dapp
                 tmp_path = dimg.send(type, 'mount', absolute_path[1..-1]).tap(&:mkpath)
                 image.add_volume "#{tmp_path}:#{absolute_path}"
               end
-
-              image.add_service_change_label :"dapp-mount-#{type.to_s.tr('_', '-')}" => mounts.join(';')
             end
-
-            image_add_custom_mounts
           end
 
           def image_add_custom_mounts
             adding_custom_dir_mounts.each do |from, to_pathes|
               FileUtils.mkdir_p(from)
               to_pathes.tap(&:uniq!).map { |to_path| image.add_volume "#{from}:#{to_path}" }
+              image.add_service_change_label :"dapp-mount-custom-dir-#{from.gsub('/', '--')}" => to_pathes.join(';')
+            end
+          end
+
+          def image_add_mounts_labels
+            [:tmp_dir, :build_dir].each do |type|
+              next if (mounts = adding_mounts_by_type(type)).empty?
+              image.add_service_change_label :"dapp-mount-#{type.to_s.tr('_', '-')}" => mounts.join(';')
+            end
+
+            adding_custom_dir_mounts.each do |from, to_pathes|
               image.add_service_change_label :"dapp-mount-custom-dir-#{from.gsub('/', '--')}" => to_pathes.join(';')
             end
           end

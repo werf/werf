@@ -59,12 +59,8 @@ module Dapp
             config_mounts.values.flatten.uniq
           end
 
-          def adding_mounts_by_type(_type)
-            []
-          end
-
-          def adding_custom_dir_mounts
-            []
+          def image_add_mounts
+            image_add_mounts_labels
           end
 
           def image_should_be_untagged_condition
