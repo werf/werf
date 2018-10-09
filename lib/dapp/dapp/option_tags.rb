@@ -60,7 +60,7 @@ module Dapp
         return {} unless options[:tag_build_id]
 
         if ENV['GITLAB_CI']
-          build_id = ENV['CI_BUILD_ID']
+          build_id = ENV['CI_BUILD_ID'] || ENV['CI_JOB_ID']
         elsif ENV['TRAVIS']
           build_id = ENV['TRAVIS_BUILD_NUMBER']
         else
@@ -75,10 +75,10 @@ module Dapp
 
         {}.tap do |tags_by_scheme|
           if ENV['GITLAB_CI']
-            if ENV['CI_BUILD_TAG']
-              tags_by_scheme[:git_tag] = [ENV['CI_BUILD_TAG']]
-            elsif ENV['CI_BUILD_REF_NAME']
-              tags_by_scheme[:git_branch] = [ENV['CI_BUILD_REF_NAME']]
+            if ENV['CI_BUILD_TAG'] || ENV['CI_COMMIT_TAG']
+              tags_by_scheme[:git_tag] = [ENV['CI_BUILD_TAG'] || ENV['CI_COMMIT_TAG']]
+            elsif ENV['CI_BUILD_REF_NAME'] || ENV['CI_COMMIT_REF_NAME']
+              tags_by_scheme[:git_branch] = [ENV['CI_BUILD_REF_NAME'] || ENV['CI_COMMIT_REF_NAME']]
             end
           elsif ENV['TRAVIS']
             if ENV['TRAVIS_TAG']
