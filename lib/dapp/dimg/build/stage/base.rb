@@ -145,7 +145,7 @@ module Dapp
 
           def image_add_custom_mounts
             adding_custom_dir_mounts.each do |from, to_pathes|
-              FileUtils.mkdir_p(from)
+              FileUtils.mkdir_p(from) unless File.exist?(from)
               to_pathes.tap(&:uniq!).map { |to_path| image.add_volume "#{from}:#{to_path}" }
               image.add_service_change_label :"dapp-mount-custom-dir-#{from.gsub('/', '--')}" => to_pathes.join(';')
             end

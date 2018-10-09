@@ -45,7 +45,8 @@ module Dapp
           def add_cleanup_mounts_dirs_command
             return if config_mounts_dirs.empty?
             image.add_service_command ["#{dimg.dapp.rm_bin} -rf %s",
-                                       "#{dimg.dapp.mkdir_bin} -p %s"].map { |c| format(c, config_mounts_dirs.join(' ')) }
+                                       "#{dimg.dapp.mkdir_bin} -p %s",
+                                       "#{dimg.dapp.rm_bin} -rf %s"].map { |c| format(c, config_mounts_dirs.join(' ')) }
           end
 
           def config_mounts
