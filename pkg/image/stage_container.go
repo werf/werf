@@ -72,12 +72,16 @@ func (c *StageContainer) PreparedRunCommand() string {
 }
 
 func (c *StageContainer) PreparedRunCommands() []string {
-	runCommands := append(c.RunCommands, c.ServiceRunCommands...)
+	runCommands := c.AllRunCommands()
 	if len(runCommands) != 0 {
 		return runCommands
 	} else {
 		return []string{dappdeps.BaseBinPath("true")}
 	}
+}
+
+func (c *StageContainer) AllRunCommands() []string {
+	return append(c.RunCommands, c.ServiceRunCommands...)
 }
 
 func ShelloutPack(command string) string {
