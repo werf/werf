@@ -218,10 +218,11 @@ func splitContent(content []byte) (docsContents [][]byte) {
 	if docStartIndex != index+1 {
 		switch state {
 		case stateDocDash3, stateDocSpaces, stateDocComment:
-			if docStartIndex == index-separatorLength {
+			separatorLengthWithoutCursor := separatorLength - 1
+			if docStartIndex == index-separatorLengthWithoutCursor {
 				docContent = []byte{}
 			} else {
-				docContent = content[docStartIndex : index-separatorLength]
+				docContent = content[docStartIndex : index-separatorLengthWithoutCursor]
 			}
 		default:
 			docContent = content[docStartIndex:]
