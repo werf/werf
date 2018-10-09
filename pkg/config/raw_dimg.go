@@ -190,12 +190,6 @@ func (c *RawDimg) toDimgAsLayersDirective(name string) (dimg *Dimg, err error) {
 		}
 	}
 
-	if dimgWithGit, err := c.toDimgLayerWithGitDirective(name); err != nil {
-		return nil, err
-	} else if dimgWithGit != nil {
-		dimgLayers = append(dimgLayers, dimgWithGit)
-	}
-
 	if shellDimg != nil {
 		if dimgShellLayers, err := c.toDimgShellLayersByStage(name, shellDimg.BeforeInstall, "beforeInstall"); err != nil {
 			return nil, err
@@ -208,6 +202,12 @@ func (c *RawDimg) toDimgAsLayersDirective(name string) (dimg *Dimg, err error) {
 		} else {
 			dimgLayers = append(dimgLayers, dimgShellLayers...)
 		}
+	}
+
+	if dimgWithGit, err := c.toDimgLayerWithGitDirective(name); err != nil {
+		return nil, err
+	} else if dimgWithGit != nil {
+		dimgLayers = append(dimgLayers, dimgWithGit)
 	}
 
 	if dimgWithArtifacts, err := c.toDimgLayerWithArtifactsDirective(name, "install", ""); err != nil {
@@ -257,13 +257,13 @@ func (c *RawDimg) toDimgAsLayersDirective(name string) (dimg *Dimg, err error) {
 	}
 
 	if shellDimg != nil {
-		if dimgShellLayers, err := c.toDimgShellLayersByStage(name, shellDimg.Setup, "beforeSetup"); err != nil {
+		if dimgShellLayers, err := c.toDimgShellLayersByStage(name, shellDimg.Setup, "setup"); err != nil {
 			return nil, err
 		} else {
 			dimgLayers = append(dimgLayers, dimgShellLayers...)
 		}
 	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgAnsibleLayers(name, ansible.Setup, "beforeSetup"); err != nil {
+		if dimgShellLayers, err := c.toDimgAnsibleLayers(name, ansible.Setup, "setup"); err != nil {
 			return nil, err
 		} else {
 			dimgLayers = append(dimgLayers, dimgShellLayers...)
@@ -408,12 +408,6 @@ func (c *RawDimg) toDimgArtifactAsLayersDirective() (dimgArtifact *DimgArtifact,
 		}
 	}
 
-	if dimgArtifactWithGit, err := c.toDimgArtifactLayerWithGitDirective(); err != nil {
-		return nil, err
-	} else if dimgArtifactWithGit != nil {
-		dimgArtifactLayers = append(dimgArtifactLayers, dimgArtifactWithGit)
-	}
-
 	if shellArtifact != nil {
 		if dimgShellLayers, err := c.toDimgArtifactShellLayers(shellArtifact.BeforeInstall, "beforeInstall"); err != nil {
 			return nil, err
@@ -432,6 +426,12 @@ func (c *RawDimg) toDimgArtifactAsLayersDirective() (dimgArtifact *DimgArtifact,
 		return nil, err
 	} else if dimgWithArtifacts != nil {
 		dimgArtifactLayers = append(dimgArtifactLayers, dimgWithArtifacts)
+	}
+
+	if dimgArtifactWithGit, err := c.toDimgArtifactLayerWithGitDirective(); err != nil {
+		return nil, err
+	} else if dimgArtifactWithGit != nil {
+		dimgArtifactLayers = append(dimgArtifactLayers, dimgArtifactWithGit)
 	}
 
 	if shellArtifact != nil {
@@ -475,13 +475,13 @@ func (c *RawDimg) toDimgArtifactAsLayersDirective() (dimgArtifact *DimgArtifact,
 	}
 
 	if shellArtifact != nil {
-		if dimgShellLayers, err := c.toDimgArtifactShellLayers(shellArtifact.Setup, "beforeSetup"); err != nil {
+		if dimgShellLayers, err := c.toDimgArtifactShellLayers(shellArtifact.Setup, "setup"); err != nil {
 			return nil, err
 		} else {
 			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
 		}
 	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgArtifactAnsibleLayers(ansible.Setup, "beforeSetup"); err != nil {
+		if dimgShellLayers, err := c.toDimgArtifactAnsibleLayers(ansible.Setup, "setup"); err != nil {
 			return nil, err
 		} else {
 			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
