@@ -64,8 +64,8 @@ entries:
       - title: Pull
         url: /reference/registry/pull.html
 
-      - title: Cleanup
-        url: /reference/registry/cleanup.html
+      - title: Cleaning
+        url: /reference/registry/cleaning.html
 
     - title: Deploy
       fi:
