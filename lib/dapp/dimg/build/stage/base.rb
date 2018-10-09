@@ -137,7 +137,7 @@ module Dapp
 
               mounts.each do |path|
                 absolute_path = File.expand_path(File.join('/', path))
-                tmp_path = dimg.send(type, 'mount', absolute_path[1..-1]).tap(&:mkpath)
+                tmp_path = dimg.send(type, 'mount', dimg.dapp.consistent_uniq_slugify(absolute_path)).tap(&:mkpath)
                 image.add_volume "#{tmp_path}:#{absolute_path}"
               end
             end
