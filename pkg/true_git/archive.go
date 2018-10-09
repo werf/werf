@@ -182,6 +182,11 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 			return fmt.Errorf("unable to write data to tar archive from file `%s`: %s", path, err)
 		}
 
+		err = file.Close()
+		if err != nil {
+			return fmt.Errorf("error closing file `%s`: %s", absPath, err)
+		}
+
 		if debugArchive() {
 			fmt.Printf("Added archive file `%s`\n", path)
 		}
