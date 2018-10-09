@@ -48,6 +48,7 @@ func (i *Stage) Build(options *StageBuildOptions) error {
 	if containerRunErr := i.Container.Run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
+				fmt.Printf("Launched command: %s\n", strings.Join(i.Container.AllRunCommands(), " && "))
 				if err := i.IntrospectBefore(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
@@ -55,6 +56,8 @@ func (i *Stage) Build(options *StageBuildOptions) error {
 				if err := i.Commit(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
+
+				fmt.Printf("Launched command: %s\n", strings.Join(i.Container.AllRunCommands(), " && "))
 				if err := i.Introspect(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
