@@ -63,13 +63,13 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 		}
 	}
 
-	err = SwitchWorkTree(gitDir, workTreeDir, opts.Commit)
+	err = switchWorkTree(gitDir, workTreeDir, opts.Commit)
 	if err != nil {
 		return nil, fmt.Errorf("cannot reset work tree `%s` to commit `%s`: %s", workTreeDir, opts.Commit, err)
 	}
 
 	if withSubmodules {
-		err := UpdateSubmodules(gitDir, workTreeDir)
+		err := updateSubmodules(gitDir, workTreeDir)
 		if err != nil {
 			return nil, fmt.Errorf("cannot update submodules: %s", err)
 		}

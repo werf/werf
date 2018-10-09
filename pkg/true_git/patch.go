@@ -72,12 +72,12 @@ func writePatch(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, 
 	if withSubmodules {
 		var err error
 
-		err = SwitchWorkTree(gitDir, workTreeDir, opts.ToCommit)
+		err = switchWorkTree(gitDir, workTreeDir, opts.ToCommit)
 		if err != nil {
 			return nil, fmt.Errorf("cannot reset work tree `%s` to commit `%s`: %s", workTreeDir, opts.ToCommit, err)
 		}
 
-		err = UpdateSubmodules(gitDir, workTreeDir)
+		err = updateSubmodules(gitDir, workTreeDir)
 		if err != nil {
 			return nil, fmt.Errorf("cannot update submodules: %s", err)
 		}

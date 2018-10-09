@@ -5,9 +5,53 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
-func SwitchWorkTree(repoDir, workTreeDir string, commit string) error {
+func PrepareWorkTree(gitDir, workTreeDir string, commit string) error {
+	return prepareWorkTree(gitDir, workTreeDir, commit, false)
+}
+
+func PrepareWorkTreeWithSubmodules(gitDir, workTreeDir string, commit string) error {
+	return prepareWorkTree(gitDir, workTreeDir, commit, true)
+}
+
+func prepareWorkTree(gitDir, workTreeDir string, commit string, withSubmodules bool) error {
+	var err error
+
+	gitDir, err = filepath.Abs(gitDir)
+	if err != nil {
+		return fmt.Errorf("bad git dir `%s`: %s", gitDir, err)
+	}
+
+	workTreeDir, err = filepath.Abs(workTreeDir)
+	if err != nil {
+		return fmt.Errorf("bad work tree dir `%s`: %s", workTreeDir, err)
+	}
+
+	if withSubmodules {
+		err := checkSubmoduleConstraint()
+		if err != nil {
+			return err
+		}
+	}
+
+	err = switchWorkTree(gitDir, workTreeDir, commit)
+	if err != nil {
+		return fmt.Errorf("cannot reset work tree `%s` to commit `%s`: %s", workTreeDir, commit, err)
+	}
+
+	if withSubmodules {
+		err := updateSubmodules(gitDir, workTreeDir)
+		if err != nil {
+			return fmt.Errorf("cannot update submodules: %s", err)
+		}
+	}
+
+	return nil
+}
+
+func switchWorkTree(repoDir, workTreeDir string, commit string) error {
 	fmt.Printf("Switch work tree `%s` to commit `%s` ...\n", workTreeDir, commit)
 
 	var err error

@@ -29,6 +29,10 @@ func (repo *Local) CreateArchive(opts ArchiveOptions) (Archive, error) {
 	return repo.createArchive(repo.Path, repo.GitDir, repo.getWorkTreeDir(), opts)
 }
 
+func (repo *Local) Checksum(opts ChecksumOptions) (Checksum, error) {
+	return repo.checksum(repo.Path, repo.GitDir, repo.getWorkTreeDir(), opts)
+}
+
 func (repo *Local) IsCommitExists(commit string) (bool, error) {
 	return repo.isCommitExists(repo.Path, commit)
 }

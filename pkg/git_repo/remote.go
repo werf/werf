@@ -243,6 +243,14 @@ func (repo *Remote) CreateArchive(opts ArchiveOptions) (Archive, error) {
 	return repo.createArchive(repo.ClonePath, repo.ClonePath, workTreeDir, opts)
 }
 
+func (repo *Remote) Checksum(opts ChecksumOptions) (Checksum, error) {
+	workTreeDir, err := repo.getWorkTreeDir()
+	if err != nil {
+		return nil, err
+	}
+	return repo.checksum(repo.ClonePath, repo.ClonePath, workTreeDir, opts)
+}
+
 func (repo *Remote) IsCommitExists(commit string) (bool, error) {
 	return repo.isCommitExists(repo.ClonePath, commit)
 }

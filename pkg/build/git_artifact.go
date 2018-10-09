@@ -282,6 +282,31 @@ func (ga *GitArtifact) ApplyArchiveCommand(stage Stage) ([]string, error) {
 	return commands, err
 }
 
+func (ga *GitArtifact) StageDependenciesChecksum(stageName string) (string, error) {
+	depsPaths := ga.StagesDependencies[stageName]
+	if len(depsPaths) == 0 {
+		return "", nil
+	}
+
+	commit, err := ga.LatestCommit()
+	if err != nil {
+		return "", fmt.Errorf("unable to get latest commit: %s", err)
+	}
+
+	opts := git_repo.ChecksumOptions{Paths: depsPaths, Commit: commit}
+
+	checksum, err := ga.GitRepo().Checksum(opts)
+	if err != nil {
+		return "", err
+	}
+
+	for _, path := range checksum.GetNoMatchPaths() {
+		fmt.Fprintf(os.Stderr, "WARN: stage `%s` dependency path `%s` have not been found in repo `%s`\n", stageName, path, ga.GitRepo().String())
+	}
+
+	return checksum.String(), nil
+}
+
 func (ga *GitArtifact) getArchiveFileDescriptor(commit string) *ContainerFileDescriptor {
 	fileName := fmt.Sprintf("%s_%s.tar", ga.Paramshash, commit)
 

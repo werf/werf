@@ -1,12 +1,16 @@
 package git_repo
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/bmatcuk/doublestar"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/true_git"
 	git "gopkg.in/src-d/go-git.v4"
@@ -310,4 +314,202 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	})
 
 	return res, nil
+}
+
+func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOptions) (Checksum, error) {
+	repository, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	commitHash, err := newHash(opts.Commit)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit hash `%s`: %s", opts.Commit, err)
+	}
+
+	commit, err := repository.CommitObject(commitHash)
+	if err != nil {
+		return nil, fmt.Errorf("bad commit `%s`: %s", opts.Commit, err)
+	}
+
+	hasSubmodules, err := HasSubmodulesInCommit(commit)
+	if err != nil {
+		return nil, err
+	}
+
+	checksum := &ChecksumDescriptor{
+		NoMatchPaths: make([]string, 0),
+		Hash:         sha256.New(),
+	}
+
+	err = repo.withWorkTreeLock(workTreeDir, func() error {
+		if hasSubmodules {
+			err := true_git.PrepareWorkTreeWithSubmodules(gitDir, workTreeDir, opts.Commit)
+			if err != nil {
+				return err
+			}
+		} else {
+			err := true_git.PrepareWorkTree(gitDir, workTreeDir, opts.Commit)
+			if err != nil {
+				return err
+			}
+		}
+
+		paths := make([]string, 0)
+
+		for _, pathPattern := range opts.Paths {
+			res, err := getFilesByPattern(workTreeDir, pathPattern)
+			if err != nil {
+				return fmt.Errorf("error getting files by path pattern `%s`: %s", pathPattern, err)
+			}
+
+			if len(res) == 0 {
+				checksum.NoMatchPaths = append(checksum.NoMatchPaths, pathPattern)
+				if debugChecksum() {
+					fmt.Printf("Ignore checksum path pattern `%s`: no matches found\n", pathPattern)
+				}
+			}
+
+			paths = append(paths, res...)
+		}
+
+		sort.Strings(paths)
+
+		for _, path := range paths {
+			_, err = checksum.Hash.Write([]byte(path))
+			if err != nil {
+				return err
+			}
+
+			fullPath := filepath.Join(workTreeDir, path)
+
+			stat, err := os.Lstat(fullPath)
+			// file should exist after being scanned
+			if err != nil {
+				return fmt.Errorf("error accessing file `%s`: %s", fullPath, err)
+			}
+
+			_, err = checksum.Hash.Write([]byte(fmt.Sprintf("%o", stat.Mode())))
+			if err != nil {
+				return fmt.Errorf("error calculating checksum of file `%s` mode: %s", fullPath, err)
+			}
+
+			if stat.Mode().IsRegular() {
+				f, err := os.Open(fullPath)
+				if err != nil {
+					return fmt.Errorf("unable to open file `%s`: %s", fullPath, err)
+				}
+
+				_, err = io.Copy(checksum.Hash, f)
+				if err != nil {
+					return fmt.Errorf("error calculating checksum of file `%s` content: %s", fullPath, err)
+				}
+
+				err = f.Close()
+				if err != nil {
+					return fmt.Errorf("error closing file `%s`: %s", fullPath, err)
+				}
+
+				if debugChecksum() {
+					fmt.Printf("Added file `%s` to checksum with content:\n", fullPath)
+
+					f, err := os.Open(fullPath)
+					if err != nil {
+						return fmt.Errorf("unable to open file `%s`: %s", fullPath, err)
+					}
+
+					_, err = io.Copy(os.Stdout, f)
+					if err != nil {
+						return fmt.Errorf("error reading file `%s` content: %s", fullPath, err)
+					}
+
+					err = f.Close()
+					if err != nil {
+						return fmt.Errorf("error closing file `%s`: %s", fullPath, err)
+					}
+				}
+			} else if stat.Mode()&os.ModeSymlink != 0 {
+				linkname, err := os.Readlink(fullPath)
+				if err != nil {
+					return fmt.Errorf("cannot read symlink `%s`: %s", fullPath, err)
+				}
+
+				_, err = checksum.Hash.Write([]byte(linkname))
+				if err != nil {
+					return fmt.Errorf("error calculating checksum of symlink `%s`: %s", fullPath, err)
+				}
+
+				if debugChecksum() {
+					fmt.Printf("Added symlink `%s` -> `%s` to checksum\n", fullPath, linkname)
+				}
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if debugChecksum() {
+		fmt.Printf("Calculated checksum %s\n", checksum.String())
+	}
+
+	return checksum, nil
+}
+
+func getFilesByPattern(baseDir, pathPattern string) ([]string, error) {
+	fullPathPattern := filepath.Join(baseDir, pathPattern)
+
+	matches, err := doublestar.Glob(fullPathPattern)
+	if err != nil {
+		return nil, err
+	}
+
+	paths := make([]string, 0)
+
+	for _, fullPath := range matches {
+		stat, err := os.Lstat(fullPath)
+		// file should exist after glob match
+		if err != nil {
+			return nil, fmt.Errorf("error accessing file `%s`: %s", fullPath, err)
+		}
+
+		if stat.Mode().IsRegular() || (stat.Mode()&os.ModeSymlink != 0) {
+			path, err := filepath.Rel(baseDir, fullPath)
+			if err != nil {
+				return nil, fmt.Errorf("error getting relative path for `%s`: %s", fullPath, err)
+			}
+
+			paths = append(paths, path)
+		} else if stat.Mode().IsDir() {
+			err := filepath.Walk(fullPath, func(fullWalkPath string, info os.FileInfo, accessErr error) error {
+				if accessErr != nil {
+					return fmt.Errorf("error accessing file `%s`: %s", fullWalkPath, err)
+				}
+
+				if info.Mode().IsRegular() || (stat.Mode()&os.ModeSymlink != 0) {
+					path, err := filepath.Rel(baseDir, fullWalkPath)
+					if err != nil {
+						return fmt.Errorf("error getting relative path for `%s`: %s", fullWalkPath, err)
+					}
+
+					paths = append(paths, path)
+				}
+
+				return nil
+			})
+
+			if err != nil {
+				return nil, fmt.Errorf("error scanning directory `%s`: %s", fullPath, err)
+			}
+		}
+	}
+
+	return paths, nil
+}
+
+func debugChecksum() bool {
+	return os.Getenv("DAPP_DEBUG_GIT_REPO_CHECKSUM") == "1"
 }

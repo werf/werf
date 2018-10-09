@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func UpdateSubmodules(repoDir, workTreeDir string) error {
+func updateSubmodules(repoDir, workTreeDir string) error {
 	fmt.Printf("Update submodules in work tree `%s` ...\n", workTreeDir)
 
 	cmd := exec.Command(
