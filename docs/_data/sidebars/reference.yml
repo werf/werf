@@ -79,7 +79,7 @@ entries:
       - title: Конфигурация выката
         url: /reference/deploy/templates.html
 
-      - title: Использование minikube
+      - title: Using Minikube
         url: /reference/deploy/minikube.html
 
     - title: CLI
