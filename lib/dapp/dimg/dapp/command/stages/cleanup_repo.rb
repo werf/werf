@@ -8,102 +8,25 @@ module Dapp
               lock_repo(repo = option_repo) do
                 raise ::Dapp::Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
-                log_step_with_indent("#{repo} stages") do
-                  registry        = dimg_registry(repo)
-                  repo_dimgs      = repo_dimgs_images(registry)
-                  repo_dimgstages = repo_dimgstages_images(registry)
-
-                  array_hash_delete_if_by_id(repo_dimgstages, repo_dimgs) # ignoring stages with dimgs ids (v2)
-
-                  proper_repo_cache(registry, repo_dimgstages)                   if proper_cache_version?
-                  repo_dimgstages_cleanup(registry, repo_dimgs, repo_dimgstages) if proper_repo_cache?
-                  proper_repo_git_commit(registry)                               if proper_git_commit?
-                end
+                ruby2go_cleanup_command(:sync, cleanup_repo_proper_cache_version_options) if proper_cache_version?
+                repo_dimgstages_cleanup if proper_repo_cache?
               end
             end
 
-            protected
+            def repo_dimgstages_cleanup
+              ruby2go_cleanup_command(:sync, cleanup_repo_proper_repo_cache_options)
+            end
 
-            def proper_repo_cache(registry, repo_dimgstages)
-              log_proper_cache do
-                repo_dimgstages
-                  .select { |dimgstage| repo_image_dapp_cache_version_label(registry, dimgstage) != ::Dapp::BUILD_CACHE_VERSION.to_s }
-                  .each { |dimgstage| delete_repo_image(registry, dimgstage); repo_dimgstages.delete_at(repo_dimgstages.index(dimgstage)) }
+            def cleanup_repo_proper_cache_version_options
+              ruby2go_cleanup_sync_common_repo_options.merge({ mode: { sync_repo: true, only_cache_version: true } }).merge(ruby2go_cleanup_sync_cache_version_option).tap do |data|
+                break JSON.dump(data)
               end
             end
 
-            def repo_dimgstages_cleanup(registry, repo_dimgs, repo_dimgstages)
-              log_proper_repo_cache do
-                repo_dimgs.each { |dimg| except_repo_image_with_parents(registry, dimg, repo_dimgstages) }
-                repo_dimgstages.each { |dimgstage| delete_repo_image(registry, dimgstage) }
+            def cleanup_repo_proper_repo_cache_options
+              ruby2go_cleanup_sync_common_repo_options.merge({ sync_repo: true }).tap do |data|
+                break JSON.dump(data)
               end
-            end
-
-            def except_repo_image_with_parents(registry, repo_image, repo_dimgstages)
-              repo_image_dapp_artifacts_labels(registry, repo_image).each do |aiid|
-                unless (repo_artifact_image = repo_image_by_id(aiid, repo_dimgstages)).nil?
-                  except_repo_image_with_parents(registry, repo_artifact_image, repo_dimgstages)
-                end
-              end
-
-              ri = repo_image
-              loop do
-                array_hash_delete_if_by_id(repo_dimgstages, ri)
-                ri_parent_id = registry.image_parent_id(ri[:tag], ri[:dimg])
-                break if ri_parent_id.empty? || (ri = repo_image_by_id(ri_parent_id, repo_dimgstages)).nil?
-              end
-            end
-
-            def repo_image_dapp_artifacts_labels(registry, repo_image)
-              select_dapp_artifacts_ids(registry.image_config(repo_image[:tag], repo_image[:dimg])["config"]["Labels"])
-            end
-
-            def repo_image_dapp_cache_version_label(registry, repo_image)
-              registry.image_config(repo_image[:tag], repo_image[:dimg])["config"]["Labels"]['dapp-cache-version']
-            end
-
-            def repo_image_by_id(repo_image_id, repo_images)
-              repo_images.find { |repo_image| repo_image[:id] == repo_image_id }
-            end
-
-            def proper_repo_git_commit(registry)
-              log_proper_git_commit do
-                unproper_dimgstages = []
-                repo_detailed_dimgstage_images(registry).each do |dimgstage|
-                  dimgstage[:labels].each do |repo_name, commit|
-                    next if (repo = dapp_git_repositories[repo_name]).nil?
-                    unproper_dimgstages.concat(repo_detailed_image_with_children(registry, dimgstage)) unless repo.commit_exists?(commit)
-                  end
-                end
-                unproper_dimgstages.uniq.each { |dimgstage| delete_repo_image(registry, dimgstage) }
-              end
-            end
-
-            def repo_detailed_dimgstage_images(registry)
-              @repo_dapp_dimgstage_images_detailed ||= begin
-                repo_dimgstages_images(registry).each do |dimgstage|
-                  image_config = registry.image_config(dimgstage[:tag], nil)
-                  dimgstage[:parent] = image_config["container_config"]["Image"]
-                  dimgstage[:labels] = image_config["config"]["Labels"]
-                end
-              end
-            end
-
-            def repo_detailed_image_with_children(registry, image)
-              children        = []
-              detailed_images = [image]
-
-              loop do
-                children.concat(detailed_images)
-                detailed_images.map! do |repo_image|
-                  repo_detailed_dimgstage_images(registry)
-                    .select { |dimgstage| dimgstage[:parent] == repo_image[:id] }
-                end
-                detailed_images.flatten!
-                break if detailed_images.empty?
-              end
-
-              children
             end
           end
         end

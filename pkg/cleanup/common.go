@@ -15,6 +15,29 @@ type CommonOptions struct {
 	Force  bool `json:"force"`
 }
 
+func dappDimgstagesFlushByCacheVersion(filterSet filters.Args, cacheVersion string, options CommonOptions) error {
+	dappCacheVersionLabel := fmt.Sprintf("dapp-cache-version=%s", cacheVersion)
+	filterSet.Add("label", dappCacheVersionLabel)
+	images, err := dappImagesByFilterSet(filters.NewArgs())
+	if err != nil {
+		return err
+	}
+
+	var imagesToDelete []types.ImageSummary
+	for _, image := range images {
+		version, ok := image.Labels["dapp-cache-version"]
+		if !ok || version != cacheVersion {
+			imagesToDelete = append(imagesToDelete, image)
+		}
+	}
+
+	if err := imagesRemove(imagesToDelete, options); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func dappImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
 	images, err := dappImagesByFilterSet(filterSet)
 	if err != nil {
@@ -90,7 +113,7 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 	containerRemoveOptions := types.ContainerRemoveOptions{Force: options.Force}
 	for _, container := range containers {
 		if options.DryRun {
-			fmt.Println(container.ID) // TODO
+			fmt.Println(container.ID)
 			fmt.Println()
 		} else {
 			if err := docker.ContainerRemove(container.ID, containerRemoveOptions); err != nil {
@@ -105,7 +128,7 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 func imageReferencesRemove(references []string, options CommonOptions) error {
 	if len(references) != 0 {
 		if options.DryRun {
-			fmt.Printf(strings.Join(references, "\n")) // TODO
+			fmt.Printf(strings.Join(references, "\n"))
 			fmt.Println()
 		} else {
 			var args []string

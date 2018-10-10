@@ -15,9 +15,11 @@ module Dapp
                   dimg_names: dimgs_names,
                   dry_run: dry_run?
                 },
-                with_dimgs: false,
-                with_stages: true,
-                only_repo: true,
+                mode: {
+                  with_dimgs: false,
+                  with_stages: true,
+                  only_repo: true,
+                },
               }.tap do |json|
                 break JSON.dump(json)
               end

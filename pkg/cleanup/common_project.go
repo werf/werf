@@ -11,21 +11,30 @@ type CommonProjectOptions struct {
 	CommonOptions CommonOptions `json:"common_options"`
 }
 
-func dappProjectCleanup(options CommonProjectOptions) error {
-	filterSet := filters.NewArgs()
-	filterSet.Add("label", dappLabel(options))
+func projectCleanup(options CommonProjectOptions) error {
+	filterSet := projectDimgstageFilterSet(options)
 	filterSet.Add("dangling", "true")
 	if err := dappImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
 		return err
 	}
 
-	filterSet = filters.NewArgs()
-	filterSet.Add("label", dappLabel(options))
-	if err := dappContainersFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
+	if err := dappContainersFlushByFilterSet(projectFilterSet(options), options.CommonOptions); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func projectDimgstageFilterSet(options CommonProjectOptions) filters.Args {
+	filterSet := projectFilterSet(options)
+	filterSet.Add("reference", stageCacheReference(options))
+	return filterSet
+}
+
+func projectFilterSet(options CommonProjectOptions) filters.Args {
+	filterSet := filters.NewArgs()
+	filterSet.Add("label", dappLabel(options))
+	return filterSet
 }
 
 func dappLabel(options CommonProjectOptions) string {

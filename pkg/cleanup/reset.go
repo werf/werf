@@ -2,7 +2,7 @@ package cleanup
 
 import (
 	"fmt"
-	"github.com/docker/docker/api/types"
+
 	"github.com/docker/docker/api/types/filters"
 )
 
@@ -61,23 +61,7 @@ func resetDevModeCache(options ResetOptions) error {
 }
 
 func resetCacheVersion(options ResetOptions) error {
-	dappCacheVersionLabel := fmt.Sprintf("dapp-cache-version=%s", options.CacheVersion)
-	filterSet := filters.NewArgs()
-	filterSet.Add("label", dappCacheVersionLabel)
-	images, err := dappImagesByFilterSet(filters.NewArgs())
-	if err != nil {
-		return err
-	}
-
-	var imagesToDelete []types.ImageSummary
-	for _, image := range images {
-		version, ok := image.Labels["dapp-cache-version"]
-		if !ok || version != options.CacheVersion {
-			imagesToDelete = append(imagesToDelete, image)
-		}
-	}
-
-	if err := imagesRemove(imagesToDelete, options.CommonOptions); err != nil {
+	if err := dappDimgstagesFlushByCacheVersion(filters.NewArgs(), options.CacheVersion, options.CommonOptions); err != nil {
 		return err
 	}
 

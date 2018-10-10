@@ -16,9 +16,11 @@ module Dapp
                   force: true
                 }
               },
-              with_dimgs: true,
-              with_stages: with_stages?,
-              only_repo: false,
+              mode: {
+                with_dimgs: true,
+                with_stages: with_stages?,
+                only_repo: false,
+              },
             }.tap do |json|
               break JSON.dump(json)
             end
