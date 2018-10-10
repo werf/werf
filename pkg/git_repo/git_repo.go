@@ -1,10 +1,5 @@
 package git_repo
 
-type FilterOptions struct {
-	BasePath                   string
-	IncludePaths, ExcludePaths []string
-}
-
 type PatchOptions struct {
 	FilterOptions
 	FromCommit, ToCommit string
@@ -13,6 +8,16 @@ type PatchOptions struct {
 type ArchiveOptions struct {
 	FilterOptions
 	Commit string
+}
+
+type ChecksumOptions struct {
+	Paths  []string
+	Commit string
+}
+
+type FilterOptions struct {
+	BasePath                   string
+	IncludePaths, ExcludePaths []string
 }
 
 type ArchiveType string
@@ -32,8 +37,7 @@ type GitRepo interface {
 
 	CreatePatch(PatchOptions) (Patch, error)
 	CreateArchive(ArchiveOptions) (Archive, error)
-
-	// ArchiveChecksum(ArchiveOptions) (string, error) // TODO
+	Checksum(ChecksumOptions) (Checksum, error)
 }
 
 type Patch interface {
@@ -48,4 +52,9 @@ type Archive interface {
 	GetFilePath() string
 	GetType() ArchiveType
 	IsEmpty() bool
+}
+
+type Checksum interface {
+	String() string
+	GetNoMatchPaths() []string
 }

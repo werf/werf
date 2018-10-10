@@ -100,6 +100,23 @@ func main() {
 
 			return res, resErr
 
+		case "StageDependenciesChecksum":
+			stageName, hasKey := args["StageName"]
+			if !hasKey {
+				return nil, fmt.Errorf("StageName argument required!")
+			}
+			resultValue, resErr := ga.StageDependenciesChecksum(stageName.(string))
+
+			res["result"] = resultValue
+
+			state, err = json.Marshal(ga)
+			if err != nil {
+				return nil, err
+			}
+			res["GitArtifact"] = string(state)
+
+			return res, resErr
+
 		default:
 			return nil, fmt.Errorf("unknown method \"%s\"", method)
 		}

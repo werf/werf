@@ -307,7 +307,29 @@ module Dapp
         end
       end
 
+      def calculate_stage_dependencies_checksum(stage)
+        res = repo.dapp.ruby2go_git_artifact(
+          "GitArtifact" => JSON.dump(get_ruby2go_state_hash),
+          "method" => "StageDependenciesChecksum",
+          "StageName" => stage.name,
+        )
+
+        raise res["error"] if res["error"]
+
+        self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
+
+        result = res["data"]["result"]
+        return [] if result == ""
+        return result
+      end
+
       def stage_dependencies_checksum(stage)
+        stage_dependencies_key = [stage.name, commit]
+        @stage_dependencies_checksums ||= {}
+        @stage_dependencies_checksums[stage_dependencies_key] ||= calculate_stage_dependencies_checksum(stage)
+      end
+
+      def stage_dependencies_checksum_old(stage)
         return [] if (stage_dependencies = stages_dependencies[stage.name]).empty?
 
         paths = base_paths(stage_dependencies, true)
