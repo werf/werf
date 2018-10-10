@@ -1,27 +1,27 @@
 ---
-title: Конфигурация выката
+title: Release configuration
 sidebar: reference
 permalink: reference/deploy/templates.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
-Dapp при выкате вызывает [helm](https://helm.sh/), который использует чарт из папки `.helm` в корне проекта для конфигурации выката. Helm ищет YAML описания для объектов kubernetes в папке `templates` чарта и обрабатывает каждый файл с помощью механизма рендеринга шаблонов [GO](https://golang.org/). Dapp не обрабатывает чарты и шаблоны чарта сам, а использует для этого helm.
+In the course of the release, dapp calls helm that uses the chart in the `.helm` folder in the project root for release configuration. Helm searches for YAML descriptions for kubernetes objects in the chart's `templates` folder and processes each file using the GO template rendering engine. Dapp does not directly process charts and templates. It uses helm for this.
 
-> Ссылки на дополнительную информацию:
-- [Язык описания GO-шаблонов](https://godoc.org/text/template)
-- [Справочник по Sprig](https://godoc.org/github.com/Masterminds/sprig) - библиотека, которую использует helm для рендеринга шаблонов GO
-- [Дополнительные функции](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks) добавленные в helm для шаблонов, такие как `include` и `required`
+For more information:
+* [GO templates description language](https://godoc.org/text/template)
+* [Sprig reference](https://godoc.org/github.com/Masterminds/sprig) – a library that helm uses for GO template rendering
+* [Advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks) added to helm for templates like include and required
 
-Создать структуру чарта можно с помощью команды `dapp kube chart create`, выполнив ее в корневой папке проекта. В результате выполнения будет создана папка `.helm` в которой будет создан чарт с примерами описания объектов kubernetes.
+You can create a chart structure using the `dapp kube chart create` command, applying it from the project root directory. As a result, the `.helm` folder is created with the chart containing a sample description of kubernetes objects.
 
-## Передача параметров
+## Passing parameters
 
-При выкате приложения, существует несколько способов передачи параметров:
-- использование файлов `values.yaml`, `secret-values.yaml`. Оба варианта идентичны с точки зрения доступа, разница только в способе хранения - в файле `secret-values.yaml` значение переменных зашифрованы. Далее по тексту на эти различия не будет обращаться внимание;
-- использование параметра --set в командах `dapp kube deploy` (см. раздел [Управление выкатом](deploy_for_kube.html));
-- использование переменных окружения.
+In the course of an application release, there is many ways of passing parameters:
+* using the `values.yaml` or `secret-values.yaml` files. Both methods are identical for access. The only difference is in the storage method; values of variables are encrypted in the `secret-values.yaml` file. Further, in the text, this difference will be ignored.
+* using the --set parameter in `dapp kube deploy` commands (see [section](deploy_for_kube.html))
+* using environment variables.
 
-В файлах values.yaml и secret-values.yaml содержатся описание переменных, которые будут доступны в шаблонах. Например, есть такой values.yaml:
+The `values.yaml` and `secret-values.yaml` files contain a description of the variables that are available in the templates. For instance, we have a `values.yaml` file:
 
 ```yaml
 replicas:
@@ -41,7 +41,16 @@ db:
     stage: stagedb
 ```
 
-Тогда, обратиться к соответствующим переменным в шаблоне можно через конструкцию подобной - {% raw %}`{{ .Values.db.username.production }}`{% endraw %}.
+Then you can address the appropriate variables in the template using a construction like – {% raw %}`{{ .Values.db.username.production }}`{% endraw %}.
+
+Dapp sets and uses many variables that are also available in the templates. You can retrieve their values using the `dapp kube value get VALUE_KEY` command.
+
+For instance, you can perform the following actions to retrieve values for all variables:
+```
+dapp kube value get .
+```
+
+Тогда, обратиться к соответствующим переменным в шаблоне можно через конструкцию подобной – {% raw %}`{{ .Values.db.username.production }}`{% endraw %}.
 
 Dapp устанавливает и использует ряд переменных, также доступных в шаблонах. Получить их значения можно с помощью команды `dapp kube value get VALUE_KEY`.
 
@@ -50,53 +59,53 @@ Dapp устанавливает и использует ряд переменн�
 dapp kube value get .
 ```
 
-## Особенности написания шаблонов чарта
+## Features of chart template creation
 
-Шаблоны чарта размещаются в директории `templates` в виде YAML-файлов.
+Chart templates are published to the `templates` directory as YAML files.
 
-Dapp предоставляет для использования следующие дополнительные шаблоны:
-- `dapp_container_image`
-- `dapp_container_env`
+Dapp provides the following additional templates to be used:
+* `dapp_container_image`
+* `dapp_container_env`
 
-### Шаблон `dapp_container_image`
+### The `dapp_container_image` template
 
-Пришел на смену используемому в старых версиях dapp шаблону `dimg`. Шаблон генерирует ключи `image` и `imagePullPolicy` для контейнера пода.
+This replaced the dapp `dimg` template that was previously used in outdated versions. The template generates `image` and `imagePullPolicy` keys for the pod container.
 
-Особенностью шаблона является то, что `imagePullPolicy` генерируется в зависимости от значения `.Values.global.dapp.is_branch` - в случае использования тегов не будет ставиться `imagePullPolicy: Always`.
+A specific feature of the template is that `imagePullPolicy` is generated based on the `.Values.global.dapp.is_branch` value, if tags are used, `imagePullPolicy: Always` is not set.
 
-Шаблон может вернуть несколько строк, поэтому обязательно его использование с конструкцией indent.
+The template may return multiple strings, which is why it must be used together with the `indent` construction.
 
-Логика генерации ключа `imagePullPolicy`:
-* Значение `.Values.global.dapp.is_branch=true` означает, что происходит деплой образа по логике "latest" для ветки.
-    * В этом случае образ по соответствующему docker-тегу нужно обновлять через docker pull, даже если он уже существует, чтобы получить актуальную "latest" версию соответствущего тега.
-    * В этом случае - `imagePullPolicy=Always`.
-* Значение `.Values.global.dapp.is_branch=false` означает, что происходит деплой тега или отдельного коммита образа.
-    * В этом случае образ по соответствующему docker-тегу не нужно обновлять через docker pull, если он уже существует.
-    * В этом случае `imagePullPolicy` не указывается, что соответствует значению по умолчанию принятому в kubernetes на данный момент: `imagePullPolicy=IfNotPresent`.
+The logic of generating the `imagePullPolicy` key:
+* The `.Values.global.dapp.is_branch=true` value means that an image is being deployed based on the `latest` logic for a branch.
+  * In this case, the image for an appropriate docker tag must be updated through docker pull, even if it already exists, to get the current `latest` version of the respective tag.
+  * In this case – `imagePullPolicy=Always`.
+* The `.Values.global.dapp.is_branch=false` value means that a tag or a specific image commit is being deployed.
+  * In this case, the image for an appropriate docker tag doesn't need to be updated through docker pull if it already exists.
+  * In this case, `imagePullPolicy` is not specified, which is consistent with the default value currently adopted in kubernetes: `imagePullPolicy=IfNotPresent`.
 
-Пример использования шаблона, при наличии нескольких dimg в dappfile:
+An example of using a template in case multiple dimgs exist in the dappfile:
 * `tuple <dimg-name> . | include "dapp_container_image" | indent <N-spaces>`
 
-Пример использования шаблона, при наличии только одного dimg без имени в dappfile:
+An example of using a template in case a single unnamed dimg exists in dappfile:
 * `tuple . | include "dapp_container_image" | indent <N-spaces>`
-* `include "dapp_container_image" . | indent <N-spaces>`  (дополнительная упрощенная форма записи)
+* `include "dapp_container_image" . | indent <N-spaces>` (additional simplified entry format)
 
-### Шаблон `dapp_container_env`
+### The `dapp_container_env` template
 
-Позволяет оптимизировать работу выката, если образ не меняется. Генерирует блок с переменной окружения `DOCKER_IMAGE_ID` для контейнера пода, но только если `.Values.global.dapp.is_branch=true`, т.к. в этом случае образ по соответствующему docker-тегу мог обновится, но его имя осталось прежним. В переменной `DOCKER_IMAGE_ID` будет новый id docker образа, что заставит kubernetes обновить ресурс. Шаблон может вернуть несколько строк, поэтому обязательно его использование с indent.
+Enables streamlining the release process if the image remains unchanged. Generates a block with the `DOCKER_IMAGE_ID` environment variable for the pod container, but only if `.Values.global.dapp.is_branch=true`, because in this case the image for an appropriate docker tag might have been updated through its name remained unchanged. The `DOCKER_IMAGE_ID` variable contains a new id docker for an image, which forces kubernetes to update an asset. The template may return multiple strings, which is why it must be used together with `indent`.
 
-
-Пример использования шаблона, при наличии нескольких dimg в dappfile:
+An example of using a template in case multiple dimgs exist in the dappfile:
 * `tuple <dimg-name> . | include "dapp_container_env" | indent <N-spaces>`
 
-Пример использования шаблона, при наличии только одного dimg без имени в dappfile:
+An example of using a template in case a single unnamed dimg exists in dappfile:
 * `tuple . | include "dapp_container_env" | indent <N-spaces>`
-* `include "dapp_container_env" . | indent <N-spaces>`  (дополнительная упрощенная форма записи)
+* `include "dapp_container_env" . | indent <N-spaces>` (additional simplified entry format)
 
-## Пример конфигурации
-Пример описания конфигурации приложения, состоящего из контейнеров frontend, backend, db, демонстрирующий использование шаблонов dapp.
+## Example of configuration
 
-> В примере рассматривается только сутевая часть описания конфигурации. Для запуска приложения, в зависимости от конфигурации вашего кластера, дополнительно может потребоваться создание Ingress-ресурса, создание объекта Secret (если вы работаете с приватным репозиторием), создание объекта Service, обеспечение маршрутизации трафика и т.д.
+A sample description of an application configuration that comprises frontend, backend, and db containers representing dapp template use.
+
+> This example covers only the crucial aspect of the configuration description. Based on your cluster configuration, to launch an application you might additionally be required to create such resources as an Ingress, a Secret (if you're working with a private repository), or a Service, or ensuring traffic routing, and so on.
 
 Chart.yaml
 ```
@@ -172,7 +181,7 @@ spec:
 ```
 {% endraw %}
 
-Результат:
+Result:
 ```
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -226,4 +235,4 @@ spec:
 
 ```
 
-Упомянутое в конфигурации `.Chart.Name` — это значение ключа `name` из Chart.yaml, а значение `.Values.replicas.production` - взято из values.yaml.
+The `.Chart.Name` mentioned in the configuration is a `name` key value from `Chart.yaml`, and the `.Values.replicas.production` value is retrieved from `values.yaml`.
