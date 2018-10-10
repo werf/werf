@@ -76,10 +76,10 @@ entries:
       - title: Working with secrets
         url: /reference/deploy/secrets.html
 
-      - title: Конфигурация выката
+      - title: Release configuration
         url: /reference/deploy/templates.html
 
-      - title: Использование minikube
+      - title: Using Minikube
         url: /reference/deploy/minikube.html
 
     - title: CLI

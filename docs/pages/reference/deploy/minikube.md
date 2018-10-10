@@ -1,16 +1,15 @@
 ---
-title: Использование minikube
+title: Using Minikube
 sidebar: reference
 permalink: reference/deploy/minikube.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Чтобы использовать dapp для деплоя образов в minikube:
-
-* Собрать требуемые образы на хост-машине.
-* Поднять minikube с docker-registry и proxy на хост-машине, см. [`dapp kube minikube setup`](#dapp-kube-minikube-setup).
-* Загрузить собранные образы в docker-registry, указывая `:minikube` в качестве параметра `REPO`, через [`dapp dimg push :minikube`]({{ site.baseurl }}/reference/cli/dimg_push.html).
-* Применить конфигурацию kubernetes, указывая `:minikube` в качестве параметра `REPO`, через [`dapp kube deploy :minikube`]({{ site.baseurl }}/reference/cli/kube_deploy.html).
+To use dapp for deployment of images in minikube:
+* Collect required images from the host machine.
+* Deploy minikube with docker-registry and proxy on the host machine, see [`dapp kube minikube setup`](#dapp-kube-minikube-setup).
+* Upload collected images to docker-registry and specify `:minikube` as the `REPO` parameter through [`dapp dimg push :minikube`]({{ site.baseurl }}/reference/cli/dimg_push.html).
+* Apply the kubernetes configuration and specify `:minikube` as the `REPO` parameter through [`dapp kube deploy :minikube`]({{ site.baseurl }}/reference/cli/kube_deploy.html).
 
 ### dapp kube minikube setup
 
@@ -18,10 +17,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 dapp kube minikube setup
 ```
 
-* Запускает minikube, принудительно перезапускает, если уже был запущен.
-* Дожидается готовности кластера kubernetes в minikube.
-* Запускает docker registry в minikube.
-* Запускает в системе proxy для docker-registry по адресу `localhost:5000`.
-  * Proxy пробрасывает прямо в pod docker-registry внутри minikube.
-    * Как следствие при падении pod-а команду setup надо запускать заново.
-
+* Launches minikube, forces restart if it's already launched.
+* Awaits kubernetes cluster readiness in minikube.
+* Launches docker registry in minikube.
+* Launches proxy for docker-registry at the system address: `localhost:5000`.
+  * Proxy forwards directly to pod docker-registry inside minikube.
+    * As a result, if pod fails, the setup command needs to be restarted.
