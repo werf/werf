@@ -24,11 +24,7 @@ module Dapp
                   cleanup_repo_by_policies(registry, actual_detailed_dimgs_images_by_scheme(registry))
                 end
 
-                begin
-                  repo_dimgs      = repo_dimgs_images(registry)
-                  repo_dimgstages = repo_dimgstages_images(registry)
-                  repo_dimgstages_cleanup(registry, repo_dimgs, repo_dimgstages)
-                end if with_stages?
+                repo_dimgstages_cleanup(registry, repo_dimgs, repo_dimgstages) if with_stages?
               end
             end
           end

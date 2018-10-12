@@ -76,25 +76,6 @@ module Dapp
               end
             end
 
-            def select_dapp_artifacts_ids(labels)
-              labels.select { |k, _v| k.start_with?('dapp-artifact') }.values
-            end
-
-            def dapp_git_repositories
-              @dapp_git_repositories ||= begin
-                {}.tap do |repositories|
-                  dimgs = build_configs.map { |config| dimg(config: config, ignore_signature_auto_calculation: true) }
-                  dimgs.each do |dimg|
-                    [dimg, dimg.artifacts]
-                      .flatten
-                      .map(&:git_artifacts)
-                      .flatten
-                      .map { |git_artifact| repositories[dimgstage_g_a_commit_label(git_artifact.paramshash)] = git_artifact.repo }
-                  end
-                end
-              end
-            end
-
             def proper_repo_cache?
               !!options[:proper_repo_cache]
             end

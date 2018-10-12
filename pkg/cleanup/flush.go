@@ -11,59 +11,24 @@ import (
 type FlushOptions struct {
 	CommonRepoOptions    CommonRepoOptions    `json:"common_repo_options"`
 	CommonProjectOptions CommonProjectOptions `json:"common_project_options"`
-	WithStages           bool                 `json:"with_stages"`
-	WithDimgs            bool                 `json:"with_dimgs"`
-	OnlyRepo             bool                 `json:"only_repo"`
+	Mode                 FlushModeOptions     `json:"mode"`
+}
+
+type FlushModeOptions struct {
+	WithStages bool `json:"with_stages"`
+	WithDimgs  bool `json:"with_dimgs"`
+	OnlyRepo   bool `json:"only_repo"`
 }
 
 func Flush(options FlushOptions) error {
-	var err error
-
 	if options.CommonRepoOptions.Repository != "" {
-		err = lock.WithLock(options.CommonRepoOptions.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-			if options.WithDimgs {
-				if err := repoDappDimgsFlush(options.CommonRepoOptions); err != nil {
-					return err
-				}
-			}
-
-			if options.WithStages {
-				if err := repoDappDimgstagesFlush(options.CommonRepoOptions); err != nil {
-					return err
-				}
-			}
-
-			return nil
-		})
-
-		if err != nil {
+		if err := repoImagesFlush(options); err != nil {
 			return err
 		}
 	}
 
-	if !options.OnlyRepo {
-		projectImagesLockName := fmt.Sprintf("%s.images", options.CommonProjectOptions.ProjectName)
-		err = lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-			if options.WithDimgs {
-				if err := dappProjectDimgsFlush(options.CommonProjectOptions); err != nil {
-					return err
-				}
-			}
-
-			if options.WithStages {
-				if err := dappProjectDimgstagesFlush(options.CommonProjectOptions); err != nil {
-					return err
-				}
-			}
-
-			if err := dappProjectCleanup(options.CommonProjectOptions); err != nil {
-				return err
-			}
-
-			return nil
-		})
-
-		if err != nil {
+	if !options.Mode.OnlyRepo {
+		if err := projectImagesFlush(options); err != nil {
 			return err
 		}
 	}
@@ -71,7 +36,60 @@ func Flush(options FlushOptions) error {
 	return nil
 }
 
-func repoDappDimgsFlush(options CommonRepoOptions) error {
+func repoImagesFlush(options FlushOptions) error {
+	err := lock.WithLock(options.CommonRepoOptions.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+		if options.Mode.WithDimgs {
+			if err := repoDimgsFlush(options.CommonRepoOptions); err != nil {
+				return err
+			}
+		}
+
+		if options.Mode.WithStages {
+			if err := repoDimgstagesFlush(options.CommonRepoOptions); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func projectImagesFlush(options FlushOptions) error {
+	projectImagesLockName := fmt.Sprintf("%s.images", options.CommonProjectOptions.ProjectName)
+	err := lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+		if options.Mode.WithDimgs {
+			if err := projectDimgsFlush(options.CommonProjectOptions); err != nil {
+				return err
+			}
+		}
+
+		if options.Mode.WithStages {
+			if err := projectDimgstagesFlush(options.CommonProjectOptions); err != nil {
+				return err
+			}
+		}
+
+		if err := projectCleanup(options.CommonProjectOptions); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func repoDimgsFlush(options CommonRepoOptions) error {
 	dimgImages, err := repoDimgImages(options)
 	if err != nil {
 		return err
@@ -85,7 +103,7 @@ func repoDappDimgsFlush(options CommonRepoOptions) error {
 	return nil
 }
 
-func repoDappDimgstagesFlush(options CommonRepoOptions) error {
+func repoDimgstagesFlush(options CommonRepoOptions) error {
 	dimgstageImages, err := repoDimgstageImages(options)
 	if err != nil {
 		return err
@@ -99,7 +117,7 @@ func repoDappDimgstagesFlush(options CommonRepoOptions) error {
 	return nil
 }
 
-func dappProjectDimgsFlush(options CommonProjectOptions) error {
+func projectDimgsFlush(options CommonProjectOptions) error {
 	filterSet := filters.NewArgs()
 	filterSet.Add("label", "dapp-dimg=true")
 	if err := dappImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
@@ -109,11 +127,8 @@ func dappProjectDimgsFlush(options CommonProjectOptions) error {
 	return nil
 }
 
-func dappProjectDimgstagesFlush(options CommonProjectOptions) error {
-	filterSet := filters.NewArgs()
-	filterSet.Add("label", dappLabel(options))
-	filterSet.Add("reference", stageCacheReference(options))
-	if err := dappImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
+func projectDimgstagesFlush(options CommonProjectOptions) error {
+	if err := dappImagesFlushByFilterSet(projectDimgstageFilterSet(options), options.CommonOptions); err != nil {
 		return err
 	}
 
