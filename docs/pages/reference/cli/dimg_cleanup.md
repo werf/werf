@@ -61,4 +61,4 @@ dapp dimg cleanup repo [options] [DIMG ...] REPO
 Соответствует вызову команды `dapp dimg stages cleanup local` с опцией `--improper-repo-cache`.
 
 #### `--without-kube`
-Отключает проверку использования образов в кластерах. См. подробнее [о работе очистки]({{ site.baseurl }}/reference/registry/cleanup.html#автоматическая-очистка-по-политикам).
+Отключает проверку использования образов в кластерах. См. подробнее [о работе очистки]({{ site.baseurl }}/reference/registry/cleaning.html).
