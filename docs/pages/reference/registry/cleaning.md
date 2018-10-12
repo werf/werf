@@ -2,219 +2,154 @@
 title: Cleaning
 sidebar: reference
 permalink: reference/registry/cleaning.html
-author: Artem Kladov <artem.kladov@flant.com>
+author: Artem Kladov <artem.kladov@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Одни из основных преимуществ использования dapp, - это возможности применения разноуровневого эффективного кэширования и инструментов очистки docker registry. О возможностях кэширования вы можете узнать в соответствующем [разделе]({{ site.baseurl }}/not_used/cache_for_advanced_build.html), а далее будут рассмотрены способы обеспечения очистки docker registry.
+Build and push processes create sets of docker layers but don't delete them. As a result, local images storage and docker registry instantly grows and consume more and more space. Interrupted build process leaves stale images. When git branch has been deleted, a set of images which was built for this branch also leave in a docker registry. It is necessary to clean a docker registry periodically. Otherwise, it will be filled with **stale images**.
 
-Правильное использование инструментов очистки позволит сократить объем занимаемого docker registry пространства, забыть о рутинных операциях по очистке вашего docker registry в процессе разработки и эксплуатации приложений.
+## Methods of cleaning
 
-Под очисткой подразумевается очистка используемых в dapp кэшей, а также локального и удаленного docker registry.
+Dapp has an efficient multi-level images cleaning. There are two methods of images cleaning in dapp:
 
-Периодическая очистка docker registry - необходима, т.к. процессе сборки образов приложений появляются неактуальные docker-образы, которые будут занимать место в registry, но уже не понадобятся. Такие образы могут возникать например в случае, если ветка/тег были удалены, процесс сборки был внезапно остановлен и т.п.
+1. Cleaning by policies
+2. Manual cleaning
 
-Процесс сборки и публикации образа в распределенном окружении включает в себя следующие этапы:
+### Cleaning by policies
 
-* Скачивание кэша сборки приложения на сборочном сервере (pull из docker registry).
-* Сборка образа на сборочном сервере.
-* Выкат образа приложения вместе со сборочным кэшем в registry (push в docker registry).
+Cleaning by policies helps to organize automatic periodical cleaning of stale images. It implies regular gradual cleaning of stale images according to cleaning policies. This method is the safest way of cleaning because it doesn't affect your production environment.
 
-**Важно понимать**, что локальные образы на сборочном сервере синхронизируются с образами в registry. Registry является первичным источником информации о том, какие образы являются лишними.
+The cleaning by policies method includes the steps in the following order:
+1. [**Garbage collection**](#garbage-collection) executes a cleaning docker registry from stale images according to the cleaning policies.
+2. [**Local storage synchronization**](#local-storage-synchronization) performs syncing local docker image storage with docker registry.
 
-## Очистка неактуального кэша приложений
+A docker registry is the primary source of information about actual and stale images. Therefore, it is essential to clean docker registry on the first step and only then synchronize the content of local storage with the docker registry.
 
-Набор связанных с dapp приложением образов в registry состоит из:
+### Manual cleaning
 
-* Конечных образов приложений, о схеме их именования см подробнее в разделе [registry]({{ site.baseurl }}/reference/registry/push_and_pull.html).
-  * При этом на сборочной машине такие образы не создаются, т.к. не нужны.
-* Образов сборочного кэша, связанных с конечными образами приложений.
+Manual cleaning method assumes one-step cleaning with the complete removal of images from local docker image storage or docker registry. This method doesn't check whether the image used by kubernetes or not. Manual cleaning is not recommended for automatical using (use cleaning by policies instead). In general it suitable for forced images removal.
 
-Пользователь dapp управляет очисткой кэша удаляя конечные образы приложения из registry. Для удаления конкретных конечных образов приложения не существует специальных команд в dapp — пользователь делает это самостоятельно.
+The manual cleaning method includes the following options:
 
-Удаление же связанных с этими конечными образами приложения образов кэша сборки — по сути синхронизация сборочного кэша с реально существующими версиями приложения — происходит с помощью использования команд dapp.
+* [**Flush**](#flush). Deleting images of the **current project** in local storage or docker registry.
+* [**Reset**](#reset). Deleting images of **all dapp projects** in local storage.
 
-* `dapp dimg stages cleanup local --improper-repo-cache REPO` удаляет те локальные образы, которые не связаны ни с одним образом конечного приложения из registry `REPO`.
-* `dapp dimg stages cleanup repo --improper-repo-cache REPO` удаляет то же самое, но уже в самом registry `REPO`.
+## Garbage collection
 
-*Примечание*. Для обеих команд первичным источником информации о существующих конечных образах приложения является registry. Как следствие, запуск `dapp dimg stages cleanup local --improper-repo-cache` до публикации собранного приложения в registry удалит весь локальных кэш (т.к. registry пуст).
+Garbage collection is a dapp ability to automate cleaning of a docker registry. It works according to special rules called **garbage collection policies**. These policies determine which images to delete and which not to.
 
-## Очистка образов от старых версий сборщика dapp
+### Garbage collection policies
 
-Docker-образы, которые создает dapp могут стать неактуальными после обновления версии dapp. Но такое происходит только в случае, если в dapp произошли существенные изменения в логике сборки и требуется пересборка уже собранных ранее образов. От пользователя требуется периодически запускать специальные команды очистки таких образов.
+* **by branches:**
+    * Every new commit updates the image for the git branch (there is the only docker tag for the git branch).
+    * Dapp deletes the image from the docker registry when the corresponding git branch doesn't exist. The image always remains, while the corresponding git branch exists.
+    * The policy covers images tagged by dapp with `--tag-ci` or `--tag-branch` tags.
+* **by commits:**
+    * Dapp deletes the image from the docker registry when the corresponding git commit doesn't exist.
+    * For the remaining images, the following policies apply:
+       * `GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY`. Deleting images uploaded in docker registry more than **30 days**. 30 days is a default period. To change the default period set `GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY` environment variable in seconds.
+       * `GIT_COMMITS_LIMIT_POLICY`. Deleting all images in docker registry except **last 50 images**. 50 images is a default value. To change the default value set count in  `GIT_COMMITS_LIMIT_POLICY` environment variables.
+    * The policy covers images tagged by dapp with `--tag-commit` tag.
+* **by tags:**
+    * Dapp deletes the image from the docker registry when the corresponding git tag doesn't exist.
+    * For the remaining images, the following policies apply:
+      * `EXPIRY_DATE_PERIOD_POLICY`. Deleting images uploaded in docker registry more than **30 days**. 30 days is a default period. To change the default period set `EXPIRY_DATE_PERIOD_POLICY` environment variable in seconds;
+      * `GIT_TAGS_LIMIT_POLICY`.  Deleting all images in docker registry except **last 10 images**. 10 images is a default value. To change the default value set count in `GIT_TAGS_LIMIT_POLICY`.
+    * The policy covers images tagged by dapp with `--tag-ci` tag.
 
-Аналогично, предыдущему разделу, есть 2 команды для удаления локальных образов и образов в registry.
+**Pay attention,** that garbage collection affects only images built by dapp **and** images tagged by dapp with one of the `--tag-ci`, `--tag-branch` or `--tag-commit` options. Other images in the docker registry stay as they are.
 
-* `dapp dimg stages cleanup local --improper-cache-version` удалит локальные docker-образы более не актуальные для текущей версии dapp.
-* `dapp dimg stages cleanup repo --improper-cache-version REPO` удалит docker-образы более не актуальные для текущей версии dapp из registry `REPO`.
+### Whitelist of images
 
-## Очистка некорректного сборочного кэша из-за использования git rebase
+The image always remains in docker registry while exists kubernetes object which uses the image. In kubernetes cluster dapp scans the following kinds of objects: `pod`, `deployment`, `replicaset`, `statefulset`, `daemonset`, `job`, `cronjob`, `replicationcontroller`.
 
-Допустим, пользователь собрал для приложения, использующего git-артефакт некоторый образ. А затем, для git-артефакта был сделан rebase, была изменена история коммитов и использовавшийся в кэше сборки идентификатор коммита перестал существовать в git-репозитории. Попытка сборки при наличии такого кэша приведет к ошибкам.
+The functionality can be disabled by option `--without-kube`.
 
-Поэтому существуют специальные команды удаления кэша, который более не валиден из-за изменений в связанных git-репозиториях:
+#### Connecting to kubernetes
 
-* `dapp dimg stages cleanup local --improper-git-commit` — локально;
-* `dapp dimg stages cleanup repo --improper-git-commit REPO` — в registry `REPO`.
+Dapp gets information about kubernetes clusters and how to connect to them in the following order:
+1. gets `KUBECONFIG` environment variable for the path to kubectl configuration file;
+2. or executes `kubectl config view` command if kubectl is available in the system;
+3. or gets `~/.kube/config` kubectl configuration file.
 
-На данный момент автоматической инвалидации подобных образов не предусмотрено.
+Dapp connects to all kubernetes clusters, defined in all contexts of kubectl configuration, to gather images that are in use.
 
-## Очистка нетегированных образов
+### Docker registry authorization
 
-В результате внезапного завершения процессов сборки по каким-либо причинам, в локальном хранилище docker образов могу остаться собранные но не протегированные dapp образы. Такие образы не попадут в сборочный кэш, не будут использоваться и не будут удалены автоматически. Например, если прервать работу сборщика, убив процесс — все собранные стадии останутся в локальном хранилище docker образов непротегированными в следующем виде:
+For docker registry authorization in garbage collection, dapp require the `DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
 
-```shell
-REPOSITORY    TAG         IMAGE ID           CREATED             SIZE
-<none>        <none>      b482808d6b36       14 seconds ago      130 MB
-<none>        <none>      6fa6a4d13396       31 seconds ago      130 MB
-```
-
-Чтобы избавиться от таких образов, в dapp предусмотрена команда:
-* `dapp dimg cleanup`.
-
-В результате ее работы будут удалены нетегированные docker-образы, только связанные с данным проектом. Технически dapp может идентифицировать эти образы по специальной метке, которая проставляется на все образы, создаваемые при сборке.
-
-## Принудительная очистка кэша приложения
-
-Если требуется принудительно сбросить сборочный кэш приложения, есть отдельная подкоманда flush:
-
-* `dapp dimg stages flush local` — локально;
-* `dapp dimg stages flush repo REPO` — в registry `REPO`.
-
-*Подсказка*. Cleanup — очистка лишнего. Flush — принудительный сброс.
-
-## Очистка кэша в режиме разработчика
-
-Для режима разработчика существует опция `--dev`, добавляемая во все команды сборки и очистки образов. В этом режиме создается отдельный кэш образов, никак не пересекающийся с обычным кэшем образов. Все описанные команды кроме mrproper применимы и для режима разработчика при дополнительном указании опции `--dev`.
-
-Использование команды [mrproper]({{ site.baseurl }}/reference/cli/dimg_mrproper.html), для удаления docker-образов и docker-контейнеров связанных с dapp и собранных в режиме разработчика, возможно следующим образом:
-
-`dapp dimg mrproper --improper-dev-mode-cache`
-
-## Полная очистка локального хранилища
-
-Для глобального (без привязки к какому-либо проекту) удаления docker-образов и контейнеров в локальном хранилище docker образов, можно воспользоваться командой `dapp dimg mrproper`:
-- `dapp dimg mrproper --all` - удалит весь dapp кэш, т.е. вообще все образы созданные dapp в локальном хранилище, а также соответствующие контейнеры;
-- `dapp dimg mrproper --improper-cache-version-stages` - сделает то-же самое, но только для образов и контейнеров, созданных более старыми версиями dapp;
-- `dapp dimg mrproper --improper-dev-mode-cache` - удалит образы и контейнеры созданные в режиме разработчика во всех проектах.
-
-## Автоматическая очистка по политикам
-
-При работе dapp совместно с [GitLab CI](https://about.gitlab.com/), в dapp существует механизм, позволяющий автоматизировать очистку удаленного хранилища docker образов. В логику работы очистки заложены определенные правила (политики), по которым принимается решение об удалении образа, и которые необходимо понимать. Также, корректная работа очистки требует предварительного выполнения ряда условий, без выполнения которых очистка не будет приводить к нужному результату.
-
-Механизм очистки определяет какие образы необходимо удалить на основании анализа:
-- **ветки**, **тега** или **коммита** в git-репозитории, из которого был собран образ;
-- **кластеров kubernetes**, до которых настроен доступ в kubectl.
-
-Подробнее о правилах, используемых при запуске команды очистки:
-* **по веткам:**
-    * образ, собранный для ветки обновляется в registry при каждом новом коммите (docker-тег для одной ветки один и тот же);
-    * при отсутствии ветки в git (ветка, из которой собирался образ, удалена), соответствующий образ удаляется из docker registry (соответственно, при запуске команды очистки, из docker registry будут удалены все образы, для которых уже не существует веток в git);
-    * пока в git есть ветка, связанная с образом, образ не удаляется из docker registry;
-    * в эту категорию попадают образы, протегированные с тегом `--tag-ci` или `--tag-branch`.
-* **по коммитам:**
-    * при отсутствии коммита в git (к примеру, после выполнения rebase), соответствующий образ удаляется из docker registry;
-    * для оставшихся образов применяются политики `GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY` и `GIT_COMMITS_LIMIT_POLICY`:
-       * исходя из времени загрузки образов в registry, удаляются образы **превышающие период в 30 дней** (значение можно переопределить, указав произвольный период в секундах в переменной окружения `GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY`);
-       * исходя из времени загрузки образов в registry, из оставшихся остаются только **50 последних образов** (значение можно переопределить, указав произвольное количество в переменной окружения `GIT_COMMITS_LIMIT_POLICY`).
-    * в эту категорию попадают образы, протегированные с тегом `--tag-commit`.
-* **по тегам:**
-    * при отсутствии тега в git, соответствующий образ удаляется из docker registry;
-    * для оставшихся образов применяются политики `EXPIRY_DATE_PERIOD_POLICY` и `GIT_TAGS_LIMIT_POLICY`:
-      * исходя из времени загрузки образов в registry, удаляются образы **превышающие период в 30 дней** (значение можно переопределить, указав произвольный период в секундах в переменной окружения `EXPIRY_DATE_PERIOD_POLICY`);
-       * исходя из времени загрузки образов в registry, из оставшихся остаются только **10 последних образов** (значение можно переопределить, указав произвольное количество в переменной окружения `GIT_TAGS_LIMIT_POLICY`).
-    * в эту категорию попадают образы, протегированные с тегом `--tag-ci`.
-* **по кластерам kubernetes:**
-    * не удаляются те образы, которые используются в кластерах kubernetes. В кластерах, до которых настроен доступ в kubectl, сканируются все объекты типа - pod, deployment, replicaset, statefulset, daemonset, job, cronjob, replicationcontroller;
-    * данный функционал можно при необходимости отключить опцией `--without-kube`.
-
-**Очистка применяется только к образам, собранным dapp и протегированным с опциями `--tag-ci` ([GitLab CI](https://about.gitlab.com/)), `--tag-branch` или `--tag-commit`**. Если в docker registry есть другие образы, то с ними никаких действий предпринято не будет.
-
-### Как настроить
-
-Для каждого проекта:
-* обязательно использовать `--tag-ci`, `--tag-branch` или `--tag-commit` опцию при вызове команд `dapp dimg bp` и `dapp dimg push` (при тегировании в конечном образе сохраняется дополнительная информация, используемая при чистке registry). Без выполнения этого условия **очистка работать не будет**, образы будут проигнорированы.
-* очистка docker registry проекта от устаревших образов, загруженных без использования соответствующих тегов, не приведёт к их удалению.
-
-После выполнения этих шагов, можно использовать команду `dapp dimg cleanup repo <repo>` для автоматической очистки по политикам docker-registry данного проекта.
-
-### Как использовать
-
-Для использования очистки нужно:
-* создать `Personal Access Tokens` с необходимыми правами и обеспечить его наличие в переменной окружения `DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD` (см. ниже);
-* исправить `.gitlab-ci.yaml` для запуска очистки в два этапа:
-    * очистка удаленного docker registry командой `dapp dimg cleanup repo $CI_REGISTRY_IMAGE`;
-    * локальная очистка командой
-```
-dapp dimg stages cleanup local \
-    --improper-cache-version \
-    --improper-git-commit \
-    --improper-repo-cache $CI_REGISTRY_IMAGE
-```
-* настроить периодический запуск pipeline в GitLab, выполняющего очистку.
-
-**Важно:** Порядок запуска очистки сначала удаленного, затем локального хранилища важен, и обусловлен тем, что при работе локальной очистки удаленный docker registry является первичным источником информации, на основании которой содержимое локального хранилища образов на сборочном сервере синхронизируются с содержимым удаленного docker registry. Таким образом, автоматическая очистка по политикам выполняет непосредственное удаление образов в удаленном хранилище, а затем, на втором этапе, происходит синхронизация изменений с локальным хранилищем.
-
-Т.к. запуск задания в GitLab со стандартными правами на основе `CI_JOB_TOKEN` не даст необходимых для очистки прав, при запуске очистки необходимо обеспечить наличие переменной окружения `DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD=<token>`, где `<token>`, - это:
-* `Personal Access Tokens` пользователя с правами не ниже `Developer` на проект GitLab, в котором будет осуществляться чистка;
-* у этого token установлен `Scopes` - `api` (указать `Scopes` можно при создании `Personal Access Tokens` в разделе `Settings` -> `Access Tokens` пользователя GitLab).
-
-Переменную `DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD=<token>` нужно установить в переменных проекта в GitLab (`Settings` -> `CI / CD` -> `Variables`). Т.о. данная переменная будет доступна при обычном запуске pipeline и выполнении других операций dapp, но использоваться будет только для команды `dapp dimg cleanup repo`.
-
-Для добавления заданий по очистке в pipeline проекта, необходимо в `.gitlab-ci.yaml` внести соответствующие изменения, обеспечивающие запуск в нужном порядке dapp для очистки сначала удаленного, затем локального хранилища. Поскольку при выполнении команды `dapp dimg cleanup repo` осуществляется анализ объектов кластера kubernetes, запускать ее необходимо на том `gitlab-runner`, у которого настроен доступ к кластерам через kubectl.
-
-Dapp берет информацию о подключении к кластеру в следующем порядке:
-* из переменной `KUBECONFIG`;
-* вызывая команду `kubectl config view`;
-* из файла `~/.kube/config`.
-
-При вызове команды `dapp dimg cleanup repo REPO` dapp всегда сканирует **каждый из контекстов** kube-config на наличие используемых в данный момент в кластерах kubernetes образов.
-
-Приведем пример `.gitlab-ci.yaml`, когда для сборки и выката приложений в GitLab используются два разных `gitlab-runner` (соответственно с тегами - build для сборки, и deploy - для выката).
+### Syntax
 
 ```
-Cleanup docker registry:
-  stage: cleanup-docker-registry
-  script:
-    - dapp dimg cleanup repo $CI_REGISTRY_IMAGE
-  retry: 2
-  only:
-    - schedules
-  tags:
-    - deploy
-
-Cleanup build cache:
-  stage: cleanup-build-cache
-  script:
-    - dapp dimg stages cleanup local --improper-cache-version --improper-git-commit --improper-repo-cache $CI_REGISTRY_IMAGE
-  retry: 2
-  only:
-    - schedules
-  tags:
-    - build
+dapp dimg cleanup repo [--with-stages=false]
 ```
 
-В приведенном примере, оба задания запускаются только при запуске запланированного задания (`only: schedules` в `.gitlab-ci.yaml`). Создать такое задание в GitLab можно в разделе `CI/CD` -> `Schedules`, выбрав `New Schedule`. Подробнее с созданием заданий в GitLab можно ознакомиться в [соответствующем разделе](https://docs.gitlab.com/ee/user/project/pipelines/schedules.html) документации GitLab.
+`--with-stages` — option used to delete not only tagged images but also _related_ stages cache, which was pushed into the registry (see [push for details]({{ site.baseurl }}/reference/registry/authorization.html#stages-push-procedure)).
 
-Если вам не нужно, чтобы запланированное задание запускало другие задания pipeline, то добавьте в их описание в `.gitlab-ci.yaml` конструкцию `except: [schedules]`. Пример:
+## Local storage synchronization
+
+After cleaning docker registry on the garbage collection step, local storage still contains all of the images that have been deleted from the docker registry. These images include tagged dimg images (created with a [dapp tag procedure]({{ site.baseurl }}/reference/registry/image_naming.md#dapp-tag-procedure)) and stages cache for dimgs.
+
+Executing a local storage synchronization is necessary to update local storage according to a docker registry. On the local storage synchronization step, dapp deletes old local stages cache, which doesn't relate to any of the dimgs currently existing in the docker registry.
+
+There are some consequences of this algorithm:
+
+1. If the garbage collection, — the first step of cleaning by policies, — was skipped, then local storage synchronization makes no sense.
+2. Dapp completely removes local stages cache for the built dimgs, that don't exist into the docker registry.
+
+### Syntax
+
 ```
-Build:
-  stage: build
-  script:
-    - dapp dimg bp --tag-ci ${CI_REGISTRY_IMAGE}
-  retry: 2
-  tags:
-    - build
-  except:
-    - schedules
+dapp dimg stages cleanup local [options] REPO
+    --improper-cache-version
+    --improper-repo-cache
 ```
 
-Если в вашем проекте для сборки используются несколько `gitlab-runner`, то и соответствующих заданий (в примере, это - "Cleanup build cache") должно быть несколько, с соответствующими тегами gitlab-runner'ов.
+`--improper-cache-version` —  dapp deletes images built by another dapp version.
 
-## Очистка кэша из build-директории
+`--improper-repo-cache` — dapp deletes stages cache non related with any dimg in docker repository. This option enables the exact synchronization with the docker registry step. Images of your project that is not pushed yet will also be deleted with this option.
 
-Кэш из build-директории включает в себя:
+## Flush
 
-* Git-bare репозитории удалённых git-артефактов.
-* Кэш для примонтированных сборочных директорий с использованием опции `from :build_dir` (подробнее о [кэшировании]({{ site.baseurl }}/not_used/cache_for_advanced_build.html)).
+Allows deleting information about specified (current) project. Flush includes cleaning both the local storage and docker registry.
 
-Для очистки данного кэша — достаточно удалить build директорию `~/.dapp/builds/<dapp name>` (директория может быть переопределена с помощью опции [--build-dir]({{ site.baseurl }}/reference/cli/dimg_build.html)).
+Local storage cleaning includes:
+* Deleting stages cache images of the project. Also deleting images from previous dapp version.
+* Deleting all of the dimgs tagged by `dapp dimg tag` command.
+* Deleting `<none>` images of the project. `<none>` images can remain as a result of build process interruption. In this case, such built images exist as orphans outside of the stages cache. These images also not deleted by the garbage collection.
+* Deleting containers associated with the images of the project.
+
+Docker registry cleaning includes:
+* Deleting pushed dimgs of the project.
+* Deleting pushed stages cache of the project.
+
+### Syntax
+
+```
+dapp dimg flush local [--with-stages]
+```
+
+The command deletes images of the current project only in the local storage.
+
+```
+dapp dimg flush repo REPO [--with-stages]
+```
+
+The command deletes images of the current project only in docker registry.
+
+The `--with-stages` option uses to delete not only tagged images but also stages cache. The option is disabled by default. It is always recommended to use this option. 
+
+## Reset
+
+With this variant of cleaning, dapp can delete all images, containers, and files from all projects created by dapp on the host. The files include `~/.dapp/builds` directory, which is a build dir cache directory for all projects on the build host (see [the cache article]({{ site.baseurl }}/reference/build/cache.html) for the details).
+
+Reset is the fullest method of cleaning on the local machine.
+
+### Syntax
+
+```
+dapp dimg mrproper [--all] [--improper-cache-version-stages] [--improper-dev-mode-cache]
+```
+
+* `--all` — dapp deletes stages cache with all of images and containers ever dapp created in local storage.
+* `--improper-cache-version-stages` — like the `--all` parameter, but dapp deletes stages cache, images, and containers created by versions of dapp older than current;
+* `--improper-dev-mode-cache` — dapp deletes cache, images and container created in developer mode (`--dev` option).
