@@ -134,6 +134,72 @@ func main() {
 
 			return res, resErr
 
+		case "GetParamshash":
+			resultValue := ga.GetParamshash()
+
+			res["result"] = resultValue
+
+			state, err = json.Marshal(ga)
+			if err != nil {
+				return nil, err
+			}
+			res["GitArtifact"] = string(state)
+
+			return res, nil
+
+		case "GetFullName":
+			resultValue := ga.GetFullName()
+
+			res["result"] = resultValue
+
+			state, err = json.Marshal(ga)
+			if err != nil {
+				return nil, err
+			}
+			res["GitArtifact"] = string(state)
+
+			return res, nil
+
+		case "IsPatchEmpty":
+			stage := &build.StubStage{}
+			if state, hasKey := args["Stage"]; hasKey {
+				err := json.Unmarshal([]byte(state.(string)), stage)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			resultValue, resErr := ga.IsPatchEmpty(stage)
+
+			res["result"] = resultValue
+
+			state, err = json.Marshal(ga)
+			if err != nil {
+				return nil, err
+			}
+			res["GitArtifact"] = string(state)
+
+			state, err = json.Marshal(stage)
+			if err != nil {
+				return nil, err
+			}
+			res["Stage"] = string(state)
+
+			return res, resErr
+
+		case "IsEmpty":
+			resultValue, resErr := ga.IsEmpty()
+
+			res["result"] = resultValue
+
+			state, err = json.Marshal(ga)
+			if err != nil {
+				return nil, err
+			}
+			res["GitArtifact"] = string(state)
+
+			return res, resErr
+
 		default:
 			return nil, fmt.Errorf("unknown method \"%s\"", method)
 		}

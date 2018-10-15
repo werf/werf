@@ -63,6 +63,10 @@ func (repo *Base) getReferenceForRepo(repoPath string) (*plumbing.Reference, err
 }
 
 func (repo *Base) String() string {
+	return repo.GetName()
+}
+
+func (repo *Base) GetName() string {
 	return repo.Name
 }
 
@@ -165,8 +169,7 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	// TODO: change return value when submodules support available
-	return false, nil
+	return true, nil
 }
 
 func (repo *Base) createArchive(repoPath, gitDir, workTreeDir string, opts ArchiveOptions) (Archive, error) {

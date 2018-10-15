@@ -28,22 +28,12 @@ module Dapp
         def generate_git_artifacts(repo, omit_empty: true, **git_artifact_options)
           [].tap do |artifacts|
             artifacts << (artifact = ::Dapp::Dimg::GitArtifact.new(repo, self, ignore_signature_auto_calculation: ignore_signature_auto_calculation, **git_artifact_options))
-            if ENV['DAPP_DISABLE_GIT_SUBMODULES']
-              artifacts
-            else
-              artifacts.concat(generate_git_embedded_artifacts(artifact))
-            end
+            artifacts
           end.select do |artifact|
-            !omit_empty || !artifact.empty?
+            !omit_empty || !artifact.is_empty
           end
         end
 
-        def generate_git_embedded_artifacts(artifact)
-          [].tap do |artifacts|
-            artifacts.concat(submodules_artifacts = artifact.embedded_artifacts)
-            artifacts.concat(submodules_artifacts.map(&method(:generate_git_embedded_artifacts)).flatten)
-          end
-        end
       end # GitArtifact
     end # Mod
   end # Dimg
