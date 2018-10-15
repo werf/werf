@@ -18,13 +18,22 @@ module Dapp
             end
 
             def cleanup_repo_proper_cache_version_options
-              ruby2go_cleanup_sync_common_repo_options.merge({ mode: { sync_repo: true, only_cache_version: true } }).merge(ruby2go_cleanup_sync_cache_version_option).tap do |data|
+              ruby2go_cleanup_common_repo_options.merge(ruby2go_cleanup_cache_version_options).merge(
+                mode: {
+                  sync_repo: true,
+                  only_cache_version: true
+               }
+              ).tap do |data|
                 break JSON.dump(data)
               end
             end
 
             def cleanup_repo_proper_repo_cache_options
-              ruby2go_cleanup_sync_common_repo_options.merge({ sync_repo: true }).tap do |data|
+              ruby2go_cleanup_common_repo_options.merge(
+                mode: {
+                  sync_repo: true
+                }
+              ).tap do |data|
                 break JSON.dump(data)
               end
             end
