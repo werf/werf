@@ -161,6 +161,12 @@ func (p *diffParser) handleDiffLine(line string) error {
 		if strings.HasPrefix(line, "Binary files") {
 			return p.handleShortBinaryHeader(line)
 		}
+		if strings.HasPrefix(line, "diff --git ") {
+			return p.handleDiffBegin(line)
+		}
+		if strings.HasPrefix(line, "Submodule ") {
+			return p.handleSubmoduleLine(line)
+		}
 		return p.writeOutLine(line)
 
 	case deleteFileDiff:
@@ -172,6 +178,12 @@ func (p *diffParser) handleDiffLine(line string) error {
 		}
 		if strings.HasPrefix(line, "Binary files") {
 			return p.handleShortBinaryHeader(line)
+		}
+		if strings.HasPrefix(line, "diff --git ") {
+			return p.handleDiffBegin(line)
+		}
+		if strings.HasPrefix(line, "Submodule ") {
+			return p.handleSubmoduleLine(line)
 		}
 		return p.writeOutLine(line)
 
