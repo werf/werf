@@ -324,6 +324,7 @@ module Dapp
       end
 
       def stage_dependencies_checksum(stage)
+        return stage_dependencies_checksum_old(stage) if dev_mode?
         stage_dependencies_key = [stage.name, commit]
         @stage_dependencies_checksums ||= {}
         @stage_dependencies_checksums[stage_dependencies_key] ||= calculate_stage_dependencies_checksum(stage)
@@ -364,6 +365,20 @@ module Dapp
       end
 
       def patch_size(from_commit)
+        res = repo.dapp.ruby2go_git_artifact(
+          "GitArtifact" => JSON.dump(get_ruby2go_state_hash),
+          "method" => "PatchSize",
+          "FromCommit" => from_commit,
+        )
+
+        raise res["error"] if res["error"]
+
+        self.set_ruby2go_state_hash(JSON.load(res["data"]["GitArtifact"]))
+
+        res["data"]["result"]
+      end
+
+      def patch_size_old(from_commit)
         to_commit = dev_mode? ? nil : latest_commit
         diff_patches(from_commit, to_commit).reduce(0) do |bytes, patch|
           bytes += patch.delta.deleted? ? patch.delta.old_file[:size] : patch.delta.new_file[:size]

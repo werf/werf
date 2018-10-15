@@ -158,7 +158,14 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 	}
 
 	if patch.HasBinary() {
-		pathsListFile, err := ga.createPatchPathsListFile(patch.GetPaths(), fromCommit, toCommit)
+		patchPaths := patch.GetPaths()
+
+		err := os.Remove(patch.GetFilePath())
+		if err != nil {
+			return nil, fmt.Errorf("unable to remove temporary patch file `%s`: %s", patch.GetFilePath(), err)
+		}
+
+		pathsListFile, err := ga.createPatchPathsListFile(patchPaths, fromCommit, toCommit)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create patch paths list file: %s", err)
 		}
@@ -305,6 +312,37 @@ func (ga *GitArtifact) StageDependenciesChecksum(stageName string) (string, erro
 	}
 
 	return checksum.String(), nil
+}
+
+func (ga *GitArtifact) PatchSize(fromCommit string) (int64, error) {
+	toCommit, err := ga.LatestCommit()
+	if err != nil {
+		return 0, fmt.Errorf("unable to get latest commit: %s", err)
+	}
+
+	patchOpts := git_repo.PatchOptions{
+		FilterOptions:         ga.getRepoFilterOptions(),
+		FromCommit:            fromCommit,
+		ToCommit:              toCommit,
+		WithEntireFileContext: true,
+		WithBinary:            true,
+	}
+	patch, err := ga.GitRepo().CreatePatch(patchOpts)
+	if err != nil {
+		return 0, err
+	}
+
+	fileInfo, err := os.Stat(patch.GetFilePath())
+	if err != nil {
+		return 0, fmt.Errorf("unable to stat temporary patch file `%s`: %s", patch.GetFilePath(), err)
+	}
+
+	err = os.Remove(patch.GetFilePath())
+	if err != nil {
+		return 0, fmt.Errorf("unable to remove temporary patch file `%s`: %s", patch.GetFilePath(), err)
+	}
+
+	return fileInfo.Size(), nil
 }
 
 func (ga *GitArtifact) getArchiveFileDescriptor(commit string) *ContainerFileDescriptor {

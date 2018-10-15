@@ -82,30 +82,6 @@ func (repo *Base) LatestTagCommit(branch string) (string, error) {
 	panic("not implemented")
 }
 
-func (repo *Base) ArchiveType(ArchiveOptions) (ArchiveType, error) {
-	panic("not implemented")
-}
-
-func (repo *Base) CreatePatch(io.Writer, PatchOptions) error {
-	panic("not implemented")
-}
-
-func (repo *Base) IsAnyChanges(PatchOptions) (bool, error) {
-	panic("not implemented")
-}
-
-func (repo *Base) IsAnyEntries(ArchiveOptions) (bool, error) {
-	panic("not implemented")
-}
-
-func (repo *Base) CreateArchiveTar(io.Writer, ArchiveOptions) error {
-	panic("not implemented")
-}
-
-func (repo *Base) ArchiveChecksum(ArchiveOptions) (string, error) {
-	panic("not implemented")
-}
-
 func (repo *Base) createPatch(repoPath, gitDir, workTreeDir string, opts PatchOptions) (Patch, error) {
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
@@ -152,6 +128,8 @@ func (repo *Base) createPatch(repoPath, gitDir, workTreeDir string, opts PatchOp
 			IncludePaths: opts.IncludePaths,
 			ExcludePaths: opts.ExcludePaths,
 		},
+		WithEntireFileContext: opts.WithEntireFileContext,
+		WithBinary:            opts.WithBinary,
 	}
 
 	var desc *true_git.PatchDescriptor
@@ -378,7 +356,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 		for _, path := range paths {
 			_, err = checksum.Hash.Write([]byte(path))
 			if err != nil {
-				return err
+				return fmt.Errorf("error calculating checksum of path `%s`: %s", path, err)
 			}
 
 			fullPath := filepath.Join(workTreeDir, path)

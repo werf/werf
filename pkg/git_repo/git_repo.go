@@ -3,6 +3,9 @@ package git_repo
 type PatchOptions struct {
 	FilterOptions
 	FromCommit, ToCommit string
+
+	WithEntireFileContext bool
+	WithBinary            bool
 }
 
 type ArchiveOptions struct {
