@@ -17,7 +17,7 @@ module Dapp
             end
 
             def cleanup_local_proper_cache_version_options_dump
-              ruby2go_cleanup_common_project_options.merge(ruby2go_cleanup_sync_cache_version_option).tap do |data|
+              ruby2go_cleanup_common_project_options.merge(ruby2go_cleanup_cache_version_options).tap do |data|
                 break JSON.dump(data)
               end
             end

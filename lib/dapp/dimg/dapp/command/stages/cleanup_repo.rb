@@ -8,7 +8,7 @@ module Dapp
               lock_repo(repo = option_repo) do
                 raise ::Dapp::Error::Command, code: :stages_cleanup_required_option unless stages_cleanup_option?
 
-                ruby2go_cleanup_command(:sync, cleanup_repo_proper_cache_version_options) if proper_cache_version?
+                ruby2go_cleanup_command(:sync, cleanup_repo_proper_cache_version_options_dump) if proper_cache_version?
                 repo_dimgstages_cleanup if proper_repo_cache?
               end
             end
@@ -17,7 +17,7 @@ module Dapp
               ruby2go_cleanup_command(:sync, cleanup_repo_proper_repo_cache_options)
             end
 
-            def cleanup_repo_proper_cache_version_options
+            def cleanup_repo_proper_cache_version_options_dump
               ruby2go_cleanup_common_repo_options.merge(ruby2go_cleanup_cache_version_options).merge(
                 mode: {
                   sync_repo: true,
