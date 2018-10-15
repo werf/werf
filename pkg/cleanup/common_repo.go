@@ -9,28 +9,31 @@ import (
 
 type CommonRepoOptions struct {
 	Repository string   `json:"repository"`
-	DimgNames  []string `json:"dimg_names"`
+	DimgsNames []string `json:"dimgs_names"`
 	DryRun     bool     `json:"dry_run"`
 }
 
 func repoDimgImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
 	var dimgImages []docker_registry.RepoImage
 
-	namelessDimgImages, err := docker_registry.ImagesByDappDimgLabel(options.Repository, "true")
-	if err != nil {
-		return nil, err
-	}
-
-	dimgImages = append(dimgImages, namelessDimgImages...)
-
-	for _, dimgName := range options.DimgNames {
-		repository := fmt.Sprintf("%s/%s", options.Repository, dimgName)
-		images, err := docker_registry.ImagesByDappDimgLabel(repository, "true")
+	isNamelessDimg := len(options.DimgsNames) == 0
+	if isNamelessDimg {
+		namelessDimgImages, err := docker_registry.ImagesByDappDimgLabel(options.Repository, "true")
 		if err != nil {
 			return nil, err
 		}
 
-		dimgImages = append(dimgImages, images...)
+		dimgImages = append(dimgImages, namelessDimgImages...)
+	} else {
+		for _, dimgName := range options.DimgsNames {
+			repository := fmt.Sprintf("%s/%s", options.Repository, dimgName)
+			images, err := docker_registry.ImagesByDappDimgLabel(repository, "true")
+			if err != nil {
+				return nil, err
+			}
+
+			dimgImages = append(dimgImages, images...)
+		}
 	}
 
 	return dimgImages, nil

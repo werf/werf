@@ -305,12 +305,12 @@ func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath 
 }
 
 func validateDimgsNames(dimgs []*Dimg) error {
-	dimgNames := map[string]*Dimg{}
+	dimgsNames := map[string]*Dimg{}
 	for _, dimg := range dimgs {
-		if d, ok := dimgNames[dimg.Name]; ok {
+		if d, ok := dimgsNames[dimg.Name]; ok {
 			return NewConfigError(fmt.Sprintf("Conflict between dimgs names!\n\n%s%s\n", DumpConfigDoc(d.Raw.Doc), DumpConfigDoc(dimg.Raw.Doc)))
 		} else {
-			dimgNames[dimg.Name] = dimg
+			dimgsNames[dimg.Name] = dimg
 		}
 	}
 	return nil

@@ -13,7 +13,7 @@ module Dapp
 
         def one_dimg!
           return if build_configs.one?
-          raise ::Dapp::Error::Command, code: :command_unexpected_dimgs_number, data: { dimgs_names: build_configs.map(&:_name).join('`, `') }
+          raise ::Dapp::Error::Command, code: :command_unexpected_dimgs_number, data: { dimgs_names: dimgs_names.join('`, `') }
         end
 
         def dimgs_names

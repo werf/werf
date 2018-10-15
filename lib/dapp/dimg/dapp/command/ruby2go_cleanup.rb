@@ -15,29 +15,29 @@ module Dapp
             end
           end
 
-          def ruby2go_cleanup_sync_common_project_options
+          def ruby2go_cleanup_common_project_options(force: false)
             {
               common_project_options: {
                 project_name: name,
                 common_options: {
                   dry_run: dry_run?,
-                  force: true
+                  force: force
                 }
               },
             }
           end
 
-          def ruby2go_cleanup_sync_cache_version_option
+          def ruby2go_cleanup_cache_version_options
             {
               cache_version: ::Dapp::BUILD_CACHE_VERSION.to_s
             }
           end
 
-          def ruby2go_cleanup_sync_common_repo_options
+          def ruby2go_cleanup_common_repo_options
             {
               common_repo_options: {
                 repository: option_repo,
-                dimg_names: dimgs_names,
+                dimgs_names: nameless_dimg? ? [] : dimgs_names,
                 dry_run: dry_run?
               }
             }
