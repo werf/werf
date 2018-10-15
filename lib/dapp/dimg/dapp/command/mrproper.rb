@@ -8,7 +8,7 @@ module Dapp
           end
 
           def ruby2go_cleanup_reset_options_dump
-            cleanup_repo_proper_cache_version_options.merge(
+            ruby2go_cleanup_cache_version_options.merge(
               mode: {
                 all: !!options[:proper_all],
                 dev_mode_cache: !!options[:proper_dev_mode_cache],
