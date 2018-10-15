@@ -37,7 +37,7 @@ module Dapp
             {
               common_repo_options: {
                 repository: option_repo,
-                dimgs_names: dimgs_names,
+                dimgs_names: nameless_dimg? ? [] : dimgs_names,
                 dry_run: dry_run?
               }
             }
