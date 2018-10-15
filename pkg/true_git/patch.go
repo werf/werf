@@ -13,6 +13,9 @@ import (
 type PatchOptions struct {
 	FromCommit, ToCommit string
 	PathFilter           PathFilter
+
+	WithEntireFileContext bool
+	WithBinary            bool
 }
 
 type PatchDescriptor struct {
@@ -55,16 +58,22 @@ func writePatch(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, 
 		return nil, fmt.Errorf("provide work tree directory to enable submodules!")
 	}
 
+	commonGitOpts := []string{
+		"--git-dir", gitDir,
+		"-c", "diff.renames=false",
+	}
+	if opts.WithEntireFileContext {
+		commonGitOpts = append(commonGitOpts, "-c", "diff.context=999999999")
+	}
+
 	diffOpts := []string{}
 	if withSubmodules {
 		diffOpts = append(diffOpts, "--submodule=diff")
 	} else {
 		diffOpts = append(diffOpts, "--submodule=log")
 	}
-
-	commonGitOpts := []string{
-		"--git-dir", gitDir,
-		"-c", "diff.renames=false",
+	if opts.WithBinary {
+		diffOpts = append(diffOpts, "--binary")
 	}
 
 	var cmd *exec.Cmd

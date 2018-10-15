@@ -117,6 +117,23 @@ func main() {
 
 			return res, resErr
 
+		case "PatchSize":
+			fromCommit, hasKey := args["FromCommit"]
+			if !hasKey {
+				return nil, fmt.Errorf("FromCommit argument required!")
+			}
+			resultValue, resErr := ga.PatchSize(fromCommit.(string))
+
+			res["result"] = resultValue
+
+			state, err = json.Marshal(ga)
+			if err != nil {
+				return nil, err
+			}
+			res["GitArtifact"] = string(state)
+
+			return res, resErr
+
 		default:
 			return nil, fmt.Errorf("unknown method \"%s\"", method)
 		}
