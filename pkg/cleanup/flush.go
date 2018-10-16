@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/api/types/filters"
 	"github.com/flant/dapp/pkg/lock"
 )
 
@@ -118,7 +117,7 @@ func repoDimgstagesFlush(options CommonRepoOptions) error {
 }
 
 func projectDimgsFlush(options CommonProjectOptions) error {
-	filterSet := filters.NewArgs()
+	filterSet := projectFilterSet(options)
 	filterSet.Add("label", "dapp-dimg=true")
 	if err := dappImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
 		return err
