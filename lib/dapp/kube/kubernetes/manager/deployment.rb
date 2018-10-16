@@ -50,12 +50,11 @@ module Dapp
 
               dapp.log_step("[#{Time.now}] Poll deployment '#{d.name}' status")
               dapp.with_log_indent do
-                dapp.log_info("Target replicas: #{_field_value_for_log(d.replicas)}")
-                dapp.log_info("Updated replicas: #{_field_value_for_log(d.status['updatedReplicas'])} / #{_field_value_for_log(d.replicas)}")
-                dapp.log_info("Available replicas: #{_field_value_for_log(d.status['availableReplicas'])} / #{_field_value_for_log(d.replicas)}")
+                dapp.log_info("Replicas: #{_field_value_for_log(d.status['replicas'])}")
+                dapp.log_info("Updated replicas: #{_field_value_for_log(d.status['updatedReplicas'])}")
+                dapp.log_info("Available replicas: #{_field_value_for_log(d.status['availableReplicas'])}")
+                dapp.log_info("Unavailable replicas: #{_field_value_for_log(d.status['unavailableReplicas'])}")
                 dapp.log_info("Ready replicas: #{_field_value_for_log(d.status['readyReplicas'])} / #{_field_value_for_log(d.replicas)}")
-                dapp.log_info("Old deployment.kubernetes.io/revision: #{_field_value_for_log(@revision_before_deploy)}")
-                dapp.log_info("Current deployment.kubernetes.io/revision: #{_field_value_for_log(d_revision)}")
               end
 
               rs = nil
@@ -84,6 +83,16 @@ module Dapp
               end
 
               if rs
+                dapp.with_log_indent do
+                  dapp.log_step("Current ReplicaSet '#{rs.name}' status")
+                  dapp.with_log_indent do
+                    dapp.log_info("Replicas: #{_field_value_for_log(rs.status['replicas'])}")
+                    dapp.log_info("Fully labeled replicas: #{_field_value_for_log(rs.status['fullyLabeledReplicas'])}")
+                    dapp.log_info("Available replicas: #{_field_value_for_log(rs.status['availableReplicas'])}")
+                    dapp.log_info("Ready replicas: #{_field_value_for_log(rs.status['readyReplicas'])} / #{_field_value_for_log(d.replicas)}")
+                  end
+                end
+
                 # Pod'ы связанные с активным ReplicaSet
                 rs_pods = dapp.kubernetes.pod_list['items']
                   .map {|spec| Kubernetes::Client::Resource::Pod.new(spec)}
@@ -168,25 +177,28 @@ module Dapp
                 end # with_log_indent
               end
 
-              if d_revision && d.replicas
-                if d.replicas == 0
-                  break
-                else
-                  break if begin
-                    d.status['updatedReplicas'] &&
-                      d.status['availableReplicas'] &&
-                        d.status['readyReplicas'] &&
-                          (d.status['updatedReplicas'] >= d.replicas) &&
-                            (d.status['availableReplicas'] >= d.replicas) &&
-                              (d.status['readyReplicas'] >= d.replicas)
-                  end
-                end
+              # break only when rs is not nil
+
+              if d_revision && d.replicas && d.replicas == 0
+                break
+              end
+
+              if d_revision && d.replicas && rs
+                break if is_deployment_ready(d) && is_replicaset_ready(d, rs)
               end
 
               sleep 5
               d = Kubernetes::Client::Resource::Deployment.new(dapp.kubernetes.deployment(d.name))
             end
           end
+        end
+
+        def is_deployment_ready(d)
+          d.status.key?("readyReplicas") && d.status["readyReplicas"] >= d.replicas
+        end
+
+        def is_replicaset_ready(d, rs)
+          rs.status.key?("readyReplicas") && rs.status["readyReplicas"] >= d.replicas
         end
 
         private
