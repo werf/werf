@@ -8,14 +8,14 @@ module Dapp
           end
 
           def ruby2go_cleanup_flush_local_options_dump
-            ruby2go_cleanup_common_project_options(force: true).merge(
+            ruby2go_cleanup_common_project_options.merge(
               mode: {
                 with_dimgs: true,
                 with_stages: with_stages?,
                 only_repo: false,
               },
-            ).tap do |json|
-              break JSON.dump(json)
+            ).tap do |data|
+              break JSON.dump(data)
             end
           end
         end

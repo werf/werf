@@ -15,13 +15,12 @@ module Dapp
             end
           end
 
-          def ruby2go_cleanup_common_project_options(force: false)
+          def ruby2go_cleanup_common_project_options
             {
               common_project_options: {
                 project_name: name,
                 common_options: {
                   dry_run: dry_run?,
-                  force: force
                 }
               },
             }

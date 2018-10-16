@@ -12,7 +12,6 @@ import (
 
 type CommonOptions struct {
 	DryRun bool `json:"dry_run"`
-	Force  bool `json:"force"`
 }
 
 func dappDimgstagesFlushByCacheVersion(filterSet filters.Args, cacheVersion string, options CommonOptions) error {
@@ -110,7 +109,7 @@ func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
 }
 
 func containersRemove(containers []types.Container, options CommonOptions) error {
-	containerRemoveOptions := types.ContainerRemoveOptions{Force: options.Force}
+	containerRemoveOptions := types.ContainerRemoveOptions{Force: true}
 	for _, container := range containers {
 		if options.DryRun {
 			fmt.Println(container.ID)
@@ -132,9 +131,7 @@ func imageReferencesRemove(references []string, options CommonOptions) error {
 			fmt.Println()
 		} else {
 			var args []string
-			if options.Force {
-				args = append(args, "--force")
-			}
+			args = append(args, "--force")
 			args = append(args, references...)
 
 			if err := docker.CliRmi(args...); err != nil {
