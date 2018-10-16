@@ -29,6 +29,10 @@ module Dapp
         _ruby2go("cleanup", args_hash)
       end
 
+      def ruby2go_slug(args_hash)
+        _ruby2go("slug", args_hash)
+      end
+
       def ruby2go_init
         @_call_after_before_terminate << proc {
           FileUtils.rmtree(@_ruby2go_tmp_dir) if @_ruby2go_tmp_dir

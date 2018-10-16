@@ -9,7 +9,7 @@ module Dapp
             end
 
             def ruby2go_cleanup_stages_flush_local_options_dump
-              ruby2go_cleanup_common_project_options(force: true).merge(
+              ruby2go_cleanup_common_project_options.merge(
                 mode: {
                   with_dimgs: false,
                   with_stages: true,

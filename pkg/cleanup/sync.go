@@ -48,7 +48,12 @@ func repoDimgstagesSync(options SyncOptions) error {
 
 	err := lock.WithLock(options.CommonRepoOptions.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		if !options.Mode.OnlyCacheVersion {
-			if err := repoDimgstagesSyncByRepoDimgs(options.CommonRepoOptions); err != nil {
+			repoDimgs, err := repoDimgImages(options.CommonRepoOptions)
+			if err != nil {
+				return err
+			}
+
+			if err := repoDimgstagesSyncByRepoDimgs(repoDimgs, options.CommonRepoOptions); err != nil {
 				return err
 			}
 		}
@@ -108,7 +113,7 @@ func projectDimgstagesSync(options SyncOptions) error {
 	return nil
 }
 
-func repoDimgstagesSyncByRepoDimgs(options CommonRepoOptions) error {
+func repoDimgstagesSyncByRepoDimgs(repoDimgs []docker_registry.RepoImage, options CommonRepoOptions) error {
 	repoDimgstages, err := repoDimgstageImages(options)
 	if err != nil {
 		return err
@@ -116,11 +121,6 @@ func repoDimgstagesSyncByRepoDimgs(options CommonRepoOptions) error {
 
 	if len(repoDimgstages) == 0 {
 		return nil
-	}
-
-	repoDimgs, err := repoDimgImages(options)
-	if err != nil {
-		return err
 	}
 
 	for _, repoDimg := range repoDimgs {
@@ -217,7 +217,7 @@ func exceptRepoDimgstagesByRepoDimgstage(repoDimgstages []docker_registry.RepoIm
 
 	currentRepoDimgstage := &repoDimgstage
 	for {
-		repoDimgstages = exceptRepoDimgstage(repoDimgstages, currentRepoDimgstage)
+		repoDimgstages = exceptRepoImages(repoDimgstages, *currentRepoDimgstage)
 
 		parentId, err := repoImageParentId(*currentRepoDimgstage)
 		if err != nil {
@@ -237,17 +237,6 @@ func exceptRepoDimgstagesByRepoDimgstage(repoDimgstages []docker_registry.RepoIm
 	return repoDimgstages, nil
 }
 
-func exceptRepoDimgstage(repoDimgstages []docker_registry.RepoImage, repoDimgstageToExclude *docker_registry.RepoImage) []docker_registry.RepoImage {
-	var newRepoDimgstages []docker_registry.RepoImage
-	for _, repoDimgstage := range repoDimgstages {
-		if !(repoDimgstageToExclude.Tag == repoDimgstage.Tag) {
-			newRepoDimgstages = append(newRepoDimgstages, repoDimgstage)
-		}
-	}
-
-	return newRepoDimgstages
-}
-
 func repoImageParentId(repoImage docker_registry.RepoImage) (string, error) {
 	configFile, err := repoImage.Image.ConfigFile()
 	if err != nil {
@@ -264,6 +253,15 @@ func repoImageLabels(repoImage docker_registry.RepoImage) (map[string]string, er
 	}
 
 	return configFile.Config.Labels, nil
+}
+
+func repoImageCreated(repoImage docker_registry.RepoImage) (time.Time, error) {
+	configFile, err := repoImage.Image.ConfigFile()
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return configFile.Created.Time, nil
 }
 
 func projectDimgstagesSyncByRepoDimgs(commonProjectOptions CommonProjectOptions, commonRepoOptions CommonRepoOptions) error {

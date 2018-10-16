@@ -12,7 +12,7 @@ type CommonProjectOptions struct {
 }
 
 func projectCleanup(options CommonProjectOptions) error {
-	filterSet := projectDimgstageFilterSet(options)
+	filterSet := projectFilterSet(options)
 	filterSet.Add("dangling", "true")
 	if err := dappImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
 		return err

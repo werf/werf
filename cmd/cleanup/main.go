@@ -9,6 +9,7 @@ import (
 
 	"github.com/flant/dapp/pkg/cleanup"
 	"github.com/flant/dapp/pkg/docker"
+	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ruby2go"
 )
@@ -78,6 +79,30 @@ func main() {
 			}
 
 			return nil, cleanup.Sync(*options)
+		case "gc":
+			rawOptions, err := ruby2go.StringFieldFromMapInterface("command_options", args)
+			if err != nil {
+				return nil, err
+			}
+
+			options := &cleanup.GCOptions{}
+			err = json.Unmarshal([]byte(rawOptions), options)
+			if err != nil {
+				return nil, err
+			}
+
+			state, err := ruby2go.StringOptionFromArgs("local_repo", args)
+			if err != nil {
+				return nil, err
+			}
+
+			repo := &git_repo.Local{}
+			if err := json.Unmarshal([]byte(state), repo); err != nil {
+				return nil, err
+			}
+			options.LocalRepo = repo
+
+			return nil, cleanup.GC(*options)
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)
 		}

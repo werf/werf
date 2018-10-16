@@ -3,167 +3,20 @@ module Dapp
     module Dapp
       module Command
         module CleanupRepo
-          GIT_TAGS_LIMIT_POLICY                 = 10
-          EXPIRY_DATE_PERIOD_POLICY             = 60 * 60 * 24 * 30
-          GIT_COMMITS_LIMIT_POLICY              = 50
-          GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY = 60 * 60 * 24 * 30
-
           def cleanup_repo
-            lock_repo(repo = option_repo) do
-              log_step_with_indent(repo) do
-                log_step_with_indent('Searching for images being used in kubernetes clusters in one of the kube-config contexts') do
-                  deployed_docker_images.each do |deployed_img|
-                    log(deployed_img)
-                  end
-                end
+            git_repo_option = git_own_repo_exist? ? JSON.dump(git_own_repo.get_ruby2go_state_hash) : nil
+            ruby2go_cleanup_command(:gc, ruby2go_cleanup_gc_options_dump, local_repo: git_repo_option)
+          end
 
-                registry = dimg_registry(repo)
-
-                if git_own_repo_exist?
-                  cleanup_repo_by_nonexistent_git_primitive(registry, actual_detailed_dimgs_images_by_scheme(registry))
-                  cleanup_repo_by_policies(registry, actual_detailed_dimgs_images_by_scheme(registry))
-                end
-
-                repo_dimgstages_cleanup(registry, repo_dimgs, repo_dimgstages) if with_stages?
-              end
+          def ruby2go_cleanup_gc_options_dump
+            ruby2go_cleanup_common_repo_options.merge(
+              mode: {
+                with_stages: with_stages?
+              },
+              deployed_docker_images: deployed_docker_images
+            ).tap do |data|
+              break JSON.dump(data)
             end
-          end
-
-          def actual_detailed_dimgs_images_by_scheme(registry)
-            {}.tap do |detailed_dimgs_images_by_scheme|
-              tagging_schemes.each { |scheme| detailed_dimgs_images_by_scheme[scheme] = [] }
-              repo_detailed_dimgs_images(registry).each do |image|
-                image_repository = [option_repo, image[:dimg]].compact.join('/')
-                image_name = [image_repository, image[:tag]].join(':')
-
-                should_be_ignored = deployed_docker_images.include?(image_name)
-
-                if should_be_ignored
-                  log "Keep in repo image that is being used in kubernetes: #{image_name}"
-                  next
-                end
-
-                (detailed_dimgs_images_by_scheme[image[:labels]['dapp-tag-scheme']] ||= []) << image
-              end
-            end
-          end
-
-          def cleanup_repo_by_nonexistent_git_primitive(registry, detailed_dimgs_images_by_scheme)
-            %w(git_tag git_branch git_commit).each do |scheme|
-              cleanup_repo_by_nonexistent_git_base(registry, detailed_dimgs_images_by_scheme, scheme) do |detailed_dimg_image|
-                case scheme
-                  when 'git_tag'    then consistent_git_tags.include?(detailed_dimg_image[:tag])
-                  when 'git_branch' then consistent_git_remote_branches.include?(detailed_dimg_image[:tag])
-                  when 'git_commit' then git_own_repo.commit_exists?(detailed_dimg_image[:tag])
-                  else
-                    raise
-                end
-              end unless detailed_dimgs_images_by_scheme[scheme].empty?
-            end
-          end
-
-          def consistent_git_tags
-            git_tag_by_consistent_tag_name.keys
-          end
-
-          def consistent_git_remote_branches
-            @consistent_git_remote_branches ||= git_own_repo.remote_branches.map(&method(:consistent_uniq_slugify))
-          end
-
-          def cleanup_repo_by_nonexistent_git_base(registry, repo_dimgs_images_by_scheme, dapp_tag_scheme)
-            nonexist_repo_images = repo_dimgs_images_by_scheme[dapp_tag_scheme]
-              .select { |dimg_image| dimg_image[:labels]['dapp-tag-scheme'] == dapp_tag_scheme }
-              .select { |dimg_image| !(yield dimg_image) }
-
-            log_step_with_indent(:"#{dapp_tag_scheme.split('_').join(' ')} nonexistent") do
-              nonexist_repo_images.each { |repo_image| delete_repo_image(registry, repo_image) }
-            end unless nonexist_repo_images.empty?
-          end
-
-          def cleanup_repo_by_policies(registry, detailed_dimgs_images_by_scheme)
-            cleanup_repo_tags_by_policies(registry, detailed_dimgs_images_by_scheme)
-            cleanup_repo_commits_by_policies(registry, detailed_dimgs_images_by_scheme)
-          end
-
-          def cleanup_repo_tags_by_policies(registry, detailed_dimgs_images_by_scheme)
-            cleanup_repo_by_policies_base(
-              registry,
-              detailed_dimgs_images_by_scheme['git_tag'].select { |dimg| consistent_git_tags.include?(dimg[:tag]) },
-              expiry_date_policy: git_tags_expiry_date_policy,
-              limit_policy:       git_tags_limit_policy,
-              log_primitive:      'tag'
-            )
-          end
-
-          def cleanup_repo_commits_by_policies(registry, detailed_dimgs_images_by_scheme)
-            cleanup_repo_by_policies_base(
-              registry,
-              detailed_dimgs_images_by_scheme['git_commit'].select { |dimg| git_own_repo.commit_exists?(dimg[:tag]) },
-              expiry_date_policy: git_commits_expiry_date_policy,
-              limit_policy:       git_commits_limit_policy,
-              log_primitive:      'commit'
-            )
-          end
-
-          def cleanup_repo_by_policies_base(registry, detailed_dimgs_images, expiry_date_policy:, limit_policy:, log_primitive:)
-            sorted_detailed_dimgs_images = detailed_dimgs_images.sort_by { |dimg| dimg[:created_at] }.reverse
-
-            expired_dimgs_images, not_expired_dimgs_images = sorted_detailed_dimgs_images.partition do |dimg_image|
-              dimg_image[:created_at] < expiry_date_policy
-            end
-
-            log_step_with_indent(:"git #{log_primitive} date policy (before #{DateTime.strptime(expiry_date_policy.to_s, '%s')})") do
-              expired_dimgs_images.each { |dimg| delete_repo_image(registry, dimg) }
-            end unless expired_dimgs_images.empty?
-
-            not_expired_dimgs_images
-              .each_with_object({}) { |dimg, images_by_dimg| (images_by_dimg[dimg[:dimg]] ||= []) << dimg }
-              .each do |dimg_name, images|
-              next if images[limit_policy..-1].nil?
-              log_step_with_indent(:"git #{log_primitive} limit policy (> #{limit_policy}) (`#{dimg_name || 'nameless'}` dimg)") do
-                images[limit_policy..-1].each { |dimg| delete_repo_image(registry, dimg) }
-              end
-            end
-          end
-
-          def git_tags_expiry_date_policy
-            @git_tags_expiry_date_policy ||= expiry_date_policy_value('EXPIRY_DATE_PERIOD_POLICY', default: EXPIRY_DATE_PERIOD_POLICY)
-          end
-
-          def git_tags_limit_policy
-            @git_tags_limit_policy ||= policy_value('GIT_TAGS_LIMIT_POLICY', default: GIT_TAGS_LIMIT_POLICY)
-          end
-
-          def git_commits_expiry_date_policy
-            @git_commits_expiry_date_policy ||= expiry_date_policy_value('GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY', default: GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY)
-          end
-
-          def git_commits_limit_policy
-            @git_commits_limit_policy ||= policy_value('GIT_COMMITS_LIMIT_POLICY', default: GIT_COMMITS_LIMIT_POLICY)
-          end
-
-          def expiry_date_policy_value(env_key, default:)
-            expiry_date_period_policy = policy_value(env_key, default: default)
-            Time.now.to_i - expiry_date_period_policy
-          end
-
-          def policy_value(env_key, default:)
-            return default if (val = ENV[env_key]).nil?
-
-            if val.to_i.to_s == val
-              val.to_i
-            else
-              log_warning("WARNING: `#{env_key}` value `#{val}` is ignored (using default value `#{default}`)!")
-              default
-            end
-          end
-
-          def git_tag_by_consistent_git_tag(consistent_git_tag)
-            git_tag_by_consistent_tag_name[consistent_git_tag]
-          end
-
-          def git_tag_by_consistent_tag_name
-            @git_consistent_tags ||= git_own_repo.tags.map { |t| [consistent_uniq_slugify(t), t] }.to_h
           end
 
           def deployed_docker_images

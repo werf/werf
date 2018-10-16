@@ -84,6 +84,7 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 		return err
 	}
 
+	fmt.Printf("%s: ", image.Tag)
 	if err := repoReferenceRemove(reference, options); err != nil {
 		return err
 	}
@@ -101,4 +102,23 @@ func repoReferenceRemove(reference string, options CommonRepoOptions) error {
 	}
 
 	return nil
+}
+
+func exceptRepoImages(repoImages []docker_registry.RepoImage, repoImagesToExclude ...docker_registry.RepoImage) []docker_registry.RepoImage {
+	var newRepoImages []docker_registry.RepoImage
+
+Loop:
+	for _, repoImage := range repoImages {
+		reference := strings.Join([]string{repoImage.Repository, repoImage.Tag}, ":")
+		for _, repoImageToExclude := range repoImagesToExclude {
+			referenceToExclude := strings.Join([]string{repoImageToExclude.Repository, repoImageToExclude.Tag}, ":")
+			if reference == referenceToExclude {
+				continue Loop
+			}
+		}
+
+		newRepoImages = append(newRepoImages, repoImage)
+	}
+
+	return newRepoImages
 }

@@ -3,11 +3,11 @@ module Dapp
     module Dapp
       module Command
         module Ruby2GoCleanup
-          def ruby2go_cleanup_command(command, command_options)
+          def ruby2go_cleanup_command(command, command_options, **options)
             options = {
               command: command,
               command_options: command_options,
-              options: { host_docker_config_dir: self.class.host_docker_config_dir }
+              options: { host_docker_config_dir: self.class.host_docker_config_dir }.merge(options)
             }
 
             ruby2go_cleanup(options).tap do |res|
@@ -15,13 +15,12 @@ module Dapp
             end
           end
 
-          def ruby2go_cleanup_common_project_options(force: false)
+          def ruby2go_cleanup_common_project_options
             {
               common_project_options: {
                 project_name: name,
                 common_options: {
                   dry_run: dry_run?,
-                  force: force
                 }
               },
             }
