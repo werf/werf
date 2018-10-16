@@ -84,7 +84,7 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 		return err
 	}
 
-	fmt.Printf("%s: ", image.Tag)
+	fmt.Printf("%s:\n  ", image.Tag)
 	if err := repoReferenceRemove(reference, options); err != nil {
 		return err
 	}
