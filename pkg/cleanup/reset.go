@@ -2,6 +2,9 @@ package cleanup
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/docker/docker/api/types/filters"
 )
@@ -41,7 +44,54 @@ func resetAll(options ResetOptions) error {
 		return err
 	}
 
+	if err := deleteDappFiles(options.CommonOptions); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func deleteDappFiles(options CommonOptions) error {
+	var directoryPathToDelete []string
+	for _, directory := range []string{"bin", "builds", "git"} {
+		directoryPath := filepath.Join(userHomeDir(), ".dapp", directory)
+
+		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {
+			directoryPathToDelete = append(directoryPathToDelete, directoryPath)
+		}
+	}
+
+	if len(directoryPathToDelete) != 0 {
+		fmt.Println("reset dapp cache")
+		for _, directoryPath := range directoryPathToDelete {
+			if options.DryRun {
+				fmt.Println(directoryPath)
+			} else {
+				err := os.RemoveAll(directoryPath)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func userHomeDir() string {
+	if runtime.GOOS == "windows" {
+		home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
+		if home == "" {
+			home = os.Getenv("USERPROFILE")
+		}
+		return home
+	} else if runtime.GOOS == "linux" {
+		home := os.Getenv("XDG_CONFIG_HOME")
+		if home != "" {
+			return home
+		}
+	}
+	return os.Getenv("HOME")
 }
 
 func resetDevModeCache(options ResetOptions) error {
