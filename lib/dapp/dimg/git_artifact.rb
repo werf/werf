@@ -100,7 +100,7 @@ module Dapp
         res = repo.dapp.ruby2go_git_artifact(
           "GitArtifact" => JSON.dump(get_ruby2go_state_hash),
           "method" => "StageDependenciesChecksum",
-          "StageName" => stage.name,
+          "StageName" => ::Dapp::Helper::CaseConversion.snake_case_to_lower_camel_case(stage.name.to_s),
         )
 
         raise res["error"] if res["error"]
