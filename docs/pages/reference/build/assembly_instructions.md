@@ -52,112 +52,230 @@ summary: |
   <b>Running assembly instructions with git</b>
   
   <a href="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=2033&amp;h=433" data-featherlight="image">
-    <img src="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=1016&amp;h=216">
-    </a>
+  <img src="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=1016&amp;h=216">
+  </a>
 ---
 
-## Проблематика
+## What is user stages?
 
-TODO
+***User stage*** is a [_stage_]({{ site.baseurl }}/reference/build/stages.html) with _assembly instructions_ from dappfile.
+Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. Dapp
+defines 4 _user stages_ and executes them in this order: _before_install_, _install_,
+_before_setup_ and _setup_. Assembly instructions from one stage are executed to
+create one docker layer.
 
-Стадии `before_install`, `install`, `before_setup`, `setup` предлагаются для того, чтобы в них прописывать свои инструкции. Это не все стадии, полный список можно увидеть в man-е или [в диаграме]({{ site.baseurl }}/not_used/stages_diagram.html).
+## Motivation behind stages
 
-![Диаграмма пользовательских стадий сборки]({{ site.baseurl }}/images/build/stages_01.png "Диаграмма пользовательских стадий сборки")
+### Opinionated build structure
 
-### Пользовательская стадия
-Пользовательская стадия — это стадия, инструкции для сборки которой задаются пользователем dapp.
+_User stages pattern_ is based on analysis of real applications building
+instructions. It turns out that group assembly instructions into 4 _user stages_
+are enough for most applications. Instructions grouping decrease layers sizes
+and speed up image building.
 
-Инструкции задаются через dappfile или chef-рецепты — зависит от используемого сборщика: shell сборщик или [chef сборщик]({{ site.baseurl }}/ruby/chef.html).
+### Framework for a build process
+
+_User stages pattern_ defines a structure for building process and thus set
+boundaries for a developer. This is a high speed up over unstructured
+instructions in Dockerfile because developer knows what kind of instructions
+should be on each _stage_.
+
+### Run assembly instruction on git changes
+
+_User stage_ execution can depend on changes of files in a git repository. Dapp
+supports local and remote git repositories. User stage can be
+dependent on changes in several repositories. Different changes in one
+repository can cause a rebuild of different _user stages_.
+
+### More build tools: shell, ansible, ...
+
+_Shell_ is a familiar and well-known build tool. Ansible is a newer tool and it 
+needs some time for learning.
+
+If you need prototype as soon as possible then _the shell_ is enough — it works
+like a `RUN` instruction in Dockerfile. Ansible configuration is declarative and
+mostly idempotent which is good for long-term maintenance.
+
+Stage execution is isolated in code, so implementing support for another tool
+is not so difficult.
+
+## Usage of user stages
+
+Dapp provides 4 _user stages_ where assembly instructions can be defined. Assembly
+instructions are not limited by dapp. You can define whatever you define for `RUN`
+instruction in Dockerfile. However, assembly instructions grouping arises from
+experience with real-life applications. So the vast majority of application builds
+need these actions:
+
+- install system packages
+- install system dependencies
+- install application dependencies
+- setup system applications
+- setup application
+
+What is the best strategy to execute them? First thought is to execute them one
+by one to cache interim results. The other thought is not to mix instructions
+for these actions because of different file dependencies. _User stages pattern_
+suggests this strategy:
+
+- use _before_install user stage_ for installing system packages
+- use _install user stage_ to install system dependencies and application dependencies
+- use _before_setup user stage_ to setup system settings and install an application
+- use _setup user stage_ to setup application settings
 
 ### before_install
 
-На этой стадии производятся долгоживущие настройки ОС, устанавливаются пакеты, версия которых меняется не часто. Например, устанавливается нужная локаль и часовой пояс, выполняются apt-get update, устанавливается nginx, php, расширения для php (версии которых не будут меняться очень часто).
+A stage that executes instructions before install an application. This stage
+is for system applications that rarely changes but time consuming to install.
+Also, long-lived system settings can be done here like setting locale, setting
+time zone, adding groups and users, etc. Installation of enormous language
+distributions and build tools like PHP and composer, java and gradle, etc. are good candidates to execute at this stage.
 
-По практике коммиты с изменениями команд или версий ПО на этой стадии составляют менее 1%  от всех коммитов в репозитории. При этом эта стадия самая затратная по времени.
-
-Подсказка: before_install — в эту стадию добавлять редко изменяющиеся или тяжелые пакеты и долгоживущие настройки ОС.
-
-Мнемоника: _перед установкой_ приложения нужно настроить ОС, установить системные пакеты
+In practice, these components are rarely changes, and _before_install stage_ caches
+them for an extended period.
 
 ### install
 
-В этот момент лучше всего ставить прикладные зависимости приложения. Например, composer, нужные расширения для php. Можно добавить общие настройки php (отключение ошибок в браузер, включение логов и прочее, что не часто изменяется).
+A stage to install an application. This stage is for installation of
+application dependencies and setup some standard settings.
 
-Коммиты с изменениями в этих вещах составляют примерно 5% от общего числа коммитов. Эта стадия может являться менее затратной по времени, чем before_install.
-
-Подсказка: install — стадия для прикладных зависимостей и их общих настроек.
-
-Мнемоника: _установка_ всего что нужно для приложения.
+Instructions on this stage have access to application source codes, so
+application dependencies can be installed with build tools (like composer,
+gradle, npm, etc.) that require some manifest file (i.e., pom.xml,
+Gruntfile). Best practice is to make this stage dependent on changes in that
+manifest file.
 
 ### before_setup
 
-Основные действия по сборке самого приложения производятся на этой стадии. Компилирование исходных текстов, компилирование ассетов, копирование исходных текстов в особую папку или сжатие исходных текстов — всё это тут.
-
-Здесь выполняются действия, которые нужно произвести, чтобы приложение запустилось после изменения исходных текстов.
-
-Подсказка: before_setup — стадия с действиями над исходными текстами.
-
-Мнемоника: _перед настрокой_ приложения нужно установить само приложение.
+This stage is for prepare application before setup some settings. Every kind
+of compilation can be done here: creating jars, creating executable files and
+dynamic libraries, creating web assets, uglification and encryption. This stage
+often makes to be dependent on changes in source codes.
 
 ### setup
 
-Эта стадия выделена для конфигурации приложения, это может быть копирование файлов в /etc, создание программного модуля с версией приложения. В основном это лёгкие, быстрые действия, которые нужно выполнять при сборке для каждого коммита, либо примерно для 2% коммитов, в которых изменяются конфигурационные файлы приложения.
+This stage is to setup application settings. The usual actions here are copying
+some profiles into `/etc`, copying configuration files into well-known
+locations, creating a file with the application version. These actions should not be
+time-consuming as they execute on every commit.
 
-Стадия выполняется быстро, поэтому выполняется после сборки приложения. Возможны два сценария: либо стадия выполняется каждый коммит, либо изменились исходные тексты и будет перевыполнены стадии before_setup и setup.
+### custom strategy
 
-Подсказка: setup — стадия для конфигурации приложения и для действий на каждый коммит.
+Again, there are no limitations for assembly instructions. The previous
+definitions of _user stages_ are just suggestions arise from experience with real
+applications. You can even use only one _user stage_ or define your strategy
+of grouping assembly instructions and get benefits from caching and git
+dependencies.
 
-Мнемоника: _настройка_ параметров приложения
+## Syntax
+
+There are two ***builder directives*** for assembly instructions on top level: `shell` and `ansible`. These builder directives are mutually exclusive. You can build an image with ***shell assembly instructions*** or with ***ansible assembly instructions***.
+
+_Builder directive_ has four directives which define assembly instructions for each _user stage_:
+- `beforeInstall`
+- `install`
+- `beforeSetup`
+- `setup`
+
+Builder directives also contain ***cacheVersion  directives*** that are user-defined parts of _user stages signatures_. More details in a [CacheVersion](#dependency-on-cacheversion-values) section.
 
 ## Shell
 
-Shell assembly allows executing commands on any user stage. Each described command will be executed with bash in the time of build, so you can use any bash commands to prepare image.
+Syntax for _user stages_ with _shell assembly instructions_: 
 
 ```yaml
 shell:
   beforeInstall:
-    - apt update
+  - <bash_command 1>
+  - <bash_command 2>
+  ...
+  - <bash_command N>
   install:
-    - apt install -qy python
+  - bash command
+  ...
   beforeSetup:
-    - mkdir -p /app
+  - bash command
+  ...
   setup:
-    - echo 'print "Hello world"' > /app/index.py
-```
-
-On any user stage you can use any number of commands as you need.
-
-Executing commands with the shell assembly is like using RUN command in a Dockerfile, except dapp will create a new docker layer on each stage.
-
-### Shell assembly syntax
-
-{% raw %}
-```yaml
-shell:
-  beforeInstall:
-  - <bash_command>
-  install:
-  - <bash_command>
-  beforeSetup:
-  - <bash_command>
-  setup:
-  - <bash_command>
+  - bash command
+  ...
   cacheVersion: <version>
   beforeInstallCacheVersion: <version>
   installCacheVersion: <version>
   beforeSetupCacheVersion: <version>
   setupCacheVersion: <version>
 ```
-{% endraw %}
+
+_Shell assembly instructions_ are arrays of bash commands for _user stages_. Commands for one stage are executed as one `RUN` instruction in Dockerfile, and thus dapp creates one layer for one _user stage_.
+
+Dapp provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/reference/build/base_image.html). Commands for one stage are joined with `&&` and then encoded as base64. _User stage assembly container_ runs decoding and then executes joined commands. For example, _before_install stage_ with `apt-get update` and `apt-get install` commands:
+
+```yaml
+beforeInstall:
+- apt-get update
+- apt-get install -y build-essential g++ libcurl4
+```
+
+These commands transform into this command for _user stage assembly container_:
+```shell
+bash -ec 'eval $(echo YXB0LWdldCB1cGRhdGUgJiYgYXB0LWdldCBpbnN0YWxsIC15IGJ1aWxkLWVzc2VudGlhbCBnKysgbGliY3VybDQK | base64 --decode)'
+```
+
+`bash` and `base64` binaries are stored in _dappdeps volume_. Details of _dappdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
 
 ## Ansible
 
-`ansible` directive is similar to `shell`. It has 4 keys: `beforeInstall`, `install`,
-`beforeSetup`, `setup` for each available stage. Stage description is an array
-of ansible tasks:
+Syntax for _user stages_ with _ansible assembly instructions_: 
+
+```yaml
+ansible:
+  beforeInstall:
+  - <ansible task 1>
+  - <ansible task 2>
+  ...
+  - <ansible task N>
+  install:
+  - ansible task
+  ...
+  beforeSetup:
+  - ansible task
+  ...
+  setup:
+  - ansible task
+  ...
+  cacheVersion: <version>
+  beforeInstallCacheVersion: <version>
+  installCacheVersion: <version>
+  beforeSetupCacheVersion: <version>
+  setupCacheVersion: <version>
+```
+
+### Ansible config and stage playbook
+
+_Ansible assembly instructions_ for _user stage_ is a set of ansible tasks. To run
+this tasks with `ansible-playbook` command dapp mounts this directory structure
+into the _user stage assembly container_:
 
 ```
-dimg: app
+/.dapp/ansible-workdir
+├── ansible.cfg
+├── hosts
+└── playbook.yml
+```
+
+`ansible.cfg` contains settings for ansible:
+- use local transport
+- dapp stdout_callback for better logging
+- turn on force_color
+- use sudo for privilege escalation (no need to use `become` in tasks)
+
+`hosts` is an inventory file and contains the only localhost. Also, there are some
+ansible_* settings, i.e., the path to python in dappdeps.
+
+`playbook.yml` is a playbook with all tasks from one _user stage_. For example,
+`dappfile.yaml` with _install stage_ like this:
+
+```yaml
 ansible:
   install:
   - debug: msg='Start install'
@@ -168,88 +286,84 @@ ansible:
   - apk:
       name: curl
       update_cache: yes
-  - command: ls -la /bin
-```
-
-### Ansible config and stage playbook
-
-Each stage description array is converted to a playbook:
-
-
-```
-- hosts: all
-  gather_facts: no
-  tasks:
-  - debug: msg='Start install'  -.
-  - file: path=/etc mode=0777    |
-  - copy:                        |> copy from ansible:
-      src: /bin/sh               |              install:
-      dest: /bin/sh.orig        -'              - debug: ...
   ...
 ```
 
-This playbook is stored into `/.dapp/ansible-playbook-STAGE/playbook.yml` in stage container and thus available
-in introspect mode for debugging purposes.
-
-Default settings for ansible is not suited for dapp, so there are config and inventory files in `/.dapp/ansible-playbook-STAGE`:
-
-`/.dapp/ansible-playbook-STAGE/ansible.cfg`
-
-```
-[defaults]
-inventory = /.dapp/ansible-playbook-STAGE/hosts
-transport = local
-; do not generate retry files in ro volumes
-retry_files_enabled = False
-; more verbose stdout like ad-hoc ansible command
-stdout_callback = minimal
-```
-
-`/.dapp/ansible-playbook-STAGE/hosts`
-
-```
-localhost ansible_python_interpreter=/.dappdeps/ansible/...
+dapp produces this `playbook.yml` for _install stage_:
+```yaml
+- hosts: all
+  gather_facts: 'no'
+  tasks:
+  - debug: msg='Start install'  \
+  - file: path=/etc mode=0777   |
+  - copy:                        > these lines are copied from dappfile.yaml
+      src: /bin/sh              |
+      dest: /bin/sh.orig        |
+  - apk:                        |
+      name: curl                |
+      update_cache: yes         /
+  ...
 ```
 
-After generation of this files dapp plays the stage playbook like this:
+Dapp plays the _user stage_ playbook in the _user stage assembly container_ with `playbook-ansible`
+command:
+
+```bash
+$ export ANSIBLE_CONFIG="/.dapp/ansible-workdir/ansible.cfg"
+$ ansible-playbook /.dapp/ansible-workdir/playbook.yml
 ```
-ANSIBLE_CONFIG=/.dapp/ansible-playbook-STAGE/ansible.cfg ansible-playbook /.dapp/ansible-playbook-STAGE/playbook.yml
-```
 
-Notes:
+`ansible` and `python` binaries and libraries are stored in _dappdeps/ansible volume_. Details of _dappdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
 
-1. stdout_callback set to _minimal_ because of more verbosity.
-2. Ansible has no live stdout. This can be a show stopper for long lasting commands. Quite console is bad for build.
-3. `inventory` and `ansible_python_interpreter` — this can be in dappdeps image
-4. It would be great to create ansible-solo command for local plays with builtin config and inventory
-5. `gather_facts` can be enabled with modules like `setup`, `set_fact`, etc.
+### Supported modules
 
-### Checksums
+One of the ideas behind dapp is idempotent builds. If nothing changed — dapp
+should create the same image. This task accomplished by _signature_ calculation
+for _stages_. Ansible has non-idempotent modules — they are giving different
+results if executed twice and dapp cannot correctly calculate _signature_ to
+rebuild _stages_. For now, there is a list of supported modules:
 
-Dapp calculates checksum for each stage before build. Stage is considered to be rebuild if checksum
-changed. The simplest checksum is a hash over text of stage configuration. More interesting is checksum of
-files involved into build process. You can place ansible config files
-everywhere in repository tree. But Ansible has rich syntax for modules and dapp should parse
-ansible syntax to get all pathes from `src`, `with_files`, etc and implement logic for lookup plugins
-to mount that files into stage container. That is very difficult to implement. That's why we come to 2 approaches:
+- [Command modules](https://docs.ansible.com/ansible/2.5/modules/list_of_commands_modules.html): command, shell, raw, script.
 
-The first iteration of Ansible builder will implement only text checksum. To calculate checksum for files use go template function .Files.Get and `content` attribute of modules.
+- [Crypto modules](https://docs.ansible.com/ansible/2.5/modules/list_of_crypto_modules.html): openssl_certificate, and other.
+
+- [Files modules](https://docs.ansible.com/ansible/2.5/modules/list_of_files_modules.html): acl, archive, copy, stat, tempfile, and other.
+
+- [Net Tools Modules](https://docs.ansible.com/ansible/2.5/modules/list_of_net_tools_modules.html): get_url, slurp, uri.
+
+- [Packaging/Language modules](https://docs.ansible.com/ansible/2.5/modules/list_of_packaging_modules.html#language): composer, gem, npm, pip, and other.
+
+- [Packaging/OS modules](https://docs.ansible.com/ansible/2.5/modules/list_of_packaging_modules.html#os): apt, apk, yum, and other.
+
+- [System modules](https://docs.ansible.com/ansible/2.5/modules/list_of_system_modules.html): user, group, getent, locale_gen, timezone, cron, and other.
+
+- [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
+
+_Dappfile_ with the module not from this list gives an error and stops a build. Feel free to report an issue if some module should be enabled.
+
+### Copy files
+
+The preferred way of copying files into an image is [_git paths_]({{ site.baseurl }}/reference/build/git_directive.html). Dapp cannot calculate changes of files referred in `copy` module. The only way to
+copy some external file into an image, for now, is to use the go-templating method
+`.Files.Get`. This method returns file content as a string. So content of the file becomes a part of _user stage signature_, and file changes lead to _user stage_
+rebuild.
+
+For example, copy `nginx.conf` into an image:
 
 {% raw %}
-```
-> dappfile.yml
-
+```yaml
 ansible:
   install:
   - copy:
-      content: {{ .Files.Get '/conf/etc/nginx.conf'}}
+      content: |
+{{ .Files.Get '/conf/etc/nginx.conf' | indent 6}}
       dest: /etc/nginx
 ```
 {% endraw %}
 
-```
-> resulting playbook.yml
+Dapp renders that snippet as go template and then transforms it into this `playbook.yml`:
 
+```yaml
 - hosts: all
   gather_facts: no
   tasks:   
@@ -263,91 +377,74 @@ ansible:
             ...
 ```
 
-.Files.Get input is path to file in repository. Function returns string with file content.
-
-### Modules
-
-Initial ansible builder will support only some modules:
-
-* Command
-* Shell
-* Copy
-* Debug
-* packaging category
-
-Other ansible modules are available, but they may be not stable.
-
 ### Jinja templating
 
-{% raw %}
-Go template and jinja has equal delimeters: `{{` and `}}`.
-{% endraw %}
+Ansible supports [Jinja templating](https://docs.ansible.com/ansible/2.5/user_guide/playbooks_templating.html) of playbooks. However, Go templates and Jinja
+templates has the same delimiters: {% raw %}`{{` and `}}`{% endraw %}. Jinja templates should be escaped
+ to work. There are two possible variants: escape only {% raw %}`{{`{% endraw %} or escape
+the whole Jinja expression.
 
-First iteration will support only go style escaping:
-
-{% raw %}
-```
-> dappfile.yml
-
-git:
-- add: '/'
-  to: '/app'
-ansible:
-  install:
-  - copy:
-      src: {{"{{"}} item {{"}}"}} OR src: {{`{{item}}`}}
-      dest: /etc/nginx
-      with_files:
-      - /app/conf/etc/nginx.conf
-      - /app/conf/etc/server.conf
-```
-{% endraw %}
-
-### Templates
-
-No templates for first iteration. Templates can be supported when .Files.Path will be implemented.
-
-### Ansible problems
-
-1. No live stdout. In general we need to implement our stdout callback and connection plugin.
-  stdout callbacks has no pre_* methods for display information about executed task. There are only post_* methods
-  for display information about finished task.
-2. `-c local` may be an overload because of zipping modules. There must be a way to directly start modules.
-  Ansible-solo command with direct modules calls would be a great improvement for building images.
-
-### Ansible assembly syntax
+For example, you have this ansible task:
 
 {% raw %}
 ```yaml
-ansible:
-  beforeInstall:
-  - <task>
-  install:
-  - <task>
-  beforeSetup:
-  - <task>
-  setup:
-  - <task>
-  cacheVersion: <version>
-  beforeInstallCacheVersion: <version>
-  installCacheVersion: <version>
-  beforeSetupCacheVersion: <version>
-  setupCacheVersion: <version>
-```   
+- copy:
+    src: {{item}}
+    dest: /etc/nginx
+    with_files:
+    - /app/conf/etc/nginx.conf
+    - /app/conf/etc/server.conf
+```
 {% endraw %}
 
-## Forced build (CacheVersion)
+{% raw %}
+So, Jinja expression `{{item}}` should be escaped:
+{% endraw %}
 
-If you need to forcibly rebuild some or all of user stages (in case they are not actual) you can use `<stage>cacheVersion` directives. Using any of these directives, give a possibility to force the rebuild of the appropriate stage and all of the subsequent stages when values in used directives have changed.
-
-E.g., you use the following dappfile:
-
+{% raw %}
+```yaml
+# escape {{ only
+src: {{"{{"}} item }}
 ```
-dimg: ~
-from: alpine:latest
+or
+```yaml
+# escape the whole expression
+src: {{`{{item}}`}}
+```
+{% endraw %}
 
+### Ansible problems
+
+- Live stdout implemented for raw and command modules. Other modules display stdout and stderr content after execution.
+- Excess logging into stderr may hang ansible task execution ([issue #784](https://github.com/flant/dapp/issues/784)).
+- `apt` module hangs build process on particular debian and ubuntu versions. This affects derived images as well ([issue #645](https://github.com/flant/dapp/issues/645)).
+
+## User stages dependencies
+
+One of the dapp features is an ability to define dependencies for _stage_ rebuild.
+As described in [_stages_ reference]({{ site.baseurl }}/reference/build/stages.html), _stages_ are built one by one, and each _stage_ has
+a calculated _stage signature_. _Signatures_ have various dependencies. When
+dependencies are changed, the _stage signature_ is changed, and dapp rebuild this _stage_ and
+all following _stages_.
+
+These dependencies can be used for defining rebuild for the
+_user stages_. _User stages signatures_ and so rebuilding of the _user stages_
+depends on:
+- changes in assembly instructions
+- changes of _cacheVersion directives_
+- git repository changes
+- changes in files that imports from an [artifacts]({{ site.baseurl }}/reference/build/artifact_directive.html)
+
+First three dependencies are described further.
+
+## Dependency on assembly instructions changes
+
+_User stage signature_ depends on rendered assembly instructions text. Changes in
+assembly instructions for _user stage_ lead to the rebuilding of this _stage_. E.g., you
+use the following _shell assembly instructions_:
+
+```yaml
 shell:
-  installCacheVersion: 1
   beforeInstall:
   - echo "Commands on the Before Install stage"
   install:
@@ -358,57 +455,173 @@ shell:
   - echo "Commands on the Setup stage"
 ```
 
-When you've built this image with `dapp dimg build` command, run it again - dapp will use its build cache and will not rebuild any stages described in the dappfile. But if you'll change `installCacheVersion` value and will run again `dapp dimg build` - the install stage will be forcibly rebuilt in spite of stage commands have no changes.
+First, build of this dimg execute all four _user stages_. There is no _git path_ in
+this _dappfile_, so next builds never execute assembly instructions because _user
+stages signatures_ not changed and build cache remains valid.
 
-You can use all of the `<stage>cacheVersion` directives when describing an image in dappfile. E.g.:
+Changing assembly instructions for _install user stage_:
 
-{% raw %}
-```
-dimg: ~
-from: alpine:latest
-
+```yaml
 shell:
-  cacheVersion: 1
-  beforeInstallCacheVersion: 1
-  installCacheVersion: 1
-  beforeSetupCacheVersion: 1
-  setupCacheVersion: 1
   beforeInstall:
   - echo "Commands on the Before Install stage"
   install:
   - echo "Commands on the Install stage"
+  - echo "Installing ..."
   beforeSetup:
   - echo "Commands on the Before Setup stage"
   setup:
   - echo "Commands on the Setup stage"
 ```
-{% endraw %}
 
-Pay attention that `cacheVersion` and `beforeInstallCacheVersion` directives have the same effect - when their values have changed, then `beforeInstall` stage and subsequent stages will be rebuilt.
+Now `dapp dimg build` executes _install assembly instructions_ and instructions from
+following _stages_.
 
-When may you need to forcibly rebuild stage? When may the stage be not actual?
-
-The simple case is, e.g., when you make `apt update` on the `beforeInstall` stage, and you wish that once a month `beforeInstall` stage be rebuilt and APT cache be updated. To achieve this, you can use the following dappfile, using GO templates:
+Go-templating and using environment variables can changes assembly instructions
+and lead to unforeseen rebuilds. For example:
 
 {% raw %}
+```yaml
+shell:
+  beforeInstall:
+  - echo "Commands on the Before Install stage for {{ env "CI_COMMIT_SHA” }}"
+  install:
+  - echo "Commands on the Install stage"
+  ...
 ```
+{% endraw %}
+
+First build renders _beforeInstall command_ into:
+```bash
+echo "Commands on the Before Install stage for 0a8463e2ed7e7f1aa015f55a8e8730752206311b"
+```
+
+Build for the next commit renders _beforeInstall command_ into:
+
+```bash
+echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290e84df27"
+``` 
+
+Using `CI_COMMIT_SHA` assembly instructions text changes every commit.
+So this configuration rebuilds _before_install user stage_ on every commit.
+
+## Dependency on git repo changes
+
+<a href="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=2033&amp;h=433" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=1016&amp;h=216">
+</a>
+
+As stated in a _git path_ reference, there are _g_a_archive_ and _g_a_latest_patch_ stages. _g_a_archive_ is executed after _before_install user stage_, and _g_a_latest_patch_ is executed after _setup user stage_ if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _g_a_archive_ with [special commit]({{site.baseurl}}/reference/build/git_directive.html#rebuild-of-g_a_archive-stage) or rebuild _before_install_ (change _cacheVersion_ or instructions for _before_install stage_).
+
+Dapp has additional _stages_, _g_a_pre_install_patch_, _g_a_post_install_patch_ and _g_a_pre_setup_patch_, to apply git patches before _install_, _before_setup_ and _setup_ user stages. These additional _stages_ make _user stages_ dependant on git repository changes so that dapp can execute assembly instructions of the particular _user stage_ with the latest version of source codes.
+
+_User stage_ dependency on git repository changes is defined with `git.stageDependencies` parameter. Syntax is:
+
+```yaml
+git:
+- ...
+  stageDependencies:
+    install:
+    - <mask 1>
+    ...
+    - <mask N>
+    beforeSetup:
+    - <mask>
+    ...
+    setup:
+    - <mask>
+```
+
+`git.stageDependencies` parameter has 3 keys: `install`, `beforeSetup` and `setup`. Each key defines an array of masks for one user stage. User stage is rebuilt if a git repository has changes in files that match with one of the masks defined for _user stage_.
+
+For each _user stage_ dapp creates a list of matched files and calculates a checksum over each file attributes and content. This checksum is a part of _stage signature_. So signature is changed with every change in a repository: getting new attributes for the file, changing file's content, adding a new matched file, deleting a matched file, etc.
+
+`git.stageDependencies` masks work together with `git.includePaths` and `git.excludePaths` masks. dapp considers only files matched with `includePaths` filter and `stageDependencies` masks. Likewise, dapp considers only files not matched with `excludePaths` filter and matched with `stageDependencies` masks.
+
+`stageDependencies` masks works like `includePaths` and `excludePaths` filters. Masks are matched with files paths with [fnmatch method](https://ruby-doc.org/core-2.2.0/File.html#method-c-fnmatch). Masks may contain the following patterns:
+
+- `*` — matches any file. This pattern includes `.` and excludes `/`
+- `**` — matches directories recursively or files expansively
+- `?` — matches any one character. Equivalent to /.{1}/ in regexp
+- `[set]` — matches any one character in the set. Behaves exactly like character sets in regexp, including set negation ([^a-z])
+- `\` — escapes the next metacharacter
+
+Mask that starts with `*` or `**` patterns should be escaped with quotes in `dappfile.yaml` file:
+
+- `"*.rb"` — with double quotes
+- `'**/*'` — with single quotes
+
+Dapp determines whether the files changes in the git repository with use of checksums. For _user stage_ and for each mask, the following algorithm is applied:
+
+- dapp creates a list of all files from `add` path and apply `excludePaths` and `includePaths` filters
+- each file path from the list compared to the mask with the use of [fnmatch](https://ruby-doc.org/core-2.2.0/File.html#method-c-fnmatch) with FNM_PATHNAME and FNM_PERIOD flags (`.` is included in the `*`, however `/` is excluded);
+  - if fnmatch returns true, then the file is matched;
+- if mask matches a directory then this directory content is matched recursively;
+- dapp calculates checksum of attributes and content of all matched files;
+
+These checksums are calculated in the beginning of the build process before any stage container is ran.
+
+Example:
+
+```yaml
+---
+dimg: app
+git:
+- add: /src
+  to: /app
+  stageDependencies:
+    beforeSetup:
+    - "*"
+shell:
+  install:
+  - echo "install stage"
+  beforeSetup:
+  - echo "beforeSetup stage"
+```
+
+This `dappfile.yaml` has a git path configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _g_a_archive stage_ and assembly instructions for _install_ and _before_setup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src`, then checksums of matched files are changed, and dapp rebuilds _g_a_post_install_patch stage_ and _before_setup_ stages.
+
+## Dependency on CacheVersion values
+
+There are situations when a user wants to rebuild all or one of _user stages_. This
+can be accomplished by changing `cacheVersion` or `<user stage name>CacheVersion` values.
+
+Signature of the _install user stage_ depends on the value of the
+`installCacheVersion` parameter. To rebuild the _install user stage_ (and
+subsequent stages), you need to change the value of the `installCacheVersion` parameter.
+
+> Note that `cacheVersion` and `beforeInstallCacheVersion` directives have the same effect. When these values are changed, then the _before_install stage_ and subsequent stages rebuilt.
+
+### Example: common image for multiple applications
+
+You can define an image with common packages in separated `dappfile.yaml`. `cacheVersion` value can be used to rebuild this image to refresh packages versions.
+
+```yaml
 dimg: ~
 from: ubuntu:latest
 shell:
-  beforeInstallCacheVersion: {{ now | date "2006-01" }}
+  beforeInstallCacheVersion: 2
   beforeInstall:
   - apt update
+  - apt install ...
+```
+
+This image can be used as base image for multiple applications if images from hub.docker.com doesn't suite your needs.
+
+### External dependency example
+
+_CacheVersion directives_ can be used with [go templates]({{ site.baseurl }}/reference/build/dappfile.html#go-templates) to define _user stage_ dependency on files, not in the git tree. 
+
+{% raw %}
+```yaml
+dimg: ~
+from: ubuntu:latest
+shell:
+  installCacheVersion: {{.Files.Get "some-library-latest.tar.gz" | sha256sum}}
+  install:
+  - tar zxf some-library-latest.tar.gz
+  - <build application>
 ```
 {% endraw %}
 
-> Why is it "2006-01" argument in the date function? You can read about time format [here](https://golang.org/pkg/time/#pkg-constants).
-
-## Использование совместно с добавлением исходников
-
-Проблема возникает, когда подготовка образа включает в себя, например, установку внешних зависимостей gem'ов в образ на основе Gemfile и Gemfile.lock из git-репозитория. В таком случае необходимо пересобирать стадию, на которой происходит установка этих зависимостей, если поменялся Gemfile или Gemfile.lock.
-
-* Существуют стадии, в формировании [cигнатур](#сигнатура-стадии) которых используется сигнатура последующей стадии, вдобавок к зависимостям самой стадии. Такие стадии всегда будут пересобираться вместе с зависимой стадией.
-  * git artifact pre install patch зависит от install.
-  * git artifact post install patch зависит от before setup.
-  * git artifact pre setup patch зависит от setup.
-  * git artifact artifact patch зависит от build artifact.
+Build script can be used to download `some-library-latest.tar.gz` archive and then execute `dapp dimg build` command. If the file is changed then dapp rebuilds _install user stage_ and subsequent stages.
