@@ -2,6 +2,7 @@ package cleanup
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -71,7 +72,10 @@ func dappContainersFlushByFilterSet(filterSet filters.Args, options CommonOption
 
 func dappContainersByFilterSet(filterSet filters.Args) ([]types.Container, error) {
 	filterSet.Add("name", "dapp.build.")
+	return containersByFilterSet(filterSet)
+}
 
+func containersByFilterSet(filterSet filters.Args) ([]types.Container, error) {
 	containersOptions := types.ContainerListOptions{}
 	containersOptions.All = true
 	containersOptions.Quiet = true
@@ -81,6 +85,12 @@ func dappContainersByFilterSet(filterSet filters.Args) ([]types.Container, error
 }
 
 func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
+	var err error
+	images, err = ignoreUsedImages(images)
+	if err != nil {
+		return err
+	}
+
 	var imageReferences []string
 	for _, image := range images {
 		if len(image.RepoTags) == 0 {
@@ -108,14 +118,52 @@ func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
 	return nil
 }
 
+func ignoreUsedImages(images []types.ImageSummary) ([]types.ImageSummary, error) {
+	filterSet := filters.NewArgs()
+	for _, image := range images {
+		filterSet.Add("ancestor", image.ID)
+	}
+
+	containers, err := containersByFilterSet(filterSet)
+	if err != nil {
+		return nil, err
+	}
+
+	var imagesToExclude []types.ImageSummary
+	for _, container := range containers {
+		for _, image := range images {
+			if image.ID == container.ImageID {
+				fmt.Printf("Skip image '%s' (used by container '%s')\n", image.ID, container.ID)
+				imagesToExclude = append(imagesToExclude, image)
+			}
+		}
+	}
+
+	for _, image := range imagesToExclude {
+		images = exceptImage(images, image)
+	}
+
+	return images, nil
+}
+
+func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary) []types.ImageSummary {
+	var newImages []types.ImageSummary
+	for _, image := range images {
+		if !reflect.DeepEqual(imageToExclude, image) {
+			newImages = append(newImages, image)
+		}
+	}
+
+	return newImages
+}
+
 func containersRemove(containers []types.Container, options CommonOptions) error {
-	containerRemoveOptions := types.ContainerRemoveOptions{Force: true}
 	for _, container := range containers {
 		if options.DryRun {
 			fmt.Println(container.ID)
 			fmt.Println()
 		} else {
-			if err := docker.ContainerRemove(container.ID, containerRemoveOptions); err != nil {
+			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{}); err != nil {
 				return err
 			}
 		}
