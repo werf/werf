@@ -38,3 +38,19 @@ dapp dimg stages pull [options] [DIMG ...] REPO
 The `DIMG` optional parameter — is a name of dimg from a dappfile. Specifying `DIMG` one or multiple times allows pulling stages cache only related to certain dimgs from dappfile. By default, dapp pull stages cache of all dimgs from dappfile.
 
 The `REPO` required parameter — is a repository name (see more in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter) article).
+
+## Example
+
+### Pull stages cache
+
+```
+dapp dimg stages pull registry.hello.com/taxi/backend
+```
+
+Command pull stages cache from the specified repo.
+
+Pulled images have `dimgstage` prefixes. Here is an example of image names pulled as stages cache:
+
+* `registry.hello.com/taxi/backend:dimgstage-ab192db1f7cf6b894aeaf14c0f1615f27d5170bb16b8529ec18253b94dc4916e`
+* `registry.hello.com/taxi/backend:dimgstage-0d05ad73cf69430e8ff2bf457d6fd6273ec100785fcc3ad0267c0fb609c81a7c`
+* `registry.hello.com/taxi/backend:dimgstage-41772c141b158349804ad27b354247df8984ead077a5dd601f3940536ebe9a11`
