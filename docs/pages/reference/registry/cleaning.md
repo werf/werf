@@ -87,7 +87,7 @@ dapp dimg cleanup repo [--with-stages=false]
 
 ## Local storage synchronization
 
-After cleaning docker registry on the garbage collection step, local storage still contains all of the images that have been deleted from the docker registry. These images include tagged dimg images (created with a [dapp tag procedure]({{ site.baseurl }}/reference/registry/image_naming.md#dapp-tag-procedure)) and stages cache for dimgs.
+After cleaning docker registry on the garbage collection step, local storage still contains all of the images that have been deleted from the docker registry. These images include tagged dimg images (created with a [dapp tag procedure]({{ site.baseurl }}/reference/registry/image_naming.html#dapp-tag-procedure)) and stages cache for dimgs.
 
 Executing a local storage synchronization is necessary to update local storage according to a docker registry. On the local storage synchronization step, dapp deletes old local stages cache, which doesn't relate to any of the dimgs currently existing in the docker registry.
 

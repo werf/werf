@@ -48,7 +48,7 @@ To manually **disable** autologin procedure specify environment variable `DAPP_I
 
 #### Autologin for build commands
 
-For [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) dapp uses pull procedure for images specified as base (see [from directive]({{ site.baseurl }}/reference/build/base_directives.html#from)).
+For [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) dapp uses pull procedure for images specified as base (see [from directive]({{ site.baseurl }}/reference/build/base_image.html#from-and-fromcacheversion)).
 
 Running in gitlab environment dapp build command will perform autologin procedure for the gitlab container registry under these conditions:
 
