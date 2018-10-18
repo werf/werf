@@ -1,17 +1,16 @@
 # This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
 
 entries:
-- title: sidebar
   f:
 
-    - title: Installation
-      url: /how_to/installation.html
+  - title: Installation
+    url: /how_to/installation.html
 
-    - title: Build, run and push
-      url: /how_to/build_run_and_push.html
+  - title: Build, run and push
+    url: /how_to/build_run_and_push.html
 
-    - title: Deploy into kubernetes
-      url: /how_to/deploy_into_kubernetes.html
+  - title: Deploy into kubernetes
+    url: /how_to/deploy_into_kubernetes.html
 
-    - title: Gitlab CI/CD integration
-      url: /how_to/gitlab_ci_cd_integration.html
+  - title: Gitlab CI/CD integration
+    url: /how_to/gitlab_ci_cd_integration.html

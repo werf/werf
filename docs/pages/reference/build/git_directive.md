@@ -256,10 +256,12 @@ url: https://[USERNAME[:PASSWORD]@]repo_host/repo_path[.git/]
 
 https доступ может требовать логин и пароль, например, вот так выглядит адрес в описании сборки в gitlab-ci:
 
+{% raw %}
 ```
 git:
 - add: https://{{ env "CI_REGISTRY_USER" }}:{{ env "CI_JOB_TOKEN" }}@registry.gitlab.company.name/common/helper-utils.git
 ```
+{% endraw %}
 
 В этом примере для доступа к переменным окружения на помощь приходит метод env из библиотеки sprig, которая подключена к go-шаблонам dappfile.
 
