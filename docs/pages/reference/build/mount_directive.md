@@ -26,9 +26,9 @@ Mount directive in a dappfile allows defining volumes. Host and assembly contain
 
 Dapp binds host mount folders for reading/writing on each stage build. If you need to keep assembly data from these directories in a image, you should copy them to another directory during build.
 
-On `from` stage dapp adds mount points definitions in stage image labels and then each stage uses theirs to add volumes in an assembly container. This implementation allows inheriting mount points from [base image]({{ site.baseurl }}/reference/build/base_directives.html#base-image). 
+On `from` stage dapp adds mount points definitions in stage image labels and then each stage uses theirs to add volumes in an assembly container. This implementation allows inheriting mount points from [base image]({{ site.baseurl }}/reference/build/base_image.html). 
 
-Also on `from` stage dapp cleans assembly container mount points in a [base image]({{ site.baseurl }}/reference/build/base_directives.html#base-image). Therefore these folders are empty in a image. 
+Also on `from` stage dapp cleans assembly container mount points in a [base image]({{ site.baseurl }}/reference/build/base_image.html). Therefore these folders are empty in a image. 
 
 ## Syntax
 ```yaml

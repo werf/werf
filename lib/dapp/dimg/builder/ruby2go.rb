@@ -45,8 +45,13 @@ module Dapp
       end
 
       def snake_case_to_camel_case(value)
-        value.to_s.split('_').collect(&:capitalize).join
+        ::Dapp::Helper::CaseConversion.snake_case_to_camel_case(value)
       end
+
+      def snake_case_to_lower_camel_case(value)
+        ::Dapp::Helper::CaseConversion.snake_case_to_lower_camel_case(value)
+      end
+
     end # Builder::Shell
   end # Dimg
 end # Dapp

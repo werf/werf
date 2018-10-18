@@ -32,6 +32,7 @@ const (
 
 type GitRepo interface {
 	String() string
+	GetName() string
 
 	HeadCommit() (string, error)
 	HeadBranchName() (string, error)

@@ -23,9 +23,9 @@ func (stage *StubStage) GetImage() Image {
 }
 
 func (stage *StubStage) LayerCommit(gitArtifact *GitArtifact) (string, error) {
-	if commit, hasKey := stage.LayerCommitMap[gitArtifact.Paramshash]; hasKey {
+	if commit, hasKey := stage.LayerCommitMap[gitArtifact.GetParamshash()]; hasKey {
 		return commit, nil
 	}
 
-	panic(fmt.Errorf("assertion failed: StubStage layer commit should be present for git `%s`", gitArtifact.Paramshash))
+	panic(fmt.Errorf("assertion failed: StubStage layer commit should be present for git `%s`", gitArtifact.GetParamshash()))
 }

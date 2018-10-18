@@ -29,12 +29,14 @@ module Dapp
 
           def commit_list
             dimg.git_artifacts
-              .select { |ga| ga.repo.commit_exists?(prev_stage.layer_commit(ga)) && ga.patch_any_changes?(self) }
+              .select { |ga| ga.repo.commit_exists?(prev_stage.layer_commit(ga)) && !ga.is_patch_empty(self) }
               .map(&method(:layer_commit))
           end
 
           def git_artifacts_dev_patch_hashes
-            dimg.git_artifacts.map(&:dev_patch_hash)
+            # FIXME: dev-mode support in GitArtifact
+            # dimg.git_artifacts.map(&:dev_patch_hash)
+            nil
           end
         end # GALatestPatch
       end # Stage

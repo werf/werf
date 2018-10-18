@@ -3,7 +3,6 @@ package cleanup
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -290,7 +289,7 @@ func projectDimgstagesSyncByRepoDimgs(commonProjectOptions CommonProjectOptions,
 	if os.Getenv("DAPP_STAGES_CLEANUP_LOCAL_DISABLED_DATE_POLICY") == "" {
 		for _, dimgstage := range dimgstages {
 			if time.Now().Unix()-dimgstage.Created < syncIgnoreProjectDimgstagePeriod {
-				dimgstages = exceptDimgstage(dimgstages, dimgstage)
+				dimgstages = exceptImage(dimgstages, dimgstage)
 			}
 		}
 	}
@@ -330,7 +329,7 @@ func exceptDimgstagesByDimgstage(dimgstages []types.ImageSummary, dimgstage type
 
 	currentDimgstage := &dimgstage
 	for {
-		dimgstages = exceptDimgstage(dimgstages, *currentDimgstage)
+		dimgstages = exceptImage(dimgstages, *currentDimgstage)
 		currentDimgstage = findDimgstageByImageId(dimgstages, currentDimgstage.ParentID)
 		if currentDimgstage == nil {
 			break
@@ -348,17 +347,6 @@ func findDimgstageByImageId(dimgstages []types.ImageSummary, imageId string) *ty
 	}
 
 	return nil
-}
-
-func exceptDimgstage(dimgstages []types.ImageSummary, dimgstageToExclude types.ImageSummary) []types.ImageSummary {
-	var newDimgstages []types.ImageSummary
-	for _, dimgstage := range dimgstages {
-		if !reflect.DeepEqual(dimgstageToExclude, dimgstage) {
-			newDimgstages = append(newDimgstages, dimgstage)
-		}
-	}
-
-	return newDimgstages
 }
 
 func projectDimgstages(options CommonProjectOptions) ([]types.ImageSummary, error) {

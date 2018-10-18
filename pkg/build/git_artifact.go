@@ -1,6 +1,7 @@
 package build
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -27,7 +28,6 @@ type GitArtifact struct {
 	IncludePaths         []string
 	ExcludePaths         []string
 	StagesDependencies   map[string][]string
-	Paramshash           string // TODO: method
 	PatchesDir           string
 	ContainerPatchesDir  string
 	ArchivesDir          string
@@ -152,6 +152,7 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer os.RemoveAll(patch.GetFilePath())
 
 	if patch.IsEmpty() {
 		return nil, nil
@@ -159,11 +160,6 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 
 	if patch.HasBinary() {
 		patchPaths := patch.GetPaths()
-
-		err := os.Remove(patch.GetFilePath())
-		if err != nil {
-			return nil, fmt.Errorf("unable to remove temporary patch file `%s`: %s", patch.GetFilePath(), err)
-		}
 
 		pathsListFile, err := ga.createPatchPathsListFile(patchPaths, fromCommit, toCommit)
 		if err != nil {
@@ -193,6 +189,7 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+		defer os.RemoveAll(archive.GetFilePath())
 
 		if archive.IsEmpty() {
 			return commands, nil
@@ -267,6 +264,7 @@ func (ga *GitArtifact) ApplyArchiveCommand(stage Stage) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer os.RemoveAll(archive.GetFilePath())
 
 	if archive.IsEmpty() {
 		return nil, nil
@@ -331,22 +329,94 @@ func (ga *GitArtifact) PatchSize(fromCommit string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+	defer os.RemoveAll(patch.GetFilePath())
 
 	fileInfo, err := os.Stat(patch.GetFilePath())
 	if err != nil {
 		return 0, fmt.Errorf("unable to stat temporary patch file `%s`: %s", patch.GetFilePath(), err)
 	}
 
-	err = os.Remove(patch.GetFilePath())
-	if err != nil {
-		return 0, fmt.Errorf("unable to remove temporary patch file `%s`: %s", patch.GetFilePath(), err)
-	}
-
 	return fileInfo.Size(), nil
 }
 
+func (ga *GitArtifact) GetFullName() string {
+	if ga.Name != "" {
+		return fmt.Sprintf("%s_%s", ga.GitRepo().GetName(), ga.Name)
+	}
+	return ga.GitRepo().GetName()
+}
+
+func (ga *GitArtifact) GetParamshash() string {
+	var err error
+
+	hash := sha256.New()
+
+	parts := []string{ga.GetFullName(), ":::", ga.To, ":::", ga.Cwd}
+	parts = append(parts, ":::")
+	parts = append(parts, ga.IncludePaths...)
+	parts = append(parts, ":::")
+	parts = append(parts, ga.ExcludePaths...)
+	parts = append(parts, ":::")
+	parts = append(parts, ga.Owner)
+	parts = append(parts, ":::")
+	parts = append(parts, ga.Group)
+
+	for _, part := range parts {
+		_, err = hash.Write([]byte(part))
+		if err != nil {
+			panic(fmt.Sprintf("error calculating sha256 of `%s`: %s", part, err))
+		}
+	}
+
+	return fmt.Sprintf("%x", hash.Sum(nil))
+}
+
+func (ga *GitArtifact) IsPatchEmpty(stage Stage) (bool, error) {
+	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
+	if err != nil {
+		return false, err
+	}
+
+	toCommit, err := stage.LayerCommit(ga)
+	if err != nil {
+		return false, err
+	}
+
+	patchOpts := git_repo.PatchOptions{
+		FilterOptions: ga.getRepoFilterOptions(),
+		FromCommit:    fromCommit,
+		ToCommit:      toCommit,
+	}
+	patch, err := ga.GitRepo().CreatePatch(patchOpts)
+	if err != nil {
+		return false, err
+	}
+	defer os.RemoveAll(patch.GetFilePath())
+
+	return patch.IsEmpty(), nil
+}
+
+func (ga *GitArtifact) IsEmpty() (bool, error) {
+	commit, err := ga.LatestCommit()
+	if err != nil {
+		return false, fmt.Errorf("unable to get latest commit: %s", err)
+	}
+
+	archiveOpts := git_repo.ArchiveOptions{
+		FilterOptions: ga.getRepoFilterOptions(),
+		Commit:        commit,
+	}
+	archive, err := ga.GitRepo().CreateArchive(archiveOpts)
+	if err != nil {
+		return false, err
+	}
+	defer os.RemoveAll(archive.GetFilePath())
+
+	return archive.IsEmpty(), nil
+}
+
 func (ga *GitArtifact) getArchiveFileDescriptor(commit string) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s_%s.tar", ga.Paramshash, commit)
+	fileName := fmt.Sprintf("%s_%s.tar", ga.GetParamshash(), commit)
 
 	return &ContainerFileDescriptor{
 		FilePath:          filepath.Join(ga.ArchivesDir, fileName),
@@ -404,7 +474,7 @@ func (ga *GitArtifact) createPatchFile(patch git_repo.Patch, fromCommit, toCommi
 }
 
 func (ga *GitArtifact) getPatchPathsListFileDescriptor(fromCommit, toCommit string) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s_%s_%s-paths-list", ga.Paramshash, fromCommit, toCommit)
+	fileName := fmt.Sprintf("%s_%s_%s-paths-list", ga.GetParamshash(), fromCommit, toCommit)
 
 	return &ContainerFileDescriptor{
 		FilePath:          filepath.Join(ga.PatchesDir, fileName),
@@ -413,7 +483,7 @@ func (ga *GitArtifact) getPatchPathsListFileDescriptor(fromCommit, toCommit stri
 }
 
 func (ga *GitArtifact) getPatchFileDescriptor(fromCommit, toCommit string) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s_%s_%s.patch", ga.Paramshash, fromCommit, toCommit)
+	fileName := fmt.Sprintf("%s_%s_%s.patch", ga.GetParamshash(), fromCommit, toCommit)
 
 	return &ContainerFileDescriptor{
 		FilePath:          filepath.Join(ga.PatchesDir, fileName),
@@ -435,7 +505,7 @@ func (ga *GitArtifact) makeCredentialsOpts() string {
 }
 
 func (ga *GitArtifact) getArchiveTypeLabelName() string {
-	return fmt.Sprintf("dapp-git-%s-type", ga.Paramshash)
+	return fmt.Sprintf("dapp-git-%s-type", ga.GetParamshash())
 }
 
 func renameFile(fromPath, toPath string) error {
