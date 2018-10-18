@@ -14,3 +14,6 @@ entries:
 
   - title: Gitlab CI/CD integration
     url: /how_to/gitlab_ci_cd_integration.html
+
+  - title: Using mounts
+    url: /how_to/mounts.html
