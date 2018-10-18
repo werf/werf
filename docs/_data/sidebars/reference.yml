@@ -1,20 +1,28 @@
 # This is your sidebar TOC. The sidebar code loops through sections here and provides the appropriate formatting.
 
 entries:
-- title: sidebar
   f:
 
-    - title: Build
-      fi:
+  - title: Build
+    sf:
 
-      - title: Dappfile
-        url: /reference/build/dappfile.html
+    - title: Dappfile
+      url: /reference/build/dappfile.html
 
-      - title: Stages
-        url: /reference/build/stages.html
+    - title: Stages
+      url: /reference/build/stages.html
 
-      - title: Base directives
-        url: /reference/build/base_directives.html
+    - title: Cache
+      url: /reference/build/cache.html
+
+    - title: Dimg configuration
+      sfi:
+
+      - title: Naming (required)
+        url: /reference/build/naming.html
+
+      - title: Base image (required)
+        url: /reference/build/base_image.html
 
       - title: Adding docker instructions
         url: /reference/build/docker_directive.html
@@ -28,14 +36,17 @@ entries:
       - title: Reducing image size and speeding up a build by mounts
         url: /reference/build/mount_directive.html
 
-      - title: Using artifacts
-        url: /reference/build/artifact_directive.html
+      - title: Importing artifacts
+        url: /reference/build/import_directive.html
 
-      - title: Supported directives
-        url: /reference/build/supported_directives.html
+      - title: All directives
+        url: /reference/build/dimg_directives.html
 
-      - title: Cache
-        url: /reference/build/cache.html
+    - title: Artifact configuration
+      url: /reference/build/artifact_directive.html
+
+    - title: Developer tools
+      sfi:
 
       - title: Stage introspection
         url: /reference/build/stage_introspection.html
@@ -46,95 +57,95 @@ entries:
       - title: Caching each instruction separately with asLayers
         url: /reference/build/as_layers.html
 
-    - title: Registry
-      fi:
+  - title: Registry
+    fi:
 
-      - title: Authorization
-        url: /reference/registry/authorization.html
+    - title: Authorization
+      url: /reference/registry/authorization.html
 
-      - title: Image naming
-        url: /reference/registry/image_naming.html
+    - title: Image naming
+      url: /reference/registry/image_naming.html
 
-      - title: Tag
-        url: /reference/registry/tag.html
+    - title: Tag
+      url: /reference/registry/tag.html
 
-      - title: Push
-        url: /reference/registry/push.html
+    - title: Push
+      url: /reference/registry/push.html
 
-      - title: Pull
-        url: /reference/registry/pull.html
+    - title: Pull
+      url: /reference/registry/pull.html
 
-      - title: Cleaning
-        url: /reference/registry/cleaning.html
+    - title: Cleaning
+      url: /reference/registry/cleaning.html
 
-    - title: Deploy
-      fi:
+  - title: Deploy
+    fi:
 
-      - title: Deployment to kubernetes
-        url: /reference/deploy/deployment_to_kubernetes.html
+    - title: Deployment to kubernetes
+      url: /reference/deploy/deployment_to_kubernetes.html
 
-      - title: Working with secrets
-        url: /reference/deploy/secrets.html
+    - title: Working with secrets
+      url: /reference/deploy/secrets.html
 
-      - title: Release configuration
-        url: /reference/deploy/templates.html
+    - title: Release configuration
+      url: /reference/deploy/templates.html
 
-      - title: Using Minikube
-        url: /reference/deploy/minikube.html
+    - title: Using Minikube
+      url: /reference/deploy/minikube.html
 
-    - title: CLI
-      fi:
+  - title: CLI
+    fi:
 
-      - title: dimg build
-        url: /reference/cli/dimg_build.html
+    - title: dimg build
+      url: /reference/cli/dimg_build.html
 
-      - title: dimg build-context
-        url: /reference/cli/dimg_build_context.html
+    - title: dimg build-context
+      url: /reference/cli/dimg_build_context.html
 
-      - title: dimg cleanup
-        url: /reference/cli/dimg_cleanup.html
+    - title: dimg cleanup
+      url: /reference/cli/dimg_cleanup.html
 
-      - title: dimg flush
-        url: /reference/cli/dimg_flush.html
+    - title: dimg flush
+      url: /reference/cli/dimg_flush.html
 
-      - title: dimg list
-        url: /reference/cli/dimg_list.html
+    - title: dimg list
+      url: /reference/cli/dimg_list.html
 
-      - title: dimg mrproper
-        url: /reference/cli/dimg_mrproper.html
+    - title: dimg mrproper
+      url: /reference/cli/dimg_mrproper.html
 
-      - title: dimg push
-        url: /reference/cli/dimg_push.html
+    - title: dimg push
+      url: /reference/cli/dimg_push.html
 
-      - title: dimg run
-        url: /reference/cli/dimg_run.html
+    - title: dimg run
+      url: /reference/cli/dimg_run.html
 
-      - title: dimg slug
-        url: /reference/cli/dimg_slug.html
+    - title: dimg slug
+      url: /reference/cli/dimg_slug.html
 
-      - title: dimg stages
-        url: /reference/cli/dimg_stages.html
+    - title: dimg stages
+      url: /reference/cli/dimg_stages.html
 
-      - title: kube chart create
-        url: /reference/cli/kube_chart_create.html
+    - title: kube chart create
+      url: /reference/cli/kube_chart_create.html
 
-      - title: kube deploy
-        url: /reference/cli/kube_deploy.html
+    - title: kube deploy
+      url: /reference/cli/kube_deploy.html
 
-      - title: kube dismiss
-        url: /reference/cli/kube_dismiss.html
+    - title: kube dismiss
+      url: /reference/cli/kube_dismiss.html
 
-      - title: kube lint
-        url: /reference/cli/kube_lint.html
+    - title: kube lint
+      url: /reference/cli/kube_lint.html
 
-      - title: kube render
-        url: /reference/cli/kube_render.html
+    - title: kube render
+      url: /reference/cli/kube_render.html
 
-      - title: kube secret
-        url: /reference/cli/kube_secret.html
+    - title: kube secret
+      url: /reference/cli/kube_secret.html
 
-      - title: kube value
-        url: /reference/cli/kube_value.html
+    - title: kube value
+      url: /reference/cli/kube_value.html
 
-    - title: Glossary
-      url: /reference/glossary.html
+  - title: Glossary
+    url: /reference/glossary.html

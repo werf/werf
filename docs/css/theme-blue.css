@@ -13,12 +13,8 @@ h4 {color: #808080; }
     color: white;
 }
 
-.nav > li.active > a {
+.nav > li.active > a, .nav > li > a:hover {
     background-color: #347DBE;
-}
-
-.nav > li > a:hover {
-    background-color: #248ec2;
 }
 
 div.navbar-collapse .dropdown-menu > li > a:hover {

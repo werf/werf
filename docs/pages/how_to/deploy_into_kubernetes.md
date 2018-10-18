@@ -229,7 +229,7 @@ Make sure that host name `myapp.local` is resolving to this IP address on your m
 192.168.99.100 myapp.local
 ```
 
-Then you can check application by url: <http://myapp.local>.
+Then you can check application by url: `http://myapp.local`.
 
 ## Delete application from kubernetes
 

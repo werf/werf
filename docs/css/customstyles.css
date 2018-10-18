@@ -388,10 +388,6 @@ ul#mysidebar {
     border-radius:0px;
 }
 
-.nav ul li ul li a {
-    padding-left:40px;
-}
-
 .nav li.thirdlevel > a {
     color: #248EC2;
     font-weight:bold;
@@ -893,14 +889,6 @@ span.soft {
     border: 1px solid #dedede;
 }
 
-
-@media only screen and (min-width: 900px), @media only screen and (min-device-width: 900px) {
-    .col-md-9 img {
-        max-width: 700px;
-        max-height: 700px;
-    }
-}
-
 *:hover > .anchorjs-link {
     transition: color .25s linear;
     text-decoration: none;
@@ -910,17 +898,6 @@ span.soft {
     color: white;
     background-color: #444;
     padding:10px;
-}
-
-/* this part adds an icon after external links, using FontAwesome*/
-a[href^="http://"]:after, a[href^="https://"]:after {
-    content: "\f08e";
-    font-family: FontAwesome;
-    font-weight: normal;
-    font-style: normal;
-    display: inline-block;
-    text-decoration: none;
-    padding-left: 3px;
 }
 
 /* Strip the outbound icon when this class is present */
@@ -996,7 +973,16 @@ span.label.label-primary {
     background-color: whitesmoke;
     font-weight: bold;
     color: black;
-    }
+}
+
+.nav li.subfolders ul > li > a {
+  background: #f5f5f5;
+  padding-left: 20px;
+}
+
+.nav li.subfolders ul > li:hover > a, .nav li.subfolders ul > li.active > a {
+  background: #2e5077;
+}
 
 a code {
     color: #248EC2;

@@ -5,11 +5,11 @@ permalink: reference/build/dappfile.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-## What is dappfile for?
+## What is dappfile?
 
 Dapp uses the configuration file called dappfile to build docker images. At present, dapp only support YAML syntax and uses one of the following files in the root folder of your project — `dappfile.yaml` or `dappfile.yml`. 
 
-The dappfile is a collection of [YAML documents](http://yaml.org/spec/1.2/spec.html#id2800132) combined with splitter `---`. Each YAML document contains instructions to build independent docker image. 
+The dappfile is a collection of [YAML documents](http://yaml.org/spec/1.2/spec.html#id2800132) combined with delimiter `---`. Each YAML document contains instructions to build independent docker image. 
 
 Thus, you can describe multiple images in one dappfile:
 
@@ -21,9 +21,13 @@ YAML_DOC
 YAML_DOC
 ```
 
+Dapp represents YAML document as an internal object. Currently, dapp supports two object types, [dimg]({{ site.baseurl }}/reference/build/naming.html) and [artifact]({{ site.baseurl }}/reference/build/artifact_directive.html). 
+
+_Dimg_ is the named set of rules, an internal representation of user image. An artifact is a special dimg that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).  
+
 ## Processing of dappfile
 
-Processing of YAML configuration file could be described by the following steps:
+The following steps could describe the processing of a YAML configuration file:
 1. Reading dappfile;
 1. Executing Go templates;
 1. Saving dump into `.dappfile.render.yaml` (that file will remain after build and will be available until next render);
@@ -31,6 +35,7 @@ Processing of YAML configuration file could be described by the following steps:
 1. Validating each YAML document:
   * Validating YAML syntax (you could read YAML reference [here](http://yaml.org/refcard.html)).
   * Validating our syntax.
+1. Generating a set of dimgs.
 
 ### Go templates
 
