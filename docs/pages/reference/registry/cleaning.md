@@ -136,7 +136,7 @@ dapp dimg flush repo REPO [--with-stages]
 
 The command deletes images of the current project only in docker registry.
 
-The `--with-stages` option uses to delete not only tagged images but also stages cache. The option is disabled by default. It is always recommended to use this option. 
+The `--with-stages` option uses to delete not only tagged images but also stages cache. The option is disabled by default. It is always recommended to use this option.
 
 ## Reset
 
@@ -153,3 +153,52 @@ dapp dimg mrproper [--all] [--improper-cache-version-stages] [--improper-dev-mod
 * `--all` — dapp deletes stages cache with all of images and containers ever dapp created in local storage.
 * `--improper-cache-version-stages` — like the `--all` parameter, but dapp deletes stages cache, images, and containers created by versions of dapp older than current;
 * `--improper-dev-mode-cache` — dapp deletes cache, images and container created in developer mode (`--dev` option).
+
+
+## Examples
+
+### Delete all images in the current project
+
+Given dappfile with two dimgs. Images succesfully builded and tagged.
+
+```
+dapp dimg flush local
+```
+
+Command deletes all tagged images, but don't delete stages cache.
+
+### Delete all images and stages cache in the current project
+
+```
+dapp dimg flush local --with-stages
+```
+
+Command deletes all tagged images, and delete stages cache.
+
+### Delete all images of all dapp projects
+
+Given several dapp projects.
+
+```
+dapp dimg mrproper --all --improper-cache-version-stages --improper-dev-mode-cache
+```
+
+Command delete every image created by dapp. Other docker images like image specified in `from:` directive in dappfile - remains.
+
+### Garbage collection with GitLab CI
+
+Given project, where dapp executes with `--tag-ci` option when push images.
+
+On the first step, the following command cleanups repo:
+
+```
+dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
+```
+
+On the second step, the following command cleanups local storage:
+
+```
+dapp dimg stages cleanup local --improper-cache-version --improper-repo-cache ${CI_REGISTRY_IMAGE}
+```
+
+Read a deeper example with garbage collection and GitLab CI [here]({{ site.baseurl }}/how_to/gitlab_ci_cd_integration.html).
