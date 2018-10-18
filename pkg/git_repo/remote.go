@@ -22,6 +22,22 @@ type Remote struct {
 	IsDryRun  bool
 }
 
+func (repo *Remote) RemoteOriginUrl() (string, error) {
+	return repo.remoteOriginUrl(repo.ClonePath)
+}
+
+func (repo *Remote) FindCommitIdByMessage(regex string) (string, error) {
+	head, err := repo.HeadCommit()
+	if err != nil {
+		return "", fmt.Errorf("error getting head commit: %s", err)
+	}
+	return repo.findCommitIdByMessage(repo.ClonePath, regex, head)
+}
+
+func (repo *Remote) IsEmpty() (bool, error) {
+	return repo.isEmpty(repo.ClonePath)
+}
+
 func (repo *Remote) CloneAndFetch() error {
 	isCloned, err := repo.Clone()
 	if err != nil {
@@ -132,7 +148,7 @@ func (repo *Remote) Fetch() error {
 
 		fmt.Printf("Fetching remote `%s` of repo `%s` ...\n", remoteName, repo.String())
 
-		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName})
+		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
 			return fmt.Errorf("cannot fetch remote `%s` of repo `%s`: %s", remoteName, repo.String(), err)
 		}
@@ -144,22 +160,30 @@ func (repo *Remote) Fetch() error {
 }
 
 func (repo *Remote) HeadCommit() (string, error) {
-	branchName, err := repo.HeadBranchName()
+	repoPath := repo.ClonePath
+
+	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
 	}
 
-	commit, err := repo.LatestBranchCommit(branchName)
+	branch, err := repo.HeadBranchName()
 	if err != nil {
-		return "", err
-	} else {
-		fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, repo.String())
-		return commit, nil
+		return "", fmt.Errorf("cannot detect head branch name of repo `%s`: %s", repoPath, err)
 	}
+
+	refName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/origin/%s", branch))
+
+	ref, err := repository.Reference(refName, true)
+	if err != nil {
+		return "", fmt.Errorf("cannot resolve reference `%s` of repo `%s`: %s", refName, repoPath, err)
+	}
+
+	return ref.Hash().String(), nil
 }
 
 func (repo *Remote) HeadBranchName() (string, error) {
-	return repo.getHeadBranchNameForRepo(repo.ClonePath)
+	return repo.getHeadBranchName(repo.ClonePath)
 }
 
 func (repo *Remote) findReference(rawRepo *git.Repository, reference string) (string, error) {

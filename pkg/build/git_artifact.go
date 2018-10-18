@@ -15,19 +15,20 @@ type GitArtifact struct {
 	LocalGitRepo  *git_repo.Local
 	RemoteGitRepo *git_repo.Remote
 
-	Name                 string
-	As                   string
-	Branch               string
-	Tag                  string
-	Commit               string
-	To                   string
-	RepoPath             string
-	Cwd                  string
-	Owner                string
-	Group                string
-	IncludePaths         []string
-	ExcludePaths         []string
-	StagesDependencies   map[string][]string
+	Name               string
+	As                 string
+	Branch             string
+	Tag                string
+	Commit             string
+	To                 string
+	RepoPath           string
+	Cwd                string
+	Owner              string
+	Group              string
+	IncludePaths       []string
+	ExcludePaths       []string
+	StagesDependencies map[string][]string
+
 	PatchesDir           string
 	ContainerPatchesDir  string
 	ArchivesDir          string
@@ -360,6 +361,12 @@ func (ga *GitArtifact) GetParamshash() string {
 	parts = append(parts, ga.Owner)
 	parts = append(parts, ":::")
 	parts = append(parts, ga.Group)
+	parts = append(parts, ":::")
+	parts = append(parts, ga.Branch)
+	parts = append(parts, ":::")
+	parts = append(parts, ga.Tag)
+	parts = append(parts, ":::")
+	parts = append(parts, ga.Commit)
 
 	for _, part := range parts {
 		_, err = hash.Write([]byte(part))

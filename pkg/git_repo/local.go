@@ -11,14 +11,37 @@ type Local struct {
 	GitDir string
 }
 
-func (repo *Local) HeadCommit() (string, error) {
-	commit, err := repo.getHeadCommitForRepo(repo.Path)
+func (repo *Local) FindCommitIdByMessage(regex string) (string, error) {
+	head, err := repo.HeadCommit()
+	if err != nil {
+		return "", fmt.Errorf("error getting head commit: %s", err)
+	}
+	return repo.findCommitIdByMessage(repo.Path, regex, head)
+}
 
-	if err == nil {
-		fmt.Printf("Using commit `%s` of repo `%s`\n", commit, repo.String())
+func (repo *Local) IsEmpty() (bool, error) {
+	return repo.isEmpty(repo.Path)
+}
+
+func (repo *Local) RemoteOriginUrl() (string, error) {
+	return repo.remoteOriginUrl(repo.Path)
+}
+
+func (repo *Local) HeadCommit() (string, error) {
+	ref, err := repo.getReferenceForRepo(repo.Path)
+	if err != nil {
+		return "", fmt.Errorf("cannot get repo `%s` head ref: %s", repo.Path, err)
 	}
 
-	return commit, err
+	commit := fmt.Sprintf("%s", ref.Hash())
+
+	fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, repo.String())
+
+	return commit, nil
+}
+
+func (repo *Local) HeadBranchName() (string, error) {
+	return repo.getHeadBranchName(repo.Path)
 }
 
 func (repo *Local) CreatePatch(opts PatchOptions) (Patch, error) {

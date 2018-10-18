@@ -102,9 +102,6 @@ module Dapp
     def git_url
       return unless git_own_repo_exist?
       git_own_repo.remote_origin_url
-    rescue Dimg::Error::Rugged => e
-      return if e.net_status[:code] == :git_repository_without_remote_url
-      raise
     end
 
     def git_own_repo_exist?

@@ -47,7 +47,7 @@ module Dapp
 
       def branch_tags
         return {} unless options[:tag_branch]
-        raise Error::Dapp, code: :git_branch_without_name if (branch = git_own_repo.branch) == 'HEAD'
+        raise Error::Dapp, code: :git_branch_without_name if (branch = git_own_repo.head_branch_name) == 'HEAD'
         { git_branch: [branch] }
       end
 

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
 type Base struct {
@@ -23,32 +25,100 @@ type Base struct {
 	TmpDir string
 }
 
+func (repo *Base) HeadCommit() (string, error) {
+	panic("not implemented")
+}
+
+func (repo *Base) LatestBranchCommit(branch string) (string, error) {
+	panic("not implemented")
+}
+
+func (repo *Base) LatestTagCommit(branch string) (string, error) {
+	panic("not implemented")
+}
+
+func (repo *Base) remoteOriginUrl(repoPath string) (string, error) {
+	repository, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	cfg, err := repository.Config()
+	if err != nil {
+		return "", fmt.Errorf("cannot access repo config: %s", err)
+	}
+
+	if originCfg, hasKey := cfg.Remotes["origin"]; hasKey {
+		return originCfg.URLs[0], nil
+	}
+
+	return "", nil
+}
+
+func (repo *Base) findCommitIdByMessage(repoPath string, regex string, headCommit string) (string, error) {
+	repository, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	headHash, err := newHash(headCommit)
+	if err != nil {
+		return "", fmt.Errorf("bad head commit hash `%s`: %s", headCommit, err)
+	}
+
+	commitObj, err := repository.CommitObject(headHash)
+	if err != nil {
+		return "", err
+	}
+
+	commitIter := object.NewCommitIterBSF(commitObj, nil, nil)
+
+	regexObj, err := regexp.Compile(regex)
+	if err != nil {
+		return "", fmt.Errorf("bad regex `%s`: %s", regex, err)
+	}
+
+	var foundCommit *object.Commit
+
+	err = commitIter.ForEach(func(c *object.Commit) error {
+		if regexObj.Match([]byte(c.Message)) {
+			foundCommit = c
+			return storer.ErrStop
+		}
+
+		return nil
+	})
+
+	if foundCommit != nil {
+		return foundCommit.Hash.String(), nil
+	}
+	return "", nil
+}
+
+func (repo *Base) isEmpty(repoPath string) (bool, error) {
+	repository, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return false, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	commitIter, err := repository.CommitObjects()
+	if err != nil {
+		return false, err
+	}
+
+	_, err = commitIter.Next()
+	if err == io.EOF {
+		return true, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return false, nil
+}
+
 func (repo *Base) withWorkTreeLock(workTree string, f func() error) error {
 	lockName := fmt.Sprintf("git_work_tree %s", workTree)
 	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
-}
-
-func (repo *Base) getHeadCommitForRepo(repoPath string) (string, error) {
-	ref, err := repo.getReferenceForRepo(repoPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot get repo head: %s", err)
-	}
-
-	return fmt.Sprintf("%s", ref.Hash()), nil
-}
-
-func (repo *Base) getHeadBranchNameForRepo(repoPath string) (string, error) {
-	ref, err := repo.getReferenceForRepo(repoPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot get repo head: %s", err)
-	}
-
-	if ref.Name().IsBranch() {
-		branchRef := ref.Name()
-		return strings.Split(string(branchRef), "refs/heads/")[1], nil
-	} else {
-		return "", fmt.Errorf("cannot get branch name: HEAD refers to a specific revision that is not associated with a branch name")
-	}
 }
 
 func (repo *Base) getReferenceForRepo(repoPath string) (*plumbing.Reference, error) {
@@ -62,28 +132,26 @@ func (repo *Base) getReferenceForRepo(repoPath string) (*plumbing.Reference, err
 	return repository.Head()
 }
 
+func (repo *Base) getHeadBranchName(repoPath string) (string, error) {
+	ref, err := repo.getReferenceForRepo(repoPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot get repo `%s` head: %s", repoPath, err)
+	}
+
+	if ref.Name().IsBranch() {
+		branchRef := ref.Name()
+		return strings.Split(string(branchRef), "refs/heads/")[1], nil
+	}
+
+	return "", fmt.Errorf("cannot get branch name: HEAD refers to a specific revision that is not associated with a branch name")
+}
+
 func (repo *Base) String() string {
 	return repo.GetName()
 }
 
 func (repo *Base) GetName() string {
 	return repo.Name
-}
-
-func (repo *Base) HeadCommit() (string, error) {
-	panic("not implemented")
-}
-
-func (repo *Base) HeadBranchName() (string, error) {
-	return "", fmt.Errorf("not implemented")
-}
-
-func (repo *Base) LatestBranchCommit(branch string) (string, error) {
-	panic("not implemented")
-}
-
-func (repo *Base) LatestTagCommit(branch string) (string, error) {
-	panic("not implemented")
 }
 
 func (repo *Base) createPatch(repoPath, gitDir, workTreeDir string, opts PatchOptions) (Patch, error) {

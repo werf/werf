@@ -29,6 +29,122 @@ func main() {
 			json.Unmarshal([]byte(state.(string)), repo)
 
 			switch method := args["method"]; method {
+			case "IsCommitExists":
+				res := make(map[string]interface{})
+
+				commit, hasKey := args["commit"]
+				if !hasKey {
+					return nil, fmt.Errorf("commit argument required!")
+				}
+
+				resValue, resErr := repo.IsCommitExists(commit.(string))
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["LocalGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "LatestBranchCommit":
+				res := make(map[string]interface{})
+
+				branch, hasKey := args["branch"]
+				if !hasKey {
+					return nil, fmt.Errorf("branch argument required!")
+				}
+
+				resValue, resErr := repo.LatestBranchCommit(branch.(string))
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["LocalGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "FindCommitIdByMessage":
+				res := make(map[string]interface{})
+
+				regex, hasKey := args["regex"]
+				if !hasKey {
+					return nil, fmt.Errorf("regex argument required!")
+				}
+
+				resValue, resErr := repo.FindCommitIdByMessage(regex.(string))
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["LocalGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "IsEmpty":
+				res := make(map[string]interface{})
+				resValue, resErr := repo.IsEmpty()
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["LocalGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "HeadCommit":
+				res := make(map[string]interface{})
+				resValue, resErr := repo.HeadCommit()
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["LocalGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "HeadBranchName":
+				res := make(map[string]interface{})
+				resValue, resErr := repo.HeadBranchName()
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["LocalGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "RemoteOriginUrl":
+				res := make(map[string]interface{})
+				resValue, resErr := repo.RemoteOriginUrl()
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["LocalGitRepo"] = string(newState)
+
+				return res, resErr
+
 			default:
 				return nil, fmt.Errorf("unknown method \"%s\"", method)
 			}
@@ -37,9 +153,125 @@ func main() {
 			json.Unmarshal([]byte(state.(string)), repo)
 
 			switch method := args["method"]; method {
+			case "FindCommitIdByMessage":
+				res := make(map[string]interface{})
+
+				regex, hasKey := args["regex"]
+				if !hasKey {
+					return nil, fmt.Errorf("regex argument required!")
+				}
+
+				resValue, resErr := repo.FindCommitIdByMessage(regex.(string))
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["RemoteGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "IsEmpty":
+				res := make(map[string]interface{})
+				resValue, resErr := repo.IsEmpty()
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["RemoteGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "HeadCommit":
+				res := make(map[string]interface{})
+				resValue, resErr := repo.HeadCommit()
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["RemoteGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "HeadBranchName":
+				res := make(map[string]interface{})
+				resValue, resErr := repo.HeadBranchName()
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["RemoteGitRepo"] = string(newState)
+
+				return res, resErr
+
 			case "CloneAndFetch":
 				res := make(map[string]interface{})
 				resErr := repo.CloneAndFetch()
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["RemoteGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "IsCommitExists":
+				res := make(map[string]interface{})
+
+				commit, hasKey := args["commit"]
+				if !hasKey {
+					return nil, fmt.Errorf("commit argument required!")
+				}
+
+				resValue, resErr := repo.IsCommitExists(commit.(string))
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["RemoteGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "LatestBranchCommit":
+				res := make(map[string]interface{})
+
+				branch, hasKey := args["branch"]
+				if !hasKey {
+					return nil, fmt.Errorf("branch argument required!")
+				}
+
+				resValue, resErr := repo.LatestBranchCommit(branch.(string))
+
+				res["result"] = resValue
+
+				newState, err := json.Marshal(repo)
+				if err != nil {
+					return nil, err
+				}
+				res["RemoteGitRepo"] = string(newState)
+
+				return res, resErr
+
+			case "RemoteOriginUrl":
+				res := make(map[string]interface{})
+				resValue, resErr := repo.RemoteOriginUrl()
+
+				res["result"] = resValue
 
 				newState, err := json.Marshal(repo)
 				if err != nil {

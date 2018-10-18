@@ -58,13 +58,12 @@ module Dapp
         }.tap {|extra|
           if git_own_repo_exist?
             extra["git"] = {}.tap do |extra_git|
-              if git_own_repo.tracked_remote_repository?
+              if git_own_repo.remote_origin_url
                 extra_git["remote_origin_url"] = git_own_repo.remote_origin_url, # may contain https token
                 extra_git["name"] = self.git_url_to_name(git_own_repo.remote_origin_url)
               end
 
               extra_git["path"] = git_own_repo.path
-              extra_git["workdir_path"] = git_own_repo.workdir_path
               extra_git["latest_commit"] = git_own_repo.head_commit unless git_own_repo.empty?
             end
           end
@@ -84,7 +83,7 @@ module Dapp
           "dapp-build-cache-version" => ::Dapp::BUILD_CACHE_VERSION,
           "dapp-command" => self.options[:dapp_command],
         }.tap {|tags|
-          if git_own_repo_exist? && git_own_repo.tracked_remote_repository?
+          if git_own_repo_exist? && git_own_repo.remote_origin_url
             tags["git-host"] = self.get_host_from_git_url(git_own_repo.remote_origin_url)
 
             git_name = self.git_url_to_name(git_own_repo.remote_origin_url)
