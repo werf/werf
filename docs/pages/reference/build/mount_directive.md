@@ -3,6 +3,19 @@ title: Reducing image size and speeding up a build by mounts
 sidebar: reference
 permalink: reference/build/mount_directive.html
 author: Artem Kladov <artem.kladov@flant.com>, Alexey Igrychev <alexey.igrychev@flant.com>
+summary: |
+  <a href="https://docs.google.com/drawings/d/e/2PACX-1vReDSY8s7mMtxuxwDTwtPLFYjEXePaoIB-XbEZcunJGNEHrLbrb9aFxyOoj_WeQe0XKQVhq7RWnG3Eq/pub?w=2031&amp;h=144" data-featherlight="image">
+      <img src="https://docs.google.com/drawings/d/e/2PACX-1vReDSY8s7mMtxuxwDTwtPLFYjEXePaoIB-XbEZcunJGNEHrLbrb9aFxyOoj_WeQe0XKQVhq7RWnG3Eq/pub?w=1016&amp;h=72">
+  </a>
+  
+  <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">mount</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s">from</span><span class="pi">:</span> <span class="s">tmp_dir</span>
+    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span>
+  <span class="pi">-</span> <span class="s">from</span><span class="pi">:</span> <span class="s">build_dir</span>
+    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span>
+  <span class="pi">-</span> <span class="s">fromPath</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span>
+    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute_path&gt;</span></code></pre>
+  </div>
 ---
 
 Quite often when you build an image, you have auxiliary files that should be excluded from the image. E.g.:
@@ -29,14 +42,3 @@ Dapp binds host mount folders for reading/writing on each stage build. If you ne
 On `from` stage dapp adds mount points definitions in stage image labels and then each stage uses theirs to add volumes in an assembly container. This implementation allows inheriting mount points from [base image]({{ site.baseurl }}/reference/build/base_image.html). 
 
 Also on `from` stage dapp cleans assembly container mount points in a [base image]({{ site.baseurl }}/reference/build/base_image.html). Therefore these folders are empty in a image. 
-
-## Syntax
-```yaml
-mount:
-- from: tmp_dir
-  to: <absolute_path>
-- from: build_dir
-  to: <absolute_path>
-- fromPath: <absolute_path>
-  to: <absolute_path>
-```

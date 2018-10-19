@@ -3,6 +3,16 @@ title: Base image
 sidebar: reference
 permalink: reference/build/base_image.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
+summary: |
+  <a href="https://docs.google.com/drawings/d/e/2PACX-1vReDSY8s7mMtxuxwDTwtPLFYjEXePaoIB-XbEZcunJGNEHrLbrb9aFxyOoj_WeQe0XKQVhq7RWnG3Eq/pub?w=2031&amp;h=144" data-featherlight="image">
+      <img src="https://docs.google.com/drawings/d/e/2PACX-1vReDSY8s7mMtxuxwDTwtPLFYjEXePaoIB-XbEZcunJGNEHrLbrb9aFxyOoj_WeQe0XKQVhq7RWnG3Eq/pub?w=1016&amp;h=72">
+  </a>
+      
+  <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">from</span><span class="pi">:</span> <span class="s">&lt;image[:&lt;tag&gt;]&gt;</span>
+  <span class="s">fromCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
+  <span class="s">fromDimg</span><span class="pi">:</span> <span class="s">&lt;dimg name&gt;</span>
+  <span class="s">fromDimgArtifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span></code></pre>
+  </div>
 ---
 
 Here's a minimal `dappfile.yml`. It describes a _dimg_ named `example` that is based on a _base image_ named `alpine`:
