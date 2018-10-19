@@ -12,7 +12,7 @@ dimg: example
 from: alpine
 ```
 
-_Base image_ can be declared with `from`, `fromDimg` or `fromDimgArtifact` directives.   
+_Base image_ can be declared with `from`, `fromDimg` or `fromDimgArtifact` directive.   
 
 ## from and fromCacheVersion
 
@@ -39,15 +39,15 @@ fromCacheVersion: {{ env "FROM_IMAGE_DIGEST" }}
 
 ## fromDimg and fromDimgArtifact
 
-Besides using docker images from a repository, _base image_ can refer to _dimg_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact_directive.html), described in the same `dappfile.yml`.
+Besides using docker image from a repository, _base image_ can refer to _dimg_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact_directive.html), described in the same `dappfile.yml`.
 
 ```yaml
 fromDimg: <dimg name>
 fromDimgArtifact: <artifact name>
 ```
 
-If an intermediate image is specific to a particular application,
-it is reasonable to store its description with _dimgs_ and _artifacts_ which are used it as opposed to storing _base image_ in a registry.
+If a _base image_ is specific to a particular application,
+it is reasonable to store its description with _dimgs_ and _artifacts_ which are used it as opposed to storing the _base image_ in a registry.
 
 Also, this method can be helpful if the stages of _stage conveyor_ are not enough for building an image. You can design your _stage conveyor_.
 

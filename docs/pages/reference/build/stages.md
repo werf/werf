@@ -46,15 +46,22 @@ Each _stage_ is assembled in an _assembly container_ based on an image of the pr
 
 Using a cache for re-assemblies is possible due to the build stage identifier called _signature_. The _signature_ is calculated for the _stages_ at each build. At the last step of the build when saving _stages cache_, the _signature_ is used for tagging (`dimgstage-<project name>:<signature>`). This logic allows to assembly only _stages_ whose the _stages cache_ does not exist in the docker. More information about _stages cache_ in a [separate article]({{ site.baseurl }}/reference/build/cache.html).
 
-<div markdown="1">
+<div class="rsc" markdown="1">
 
+<div class="rsc-description" markdown="1">
+  
+  The _stage signature_ is the checksum of _stage dependencies_ and previous _stage signature_. In the absence of _stage dependencies_, the _stage_ is skipped. 
+  
+  It means that the _stage conveyor_, e.g., dimg _stage conveyor_, can be reduced to several _stages_ or even to single _from stage_.
+  
+</div>
+
+<div class="rsc-example">
 <a href="https://docs.google.com/drawings/d/e/2PACX-1vSL81NRgq51uWSBUdSG4amon-e-loGKtLGJLWu35Anw-EyE9VVsBxJfP89TiUpWQRHrIXbTTijeedsF/pub?w=572&amp;h=577" data-featherlight="image">
-<img style="float: right; padding-left: 10px; margin: 7px 0 10px;" src="https://docs.google.com/drawings/d/e/2PACX-1vSL81NRgq51uWSBUdSG4amon-e-loGKtLGJLWu35Anw-EyE9VVsBxJfP89TiUpWQRHrIXbTTijeedsF/pub?w=286&amp;h=288">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vSL81NRgq51uWSBUdSG4amon-e-loGKtLGJLWu35Anw-EyE9VVsBxJfP89TiUpWQRHrIXbTTijeedsF/pub?w=286&amp;h=288">
 </a>
-
-The _stage signature_ is the checksum of _stage dependencies_ and previous _stage signature_. In the absence of _stage dependencies_, the _stage_ is skipped. 
-
-It means that the _stage conveyor_, e.g., dimg _stage conveyor_, can be reduced to several _stages_ or even to single _from stage_.
+</div>
 
 </div>
+
 <div style="clear: both;"></div>
