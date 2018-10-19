@@ -2,6 +2,61 @@
 title: Adding source code from git repositories
 sidebar: reference
 permalink: reference/build/git_directive.html
+summary: |
+  <a href="https://docs.google.com/drawings/d/e/2PACX-1vSJax_QDnGEkIwiNndib4Yu4sKxX4sMntjb33YfOYXvb3E3wqLRxII09gvNyuxDw5gYoAoLG24gmM_I/pub?w=2031&amp;h=144" data-featherlight="image">
+      <img src="https://docs.google.com/drawings/d/e/2PACX-1vSJax_QDnGEkIwiNndib4Yu4sKxX4sMntjb33YfOYXvb3E3wqLRxII09gvNyuxDw5gYoAoLG24gmM_I/pub?w=1016&amp;h=72">
+  </a>
+      
+  <div class="tab">
+    <button class="tablinks active" onclick="openTab(event, 'local')">Local</button>
+    <button class="tablinks" onclick="openTab(event, 'remote')">Remote</button>
+  </div>
+  
+  <div id="local" class="tabcontent active">
+    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">git</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s">as</span><span class="pi">:</span> <span class="s">&lt;custom name&gt;</span>
+    <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
+    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
+    <span class="s">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
+    <span class="s">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
+    <span class="s">includePaths</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+    <span class="s">excludePaths</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+    <span class="s">stageDependencies</span><span class="pi">:</span>
+      <span class="s">install</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+      <span class="s">beforeSetup</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+      <span class="s">setup</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span></code></pre>
+    </div>
+  </div>
+  
+  <div id="remote" class="tabcontent">
+    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">git</span><span class="pi">:</span>
+  <span class="pi">-</span> <span class="s">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
+    <span class="s">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
+    <span class="s">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
+    <span class="s">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
+    <span class="s">as</span><span class="pi">:</span> <span class="s">&lt;custom name&gt;</span>
+    <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
+    <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
+    <span class="s">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
+    <span class="s">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
+    <span class="s">includePaths</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+    <span class="s">excludePaths</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+    <span class="s">stageDependencies</span><span class="pi">:</span>
+      <span class="s">install</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+      <span class="s">beforeSetup</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span>
+      <span class="s">setup</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span></code></pre>
+      </div>
+  </div>
 ---
 
 ## What is git-path? 

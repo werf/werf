@@ -31,3 +31,13 @@ div.rsc div.rsc-example img {
     margin: 0
   }
 }
+
+.summary {
+  color: #808080;
+  border-left: 5px solid #2e5077;
+  font-size:16px;
+}
+
+.summary > a > img {
+  margin: 0;
+}

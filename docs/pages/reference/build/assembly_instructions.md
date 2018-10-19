@@ -2,6 +2,58 @@
 title: Running assembly instructions
 sidebar: reference
 permalink: reference/build/assembly_instructions.html
+summary: |
+  <a href="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=2031&amp;h=144" data-featherlight="image">
+      <img src="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=1016&amp;h=72">
+  </a>
+  
+  <div class="tab">
+    <button class="tablinks active" onclick="openTab(event, 'shell')">Shell</button>
+    <button class="tablinks" onclick="openTab(event, 'ansible')">Ansible</button>
+  </div>
+  
+  <div id="shell" class="tabcontent active">
+    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">shell</span><span class="pi">:</span>
+    <span class="na">beforeInstall</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
+    <span class="na">install</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
+    <span class="na">beforeSetup</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
+    <span class="na">setup</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;bash command&gt;</span>
+    <span class="na">cacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
+    <span class="na">beforeInstallCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
+    <span class="na">installCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
+    <span class="na">beforeSetupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
+    <span class="na">setupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span></code></pre>
+    </div>
+  </div>
+  
+  <div id="ansible" class="tabcontent">
+    <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">ansible</span><span class="pi">:</span>
+    <span class="na">beforeInstall</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
+    <span class="na">install</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
+    <span class="na">beforeSetup</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
+    <span class="na">setup</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;task&gt;</span>
+    <span class="na">cacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
+    <span class="na">beforeInstallCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
+    <span class="na">installCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
+    <span class="na">beforeSetupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span>
+    <span class="na">setupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span></code></pre>
+      </div>
+  </div>
+  
+  <br/>
+  <b>Running assembly instructions with git</b>
+  
+  <a href="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=2033&amp;h=433" data-featherlight="image">
+    <img src="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=1016&amp;h=216">
+    </a>
 ---
 
 ## Проблематика

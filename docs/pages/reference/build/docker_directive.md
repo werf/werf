@@ -3,6 +3,29 @@ title: Adding docker instructions
 sidebar: reference
 permalink: reference/build/docker_directive.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
+summary: |
+  <a href="https://docs.google.com/drawings/d/e/2PACX-1vTZB0BLxL7mRUFxkrOMaj310CQgb5D5H_V0gXe7QYsTu3kKkdwchg--A1EoEP2CtKbO8pp2qARfeoOK/pub?w=2031&amp;h=144" data-featherlight="image">
+    <img src="https://docs.google.com/drawings/d/e/2PACX-1vTZB0BLxL7mRUFxkrOMaj310CQgb5D5H_V0gXe7QYsTu3kKkdwchg--A1EoEP2CtKbO8pp2qARfeoOK/pub?w=1016&amp;h=72">
+  </a>
+  
+  <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">docker</span><span class="pi">:</span>
+    <span class="s">VOLUME</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;volume&gt;</span>
+    <span class="s">EXPOSE</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;expose&gt;</span>
+    <span class="s">ENV</span><span class="pi">:</span>
+      <span class="s">&lt;env_name&gt;</span><span class="pi">:</span> <span class="s">&lt;env_value&gt;</span>
+    <span class="s">LABEL</span><span class="pi">:</span>
+      <span class="s">&lt;label_name&gt;</span><span class="pi">:</span> <span class="s">&lt;label_value&gt;</span>
+    <span class="s">ENTRYPOINT</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;entrypoint&gt;</span>
+    <span class="s">CMD</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;cmd&gt;</span>
+    <span class="s">ONBUILD</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">&lt;onbuild&gt;</span>
+    <span class="s">WORKDIR</span><span class="pi">:</span> <span class="s">&lt;workdir&gt;</span>
+    <span class="s">USER</span><span class="pi">:</span> <span class="s">&lt;user&gt;</span></code></pre>
+  </div>
 ---
 
 Docker can build images by [Dockerfile](https://docs.docker.com/engine/reference/builder/) instructions. These instructions can be divided into two groups: build-time instructions and other instructions that effect on a running built image and a built image in general.  
@@ -36,25 +59,3 @@ docker:
 Defined docker instructions are applied on the last stage called `docker_instructions`. Thus instructions don't effect on other stages and a dapp build process in general, they simply will be applied on a final image. 
 
 If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ site.baseurl }}/reference/build/base_image.html) with these variables.
-
-## Syntax
-
-```yaml
-docker:
-  VOLUME:
-  - <volume>
-  EXPOSE:
-  - <expose>
-  ENV:
-    <env_name>: <env_value>
-  LABEL:
-    <label_name>: <label_value>
-  ENTRYPOINT:
-  - <entrypoint>
-  CMD:
-  - <cmd>
-  ONBUILD:
-  - <onbuild>
-  WORKDIR: <workdir>
-  USER: <user>
-```

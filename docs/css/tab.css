@@ -1,4 +1,5 @@
 .tab {
+  margin: 25px 0px 0px;
   overflow: hidden;
   border: 1px solid #ccc;
   background-color: #f1f1f1;
@@ -12,6 +13,7 @@
   cursor: pointer;
   padding: 14px 16px;
   transition: 0.3s;
+  font-size: 15px;
 }
 
 .tab button:hover {
