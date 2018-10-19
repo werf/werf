@@ -6,3 +6,28 @@ a.anchorjs-link {
   line-height: 1;
   padding-left: 0.375em;
 }
+
+div.rsc div.rsc-description {
+  float: left;
+  width: 64%;
+}
+
+div.rsc div.rsc-example {
+  float: right;
+  width: 35%
+}
+
+div.rsc div.rsc-example img {
+  margin: 0
+}
+
+@media (max-width: 900px) {
+  div.rsc > div.rsc-description, div.rsc > div.rsc-example {
+    float: none;
+    width: 100%
+  }
+
+  div.rsc div.rsc-example img {
+    margin: 0
+  }
+}
