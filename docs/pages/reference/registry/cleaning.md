@@ -136,7 +136,7 @@ dapp dimg flush repo REPO [--with-stages]
 
 The command deletes images of the current project only in docker registry.
 
-The `--with-stages` option uses to delete not only tagged images but also stages cache. The option is disabled by default. It is always recommended to use this option. 
+The `--with-stages` option uses to delete not only tagged images but also stages cache. The option is disabled by default. It is always recommended to use this option.
 
 ## Reset
 
@@ -153,3 +153,44 @@ dapp dimg mrproper [--all] [--improper-cache-version-stages] [--improper-dev-mod
 * `--all` — dapp deletes stages cache with all of images and containers ever dapp created in local storage.
 * `--improper-cache-version-stages` — like the `--all` parameter, but dapp deletes stages cache, images, and containers created by versions of dapp older than current;
 * `--improper-dev-mode-cache` — dapp deletes cache, images and container created in developer mode (`--dev` option).
+
+
+## Examples
+
+### Delete all images and stages cache in the current project
+
+Given dappfile with two dimgs. Images succesfully built and tagged.
+
+```
+dapp dimg flush local --with-stages
+```
+
+Command deletes all tagged images, and delete stages cache.
+
+### Delete all images of all dapp projects
+
+Given several dapp projects.
+
+```
+dapp dimg mrproper --all --improper-cache-version-stages --improper-dev-mode-cache
+```
+
+Command delete every image created by dapp. Other docker images like image specified in `from:` directive in dappfile - remains.
+
+### Cleaning GitLab CI docker registry
+
+Given project, where dapp executes with `--tag-ci` option to push images.
+
+On the first step, the following command performs garbage collection in repo:
+
+```
+dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
+```
+
+On the second step, the following command performs synchronizing of local storage with the registry:
+
+```
+dapp dimg stages cleanup local --improper-cache-version --improper-repo-cache ${CI_REGISTRY_IMAGE}
+```
+
+Read a deeper example [here]({{ site.baseurl }}/how_to/gitlab_ci_cd_integration.html).
