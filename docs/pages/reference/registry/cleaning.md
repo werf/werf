@@ -187,7 +187,7 @@ On the first step, the following command performs garbage collection in repo:
 dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
 ```
 
-On the second step, the following command performs synchronizing of local storage with registry:
+On the second step, the following command performs synchronizing of local storage with the registry:
 
 ```
 dapp dimg stages cleanup local --improper-cache-version --improper-repo-cache ${CI_REGISTRY_IMAGE}
