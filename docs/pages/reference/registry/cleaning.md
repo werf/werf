@@ -157,17 +157,9 @@ dapp dimg mrproper [--all] [--improper-cache-version-stages] [--improper-dev-mod
 
 ## Examples
 
-### Delete all images in the current project
-
-Given dappfile with two dimgs. Images succesfully builded and tagged.
-
-```
-dapp dimg flush local
-```
-
-Command deletes all tagged images, but don't delete stages cache.
-
 ### Delete all images and stages cache in the current project
+
+Given dappfile with two dimgs. Images succesfully built and tagged.
 
 ```
 dapp dimg flush local --with-stages
@@ -185,20 +177,20 @@ dapp dimg mrproper --all --improper-cache-version-stages --improper-dev-mode-cac
 
 Command delete every image created by dapp. Other docker images like image specified in `from:` directive in dappfile - remains.
 
-### Garbage collection with GitLab CI
+### Cleaning GitLab CI docker registry
 
-Given project, where dapp executes with `--tag-ci` option when push images.
+Given project, where dapp executes with `--tag-ci` option to push images.
 
-On the first step, the following command cleanups repo:
+On the first step, the following command performs garbage collection in repo:
 
 ```
 dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
 ```
 
-On the second step, the following command cleanups local storage:
+On the second step, the following command performs synchronizing of local storage with registry:
 
 ```
 dapp dimg stages cleanup local --improper-cache-version --improper-repo-cache ${CI_REGISTRY_IMAGE}
 ```
 
-Read a deeper example with garbage collection and GitLab CI [here]({{ site.baseurl }}/how_to/gitlab_ci_cd_integration.html).
+Read a deeper example [here]({{ site.baseurl }}/how_to/gitlab_ci_cd_integration.html).
