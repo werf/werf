@@ -30,14 +30,17 @@ const (
 	DirectoryArchive ArchiveType = "directory"
 )
 
+// TODO: This is interface for build pkg only -- should be renamed.
+// Do not add operations that are not designed for build pkg usage.
 type GitRepo interface {
 	String() string
 	GetName() string
 
+	IsEmpty() (bool, error)
 	HeadCommit() (string, error)
-	HeadBranchName() (string, error)
 	LatestBranchCommit(branch string) (string, error)
 	LatestTagCommit(tag string) (string, error)
+	FindCommitIdByMessage(regex string) (string, error)
 
 	CreatePatch(PatchOptions) (Patch, error)
 	CreateArchive(ArchiveOptions) (Archive, error)

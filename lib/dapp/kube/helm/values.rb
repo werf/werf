@@ -38,8 +38,8 @@ module Dapp
           elsif ENV["CI_COMMIT_REF_NAME"]
             ci_info["branch"] = ci_info["ref"] = ENV["CI_COMMIT_REF_NAME"]
             ci_info["is_branch"] = true
-          elsif dapp.git_own_repo_exist? and dapp.git_own_repo.branch != "HEAD"
-            ci_info["branch"] = ci_info["ref"] = dapp.git_own_repo.branch
+          elsif dapp.git_own_repo_exist? and dapp.git_own_repo.head_branch_name != "HEAD"
+            ci_info["branch"] = ci_info["ref"] = dapp.git_own_repo.head_branch_name
             ci_info["is_branch"] = true
           elsif dapp.git_own_repo_exist?
             git = dapp.git_own_repo.send(:git)
