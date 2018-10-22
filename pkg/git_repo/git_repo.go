@@ -14,6 +14,7 @@ type ArchiveOptions struct {
 }
 
 type ChecksumOptions struct {
+	FilterOptions
 	Paths  []string
 	Commit string
 }

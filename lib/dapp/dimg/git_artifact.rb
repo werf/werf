@@ -32,27 +32,9 @@ module Dapp
         @owner = owner
         @group = group
         @as = as
-
         @stages_dependencies = stages_dependencies
-
-
-        @all_include_paths = base_paths(@include_paths, true)
-        @all_exclude_paths = repo.exclude_paths + base_paths(@exclude_paths, true)
       end
       # rubocop:enable Metrics/ParameterLists
-
-      def base_paths(paths, with_cwd = false)
-        [paths].flatten.compact.map do |path|
-          if with_cwd && !cwd.empty?
-            File.join(cwd, path)
-          else
-            path
-          end
-            .chomp('/')
-            .reverse.chomp('/')
-            .reverse
-        end
-      end
 
       def apply_archive_command(stage)
         res = repo.dapp.ruby2go_git_artifact(
@@ -144,8 +126,8 @@ module Dapp
           "RepoPath" => File.join("/", @cwd.to_s),
           "Owner" => @owner.to_s,
           "Group" => @group.to_s,
-          "IncludePaths" => @all_include_paths,
-          "ExcludePaths" => @all_exclude_paths,
+          "IncludePaths" => @include_paths,
+          "ExcludePaths" => @exclude_paths,
           "StagesDependencies" => @stages_dependencies.map {|k, v| [_stages_map[k], Array(v).map(&:to_s)]}.to_h,
           "PatchesDir" => dimg.tmp_path('patches'),
           "ContainerPatchesDir" => dimg.container_tmp_path('patches'),
