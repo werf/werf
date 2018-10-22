@@ -2,31 +2,32 @@
 title: Cache
 sidebar: reference
 permalink: reference/build/cache.html
+author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-Dapp использует в работе разноуровневое эффективное кэширование, которое существенно сокращает время сборки приложения и позволяет уменьшить размер конечного образа.
+Dapp uses multi-layer high-performance caching that significantly accelerates assembling and reduces the size of the resulting image.
 
-В dapp предусмотрена директория для хранения сборочного кэша проекта `~/.dapp/builds/<project name>`. В этой директории могут хранится следующие данные:
-* Удалённые git репозитории. При первой сборке выполняется clone, а при последующих fetch — польза очевидна, особенно, при тяжёлых репозиториях и ограничениях по скорости и трафику интернета (подробнее про работу с git репозиториями в соответствующих статьях).
-* Директории монтирования `build_dir` (подробнее в статье про [монтирование]({{ site.baseurl }}/reference/build/mount_directive.html)).
+Dapp provides a directory for storing the project's assembly cache — `~/.dapp/builds/<project name>`. This directory may store the following data:
+* Remote git repositories. Dapp runs _git clone_ on the first build and then only retrieves changes from the remote git repository by _git fetch_. Benefits of this approach are clear, especially when git repository is heavy and there are connection speed and traffic limits (for detailed information about working with git repositories see the [corresponding article]({{ site.baseurl }}/reference/build/git_directive.html)).
+* _build_dir_ mounting directories (for detailed information see the article dedicated to [mounting]({{ site.baseurl }}/reference/build/mount_directive.html)).
 
-Наибольший интерес представляет сборочный кэш приложения, работающий по тому же принципу, что и docker-слои при использовании Dockerfile. Далее рассматривается принцип организации кэша.
+The most exciting thing is the _stages cache_ performing the same functions as docker layers when using Dockerfile. Further, we consider the principle of organizing _stages cache_.
 
-## Создание сборочного кэша
+## Creating _stages cache_
 
-В процессе сборки docker-образы тех стадий, которые собрались остаются "невидимыми" пользователю dapp, они имеют только временный идентификатор в docker. Технически docker-образ попадает в сборочный кэш в тот момент, когда dapp тегирует этот образ специальным образом: используя `dimgstage-<имя-репозитория-приложения>` в качестве имени образа и сигнатуры стадии в качестве тега образа.
+During assembly, docker images of the assembled stages remain "invisible" for a dapp user, and those images only have a temporary ID in docker. Technically speaking, a docker image would get to the _stages cache_ precisely at the moment when dapp tags the image in a particular way: using `dimgstage-<project name>` as the image name, and a _stage signature_ as the image tag.
 
-Dapp сохраняет собранные слои в кэш только после успешной сборки всех стадий. Если в процессе сборки некоторой стадии произошла ошибка, то все успешно собранные на этот момент стадии будут потеряны. При повторном запуске сборка начнется с того же образа, с которого была начата предыдущая сборка.
+Dapp only saves the assembled layers to the _stages cache_ after all stages are successfully assembled. If during assembly of a particular stage an error occurs, then all stages that were successfully assembled by that point are lost. Rerunning the assembly operation starts from the same _stage_ from which the previous assembly operation started.
 
-Такой механизм работы кэша необходим, чтобы обеспечить строгую корректность сохраненного кэша.
+This caching scheme is required to ensure strict correctness of the saved cache.
 
-## Принудительное сохранение образов в кэш после сборки
+## Forced saving images to cache after assembling
 
-Для разработчика конфигурации было бы удобнее, если бы все успешно собранные стадии сразу сохранялись в кэш docker образов. В таком случае, при возникновении ошибки, пересборка бы всегда начиналась с ошибочной стадии.
+For configuration developers, it would be much more convenient if all successfully assembled stages were saved to the cache of the docker images. In this case, if an error is thrown, re-assembling would always start from the erroneous _stage_.
 
-Для этой цели в dapp предусмотрена возможность принудительного сохранения кэша, включаемая либо опцией `--force-save-cache`, либо наличием переменной окружения `DAPP_FORCE_SAVE_CACHE=1`.
+For this purpose, dapp provides the forced cache saving option, which is enabled either by the `--force-save-cache` option or by the presence of the `DAPP_FORCE_SAVE_CACHE=1` environment variable.
 
-На примере dappfile:
+For example, dappfile:
 
 ```yaml
 dimg: ~
@@ -39,9 +40,9 @@ shell:
   - apt-get install -y non-existing
 ```
 
-Запустим сборку:
+We run an assembly:
 
- ```shell
+```shell
 $ dapp dimg build --force-save-cache
 nameless: calculating stages signatures                                     [RUNNING]
 nameless: calculating stages signatures                                          [OK] 0.16 sec
@@ -72,7 +73,7 @@ Stacktrace dumped to /tmp/dapp-stacktrace-f9333e01-c9b9-4f31-809a-12ada6f7c64d.o
 ruby2go_image command `build` failed!
 ```
 
-При повторном запуске стадия Before install более не будет пересобираться, т.к. была закэширована при первом запуске:
+When running again, the _before_install stage_ will not be re-assembled any longer, because it was cached during the first launch.
 
 ```shell
 $ dapp dimg build --force-save-cache
@@ -101,13 +102,13 @@ Stacktrace dumped to /tmp/dapp-stacktrace-9adbb391-79e4-421f-83b1-dcdad372051c.o
 ruby2go_image command `build` failed!
 ```
 
-## Почему dapp не сохраняет кэш ошибочных сборок по умолчанию?
+## Why does dapp not save the cache of erroneous assemblies by default?
 
-Режим работы `DAPP_FORCE_SAVE_CACHE` может привести к созданию некорректного кэша. Исправить такую ситуацию можно будет лишь ручным удалением проблемного кэша.
+`DAPP_FORCE_SAVE_CACHE` operating mode may result in an invalid cache being created. In this case only removing the erroneous cache manually can help.
 
-В каком случае может получится ситуация, когда был сохранен некорректный кэш проще пояснить на примере.
+We should consider an example to understand how an invalid cache could be saved.
 
-Инициализируем приложение стандартным dappfile:
+Let us initiate the application with a standard dappfile:
 
 ```yaml
 dimg: ~
@@ -117,7 +118,7 @@ git:
   to: /app
 ```
 
-Собираем:
+Assembling:
 
 ```shell
 $ dapp dimg build --force-save-cache
@@ -134,7 +135,9 @@ Setup group
 Running time 13.9 seconds
 ```
 
-Сборка прошла успешно, сборочный кэш наполнился корректными стадиями. Далее добавим сборочную инструкцию, которая использует файл из git. Но намеренно совершим ошибку в этой инструкции -- попытаемся скопировать файл `/app/hello`, которого нет в git. Например, пользователь забыл его добавить.
+Assembling has been successfully finished, and _stages cache_ is filled with valid _stages_ images. 
+
+Then we add an assembly instruction that uses a file from git. However, we intentionally made a mistake in this instruction — we are trying to copy a `/app/hello` file that is not present in git. For example, the user may have forgotten to add it.
 
 ```yaml
 dimg: ~
@@ -147,7 +150,7 @@ shell:
   - cp /app/hello /hello
 ```
 
-Сборка с этим dappfile приводит к ошибке:
+Assembling with this dappfile throws an error:
 
 ```shell
 $ dapp dimg build --force-save-cache
@@ -179,9 +182,9 @@ cp: cannot stat '/app/hello': No such file or directory
 >>> END STREAM
 ```
 
-При сборке dapp заметил, что добавились инструкции сборки стадии install и начал пересобирать эту стадию. Предварительно перед сборкой стадии install была собрана стадия `Git artifacts: apply patches (before install)`, в которой накладывается патч с изменениями из git. Это делается чтобы на стадии install были доступны актуальные файлы из git.
+During assembly, dapp notices adding assembly instructions to _install stage_ and builds it. Before _install stage_ assembly, dapp builds _g_a_pre_install_patch stage_ (`Git artifacts: apply patches (before install)`). This approach is needed to use actual condition of git repository during _install stage_ assembly (read more about it in [separate article](/reference/build/assembly_instructions.html)).
 
-Далее попытаемся исправить ошибку и добавим файл hello в git. Запускаем пересборку и видим ту же самую ошибку: нет файла hello.
+We add the `hello` file to git repository to fix the error. Then run re-assembly and see the same error: there is no `hello` file.
 
 ```shell
 $ dapp dimg build --force-save-cache
@@ -215,10 +218,10 @@ cp: cannot stat '/app/hello': No such file or directory
 >>> END STREAM
 ```
 
-Этот файл должен был попасть в образ на стадии `Git artifacts: apply patches (before install)`, однако данная стадия была закэширована на тот момент, когда файла еще не было в git репозитории. Для исправления придется вручную удалить эту стадию.
+This file was meant to be added to the image at the _g_a_pre_install_patch stage_; however, this _stage_ was cached at the moment when this file was not yet available in the git repository. To correct this, you should manually remove this _stage cache_.
 
-В этом особенность работы кэша dapp. Сигнатура данной стадии не может зависеть от произвольных файлов в git, иначе теряется весь смысл кэширования стадий install, before setup, setup. А если не меняется сигнатура, то не меняется и кэш.
+This is the feature of dapp cache. The _signature_ of this _stage_ cannot depend on random files in git, otherwise caching _install_, _before setup_ and _setup_ _stages_ makes no sense. So, if the _signature_ is not changed, the cache is not changed either.
 
-Подобные проблемы исключаются, если сохранения кэша стадий происходит только при успешных сборках, что и делает dapp по умолчанию.
+These issues don't appear if the cache for stages is only performed after successfully finished assembly. This caching scheme dapp uses by default.
 
-Поэтому, если вы решили использовать опцию `DAPP_FORCE_SAVE_CACHE`, то будьте готовы к подобным случаям, пользуйтесь опцией осторожно и желательно только при отладке конфигурации.
+So if you decide to use `DAPP_FORCE_SAVE_CACHE` option, be prepared for situations like this, use the option carefully, and preferably only use it during configuration debugging.
