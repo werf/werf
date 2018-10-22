@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -25,12 +26,18 @@ func main() {
 			return nil, err
 		}
 
-		if err := docker.Init(hostDockerConfigDir); err != nil {
+		cmd, err := ruby2go.CommandFieldFromArgs(args)
+		if err != nil {
 			return nil, err
 		}
 
-		cmd, err := ruby2go.CommandFieldFromArgs(args)
-		if err != nil {
+		if cmd == "login" {
+			_, w, _ := os.Pipe()
+			os.Stdout = w
+			os.Stderr = w
+		}
+
+		if err := docker.Init(hostDockerConfigDir); err != nil {
 			return nil, err
 		}
 
@@ -199,6 +206,24 @@ func main() {
 			default: // "rmi"
 				return nil, docker.CliRmi(args...)
 			}
+		case "login":
+			username, err := ruby2go.StringOptionFromArgs("username", args)
+			if err != nil {
+				return nil, err
+			}
+
+			password, err := ruby2go.StringOptionFromArgs("password", args)
+			if err != nil {
+				return nil, err
+			}
+
+			repository, err := ruby2go.StringOptionFromArgs("repository", args)
+			if err != nil {
+				return nil, err
+			}
+
+			args := []string{"-u", username, "-p", password, repository}
+			return nil, docker.CliLogin(args...)
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)
 		}
