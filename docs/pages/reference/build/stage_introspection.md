@@ -2,30 +2,29 @@
 title: Stage Introspection
 sidebar: reference
 permalink: reference/build/stage_introspection.html
+author: Alexey Igrychev <alexey.igrychev@flant.com>
+summary: |
+  <div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="c"># introspection before and after execution of a dysfunctional set of instructions</span>
+  dapp dimg build --introspect-error 
+  dapp dimg build --introspect-before-error
+  
+  <span class="c"># introspection of an assembled STAGE stage</span>
+  dapp dimg build --introspect-stage STAGE
+  dapp dimg build --introspect-artifact-stage STAGE
+  
+  <span class="c"># introspection before execution of the instructions for the STAGE stage</span>
+  dapp dimg build --introspect-before STAGE
+  dapp dimg build --introspect-artifact-before STAGE   
+  </code></pre>
+  </div>
 ---
 
-Написание конфигурации на первых шагах усложняется отсутствием понимания того, что содержится в сборочном контейнере при выполнении инструкций.
+Writing a configuration is especially difficult at the beginning because you don't quite understand what is in the _stage assembly container_ when the instructions are executed.
 
-В процессе сборки есть возможность получить доступ к определённой стадии, воспользовавшись опциями интроспекции. При интроспекции, как и при сборке, сборочный контейнер содержит служебныи инструментарий и переменные окружения. Инструментарий представляется в виде набора утилит, который необходим на время сборки. Его добавление осуществляется монтированием директорий из служебных контейнеров наших дистрибутивов dappdeps (в сборочном контейнере они доступны по пути /.dapp/deps). Интроспекция сводится к тому, что сборочный контейнер стадии запускается для пользователя в интерактивном режиме.
+In the process of assembling, you can access a certain _stage_ using introspection options. During introspection, like during assembling, the _stage assembly container_ contains service tools and environment variables. Tools are presented as a set of utilities required during assembling. They are added by mounting the directories from service containers of our _dappdeps_ distributions (available at `/.dapp/deps` path in the _assembly container_). Introspection comes down the fact that the _stage assembly container_ is launched for users in interactive mode.
 
-При разработке интроспекция позволяет прийти к необходимому результату в сборочном контейнере, а затем перенести все шаги, инструкции, в конфигурацию соответствующей стадии. Такой подход может быть полезен, когда поставленная задача ясна, но шаги для её решения не очевидны и требуют экспериментов.
+During development, introspection makes it possible to achieve the required outcomes in an _assembly container_, and then transfer all the steps and instructions into the configuration of the appropriate _stage_. This approach is useful when the set objective is clear, although the steps to achieve it are not so obvious and require a great deal of experiment.
 
-При отладке интроспекция позволяет посмотреть, почему сборка завершилась с ошибкой или результат не соответствует ожиданиям, проверить наличие зависимых файлов, состояние системы.
+During debugging, introspection allows you to see why assembling ended with an error or the result was unexpected, to check whether dependent files are present and to check the system state.
 
-Наконец, при использовании интроспекции приложений использующих ansible появляется возможность отладки ansible playbooks в сборочном контейнере с последующим переносом ansible-задач в соответствующие стадии конфигурации.
-
-При сборке поддерживаются следующие опции интроспекции:
-
-```bash
-# интроспекция до и после выполнения проблемного набора инструкций
-dapp dimg build --introspect-error  
-dapp dimg build --introspect-before-error
-
-# интроспекция собранной стадии STAGE
-dapp dimg build --introspect-stage STAGE
-dapp dimg build --introspect-artifact-stage STAGE
-
-# интроспекция до выполнения инструкций стадии STAGE
-dapp dimg build --introspect-before STAGE
-dapp dimg build --introspect-artifact-before STAGE    
-```
+Finally, when introspection is effected for applications that use ansible,  you can debug ansible playbooks in the _assembly container_ and subsequently transfer ansible tasks to the appropriate configuration _stages_.

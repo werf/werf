@@ -2,20 +2,21 @@
 title: Work with local changes without commits in dev mode
 sidebar: reference
 permalink: reference/build/dev_mode.html
+author: Alexey Igrychev <alexey.igrychev@flant.com>
+summary: |
+  <div class="language-bash highlighter-rouge"><pre class="highlight"><code>dapp dimg build --dev
+  
+  <span class="c"># removing dev cache for the stages of all projects</span>
+  dapp dimg mrproper --improper-dev-mode-cache    
+  </code></pre>
+  </div>
 ---
 
-При разработке конфигурации в стандартном режиме сборки требуются формальные коммиты для того, чтобы dapp учитывал изменения в файлах при сборке. По аналогии с монтированием рабочей директории при сборке Dockerfile хочется работать с текущим состоянием локального репозитория.
+When developing the configuration in standard assembly mode, formal commits are required so that dapp can take account of changing in files while assembling. Similar to mounting a working directory during Dockerfile assembly, you may want to work with the current state of the local repository.
 
-Для облегчения и ускорения процесса разработки конфигурации сборки, в dapp предусмотрен специальный режим разработчика, включаемый опцией `--dev`. Особенности режима разработчика:
-* При сборке учитываются некоммитнутые изменения локального Git-репозитория, соответствующие конфигурации. Если быть точным, учитываются пути из следующих поддиректив git: `add`, `includePaths`, `excludePaths`, `stageDependencies`.
-* Выполняется принудительное сохранение кэша после сборки (подробнее в соответствующей статье).
-* Создаётся отдельный кэш образов, который никак не затрагивает стандатный.
+To simplify and accelerate the assembly configuration development workflow, dapp provides a special _developer mode_ that is enabled by `--dev` option. Special features of _developer mode_:
+* During assembly, non-committed changes of the local git repository that comply with the configuration are considered. More specifically, the paths from the following _git-path_ sub-directives are taken into account: `add`, `includePaths`, `excludePaths`, `stageDependencies`.
+* Successfully assembled _stages_ always saves to the _stages cache_ (more information about _stages cache_ can be found in the [relevant article]({{ site.baseurl }}/reference/build/cache.html#forced-saving-images-to-cache-after-assembling)).
+* Dapp creates a separate _stages cache_ that in no way impacts the standard one.
 
-Работа в режиме разработчика может быть удобна не только при локальной разработке, но и если требуется отладить код на сборочной машине, не затрагивая сборочный кэш и не делая коммиты в git репозиторий.
-
-```
-dapp dimg build --dev
-
-# удаление dev-кэша стадий всех проектов
-dapp dimg mrproper --improper-dev-mode-cache    
-```
+Working in _developer mode_ may be useful not only for local development but also when you need to debug your code on the build machine without impacting the assembly cache or making commits to the git repository.
