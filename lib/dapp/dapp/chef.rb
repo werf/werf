@@ -1,14 +1,6 @@
 module Dapp
   class Dapp
     module Chef
-      def local_git_artifact_exclude_paths(&blk)
-        super do |exclude_paths|
-          exclude_paths << '.dapp_chef'
-
-          yield exclude_paths if block_given?
-        end
-      end
-
       def builder_cookbook_path
         path('.dapp_chef')
       end

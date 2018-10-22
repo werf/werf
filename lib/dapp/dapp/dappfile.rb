@@ -12,16 +12,6 @@ module Dapp
         end
       end
 
-      def local_git_artifact_exclude_paths(&blk)
-        super do |exclude_paths|
-          exclude_paths << 'Dappfile'
-          exclude_paths << "dappfile.yml"
-          exclude_paths << "dappfile.yaml"
-
-          yield exclude_paths if block_given?
-        end
-      end
-
       def expand_path(path, number = 1)
         path = File.expand_path(path)
         number.times.each { path = File.dirname(path) }
