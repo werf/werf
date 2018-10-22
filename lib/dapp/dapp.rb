@@ -143,15 +143,6 @@ module Dapp
       make_path(build_dir, *path)
     end
 
-    def local_git_artifact_exclude_paths(&blk)
-      super do |exclude_paths|
-        build_path_relpath = Pathname.new(build_path).subpath_of(File.dirname(git_own_repo.path))
-        exclude_paths << build_path_relpath.to_s if build_path_relpath
-
-        yield exclude_paths if block_given?
-      end
-    end
-
     def stage_cache
       "dimgstage-#{name}"
     end

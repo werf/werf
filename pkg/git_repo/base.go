@@ -1,6 +1,7 @@
 package git_repo
 
 import (
+	"crypto/md5"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -407,7 +408,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 		paths := make([]string, 0)
 
 		for _, pathPattern := range opts.Paths {
-			res, err := getFilesByPattern(workTreeDir, pathPattern)
+			res, err := getFilesByPattern(workTreeDir, filepath.Join(opts.BasePath, pathPattern))
 			if err != nil {
 				return fmt.Errorf("error getting files by path pattern `%s`: %s", pathPattern, err)
 			}
@@ -424,13 +425,26 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 
 		sort.Strings(paths)
 
+		pathFilter := true_git.PathFilter{
+			BasePath:     opts.BasePath,
+			IncludePaths: opts.IncludePaths,
+			ExcludePaths: opts.ExcludePaths,
+		}
+
 		for _, path := range paths {
+			fullPath := filepath.Join(workTreeDir, path)
+
+			if !pathFilter.IsFilePathValid(path) {
+				if debugChecksum() {
+					fmt.Printf("Excluded file `%s` from resulting checksum by path filter %s\n", fullPath, pathFilter.String())
+				}
+				continue
+			}
+
 			_, err = checksum.Hash.Write([]byte(path))
 			if err != nil {
 				return fmt.Errorf("error calculating checksum of path `%s`: %s", path, err)
 			}
-
-			fullPath := filepath.Join(workTreeDir, path)
 
 			stat, err := os.Lstat(fullPath)
 			// file should exist after being scanned
@@ -460,22 +474,24 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 				}
 
 				if debugChecksum() {
-					fmt.Printf("Added file `%s` to checksum with content:\n", fullPath)
-
 					f, err := os.Open(fullPath)
 					if err != nil {
 						return fmt.Errorf("unable to open file `%s`: %s", fullPath, err)
 					}
 
-					_, err = io.Copy(os.Stdout, f)
+					hash := md5.New()
+					_, err = io.Copy(hash, f)
 					if err != nil {
 						return fmt.Errorf("error reading file `%s` content: %s", fullPath, err)
 					}
+					contentHash := fmt.Sprintf("%x", hash.Sum(nil))
 
 					err = f.Close()
 					if err != nil {
 						return fmt.Errorf("error closing file `%s`: %s", fullPath, err)
 					}
+
+					fmt.Printf("Added file `%s` to resulting checksum with content checksum: %s\n", fullPath, contentHash)
 				}
 			} else if stat.Mode()&os.ModeSymlink != 0 {
 				linkname, err := os.Readlink(fullPath)
@@ -489,7 +505,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 				}
 
 				if debugChecksum() {
-					fmt.Printf("Added symlink `%s` -> `%s` to checksum\n", fullPath, linkname)
+					fmt.Printf("Added symlink `%s` -> `%s` to resulting checksum\n", fullPath, linkname)
 				}
 			}
 		}

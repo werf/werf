@@ -299,7 +299,11 @@ func (ga *GitArtifact) StageDependenciesChecksum(stageName string) (string, erro
 		return "", fmt.Errorf("unable to get latest commit: %s", err)
 	}
 
-	opts := git_repo.ChecksumOptions{Paths: depsPaths, Commit: commit}
+	opts := git_repo.ChecksumOptions{
+		FilterOptions: ga.getRepoFilterOptions(),
+		Paths:         depsPaths,
+		Commit:        commit,
+	}
 
 	checksum, err := ga.GitRepo().Checksum(opts)
 	if err != nil {
