@@ -2,18 +2,23 @@
 title: Caching each instruction separately with asLayers
 sidebar: reference
 permalink: reference/build/as_layers.html
+author: Alexey Igrychev <alexey.igrychev@flant.com>
+summary: |
+  <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">asLayers</span><span class="pi">:</span> <span class="s">true</span>
+  </code></pre>
+  </div>
 ---
 
-Стадии `before_install`, `install`, `before_setup`, `setup` и `build_artifact` зависят от соответствующих инструкций в конфигурации. Любое изменение инструкций приводит к пересборке соответствующей стадии со всеми инструкциями. Таким образом, при тяжеловесных, требовательных ко времени, инструкциях разработка конфигурации может затянуться.
+User stages, `before_install`, `install`, `before_setup`, `setup` and `build_artifact`, depend upon the appropriate instructions in the configuration. Any modification in _stage_ instructions results in re-assembling the appropriate _stage_ with all instructions. Therefore, if the instructions are heavy and time-consuming, development of the configuration may take much time.
 
-Добавим ко всему этому ситуацию, когда при выполнении команд сборка падает на одной из последних инструкций стадии. Помимо того, что сборку необходимо выполнять заново, нет возможности получить состояние среды до упавшей инструкции, проверить корректность выполнения предыдущих инструкций.
+Let us also consider the situation where one of the last stage instruction fails. A user cannot retrieve the environment state preceding the failure of the instruction or check those previous instructions were correctly executed.
 
-Для удобства разработки и отладки была введена директива `asLayers`, которая указывается для конкретного приложения или его артефакта в конфигурации, dappfile.yaml. При сборке инструкции кэшируются по отдельности, а пересборка осуществляется только при изменении их порядка.
+For development and debugging, we introduce _asLayers_ directive. When assembling, the instructions are cached separately, and re-assembly is only performed when their sequence changes. The directive can be specified for a specific _dimg_ or _artifact_ in the `dappfile.yaml` configuration.
 
-При отсутствии директивы `asLayers` (или в случае asLayers: false) используется кэширование по умолчанию, т.е. один docker-образ на все инструкции стадии, а если указать asLayers: true, то включится новый режим кэширования — один docker-образ на одну команду для shell или один task для ansible.
+If `asLayers: true`, then the new caching mode is enabled — one docker image for one shell command, or one task for ansible. Otherwise, if _asLayers_ directive is not specified (or if `asLayers: false`) default caching is applied, one docker image is used for all _stage_ instructions. 
 
-Переключение между режимами сборки регулируется только директивой `asLayers` — остальные инструкции конфигурации остаются неизменными. После того, как сборочные инструкции отлажены, `asLayers` необходимо выключить.
+Switching between assembly mode is only governed by the _asLayers directive_. Other instructions for the configuration remain unchanged. After having debugged the assembly instructions, _asLayers_ must be disabled.
 
-Директива `asLayers` позволяет кэшировать инструкции по отдельности. При использовании опций интроспекции `--introspect-error` и `--introspect-before-error` пользователь может получить среду до или после выполнения проблемной инструкции.
+_asLayers_ directive allows caching of individual instructions. If `--introspect-error` and `--introspect-before-error` introspection options are used, users may retrieve the environment before or after execution of a problem instruction.
 
-Важно не пользоваться этой инструкцией при штатной сборке образов: данный режим порождает избыточное количество docker-образов и не рассчитан на инкрементальную сборку (т.к. увеличивается время ожидания и размер сборочного кэша).
+> It is important not to use this instruction in the course of standard assembly of images: this mode generates an excessive number of docker images and is not intended for incremental assembly (due to a longer timeout and greater size of _stages cache_).
