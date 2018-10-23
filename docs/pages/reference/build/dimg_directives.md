@@ -50,18 +50,6 @@ git:
     - <relative path or glob>
     setup:
     - <relative path or glob>
-import:
-- artifact: <artifact name>
-  before: <install || setup>
-  after: <install || setup>
-  add: <absolute path>
-  to: <absolute path>
-  owner: <owner>
-  group: <group>
-  includePaths:
-  - <relative path or glob>
-  excludePaths:
-  - <relative path or glob>
 shell:
   beforeInstall:
   - <bash command>
@@ -97,6 +85,18 @@ mount:
   to: <absolute path>
 - fromPath: <absolute path>
   to: <absolute path>
+import:
+- artifact: <artifact name>
+  before: <install || setup>
+  after: <install || setup>
+  add: <absolute path>
+  to: <absolute path>
+  owner: <owner>
+  group: <group>
+  includePaths:
+  - <relative path or glob>
+  excludePaths:
+  - <relative path or glob>
 docker:
   VOLUME:
   - <volume>
