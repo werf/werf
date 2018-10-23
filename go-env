@@ -7,3 +7,4 @@ export DAPP_BIN_DAPPDEPS=$GOPATH/bin/dappdeps
 export DAPP_BIN_DOCKER_REGISTRY=$GOPATH/bin/docker_registry
 export DAPP_BIN_CLEANUP=$GOPATH/bin/cleanup
 export DAPP_BIN_SLUG=$GOPATH/bin/slug
+export DAPP_BIN_DEPLOY_WATCHER=$GOPATH/bin/deploy-watcher

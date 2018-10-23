@@ -157,7 +157,11 @@ module Dapp
                   begin
                     watch_hooks.each do |job|
                       begin
-                        Kubernetes::Manager::Job.new(self, job.name).watch_till_done!
+                        if ENV["KUBEDOG"]
+                          ruby2go_deploy_watcher("action" => "watch job", "resourceName" => job.name, "namespace" => release.namespace)
+                        else
+                          Kubernetes::Manager::Job.new(self, job.name).watch_till_done!
+                        end
                       rescue ::Exception => e
                         sentry_exception(e, extra: {"job-spec" => job.spec})
                         raise
@@ -219,7 +223,11 @@ module Dapp
                   ::Timeout::timeout(self.options[:timeout] || 300) do
                     deployment_managers.each {|deployment_manager|
                       if deployment_manager.should_watch?
-                        deployment_manager.watch_till_ready!
+                        if ENV["KUBEDOG"]
+                          ruby2go_deploy_watcher("action" => "watch deployment", "resourceName" => deployment_manager.name, "namespace" => release.namespace)
+                        else
+                          deployment_manager.watch_till_ready!
+                        end
                       end
                     }
                   end
