@@ -28,7 +28,6 @@ The dapp assembly process is a sequential build of _stages_. Dapp uses different
 </div>
 
 <div id="dimg" class="tabcontent active">
-
 <a href="https://docs.google.com/drawings/d/e/2PACX-1vRbqae63cNHREeseGvz2WDNExunn__HVzTSH9Umuvo8-WD0D9waBDdz_Z0GrRwuDIA5GSalmRgSyJI4/pub?w=2035&amp;h=859" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vRbqae63cNHREeseGvz2WDNExunn__HVzTSH9Umuvo8-WD0D9waBDdz_Z0GrRwuDIA5GSalmRgSyJI4/pub?w=1017&amp;h=429" >
 </a>

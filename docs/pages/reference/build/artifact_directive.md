@@ -2,8 +2,127 @@
 title: Using artifacts
 sidebar: reference
 permalink: reference/build/artifact_directive.html
+author: Alexey Igrychev <alexey.igrychev@flant.com>
+summary: |
+  <a href="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=1914&amp;h=721" data-featherlight="image">
+  <img src="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=957&amp;h=360">
+  </a>
 ---
 
+The size of the final image due to the assembly tools and source files can be increased several times, while the user does not need them. To solve such problems, the Docker community suggests in one step to do the installation of tools, the assembly, and removal of tools.
+
+```
+RUN “download-source && cmd && cmd2 && remove-source”
+```
+
+> To obtain a similar effect when using dapp, it is sufficient to describe the instructions in one _user stage_. For example, the _shell assembly instructions_ for the _install stage_ (similarly for _ansible_):
+```yaml
+shell:
+  install:
+  - "download-source"
+  - "cmd"
+  - "cmd2"
+  - "remove-source"
+```
+
+However, with this use, it isn't possible to use caching and need to install toolkit regularly.
+
+Another solution is to use multi-stage builds, which are supported starting with Docker 17.05.
+
+```
+FROM node:latest AS storefront
+WORKDIR /usr/src/atsea/app/react-app
+COPY react-app .
+RUN npm install
+RUN npm run build
+
+FROM maven:latest AS appserver
+WORKDIR /usr/src/atsea
+COPY pom.xml .
+RUN mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:resolve
+COPY . .
+RUN mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
+
+FROM java:8-jdk-alpine
+RUN adduser -Dh /home/gordon gordon
+WORKDIR /static
+COPY --from=storefront /usr/src/atsea/app/react-app/build/ .
+WORKDIR /app
+COPY --from=appserver /usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar .
+ENTRYPOINT ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
+CMD ["--spring.profiles.active=postgres"]
+```
+
+The meaning of such an approach is as follows, describe several auxiliary images, and selectively copy artifacts from one image to another, leaving behind everything you don’t want in the final image.
+
+Dapp offers an alternative in the form of _artifact dimg_, which are built according to the same rules as _dimg_, but with slight changes in the _stage conveyor_.
+
+> Why doesn't dapp use multi-stage? Historically, _artifacts_ appeared much earlier than docker multi-stage, and we also want more flexibility when working with auxiliary images.
+
+## What is a artifact?
+
+***Artifact*** is special dimg that is used by _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
+          
+_Artifact_ cannot be [tagged like _dimg_]({{ site.baseurl }}/reference/registry/image_naming.html#dapp-tag-procedure) and used as standalone application.
+
+Using artifacts, you can independently assemble an unlimited number of components, and also solving the following problems:
+
+- The application consists of a set of components, and each has its dependencies. With a standard assembly, you have to rebuild all the components, when you want to rebuild only the dependent ones
+- Components need to be built in another environment.
+
+## Configuration
+
+The _dappfile configuration_ of the _artifact_ is not much different from the configuration of _dimg_. Each _artifact_ should be described in a separate YAML document.
+
+The instructions associated with the _from stage_, namely the [_base image_]({{ site.baseurl }}/reference/build/base_image.html) and [mount]({{ site.baseurl }}/reference/build/mount_directive.html), remain unchanged.
+
+The _docker_instructions stage_ and the corresponding instructions are not supported for the _artifact_. A _artifact_ is an assembly tool and only the data stored in it is required.
+
+The remaining _stages_ and instructions are considered further separately.
+
+### Naming
+
+_Artifact images_ are declared with `artifact` directive: `artifact: <artifact name>`. Unlike the naming of the _dimg image_, the artifact has no limitations associated with docker naming convention, as used only internal.
+
+```yaml
+artifact: "application assets"
+```  
+
+### Adding source code from git repositories
+
+<a href="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=2031&amp;h=144" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=1016&amp;h=72">
+</a>
+
+Unlike with _dimg_, building _artifact_ does not include the _g_a_latest_patch_ and _g_a_post_setup_patch_ stages. When dapp first builds an _artifact image_, it uses the current state of the git repository and caches image for all next assemblies (provided that there are no _user stages_ with dependencies, that are described in the next section).
+
+Read about working with _git repositories_ in the corresponding [article]({{ site.baseurl }}/reference/build/git_directive.html).
+
+### Running assembly instructions
+
+<a href="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=2031&amp;h=144" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=1016&amp;h=72">
+</a>
+
+When describing an _artifact_, an additional _build_artifact user stage_ is available, which is no different from the _install_, _before_setup_, and _setup_ stages. As well as the listed _stages_, _build_artifact_ also has a dependent git stage.
+
+<a href="https://docs.google.com/drawings/d/e/2PACX-1vTd0XO1HQdwWQRB-QCNmxhJcaBdZG5m4YktzhMXLB4hdu8NxEEnWZvbaivwK13pEfddxtiHNXzgjhal/pub?w=1917&amp;h=432" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vTd0XO1HQdwWQRB-QCNmxhJcaBdZG5m4YktzhMXLB4hdu8NxEEnWZvbaivwK13pEfddxtiHNXzgjhal/pub?w=959&amp;h=216">
+</a>
+
+If there are no dependencies on files, `stageDependencies`, in the _artifact user stages_, the image is cached after the first build and will no longer be rebuilt until the _stages cache_ is reset.
+
+> If the artifact should be rebuilt for every change in the related git repository, you should specify the `stageDependencies` for any _user stage_, e.g., for _build_artifact stage_:
+```
+git:
+- to: /
+  stageDependencies:
+    buildArtifact: "**/*"
+```
+
+Read about working with _assembly instructions_ in the corresponding [article]({{ site.baseurl }}/reference/build/assembly_instructions.html).
+
+## All directives
 ```yaml
 artifact: <artifact_name>
 from: <image>
@@ -94,131 +213,17 @@ mount:
   to: <absolute_path>
 - fromPath: <absolute_path>
   to: <absolute_path>
+import:
+- artifact: <artifact name>
+  before: <install || setup>
+  after: <install || setup>
+  add: <absolute path>
+  to: <absolute path>
+  owner: <owner>
+  group: <group>
+  includePaths:
+  - <relative path or glob>
+  excludePaths:
+  - <relative path or glob>
 asLayers: <false || true>
-```
-
-Размер конечного образа за счёт инструментов сборки и исходных файлов может увеличиваться в несколько раз, притом что пользователю они не требуются.
-
-Для решения подобных проблем сообщество docker предлагает в одном шаге делать установку инструментов, сборку и удаление инструментов,
-
-```
-RUN “download-source && cmd && cmd2 && remove-source”
-```
-
-Но при таком использовании не получится использовать кэширование, а это время на постоянную установку инструментария.
-
-dapp предлагает альтернативу в виде приложений артефактов, сборка которых осуществляется по тем же правилам, что и приложений, но с другим набором стадий.
-
-Приложение артефакта используется для изолирования процесса сборки и инструментов сборки (среды, программного обеспечение, данных) ресурсов от образов, использующих эти ресурсы.
-
-```ruby
-dimg do
-  docker.from 'ubuntu:16.04'
-
-  # определение приложения артефакта
-  artifact do
-    # добавление исходных файлов и зависимости пересборки артефакта от любого изменения
-    git.add do
-      to('/app')
-      stage_dependencies.build_artifact('*')
-    end
-
-    shell do
-      # установка инструментов сборки
-      install.run('apt-get install build-essentials libmysql-dev')
-      # сборка
-      build_artifact.run('make -C /app')
-    end
-
-    # определение артефакта, импортирование `/app/build` в `/usr/bin` приложения после стадии `setup`
-    export('/app/build') do
-      to('/usr/bin/app')
-      after('setup')
-    end
-  end
-end
-```
-
-В таком случае, сборка приложения будет осуществляться в образе артефакта, а в конечный образ попадёт только бинарный файл.
-
-Разница между стадиями заключается в следующем:
-* на стадии build\_artifact определяются шаги для сборки артефакта, зависимости от файлов которой можно описать в stage\_dependencies в директиве git;
-* за наложение финального патча отвечает стадия g\_a\_artifact\_patch, которая будет собрана только в том случае, если потребуется пересобрать build\_artifact;
-* не используется стадия docker\_instruction, так как приложение артефакта является служебным.
-
-При отсутствии зависимостей у стадии build\_artifact артефакт закэшируется после первой сборки и не будет пересобираться.
-
-Стоит отметить, что может быть произвольное количество как приложений артефактов, так и артефактов. Артефактом в данном случае называется директория, которая экспортируется в образ. Т.о. одно приложение артефакта может экспортировать несколько директорий в конечный образ приложения.
-
-Таким образом, с использованием артефактов можно независимо собирать неограниченное количество компонентов, притом также решая следующие проблемы:
-* Пересборка происходит при изменении несвязанных данных и подготовка ресурсов занимает значительное время, а приложение можно разделить на несвязанные компоненты.
-* Ресурсы необходимо собирать в среде отличающейся от среды приложения.
-
-Артефакт (artifact) — это набор правил для сборки образа с файловым ресурсом (образа артефакта), который затем используется в одном или нескольких образах приложений. Образ артефакта не используется и не остается после окончания процесса сборки образов приложений, он нужен для изолирования процесса сборки ресурсов, или инструментов сборки (среды, программного обеспечение, данных) от процесса сборки образов приложений, использующих эти ресурсы или инструменты.
-
-Количество артефактов, описываемых в одном dappfile строго не ограничено
-
-Основное различие при использовании разного синтаксиса dappfile в части описания артефактов - в случае с YAML синтаксисом доступен только импорт артефакта, в случае же с ruby синтаксисом, доступен как вариант описания импорта артефакта в образ приложения так и описание экспорта артефакта из образа артефакта.
-
-## Правила использования
-
-* пути добавления не должны пересекаться между артефактами
-* изменение любого параметра артефакта ведёт к смене сигнатур, пересборке связанных стадий приложения
-* приложение может содержать любое количество артефактов
-* артефакты обязаны иметь имя
-* имена образов приложений и образов артефактов должны различаться
-
-
-## Синтаксис
-
-Описание образа артефакта выполняется с помощью директивы `artifact: <name>`, где `<name>` - обязательное имя артефакта. Имя артефакта используется для указания артефакта по имени в описании образа приложения, при импорте файлов из артефакта в образ приложения. При использовании YAML синтаксиса доступен только импорт из артефакта (отсутствует директива `export`).
-
-Указание базового образа при описании образа приложения или образа артефакта выполняется с помощью обязательной директивы `from: <DOCKER_IMAGE>`, где `<DOCKER_IMAGE>` - имя образа в формате `image:tag` (tag может отсутствовать, тогда используется latest). Как и при описании образов приложений, описание нескольких образов артефактов выполняется линейно - друг за другом, отделяются строкой состоящей из последовательности `---` (согласно YAML спецификации).
-
-Использование артефакта в образе приложения описывается с помощью директивы `import:`, которая представляет собой массив следующих элементов:
-* `artifact: ARTIFACT_NAME`, где `ARTIFACT_NAME` - имя артефакта, из которого необходимо скопировать файлы в образ приложения;
-* `add: SOURCE_DIRECTORY_TO_IMPORT`, где `SOURCE_DIRECTORY_TO_IMPORT` - путь в образе артефакта к файлу или папке, которые должны быть скопированы в образ приложения;
-* `to: DESTINATION_DIRECTORY`, где `DESTINATION_DIRECTORY` - путь в образе приложения, куда должны быть скопированы файлы из образа артефакта. Необязательный элемент, в случае отсутствия принимается равным значению `SOURCE_DIRECTORY_TO_IMPORT`;
-* `before: STAGE | after: STAGE`, где `STAGE` - стадия `install` или `setup`, соответственно до (`before`) или после (`after`) которой необходимо импортировать файлы артефакта в образ.
-
-Сборка образов артефактов отличается отсутствием стадии `latest_patch`, т.о. при первой сборке образа артефакта используются текущие состояния git-репозиториев и при последующих сборках образы артефактов не пересобираются (при условии, что отсутствуют зависимости пользовательских стадий от файлов, описанных с помощью директивы `stageDependencies`, о чем см. ниже).
-
-Unlike with applications, building artifacts does not include the `latest_patch` stage.
-When dapp first builds an artifact image, it uses the current state of the git repository.
-On next builds it does not rebuild the image from scratch.
-
-### Пример использования артефакта
-```
-import:
-- artifact: application-assets
-  add: /app/public/assets
-  after: install
-- artifact: application-assets
-  add: /vendor
-  to: /app/vendor
-  before: setup
-```
-
-### Пример описания образа приложения с использованием артефакта
-
-В следующем примере используется описание образа приложения и образа артефакта. В артефакте создается файл, который импортируется в образ `application`, и на стадии setup выводится его содержимое.
-
-```
-artifact: assets
-from: alpine
-shell:
-  install:
-  - mkdir /tmp/asset-files
-  - echo 'Artifact file for import' >/tmp/asset-files/asset
----
-dimg: application
-from: ubuntu:16.04
-import:
-  - artifact: assets
-    add: /tmp/asset-files
-    to: /app
-    after: install
-shell:
-  setup:
-    - cat /app/asset
 ```

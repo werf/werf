@@ -42,7 +42,7 @@ entries:
       - title: All directives
         url: /reference/build/dimg_directives.html
 
-    - title: Artifact configuration
+    - title: Using artifacts
       url: /reference/build/artifact_directive.html
 
     - title: Developer tools
