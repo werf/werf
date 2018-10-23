@@ -56,18 +56,6 @@ module Dapp
             "DAPP_CHEF_DEBUG" => ENV["DAPP_CHEF_DEBUG"],
           },
         }.tap {|extra|
-          if git_own_repo_exist?
-            extra["git"] = {}.tap do |extra_git|
-              if git_own_repo.remote_origin_url
-                extra_git["remote_origin_url"] = git_own_repo.remote_origin_url, # may contain https token
-                extra_git["name"] = self.git_url_to_name(git_own_repo.remote_origin_url)
-              end
-
-              extra_git["path"] = git_own_repo.path
-              extra_git["latest_commit"] = git_own_repo.head_commit unless git_own_repo.empty?
-            end
-          end
-
           extra["ci-env"] = {"CI" => ENV["CI"]}
           ENV.select {|k, v| k.start_with?("CI_")}.each do |k, v|
             extra["ci-env"][k] = v
