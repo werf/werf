@@ -175,11 +175,7 @@ module Dapp
       return unless self.class.options_with_docker_credentials?
 
       username, password = self.class.docker_credentials
-      if ::Dapp::Dapp.host_docker_minor_version >= Gem::Version.new('17.07')
-        shellout!("#{host_docker} login --username '#{username}' --password-stdin '#{repo}'", input: password)
-      else
-        shellout!("#{host_docker} login --username '#{username}' --password '#{password}' '#{repo}'")
-      end
+      ::Dapp::Dimg::Image::Stage.ruby2go_command(self, command: :login, options: { username: username, password: password, repository: repo })
     end
 
     class << self
