@@ -129,7 +129,7 @@ th {
     text-align: left;
 }
 table {
-    max-width: 100%;
+    width: 100%;
     margin-bottom: 20px;
     border: 1px solid #dedede;
 }
@@ -142,7 +142,7 @@ table > tbody > tr > td,
 table > tfoot > tr > td {
     padding: 8px;
     line-height: 1.42857143;
-    vertical-align: top;
+    vertical-align: center;
     border-top: 1px solid #ddd;
 }
 table > thead > tr > th, table.tag-scheme tr > td:first-child {

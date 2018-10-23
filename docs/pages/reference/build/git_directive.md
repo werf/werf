@@ -59,20 +59,20 @@ summary: |
   </div>
 ---
 
-## What is git-path? 
+## What is git path? 
 
-_Git-путь_ описывает файл или директорию из git-репозитория, которую нужно добавить в образ по определённому пути. Репозиторий может быть локальным, в директории, где расположен dappfile, или удалённым, тогда описание git-пути содержит адрес репозитория и версию в дереве коммитов (ветка, тэг или хэш коммита). 
+***Git path*** describes a file or directory from the git repository that should be added to the image by a specific path. The repository may be a local one, hosted in the directory that contains the dappfile, or a remote one, and in this case, the configuration of the _git path_ contains the repository address and the version (branch, tag or commit hash).
 
-dapp добавляет файлы в образ из репозитория двумя способами: полным переносом или наложением патчей. Полный перенос обычно происходит не очень часто, а если файлы уже были перенесены, то для сборки следующих коммитов будет использоваться патч. Подробно этот механизм разобран ниже в части More details: archive, g_a_, latest_patch .
+Dapp adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
+The full transfer is used for the initial adding of files. The subsequent builds use applying patches to reflect changes in a git repository. The algorithm behind the full transfer and applying patches is reviewed the [More details: g_a_archive...](#more-details-g_a_archive-g_a_post_setup_patch-g_a_latest_patch) section.
 
-Описание git-пути поддерживает фильтрацию файлов и с помощью набора описаний git-путей можно сформировать практически любую итоговую файловую структуру в образе. Также описание git-пути решает проблему владельца файлов, т.к. можно сразу указать владельца и его группу.
+The configuration of the _git path_ supports filtering files, and you can use the set of _git paths_ to create virtually any resulting file structure in the image. Also, you can specify the owner and the group of files in the _git path_ configuration — no subsequent `chown` required.
 
-git-путь может содержать сабмодули — dapp это обнаруживает и делает всё что можно, чтобы правильно обработать изменения в сабмодулях.
+Dapp has support for submodules. Dapp detects if files specified with _git path_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
 
-Пример описания для добавления в итоговый образ исходников из /src локального репозитория в директорию /app и исходников phantomjs в директорию /src/phantomjs:
+An example of a _git path_ configuration for adding source files from a local repository from the `/src` into the `/app` directory, and remote phantomjs source files to `/src/phantomjs`:
 
-```
-dimg: backend-app
+```yaml
 git:
 - add: /src
   to: /app
@@ -81,64 +81,61 @@ git:
   to: /src/phantomjs
 ```
 
-## Motivation for git-paths
+## Motivation for git paths
 
-Main idea is to bring git history into build process.
+The main idea is to bring git history into the build process.
 
 ### Patching instead of copying
 
-Большая часть коммитов в репозиторий приложения относится к обновлению кода самого приложения. В этом случае, если не требуется компиляция, сборка нового образа должна представлять собой не более, чем добавление изменений к файлам предыдущего образа.
+Most commits in the real application repository relate to updating the code of the application itself. In this case, if the compilation is not required, assembling a new image shall be nothing more than applying patches to the files in the previous image.
 
 ### Remote repositories
 
-Сборка приложения может зависеть от исходных текстов в других репозиториях. dapp предоставляет возможность добавлять файлы из удалённых репозиториев в итоговый образ, при этом механизм добавления изменений не отличается для локальных и удалённых репозиториев.
+Building an application image may depend on source files in other repositories. Dapp provides the ability to add files from remote repositories too. Dapp can detect changes in local repositories and remote repositories.
 
 ## Syntax of a git path
 
-Описание git-пути для локального репозитория имеет следующие параметры:
+The _git path_ configuration for a local repository has the following parameters:
 
-- add — путь к директории или файлу, содержимое которых нужно скопировать в образ. Путь указывается относительно корня репозитория, но при этом путь абсолютный, т.е. должен начинаться с /. Параметр необязательный, по умолчанию переносится содержимое всего репозитория, т.е. запись add: / эквивалентна отсутствию параметра;
-- to — путь в образе, куда будет скопировано то, что указано в add;
-- owner — идентификатор или имя пользователя, который будет владельцем скопированных файлов;
-- group — идентификатор или имя группы, которая будет владельцем скопированных файлов;
-- excludePaths — набор масок для игнорирования файлов или директорий во время рекурсивного копирования. Пути в масках указываются относительно add;
-- includePaths — набор масок для включения файлов или директорий во время рекурсивного копирования. Пути указываются относительно add;
-- stageDependencies — набор масок, определяющих файлы по пути add, изменение которых приведёт к пересборке пользовательских стадий. Этот механизм рассмотрен подробно в статье  Running assembly instructions.
+- `add` — the path to a directory or file whose contents must be copied to the image. The path is specified relative to the repository root, and the path is absolute (i.e., it must start with `/`). This parameter is optional, the content of the entire repository is transferred by default, i.e., an empty `add` is equal to `add: /`;
+- `to` — the path in the image, where the content specified with `add` will be copied;
+- `owner` — the name or uid of the owner of the copied files;
+- `group` — the name or gid of the group of the owner;
+- `excludePaths` — a set of masks to ignore the files or directories during recursive copying. Paths in masks are specified relative to add;
+- `includePaths` — a set of masks to include the files or directories during recursive copying. Paths in masks are specified relative to add;
+- `stageDependencies` — a set of masks to detect changes that lead to the user stages rebuilds. This is reviewed in detail in the [Running assembly instructions]({{ site.baseurl }}/reference/build/assembly_instructions.html) reference.
 
-git-путь для удалённого репозитория имеет дополнительные параметры:
-- url — адрес удалённого репозитория;
-- branch, tag, commit — имя ветки, тэга или хэш коммита, который будет использоваться. Если эти параметры не указаны, то используется ветка master;
-- as — алиас для упрощения получения информации о удалённом репозитории в шаблонах helm. Подробности в статье деплой.
+The _git path_ configuration for a remote repository has some additional parameters:
+- `url` — remote repository address;
+- `branch`, `tag`, `commit` — a name of branch, tag or commit hash that will be used. If these parameters are not specified, the master branch is used;
+- `as` — defines an alias to simplify the retrieval of remote repository-related information in helm templates. Details are available in the [Deployment to kubernetes]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html) reference.
 
 ## Uses of git paths
 
-### Простое копирование
+### Copying of directories
 
-Параметр add указывает путь в репозитории, откуда нужно рекурсивно взять все файлы и добавить их по пути to в образе, если параметр не указан, то путь по умолчанию — /, т.е. будет переносится весь репозиторий.
-Например:
+The `add` parameter specifies a path in a repository, from which all files must be recursively retrieved and added to the image with the `to` path; if the parameter is not specified, then the default path — `/` is used, i.e., the entire repository is transferred.
+For example:
 
-```
----
-dimg: frontend
+```yaml
 git:
 - add: /
   to: /app
 ```
 
-Это самый простой вариант git-пути, который добавляет всё содержимое из репозитория в директорию /app в образе.
-Если в репозитории такая структура:
+This is the simple _git path_ configuration that adds the entire content from the repository to the `/app` directory in the image.
 
-image1
+If the repository contains the following structure:
 
-То в образе будет такая структура:
+![git repository files tree]({{ site.baseurl }}/images/build/git_path_01.png)
 
-image2
+Then the image contains this structure:
 
-Можно указывать несколько git-путей:
+![image files tree]({{ site.baseurl }}/images/build/git_path_02.png)
 
-```
----
-dimg: frontend
+Multiple _git paths_ may be specified:
+
+```yaml
 git:
 - add: /src
   to: /app/src
@@ -146,264 +143,284 @@ git:
   to: /static
 ```
 
-Если в репозитории такая структура:
+If the repository contains the following structure:
 
-image3
+![git repository files tree]({{ site.baseurl }}/images/build/git_path_03.png)
 
-То в образе будет такая структура:
+Then the image contains this structure:
 
-image4
+![image files tree]({{ site.baseurl }}/images/build/git_path_04.png)
 
-Важно понимать, что в директорию образа, указанную в to, из директории репозитория, указанной в add, будет рекурсивно перенесено именно содержимое, а не директория. То есть, если из репозитория нужно перенести директорию /assets в директорию /app/assets, то слово assets придётся написать два раза, либо использовать git-путь с фильтром includePaths.
+It should be noted, that _git path_ configuration doesn't specify a directory to be transferred like `cp -r /src /app`. `add` parameter specifies a directory content that will be recursively transferred from the repository. That is if the `/assets` directory needs to be transferred to the `/app/assets` directory, then the name **assets** should be written twice, or `includePaths` [filter](#using-filters) can be used.
 
-_Замечание:  В dapp нет соглашения про / на конце, которое есть в rsync, т.е. add: /src и add: /src/ — одно и тоже._
-
-
-
-### Копирование файла
-
-Копирование из add содержимого, а не указанной директории работает и для файлов. Чтобы перенести файл в образ, нужно указать его имя дважды — один раз в add, а другой раз в to. Это даёт дополнительную возможность переименовать файл:
-
+```yaml
+git:
+- add: /assets
+  to: /app/assets
 ```
----
-dimg: frontend
+
+or
+
+```yaml
+git:
+- add: /
+  to: /app
+  includePaths: assets
+```
+
+> Dapp has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same.
+
+### Copying of file
+
+Copying the content, not the specified directory, from `add` path also applies to files. To transfer the file to the image, you must specify its name twice — once in `add`, and again in `to`. This provides an ability to rename the file:
+
+```yaml
 git:
 - add: /config/prod.yaml
   to: /app/conf/production.yaml
 ```
 
-### Смена владельца
-Для git-пути предусмотрены параметры `owner` и `group` — это имена или числовые id владельца и группы для всех переносимых в образ файлов и директорий. 
+### Changing an owner
 
-```
----
-dimg: frontend
-from: ubuntu:18.04
+The _git path_ configuration provides parameters `owner` and `group`. These are the names or numerical ids of the owner and group used for all files and directories transferred to the image.
+
+```yaml
 git:
 - add: /src/index.php
   to: /app/index.php
   owner: www-data
 ```
 
-image_here
+![index.php owned by www-data user and group]({{ site.baseurl }}/images/build/git_path_05.png)
 
-Можно заметить, что при указании только параметра `owner`, группа для файлов будет совпадать с основной группой владельца.
+If only the `owner` parameter is specified, the group for files is the same as the primary group of the specified user.
 
-Если указывается строковое имя пользователя или группы, то такой пользователь или группа должны быть в образе к моменту полного добавления файлов, иначе сборка завершится с ошибкой.
+If `owner` or `group` value is a string, then the specified user or group must be added to the system by the time of the full transfer of files, otherwise, build ends with an error.
 
-```
----
-dimg: frontend
-from: ubuntu:18.04
+```yaml
 git:
 - add: /src/index.php
   to: /app/index.php
   owner: wwwdata
 ```
 
-image_here
 
 
-### Копирование с фильтрами
+### Using filters
 
-При обработке списка файлов учитываются параметры `excludePaths` и `includePaths` — это наборы масок, которыми можно исключить или включить файлы и директории из списка файлов, которые будут перенесены в образ. Механизм фильтров excludePaths упрощённо работает так: к каждому файлу, найденному в add применяются маски. Если хотя бы одна маска совпадает, то файл игнорируется, а если нет совпадающих масок, значит файл можно добавлять в образ. includePaths работает наоборот: если совпадает хотя бы одна маска, то файл будет добавлен в образ.
+`includePaths` and `excludePaths` parameters are used when processing the file list. These are the sets of masks that can be used to include and exclude files and directories from/to the list of files that will be transferred to the image. Simply stated, the `excludePaths` filter works as follows: masks are applied to each file found in `add` path. If at least one mask matches, then the file is ignored; if no matches are found, then the file gets added to the image. `includePaths` works the opposite way: if at least one mask is a match, the file gets added to the image.
 
-Пример:
+_Git path_ configuration can contain both filters. In this case, a file is added to the image if the path matches with one of `includePaths` masks and not match with all `excludePaths` masks.
 
-```
-dimg: frontend
+For example:
+
+```yaml
 git:
 - add: /src
   to: /app
   includePaths:
-  - **/*.php
+  - '**/*.php'
+  - '**/*.js'
+  excludePaths:
+  - '**/*-dev.*'
+  - '**/*-test.*'
 ```
 
-Чтобы определить, совпадает файл с маской или нет, выполняется такой алгоритм:
-- путь в add склеивается с маской;
-- берётся абсолютный путь к файлу внутри репозитория;
-- два пути сравниваются с помощью fnmatch с флагами FNM_PATHNAME и FNM_PERIOD (в шаблон `*` включается `.`, но исключается `/`);
-- если fnmatch возвращает true, то маска совпадает, алгоритм завершается;
-- путь в add склеивается с маской и с дополнительным шаблоном **/* ;
-- берётся абсолютный путь к файлу внутри репозитория;
-- два пути сравниваются с помощью fnmatch с флагами FNM_PATHNAME и FNM_DOTMATCH (в шаблон `*` включается `.`, но исключается `/`);
-- если fnmatch возвращает true, то маска совпадает, если false, то маска не совпадает;
+This is the git path configuration that adds `.php` and `.js` files from `/src` except files with `-dev` or `-test` suffixes.
 
-Замечание: второй шаг с добавлением шаблона **/* сделан для удобства: самый частый случай фильтра — указание рекурсивного копирования директории. С добавлением **/* достаточно указать имя директории и в фильтр попадёт всё её содержимое.
+To determine whether the file matches the mask the following algorithm is applied:
+- the path in `add` is concatenated with the mask;
+- an absolute file path inside the repository is taken;
+- two paths are compared with the use of [fnmatch](https://ruby-doc.org/core-2.2.0/File.html#method-c-fnmatch) method with FNM_PATHNAME and FNM_PERIOD flags (`.` is included in the `*`, however `/` is excluded);
+- if fnmatch returns true, then the file is matched, and the algorithm is ended;
+- the path in `add` is concatenated with the mask and with an additional pattern `**/*` ;
+- an absolute file path inside the repository is taken;
+- two paths are compared with the use of fnmatch with FNM_PATHNAME and FNM_DOTMATCH flags (`.` is included in the `*`, however `/` is excluded);
+- if fnmatch returns true, then the file is matched; if false, the file does not match;
 
-В маске можно указать такие шаблоны:   
-- `*` — любые символы, кроме /
--`**` — рекурсивно учитывать все директории
-- `?` — один любой символ
-- `[a-z]` — один символ из набора
-- `{1, 2, 3, abc, foo, bar}` — любой элемент из набора
+> The second step with adding `**/*` template is for convenience: the most frequent use case of a _git path_ with filters is to configure recursive copying for the directory. Adding `**/*` makes enough to specify the directory name only, and its entire content matches the filter.
 
-Примеры фильтров:
+Masks may contain the following patterns:
 
-```
+- `*` — matches any file. This pattern includes `.` and exclude `/`
+- `**` — matches directories recursively or files expansively
+- `?` — matches any one character. Equivalent to /.{1}/ in regexp
+- `[set]` — matches any one character in the set. Behaves exactly like character sets in regexp, including set negation ([^a-z])
+- `\` — escapes the next metacharacter
+
+Mask that starts with `*` or `**` patterns should be escaped with quotes in `dappfile.yaml` file:
+ - `"*.rb"` — with double quotes
+- `'**/*'` — with single quotes
+
+Examples of filters:
+
+```yaml
 add: /src
 to: /app
 includePaths:
-- *.php — собрать все php файлы, непосредственно расположенные в /src
-- **/*.php — собрать все php файлы рекурсивно из /src (включает маску *.php, т.к. . тоже входит в **)
-- module1/**/{config,view,contoller}/*.php — собрать все php файлы рекурсивно из /src/module1, причём только те, которые находятся непосредственно в директориях config, view или controller
-- module1 — собрать все файлы рекурсивно из /src/module1 — применение неявного добавления **/*.
+# match all php files residing directly in /src
+- '*.php' 
+
+# matches recursively all php files from /src
+# (also matches *.php because '.' is included in **)
+- '**/*.php'
+
+# matches all files from /src/module1 recursively
+# an example of implicit adding of **/*
+- module1
 ```
 
-Одной маской можно собирать исходные тексты по расширению файлов:
-```
-add: /src
-to: /app
-includePaths: '**/*.{php,css,js}'
-```
-
-С помощью includePaths можно cкопировать один файл:
-```
+`includePaths` filter can be used to copy one file without renaming:
+```yaml
 git:
 - add: /src
   to: /app
   includePaths: index.php
 ```
-Но конечно переименовать файл в этом случае не получится.
 
-### Внимание: пересечение путей назначения
-Если добавляется несколько git-путей, то нужно помнить, что пересечения путей в to могут приводить к невозможности добавления файлов в образ. Например:
+### Target paths overlapping
 
-```
----
-dimg: frontend
+If multiple git paths are added, you should remember those intersecting paths defined in `to` may result in the inability to add files to the image. For example:
+
+```yaml
 git:
 - add: /src
   to: /app
-- add: /assets
-  to: /app
-```
-
-
-dapp при обработке dappfile вычисляет возможные пересечения среди всех git-путей с учётом includePaths и excludePaths. В случае пересечения сборка завершится с ошибкой, но в некоторых случаях dapp не будет ругаться на пересечение, а добавит excludePaths в git-путь. Однако предугадать все возможные случаи невозможно, поэтому, при описании нескольких git-путей желательно не допускать конфликтов пересечения путей.
-
-Пример с автодобавлением exludePaths:
-
-```
-dimg: frontend
-git:
-- add: /src
-  to: /app
-  excludePaths:  # dapp при обработке этого git-пути будет
-  - assets       # работать так, как будто есть этот фильтр
 - add: /assets
   to: /app/assets
 ```
 
-> TODO: Пример с неуловимой ошибкой и пример, как устранить проблему.
+When processing a dappfile, dapp calculates the possible intersections among all git paths concerning `includePaths` and `excludePaths` filters. If an intersection is detected, then dapp can resolve simple conflicts with implicitly adding `excludePaths` into the git path. In other cases, the build ends with an error. However, implicit `excludePaths` filter can have undesirable effects, so try to avoid conflicts of intersecting paths between configured git paths.
 
+Implicit `excludePaths` example:
+
+```yaml
+git:
+- add: /src
+  to: /app
+  excludePaths:  # dapp add this filter to resolve a conflict
+  - assets       # between paths /src/assets and /assets
+- add: /assets
+  to: /app/assets
+```
 
 ## Working with remote repositories
 
-dapp умеет работать с remote репозиториями, как с источниками файлов. Для этого в описании git-пути есть параметр url, где нужно указать адрес репозитория. dapp поддерживает доступ через https и git+ssh.
+Dapp may use remote repositories as file sources. For this purpose, the _git path_ configuration contains an `url` parameter where you should specify the repository address. Dapp supports `https` and `git+ssh` protocols.
 
 ### https
 
-```
-Syntax:
-url: https://[USERNAME[:PASSWORD]@]repo_host/repo_path[.git/]
-```
-
-https доступ может требовать логин и пароль, например, вот так выглядит адрес в описании сборки в gitlab-ci:
+The syntax for https protocol is:
 
 {% raw %}
+```yaml
+git:
+- url: https://[USERNAME[:PASSWORD]@]repo_host/repo_path[.git/]
 ```
+{% endraw %}
+
+`https` access may require login and password.
+
+For example, login and password from gitlab ci variables:
+
+{% raw %}
+```yaml
 git:
 - add: https://{{ env "CI_REGISTRY_USER" }}:{{ env "CI_JOB_TOKEN" }}@registry.gitlab.company.name/common/helper-utils.git
 ```
 {% endraw %}
 
-В этом примере для доступа к переменным окружения на помощь приходит метод env из библиотеки sprig, которая подключена к go-шаблонам dappfile.
-
+In this example, the [env](http://masterminds.github.io/sprig/os.html) method from the sprig library is used to access the environment variables.
 
 ### git, ssh
 
-dapp поддерживает доступ к репозиторию через протокол git. Доступ по этому протоколу обычно защищается средствами ssh: так делают github, bitbucket, gitlab, gogs, gitolite… Адрес репозитория в большинстве случаев выглядит так:
+Dapp supports access to the repository via the git protocol. Access via this protocol is typically protected using ssh tools: this feature is used by github, bitbucket, gitlab, gogs, gitolite, etc. Most often the repository address looks as follows:
 
-```
+```yaml
 git:
 - add: git@gitlab.company.name:project_group/project.git
 ```
 
-Для успешной работы с удалёнными репозиториями через ssh важно понять, как dapp ищет ключи доступа.
-
-#### Механизм работы с ключами
-Работа с ключами организована через ssh-agent. Ssh-agent это демон, который работает через файловый сокет, путь к которому записывается в переменную среды SSH_AUTH_SOCK. Dapp во все сборочные контейнеры монтирует файловый сокет, и устанавливает переменную окружения SSH_AUTH_SOCK, т.е. подключение к удалённым git-репозиториям устанавливается с ключами, которые зарегистрированы в запущенном ssh-агенте.
-
-Ssh-агент определяется так:
-- Если переданы опции --ssh-key (их может быть несколько):
-  - Запускается временный ssh-agent с переданными ключами и используется для всех git-операций с удалёнными репозиториями.
-  - Если в окружении есть переменная SSH_AUTH_SOCK и запущен агент, то он игнорируется.
-- Опций --ssh-key не передано, а агент уже запущен в том окружении, где работает dapp:
-  - Будет использована переменная среды SSH_AUTH_SOCK и для git-операций будут использоваться ключи, добавленные в этого агента
-- Опций --ssh-key не передано, ssh-агент не запущен:
-  - Если существует файл ~/.ssh/id_rsa, то dapp автоматом запускает временный ssh-agent с зарегистрированным ключом из файла ~/.ssh/id_rsa
-- Если ничего из предыдущих пунктов не сработало, то ssh-агент не запускается и ключи для работы с git отсутствуют. Сборка с доступом через ssh к удалённому репозиторию завершится с ошибкой.
-
-## More details: archive, git_archive_post_setup_patch, latest_patch
-Рассмотрим более детально механизм добавления файлов в итоговый образ. Как известно, docker-образ состоит из нескольких слоёв. Чтобы понять, какие слои будет создавать dapp, рассмотрим действия по сборке на примере 3-ёх последовательных коммитов: 1, 2 и 3:
-- Сборка коммита №1. В одном слое добавляются все файлы по описаниям git-путей — это делается с помощью git archive. Это слой стадии git_arсhive.
-- Сборка коммита №2. Добавляется ещё один слой, где файлы меняются с помощью наложения патча. Это слой, где накладываются патчи — latest_patch.
-- Сборка коммита №3. Изменит только последний слой — слой стадии latest_patch.
-
-Ситуацию со сборками этих коммитов можно представить так:
-
-table 1
-
-| | git_archive | --- | latest_patch |
-|---|---|---|---|
-| Сделан коммит №1, сборка в 10:00 |  файлы как в коммите №1 | --- | - |
-| Сделан коммит №2, сборка в 10:05 |  файлы как в коммите №1 | --- | файлы как в коммите №2 |
-| Сделан коммит №3, сборка в 10:15 |  файлы как в коммите №1 | --- | файлы как в коммите №3 |
-
-В этой таблице не зря есть пустое место между слоями. Со временем число коммитов увеличится и патч между коммитом №1 и текущим коммитом может стать довольно большим, что увеличит размер последнего слоя и общий размер образа. Чтобы последний слой не увеличивался со временем, в dapp предусмотрена ещё одна промежуточная стадия —  git_archive_post_setup_patch.
-Как dapp работает с тремя стадиями? Теперь для иллюстрации нужно больше коммитов, пусть это будут: 1, 2, 3, 4, 5, 6 и 7.
-
-- Сборка коммита №1. Как и ранее, в одном слое добавляются все файлы по описаниям git-путей — это делается с помощью git archive. Это слой стадии git_arсhive.
-- Сборка коммита №2. Добавляется слой стадии git_archive_post_setup_patch, где файлы меняются с помощью наложения патча между 1 и 2.
-- Сборка коммита №3.  Добавляется слой стадии latest_patch, где будет применён патч между 2 и 3
-- Сборка коммита №4. Размер патча между 1 и 4 не больше 1Mb, поэтому изменяется только слой стадии latest_patch патчем между 2 и 4.
-- Сборка коммита №5. Размер патча между 1 и 5 не больше 1Mb, поэтому изменяется только слой стадии latest_patch патчем между 2 и 5.
-- Сборка коммита №6. Размер патча между 1 и 6 превышает 1Mb. Теперь изменения применяются в слое стадии git_archive_post_setup_patch.
-- Сборка коммита №7. Изменения патчем между 6 и 7 добавляются в слой стадии latest_patch.
-
-То есть, по мере накопления коммитов с момента первой сборки, большие изменения постепенно сбрасываются в слой git_archive_post_setup_patch, а в последний слой попадают относительно небольшие изменения, что сокращает размер кэша и итогового образа.
+To successfully work with remote repositories via ssh, you should understand how dapp searches for access keys.
 
 
-| | git_archive | git_archive_post_setup_patch | latest_patch |
-|---|---:|---:|---:|
-| Сделан коммит №1, сборка в 12:00 |  1 |  - | - |
-| Сделан коммит №2, сборка в 12:05 |  1 |  2 | - |
-| Сделан коммит №3, сборка в 12:15 |  1 |  2 | 3 |
-| Сделан коммит №4, сборка в 12:19 |  1 |  2 | 4 |
-| Сделан коммит №5, сборка в 12:25 |  1 |  2 | 5 |
-| Сделан коммит №6, сборка в 12:45 |  1 | *6 | - |
-| Сделан коммит №7, сборка в 12:57 |  1 |  6 | 7 |
+#### Working with ssh keys
 
-\* — патч для коммита R превысил 1Mb и он применяется не в слое стадии latest_patch, а в слое стадии git_archive_post_setup_patch
+Keys for ssh connects are provided by ssh-agent. The ssh-agent is a daemon that operates via file socket, the path to which is stored in the environment variable `SSH_AUTH_SOCK`. Dapp mounts this file socket to all _assembly containers_ and sets the environment variable `SSH_AUTH_SOCK`, i.e., connection to remote git repositories is established with the use of keys that are registered in the running ssh-agent.
+
+The ssh-agent is determined as follows:
+
+- If dapp is started with `--ssh-key` flags (there may be multiple flags):
+  - A temporary ssh-agent runs with defined keys, and it is used for all git operations with remote repositories.
+  - The already running ssh-agent is ignored in this case.
+- No `--ssh-key` flags specified and ssh-agent is running:
+  - `SSH_AUTH_SOCK` environment variable is used, and the keys added to this agent is used for git operations.
+- No `--ssh-key` flags specified and ssh-agent is not running:
+  - If `~/.ssh/id_rsa` file exists, then dapp will run the temporary ssh-agent with the  key from `~/.ssh/id_rsa` file.
+- If none of the previous options is applicable, then the ssh-agent is not started, and no keys for git operation are available. Build images with remote _git paths_ ends with an error.
+
+## More details: g_a_archive, g_a_post_setup_patch, g_a_latest_patch
+
+Let us review adding files to the resulting image in more detail. As stated earlier, the docker image contains multiple layers. To understand what layers dapp create, let's consider the building actions based on three sample commits: `1`, `2` and `3`:
+
+- Build of commit No. 1. All files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _g_a_archive stage_.
+- Build of commit No. 2. Another layer is added where the files are changed by applying a patch. This is the layer of the _g_a_latest_patch stage_.
+- Build of commit No. 3. Files have already added, so dapp apply patches in the _g_a_latest_patch stage_ layer.
+
+Build sequence for these commits may be represented as follows:
+
+| | g_a_archive | --- | g_a_latest_patch |
+|---|:---:|:---:|:---:|
+| Commit No. 1 is made, build at 10:00 |  files as in commit No. 1 | --- | - |
+| Commit No. 2 is made, build at 10:05 |  files as in commit No. 1 | --- | files as in commit No. 2 |
+| Commit No. 3 is made, build at 10:15 |  files as in commit No. 1 | --- | files as in commit No. 3 |
+
+A space between the layers in this table is not accidental. After a while, the number of commits grows, and the patch between commit No. 1 and the current commit may become quite large, which will further increase the size of the last layer and the total size of the _stages cache_. To prevent the growth of the last layer dapp provides another intermediary stage — _g_a_post_setup_patch_.
+How does dapp work with these three stages? Now we are going to need more commits to illustrate this, let it be `1`, `2`, `3`, `4`, `5`, `6` and `7`.
+
+- Build of commit No. 1. As before, files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _g_a_archive stage_.
+- Build of commit No. 2. The layer of the _g_a_post_setup_patch_ stage is added, where files are changed by applying a patch between commits `1` and `2`.
+- Build of commit No. 3. The layer of the _g_a_latest_patch stage_ is added, where the patch between `2` and `3` is applied.
+- Build of commit No. 4. The size of the patch between `1` and `4` does not exceed 1 MiB, so only the layer of the _g_a_latest_patch stage_ is modified by applying the patch between `2` and `4`.
+- Build of commit No. 5. The size of the patch between `1` and `5` does not exceed 1 MiB, so only the layer of the _g_a_latest_patch stage_ is modified by applying the patch between `2` and `5`.
+- Build of commit No. 6. The size of the patch between `1` and `6` exceeds 1 MiB. Now _g_a_post_setup_patch stage_ layer is modified.
+- Build of commit No. 7. The layer of the _g_a_latest_patch stage_ is modified by applying the patch between `6` and `7`.
+
+This means that as commits are added starting from the moment the first build is done, big patches are gradually accumulated into the layer for the _g_a_post_setup_patch stage_, and only patches with moderate size are applied in the layer for the last _g_a_latest_patch stage_. This algorithm reduces the size of the _stages cache_.
+
+| | g_a_archive | g_a_post_setup_patch | g_a_latest_patch |
+|---|:---:|:---:|:---:|
+| Commit No. 1 is made, build at 12:00 |  1 |  - | - |
+| Commit No. 2 is made, build at 12:05 |  1 |  2 | - |
+| Commit No. 3 is made, build at 12:15 |  1 |  2 | 3 |
+| Commit No. 4 is made, build at 12:19 |  1 |  2 | 4 |
+| Commit No. 5 is made, build at 12:25 |  1 |  2 | 5 |
+| Commit No. 6 is made, build at 12:45 |  1 | *6 | - |
+| Commit No. 7 is made, build at 12:57 |  1 |  6 | 7 |
+
+\* — the size of the patch for commit `6` exceeded 1 MiB, so this patch is applied in the layer for the _g_a_post_setup_patch stage_.
+
+### Rebuild of g_a_archive stage
+
+For various reasons, you may want to reset the _g_a_archive stage_, for example, to decrease the size of the _stages cache_ and the image. 
+
+To illustrate the unnecessary growth of image size assume the rare case of 2GiB file in git repository. First build tranfers this file in the layer of the _g_a_archive stage_. Then some optimization occured and file is recompiled and it's size is decreased to 1.6GiB. The build of this new commit applies patch in the layer of the _g_a_post_setup_patch_ stage. The image size become 3.6GiB of which 2GiB is a cached old version of the big file. Rebuilding from _g_a_archive_ stage can reduce image size to 1.6GiB. This situation is quite rare but gives a good explanation of correlation between the layers of the _g_a stages_.
+
+You can reset the _g_a_archive stage_ specifying the **[dapp reset]** or **[reset dapp]** string in the commit message. Let us assume that, in the previous example commit `4` contains **[dapp reset]** in its message, and then the builds would look as follows:
 
 
-### Пересборка git_archive
-По разным причинам бывает необходимо сбросить слой стадии git_archive, например, накопилось много изменений и пересборка уменьшит размер сборочного кэша и итогового образа. Есть возможность сбросить эту стадию с помощью указания в сообщении коммита строк "[dapp reset]" или "[reset dapp]". Пусть, например, в предыдущей ситуации коммит 4 содержал бы в своём сообщении [dapp reset], тогда сборки выглядели бы так:
+| | g_a_archive | g_a_post_setup_patch | g_a_latest_patch |
+|---|:---:|:---:|:---:|
+| Commit No. 1 is made, build at 12:00 |  1 |  - | - |
+| Commit No. 2 is made, build at 12:05 |  1 |  2 | - |
+| Commit No. 3 is made, build at 12:15 |  1 |  2 | 3 |
+| Commit No. 4 is made, build at 12:19 |  *4 | - | - |
+| Commit No. 5 is made, build at 12:25 |  4 | 5 | - |
+| Commit No. 6 is made, build at 12:45 |  4 | 5 | 6 |
+| Commit No. 7 is made, build at 12:57 |  4 | 5 | 7 |
 
-| | git_archive | git_archive_post_setup_patch | latest_patch |
-|---|---:|---:|---:|
-| Сделан коммит №1, сборка в 12:00 |   1 | - | - |
-| Сделан коммит №2, сборка в 12:05 |   1 | 2 | - |
-| Сделан коммит №3, сборка в 12:15 |   1 | 2 | 3 |
-| Сделан коммит №4, сборка в 12:19 |  *4 | - | - |
-| Сделан коммит №5, сборка в 12:25 |   4 | 5 | - |
-| Сделан коммит №6, сборка в 12:45 |   4 | 5 | 6 |
-| Сделан коммит №7, сборка в 12:57 |   4 | 5 | 7 |
+\* — commit `4` contains the **[dapp reset]** string in its message, so the _g_a_archive stage_ is rebuilt.
 
-\* — коммит 4 содержит в сообщении строку "[dapp reset]", поэтому стадия git_archive пересобирается
+### _g_a stages_ and rebasing
 
-
-
-### git_archive and rebase
-В dapp есть механизм для пересборки стадии git_archive в случае ребейза ветки. Коммит, из которого собирался слой git_archive пропадёт и слой автоматически пересоберётся.
+Each _g_a stage_ stores service labels with commits SHA from which this _stage_ was built. These commits are used for creating patches on the next _g_a stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_G_A_STAGE LATEST_COMMIT` for each described _git path_). So, if the any saved commit isn't in a git repository, e.g., after rebasing, then dapp rebuilds that stage with latest commits at the next build.
