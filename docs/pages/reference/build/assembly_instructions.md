@@ -401,7 +401,7 @@ shell:
 ```
 {% endraw %}
 
-> Why is it "2006-01" argument in the date function? You can read abolut time format [here](https://golang.org/pkg/time/#pkg-constants).
+> Why is it "2006-01" argument in the date function? You can read about time format [here](https://golang.org/pkg/time/#pkg-constants).
 
 ## Использование совместно с добавлением исходников
 
