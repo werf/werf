@@ -72,6 +72,8 @@ Using artifacts, you can independently assemble an unlimited number of component
 - The application can consist of a set of components, and each has its dependencies. With a standard assembly, you should rebuild all every time, but you want to assemble each one on-demand.
 - Components need to be assembled in other environments.
 
+Importing _artifacts resources_ are described at destination _dimg_ or _artifact_ by `import` directive records.
+
 ## Configuration
 
 The _dappfile configuration_ of the _artifact_ is not much different from the configuration of _dimg_. Each _artifact_ should be described in a separate YAML document.
@@ -90,16 +92,22 @@ artifact: <artifact name>
 ```
 </div>
 
-
 _Artifact images_ are declared with `artifact` directive: `artifact: <artifact name>`. Unlike the [naming of the _dimg_]({{ site.baseurl }}/reference/build/naming.html), the artifact has no limitations associated with docker naming convention, as used only internal.
 
 ```yaml
 artifact: "application assets"
 ```  
 
+The _artifact name_ is used to specify the artifact in the [_artifact resources import_ description](#importing-artifacts) of the _dimg_ or _artifact_.
+
 ### Adding source code from git repositories
 
 <div class="summary" markdown="1">
+
+<a href="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=2031&amp;h=144" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=1016&amp;h=72">
+</a>
+
 ```yaml
 git:
 - ...
@@ -108,11 +116,8 @@ git:
     buildArtifact: 
     - <relative_path or glob>
 ```
-</div>
 
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=2031&amp;h=144" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=1016&amp;h=72">
-</a>
+</div>
 
 Unlike with _dimg_, _artifact stage conveyor_ has no _g_a_latest_patch_ and _g_a_post_setup_patch_ stages.
 
@@ -123,6 +128,10 @@ Read about working with _git repositories_ in the corresponding [article]({{ sit
 ### Running assembly instructions
 
 <div class="summary" markdown="1">
+
+<a href="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=2031&amp;h=144" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=1016&amp;h=72">
+</a>
 
 <div class="tab">
     <button class="tablinks active" onclick="openTab(event, 'shell')">Shell</button>
@@ -151,10 +160,6 @@ ansible:
 
 </div>
 
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=2031&amp;h=144" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=1016&amp;h=72">
-</a>
-
 When describing an _artifact_, an additional _build_artifact user stage_ is available, which is no different from the _install_, _before_setup_, and _setup_ stages. As well as the listed _stages_, _build_artifact_ also has a dependent git stage.
 
 <a href="https://docs.google.com/drawings/d/e/2PACX-1vTd0XO1HQdwWQRB-QCNmxhJcaBdZG5m4YktzhMXLB4hdu8NxEEnWZvbaivwK13pEfddxtiHNXzgjhal/pub?w=1917&amp;h=432" data-featherlight="image">
@@ -172,6 +177,10 @@ git:
 ```
 
 Read about working with _assembly instructions_ in the corresponding [article]({{ site.baseurl }}/reference/build/assembly_instructions.html).
+
+### Importing artifacts
+
+{% include_relative import_artifacts_partial.md %}
 
 ## All directives
 ```yaml
