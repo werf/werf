@@ -9,7 +9,9 @@ summary: |
   </a>
 ---
 
-The size of the final image due to the assembly tools and source files can be increased several times, while the user does not need them. To solve such problems, the Docker community suggests in one step to do the installation of tools, the assembly, and removal of tools.
+The size of the final image can be increased several times due to the assembly tools and source files, while the user does not need them. 
+
+To solve such problems, the Docker community suggests doing the installation of tools, the assembly, and removal of tools in one step.
 
 ```
 RUN “download-source && cmd && cmd2 && remove-source”
@@ -25,7 +27,7 @@ shell:
   - "remove-source"
 ```
 
-However, with this use, it isn't possible to use caching and need to install toolkit regularly.
+However, with this method, it isn't possible to use caching and need to install toolkit regularly.
 
 Another solution is to use multi-stage builds, which are supported starting with Docker 17.05.
 
@@ -55,11 +57,11 @@ CMD ["--spring.profiles.active=postgres"]
 
 The meaning of such an approach is as follows, describe several auxiliary images, and selectively copy artifacts from one image to another, leaving behind everything you don’t want in the final image.
 
-Dapp offers an alternative in the form of _artifact dimg_, which are built according to the same rules as _dimg_, but with slight changes in the _stage conveyor_.
+Dapp suggests an alternative in the form of _artifact dimg_, which are built according to the same rules as _dimg_, but with slight changes in the _stage conveyor_.
 
-> Why doesn't dapp use multi-stage? Historically, _artifacts_ appeared much earlier than docker multi-stage, and we also want more flexibility when working with auxiliary images.
+> Why doesn't dapp use multi-stage? Historically, _artifacts_ appeared much earlier than Docker multi-stage, and dapp approach gives more flexibility when working with auxiliary images.
 
-## What is a artifact?
+## What is an artifact?
 
 ***Artifact*** is special dimg that is used by _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
           
@@ -67,22 +69,29 @@ _Artifact_ cannot be [tagged like _dimg_]({{ site.baseurl }}/reference/registry/
 
 Using artifacts, you can independently assemble an unlimited number of components, and also solving the following problems:
 
-- The application consists of a set of components, and each has its dependencies. With a standard assembly, you have to rebuild all the components, when you want to rebuild only the dependent ones
-- Components need to be built in another environment.
+- The application can consist of a set of components, and each has its dependencies. With a standard assembly, you should rebuild all every time, but you want to assemble each one on-demand.
+- Components need to be assembled in other environments.
 
 ## Configuration
 
 The _dappfile configuration_ of the _artifact_ is not much different from the configuration of _dimg_. Each _artifact_ should be described in a separate YAML document.
 
-The instructions associated with the _from stage_, namely the [_base image_]({{ site.baseurl }}/reference/build/base_image.html) and [mount]({{ site.baseurl }}/reference/build/mount_directive.html), remain unchanged.
+The instructions associated with the _from stage_, namely the [_base image_]({{ site.baseurl }}/reference/build/base_image.html) and [mounts]({{ site.baseurl }}/reference/build/mount_directive.html), remain unchanged.
 
-The _docker_instructions stage_ and the corresponding instructions are not supported for the _artifact_. A _artifact_ is an assembly tool and only the data stored in it is required.
+The _docker_instructions stage_ and the [corresponding instructions]({{ site.baseurl }}/reference/build/docker_directive.html) are not supported for the _artifact_. A _artifact_ is an assembly tool and only the data stored in it is required.
 
 The remaining _stages_ and instructions are considered further separately.
 
 ### Naming
 
-_Artifact images_ are declared with `artifact` directive: `artifact: <artifact name>`. Unlike the naming of the _dimg image_, the artifact has no limitations associated with docker naming convention, as used only internal.
+<div class="summary" markdown="1">
+```yaml
+artifact: <artifact name>
+```
+</div>
+
+
+_Artifact images_ are declared with `artifact` directive: `artifact: <artifact name>`. Unlike the [naming of the _dimg_]({{ site.baseurl }}/reference/build/naming.html), the artifact has no limitations associated with docker naming convention, as used only internal.
 
 ```yaml
 artifact: "application assets"
@@ -90,15 +99,57 @@ artifact: "application assets"
 
 ### Adding source code from git repositories
 
+<div class="summary" markdown="1">
+```yaml
+git:
+- ...
+  stageDependencies:
+    ...
+    buildArtifact: 
+    - <relative_path or glob>
+```
+</div>
+
 <a href="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=2031&amp;h=144" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=1016&amp;h=72">
 </a>
 
-Unlike with _dimg_, building _artifact_ does not include the _g_a_latest_patch_ and _g_a_post_setup_patch_ stages. When dapp first builds an _artifact image_, it uses the current state of the git repository and caches image for all next assemblies (provided that there are no _user stages_ with dependencies, that are described in the next section).
+Unlike with _dimg_, _artifact stage conveyor_ has no _g_a_latest_patch_ and _g_a_post_setup_patch_ stages.
+
+> Dapp implements optional dependence on changes in git repositories for _artifacts_. Thus, by default dapp ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions.
 
 Read about working with _git repositories_ in the corresponding [article]({{ site.baseurl }}/reference/build/git_directive.html).
 
 ### Running assembly instructions
+
+<div class="summary" markdown="1">
+
+<div class="tab">
+    <button class="tablinks active" onclick="openTab(event, 'shell')">Shell</button>
+    <button class="tablinks" onclick="openTab(event, 'ansible')">Ansible</button>
+</div>
+
+<div id="shell" class="tabcontent active" markdown="1">
+```yaml
+shell:
+  ...
+  buildArtifact:
+  - <bash command>
+  buildArtifactCacheVersion: <arbitrary string>
+```
+</div>
+
+<div id="ansible" class="tabcontent" markdown="1">
+```yaml
+ansible:
+  ...
+  buildArtifact:
+  - <task>
+  buildArtifactCacheVersion: <arbitrary string>
+```
+</div>
+
+</div>
 
 <a href="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=2031&amp;h=144" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=1016&amp;h=72">
@@ -110,10 +161,10 @@ When describing an _artifact_, an additional _build_artifact user stage_ is avai
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vTd0XO1HQdwWQRB-QCNmxhJcaBdZG5m4YktzhMXLB4hdu8NxEEnWZvbaivwK13pEfddxtiHNXzgjhal/pub?w=959&amp;h=216">
 </a>
 
-If there are no dependencies on files, `stageDependencies`, in the _artifact user stages_, the image is cached after the first build and will no longer be rebuilt until the _stages cache_ is reset.
+If there are no dependencies on files specified in git `stageDependencies` directive for _artifact user stages_, the image is cached after the first build and will no longer be reassembled while the _stages cache_ exists.
 
-> If the artifact should be rebuilt for every change in the related git repository, you should specify the `stageDependencies` for any _user stage_, e.g., for _build_artifact stage_:
-```
+> If the artifact should be rebuilt on any change in the related git repository, you should specify the _stageDependency_ `**/*` for any _user stage_, e.g., for _build_artifact stage_:
+```yaml
 git:
 - to: /
   stageDependencies:
