@@ -49,3 +49,7 @@ details summary {
 details summary:hover {
   cursor: pointer;
 }
+
+h5 {
+  color: #ED1951;
+}
