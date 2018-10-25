@@ -39,7 +39,7 @@ version: 0.1.0
 
 In the `templates` directory, YAML file (chart element) templates are stored, which describe the resources for their publishing in the cluster. Detailed information about template creation is available in a separate [section]({{ site.baseurl }}/reference/deploy/templates.html). The `charts` directory is used when you need to work with external charts.
 
-Chart structure includes additional elements that are not contained within the structure of a standard helm chart – these are the `secret-values.yaml` file and the `secret` directory that are described in detail in the [working with secrets section]({{ site.baseurl }}/reference/deploy/secrets.html).
+Chart structure includes additional elements that are not contained within the structure of a standard helm chart – these are the `secret-values.yaml` file and the `secret` directory that is described in detail in the [working with secrets section]({{ site.baseurl }}/reference/deploy/secrets.html).
 
 ## Connection settings
 
@@ -77,11 +77,11 @@ This chart contains:
 * Additional generated go-templates: `dapp_container_image`, `dapp_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/reference/deploy/templates.html).
 * Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/reference/deploy/secrets.html).
 
-Temporary chart then passed to the helm. Dapp deletes this chart on the dapp deploy command termination.
+The temporary chart then passed to the helm. Dapp deletes this chart on the dapp deploy command termination.
 
 ### Watch resources
 
-Dapp watches resources statuses and logs during deploy process. More info is avaiable in the [watch resources article]({{ site.baseurl }}/reference/deploy/watch_resources.html).
+Dapp watches resources statuses and logs during the deploy process. More info is available in the [watch resources article]({{ site.baseurl }}/reference/deploy/watch_resources.html).
 
 ## Dapp deploy command
 
