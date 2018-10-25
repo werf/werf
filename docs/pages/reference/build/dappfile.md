@@ -7,7 +7,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 
 ## What is dappfile?
 
-Dapp uses the configuration file called dappfile to build docker images. At present, dapp only support YAML syntax and uses one of the following files in the root folder of your project — `dappfile.yaml` or `dappfile.yml`. 
+Dapp uses the configuration file called ***dappfile*** to build docker images. At present, dapp only support YAML syntax and uses one of the following files in the root folder of your project — `dappfile.yaml` or `dappfile.yml`. 
 
 The dappfile is a collection of [YAML documents](http://yaml.org/spec/1.2/spec.html#id2800132) combined with delimiter `---`. Each YAML document contains instructions to build independent docker image. 
 
@@ -21,9 +21,9 @@ YAML_DOC
 YAML_DOC
 ```
 
-Dapp represents YAML document as an internal object. Currently, dapp supports two object types, [dimg]({{ site.baseurl }}/reference/build/naming.html) and [artifact]({{ site.baseurl }}/reference/build/artifact.html). 
+Dapp represents YAML document as an internal object. Currently, dapp supports two object types, [_dimg_]({{ site.baseurl }}/reference/build/naming.html) and [_artifact_]({{ site.baseurl }}/reference/build/artifact.html). 
 
-_Dimg_ is the named set of rules, an internal representation of user image. An artifact is a special dimg that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).  
+***Dimg*** is the named set of rules, an internal representation of user image. An ***artifact*** is a special dimg that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).  
 
 ## Processing of dappfile
 
