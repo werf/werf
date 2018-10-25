@@ -27,17 +27,35 @@ Then [the dapp pull command](#dapp-pull) must be used to pull stages cache befor
 
 ## Dapp pull
 
-Command used to pull stages cache from the specified docker registry. Must be called before any of the build commands.
+Command used to pull stages cache from the specified docker registry. Call command before any of the build commands.
+
+Dapp pull command optimized to pull only single cache stage for each dimg, that needed to rebuild _current state_ of the dimg.
+
+For example there was a change in `beforeSetup` stage of the dimg since last project build. Dapp pull command:
+
+1. Calculates current state of the stage cache and realizes, that there are change in `beforeSetup` stage.
+2. Downloads `install` (the stage prior `beforeSetup`) stage from docker registry. `beforeInstall` stage will not be downloaded, because only `install` stage is needed to rebuild `beforeSetup` and further stages.
+
+Pulled stage can be used by multiple dimgs of the same dappfile in the case, when this stage is common between multiple dimgs.
+
+In other words, dapp downloads from cache **last common stage** between old and new dimg state.
+
+There is also an option to turn off this optimized behaviour and always pull all stages.
 
 ### Syntax
 
 ```
 dapp dimg stages pull [options] [DIMG ...] REPO
+  --registry-username USERNAME
+  --registry-password PASSWORD
+  --all
 ```
 
 The `DIMG` optional parameter — is a name of dimg from a dappfile. Specifying `DIMG` one or multiple times allows pulling stages cache only related to certain dimgs from dappfile. By default, dapp pull stages cache of all dimgs from dappfile.
 
 The `REPO` required parameter — is a repository name (see more in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter) article).
+
+`--all` option causes dapp to download all available stages for each dimg from the docker registry, instead of downloading only last common stage between old and new dimg state.
 
 ## Example
 
@@ -49,8 +67,6 @@ dapp dimg stages pull registry.hello.com/taxi/backend
 
 Command pull stages cache from the specified repo.
 
-Pulled images have `dimgstage` prefixes. Here is an example of image names pulled as stages cache:
+Pulled images have `dimgstage` prefixes. Here is an example of image name pulled as stages cache:
 
 * `registry.hello.com/taxi/backend:dimgstage-ab192db1f7cf6b894aeaf14c0f1615f27d5170bb16b8529ec18253b94dc4916e`
-* `registry.hello.com/taxi/backend:dimgstage-0d05ad73cf69430e8ff2bf457d6fd6273ec100785fcc3ad0267c0fb609c81a7c`
-* `registry.hello.com/taxi/backend:dimgstage-41772c141b158349804ad27b354247df8984ead077a5dd601f3940536ebe9a11`
