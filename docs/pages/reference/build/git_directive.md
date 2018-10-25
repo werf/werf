@@ -408,7 +408,6 @@ To illustrate the unnecessary growth of image size assume the rare case of 2GiB 
 
 You can reset the _g_a_archive stage_ specifying the **[dapp reset]** or **[reset dapp]** string in the commit message. Let us assume that, in the previous example commit `4` contains **[dapp reset]** in its message, and then the builds would look as follows:
 
-
 | | g_a_archive | g_a_post_setup_patch | g_a_latest_patch |
 |---|:---:|:---:|:---:|
 | Commit No. 1 is made, build at 12:00 |  1 |  - | - |
