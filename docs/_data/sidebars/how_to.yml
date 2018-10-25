@@ -17,3 +17,6 @@ entries:
 
   - title: Using mounts
     url: /how_to/mounts.html
+
+  - title: Building multiple images
+    url: /how_to/multi_images.html

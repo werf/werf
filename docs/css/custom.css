@@ -41,3 +41,11 @@ div.rsc div.rsc-example img {
 .summary a > img {
   margin: 0;
 }
+
+details summary {
+  outline: none;
+}
+
+details summary:hover {
+  cursor: pointer;
+}
