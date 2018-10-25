@@ -5,7 +5,7 @@ permalink: reference/deploy/watch_kubernetes_resources.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Dapp has ability of watching statuses and logs of kubernetes resources during deploy process.
+Dapp can watch statuses and logs of kubernetes resources during the deploy process.
 
 ## Watch hook logs
 
@@ -24,13 +24,13 @@ metadata:
     "dapp/watch": "true"
 ```
 
-Logs of pods will be printed for a job, until job terminated.
+Logs of pods will be printed for a job until job terminated.
 
 **NOTICE** For now logs watch is supported only for **Job** resource kind.
 
 ## Watch release status
 
-After helm release has been installed or updated dapp will watch all Deployments that existed in the chart.
+After helm, a release has been installed, or updated dapp will watch all Deployments that existed in the chart.
 
 **Status watch procedure** consists of:
 
@@ -39,7 +39,7 @@ After helm release has been installed or updated dapp will watch all Deployments
 
 The procedure is ended when resource readiness condition is reached.
 
-This is **default behaviour** for any Deployment found in chart. To turn it off for specific deployment add special annotation `"dapp/watch": "false"` in the resource template. For example:
+This is **default behavior** for any Deployment found in the chart. To turn it off for specific deployment add special annotation `"dapp/watch": "false"` in the resource template. For example:
 
 ```yaml
 ...
@@ -50,4 +50,4 @@ metadata:
     "dapp/watch": "false"
 ```
 
-**NOTICE** For now status watch is supported only for **Deployment** resource kind. ReplicaSet, DaemonSet and other resource will be supported soon.
+**NOTICE** For now status watch is supported only for **Deployment** resource kind. ReplicaSet, DaemonSet, and other resources will be supported soon.
