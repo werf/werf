@@ -23,8 +23,20 @@ Writing a configuration is especially difficult at the beginning because you don
 
 In the process of assembling, you can access a certain _stage_ using introspection options. During introspection, like during assembling, the _stage assembly container_ contains service tools and environment variables. Tools are presented as a set of utilities required during assembling. They are added by mounting the directories from service containers of our _dappdeps_ distributions (available at `/.dapp/deps` path in the _assembly container_). Introspection comes down the fact that the _stage assembly container_ is launched for users in interactive mode.
 
-During development, introspection makes it possible to achieve the required outcomes in an _assembly container_, and then transfer all the steps and instructions into the configuration of the appropriate _stage_. This approach is useful when the set objective is clear, although the steps to achieve it are not so obvious and require a great deal of experiment.
+**During development**, introspection makes it possible to achieve the required outcomes in an _assembly container_, and then transfer all the steps and instructions into the configuration of the appropriate _stage_. This approach is useful when the set objective is clear, although the steps to achieve it are not so obvious and require a great deal of experiment.
 
-During debugging, introspection allows you to see why assembling ended with an error or the result was unexpected, to check whether dependent files are present and to check the system state.
+<div class="videoWrapper">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/VEFapPLXxcE" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
+</div>
+                  
+**During debugging**, introspection allows you to see why assembling ended with an error or the result was unexpected, to check whether dependent files are present and to check the system state.
 
-Finally, when introspection is effected for applications that use ansible,  you can debug ansible playbooks in the _assembly container_ and subsequently transfer ansible tasks to the appropriate configuration _stages_.
+<div class="videoWrapper">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/GiEbEhF2Pes" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
+</div>
+
+Finally, when introspection is effected for applications that use **ansible**,  you can debug ansible playbooks in the _assembly container_ and subsequently transfer ansible tasks to the appropriate configuration _stages_.
+
+<div class="videoWrapper">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/TEpn0yFvJik" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
+</div>
