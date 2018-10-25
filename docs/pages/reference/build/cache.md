@@ -42,7 +42,7 @@ shell:
 
 We run an assembly:
 
-```shell
+```bash
 $ dapp dimg build --force-save-cache
 nameless: calculating stages signatures                                     [RUNNING]
 nameless: calculating stages signatures                                          [OK] 0.16 sec
@@ -120,7 +120,7 @@ git:
 
 Assembling:
 
-```shell
+```bash
 $ dapp dimg build --force-save-cache
 nameless: calculating stages signatures                                     [RUNNING]
   Repository `own`: latest commit `3d70fcec74abf7b8197230830bb6d7ccf5826952` to `/app`

@@ -17,7 +17,7 @@ The example application is the [Hotel Booking Example](https://github.com/revel/
 
 Create a `booking` directory and place the following `dappfile.yaml` in the `booking` directory:
 {% raw %}
-```
+```yaml
 {{ $_ := set . "GoDlPath" "https://dl.google.com/go/" }}
 {{ $_ := set . "GoTarball" "go1.11.1.linux-amd64.tar.gz" }}
 {{ $_ := set . "GoTarballChecksum" "sha256:2871270d8ff0c8c69f161aaae42f9f28739855ff5c5204752a8d92a1c9f63993" }}
@@ -76,24 +76,24 @@ export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 {% endraw %}
 
 Build the application by executing the following command in the `booking` directory:
-```
+```bash
 dapp dimg build
 ```
 
 ### Running
 
 Run the application by executing the following command in the `booking` directory:
-```
+```bash
 dapp dimg run -p 9000:9000 --rm -d -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
-```
+```bash
 docker ps
 ```
 
 You should see a running container with a random name, like this:
-```
+```bash
 CONTAINER ID  IMAGE         COMMAND        CREATED        STATUS        PORTS                   NAMES
 41d6f49798a8  14e6b9c6b93b  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  infallible_bell
 ```
@@ -106,7 +106,7 @@ The `revel framework booking demo` page should open, and you can login by enteri
 
 Create a final image with tag `v1.0`:
 
-```
+```bash
 dapp dimg tag booking --tag-plain v1.0
 ```
 
@@ -114,19 +114,19 @@ After tagging we get an image `booking/go-booking:v1.0` according to dapp naming
 
 Determine the image size by executing:
 
-```
+```bash
 docker images booking/go-booking:v1.0
 ```
 
 The output will be something like this:
-```
+```bash
 REPOSITORY           TAG           IMAGE ID            CREATED             SIZE
 booking/go-booking   v1.0          0bf71cb34076        10 minutes ago      1.04 GB
 ```
 
 You can check the size of all ancestor images. To find ancestor images tags look at the output of the `dapp dimg build` command — in the lines like `signature: dimgstage-booking:c05db314b209a96bd906b77c910d6a5ae76e25f6422bf57f2da37e935805ddca`. The last long HEX value is the image tag. E.e. you could see in the output of the `docker images` command like this (TAGs values was cut to fit the web page):
 
-```
+```bash
 REPOSITORY            TAG                  IMAGE ID            CREATED             SIZE
 dimgstage-booking     c05db314b20...ddca   14e6b9c6b93b        21 minutes ago      1.04 GB
 dimgstage-booking     46fb00c9dda...3ef1   9a34966e6c85        22 minutes ago      938 MB
@@ -146,7 +146,7 @@ There are often a lot of useless files in the image. In our example application,
 
 To optimize using APT cache add the following directives to `go-booking` dimg in the dappfile:
 
-```
+```yaml
 mount:
 - from: tmp_dir
   to: /var/lib/apt/lists
@@ -162,7 +162,7 @@ The `/var/cache/apt/` directory is caching in the `~/.dapp/builds/booking/mount`
 
 Official Ubuntu image contains special hooks that remove APT cache after image build. To disable these hooks, add the following task to a beforeInstall stage of the dappfile:
 
-```
+```yaml
 ansible:
   beforeInstall:
   - name: Disable docker hook for apt-cache deletion
@@ -180,7 +180,7 @@ Building application on the setup stage uses the `/go` directory, specified in t
 
 Add the following to mount directives in the dappfile:
 
-```
+```yaml
 - from: tmp_dir
   to: /go
 - from: build_dir
@@ -192,7 +192,7 @@ Add the following to mount directives in the dappfile:
 ### Complete dappfile
 
 {% raw %}
-```
+```yaml
 {{ $_ := set . "GoDlPath" "https://dl.google.com/go/" }}
 {{ $_ := set . "GoTarball" "go1.11.1.linux-amd64.tar.gz" }}
 {{ $_ := set . "GoTarballChecksum" "sha256:2871270d8ff0c8c69f161aaae42f9f28739855ff5c5204752a8d92a1c9f63993" }}
@@ -267,7 +267,7 @@ export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 {% endraw %}
 
 Build the application with the modified dappfile:
-```
+```bash
 dapp dimg build
 ```
 
@@ -275,22 +275,22 @@ dapp dimg build
 
 Before running the modified application, you need to stop running container. Otherwise, the new container can't bind to 9000 port on localhost. E.g., execute the following command to stop last created container:
 
-```
+```bash
 docker stop `docker ps -lq`
 ```
 
 Run the modified application by executing the following command:
-```
+```bash
 dapp dimg run -p 9000:9000 --rm -d -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
-```
+```bash
 docker ps
 ```
 
 You should see a running container with a random name, like this:
-```
+```bash
 CONTAINER ID  IMAGE         COMMAND        CREATED        STATUS        PORTS                   NAMES
 88287022813b  c8277cd4a801  "/app/run.sh"  5 seconds ago  Up 3 seconds  0.0.0.0:9000->9000/tcp  naughty_dubinsky
 ```
@@ -303,17 +303,17 @@ The `revel framework booking demo` page should open, and you can login by enteri
 
 Create a final image with tag `v2.0`:
 
-```
+```bash
 dapp dimg tag booking --tag-plain v2.0
 ```
 
 Determine the final image size of optimized build, by executing:
-```
+```bash
 docker images booking/go-booking
 ```
 
 The output will be something like this:
-```
+```bash
 REPOSITORY            TAG        IMAGE ID         CREATED            SIZE
 booking/go-booking    v2.0      0a9943b0da6a     3 minutes ago      335 MB
 booking/go-booking    v1.0      0bf71cb34076     15 minutes ago     1.04 GB
@@ -325,12 +325,12 @@ Dapp store build cache for project in the `~/.dapp/builds/<project>/` directory.
 
 Analyze the structure of the `~/.dapp/builds/booking/mount` directory. Execute the following command:
 
-```
+```bash
 tree -L 3 ~/.dapp/builds/booking/mount
 ```
 
 The output will be like this (some lines skipped):
-```
+```bash
 /home/user/.dapp/builds/booking/mount
 ├── usr-local-go-a179aaae
 │   ├── api
@@ -350,12 +350,12 @@ The output will be like this (some lines skipped):
 As you may see, there are separate directories on the host for every mount in dappfile exists.
 
 Check the directories size, by executing:
-```
+```bash
 sudo du -kh --max-depth=1 ~/.dapp/builds/booking/mount
 ```
 
 The output will be like this:
-```
+```bash
 49M     /home/user/.dapp/builds/booking/mount/var-cache-apt-28143ccf
 122M    /home/user/.dapp/builds/booking/mount/usr-local-src-f1bad46a
 423M    /home/user/.dapp/builds/booking/mount/usr-local-go-a179aaae

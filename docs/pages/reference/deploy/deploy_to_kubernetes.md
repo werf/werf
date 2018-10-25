@@ -30,7 +30,7 @@ The `.helm` directory in the project root describes a helm chart (starting now r
 The `Chart.yaml` file describes the application chart, and you must specify at least the name and version of the application. Example of a `Chart.yaml` file:
 
 
-```
+```yaml
 apiVersion: v1
 description: Test RabbitMQ chart for Kubernetes
 name: rabbit
@@ -91,7 +91,7 @@ Dapp deploy command starts the helm-chart release process in kubernetes. A relea
 
 #### Syntax
 
-```
+```bash
 dapp kube deploy REPO [--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci] [--namespace=NAMESPACE] [--set=<value>] [--values=<values-path>] [--secret-values=<secret-values-path>]
 ```
 
@@ -127,7 +127,7 @@ Enables specifying an additional secret-values yaml file together with the stand
 
 Starts the process to remove release `<dapp name>-<NAMESPACE>` from helm.
 
-```
+```bash
 dapp kube dismiss [--namespace=NAMESPACE] [--with-namespace]
 ```
 

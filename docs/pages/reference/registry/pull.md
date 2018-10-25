@@ -44,7 +44,7 @@ There is also an option to turn off this optimized behavior and always pull all 
 
 ### Syntax
 
-```
+```bash
 dapp dimg stages pull [options] [DIMG ...] REPO
   --registry-username USERNAME
   --registry-password PASSWORD
@@ -61,7 +61,7 @@ The `REPO` required parameter — is a repository name (see more in [image namin
 
 ### Pull stages cache
 
-```
+```bash
 dapp dimg stages pull registry.hello.com/taxi/backend
 ```
 

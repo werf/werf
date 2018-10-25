@@ -81,7 +81,7 @@ The reason is no need to build the same stage multiple times. Dapp build process
 
 ### Syntax
 
-```
+```bash
 dapp dimg build [options] [DIMG ...]
   --introspect-stage STAGE
   --introspect-before STAGE

@@ -4,7 +4,7 @@
 
 1. Clone dapp source code to the right place in `$GOPATH`:
 
-    ```
+    ```bash
     mkdir -p $GOPATH/src/github.com/flant
     git clone https://github.com/flant/dapp.git $GOPATH/src/github.com/flant/dapp
     cd $GOPATH/src/github.com/flant/dapp
@@ -12,7 +12,7 @@
 
 2. Setup development environment variables:
 
-    ```
+    ```bash
     source ./go-env
     ```
     
@@ -20,13 +20,13 @@
 
 3. Download go dependencies:
 
-    ```
+    ```bash
     ./go-get.sh
     ```
 
 3. Run build:
 
-    ```
+    ```bash
     ./go-build.sh
     ```
 

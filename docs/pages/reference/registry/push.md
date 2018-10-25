@@ -66,7 +66,7 @@ Dapp push command used to perform _dimg push procedure_ and optionally _stages p
 
 ### Syntax
 
-```
+```bash
 dapp dimg push [options] [DIMG ...] REPO
   --with-stages
   --tag TAG
@@ -94,8 +94,8 @@ It has an execution speed advantage over using separate build and push commands,
 
 ### Syntax
 
-```
-  dapp dimg bp [options] [DIMG ...] REPO
+```bash
+dapp dimg bp [options] [DIMG ...] REPO
   --with-stages
   --tag TAG
   --tag-branch
@@ -124,7 +124,7 @@ Dimgs should be built with dapp [build commands] before calling this command.
 
 ### Syntax
 
-```
+```bash
 dapp dimg spush [options] [DIMG] REPO
   --tag TAG
   --tag-branch
@@ -151,7 +151,7 @@ The `DIMG` optional parameter — is a name of dimg from a dappfile.
 
 Given dappfile with three dimgs — `core`, `queue` and `api`.
 
-```
+```bash
 dapp dimg push registry.hello.com/taxi/backend --tag-plain v1.1.14
 ```
 
@@ -165,7 +165,7 @@ Command pushes three images into specified repo:
 
 Given dapp project named `geo` with dappfile, that contains two dimgs — `server`, `geodata`.
 
-```
+```bash
 dapp dimg bp registry.hello.com/api/geo --tag stable --with-stages
 ```
 
@@ -184,7 +184,7 @@ Notice the images with the `dimgstage` prefixes in the docker tags. These are th
 
 Given dappfile with three dimgs — `kubetools`, `backuptools` and `copytools`.
 
-```
+```bash
 dapp dimg push kubetools backuptools registry.hello.com/tools/common
 ```
 
@@ -197,7 +197,7 @@ Command pushes following images into specified repo for each of the specified di
 
 Given dappfile with two dimgs — `plain-c` and `rust`.
 
-```
+```bash
 dapp dimg spush plain-c myregistry.host/lingvo/parser --tag stable --tag-plain v1.4.11
 ```
 

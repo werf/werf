@@ -57,7 +57,7 @@ Running in gitlab environment dapp build command will perform autologin procedur
 
 For example, given this build configuration:
 
-```
+```yaml
 from: registry.myhost.com/sys/project/image:v2.1.0
 ```
 
@@ -79,38 +79,38 @@ Options `--registry-username` and `--registry-password` can be used for dapp com
 
 Run dapp command without login options. Autologin procedure is enabled in this case:
 
-```
+```bash
 dapp dimg push registry.myhost.com/web/backend
 ```
 
 Run dapp command with a manually specified user and password for docker registry:
 
-```
+```bash
 dapp dimg push registry.myhost.com/web/backend --registry-username=myuser --registry-password=mypassword
 ```
 
 Run dapp command with disabled autologin procedure:
 
-```
+```bash
 DAPP_IGNORE_CI_DOCKER_AUTOLOGIN=1 dapp dimg push registry.myhost.com/web/backend
 ```
 
 Run dapp cleaning command with a special token for autologin procedure:
 
-```
+```bash
 export DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD="A3XewXjfldf"
 dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
 ```
 
 Run dapp cleaning command with a manually specified user and password:
 
-```
+```bash
 dapp dimg cleanup repo registry.myhost.com/web/backend --registry-username=myuser --registry-password=mypassword
 ```
 
 Run dapp command with external docker config. Dapp will not perform the login procedure in this case:
 
-```
+```bash
 export DAPP_DOCKER_CONFIG=./.docker
 dapp dimg push registry.myhost.com/web/backend
 ```

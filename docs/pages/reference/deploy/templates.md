@@ -46,7 +46,7 @@ Then you can address the appropriate variables in the template using a construct
 Dapp sets and uses many variables that are also available in the templates. You can retrieve their values using the `dapp kube value get VALUE_KEY` command.
 
 For instance, you can perform the following actions to retrieve values for all variables:
-```
+```bash
 dapp kube value get .
 ```
 
@@ -55,7 +55,7 @@ dapp kube value get .
 Dapp устанавливает и использует ряд переменных, также доступных в шаблонах. Получить их значения можно с помощью команды `dapp kube value get VALUE_KEY`.
 
 Например получить значения всех переменных можно следующим образом:
-```
+```bash
 dapp kube value get .
 ```
 
@@ -108,20 +108,20 @@ A sample description of an application configuration that comprises frontend, ba
 > This example covers only the crucial aspect of the configuration description. Based on your cluster configuration, to launch an application you might additionally be required to create such resources as an Ingress, a Secret (if you're working with a private repository), or a Service, or ensuring traffic routing, and so on.
 
 Chart.yaml
-```
+```yaml
 name: example-dapp-deploy
 version: 0.1.0
 ```
 
 values.yaml
-```
+```yaml
 replicas:
   production: 3
   staging: 1
 ```
 
 dappfile.yaml
-```
+```yaml
 dimg: "frontend"
 from: "nginx"
 ---
@@ -134,7 +134,7 @@ from: "mysql"
 
 app.yaml
 {% raw %}
-```
+```yaml
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
@@ -182,7 +182,7 @@ spec:
 {% endraw %}
 
 Result:
-```
+```yaml
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
