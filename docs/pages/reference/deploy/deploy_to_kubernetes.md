@@ -1,15 +1,15 @@
 ---
-title: Deployment to kubernetes
+title: Deploy to kubernetes
 sidebar: reference
-permalink: reference/deploy/deployment_to_kubernetes.html
+permalink: reference/deploy/deploy_to_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-For deployment in kubernetes, [helm](https://helm.sh/) is used (kubernetes package manager).
+Dapp uses [helm](https://helm.sh/) kubernetes package manager to deploy applications into kubernetes.
 
 ## Installing helm
 
-Before you can use dapp for deployment, you should install [helm](https://docs.helm.sh/using_helm/#installing-helm) and its back-end part — [tiller](https://docs.helm.sh/using_helm/#installing-tiller). 
+Before using dapp for deploy, you should install [helm](https://docs.helm.sh/using_helm/#installing-helm) and its back-end part — [tiller](https://docs.helm.sh/using_helm/#installing-tiller).
 
 ## Helm chart
 
@@ -31,7 +31,7 @@ The `Chart.yaml` file describes the application chart, and you must specify at l
 
 
 ```
-apiVersion: v1 [ apiVersion: v1]
+apiVersion: v1
 description: Test RabbitMQ chart for Kubernetes
 name: rabbit
 version: 0.1.0
@@ -64,11 +64,32 @@ SSL_CERT_FILE=/home/gitlab-runner/CERTFILE.crt dapp kube deploy
       ${CI_REGISTRY_IMAGE}
 ```
 
-## Release management
+## Additions to helm
 
-### dapp kube deploy
+Dapp has several additions to the helm.
 
-Starts the helm-chart release process in kubernetes. A release named `<dapp name>-<NAMESPACE>` will be created or updated in helm.
+### Chart generation
+
+During dapp deploy a temporary helm chart is created.
+
+This chart contains:
+
+* Additional generated go-templates: `dapp_container_image`, `dapp_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/reference/deploy/templates.html).
+* Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/reference/deploy/secrets.html).
+
+Temporary chart then passed to the helm. Dapp deletes this chart on the dapp deploy command termination.
+
+### Watch resources
+
+Dapp watches resources statuses and logs during deploy process. More info is avaiable in the [watch resources article]({{ site.baseurl }}/reference/deploy/watch_resources.html).
+
+## Dapp deploy command
+
+Dapp deploy command starts the helm-chart release process in kubernetes. A release named `<dapp name>-<NAMESPACE>` will be installed or updated by helm.
+
+`DAPP_HELM_RELEASE_NAME` environment variable could be used to specify custom helm release name.
+
+#### Syntax
 
 ```
 dapp kube deploy REPO [--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci] [--namespace=NAMESPACE] [--set=<value>] [--values=<values-path>] [--secret-values=<secret-values-path>]
