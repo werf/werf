@@ -21,172 +21,182 @@ Installed [docker-compose](https://docs.docker.com/compose/install/).
 
 The example application is the [AtSea Shop](https://github.com/dockersamples/atsea-sample-shop-app) Demonstration Application from the [Official Docker Samples repository](https://github.com/dockersamples). The application is a prototype of a small shop application consisting of several components.
 
-
 It's frontend written in React and backend written in Java Spring Boot. There will be nginx reverse proxy and payment gateway added in the project to make it more real.
 
 ## Application components
 
-The application consists of the following components:
-* **Backend**. It is the `app` image. This is the application backend image. The backend container handles HTTP requests from the frontend container. The source code of the application is in the `/app` directory. It consists of Java application and ReactJS application. To build the backend image there are two artifact images (read more about artifacts [here]({{ site.baseurl }}/reference/build/artifact_directive.html)):
-  * `Storefront` artifact. Builds assets. After building dapp imports assets into the `/static` directory of the `app` image. To increase the efficiency of the building `storefront` image, build instructions divided into two stages — _install_ and _setup_.
+### Backend
 
-    ```yaml
-    artifact: storefront
-    from: node:latest
-    git:
-    - add: /app/react-app
-      to: /usr/src/atsea/app/react-app
-      stageDependencies:
-        install: 
-        - package.json
-        setup: 
-        - src
-        - public
-    shell:
-      install:
-      - cd /usr/src/atsea/app/react-app
-      - npm install
-      setup:
-      - cd /usr/src/atsea/app/react-app
-      - npm run build
-    ```
+It is the `app` image. The backend container handles HTTP requests from the frontend container. The source code of the application is in the `/app` directory. It consists of Java application and ReactJS application. To build the backend image there are two artifact images (read more about artifacts [here]({{ site.baseurl }}/reference/build/artifact_directive.html)) - `storefront` and `appserver`.
 
-  * `Appserver` artifact. Builds a Java code. Dapp imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar` into the `/app` directory of the `app` image. To increase the efficiency of the building `appserver` image, build instructions divided into two stages — _install_ and _setup_. Also, the `/usr/share/maven/ref/repository` directory mounts with the `build_dir` directives to allow some caching (read more about mount directives [here]({{ site.baseurl }}/reference/build/mount_directive.html)).
+Image of the backend base on the official java image. It uses files from artifacts and doesn't need any steps for downloading packages or building.
 
-    ```yaml
-    artifact: appserver
-    from: maven:latest
-    mount:
-    - from: build_dir
-      to: /usr/share/maven/ref/repository
-    git:
-    - add: /app
-      to: /usr/src/atsea
-      stageDependencies:
-        install: 
-        - pom.xml
-        setup: 
-        - src
-    shell:
-      install:
-      - cd /usr/src/atsea
-      - mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:go-offline
-      setup:
-      - cd /usr/src/atsea
-      - mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
-    ```
+```yaml
+dimg: app
+from: java:8-jdk-alpine
+docker:
+  ENTRYPOINT: ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
+  CMD: ["--spring.profiles.active=postgres"]
+shell:
+  beforeInstall:
+  - mkdir /app
+  - adduser -Dh /home/gordon gordon
+import:
+- artifact: storefront
+  add: /usr/src/atsea/app/react-app/build
+  to: /static
+  after: install
+- artifact: appserver
+  add: /usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar
+  to: /app/AtSea-0.0.1-SNAPSHOT.jar
+  after: install
+```
 
-  Image of the backend base on the official java image. It uses files from artifacts and doesn't need any steps for downloading packages or building.
+### Storefront artifact
 
-  ```yaml
-  dimg: app
-  from: java:8-jdk-alpine
-  docker:
-    ENTRYPOINT: ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
-    CMD: ["--spring.profiles.active=postgres"]
-  shell:
-    beforeInstall:
-    - mkdir /app
-    - adduser -Dh /home/gordon gordon
-  import:
-  - artifact: storefront
-    add: /usr/src/atsea/app/react-app/build
-    to: /static
-    after: install
-  - artifact: appserver
-    add: /usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar
-    to: /app/AtSea-0.0.1-SNAPSHOT.jar
-    after: install
-  ```
+Builds assets. After building dapp imports assets into the `/static` directory of the `app` image. To increase the efficiency of the building `storefront` image, build instructions divided into two stages — _install_ and _setup_.
 
-* **Frontend**. It is the `reverse_proxy` image. This image base on the official image of the [NGINX](https://www.nginx.com) server. It acts as a frontend and is configured as a reverse proxy. The frontend container handles all incoming traffic, cache it and pass requests to the backend container.
-
-  {% raw %}
-  ```yaml
-  dimg: reverse_proxy
-  from: nginx:alpine
-  ansible:
+```yaml
+artifact: storefront
+from: node:latest
+git:
+- add: /app/react-app
+  to: /usr/src/atsea/app/react-app
+  stageDependencies:
     install:
-    - name: "Copy nginx.conf"
-      copy:
-        content: |
-  {{ .Files.Get "reverse_proxy/nginx.conf" | indent 8 }}
-        dest: /etc/nginx/nginx.conf
-    - name: "Copy SSL certificates"
-      file:
-        path: /run/secrets
-        state: directory
-        owner: nginx
-    - copy:
-        content: |
-  {{ .Files.Get "reverse_proxy/certs/revprox_cert" | indent 8 }}
-        dest: /run/secrets/revprox_cert
-    - copy:
-        content: |
-  {{ .Files.Get "reverse_proxy/certs/revprox_key" | indent 8 }}
-        dest: /run/secrets/revprox_key
-  ```
-  {% endraw %}
+    - package.json
+    setup:
+    - src
+    - public
+shell:
+  install:
+  - cd /usr/src/atsea/app/react-app
+  - npm install
+  setup:
+  - cd /usr/src/atsea/app/react-app
+  - npm run build
+```
 
-* **Database**. It is the `database` image. This image base on the official image of the PostgreSQL server. Dapp adds configs and SQL file for bootstrap in this image. The backend container uses the database to store its data.
+### Appserver artifact
 
-  {% raw %}
-  ```yaml
-  dimg: database
-  from: postgres:11
-  docker:
-    ENV:
-      POSTGRES_USER: gordonuser
-      POSTGRES_DB: atsea
-  ansible:
+Builds a Java code. Dapp imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar` into the `/app` directory of the `app` image. To increase the efficiency of the building `appserver` image, build instructions divided into two stages — _install_ and _setup_. Also, the `/usr/share/maven/ref/repository` directory mounts with the `build_dir` directives to allow some caching (read more about mount directives [here]({{ site.baseurl }}/reference/build/mount_directive.html)).
+
+```yaml
+artifact: appserver
+from: maven:latest
+mount:
+- from: build_dir
+  to: /usr/share/maven/ref/repository
+git:
+- add: /app
+  to: /usr/src/atsea
+  stageDependencies:
     install:
-    - raw: mkdir -p /images/
-    - name: "Copy DB configs"
-      copy:
-        content: |
-  {{ .Files.Get "database/pg_hba.conf" | indent 8 }}
-        dest: /usr/share/postgresql/11/pg_hba.conf
-    - copy:
-        content: |
-  {{ .Files.Get "database/postgresql.conf" | indent 8 }}
-        dest:  /usr/share/postgresql/11/postgresql.conf
-  git:
-  - add: /database/docker-entrypoint-initdb.d/
-    to:  /docker-entrypoint-initdb.d/
-  ```
-  {% endraw %}
-* **Payment gateway**. It is the `payment_gw` image. This image is an example of the payment gateway application. It does nothing except infinitely writes messages to stdout. Payment gateway acts as another component of the application.
+    - pom.xml
+    setup:
+    - src
+shell:
+  install:
+  - cd /usr/src/atsea
+  - mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:go-offline
+  setup:
+  - cd /usr/src/atsea
+  - mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
+```
 
-  {% raw %}
-  ```yaml
-  dimg: payment_gw
-  from: alpine
-  docker:
-    CMD: ["/home/payment/process.sh"]
-  ansible:
-    beforeInstall:
-    - name: "Create payment user"
-      user:
-        name: payment
-        comment: "Payment user"
-        shell: /bin/sh
-        home: /home/payment
-    - file:
-        path: /run/secrets
-        state: directory
-        owner: payment
-    - copy:
-        content: |
-          production
-        dest: /run/secrets/payment_token
-  git:
-  - add: /payment_gateway/process.sh
-    to: /home/payment/process.sh
-    owner: payment
-  ```
-  {% endraw %}
+### Frontend
 
-The complete dappfile will be given next.
+It is the `reverse_proxy` image. This image base on the official image of the [NGINX](https://www.nginx.com) server. It acts as a frontend and is configured as a reverse proxy. The frontend container handles all incoming traffic, cache it and pass requests to the backend container.
+
+{% raw %}
+```yaml
+dimg: reverse_proxy
+from: nginx:alpine
+ansible:
+  install:
+  - name: "Copy nginx.conf"
+    copy:
+      content: |
+{{ .Files.Get "reverse_proxy/nginx.conf" | indent 8 }}
+      dest: /etc/nginx/nginx.conf
+  - name: "Copy SSL certificates"
+    file:
+      path: /run/secrets
+      state: directory
+      owner: nginx
+  - copy:
+      content: |
+{{ .Files.Get "reverse_proxy/certs/revprox_cert" | indent 8 }}
+      dest: /run/secrets/revprox_cert
+  - copy:
+      content: |
+{{ .Files.Get "reverse_proxy/certs/revprox_key" | indent 8 }}
+      dest: /run/secrets/revprox_key
+```
+{% endraw %}
+
+### Database
+
+It is the `database` image. This image base on the official image of the PostgreSQL server. Dapp adds configs and SQL file for bootstrap in this image. The backend container uses the database to store its data.
+
+{% raw %}
+```yaml
+dimg: database
+from: postgres:11
+docker:
+  ENV:
+    POSTGRES_USER: gordonuser
+    POSTGRES_DB: atsea
+ansible:
+  install:
+  - raw: mkdir -p /images/
+  - name: "Copy DB configs"
+    copy:
+      content: |
+{{ .Files.Get "database/pg_hba.conf" | indent 8 }}
+      dest: /usr/share/postgresql/11/pg_hba.conf
+  - copy:
+      content: |
+{{ .Files.Get "database/postgresql.conf" | indent 8 }}
+      dest:  /usr/share/postgresql/11/postgresql.conf
+git:
+- add: /database/docker-entrypoint-initdb.d/
+  to:  /docker-entrypoint-initdb.d/
+```
+{% endraw %}
+
+### Payment gateway
+
+It is the `payment_gw` image. This image is an example of the payment gateway application. It does nothing except infinitely writes messages to stdout. Payment gateway acts as another component of the application.
+
+{% raw %}
+```yaml
+dimg: payment_gw
+from: alpine
+docker:
+  CMD: ["/home/payment/process.sh"]
+ansible:
+  beforeInstall:
+  - name: "Create payment user"
+    user:
+      name: payment
+      comment: "Payment user"
+      shell: /bin/sh
+      home: /home/payment
+  - file:
+      path: /run/secrets
+      state: directory
+      owner: payment
+  - copy:
+      content: |
+        production
+      dest: /run/secrets/payment_token
+git:
+- add: /payment_gateway/process.sh
+  to: /home/payment/process.sh
+  owner: payment
+```
+{% endraw %}
 
 ## Step 1: Clone the application repository
 
@@ -211,9 +221,9 @@ git:
 - add: /app/react-app
   to: /usr/src/atsea/app/react-app
   stageDependencies:
-    install: 
+    install:
     - package.json
-    setup: 
+    setup:
     - src
     - public
 shell:
@@ -233,9 +243,9 @@ git:
 - add: /app
   to: /usr/src/atsea
   stageDependencies:
-    install: 
+    install:
     - pom.xml
-    setup: 
+    setup:
     - src
 shell:
   install:
