@@ -52,7 +52,7 @@ import:
   after: install
 ```
 
-### Storefront artifact
+#### Storefront artifact
 
 Builds assets. After building dapp imports assets into the `/static` directory of the `app` image. To increase the efficiency of the building `storefront` image, build instructions divided into two stages — _install_ and _setup_.
 
@@ -77,7 +77,7 @@ shell:
   - npm run build
 ```
 
-### Appserver artifact
+#### Appserver artifact
 
 Builds a Java code. Dapp imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar` into the `/app` directory of the `app` image. To increase the efficiency of the building `appserver` image, build instructions divided into two stages — _install_ and _setup_. Also, the `/usr/share/maven/ref/repository` directory mounts with the `build_dir` directives to allow some caching (read more about mount directives [here]({{ site.baseurl }}/reference/build/mount_directive.html)).
 
