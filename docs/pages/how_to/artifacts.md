@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-When building an application image, there are often step on it is necessary to download package, build code and so on. In the results, the size of the final image can increase.
+When you build an application image, it is often necessary to download package, build source code and so on. In the results, the application image contains files that are not needed to run the application.
 
 Dapp has artifacts, to reduce the size of the final image. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but more convenient (and appeared much earlier).
 
