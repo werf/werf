@@ -62,5 +62,5 @@ it is reasonable to store its description with _dimgs_ and _artifacts_ which are
 Also, this method can be helpful if the stages of _stage conveyor_ are not enough for building an image. You can design your _stage conveyor_.
 
 <a href="https://docs.google.com/drawings/d/e/2PACX-1vQFIMrYCWTPiLImK3QSDl-b_Ch_mEIy8zCK-S_v6oeeuz6UXISDxXVcXqHO2wH1Oa9Y9RJIQU33rRfE/pub?w=1629&amp;h=1435" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vQFIMrYCWTPiLImK3QSDl-b_Ch_mEIy8zCK-S_v6oeeuz6UXISDxXVcXqHO2wH1Oa9Y9RJIQU33rRfE/pub?w=815&amp;h=718">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vQFIMrYCWTPiLImK3QSDl-b_Ch_mEIy8zCK-S_v6oeeuz6UXISDxXVcXqHO2wH1Oa9Y9RJIQU33rRfE/pub?w=900&amp;h=793">
 </a>
