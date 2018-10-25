@@ -373,5 +373,5 @@ The total size difference between `v1.0` and `v2.0` images is about 730 MB (the 
 ## What Can Be Improved
 
 * Use a smaller base image instead of ubuntu, such as [alpine](https://hub.docker.com/_/alpine/) or [golang](https://hub.docker.com/_/golang/).
-* Using [dapp artifacts]({{ site.baseurl }}/reference/build/artifact_directive.html) in many cases can give more efficient.
+* Using [dapp artifacts]({{ site.baseurl }}/reference/build/artifact.html) in many cases can give more efficient.
   The size of `/app` directory in the final image is about only 17 MB (you can check it by executing `dapp dimg run --rm -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in dapp artifact and then import only the resulting `/app` directory.

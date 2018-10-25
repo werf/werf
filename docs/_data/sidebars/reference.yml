@@ -43,7 +43,7 @@ entries:
         url: /reference/build/dimg_directives.html
 
     - title: Artifact configuration
-      url: /reference/build/artifact_directive.html
+      url: /reference/build/artifact.html
 
     - title: Developer tools
       sfi:

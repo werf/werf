@@ -49,7 +49,7 @@ fromCacheVersion: {{ env "FROM_IMAGE_DIGEST" }}
 
 ## fromDimg and fromDimgArtifact
 
-Besides using docker image from a repository, _base image_ can refer to _dimg_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact_directive.html), described in the same `dappfile.yml`.
+Besides using docker image from a repository, _base image_ can refer to _dimg_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact.html), described in the same `dappfile.yml`.
 
 ```yaml
 fromDimg: <dimg name>

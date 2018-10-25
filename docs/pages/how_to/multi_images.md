@@ -27,7 +27,7 @@ It's frontend written in React and backend written in Java Spring Boot. There wi
 
 ### Backend
 
-It is the `app` image. The backend container handles HTTP requests from the frontend container. The source code of the application is in the `/app` directory. It consists of Java application and ReactJS application. To build the backend image there are two artifact images (read more about artifacts [here]({{ site.baseurl }}/reference/build/artifact_directive.html)) - `storefront` and `appserver`.
+It is the `app` image. The backend container handles HTTP requests from the frontend container. The source code of the application is in the `/app` directory. It consists of Java application and ReactJS application. To build the backend image there are two artifact images (read more about artifacts [here]({{ site.baseurl }}/reference/build/artifact.html)) - `storefront` and `appserver`.
 
 Image of the backend base on the official java image. It uses files from artifacts and doesn't need any steps for downloading packages or building.
 

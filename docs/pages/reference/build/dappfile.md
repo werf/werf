@@ -21,7 +21,7 @@ YAML_DOC
 YAML_DOC
 ```
 
-Dapp represents YAML document as an internal object. Currently, dapp supports two object types, [dimg]({{ site.baseurl }}/reference/build/naming.html) and [artifact]({{ site.baseurl }}/reference/build/artifact_directive.html). 
+Dapp represents YAML document as an internal object. Currently, dapp supports two object types, [dimg]({{ site.baseurl }}/reference/build/naming.html) and [artifact]({{ site.baseurl }}/reference/build/artifact.html). 
 
 _Dimg_ is the named set of rules, an internal representation of user image. An artifact is a special dimg that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).  
 

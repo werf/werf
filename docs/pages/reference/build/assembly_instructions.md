@@ -433,7 +433,7 @@ depends on:
 - changes in assembly instructions
 - changes of _cacheVersion directives_
 - git repository changes
-- changes in files that imports from an [artifacts]({{ site.baseurl }}/reference/build/artifact_directive.html)
+- changes in files that imports from an [artifacts]({{ site.baseurl }}/reference/build/artifact.html)
 
 First three dependencies are described further.
 

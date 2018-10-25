@@ -1,7 +1,7 @@
 ---
 title: Using artifacts
 sidebar: reference
-permalink: reference/build/artifact_directive.html
+permalink: reference/build/artifact.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <a href="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=1914&amp;h=721" data-featherlight="image">
