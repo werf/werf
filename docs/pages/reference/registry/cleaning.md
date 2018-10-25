@@ -150,10 +150,9 @@ Reset is the fullest method of cleaning on the local machine.
 dapp dimg mrproper [--all] [--improper-cache-version-stages] [--improper-dev-mode-cache]
 ```
 
-* `--all` — dapp deletes stages cache with all of images and containers ever dapp created in local storage.
-* `--improper-cache-version-stages` — like the `--all` parameter, but dapp deletes stages cache, images, and containers created by versions of dapp older than current;
-* `--improper-dev-mode-cache` — dapp deletes cache, images and container created in developer mode (`--dev` option).
-
+* `--improper-cache-version-stages` — delete stages cache, images, and containers created by versions of dapp older than current.
+* `--improper-dev-mode-cache` — delete stages cache, images and container created in developer mode (`--dev` option).
+* `--all` — delete stages cache with all of images and containers ever dapp created in local storage. This option superseedes any other options specified. That means images targeted by options `--improper-cache-version-stages` and `--improper-dev-mode-cache` will also be deleted.
 
 ## Examples
 
