@@ -7,9 +7,9 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-When building an application image, there are often step on it is necessary to download package, build code and so on. In the results, the size of the final image can increase
+When building an application image, there are often step on it is necessary to download package, build code and so on. In the results, the size of the final image can increase.
 
-Dapp has artifacts, to reduce the size of the final image. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but more efficient and convenient (and appeared much earlier).
+Dapp has artifacts, to reduce the size of the final image. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but more convenient (and appeared much earlier).
 
 In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce final image size with using mount directives.
 
