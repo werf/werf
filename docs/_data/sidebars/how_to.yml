@@ -20,3 +20,6 @@ entries:
 
   - title: Building multiple images
     url: /how_to/multi_images.html
+
+  - title: Using artifacts
+    url: /how_to/artifacts.html
