@@ -1,7 +1,7 @@
 ---
-title: Build, run and push
+title: Getting started
 sidebar: how_to
-permalink: how_to/build_run_and_push.html
+permalink: how_to/getting_started.html
 author: Ivan Mikheykin <ivan.mikheykin@flant.com>
 ---
 

@@ -6,8 +6,8 @@ entries:
   - title: Installation
     url: /how_to/installation.html
 
-  - title: Build, run and push
-    url: /how_to/build_run_and_push.html
+  - title: Getting started
+    url: /how_to/getting_started.html
 
   - title: Deploy into kubernetes
     url: /how_to/deploy_into_kubernetes.html
@@ -15,11 +15,14 @@ entries:
   - title: Gitlab CI/CD integration
     url: /how_to/gitlab_ci_cd_integration.html
 
-  - title: Using mounts
-    url: /how_to/mounts.html
+  - title: Advanced build
+    sf:
 
-  - title: Building multiple images
-    url: /how_to/multi_images.html
+    - title: Building multiple images
+      url: /how_to/multi_images.html
 
-  - title: Using artifacts
-    url: /how_to/artifacts.html
+    - title: Using mounts
+      url: /how_to/mounts.html
+
+    - title: Using artifacts
+      url: /how_to/artifacts.html

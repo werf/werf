@@ -126,7 +126,7 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
 
 Now you have dapp installed. Check it with `dapp --version`.
 
-Time to [make your first dapp application](https://flant.github.io/dapp/how_to/build_run_and_push.html)!
+Time to [make your first dapp application](https://flant.github.io/dapp/how_to/getting_started.html)!
 
 # Docs and Support
 
