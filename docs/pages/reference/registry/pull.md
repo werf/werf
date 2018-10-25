@@ -31,16 +31,16 @@ Command used to pull stages cache from the specified docker registry. Call comma
 
 Dapp pull command optimized to pull only single cache stage for each dimg, that needed to rebuild _current state_ of the dimg.
 
-For example there was a change in `beforeSetup` stage of the dimg since last project build. Dapp pull command:
+For example, there was a change in `beforeSetup` stage of the dimg since last project build. Dapp pull command:
 
-1. Calculates current state of the stage cache and realizes, that there are change in `beforeSetup` stage.
+1. Calculates current state of the stage cache and realizes, that there is a change in `beforeSetup` stage.
 2. Downloads `install` (the stage prior `beforeSetup`) stage from docker registry. `beforeInstall` stage will not be downloaded, because only `install` stage is needed to rebuild `beforeSetup` and further stages.
 
-Pulled stage can be used by multiple dimgs of the same dappfile in the case, when this stage is common between multiple dimgs.
+A pulled stage can be used by multiple dimgs of the same dappfile in the case when this stage is common between multiple dimgs.
 
 In other words, dapp downloads from cache **last common stage** between old and new dimg state.
 
-There is also an option to turn off this optimized behaviour and always pull all stages.
+There is also an option to turn off this optimized behavior and always pull all stages.
 
 ### Syntax
 
