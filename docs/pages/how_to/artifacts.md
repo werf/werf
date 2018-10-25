@@ -148,7 +148,7 @@ import:
 ```
 {% endraw %}
 
-In the optimized dappfile, we build the application in the `booking-app` artifact and import the '/app' directory into the `go-booking` dimg.
+In the optimized dappfile, we build the application in the `booking-app` artifact and import the `/app` directory into the `go-booking` dimg.
 
 Pay attention, that `go-booking` dimg based on the ubuntu image, but not on the golang image.
 
