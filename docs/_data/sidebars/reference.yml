@@ -42,8 +42,8 @@ entries:
       - title: All directives
         url: /reference/build/dimg_directives.html
 
-    - title: Using artifacts
-      url: /reference/build/artifact_directive.html
+    - title: Artifact configuration
+      url: /reference/build/artifact.html
 
     - title: Developer tools
       sfi:

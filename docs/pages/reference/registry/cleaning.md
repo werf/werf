@@ -79,7 +79,7 @@ For docker registry authorization in garbage collection, dapp require the `DAPP_
 
 ### Syntax
 
-```
+```bash
 dapp dimg cleanup repo [--with-stages=false]
 ```
 
@@ -98,10 +98,10 @@ There are some consequences of this algorithm:
 
 ### Syntax
 
-```
+```bash
 dapp dimg stages cleanup local [options] REPO
-    --improper-cache-version
-    --improper-repo-cache
+  --improper-cache-version
+  --improper-repo-cache
 ```
 
 `--improper-cache-version` —  dapp deletes images built by another dapp version.
@@ -124,13 +124,13 @@ Docker registry cleaning includes:
 
 ### Syntax
 
-```
+```bash
 dapp dimg flush local [--with-stages]
 ```
 
 The command deletes images of the current project only in the local storage.
 
-```
+```bash
 dapp dimg flush repo REPO [--with-stages]
 ```
 
@@ -146,7 +146,7 @@ Reset is the fullest method of cleaning on the local machine.
 
 ### Syntax
 
-```
+```bash
 dapp dimg mrproper [--all] [--improper-cache-version-stages] [--improper-dev-mode-cache]
 ```
 
@@ -160,7 +160,7 @@ dapp dimg mrproper [--all] [--improper-cache-version-stages] [--improper-dev-mod
 
 Given dappfile with two dimgs. Images succesfully built and tagged.
 
-```
+```bash
 dapp dimg flush local --with-stages
 ```
 
@@ -170,11 +170,11 @@ Command deletes all tagged images, and delete stages cache.
 
 Given several dapp projects.
 
-```
+```bash
 dapp dimg mrproper --all --improper-cache-version-stages --improper-dev-mode-cache
 ```
 
-Command delete every image created by dapp. Other docker images like image specified in `from:` directive in dappfile - remains.
+Command delete every image created by dapp. Other docker images like image specified in `from` directive in dappfile - remains.
 
 ### Cleaning GitLab CI docker registry
 
@@ -182,13 +182,13 @@ Given project, where dapp executes with `--tag-ci` option to push images.
 
 On the first step, the following command performs garbage collection in repo:
 
-```
+```bash
 dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
 ```
 
 On the second step, the following command performs synchronizing of local storage with the registry:
 
-```
+```bash
 dapp dimg stages cleanup local --improper-cache-version --improper-repo-cache ${CI_REGISTRY_IMAGE}
 ```
 

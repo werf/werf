@@ -42,7 +42,7 @@ shell:
 
 We run an assembly:
 
-```shell
+```bash
 $ dapp dimg build --force-save-cache
 nameless: calculating stages signatures                                     [RUNNING]
 nameless: calculating stages signatures                                          [OK] 0.16 sec
@@ -120,7 +120,7 @@ git:
 
 Assembling:
 
-```shell
+```bash
 $ dapp dimg build --force-save-cache
 nameless: calculating stages signatures                                     [RUNNING]
   Repository `own`: latest commit `3d70fcec74abf7b8197230830bb6d7ccf5826952` to `/app`
@@ -182,7 +182,7 @@ cp: cannot stat '/app/hello': No such file or directory
 >>> END STREAM
 ```
 
-During assembly, dapp notices adding assembly instructions to _install stage_ and builds it. Before _install stage_ assembly, dapp builds _g_a_pre_install_patch stage_ (`Git artifacts: apply patches (before install)`). This approach is needed to use actual condition of git repository during _install stage_ assembly (read more about it in [separate article](/reference/build/assembly_instructions.html)).
+During assembly, dapp notices adding assembly instructions to _install stage_ and builds it. Before _install stage_ assembly, dapp builds _g_a_pre_install_patch stage_ (`Git artifacts: apply patches (before install)`). This approach is needed to use actual condition of git repository during _install stage_ assembly (read more about it in [separate article]({{ site.baseurl }}/reference/build/assembly_instructions.html)).
 
 We add the `hello` file to git repository to fix the error. Then run re-assembly and see the same error: there is no `hello` file.
 

@@ -5,7 +5,6 @@
   <a href="https://badge.fury.io/rb/dapp"><img alt="Gem Version" src="https://badge.fury.io/rb/dapp.svg" style="max-width:100%;"></a>
   <a href="https://travis-ci.org/flant/dapp"><img alt="Build Status" src="https://travis-ci.org/flant/dapp.svg" style="max-width:100%;"></a>
   <a href="https://codeclimate.com/github/flant/dapp"><img alt="Code Climate" src="https://codeclimate.com/github/flant/dapp/badges/gpa.svg" style="max-width:100%;"></a>
-  <a href="https://codeclimate.com/github/flant/dapp/coverage"><img alt="Test Coverage" src="https://codeclimate.com/github/flant/dapp/badges/coverage.svg" style="max-width:100%;"></a>
 </p>
 
 ___
@@ -126,7 +125,7 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
 
 Now you have dapp installed. Check it with `dapp --version`.
 
-Time to [make your first dapp application](https://flant.github.io/dapp/how_to/build_run_and_push.html)!
+Time to [make your first dapp application](https://flant.github.io/dapp/how_to/getting_started.html)!
 
 # Docs and Support
 

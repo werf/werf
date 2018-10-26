@@ -39,6 +39,6 @@ import:
   after: install
 ```
 
-As in the case of adding _git-paths_, masks are supported for including and excluding files from the specified path, and you can also specify the rights for the imported resources. Read more about these in the [git directive article]({{ site.baseurl }}/reference/build/git_directive.html).
+As in the case of adding _git paths_, masks are supported for including and excluding files from the specified path, and you can also specify the rights for the imported resources. Read more about these in the [git directive article]({{ site.baseurl }}/reference/build/git_directive.html).
 
-> Import paths and _git-paths_ should not overlap with each other.
+> Import paths and _git paths_ should not overlap with each other.

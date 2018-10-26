@@ -22,7 +22,7 @@ To use dapp mount from `build_dir` option `--build-dir=/tmp/dapp_build` required
 
 1. Run host-system preparation script:
 
-```
+```bash
 ./pre-vagrant-prepare
 ```
 
@@ -31,6 +31,6 @@ To use dapp mount from `build_dir` option `--build-dir=/tmp/dapp_build` required
 
 2. Run vagrant:
 
-```
+```bash
 vagrant up
 ```

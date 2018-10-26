@@ -11,7 +11,7 @@ There are several categories of commands that work with docker registry, thus ne
 * [Push commands]({{ site.baseurl }}/reference/registry/push.html) used to create and update images in docker registry.
 * [Pull commands]({{ site.baseurl }}/reference/registry/pull.html) used to pull build cache from docker registry.
 * [Cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html) used to delete images from docker registry.
-* [Deploy commands]({{ site.baseurl }}/reference/deploy/deployment_to_kubernetes.html#dapp-kube-deploy) used to read meta information about images from docker registry during deploy.
+* [Deploy commands]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#dapp-kube-deploy) used to read meta information about images from docker registry during deploy.
 
 Dapp uses the same procedure to authorize in the docker registry as the docker client does. Docker client command `docker login` is used to authorize in docker registry. This command creates new **docker config** directory (`~/.docker` by default) or updates existing one with credentials that can be used to make docker registry operations. The process of creating such config will be referred as **login procedure**.
 
@@ -57,7 +57,7 @@ Running in gitlab environment dapp build command will perform autologin procedur
 
 For example, given this build configuration:
 
-```
+```yaml
 from: registry.myhost.com/sys/project/image:v2.1.0
 ```
 
@@ -79,38 +79,38 @@ Options `--registry-username` and `--registry-password` can be used for dapp com
 
 Run dapp command without login options. Autologin procedure is enabled in this case:
 
-```
+```bash
 dapp dimg push registry.myhost.com/web/backend
 ```
 
 Run dapp command with a manually specified user and password for docker registry:
 
-```
+```bash
 dapp dimg push registry.myhost.com/web/backend --registry-username=myuser --registry-password=mypassword
 ```
 
 Run dapp command with disabled autologin procedure:
 
-```
+```bash
 DAPP_IGNORE_CI_DOCKER_AUTOLOGIN=1 dapp dimg push registry.myhost.com/web/backend
 ```
 
 Run dapp cleaning command with a special token for autologin procedure:
 
-```
+```bash
 export DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD="A3XewXjfldf"
 dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
 ```
 
 Run dapp cleaning command with a manually specified user and password:
 
-```
+```bash
 dapp dimg cleanup repo registry.myhost.com/web/backend --registry-username=myuser --registry-password=mypassword
 ```
 
 Run dapp command with external docker config. Dapp will not perform the login procedure in this case:
 
-```
+```bash
 export DAPP_DOCKER_CONFIG=./.docker
 dapp dimg push registry.myhost.com/web/backend
 ```

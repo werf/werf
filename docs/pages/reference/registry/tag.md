@@ -18,15 +18,15 @@ Unlike `docker tag` command, which simply creates an alias for the specified ima
 
 ## Syntax
 
-```
+```bash
 dapp dimg tag [options] [DIMG ...] REPO
-        --tag TAG
-        --tag-branch
-        --tag-build-id
-        --tag-ci
-        --tag-commit
-        --tag-plain TAG
-        --tag-slug TAG
+  --tag TAG
+  --tag-branch
+  --tag-build-id
+  --tag-ci
+  --tag-commit
+  --tag-plain TAG
+  --tag-slug TAG
 ```
 
 This command supports tag options, described in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#image-tag-parameters) article.
@@ -41,7 +41,7 @@ The `REPO` required parameter — is a repository name (see more in [image namin
 
 Given dappfile with three dimgs — `backend`, `frontend` and `assets`.
 
-```
+```bash
 dapp dimg tag registry.hello.com/web/core/system --tag-plain v1.3.0
 ```
 
@@ -55,7 +55,7 @@ Command creates three local docker images:
 
 Given dappfile with three dimgs — `backend`, `frontend` and `assets`.
 
-```
+```bash
 dapp dimg tag frontend assets registry.hello.com/web/core/system --tag-plain v1.3.0
 ```
 
@@ -66,7 +66,7 @@ Command creates two local docker images for specified dimgs:
 
 ### Tag single unnamed dimg with multiple docker tags
 
-```
+```bash
 dapp dimg tag registry.hello.com/tools/archiver --tag-plain v2.9.13 --tag fix/memory-leak
 ```
 

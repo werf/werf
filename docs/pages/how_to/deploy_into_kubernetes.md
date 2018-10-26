@@ -241,4 +241,4 @@ dapp kube dismiss :minikube --namespace mynamespace --with-namespace
 
 ## See also
 
-For all dapp deploy features such as secrets [take a look at reference]({{ site.baseurl }}/reference/deploy/deployment_to_kubernetes.html).
+For all dapp deploy features such as secrets [take a look at reference]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html).

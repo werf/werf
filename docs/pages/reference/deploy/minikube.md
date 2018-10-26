@@ -13,7 +13,7 @@ To use dapp for deployment of images in minikube:
 
 ### dapp kube minikube setup
 
-```
+```bash
 dapp kube minikube setup
 ```
 

@@ -29,6 +29,9 @@ _Dapp name_ can be explicitly specified with `--name` basic option of the most d
 
 The dapp assembly process is a sequential build of _stages_.
 
+## User stage
+— is a _stage_ with assembly instructions from dappfile.
+
 ## Stage assembly container
 — is container for assembling stage instructions based on previous stage image (or on _base image_ for _from stage_).
 

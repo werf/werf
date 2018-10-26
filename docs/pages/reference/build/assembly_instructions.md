@@ -256,7 +256,7 @@ _Ansible assembly instructions_ for _user stage_ is a set of ansible tasks. To r
 this tasks with `ansible-playbook` command dapp mounts this directory structure
 into the _user stage assembly container_:
 
-```
+```bash
 /.dapp/ansible-workdir
 ├── ansible.cfg
 ├── hosts
@@ -433,7 +433,7 @@ depends on:
 - changes in assembly instructions
 - changes of _cacheVersion directives_
 - git repository changes
-- changes in files that imports from an [artifacts]({{ site.baseurl }}/reference/build/artifact_directive.html)
+- changes in files that imports from an [artifacts]({{ site.baseurl }}/reference/build/artifact.html)
 
 First three dependencies are described further.
 

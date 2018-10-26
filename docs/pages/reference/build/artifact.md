@@ -1,7 +1,7 @@
 ---
 title: Using artifacts
 sidebar: reference
-permalink: reference/build/artifact_directive.html
+permalink: reference/build/artifact.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <a href="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=1914&amp;h=721" data-featherlight="image">
@@ -9,7 +9,7 @@ summary: |
   </a>
 ---
 
-The size of the final image can be increased several times due to the assembly tools and source files, while the user does not need them. 
+The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them. 
 
 To solve such problems, the Docker community suggests doing the installation of tools, the assembly, and removal of tools in one step.
 
