@@ -26,7 +26,7 @@ In the process of assembling, you can access a certain _stage_ using introspecti
 **During development**, introspection makes it possible to achieve the required outcomes in an _assembly container_, and then transfer all the steps and instructions into the configuration of the appropriate _stage_. This approach is useful when the set objective is clear, although the steps to achieve it are not so obvious and require a great deal of experiment.
 
 <div class="videoWrapper">
-<iframe width="560" height="315" src="https://www.youtube.com/embed/VEFapPLXxcE" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/quoWwLSM_-4" frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
 </div>
                   
 **During debugging**, introspection allows you to see why assembling ended with an error or the result was unexpected, to check whether dependent files are present and to check the system state.
