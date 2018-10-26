@@ -96,59 +96,59 @@ entries:
     - title: Using Minikube
       url: /reference/deploy/minikube.html
 
-  - title: CLI
-    fi:
-
-    - title: dimg build
-      url: /reference/cli/dimg_build.html
-
-    - title: dimg build-context
-      url: /reference/cli/dimg_build_context.html
-
-    - title: dimg cleanup
-      url: /reference/cli/dimg_cleanup.html
-
-    - title: dimg flush
-      url: /reference/cli/dimg_flush.html
-
-    - title: dimg list
-      url: /reference/cli/dimg_list.html
-
-    - title: dimg mrproper
-      url: /reference/cli/dimg_mrproper.html
-
-    - title: dimg push
-      url: /reference/cli/dimg_push.html
-
-    - title: dimg run
-      url: /reference/cli/dimg_run.html
-
-    - title: dimg slug
-      url: /reference/cli/dimg_slug.html
-
-    - title: dimg stages
-      url: /reference/cli/dimg_stages.html
-
-    - title: kube chart create
-      url: /reference/cli/kube_chart_create.html
-
-    - title: kube deploy
-      url: /reference/cli/kube_deploy.html
-
-    - title: kube dismiss
-      url: /reference/cli/kube_dismiss.html
-
-    - title: kube lint
-      url: /reference/cli/kube_lint.html
-
-    - title: kube render
-      url: /reference/cli/kube_render.html
-
-    - title: kube secret
-      url: /reference/cli/kube_secret.html
-
-    - title: kube value
-      url: /reference/cli/kube_value.html
+#  - title: CLI
+#    fi:
+#
+#    - title: dimg build
+#      url: /reference/cli/dimg_build.html
+#
+#    - title: dimg build-context
+#      url: /reference/cli/dimg_build_context.html
+#
+#    - title: dimg cleanup
+#      url: /reference/cli/dimg_cleanup.html
+#
+#    - title: dimg flush
+#      url: /reference/cli/dimg_flush.html
+#
+#    - title: dimg list
+#      url: /reference/cli/dimg_list.html
+#
+#    - title: dimg mrproper
+#      url: /reference/cli/dimg_mrproper.html
+#
+#    - title: dimg push
+#      url: /reference/cli/dimg_push.html
+#
+#    - title: dimg run
+#      url: /reference/cli/dimg_run.html
+#
+#    - title: dimg slug
+#      url: /reference/cli/dimg_slug.html
+#
+#    - title: dimg stages
+#      url: /reference/cli/dimg_stages.html
+#
+#    - title: kube chart create
+#      url: /reference/cli/kube_chart_create.html
+#
+#    - title: kube deploy
+#      url: /reference/cli/kube_deploy.html
+#
+#    - title: kube dismiss
+#      url: /reference/cli/kube_dismiss.html
+#
+#    - title: kube lint
+#      url: /reference/cli/kube_lint.html
+#
+#    - title: kube render
+#      url: /reference/cli/kube_render.html
+#
+#    - title: kube secret
+#      url: /reference/cli/kube_secret.html
+#
+#    - title: kube value
+#      url: /reference/cli/kube_value.html
 
   - title: Glossary
     url: /reference/glossary.html
