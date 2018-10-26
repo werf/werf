@@ -212,6 +212,7 @@ func (c *StageContainer) inheritedCommitOptions() (*StageContainerOptions, error
 
 	inheritedOptions.Entrypoint = fromImageInspect.Config.Entrypoint
 	inheritedOptions.Cmd = fromImageInspect.Config.Cmd
+	inheritedOptions.User = fromImageInspect.Config.User
 	if fromImageInspect.Config.WorkingDir != "" {
 		inheritedOptions.Workdir = fromImageInspect.Config.WorkingDir
 	} else {
