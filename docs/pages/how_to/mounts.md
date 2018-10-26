@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce final image size with using mount directives.
+In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce image size with using mount directives.
 
 ## Sample application
 
@@ -104,7 +104,7 @@ The `revel framework booking demo` page should open, and you can login by enteri
 
 ### Getting the application image size
 
-Create a final image with tag `v1.0`:
+Create a image with tag `v1.0`:
 
 ```bash
 dapp dimg tag booking --tag-plain v1.0
@@ -134,11 +134,11 @@ dimgstage-booking     bf057acfb01...5d4b   97ea9a99ddb2        49 minutes ago   
 dimgstage-booking     41772c141b1...9a11   66ce7d681e8d        52 minutes ago      84.1 MB
 ```
 
-Pay attention, that the final image size of the application is **above 1 GB**.
+Pay attention, that the image size of the application is **above 1 GB**.
 
 ## Optimizing
 
-There are often a lot of useless files in the image. In our example application, these are — APT cache and GO sources. Also, after building the application, the GO itself is not needed to run the application and can be removed from the final image.
+There are often a lot of useless files in the image. In our example application, these are — APT cache and GO sources. Also, after building the application, the GO itself is not needed to run the application and can be removed from the image.
 
 ### Optimizing APT cache
 
@@ -156,9 +156,9 @@ mount:
 
 Read more about mount directives [here]({{ site.baseurl }}/reference/build/mount_directive.html).
 
-The `/var/lib/apt/lists` directory is filling in the build-time, but in the final image, it is empty.
+The `/var/lib/apt/lists` directory is filling in the build-time, but in the image, it is empty.
 
-The `/var/cache/apt/` directory is caching in the `~/.dapp/builds/booking/mount` directory but in the final image, it is empty. Mounts work only during dapp assembly process. So, if you change stages instructions and rebuild your project, the `/var/cache/apt/` will already contain packages downloaded earlier.
+The `/var/cache/apt/` directory is caching in the `~/.dapp/builds/booking/mount` directory but in the image, it is empty. Mounts work only during dapp assembly process. So, if you change stages instructions and rebuild your project, the `/var/cache/apt/` will already contain packages downloaded earlier.
 
 Official Ubuntu image contains special hooks that remove APT cache after image build. To disable these hooks, add the following task to a beforeInstall stage of the dappfile:
 
@@ -174,7 +174,7 @@ ansible:
 
 ### Optimizing builds
 
-In the example application, the GO is downloaded and extracted. The GO source is not needed in the final image. After the application is built, the GO itself is also not needed in the final image. So mount `/usr/local/src` and `/usr/local/go` directories to place them outside the image.
+In the example application, the GO is downloaded and extracted. The GO source is not needed in the image. After the application is built, the GO itself is also not needed in the image. So mount `/usr/local/src` and `/usr/local/go` directories to place them outside the image.
 
 Building application on the setup stage uses the `/go` directory, specified in the `GOPATH` environment variable. This directory contains necessary packages and application source. After the build, the result is placed in the `/app` directory, and the `/go` directory is not needed to run the application. So, the `/go` directory can be mounted to a temporary place, outside of the image.
 
@@ -301,13 +301,13 @@ The `revel framework booking demo` page should open, and you can login by enteri
 
 ### Getting images size
 
-Create a final image with tag `v2.0`:
+Create a image with tag `v2.0`:
 
 ```bash
 dapp dimg tag booking --tag-plain v2.0
 ```
 
-Determine the final image size of optimized build, by executing:
+Determine the image size of optimized build, by executing:
 ```bash
 docker images booking/go-booking
 ```
@@ -362,16 +362,16 @@ The output will be like this:
 592M    /home/user/.dapp/builds/booking/mount
 ```
 
-`592MB` is a size of files excluded from final image, but these files are accessible, in case of rebuild image and also they can be mounted in other dimgs in this project. E.g., if you add dimg based on Ubuntu, you can mount `/var/cache/apt` with `from: build_dir` and use already downloaded packages.
+`592MB` is a size of files excluded from image, but these files are accessible, in case of rebuild image and also they can be mounted in other dimgs in this project. E.g., if you add dimg based on Ubuntu, you can mount `/var/cache/apt` with `from: build_dir` and use already downloaded packages.
 
-Also, approximately `77MB` of space occupy files in directories mounted with `from: tmp_dir`. These files also excluded from the final image and deleted from the host at the end of image building.
+Also, approximately `77MB` of space occupy files in directories mounted with `from: tmp_dir`. These files also excluded from the image and deleted from the host at the end of image building.
 
 The total size difference between `v1.0` and `v2.0` images is about 730 MB (the result of 1.04 GB — 335 MB).
 
-**Our example shows that with using dapp mounts the final image size smaller by more than 68% than the original image size!**
+**Our example shows that with using dapp mounts the image size smaller by more than 68% than the original image size!**
 
 ## What Can Be Improved
 
 * Use a smaller base image instead of ubuntu, such as [alpine](https://hub.docker.com/_/alpine/) or [golang](https://hub.docker.com/_/golang/).
 * Using [dapp artifacts]({{ site.baseurl }}/reference/build/artifact.html) in many cases can give more efficient.
-  The size of `/app` directory in the final image is about only 17 MB (you can check it by executing `dapp dimg run --rm -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in dapp artifact and then import only the resulting `/app` directory.
+  The size of `/app` directory in the image is about only 17 MB (you can check it by executing `dapp dimg run --rm -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in dapp artifact and then import only the resulting `/app` directory.
