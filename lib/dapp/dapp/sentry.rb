@@ -71,14 +71,15 @@ module Dapp
           "dapp-build-cache-version" => ::Dapp::BUILD_CACHE_VERSION,
           "dapp-command" => self.options[:dapp_command],
         }.tap {|tags|
-          if git_own_repo_exist? && git_own_repo.remote_origin_url
-            tags["git-host"] = self.get_host_from_git_url(git_own_repo.remote_origin_url)
+          # FIXME: precache this info after Dapp object initialization
+          #if git_own_repo_exist? && git_own_repo.remote_origin_url
+            #tags["git-host"] = self.get_host_from_git_url(git_own_repo.remote_origin_url)
 
-            git_name = self.git_url_to_name(git_own_repo.remote_origin_url)
+            #git_name = self.git_url_to_name(git_own_repo.remote_origin_url)
 
-            tags["git-group"] = git_name.partition("/")[0]
-            tags["git-name"] = git_name
-          end
+            #tags["git-group"] = git_name.partition("/")[0]
+            #tags["git-name"] = git_name
+          #end
 
           begin
             ver = self.class.host_docker_minor_version
