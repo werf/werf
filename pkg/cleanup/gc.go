@@ -352,15 +352,13 @@ func repoDimgsCleanupByPolicy(repoDimgs, repoDimgsWithScheme []docker_registry.R
 			repoDimgs = exceptRepoImages(repoDimgs, expiredRepoDimgs...)
 		}
 
-		for repository, repositoryRepoDimgs := range repoDimgsByRepository {
-			if int64(len(repositoryRepoDimgs)) > options.expiryLimit {
-				fmt.Printf("%s: git %s limit policy (> %d)\n", repository, options.gitPrimitive, options.expiryLimit)
-				if err := repoImagesRemove(repositoryRepoDimgs[options.expiryLimit:], options.commonRepoOptions); err != nil {
-					return nil, err
-				}
-				fmt.Println()
-				repoDimgs = exceptRepoImages(repoDimgs, repositoryRepoDimgs[options.expiryLimit:]...)
+		if int64(len(notExpiredRepoDimgs)) > options.expiryLimit {
+			fmt.Printf("%s: git %s limit policy (> %d)\n", repository, options.gitPrimitive, options.expiryLimit)
+			if err := repoImagesRemove(notExpiredRepoDimgs[options.expiryLimit:], options.commonRepoOptions); err != nil {
+				return nil, err
 			}
+			fmt.Println()
+			repoDimgs = exceptRepoImages(repoDimgs, notExpiredRepoDimgs[options.expiryLimit:]...)
 		}
 	}
 
