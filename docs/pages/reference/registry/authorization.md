@@ -11,7 +11,7 @@ There are several categories of commands that work with docker registry, thus ne
 * [Push commands]({{ site.baseurl }}/reference/registry/push.html) used to create and update images in docker registry.
 * [Pull commands]({{ site.baseurl }}/reference/registry/pull.html) used to pull build cache from docker registry.
 * [Cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html) used to delete images from docker registry.
-* [Deploy commands]({{ site.baseurl }}/reference/deploy/deployment_to_kubernetes.html#dapp-kube-deploy) used to read meta information about images from docker registry during deploy.
+* [Deploy commands]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#dapp-kube-deploy) used to read meta information about images from docker registry during deploy.
 
 Dapp uses the same procedure to authorize in the docker registry as the docker client does. Docker client command `docker login` is used to authorize in docker registry. This command creates new **docker config** directory (`~/.docker` by default) or updates existing one with credentials that can be used to make docker registry operations. The process of creating such config will be referred as **login procedure**.
 

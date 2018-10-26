@@ -81,7 +81,7 @@ The temporary chart then passed to the helm. Dapp deletes this chart on the dapp
 
 ### Watch resources
 
-Dapp watches resources statuses and logs during the deploy process. More info is available in the [watch resources article]({{ site.baseurl }}/reference/deploy/watch_resources.html).
+Dapp watches resources statuses and logs during the deploy process. More info is available in the [watch resources article]({{ site.baseurl }}/reference/deploy/watch_kubernetes_resources.html).
 
 ## Dapp deploy command
 

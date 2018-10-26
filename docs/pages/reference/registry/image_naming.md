@@ -10,13 +10,13 @@ Dapp builds and tags docker images to run and push in a registry. For tagging im
 * [Push commands]({{ site.baseurl }}/reference/registry/push.html)
 * [Pull commands]({{ site.baseurl }}/reference/registry/pull.html)
 * [Cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html)
-* [Deploy commands]({{ site.baseurl }}/reference/deploy/deployment_to_kubernetes.html#dapp-kube-deploy)
+* [Deploy commands]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#dapp-kube-deploy)
 
 ## Dapp tag procedure
 
 In a Docker world a tag is a creating an alias name for existent docker image.
 
-In Dapp world tagging creates **a new image layer** with the specified name. Dapp stores internal service information about tagging schema in this layer (using docker labels). This information is referred to as image **meta-information**. Dapp uses this information in [deploying]({{ site.baseurl }}/reference/deploy/deployment_to_kubernetes.html#dapp-kube-deploy) and [cleaning]({{ site.baseurl }}/reference/registry/cleaning.html) processes.
+In Dapp world tagging creates **a new image layer** with the specified name. Dapp stores internal service information about tagging schema in this layer (using docker labels). This information is referred to as image **meta-information**. Dapp uses this information in [deploying]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#dapp-kube-deploy) and [cleaning]({{ site.baseurl }}/reference/registry/cleaning.html) processes.
 
 The procedure of creating such a layer will be referred to as **dapp tag procedure**.
  

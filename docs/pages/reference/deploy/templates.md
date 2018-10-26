@@ -18,7 +18,7 @@ You can create a chart structure using the `dapp kube chart create` command, app
 
 In the course of an application release, there is many ways of passing parameters:
 * using the `values.yaml` or `secret-values.yaml` files. Both methods are identical for access. The only difference is in the storage method; values of variables are encrypted in the `secret-values.yaml` file. Further, in the text, this difference will be ignored.
-* using the --set parameter in `dapp kube deploy` commands (see [section](deployment_to_kubernetes.html))
+* using the --set parameter in `dapp kube deploy` commands (see [section](deploy_to_kubernetes.html))
 * using environment variables.
 
 The `values.yaml` and `secret-values.yaml` files contain a description of the variables that are available in the templates. For instance, we have a `values.yaml` file:
