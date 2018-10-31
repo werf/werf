@@ -1,10 +1,12 @@
 package docker_registry
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 
@@ -133,7 +135,8 @@ func Tags(reference string) ([]string, error) {
 		return nil, fmt.Errorf("getting creds for %q: %v", repo, err)
 	}
 
-	tags, err := remote.List(repo, auth, http.DefaultTransport)
+	tags, err := remote.List(repo, auth, getHttpTransport())
+
 	if err != nil {
 		return nil, fmt.Errorf("reading tags for %q: %v", repo, err)
 	}
@@ -189,9 +192,9 @@ func ImageDelete(reference string) error {
 		return fmt.Errorf("getting creds for %q: %v", r, err)
 	}
 
-	if err := remote.Delete(r, auth, http.DefaultTransport); err != nil {
+	if err := remote.Delete(r, auth, getHttpTransport()); err != nil {
 		if strings.Contains(err.Error(), "UNAUTHORIZED") {
-			if gitlabRegistryDeleteErr := GitlabRegistryDelete(r, auth, http.DefaultTransport); gitlabRegistryDeleteErr != nil {
+			if gitlabRegistryDeleteErr := GitlabRegistryDelete(r, auth, getHttpTransport()); gitlabRegistryDeleteErr != nil {
 				if strings.Contains(gitlabRegistryDeleteErr.Error(), "UNAUTHORIZED") {
 					return fmt.Errorf("deleting image %q: %v", r, err)
 				}
@@ -263,10 +266,40 @@ func image(reference string) (v1.Image, name.Reference, error) {
 		return nil, nil, fmt.Errorf("parsing reference %q: %v", reference, err)
 	}
 
+	// FIXME: Hack for the go-containerregistry library,
+	// FIXME: that uses default transport without options to change transport to custom.
+	// FIXME: Needed for the insecure https registry to work.
+	oldDefaultTransport := http.DefaultTransport
+	http.DefaultTransport = getHttpTransport()
 	img, err := remote.Image(ref, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+	http.DefaultTransport = oldDefaultTransport
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("reading image %q: %v", ref, err)
 	}
 
 	return img, ref, nil
+}
+
+func getHttpTransport() (transport http.RoundTripper) {
+	transport = http.DefaultTransport
+
+	if os.Getenv("DAPP_INSECURE_REGISTRY") == "1" {
+		defaultTransport := http.DefaultTransport.(*http.Transport)
+
+		newTransport := &http.Transport{
+			Proxy:                 defaultTransport.Proxy,
+			DialContext:           defaultTransport.DialContext,
+			MaxIdleConns:          defaultTransport.MaxIdleConns,
+			IdleConnTimeout:       defaultTransport.IdleConnTimeout,
+			TLSHandshakeTimeout:   defaultTransport.TLSHandshakeTimeout,
+			ExpectContinueTimeout: defaultTransport.ExpectContinueTimeout,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+			TLSNextProto:          make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
+		}
+
+		transport = newTransport
+	}
+
+	return
 }
