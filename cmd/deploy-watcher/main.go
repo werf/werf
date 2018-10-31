@@ -30,7 +30,7 @@ func main() {
 
 		switch action := args["action"]; action {
 		case "watch job":
-			err := kubedog.WatchJobTillDone(resourceName, namespace)
+			err := kubedog.WatchJobTillDone(resourceName, namespace, nil)
 			if err != nil {
 				return nil, fmt.Errorf("error watching job `%s` in namespace `%s`: %s", resourceName, namespace, err)
 			}
