@@ -157,8 +157,14 @@ module Dapp
                   begin
                     watch_hooks.each do |job|
                       begin
-                        if ENV["KUBEDOG"]
-                          ruby2go_deploy_watcher("action" => "watch job", "resourceName" => job.name, "namespace" => release.namespace)
+                        if ENV["KUBEDOG"] != "0"
+                          timeout = self.options[:timeout] || 300
+                          ruby2go_deploy_watcher(
+                            "action" => "watch job",
+                            "resourceName" => job.name,
+                            "namespace" => release.namespace,
+                            "timeout" => timeout,
+                          )
                         else
                           Kubernetes::Manager::Job.new(self, job.name).watch_till_done!
                         end
@@ -220,11 +226,17 @@ module Dapp
 
               unless dry_run?
                 begin
-                  ::Timeout::timeout(self.options[:timeout] || 300) do
+                  timeout = self.options[:timeout] || 300
+                  ::Timeout::timeout(timeout) do
                     deployment_managers.each {|deployment_manager|
                       if deployment_manager.should_watch?
-                        if ENV["KUBEDOG"]
-                          ruby2go_deploy_watcher("action" => "watch deployment", "resourceName" => deployment_manager.name, "namespace" => release.namespace)
+                        if ENV["KUBEDOG"] == "1"
+                          ruby2go_deploy_watcher(
+                            "action" => "watch deployment",
+                            "resourceName" => deployment_manager.name,
+                            "namespace" => release.namespace,
+                            "timeout" => timeout,
+                          )
                         else
                           deployment_manager.watch_till_ready!
                         end
