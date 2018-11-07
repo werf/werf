@@ -68,8 +68,10 @@ module Dapp
           end
         end
 
+        env_hash = ENV.map {|k, v| [k, v]}.to_h
+
         begin
-          exec("#{bin_path} -args-from-file #{args_file} -result-to-file #{res_file}") unless (pid = fork)
+          exec(env_hash, "#{bin_path} -args-from-file #{args_file} -result-to-file #{res_file}") unless (pid = fork)
           pid, status = Process.waitpid2(pid)
         rescue Interrupt => _e
           Process.kill('INT', pid)
