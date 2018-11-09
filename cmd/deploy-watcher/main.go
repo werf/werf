@@ -8,8 +8,8 @@ import (
 	"github.com/flant/dapp/pkg/ruby2go"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/kubedog/pkg/kubedog"
-	"github.com/flant/kubedog/pkg/monitor"
+	"github.com/flant/kubedog/pkg/tracker"
+	"github.com/flant/kubedog/pkg/trackers/rollout"
 )
 
 func main() {
@@ -40,14 +40,14 @@ func main() {
 
 		switch action := args["action"]; action {
 		case "watch job":
-			err := kubedog.WatchJobTillDone(resourceName, namespace, kube.Kubernetes, monitor.WatchOptions{Timeout: time.Second * time.Duration(timeout)})
+			err := rollout.TrackJobTillDone(resourceName, namespace, kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(timeout)})
 			if err != nil {
-				return nil, fmt.Errorf("error watching job `%s` in namespace `%s`: %s", resourceName, namespace, err)
+				return nil, fmt.Errorf("error tracking job `%s` in namespace `%s`: %s", resourceName, namespace, err)
 			}
 		case "watch deployment":
-			err := kubedog.WatchDeploymentTillReady(resourceName, namespace, kube.Kubernetes)
+			err := rollout.TrackDeploymentTillReady(resourceName, namespace, kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(timeout)})
 			if err != nil {
-				return nil, fmt.Errorf("error watching deployment `%s` in namespace `%s`: %s", resourceName, namespace, err)
+				return nil, fmt.Errorf("error tracking deployment `%s` in namespace `%s`: %s", resourceName, namespace, err)
 			}
 		default:
 			return nil, fmt.Errorf("unknown action \"%s\"", action)
