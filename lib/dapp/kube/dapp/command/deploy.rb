@@ -159,17 +159,20 @@ module Dapp
                       begin
                         if ENV["KUBEDOG"] != "0"
                           timeout = self.options[:timeout] || 300
-                          ruby2go_deploy_watcher(
+                          res = ruby2go_deploy_watcher(
                             "action" => "watch job",
                             "resourceName" => job.name,
                             "namespace" => release.namespace,
                             "timeout" => timeout,
                           )
+
+                          if res["error"]
+                            $stderr.puts(::Dapp::Dapp.paint_string(::Dapp::Helper::NetStatus.message(res["error"]), :warning))
+                          end
                         else
                           Kubernetes::Manager::Job.new(self, job.name).watch_till_done!
                         end
                       rescue ::Exception => e
-                        sentry_exception(e, extra: {"job-spec" => job.spec})
                         raise
                       end
                     end # watch_hooks.each
@@ -231,12 +234,16 @@ module Dapp
                     deployment_managers.each {|deployment_manager|
                       if deployment_manager.should_watch?
                         if ENV["KUBEDOG"] == "1"
-                          ruby2go_deploy_watcher(
+                          res = ruby2go_deploy_watcher(
                             "action" => "watch deployment",
                             "resourceName" => deployment_manager.name,
                             "namespace" => release.namespace,
                             "timeout" => timeout,
                           )
+
+                          if res["error"]
+                            raise res["error"]
+                          end
                         else
                           deployment_manager.watch_till_ready!
                         end
