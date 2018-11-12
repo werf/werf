@@ -8,6 +8,7 @@ module Dapp
 
             helm_release do |release|
               do_deploy = proc do
+                init_kube_deploy_start_time
                 kube_run_deploy(release)
               end
 
@@ -17,6 +18,14 @@ module Dapp
                 lock_helm_release &do_deploy
               end
             end
+          end
+
+          def init_kube_deploy_start_time
+            @kube_deploy_start_time ||= Time.now.to_datetime.rfc3339
+          end
+
+          def kube_deploy_start_time
+            @kube_deploy_start_time
           end
 
           def kube_flush_hooks_jobs(release)
@@ -164,6 +173,7 @@ module Dapp
                             "resourceName" => job.name,
                             "namespace" => release.namespace,
                             "timeout" => timeout,
+                            "logsFromTime" => kube_deploy_start_time
                           )
 
                           if res["error"]
@@ -239,6 +249,7 @@ module Dapp
                             "resourceName" => deployment_manager.name,
                             "namespace" => release.namespace,
                             "timeout" => timeout,
+                            "logsFromTime" => kube_deploy_start_time
                           )
 
                           if res["error"]

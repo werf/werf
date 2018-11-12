@@ -38,14 +38,24 @@ func main() {
 
 		timeout := args["timeout"].(float64)
 
+		var logsFromTime time.Time
+		if logsFromTimeOption, ok := args["logsFromTime"]; ok {
+			logsFromTime, err = time.Parse(time.RFC3339, logsFromTimeOption.(string))
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			logsFromTime = time.Time{}
+		}
+
 		switch action := args["action"]; action {
 		case "watch job":
-			err := rollout.TrackJobTillDone(resourceName, namespace, kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(timeout)})
+			err := rollout.TrackJobTillDone(resourceName, namespace, kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(timeout), LogsFromTime: logsFromTime})
 			if err != nil {
 				return nil, fmt.Errorf("error tracking job `%s` in namespace `%s`: %s", resourceName, namespace, err)
 			}
 		case "watch deployment":
-			err := rollout.TrackDeploymentTillReady(resourceName, namespace, kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(timeout)})
+			err := rollout.TrackDeploymentTillReady(resourceName, namespace, kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(timeout), LogsFromTime: logsFromTime})
 			if err != nil {
 				return nil, fmt.Errorf("error tracking deployment `%s` in namespace `%s`: %s", resourceName, namespace, err)
 			}
