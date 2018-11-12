@@ -109,7 +109,7 @@ module Dapp
         end
 
         def image_inspect
-          ruby2go_command(:inspect, extended_image_option: false) if @image_inspect.nil?
+          ruby2go_command(:inspect, short_image_option: true) if @image_inspect.nil?
           @image_inspect
         end
 
@@ -174,19 +174,19 @@ module Dapp
           ruby2go_command(:untag)
         end
 
-        def ruby2go_command(command, extended_image_option: true, options: {})
-          command_options = ruby2go_command_options(command, extended_image_option: extended_image_option).in_depth_merge(options: options)
+        def ruby2go_command(command, short_image_option: false, options: {})
+          command_options = ruby2go_command_options(command, short_image_option: short_image_option).in_depth_merge(options: options)
           self.class.ruby2go_command(dapp, **command_options).tap do |data|
             set_ruby2go_state_hash(JSON.load(data['image']))
           end
         end
 
-        def ruby2go_command_options(command, extended_image_option: true)
+        def ruby2go_command_options(command, short_image_option: false)
           image = begin
-            if extended_image_option
-              ruby2go_image_option
+            if short_image_option
+              ruby2go_short_image_option
             else
-              JSON.dump({name: name})
+              ruby2go_image_option
             end
           end
 
@@ -198,6 +198,10 @@ module Dapp
 
         def ruby2go_image_option
           JSON.dump(get_ruby2go_state_hash)
+        end
+
+        def ruby2go_short_image_option
+          JSON.dump(get_ruby2go_short_state_hash)
         end
 
         def get_ruby2go_state_hash
@@ -220,6 +224,21 @@ module Dapp
             else
               [name, send(name)]
             end
+          end
+            .compact
+            .to_h
+        end
+
+        def get_ruby2go_short_state_hash
+          [
+            :name,
+            :bash_commands,
+            :service_bash_commands,
+            :options,
+            :change_options,
+            :service_change_options,
+          ].map do |name|
+            [name, send(name)]
           end
             .compact
             .to_h
