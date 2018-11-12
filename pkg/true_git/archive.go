@@ -87,7 +87,7 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 		}
 
 		baseName := filepath.Base(absPath)
-		for _, p := range []string{".git", ".gitmodules", ".gitkeep", ".gitignore"} {
+		for _, p := range []string{".git"} {
 			if baseName == p {
 				return nil
 			}
