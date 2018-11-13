@@ -1,6 +1,9 @@
 module Dapp
   class Dapp
     module Ruby2Go
+      class Error < ::Dapp::Error::Base
+      end
+
       def ruby2go_image(args_hash)
         _ruby2go("image", args_hash)
       end
@@ -33,8 +36,8 @@ module Dapp
         _ruby2go("slug", args_hash)
       end
 
-      def ruby2go_deploy_watcher(args_hash)
-        _ruby2go("deploy-watcher", args_hash)
+      def ruby2go_deploy_watcher(args_hash, **kwargs)
+        _ruby2go("deploy-watcher", args_hash, **kwargs)
       end
 
       def ruby2go_init
@@ -47,13 +50,15 @@ module Dapp
         "DAPP_BIN_#{progname.gsub("-", "_").upcase}"
       end
 
-      def _ruby2go(progname, args_hash)
+      def _ruby2go(progname, args_hash, tmp_dir: nil)
+        tmp_dir = _ruby2go_tmp_dir if tmp_dir.nil?
+
         call_id = SecureRandom.uuid
 
-        args_file = File.join(_ruby2go_tmp_dir, "args.#{call_id}.json")
+        args_file = File.join(tmp_dir, "args.#{call_id}.json")
         File.open(args_file, "w") {|f| f.write JSON.dump(args_hash)}
 
-        res_file = File.join(_ruby2go_tmp_dir, "res.#{call_id}.json")
+        res_file = File.join(tmp_dir, "res.#{call_id}.json")
 
         if bin_path = ENV[_ruby2go_bin_path_env_var_name(progname)]
           unless File.exists? bin_path
@@ -84,7 +89,7 @@ module Dapp
           File.open(res_file, "r") {|f| res = JSON.load(f.read)}
           res
         else
-          raise ::Dapp::Error::Base, code: :ruby2go_command_unexpected_exitstatus, data: { progname: progname, status_code: status_code }
+          raise ::Dapp::Dapp::Ruby2Go::Error, code: :ruby2go_command_unexpected_exitstatus, data: { progname: progname, status_code: status_code }
         end
       end
 

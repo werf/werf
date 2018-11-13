@@ -118,7 +118,6 @@ func Trap() {
 			if sig == syscall.SIGPIPE {
 				continue
 			}
-
 			go func(sig os.Signal) {
 				switch sig {
 				case os.Interrupt, syscall.SIGTERM:
@@ -127,7 +126,8 @@ func Trap() {
 							for _, trapCleanupHook := range TrapCleanupHooks {
 								trapCleanupHook()
 							}
-							os.Exit(0)
+
+							os.Exit(17)
 						} else {
 							return
 						}
@@ -136,7 +136,7 @@ func Trap() {
 				for _, trapCleanupHook := range TrapCleanupHooks {
 					trapCleanupHook()
 				}
-				os.Exit(128 + int(sig.(syscall.Signal)))
+				os.Exit(17)
 			}(sig)
 		}
 	}()
