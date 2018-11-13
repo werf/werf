@@ -23,14 +23,13 @@ func makeDiffParser(out io.Writer, pathFilter PathFilter) *diffParser {
 type parserState string
 
 const (
-	unrecognized       parserState = "unrecognized"
-	diffBegin          parserState = "diffBegin"
-	diffBody           parserState = "diffBody"
-	newFileDiff        parserState = "newFileDiff"
-	deleteFileDiff     parserState = "deleteFileDiff"
-	modifyFileDiff     parserState = "modifyFileDiff"
-	modifyFileModeDiff parserState = "modifyFileModeDiff"
-	ignoreDiff         parserState = "ignoreDiff"
+	unrecognized   parserState = "unrecognized"
+	diffBegin      parserState = "diffBegin"
+	diffBody       parserState = "diffBody"
+	newFileDiff    parserState = "newFileDiff"
+	deleteFileDiff parserState = "deleteFileDiff"
+	modifyFileDiff parserState = "modifyFileDiff"
+	ignoreDiff     parserState = "ignoreDiff"
 )
 
 type diffParser struct {
@@ -122,7 +121,7 @@ func (p *diffParser) handleDiffLine(line string) error {
 			return p.handleNewFileDiff(line)
 		}
 		if strings.HasPrefix(line, "old mode ") {
-			return p.handleModifyFileModeDiff(line)
+			return p.handleModifyFileDiff(line)
 		}
 		if strings.HasPrefix(line, "index ") {
 			return p.handleModifyFileDiff(line)
@@ -130,6 +129,9 @@ func (p *diffParser) handleDiffLine(line string) error {
 		return fmt.Errorf("unexpected diff line in state `%s`: %#v", p.state, line)
 
 	case modifyFileDiff:
+		if strings.HasPrefix(line, "new mode ") {
+			return p.writeOutLine(line)
+		}
 		if strings.HasPrefix(line, "--- ") {
 			return p.handleModifyFilePathA(line)
 		}
@@ -143,13 +145,6 @@ func (p *diffParser) handleDiffLine(line string) error {
 			return p.handleShortBinaryHeader(line)
 		}
 		return p.writeOutLine(line)
-
-	case modifyFileModeDiff:
-		if strings.HasPrefix(line, "new mode ") {
-			p.state = unrecognized
-			return p.writeOutLine(line)
-		}
-		return fmt.Errorf("unexpected diff line in state `%s`: %#v", p.state, line)
 
 	case newFileDiff:
 		if strings.HasPrefix(line, "+++ ") {
@@ -262,11 +257,6 @@ func (p *diffParser) handleNewFileDiff(line string) error {
 
 func (p *diffParser) handleModifyFileDiff(line string) error {
 	p.state = modifyFileDiff
-	return p.writeOutLine(line)
-}
-
-func (p *diffParser) handleModifyFileModeDiff(line string) error {
-	p.state = modifyFileModeDiff
 	return p.writeOutLine(line)
 }
 
