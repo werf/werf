@@ -53,7 +53,8 @@ def set_gitlab_cancel_handler
 
       parents_pids.each do |pid|
         if not process_alive? pid
-          File.open(File.join(ENV["HOME"], ".dapp", "cancelled"), "a") do |file|
+          home_dir = (ENV["DAPP_HOME"] || File.join(ENV["HOME"], ".dapp"))
+          File.open(File.join(home_dir, "cancelled"), "a") do |file|
             file.write "#{Process.pid}\n"
           end
 

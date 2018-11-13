@@ -180,7 +180,7 @@ module Dapp
 
     class << self
       def home_dir
-        File.join(Dir.home, ".dapp")
+        ENV["DAPP_HOME"] || File.join(Dir.home, ".dapp")
       end
 
       def options

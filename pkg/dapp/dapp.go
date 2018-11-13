@@ -5,9 +5,12 @@ import (
 	"path/filepath"
 )
 
-var (
-	HomeDir = filepath.Join(os.Getenv("HOME"), ".dapp")
-)
+func GetHomeDir() string {
+	if val, ok := os.LookupEnv("DAPP_HOME"); ok {
+		return val
+	}
+	return filepath.Join(os.Getenv("HOME"), ".dapp")
+}
 
 /* TODO: will be needed for single go-dapp binary
 func Init() error {
