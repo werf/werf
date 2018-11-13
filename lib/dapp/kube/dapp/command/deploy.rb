@@ -155,6 +155,7 @@ module Dapp
               watch_hooks_condition_mutex = ::Mutex.new
               watch_hooks_condition = ::ConditionVariable.new
               deploy_has_began = false
+
               unless dry_run? and watch_hooks.any?
                 watch_hooks_thr = Thread.new do
                   watch_hooks_condition_mutex.synchronize do
@@ -168,13 +169,30 @@ module Dapp
                       begin
                         if ENV["KUBEDOG"] != "0"
                           timeout = self.options[:timeout] || 300
-                          res = ruby2go_deploy_watcher(
-                            "action" => "watch job",
-                            "resourceName" => job.name,
-                            "namespace" => release.namespace,
-                            "timeout" => timeout,
-                            "logsFromTime" => kube_deploy_start_time
-                          )
+                          tmp_dir = Dir.mktmpdir('dapp-ruby2go-', tmp_base_dir)
+                          res = nil
+
+                          begin
+                            res = ruby2go_deploy_watcher(
+                              {
+                                "action" => "watch job",
+                                "resourceName" => job.name,
+                                "namespace" => release.namespace,
+                                "timeout" => timeout,
+                                "logsFromTime" => kube_deploy_start_time
+                              },
+                              tmp_dir: tmp_dir,
+                            )
+                          rescue ::Dapp::Dapp::Ruby2Go::Error => err
+                            # ignore interrupt
+                            if err.net_status[:data][:status_code] == 17
+                              res = {}
+                            else
+                              raise
+                            end
+                          ensure
+                            FileUtils.rmtree(tmp_dir)
+                          end
 
                           if res["error"]
                             $stderr.puts(::Dapp::Dapp.paint_string(::Dapp::Helper::NetStatus.message(res["error"]), :warning))
@@ -196,7 +214,6 @@ module Dapp
                     # ошибку для информации пользователю без завершения работы dapp.
                     $stderr.puts(::Dapp::Dapp.paint_string(::Dapp::Helper::NetStatus.message(e), :warning))
                   end
-
                 end # Thread
               end # unless
 
@@ -218,6 +235,8 @@ module Dapp
                   release.install_helm_release
                 end
 
+                watch_hooks_thr.join if !dry_run? && watch_hooks_thr && watch_hooks_thr.alive?
+
                 if cmd_res.error?
                   if cmd_res.stderr.end_with? "has no deployed releases\n"
                     log_warning "[WARN] Helm release #{release.name} is in improper state: #{cmd_res.stderr}"
@@ -229,8 +248,6 @@ module Dapp
                   raise ::Dapp::Error::Command, code: :kube_helm_failed, data: {output: (cmd_res.stdout + cmd_res.stderr).strip}
                 else
                   kube_delete_helm_auto_purge_trigger_file(release.name)
-
-                  watch_hooks_thr.join if !dry_run? && watch_hooks_thr && watch_hooks_thr.alive?
                   log_info((cmd_res.stdout + cmd_res.stderr).strip)
                 end
               end
