@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
+	"github.com/flant/dapp/pkg/kill_cord"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -62,6 +63,12 @@ func writeJsonObjectToFile(obj map[string]interface{}, path string) error {
 
 func RunCli(progname string, runFunc func(map[string]interface{}) (interface{}, error)) {
 	Trap()
+
+	err := kill_cord.Init()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Kill cord initialization error: %s\n", err)
+		os.Exit(1)
+	}
 
 	WorkingDir, err := os.Getwd()
 	if err != nil {

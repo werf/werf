@@ -195,7 +195,7 @@ module Dapp
                           end
 
                           if res["error"]
-                            $stderr.puts(::Dapp::Dapp.paint_string(::Dapp::Helper::NetStatus.message(res["error"]), :warning))
+                            $stderr.puts(::Dapp::Dapp.paint_string(res["error"], :warning))
                           end
                         else
                           Kubernetes::Manager::Job.new(self, job.name).watch_till_done!
@@ -235,8 +235,6 @@ module Dapp
                   release.install_helm_release
                 end
 
-                watch_hooks_thr.join if !dry_run? && watch_hooks_thr && watch_hooks_thr.alive?
-
                 if cmd_res.error?
                   if cmd_res.stderr.end_with? "has no deployed releases\n"
                     log_warning "[WARN] Helm release #{release.name} is in improper state: #{cmd_res.stderr}"
@@ -245,10 +243,14 @@ module Dapp
                     kube_create_helm_auto_purge_trigger_file(release.name)
                   end
 
+                  watch_hooks_thr.kill if !dry_run? && watch_hooks_thr && watch_hooks_thr.alive?
+
                   raise ::Dapp::Error::Command, code: :kube_helm_failed, data: {output: (cmd_res.stdout + cmd_res.stderr).strip}
                 else
                   kube_delete_helm_auto_purge_trigger_file(release.name)
                   log_info((cmd_res.stdout + cmd_res.stderr).strip)
+
+                  watch_hooks_thr.join if !dry_run? && watch_hooks_thr && watch_hooks_thr.alive?
                 end
               end
 
