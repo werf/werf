@@ -2,16 +2,17 @@ package lock
 
 import (
 	"fmt"
-	"github.com/flant/dapp/pkg/dapp"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/flant/dapp/pkg/dapp"
 )
 
 var (
 	Locks          map[string]LockObject
 	DefaultTimeout = 24 * time.Hour
-	LocksDir       = filepath.Join(dapp.HomeDir, "locks")
+	LocksDir       = filepath.Join(dapp.GetHomeDir(), "locks")
 )
 
 func Init() error {

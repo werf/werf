@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/docker/docker/api/types/filters"
+	"github.com/flant/dapp/pkg/dapp"
 )
 
 type ResetOptions struct {
@@ -54,7 +55,7 @@ func resetAll(options ResetOptions) error {
 func deleteDappFiles(options CommonOptions) error {
 	var directoryPathToDelete []string
 	for _, directory := range []string{"bin", "builds", "git"} {
-		directoryPath := filepath.Join(userHomeDir(), ".dapp", directory)
+		directoryPath := filepath.Join(dapp.GetHomeDir(), directory)
 
 		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {
 			directoryPathToDelete = append(directoryPathToDelete, directoryPath)
