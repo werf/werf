@@ -58,18 +58,18 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
 1.  Docker version 1.10.0 or later:
     [Docker installation](https://docs.docker.com/engine/installation/).
 
-1.  сmake (required to install `rugged` gem):
+1.  сmake and pkg-config (required to install `rugged` gem):
 
     on Ubuntu:
 
     ```bash
-    apt-get install cmake
+    apt-get install cmake pkg-config
     ```
 
     on Centos:
 
     ```bash
-    yum install cmake
+    yum install cmake pkgconfig
     ```
 
 
