@@ -262,7 +262,7 @@ module Dapp
                   ::Timeout::timeout(timeout) do
                     deployment_managers.each {|deployment_manager|
                       if deployment_manager.should_watch?
-                        if ENV["KUBEDOG"] == "1"
+                        if ENV["KUBEDOG"] != "0"
                           res = ruby2go_deploy_watcher(
                             "action" => "watch deployment",
                             "resourceName" => deployment_manager.name,
@@ -272,7 +272,7 @@ module Dapp
                           )
 
                           if res["error"]
-                            raise res["error"]
+                            raise ::Dapp::Kube::Kubernetes::Error::Default.new data: {message: res["error"]}
                           end
                         else
                           deployment_manager.watch_till_ready!

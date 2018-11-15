@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/flant/dapp/pkg/kill_cord"
+	"github.com/flant/dapp/pkg/process_exterminator"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -64,9 +64,9 @@ func writeJsonObjectToFile(obj map[string]interface{}, path string) error {
 func RunCli(progname string, runFunc func(map[string]interface{}) (interface{}, error)) {
 	Trap()
 
-	err := kill_cord.Init()
+	err := process_exterminator.Init()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Kill cord initialization error: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Process exterminator initialization error: %s\n", err)
 		os.Exit(1)
 	}
 

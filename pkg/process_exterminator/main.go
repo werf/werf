@@ -1,4 +1,4 @@
-package kill_cord
+package process_exterminator
 
 import (
 	"bufio"
@@ -39,7 +39,7 @@ func run(parentsPids []int) {
 
 			err := writePidToFile(os.Getpid(), filepath.Join(dapp.GetHomeDir(), ".killed_pids"))
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Kill cord error: %s\n", err)
+				fmt.Fprintf(os.Stderr, "Process exterminator error: %s\n", err)
 			}
 
 			syscall.Kill(ownPid, syscall.SIGINT)
