@@ -106,7 +106,7 @@ module Dapp
         response = JSON.parse(raw_json_response)
 
         log_warning(response["warning"]) unless response["warning"].empty?
-        raise ::Dapp::Dapp::Error::DappfileYmlErrorResponse.new(response["error"], response) if response["error"]
+        raise ::Dapp::Dapp::Dappfile::Error::DappfileYmlErrorResponse.new(response["error"], response) if response["error"]
 
         YAML.load response["dappConfig"]
       end
