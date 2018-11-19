@@ -32,11 +32,11 @@ module Dapp
           res["global"]["dapp"]["ci"] = ci_info
 
           if fake
-          elsif ENV["CI_COMMIT_TAG"]
-            ci_info["tag"] = ci_info["ref"] = ENV["CI_COMMIT_TAG"]
+          elsif commit_tag = (ENV["CI_BUILD_TAG"] || ENV["CI_COMMIT_TAG"])
+            ci_info["tag"] = ci_info["ref"] = commit_tag
             ci_info["is_tag"] = true
-          elsif ENV["CI_COMMIT_REF_NAME"]
-            ci_info["branch"] = ci_info["ref"] = ENV["CI_COMMIT_REF_NAME"]
+          elsif commit_ref_name = (ENV["CI_BUILD_REF_NAME"] || ENV["CI_COMMIT_REF_NAME"])
+            ci_info["branch"] = ci_info["ref"] = commit_ref_name
             ci_info["is_branch"] = true
           elsif dapp.git_own_repo_exist? and dapp.git_own_repo.head_branch_name != "HEAD"
             ci_info["branch"] = ci_info["ref"] = dapp.git_own_repo.head_branch_name
