@@ -37,7 +37,7 @@ type HelmChartOptions struct {
 
 func DeployHelmChart(chartPath string, releaseName string, namespace string, opts HelmChartOptions) error {
 	lockName := fmt.Sprintf("helm_release.%s", releaseName)
-	return lock.WithLock(lockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	return lock.WithLock(lockName, lock.LockOptions{}, func() error {
 		if err := doDeployHelmChart(chartPath, releaseName, namespace, opts); err != nil {
 			return err
 		}
