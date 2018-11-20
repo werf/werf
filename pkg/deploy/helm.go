@@ -26,11 +26,12 @@ import (
 )
 
 type HelmChartOptions struct {
-	Set     []string
-	Values  []string
-	DryRun  bool
-	Debug   bool
-	Timeout time.Duration
+	Set         []string
+	Values      []string
+	KubeContext string
+	DryRun      bool
+	Debug       bool
+	Timeout     time.Duration
 }
 
 func DeployHelmChart(chartPath string, releaseName string, namespace string, opts HelmChartOptions) error {
@@ -162,6 +163,10 @@ func commonDeployCommandArgs(namespace string, opts HelmChartOptions) []string {
 
 	for _, values := range opts.Values {
 		args = append(args, "--values", values)
+	}
+
+	if opts.KubeContext != "" {
+		args = append(args, "--kube-context", opts.KubeContext)
 	}
 
 	if opts.DryRun {
