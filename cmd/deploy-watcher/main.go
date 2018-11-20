@@ -21,7 +21,11 @@ func main() {
 	}
 
 	ruby2go.RunCli("deploy-watcher", func(args map[string]interface{}) (interface{}, error) {
-		initOpts := kube.InitOptions{KubeContext: args["kubeContext"].(string)}
+		initOpts := kube.InitOptions{}
+		if kubeContext, ok := args["kubeContext"]; ok && kubeContext != nil {
+			initOpts.KubeContext = kubeContext.(string)
+		}
+
 		err = kube.Init(initOpts)
 		if err != nil {
 			panic(err)
@@ -40,7 +44,7 @@ func main() {
 		timeout := args["timeout"].(float64)
 
 		var logsFromTime time.Time
-		if logsFromTimeOption, ok := args["logsFromTime"]; ok {
+		if logsFromTimeOption, ok := args["logsFromTime"]; ok && logsFromTimeOption != nil {
 			logsFromTime, err = time.Parse(time.RFC3339, logsFromTimeOption.(string))
 			if err != nil {
 				return nil, err
