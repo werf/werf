@@ -15,7 +15,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := kube.Init(); err != nil {
+	if err := kube.Init(kube.InitOptions{}); err != nil {
 		fmt.Fprintf(os.Stderr, "Kube init error: %s\n", err)
 		os.Exit(1)
 	}
