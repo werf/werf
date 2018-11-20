@@ -90,7 +90,12 @@ module Dapp
 
           def kube_run_deploy(release)
             log_process("Deploy release #{release.name}") do
-              helm_status_res = shellout("helm status #{release.name}")
+              helm_status_res = shellout([
+                "helm",
+                ("--kube-context #{custom_kube_context}" if custom_kube_context),
+                "status",
+                release.name,
+              ].compact.join(" "))
 
               release_status = nil
               if helm_status_res.status.success?
@@ -111,7 +116,12 @@ module Dapp
 
                 if File.exists? kube_helm_auto_purge_trigger_file_path(release.name)
                   log_process("Purge helm release #{release.name}") do
-                    shellout!("helm delete --purge #{release.name}")
+                    shellout!([
+                      "helm",
+                      ("--kube-context #{custom_kube_context}" if custom_kube_context),
+                      "delete",
+                      "--purge #{release.name}",
+                    ].compact.join(" "))
                   end
 
                   # Purge-trigger file remains to exist
@@ -179,7 +189,8 @@ module Dapp
                                 "resourceName" => job.name,
                                 "namespace" => release.namespace,
                                 "timeout" => timeout,
-                                "logsFromTime" => kube_deploy_start_time
+                                "logsFromTime" => kube_deploy_start_time,
+                                "kubeContext" => custom_kube_context,
                               },
                               tmp_dir: tmp_dir,
                             )
@@ -268,7 +279,8 @@ module Dapp
                             "resourceName" => deployment_manager.name,
                             "namespace" => release.namespace,
                             "timeout" => timeout,
-                            "logsFromTime" => kube_deploy_start_time
+                            "logsFromTime" => kube_deploy_start_time,
+                            "kubeContext" => custom_kube_context,
                           )
 
                           if res["error"]

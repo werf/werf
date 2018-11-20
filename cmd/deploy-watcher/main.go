@@ -20,12 +20,13 @@ func main() {
 		panic(err)
 	}
 
-	err = kube.Init()
-	if err != nil {
-		panic(err)
-	}
-
 	ruby2go.RunCli("deploy-watcher", func(args map[string]interface{}) (interface{}, error) {
+		initOpts := kube.InitOptions{KubeContext: args["kubeContext"].(string)}
+		err = kube.Init(initOpts)
+		if err != nil {
+			panic(err)
+		}
+
 		namespace := args["namespace"].(string)
 		if namespace == "" {
 			return nil, fmt.Errorf("namespace argument required!")

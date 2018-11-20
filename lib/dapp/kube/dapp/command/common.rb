@@ -31,6 +31,7 @@ module Dapp
                   repo: repo,
                   docker_tag: tag,
                   namespace: kube_namespace,
+                  kube_context: custom_kube_context,
                   chart_path: kube_chart_path_for_helm,
                   set: self.options[:helm_set_options],
                   values: [*kube_values_paths, *kube_tmp_chart_secret_values_paths],
@@ -345,10 +346,12 @@ image: {{ tuple $name $context | include "_dimg2" }}
             options[:context]
           end
 
+          def custom_kube_context
+            ENV["KUBECONTEXT"] || context_option
+          end
+
           def kube_context
-            ENV["KUBECONTEXT"] ||
-              context_option ||
-                kubernetes_config.current_context_name
+            custom_kube_context || kubernetes_config.current_context_name
           end
 
           def kube_namespace

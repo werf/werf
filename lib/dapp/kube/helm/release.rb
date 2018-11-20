@@ -14,10 +14,11 @@ module Dapp
       attr_reader :values
       attr_reader :deploy_timeout
       attr_reader :without_registry
+      attr_reader :kube_context
 
       def initialize(dapp,
         name:, repo:, docker_tag:, namespace:, chart_path:,
-        set: [], values: [], deploy_timeout: nil, without_registry: nil)
+        set: [], values: [], deploy_timeout: nil, without_registry: nil, kube_context: nil)
         @dapp = dapp
 
         @name = name
@@ -29,6 +30,7 @@ module Dapp
         @values = values
         @deploy_timeout = deploy_timeout
         @without_registry = (without_registry.nil? ? false : without_registry)
+        @kube_context = kube_context
       end
 
       def jobs
@@ -60,6 +62,7 @@ module Dapp
           *helm_additional_values_options,
           *helm_set_options,
           *helm_install_options,
+          ("--kube-context #{kube_context}" if kube_context),
         ].join(" "))
 
         return cmd
@@ -70,7 +73,8 @@ module Dapp
           "helm upgrade #{name} #{chart_path}",
           *helm_additional_values_options,
           *helm_set_options,
-          *helm_install_options
+          *helm_install_options,
+          ("--kube-context #{kube_context}" if kube_context),
         ].join(" "))
 
         return cmd
@@ -107,6 +111,7 @@ module Dapp
           *helm_additional_values_options,
           *helm_set_options(fake: true),
           *helm_common_options,
+          ("--kube-context #{kube_context}" if kube_context),
           chart_path
         ].compact.join(' ')
       end
@@ -123,6 +128,7 @@ module Dapp
             helm_set_options(without_registry: true),
             ("--namespace #{namespace}" if namespace),
             "--name #{name}",
+            ("--kube-context #{kube_context}" if kube_context),
           ].compact.join(" ")
 
           cmd.stdout
