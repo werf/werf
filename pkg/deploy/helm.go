@@ -2,10 +2,8 @@ package deploy
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"sort"
@@ -37,7 +35,7 @@ type HelmChartOptions struct {
 
 func DeployHelmChart(chartPath string, releaseName string, namespace string, opts HelmChartOptions) error {
 	lockName := fmt.Sprintf("helm_release.%s", releaseName)
-	return lock.WithLock(lockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	return lock.WithLock(lockName, lock.LockOptions{}, func() error {
 		if err := doDeployHelmChart(chartPath, releaseName, namespace, opts); err != nil {
 			return err
 		}
@@ -441,21 +439,4 @@ func deleteAutoPurgeTriggerFilePath(releaseName string) error {
 
 func autoPurgeTriggerFilePath(releaseName string) string {
 	return filepath.Join(dapp.GetHomeDir(), "helm", releaseName, "auto_purge_failed_release_on_next_deploy")
-}
-
-func HelmCmd(args ...string) (stdout string, stderr string, err error) {
-	binPath := "/usr/local/bin/helm"
-	cmd := exec.Command(binPath, args...)
-	cmd.Env = os.Environ()
-
-	var stdoutBuf bytes.Buffer
-	cmd.Stdout = &stdoutBuf
-	var stderrBuf bytes.Buffer
-	cmd.Stderr = &stderrBuf
-
-	err = cmd.Run()
-	stdout = strings.TrimSpace(stdoutBuf.String())
-	stderr = strings.TrimSpace(stderrBuf.String())
-
-	return
 }
