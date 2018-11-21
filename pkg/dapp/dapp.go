@@ -12,6 +12,13 @@ func GetHomeDir() string {
 	return filepath.Join(os.Getenv("HOME"), ".dapp")
 }
 
+func GetTmpDir() string {
+	if val, ok := os.LookupEnv("DAPP_TMP"); ok {
+		return val
+	}
+	return os.TempDir()
+}
+
 /* TODO: will be needed for single go-dapp binary
 func Init() error {
 		TmpDir, err = ioutil.TempDir("", "dapp-")
