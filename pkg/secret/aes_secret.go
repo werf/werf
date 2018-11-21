@@ -15,13 +15,15 @@ type AesSecret struct {
 	CipherBlock cipher.Block
 }
 
-func GenerateAexSecretKey() (string, error) {
+func GenerateAexSecretKey() ([]byte, error) {
 	randomBytes := make([]byte, 16)
 	if _, err := rand.Read(randomBytes); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return hex.EncodeToString(randomBytes), nil
+	result := []byte(hex.EncodeToString(randomBytes))
+
+	return result, nil
 }
 
 func NewAesSecret(key []byte) (*AesSecret, error) {
