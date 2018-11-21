@@ -63,6 +63,34 @@ func main() {
 
 				return nil, secretExtract(secretGenerator, *options)
 			}
+		case "secret_regenerate":
+			projectDir, err := ruby2go.StringOptionFromArgs("project_dir", args)
+			if err != nil {
+				return nil, err
+			}
+
+			oldKey, err := ruby2go.StringOptionFromArgs("old_key", args)
+			if err != nil {
+				return nil, err
+			}
+
+			secretValuesPaths, err := ruby2go.StringArrayOptionFromArgs("secret_values_paths", args)
+			if err != nil {
+				return nil, err
+			}
+
+			newSecret, err := deploy.GetSecret(projectDir)
+			if err != nil {
+				return nil, err
+			}
+
+			oldSecret, err := secret.NewSecret([]byte(oldKey))
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, SecretsRegenerate(newSecret, oldSecret, projectDir, secretValuesPaths...)
+		case "secret_edit":
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)
 		}
