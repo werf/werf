@@ -40,6 +40,10 @@ module Dapp
         _ruby2go("deploy-watcher", args_hash, **kwargs)
       end
 
+      def ruby2go_deploy(args_hash)
+        _ruby2go("deploy", args_hash)
+      end
+
       def ruby2go_init
         @_call_after_before_terminate << proc {
           FileUtils.rmtree(@_ruby2go_tmp_dir) if @_ruby2go_tmp_dir

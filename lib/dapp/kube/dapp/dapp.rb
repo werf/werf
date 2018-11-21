@@ -17,6 +17,7 @@ module Dapp
         include Command::Lint
         include Command::ValueGet
         include Command::Common
+        include Command::Ruby2Go
       end
     end
   end

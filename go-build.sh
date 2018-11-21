@@ -12,3 +12,4 @@ go install github.com/flant/dapp/cmd/docker_registry
 go install github.com/flant/dapp/cmd/cleanup
 go install github.com/flant/dapp/cmd/slug
 go install github.com/flant/dapp/cmd/deploy-watcher
+go install github.com/flant/dapp/cmd/deploy
