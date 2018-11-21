@@ -187,3 +187,21 @@ func BoolFieldFromMapInterface(field string, value map[string]interface{}) (bool
 		return false, fmt.Errorf("option `%s` field value `%#v` can't be casted into bool", field, value[field])
 	}
 }
+
+func StringArrayOptionFromArgs(optionName string, args map[string]interface{}) ([]string, error) {
+	options, err := OptionsFieldFromArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	switch options[optionName].(type) {
+	case []interface{}:
+		res, err := util.InterfaceArrayToStringArray(options[optionName].([]interface{}))
+		if err != nil {
+			return nil, fmt.Errorf("%s option field value `%#v` can't be casted into []string: `%s`", optionName, options[optionName], err)
+		}
+		return res, nil
+	default:
+		return nil, fmt.Errorf("option `%s` field value `%#v` can't be casted into []string", optionName, options[optionName])
+	}
+}

@@ -8,10 +8,10 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"syscall"
 
 	"github.com/flant/dapp/pkg/deploy"
 
+	"github.com/howeyc/gopass"
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/kubernetes/pkg/util/file"
 )
@@ -49,9 +49,11 @@ func generateFromStdin(s *deploy.SecretGenerator) ([]byte, error) {
 	var err error
 	if terminal.IsTerminal(int(os.Stdin.Fd())) {
 		fmt.Printf("Enter secret: ")
-		secretData, err = terminal.ReadPassword(int(syscall.Stdin))
-		fmt.Println()
+		secretData, err = gopass.GetPasswd()
 		if err != nil {
+			if err.Error() == "interrupted" {
+				return nil, nil
+			}
 			return nil, err
 		}
 	} else {
@@ -97,12 +99,13 @@ func generateFromStdin(s *deploy.SecretGenerator) ([]byte, error) {
 
 func saveGeneratedData(data []byte, options secretGenerateOptions) error {
 	if options.OutputFilePath != "" {
-		err := os.MkdirAll(filepath.Dir(options.OutputFilePath), os.ModeDir)
-		if err != nil {
+		if err := os.MkdirAll(filepath.Dir(options.OutputFilePath), 0777); err != nil {
 			return err
 		}
 
-		ioutil.WriteFile(options.OutputFilePath, data, 0644)
+		if err := ioutil.WriteFile(options.OutputFilePath, data, 0644); err != nil {
+			return err
+		}
 	} else {
 		if terminal.IsTerminal(int(os.Stdout.Fd())) {
 			if !bytes.HasSuffix(data, []byte("\n")) {

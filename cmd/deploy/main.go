@@ -65,7 +65,35 @@ func main() {
 
 				return nil, secretExtract(secretGenerator, *options)
 			}
+		case "secret_regenerate":
+			projectDir, err := ruby2go.StringOptionFromArgs("project_dir", args)
+			if err != nil {
+				return nil, err
+			}
 
+			oldKey, err := ruby2go.StringOptionFromArgs("old_key", args)
+			if err != nil {
+				return nil, err
+			}
+
+			secretValuesPaths, err := ruby2go.StringArrayOptionFromArgs("secret_values_paths", args)
+			if err != nil {
+				return nil, err
+			}
+
+			newSecret, err := deploy.GetSecret(projectDir)
+			if err != nil {
+				return nil, err
+			}
+
+			oldSecret, err := secret.NewSecret([]byte(oldKey))
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, SecretsRegenerate(newSecret, oldSecret, projectDir, secretValuesPaths...)
+
+		case "secret_edit":
 		case "deploy":
 			var rubyCliOptions deployRubyCliOptions
 			if value, hasKey := args["rubyCliOptions"]; hasKey {
@@ -73,6 +101,11 @@ func main() {
 				if err != nil {
 					return nil, err
 				}
+			}
+
+			err = lock.Init()
+			if err != nil {
+				return nil, err
 			}
 
 			kubeContext := os.Getenv("KUBECONTEXT")
@@ -89,20 +122,31 @@ func main() {
 				return nil, err
 			}
 
-			projectDir, err := ruby2go.StringOptionFromArgs("projectDir", args)
-			if err != nil {
-				return nil, err
+			value, hasKey := args["projectDir"]
+			if !hasKey {
+				return nil, fmt.Errorf("projectDir argument required!")
 			}
-			releaseName, err := ruby2go.StringOptionFromArgs("releaseName", args)
-			if err != nil {
-				return nil, err
-			}
-			tag, err := ruby2go.StringOptionFromArgs("tag", args)
-			if err != nil {
-				return nil, err
-			}
+			projectDir := value.(string)
 
-			return nil, runDeploy(projectDir, releaseName, tag, kubeContext, rubyCliOptions)
+			value, hasKey = args["releaseName"]
+			if !hasKey {
+				return nil, fmt.Errorf("releaseName argument required!")
+			}
+			releaseName := value.(string)
+
+			value, hasKey = args["tag"]
+			if !hasKey {
+				return nil, fmt.Errorf("tag argument required!")
+			}
+			tag := value.(string)
+
+			value, hasKey = args["repo"]
+			if !hasKey {
+				return nil, fmt.Errorf("repo argument required!")
+			}
+			repo := value.(string)
+
+			return nil, runDeploy(projectDir, releaseName, tag, kubeContext, repo, rubyCliOptions)
 
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)
