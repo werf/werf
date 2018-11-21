@@ -1,9 +1,14 @@
 package main
 
-import "github.com/flant/dapp/pkg/deploy"
+import (
+	"time"
+
+	"github.com/flant/dapp/pkg/deploy"
+)
 
 type deployRubyCliOptions struct {
 	Namespace               string   `json:"namespace"`
+	Repo                    string   `json:"repo"`
 	Context                 string   `json:"context"`
 	HelmSetOptions          []string `json:"helm_set_options"`
 	HelmValuesOptions       []string `json:"helm_values_options"`
@@ -14,6 +19,14 @@ type deployRubyCliOptions struct {
 	WithoutRegistry         bool     `json:"without_registry"`
 }
 
-func runDeploy(projectDir string, releaseName string, tag string, kubeContext string, rubyCliOptions deployRubyCliOptions) error {
-	return deploy.RunDeploy(projectDir, releaseName, rubyCliOptions.Namespace, deploy.DeployOptions{})
+func runDeploy(projectDir string, releaseName string, tag string, kubeContext string, repo string, rubyCliOptions deployRubyCliOptions) error {
+	return deploy.RunDeploy(projectDir, releaseName, deploy.DeployOptions{
+		Namespace:    rubyCliOptions.Namespace,
+		Repo:         rubyCliOptions.Repo,
+		Values:       rubyCliOptions.HelmValuesOptions,
+		SecretValues: rubyCliOptions.HelmSecretValuesOptions,
+		Set:          rubyCliOptions.HelmSetOptions,
+		Timeout:      time.Duration(rubyCliOptions.Timeout) * time.Second,
+		KubeContext:  kubeContext,
+	})
 }

@@ -1,24 +1,63 @@
 package deploy
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/flant/dapp/pkg/secret"
+	"github.com/flant/dapp/pkg/slug"
 )
 
 type DeployOptions struct {
+	Namespace    string
+	Repo         string
 	Values       []string
 	SecretValues []string
 	Set          []string
-	Secret       secret.Secret
 	Timeout      time.Duration
 	KubeContext  string
 }
 
-func RunDeploy(projectDir string, releaseName string, namespace string, opts DeployOptions) error {
-	dappChart, err := GenerateDappChart(projectDir, opts.Secret)
+// RunDeploy runs deploy of dapp chart
+func RunDeploy(projectDir string, releaseName string, opts DeployOptions) error {
+	namespace := slug.Slug(opts.Namespace)
+
+	if debug() {
+		fmt.Printf("Deploy options: %#v\n", opts)
+		fmt.Printf("Slug namespace: %s\n", namespace)
+	}
+
+	var s secret.Secret
+
+	isSecretsExists := false
+	if _, err := os.Stat(filepath.Join(projectDir, ProjectSecretDir)); !os.IsNotExist(err) {
+		isSecretsExists = true
+	}
+	if _, err := os.Stat(filepath.Join(projectDir, ProjectDefaultSecretValuesFile)); !os.IsNotExist(err) {
+		isSecretsExists = true
+	}
+	if len(opts.SecretValues) > 0 {
+		isSecretsExists = true
+	}
+	if isSecretsExists {
+		var err error
+		s, err = GetSecret(projectDir)
+		if err != nil {
+			return fmt.Errorf("cannot get project secret: %s", err)
+		}
+	}
+
+	dappChart, err := GenerateDappChart(projectDir, s)
 	if err != nil {
 		return err
+	}
+	if debug() {
+		// Do not remove tmp chart in debug
+		fmt.Printf("Generated dapp chart: %#v\n", dappChart)
+	} else {
+		defer os.RemoveAll(dappChart.ChartDir)
 	}
 
 	for _, path := range opts.Values {
@@ -29,7 +68,7 @@ func RunDeploy(projectDir string, releaseName string, namespace string, opts Dep
 	}
 
 	for _, path := range opts.SecretValues {
-		err = dappChart.SetSecretValuesFile(path, opts.Secret)
+		err = dappChart.SetSecretValuesFile(path, s)
 		if err != nil {
 			return err
 		}
@@ -45,4 +84,8 @@ func RunDeploy(projectDir string, releaseName string, namespace string, opts Dep
 	// TODO set service values
 
 	return dappChart.Deploy(releaseName, namespace, HelmChartOptions{KubeContext: opts.KubeContext, Timeout: opts.Timeout})
+}
+
+func debug() bool {
+	return os.Getenv("DAPP_DEPLOY_DEBUG") == "1"
 }
