@@ -3,6 +3,32 @@ module Dapp
     module Dapp
       module Command
         module Deploy
+          def kube_deploy_new
+            command = "deploy"
+
+            # TODO: move option_tags logic to golang
+            tag = begin
+              raise ::Dapp::Error::Command, code: :expected_only_one_tag, data: { tags: option_tags.join(', ') } if option_tags.count > 1
+              option_tags.first
+            end
+
+            # TODO: move project dir logic to golang
+            project_dir = path.to_s
+
+            # TODO: move release name logic to golang
+            release_name = kube_release_name
+
+            res = ruby2go_deploy(
+              "command" => command,
+              "projectDir" => project_dir,
+              "tag" => tag,
+              "releaseName" => release_name,
+              "rubyCliOptions" => JSON.dump(self.options),
+            )
+
+            raise ::Dapp::Error::Command, code: :ruby2go_deploy_command_failed, data: { command: command, message: res["error"] } unless res["error"].nil?
+          end
+
           def kube_deploy
             setup_ssh_agent
 

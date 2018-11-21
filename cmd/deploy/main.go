@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/flant/dapp/pkg/deploy"
 	"github.com/flant/dapp/pkg/ruby2go"
 	"github.com/flant/dapp/pkg/secret"
+	"github.com/flant/kubedog/pkg/kube"
 )
 
 func main() {
@@ -90,7 +92,62 @@ func main() {
 			}
 
 			return nil, SecretsRegenerate(newSecret, oldSecret, projectDir, secretValuesPaths...)
+
 		case "secret_edit":
+		case "deploy":
+			var rubyCliOptions deployRubyCliOptions
+			if value, hasKey := args["rubyCliOptions"]; hasKey {
+				err = json.Unmarshal([]byte(value.(string)), &rubyCliOptions)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			err = lock.Init()
+			if err != nil {
+				return nil, err
+			}
+
+			kubeContext := os.Getenv("KUBECONTEXT")
+			if kubeContext == "" {
+				kubeContext = rubyCliOptions.Context
+			}
+			err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
+			if err != nil {
+				return nil, err
+			}
+
+			err = deploy.Init()
+			if err != nil {
+				return nil, err
+			}
+
+			value, hasKey := args["projectDir"]
+			if !hasKey {
+				return nil, fmt.Errorf("projectDir argument required!")
+			}
+			projectDir := value.(string)
+
+			value, hasKey = args["releaseName"]
+			if !hasKey {
+				return nil, fmt.Errorf("releaseName argument required!")
+			}
+			releaseName := value.(string)
+
+			value, hasKey = args["tag"]
+			if !hasKey {
+				return nil, fmt.Errorf("tag argument required!")
+			}
+			tag := value.(string)
+
+			value, hasKey = args["repo"]
+			if !hasKey {
+				return nil, fmt.Errorf("repo argument required!")
+			}
+			repo := value.(string)
+
+			return nil, runDeploy(projectDir, releaseName, tag, kubeContext, repo, rubyCliOptions)
+
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)
 		}
