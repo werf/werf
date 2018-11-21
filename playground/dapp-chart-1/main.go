@@ -8,9 +8,23 @@ import (
 )
 
 func main() {
-	dappChart, err := deploy.GenerateDappChart(".", deploy.DappChartOptions{
-		Secret:       &secret.AesSecret{},
-		SecretValues: []string{"mypath.yaml"},
+	dappChart, err := deploy.GenerateDappChart(".", deploy.DappChartOptions{Secret: &secret.AesSecret{}})
+	if err != nil {
+		panic(err)
+	}
+
+	err = dappChart.SetSecretValuesFile("mypath.yaml", &secret.AesSecret{})
+	if err != nil {
+		panic(err)
+	}
+
+	err = dappChart.SetValues(map[string]interface{}{
+		"custom": "values",
+		"service_info": map[string]interface{}{
+			"version":     "1.0.0",
+			"project_url": "https://github.com/flant/dapp",
+			"a number":    123.456,
+		},
 	})
 	if err != nil {
 		panic(err)
