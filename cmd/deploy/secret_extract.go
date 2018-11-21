@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/flant/dapp/pkg/deploy"
 	"github.com/flant/dapp/pkg/secret"
@@ -31,31 +32,27 @@ func secretExtract(s *deploy.SecretGenerator, options secretGenerateOptions) err
 		if options.Values {
 			data, err = s.GenerateYamlData(fileData)
 			if err != nil {
-				return err
+				return fmt.Errorf("check encryption key and data: %s", err)
 			}
 		} else {
 			data, err = s.Generate(fileData)
 			if err != nil {
-				return err
+				return fmt.Errorf("check encryption key and data: %s", err)
 			}
-		}
-
-		if err := saveGeneratedData(data, options); err != nil {
-			return err
 		}
 	} else {
 		data, err = generateFromStdin(s)
 		if err != nil {
-			return err
+			return fmt.Errorf("check encryption key and data: %s", err)
 		}
 
 		if data == nil {
 			return nil
 		}
+	}
 
-		if err := saveGeneratedData(data, options); err != nil {
-			return err
-		}
+	if err := saveGeneratedData(data, options); err != nil {
+		return err
 	}
 
 	return nil

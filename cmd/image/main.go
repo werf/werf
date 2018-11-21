@@ -137,7 +137,7 @@ func main() {
 				}
 
 				if cmd == "save" {
-					images, err := stringArrayOptionFromArgs("images", args)
+					images, err := ruby2go.StringArrayOptionFromArgs("images", args)
 					if err != nil {
 						return nil, err
 					}
@@ -151,7 +151,7 @@ func main() {
 					return nil, docker.CliLoad("-i", filePath)
 				}
 			case "container_run":
-				runArgs, err := stringArrayOptionFromArgs("args", args)
+				runArgs, err := ruby2go.StringArrayOptionFromArgs("args", args)
 				if err != nil {
 					return nil, err
 				}
@@ -184,7 +184,7 @@ func main() {
 				return docker.Containers(options)
 			}
 		case "rm", "rmi":
-			ids, err := stringArrayOptionFromArgs("ids", args)
+			ids, err := ruby2go.StringArrayOptionFromArgs("ids", args)
 			if err != nil {
 				return nil, err
 			}
@@ -260,24 +260,6 @@ func mapInterfaceToMapBool(req map[string]interface{}) (map[string]bool, error) 
 		}
 	}
 	return res, nil
-}
-
-func stringArrayOptionFromArgs(optionName string, args map[string]interface{}) ([]string, error) {
-	options, err := ruby2go.OptionsFieldFromArgs(args)
-	if err != nil {
-		return nil, err
-	}
-
-	switch options[optionName].(type) {
-	case []interface{}:
-		res, err := util.InterfaceArrayToStringArray(options[optionName].([]interface{}))
-		if err != nil {
-			return nil, fmt.Errorf("%s option field value `%#v` can't be casted into []string: `%s`", optionName, options[optionName], err)
-		}
-		return res, nil
-	default:
-		return nil, fmt.Errorf("option `%s` field value `%#v` can't be casted into []string", optionName, options[optionName])
-	}
 }
 
 func filtersOptionFromArgs(args map[string]interface{}) ([]map[string]string, error) {

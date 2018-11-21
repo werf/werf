@@ -110,7 +110,7 @@ func unpad(data []byte) ([]byte, error) {
 	unpadding := int(data[length-1])
 
 	if unpadding > length {
-		return nil, fmt.Errorf("unpad failed")
+		return nil, fmt.Errorf("inconsistent data, unpad failed")
 	}
 
 	return data[:(length - unpadding)], nil
