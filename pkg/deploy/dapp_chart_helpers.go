@@ -3,7 +3,7 @@ package deploy
 var DappChartHelpersTpl = []byte(`{{- define "dapp_secret_file" -}}
 {{-   $relative_file_path := index . 0 -}}
 {{-   $context := index . 1 -}}
-{{-   $context.Files.Get (print "` + DecodedSecretDirName + `/" $relative_file_path) -}}
+{{-   $context.Files.Get (print "` + DappChartDecodedSecretDir + `/" $relative_file_path) -}}
 {{- end -}}
 
 {{- define "_dimg" -}}

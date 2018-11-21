@@ -3,7 +3,10 @@ module Dapp
     module Dapp
       module Command
         module Deploy
-          def kube_deploy_new
+          def kube_deploy
+            # TODO: move setup_ssh_agent to golang
+            setup_ssh_agent
+
             command = "deploy"
 
             # TODO: move option_tags logic to golang
@@ -18,18 +21,22 @@ module Dapp
             # TODO: move release name logic to golang
             release_name = kube_release_name
 
+            # TODO: move repo logic to golang
+            repo = option_repo
+
             res = ruby2go_deploy(
               "command" => command,
               "projectDir" => project_dir,
               "tag" => tag,
               "releaseName" => release_name,
+              "repo" => repo,
               "rubyCliOptions" => JSON.dump(self.options),
             )
 
             raise ::Dapp::Error::Command, code: :ruby2go_deploy_command_failed, data: { command: command, message: res["error"] } unless res["error"].nil?
           end
 
-          def kube_deploy
+          def kube_deploy_old
             setup_ssh_agent
 
             helm_release do |release|

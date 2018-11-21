@@ -16,10 +16,12 @@ import (
 )
 
 const (
-	DefaultSecretValuesFile = "secret-values.yaml"
-	SecretDirName           = "secret"
-	DecodedSecretDirName    = "decoded-secret"
-	MoreValuesDirName       = "more-values"
+	ProjectHelmChartDir            = ".helm"
+	ProjectDefaultSecretValuesFile = ProjectHelmChartDir + "/secret-values.yaml"
+	ProjectSecretDir               = ProjectHelmChartDir + "/secret"
+
+	DappChartDecodedSecretDir = "decoded-secret"
+	DappChartMoreValuesDir    = "more-values"
 )
 
 type DappChart struct {
@@ -36,7 +38,7 @@ func (chart *DappChart) SetGlobalAnnotation(name, value string) error {
 }
 
 func (chart *DappChart) SetValues(values map[string]interface{}) error {
-	path := filepath.Join(chart.ChartDir, MoreValuesDirName, fmt.Sprintf("%d.yaml", chart.moreValuesCounter))
+	path := filepath.Join(chart.ChartDir, DappChartMoreValuesDir, fmt.Sprintf("%d.yaml", chart.moreValuesCounter))
 	err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
 	if err != nil {
 		return err
@@ -79,7 +81,7 @@ func (chart *DappChart) SetSecretValuesFile(path string, secret secret.Secret) e
 		return fmt.Errorf("cannot decode secret values file %s data: %s", path, err)
 	}
 
-	newPath := filepath.Join(chart.ChartDir, MoreValuesDirName, fmt.Sprintf("%d.yaml", chart.moreValuesCounter))
+	newPath := filepath.Join(chart.ChartDir, DappChartMoreValuesDir, fmt.Sprintf("%d.yaml", chart.moreValuesCounter))
 
 	err = os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
 	if err != nil {
@@ -139,7 +141,7 @@ func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret)
 		return nil, fmt.Errorf("unable to write %s: %s", helpersTplPath, err)
 	}
 
-	defaultSecretValues := filepath.Join(projectDir, DefaultSecretValuesFile)
+	defaultSecretValues := filepath.Join(projectDir, ProjectDefaultSecretValuesFile)
 	if _, err := os.Stat(defaultSecretValues); !os.IsNotExist(err) {
 		err := dappChart.SetSecretValuesFile(defaultSecretValues, secret)
 		if err != nil {
@@ -147,7 +149,7 @@ func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret)
 		}
 	}
 
-	secretDir := filepath.Join(projectDir, SecretDirName)
+	secretDir := filepath.Join(projectDir, ProjectSecretDir)
 	if _, err := os.Stat(secretDir); !os.IsNotExist(err) {
 		err := filepath.Walk(secretDir, func(path string, info os.FileInfo, accessErr error) error {
 			if accessErr != nil {
@@ -159,7 +161,7 @@ func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret)
 			}
 
 			relativePath := strings.TrimPrefix(path, secretDir)
-			newPath := filepath.Join(targetDir, DecodedSecretDirName, relativePath)
+			newPath := filepath.Join(targetDir, DappChartDecodedSecretDir, relativePath)
 
 			if secret == nil {
 				err := os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
@@ -204,9 +206,17 @@ func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret)
 }
 
 func decodeSecretValues(data []byte, secret secret.Secret) ([]byte, error) {
-	return data, nil
+	obj, err := NewSecretDecodeGenerator(secret)
+	if err != nil {
+		return nil, err
+	}
+	return obj.GenerateYamlData(data)
 }
 
 func decodeSecret(data []byte, secret secret.Secret) ([]byte, error) {
-	return data, nil
+	obj, err := NewSecretDecodeGenerator(secret)
+	if err != nil {
+		return nil, err
+	}
+	return obj.Generate(data)
 }
