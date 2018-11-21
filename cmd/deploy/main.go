@@ -87,8 +87,38 @@ func main() {
 			}
 
 			return nil, SecretsRegenerate(newSecret, oldSecret, projectDir, secretValuesPaths...)
-
 		case "secret_edit":
+			projectDir, err := ruby2go.StringOptionFromArgs("project_dir", args)
+			if err != nil {
+				return nil, err
+			}
+
+			filePath, err := ruby2go.StringOptionFromArgs("file_path", args)
+			if err != nil {
+				return nil, err
+			}
+
+			tmpDir, err := ruby2go.StringOptionFromArgs("tmp_dir", args)
+			if err != nil {
+				return nil, err
+			}
+
+			options, err := ruby2go.OptionsFieldFromArgs(args)
+			if err != nil {
+				return nil, err
+			}
+
+			values, err := ruby2go.BoolFieldFromMapInterface("values", options)
+			if err != nil {
+				return nil, err
+			}
+
+			s, err := secret.GetSecret(projectDir)
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, secretEdit(s, filePath, values, tmpDir)
 		case "deploy":
 			var rubyCliOptions deployRubyCliOptions
 			if value, hasKey := args["rubyCliOptions"]; hasKey {
