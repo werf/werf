@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	dappChart, err := deploy.GenerateDappChart(".", deploy.DappChartOptions{Secret: &secret.AesSecret{}})
+	dappChart, err := deploy.GenerateDappChart(".", &secret.AesSecret{})
 	if err != nil {
 		panic(err)
 	}
