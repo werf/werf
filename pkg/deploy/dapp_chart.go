@@ -115,16 +115,12 @@ func (chart *DappChart) Lint() error {
 	return nil
 }
 
-type DappChartOptions struct {
-	Secret secret.Secret
-}
-
-func GenerateDappChart(projectDir string, opts DappChartOptions) (*DappChart, error) {
+func GenerateDappChart(projectDir string, secret secret.Secret) (*DappChart, error) {
 	tmpChartPath := filepath.Join(dapp.GetTmpDir(), fmt.Sprintf("dapp-chart-%s", uuid.NewV4().String()))
-	return PrepareDappChart(projectDir, tmpChartPath, opts)
+	return PrepareDappChart(projectDir, tmpChartPath, secret)
 }
 
-func PrepareDappChart(projectDir string, targetDir string, opts DappChartOptions) (*DappChart, error) {
+func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret) (*DappChart, error) {
 	dappChart := &DappChart{ChartDir: targetDir}
 
 	projectHelmDir := filepath.Join(projectDir, ".helm")
@@ -145,7 +141,7 @@ func PrepareDappChart(projectDir string, targetDir string, opts DappChartOptions
 
 	defaultSecretValues := filepath.Join(projectDir, DefaultSecretValuesFile)
 	if _, err := os.Stat(defaultSecretValues); !os.IsNotExist(err) {
-		err := dappChart.SetSecretValuesFile(defaultSecretValues, opts.Secret)
+		err := dappChart.SetSecretValuesFile(defaultSecretValues, secret)
 		if err != nil {
 			return nil, err
 		}
@@ -165,7 +161,7 @@ func PrepareDappChart(projectDir string, targetDir string, opts DappChartOptions
 			relativePath := strings.TrimPrefix(path, secretDir)
 			newPath := filepath.Join(targetDir, DecodedSecretDirName, relativePath)
 
-			if opts.Secret == nil {
+			if secret == nil {
 				err := os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
 				if err != nil {
 					return err
@@ -182,7 +178,7 @@ func PrepareDappChart(projectDir string, targetDir string, opts DappChartOptions
 				return fmt.Errorf("error reading file %s: %s", path, err)
 			}
 
-			decodedData, err := decodeSecret([]byte(strings.TrimRightFunc(string(data), unicode.IsSpace)), opts.Secret)
+			decodedData, err := decodeSecret([]byte(strings.TrimRightFunc(string(data), unicode.IsSpace)), secret)
 			if err != nil {
 				return fmt.Errorf("error decoding %s: %s", path, err)
 			}

@@ -16,7 +16,7 @@ type DeployOptions struct {
 }
 
 func RunDeploy(projectDir string, releaseName string, namespace string, opts DeployOptions) error {
-	dappChart, err := GenerateDappChart(projectDir, DappChartOptions{Secret: opts.Secret})
+	dappChart, err := GenerateDappChart(projectDir, opts.Secret)
 	if err != nil {
 		return err
 	}
