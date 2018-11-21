@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/flant/dapp/pkg/deploy"
 	"github.com/flant/dapp/pkg/ruby2go"
 	"github.com/flant/dapp/pkg/secret"
+	"github.com/flant/kubedog/pkg/kube"
 )
 
 func main() {
@@ -63,6 +65,45 @@ func main() {
 
 				return nil, secretExtract(secretGenerator, *options)
 			}
+
+		case "deploy":
+			var rubyCliOptions deployRubyCliOptions
+			if value, hasKey := args["rubyCliOptions"]; hasKey {
+				err = json.Unmarshal([]byte(value.(string)), &rubyCliOptions)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			kubeContext := os.Getenv("KUBECONTEXT")
+			if kubeContext == "" {
+				kubeContext = rubyCliOptions.Context
+			}
+			err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
+			if err != nil {
+				return nil, err
+			}
+
+			err = deploy.Init()
+			if err != nil {
+				return nil, err
+			}
+
+			projectDir, err := ruby2go.StringOptionFromArgs("projectDir", args)
+			if err != nil {
+				return nil, err
+			}
+			releaseName, err := ruby2go.StringOptionFromArgs("releaseName", args)
+			if err != nil {
+				return nil, err
+			}
+			tag, err := ruby2go.StringOptionFromArgs("tag", args)
+			if err != nil {
+				return nil, err
+			}
+
+			return nil, runDeploy(projectDir, releaseName, tag, kubeContext, rubyCliOptions)
+
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)
 		}
