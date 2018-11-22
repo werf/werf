@@ -101,11 +101,11 @@ func (chart *DappChart) SetSecretValuesFile(path string, secret secret.Secret) e
 
 func (chart *DappChart) Deploy(releaseName string, namespace string, opts HelmChartOptions) error {
 	return DeployHelmChart(chart.ChartDir, releaseName, namespace, HelmChartOptions{
-		Set:         append(chart.Set, opts.Set...),
-		Values:      append(chart.Values, opts.Values...),
-		KubeContext: opts.KubeContext,
-		DryRun:      opts.DryRun,
-		Debug:       opts.Debug,
+		CommonHelmOptions: CommonHelmOptions{KubeContext: opts.KubeContext},
+		Set:               append(chart.Set, opts.Set...),
+		Values:            append(chart.Values, opts.Values...),
+		DryRun:            opts.DryRun,
+		Debug:             opts.Debug,
 	})
 }
 

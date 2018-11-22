@@ -10,8 +10,6 @@ import (
 	"github.com/flant/dapp/pkg/deploy/secret"
 	"github.com/flant/dapp/pkg/docker_registry"
 	"github.com/flant/dapp/pkg/git_repo"
-	"github.com/flant/dapp/pkg/slug"
-	"github.com/flant/kubedog/pkg/kube"
 )
 
 type DeployOptions struct {
@@ -58,11 +56,7 @@ func (d *DimgInfoGetterStub) GetImageId() (string, error) {
 
 // RunDeploy runs deploy of dapp chart
 func RunDeploy(releaseName string, opts DeployOptions) error {
-	namespace := opts.Namespace
-	if namespace == "" {
-		namespace = kube.DefaultNamespace
-	}
-	namespace = slug.Slug(namespace)
+	namespace := getNamespace(opts.Namespace)
 
 	if debug() {
 		fmt.Printf("Deploy options: %#v\n", opts)
@@ -147,9 +141,5 @@ func RunDeploy(releaseName string, opts DeployOptions) error {
 		return err
 	}
 
-	return dappChart.Deploy(releaseName, namespace, HelmChartOptions{KubeContext: opts.KubeContext, Timeout: opts.Timeout})
-}
-
-func debug() bool {
-	return os.Getenv("DAPP_DEPLOY_DEBUG") == "1"
+	return dappChart.Deploy(releaseName, namespace, HelmChartOptions{CommonHelmOptions: CommonHelmOptions{KubeContext: opts.KubeContext}, Timeout: opts.Timeout})
 }
