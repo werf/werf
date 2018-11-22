@@ -5,22 +5,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/flant/dapp/pkg/deploy"
-	"github.com/flant/dapp/pkg/secret"
+	"github.com/flant/dapp/pkg/deploy/secret"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func newSecretExtractGenerator(s secret.Secret) (*deploy.SecretGenerator, error) {
-	g, err := deploy.NewSecretDecodeGenerator(s)
-	if err != nil {
-		return nil, err
-	}
-
-	return g, nil
-}
-
-func secretExtract(s *deploy.SecretGenerator, options secretGenerateOptions) error {
+func secretExtract(s secret.Secret, options secretGenerateOptions) error {
 	var encodedData []byte
 	var data []byte
 	var err error
@@ -44,19 +34,19 @@ func secretExtract(s *deploy.SecretGenerator, options secretGenerateOptions) err
 	encodedData = bytes.TrimSpace(encodedData)
 
 	if options.FilePath != "" && options.Values {
-		data, err = s.GenerateYamlData(encodedData)
+		data, err = s.ExtractYamlData(encodedData)
 		if err != nil {
-			return fmt.Errorf("check encryption key and data: %s", err)
+			return err
 		}
 	} else {
-		data, err = s.Generate(encodedData)
+		data, err = s.Extract(encodedData)
 		if err != nil {
-			return fmt.Errorf("check encryption key and data: %s", err)
+			return err
 		}
 	}
 
 	if options.OutputFilePath != "" {
-		if err := saveGeneratedData(options.OutputFilePath, data, options); err != nil {
+		if err := saveGeneratedData(options.OutputFilePath, data); err != nil {
 			return err
 		}
 	} else {

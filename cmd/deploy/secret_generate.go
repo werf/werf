@@ -4,20 +4,10 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/flant/dapp/pkg/deploy"
-	"github.com/flant/dapp/pkg/secret"
+	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-func newSecretGenerateGenerator(s secret.Secret) (*deploy.SecretGenerator, error) {
-	g, err := deploy.NewSecretEncodeGenerator(s)
-	if err != nil {
-		return nil, err
-	}
-
-	return g, nil
-}
-
-func secretGenerate(s *deploy.SecretGenerator, options secretGenerateOptions) error {
+func secretGenerate(s secret.Secret, options secretGenerateOptions) error {
 	var data []byte
 	var encodedData []byte
 	var err error
@@ -55,7 +45,7 @@ func secretGenerate(s *deploy.SecretGenerator, options secretGenerateOptions) er
 	}
 
 	if options.OutputFilePath != "" {
-		if err := saveGeneratedData(options.OutputFilePath, encodedData, options); err != nil {
+		if err := saveGeneratedData(options.OutputFilePath, encodedData); err != nil {
 			return err
 		}
 	} else {

@@ -9,7 +9,7 @@ import (
 	"unicode"
 
 	"github.com/flant/dapp/pkg/dapp"
-	"github.com/flant/dapp/pkg/secret"
+	"github.com/flant/dapp/pkg/deploy/secret"
 	"github.com/ghodss/yaml"
 	"github.com/otiai10/copy"
 	uuid "github.com/satori/go.uuid"
@@ -76,7 +76,7 @@ func (chart *DappChart) SetSecretValuesFile(path string, secret secret.Secret) e
 		return fmt.Errorf("cannot read secret values file %s: %s", path, err)
 	}
 
-	decodedData, err := decodeSecretValues(data, secret)
+	decodedData, err := secret.ExtractYamlData(data)
 	if err != nil {
 		return fmt.Errorf("cannot decode secret values file %s data: %s", path, err)
 	}
@@ -180,7 +180,7 @@ func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret)
 				return fmt.Errorf("error reading file %s: %s", path, err)
 			}
 
-			decodedData, err := decodeSecret([]byte(strings.TrimRightFunc(string(data), unicode.IsSpace)), secret)
+			decodedData, err := secret.Extract([]byte(strings.TrimRightFunc(string(data), unicode.IsSpace)))
 			if err != nil {
 				return fmt.Errorf("error decoding %s: %s", path, err)
 			}
@@ -203,20 +203,4 @@ func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret)
 	}
 
 	return dappChart, nil
-}
-
-func decodeSecretValues(data []byte, secret secret.Secret) ([]byte, error) {
-	obj, err := NewSecretDecodeGenerator(secret)
-	if err != nil {
-		return nil, err
-	}
-	return obj.GenerateYamlData(data)
-}
-
-func decodeSecret(data []byte, secret secret.Secret) ([]byte, error) {
-	obj, err := NewSecretDecodeGenerator(secret)
-	if err != nil {
-		return nil, err
-	}
-	return obj.Generate(data)
 }

@@ -7,8 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/dapp/pkg/deploy"
-	"github.com/flant/dapp/pkg/secret"
+	"github.com/flant/dapp/pkg/deploy/secret"
 
 	"k8s.io/kubernetes/pkg/util/file"
 )
@@ -18,16 +17,6 @@ func SecretsRegenerate(newSecret, oldSecret secret.Secret, projectPath string, s
 	regeneratedFilesData := map[string][]byte{}
 	secretFilesData := map[string][]byte{}
 	secretValuesFilesData := map[string][]byte{}
-
-	decodeGenerator, err := deploy.NewSecretDecodeGenerator(oldSecret)
-	if err != nil {
-		return err
-	}
-
-	encodeGenerator, err := deploy.NewSecretEncodeGenerator(newSecret)
-	if err != nil {
-		return err
-	}
 
 	helmChartPath := filepath.Join(projectPath, ".helm")
 	exist, err := file.FileExists(helmChartPath)
@@ -84,11 +73,11 @@ func SecretsRegenerate(newSecret, oldSecret secret.Secret, projectPath string, s
 		return err
 	}
 
-	if err := regenerateSecrets(secretFilesData, regeneratedFilesData, decodeGenerator.Generate, encodeGenerator.Generate); err != nil {
+	if err := regenerateSecrets(secretFilesData, regeneratedFilesData, oldSecret.Extract, newSecret.Generate); err != nil {
 		return err
 	}
 
-	if err := regenerateSecrets(secretValuesFilesData, regeneratedFilesData, decodeGenerator.GenerateYamlData, encodeGenerator.GenerateYamlData); err != nil {
+	if err := regenerateSecrets(secretValuesFilesData, regeneratedFilesData, oldSecret.ExtractYamlData, newSecret.GenerateYamlData); err != nil {
 		return err
 	}
 

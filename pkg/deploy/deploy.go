@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/flant/dapp/pkg/deploy/secret"
 	"github.com/flant/dapp/pkg/docker_registry"
 	"github.com/flant/dapp/pkg/git_repo"
-	"github.com/flant/dapp/pkg/secret"
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/kubedog/pkg/kube"
 )
@@ -82,9 +83,13 @@ func RunDeploy(releaseName string, opts DeployOptions) error {
 	}
 	if isSecretsExists {
 		var err error
-		s, err = GetSecret(opts.ProjectDir)
+		s, err = secret.GetSecret(opts.ProjectDir)
 		if err != nil {
-			return fmt.Errorf("cannot get project secret: %s", err)
+			if strings.HasPrefix(err.Error(), "encryption key not found in") {
+				fmt.Fprintln(os.Stderr, err)
+			} else {
+				return fmt.Errorf("cannot get project secret: %s", err)
+			}
 		}
 	}
 
