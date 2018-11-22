@@ -2,7 +2,13 @@ package git_repo
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
+
+	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
 
 type Local struct {
@@ -85,4 +91,88 @@ func (repo *Local) getWorkTreeDir() string {
 	pathParts = append([]string{GetBaseWorkTreeDir()}, pathParts...)
 
 	return filepath.Join(pathParts...)
+}
+
+func (repo *Local) IsBranchState() bool {
+	_, err := repo.HeadBranchName()
+	if err == errNotABranch {
+		return false
+	} else if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR getting branch of local git: %s\n", err)
+		return false
+	}
+	return true
+}
+
+func (repo *Local) GetCurrentBranchName() string {
+	name, err := repo.HeadBranchName()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR getting branch of local git: %s\n", err)
+		return ""
+	}
+	return name
+}
+
+func (repo *Local) IsTagState() bool {
+	return repo.GetCurrentTagName() != ""
+}
+
+func (repo *Local) findTagByCommitID(repoPath string, commitID plumbing.Hash) (string, error) {
+	repository, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)
+	}
+
+	references, err := repository.References()
+	if err != nil {
+		return "", err
+	}
+
+	tagPrefix := "refs/tags/"
+
+	var res *plumbing.Reference
+
+	err = references.ForEach(func(r *plumbing.Reference) error {
+		refName := r.Name().String()
+		if strings.HasPrefix(refName, tagPrefix) {
+			if r.Hash() == commitID {
+				res = r
+				return storer.ErrStop
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	if res != nil {
+		return strings.TrimPrefix(res.Name().String(), tagPrefix), nil
+	}
+	return "", nil
+}
+
+func (repo *Local) GetCurrentTagName() string {
+	ref, err := repo.getReferenceForRepo(repo.Path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR cannot get local git repo head ref: %s\n", err)
+		return ""
+	}
+
+	tag, err := repo.findTagByCommitID(repo.Path, ref.Hash())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR cannot get local git repo tag: %s\n", err)
+		return ""
+	}
+	return tag
+}
+
+func (repo *Local) GetHeadCommit() string {
+	ref, err := repo.getReferenceForRepo(repo.Path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR getting HEAD commit id of local git repo: %s\n", err)
+		return ""
+	}
+	return fmt.Sprintf("%s", ref.Hash())
 }

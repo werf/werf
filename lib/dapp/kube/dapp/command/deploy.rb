@@ -15,6 +15,9 @@ module Dapp
               option_tags.first
             end
 
+            # TODO: move project name logic to golang
+            project_name = name.to_s
+
             # TODO: move project dir logic to golang
             project_dir = path.to_s
 
@@ -24,13 +27,23 @@ module Dapp
             # TODO: move repo logic to golang
             repo = option_repo
 
+            dimgs = self.build_configs.map do |config|
+              d = self.dimg(config: config, ignore_signature_auto_calculation: true)
+              {"Name" => d.name, "ImageTag" => tag, "Repo" => repo}
+            end.uniq do |dimg|
+              dimg["Name"]
+            end
+
             res = ruby2go_deploy(
               "command" => command,
+              "projectName" => project_name,
               "projectDir" => project_dir,
               "tag" => tag,
               "releaseName" => release_name,
               "repo" => repo,
+              "dimgs" => JSON.dump(dimgs),
               "rubyCliOptions" => JSON.dump(self.options),
+              options: { host_docker_config_dir: self.class.host_docker_config_dir },
             )
 
             raise ::Dapp::Error::Command, code: :ruby2go_deploy_command_failed, data: { command: command, message: res["error"] } unless res["error"].nil?
