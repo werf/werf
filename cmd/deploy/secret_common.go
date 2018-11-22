@@ -1,17 +1,11 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/flant/dapp/pkg/deploy"
-
-	"github.com/howeyc/gopass"
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/kubernetes/pkg/util/file"
 )
@@ -22,11 +16,11 @@ type secretGenerateOptions struct {
 	Values         bool   `json:"values"`
 }
 
-func readFileData(options secretGenerateOptions) ([]byte, error) {
-	if exist, err := file.FileExists(options.FilePath); err != nil {
+func readFileData(filePath string) ([]byte, error) {
+	if exist, err := file.FileExists(filePath); err != nil {
 		return nil, err
 	} else if !exist {
-		absFilePath, err := filepath.Abs(options.FilePath)
+		absFilePath, err := filepath.Abs(filePath)
 		if err != nil {
 			return nil, err
 		}
@@ -34,7 +28,7 @@ func readFileData(options secretGenerateOptions) ([]byte, error) {
 		return nil, fmt.Errorf("secret file '%s' not found", absFilePath)
 	}
 
-	fileData, err := ioutil.ReadFile(options.FilePath)
+	fileData, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -42,78 +36,34 @@ func readFileData(options secretGenerateOptions) ([]byte, error) {
 	return fileData, err
 }
 
-func generateFromStdin(s *deploy.SecretGenerator) ([]byte, error) {
+func readStdin() ([]byte, error) {
 	var data []byte
-	var secretData []byte
-
 	var err error
+
 	if terminal.IsTerminal(int(os.Stdin.Fd())) {
 		fmt.Printf("Enter secret: ")
-		secretData, err = gopass.GetPasswd()
+		data, err = terminal.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Println()
 		if err != nil {
-			if err.Error() == "interrupted" {
-				return nil, nil
-			}
 			return nil, err
 		}
 	} else {
-		r := bufio.NewReader(os.Stdin)
-		buf := make([]byte, 0, 4<<20)
-		for {
-			n, err := r.Read(buf[:cap(buf)])
-			buf = buf[:n]
-
-			secretData = append(secretData, buf...)
-
-			if n == 0 {
-				if err == nil {
-					continue
-				}
-
-				if err == io.EOF {
-					break
-				}
-
-				return nil, err
-			}
-
-			if err != nil && err != io.EOF {
-				return nil, err
-			}
+		data, err = ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			return nil, err
 		}
-
-		secretData = bytes.TrimSpace(secretData)
-	}
-
-	if len(secretData) == 0 {
-		return nil, nil
-	}
-
-	data, err = s.Generate(secretData)
-	if err != nil {
-		return nil, err
 	}
 
 	return data, nil
 }
 
-func saveGeneratedData(data []byte, options secretGenerateOptions) error {
-	if options.OutputFilePath != "" {
-		if err := os.MkdirAll(filepath.Dir(options.OutputFilePath), 0777); err != nil {
-			return err
-		}
+func saveGeneratedData(filePath string, data []byte, options secretGenerateOptions) error {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0777); err != nil {
+		return err
+	}
 
-		if err := ioutil.WriteFile(options.OutputFilePath, data, 0644); err != nil {
-			return err
-		}
-	} else {
-		if terminal.IsTerminal(int(os.Stdout.Fd())) {
-			if !bytes.HasSuffix(data, []byte("\n")) {
-				data = append(data, []byte("\n")...)
-			}
-		}
-
-		fmt.Printf(string(data))
+	if err := ioutil.WriteFile(options.OutputFilePath, data, 0644); err != nil {
+		return err
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/flant/dapp/pkg/deploy"
 	"github.com/flant/dapp/pkg/secret"
@@ -18,40 +19,47 @@ func newSecretGenerateGenerator(s secret.Secret) (*deploy.SecretGenerator, error
 
 func secretGenerate(s *deploy.SecretGenerator, options secretGenerateOptions) error {
 	var data []byte
+	var encodedData []byte
 	var err error
 
 	if options.FilePath != "" {
-		fileData, err := readFileData(options)
+		data, err = readFileData(options.FilePath)
 		if err != nil {
 			return err
-		}
-
-		if options.Values {
-			data, err = s.GenerateYamlData(fileData)
-			if err != nil {
-				return err
-			}
-		} else {
-			data, err = s.Generate(fileData)
-			if err != nil {
-				return err
-			}
 		}
 	} else {
-		data, err = generateFromStdin(s)
+		data, err = readStdin()
 		if err != nil {
 			return err
 		}
 
-		if data == nil {
+		if len(data) == 0 {
 			return nil
 		}
 	}
 
-	data = append(bytes.TrimSpace(data), []byte("\n")...)
+	if options.FilePath != "" && options.Values {
+		encodedData, err = s.GenerateYamlData(data)
+		if err != nil {
+			return err
+		}
+	} else {
+		encodedData, err = s.Generate(data)
+		if err != nil {
+			return err
+		}
+	}
 
-	if err := saveGeneratedData(data, options); err != nil {
-		return err
+	if !bytes.HasSuffix(encodedData, []byte("\n")) {
+		encodedData = append(encodedData, []byte("\n")...)
+	}
+
+	if options.OutputFilePath != "" {
+		if err := saveGeneratedData(options.OutputFilePath, encodedData, options); err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf(string(encodedData))
 	}
 
 	return nil
