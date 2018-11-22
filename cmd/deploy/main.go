@@ -3,9 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/flant/dapp/pkg/deploy"
+	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ruby2go"
 	"github.com/flant/dapp/pkg/secret"
@@ -109,6 +112,19 @@ func main() {
 				return nil, err
 			}
 
+			hostDockerConfigDir, err := ruby2go.StringOptionFromArgs("host_docker_config_dir", args)
+			if err != nil {
+				return nil, err
+			}
+
+			os.Setenv("DOCKER_CONFIG", hostDockerConfigDir)
+			log.SetFlags(0)
+			log.SetOutput(ioutil.Discard)
+
+			if err := docker.Init(hostDockerConfigDir); err != nil {
+				return nil, err
+			}
+
 			kubeContext := os.Getenv("KUBECONTEXT")
 			if kubeContext == "" {
 				kubeContext = rubyCliOptions.Context
@@ -123,7 +139,13 @@ func main() {
 				return nil, err
 			}
 
-			value, hasKey := args["projectDir"]
+			value, hasKey := args["projectName"]
+			if !hasKey {
+				return nil, fmt.Errorf("projectName argument required!")
+			}
+			projectName := value.(string)
+
+			value, hasKey = args["projectDir"]
 			if !hasKey {
 				return nil, fmt.Errorf("projectDir argument required!")
 			}
@@ -147,7 +169,17 @@ func main() {
 			}
 			repo := value.(string)
 
-			return nil, runDeploy(projectDir, releaseName, tag, kubeContext, repo, rubyCliOptions)
+			var dimgs []*deploy.DimgInfoGetterStub
+			if value, hasKey := args["dimgs"]; hasKey {
+				err = json.Unmarshal([]byte(value.(string)), &dimgs)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, fmt.Errorf("dimgs argument required!")
+			}
+
+			return nil, runDeploy(projectName, projectDir, releaseName, tag, kubeContext, repo, dimgs, rubyCliOptions)
 
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)

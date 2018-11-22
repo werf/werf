@@ -19,14 +19,19 @@ type deployRubyCliOptions struct {
 	WithoutRegistry         bool     `json:"without_registry"`
 }
 
-func runDeploy(projectDir string, releaseName string, tag string, kubeContext string, repo string, rubyCliOptions deployRubyCliOptions) error {
-	return deploy.RunDeploy(projectDir, releaseName, deploy.DeployOptions{
-		Namespace:    rubyCliOptions.Namespace,
-		Repo:         rubyCliOptions.Repo,
-		Values:       rubyCliOptions.HelmValuesOptions,
-		SecretValues: rubyCliOptions.HelmSecretValuesOptions,
-		Set:          rubyCliOptions.HelmSetOptions,
-		Timeout:      time.Duration(rubyCliOptions.Timeout) * time.Second,
-		KubeContext:  kubeContext,
+func runDeploy(projectName, projectDir, releaseName, imageTag, kubeContext, repo string, dimgs []*deploy.DimgInfoGetterStub, rubyCliOptions deployRubyCliOptions) error {
+	return deploy.RunDeploy(releaseName, deploy.DeployOptions{
+		ProjectDir:      projectDir,
+		ProjectName:     projectName,
+		Namespace:       rubyCliOptions.Namespace,
+		Repo:            repo,
+		Values:          rubyCliOptions.HelmValuesOptions,
+		SecretValues:    rubyCliOptions.HelmSecretValuesOptions,
+		Set:             rubyCliOptions.HelmSetOptions,
+		Timeout:         time.Duration(rubyCliOptions.Timeout) * time.Second,
+		KubeContext:     kubeContext,
+		ImageTag:        imageTag,
+		Dimgs:           dimgs,
+		WithoutRegistry: rubyCliOptions.WithoutRegistry,
 	})
 }
