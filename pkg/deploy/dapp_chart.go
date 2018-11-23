@@ -1,9 +1,11 @@
 package deploy
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"unicode"
@@ -113,8 +115,60 @@ func (chart *DappChart) Render() (string, error) {
 	return "THIS IS TEMPLATE\n", nil
 }
 
+type ChartConfig struct {
+	Name string `json:"name"`
+}
+
 func (chart *DappChart) Lint() error {
-	fmt.Printf("Lint OK!\n")
+	tmpLintPath := filepath.Join(dapp.GetTmpDir(), fmt.Sprintf("dapp-lint-%s", uuid.NewV4().String()))
+	defer os.RemoveAll(tmpLintPath)
+
+	err := os.MkdirAll(tmpLintPath, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	chartConfigPath := filepath.Join(chart.ChartDir, "Chart.yaml")
+
+	data, err := ioutil.ReadFile(chartConfigPath)
+	if err != nil {
+		return fmt.Errorf("error reading %s: %s", chartConfigPath, err)
+	}
+
+	if debug() {
+		fmt.Printf("Read chart config:\n%s\n", data)
+	}
+
+	var cc ChartConfig
+	err = yaml.Unmarshal(data, &cc)
+	if err != nil {
+		return fmt.Errorf("bad chart config %s: %s", chartConfigPath, err)
+	}
+
+	tmpChartDir := filepath.Join(tmpLintPath, cc.Name)
+	err = copy.Copy(chart.ChartDir, tmpChartDir)
+
+	args := []string{"lint", tmpChartDir, "--strict"}
+	for _, set := range chart.Set {
+		args = append(args, "--set", set)
+	}
+	for _, values := range chart.Values {
+		args = append(args, "--values", values)
+	}
+
+	cmd := exec.Command("helm", args...)
+	cmd.Env = os.Environ()
+
+	var output bytes.Buffer
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("helm lint failed: %s\n%s", err, output.String())
+	}
+
+	fmt.Printf("%s", output.String())
+
 	return nil
 }
 

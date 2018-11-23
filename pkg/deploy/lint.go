@@ -1,6 +1,9 @@
 package deploy
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type LintOptions struct {
 	ProjectDir   string
@@ -27,6 +30,10 @@ func RunLint(opts LintOptions) error {
 	dappChart, err := getDappChart(opts.ProjectDir, s, opts.Values, opts.SecretValues, opts.Set, serviceValues)
 	if err != nil {
 		return err
+	}
+	if !debug() {
+		// Do not remove tmp chart in debug
+		defer os.RemoveAll(dappChart.ChartDir)
 	}
 
 	return dappChart.Lint()

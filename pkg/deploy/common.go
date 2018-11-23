@@ -51,12 +51,6 @@ func getDappChart(projectDir string, s secret.Secret, values, secretValues, set 
 	if err != nil {
 		return nil, err
 	}
-	if debug() {
-		// Do not remove tmp chart in debug
-		fmt.Printf("Generated dapp chart: %#v\n", dappChart)
-	} else {
-		defer os.RemoveAll(dappChart.ChartDir)
-	}
 
 	for _, path := range values {
 		err = dappChart.SetValuesFile(path)
@@ -84,6 +78,10 @@ func getDappChart(projectDir string, s secret.Secret, values, secretValues, set 
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if debug() {
+		fmt.Printf("Dapp chart: %#v\n", dappChart)
 	}
 
 	return dappChart, nil
