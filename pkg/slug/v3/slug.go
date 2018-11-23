@@ -33,5 +33,5 @@ func Slug(data string) string {
 }
 
 func ShouldNotBeSlugged(data string) bool {
-	return v1.ShouldNotBeSlugged(data) && len(data) < v2.SlugLimitLength
+	return len(data) == 0 || v1.ShouldNotBeSlugged(data) && len(data) < v2.SlugLimitLength
 }
