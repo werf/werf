@@ -18,8 +18,8 @@ import (
 	"k8s.io/kubernetes/pkg/util/file"
 )
 
-func secretEdit(s secret.Secret, filePath string, values bool, tmpDir string) error {
-	data, encodedData, err := readEditedFile(s, filePath, values)
+func secretEdit(m secret.Manager, filePath string, values bool, tmpDir string) error {
+	data, encodedData, err := readEditedFile(m, filePath, values)
 	if err != nil {
 		return err
 	}
@@ -57,12 +57,12 @@ func secretEdit(s secret.Secret, filePath string, values bool, tmpDir string) er
 
 		var newEncodedData []byte
 		if values {
-			newEncodedData, err = s.GenerateYamlData(newData)
+			newEncodedData, err = m.GenerateYamlData(newData)
 			if err != nil {
 				return err
 			}
 		} else {
-			newEncodedData, err = s.Generate(newData)
+			newEncodedData, err = m.Generate(newData)
 			if err != nil {
 				return err
 			}
@@ -107,7 +107,7 @@ func secretEdit(s secret.Secret, filePath string, values bool, tmpDir string) er
 	return nil
 }
 
-func readEditedFile(s secret.Secret, filePath string, values bool) ([]byte, []byte, error) {
+func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []byte, error) {
 	var data, encodedData []byte
 
 	exist, err := file.FileExists(filePath)
@@ -124,12 +124,12 @@ func readEditedFile(s secret.Secret, filePath string, values bool) ([]byte, []by
 		encodedData = bytes.TrimSpace(encodedData)
 
 		if values {
-			data, err = s.ExtractYamlData(encodedData)
+			data, err = m.ExtractYamlData(encodedData)
 			if err != nil {
 				return nil, nil, err
 			}
 		} else {
-			data, err = s.Extract(encodedData)
+			data, err = m.Extract(encodedData)
 			if err != nil {
 				return nil, nil, err
 			}

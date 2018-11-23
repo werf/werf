@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func secretExtract(s secret.Secret, options secretGenerateOptions) error {
+func secretExtract(m secret.Manager, options secretGenerateOptions) error {
 	var encodedData []byte
 	var data []byte
 	var err error
@@ -34,12 +34,12 @@ func secretExtract(s secret.Secret, options secretGenerateOptions) error {
 	encodedData = bytes.TrimSpace(encodedData)
 
 	if options.FilePath != "" && options.Values {
-		data, err = s.ExtractYamlData(encodedData)
+		data, err = m.ExtractYamlData(encodedData)
 		if err != nil {
 			return err
 		}
 	} else {
-		data, err = s.Extract(encodedData)
+		data, err = m.Extract(encodedData)
 		if err != nil {
 			return err
 		}

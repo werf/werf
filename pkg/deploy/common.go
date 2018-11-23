@@ -18,9 +18,7 @@ func getNamespace(namespaceOption string) string {
 	return slug.Slug(namespaceOption)
 }
 
-func getOptionalSecret(projectDir string, secretValues []string) (secret.Secret, error) {
-	var s secret.Secret
-
+func getSafeSecretManager(projectDir string, secretValues []string) (secret.Manager, error) {
 	isSecretsExists := false
 	if _, err := os.Stat(filepath.Join(projectDir, ProjectSecretDir)); !os.IsNotExist(err) {
 		isSecretsExists = true
@@ -36,24 +34,19 @@ func getOptionalSecret(projectDir string, secretValues []string) (secret.Secret,
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "encryption key not found in") {
 				fmt.Fprintln(os.Stderr, err)
-
-				return nil, nil
 			} else {
 				return nil, err
 			}
-		}
-
-		s, err = secret.NewSecretByKey(key)
-		if err != nil {
-			return nil, err
+		} else {
+			return secret.NewManager(key)
 		}
 	}
 
-	return s, nil
+	return secret.NewSafeManager()
 }
 
-func getDappChart(projectDir string, s secret.Secret, values, secretValues, set []string, serviceValues map[string]interface{}) (*DappChart, error) {
-	dappChart, err := GenerateDappChart(projectDir, s)
+func getDappChart(projectDir string, m secret.Manager, values, secretValues, set []string, serviceValues map[string]interface{}) (*DappChart, error) {
+	dappChart, err := GenerateDappChart(projectDir, m)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +59,7 @@ func getDappChart(projectDir string, s secret.Secret, values, secretValues, set 
 	}
 
 	for _, path := range secretValues {
-		err = dappChart.SetSecretValuesFile(path, s)
+		err = dappChart.SetSecretValuesFile(path, m)
 		if err != nil {
 			return nil, err
 		}

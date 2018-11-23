@@ -8,12 +8,12 @@ import (
 )
 
 func main() {
-	dappChart, err := deploy.GenerateDappChart(".", &secret.BaseSecret{})
+	dappChart, err := deploy.GenerateDappChart(".", &secret.BaseManager{})
 	if err != nil {
 		panic(err)
 	}
 
-	err = dappChart.SetSecretValuesFile("mypath.yaml", &secret.BaseSecret{})
+	err = dappChart.SetSecretValuesFile("mypath.yaml", &secret.BaseManager{})
 	if err != nil {
 		panic(err)
 	}

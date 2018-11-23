@@ -7,7 +7,7 @@ import (
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-func secretGenerate(s secret.Secret, options secretGenerateOptions) error {
+func secretGenerate(m secret.Manager, options secretGenerateOptions) error {
 	var data []byte
 	var encodedData []byte
 	var err error
@@ -29,12 +29,12 @@ func secretGenerate(s secret.Secret, options secretGenerateOptions) error {
 	}
 
 	if options.FilePath != "" && options.Values {
-		encodedData, err = s.GenerateYamlData(data)
+		encodedData, err = m.GenerateYamlData(data)
 		if err != nil {
 			return err
 		}
 	} else {
-		encodedData, err = s.Generate(data)
+		encodedData, err = m.Generate(data)
 		if err != nil {
 			return err
 		}

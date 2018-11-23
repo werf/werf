@@ -52,7 +52,7 @@ func TestBaseSecret_doYamlData(t *testing.T) {
   affinity: {}
 `)
 
-	s, err := NewSecret(&SecretMock{})
+	s, err := newBaseManager(&SecretMock{})
 	if err != nil {
 		t.Fatal(err)
 	}
