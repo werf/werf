@@ -7,6 +7,11 @@ module Dapp
             @dependencies ||= [from_image_name, dimg.config._docker._from_cache_version, config_mounts]
           end
 
+          def save_in_cache!
+            super
+            from_dimg.last_stage.save_in_cache! unless from_dimg.nil?
+          end
+
           protected
 
           def prepare_image
