@@ -23,6 +23,50 @@ func main() {
 		}
 
 		switch cmd {
+		case "lint":
+			var rubyCliOptions lintRubyCliOptions
+			if value, hasKey := args["rubyCliOptions"]; hasKey {
+				err = json.Unmarshal([]byte(value.(string)), &rubyCliOptions)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			err = deploy.Init()
+			if err != nil {
+				return nil, err
+			}
+
+			value, hasKey := args["projectDir"]
+			if !hasKey {
+				return nil, fmt.Errorf("projectDir argument required!")
+			}
+			projectDir := value.(string)
+
+			return nil, runLint(projectDir, rubyCliOptions)
+
+		case "render":
+			var rubyCliOptions renderRubyCliOptions
+			if value, hasKey := args["rubyCliOptions"]; hasKey {
+				err = json.Unmarshal([]byte(value.(string)), &rubyCliOptions)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			err = deploy.Init()
+			if err != nil {
+				return nil, err
+			}
+
+			value, hasKey := args["projectDir"]
+			if !hasKey {
+				return nil, fmt.Errorf("projectDir argument required!")
+			}
+			projectDir := value.(string)
+
+			return nil, runRender(projectDir, rubyCliOptions)
+
 		case "dismiss":
 			var rubyCliOptions dismissRubyCliOptions
 			if value, hasKey := args["rubyCliOptions"]; hasKey {

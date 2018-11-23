@@ -3,6 +3,21 @@ module Dapp
     module Dapp
       module Command
         module Lint
+          def kube_lint
+            command = "lint"
+
+            # TODO: move project dir logic to golang
+            project_dir = path.to_s
+
+            res = ruby2go_deploy(
+              "command" => command,
+              "projectDir" => project_dir,
+              "rubyCliOptions" => JSON.dump(self.options),
+            )
+
+            raise ::Dapp::Error::Command, code: :ruby2go_deploy_command_failed, data: { command: command, message: res["error"] } unless res["error"].nil?
+          end
+
           def kube_chart_name
             chart_spec = yaml_load_file(kube_chart_yaml_path)
 
@@ -26,7 +41,7 @@ module Dapp
             end
           end
 
-          def kube_lint
+          def kube_lint_old
             kube_check_helm_chart_yaml!
             with_kube_tmp_lint_chart_dir do
               helm_release(&:lint!)
