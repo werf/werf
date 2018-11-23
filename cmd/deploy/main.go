@@ -8,10 +8,10 @@ import (
 	"os"
 
 	"github.com/flant/dapp/pkg/deploy"
+	"github.com/flant/dapp/pkg/deploy/secret"
 	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ruby2go"
-	"github.com/flant/dapp/pkg/secret"
 	"github.com/flant/kubedog/pkg/kube"
 )
 
@@ -24,7 +24,7 @@ func main() {
 
 		switch cmd {
 		case "secret_key_generate":
-			key, err := secret.GenerateAexSecretKey()
+			key, err := secret.GenerateSecretKey()
 			if err != nil {
 				return nil, err
 			}
@@ -49,25 +49,16 @@ func main() {
 				return nil, err
 			}
 
-			s, err := deploy.GetSecret(projectDir)
+			s, err := secret.GetSecret(projectDir)
 			if err != nil {
 				return nil, err
 			}
 
-			var secretGenerator *deploy.SecretGenerator
 			switch cmd {
 			case "secret_generate":
-				if secretGenerator, err = newSecretGenerateGenerator(s); err != nil {
-					return nil, err
-				}
-
-				return nil, secretGenerate(secretGenerator, *options)
+				return nil, secretGenerate(s, *options)
 			case "secret_extract":
-				if secretGenerator, err = newSecretExtractGenerator(s); err != nil {
-					return nil, err
-				}
-
-				return nil, secretExtract(secretGenerator, *options)
+				return nil, secretExtract(s, *options)
 			}
 		case "secret_regenerate":
 			projectDir, err := ruby2go.StringOptionFromArgs("project_dir", args)
@@ -85,12 +76,12 @@ func main() {
 				return nil, err
 			}
 
-			newSecret, err := deploy.GetSecret(projectDir)
+			newSecret, err := secret.GetSecret(projectDir)
 			if err != nil {
 				return nil, err
 			}
 
-			oldSecret, err := secret.NewSecret([]byte(oldKey))
+			oldSecret, err := secret.NewSecretByKey([]byte(oldKey))
 			if err != nil {
 				return nil, err
 			}

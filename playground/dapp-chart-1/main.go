@@ -4,16 +4,16 @@ import (
 	"fmt"
 
 	"github.com/flant/dapp/pkg/deploy"
-	"github.com/flant/dapp/pkg/secret"
+	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
 func main() {
-	dappChart, err := deploy.GenerateDappChart(".", &secret.AesSecret{})
+	dappChart, err := deploy.GenerateDappChart(".", &secret.BaseSecret{})
 	if err != nil {
 		panic(err)
 	}
 
-	err = dappChart.SetSecretValuesFile("mypath.yaml", &secret.AesSecret{})
+	err = dappChart.SetSecretValuesFile("mypath.yaml", &secret.BaseSecret{})
 	if err != nil {
 		panic(err)
 	}

@@ -41,9 +41,16 @@ func readStdin() ([]byte, error) {
 	var err error
 
 	if terminal.IsTerminal(int(os.Stdin.Fd())) {
-		fmt.Printf("Enter secret: ")
+		isStdoutTerminal := terminal.IsTerminal(int(os.Stdout.Fd()))
+		if isStdoutTerminal {
+			fmt.Printf("Enter secret: ")
+		}
+
 		data, err = terminal.ReadPassword(int(os.Stdin.Fd()))
-		fmt.Println()
+
+		if isStdoutTerminal {
+			fmt.Println()
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -57,12 +64,12 @@ func readStdin() ([]byte, error) {
 	return data, nil
 }
 
-func saveGeneratedData(filePath string, data []byte, options secretGenerateOptions) error {
+func saveGeneratedData(filePath string, data []byte) error {
 	if err := os.MkdirAll(filepath.Dir(filePath), 0777); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(options.OutputFilePath, data, 0644); err != nil {
+	if err := ioutil.WriteFile(filePath, data, 0644); err != nil {
 		return err
 	}
 
