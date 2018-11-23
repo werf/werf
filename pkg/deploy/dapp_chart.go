@@ -109,11 +109,12 @@ func (chart *DappChart) Deploy(releaseName string, namespace string, opts HelmCh
 	})
 }
 
-func (chart *DappChart) Render() error {
-	return nil
+func (chart *DappChart) Render() (string, error) {
+	return "THIS IS TEMPLATE\n", nil
 }
 
 func (chart *DappChart) Lint() error {
+	fmt.Printf("Lint OK!\n")
 	return nil
 }
 

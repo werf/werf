@@ -2,12 +2,9 @@ package deploy
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
-	"github.com/flant/dapp/pkg/deploy/secret"
 	"github.com/flant/dapp/pkg/docker_registry"
 	"github.com/flant/dapp/pkg/git_repo"
 )
@@ -63,60 +60,9 @@ func RunDeploy(releaseName string, opts DeployOptions) error {
 		fmt.Printf("Namespace: %s\n", namespace)
 	}
 
-	var s secret.Secret
-
-	isSecretsExists := false
-	if _, err := os.Stat(filepath.Join(opts.ProjectDir, ProjectSecretDir)); !os.IsNotExist(err) {
-		isSecretsExists = true
-	}
-	if _, err := os.Stat(filepath.Join(opts.ProjectDir, ProjectDefaultSecretValuesFile)); !os.IsNotExist(err) {
-		isSecretsExists = true
-	}
-	if len(opts.SecretValues) > 0 {
-		isSecretsExists = true
-	}
-	if isSecretsExists {
-		var err error
-		s, err = secret.GetSecret(opts.ProjectDir)
-		if err != nil {
-			if strings.HasPrefix(err.Error(), "encryption key not found in") {
-				fmt.Fprintln(os.Stderr, err)
-			} else {
-				return fmt.Errorf("cannot get project secret: %s", err)
-			}
-		}
-	}
-
-	dappChart, err := GenerateDappChart(opts.ProjectDir, s)
+	s, err := getOptionalSecret(opts.ProjectDir, opts.SecretValues)
 	if err != nil {
-		return err
-	}
-	if debug() {
-		// Do not remove tmp chart in debug
-		fmt.Printf("Generated dapp chart: %#v\n", dappChart)
-	} else {
-		defer os.RemoveAll(dappChart.ChartDir)
-	}
-
-	for _, path := range opts.Values {
-		err = dappChart.SetValuesFile(path)
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, path := range opts.SecretValues {
-		err = dappChart.SetSecretValuesFile(path, s)
-		if err != nil {
-			return err
-		}
-	}
-
-	for _, set := range opts.Set {
-		err = dappChart.SetValuesSet(set)
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("cannot get project secret: %s", err)
 	}
 
 	localGit := &git_repo.Local{Path: opts.ProjectDir, GitDir: filepath.Join(opts.ProjectDir, ".git")}
@@ -136,7 +82,7 @@ func RunDeploy(releaseName string, opts DeployOptions) error {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	err = dappChart.SetValues(serviceValues)
+	dappChart, err := getDappChart(opts.ProjectDir, s, opts.Values, opts.SecretValues, opts.Set, serviceValues)
 	if err != nil {
 		return err
 	}

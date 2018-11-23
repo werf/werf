@@ -2,16 +2,16 @@ package deploy
 
 import "fmt"
 
-type LintOptions struct {
+type RenderOptions struct {
 	ProjectDir   string
 	Values       []string
 	SecretValues []string
 	Set          []string
 }
 
-func RunLint(opts LintOptions) error {
+func RunRender(opts RenderOptions) error {
 	if debug() {
-		fmt.Printf("Lint options: %#v\n", opts)
+		fmt.Printf("Render options: %#v\n", opts)
 	}
 
 	s, err := getOptionalSecret(opts.ProjectDir, opts.SecretValues)
@@ -29,5 +29,12 @@ func RunLint(opts LintOptions) error {
 		return err
 	}
 
-	return dappChart.Lint()
+	data, err := dappChart.Render()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s", data)
+
+	return nil
 }
