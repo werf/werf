@@ -110,7 +110,18 @@ func (chart *DappChart) Deploy(releaseName string, namespace string, opts HelmCh
 }
 
 func (chart *DappChart) Render() (string, error) {
-	return "THIS IS TEMPLATE\n", nil
+	args := []string{"template", chart.ChartDir}
+	args = append(args, commonHelmCommandArgs("", HelmChartOptions{
+		Set:    chart.Set,
+		Values: chart.Values,
+	})...)
+
+	stdout, stderr, err := HelmCmd(args...)
+	if err != nil {
+		return "", fmt.Errorf("%s\n%s", stdout, stderr)
+	}
+
+	return stdout, nil
 }
 
 func (chart *DappChart) Lint() error {

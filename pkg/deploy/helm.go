@@ -101,7 +101,7 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 		return fmt.Errorf("watching job hooks failed: %s", err)
 	}
 
-	args := commonDeployCommandArgs(namespace, opts)
+	args := commonHelmCommandArgs(namespace, opts)
 	if releaseExist {
 		args = append([]string{"upgrade", releaseName, chartPath}, args...)
 		fmt.Printf("# Upgrading helm release '%s'...\n", releaseName)
@@ -184,7 +184,7 @@ func watchJobHooks(templates *ChartTemplates, releaseExist bool, deployStartTime
 	return jobHooksWatcherDone, nil
 }
 
-func commonDeployCommandArgs(namespace string, opts HelmChartOptions) []string {
+func commonHelmCommandArgs(namespace string, opts HelmChartOptions) []string {
 	var args []string
 
 	if namespace != "" {

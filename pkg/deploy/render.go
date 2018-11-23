@@ -34,7 +34,7 @@ func RunRender(opts RenderOptions) error {
 		return err
 	}
 
-	fmt.Printf("%s", data)
+	fmt.Println(data)
 
 	return nil
 }
