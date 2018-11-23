@@ -17,7 +17,7 @@ func RunLint(opts LintOptions) error {
 		fmt.Printf("Lint options: %#v\n", opts)
 	}
 
-	s, err := getOptionalSecret(opts.ProjectDir, opts.SecretValues)
+	m, err := getSafeSecretManager(opts.ProjectDir, opts.SecretValues)
 	if err != nil {
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
@@ -27,7 +27,7 @@ func RunLint(opts LintOptions) error {
 		WithoutRegistry: true,
 	})
 
-	dappChart, err := getDappChart(opts.ProjectDir, s, opts.Values, opts.SecretValues, opts.Set, serviceValues)
+	dappChart, err := getDappChart(opts.ProjectDir, m, opts.Values, opts.SecretValues, opts.Set, serviceValues)
 	if err != nil {
 		return err
 	}

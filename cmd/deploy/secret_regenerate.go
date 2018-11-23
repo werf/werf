@@ -12,7 +12,7 @@ import (
 	"k8s.io/kubernetes/pkg/util/file"
 )
 
-func SecretsRegenerate(newSecret, oldSecret secret.Secret, projectPath string, secretValuesPaths ...string) error {
+func SecretsRegenerate(newManager, oldManager secret.Manager, projectPath string, secretValuesPaths ...string) error {
 	var secretFilesPaths []string
 	regeneratedFilesData := map[string][]byte{}
 	secretFilesData := map[string][]byte{}
@@ -73,11 +73,11 @@ func SecretsRegenerate(newSecret, oldSecret secret.Secret, projectPath string, s
 		return err
 	}
 
-	if err := regenerateSecrets(secretFilesData, regeneratedFilesData, oldSecret.Extract, newSecret.Generate); err != nil {
+	if err := regenerateSecrets(secretFilesData, regeneratedFilesData, oldManager.Extract, newManager.Generate); err != nil {
 		return err
 	}
 
-	if err := regenerateSecrets(secretValuesFilesData, regeneratedFilesData, oldSecret.ExtractYamlData, newSecret.GenerateYamlData); err != nil {
+	if err := regenerateSecrets(secretValuesFilesData, regeneratedFilesData, oldManager.ExtractYamlData, newManager.GenerateYamlData); err != nil {
 		return err
 	}
 

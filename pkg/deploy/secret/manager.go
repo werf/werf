@@ -13,7 +13,7 @@ import (
 	"k8s.io/kubernetes/pkg/util/file"
 )
 
-type Secret interface {
+type Manager interface {
 	secret.Secret
 
 	GenerateYamlData(data []byte) ([]byte, error)
@@ -24,8 +24,8 @@ func GenerateSecretKey() ([]byte, error) {
 	return secret.GenerateAexSecretKey()
 }
 
-func GetSecret(projectDir string) (Secret, error) {
-	var s Secret
+func GetManager(projectDir string) (Manager, error) {
+	var m Manager
 	var key []byte
 	var err error
 
@@ -34,12 +34,12 @@ func GetSecret(projectDir string) (Secret, error) {
 		return nil, err
 	}
 
-	s, err = NewSecretByKey(key)
+	m, err = NewManager(key)
 	if err != nil {
 		return nil, err
 	}
 
-	return s, nil
+	return m, nil
 }
 
 func GetSecretKey(projectDir string) ([]byte, error) {
@@ -96,25 +96,15 @@ func GetSecretKey(projectDir string) ([]byte, error) {
 	return secretKey, nil
 }
 
-func NewSecretByKey(key []byte) (Secret, error) {
+func NewManager(key []byte) (Manager, error) {
 	ss, err := secret.NewSecret(key)
 	if err != nil {
 		return nil, fmt.Errorf("check encryption key: %s", err)
 	}
 
-	return NewSecret(ss)
+	return newBaseManager(ss)
 }
 
-func NewSecret(ss secret.Secret) (Secret, error) {
-	s := &BaseSecret{}
-
-	if ss != nil {
-		s.generateFunc = ss.Generate
-		s.extractFunc = ss.Extract
-	} else {
-		s.generateFunc = doNothing
-		s.extractFunc = doNothing
-	}
-
-	return s, nil
+func NewSafeManager() (Manager, error) {
+	return newBaseManager(nil)
 }

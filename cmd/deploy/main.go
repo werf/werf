@@ -129,7 +129,7 @@ func main() {
 				return nil, err
 			}
 
-			s, err := secret.GetSecret(projectDir)
+			s, err := secret.GetManager(projectDir)
 			if err != nil {
 				return nil, err
 			}
@@ -156,12 +156,12 @@ func main() {
 				return nil, err
 			}
 
-			newSecret, err := secret.GetSecret(projectDir)
+			newSecret, err := secret.GetManager(projectDir)
 			if err != nil {
 				return nil, err
 			}
 
-			oldSecret, err := secret.NewSecretByKey([]byte(oldKey))
+			oldSecret, err := secret.NewManager([]byte(oldKey))
 			if err != nil {
 				return nil, err
 			}
@@ -193,7 +193,7 @@ func main() {
 				return nil, err
 			}
 
-			s, err := secret.GetSecret(projectDir)
+			s, err := secret.GetManager(projectDir)
 			if err != nil {
 				return nil, err
 			}

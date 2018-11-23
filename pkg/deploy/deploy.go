@@ -61,7 +61,7 @@ func RunDeploy(releaseName string, opts DeployOptions) error {
 		fmt.Printf("Namespace: %s\n", namespace)
 	}
 
-	s, err := getOptionalSecret(opts.ProjectDir, opts.SecretValues)
+	m, err := getSafeSecretManager(opts.ProjectDir, opts.SecretValues)
 	if err != nil {
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
@@ -83,7 +83,7 @@ func RunDeploy(releaseName string, opts DeployOptions) error {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	dappChart, err := getDappChart(opts.ProjectDir, s, opts.Values, opts.SecretValues, opts.Set, serviceValues)
+	dappChart, err := getDappChart(opts.ProjectDir, m, opts.Values, opts.SecretValues, opts.Set, serviceValues)
 	if err != nil {
 		return err
 	}

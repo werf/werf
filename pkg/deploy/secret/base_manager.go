@@ -3,16 +3,32 @@ package secret
 import (
 	"fmt"
 	"gopkg.in/yaml.v2"
+
+	"github.com/flant/dapp/pkg/secret"
 )
 
-type BaseSecret struct {
+type BaseManager struct {
 	generateFunc func([]byte) ([]byte, error)
 	extractFunc  func([]byte) ([]byte, error)
 }
 
+func newBaseManager(ss secret.Secret) (Manager, error) {
+	s := &BaseManager{}
+
+	if ss != nil {
+		s.generateFunc = ss.Generate
+		s.extractFunc = ss.Extract
+	} else {
+		s.generateFunc = doNothing
+		s.extractFunc = doNothing
+	}
+
+	return s, nil
+}
+
 func doNothing(data []byte) ([]byte, error) { return data, nil }
 
-func (s *BaseSecret) Generate(data []byte) ([]byte, error) {
+func (s *BaseManager) Generate(data []byte) ([]byte, error) {
 	resultData, err := s.generateFunc(data)
 	if err != nil {
 		return nil, fmt.Errorf("encoding failed: check encryption key and data: %s", err)
@@ -21,7 +37,7 @@ func (s *BaseSecret) Generate(data []byte) ([]byte, error) {
 	return resultData, nil
 }
 
-func (s *BaseSecret) GenerateYamlData(data []byte) ([]byte, error) {
+func (s *BaseManager) GenerateYamlData(data []byte) ([]byte, error) {
 	resultData, err := doYamlData(s.generateFunc, data)
 	if err != nil {
 		return nil, fmt.Errorf("encoding failed: check encryption key and data: %s", err)
@@ -30,7 +46,7 @@ func (s *BaseSecret) GenerateYamlData(data []byte) ([]byte, error) {
 	return resultData, nil
 }
 
-func (s *BaseSecret) Extract(data []byte) ([]byte, error) {
+func (s *BaseManager) Extract(data []byte) ([]byte, error) {
 	resultData, err := s.extractFunc(data)
 	if err != nil {
 		return nil, fmt.Errorf("decoding failed: check encryption key and data: %s", err)
@@ -39,7 +55,7 @@ func (s *BaseSecret) Extract(data []byte) ([]byte, error) {
 	return resultData, nil
 }
 
-func (s *BaseSecret) ExtractYamlData(data []byte) ([]byte, error) {
+func (s *BaseManager) ExtractYamlData(data []byte) ([]byte, error) {
 	resultData, err := doYamlData(s.extractFunc, data)
 	if err != nil {
 		return nil, fmt.Errorf("decoding failed: check encryption key and data: %s", err)

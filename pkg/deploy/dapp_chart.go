@@ -72,23 +72,18 @@ func (chart *DappChart) SetValuesFile(path string) error {
 	return nil
 }
 
-func (chart *DappChart) SetSecretValuesFile(path string, secret secret.Secret) error {
+func (chart *DappChart) SetSecretValuesFile(path string, m secret.Manager) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("cannot read secret values file %s: %s", path, err)
 	}
 
-	newPath := filepath.Join(chart.ChartDir, DappChartMoreValuesDir, fmt.Sprintf("%d.yaml", chart.moreValuesCounter))
-
-	var decodedData []byte
-	if secret == nil {
-		decodedData = data
-	} else {
-		decodedData, err = secret.ExtractYamlData(data)
-		if err != nil {
-			return fmt.Errorf("cannot decode secret values file %s data: %s", path, err)
-		}
+	decodedData, err := m.ExtractYamlData(data)
+	if err != nil {
+		return fmt.Errorf("cannot decode secret values file %s data: %s", path, err)
 	}
+
+	newPath := filepath.Join(chart.ChartDir, DappChartMoreValuesDir, fmt.Sprintf("%d.yaml", chart.moreValuesCounter))
 
 	err = os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
 	if err != nil {
@@ -188,12 +183,12 @@ func (chart *DappChart) Lint() error {
 	return nil
 }
 
-func GenerateDappChart(projectDir string, secret secret.Secret) (*DappChart, error) {
+func GenerateDappChart(projectDir string, m secret.Manager) (*DappChart, error) {
 	tmpChartPath := filepath.Join(dapp.GetTmpDir(), fmt.Sprintf("dapp-chart-%s", uuid.NewV4().String()))
-	return PrepareDappChart(projectDir, tmpChartPath, secret)
+	return PrepareDappChart(projectDir, tmpChartPath, m)
 }
 
-func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret) (*DappChart, error) {
+func PrepareDappChart(projectDir string, targetDir string, m secret.Manager) (*DappChart, error) {
 	dappChart := &DappChart{ChartDir: targetDir}
 
 	projectHelmDir := filepath.Join(projectDir, ".helm")
@@ -214,7 +209,7 @@ func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret)
 
 	defaultSecretValues := filepath.Join(projectDir, ProjectDefaultSecretValuesFile)
 	if _, err := os.Stat(defaultSecretValues); !os.IsNotExist(err) {
-		err := dappChart.SetSecretValuesFile(defaultSecretValues, secret)
+		err := dappChart.SetSecretValuesFile(defaultSecretValues, m)
 		if err != nil {
 			return nil, err
 		}
@@ -234,25 +229,12 @@ func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret)
 			relativePath := strings.TrimPrefix(path, secretDir)
 			newPath := filepath.Join(targetDir, DappChartDecodedSecretDir, relativePath)
 
-			if secret == nil {
-				err := os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
-				if err != nil {
-					return err
-				}
-				err = ioutil.WriteFile(newPath, []byte{}, 0400)
-				if err != nil {
-					return fmt.Errorf("unable to create decoded secret file %s: %s", newPath, err)
-				}
-
-				return nil
-			}
-
 			data, err := ioutil.ReadFile(path)
 			if err != nil {
 				return fmt.Errorf("error reading file %s: %s", path, err)
 			}
 
-			decodedData, err := secret.Extract([]byte(strings.TrimRightFunc(string(data), unicode.IsSpace)))
+			decodedData, err := m.Extract([]byte(strings.TrimRightFunc(string(data), unicode.IsSpace)))
 			if err != nil {
 				return fmt.Errorf("error decoding %s: %s", path, err)
 			}
