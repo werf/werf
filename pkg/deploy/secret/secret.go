@@ -26,31 +26,23 @@ func GenerateSecretKey() ([]byte, error) {
 
 func GetSecret(projectDir string) (Secret, error) {
 	var s Secret
-	var ss secret.Secret
 	var key []byte
 	var err error
 
-	key, err = getSecretKey(projectDir)
+	key, err = GetSecretKey(projectDir)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(key) != 0 {
-		s, err = NewSecretByKey(key)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		s, err = NewSecret(ss)
-		if err != nil {
-			return nil, err
-		}
+	s, err = NewSecretByKey(key)
+	if err != nil {
+		return nil, err
 	}
 
 	return s, nil
 }
 
-func getSecretKey(projectDir string) ([]byte, error) {
+func GetSecretKey(projectDir string) ([]byte, error) {
 	var secretKey []byte
 	var dappSecretKeyPaths []string
 	var notFoundIn []string

@@ -76,12 +76,17 @@ func (chart *DappChart) SetSecretValuesFile(path string, secret secret.Secret) e
 		return fmt.Errorf("cannot read secret values file %s: %s", path, err)
 	}
 
-	decodedData, err := secret.ExtractYamlData(data)
-	if err != nil {
-		return fmt.Errorf("cannot decode secret values file %s data: %s", path, err)
-	}
-
 	newPath := filepath.Join(chart.ChartDir, DappChartMoreValuesDir, fmt.Sprintf("%d.yaml", chart.moreValuesCounter))
+
+	var decodedData []byte
+	if secret == nil {
+		decodedData = data
+	} else {
+		decodedData, err = secret.ExtractYamlData(data)
+		if err != nil {
+			return fmt.Errorf("cannot decode secret values file %s data: %s", path, err)
+		}
+	}
 
 	err = os.MkdirAll(filepath.Dir(newPath), os.ModePerm)
 	if err != nil {
@@ -184,6 +189,7 @@ func PrepareDappChart(projectDir string, targetDir string, secret secret.Secret)
 				if err != nil {
 					return fmt.Errorf("unable to create decoded secret file %s: %s", newPath, err)
 				}
+
 				return nil
 			}
 

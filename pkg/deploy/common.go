@@ -32,14 +32,20 @@ func getOptionalSecret(projectDir string, secretValues []string) (secret.Secret,
 		isSecretsExists = true
 	}
 	if isSecretsExists {
-		var err error
-		s, err = secret.GetSecret(projectDir)
+		key, err := secret.GetSecretKey(projectDir)
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "encryption key not found in") {
 				fmt.Fprintln(os.Stderr, err)
+
+				return nil, nil
 			} else {
 				return nil, err
 			}
+		}
+
+		s, err = secret.NewSecretByKey(key)
+		if err != nil {
+			return nil, err
 		}
 	}
 

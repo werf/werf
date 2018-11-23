@@ -10,7 +10,7 @@ type BaseSecret struct {
 	extractFunc  func([]byte) ([]byte, error)
 }
 
-func doNothing(_ []byte) ([]byte, error) { return []byte{}, nil }
+func doNothing(data []byte) ([]byte, error) { return data, nil }
 
 func (s *BaseSecret) Generate(data []byte) ([]byte, error) {
 	resultData, err := s.generateFunc(data)
