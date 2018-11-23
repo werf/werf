@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -85,6 +86,10 @@ func RunDeploy(releaseName string, opts DeployOptions) error {
 	dappChart, err := getDappChart(opts.ProjectDir, s, opts.Values, opts.SecretValues, opts.Set, serviceValues)
 	if err != nil {
 		return err
+	}
+	if !debug() {
+		// Do not remove tmp chart in debug
+		defer os.RemoveAll(dappChart.ChartDir)
 	}
 
 	return dappChart.Deploy(releaseName, namespace, HelmChartOptions{CommonHelmOptions: CommonHelmOptions{KubeContext: opts.KubeContext}, Timeout: opts.Timeout})
