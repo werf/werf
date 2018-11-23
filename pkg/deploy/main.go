@@ -69,3 +69,7 @@ func HelmCmd(args ...string) (stdout string, stderr string, err error) {
 
 	return
 }
+
+func debug() bool {
+	return os.Getenv("DAPP_DEPLOY_DEBUG") == "1"
+}

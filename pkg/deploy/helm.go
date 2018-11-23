@@ -25,23 +25,57 @@ import (
 	"k8s.io/kubernetes/pkg/util/file"
 )
 
-type HelmChartOptions struct {
-	Set         []string
-	Values      []string
+type CommonHelmOptions struct {
 	KubeContext string
-	DryRun      bool
-	Debug       bool
-	Timeout     time.Duration
+}
+
+func PurgeHelmRelease(releaseName string, opts CommonHelmOptions) error {
+	return withLockedHelmRelease(releaseName, func() error {
+		return doPurgeHelmRelease(releaseName, opts)
+	})
+}
+
+func doPurgeHelmRelease(releaseName string, opts CommonHelmOptions) error {
+	args := []string{}
+	if opts.KubeContext != "" {
+		args = append(args, "--kube-context")
+		args = append(args, opts.KubeContext)
+	}
+
+	helmStatusStdout, helmStatusStderr, helmStatusErr := HelmCmd(append([]string{"status", releaseName}, args...)...)
+	if helmStatusErr != nil {
+		if strings.HasSuffix(helmStatusStderr, "not found") {
+			return fmt.Errorf("Helm release '%s' doesn't exist", releaseName)
+		}
+		return fmt.Errorf("failed to check release status: %s\n%s\n%s", helmStatusErr, helmStatusStdout, helmStatusStderr)
+	}
+
+	fmt.Printf("# Purging helm release '%s'...\n", releaseName)
+	helmPurgeStdout, helmPurgeStderr, helmPurgeErr := HelmCmd(append([]string{"delete", "--purge", releaseName}, args...)...)
+	if helmPurgeErr != nil {
+		return fmt.Errorf("failed to purge release: %s\n%s\n%s", helmPurgeErr, helmPurgeStdout, helmPurgeStderr)
+	}
+
+	return nil
+}
+
+type HelmChartOptions struct {
+	Set     []string
+	Values  []string
+	DryRun  bool
+	Debug   bool
+	Timeout time.Duration
+	CommonHelmOptions
+}
+
+func withLockedHelmRelease(releaseName string, f func() error) error {
+	lockName := fmt.Sprintf("helm_release.%s", releaseName)
+	return lock.WithLock(lockName, lock.LockOptions{}, f)
 }
 
 func DeployHelmChart(chartPath string, releaseName string, namespace string, opts HelmChartOptions) error {
-	lockName := fmt.Sprintf("helm_release.%s", releaseName)
-	return lock.WithLock(lockName, lock.LockOptions{}, func() error {
-		if err := doDeployHelmChart(chartPath, releaseName, namespace, opts); err != nil {
-			return err
-		}
-
-		return nil
+	return withLockedHelmRelease(releaseName, func() error {
+		return doDeployHelmChart(chartPath, releaseName, namespace, opts)
 	})
 }
 

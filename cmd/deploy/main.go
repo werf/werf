@@ -23,6 +23,42 @@ func main() {
 		}
 
 		switch cmd {
+		case "dismiss":
+			var rubyCliOptions dismissRubyCliOptions
+			if value, hasKey := args["rubyCliOptions"]; hasKey {
+				err = json.Unmarshal([]byte(value.(string)), &rubyCliOptions)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			err = lock.Init()
+			if err != nil {
+				return nil, err
+			}
+
+			kubeContext := os.Getenv("KUBECONTEXT")
+			if kubeContext == "" {
+				kubeContext = rubyCliOptions.Context
+			}
+			err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
+			if err != nil {
+				return nil, err
+			}
+
+			err = deploy.Init()
+			if err != nil {
+				return nil, err
+			}
+
+			value, hasKey := args["releaseName"]
+			if !hasKey {
+				return nil, fmt.Errorf("releaseName argument required!")
+			}
+			releaseName := value.(string)
+
+			return nil, runDismiss(releaseName, kubeContext, rubyCliOptions)
+
 		case "secret_key_generate":
 			key, err := secret.GenerateSecretKey()
 			if err != nil {
