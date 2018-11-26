@@ -38,7 +38,7 @@ func getSafeSecretManager(projectDir string, secretValues []string) (secret.Mana
 				return nil, err
 			}
 		} else {
-			return secret.NewManager(key)
+			return secret.NewManager(key, secret.NewManagerOptions{})
 		}
 	}
 
