@@ -86,7 +86,6 @@ func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*Do
 	return docs, nil
 }
 
-// TODO: переделать на ParseFiles вместо Parse
 func parseDappfileYaml(dappfilePath string) (string, error) {
 	data, err := ioutil.ReadFile(dappfilePath)
 	if err != nil {
@@ -95,13 +94,72 @@ func parseDappfileYaml(dappfilePath string) (string, error) {
 
 	tmpl := template.New("dappfile")
 	tmpl.Funcs(funcMap(tmpl))
+
+	projectDir := filepath.Dir(dappfilePath)
+	dappfilesDir := filepath.Join(projectDir, ".dappfiles")
+	dappfilesTemplates, err := getDappfilesTemplates(dappfilesDir)
+	if err != nil {
+		return "", err
+	}
+
+	if len(dappfilesTemplates) != 0 {
+		for _, templatePath := range dappfilesTemplates {
+			templateName, err := filepath.Rel(dappfilesDir, templatePath)
+			if err != nil {
+				return "", err
+			}
+
+			extraTemplate := tmpl.New(templateName)
+
+			var filePathData []byte
+			if filePathData, err = ioutil.ReadFile(templatePath); err != nil {
+				return "", err
+			}
+
+			if _, err := extraTemplate.Parse(string(filePathData)); err != nil {
+				return "", err
+			}
+		}
+	}
+
 	if _, err := tmpl.Parse(string(data)); err != nil {
 		return "", err
 	}
 
 	files := Files{filepath.Dir(dappfilePath)}
 	config, err := executeTemplate(tmpl, "dappfile", map[string]interface{}{"Files": files})
+
 	return config, err
+}
+
+func getDappfilesTemplates(path string) ([]string, error) {
+	var templates []string
+	err := filepath.Walk(path, func(fp string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if fi.IsDir() {
+			return nil
+		}
+
+		matched, err := filepath.Match("*.tmpl", fi.Name())
+		if err != nil {
+			return err
+		}
+
+		if matched {
+			templates = append(templates, fp)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return templates, nil
 }
 
 func funcMap(tmpl *template.Template) template.FuncMap {
