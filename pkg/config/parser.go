@@ -133,6 +133,10 @@ func parseDappfileYaml(dappfilePath string) (string, error) {
 }
 
 func getDappfilesTemplates(path string) ([]string, error) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, nil
+	}
+
 	var templates []string
 	err := filepath.Walk(path, func(fp string, fi os.FileInfo, err error) error {
 		if err != nil {
