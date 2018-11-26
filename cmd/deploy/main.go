@@ -161,7 +161,7 @@ func main() {
 				return nil, err
 			}
 
-			oldSecret, err := secret.NewManager([]byte(oldKey))
+			oldSecret, err := secret.NewManager([]byte(oldKey), secret.NewManagerOptions{IgnoreWarning: true})
 			if err != nil {
 				return nil, err
 			}
