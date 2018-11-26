@@ -85,7 +85,7 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 		return fmt.Errorf("checking release failed: %s", err)
 	}
 
-	templates, err := parseTemplates(chartPath, releaseName)
+	templates, err := parseTemplates(chartPath, releaseName, opts.Set, opts.Values)
 	if err != nil {
 		return fmt.Errorf("parsing templates failed: %s", err)
 	}
@@ -309,10 +309,18 @@ func (t *Template) Namespace(namespace string) string {
 	return namespace
 }
 
-func parseTemplates(chartPath, releaseName string) (*ChartTemplates, error) {
+func parseTemplates(chartPath, releaseName string, set []string, values []string) (*ChartTemplates, error) {
 	var templates []*Template
 
-	stdout, stderr, err := HelmCmd("template", chartPath, "--name", releaseName)
+	args := []string{"template", chartPath, "--name", releaseName}
+	for _, s := range set {
+		args = append(args, "--set", s)
+	}
+	for _, v := range values {
+		args = append(args, "--values", v)
+	}
+
+	stdout, stderr, err := HelmCmd(args...)
 	if err != nil {
 		return nil, fmt.Errorf(stderr)
 	}
