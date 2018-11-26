@@ -10,6 +10,9 @@ type RenderOptions struct {
 	Values       []string
 	SecretValues []string
 	Set          []string
+
+	// TODO: remove this after full port to go
+	Dimgs []*DimgInfoGetterStub
 }
 
 func RunRender(opts RenderOptions) error {
@@ -22,7 +25,15 @@ func RunRender(opts RenderOptions) error {
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
 
-	serviceValues, err := GetServiceValues("PROJECT_NAME", "REPO", "NAMESPACE", "DOCKER_TAG", nil, nil, ServiceValuesOptions{
+	images := []DimgInfoGetter{}
+	for _, dimg := range opts.Dimgs {
+		if debug() {
+			fmt.Printf("DimgInfoGetterStub: %#v\n", dimg)
+		}
+		images = append(images, dimg)
+	}
+
+	serviceValues, err := GetServiceValues("PROJECT_NAME", "REPO", "NAMESPACE", "DOCKER_TAG", nil, images, ServiceValuesOptions{
 		Fake:            true,
 		WithoutRegistry: true,
 	})

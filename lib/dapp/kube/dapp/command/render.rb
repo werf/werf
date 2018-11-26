@@ -9,10 +9,17 @@ module Dapp
             # TODO: move project dir logic to golang
             project_dir = path.to_s
 
+            dimgs = self.build_configs.map do |config|
+              {"Name" => config._name, "ImageTag" => "DOCKER_TAG", "Repo" => "REPO"}
+            end.uniq do |dimg|
+              dimg["Name"]
+            end
+
             res = ruby2go_deploy(
               "command" => command,
               "projectDir" => project_dir,
               "rubyCliOptions" => JSON.dump(self.options),
+              "dimgs" => JSON.dump(dimgs),
             )
 
             raise ::Dapp::Error::Command, code: :ruby2go_deploy_command_failed, data: { command: command, message: res["error"] } unless res["error"].nil?
