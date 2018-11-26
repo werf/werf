@@ -107,7 +107,7 @@ image: {{ tuple $name $context | include "_dimg2" }}
 {{-   $context := index . 0 -}}
 {{-   if $context.Values.global.dapp.ci.is_branch -}}
 - name: DOCKER_IMAGE_ID
-value: {{ tuple $context | include "_dimg_id" }}
+  value: {{ tuple $context | include "_dimg_id" }}
 {{-   end -}}
 {{- end -}}
 
@@ -116,7 +116,7 @@ value: {{ tuple $context | include "_dimg_id" }}
 {{-   $context := index . 1 -}}
 {{-   if $context.Values.global.dapp.ci.is_branch -}}
 - name: DOCKER_IMAGE_ID
-value: {{ tuple $name $context | include "_dimg_id2" }}
+  value: {{ tuple $name $context | include "_dimg_id2" }}
 {{-   end -}}
 {{- end -}}
 
