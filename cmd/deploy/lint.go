@@ -10,11 +10,12 @@ type lintRubyCliOptions struct {
 	HelmSecretValuesOptions []string `json:"helm_secret_values_options"`
 }
 
-func runLint(projectDir string, rubyCliOptions lintRubyCliOptions) error {
+func runLint(projectDir string, dimgs []*deploy.DimgInfoGetterStub, rubyCliOptions lintRubyCliOptions) error {
 	return deploy.RunLint(deploy.LintOptions{
 		ProjectDir:   projectDir,
 		Values:       rubyCliOptions.HelmValuesOptions,
 		SecretValues: rubyCliOptions.HelmSecretValuesOptions,
 		Set:          rubyCliOptions.HelmSetOptions,
+		Dimgs:        dimgs,
 	})
 }

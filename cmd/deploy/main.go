@@ -43,7 +43,17 @@ func main() {
 			}
 			projectDir := value.(string)
 
-			return nil, runLint(projectDir, rubyCliOptions)
+			var dimgs []*deploy.DimgInfoGetterStub
+			if value, hasKey := args["dimgs"]; hasKey {
+				err = json.Unmarshal([]byte(value.(string)), &dimgs)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, fmt.Errorf("dimgs argument required!")
+			}
+
+			return nil, runLint(projectDir, dimgs, rubyCliOptions)
 
 		case "render":
 			var rubyCliOptions renderRubyCliOptions
@@ -65,7 +75,17 @@ func main() {
 			}
 			projectDir := value.(string)
 
-			return nil, runRender(projectDir, rubyCliOptions)
+			var dimgs []*deploy.DimgInfoGetterStub
+			if value, hasKey := args["dimgs"]; hasKey {
+				err = json.Unmarshal([]byte(value.(string)), &dimgs)
+				if err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, fmt.Errorf("dimgs argument required!")
+			}
+
+			return nil, runRender(projectDir, dimgs, rubyCliOptions)
 
 		case "dismiss":
 			var rubyCliOptions dismissRubyCliOptions

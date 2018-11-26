@@ -10,11 +10,12 @@ type renderRubyCliOptions struct {
 	HelmSecretValuesOptions []string `json:"helm_secret_values_options"`
 }
 
-func runRender(projectDir string, rubyCliOptions renderRubyCliOptions) error {
+func runRender(projectDir string, dimgs []*deploy.DimgInfoGetterStub, rubyCliOptions renderRubyCliOptions) error {
 	return deploy.RunRender(deploy.RenderOptions{
 		ProjectDir:   projectDir,
 		Values:       rubyCliOptions.HelmValuesOptions,
 		SecretValues: rubyCliOptions.HelmSecretValuesOptions,
 		Set:          rubyCliOptions.HelmSetOptions,
+		Dimgs:        dimgs,
 	})
 }
