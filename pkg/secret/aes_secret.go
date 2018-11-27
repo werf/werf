@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"strings"
 )
 
 type AesSecret struct {
@@ -123,4 +124,19 @@ func hexToBinary(data []byte) ([]byte, error) {
 	}
 
 	return result, nil
+}
+
+func IsExtractDataError(err error) bool {
+	dataErrorPrefixs := []string{
+		"minimum required data length",
+		"encoding/hex: odd length hex string",
+	}
+
+	for _, prefix := range dataErrorPrefixs {
+		if strings.HasPrefix(err.Error(), prefix) {
+			return true
+		}
+	}
+
+	return false
 }

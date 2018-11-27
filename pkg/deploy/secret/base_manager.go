@@ -49,6 +49,10 @@ func (s *BaseManager) GenerateYamlData(data []byte) ([]byte, error) {
 func (s *BaseManager) Extract(data []byte) ([]byte, error) {
 	resultData, err := s.extractFunc(data)
 	if err != nil {
+		if secret.IsExtractDataError(err) {
+			return nil, fmt.Errorf("decoding failed: check data `%s`: %s", string(data), err)
+		}
+
 		return nil, fmt.Errorf("decoding failed: check encryption key and data: %s", err)
 	}
 
@@ -58,6 +62,10 @@ func (s *BaseManager) Extract(data []byte) ([]byte, error) {
 func (s *BaseManager) ExtractYamlData(data []byte) ([]byte, error) {
 	resultData, err := doYamlData(s.extractFunc, data)
 	if err != nil {
+		if secret.IsExtractDataError(err) {
+			return nil, fmt.Errorf("decoding failed: check data `%s`: %s", string(data), err)
+		}
+
 		return nil, fmt.Errorf("decoding failed: check encryption key and data: %s", err)
 	}
 
