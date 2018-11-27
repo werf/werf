@@ -12,8 +12,9 @@ import (
 )
 
 type GitArtifact struct {
-	LocalGitRepo  *git_repo.Local
-	RemoteGitRepo *git_repo.Remote
+	GitRepoInterface git_repo.GitRepo
+	LocalGitRepo     *git_repo.Local
+	RemoteGitRepo    *git_repo.Remote
 
 	Name               string
 	As                 string
@@ -55,7 +56,9 @@ func (f *ContainerFileDescriptor) Open(flag int, perm os.FileMode) (*os.File, er
 }
 
 func (ga *GitArtifact) GitRepo() git_repo.GitRepo {
-	if ga.LocalGitRepo != nil {
+	if ga.GitRepoInterface != nil {
+		return ga.GitRepoInterface
+	} else if ga.LocalGitRepo != nil {
 		return ga.LocalGitRepo
 	} else if ga.RemoteGitRepo != nil {
 		return ga.RemoteGitRepo

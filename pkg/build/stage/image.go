@@ -1,4 +1,4 @@
-package build
+package stage
 
 type Image interface {
 	GetLabels() map[string]string
