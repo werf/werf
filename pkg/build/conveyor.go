@@ -2,10 +2,14 @@ package build
 
 import (
 	"github.com/flant/dapp/pkg/build/stage"
+	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/image"
 )
 
 type Conveyor struct {
+	Dappfile     []*config.Dimg
+	DimgsInOrder []*Dimg
+
 	// Все кеширование тут
 	// Инициализируется конфигом dappfile (все dimgs, все artifacts)
 	// Предоставляет интерфейс для получения инфы по образам связанным с dappfile. ???
