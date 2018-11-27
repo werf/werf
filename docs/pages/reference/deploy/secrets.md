@@ -23,6 +23,14 @@ DAPP_SECRET_KEY=c85e100d4ff006b693b0555f09244fdf
 
 For convenience, the command output already contains an environment variable and can be used in the `export` command.
 
+> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. `dapp kube secret key generate` command returns AES-128 encryption key.
+
+If you want to generate key yourself don't forget about hex dump:
+```bash
+$ head -c16 </dev/random | xxd -p
+5c350e9e22f97501c862396019436988
+```
+
 ### Working with the `DAPP_SECRET_KEY` environment variable
 
 If an environment variable is available in the environment where dapp is launched, dapp can use it.
