@@ -116,12 +116,12 @@ module Dapp
           return if File.exists? dappfile_yml_bin_path
 
           log_process("Downloading dappfile-yml dapp dependency") do
-            location = URI("https://dl.bintray.com/flant/dapp/#{::Dapp::VERSION}/dappfile-yml")
+            location = URI("https://dl.bintray.com/dapp/ruby2go/#{::Dapp::VERSION}/dappfile-yml")
 
             tmp_bin_path = File.join(self.class.tmp_base_dir, "dappfile-yml-#{SecureRandom.uuid}")
             ::Dapp::Downloader.download(location, tmp_bin_path, show_progress: true, progress_titile: dappfile_yml_bin_path)
 
-            checksum_location = URI("https://dl.bintray.com/flant/dapp/#{::Dapp::VERSION}/dappfile-yml.sha")
+            checksum_location = URI("https://dl.bintray.com/dapp/ruby2go/#{::Dapp::VERSION}/dappfile-yml.sha")
             tmp_bin_checksum_path = tmp_bin_path + ".checksum"
             ::Dapp::Downloader.download(checksum_location, tmp_bin_checksum_path)
 
