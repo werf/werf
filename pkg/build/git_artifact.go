@@ -129,7 +129,7 @@ func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, arc
 	return commands, nil
 }
 
-func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
+func (ga *GitArtifact) ApplyPatchCommand(stage LegacyStage) ([]string, error) {
 	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
 	if err != nil {
 		return nil, err
@@ -251,7 +251,7 @@ func (ga *GitArtifact) applyArchiveCommand(archiveFile *ContainerFileDescriptor,
 	return commands, nil
 }
 
-func (ga *GitArtifact) ApplyArchiveCommand(stage Stage) ([]string, error) {
+func (ga *GitArtifact) ApplyArchiveCommand(stage LegacyStage) ([]string, error) {
 	commit, err := stage.LayerCommit(ga)
 	if err != nil {
 		return nil, err
@@ -382,7 +382,7 @@ func (ga *GitArtifact) GetParamshash() string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (ga *GitArtifact) IsPatchEmpty(stage Stage) (bool, error) {
+func (ga *GitArtifact) IsPatchEmpty(stage LegacyStage) (bool, error) {
 	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
 	if err != nil {
 		return false, err

@@ -2,6 +2,10 @@ package build
 
 import "fmt"
 
+const (
+	BuildCacheVersion = "33"
+)
+
 func NewSignaturesPhase() *SignaturesPhase {
 	return &SignaturesPhase{}
 }
@@ -12,5 +16,6 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 	if debug() {
 		fmt.Printf("SignaturesPhase.Run\n")
 	}
+
 	return nil
 }
