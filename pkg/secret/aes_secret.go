@@ -68,6 +68,10 @@ func (s *AesSecret) Generate(data []byte) ([]byte, error) {
 }
 
 func (s *AesSecret) Extract(data []byte) ([]byte, error) {
+	if len(data) == 0 {
+		return data, nil
+	}
+
 	dataToExtract, err := hexToBinary(data)
 	if err != nil {
 		return nil, err
