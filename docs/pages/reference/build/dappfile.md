@@ -70,8 +70,7 @@ ansible:
     shell: |
       set -e
       ssh-keyscan github.com >> /root/.ssh/known_hosts
-      ssh-keyscan fox.flant.com >> /root/.ssh/known_hosts
-      ssh-keyscan gitlab.flant.ru >> /root/.ssh/known_hosts
+      ssh-keyscan mygitlab.myorg.com >> /root/.ssh/known_hosts
     args:
       executable: /bin/bash
   - name: "Install Gemfile dependencies with bundler"

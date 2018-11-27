@@ -27,9 +27,9 @@ For all commands related to a docker registry, dapp uses a single parameter name
 * If dapp project contains nameless dimg, dapp uses `REPO` as docker repository.
 * Otherwise, dapp constructs docker repository name for each dimg by following template `REPO/DIMG_NAME`.
 
-E.g., if there is unnamed dimg in a dappfile and `REPO` is `registry.flant.com/sys/backend` then the docker repository name is the `registry.flant.com/sys/backend`.  If there are two dimgs in a dappfile — `server` and `worker`, then docker repository names are:
-* `registry.flant.com/sys/backend/server` for `server` dimg;
-* `registry.flant.com/sys/backend/worker` for `worker` dimg.
+E.g., if there is unnamed dimg in a dappfile and `REPO` is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two dimgs in a dappfile — `server` and `worker`, then docker repository names are:
+* `myregistry.myorg.com/sys/backend/server` for `server` dimg;
+* `myregistry.myorg.com/sys/backend/worker` for `worker` dimg.
 
 ### Minikube docker registry
 

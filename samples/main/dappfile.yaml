@@ -173,12 +173,12 @@ ansible:
   - name: Get dependencies
     shell: ./go-get.sh
     args:
-      chdir: /go/src/fox.flant.com/sys/gogomonia
+      chdir: /go/src/github.com/flant/gogomonia
   buildArtifact:
   - name: Build binary
     shell: CGO_ENABLED=0 GOOS=linux ./go-install.sh
     args:
-      chdir: /go/src/fox.flant.com/sys/gogomonia
+      chdir: /go/src/github.com/flant/gogomonia
 # shell:
 #   beforeInstall:
 #   - CMD
