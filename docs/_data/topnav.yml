@@ -5,9 +5,11 @@ topnav:
   items:
 
   - title: How To
+    directory: /how_to/
     url: /how_to/installation.html
 
   - title: Reference
+    directory: /reference/
     url: /reference/build/dappfile.html
 
   - title: Publications

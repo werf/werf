@@ -69,6 +69,11 @@ h5 {
   height: 100%;
 }
 
+.navbar-inverse .navbar-nav > .active > a, .navbar-inverse .navbar-nav > .active > a:hover, .navbar-inverse .navbar-nav > li > a:hover {
+  background-color: #0d508c;
+  border-radius: 5px;
+}
+
 details {
   margin-bottom: 10px;
 }
