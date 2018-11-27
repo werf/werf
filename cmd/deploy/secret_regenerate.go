@@ -19,42 +19,49 @@ func SecretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 	secretValuesFilesData := map[string][]byte{}
 
 	helmChartPath := filepath.Join(projectPath, ".helm")
-	exist, err := file.FileExists(helmChartPath)
+	isHelmChartDirExist, err := file.FileExists(helmChartPath)
 	if err != nil {
 		return err
 	}
 
-	if exist {
+	if isHelmChartDirExist {
 		defaultSecretValuesPath := filepath.Join(helmChartPath, "secret-values.yaml")
-		exist, err := file.FileExists(defaultSecretValuesPath)
+		isDefaultSecretValuesExist, err := file.FileExists(defaultSecretValuesPath)
 		if err != nil {
 			return err
 		}
 
-		if exist {
+		if isDefaultSecretValuesExist {
 			secretValuesPaths = append(secretValuesPaths, defaultSecretValuesPath)
 		}
 
 		secretDirectory := filepath.Join(helmChartPath, "secret")
-		err = filepath.Walk(secretDirectory,
-			func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-
-				fileInfo, err := os.Stat(path)
-				if err != nil {
-					return err
-				}
-
-				if !fileInfo.IsDir() {
-					secretFilesPaths = append(secretFilesPaths, path)
-				}
-
-				return nil
-			})
+		isSecretDirectoryExist, err := file.FileExists(defaultSecretValuesPath)
 		if err != nil {
 			return err
+		}
+
+		if isSecretDirectoryExist {
+			err = filepath.Walk(secretDirectory,
+				func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+
+					fileInfo, err := os.Stat(path)
+					if err != nil {
+						return err
+					}
+
+					if !fileInfo.IsDir() {
+						secretFilesPaths = append(secretFilesPaths, path)
+					}
+
+					return nil
+				})
+			if err != nil {
+				return err
+			}
 		}
 	}
 
