@@ -23,6 +23,7 @@ func (c *Conveyor) Build() error {
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewSetCachedStatePhase()) // Определение состояния кеша (есть в кеше / нет в кеше)
 	phases = append(phases, NewRenewPhase()) // Сброс кеша отсутствующих коммитов из-за rebase
+	phases = append(phases, NewPrepareImagePhase()) // Определение состояния кеша (есть в кеше / нет в кеше)
 	phases = append(phases, NewBuildPhase()) // Определение состояния кеша (есть в кеше / нет в кеше)
 
 	for _, phase := range phases {
