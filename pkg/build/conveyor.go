@@ -1,5 +1,7 @@
 package build
 
+import "github.com/flant/dapp/pkg/build/stage"
+
 type Conveyor struct {
 	// Все кеширование тут
 	// Инициализируется конфигом dappfile (все dimgs, все artifacts)
@@ -11,6 +13,8 @@ type Conveyor struct {
 	// Tag()
 	// Push()
 	// BP()
+
+	TmpDir string
 }
 
 type Phase interface {
@@ -33,5 +37,21 @@ func (c *Conveyor) Build() error {
 		}
 	}
 
+	return nil
+}
+
+func (c *Conveyor) GetOrCreateImage(fromImage stage.Interface, name string) stage.Image {
+	return nil
+}
+
+func (c *Conveyor) GetDimg(name string) *stage.Dimg {
+	return nil
+}
+
+func (c *Conveyor) GetImage(imageName string) stage.Image {
+	return nil
+}
+
+func (c *Conveyor) GetDimgsInOrder() []*stage.Dimg {
 	return nil
 }
