@@ -2,8 +2,8 @@ package build
 
 import "fmt"
 
-type Stage interface {
-	GetPrevStage() Stage
+type LegacyStage interface {
+	GetPrevStage() LegacyStage
 	GetImage() Image
 	LayerCommit(gitArtifact *GitArtifact) (string, error)
 }
@@ -14,7 +14,7 @@ type StubStage struct {
 	Image          *StubImage
 }
 
-func (stage *StubStage) GetPrevStage() Stage {
+func (stage *StubStage) GetPrevStage() LegacyStage {
 	return stage.PrevStage
 }
 
