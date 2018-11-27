@@ -217,7 +217,7 @@ The code below demonstrates Go templates and `include`:
 {% raw %}
 ```yaml
 # Declaring a "BaseImage" variable
-{{ $_ := set . "BaseImage" "registry.flant.com/dapp/ubuntu-dimg:10" }}
+{{ $_ := set . "BaseImage" "myregistry.myorg.com/dapp/ubuntu-dimg:10" }}
 
 dimg: "curl_and_shell"
 from: "{{ .BaseImage }}"
