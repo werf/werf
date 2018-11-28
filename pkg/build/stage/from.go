@@ -61,8 +61,8 @@ type BaseFromStage struct {
 	mounts       []*config.Mount
 }
 
-func (s *BaseFromStage) Name() string {
-	return "from"
+func (s *BaseFromStage) Name() StageName {
+	return From
 }
 
 func (s *BaseFromStage) GetDependencies() string {

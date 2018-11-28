@@ -5,7 +5,11 @@ import (
 	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
+type DimgInterface interface{}
+
 type DimgBase struct {
+	DimgInterface
+
 	Name             string
 	From             string
 	FromCacheVersion string

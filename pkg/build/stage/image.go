@@ -1,8 +1,6 @@
 package stage
 
 type Image interface {
-	ReadDockerState() error
-	IsImageExists() bool
 	GetLabels() map[string]string
 	AddServiceChangeLabel(name, value string)
 }

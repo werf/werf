@@ -8,7 +8,7 @@ type Dimg struct {
 	Docker *Docker
 }
 
-func (c *Dimg) RelatedDimgs() (relatedDimgs []interface{}) {
+func (c *Dimg) RelatedDimgs() (relatedDimgs []DimgInterface) {
 	relatedDimgs = append(relatedDimgs, c)
 	if c.FromDimg != nil {
 		relatedDimgs = append(relatedDimgs, c.FromDimg.RelatedDimgs()...)
@@ -19,7 +19,7 @@ func (c *Dimg) RelatedDimgs() (relatedDimgs []interface{}) {
 	return
 }
 
-func (c *Dimg) LastLayerOrSelf() interface{} {
+func (c *Dimg) LastLayerOrSelf() DimgInterface {
 	if c.FromDimg != nil {
 		return c.FromDimg.LastLayerOrSelf()
 	}

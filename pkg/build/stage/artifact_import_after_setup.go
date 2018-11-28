@@ -21,6 +21,6 @@ type ArtifactImportAfterSetupStage struct {
 	*ArtifactImportStage
 }
 
-func (s *ArtifactImportAfterSetupStage) Name() string {
-	return "after_install_artifact"
+func (s *ArtifactImportAfterSetupStage) Name() StageName {
+	return ArtifactImportAfterSetup
 }

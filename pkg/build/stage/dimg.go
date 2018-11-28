@@ -12,7 +12,7 @@ func (d *Dimg) GetStages() []Interface {
 	return d.stages
 }
 
-func (d *Dimg) GetStage(name string) Interface {
+func (d *Dimg) GetStage(name StageName) Interface {
 	for _, stage := range d.stages {
 		if stage.Name() == name {
 			return stage

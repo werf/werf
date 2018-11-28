@@ -2,9 +2,10 @@ package stage
 
 import (
 	"github.com/flant/dapp/pkg/build/builder"
+	"github.com/flant/dapp/pkg/config"
 )
 
-func GenerateSetupStage(dimgConfig interface{}, extra *builder.Extra) Interface {
+func GenerateSetupStage(dimgConfig config.DimgInterface, extra *builder.Extra) Interface {
 	b := getBuilder(dimgConfig, extra)
 	if b != nil && !b.IsSetupEmpty() {
 		return newSetupStage(b)
@@ -23,8 +24,8 @@ type SetupStage struct {
 	*UserStage
 }
 
-func (s *SetupStage) Name() string {
-	return "setup"
+func (s *SetupStage) Name() StageName {
+	return Setup
 }
 
 func (s *SetupStage) GetContext(_ Cache) string {
