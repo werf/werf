@@ -4,16 +4,16 @@ import (
 	"github.com/flant/dapp/pkg/build/builder"
 )
 
-func generateInstallStage(dimgConfig interface{}) Interface {
-	b := getBuilder(dimgConfig)
+func GenerateInstallStage(dimgConfig interface{}, extra *builder.Extra) Interface {
+	b := getBuilder(dimgConfig, extra)
 	if b != nil && !b.IsInstallEmpty() {
-		return NewInstallStage(b)
+		return newInstallStage(b)
 	}
 
 	return nil
 }
 
-func NewInstallStage(builder builder.Builder) *InstallStage {
+func newInstallStage(builder builder.Builder) *InstallStage {
 	s := &InstallStage{}
 	s.UserStage = newUserStage(builder)
 	return s

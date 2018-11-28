@@ -5,7 +5,7 @@ import (
 	"github.com/flant/dapp/pkg/config"
 )
 
-func getBuilder(dimgConfig interface{}) builder.Builder {
+func getBuilder(dimgConfig interface{}, extra *builder.Extra) builder.Builder {
 	var b builder.Builder
 	switch dimgConfig.(type) {
 	case config.Dimg:
@@ -13,14 +13,14 @@ func getBuilder(dimgConfig interface{}) builder.Builder {
 		if d.Shell != nil {
 			b = builder.NewShellBuilder(d.Shell)
 		} else if d.Ansible != nil {
-			b = builder.NewAnsibleBuilder(d.Ansible, &builder.Extra{}) // TODO: extra
+			b = builder.NewAnsibleBuilder(d.Ansible, extra)
 		}
 	case config.DimgArtifact:
 		d := dimgConfig.(config.DimgArtifact)
 		if d.Shell != nil {
 			b = builder.NewShellBuilder(d.Shell)
 		} else if d.Ansible != nil {
-			b = builder.NewAnsibleBuilder(d.Ansible, &builder.Extra{}) // TODO: extra
+			b = builder.NewAnsibleBuilder(d.Ansible, extra)
 		}
 	}
 

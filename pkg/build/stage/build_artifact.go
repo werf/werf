@@ -4,16 +4,16 @@ import (
 	"github.com/flant/dapp/pkg/build/builder"
 )
 
-func generateBuildArtifactStage(dimgConfig interface{}) Interface {
-	b := getBuilder(dimgConfig)
+func GenerateBuildArtifactStage(dimgConfig interface{}, extra *builder.Extra) Interface {
+	b := getBuilder(dimgConfig, extra)
 	if b != nil && !b.IsBuildArtifactEmpty() {
-		return NewBuildArtifactStage(b)
+		return newBuildArtifactStage(b)
 	}
 
 	return nil
 }
 
-func NewBuildArtifactStage(builder builder.Builder) *BuildArtifactStage {
+func newBuildArtifactStage(builder builder.Builder) *BuildArtifactStage {
 	s := &BuildArtifactStage{}
 	s.UserStage = newUserStage(builder)
 	return s

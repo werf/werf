@@ -5,7 +5,7 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func generateFromStage(dimgBaseConfig *config.DimgBase) Interface {
+func GenerateFromStage(dimgBaseConfig *config.DimgBase) Interface {
 	fromCacheVersion := dimgBaseConfig.FromCacheVersion
 
 	if dimgBaseConfig.From != "" {
