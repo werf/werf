@@ -14,9 +14,6 @@ type Stage struct {
 	FromImage  *Stage
 	Container  *StageContainer
 	BuildImage *Build
-
-	ServiceChangeLabels map[string]string
-	Labels              map[string]string
 }
 
 func NewStageImage(fromImage *Stage, name string) *Stage {
@@ -24,7 +21,6 @@ func NewStageImage(fromImage *Stage, name string) *Stage {
 	stage.Base = NewBaseImage(name)
 	stage.FromImage = fromImage
 	stage.Container = NewStageImageContainer(stage)
-	stage.ServiceChangeLabels = make(map[string]string)
 	return stage
 }
 
@@ -198,9 +194,25 @@ func (i *Stage) Export(name string) error {
 }
 
 func (i *Stage) AddServiceChangeLabel(name, value string) {
-	i.ServiceChangeLabels[name] = value
+	change := &StageContainerOptions{Label: map[string]interface{}{name: value}}
+	i.Container.ServiceCommitChangeOptions = i.Container.ServiceCommitChangeOptions.merge(change)
+}
+
+func (i *Stage) ReadDockerState() error {
+	_, err := i.GetInspect()
+	if err != nil {
+		return fmt.Errorf("image %s inspect failed: %s", i.Name, err)
+	}
+	return nil
 }
 
 func (i *Stage) GetLabels() map[string]string {
-	return i.Labels
+	if i.Inspect != nil {
+		return i.Inspect.Config.Labels
+	}
+	return nil
+}
+
+func (i *Stage) IsImageExists() bool {
+	return i.Inspect != nil
 }
