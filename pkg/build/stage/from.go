@@ -60,7 +60,7 @@ type BaseFromStage struct { // TODO: mounts
 }
 
 func (s *BaseFromStage) Name() string {
-	return "name"
+	return "from"
 }
 
 func (s *BaseFromStage) GetDependencies() string {
