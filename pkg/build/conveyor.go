@@ -1,6 +1,9 @@
 package build
 
-import "github.com/flant/dapp/pkg/build/stage"
+import (
+	"github.com/flant/dapp/pkg/build/stage"
+	"github.com/flant/dapp/pkg/image"
+)
 
 type Conveyor struct {
 	// Все кеширование тут
@@ -14,8 +17,18 @@ type Conveyor struct {
 	// Push()
 	// BP()
 
+	stageImages map[string]*image.Stage
+
 	ProjectName string
 	TmpDir      string
+}
+
+func NewConveyor(projectName, tmpDir string) *Conveyor {
+	return &Conveyor{
+		ProjectName: projectName,
+		TmpDir:      tmpDir,
+		stageImages: make(map[string]*image.Stage),
+	}
 }
 
 type Phase interface {
@@ -41,8 +54,14 @@ func (c *Conveyor) Build() error {
 	return nil
 }
 
-func (c *Conveyor) GetOrCreateImage(fromImage stage.Image, name string) stage.Image {
-	return nil
+func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.Stage {
+	if image, ok := c.stageImages[name]; ok {
+		return image
+	}
+
+	image := image.NewStageImage(fromImage, name)
+	c.stageImages[name] = image
+	return image
 }
 
 func (c *Conveyor) GetDimg(name string) *stage.Dimg {
