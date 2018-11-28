@@ -41,7 +41,7 @@ func (c *Conveyor) Build() error {
 	return nil
 }
 
-func (c *Conveyor) GetOrCreateImage(fromImage stage.Interface, name string) stage.Image {
+func (c *Conveyor) GetOrCreateImage(fromImage stage.Image, name string) stage.Image {
 	return nil
 }
 
