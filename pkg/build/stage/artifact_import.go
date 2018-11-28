@@ -23,21 +23,21 @@ func getImports(dimgBaseConfig *config.DimgBase, options *getImportsOptions) []*
 	return imports
 }
 
-func newArtifactImportBaseStage(imports []*config.ArtifactImport) *ArtifactImportBaseStage {
-	s := &ArtifactImportBaseStage{}
+func newArtifactImportStage(imports []*config.ArtifactImport) *ArtifactImportStage {
+	s := &ArtifactImportStage{}
 	s.imports = imports
 	s.BaseStage = newBaseStage()
 
 	return s
 }
 
-type ArtifactImportBaseStage struct {
+type ArtifactImportStage struct {
 	*BaseStage
 
 	imports []*config.ArtifactImport
 }
 
-func (s *ArtifactImportBaseStage) GetDependencies(c Cache) string {
+func (s *ArtifactImportStage) GetDependencies(c Cache) string {
 	var args []string
 
 	for _, elm := range s.imports {
