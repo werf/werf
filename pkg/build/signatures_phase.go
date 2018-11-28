@@ -24,6 +24,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 	for _, dimg := range c.GetDimgsInOrder() {
 		var prevStage stage.Interface
+		var prevImage stage.Image
 
 		for _, stage := range dimg.GetStages() {
 			checksumArgs := []string{stage.GetDependencies(c), BuildCacheVersion}
@@ -43,10 +44,11 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 			stage.SetSignature(stageSig)
 
 			imageName := fmt.Sprintf("dimgstage-%s:%s", c.GetProjectName(), stageSig)
-			image := c.GetOrCreateImage(prevStage, imageName)
+			image := c.GetOrCreateImage(prevImage, imageName)
 			stage.SetImage(image)
 
 			prevStage = stage
+			prevImage = image
 		}
 	}
 
