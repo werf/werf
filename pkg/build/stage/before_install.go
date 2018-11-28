@@ -27,6 +27,10 @@ func (s *BeforeInstallStage) Name() string {
 	return "beforeInstall"
 }
 
+func (s *BeforeInstallStage) GetDependencies(_ Cache) string {
+	return s.builder.BeforeInstallChecksum()
+}
+
 func (s *BeforeInstallStage) GetContext(_ Cache) string {
-	return s.builder.BeforeInstallChecksum() // TODO: git
+	return ""
 }
