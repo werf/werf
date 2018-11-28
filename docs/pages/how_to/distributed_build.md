@@ -16,7 +16,9 @@ Distributed build assumes the following steps:
 * build images;
 * push built images and stages cache to the Docker registry.
 
-In this tutorial, we setup the CI/CD process using GitLab CI and two build nodes with a distributed build.
+In this tutorial, we setup the CI/CD process using GitLab CI and two persistent build nodes with a distributed build.
+
+> The same approach described in this tutorial is also appliable when there are arbitrary number of dynamically allocated build nodes, instead of fixed number of persistent build nodes.
 
 ## Requirements
 
