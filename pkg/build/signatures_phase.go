@@ -48,6 +48,11 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 			image := c.GetOrCreateImage(prevImage, imageName)
 			stage.SetImage(image)
 
+			err := image.ReadDockerState()
+			if err != nil {
+				return fmt.Errorf("error reading docker state of stage %s: %s", stage.Name(), err)
+			}
+
 			prevStage = stage
 			prevImage = image
 		}

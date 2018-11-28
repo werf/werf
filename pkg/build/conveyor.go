@@ -44,10 +44,9 @@ func (c *Conveyor) Build() error {
 	phases := []Phase{}
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase())
-	phases = append(phases, NewDockerStatePhase())   // Определение состояния кеша (есть в кеше / нет в кеше)
-	phases = append(phases, NewRenewPhase())         // Сброс кеша отсутствующих коммитов из-за rebase
-	phases = append(phases, NewPrepareImagesPhase()) // Определение состояния кеша (есть в кеше / нет в кеше)
-	phases = append(phases, NewBuildPhase())         // Определение состояния кеша (есть в кеше / нет в кеше)
+	phases = append(phases, NewRenewPhase())
+	phases = append(phases, NewPrepareImagesPhase())
+	phases = append(phases, NewBuildPhase())
 
 	for _, phase := range phases {
 		err := phase.Run(c)
