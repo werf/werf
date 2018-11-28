@@ -68,21 +68,43 @@ func generateStages(dimgConfig interface{}, c *Conveyor) []stage.Interface {
 		dimgArtifact = true
 	}
 
-	stages = appendIfExist(stages, stage.GenerateFromStage(dimgBase))
-
 	ansibleBuilderExtra := &builder.Extra{
 		TmpPath:           c.TmpDir,
 		ContainerDappPath: c.ContainerDappPath,
 	}
 
+	// from
+	stages = appendIfExist(stages, stage.GenerateFromStage(dimgBase))
+
+	// before_install
 	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgConfig, ansibleBuilderExtra))
+
+	// before_install_artifact
+	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(dimgBase))
+
+	// install
 	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgConfig, ansibleBuilderExtra))
+
+	// after_install_artifact
+	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(dimgBase))
+
+	// before_setup
 	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgConfig, ansibleBuilderExtra))
+
+	// before_setup_artifact
+	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBase))
+
+	// setup
 	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgConfig, ansibleBuilderExtra))
 
+	// after_setup_artifact
+	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(dimgBase))
+
 	if dimgArtifact {
+		// build_artifact
 		stages = appendIfExist(stages, stage.GenerateBuildArtifactStage(dimgConfig, ansibleBuilderExtra))
 	} else {
+		// docker_instructions
 		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(dimgConfig.(*config.Dimg)))
 	}
 
