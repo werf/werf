@@ -5,7 +5,7 @@ import (
 	"github.com/flant/dapp/pkg/config"
 )
 
-func getBuilder(dimgConfig interface{}, extra *builder.Extra) builder.Builder {
+func getBuilder(dimgConfig config.DimgInterface, extra *builder.Extra) builder.Builder {
 	var b builder.Builder
 	switch dimgConfig.(type) {
 	case config.Dimg:

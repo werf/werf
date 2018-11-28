@@ -7,7 +7,7 @@ type DimgArtifact struct {
 	Shell *ShellArtifact
 }
 
-func (c *DimgArtifact) RelatedDimgs() (relatedDimgs []interface{}) {
+func (c *DimgArtifact) RelatedDimgs() (relatedDimgs []DimgInterface) {
 	relatedDimgs = append(relatedDimgs, c)
 	if c.FromDimg != nil {
 		relatedDimgs = append(relatedDimgs, c.FromDimg.RelatedDimgs()...)
@@ -18,7 +18,7 @@ func (c *DimgArtifact) RelatedDimgs() (relatedDimgs []interface{}) {
 	return
 }
 
-func (c *DimgArtifact) LastLayerOrSelf() interface{} {
+func (c *DimgArtifact) LastLayerOrSelf() DimgInterface {
 	if c.FromDimg != nil {
 		return c.FromDimg.LastLayerOrSelf()
 	}

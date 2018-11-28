@@ -440,7 +440,7 @@ func associateDimgsAndArtifactsFrom(dimgs []*Dimg, artifacts []*DimgArtifact) er
 	return nil
 }
 
-func associateDimgFrom(dimg interface{}, dimgs []*Dimg, artifacts []*DimgArtifact) error {
+func associateDimgFrom(dimg DimgInterface, dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	switch dimg.(type) {
 	case *Dimg:
 		return dimg.(*Dimg).AssociateFrom(dimgs, artifacts)
