@@ -14,7 +14,8 @@ type Conveyor struct {
 	// Push()
 	// BP()
 
-	TmpDir string
+	ProjectName string
+	TmpDir      string
 }
 
 type Phase interface {
@@ -54,4 +55,8 @@ func (c *Conveyor) GetImage(imageName string) stage.Image {
 
 func (c *Conveyor) GetDimgsInOrder() []*stage.Dimg {
 	return nil
+}
+
+func (c *Conveyor) GetProjectName() string {
+	return c.ProjectName
 }

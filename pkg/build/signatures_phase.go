@@ -1,6 +1,11 @@
 package build
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/flant/dapp/pkg/build/stage"
+	"github.com/flant/dapp/pkg/util"
+)
 
 const (
 	BuildCacheVersion = "33"
@@ -17,19 +22,33 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 		fmt.Printf("SignaturesPhase.Run\n")
 	}
 
-	/*
-		for c.GetDimgsInOrder {
-			for dimg.GetStages() {
-				stageSig = stage.GetDependecies + prevStageSignature + BuildCacheVersion + getStage(stage.RelatedStageName).GetContext
-				stage.SetSignature(stageSig)
-				prevStageSignature = stageSig
+	for _, dimg := range c.GetDimgsInOrder() {
+		var prevStage stage.Interface
 
-				create image by stageSig
-				c.GetOrCreateImage(fromImage *Stage, name string)
+		for _, stage := range dimg.GetStages() {
+			checksumArgs := []string{stage.GetDependencies(c), BuildCacheVersion}
 
+			if prevStage != nil {
+				checksumArgs = append(checksumArgs, prevStage.GetSignature())
 			}
+
+			relatedStage := dimg.GetStage(stage.GetRelatedStageName())
+			// related stage may be empty
+			if relatedStage != nil {
+				checksumArgs = append(checksumArgs, relatedStage.GetContext(c))
+			}
+
+			stageSig := util.Sha256Hash(checksumArgs...)
+
+			stage.SetSignature(stageSig)
+
+			imageName := fmt.Sprintf("dimgstage-%s:%s", c.GetProjectName(), stageSig)
+			image := c.GetOrCreateImage(prevStage, imageName)
+			stage.SetImage(image)
+
+			prevStage = stage
 		}
-	*/
+	}
 
 	return nil
 }
