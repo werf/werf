@@ -5,7 +5,7 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func generateDockerInstructionsStage(dimgConfig *config.Dimg) Interface {
+func GenerateDockerInstructionsStage(dimgConfig *config.Dimg) Interface {
 	if dimgConfig.Docker != nil {
 		return newDockerInstructionsStage(dimgConfig.Docker)
 	}

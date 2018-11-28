@@ -4,16 +4,16 @@ import (
 	"github.com/flant/dapp/pkg/build/builder"
 )
 
-func generateBeforeSetupStage(dimgConfig interface{}) Interface {
-	b := getBuilder(dimgConfig)
+func GenerateBeforeSetupStage(dimgConfig interface{}, extra *builder.Extra) Interface {
+	b := getBuilder(dimgConfig, extra)
 	if b != nil && !b.IsBeforeSetupEmpty() {
-		return NewBeforeSetupStage(b)
+		return newBeforeSetupStage(b)
 	}
 
 	return nil
 }
 
-func NewBeforeSetupStage(builder builder.Builder) *BeforeSetupStage {
+func newBeforeSetupStage(builder builder.Builder) *BeforeSetupStage {
 	s := &BeforeSetupStage{}
 	s.UserStage = newUserStage(builder)
 	return s

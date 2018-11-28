@@ -8,7 +8,7 @@ import (
 
 type Conveyor struct {
 	Dappfile     []*config.Dimg
-	DimgsInOrder []*Dimg
+	DimgsInOrder []*stage.Dimg
 
 	// Все кеширование тут
 	// Инициализируется конфигом dappfile (все dimgs, все artifacts)
@@ -23,8 +23,9 @@ type Conveyor struct {
 
 	stageImages map[string]*image.Stage
 
-	ProjectName string
-	TmpDir      string
+	ProjectName       string
+	TmpDir            string
+	ContainerDappPath string
 }
 
 func NewConveyor(projectName, tmpDir string) *Conveyor {
