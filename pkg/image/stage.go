@@ -14,6 +14,9 @@ type Stage struct {
 	FromImage  *Stage
 	Container  *StageContainer
 	BuildImage *Build
+
+	ServiceChangeLabels map[string]string
+	Labels              map[string]string
 }
 
 func NewStageImage(fromImage *Stage, name string) *Stage {
@@ -21,6 +24,7 @@ func NewStageImage(fromImage *Stage, name string) *Stage {
 	stage.Base = NewBaseImage(name)
 	stage.FromImage = fromImage
 	stage.Container = NewStageImageContainer(stage)
+	stage.ServiceChangeLabels = make(map[string]string)
 	return stage
 }
 
@@ -191,4 +195,12 @@ func (i *Stage) Export(name string) error {
 	}
 
 	return nil
+}
+
+func (i *Stage) AddServiceChangeLabel(name, value string) {
+	i.ServiceChangeLabels[name] = value
+}
+
+func (i *Stage) GetLabels() map[string]string {
+	return i.Labels
 }
