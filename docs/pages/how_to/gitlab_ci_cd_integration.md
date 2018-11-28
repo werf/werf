@@ -271,7 +271,7 @@ Deploy to Stage:
     - schedules
 ```
 
-We use `base_deploy` template and define only unique to stage environment variables such as — environment name and URL. Because of this approach, we get a small and readable job description and as a result — more compact and readable `gitlab-ci.yml`.
+We use `base_deploy` template and define only unique to stage environment variables such as — environment name and URL. Because of this approach, we get a small and readable job description and as a result — more compact and readable `.gitlab-ci.yml`.
 
 #### Production
 
@@ -300,7 +300,7 @@ Dapp has an efficient cleanup functionality which can help you to avoid overflow
 
 In the results of dapp works, we have images in a registry and a build cache. Build cache exists only on build node and to the registry dapp push only built images.
 
-There are two stages — `cleanup_registry` and `cleanup_builder`, in the `gitlab-cy.yml` file for the cleanup process. Every stage has only one job in it and order of stage definition (see `stages` list in the top of the `gitlab-ci.yml` file) is important.
+There are two stages — `cleanup_registry` and `cleanup_builder`, in the `.gitlab-ci.yml` file for the cleanup process. Every stage has only one job in it and order of stage definition (see `stages` list in the top of the `.gitlab-ci.yml` file) is important.
 
 The first step in the cleanup process is to clean registry from unused images (built from stale or deleted branches and so on — see more [about dapp cleanup]({{ site.baseurl }}/reference/registry/cleaning.html)). This work will be done on the `cleanup_registry` stage. On this stage, dapp connect to the registry and to the kubernetes cluster. That is why on this stage we need to use deploy runner. From kubernetes cluster dapp gets info about images are currently used by pods.
 
@@ -342,7 +342,7 @@ For demo project simply create `Personal Access Token` for your account. To do t
 
 Both stages will start only by schedules. You can define schedule in `CI/CD` —> `Schedules` section of your project in GitLab Web interface. Push `New schedule` button, fill description, define cron pattern, leave the master branch in target branch (because it doesn't affect on cleanup), check on Active (if it's not checked) and save pipeline schedule. That's all!
 
-## Complete `gitlab-ci.yml` file
+## Complete `.gitlab-ci.yml` file
 
 ```yaml
 variables:
