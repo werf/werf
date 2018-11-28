@@ -31,6 +31,7 @@ func newUserStage(builder builder.Builder) *UserStage {
 	s := &UserStage{}
 	s.builder = builder
 	s.BaseStage = newBaseStage()
+
 	return s
 }
 

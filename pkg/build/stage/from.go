@@ -9,7 +9,7 @@ func generateFromStage(dimgBaseConfig *config.DimgBase) Interface {
 	fromCacheVersion := dimgBaseConfig.FromCacheVersion
 
 	if dimgBaseConfig.From != "" {
-		return newFromStage(fromCacheVersion, dimgBaseConfig.From)
+		return newFromStage(fromCacheVersion, dimgBaseConfig.Mount, dimgBaseConfig.From)
 	} else {
 		fromDimg := dimgBaseConfig.FromDimg
 		fromDimgArtifact := dimgBaseConfig.FromDimgArtifact
@@ -22,41 +22,43 @@ func generateFromStage(dimgBaseConfig *config.DimgBase) Interface {
 		}
 
 		if fromDimgName != "" {
-			return newFromDimgStage(fromCacheVersion, fromDimgName)
+			return newFromDimgStage(fromCacheVersion, dimgBaseConfig.Mount, fromDimgName)
 		}
 	}
 
 	return nil
 }
 
-func newFromStage(cacheVersion, from string) *FromStage {
+func newFromStage(cacheVersion string, mounts []*config.Mount, from string) *FromStage {
 	s := &FromStage{}
 	s.from = from
-	s.BaseFromStage = newBaseFromStage(cacheVersion)
+	s.BaseFromStage = newBaseFromStage(cacheVersion, mounts)
 
 	return s
 }
 
-func newFromDimgStage(cacheVersion, dimgName string) *FromDimgStage {
+func newFromDimgStage(cacheVersion string, mounts []*config.Mount, dimgName string) *FromDimgStage {
 	s := &FromDimgStage{}
 	s.dimgName = dimgName
-	s.BaseFromStage = newBaseFromStage(cacheVersion)
+	s.BaseFromStage = newBaseFromStage(cacheVersion, mounts)
 
 	return s
 }
 
-func newBaseFromStage(cacheVersion string) *BaseFromStage {
+func newBaseFromStage(cacheVersion string, mounts []*config.Mount) *BaseFromStage {
 	s := &BaseFromStage{}
 	s.cacheVersion = cacheVersion
+	s.mounts = mounts
 	s.BaseStage = newBaseStage()
 
 	return s
 }
 
-type BaseFromStage struct { // TODO: mounts
+type BaseFromStage struct {
 	*BaseStage
 
 	cacheVersion string
+	mounts       []*config.Mount
 }
 
 func (s *BaseFromStage) Name() string {
@@ -64,7 +66,15 @@ func (s *BaseFromStage) Name() string {
 }
 
 func (s *BaseFromStage) GetDependencies() string {
-	return util.Sha256Hash(s.cacheVersion)
+	var args []string
+
+	args = append(args, s.cacheVersion)
+
+	for _, mount := range s.mounts {
+		args = append(args, mount.From, mount.To, mount.Type)
+	}
+
+	return util.Sha256Hash(args...)
 }
 
 type FromStage struct {
