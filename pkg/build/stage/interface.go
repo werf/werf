@@ -3,9 +3,6 @@ package stage
 import "github.com/flant/dapp/pkg/build"
 
 type Interface interface {
-	ReadDockerState() error
-	IsImageExists() bool
-
 	Name() StageName
 	GetDependencies(Cache) string   // dependencies + builder_checksum
 	GetContext(Cache) string        // context
