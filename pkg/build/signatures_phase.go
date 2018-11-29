@@ -25,7 +25,9 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 	for _, dimg := range c.GetDimgsInOrder() {
 		var prevStage stage.Interface
 
-		prevImage := dimg.CreateBaseImage(c)
+		dimg.SetupBaseImage(c)
+
+		prevImage := dimg.GetBaseImage()
 
 		newStagesList := []stage.Interface{}
 

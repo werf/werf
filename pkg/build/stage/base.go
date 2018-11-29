@@ -200,22 +200,6 @@ func (s *BaseStage) addCustomMounts(prevImage, image Image) error {
 	return nil
 }
 
-func addMountsLabels(prevImage, image Image) error {
-	/*
-	   def image_add_mounts_labels
-	     [:tmp_dir, :build_dir].each do |type|
-	       next if (mounts = adding_mounts_by_type(type)).empty?
-	       image.add_service_change_label :"dapp-mount-#{type.to_s.tr('_', '-')}" => mounts.join(';')
-	     end
-
-	     adding_custom_dir_mounts.each do |from, to_pathes|
-	       image.add_service_change_label :"dapp-mount-custom-dir-#{from.gsub('/', '--')}" => to_pathes.join(';')
-	     end
-	   end
-	*/
-	return nil
-}
-
 func (s *BaseStage) SetSignature(signature string) {
 	s.signature = signature
 }

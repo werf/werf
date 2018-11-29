@@ -2,7 +2,6 @@ package build
 
 import (
 	"github.com/flant/dapp/pkg/build/stage"
-	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/image"
 )
 
@@ -10,7 +9,8 @@ type Dimg struct {
 	baseImageName     string
 	baseImageDimgName string
 
-	stages []stage.Interface
+	stages    []stage.Interface
+	baseImage *image.Stage
 }
 
 func (d *Dimg) SetStages(stages []stage.Interface) {
@@ -35,15 +35,27 @@ func (d *Dimg) LatestStage() stage.Interface {
 	return d.stages[len(d.stages)-1]
 }
 
-func (d *Dimg) GetConfig() *config.Dimg {
-	return nil
+func (d *Dimg) GetName() string {
+	return ""
 }
 
-func (d *Dimg) CreateBaseImage(c *Conveyor) *image.Stage {
+func (d *Dimg) SetupBaseImage(c *Conveyor) {
 	baseImageName := d.baseImageName
 	if d.baseImageDimgName != "" {
 		baseImageName = c.GetDimg(d.baseImageDimgName).LatestStage().GetImage().GetName()
 	}
 
-	return c.GetOrCreateImage(nil, baseImageName)
+	d.baseImage = c.GetOrCreateImage(nil, baseImageName)
+}
+
+func (d *Dimg) GetBaseImage() *image.Stage {
+	return d.baseImage
+}
+
+func (d *Dimg) PrepareBaseImage() error {
+	if d.baseImageDimgName != "" {
+		return nil
+	}
+
+	return d.baseImage.Pull()
 }

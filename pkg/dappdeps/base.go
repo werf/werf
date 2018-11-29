@@ -21,6 +21,10 @@ func BaseContainer() (string, error) {
 	}
 }
 
+func RmBinPath() string {
+	return BaseBinPath("rm")
+}
+
 func BaseBinPath(bin string) string {
 	return fmt.Sprintf("/.dapp/deps/base/%s/embedded/bin/%s", BASE_VERSION, bin)
 }
