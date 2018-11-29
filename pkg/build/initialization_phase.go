@@ -34,16 +34,43 @@ func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) ([]*Dimg, error)
 	for _, dimgConfig := range getDimgConfigsInOrder(dappfile) {
 		dimg := &Dimg{}
 
+		from, fromDimgName := getFromAndFromDimgName(dimgConfig)
+		dimg.baseImageName = from
+		dimg.baseImageDimgName = fromDimgName
+
 		stages, err := generateStages(dimgConfig, c)
 		if err != nil {
 			return nil, err
 		}
 
 		dimg.SetStages(stages)
+
 		dimgs = append(dimgs, dimg)
 	}
 
 	return dimgs, nil
+}
+
+func getFromAndFromDimgName(dimgConfig config.DimgInterface) (string, string) {
+	var from string
+	var fromDimgName string
+
+	dimgBaseConfig, _ := processDimgConfig(dimgConfig)
+
+	if dimgBaseConfig.From != "" {
+		from = dimgBaseConfig.From
+	} else {
+		fromDimg := dimgBaseConfig.FromDimg
+		fromDimgArtifact := dimgBaseConfig.FromDimgArtifact
+
+		if fromDimg != nil {
+			fromDimgName = fromDimg.Name
+		} else {
+			fromDimgName = fromDimgArtifact.Name
+		}
+	}
+
+	return from, fromDimgName
 }
 
 func getDimgConfigsInOrder(dappfile []*config.Dimg) []config.DimgInterface {

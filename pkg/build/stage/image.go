@@ -1,6 +1,7 @@
 package stage
 
 type Image interface {
+	GetName() string
 	ReadDockerState() error
 	IsImageExists() bool
 	GetLabels() map[string]string
@@ -29,4 +30,8 @@ func (image *StubImage) ReadDockerState() error {
 
 func (image *StubImage) IsImageExists() bool {
 	return false
+}
+
+func (image *StubImage) GetName() string {
+	return ""
 }
