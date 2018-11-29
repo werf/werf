@@ -37,3 +37,15 @@ func (s *SetupStage) GetContext(_ Conveyor) (string, error) {
 
 	return util.Sha256Hash(s.builder.SetupChecksum(), stageDependenciesChecksum), nil
 }
+
+func (s *SetupStage) PrepareImage(prevImage, image Image) error {
+	if err := s.BaseStage.PrepareImage(prevImage, image); err != nil {
+		return err
+	}
+
+	if err := s.builder.Setup(image.GetContainer()); err != nil {
+		return err
+	}
+
+	return nil
+}

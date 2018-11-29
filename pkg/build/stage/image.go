@@ -1,10 +1,14 @@
 package stage
 
+import "github.com/flant/dapp/pkg/build/builder"
+
 type Image interface {
 	GetName() string
 	ReadDockerState() error
 	IsImageExists() bool
 	GetLabels() map[string]string
+
+	GetContainer() builder.Container
 
 	AddRunCommands([]string)
 	AddEnv(map[string]interface{})
@@ -19,6 +23,10 @@ type StubImage struct {
 
 func (image *StubImage) GetLabels() map[string]string {
 	return image.Labels
+}
+
+func (image *StubImage) GetContainer() builder.Container {
+	return nil
 }
 
 func (image *StubImage) AddRunCommands([]string) {}
