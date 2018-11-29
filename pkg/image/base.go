@@ -20,6 +20,10 @@ func NewBaseImage(name string) *Base {
 	return image
 }
 
+func (i *Base) GetName() string {
+	return i.Name
+}
+
 func (i *Base) MustGetId() (string, error) {
 	if inspect, err := i.MustGetInspect(); err == nil {
 		return inspect.ID, nil

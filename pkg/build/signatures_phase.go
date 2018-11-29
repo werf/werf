@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/flant/dapp/pkg/build/stage"
-	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -25,7 +24,8 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 	for _, dimg := range c.GetDimgsInOrder() {
 		var prevStage stage.Interface
-		var prevImage *image.Stage
+
+		prevImage := dimg.CreateBaseImage(c)
 
 		newStagesList := []stage.Interface{}
 
