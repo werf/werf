@@ -20,3 +20,16 @@ IterateAllValues:
 func UniqAppendString(arr []string, value string) []string {
 	return UniqStrings(append(arr, value))
 }
+
+func RejectEmptyStrings(arr []string) []string {
+	res := []string{}
+
+	for _, v := range arr {
+		if v == "" {
+			continue
+		}
+		res = append(res, v)
+	}
+
+	return res
+}
