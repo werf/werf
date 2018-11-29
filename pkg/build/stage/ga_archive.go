@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"sort"
+
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -33,6 +35,8 @@ func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
 
 		args = append(args, commit)
 	}
+
+	sort.Strings(args)
 
 	return util.Sha256Hash(args...), nil
 }
