@@ -45,5 +45,5 @@ func (d *Dimg) CreateBaseImage(c *Conveyor) *image.Stage {
 		baseImageName = c.GetDimg(d.baseImageDimgName).LatestStage().GetImage().GetName()
 	}
 
-	return image.NewStageImage(nil, baseImageName)
+	return c.GetOrCreateImage(nil, baseImageName)
 }
