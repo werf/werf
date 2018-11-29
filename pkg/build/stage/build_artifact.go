@@ -3,6 +3,7 @@ package stage
 import (
 	"github.com/flant/dapp/pkg/build/builder"
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/util"
 )
 
 func GenerateBuildArtifactStage(dimgConfig config.DimgInterface, extra *builder.Extra) Interface {
@@ -29,5 +30,8 @@ func (s *BuildArtifactStage) Name() StageName {
 }
 
 func (s *BuildArtifactStage) GetContext(_ Cache) string {
-	return s.builder.BuildArtifactChecksum() // TODO: git
+	return util.Sha256Hash(
+		s.builder.BuildArtifactChecksum(),
+		s.GetStageDependenciesChecksum(BuildArtifact),
+	)
 }

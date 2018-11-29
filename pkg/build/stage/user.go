@@ -3,6 +3,7 @@ package stage
 import (
 	"github.com/flant/dapp/pkg/build/builder"
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/util"
 )
 
 func getBuilder(dimgConfig config.DimgInterface, extra *builder.Extra) builder.Builder {
@@ -47,4 +48,18 @@ func (s *UserStage) GetDependencies(_ Cache) string {
 
 func (s *UserStage) GetContext(_ Cache) string {
 	panic("method must be implemented!")
+}
+
+func (s *UserStage) GetStageDependenciesChecksum(name StageName) string {
+	var args []string
+	for _, ga := range s.gitArtifacts {
+		checksum, err := ga.StageDependenciesChecksum(string(Install))
+		if err != nil {
+			panic(err)
+		}
+
+		args = append(args, checksum)
+	}
+
+	return util.Sha256Hash(args...)
 }
