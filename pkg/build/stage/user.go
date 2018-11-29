@@ -42,24 +42,24 @@ type UserStage struct {
 	builder builder.Builder
 }
 
-func (s *UserStage) GetDependencies(_ Conveyor, _ Image) string {
-	return ""
+func (s *UserStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
+	return "", nil
 }
 
-func (s *UserStage) GetContext(_ Conveyor) string {
+func (s *UserStage) GetContext(_ Conveyor) (string, error) {
 	panic("method must be implemented!")
 }
 
-func (s *UserStage) GetStageDependenciesChecksum(name StageName) string {
+func (s *UserStage) GetStageDependenciesChecksum(name StageName) (string, error) {
 	var args []string
 	for _, ga := range s.gitArtifacts {
 		checksum, err := ga.StageDependenciesChecksum(string(Install))
 		if err != nil {
-			panic(err)
+			return "", err
 		}
 
 		args = append(args, checksum)
 	}
 
-	return util.Sha256Hash(args...)
+	return util.Sha256Hash(args...), nil
 }

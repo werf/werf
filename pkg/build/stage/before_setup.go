@@ -29,9 +29,11 @@ func (s *BeforeSetupStage) Name() StageName {
 	return BeforeSetup
 }
 
-func (s *BeforeSetupStage) GetContext(_ Conveyor) string {
-	return util.Sha256Hash(
-		s.builder.BeforeSetupChecksum(),
-		s.GetStageDependenciesChecksum(BeforeSetup),
-	)
+func (s *BeforeSetupStage) GetContext(_ Conveyor) (string, error) {
+	stageDependenciesChecksum, err := s.GetStageDependenciesChecksum(BeforeSetup)
+	if err != nil {
+		return "", err
+	}
+
+	return util.Sha256Hash(s.builder.BeforeSetupChecksum(), stageDependenciesChecksum), nil
 }

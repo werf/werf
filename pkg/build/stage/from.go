@@ -65,7 +65,7 @@ func (s *BaseFromStage) Name() StageName {
 	return From
 }
 
-func (s *BaseFromStage) GetDependencies() string {
+func (s *BaseFromStage) GetDependencies() (string, error) {
 	var args []string
 
 	args = append(args, s.cacheVersion)
@@ -74,7 +74,7 @@ func (s *BaseFromStage) GetDependencies() string {
 		args = append(args, mount.From, mount.To, mount.Type)
 	}
 
-	return util.Sha256Hash(args...)
+	return util.Sha256Hash(args...), nil
 }
 
 type FromStage struct {
@@ -83,8 +83,13 @@ type FromStage struct {
 	from string
 }
 
-func (s *FromStage) GetDependencies(_ Conveyor, _ Image) string {
-	return util.Sha256Hash(s.BaseFromStage.GetDependencies(), s.from)
+func (s *FromStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
+	baseFromStageDependencies, err := s.BaseFromStage.GetDependencies()
+	if err != nil {
+		return "", err
+	}
+
+	return util.Sha256Hash(baseFromStageDependencies, s.from), nil
 }
 
 type FromDimgStage struct {
@@ -93,9 +98,11 @@ type FromDimgStage struct {
 	dimgName string
 }
 
-func (s *FromDimgStage) GetDependencies(c Conveyor, _ Image) string {
-	return util.Sha256Hash(
-		s.BaseFromStage.GetDependencies(),
-		c.GetDimgSignature(s.dimgName),
-	)
+func (s *FromDimgStage) GetDependencies(c Conveyor, _ Image) (string, error) {
+	baseFromStageDependencies, err := s.BaseFromStage.GetDependencies()
+	if err != nil {
+		return "", err
+	}
+
+	return util.Sha256Hash(baseFromStageDependencies, c.GetDimgSignature(s.dimgName)), nil
 }
