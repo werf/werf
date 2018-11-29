@@ -1,6 +1,7 @@
 package build
 
 import (
+	"net/url"
 	"path"
 	"reflect"
 
@@ -18,19 +19,31 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) error {
-	c.DimgsInOrder = generateDimgsInOrder(c.Dappfile, c)
+	dimgsInOrder, err := generateDimgsInOrder(c.Dappfile, c)
+	if err != nil {
+		return err
+	}
+
+	c.DimgsInOrder = dimgsInOrder
+
 	return nil
 }
 
-func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) []*Dimg {
+func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) ([]*Dimg, error) {
 	var dimgs []*Dimg
 	for _, dimgConfig := range getDimgConfigsInOrder(dappfile) {
 		dimg := &Dimg{}
-		dimg.SetStages(generateStages(dimgConfig, c))
+
+		stages, err := generateStages(dimgConfig, c)
+		if err != nil {
+			return nil, err
+		}
+
+		dimg.SetStages(stages)
 		dimgs = append(dimgs, dimg)
 	}
 
-	return dimgs
+	return dimgs, nil
 }
 
 func getDimgConfigsInOrder(dappfile []*config.Dimg) []config.DimgInterface {
@@ -57,12 +70,16 @@ func isNotInArr(arr []config.DimgInterface, obj config.DimgInterface) bool {
 	return true
 }
 
-func generateStages(dimgConfig config.DimgInterface, c *Conveyor) []stage.Interface {
+func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Interface, error) {
 	var stages []stage.Interface
 
 	dimgBaseConfig, dimgArtifact := processDimgConfig(dimgConfig)
 
-	gitArtifacts := generateGitArtifacts(dimgBaseConfig, c)
+	gitArtifacts, err := generateGitArtifacts(dimgBaseConfig, c)
+	if err != nil {
+		return nil, err
+	}
+
 	areGitArtifactsExist := len(gitArtifacts) != 0
 
 	// from
@@ -151,10 +168,10 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) []stage.Interf
 		}
 	}
 
-	return stages
+	return stages, nil
 }
 
-func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) []*stage.GitArtifact {
+func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stage.GitArtifact, error) {
 	var gitArtifacts, nonEmptyGitArtifacts []*stage.GitArtifact
 
 	var localGitRepo *git_repo.Local
@@ -175,9 +192,14 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) []*stage
 		if len(dimgBaseConfig.Git.Remote) != 0 {
 			_, exist := remoteGitRepos[remoteGAConfig.Name]
 			if !exist {
+				clonePath, err := getRemoteGitRepoClonePath(remoteGAConfig, c)
+				if err != nil {
+					return nil, err
+				}
+
 				remoteGitRepo = &git_repo.Remote{
 					Url:       remoteGAConfig.Url,
-					ClonePath: path.Join(c.GetProjectBuildDir(), "remote_git_repo", string(git_repo.RemoteGitRepoCacheVersion), slug.Slug(remoteGAConfig.Name)), // TODO: + url protocol
+					ClonePath: clonePath,
 				}
 				remoteGitRepos[remoteGAConfig.Name] = remoteGitRepo
 			}
@@ -194,7 +216,33 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) []*stage
 		}
 	}
 
-	return nonEmptyGitArtifacts
+	return nonEmptyGitArtifacts, nil
+}
+
+func getRemoteGitRepoClonePath(remoteGaConfig *config.GitRemote, c *Conveyor) (string, error) {
+	scheme, err := urlScheme(remoteGaConfig.Url)
+	if err != nil {
+		return "", err
+	}
+
+	clonePath := path.Join(
+		c.GetProjectBuildDir(),
+		"remote_git_repo",
+		string(git_repo.RemoteGitRepoCacheVersion),
+		slug.Slug(remoteGaConfig.Name),
+		scheme,
+	)
+
+	return clonePath, nil
+}
+
+func urlScheme(urlString string) (string, error) {
+	u, err := url.Parse(urlString)
+	if err != nil {
+		return "", err
+	}
+
+	return u.Scheme, nil
 }
 
 func gitRemoteArtifactInit(remoteGAConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, dimgName string, c *Conveyor) *stage.GitArtifact {
