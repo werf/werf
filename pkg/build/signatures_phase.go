@@ -28,7 +28,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 		var prevImage *image.Stage
 
 		for _, stage := range dimg.GetStages() {
-			checksumArgs := []string{stage.GetDependencies(c), BuildCacheVersion}
+			checksumArgs := []string{stage.GetDependencies(c, prevImage), BuildCacheVersion}
 
 			if prevStage != nil {
 				checksumArgs = append(checksumArgs, prevStage.GetSignature())
@@ -52,6 +52,8 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 			if err != nil {
 				return fmt.Errorf("error reading docker state of stage %s: %s", stage.Name(), err)
 			}
+
+			// TODO call stage IsEmpty + refilter + call dimg.SetStages
 
 			prevStage = stage
 			prevImage = image

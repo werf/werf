@@ -42,11 +42,11 @@ type UserStage struct {
 	builder builder.Builder
 }
 
-func (s *UserStage) GetDependencies(_ Cache) string {
+func (s *UserStage) GetDependencies(_ Conveyor, _ Image) string {
 	return ""
 }
 
-func (s *UserStage) GetContext(_ Cache) string {
+func (s *UserStage) GetContext(_ Conveyor) string {
 	panic("method must be implemented!")
 }
 

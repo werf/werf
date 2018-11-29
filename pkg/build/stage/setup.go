@@ -29,7 +29,7 @@ func (s *SetupStage) Name() StageName {
 	return Setup
 }
 
-func (s *SetupStage) GetContext(_ Cache) string {
+func (s *SetupStage) GetContext(_ Conveyor) string {
 	return util.Sha256Hash(
 		s.builder.SetupChecksum(),
 		s.GetStageDependenciesChecksum(Setup),

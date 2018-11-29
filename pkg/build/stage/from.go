@@ -83,7 +83,7 @@ type FromStage struct {
 	from string
 }
 
-func (s *FromStage) GetDependencies(_ Cache) string {
+func (s *FromStage) GetDependencies(_ Conveyor, _ Image) string {
 	return util.Sha256Hash(s.BaseFromStage.GetDependencies(), s.from)
 }
 
@@ -93,9 +93,9 @@ type FromDimgStage struct {
 	dimgName string
 }
 
-func (s *FromDimgStage) GetDependencies(c Cache) string {
+func (s *FromDimgStage) GetDependencies(c Conveyor, _ Image) string {
 	return util.Sha256Hash(
 		s.BaseFromStage.GetDependencies(),
-		c.GetDimg(s.dimgName).LatestStage().GetSignature(),
+		c.GetDimgSignature(s.dimgName),
 	)
 }

@@ -29,7 +29,7 @@ func (s *BuildArtifactStage) Name() StageName {
 	return BuildArtifact
 }
 
-func (s *BuildArtifactStage) GetContext(_ Cache) string {
+func (s *BuildArtifactStage) GetContext(_ Conveyor) string {
 	return util.Sha256Hash(
 		s.builder.BuildArtifactChecksum(),
 		s.GetStageDependenciesChecksum(BuildArtifact),

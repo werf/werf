@@ -29,7 +29,7 @@ func (s *InstallStage) Name() StageName {
 	return Install
 }
 
-func (s *InstallStage) GetContext(_ Cache) string {
+func (s *InstallStage) GetContext(_ Conveyor) string {
 	return util.Sha256Hash(
 		s.builder.InstallChecksum(),
 		s.GetStageDependenciesChecksum(Install),

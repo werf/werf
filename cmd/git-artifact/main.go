@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/flant/dapp/pkg/build"
+	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ruby2go"
 	"github.com/flant/dapp/pkg/true_git"
@@ -26,7 +26,7 @@ func main() {
 	ruby2go.RunCli("git-artifact", func(args map[string]interface{}) (interface{}, error) {
 		res := make(map[string]interface{})
 
-		ga := &build.GitArtifact{}
+		ga := &stage.GitArtifact{}
 		if state, hasKey := args["GitArtifact"]; hasKey {
 			json.Unmarshal([]byte(state.(string)), ga)
 		}
@@ -47,7 +47,7 @@ func main() {
 			return res, resErr
 
 		case "ApplyPatchCommand":
-			stage := &build.StubStage{}
+			stage := &stage.StubStage{}
 			if state, hasKey := args["Stage"]; hasKey {
 				err := json.Unmarshal([]byte(state.(string)), stage)
 				if err != nil {
@@ -74,7 +74,7 @@ func main() {
 			return res, resErr
 
 		case "ApplyArchiveCommand":
-			stage := &build.StubStage{}
+			stage := &stage.StubStage{}
 			if state, hasKey := args["Stage"]; hasKey {
 				err := json.Unmarshal([]byte(state.(string)), stage)
 				if err != nil {
@@ -161,7 +161,7 @@ func main() {
 			return res, nil
 
 		case "IsPatchEmpty":
-			stage := &build.StubStage{}
+			stage := &stage.StubStage{}
 			if state, hasKey := args["Stage"]; hasKey {
 				err := json.Unmarshal([]byte(state.(string)), stage)
 				if err != nil {

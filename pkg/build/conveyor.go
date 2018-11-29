@@ -8,7 +8,7 @@ import (
 
 type Conveyor struct {
 	Dappfile     []*config.Dimg
-	DimgsInOrder []*stage.Dimg
+	DimgsInOrder []*Dimg
 
 	// Все кеширование тут
 	// Инициализируется конфигом dappfile (все dimgs, все artifacts)
@@ -68,7 +68,7 @@ func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.
 	return image
 }
 
-func (c *Conveyor) GetDimg(name string) *stage.Dimg {
+func (c *Conveyor) GetDimg(name string) *Dimg {
 	return nil
 }
 
@@ -76,10 +76,14 @@ func (c *Conveyor) GetImage(imageName string) stage.Image {
 	return nil
 }
 
-func (c *Conveyor) GetDimgsInOrder() []*stage.Dimg {
+func (c *Conveyor) GetDimgsInOrder() []*Dimg {
 	return nil
 }
 
 func (c *Conveyor) GetProjectName() string {
 	return c.ProjectName
+}
+
+func (c *Conveyor) GetDimgSignature(dimgName string) string {
+	return c.GetDimg(dimgName).LatestStage().GetSignature()
 }
