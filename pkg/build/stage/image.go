@@ -19,3 +19,11 @@ func (image *StubImage) GetLabels() map[string]string {
 func (image *StubImage) AddServiceChangeLabel(name, value string) {
 	image.ServiceChangeLabels[name] = value
 }
+
+func (image *StubImage) ReadDockerState() error {
+	return nil
+}
+
+func (image *StubImage) IsImageExists() bool {
+	return false
+}

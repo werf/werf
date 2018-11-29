@@ -1,7 +1,5 @@
 package stage
 
-import "github.com/flant/dapp/pkg/build"
-
 type Interface interface {
 	Name() StageName
 	GetDependencies(Cache) string   // dependencies + builder_checksum
@@ -14,6 +12,6 @@ type Interface interface {
 	SetImage(Image)
 	GetImage() Image
 
-	SetGitArtifacts([]*build.GitArtifact)
-	GetGitArtifacts() []*build.GitArtifact
+	SetGitArtifacts([]*GitArtifact)
+	GetGitArtifacts() []*GitArtifact
 }

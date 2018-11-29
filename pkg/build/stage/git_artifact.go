@@ -1,4 +1,4 @@
-package build
+package stage
 
 import (
 	"crypto/sha256"

@@ -1,7 +1,5 @@
 package stage
 
-import "github.com/flant/dapp/pkg/build"
-
 type StageName string
 
 const (
@@ -32,7 +30,7 @@ func newBaseStage() *BaseStage {
 type BaseStage struct {
 	signature    string
 	image        Image
-	gitArtifacts []*build.GitArtifact
+	gitArtifacts []*GitArtifact
 }
 
 func (s *BaseStage) Name() StageName {
@@ -67,10 +65,10 @@ func (s *BaseStage) GetImage() Image {
 	return s.image
 }
 
-func (s *BaseStage) SetGitArtifacts(gitArtifacts []*build.GitArtifact) {
+func (s *BaseStage) SetGitArtifacts(gitArtifacts []*GitArtifact) {
 	s.gitArtifacts = gitArtifacts
 }
 
-func (s *BaseStage) GetGitArtifacts() []*build.GitArtifact {
+func (s *BaseStage) GetGitArtifacts() []*GitArtifact {
 	return s.gitArtifacts
 }
