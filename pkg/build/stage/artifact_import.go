@@ -37,11 +37,11 @@ type ArtifactImportStage struct {
 	imports []*config.ArtifactImport
 }
 
-func (s *ArtifactImportStage) GetDependencies(c Cache) string {
+func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ Image) string {
 	var args []string
 
 	for _, elm := range s.imports {
-		args = append(args, c.GetDimg(elm.ArtifactName).LatestStage().GetSignature())
+		args = append(args, c.GetDimgSignature(elm.ArtifactName))
 		args = append(args, elm.Add, elm.To)
 		args = append(args, elm.Group, elm.Owner)
 		args = append(args, elm.IncludePaths...)

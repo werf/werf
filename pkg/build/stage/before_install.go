@@ -28,10 +28,10 @@ func (s *BeforeInstallStage) Name() StageName {
 	return BeforeInstall
 }
 
-func (s *BeforeInstallStage) GetDependencies(_ Cache) string {
+func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _ Image) string {
 	return s.builder.BeforeInstallChecksum()
 }
 
-func (s *BeforeInstallStage) GetContext(_ Cache) string {
+func (s *BeforeInstallStage) GetContext(_ Conveyor) string {
 	return ""
 }

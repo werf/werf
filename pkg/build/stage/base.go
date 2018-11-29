@@ -37,11 +37,15 @@ func (s *BaseStage) Name() StageName {
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) GetDependencies(_ Cache) string {
+func (s *BaseStage) GetDependencies(_ Conveyor, _ Image) string {
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) GetContext(_ Cache) string {
+func (s *BaseStage) IsEmpty(_ Conveyor, _ Image) (bool, error) {
+	panic("method must be implemented!")
+}
+
+func (s *BaseStage) GetContext(_ Conveyor) string {
 	return ""
 }
 

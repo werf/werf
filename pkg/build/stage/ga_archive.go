@@ -21,7 +21,7 @@ func (s *GAArchiveStage) Name() StageName {
 	return GAArchive
 }
 
-func (s *GAArchiveStage) GetDependencies(_ Cache) string {
+func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ Image) string {
 	var args []string
 	for _, ga := range s.gitArtifacts {
 		args = append(args, ga.GetParamshash())

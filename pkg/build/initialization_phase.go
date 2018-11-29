@@ -20,10 +20,10 @@ func (p *InitializationPhase) Run(c *Conveyor) error {
 	return nil
 }
 
-func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) []*stage.Dimg {
-	var dimgs []*stage.Dimg
+func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) []*Dimg {
+	var dimgs []*Dimg
 	for _, dimgConfig := range getDimgConfigsInOrder(dappfile) {
-		dimg := &stage.Dimg{}
+		dimg := &Dimg{}
 		dimg.SetStages(generateStages(dimgConfig, c))
 		dimgs = append(dimgs, dimg)
 	}

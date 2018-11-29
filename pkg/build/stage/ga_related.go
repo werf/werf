@@ -11,7 +11,7 @@ type GARelatedStage struct {
 	*GAStage
 }
 
-func (s *GARelatedStage) GetDependencies(_ Cache) string {
+func (s *GARelatedStage) GetDependencies(_ Conveyor, _ Image) string {
 	return ""
 }
 

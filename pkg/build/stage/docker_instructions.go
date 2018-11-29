@@ -30,7 +30,7 @@ func (s *DockerInstructionsStage) Name() StageName {
 	return DockerInstructions
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ Cache) string {
+func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ Image) string {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)
