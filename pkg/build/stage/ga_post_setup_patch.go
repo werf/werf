@@ -1,5 +1,9 @@
 package stage
 
+import "github.com/flant/dapp/pkg/util"
+
+const patchSizeStep = 1024 * 1024
+
 func NewGAPostSetupPatchStage() *GAPostSetupPatchStage {
 	s := &GAPostSetupPatchStage{}
 	s.GAStage = newGAStage()
@@ -13,4 +17,28 @@ type GAPostSetupPatchStage struct {
 
 func (s *GAPostSetupPatchStage) Name() StageName {
 	return GAPostSetupPatch
+}
+
+func (s *GAPostSetupPatchStage) GetDependencies(_ Conveyor, prevImage Image) (string, error) {
+	var size int64
+	for _, ga := range s.gitArtifacts {
+		commit, ok := prevImage.GetLabels()[ga.GetParamshash()]
+		if ok {
+			exist, err := ga.GitRepo().IsCommitExists(commit)
+			if err != nil {
+				return "", err
+			}
+
+			if exist {
+				patchSize, err := ga.PatchSize(commit)
+				if err != nil {
+					return "", err
+				}
+
+				size += patchSize
+			}
+		}
+	}
+
+	return util.Sha256Hash(string(size / patchSizeStep)), nil
 }
