@@ -39,14 +39,6 @@ func (s *BaseStage) Name() StageName {
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) ReadDockerState() error {
-	panic("method must be implemented!")
-}
-
-func (s *BaseStage) IsImageExists() bool {
-	panic("method must be implemented!")
-}
-
 func (s *BaseStage) GetDependencies(_ Cache) string {
 	panic("method must be implemented!")
 }
