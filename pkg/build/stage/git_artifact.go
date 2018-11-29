@@ -132,7 +132,7 @@ func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, arc
 	return commands, nil
 }
 
-func (ga *GitArtifact) ApplyPatchCommand(stage LegacyStage) ([]string, error) {
+func (ga *GitArtifact) LegacyApplyPatchCommand(stage LegacyStage) ([]string, error) {
 	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
 	if err != nil {
 		return nil, err
@@ -143,9 +143,41 @@ func (ga *GitArtifact) ApplyPatchCommand(stage LegacyStage) ([]string, error) {
 		return nil, err
 	}
 
-	archiveType := git_repo.ArchiveType(
-		stage.GetPrevStage().GetImage().
-			GetLabels()[ga.getArchiveTypeLabelName()])
+	return ga.baseApplyPatchLegacyCommand(fromCommit, toCommit, stage.GetPrevStage().GetImage())
+}
+
+func (ga *GitArtifact) ApplyPatchCommand(prevImage, image Image) error {
+	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevImage)
+	if err != nil {
+		return err
+	}
+
+	commands, err := ga.baseApplyPatchLegacyCommand(fromCommit, toCommit, prevImage)
+	if err != nil {
+		return err
+	}
+
+	image.AddRunCommands(commands)
+
+	return nil
+}
+
+func (ga *GitArtifact) GetCommitsToPatch(prevImage Image) (string, string, error) {
+	fromCommit, ok := prevImage.GetLabels()[ga.GetParamshash()]
+	if !ok {
+		return "", "", fmt.Errorf("!!!") // TODO
+	}
+
+	toCommit, err := ga.LatestCommit()
+	if err != nil {
+		return "", "", err
+	}
+
+	return fromCommit, toCommit, nil
+}
+
+func (ga *GitArtifact) baseApplyPatchLegacyCommand(fromCommit, toCommit string, prevImage Image) ([]string, error) {
+	archiveType := git_repo.ArchiveType(prevImage.GetLabels()[ga.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
@@ -254,12 +286,32 @@ func (ga *GitArtifact) applyArchiveCommand(archiveFile *ContainerFileDescriptor,
 	return commands, nil
 }
 
-func (ga *GitArtifact) ApplyArchiveCommand(stage LegacyStage) ([]string, error) {
+func (ga *GitArtifact) LegacyApplyArchiveCommand(stage LegacyStage) ([]string, error) {
 	commit, err := stage.LayerCommit(ga)
 	if err != nil {
 		return nil, err
 	}
 
+	return ga.baseApplyArchiveCommand(commit, stage.GetImage())
+}
+
+func (ga *GitArtifact) ApplyArchiveCommand(image Image) error {
+	commit, err := ga.LatestCommit()
+	if err != nil {
+		return err
+	}
+
+	commands, err := ga.baseApplyArchiveCommand(commit, image)
+	if err != nil {
+		return err
+	}
+
+	image.AddRunCommands(commands)
+
+	return nil
+}
+
+func (ga *GitArtifact) baseApplyArchiveCommand(commit string, image Image) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
 		Commit:        commit,
@@ -286,7 +338,7 @@ func (ga *GitArtifact) ApplyArchiveCommand(stage LegacyStage) ([]string, error) 
 		return nil, err
 	}
 
-	stage.GetImage().AddServiceChangeLabel(ga.getArchiveTypeLabelName(), string(archiveType))
+	image.AddServiceChangeLabel(ga.getArchiveTypeLabelName(), string(archiveType))
 
 	return commands, err
 }
@@ -385,7 +437,7 @@ func (ga *GitArtifact) GetParamshash() string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (ga *GitArtifact) IsPatchEmpty(stage LegacyStage) (bool, error) {
+func (ga *GitArtifact) LegacyIsPatchEmpty(stage LegacyStage) (bool, error) {
 	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
 	if err != nil {
 		return false, err
@@ -396,6 +448,19 @@ func (ga *GitArtifact) IsPatchEmpty(stage LegacyStage) (bool, error) {
 		return false, err
 	}
 
+	return ga.baseIsPatchEmpty(fromCommit, toCommit)
+}
+
+func (ga *GitArtifact) IsPatchEmpty(prevImage Image) (bool, error) {
+	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevImage)
+	if err != nil {
+		return false, err
+	}
+
+	return ga.baseIsPatchEmpty(fromCommit, toCommit)
+}
+
+func (ga *GitArtifact) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error) {
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
 		FromCommit:    fromCommit,

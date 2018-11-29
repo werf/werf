@@ -55,7 +55,7 @@ func main() {
 				}
 			}
 
-			resultValue, resErr := ga.ApplyPatchCommand(stage)
+			resultValue, resErr := ga.LegacyApplyPatchCommand(stage)
 
 			res["result"] = resultValue
 
@@ -82,7 +82,7 @@ func main() {
 				}
 			}
 
-			resultValue, resErr := ga.ApplyArchiveCommand(stage)
+			resultValue, resErr := ga.LegacyApplyArchiveCommand(stage)
 
 			res["result"] = resultValue
 
@@ -169,7 +169,7 @@ func main() {
 				}
 			}
 
-			resultValue, resErr := ga.IsPatchEmpty(stage)
+			resultValue, resErr := ga.LegacyIsPatchEmpty(stage)
 
 			res["result"] = resultValue
 

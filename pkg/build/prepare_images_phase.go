@@ -36,7 +36,7 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 				})
 			}
 
-			err := stage.PrepareImage(image, prevImage)
+			err := stage.PrepareImage(prevImage, image)
 			if err != nil {
 				return fmt.Errorf("error preparing stage %s: %s", stage.Name(), err)
 			}

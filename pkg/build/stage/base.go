@@ -67,15 +67,15 @@ func (s *BaseStage) GetRelatedStageName() StageName {
 	return ""
 }
 
-func (s *BaseStage) PrepareImage(image Image, prevImage Image) error {
+func (s *BaseStage) PrepareImage(prevImage, image Image) error {
 	var err error
 
-	err = s.addServiceMounts(image, prevImage)
+	err = s.addServiceMounts(prevImage, image)
 	if err != nil {
 		return fmt.Errorf("error adding service mounts: %s", err)
 	}
 
-	err = s.addCustomMounts(image, prevImage)
+	err = s.addCustomMounts(prevImage, image)
 	if err != nil {
 		return fmt.Errorf("error adding custom mounts: %s", err)
 	}
@@ -83,7 +83,7 @@ func (s *BaseStage) PrepareImage(image Image, prevImage Image) error {
 	return nil
 }
 
-func (s *BaseStage) addServiceMounts(image Image, prevImage Image) error {
+func (s *BaseStage) addServiceMounts(prevImage, image Image) error {
 	mountpointsByType := map[string][]string{}
 
 	for _, mountCfg := range s.dimgConfig.Mount {
@@ -148,7 +148,7 @@ func (s *BaseStage) addServiceMounts(image Image, prevImage Image) error {
 	return nil
 }
 
-func (s *BaseStage) addCustomMounts(image Image, prevImage Image) error {
+func (s *BaseStage) addCustomMounts(prevImage, image Image) error {
 	mountpointsByFrom := map[string][]string{}
 
 	for _, mountCfg := range s.dimgConfig.Mount {
@@ -197,6 +197,22 @@ func (s *BaseStage) addCustomMounts(image Image, prevImage Image) error {
 		image.AddServiceChangeLabel(labelName, labelValue)
 	}
 
+	return nil
+}
+
+func addMountsLabels(prevImage, image Image) error {
+	/*
+	   def image_add_mounts_labels
+	     [:tmp_dir, :build_dir].each do |type|
+	       next if (mounts = adding_mounts_by_type(type)).empty?
+	       image.add_service_change_label :"dapp-mount-#{type.to_s.tr('_', '-')}" => mounts.join(';')
+	     end
+
+	     adding_custom_dir_mounts.each do |from, to_pathes|
+	       image.add_service_change_label :"dapp-mount-custom-dir-#{from.gsub('/', '--')}" => to_pathes.join(';')
+	     end
+	   end
+	*/
 	return nil
 }
 

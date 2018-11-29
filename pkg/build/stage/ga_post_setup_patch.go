@@ -6,13 +6,13 @@ const patchSizeStep = 1024 * 1024
 
 func NewGAPostSetupPatchStage() *GAPostSetupPatchStage {
 	s := &GAPostSetupPatchStage{}
-	s.GAStage = newGAStage()
+	s.GAPatchStage = newGAPatchStage()
 
 	return s
 }
 
 type GAPostSetupPatchStage struct {
-	*GAStage
+	*GAPatchStage
 }
 
 func (s *GAPostSetupPatchStage) Name() StageName {
