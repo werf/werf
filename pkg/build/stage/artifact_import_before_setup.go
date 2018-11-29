@@ -3,7 +3,7 @@ package stage
 import "github.com/flant/dapp/pkg/config"
 
 func GenerateArtifactImportBeforeSetupStage(dimgBaseConfig *config.DimgBase) Interface {
-	imports := getImports(dimgBaseConfig, &getImportsOptions{Before: "setup"})
+	imports := getImports(dimgBaseConfig, &getImportsOptions{Before: Setup})
 	if len(imports) != 0 {
 		return newArtifactImportBeforeSetupStage(imports)
 	}

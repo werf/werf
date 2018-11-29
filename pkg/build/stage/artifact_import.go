@@ -6,16 +6,16 @@ import (
 )
 
 type getImportsOptions struct {
-	Before string
-	After  string
+	Before StageName
+	After  StageName
 }
 
 func getImports(dimgBaseConfig *config.DimgBase, options *getImportsOptions) []*config.ArtifactImport {
 	var imports []*config.ArtifactImport
 	for _, elm := range dimgBaseConfig.Import {
-		if options.Before != "" && elm.Before != "" && elm.Before == options.Before {
+		if options.Before != "" && elm.Before != "" && elm.Before == string(options.Before) {
 			imports = append(imports, elm)
-		} else if options.After != "" && elm.After != "" && elm.After == options.After {
+		} else if options.After != "" && elm.After != "" && elm.After == string(options.After) {
 			imports = append(imports, elm)
 		}
 	}

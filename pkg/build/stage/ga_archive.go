@@ -40,3 +40,17 @@ func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
 
 	return util.Sha256Hash(args...), nil
 }
+
+func (s *GAArchiveStage) PrepareImage(prevImage, image Image) error {
+	if err := s.BaseStage.PrepareImage(prevImage, image); err != nil {
+		return err
+	}
+
+	for _, ga := range s.gitArtifacts {
+		if err := ga.ApplyArchiveCommand(image); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

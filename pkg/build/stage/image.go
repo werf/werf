@@ -5,6 +5,9 @@ type Image interface {
 	ReadDockerState() error
 	IsImageExists() bool
 	GetLabels() map[string]string
+
+	AddRunCommands([]string)
+	AddEnv(map[string]interface{})
 	AddServiceChangeLabel(name, value string)
 	AddVolume(volume string)
 }
@@ -17,6 +20,10 @@ type StubImage struct {
 func (image *StubImage) GetLabels() map[string]string {
 	return image.Labels
 }
+
+func (image *StubImage) AddRunCommands([]string) {}
+
+func (image *StubImage) AddEnv(map[string]interface{}) {}
 
 func (image *StubImage) AddVolume(string) {}
 
