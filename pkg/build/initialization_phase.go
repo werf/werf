@@ -152,8 +152,8 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) []stage.Interf
 	return stages
 }
 
-func generateGitArtifacts(dimgBaseConfig *config.DimgBase, _ *Conveyor) []*GitArtifact {
-	var gitArtifacts []*GitArtifact
+func generateGitArtifacts(dimgBaseConfig *config.DimgBase, _ *Conveyor) []*stage.GitArtifact {
+	var gitArtifacts []*stage.GitArtifact
 
 	var localGitRepo *git_repo.Local
 	if len(dimgBaseConfig.Git.Local) != 0 {
@@ -164,7 +164,7 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, _ *Conveyor) []*GitAr
 	}
 
 	for _, localGA := range dimgBaseConfig.Git.Local {
-		ga := &GitArtifact{
+		ga := &stage.GitArtifact{
 			GitRepoInterface:     localGitRepo,
 			PatchesDir:           "", // TODO
 			ContainerPatchesDir:  "", // TODO
@@ -199,7 +199,7 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, _ *Conveyor) []*GitAr
 			}
 		}
 
-		ga := &GitArtifact{
+		ga := &stage.GitArtifact{
 			GitRepoInterface:     remoteGitRepos[remoteGA.Name],
 			PatchesDir:           "", // TODO
 			ContainerPatchesDir:  "", // TODO

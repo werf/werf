@@ -1,7 +1,6 @@
 package stage
 
 import (
-	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/util"
 )
@@ -31,7 +30,7 @@ func (s *DockerInstructionsStage) Name() StageName {
 	return DockerInstructions
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ build.Conveyor) string {
+func (s *DockerInstructionsStage) GetDependencies(_ Cache) string {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)

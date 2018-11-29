@@ -1,28 +1,26 @@
-package build
+package stage
 
 import (
 	"fmt"
-
-	"github.com/flant/dapp/pkg/build/stage"
 )
 
 type LegacyStage interface {
 	GetPrevStage() LegacyStage
-	GetImage() stage.Image
+	GetImage() Image
 	LayerCommit(gitArtifact *GitArtifact) (string, error)
 }
 
 type StubStage struct {
 	LayerCommitMap map[string]string
 	PrevStage      *StubStage
-	Image          *stage.StubImage
+	Image          *StubImage
 }
 
 func (stage *StubStage) GetPrevStage() LegacyStage {
 	return stage.PrevStage
 }
 
-func (stage *StubStage) GetImage() stage.Image {
+func (stage *StubStage) GetImage() Image {
 	return stage.Image
 }
 
