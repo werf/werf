@@ -30,6 +30,7 @@ type Conveyor struct {
 	ProjectPath       string
 	TmpDir            string
 	ContainerDappPath string
+	SshAuthSock       string
 }
 
 func NewConveyor(projectName, tmpDir string) *Conveyor {

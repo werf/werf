@@ -5,6 +5,10 @@ import (
 	"path/filepath"
 )
 
+const (
+	Version = "0.36.9"
+)
+
 func GetHomeDir() string {
 	if val, ok := os.LookupEnv("DAPP_HOME"); ok {
 		return val

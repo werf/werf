@@ -5,6 +5,7 @@ type Image interface {
 	IsImageExists() bool
 	GetLabels() map[string]string
 	AddServiceChangeLabel(name, value string)
+	AddVolume(volume string)
 }
 
 type StubImage struct {
@@ -15,6 +16,8 @@ type StubImage struct {
 func (image *StubImage) GetLabels() map[string]string {
 	return image.Labels
 }
+
+func (image *StubImage) AddVolume(string) {}
 
 func (image *StubImage) AddServiceChangeLabel(name, value string) {
 	image.ServiceChangeLabels[name] = value
