@@ -6,11 +6,11 @@ import (
 
 type ShellDimg struct{ *ShellBase }
 
-func (c *ShellDimg) Validate() error {
+func (c *ShellDimg) validate() error {
 	return nil
 }
 
-func (c *ShellDimg) ToRuby() ruby_marshal_config.ShellDimg {
+func (c *ShellDimg) toRuby() ruby_marshal_config.ShellDimg {
 	shellDimg := ruby_marshal_config.ShellDimg{}
 
 	shellDimg.Version = c.CacheVersion

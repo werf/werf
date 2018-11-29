@@ -6,17 +6,17 @@ type GitLocal struct {
 	*GitLocalExport
 	As string
 
-	Raw *RawGit
+	raw *rawGit
 }
 
-func (c *GitLocal) Validate() error {
+func (c *GitLocal) validate() error {
 	return nil
 }
 
-func (c *GitLocal) ToRuby() ruby_marshal_config.GitArtifactLocal {
+func (c *GitLocal) toRuby() ruby_marshal_config.GitArtifactLocal {
 	rubyGitArtifactLocal := ruby_marshal_config.GitArtifactLocal{}
 	if c.GitLocalExport != nil {
-		rubyGitArtifactLocal.Export = append(rubyGitArtifactLocal.Export, c.GitLocalExport.ToRuby())
+		rubyGitArtifactLocal.Export = append(rubyGitArtifactLocal.Export, c.GitLocalExport.toRuby())
 	}
 	rubyGitArtifactLocal.As = c.As
 	return rubyGitArtifactLocal

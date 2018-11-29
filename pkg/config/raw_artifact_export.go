@@ -1,28 +1,28 @@
 package config
 
-type RawArtifactExport struct {
-	RawExportBase `yaml:",inline"`
+type rawArtifactExport struct {
+	rawExportBase `yaml:",inline"`
 
-	RawOrigin RawOrigin `yaml:"-"` // parent
+	rawOrigin rawOrigin `yaml:"-"` // parent
 }
 
-func (c *RawArtifactExport) InlinedIntoRaw(RawOrigin RawOrigin) {
-	c.RawOrigin = RawOrigin
-	c.RawExportBase.InlinedIntoRaw(RawOrigin)
+func (c *rawArtifactExport) inlinedIntoRaw(rawOrigin rawOrigin) {
+	c.rawOrigin = rawOrigin
+	c.rawExportBase.inlinedIntoRaw(rawOrigin)
 }
 
-func (c *RawArtifactExport) ToDirective() (artifactExport *ArtifactExport, err error) {
+func (c *rawArtifactExport) toDirective() (artifactExport *ArtifactExport, err error) {
 	artifactExport = &ArtifactExport{}
 
-	if exportBase, err := c.RawExportBase.ToDirective(); err != nil {
+	if exportBase, err := c.rawExportBase.toDirective(); err != nil {
 		return nil, err
 	} else {
 		artifactExport.ExportBase = exportBase
 	}
 
-	artifactExport.Raw = c
+	artifactExport.raw = c
 
-	if err := artifactExport.Validate(); err != nil {
+	if err := artifactExport.validate(); err != nil {
 		return nil, err
 	}
 

@@ -19,7 +19,7 @@ func LoadDappfile(dappfilePath string) (interface{}, error, []string) {
 func generateRubyConfig(dimgs []*Dimg) *ruby_marshal_config.Config {
 	c := &ruby_marshal_config.Config{}
 	for _, dimg := range dimgs {
-		c.Dimg = append(c.Dimg, dimg.ToRuby())
+		c.Dimg = append(c.Dimg, dimg.toRuby())
 	}
 	return c
 }

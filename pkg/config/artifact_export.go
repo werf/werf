@@ -3,9 +3,9 @@ package config
 type ArtifactExport struct {
 	*ExportBase
 
-	Raw *RawArtifactExport
+	raw *rawArtifactExport
 }
 
-func (c *ArtifactExport) Validate() error {
-	return c.ExportBase.Validate()
+func (c *ArtifactExport) validate() error {
+	return c.ExportBase.validate()
 }

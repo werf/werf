@@ -64,12 +64,12 @@ func dumpDappfileRender(dappfilePath string, dappfileRenderContent string) (stri
 	return dappfileRenderPath, nil
 }
 
-func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*Doc, error) {
-	var docs []*Doc
+func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*doc, error) {
+	var docs []*doc
 	var line int
 	for _, docContent := range splitContent([]byte(dappfileRenderContent)) {
 		if !emptyDocContent(docContent) {
-			docs = append(docs, &Doc{
+			docs = append(docs, &doc{
 				Line:           line,
 				Content:        docContent,
 				RenderFilePath: dappfileRenderPath,
@@ -126,7 +126,7 @@ func parseDappfileYaml(dappfilePath string) (string, error) {
 		return "", err
 	}
 
-	files := Files{filepath.Dir(dappfilePath)}
+	files := files{filepath.Dir(dappfilePath)}
 	config, err := executeTemplate(tmpl, "dappfile", map[string]interface{}{"Files": files})
 
 	return config, err
@@ -182,11 +182,11 @@ func executeTemplate(tmpl *template.Template, name string, data interface{}) (st
 	return buf.String(), nil
 }
 
-type Files struct {
+type files struct {
 	HomePath string
 }
 
-func (f Files) Get(path string) string {
+func (f files) Get(path string) string {
 	filePath := filepath.Join(f.HomePath, path)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -318,7 +318,7 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath string) ([]*Dimg, error) {
+func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath string) ([]*Dimg, error) {
 	rawDimgs, err := splitByRawDimgs(docs)
 	if err != nil {
 		return nil, err
@@ -328,14 +328,14 @@ func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath 
 	var artifacts []*DimgArtifact
 
 	for _, rawDimg := range rawDimgs {
-		if rawDimg.Type() == "dimgs" {
-			if sameDimgs, err := rawDimg.ToDimgDirectives(); err != nil {
+		if rawDimg.dimgType() == "dimgs" {
+			if sameDimgs, err := rawDimg.toDimgDirectives(); err != nil {
 				return nil, err
 			} else {
 				dimgs = append(dimgs, sameDimgs...)
 			}
 		} else {
-			if dimgArtifact, err := rawDimg.ToDimgArtifactDirective(); err != nil {
+			if dimgArtifact, err := rawDimg.toDimgArtifactDirective(); err != nil {
 				return nil, err
 			} else {
 				artifacts = append(artifacts, dimgArtifact)
@@ -344,7 +344,7 @@ func splitByDimgs(docs []*Doc, dappfileRenderContent string, dappfileRenderPath 
 	}
 
 	if len(dimgs) == 0 {
-		return nil, NewConfigError(fmt.Sprintf("No dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
+		return nil, newConfigError(fmt.Sprintf("No dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
 	}
 
 	if err = validateDimgsNames(dimgs); err != nil {
@@ -370,7 +370,7 @@ func validateDimgsNames(dimgs []*Dimg) error {
 	dimgsNames := map[string]*Dimg{}
 	for _, dimg := range dimgs {
 		if d, ok := dimgsNames[dimg.Name]; ok {
-			return NewConfigError(fmt.Sprintf("Conflict between dimgs names!\n\n%s%s\n", DumpConfigDoc(d.Raw.Doc), DumpConfigDoc(dimg.Raw.Doc)))
+			return newConfigError(fmt.Sprintf("Conflict between dimgs names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(dimg.raw.doc)))
 		} else {
 			dimgsNames[dimg.Name] = dimg
 		}
@@ -382,7 +382,7 @@ func validateArtifactsNames(artifacts []*DimgArtifact) error {
 	artifactsNames := map[string]*DimgArtifact{}
 	for _, artifact := range artifacts {
 		if a, ok := artifactsNames[artifact.Name]; ok {
-			return NewConfigError(fmt.Sprintf("Conflict between artifacts names!\n\n%s%s\n", DumpConfigDoc(a.Raw.Doc), DumpConfigDoc(artifact.Raw.Doc)))
+			return newConfigError(fmt.Sprintf("Conflict between artifacts names!\n\n%s%s\n", dumpConfigDoc(a.raw.doc), dumpConfigDoc(artifact.raw.doc)))
 		} else {
 			artifactsNames[artifact.Name] = artifact
 		}
@@ -416,7 +416,7 @@ func associateImportsArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	}
 
 	for _, artifactImport := range artifactImports {
-		if err := artifactImport.AssociateArtifact(artifacts); err != nil {
+		if err := artifactImport.associateArtifact(artifacts); err != nil {
 			return err
 		}
 	}
@@ -426,13 +426,13 @@ func associateImportsArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 
 func associateDimgsAndArtifactsFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	for _, dimg := range dimgs {
-		if err := associateDimgFrom(dimg.LastLayerOrSelf(), dimgs, artifacts); err != nil {
+		if err := associateDimgFrom(dimg.lastLayerOrSelf(), dimgs, artifacts); err != nil {
 			return err
 		}
 	}
 
 	for _, dimg := range artifacts {
-		if err := associateDimgFrom(dimg.LastLayerOrSelf(), dimgs, artifacts); err != nil {
+		if err := associateDimgFrom(dimg.lastLayerOrSelf(), dimgs, artifacts); err != nil {
 			return err
 		}
 	}
@@ -443,19 +443,19 @@ func associateDimgsAndArtifactsFrom(dimgs []*Dimg, artifacts []*DimgArtifact) er
 func associateDimgFrom(dimg DimgInterface, dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	switch dimg.(type) {
 	case *Dimg:
-		return dimg.(*Dimg).AssociateFrom(dimgs, artifacts)
+		return dimg.(*Dimg).associateFrom(dimgs, artifacts)
 	case *DimgArtifact:
-		return dimg.(*DimgArtifact).AssociateFrom(dimgs, artifacts)
+		return dimg.(*DimgArtifact).associateFrom(dimgs, artifacts)
 	default:
 		panic("runtime error")
 	}
 }
 
-func splitByRawDimgs(docs []*Doc) ([]*RawDimg, error) {
-	var rawDimgs []*RawDimg
-	ParentStack = util.NewStack()
+func splitByRawDimgs(docs []*doc) ([]*rawDimg, error) {
+	var rawDimgs []*rawDimg
+	parentStack = util.NewStack()
 	for _, doc := range docs {
-		dimg := &RawDimg{Doc: doc}
+		dimg := &rawDimg{doc: doc}
 		err := yaml.Unmarshal(doc.Content, &dimg)
 		if err != nil {
 			return nil, newYamlUnmarshalError(err, doc)
@@ -466,9 +466,9 @@ func splitByRawDimgs(docs []*Doc) ([]*RawDimg, error) {
 	return rawDimgs, nil
 }
 
-func newYamlUnmarshalError(err error, doc *Doc) error {
+func newYamlUnmarshalError(err error, doc *doc) error {
 	switch err.(type) {
-	case *ConfigError:
+	case *configError:
 		return err
 	default:
 		message := err.Error()
@@ -487,6 +487,6 @@ func newYamlUnmarshalError(err error, doc *Doc) error {
 
 			message = reg.ReplaceAllString(message, fmt.Sprintf("line %d", line+doc.Line))
 		}
-		return NewDetailedConfigError(message, nil, doc)
+		return newDetailedConfigError(message, nil, doc)
 	}
 }

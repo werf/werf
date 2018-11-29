@@ -1,6 +1,6 @@
 package config
 
-type RawExportBase struct {
+type rawExportBase struct {
 	Add          string      `yaml:"add,omitempty"`
 	To           string      `yaml:"to,omitempty"`
 	IncludePaths interface{} `yaml:"includePaths,omitempty"`
@@ -8,25 +8,25 @@ type RawExportBase struct {
 	Owner        string      `yaml:"owner,omitempty"`
 	Group        string      `yaml:"group,omitempty"`
 
-	RawOrigin RawOrigin `yaml:"-"` // parent
+	rawOrigin rawOrigin `yaml:"-"` // parent
 }
 
-func (c *RawExportBase) InlinedIntoRaw(RawOrigin RawOrigin) {
-	c.RawOrigin = RawOrigin
+func (c *rawExportBase) inlinedIntoRaw(rawOrigin rawOrigin) {
+	c.rawOrigin = rawOrigin
 }
 
-func (c *RawExportBase) ToDirective() (exportBase *ExportBase, err error) {
+func (c *rawExportBase) toDirective() (exportBase *ExportBase, err error) {
 	exportBase = &ExportBase{}
 	exportBase.Add = c.Add
 	exportBase.To = c.To
 
-	if includePaths, err := InterfaceToStringArray(c.IncludePaths, c.RawOrigin.ConfigSection(), c.RawOrigin.Doc()); err != nil {
+	if includePaths, err := InterfaceToStringArray(c.IncludePaths, c.rawOrigin.configSection(), c.rawOrigin.doc()); err != nil {
 		return nil, err
 	} else {
 		exportBase.IncludePaths = includePaths
 	}
 
-	if excludePaths, err := InterfaceToStringArray(c.ExcludePaths, c.RawOrigin.ConfigSection(), c.RawOrigin.Doc()); err != nil {
+	if excludePaths, err := InterfaceToStringArray(c.ExcludePaths, c.rawOrigin.configSection(), c.rawOrigin.doc()); err != nil {
 		return nil, err
 	} else {
 		exportBase.ExcludePaths = excludePaths
@@ -35,9 +35,9 @@ func (c *RawExportBase) ToDirective() (exportBase *ExportBase, err error) {
 	exportBase.Owner = c.Owner
 	exportBase.Group = c.Group
 
-	exportBase.Raw = c
+	exportBase.raw = c
 
-	if err := exportBase.Validate(); err != nil {
+	if err := exportBase.validate(); err != nil {
 		return nil, err
 	}
 

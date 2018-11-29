@@ -5,62 +5,62 @@ import (
 	"regexp"
 )
 
-type RawGit struct {
-	RawGitExport         `yaml:",inline"`
+type rawGit struct {
+	rawGitExport         `yaml:",inline"`
 	As                   string                `yaml:"as,omitempty"`
 	Url                  string                `yaml:"url,omitempty"`
 	Branch               string                `yaml:"branch,omitempty"`
 	Tag                  string                `yaml:"tag,omitempty"`
 	Commit               string                `yaml:"commit,omitempty"`
-	RawStageDependencies *RawStageDependencies `yaml:"stageDependencies,omitempty"`
+	RawStageDependencies *rawStageDependencies `yaml:"stageDependencies,omitempty"`
 
-	RawDimg *RawDimg `yaml:"-"` // parent
+	rawDimg *rawDimg `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *RawGit) ConfigSection() interface{} {
+func (c *rawGit) configSection() interface{} {
 	return c
 }
 
-func (c *RawGit) Doc() *Doc {
-	return c.RawDimg.Doc
+func (c *rawGit) doc() *doc {
+	return c.rawDimg.doc
 }
 
-func (c *RawGit) Type() string {
+func (c *rawGit) gitType() string {
 	if c.Url != "" {
 		return "remote"
 	}
 	return "local"
 }
 
-func (c *RawGit) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	c.RawGitExport = NewRawGitExport()
-	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
-		c.RawDimg = parent
+func (c *rawGit) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	c.rawGitExport = newRawGitExport()
+	if parent, ok := parentStack.Peek().(*rawDimg); ok {
+		c.rawDimg = parent
 	}
 
-	ParentStack.Push(c)
-	type plain RawGit
+	parentStack.Push(c)
+	type plain rawGit
 	err := unmarshal((*plain)(c))
-	ParentStack.Pop()
+	parentStack.Pop()
 	if err != nil {
 		return err
 	}
 
-	c.RawGitExport.InlinedIntoRaw(c)
+	c.rawGitExport.inlinedIntoRaw(c)
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawDimg.doc); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *RawGit) ToGitLocalDirective() (gitLocal *GitLocal, err error) {
+func (c *rawGit) toGitLocalDirective() (gitLocal *GitLocal, err error) {
 	gitLocal = &GitLocal{}
 
-	if gitLocalExport, err := c.ToGitLocalExportDirective(); err != nil {
+	if gitLocalExport, err := c.toGitLocalExportDirective(); err != nil {
 		return nil, err
 	} else {
 		gitLocal.GitLocalExport = gitLocalExport
@@ -68,66 +68,66 @@ func (c *RawGit) ToGitLocalDirective() (gitLocal *GitLocal, err error) {
 
 	gitLocal.As = c.As
 
-	gitLocal.Raw = c
+	gitLocal.raw = c
 
-	if err := c.ValidateGitLocalDirective(gitLocal); err != nil {
+	if err := c.validateGitLocalDirective(gitLocal); err != nil {
 		return nil, err
 	}
 
 	return gitLocal, nil
 }
 
-func (c *RawGit) ValidateGitLocalDirective(gitLocal *GitLocal) (err error) {
+func (c *rawGit) validateGitLocalDirective(gitLocal *GitLocal) (err error) {
 	if c.Branch != "" || c.Commit != "" || c.Tag != "" {
-		return NewDetailedConfigError("Specify `branch: BRANCH`, `tag: TAG` and `commit: COMMIT` only for remote git!", nil, c.RawDimg.Doc)
+		return newDetailedConfigError("Specify `branch: BRANCH`, `tag: TAG` and `commit: COMMIT` only for remote git!", nil, c.rawDimg.doc)
 	}
 
-	if err := gitLocal.Validate(); err != nil {
+	if err := gitLocal.validate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *RawGit) ToGitLocalExportDirective() (gitLocalExport *GitLocalExport, err error) {
+func (c *rawGit) toGitLocalExportDirective() (gitLocalExport *GitLocalExport, err error) {
 	gitLocalExport = &GitLocalExport{}
 
 	gitLocalExport.GitExportBase = &GitExportBase{}
-	if gitExport, err := c.RawGitExport.ToDirective(); err != nil {
+	if gitExport, err := c.rawGitExport.toDirective(); err != nil {
 		return nil, err
 	} else {
 		gitLocalExport.GitExportBase.GitExport = gitExport
 	}
 
 	if c.RawStageDependencies != nil {
-		if stageDependencies, err := c.RawStageDependencies.ToDirective(); err != nil {
+		if stageDependencies, err := c.RawStageDependencies.toDirective(); err != nil {
 			return nil, err
 		} else {
 			gitLocalExport.StageDependencies = stageDependencies
 		}
 	}
 
-	gitLocalExport.Raw = c
+	gitLocalExport.raw = c
 
-	if err := c.ValidateGitLocalExportDirective(gitLocalExport); err != nil {
+	if err := c.validateGitLocalExportDirective(gitLocalExport); err != nil {
 		return nil, err
 	}
 
 	return gitLocalExport, nil
 }
 
-func (c *RawGit) ValidateGitLocalExportDirective(gitLocalExport *GitLocalExport) (err error) {
-	if err := gitLocalExport.Validate(); err != nil {
+func (c *rawGit) validateGitLocalExportDirective(gitLocalExport *GitLocalExport) (err error) {
+	if err := gitLocalExport.validate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
+func (c *rawGit) toGitRemoteDirective() (gitRemote *GitRemote, err error) {
 	gitRemote = &GitRemote{}
 
-	if gitRemoteExport, err := c.ToGitRemoteExportDirective(); err != nil {
+	if gitRemoteExport, err := c.toGitRemoteExportDirective(); err != nil {
 		return nil, err
 	} else {
 		gitRemote.GitRemoteExport = gitRemoteExport
@@ -138,21 +138,21 @@ func (c *RawGit) ToGitRemoteDirective() (gitRemote *GitRemote, err error) {
 
 	// FIXME
 	if url, err := c.getNameFromUrl(); err != nil {
-		return nil, NewDetailedConfigError(err.Error(), c, c.RawDimg.Doc)
+		return nil, newDetailedConfigError(err.Error(), c, c.rawDimg.doc)
 	} else {
 		gitRemote.Name = url
 	}
 
-	gitRemote.Raw = c
+	gitRemote.raw = c
 
-	if err := c.ValidateGitRemoteDirective(gitRemote); err != nil {
+	if err := c.validateGitRemoteDirective(gitRemote); err != nil {
 		return nil, err
 	}
 
 	return gitRemote, nil
 }
 
-func (c *RawGit) getNameFromUrl() (string, error) {
+func (c *rawGit) getNameFromUrl() (string, error) {
 	r := regexp.MustCompile(`.*?([^:/ ]+/[^/ ]+)\.git$`)
 	match := r.FindStringSubmatch(c.Url)
 	if len(match) == 2 {
@@ -162,18 +162,18 @@ func (c *RawGit) getNameFromUrl() (string, error) {
 	}
 }
 
-func (c *RawGit) ValidateGitRemoteDirective(gitRemote *GitRemote) (err error) {
-	if err := gitRemote.Validate(); err != nil {
+func (c *rawGit) validateGitRemoteDirective(gitRemote *GitRemote) (err error) {
+	if err := gitRemote.validate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *RawGit) ToGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport, err error) {
+func (c *rawGit) toGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport, err error) {
 	gitRemoteExport = &GitRemoteExport{}
 
-	if gitLocalExport, err := c.ToGitLocalExportDirective(); err != nil {
+	if gitLocalExport, err := c.toGitLocalExportDirective(); err != nil {
 		return nil, err
 	} else {
 		gitRemoteExport.GitLocalExport = gitLocalExport
@@ -183,17 +183,17 @@ func (c *RawGit) ToGitRemoteExportDirective() (gitRemoteExport *GitRemoteExport,
 	gitRemoteExport.Tag = c.Tag
 	gitRemoteExport.Commit = c.Commit
 
-	gitRemoteExport.Raw = c
+	gitRemoteExport.raw = c
 
-	if err := c.ValidateGitRemoteExportDirective(gitRemoteExport); err != nil {
+	if err := c.validateGitRemoteExportDirective(gitRemoteExport); err != nil {
 		return nil, err
 	}
 
 	return gitRemoteExport, nil
 }
 
-func (c *RawGit) ValidateGitRemoteExportDirective(gitRemoteExport *GitRemoteExport) (err error) {
-	if err := gitRemoteExport.Validate(); err != nil {
+func (c *rawGit) validateGitRemoteExportDirective(gitRemoteExport *GitRemoteExport) (err error) {
+	if err := gitRemoteExport.validate(); err != nil {
 		return err
 	}
 

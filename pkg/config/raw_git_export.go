@@ -1,35 +1,35 @@
 package config
 
-type RawGitExport struct {
-	RawExportBase `yaml:",inline"`
+type rawGitExport struct {
+	rawExportBase `yaml:",inline"`
 
-	RawOrigin RawOrigin `yaml:"-"` // parent
+	rawOrigin rawOrigin `yaml:"-"` // parent
 }
 
-func (c *RawGitExport) InlinedIntoRaw(RawOrigin RawOrigin) {
-	c.RawOrigin = RawOrigin
-	c.RawExportBase.InlinedIntoRaw(RawOrigin)
+func (c *rawGitExport) inlinedIntoRaw(rawOrigin rawOrigin) {
+	c.rawOrigin = rawOrigin
+	c.rawExportBase.inlinedIntoRaw(rawOrigin)
 }
 
-func NewRawGitExport() RawGitExport {
-	rawGitExport := RawGitExport{}
-	rawGitExport.RawExportBase = RawExportBase{}
-	rawGitExport.RawExportBase.Add = "/"
+func newRawGitExport() rawGitExport {
+	rawGitExport := rawGitExport{}
+	rawGitExport.rawExportBase = rawExportBase{}
+	rawGitExport.rawExportBase.Add = "/"
 	return rawGitExport
 }
 
-func (c *RawGitExport) ToDirective() (gitExport *GitExport, err error) {
+func (c *rawGitExport) toDirective() (gitExport *GitExport, err error) {
 	gitExport = &GitExport{}
 
-	if exportBase, err := c.RawExportBase.ToDirective(); err != nil {
+	if exportBase, err := c.rawExportBase.toDirective(); err != nil {
 		return nil, err
 	} else {
 		gitExport.ExportBase = exportBase
 	}
 
-	gitExport.Raw = c
+	gitExport.raw = c
 
-	if err := gitExport.Validate(); err != nil {
+	if err := gitExport.validate(); err != nil {
 		return nil, err
 	}
 

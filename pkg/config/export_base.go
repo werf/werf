@@ -10,23 +10,23 @@ type ExportBase struct {
 	Owner        string
 	Group        string
 
-	Raw *RawExportBase
+	raw *rawExportBase
 }
 
-func (c *ExportBase) Validate() error {
-	if c.Add == "" || !IsAbsolutePath(c.Add) {
-		return NewDetailedConfigError("`add: PATH` absolute path required for import!", c.Raw.RawOrigin.ConfigSection(), c.Raw.RawOrigin.Doc())
-	} else if c.To == "" || !IsAbsolutePath(c.To) {
-		return NewDetailedConfigError("`to: PATH` absolute path required for import!", c.Raw.RawOrigin.ConfigSection(), c.Raw.RawOrigin.Doc())
-	} else if !AllRelativePaths(c.IncludePaths) {
-		return NewDetailedConfigError("`includePaths: [PATH, ...]|PATH` should be relative paths!", c.Raw.RawOrigin.ConfigSection(), c.Raw.RawOrigin.Doc())
-	} else if !AllRelativePaths(c.ExcludePaths) {
-		return NewDetailedConfigError("`excludePaths: [PATH, ...]|PATH` should be relative paths!", c.Raw.RawOrigin.ConfigSection(), c.Raw.RawOrigin.Doc())
+func (c *ExportBase) validate() error {
+	if c.Add == "" || !isAbsolutePath(c.Add) {
+		return newDetailedConfigError("`add: PATH` absolute path required for import!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
+	} else if c.To == "" || !isAbsolutePath(c.To) {
+		return newDetailedConfigError("`to: PATH` absolute path required for import!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
+	} else if !allRelativePaths(c.IncludePaths) {
+		return newDetailedConfigError("`includePaths: [PATH, ...]|PATH` should be relative paths!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
+	} else if !allRelativePaths(c.ExcludePaths) {
+		return newDetailedConfigError("`excludePaths: [PATH, ...]|PATH` should be relative paths!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
 	}
 	return nil
 }
 
-func (c *ExportBase) ToRuby() ruby_marshal_config.ArtifactBaseExport {
+func (c *ExportBase) toRuby() ruby_marshal_config.ArtifactBaseExport {
 	artifactBaseExport := ruby_marshal_config.ArtifactBaseExport{}
 	artifactBaseExport.Cwd = c.Add
 	artifactBaseExport.To = c.To

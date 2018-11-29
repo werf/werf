@@ -7,18 +7,18 @@ import (
 type AnsibleTask struct {
 	Config interface{}
 
-	Raw *RawAnsibleTask
+	raw *rawAnsibleTask
 
-	DumpConfigSection string // FIXME: reject after a complete transition from ruby to golang
+	DumpConfigSection string // FIXME: reject in golang binary
 }
 
-func (c *AnsibleTask) Validate() error {
+func (c *AnsibleTask) validate() error {
 	return nil
 }
 
-func (c *AnsibleTask) ToRuby() ruby_marshal_config.AnsibleTask {
+func (c *AnsibleTask) toRuby() ruby_marshal_config.AnsibleTask {
 	rubyAnsibleTask := ruby_marshal_config.AnsibleTask{}
 	rubyAnsibleTask.Config = c.Config
-	rubyAnsibleTask.DumpConfigSection = DumpConfigSection(c.Raw)
+	rubyAnsibleTask.DumpConfigSection = dumpConfigSection(c.raw)
 	return rubyAnsibleTask
 }
