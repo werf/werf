@@ -193,9 +193,12 @@ func (i *Stage) Export(name string) error {
 	return nil
 }
 
+func (i *Stage) AddVolume(string) {
+	// FIXME
+}
+
 func (i *Stage) AddServiceChangeLabel(name, value string) {
-	change := &StageContainerOptions{Label: map[string]interface{}{name: value}}
-	i.Container.ServiceCommitChangeOptions = i.Container.ServiceCommitChangeOptions.merge(change)
+	i.Container.ServiceCommitChangeOptions.AddLabel(map[string]interface{}{name: value})
 }
 
 func (i *Stage) ReadDockerState() error {

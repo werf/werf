@@ -27,7 +27,17 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 		var prevStage stage.Interface
 		var prevImage *image.Stage
 
+		newStagesList := []stage.Interface{}
+
 		for _, stage := range dimg.GetStages() {
+			isEmpty, err := stage.IsEmpty(c, prevImage)
+			if err != nil {
+				return fmt.Errorf("error checking stage %s emptyness: %s", stage.Name(), err)
+			}
+			if isEmpty {
+				continue
+			}
+
 			stageDependencies, err := stage.GetDependencies(c, prevImage)
 			if err != nil {
 				return err
@@ -63,11 +73,13 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 				return fmt.Errorf("error reading docker state of stage %s: %s", stage.Name(), err)
 			}
 
-			// TODO call stage IsEmpty + refilter + call dimg.SetStages
+			newStagesList = append(newStagesList, stage)
 
 			prevStage = stage
 			prevImage = image
 		}
+
+		dimg.SetStages(newStagesList)
 	}
 
 	return nil

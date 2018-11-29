@@ -2,9 +2,9 @@ package build
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/flant/dapp/pkg/build/stage"
+	"github.com/flant/dapp/pkg/dapp"
 )
 
 func NewPrepareImagesPhase() *PrepareImagesPhase {
@@ -19,43 +19,29 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 	}
 
 	for _, dimg := range c.GetDimgsInOrder() {
-		var prevStage stage.Interface
+		var prevImage stage.Image
 
 		for _, stage := range dimg.GetStages() {
-			err := p.AddMounts(dimg, stage, prevStage)
+			image := stage.GetImage()
+
+			image.AddServiceChangeLabel("dapp-version", dapp.Version)
+			image.AddServiceChangeLabel("dapp-cache-version", BuildCacheVersion)
+			image.AddServiceChangeLabel("dapp-dimg", "false")
+			image.AddServiceChangeLabel("dapp-dev-mode", "false")
+
+			if c.SshAuthSock != "" {
+				image.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SshAuthSock))
+				image.AddEnv(map[string]interface{}{
+					"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent",
+				})
+			}
+
+			err := stage.PrepareImage(image, prevImage)
 			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (p *PrepareImagesPhase) AddMounts(dimg *Dimg, stage stage.Interface, prevStage stage.Interface) error {
-	mountpointsByType := map[string][]string{}
-
-	for _, mountCfg := range dimg.GetConfig().Mount {
-		mountpointsByType[mountCfg.Type] = append(mountpointsByType[mountCfg.Type], mountCfg.To)
-	}
-
-	labels := prevStage.GetImage().GetLabels()
-	for _, labelMountType := range []struct{ Label, MountType string }{
-		struct{ Label, MountType string }{"dapp-mount-tmp-dir", "tmp_dir"},
-		struct{ Label, MountType string }{"dapp-mount-build-dir", "build_dir"},
-	} {
-		value, hasKey := labels[labelMountType.Label]
-		if !hasKey {
-			continue
-		}
-
-		mountpoints := strings.Split(value, ";")
-		for _, mountpoint := range mountpoints {
-			if mountpoint == "" {
-				continue
+				return fmt.Errorf("error preparing stage %s: %s", stage.Name(), err)
 			}
 
-			mountpointsByType[labelMountType.MountType] = append(mountpointsByType[labelMountType.MountType], mountpoint)
+			prevImage = image
 		}
 	}
 
