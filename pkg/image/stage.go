@@ -193,8 +193,20 @@ func (i *Stage) Export(name string) error {
 	return nil
 }
 
-func (i *Stage) AddVolume(string) {
-	// FIXME
+func (i *Stage) AddServiceRunCommands(commands []string) {
+	i.Container.ServiceRunCommands = append(i.Container.ServiceRunCommands, commands...)
+}
+
+func (i *Stage) AddRunCommands(commands []string) {
+	i.Container.RunCommands = append(i.Container.RunCommands, commands...)
+}
+
+func (i *Stage) AddEnv(env map[string]interface{}) {
+	i.Container.RunOptions.AddEnv(env)
+}
+
+func (i *Stage) AddVolume(volume string) {
+	i.Container.RunOptions.AddVolume([]string{volume})
 }
 
 func (i *Stage) AddServiceChangeLabel(name, value string) {

@@ -11,9 +11,12 @@ type Image interface {
 	GetContainer() builder.Container
 
 	AddRunCommands([]string)
+	AddServiceRunCommands([]string)
 	AddEnv(map[string]interface{})
 	AddServiceChangeLabel(name, value string)
 	AddVolume(volume string)
+
+	Pull() error
 }
 
 type StubImage struct {
@@ -30,6 +33,8 @@ func (image *StubImage) GetContainer() builder.Container {
 }
 
 func (image *StubImage) AddRunCommands([]string) {}
+
+func (image *StubImage) AddServiceRunCommands([]string) {}
 
 func (image *StubImage) AddEnv(map[string]interface{}) {}
 
@@ -49,4 +54,8 @@ func (image *StubImage) IsImageExists() bool {
 
 func (image *StubImage) GetName() string {
 	return ""
+}
+
+func (image *StubImage) Pull() error {
+	return nil
 }

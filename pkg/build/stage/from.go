@@ -1,7 +1,11 @@
 package stage
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/dappdeps"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -41,4 +45,23 @@ func (s *FromStage) GetDependencies(_ Conveyor, baseImage Image) (string, error)
 	args = append(args, baseImage.GetName())
 
 	return util.Sha256Hash(args...), nil
+}
+
+func (s *FromStage) PrepareImage(prevImage, image Image) error {
+	mountpoints := []string{}
+	for _, mountCfg := range s.mounts {
+		mountpoints = append(mountpoints, mountCfg.To)
+	}
+
+	if len(mountpoints) == 0 {
+		return nil
+	}
+
+	mountpointsStr := strings.Join(mountpoints, " ")
+
+	image.AddServiceRunCommands([]string{
+		fmt.Sprintf("%s -rf %s", dappdeps.RmBinPath(), mountpointsStr),
+	})
+
+	return nil
 }
