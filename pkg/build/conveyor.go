@@ -1,8 +1,11 @@
 package build
 
 import (
+	"path"
+
 	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/image"
 )
 
@@ -24,6 +27,7 @@ type Conveyor struct {
 	stageImages map[string]*image.Stage
 
 	ProjectName       string
+	ProjectPath       string
 	TmpDir            string
 	ContainerDappPath string
 }
@@ -86,4 +90,24 @@ func (c *Conveyor) GetProjectName() string {
 
 func (c *Conveyor) GetDimgSignature(dimgName string) string {
 	return c.GetDimg(dimgName).LatestStage().GetSignature()
+}
+
+func (c *Conveyor) GetProjectBuildDir() string {
+	return path.Join(dapp.GetHomeDir(), "build", c.ProjectName)
+}
+
+func getDimgPatchesDir(dimgName string, c *Conveyor) string {
+	return path.Join(c.TmpDir, dimgName, "patch")
+}
+
+func getDimgPatchesContainerDir(c *Conveyor) string {
+	return path.Join(c.ContainerDappPath, "patch")
+}
+
+func getDimgArchivesDir(dimgName string, c *Conveyor) string {
+	return path.Join(c.TmpDir, dimgName, "archive")
+}
+
+func getDimgArchivesContainerDir(c *Conveyor) string {
+	return path.Join(c.ContainerDappPath, "archive")
 }
