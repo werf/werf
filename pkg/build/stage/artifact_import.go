@@ -37,7 +37,7 @@ type ArtifactImportStage struct {
 	imports []*config.ArtifactImport
 }
 
-func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ Image) string {
+func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ Image) (string, error) {
 	var args []string
 
 	for _, elm := range s.imports {
@@ -48,5 +48,5 @@ func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ Image) string {
 		args = append(args, elm.ExcludePaths...)
 	}
 
-	return util.Sha256Hash(args...)
+	return util.Sha256Hash(args...), nil
 }

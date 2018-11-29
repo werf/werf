@@ -30,7 +30,7 @@ func (s *DockerInstructionsStage) Name() StageName {
 	return DockerInstructions
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ Image) string {
+func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)
@@ -50,5 +50,5 @@ func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ Image) string {
 	args = append(args, s.instructions.Workdir)
 	args = append(args, s.instructions.User)
 
-	return util.Sha256Hash(args...)
+	return util.Sha256Hash(args...), nil
 }
