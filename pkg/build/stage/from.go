@@ -48,6 +48,10 @@ func (s *FromStage) GetDependencies(_ Conveyor, baseImage Image) (string, error)
 }
 
 func (s *FromStage) PrepareImage(prevImage, image Image) error {
+	if err := s.BaseStage.PrepareImage(prevImage, image); err != nil {
+		return err
+	}
+
 	mountpoints := []string{}
 	for _, mountCfg := range s.mounts {
 		mountpoints = append(mountpoints, mountCfg.To)
