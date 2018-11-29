@@ -3,6 +3,7 @@ package stage
 import (
 	"github.com/flant/dapp/pkg/build/builder"
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/util"
 )
 
 func GenerateSetupStage(dimgConfig config.DimgInterface, extra *builder.Extra) Interface {
@@ -29,5 +30,8 @@ func (s *SetupStage) Name() StageName {
 }
 
 func (s *SetupStage) GetContext(_ Cache) string {
-	return s.builder.SetupChecksum() // TODO: git
+	return util.Sha256Hash(
+		s.builder.SetupChecksum(),
+		s.GetStageDependenciesChecksum(Setup),
+	)
 }
