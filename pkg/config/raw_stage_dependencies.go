@@ -1,71 +1,71 @@
 package config
 
-type RawStageDependencies struct {
+type rawStageDependencies struct {
 	Install       interface{} `yaml:"install,omitempty"`
 	Setup         interface{} `yaml:"setup,omitempty"`
 	BeforeSetup   interface{} `yaml:"beforeSetup,omitempty"`
 	BuildArtifact interface{} `yaml:"buildArtifact,omitempty"`
 
-	RawGit *RawGit `yaml:"-"` // parent
+	rawGit *rawGit `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *RawStageDependencies) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := ParentStack.Peek().(*RawGit); ok {
-		c.RawGit = parent
+func (c *rawStageDependencies) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawGit); ok {
+		c.rawGit = parent
 	}
 
-	type plain RawStageDependencies
+	type plain rawStageDependencies
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
 	}
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawGit.RawDimg.Doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawGit.rawDimg.doc); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *RawStageDependencies) ToDirective() (stageDependencies *StageDependencies, err error) {
+func (c *rawStageDependencies) toDirective() (stageDependencies *StageDependencies, err error) {
 	stageDependencies = &StageDependencies{}
 
-	if install, err := InterfaceToStringArray(c.Install, c, c.RawGit.RawDimg.Doc); err != nil {
+	if install, err := InterfaceToStringArray(c.Install, c, c.rawGit.rawDimg.doc); err != nil {
 		return nil, err
 	} else {
 		stageDependencies.Install = install
 	}
 
-	if beforeSetup, err := InterfaceToStringArray(c.BeforeSetup, c, c.RawGit.RawDimg.Doc); err != nil {
+	if beforeSetup, err := InterfaceToStringArray(c.BeforeSetup, c, c.rawGit.rawDimg.doc); err != nil {
 		return nil, err
 	} else {
 		stageDependencies.BeforeSetup = beforeSetup
 	}
 
-	if setup, err := InterfaceToStringArray(c.Setup, c, c.RawGit.RawDimg.Doc); err != nil {
+	if setup, err := InterfaceToStringArray(c.Setup, c, c.rawGit.rawDimg.doc); err != nil {
 		return nil, err
 	} else {
 		stageDependencies.Setup = setup
 	}
 
-	if buildArtifact, err := InterfaceToStringArray(c.BuildArtifact, c, c.RawGit.RawDimg.Doc); err != nil {
+	if buildArtifact, err := InterfaceToStringArray(c.BuildArtifact, c, c.rawGit.rawDimg.doc); err != nil {
 		return nil, err
 	} else {
 		stageDependencies.BuildArtifact = buildArtifact
 	}
 
-	stageDependencies.Raw = c
+	stageDependencies.raw = c
 
-	if err := c.ValidateDirective(stageDependencies); err != nil {
+	if err := c.validateDirective(stageDependencies); err != nil {
 		return nil, err
 	}
 
 	return stageDependencies, nil
 }
 
-func (c *RawStageDependencies) ValidateDirective(stageDependencies *StageDependencies) error {
-	if err := stageDependencies.Validate(); err != nil {
+func (c *rawStageDependencies) validateDirective(stageDependencies *StageDependencies) error {
+	if err := stageDependencies.validate(); err != nil {
 		return err
 	}
 

@@ -8,23 +8,23 @@ type StageDependencies struct {
 	BeforeSetup   []string
 	BuildArtifact []string
 
-	Raw *RawStageDependencies
+	raw *rawStageDependencies
 }
 
-func (c *StageDependencies) Validate() error {
-	if !AllRelativePaths(c.Install) {
-		return NewDetailedConfigError("`install: [PATH, ...]|PATH` should be relative paths!", c.Raw, c.Raw.RawGit.RawDimg.Doc)
-	} else if !AllRelativePaths(c.Setup) {
-		return NewDetailedConfigError("`setup: [PATH, ...]|PATH` should be relative paths!", c.Raw, c.Raw.RawGit.RawDimg.Doc)
-	} else if !AllRelativePaths(c.BeforeSetup) {
-		return NewDetailedConfigError("`beforeSetup: [PATH, ...]|PATH` should be relative paths!", c.Raw, c.Raw.RawGit.RawDimg.Doc)
-	} else if !AllRelativePaths(c.BuildArtifact) {
-		return NewDetailedConfigError("`buildArtifact: [PATH, ...]|PATH` should be relative paths!", c.Raw, c.Raw.RawGit.RawDimg.Doc)
+func (c *StageDependencies) validate() error {
+	if !allRelativePaths(c.Install) {
+		return newDetailedConfigError("`install: [PATH, ...]|PATH` should be relative paths!", c.raw, c.raw.rawGit.rawDimg.doc)
+	} else if !allRelativePaths(c.Setup) {
+		return newDetailedConfigError("`setup: [PATH, ...]|PATH` should be relative paths!", c.raw, c.raw.rawGit.rawDimg.doc)
+	} else if !allRelativePaths(c.BeforeSetup) {
+		return newDetailedConfigError("`beforeSetup: [PATH, ...]|PATH` should be relative paths!", c.raw, c.raw.rawGit.rawDimg.doc)
+	} else if !allRelativePaths(c.BuildArtifact) {
+		return newDetailedConfigError("`buildArtifact: [PATH, ...]|PATH` should be relative paths!", c.raw, c.raw.rawGit.rawDimg.doc)
 	}
 	return nil
 }
 
-func (c *StageDependencies) ToRuby() ruby_marshal_config.StageDependencies {
+func (c *StageDependencies) toRuby() ruby_marshal_config.StageDependencies {
 	rubyStageDependencies := ruby_marshal_config.StageDependencies{}
 	rubyStageDependencies.Install = c.Install
 	rubyStageDependencies.BeforeSetup = c.BeforeSetup

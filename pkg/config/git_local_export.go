@@ -5,20 +5,20 @@ import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
 type GitLocalExport struct {
 	*GitExportBase
 
-	Raw *RawGit
+	raw *rawGit
 }
 
-func (c *GitLocalExport) Validate() error {
+func (c *GitLocalExport) validate() error {
 	return nil
 }
 
-func (c *GitLocalExport) ToRuby() ruby_marshal_config.GitArtifactLocalExport {
+func (c *GitLocalExport) toRuby() ruby_marshal_config.GitArtifactLocalExport {
 	rubyGitArtifactLocalExport := ruby_marshal_config.GitArtifactLocalExport{}
 	if c.ExportBase != nil {
-		rubyGitArtifactLocalExport.ArtifactBaseExport = c.ExportBase.ToRuby()
+		rubyGitArtifactLocalExport.ArtifactBaseExport = c.ExportBase.toRuby()
 	}
 	if c.StageDependencies != nil {
-		rubyGitArtifactLocalExport.StageDependencies = c.StageDependencies.ToRuby()
+		rubyGitArtifactLocalExport.StageDependencies = c.StageDependencies.toRuby()
 	}
 	return rubyGitArtifactLocalExport
 }

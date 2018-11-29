@@ -8,28 +8,29 @@ import (
 type ArtifactImport struct {
 	*ArtifactExport
 	ArtifactName string
-	ArtifactDimg *DimgArtifact
 	Before       string
 	After        string
 
-	Raw *RawArtifactImport
+	raw *rawArtifactImport
+
+	artifactDimg *DimgArtifact // FIXME: reject in golang binary
 }
 
-func (c *ArtifactImport) Validate() error {
-	if err := c.ArtifactExport.Validate(); err != nil {
+func (c *ArtifactImport) validate() error {
+	if err := c.ArtifactExport.validate(); err != nil {
 		return err
 	}
 
 	if c.ArtifactName == "" {
-		return NewDetailedConfigError("Artifact name `artifact: NAME` required for import!", c.Raw, c.Raw.RawDimg.Doc)
+		return newDetailedConfigError("Artifact name `artifact: NAME` required for import!", c.raw, c.raw.rawDimg.doc)
 	} else if c.Before != "" && c.After != "" {
-		return NewDetailedConfigError("Specify only one artifact stage using `before: install|setup` or `after: install|setup` for import!", c.Raw, c.Raw.RawDimg.Doc)
+		return newDetailedConfigError("Specify only one artifact stage using `before: install|setup` or `after: install|setup` for import!", c.raw, c.raw.rawDimg.doc)
 	} else if c.Before == "" && c.After == "" {
-		return NewDetailedConfigError("Artifact stage is not specified with `before: install|setup` or `after: install|setup` for import!", c.Raw, c.Raw.RawDimg.Doc)
+		return newDetailedConfigError("Artifact stage is not specified with `before: install|setup` or `after: install|setup` for import!", c.raw, c.raw.rawDimg.doc)
 	} else if c.Before != "" && checkInvalidRelation(c.Before) {
-		return NewDetailedConfigError(fmt.Sprintf("Invalid artifact stage `before: %s` for import: expected install or setup!", c.Before), c.Raw, c.Raw.RawDimg.Doc)
+		return newDetailedConfigError(fmt.Sprintf("Invalid artifact stage `before: %s` for import: expected install or setup!", c.Before), c.raw, c.raw.rawDimg.doc)
 	} else if c.After != "" && checkInvalidRelation(c.After) {
-		return NewDetailedConfigError(fmt.Sprintf("Invalid artifact stage `after: %s` for import: expected install or setup!", c.After), c.Raw, c.Raw.RawDimg.Doc)
+		return newDetailedConfigError(fmt.Sprintf("Invalid artifact stage `after: %s` for import: expected install or setup!", c.After), c.raw, c.raw.rawDimg.doc)
 	}
 	return nil
 }
@@ -38,11 +39,11 @@ func checkInvalidRelation(rel string) bool {
 	return !(rel == "install" || rel == "setup")
 }
 
-func (c *ArtifactImport) AssociateArtifact(artifacts []*DimgArtifact) error {
+func (c *ArtifactImport) associateArtifact(artifacts []*DimgArtifact) error { // FIXME: reject in golang binary
 	if artifactDimg := artifactByName(artifacts, c.ArtifactName); artifactDimg != nil {
-		c.ArtifactDimg = artifactDimg
+		c.artifactDimg = artifactDimg
 	} else {
-		return NewDetailedConfigError(fmt.Sprintf("No such artifact `%s`!", c.ArtifactName), c.Raw, c.Raw.RawDimg.Doc)
+		return newDetailedConfigError(fmt.Sprintf("No such artifact `%s`!", c.ArtifactName), c.raw, c.raw.rawDimg.doc)
 	}
 	return nil
 }
@@ -56,14 +57,14 @@ func artifactByName(artifacts []*DimgArtifact, name string) *DimgArtifact {
 	return nil
 }
 
-func (c *ArtifactImport) ToRuby() ruby_marshal_config.ArtifactExport {
+func (c *ArtifactImport) toRuby() ruby_marshal_config.ArtifactExport {
 	artifactExport := ruby_marshal_config.ArtifactExport{}
 
 	if c.ExportBase != nil {
-		artifactExport.ArtifactBaseExport = c.ExportBase.ToRuby()
+		artifactExport.ArtifactBaseExport = c.ExportBase.toRuby()
 	}
-	if c.ArtifactDimg != nil {
-		artifactExport.Config = c.ArtifactDimg.ToRuby()
+	if c.artifactDimg != nil {
+		artifactExport.Config = c.artifactDimg.toRuby()
 	}
 
 	artifactExport.After = ruby_marshal_config.Symbol(c.After)

@@ -3,9 +3,9 @@ package config
 type GitExport struct {
 	*ExportBase
 
-	Raw *RawGitExport
+	raw *rawGitExport
 }
 
-func (c *GitExport) Validate() error {
+func (c *GitExport) validate() error {
 	return nil
 }

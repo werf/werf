@@ -10,13 +10,13 @@ type ShellArtifact struct {
 	BuildArtifactCacheVersion string
 }
 
-func (c *ShellArtifact) Validate() error {
+func (c *ShellArtifact) validate() error {
 	return nil
 }
 
-func (c *ShellArtifact) ToRuby() ruby_marshal_config.ShellArtifact {
+func (c *ShellArtifact) toRuby() ruby_marshal_config.ShellArtifact {
 	shellArtifact := ruby_marshal_config.ShellArtifact{}
-	shellArtifact.ShellDimg = c.ShellDimg.ToRuby()
+	shellArtifact.ShellDimg = c.ShellDimg.toRuby()
 	shellArtifact.BuildArtifact.Version = c.BuildArtifactCacheVersion
 	shellArtifact.BuildArtifact.Run = c.BuildArtifact
 	return shellArtifact

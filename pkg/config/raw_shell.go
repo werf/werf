@@ -1,6 +1,6 @@
 package config
 
-type RawShell struct {
+type rawShell struct {
 	BeforeInstall             interface{} `yaml:"beforeInstall,omitempty"`
 	Install                   interface{} `yaml:"install,omitempty"`
 	BeforeSetup               interface{} `yaml:"beforeSetup,omitempty"`
@@ -13,29 +13,29 @@ type RawShell struct {
 	SetupCacheVersion         string      `yaml:"setupCacheVersion,omitempty"`
 	BuildArtifactCacheVersion string      `yaml:"buildArtifactCacheVersion,omitempty"`
 
-	RawDimg *RawDimg `yaml:"-"` // parent
+	rawDimg *rawDimg `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *RawShell) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
-		c.RawDimg = parent
+func (c *rawShell) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawDimg); ok {
+		c.rawDimg = parent
 	}
 
-	type plain RawShell
+	type plain rawShell
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
 	}
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawDimg.doc); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *RawShell) ToBaseDirective() (shellDimg *ShellDimg, err error) {
+func (c *rawShell) toBaseDirective() (shellDimg *ShellDimg, err error) {
 	shellDimg = &ShellDimg{}
 	shellDimg.ShellBase = &ShellBase{}
 
@@ -45,74 +45,74 @@ func (c *RawShell) ToBaseDirective() (shellDimg *ShellDimg, err error) {
 	shellDimg.BeforeSetupCacheVersion = c.BeforeSetupCacheVersion
 	shellDimg.SetupCacheVersion = c.SetupCacheVersion
 
-	if beforeInstall, err := InterfaceToStringArray(c.BeforeInstall, c, c.RawDimg.Doc); err != nil {
+	if beforeInstall, err := InterfaceToStringArray(c.BeforeInstall, c, c.rawDimg.doc); err != nil {
 		return nil, err
 	} else {
 		shellDimg.ShellBase.BeforeInstall = beforeInstall
 	}
 
-	if install, err := InterfaceToStringArray(c.Install, c, c.RawDimg.Doc); err != nil {
+	if install, err := InterfaceToStringArray(c.Install, c, c.rawDimg.doc); err != nil {
 		return nil, err
 	} else {
 		shellDimg.ShellBase.Install = install
 	}
 
-	if beforeSetup, err := InterfaceToStringArray(c.BeforeSetup, c, c.RawDimg.Doc); err != nil {
+	if beforeSetup, err := InterfaceToStringArray(c.BeforeSetup, c, c.rawDimg.doc); err != nil {
 		return nil, err
 	} else {
 		shellDimg.ShellBase.BeforeSetup = beforeSetup
 	}
 
-	if setup, err := InterfaceToStringArray(c.Setup, c, c.RawDimg.Doc); err != nil {
+	if setup, err := InterfaceToStringArray(c.Setup, c, c.rawDimg.doc); err != nil {
 		return nil, err
 	} else {
 		shellDimg.ShellBase.Setup = setup
 	}
 
-	shellDimg.ShellBase.Raw = c
+	shellDimg.ShellBase.raw = c
 
 	return shellDimg, nil
 }
 
-func (c *RawShell) ToDirective() (shellDimg *ShellDimg, err error) {
-	shellDimg, err = c.ToBaseDirective()
+func (c *rawShell) toDirective() (shellDimg *ShellDimg, err error) {
+	shellDimg, err = c.toBaseDirective()
 	if err != nil {
 		return nil, err
 	}
 
-	if err := c.ValidateDirective(shellDimg); err != nil {
+	if err := c.validateDirective(shellDimg); err != nil {
 		return nil, err
 	}
 
 	return shellDimg, nil
 }
 
-func (c *RawShell) ValidateDirective(shellDimg *ShellDimg) error {
+func (c *rawShell) validateDirective(shellDimg *ShellDimg) error {
 	if c.BuildArtifact != nil {
-		return NewDetailedConfigError("`buildArtifact` stage is not available for dimg, only for artifact!", c, c.RawDimg.Doc)
+		return newDetailedConfigError("`buildArtifact` stage is not available for dimg, only for artifact!", c, c.rawDimg.doc)
 	}
 
 	if c.BuildArtifactCacheVersion != "" {
-		return NewDetailedConfigError("`buildArtifactCacheVersion` directive is not available for dimg, only for artifact!", c, c.RawDimg.Doc)
+		return newDetailedConfigError("`buildArtifactCacheVersion` directive is not available for dimg, only for artifact!", c, c.rawDimg.doc)
 	}
 
-	if err := shellDimg.Validate(); err != nil {
+	if err := shellDimg.validate(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *RawShell) ToArtifactDirective() (shellArtifact *ShellArtifact, err error) {
+func (c *rawShell) toArtifactDirective() (shellArtifact *ShellArtifact, err error) {
 	shellArtifact = &ShellArtifact{}
 
-	if shellDimg, err := c.ToBaseDirective(); err != nil {
+	if shellDimg, err := c.toBaseDirective(); err != nil {
 		return nil, err
 	} else {
 		shellArtifact.ShellDimg = shellDimg
 	}
 
-	if buildArtifact, err := InterfaceToStringArray(c.BuildArtifact, c, c.RawDimg.Doc); err != nil {
+	if buildArtifact, err := InterfaceToStringArray(c.BuildArtifact, c, c.rawDimg.doc); err != nil {
 		return nil, err
 	} else {
 		shellArtifact.BuildArtifact = buildArtifact
@@ -120,15 +120,15 @@ func (c *RawShell) ToArtifactDirective() (shellArtifact *ShellArtifact, err erro
 
 	shellArtifact.BuildArtifactCacheVersion = c.BuildArtifactCacheVersion
 
-	if err := c.ValidateArtifactDirective(shellArtifact); err != nil {
+	if err := c.validateArtifactDirective(shellArtifact); err != nil {
 		return nil, err
 	}
 
 	return shellArtifact, nil
 }
 
-func (c *RawShell) ValidateArtifactDirective(shellArtifact *ShellArtifact) error {
-	if err := shellArtifact.Validate(); err != nil {
+func (c *rawShell) validateArtifactDirective(shellArtifact *ShellArtifact) error {
+	if err := shellArtifact.validate(); err != nil {
 		return err
 	}
 

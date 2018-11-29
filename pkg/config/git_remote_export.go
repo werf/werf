@@ -8,20 +8,20 @@ type GitRemoteExport struct {
 	Tag    string
 	Commit string
 
-	Raw *RawGit
+	raw *rawGit
 }
 
-func (c *GitRemoteExport) Validate() error {
-	if !OneOrNone([]bool{c.Branch != "", c.Commit != "", c.Tag != ""}) {
-		return NewDetailedConfigError("Specify only `branch: BRANCH`, `tag: TAG` or `commit: COMMIT` for remote git!", c.Raw, c.Raw.RawDimg.Doc)
+func (c *GitRemoteExport) validate() error {
+	if !oneOrNone([]bool{c.Branch != "", c.Commit != "", c.Tag != ""}) {
+		return newDetailedConfigError("Specify only `branch: BRANCH`, `tag: TAG` or `commit: COMMIT` for remote git!", c.raw, c.raw.rawDimg.doc)
 	}
 	return nil
 }
 
-func (c *GitRemoteExport) ToRuby() ruby_marshal_config.GitArtifactRemoteExport {
+func (c *GitRemoteExport) toRuby() ruby_marshal_config.GitArtifactRemoteExport {
 	rubyGitArtifactRemoteExport := ruby_marshal_config.GitArtifactRemoteExport{}
 	if c.GitLocalExport != nil {
-		rubyGitArtifactRemoteExport.GitArtifactLocalExport = c.GitLocalExport.ToRuby()
+		rubyGitArtifactRemoteExport.GitArtifactLocalExport = c.GitLocalExport.toRuby()
 	}
 	rubyGitArtifactRemoteExport.Branch = c.Branch
 	rubyGitArtifactRemoteExport.Tag = c.Tag

@@ -11,23 +11,23 @@ type Mount struct {
 	From string
 	Type string
 
-	Raw *RawMount
+	raw *rawMount
 }
 
-func (c *Mount) Validate() error {
-	if c.To == "" || !IsAbsolutePath(c.To) {
-		return NewDetailedConfigError("`to: PATH` absolute path required for mount!", c.Raw, c.Raw.RawDimg.Doc)
+func (c *Mount) validate() error {
+	if c.To == "" || !isAbsolutePath(c.To) {
+		return newDetailedConfigError("`to: PATH` absolute path required for mount!", c.raw, c.raw.rawDimg.doc)
 	} else if c.Type == "custom_dir" {
 		if (c.From != "" && isRelativePath(c.From)) || c.From == "" {
-			return NewDetailedConfigError("`fromPath: PATH` should be absolute path for mount!", c.Raw, c.Raw.RawDimg.Doc)
+			return newDetailedConfigError("`fromPath: PATH` should be absolute path for mount!", c.raw, c.raw.rawDimg.doc)
 		}
 	} else if c.Type != "tmp_dir" && c.Type != "build_dir" {
-		return NewDetailedConfigError(fmt.Sprintf("Invalid `from: %s` for mount: expected `tmp_dir` or `build_dir`!", c.Type), c.Raw, c.Raw.RawDimg.Doc)
+		return newDetailedConfigError(fmt.Sprintf("Invalid `from: %s` for mount: expected `tmp_dir` or `build_dir`!", c.Type), c.raw, c.raw.rawDimg.doc)
 	}
 	return nil
 }
 
-func (c *Mount) ToRuby() ruby_marshal_config.Mount {
+func (c *Mount) toRuby() ruby_marshal_config.Mount {
 	rubyMount := ruby_marshal_config.Mount{}
 	rubyMount.To = c.To
 	rubyMount.From = c.From

@@ -5,36 +5,36 @@ import (
 	"gopkg.in/flant/yaml.v2"
 )
 
-type RawAnsibleTask struct {
-	Block  []RawAnsibleTask       `yaml:"block,omitempty"`
-	Rescue []RawAnsibleTask       `yaml:"rescue,omitempty"`
-	Always []RawAnsibleTask       `yaml:"always,omitempty"`
+type rawAnsibleTask struct {
+	Block  []rawAnsibleTask       `yaml:"block,omitempty"`
+	Rescue []rawAnsibleTask       `yaml:"rescue,omitempty"`
+	Always []rawAnsibleTask       `yaml:"always,omitempty"`
 	Fields map[string]interface{} `yaml:",inline"`
 
-	RawAnsible *RawAnsible `yaml:"-"` // parent
+	rawAnsible *rawAnsible `yaml:"-"` // parent
 }
 
-func (c *RawAnsibleTask) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := ParentStack.Peek().(*RawAnsible); ok {
-		c.RawAnsible = parent
-	} else if parent, ok := ParentStack.Peek().(*RawAnsibleTask); ok {
-		c.RawAnsible = parent.RawAnsible
+func (c *rawAnsibleTask) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawAnsible); ok {
+		c.rawAnsible = parent
+	} else if parent, ok := parentStack.Peek().(*rawAnsibleTask); ok {
+		c.rawAnsible = parent.rawAnsible
 	}
 
-	ParentStack.Push(c)
-	type plain RawAnsibleTask
+	parentStack.Push(c)
+	type plain rawAnsibleTask
 	err := unmarshal((*plain)(c))
-	ParentStack.Pop()
+	parentStack.Pop()
 	if err != nil {
 		return err
 	}
 
-	if !c.BlockDefined() {
+	if !c.blockDefined() {
 		check := false
 		for _, supportedModule := range supportedModules() {
 			if c.Fields[supportedModule] != nil {
 				if check {
-					return NewDetailedConfigError("Invalid ansible task!", c, c.RawAnsible.RawDimg.Doc)
+					return newDetailedConfigError("Invalid ansible task!", c, c.rawAnsible.rawDimg.doc)
 				} else {
 					check = true
 				}
@@ -46,14 +46,14 @@ func (c *RawAnsibleTask) UnmarshalYAML(unmarshal func(interface{}) error) error 
 			for _, supportedModule := range supportedModules() {
 				supportedModulesString += fmt.Sprintf("* %s\n", supportedModule)
 			}
-			return NewConfigError(fmt.Sprintf("Unsupported ansible task!\n\n%s\nSupported modules list:\n%s\n%s", DumpConfigSection(c), supportedModulesString, DumpConfigDoc(c.RawAnsible.RawDimg.Doc)))
+			return newConfigError(fmt.Sprintf("Unsupported ansible task!\n\n%s\nSupported modules list:\n%s\n%s", dumpConfigSection(c), supportedModulesString, dumpConfigDoc(c.rawAnsible.rawDimg.doc)))
 		}
 	}
 
 	return nil
 }
 
-func (c *RawAnsibleTask) BlockDefined() bool {
+func (c *rawAnsibleTask) blockDefined() bool {
 	return c.Block != nil || c.Rescue != nil || c.Always != nil
 }
 
@@ -124,7 +124,7 @@ func supportedModules() []string {
 	return modules
 }
 
-func (c *RawAnsibleTask) ToDirective() (*AnsibleTask, error) {
+func (c *rawAnsibleTask) toDirective() (*AnsibleTask, error) {
 	ansibleTask := &AnsibleTask{}
 
 	marshal, err := yaml.Marshal(c)
@@ -139,7 +139,7 @@ func (c *RawAnsibleTask) ToDirective() (*AnsibleTask, error) {
 	}
 
 	ansibleTask.Config = unmarshal
-	ansibleTask.Raw = c
+	ansibleTask.raw = c
 
 	return ansibleTask, nil
 }

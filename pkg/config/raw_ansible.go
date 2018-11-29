@@ -1,11 +1,11 @@
 package config
 
-type RawAnsible struct {
-	BeforeInstall             []RawAnsibleTask `yaml:"beforeInstall"`
-	Install                   []RawAnsibleTask `yaml:"install"`
-	BeforeSetup               []RawAnsibleTask `yaml:"beforeSetup"`
-	Setup                     []RawAnsibleTask `yaml:"setup"`
-	BuildArtifact             []RawAnsibleTask `yaml:"buildArtifact"`
+type rawAnsible struct {
+	BeforeInstall             []rawAnsibleTask `yaml:"beforeInstall"`
+	Install                   []rawAnsibleTask `yaml:"install"`
+	BeforeSetup               []rawAnsibleTask `yaml:"beforeSetup"`
+	Setup                     []rawAnsibleTask `yaml:"setup"`
+	BuildArtifact             []rawAnsibleTask `yaml:"buildArtifact"`
 	CacheVersion              string           `yaml:"cacheVersion,omitempty"`
 	BeforeInstallCacheVersion string           `yaml:"beforeInstallCacheVersion,omitempty"`
 	InstallCacheVersion       string           `yaml:"installCacheVersion,omitempty"`
@@ -13,32 +13,32 @@ type RawAnsible struct {
 	SetupCacheVersion         string           `yaml:"setupCacheVersion,omitempty"`
 	BuildArtifactCacheVersion string           `yaml:"buildArtifactCacheVersion,omitempty"`
 
-	RawDimg *RawDimg `yaml:"-"` // parent
+	rawDimg *rawDimg `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *RawAnsible) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
-		c.RawDimg = parent
+func (c *rawAnsible) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawDimg); ok {
+		c.rawDimg = parent
 	}
 
-	ParentStack.Push(c)
-	type plain RawAnsible
+	parentStack.Push(c)
+	type plain rawAnsible
 	err := unmarshal((*plain)(c))
-	ParentStack.Pop()
+	parentStack.Pop()
 	if err != nil {
 		return err
 	}
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawDimg.doc); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (c *RawAnsible) ToDirective() (ansible *Ansible, err error) {
+func (c *rawAnsible) toDirective() (ansible *Ansible, err error) {
 	ansible = &Ansible{}
 
 	ansible.CacheVersion = c.CacheVersion
@@ -49,7 +49,7 @@ func (c *RawAnsible) ToDirective() (ansible *Ansible, err error) {
 	ansible.BuildArtifactCacheVersion = c.BuildArtifactCacheVersion
 
 	for ind := range c.BeforeInstall {
-		if ansibleTask, err := c.BeforeInstall[ind].ToDirective(); err != nil {
+		if ansibleTask, err := c.BeforeInstall[ind].toDirective(); err != nil {
 			return nil, err
 		} else {
 			ansible.BeforeInstall = append(ansible.BeforeInstall, ansibleTask)
@@ -57,7 +57,7 @@ func (c *RawAnsible) ToDirective() (ansible *Ansible, err error) {
 	}
 
 	for ind := range c.Install {
-		if ansibleTask, err := c.Install[ind].ToDirective(); err != nil {
+		if ansibleTask, err := c.Install[ind].toDirective(); err != nil {
 			return nil, err
 		} else {
 			ansible.Install = append(ansible.Install, ansibleTask)
@@ -65,7 +65,7 @@ func (c *RawAnsible) ToDirective() (ansible *Ansible, err error) {
 	}
 
 	for ind := range c.BeforeSetup {
-		if ansibleTask, err := c.BeforeSetup[ind].ToDirective(); err != nil {
+		if ansibleTask, err := c.BeforeSetup[ind].toDirective(); err != nil {
 			return nil, err
 		} else {
 			ansible.BeforeSetup = append(ansible.BeforeSetup, ansibleTask)
@@ -73,7 +73,7 @@ func (c *RawAnsible) ToDirective() (ansible *Ansible, err error) {
 	}
 
 	for ind := range c.Setup {
-		if ansibleTask, err := c.Setup[ind].ToDirective(); err != nil {
+		if ansibleTask, err := c.Setup[ind].toDirective(); err != nil {
 			return nil, err
 		} else {
 			ansible.Setup = append(ansible.Setup, ansibleTask)
@@ -81,24 +81,24 @@ func (c *RawAnsible) ToDirective() (ansible *Ansible, err error) {
 	}
 
 	for ind := range c.BuildArtifact {
-		if ansibleTask, err := c.BuildArtifact[ind].ToDirective(); err != nil {
+		if ansibleTask, err := c.BuildArtifact[ind].toDirective(); err != nil {
 			return nil, err
 		} else {
 			ansible.BuildArtifact = append(ansible.BuildArtifact, ansibleTask)
 		}
 	}
 
-	ansible.Raw = c
+	ansible.raw = c
 
-	if err := c.ValidateDirective(ansible); err != nil {
+	if err := c.validateDirective(ansible); err != nil {
 		return nil, err
 	}
 
 	return ansible, nil
 }
 
-func (c *RawAnsible) ValidateDirective(ansible *Ansible) (err error) {
-	if err := ansible.Validate(); err != nil {
+func (c *rawAnsible) validateDirective(ansible *Ansible) (err error) {
+	if err := ansible.validate(); err != nil {
 		return err
 	}
 

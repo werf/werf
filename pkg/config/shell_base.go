@@ -14,9 +14,9 @@ type ShellBase struct {
 	BeforeSetupCacheVersion   string
 	SetupCacheVersion         string
 
-	Raw *RawShell
+	raw *rawShell
 }
 
-func (c *ShellBase) Validate() error {
+func (c *ShellBase) validate() error {
 	return nil
 }

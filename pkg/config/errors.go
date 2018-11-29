@@ -7,26 +7,26 @@ import (
 	"gopkg.in/flant/yaml.v2"
 )
 
-type ConfigError struct {
+type configError struct {
 	s string
 }
 
-func (e *ConfigError) Error() string {
+func (e *configError) Error() string {
 	return e.s
 }
 
-func NewConfigError(message string) error {
-	return &ConfigError{message}
+func newConfigError(message string) error {
+	return &configError{message}
 }
 
-func NewDetailedConfigError(message string, configSection interface{}, configDoc *Doc) error {
+func newDetailedConfigError(message string, configSection interface{}, configDoc *doc) error {
 	var errorString string
 	if configSection != nil {
-		errorString = fmt.Sprintf("%s\n\n%s\n%s", message, DumpConfigSection(configSection), DumpConfigDoc(configDoc))
+		errorString = fmt.Sprintf("%s\n\n%s\n%s", message, dumpConfigSection(configSection), dumpConfigDoc(configDoc))
 	} else {
-		errorString = fmt.Sprintf("%s\n\n%s", message, DumpConfigDoc(configDoc))
+		errorString = fmt.Sprintf("%s\n\n%s", message, dumpConfigDoc(configDoc))
 	}
-	return NewConfigError(errorString)
+	return newConfigError(errorString)
 }
 
 func getLines(data []byte) [][]byte {
@@ -37,7 +37,7 @@ func getLines(data []byte) [][]byte {
 	return contentLines
 }
 
-func DumpConfigSection(config interface{}) string {
+func dumpConfigSection(config interface{}) string {
 	d, err := yaml.Marshal(config)
 	if err != nil {
 		return ""
@@ -53,7 +53,7 @@ func DumpConfigSection(config interface{}) string {
 	return res
 }
 
-func DumpConfigDoc(doc *Doc) string {
+func dumpConfigDoc(doc *doc) string {
 	contentLines := getLines(doc.Content)
 
 	res := fmt.Sprintf("%s\n\n", doc.RenderFilePath)
