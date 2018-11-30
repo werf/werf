@@ -2,20 +2,25 @@ package stage
 
 func newGAPatchStage() *GAPatchStage {
 	s := &GAPatchStage{}
+	s.GAStage = newGAStage()
 	return s
 }
 
 type GAPatchStage struct {
-	*BaseStage
+	*GAStage
 }
 
-func (s *GAPatchStage) PrepareImage(prevImage, image Image) error {
-	if err := s.BaseStage.PrepareImage(prevImage, image); err != nil {
+func (s *GAPatchStage) PrepareImage(prevBuiltImage, image Image) error {
+	if s.willLatestCommitBeBuiltOnPrevStage(prevBuiltImage) {
+		return nil
+	}
+
+	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
 		return err
 	}
 
 	for _, ga := range s.gitArtifacts {
-		if err := ga.ApplyPatchCommand(prevImage, image); err != nil {
+		if err := ga.ApplyPatchCommand(prevBuiltImage, image); err != nil {
 			return err
 		}
 	}

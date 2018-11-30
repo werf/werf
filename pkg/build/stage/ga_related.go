@@ -3,7 +3,6 @@ package stage
 func newGARelatedStage() *GARelatedStage {
 	s := &GARelatedStage{}
 	s.GAPatchStage = newGAPatchStage()
-
 	return s
 }
 

@@ -2,15 +2,32 @@ package stage
 
 func NewGALatestPatchStage() *GALatestPatchStage {
 	s := &GALatestPatchStage{}
-	s.GAStage = newGAStage()
-
+	s.GAPatchStage = newGAPatchStage()
 	return s
 }
 
 type GALatestPatchStage struct {
-	*GAStage
+	*GAPatchStage
 }
 
 func (s *GALatestPatchStage) Name() StageName {
 	return GALatestPatch
+}
+
+func (s *GALatestPatchStage) IsEmpty(_ Conveyor, prevBuiltImage Image) (bool, error) {
+	if s.willLatestCommitBeBuiltOnPrevStage(prevBuiltImage) {
+		return true, nil
+	}
+
+	isEmpty := true
+	for _, ga := range s.gitArtifacts {
+		if empty, err := ga.IsPatchEmpty(prevBuiltImage); err != nil {
+			return false, err
+		} else if !empty {
+			isEmpty = false
+			break
+		}
+	}
+
+	return isEmpty, nil
 }

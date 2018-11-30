@@ -143,7 +143,7 @@ func (ga *GitArtifact) LegacyApplyPatchCommand(stage LegacyStage) ([]string, err
 		return nil, err
 	}
 
-	return ga.baseApplyPatchLegacyCommand(fromCommit, toCommit, stage.GetPrevStage().GetImage())
+	return ga.baseApplyPatchCommand(fromCommit, toCommit, stage.GetPrevStage().GetImage())
 }
 
 func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image Image) error {
@@ -152,7 +152,7 @@ func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image Image) error {
 		return err
 	}
 
-	commands, err := ga.baseApplyPatchLegacyCommand(fromCommit, toCommit, prevBuiltImage)
+	commands, err := ga.baseApplyPatchCommand(fromCommit, toCommit, prevBuiltImage)
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage Image) (string, string, 
 	return fromCommit, toCommit, nil
 }
 
-func (ga *GitArtifact) baseApplyPatchLegacyCommand(fromCommit, toCommit string, prevBuiltImage Image) ([]string, error) {
+func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage Image) ([]string, error) {
 	archiveType := git_repo.ArchiveType(prevBuiltImage.Labels()[ga.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
