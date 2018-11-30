@@ -114,7 +114,7 @@ ansible:
 
 </details>
 
-> If there are templates with the same name dapp will be will use template defined in _dappfile.yaml_ or the latest described in _templates files_.
+> If there are templates with the same name dapp will use template defined in _dappfile.yaml_ or the latest described in _templates files_.
 
 If need to use the whole _template file_, use template file path relative to _.dappfiles_ directory as a template name in [include](#include) function.
 
