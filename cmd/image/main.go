@@ -48,7 +48,7 @@ func main() {
 					return err
 				}
 
-				_, err = stageImage.Base.MustGetInspect()
+				_, err = stageImage.MustGetInspect()
 
 				return err
 			})
@@ -64,7 +64,7 @@ func main() {
 		case "build":
 			return image.ImageCommand(args, func(stageImage *image.Stage) error {
 				ruby2go.TrapCleanupHooks = append(ruby2go.TrapCleanupHooks, func() {
-					containerName := stageImage.Container.Name
+					containerName := stageImage.Container().Name()
 					exist, err := docker.ContainerExist(containerName)
 					if err != nil {
 						panic(err)
@@ -90,7 +90,7 @@ func main() {
 					return err
 				}
 
-				_, err = stageImage.BuildImage.MustGetInspect()
+				_, err = stageImage.MustGetInspect()
 
 				return err
 			})
@@ -104,7 +104,7 @@ func main() {
 					return err
 				}
 
-				_, err = stageImage.Base.MustGetInspect()
+				_, err = stageImage.MustGetInspect()
 
 				return err
 			})

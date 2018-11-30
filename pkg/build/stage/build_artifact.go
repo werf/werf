@@ -43,7 +43,7 @@ func (s *BuildArtifactStage) PrepareImage(prevImage, image Image) error {
 		return err
 	}
 
-	if err := s.builder.BuildArtifact(image.GetContainer()); err != nil {
+	if err := s.builder.BuildArtifact(image.BuilderContainer()); err != nil {
 		return err
 	}
 

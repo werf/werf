@@ -42,7 +42,7 @@ func (s *FromStage) GetDependencies(_ Conveyor, baseImage Image) (string, error)
 		args = append(args, mount.From, mount.To, mount.Type)
 	}
 
-	args = append(args, baseImage.GetName())
+	args = append(args, baseImage.Name())
 
 	return util.Sha256Hash(args...), nil
 }
@@ -63,9 +63,7 @@ func (s *FromStage) PrepareImage(prevImage, image Image) error {
 
 	mountpointsStr := strings.Join(mountpoints, " ")
 
-	image.AddServiceRunCommands([]string{
-		fmt.Sprintf("%s -rf %s", dappdeps.RmBinPath(), mountpointsStr),
-	})
+	image.Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", dappdeps.RmBinPath(), mountpointsStr))
 
 	return nil
 }
