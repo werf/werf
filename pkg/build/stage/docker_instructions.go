@@ -52,3 +52,18 @@ func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ Image) (string, 
 
 	return util.Sha256Hash(args...), nil
 }
+
+func (s *DockerInstructionsStage) PrepareImage(_, image Image) error {
+	imageCommitChangeOptions := image.Container().CommitChangeOptions()
+
+	imageCommitChangeOptions.AddVolume(s.instructions.Volume...)
+	imageCommitChangeOptions.AddExpose(s.instructions.Expose...)
+	imageCommitChangeOptions.AddEnv(s.instructions.Env)
+	imageCommitChangeOptions.AddCmd(s.instructions.Cmd...)
+	imageCommitChangeOptions.AddOnbuild(s.instructions.Onbuild...)
+	imageCommitChangeOptions.AddEntrypoint(s.instructions.Entrypoint...)
+	imageCommitChangeOptions.AddUser(s.instructions.User)
+	imageCommitChangeOptions.AddWorkdir(s.instructions.Workdir)
+
+	return nil
+}
