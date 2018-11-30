@@ -146,13 +146,13 @@ func (ga *GitArtifact) LegacyApplyPatchCommand(stage LegacyStage) ([]string, err
 	return ga.baseApplyPatchLegacyCommand(fromCommit, toCommit, stage.GetPrevStage().GetImage())
 }
 
-func (ga *GitArtifact) ApplyPatchCommand(prevImage, image Image) error {
-	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevImage)
+func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image Image) error {
+	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return err
 	}
 
-	commands, err := ga.baseApplyPatchLegacyCommand(fromCommit, toCommit, prevImage)
+	commands, err := ga.baseApplyPatchLegacyCommand(fromCommit, toCommit, prevBuiltImage)
 	if err != nil {
 		return err
 	}
@@ -162,8 +162,8 @@ func (ga *GitArtifact) ApplyPatchCommand(prevImage, image Image) error {
 	return nil
 }
 
-func (ga *GitArtifact) GetCommitsToPatch(prevImage Image) (string, string, error) {
-	fromCommit, ok := prevImage.Labels()[ga.GetParamshash()]
+func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage Image) (string, string, error) {
+	fromCommit, ok := prevBuiltImage.Labels()[ga.GetParamshash()]
 	if !ok {
 		return "", "", fmt.Errorf("!!!") // TODO
 	}
@@ -176,8 +176,8 @@ func (ga *GitArtifact) GetCommitsToPatch(prevImage Image) (string, string, error
 	return fromCommit, toCommit, nil
 }
 
-func (ga *GitArtifact) baseApplyPatchLegacyCommand(fromCommit, toCommit string, prevImage Image) ([]string, error) {
-	archiveType := git_repo.ArchiveType(prevImage.Labels()[ga.getArchiveTypeLabelName()])
+func (ga *GitArtifact) baseApplyPatchLegacyCommand(fromCommit, toCommit string, prevBuiltImage Image) ([]string, error) {
+	archiveType := git_repo.ArchiveType(prevBuiltImage.Labels()[ga.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
@@ -451,8 +451,8 @@ func (ga *GitArtifact) LegacyIsPatchEmpty(stage LegacyStage) (bool, error) {
 	return ga.baseIsPatchEmpty(fromCommit, toCommit)
 }
 
-func (ga *GitArtifact) IsPatchEmpty(prevImage Image) (bool, error) {
-	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevImage)
+func (ga *GitArtifact) IsPatchEmpty(prevBuiltImage Image) (bool, error) {
+	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return false, err
 	}
