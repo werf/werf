@@ -47,8 +47,8 @@ func (s *FromStage) GetDependencies(_ Conveyor, baseImage Image) (string, error)
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(prevImage, image Image) error {
-	if err := s.BaseStage.PrepareImage(prevImage, image); err != nil {
+func (s *FromStage) PrepareImage(prevBuiltImage, image Image) error {
+	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
 		return err
 	}
 

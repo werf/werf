@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flant/dapp/pkg/build/stage"
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -27,20 +28,27 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 		dimg.SetupBaseImage(c)
 
+		var prevBuiltImage *image.Stage
 		prevImage := dimg.GetBaseImage()
 
-		newStagesList := []stage.Interface{}
+		var newStagesList []stage.Interface
 
-		for _, stage := range dimg.GetStages() {
-			isEmpty, err := stage.IsEmpty(c, prevImage)
+		for _, s := range dimg.GetStages() {
+			if exist, err := prevImage.IsExists(); err != nil {
+				return err
+			} else if exist {
+				prevBuiltImage = prevImage
+			}
+
+			isEmpty, err := s.IsEmpty(c, prevBuiltImage)
 			if err != nil {
-				return fmt.Errorf("error checking stage %s emptyness: %s", stage.Name(), err)
+				return fmt.Errorf("error checking stage %s emptyness: %s", s.Name(), err)
 			}
 			if isEmpty {
 				continue
 			}
 
-			stageDependencies, err := stage.GetDependencies(c, prevImage)
+			stageDependencies, err := s.GetDependencies(c, prevBuiltImage)
 			if err != nil {
 				return err
 			}
@@ -51,7 +59,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 				checksumArgs = append(checksumArgs, prevStage.GetSignature())
 			}
 
-			relatedStage := dimg.GetStage(stage.GetRelatedStageName())
+			relatedStage := dimg.GetStage(s.GetRelatedStageName())
 			// related stage may be empty
 			if relatedStage != nil {
 				relatedStageContext, err := relatedStage.GetContext(c)
@@ -64,21 +72,21 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 			stageSig := util.Sha256Hash(checksumArgs...)
 
-			stage.SetSignature(stageSig)
+			s.SetSignature(stageSig)
 
 			imageName := fmt.Sprintf("dimgstage-%s:%s", c.GetProjectName(), stageSig)
-			image := c.GetOrCreateImage(prevImage, imageName)
-			stage.SetImage(image)
+			i := c.GetOrCreateImage(prevImage, imageName)
+			s.SetImage(i)
 
-			err = image.ReadDockerState()
+			err = i.ReadDockerState()
 			if err != nil {
-				return fmt.Errorf("error reading docker state of stage %s: %s", stage.Name(), err)
+				return fmt.Errorf("error reading docker state of stage %s: %s", s.Name(), err)
 			}
 
-			newStagesList = append(newStagesList, stage)
+			newStagesList = append(newStagesList, s)
 
-			prevStage = stage
-			prevImage = image
+			prevStage = s
+			prevImage = i
 		}
 
 		dimg.SetStages(newStagesList)

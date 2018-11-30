@@ -36,8 +36,8 @@ func (s *BeforeInstallStage) GetContext(_ Conveyor) (string, error) {
 	return "", nil
 }
 
-func (s *BeforeInstallStage) PrepareImage(prevImage, image Image) error {
-	if err := s.BaseStage.PrepareImage(prevImage, image); err != nil {
+func (s *BeforeInstallStage) PrepareImage(prevBuiltImage, image Image) error {
+	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
 		return err
 	}
 

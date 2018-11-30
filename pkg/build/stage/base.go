@@ -67,15 +67,15 @@ func (s *BaseStage) GetRelatedStageName() StageName {
 	return ""
 }
 
-func (s *BaseStage) PrepareImage(prevImage, image Image) error {
+func (s *BaseStage) PrepareImage(prevBuiltImage, image Image) error {
 	var err error
 
-	err = s.addServiceMounts(prevImage, image)
+	err = s.addServiceMounts(prevBuiltImage, image)
 	if err != nil {
 		return fmt.Errorf("error adding service mounts: %s", err)
 	}
 
-	err = s.addCustomMounts(prevImage, image)
+	err = s.addCustomMounts(prevBuiltImage, image)
 	if err != nil {
 		return fmt.Errorf("error adding custom mounts: %s", err)
 	}
@@ -83,7 +83,7 @@ func (s *BaseStage) PrepareImage(prevImage, image Image) error {
 	return nil
 }
 
-func (s *BaseStage) addServiceMounts(prevImage, image Image) error {
+func (s *BaseStage) addServiceMounts(prevBuiltImage, image Image) error {
 	mountpointsByType := map[string][]string{}
 
 	for _, mountCfg := range s.dimgConfig.Mount {
@@ -92,8 +92,8 @@ func (s *BaseStage) addServiceMounts(prevImage, image Image) error {
 	}
 
 	var labels map[string]string
-	if prevImage != nil {
-		labels = prevImage.Labels()
+	if prevBuiltImage != nil {
+		labels = prevBuiltImage.Labels()
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
@@ -148,7 +148,7 @@ func (s *BaseStage) addServiceMounts(prevImage, image Image) error {
 	return nil
 }
 
-func (s *BaseStage) addCustomMounts(prevImage, image Image) error {
+func (s *BaseStage) addCustomMounts(prevBuiltImage, image Image) error {
 	mountpointsByFrom := map[string][]string{}
 
 	for _, mountCfg := range s.dimgConfig.Mount {
@@ -163,8 +163,8 @@ func (s *BaseStage) addCustomMounts(prevImage, image Image) error {
 	}
 
 	var labels map[string]string
-	if prevImage != nil {
-		labels = prevImage.Labels()
+	if prevBuiltImage != nil {
+		labels = prevBuiltImage.Labels()
 	}
 
 	for k, v := range labels {
