@@ -148,7 +148,7 @@ $ echo "1000541517bccae1acce015629f4ec89996e0b4" | dapp kube secret extract
 
 ```bash
 $ dapp kube secret extract .helm/secret/sense_of_life.txt
-42 — ответ на «главный вопрос Жизни, Вселенной и Всего Остального».
+The Ultimate Question of Life, the Universe, and Everything.
 ```
 
 If you need to decrypt the secret-values file, you must also specify the `--values` option.
