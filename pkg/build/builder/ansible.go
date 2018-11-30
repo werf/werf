@@ -61,7 +61,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 	}
 
 	container.AddEnv(
-		map[string]interface{}{
+		map[string]string{
 			"ANSIBLE_CONFIG":              filepath.Join(b.containerWorkDir(), "ansible.cfg"),
 			"DAPP_DUMP_CONFIG_DOC_PATH":   filepath.Join(b.containerWorkDir(), "dump_config.json"),
 			"PYTHONPATH":                  filepath.Join(b.containerWorkDir(), "lib"),
@@ -80,16 +80,16 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 		return err
 	}
 
-	container.AddVolume([]string{
+	container.AddVolume(
 		fmt.Sprintf("%s:%s:ro", stageHostWorkDir, b.containerWorkDir()),
 		fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
-	})
+	)
 
 	containerName, err := dappdeps.AnsibleContainer()
 	if err != nil {
 		return err
 	}
-	container.AddVolumeFrom([]string{fmt.Sprintf("%s:ro", containerName)})
+	container.AddVolumeFrom(fmt.Sprintf("%s:ro", containerName))
 
 	commands := []string{
 		strings.Join([]string{dappdeps.AnsibleBinPath("ansible-playbook"), filepath.Join(b.containerWorkDir(), "playbook.yml")}, " "),
@@ -99,7 +99,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 		commands = append(commands, value)
 	}
 
-	container.AddRunCommands(commands)
+	container.AddRunCommands(commands...)
 
 	return nil
 }

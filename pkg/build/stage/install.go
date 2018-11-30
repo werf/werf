@@ -43,7 +43,7 @@ func (s *InstallStage) PrepareImage(prevImage, image Image) error {
 		return err
 	}
 
-	if err := s.builder.Install(image.GetContainer()); err != nil {
+	if err := s.builder.Install(image.BuilderContainer()); err != nil {
 		return err
 	}
 

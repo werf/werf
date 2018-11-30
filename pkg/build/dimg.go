@@ -42,7 +42,7 @@ func (d *Dimg) GetName() string {
 func (d *Dimg) SetupBaseImage(c *Conveyor) {
 	baseImageName := d.baseImageName
 	if d.baseImageDimgName != "" {
-		baseImageName = c.GetDimg(d.baseImageDimgName).LatestStage().GetImage().GetName()
+		baseImageName = c.GetDimg(d.baseImageDimgName).LatestStage().GetImage().Name()
 	}
 
 	d.baseImage = c.GetOrCreateImage(nil, baseImageName)

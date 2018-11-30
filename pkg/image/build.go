@@ -1,11 +1,11 @@
 package image
 
-type Build struct {
-	*Base
+type build struct {
+	*base
 }
 
-func NewBuildImage(id string) *Build {
-	image := &Build{}
-	image.Base = NewBaseImage(id)
+func newBuildImage(id string) *build {
+	image := &build{}
+	image.base = newBaseImage(id)
 	return image
 }

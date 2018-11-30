@@ -23,22 +23,24 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 
 		err := dimg.PrepareBaseImage()
 		if err != nil {
-			return fmt.Errorf("error preparing base image %s of dimg %s: %s", dimg.GetBaseImage().GetName(), dimg.GetName(), err)
+			return fmt.Errorf("error preparing base image %s of dimg %s: %s", dimg.GetBaseImage().Name(), dimg.GetName(), err)
 		}
 
 		for _, stage := range dimg.GetStages() {
 			image := stage.GetImage()
 
-			image.AddServiceChangeLabel("dapp-version", dapp.Version)
-			image.AddServiceChangeLabel("dapp-cache-version", BuildCacheVersion)
-			image.AddServiceChangeLabel("dapp-dimg", "false")
-			image.AddServiceChangeLabel("dapp-dev-mode", "false")
+			imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()
+			imageServiceCommitChangeOptions.AddLabel(map[string]string{
+				"dapp-version":       dapp.Version,
+				"dapp-cache-version": BuildCacheVersion,
+				"dapp-dimg":          "false",
+				"dapp-dev-mode":      "false",
+			})
 
 			if c.SshAuthSock != "" {
-				image.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SshAuthSock))
-				image.AddEnv(map[string]interface{}{
-					"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent",
-				})
+				imageRunOptions := image.Container().RunOptions()
+				imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SshAuthSock))
+				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
 			}
 
 			err := stage.PrepareImage(prevImage, image)

@@ -93,7 +93,7 @@ func (s *BaseStage) addServiceMounts(prevImage, image Image) error {
 
 	var labels map[string]string
 	if prevImage != nil {
-		labels = prevImage.GetLabels()
+		labels = prevImage.Labels()
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
@@ -128,7 +128,7 @@ func (s *BaseStage) addServiceMounts(prevImage, image Image) error {
 				return fmt.Errorf("error creating tmp path %s for mount: %s", absoluteFrom, err)
 			}
 
-			image.AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+			image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
 		}
 
 		var labelName string
@@ -142,7 +142,7 @@ func (s *BaseStage) addServiceMounts(prevImage, image Image) error {
 
 		labelValue := strings.Join(mountpoints, ";")
 
-		image.AddServiceChangeLabel(labelName, labelValue)
+		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}
 
 	return nil
@@ -164,7 +164,7 @@ func (s *BaseStage) addCustomMounts(prevImage, image Image) error {
 
 	var labels map[string]string
 	if prevImage != nil {
-		labels = prevImage.GetLabels()
+		labels = prevImage.Labels()
 	}
 
 	for k, v := range labels {
@@ -189,12 +189,12 @@ func (s *BaseStage) addCustomMounts(prevImage, image Image) error {
 
 		for _, mountpoint := range mountpoints {
 			absoluteMountpoint := filepath.Join("/", mountpoint)
-			image.AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+			image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
 		}
 
 		labelName := fmt.Sprintf("dapp-mount-custom-dir-%s", strings.Replace(from, "/", "--", -1))
 		labelValue := strings.Join(mountpoints, ";")
-		image.AddServiceChangeLabel(labelName, labelValue)
+		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}
 
 	return nil

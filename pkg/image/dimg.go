@@ -9,9 +9,9 @@ func NewDimgImage(fromImage *Stage, name string) *Dimg {
 }
 
 func (i *Dimg) Tag() error {
-	return i.Stage.Tag(i.Name)
+	return i.Stage.Tag(i.name)
 }
 
 func (i *Dimg) Export() error {
-	return i.Stage.Export(i.Name)
+	return i.Stage.Export(i.name)
 }

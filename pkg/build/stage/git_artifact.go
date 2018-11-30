@@ -157,13 +157,13 @@ func (ga *GitArtifact) ApplyPatchCommand(prevImage, image Image) error {
 		return err
 	}
 
-	image.AddRunCommands(commands)
+	image.Container().AddRunCommands(commands...)
 
 	return nil
 }
 
 func (ga *GitArtifact) GetCommitsToPatch(prevImage Image) (string, string, error) {
-	fromCommit, ok := prevImage.GetLabels()[ga.GetParamshash()]
+	fromCommit, ok := prevImage.Labels()[ga.GetParamshash()]
 	if !ok {
 		return "", "", fmt.Errorf("!!!") // TODO
 	}
@@ -177,7 +177,7 @@ func (ga *GitArtifact) GetCommitsToPatch(prevImage Image) (string, string, error
 }
 
 func (ga *GitArtifact) baseApplyPatchLegacyCommand(fromCommit, toCommit string, prevImage Image) ([]string, error) {
-	archiveType := git_repo.ArchiveType(prevImage.GetLabels()[ga.getArchiveTypeLabelName()])
+	archiveType := git_repo.ArchiveType(prevImage.Labels()[ga.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
@@ -306,7 +306,7 @@ func (ga *GitArtifact) ApplyArchiveCommand(image Image) error {
 		return err
 	}
 
-	image.AddRunCommands(commands)
+	image.Container().AddRunCommands(commands...)
 
 	return nil
 }
@@ -338,7 +338,7 @@ func (ga *GitArtifact) baseApplyArchiveCommand(commit string, image Image) ([]st
 		return nil, err
 	}
 
-	image.AddServiceChangeLabel(ga.getArchiveTypeLabelName(), string(archiveType))
+	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{ga.getArchiveTypeLabelName(): string(archiveType)})
 
 	return commands, err
 }

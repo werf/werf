@@ -10,46 +10,81 @@ import (
 )
 
 type Stage struct {
-	*Base
-	FromImage  *Stage
-	Container  *StageContainer
-	BuildImage *Build
+	*base
+	fromImage  *Stage
+	container  *StageContainer
+	buildImage *build
 }
 
 func NewStageImage(fromImage *Stage, name string) *Stage {
 	stage := &Stage{}
-	stage.Base = NewBaseImage(name)
-	stage.FromImage = fromImage
-	stage.Container = NewStageImageContainer(stage)
+	stage.base = newBaseImage(name)
+	stage.fromImage = fromImage
+	stage.container = newStageImageContainer(stage)
 	return stage
+}
+
+func (i *Stage) Labels() map[string]string {
+	if i.inspect != nil {
+		return i.inspect.Config.Labels
+	}
+	return nil
 }
 
 func (i *Stage) BuilderContainer() *StageBuilderContainer {
 	return &StageBuilderContainer{i}
 }
 
+func (i *Stage) Container() *StageContainer {
+	return i.container
+}
+
 func (i *Stage) MustGetInspect() (*types.ImageInspect, error) {
-	if i.BuildImage != nil {
-		return i.BuildImage.MustGetInspect()
+	if i.buildImage != nil {
+		return i.buildImage.MustGetInspect()
 	} else {
-		return i.Base.MustGetInspect()
+		return i.base.MustGetInspect()
 	}
 }
 
 func (i *Stage) MustGetId() (string, error) {
-	if i.BuildImage != nil {
-		return i.BuildImage.MustGetId()
+	if i.buildImage != nil {
+		return i.buildImage.MustGetId()
 	} else {
-		return i.Base.MustGetId()
+		return i.base.MustGetId()
 	}
 }
 
+func (i *Stage) IsExists() (bool, error) {
+	inspect, err := i.GetInspect()
+	if err != nil {
+		return false, err
+	}
+
+	exist := inspect != nil
+
+	return exist, nil
+}
+
+func (i *Stage) ReadDockerState() error {
+	_, err := i.GetInspect()
+	if err != nil {
+		return fmt.Errorf("image %s inspect failed: %s", i.name, err)
+	}
+	return nil
+}
+
+type StageBuildOptions struct {
+	IntrospectBeforeError bool
+	IntrospectAfterError  bool
+}
+
 func (i *Stage) Build(options *StageBuildOptions) error {
-	if containerRunErr := i.Container.Run(); containerRunErr != nil {
+	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
-				fmt.Printf("Launched command: %s\n", strings.Join(i.Container.AllRunCommands(), " && "))
-				if err := i.IntrospectBefore(); err != nil {
+				fmt.Printf("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				if err := i.introspectBefore(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			} else if options.IntrospectAfterError {
@@ -57,13 +92,13 @@ func (i *Stage) Build(options *StageBuildOptions) error {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 
-				fmt.Printf("Launched command: %s\n", strings.Join(i.Container.AllRunCommands(), " && "))
+				fmt.Printf("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 				if err := i.Introspect(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			}
 
-			if err := i.Container.Rm(); err != nil {
+			if err := i.container.rm(); err != nil {
 				return fmt.Errorf("introspect error failed: %s", err)
 			}
 		}
@@ -75,39 +110,34 @@ func (i *Stage) Build(options *StageBuildOptions) error {
 		return err
 	}
 
-	if err := i.Container.Rm(); err != nil {
+	if err := i.container.rm(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-type StageBuildOptions struct {
-	IntrospectBeforeError bool
-	IntrospectAfterError  bool
-}
-
 func (i *Stage) Commit() error {
-	builtId, err := i.Container.Commit()
+	builtId, err := i.container.commit()
 	if err != nil {
 		return err
 	}
 
-	i.BuildImage = NewBuildImage(builtId)
+	i.buildImage = newBuildImage(builtId)
 
 	return nil
 }
 
 func (i *Stage) Introspect() error {
-	if err := i.Container.Introspect(); err != nil {
+	if err := i.container.introspect(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (i *Stage) IntrospectBefore() error {
-	if err := i.Container.IntrospectBefore(); err != nil {
+func (i *Stage) introspectBefore() error {
+	if err := i.container.introspectBefore(); err != nil {
 		return err
 	}
 
@@ -115,12 +145,12 @@ func (i *Stage) IntrospectBefore() error {
 }
 
 func (i *Stage) SaveInCache() error {
-	buildImageId, err := i.BuildImage.MustGetId()
+	buildImageId, err := i.buildImage.MustGetId()
 	if err != nil {
 		return err
 	}
 
-	if err := docker.CliTag(buildImageId, i.Name); err != nil {
+	if err := docker.CliTag(buildImageId, i.name); err != nil {
 		return err
 	}
 
@@ -141,21 +171,21 @@ func (i *Stage) Tag(name string) error {
 }
 
 func (i *Stage) Pull() error {
-	if err := docker.CliPull(i.Name); err != nil {
+	if err := docker.CliPull(i.name); err != nil {
 		return err
 	}
 
-	i.Base.UnsetInspect()
+	i.base.unsetInspect()
 
 	return nil
 }
 
 func (i *Stage) Push() error {
-	return docker.CliPush(i.Name)
+	return docker.CliPush(i.name)
 }
 
 func (i *Stage) Import(name string) error {
-	importedImage := NewBaseImage(name)
+	importedImage := newBaseImage(name)
 
 	if err := docker.CliPull(name); err != nil {
 		return err
@@ -166,7 +196,7 @@ func (i *Stage) Import(name string) error {
 		return err
 	}
 
-	if err := docker.CliTag(importedImageId, i.Name); err != nil {
+	if err := docker.CliTag(importedImageId, i.name); err != nil {
 		return err
 	}
 
@@ -191,43 +221,4 @@ func (i *Stage) Export(name string) error {
 	}
 
 	return nil
-}
-
-func (i *Stage) AddServiceRunCommands(commands []string) {
-	i.Container.ServiceRunCommands = append(i.Container.ServiceRunCommands, commands...)
-}
-
-func (i *Stage) AddRunCommands(commands []string) {
-	i.Container.RunCommands = append(i.Container.RunCommands, commands...)
-}
-
-func (i *Stage) AddEnv(env map[string]interface{}) {
-	i.Container.RunOptions.AddEnv(env)
-}
-
-func (i *Stage) AddVolume(volume string) {
-	i.Container.RunOptions.AddVolume([]string{volume})
-}
-
-func (i *Stage) AddServiceChangeLabel(name, value string) {
-	i.Container.ServiceCommitChangeOptions.AddLabel(map[string]interface{}{name: value})
-}
-
-func (i *Stage) ReadDockerState() error {
-	_, err := i.GetInspect()
-	if err != nil {
-		return fmt.Errorf("image %s inspect failed: %s", i.Name, err)
-	}
-	return nil
-}
-
-func (i *Stage) GetLabels() map[string]string {
-	if i.Inspect != nil {
-		return i.Inspect.Config.Labels
-	}
-	return nil
-}
-
-func (i *Stage) IsImageExists() bool {
-	return i.Inspect != nil
 }

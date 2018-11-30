@@ -43,7 +43,7 @@ func (s *SetupStage) PrepareImage(prevImage, image Image) error {
 		return err
 	}
 
-	if err := s.builder.Setup(image.GetContainer()); err != nil {
+	if err := s.builder.Setup(image.BuilderContainer()); err != nil {
 		return err
 	}
 

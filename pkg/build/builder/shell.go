@@ -39,7 +39,7 @@ func (b *Shell) isEmptyStage(userStageName string) bool {
 }
 
 func (b *Shell) stage(userStageName string, container Container) error {
-	container.AddRunCommands(b.stageCommands(userStageName))
+	container.AddRunCommands(b.stageCommands(userStageName)...)
 	return nil
 }
 

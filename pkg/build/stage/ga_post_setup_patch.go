@@ -22,7 +22,7 @@ func (s *GAPostSetupPatchStage) Name() StageName {
 func (s *GAPostSetupPatchStage) GetDependencies(_ Conveyor, prevImage Image) (string, error) {
 	var size int64
 	for _, ga := range s.gitArtifacts {
-		commit, ok := prevImage.GetLabels()[ga.GetParamshash()]
+		commit, ok := prevImage.Labels()[ga.GetParamshash()]
 		if ok {
 			exist, err := ga.GitRepo().IsCommitExists(commit)
 			if err != nil {
