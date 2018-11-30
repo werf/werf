@@ -206,7 +206,7 @@ Clone the [AtSea Shop](https://github.com/dockersamples/atsea-sample-shop-app) r
 git clone https://github.com/dockersamples/atsea-sample-shop-app.git
 ```
 
-## Step 2: Сreate a dappfile
+## Step 2: Create a dappfile
 
 To build an application with all of its components create the following `dappfile.yml` **in the root folder** of the repository:
 
@@ -348,7 +348,7 @@ git:
 
 </details>
 
-## Step 3: Сreate SSL certificates
+## Step 3: Create SSL certificates
 
 The NGINX in the `reverse_proxy` image listen on SSL ports and need a key and certificate.
 

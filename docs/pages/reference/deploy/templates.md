@@ -50,15 +50,6 @@ For instance, you can perform the following actions to retrieve values for all v
 dapp kube value get .
 ```
 
-Тогда, обратиться к соответствующим переменным в шаблоне можно через конструкцию подобной – {% raw %}`{{ .Values.db.username.production }}`{% endraw %}.
-
-Dapp устанавливает и использует ряд переменных, также доступных в шаблонах. Получить их значения можно с помощью команды `dapp kube value get VALUE_KEY`.
-
-Например получить значения всех переменных можно следующим образом:
-```bash
-dapp kube value get .
-```
-
 ## Features of chart template creation
 
 Chart templates are published to the `templates` directory as YAML files.
