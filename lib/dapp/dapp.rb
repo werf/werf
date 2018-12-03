@@ -47,7 +47,7 @@ module Dapp
       }
     end
 
-    def initialize(options: {})
+    def initialize(options: {}, init_only_cli_for_ruby2go: false)
       self.class.options.merge!(options)
       Logging::I18n.initialize
       validate_config_options!
@@ -58,8 +58,10 @@ module Dapp
 
       ruby2go_init
 
-      setup_ssh_agent
-      try_host_docker_login unless !!options[:ignore_try_host_docker_login]
+      if !init_only_cli_for_ruby2go
+        setup_ssh_agent
+        try_host_docker_login unless !!options[:ignore_try_host_docker_login]
+      end
     end
 
     def options
