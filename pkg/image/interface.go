@@ -1,5 +1,10 @@
 package image
 
+type BuildOptions struct {
+	IntrospectBeforeError bool
+	IntrospectAfterError  bool
+}
+
 type Image interface {
 	Name() string
 	Labels() map[string]string
@@ -12,9 +17,15 @@ type Image interface {
 	SyncDockerState() error
 
 	Pull() error
+
+	SaveInCache() error
+
+	Build2(BuildOptions) error
 }
 
 type Container interface {
+	Name() string
+
 	AddServiceRunCommands(commands ...string)
 	AddRunCommands(commands ...string)
 
