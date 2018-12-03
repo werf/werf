@@ -158,7 +158,11 @@ func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) erro
 		return err
 	}
 
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.PatchesDir, ga.ContainerPatchesDir))
 	image.Container().AddRunCommands(commands...)
+	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+		fmt.Sprintf("dapp-git-%s-commit", ga.GetParamshash()): toCommit,
+	})
 
 	return nil
 }
@@ -307,7 +311,11 @@ func (ga *GitArtifact) ApplyArchiveCommand(image image.Image) error {
 		return err
 	}
 
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.ArchivesDir, ga.ContainerArchivesDir))
 	image.Container().AddRunCommands(commands...)
+	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+		fmt.Sprintf("dapp-git-%s-commit", ga.GetParamshash()): commit,
+	})
 
 	return nil
 }
