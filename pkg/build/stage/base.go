@@ -79,7 +79,7 @@ func (s *BaseStage) GetRelatedStageName() StageName {
 	return ""
 }
 
-func (s *BaseStage) PrepareImage(prevBuiltImage, image image.Image) error {
+func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.Image) error {
 	var err error
 
 	/*

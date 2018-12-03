@@ -47,7 +47,7 @@ func (s *FromStage) GetDependencies(_ Conveyor, image image.Image) (string, erro
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(prevBuiltImage, image image.Image) error {
+func (s *FromStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
 	var err error
 
 	err = s.addServiceMounts(prevBuiltImage, image, true)

@@ -43,7 +43,7 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
 			}
 
-			err := stage.PrepareImage(prevBuiltImage, image)
+			err := stage.PrepareImage(c, prevBuiltImage, image)
 			if err != nil {
 				return fmt.Errorf("error preparing stage %s: %s", stage.Name(), err)
 			}

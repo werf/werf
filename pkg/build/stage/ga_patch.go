@@ -12,12 +12,12 @@ type GAPatchStage struct {
 	*GAStage
 }
 
-func (s *GAPatchStage) PrepareImage(prevBuiltImage, image image.Image) error {
+func (s *GAPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
 	if s.willLatestCommitBeBuiltOnPrevStage(prevBuiltImage) {
 		return nil
 	}
 
-	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
+	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
 

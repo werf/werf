@@ -325,6 +325,22 @@ func baseGitArtifactInit(local *config.GitLocalExport, dimgName string, c *Conve
 	return ga
 }
 
+func getDimgPatchesDir(dimgName string, c *Conveyor) string {
+	return path.Join(c.TmpDir, dimgName, "patch")
+}
+
+func getDimgPatchesContainerDir(c *Conveyor) string {
+	return path.Join(c.ContainerDappPath, "patch")
+}
+
+func getDimgArchivesDir(dimgName string, c *Conveyor) string {
+	return path.Join(c.TmpDir, dimgName, "archive")
+}
+
+func getDimgArchivesContainerDir(c *Conveyor) string {
+	return path.Join(c.ContainerDappPath, "archive")
+}
+
 func stageDependenciesToMap(sd *config.StageDependencies) map[string][]string {
 	result := map[string][]string{
 		"install":        sd.Install,
