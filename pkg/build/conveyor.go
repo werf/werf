@@ -117,20 +117,12 @@ func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
 	return c.dockerAuthorizer
 }
 
-func getDimgPatchesDir(dimgName string, c *Conveyor) string {
-	return path.Join(c.TmpDir, dimgName, "patch")
+func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
+	return path.Join(c.TmpDir, dimgName)
 }
 
-func getDimgPatchesContainerDir(c *Conveyor) string {
-	return path.Join(c.ContainerDappPath, "patch")
-}
-
-func getDimgArchivesDir(dimgName string, c *Conveyor) string {
-	return path.Join(c.TmpDir, dimgName, "archive")
-}
-
-func getDimgArchivesContainerDir(c *Conveyor) string {
-	return path.Join(c.ContainerDappPath, "archive")
+func (c *Conveyor) GetDimgContainerTmpDir(dimgName string) string {
+	return path.Join(c.ContainerDappPath, "dimg", dimgName)
 }
 
 type stubDockerAuthorizer struct{}

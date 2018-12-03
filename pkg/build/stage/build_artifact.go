@@ -39,8 +39,8 @@ func (s *BuildArtifactStage) GetContext(_ Conveyor) (string, error) {
 	return util.Sha256Hash(s.builder.BuildArtifactChecksum(), stageDependenciesChecksum), nil
 }
 
-func (s *BuildArtifactStage) PrepareImage(prevBuiltImage, image image.Image) error {
-	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
+func (s *BuildArtifactStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
 

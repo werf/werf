@@ -41,8 +41,8 @@ func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ image.Image) (string, err
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *GAArchiveStage) PrepareImage(prevBuiltImage, image image.Image) error {
-	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
+func (s *GAArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
 

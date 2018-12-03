@@ -84,7 +84,7 @@ func (c *StageContainer) prepareRunArgs() ([]string, error) {
 }
 
 func (c *StageContainer) prepareRunCommand() string {
-	return shelloutPack(strings.Join(c.prepareRunCommands(), " && "))
+	return ShelloutPack(strings.Join(c.prepareRunCommands(), " && "))
 }
 
 func (c *StageContainer) prepareRunCommands() []string {
@@ -100,7 +100,7 @@ func (c *StageContainer) prepareAllRunCommands() []string {
 	return append(c.runCommands, c.serviceRunCommands...)
 }
 
-func shelloutPack(command string) string {
+func ShelloutPack(command string) string {
 	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), dappdeps.BaseBinPath("base64"))
 }
 

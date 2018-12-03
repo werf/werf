@@ -12,7 +12,7 @@ type Interface interface {
 	GetContext(Conveyor) (string, error)
 	GetRelatedStageName() StageName
 
-	PrepareImage(prevBuiltImage, image image.Image) error
+	PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error
 
 	SetSignature(signature string)
 	GetSignature() string
