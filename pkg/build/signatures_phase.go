@@ -34,9 +34,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 		var newStagesList []stage.Interface
 
 		for _, s := range dimg.GetStages() {
-			if inspect, err := prevImage.GetInspect(); err != nil {
-				return err
-			} else if inspect != nil {
+			if prevImage.IsExists() {
 				prevBuiltImage = prevImage
 			}
 
