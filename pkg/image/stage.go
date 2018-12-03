@@ -60,8 +60,7 @@ func (i *Stage) IsExists() bool {
 }
 
 func (i *Stage) SyncDockerState() error {
-	err := i.resetInspect()
-	if err != nil {
+	if err := i.ResetInspect(); err != nil {
 		return fmt.Errorf("image %s inspect failed: %s", i.name, err)
 	}
 	return nil

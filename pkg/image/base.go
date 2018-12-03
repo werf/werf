@@ -42,6 +42,12 @@ func (i *base) MustGetInspect() (*types.ImageInspect, error) {
 	}
 }
 
+func (i *base) ResetInspect() error {
+	i.unsetInspect()
+	_, err := i.GetInspect()
+	return err
+}
+
 func (i *base) GetInspect() (*types.ImageInspect, error) {
 	if i.inspect == nil {
 		if err := i.resetInspect(); err != nil {
