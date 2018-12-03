@@ -28,20 +28,11 @@ func Init(keys []string) error {
 	}
 
 	if len(keys) > 0 {
-		agentSock, err := runSSHAgent()
+		agentSock, err := runSSHAgentWithKeys(keys)
 		if err != nil {
-			return fmt.Errorf("error running ssh agent: %s", err)
+			return err
 		}
 		SSHAuthSock = agentSock
-
-		fmt.Printf("Running ssh agent on unix sock %s\n", SSHAuthSock)
-
-		for _, key := range keys {
-			err := addSSHKey(agentSock, key)
-			if err != nil {
-				return fmt.Errorf("error adding ssh key %s: %s", key, err)
-			}
-		}
 
 		return nil
 	}
@@ -62,24 +53,47 @@ func Init(keys []string) error {
 	}
 
 	if len(defaultKeys) > 0 {
-		agentSock, err := runSSHAgent()
-		if err != nil {
-			return fmt.Errorf("error running ssh agent: %s", err)
-		}
-		SSHAuthSock = agentSock
-
-		fmt.Printf("Running ssh agent on unix sock %s\n", SSHAuthSock)
+		validKeys := []string{}
 
 		for _, key := range defaultKeys {
-			// TODO: askpass
-			err := addSSHKey(agentSock, key)
+			keyData, err := ioutil.ReadFile(key)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "WARNING failed to add default ssh key %s to ssh-agent: %s\n", key, err)
+				continue
 			}
+			_, err = ssh.ParseRawPrivateKeyWithPassphrase(keyData, []byte{})
+			if err != nil {
+				continue
+			}
+
+			validKeys = append(validKeys, key)
+		}
+
+		if len(validKeys) > 0 {
+			agentSock, err := runSSHAgentWithKeys(validKeys)
+			if err != nil {
+				return err
+			}
+			SSHAuthSock = agentSock
 		}
 	}
 
 	return nil
+}
+
+func runSSHAgentWithKeys(keys []string) (string, error) {
+	agentSock, err := runSSHAgent()
+	if err != nil {
+		return "", fmt.Errorf("error running ssh agent: %s", err)
+	}
+
+	for _, key := range keys {
+		err := addSSHKey(agentSock, key)
+		if err != nil {
+			return "", fmt.Errorf("error adding ssh key %s: %s", key, err)
+		}
+	}
+
+	return agentSock, nil
 }
 
 func runSSHAgent() (string, error) {
@@ -95,13 +109,15 @@ func runSSHAgent() (string, error) {
 		return "", fmt.Errorf("error listen unix sock %s: %s", sockPath, err)
 	}
 
+	fmt.Printf("Running ssh agent on unix sock %s\n", sockPath)
+
 	go func() {
 		agnt := agent.NewKeyring()
 
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "WARNING: error accepting connection: %s\n", err)
+				fmt.Fprintf(os.Stderr, "WARNING: failed to accept ssh-agent connection: %s\n", err)
 				continue
 			}
 
