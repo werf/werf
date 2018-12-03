@@ -19,7 +19,7 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 	}
 
 	for _, dimg := range c.GetDimgsInOrder() {
-		var prevImage image.Image
+		var prevBuiltImage image.Image
 
 		err := dimg.PrepareBaseImage()
 		if err != nil {
@@ -43,12 +43,14 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
 			}
 
-			err := stage.PrepareImage(prevImage, image)
+			err := stage.PrepareImage(prevBuiltImage, image)
 			if err != nil {
 				return fmt.Errorf("error preparing stage %s: %s", stage.Name(), err)
 			}
 
-			prevImage = image
+			if image.IsExists() {
+				prevBuiltImage = image
+			}
 		}
 	}
 
