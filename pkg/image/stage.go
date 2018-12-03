@@ -110,6 +110,13 @@ func (i *Stage) Build(options *StageBuildOptions) error {
 	return nil
 }
 
+func (i *Stage) Build2(opts BuildOptions) error {
+	return i.Build(&StageBuildOptions{
+		IntrospectBeforeError: opts.IntrospectBeforeError,
+		IntrospectAfterError:  opts.IntrospectAfterError,
+	})
+}
+
 func (i *Stage) Commit() error {
 	builtId, err := i.container.commit()
 	if err != nil {

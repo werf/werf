@@ -33,3 +33,11 @@ func (i *StubImage) SyncDockerState() error {
 func (i *StubImage) Pull() error {
 	return nil
 }
+
+func (i *StubImage) SaveInCache() error {
+	return nil
+}
+
+func (i *StubImage) Build2(image.BuildOptions) error {
+	return nil
+}

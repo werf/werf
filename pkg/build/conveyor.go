@@ -7,6 +7,7 @@ import (
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/dapp/pkg/lock"
 )
 
 type Conveyor struct {
@@ -52,12 +53,21 @@ type Phase interface {
 }
 
 func (c *Conveyor) Build() error {
+	var err error
+
 	phases := []Phase{}
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareImagesPhase())
 	phases = append(phases, NewBuildPhase())
+
+	lockImagesName := fmt.Sprintf("%s.images", c.ProjectName)
+	err = lock.Lock(lockImagesName, lock.LockOptions{ReadOnly: true})
+	if err != nil {
+		return fmt.Errorf("error locking %s: %s", lockImagesName, err)
+	}
+	defer lock.Unlock(lockImagesName)
 
 	for _, phase := range phases {
 		err := phase.Run(c)
