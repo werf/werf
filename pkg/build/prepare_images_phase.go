@@ -19,38 +19,42 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 	}
 
 	for _, dimg := range c.DimgsInOrder {
-		var prevBuiltImage image.Image
+		var prevImage, prevBuiltImage image.Image
 
 		err := dimg.PrepareBaseImage(c)
 		if err != nil {
 			return fmt.Errorf("error preparing base image %s of dimg %s: %s", dimg.GetBaseImage().Name(), dimg.GetName(), err)
 		}
 
+		prevImage = dimg.baseImage
 		for _, stage := range dimg.GetStages() {
+			if prevImage.IsExists() {
+				prevBuiltImage = prevImage
+			}
+
 			img := stage.GetImage()
+			if !img.IsExists() {
+				imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
+				imageServiceCommitChangeOptions.AddLabel(map[string]string{
+					"dapp-version":       dapp.Version,
+					"dapp-cache-version": BuildCacheVersion,
+					"dapp-dimg":          "false",
+					"dapp-dev-mode":      "false",
+				})
 
-			imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
-			imageServiceCommitChangeOptions.AddLabel(map[string]string{
-				"dapp-version":       dapp.Version,
-				"dapp-cache-version": BuildCacheVersion,
-				"dapp-dimg":          "false",
-				"dapp-dev-mode":      "false",
-			})
+				if c.SshAuthSock != "" {
+					imageRunOptions := img.Container().RunOptions()
+					imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SshAuthSock))
+					imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
+				}
 
-			if c.SshAuthSock != "" {
-				imageRunOptions := img.Container().RunOptions()
-				imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SshAuthSock))
-				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
+				err := stage.PrepareImage(c, prevBuiltImage, img)
+				if err != nil {
+					return fmt.Errorf("error preparing stage %s: %s", stage.Name(), err)
+				}
 			}
 
-			err := stage.PrepareImage(c, prevBuiltImage, img)
-			if err != nil {
-				return fmt.Errorf("error preparing stage %s: %s", stage.Name(), err)
-			}
-
-			if img.IsExists() {
-				prevBuiltImage = img
-			}
+			prevImage = img
 		}
 	}
 
