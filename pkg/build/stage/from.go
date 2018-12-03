@@ -2,6 +2,7 @@ package stage
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/flant/dapp/pkg/config"
@@ -50,26 +51,97 @@ func (s *FromStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, 
 }
 
 func (s *FromStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
-	var err error
+	serviceMounts := mergeMounts(s.getServiceMountsFromConfig(), s.getServiceMountsFromLabels(prevBuiltImage))
+	s.addServiceMountsLabels(serviceMounts, image)
 
-	err = s.addServiceMounts(prevBuiltImage, image, true)
-	if err != nil {
-		return fmt.Errorf("error adding service mounts: %s", err)
+	customMounts := mergeMounts(s.getCustomMountsFromConfig(), s.getCustomMountsFromLabels(prevBuiltImage))
+	s.addCustomMountLabels(customMounts, image)
+
+	s.addCleanupMountsCommands(image)
+
+	return nil
+}
+
+func (s *FromStage) getServiceMountsFromConfig() map[string][]string {
+	mountpointsByType := map[string][]string{}
+
+	for _, mountCfg := range s.mounts {
+		mountpoint := filepath.Clean(mountCfg.To)
+		mountpointsByType[mountCfg.Type] = append(mountpointsByType[mountCfg.Type], mountpoint)
 	}
 
-	err = s.addCustomMounts(prevBuiltImage, image, true)
-	if err != nil {
-		return fmt.Errorf("error adding custom mounts: %s", err)
+	return mountpointsByType
+}
+
+func (s *FromStage) getCustomMountsFromConfig() map[string][]string {
+	mountpointsByFrom := map[string][]string{}
+	for _, mountCfg := range s.mounts {
+		if mountCfg.Type != "custom_dir" {
+			continue
+		}
+
+		from := filepath.Clean(mountCfg.From)
+		mountpoint := filepath.Clean(mountCfg.To)
+
+		mountpointsByFrom[from] = util.UniqAppendString(mountpointsByFrom[from], mountpoint)
 	}
 
-	mountpoints := []string{}
+	return mountpointsByFrom
+}
+
+func (s *FromStage) addCleanupMountsCommands(image image.Image) {
+	var mountpoints []string
+
 	for _, mountCfg := range s.mounts {
 		mountpoints = append(mountpoints, mountCfg.To)
 	}
+
 	if len(mountpoints) != 0 {
 		mountpointsStr := strings.Join(mountpoints, " ")
 		image.Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", dappdeps.RmBinPath(), mountpointsStr))
 	}
+}
 
-	return nil
+func mergeMounts(mountsFromConfig, mountsFromLabels map[string][]string) map[string][]string {
+	resultMounts := map[string][]string{}
+
+	var keys []string
+	for key := range mountsFromConfig {
+		keys = append(keys, key)
+	}
+
+	for key := range mountsFromLabels {
+		keys = append(keys, key)
+	}
+
+	isNotInArray := func(arr []string, elm string) bool {
+		for _, arrElm := range arr {
+			if arrElm == elm {
+				return false
+			}
+		}
+
+		return true
+	}
+
+	for _, key := range keys {
+		mountsByKeyFromConfig, ok := mountsFromConfig[key]
+		if ok {
+			resultMounts[key] = mountsByKeyFromConfig
+		} else {
+			resultMounts[key] = mountsFromConfig[key]
+			continue
+		}
+
+		mountsByKeyFromLabels, ok := mountsFromLabels[key]
+		if ok {
+			for _, mount := range mountsByKeyFromLabels {
+				if isNotInArray(mountsByKeyFromConfig, mount) {
+					resultMounts[key] = append(resultMounts[key], mount)
+				}
+			}
+		}
+	}
+
+	return resultMounts
 }
