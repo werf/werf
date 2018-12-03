@@ -45,7 +45,7 @@ func newBaseStage(options *NewBaseStageOptions) *BaseStage {
 	s.projectBuildDir = options.ProjectBuildDir
 	s.dimgTmpDir = options.DimgTmpDir
 	s.dimgContainerTmpDir = options.DimgContainerTmpDir
-	return &BaseStage{}
+	return s
 }
 
 type BaseStage struct {
