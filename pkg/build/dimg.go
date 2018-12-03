@@ -59,7 +59,7 @@ func (d *Dimg) GetBaseImage() *image.Stage {
 func (d *Dimg) PrepareBaseImage(c *Conveyor) error {
 	fromImage := d.stages[0].GetImage()
 
-	if fromImage.IsImageExists() {
+	if fromImage.IsExists() {
 		return nil
 	}
 
@@ -68,25 +68,25 @@ func (d *Dimg) PrepareBaseImage(c *Conveyor) error {
 	}
 
 	ciRegistry := os.Getenv("CI_REGISTRY")
-	if ciRegistry != "" && strings.HasPrefix(fromImage.GetName(), ciRegistry) {
+	if ciRegistry != "" && strings.HasPrefix(fromImage.Name(), ciRegistry) {
 		err := c.GetDockerAuthorizer().LoginBaseImage(ciRegistry)
 		if err != nil {
-			return fmt.Errorf("login into repo %s for base image %s failed: %s", ciRegistry, fromImage.GetName(), err)
+			return fmt.Errorf("login into repo %s for base image %s failed: %s", ciRegistry, fromImage.Name(), err)
 		}
 	}
 
-	if d.baseImage.IsImageExists() {
+	if d.baseImage.IsExists() {
 		err := d.baseImage.Pull()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "WARNING: cannot pull base image %s: %s\n", d.baseImage.GetName(), err)
-			fmt.Fprintf(os.Stderr, "WARNING: using existing image %s without pull\n", d.baseImage.GetName())
+			fmt.Fprintf(os.Stderr, "WARNING: cannot pull base image %s: %s\n", d.baseImage.Name(), err)
+			fmt.Fprintf(os.Stderr, "WARNING: using existing image %s without pull\n", d.baseImage.Name())
 		}
 		return nil
 	}
 
 	err := d.baseImage.Pull()
 	if err != nil {
-		return fmt.Errorf("image %s pull failed: %s", d.baseImage.GetName(), err)
+		return fmt.Errorf("image %s pull failed: %s", d.baseImage.Name(), err)
 	}
 
 	return nil
