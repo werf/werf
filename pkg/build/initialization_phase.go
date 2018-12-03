@@ -334,16 +334,16 @@ func getDimgPatchesDir(dimgName string, c *Conveyor) string {
 	return path.Join(c.TmpDir, dimgName, "patch")
 }
 
-func getDimgPatchesContainerDir(c *Conveyor) string {
-	return path.Join(c.ContainerDappPath, "patch")
+func getDimgPatchesContainerDir(_ *Conveyor) string {
+	return path.Join("/.dapp", "patch")
 }
 
 func getDimgArchivesDir(dimgName string, c *Conveyor) string {
 	return path.Join(c.TmpDir, dimgName, "archive")
 }
 
-func getDimgArchivesContainerDir(c *Conveyor) string {
-	return path.Join(c.ContainerDappPath, "archive")
+func getDimgArchivesContainerDir(_ *Conveyor) string {
+	return path.Join("/.dapp", "archive")
 }
 
 func stageDependenciesToMap(sd *config.StageDependencies) map[string][]string {
@@ -375,7 +375,7 @@ func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, bool)
 func ansibleBuilderExtra(c *Conveyor) *builder.Extra {
 	ansibleBuilderExtra := &builder.Extra{
 		TmpPath:           c.TmpDir,
-		ContainerDappPath: c.ContainerDappPath,
+		ContainerDappPath: "/.dapp",
 	}
 
 	return ansibleBuilderExtra

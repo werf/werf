@@ -28,11 +28,10 @@ type Conveyor struct {
 	stageImages      map[string]*image.Stage
 	dockerAuthorizer DockerAuthorizer
 
-	ProjectName       string
-	ProjectPath       string
-	TmpDir            string
-	ContainerDappPath string
-	SshAuthSock       string
+	ProjectName string
+	ProjectPath string
+	TmpDir      string
+	SshAuthSock string
 }
 
 type DockerAuthorizer interface {
@@ -57,7 +56,7 @@ type Phase interface {
 func (c *Conveyor) Build() error {
 	var err error
 
-	phases := []Phase{}
+	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewRenewPhase())
@@ -120,7 +119,7 @@ func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
 }
 
 func (c *Conveyor) GetDimgContainerTmpDir(dimgName string) string {
-	return path.Join(c.ContainerDappPath, "dimg", dimgName)
+	return path.Join("/.dapp", "dimg", dimgName)
 }
 
 type stubDockerAuthorizer struct{}
