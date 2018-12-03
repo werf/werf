@@ -243,7 +243,7 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 
 	for _, ga := range gitArtifacts {
 		if empty, err := ga.IsEmpty(); err != nil {
-			panic(err)
+			return nil, err
 		} else if !empty {
 			nonEmptyGitArtifacts = append(nonEmptyGitArtifacts, ga)
 		}
@@ -305,6 +305,11 @@ func gitLocalArtifactInit(localGAConfig *config.GitLocal, localGitRepo *git_repo
 }
 
 func baseGitArtifactInit(local *config.GitLocalExport, dimgName string, c *Conveyor) *stage.GitArtifact {
+	var stageDependencies map[string][]string
+	if local.StageDependencies != nil {
+		stageDependencies = stageDependenciesToMap(local.StageDependencies)
+	}
+
 	ga := &stage.GitArtifact{
 		PatchesDir:           getDimgPatchesDir(dimgName, c),
 		ContainerPatchesDir:  getDimgPatchesContainerDir(c),
@@ -319,7 +324,7 @@ func baseGitArtifactInit(local *config.GitLocalExport, dimgName string, c *Conve
 		IncludePaths:       local.IncludePaths,
 		Owner:              local.Owner,
 		Group:              local.Group,
-		StagesDependencies: stageDependenciesToMap(local.StageDependencies),
+		StagesDependencies: stageDependencies,
 	}
 
 	return ga
