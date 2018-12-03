@@ -55,19 +55,12 @@ func (i *Stage) MustGetId() (string, error) {
 	}
 }
 
-func (i *Stage) IsExists() (bool, error) {
-	inspect, err := i.GetInspect()
-	if err != nil {
-		return false, err
-	}
-
-	exist := inspect != nil
-
-	return exist, nil
+func (i *Stage) IsExists() bool {
+	return i.inspect != nil
 }
 
-func (i *Stage) ReadDockerState() error {
-	_, err := i.GetInspect()
+func (i *Stage) SyncDockerState() error {
+	err := i.resetInspect()
 	if err != nil {
 		return fmt.Errorf("image %s inspect failed: %s", i.name, err)
 	}

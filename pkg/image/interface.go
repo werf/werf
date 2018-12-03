@@ -7,9 +7,9 @@ type Image interface {
 	Container() Container
 	BuilderContainer() BuilderContainer
 
-	IsExists() (bool, error)
+	IsExists() bool
 
-	ReadDockerState() error
+	SyncDockerState() error
 
 	Pull() error
 }

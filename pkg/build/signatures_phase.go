@@ -28,15 +28,15 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 		dimg.SetupBaseImage(c)
 
-		var prevBuiltImage *image.Stage
+		var prevBuiltImage image.Image
 		prevImage := dimg.GetBaseImage()
 
 		var newStagesList []stage.Interface
 
 		for _, s := range dimg.GetStages() {
-			if exist, err := prevImage.IsExists(); err != nil {
+			if inspect, err := prevImage.GetInspect(); err != nil {
 				return err
-			} else if exist {
+			} else if inspect != nil {
 				prevBuiltImage = prevImage
 			}
 
@@ -78,7 +78,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 			i := c.GetOrCreateImage(prevImage, imageName)
 			s.SetImage(i)
 
-			err = i.ReadDockerState()
+			err = i.SyncDockerState()
 			if err != nil {
 				return fmt.Errorf("error reading docker state of stage %s: %s", s.Name(), err)
 			}

@@ -34,7 +34,7 @@ func (s *FromStage) Name() StageName {
 	return From
 }
 
-func (s *FromStage) GetDependencies(_ Conveyor, baseImage image.Image) (string, error) {
+func (s *FromStage) GetDependencies(_ Conveyor, image image.Image) (string, error) {
 	var args []string
 
 	args = append(args, s.cacheVersion)
@@ -43,7 +43,7 @@ func (s *FromStage) GetDependencies(_ Conveyor, baseImage image.Image) (string, 
 		args = append(args, mount.From, mount.To, mount.Type)
 	}
 
-	args = append(args, baseImage.Name())
+	args = append(args, image.Name())
 
 	return util.Sha256Hash(args...), nil
 }

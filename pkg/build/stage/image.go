@@ -22,11 +22,11 @@ func (i *StubImage) BuilderContainer() image.BuilderContainer {
 	return nil
 }
 
-func (i *StubImage) IsExists() (bool, error) {
-	return false, nil
+func (i *StubImage) IsExists() bool {
+	return false
 }
 
-func (i *StubImage) ReadDockerState() error {
+func (i *StubImage) SyncDockerState() error {
 	return nil
 }
 
