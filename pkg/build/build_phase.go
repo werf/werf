@@ -47,10 +47,14 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		}
 
 		// build
-		for _, stage := range dimg.GetStages() {
-			img := stage.GetImage()
+		for _, s := range dimg.GetStages() {
+			img := s.GetImage()
 			if img.IsExists() {
 				continue
+			}
+
+			if debug() {
+				fmt.Printf("  %s\n", s.Name())
 			}
 
 			err := img.Build2(image.BuildOptions{})

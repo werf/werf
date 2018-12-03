@@ -50,6 +50,10 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 				continue
 			}
 
+			if debug() {
+				fmt.Printf("  %s\n", s.Name())
+			}
+
 			stageDependencies, err := s.GetDependencies(c, prevImage)
 			if err != nil {
 				return err

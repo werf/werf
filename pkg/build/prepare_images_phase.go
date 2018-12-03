@@ -27,13 +27,17 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 		}
 
 		prevImage = dimg.baseImage
-		for _, stage := range dimg.GetStages() {
+		for _, s := range dimg.GetStages() {
 			if prevImage.IsExists() {
 				prevBuiltImage = prevImage
 			}
 
-			img := stage.GetImage()
+			img := s.GetImage()
 			if !img.IsExists() {
+				if debug() {
+					fmt.Printf("  %s\n", s.Name())
+				}
+
 				imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
 				imageServiceCommitChangeOptions.AddLabel(map[string]string{
 					"dapp-version":       dapp.Version,
@@ -48,9 +52,9 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 					imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
 				}
 
-				err := stage.PrepareImage(c, prevBuiltImage, img)
+				err := s.PrepareImage(c, prevBuiltImage, img)
 				if err != nil {
-					return fmt.Errorf("error preparing stage %s: %s", stage.Name(), err)
+					return fmt.Errorf("error preparing stage %s: %s", s.Name(), err)
 				}
 			}
 
