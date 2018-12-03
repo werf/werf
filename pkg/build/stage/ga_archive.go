@@ -9,10 +9,9 @@ import (
 
 const GAArchiveResetCommitRegex = "(\\[dapp reset\\])|(\\[reset dapp\\])"
 
-func NewGAArchiveStage() *GAArchiveStage {
+func NewGAArchiveStage(baseStageOptions *NewBaseStageOptions) *GAArchiveStage {
 	s := &GAArchiveStage{}
-	s.GAStage = newGAStage()
-
+	s.GAStage = newGAStage(baseStageOptions)
 	return s
 }
 

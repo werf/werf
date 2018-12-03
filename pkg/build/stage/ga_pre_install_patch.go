@@ -1,9 +1,8 @@
 package stage
 
-func NewGAPreInstallPatchStage() *GAPreInstallPatchStage {
+func NewGAPreInstallPatchStage(baseStageOptions *NewBaseStageOptions) *GAPreInstallPatchStage {
 	s := &GAPreInstallPatchStage{}
-	s.GARelatedStage = newGARelatedStage()
-
+	s.GARelatedStage = newGARelatedStage(baseStageOptions)
 	return s
 }
 

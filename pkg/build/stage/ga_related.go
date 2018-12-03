@@ -2,9 +2,9 @@ package stage
 
 import "github.com/flant/dapp/pkg/image"
 
-func newGARelatedStage() *GARelatedStage {
+func newGARelatedStage(baseStageOptions *NewBaseStageOptions) *GARelatedStage {
 	s := &GARelatedStage{}
-	s.GAPatchStage = newGAPatchStage()
+	s.GAPatchStage = newGAPatchStage(baseStageOptions)
 	return s
 }
 

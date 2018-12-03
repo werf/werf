@@ -1,9 +1,8 @@
 package stage
 
-func NewGAPostInstallPatchStage() *GAPostInstallPatchStage {
+func NewGAPostInstallPatchStage(baseStageOptions *NewBaseStageOptions) *GAPostInstallPatchStage {
 	s := &GAPostInstallPatchStage{}
-	s.GARelatedStage = newGARelatedStage()
-
+	s.GARelatedStage = newGARelatedStage(baseStageOptions)
 	return s
 }
 

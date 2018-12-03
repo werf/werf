@@ -35,17 +35,28 @@ const (
 	BuildArtifact               StageName = "build_artifact"
 )
 
-func newBaseStage() *BaseStage {
+type NewBaseStageOptions struct {
+	DimgTmpDir          string
+	DimgContainerTmpDir string
+	ProjectBuildDir     string
+}
+
+func newBaseStage(options *NewBaseStageOptions) *BaseStage {
+	s := &BaseStage{}
+	s.projectBuildDir = options.ProjectBuildDir
+	s.dimgTmpDir = options.DimgTmpDir
+	s.dimgContainerTmpDir = options.DimgContainerTmpDir
 	return &BaseStage{}
 }
 
 type BaseStage struct {
-	signature    string
-	image        image.Image
-	gitArtifacts []*GitArtifact
-	dimgConfig   *config.Dimg
-	tmpDir       string
-	buildDir     string
+	signature           string
+	image               image.Image
+	gitArtifacts        []*GitArtifact
+	dimgConfig          *config.Dimg
+	dimgTmpDir          string
+	dimgContainerTmpDir string
+	projectBuildDir     string
 }
 
 func (s *BaseStage) Name() StageName {
@@ -123,9 +134,9 @@ func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image, onlyLabe
 				var absoluteFrom string
 				switch mountType {
 				case "tmp_dir":
-					absoluteFrom = filepath.Join(s.tmpDir, "mount", slug.Slug(absoluteMountpoint))
+					absoluteFrom = filepath.Join(s.dimgTmpDir, "mount", slug.Slug(absoluteMountpoint))
 				case "build_dir":
-					absoluteFrom = filepath.Join(s.buildDir, "mount", slug.Slug(absoluteMountpoint))
+					absoluteFrom = filepath.Join(s.projectBuildDir, "mount", slug.Slug(absoluteMountpoint))
 				default:
 					panic(fmt.Sprintf("unknown mount type %s", mountType))
 				}

@@ -102,6 +102,12 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 
 	dimgBaseConfig, dimgArtifact := processDimgConfig(dimgConfig)
 
+	baseStageOptions := &stage.NewBaseStageOptions{
+		DimgTmpDir:          c.GetDimgTmpDir(dimgBaseConfig.Name),
+		DimgContainerTmpDir: c.GetDimgContainerTmpDir(dimgBaseConfig.Name),
+		ProjectBuildDir:     c.GetProjectBuildDir(),
+	}
+
 	gitArtifacts, err := generateGitArtifacts(dimgBaseConfig, c)
 	if err != nil {
 		return nil, err
@@ -110,24 +116,24 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	areGitArtifactsExist := len(gitArtifacts) != 0
 
 	// from
-	stages = appendIfExist(stages, stage.GenerateFromStage(dimgBaseConfig))
+	stages = appendIfExist(stages, stage.GenerateFromStage(dimgBaseConfig, baseStageOptions))
 
 	// before_install
-	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgConfig, ansibleBuilderExtra(c)))
+	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions))
 
 	// before_install_artifact
-	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(dimgBaseConfig))
+	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(dimgBaseConfig, baseStageOptions))
 
 	if areGitArtifactsExist {
 		// g_a_archive_stage
-		stages = append(stages, stage.NewGAArchiveStage())
+		stages = append(stages, stage.NewGAArchiveStage(baseStageOptions))
 	}
 
-	installStage := stage.GenerateInstallStage(dimgConfig, ansibleBuilderExtra(c))
+	installStage := stage.GenerateInstallStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
 	if installStage != nil {
 		if areGitArtifactsExist {
 			// g_a_pre_install_patch
-			stages = append(stages, stage.NewGAPreInstallPatchStage())
+			stages = append(stages, stage.NewGAPreInstallPatchStage(baseStageOptions))
 		}
 
 		// install
@@ -135,13 +141,13 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	}
 
 	// after_install_artifact
-	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(dimgBaseConfig))
+	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(dimgBaseConfig, baseStageOptions))
 
-	beforeSetupStage := stage.GenerateBeforeSetupStage(dimgConfig, ansibleBuilderExtra(c))
+	beforeSetupStage := stage.GenerateBeforeSetupStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
 	if beforeSetupStage != nil {
 		if areGitArtifactsExist {
 			// g_a_post_install_patch
-			stages = append(stages, stage.NewGAPostInstallPatchStage())
+			stages = append(stages, stage.NewGAPostInstallPatchStage(baseStageOptions))
 		}
 
 		// before_setup
@@ -149,13 +155,13 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	}
 
 	// before_setup_artifact
-	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBaseConfig))
+	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBaseConfig, baseStageOptions))
 
-	setup := stage.GenerateSetupStage(dimgConfig, ansibleBuilderExtra(c))
+	setup := stage.GenerateSetupStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
 	if beforeSetupStage != nil {
 		if areGitArtifactsExist {
 			// g_a_pre_setup_patch
-			stages = append(stages, stage.NewGAPreSetupPatchStage())
+			stages = append(stages, stage.NewGAPreSetupPatchStage(baseStageOptions))
 		}
 
 		// setup
@@ -163,14 +169,14 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	}
 
 	// after_setup_artifact
-	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(dimgBaseConfig))
+	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(dimgBaseConfig, baseStageOptions))
 
 	if dimgArtifact {
-		buildArtifact := stage.GenerateBuildArtifactStage(dimgConfig, ansibleBuilderExtra(c))
+		buildArtifact := stage.GenerateBuildArtifactStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
 		if beforeSetupStage != nil {
 			if areGitArtifactsExist {
 				// g_a_artifact_patch
-				stages = append(stages, stage.NewGAArtifactPatchStage())
+				stages = append(stages, stage.NewGAArtifactPatchStage(baseStageOptions))
 			}
 
 			// build_artifact
@@ -179,14 +185,14 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	} else {
 		if areGitArtifactsExist {
 			// g_a_post_setup_patch
-			stages = append(stages, stage.NewGAPostSetupPatchStage())
+			stages = append(stages, stage.NewGAPostSetupPatchStage(baseStageOptions))
 
 			// g_a_latest_patch
-			stages = append(stages, stage.NewGALatestPatchStage())
+			stages = append(stages, stage.NewGALatestPatchStage(baseStageOptions))
 		}
 
 		// docker_instructions
-		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(dimgConfig.(*config.Dimg)))
+		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(dimgConfig.(*config.Dimg), baseStageOptions))
 	}
 
 	if areGitArtifactsExist {

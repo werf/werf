@@ -10,16 +10,15 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func GenerateFromStage(dimgBaseConfig *config.DimgBase) Interface {
-	return newFromStage(dimgBaseConfig.FromCacheVersion, dimgBaseConfig.Mount)
+func GenerateFromStage(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) *FromStage {
+	return newFromStage(dimgBaseConfig.FromCacheVersion, dimgBaseConfig.Mount, baseStageOptions)
 }
 
-func newFromStage(cacheVersion string, mounts []*config.Mount) *FromStage {
+func newFromStage(cacheVersion string, mounts []*config.Mount, baseStageOptions *NewBaseStageOptions) *FromStage {
 	s := &FromStage{}
 	s.cacheVersion = cacheVersion
 	s.mounts = mounts
-	s.BaseStage = newBaseStage()
-
+	s.BaseStage = newBaseStage(baseStageOptions)
 	return s
 }
 

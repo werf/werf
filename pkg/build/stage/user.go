@@ -29,11 +29,10 @@ func getBuilder(dimgConfig config.DimgInterface, extra *builder.Extra) builder.B
 	return b
 }
 
-func newUserStage(builder builder.Builder) *UserStage {
+func newUserStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *UserStage {
 	s := &UserStage{}
 	s.builder = builder
-	s.BaseStage = newBaseStage()
-
+	s.BaseStage = newBaseStage(baseStageOptions)
 	return s
 }
 

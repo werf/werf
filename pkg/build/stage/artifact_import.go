@@ -24,11 +24,10 @@ func getImports(dimgBaseConfig *config.DimgBase, options *getImportsOptions) []*
 	return imports
 }
 
-func newArtifactImportStage(imports []*config.ArtifactImport) *ArtifactImportStage {
+func newArtifactImportStage(imports []*config.ArtifactImport, baseStageOptions *NewBaseStageOptions) *ArtifactImportStage {
 	s := &ArtifactImportStage{}
 	s.imports = imports
-	s.BaseStage = newBaseStage()
-
+	s.BaseStage = newBaseStage(baseStageOptions)
 	return s
 }
 

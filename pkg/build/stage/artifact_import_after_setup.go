@@ -2,18 +2,18 @@ package stage
 
 import "github.com/flant/dapp/pkg/config"
 
-func GenerateArtifactImportAfterSetupStage(dimgBaseConfig *config.DimgBase) Interface {
+func GenerateArtifactImportAfterSetupStage(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) *ArtifactImportAfterSetupStage {
 	imports := getImports(dimgBaseConfig, &getImportsOptions{After: Setup})
 	if len(imports) != 0 {
-		return newArtifactImportAfterSetupStage(imports)
+		return newArtifactImportAfterSetupStage(imports, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newArtifactImportAfterSetupStage(imports []*config.ArtifactImport) *ArtifactImportAfterSetupStage {
+func newArtifactImportAfterSetupStage(imports []*config.ArtifactImport, baseStageOptions *NewBaseStageOptions) *ArtifactImportAfterSetupStage {
 	s := &ArtifactImportAfterSetupStage{}
-	s.ArtifactImportStage = newArtifactImportStage(imports)
+	s.ArtifactImportStage = newArtifactImportStage(imports, baseStageOptions)
 	return s
 }
 
