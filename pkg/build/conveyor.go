@@ -1,6 +1,7 @@
 package build
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/flant/dapp/pkg/config"
@@ -23,7 +24,8 @@ type Conveyor struct {
 	// Push()
 	// BP()
 
-	stageImages map[string]*image.Stage
+	stageImages      map[string]*image.Stage
+	dockerAuthorizer DockerAuthorizer
 
 	ProjectName       string
 	ProjectPath       string
@@ -32,11 +34,16 @@ type Conveyor struct {
 	SshAuthSock       string
 }
 
+type DockerAuthorizer interface {
+	LoginBaseImage(repo string) error
+}
+
 func NewConveyor(projectName, tmpDir string) *Conveyor {
 	return &Conveyor{
-		ProjectName: projectName,
-		TmpDir:      tmpDir,
-		stageImages: make(map[string]*image.Stage),
+		ProjectName:      projectName,
+		TmpDir:           tmpDir,
+		stageImages:      make(map[string]*image.Stage),
+		dockerAuthorizer: &stubDockerAuthorizer{},
 	}
 }
 
@@ -96,6 +103,10 @@ func (c *Conveyor) GetProjectBuildDir() string {
 	return path.Join(dapp.GetHomeDir(), "build", c.ProjectName)
 }
 
+func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
+	return c.dockerAuthorizer
+}
+
 func getDimgPatchesDir(dimgName string, c *Conveyor) string {
 	return path.Join(c.TmpDir, dimgName, "patch")
 }
@@ -110,4 +121,11 @@ func getDimgArchivesDir(dimgName string, c *Conveyor) string {
 
 func getDimgArchivesContainerDir(c *Conveyor) string {
 	return path.Join(c.ContainerDappPath, "archive")
+}
+
+type stubDockerAuthorizer struct{}
+
+func (a *stubDockerAuthorizer) LoginBaseImage(repo string) error {
+	fmt.Printf("Called login for base image repo %s\n", repo)
+	return nil
 }
