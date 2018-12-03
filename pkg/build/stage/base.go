@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/dapp/pkg/util"
@@ -53,7 +52,6 @@ type BaseStage struct {
 	signature           string
 	image               image.Image
 	gitArtifacts        []*GitArtifact
-	dimgConfig          *config.Dimg
 	dimgTmpDir          string
 	dimgContainerTmpDir string
 	projectBuildDir     string
@@ -87,12 +85,12 @@ func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.Image) 
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	err = s.addServiceMounts(prevBuiltImage, image, false)
+	err = s.addServiceMounts(prevBuiltImage, image)
 	if err != nil {
 		return fmt.Errorf("error adding service mounts: %s", err)
 	}
 
-	err = s.addCustomMounts(prevBuiltImage, image, false)
+	err = s.addCustomMounts(prevBuiltImage, image)
 	if err != nil {
 		return fmt.Errorf("error adding custom mounts: %s", err)
 	}
@@ -100,13 +98,26 @@ func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.Image) 
 	return nil
 }
 
-func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image, onlyLabels bool) error {
-	mountpointsByType := map[string][]string{}
+func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image) error {
+	mountpointsByType := s.getServiceMountsFromLabels(prevBuiltImage)
 
-	for _, mountCfg := range s.dimgConfig.Mount {
-		mountpoint := filepath.Clean(mountCfg.To)
-		mountpointsByType[mountCfg.Type] = append(mountpointsByType[mountCfg.Type], mountpoint)
+	s.addServiceMountsLabels(mountpointsByType, image)
+
+	if err := s.addServiceMountsVolumes(mountpointsByType, image); err != nil {
+		return err
 	}
+
+	return nil
+}
+
+const (
+	dappMountTypeTmpDirLabel          = "dapp-mount-type-tmp-dir"
+	dappMountTypeBuildDirLabel        = "dapp-mount-type-build-dir"
+	dappMountTypeCustomDirLabelPrefix = "dapp-mount-type-custom-dir-"
+)
+
+func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage image.Image) map[string][]string {
+	mountpointsByType := map[string][]string{}
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
@@ -114,8 +125,8 @@ func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image, onlyLabe
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
-		{"dapp-mount-tmp-dir", "tmp_dir"},
-		{"dapp-mount-build-dir", "build_dir"},
+		{dappMountTypeTmpDirLabel, "tmp_dir"},
+		{dappMountTypeBuildDirLabel, "build_dir"},
 	} {
 		v, hasKey := labels[labelMountType.Label]
 		if !hasKey {
@@ -126,36 +137,44 @@ func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image, onlyLabe
 		mountpointsByType[labelMountType.MountType] = mountpoints
 	}
 
+	return mountpointsByType
+}
+
+func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, image image.Image) error {
 	for mountType, mountpoints := range mountpointsByType {
-		if !onlyLabels {
-			for _, mountpoint := range mountpoints {
-				absoluteMountpoint := filepath.Join("/", mountpoint)
+		for _, mountpoint := range mountpoints {
+			absoluteMountpoint := filepath.Join("/", mountpoint)
 
-				var absoluteFrom string
-				switch mountType {
-				case "tmp_dir":
-					absoluteFrom = filepath.Join(s.dimgTmpDir, "mount", slug.Slug(absoluteMountpoint))
-				case "build_dir":
-					absoluteFrom = filepath.Join(s.projectBuildDir, "mount", slug.Slug(absoluteMountpoint))
-				default:
-					panic(fmt.Sprintf("unknown mount type %s", mountType))
-				}
-
-				err := os.MkdirAll(absoluteFrom, os.ModePerm)
-				if err != nil {
-					return fmt.Errorf("error creating tmp path %s for mount: %s", absoluteFrom, err)
-				}
-
-				image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+			var absoluteFrom string
+			switch mountType {
+			case "tmp_dir":
+				absoluteFrom = filepath.Join(s.dimgTmpDir, "mount", slug.Slug(absoluteMountpoint))
+			case "build_dir":
+				absoluteFrom = filepath.Join(s.projectBuildDir, "mount", slug.Slug(absoluteMountpoint))
+			default:
+				panic(fmt.Sprintf("unknown mount type %s", mountType))
 			}
-		}
 
+			err := os.MkdirAll(absoluteFrom, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("error creating tmp path %s for mount: %s", absoluteFrom, err)
+			}
+
+			image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+		}
+	}
+
+	return nil
+}
+
+func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, image image.Image) {
+	for mountType, mountpoints := range mountpointsByType {
 		var labelName string
 		switch mountType {
 		case "tmp_dir":
-			labelName = "dapp-mount-type-tmp-dir"
+			labelName = dappMountTypeTmpDirLabel
 		case "build_dir":
-			labelName = "dapp-mount-type-build-dir"
+			labelName = dappMountTypeBuildDirLabel
 		default:
 			panic(fmt.Sprintf("unknown mount type %s", mountType))
 		}
@@ -164,41 +183,43 @@ func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image, onlyLabe
 
 		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}
+}
+
+func (s *BaseStage) addCustomMounts(prevBuiltImage, image image.Image) error {
+	mountpointsByFrom := s.getCustomMountsFromLabels(prevBuiltImage)
+
+	s.addCustomMountLabels(mountpointsByFrom, image)
+
+	if err := s.addCustomMountVolumes(mountpointsByFrom, image); err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (s *BaseStage) addCustomMounts(prevBuiltImage, image image.Image, onlyLabels bool) error {
+func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage image.Image) map[string][]string {
 	mountpointsByFrom := map[string][]string{}
-
-	for _, mountCfg := range s.dimgConfig.Mount {
-		if mountCfg.Type != "custom_dir" {
-			continue
-		}
-
-		from := filepath.Clean(mountCfg.From)
-		mountpoint := filepath.Clean(mountCfg.To)
-
-		mountpointsByFrom[from] = util.UniqAppendString(mountpointsByFrom[from], mountpoint)
-	}
 
 	var labels map[string]string
 	if prevBuiltImage != nil {
 		labels = prevBuiltImage.Labels()
 	}
-
 	for k, v := range labels {
-		if !strings.HasPrefix(k, "dapp-mount-custom-dir-") {
+		if !strings.HasPrefix(k, dappMountTypeCustomDirLabelPrefix) {
 			continue
 		}
 
-		parts := strings.SplitN(k, "dapp-mount-custom-dir-", 2)
+		parts := strings.SplitN(k, dappMountTypeCustomDirLabelPrefix, 2)
 		from := strings.Replace(parts[1], "--", "/", -1)
 
 		mountpoints := util.RejectEmptyStrings(util.UniqStrings(strings.Split(v, ";")))
 		mountpointsByFrom[from] = mountpoints
 	}
 
+	return mountpointsByFrom
+}
+
+func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, image image.Image) error {
 	for from, mountpoints := range mountpointsByFrom {
 		absoluteFrom := util.ExpandPath(from)
 
@@ -207,19 +228,21 @@ func (s *BaseStage) addCustomMounts(prevBuiltImage, image image.Image, onlyLabel
 			return fmt.Errorf("error creating %s: %s", absoluteFrom, err)
 		}
 
-		if !onlyLabels {
-			for _, mountpoint := range mountpoints {
-				absoluteMountpoint := filepath.Join("/", mountpoint)
-				image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
-			}
+		for _, mountpoint := range mountpoints {
+			absoluteMountpoint := filepath.Join("/", mountpoint)
+			image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
 		}
-
-		labelName := fmt.Sprintf("dapp-mount-custom-dir-%s", strings.Replace(from, "/", "--", -1))
-		labelValue := strings.Join(mountpoints, ";")
-		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}
 
 	return nil
+}
+
+func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image image.Image) {
+	for from, mountpoints := range mountpointsByFrom {
+		labelName := fmt.Sprintf("%s%s", dappMountTypeCustomDirLabelPrefix, strings.Replace(from, "/", "--", -1))
+		labelValue := strings.Join(mountpoints, ";")
+		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
+	}
 }
 
 func (s *BaseStage) SetSignature(signature string) {
