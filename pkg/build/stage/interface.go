@@ -1,22 +1,24 @@
 package stage
 
+import "github.com/flant/dapp/pkg/image"
+
 type Interface interface {
 	Name() StageName
 
-	IsEmpty(Conveyor, Image) (bool, error)
+	IsEmpty(Conveyor, image.Image) (bool, error)
 
-	GetDependencies(Conveyor, Image) (string, error)
+	GetDependencies(Conveyor, image.Image) (string, error)
 
 	GetContext(Conveyor) (string, error)
 	GetRelatedStageName() StageName
 
-	PrepareImage(prevBuiltImage, image Image) error
+	PrepareImage(prevBuiltImage, image image.Image) error
 
 	SetSignature(signature string)
 	GetSignature() string
 
-	SetImage(Image)
-	GetImage() Image
+	SetImage(image.Image)
+	GetImage() image.Image
 
 	SetGitArtifacts([]*GitArtifact)
 	GetGitArtifacts() []*GitArtifact

@@ -6,6 +6,7 @@ import (
 
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dappdeps"
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -33,7 +34,7 @@ func (s *FromStage) Name() StageName {
 	return From
 }
 
-func (s *FromStage) GetDependencies(_ Conveyor, baseImage Image) (string, error) {
+func (s *FromStage) GetDependencies(_ Conveyor, baseImage image.Image) (string, error) {
 	var args []string
 
 	args = append(args, s.cacheVersion)
@@ -47,7 +48,7 @@ func (s *FromStage) GetDependencies(_ Conveyor, baseImage Image) (string, error)
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(prevBuiltImage, image Image) error {
+func (s *FromStage) PrepareImage(prevBuiltImage, image image.Image) error {
 	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
 		return err
 	}

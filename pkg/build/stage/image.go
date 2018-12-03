@@ -2,20 +2,6 @@ package stage
 
 import "github.com/flant/dapp/pkg/image"
 
-type Image interface {
-	Name() string
-	Labels() map[string]string
-
-	Container() *image.StageContainer
-	BuilderContainer() *image.StageBuilderContainer
-
-	IsExists() (bool, error)
-
-	ReadDockerState() error
-
-	Pull() error
-}
-
 type StubImage struct {
 	labels map[string]string
 }
@@ -28,11 +14,11 @@ func (i *StubImage) Labels() map[string]string {
 	return i.labels
 }
 
-func (i *StubImage) Container() *image.StageContainer {
+func (i *StubImage) Container() image.Container {
 	return nil
 }
 
-func (i *StubImage) BuilderContainer() *image.StageBuilderContainer {
+func (i *StubImage) BuilderContainer() image.BuilderContainer {
 	return nil
 }
 

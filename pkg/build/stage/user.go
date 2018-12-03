@@ -3,6 +3,7 @@ package stage
 import (
 	"github.com/flant/dapp/pkg/build/builder"
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -42,7 +43,7 @@ type UserStage struct {
 	builder builder.Builder
 }
 
-func (s *UserStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
+func (s *UserStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
 	return "", nil
 }
 

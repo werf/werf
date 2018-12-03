@@ -1,6 +1,9 @@
 package stage
 
-import "github.com/flant/dapp/pkg/util"
+import (
+	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/dapp/pkg/util"
+)
 
 const patchSizeStep = 1024 * 1024
 
@@ -19,7 +22,7 @@ func (s *GAPostSetupPatchStage) Name() StageName {
 	return GAPostSetupPatch
 }
 
-func (s *GAPostSetupPatchStage) GetDependencies(_ Conveyor, prevImage Image) (string, error) {
+func (s *GAPostSetupPatchStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, error) {
 	var size int64
 	for _, ga := range s.gitArtifacts {
 		commit, ok := prevImage.Labels()[ga.GetParamshash()]

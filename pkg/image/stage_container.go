@@ -44,15 +44,15 @@ func (c *StageContainer) AddServiceRunCommands(commands ...string) {
 	c.serviceRunCommands = append(c.serviceRunCommands, commands...)
 }
 
-func (c *StageContainer) RunOptions() *StageContainerOptions {
+func (c *StageContainer) RunOptions() ContainerOptions {
 	return c.runOptions
 }
 
-func (c *StageContainer) CommitChangeOptions() *StageContainerOptions {
+func (c *StageContainer) CommitChangeOptions() ContainerOptions {
 	return c.commitChangeOptions
 }
 
-func (c *StageContainer) ServiceCommitChangeOptions() *StageContainerOptions {
+func (c *StageContainer) ServiceCommitChangeOptions() ContainerOptions {
 	return c.serviceCommitChangeOptions
 }
 

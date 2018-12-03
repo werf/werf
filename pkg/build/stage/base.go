@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/dapp/pkg/util"
 )
@@ -40,7 +41,7 @@ func newBaseStage() *BaseStage {
 
 type BaseStage struct {
 	signature    string
-	image        Image
+	image        image.Image
 	gitArtifacts []*GitArtifact
 	dimgConfig   *config.Dimg
 	tmpDir       string
@@ -51,11 +52,11 @@ func (s *BaseStage) Name() StageName {
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
+func (s *BaseStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) IsEmpty(_ Conveyor, _ Image) (bool, error) {
+func (s *BaseStage) IsEmpty(_ Conveyor, _ image.Image) (bool, error) {
 	panic("method must be implemented!")
 }
 
@@ -67,7 +68,7 @@ func (s *BaseStage) GetRelatedStageName() StageName {
 	return ""
 }
 
-func (s *BaseStage) PrepareImage(prevBuiltImage, image Image) error {
+func (s *BaseStage) PrepareImage(prevBuiltImage, image image.Image) error {
 	var err error
 
 	err = s.addServiceMounts(prevBuiltImage, image)
@@ -83,7 +84,7 @@ func (s *BaseStage) PrepareImage(prevBuiltImage, image Image) error {
 	return nil
 }
 
-func (s *BaseStage) addServiceMounts(prevBuiltImage, image Image) error {
+func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image) error {
 	mountpointsByType := map[string][]string{}
 
 	for _, mountCfg := range s.dimgConfig.Mount {
@@ -148,7 +149,7 @@ func (s *BaseStage) addServiceMounts(prevBuiltImage, image Image) error {
 	return nil
 }
 
-func (s *BaseStage) addCustomMounts(prevBuiltImage, image Image) error {
+func (s *BaseStage) addCustomMounts(prevBuiltImage, image image.Image) error {
 	mountpointsByFrom := map[string][]string{}
 
 	for _, mountCfg := range s.dimgConfig.Mount {
@@ -208,11 +209,11 @@ func (s *BaseStage) GetSignature() string {
 	return s.signature
 }
 
-func (s *BaseStage) SetImage(image Image) {
+func (s *BaseStage) SetImage(image image.Image) {
 	s.image = image
 }
 
-func (s *BaseStage) GetImage() Image {
+func (s *BaseStage) GetImage() image.Image {
 	return s.image
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/flant/dapp/pkg/dappdeps"
 	"github.com/flant/dapp/pkg/git_repo"
+	"github.com/flant/dapp/pkg/image"
 )
 
 type GitArtifact struct {
@@ -146,7 +147,7 @@ func (ga *GitArtifact) LegacyApplyPatchCommand(stage LegacyStage) ([]string, err
 	return ga.baseApplyPatchCommand(fromCommit, toCommit, stage.GetPrevStage().GetImage())
 }
 
-func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image Image) error {
+func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) error {
 	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return err
@@ -162,7 +163,7 @@ func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image Image) error {
 	return nil
 }
 
-func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage Image) (string, string, error) {
+func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage image.Image) (string, string, error) {
 	fromCommit, ok := prevBuiltImage.Labels()[ga.GetParamshash()]
 	if !ok {
 		return "", "", fmt.Errorf("!!!") // TODO
@@ -176,7 +177,7 @@ func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage Image) (string, string, 
 	return fromCommit, toCommit, nil
 }
 
-func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage Image) ([]string, error) {
+func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage image.Image) ([]string, error) {
 	archiveType := git_repo.ArchiveType(prevBuiltImage.Labels()[ga.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
@@ -295,7 +296,7 @@ func (ga *GitArtifact) LegacyApplyArchiveCommand(stage LegacyStage) ([]string, e
 	return ga.baseApplyArchiveCommand(commit, stage.GetImage())
 }
 
-func (ga *GitArtifact) ApplyArchiveCommand(image Image) error {
+func (ga *GitArtifact) ApplyArchiveCommand(image image.Image) error {
 	commit, err := ga.LatestCommit()
 	if err != nil {
 		return err
@@ -311,7 +312,7 @@ func (ga *GitArtifact) ApplyArchiveCommand(image Image) error {
 	return nil
 }
 
-func (ga *GitArtifact) baseApplyArchiveCommand(commit string, image Image) ([]string, error) {
+func (ga *GitArtifact) baseApplyArchiveCommand(commit string, image image.Image) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
 		Commit:        commit,
@@ -451,7 +452,7 @@ func (ga *GitArtifact) LegacyIsPatchEmpty(stage LegacyStage) (bool, error) {
 	return ga.baseIsPatchEmpty(fromCommit, toCommit)
 }
 
-func (ga *GitArtifact) IsPatchEmpty(prevBuiltImage Image) (bool, error) {
+func (ga *GitArtifact) IsPatchEmpty(prevBuiltImage image.Image) (bool, error) {
 	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return false, err

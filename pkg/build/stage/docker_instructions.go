@@ -2,6 +2,7 @@ package stage
 
 import (
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -30,7 +31,7 @@ func (s *DockerInstructionsStage) Name() StageName {
 	return DockerInstructions
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
+func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)
@@ -53,7 +54,7 @@ func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ Image) (string, 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *DockerInstructionsStage) PrepareImage(_, image Image) error {
+func (s *DockerInstructionsStage) PrepareImage(_, image image.Image) error {
 	imageCommitChangeOptions := image.Container().CommitChangeOptions()
 
 	imageCommitChangeOptions.AddVolume(s.instructions.Volume...)

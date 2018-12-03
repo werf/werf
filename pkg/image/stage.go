@@ -31,11 +31,11 @@ func (i *Stage) Labels() map[string]string {
 	return nil
 }
 
-func (i *Stage) BuilderContainer() *StageBuilderContainer {
+func (i *Stage) BuilderContainer() BuilderContainer {
 	return &StageBuilderContainer{i}
 }
 
-func (i *Stage) Container() *StageContainer {
+func (i *Stage) Container() Container {
 	return i.container
 }
 

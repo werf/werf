@@ -1,5 +1,7 @@
 package stage
 
+import "github.com/flant/dapp/pkg/image"
+
 func newGAPatchStage() *GAPatchStage {
 	s := &GAPatchStage{}
 	s.GAStage = newGAStage()
@@ -10,7 +12,7 @@ type GAPatchStage struct {
 	*GAStage
 }
 
-func (s *GAPatchStage) PrepareImage(prevBuiltImage, image Image) error {
+func (s *GAPatchStage) PrepareImage(prevBuiltImage, image image.Image) error {
 	if s.willLatestCommitBeBuiltOnPrevStage(prevBuiltImage) {
 		return nil
 	}
