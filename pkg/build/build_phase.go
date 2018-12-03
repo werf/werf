@@ -19,7 +19,7 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 	}
 
 	for _, dimg := range c.DimgsInOrder {
-		acquiredLocks := []string{}
+		var acquiredLocks []string
 
 		unlockLocks := func() {
 			locks := acquiredLocks
@@ -49,6 +49,9 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		// build
 		for _, stage := range dimg.GetStages() {
 			img := stage.GetImage()
+			if img.IsExists() {
+				continue
+			}
 
 			err := img.Build2(image.BuildOptions{})
 			if err != nil {
@@ -59,6 +62,9 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		// save in cache
 		for _, stage := range dimg.GetStages() {
 			img := stage.GetImage()
+			if img.IsExists() {
+				continue
+			}
 
 			err := img.SaveInCache()
 			if err != nil {
