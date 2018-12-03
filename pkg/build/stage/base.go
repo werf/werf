@@ -68,7 +68,7 @@ func (s *BaseStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
 }
 
 func (s *BaseStage) IsEmpty(_ Conveyor, _ image.Image) (bool, error) {
-	panic("method must be implemented!")
+	return false, nil
 }
 
 func (s *BaseStage) GetContext(_ Conveyor) (string, error) {
@@ -114,8 +114,8 @@ func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image, onlyLabe
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
-		struct{ Label, MountType string }{"dapp-mount-tmp-dir", "tmp_dir"},
-		struct{ Label, MountType string }{"dapp-mount-build-dir", "build_dir"},
+		{"dapp-mount-tmp-dir", "tmp_dir"},
+		{"dapp-mount-build-dir", "build_dir"},
 	} {
 		v, hasKey := labels[labelMountType.Label]
 		if !hasKey {

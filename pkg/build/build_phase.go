@@ -18,7 +18,7 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		fmt.Printf("BuildPhase.Run\n")
 	}
 
-	for _, dimg := range c.GetDimgsInOrder() {
+	for _, dimg := range c.DimgsInOrder {
 		acquiredLocks := []string{}
 
 		unlockLocks := func() {

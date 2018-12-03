@@ -18,7 +18,7 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 		fmt.Printf("PrepareImagesPhase.Run\n")
 	}
 
-	for _, dimg := range c.GetDimgsInOrder() {
+	for _, dimg := range c.DimgsInOrder {
 		var prevBuiltImage image.Image
 
 		err := dimg.PrepareBaseImage(c)
@@ -27,9 +27,9 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 		}
 
 		for _, stage := range dimg.GetStages() {
-			image := stage.GetImage()
+			img := stage.GetImage()
 
-			imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()
+			imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
 			imageServiceCommitChangeOptions.AddLabel(map[string]string{
 				"dapp-version":       dapp.Version,
 				"dapp-cache-version": BuildCacheVersion,
@@ -38,18 +38,18 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 			})
 
 			if c.SshAuthSock != "" {
-				imageRunOptions := image.Container().RunOptions()
+				imageRunOptions := img.Container().RunOptions()
 				imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SshAuthSock))
 				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
 			}
 
-			err := stage.PrepareImage(c, prevBuiltImage, image)
+			err := stage.PrepareImage(c, prevBuiltImage, img)
 			if err != nil {
 				return fmt.Errorf("error preparing stage %s: %s", stage.Name(), err)
 			}
 
-			if image.IsExists() {
-				prevBuiltImage = image
+			if img.IsExists() {
+				prevBuiltImage = img
 			}
 		}
 	}

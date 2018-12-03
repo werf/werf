@@ -10,6 +10,7 @@ import (
 	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dapp"
+	"github.com/flant/dapp/pkg/lock"
 )
 
 type buildRubyCliOptions struct {
@@ -21,6 +22,10 @@ type buildRubyCliOptions struct {
 func runBuild(projectDir string, rubyCliOptions buildRubyCliOptions) error {
 	dappfile, err := parseDappfile(projectDir)
 	if err != nil {
+		return err
+	}
+
+	if err := lock.Init(); err != nil {
 		return err
 	}
 
