@@ -11,6 +11,7 @@ import (
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/dapp/pkg/ssh_agent"
 )
 
 type buildRubyCliOptions struct {
@@ -27,6 +28,10 @@ func runBuild(projectDir string, rubyCliOptions buildRubyCliOptions) error {
 
 	if err := lock.Init(); err != nil {
 		return err
+	}
+
+	if err := ssh_agent.Init(rubyCliOptions.SSHKey); err != nil {
+		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
 	c := build.NewConveyor(dappfile, projectDir, rubyCliOptions.Name, dapp.GetTmpDir())
