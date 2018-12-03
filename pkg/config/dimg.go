@@ -8,6 +8,23 @@ type Dimg struct {
 	Docker *Docker
 }
 
+func (c *Dimg) DimgTree() (tree []DimgInterface) {
+	if c.FromDimg != nil {
+		tree = append(tree, c.FromDimg.DimgTree()...)
+	}
+	if c.FromDimgArtifact != nil {
+		tree = append(tree, c.FromDimgArtifact.DimgTree()...)
+	}
+
+	for _, importElm := range c.Import {
+		tree = append(tree, importElm.artifactDimg.DimgTree()...)
+	}
+
+	tree = append(tree, c)
+
+	return
+}
+
 func (c *Dimg) RelatedDimgs() (relatedDimgs []DimgInterface) {
 	relatedDimgs = append(relatedDimgs, c)
 	if c.FromDimg != nil {
