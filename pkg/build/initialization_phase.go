@@ -158,7 +158,7 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBaseConfig, baseStageOptions))
 
 	setup := stage.GenerateSetupStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
-	if beforeSetupStage != nil {
+	if setup != nil {
 		if areGitArtifactsExist {
 			// g_a_pre_setup_patch
 			stages = append(stages, stage.NewGAPreSetupPatchStage(baseStageOptions))
@@ -173,7 +173,7 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 
 	if dimgArtifact {
 		buildArtifact := stage.GenerateBuildArtifactStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
-		if beforeSetupStage != nil {
+		if buildArtifact != nil {
 			if areGitArtifactsExist {
 				// g_a_artifact_patch
 				stages = append(stages, stage.NewGAArtifactPatchStage(baseStageOptions))
