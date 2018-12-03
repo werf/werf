@@ -99,10 +99,6 @@ func (c *Conveyor) GetImage(imageName string) image.Image {
 	return nil
 }
 
-func (c *Conveyor) GetDimgsInOrder() []*Dimg {
-	return nil
-}
-
 func (c *Conveyor) GetProjectName() string {
 	return c.ProjectName
 }

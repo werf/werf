@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ruby2go"
 )
 
@@ -12,10 +11,6 @@ func main() {
 	ruby2go.RunCli("build", func(args map[string]interface{}) (interface{}, error) {
 		cmd, err := ruby2go.CommandFieldFromArgs(args)
 		if err != nil {
-			return nil, err
-		}
-
-		if err := lock.Init(); err != nil {
 			return nil, err
 		}
 

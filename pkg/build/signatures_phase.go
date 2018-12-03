@@ -23,7 +23,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 		fmt.Printf("SignaturesPhase.Run\n")
 	}
 
-	for _, dimg := range c.GetDimgsInOrder() {
+	for _, dimg := range c.DimgsInOrder {
 		var prevStage stage.Interface
 
 		dimg.SetupBaseImage(c)
@@ -46,7 +46,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 				continue
 			}
 
-			stageDependencies, err := s.GetDependencies(c, prevBuiltImage)
+			stageDependencies, err := s.GetDependencies(c, prevImage)
 			if err != nil {
 				return err
 			}

@@ -5,9 +5,9 @@ import "github.com/flant/dapp/pkg/image"
 type Interface interface {
 	Name() StageName
 
-	IsEmpty(Conveyor, image.Image) (bool, error)
+	IsEmpty(c Conveyor, prevBuiltImage image.Image) (bool, error)
 
-	GetDependencies(Conveyor, image.Image) (string, error)
+	GetDependencies(c Conveyor, prevImage image.Image) (string, error)
 
 	GetContext(Conveyor) (string, error)
 	GetRelatedStageName() StageName
