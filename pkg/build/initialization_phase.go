@@ -77,7 +77,7 @@ func getDimgConfigsInOrder(dappfile []*config.Dimg) []config.DimgInterface {
 	var dimgConfigs []config.DimgInterface
 	for _, dimg := range dappfile {
 		relatedDimgs := dimg.RelatedDimgs()
-		for i := len(relatedDimgs) - 1; i > 0; i-- {
+		for i := len(relatedDimgs) - 1; i >= 0; i-- {
 			if isNotInArr(dimgConfigs, relatedDimgs[i]) {
 				dimgConfigs = append(dimgConfigs, relatedDimgs[i])
 			}
@@ -356,10 +356,10 @@ func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, bool)
 	var dimgBase *config.DimgBase
 	var dimgArtifact bool
 	switch dimgConfig.(type) {
-	case config.Dimg:
+	case *config.Dimg:
 		dimgBase = dimgConfig.(*config.Dimg).DimgBase
 		dimgArtifact = false
-	case config.DimgArtifact:
+	case *config.DimgArtifact:
 		dimgBase = dimgConfig.(*config.DimgArtifact).DimgBase
 		dimgArtifact = true
 	}
@@ -377,7 +377,7 @@ func ansibleBuilderExtra(c *Conveyor) *builder.Extra {
 }
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
-	if stage != nil {
+	if !reflect.ValueOf(stage).IsNil() {
 		return append(stages, stage)
 	}
 

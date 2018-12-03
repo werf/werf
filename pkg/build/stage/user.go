@@ -10,15 +10,15 @@ import (
 func getBuilder(dimgConfig config.DimgInterface, extra *builder.Extra) builder.Builder {
 	var b builder.Builder
 	switch dimgConfig.(type) {
-	case config.Dimg:
-		d := dimgConfig.(config.Dimg)
+	case *config.Dimg:
+		d := dimgConfig.(*config.Dimg)
 		if d.Shell != nil {
 			b = builder.NewShellBuilder(d.Shell)
 		} else if d.Ansible != nil {
 			b = builder.NewAnsibleBuilder(d.Ansible, extra)
 		}
-	case config.DimgArtifact:
-		d := dimgConfig.(config.DimgArtifact)
+	case *config.DimgArtifact:
+		d := dimgConfig.(*config.DimgArtifact)
 		if d.Shell != nil {
 			b = builder.NewShellBuilder(d.Shell)
 		} else if d.Ansible != nil {
