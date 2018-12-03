@@ -49,22 +49,26 @@ func (s *FromStage) GetDependencies(_ Conveyor, image image.Image) (string, erro
 }
 
 func (s *FromStage) PrepareImage(prevBuiltImage, image image.Image) error {
-	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
-		return err
+	var err error
+
+	err = s.addServiceMounts(prevBuiltImage, image, true)
+	if err != nil {
+		return fmt.Errorf("error adding service mounts: %s", err)
+	}
+
+	err = s.addCustomMounts(prevBuiltImage, image, true)
+	if err != nil {
+		return fmt.Errorf("error adding custom mounts: %s", err)
 	}
 
 	mountpoints := []string{}
 	for _, mountCfg := range s.mounts {
 		mountpoints = append(mountpoints, mountCfg.To)
 	}
-
-	if len(mountpoints) == 0 {
-		return nil
+	if len(mountpoints) != 0 {
+		mountpointsStr := strings.Join(mountpoints, " ")
+		image.Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", dappdeps.RmBinPath(), mountpointsStr))
 	}
-
-	mountpointsStr := strings.Join(mountpoints, " ")
-
-	image.Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", dappdeps.RmBinPath(), mountpointsStr))
 
 	return nil
 }

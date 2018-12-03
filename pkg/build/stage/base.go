@@ -71,12 +71,17 @@ func (s *BaseStage) GetRelatedStageName() StageName {
 func (s *BaseStage) PrepareImage(prevBuiltImage, image image.Image) error {
 	var err error
 
-	err = s.addServiceMounts(prevBuiltImage, image)
+	/*
+	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
+	 * NOTE: Take into account when adding new base PrepareImage steps.
+	 */
+
+	err = s.addServiceMounts(prevBuiltImage, image, false)
 	if err != nil {
 		return fmt.Errorf("error adding service mounts: %s", err)
 	}
 
-	err = s.addCustomMounts(prevBuiltImage, image)
+	err = s.addCustomMounts(prevBuiltImage, image, false)
 	if err != nil {
 		return fmt.Errorf("error adding custom mounts: %s", err)
 	}
@@ -84,7 +89,7 @@ func (s *BaseStage) PrepareImage(prevBuiltImage, image image.Image) error {
 	return nil
 }
 
-func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image) error {
+func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image, onlyLabels bool) error {
 	mountpointsByType := map[string][]string{}
 
 	for _, mountCfg := range s.dimgConfig.Mount {
@@ -111,25 +116,27 @@ func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image) error {
 	}
 
 	for mountType, mountpoints := range mountpointsByType {
-		for _, mountpoint := range mountpoints {
-			absoluteMountpoint := filepath.Join("/", mountpoint)
+		if !onlyLabels {
+			for _, mountpoint := range mountpoints {
+				absoluteMountpoint := filepath.Join("/", mountpoint)
 
-			var absoluteFrom string
-			switch mountType {
-			case "tmp_dir":
-				absoluteFrom = filepath.Join(s.tmpDir, "mount", slug.Slug(absoluteMountpoint))
-			case "build_dir":
-				absoluteFrom = filepath.Join(s.buildDir, "mount", slug.Slug(absoluteMountpoint))
-			default:
-				panic(fmt.Sprintf("unknown mount type %s", mountType))
+				var absoluteFrom string
+				switch mountType {
+				case "tmp_dir":
+					absoluteFrom = filepath.Join(s.tmpDir, "mount", slug.Slug(absoluteMountpoint))
+				case "build_dir":
+					absoluteFrom = filepath.Join(s.buildDir, "mount", slug.Slug(absoluteMountpoint))
+				default:
+					panic(fmt.Sprintf("unknown mount type %s", mountType))
+				}
+
+				err := os.MkdirAll(absoluteFrom, os.ModePerm)
+				if err != nil {
+					return fmt.Errorf("error creating tmp path %s for mount: %s", absoluteFrom, err)
+				}
+
+				image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
 			}
-
-			err := os.MkdirAll(absoluteFrom, os.ModePerm)
-			if err != nil {
-				return fmt.Errorf("error creating tmp path %s for mount: %s", absoluteFrom, err)
-			}
-
-			image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
 		}
 
 		var labelName string
@@ -137,6 +144,7 @@ func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image) error {
 		case "tmp_dir":
 			labelName = "dapp-mount-type-tmp-dir"
 		case "build_dir":
+			labelName = "dapp-mount-type-build-dir"
 		default:
 			panic(fmt.Sprintf("unknown mount type %s", mountType))
 		}
@@ -149,7 +157,7 @@ func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image) error {
 	return nil
 }
 
-func (s *BaseStage) addCustomMounts(prevBuiltImage, image image.Image) error {
+func (s *BaseStage) addCustomMounts(prevBuiltImage, image image.Image, onlyLabels bool) error {
 	mountpointsByFrom := map[string][]string{}
 
 	for _, mountCfg := range s.dimgConfig.Mount {
@@ -188,9 +196,11 @@ func (s *BaseStage) addCustomMounts(prevBuiltImage, image image.Image) error {
 			return fmt.Errorf("error creating %s: %s", absoluteFrom, err)
 		}
 
-		for _, mountpoint := range mountpoints {
-			absoluteMountpoint := filepath.Join("/", mountpoint)
-			image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+		if !onlyLabels {
+			for _, mountpoint := range mountpoints {
+				absoluteMountpoint := filepath.Join("/", mountpoint)
+				image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s", absoluteFrom, absoluteMountpoint))
+			}
 		}
 
 		labelName := fmt.Sprintf("dapp-mount-custom-dir-%s", strings.Replace(from, "/", "--", -1))
