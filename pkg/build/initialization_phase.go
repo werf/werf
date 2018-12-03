@@ -76,10 +76,10 @@ func getFromAndFromDimgName(dimgConfig config.DimgInterface) (string, string) {
 func getDimgConfigsInOrder(dappfile []*config.Dimg) []config.DimgInterface {
 	var dimgConfigs []config.DimgInterface
 	for _, dimg := range dappfile {
-		relatedDimgs := dimg.RelatedDimgs()
-		for i := len(relatedDimgs) - 1; i >= 0; i-- {
-			if isNotInArr(dimgConfigs, relatedDimgs[i]) {
-				dimgConfigs = append(dimgConfigs, relatedDimgs[i])
+		dimgsInBuildOrder := dimg.DimgTree()
+		for i := 0; i < len(dimgsInBuildOrder); i++ {
+			if isNotInArr(dimgConfigs, dimgsInBuildOrder[i]) {
+				dimgConfigs = append(dimgConfigs, dimgsInBuildOrder[i])
 			}
 		}
 	}
