@@ -39,8 +39,10 @@ type DockerAuthorizer interface {
 	LoginBaseImage(repo string) error
 }
 
-func NewConveyor(projectName, tmpDir string) *Conveyor {
+func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, tmpDir string) *Conveyor {
 	return &Conveyor{
+		Dappfile:         dappfile,
+		ProjectPath:      projectDir,
 		ProjectName:      projectName,
 		TmpDir:           tmpDir,
 		stageImages:      make(map[string]*image.Stage),
@@ -80,13 +82,13 @@ func (c *Conveyor) Build() error {
 }
 
 func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.Stage {
-	if image, ok := c.stageImages[name]; ok {
-		return image
+	if img, ok := c.stageImages[name]; ok {
+		return img
 	}
 
-	image := image.NewStageImage(fromImage, name)
-	c.stageImages[name] = image
-	return image
+	img := image.NewStageImage(fromImage, name)
+	c.stageImages[name] = img
+	return img
 }
 
 func (c *Conveyor) GetDimg(name string) *Dimg {
