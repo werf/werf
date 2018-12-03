@@ -53,6 +53,7 @@ en:
       kube_helm_failed: "Helm failed: %{output}"
       samples_directory_not_exist: "Samples directory `%{path}` not exist in repository `%{url}`!"
       sample_not_exist: "Sample `%{name}` not exist in repository `%{url}` (inside samples directory `%{path}`)!"
+      ruby2go_build_command_failed: "ruby2go_build command `%{command}` failed: `%{message}`!"
       ruby2go_deploy_command_failed: "ruby2go_deploy command `%{command}` failed: `%{message}`!"
     dapp:
       no_such_dimg: "No such dimg: `%{dimgs_patterns}`!"
