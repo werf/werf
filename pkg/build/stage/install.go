@@ -3,6 +3,7 @@ package stage
 import (
 	"github.com/flant/dapp/pkg/build/builder"
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -38,7 +39,7 @@ func (s *InstallStage) GetContext(_ Conveyor) (string, error) {
 	return util.Sha256Hash(s.builder.InstallChecksum(), stageDependenciesChecksum), nil
 }
 
-func (s *InstallStage) PrepareImage(prevBuiltImage, image Image) error {
+func (s *InstallStage) PrepareImage(prevBuiltImage, image image.Image) error {
 	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
 		return err
 	}

@@ -1,5 +1,7 @@
 package stage
 
+import "github.com/flant/dapp/pkg/image"
+
 func newGAStage() *GAStage {
 	s := &GAStage{}
 	s.BaseStage = newBaseStage()
@@ -10,7 +12,7 @@ type GAStage struct {
 	*BaseStage
 }
 
-func (s *GAStage) willLatestCommitBeBuiltOnPrevStage(prevBuiltImage Image) bool {
+func (s *GAStage) willLatestCommitBeBuiltOnPrevStage(prevBuiltImage image.Image) bool {
 	if prevBuiltImage == nil {
 		return true
 	}

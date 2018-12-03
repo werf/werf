@@ -3,6 +3,7 @@ package stage
 import (
 	"sort"
 
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -23,7 +24,7 @@ func (s *GAArchiveStage) Name() StageName {
 	return GAArchive
 }
 
-func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
+func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
 	var args []string
 	for _, ga := range s.gitArtifacts {
 		args = append(args, ga.GetParamshash())
@@ -41,7 +42,7 @@ func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *GAArchiveStage) PrepareImage(prevBuiltImage, image Image) error {
+func (s *GAArchiveStage) PrepareImage(prevBuiltImage, image image.Image) error {
 	if err := s.BaseStage.PrepareImage(prevBuiltImage, image); err != nil {
 		return err
 	}

@@ -1,5 +1,7 @@
 package stage
 
+import "github.com/flant/dapp/pkg/image"
+
 func NewGALatestPatchStage() *GALatestPatchStage {
 	s := &GALatestPatchStage{}
 	s.GAPatchStage = newGAPatchStage()
@@ -14,7 +16,7 @@ func (s *GALatestPatchStage) Name() StageName {
 	return GALatestPatch
 }
 
-func (s *GALatestPatchStage) IsEmpty(_ Conveyor, prevBuiltImage Image) (bool, error) {
+func (s *GALatestPatchStage) IsEmpty(_ Conveyor, prevBuiltImage image.Image) (bool, error) {
 	if s.willLatestCommitBeBuiltOnPrevStage(prevBuiltImage) {
 		return true, nil
 	}

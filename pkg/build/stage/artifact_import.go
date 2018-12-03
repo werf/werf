@@ -2,6 +2,7 @@ package stage
 
 import (
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -37,7 +38,7 @@ type ArtifactImportStage struct {
 	imports []*config.ArtifactImport
 }
 
-func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ Image) (string, error) {
+func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ image.Image) (string, error) {
 	var args []string
 
 	for _, elm := range s.imports {

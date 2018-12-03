@@ -3,8 +3,8 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/dapp"
+	"github.com/flant/dapp/pkg/image"
 )
 
 func NewPrepareImagesPhase() *PrepareImagesPhase {
@@ -19,7 +19,7 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 	}
 
 	for _, dimg := range c.GetDimgsInOrder() {
-		var prevImage stage.Image
+		var prevImage image.Image
 
 		err := dimg.PrepareBaseImage()
 		if err != nil {

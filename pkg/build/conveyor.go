@@ -3,7 +3,6 @@ package build
 import (
 	"path"
 
-	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/image"
@@ -77,7 +76,7 @@ func (c *Conveyor) GetDimg(name string) *Dimg {
 	return nil
 }
 
-func (c *Conveyor) GetImage(imageName string) stage.Image {
+func (c *Conveyor) GetImage(imageName string) image.Image {
 	return nil
 }
 

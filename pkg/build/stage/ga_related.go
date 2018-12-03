@@ -1,5 +1,7 @@
 package stage
 
+import "github.com/flant/dapp/pkg/image"
+
 func newGARelatedStage() *GARelatedStage {
 	s := &GARelatedStage{}
 	s.GAPatchStage = newGAPatchStage()
@@ -10,7 +12,7 @@ type GARelatedStage struct {
 	*GAPatchStage
 }
 
-func (s *GARelatedStage) GetDependencies(_ Conveyor, _ Image) (string, error) {
+func (s *GARelatedStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
 	return "", nil
 }
 
