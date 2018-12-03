@@ -30,6 +30,10 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 		var prevBuiltImage image.Image
 		prevImage := dimg.GetBaseImage()
+		err := prevImage.SyncDockerState()
+		if err != nil {
+			return err
+		}
 
 		var newStagesList []stage.Interface
 
