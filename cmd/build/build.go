@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path"
 
 	"k8s.io/kubernetes/pkg/util/file"
@@ -10,6 +11,7 @@ import (
 	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dapp"
+	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/ssh_agent"
 )
@@ -34,7 +36,11 @@ func runBuild(projectDir string, rubyCliOptions buildRubyCliOptions) error {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
-	c := build.NewConveyor(dappfile, projectDir, rubyCliOptions.Name, dapp.GetTmpDir())
+	if err := docker.Init(hostDockerConfigDir()); err != nil {
+		return err
+	}
+
+	c := build.NewConveyor(dappfile, projectDir, path.Base(projectDir), dapp.GetTmpDir()) // TODO project name
 	if err = c.Build(); err != nil {
 		return err
 	}
@@ -54,4 +60,20 @@ func parseDappfile(projectPath string) ([]*config.Dimg, error) {
 	}
 
 	return nil, errors.New("dappfile.y[a]ml not found")
+}
+
+/**
+TODO
+if options_with_docker_credentials? && !options[:repo].nil?
+	host_docker_tmp_config_dir
+end
+*/
+func hostDockerConfigDir() string {
+	dappDockerConfigEnv := os.Getenv("DAPP_DOCKER_CONFIG")
+
+	if dappDockerConfigEnv != "" {
+		return dappDockerConfigEnv
+	} else {
+		return path.Join(os.Getenv("HOME"), ".docker")
+	}
 }
