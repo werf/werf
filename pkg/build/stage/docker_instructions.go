@@ -6,18 +6,18 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func GenerateDockerInstructionsStage(dimgConfig *config.Dimg) Interface {
+func GenerateDockerInstructionsStage(dimgConfig *config.Dimg, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {
 	if dimgConfig.Docker != nil {
-		return newDockerInstructionsStage(dimgConfig.Docker)
+		return newDockerInstructionsStage(dimgConfig.Docker, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newDockerInstructionsStage(instructions *config.Docker) *DockerInstructionsStage {
+func newDockerInstructionsStage(instructions *config.Docker, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {
 	s := &DockerInstructionsStage{}
 	s.instructions = instructions
-	s.BaseStage = newBaseStage()
+	s.BaseStage = newBaseStage(baseStageOptions)
 	return s
 }
 

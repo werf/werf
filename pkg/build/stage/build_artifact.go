@@ -7,18 +7,18 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func GenerateBuildArtifactStage(dimgConfig config.DimgInterface, extra *builder.Extra) Interface {
+func GenerateBuildArtifactStage(dimgConfig config.DimgInterface, extra *builder.Extra, baseStageOptions *NewBaseStageOptions) *BuildArtifactStage {
 	b := getBuilder(dimgConfig, extra)
 	if b != nil && !b.IsBuildArtifactEmpty() {
-		return newBuildArtifactStage(b)
+		return newBuildArtifactStage(b, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newBuildArtifactStage(builder builder.Builder) *BuildArtifactStage {
+func newBuildArtifactStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *BuildArtifactStage {
 	s := &BuildArtifactStage{}
-	s.UserStage = newUserStage(builder)
+	s.UserStage = newUserStage(builder, baseStageOptions)
 	return s
 }
 

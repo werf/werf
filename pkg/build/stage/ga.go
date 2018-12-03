@@ -2,9 +2,9 @@ package stage
 
 import "github.com/flant/dapp/pkg/image"
 
-func newGAStage() *GAStage {
+func newGAStage(baseStageOptions *NewBaseStageOptions) *GAStage {
 	s := &GAStage{}
-	s.BaseStage = newBaseStage()
+	s.BaseStage = newBaseStage(baseStageOptions)
 	return s
 }
 
