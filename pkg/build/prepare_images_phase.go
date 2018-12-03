@@ -21,7 +21,7 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 	for _, dimg := range c.GetDimgsInOrder() {
 		var prevBuiltImage image.Image
 
-		err := dimg.PrepareBaseImage()
+		err := dimg.PrepareBaseImage(c)
 		if err != nil {
 			return fmt.Errorf("error preparing base image %s of dimg %s: %s", dimg.GetBaseImage().Name(), dimg.GetName(), err)
 		}

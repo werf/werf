@@ -40,7 +40,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 			isEmpty, err := s.IsEmpty(c, prevBuiltImage)
 			if err != nil {
-				return fmt.Errorf("error checking stage %s emptyness: %s", s.Name(), err)
+				return fmt.Errorf("error checking stage %s is empty: %s", s.Name(), err)
 			}
 			if isEmpty {
 				continue
@@ -78,7 +78,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 			err = i.SyncDockerState()
 			if err != nil {
-				return fmt.Errorf("error reading docker state of stage %s: %s", s.Name(), err)
+				return fmt.Errorf("error synchronizing docker state of stage %s: %s", s.Name(), err)
 			}
 
 			newStagesList = append(newStagesList, s)

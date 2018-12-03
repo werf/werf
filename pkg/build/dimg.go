@@ -1,6 +1,10 @@
 package build
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/image"
 )
@@ -52,10 +56,38 @@ func (d *Dimg) GetBaseImage() *image.Stage {
 	return d.baseImage
 }
 
-func (d *Dimg) PrepareBaseImage() error {
+func (d *Dimg) PrepareBaseImage(c *Conveyor) error {
+	fromImage := d.stages[0].GetImage()
+
+	if fromImage.IsImageExists() {
+		return nil
+	}
+
 	if d.baseImageDimgName != "" {
 		return nil
 	}
 
-	return d.baseImage.Pull()
+	ciRegistry := os.Getenv("CI_REGISTRY")
+	if ciRegistry != "" && strings.HasPrefix(fromImage.GetName(), ciRegistry) {
+		err := c.GetDockerAuthorizer().LoginBaseImage(ciRegistry)
+		if err != nil {
+			return fmt.Errorf("login into repo %s for base image %s failed: %s", ciRegistry, fromImage.GetName(), err)
+		}
+	}
+
+	if d.baseImage.IsImageExists() {
+		err := d.baseImage.Pull()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "WARNING: cannot pull base image %s: %s\n", d.baseImage.GetName(), err)
+			fmt.Fprintf(os.Stderr, "WARNING: using existing image %s without pull\n", d.baseImage.GetName())
+		}
+		return nil
+	}
+
+	err := d.baseImage.Pull()
+	if err != nil {
+		return fmt.Errorf("image %s pull failed: %s", d.baseImage.GetName(), err)
+	}
+
+	return nil
 }
