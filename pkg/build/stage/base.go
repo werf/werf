@@ -35,26 +35,26 @@ const (
 )
 
 type NewBaseStageOptions struct {
-	DimgTmpDir          string
-	DimgContainerTmpDir string
-	ProjectBuildDir     string
+	DimgTmpDir       string
+	ContainerDappDir string
+	ProjectBuildDir  string
 }
 
 func newBaseStage(options *NewBaseStageOptions) *BaseStage {
 	s := &BaseStage{}
 	s.projectBuildDir = options.ProjectBuildDir
 	s.dimgTmpDir = options.DimgTmpDir
-	s.dimgContainerTmpDir = options.DimgContainerTmpDir
+	s.containerDappDir = options.ContainerDappDir
 	return s
 }
 
 type BaseStage struct {
-	signature           string
-	image               image.Image
-	gitArtifacts        []*GitArtifact
-	dimgTmpDir          string
-	dimgContainerTmpDir string
-	projectBuildDir     string
+	signature        string
+	image            image.Image
+	gitArtifacts     []*GitArtifact
+	dimgTmpDir       string
+	containerDappDir string
+	projectBuildDir  string
 }
 
 func (s *BaseStage) Name() StageName {
