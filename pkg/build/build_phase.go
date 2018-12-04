@@ -26,10 +26,9 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		var acquiredLocks []string
 
 		unlockLocks := func() {
-			locks := acquiredLocks
 			for len(acquiredLocks) > 0 {
 				var lockName string
-				lockName, locks = locks[0], locks[1:]
+				lockName, acquiredLocks = acquiredLocks[0], acquiredLocks[1:]
 				lock.Unlock(lockName)
 			}
 		}
