@@ -34,7 +34,10 @@ func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) ([]*Dimg, error)
 	for _, dimgConfig := range getDimgConfigsInOrder(dappfile) {
 		dimg := &Dimg{}
 
-		from, fromDimgName := getFromAndFromDimgName(dimgConfig)
+		dimgBaseConfig, _ := processDimgConfig(dimgConfig)
+		from, fromDimgName := getFromAndFromDimgName(dimgBaseConfig)
+
+		dimg.name = dimgBaseConfig.Name
 		dimg.baseImageName = from
 		dimg.baseImageDimgName = fromDimgName
 
@@ -51,11 +54,9 @@ func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) ([]*Dimg, error)
 	return dimgs, nil
 }
 
-func getFromAndFromDimgName(dimgConfig config.DimgInterface) (string, string) {
+func getFromAndFromDimgName(dimgBaseConfig *config.DimgBase) (string, string) {
 	var from string
 	var fromDimgName string
-
-	dimgBaseConfig, _ := processDimgConfig(dimgConfig)
 
 	if dimgBaseConfig.From != "" {
 		from = dimgBaseConfig.From

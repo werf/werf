@@ -10,6 +10,8 @@ import (
 )
 
 type Dimg struct {
+	name string
+
 	baseImageName     string
 	baseImageDimgName string
 
@@ -26,9 +28,9 @@ func (d *Dimg) GetStages() []stage.Interface {
 }
 
 func (d *Dimg) GetStage(name stage.StageName) stage.Interface {
-	for _, stage := range d.stages {
-		if stage.Name() == name {
-			return stage
+	for _, s := range d.stages {
+		if s.Name() == name {
+			return s
 		}
 	}
 
@@ -40,7 +42,7 @@ func (d *Dimg) LatestStage() stage.Interface {
 }
 
 func (d *Dimg) GetName() string {
-	return ""
+	return d.name
 }
 
 func (d *Dimg) SetupBaseImage(c *Conveyor) {
