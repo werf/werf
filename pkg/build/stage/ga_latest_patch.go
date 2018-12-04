@@ -17,7 +17,7 @@ func (s *GALatestPatchStage) Name() StageName {
 }
 
 func (s *GALatestPatchStage) IsEmpty(_ Conveyor, prevBuiltImage image.Image) (bool, error) {
-	if s.willLatestCommitBeBuiltOnPrevStage(prevBuiltImage) {
+	if s.willLatestCommitBeBuiltOnGAArchiveStage(prevBuiltImage) {
 		return true, nil
 	}
 

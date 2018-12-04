@@ -160,17 +160,16 @@ func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) erro
 
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.PatchesDir, ga.ContainerPatchesDir))
 	image.Container().AddRunCommands(commands...)
-	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-		fmt.Sprintf("dapp-git-%s-commit", ga.GetParamshash()): toCommit,
-	})
+
+	ga.AddGACommitToImageLabels(image, toCommit)
 
 	return nil
 }
 
 func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage image.Image) (string, string, error) {
-	fromCommit, ok := prevBuiltImage.Labels()[ga.GetParamshash()]
-	if !ok {
-		return "", "", fmt.Errorf("!!!") // TODO
+	fromCommit := ga.GetGACommitFromImageLabels(prevBuiltImage)
+	if fromCommit == "" {
+		panic("Commit should be in prev built image labels!")
 	}
 
 	toCommit, err := ga.LatestCommit()
@@ -179,6 +178,27 @@ func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage image.Image) (string, st
 	}
 
 	return fromCommit, toCommit, nil
+}
+
+const DappGitCommitLabelFormat = "dapp-git-%s-commit"
+
+func (ga *GitArtifact) AddGACommitToImageLabels(image image.Image, commit string) {
+	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+		ga.ImageGACommitLabel(): commit,
+	})
+}
+
+func (ga *GitArtifact) GetGACommitFromImageLabels(prevImage image.Image) string {
+	commit, ok := prevImage.Labels()[DappGitCommitLabelFormat]
+	if !ok {
+		return ""
+	}
+
+	return commit
+}
+
+func (ga *GitArtifact) ImageGACommitLabel() string {
+	return fmt.Sprintf("dapp-git-%s-commit", ga.GetParamshash())
 }
 
 func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage image.Image) ([]string, error) {
@@ -313,9 +333,8 @@ func (ga *GitArtifact) ApplyArchiveCommand(image image.Image) error {
 
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.ArchivesDir, ga.ContainerArchivesDir))
 	image.Container().AddRunCommands(commands...)
-	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-		fmt.Sprintf("dapp-git-%s-commit", ga.GetParamshash()): commit,
-	})
+
+	ga.AddGACommitToImageLabels(image, commit)
 
 	return nil
 }

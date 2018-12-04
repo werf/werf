@@ -27,7 +27,7 @@ func (stage *StubStage) GetImage() image.Image {
 }
 
 func (stage *StubStage) LayerCommit(gitArtifact *GitArtifact) (string, error) {
-	if commit, hasKey := stage.LayerCommitMap[gitArtifact.GetParamshash()]; hasKey {
+	if commit, hasKey := stage.LayerCommitMap[gitArtifact.ImageGACommitLabel()]; hasKey {
 		return commit, nil
 	}
 
