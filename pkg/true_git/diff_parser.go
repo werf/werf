@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -93,7 +94,19 @@ func (p *diffParser) writeUnrecognizedLine(line string) error {
 	return err
 }
 
+func debugPatchParser() bool {
+	return os.Getenv("DAPP_TRUE_GIT_DEBUG_PATCH_PARSER") == "1"
+}
+
 func (p *diffParser) handleDiffLine(line string) error {
+	if debugPatchParser() {
+		oldState := p.state
+		fmt.Printf("TRUE_GIT parse diff line: state=%#v line=%#v\n", oldState, line)
+		defer func() {
+			fmt.Printf("TRUE_GIT parse diff line: state change: %#v => %#v\n", oldState, p.state)
+		}()
+	}
+
 	switch p.state {
 	case unrecognized:
 		if strings.HasPrefix(line, "diff --git ") {
@@ -143,6 +156,12 @@ func (p *diffParser) handleDiffLine(line string) error {
 		}
 		if strings.HasPrefix(line, "Binary files") {
 			return p.handleShortBinaryHeader(line)
+		}
+		if strings.HasPrefix(line, "diff --git ") {
+			return p.handleDiffBegin(line)
+		}
+		if strings.HasPrefix(line, "Submodule ") {
+			return p.handleSubmoduleLine(line)
 		}
 		return p.writeOutLine(line)
 
