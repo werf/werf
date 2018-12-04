@@ -51,9 +51,9 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 					"dapp-dev-mode":      "false",
 				})
 
-				if c.SshAuthSock != "" {
+				if c.SSHAuthSock != "" {
 					imageRunOptions := img.Container().RunOptions()
-					imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SshAuthSock))
+					imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SSHAuthSock))
 					imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
 				}
 

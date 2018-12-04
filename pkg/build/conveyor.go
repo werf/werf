@@ -34,14 +34,14 @@ type Conveyor struct {
 	ContainerDappDir string
 	TmpDir           string
 
-	SshAuthSock string
+	SSHAuthSock string
 }
 
 type DockerAuthorizer interface {
 	LoginBaseImage(repo string) error
 }
 
-func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmpDir string) *Conveyor {
+func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmpDir, sshAuthSock string) *Conveyor {
 	return &Conveyor{
 		Dappfile:         dappfile,
 		ProjectDir:       projectDir,
@@ -49,6 +49,7 @@ func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmp
 		ProjectBuildDir:  buildDir,
 		ContainerDappDir: "/.dapp",
 		TmpDir:           tmpDir,
+		SSHAuthSock:      sshAuthSock,
 		stageImages:      make(map[string]*image.Stage),
 		dockerAuthorizer: &stubDockerAuthorizer{},
 	}

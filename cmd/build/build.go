@@ -80,7 +80,7 @@ func runBuild(rubyCliOptions buildRubyCliOptions) error {
 		return fmt.Errorf("parsing dappfile failed: %s", err)
 	}
 
-	c := build.NewConveyor(dappfile, projectDir, projectName, buildDir, tmpDir)
+	c := build.NewConveyor(dappfile, projectDir, projectName, buildDir, tmpDir, ssh_agent.SSHAuthSock)
 	if err = c.Build(); err != nil {
 		return err
 	}
