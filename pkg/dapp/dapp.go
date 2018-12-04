@@ -9,18 +9,36 @@ const (
 	Version = "0.36.9"
 )
 
+var (
+	tmpDir, homeDir string
+)
+
 func GetHomeDir() string {
-	if val, ok := os.LookupEnv("DAPP_HOME"); ok {
-		return val
-	}
-	return filepath.Join(os.Getenv("HOME"), ".dapp")
+	return homeDir
 }
 
 func GetTmpDir() string {
+	return tmpDir
+}
+
+func Init(tmpDirOption, homeDirOption string) error {
 	if val, ok := os.LookupEnv("DAPP_TMP"); ok {
-		return val
+		tmpDir = val
+	} else if tmpDirOption != "" {
+		tmpDir = tmpDirOption
+	} else {
+		tmpDir = os.TempDir()
 	}
-	return os.TempDir()
+
+	if val, ok := os.LookupEnv("DAPP_HOME"); ok {
+		homeDir = val
+	} else if homeDirOption != "" {
+		homeDir = homeDirOption
+	} else {
+		homeDir = filepath.Join(os.Getenv("HOME"), ".dapp")
+	}
+
+	return nil
 }
 
 /* TODO: will be needed for single go-dapp binary
