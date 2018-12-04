@@ -189,14 +189,13 @@ func generateSafeCp(from, to, owner, group string, includePaths, excludePaths []
 
 func descentPath(filePath string) []string {
 	var parts []string
-	var prevPart string
 
-	currentPart := filePath
+	part := filePath
 	for {
-		parts = append(parts, currentPart)
-		currentPart = path.Dir(prevPart)
+		parts = append(parts, part)
+		part = path.Dir(part)
 
-		if prevPart == currentPart {
+		if part == path.Dir(part) {
 			break
 		}
 	}
