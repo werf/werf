@@ -41,7 +41,7 @@ type DockerAuthorizer interface {
 	LoginBaseImage(repo string) error
 }
 
-func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmpDir, sshAuthSock string) *Conveyor {
+func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
 	return &Conveyor{
 		Dappfile:         dappfile,
 		ProjectDir:       projectDir,
@@ -51,7 +51,7 @@ func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmp
 		TmpDir:           tmpDir,
 		SSHAuthSock:      sshAuthSock,
 		stageImages:      make(map[string]*image.Stage),
-		dockerAuthorizer: &stubDockerAuthorizer{},
+		dockerAuthorizer: authorizer,
 	}
 }
 

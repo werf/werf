@@ -30,7 +30,7 @@ type buildRubyCliOptions struct {
 	SSHKey           []string `json:"ssh_key"`
 	RegistryUsername string   `json:"registry_username"`
 	RegistryPassword string   `json:"registry_password"`
-	Registry         string   `json:"repo"`
+	Repo             string   `json:"repo"`
 }
 
 func runBuild(rubyCliOptions buildRubyCliOptions) error {
@@ -80,7 +80,20 @@ func runBuild(rubyCliOptions buildRubyCliOptions) error {
 		return fmt.Errorf("parsing dappfile failed: %s", err)
 	}
 
-	c := build.NewConveyor(dappfile, projectDir, projectName, buildDir, tmpDir, ssh_agent.SSHAuthSock)
+	authorizer, err := getDockerAuthorizer(rubyCliOptions)
+	if err != nil {
+		return err
+	}
+
+	// repo, err := getRepoName(rubyCliOptions.Repo)
+	// if err != nil {
+	// 	return fmt.Errorf("repo name error: %s", err)
+	// }
+	// if err := authorizer.Login(repo); err != nil {
+	// 	return fmt.Errorf("login into %s failed: %s", repo, err)
+	// }
+
+	c := build.NewConveyor(dappfile, projectDir, projectName, buildDir, tmpDir, ssh_agent.SSHAuthSock, authorizer)
 	if err = c.Build(); err != nil {
 		return err
 	}
@@ -205,7 +218,7 @@ func hostDockerConfigDir(projectTmpDir string, rubyCliOptions buildRubyCliOption
 	}
 	areDockerCredentialsNotEmpty := username != "" && password != ""
 
-	if areDockerCredentialsNotEmpty && rubyCliOptions.Registry != "" {
+	if areDockerCredentialsNotEmpty && rubyCliOptions.Repo != "" {
 		tmpDockerConfigDir := path.Join(projectTmpDir, "docker")
 
 		if err := os.Mkdir(tmpDockerConfigDir, os.ModePerm); err != nil {
@@ -218,6 +231,21 @@ func hostDockerConfigDir(projectTmpDir string, rubyCliOptions buildRubyCliOption
 	} else {
 		return path.Join(os.Getenv("HOME"), ".docker"), nil
 	}
+}
+
+func getRepoName(repoOption string) (string, error) {
+	if repoOption != "" {
+		return repoOption, nil
+	}
+
+	ciRegistryImage := os.Getenv("CI_REGISTRY_IMAGE")
+	if ciRegistryImage != "" {
+		return ciRegistryImage, nil
+	}
+
+	// TODO: repo should be fully optional for render/lint commands
+
+	return "", fmt.Errorf("CI_REGISTRY_IMAGE variable or repo option required!")
 }
 
 func dockerCredentials(rubyCliOptions buildRubyCliOptions) (string, string, error) {
@@ -247,7 +275,7 @@ func dockerCredentials(rubyCliOptions buildRubyCliOptions) (string, string, erro
 }
 
 func isGCR(rubyCliOptions buildRubyCliOptions) (bool, error) {
-	registryOption := rubyCliOptions.Registry
+	registryOption := rubyCliOptions.Repo
 	if registryOption != "" {
 		if registryOption == ":minikube" {
 			return false, nil
@@ -257,4 +285,29 @@ func isGCR(rubyCliOptions buildRubyCliOptions) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func getDockerAuthorizer(rubyCliOptions buildRubyCliOptions) (*DockerAuthorizer, error) {
+	username, password, err := dockerCredentials(rubyCliOptions)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get docker credentials: %s", err)
+	}
+
+	return NewDockerAuthorizer(username, password), nil
+}
+
+type DockerAuthorizer struct {
+	Username, Password string
+}
+
+func NewDockerAuthorizer(username, password string) *DockerAuthorizer {
+	return &DockerAuthorizer{Username: username, Password: password}
+}
+
+func (a *DockerAuthorizer) LoginBaseImage(repo string) error {
+	return nil
+}
+
+func (a *DockerAuthorizer) LoginForPushes(repo string) error {
+	return nil
 }
