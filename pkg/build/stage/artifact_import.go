@@ -105,7 +105,7 @@ func (s *ArtifactImportStage) generateImportData(c Conveyor, i *config.ArtifactI
 		fmt.Sprintf("--volumes-from=%s", baseContainer),
 		fmt.Sprintf("--entrypoint=%s", dappdeps.BaseBinPath("bash")),
 		fmt.Sprintf("--volume=%s:%s", importTmpPath, importContainerTmpPath),
-		c.GetDimgSignature(i.ArtifactName),
+		c.GetDimgImageName(i.ArtifactName),
 		"-ec",
 		image.ShelloutPack(artifactCommand),
 	}

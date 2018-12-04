@@ -110,6 +110,10 @@ func (c *Conveyor) GetDimgSignature(dimgName string) string {
 	return c.GetDimg(dimgName).LatestStage().GetSignature()
 }
 
+func (c *Conveyor) GetDimgImageName(dimgName string) string {
+	return c.GetDimg(dimgName).LatestStage().GetImage().Name()
+}
+
 func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
 	return c.dockerAuthorizer
 }
