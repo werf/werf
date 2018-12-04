@@ -19,7 +19,7 @@ func (s *GAPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Imag
 		return err
 	}
 
-	if s.willLatestCommitBeBuiltOnPrevStage(prevBuiltImage) {
+	if s.willLatestCommitBeBuiltOnGAArchiveStage(prevBuiltImage) {
 		return nil
 	}
 
@@ -32,14 +32,13 @@ func (s *GAPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Imag
 	return nil
 }
 
-func (s *GAPatchStage) willLatestCommitBeBuiltOnPrevStage(prevBuiltImage image.Image) bool {
+func (s *GAPatchStage) willLatestCommitBeBuiltOnGAArchiveStage(prevBuiltImage image.Image) bool {
 	if prevBuiltImage == nil {
 		return true
 	}
 
 	for _, ga := range s.gitArtifacts {
-		_, exist := prevBuiltImage.Labels()[ga.GetParamshash()]
-		if !exist {
+		if ga.GetGACommitFromImageLabels(prevBuiltImage) == "" {
 			return true
 		}
 	}
