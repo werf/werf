@@ -5,7 +5,6 @@ import (
 	"path"
 
 	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/lock"
 )
@@ -29,8 +28,12 @@ type Conveyor struct {
 	dockerAuthorizer DockerAuthorizer
 
 	ProjectName string
-	ProjectPath string
-	TmpDir      string
+
+	ProjectDir       string
+	ProjectBuildDir  string
+	ContainerDappDir string
+	TmpDir           string
+
 	SshAuthSock string
 }
 
@@ -38,11 +41,13 @@ type DockerAuthorizer interface {
 	LoginBaseImage(repo string) error
 }
 
-func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, tmpDir string) *Conveyor {
+func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmpDir string) *Conveyor {
 	return &Conveyor{
 		Dappfile:         dappfile,
-		ProjectPath:      projectDir,
+		ProjectDir:       projectDir,
 		ProjectName:      projectName,
+		ProjectBuildDir:  buildDir,
+		ContainerDappDir: "/.dapp",
 		TmpDir:           tmpDir,
 		stageImages:      make(map[string]*image.Stage),
 		dockerAuthorizer: &stubDockerAuthorizer{},
@@ -91,27 +96,17 @@ func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.
 }
 
 func (c *Conveyor) GetDimg(name string) *Dimg {
-	return nil
-}
+	for _, dimg := range c.DimgsInOrder {
+		if dimg.GetName() == name {
+			return dimg
+		}
+	}
 
-func (c *Conveyor) GetImage(imageName string) image.Image {
-	return nil
-}
-
-func (c *Conveyor) GetProjectName() string {
-	return c.ProjectName
+	panic(fmt.Sprintf("Dimg '%s' not found!", name))
 }
 
 func (c *Conveyor) GetDimgSignature(dimgName string) string {
 	return c.GetDimg(dimgName).LatestStage().GetSignature()
-}
-
-func (c *Conveyor) GetProjectBuildDir() string {
-	return path.Join(dapp.GetHomeDir(), "build", c.ProjectName)
-}
-
-func (c *Conveyor) GetContainerDappDir() string {
-	return "/.dapp"
 }
 
 func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
@@ -120,10 +115,6 @@ func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
 
 func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
 	return path.Join(c.TmpDir, dimgName)
-}
-
-func (c *Conveyor) GetDimgContainerTmpDir(dimgName string) string {
-	return path.Join(c.GetContainerDappDir(), "dimg", dimgName)
 }
 
 type stubDockerAuthorizer struct{}

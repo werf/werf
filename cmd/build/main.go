@@ -24,13 +24,7 @@ func main() {
 				}
 			}
 
-			value, hasKey := args["projectDir"]
-			if !hasKey {
-				return nil, fmt.Errorf("projectDir argument required!")
-			}
-			projectDir := value.(string)
-
-			return nil, runBuild(projectDir, rubyCliOptions)
+			return nil, runBuild(rubyCliOptions)
 
 		default:
 			return nil, fmt.Errorf("command `%s` isn't supported", cmd)

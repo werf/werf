@@ -82,10 +82,12 @@ func (s *ArtifactImportStage) PrepareImage(c Conveyor, _, image image.Image) err
 
 func (s *ArtifactImportStage) generateImportData(c Conveyor, i *config.ArtifactImport) (string, string, error) {
 	exportFolderName := uuid.NewV4().String()
-	dimgArtifactTmpPath := path.Join(s.dimgTmpDir, i.ArtifactName, exportFolderName)
-	dimgArtifactContainerTmpPath := path.Join(s.dimgContainerTmpDir, i.ArtifactName, exportFolderName)
 
-	artifactCommand := generateSafeCp(i.Add, dimgArtifactContainerTmpPath, "", "", []string{}, []string{})
+	artifactNamePathPart := slug.Slug(i.ArtifactName)
+	importTmpPath := path.Join(s.dimgTmpDir, "artifact", artifactNamePathPart, exportFolderName)
+	importContainerTmpPath := path.Join(s.containerDappDir, "artifact", artifactNamePathPart, exportFolderName)
+
+	artifactCommand := generateSafeCp(i.Add, importContainerTmpPath, "", "", []string{}, []string{})
 
 	toolchainContainer, err := dappdeps.ToolchainContainer()
 	if err != nil {
@@ -102,7 +104,7 @@ func (s *ArtifactImportStage) generateImportData(c Conveyor, i *config.ArtifactI
 		fmt.Sprintf("--volumes-from=%s", toolchainContainer),
 		fmt.Sprintf("--volumes-from=%s", baseContainer),
 		fmt.Sprintf("--entrypoint=%s", dappdeps.BaseBinPath("bash")),
-		fmt.Sprintf("--volume=%s:%s", dimgArtifactTmpPath, dimgArtifactContainerTmpPath),
+		fmt.Sprintf("--volume=%s:%s", importTmpPath, importContainerTmpPath),
 		c.GetDimgSignature(i.ArtifactName),
 		"-ec",
 		image.ShelloutPack(artifactCommand),
@@ -113,9 +115,9 @@ func (s *ArtifactImportStage) generateImportData(c Conveyor, i *config.ArtifactI
 		return "", "", err
 	}
 
-	command := generateSafeCp(dimgArtifactContainerTmpPath, i.To, i.Owner, i.Group, i.IncludePaths, i.ExcludePaths)
+	command := generateSafeCp(importContainerTmpPath, i.To, i.Owner, i.Group, i.IncludePaths, i.ExcludePaths)
 
-	volume := fmt.Sprintf("%s:%s:ro", dimgArtifactTmpPath, dimgArtifactContainerTmpPath)
+	volume := fmt.Sprintf("%s:%s:ro", importTmpPath, importContainerTmpPath)
 
 	return command, volume, nil
 }

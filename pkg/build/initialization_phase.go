@@ -103,9 +103,9 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	dimgBaseConfig, dimgArtifact := processDimgConfig(dimgConfig)
 
 	baseStageOptions := &stage.NewBaseStageOptions{
-		DimgTmpDir:          c.GetDimgTmpDir(dimgBaseConfig.Name),
-		DimgContainerTmpDir: c.GetDimgContainerTmpDir(dimgBaseConfig.Name),
-		ProjectBuildDir:     c.GetProjectBuildDir(),
+		DimgTmpDir:       c.GetDimgTmpDir(dimgBaseConfig.Name),
+		ContainerDappDir: c.ContainerDappDir,
+		ProjectBuildDir:  c.ProjectBuildDir,
 	}
 
 	gitArtifacts, err := generateGitArtifacts(dimgBaseConfig, c)
@@ -210,8 +210,8 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 	var localGitRepo *git_repo.Local
 	if len(dimgBaseConfig.Git.Local) != 0 {
 		localGitRepo = &git_repo.Local{
-			Path:   c.ProjectPath,
-			GitDir: path.Join(c.ProjectPath, ".git"),
+			Path:   c.ProjectDir,
+			GitDir: path.Join(c.ProjectDir, ".git"),
 		}
 	}
 
@@ -259,7 +259,7 @@ func getRemoteGitRepoClonePath(remoteGaConfig *config.GitRemote, c *Conveyor) (s
 	}
 
 	clonePath := path.Join(
-		c.GetProjectBuildDir(),
+		c.ProjectBuildDir,
 		"remote_git_repo",
 		string(git_repo.RemoteGitRepoCacheVersion),
 		slug.Slug(remoteGaConfig.Name),
@@ -335,7 +335,7 @@ func getDimgPatchesDir(dimgName string, c *Conveyor) string {
 }
 
 func getDimgPatchesContainerDir(c *Conveyor) string {
-	return path.Join(c.GetContainerDappDir(), "patch")
+	return path.Join(c.ContainerDappDir, "patch")
 }
 
 func getDimgArchivesDir(dimgName string, c *Conveyor) string {
@@ -343,7 +343,7 @@ func getDimgArchivesDir(dimgName string, c *Conveyor) string {
 }
 
 func getDimgArchivesContainerDir(c *Conveyor) string {
-	return path.Join(c.GetContainerDappDir(), "archive")
+	return path.Join(c.ContainerDappDir, "archive")
 }
 
 func stageDependenciesToMap(sd *config.StageDependencies) map[string][]string {
@@ -375,7 +375,7 @@ func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, bool)
 func ansibleBuilderExtra(c *Conveyor) *builder.Extra {
 	ansibleBuilderExtra := &builder.Extra{
 		TmpPath:           c.TmpDir,
-		ContainerDappPath: c.GetContainerDappDir(),
+		ContainerDappPath: c.ContainerDappDir,
 	}
 
 	return ansibleBuilderExtra

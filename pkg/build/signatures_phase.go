@@ -80,7 +80,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 			s.SetSignature(stageSig)
 
-			imageName := fmt.Sprintf("dimgstage-%s:%s", c.GetProjectName(), stageSig)
+			imageName := fmt.Sprintf("dimgstage-%s:%s", c.ProjectName, stageSig)
 			i := c.GetOrCreateImage(prevImage, imageName)
 			s.SetImage(i)
 
