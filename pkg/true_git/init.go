@@ -16,9 +16,7 @@ const (
 
 var (
 	GitVersion            string
-	RequiredGitVersionMsg = fmt.Sprintf("Git version >= %s required!", MinGitVersionConstraint)
-	// Uncomment when submodules supported by go-dapp
-	// RequiredGitVersionMsg = fmt.Sprintf("Git version >= %s required! To use submodules install git >= %s.", MinGitVersionConstraint, MinGitVersionWithSubmodulesConstraint)
+	RequiredGitVersionMsg = fmt.Sprintf("Git version >= %s required! To use submodules install git >= %s.", MinGitVersionConstraint, MinGitVersionWithSubmodulesConstraint)
 
 	gitVersionObj                 *semver.Version
 	minVersionConstraintObj       *semver.Constraints

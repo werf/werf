@@ -57,7 +57,10 @@ module Dapp
         end
 
         def run_dapp_command(run_method, options: {})
-          dapp = ::Dapp::Dapp.new(options: options)
+          init_only_cli_for_ruby2go = false
+          init_only_cli_for_ruby2go = true if ["build"].any? {|name| name == run_method.to_s}
+
+          dapp = ::Dapp::Dapp.new(options: options, init_only_cli_for_ruby2go: init_only_cli_for_ruby2go)
           ::Dapp::CLI.dapp_object = dapp
           dapp.sentry_message("Manual usage: `#{options[:dapp_command]}` command") unless ENV['CI']
 

@@ -1,54 +1,54 @@
 package config
 
-type RawArtifactImport struct {
-	RawArtifactExport `yaml:",inline"`
-	ArtifactName      string `yaml:"artifact,omitempty"`
-	Before            string `yaml:"before,omitempty"`
-	After             string `yaml:"after,omitempty"`
+type rawArtifactImport struct {
+	ArtifactName string `yaml:"artifact,omitempty"`
+	Before       string `yaml:"before,omitempty"`
+	After        string `yaml:"after,omitempty"`
 
-	RawDimg *RawDimg `yaml:"-"` // parent
+	rawArtifactExport `yaml:",inline"`
+	rawDimg           *rawDimg `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *RawArtifactImport) ConfigSection() interface{} {
+func (c *rawArtifactImport) configSection() interface{} {
 	return c
 }
 
-func (c *RawArtifactImport) Doc() *Doc {
-	return c.RawDimg.Doc
+func (c *rawArtifactImport) doc() *doc {
+	return c.rawDimg.doc
 }
 
-func (c *RawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := ParentStack.Peek().(*RawDimg); ok {
-		c.RawDimg = parent
+func (c *rawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	if parent, ok := parentStack.Peek().(*rawDimg); ok {
+		c.rawDimg = parent
 	}
 
-	ParentStack.Push(c)
-	type plain RawArtifactImport
+	parentStack.Push(c)
+	type plain rawArtifactImport
 	err := unmarshal((*plain)(c))
-	ParentStack.Pop()
+	parentStack.Pop()
 	if err != nil {
 		return err
 	}
 
-	c.RawArtifactExport.InlinedIntoRaw(c)
+	c.rawArtifactExport.inlinedIntoRaw(c)
 
-	if err := CheckOverflow(c.UnsupportedAttributes, c, c.RawDimg.Doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawDimg.doc); err != nil {
 		return err
 	}
 
-	if c.RawArtifactExport.RawExportBase.To == "" {
-		c.RawArtifactExport.RawExportBase.To = c.RawArtifactExport.RawExportBase.Add
+	if c.rawArtifactExport.rawExportBase.To == "" {
+		c.rawArtifactExport.rawExportBase.To = c.rawArtifactExport.rawExportBase.Add
 	}
 
 	return nil
 }
 
-func (c *RawArtifactImport) ToDirective() (artifactImport *ArtifactImport, err error) {
+func (c *rawArtifactImport) toDirective() (artifactImport *ArtifactImport, err error) {
 	artifactImport = &ArtifactImport{}
 
-	if artifactExport, err := c.RawArtifactExport.ToDirective(); err != nil {
+	if artifactExport, err := c.rawArtifactExport.toDirective(); err != nil {
 		return nil, err
 	} else {
 		artifactImport.ArtifactExport = artifactExport
@@ -58,17 +58,17 @@ func (c *RawArtifactImport) ToDirective() (artifactImport *ArtifactImport, err e
 	artifactImport.Before = c.Before
 	artifactImport.After = c.After
 
-	artifactImport.Raw = c
+	artifactImport.raw = c
 
-	if err = c.ValidateDirective(artifactImport); err != nil {
+	if err = c.validateDirective(artifactImport); err != nil {
 		return nil, err
 	}
 
 	return artifactImport, nil
 }
 
-func (c *RawArtifactImport) ValidateDirective(artifactImport *ArtifactImport) (err error) {
-	if err = artifactImport.Validate(); err != nil {
+func (c *rawArtifactImport) validateDirective(artifactImport *ArtifactImport) (err error) {
+	if err = artifactImport.validate(); err != nil {
 		return err
 	}
 

@@ -13,14 +13,14 @@ type Docker struct {
 	User       string
 	Entrypoint []string
 
-	Raw *RawDocker
+	raw *rawDocker
 }
 
-func (c *Docker) Validate() error {
+func (c *Docker) validate() error {
 	return nil
 }
 
-func (c *Docker) ToRuby() ruby_marshal_config.DockerDimg {
+func (c *Docker) toRuby() ruby_marshal_config.DockerDimg {
 	rubyDocker := ruby_marshal_config.DockerDimg{}
 	rubyDocker.Volume = c.Volume
 	rubyDocker.Expose = c.Expose

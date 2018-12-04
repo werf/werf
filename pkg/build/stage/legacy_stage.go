@@ -1,10 +1,14 @@
-package build
+package stage
 
-import "fmt"
+import (
+	"fmt"
 
-type Stage interface {
-	GetPrevStage() Stage
-	GetImage() Image
+	"github.com/flant/dapp/pkg/image"
+)
+
+type LegacyStage interface {
+	GetPrevStage() LegacyStage
+	GetImage() image.Image
 	LayerCommit(gitArtifact *GitArtifact) (string, error)
 }
 
@@ -14,16 +18,16 @@ type StubStage struct {
 	Image          *StubImage
 }
 
-func (stage *StubStage) GetPrevStage() Stage {
+func (stage *StubStage) GetPrevStage() LegacyStage {
 	return stage.PrevStage
 }
 
-func (stage *StubStage) GetImage() Image {
+func (stage *StubStage) GetImage() image.Image {
 	return stage.Image
 }
 
 func (stage *StubStage) LayerCommit(gitArtifact *GitArtifact) (string, error) {
-	if commit, hasKey := stage.LayerCommitMap[gitArtifact.GetParamshash()]; hasKey {
+	if commit, hasKey := stage.LayerCommitMap[gitArtifact.ImageGACommitLabel()]; hasKey {
 		return commit, nil
 	}
 

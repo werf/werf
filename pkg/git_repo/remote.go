@@ -15,6 +15,8 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 )
 
+const RemoteGitRepoCacheVersion = 4
+
 type Remote struct {
 	Base
 	Url       string

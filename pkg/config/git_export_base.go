@@ -4,9 +4,9 @@ type GitExportBase struct {
 	*GitExport
 	StageDependencies *StageDependencies
 
-	Raw *RawGit
+	raw *rawGit
 }
 
-func (c *GitExportBase) Validate() error {
+func (c *GitExportBase) validate() error {
 	return nil
 }

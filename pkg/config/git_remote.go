@@ -10,20 +10,20 @@ type GitRemote struct {
 	Name string
 	Url  string
 
-	Raw *RawGit
+	raw *rawGit
 }
 
-func (c *GitRemote) Validate() error {
+func (c *GitRemote) validate() error {
 	return nil
 }
 
-func (c *GitRemote) ToRuby() ruby_marshal_config.GitArtifactRemote {
+func (c *GitRemote) toRuby() ruby_marshal_config.GitArtifactRemote {
 	rubyGitArtifactRemote := ruby_marshal_config.GitArtifactRemote{}
 	rubyGitArtifactRemote.Url = c.Url
 	rubyGitArtifactRemote.Name = c.Name
 	rubyGitArtifactRemote.As = c.As
 	if c.GitRemoteExport != nil {
-		rubyGitArtifactRemote.Export = append(rubyGitArtifactRemote.Export, c.GitRemoteExport.ToRuby())
+		rubyGitArtifactRemote.Export = append(rubyGitArtifactRemote.Export, c.GitRemoteExport.toRuby())
 	}
 	return rubyGitArtifactRemote
 }

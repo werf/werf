@@ -13,38 +13,54 @@ import (
 )
 
 type StageContainer struct {
-	Image                      *Stage
-	Name                       string
-	RunCommands                []string
-	ServiceRunCommands         []string
-	RunOptions                 *StageContainerOptions
-	CommitChangeOptions        *StageContainerOptions
-	ServiceCommitChangeOptions *StageContainerOptions
+	image                      *Stage
+	name                       string
+	runCommands                []string
+	serviceRunCommands         []string
+	runOptions                 *StageContainerOptions
+	commitChangeOptions        *StageContainerOptions
+	serviceCommitChangeOptions *StageContainerOptions
 }
 
-func NewStageImageContainer(image *Stage) *StageContainer {
+func newStageImageContainer(image *Stage) *StageContainer {
 	c := &StageContainer{}
-	c.Image = image
-	c.Name = fmt.Sprintf("dapp.build.%v", util.GenerateConsistentRandomString(10))
-	c.RunOptions = NewStageContainerOptions()
-	c.CommitChangeOptions = NewStageContainerOptions()
-	c.ServiceCommitChangeOptions = NewStageContainerOptions()
+	c.image = image
+	c.name = fmt.Sprintf("dapp.build.%v", util.GenerateConsistentRandomString(10))
+	c.runOptions = newStageContainerOptions()
+	c.commitChangeOptions = newStageContainerOptions()
+	c.serviceCommitChangeOptions = newStageContainerOptions()
 	return c
 }
 
-func (c *StageContainer) AddRunCommands(commands []string) {
-	c.RunCommands = append(c.RunCommands, commands...)
+func (c *StageContainer) Name() string {
+	return c.name
 }
 
-func (c *StageContainer) AddServiceRunCommands(commands []string) {
-	c.ServiceRunCommands = append(c.ServiceRunCommands, commands...)
+func (c *StageContainer) AddRunCommands(commands ...string) {
+	c.runCommands = append(c.runCommands, commands...)
 }
 
-func (c *StageContainer) runArgs() ([]string, error) {
+func (c *StageContainer) AddServiceRunCommands(commands ...string) {
+	c.serviceRunCommands = append(c.serviceRunCommands, commands...)
+}
+
+func (c *StageContainer) RunOptions() ContainerOptions {
+	return c.runOptions
+}
+
+func (c *StageContainer) CommitChangeOptions() ContainerOptions {
+	return c.commitChangeOptions
+}
+
+func (c *StageContainer) ServiceCommitChangeOptions() ContainerOptions {
+	return c.serviceCommitChangeOptions
+}
+
+func (c *StageContainer) prepareRunArgs() ([]string, error) {
 	var args []string
-	args = append(args, fmt.Sprintf("--name=%s", c.Name))
+	args = append(args, fmt.Sprintf("--name=%s", c.name))
 
-	runOptions, err := c.runOptions()
+	runOptions, err := c.prepareRunOptions()
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +70,7 @@ func (c *StageContainer) runArgs() ([]string, error) {
 		return nil, err
 	}
 
-	fromImageId, err := c.Image.FromImage.MustGetId()
+	fromImageId, err := c.image.fromImage.MustGetId()
 	if err != nil {
 		return nil, err
 	}
@@ -62,17 +78,17 @@ func (c *StageContainer) runArgs() ([]string, error) {
 	args = append(args, runArgs...)
 	args = append(args, fromImageId)
 	args = append(args, "-ec")
-	args = append(args, c.PreparedRunCommand())
+	args = append(args, c.prepareRunCommand())
 
 	return args, nil
 }
 
-func (c *StageContainer) PreparedRunCommand() string {
-	return ShelloutPack(strings.Join(c.PreparedRunCommands(), " && "))
+func (c *StageContainer) prepareRunCommand() string {
+	return ShelloutPack(strings.Join(c.prepareRunCommands(), " && "))
 }
 
-func (c *StageContainer) PreparedRunCommands() []string {
-	runCommands := c.AllRunCommands()
+func (c *StageContainer) prepareRunCommands() []string {
+	runCommands := c.prepareAllRunCommands()
 	if len(runCommands) != 0 {
 		return runCommands
 	} else {
@@ -80,21 +96,21 @@ func (c *StageContainer) PreparedRunCommands() []string {
 	}
 }
 
-func (c *StageContainer) AllRunCommands() []string {
-	return append(c.RunCommands, c.ServiceRunCommands...)
+func (c *StageContainer) prepareAllRunCommands() []string {
+	return append(c.runCommands, c.serviceRunCommands...)
 }
 
 func ShelloutPack(command string) string {
 	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), dappdeps.BaseBinPath("base64"))
 }
 
-func (c *StageContainer) introspectBeforeArgs() ([]string, error) {
-	args, err := c.introspectArgsBase()
+func (c *StageContainer) prepareIntrospectBeforeArgs() ([]string, error) {
+	args, err := c.prepareIntrospectArgsBase()
 	if err != nil {
 		return nil, err
 	}
 
-	fromImageId, err := c.Image.FromImage.MustGetId()
+	fromImageId, err := c.image.fromImage.MustGetId()
 	if err != nil {
 		return nil, err
 	}
@@ -106,13 +122,13 @@ func (c *StageContainer) introspectBeforeArgs() ([]string, error) {
 	return args, nil
 }
 
-func (c *StageContainer) introspectArgs() ([]string, error) {
-	args, err := c.introspectArgsBase()
+func (c *StageContainer) prepareIntrospectArgs() ([]string, error) {
+	args, err := c.prepareIntrospectArgsBase()
 	if err != nil {
 		return nil, err
 	}
 
-	imageId, err := c.Image.MustGetId()
+	imageId, err := c.image.MustGetId()
 	if err != nil {
 		return nil, err
 	}
@@ -124,10 +140,10 @@ func (c *StageContainer) introspectArgs() ([]string, error) {
 	return args, nil
 }
 
-func (c *StageContainer) introspectArgsBase() ([]string, error) {
+func (c *StageContainer) prepareIntrospectArgsBase() ([]string, error) {
 	var args []string
 
-	runOptions, err := c.introspectOptions()
+	runOptions, err := c.prepareIntrospectOptions()
 	if err != nil {
 		return nil, err
 	}
@@ -143,16 +159,16 @@ func (c *StageContainer) introspectArgsBase() ([]string, error) {
 	return args, nil
 }
 
-func (c *StageContainer) runOptions() (*StageContainerOptions, error) {
-	serviceRunOptions, err := c.ServiceRunOptions()
+func (c *StageContainer) prepareRunOptions() (*StageContainerOptions, error) {
+	serviceRunOptions, err := c.prepareServiceRunOptions()
 	if err != nil {
 		return nil, err
 	}
-	return serviceRunOptions.merge(c.RunOptions), nil
+	return serviceRunOptions.merge(c.runOptions), nil
 }
 
-func (c *StageContainer) ServiceRunOptions() (*StageContainerOptions, error) {
-	serviceRunOptions := NewStageContainerOptions()
+func (c *StageContainer) prepareServiceRunOptions() (*StageContainerOptions, error) {
+	serviceRunOptions := newStageContainerOptions()
 	serviceRunOptions.Workdir = "/"
 	serviceRunOptions.Entrypoint = []string{dappdeps.BaseBinPath("bash")}
 	serviceRunOptions.User = "0:0"
@@ -171,12 +187,12 @@ func (c *StageContainer) ServiceRunOptions() (*StageContainerOptions, error) {
 	return serviceRunOptions, nil
 }
 
-func (c *StageContainer) introspectOptions() (*StageContainerOptions, error) {
-	return c.runOptions()
+func (c *StageContainer) prepareIntrospectOptions() (*StageContainerOptions, error) {
+	return c.prepareRunOptions()
 }
 
-func (c *StageContainer) commitChanges() ([]string, error) {
-	commitOptions, err := c.commitOptions()
+func (c *StageContainer) prepareCommitChanges() ([]string, error) {
+	commitOptions, err := c.prepareCommitOptions()
 	if err != nil {
 		return nil, err
 	}
@@ -188,24 +204,24 @@ func (c *StageContainer) commitChanges() ([]string, error) {
 	return commitChanges, nil
 }
 
-func (c *StageContainer) commitOptions() (*StageContainerOptions, error) {
-	inheritedCommitOptions, err := c.inheritedCommitOptions()
+func (c *StageContainer) prepareCommitOptions() (*StageContainerOptions, error) {
+	inheritedCommitOptions, err := c.prepareInheritedCommitOptions()
 	if err != nil {
 		return nil, err
 	}
 
-	commitOptions := inheritedCommitOptions.merge(c.ServiceCommitChangeOptions.merge(c.CommitChangeOptions))
+	commitOptions := inheritedCommitOptions.merge(c.serviceCommitChangeOptions.merge(c.commitChangeOptions))
 	return commitOptions, nil
 }
 
-func (c *StageContainer) inheritedCommitOptions() (*StageContainerOptions, error) {
-	inheritedOptions := NewStageContainerOptions()
+func (c *StageContainer) prepareInheritedCommitOptions() (*StageContainerOptions, error) {
+	inheritedOptions := newStageContainerOptions()
 
-	if c.Image.FromImage == nil {
-		panic(fmt.Sprintf("runtime error: FromImage should be (%s)", c.Image.Name))
+	if c.image.fromImage == nil {
+		panic(fmt.Sprintf("runtime error: FromImage should be (%s)", c.image.name))
 	}
 
-	fromImageInspect, err := c.Image.FromImage.MustGetInspect()
+	fromImageInspect, err := c.image.fromImage.MustGetInspect()
 	if err != nil {
 		return nil, err
 	}
@@ -221,8 +237,8 @@ func (c *StageContainer) inheritedCommitOptions() (*StageContainerOptions, error
 	return inheritedOptions, nil
 }
 
-func (c *StageContainer) Run() error {
-	runArgs, err := c.runArgs()
+func (c *StageContainer) run() error {
+	runArgs, err := c.prepareRunArgs()
 	if err != nil {
 		return err
 	}
@@ -234,8 +250,8 @@ func (c *StageContainer) Run() error {
 	return nil
 }
 
-func (c *StageContainer) Introspect() error {
-	runArgs, err := c.introspectArgs()
+func (c *StageContainer) introspect() error {
+	runArgs, err := c.prepareIntrospectArgs()
 	if err != nil {
 		return err
 	}
@@ -247,8 +263,8 @@ func (c *StageContainer) Introspect() error {
 	return nil
 }
 
-func (c *StageContainer) IntrospectBefore() error {
-	runArgs, err := c.introspectBeforeArgs()
+func (c *StageContainer) introspectBefore() error {
+	runArgs, err := c.prepareIntrospectBeforeArgs()
 	if err != nil {
 		return err
 	}
@@ -260,14 +276,14 @@ func (c *StageContainer) IntrospectBefore() error {
 	return nil
 }
 
-func (c *StageContainer) Commit() (string, error) {
-	commitChanges, err := c.commitChanges()
+func (c *StageContainer) commit() (string, error) {
+	commitChanges, err := c.prepareCommitChanges()
 	if err != nil {
 		return "", err
 	}
 
 	commitOptions := types.ContainerCommitOptions{Changes: commitChanges}
-	id, err := docker.ContainerCommit(c.Name, commitOptions)
+	id, err := docker.ContainerCommit(c.name, commitOptions)
 	if err != nil {
 		return "", err
 	}
@@ -275,6 +291,6 @@ func (c *StageContainer) Commit() (string, error) {
 	return id, nil
 }
 
-func (c *StageContainer) Rm() error {
-	return docker.ContainerRemove(c.Name, types.ContainerRemoveOptions{})
+func (c *StageContainer) rm() error {
+	return docker.ContainerRemove(c.name, types.ContainerRemoveOptions{})
 }

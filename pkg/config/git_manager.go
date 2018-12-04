@@ -7,15 +7,15 @@ type GitManager struct {
 	Remote []*GitRemote
 }
 
-func (c *GitManager) ToRuby() ruby_marshal_config.GitArtifact {
+func (c *GitManager) toRuby() ruby_marshal_config.GitArtifact {
 	gitArtifact := &ruby_marshal_config.GitArtifact{}
 
 	for _, local := range c.Local {
-		gitArtifact.Local = append(gitArtifact.Local, local.ToRuby())
+		gitArtifact.Local = append(gitArtifact.Local, local.toRuby())
 	}
 
 	for _, remote := range c.Remote {
-		gitArtifact.Remote = append(gitArtifact.Remote, remote.ToRuby())
+		gitArtifact.Remote = append(gitArtifact.Remote, remote.toRuby())
 	}
 
 	return *gitArtifact

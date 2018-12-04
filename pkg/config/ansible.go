@@ -17,16 +17,16 @@ type Ansible struct {
 	SetupCacheVersion         string
 	BuildArtifactCacheVersion string
 
-	Raw *RawAnsible
+	raw *rawAnsible
 
 	DumpConfigSection string // FIXME: reject after a complete transition from ruby to golang
 }
 
-func (c *Ansible) Validate() error {
+func (c *Ansible) validate() error {
 	return nil
 }
 
-func (c *Ansible) ToRuby() ruby_marshal_config.Ansible {
+func (c *Ansible) toRuby() ruby_marshal_config.Ansible {
 	rubyAnsible := ruby_marshal_config.Ansible{}
 
 	rubyAnsible.Version = c.CacheVersion
@@ -37,26 +37,26 @@ func (c *Ansible) ToRuby() ruby_marshal_config.Ansible {
 	rubyAnsible.BuildArtifactVersion = c.BuildArtifactCacheVersion
 
 	for _, ansibleTask := range c.BeforeInstall {
-		rubyAnsible.BeforeInstall = append(rubyAnsible.BeforeInstall, ansibleTask.ToRuby())
+		rubyAnsible.BeforeInstall = append(rubyAnsible.BeforeInstall, ansibleTask.toRuby())
 	}
 
 	for _, ansibleTask := range c.Install {
-		rubyAnsible.Install = append(rubyAnsible.Install, ansibleTask.ToRuby())
+		rubyAnsible.Install = append(rubyAnsible.Install, ansibleTask.toRuby())
 	}
 
 	for _, ansibleTask := range c.BeforeSetup {
-		rubyAnsible.BeforeSetup = append(rubyAnsible.BeforeSetup, ansibleTask.ToRuby())
+		rubyAnsible.BeforeSetup = append(rubyAnsible.BeforeSetup, ansibleTask.toRuby())
 	}
 
 	for _, ansibleTask := range c.Setup {
-		rubyAnsible.Setup = append(rubyAnsible.Setup, ansibleTask.ToRuby())
+		rubyAnsible.Setup = append(rubyAnsible.Setup, ansibleTask.toRuby())
 	}
 
 	for _, ansibleTask := range c.BuildArtifact {
-		rubyAnsible.BuildArtifact = append(rubyAnsible.BuildArtifact, ansibleTask.ToRuby())
+		rubyAnsible.BuildArtifact = append(rubyAnsible.BuildArtifact, ansibleTask.toRuby())
 	}
 
-	rubyAnsible.DumpConfigDoc = DumpConfigDoc(c.Raw.RawDimg.Doc)
+	rubyAnsible.DumpConfigDoc = dumpConfigDoc(c.raw.rawDimg.doc)
 
 	return rubyAnsible
 }

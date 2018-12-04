@@ -13,3 +13,5 @@ go install github.com/flant/dapp/cmd/cleanup
 go install github.com/flant/dapp/cmd/slug
 go install github.com/flant/dapp/cmd/deploy-watcher
 go install github.com/flant/dapp/cmd/deploy
+go install github.com/flant/dapp/cmd/build
+go install github.com/flant/dapp/cmd/dapp

@@ -8,7 +8,24 @@ type Dimg struct {
 	Docker *Docker
 }
 
-func (c *Dimg) RelatedDimgs() (relatedDimgs []interface{}) {
+func (c *Dimg) DimgTree() (tree []DimgInterface) {
+	if c.FromDimg != nil {
+		tree = append(tree, c.FromDimg.DimgTree()...)
+	}
+	if c.FromDimgArtifact != nil {
+		tree = append(tree, c.FromDimgArtifact.DimgTree()...)
+	}
+
+	for _, importElm := range c.Import {
+		tree = append(tree, importElm.artifactDimg.DimgTree()...)
+	}
+
+	tree = append(tree, c)
+
+	return
+}
+
+func (c *Dimg) RelatedDimgs() (relatedDimgs []DimgInterface) {
 	relatedDimgs = append(relatedDimgs, c)
 	if c.FromDimg != nil {
 		relatedDimgs = append(relatedDimgs, c.FromDimg.RelatedDimgs()...)
@@ -19,38 +36,38 @@ func (c *Dimg) RelatedDimgs() (relatedDimgs []interface{}) {
 	return
 }
 
-func (c *Dimg) LastLayerOrSelf() interface{} {
+func (c *Dimg) lastLayerOrSelf() DimgInterface {
 	if c.FromDimg != nil {
-		return c.FromDimg.LastLayerOrSelf()
+		return c.FromDimg.lastLayerOrSelf()
 	}
 	if c.FromDimgArtifact != nil {
-		return c.FromDimgArtifact.LastLayerOrSelf()
+		return c.FromDimgArtifact.lastLayerOrSelf()
 	}
 	return c
 }
 
-func (c *Dimg) Validate() error {
-	if !OneOrNone([]bool{c.Shell != nil, c.Ansible != nil}) {
-		return NewDetailedConfigError("Cannot use shell and ansible builders at the same time!", nil, c.DimgBase.Raw.Doc)
+func (c *Dimg) validate() error {
+	if !oneOrNone([]bool{c.Shell != nil, c.Ansible != nil}) {
+		return newDetailedConfigError("Cannot use shell and ansible builders at the same time!", nil, c.DimgBase.raw.doc)
 	}
 
 	return nil
 }
 
-func (c *Dimg) ToRuby() ruby_marshal_config.Dimg {
-	return *c.ToRubyPointer()
+func (c *Dimg) toRuby() ruby_marshal_config.Dimg {
+	return *c.toRubyPointer()
 }
 
-func (c *Dimg) ToRubyPointer() *ruby_marshal_config.Dimg {
+func (c *Dimg) toRubyPointer() *ruby_marshal_config.Dimg {
 	rubyDimg := &ruby_marshal_config.Dimg{}
-	rubyDimg.DimgBase = c.DimgBase.ToRuby()
+	rubyDimg.DimgBase = c.DimgBase.toRuby()
 
 	if c.Shell != nil {
-		rubyDimg.Shell = c.Shell.ToRuby()
+		rubyDimg.Shell = c.Shell.toRuby()
 	}
 
 	if c.Docker != nil {
-		rubyDimg.Docker = c.Docker.ToRuby()
+		rubyDimg.Docker = c.Docker.toRuby()
 	}
 	rubyDimg.Docker.From = c.From
 	rubyDimg.Docker.FromCacheVersion = c.FromCacheVersion

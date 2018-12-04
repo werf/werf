@@ -10,51 +10,71 @@ import (
 )
 
 type StageContainerOptions struct {
-	Volume      []string               `json:"volume"`
-	VolumesFrom []string               `json:"volumes-from"`
-	Expose      []string               `json:"expose"`
-	Env         map[string]interface{} `json:"env"`
-	Label       map[string]interface{} `json:"label"`
-	Cmd         []string               `json:"cmd"`
-	Onbuild     []string               `json:"onbuild"`
-	Workdir     string                 `json:"workdir"`
-	User        string                 `json:"user"`
-	Entrypoint  []string               `json:"entrypoint"`
+	Volume      []string          `json:"volume"`
+	VolumesFrom []string          `json:"volumes-from"`
+	Expose      []string          `json:"expose"`
+	Env         map[string]string `json:"env"`
+	Label       map[string]string `json:"label"`
+	Cmd         []string          `json:"cmd"`
+	Onbuild     []string          `json:"onbuild"`
+	Workdir     string            `json:"workdir"`
+	User        string            `json:"user"`
+	Entrypoint  []string          `json:"entrypoint"`
 }
 
-func NewStageContainerOptions() *StageContainerOptions {
+func newStageContainerOptions() *StageContainerOptions {
 	c := &StageContainerOptions{}
-	c.Env = make(map[string]interface{})
-	c.Label = make(map[string]interface{})
+	c.Env = make(map[string]string)
+	c.Label = make(map[string]string)
 	return c
 }
 
-func (co *StageContainerOptions) AddVolume(volumes []string) {
+func (co *StageContainerOptions) AddVolume(volumes ...string) {
 	co.Volume = append(co.Volume, volumes...)
 }
 
-func (co *StageContainerOptions) AddVolumeFrom(volumesFrom []string) {
+func (co *StageContainerOptions) AddVolumeFrom(volumesFrom ...string) {
 	co.VolumesFrom = append(co.VolumesFrom, volumesFrom...)
 }
 
-func (co *StageContainerOptions) AddExpose(exposes []string) {
+func (co *StageContainerOptions) AddExpose(exposes ...string) {
 	co.Expose = append(co.Expose, exposes...)
 }
 
-func (co *StageContainerOptions) AddEnv(envs map[string]interface{}) {
+func (co *StageContainerOptions) AddEnv(envs map[string]string) {
 	for env, value := range envs {
 		co.Env[env] = value
 	}
 }
 
-func (co *StageContainerOptions) AddLabel(labels map[string]interface{}) {
+func (co *StageContainerOptions) AddLabel(labels map[string]string) {
 	for label, value := range labels {
 		co.Label[label] = value
 	}
 }
 
+func (co *StageContainerOptions) AddCmd(cmds ...string) {
+	co.Cmd = append(co.Cmd, cmds...)
+}
+
+func (co *StageContainerOptions) AddOnbuild(onbuilds ...string) {
+	co.Onbuild = append(co.Onbuild, onbuilds...)
+}
+
+func (co *StageContainerOptions) AddWorkdir(workdir string) {
+	co.Workdir = workdir
+}
+
+func (co *StageContainerOptions) AddUser(user string) {
+	co.User = user
+}
+
+func (co *StageContainerOptions) AddEntrypoint(entrypoints ...string) {
+	co.Entrypoint = append(co.Entrypoint, entrypoints...)
+}
+
 func (co *StageContainerOptions) merge(co2 *StageContainerOptions) *StageContainerOptions {
-	mergedCo := NewStageContainerOptions()
+	mergedCo := newStageContainerOptions()
 	mergedCo.Volume = append(co.Volume, co2.Volume...)
 	mergedCo.VolumesFrom = append(co.VolumesFrom, co2.VolumesFrom...)
 	mergedCo.Expose = append(co.Expose, co2.Expose...)

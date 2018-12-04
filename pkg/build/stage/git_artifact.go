@@ -1,4 +1,4 @@
-package build
+package stage
 
 import (
 	"crypto/sha256"
@@ -9,11 +9,13 @@ import (
 
 	"github.com/flant/dapp/pkg/dappdeps"
 	"github.com/flant/dapp/pkg/git_repo"
+	"github.com/flant/dapp/pkg/image"
 )
 
 type GitArtifact struct {
-	LocalGitRepo  *git_repo.Local
-	RemoteGitRepo *git_repo.Remote
+	GitRepoInterface git_repo.GitRepo
+	LocalGitRepo     *git_repo.Local
+	RemoteGitRepo    *git_repo.Remote
 
 	Name               string
 	As                 string
@@ -55,7 +57,9 @@ func (f *ContainerFileDescriptor) Open(flag int, perm os.FileMode) (*os.File, er
 }
 
 func (ga *GitArtifact) GitRepo() git_repo.GitRepo {
-	if ga.LocalGitRepo != nil {
+	if ga.GitRepoInterface != nil {
+		return ga.GitRepoInterface
+	} else if ga.LocalGitRepo != nil {
 		return ga.LocalGitRepo
 	} else if ga.RemoteGitRepo != nil {
 		return ga.RemoteGitRepo
@@ -129,7 +133,7 @@ func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, arc
 	return commands, nil
 }
 
-func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
+func (ga *GitArtifact) LegacyApplyPatchCommand(stage LegacyStage) ([]string, error) {
 	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
 	if err != nil {
 		return nil, err
@@ -140,9 +144,69 @@ func (ga *GitArtifact) ApplyPatchCommand(stage Stage) ([]string, error) {
 		return nil, err
 	}
 
-	archiveType := git_repo.ArchiveType(
-		stage.GetPrevStage().GetImage().
-			GetLabels()[ga.getArchiveTypeLabelName()])
+	return ga.baseApplyPatchCommand(fromCommit, toCommit, stage.GetPrevStage().GetImage())
+}
+
+func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) error {
+	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
+	if err != nil {
+		return err
+	}
+
+	commands, err := ga.baseApplyPatchCommand(fromCommit, toCommit, prevBuiltImage)
+	if err != nil {
+		return err
+	}
+
+	gitArtifactContainerName, err := dappdeps.GitArtifactContainer()
+	if err != nil {
+		return err
+	}
+
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.PatchesDir, ga.ContainerPatchesDir))
+	image.Container().AddRunCommands(commands...)
+
+	ga.AddGACommitToImageLabels(image, toCommit)
+	image.Container().RunOptions().AddVolumeFrom(gitArtifactContainerName)
+
+	return nil
+}
+
+func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage image.Image) (string, string, error) {
+	fromCommit := ga.GetGACommitFromImageLabels(prevBuiltImage)
+	if fromCommit == "" {
+		panic("Commit should be in prev built image labels!")
+	}
+
+	toCommit, err := ga.LatestCommit()
+	if err != nil {
+		return "", "", err
+	}
+
+	return fromCommit, toCommit, nil
+}
+
+func (ga *GitArtifact) AddGACommitToImageLabels(image image.Image, commit string) {
+	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+		ga.ImageGACommitLabel(): commit,
+	})
+}
+
+func (ga *GitArtifact) GetGACommitFromImageLabels(prevImage image.Image) string {
+	commit, ok := prevImage.Labels()[ga.ImageGACommitLabel()]
+	if !ok {
+		return ""
+	}
+
+	return commit
+}
+
+func (ga *GitArtifact) ImageGACommitLabel() string {
+	return fmt.Sprintf("dapp-git-%s-commit", ga.GetParamshash())
+}
+
+func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage image.Image) ([]string, error) {
+	archiveType := git_repo.ArchiveType(prevBuiltImage.Labels()[ga.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
@@ -251,12 +315,35 @@ func (ga *GitArtifact) applyArchiveCommand(archiveFile *ContainerFileDescriptor,
 	return commands, nil
 }
 
-func (ga *GitArtifact) ApplyArchiveCommand(stage Stage) ([]string, error) {
+func (ga *GitArtifact) LegacyApplyArchiveCommand(stage LegacyStage) ([]string, error) {
 	commit, err := stage.LayerCommit(ga)
 	if err != nil {
 		return nil, err
 	}
 
+	return ga.baseApplyArchiveCommand(commit, stage.GetImage())
+}
+
+func (ga *GitArtifact) ApplyArchiveCommand(image image.Image) error {
+	commit, err := ga.LatestCommit()
+	if err != nil {
+		return err
+	}
+
+	commands, err := ga.baseApplyArchiveCommand(commit, image)
+	if err != nil {
+		return err
+	}
+
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.ArchivesDir, ga.ContainerArchivesDir))
+	image.Container().AddRunCommands(commands...)
+
+	ga.AddGACommitToImageLabels(image, commit)
+
+	return nil
+}
+
+func (ga *GitArtifact) baseApplyArchiveCommand(commit string, image image.Image) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
 		Commit:        commit,
@@ -283,7 +370,7 @@ func (ga *GitArtifact) ApplyArchiveCommand(stage Stage) ([]string, error) {
 		return nil, err
 	}
 
-	stage.GetImage().AddServiceChangeLabel(ga.getArchiveTypeLabelName(), string(archiveType))
+	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{ga.getArchiveTypeLabelName(): string(archiveType)})
 
 	return commands, err
 }
@@ -382,7 +469,7 @@ func (ga *GitArtifact) GetParamshash() string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (ga *GitArtifact) IsPatchEmpty(stage Stage) (bool, error) {
+func (ga *GitArtifact) LegacyIsPatchEmpty(stage LegacyStage) (bool, error) {
 	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
 	if err != nil {
 		return false, err
@@ -393,6 +480,19 @@ func (ga *GitArtifact) IsPatchEmpty(stage Stage) (bool, error) {
 		return false, err
 	}
 
+	return ga.baseIsPatchEmpty(fromCommit, toCommit)
+}
+
+func (ga *GitArtifact) IsPatchEmpty(prevBuiltImage image.Image) (bool, error) {
+	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
+	if err != nil {
+		return false, err
+	}
+
+	return ga.baseIsPatchEmpty(fromCommit, toCommit)
+}
+
+func (ga *GitArtifact) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error) {
 	patchOpts := git_repo.PatchOptions{
 		FilterOptions: ga.getRepoFilterOptions(),
 		FromCommit:    fromCommit,

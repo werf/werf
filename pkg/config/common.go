@@ -7,18 +7,18 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-type RawOrigin interface {
-	ConfigSection() interface{}
-	Doc() *Doc
+type rawOrigin interface {
+	configSection() interface{}
+	doc() *doc
 }
 
-type Doc struct {
+type doc struct {
 	Content        []byte
 	Line           int
 	RenderFilePath string
 }
 
-func CheckOverflow(m map[string]interface{}, configSection interface{}, doc *Doc) error {
+func checkOverflow(m map[string]interface{}, configSection interface{}, doc *doc) error {
 	if len(m) > 0 {
 		var keys []string
 		for k := range m {
@@ -27,15 +27,15 @@ func CheckOverflow(m map[string]interface{}, configSection interface{}, doc *Doc
 
 		message := fmt.Sprintf("Unknown fields: `%s`!", strings.Join(keys, "`, `"))
 		if configSection == nil {
-			return NewDetailedConfigError(message, nil, doc)
+			return newDetailedConfigError(message, nil, doc)
 		} else {
-			return NewDetailedConfigError(message, configSection, doc)
+			return newDetailedConfigError(message, configSection, doc)
 		}
 	}
 	return nil
 }
 
-func AllRelativePaths(paths []string) bool {
+func allRelativePaths(paths []string) bool {
 	for _, path := range paths {
 		if !isRelativePath(path) {
 			return false
@@ -45,14 +45,14 @@ func AllRelativePaths(paths []string) bool {
 }
 
 func isRelativePath(path string) bool {
-	return !IsAbsolutePath(path)
+	return !isAbsolutePath(path)
 }
 
-func IsAbsolutePath(path string) bool {
+func isAbsolutePath(path string) bool {
 	return strings.HasPrefix(path, "/")
 }
 
-func OneOrNone(conditions []bool) bool {
+func oneOrNone(conditions []bool) bool {
 	if len(conditions) == 0 {
 		return true
 	}
@@ -70,7 +70,7 @@ func OneOrNone(conditions []bool) bool {
 	return true
 }
 
-func InterfaceToStringArray(stringOrStringArray interface{}, configSection interface{}, doc *Doc) ([]string, error) {
+func InterfaceToStringArray(stringOrStringArray interface{}, configSection interface{}, doc *doc) ([]string, error) {
 	if stringOrStringArray == nil {
 		return []string{}, nil
 	} else if val, ok := stringOrStringArray.(string); ok {
@@ -81,15 +81,15 @@ func InterfaceToStringArray(stringOrStringArray interface{}, configSection inter
 			if val, ok := interf.(string); ok {
 				stringArray = append(stringArray, val)
 			} else {
-				return nil, NewDetailedConfigError(fmt.Sprintf("Single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
+				return nil, newDetailedConfigError(fmt.Sprintf("Single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
 			}
 		}
 		return stringArray, nil
 	} else {
-		return nil, NewDetailedConfigError(fmt.Sprintf("Single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
+		return nil, newDetailedConfigError(fmt.Sprintf("Single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
 	}
 }
 
 // Stack for setting parents in UnmarshalYAML calls
 // Set this to util.NewStack before yaml.Unmarshal
-var ParentStack *util.Stack
+var parentStack *util.Stack

@@ -27,7 +27,7 @@ import:
   to: '/app/bin'
 `
 
-	docs := []*Doc{
+	docs := []*doc{
 		{
 			Content:        []byte(data),
 			Line:           1,
@@ -47,53 +47,53 @@ import:
 
 	dimg := dimgs[0]
 
-	if dimg.Doc == nil {
+	if dimg.doc == nil {
 		t.Fatalf("dimg.Doc should be set\n")
 	}
 
 	// git:
 	if len(dimg.RawGit) != 1 {
-		t.Fatalf("dimg.RawGit len must be 1")
+		t.Fatalf("dimg.rawGit len must be 1")
 	}
 
-	if dimg.RawGit[0].RawDimg == nil {
-		t.Fatalf("dimg.RawGit[0].RawDimg should be set\n")
+	if dimg.RawGit[0].rawDimg == nil {
+		t.Fatalf("dimg.rawGit[0].rawDimg should be set\n")
 	}
 
 	if dimg.RawGit[0].RawStageDependencies == nil {
-		t.Fatalf("dimg.RawGit[0].RawStageDependencies must be set")
+		t.Fatalf("dimg.rawGit[0].rawStageDependencies must be set")
 	}
 
-	if dimg.RawGit[0].RawStageDependencies.RawGit == nil {
-		t.Fatalf("dimg.RawGit[0].RawStageDependencies.RawShell should be set\n")
+	if dimg.RawGit[0].RawStageDependencies.rawGit == nil {
+		t.Fatalf("dimg.rawGit[0].rawStageDependencies.rawShell should be set\n")
 	}
 
 	// shell:
-	if dimg.RawShell.RawDimg == nil {
-		t.Fatalf("dimg.RawShell.RawDimg should be set\n")
+	if dimg.RawShell.rawDimg == nil {
+		t.Fatalf("dimg.rawShell.rawDimg should be set\n")
 	}
 
 	// mount:
 	if len(dimg.RawMount) != 1 {
-		t.Fatalf("dimg.RawMount len must be 1")
+		t.Fatalf("dimg.rawMount len must be 1")
 	}
 
-	if dimg.RawMount[0].RawDimg == nil {
-		t.Fatalf("dimg.RawMount[0].RawDimg should be set\n")
+	if dimg.RawMount[0].rawDimg == nil {
+		t.Fatalf("dimg.rawMount[0].rawDimg should be set\n")
 	}
 
 	// docker:
-	if dimg.RawDocker.RawDimg == nil {
-		t.Fatalf("dimg.RawDocker.RawDimg should be set\n")
+	if dimg.RawDocker.rawDimg == nil {
+		t.Fatalf("dimg.rawDocker.rawDimg should be set\n")
 	}
 
 	// import:
 	if len(dimg.RawImport) != 1 {
-		t.Fatalf("dimg.RawMount len must be 1")
+		t.Fatalf("dimg.rawMount len must be 1")
 	}
 
-	if dimg.RawImport[0].RawDimg == nil {
-		t.Fatalf("dimg.RawMount[0].RawDimg should be set\n")
+	if dimg.RawImport[0].rawDimg == nil {
+		t.Fatalf("dimg.rawMount[0].rawDimg should be set\n")
 	}
 
 }
@@ -106,22 +106,22 @@ func Test_ParseDimgs_Git(t *testing.T) {
 
 	dimgGitLocals := dimgs[0].Git.Local
 	for _, git := range dimgGitLocals {
-		git.Raw = nil
-		git.GitLocalExport.Raw = nil
-		git.GitExport.Raw = nil
-		git.GitExportBase.Raw = nil
-		git.ExportBase.Raw = nil
-		git.StageDependencies.Raw = nil
+		git.raw = nil
+		git.GitLocalExport.raw = nil
+		git.GitExport.raw = nil
+		git.GitExportBase.raw = nil
+		git.ExportBase.raw = nil
+		git.StageDependencies.raw = nil
 	}
 	dimgGitRemotes := dimgs[0].Git.Remote
 	for _, git := range dimgGitRemotes {
-		git.Raw = nil
-		git.GitRemoteExport.Raw = nil
-		git.GitLocalExport.Raw = nil
-		git.GitExport.Raw = nil
-		git.GitExportBase.Raw = nil
-		git.ExportBase.Raw = nil
-		git.StageDependencies.Raw = nil
+		git.raw = nil
+		git.GitRemoteExport.raw = nil
+		git.GitLocalExport.raw = nil
+		git.GitExport.raw = nil
+		git.GitExportBase.raw = nil
+		git.ExportBase.raw = nil
+		git.StageDependencies.raw = nil
 	}
 	expectedDimgGitLocals := []*GitLocal{
 		{
@@ -187,24 +187,24 @@ func Test_ParseDimgs_Git(t *testing.T) {
 		t.Errorf("\n[EXPECTED]: %#v\n[GOT]: %#v", dimgGitRemotes, expectedDimgGitRemotes)
 	}
 
-	artifactGitLocals := dimgs[0].Import[0].ArtifactDimg.Git.Local
+	artifactGitLocals := dimgs[0].Import[0].artifactDimg.Git.Local
 	for _, git := range artifactGitLocals {
-		git.Raw = nil
-		git.GitLocalExport.Raw = nil
-		git.GitExport.Raw = nil
-		git.GitExportBase.Raw = nil
-		git.ExportBase.Raw = nil
-		git.StageDependencies.Raw = nil
+		git.raw = nil
+		git.GitLocalExport.raw = nil
+		git.GitExport.raw = nil
+		git.GitExportBase.raw = nil
+		git.ExportBase.raw = nil
+		git.StageDependencies.raw = nil
 	}
-	artifactGitRemotes := dimgs[0].Import[0].ArtifactDimg.Git.Remote
+	artifactGitRemotes := dimgs[0].Import[0].artifactDimg.Git.Remote
 	for _, git := range artifactGitRemotes {
-		git.Raw = nil
-		git.GitRemoteExport.Raw = nil
-		git.GitLocalExport.Raw = nil
-		git.GitExport.Raw = nil
-		git.GitExportBase.Raw = nil
-		git.ExportBase.Raw = nil
-		git.StageDependencies.Raw = nil
+		git.raw = nil
+		git.GitRemoteExport.raw = nil
+		git.GitLocalExport.raw = nil
+		git.GitExport.raw = nil
+		git.GitExportBase.raw = nil
+		git.ExportBase.raw = nil
+		git.StageDependencies.raw = nil
 	}
 	expectedArtifactGitLocals := expectedDimgGitLocals
 	expectedArtifactGitLocals[0].StageDependencies.BuildArtifact = []string{"*.php"}
@@ -228,8 +228,8 @@ func Test_ParseDimgs_Shell(t *testing.T) {
 	}
 
 	shellDimg := dimgs[0].Shell
-	shellDimg.Raw = nil
-	shellDimg.ShellBase.Raw = nil
+	shellDimg.raw = nil
+	shellDimg.ShellBase.raw = nil
 	expectedShellDimg := &ShellDimg{
 		ShellBase: &ShellBase{
 			BeforeInstall:             []string{"cat \"beforeInstall\""},
@@ -248,9 +248,9 @@ func Test_ParseDimgs_Shell(t *testing.T) {
 		t.Errorf("\n[EXPECTED]: %#v\n[GOT]: %#v", shellDimg, expectedShellDimg)
 	}
 
-	shellArtifact := dimgs[0].Import[0].ArtifactDimg.Shell
-	shellArtifact.Raw = nil
-	shellArtifact.ShellBase.Raw = nil
+	shellArtifact := dimgs[0].Import[0].artifactDimg.Shell
+	shellArtifact.raw = nil
+	shellArtifact.ShellBase.raw = nil
 	expectedShellArtifact := &ShellArtifact{
 		ShellDimg:                 expectedShellDimg,
 		BuildArtifact:             []string{"cat \"buildArtifact\""},
@@ -269,11 +269,11 @@ func Test_ParseDimgs_Ansible(t *testing.T) {
 	}
 
 	ansibleDimg := dimgs[0].Ansible
-	ansibleDimg.Raw = nil
-	ansibleDimg.BeforeInstall[0].Raw = nil
-	ansibleDimg.Install[0].Raw = nil
-	ansibleDimg.BeforeSetup[0].Raw = nil
-	ansibleDimg.Setup[0].Raw = nil
+	ansibleDimg.raw = nil
+	ansibleDimg.BeforeInstall[0].raw = nil
+	ansibleDimg.Install[0].raw = nil
+	ansibleDimg.BeforeSetup[0].raw = nil
+	ansibleDimg.Setup[0].raw = nil
 	expectedDimgAnsible := &Ansible{
 		BeforeInstall: []*AnsibleTask{
 			{Config: map[string]interface{}{"debug": map[interface{}]interface{}{"msg": "beforeInstall"}}},
@@ -298,14 +298,14 @@ func Test_ParseDimgs_Ansible(t *testing.T) {
 		t.Errorf("\n[EXPECTED]: %#v\n[GOT]: %#v", ansibleDimg, expectedDimgAnsible)
 	}
 
-	ansibleArtifact := dimgs[0].Import[0].ArtifactDimg.Ansible
-	ansibleArtifact.Raw = nil
-	ansibleArtifact.Raw = nil
-	ansibleArtifact.BeforeInstall[0].Raw = nil
-	ansibleArtifact.Install[0].Raw = nil
-	ansibleArtifact.BeforeSetup[0].Raw = nil
-	ansibleArtifact.Setup[0].Raw = nil
-	ansibleArtifact.BuildArtifact[0].Raw = nil
+	ansibleArtifact := dimgs[0].Import[0].artifactDimg.Ansible
+	ansibleArtifact.raw = nil
+	ansibleArtifact.raw = nil
+	ansibleArtifact.BeforeInstall[0].raw = nil
+	ansibleArtifact.Install[0].raw = nil
+	ansibleArtifact.BeforeSetup[0].raw = nil
+	ansibleArtifact.Setup[0].raw = nil
+	ansibleArtifact.BuildArtifact[0].raw = nil
 	expectedAnsibleArtifact := expectedDimgAnsible
 	expectedAnsibleArtifact.BuildArtifact = []*AnsibleTask{{Config: map[string]interface{}{"debug": map[interface{}]interface{}{"msg": "buildArtifact"}}}}
 	expectedAnsibleArtifact.BuildArtifactCacheVersion = "buildArtifactCacheVersion"
@@ -322,7 +322,7 @@ func Test_ParseDimgs_Docker(t *testing.T) {
 	}
 
 	docker := dimgs[0].Docker
-	docker.Raw = nil
+	docker.raw = nil
 	expectedDocker := &Docker{
 		Volume:     []string{"/data"},
 		Expose:     []string{"80/tcp"},
@@ -348,7 +348,7 @@ func Test_ParseDimgs_Mount(t *testing.T) {
 
 	mounts := dimgs[0].Mount
 	for _, mount := range dimgs[0].Mount {
-		mount.Raw = nil
+		mount.raw = nil
 	}
 	expectedMounts := []*Mount{
 		{To: "/folder1", From: "", Type: "build_dir"},

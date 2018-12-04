@@ -19,11 +19,11 @@ type Builder interface {
 }
 
 type Container interface {
-	AddRunCommands(commands []string)
-	AddServiceRunCommands(commands []string)
-	AddVolumeFrom(volumesFrom []string)
-	AddVolume(volumes []string)
-	AddExpose(exposes []string)
-	AddEnv(envs map[string]interface{})
-	AddLabel(labels map[string]interface{})
+	AddRunCommands(commands ...string)
+	AddServiceRunCommands(commands ...string)
+	AddVolumeFrom(volumesFrom ...string)
+	AddVolume(volumes ...string)
+	AddExpose(exposes ...string)
+	AddEnv(envs map[string]string)
+	AddLabel(labels map[string]string)
 }

@@ -9,18 +9,22 @@ import (
 	"github.com/flant/dapp/pkg/docker"
 )
 
-type Base struct {
-	Name    string
-	Inspect *types.ImageInspect
+type base struct {
+	name    string
+	inspect *types.ImageInspect
 }
 
-func NewBaseImage(name string) *Base {
-	image := &Base{}
-	image.Name = name
+func newBaseImage(name string) *base {
+	image := &base{}
+	image.name = name
 	return image
 }
 
-func (i *Base) MustGetId() (string, error) {
+func (i *base) Name() string {
+	return i.name
+}
+
+func (i *base) MustGetId() (string, error) {
 	if inspect, err := i.MustGetInspect(); err == nil {
 		return inspect.ID, nil
 	} else {
@@ -28,18 +32,24 @@ func (i *Base) MustGetId() (string, error) {
 	}
 }
 
-func (i *Base) MustGetInspect() (*types.ImageInspect, error) {
+func (i *base) MustGetInspect() (*types.ImageInspect, error) {
 	if inspect, err := i.GetInspect(); err == nil && inspect != nil {
 		return inspect, nil
 	} else if err != nil {
 		return nil, err
 	} else {
-		panic(fmt.Sprintf("runtime error: inspect must be (%s)", i.Name))
+		panic(fmt.Sprintf("runtime error: inspect must be (%s)", i.name))
 	}
 }
 
-func (i *Base) GetInspect() (*types.ImageInspect, error) {
-	if i.Inspect == nil {
+func (i *base) ResetInspect() error {
+	i.unsetInspect()
+	_, err := i.GetInspect()
+	return err
+}
+
+func (i *base) GetInspect() (*types.ImageInspect, error) {
+	if i.inspect == nil {
 		if err := i.resetInspect(); err != nil {
 			if client.IsErrNotFound(err) {
 				return nil, nil
@@ -48,29 +58,29 @@ func (i *Base) GetInspect() (*types.ImageInspect, error) {
 			}
 		}
 	}
-	return i.Inspect, nil
+	return i.inspect, nil
 }
 
-func (i *Base) resetInspect() error {
-	inspect, err := docker.ImageInspect(i.Name)
+func (i *base) resetInspect() error {
+	inspect, err := docker.ImageInspect(i.name)
 	if err != nil {
 		return err
 	}
 
-	i.Inspect = inspect
+	i.inspect = inspect
 	return nil
 }
 
-func (i *Base) UnsetInspect() {
-	i.Inspect = nil
+func (i *base) unsetInspect() {
+	i.inspect = nil
 }
 
-func (i *Base) Untag() error {
-	if err := docker.CliRmi(i.Name); err != nil {
+func (i *base) Untag() error {
+	if err := docker.CliRmi(i.name); err != nil {
 		return err
 	}
 
-	i.UnsetInspect()
+	i.unsetInspect()
 
 	return nil
 }

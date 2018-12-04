@@ -5,49 +5,54 @@ import (
 	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
+type DimgInterface interface{}
+
 type DimgBase struct {
+	DimgInterface
+
 	Name             string
 	From             string
+	FromDimg         *Dimg         // FIXME: reject in golang binary
+	FromDimgArtifact *DimgArtifact // FIXME: FromDimgName field only
 	FromCacheVersion string
-	FromDimg         *Dimg
-	FromDimgArtifact *DimgArtifact
-	Bulder           string
 	Git              *GitManager
 	Ansible          *Ansible
 	Mount            []*Mount
 	Import           []*ArtifactImport
 
-	Raw *RawDimg
+	raw *rawDimg
+
+	builder string // FIXME: reject in golang binary
 }
 
-func (c *DimgBase) AssociateFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
+func (c *DimgBase) associateFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	if c.FromDimg != nil || c.FromDimgArtifact != nil { // asLayers
 		return nil
 	}
 
-	if c.Raw.FromDimg != "" {
-		fromDimgName := c.Raw.FromDimg
+	if c.raw.FromDimg != "" {
+		fromDimgName := c.raw.FromDimg
 
 		if fromDimgName == c.Name {
-			return NewDetailedConfigError(fmt.Sprintf("Cannot use own dimg name as `fromDimg` directive value!"), nil, c.Raw.Doc)
+			return newDetailedConfigError(fmt.Sprintf("Cannot use own dimg name as `fromDimg` directive value!"), nil, c.raw.doc)
 		}
 
 		if dimg := dimgByName(dimgs, fromDimgName); dimg != nil {
 			c.FromDimg = dimg
 		} else {
-			return NewDetailedConfigError(fmt.Sprintf("No such dimg `%s`!", fromDimgName), c.Raw, c.Raw.Doc)
+			return newDetailedConfigError(fmt.Sprintf("No such dimg `%s`!", fromDimgName), c.raw, c.raw.doc)
 		}
-	} else if c.Raw.FromDimgArtifact != "" {
-		fromDimgArtifactName := c.Raw.FromDimgArtifact
+	} else if c.raw.FromDimgArtifact != "" {
+		fromDimgArtifactName := c.raw.FromDimgArtifact
 
 		if fromDimgArtifactName == c.Name {
-			return NewDetailedConfigError(fmt.Sprintf("Cannot use own dimg name as `fromDimgArtifact` directive value!"), nil, c.Raw.Doc)
+			return newDetailedConfigError(fmt.Sprintf("Cannot use own dimg name as `fromDimgArtifact` directive value!"), nil, c.raw.doc)
 		}
 
 		if dimgArtifact := dimgArtifactByName(artifacts, fromDimgArtifactName); dimgArtifact != nil {
 			c.FromDimgArtifact = dimgArtifact
 		} else {
-			return NewDetailedConfigError(fmt.Sprintf("No such dimg artifact `%s`!", fromDimgArtifactName), c.Raw, c.Raw.Doc)
+			return newDetailedConfigError(fmt.Sprintf("No such dimg artifact `%s`!", fromDimgArtifactName), c.raw, c.raw.doc)
 		}
 	}
 
@@ -72,13 +77,13 @@ func dimgArtifactByName(dimgs []*DimgArtifact, name string) *DimgArtifact {
 	return nil
 }
 
-func (c *DimgBase) Validate() error {
-	if c.From == "" && c.Raw.FromDimg == "" && c.Raw.FromDimgArtifact == "" && c.FromDimg == nil && c.FromDimgArtifact == nil {
-		return NewDetailedConfigError("`from: DOCKER_IMAGE`, `fromDimg: DIMG_NAME`, `fromDimgArtifact: ARTIFACT_DIMG_NAME` required!", nil, c.Raw.Doc)
+func (c *DimgBase) validate() error {
+	if c.From == "" && c.raw.FromDimg == "" && c.raw.FromDimgArtifact == "" && c.FromDimg == nil && c.FromDimgArtifact == nil {
+		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromDimg: DIMG_NAME`, `fromDimgArtifact: ARTIFACT_DIMG_NAME` required!", nil, c.raw.doc)
 	}
 
-	if !OneOrNone([]bool{c.From != "", c.Raw.FromDimg != "", c.Raw.FromDimgArtifact != ""}) {
-		return NewDetailedConfigError("`conflict between `from`, `fromDimg` and `fromDimgArtifact` directives!", nil, c.Raw.Doc)
+	if !oneOrNone([]bool{c.From != "", c.raw.FromDimg != "", c.raw.FromDimgArtifact != ""}) {
+		return newDetailedConfigError("`conflict between `from`, `fromDimg` and `fromDimgArtifact` directives!", nil, c.raw.doc)
 	}
 
 	// TODO: валидацию формата `From`
@@ -87,34 +92,34 @@ func (c *DimgBase) Validate() error {
 	return nil
 }
 
-func (c *DimgBase) ToRuby() ruby_marshal_config.DimgBase {
+func (c *DimgBase) toRuby() ruby_marshal_config.DimgBase {
 	rubyDimg := ruby_marshal_config.DimgBase{}
 	rubyDimg.Name = c.Name
-	rubyDimg.Builder = ruby_marshal_config.Symbol(c.Bulder)
+	rubyDimg.Builder = ruby_marshal_config.Symbol(c.builder)
 
 	if c.FromDimg != nil {
-		rubyDimg.FromDimg = c.FromDimg.ToRubyPointer()
+		rubyDimg.FromDimg = c.FromDimg.toRubyPointer()
 	}
 
 	if c.FromDimgArtifact != nil {
-		rubyDimg.FromDimgArtifact = c.FromDimgArtifact.ToRubyPointer()
+		rubyDimg.FromDimgArtifact = c.FromDimgArtifact.toRubyPointer()
 	}
 
 	if c.Ansible != nil {
-		rubyDimg.Ansible = c.Ansible.ToRuby()
+		rubyDimg.Ansible = c.Ansible.toRuby()
 	}
 
 	if c.Git != nil {
-		rubyDimg.GitArtifact = c.Git.ToRuby()
+		rubyDimg.GitArtifact = c.Git.toRuby()
 	}
 
 	for _, mount := range c.Mount {
-		rubyDimg.Mount = append(rubyDimg.Mount, mount.ToRuby())
+		rubyDimg.Mount = append(rubyDimg.Mount, mount.toRuby())
 	}
 
 	for _, importArtifact := range c.Import {
 		artifactGroup := ruby_marshal_config.ArtifactGroup{}
-		artifactGroup.Export = append(artifactGroup.Export, importArtifact.ToRuby())
+		artifactGroup.Export = append(artifactGroup.Export, importArtifact.toRuby())
 		rubyDimg.ArtifactGroup = append(rubyDimg.ArtifactGroup, artifactGroup)
 	}
 
