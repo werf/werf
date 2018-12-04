@@ -40,6 +40,7 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 
 				imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
 				imageServiceCommitChangeOptions.AddLabel(map[string]string{
+					"dapp":               c.ProjectName,
 					"dapp-version":       dapp.Version,
 					"dapp-cache-version": BuildCacheVersion,
 					"dapp-dimg":          "false",
