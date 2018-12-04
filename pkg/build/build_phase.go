@@ -19,6 +19,10 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 	}
 
 	for _, dimg := range c.DimgsInOrder {
+		if debug() {
+			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
+		}
+
 		var acquiredLocks []string
 
 		unlockLocks := func() {
@@ -54,7 +58,7 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 			}
 
 			if debug() {
-				fmt.Printf("  %s\n", s.Name())
+				fmt.Printf("    %s\n", s.Name())
 			}
 
 			err := img.Build2(image.BuildOptions{})

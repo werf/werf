@@ -19,6 +19,10 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 	}
 
 	for _, dimg := range c.DimgsInOrder {
+		if debug() {
+			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
+		}
+
 		var prevImage, prevBuiltImage image.Image
 
 		err := dimg.PrepareBaseImage(c)
@@ -35,7 +39,7 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 			img := s.GetImage()
 			if !img.IsExists() {
 				if debug() {
-					fmt.Printf("  %s\n", s.Name())
+					fmt.Printf("    %s\n", s.Name())
 				}
 
 				imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
