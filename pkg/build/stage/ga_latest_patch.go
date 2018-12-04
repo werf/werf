@@ -1,6 +1,9 @@
 package stage
 
-import "github.com/flant/dapp/pkg/image"
+import (
+	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/dapp/pkg/util"
+)
 
 func NewGALatestPatchStage(baseStageOptions *NewBaseStageOptions) *GALatestPatchStage {
 	s := &GALatestPatchStage{}
@@ -32,4 +35,19 @@ func (s *GALatestPatchStage) IsEmpty(_ Conveyor, prevBuiltImage image.Image) (bo
 	}
 
 	return isEmpty, nil
+}
+
+func (s *GALatestPatchStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, error) {
+	var args []string
+
+	for _, ga := range s.gitArtifacts {
+		commit, err := ga.LatestCommit()
+		if err != nil {
+			return "", err
+		}
+
+		args = append(args, commit)
+	}
+
+	return util.Sha256Hash(args...), nil
 }

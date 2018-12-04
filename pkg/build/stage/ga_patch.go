@@ -43,5 +43,5 @@ func (s *GAPatchStage) willLatestCommitBeBuiltOnGAArchiveStage(prevBuiltImage im
 		}
 	}
 
-	return true
+	return false
 }

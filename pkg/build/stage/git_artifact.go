@@ -158,10 +158,16 @@ func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) erro
 		return err
 	}
 
+	gitArtifactContainerName, err := dappdeps.GitArtifactContainer()
+	if err != nil {
+		return err
+	}
+
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.PatchesDir, ga.ContainerPatchesDir))
 	image.Container().AddRunCommands(commands...)
 
 	ga.AddGACommitToImageLabels(image, toCommit)
+	image.Container().RunOptions().AddVolumeFrom(gitArtifactContainerName)
 
 	return nil
 }
@@ -180,8 +186,6 @@ func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage image.Image) (string, st
 	return fromCommit, toCommit, nil
 }
 
-const DappGitCommitLabelFormat = "dapp-git-%s-commit"
-
 func (ga *GitArtifact) AddGACommitToImageLabels(image image.Image, commit string) {
 	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 		ga.ImageGACommitLabel(): commit,
@@ -189,7 +193,7 @@ func (ga *GitArtifact) AddGACommitToImageLabels(image image.Image, commit string
 }
 
 func (ga *GitArtifact) GetGACommitFromImageLabels(prevImage image.Image) string {
-	commit, ok := prevImage.Labels()[DappGitCommitLabelFormat]
+	commit, ok := prevImage.Labels()[ga.ImageGACommitLabel()]
 	if !ok {
 		return ""
 	}
