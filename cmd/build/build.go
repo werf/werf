@@ -19,6 +19,7 @@ import (
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/dapp/pkg/ssh_agent"
+	"github.com/flant/dapp/pkg/true_git"
 )
 
 type buildRubyCliOptions struct {
@@ -39,6 +40,10 @@ func runBuild(rubyCliOptions buildRubyCliOptions) error {
 
 	if err := ssh_agent.Init(rubyCliOptions.SSHKey); err != nil {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
+	}
+
+	if err := true_git.Init(); err != nil {
+		return err
 	}
 
 	projectDir, err := getProjectDir(rubyCliOptions)
