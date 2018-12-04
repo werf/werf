@@ -110,6 +110,10 @@ func (c *Conveyor) GetProjectBuildDir() string {
 	return path.Join(dapp.GetHomeDir(), "build", c.ProjectName)
 }
 
+func (c *Conveyor) GetContainerDappDir() string {
+	return "/.dapp"
+}
+
 func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
 	return c.dockerAuthorizer
 }
@@ -119,7 +123,7 @@ func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
 }
 
 func (c *Conveyor) GetDimgContainerTmpDir(dimgName string) string {
-	return path.Join("/.dapp", "dimg", dimgName)
+	return path.Join(c.GetContainerDappDir(), "dimg", dimgName)
 }
 
 type stubDockerAuthorizer struct{}
