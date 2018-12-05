@@ -87,6 +87,16 @@ func (c *Conveyor) Build() error {
 	return nil
 }
 
+func (c *Conveyor) Push() error {
+	fmt.Printf("TODO push\n")
+	return nil
+}
+
+func (c *Conveyor) BP() error {
+	fmt.Printf("TODO bp\n")
+	return nil
+}
+
 func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.Stage {
 	if img, ok := c.stageImages[name]; ok {
 		return img
