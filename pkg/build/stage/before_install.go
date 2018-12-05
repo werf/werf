@@ -6,8 +6,8 @@ import (
 	"github.com/flant/dapp/pkg/image"
 )
 
-func GenerateBeforeInstallStage(dimgConfig config.DimgInterface, extra *builder.Extra, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
-	b := getBuilder(dimgConfig, extra)
+func GenerateBeforeInstallStage(dimgBaseConfig *config.DimgBase, extra *builder.Extra, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
+	b := getBuilder(dimgBaseConfig, extra)
 	if b != nil && !b.IsBeforeInstallEmpty() {
 		return newBeforeInstallStage(b, baseStageOptions)
 	}

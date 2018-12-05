@@ -5,13 +5,11 @@ type rawAnsible struct {
 	Install                   []rawAnsibleTask `yaml:"install"`
 	BeforeSetup               []rawAnsibleTask `yaml:"beforeSetup"`
 	Setup                     []rawAnsibleTask `yaml:"setup"`
-	BuildArtifact             []rawAnsibleTask `yaml:"buildArtifact"`
 	CacheVersion              string           `yaml:"cacheVersion,omitempty"`
 	BeforeInstallCacheVersion string           `yaml:"beforeInstallCacheVersion,omitempty"`
 	InstallCacheVersion       string           `yaml:"installCacheVersion,omitempty"`
 	BeforeSetupCacheVersion   string           `yaml:"beforeSetupCacheVersion,omitempty"`
 	SetupCacheVersion         string           `yaml:"setupCacheVersion,omitempty"`
-	BuildArtifactCacheVersion string           `yaml:"buildArtifactCacheVersion,omitempty"`
 
 	rawDimg *rawDimg `yaml:"-"` // parent
 
@@ -46,7 +44,6 @@ func (c *rawAnsible) toDirective() (ansible *Ansible, err error) {
 	ansible.InstallCacheVersion = c.InstallCacheVersion
 	ansible.BeforeSetupCacheVersion = c.BeforeSetupCacheVersion
 	ansible.SetupCacheVersion = c.SetupCacheVersion
-	ansible.BuildArtifactCacheVersion = c.BuildArtifactCacheVersion
 
 	for ind := range c.BeforeInstall {
 		if ansibleTask, err := c.BeforeInstall[ind].toDirective(); err != nil {
@@ -77,14 +74,6 @@ func (c *rawAnsible) toDirective() (ansible *Ansible, err error) {
 			return nil, err
 		} else {
 			ansible.Setup = append(ansible.Setup, ansibleTask)
-		}
-	}
-
-	for ind := range c.BuildArtifact {
-		if ansibleTask, err := c.BuildArtifact[ind].toDirective(); err != nil {
-			return nil, err
-		} else {
-			ansible.BuildArtifact = append(ansible.BuildArtifact, ansibleTask)
 		}
 	}
 

@@ -190,7 +190,7 @@ func (f files) Get(path string) string {
 	filePath := filepath.Join(f.HomePath, path)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		Warnings = append(Warnings, fmt.Sprintf("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!", path, filePath))
+		fmt.Fprintf(os.Stderr, "WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
 		return ""
 	}
 
@@ -394,7 +394,7 @@ func associateImportsArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	var artifactImports []*ArtifactImport
 
 	for _, dimg := range dimgs {
-		for _, relatedDimgInterface := range dimg.RelatedDimgs() {
+		for _, relatedDimgInterface := range dimg.relatedDimgs() {
 			switch relatedDimgInterface.(type) {
 			case *Dimg:
 				artifactImports = append(artifactImports, relatedDimgInterface.(*Dimg).Import...)
@@ -405,7 +405,7 @@ func associateImportsArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	}
 
 	for _, artifactDimg := range artifacts {
-		for _, relatedDimgInterface := range artifactDimg.RelatedDimgs() {
+		for _, relatedDimgInterface := range artifactDimg.relatedDimgs() {
 			switch relatedDimgInterface.(type) {
 			case *Dimg:
 				artifactImports = append(artifactImports, relatedDimgInterface.(*Dimg).Import...)

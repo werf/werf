@@ -1,10 +1,7 @@
 package config
 
-import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
-
 type Dimg struct {
 	*DimgBase
-	Shell  *ShellDimg
 	Docker *Docker
 }
 
@@ -17,7 +14,7 @@ func (c *Dimg) DimgTree() (tree []DimgInterface) {
 	}
 
 	for _, importElm := range c.Import {
-		tree = append(tree, importElm.artifactDimg.DimgTree()...)
+		tree = append(tree, importElm.ArtifactDimg.DimgTree()...)
 	}
 
 	tree = append(tree, c)
@@ -25,13 +22,13 @@ func (c *Dimg) DimgTree() (tree []DimgInterface) {
 	return
 }
 
-func (c *Dimg) RelatedDimgs() (relatedDimgs []DimgInterface) {
+func (c *Dimg) relatedDimgs() (relatedDimgs []DimgInterface) {
 	relatedDimgs = append(relatedDimgs, c)
 	if c.FromDimg != nil {
-		relatedDimgs = append(relatedDimgs, c.FromDimg.RelatedDimgs()...)
+		relatedDimgs = append(relatedDimgs, c.FromDimg.relatedDimgs()...)
 	}
 	if c.FromDimgArtifact != nil {
-		relatedDimgs = append(relatedDimgs, c.FromDimgArtifact.RelatedDimgs()...)
+		relatedDimgs = append(relatedDimgs, c.FromDimgArtifact.relatedDimgs()...)
 	}
 	return
 }
@@ -52,25 +49,4 @@ func (c *Dimg) validate() error {
 	}
 
 	return nil
-}
-
-func (c *Dimg) toRuby() ruby_marshal_config.Dimg {
-	return *c.toRubyPointer()
-}
-
-func (c *Dimg) toRubyPointer() *ruby_marshal_config.Dimg {
-	rubyDimg := &ruby_marshal_config.Dimg{}
-	rubyDimg.DimgBase = c.DimgBase.toRuby()
-
-	if c.Shell != nil {
-		rubyDimg.Shell = c.Shell.toRuby()
-	}
-
-	if c.Docker != nil {
-		rubyDimg.Docker = c.Docker.toRuby()
-	}
-	rubyDimg.Docker.From = c.From
-	rubyDimg.Docker.FromCacheVersion = c.FromCacheVersion
-
-	return rubyDimg
 }

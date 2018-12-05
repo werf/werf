@@ -29,7 +29,7 @@ type GitArtifact struct {
 	Group              string
 	IncludePaths       []string
 	ExcludePaths       []string
-	StagesDependencies map[string][]string
+	StagesDependencies map[StageName][]string
 
 	PatchesDir           string
 	ContainerPatchesDir  string
@@ -375,7 +375,7 @@ func (ga *GitArtifact) baseApplyArchiveCommand(commit string, image image.Image)
 	return commands, err
 }
 
-func (ga *GitArtifact) StageDependenciesChecksum(stageName string) (string, error) {
+func (ga *GitArtifact) StageDependenciesChecksum(stageName StageName) (string, error) {
 	depsPaths := ga.StagesDependencies[stageName]
 	if len(depsPaths) == 0 {
 		return "", nil

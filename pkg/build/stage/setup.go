@@ -7,8 +7,8 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func GenerateSetupStage(dimgConfig config.DimgInterface, extra *builder.Extra, baseStageOptions *NewBaseStageOptions) *SetupStage {
-	b := getBuilder(dimgConfig, extra)
+func GenerateSetupStage(dimgBaseConfig *config.DimgBase, extra *builder.Extra, baseStageOptions *NewBaseStageOptions) *SetupStage {
+	b := getBuilder(dimgBaseConfig, extra)
 	if b != nil && !b.IsSetupEmpty() {
 		return newSetupStage(b, baseStageOptions)
 	}

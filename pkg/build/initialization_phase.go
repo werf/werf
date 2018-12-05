@@ -118,7 +118,7 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	stages = appendIfExist(stages, stage.GenerateFromStage(dimgBaseConfig, baseStageOptions))
 
 	// before_install
-	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgBaseConfig, ansibleBuilderExtra(c), baseStageOptions))
 
 	// before_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(dimgBaseConfig, baseStageOptions))
@@ -127,19 +127,19 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	stages = append(stages, stage.NewGAArchiveStage(baseStageOptions))
 
 	// install
-	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgBaseConfig, ansibleBuilderExtra(c), baseStageOptions))
 
 	// after_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(dimgBaseConfig, baseStageOptions))
 
 	// before_setup
-	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgBaseConfig, ansibleBuilderExtra(c), baseStageOptions))
 
 	// before_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBaseConfig, baseStageOptions))
 
 	// setup
-	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgBaseConfig, ansibleBuilderExtra(c), baseStageOptions))
 
 	// after_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(dimgBaseConfig, baseStageOptions))
@@ -265,7 +265,7 @@ func gitLocalArtifactInit(localGAConfig *config.GitLocal, localGitRepo *git_repo
 }
 
 func baseGitArtifactInit(local *config.GitLocalExport, dimgName string, c *Conveyor) *stage.GitArtifact {
-	var stageDependencies map[string][]string
+	var stageDependencies map[stage.StageName][]string
 	if local.StageDependencies != nil {
 		stageDependencies = stageDependenciesToMap(local.StageDependencies)
 	}
@@ -306,12 +306,11 @@ func getDimgArchivesContainerDir(c *Conveyor) string {
 	return path.Join(c.ContainerDappDir, "archive")
 }
 
-func stageDependenciesToMap(sd *config.StageDependencies) map[string][]string {
-	result := map[string][]string{
-		"install":        sd.Install,
-		"before_setup":   sd.BeforeSetup,
-		"setup":          sd.Setup,
-		"build_artifact": sd.BuildArtifact,
+func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]string {
+	result := map[stage.StageName][]string{
+		stage.Install:     sd.Install,
+		stage.BeforeSetup: sd.BeforeSetup,
+		stage.Setup:       sd.Setup,
 	}
 
 	return result

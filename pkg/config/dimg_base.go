@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
 type DimgInterface interface{}
@@ -12,17 +11,16 @@ type DimgBase struct {
 
 	Name             string
 	From             string
-	FromDimg         *Dimg         // FIXME: reject in golang binary
-	FromDimgArtifact *DimgArtifact // FIXME: FromDimgName field only
+	FromDimg         *Dimg
+	FromDimgArtifact *DimgArtifact
 	FromCacheVersion string
 	Git              *GitManager
+	Shell            *Shell
 	Ansible          *Ansible
 	Mount            []*Mount
 	Import           []*ArtifactImport
 
 	raw *rawDimg
-
-	builder string // FIXME: reject in golang binary
 }
 
 func (c *DimgBase) associateFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
@@ -90,38 +88,4 @@ func (c *DimgBase) validate() error {
 	// TODO: валидация формата `Name`
 
 	return nil
-}
-
-func (c *DimgBase) toRuby() ruby_marshal_config.DimgBase {
-	rubyDimg := ruby_marshal_config.DimgBase{}
-	rubyDimg.Name = c.Name
-	rubyDimg.Builder = ruby_marshal_config.Symbol(c.builder)
-
-	if c.FromDimg != nil {
-		rubyDimg.FromDimg = c.FromDimg.toRubyPointer()
-	}
-
-	if c.FromDimgArtifact != nil {
-		rubyDimg.FromDimgArtifact = c.FromDimgArtifact.toRubyPointer()
-	}
-
-	if c.Ansible != nil {
-		rubyDimg.Ansible = c.Ansible.toRuby()
-	}
-
-	if c.Git != nil {
-		rubyDimg.GitArtifact = c.Git.toRuby()
-	}
-
-	for _, mount := range c.Mount {
-		rubyDimg.Mount = append(rubyDimg.Mount, mount.toRuby())
-	}
-
-	for _, importArtifact := range c.Import {
-		artifactGroup := ruby_marshal_config.ArtifactGroup{}
-		artifactGroup.Export = append(artifactGroup.Export, importArtifact.toRuby())
-		rubyDimg.ArtifactGroup = append(rubyDimg.ArtifactGroup, artifactGroup)
-	}
-
-	return rubyDimg
 }

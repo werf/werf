@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"github.com/flant/dapp/pkg/config/ruby_marshal_config"
 )
 
 type ArtifactImport struct {
@@ -11,9 +10,9 @@ type ArtifactImport struct {
 	Before       string
 	After        string
 
-	raw *rawArtifactImport
+	ArtifactDimg *DimgArtifact
 
-	artifactDimg *DimgArtifact // FIXME: reject in golang binary
+	raw *rawArtifactImport
 }
 
 func (c *ArtifactImport) validate() error {
@@ -39,9 +38,9 @@ func checkInvalidRelation(rel string) bool {
 	return !(rel == "install" || rel == "setup")
 }
 
-func (c *ArtifactImport) associateArtifact(artifacts []*DimgArtifact) error { // FIXME: reject in golang binary
+func (c *ArtifactImport) associateArtifact(artifacts []*DimgArtifact) error {
 	if artifactDimg := artifactByName(artifacts, c.ArtifactName); artifactDimg != nil {
-		c.artifactDimg = artifactDimg
+		c.ArtifactDimg = artifactDimg
 	} else {
 		return newDetailedConfigError(fmt.Sprintf("No such artifact `%s`!", c.ArtifactName), c.raw, c.raw.rawDimg.doc)
 	}
@@ -55,19 +54,4 @@ func artifactByName(artifacts []*DimgArtifact, name string) *DimgArtifact {
 		}
 	}
 	return nil
-}
-
-func (c *ArtifactImport) toRuby() ruby_marshal_config.ArtifactExport {
-	artifactExport := ruby_marshal_config.ArtifactExport{}
-
-	if c.ExportBase != nil {
-		artifactExport.ArtifactBaseExport = c.ExportBase.toRuby()
-	}
-	if c.artifactDimg != nil {
-		artifactExport.Config = c.artifactDimg.toRuby()
-	}
-
-	artifactExport.After = ruby_marshal_config.Symbol(c.After)
-	artifactExport.Before = ruby_marshal_config.Symbol(c.Before)
-	return artifactExport
 }

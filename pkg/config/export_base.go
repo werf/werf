@@ -1,7 +1,5 @@
 package config
 
-import "github.com/flant/dapp/pkg/config/ruby_marshal_config"
-
 type ExportBase struct {
 	Add          string
 	To           string
@@ -24,15 +22,4 @@ func (c *ExportBase) validate() error {
 		return newDetailedConfigError("`excludePaths: [PATH, ...]|PATH` should be relative paths!", c.raw.rawOrigin.configSection(), c.raw.rawOrigin.doc())
 	}
 	return nil
-}
-
-func (c *ExportBase) toRuby() ruby_marshal_config.ArtifactBaseExport {
-	artifactBaseExport := ruby_marshal_config.ArtifactBaseExport{}
-	artifactBaseExport.Cwd = c.Add
-	artifactBaseExport.To = c.To
-	artifactBaseExport.IncludePaths = c.IncludePaths
-	artifactBaseExport.ExcludePaths = c.ExcludePaths
-	artifactBaseExport.Owner = c.Owner
-	artifactBaseExport.Group = c.Group
-	return artifactBaseExport
 }
