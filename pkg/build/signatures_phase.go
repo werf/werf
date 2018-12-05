@@ -69,17 +69,6 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 				checksumArgs = append(checksumArgs, prevStage.GetSignature())
 			}
 
-			relatedStage := dimg.GetStage(s.GetRelatedStageName())
-			// related stage may be empty
-			if relatedStage != nil {
-				relatedStageContext, err := relatedStage.GetContext(c)
-				if err != nil {
-					return err
-				}
-
-				checksumArgs = append(checksumArgs, relatedStageContext)
-			}
-
 			stageSig := util.Sha256Hash(checksumArgs...)
 
 			s.SetSignature(stageSig)

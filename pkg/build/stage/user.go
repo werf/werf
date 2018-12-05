@@ -43,10 +43,6 @@ type UserStage struct {
 }
 
 func (s *UserStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
-	return "", nil
-}
-
-func (s *UserStage) GetContext(_ Conveyor) (string, error) {
 	panic("method must be implemented!")
 }
 

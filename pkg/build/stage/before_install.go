@@ -33,10 +33,6 @@ func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _ image.Image) (string,
 	return s.builder.BeforeInstallChecksum(), nil
 }
 
-func (s *BeforeInstallStage) GetContext(_ Conveyor) (string, error) {
-	return "", nil
-}
-
 func (s *BeforeInstallStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err

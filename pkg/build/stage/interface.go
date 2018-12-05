@@ -9,9 +9,6 @@ type Interface interface {
 
 	GetDependencies(c Conveyor, prevImage image.Image) (string, error)
 
-	GetContext(Conveyor) (string, error)
-	GetRelatedStageName() StageName
-
 	PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error
 
 	PreRunHook(Conveyor) error
