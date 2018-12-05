@@ -38,7 +38,8 @@ type Conveyor struct {
 }
 
 type DockerAuthorizer interface {
-	LoginBaseImage(repo string) error
+	LoginForPull(repo string) error
+	LoginForPush(repo string) error
 }
 
 func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {

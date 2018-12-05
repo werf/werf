@@ -71,7 +71,7 @@ func (d *Dimg) PrepareBaseImage(c *Conveyor) error {
 
 	ciRegistry := os.Getenv("CI_REGISTRY")
 	if ciRegistry != "" && strings.HasPrefix(fromImage.Name(), ciRegistry) {
-		err := c.GetDockerAuthorizer().LoginBaseImage(ciRegistry)
+		err := c.GetDockerAuthorizer().LoginForPull(ciRegistry)
 		if err != nil {
 			return fmt.Errorf("login into repo %s for base image %s failed: %s", ciRegistry, fromImage.Name(), err)
 		}
