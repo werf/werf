@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/flant/dapp/cmd/dapp/docker_authorizer"
 	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/docker"
@@ -42,10 +43,6 @@ func runBuild() error {
 		return err
 	}
 
-	if err := ssh_agent.Init(rootCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
-	}
-
 	if err := true_git.Init(); err != nil {
 		return err
 	}
@@ -70,26 +67,25 @@ func runBuild() error {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 
-	hostDockerConfigDir, err := hostDockerConfigDir(projectTmpDir, buildCmdData.PullUsername, buildCmdData.PullPassword, "")
-	if err != nil {
-		return fmt.Errorf("getting host docker config dir failed: %s", err)
-	}
-
-	if err := docker.Init(hostDockerConfigDir); err != nil {
-		return err
-	}
-
 	dappfile, err := parseDappfile(projectDir)
 	if err != nil {
-		return fmt.Errorf("parsing dappfile failed: %s", err)
+		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
 
-	authorizer, err := getDockerAuthorizer(buildCmdData.PullUsername, buildCmdData.PullPassword, "")
+	dockerAuthorizer, err := docker_authorizer.GetBuildDockerAuthorizer(projectTmpDir, buildCmdData.PullUsername, buildCmdData.PullPassword)
 	if err != nil {
 		return err
 	}
 
-	c := build.NewConveyor(dappfile, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, authorizer)
+	if err := docker.Init(dockerAuthorizer.HostDockerConfigDir); err != nil {
+		return err
+	}
+
+	if err := ssh_agent.Init(rootCmdData.SSHKeys); err != nil {
+		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
+	}
+
+	c := build.NewConveyor(dappfile, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 	if err = c.Build(); err != nil {
 		return err
 	}
