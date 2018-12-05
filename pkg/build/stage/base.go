@@ -30,8 +30,6 @@ const (
 	GAPostSetupPatch            StageName = "g_a_post_setup_patch"
 	GALatestPatch               StageName = "g_a_latest_patch"
 	DockerInstructions          StageName = "docker_instructions"
-	GAArtifactPatch             StageName = "g_a_artifact_patch"
-	BuildArtifact               StageName = "build_artifact"
 )
 
 type NewBaseStageOptions struct {
@@ -67,14 +65,6 @@ func (s *BaseStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
 
 func (s *BaseStage) IsEmpty(_ Conveyor, _ image.Image) (bool, error) {
 	return false, nil
-}
-
-func (s *BaseStage) GetContext(_ Conveyor) (string, error) {
-	return "", nil
-}
-
-func (s *BaseStage) GetRelatedStageName() StageName {
-	return ""
 }
 
 func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.Image) error {
