@@ -211,6 +211,7 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 	var localGitRepo *git_repo.Local
 	if len(dimgBaseConfig.Git.Local) != 0 {
 		localGitRepo = &git_repo.Local{
+			Base:   git_repo.Base{Name: "own"},
 			Path:   c.ProjectDir,
 			GitDir: path.Join(c.ProjectDir, ".git"),
 		}
@@ -232,6 +233,7 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 				}
 
 				remoteGitRepo = &git_repo.Remote{
+					Base:      git_repo.Base{Name: remoteGAConfig.Name},
 					Url:       remoteGAConfig.Url,
 					ClonePath: clonePath,
 				}

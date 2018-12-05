@@ -98,6 +98,10 @@ func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.Image) 
 	return nil
 }
 
+func (s *BaseStage) PreRunHook(_ Conveyor) error {
+	return nil
+}
+
 func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image) error {
 	mountpointsByType := s.getServiceMountsFromLabels(prevBuiltImage)
 

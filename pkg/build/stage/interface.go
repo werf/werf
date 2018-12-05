@@ -14,6 +14,8 @@ type Interface interface {
 
 	PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error
 
+	PreRunHook(Conveyor) error
+
 	SetSignature(signature string)
 	GetSignature() string
 

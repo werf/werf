@@ -60,8 +60,11 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 				fmt.Printf("    %s\n", s.Name())
 			}
 
-			err := img.Build2(image.BuildOptions{})
-			if err != nil {
+			if err := s.PreRunHook(c); err != nil {
+				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
+			}
+
+			if err := img.Build2(image.BuildOptions{}); err != nil {
 				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 			}
 		}
