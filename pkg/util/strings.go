@@ -33,3 +33,12 @@ func RejectEmptyStrings(arr []string) []string {
 
 	return res
 }
+
+func IsStringsContainValue(arr []string, value string) bool {
+	for _, v := range arr {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}

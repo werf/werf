@@ -55,6 +55,13 @@ func (i *Stage) MustGetId() (string, error) {
 	}
 }
 
+func (i *Stage) ID() string {
+	if i.inspect != nil {
+		return i.inspect.ID
+	}
+	return ""
+}
+
 func (i *Stage) IsExists() bool {
 	return i.inspect != nil
 }

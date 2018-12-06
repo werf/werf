@@ -73,31 +73,69 @@ func (c *Conveyor) Build() error {
 	phases = append(phases, NewPrepareImagesPhase())
 	phases = append(phases, NewBuildPhase())
 
-	lockImagesName := fmt.Sprintf("%s.images", c.ProjectName)
-	err = lock.Lock(lockImagesName, lock.LockOptions{ReadOnly: true})
+	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {
-		return fmt.Errorf("error locking %s: %s", lockImagesName, err)
+		return err
 	}
-	defer lock.Unlock(lockImagesName)
+	defer lock.Unlock(lockName)
 
+	return c.run(phases)
+}
+
+type PushOptions struct {
+	WithStages bool
+
+	Tags            []string
+	TagsByGitTag    []string
+	TagsByGitBranch []string
+	TagsByGitCommit []string
+	TagsByCI        []string
+}
+
+func (c *Conveyor) Push(repo string, opts PushOptions) error {
+	var err error
+
+	var phases []Phase
+	phases = append(phases, NewInitializationPhase())
+	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewShouldBeBuiltPhase())
+	phases = append(phases, NewPushPhase(repo, opts))
+
+	lockName, err := c.lockAllImagesReadOnly()
+	if err != nil {
+		return err
+	}
+	defer lock.Unlock(lockName)
+
+	return c.run(phases)
+}
+
+func (c *Conveyor) BP(repo string, opts PushOptions) error {
+	fmt.Printf("TODO bp\n")
+	return nil
+}
+
+func (c *Conveyor) run(phases []Phase) error {
 	for _, phase := range phases {
 		err := phase.Run(c)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
-func (c *Conveyor) Push() error {
-	fmt.Printf("TODO push\n")
-	return nil
+func (c *Conveyor) lockAllImagesReadOnly() (string, error) {
+	lockName := fmt.Sprintf("%s.images", c.ProjectName)
+	err := lock.Lock(lockName, lock.LockOptions{ReadOnly: true})
+	if err != nil {
+		return "", fmt.Errorf("error locking %s: %s", lockName, err)
+	}
+	return lockName, nil
 }
 
-func (c *Conveyor) BP() error {
-	fmt.Printf("TODO bp\n")
-	return nil
+func (c *Conveyor) GetImage(name string) *image.Stage {
+	return c.stageImages[name]
 }
 
 func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.Stage {

@@ -27,7 +27,8 @@ var rootCmdData struct {
 
 func main() {
 	cmd := &cobra.Command{
-		Use: "dapp",
+		Use:          "dapp",
+		SilenceUsage: true,
 	}
 
 	cmd.AddCommand(
@@ -47,7 +48,6 @@ or it is the name of the directory where Dappfile resides.`)
 
 	err := cmd.Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
 }
@@ -149,16 +149,18 @@ func gitOwnRepoOriginUrl(projectDir string) (string, error) {
 	return remoteOriginUrl, nil
 }
 
-func getRequiredRepoName(repoOption string) (string, error) {
-	res := getOptionalRepoName(repoOption)
+func getRequiredRepoName(projectName, repoOption string) (string, error) {
+	res := getOptionalRepoName(projectName, repoOption)
 	if res == "" {
 		return "", fmt.Errorf("CI_REGISTRY_IMAGE variable or repo option required!")
 	}
 	return res, nil
 }
 
-func getOptionalRepoName(repoOption string) string {
-	if repoOption != "" {
+func getOptionalRepoName(projectName, repoOption string) string {
+	if repoOption == ":minikube" {
+		return fmt.Sprintf("localhost:5000/%s", projectName)
+	} else if repoOption != "" {
 		return repoOption
 	}
 

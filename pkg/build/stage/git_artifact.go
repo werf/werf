@@ -98,7 +98,14 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 		return ga.GitRepo().LatestBranchCommit(ga.Branch)
 	}
 
-	return ga.GitRepo().HeadCommit()
+	commit, err := ga.GitRepo().HeadCommit()
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, ga.GitRepo().String())
+
+	return commit, nil
 }
 
 func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
