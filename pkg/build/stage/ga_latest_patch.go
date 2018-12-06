@@ -15,8 +15,10 @@ type GALatestPatchStage struct {
 	*GAPatchStage
 }
 
-func (s *GALatestPatchStage) IsEmpty(_ Conveyor, prevBuiltImage image.Image) (bool, error) {
-	if s.willLatestCommitBeBuiltOnGAArchiveStage(prevBuiltImage) {
+func (s *GALatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.Image) (bool, error) {
+	if empty, err := s.GAPatchStage.IsEmpty(c, prevBuiltImage); err != nil {
+		return false, err
+	} else if empty {
 		return true, nil
 	}
 

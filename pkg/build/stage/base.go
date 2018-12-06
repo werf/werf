@@ -30,6 +30,7 @@ const (
 )
 
 type NewBaseStageOptions struct {
+	DimgName         string
 	DimgTmpDir       string
 	ContainerDappDir string
 	ProjectBuildDir  string
@@ -38,6 +39,7 @@ type NewBaseStageOptions struct {
 func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
 	s := &BaseStage{}
 	s.name = name
+	s.dimgName = options.DimgName
 	s.projectBuildDir = options.ProjectBuildDir
 	s.dimgTmpDir = options.DimgTmpDir
 	s.containerDappDir = options.ContainerDappDir
@@ -46,6 +48,7 @@ func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
 
 type BaseStage struct {
 	name             StageName
+	dimgName         string
 	signature        string
 	image            image.Image
 	gitArtifacts     []*GitArtifact
@@ -88,6 +91,10 @@ func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.Image) 
 		return fmt.Errorf("error adding custom mounts: %s", err)
 	}
 
+	return nil
+}
+
+func (s *BaseStage) AfterImageSyncDockerStateHook(_ Conveyor) error {
 	return nil
 }
 

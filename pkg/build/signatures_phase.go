@@ -77,9 +77,12 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 			i := c.GetOrCreateImage(prevImage, imageName)
 			s.SetImage(i)
 
-			err = i.SyncDockerState()
-			if err != nil {
+			if err = i.SyncDockerState(); err != nil {
 				return fmt.Errorf("error synchronizing docker state of stage %s: %s", s.Name(), err)
+			}
+
+			if err = s.AfterImageSyncDockerStateHook(c); err != nil {
+				return err
 			}
 
 			newStagesList = append(newStagesList, s)

@@ -25,10 +25,9 @@ type Conveyor struct {
 	// Push()
 	// BP()
 
-	states map[string]stage.StageName
-
-	stageImages      map[string]*image.Stage
-	dockerAuthorizer DockerAuthorizer
+	stageImages                   map[string]*image.Stage
+	buildingGAStageNameByDimgName map[string]stage.StageName
+	dockerAuthorizer              DockerAuthorizer
 
 	ProjectName string
 
@@ -47,16 +46,16 @@ type DockerAuthorizer interface {
 
 func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
 	return &Conveyor{
-		Dappfile:         dappfile,
-		ProjectDir:       projectDir,
-		ProjectName:      projectName,
-		ProjectBuildDir:  buildDir,
-		ContainerDappDir: "/.dapp",
-		TmpDir:           tmpDir,
-		SSHAuthSock:      sshAuthSock,
-		stageImages:      make(map[string]*image.Stage),
-		dockerAuthorizer: authorizer,
-		states:           make(map[string]stage.StageName),
+		Dappfile:                      dappfile,
+		ProjectDir:                    projectDir,
+		ProjectName:                   projectName,
+		ProjectBuildDir:               buildDir,
+		ContainerDappDir:              "/.dapp",
+		TmpDir:                        tmpDir,
+		SSHAuthSock:                   sshAuthSock,
+		stageImages:                   make(map[string]*image.Stage),
+		dockerAuthorizer:              authorizer,
+		buildingGAStageNameByDimgName: make(map[string]stage.StageName),
 	}
 }
 
@@ -133,17 +132,17 @@ func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
 	return c.dockerAuthorizer
 }
 
-func (c *Conveyor) SetStateToBuildGitArtifacts(key string, name stage.StageName) {
-	c.states[key] = name
+func (c *Conveyor) SetBuildingGAStage(dimgName string, stageName stage.StageName) {
+	c.buildingGAStageNameByDimgName[dimgName] = stageName
 }
 
-func (c *Conveyor) GetStateToBuildGitArtifacts(key string) stage.StageName {
-	value, ok := c.states[key]
+func (c *Conveyor) GetBuildingGAStage(dimgName string) stage.StageName {
+	stageName, ok := c.buildingGAStageNameByDimgName[dimgName]
 	if !ok {
-		return value
+		return ""
 	}
 
-	return value
+	return stageName
 }
 
 func (c *Conveyor) GetDimgTmpDir(dimgName string) string {

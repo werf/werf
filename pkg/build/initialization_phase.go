@@ -34,10 +34,10 @@ func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) ([]*Dimg, error)
 	for _, dimgConfig := range getDimgConfigsInOrder(dappfile) {
 		dimg := &Dimg{}
 
-		dimgBaseConfig, _ := processDimgConfig(dimgConfig)
+		dimgBaseConfig, dimgName, _ := processDimgConfig(dimgConfig)
 		from, fromDimgName := getFromAndFromDimgName(dimgBaseConfig)
 
-		dimg.name = dimgBaseConfig.Name
+		dimg.name = dimgName
 		dimg.baseImageName = from
 		dimg.baseImageDimgName = fromDimgName
 
@@ -101,9 +101,10 @@ func isNotInArr(arr []config.DimgInterface, obj config.DimgInterface) bool {
 func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Interface, error) {
 	var stages []stage.Interface
 
-	dimgBaseConfig, dimgArtifact := processDimgConfig(dimgConfig)
+	dimgBaseConfig, dimgName, dimgArtifact := processDimgConfig(dimgConfig)
 
 	baseStageOptions := &stage.NewBaseStageOptions{
+		DimgName:         dimgName,
 		DimgTmpDir:       c.GetDimgTmpDir(dimgBaseConfig.Name),
 		ContainerDappDir: c.ContainerDappDir,
 		ProjectBuildDir:  c.ProjectBuildDir,
@@ -316,7 +317,7 @@ func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]
 	return result
 }
 
-func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, bool) {
+func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, string, bool) {
 	var dimgBase *config.DimgBase
 	var dimgArtifact bool
 	switch dimgConfig.(type) {
@@ -328,7 +329,7 @@ func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, bool)
 		dimgArtifact = true
 	}
 
-	return dimgBase, dimgArtifact
+	return dimgBase, dimgBase.Name, dimgArtifact
 }
 
 func ansibleBuilderExtra(c *Conveyor) *builder.Extra {

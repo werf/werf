@@ -23,8 +23,19 @@ func (s *UserWithGAPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image im
 		return err
 	}
 
-	if err := s.GAPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
-		return nil
+	stageName := c.GetBuildingGAStage(s.dimgName)
+	if stageName == s.Name() {
+		if err := s.GAPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (s *UserWithGAPatchStage) AfterImageSyncDockerStateHook(c Conveyor) error {
+	if err := s.GAPatchStage.AfterImageSyncDockerStateHook(c); err != nil {
+		return err
 	}
 
 	return nil
