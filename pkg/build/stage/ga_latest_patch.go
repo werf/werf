@@ -7,16 +7,12 @@ import (
 
 func NewGALatestPatchStage(baseStageOptions *NewBaseStageOptions) *GALatestPatchStage {
 	s := &GALatestPatchStage{}
-	s.GAPatchStage = newGAPatchStage(baseStageOptions)
+	s.GAPatchStage = newGAPatchStage(GALatestPatch, baseStageOptions)
 	return s
 }
 
 type GALatestPatchStage struct {
 	*GAPatchStage
-}
-
-func (s *GALatestPatchStage) Name() StageName {
-	return GALatestPatch
 }
 
 func (s *GALatestPatchStage) IsEmpty(_ Conveyor, prevBuiltImage image.Image) (bool, error) {

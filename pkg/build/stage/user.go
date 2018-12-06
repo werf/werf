@@ -3,7 +3,6 @@ package stage
 import (
 	"github.com/flant/dapp/pkg/build/builder"
 	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -18,10 +17,10 @@ func getBuilder(dimgBaseConfig *config.DimgBase, extra *builder.Extra) builder.B
 	return b
 }
 
-func newUserStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *UserStage {
+func newUserStage(builder builder.Builder, name StageName, baseStageOptions *NewBaseStageOptions) *UserStage {
 	s := &UserStage{}
 	s.builder = builder
-	s.BaseStage = newBaseStage(baseStageOptions)
+	s.BaseStage = newBaseStage(name, baseStageOptions)
 	return s
 }
 
@@ -31,11 +30,7 @@ type UserStage struct {
 	builder builder.Builder
 }
 
-func (s *UserStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
-	panic("method must be implemented!")
-}
-
-func (s *UserStage) GetStageDependenciesChecksum(name StageName) (string, error) {
+func (s *UserStage) getStageDependenciesChecksum(name StageName) (string, error) {
 	var args []string
 	for _, ga := range s.gitArtifacts {
 		checksum, err := ga.StageDependenciesChecksum(name)

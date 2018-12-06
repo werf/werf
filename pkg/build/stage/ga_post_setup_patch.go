@@ -9,16 +9,12 @@ const patchSizeStep = 1024 * 1024
 
 func NewGAPostSetupPatchStage(baseStageOptions *NewBaseStageOptions) *GAPostSetupPatchStage {
 	s := &GAPostSetupPatchStage{}
-	s.GAPatchStage = newGAPatchStage(baseStageOptions)
+	s.GAPatchStage = newGAPatchStage(GAPostSetupPatch, baseStageOptions)
 	return s
 }
 
 type GAPostSetupPatchStage struct {
 	*GAPatchStage
-}
-
-func (s *GAPostSetupPatchStage) Name() StageName {
-	return GAPostSetupPatch
 }
 
 func (s *GAPostSetupPatchStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, error) {

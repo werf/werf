@@ -18,7 +18,7 @@ func GenerateSetupStage(dimgBaseConfig *config.DimgBase, extra *builder.Extra, b
 
 func newSetupStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *SetupStage {
 	s := &SetupStage{}
-	s.UserWithGAPatchStage = newUserWithGAPatchStage(builder, baseStageOptions)
+	s.UserWithGAPatchStage = newUserWithGAPatchStage(builder, Setup, baseStageOptions)
 	return s
 }
 
@@ -26,12 +26,8 @@ type SetupStage struct {
 	*UserWithGAPatchStage
 }
 
-func (s *SetupStage) Name() StageName {
-	return Setup
-}
-
 func (s *SetupStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
-	stageDependenciesChecksum, err := s.GetStageDependenciesChecksum(Setup)
+	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(Setup)
 	if err != nil {
 		return "", err
 	}

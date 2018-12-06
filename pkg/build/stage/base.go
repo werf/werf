@@ -35,8 +35,9 @@ type NewBaseStageOptions struct {
 	ProjectBuildDir  string
 }
 
-func newBaseStage(options *NewBaseStageOptions) *BaseStage {
+func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
 	s := &BaseStage{}
+	s.name = name
 	s.projectBuildDir = options.ProjectBuildDir
 	s.dimgTmpDir = options.DimgTmpDir
 	s.containerDappDir = options.ContainerDappDir
@@ -44,6 +45,7 @@ func newBaseStage(options *NewBaseStageOptions) *BaseStage {
 }
 
 type BaseStage struct {
+	name             StageName
 	signature        string
 	image            image.Image
 	gitArtifacts     []*GitArtifact
@@ -53,7 +55,11 @@ type BaseStage struct {
 }
 
 func (s *BaseStage) Name() StageName {
-	panic("method must be implemented!")
+	if s.name != "" {
+		return s.name
+	}
+
+	panic("name must be defined!")
 }
 
 func (s *BaseStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {

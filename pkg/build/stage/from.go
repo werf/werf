@@ -19,7 +19,7 @@ func newFromStage(cacheVersion string, mounts []*config.Mount, baseStageOptions 
 	s := &FromStage{}
 	s.cacheVersion = cacheVersion
 	s.mounts = mounts
-	s.BaseStage = newBaseStage(baseStageOptions)
+	s.BaseStage = newBaseStage(From, baseStageOptions)
 	return s
 }
 
@@ -28,10 +28,6 @@ type FromStage struct {
 
 	cacheVersion string
 	mounts       []*config.Mount
-}
-
-func (s *FromStage) Name() StageName {
-	return From
 }
 
 func (s *FromStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, error) {

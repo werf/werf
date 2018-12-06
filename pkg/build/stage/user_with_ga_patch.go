@@ -5,10 +5,11 @@ import (
 	"github.com/flant/dapp/pkg/image"
 )
 
-func newUserWithGAPatchStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *UserWithGAPatchStage {
+func newUserWithGAPatchStage(builder builder.Builder, name StageName, baseStageOptions *NewBaseStageOptions) *UserWithGAPatchStage {
 	s := &UserWithGAPatchStage{}
-	s.UserStage = newUserStage(builder, baseStageOptions)
-	s.GAPatchStage = newGAPatchStage(baseStageOptions)
+	s.UserStage = newUserStage(builder, name, baseStageOptions)
+	s.GAPatchStage = newGAPatchStage(name, baseStageOptions)
+	s.GAPatchStage.BaseStage = s.BaseStage
 	return s
 }
 

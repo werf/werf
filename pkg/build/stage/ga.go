@@ -1,8 +1,8 @@
 package stage
 
-func newGAStage(baseStageOptions *NewBaseStageOptions) *GAStage {
+func newGAStage(name StageName, baseStageOptions *NewBaseStageOptions) *GAStage {
 	s := &GAStage{}
-	s.BaseStage = newBaseStage(baseStageOptions)
+	s.BaseStage = newBaseStage(name, baseStageOptions)
 	return s
 }
 

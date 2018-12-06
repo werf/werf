@@ -17,16 +17,12 @@ func GenerateBeforeInstallStage(dimgBaseConfig *config.DimgBase, extra *builder.
 
 func newBeforeInstallStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
 	s := &BeforeInstallStage{}
-	s.UserStage = newUserStage(builder, baseStageOptions)
+	s.UserStage = newUserStage(builder, BeforeInstall, baseStageOptions)
 	return s
 }
 
 type BeforeInstallStage struct {
 	*UserStage
-}
-
-func (s *BeforeInstallStage) Name() StageName {
-	return BeforeInstall
 }
 
 func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {

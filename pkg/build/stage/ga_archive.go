@@ -11,16 +11,12 @@ const GAArchiveResetCommitRegex = "(\\[dapp reset\\])|(\\[reset dapp\\])"
 
 func NewGAArchiveStage(baseStageOptions *NewBaseStageOptions) *GAArchiveStage {
 	s := &GAArchiveStage{}
-	s.GAStage = newGAStage(baseStageOptions)
+	s.GAStage = newGAStage(GAArchive, baseStageOptions)
 	return s
 }
 
 type GAArchiveStage struct {
 	*GAStage
-}
-
-func (s *GAArchiveStage) Name() StageName {
-	return GAArchive
 }
 
 func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {

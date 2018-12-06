@@ -4,9 +4,9 @@ import (
 	"github.com/flant/dapp/pkg/image"
 )
 
-func newGAPatchStage(baseStageOptions *NewBaseStageOptions) *GAPatchStage {
+func newGAPatchStage(name StageName, baseStageOptions *NewBaseStageOptions) *GAPatchStage {
 	s := &GAPatchStage{}
-	s.GAStage = newGAStage(baseStageOptions)
+	s.GAStage = newGAStage(name, baseStageOptions)
 	return s
 }
 

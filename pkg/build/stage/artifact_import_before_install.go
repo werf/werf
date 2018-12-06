@@ -13,14 +13,10 @@ func GenerateArtifactImportBeforeInstallStage(dimgBaseConfig *config.DimgBase, b
 
 func newArtifactImportBeforeInstallStage(imports []*config.ArtifactImport, baseStageOptions *NewBaseStageOptions) *ArtifactImportBeforeInstallStage {
 	s := &ArtifactImportBeforeInstallStage{}
-	s.ArtifactImportStage = newArtifactImportStage(imports, baseStageOptions)
+	s.ArtifactImportStage = newArtifactImportStage(imports, ArtifactImportBeforeInstall, baseStageOptions)
 	return s
 }
 
 type ArtifactImportBeforeInstallStage struct {
 	*ArtifactImportStage
-}
-
-func (s *ArtifactImportBeforeInstallStage) Name() StageName {
-	return ArtifactImportBeforeInstall
 }

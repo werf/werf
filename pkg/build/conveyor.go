@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/lock"
@@ -23,6 +24,8 @@ type Conveyor struct {
 	// Tag()
 	// Push()
 	// BP()
+
+	states map[string]stage.StageName
 
 	stageImages      map[string]*image.Stage
 	dockerAuthorizer DockerAuthorizer
@@ -53,6 +56,7 @@ func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmp
 		SSHAuthSock:      sshAuthSock,
 		stageImages:      make(map[string]*image.Stage),
 		dockerAuthorizer: authorizer,
+		states:           make(map[string]stage.StageName),
 	}
 }
 
@@ -127,6 +131,19 @@ func (c *Conveyor) GetDimgImageName(dimgName string) string {
 
 func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
 	return c.dockerAuthorizer
+}
+
+func (c *Conveyor) SetStateToBuildGitArtifacts(key string, name stage.StageName) {
+	c.states[key] = name
+}
+
+func (c *Conveyor) GetStateToBuildGitArtifacts(key string) stage.StageName {
+	value, ok := c.states[key]
+	if !ok {
+		return value
+	}
+
+	return value
 }
 
 func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
