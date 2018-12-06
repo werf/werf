@@ -23,8 +23,8 @@ var bpCmdData struct {
 
 	Tag        []string
 	TagBranch  bool
-	TagBuildId bool
-	TagCi      bool
+	TagBuildID bool
+	TagCI      bool
 	TagCommit  bool
 }
 
@@ -61,8 +61,8 @@ func newBPCmd() *cobra.Command {
 
 	cmd.PersistentFlags().StringArrayVarP(&bpCmdData.Tag, "tag", "", []string{}, "Add tag (can be used one or more times)")
 	cmd.PersistentFlags().BoolVarP(&bpCmdData.TagBranch, "tag-branch", "", false, "Tag by git branch")
-	cmd.PersistentFlags().BoolVarP(&bpCmdData.TagBuildId, "tag-build-id", "", false, "Tag by CI build id")
-	cmd.PersistentFlags().BoolVarP(&bpCmdData.TagCi, "tag-ci", "", false, "Tag by CI branch and tag")
+	cmd.PersistentFlags().BoolVarP(&bpCmdData.TagBuildID, "tag-build-id", "", false, "Tag by CI build id")
+	cmd.PersistentFlags().BoolVarP(&bpCmdData.TagCI, "tag-ci", "", false, "Tag by CI branch and tag")
 	cmd.PersistentFlags().BoolVarP(&bpCmdData.TagCommit, "tag-commit", "", false, "Tag by git commit")
 
 	return cmd
@@ -106,7 +106,7 @@ func runBP() error {
 		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
 
-	repo, err := getRequiredRepoName(pushCmdData.Repo)
+	repo, err := getRequiredRepoName(projectName, pushCmdData.Repo)
 	if err != nil {
 		return err
 	}
@@ -124,8 +124,13 @@ func runBP() error {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
+	opts, err := getPushOptions(projectDir, pushCmdData.Tag, pushCmdData.TagBranch, pushCmdData.TagCommit, pushCmdData.TagBuildID, pushCmdData.TagCI, pushCmdData.WithStages)
+	if err != nil {
+		return err
+	}
+
 	c := build.NewConveyor(dappfile, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
-	if err = c.Push(); err != nil {
+	if err = c.BP(repo, opts); err != nil {
 		return err
 	}
 

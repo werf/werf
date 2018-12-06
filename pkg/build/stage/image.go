@@ -14,6 +14,10 @@ func (i *StubImage) Labels() map[string]string {
 	return i.labels
 }
 
+func (i *StubImage) ID() string {
+	return ""
+}
+
 func (i *StubImage) Container() image.Container {
 	return nil
 }

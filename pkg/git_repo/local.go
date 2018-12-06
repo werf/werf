@@ -38,12 +38,7 @@ func (repo *Local) HeadCommit() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("cannot get repo `%s` head ref: %s", repo.Path, err)
 	}
-
-	commit := fmt.Sprintf("%s", ref.Hash())
-
-	fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, repo.String())
-
-	return commit, nil
+	return fmt.Sprintf("%s", ref.Hash()), nil
 }
 
 func (repo *Local) HeadBranchName() (string, error) {

@@ -22,8 +22,8 @@ var pushCmdData struct {
 
 	Tag        []string
 	TagBranch  bool
-	TagBuildId bool
-	TagCi      bool
+	TagBuildID bool
+	TagCI      bool
 	TagCommit  bool
 }
 
@@ -31,7 +31,11 @@ func newPushCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "push",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runPush()
+			err := runPush()
+			if err != nil {
+				return fmt.Errorf("push failed: %s", err)
+			}
+			return nil
 		},
 	}
 
@@ -45,8 +49,8 @@ func newPushCmd() *cobra.Command {
 
 	cmd.PersistentFlags().StringArrayVarP(&pushCmdData.Tag, "tag", "", []string{}, "Add tag (can be used one or more times)")
 	cmd.PersistentFlags().BoolVarP(&pushCmdData.TagBranch, "tag-branch", "", false, "Tag by git branch")
-	cmd.PersistentFlags().BoolVarP(&pushCmdData.TagBuildId, "tag-build-id", "", false, "Tag by CI build id")
-	cmd.PersistentFlags().BoolVarP(&pushCmdData.TagCi, "tag-ci", "", false, "Tag by CI branch and tag")
+	cmd.PersistentFlags().BoolVarP(&pushCmdData.TagBuildID, "tag-build-id", "", false, "Tag by CI build id")
+	cmd.PersistentFlags().BoolVarP(&pushCmdData.TagCI, "tag-ci", "", false, "Tag by CI branch and tag")
 	cmd.PersistentFlags().BoolVarP(&pushCmdData.TagCommit, "tag-commit", "", false, "Tag by git commit")
 
 	return cmd
@@ -90,7 +94,7 @@ func runPush() error {
 		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
 
-	repo, err := getRequiredRepoName(pushCmdData.Repo)
+	repo, err := getRequiredRepoName(projectName, pushCmdData.Repo)
 	if err != nil {
 		return err
 	}
@@ -108,8 +112,13 @@ func runPush() error {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
+	opts, err := getPushOptions(projectDir, pushCmdData.Tag, pushCmdData.TagBranch, pushCmdData.TagCommit, pushCmdData.TagBuildID, pushCmdData.TagCI, pushCmdData.WithStages)
+	if err != nil {
+		return err
+	}
+
 	c := build.NewConveyor(dappfile, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
-	if err = c.Push(); err != nil {
+	if err = c.Push(repo, opts); err != nil {
 		return err
 	}
 
