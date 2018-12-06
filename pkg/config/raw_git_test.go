@@ -40,7 +40,7 @@ func TestRawGit_getNameFromUrl(t *testing.T) {
 	for _, expectation := range negativeExpectations {
 		rawGit := rawGit{Url: expectation}
 		_, err := rawGit.getNameFromUrl()
-		expectedError := fmt.Sprintf("Cannot determine repo name from `url: %s`: url is not fit `.*?([^:/ ]+/[^/ ]+)\\.git$` regex!", expectation)
+		expectedError := fmt.Sprintf("cannot determine repo name from `url: %s`: url is not fit `.*?([^:/ ]+/[^/ ]+)\\.git$` regex!", expectation)
 		if err == nil {
 			t.Errorf("\n[EXPECTED]: %s", expectedError)
 		} else if err.Error() != expectedError {

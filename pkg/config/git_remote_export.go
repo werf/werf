@@ -11,7 +11,7 @@ type GitRemoteExport struct {
 
 func (c *GitRemoteExport) validate() error {
 	if !oneOrNone([]bool{c.Branch != "", c.Commit != "", c.Tag != ""}) {
-		return newDetailedConfigError("Specify only `branch: BRANCH`, `tag: TAG` or `commit: COMMIT` for remote git!", c.raw, c.raw.rawDimg.doc)
+		return newDetailedConfigError("specify only `branch: BRANCH`, `tag: TAG` or `commit: COMMIT` for remote git!", c.raw, c.raw.rawDimg.doc)
 	}
 	return nil
 }

@@ -32,25 +32,25 @@ func (c *DimgBase) associateFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error
 		fromDimgName := c.raw.FromDimg
 
 		if fromDimgName == c.Name {
-			return newDetailedConfigError(fmt.Sprintf("Cannot use own dimg name as `fromDimg` directive value!"), nil, c.raw.doc)
+			return newDetailedConfigError(fmt.Sprintf("cannot use own dimg name as `fromDimg` directive value!"), nil, c.raw.doc)
 		}
 
 		if dimg := dimgByName(dimgs, fromDimgName); dimg != nil {
 			c.FromDimg = dimg
 		} else {
-			return newDetailedConfigError(fmt.Sprintf("No such dimg `%s`!", fromDimgName), c.raw, c.raw.doc)
+			return newDetailedConfigError(fmt.Sprintf("no such dimg `%s`!", fromDimgName), c.raw, c.raw.doc)
 		}
 	} else if c.raw.FromDimgArtifact != "" {
 		fromDimgArtifactName := c.raw.FromDimgArtifact
 
 		if fromDimgArtifactName == c.Name {
-			return newDetailedConfigError(fmt.Sprintf("Cannot use own dimg name as `fromDimgArtifact` directive value!"), nil, c.raw.doc)
+			return newDetailedConfigError(fmt.Sprintf("cannot use own dimg name as `fromDimgArtifact` directive value!"), nil, c.raw.doc)
 		}
 
 		if dimgArtifact := dimgArtifactByName(artifacts, fromDimgArtifactName); dimgArtifact != nil {
 			c.FromDimgArtifact = dimgArtifact
 		} else {
-			return newDetailedConfigError(fmt.Sprintf("No such dimg artifact `%s`!", fromDimgArtifactName), c.raw, c.raw.doc)
+			return newDetailedConfigError(fmt.Sprintf("no such dimg artifact `%s`!", fromDimgArtifactName), c.raw, c.raw.doc)
 		}
 	}
 

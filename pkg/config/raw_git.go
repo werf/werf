@@ -79,7 +79,7 @@ func (c *rawGit) toGitLocalDirective() (gitLocal *GitLocal, err error) {
 
 func (c *rawGit) validateGitLocalDirective(gitLocal *GitLocal) (err error) {
 	if c.Branch != "" || c.Commit != "" || c.Tag != "" {
-		return newDetailedConfigError("Specify `branch: BRANCH`, `tag: TAG` and `commit: COMMIT` only for remote git!", nil, c.rawDimg.doc)
+		return newDetailedConfigError("specify `branch: BRANCH`, `tag: TAG` and `commit: COMMIT` only for remote git!", nil, c.rawDimg.doc)
 	}
 
 	if err := gitLocal.validate(); err != nil {

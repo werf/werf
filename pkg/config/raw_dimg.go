@@ -42,7 +42,7 @@ func (c *rawDimg) setAndValidateDimg() error {
 		case nil:
 			c.Dimgs = []string{""}
 		default:
-			return newDetailedConfigError(fmt.Sprintf("Invalid dimg name `%v`!", t), nil, c.doc)
+			return newDetailedConfigError(fmt.Sprintf("invalid dimg name `%v`!", t), nil, c.doc)
 		}
 	}
 
@@ -78,9 +78,9 @@ func (c *rawDimg) validateDimgType() error {
 	isArtifact := c.Artifact != ""
 
 	if isDimg && isArtifact {
-		return newDetailedConfigError("Unknown doc type: one and only one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
+		return newDetailedConfigError("unknown doc type: one and only one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
 	} else if !(isDimg || isArtifact) {
-		return newDetailedConfigError("Unknown doc type: one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
+		return newDetailedConfigError("unknown doc type: one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
 	}
 
 	return nil

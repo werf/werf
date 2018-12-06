@@ -25,7 +25,7 @@ func checkOverflow(m map[string]interface{}, configSection interface{}, doc *doc
 			keys = append(keys, k)
 		}
 
-		message := fmt.Sprintf("Unknown fields: `%s`!", strings.Join(keys, "`, `"))
+		message := fmt.Sprintf("unknown fields: `%s`!", strings.Join(keys, "`, `"))
 		if configSection == nil {
 			return newDetailedConfigError(message, nil, doc)
 		} else {
@@ -81,12 +81,12 @@ func InterfaceToStringArray(stringOrStringArray interface{}, configSection inter
 			if val, ok := interf.(string); ok {
 				stringArray = append(stringArray, val)
 			} else {
-				return nil, newDetailedConfigError(fmt.Sprintf("Single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
+				return nil, newDetailedConfigError(fmt.Sprintf("single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
 			}
 		}
 		return stringArray, nil
 	} else {
-		return nil, newDetailedConfigError(fmt.Sprintf("Single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
+		return nil, newDetailedConfigError(fmt.Sprintf("single string or array of strings expected, got `%v`!", stringOrStringArray), configSection, doc)
 	}
 }
 

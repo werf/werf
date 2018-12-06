@@ -45,7 +45,7 @@ func (c *Dimg) lastLayerOrSelf() DimgInterface {
 
 func (c *Dimg) validate() error {
 	if !oneOrNone([]bool{c.Shell != nil, c.Ansible != nil}) {
-		return newDetailedConfigError("Cannot use shell and ansible builders at the same time!", nil, c.DimgBase.raw.doc)
+		return newDetailedConfigError("cannot use shell and ansible builders at the same time!", nil, c.DimgBase.raw.doc)
 	}
 
 	return nil

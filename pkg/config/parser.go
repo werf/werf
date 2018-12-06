@@ -344,7 +344,7 @@ func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath 
 	}
 
 	if len(dimgs) == 0 {
-		return nil, newConfigError(fmt.Sprintf("No dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
+		return nil, newConfigError(fmt.Sprintf("no dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
 	}
 
 	if err = validateDimgsNames(dimgs); err != nil {
