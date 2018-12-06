@@ -13,15 +13,10 @@ import (
 	"github.com/flant/dapp/pkg/slug"
 )
 
-type GCOptions struct {
-	Mode                 GCModeOptions     `json:"mode"`
-	CommonRepoOptions    CommonRepoOptions `json:"common_repo_options"`
-	DeployedDockerImages []string          `json:"deployed_docker_images"`
+type CleanupOptions struct {
+	CommonRepoOptions    CommonRepoOptions
+	DeployedDockerImages []string
 	LocalRepo            GitRepo
-}
-
-type GCModeOptions struct {
-	WithStages bool `json:"with_stages"`
 }
 
 const (
@@ -31,7 +26,7 @@ const (
 	gitCommitsLimitPolicy            = 50
 )
 
-func GC(options GCOptions) error {
+func Cleanup(options CleanupOptions) error {
 	err := lock.WithLock(options.CommonRepoOptions.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoDimgs, err := repoDimgImages(options.CommonRepoOptions)
 		if err != nil {
@@ -55,10 +50,8 @@ func GC(options GCOptions) error {
 			}
 		}
 
-		if options.Mode.WithStages {
-			if err := repoDimgstagesSyncByRepoDimgs(repoDimgs, options.CommonRepoOptions); err != nil {
-				return err
-			}
+		if err := repoDimgstagesSyncByRepoDimgs(repoDimgs, options.CommonRepoOptions); err != nil {
+			return err
 		}
 
 		return nil
@@ -71,7 +64,7 @@ func GC(options GCOptions) error {
 	return nil
 }
 
-func exceptRepoDimgsByWhitelist(repoDimgs []docker_registry.RepoImage, options GCOptions) ([]docker_registry.RepoImage, error) {
+func exceptRepoDimgsByWhitelist(repoDimgs []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
 	var newRepoDimgs, exceptedRepoDimgs []docker_registry.RepoImage
 
 Loop:
@@ -99,7 +92,7 @@ Loop:
 	return newRepoDimgs, nil
 }
 
-func repoDimgsCleanupByNonexistentGitPrimitive(repoDimgs []docker_registry.RepoImage, options GCOptions) ([]docker_registry.RepoImage, error) {
+func repoDimgsCleanupByNonexistentGitPrimitive(repoDimgs []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
 	var nonexistentGitTagRepoImages, nonexistentGitCommitRepoImages, nonexistentGitBranchRepoImages []docker_registry.RepoImage
 
 	sluggedGitTags, err := consistentGitTags(options)
@@ -179,7 +172,7 @@ Loop:
 	return repoDimgs, nil
 }
 
-func consistentGitBranches(options GCOptions) ([]string, error) {
+func consistentGitBranches(options CleanupOptions) ([]string, error) {
 	var sluggedBranches []string
 	branches, err := options.LocalRepo.RemoteBranchesList()
 	if err != nil {
@@ -193,7 +186,7 @@ func consistentGitBranches(options GCOptions) ([]string, error) {
 	return sluggedBranches, nil
 }
 
-func consistentGitTags(options GCOptions) ([]string, error) {
+func consistentGitTags(options CleanupOptions) ([]string, error) {
 	var sluggedTags []string
 	tags, err := options.LocalRepo.TagsList()
 	if err != nil {
@@ -217,7 +210,7 @@ func repoImageTagMatch(repoImage docker_registry.RepoImage, matches ...string) b
 	return false
 }
 
-func repoDimgsCleanupByPolicies(repoDimgs []docker_registry.RepoImage, options GCOptions) ([]docker_registry.RepoImage, error) {
+func repoDimgsCleanupByPolicies(repoDimgs []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
 	var repoDimgsWithGitTagScheme, repoDimgsWithGitCommitScheme []docker_registry.RepoImage
 
 	for _, repoDimg := range repoDimgs {

@@ -35,6 +35,11 @@ func main() {
 		newBuildCmd(),
 		newPushCmd(),
 		newBPCmd(),
+
+		newResetCmd(),
+		newFlushCmd(),
+		newSyncCmd(),
+		newCleanupCmd(),
 	)
 
 	cmd.PersistentFlags().StringVarP(&rootCmdData.Name, "name", "", "", `Use custom dapp name.
@@ -135,13 +140,15 @@ func isGitOwnRepoExists(projectDir string) (bool, error) {
 	return fileInfo.IsDir(), nil
 }
 
-func gitOwnRepoOriginUrl(projectDir string) (string, error) {
-	localGitRepo := &git_repo.Local{
+func localGitRepo(projectDir string) *git_repo.Local {
+	return &git_repo.Local{
 		Path:   projectDir,
 		GitDir: path.Join(projectDir, ".git"),
 	}
+}
 
-	remoteOriginUrl, err := localGitRepo.RemoteOriginUrl()
+func gitOwnRepoOriginUrl(projectDir string) (string, error) {
+	remoteOriginUrl, err := localGitRepo(projectDir).RemoteOriginUrl()
 	if err != nil {
 		return "", nil
 	}

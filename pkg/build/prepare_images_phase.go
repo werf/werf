@@ -13,6 +13,8 @@ func NewPrepareImagesPhase() *PrepareImagesPhase {
 
 type PrepareImagesPhase struct{}
 
+const DappCacheVersionLabel = "dapp-cache-version"
+
 func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 	if debug() {
 		fmt.Printf("PrepareImagesPhase.Run\n")
@@ -44,11 +46,11 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 
 				imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
 				imageServiceCommitChangeOptions.AddLabel(map[string]string{
-					"dapp":               c.ProjectName,
-					"dapp-version":       dapp.Version,
-					"dapp-cache-version": BuildCacheVersion,
-					"dapp-dimg":          "false",
-					"dapp-dev-mode":      "false",
+					"dapp":                c.ProjectName,
+					"dapp-version":        dapp.Version,
+					DappCacheVersionLabel: BuildCacheVersion,
+					"dapp-dimg":           "false",
+					"dapp-dev-mode":       "false",
 				})
 
 				if c.SSHAuthSock != "" {

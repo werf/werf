@@ -8,59 +8,32 @@ import (
 
 	"github.com/docker/docker/api/types"
 
+	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/docker_registry"
 	"github.com/flant/dapp/pkg/lock"
 )
 
 const syncIgnoreProjectDimgstagePeriod = 2 * 60 * 60
 
-type SyncOptions struct {
-	Mode                 SyncModeOptions      `json:"mode"`
-	CommonRepoOptions    CommonRepoOptions    `json:"common_repo_options"`
-	CommonProjectOptions CommonProjectOptions `json:"common_project_options"`
-	CacheVersion         string               `json:"cache_version"`
-}
+func ProjectDimgstagesSync(commonProjectOptions CommonProjectOptions, commonRepoOptions CommonRepoOptions) error {
+	projectImagesLockName := fmt.Sprintf("%s.images", commonProjectOptions.ProjectName)
+	err := lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+		if commonRepoOptions.Repository != "" {
+			err := lock.WithLock(commonRepoOptions.Repository, lock.LockOptions{ReadOnly: true, Timeout: time.Second * 600}, func() error {
+				if err := projectDimgstagesSyncByRepoDimgs(commonProjectOptions, commonRepoOptions); err != nil {
+					return err
+				}
 
-type SyncModeOptions struct {
-	OnlyCacheVersion bool `json:"only_cache_version"`
-	SyncRepo         bool `json:"sync_repo"`
-}
+				return nil
+			})
 
-func Sync(options SyncOptions) error {
-	if options.Mode.SyncRepo {
-		if err := repoDimgstagesSync(options); err != nil {
-			return err
-		}
-	} else {
-		if err := projectDimgstagesSync(options); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func repoDimgstagesSync(options SyncOptions) error {
-	if options.CommonRepoOptions.Repository == "" {
-		return nil
-	}
-
-	err := lock.WithLock(options.CommonRepoOptions.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if !options.Mode.OnlyCacheVersion {
-			repoDimgs, err := repoDimgImages(options.CommonRepoOptions)
 			if err != nil {
 				return err
 			}
-
-			if err := repoDimgstagesSyncByRepoDimgs(repoDimgs, options.CommonRepoOptions); err != nil {
-				return err
-			}
 		}
 
-		if options.CacheVersion != "" {
-			if err := repoDimgstagesSyncByCacheVersion(options.CacheVersion, options.CommonRepoOptions); err != nil {
-				return err
-			}
+		if err := projectDimgstagesSyncByCacheVersion(commonProjectOptions); err != nil {
+			return err
 		}
 
 		return nil
@@ -70,42 +43,7 @@ func repoDimgstagesSync(options SyncOptions) error {
 		return err
 	}
 
-	return nil
-}
-
-func projectDimgstagesSync(options SyncOptions) error {
-	projectImagesLockName := fmt.Sprintf("%s.images", options.CommonProjectOptions.ProjectName)
-	err := lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if !options.Mode.OnlyCacheVersion {
-			if options.CommonRepoOptions.Repository != "" {
-				err := lock.WithLock(options.CommonRepoOptions.Repository, lock.LockOptions{ReadOnly: true, Timeout: time.Second * 600}, func() error {
-					if err := projectDimgstagesSyncByRepoDimgs(options.CommonProjectOptions, options.CommonRepoOptions); err != nil {
-						return err
-					}
-
-					return nil
-				})
-
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		if options.CacheVersion != "" {
-			if err := projectDimgstagesSyncByCacheVersion(options.CacheVersion, options.CommonProjectOptions); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if err := projectCleanup(options.CommonProjectOptions); err != nil {
+	if err := projectCleanup(commonProjectOptions); err != nil {
 		return err
 	}
 
@@ -142,7 +80,7 @@ func repoDimgstagesSyncByRepoDimgs(repoDimgs []docker_registry.RepoImage, option
 	return nil
 }
 
-func repoDimgstagesSyncByCacheVersion(cacheVersion string, options CommonRepoOptions) error {
+func repoDimgstagesSyncByCacheVersion(options CommonRepoOptions) error {
 	repoDimgstages, err := repoDimgstageImages(options)
 	if err != nil {
 		return err
@@ -155,9 +93,9 @@ func repoDimgstagesSyncByCacheVersion(cacheVersion string, options CommonRepoOpt
 			return err
 		}
 
-		version, ok := labels["dapp-cache-version"]
-		if !ok || (version != cacheVersion) {
-			fmt.Printf("%s %s %s\n", repoDimgstage.Tag, version, cacheVersion)
+		version, ok := labels[build.DappCacheVersionLabel]
+		if !ok || (version != build.BuildCacheVersion) {
+			fmt.Printf("%s %s %s\n", repoDimgstage.Tag, version, build.BuildCacheVersion)
 			repoImagesToDelete = append(repoImagesToDelete, repoDimgstage)
 		}
 	}
@@ -286,7 +224,7 @@ func projectDimgstagesSyncByRepoDimgs(commonProjectOptions CommonProjectOptions,
 		}
 	}
 
-	if os.Getenv("DAPP_STAGES_CLEANUP_LOCAL_DISABLED_DATE_POLICY") == "" {
+	if os.Getenv("DAPP_STAGES_SYNC_LOCAL_DISABLED_DATE_POLICY") == "" {
 		for _, dimgstage := range dimgstages {
 			if time.Now().Unix()-dimgstage.Created < syncIgnoreProjectDimgstagePeriod {
 				dimgstages = exceptImage(dimgstages, dimgstage)
@@ -358,6 +296,6 @@ func projectDimgstages(options CommonProjectOptions) ([]types.ImageSummary, erro
 	return images, nil
 }
 
-func projectDimgstagesSyncByCacheVersion(cacheVersion string, options CommonProjectOptions) error {
-	return dappDimgstagesFlushByCacheVersion(projectDimgstageFilterSet(options), cacheVersion, options.CommonOptions)
+func projectDimgstagesSyncByCacheVersion(options CommonProjectOptions) error {
+	return dappDimgstagesFlushByCacheVersion(projectDimgstageFilterSet(options), options.CommonOptions)
 }

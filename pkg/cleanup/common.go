@@ -8,15 +8,17 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
+	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/docker"
+	"github.com/flant/dapp/pkg/image"
 )
 
 type CommonOptions struct {
-	DryRun bool `json:"dry_run"`
+	DryRun bool
 }
 
-func dappDimgstagesFlushByCacheVersion(filterSet filters.Args, cacheVersion string, options CommonOptions) error {
-	dappCacheVersionLabel := fmt.Sprintf("dapp-cache-version=%s", cacheVersion)
+func dappDimgstagesFlushByCacheVersion(filterSet filters.Args, options CommonOptions) error {
+	dappCacheVersionLabel := fmt.Sprintf("%s=%s", build.DappCacheVersionLabel, build.BuildCacheVersion)
 	filterSet.Add("label", dappCacheVersionLabel)
 	images, err := dappImagesByFilterSet(filters.NewArgs())
 	if err != nil {
@@ -24,10 +26,10 @@ func dappDimgstagesFlushByCacheVersion(filterSet filters.Args, cacheVersion stri
 	}
 
 	var imagesToDelete []types.ImageSummary
-	for _, image := range images {
-		version, ok := image.Labels["dapp-cache-version"]
-		if !ok || version != cacheVersion {
-			imagesToDelete = append(imagesToDelete, image)
+	for _, img := range images {
+		version, ok := img.Labels[build.DappCacheVersionLabel]
+		if !ok || version != build.BuildCacheVersion {
+			imagesToDelete = append(imagesToDelete, img)
 		}
 	}
 
@@ -71,7 +73,7 @@ func dappContainersFlushByFilterSet(filterSet filters.Args, options CommonOption
 }
 
 func dappContainersByFilterSet(filterSet filters.Args) ([]types.Container, error) {
-	filterSet.Add("name", "dapp.build.")
+	filterSet.Add("name", image.StageContainerNamePrefix)
 	return containersByFilterSet(filterSet)
 }
 
@@ -92,18 +94,18 @@ func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
 	}
 
 	var imageReferences []string
-	for _, image := range images {
-		if len(image.RepoTags) == 0 {
-			imageReferences = append(imageReferences, image.ID)
+	for _, img := range images {
+		if len(img.RepoTags) == 0 {
+			imageReferences = append(imageReferences, img.ID)
 		} else {
-			for ind, repoTag := range image.RepoTags {
+			for ind, repoTag := range img.RepoTags {
 				isDanglingImage := repoTag == "<none>:<none>"
 				isTaglessImage := !isDanglingImage && strings.HasSuffix(repoTag, "<none>")
 
 				if isDanglingImage {
-					imageReferences = append(imageReferences, image.ID)
+					imageReferences = append(imageReferences, img.ID)
 				} else if isTaglessImage {
-					imageReferences = append(imageReferences, image.RepoDigests[ind])
+					imageReferences = append(imageReferences, img.RepoDigests[ind])
 				} else {
 					imageReferences = append(imageReferences, repoTag)
 				}
@@ -120,8 +122,8 @@ func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
 
 func ignoreUsedImages(images []types.ImageSummary) ([]types.ImageSummary, error) {
 	filterSet := filters.NewArgs()
-	for _, image := range images {
-		filterSet.Add("ancestor", image.ID)
+	for _, img := range images {
+		filterSet.Add("ancestor", img.ID)
 	}
 
 	containers, err := containersByFilterSet(filterSet)
@@ -131,16 +133,16 @@ func ignoreUsedImages(images []types.ImageSummary) ([]types.ImageSummary, error)
 
 	var imagesToExclude []types.ImageSummary
 	for _, container := range containers {
-		for _, image := range images {
-			if image.ID == container.ImageID {
-				fmt.Printf("Skip image '%s' (used by container '%s')\n", image.ID, container.ID)
-				imagesToExclude = append(imagesToExclude, image)
+		for _, img := range images {
+			if img.ID == container.ImageID {
+				fmt.Printf("Skip image '%s' (used by container '%s')\n", img.ID, container.ID)
+				imagesToExclude = append(imagesToExclude, img)
 			}
 		}
 	}
 
-	for _, image := range imagesToExclude {
-		images = exceptImage(images, image)
+	for _, img := range imagesToExclude {
+		images = exceptImage(images, img)
 	}
 
 	return images, nil
@@ -148,9 +150,9 @@ func ignoreUsedImages(images []types.ImageSummary) ([]types.ImageSummary, error)
 
 func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary) []types.ImageSummary {
 	var newImages []types.ImageSummary
-	for _, image := range images {
-		if !reflect.DeepEqual(imageToExclude, image) {
-			newImages = append(newImages, image)
+	for _, img := range images {
+		if !reflect.DeepEqual(imageToExclude, img) {
+			newImages = append(newImages, img)
 		}
 	}
 
