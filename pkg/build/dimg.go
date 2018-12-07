@@ -15,8 +15,9 @@ type Dimg struct {
 	baseImageName     string
 	baseImageDimgName string
 
-	stages    []stage.Interface
-	baseImage *image.Stage
+	stages     []stage.Interface
+	baseImage  *image.Stage
+	isArtifact bool
 }
 
 func (d *Dimg) SetStages(stages []stage.Interface) {
