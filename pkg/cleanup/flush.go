@@ -7,46 +7,16 @@ import (
 	"github.com/flant/dapp/pkg/lock"
 )
 
-type FlushOptions struct {
-	CommonRepoOptions    CommonRepoOptions    `json:"common_repo_options"`
-	CommonProjectOptions CommonProjectOptions `json:"common_project_options"`
-	Mode                 FlushModeOptions     `json:"mode"`
-}
-
-type FlushModeOptions struct {
-	WithStages bool `json:"with_stages"`
-	WithDimgs  bool `json:"with_dimgs"`
-	OnlyRepo   bool `json:"only_repo"`
-}
-
-func Flush(options FlushOptions) error {
-	if options.CommonRepoOptions.Repository != "" {
-		if err := repoImagesFlush(options); err != nil {
-			return err
-		}
-	}
-
-	if !options.Mode.OnlyRepo {
-		if err := projectImagesFlush(options); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func repoImagesFlush(options FlushOptions) error {
-	err := lock.WithLock(options.CommonRepoOptions.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if options.Mode.WithDimgs {
-			if err := repoDimgsFlush(options.CommonRepoOptions); err != nil {
+func RepoImagesFlush(withDimgs bool, options CommonRepoOptions) error {
+	err := lock.WithLock(options.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+		if withDimgs {
+			if err := repoDimgsFlush(options); err != nil {
 				return err
 			}
 		}
 
-		if options.Mode.WithStages {
-			if err := repoDimgstagesFlush(options.CommonRepoOptions); err != nil {
-				return err
-			}
+		if err := repoDimgstagesFlush(options); err != nil {
+			return err
 		}
 
 		return nil
@@ -59,22 +29,20 @@ func repoImagesFlush(options FlushOptions) error {
 	return nil
 }
 
-func projectImagesFlush(options FlushOptions) error {
-	projectImagesLockName := fmt.Sprintf("%s.images", options.CommonProjectOptions.ProjectName)
+func ProjectImagesFlush(withDimgs bool, options CommonProjectOptions) error {
+	projectImagesLockName := fmt.Sprintf("%s.images", options.ProjectName)
 	err := lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if options.Mode.WithDimgs {
-			if err := projectDimgsFlush(options.CommonProjectOptions); err != nil {
+		if withDimgs {
+			if err := projectDimgsFlush(options); err != nil {
 				return err
 			}
 		}
 
-		if options.Mode.WithStages {
-			if err := projectDimgstagesFlush(options.CommonProjectOptions); err != nil {
-				return err
-			}
+		if err := projectDimgstagesFlush(options); err != nil {
+			return err
 		}
 
-		if err := projectCleanup(options.CommonProjectOptions); err != nil {
+		if err := projectCleanup(options); err != nil {
 			return err
 		}
 

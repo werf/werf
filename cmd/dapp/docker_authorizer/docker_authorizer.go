@@ -18,6 +18,7 @@ type DockerAuthorizer struct {
 	HostDockerConfigDir  string
 	ExternalDockerConfig bool
 
+	Credentials     *DockerCredentials
 	PullCredentials *DockerCredentials
 	PushCredentials *DockerCredentials
 }
@@ -28,6 +29,10 @@ func (a *DockerAuthorizer) LoginForPull(repo string) error {
 
 func (a *DockerAuthorizer) LoginForPush(repo string) error {
 	return a.login(a.PushCredentials, repo)
+}
+
+func (a *DockerAuthorizer) Login(repo string) error {
+	return a.login(a.Credentials, repo)
 }
 
 func (a *DockerAuthorizer) login(creds *DockerCredentials, repo string) error {
@@ -43,7 +48,7 @@ func GetBuildDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOpt
 		return nil, fmt.Errorf("cannot get docker credentials for pull: %s", err)
 	}
 
-	return getDockerAuthorizer(projectTmpDir, pullCredentials, nil)
+	return getDockerAuthorizer(projectTmpDir, nil, pullCredentials, nil)
 }
 
 func GetPushDockerAuthorizer(projectTmpDir, pushUsernameOption, pushPasswordOption, repo string) (*DockerAuthorizer, error) {
@@ -52,7 +57,7 @@ func GetPushDockerAuthorizer(projectTmpDir, pushUsernameOption, pushPasswordOpti
 		return nil, fmt.Errorf("cannot get docker credentials for push: %s", err)
 	}
 
-	return getDockerAuthorizer(projectTmpDir, nil, pushCredentials)
+	return getDockerAuthorizer(projectTmpDir, nil, nil, pushCredentials)
 }
 
 func GetBPDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption, pushUsernameOption, pushPasswordOption, repo string) (*DockerAuthorizer, error) {
@@ -66,11 +71,38 @@ func GetBPDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption
 		return nil, fmt.Errorf("cannot get docker credentials for push: %s", err)
 	}
 
-	return getDockerAuthorizer(projectTmpDir, pullCredentials, pushCredentials)
+	return getDockerAuthorizer(projectTmpDir, nil, pullCredentials, pushCredentials)
 }
 
-func getDockerAuthorizer(projectTmpDir string, pullCredentials, pushCredentials *DockerCredentials) (*DockerAuthorizer, error) {
-	a := &DockerAuthorizer{PullCredentials: pullCredentials, PushCredentials: pushCredentials}
+func GetFlushDockerAuthorizer(projectTmpDir, flushUsernameOption, flushPasswordOption string) (*DockerAuthorizer, error) {
+	credentials, err := getFlushCredentials(flushUsernameOption, flushPasswordOption)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get docker credentials for flush: %s", err)
+	}
+
+	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
+}
+
+func GetSyncDockerAuthorizer(projectTmpDir, syncUsernameOption, syncPasswordOption, repo string) (*DockerAuthorizer, error) {
+	credentials, err := getSyncCredentials(syncUsernameOption, syncPasswordOption, repo)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get docker credentials for sync: %s", err)
+	}
+
+	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
+}
+
+func GetCleanupDockerAuthorizer(projectTmpDir, syncUsernameOption, syncPasswordOption, repo string) (*DockerAuthorizer, error) {
+	credentials, err := getCleanupCredentials(syncUsernameOption, syncPasswordOption, repo)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get docker credentials for cleanup: %s", err)
+	}
+
+	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
+}
+
+func getDockerAuthorizer(projectTmpDir string, credentials, pullCredentials, pushCredentials *DockerCredentials) (*DockerAuthorizer, error) {
+	a := &DockerAuthorizer{Credentials: credentials, PullCredentials: pullCredentials, PushCredentials: pushCredentials}
 
 	if dappDockerConfigEnv := os.Getenv("DAPP_DOCKER_CONFIG"); dappDockerConfigEnv != "" {
 		a.HostDockerConfigDir = dappDockerConfigEnv
@@ -87,12 +119,16 @@ func getDockerAuthorizer(projectTmpDir string, pullCredentials, pushCredentials 
 
 			a.HostDockerConfigDir = tmpDockerConfigDir
 		} else {
-			a.HostDockerConfigDir = path.Join(os.Getenv("HOME"), ".docker")
+			a.HostDockerConfigDir = GetHomeDockerConfigDir()
 			a.ExternalDockerConfig = true
 		}
 	}
 
 	return a, nil
+}
+
+func GetHomeDockerConfigDir() string {
+	return path.Join(os.Getenv("HOME"), ".docker")
 }
 
 func getPullCredentials(pullUsernameOption, pullPasswordOption string) (*DockerCredentials, error) {
@@ -131,12 +167,61 @@ func getPushCredentials(pushUsernameOption, pushPasswordOption, repo string) (*D
 	return nil, nil
 }
 
+func getFlushCredentials(usernameOption, passwordOption string) (*DockerCredentials, error) {
+	if usernameOption != "" && passwordOption != "" {
+		return &DockerCredentials{Username: usernameOption, Password: passwordOption}, nil
+	}
+
+	return nil, nil
+}
+
+func getSyncCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
+	if usernameOption != "" && passwordOption != "" {
+		return &DockerCredentials{Username: usernameOption, Password: passwordOption}, nil
+	}
+
+	isGCR, err := isGCR(repo)
+	if err != nil {
+		return nil, err
+	}
+	if !isGCR && os.Getenv("DAPP_IGNORE_CI_DOCKER_AUTOLOGIN") == "" {
+		ciRegistryEnv := os.Getenv("CI_REGISTRY")
+		ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
+		if ciRegistryEnv != "" && ciJobTokenEnv != "" {
+			return &DockerCredentials{Username: "gitlab-ci-token", Password: ciJobTokenEnv}, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func getCleanupCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
+	if usernameOption != "" && passwordOption != "" {
+		return &DockerCredentials{Username: usernameOption, Password: passwordOption}, nil
+	}
+
+	dappSyncRegistryPassword := os.Getenv("DAPP_SYNC_REGISTRY_PASSWORD")
+	if dappSyncRegistryPassword != "" {
+		return &DockerCredentials{Username: "dapp-sync", Password: dappSyncRegistryPassword}, nil
+	}
+
+	isGCR, err := isGCR(repo)
+	if err != nil {
+		return nil, err
+	}
+	if !isGCR && os.Getenv("DAPP_IGNORE_CI_DOCKER_AUTOLOGIN") == "" {
+		ciRegistryEnv := os.Getenv("CI_REGISTRY")
+		ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
+		if ciRegistryEnv != "" && ciJobTokenEnv != "" {
+			return &DockerCredentials{Username: "gitlab-ci-token", Password: ciJobTokenEnv}, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func isGCR(repoOption string) (bool, error) {
 	if repoOption != "" {
-		if repoOption == ":minikube" {
-			return false, nil
-		}
-
 		return docker_registry.IsGCR(repoOption)
 	}
 
