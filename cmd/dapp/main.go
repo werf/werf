@@ -35,6 +35,7 @@ func main() {
 		newBuildCmd(),
 		newPushCmd(),
 		newBPCmd(),
+
 		newDeployCmd(),
 		// newDismissCmd(),
 

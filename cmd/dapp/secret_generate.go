@@ -20,7 +20,11 @@ func newSecretGenerateCmd() *cobra.Command {
 		Use:   "generate",
 		Short: "Generate secret data",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSecretGenerate()
+			err := runSecretGenerate()
+			if err != nil {
+				return fmt.Errorf("secret generate failed: %s", err)
+			}
+			return nil
 		},
 	}
 

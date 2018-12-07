@@ -22,7 +22,11 @@ func newSecretExtractCmd() *cobra.Command {
 		Use:   "extract",
 		Short: "Extract data",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSecretExtract()
+			err := runSecretExtract()
+			if err != nil {
+				return fmt.Errorf("secret extract failed: %s", err)
+			}
+			return nil
 		},
 	}
 
