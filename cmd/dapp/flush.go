@@ -30,12 +30,13 @@ func newFlushCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&flushCmdData.Repo, "repo", "", "", "docker repository name")
-	cmd.PersistentFlags().StringVarP(&flushCmdData.RegistryUsername, "registry-username", "", "", "docker registry username (granted read-write permission)")
-	cmd.PersistentFlags().StringVarP(&flushCmdData.RegistryPassword, "registry-password", "", "", "docker registry password (granted read-write permission)")
-	cmd.PersistentFlags().BoolVarP(&flushCmdData.WithDimgs, "with-dimgs", "", false, "delete images (not only stages cache)")
+	cmd.PersistentFlags().StringVarP(&flushCmdData.Repo, "repo", "", "", "Docker repository name")
+	cmd.PersistentFlags().StringVarP(&flushCmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
+	cmd.PersistentFlags().StringVarP(&flushCmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
 
-	cmd.PersistentFlags().BoolVarP(&flushCmdData.DryRun, "dry-run", "", false, "indicate what the command would do without actually doing that")
+	cmd.PersistentFlags().BoolVarP(&flushCmdData.WithDimgs, "with-dimgs", "", false, "Delete images (not only stages cache)")
+
+	cmd.PersistentFlags().BoolVarP(&flushCmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }

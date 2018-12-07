@@ -32,13 +32,13 @@ func newCleanupCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&cleanupCmdData.Repo, "repo", "", "", "docker repository name")
-	cmd.PersistentFlags().StringVarP(&cleanupCmdData.RegistryUsername, "registry-username", "", "", "docker registry username (granted read-write permission)")
-	cmd.PersistentFlags().StringVarP(&cleanupCmdData.RegistryPassword, "registry-password", "", "", "docker registry password (granted read-write permission)")
+	cmd.PersistentFlags().StringVarP(&cleanupCmdData.Repo, "repo", "", "", "Docker repository name")
+	cmd.PersistentFlags().StringVarP(&cleanupCmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
+	cmd.PersistentFlags().StringVarP(&cleanupCmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
 
-	cmd.PersistentFlags().BoolVarP(&cleanupCmdData.WithoutKube, "without-kube", "", false, "do not skip deployed kubernetes images")
+	cmd.PersistentFlags().BoolVarP(&cleanupCmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
 
-	cmd.PersistentFlags().BoolVarP(&cleanupCmdData.DryRun, "dry-run", "", false, "indicate what the command would do without actually doing that")
+	cmd.PersistentFlags().BoolVarP(&cleanupCmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }

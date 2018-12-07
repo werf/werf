@@ -28,11 +28,11 @@ func newSyncCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&syncCmdData.Repo, "repo", "", "", "docker repository name to get images information")
-	cmd.PersistentFlags().StringVarP(&syncCmdData.RegistryUsername, "registry-username", "", "", "docker registry username (granted read permission)")
-	cmd.PersistentFlags().StringVarP(&syncCmdData.RegistryPassword, "registry-password", "", "", "docker registry password (granted read permission)")
+	cmd.PersistentFlags().StringVarP(&syncCmdData.Repo, "repo", "", "", "Docker repository name to get images information")
+	cmd.PersistentFlags().StringVarP(&syncCmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read permission)")
+	cmd.PersistentFlags().StringVarP(&syncCmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read permission)")
 
-	cmd.PersistentFlags().BoolVarP(&syncCmdData.DryRun, "dry-run", "", false, "indicate what the command would do without actually doing that")
+	cmd.PersistentFlags().BoolVarP(&syncCmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }
