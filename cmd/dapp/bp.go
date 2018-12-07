@@ -48,7 +48,11 @@ func newBPCmd() *cobra.Command {
 				bpCmdData.PushPassword = bpCmdData.RegistryPassword
 			}
 
-			return runBP()
+			err := runBP()
+			if err != nil {
+				return fmt.Errorf("bp failed: %s", err)
+			}
+			return nil
 		},
 	}
 
@@ -127,13 +131,15 @@ func runBP() error {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
-	opts, err := getPushOptions(projectDir, bpCmdData.Tag, bpCmdData.TagBranch, bpCmdData.TagCommit, bpCmdData.TagBuildID, bpCmdData.TagCI, bpCmdData.WithStages)
+	tagOpts, err := getTagOptions(projectDir, bpCmdData.Tag, bpCmdData.TagBranch, bpCmdData.TagCommit, bpCmdData.TagBuildID, bpCmdData.TagCI)
 	if err != nil {
 		return err
 	}
 
+	pushOpts := build.PushOptions{TagOptions: tagOpts, WithStages: pushCmdData.WithStages}
+
 	c := build.NewConveyor(dappfile, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
-	if err = c.BP(repo, opts); err != nil {
+	if err = c.BP(repo, pushOpts); err != nil {
 		return err
 	}
 

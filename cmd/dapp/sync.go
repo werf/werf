@@ -24,7 +24,11 @@ func newSyncCmd() *cobra.Command {
 		Use:   "sync",
 		Short: "Remove local stages cache for the images, that don't exist into the docker registry",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSync()
+			err := runSync()
+			if err != nil {
+				return fmt.Errorf("sync failed: %s", err)
+			}
+			return nil
 		},
 	}
 

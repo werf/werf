@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/dapp/cmd/dapp/docker_authorizer"
@@ -20,7 +22,11 @@ func newResetCmd() *cobra.Command {
 		Use:   "reset",
 		Short: "Delete images, containers, and cache files for all projects created by dapp on the host",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runReset()
+			err := runReset()
+			if err != nil {
+				return fmt.Errorf("reset failed: %s", err)
+			}
+			return nil
 		},
 	}
 

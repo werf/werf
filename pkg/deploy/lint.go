@@ -33,10 +33,7 @@ func RunLint(opts LintOptions) error {
 		images = append(images, dimg)
 	}
 
-	serviceValues, err := GetServiceValues("PROJECT_NAME", "REPO", "NAMESPACE", "DOCKER_TAG", nil, images, ServiceValuesOptions{
-		Fake:            true,
-		WithoutRegistry: true,
-	})
+	serviceValues, err := GetServiceValues("PROJECT_NAME", "REPO", "NAMESPACE", "DOCKER_TAG", nil, images, ServiceValuesOptions{Fake: true})
 
 	dappChart, err := getDappChart(opts.ProjectDir, m, opts.Values, opts.SecretValues, opts.Set, serviceValues)
 	if err != nil {

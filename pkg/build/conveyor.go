@@ -82,14 +82,17 @@ func (c *Conveyor) Build() error {
 	return c.runPhases(phases)
 }
 
-type PushOptions struct {
-	WithStages bool
-
+type TagOptions struct {
 	Tags            []string
 	TagsByGitTag    []string
 	TagsByGitBranch []string
 	TagsByGitCommit []string
 	TagsByCI        []string
+}
+
+type PushOptions struct {
+	TagOptions
+	WithStages bool
 }
 
 func (c *Conveyor) Push(repo string, opts PushOptions) error {

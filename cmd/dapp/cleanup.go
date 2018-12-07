@@ -28,7 +28,11 @@ func newCleanupCmd() *cobra.Command {
 		Use:   "cleanup",
 		Short: "Cleanup project images in docker registry by policies",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCleanup()
+			err := runCleanup()
+			if err != nil {
+				return fmt.Errorf("cleanup failed: %s", err)
+			}
+			return nil
 		},
 	}
 

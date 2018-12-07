@@ -26,7 +26,11 @@ func newFlushCmd() *cobra.Command {
 		Use:   "flush",
 		Short: "Delete project images in local docker storage and specified docker registry",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runFlush()
+			err := runFlush()
+			if err != nil {
+				return fmt.Errorf("flush failed: %s", err)
+			}
+			return nil
 		},
 	}
 
