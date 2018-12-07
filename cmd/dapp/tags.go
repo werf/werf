@@ -9,10 +9,48 @@ import (
 	"github.com/flant/dapp/pkg/git_repo"
 )
 
-func getPushOptions(projectDir string, tagOption []string, tagBranchOption bool, tagCommitOption bool, tagBuildIDOption bool, tagCIOption bool, withStages bool) (build.PushOptions, error) {
+func getDeployTag(projectDir string, tagOption []string, tagBranchOption bool, tagCommitOption bool, tagBuildIDOption bool, tagCIOption bool) (string, error) {
+	optionsCount := 0
+	if len(tagOption) > 0 {
+		optionsCount += len(tagOption)
+	}
+
+	if tagBranchOption {
+		optionsCount++
+	}
+	if tagCommitOption {
+		optionsCount++
+	}
+	if tagBuildIDOption {
+		optionsCount++
+	}
+	if tagCIOption {
+		optionsCount++
+	}
+
+	if optionsCount > 1 {
+		return "", fmt.Errorf("exactly one tag should be specified for deploy")
+	}
+
+	opts, err := getTagOptions(projectDir, tagOption, tagBranchOption, tagBranchOption, tagBuildIDOption, tagBranchOption)
+	if err != nil {
+		return "", err
+	}
+
+	tags := []string{}
+	tags = append(tags, opts.Tags...)
+	tags = append(tags, opts.TagsByCI...)
+	tags = append(tags, opts.TagsByGitBranch...)
+	tags = append(tags, opts.TagsByGitCommit...)
+	tags = append(tags, opts.TagsByGitTag...)
+
+	return tags[0], nil
+}
+
+func getTagOptions(projectDir string, tagOption []string, tagBranchOption bool, tagCommitOption bool, tagBuildIDOption bool, tagCIOption bool) (build.TagOptions, error) {
 	emptyTags := true
 
-	opts := build.PushOptions{WithStages: withStages}
+	opts := build.TagOptions{}
 	opts.Tags = tagOption
 	if len(tagOption) > 0 {
 		emptyTags = false
@@ -26,7 +64,7 @@ func getPushOptions(projectDir string, tagOption []string, tagBranchOption bool,
 
 		branch, err := localGitRepo.HeadBranchName()
 		if err != nil {
-			return build.PushOptions{}, fmt.Errorf("cannot detect local git branch for --tag-branch option: %s", err)
+			return build.TagOptions{}, fmt.Errorf("cannot detect local git branch for --tag-branch option: %s", err)
 		}
 
 		opts.TagsByGitBranch = append(opts.TagsByGitBranch, branch)
@@ -41,7 +79,7 @@ func getPushOptions(projectDir string, tagOption []string, tagBranchOption bool,
 
 		commit, err := localGitRepo.HeadCommit()
 		if err != nil {
-			return build.PushOptions{}, fmt.Errorf("cannot detect local git HEAD commit for --tag-commit option: %s", err)
+			return build.TagOptions{}, fmt.Errorf("cannot detect local git HEAD commit for --tag-commit option: %s", err)
 		}
 
 		opts.TagsByGitCommit = append(opts.TagsByGitCommit, commit)
@@ -59,7 +97,7 @@ func getPushOptions(projectDir string, tagOption []string, tagBranchOption bool,
 		} else if os.Getenv("TRAVIS") != "" {
 			buildID = os.Getenv("TRAVIS_BUILD_NUMBER")
 		} else {
-			return build.PushOptions{}, fmt.Errorf("GITLAB_CI or TRAVIS environment variables has not been found for --tag-build-id option")
+			return build.TagOptions{}, fmt.Errorf("GITLAB_CI or TRAVIS environment variables has not been found for --tag-build-id option")
 		}
 
 		if buildID != "" {
@@ -85,7 +123,7 @@ func getPushOptions(projectDir string, tagOption []string, tagBranchOption bool,
 			gitTag = os.Getenv("TRAVIS_TAG")
 			gitBranch = os.Getenv("TRAVIS_BRANCH")
 		} else {
-			return build.PushOptions{}, fmt.Errorf("GITLAB_CI or TRAVIS environment variables has not been found for --tag-ci option")
+			return build.TagOptions{}, fmt.Errorf("GITLAB_CI or TRAVIS environment variables has not been found for --tag-ci option")
 		}
 
 		if gitTag != "" {

@@ -35,6 +35,8 @@ func main() {
 		newBuildCmd(),
 		newPushCmd(),
 		newBPCmd(),
+		newDeployCmd(),
+		// newDismissCmd(),
 
 		newResetCmd(),
 		newFlushCmd(),
@@ -174,7 +176,7 @@ func gitOwnRepoOriginUrl(projectDir string) (string, error) {
 func getRequiredRepoName(projectName, repoOption string) (string, error) {
 	res := getOptionalRepoName(projectName, repoOption)
 	if res == "" {
-		return "", fmt.Errorf("CI_REGISTRY_IMAGE variable or repo option required!")
+		return "", fmt.Errorf("CI_REGISTRY_IMAGE variable or --repo option required!")
 	}
 	return res, nil
 }

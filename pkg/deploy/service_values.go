@@ -12,9 +12,7 @@ const (
 )
 
 type ServiceValuesOptions struct {
-	Fake            bool
-	WithoutRegistry bool
-	DisableWarnings bool
+	Fake bool
 }
 
 type GitInfoGetter interface {
@@ -111,19 +109,23 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 		imageData["docker_image"] = image.GetImageName()
 		imageData["docker_image_id"] = TemplateEmptyValue
 
-		if !opts.Fake && !opts.WithoutRegistry {
+		if !opts.Fake {
 			imageID, err := image.GetImageId()
-			if debug() {
-				fmt.Printf("GetImageId for %s result: id=%s, err=%s\n", image.GetImageName(), imageID, err)
+			if err != nil {
+				return nil, err
 			}
 
-			if err != nil {
-				if !opts.DisableWarnings {
-					fmt.Fprintf(os.Stderr, "ERROR getting image %s id: %s\n", image.GetImageName(), err)
-				}
-			} else {
-				imageData["docker_image_id"] = imageID
+			if debug() {
+				fmt.Printf("GetServiceValues got image id of %s: %#v", image.GetImageName(), imageID)
 			}
+
+			var value string
+			if imageID == "" {
+				value = TemplateEmptyValue
+			} else {
+				value = imageID
+			}
+			imageData["docker_image_id"] = value
 		}
 	}
 

@@ -22,7 +22,11 @@ func newBuildCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "build",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runBuild()
+			err := runBuild()
+			if err != nil {
+				return fmt.Errorf("build failed: %s", err)
+			}
+			return nil
 		},
 	}
 

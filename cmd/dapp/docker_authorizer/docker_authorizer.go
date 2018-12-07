@@ -101,6 +101,15 @@ func GetCleanupDockerAuthorizer(projectTmpDir, syncUsernameOption, syncPasswordO
 	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
 }
 
+func GetDeployDockerAuthorizer(projectTmpDir, usernameOption, passwordOption, repo string) (*DockerAuthorizer, error) {
+	credentials, err := getDeployCredentials(usernameOption, passwordOption, repo)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get docker credentials for deploy: %s", err)
+	}
+
+	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
+}
+
 func getDockerAuthorizer(projectTmpDir string, credentials, pullCredentials, pushCredentials *DockerCredentials) (*DockerAuthorizer, error) {
 	a := &DockerAuthorizer{Credentials: credentials, PullCredentials: pullCredentials, PushCredentials: pushCredentials}
 
@@ -108,7 +117,7 @@ func getDockerAuthorizer(projectTmpDir string, credentials, pullCredentials, pus
 		a.HostDockerConfigDir = dappDockerConfigEnv
 		a.ExternalDockerConfig = true
 	} else {
-		if a.PullCredentials != nil || a.PushCredentials != nil {
+		if a.Credentials != nil || a.PullCredentials != nil || a.PushCredentials != nil {
 			tmpDockerConfigDir := path.Join(projectTmpDir, "docker")
 
 			if err := os.Mkdir(tmpDockerConfigDir, os.ModePerm); err != nil {
@@ -132,72 +141,73 @@ func GetHomeDockerConfigDir() string {
 }
 
 func getPullCredentials(pullUsernameOption, pullPasswordOption string) (*DockerCredentials, error) {
-	if pullUsernameOption != "" && pullPasswordOption != "" {
-		return &DockerCredentials{Username: pullUsernameOption, Password: pullPasswordOption}, nil
+	creds := getCredentialsFromOptions(pullUsernameOption, pullPasswordOption)
+	if creds != nil {
+		return creds, nil
 	}
 
-	if os.Getenv("DAPP_IGNORE_CI_DOCKER_AUTOLOGIN") == "" {
-		ciRegistryEnv := os.Getenv("CI_REGISTRY")
-		ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
-		if ciRegistryEnv != "" && ciJobTokenEnv != "" {
-			return &DockerCredentials{Username: "gitlab-ci-token", Password: ciJobTokenEnv}, nil
-		}
-	}
-
-	return nil, nil
+	return getDefaultAutologinCredentials()
 }
 
 func getPushCredentials(pushUsernameOption, pushPasswordOption, repo string) (*DockerCredentials, error) {
-	if pushUsernameOption != "" && pushPasswordOption != "" {
-		return &DockerCredentials{Username: pushUsernameOption, Password: pushPasswordOption}, nil
+	creds := getCredentialsFromOptions(pushUsernameOption, pushPasswordOption)
+	if creds != nil {
+		return creds, nil
 	}
 
 	isGCR, err := isGCR(repo)
 	if err != nil {
 		return nil, err
 	}
-	if !isGCR && os.Getenv("DAPP_IGNORE_CI_DOCKER_AUTOLOGIN") == "" {
-		ciRegistryEnv := os.Getenv("CI_REGISTRY")
-		ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
-		if ciRegistryEnv != "" && ciJobTokenEnv != "" {
-			return &DockerCredentials{Username: "gitlab-ci-token", Password: ciJobTokenEnv}, nil
-		}
+	if isGCR {
+		return nil, nil
 	}
 
-	return nil, nil
+	return getDefaultAutologinCredentials()
 }
 
 func getFlushCredentials(usernameOption, passwordOption string) (*DockerCredentials, error) {
-	if usernameOption != "" && passwordOption != "" {
-		return &DockerCredentials{Username: usernameOption, Password: passwordOption}, nil
-	}
-
-	return nil, nil
+	return getCredentialsFromOptions(usernameOption, passwordOption), nil
 }
 
 func getSyncCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	if usernameOption != "" && passwordOption != "" {
-		return &DockerCredentials{Username: usernameOption, Password: passwordOption}, nil
+	creds := getCredentialsFromOptions(usernameOption, passwordOption)
+	if creds != nil {
+		return creds, nil
 	}
 
 	isGCR, err := isGCR(repo)
 	if err != nil {
 		return nil, err
 	}
-	if !isGCR && os.Getenv("DAPP_IGNORE_CI_DOCKER_AUTOLOGIN") == "" {
-		ciRegistryEnv := os.Getenv("CI_REGISTRY")
-		ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
-		if ciRegistryEnv != "" && ciJobTokenEnv != "" {
-			return &DockerCredentials{Username: "gitlab-ci-token", Password: ciJobTokenEnv}, nil
-		}
+	if isGCR {
+		return nil, nil
 	}
 
-	return nil, nil
+	return getDefaultAutologinCredentials()
+}
+
+func getDeployCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
+	creds := getCredentialsFromOptions(usernameOption, passwordOption)
+	if creds != nil {
+		return creds, nil
+	}
+
+	isGCR, err := isGCR(repo)
+	if err != nil {
+		return nil, err
+	}
+	if isGCR {
+		return nil, nil
+	}
+
+	return getDefaultAutologinCredentials()
 }
 
 func getCleanupCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	if usernameOption != "" && passwordOption != "" {
-		return &DockerCredentials{Username: usernameOption, Password: passwordOption}, nil
+	creds := getCredentialsFromOptions(usernameOption, passwordOption)
+	if creds != nil {
+		return creds, nil
 	}
 
 	dappSyncRegistryPassword := os.Getenv("DAPP_SYNC_REGISTRY_PASSWORD")
@@ -209,7 +219,23 @@ func getCleanupCredentials(usernameOption, passwordOption, repo string) (*Docker
 	if err != nil {
 		return nil, err
 	}
-	if !isGCR && os.Getenv("DAPP_IGNORE_CI_DOCKER_AUTOLOGIN") == "" {
+	if isGCR {
+		return nil, nil
+	}
+
+	return getDefaultAutologinCredentials()
+}
+
+func getCredentialsFromOptions(usernameOption, passwordOption string) *DockerCredentials {
+	if usernameOption != "" && passwordOption != "" {
+		return &DockerCredentials{Username: usernameOption, Password: passwordOption}
+	}
+
+	return nil
+}
+
+func getDefaultAutologinCredentials() (*DockerCredentials, error) {
+	if os.Getenv("DAPP_IGNORE_CI_DOCKER_AUTOLOGIN") == "" {
 		ciRegistryEnv := os.Getenv("CI_REGISTRY")
 		ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
 		if ciRegistryEnv != "" && ciJobTokenEnv != "" {

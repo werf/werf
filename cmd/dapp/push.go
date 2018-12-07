@@ -112,13 +112,15 @@ func runPush() error {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
-	opts, err := getPushOptions(projectDir, pushCmdData.Tag, pushCmdData.TagBranch, pushCmdData.TagCommit, pushCmdData.TagBuildID, pushCmdData.TagCI, pushCmdData.WithStages)
+	tagOpts, err := getTagOptions(projectDir, pushCmdData.Tag, pushCmdData.TagBranch, pushCmdData.TagCommit, pushCmdData.TagBuildID, pushCmdData.TagCI)
 	if err != nil {
 		return err
 	}
 
+	pushOpts := build.PushOptions{TagOptions: tagOpts, WithStages: pushCmdData.WithStages}
+
 	c := build.NewConveyor(dappfile, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
-	if err = c.Push(repo, opts); err != nil {
+	if err = c.Push(repo, pushOpts); err != nil {
 		return err
 	}
 
