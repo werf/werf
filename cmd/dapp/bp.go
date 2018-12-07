@@ -14,6 +14,9 @@ import (
 )
 
 var bpCmdData struct {
+	Repo       string
+	WithStages bool
+
 	PullUsername     string
 	PullPassword     string
 	PushUsername     string
@@ -49,8 +52,8 @@ func newBPCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&pushCmdData.Repo, "repo", "", "", "Docker repository name to push images to. CI_REGISTRY_IMAGE will be used by default if available.")
-	cmd.PersistentFlags().BoolVarP(&pushCmdData.WithStages, "with-stages", "", false, "Push images with stages cache")
+	cmd.PersistentFlags().StringVarP(&bpCmdData.Repo, "repo", "", "", "Docker repository name to push images to. CI_REGISTRY_IMAGE will be used by default if available.")
+	cmd.PersistentFlags().BoolVarP(&bpCmdData.WithStages, "with-stages", "", false, "Push images with stages cache")
 
 	cmd.PersistentFlags().StringVarP(&bpCmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
 	cmd.PersistentFlags().StringVarP(&bpCmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
@@ -106,7 +109,7 @@ func runBP() error {
 		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
 
-	repo, err := getRequiredRepoName(projectName, pushCmdData.Repo)
+	repo, err := getRequiredRepoName(projectName, bpCmdData.Repo)
 	if err != nil {
 		return err
 	}
@@ -124,7 +127,7 @@ func runBP() error {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
-	opts, err := getPushOptions(projectDir, pushCmdData.Tag, pushCmdData.TagBranch, pushCmdData.TagCommit, pushCmdData.TagBuildID, pushCmdData.TagCI, pushCmdData.WithStages)
+	opts, err := getPushOptions(projectDir, bpCmdData.Tag, bpCmdData.TagBranch, bpCmdData.TagCommit, bpCmdData.TagBuildID, bpCmdData.TagCI, bpCmdData.WithStages)
 	if err != nil {
 		return err
 	}

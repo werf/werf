@@ -79,7 +79,7 @@ func (c *Conveyor) Build() error {
 	}
 	defer lock.Unlock(lockName)
 
-	return c.run(phases)
+	return c.runPhases(phases)
 }
 
 type PushOptions struct {
@@ -107,15 +107,30 @@ func (c *Conveyor) Push(repo string, opts PushOptions) error {
 	}
 	defer lock.Unlock(lockName)
 
-	return c.run(phases)
+	return c.runPhases(phases)
 }
 
 func (c *Conveyor) BP(repo string, opts PushOptions) error {
-	fmt.Printf("TODO bp\n")
-	return nil
+	var err error
+
+	var phases []Phase
+	phases = append(phases, NewInitializationPhase())
+	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewRenewPhase())
+	phases = append(phases, NewPrepareImagesPhase())
+	phases = append(phases, NewBuildPhase())
+	phases = append(phases, NewPushPhase(repo, opts))
+
+	lockName, err := c.lockAllImagesReadOnly()
+	if err != nil {
+		return err
+	}
+	defer lock.Unlock(lockName)
+
+	return c.runPhases(phases)
 }
 
-func (c *Conveyor) run(phases []Phase) error {
+func (c *Conveyor) runPhases(phases []Phase) error {
 	for _, phase := range phases {
 		err := phase.Run(c)
 		if err != nil {
