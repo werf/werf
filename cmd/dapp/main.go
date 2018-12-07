@@ -40,6 +40,8 @@ func main() {
 		newFlushCmd(),
 		newSyncCmd(),
 		newCleanupCmd(),
+
+		secretCmd(),
 	)
 
 	cmd.PersistentFlags().StringVarP(&rootCmdData.Name, "name", "", "", `Use custom dapp name.
@@ -55,6 +57,19 @@ or it is the name of the directory where Dappfile resides.`)
 	if err != nil {
 		os.Exit(1)
 	}
+}
+
+func secretCmd() *cobra.Command {
+	cmd := &cobra.Command{Use: "secret"}
+	cmd.AddCommand(
+		newSecretKeyGenCmd(),
+		newSecretGenerateCmd(),
+		newSecretExtractCmd(),
+		newSecretEditCmd(),
+		newSecretRegenerateCmd(),
+	)
+
+	return cmd
 }
 
 func getProjectName(projectDir string) (string, error) {
@@ -117,7 +132,7 @@ func getProjectDir() (string, error) {
 	return currentDir, nil
 }
 
-func getProjectTmpDir() (string, error) {
+func getTmpDir() (string, error) {
 	return ioutil.TempDir(dapp.GetTmpDir(), "dapp-")
 }
 

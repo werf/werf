@@ -47,7 +47,7 @@ func runSync() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectTmpDir, err := getProjectTmpDir()
+	projectTmpDir, err := getTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}

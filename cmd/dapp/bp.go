@@ -99,7 +99,7 @@ func runBP() error {
 		return fmt.Errorf("getting project build dir failed: %s", err)
 	}
 
-	projectTmpDir, err := getProjectTmpDir()
+	projectTmpDir, err := getTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}

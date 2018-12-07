@@ -52,7 +52,7 @@ func runFlush() error {
 	}
 
 	if flushCmdData.Repo != "" {
-		projectTmpDir, err := getProjectTmpDir()
+		projectTmpDir, err := getTmpDir()
 		if err != nil {
 			return fmt.Errorf("getting project tmp dir failed: %s", err)
 		}
