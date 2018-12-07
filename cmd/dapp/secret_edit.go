@@ -29,7 +29,11 @@ func newSecretEditCmd() *cobra.Command {
 		Short: "Edit or create new secret file",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSecretEdit(args[0])
+			err := runSecretEdit(args[0])
+			if err != nil {
+				return fmt.Errorf("secret edit failed: %s", err)
+			}
+			return nil
 		},
 	}
 

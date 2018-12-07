@@ -15,7 +15,11 @@ func newSecretKeyGenCmd() *cobra.Command {
 		Use:   "keygen",
 		Short: "Generate encryption key",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSecretKeyGenerate()
+			err := runSecretKeyGenerate()
+			if err != nil {
+				return fmt.Errorf("secret keygen failed: %s", err)
+			}
+			return nil
 		},
 	}
 

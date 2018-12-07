@@ -22,7 +22,11 @@ func newSecretRegenerateCmd() *cobra.Command {
 		Use:   "regenerate [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		Short: "Regenerate secret files with new secret key",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSecretRegenerate(args...)
+			err := runSecretRegenerate(args...)
+			if err != nil {
+				return fmt.Errorf("secret regenerate failed: %s", err)
+			}
+			return nil
 		},
 	}
 
