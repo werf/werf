@@ -25,9 +25,9 @@ func newResetCmd() *cobra.Command {
 	}
 
 	//cmd.PersistentFlags().BoolVarP(&resetCmdData.OnlyDevModeCache, "only-dev-mode-cache", "", false, "delete stages cache, images, and containers created in developer mode")
-	cmd.PersistentFlags().BoolVarP(&resetCmdData.OnlyCacheVersion, "only-cache-version", "", false, "only delete stages cache, images, and containers created by another dapp version")
+	cmd.PersistentFlags().BoolVarP(&resetCmdData.OnlyCacheVersion, "only-cache-version", "", false, "Only delete stages cache, images, and containers created by another dapp version")
 
-	cmd.PersistentFlags().BoolVarP(&resetCmdData.DryRun, "dry-run", "", false, "indicate what the command would do without actually doing that")
+	cmd.PersistentFlags().BoolVarP(&resetCmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }
