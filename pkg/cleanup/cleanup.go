@@ -19,6 +19,7 @@ import (
 type CleanupOptions struct {
 	CommonRepoOptions CommonRepoOptions
 	LocalRepo         GitRepo
+	WithoutKube       bool
 }
 
 const (
@@ -36,9 +37,11 @@ func Cleanup(options CleanupOptions) error {
 		}
 
 		if options.LocalRepo != nil {
-			repoDimgs, err = exceptRepoDimgsByWhitelist(repoDimgs)
-			if err != nil {
-				return err
+			if !options.WithoutKube {
+				repoDimgs, err = exceptRepoDimgsByWhitelist(repoDimgs)
+				if err != nil {
+					return err
+				}
 			}
 
 			repoDimgs, err = repoDimgsCleanupByNonexistentGitPrimitive(repoDimgs, options)

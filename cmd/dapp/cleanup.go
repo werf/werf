@@ -18,6 +18,8 @@ var cleanupCmdData struct {
 	RegistryUsername string
 	RegistryPassword string
 
+	WithoutKube bool
+
 	DryRun bool
 }
 
@@ -33,6 +35,8 @@ func newCleanupCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&cleanupCmdData.Repo, "repo", "", "", "docker repository name")
 	cmd.PersistentFlags().StringVarP(&cleanupCmdData.RegistryUsername, "registry-username", "", "", "docker registry username (granted read-write permission)")
 	cmd.PersistentFlags().StringVarP(&cleanupCmdData.RegistryPassword, "registry-password", "", "", "docker registry password (granted read-write permission)")
+
+	cmd.PersistentFlags().BoolVarP(&cleanupCmdData.WithoutKube, "without-kube", "", false, "do not skip deployed kubernetes images")
 
 	cmd.PersistentFlags().BoolVarP(&cleanupCmdData.DryRun, "dry-run", "", false, "indicate what the command would do without actually doing that")
 
@@ -105,6 +109,7 @@ func runCleanup() error {
 	cleanupOptions := cleanup.CleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
 		LocalRepo:         localRepo,
+		WithoutKube:       cleanupCmdData.WithoutKube,
 	}
 
 	if err := cleanup.Cleanup(cleanupOptions); err != nil {
