@@ -8,15 +8,17 @@ import (
 	"strconv"
 	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/flant/dapp/pkg/docker_registry"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/slug"
+	"github.com/flant/kubedog/pkg/kube"
 )
 
 type CleanupOptions struct {
-	CommonRepoOptions    CommonRepoOptions
-	DeployedDockerImages []string
-	LocalRepo            GitRepo
+	CommonRepoOptions CommonRepoOptions
+	LocalRepo         GitRepo
 }
 
 const (
@@ -34,7 +36,7 @@ func Cleanup(options CleanupOptions) error {
 		}
 
 		if options.LocalRepo != nil {
-			repoDimgs, err = exceptRepoDimgsByWhitelist(repoDimgs, options)
+			repoDimgs, err = exceptRepoDimgsByWhitelist(repoDimgs)
 			if err != nil {
 				return err
 			}
@@ -64,13 +66,18 @@ func Cleanup(options CleanupOptions) error {
 	return nil
 }
 
-func exceptRepoDimgsByWhitelist(repoDimgs []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
+func exceptRepoDimgsByWhitelist(repoDimgs []docker_registry.RepoImage) ([]docker_registry.RepoImage, error) {
 	var newRepoDimgs, exceptedRepoDimgs []docker_registry.RepoImage
+
+	deployedDockerImages, err := deployedDockerImages()
+	if err != nil {
+		return nil, err
+	}
 
 Loop:
 	for _, repoDimg := range repoDimgs {
 		imageName := fmt.Sprintf("%s:%s", repoDimg.Repository, repoDimg.Tag)
-		for _, deployedDockerImage := range options.DeployedDockerImages {
+		for _, deployedDockerImage := range deployedDockerImages {
 			if deployedDockerImage == imageName {
 				exceptedRepoDimgs = append(exceptedRepoDimgs, repoDimg)
 				continue Loop
@@ -356,4 +363,194 @@ func repoDimgsCleanupByPolicy(repoDimgs, repoDimgsWithScheme []docker_registry.R
 	}
 
 	return repoDimgs, nil
+}
+
+func deployedDockerImages() ([]string, error) {
+	var deployedDockerImages []string
+
+	images, err := getPodsImages()
+	if err != nil {
+		return nil, err
+	}
+
+	deployedDockerImages = append(deployedDockerImages, images...)
+
+	images, err = getReplicationControllersImages()
+	if err != nil {
+		return nil, err
+	}
+
+	deployedDockerImages = append(deployedDockerImages, images...)
+
+	images, err = getDeploymentImages()
+	if err != nil {
+		return nil, err
+	}
+
+	deployedDockerImages = append(deployedDockerImages, images...)
+
+	images, err = getStatefulSetsImages()
+	if err != nil {
+		return nil, err
+	}
+
+	deployedDockerImages = append(deployedDockerImages, images...)
+
+	images, err = getDaemonSetsImages()
+	if err != nil {
+		return nil, err
+	}
+
+	deployedDockerImages = append(deployedDockerImages, images...)
+
+	images, err = getReplicaSetsImages()
+	if err != nil {
+		return nil, err
+	}
+
+	deployedDockerImages = append(deployedDockerImages, images...)
+
+	images, err = getCronJobsImages()
+	if err != nil {
+		return nil, err
+	}
+
+	deployedDockerImages = append(deployedDockerImages, images...)
+
+	images, err = getJobsImages()
+	if err != nil {
+		return nil, err
+	}
+
+	deployedDockerImages = append(deployedDockerImages, images...)
+
+	return deployedDockerImages, nil
+}
+
+func getPodsImages() ([]string, error) {
+	var images []string
+	list, err := kube.Kubernetes.CoreV1().Pods("").List(v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, pod := range list.Items {
+		for _, container := range pod.Spec.Containers {
+			images = append(images, container.Image)
+		}
+	}
+
+	return images, nil
+}
+
+func getReplicationControllersImages() ([]string, error) {
+	var images []string
+	list, err := kube.Kubernetes.CoreV1().ReplicationControllers("").List(v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, replicationController := range list.Items {
+		for _, container := range replicationController.Spec.Template.Spec.Containers {
+			images = append(images, container.Image)
+		}
+	}
+
+	return images, nil
+}
+
+func getDeploymentImages() ([]string, error) {
+	var images []string
+	list, err := kube.Kubernetes.AppsV1beta1().Deployments("").List(v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, deployment := range list.Items {
+		for _, container := range deployment.Spec.Template.Spec.Containers {
+			images = append(images, container.Image)
+		}
+	}
+
+	return images, nil
+}
+
+func getStatefulSetsImages() ([]string, error) {
+	var images []string
+	list, err := kube.Kubernetes.AppsV1beta1().StatefulSets("").List(v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, statefulSet := range list.Items {
+		for _, container := range statefulSet.Spec.Template.Spec.Containers {
+			images = append(images, container.Image)
+		}
+	}
+
+	return images, nil
+}
+
+func getDaemonSetsImages() ([]string, error) {
+	var images []string
+	list, err := kube.Kubernetes.ExtensionsV1beta1().DaemonSets("").List(v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, daemonSets := range list.Items {
+		for _, container := range daemonSets.Spec.Template.Spec.Containers {
+			images = append(images, container.Image)
+		}
+	}
+
+	return images, nil
+}
+
+func getReplicaSetsImages() ([]string, error) {
+	var images []string
+	list, err := kube.Kubernetes.ExtensionsV1beta1().ReplicaSets("").List(v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, replicaSet := range list.Items {
+		for _, container := range replicaSet.Spec.Template.Spec.Containers {
+			images = append(images, container.Image)
+		}
+	}
+
+	return images, nil
+}
+
+func getCronJobsImages() ([]string, error) {
+	var images []string
+	list, err := kube.Kubernetes.BatchV2alpha1().CronJobs("").List(v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, cronJob := range list.Items {
+		for _, container := range cronJob.Spec.JobTemplate.Spec.Template.Spec.Containers {
+			images = append(images, container.Image)
+		}
+	}
+
+	return images, nil
+}
+
+func getJobsImages() ([]string, error) {
+	var images []string
+	list, err := kube.Kubernetes.BatchV1().Jobs("").List(v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, job := range list.Items {
+		for _, container := range job.Spec.Template.Spec.Containers {
+			images = append(images, container.Image)
+		}
+	}
+
+	return images, nil
 }

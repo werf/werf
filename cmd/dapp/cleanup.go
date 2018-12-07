@@ -10,6 +10,7 @@ import (
 	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/kubedog/pkg/kube"
 )
 
 var cleanupCmdData struct {
@@ -42,6 +43,8 @@ func runCleanup() error {
 	if err := lock.Init(); err != nil {
 		return err
 	}
+
+	kube.Init(kube.InitOptions{})
 
 	projectDir, err := getProjectDir()
 	if err != nil {
@@ -102,7 +105,6 @@ func runCleanup() error {
 	cleanupOptions := cleanup.CleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
 		LocalRepo:         localRepo,
-		//DeployedDockerImages:, TODO
 	}
 
 	if err := cleanup.Cleanup(cleanupOptions); err != nil {
