@@ -141,7 +141,7 @@ func GetHomeDockerConfigDir() string {
 }
 
 func getPullCredentials(pullUsernameOption, pullPasswordOption string) (*DockerCredentials, error) {
-	creds := getCredentialsFromOptions(pullUsernameOption, pullPasswordOption)
+	creds := getSpecifiedCredentials(pullUsernameOption, pullPasswordOption)
 	if creds != nil {
 		return creds, nil
 	}
@@ -149,63 +149,24 @@ func getPullCredentials(pullUsernameOption, pullPasswordOption string) (*DockerC
 	return getDefaultAutologinCredentials()
 }
 
-func getPushCredentials(pushUsernameOption, pushPasswordOption, repo string) (*DockerCredentials, error) {
-	creds := getCredentialsFromOptions(pushUsernameOption, pushPasswordOption)
-	if creds != nil {
-		return creds, nil
-	}
-
-	isGCR, err := isGCR(repo)
-	if err != nil {
-		return nil, err
-	}
-	if isGCR {
-		return nil, nil
-	}
-
-	return getDefaultAutologinCredentials()
+func getPushCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
+	return getDefaultCredentials(usernameOption, passwordOption, repo)
 }
 
 func getFlushCredentials(usernameOption, passwordOption string) (*DockerCredentials, error) {
-	return getCredentialsFromOptions(usernameOption, passwordOption), nil
+	return getSpecifiedCredentials(usernameOption, passwordOption), nil
 }
 
 func getSyncCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	creds := getCredentialsFromOptions(usernameOption, passwordOption)
-	if creds != nil {
-		return creds, nil
-	}
-
-	isGCR, err := isGCR(repo)
-	if err != nil {
-		return nil, err
-	}
-	if isGCR {
-		return nil, nil
-	}
-
-	return getDefaultAutologinCredentials()
+	return getDefaultCredentials(usernameOption, passwordOption, repo)
 }
 
 func getDeployCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	creds := getCredentialsFromOptions(usernameOption, passwordOption)
-	if creds != nil {
-		return creds, nil
-	}
-
-	isGCR, err := isGCR(repo)
-	if err != nil {
-		return nil, err
-	}
-	if isGCR {
-		return nil, nil
-	}
-
-	return getDefaultAutologinCredentials()
+	return getDefaultCredentials(usernameOption, passwordOption, repo)
 }
 
 func getCleanupCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	creds := getCredentialsFromOptions(usernameOption, passwordOption)
+	creds := getSpecifiedCredentials(usernameOption, passwordOption)
 	if creds != nil {
 		return creds, nil
 	}
@@ -226,7 +187,24 @@ func getCleanupCredentials(usernameOption, passwordOption, repo string) (*Docker
 	return getDefaultAutologinCredentials()
 }
 
-func getCredentialsFromOptions(usernameOption, passwordOption string) *DockerCredentials {
+func getDefaultCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
+	creds := getSpecifiedCredentials(usernameOption, passwordOption)
+	if creds != nil {
+		return creds, nil
+	}
+
+	isGCR, err := isGCR(repo)
+	if err != nil {
+		return nil, err
+	}
+	if isGCR {
+		return nil, nil
+	}
+
+	return getDefaultAutologinCredentials()
+}
+
+func getSpecifiedCredentials(usernameOption, passwordOption string) *DockerCredentials {
 	if usernameOption != "" && passwordOption != "" {
 		return &DockerCredentials{Username: usernameOption, Password: passwordOption}
 	}

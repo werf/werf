@@ -8,12 +8,8 @@ import (
 )
 
 const (
-	TemplateEmptyValue = "-"
+	TemplateEmptyValue = "\"-\""
 )
-
-type ServiceValuesOptions struct {
-	Fake bool
-}
 
 type GitInfoGetter interface {
 	IsBranchState() bool
@@ -28,6 +24,11 @@ type DimgInfoGetter interface {
 	GetName() string
 	GetImageName() string
 	GetImageId() (string, error)
+}
+
+type ServiceValuesOptions struct {
+	ForceTag    string
+	ForceBranch string
 }
 
 func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit GitInfoGetter, images []DimgInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
@@ -57,7 +58,13 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 		"dapp":      dappInfo,
 	}
 
-	if !opts.Fake {
+	if opts.ForceBranch != "" {
+		ciInfo["is_branch"] = true
+		ciInfo["branch"] = opts.ForceBranch
+	} else if opts.ForceTag != "" {
+		ciInfo["is_tag"] = true
+		ciInfo["tag"] = opts.ForceTag
+	} else {
 		ciCommitTag := os.Getenv("CI_COMMIT_TAG")
 		if ciCommitTag == "" {
 			ciCommitTag = os.Getenv("CI_BUILD_TAG")
@@ -109,24 +116,22 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 		imageData["docker_image"] = image.GetImageName()
 		imageData["docker_image_id"] = TemplateEmptyValue
 
-		if !opts.Fake {
-			imageID, err := image.GetImageId()
-			if err != nil {
-				return nil, err
-			}
-
-			if debug() {
-				fmt.Printf("GetServiceValues got image id of %s: %#v", image.GetImageName(), imageID)
-			}
-
-			var value string
-			if imageID == "" {
-				value = TemplateEmptyValue
-			} else {
-				value = imageID
-			}
-			imageData["docker_image_id"] = value
+		imageID, err := image.GetImageId()
+		if err != nil {
+			return nil, err
 		}
+
+		if debug() {
+			fmt.Printf("GetServiceValues got image id of %s: %#v", image.GetImageName(), imageID)
+		}
+
+		var value string
+		if imageID == "" {
+			value = TemplateEmptyValue
+		} else {
+			value = imageID
+		}
+		imageData["docker_image_id"] = value
 	}
 
 	if debug() {
