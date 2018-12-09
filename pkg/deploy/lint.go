@@ -23,13 +23,17 @@ func RunLint(projectName, projectDir string, dappfile []*config.Dimg, opts LintO
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
 
+	repo := "REPO"
+	tag := "DOCKER_TAG"
+	namespace := "NAMESPACE"
+
 	images := []DimgInfoGetter{}
 	for _, dimg := range dappfile {
-		d := &DimgInfo{Config: dimg, WithoutRegistry: true}
+		d := &DimgInfo{Config: dimg, WithoutRegistry: true, Repo: repo, Tag: tag}
 		images = append(images, d)
 	}
 
-	serviceValues, err := GetServiceValues(projectName, "REPO", "NAMESPACE", "TAG", nil, images, ServiceValuesOptions{})
+	serviceValues, err := GetServiceValues(projectName, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
