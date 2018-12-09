@@ -38,6 +38,7 @@ func main() {
 
 		newDeployCmd(),
 		// newDismissCmd(),
+		newLintCmd(),
 
 		newResetCmd(),
 		newFlushCmd(),
