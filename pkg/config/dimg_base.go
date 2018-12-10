@@ -80,8 +80,18 @@ func (c *DimgBase) validate() error {
 		return newDetailedConfigError("`from: DOCKER_IMAGE`, `fromDimg: DIMG_NAME`, `fromDimgArtifact: ARTIFACT_DIMG_NAME` required!", nil, c.raw.doc)
 	}
 
+	mountByTo := map[string]bool{}
+	for _, mount := range c.Mount {
+		_, exist := mountByTo[mount.To]
+		if exist {
+			return newDetailedConfigError("conflict between mounts!", nil, c.raw.doc)
+		}
+
+		mountByTo[mount.To] = true
+	}
+
 	if !oneOrNone([]bool{c.From != "", c.raw.FromDimg != "", c.raw.FromDimgArtifact != ""}) {
-		return newDetailedConfigError("`conflict between `from`, `fromDimg` and `fromDimgArtifact` directives!", nil, c.raw.doc)
+		return newDetailedConfigError("conflict between `from`, `fromDimg` and `fromDimgArtifact` directives!", nil, c.raw.doc)
 	}
 
 	// TODO: валидацию формата `From`
