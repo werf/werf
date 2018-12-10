@@ -347,6 +347,10 @@ func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath 
 		return nil, newConfigError(fmt.Sprintf("no dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
 	}
 
+	if err = exportsAutoExcluding(dimgs, artifacts); err != nil {
+		return nil, err
+	}
+
 	if err = validateDimgsNames(dimgs, artifacts); err != nil {
 		return nil, err
 	}
@@ -360,6 +364,22 @@ func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath 
 	}
 
 	return dimgs, nil
+}
+
+func exportsAutoExcluding(dimgs []*Dimg, artifacts []*DimgArtifact) error {
+	for _, dimg := range dimgs {
+		if err := dimg.exportsAutoExcluding(); err != nil {
+			return err
+		}
+	}
+
+	for _, artifact := range artifacts {
+		if err := artifact.exportsAutoExcluding(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func validateDimgsNames(dimgs []*Dimg, artifacts []*DimgArtifact) error {

@@ -1,5 +1,9 @@
 package config
 
+import (
+	"path/filepath"
+)
+
 type rawExportBase struct {
 	Add          string      `yaml:"add,omitempty"`
 	To           string      `yaml:"to,omitempty"`
@@ -17,19 +21,23 @@ func (c *rawExportBase) inlinedIntoRaw(rawOrigin rawOrigin) {
 
 func (c *rawExportBase) toDirective() (exportBase *ExportBase, err error) {
 	exportBase = &ExportBase{}
-	exportBase.Add = c.Add
-	exportBase.To = c.To
+	exportBase.Add = filepath.Clean(c.Add)
+	exportBase.To = filepath.Clean(c.To)
 
 	if includePaths, err := InterfaceToStringArray(c.IncludePaths, c.rawOrigin.configSection(), c.rawOrigin.doc()); err != nil {
 		return nil, err
 	} else {
-		exportBase.IncludePaths = includePaths
+		for _, path := range includePaths {
+			exportBase.IncludePaths = append(exportBase.IncludePaths, filepath.Clean(path))
+		}
 	}
 
 	if excludePaths, err := InterfaceToStringArray(c.ExcludePaths, c.rawOrigin.configSection(), c.rawOrigin.doc()); err != nil {
 		return nil, err
 	} else {
-		exportBase.ExcludePaths = excludePaths
+		for _, path := range excludePaths {
+			exportBase.ExcludePaths = append(exportBase.ExcludePaths, filepath.Clean(path))
+		}
 	}
 
 	exportBase.Owner = c.Owner

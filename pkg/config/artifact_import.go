@@ -15,6 +15,10 @@ type ArtifactImport struct {
 	raw *rawArtifactImport
 }
 
+func (c *ArtifactImport) GetRaw() interface{} {
+	return c.raw
+}
+
 func (c *ArtifactImport) validate() error {
 	if err := c.ArtifactExport.validate(); err != nil {
 		return err
