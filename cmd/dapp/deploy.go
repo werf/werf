@@ -156,10 +156,3 @@ func runDeploy() error {
 		WithoutRegistry: deployCmdData.WithoutRegistry,
 	})
 }
-
-func getNamespace(namespaceOption string) string {
-	if namespaceOption == "" {
-		return kube.DefaultNamespace
-	}
-	return namespaceOption
-}

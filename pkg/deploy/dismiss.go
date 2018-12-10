@@ -12,7 +12,7 @@ type DismissOptions struct {
 	KubeContext   string
 }
 
-func RunDismiss(releaseName string, namespace string, opts DismissOptions) error {
+func RunDismiss(releaseName, namespace, kubeContext string, opts DismissOptions) error {
 	if debug() {
 		fmt.Printf("Dismiss options: %#v\n", opts)
 		fmt.Printf("Namespace: %s\n", namespace)

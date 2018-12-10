@@ -11,6 +11,7 @@ import (
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/git_repo"
+	"github.com/flant/kubedog/pkg/kube"
 	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/dapp/pkg/slug"
@@ -37,7 +38,7 @@ func main() {
 		newBPCmd(),
 
 		newDeployCmd(),
-		// newDismissCmd(),
+		newDismissCmd(),
 		newLintCmd(),
 		newRenderCmd(),
 
@@ -197,4 +198,11 @@ func getOptionalRepoName(projectName, repoOption string) string {
 	}
 
 	return ""
+}
+
+func getNamespace(namespaceOption string) string {
+	if namespaceOption == "" {
+		return kube.DefaultNamespace
+	}
+	return namespaceOption
 }
