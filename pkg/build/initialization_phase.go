@@ -1,9 +1,11 @@
 package build
 
 import (
+	"fmt"
 	"net/url"
 	"path"
 	"reflect"
+	"strings"
 
 	"github.com/flant/dapp/pkg/build/builder"
 	"github.com/flant/dapp/pkg/build/stage"
@@ -196,6 +198,11 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 					Url:       remoteGAConfig.Url,
 					ClonePath: clonePath,
 				}
+
+				if err := remoteGitRepo.CloneAndFetch(); err != nil {
+					return nil, err
+				}
+
 				remoteGitRepos[remoteGAConfig.Name] = remoteGitRepo
 			}
 		}
@@ -223,7 +230,7 @@ func getRemoteGitRepoClonePath(remoteGaConfig *config.GitRemote, c *Conveyor) (s
 	clonePath := path.Join(
 		c.ProjectBuildDir,
 		"remote_git_repo",
-		string(git_repo.RemoteGitRepoCacheVersion),
+		fmt.Sprintf("%v", git_repo.RemoteGitRepoCacheVersion),
 		slug.Slug(remoteGaConfig.Name),
 		scheme,
 	)
@@ -234,6 +241,13 @@ func getRemoteGitRepoClonePath(remoteGaConfig *config.GitRemote, c *Conveyor) (s
 func urlScheme(urlString string) (string, error) {
 	u, err := url.Parse(urlString)
 	if err != nil {
+		if strings.HasSuffix(err.Error(), "first path segment in URL cannot contain colon") {
+			for _, protocol := range []string{"git", "ssh"} {
+				if strings.HasPrefix(urlString, fmt.Sprintf("%s@", protocol)) {
+					return "ssh", nil
+				}
+			}
+		}
 		return "", err
 	}
 
