@@ -1,9 +1,8 @@
-package main
+package secret
 
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,18 +11,24 @@ import (
 	"reflect"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/kubernetes/pkg/util/file"
 
+	"github.com/flant/dapp/cmd/dapp/common"
+	secret_common "github.com/flant/dapp/cmd/dapp/secret/common"
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-var secretEditCmdData struct {
+var CmdData struct {
 	Values bool
 }
 
-func newSecretEditCmd() *cobra.Command {
+var CommonCmdData common.CmdData
+
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit FILE_PATH",
 		Short: "Edit or create new secret file",
@@ -37,13 +42,17 @@ func newSecretEditCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().BoolVarP(&secretEditCmdData.Values, "values", "", false, "Edit FILE_PATH as secret values file")
+	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	cmd.PersistentFlags().BoolVarP(&CmdData.Values, "values", "", false, "Edit FILE_PATH as secret values file")
 
 	return cmd
 }
 
 func runSecretEdit(filepPath string) error {
-	projectDir, err := getProjectDir()
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -53,7 +62,7 @@ func runSecretEdit(filepPath string) error {
 		return err
 	}
 
-	return secretEdit(m, filepPath, secretEditCmdData.Values)
+	return secretEdit(m, filepPath, CmdData.Values)
 }
 
 func secretEdit(m secret.Manager, filePath string, values bool) error {
@@ -67,7 +76,7 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 		tmpFileName = "tmp_secret_file.yaml"
 	}
 
-	tmpDir, err := getTmpDir()
+	tmpDir, err := common.GetTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
@@ -118,7 +127,7 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 				newEncodedData, err = prepareResultValuesData(data, encodedData, newData, newEncodedData)
 			}
 
-			if err := saveGeneratedData(filePath, newEncodedData); err != nil {
+			if err := secret_common.SaveGeneratedData(filePath, newEncodedData); err != nil {
 				return err
 			}
 		}
@@ -215,7 +224,7 @@ func askForConfirmation() (bool, error) {
 }
 
 func createTmpEditedFile(filePath string, data []byte) error {
-	if err := saveGeneratedData(filePath, data); err != nil {
+	if err := secret_common.SaveGeneratedData(filePath, data); err != nil {
 		return err
 	}
 	return nil

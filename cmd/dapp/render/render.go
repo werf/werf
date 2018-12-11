@@ -1,8 +1,9 @@
-package main
+package render
 
 import (
 	"fmt"
 
+	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/deploy"
 	"github.com/flant/dapp/pkg/lock"
@@ -10,13 +11,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var renderCmdData struct {
+var CmdData struct {
 	Values       []string
 	SecretValues []string
 	Set          []string
 }
 
-func newRenderCmd() *cobra.Command {
+var CommonCmdData common.CmdData
+
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "render",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -28,15 +31,20 @@ func newRenderCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringArrayVarP(&renderCmdData.Values, "values", "", []string{}, "Additional helm values")
-	cmd.PersistentFlags().StringArrayVarP(&renderCmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
-	cmd.PersistentFlags().StringArrayVarP(&renderCmdData.Set, "set", "", []string{}, "Additional helm sets")
+	common.SetupName(&CommonCmdData, cmd)
+	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	cmd.PersistentFlags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
+	cmd.PersistentFlags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
+	cmd.PersistentFlags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
 
 	return cmd
 }
 
 func runRender() error {
-	if err := dapp.Init(rootCmdData.TmpDir, rootCmdData.HomeDir); err != nil {
+	if err := dapp.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -48,24 +56,24 @@ func runRender() error {
 		return err
 	}
 
-	projectDir, err := getProjectDir()
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := getProjectName(projectDir)
+	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)
 	if err != nil {
 		return fmt.Errorf("getting project name failed: %s", err)
 	}
 
-	dappfile, err := parseDappfile(projectDir)
+	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
 		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
 
 	return deploy.RunRender(projectName, projectDir, dappfile, deploy.RenderOptions{
-		Values:       renderCmdData.Values,
-		SecretValues: renderCmdData.SecretValues,
-		Set:          renderCmdData.Set,
+		Values:       CmdData.Values,
+		SecretValues: CmdData.SecretValues,
+		Set:          CmdData.Set,
 	})
 }

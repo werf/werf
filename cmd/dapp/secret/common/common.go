@@ -1,4 +1,4 @@
-package main
+package secret
 
 import (
 	"fmt"
@@ -10,13 +10,13 @@ import (
 	"k8s.io/kubernetes/pkg/util/file"
 )
 
-type secretGenerateOptions struct {
+type GenerateOptions struct {
 	FilePath       string
 	OutputFilePath string
 	Values         bool
 }
 
-func readFileData(filePath string) ([]byte, error) {
+func ReadFileData(filePath string) ([]byte, error) {
 	if exist, err := file.FileExists(filePath); err != nil {
 		return nil, err
 	} else if !exist {
@@ -36,7 +36,7 @@ func readFileData(filePath string) ([]byte, error) {
 	return fileData, err
 }
 
-func readStdin() ([]byte, error) {
+func ReadStdin() ([]byte, error) {
 	var data []byte
 	var err error
 
@@ -64,7 +64,7 @@ func readStdin() ([]byte, error) {
 	return data, nil
 }
 
-func saveGeneratedData(filePath string, data []byte) error {
+func SaveGeneratedData(filePath string, data []byte) error {
 	if err := os.MkdirAll(filepath.Dir(filePath), 0777); err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"fmt"
@@ -9,22 +9,22 @@ import (
 	"github.com/flant/dapp/pkg/git_repo"
 )
 
-func getDeployTag(projectDir string, tagOption []string, tagBranchOption bool, tagCommitOption bool, tagBuildIDOption bool, tagCIOption bool) (string, error) {
+func GetDeployTag(cmdData *CmdData, projectDir string) (string, error) {
 	optionsCount := 0
-	if len(tagOption) > 0 {
-		optionsCount += len(tagOption)
+	if len(*cmdData.Tag) > 0 {
+		optionsCount += len(*cmdData.Tag)
 	}
 
-	if tagBranchOption {
+	if *cmdData.TagBranch {
 		optionsCount++
 	}
-	if tagCommitOption {
+	if *cmdData.TagCommit {
 		optionsCount++
 	}
-	if tagBuildIDOption {
+	if *cmdData.TagBuildID {
 		optionsCount++
 	}
-	if tagCIOption {
+	if *cmdData.TagCI {
 		optionsCount++
 	}
 
@@ -32,7 +32,7 @@ func getDeployTag(projectDir string, tagOption []string, tagBranchOption bool, t
 		return "", fmt.Errorf("exactly one tag should be specified for deploy")
 	}
 
-	opts, err := getTagOptions(projectDir, tagOption, tagBranchOption, tagBranchOption, tagBuildIDOption, tagBranchOption)
+	opts, err := GetTagOptions(cmdData, projectDir)
 	if err != nil {
 		return "", err
 	}
@@ -47,16 +47,16 @@ func getDeployTag(projectDir string, tagOption []string, tagBranchOption bool, t
 	return tags[0], nil
 }
 
-func getTagOptions(projectDir string, tagOption []string, tagBranchOption bool, tagCommitOption bool, tagBuildIDOption bool, tagCIOption bool) (build.TagOptions, error) {
+func GetTagOptions(cmdData *CmdData, projectDir string) (build.TagOptions, error) {
 	emptyTags := true
 
 	opts := build.TagOptions{}
-	opts.Tags = tagOption
-	if len(tagOption) > 0 {
+	opts.Tags = *cmdData.Tag
+	if len(*cmdData.Tag) > 0 {
 		emptyTags = false
 	}
 
-	if tagBranchOption {
+	if *cmdData.TagBranch {
 		localGitRepo := &git_repo.Local{
 			Path:   projectDir,
 			GitDir: path.Join(projectDir, ".git"),
@@ -71,7 +71,7 @@ func getTagOptions(projectDir string, tagOption []string, tagBranchOption bool, 
 		emptyTags = false
 	}
 
-	if tagCommitOption {
+	if *cmdData.TagCommit {
 		localGitRepo := &git_repo.Local{
 			Path:   projectDir,
 			GitDir: path.Join(projectDir, ".git"),
@@ -86,7 +86,7 @@ func getTagOptions(projectDir string, tagOption []string, tagBranchOption bool, 
 		emptyTags = false
 	}
 
-	if tagBuildIDOption {
+	if *cmdData.TagBuildID {
 		var buildID string
 
 		if os.Getenv("GITLAB_CI") != "" {
@@ -106,7 +106,7 @@ func getTagOptions(projectDir string, tagOption []string, tagBranchOption bool, 
 		}
 	}
 
-	if tagCIOption {
+	if *cmdData.TagCI {
 		var gitBranch, gitTag string
 
 		if os.Getenv("GITLAB_CI") != "" {

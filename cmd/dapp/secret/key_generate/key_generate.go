@@ -1,4 +1,4 @@
-package main
+package secret
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-func newSecretKeyGenCmd() *cobra.Command {
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "keygen",
 		Short: "Generate encryption key",
