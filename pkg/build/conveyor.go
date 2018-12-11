@@ -6,6 +6,7 @@ import (
 
 	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/lock"
 )
@@ -27,6 +28,7 @@ type Conveyor struct {
 
 	stageImages                   map[string]*image.Stage
 	buildingGAStageNameByDimgName map[string]stage.StageName
+	remoteGitRepos                map[string]*git_repo.Remote
 	dockerAuthorizer              DockerAuthorizer
 
 	ProjectName string
@@ -56,6 +58,7 @@ func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmp
 		stageImages:                   make(map[string]*image.Stage),
 		dockerAuthorizer:              authorizer,
 		buildingGAStageNameByDimgName: make(map[string]stage.StageName),
+		remoteGitRepos:                make(map[string]*git_repo.Remote),
 	}
 }
 
