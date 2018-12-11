@@ -28,3 +28,11 @@ func (s *GAStage) AfterImageSyncDockerStateHook(c Conveyor) error {
 
 	return nil
 }
+
+func (s *GAStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+		return err
+	}
+
+	return nil
+}

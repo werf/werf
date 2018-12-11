@@ -165,16 +165,9 @@ func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) erro
 		return err
 	}
 
-	gitArtifactContainerName, err := dappdeps.GitArtifactContainer()
-	if err != nil {
-		return err
-	}
-
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.PatchesDir, ga.ContainerPatchesDir))
 	image.Container().AddRunCommands(commands...)
 
 	ga.AddGACommitToImageLabels(image, toCommit)
-	image.Container().RunOptions().AddVolumeFrom(gitArtifactContainerName)
 
 	return nil
 }
@@ -342,7 +335,6 @@ func (ga *GitArtifact) ApplyArchiveCommand(image image.Image) error {
 		return err
 	}
 
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.ArchivesDir, ga.ContainerArchivesDir))
 	image.Container().AddRunCommands(commands...)
 
 	ga.AddGACommitToImageLabels(image, commit)

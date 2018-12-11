@@ -143,6 +143,16 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 		ProjectBuildDir:  c.ProjectBuildDir,
 	}
 
+	gaArchiveStageOptions := &stage.NewGAArchiveStageOptions{
+		ArchivesDir:          getDimgArchivesDir(dimgName, c),
+		ContainerArchivesDir: getDimgArchivesContainerDir(c),
+	}
+
+	gaPatchStageOptions := &stage.NewGaPatchStageOptions{
+		PatchesDir:          getDimgPatchesDir(dimgName, c),
+		ContainerPatchesDir: getDimgPatchesContainerDir(c),
+	}
+
 	gitArtifacts, err := generateGitArtifacts(dimgBaseConfig, c)
 	if err != nil {
 		return nil, err
@@ -158,32 +168,32 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(dimgBaseConfig, baseStageOptions))
 
 	// g_a_archive_stage
-	stages = append(stages, stage.NewGAArchiveStage(baseStageOptions))
+	stages = append(stages, stage.NewGAArchiveStage(gaArchiveStageOptions, baseStageOptions))
 
 	// install
-	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgBaseConfig, ansibleBuilderExtra(c), baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgBaseConfig, ansibleBuilderExtra(c), gaPatchStageOptions, baseStageOptions))
 
 	// after_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(dimgBaseConfig, baseStageOptions))
 
 	// before_setup
-	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgBaseConfig, ansibleBuilderExtra(c), baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgBaseConfig, ansibleBuilderExtra(c), gaPatchStageOptions, baseStageOptions))
 
 	// before_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBaseConfig, baseStageOptions))
 
 	// setup
-	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgBaseConfig, ansibleBuilderExtra(c), baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgBaseConfig, ansibleBuilderExtra(c), gaPatchStageOptions, baseStageOptions))
 
 	// after_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(dimgBaseConfig, baseStageOptions))
 
 	if !dimgArtifact {
 		// g_a_post_setup_patch
-		stages = append(stages, stage.NewGAPostSetupPatchStage(baseStageOptions))
+		stages = append(stages, stage.NewGAPostSetupPatchStage(gaPatchStageOptions, baseStageOptions))
 
 		// g_a_latest_patch
-		stages = append(stages, stage.NewGALatestPatchStage(baseStageOptions))
+		stages = append(stages, stage.NewGALatestPatchStage(gaPatchStageOptions, baseStageOptions))
 
 		// docker_instructions
 		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(dimgConfig.(*config.Dimg), baseStageOptions))

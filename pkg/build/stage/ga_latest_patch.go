@@ -5,9 +5,9 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func NewGALatestPatchStage(baseStageOptions *NewBaseStageOptions) *GALatestPatchStage {
+func NewGALatestPatchStage(gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GALatestPatchStage {
 	s := &GALatestPatchStage{}
-	s.GAPatchStage = newGAPatchStage(GALatestPatch, baseStageOptions)
+	s.GAPatchStage = newGAPatchStage(GALatestPatch, gaPatchStageOptions, baseStageOptions)
 	return s
 }
 

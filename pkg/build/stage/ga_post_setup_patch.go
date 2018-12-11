@@ -7,9 +7,9 @@ import (
 
 const patchSizeStep = 1024 * 1024
 
-func NewGAPostSetupPatchStage(baseStageOptions *NewBaseStageOptions) *GAPostSetupPatchStage {
+func NewGAPostSetupPatchStage(gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GAPostSetupPatchStage {
 	s := &GAPostSetupPatchStage{}
-	s.GAPatchStage = newGAPatchStage(GAPostSetupPatch, baseStageOptions)
+	s.GAPatchStage = newGAPatchStage(GAPostSetupPatch, gaPatchStageOptions, baseStageOptions)
 	return s
 }
 

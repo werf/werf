@@ -1,17 +1,31 @@
 package stage
 
 import (
+	"fmt"
+
+	"github.com/flant/dapp/pkg/dappdeps"
 	"github.com/flant/dapp/pkg/image"
 )
 
-func newGAPatchStage(name StageName, baseStageOptions *NewBaseStageOptions) *GAPatchStage {
-	s := &GAPatchStage{}
+type NewGaPatchStageOptions struct {
+	PatchesDir          string
+	ContainerPatchesDir string
+}
+
+func newGAPatchStage(name StageName, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GAPatchStage {
+	s := &GAPatchStage{
+		PatchesDir:          gaPatchStageOptions.PatchesDir,
+		ContainerPatchesDir: gaPatchStageOptions.ContainerPatchesDir,
+	}
 	s.GAStage = newGAStage(name, baseStageOptions)
 	return s
 }
 
 type GAPatchStage struct {
 	*GAStage
+
+	PatchesDir          string
+	ContainerPatchesDir string
 }
 
 func (s *GAPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.Image) (bool, error) {
@@ -62,11 +76,31 @@ func (s *GAPatchStage) hasPrevBuiltStageHadActualGA(prevBuiltImage image.Image) 
 }
 
 func (s *GAPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+	if err := s.GAStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+		return err
+	}
+
+	if err := s.prepareImage(c, prevBuiltImage, image); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *GAPatchStage) prepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
 	for _, ga := range s.gitArtifacts {
 		if err := ga.ApplyPatchCommand(prevBuiltImage, image); err != nil {
 			return err
 		}
 	}
+
+	gitArtifactContainerName, err := dappdeps.GitArtifactContainer()
+	if err != nil {
+		return err
+	}
+
+	image.Container().RunOptions().AddVolumeFrom(gitArtifactContainerName)
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.PatchesDir, s.ContainerPatchesDir))
 
 	return nil
 }

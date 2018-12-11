@@ -5,10 +5,10 @@ import (
 	"github.com/flant/dapp/pkg/image"
 )
 
-func newUserWithGAPatchStage(builder builder.Builder, name StageName, baseStageOptions *NewBaseStageOptions) *UserWithGAPatchStage {
+func newUserWithGAPatchStage(builder builder.Builder, name StageName, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *UserWithGAPatchStage {
 	s := &UserWithGAPatchStage{}
 	s.UserStage = newUserStage(builder, name, baseStageOptions)
-	s.GAPatchStage = newGAPatchStage(name, baseStageOptions)
+	s.GAPatchStage = newGAPatchStage(name, gaPatchStageOptions, baseStageOptions)
 	s.GAPatchStage.BaseStage = s.BaseStage
 	return s
 }
@@ -25,7 +25,7 @@ func (s *UserWithGAPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image im
 
 	stageName := c.GetBuildingGAStage(s.dimgName)
 	if stageName == s.Name() {
-		if err := s.GAPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+		if err := s.GAPatchStage.prepareImage(c, prevBuiltImage, image); err != nil {
 			return nil
 		}
 	}

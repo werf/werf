@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/flant/dapp/pkg/image"
@@ -9,14 +10,25 @@ import (
 
 const GAArchiveResetCommitRegex = "(\\[dapp reset\\])|(\\[reset dapp\\])"
 
-func NewGAArchiveStage(baseStageOptions *NewBaseStageOptions) *GAArchiveStage {
-	s := &GAArchiveStage{}
+type NewGAArchiveStageOptions struct {
+	ArchivesDir          string
+	ContainerArchivesDir string
+}
+
+func NewGAArchiveStage(gaArchiveStageOptions *NewGAArchiveStageOptions, baseStageOptions *NewBaseStageOptions) *GAArchiveStage {
+	s := &GAArchiveStage{
+		ArchivesDir:          gaArchiveStageOptions.ArchivesDir,
+		ContainerArchivesDir: gaArchiveStageOptions.ContainerArchivesDir,
+	}
 	s.GAStage = newGAStage(GAArchive, baseStageOptions)
 	return s
 }
 
 type GAArchiveStage struct {
 	*GAStage
+
+	ArchivesDir          string
+	ContainerArchivesDir string
 }
 
 func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
@@ -38,7 +50,7 @@ func (s *GAArchiveStage) GetDependencies(_ Conveyor, _ image.Image) (string, err
 }
 
 func (s *GAArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
-	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+	if err := s.GAStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
 
@@ -47,6 +59,8 @@ func (s *GAArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Im
 			return err
 		}
 	}
+
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ArchivesDir, s.ContainerArchivesDir))
 
 	return nil
 }
