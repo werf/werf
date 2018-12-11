@@ -20,6 +20,7 @@ type Conveyor struct {
 	buildingGAStageNameByDimgName map[string]stage.StageName
 	remoteGitRepos                map[string]*git_repo.Remote
 	dockerAuthorizer              DockerAuthorizer
+	imagesBySignature             map[string]image.Image
 
 	ProjectName string
 
@@ -50,6 +51,7 @@ func NewConveyor(dappfile []*config.Dimg, dimgNamesToProcess []string, projectDi
 		dockerAuthorizer:              authorizer,
 		buildingGAStageNameByDimgName: make(map[string]stage.StageName),
 		remoteGitRepos:                make(map[string]*git_repo.Remote),
+		imagesBySignature:             make(map[string]image.Image),
 	}
 }
 
@@ -158,6 +160,14 @@ func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.
 	img := image.NewStageImage(fromImage, name)
 	c.stageImages[name] = img
 	return img
+}
+
+func (c *Conveyor) GetImageBySignature(signature string) image.Image {
+	return c.imagesBySignature[signature]
+}
+
+func (c *Conveyor) SetImageBySignature(signature string, img image.Image) {
+	c.imagesBySignature[signature] = img
 }
 
 func (c *Conveyor) GetDimg(name string) *Dimg {
