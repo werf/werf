@@ -8,6 +8,7 @@ import (
 	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/cmd/dapp/docker_authorizer"
 	"github.com/flant/dapp/pkg/cleanup"
+	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/lock"
@@ -56,6 +57,10 @@ func NewCmd() *cobra.Command {
 }
 
 func runCleanup() error {
+	if err := dapp.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
+
 	if err := lock.Init(); err != nil {
 		return err
 	}

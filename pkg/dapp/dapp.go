@@ -14,10 +14,18 @@ var (
 )
 
 func GetHomeDir() string {
+	if homeDir == "" {
+		panic("bug: init required!")
+	}
+
 	return homeDir
 }
 
 func GetTmpDir() string {
+	if tmpDir == "" {
+		panic("bug: init required!")
+	}
+
 	return tmpDir
 }
 

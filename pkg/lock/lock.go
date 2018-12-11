@@ -10,13 +10,14 @@ import (
 )
 
 var (
+	LocksDir       string
 	Locks          map[string]LockObject
 	DefaultTimeout = 24 * time.Hour
-	LocksDir       = filepath.Join(dapp.GetHomeDir(), "locks")
 )
 
 func Init() error {
 	Locks = make(map[string]LockObject)
+	LocksDir = filepath.Join(dapp.GetHomeDir(), "locks")
 
 	err := os.MkdirAll(LocksDir, 0755)
 	if err != nil {

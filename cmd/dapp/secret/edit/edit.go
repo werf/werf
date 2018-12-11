@@ -19,6 +19,7 @@ import (
 
 	"github.com/flant/dapp/cmd/dapp/common"
 	secret_common "github.com/flant/dapp/cmd/dapp/secret/common"
+	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
@@ -52,6 +53,10 @@ func NewCmd() *cobra.Command {
 }
 
 func runSecretEdit(filepPath string) error {
+	if err := dapp.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
+
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
