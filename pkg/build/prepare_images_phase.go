@@ -39,31 +39,37 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 			}
 
 			img := s.GetImage()
-			if !img.IsExists() {
-				if debug() {
-					fmt.Printf("    %s\n", s.Name())
-				}
 
-				imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
-				imageServiceCommitChangeOptions.AddLabel(map[string]string{
-					"dapp":                c.ProjectName,
-					"dapp-version":        dapp.Version,
-					DappCacheVersionLabel: BuildCacheVersion,
-					"dapp-dimg":           "false",
-					"dapp-dev-mode":       "false",
-				})
-
-				if c.SSHAuthSock != "" {
-					imageRunOptions := img.Container().RunOptions()
-					imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SSHAuthSock))
-					imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
-				}
-
-				err := s.PrepareImage(c, prevBuiltImage, img)
-				if err != nil {
-					return fmt.Errorf("error preparing stage %s: %s", s.Name(), err)
-				}
+			if c.GetImageBySignature(s.GetSignature()) != nil || img.IsExists() {
+				prevImage = img
+				continue
 			}
+
+			if debug() {
+				fmt.Printf("    %s\n", s.Name())
+			}
+
+			imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
+			imageServiceCommitChangeOptions.AddLabel(map[string]string{
+				"dapp":                c.ProjectName,
+				"dapp-version":        dapp.Version,
+				DappCacheVersionLabel: BuildCacheVersion,
+				"dapp-dimg":           "false",
+				"dapp-dev-mode":       "false",
+			})
+
+			if c.SSHAuthSock != "" {
+				imageRunOptions := img.Container().RunOptions()
+				imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SSHAuthSock))
+				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
+			}
+
+			err := s.PrepareImage(c, prevBuiltImage, img)
+			if err != nil {
+				return fmt.Errorf("error preparing stage %s: %s", s.Name(), err)
+			}
+
+			c.SetImageBySignature(s.GetSignature(), img)
 
 			prevImage = img
 		}
