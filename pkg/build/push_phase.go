@@ -42,6 +42,11 @@ func (p *PushPhase) Run(c *Conveyor) error {
 		fmt.Printf("PushPhase.Run\n")
 	}
 
+	err := c.GetDockerAuthorizer().LoginForPush(p.Repo)
+	if err != nil {
+		return fmt.Errorf("login into '%s' for push failed: %s", p.Repo, err)
+	}
+
 	for _, dimg := range c.DimgsInOrder {
 		if p.WithStages {
 			err := p.pushDimgStages(c, dimg)
