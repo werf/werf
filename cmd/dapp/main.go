@@ -21,6 +21,10 @@ import (
 	secret_key_generate "github.com/flant/dapp/cmd/dapp/secret/key_generate"
 	secret_regenerate "github.com/flant/dapp/cmd/dapp/secret/regenerate"
 
+	slug_namespace "github.com/flant/dapp/cmd/dapp/slug/namespace"
+	slug_release "github.com/flant/dapp/cmd/dapp/slug/release"
+	slug_tag "github.com/flant/dapp/cmd/dapp/slug/tag"
+
 	"github.com/spf13/cobra"
 )
 
@@ -46,6 +50,7 @@ func main() {
 		cleanup.NewCmd(),
 
 		secretCmd(),
+		slugCmd(),
 	)
 
 	err := cmd.Execute()
@@ -62,6 +67,17 @@ func secretCmd() *cobra.Command {
 		secret_extract.NewCmd(),
 		secret_edit.NewCmd(),
 		secret_regenerate.NewCmd(),
+	)
+
+	return cmd
+}
+
+func slugCmd() *cobra.Command {
+	cmd := &cobra.Command{Use: "slug"}
+	cmd.AddCommand(
+		slug_tag.NewCmd(),
+		slug_namespace.NewCmd(),
+		slug_release.NewCmd(),
 	)
 
 	return cmd

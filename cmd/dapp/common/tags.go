@@ -7,6 +7,7 @@ import (
 
 	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/git_repo"
+	"github.com/flant/dapp/pkg/slug"
 )
 
 func GetDeployTag(cmdData *CmdData, projectDir string) (string, error) {
@@ -67,7 +68,7 @@ func GetTagOptions(cmdData *CmdData, projectDir string) (build.TagOptions, error
 			return build.TagOptions{}, fmt.Errorf("cannot detect local git branch for --tag-branch option: %s", err)
 		}
 
-		opts.TagsByGitBranch = append(opts.TagsByGitBranch, branch)
+		opts.TagsByGitBranch = append(opts.TagsByGitBranch, slug.DockerTag(branch))
 		emptyTags = false
 	}
 
@@ -127,10 +128,10 @@ func GetTagOptions(cmdData *CmdData, projectDir string) (build.TagOptions, error
 		}
 
 		if gitTag != "" {
-			opts.TagsByGitTag = append(opts.TagsByGitTag, gitTag)
+			opts.TagsByGitTag = append(opts.TagsByGitTag, slug.DockerTag(gitTag))
 		}
 		if gitBranch != "" {
-			opts.TagsByGitBranch = append(opts.TagsByGitBranch, gitBranch)
+			opts.TagsByGitBranch = append(opts.TagsByGitBranch, slug.DockerTag(gitBranch))
 		}
 	}
 
