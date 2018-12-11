@@ -17,3 +17,15 @@ func Slug(data string) string {
 		return v1.Slug(data)
 	}
 }
+
+func DockerTag(data string) string {
+	return data
+}
+
+func KubernetesNamespace(namespace string) string {
+	return namespace
+}
+
+func HelmRelease(name string) string {
+	return name
+}
