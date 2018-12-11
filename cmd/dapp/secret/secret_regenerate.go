@@ -1,4 +1,4 @@
-package main
+package secret
 
 import (
 	"bytes"
@@ -10,14 +10,15 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/kubernetes/pkg/util/file"
 
+	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-var secretRegenerateCmdData struct {
+var RegenerateCmdData struct {
 	OldKey string
 }
 
-func newSecretRegenerateCmd() *cobra.Command {
+func NewRegenerateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "regenerate [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		Short: "Regenerate secret files with new secret key",
@@ -30,14 +31,18 @@ func newSecretRegenerateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&secretRegenerateCmdData.OldKey, "old-key", "", "", "Old secret key")
+	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	cmd.PersistentFlags().StringVarP(&RegenerateCmdData.OldKey, "old-key", "", "", "Old secret key")
 	cmd.MarkPersistentFlagRequired("old-key")
 
 	return cmd
 }
 
 func runSecretRegenerate(secretValuesPaths ...string) error {
-	projectDir, err := getProjectDir()
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -47,7 +52,7 @@ func runSecretRegenerate(secretValuesPaths ...string) error {
 		return err
 	}
 
-	oldSecret, err := secret.NewManager([]byte(secretRegenerateCmdData.OldKey), secret.NewManagerOptions{IgnoreWarning: true})
+	oldSecret, err := secret.NewManager([]byte(RegenerateCmdData.OldKey), secret.NewManagerOptions{IgnoreWarning: true})
 	if err != nil {
 		return err
 	}

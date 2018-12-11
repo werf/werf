@@ -1,9 +1,8 @@
-package main
+package secret
 
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,18 +11,21 @@ import (
 	"reflect"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/kubernetes/pkg/util/file"
 
+	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-var secretEditCmdData struct {
+var EditCmdData struct {
 	Values bool
 }
 
-func newSecretEditCmd() *cobra.Command {
+func NewEditCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit FILE_PATH",
 		Short: "Edit or create new secret file",
@@ -37,13 +39,17 @@ func newSecretEditCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().BoolVarP(&secretEditCmdData.Values, "values", "", false, "Edit FILE_PATH as secret values file")
+	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	cmd.PersistentFlags().BoolVarP(&EditCmdData.Values, "values", "", false, "Edit FILE_PATH as secret values file")
 
 	return cmd
 }
 
 func runSecretEdit(filepPath string) error {
-	projectDir, err := getProjectDir()
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -53,7 +59,7 @@ func runSecretEdit(filepPath string) error {
 		return err
 	}
 
-	return secretEdit(m, filepPath, secretEditCmdData.Values)
+	return secretEdit(m, filepPath, EditCmdData.Values)
 }
 
 func secretEdit(m secret.Manager, filePath string, values bool) error {
@@ -67,7 +73,7 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 		tmpFileName = "tmp_secret_file.yaml"
 	}
 
-	tmpDir, err := getTmpDir()
+	tmpDir, err := common.GetTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}

@@ -1,4 +1,4 @@
-package main
+package secret
 
 import (
 	"fmt"
@@ -6,9 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/flant/dapp/cmd/dapp/common"
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/kubernetes/pkg/util/file"
 )
+
+var CommonCmdData common.CmdData
 
 type secretGenerateOptions struct {
 	FilePath       string

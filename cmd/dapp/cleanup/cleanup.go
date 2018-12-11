@@ -1,10 +1,11 @@
-package main
+package cleanup
 
 import (
 	"fmt"
 
 	"github.com/spf13/cobra"
 
+	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/cmd/dapp/docker_authorizer"
 	"github.com/flant/dapp/pkg/cleanup"
 	"github.com/flant/dapp/pkg/docker"
@@ -13,7 +14,7 @@ import (
 	"github.com/flant/kubedog/pkg/kube"
 )
 
-var cleanupCmdData struct {
+var CmdData struct {
 	Repo             string
 	RegistryUsername string
 	RegistryPassword string
@@ -23,7 +24,9 @@ var cleanupCmdData struct {
 	DryRun bool
 }
 
-func newCleanupCmd() *cobra.Command {
+var CommonCmdData common.CmdData
+
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cleanup",
 		Short: "Cleanup project images in docker registry by policies",
@@ -36,13 +39,18 @@ func newCleanupCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&cleanupCmdData.Repo, "repo", "", "", "Docker repository name")
-	cmd.PersistentFlags().StringVarP(&cleanupCmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
-	cmd.PersistentFlags().StringVarP(&cleanupCmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
+	common.SetupName(&CommonCmdData, cmd)
+	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().BoolVarP(&cleanupCmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
+	cmd.PersistentFlags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name")
+	cmd.PersistentFlags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
+	cmd.PersistentFlags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
 
-	cmd.PersistentFlags().BoolVarP(&cleanupCmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	cmd.PersistentFlags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
+
+	cmd.PersistentFlags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }
@@ -54,27 +62,27 @@ func runCleanup() error {
 
 	kube.Init(kube.InitOptions{})
 
-	projectDir, err := getProjectDir()
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := getProjectName(projectDir)
+	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)
 	if err != nil {
 		return fmt.Errorf("getting project name failed: %s", err)
 	}
 
-	projectTmpDir, err := getTmpDir()
+	projectTmpDir, err := common.GetTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 
-	repoName, err := getRequiredRepoName(projectName, cleanupCmdData.Repo)
+	repoName, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
 	if err != nil {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetCleanupDockerAuthorizer(projectTmpDir, cleanupCmdData.RegistryUsername, cleanupCmdData.RegistryPassword, repoName)
+	dockerAuthorizer, err := docker_authorizer.GetCleanupDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, repoName)
 	if err != nil {
 		return err
 	}
@@ -87,7 +95,7 @@ func runCleanup() error {
 		return err
 	}
 
-	dappfile, err := parseDappfile(projectDir)
+	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
 		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
@@ -100,20 +108,20 @@ func runCleanup() error {
 	commonRepoOptions := cleanup.CommonRepoOptions{
 		Repository: repoName,
 		DimgsNames: dimgNames,
-		DryRun:     cleanupCmdData.DryRun,
+		DryRun:     CmdData.DryRun,
 	}
 
 	localRepo := &git_repo.Local{}
-	if exist, err := isGitOwnRepoExists(projectDir); err != nil {
+	if exist, err := common.IsGitOwnRepoExists(projectDir); err != nil {
 		return err
 	} else if exist {
-		localRepo = localGitRepo(projectDir)
+		localRepo = common.GetLocalGitRepo(projectDir)
 	}
 
 	cleanupOptions := cleanup.CleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
 		LocalRepo:         localRepo,
-		WithoutKube:       cleanupCmdData.WithoutKube,
+		WithoutKube:       CmdData.WithoutKube,
 	}
 
 	if err := cleanup.Cleanup(cleanupOptions); err != nil {

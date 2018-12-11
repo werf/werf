@@ -1,4 +1,4 @@
-package main
+package secret
 
 import (
 	"bytes"
@@ -6,16 +6,17 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-var secretGenerateCmdData struct {
+var GenerateCmdData struct {
 	FilePath       string
 	OutputFilePath string
 	Values         bool
 }
 
-func newSecretGenerateCmd() *cobra.Command {
+func NewGenerateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate",
 		Short: "Generate secret data",
@@ -28,23 +29,27 @@ func newSecretGenerateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&secretGenerateCmdData.FilePath, "file-path", "", "", "Encode file data by specified path")
-	cmd.PersistentFlags().StringVarP(&secretGenerateCmdData.OutputFilePath, "output-file-path", "", "", "Save encoded data by specified file path")
-	cmd.PersistentFlags().BoolVarP(&secretGenerateCmdData.Values, "values", "", false, "Encode specified FILE_PATH (--file-path) as secret values file")
+	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	cmd.PersistentFlags().StringVarP(&GenerateCmdData.FilePath, "file-path", "", "", "Encode file data by specified path")
+	cmd.PersistentFlags().StringVarP(&GenerateCmdData.OutputFilePath, "output-file-path", "", "", "Save encoded data by specified file path")
+	cmd.PersistentFlags().BoolVarP(&GenerateCmdData.Values, "values", "", false, "Encode specified FILE_PATH (--file-path) as secret values file")
 
 	return cmd
 }
 
 func runSecretGenerate() error {
-	projectDir, err := getProjectDir()
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
 	options := &secretGenerateOptions{
-		FilePath:       secretGenerateCmdData.FilePath,
-		OutputFilePath: secretGenerateCmdData.OutputFilePath,
-		Values:         secretGenerateCmdData.Values,
+		FilePath:       GenerateCmdData.FilePath,
+		OutputFilePath: GenerateCmdData.OutputFilePath,
+		Values:         GenerateCmdData.Values,
 	}
 
 	m, err := secret.GetManager(projectDir)

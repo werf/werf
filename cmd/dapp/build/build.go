@@ -1,8 +1,9 @@
-package main
+package build
 
 import (
 	"fmt"
 
+	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/cmd/dapp/docker_authorizer"
 	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/dapp"
@@ -13,12 +14,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var buildCmdData struct {
+var CmdData struct {
 	PullUsername string
 	PullPassword string
 }
 
-func newBuildCmd() *cobra.Command {
+var CommonCmdData common.CmdData
+
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "build",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -30,16 +33,22 @@ func newBuildCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&buildCmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
-	cmd.PersistentFlags().StringVarP(&buildCmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
-	cmd.PersistentFlags().StringVarP(&buildCmdData.PullUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images")
-	cmd.PersistentFlags().StringVarP(&buildCmdData.PullPassword, "registry-password", "", "", "Docker registry password to authorize pull of base images")
+	common.SetupName(&CommonCmdData, cmd)
+	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupSSHKey(&CommonCmdData, cmd)
+
+	cmd.PersistentFlags().StringVarP(&CmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
+	cmd.PersistentFlags().StringVarP(&CmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
+	cmd.PersistentFlags().StringVarP(&CmdData.PullUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images")
+	cmd.PersistentFlags().StringVarP(&CmdData.PullPassword, "registry-password", "", "", "Docker registry password to authorize pull of base images")
 
 	return cmd
 }
 
 func runBuild() error {
-	if err := dapp.Init(rootCmdData.TmpDir, rootCmdData.HomeDir); err != nil {
+	if err := dapp.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -51,32 +60,32 @@ func runBuild() error {
 		return err
 	}
 
-	projectDir, err := getProjectDir()
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := getProjectName(projectDir)
+	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)
 	if err != nil {
 		return fmt.Errorf("getting project name failed: %s", err)
 	}
 
-	projectBuildDir, err := getProjectBuildDir(projectName)
+	projectBuildDir, err := common.GetProjectBuildDir(projectName)
 	if err != nil {
 		return fmt.Errorf("getting project build dir failed: %s", err)
 	}
 
-	projectTmpDir, err := getTmpDir()
+	projectTmpDir, err := common.GetTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 
-	dappfile, err := parseDappfile(projectDir)
+	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
 		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetBuildDockerAuthorizer(projectTmpDir, buildCmdData.PullUsername, buildCmdData.PullPassword)
+	dockerAuthorizer, err := docker_authorizer.GetBuildDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword)
 	if err != nil {
 		return err
 	}
@@ -85,7 +94,7 @@ func runBuild() error {
 		return err
 	}
 
-	if err := ssh_agent.Init(rootCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 

@@ -46,17 +46,17 @@ func runBuild(rubyCliOptions buildRubyCliOptions) error {
 		return err
 	}
 
-	projectDir, err := getProjectDir(rubyCliOptions)
+	projectDir, err := common.GetProjectDir(rubyCliOptions)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := getProjectName(projectDir, rubyCliOptions)
+	projectName, err := common.GetProjectName(projectDir, rubyCliOptions)
 	if err != nil {
 		return fmt.Errorf("getting project name failed: %s", err)
 	}
 
-	buildDir, err := getProjectBuildDir(projectName, rubyCliOptions)
+	buildDir, err := common.GetProjectBuildDir(projectName, rubyCliOptions)
 	if err != nil {
 		return fmt.Errorf("getting project build dir failed: %s", err)
 	}
@@ -75,7 +75,7 @@ func runBuild(rubyCliOptions buildRubyCliOptions) error {
 		return err
 	}
 
-	dappfile, err := parseDappfile(projectDir)
+	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
 		return fmt.Errorf("parsing dappfile failed: %s", err)
 	}
@@ -101,7 +101,7 @@ func runBuild(rubyCliOptions buildRubyCliOptions) error {
 	return nil
 }
 
-func parseDappfile(projectDir string) ([]*config.Dimg, error) {
+func common.GetDappfile(projectDir string) ([]*config.Dimg, error) {
 	for _, dappfileName := range []string{"dappfile.yml", "dappfile.yaml"} {
 		dappfilePath := path.Join(projectDir, dappfileName)
 		if exist, err := file.FileExists(dappfilePath); err != nil {
@@ -114,7 +114,7 @@ func parseDappfile(projectDir string) ([]*config.Dimg, error) {
 	return nil, errors.New("dappfile.y[a]ml not found")
 }
 
-func getProjectDir(rubyCliOptions buildRubyCliOptions) (string, error) {
+func common.GetProjectDir(rubyCliOptions buildRubyCliOptions) (string, error) {
 	if rubyCliOptions.Dir != "" {
 		return rubyCliOptions.Dir, nil
 	}
@@ -127,7 +127,7 @@ func getProjectDir(rubyCliOptions buildRubyCliOptions) (string, error) {
 	return currentDir, nil
 }
 
-func getProjectBuildDir(projectName string, options buildRubyCliOptions) (string, error) {
+func common.GetProjectBuildDir(projectName string, options buildRubyCliOptions) (string, error) {
 	if options.BuildDir != "" {
 		return options.BuildDir, nil
 	} else {
@@ -152,7 +152,7 @@ func getProjectTmpDir(options buildRubyCliOptions) (string, error) {
 	return ioutil.TempDir("", tmpDirPrefix)
 }
 
-func getProjectName(projectDir string, rubyCliOptions buildRubyCliOptions) (string, error) {
+func common.GetProjectName(projectDir string, rubyCliOptions buildRubyCliOptions) (string, error) {
 	name := path.Base(projectDir)
 
 	if rubyCliOptions.Name != "" {

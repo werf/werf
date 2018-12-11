@@ -1,9 +1,10 @@
-package main
+package dismiss
 
 import (
 	"fmt"
 	"os"
 
+	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/deploy"
 	"github.com/flant/dapp/pkg/lock"
@@ -11,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var dismissCmdData struct {
+var CmdData struct {
 	HelmReleaseName string
 
 	Namespace     string
@@ -19,12 +20,14 @@ var dismissCmdData struct {
 	WithNamespace bool
 }
 
-func newDismissCmd() *cobra.Command {
+var CommonCmdData common.CmdData
+
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:  "dismiss HELM_RELEASE_NAME",
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			dismissCmdData.HelmReleaseName = args[0]
+			CmdData.HelmReleaseName = args[0]
 
 			err := runDismiss()
 			if err != nil {
@@ -35,15 +38,18 @@ func newDismissCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&dismissCmdData.Namespace, "namespace", "", "", "Kubernetes namespace")
-	cmd.PersistentFlags().StringVarP(&dismissCmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
-	cmd.PersistentFlags().BoolVarP(&dismissCmdData.WithNamespace, "with-namespace", "", false, "Delete namespace after purging helm release")
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	cmd.PersistentFlags().StringVarP(&CmdData.Namespace, "namespace", "", "", "Kubernetes namespace")
+	cmd.PersistentFlags().StringVarP(&CmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
+	cmd.PersistentFlags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete namespace after purging helm release")
 
 	return cmd
 }
 
 func runDismiss() error {
-	if err := dapp.Init(rootCmdData.TmpDir, rootCmdData.HomeDir); err != nil {
+	if err := dapp.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -53,16 +59,16 @@ func runDismiss() error {
 
 	kubeContext := os.Getenv("KUBECONTEXT")
 	if kubeContext == "" {
-		kubeContext = dismissCmdData.KubeContext
+		kubeContext = CmdData.KubeContext
 	}
 	err := kube.Init(kube.InitOptions{KubeContext: kubeContext})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	namespace := getNamespace(dismissCmdData.Namespace)
+	namespace := common.GetNamespace(CmdData.Namespace)
 
-	return deploy.RunDismiss(dismissCmdData.HelmReleaseName, namespace, kubeContext, deploy.DismissOptions{
-		WithNamespace: dismissCmdData.WithNamespace,
+	return deploy.RunDismiss(CmdData.HelmReleaseName, namespace, kubeContext, deploy.DismissOptions{
+		WithNamespace: CmdData.WithNamespace,
 	})
 }

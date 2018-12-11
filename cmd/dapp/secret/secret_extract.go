@@ -1,23 +1,25 @@
-package main
+package secret
 
 import (
 	"bytes"
 	"fmt"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
+
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/spf13/cobra"
 
+	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-var secretExtractCmdData struct {
+var ExtractCmdData struct {
 	FilePath       string
 	OutputFilePath string
 	Values         bool
 }
 
-func newSecretExtractCmd() *cobra.Command {
+func NewExtractCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "extract",
 		Short: "Extract data",
@@ -30,23 +32,27 @@ func newSecretExtractCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().StringVarP(&secretExtractCmdData.FilePath, "file-path", "", "", "Decode file data by specified path")
-	cmd.PersistentFlags().StringVarP(&secretExtractCmdData.OutputFilePath, "output-file-path", "", "", "Save decoded data by specified file path")
-	cmd.PersistentFlags().BoolVarP(&secretExtractCmdData.Values, "values", "", false, "Decode specified FILE_PATH (--file-path) as secret values file")
+	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	cmd.PersistentFlags().StringVarP(&ExtractCmdData.FilePath, "file-path", "", "", "Decode file data by specified path")
+	cmd.PersistentFlags().StringVarP(&ExtractCmdData.OutputFilePath, "output-file-path", "", "", "Save decoded data by specified file path")
+	cmd.PersistentFlags().BoolVarP(&ExtractCmdData.Values, "values", "", false, "Decode specified FILE_PATH (--file-path) as secret values file")
 
 	return cmd
 }
 
 func runSecretExtract() error {
-	projectDir, err := getProjectDir()
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
 	options := &secretGenerateOptions{
-		FilePath:       secretExtractCmdData.FilePath,
-		OutputFilePath: secretExtractCmdData.OutputFilePath,
-		Values:         secretExtractCmdData.Values,
+		FilePath:       ExtractCmdData.FilePath,
+		OutputFilePath: ExtractCmdData.OutputFilePath,
+		Values:         ExtractCmdData.Values,
 	}
 
 	m, err := secret.GetManager(projectDir)
