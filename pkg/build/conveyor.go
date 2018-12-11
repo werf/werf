@@ -11,19 +11,9 @@ import (
 )
 
 type Conveyor struct {
-	Dappfile     []*config.Dimg
-	DimgsInOrder []*Dimg
-
-	// Все кеширование тут
-	// Инициализируется конфигом dappfile (все dimgs, все artifacts)
-	// Предоставляет интерфейс для получения инфы по образам связанным с dappfile. ???
-	// SetEnabledDimgs(...)
-	// defaultPhases() -> []Phase
-
-	// Build()
-	// Tag()
-	// Push()
-	// BP()
+	Dappfile           []*config.Dimg
+	DimgsInOrder       []*Dimg
+	DimgNamesToProcess []string
 
 	stageImages                   map[string]*image.Stage
 	buildingGAStageNameByDimgName map[string]stage.StageName
@@ -44,9 +34,10 @@ type DockerAuthorizer interface {
 	LoginForPush(repo string) error
 }
 
-func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
+func NewConveyor(dappfile []*config.Dimg, dimgNamesToProcess []string, projectDir, projectName, buildDir, tmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
 	return &Conveyor{
 		Dappfile:                      dappfile,
+		DimgNamesToProcess:            dimgNamesToProcess,
 		ProjectDir:                    projectDir,
 		ProjectName:                   projectName,
 		ProjectBuildDir:               buildDir,

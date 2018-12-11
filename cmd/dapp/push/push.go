@@ -26,9 +26,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "push",
+		Use: "push [DIMG_NAME...]",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runPush()
+			err := runPush(args)
 			if err != nil {
 				return fmt.Errorf("push failed: %s", err)
 			}
@@ -55,7 +55,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runPush() error {
+func runPush(dimgsToProcess []string) error {
 	if err := dapp.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -118,7 +118,7 @@ func runPush() error {
 
 	pushOpts := build.PushOptions{TagOptions: tagOpts, WithStages: CmdData.WithStages}
 
-	c := build.NewConveyor(dappfile, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 	if err = c.Push(repo, pushOpts); err != nil {
 		return err
 	}
