@@ -1,4 +1,4 @@
-package v1
+package slug
 
 var mapping = map[string]string{
 	"0": "0",
