@@ -78,6 +78,12 @@ func (d *Dimg) PrepareBaseImage(c *Conveyor) error {
 		}
 	}
 
+	if d.GetName() == "" {
+		fmt.Printf("# Pulling base image for dimg\n")
+	} else {
+		fmt.Printf("# Pulling base image for dimg/%s\n", d.GetName())
+	}
+
 	if d.baseImage.IsExists() {
 		err := d.baseImage.Pull()
 		if err != nil {

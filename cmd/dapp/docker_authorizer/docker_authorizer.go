@@ -24,10 +24,12 @@ type DockerAuthorizer struct {
 }
 
 func (a *DockerAuthorizer) LoginForPull(repo string) error {
+	fmt.Printf("# Login into docker repo %s for pull\n", repo)
 	return a.login(a.PullCredentials, repo)
 }
 
 func (a *DockerAuthorizer) LoginForPush(repo string) error {
+	fmt.Printf("# Login into docker repo %s for push\n", repo)
 	return a.login(a.PushCredentials, repo)
 }
 

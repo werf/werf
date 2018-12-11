@@ -85,6 +85,12 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 				return err
 			}
 
+			if dimg.GetName() == "" {
+				fmt.Printf("# Calculated signature %s for dimg %s\n", stageSig, fmt.Sprintf("stage/%s", s.Name()))
+			} else {
+				fmt.Printf("# Calculated signature %s for dimg/%s %s\n", stageSig, dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
+			}
+
 			newStagesList = append(newStagesList, s)
 
 			prevStage = s
