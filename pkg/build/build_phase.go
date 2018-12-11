@@ -53,7 +53,19 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		for _, s := range dimg.GetStages() {
 			img := s.GetImage()
 			if img.IsExists() {
+				if dimg.GetName() == "" {
+					fmt.Printf("# Using cached image %s for dimg %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
+				} else {
+					fmt.Printf("# Using cached image %s for dimg/%s %s\n", img.Name(), dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
+				}
+
 				continue
+			}
+
+			if dimg.GetName() == "" {
+				fmt.Printf("# Building image %s for dimg %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
+			} else {
+				fmt.Printf("# Building image %s for dimg/%s %s\n", img.Name(), dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
 			}
 
 			if debug() {

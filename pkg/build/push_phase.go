@@ -49,6 +49,12 @@ func (p *PushPhase) Run(c *Conveyor) error {
 
 	for _, dimg := range c.DimgsInOrder {
 		if p.WithStages {
+			if dimg.GetName() == "" {
+				fmt.Printf("# Pushing dimg stages cache\n")
+			} else {
+				fmt.Printf("# Pushing dimg/%s stages cache\n", dimg.GetName())
+			}
+
 			err := p.pushDimgStages(c, dimg)
 			if err != nil {
 				return fmt.Errorf("unable to push dimg %s stages: %s", dimg.GetName(), err)
@@ -56,6 +62,12 @@ func (p *PushPhase) Run(c *Conveyor) error {
 		}
 
 		if !dimg.isArtifact {
+			if dimg.GetName() == "" {
+				fmt.Printf("# Pushing dimg\n")
+			} else {
+				fmt.Printf("# Pushing dimg/%s\n", dimg.GetName())
+			}
+
 			err := p.pushDimg(c, dimg)
 			if err != nil {
 				return fmt.Errorf("unable to push dimg %s: %s", dimg.GetName(), err)
@@ -79,7 +91,12 @@ func (p *PushPhase) pushDimgStages(c *Conveyor, dimg *Dimg) error {
 		stageImageName := fmt.Sprintf("%s:%s", p.Repo, stageTagName)
 
 		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
-			fmt.Printf("Stage %s EXIST\n", stageImageName)
+			if dimg.GetName() == "" {
+				fmt.Printf("# Ignore existing in repo image %s for dimg stage/%s\n", stageImageName, stage.Name())
+			} else {
+				fmt.Printf("# Ignore existing in repo image %s for dimg/%s stage/%s\n", stageImageName, dimg.GetName(), stage.Name())
+			}
+
 			continue
 		}
 
@@ -93,7 +110,11 @@ func (p *PushPhase) pushDimgStages(c *Conveyor, dimg *Dimg) error {
 			}
 			defer lock.Unlock(imageLockName)
 
-			fmt.Printf("Push stage %s\n", stageImageName)
+			if dimg.GetName() == "" {
+				fmt.Printf("# Pushing image %s for dimg stage/%s\n", stageImageName, stage.Name())
+			} else {
+				fmt.Printf("# Pushing  image %s for dimg/%s stage/%s\n", stageImageName, dimg.GetName(), stage.Name())
+			}
 
 			stageImage := c.GetImage(stage.GetImage().Name())
 
@@ -141,7 +162,11 @@ func (p *PushPhase) pushDimg(c *Conveyor, dimg *Dimg) error {
 				}
 
 				if lastStageImage.ID() == parentID {
-					fmt.Printf("%s EXIST\n", dimgImageName)
+					if dimg.GetName() == "" {
+						fmt.Printf("# Ignore existing in repo image %s for dimg\n", dimgImageName)
+					} else {
+						fmt.Printf("# Ignore existing in repo image %s for dimg/%s\n", dimgImageName, dimg.GetName())
+					}
 					continue ProcessingTags
 				}
 			}
@@ -170,7 +195,11 @@ func (p *PushPhase) pushDimg(c *Conveyor, dimg *Dimg) error {
 					return fmt.Errorf("error building %s with tag scheme '%s': %s", dimgImageName, scheme, err)
 				}
 
-				fmt.Printf("Push %s\n", dimgImageName)
+				if dimg.GetName() == "" {
+					fmt.Printf("# Pushing image %s for dimg\n", dimgImageName)
+				} else {
+					fmt.Printf("# Pushing image %s for dimg/%s\n", dimgImageName, dimg.GetName())
+				}
 
 				err = pushImage.Export()
 				if err != nil {
