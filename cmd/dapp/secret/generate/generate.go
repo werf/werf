@@ -7,16 +7,19 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/dapp/cmd/dapp/common"
+	secret_common "github.com/flant/dapp/cmd/dapp/secret/common"
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-var GenerateCmdData struct {
+var CmdData struct {
 	FilePath       string
 	OutputFilePath string
 	Values         bool
 }
 
-func NewGenerateCmd() *cobra.Command {
+var CommonCmdData common.CmdData
+
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate",
 		Short: "Generate secret data",
@@ -33,9 +36,9 @@ func NewGenerateCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&GenerateCmdData.FilePath, "file-path", "", "", "Encode file data by specified path")
-	cmd.PersistentFlags().StringVarP(&GenerateCmdData.OutputFilePath, "output-file-path", "", "", "Save encoded data by specified file path")
-	cmd.PersistentFlags().BoolVarP(&GenerateCmdData.Values, "values", "", false, "Encode specified FILE_PATH (--file-path) as secret values file")
+	cmd.PersistentFlags().StringVarP(&CmdData.FilePath, "file-path", "", "", "Encode file data by specified path")
+	cmd.PersistentFlags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "", "", "Save encoded data by specified file path")
+	cmd.PersistentFlags().BoolVarP(&CmdData.Values, "values", "", false, "Encode specified FILE_PATH (--file-path) as secret values file")
 
 	return cmd
 }
@@ -46,10 +49,10 @@ func runSecretGenerate() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	options := &secretGenerateOptions{
-		FilePath:       GenerateCmdData.FilePath,
-		OutputFilePath: GenerateCmdData.OutputFilePath,
-		Values:         GenerateCmdData.Values,
+	options := &secret_common.GenerateOptions{
+		FilePath:       CmdData.FilePath,
+		OutputFilePath: CmdData.OutputFilePath,
+		Values:         CmdData.Values,
 	}
 
 	m, err := secret.GetManager(projectDir)
@@ -60,18 +63,18 @@ func runSecretGenerate() error {
 	return secretGenerate(m, options)
 }
 
-func secretGenerate(m secret.Manager, options *secretGenerateOptions) error {
+func secretGenerate(m secret.Manager, options *secret_common.GenerateOptions) error {
 	var data []byte
 	var encodedData []byte
 	var err error
 
 	if options.FilePath != "" {
-		data, err = readFileData(options.FilePath)
+		data, err = secret_common.ReadFileData(options.FilePath)
 		if err != nil {
 			return err
 		}
 	} else {
-		data, err = readStdin()
+		data, err = secret_common.ReadStdin()
 		if err != nil {
 			return err
 		}
@@ -98,7 +101,7 @@ func secretGenerate(m secret.Manager, options *secretGenerateOptions) error {
 	}
 
 	if options.OutputFilePath != "" {
-		if err := saveGeneratedData(options.OutputFilePath, encodedData); err != nil {
+		if err := secret_common.SaveGeneratedData(options.OutputFilePath, encodedData); err != nil {
 			return err
 		}
 	} else {

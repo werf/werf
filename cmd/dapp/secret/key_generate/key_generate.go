@@ -10,7 +10,7 @@ import (
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-func NewKeyGenCmd() *cobra.Command {
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "keygen",
 		Short: "Generate encryption key",

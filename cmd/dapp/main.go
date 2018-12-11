@@ -13,8 +13,14 @@ import (
 	"github.com/flant/dapp/cmd/dapp/push"
 	"github.com/flant/dapp/cmd/dapp/render"
 	"github.com/flant/dapp/cmd/dapp/reset"
-	"github.com/flant/dapp/cmd/dapp/secret"
 	"github.com/flant/dapp/cmd/dapp/sync"
+
+	secret_edit "github.com/flant/dapp/cmd/dapp/secret/edit"
+	secret_extract "github.com/flant/dapp/cmd/dapp/secret/extract"
+	secret_generate "github.com/flant/dapp/cmd/dapp/secret/generate"
+	secret_key_generate "github.com/flant/dapp/cmd/dapp/secret/key_generate"
+	secret_regenerate "github.com/flant/dapp/cmd/dapp/secret/regenerate"
+
 	"github.com/spf13/cobra"
 )
 
@@ -51,11 +57,11 @@ func main() {
 func secretCmd() *cobra.Command {
 	cmd := &cobra.Command{Use: "secret"}
 	cmd.AddCommand(
-		secret.NewKeyGenCmd(),
-		secret.NewGenerateCmd(),
-		secret.NewExtractCmd(),
-		secret.NewEditCmd(),
-		secret.NewRegenerateCmd(),
+		secret_key_generate.NewCmd(),
+		secret_generate.NewCmd(),
+		secret_extract.NewCmd(),
+		secret_edit.NewCmd(),
+		secret_regenerate.NewCmd(),
 	)
 
 	return cmd

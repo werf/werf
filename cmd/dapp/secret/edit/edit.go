@@ -18,14 +18,17 @@ import (
 	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/dapp/cmd/dapp/common"
+	secret_common "github.com/flant/dapp/cmd/dapp/secret/common"
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-var EditCmdData struct {
+var CmdData struct {
 	Values bool
 }
 
-func NewEditCmd() *cobra.Command {
+var CommonCmdData common.CmdData
+
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit FILE_PATH",
 		Short: "Edit or create new secret file",
@@ -43,7 +46,7 @@ func NewEditCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().BoolVarP(&EditCmdData.Values, "values", "", false, "Edit FILE_PATH as secret values file")
+	cmd.PersistentFlags().BoolVarP(&CmdData.Values, "values", "", false, "Edit FILE_PATH as secret values file")
 
 	return cmd
 }
@@ -59,7 +62,7 @@ func runSecretEdit(filepPath string) error {
 		return err
 	}
 
-	return secretEdit(m, filepPath, EditCmdData.Values)
+	return secretEdit(m, filepPath, CmdData.Values)
 }
 
 func secretEdit(m secret.Manager, filePath string, values bool) error {
@@ -124,7 +127,7 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 				newEncodedData, err = prepareResultValuesData(data, encodedData, newData, newEncodedData)
 			}
 
-			if err := saveGeneratedData(filePath, newEncodedData); err != nil {
+			if err := secret_common.SaveGeneratedData(filePath, newEncodedData); err != nil {
 				return err
 			}
 		}
@@ -221,7 +224,7 @@ func askForConfirmation() (bool, error) {
 }
 
 func createTmpEditedFile(filePath string, data []byte) error {
-	if err := saveGeneratedData(filePath, data); err != nil {
+	if err := secret_common.SaveGeneratedData(filePath, data); err != nil {
 		return err
 	}
 	return nil

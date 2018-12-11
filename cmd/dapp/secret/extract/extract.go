@@ -10,16 +10,19 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/dapp/cmd/dapp/common"
+	secret_common "github.com/flant/dapp/cmd/dapp/secret/common"
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-var ExtractCmdData struct {
+var CmdData struct {
 	FilePath       string
 	OutputFilePath string
 	Values         bool
 }
 
-func NewExtractCmd() *cobra.Command {
+var CommonCmdData common.CmdData
+
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "extract",
 		Short: "Extract data",
@@ -36,9 +39,9 @@ func NewExtractCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&ExtractCmdData.FilePath, "file-path", "", "", "Decode file data by specified path")
-	cmd.PersistentFlags().StringVarP(&ExtractCmdData.OutputFilePath, "output-file-path", "", "", "Save decoded data by specified file path")
-	cmd.PersistentFlags().BoolVarP(&ExtractCmdData.Values, "values", "", false, "Decode specified FILE_PATH (--file-path) as secret values file")
+	cmd.PersistentFlags().StringVarP(&CmdData.FilePath, "file-path", "", "", "Decode file data by specified path")
+	cmd.PersistentFlags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "", "", "Save decoded data by specified file path")
+	cmd.PersistentFlags().BoolVarP(&CmdData.Values, "values", "", false, "Decode specified FILE_PATH (--file-path) as secret values file")
 
 	return cmd
 }
@@ -49,10 +52,10 @@ func runSecretExtract() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	options := &secretGenerateOptions{
-		FilePath:       ExtractCmdData.FilePath,
-		OutputFilePath: ExtractCmdData.OutputFilePath,
-		Values:         ExtractCmdData.Values,
+	options := &secret_common.GenerateOptions{
+		FilePath:       CmdData.FilePath,
+		OutputFilePath: CmdData.OutputFilePath,
+		Values:         CmdData.Values,
 	}
 
 	m, err := secret.GetManager(projectDir)
@@ -63,18 +66,18 @@ func runSecretExtract() error {
 	return secretExtract(m, options)
 }
 
-func secretExtract(m secret.Manager, options *secretGenerateOptions) error {
+func secretExtract(m secret.Manager, options *secret_common.GenerateOptions) error {
 	var encodedData []byte
 	var data []byte
 	var err error
 
 	if options.FilePath != "" {
-		encodedData, err = readFileData(options.FilePath)
+		encodedData, err = secret_common.ReadFileData(options.FilePath)
 		if err != nil {
 			return err
 		}
 	} else {
-		encodedData, err = readStdin()
+		encodedData, err = secret_common.ReadStdin()
 		if err != nil {
 			return err
 		}
@@ -99,7 +102,7 @@ func secretExtract(m secret.Manager, options *secretGenerateOptions) error {
 	}
 
 	if options.OutputFilePath != "" {
-		if err := saveGeneratedData(options.OutputFilePath, data); err != nil {
+		if err := secret_common.SaveGeneratedData(options.OutputFilePath, data); err != nil {
 			return err
 		}
 	} else {

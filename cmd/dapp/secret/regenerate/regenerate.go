@@ -14,11 +14,13 @@ import (
 	"github.com/flant/dapp/pkg/deploy/secret"
 )
 
-var RegenerateCmdData struct {
+var CmdData struct {
 	OldKey string
 }
 
-func NewRegenerateCmd() *cobra.Command {
+var CommonCmdData common.CmdData
+
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "regenerate [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		Short: "Regenerate secret files with new secret key",
@@ -35,7 +37,7 @@ func NewRegenerateCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&RegenerateCmdData.OldKey, "old-key", "", "", "Old secret key")
+	cmd.PersistentFlags().StringVarP(&CmdData.OldKey, "old-key", "", "", "Old secret key")
 	cmd.MarkPersistentFlagRequired("old-key")
 
 	return cmd
@@ -52,7 +54,7 @@ func runSecretRegenerate(secretValuesPaths ...string) error {
 		return err
 	}
 
-	oldSecret, err := secret.NewManager([]byte(RegenerateCmdData.OldKey), secret.NewManagerOptions{IgnoreWarning: true})
+	oldSecret, err := secret.NewManager([]byte(CmdData.OldKey), secret.NewManagerOptions{IgnoreWarning: true})
 	if err != nil {
 		return err
 	}
