@@ -23,6 +23,42 @@ type DimgBase struct {
 	raw *rawDimg
 }
 
+func (c *DimgBase) exportsAutoExcluding() error {
+	for _, exp1 := range c.exports() {
+		for _, exp2 := range c.exports() {
+			if exp1 == exp2 {
+				continue
+			}
+
+			if !exp1.AutoExcludeExportAndCheck(exp2) {
+				errMsg := fmt.Sprintf("Conflict between imports!\n\n%s\n%s", dumpConfigSection(exp1.GetRaw()), dumpConfigSection(exp2.GetRaw()))
+				return newDetailedConfigError(errMsg, nil, c.raw.doc)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (c *DimgBase) exports() []autoExcludeExport {
+	var exports []autoExcludeExport
+	if c.Git != nil {
+		for _, git := range c.Git.Local {
+			exports = append(exports, git)
+		}
+
+		for _, git := range c.Git.Remote {
+			exports = append(exports, git)
+		}
+	}
+
+	for _, imp := range c.Import {
+		exports = append(exports, imp)
+	}
+
+	return exports
+}
+
 func (c *DimgBase) associateFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	if c.FromDimg != nil || c.FromDimgArtifact != nil { // asLayers
 		return nil
