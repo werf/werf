@@ -30,7 +30,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "bp",
+		Use: "bp [DIMG_NAME...]",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if CmdData.PullUsername == "" {
 				CmdData.PullUsername = CmdData.RegistryUsername
@@ -45,7 +45,7 @@ func NewCmd() *cobra.Command {
 				CmdData.PushPassword = CmdData.RegistryPassword
 			}
 
-			err := runBP()
+			err := runBP(args)
 			if err != nil {
 				return fmt.Errorf("bp failed: %s", err)
 			}
@@ -74,7 +74,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runBP() error {
+func runBP(dimgsToProcess []string) error {
 	if err := dapp.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -137,7 +137,7 @@ func runBP() error {
 
 	pushOpts := build.PushOptions{TagOptions: tagOpts, WithStages: CmdData.WithStages}
 
-	c := build.NewConveyor(dappfile, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 	if err = c.BP(repo, pushOpts); err != nil {
 		return err
 	}

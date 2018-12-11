@@ -23,9 +23,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "build",
+		Use: "build [DIMG_NAME...]",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runBuild()
+			err := runBuild(args)
 			if err != nil {
 				return fmt.Errorf("build failed: %s", err)
 			}
@@ -47,7 +47,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runBuild() error {
+func runBuild(dimgsToProcess []string) error {
 	if err := dapp.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -98,7 +98,7 @@ func runBuild() error {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
-	c := build.NewConveyor(dappfile, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 	if err = c.Build(); err != nil {
 		return err
 	}

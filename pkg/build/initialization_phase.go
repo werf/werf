@@ -3,6 +3,7 @@ package build
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"path"
 	"reflect"
 	"strings"
@@ -33,7 +34,7 @@ func (p *InitializationPhase) Run(c *Conveyor) error {
 
 func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) ([]*Dimg, error) {
 	var dimgs []*Dimg
-	for _, dimgConfig := range getDimgConfigsInOrder(dappfile) {
+	for _, dimgConfig := range getDimgConfigsInOrder(dappfile, c) {
 		dimg := &Dimg{}
 
 		dimgBaseConfig, dimgName, dimgArtifact := processDimgConfig(dimgConfig)
@@ -77,9 +78,9 @@ func getFromAndFromDimgName(dimgBaseConfig *config.DimgBase) (string, string) {
 	return from, fromDimgName
 }
 
-func getDimgConfigsInOrder(dappfile []*config.Dimg) []config.DimgInterface {
+func getDimgConfigsInOrder(dappfile []*config.Dimg, c *Conveyor) []config.DimgInterface {
 	var dimgConfigs []config.DimgInterface
-	for _, dimg := range dappfile {
+	for _, dimg := range getDimgConfigToProcess(dappfile, c) {
 		dimgsInBuildOrder := dimg.DimgTree()
 		for i := 0; i < len(dimgsInBuildOrder); i++ {
 			if isNotInArr(dimgConfigs, dimgsInBuildOrder[i]) {
@@ -89,6 +90,35 @@ func getDimgConfigsInOrder(dappfile []*config.Dimg) []config.DimgInterface {
 	}
 
 	return dimgConfigs
+}
+
+func getDimgConfigToProcess(dappfile []*config.Dimg, c *Conveyor) []*config.Dimg {
+	var dimgConfigsToProcess []*config.Dimg
+
+	if len(c.DimgNamesToProcess) == 0 {
+		dimgConfigsToProcess = dappfile
+	} else {
+		for _, dimgName := range c.DimgNamesToProcess {
+			dimgToProcess := getDimgConfigByName(dappfile, dimgName)
+			if dimgToProcess == nil {
+				fmt.Fprintf(os.Stderr, "WARNING: Specified dimg '%s' isn't defined in dappfile!\n", dimgName)
+			} else {
+				dimgConfigsToProcess = append(dimgConfigsToProcess, dimgToProcess)
+			}
+		}
+	}
+
+	return dimgConfigsToProcess
+}
+
+func getDimgConfigByName(dappfile []*config.Dimg, name string) *config.Dimg {
+	for _, dimg := range dappfile {
+		if dimg.Name == name {
+			return dimg
+		}
+	}
+
+	return nil
 }
 
 func isNotInArr(arr []config.DimgInterface, obj config.DimgInterface) bool {
