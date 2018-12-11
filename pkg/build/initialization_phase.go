@@ -212,29 +212,25 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 		gitArtifacts = append(gitArtifacts, gitLocalArtifactInit(localGAConfig, localGitRepo, dimgBaseConfig.Name, c))
 	}
 
-	remoteGitRepos := map[string]*git_repo.Remote{}
 	for _, remoteGAConfig := range dimgBaseConfig.Git.Remote {
-		var remoteGitRepo *git_repo.Remote
-		if len(dimgBaseConfig.Git.Remote) != 0 {
-			_, exist := remoteGitRepos[remoteGAConfig.Name]
-			if !exist {
-				clonePath, err := getRemoteGitRepoClonePath(remoteGAConfig, c)
-				if err != nil {
-					return nil, err
-				}
-
-				remoteGitRepo = &git_repo.Remote{
-					Base:      git_repo.Base{Name: remoteGAConfig.Name},
-					Url:       remoteGAConfig.Url,
-					ClonePath: clonePath,
-				}
-
-				if err := remoteGitRepo.CloneAndFetch(); err != nil {
-					return nil, err
-				}
-
-				remoteGitRepos[remoteGAConfig.Name] = remoteGitRepo
+		remoteGitRepo, exist := c.remoteGitRepos[remoteGAConfig.Name]
+		if !exist {
+			clonePath, err := getRemoteGitRepoClonePath(remoteGAConfig, c)
+			if err != nil {
+				return nil, err
 			}
+
+			remoteGitRepo = &git_repo.Remote{
+				Base:      git_repo.Base{Name: remoteGAConfig.Name},
+				Url:       remoteGAConfig.Url,
+				ClonePath: clonePath,
+			}
+
+			if err := remoteGitRepo.CloneAndFetch(); err != nil {
+				return nil, err
+			}
+
+			c.remoteGitRepos[remoteGAConfig.Name] = remoteGitRepo
 		}
 
 		gitArtifacts = append(gitArtifacts, gitRemoteArtifactInit(remoteGAConfig, remoteGitRepo, dimgBaseConfig.Name, c))
