@@ -10,6 +10,7 @@ import (
 	"github.com/flant/dapp/pkg/dappdeps"
 	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/dapp/pkg/logger"
 )
 
 type GitArtifact struct {
@@ -397,7 +398,7 @@ func (ga *GitArtifact) StageDependenciesChecksum(stageName StageName) (string, e
 	}
 
 	for _, path := range checksum.GetNoMatchPaths() {
-		fmt.Fprintf(os.Stderr, "WARN: stage `%s` dependency path `%s` have not been found in repo `%s`\n", stageName, path, ga.GitRepo().String())
+		logger.LogWarningF("WARNING: stage `%s` dependency path `%s` have not been found in repo `%s`\n", stageName, path, ga.GitRepo().String())
 	}
 
 	return checksum.String(), nil

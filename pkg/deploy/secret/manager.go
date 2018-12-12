@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/flant/dapp/pkg/dapp"
+	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/secret"
 
 	"k8s.io/kubernetes/pkg/util/file"
@@ -105,10 +106,11 @@ func NewManager(key []byte, options NewManagerOptions) (Manager, error) {
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "encoding/hex:") {
 			if !options.IgnoreWarning {
-				fmt.Fprintln(os.Stderr, "###################################################################################################")
-				fmt.Fprintln(os.Stderr, "###                       WARNING invalid encryption key, do regenerate!                        ###")
-				fmt.Fprintln(os.Stderr, "### https://flant.github.io/dapp/reference/deploy/secrets.html#regeneration-of-existing-secrets ###")
-				fmt.Fprintln(os.Stderr, "###################################################################################################")
+				logger.LogWarning(`
+###################################################################################################
+###                       WARNING invalid encryption key, do regenerate!                        ###
+### https://flant.github.io/dapp/reference/deploy/secrets.html#regeneration-of-existing-secrets ###
+###################################################################################################`)
 			}
 
 			return NewManager(ruby2GoSecretKey(key), options)

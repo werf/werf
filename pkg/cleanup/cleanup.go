@@ -12,6 +12,7 @@ import (
 
 	"github.com/flant/dapp/pkg/docker_registry"
 	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/kubedog/pkg/kube"
 )
@@ -291,7 +292,7 @@ func policyValue(envKey string, defaultValue int64) int64 {
 	if envValue != "" {
 		value, err := strconv.ParseInt(envValue, 10, 64)
 		if err != nil {
-			fmt.Printf("WARNING: '%s' value '%s' is ignored (using default value '%s'\n", envKey, envValue, defaultValue)
+			logger.LogWarningF("WARNING: '%s' value '%s' is ignored (using default value '%s'\n", envKey, envValue, defaultValue)
 		} else {
 			return value
 		}

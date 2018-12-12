@@ -15,6 +15,7 @@ import (
 
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/kubedog/pkg/tracker"
 	"github.com/flant/kubedog/pkg/trackers/rollout"
@@ -36,7 +37,7 @@ func PurgeHelmRelease(releaseName string, opts CommonHelmOptions) error {
 }
 
 func doPurgeHelmRelease(releaseName string, opts CommonHelmOptions) error {
-	args := []string{}
+	var args []string
 	if opts.KubeContext != "" {
 		args = append(args, "--kube-context")
 		args = append(args, opts.KubeContext)
@@ -113,8 +114,8 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 	stdout, stderr, err := HelmCmd(args...)
 	if err != nil {
 		if strings.HasSuffix(stderr, "has no deployed releases\n") {
-			fmt.Printf("WARN: Helm release '%s' is in improper state: %s", releaseName, stderr)
-			fmt.Printf("WARN: Helm release %s will be removed with `helm delete --purge` on the next run of `dapp kube deploy`", releaseName)
+			logger.LogWarningF("WARNING: Helm release '%s' is in improper state: %s", releaseName, stderr)
+			logger.LogWarningF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `dapp kube deploy`", releaseName)
 		}
 
 		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
@@ -254,7 +255,7 @@ func isReleaseExist(releaseName string) (bool, error) {
 		if exist, err := file.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
 			return false, err
 		} else if exist {
-			fmt.Printf("WARN: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, releaseStatus)
+			logger.LogWarningF("WARNING: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, releaseStatus)
 		}
 
 		releaseExist = true
@@ -420,7 +421,7 @@ func jobHooksToWatch(templates *ChartTemplates, releaseExist bool) ([]*Template,
 
 				i, err := strconv.Atoi(val)
 				if err != nil {
-					fmt.Printf("WARN: Incorrect hook-weight anno value '%v'\n", val)
+					logger.LogWarningF("WARNING: Incorrect hook-weight anno value '%v'\n", val)
 					return 0
 				}
 

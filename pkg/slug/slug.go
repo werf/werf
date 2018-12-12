@@ -54,8 +54,8 @@ func HelmRelease(name string) string {
 	return slug(name, helmReleaseMaxSize)
 }
 
-func shouldNotBeSlugged(data string, regexp *regexp.Regexp, maxLen int) bool {
-	return len(data) == 0 || regexp.Match([]byte(data)) && len(data) < maxLen
+func shouldNotBeSlugged(data string, regexp *regexp.Regexp, maxSize int) bool {
+	return len(data) == 0 || regexp.Match([]byte(data)) && len(data) < maxSize
 }
 
 func slug(data string, maxSize int) string {
