@@ -2,6 +2,7 @@ package push
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/cmd/dapp/docker_authorizer"
@@ -87,6 +88,12 @@ func runPush(dimgsToProcess []string) error {
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
+	defer func() {
+		err := os.RemoveAll(projectTmpDir)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "WARNING: unable to remove project tmp dir %s: %s", projectTmpDir, err)
+		}
+	}()
 
 	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
