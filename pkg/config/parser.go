@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
+	"github.com/ghodss/yaml"
 
 	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/util"
