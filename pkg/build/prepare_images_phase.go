@@ -72,9 +72,9 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 			c.SetImageBySignature(s.GetSignature(), img)
 
 			if dimg.GetName() == "" {
-				fmt.Printf("# Prepared image for build dimg %-30s %s\n", fmt.Sprintf("stage/%s", s.Name()), img.Name())
+				fmt.Printf("# Prepared for build image %s for dimg %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
 			} else {
-				fmt.Printf("# Prepared image for build dimg/%s %-30s %s\n", dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()), img.Name())
+				fmt.Printf("# Prepared for build image %s for dimg/%s %s\n", img.Name(), dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
 			}
 
 			prevImage = img

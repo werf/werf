@@ -113,7 +113,7 @@ func (p *PushPhase) pushDimgStages(c *Conveyor, dimg *Dimg) error {
 			if dimg.GetName() == "" {
 				fmt.Printf("# Pushing image %s for dimg stage/%s\n", stageImageName, stage.Name())
 			} else {
-				fmt.Printf("# Pushing  image %s for dimg/%s stage/%s\n", stageImageName, dimg.GetName(), stage.Name())
+				fmt.Printf("# Pushing image %s for dimg/%s stage/%s\n", stageImageName, dimg.GetName(), stage.Name())
 			}
 
 			stageImage := c.GetImage(stage.GetImage().Name())
