@@ -206,12 +206,5 @@ func (c *Conveyor) GetBuildingGAStage(dimgName string) stage.StageName {
 }
 
 func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
-	return path.Join(c.TmpDir, dimgName)
-}
-
-type stubDockerAuthorizer struct{}
-
-func (a *stubDockerAuthorizer) LoginBaseImage(repo string) error {
-	fmt.Printf("Called login for base image repo %s\n", repo)
-	return nil
+	return path.Join(c.TmpDir, "dimg", dimgName)
 }
