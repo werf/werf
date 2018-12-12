@@ -138,6 +138,7 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 
 	baseStageOptions := &stage.NewBaseStageOptions{
 		DimgName:         dimgName,
+		ConfigMounts:     dimgBaseConfig.Mount,
 		DimgTmpDir:       c.GetDimgTmpDir(dimgBaseConfig.Name),
 		ContainerDappDir: c.ContainerDappDir,
 		ProjectBuildDir:  c.ProjectBuildDir,
