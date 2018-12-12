@@ -3,7 +3,6 @@ package build
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"path"
 	"reflect"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/git_repo"
+	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/slug"
 )
 
@@ -101,7 +101,7 @@ func getDimgConfigToProcess(dappfile []*config.Dimg, c *Conveyor) []*config.Dimg
 		for _, dimgName := range c.DimgNamesToProcess {
 			dimgToProcess := getDimgConfigByName(dappfile, dimgName)
 			if dimgToProcess == nil {
-				fmt.Fprintf(os.Stderr, "WARNING: Specified dimg '%s' isn't defined in dappfile!\n", dimgName)
+				logger.LogWarningF("WARNING: Specified dimg '%s' isn't defined in dappfile!\n", dimgName)
 			} else {
 				dimgConfigsToProcess = append(dimgConfigsToProcess, dimgToProcess)
 			}

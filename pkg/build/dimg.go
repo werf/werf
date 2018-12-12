@@ -7,6 +7,7 @@ import (
 
 	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/dapp/pkg/logger"
 )
 
 type Dimg struct {
@@ -87,8 +88,8 @@ func (d *Dimg) PrepareBaseImage(c *Conveyor) error {
 	if d.baseImage.IsExists() {
 		err := d.baseImage.Pull()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "WARNING: cannot pull base image %s: %s\n", d.baseImage.Name(), err)
-			fmt.Fprintf(os.Stderr, "WARNING: using existing image %s without pull\n", d.baseImage.Name())
+			logger.LogWarningF("WARNING: cannot pull base image %s: %s\n", d.baseImage.Name(), err)
+			logger.LogWarningF("WARNING: using existing image %s without pull\n", d.baseImage.Name())
 		}
 		return nil
 	}

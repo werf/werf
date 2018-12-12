@@ -13,8 +13,8 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"gopkg.in/flant/yaml.v2"
 
+	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/util"
 )
 
@@ -190,7 +190,7 @@ func (f files) Get(path string) string {
 	filePath := filepath.Join(f.HomePath, path)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		fmt.Fprintf(os.Stderr, "WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
+		logger.LogWarningF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
 		return ""
 	}
 
