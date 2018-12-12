@@ -18,6 +18,7 @@ import (
 
 var (
 	SSHAuthSock string
+	tmpSockPath string
 )
 
 func Init(keys []string) error {
@@ -80,6 +81,17 @@ func Init(keys []string) error {
 	return nil
 }
 
+func Terminate() error {
+	if tmpSockPath != "" {
+		err := os.RemoveAll(tmpSockPath)
+		if err != nil {
+			return fmt.Errorf("unable to remove tmp ssh agent sock %s: %s", tmpSockPath, err)
+		}
+	}
+
+	return nil
+}
+
 func runSSHAgentWithKeys(keys []string) (string, error) {
 	agentSock, err := runSSHAgent()
 	if err != nil {
@@ -98,6 +110,7 @@ func runSSHAgentWithKeys(keys []string) (string, error) {
 
 func runSSHAgent() (string, error) {
 	sockPath := filepath.Join(dapp.GetTmpDir(), "dapp-ssh-agent", uuid.NewV4().String())
+	tmpSockPath = sockPath
 
 	err := os.MkdirAll(filepath.Dir(sockPath), os.ModePerm)
 	if err != nil {

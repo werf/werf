@@ -115,8 +115,14 @@ func runPush(dimgsToProcess []string) error {
 	}
 
 	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
+		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
+	defer func() {
+		err := ssh_agent.Terminate()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "WARNING: ssh agent termination failed: %s", err)
+		}
+	}()
 
 	tagOpts, err := common.GetTagOptions(&CommonCmdData, projectDir)
 	if err != nil {

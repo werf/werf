@@ -102,8 +102,14 @@ func runBuild(dimgsToProcess []string) error {
 	}
 
 	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
+		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
+	defer func() {
+		err := ssh_agent.Terminate()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "WARNING: ssh agent termination failed: %s", err)
+		}
+	}()
 
 	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 	if err = c.Build(); err != nil {
