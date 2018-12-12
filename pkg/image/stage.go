@@ -73,12 +73,7 @@ func (i *Stage) SyncDockerState() error {
 	return nil
 }
 
-type StageBuildOptions struct {
-	IntrospectBeforeError bool
-	IntrospectAfterError  bool
-}
-
-func (i *Stage) Build(options *StageBuildOptions) error {
+func (i *Stage) Build(options *BuildOptions) error {
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
@@ -114,13 +109,6 @@ func (i *Stage) Build(options *StageBuildOptions) error {
 	}
 
 	return nil
-}
-
-func (i *Stage) Build2(opts BuildOptions) error {
-	return i.Build(&StageBuildOptions{
-		IntrospectBeforeError: opts.IntrospectBeforeError,
-		IntrospectAfterError:  opts.IntrospectAfterError,
-	})
 }
 
 func (i *Stage) Commit() error {
