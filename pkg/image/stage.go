@@ -160,6 +160,10 @@ func (i *Stage) SaveInCache() error {
 		return err
 	}
 
+	if err := i.SyncDockerState(); err != nil {
+		return err
+	}
+
 	return nil
 }
 

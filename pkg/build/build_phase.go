@@ -47,6 +47,10 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 			if err != nil {
 				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 			}
+
+			if err := img.SyncDockerState(); err != nil {
+				return err
+			}
 		}
 
 		// build
