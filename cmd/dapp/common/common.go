@@ -138,7 +138,7 @@ func GetTmpDir() (string, error) {
 }
 
 func GetProjectBuildDir(projectName string) (string, error) {
-	projectBuildDir := path.Join(dapp.GetHomeDir(), "build", projectName)
+	projectBuildDir := path.Join(dapp.GetHomeDir(), "builds", projectName)
 
 	if err := os.MkdirAll(projectBuildDir, os.ModePerm); err != nil {
 		return "", err

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/dapp/pkg/util"
@@ -29,8 +30,15 @@ const (
 	DockerInstructions          StageName = "docker_instructions"
 )
 
+const (
+	mountTmpDirLabel          = "dapp-mount-type-tmp-dir"
+	mountBuildDIrLabel        = "dapp-mount-type-build-dir"
+	mountCustomDirLabelPrefix = "dapp-mount-type-custom-dir-"
+)
+
 type NewBaseStageOptions struct {
 	DimgName         string
+	ConfigMounts     []*config.Mount
 	DimgTmpDir       string
 	ContainerDappDir string
 	ProjectBuildDir  string
@@ -40,6 +48,7 @@ func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
 	s := &BaseStage{}
 	s.name = name
 	s.dimgName = options.DimgName
+	s.configMounts = options.ConfigMounts
 	s.projectBuildDir = options.ProjectBuildDir
 	s.dimgTmpDir = options.DimgTmpDir
 	s.containerDappDir = options.ContainerDappDir
@@ -55,6 +64,7 @@ type BaseStage struct {
 	dimgTmpDir       string
 	containerDappDir string
 	projectBuildDir  string
+	configMounts     []*config.Mount
 }
 
 func (s *BaseStage) Name() StageName {
@@ -74,21 +84,21 @@ func (s *BaseStage) IsEmpty(_ Conveyor, _ image.Image) (bool, error) {
 }
 
 func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.Image) error {
-	var err error
-
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
 	 */
 
-	err = s.addServiceMounts(prevBuiltImage, image)
-	if err != nil {
-		return fmt.Errorf("error adding service mounts: %s", err)
+	serviceMounts := s.getServiceMounts(prevBuiltImage)
+	s.addServiceMountsLabels(serviceMounts, image)
+	if err := s.addServiceMountsVolumes(serviceMounts, image); err != nil {
+		return fmt.Errorf("error adding mounts volumes: %s", err)
 	}
 
-	err = s.addCustomMounts(prevBuiltImage, image)
-	if err != nil {
-		return fmt.Errorf("error adding custom mounts: %s", err)
+	customMounts := s.getCustomMounts(prevBuiltImage)
+	s.addCustomMountLabels(customMounts, image)
+	if err := s.addCustomMountVolumes(customMounts, image); err != nil {
+		return fmt.Errorf("error adding mounts volumes: %s", err)
 	}
 
 	return nil
@@ -102,23 +112,9 @@ func (s *BaseStage) PreRunHook(_ Conveyor) error {
 	return nil
 }
 
-func (s *BaseStage) addServiceMounts(prevBuiltImage, image image.Image) error {
-	mountpointsByType := s.getServiceMountsFromLabels(prevBuiltImage)
-
-	s.addServiceMountsLabels(mountpointsByType, image)
-
-	if err := s.addServiceMountsVolumes(mountpointsByType, image); err != nil {
-		return err
-	}
-
-	return nil
+func (s *BaseStage) getServiceMounts(prevBuiltImage image.Image) map[string][]string {
+	return mergeMounts(s.getServiceMountsFromLabels(prevBuiltImage), s.getServiceMountsFromConfig())
 }
-
-const (
-	dappMountTypeTmpDirLabel          = "dapp-mount-type-tmp-dir"
-	dappMountTypeBuildDirLabel        = "dapp-mount-type-build-dir"
-	dappMountTypeCustomDirLabelPrefix = "dapp-mount-type-custom-dir-"
-)
 
 func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage image.Image) map[string][]string {
 	mountpointsByType := map[string][]string{}
@@ -129,8 +125,8 @@ func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage image.Image) map[s
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
-		{dappMountTypeTmpDirLabel, "tmp_dir"},
-		{dappMountTypeBuildDirLabel, "build_dir"},
+		{mountTmpDirLabel, "tmp_dir"},
+		{mountBuildDIrLabel, "build_dir"},
 	} {
 		v, hasKey := labels[labelMountType.Label]
 		if !hasKey {
@@ -139,6 +135,17 @@ func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage image.Image) map[s
 
 		mountpoints := util.RejectEmptyStrings(util.UniqStrings(strings.Split(v, ";")))
 		mountpointsByType[labelMountType.MountType] = mountpoints
+	}
+
+	return mountpointsByType
+}
+
+func (s *BaseStage) getServiceMountsFromConfig() map[string][]string {
+	mountpointsByType := map[string][]string{}
+
+	for _, mountCfg := range s.configMounts {
+		mountpoint := filepath.Clean(mountCfg.To)
+		mountpointsByType[mountCfg.Type] = append(mountpointsByType[mountCfg.Type], mountpoint)
 	}
 
 	return mountpointsByType
@@ -176,9 +183,9 @@ func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string
 		var labelName string
 		switch mountType {
 		case "tmp_dir":
-			labelName = dappMountTypeTmpDirLabel
+			labelName = mountTmpDirLabel
 		case "build_dir":
-			labelName = dappMountTypeBuildDirLabel
+			labelName = mountBuildDIrLabel
 		default:
 			panic(fmt.Sprintf("unknown mount type %s", mountType))
 		}
@@ -189,16 +196,8 @@ func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string
 	}
 }
 
-func (s *BaseStage) addCustomMounts(prevBuiltImage, image image.Image) error {
-	mountpointsByFrom := s.getCustomMountsFromLabels(prevBuiltImage)
-
-	s.addCustomMountLabels(mountpointsByFrom, image)
-
-	if err := s.addCustomMountVolumes(mountpointsByFrom, image); err != nil {
-		return err
-	}
-
-	return nil
+func (s *BaseStage) getCustomMounts(prevBuiltImage image.Image) map[string][]string {
+	return mergeMounts(s.getCustomMountsFromLabels(prevBuiltImage), s.getCustomMountsFromConfig())
 }
 
 func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage image.Image) map[string][]string {
@@ -209,15 +208,31 @@ func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage image.Image) map[st
 		labels = prevBuiltImage.Labels()
 	}
 	for k, v := range labels {
-		if !strings.HasPrefix(k, dappMountTypeCustomDirLabelPrefix) {
+		if !strings.HasPrefix(k, mountCustomDirLabelPrefix) {
 			continue
 		}
 
-		parts := strings.SplitN(k, dappMountTypeCustomDirLabelPrefix, 2)
+		parts := strings.SplitN(k, mountCustomDirLabelPrefix, 2)
 		from := strings.Replace(parts[1], "--", "/", -1)
 
 		mountpoints := util.RejectEmptyStrings(util.UniqStrings(strings.Split(v, ";")))
 		mountpointsByFrom[from] = mountpoints
+	}
+
+	return mountpointsByFrom
+}
+
+func (s *BaseStage) getCustomMountsFromConfig() map[string][]string {
+	mountpointsByFrom := map[string][]string{}
+	for _, mountCfg := range s.configMounts {
+		if mountCfg.Type != "custom_dir" {
+			continue
+		}
+
+		from := filepath.Clean(mountCfg.From)
+		mountpoint := filepath.Clean(mountCfg.To)
+
+		mountpointsByFrom[from] = util.UniqAppendString(mountpointsByFrom[from], mountpoint)
 	}
 
 	return mountpointsByFrom
@@ -243,7 +258,7 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 
 func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image image.Image) {
 	for from, mountpoints := range mountpointsByFrom {
-		labelName := fmt.Sprintf("%s%s", dappMountTypeCustomDirLabelPrefix, strings.Replace(from, "/", "--", -1))
+		labelName := fmt.Sprintf("%s%s", mountCustomDirLabelPrefix, strings.Replace(from, "/", "--", -1))
 		labelValue := strings.Join(mountpoints, ";")
 		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}
@@ -271,4 +286,17 @@ func (s *BaseStage) SetGitArtifacts(gitArtifacts []*GitArtifact) {
 
 func (s *BaseStage) GetGitArtifacts() []*GitArtifact {
 	return s.gitArtifacts
+}
+
+func mergeMounts(a, b map[string][]string) map[string][]string {
+	res := map[string][]string{}
+
+	for k, mountpoints := range a {
+		res[k] = mountpoints
+	}
+	for k, mountpoints := range b {
+		res[k] = util.UniqStrings(append(res[k], mountpoints...))
+	}
+
+	return res
 }
