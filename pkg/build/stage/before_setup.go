@@ -7,8 +7,8 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func GenerateBeforeSetupStage(dimgBaseConfig *config.DimgBase, extra *builder.Extra, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
-	b := getBuilder(dimgBaseConfig, extra)
+func GenerateBeforeSetupStage(dimgBaseConfig *config.DimgBase, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
+	b := getBuilder(dimgBaseConfig, baseStageOptions)
 	if b != nil && !b.IsBeforeSetupEmpty() {
 		return newBeforeSetupStage(b, gaPatchStageOptions, baseStageOptions)
 	}

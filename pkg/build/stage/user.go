@@ -6,11 +6,12 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func getBuilder(dimgBaseConfig *config.DimgBase, extra *builder.Extra) builder.Builder {
+func getBuilder(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) builder.Builder {
 	var b builder.Builder
 	if dimgBaseConfig.Shell != nil {
 		b = builder.NewShellBuilder(dimgBaseConfig.Shell)
 	} else if dimgBaseConfig.Ansible != nil {
+		extra := &builder.Extra{ContainerDappPath: baseStageOptions.ContainerDappDir, TmpPath: baseStageOptions.DimgTmpDir}
 		b = builder.NewAnsibleBuilder(dimgBaseConfig.Ansible, extra)
 	}
 

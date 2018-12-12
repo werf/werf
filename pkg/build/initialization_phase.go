@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/flant/dapp/pkg/build/builder"
 	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/git_repo"
@@ -163,7 +162,7 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	stages = appendIfExist(stages, stage.GenerateFromStage(dimgBaseConfig, baseStageOptions))
 
 	// before_install
-	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgBaseConfig, ansibleBuilderExtra(c), baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgBaseConfig, baseStageOptions))
 
 	// before_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(dimgBaseConfig, baseStageOptions))
@@ -172,19 +171,19 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	stages = append(stages, stage.NewGAArchiveStage(gaArchiveStageOptions, baseStageOptions))
 
 	// install
-	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgBaseConfig, ansibleBuilderExtra(c), gaPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgBaseConfig, gaPatchStageOptions, baseStageOptions))
 
 	// after_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(dimgBaseConfig, baseStageOptions))
 
 	// before_setup
-	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgBaseConfig, ansibleBuilderExtra(c), gaPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgBaseConfig, gaPatchStageOptions, baseStageOptions))
 
 	// before_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBaseConfig, baseStageOptions))
 
 	// setup
-	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgBaseConfig, ansibleBuilderExtra(c), gaPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgBaseConfig, gaPatchStageOptions, baseStageOptions))
 
 	// after_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(dimgBaseConfig, baseStageOptions))
@@ -382,15 +381,6 @@ func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, strin
 	}
 
 	return dimgBase, dimgBase.Name, dimgArtifact
-}
-
-func ansibleBuilderExtra(c *Conveyor) *builder.Extra {
-	ansibleBuilderExtra := &builder.Extra{
-		TmpPath:           c.TmpDir,
-		ContainerDappPath: c.ContainerDappDir,
-	}
-
-	return ansibleBuilderExtra
 }
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
