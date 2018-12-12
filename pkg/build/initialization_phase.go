@@ -159,6 +159,15 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 		return nil, err
 	}
 
+	for _, ga := range gitArtifacts {
+		commit, err := ga.LatestCommit()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", ga.GitRepo().String(), err)
+		}
+
+		fmt.Printf("Using commit '%s' of repo '%s'\n", commit, ga.GitRepo().String())
+	}
+
 	// from
 	stages = appendIfExist(stages, stage.GenerateFromStage(dimgBaseConfig, baseStageOptions))
 

@@ -104,8 +104,6 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 		return "", err
 	}
 
-	fmt.Printf("Using HEAD commit `%s` of repo `%s`\n", commit, ga.GitRepo().String())
-
 	return commit, nil
 }
 
