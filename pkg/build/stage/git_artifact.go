@@ -141,20 +141,6 @@ func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, arc
 	return commands, nil
 }
 
-func (ga *GitArtifact) LegacyApplyPatchCommand(stage LegacyStage) ([]string, error) {
-	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
-	if err != nil {
-		return nil, err
-	}
-
-	toCommit, err := stage.LayerCommit(ga)
-	if err != nil {
-		return nil, err
-	}
-
-	return ga.baseApplyPatchCommand(fromCommit, toCommit, stage.GetPrevStage().GetImage())
-}
-
 func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) error {
 	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
@@ -316,15 +302,6 @@ func (ga *GitArtifact) applyArchiveCommand(archiveFile *ContainerFileDescriptor,
 	return commands, nil
 }
 
-func (ga *GitArtifact) LegacyApplyArchiveCommand(stage LegacyStage) ([]string, error) {
-	commit, err := stage.LayerCommit(ga)
-	if err != nil {
-		return nil, err
-	}
-
-	return ga.baseApplyArchiveCommand(commit, stage.GetImage())
-}
-
 func (ga *GitArtifact) ApplyArchiveCommand(image image.Image) error {
 	commit, err := ga.LatestCommit()
 	if err != nil {
@@ -467,20 +444,6 @@ func (ga *GitArtifact) GetParamshash() string {
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
-func (ga *GitArtifact) LegacyIsPatchEmpty(stage LegacyStage) (bool, error) {
-	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
-	if err != nil {
-		return false, err
-	}
-
-	toCommit, err := stage.LayerCommit(ga)
-	if err != nil {
-		return false, err
-	}
-
-	return ga.baseIsPatchEmpty(fromCommit, toCommit)
 }
 
 func (ga *GitArtifact) IsPatchEmpty(prevBuiltImage image.Image) (bool, error) {
