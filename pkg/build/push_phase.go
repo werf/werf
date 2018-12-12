@@ -190,7 +190,7 @@ func (p *PushPhase) pushDimg(c *Conveyor, dimg *Dimg) error {
 					"dapp-dimg":       "true",
 				})
 
-				err = pushImage.Build(&image.BuildOptions{})
+				err = pushImage.Build(image.BuildOptions{})
 				if err != nil {
 					return fmt.Errorf("error building %s with tag scheme '%s': %s", dimgImageName, scheme, err)
 				}

@@ -73,7 +73,7 @@ func (i *Stage) SyncDockerState() error {
 	return nil
 }
 
-func (i *Stage) Build(options *BuildOptions) error {
+func (i *Stage) Build(options BuildOptions) error {
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {

@@ -21,7 +21,7 @@ type Image interface {
 
 	SaveInCache() error
 
-	Build(*BuildOptions) error
+	Build(BuildOptions) error
 }
 
 type Container interface {
