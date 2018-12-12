@@ -27,20 +27,20 @@ var (
 	indent = 0
 )
 
-func LogProcessInline(msg string, processFunc func() error) {
-	logProcessInlineBase(msg, processFunc, colorizeStep, colorizeSuccess)
+func LogProcessInline(msg string, processFunc func() error) error {
+	return logProcessInlineBase(msg, processFunc, colorizeStep, colorizeSuccess)
 }
 
-func LogServiceProcessInline(msg string, processFunc func() error) {
-	logProcessInlineBase(msg, processFunc, colorizeService, colorizeService)
+func LogServiceProcessInline(msg string, processFunc func() error) error {
+	return logProcessInlineBase(msg, processFunc, colorizeService, colorizeService)
 }
 
-func LogProcess(msg, processMsg string, processFunc func() error) {
-	logProcessBase(msg, processMsg, processFunc, colorizeStep, colorizeSuccess)
+func LogProcess(msg, processMsg string, processFunc func() error) error {
+	return logProcessBase(msg, processMsg, processFunc, colorizeStep, colorizeSuccess)
 }
 
-func LogServiceProcess(msg, processMsg string, processFunc func() error) {
-	logProcessBase(msg, processMsg, processFunc, colorizeService, colorizeService)
+func LogServiceProcess(msg, processMsg string, processFunc func() error) error {
+	return logProcessBase(msg, processMsg, processFunc, colorizeService, colorizeService)
 }
 
 func LogState(msg, state string) {
@@ -147,7 +147,7 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 }
 
 func logProcessBase(msg, processMsg string, processFunc func() error, colorizeMsgFunc, colorizeSuccessFunc func(string) string) error {
-	if processMsg != "" {
+	if processMsg == "" {
 		processMsg = logProcessDefaultProcessMsg
 	}
 
