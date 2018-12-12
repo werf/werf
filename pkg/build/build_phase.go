@@ -47,6 +47,10 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 			if err != nil {
 				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 			}
+
+			if err := img.SyncDockerState(); err != nil {
+				return err
+			}
 		}
 
 		// build
@@ -76,7 +80,7 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
 			}
 
-			if err := img.Build2(image.BuildOptions{}); err != nil {
+			if err := img.Build(image.BuildOptions{}); err != nil {
 				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 			}
 		}
