@@ -27,6 +27,8 @@ const (
 	GitBranchScheme TagScheme = "git_branch"
 	GitCommitScheme TagScheme = "git_commit"
 	CIScheme        TagScheme = "ci"
+
+	RepoDimgstageTagFormat = "dimgstage-%s"
 )
 
 type TagScheme string
@@ -87,7 +89,7 @@ func (p *PushPhase) pushDimgStages(c *Conveyor, dimg *Dimg) error {
 	}
 
 	for _, stage := range stages {
-		stageTagName := fmt.Sprintf("dimgstage-%s", stage.GetSignature())
+		stageTagName := fmt.Sprintf(RepoDimgstageTagFormat, stage.GetSignature())
 		stageImageName := fmt.Sprintf("%s:%s", p.Repo, stageTagName)
 
 		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
