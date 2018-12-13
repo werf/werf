@@ -181,7 +181,7 @@ func (p *PushPhase) pushDimg(c *Conveyor, dimg *Dimg) error {
 				}
 				defer lock.Unlock(imageLockName)
 
-				fmt.Printf("Build %s layer with tag scheme '%s'\n", dimgImageName, scheme)
+				fmt.Printf("# Build %s layer with tag scheme '%s'\n", dimgImageName, scheme)
 
 				pushImage := image.NewDimgImage(c.GetImage(lastStageImage.Name()), dimgImageName)
 
