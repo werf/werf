@@ -363,7 +363,10 @@ func (repo *Base) remoteBranchesList(repoPath string) ([]string, error) {
 	err = branches.ForEach(func(r *plumbing.Reference) error {
 		refName := r.Name().String()
 		if strings.HasPrefix(refName, remoteBranchPrefix) {
-			res = append(res, strings.TrimPrefix(refName, remoteBranchPrefix))
+			value := strings.TrimPrefix(refName, remoteBranchPrefix)
+			if value != "HEAD" {
+				res = append(res, value)
+			}
 		}
 		return nil
 	})
