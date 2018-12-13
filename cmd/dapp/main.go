@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/flant/dapp/cmd/dapp/bp"
 	"github.com/flant/dapp/cmd/dapp/build"
@@ -14,6 +17,7 @@ import (
 	"github.com/flant/dapp/cmd/dapp/render"
 	"github.com/flant/dapp/cmd/dapp/reset"
 	"github.com/flant/dapp/cmd/dapp/sync"
+	"github.com/flant/dapp/pkg/process_exterminator"
 
 	secret_edit "github.com/flant/dapp/cmd/dapp/secret/edit"
 	secret_extract "github.com/flant/dapp/cmd/dapp/secret/extract"
@@ -29,6 +33,13 @@ import (
 )
 
 func main() {
+	trapTerminationSignals()
+
+	if err := process_exterminator.Init(); err != nil {
+		fmt.Fprintf(os.Stderr, "Process exterminator initialization error: %s\n", err)
+		os.Exit(1)
+	}
+
 	cmd := &cobra.Command{
 		Use:          "dapp",
 		SilenceUsage: true,
@@ -53,8 +64,7 @@ func main() {
 		slugCmd(),
 	)
 
-	err := cmd.Execute()
-	if err != nil {
+	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
@@ -81,4 +91,17 @@ func slugCmd() *cobra.Command {
 	)
 
 	return cmd
+}
+
+func trapTerminationSignals() {
+	c := make(chan os.Signal, 1)
+	signals := []os.Signal{os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT}
+	signal.Notify(c, signals...)
+	go func() {
+		<-c
+
+		fmt.Fprintf(os.Stderr, "Interrupted\n")
+
+		os.Exit(17)
+	}()
 }
