@@ -7,6 +7,7 @@ import (
 
 	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/dapp/pkg/logger"
 )
 
 type Dimg struct {
@@ -15,8 +16,9 @@ type Dimg struct {
 	baseImageName     string
 	baseImageDimgName string
 
-	stages    []stage.Interface
-	baseImage *image.Stage
+	stages     []stage.Interface
+	baseImage  *image.Stage
+	isArtifact bool
 }
 
 func (d *Dimg) SetStages(stages []stage.Interface) {
@@ -70,18 +72,24 @@ func (d *Dimg) PrepareBaseImage(c *Conveyor) error {
 	}
 
 	ciRegistry := os.Getenv("CI_REGISTRY")
-	if ciRegistry != "" && strings.HasPrefix(fromImage.Name(), ciRegistry) {
-		err := c.GetDockerAuthorizer().LoginBaseImage(ciRegistry)
+	if ciRegistry != "" && strings.HasPrefix(d.baseImage.Name(), ciRegistry) {
+		err := c.GetDockerAuthorizer().LoginForPull(ciRegistry)
 		if err != nil {
-			return fmt.Errorf("login into repo %s for base image %s failed: %s", ciRegistry, fromImage.Name(), err)
+			return fmt.Errorf("login into repo %s for base image %s failed: %s", ciRegistry, d.baseImage.Name(), err)
 		}
+	}
+
+	if d.GetName() == "" {
+		fmt.Printf("# Pulling base image for dimg\n")
+	} else {
+		fmt.Printf("# Pulling base image for dimg/%s\n", d.GetName())
 	}
 
 	if d.baseImage.IsExists() {
 		err := d.baseImage.Pull()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "WARNING: cannot pull base image %s: %s\n", d.baseImage.Name(), err)
-			fmt.Fprintf(os.Stderr, "WARNING: using existing image %s without pull\n", d.baseImage.Name())
+			logger.LogWarningF("WARNING: cannot pull base image %s: %s\n", d.baseImage.Name(), err)
+			logger.LogWarningF("WARNING: using existing image %s without pull\n", d.baseImage.Name())
 		}
 		return nil
 	}

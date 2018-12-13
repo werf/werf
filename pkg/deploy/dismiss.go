@@ -8,14 +8,11 @@ import (
 )
 
 type DismissOptions struct {
-	Namespace     string
 	WithNamespace bool
 	KubeContext   string
 }
 
-func RunDismiss(releaseName string, opts DismissOptions) error {
-	namespace := getNamespace(opts.Namespace)
-
+func RunDismiss(releaseName, namespace, kubeContext string, opts DismissOptions) error {
 	if debug() {
 		fmt.Printf("Dismiss options: %#v\n", opts)
 		fmt.Printf("Namespace: %s\n", namespace)

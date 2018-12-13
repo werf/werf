@@ -7,31 +7,27 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func GenerateBeforeSetupStage(dimgConfig config.DimgInterface, extra *builder.Extra, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
-	b := getBuilder(dimgConfig, extra)
+func GenerateBeforeSetupStage(dimgBaseConfig *config.DimgBase, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
+	b := getBuilder(dimgBaseConfig, baseStageOptions)
 	if b != nil && !b.IsBeforeSetupEmpty() {
-		return newBeforeSetupStage(b, baseStageOptions)
+		return newBeforeSetupStage(b, gaPatchStageOptions, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newBeforeSetupStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
+func newBeforeSetupStage(builder builder.Builder, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *BeforeSetupStage {
 	s := &BeforeSetupStage{}
-	s.UserStage = newUserStage(builder, baseStageOptions)
+	s.UserWithGAPatchStage = newUserWithGAPatchStage(builder, BeforeSetup, gaPatchStageOptions, baseStageOptions)
 	return s
 }
 
 type BeforeSetupStage struct {
-	*UserStage
+	*UserWithGAPatchStage
 }
 
-func (s *BeforeSetupStage) Name() StageName {
-	return BeforeSetup
-}
-
-func (s *BeforeSetupStage) GetContext(_ Conveyor) (string, error) {
-	stageDependenciesChecksum, err := s.GetStageDependenciesChecksum(BeforeSetup)
+func (s *BeforeSetupStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
+	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(BeforeSetup)
 	if err != nil {
 		return "", err
 	}
@@ -40,8 +36,8 @@ func (s *BeforeSetupStage) GetContext(_ Conveyor) (string, error) {
 }
 
 func (s *BeforeSetupStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
-	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
-		return err
+	if err := s.UserWithGAPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+		return nil
 	}
 
 	if err := s.builder.BeforeSetup(image.BuilderContainer()); err != nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/flant/dapp/pkg/dappdeps"
 	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/dapp/pkg/logger"
 )
 
 type GitArtifact struct {
@@ -29,7 +30,7 @@ type GitArtifact struct {
 	Group              string
 	IncludePaths       []string
 	ExcludePaths       []string
-	StagesDependencies map[string][]string
+	StagesDependencies map[StageName][]string
 
 	PatchesDir           string
 	ContainerPatchesDir  string
@@ -98,7 +99,12 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 		return ga.GitRepo().LatestBranchCommit(ga.Branch)
 	}
 
-	return ga.GitRepo().HeadCommit()
+	commit, err := ga.GitRepo().HeadCommit()
+	if err != nil {
+		return "", err
+	}
+
+	return commit, nil
 }
 
 func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
@@ -133,20 +139,6 @@ func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, arc
 	return commands, nil
 }
 
-func (ga *GitArtifact) LegacyApplyPatchCommand(stage LegacyStage) ([]string, error) {
-	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
-	if err != nil {
-		return nil, err
-	}
-
-	toCommit, err := stage.LayerCommit(ga)
-	if err != nil {
-		return nil, err
-	}
-
-	return ga.baseApplyPatchCommand(fromCommit, toCommit, stage.GetPrevStage().GetImage())
-}
-
 func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) error {
 	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
@@ -158,16 +150,9 @@ func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) erro
 		return err
 	}
 
-	gitArtifactContainerName, err := dappdeps.GitArtifactContainer()
-	if err != nil {
-		return err
-	}
-
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.PatchesDir, ga.ContainerPatchesDir))
 	image.Container().AddRunCommands(commands...)
 
 	ga.AddGACommitToImageLabels(image, toCommit)
-	image.Container().RunOptions().AddVolumeFrom(gitArtifactContainerName)
 
 	return nil
 }
@@ -315,15 +300,6 @@ func (ga *GitArtifact) applyArchiveCommand(archiveFile *ContainerFileDescriptor,
 	return commands, nil
 }
 
-func (ga *GitArtifact) LegacyApplyArchiveCommand(stage LegacyStage) ([]string, error) {
-	commit, err := stage.LayerCommit(ga)
-	if err != nil {
-		return nil, err
-	}
-
-	return ga.baseApplyArchiveCommand(commit, stage.GetImage())
-}
-
 func (ga *GitArtifact) ApplyArchiveCommand(image image.Image) error {
 	commit, err := ga.LatestCommit()
 	if err != nil {
@@ -335,7 +311,6 @@ func (ga *GitArtifact) ApplyArchiveCommand(image image.Image) error {
 		return err
 	}
 
-	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", ga.ArchivesDir, ga.ContainerArchivesDir))
 	image.Container().AddRunCommands(commands...)
 
 	ga.AddGACommitToImageLabels(image, commit)
@@ -375,7 +350,7 @@ func (ga *GitArtifact) baseApplyArchiveCommand(commit string, image image.Image)
 	return commands, err
 }
 
-func (ga *GitArtifact) StageDependenciesChecksum(stageName string) (string, error) {
+func (ga *GitArtifact) StageDependenciesChecksum(stageName StageName) (string, error) {
 	depsPaths := ga.StagesDependencies[stageName]
 	if len(depsPaths) == 0 {
 		return "", nil
@@ -398,7 +373,7 @@ func (ga *GitArtifact) StageDependenciesChecksum(stageName string) (string, erro
 	}
 
 	for _, path := range checksum.GetNoMatchPaths() {
-		fmt.Fprintf(os.Stderr, "WARN: stage `%s` dependency path `%s` have not been found in repo `%s`\n", stageName, path, ga.GitRepo().String())
+		logger.LogWarningF("WARNING: stage `%s` dependency path `%s` have not been found in repo `%s`\n", stageName, path, ga.GitRepo().String())
 	}
 
 	return checksum.String(), nil
@@ -467,20 +442,6 @@ func (ga *GitArtifact) GetParamshash() string {
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil))
-}
-
-func (ga *GitArtifact) LegacyIsPatchEmpty(stage LegacyStage) (bool, error) {
-	fromCommit, err := stage.GetPrevStage().LayerCommit(ga)
-	if err != nil {
-		return false, err
-	}
-
-	toCommit, err := stage.LayerCommit(ga)
-	if err != nil {
-		return false, err
-	}
-
-	return ga.baseIsPatchEmpty(fromCommit, toCommit)
 }
 
 func (ga *GitArtifact) IsPatchEmpty(prevBuiltImage image.Image) (bool, error) {

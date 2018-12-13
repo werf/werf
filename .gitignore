@@ -1,9 +1,6 @@
 *.swp
 *.gem
 .tags
-/.bundle
-/.vendor
-/Gemfile.lock
 /.vscode
 /.idea
 /docs/vendor
@@ -16,6 +13,5 @@ dappdeps/*/omnibus/build/
 /dappfile-yml.sha
 
 /osx/.vagrant
-/.vendor_osx
 
 main

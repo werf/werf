@@ -4,28 +4,23 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/lock"
 )
 
 type Conveyor struct {
-	Dappfile     []*config.Dimg
-	DimgsInOrder []*Dimg
+	Dappfile           []*config.Dimg
+	DimgsInOrder       []*Dimg
+	DimgNamesToProcess []string
 
-	// Все кеширование тут
-	// Инициализируется конфигом dappfile (все dimgs, все artifacts)
-	// Предоставляет интерфейс для получения инфы по образам связанным с dappfile. ???
-	// SetEnabledDimgs(...)
-	// defaultPhases() -> []Phase
-
-	// Build()
-	// Tag()
-	// Push()
-	// BP()
-
-	stageImages      map[string]*image.Stage
-	dockerAuthorizer DockerAuthorizer
+	stageImages                   map[string]*image.Stage
+	buildingGAStageNameByDimgName map[string]stage.StageName
+	remoteGitRepos                map[string]*git_repo.Remote
+	dockerAuthorizer              DockerAuthorizer
+	imagesBySignature             map[string]image.Image
 
 	ProjectName string
 
@@ -38,20 +33,25 @@ type Conveyor struct {
 }
 
 type DockerAuthorizer interface {
-	LoginBaseImage(repo string) error
+	LoginForPull(repo string) error
+	LoginForPush(repo string) error
 }
 
-func NewConveyor(dappfile []*config.Dimg, projectDir, projectName, buildDir, tmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
+func NewConveyor(dappfile []*config.Dimg, dimgNamesToProcess []string, projectDir, projectName, buildDir, tmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
 	return &Conveyor{
-		Dappfile:         dappfile,
-		ProjectDir:       projectDir,
-		ProjectName:      projectName,
-		ProjectBuildDir:  buildDir,
-		ContainerDappDir: "/.dapp",
-		TmpDir:           tmpDir,
-		SSHAuthSock:      sshAuthSock,
-		stageImages:      make(map[string]*image.Stage),
-		dockerAuthorizer: authorizer,
+		Dappfile:                      dappfile,
+		DimgNamesToProcess:            dimgNamesToProcess,
+		ProjectDir:                    projectDir,
+		ProjectName:                   projectName,
+		ProjectBuildDir:               buildDir,
+		ContainerDappDir:              "/.dapp",
+		TmpDir:                        tmpDir,
+		SSHAuthSock:                   sshAuthSock,
+		stageImages:                   make(map[string]*image.Stage),
+		dockerAuthorizer:              authorizer,
+		buildingGAStageNameByDimgName: make(map[string]stage.StageName),
+		remoteGitRepos:                make(map[string]*git_repo.Remote),
+		imagesBySignature:             make(map[string]image.Image),
 	}
 }
 
@@ -69,21 +69,87 @@ func (c *Conveyor) Build() error {
 	phases = append(phases, NewPrepareImagesPhase())
 	phases = append(phases, NewBuildPhase())
 
-	lockImagesName := fmt.Sprintf("%s.images", c.ProjectName)
-	err = lock.Lock(lockImagesName, lock.LockOptions{ReadOnly: true})
+	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {
-		return fmt.Errorf("error locking %s: %s", lockImagesName, err)
+		return err
 	}
-	defer lock.Unlock(lockImagesName)
+	defer lock.Unlock(lockName)
 
+	return c.runPhases(phases)
+}
+
+type TagOptions struct {
+	Tags            []string
+	TagsByGitTag    []string
+	TagsByGitBranch []string
+	TagsByGitCommit []string
+	TagsByCI        []string
+}
+
+type PushOptions struct {
+	TagOptions
+	WithStages bool
+}
+
+func (c *Conveyor) Push(repo string, opts PushOptions) error {
+	var err error
+
+	var phases []Phase
+	phases = append(phases, NewInitializationPhase())
+	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewShouldBeBuiltPhase())
+	phases = append(phases, NewPushPhase(repo, opts))
+
+	lockName, err := c.lockAllImagesReadOnly()
+	if err != nil {
+		return err
+	}
+	defer lock.Unlock(lockName)
+
+	return c.runPhases(phases)
+}
+
+func (c *Conveyor) BP(repo string, opts PushOptions) error {
+	var err error
+
+	var phases []Phase
+	phases = append(phases, NewInitializationPhase())
+	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewRenewPhase())
+	phases = append(phases, NewPrepareImagesPhase())
+	phases = append(phases, NewBuildPhase())
+	phases = append(phases, NewPushPhase(repo, opts))
+
+	lockName, err := c.lockAllImagesReadOnly()
+	if err != nil {
+		return err
+	}
+	defer lock.Unlock(lockName)
+
+	return c.runPhases(phases)
+}
+
+func (c *Conveyor) runPhases(phases []Phase) error {
 	for _, phase := range phases {
 		err := phase.Run(c)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
+}
+
+func (c *Conveyor) lockAllImagesReadOnly() (string, error) {
+	lockName := fmt.Sprintf("%s.images", c.ProjectName)
+	err := lock.Lock(lockName, lock.LockOptions{ReadOnly: true})
+	if err != nil {
+		return "", fmt.Errorf("error locking %s: %s", lockName, err)
+	}
+	return lockName, nil
+}
+
+func (c *Conveyor) GetImage(name string) *image.Stage {
+	return c.stageImages[name]
 }
 
 func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.Stage {
@@ -94,6 +160,14 @@ func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.
 	img := image.NewStageImage(fromImage, name)
 	c.stageImages[name] = img
 	return img
+}
+
+func (c *Conveyor) GetImageBySignature(signature string) image.Image {
+	return c.imagesBySignature[signature]
+}
+
+func (c *Conveyor) SetImageBySignature(signature string, img image.Image) {
+	c.imagesBySignature[signature] = img
 }
 
 func (c *Conveyor) GetDimg(name string) *Dimg {
@@ -118,13 +192,19 @@ func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
 	return c.dockerAuthorizer
 }
 
-func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
-	return path.Join(c.TmpDir, dimgName)
+func (c *Conveyor) SetBuildingGAStage(dimgName string, stageName stage.StageName) {
+	c.buildingGAStageNameByDimgName[dimgName] = stageName
 }
 
-type stubDockerAuthorizer struct{}
+func (c *Conveyor) GetBuildingGAStage(dimgName string) stage.StageName {
+	stageName, ok := c.buildingGAStageNameByDimgName[dimgName]
+	if !ok {
+		return ""
+	}
 
-func (a *stubDockerAuthorizer) LoginBaseImage(repo string) error {
-	fmt.Printf("Called login for base image repo %s\n", repo)
-	return nil
+	return stageName
+}
+
+func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
+	return path.Join(c.TmpDir, "dimg", dimgName)
 }

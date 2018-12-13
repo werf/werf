@@ -8,16 +8,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/flant/dapp/pkg/dapp"
-	uuid "github.com/satori/go.uuid"
-
-	"github.com/flant/dapp/pkg/util"
+	"github.com/satori/go.uuid"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
+
+	"github.com/flant/dapp/pkg/dapp"
+	"github.com/flant/dapp/pkg/logger"
+	"github.com/flant/dapp/pkg/util"
 )
 
 var (
 	SSHAuthSock string
+	tmpSockPath string
 )
 
 func Init(keys []string) error {
@@ -44,7 +46,7 @@ func Init(keys []string) error {
 		return nil
 	}
 
-	defaultKeys := []string{}
+	var defaultKeys []string
 	for _, defaultFileName := range []string{"id_rsa", "id_dsa"} {
 		path := filepath.Join(os.Getenv("HOME"), ".ssh", defaultFileName)
 		if util.IsFileExists(path) {
@@ -53,7 +55,7 @@ func Init(keys []string) error {
 	}
 
 	if len(defaultKeys) > 0 {
-		validKeys := []string{}
+		var validKeys []string
 
 		for _, key := range defaultKeys {
 			keyData, err := ioutil.ReadFile(key)
@@ -80,6 +82,17 @@ func Init(keys []string) error {
 	return nil
 }
 
+func Terminate() error {
+	if tmpSockPath != "" {
+		err := os.RemoveAll(tmpSockPath)
+		if err != nil {
+			return fmt.Errorf("unable to remove tmp ssh agent sock %s: %s", tmpSockPath, err)
+		}
+	}
+
+	return nil
+}
+
 func runSSHAgentWithKeys(keys []string) (string, error) {
 	agentSock, err := runSSHAgent()
 	if err != nil {
@@ -98,6 +111,7 @@ func runSSHAgentWithKeys(keys []string) (string, error) {
 
 func runSSHAgent() (string, error) {
 	sockPath := filepath.Join(dapp.GetTmpDir(), "dapp-ssh-agent", uuid.NewV4().String())
+	tmpSockPath = sockPath
 
 	err := os.MkdirAll(filepath.Dir(sockPath), os.ModePerm)
 	if err != nil {
@@ -117,7 +131,7 @@ func runSSHAgent() (string, error) {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "WARNING: failed to accept ssh-agent connection: %s\n", err)
+				logger.LogWarningF("WARNING: failed to accept ssh-agent connection: %s\n", err)
 				continue
 			}
 
@@ -126,13 +140,13 @@ func runSSHAgent() (string, error) {
 
 				err = agent.ServeAgent(agnt, conn)
 				if err != nil && err != io.EOF {
-					fmt.Fprintf(os.Stderr, "WARNING: ssh-agent server error: %s\n", err)
+					logger.LogWarningF("WARNING: ssh-agent server error: %s\n", err)
 					return
 				}
 
 				err = conn.Close()
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "WARNING: ssh-agent server connection close error: %s\n", err)
+					logger.LogWarningF("WARNING: ssh-agent server connection close error: %s\n", err)
 					return
 				}
 			}()

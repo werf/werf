@@ -7,31 +7,27 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func GenerateInstallStage(dimgConfig config.DimgInterface, extra *builder.Extra, baseStageOptions *NewBaseStageOptions) *InstallStage {
-	b := getBuilder(dimgConfig, extra)
+func GenerateInstallStage(dimgBaseConfig *config.DimgBase, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *InstallStage {
+	b := getBuilder(dimgBaseConfig, baseStageOptions)
 	if b != nil && !b.IsInstallEmpty() {
-		return newInstallStage(b, baseStageOptions)
+		return newInstallStage(b, gaPatchStageOptions, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newInstallStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *InstallStage {
+func newInstallStage(builder builder.Builder, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *InstallStage {
 	s := &InstallStage{}
-	s.UserStage = newUserStage(builder, baseStageOptions)
+	s.UserWithGAPatchStage = newUserWithGAPatchStage(builder, Install, gaPatchStageOptions, baseStageOptions)
 	return s
 }
 
 type InstallStage struct {
-	*UserStage
+	*UserWithGAPatchStage
 }
 
-func (s *InstallStage) Name() StageName {
-	return Install
-}
-
-func (s *InstallStage) GetContext(_ Conveyor) (string, error) {
-	stageDependenciesChecksum, err := s.GetStageDependenciesChecksum(Install)
+func (s *InstallStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
+	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(Install)
 	if err != nil {
 		return "", err
 	}
@@ -40,8 +36,8 @@ func (s *InstallStage) GetContext(_ Conveyor) (string, error) {
 }
 
 func (s *InstallStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
-	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
-		return err
+	if err := s.UserWithGAPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+		return nil
 	}
 
 	if err := s.builder.Install(image.BuilderContainer()); err != nil {

@@ -69,17 +69,6 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 				checksumArgs = append(checksumArgs, prevStage.GetSignature())
 			}
 
-			relatedStage := dimg.GetStage(s.GetRelatedStageName())
-			// related stage may be empty
-			if relatedStage != nil {
-				relatedStageContext, err := relatedStage.GetContext(c)
-				if err != nil {
-					return err
-				}
-
-				checksumArgs = append(checksumArgs, relatedStageContext)
-			}
-
 			stageSig := util.Sha256Hash(checksumArgs...)
 
 			s.SetSignature(stageSig)
@@ -88,9 +77,18 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 			i := c.GetOrCreateImage(prevImage, imageName)
 			s.SetImage(i)
 
-			err = i.SyncDockerState()
-			if err != nil {
+			if err = i.SyncDockerState(); err != nil {
 				return fmt.Errorf("error synchronizing docker state of stage %s: %s", s.Name(), err)
+			}
+
+			if err = s.AfterImageSyncDockerStateHook(c); err != nil {
+				return err
+			}
+
+			if dimg.GetName() == "" {
+				fmt.Printf("# Calculated signature %s for dimg %s\n", stageSig, fmt.Sprintf("stage/%s", s.Name()))
+			} else {
+				fmt.Printf("# Calculated signature %s for dimg/%s %s\n", stageSig, dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
 			}
 
 			newStagesList = append(newStagesList, s)

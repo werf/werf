@@ -112,13 +112,13 @@ func (b *Ansible) stageConfig(userStageName string) (map[string]interface{}, err
 		tags = append(tags, dumpTag)
 		task["tags"] = tags
 
-		dumpConfigSections[dumpTag] = ansibleTask.DumpConfigSection
+		dumpConfigSections[dumpTag] = ansibleTask.GetDumpConfigSection()
 
 		tasks = append(tasks, task)
 	}
 
 	dumpConfig := map[string]interface{}{
-		"dump_config_doc":      b.config.DumpConfigSection,
+		"dump_config_doc":      b.config.GetDumpConfigSection(),
 		"dump_config_sections": dumpConfigSections,
 	}
 

@@ -1,10 +1,9 @@
 package config
 
 type rawStageDependencies struct {
-	Install       interface{} `yaml:"install,omitempty"`
-	Setup         interface{} `yaml:"setup,omitempty"`
-	BeforeSetup   interface{} `yaml:"beforeSetup,omitempty"`
-	BuildArtifact interface{} `yaml:"buildArtifact,omitempty"`
+	Install     interface{} `yaml:"install,omitempty"`
+	Setup       interface{} `yaml:"setup,omitempty"`
+	BeforeSetup interface{} `yaml:"beforeSetup,omitempty"`
 
 	rawGit *rawGit `yaml:"-"` // parent
 
@@ -47,12 +46,6 @@ func (c *rawStageDependencies) toDirective() (stageDependencies *StageDependenci
 		return nil, err
 	} else {
 		stageDependencies.Setup = setup
-	}
-
-	if buildArtifact, err := InterfaceToStringArray(c.BuildArtifact, c, c.rawGit.rawDimg.doc); err != nil {
-		return nil, err
-	} else {
-		stageDependencies.BuildArtifact = buildArtifact
 	}
 
 	stageDependencies.raw = c

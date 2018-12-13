@@ -1,9 +1,0 @@
-dimg: ~
-from: alpine
-mount:
-- from: build_dir
-  to: /folder1
-- from: tmp_dir
-  to: /folder2
-- fromPath: /from_path
-  to: /folder3

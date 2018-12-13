@@ -5,9 +5,9 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func NewGALatestPatchStage(baseStageOptions *NewBaseStageOptions) *GALatestPatchStage {
+func NewGALatestPatchStage(gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GALatestPatchStage {
 	s := &GALatestPatchStage{}
-	s.GAPatchStage = newGAPatchStage(baseStageOptions)
+	s.GAPatchStage = newGAPatchStage(GALatestPatch, gaPatchStageOptions, baseStageOptions)
 	return s
 }
 
@@ -15,12 +15,10 @@ type GALatestPatchStage struct {
 	*GAPatchStage
 }
 
-func (s *GALatestPatchStage) Name() StageName {
-	return GALatestPatch
-}
-
-func (s *GALatestPatchStage) IsEmpty(_ Conveyor, prevBuiltImage image.Image) (bool, error) {
-	if s.willLatestCommitBeBuiltOnGAArchiveStage(prevBuiltImage) {
+func (s *GALatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.Image) (bool, error) {
+	if empty, err := s.GAPatchStage.IsEmpty(c, prevBuiltImage); err != nil {
+		return false, err
+	} else if empty {
 		return true, nil
 	}
 

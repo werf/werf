@@ -13,9 +13,10 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"gopkg.in/flant/yaml.v2"
 
+	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/util"
+	"gopkg.in/flant/yaml.v2"
 )
 
 func ParseDimgs(dappfilePath string) ([]*Dimg, error) {
@@ -190,7 +191,7 @@ func (f files) Get(path string) string {
 	filePath := filepath.Join(f.HomePath, path)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		Warnings = append(Warnings, fmt.Sprintf("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!", path, filePath))
+		logger.LogWarningF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
 		return ""
 	}
 
@@ -344,14 +345,14 @@ func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath 
 	}
 
 	if len(dimgs) == 0 {
-		return nil, newConfigError(fmt.Sprintf("No dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
+		return nil, newConfigError(fmt.Sprintf("no dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
 	}
 
-	if err = validateDimgsNames(dimgs); err != nil {
+	if err = exportsAutoExcluding(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err = validateArtifactsNames(artifacts); err != nil {
+	if err = validateDimgsNames(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
@@ -366,27 +367,56 @@ func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath 
 	return dimgs, nil
 }
 
-func validateDimgsNames(dimgs []*Dimg) error {
-	dimgsNames := map[string]*Dimg{}
+func exportsAutoExcluding(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	for _, dimg := range dimgs {
-		if d, ok := dimgsNames[dimg.Name]; ok {
-			return newConfigError(fmt.Sprintf("Conflict between dimgs names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(dimg.raw.doc)))
-		} else {
-			dimgsNames[dimg.Name] = dimg
+		if err := dimg.exportsAutoExcluding(); err != nil {
+			return err
 		}
 	}
+
+	for _, artifact := range artifacts {
+		if err := artifact.exportsAutoExcluding(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
-func validateArtifactsNames(artifacts []*DimgArtifact) error {
-	artifactsNames := map[string]*DimgArtifact{}
-	for _, artifact := range artifacts {
-		if a, ok := artifactsNames[artifact.Name]; ok {
-			return newConfigError(fmt.Sprintf("Conflict between artifacts names!\n\n%s%s\n", dumpConfigDoc(a.raw.doc), dumpConfigDoc(artifact.raw.doc)))
+func validateDimgsNames(dimgs []*Dimg, artifacts []*DimgArtifact) error {
+	existByDimgName := map[string]bool{}
+
+	dimgByName := map[string]*Dimg{}
+	for _, dimg := range dimgs {
+		name := dimg.Name
+
+		if d, ok := dimgByName[name]; ok {
+			return newConfigError(fmt.Sprintf("conflict between dimgs names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(dimg.raw.doc)))
 		} else {
-			artifactsNames[artifact.Name] = artifact
+			dimgByName[name] = dimg
+			existByDimgName[name] = true
 		}
 	}
+
+	dimgArtifactByName := map[string]*DimgArtifact{}
+	for _, artifact := range artifacts {
+		name := artifact.Name
+
+		if a, ok := dimgArtifactByName[name]; ok {
+			return newConfigError(fmt.Sprintf("conflict between artifacts names!\n\n%s%s\n", dumpConfigDoc(a.raw.doc), dumpConfigDoc(artifact.raw.doc)))
+		} else {
+			dimgArtifactByName[name] = artifact
+		}
+
+		if exist, ok := existByDimgName[name]; ok && exist {
+			d := dimgByName[name]
+
+			return newConfigError(fmt.Sprintf("conflict between dimg and artifact names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(artifact.raw.doc)))
+		} else {
+			dimgArtifactByName[name] = artifact
+		}
+	}
+
 	return nil
 }
 
@@ -394,7 +424,7 @@ func associateImportsArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	var artifactImports []*ArtifactImport
 
 	for _, dimg := range dimgs {
-		for _, relatedDimgInterface := range dimg.RelatedDimgs() {
+		for _, relatedDimgInterface := range dimg.relatedDimgs() {
 			switch relatedDimgInterface.(type) {
 			case *Dimg:
 				artifactImports = append(artifactImports, relatedDimgInterface.(*Dimg).Import...)
@@ -405,7 +435,7 @@ func associateImportsArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	}
 
 	for _, artifactDimg := range artifacts {
-		for _, relatedDimgInterface := range artifactDimg.RelatedDimgs() {
+		for _, relatedDimgInterface := range artifactDimg.relatedDimgs() {
 			switch relatedDimgInterface.(type) {
 			case *Dimg:
 				artifactImports = append(artifactImports, relatedDimgInterface.(*Dimg).Import...)

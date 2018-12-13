@@ -17,7 +17,7 @@ func GenerateDockerInstructionsStage(dimgConfig *config.Dimg, baseStageOptions *
 func newDockerInstructionsStage(instructions *config.Docker, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {
 	s := &DockerInstructionsStage{}
 	s.instructions = instructions
-	s.BaseStage = newBaseStage(baseStageOptions)
+	s.BaseStage = newBaseStage(DockerInstructions, baseStageOptions)
 	return s
 }
 
@@ -25,10 +25,6 @@ type DockerInstructionsStage struct {
 	*BaseStage
 
 	instructions *config.Docker
-}
-
-func (s *DockerInstructionsStage) Name() StageName {
-	return DockerInstructions
 }
 
 func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {

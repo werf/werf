@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"os"
+
 	"github.com/docker/cli/cli/command"
 	cliconfig "github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/flags"
@@ -61,4 +63,8 @@ func setDockerApiClient() error {
 	}
 
 	return nil
+}
+
+func Debug() bool {
+	return os.Getenv("DAPP_DEBUG_DOCKER") == "1"
 }

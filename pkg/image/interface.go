@@ -8,6 +8,7 @@ type BuildOptions struct {
 type Image interface {
 	Name() string
 	Labels() map[string]string
+	ID() string
 
 	Container() Container
 	BuilderContainer() BuilderContainer
@@ -20,7 +21,7 @@ type Image interface {
 
 	SaveInCache() error
 
-	Build2(BuildOptions) error
+	Build(BuildOptions) error
 }
 
 type Container interface {

@@ -6,8 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	"gopkg.in/satori/go.uuid.v1"
-
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dappdeps"
 	"github.com/flant/dapp/pkg/docker"
@@ -34,10 +32,10 @@ func getImports(dimgBaseConfig *config.DimgBase, options *getImportsOptions) []*
 	return imports
 }
 
-func newArtifactImportStage(imports []*config.ArtifactImport, baseStageOptions *NewBaseStageOptions) *ArtifactImportStage {
+func newArtifactImportStage(imports []*config.ArtifactImport, name StageName, baseStageOptions *NewBaseStageOptions) *ArtifactImportStage {
 	s := &ArtifactImportStage{}
 	s.imports = imports
-	s.BaseStage = newBaseStage(baseStageOptions)
+	s.BaseStage = newBaseStage(name, baseStageOptions)
 	return s
 }
 
@@ -63,10 +61,9 @@ func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ image.Image) (string
 
 func (s *ArtifactImportStage) PrepareImage(c Conveyor, _, image image.Image) error {
 	for _, elm := range s.imports {
-		command, volume, err := s.generateImportData(c, elm)
-		if err != nil {
-			return err
-		}
+		importTmpPath, importContainerTmpPath := s.generateImportPaths(elm)
+		command := generateSafeCp(importContainerTmpPath, elm.To, elm.Owner, elm.Group, elm.IncludePaths, elm.ExcludePaths)
+		volume := fmt.Sprintf("%s:%s:ro", importTmpPath, importContainerTmpPath)
 
 		image.Container().AddRunCommands(command)
 		image.Container().RunOptions().AddVolume(volume)
@@ -80,23 +77,29 @@ func (s *ArtifactImportStage) PrepareImage(c Conveyor, _, image image.Image) err
 	return nil
 }
 
-func (s *ArtifactImportStage) generateImportData(c Conveyor, i *config.ArtifactImport) (string, string, error) {
-	exportFolderName := uuid.NewV4().String()
+func (s *ArtifactImportStage) PreRunHook(c Conveyor) error {
+	for _, elm := range s.imports {
+		if err := s.prepareImportData(c, elm); err != nil {
+			return err
+		}
+	}
 
-	artifactNamePathPart := slug.Slug(i.ArtifactName)
-	importTmpPath := path.Join(s.dimgTmpDir, "artifact", artifactNamePathPart, exportFolderName)
-	importContainerTmpPath := path.Join(s.containerDappDir, "artifact", artifactNamePathPart, exportFolderName)
+	return nil
+}
+
+func (s *ArtifactImportStage) prepareImportData(c Conveyor, i *config.ArtifactImport) error {
+	importTmpPath, importContainerTmpPath := s.generateImportPaths(i)
 
 	artifactCommand := generateSafeCp(i.Add, importContainerTmpPath, "", "", []string{}, []string{})
 
 	toolchainContainer, err := dappdeps.ToolchainContainer()
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
 	baseContainer, err := dappdeps.BaseContainer()
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
 	args := []string{
@@ -112,14 +115,19 @@ func (s *ArtifactImportStage) generateImportData(c Conveyor, i *config.ArtifactI
 
 	err = docker.CliRun(args...)
 	if err != nil {
-		return "", "", err
+		return err
 	}
 
-	command := generateSafeCp(importContainerTmpPath, i.To, i.Owner, i.Group, i.IncludePaths, i.ExcludePaths)
+	return nil
+}
 
-	volume := fmt.Sprintf("%s:%s:ro", importTmpPath, importContainerTmpPath)
+func (s *ArtifactImportStage) generateImportPaths(i *config.ArtifactImport) (string, string) {
+	exportFolderName := util.Sha256Hash(fmt.Sprintf("%+v", i))
+	artifactNamePathPart := slug.Slug(i.ArtifactName)
+	importTmpPath := path.Join(s.dimgTmpDir, "artifact", artifactNamePathPart, exportFolderName)
+	importContainerTmpPath := path.Join(s.containerDappDir, "artifact", artifactNamePathPart, exportFolderName)
 
-	return command, volume, nil
+	return importTmpPath, importContainerTmpPath
 }
 
 func generateSafeCp(from, to, owner, group string, includePaths, excludePaths []string) string {

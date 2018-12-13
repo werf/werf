@@ -6,8 +6,8 @@ import (
 	"github.com/flant/dapp/pkg/image"
 )
 
-func GenerateBeforeInstallStage(dimgConfig config.DimgInterface, extra *builder.Extra, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
-	b := getBuilder(dimgConfig, extra)
+func GenerateBeforeInstallStage(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
+	b := getBuilder(dimgBaseConfig, baseStageOptions)
 	if b != nil && !b.IsBeforeInstallEmpty() {
 		return newBeforeInstallStage(b, baseStageOptions)
 	}
@@ -17,7 +17,7 @@ func GenerateBeforeInstallStage(dimgConfig config.DimgInterface, extra *builder.
 
 func newBeforeInstallStage(builder builder.Builder, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
 	s := &BeforeInstallStage{}
-	s.UserStage = newUserStage(builder, baseStageOptions)
+	s.UserStage = newUserStage(builder, BeforeInstall, baseStageOptions)
 	return s
 }
 
@@ -25,16 +25,8 @@ type BeforeInstallStage struct {
 	*UserStage
 }
 
-func (s *BeforeInstallStage) Name() StageName {
-	return BeforeInstall
-}
-
 func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
 	return s.builder.BeforeInstallChecksum(), nil
-}
-
-func (s *BeforeInstallStage) GetContext(_ Conveyor) (string, error) {
-	return "", nil
 }
 
 func (s *BeforeInstallStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {

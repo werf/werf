@@ -1,14 +1,16 @@
 package build
 
 import (
+	"fmt"
 	"net/url"
 	"path"
 	"reflect"
+	"strings"
 
-	"github.com/flant/dapp/pkg/build/builder"
 	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/git_repo"
+	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/slug"
 )
 
@@ -31,15 +33,16 @@ func (p *InitializationPhase) Run(c *Conveyor) error {
 
 func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) ([]*Dimg, error) {
 	var dimgs []*Dimg
-	for _, dimgConfig := range getDimgConfigsInOrder(dappfile) {
+	for _, dimgConfig := range getDimgConfigsInOrder(dappfile, c) {
 		dimg := &Dimg{}
 
-		dimgBaseConfig, _ := processDimgConfig(dimgConfig)
+		dimgBaseConfig, dimgName, dimgArtifact := processDimgConfig(dimgConfig)
 		from, fromDimgName := getFromAndFromDimgName(dimgBaseConfig)
 
-		dimg.name = dimgBaseConfig.Name
+		dimg.name = dimgName
 		dimg.baseImageName = from
 		dimg.baseImageDimgName = fromDimgName
+		dimg.isArtifact = dimgArtifact
 
 		stages, err := generateStages(dimgConfig, c)
 		if err != nil {
@@ -74,9 +77,9 @@ func getFromAndFromDimgName(dimgBaseConfig *config.DimgBase) (string, string) {
 	return from, fromDimgName
 }
 
-func getDimgConfigsInOrder(dappfile []*config.Dimg) []config.DimgInterface {
+func getDimgConfigsInOrder(dappfile []*config.Dimg, c *Conveyor) []config.DimgInterface {
 	var dimgConfigs []config.DimgInterface
-	for _, dimg := range dappfile {
+	for _, dimg := range getDimgConfigToProcess(dappfile, c) {
 		dimgsInBuildOrder := dimg.DimgTree()
 		for i := 0; i < len(dimgsInBuildOrder); i++ {
 			if isNotInArr(dimgConfigs, dimgsInBuildOrder[i]) {
@@ -86,6 +89,35 @@ func getDimgConfigsInOrder(dappfile []*config.Dimg) []config.DimgInterface {
 	}
 
 	return dimgConfigs
+}
+
+func getDimgConfigToProcess(dappfile []*config.Dimg, c *Conveyor) []*config.Dimg {
+	var dimgConfigsToProcess []*config.Dimg
+
+	if len(c.DimgNamesToProcess) == 0 {
+		dimgConfigsToProcess = dappfile
+	} else {
+		for _, dimgName := range c.DimgNamesToProcess {
+			dimgToProcess := getDimgConfigByName(dappfile, dimgName)
+			if dimgToProcess == nil {
+				logger.LogWarningF("WARNING: Specified dimg '%s' isn't defined in dappfile!\n", dimgName)
+			} else {
+				dimgConfigsToProcess = append(dimgConfigsToProcess, dimgToProcess)
+			}
+		}
+	}
+
+	return dimgConfigsToProcess
+}
+
+func getDimgConfigByName(dappfile []*config.Dimg, name string) *config.Dimg {
+	for _, dimg := range dappfile {
+		if dimg.Name == name {
+			return dimg
+		}
+	}
+
+	return nil
 }
 
 func isNotInArr(arr []config.DimgInterface, obj config.DimgInterface) bool {
@@ -101,12 +133,24 @@ func isNotInArr(arr []config.DimgInterface, obj config.DimgInterface) bool {
 func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Interface, error) {
 	var stages []stage.Interface
 
-	dimgBaseConfig, dimgArtifact := processDimgConfig(dimgConfig)
+	dimgBaseConfig, dimgName, dimgArtifact := processDimgConfig(dimgConfig)
 
 	baseStageOptions := &stage.NewBaseStageOptions{
+		DimgName:         dimgName,
+		ConfigMounts:     dimgBaseConfig.Mount,
 		DimgTmpDir:       c.GetDimgTmpDir(dimgBaseConfig.Name),
 		ContainerDappDir: c.ContainerDappDir,
 		ProjectBuildDir:  c.ProjectBuildDir,
+	}
+
+	gaArchiveStageOptions := &stage.NewGAArchiveStageOptions{
+		ArchivesDir:          getDimgArchivesDir(dimgName, c),
+		ContainerArchivesDir: getDimgArchivesContainerDir(c),
+	}
+
+	gaPatchStageOptions := &stage.NewGaPatchStageOptions{
+		PatchesDir:          getDimgPatchesDir(dimgName, c),
+		ContainerPatchesDir: getDimgPatchesContainerDir(c),
 	}
 
 	gitArtifacts, err := generateGitArtifacts(dimgBaseConfig, c)
@@ -114,92 +158,58 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 		return nil, err
 	}
 
-	areGitArtifactsExist := len(gitArtifacts) != 0
+	for _, ga := range gitArtifacts {
+		commit, err := ga.LatestCommit()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", ga.GitRepo().String(), err)
+		}
+
+		fmt.Printf("Using commit '%s' of repo '%s'\n", commit, ga.GitRepo().String())
+	}
 
 	// from
 	stages = appendIfExist(stages, stage.GenerateFromStage(dimgBaseConfig, baseStageOptions))
 
 	// before_install
-	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgBaseConfig, baseStageOptions))
 
 	// before_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(dimgBaseConfig, baseStageOptions))
 
-	if areGitArtifactsExist {
-		// g_a_archive_stage
-		stages = append(stages, stage.NewGAArchiveStage(baseStageOptions))
-	}
+	// g_a_archive_stage
+	stages = append(stages, stage.NewGAArchiveStage(gaArchiveStageOptions, baseStageOptions))
 
-	installStage := stage.GenerateInstallStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
-	if installStage != nil {
-		if areGitArtifactsExist {
-			// g_a_pre_install_patch
-			stages = append(stages, stage.NewGAPreInstallPatchStage(baseStageOptions))
-		}
-
-		// install
-		stages = append(stages, installStage)
-	}
+	// install
+	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgBaseConfig, gaPatchStageOptions, baseStageOptions))
 
 	// after_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(dimgBaseConfig, baseStageOptions))
 
-	beforeSetupStage := stage.GenerateBeforeSetupStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
-	if beforeSetupStage != nil {
-		if areGitArtifactsExist {
-			// g_a_post_install_patch
-			stages = append(stages, stage.NewGAPostInstallPatchStage(baseStageOptions))
-		}
-
-		// before_setup
-		stages = append(stages, beforeSetupStage)
-	}
+	// before_setup
+	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgBaseConfig, gaPatchStageOptions, baseStageOptions))
 
 	// before_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBaseConfig, baseStageOptions))
 
-	setup := stage.GenerateSetupStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
-	if setup != nil {
-		if areGitArtifactsExist {
-			// g_a_pre_setup_patch
-			stages = append(stages, stage.NewGAPreSetupPatchStage(baseStageOptions))
-		}
-
-		// setup
-		stages = append(stages, setup)
-	}
+	// setup
+	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgBaseConfig, gaPatchStageOptions, baseStageOptions))
 
 	// after_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(dimgBaseConfig, baseStageOptions))
 
-	if dimgArtifact {
-		buildArtifact := stage.GenerateBuildArtifactStage(dimgConfig, ansibleBuilderExtra(c), baseStageOptions)
-		if buildArtifact != nil {
-			if areGitArtifactsExist {
-				// g_a_artifact_patch
-				stages = append(stages, stage.NewGAArtifactPatchStage(baseStageOptions))
-			}
+	if !dimgArtifact {
+		// g_a_post_setup_patch
+		stages = append(stages, stage.NewGAPostSetupPatchStage(gaPatchStageOptions, baseStageOptions))
 
-			// build_artifact
-			stages = append(stages, buildArtifact)
-		}
-	} else {
-		if areGitArtifactsExist {
-			// g_a_post_setup_patch
-			stages = append(stages, stage.NewGAPostSetupPatchStage(baseStageOptions))
-
-			// g_a_latest_patch
-			stages = append(stages, stage.NewGALatestPatchStage(baseStageOptions))
-		}
+		// g_a_latest_patch
+		stages = append(stages, stage.NewGALatestPatchStage(gaPatchStageOptions, baseStageOptions))
 
 		// docker_instructions
 		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(dimgConfig.(*config.Dimg), baseStageOptions))
 	}
 
-	if areGitArtifactsExist {
-		for _, s := range stages {
-			s.SetGitArtifacts(gitArtifacts)
-		}
+	for _, s := range stages {
+		s.SetGitArtifacts(gitArtifacts)
 	}
 
 	return stages, nil
@@ -211,6 +221,7 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 	var localGitRepo *git_repo.Local
 	if len(dimgBaseConfig.Git.Local) != 0 {
 		localGitRepo = &git_repo.Local{
+			Base:   git_repo.Base{Name: "own"},
 			Path:   c.ProjectDir,
 			GitDir: path.Join(c.ProjectDir, ".git"),
 		}
@@ -220,23 +231,25 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 		gitArtifacts = append(gitArtifacts, gitLocalArtifactInit(localGAConfig, localGitRepo, dimgBaseConfig.Name, c))
 	}
 
-	remoteGitRepos := map[string]*git_repo.Remote{}
 	for _, remoteGAConfig := range dimgBaseConfig.Git.Remote {
-		var remoteGitRepo *git_repo.Remote
-		if len(dimgBaseConfig.Git.Remote) != 0 {
-			_, exist := remoteGitRepos[remoteGAConfig.Name]
-			if !exist {
-				clonePath, err := getRemoteGitRepoClonePath(remoteGAConfig, c)
-				if err != nil {
-					return nil, err
-				}
-
-				remoteGitRepo = &git_repo.Remote{
-					Url:       remoteGAConfig.Url,
-					ClonePath: clonePath,
-				}
-				remoteGitRepos[remoteGAConfig.Name] = remoteGitRepo
+		remoteGitRepo, exist := c.remoteGitRepos[remoteGAConfig.Name]
+		if !exist {
+			clonePath, err := getRemoteGitRepoClonePath(remoteGAConfig, c)
+			if err != nil {
+				return nil, err
 			}
+
+			remoteGitRepo = &git_repo.Remote{
+				Base:      git_repo.Base{Name: remoteGAConfig.Name},
+				Url:       remoteGAConfig.Url,
+				ClonePath: clonePath,
+			}
+
+			if err := remoteGitRepo.CloneAndFetch(); err != nil {
+				return nil, err
+			}
+
+			c.remoteGitRepos[remoteGAConfig.Name] = remoteGitRepo
 		}
 
 		gitArtifacts = append(gitArtifacts, gitRemoteArtifactInit(remoteGAConfig, remoteGitRepo, dimgBaseConfig.Name, c))
@@ -262,7 +275,7 @@ func getRemoteGitRepoClonePath(remoteGaConfig *config.GitRemote, c *Conveyor) (s
 	clonePath := path.Join(
 		c.ProjectBuildDir,
 		"remote_git_repo",
-		string(git_repo.RemoteGitRepoCacheVersion),
+		fmt.Sprintf("%v", git_repo.RemoteGitRepoCacheVersion),
 		slug.Slug(remoteGaConfig.Name),
 		scheme,
 	)
@@ -273,6 +286,13 @@ func getRemoteGitRepoClonePath(remoteGaConfig *config.GitRemote, c *Conveyor) (s
 func urlScheme(urlString string) (string, error) {
 	u, err := url.Parse(urlString)
 	if err != nil {
+		if strings.HasSuffix(err.Error(), "first path segment in URL cannot contain colon") {
+			for _, protocol := range []string{"git", "ssh"} {
+				if strings.HasPrefix(urlString, fmt.Sprintf("%s@", protocol)) {
+					return "ssh", nil
+				}
+			}
+		}
 		return "", err
 	}
 
@@ -306,7 +326,7 @@ func gitLocalArtifactInit(localGAConfig *config.GitLocal, localGitRepo *git_repo
 }
 
 func baseGitArtifactInit(local *config.GitLocalExport, dimgName string, c *Conveyor) *stage.GitArtifact {
-	var stageDependencies map[string][]string
+	var stageDependencies map[stage.StageName][]string
 	if local.StageDependencies != nil {
 		stageDependencies = stageDependenciesToMap(local.StageDependencies)
 	}
@@ -347,18 +367,17 @@ func getDimgArchivesContainerDir(c *Conveyor) string {
 	return path.Join(c.ContainerDappDir, "archive")
 }
 
-func stageDependenciesToMap(sd *config.StageDependencies) map[string][]string {
-	result := map[string][]string{
-		"install":        sd.Install,
-		"before_setup":   sd.BeforeSetup,
-		"setup":          sd.Setup,
-		"build_artifact": sd.BuildArtifact,
+func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]string {
+	result := map[stage.StageName][]string{
+		stage.Install:     sd.Install,
+		stage.BeforeSetup: sd.BeforeSetup,
+		stage.Setup:       sd.Setup,
 	}
 
 	return result
 }
 
-func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, bool) {
+func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, string, bool) {
 	var dimgBase *config.DimgBase
 	var dimgArtifact bool
 	switch dimgConfig.(type) {
@@ -370,16 +389,7 @@ func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, bool)
 		dimgArtifact = true
 	}
 
-	return dimgBase, dimgArtifact
-}
-
-func ansibleBuilderExtra(c *Conveyor) *builder.Extra {
-	ansibleBuilderExtra := &builder.Extra{
-		TmpPath:           c.TmpDir,
-		ContainerDappPath: c.ContainerDappDir,
-	}
-
-	return ansibleBuilderExtra
+	return dimgBase, dimgBase.Name, dimgArtifact
 }
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {

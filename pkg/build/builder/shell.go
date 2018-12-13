@@ -10,9 +10,9 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-type Shell struct{ config config.Shell }
+type Shell struct{ config *config.Shell }
 
-func NewShellBuilder(config config.Shell) *Shell {
+func NewShellBuilder(config *config.Shell) *Shell {
 	return &Shell{config}
 }
 

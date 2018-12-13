@@ -25,7 +25,7 @@ type rawDimg struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *rawDimg) setAndvalidateDimg() error {
+func (c *rawDimg) setAndValidateDimg() error {
 	value, ok := c.UnsupportedAttributes["dimg"]
 	if ok {
 		delete(c.UnsupportedAttributes, "dimg")
@@ -42,7 +42,7 @@ func (c *rawDimg) setAndvalidateDimg() error {
 		case nil:
 			c.Dimgs = []string{""}
 		default:
-			return newDetailedConfigError(fmt.Sprintf("Invalid dimg name `%v`!", t), nil, c.doc)
+			return newDetailedConfigError(fmt.Sprintf("invalid dimg name `%v`!", t), nil, c.doc)
 		}
 	}
 
@@ -58,7 +58,7 @@ func (c *rawDimg) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := c.setAndvalidateDimg(); err != nil {
+	if err := c.setAndValidateDimg(); err != nil {
 		return err
 	}
 
@@ -78,9 +78,9 @@ func (c *rawDimg) validateDimgType() error {
 	isArtifact := c.Artifact != ""
 
 	if isDimg && isArtifact {
-		return newDetailedConfigError("Unknown doc type: one and only one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
+		return newDetailedConfigError("unknown doc type: one and only one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
 	} else if !(isDimg || isArtifact) {
-		return newDetailedConfigError("Unknown doc type: one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
+		return newDetailedConfigError("unknown doc type: one of `dimg: NAME` or `artifact: NAME` non-empty name required!", nil, c.doc)
 	}
 
 	return nil
@@ -118,13 +118,6 @@ func (c *rawDimg) toDimgArtifactDirective() (dimgArtifact *DimgArtifact, err err
 		if dimgArtifact.DimgBase, err = c.toDimgBaseDirective(c.Artifact); err != nil {
 			return nil, err
 		}
-
-		if c.RawShell != nil {
-			dimgArtifact.builder = "shell"
-			if dimgArtifact.Shell, err = c.RawShell.toArtifactDirective(); err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	if err := c.validateArtifactDimgDirective(dimgArtifact); err != nil {
@@ -148,15 +141,6 @@ func (c *rawDimg) toDimgDirective(name string) (dimg *Dimg, err error) {
 			dimg.DimgBase = dimgBase
 		}
 
-		if c.RawShell != nil {
-			dimg.builder = "shell"
-			if shell, err := c.RawShell.toDirective(); err != nil {
-				return nil, err
-			} else {
-				dimg.Shell = shell
-			}
-		}
-
 		if c.RawDocker != nil {
 			if docker, err := c.RawDocker.toDirective(); err != nil {
 				return nil, err
@@ -174,110 +158,26 @@ func (c *rawDimg) toDimgDirective(name string) (dimg *Dimg, err error) {
 }
 
 func (c *rawDimg) toDimgAsLayersDirective(name string) (dimg *Dimg, err error) {
-	var dimgLayers []*Dimg
-
-	var shellDimg *ShellDimg
-	var ansible *Ansible
-	if c.RawShell != nil {
-		shellDimg, err = c.RawShell.toDirective()
-		if err != nil {
-			return nil, err
-		}
-	} else if c.RawAnsible != nil {
-		ansible, err = c.RawAnsible.toDirective()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if shellDimg != nil {
-		if dimgShellLayers, err := c.toDimgShellLayersByStage(name, shellDimg.BeforeInstall, "beforeInstall"); err != nil {
-			return nil, err
-		} else {
-			dimgLayers = append(dimgLayers, dimgShellLayers...)
-		}
-	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgAnsibleLayers(name, ansible.BeforeInstall, "beforeInstall"); err != nil {
-			return nil, err
-		} else {
-			dimgLayers = append(dimgLayers, dimgShellLayers...)
-		}
-	}
-
-	if dimgWithGit, err := c.toDimgLayerWithGitDirective(name); err != nil {
+	dimgBaseLayers, err := c.toDimgBaseLayersDirectives(name)
+	if err != nil {
 		return nil, err
-	} else if dimgWithGit != nil {
-		dimgLayers = append(dimgLayers, dimgWithGit)
 	}
 
-	if dimgWithArtifacts, err := c.toDimgLayerWithArtifactsDirective(name, "install", ""); err != nil {
-		return nil, err
-	} else if dimgWithArtifacts != nil {
-		dimgLayers = append(dimgLayers, dimgWithArtifacts)
+	var layers []*Dimg
+	for _, dimgBaseLayer := range dimgBaseLayers {
+		layer := &Dimg{}
+		layer.DimgBase = dimgBaseLayer
+		layers = append(layers, layer)
 	}
 
-	if shellDimg != nil {
-		if dimgShellLayers, err := c.toDimgShellLayersByStage(name, shellDimg.Install, "install"); err != nil {
-			return nil, err
-		} else {
-			dimgLayers = append(dimgLayers, dimgShellLayers...)
-		}
-	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgAnsibleLayers(name, ansible.Install, "install"); err != nil {
-			return nil, err
-		} else {
-			dimgLayers = append(dimgLayers, dimgShellLayers...)
-		}
-	}
-
-	if dimgWithArtifacts, err := c.toDimgLayerWithArtifactsDirective(name, "", "install"); err != nil {
-		return nil, err
-	} else if dimgWithArtifacts != nil {
-		dimgLayers = append(dimgLayers, dimgWithArtifacts)
-	}
-
-	if shellDimg != nil {
-		if dimgShellLayers, err := c.toDimgShellLayersByStage(name, shellDimg.BeforeSetup, "beforeSetup"); err != nil {
-			return nil, err
-		} else {
-			dimgLayers = append(dimgLayers, dimgShellLayers...)
-		}
-	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgAnsibleLayers(name, ansible.BeforeSetup, "beforeSetup"); err != nil {
-			return nil, err
-		} else {
-			dimgLayers = append(dimgLayers, dimgShellLayers...)
-		}
-	}
-
-	if dimgWithArtifacts, err := c.toDimgLayerWithArtifactsDirective(name, "setup", ""); err != nil {
-		return nil, err
-	} else if dimgWithArtifacts != nil {
-		dimgLayers = append(dimgLayers, dimgWithArtifacts)
-	}
-
-	if shellDimg != nil {
-		if dimgShellLayers, err := c.toDimgShellLayersByStage(name, shellDimg.Setup, "setup"); err != nil {
-			return nil, err
-		} else {
-			dimgLayers = append(dimgLayers, dimgShellLayers...)
-		}
-	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgAnsibleLayers(name, ansible.Setup, "setup"); err != nil {
-			return nil, err
-		} else {
-			dimgLayers = append(dimgLayers, dimgShellLayers...)
-		}
-	}
-
-	if dimg, err = c.toMainDimgLayerDirective(name); err != nil {
+	if dimg, err = c.toDimgTopLayerDirective(name); err != nil {
 		return nil, err
 	} else {
-		dimgLayers = append(dimgLayers, dimg)
+		layers = append(layers, dimg)
 	}
 
 	var prevDimgLayer *Dimg
-	for _, dimgLayer := range dimgLayers {
+	for _, dimgLayer := range layers {
 		if prevDimgLayer == nil {
 			dimgLayer.From = c.From
 			dimgLayer.FromCacheVersion = c.FromCacheVersion
@@ -294,48 +194,138 @@ func (c *rawDimg) toDimgAsLayersDirective(name string) (dimg *Dimg, err error) {
 	}
 }
 
-func (c *rawDimg) toDimgShellLayersByStage(name string, commands []string, stage string) (dimgLayers []*Dimg, err error) {
+func (c *rawDimg) toDimgBaseLayersDirectives(name string) (layers []*DimgBase, err error) {
+	var shell *Shell
+	var ansible *Ansible
+	if c.RawShell != nil {
+		shell, err = c.RawShell.toDirective()
+		if err != nil {
+			return nil, err
+		}
+	} else if c.RawAnsible != nil {
+		ansible, err = c.RawAnsible.toDirective()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if shell != nil {
+		if beforeInstallShellLayers, err := c.toDimgBaseShellLayersDirectivesByStage(name, shell.BeforeInstall, "beforeInstall"); err != nil {
+			return nil, err
+		} else {
+			layers = append(layers, beforeInstallShellLayers...)
+		}
+	} else if ansible != nil {
+		if beforeInstallAnsibleLayers, err := c.toDimgBaseAnsibleLayersDirectivesByStage(name, ansible.BeforeInstall, "beforeInstall"); err != nil {
+			return nil, err
+		} else {
+			layers = append(layers, beforeInstallAnsibleLayers...)
+		}
+	}
+
+	if gitLayer, err := c.toDimgBaseGitLayerDirective(name); err != nil {
+		return nil, err
+	} else if gitLayer != nil {
+		layers = append(layers, gitLayer)
+	}
+
+	if importsLayers, err := c.toDimgBaseImportsLayerDirectiveByBeforeAndAfter(name, "install", ""); err != nil {
+		return nil, err
+	} else if importsLayers != nil {
+		layers = append(layers, importsLayers)
+	}
+
+	if shell != nil {
+		if installShellLayers, err := c.toDimgBaseShellLayersDirectivesByStage(name, shell.Install, "install"); err != nil {
+			return nil, err
+		} else {
+			layers = append(layers, installShellLayers...)
+		}
+	} else if ansible != nil {
+		if installAnsibleLayers, err := c.toDimgBaseAnsibleLayersDirectivesByStage(name, ansible.Install, "install"); err != nil {
+			return nil, err
+		} else {
+			layers = append(layers, installAnsibleLayers...)
+		}
+	}
+
+	if importsLayer, err := c.toDimgBaseImportsLayerDirectiveByBeforeAndAfter(name, "", "install"); err != nil {
+		return nil, err
+	} else if importsLayer != nil {
+		layers = append(layers, importsLayer)
+	}
+
+	if shell != nil {
+		if beforeSetupShellLayers, err := c.toDimgBaseShellLayersDirectivesByStage(name, shell.BeforeSetup, "beforeSetup"); err != nil {
+			return nil, err
+		} else {
+			layers = append(layers, beforeSetupShellLayers...)
+		}
+	} else if ansible != nil {
+		if beforeSetupAnsibleLayers, err := c.toDimgBaseAnsibleLayersDirectivesByStage(name, ansible.BeforeSetup, "beforeSetup"); err != nil {
+			return nil, err
+		} else {
+			layers = append(layers, beforeSetupAnsibleLayers...)
+		}
+	}
+
+	if importsLayer, err := c.toDimgBaseImportsLayerDirectiveByBeforeAndAfter(name, "setup", ""); err != nil {
+		return nil, err
+	} else if importsLayer != nil {
+		layers = append(layers, importsLayer)
+	}
+
+	if shell != nil {
+		if setupShellLayers, err := c.toDimgBaseShellLayersDirectivesByStage(name, shell.Setup, "setup"); err != nil {
+			return nil, err
+		} else {
+			layers = append(layers, setupShellLayers...)
+		}
+	} else if ansible != nil {
+		if setupAnsibleLayers, err := c.toDimgBaseAnsibleLayersDirectivesByStage(name, ansible.Setup, "setup"); err != nil {
+			return nil, err
+		} else {
+			layers = append(layers, setupAnsibleLayers...)
+		}
+	}
+
+	return layers, nil
+}
+
+func (c *rawDimg) toDimgBaseShellLayersDirectivesByStage(name string, commands []string, stage string) (dimgLayers []*DimgBase, err error) {
 	for ind, command := range commands {
 		layerName := fmt.Sprintf("%s-%d", strings.ToLower(stage), ind)
 		if name != "" {
 			layerName = strings.Join([]string{name, layerName}, "-")
 		}
 
-		if dimgLayer, err := c.toDimgLayerDirective(layerName); err != nil {
+		if dimgBaseLayer, err := c.toBaseDimgBaseDirective(layerName); err != nil {
 			return nil, err
 		} else {
-			dimgLayer.builder = "shell"
-			dimgLayer.Shell = c.toShellDimgWithCommandByStage(command, stage)
-			dimgLayers = append(dimgLayers, dimgLayer)
+			dimgBaseLayer.Shell = c.toShellDirectiveByCommandAndStage(command, stage)
+			dimgLayers = append(dimgLayers, dimgBaseLayer)
 		}
 	}
 
 	return dimgLayers, nil
 }
 
-func (c *rawDimg) toShellDimgWithCommandByStage(command string, stage string) (shellDimg *ShellDimg) {
-	shellDimg = &ShellDimg{}
-	shellDimg.ShellBase = c.toShellBaseWithCommandByStage(command, stage)
-	return
-}
-
-func (c *rawDimg) toDimgAnsibleLayers(name string, tasks []*AnsibleTask, stage string) (dimgLayers []*Dimg, err error) {
+func (c *rawDimg) toDimgBaseAnsibleLayersDirectivesByStage(name string, tasks []*AnsibleTask, stage string) (layers []*DimgBase, err error) {
 	for ind, task := range tasks {
 		layerName := fmt.Sprintf("%s-%d", strings.ToLower(stage), ind)
 		if name != "" {
 			layerName = strings.Join([]string{name, layerName}, "-")
 		}
 
-		if dimgLayer, err := c.toDimgLayerDirective(layerName); err != nil {
+		if layer, err := c.toBaseDimgBaseDirective(layerName); err != nil {
 			return nil, err
 		} else {
-			dimgLayer.builder = "ansible"
-			dimgLayer.Ansible = c.toAnsibleWithTaskByStage(task, stage)
-			dimgLayers = append(dimgLayers, dimgLayer)
+			layer.Ansible = c.toAnsibleWithTaskByStage(task, stage)
+			layers = append(layers, layer)
 		}
 	}
 
-	return dimgLayers, nil
+	return layers, nil
 }
 
 func (c *rawDimg) toDimgLayerDirective(layerName string) (dimg *Dimg, err error) {
@@ -346,23 +336,7 @@ func (c *rawDimg) toDimgLayerDirective(layerName string) (dimg *Dimg, err error)
 	return
 }
 
-func (c *rawDimg) toDimgLayerWithGitDirective(name string) (dimg *Dimg, err error) {
-	if dimgBase, err := c.toLayerWithGitDirective(name); err == nil && dimgBase != nil {
-		dimg = &Dimg{}
-		dimg.DimgBase = dimgBase
-	}
-	return
-}
-
-func (c *rawDimg) toDimgLayerWithArtifactsDirective(name string, before string, after string) (dimg *Dimg, err error) {
-	if dimgBase, err := c.toLayerWithArtifactsDirective(name, before, after); err == nil && dimgBase != nil {
-		dimg = &Dimg{}
-		dimg.DimgBase = dimgBase
-	}
-	return
-}
-
-func (c *rawDimg) toMainDimgLayerDirective(name string) (mainDimgLayer *Dimg, err error) {
+func (c *rawDimg) toDimgTopLayerDirective(name string) (mainDimgLayer *Dimg, err error) {
 	mainDimgLayer = &Dimg{}
 	if mainDimgLayer.DimgBase, err = c.toBaseDimgBaseDirective(name); err != nil {
 		return nil, err
@@ -391,138 +365,35 @@ func (c *rawDimg) validateDimgDirective(dimg *Dimg) (err error) {
 	return nil
 }
 
-func (c *rawDimg) toDimgArtifactAsLayersDirective() (dimgArtifact *DimgArtifact, err error) {
-	var dimgArtifactLayers []*DimgArtifact
-
-	var shellArtifact *ShellArtifact
-	var ansible *Ansible
-	if c.RawShell != nil {
-		shellArtifact, err = c.RawShell.toArtifactDirective()
-		if err != nil {
-			return nil, err
-		}
-	} else if c.RawAnsible != nil {
-		ansible, err = c.RawAnsible.toDirective()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if shellArtifact != nil {
-		if dimgShellLayers, err := c.toDimgArtifactShellLayers(shellArtifact.BeforeInstall, "beforeInstall"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgArtifactAnsibleLayers(ansible.BeforeInstall, "beforeInstall"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	}
-
-	if dimgWithArtifacts, err := c.toDimgArtifactLayerWithArtifactsDirective("install", ""); err != nil {
+func (c *rawDimg) toDimgArtifactAsLayersDirective() (dimgArtifactLayer *DimgArtifact, err error) {
+	dimgBaseLayers, err := c.toDimgBaseLayersDirectives(c.Artifact)
+	if err != nil {
 		return nil, err
-	} else if dimgWithArtifacts != nil {
-		dimgArtifactLayers = append(dimgArtifactLayers, dimgWithArtifacts)
 	}
 
-	if dimgArtifactWithGit, err := c.toDimgArtifactLayerWithGitDirective(); err != nil {
-		return nil, err
-	} else if dimgArtifactWithGit != nil {
-		dimgArtifactLayers = append(dimgArtifactLayers, dimgArtifactWithGit)
+	var layers []*DimgArtifact
+	for _, dimgBaseLayer := range dimgBaseLayers {
+		layer := &DimgArtifact{}
+		layer.DimgBase = dimgBaseLayer
+		layers = append(layers, layer)
 	}
 
-	if shellArtifact != nil {
-		if dimgShellLayers, err := c.toDimgArtifactShellLayers(shellArtifact.Install, "install"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgArtifactAnsibleLayers(ansible.Install, "install"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	}
-
-	if dimgWithArtifacts, err := c.toDimgArtifactLayerWithArtifactsDirective("", "install"); err != nil {
-		return nil, err
-	} else if dimgWithArtifacts != nil {
-		dimgArtifactLayers = append(dimgArtifactLayers, dimgWithArtifacts)
-	}
-
-	if shellArtifact != nil {
-		if dimgShellLayers, err := c.toDimgArtifactShellLayers(shellArtifact.BeforeSetup, "beforeSetup"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgArtifactAnsibleLayers(ansible.BeforeSetup, "beforeSetup"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	}
-
-	if dimgWithArtifacts, err := c.toDimgArtifactLayerWithArtifactsDirective("setup", ""); err != nil {
-		return nil, err
-	} else if dimgWithArtifacts != nil {
-		dimgArtifactLayers = append(dimgArtifactLayers, dimgWithArtifacts)
-	}
-
-	if shellArtifact != nil {
-		if dimgShellLayers, err := c.toDimgArtifactShellLayers(shellArtifact.Setup, "setup"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgArtifactAnsibleLayers(ansible.Setup, "setup"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	}
-
-	if dimgWithArtifacts, err := c.toDimgArtifactLayerWithArtifactsDirective("", "setup"); err != nil {
-		return nil, err
-	} else if dimgWithArtifacts != nil {
-		dimgArtifactLayers = append(dimgArtifactLayers, dimgWithArtifacts)
-	}
-
-	if shellArtifact != nil {
-		if dimgShellLayers, err := c.toDimgArtifactShellLayers(shellArtifact.BuildArtifact, "buildArtifact"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	} else if ansible != nil {
-		if dimgShellLayers, err := c.toDimgArtifactAnsibleLayers(ansible.BuildArtifact, "buildArtifact"); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgShellLayers...)
-		}
-	}
-
-	if dimgArtifact, err = c.toMainDimgArtifactLayerDirective(); err != nil {
+	if dimgArtifactLayer, err = c.toDimgArtifactTopLayerDirective(); err != nil {
 		return nil, err
 	} else {
-		dimgArtifactLayers = append(dimgArtifactLayers, dimgArtifact)
+		layers = append(layers, dimgArtifactLayer)
 	}
 
 	var prevDimgLayer *DimgArtifact
-	for _, dimgArtifactLayer := range dimgArtifactLayers {
+	for _, layer := range layers {
 		if prevDimgLayer == nil {
-			dimgArtifactLayer.From = c.From
-			dimgArtifactLayer.FromCacheVersion = c.FromCacheVersion
+			layer.From = c.From
+			layer.FromCacheVersion = c.FromCacheVersion
 		} else {
-			dimgArtifactLayer.FromDimgArtifact = prevDimgLayer
+			layer.FromDimgArtifact = prevDimgLayer
 		}
-		prevDimgLayer = dimgArtifactLayer
+
+		prevDimgLayer = layer
 	}
 
 	if err = c.validateDimgBaseDirective(prevDimgLayer.DimgBase); err != nil {
@@ -541,7 +412,7 @@ func (c *rawDimg) toDimgArtifactLayerDirective(layerName string) (dimgArtifact *
 }
 
 func (c *rawDimg) toDimgArtifactLayerWithGitDirective() (dimgArtifact *DimgArtifact, err error) {
-	if dimgBase, err := c.toLayerWithGitDirective(c.Artifact); err == nil && dimgBase != nil {
+	if dimgBase, err := c.toDimgBaseGitLayerDirective(c.Artifact); err == nil && dimgBase != nil {
 		dimgArtifact = &DimgArtifact{}
 		dimgArtifact.DimgBase = dimgBase
 	}
@@ -549,14 +420,14 @@ func (c *rawDimg) toDimgArtifactLayerWithGitDirective() (dimgArtifact *DimgArtif
 }
 
 func (c *rawDimg) toDimgArtifactLayerWithArtifactsDirective(before string, after string) (dimgArtifact *DimgArtifact, err error) {
-	if dimgBase, err := c.toLayerWithArtifactsDirective(c.Artifact, before, after); err == nil && dimgBase != nil {
+	if dimgBase, err := c.toDimgBaseImportsLayerDirectiveByBeforeAndAfter(c.Artifact, before, after); err == nil && dimgBase != nil {
 		dimgArtifact = &DimgArtifact{}
 		dimgArtifact.DimgBase = dimgBase
 	}
 	return
 }
 
-func (c *rawDimg) toLayerWithGitDirective(name string) (dimgBase *DimgBase, err error) {
+func (c *rawDimg) toDimgBaseGitLayerDirective(name string) (dimgBase *DimgBase, err error) {
 	if len(c.RawGit) != 0 {
 		layerName := "git"
 		if name != "" {
@@ -588,7 +459,7 @@ func (c *rawDimg) toLayerWithGitDirective(name string) (dimgBase *DimgBase, err 
 	return
 }
 
-func (c *rawDimg) toLayerWithArtifactsDirective(name string, before string, after string) (dimgBase *DimgBase, err error) {
+func (c *rawDimg) toDimgBaseImportsLayerDirectiveByBeforeAndAfter(name string, before string, after string) (dimgBase *DimgBase, err error) {
 	if importArtifacts, err := c.layerImportArtifactsByLayer(before, after); err != nil {
 		return nil, err
 	} else {
@@ -616,11 +487,12 @@ func (c *rawDimg) toLayerWithArtifactsDirective(name string, before string, afte
 	return
 }
 
-func (c *rawDimg) toMainDimgArtifactLayerDirective() (mainDimgArtifactLayer *DimgArtifact, err error) {
+func (c *rawDimg) toDimgArtifactTopLayerDirective() (mainDimgArtifactLayer *DimgArtifact, err error) {
 	mainDimgArtifactLayer = &DimgArtifact{}
 	if mainDimgArtifactLayer.DimgBase, err = c.toBaseDimgBaseDirective(c.Artifact); err != nil {
 		return nil, err
 	}
+
 	return mainDimgArtifactLayer, nil
 }
 
@@ -647,44 +519,21 @@ func (c *rawDimg) layerImportArtifactsByLayer(before string, after string) (arti
 	return
 }
 
-func (c *rawDimg) toDimgArtifactShellLayers(commands []string, stage string) (dimgArtifactLayers []*DimgArtifact, err error) {
-	for ind, command := range commands {
-		layerName := fmt.Sprintf("%s-%s-%d", c.Artifact, strings.ToLower(stage), ind)
-		if dimgArtifactLayer, err := c.toDimgArtifactLayerDirective(layerName); err != nil {
-			return nil, err
-		} else {
-			dimgArtifactLayer.builder = "shell"
-			dimgArtifactLayer.Shell = c.toShellArtifactWithCommandByStage(command, stage)
-			dimgArtifactLayers = append(dimgArtifactLayers, dimgArtifactLayer)
-		}
-	}
-
-	return dimgArtifactLayers, nil
-}
-
-func (c *rawDimg) toShellArtifactWithCommandByStage(command string, stage string) (shellArtifact *ShellArtifact) {
-	shellArtifact = &ShellArtifact{}
-	if stage == "buildArtifact" {
-		shellArtifact.BuildArtifact = []string{command}
-	} else {
-		shellArtifact.ShellDimg = c.toShellDimgWithCommandByStage(command, stage)
-	}
-	return
-}
-
-func (c *rawDimg) toShellBaseWithCommandByStage(command string, stage string) (shellBase *ShellBase) {
-	shellBase = &ShellBase{}
+func (c *rawDimg) toShellDirectiveByCommandAndStage(command string, stage string) (shell *Shell) {
+	shell = &Shell{}
 	switch stage {
 	case "beforeInstall":
-		shellBase.BeforeInstall = []string{command}
+		shell.BeforeInstall = []string{command}
 	case "install":
-		shellBase.Install = []string{command}
+		shell.Install = []string{command}
 	case "beforeSetup":
-		shellBase.BeforeSetup = []string{command}
+		shell.BeforeSetup = []string{command}
 	case "setup":
-		shellBase.Setup = []string{command}
+		shell.Setup = []string{command}
 	}
-	shellBase.raw = c.RawShell
+
+	shell.raw = c.RawShell
+
 	return
 }
 
@@ -694,7 +543,6 @@ func (c *rawDimg) toDimgArtifactAnsibleLayers(tasks []*AnsibleTask, stage string
 		if dimgLayer, err := c.toDimgArtifactLayerDirective(layerName); err != nil {
 			return nil, err
 		} else {
-			dimgLayer.builder = "ansible"
 			dimgLayer.Ansible = c.toAnsibleWithTaskByStage(task, stage)
 			dimgLayers = append(dimgLayers, dimgLayer)
 		}
@@ -714,8 +562,6 @@ func (c *rawDimg) toAnsibleWithTaskByStage(task *AnsibleTask, stage string) (ans
 		ansible.BeforeSetup = []*AnsibleTask{task}
 	case "setup":
 		ansible.Setup = []*AnsibleTask{task}
-	case "buildArtifact":
-		ansible.BuildArtifact = []*AnsibleTask{task}
 	}
 	ansible.raw = c.RawAnsible
 	return
@@ -758,8 +604,15 @@ func (c *rawDimg) toDimgBaseDirective(name string) (dimgBase *DimgBase, err erro
 		}
 	}
 
+	if c.RawShell != nil {
+		if shell, err := c.RawShell.toDirective(); err != nil {
+			return nil, err
+		} else {
+			dimgBase.Shell = shell
+		}
+	}
+
 	if c.RawAnsible != nil {
-		dimgBase.builder = "ansible"
 		if ansible, err := c.RawAnsible.toDirective(); err != nil {
 			return nil, err
 		} else {
@@ -793,7 +646,6 @@ func (c *rawDimg) validateDimgBaseDirective(dimgBase *DimgBase) (err error) {
 func (c *rawDimg) toBaseDimgBaseDirective(name string) (dimgBase *DimgBase, err error) {
 	dimgBase = &DimgBase{}
 	dimgBase.Name = name
-	dimgBase.builder = "none"
 
 	for _, mount := range c.RawMount {
 		if dimgMount, err := mount.toDirective(); err != nil {

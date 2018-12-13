@@ -55,6 +55,13 @@ func (i *Stage) MustGetId() (string, error) {
 	}
 }
 
+func (i *Stage) ID() string {
+	if i.inspect != nil {
+		return i.inspect.ID
+	}
+	return ""
+}
+
 func (i *Stage) IsExists() bool {
 	return i.inspect != nil
 }
@@ -66,12 +73,7 @@ func (i *Stage) SyncDockerState() error {
 	return nil
 }
 
-type StageBuildOptions struct {
-	IntrospectBeforeError bool
-	IntrospectAfterError  bool
-}
-
-func (i *Stage) Build(options *StageBuildOptions) error {
+func (i *Stage) Build(options BuildOptions) error {
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
@@ -109,13 +111,6 @@ func (i *Stage) Build(options *StageBuildOptions) error {
 	return nil
 }
 
-func (i *Stage) Build2(opts BuildOptions) error {
-	return i.Build(&StageBuildOptions{
-		IntrospectBeforeError: opts.IntrospectBeforeError,
-		IntrospectAfterError:  opts.IntrospectAfterError,
-	})
-}
-
 func (i *Stage) Commit() error {
 	builtId, err := i.container.commit()
 	if err != nil {
@@ -150,6 +145,10 @@ func (i *Stage) SaveInCache() error {
 	}
 
 	if err := docker.CliTag(buildImageId, i.name); err != nil {
+		return err
+	}
+
+	if err := i.SyncDockerState(); err != nil {
 		return err
 	}
 

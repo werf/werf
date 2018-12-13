@@ -3,42 +3,39 @@ package deploy
 import (
 	"fmt"
 	"os"
+
+	"github.com/flant/dapp/pkg/config"
 )
 
 type RenderOptions struct {
-	ProjectDir   string
 	Values       []string
 	SecretValues []string
 	Set          []string
-
-	// TODO: remove this after full port to go
-	Dimgs []*DimgInfoGetterStub
 }
 
-func RunRender(opts RenderOptions) error {
+func RunRender(projectName, projectDir string, dappfile []*config.Dimg, opts RenderOptions) error {
 	if debug() {
 		fmt.Printf("Render options: %#v\n", opts)
 	}
 
-	m, err := getSafeSecretManager(opts.ProjectDir, opts.SecretValues)
+	m, err := getSafeSecretManager(projectDir, opts.SecretValues)
 	if err != nil {
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
 
+	repo := "REPO"
+	tag := "DOCKER_TAG"
+	namespace := "NAMESPACE"
+
 	images := []DimgInfoGetter{}
-	for _, dimg := range opts.Dimgs {
-		if debug() {
-			fmt.Printf("DimgInfoGetterStub: %#v\n", dimg)
-		}
-		images = append(images, dimg)
+	for _, dimg := range dappfile {
+		d := &DimgInfo{Config: dimg, WithoutRegistry: true, Repo: repo, Tag: tag}
+		images = append(images, d)
 	}
 
-	serviceValues, err := GetServiceValues("PROJECT_NAME", "REPO", "NAMESPACE", "DOCKER_TAG", nil, images, ServiceValuesOptions{
-		Fake:            true,
-		WithoutRegistry: true,
-	})
+	serviceValues, err := GetServiceValues(projectName, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 
-	dappChart, err := getDappChart(opts.ProjectDir, m, opts.Values, opts.SecretValues, opts.Set, serviceValues)
+	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, serviceValues)
 	if err != nil {
 		return err
 	}

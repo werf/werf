@@ -22,10 +22,12 @@ type StageContainer struct {
 	serviceCommitChangeOptions *StageContainerOptions
 }
 
+const StageContainerNamePrefix = "dapp.build."
+
 func newStageImageContainer(image *Stage) *StageContainer {
 	c := &StageContainer{}
 	c.image = image
-	c.name = fmt.Sprintf("dapp.build.%v", util.GenerateConsistentRandomString(10))
+	c.name = fmt.Sprintf("%s%v", StageContainerNamePrefix, util.GenerateConsistentRandomString(10))
 	c.runOptions = newStageContainerOptions()
 	c.commitChangeOptions = newStageContainerOptions()
 	c.serviceCommitChangeOptions = newStageContainerOptions()

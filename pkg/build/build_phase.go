@@ -47,21 +47,40 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 			if err != nil {
 				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 			}
+
+			if err := img.SyncDockerState(); err != nil {
+				return err
+			}
 		}
 
 		// build
 		for _, s := range dimg.GetStages() {
 			img := s.GetImage()
 			if img.IsExists() {
+				if dimg.GetName() == "" {
+					fmt.Printf("# Using cached image %s for dimg %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
+				} else {
+					fmt.Printf("# Using cached image %s for dimg/%s %s\n", img.Name(), dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
+				}
+
 				continue
+			}
+
+			if dimg.GetName() == "" {
+				fmt.Printf("# Building image %s for dimg %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
+			} else {
+				fmt.Printf("# Building image %s for dimg/%s %s\n", img.Name(), dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
 			}
 
 			if debug() {
 				fmt.Printf("    %s\n", s.Name())
 			}
 
-			err := img.Build2(image.BuildOptions{})
-			if err != nil {
+			if err := s.PreRunHook(c); err != nil {
+				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
+			}
+
+			if err := img.Build(image.BuildOptions{}); err != nil {
 				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 			}
 		}

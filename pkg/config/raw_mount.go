@@ -51,7 +51,7 @@ func (c *rawMount) toDirective() (mount *Mount, err error) {
 
 func (c *rawMount) validateDirective(mount *Mount) (err error) {
 	if c.From != "" && c.FromPath != "" {
-		return newDetailedConfigError(fmt.Sprintf("Cannot use `from: %s` and `fromPath: %s` at the same time for mount!", c.From, c.FromPath), c, c.rawDimg.doc)
+		return newDetailedConfigError(fmt.Sprintf("cannot use `from: %s` and `fromPath: %s` at the same time for mount!", c.From, c.FromPath), c, c.rawDimg.doc)
 	}
 
 	if err := mount.validate(); err != nil {
