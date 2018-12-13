@@ -4,11 +4,13 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/api/types/filters"
+
+	"github.com/flant/dapp/pkg/build"
 )
 
 type CommonProjectOptions struct {
-	ProjectName   string        `json:"project_name"`
-	CommonOptions CommonOptions `json:"common_options"`
+	ProjectName   string
+	CommonOptions CommonOptions
 }
 
 func projectCleanup(options CommonProjectOptions) error {
@@ -42,5 +44,5 @@ func dappLabel(options CommonProjectOptions) string {
 }
 
 func stageCacheReference(options CommonProjectOptions) string {
-	return fmt.Sprintf("dimgstage-%s", options.ProjectName)
+	return fmt.Sprintf(build.LocalDimgstageImageNameFormat, options.ProjectName)
 }

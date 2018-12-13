@@ -143,9 +143,9 @@ func exceptRepoDimgstagesByRepoDimgstage(repoDimgstages []docker_registry.RepoIm
 		return nil, err
 	}
 
-	for label, value := range labels {
+	for label, signature := range labels {
 		if strings.HasPrefix(label, "dapp-artifact") {
-			repoDimgstages, err = exceptRepoDimgstagesByImageId(repoDimgstages, value)
+			repoDimgstages, err = exceptRepoDimgstagesBySignature(repoDimgstages, signature)
 			if err != nil {
 				return nil, err
 			}
@@ -172,6 +172,30 @@ func exceptRepoDimgstagesByRepoDimgstage(repoDimgstages []docker_registry.RepoIm
 	}
 
 	return repoDimgstages, nil
+}
+
+func exceptRepoDimgstagesBySignature(repoDimgstages []docker_registry.RepoImage, signature string) ([]docker_registry.RepoImage, error) {
+	repoDimgstage, err := findRepoDimgstageBySignature(repoDimgstages, signature)
+	if repoDimgstage == nil {
+		return repoDimgstages, nil
+	}
+
+	repoDimgstages, err = exceptRepoDimgstagesByRepoDimgstage(repoDimgstages, *repoDimgstage)
+	if err != nil {
+		return nil, err
+	}
+
+	return repoDimgstages, nil
+}
+
+func findRepoDimgstageBySignature(repoDimgstages []docker_registry.RepoImage, signature string) (*docker_registry.RepoImage, error) {
+	for _, repoDimgstage := range repoDimgstages {
+		if repoDimgstage.Tag == fmt.Sprintf(build.RepoDimgstageTagFormat, signature) {
+			return &repoDimgstage, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func repoImageParentId(repoImage docker_registry.RepoImage) (string, error) {
@@ -218,7 +242,7 @@ func projectDimgstagesSyncByRepoDimgs(commonProjectOptions CommonProjectOptions,
 			return err
 		}
 
-		dimgstages, err = exceptDimgstagesByImageId(dimgstages, parentId)
+		dimgstages, err = exceptDimgstagesByImageId(dimgstages, parentId, commonProjectOptions)
 		if err != nil {
 			return err
 		}
@@ -240,13 +264,13 @@ func projectDimgstagesSyncByRepoDimgs(commonProjectOptions CommonProjectOptions,
 	return nil
 }
 
-func exceptDimgstagesByImageId(dimgstages []types.ImageSummary, imageId string) ([]types.ImageSummary, error) {
+func exceptDimgstagesByImageId(dimgstages []types.ImageSummary, imageId string, options CommonProjectOptions) ([]types.ImageSummary, error) {
 	dimgstage := findDimgstageByImageId(dimgstages, imageId)
 	if dimgstage == nil {
 		return dimgstages, nil
 	}
 
-	dimgstages, err := exceptDimgstagesByDimgstage(dimgstages, *dimgstage)
+	dimgstages, err := exceptDimgstagesByDimgstage(dimgstages, *dimgstage, options)
 	if err != nil {
 		return nil, err
 	}
@@ -254,11 +278,11 @@ func exceptDimgstagesByImageId(dimgstages []types.ImageSummary, imageId string) 
 	return dimgstages, nil
 }
 
-func exceptDimgstagesByDimgstage(dimgstages []types.ImageSummary, dimgstage types.ImageSummary) ([]types.ImageSummary, error) {
+func exceptDimgstagesByDimgstage(dimgstages []types.ImageSummary, dimgstage types.ImageSummary, commonProjectOptions CommonProjectOptions) ([]types.ImageSummary, error) {
 	var err error
 	for label, value := range dimgstage.Labels {
 		if strings.HasPrefix(label, "dapp-artifact") {
-			dimgstages, err = exceptDimgstagesByImageId(dimgstages, value)
+			dimgstages, err = exceptDimgstagesBySignarute(dimgstages, value, commonProjectOptions)
 			if err != nil {
 				return nil, err
 			}
@@ -275,6 +299,38 @@ func exceptDimgstagesByDimgstage(dimgstages []types.ImageSummary, dimgstage type
 	}
 
 	return dimgstages, nil
+}
+
+func exceptDimgstagesBySignarute(dimgstages []types.ImageSummary, signature string, options CommonProjectOptions) ([]types.ImageSummary, error) {
+	dimgstage := findDimgstageBySignature(dimgstages, signature, options)
+	if dimgstage == nil {
+		return dimgstages, nil
+	}
+
+	dimgstages, err := exceptDimgstagesByDimgstage(dimgstages, *dimgstage, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return dimgstages, nil
+}
+
+func findDimgstageBySignature(dimgstages []types.ImageSummary, signature string, options CommonProjectOptions) *types.ImageSummary {
+	targetDimgstageName := stageCacheImage(signature, options)
+	for _, dimgstage := range dimgstages {
+		for _, dimgstageName := range dimgstage.RepoTags {
+			if dimgstageName == targetDimgstageName {
+				return &dimgstage
+			}
+
+		}
+	}
+
+	return nil
+}
+
+func stageCacheImage(signature string, options CommonProjectOptions) string {
+	return fmt.Sprintf(build.LocalDimgstageImageFormat, options.ProjectName, signature)
 }
 
 func findDimgstageByImageId(dimgstages []types.ImageSummary, imageId string) *types.ImageSummary {

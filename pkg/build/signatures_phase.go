@@ -10,6 +10,9 @@ import (
 
 const (
 	BuildCacheVersion = "33"
+
+	LocalDimgstageImageNameFormat = "dimgstage-%s"
+	LocalDimgstageImageFormat     = "dimgstage-%s:%s"
 )
 
 func NewSignaturesPhase() *SignaturesPhase {
@@ -73,7 +76,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 			s.SetSignature(stageSig)
 
-			imageName := fmt.Sprintf("dimgstage-%s:%s", c.ProjectName, stageSig)
+			imageName := fmt.Sprintf(LocalDimgstageImageFormat, c.ProjectName, stageSig)
 			i := c.GetOrCreateImage(prevImage, imageName)
 			s.SetImage(i)
 

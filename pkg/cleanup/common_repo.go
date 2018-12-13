@@ -8,9 +8,9 @@ import (
 )
 
 type CommonRepoOptions struct {
-	Repository string   `json:"repository"`
-	DimgsNames []string `json:"dimgs_names"`
-	DryRun     bool     `json:"dry_run"`
+	Repository string
+	DimgsNames []string
+	DryRun     bool
 }
 
 func repoDimgImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
