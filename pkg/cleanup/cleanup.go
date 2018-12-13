@@ -75,7 +75,7 @@ func exceptRepoDimgsByWhitelist(repoDimgs []docker_registry.RepoImage) ([]docker
 
 	deployedDockerImages, err := deployedDockerImages()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get deployed images: %s", err)
 	}
 
 Loop:
@@ -106,14 +106,14 @@ Loop:
 func repoDimgsCleanupByNonexistentGitPrimitive(repoDimgs []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
 	var nonexistentGitTagRepoImages, nonexistentGitCommitRepoImages, nonexistentGitBranchRepoImages []docker_registry.RepoImage
 
-	sluggedGitTags, err := consistentGitTags(options)
+	gitTags, err := options.LocalRepo.TagsList()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get local git tags list: %s", err)
 	}
 
-	sluggedGitBranches, err := consistentGitBranches(options)
+	gitBranches, err := options.LocalRepo.RemoteBranchesList()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get local git branches list: %s", err)
 	}
 
 Loop:
@@ -130,13 +130,13 @@ Loop:
 
 		switch scheme {
 		case "git_tag":
-			if repoImageTagMatch(repoDimg, sluggedGitTags...) {
+			if repoImageTagMatch(repoDimg, gitTags...) {
 				continue Loop
 			} else {
 				nonexistentGitTagRepoImages = append(nonexistentGitTagRepoImages, repoDimg)
 			}
 		case "git_branch":
-			if repoImageTagMatch(repoDimg, sluggedGitBranches...) {
+			if repoImageTagMatch(repoDimg, gitBranches...) {
 				continue Loop
 			} else {
 				nonexistentGitBranchRepoImages = append(nonexistentGitBranchRepoImages, repoDimg)
@@ -183,37 +183,9 @@ Loop:
 	return repoDimgs, nil
 }
 
-func consistentGitBranches(options CleanupOptions) ([]string, error) {
-	var sluggedBranches []string
-	branches, err := options.LocalRepo.RemoteBranchesList()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, branch := range branches {
-		sluggedBranches = append(sluggedBranches, slug.Slug(branch))
-	}
-
-	return sluggedBranches, nil
-}
-
-func consistentGitTags(options CleanupOptions) ([]string, error) {
-	var sluggedTags []string
-	tags, err := options.LocalRepo.TagsList()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, tag := range tags {
-		sluggedTags = append(sluggedTags, slug.Slug(tag))
-	}
-
-	return sluggedTags, nil
-}
-
 func repoImageTagMatch(repoImage docker_registry.RepoImage, matches ...string) bool {
 	for _, match := range matches {
-		if repoImage.Tag == match {
+		if repoImage.Tag == slug.DockerTag(match) {
 			return true
 		}
 	}
@@ -374,56 +346,56 @@ func deployedDockerImages() ([]string, error) {
 
 	images, err := getPodsImages()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get Pods images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getReplicationControllersImages()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get ReplicationControllers images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getDeploymentImages()
+	images, err = getDeploymentsImages()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get Deployments images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getStatefulSetsImages()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get StatefulSets images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getDaemonSetsImages()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get DaemonSets images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getReplicaSetsImages()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get ReplicaSets images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getCronJobsImages()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get CronJobs images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
 	images, err = getJobsImages()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get Jobs images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
@@ -463,7 +435,7 @@ func getReplicationControllersImages() ([]string, error) {
 	return images, nil
 }
 
-func getDeploymentImages() ([]string, error) {
+func getDeploymentsImages() ([]string, error) {
 	var images []string
 	list, err := kube.Kubernetes.AppsV1beta1().Deployments("").List(v1.ListOptions{})
 	if err != nil {
@@ -529,7 +501,7 @@ func getReplicaSetsImages() ([]string, error) {
 
 func getCronJobsImages() ([]string, error) {
 	var images []string
-	list, err := kube.Kubernetes.BatchV2alpha1().CronJobs("").List(v1.ListOptions{})
+	list, err := kube.Kubernetes.BatchV1beta1().CronJobs("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
