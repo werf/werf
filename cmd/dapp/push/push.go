@@ -114,7 +114,7 @@ func runPush(dimgsToProcess []string) error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logger.LogWarningF("WARNING: ssh agent termination failed: %s", err)
+			logger.LogWarningF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 

@@ -142,7 +142,7 @@ func GetProjectTmpDir() (string, error) {
 func RemoveProjectTmpDir(dir string) {
 	err := os.RemoveAll(dir)
 	if err != nil {
-		logger.LogWarningF("WARNING: unable to remove project tmp dir %s: %s", dir, err)
+		logger.LogWarningF("WARNING: unable to remove project tmp dir %s: %s\n", dir, err)
 	}
 }
 

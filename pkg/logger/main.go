@@ -102,10 +102,8 @@ func log(w io.Writer, msg string) {
 }
 
 func logF(w io.Writer, format string, args ...interface{}) {
-	msg := fmt.Sprintf(format, args...)
-
 	var linesWithIndent []string
-	lines := strings.Split(msg, "\n")
+	lines := strings.Split(fmt.Sprintf(format, args...), "\n")
 	for _, line := range lines {
 		if line == "" {
 			linesWithIndent = append(linesWithIndent, line)
