@@ -119,15 +119,15 @@ func runDeploy() error {
 		if err != nil {
 			return err
 		}
-	}
 
-	dockerAuthorizer, err := docker_authorizer.GetDeployDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, repo)
-	if err != nil {
-		return err
-	}
+		dockerAuthorizer, err := docker_authorizer.GetDeployDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, repo)
+		if err != nil {
+			return err
+		}
 
-	if err := docker.Init(dockerAuthorizer.HostDockerConfigDir); err != nil {
-		return err
+		if err := dockerAuthorizer.Login(repo); err != nil {
+			return fmt.Errorf("docker login failed: %s", err)
+		}
 	}
 
 	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {

@@ -41,7 +41,16 @@ func (a *DockerAuthorizer) login(creds *DockerCredentials, repo string) error {
 	if a.ExternalDockerConfig || creds == nil {
 		return nil
 	}
-	return docker.Login(creds.Username, creds.Password, repo)
+
+	if err := docker.Login(creds.Username, creds.Password, repo); err != nil {
+		return err
+	}
+
+	if err := docker.Init(a.HostDockerConfigDir); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GetBuildDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption string) (*DockerAuthorizer, error) {
@@ -133,6 +142,10 @@ func getDockerAuthorizer(projectTmpDir string, credentials, pullCredentials, pus
 			a.HostDockerConfigDir = GetHomeDockerConfigDir()
 			a.ExternalDockerConfig = true
 		}
+	}
+
+	if err := docker.Init(a.HostDockerConfigDir); err != nil {
+		return nil, err
 	}
 
 	return a, nil

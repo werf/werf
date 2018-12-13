@@ -94,10 +94,6 @@ func runBuild(dimgsToProcess []string) error {
 		return err
 	}
 
-	if err := docker.Init(dockerAuthorizer.HostDockerConfigDir); err != nil {
-		return err
-	}
-
 	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
