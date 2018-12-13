@@ -84,7 +84,17 @@ func LogWarningF(format string, args ...interface{}) {
 }
 
 func colorizeLogBaseF(w io.Writer, colorizeFunc func(string) string, format string, args ...interface{}) {
-	logF(w, colorizeFunc(fmt.Sprintf(format, args...)))
+	var colorizeLines []string
+	lines := strings.Split(fmt.Sprintf(format, args...), "\n")
+	for _, line := range lines {
+		if line == "" {
+			colorizeLines = append(colorizeLines, line)
+		} else {
+			colorizeLines = append(colorizeLines, colorizeFunc(line))
+		}
+	}
+
+	logF(w, strings.Join(colorizeLines, "\n"))
 }
 
 func log(w io.Writer, msg string) {
@@ -93,7 +103,18 @@ func log(w io.Writer, msg string) {
 
 func logF(w io.Writer, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
-	logBase(w, fmt.Sprintf("%s%s", logIndent(), msg))
+
+	var linesWithIndent []string
+	lines := strings.Split(msg, "\n")
+	for _, line := range lines {
+		if line == "" {
+			linesWithIndent = append(linesWithIndent, line)
+		} else {
+			linesWithIndent = append(linesWithIndent, fmt.Sprintf("%s%s", logIndent(), line))
+		}
+	}
+
+	logBase(w, strings.Join(linesWithIndent, "\n"))
 }
 
 func logBase(w io.Writer, msg string) {
