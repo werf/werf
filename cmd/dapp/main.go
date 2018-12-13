@@ -17,6 +17,7 @@ import (
 	"github.com/flant/dapp/cmd/dapp/render"
 	"github.com/flant/dapp/cmd/dapp/reset"
 	"github.com/flant/dapp/cmd/dapp/sync"
+	"github.com/flant/dapp/cmd/dapp/version"
 	"github.com/flant/dapp/pkg/process_exterminator"
 
 	secret_edit "github.com/flant/dapp/cmd/dapp/secret/edit"
@@ -62,6 +63,8 @@ func main() {
 
 		secretCmd(),
 		slugCmd(),
+
+		version.NewCmd(),
 	)
 
 	if err := cmd.Execute(); err != nil {
