@@ -2,7 +2,8 @@ package build
 
 import (
 	"fmt"
-	"os"
+
+	"github.com/spf13/cobra"
 
 	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/cmd/dapp/docker_authorizer"
@@ -10,9 +11,9 @@ import (
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/ssh_agent"
 	"github.com/flant/dapp/pkg/true_git"
-	"github.com/spf13/cobra"
 )
 
 var CmdData struct {
@@ -100,7 +101,7 @@ func runBuild(dimgsToProcess []string) error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "WARNING: ssh agent termination failed: %s", err)
+			logger.LogWarningF("WARNING: ssh agent termination failed: %s", err)
 		}
 	}()
 

@@ -8,13 +8,15 @@ import (
 	"path"
 	"strings"
 
+	"k8s.io/kubernetes/pkg/util/file"
+
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/git_repo"
+	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/spf13/cobra"
-	"k8s.io/kubernetes/pkg/util/file"
 )
 
 type CmdData struct {
@@ -140,7 +142,7 @@ func GetProjectTmpDir() (string, error) {
 func RemoveProjectTmpDir(dir string) {
 	err := os.RemoveAll(dir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: unable to remove project tmp dir %s: %s", dir, err)
+		logger.LogWarningF("WARNING: unable to remove project tmp dir %s: %s", dir, err)
 	}
 }
 
