@@ -129,9 +129,11 @@ func GetTagOptions(cmdData *CmdData, projectDir string) (build.TagOptions, error
 
 		if gitTag != "" {
 			opts.TagsByGitTag = append(opts.TagsByGitTag, slug.DockerTag(gitTag))
+			emptyTags = false
 		}
 		if gitBranch != "" {
 			opts.TagsByGitBranch = append(opts.TagsByGitBranch, slug.DockerTag(gitBranch))
+			emptyTags = false
 		}
 	}
 

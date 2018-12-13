@@ -148,6 +148,8 @@ func getDockerAuthorizer(projectTmpDir string, credentials, pullCredentials, pus
 		return nil, err
 	}
 
+	os.Setenv("DOCKER_CONFIG", a.HostDockerConfigDir)
+
 	return a, nil
 }
 
