@@ -99,9 +99,12 @@ func runDeploy() error {
 		return fmt.Errorf("getting project name failed: %s", err)
 	}
 
-	projectTmpDir, err := common.GetTmpDir()
+	projectTmpDir, err := common.GetProjectTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
+	}
+	if !docker.Debug() {
+		defer common.RemoveProjectTmpDir(projectTmpDir)
 	}
 
 	dappfile, err := common.GetDappfile(projectDir)

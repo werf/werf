@@ -76,16 +76,13 @@ func runBuild(dimgsToProcess []string) error {
 		return fmt.Errorf("getting project build dir failed: %s", err)
 	}
 
-	projectTmpDir, err := common.GetTmpDir()
+	projectTmpDir, err := common.GetProjectTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
-	defer func() {
-		err := os.RemoveAll(projectTmpDir)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "WARNING: unable to remove project tmp dir %s: %s", projectTmpDir, err)
-		}
-	}()
+	if !docker.Debug() {
+		defer common.RemoveProjectTmpDir(projectTmpDir)
+	}
 
 	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {

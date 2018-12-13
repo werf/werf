@@ -133,8 +133,15 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	return currentDir, nil
 }
 
-func GetTmpDir() (string, error) {
+func GetProjectTmpDir() (string, error) {
 	return ioutil.TempDir(dapp.GetTmpDir(), "dapp-")
+}
+
+func RemoveProjectTmpDir(dir string) {
+	err := os.RemoveAll(dir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "WARNING: unable to remove project tmp dir %s: %s", dir, err)
+	}
 }
 
 func GetProjectBuildDir(projectName string) (string, error) {

@@ -64,9 +64,12 @@ func runSync() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectTmpDir, err := common.GetTmpDir()
+	projectTmpDir, err := common.GetProjectTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
+	}
+	if !docker.Debug() {
+		defer common.RemoveProjectTmpDir(projectTmpDir)
 	}
 
 	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)

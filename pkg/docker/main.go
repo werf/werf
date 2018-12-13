@@ -65,6 +65,6 @@ func setDockerApiClient() error {
 	return nil
 }
 
-func debug() bool {
+func Debug() bool {
 	return os.Getenv("DAPP_DEBUG_DOCKER") == "1"
 }

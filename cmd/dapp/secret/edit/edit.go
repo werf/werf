@@ -21,6 +21,7 @@ import (
 	secret_common "github.com/flant/dapp/cmd/dapp/secret/common"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/deploy/secret"
+	"github.com/flant/dapp/pkg/docker"
 )
 
 var CmdData struct {
@@ -81,9 +82,12 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 		tmpFileName = "tmp_secret_file.yaml"
 	}
 
-	tmpDir, err := common.GetTmpDir()
+	tmpDir, err := common.GetProjectTmpDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
+	}
+	if !docker.Debug() {
+		defer common.RemoveProjectTmpDir(tmpDir)
 	}
 
 	tmpFilePath := filepath.Join(tmpDir, tmpFileName)

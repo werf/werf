@@ -24,7 +24,7 @@ func Login(username, password, repo string) error {
 	cmd.SetArgs([]string{"--username", username, "--password", password, repo})
 
 	err := cmd.Execute()
-	if debug() {
+	if Debug() {
 		fmt.Printf("Docker login stdout:\n%s\nDocker login stderr:\n%s\n", outb.String(), errb.String())
 	}
 

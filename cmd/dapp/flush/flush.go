@@ -69,9 +69,12 @@ func runFlush() error {
 	}
 
 	if CmdData.Repo != "" {
-		projectTmpDir, err := common.GetTmpDir()
+		projectTmpDir, err := common.GetProjectTmpDir()
 		if err != nil {
 			return fmt.Errorf("getting project tmp dir failed: %s", err)
+		}
+		if !docker.Debug() {
+			defer common.RemoveProjectTmpDir(projectTmpDir)
 		}
 
 		dockerAuthorizer, err := docker_authorizer.GetFlushDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
