@@ -1,15 +1,19 @@
 package config
 
+import "fmt"
+
 type rawDocker struct {
-	Volume     interface{}       `yaml:"VOLUME,omitempty"`
-	Expose     interface{}       `yaml:"EXPOSE,omitempty"`
-	Env        map[string]string `yaml:"ENV,omitempty"`
-	Label      map[string]string `yaml:"LABEL,omitempty"`
-	Cmd        interface{}       `yaml:"CMD,omitempty"`
-	Onbuild    interface{}       `yaml:"ONBUILD,omitempty"`
-	Workdir    string            `yaml:"WORKDIR,omitempty"`
-	User       string            `yaml:"USER,omitempty"`
-	Entrypoint interface{}       `yaml:"ENTRYPOINT,omitempty"`
+	Volume      interface{}       `yaml:"VOLUME,omitempty"`
+	Expose      interface{}       `yaml:"EXPOSE,omitempty"`
+	Env         map[string]string `yaml:"ENV,omitempty"`
+	Label       map[string]string `yaml:"LABEL,omitempty"`
+	Cmd         interface{}       `yaml:"CMD,omitempty"`
+	Onbuild     interface{}       `yaml:"ONBUILD,omitempty"`
+	Workdir     string            `yaml:"WORKDIR,omitempty"`
+	User        string            `yaml:"USER,omitempty"`
+	Entrypoint  interface{}       `yaml:"ENTRYPOINT,omitempty"`
+	StopSignal  interface{}       `yaml:"STOPSIGNAL,omitempty"`
+	HealthCheck string            `yaml:"HEALTHCHECK,omitempty"`
 
 	rawDimg *rawDimg `yaml:"-"` // parent
 
@@ -71,6 +75,9 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 	} else {
 		docker.Entrypoint = entrypoint
 	}
+
+	docker.StopSignal = fmt.Sprintf("%v", c.StopSignal)
+	docker.HealthCheck = c.HealthCheck
 
 	docker.raw = c
 

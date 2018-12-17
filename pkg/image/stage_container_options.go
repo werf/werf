@@ -20,6 +20,8 @@ type StageContainerOptions struct {
 	Workdir     string            `json:"workdir"`
 	User        string            `json:"user"`
 	Entrypoint  []string          `json:"entrypoint"`
+	StopSignal  string
+	HealthCheck string
 }
 
 func newStageContainerOptions() *StageContainerOptions {
@@ -67,6 +69,14 @@ func (co *StageContainerOptions) AddWorkdir(workdir string) {
 
 func (co *StageContainerOptions) AddUser(user string) {
 	co.User = user
+}
+
+func (co *StageContainerOptions) AddStopSignal(signal string) {
+	co.StopSignal = signal
+}
+
+func (co *StageContainerOptions) AddHealthCheck(check string) {
+	co.HealthCheck = check
 }
 
 func (co *StageContainerOptions) AddEntrypoint(entrypoints ...string) {
@@ -121,6 +131,18 @@ func (co *StageContainerOptions) merge(co2 *StageContainerOptions) *StageContain
 		mergedCo.Entrypoint = co.Entrypoint
 	} else {
 		mergedCo.Entrypoint = co2.Entrypoint
+	}
+
+	if co2.StopSignal == "" {
+		mergedCo.StopSignal = co.StopSignal
+	} else {
+		mergedCo.StopSignal = co2.StopSignal
+	}
+
+	if co2.HealthCheck == "" {
+		mergedCo.HealthCheck = co.HealthCheck
+	} else {
+		mergedCo.HealthCheck = co2.HealthCheck
 	}
 
 	return mergedCo
@@ -211,6 +233,14 @@ func (co *StageContainerOptions) toCommitChanges() ([]string, error) {
 		args = append(args, fmt.Sprintf("Entrypoint %s", entrypoint))
 	} else if len(co.Entrypoint) != 0 {
 		args = append(args, fmt.Sprintf("Entrypoint [\"%s\"]", strings.Join(co.Entrypoint, "\", \"")))
+	}
+
+	if co.StopSignal != "" {
+		args = append(args, fmt.Sprintf("STOPSIGNAL %s", co.StopSignal))
+	}
+
+	if co.HealthCheck != "" {
+		args = append(args, fmt.Sprintf("HEALTHCHECK %s", co.HealthCheck))
 	}
 
 	return args, nil
