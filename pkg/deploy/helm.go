@@ -133,8 +133,33 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 
 	fmt.Printf("%s\n%s\n", stdout, stderr)
 
+	if err := watchPods(templates, deployStartTime, namespace, opts); err != nil {
+		return err
+	}
 	if err := watchDeployments(templates, deployStartTime, namespace, opts); err != nil {
-		return fmt.Errorf("watching deployments failed: %s", err)
+		return err
+	}
+	if err := watchStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
+		return err
+	}
+	if err := watchDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
+		return err
+	}
+	if err := watchJobs(templates, deployStartTime, namespace, opts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func watchPods(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+	for _, template := range templates.Pods() {
+		fmt.Printf("# Run watch for pod '%s'\n", template.Metadata.Name)
+
+		err := rollout.TrackPodTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -148,6 +173,51 @@ func watchDeployments(templates *ChartTemplates, deployStartTime time.Time, name
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func watchStatefulSets(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+	for _, template := range templates.StatefulSets() {
+		fmt.Printf("# Run watch for statefulset '%s'\n", template.Metadata.Name)
+
+		err := rollout.TrackStatefulSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func watchDaemonSets(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+	for _, template := range templates.DaemonSets() {
+		fmt.Printf("# Run watch for daemonset '%s'\n", template.Metadata.Name)
+
+		err := rollout.TrackDaemonSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func watchJobs(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+	for _, template := range templates.Jobs() {
+		// Ignore hooks here
+		if _, ok := template.Metadata.Annotations["helm.sh/hook"]; ok {
+			continue
+		}
+
+		fmt.Printf("# Run watch for job '%s'\n", template.Metadata.Name)
+
+		err := rollout.TrackJobTillDone(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+		if err != nil {
+			return err
+		}
+
 	}
 
 	return nil
@@ -270,6 +340,10 @@ func isReleaseExist(releaseName string) (bool, error) {
 
 type ChartTemplates []*Template
 
+func (templates *ChartTemplates) Pods() []*Template {
+	return templates.ByKind("Pod")
+}
+
 func (templates *ChartTemplates) Jobs() []*Template {
 	return templates.ByKind("Job")
 }
@@ -278,11 +352,19 @@ func (templates *ChartTemplates) Deployments() []*Template {
 	return templates.ByKind("Deployment")
 }
 
+func (templates *ChartTemplates) StatefulSets() []*Template {
+	return templates.ByKind("StatefulSet")
+}
+
+func (templates *ChartTemplates) DaemonSets() []*Template {
+	return templates.ByKind("DaemonSet")
+}
+
 func (templates *ChartTemplates) ByKind(kind string) []*Template {
 	var resultTemplates []*Template
 
 	for _, template := range []*Template(*templates) {
-		if template.Kind == kind {
+		if strings.ToLower(template.Kind) == strings.ToLower(kind) {
 			resultTemplates = append(resultTemplates, template)
 		}
 	}
