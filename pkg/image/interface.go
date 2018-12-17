@@ -57,4 +57,6 @@ type ContainerOptions interface {
 	AddWorkdir(workdir string)
 	AddUser(user string)
 	AddEntrypoint(entrypoints ...string)
+	AddStopSignal(signal string)
+	AddHealthCheck(check string)
 }
