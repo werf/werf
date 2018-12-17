@@ -587,7 +587,6 @@ func (c *rawDimg) toDimgBaseDirective(name string) (dimgBase *DimgBase, err erro
 	dimgBase.From = c.From
 	dimgBase.FromCacheVersion = c.FromCacheVersion
 
-	dimgBase.Git = &GitManager{}
 	for _, git := range c.RawGit {
 		if git.gitType() == "local" {
 			if gitLocal, err := git.toGitLocalDirective(); err != nil {
@@ -654,6 +653,8 @@ func (c *rawDimg) toBaseDimgBaseDirective(name string) (dimgBase *DimgBase, err 
 			dimgBase.Mount = append(dimgBase.Mount, dimgMount)
 		}
 	}
+
+	dimgBase.Git = &GitManager{}
 
 	dimgBase.raw = c
 
