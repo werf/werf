@@ -14,7 +14,7 @@ import (
 	"github.com/flant/dapp/pkg/deploy/secret"
 	"github.com/ghodss/yaml"
 	"github.com/otiai10/copy"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 const (
@@ -27,9 +27,10 @@ const (
 )
 
 type DappChart struct {
-	ChartDir string
-	Values   []string
-	Set      []string
+	ChartDir  string
+	Values    []string
+	Set       []string
+	SetString []string
 
 	moreValuesCounter uint
 }
@@ -64,6 +65,11 @@ func (chart *DappChart) SetValues(values map[string]interface{}) error {
 
 func (chart *DappChart) SetValuesSet(set string) error {
 	chart.Set = append(chart.Set, set)
+	return nil
+}
+
+func (chart *DappChart) SetValuesSetString(setString string) error {
+	chart.SetString = append(chart.SetString, setString)
 	return nil
 }
 
@@ -105,6 +111,7 @@ func (chart *DappChart) Deploy(releaseName string, namespace string, opts HelmCh
 	return DeployHelmChart(chart.ChartDir, releaseName, namespace, HelmChartOptions{
 		CommonHelmOptions: CommonHelmOptions{KubeContext: opts.KubeContext},
 		Set:               append(chart.Set, opts.Set...),
+		SetString:         append(chart.SetString, opts.SetString...),
 		Values:            append(chart.Values, opts.Values...),
 		DryRun:            opts.DryRun,
 		Debug:             opts.Debug,
@@ -114,8 +121,9 @@ func (chart *DappChart) Deploy(releaseName string, namespace string, opts HelmCh
 func (chart *DappChart) Render() (string, error) {
 	args := []string{"template", chart.ChartDir}
 	args = append(args, commonHelmCommandArgs("", HelmChartOptions{
-		Set:    chart.Set,
-		Values: chart.Values,
+		Set:       chart.Set,
+		SetString: chart.SetString,
+		Values:    chart.Values,
 	})...)
 
 	stdout, stderr, err := HelmCmd(args...)
@@ -162,6 +170,9 @@ func (chart *DappChart) Lint() error {
 	args := []string{"lint", tmpChartDir, "--strict"}
 	for _, set := range chart.Set {
 		args = append(args, "--set", set)
+	}
+	for _, setString := range chart.SetString {
+		args = append(args, "--set-string", setString)
 	}
 	for _, values := range chart.Values {
 		args = append(args, "--values", values)

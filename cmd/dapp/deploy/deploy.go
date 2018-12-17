@@ -27,6 +27,7 @@ var CmdData struct {
 	Values       []string
 	SecretValues []string
 	Set          []string
+	SetString    []string
 
 	Repo             string
 	RegistryUsername string
@@ -65,6 +66,7 @@ func NewCmd() *cobra.Command {
 	cmd.PersistentFlags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
 	cmd.PersistentFlags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
 	cmd.PersistentFlags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
+	cmd.PersistentFlags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
 
 	cmd.PersistentFlags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to get images ids from. CI_REGISTRY_IMAGE will be used by default if available.")
 	cmd.PersistentFlags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username")
@@ -154,6 +156,7 @@ func runDeploy() error {
 		Values:          CmdData.Values,
 		SecretValues:    CmdData.SecretValues,
 		Set:             CmdData.Set,
+		SetString:       CmdData.SetString,
 		Timeout:         time.Duration(CmdData.Timeout) * time.Second,
 		WithoutRegistry: CmdData.WithoutRegistry,
 	})

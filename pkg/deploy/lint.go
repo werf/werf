@@ -11,6 +11,7 @@ type LintOptions struct {
 	Values       []string
 	SecretValues []string
 	Set          []string
+	SetString    []string
 }
 
 func RunLint(projectName, projectDir string, dappfile []*config.Dimg, opts LintOptions) error {
@@ -27,7 +28,7 @@ func RunLint(projectName, projectDir string, dappfile []*config.Dimg, opts LintO
 	tag := "DOCKER_TAG"
 	namespace := "NAMESPACE"
 
-	images := []DimgInfoGetter{}
+	var images []DimgInfoGetter
 	for _, dimg := range dappfile {
 		d := &DimgInfo{Config: dimg, WithoutRegistry: true, Repo: repo, Tag: tag}
 		images = append(images, d)
@@ -38,7 +39,7 @@ func RunLint(projectName, projectDir string, dappfile []*config.Dimg, opts LintO
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, serviceValues)
+	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {
 		return err
 	}

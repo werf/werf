@@ -36,7 +36,7 @@ func getSafeSecretManager(projectDir string, secretValues []string) (secret.Mana
 	return secret.NewSafeManager()
 }
 
-func getDappChart(projectDir string, m secret.Manager, values, secretValues, set []string, serviceValues map[string]interface{}) (*DappChart, error) {
+func getDappChart(projectDir string, m secret.Manager, values, secretValues, set, setString []string, serviceValues map[string]interface{}) (*DappChart, error) {
 	dappChart, err := GenerateDappChart(projectDir, m)
 	if err != nil {
 		return nil, err
@@ -58,6 +58,13 @@ func getDappChart(projectDir string, m secret.Manager, values, secretValues, set
 
 	for _, set := range set {
 		err = dappChart.SetValuesSet(set)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, setString := range setString {
+		err = dappChart.SetValuesSetString(setString)
 		if err != nil {
 			return nil, err
 		}
