@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/dapp/pkg/config"
@@ -16,7 +17,6 @@ import (
 	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/spf13/cobra"
 )
 
 type CmdData struct {

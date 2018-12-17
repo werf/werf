@@ -15,6 +15,7 @@ var CmdData struct {
 	Values       []string
 	SecretValues []string
 	Set          []string
+	SetString    []string
 }
 
 var CommonCmdData common.CmdData
@@ -39,6 +40,7 @@ func NewCmd() *cobra.Command {
 	cmd.PersistentFlags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
 	cmd.PersistentFlags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
 	cmd.PersistentFlags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
+	cmd.PersistentFlags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
 
 	return cmd
 }
@@ -75,5 +77,6 @@ func runRender() error {
 		Values:       CmdData.Values,
 		SecretValues: CmdData.SecretValues,
 		Set:          CmdData.Set,
+		SetString:    CmdData.SetString,
 	})
 }

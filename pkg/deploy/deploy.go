@@ -15,6 +15,7 @@ type DeployOptions struct {
 	Values          []string
 	SecretValues    []string
 	Set             []string
+	SetString       []string
 	Timeout         time.Duration
 	WithoutRegistry bool
 }
@@ -95,7 +96,7 @@ func RunDeploy(projectName, projectDir, releaseName, namespace, kubeContext, rep
 
 	localGit := &git_repo.Local{Path: projectDir, GitDir: filepath.Join(projectDir, ".git")}
 
-	images := []DimgInfoGetter{}
+	var images []DimgInfoGetter
 	for _, dimg := range dappfile {
 		d := &DimgInfo{Config: dimg, WithoutRegistry: opts.WithoutRegistry, Repo: repo, Tag: tag}
 		images = append(images, d)
@@ -106,7 +107,7 @@ func RunDeploy(projectName, projectDir, releaseName, namespace, kubeContext, rep
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, serviceValues)
+	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {
 		return err
 	}

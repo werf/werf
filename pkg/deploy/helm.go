@@ -61,11 +61,12 @@ func doPurgeHelmRelease(releaseName string, opts CommonHelmOptions) error {
 }
 
 type HelmChartOptions struct {
-	Set     []string
-	Values  []string
-	DryRun  bool
-	Debug   bool
-	Timeout time.Duration
+	Set       []string
+	SetString []string
+	Values    []string
+	DryRun    bool
+	Debug     bool
+	Timeout   time.Duration
 	CommonHelmOptions
 }
 
@@ -86,7 +87,7 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 		return fmt.Errorf("checking release failed: %s", err)
 	}
 
-	templates, err := parseTemplates(chartPath, releaseName, opts.Set, opts.Values)
+	templates, err := parseTemplates(chartPath, releaseName, opts.Set, opts.SetString, opts.Values)
 	if err != nil {
 		return fmt.Errorf("parsing templates failed: %s", err)
 	}
@@ -266,6 +267,10 @@ func commonHelmCommandArgs(namespace string, opts HelmChartOptions) []string {
 		args = append(args, "--set", set)
 	}
 
+	for _, setString := range opts.SetString {
+		args = append(args, "--set-string", setString)
+	}
+
 	for _, values := range opts.Values {
 		args = append(args, "--values", values)
 	}
@@ -392,12 +397,15 @@ func (t *Template) Namespace(namespace string) string {
 	return namespace
 }
 
-func parseTemplates(chartPath, releaseName string, set []string, values []string) (*ChartTemplates, error) {
+func parseTemplates(chartPath, releaseName string, set, setString []string, values []string) (*ChartTemplates, error) {
 	var templates []*Template
 
 	args := []string{"template", chartPath, "--name", releaseName}
 	for _, s := range set {
 		args = append(args, "--set", s)
+	}
+	for _, s := range setString {
+		args = append(args, "--set-string", s)
 	}
 	for _, v := range values {
 		args = append(args, "--values", v)

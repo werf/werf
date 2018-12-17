@@ -11,6 +11,7 @@ type RenderOptions struct {
 	Values       []string
 	SecretValues []string
 	Set          []string
+	SetString    []string
 }
 
 func RunRender(projectName, projectDir string, dappfile []*config.Dimg, opts RenderOptions) error {
@@ -27,7 +28,7 @@ func RunRender(projectName, projectDir string, dappfile []*config.Dimg, opts Ren
 	tag := "DOCKER_TAG"
 	namespace := "NAMESPACE"
 
-	images := []DimgInfoGetter{}
+	var images []DimgInfoGetter
 	for _, dimg := range dappfile {
 		d := &DimgInfo{Config: dimg, WithoutRegistry: true, Repo: repo, Tag: tag}
 		images = append(images, d)
@@ -35,7 +36,7 @@ func RunRender(projectName, projectDir string, dappfile []*config.Dimg, opts Ren
 
 	serviceValues, err := GetServiceValues(projectName, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 
-	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, serviceValues)
+	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {
 		return err
 	}
