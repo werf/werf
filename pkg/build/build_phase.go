@@ -7,11 +7,17 @@ import (
 	"github.com/flant/dapp/pkg/lock"
 )
 
-func NewBuildPhase() *BuildPhase {
-	return &BuildPhase{}
+func NewBuildPhase(opts BuildOptions) *BuildPhase {
+	return &BuildPhase{opts}
 }
 
-type BuildPhase struct{}
+type BuildOptions struct {
+	ImageBuildOptions image.BuildOptions
+}
+
+type BuildPhase struct {
+	BuildOptions
+}
 
 func (p *BuildPhase) Run(c *Conveyor) error {
 	if debug() {
@@ -80,7 +86,7 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
 			}
 
-			if err := img.Build(image.BuildOptions{}); err != nil {
+			if err := img.Build(p.ImageBuildOptions); err != nil {
 				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 			}
 		}

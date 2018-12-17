@@ -10,6 +10,7 @@ import (
 	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/docker"
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/ssh_agent"
@@ -26,6 +27,9 @@ var CmdData struct {
 	PushPassword     string
 	RegistryUsername string
 	RegistryPassword string
+
+	IntrospectBeforeError bool
+	IntrospectAfterError  bool
 }
 
 var CommonCmdData common.CmdData
@@ -70,6 +74,9 @@ func NewCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&CmdData.PushPassword, "push-password", "", "", "Docker registry password to authorize push to the docker repo")
 	cmd.PersistentFlags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images and push to the docker repo")
 	cmd.PersistentFlags().StringVarP(&CmdData.RegistryUsername, "registry-password", "", "", "Docker registry password to authorize pull of base images and push to the docker repo")
+
+	cmd.PersistentFlags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
+	cmd.PersistentFlags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	common.SetupTag(&CommonCmdData, cmd)
 
@@ -142,10 +149,17 @@ func runBP(dimgsToProcess []string) error {
 		return err
 	}
 
+	buildOpts := build.BuildOptions{
+		ImageBuildOptions: image.BuildOptions{
+			IntrospectAfterError:  CmdData.IntrospectAfterError,
+			IntrospectBeforeError: CmdData.IntrospectBeforeError,
+		},
+	}
+
 	pushOpts := build.PushOptions{TagOptions: tagOpts, WithStages: CmdData.WithStages}
 
 	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
-	if err = c.BP(repo, pushOpts); err != nil {
+	if err = c.BP(repo, buildOpts, pushOpts); err != nil {
 		return err
 	}
 

@@ -59,7 +59,7 @@ type Phase interface {
 	Run(*Conveyor) error
 }
 
-func (c *Conveyor) Build() error {
+func (c *Conveyor) Build(opts BuildOptions) error {
 	var err error
 
 	var phases []Phase
@@ -67,7 +67,7 @@ func (c *Conveyor) Build() error {
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareImagesPhase())
-	phases = append(phases, NewBuildPhase())
+	phases = append(phases, NewBuildPhase(opts))
 
 	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {
@@ -109,7 +109,7 @@ func (c *Conveyor) Push(repo string, opts PushOptions) error {
 	return c.runPhases(phases)
 }
 
-func (c *Conveyor) BP(repo string, opts PushOptions) error {
+func (c *Conveyor) BP(repo string, buildOpts BuildOptions, pushOpts PushOptions) error {
 	var err error
 
 	var phases []Phase
@@ -117,8 +117,8 @@ func (c *Conveyor) BP(repo string, opts PushOptions) error {
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareImagesPhase())
-	phases = append(phases, NewBuildPhase())
-	phases = append(phases, NewPushPhase(repo, opts))
+	phases = append(phases, NewBuildPhase(buildOpts))
+	phases = append(phases, NewPushPhase(repo, pushOpts))
 
 	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {
