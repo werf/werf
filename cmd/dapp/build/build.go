@@ -10,6 +10,7 @@ import (
 	"github.com/flant/dapp/pkg/build"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/docker"
+	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/ssh_agent"
@@ -19,6 +20,9 @@ import (
 var CmdData struct {
 	PullUsername string
 	PullPassword string
+
+	IntrospectBeforeError bool
+	IntrospectAfterError  bool
 }
 
 var CommonCmdData common.CmdData
@@ -45,6 +49,9 @@ func NewCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&CmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
 	cmd.PersistentFlags().StringVarP(&CmdData.PullUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images")
 	cmd.PersistentFlags().StringVarP(&CmdData.PullPassword, "registry-password", "", "", "Docker registry password to authorize pull of base images")
+
+	cmd.PersistentFlags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
+	cmd.PersistentFlags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	return cmd
 }
@@ -105,8 +112,15 @@ func runBuild(dimgsToProcess []string) error {
 		}
 	}()
 
+	buildOpts := build.BuildOptions{
+		ImageBuildOptions: image.BuildOptions{
+			IntrospectAfterError:  CmdData.IntrospectAfterError,
+			IntrospectBeforeError: CmdData.IntrospectBeforeError,
+		},
+	}
+
 	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
-	if err = c.Build(); err != nil {
+	if err = c.Build(buildOpts); err != nil {
 		return err
 	}
 
