@@ -12,6 +12,7 @@ import (
 	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/dapp/pkg/project_tmp_dir"
 	"github.com/flant/kubedog/pkg/kube"
 )
 
@@ -65,6 +66,10 @@ func runCleanup() error {
 		return err
 	}
 
+	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+		return err
+	}
+
 	kube.Init(kube.InitOptions{})
 
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
@@ -77,13 +82,11 @@ func runCleanup() error {
 		return fmt.Errorf("getting project name failed: %s", err)
 	}
 
-	projectTmpDir, err := common.GetProjectTmpDir()
+	projectTmpDir, err := project_tmp_dir.Get()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
-	if !docker.Debug() {
-		defer common.RemoveProjectTmpDir(projectTmpDir)
-	}
+	defer project_tmp_dir.Release(projectTmpDir)
 
 	repoName, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
 	if err != nil {

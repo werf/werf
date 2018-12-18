@@ -11,6 +11,7 @@ import (
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/docker"
 	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/dapp/pkg/project_tmp_dir"
 )
 
 var CmdData struct {
@@ -59,18 +60,20 @@ func runSync() error {
 		return err
 	}
 
+	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+		return err
+	}
+
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectTmpDir, err := common.GetProjectTmpDir()
+	projectTmpDir, err := project_tmp_dir.Get()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
-	if !docker.Debug() {
-		defer common.RemoveProjectTmpDir(projectTmpDir)
-	}
+	defer project_tmp_dir.Release(projectTmpDir)
 
 	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)
 	if err != nil {

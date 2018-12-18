@@ -13,6 +13,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/kubernetes/pkg/util/file"
@@ -21,7 +22,6 @@ import (
 	secret_common "github.com/flant/dapp/cmd/dapp/secret/common"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/deploy/secret"
-	"github.com/flant/dapp/pkg/docker"
 )
 
 var CmdData struct {
@@ -77,20 +77,9 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 		return err
 	}
 
-	tmpFileName := "tmp_secret_file"
-	if values {
-		tmpFileName = "tmp_secret_file.yaml"
-	}
+	tmpFilePath := filepath.Join(dapp.GetTmpDir(), fmt.Sprintf("dapp-edit-secret-%s", uuid.NewV4().String()))
+	defer os.RemoveAll(tmpFilePath)
 
-	tmpDir, err := common.GetProjectTmpDir()
-	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
-	}
-	if !docker.Debug() {
-		defer common.RemoveProjectTmpDir(tmpDir)
-	}
-
-	tmpFilePath := filepath.Join(tmpDir, tmpFileName)
 	if err := createTmpEditedFile(tmpFilePath, data); err != nil {
 		return err
 	}
