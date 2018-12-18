@@ -62,7 +62,7 @@ func (d *DimgInfo) GetName() string {
 
 func (d *DimgInfo) GetImageName() string {
 	if d.Config.Name == "" {
-		return fmt.Sprintf("%s:%s", d.Config.Name, d.Tag)
+		return fmt.Sprintf("%s:%s", d.Repo, d.Tag)
 	}
 	return fmt.Sprintf("%s/%s:%s", d.Repo, d.Config.Name, d.Tag)
 }
