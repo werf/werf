@@ -18,6 +18,7 @@ type Image interface {
 	SyncDockerState() error
 
 	Pull() error
+	Untag() error
 
 	SaveInCache() error
 

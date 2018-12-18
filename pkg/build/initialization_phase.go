@@ -21,12 +21,12 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) error {
-	dimgsInOrder, err := generateDimgsInOrder(c.Dappfile, c)
+	dimgsInOrder, err := generateDimgsInOrder(c.dappfile, c)
 	if err != nil {
 		return err
 	}
 
-	c.DimgsInOrder = dimgsInOrder
+	c.dimgsInOrder = dimgsInOrder
 
 	return nil
 }
@@ -94,10 +94,10 @@ func getDimgConfigsInOrder(dappfile []*config.Dimg, c *Conveyor) []config.DimgIn
 func getDimgConfigToProcess(dappfile []*config.Dimg, c *Conveyor) []*config.Dimg {
 	var dimgConfigsToProcess []*config.Dimg
 
-	if len(c.DimgNamesToProcess) == 0 {
+	if len(c.dimgNamesToProcess) == 0 {
 		dimgConfigsToProcess = dappfile
 	} else {
-		for _, dimgName := range c.DimgNamesToProcess {
+		for _, dimgName := range c.dimgNamesToProcess {
 			dimgToProcess := getDimgConfigByName(dappfile, dimgName)
 			if dimgToProcess == nil {
 				logger.LogWarningF("WARNING: Specified dimg '%s' isn't defined in dappfile!\n", dimgName)
@@ -139,8 +139,8 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 		DimgName:         dimgName,
 		ConfigMounts:     dimgBaseConfig.Mount,
 		DimgTmpDir:       c.GetDimgTmpDir(dimgBaseConfig.Name),
-		ContainerDappDir: c.ContainerDappDir,
-		ProjectBuildDir:  c.ProjectBuildDir,
+		ContainerDappDir: c.containerDappDir,
+		ProjectBuildDir:  c.projectBuildDir,
 	}
 
 	gaArchiveStageOptions := &stage.NewGAArchiveStageOptions{
@@ -222,8 +222,8 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 	if len(dimgBaseConfig.Git.Local) != 0 {
 		localGitRepo = &git_repo.Local{
 			Base:   git_repo.Base{Name: "own"},
-			Path:   c.ProjectDir,
-			GitDir: path.Join(c.ProjectDir, ".git"),
+			Path:   c.projectDir,
+			GitDir: path.Join(c.projectDir, ".git"),
 		}
 	}
 
@@ -273,7 +273,7 @@ func getRemoteGitRepoClonePath(remoteGaConfig *config.GitRemote, c *Conveyor) (s
 	}
 
 	clonePath := path.Join(
-		c.ProjectBuildDir,
+		c.projectBuildDir,
 		"remote_git_repo",
 		fmt.Sprintf("%v", git_repo.RemoteGitRepoCacheVersion),
 		slug.Slug(remoteGaConfig.Name),
@@ -352,19 +352,19 @@ func baseGitArtifactInit(local *config.GitLocalExport, dimgName string, c *Conve
 }
 
 func getDimgPatchesDir(dimgName string, c *Conveyor) string {
-	return path.Join(c.TmpDir, dimgName, "patch")
+	return path.Join(c.tmpDir, dimgName, "patch")
 }
 
 func getDimgPatchesContainerDir(c *Conveyor) string {
-	return path.Join(c.ContainerDappDir, "patch")
+	return path.Join(c.containerDappDir, "patch")
 }
 
 func getDimgArchivesDir(dimgName string, c *Conveyor) string {
-	return path.Join(c.TmpDir, dimgName, "archive")
+	return path.Join(c.tmpDir, dimgName, "archive")
 }
 
 func getDimgArchivesContainerDir(c *Conveyor) string {
-	return path.Join(c.ContainerDappDir, "archive")
+	return path.Join(c.containerDappDir, "archive")
 }
 
 func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]string {

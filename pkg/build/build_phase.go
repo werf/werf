@@ -24,7 +24,7 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		fmt.Printf("BuildPhase.Run\n")
 	}
 
-	for _, dimg := range c.DimgsInOrder {
+	for _, dimg := range c.dimgsInOrder {
 		if debug() {
 			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
 		}
@@ -48,7 +48,7 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 				continue
 			}
 
-			imageLockName := fmt.Sprintf("%s.image.%s", c.ProjectName, img.Name())
+			imageLockName := fmt.Sprintf("%s.image.%s", c.projectName, img.Name())
 			err := lock.Lock(imageLockName, lock.LockOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)

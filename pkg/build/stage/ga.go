@@ -18,6 +18,19 @@ func (s *GAStage) IsEmpty(_ Conveyor, prevBuiltImage image.Image) (bool, error) 
 	return len(s.gitArtifacts) == 0, nil
 }
 
+func (s *GAStage) ShouldBeReset(builtImage image.Image) (bool, error) {
+	for _, ga := range s.gitArtifacts {
+		commit := ga.GetGACommitFromImageLabels(builtImage)
+		if exist, err := ga.GitRepo().IsCommitExists(commit); err != nil {
+			return false, err
+		} else if !exist {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (s *GAStage) AfterImageSyncDockerStateHook(c Conveyor) error {
 	if !s.image.IsExists() {
 		stageName := c.GetBuildingGAStage(s.dimgName)
