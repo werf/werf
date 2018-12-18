@@ -76,7 +76,10 @@ func (c *rawDocker) toDirective() (docker *Docker, err error) {
 		docker.Entrypoint = entrypoint
 	}
 
-	docker.StopSignal = fmt.Sprintf("%v", c.StopSignal)
+	if c.StopSignal != nil {
+		docker.StopSignal = fmt.Sprintf("%v", c.StopSignal)
+	}
+
 	docker.HealthCheck = c.HealthCheck
 
 	docker.raw = c
