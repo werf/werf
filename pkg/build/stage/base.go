@@ -144,6 +144,10 @@ func (s *BaseStage) getServiceMountsFromConfig() map[string][]string {
 	mountpointsByType := map[string][]string{}
 
 	for _, mountCfg := range s.configMounts {
+		if !util.IsStringsContainValue([]string{"tmp_dir", "build_dir"}, mountCfg.Type) {
+			continue
+		}
+
 		mountpoint := filepath.Clean(mountCfg.To)
 		mountpointsByType[mountCfg.Type] = append(mountpointsByType[mountCfg.Type], mountpoint)
 	}
