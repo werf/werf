@@ -52,7 +52,7 @@ main() {
   if [ -n "$BINTRAY_AUTH" ] ; then
     ( bintray_create_version && echo "Bintray: Version $VERSION created" ) || ( exit 1 )
 
-    for $bin in dapp ; do
+    for bin in dapp ; do
       ( bintray_upload_file $bin ) || ( exit 1 )
       ( bintray_upload_file $bin.sha ) || ( exit 1 )
     done
