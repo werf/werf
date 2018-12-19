@@ -83,6 +83,10 @@ func (s *BaseStage) IsEmpty(_ Conveyor, _ image.Image) (bool, error) {
 	return false, nil
 }
 
+func (s *BaseStage) ShouldBeReset(_ image.Image) (bool, error) {
+	return false, nil
+}
+
 func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.Image) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.

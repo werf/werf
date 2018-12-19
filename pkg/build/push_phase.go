@@ -49,7 +49,7 @@ func (p *PushPhase) Run(c *Conveyor) error {
 		return fmt.Errorf("login into '%s' for push failed: %s", p.Repo, err)
 	}
 
-	for _, dimg := range c.DimgsInOrder {
+	for _, dimg := range c.dimgsInOrder {
 		if p.WithStages {
 			if dimg.GetName() == "" {
 				fmt.Printf("# Pushing dimg stages cache\n")

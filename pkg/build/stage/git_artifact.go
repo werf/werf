@@ -177,8 +177,8 @@ func (ga *GitArtifact) AddGACommitToImageLabels(image image.Image, commit string
 	})
 }
 
-func (ga *GitArtifact) GetGACommitFromImageLabels(prevImage image.Image) string {
-	commit, ok := prevImage.Labels()[ga.ImageGACommitLabel()]
+func (ga *GitArtifact) GetGACommitFromImageLabels(builtImage image.Image) string {
+	commit, ok := builtImage.Labels()[ga.ImageGACommitLabel()]
 	if !ok {
 		return ""
 	}

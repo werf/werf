@@ -24,6 +24,13 @@ func (s *GALatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.Image) (bo
 
 	isEmpty := true
 	for _, ga := range s.gitArtifacts {
+		commit := ga.GetGACommitFromImageLabels(prevBuiltImage)
+		if exist, err := ga.GitRepo().IsCommitExists(commit); err != nil {
+			return false, err
+		} else if !exist {
+			return true, nil
+		}
+
 		if empty, err := ga.IsPatchEmpty(prevBuiltImage); err != nil {
 			return false, err
 		} else if !empty {

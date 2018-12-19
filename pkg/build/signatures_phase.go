@@ -26,7 +26,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 		fmt.Printf("SignaturesPhase.Run\n")
 	}
 
-	for _, dimg := range c.DimgsInOrder {
+	for _, dimg := range c.dimgsInOrder {
 		if debug() {
 			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
 		}
@@ -76,7 +76,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 			s.SetSignature(stageSig)
 
-			imageName := fmt.Sprintf(LocalDimgstageImageFormat, c.ProjectName, stageSig)
+			imageName := fmt.Sprintf(LocalDimgstageImageFormat, c.projectName, stageSig)
 			i := c.GetOrCreateImage(prevImage, imageName)
 			s.SetImage(i)
 

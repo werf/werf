@@ -20,7 +20,7 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 		fmt.Printf("PrepareImagesPhase.Run\n")
 	}
 
-	for _, dimg := range c.DimgsInOrder {
+	for _, dimg := range c.dimgsInOrder {
 		if debug() {
 			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
 		}
@@ -51,16 +51,16 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 
 			imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
 			imageServiceCommitChangeOptions.AddLabel(map[string]string{
-				"dapp":                c.ProjectName,
+				"dapp":                c.projectName,
 				"dapp-version":        dapp.Version,
 				DappCacheVersionLabel: BuildCacheVersion,
 				"dapp-dimg":           "false",
 				"dapp-dev-mode":       "false",
 			})
 
-			if c.SSHAuthSock != "" {
+			if c.sshAuthSock != "" {
 				imageRunOptions := img.Container().RunOptions()
-				imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.SSHAuthSock))
+				imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.sshAuthSock))
 				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
 			}
 

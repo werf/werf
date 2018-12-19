@@ -18,14 +18,14 @@ func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
 		fmt.Printf("ShouldBeBuiltPhase.Run\n")
 	}
 
-	badDimgs := []*Dimg{}
+	var badDimgs []*Dimg
 
-	for _, dimg := range c.DimgsInOrder {
+	for _, dimg := range c.dimgsInOrder {
 		if debug() {
 			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
 		}
 
-		badStages := []stage.Interface{}
+		var badStages []stage.Interface
 
 		for _, s := range dimg.GetStages() {
 			image := s.GetImage()

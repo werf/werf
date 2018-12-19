@@ -6,6 +6,7 @@ type Interface interface {
 	Name() StageName
 
 	IsEmpty(c Conveyor, prevBuiltImage image.Image) (bool, error)
+	ShouldBeReset(builtImage image.Image) (bool, error)
 
 	GetDependencies(c Conveyor, prevImage image.Image) (string, error)
 

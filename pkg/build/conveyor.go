@@ -3,33 +3,43 @@ package build
 import (
 	"fmt"
 	"path"
+	"path/filepath"
 
 	"github.com/flant/dapp/pkg/build/stage"
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/dapp/pkg/util"
 )
 
 type Conveyor struct {
-	Dappfile           []*config.Dimg
-	DimgsInOrder       []*Dimg
-	DimgNamesToProcess []string
+	*conveyorPermanentFields
+
+	dimgsInOrder []*Dimg
 
 	stageImages                   map[string]*image.Stage
 	buildingGAStageNameByDimgName map[string]stage.StageName
 	remoteGitRepos                map[string]*git_repo.Remote
-	dockerAuthorizer              DockerAuthorizer
 	imagesBySignature             map[string]image.Image
 
-	ProjectName string
+	tmpDir string
+}
 
-	ProjectDir       string
-	ProjectBuildDir  string
-	ContainerDappDir string
-	TmpDir           string
+type conveyorPermanentFields struct {
+	dappfile           []*config.Dimg
+	dimgNamesToProcess []string
 
-	SSHAuthSock string
+	projectName string
+
+	projectDir       string
+	projectBuildDir  string
+	containerDappDir string
+	baseTmpDir       string
+
+	dockerAuthorizer DockerAuthorizer
+
+	sshAuthSock string
 }
 
 type DockerAuthorizer interface {
@@ -37,22 +47,38 @@ type DockerAuthorizer interface {
 	LoginForPush(repo string) error
 }
 
-func NewConveyor(dappfile []*config.Dimg, dimgNamesToProcess []string, projectDir, projectName, buildDir, tmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
-	return &Conveyor{
-		Dappfile:                      dappfile,
-		DimgNamesToProcess:            dimgNamesToProcess,
-		ProjectDir:                    projectDir,
-		ProjectName:                   projectName,
-		ProjectBuildDir:               buildDir,
-		ContainerDappDir:              "/.dapp",
-		TmpDir:                        tmpDir,
-		SSHAuthSock:                   sshAuthSock,
-		stageImages:                   make(map[string]*image.Stage),
-		dockerAuthorizer:              authorizer,
-		buildingGAStageNameByDimgName: make(map[string]stage.StageName),
-		remoteGitRepos:                make(map[string]*git_repo.Remote),
-		imagesBySignature:             make(map[string]image.Image),
+func NewConveyor(dappfile []*config.Dimg, dimgNamesToProcess []string, projectDir, projectName, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
+	c := &Conveyor{
+		conveyorPermanentFields: &conveyorPermanentFields{
+			dappfile:           dappfile,
+			dimgNamesToProcess: dimgNamesToProcess,
+
+			projectName: projectName,
+
+			projectDir:       projectDir,
+			projectBuildDir:  buildDir,
+			containerDappDir: "/.dapp",
+			baseTmpDir:       baseTmpDir,
+
+			dockerAuthorizer: authorizer,
+
+			sshAuthSock: sshAuthSock,
+		},
 	}
+	c.ReInitRuntimeFields()
+
+	return c
+}
+
+func (c *Conveyor) ReInitRuntimeFields() {
+	c.stageImages = make(map[string]*image.Stage)
+	c.imagesBySignature = make(map[string]image.Image)
+
+	c.buildingGAStageNameByDimgName = make(map[string]stage.StageName)
+
+	c.remoteGitRepos = make(map[string]*git_repo.Remote)
+
+	c.tmpDir = filepath.Join(c.baseTmpDir, string(util.GenerateConsistentRandomString(10)))
 }
 
 type Phase interface {
@@ -60,6 +86,20 @@ type Phase interface {
 }
 
 func (c *Conveyor) Build(opts BuildOptions) error {
+restart:
+	if err := c.build(opts); err != nil {
+		if isConveyorShouldBeResetError(err) {
+			c.ReInitRuntimeFields()
+			goto restart
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (c *Conveyor) build(opts BuildOptions) error {
 	var err error
 
 	var phases []Phase
@@ -110,6 +150,20 @@ func (c *Conveyor) Push(repo string, opts PushOptions) error {
 }
 
 func (c *Conveyor) BP(repo string, buildOpts BuildOptions, pushOpts PushOptions) error {
+restart:
+	if err := c.bp(repo, buildOpts, pushOpts); err != nil {
+		if isConveyorShouldBeResetError(err) {
+			c.ReInitRuntimeFields()
+			goto restart
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func (c *Conveyor) bp(repo string, buildOpts BuildOptions, pushOpts PushOptions) error {
 	var err error
 
 	var phases []Phase
@@ -140,7 +194,7 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 }
 
 func (c *Conveyor) lockAllImagesReadOnly() (string, error) {
-	lockName := fmt.Sprintf("%s.images", c.ProjectName)
+	lockName := fmt.Sprintf("%s.images", c.projectName)
 	err := lock.Lock(lockName, lock.LockOptions{ReadOnly: true})
 	if err != nil {
 		return "", fmt.Errorf("error locking %s: %s", lockName, err)
@@ -171,7 +225,7 @@ func (c *Conveyor) SetImageBySignature(signature string, img image.Image) {
 }
 
 func (c *Conveyor) GetDimg(name string) *Dimg {
-	for _, dimg := range c.DimgsInOrder {
+	for _, dimg := range c.dimgsInOrder {
 		if dimg.GetName() == name {
 			return dimg
 		}
@@ -206,5 +260,5 @@ func (c *Conveyor) GetBuildingGAStage(dimgName string) stage.StageName {
 }
 
 func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
-	return path.Join(c.TmpDir, "dimg", dimgName)
+	return path.Join(c.tmpDir, "dimg", dimgName)
 }
