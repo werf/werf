@@ -3,7 +3,6 @@ package common
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -14,7 +13,6 @@ import (
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/git_repo"
-	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/kubedog/pkg/kube"
 )
@@ -133,17 +131,6 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	}
 
 	return currentDir, nil
-}
-
-func GetProjectTmpDir() (string, error) {
-	return ioutil.TempDir(dapp.GetTmpDir(), "dapp-")
-}
-
-func RemoveProjectTmpDir(dir string) {
-	err := os.RemoveAll(dir)
-	if err != nil {
-		logger.LogWarningF("WARNING: unable to remove project tmp dir %s: %s\n", dir, err)
-	}
 }
 
 func GetProjectBuildDir(projectName string) (string, error) {

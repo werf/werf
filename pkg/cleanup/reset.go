@@ -23,12 +23,16 @@ func ResetAll(options CommonOptions) error {
 		return err
 	}
 
+	if err := RemoveLostTmpDappFiles(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func deleteDappFiles(options CommonOptions) error {
 	var directoryPathToDelete []string
-	for _, directory := range []string{"bin", "builds", "git", "worktree"} {
+	for _, directory := range []string{"bin", "builds", "git", "worktree", "tmp"} {
 		directoryPath := filepath.Join(dapp.GetHomeDir(), directory)
 
 		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {

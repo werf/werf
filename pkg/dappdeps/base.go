@@ -7,10 +7,14 @@ import (
 
 const BASE_VERSION = "0.2.3"
 
+func BaseImageName() string {
+	return fmt.Sprintf("dappdeps/base:%s", BASE_VERSION)
+}
+
 func BaseContainer() (string, error) {
 	container := &container{
 		Name:      fmt.Sprintf("dappdeps_base_%s", BASE_VERSION),
-		ImageName: fmt.Sprintf("dappdeps/base:%s", BASE_VERSION),
+		ImageName: BaseImageName(),
 		Volume:    fmt.Sprintf("/.dapp/deps/base/%s", BASE_VERSION),
 	}
 

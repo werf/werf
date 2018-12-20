@@ -12,6 +12,7 @@ import (
 	"github.com/flant/dapp/cmd/dapp/deploy"
 	"github.com/flant/dapp/cmd/dapp/dismiss"
 	"github.com/flant/dapp/cmd/dapp/flush"
+	"github.com/flant/dapp/cmd/dapp/gc"
 	"github.com/flant/dapp/cmd/dapp/lint"
 	"github.com/flant/dapp/cmd/dapp/push"
 	"github.com/flant/dapp/cmd/dapp/render"
@@ -60,6 +61,7 @@ func main() {
 		flush.NewCmd(),
 		sync.NewCmd(),
 		cleanup.NewCmd(),
+		gc.NewCmd(),
 
 		secretCmd(),
 		slugCmd(),
