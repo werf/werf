@@ -2,12 +2,15 @@ package cleanup
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/flant/dapp/pkg/dapp"
+	"github.com/flant/dapp/pkg/logger"
 )
 
 func ResetAll(options CommonOptions) error {
@@ -23,12 +26,31 @@ func ResetAll(options CommonOptions) error {
 		return err
 	}
 
+	tmpFiles, err := ioutil.ReadDir(dapp.GetTmpDir())
+	if err != nil {
+		return fmt.Errorf("unable to list tmp files in %s: %s", dapp.GetTmpDir(), err)
+	}
+
+	filesToRemove := []string{}
+	for _, finfo := range tmpFiles {
+		if strings.HasPrefix(finfo.Name(), "dapp") {
+			filesToRemove = append(filesToRemove, filepath.Join(dapp.GetTmpDir(), finfo.Name()))
+		}
+	}
+
+	for _, file := range filesToRemove {
+		err := os.RemoveAll(file)
+		if err != nil {
+			logger.LogWarningF("WARNING: unable to remove %s: %s\n", file, err)
+		}
+	}
+
 	return nil
 }
 
 func deleteDappFiles(options CommonOptions) error {
 	var directoryPathToDelete []string
-	for _, directory := range []string{"bin", "builds", "git", "worktree"} {
+	for _, directory := range []string{"bin", "builds", "git", "worktree", "tmp"} {
 		directoryPath := filepath.Join(dapp.GetHomeDir(), directory)
 
 		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {
