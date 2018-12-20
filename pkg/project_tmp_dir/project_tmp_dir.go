@@ -8,11 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/dapp/pkg/lock"
-
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/dappdeps"
 	"github.com/flant/dapp/pkg/docker"
+	"github.com/flant/dapp/pkg/lock"
 )
 
 func GetCreatedTmpDirs() string {

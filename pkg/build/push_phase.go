@@ -3,10 +3,9 @@ package build
 import (
 	"fmt"
 
+	"github.com/flant/dapp/pkg/docker_registry"
 	"github.com/flant/dapp/pkg/image"
 	"github.com/flant/dapp/pkg/lock"
-
-	"github.com/flant/dapp/pkg/docker_registry"
 	"github.com/flant/dapp/pkg/util"
 )
 

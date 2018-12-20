@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 )
 
-const (
-	Version = "1.0.0-alpha.1"
+var (
+	Version = "dev"
 )
 
 var (
