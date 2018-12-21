@@ -25,6 +25,10 @@ import (
 	"k8s.io/kubernetes/pkg/util/file"
 )
 
+const (
+	DefaultHelmTimeout = 24 * time.Hour
+)
+
 type CommonHelmOptions struct {
 	KubeContext string
 }
@@ -143,7 +147,7 @@ func watchDeployments(templates *ChartTemplates, deployStartTime time.Time, name
 	for _, template := range templates.Deployments() {
 		fmt.Printf("# Run watch for deployment '%s'\n", template.Metadata.Name)
 
-		err := rollout.TrackDeploymentTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+		err := rollout.TrackDeploymentTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
 		if err != nil {
 			return err
 		}
@@ -171,7 +175,7 @@ func watchJobHooks(templates *ChartTemplates, releaseExist bool, deployStartTime
 				jobNamespace = namespace
 			}
 
-			err := rollout.TrackJobTillDone(template.Metadata.Name, jobNamespace, kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+			err := rollout.TrackJobTillDone(template.Metadata.Name, jobNamespace, kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "ERROR %s\n", err)
 				break
@@ -210,6 +214,8 @@ func commonHelmCommandArgs(namespace string, opts HelmChartOptions) []string {
 
 	if opts.Timeout != 0 {
 		args = append(args, "--timeout", fmt.Sprintf("%v", opts.Timeout.Seconds()))
+	} else {
+		args = append(args, "--timeout", fmt.Sprintf("%v", DefaultHelmTimeout.Seconds()))
 	}
 
 	return args
