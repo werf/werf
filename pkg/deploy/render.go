@@ -47,7 +47,7 @@ func RunRender(opts RenderOptions) error {
 		defer os.RemoveAll(dappChart.ChartDir)
 	}
 
-	data, err := dappChart.Render()
+	data, err := dappChart.Render("NAMESPACE")
 	if err != nil {
 		return err
 	}

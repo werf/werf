@@ -111,12 +111,17 @@ func (chart *DappChart) Deploy(releaseName string, namespace string, opts HelmCh
 	})
 }
 
-func (chart *DappChart) Render() (string, error) {
+func (chart *DappChart) Render(namespace string) (string, error) {
 	args := []string{"template", chart.ChartDir}
-	args = append(args, commonHelmCommandArgs("", HelmChartOptions{
-		Set:    chart.Set,
-		Values: chart.Values,
-	})...)
+
+	args = append(args, "--namespace", namespace)
+
+	for _, set := range chart.Set {
+		args = append(args, "--set", set)
+	}
+	for _, values := range chart.Values {
+		args = append(args, "--values", values)
+	}
 
 	stdout, stderr, err := HelmCmd(args...)
 	if err != nil {
