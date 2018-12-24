@@ -1,0 +1,16 @@
+dist: xenial
+
+language: go
+go:
+- "1.x"
+
+install:
+- if [[ "x$TRAVIS_TAG" != "x" ]] ; then ./go-get.sh ; fi
+
+script: echo
+
+deploy:
+  provider: script
+  script: ./release/publish.sh --tag $TRAVIS_TAG $(if ! echo $TRAVIS_TAG | grep -P "alpha|beta|rc" -q ; then echo --no-prerelease ; fi)
+  on:
+    tags: true

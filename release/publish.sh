@@ -6,10 +6,12 @@ BINTRAY_SUBJECT=dapp      # bintray organization
 BINTRAY_REPO=dapp         # bintray repository
 BINTRAY_PACKAGE=Dapp      # bintray package in repository
 
+#NO_PRERELEASE=           # This is not a pre release
+
 GITHUB_OWNER=flant     # github user/org
 GITHUB_REPO=dapp       # github repository
 
-UPLOAD_FROM_DIR=$GOPATH/bin
+RELEASE_BUILD_DIR=$(pwd)/release/build
 
 GIT_REMOTE=origin      # can be changed to upstream with env
 
@@ -46,15 +48,16 @@ main() {
   # change to *contents to get commit message
   TAG_RELEASE_MESSAGE=$($gitPath for-each-ref --format="%(contents)" refs/tags/$GIT_TAG | jq -R -s '.' )
 
-  calculate_binaries_checksums && echo "Binaries checksums calculation is successful" || ( exit 1 )
+  source $(dirname $0)/build.sh $GIT_TAG
 
   echo "Publish version $VERSION from git tag $GIT_TAG"
   if [ -n "$BINTRAY_AUTH" ] ; then
     ( bintray_create_version && echo "Bintray: Version $VERSION created" ) || ( exit 1 )
 
-    for bin in dapp ; do
-      ( bintray_upload_file $bin ) || ( exit 1 )
-      ( bintray_upload_file $bin.sha ) || ( exit 1 )
+    for filename in dapp dapp.sha ; do
+      for arch in darwin linux ; do
+        ( bintray_upload_file_into_version $RELEASE_BUILD_DIR/$arch-amd64/$filename $arch-amd64/$filename ) || ( exit 1 )
+      done
     done
   fi
 
@@ -62,14 +65,6 @@ main() {
     ( github_create_release && echo "Github: Release for tag $GIT_TAG created" ) || ( exit 1 )
   fi
 
-}
-
-calculate_binaries_checksums() {
-  echo "Calculating binaries checksums"
-
-  for bin in dapp ; do
-    sha256sum $UPLOAD_FROM_DIR/$bin | cut -d' ' -f 1 > $UPLOAD_FROM_DIR/$bin.sha
-  done
 }
 
 bintray_create_version() {
@@ -105,19 +100,21 @@ JSON
 }
 
 # upload file to $GIT_TAG version
-bintray_upload_file() {
-  UPLOAD_FILENAME=$1
+bintray_upload_file_into_version() {
+  UPLOAD_FILE_PATH=$1
+  DESTINATION_PATH=$2
+
   curlResponse=$(mktemp)
   status=$(curl -s -w %{http_code} -o $curlResponse \
       --header "X-Bintray-Publish: 1" \
       --header "Content-type: application/binary" \
       --request PUT \
       --user $BINTRAY_AUTH \
-      --upload-file $UPLOAD_FROM_DIR/$UPLOAD_FILENAME \
-      https://api.bintray.com/content/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PACKAGE}/$VERSION/$VERSION/$UPLOAD_FILENAME
+      --upload-file $UPLOAD_FILE_PATH \
+      https://api.bintray.com/content/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${BINTRAY_PACKAGE}/$VERSION/$VERSION/$DESTINATION_PATH
   )
 
-  echo "Bintray upload $UPLOAD_FILENAME: curl return status $status with response"
+  echo "Bintray upload $DESTINATION_PATH: curl return status $status with response"
   cat $curlResponse
   echo
   rm $curlResponse
@@ -127,21 +124,29 @@ bintray_upload_file() {
   then
     ret=1
   else
-    dlUrl="https://dl.bintray.com/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${VERSION}/${UPLOAD_FILENAME}"
-    echo "Bintray: $UPLOAD_FILENAME uploaded to ${dlURL}"
+    dlUrl="https://dl.bintray.com/${BINTRAY_SUBJECT}/${BINTRAY_REPO}/${VERSION}/${DESTINATION_PATH}"
+    echo "Bintray: $DESTINATION_PATH uploaded to ${dlURL}"
   fi
 
   return $ret
 }
 
 github_create_release() {
+  prerelease="true"
+  if [[ "$NO_PRERELEASE" == "yes" ]] ; then
+    prerelease="false"
+    echo "# Creating release $GIT_TAG"
+  else
+    echo "# Creating pre-release $GIT_TAG"
+  fi
+
   GHPAYLOAD=$(cat <<- JSON
 {
   "tag_name": "$GIT_TAG",
-  "name": "$GITHUB_REPO $VERSION",
+  "name": "Dapp $VERSION",
   "body": $TAG_RELEASE_MESSAGE,
   "draft": false,
-  "prerelease": false
+  "prerelease": $prerelease
 }
 JSON
 )
@@ -182,6 +187,10 @@ check_curl() {
 usage() {
 printf " Usage: $0 --tag <tagname> [--github-token TOKEN] [--bintray-token TOKEN]
 
+    --no-prerelease
+            This is final release, not a prerelease. Prerelease will be created by default.
+            Can be changed manually later in the github UI.
+
     --tag
             Release is a tag based. Tag should be present if gh-token specified.
 
@@ -211,6 +220,9 @@ parse_args() {
       --bintray-auth)
         BINTRAY_AUTH="$2"
         shift
+        ;;
+      --no-prerelease)
+        NO_PRERELEASE="yes"
         ;;
       --help|-h)
         return 1
