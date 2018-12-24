@@ -135,6 +135,9 @@ github_create_release() {
   prerelease="true"
   if [[ "$NO_PRERELEASE" == "yes" ]] ; then
     prerelease="false"
+    echo "# Creating release $GIT_TAG"
+  else
+    echo "# Creating pre-release $GIT_TAG"
   fi
 
   GHPAYLOAD=$(cat <<- JSON
