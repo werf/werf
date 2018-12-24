@@ -45,7 +45,7 @@ func RunRender(projectName, projectDir string, dappfile []*config.Dimg, opts Ren
 		defer os.RemoveAll(dappChart.ChartDir)
 	}
 
-	data, err := dappChart.Render()
+	data, err := dappChart.Render(namespace)
 	if err != nil {
 		return err
 	}
