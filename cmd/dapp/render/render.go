@@ -58,6 +58,10 @@ func runRender() error {
 		return err
 	}
 
+	if err := deploy.Init(); err != nil {
+		return err
+	}
+
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)

@@ -57,6 +57,10 @@ func runDismiss() error {
 		return err
 	}
 
+	if err := deploy.Init(); err != nil {
+		return err
+	}
+
 	kubeContext := os.Getenv("KUBECONTEXT")
 	if kubeContext == "" {
 		kubeContext = CmdData.KubeContext

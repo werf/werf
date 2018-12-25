@@ -92,6 +92,10 @@ func runDeploy() error {
 		return err
 	}
 
+	if err := deploy.Init(); err != nil {
+		return err
+	}
+
 	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
 		return err
 	}
