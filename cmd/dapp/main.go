@@ -9,6 +9,7 @@ import (
 	"github.com/flant/dapp/cmd/dapp/bp"
 	"github.com/flant/dapp/cmd/dapp/build"
 	"github.com/flant/dapp/cmd/dapp/cleanup"
+	"github.com/flant/dapp/cmd/dapp/completion"
 	"github.com/flant/dapp/cmd/dapp/deploy"
 	"github.com/flant/dapp/cmd/dapp/dismiss"
 	"github.com/flant/dapp/cmd/dapp/flush"
@@ -66,6 +67,7 @@ func main() {
 		secretCmd(),
 		slugCmd(),
 
+		completion.NewCmd(cmd),
 		version.NewCmd(),
 	)
 
