@@ -69,7 +69,14 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 	}
 
 	if withSubmodules {
-		err := updateSubmodules(gitDir, workTreeDir)
+		var err error
+
+		err = deinitSubmodules(gitDir, workTreeDir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot deinit submodules: %s", err)
+		}
+
+		err = updateSubmodules(gitDir, workTreeDir)
 		if err != nil {
 			return nil, fmt.Errorf("cannot update submodules: %s", err)
 		}
