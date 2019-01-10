@@ -119,7 +119,7 @@ git:
 
 </div>
 
-Unlike with _dimg_, _artifact stage conveyor_ has no _g_a_latest_patch_ and _g_a_post_setup_patch_ stages.
+Unlike with _dimg_, _artifact stage conveyor_ has no _g_a_cache_ and _g_a_latest_patch_ stages.
 
 > Dapp implements optional dependence on changes in git repositories for _artifacts_. Thus, by default dapp ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions.
 

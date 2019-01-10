@@ -25,7 +25,7 @@ const (
 	ArtifactImportBeforeSetup   StageName = "imports_before_setup"
 	Setup                       StageName = "setup"
 	ArtifactImportAfterSetup    StageName = "imports_after_setup"
-	GAPostSetupPatch            StageName = "g_a_post_setup_patch"
+	GACache                     StageName = "g_a_cache"
 	GALatestPatch               StageName = "g_a_latest_patch"
 	DockerInstructions          StageName = "docker_instructions"
 )

@@ -7,17 +7,17 @@ import (
 
 const patchSizeStep = 1024 * 1024
 
-func NewGAPostSetupPatchStage(gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GAPostSetupPatchStage {
-	s := &GAPostSetupPatchStage{}
-	s.GAPatchStage = newGAPatchStage(GAPostSetupPatch, gaPatchStageOptions, baseStageOptions)
+func NewGACacheStage(gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GACacheStage {
+	s := &GACacheStage{}
+	s.GAPatchStage = newGAPatchStage(GACache, gaPatchStageOptions, baseStageOptions)
 	return s
 }
 
-type GAPostSetupPatchStage struct {
+type GACacheStage struct {
 	*GAPatchStage
 }
 
-func (s *GAPostSetupPatchStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, error) {
+func (s *GACacheStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, error) {
 	var size int64
 	for _, ga := range s.gitArtifacts {
 		commit := ga.GetGACommitFromImageLabels(prevImage)

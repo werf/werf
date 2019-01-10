@@ -199,7 +199,7 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 
 	if !dimgArtifact {
 		// g_a_post_setup_patch
-		stages = append(stages, stage.NewGAPostSetupPatchStage(gaPatchStageOptions, baseStageOptions))
+		stages = append(stages, stage.NewGACacheStage(gaPatchStageOptions, baseStageOptions))
 
 		// g_a_latest_patch
 		stages = append(stages, stage.NewGALatestPatchStage(gaPatchStageOptions, baseStageOptions))
