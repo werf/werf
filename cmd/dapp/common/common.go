@@ -138,7 +138,7 @@ func GetDappfile(projectDir string) (*config.Dappfile, error) {
 		if exist, err := file.FileExists(dappfilePath); err != nil {
 			return nil, err
 		} else if exist {
-			return config.ParseDimgs(dappfilePath)
+			return config.ParseDappfile(dappfilePath)
 		}
 	}
 

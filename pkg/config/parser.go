@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -19,7 +20,7 @@ import (
 	"gopkg.in/flant/yaml.v2"
 )
 
-func ParseDimgs(dappfilePath string) ([]*Dimg, error) {
+func ParseDappfile(dappfilePath string) (*Dappfile, error) {
 	dappfileRenderContent, err := parseDappfileYaml(dappfilePath)
 	if err != nil {
 		return nil, err
@@ -35,12 +36,22 @@ func ParseDimgs(dappfilePath string) ([]*Dimg, error) {
 		return nil, err
 	}
 
-	dimgs, err := splitByDimgs(docs, dappfileRenderContent, dappfileRenderPath)
+	meta, rawDimgs, err := splitByMetaAndRawDimgs(docs)
 	if err != nil {
 		return nil, err
 	}
 
-	return dimgs, nil
+	dimgs, err := splitByDimgs(rawDimgs, dappfileRenderContent, dappfileRenderPath)
+	if err != nil {
+		return nil, err
+	}
+
+	dappfile := &Dappfile{
+		Meta:  meta,
+		Dimgs: dimgs,
+	}
+
+	return dappfile, nil
 }
 
 func dumpDappfileRender(dappfilePath string, dappfileRenderContent string) (string, error) {
@@ -319,12 +330,7 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath string) ([]*Dimg, error) {
-	rawDimgs, err := splitByRawDimgs(docs)
-	if err != nil {
-		return nil, err
-	}
-
+func splitByDimgs(rawDimgs []*rawDimg, dappfileRenderContent string, dappfileRenderPath string) ([]*Dimg, error) {
 	var dimgs []*Dimg
 	var artifacts []*DimgArtifact
 
@@ -348,19 +354,19 @@ func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath 
 		return nil, newConfigError(fmt.Sprintf("no dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
 	}
 
-	if err = exportsAutoExcluding(dimgs, artifacts); err != nil {
+	if err := exportsAutoExcluding(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err = validateDimgsNames(dimgs, artifacts); err != nil {
+	if err := validateDimgsNames(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err = associateImportsArtifacts(dimgs, artifacts); err != nil {
+	if err := associateImportsArtifacts(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err = associateDimgsAndArtifactsFrom(dimgs, artifacts); err != nil {
+	if err := associateDimgsAndArtifactsFrom(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
@@ -481,19 +487,48 @@ func associateDimgFrom(dimg DimgInterface, dimgs []*Dimg, artifacts []*DimgArtif
 	}
 }
 
-func splitByRawDimgs(docs []*doc) ([]*rawDimg, error) {
+func splitByMetaAndRawDimgs(docs []*doc) (*Meta, []*rawDimg, error) {
 	var rawDimgs []*rawDimg
+	var resultMeta *Meta
+
 	parentStack = util.NewStack()
 	for _, doc := range docs {
-		dimg := &rawDimg{doc: doc}
-		err := yaml.Unmarshal(doc.Content, &dimg)
+		raw := &raw{}
+		err := yaml.Unmarshal(doc.Content, &raw)
 		if err != nil {
-			return nil, newYamlUnmarshalError(err, doc)
+			return nil, nil, newYamlUnmarshalError(err, doc)
 		}
-		rawDimgs = append(rawDimgs, dimg)
+
+		if raw.IsRawMeta() {
+			if resultMeta != nil {
+				return nil, nil, newYamlUnmarshalError(errors.New("duplicate meta definition"), doc)
+			}
+
+			rawMeta := &rawMeta{doc: doc}
+			err := yaml.Unmarshal(doc.Content, &rawMeta)
+			if err != nil {
+				return nil, nil, newYamlUnmarshalError(err, doc)
+			}
+
+			resultMeta = rawMeta.toMeta()
+		} else if raw.IsRawDimg() {
+			dimg := &rawDimg{doc: doc}
+			err := yaml.Unmarshal(doc.Content, &dimg)
+			if err != nil {
+				return nil, nil, newYamlUnmarshalError(err, doc)
+			}
+
+			rawDimgs = append(rawDimgs, dimg)
+		} else {
+			return nil, nil, newYamlUnmarshalError(errors.New("doc type cannot be recognized"), doc)
+		}
 	}
 
-	return rawDimgs, nil
+	if resultMeta == nil {
+		return nil, nil, errors.New("meta definition is not defined")
+	}
+
+	return resultMeta, rawDimgs, nil
 }
 
 func newYamlUnmarshalError(err error, doc *doc) error {
