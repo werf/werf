@@ -107,7 +107,7 @@ func GetProjectName(cmdData *CmdData, projectDir string) (string, error) {
 	return slug.Slug(name), nil
 }
 
-func GetDappfile(projectDir string) ([]*config.Dimg, error) {
+func GetDappfile(projectDir string) (*config.Dappfile, error) {
 	for _, dappfileName := range []string{"dappfile.yml", "dappfile.yaml"} {
 		dappfilePath := path.Join(projectDir, dappfileName)
 		if exist, err := file.FileExists(dappfilePath); err != nil {
