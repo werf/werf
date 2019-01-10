@@ -29,8 +29,23 @@ module Dapp
             [:realm, :service, :scope].map do |option|
               /#{option}="([[^"].]*)/ =~ header
               next unless Regexp.last_match(1)
-              [option, Regexp.last_match(1)]
+
+              option_value = begin
+                if option == :scope
+                  handle_scope_option(Regexp.last_match(1))
+                else
+                  Regexp.last_match(1)
+                end
+              end
+
+              [option, option_value]
             end.compact.to_h
+          end
+
+          def handle_scope_option(resourcescope)
+            resource_type, resource_name, actions = resourcescope.split(":")
+            actions                               = actions.split(",").map { |action| action == "delete" ? "*" : action }.join(",")
+            [resource_type, resource_name, actions].join(":")
           end
 
           def authorization_auth
