@@ -33,19 +33,16 @@ func (b *Ansible) IsBeforeInstallEmpty() bool { return b.isEmptyStage("BeforeIns
 func (b *Ansible) IsInstallEmpty() bool       { return b.isEmptyStage("Install") }
 func (b *Ansible) IsBeforeSetupEmpty() bool   { return b.isEmptyStage("BeforeSetup") }
 func (b *Ansible) IsSetupEmpty() bool         { return b.isEmptyStage("Setup") }
-func (b *Ansible) IsBuildArtifactEmpty() bool { return b.isEmptyStage("BuildArtifact") }
 
 func (b *Ansible) BeforeInstall(container Container) error { return b.stage("BeforeInstall", container) }
 func (b *Ansible) Install(container Container) error       { return b.stage("Install", container) }
 func (b *Ansible) BeforeSetup(container Container) error   { return b.stage("BeforeSetup", container) }
 func (b *Ansible) Setup(container Container) error         { return b.stage("Setup", container) }
-func (b *Ansible) BuildArtifact(container Container) error { return b.stage("BuildArtifact", container) }
 
 func (b *Ansible) BeforeInstallChecksum() string { return b.stageChecksum("BeforeInstall") }
 func (b *Ansible) InstallChecksum() string       { return b.stageChecksum("Install") }
 func (b *Ansible) BeforeSetupChecksum() string   { return b.stageChecksum("BeforeSetup") }
 func (b *Ansible) SetupChecksum() string         { return b.stageChecksum("Setup") }
-func (b *Ansible) BuildArtifactChecksum() string { return b.stageChecksum("BuildArtifact") }
 
 func (b *Ansible) isEmptyStage(userStageName string) bool {
 	return b.stageChecksum(userStageName) == ""

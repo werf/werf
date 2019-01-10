@@ -102,20 +102,11 @@ The _artifact name_ is used to specify the artifact in the [_artifact resources 
 
 ### Adding source code from git repositories
 
-<div class="summary" markdown="1">
+<div class="summary">
 
 <a href="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=2031&amp;h=144" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=1016&amp;h=72">
 </a>
-
-```yaml
-git:
-- ...
-  stageDependencies:
-    ...
-    buildArtifact: 
-    - <relative_path or glob>
-```
 
 </div>
 
@@ -127,53 +118,24 @@ Read about working with _git repositories_ in the corresponding [article]({{ sit
 
 ### Running assembly instructions
 
-<div class="summary" markdown="1">
+<div class="summary">
 
 <a href="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=2031&amp;h=144" data-featherlight="image">
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=1016&amp;h=72">
 </a>
 
-<div class="tab">
-    <button class="tablinks active" onclick="openTab(event, 'shell')">Shell</button>
-    <button class="tablinks" onclick="openTab(event, 'ansible')">Ansible</button>
 </div>
+  
+Directives and _user stages_ remain unchanged: _before_install_, _install_, _before_setup_ and _setup_.
 
-<div id="shell" class="tabcontent active" markdown="1">
-```yaml
-shell:
-  ...
-  buildArtifact:
-  - <bash command>
-  buildArtifactCacheVersion: <arbitrary string>
-```
-</div>
+If there are no dependencies on files specified in git `stageDependencies` directive for _user stages_, the image is cached after the first build and will no longer be reassembled while the _stages cache_ exists.
 
-<div id="ansible" class="tabcontent" markdown="1">
-```yaml
-ansible:
-  ...
-  buildArtifact:
-  - <task>
-  buildArtifactCacheVersion: <arbitrary string>
-```
-</div>
-
-</div>
-
-When describing an _artifact_, an additional _build_artifact user stage_ is available, which is no different from the _install_, _before_setup_, and _setup_ stages. As well as the listed _stages_, _build_artifact_ also has a dependent git stage.
-
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vTd0XO1HQdwWQRB-QCNmxhJcaBdZG5m4YktzhMXLB4hdu8NxEEnWZvbaivwK13pEfddxtiHNXzgjhal/pub?w=1917&amp;h=432" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vTd0XO1HQdwWQRB-QCNmxhJcaBdZG5m4YktzhMXLB4hdu8NxEEnWZvbaivwK13pEfddxtiHNXzgjhal/pub?w=959&amp;h=216">
-</a>
-
-If there are no dependencies on files specified in git `stageDependencies` directive for _artifact user stages_, the image is cached after the first build and will no longer be reassembled while the _stages cache_ exists.
-
-> If the artifact should be rebuilt on any change in the related git repository, you should specify the _stageDependency_ `**/*` for any _user stage_, e.g., for _build_artifact stage_:
+> If the artifact should be rebuilt on any change in the related git repository, you should specify the _stageDependency_ `**/*` for any _user stage_, e.g., for _install stage_:
 ```yaml
 git:
 - to: /
   stageDependencies:
-    buildArtifact: "**/*"
+    install: "**/*"
 ```
 
 Read about working with _assembly instructions_ in the corresponding [article]({{ site.baseurl }}/reference/build/assembly_instructions.html).
@@ -207,8 +169,6 @@ git:
     - <relative_path or glob>
     setup:
     - <relative_path or glob>
-    buildArtifact:
-    - <relative_path or glob>
 # remote git
 - url: <git_repo_url>
   branch: <branch_name>
@@ -230,8 +190,6 @@ git:
     - <relative_path or glob>
     setup:
     - <relative_path or glob>
-    buildArtifact:
-    - <relative_path or glob>
 shell:
   beforeInstall:
   - <cmd>
@@ -241,14 +199,11 @@ shell:
   - <cmd>
   setup:
   - <cmd>
-  buildArtifact:
-  - <cmd>
   cacheVersion: <version>
   beforeInstallCacheVersion: <version>
   installCacheVersion: <version>
   beforeSetupCacheVersion: <version>
   setupCacheVersion: <version>
-  buildArtifactCacheVersion: <version>
 ansible:
   beforeInstall:
   - <task>
@@ -258,14 +213,11 @@ ansible:
   - <task>
   setup:
   - <task>
-  buildArtifact:
-  - <task>
   cacheVersion: <version>
   beforeInstallCacheVersion: <version>
   installCacheVersion: <version>
   beforeSetupCacheVersion: <version>
   setupCacheVersion: <version>
-  buildArtifactCacheVersion: <version>
 mount:
 - from: build_dir
   to: <absolute_path>

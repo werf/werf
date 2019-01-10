@@ -5,17 +5,14 @@ type Builder interface {
 	IsInstallEmpty() bool
 	IsBeforeSetupEmpty() bool
 	IsSetupEmpty() bool
-	IsBuildArtifactEmpty() bool
 	BeforeInstall(container Container) error
 	Install(container Container) error
 	BeforeSetup(container Container) error
 	Setup(container Container) error
-	BuildArtifact(container Container) error
 	BeforeInstallChecksum() string
 	InstallChecksum() string
 	BeforeSetupChecksum() string
 	SetupChecksum() string
-	BuildArtifactChecksum() string
 }
 
 type Container interface {
