@@ -11,22 +11,10 @@ insert_final_newline = true
 [*.md]
 trim_trailing_whitespace = false
 
-
 ; golang
 [*.go]
 indent_style = tab
 indent_size = 4
-
-
-; ruby
-[Gemfile]
-indent_size = 2
-indent_style = space
-
-[*.{rb, gemspec}]
-indent_size = 2
-indent_style = space
-
 
 ; yaml
 [*.{yml,yaml}]

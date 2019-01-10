@@ -10,16 +10,16 @@ import (
 )
 
 type StageContainerOptions struct {
-	Volume      []string          `json:"volume"`
-	VolumesFrom []string          `json:"volumes-from"`
-	Expose      []string          `json:"expose"`
-	Env         map[string]string `json:"env"`
-	Label       map[string]string `json:"label"`
-	Cmd         []string          `json:"cmd"`
-	Onbuild     []string          `json:"onbuild"`
-	Workdir     string            `json:"workdir"`
-	User        string            `json:"user"`
-	Entrypoint  []string          `json:"entrypoint"`
+	Volume      []string
+	VolumesFrom []string
+	Expose      []string
+	Env         map[string]string
+	Label       map[string]string
+	Cmd         []string
+	Onbuild     []string
+	Workdir     string
+	User        string
+	Entrypoint  []string
 	StopSignal  string
 	HealthCheck string
 }

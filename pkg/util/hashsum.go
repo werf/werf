@@ -1,9 +1,7 @@
 package util
 
 import (
-	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
 	"fmt"
 	"strings"
 
@@ -13,14 +11,8 @@ import (
 func MurmurHash(args ...string) string {
 	h32 := murmur3.New32()
 	h32.Write([]byte(prepareHashArgs(args...)))
-
-	buf := new(bytes.Buffer)
-	err := binary.Write(buf, binary.LittleEndian, h32.Sum32())
-	if err != nil {
-		panic(fmt.Errorf("cannot make hashsum for `%v`: %s", args, err))
-	}
-
-	return fmt.Sprintf("%x", buf.Bytes())
+	sum := h32.Sum32()
+	return fmt.Sprintf("%x", sum)
 }
 
 func Sha256Hash(args ...string) string {
