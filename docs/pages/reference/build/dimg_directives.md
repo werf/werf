@@ -114,5 +114,7 @@ docker:
   - <onbuild>
   WORKDIR: <workdir>
   USER: <user>
+  STOPSIGNAL: <stopsignal>
+  HEALTHCHECK: <healthcheck>
 asLayers: <false || true>
 ```

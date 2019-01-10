@@ -24,7 +24,9 @@ summary: |
     <span class="s">ONBUILD</span><span class="pi">:</span>
     <span class="pi">-</span> <span class="s">&lt;onbuild&gt;</span>
     <span class="s">WORKDIR</span><span class="pi">:</span> <span class="s">&lt;workdir&gt;</span>
-    <span class="s">USER</span><span class="pi">:</span> <span class="s">&lt;user&gt;</span></code></pre>
+    <span class="s">USER</span><span class="pi">:</span> <span class="s">&lt;user&gt;</span>
+    <span class="s">STOPSIGNAL</span><span class="pi">:</span> <span class="s">&lt;stopsignal&gt;</span>
+    <span class="s">HEALTHCHECK</span><span class="pi">:</span> <span class="s">&lt;healthcheck&gt;</span></code></pre>
   </div>
 ---
 
@@ -41,6 +43,8 @@ Build-time instructions don't make sense in a dapp build process, therefore, dap
 * `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#entrypoint)).
 * `CMD` to provide default arguments for the `ENTRYPOINT` to configure a container that will run as an executable (read more [here](https://docs.docker.com/engine/reference/builder/#cmd)).
 * `ONBUILD` to add to the image a trigger instruction to be executed at a later time when the image is used as the base for another build (read more [here](https://docs.docker.com/engine/reference/builder/#onbuild)).
+* `STOPSIGNAL` to set the system call signal that will be sent to the container to exit (read more [here](https://docs.docker.com/engine/reference/builder/#stopsignal))
+* `HEALTHCHECK` to tell Docker how to test a container to check that it is still working (read more [here](https://docs.docker.com/engine/reference/builder/#healthcheck))
 
 These instructions can be defined in the dappfile `docker` section.
 
