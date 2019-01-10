@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-#BINTRAY_AUTH=          # bintray auth user:TOKEN
-BINTRAY_SUBJECT=flant  # bintray organization
-BINTRAY_REPO=dapp      # bintray repository
-BINTRAY_PACKAGE=dappfile-yml  # bintray package in repository
+#BINTRAY_AUTH=            # bintray auth user:TOKEN
+BINTRAY_SUBJECT=dapp      # bintray organization
+BINTRAY_REPO=ruby2go      # bintray repository
+BINTRAY_PACKAGE=ruby2go   # bintray package in repository
 
 GITHUB_OWNER=flant     # github user/org
 GITHUB_REPO=dapp       # github repository
