@@ -3,7 +3,7 @@ title: Running assembly instructions
 sidebar: reference
 permalink: reference/build/assembly_instructions.html
 summary: |
-  <a href="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=2031&amp;h=144" data-featherlight="image">
+  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=2031&amp;h=144" data-featherlight="image">
       <img src="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=1016&amp;h=72">
   </a>
   
@@ -51,8 +51,8 @@ summary: |
   <br/>
   <b>Running assembly instructions with git</b>
   
-  <a href="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=2033&amp;h=433" data-featherlight="image">
-  <img src="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=1016&amp;h=216">
+  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
+    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206">
   </a>
 ---
 
@@ -507,9 +507,9 @@ So this configuration rebuilds _before_install user stage_ on every commit.
 
 ## Dependency on git repo changes
 
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=2033&amp;h=433" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=1016&amp;h=216">
-</a>
+<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
+    <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206">
+  </a>
 
 As stated in a _git path_ reference, there are _git_archive_ and _git_latest_patch_ stages. _git_archive_ is executed after _before_install user stage_, and _git_latest_patch_ is executed after _setup user stage_ if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _git_archive_ with [special commit]({{site.baseurl}}/reference/build/git_directive.html#rebuild-of-git_archive-stage) or rebuild _before_install_ (change _cacheVersion_ or instructions for _before_install stage_).
 

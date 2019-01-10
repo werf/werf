@@ -4,8 +4,8 @@ sidebar: reference
 permalink: reference/build/artifact.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
-  <a href="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=1914&amp;h=721" data-featherlight="image">
-  <img src="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=957&amp;h=360">
+  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=1800&amp;h=850" data-featherlight="image">
+  <img src="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=640&amp;h=301">
   </a>
 ---
 
@@ -104,8 +104,8 @@ The _artifact name_ is used to specify the artifact in the [_artifact resources 
 
 <div class="summary">
 
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=2031&amp;h=144" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=1016&amp;h=72">
+<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vQQiyUM9P3-_A6O5tLms_y1UCny9X6lxQSxtMtBalcyjcHhYV4hnPnISmTVY09c-ANOFqwHeOxYPs63/pub?w=2031&amp;h=144" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vQQiyUM9P3-_A6O5tLms_y1UCny9X6lxQSxtMtBalcyjcHhYV4hnPnISmTVY09c-ANOFqwHeOxYPs63/pub?w=1016&amp;h=72">
 </a>
 
 </div>
@@ -120,8 +120,8 @@ Read about working with _git repositories_ in the corresponding [article]({{ sit
 
 <div class="summary">
 
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=2031&amp;h=144" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=1016&amp;h=72">
+<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vTlpKbAr6wQCE4bSxVB5Kr6uxzbCGu_ncsviT2Ax6_qLL3zAVLWIsYElAi9_LMuVeFiDi1lo97HNvD2/pub?w=1428&h=649" data-featherlight="image">
+      <img src="https://docs.google.com/drawings/d/e/2PACX-1vTlpKbAr6wQCE4bSxVB5Kr6uxzbCGu_ncsviT2Ax6_qLL3zAVLWIsYElAi9_LMuVeFiDi1lo97HNvD2/pub?w=426&h=216">
 </a>
 
 </div>

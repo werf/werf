@@ -3,8 +3,8 @@ title: Adding source code from git repositories
 sidebar: reference
 permalink: reference/build/git_directive.html
 summary: |
-  <a href="https://docs.google.com/drawings/d/e/2PACX-1vSJax_QDnGEkIwiNndib4Yu4sKxX4sMntjb33YfOYXvb3E3wqLRxII09gvNyuxDw5gYoAoLG24gmM_I/pub?w=2031&amp;h=144" data-featherlight="image">
-      <img src="https://docs.google.com/drawings/d/e/2PACX-1vSJax_QDnGEkIwiNndib4Yu4sKxX4sMntjb33YfOYXvb3E3wqLRxII09gvNyuxDw5gYoAoLG24gmM_I/pub?w=1016&amp;h=72">
+  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRUYmRNmeuP14OcChoeGzX_4soCdXx7ZPgNqm5ePcz9L_ItMUqyolRoJyPL7baMNoY7P6M0B08eMtsb/pub?w=2031&amp;h=144" data-featherlight="image">
+      <img src="https://docs.google.com/drawings/d/e/2PACX-1vRUYmRNmeuP14OcChoeGzX_4soCdXx7ZPgNqm5ePcz9L_ItMUqyolRoJyPL7baMNoY7P6M0B08eMtsb/pub?w=1016&amp;h=72">
   </a>
       
   <div class="tab">

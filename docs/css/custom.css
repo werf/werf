@@ -77,3 +77,7 @@ h5 {
 details {
   margin-bottom: 10px;
 }
+
+a.google-drawings img {
+  border: 2px solid black
+}
