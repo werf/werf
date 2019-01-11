@@ -24,8 +24,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "dismiss HELM_RELEASE_NAME",
-		Args: cobra.MinimumNArgs(1),
+		Short: "<COMMAND DESCRIPTION HERE>",
+		Use:   "dismiss HELM_RELEASE_NAME",
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			CmdData.HelmReleaseName = args[0]
 

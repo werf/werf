@@ -28,8 +28,14 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "flush",
 		Short: "Delete project images in local docker storage and specified docker registry",
+		Long: `Delete project images in local docker storage and specified docker registry
+
+Environment:
+  $DAPP_INSECURE_REGISTRY
+  $DAPP_HOME
+`,
+		Use: "flush",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runFlush()
 			if err != nil {

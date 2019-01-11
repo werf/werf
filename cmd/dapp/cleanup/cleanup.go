@@ -30,8 +30,16 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cleanup",
 		Short: "Cleanup project images in docker registry by policies",
+		Long: `Cleanup project images in docker registry by policies
+
+Environment:
+  $DAPP_INSECURE_REGISTRY
+  $DAPP_DOCKER_CONFIG
+  $DAPP_IGNORE_CI_DOCKER_AUTOLOGIN
+  $DAPP_HOME
+`,
+		Use: "cleanup",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runCleanup()
 			if err != nil {

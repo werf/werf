@@ -29,6 +29,17 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
+		Short: "<COMMAND DESCRIPTION HERE>",
+		Long: `<COMMAND DESCRIPTION HERE>
+
+Environment:
+  $ANSIBLE_ARGS
+  $DAPP_INSECURE_REGISTRY
+  $DAPP_DOCKER_CONFIG
+  $DAPP_IGNORE_CI_DOCKER_AUTOLOGIN
+  $DAPP_TMP
+  $DAPP_HOME
+`,
 		Use: "push [DIMG_NAME...]",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runPush(args)

@@ -37,6 +37,16 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
+		Short: "<COMMAND DESCRIPTION HERE>",
+		Long: `<COMMAND DESCRIPTION HERE>
+
+Environment:
+  $ANSIBLE_ARGS
+  $DAPP_DOCKER_CONFIG
+  $DAPP_IGNORE_CI_DOCKER_AUTOLOGIN
+  $DAPP_HOME
+  $DAPP_TMP
+`,
 		Use: "bp [DIMG_NAME...]",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if CmdData.PullUsername == "" {

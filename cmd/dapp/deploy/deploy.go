@@ -40,6 +40,16 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
+		Short: "<COMMAND DESCRIPTION HERE>",
+		Long: `<COMMAND DESCRIPTION HERE>
+
+Environment:
+  $DAPP_SECRET_KEY
+  $DAPP_DOCKER_CONFIG
+  $DAPP_IGNORE_CI_DOCKER_AUTOLOGIN
+  $DAPP_HOME
+  $DAPP_TMP
+`,
 		Use:  "deploy HELM_RELEASE_NAME",
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
