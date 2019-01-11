@@ -248,7 +248,7 @@ func projectDimgstagesSyncByRepoDimgs(commonProjectOptions CommonProjectOptions,
 		}
 	}
 
-	if os.Getenv("DAPP_STAGES_SYNC_LOCAL_DISABLED_DATE_POLICY") == "" {
+	if os.Getenv("DAPP_DISABLE_SYNC_LOCAL_STAGES_DATE_PERIOD_POLICY") == "" {
 		for _, dimgstage := range dimgstages {
 			if time.Now().Unix()-dimgstage.Created < syncIgnoreProjectDimgstagePeriod {
 				dimgstages = exceptImage(dimgstages, dimgstage)

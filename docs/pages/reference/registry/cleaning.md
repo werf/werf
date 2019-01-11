@@ -46,14 +46,14 @@ Garbage collection is a dapp ability to automate cleaning of a docker registry. 
 * **by commits:**
     * Dapp deletes the image from the docker registry when the corresponding git commit doesn't exist.
     * For the remaining images, the following policies apply:
-       * `GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY`. Deleting images uploaded in docker registry more than **30 days**. 30 days is a default period. To change the default period set `GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY` environment variable in seconds.
-       * `GIT_COMMITS_LIMIT_POLICY`. Deleting all images in docker registry except **last 50 images**. 50 images is a default value. To change the default value set count in  `GIT_COMMITS_LIMIT_POLICY` environment variables.
+       * `DAPP_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY`. Deleting images uploaded in docker registry more than **30 days**. 30 days is a default period. To change the default period set `DAPP_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY` environment variable in seconds.
+       * `DAPP_GIT_COMMITS_LIMIT_POLICY`. Deleting all images in docker registry except **last 50 images**. 50 images is a default value. To change the default value set count in  `DAPP_GIT_COMMITS_LIMIT_POLICY` environment variables.
     * The policy covers images tagged by dapp with `--tag-commit` tag.
 * **by tags:**
     * Dapp deletes the image from the docker registry when the corresponding git tag doesn't exist.
     * For the remaining images, the following policies apply:
-      * `EXPIRY_DATE_PERIOD_POLICY`. Deleting images uploaded in docker registry more than **30 days**. 30 days is a default period. To change the default period set `EXPIRY_DATE_PERIOD_POLICY` environment variable in seconds;
-      * `GIT_TAGS_LIMIT_POLICY`.  Deleting all images in docker registry except **last 10 images**. 10 images is a default value. To change the default value set count in `GIT_TAGS_LIMIT_POLICY`.
+      * `DAPP_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY`. Deleting images uploaded in docker registry more than **30 days**. 30 days is a default period. To change the default period set `DAPP_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY` environment variable in seconds;
+      * `DAPP_GIT_TAGS_LIMIT_POLICY`.  Deleting all images in docker registry except **last 10 images**. 10 images is a default value. To change the default value set count in `DAPP_GIT_TAGS_LIMIT_POLICY`.
     * The policy covers images tagged by dapp with `--tag-ci` tag.
 
 **Pay attention,** that garbage collection affects only images built by dapp **and** images tagged by dapp with one of the `--tag-ci`, `--tag-branch` or `--tag-commit` options. Other images in the docker registry stay as they are.
@@ -75,7 +75,7 @@ Dapp connects to all kubernetes clusters, defined in all contexts of kubectl con
 
 ### Docker registry authorization
 
-For docker registry authorization in garbage collection, dapp require the `DAPP_DIMG_CLEANUP_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
+For docker registry authorization in garbage collection, dapp require the `DAPP_SYNC_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
 
 ### Syntax
 

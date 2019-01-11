@@ -244,19 +244,19 @@ func repoDimgsCleanupByPolicies(repoDimgs []docker_registry.RepoImage, options C
 }
 
 func gitTagsExpiryDatePeriodPolicyValue() int64 {
-	return policyValue("EXPIRY_DATE_PERIOD_POLICY", gitTagsExpiryDatePeriodPolicy)
+	return policyValue("DAPP_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY", gitTagsExpiryDatePeriodPolicy)
 }
 
 func gitTagsLimitPolicyValue() int64 {
-	return policyValue("GIT_TAGS_LIMIT_POLICY", gitTagsLimitPolicy)
+	return policyValue("DAPP_GIT_TAGS_LIMIT_POLICY", gitTagsLimitPolicy)
 }
 
 func gitCommitsExpiryDatePeriodPolicyValue() int64 {
-	return policyValue("GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY", gitCommitsExpiryDatePeriodPolicy)
+	return policyValue("DAPP_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY", gitCommitsExpiryDatePeriodPolicy)
 }
 
 func gitCommitsLimitPolicyValue() int64 {
-	return policyValue("GIT_COMMITS_LIMIT_POLICY", gitCommitsLimitPolicy)
+	return policyValue("DAPP_GIT_COMMITS_LIMIT_POLICY", gitCommitsLimitPolicy)
 }
 
 func policyValue(envKey string, defaultValue int64) int64 {
