@@ -91,15 +91,17 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 	}
 	container.AddVolumeFrom(fmt.Sprintf("%s:ro", containerName))
 
-	commands := []string{
-		strings.Join([]string{dappdeps.AnsibleBinPath("ansible-playbook"), filepath.Join(b.containerWorkDir(), "playbook.yml")}, " "),
+	commandParts := []string{
+		dappdeps.AnsibleBinPath("ansible-playbook"),
+		filepath.Join(b.containerWorkDir(), "playbook.yml"),
 	}
 
 	if value, exist := os.LookupEnv("ANSIBLE_ARGS"); exist {
-		commands = append(commands, value)
+		commandParts = append(commandParts, value)
 	}
 
-	container.AddRunCommands(commands...)
+	command := strings.Join(commandParts, " ")
+	container.AddRunCommands(command)
 
 	return nil
 }
