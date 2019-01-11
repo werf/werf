@@ -188,9 +188,9 @@ func getCleanupCredentials(usernameOption, passwordOption, repo string) (*Docker
 		return creds, nil
 	}
 
-	dappSyncRegistryPassword := os.Getenv("DAPP_SYNC_REGISTRY_PASSWORD")
-	if dappSyncRegistryPassword != "" {
-		return &DockerCredentials{Username: "dapp-sync", Password: dappSyncRegistryPassword}, nil
+	dappCleanupRegistryPassword := os.Getenv("DAPP_CLEANUP_REGISTRY_PASSWORD")
+	if dappCleanupRegistryPassword != "" {
+		return &DockerCredentials{Username: "dapp-cleanup", Password: dappCleanupRegistryPassword}, nil
 	}
 
 	isGCR, err := isGCR(repo)
