@@ -75,7 +75,7 @@ Dapp connects to all kubernetes clusters, defined in all contexts of kubectl con
 
 ### Docker registry authorization
 
-For docker registry authorization in garbage collection, dapp require the `DAPP_SYNC_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
+For docker registry authorization in garbage collection, dapp require the `DAPP_CLEANUP_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
 
 ### Syntax
 
