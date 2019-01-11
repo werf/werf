@@ -83,7 +83,7 @@ func (d *DimgInfo) GetImageId() (string, error) {
 	return res, nil
 }
 
-func RunDeploy(projectName, projectDir, releaseName, namespace, kubeContext, repo, tag string, dappfile []*config.Dimg, opts DeployOptions) error {
+func RunDeploy(projectName, projectDir, releaseName, namespace, kubeContext, repo, tag string, dappfile *config.Dappfile, opts DeployOptions) error {
 	if debug() {
 		fmt.Printf("Deploy options: %#v\n", opts)
 		fmt.Printf("Namespace: %s\n", namespace)
@@ -97,7 +97,7 @@ func RunDeploy(projectName, projectDir, releaseName, namespace, kubeContext, rep
 	localGit := &git_repo.Local{Path: projectDir, GitDir: filepath.Join(projectDir, ".git")}
 
 	var images []DimgInfoGetter
-	for _, dimg := range dappfile {
+	for _, dimg := range dappfile.Dimgs {
 		d := &DimgInfo{Config: dimg, WithoutRegistry: opts.WithoutRegistry, Repo: repo, Tag: tag}
 		images = append(images, d)
 	}

@@ -112,7 +112,7 @@ func runCleanup() error {
 	}
 
 	var dimgNames []string
-	for _, dimg := range dappfile {
+	for _, dimg := range dappfile.Dimgs {
 		dimgNames = append(dimgNames, dimg.Name)
 	}
 

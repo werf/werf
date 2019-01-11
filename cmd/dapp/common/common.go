@@ -80,7 +80,7 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Environment = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.Release, "environment", "", "", "Use specified environment (use CI_ENVIRONMENT_SLUG by default). Environment is a required parameter and should be specified with option or CI_ENVIRONMENT_SLUG variable.")
+	cmd.PersistentFlags().StringVarP(cmdData.Environment, "environment", "", "", "Use specified environment (use CI_ENVIRONMENT_SLUG by default). Environment is a required parameter and should be specified with option or CI_ENVIRONMENT_SLUG variable.")
 }
 
 func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
@@ -90,12 +90,12 @@ func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Namespace = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.Release, "namespace", "", "", "Use specified Kubernetes namespace (use %project-%environment template by default)")
+	cmd.PersistentFlags().StringVarP(cmdData.Namespace, "namespace", "", "", "Use specified Kubernetes namespace (use %project-%environment template by default)")
 }
 
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeContext = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.Release, "kube-context", "", "", "Kubernetes config context")
+	cmd.PersistentFlags().StringVarP(cmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
 }
 
 func GetProjectName(cmdData *CmdData, projectDir string) (string, error) {

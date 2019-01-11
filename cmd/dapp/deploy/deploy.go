@@ -145,16 +145,16 @@ func runDeploy() error {
 
 	kubeContext := os.Getenv("KUBECONTEXT")
 	if kubeContext == "" {
-		kubeContext = CmdData.KubeContext
+		kubeContext = *CommonCmdData.KubeContext
 	}
 	err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	namespace := common.GetNamespace(CmdData.Namespace)
+	namespace := common.GetNamespace(*CommonCmdData.Namespace)
 
-	return deploy.RunDeploy(projectName, projectDir, CmdData.HelmReleaseName, namespace, kubeContext, repo, tag, dappfile, deploy.DeployOptions{
+	return deploy.RunDeploy(projectName, projectDir, *CommonCmdData.Release, namespace, kubeContext, repo, tag, dappfile, deploy.DeployOptions{
 		Values:          CmdData.Values,
 		SecretValues:    CmdData.SecretValues,
 		Set:             CmdData.Set,

@@ -27,7 +27,7 @@ type Conveyor struct {
 }
 
 type conveyorPermanentFields struct {
-	dappfile           []*config.Dimg
+	dappfile           *config.Dappfile
 	dimgNamesToProcess []string
 
 	projectName string
@@ -47,7 +47,7 @@ type DockerAuthorizer interface {
 	LoginForPush(repo string) error
 }
 
-func NewConveyor(dappfile []*config.Dimg, dimgNamesToProcess []string, projectDir, projectName, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
+func NewConveyor(dappfile *config.Dappfile, dimgNamesToProcess []string, projectDir, projectName, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
 	c := &Conveyor{
 		conveyorPermanentFields: &conveyorPermanentFields{
 			dappfile:           dappfile,
