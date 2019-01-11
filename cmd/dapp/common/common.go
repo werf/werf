@@ -29,6 +29,11 @@ type CmdData struct {
 	TagBuildID *bool
 	TagCI      *bool
 	TagCommit  *bool
+
+	Environment *string
+	Release     *string
+	Namespace   *string
+	KubeContext *string
 }
 
 func SetupName(cmdData *CmdData, cmd *cobra.Command) {
@@ -71,6 +76,26 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVarP(cmdData.TagBuildID, "tag-build-id", "", false, "Tag by CI build id")
 	cmd.PersistentFlags().BoolVarP(cmdData.TagCI, "tag-ci", "", false, "Tag by CI branch and tag")
 	cmd.PersistentFlags().BoolVarP(cmdData.TagCommit, "tag-commit", "", false, "Tag by git commit")
+}
+
+func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Environment = new(string)
+	cmd.PersistentFlags().StringVarP(cmdData.Release, "environment", "", "", "Use specified environment (use CI_ENVIRONMENT_SLUG by default). Environment is a required parameter and should be specified with option or CI_ENVIRONMENT_SLUG variable.")
+}
+
+func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Release = new(string)
+	cmd.PersistentFlags().StringVarP(cmdData.Release, "release", "", "", "Use specified Helm release name (use %project-%environment template by default)")
+}
+
+func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Namespace = new(string)
+	cmd.PersistentFlags().StringVarP(cmdData.Release, "namespace", "", "", "Use specified Kubernetes namespace (use %project-%environment template by default)")
+}
+
+func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeContext = new(string)
+	cmd.PersistentFlags().StringVarP(cmdData.Release, "kube-context", "", "", "Kubernetes config context")
 }
 
 func GetProjectName(cmdData *CmdData, projectDir string) (string, error) {

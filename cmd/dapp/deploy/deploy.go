@@ -19,11 +19,7 @@ import (
 )
 
 var CmdData struct {
-	HelmReleaseName string
-
-	Namespace   string
-	KubeContext string
-	Timeout     int
+	Timeout int
 
 	Values       []string
 	SecretValues []string
@@ -40,11 +36,8 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "deploy HELM_RELEASE_NAME",
-		Args: cobra.MinimumNArgs(1),
+		Use: "deploy",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			CmdData.HelmReleaseName = args[0]
-
 			err := runDeploy()
 			if err != nil {
 				return fmt.Errorf("deploy failed: %s", err)
@@ -60,8 +53,6 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&CmdData.Namespace, "namespace", "", "", "Kubernetes namespace")
-	cmd.PersistentFlags().StringVarP(&CmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
 	cmd.PersistentFlags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "watch timeout in seconds")
 
 	cmd.PersistentFlags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
@@ -75,6 +66,10 @@ func NewCmd() *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&CmdData.WithoutRegistry, "without-registry", "", false, "Do not get images info from registry")
 
 	common.SetupTag(&CommonCmdData, cmd)
+	common.SetupEnvironment(&CommonCmdData, cmd)
+	common.SetupRelease(&CommonCmdData, cmd)
+	common.SetupNamespace(&CommonCmdData, cmd)
+	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	return cmd
 }

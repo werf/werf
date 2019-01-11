@@ -13,10 +13,6 @@ import (
 )
 
 var CmdData struct {
-	HelmReleaseName string
-
-	Namespace     string
-	KubeContext   string
 	WithNamespace bool
 }
 
@@ -24,11 +20,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "dismiss HELM_RELEASE_NAME",
+		Use:  "dismiss",
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			CmdData.HelmReleaseName = args[0]
-
 			err := runDismiss()
 			if err != nil {
 				return fmt.Errorf("dismiss failed: %s", err)
@@ -41,9 +35,12 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&CmdData.Namespace, "namespace", "", "", "Kubernetes namespace")
-	cmd.PersistentFlags().StringVarP(&CmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
-	cmd.PersistentFlags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete namespace after purging helm release")
+	cmd.PersistentFlags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
+
+	common.SetupEnvironment(&CommonCmdData, cmd)
+	common.SetupRelease(&CommonCmdData, cmd)
+	common.SetupNamespace(&CommonCmdData, cmd)
+	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	return cmd
 }
