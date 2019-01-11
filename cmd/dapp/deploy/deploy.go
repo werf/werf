@@ -99,11 +99,6 @@ func runDeploy() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := common.GetProjectName(projectDir)
-	if err != nil {
-		return fmt.Errorf("getting project name failed: %s", err)
-	}
-
 	projectTmpDir, err := project_tmp_dir.Get()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
@@ -114,6 +109,8 @@ func runDeploy() error {
 	if err != nil {
 		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
+
+	projectName := dappfile.Meta.Project
 
 	var repo string
 	if !CmdData.WithoutRegistry {
@@ -161,7 +158,7 @@ func runDeploy() error {
 		return err
 	}
 
-	return deploy.RunDeploy(projectName, projectDir, repo, tag, release, namespace, dappfile, deploy.DeployOptions{
+	return deploy.RunDeploy(projectDir, repo, tag, release, namespace, dappfile, deploy.DeployOptions{
 		Values:          CmdData.Values,
 		SecretValues:    CmdData.SecretValues,
 		Set:             CmdData.Set,

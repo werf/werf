@@ -1,7 +1,7 @@
 package config
 
 type rawMeta struct {
-	Project         string             `yaml:"project,omitempty"`
+	Project         *string            `yaml:"project,omitempty"`
 	DeployTemplates rawDeployTemplates `yaml:"deploy,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
@@ -22,12 +22,20 @@ func (c *rawMeta) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
+	if c.Project != nil && *c.Project == "" {
+		return newDetailedConfigError("project field cannot be empty!", nil, c.doc)
+	}
+
 	return nil
 }
 
 func (c *rawMeta) toMeta() *Meta {
-	return &Meta{
-		Project:         c.Project,
-		DeployTemplates: c.DeployTemplates.toDeployTemplates(),
+	meta := &Meta{}
+	if c.Project != nil {
+		meta.Project = *c.Project
 	}
+
+	meta.DeployTemplates = c.DeployTemplates.toDeployTemplates()
+
+	return meta
 }

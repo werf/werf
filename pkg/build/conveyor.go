@@ -30,8 +30,6 @@ type conveyorPermanentFields struct {
 	dappfile           *config.Dappfile
 	dimgNamesToProcess []string
 
-	projectName string
-
 	projectDir       string
 	projectBuildDir  string
 	containerDappDir string
@@ -47,13 +45,11 @@ type DockerAuthorizer interface {
 	LoginForPush(repo string) error
 }
 
-func NewConveyor(dappfile *config.Dappfile, dimgNamesToProcess []string, projectDir, projectName, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
+func NewConveyor(dappfile *config.Dappfile, dimgNamesToProcess []string, projectDir, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
 	c := &Conveyor{
 		conveyorPermanentFields: &conveyorPermanentFields{
 			dappfile:           dappfile,
 			dimgNamesToProcess: dimgNamesToProcess,
-
-			projectName: projectName,
 
 			projectDir:       projectDir,
 			projectBuildDir:  buildDir,
@@ -193,8 +189,12 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 	return nil
 }
 
+func (c *Conveyor) projectName() string {
+	return c.dappfile.Meta.Project
+}
+
 func (c *Conveyor) lockAllImagesReadOnly() (string, error) {
-	lockName := fmt.Sprintf("%s.images", c.projectName)
+	lockName := fmt.Sprintf("%s.images", c.projectName())
 	err := lock.Lock(lockName, lock.LockOptions{ReadOnly: true})
 	if err != nil {
 		return "", fmt.Errorf("error locking %s: %s", lockName, err)

@@ -15,7 +15,9 @@ import (
 
 	"github.com/Masterminds/sprig"
 
+	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/logger"
+	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/dapp/pkg/util"
 	"gopkg.in/flant/yaml.v2"
 )
@@ -41,6 +43,22 @@ func ParseDappfile(dappfilePath string) (*Dappfile, error) {
 		return nil, err
 	}
 
+	if meta == nil {
+		defaultProjectName, err := GetProjectName(path.Dir(dappfilePath))
+		if err != nil {
+			return nil, err
+		}
+
+		format := "meta definition is not defined: add meta doc with required fields, e.g:\n\n" +
+			"```\n" +
+			"project: %s\n" +
+			"---\n" +
+			"```\n\n" +
+			"Read more about meta doc here, https://flant.github.io/dapp/reference/build/dappfile.html"
+
+		return nil, fmt.Errorf(format, defaultProjectName)
+	}
+
 	dimgs, err := splitByDimgs(rawDimgs, dappfileRenderContent, dappfileRenderPath)
 	if err != nil {
 		return nil, err
@@ -52,6 +70,41 @@ func ParseDappfile(dappfilePath string) (*Dappfile, error) {
 	}
 
 	return dappfile, nil
+}
+
+func GetProjectName(projectDir string) (string, error) {
+	name := path.Base(projectDir)
+
+	if exist, err := util.DirExists(path.Join(projectDir, ".git")); err != nil {
+		return "", err
+	} else if exist {
+		remoteOriginUrl, err := gitOwnRepoOriginUrl(projectDir)
+		if err != nil {
+			return "", err
+		}
+
+		if remoteOriginUrl != "" {
+			if name, err = getGitName(remoteOriginUrl); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	return slug.Project(name), nil
+}
+
+func gitOwnRepoOriginUrl(projectDir string) (string, error) {
+	localGitRepo := &git_repo.Local{
+		Path:   projectDir,
+		GitDir: path.Join(projectDir, ".git"),
+	}
+
+	remoteOriginUrl, err := localGitRepo.RemoteOriginUrl()
+	if err != nil {
+		return "", nil
+	}
+
+	return remoteOriginUrl, nil
 }
 
 func dumpDappfileRender(dappfilePath string, dappfileRenderContent string) (string, error) {
@@ -522,10 +575,6 @@ func splitByMetaAndRawDimgs(docs []*doc) (*Meta, []*rawDimg, error) {
 		} else {
 			return nil, nil, newYamlUnmarshalError(errors.New("doc type cannot be recognized"), doc)
 		}
-	}
-
-	if resultMeta == nil {
-		return nil, nil, errors.New("meta definition is not defined")
 	}
 
 	return resultMeta, rawDimgs, nil

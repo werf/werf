@@ -115,10 +115,12 @@ func runFlush() error {
 		}
 	}
 
-	projectName, err := common.GetProjectName(projectDir)
+	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
-		return fmt.Errorf("getting project name failed: %s", err)
+		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
+
+	projectName := dappfile.Meta.Project
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,

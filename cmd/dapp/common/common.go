@@ -5,15 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/dapp/pkg/config"
 	"github.com/flant/dapp/pkg/dapp"
-	"github.com/flant/dapp/pkg/git_repo"
-	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/kubedog/pkg/kube"
 )
 
@@ -89,36 +86,6 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(cmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
 }
 
-func GetProjectName(projectDir string) (string, error) {
-	name := path.Base(projectDir)
-
-	exist, err := IsGitOwnRepoExists(projectDir)
-	if err != nil {
-		return "", err
-	}
-
-	if exist {
-		remoteOriginUrl, err := gitOwnRepoOriginUrl(projectDir)
-		if err != nil {
-			return "", err
-		}
-
-		if remoteOriginUrl != "" {
-			parts := strings.Split(remoteOriginUrl, "/")
-			repoName := parts[len(parts)-1]
-
-			gitEnding := ".git"
-			if strings.HasSuffix(repoName, gitEnding) {
-				repoName = repoName[0 : len(repoName)-len(gitEnding)]
-			}
-
-			name = repoName
-		}
-	}
-
-	return slug.Slug(name), nil
-}
-
 func GetDappfile(projectDir string) (*config.Dappfile, error) {
 	for _, dappfileName := range []string{"dappfile.yml", "dappfile.yaml"} {
 		dappfilePath := path.Join(projectDir, dappfileName)
@@ -153,31 +120,6 @@ func GetProjectBuildDir(projectName string) (string, error) {
 	}
 
 	return projectBuildDir, nil
-}
-
-func IsGitOwnRepoExists(projectDir string) (bool, error) {
-	fileInfo, err := os.Stat(path.Join(projectDir, ".git"))
-	if err != nil && os.IsNotExist(err) {
-		return false, nil
-	}
-
-	return fileInfo.IsDir(), nil
-}
-
-func GetLocalGitRepo(projectDir string) *git_repo.Local {
-	return &git_repo.Local{
-		Path:   projectDir,
-		GitDir: path.Join(projectDir, ".git"),
-	}
-}
-
-func gitOwnRepoOriginUrl(projectDir string) (string, error) {
-	remoteOriginUrl, err := GetLocalGitRepo(projectDir).RemoteOriginUrl()
-	if err != nil {
-		return "", nil
-	}
-
-	return remoteOriginUrl, nil
 }
 
 func GetRequiredRepoName(projectName, repoOption string) (string, error) {

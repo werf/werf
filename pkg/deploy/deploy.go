@@ -92,7 +92,7 @@ func ConstructNameByTemplate(template string, projectName string) error {
 	return nil
 }
 
-func RunDeploy(projectName, projectDir, repo, tag, release, namespace string, dappfile *config.Dappfile, opts DeployOptions) error {
+func RunDeploy(projectDir, repo, tag, release, namespace string, dappfile *config.Dappfile, opts DeployOptions) error {
 	if debug() {
 		fmt.Printf("Deploy options: %#v\n", opts)
 	}
@@ -113,7 +113,7 @@ func RunDeploy(projectName, projectDir, repo, tag, release, namespace string, da
 		images = append(images, d)
 	}
 
-	serviceValues, err := GetServiceValues(projectName, repo, namespace, tag, localGit, images, ServiceValuesOptions{})
+	serviceValues, err := GetServiceValues(dappfile.Meta.Project, repo, namespace, tag, localGit, images, ServiceValuesOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

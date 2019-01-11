@@ -74,10 +74,12 @@ func runSync() error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	projectName, err := common.GetProjectName(projectDir)
+	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
-		return fmt.Errorf("getting project name failed: %s", err)
+		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
+
+	projectName := dappfile.Meta.Project
 
 	repoName, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
 	if err != nil {
@@ -95,11 +97,6 @@ func runSync() error {
 
 	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
 		return err
-	}
-
-	dappfile, err := common.GetDappfile(projectDir)
-	if err != nil {
-		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
 
 	var dimgNames []string

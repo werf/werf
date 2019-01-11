@@ -1,6 +1,8 @@
 package config
 
 type DeployTemplates struct {
-	HelmRelease         string
-	KubernetesNamespace string
+	HelmRelease             string
+	HelmReleaseSlug         bool
+	KubernetesNamespace     string
+	KubernetesNamespaceSlug bool
 }

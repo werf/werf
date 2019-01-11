@@ -14,7 +14,7 @@ type LintOptions struct {
 	SetString    []string
 }
 
-func RunLint(projectName, projectDir string, dappfile *config.Dappfile, opts LintOptions) error {
+func RunLint(projectDir string, dappfile *config.Dappfile, opts LintOptions) error {
 	if debug() {
 		fmt.Printf("Lint options: %#v\n", opts)
 	}
@@ -34,7 +34,7 @@ func RunLint(projectName, projectDir string, dappfile *config.Dappfile, opts Lin
 		images = append(images, d)
 	}
 
-	serviceValues, err := GetServiceValues(projectName, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
+	serviceValues, err := GetServiceValues(dappfile.Meta.Project, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

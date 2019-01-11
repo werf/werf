@@ -31,6 +31,10 @@ func Slug(data string) string {
 	return slug(data, slugMaxSize)
 }
 
+func Project(name string) string {
+	return slugify(name)
+}
+
 func DockerTag(tag string) string {
 	if shouldNotBeSlugged(tag, dockerTagRegexp, dockerTagMaxSize) {
 		return tag

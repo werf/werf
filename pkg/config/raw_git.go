@@ -152,12 +152,16 @@ func (c *rawGit) toGitRemoteDirective() (gitRemote *GitRemote, err error) {
 }
 
 func (c *rawGit) getNameFromUrl() (string, error) {
+	return getGitName(c.Url)
+}
+
+func getGitName(remoteOriginUrl string) (string, error) {
 	r := regexp.MustCompile(`.*?([^:/ ]+/[^/ ]+)\.git$`)
-	match := r.FindStringSubmatch(c.Url)
+	match := r.FindStringSubmatch(remoteOriginUrl)
 	if len(match) == 2 {
 		return match[1], nil
 	} else {
-		return "", fmt.Errorf("cannot determine repo name from `url: %s`: url is not fit `.*?([^:/ ]+/[^/ ]+)\\.git$` regex", c.Url)
+		return "", fmt.Errorf("cannot determine repo name from `url: %s`: url is not fit `.*?([^:/ ]+/[^/ ]+)\\.git$` regex", remoteOriginUrl)
 	}
 }
 

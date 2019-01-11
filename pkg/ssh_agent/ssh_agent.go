@@ -24,7 +24,7 @@ var (
 
 func Init(keys []string) error {
 	for _, key := range keys {
-		if !util.IsFileExists(key) {
+		if !util.FileExists(key) {
 			return fmt.Errorf("specified ssh key %s does not exist", key)
 		}
 	}
@@ -40,7 +40,7 @@ func Init(keys []string) error {
 	}
 
 	systemAgentSock := os.Getenv("SSH_AUTH_SOCK")
-	if systemAgentSock != "" && util.IsFileExists(systemAgentSock) {
+	if systemAgentSock != "" && util.FileExists(systemAgentSock) {
 		SSHAuthSock = systemAgentSock
 		fmt.Printf("Using system ssh-agent %s\n", systemAgentSock)
 		return nil
@@ -49,7 +49,7 @@ func Init(keys []string) error {
 	var defaultKeys []string
 	for _, defaultFileName := range []string{"id_rsa", "id_dsa"} {
 		path := filepath.Join(os.Getenv("HOME"), ".ssh", defaultFileName)
-		if util.IsFileExists(path) {
+		if util.FileExists(path) {
 			defaultKeys = append(defaultKeys, path)
 		}
 	}

@@ -78,10 +78,12 @@ func runBuild(dimgsToProcess []string) error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := common.GetProjectName(projectDir)
+	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
-		return fmt.Errorf("getting project name failed: %s", err)
+		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
+
+	projectName := dappfile.Meta.Project
 
 	projectBuildDir, err := common.GetProjectBuildDir(projectName)
 	if err != nil {
@@ -93,11 +95,6 @@ func runBuild(dimgsToProcess []string) error {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
-
-	dappfile, err := common.GetDappfile(projectDir)
-	if err != nil {
-		return fmt.Errorf("dappfile parsing failed: %s", err)
-	}
 
 	dockerAuthorizer, err := docker_authorizer.GetBuildDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword)
 	if err != nil {
@@ -121,7 +118,7 @@ func runBuild(dimgsToProcess []string) error {
 		},
 	}
 
-	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 	if err = c.Build(buildOpts); err != nil {
 		return err
 	}

@@ -66,17 +66,12 @@ func runRender() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := common.GetProjectName(projectDir)
-	if err != nil {
-		return fmt.Errorf("getting project name failed: %s", err)
-	}
-
 	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
 		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
 
-	return deploy.RunRender(projectName, projectDir, dappfile, deploy.RenderOptions{
+	return deploy.RunRender(projectDir, dappfile, deploy.RenderOptions{
 		Values:       CmdData.Values,
 		SecretValues: CmdData.SecretValues,
 		Set:          CmdData.Set,
