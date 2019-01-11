@@ -1,6 +1,7 @@
 package slug
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -38,6 +39,13 @@ func DockerTag(tag string) string {
 	return slug(tag, dockerTagMaxSize)
 }
 
+func ValidateDockerTag(tag string) error {
+	if shouldNotBeSlugged(tag, dockerTagRegexp, dockerTagMaxSize) {
+		return nil
+	}
+	return fmt.Errorf("Docker tag should comply with regex '%s' and be maximum %d chars", dockerTagRegexp, dockerTagMaxSize)
+}
+
 func KubernetesNamespace(namespace string) string {
 	if shouldNotBeSlugged(namespace, kubernetesNamespaceRegexp, kubernetesNamespaceMaxSize) {
 		return namespace
@@ -46,12 +54,26 @@ func KubernetesNamespace(namespace string) string {
 	return slug(namespace, kubernetesNamespaceMaxSize)
 }
 
+func ValidateKubernetesNamespace(namespace string) error {
+	if shouldNotBeSlugged(namespace, kubernetesNamespaceRegexp, kubernetesNamespaceMaxSize) {
+		return nil
+	}
+	return fmt.Errorf("Kubernetes namespace should comply with DNS Label requirements")
+}
+
 func HelmRelease(name string) string {
 	if shouldNotBeSlugged(name, helmReleaseRegexp, helmReleaseMaxSize) {
 		return name
 	}
 
 	return slug(name, helmReleaseMaxSize)
+}
+
+func ValidateHelmRelease(name string) error {
+	if shouldNotBeSlugged(name, helmReleaseRegexp, helmReleaseMaxSize) {
+		return nil
+	}
+	return fmt.Errorf("Helm release name should comply with regex '%s' and be maximum %d chars", helmReleaseRegexp, helmReleaseMaxSize)
 }
 
 func shouldNotBeSlugged(data string, regexp *regexp.Regexp, maxSize int) bool {

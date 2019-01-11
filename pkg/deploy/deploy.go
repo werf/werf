@@ -18,6 +18,11 @@ type DeployOptions struct {
 	SetString       []string
 	Timeout         time.Duration
 	WithoutRegistry bool
+
+	Release     string
+	Namespace   string
+	Environment string
+	KubeContext string
 }
 
 type DimgInfoGetterStub struct {
@@ -83,11 +88,17 @@ func (d *DimgInfo) GetImageId() (string, error) {
 	return res, nil
 }
 
-func RunDeploy(projectName, projectDir, releaseName, namespace, kubeContext, repo, tag string, dappfile *config.Dappfile, opts DeployOptions) error {
+func ConstructNameByTemplate(template string, projectName string) error {
+	return nil
+}
+
+func RunDeploy(projectName, projectDir, repo, tag, release, namespace string, dappfile *config.Dappfile, opts DeployOptions) error {
 	if debug() {
 		fmt.Printf("Deploy options: %#v\n", opts)
-		fmt.Printf("Namespace: %s\n", namespace)
 	}
+
+	fmt.Printf("Using Helm release name: %s\n", release)
+	fmt.Printf("Using Kubernetes namespace: %s\n", namespace)
 
 	m, err := getSafeSecretManager(projectDir, opts.SecretValues)
 	if err != nil {
@@ -116,5 +127,5 @@ func RunDeploy(projectName, projectDir, releaseName, namespace, kubeContext, rep
 		defer os.RemoveAll(dappChart.ChartDir)
 	}
 
-	return dappChart.Deploy(releaseName, namespace, HelmChartOptions{CommonHelmOptions: CommonHelmOptions{KubeContext: kubeContext}, Timeout: opts.Timeout})
+	return dappChart.Deploy(release, namespace, HelmChartOptions{CommonHelmOptions: CommonHelmOptions{KubeContext: opts.KubeContext}, Timeout: opts.Timeout})
 }

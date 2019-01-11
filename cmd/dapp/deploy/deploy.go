@@ -152,14 +152,23 @@ func runDeploy() error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	namespace := common.GetNamespace(*CommonCmdData.Namespace)
+	release, err := common.GetHelmRelease(*CommonCmdData.Release, *CommonCmdData.Environment, dappfile)
+	if err != nil {
+		return err
+	}
 
-	return deploy.RunDeploy(projectName, projectDir, *CommonCmdData.Release, namespace, kubeContext, repo, tag, dappfile, deploy.DeployOptions{
+	namespace, err := common.GetKubernetesNamespace(*CommonCmdData.Namespace, *CommonCmdData.Environment, dappfile)
+	if err != nil {
+		return err
+	}
+
+	return deploy.RunDeploy(projectName, projectDir, repo, tag, release, namespace, dappfile, deploy.DeployOptions{
 		Values:          CmdData.Values,
 		SecretValues:    CmdData.SecretValues,
 		Set:             CmdData.Set,
 		SetString:       CmdData.SetString,
 		Timeout:         time.Duration(CmdData.Timeout) * time.Second,
 		WithoutRegistry: CmdData.WithoutRegistry,
+		KubeContext:     kubeContext,
 	})
 }

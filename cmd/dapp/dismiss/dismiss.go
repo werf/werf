@@ -20,8 +20,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "dismiss",
-		Args: cobra.MinimumNArgs(1),
+		Use: "dismiss",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runDismiss()
 			if err != nil {
@@ -34,6 +33,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupDir(&CommonCmdData, cmd)
 
 	cmd.PersistentFlags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
 
@@ -58,18 +58,36 @@ func runDismiss() error {
 		return err
 	}
 
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	if err != nil {
+		return fmt.Errorf("getting project dir failed: %s", err)
+	}
+
+	dappfile, err := common.GetDappfile(projectDir)
+	if err != nil {
+		return fmt.Errorf("dappfile parsing failed: %s", err)
+	}
+
 	kubeContext := os.Getenv("KUBECONTEXT")
 	if kubeContext == "" {
 		kubeContext = *CommonCmdData.KubeContext
 	}
-	err := kube.Init(kube.InitOptions{KubeContext: kubeContext})
+	err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	namespace := common.GetNamespace(*CommonCmdData.Namespace)
+	release, err := common.GetHelmRelease(*CommonCmdData.Release, *CommonCmdData.Environment, dappfile)
+	if err != nil {
+		return err
+	}
 
-	return deploy.RunDismiss(*CommonCmdData.Release, namespace, kubeContext, deploy.DismissOptions{
+	namespace, err := common.GetKubernetesNamespace(*CommonCmdData.Namespace, *CommonCmdData.Environment, dappfile)
+	if err != nil {
+		return err
+	}
+
+	return deploy.RunDismiss(release, namespace, kubeContext, deploy.DismissOptions{
 		WithNamespace: CmdData.WithNamespace,
 	})
 }
