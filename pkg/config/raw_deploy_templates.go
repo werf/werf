@@ -2,9 +2,9 @@ package config
 
 type rawDeployTemplates struct {
 	HelmRelease             *string `yaml:"helmRelease,omitempty"`
-	HelmReleaseSlug         bool    `yaml:"helmReleaseSlug,omitempty"`
+	HelmReleaseSlug         *bool   `yaml:"helmReleaseSlug,omitempty"`
 	KubernetesNamespace     *string `yaml:"kubernetesNamespace,omitempty"`
-	KubernetesNamespaceSlug bool    `yaml:"kubernetesNamespaceSlug,omitempty"`
+	KubernetesNamespaceSlug *bool   `yaml:"kubernetesNamespaceSlug,omitempty"`
 
 	rawMeta *rawMeta
 
@@ -46,13 +46,19 @@ func (c *rawDeployTemplates) toDeployTemplates() DeployTemplates {
 		deployTemplates.HelmRelease = *c.HelmRelease
 	}
 
-	deployTemplates.HelmReleaseSlug = c.HelmReleaseSlug
+	deployTemplates.HelmReleaseSlug = true
+	if c.HelmReleaseSlug != nil {
+		deployTemplates.HelmReleaseSlug = *c.HelmReleaseSlug
+	}
 
 	if c.KubernetesNamespace != nil {
 		deployTemplates.KubernetesNamespace = *c.KubernetesNamespace
 	}
 
-	deployTemplates.KubernetesNamespaceSlug = c.KubernetesNamespaceSlug
+	deployTemplates.KubernetesNamespaceSlug = true
+	if c.KubernetesNamespaceSlug != nil {
+		deployTemplates.KubernetesNamespaceSlug = *c.KubernetesNamespaceSlug
+	}
 
 	return deployTemplates
 }
