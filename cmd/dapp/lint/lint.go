@@ -32,7 +32,6 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupName(&CommonCmdData, cmd)
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
@@ -67,7 +66,7 @@ func runLint() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)
+	projectName, err := common.GetProjectName(projectDir)
 	if err != nil {
 		return fmt.Errorf("getting project name failed: %s", err)
 	}

@@ -18,7 +18,6 @@ import (
 )
 
 type CmdData struct {
-	Name    *string
 	Dir     *string
 	TmpDir  *string
 	HomeDir *string
@@ -34,14 +33,6 @@ type CmdData struct {
 	Release     *string
 	Namespace   *string
 	KubeContext *string
-}
-
-func SetupName(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Name = new(string)
-	cmd.PersistentFlags().StringVarP(cmdData.Name, "name", "", "", `Use custom dapp name.
-Chaging default name will cause full cache rebuild.
-By default dapp name is the last element of remote.origin.url from project git,
-or it is the name of the directory where Dappfile resides.`)
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -98,34 +89,30 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.PersistentFlags().StringVarP(cmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
 }
 
-func GetProjectName(cmdData *CmdData, projectDir string) (string, error) {
+func GetProjectName(projectDir string) (string, error) {
 	name := path.Base(projectDir)
 
-	if *cmdData.Name != "" {
-		name = *cmdData.Name
-	} else {
-		exist, err := IsGitOwnRepoExists(projectDir)
+	exist, err := IsGitOwnRepoExists(projectDir)
+	if err != nil {
+		return "", err
+	}
+
+	if exist {
+		remoteOriginUrl, err := gitOwnRepoOriginUrl(projectDir)
 		if err != nil {
 			return "", err
 		}
 
-		if exist {
-			remoteOriginUrl, err := gitOwnRepoOriginUrl(projectDir)
-			if err != nil {
-				return "", err
+		if remoteOriginUrl != "" {
+			parts := strings.Split(remoteOriginUrl, "/")
+			repoName := parts[len(parts)-1]
+
+			gitEnding := ".git"
+			if strings.HasSuffix(repoName, gitEnding) {
+				repoName = repoName[0 : len(repoName)-len(gitEnding)]
 			}
 
-			if remoteOriginUrl != "" {
-				parts := strings.Split(remoteOriginUrl, "/")
-				repoName := parts[len(parts)-1]
-
-				gitEnding := ".git"
-				if strings.HasSuffix(repoName, gitEnding) {
-					repoName = repoName[0 : len(repoName)-len(gitEnding)]
-				}
-
-				name = repoName
-			}
+			name = repoName
 		}
 	}
 
