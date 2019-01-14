@@ -243,7 +243,7 @@ func unmarshalYaml(data []byte) (yaml.MapSlice, error) {
 
 func mergeYamlEncodedData(d, eD, newD, newED interface{}) (interface{}, error) {
 	dType := reflect.TypeOf(d)
-	newDType := reflect.TypeOf(d)
+	newDType := reflect.TypeOf(newD)
 
 	if dType != newDType {
 		return newED, nil
