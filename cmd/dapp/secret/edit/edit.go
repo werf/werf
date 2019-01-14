@@ -13,7 +13,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/kubernetes/pkg/util/file"
@@ -293,7 +293,7 @@ func unmarshalYaml(data []byte) (yaml.MapSlice, error) {
 
 func mergeYamlEncodedData(d, eD, newD, newED interface{}) (interface{}, error) {
 	dType := reflect.TypeOf(d)
-	newDType := reflect.TypeOf(d)
+	newDType := reflect.TypeOf(newD)
 
 	if dType != newDType {
 		return newED, nil
