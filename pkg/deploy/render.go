@@ -50,7 +50,9 @@ func RunRender(projectDir string, dappfile *config.Dappfile, opts RenderOptions)
 		return err
 	}
 
-	fmt.Println(data)
+	if data != "" {
+		fmt.Println(data)
+	}
 
 	return nil
 }
