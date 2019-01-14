@@ -127,6 +127,24 @@ type PushOptions struct {
 	WithStages bool
 }
 
+func (c *Conveyor) Tag(repo string, opts TagOptions) error {
+	var err error
+
+	var phases []Phase
+	phases = append(phases, NewInitializationPhase())
+	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewShouldBeBuiltPhase())
+	phases = append(phases, NewTagPhase(repo, opts))
+
+	lockName, err := c.lockAllImagesReadOnly()
+	if err != nil {
+		return err
+	}
+	defer lock.Unlock(lockName)
+
+	return c.runPhases(phases)
+}
+
 func (c *Conveyor) Push(repo string, opts PushOptions) error {
 	var err error
 

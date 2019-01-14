@@ -19,6 +19,7 @@ import (
 	"github.com/flant/dapp/cmd/dapp/render"
 	"github.com/flant/dapp/cmd/dapp/reset"
 	"github.com/flant/dapp/cmd/dapp/sync"
+	"github.com/flant/dapp/cmd/dapp/tag"
 	"github.com/flant/dapp/cmd/dapp/version"
 	"github.com/flant/dapp/pkg/process_exterminator"
 
@@ -52,6 +53,7 @@ func main() {
 		build.NewCmd(),
 		push.NewCmd(),
 		bp.NewCmd(),
+		tag.NewCmd(),
 
 		deploy.NewCmd(),
 		dismiss.NewCmd(),
