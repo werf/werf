@@ -31,11 +31,15 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 
 		var acquiredLocks []string
 
+		unlockLock := func() {
+			var lockName string
+			lockName, acquiredLocks = acquiredLocks[0], acquiredLocks[1:]
+			lock.Unlock(lockName)
+		}
+
 		unlockLocks := func() {
 			for len(acquiredLocks) > 0 {
-				var lockName string
-				lockName, acquiredLocks = acquiredLocks[0], acquiredLocks[1:]
-				lock.Unlock(lockName)
+				unlockLock()
 			}
 		}
 
@@ -53,6 +57,8 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 			if err != nil {
 				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 			}
+
+			acquiredLocks = append(acquiredLocks, imageLockName)
 
 			if err := img.SyncDockerState(); err != nil {
 				return err
@@ -89,22 +95,14 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 			if err := img.Build(p.ImageBuildOptions); err != nil {
 				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 			}
-		}
-
-		// save in cache
-		for _, stage := range dimg.GetStages() {
-			img := stage.GetImage()
-			if img.IsExists() {
-				continue
-			}
 
 			err := img.SaveInCache()
 			if err != nil {
 				return fmt.Errorf("failed to save in cache image %s: %s", img.Name(), err)
 			}
-		}
 
-		unlockLocks()
+			unlockLock()
+		}
 	}
 
 	return nil
