@@ -20,6 +20,7 @@ import (
 	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/dapp/pkg/util"
 	"gopkg.in/flant/yaml.v2"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 )
 
 func ParseDappfile(dappfilePath string) (*Dappfile, error) {
@@ -84,9 +85,14 @@ func GetProjectName(projectDir string) (string, error) {
 		}
 
 		if remoteOriginUrl != "" {
-			if name, err = getGitName(remoteOriginUrl); err != nil {
-				return "", err
+			ep, err := transport.NewEndpoint(remoteOriginUrl)
+			if err != nil {
+				return "", fmt.Errorf("bad url '%s': %s", remoteOriginUrl, err)
 			}
+
+			path := strings.TrimSuffix(ep.Path, ".git")
+
+			return slug.Project(path), nil
 		}
 	}
 
