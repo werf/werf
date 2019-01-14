@@ -19,11 +19,7 @@ import (
 )
 
 var CmdData struct {
-	HelmReleaseName string
-
-	Namespace   string
-	KubeContext string
-	Timeout     int
+	Timeout int
 
 	Values       []string
 	SecretValues []string
@@ -40,11 +36,8 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "deploy HELM_RELEASE_NAME",
-		Args: cobra.MinimumNArgs(1),
+		Use: "deploy",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			CmdData.HelmReleaseName = args[0]
-
 			err := runDeploy()
 			if err != nil {
 				return fmt.Errorf("deploy failed: %s", err)
@@ -54,14 +47,11 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupName(&CommonCmdData, cmd)
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&CmdData.Namespace, "namespace", "", "", "Kubernetes namespace")
-	cmd.PersistentFlags().StringVarP(&CmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
 	cmd.PersistentFlags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "watch timeout in seconds")
 
 	cmd.PersistentFlags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
@@ -75,6 +65,10 @@ func NewCmd() *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&CmdData.WithoutRegistry, "without-registry", "", false, "Do not get images info from registry")
 
 	common.SetupTag(&CommonCmdData, cmd)
+	common.SetupEnvironment(&CommonCmdData, cmd)
+	common.SetupRelease(&CommonCmdData, cmd)
+	common.SetupNamespace(&CommonCmdData, cmd)
+	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -105,11 +99,6 @@ func runDeploy() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)
-	if err != nil {
-		return fmt.Errorf("getting project name failed: %s", err)
-	}
-
 	projectTmpDir, err := project_tmp_dir.Get()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
@@ -120,6 +109,8 @@ func runDeploy() error {
 	if err != nil {
 		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
+
+	projectName := dappfile.Meta.Project
 
 	var repo string
 	if !CmdData.WithoutRegistry {
@@ -150,21 +141,30 @@ func runDeploy() error {
 
 	kubeContext := os.Getenv("KUBECONTEXT")
 	if kubeContext == "" {
-		kubeContext = CmdData.KubeContext
+		kubeContext = *CommonCmdData.KubeContext
 	}
 	err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	namespace := common.GetNamespace(CmdData.Namespace)
+	release, err := common.GetHelmRelease(*CommonCmdData.Release, *CommonCmdData.Environment, dappfile)
+	if err != nil {
+		return err
+	}
 
-	return deploy.RunDeploy(projectName, projectDir, CmdData.HelmReleaseName, namespace, kubeContext, repo, tag, dappfile, deploy.DeployOptions{
+	namespace, err := common.GetKubernetesNamespace(*CommonCmdData.Namespace, *CommonCmdData.Environment, dappfile)
+	if err != nil {
+		return err
+	}
+
+	return deploy.RunDeploy(projectDir, repo, tag, release, namespace, dappfile, deploy.DeployOptions{
 		Values:          CmdData.Values,
 		SecretValues:    CmdData.SecretValues,
 		Set:             CmdData.Set,
 		SetString:       CmdData.SetString,
 		Timeout:         time.Duration(CmdData.Timeout) * time.Second,
 		WithoutRegistry: CmdData.WithoutRegistry,
+		KubeContext:     kubeContext,
 	})
 }

@@ -12,13 +12,13 @@ type DismissOptions struct {
 	KubeContext   string
 }
 
-func RunDismiss(releaseName, namespace, kubeContext string, opts DismissOptions) error {
+func RunDismiss(release, namespace, kubeContext string, opts DismissOptions) error {
 	if debug() {
 		fmt.Printf("Dismiss options: %#v\n", opts)
 		fmt.Printf("Namespace: %s\n", namespace)
 	}
 
-	err := PurgeHelmRelease(releaseName, CommonHelmOptions{KubeContext: opts.KubeContext})
+	err := PurgeHelmRelease(release, CommonHelmOptions{KubeContext: opts.KubeContext})
 	if err != nil {
 		return err
 	}

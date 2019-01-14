@@ -60,7 +60,6 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupName(&CommonCmdData, cmd)
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
@@ -106,10 +105,12 @@ func runBP(dimgsToProcess []string) error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)
+	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
-		return fmt.Errorf("getting project name failed: %s", err)
+		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
+
+	projectName := dappfile.Meta.Project
 
 	projectBuildDir, err := common.GetProjectBuildDir(projectName)
 	if err != nil {
@@ -121,11 +122,6 @@ func runBP(dimgsToProcess []string) error {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
-
-	dappfile, err := common.GetDappfile(projectDir)
-	if err != nil {
-		return fmt.Errorf("dappfile parsing failed: %s", err)
-	}
 
 	repo, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
 	if err != nil {
@@ -161,7 +157,7 @@ func runBP(dimgsToProcess []string) error {
 
 	pushOpts := build.PushOptions{TagOptions: tagOpts, WithStages: CmdData.WithStages}
 
-	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectName, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(dappfile, dimgsToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 	if err = c.BP(repo, buildOpts, pushOpts); err != nil {
 		return err
 	}

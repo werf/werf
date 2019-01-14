@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -14,12 +15,15 @@ import (
 
 	"github.com/Masterminds/sprig"
 
+	"github.com/flant/dapp/pkg/git_repo"
 	"github.com/flant/dapp/pkg/logger"
+	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/dapp/pkg/util"
 	"gopkg.in/flant/yaml.v2"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 )
 
-func ParseDimgs(dappfilePath string) ([]*Dimg, error) {
+func ParseDappfile(dappfilePath string) (*Dappfile, error) {
 	dappfileRenderContent, err := parseDappfileYaml(dappfilePath)
 	if err != nil {
 		return nil, err
@@ -35,12 +39,78 @@ func ParseDimgs(dappfilePath string) ([]*Dimg, error) {
 		return nil, err
 	}
 
-	dimgs, err := splitByDimgs(docs, dappfileRenderContent, dappfileRenderPath)
+	meta, rawDimgs, err := splitByMetaAndRawDimgs(docs)
 	if err != nil {
 		return nil, err
 	}
 
-	return dimgs, nil
+	if meta == nil {
+		defaultProjectName, err := GetProjectName(path.Dir(dappfilePath))
+		if err != nil {
+			return nil, err
+		}
+
+		format := "meta definition is not defined: add meta doc with required fields, e.g:\n\n" +
+			"```\n" +
+			"project: %s\n" +
+			"---\n" +
+			"```\n\n" +
+			"Read more about meta doc here, https://flant.github.io/dapp/reference/build/dappfile.html"
+
+		return nil, fmt.Errorf(format, defaultProjectName)
+	}
+
+	dimgs, err := splitByDimgs(rawDimgs, dappfileRenderContent, dappfileRenderPath)
+	if err != nil {
+		return nil, err
+	}
+
+	dappfile := &Dappfile{
+		Meta:  meta,
+		Dimgs: dimgs,
+	}
+
+	return dappfile, nil
+}
+
+func GetProjectName(projectDir string) (string, error) {
+	name := path.Base(projectDir)
+
+	if exist, err := util.DirExists(path.Join(projectDir, ".git")); err != nil {
+		return "", err
+	} else if exist {
+		remoteOriginUrl, err := gitOwnRepoOriginUrl(projectDir)
+		if err != nil {
+			return "", err
+		}
+
+		if remoteOriginUrl != "" {
+			ep, err := transport.NewEndpoint(remoteOriginUrl)
+			if err != nil {
+				return "", fmt.Errorf("bad url '%s': %s", remoteOriginUrl, err)
+			}
+
+			path := strings.TrimSuffix(ep.Path, ".git")
+
+			return slug.Project(path), nil
+		}
+	}
+
+	return slug.Project(name), nil
+}
+
+func gitOwnRepoOriginUrl(projectDir string) (string, error) {
+	localGitRepo := &git_repo.Local{
+		Path:   projectDir,
+		GitDir: path.Join(projectDir, ".git"),
+	}
+
+	remoteOriginUrl, err := localGitRepo.RemoteOriginUrl()
+	if err != nil {
+		return "", nil
+	}
+
+	return remoteOriginUrl, nil
 }
 
 func dumpDappfileRender(dappfilePath string, dappfileRenderContent string) (string, error) {
@@ -319,12 +389,7 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath string) ([]*Dimg, error) {
-	rawDimgs, err := splitByRawDimgs(docs)
-	if err != nil {
-		return nil, err
-	}
-
+func splitByDimgs(rawDimgs []*rawDimg, dappfileRenderContent string, dappfileRenderPath string) ([]*Dimg, error) {
 	var dimgs []*Dimg
 	var artifacts []*DimgArtifact
 
@@ -348,19 +413,19 @@ func splitByDimgs(docs []*doc, dappfileRenderContent string, dappfileRenderPath 
 		return nil, newConfigError(fmt.Sprintf("no dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
 	}
 
-	if err = exportsAutoExcluding(dimgs, artifacts); err != nil {
+	if err := exportsAutoExcluding(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err = validateDimgsNames(dimgs, artifacts); err != nil {
+	if err := validateDimgsNames(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err = associateImportsArtifacts(dimgs, artifacts); err != nil {
+	if err := associateImportsArtifacts(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err = associateDimgsAndArtifactsFrom(dimgs, artifacts); err != nil {
+	if err := associateDimgsAndArtifactsFrom(dimgs, artifacts); err != nil {
 		return nil, err
 	}
 
@@ -481,19 +546,44 @@ func associateDimgFrom(dimg DimgInterface, dimgs []*Dimg, artifacts []*DimgArtif
 	}
 }
 
-func splitByRawDimgs(docs []*doc) ([]*rawDimg, error) {
+func splitByMetaAndRawDimgs(docs []*doc) (*Meta, []*rawDimg, error) {
 	var rawDimgs []*rawDimg
+	var resultMeta *Meta
+
 	parentStack = util.NewStack()
 	for _, doc := range docs {
-		dimg := &rawDimg{doc: doc}
-		err := yaml.Unmarshal(doc.Content, &dimg)
+		raw := &raw{}
+		err := yaml.Unmarshal(doc.Content, &raw)
 		if err != nil {
-			return nil, newYamlUnmarshalError(err, doc)
+			return nil, nil, newYamlUnmarshalError(err, doc)
 		}
-		rawDimgs = append(rawDimgs, dimg)
+
+		if raw.IsRawMeta() {
+			if resultMeta != nil {
+				return nil, nil, newYamlUnmarshalError(errors.New("duplicate meta definition"), doc)
+			}
+
+			rawMeta := &rawMeta{doc: doc}
+			err := yaml.Unmarshal(doc.Content, &rawMeta)
+			if err != nil {
+				return nil, nil, newYamlUnmarshalError(err, doc)
+			}
+
+			resultMeta = rawMeta.toMeta()
+		} else if raw.IsRawDimg() {
+			dimg := &rawDimg{doc: doc}
+			err := yaml.Unmarshal(doc.Content, &dimg)
+			if err != nil {
+				return nil, nil, newYamlUnmarshalError(err, doc)
+			}
+
+			rawDimgs = append(rawDimgs, dimg)
+		} else {
+			return nil, nil, newYamlUnmarshalError(errors.New("doc type cannot be recognized"), doc)
+		}
 	}
 
-	return rawDimgs, nil
+	return resultMeta, rawDimgs, nil
 }
 
 func newYamlUnmarshalError(err error, doc *doc) error {

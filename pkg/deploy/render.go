@@ -14,7 +14,7 @@ type RenderOptions struct {
 	SetString    []string
 }
 
-func RunRender(projectName, projectDir string, dappfile []*config.Dimg, opts RenderOptions) error {
+func RunRender(projectDir string, dappfile *config.Dappfile, opts RenderOptions) error {
 	if debug() {
 		fmt.Printf("Render options: %#v\n", opts)
 	}
@@ -29,12 +29,12 @@ func RunRender(projectName, projectDir string, dappfile []*config.Dimg, opts Ren
 	namespace := "NAMESPACE"
 
 	var images []DimgInfoGetter
-	for _, dimg := range dappfile {
+	for _, dimg := range dappfile.Dimgs {
 		d := &DimgInfo{Config: dimg, WithoutRegistry: true, Repo: repo, Tag: tag}
 		images = append(images, d)
 	}
 
-	serviceValues, err := GetServiceValues(projectName, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
+	serviceValues, err := GetServiceValues(dappfile.Meta.Project, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 
 	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {

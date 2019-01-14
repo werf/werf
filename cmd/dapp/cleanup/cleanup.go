@@ -2,8 +2,7 @@ package cleanup
 
 import (
 	"fmt"
-
-	"github.com/spf13/cobra"
+	"path"
 
 	"github.com/flant/dapp/cmd/dapp/common"
 	"github.com/flant/dapp/cmd/dapp/docker_authorizer"
@@ -14,6 +13,9 @@ import (
 	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/dapp/pkg/project_tmp_dir"
 	"github.com/flant/kubedog/pkg/kube"
+
+	"github.com/flant/dapp/pkg/util"
+	"github.com/spf13/cobra"
 )
 
 var CmdData struct {
@@ -41,7 +43,6 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupName(&CommonCmdData, cmd)
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
@@ -77,16 +78,18 @@ func runCleanup() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)
-	if err != nil {
-		return fmt.Errorf("getting project name failed: %s", err)
-	}
-
 	projectTmpDir, err := project_tmp_dir.Get()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
+
+	dappfile, err := common.GetDappfile(projectDir)
+	if err != nil {
+		return fmt.Errorf("dappfile parsing failed: %s", err)
+	}
+
+	projectName := dappfile.Meta.Project
 
 	repoName, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
 	if err != nil {
@@ -106,13 +109,8 @@ func runCleanup() error {
 		return err
 	}
 
-	dappfile, err := common.GetDappfile(projectDir)
-	if err != nil {
-		return fmt.Errorf("dappfile parsing failed: %s", err)
-	}
-
 	var dimgNames []string
-	for _, dimg := range dappfile {
+	for _, dimg := range dappfile.Dimgs {
 		dimgNames = append(dimgNames, dimg.Name)
 	}
 
@@ -122,11 +120,15 @@ func runCleanup() error {
 		DryRun:     CmdData.DryRun,
 	}
 
-	localRepo := &git_repo.Local{}
-	if exist, err := common.IsGitOwnRepoExists(projectDir); err != nil {
+	var localRepo *git_repo.Local
+	gitDir := path.Join(projectDir, ".git")
+	if exist, err := util.DirExists(gitDir); err != nil {
 		return err
 	} else if exist {
-		localRepo = common.GetLocalGitRepo(projectDir)
+		localRepo = &git_repo.Local{
+			Path:   projectDir,
+			GitDir: gitDir,
+		}
 	}
 
 	cleanupOptions := cleanup.CleanupOptions{

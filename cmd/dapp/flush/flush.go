@@ -39,7 +39,6 @@ func NewCmd() *cobra.Command {
 		},
 	}
 
-	common.SetupName(&CommonCmdData, cmd)
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
@@ -101,7 +100,7 @@ func runFlush() error {
 		}
 
 		var dimgNames []string
-		for _, dimg := range dappfile {
+		for _, dimg := range dappfile.Dimgs {
 			dimgNames = append(dimgNames, dimg.Name)
 		}
 
@@ -116,10 +115,12 @@ func runFlush() error {
 		}
 	}
 
-	projectName, err := common.GetProjectName(&CommonCmdData, projectDir)
+	dappfile, err := common.GetDappfile(projectDir)
 	if err != nil {
-		return fmt.Errorf("getting project name failed: %s", err)
+		return fmt.Errorf("dappfile parsing failed: %s", err)
 	}
+
+	projectName := dappfile.Meta.Project
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,

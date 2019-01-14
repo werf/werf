@@ -21,7 +21,7 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) error {
-	dimgsInOrder, err := generateDimgsInOrder(c.dappfile, c)
+	dimgsInOrder, err := generateDimgsInOrder(c.dappfile.Dimgs, c)
 	if err != nil {
 		return err
 	}

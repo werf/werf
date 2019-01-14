@@ -14,7 +14,7 @@ type LintOptions struct {
 	SetString    []string
 }
 
-func RunLint(projectName, projectDir string, dappfile []*config.Dimg, opts LintOptions) error {
+func RunLint(projectDir string, dappfile *config.Dappfile, opts LintOptions) error {
 	if debug() {
 		fmt.Printf("Lint options: %#v\n", opts)
 	}
@@ -29,12 +29,12 @@ func RunLint(projectName, projectDir string, dappfile []*config.Dimg, opts LintO
 	namespace := "NAMESPACE"
 
 	var images []DimgInfoGetter
-	for _, dimg := range dappfile {
+	for _, dimg := range dappfile.Dimgs {
 		d := &DimgInfo{Config: dimg, WithoutRegistry: true, Repo: repo, Tag: tag}
 		images = append(images, d)
 	}
 
-	serviceValues, err := GetServiceValues(projectName, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
+	serviceValues, err := GetServiceValues(dappfile.Meta.Project, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
