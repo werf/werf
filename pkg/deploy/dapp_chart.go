@@ -202,7 +202,13 @@ func PrepareDappChart(projectDir string, targetDir string, m secret.Manager) (*D
 		return nil, fmt.Errorf("unable to copy project helm dir %s into %s: %s", projectHelmDir, targetDir, err)
 	}
 
-	helpersTplPath := filepath.Join(targetDir, "templates/_dapp_helpers.tpl")
+	templatesDir := filepath.Join(targetDir, "templates")
+	err = os.MkdirAll(templatesDir, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create %s: %s", templatesDir, err)
+	}
+
+	helpersTplPath := filepath.Join(templatesDir, "_dapp_helpers.tpl")
 	f, err := os.Create(helpersTplPath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create %s: %s", helpersTplPath, err)

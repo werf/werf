@@ -52,7 +52,9 @@ func RunRender(opts RenderOptions) error {
 		return err
 	}
 
-	fmt.Println(data)
+	if data != "" {
+		fmt.Println(data)
+	}
 
 	return nil
 }
