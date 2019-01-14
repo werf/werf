@@ -30,6 +30,10 @@ func GetHelmRelease(releaseOption string, environmentOption string, dappfile *co
 		return "", fmt.Errorf("cannot render Helm release name by template '%s': %s", releaseTemplate, err)
 	}
 
+	if renderedRelease == "" {
+		return "", fmt.Errorf("Helm release rendered by template '%s' is empty: release name cannot be empty", releaseTemplate)
+	}
+
 	if dappfile.Meta.DeployTemplates.HelmReleaseSlug {
 		return slug.HelmRelease(renderedRelease), nil
 	}
@@ -59,6 +63,10 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, da
 	renderedNamespace, err := renderDeployParamTemplate("namespace", namespaceTemplate, environmentOption, dappfile)
 	if err != nil {
 		return "", fmt.Errorf("cannot render Kubernetes namespace by template '%s': %s", namespaceTemplate, err)
+	}
+
+	if renderedNamespace == "" {
+		return "", fmt.Errorf("Kubernetes namespace rendered by template '%s' is empty: namespace cannot be empty", namespaceTemplate)
 	}
 
 	if dappfile.Meta.DeployTemplates.KubernetesNamespaceSlug {
