@@ -52,8 +52,14 @@ func GetTagOptions(cmdData *CmdData, projectDir string) (build.TagOptions, error
 	emptyTags := true
 
 	opts := build.TagOptions{}
-	opts.Tags = *cmdData.Tag
-	if len(*cmdData.Tag) > 0 {
+
+	for _, tag := range *cmdData.Tag {
+		err := slug.ValidateDockerTag(tag)
+		if err != nil {
+			return build.TagOptions{}, fmt.Errorf("bad --tag parameter '%s' specified: %s", tag, err)
+		}
+
+		opts.Tags = append(opts.Tags, tag)
 		emptyTags = false
 	}
 
