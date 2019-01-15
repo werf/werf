@@ -165,7 +165,7 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 			fmt.Println(container.ID)
 			fmt.Println()
 		} else {
-			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{}); err != nil {
+			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{Force: true}); err != nil {
 				return err
 			}
 		}
