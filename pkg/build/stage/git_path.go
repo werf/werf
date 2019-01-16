@@ -13,7 +13,7 @@ import (
 	"github.com/flant/dapp/pkg/logger"
 )
 
-type GitArtifact struct {
+type GitPath struct {
 	GitRepoInterface git_repo.GitRepo
 	LocalGitRepo     *git_repo.Local
 	RemoteGitRepo    *git_repo.Remote
@@ -57,49 +57,49 @@ func (f *ContainerFileDescriptor) Open(flag int, perm os.FileMode) (*os.File, er
 	return handler, nil
 }
 
-func (ga *GitArtifact) GitRepo() git_repo.GitRepo {
-	if ga.GitRepoInterface != nil {
-		return ga.GitRepoInterface
-	} else if ga.LocalGitRepo != nil {
-		return ga.LocalGitRepo
-	} else if ga.RemoteGitRepo != nil {
-		return ga.RemoteGitRepo
+func (gp *GitPath) GitRepo() git_repo.GitRepo {
+	if gp.GitRepoInterface != nil {
+		return gp.GitRepoInterface
+	} else if gp.LocalGitRepo != nil {
+		return gp.LocalGitRepo
+	} else if gp.RemoteGitRepo != nil {
+		return gp.RemoteGitRepo
 	}
 
 	panic("GitRepo not initialized")
 }
 
-func (ga *GitArtifact) getRepoFilterOptions() git_repo.FilterOptions {
+func (gp *GitPath) getRepoFilterOptions() git_repo.FilterOptions {
 	return git_repo.FilterOptions{
-		BasePath:     ga.RepoPath,
-		IncludePaths: ga.IncludePaths,
-		ExcludePaths: ga.ExcludePaths,
+		BasePath:     gp.RepoPath,
+		IncludePaths: gp.IncludePaths,
+		ExcludePaths: gp.ExcludePaths,
 	}
 }
 
-func (ga *GitArtifact) IsLocal() bool {
-	if ga.LocalGitRepo != nil {
+func (gp *GitPath) IsLocal() bool {
+	if gp.LocalGitRepo != nil {
 		return true
 	} else {
 		return false
 	}
 }
 
-func (ga *GitArtifact) LatestCommit() (string, error) {
-	if ga.Commit != "" {
-		fmt.Printf("Using specified commit `%s` of repository `%s`\n", ga.Commit, ga.GitRepo().String())
-		return ga.Commit, nil
+func (gp *GitPath) LatestCommit() (string, error) {
+	if gp.Commit != "" {
+		fmt.Printf("Using specified commit `%s` of repository `%s`\n", gp.Commit, gp.GitRepo().String())
+		return gp.Commit, nil
 	}
 
-	if ga.Tag != "" {
-		return ga.GitRepo().LatestTagCommit(ga.Tag)
+	if gp.Tag != "" {
+		return gp.GitRepo().LatestTagCommit(gp.Tag)
 	}
 
-	if ga.Branch != "" {
-		return ga.GitRepo().LatestBranchCommit(ga.Branch)
+	if gp.Branch != "" {
+		return gp.GitRepo().LatestBranchCommit(gp.Branch)
 	}
 
-	commit, err := ga.GitRepo().HeadCommit()
+	commit, err := gp.GitRepo().HeadCommit()
 	if err != nil {
 		return "", err
 	}
@@ -107,16 +107,16 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 	return commit, nil
 }
 
-func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
+func (gp *GitPath) applyPatchCommand(patchFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
 	commands := make([]string, 0)
 
 	var applyPatchDirectory string
 
 	switch archiveType {
 	case git_repo.FileArchive:
-		applyPatchDirectory = filepath.Dir(ga.To)
+		applyPatchDirectory = filepath.Dir(gp.To)
 	case git_repo.DirectoryArchive:
-		applyPatchDirectory = ga.To
+		applyPatchDirectory = gp.To
 	default:
 		return nil, fmt.Errorf("unknown archive type `%s`", archiveType)
 	}
@@ -124,13 +124,13 @@ func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, arc
 	commands = append(commands, fmt.Sprintf(
 		"%s %s -d \"%s\"",
 		dappdeps.BaseBinPath("install"),
-		ga.makeCredentialsOpts(),
+		gp.makeCredentialsOpts(),
 		applyPatchDirectory,
 	))
 
 	commands = append(commands, fmt.Sprintf(
 		"%s %s apply --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s",
-		dappdeps.SudoCommand(ga.Owner, ga.Group),
+		dappdeps.SudoCommand(gp.Owner, gp.Group),
 		dappdeps.GitBin(),
 		applyPatchDirectory,
 		patchFile.ContainerFilePath,
@@ -139,31 +139,31 @@ func (ga *GitArtifact) applyPatchCommand(patchFile *ContainerFileDescriptor, arc
 	return commands, nil
 }
 
-func (ga *GitArtifact) ApplyPatchCommand(prevBuiltImage, image image.Image) error {
-	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
+func (gp *GitPath) ApplyPatchCommand(prevBuiltImage, image image.Image) error {
+	fromCommit, toCommit, err := gp.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return err
 	}
 
-	commands, err := ga.baseApplyPatchCommand(fromCommit, toCommit, prevBuiltImage)
+	commands, err := gp.baseApplyPatchCommand(fromCommit, toCommit, prevBuiltImage)
 	if err != nil {
 		return err
 	}
 
 	image.Container().AddRunCommands(commands...)
 
-	ga.AddGACommitToImageLabels(image, toCommit)
+	gp.AddGitCommitToImageLabels(image, toCommit)
 
 	return nil
 }
 
-func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage image.Image) (string, string, error) {
-	fromCommit := ga.GetGACommitFromImageLabels(prevBuiltImage)
+func (gp *GitPath) GetCommitsToPatch(prevBuiltImage image.Image) (string, string, error) {
+	fromCommit := gp.GetGitCommitFromImageLabels(prevBuiltImage)
 	if fromCommit == "" {
 		panic("Commit should be in prev built image labels!")
 	}
 
-	toCommit, err := ga.LatestCommit()
+	toCommit, err := gp.LatestCommit()
 	if err != nil {
 		return "", "", err
 	}
@@ -171,14 +171,14 @@ func (ga *GitArtifact) GetCommitsToPatch(prevBuiltImage image.Image) (string, st
 	return fromCommit, toCommit, nil
 }
 
-func (ga *GitArtifact) AddGACommitToImageLabels(image image.Image, commit string) {
+func (gp *GitPath) AddGitCommitToImageLabels(image image.Image, commit string) {
 	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-		ga.ImageGACommitLabel(): commit,
+		gp.ImageGitCommitLabel(): commit,
 	})
 }
 
-func (ga *GitArtifact) GetGACommitFromImageLabels(builtImage image.Image) string {
-	commit, ok := builtImage.Labels()[ga.ImageGACommitLabel()]
+func (gp *GitPath) GetGitCommitFromImageLabels(builtImage image.Image) string {
+	commit, ok := builtImage.Labels()[gp.ImageGitCommitLabel()]
 	if !ok {
 		return ""
 	}
@@ -186,19 +186,19 @@ func (ga *GitArtifact) GetGACommitFromImageLabels(builtImage image.Image) string
 	return commit
 }
 
-func (ga *GitArtifact) ImageGACommitLabel() string {
-	return fmt.Sprintf("dapp-git-%s-commit", ga.GetParamshash())
+func (gp *GitPath) ImageGitCommitLabel() string {
+	return fmt.Sprintf("dapp-git-%s-commit", gp.GetParamshash())
 }
 
-func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage image.Image) ([]string, error) {
-	archiveType := git_repo.ArchiveType(prevBuiltImage.Labels()[ga.getArchiveTypeLabelName()])
+func (gp *GitPath) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage image.Image) ([]string, error) {
+	archiveType := git_repo.ArchiveType(prevBuiltImage.Labels()[gp.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
-		FilterOptions: ga.getRepoFilterOptions(),
+		FilterOptions: gp.getRepoFilterOptions(),
 		FromCommit:    fromCommit,
 		ToCommit:      toCommit,
 	}
-	patch, err := ga.GitRepo().CreatePatch(patchOpts)
+	patch, err := gp.GitRepo().CreatePatch(patchOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBu
 	if patch.HasBinary() {
 		patchPaths := patch.GetPaths()
 
-		pathsListFile, err := ga.createPatchPathsListFile(patchPaths, fromCommit, toCommit)
+		pathsListFile, err := gp.createPatchPathsListFile(patchPaths, fromCommit, toCommit)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create patch paths list file: %s", err)
 		}
@@ -228,14 +228,14 @@ func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBu
 		commands = append(commands, fmt.Sprintf(
 			"%s %s -type d -empty -delete",
 			dappdeps.BaseBinPath("find"),
-			ga.To,
+			gp.To,
 		))
 
 		archiveOpts := git_repo.ArchiveOptions{
-			FilterOptions: ga.getRepoFilterOptions(),
+			FilterOptions: gp.getRepoFilterOptions(),
 			Commit:        toCommit,
 		}
-		archive, err := ga.GitRepo().CreateArchive(archiveOpts)
+		archive, err := gp.GitRepo().CreateArchive(archiveOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -245,14 +245,14 @@ func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBu
 			return commands, nil
 		}
 
-		archiveFile, err := ga.createArchiveFile(archive, toCommit)
+		archiveFile, err := gp.createArchiveFile(archive, toCommit)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create archive file: %s", err)
 		}
 
 		archiveType := archive.GetType()
 
-		applyArchiveCommands, err := ga.applyArchiveCommand(archiveFile, archiveType)
+		applyArchiveCommands, err := gp.applyArchiveCommand(archiveFile, archiveType)
 		if err != nil {
 			return nil, err
 		}
@@ -261,23 +261,23 @@ func (ga *GitArtifact) baseApplyPatchCommand(fromCommit, toCommit string, prevBu
 		return commands, nil
 	}
 
-	patchFile, err := ga.createPatchFile(patch, fromCommit, toCommit)
+	patchFile, err := gp.createPatchFile(patch, fromCommit, toCommit)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create patch file: %s", err)
 	}
 
-	return ga.applyPatchCommand(patchFile, archiveType)
+	return gp.applyPatchCommand(patchFile, archiveType)
 }
 
-func (ga *GitArtifact) applyArchiveCommand(archiveFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
+func (gp *GitPath) applyArchiveCommand(archiveFile *ContainerFileDescriptor, archiveType git_repo.ArchiveType) ([]string, error) {
 	var unpackArchiveDirectory string
 	commands := make([]string, 0)
 
 	switch archiveType {
 	case git_repo.FileArchive:
-		unpackArchiveDirectory = filepath.Dir(ga.To)
+		unpackArchiveDirectory = filepath.Dir(gp.To)
 	case git_repo.DirectoryArchive:
-		unpackArchiveDirectory = ga.To
+		unpackArchiveDirectory = gp.To
 	default:
 		return nil, fmt.Errorf("unknown archive type `%s`", archiveType)
 	}
@@ -285,13 +285,13 @@ func (ga *GitArtifact) applyArchiveCommand(archiveFile *ContainerFileDescriptor,
 	commands = append(commands, fmt.Sprintf(
 		"%s %s -d \"%s\"",
 		dappdeps.BaseBinPath("install"),
-		ga.makeCredentialsOpts(),
+		gp.makeCredentialsOpts(),
 		unpackArchiveDirectory,
 	))
 
 	commands = append(commands, fmt.Sprintf(
 		"%s %s -xf %s -C \"%s\"",
-		dappdeps.SudoCommand(ga.Owner, ga.Group),
+		dappdeps.SudoCommand(gp.Owner, gp.Group),
 		dappdeps.BaseBinPath("tar"),
 		archiveFile.ContainerFilePath,
 		unpackArchiveDirectory,
@@ -300,30 +300,30 @@ func (ga *GitArtifact) applyArchiveCommand(archiveFile *ContainerFileDescriptor,
 	return commands, nil
 }
 
-func (ga *GitArtifact) ApplyArchiveCommand(image image.Image) error {
-	commit, err := ga.LatestCommit()
+func (gp *GitPath) ApplyArchiveCommand(image image.Image) error {
+	commit, err := gp.LatestCommit()
 	if err != nil {
 		return err
 	}
 
-	commands, err := ga.baseApplyArchiveCommand(commit, image)
+	commands, err := gp.baseApplyArchiveCommand(commit, image)
 	if err != nil {
 		return err
 	}
 
 	image.Container().AddRunCommands(commands...)
 
-	ga.AddGACommitToImageLabels(image, commit)
+	gp.AddGitCommitToImageLabels(image, commit)
 
 	return nil
 }
 
-func (ga *GitArtifact) baseApplyArchiveCommand(commit string, image image.Image) ([]string, error) {
+func (gp *GitPath) baseApplyArchiveCommand(commit string, image image.Image) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
-		FilterOptions: ga.getRepoFilterOptions(),
+		FilterOptions: gp.getRepoFilterOptions(),
 		Commit:        commit,
 	}
-	archive, err := ga.GitRepo().CreateArchive(archiveOpts)
+	archive, err := gp.GitRepo().CreateArchive(archiveOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -333,66 +333,66 @@ func (ga *GitArtifact) baseApplyArchiveCommand(commit string, image image.Image)
 		return nil, nil
 	}
 
-	archiveFile, err := ga.createArchiveFile(archive, commit)
+	archiveFile, err := gp.createArchiveFile(archive, commit)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create archive file: %s", err)
 	}
 
 	archiveType := archive.GetType()
 
-	commands, err := ga.applyArchiveCommand(archiveFile, archiveType)
+	commands, err := gp.applyArchiveCommand(archiveFile, archiveType)
 	if err != nil {
 		return nil, err
 	}
 
-	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{ga.getArchiveTypeLabelName(): string(archiveType)})
+	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{gp.getArchiveTypeLabelName(): string(archiveType)})
 
 	return commands, err
 }
 
-func (ga *GitArtifact) StageDependenciesChecksum(stageName StageName) (string, error) {
-	depsPaths := ga.StagesDependencies[stageName]
+func (gp *GitPath) StageDependenciesChecksum(stageName StageName) (string, error) {
+	depsPaths := gp.StagesDependencies[stageName]
 	if len(depsPaths) == 0 {
 		return "", nil
 	}
 
-	commit, err := ga.LatestCommit()
+	commit, err := gp.LatestCommit()
 	if err != nil {
 		return "", fmt.Errorf("unable to get latest commit: %s", err)
 	}
 
 	opts := git_repo.ChecksumOptions{
-		FilterOptions: ga.getRepoFilterOptions(),
+		FilterOptions: gp.getRepoFilterOptions(),
 		Paths:         depsPaths,
 		Commit:        commit,
 	}
 
-	checksum, err := ga.GitRepo().Checksum(opts)
+	checksum, err := gp.GitRepo().Checksum(opts)
 	if err != nil {
 		return "", err
 	}
 
 	for _, path := range checksum.GetNoMatchPaths() {
-		logger.LogWarningF("WARNING: stage `%s` dependency path `%s` have not been found in repo `%s`\n", stageName, path, ga.GitRepo().String())
+		logger.LogWarningF("WARNING: stage `%s` dependency path `%s` have not been found in repo `%s`\n", stageName, path, gp.GitRepo().String())
 	}
 
 	return checksum.String(), nil
 }
 
-func (ga *GitArtifact) PatchSize(fromCommit string) (int64, error) {
-	toCommit, err := ga.LatestCommit()
+func (gp *GitPath) PatchSize(fromCommit string) (int64, error) {
+	toCommit, err := gp.LatestCommit()
 	if err != nil {
 		return 0, fmt.Errorf("unable to get latest commit: %s", err)
 	}
 
 	patchOpts := git_repo.PatchOptions{
-		FilterOptions:         ga.getRepoFilterOptions(),
+		FilterOptions:         gp.getRepoFilterOptions(),
 		FromCommit:            fromCommit,
 		ToCommit:              toCommit,
 		WithEntireFileContext: true,
 		WithBinary:            true,
 	}
-	patch, err := ga.GitRepo().CreatePatch(patchOpts)
+	patch, err := gp.GitRepo().CreatePatch(patchOpts)
 	if err != nil {
 		return 0, err
 	}
@@ -406,33 +406,33 @@ func (ga *GitArtifact) PatchSize(fromCommit string) (int64, error) {
 	return fileInfo.Size(), nil
 }
 
-func (ga *GitArtifact) GetFullName() string {
-	if ga.Name != "" {
-		return fmt.Sprintf("%s_%s", ga.GitRepo().GetName(), ga.Name)
+func (gp *GitPath) GetFullName() string {
+	if gp.Name != "" {
+		return fmt.Sprintf("%s_%s", gp.GitRepo().GetName(), gp.Name)
 	}
-	return ga.GitRepo().GetName()
+	return gp.GitRepo().GetName()
 }
 
-func (ga *GitArtifact) GetParamshash() string {
+func (gp *GitPath) GetParamshash() string {
 	var err error
 
 	hash := sha256.New()
 
-	parts := []string{ga.GetFullName(), ":::", ga.To, ":::", ga.Cwd}
+	parts := []string{gp.GetFullName(), ":::", gp.To, ":::", gp.Cwd}
 	parts = append(parts, ":::")
-	parts = append(parts, ga.IncludePaths...)
+	parts = append(parts, gp.IncludePaths...)
 	parts = append(parts, ":::")
-	parts = append(parts, ga.ExcludePaths...)
+	parts = append(parts, gp.ExcludePaths...)
 	parts = append(parts, ":::")
-	parts = append(parts, ga.Owner)
+	parts = append(parts, gp.Owner)
 	parts = append(parts, ":::")
-	parts = append(parts, ga.Group)
+	parts = append(parts, gp.Group)
 	parts = append(parts, ":::")
-	parts = append(parts, ga.Branch)
+	parts = append(parts, gp.Branch)
 	parts = append(parts, ":::")
-	parts = append(parts, ga.Tag)
+	parts = append(parts, gp.Tag)
 	parts = append(parts, ":::")
-	parts = append(parts, ga.Commit)
+	parts = append(parts, gp.Commit)
 
 	for _, part := range parts {
 		_, err = hash.Write([]byte(part))
@@ -444,22 +444,22 @@ func (ga *GitArtifact) GetParamshash() string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (ga *GitArtifact) IsPatchEmpty(prevBuiltImage image.Image) (bool, error) {
-	fromCommit, toCommit, err := ga.GetCommitsToPatch(prevBuiltImage)
+func (gp *GitPath) IsPatchEmpty(prevBuiltImage image.Image) (bool, error) {
+	fromCommit, toCommit, err := gp.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return false, err
 	}
 
-	return ga.baseIsPatchEmpty(fromCommit, toCommit)
+	return gp.baseIsPatchEmpty(fromCommit, toCommit)
 }
 
-func (ga *GitArtifact) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error) {
+func (gp *GitPath) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error) {
 	patchOpts := git_repo.PatchOptions{
-		FilterOptions: ga.getRepoFilterOptions(),
+		FilterOptions: gp.getRepoFilterOptions(),
 		FromCommit:    fromCommit,
 		ToCommit:      toCommit,
 	}
-	patch, err := ga.GitRepo().CreatePatch(patchOpts)
+	patch, err := gp.GitRepo().CreatePatch(patchOpts)
 	if err != nil {
 		return false, err
 	}
@@ -468,17 +468,17 @@ func (ga *GitArtifact) baseIsPatchEmpty(fromCommit, toCommit string) (bool, erro
 	return patch.IsEmpty(), nil
 }
 
-func (ga *GitArtifact) IsEmpty() (bool, error) {
-	commit, err := ga.LatestCommit()
+func (gp *GitPath) IsEmpty() (bool, error) {
+	commit, err := gp.LatestCommit()
 	if err != nil {
 		return false, fmt.Errorf("unable to get latest commit: %s", err)
 	}
 
 	archiveOpts := git_repo.ArchiveOptions{
-		FilterOptions: ga.getRepoFilterOptions(),
+		FilterOptions: gp.getRepoFilterOptions(),
 		Commit:        commit,
 	}
-	archive, err := ga.GitRepo().CreateArchive(archiveOpts)
+	archive, err := gp.GitRepo().CreateArchive(archiveOpts)
 	if err != nil {
 		return false, err
 	}
@@ -487,17 +487,17 @@ func (ga *GitArtifact) IsEmpty() (bool, error) {
 	return archive.IsEmpty(), nil
 }
 
-func (ga *GitArtifact) getArchiveFileDescriptor(commit string) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s_%s.tar", ga.GetParamshash(), commit)
+func (gp *GitPath) getArchiveFileDescriptor(commit string) *ContainerFileDescriptor {
+	fileName := fmt.Sprintf("%s_%s.tar", gp.GetParamshash(), commit)
 
 	return &ContainerFileDescriptor{
-		FilePath:          filepath.Join(ga.ArchivesDir, fileName),
-		ContainerFilePath: filepath.Join(ga.ContainerArchivesDir, fileName),
+		FilePath:          filepath.Join(gp.ArchivesDir, fileName),
+		ContainerFilePath: filepath.Join(gp.ContainerArchivesDir, fileName),
 	}
 }
 
-func (ga *GitArtifact) createArchiveFile(archive git_repo.Archive, commit string) (*ContainerFileDescriptor, error) {
-	fileDesc := ga.getArchiveFileDescriptor(commit)
+func (gp *GitPath) createArchiveFile(archive git_repo.Archive, commit string) (*ContainerFileDescriptor, error) {
+	fileDesc := gp.getArchiveFileDescriptor(commit)
 
 	err := renameFile(archive.GetFilePath(), fileDesc.FilePath)
 	if err != nil {
@@ -507,8 +507,8 @@ func (ga *GitArtifact) createArchiveFile(archive git_repo.Archive, commit string
 	return fileDesc, nil
 }
 
-func (ga *GitArtifact) createPatchPathsListFile(paths []string, fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
-	fileDesc := ga.getPatchPathsListFileDescriptor(fromCommit, toCommit)
+func (gp *GitPath) createPatchPathsListFile(paths []string, fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
+	fileDesc := gp.getPatchPathsListFileDescriptor(fromCommit, toCommit)
 
 	f, err := fileDesc.Open(os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
@@ -517,7 +517,7 @@ func (ga *GitArtifact) createPatchPathsListFile(paths []string, fromCommit, toCo
 
 	fullPaths := make([]string, 0)
 	for _, path := range paths {
-		fullPaths = append(fullPaths, filepath.Join(ga.To, path))
+		fullPaths = append(fullPaths, filepath.Join(gp.To, path))
 	}
 
 	pathsData := strings.Join(fullPaths, "\000")
@@ -534,8 +534,8 @@ func (ga *GitArtifact) createPatchPathsListFile(paths []string, fromCommit, toCo
 	return fileDesc, nil
 }
 
-func (ga *GitArtifact) createPatchFile(patch git_repo.Patch, fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
-	fileDesc := ga.getPatchFileDescriptor(fromCommit, toCommit)
+func (gp *GitPath) createPatchFile(patch git_repo.Patch, fromCommit, toCommit string) (*ContainerFileDescriptor, error) {
+	fileDesc := gp.getPatchFileDescriptor(fromCommit, toCommit)
 
 	err := renameFile(patch.GetFilePath(), fileDesc.FilePath)
 	if err != nil {
@@ -545,39 +545,39 @@ func (ga *GitArtifact) createPatchFile(patch git_repo.Patch, fromCommit, toCommi
 	return fileDesc, nil
 }
 
-func (ga *GitArtifact) getPatchPathsListFileDescriptor(fromCommit, toCommit string) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s_%s_%s-paths-list", ga.GetParamshash(), fromCommit, toCommit)
+func (gp *GitPath) getPatchPathsListFileDescriptor(fromCommit, toCommit string) *ContainerFileDescriptor {
+	fileName := fmt.Sprintf("%s_%s_%s-paths-list", gp.GetParamshash(), fromCommit, toCommit)
 
 	return &ContainerFileDescriptor{
-		FilePath:          filepath.Join(ga.PatchesDir, fileName),
-		ContainerFilePath: filepath.Join(ga.ContainerPatchesDir, fileName),
+		FilePath:          filepath.Join(gp.PatchesDir, fileName),
+		ContainerFilePath: filepath.Join(gp.ContainerPatchesDir, fileName),
 	}
 }
 
-func (ga *GitArtifact) getPatchFileDescriptor(fromCommit, toCommit string) *ContainerFileDescriptor {
-	fileName := fmt.Sprintf("%s_%s_%s.patch", ga.GetParamshash(), fromCommit, toCommit)
+func (gp *GitPath) getPatchFileDescriptor(fromCommit, toCommit string) *ContainerFileDescriptor {
+	fileName := fmt.Sprintf("%s_%s_%s.patch", gp.GetParamshash(), fromCommit, toCommit)
 
 	return &ContainerFileDescriptor{
-		FilePath:          filepath.Join(ga.PatchesDir, fileName),
-		ContainerFilePath: filepath.Join(ga.ContainerPatchesDir, fileName),
+		FilePath:          filepath.Join(gp.PatchesDir, fileName),
+		ContainerFilePath: filepath.Join(gp.ContainerPatchesDir, fileName),
 	}
 }
 
-func (ga *GitArtifact) makeCredentialsOpts() string {
+func (gp *GitPath) makeCredentialsOpts() string {
 	opts := make([]string, 0)
 
-	if ga.Owner != "" {
-		opts = append(opts, fmt.Sprintf("--owner=%s", ga.Owner))
+	if gp.Owner != "" {
+		opts = append(opts, fmt.Sprintf("--owner=%s", gp.Owner))
 	}
-	if ga.Group != "" {
-		opts = append(opts, fmt.Sprintf("--group=%s", ga.Group))
+	if gp.Group != "" {
+		opts = append(opts, fmt.Sprintf("--group=%s", gp.Group))
 	}
 
 	return strings.Join(opts, " ")
 }
 
-func (ga *GitArtifact) getArchiveTypeLabelName() string {
-	return fmt.Sprintf("dapp-git-%s-type", ga.GetParamshash())
+func (gp *GitPath) getArchiveTypeLabelName() string {
+	return fmt.Sprintf("dapp-git-%s-type", gp.GetParamshash())
 }
 
 func renameFile(fromPath, toPath string) error {

@@ -18,10 +18,10 @@ type Conveyor struct {
 
 	dimgsInOrder []*Dimg
 
-	stageImages                   map[string]*image.Stage
-	buildingGAStageNameByDimgName map[string]stage.StageName
-	remoteGitRepos                map[string]*git_repo.Remote
-	imagesBySignature             map[string]image.Image
+	stageImages                    map[string]*image.Stage
+	buildingGitStageNameByDimgName map[string]stage.StageName
+	remoteGitRepos                 map[string]*git_repo.Remote
+	imagesBySignature              map[string]image.Image
 
 	tmpDir string
 }
@@ -70,7 +70,7 @@ func (c *Conveyor) ReInitRuntimeFields() {
 	c.stageImages = make(map[string]*image.Stage)
 	c.imagesBySignature = make(map[string]image.Image)
 
-	c.buildingGAStageNameByDimgName = make(map[string]stage.StageName)
+	c.buildingGitStageNameByDimgName = make(map[string]stage.StageName)
 
 	c.remoteGitRepos = make(map[string]*git_repo.Remote)
 
@@ -264,12 +264,12 @@ func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
 	return c.dockerAuthorizer
 }
 
-func (c *Conveyor) SetBuildingGAStage(dimgName string, stageName stage.StageName) {
-	c.buildingGAStageNameByDimgName[dimgName] = stageName
+func (c *Conveyor) SetBuildingGitStage(dimgName string, stageName stage.StageName) {
+	c.buildingGitStageNameByDimgName[dimgName] = stageName
 }
 
-func (c *Conveyor) GetBuildingGAStage(dimgName string) stage.StageName {
-	stageName, ok := c.buildingGAStageNameByDimgName[dimgName]
+func (c *Conveyor) GetBuildingGitStage(dimgName string) stage.StageName {
+	stageName, ok := c.buildingGitStageNameByDimgName[dimgName]
 	if !ok {
 		return ""
 	}

@@ -64,7 +64,7 @@ summary: |
 ***Git path*** describes a file or directory from the git repository that should be added to the image by a specific path. The repository may be a local one, hosted in the directory that contains the dappfile, or a remote one, and in this case, the configuration of the _git path_ contains the repository address and the version (branch, tag or commit hash).
 
 Dapp adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
-The full transfer is used for the initial adding of files. The subsequent builds use applying patches to reflect changes in a git repository. The algorithm behind the full transfer and applying patches is reviewed the [More details: g_a_archive...](#more-details-g_a_archive-g_a_cache-g_a_latest_patch) section.
+The full transfer is used for the initial adding of files. The subsequent builds use applying patches to reflect changes in a git repository. The algorithm behind the full transfer and applying patches is reviewed the [More details: git_archive...](#more-details-git_archive-git_cache-git_latest_patch) section.
 
 The configuration of the _git path_ supports filtering files, and you can use the set of _git paths_ to create virtually any resulting file structure in the image. Also, you can specify the owner and the group of files in the _git path_ configuration — no subsequent `chown` required.
 
@@ -359,36 +359,36 @@ The ssh-agent is determined as follows:
   - If `~/.ssh/id_rsa` file exists, then dapp will run the temporary ssh-agent with the  key from `~/.ssh/id_rsa` file.
 - If none of the previous options is applicable, then the ssh-agent is not started, and no keys for git operation are available. Build images with remote _git paths_ ends with an error.
 
-## More details: g_a_archive, g_a_cache, g_a_latest_patch
+## More details: git_archive, git_cache, git_latest_patch
 
 Let us review adding files to the resulting image in more detail. As stated earlier, the docker image contains multiple layers. To understand what layers dapp create, let's consider the building actions based on three sample commits: `1`, `2` and `3`:
 
-- Build of commit No. 1. All files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _g_a_archive stage_.
-- Build of commit No. 2. Another layer is added where the files are changed by applying a patch. This is the layer of the _g_a_latest_patch stage_.
-- Build of commit No. 3. Files have already added, so dapp apply patches in the _g_a_latest_patch stage_ layer.
+- Build of commit No. 1. All files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _git_archive stage_.
+- Build of commit No. 2. Another layer is added where the files are changed by applying a patch. This is the layer of the _git_latest_patch stage_.
+- Build of commit No. 3. Files have already added, so dapp apply patches in the _git_latest_patch stage_ layer.
 
 Build sequence for these commits may be represented as follows:
 
-| | g_a_archive | --- | g_a_latest_patch |
+| | git_archive | --- | git_latest_patch |
 |---|:---:|:---:|:---:|
 | Commit No. 1 is made, build at 10:00 |  files as in commit No. 1 | --- | - |
 | Commit No. 2 is made, build at 10:05 |  files as in commit No. 1 | --- | files as in commit No. 2 |
 | Commit No. 3 is made, build at 10:15 |  files as in commit No. 1 | --- | files as in commit No. 3 |
 
-A space between the layers in this table is not accidental. After a while, the number of commits grows, and the patch between commit No. 1 and the current commit may become quite large, which will further increase the size of the last layer and the total size of the _stages cache_. To prevent the growth of the last layer dapp provides another intermediary stage — _g_a_cache_.
+A space between the layers in this table is not accidental. After a while, the number of commits grows, and the patch between commit No. 1 and the current commit may become quite large, which will further increase the size of the last layer and the total size of the _stages cache_. To prevent the growth of the last layer dapp provides another intermediary stage — _git_cache_.
 How does dapp work with these three stages? Now we are going to need more commits to illustrate this, let it be `1`, `2`, `3`, `4`, `5`, `6` and `7`.
 
-- Build of commit No. 1. As before, files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _g_a_archive stage_.
-- Build of commit No. 2. The layer of the _g_a_cache_ stage is added, where files are changed by applying a patch between commits `1` and `2`.
-- Build of commit No. 3. The layer of the _g_a_latest_patch stage_ is added, where the patch between `2` and `3` is applied.
-- Build of commit No. 4. The size of the patch between `1` and `4` does not exceed 1 MiB, so only the layer of the _g_a_latest_patch stage_ is modified by applying the patch between `2` and `4`.
-- Build of commit No. 5. The size of the patch between `1` and `5` does not exceed 1 MiB, so only the layer of the _g_a_latest_patch stage_ is modified by applying the patch between `2` and `5`.
-- Build of commit No. 6. The size of the patch between `1` and `6` exceeds 1 MiB. Now _g_a_cache stage_ layer is modified.
-- Build of commit No. 7. The layer of the _g_a_latest_patch stage_ is modified by applying the patch between `6` and `7`.
+- Build of commit No. 1. As before, files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _git_archive stage_.
+- Build of commit No. 2. The layer of the _git_cache_ stage is added, where files are changed by applying a patch between commits `1` and `2`.
+- Build of commit No. 3. The layer of the _git_latest_patch stage_ is added, where the patch between `2` and `3` is applied.
+- Build of commit No. 4. The size of the patch between `1` and `4` does not exceed 1 MiB, so only the layer of the _git_latest_patch stage_ is modified by applying the patch between `2` and `4`.
+- Build of commit No. 5. The size of the patch between `1` and `5` does not exceed 1 MiB, so only the layer of the _git_latest_patch stage_ is modified by applying the patch between `2` and `5`.
+- Build of commit No. 6. The size of the patch between `1` and `6` exceeds 1 MiB. Now _git_cache stage_ layer is modified.
+- Build of commit No. 7. The layer of the _git_latest_patch stage_ is modified by applying the patch between `6` and `7`.
 
-This means that as commits are added starting from the moment the first build is done, big patches are gradually accumulated into the layer for the _g_a_cache stage_, and only patches with moderate size are applied in the layer for the last _g_a_latest_patch stage_. This algorithm reduces the size of the _stages cache_.
+This means that as commits are added starting from the moment the first build is done, big patches are gradually accumulated into the layer for the _git_cache stage_, and only patches with moderate size are applied in the layer for the last _git_latest_patch stage_. This algorithm reduces the size of the _stages cache_.
 
-| | g_a_archive | g_a_cache | g_a_latest_patch |
+| | git_archive | git_cache | git_latest_patch |
 |---|:---:|:---:|:---:|
 | Commit No. 1 is made, build at 12:00 |  1 |  - | - |
 | Commit No. 2 is made, build at 12:05 |  1 |  2 | - |
@@ -398,17 +398,17 @@ This means that as commits are added starting from the moment the first build is
 | Commit No. 6 is made, build at 12:45 |  1 | *6 | - |
 | Commit No. 7 is made, build at 12:57 |  1 |  6 | 7 |
 
-\* — the size of the patch for commit `6` exceeded 1 MiB, so this patch is applied in the layer for the _g_a_cache stage_.
+\* — the size of the patch for commit `6` exceeded 1 MiB, so this patch is applied in the layer for the _git_cache stage_.
 
-### Rebuild of g_a_archive stage
+### Rebuild of git_archive stage
 
-For various reasons, you may want to reset the _g_a_archive stage_, for example, to decrease the size of the _stages cache_ and the image. 
+For various reasons, you may want to reset the _git_archive stage_, for example, to decrease the size of the _stages cache_ and the image. 
 
-To illustrate the unnecessary growth of image size assume the rare case of 2GiB file in git repository. First build tranfers this file in the layer of the _g_a_archive stage_. Then some optimization occured and file is recompiled and it's size is decreased to 1.6GiB. The build of this new commit applies patch in the layer of the _g_a_cache stage_. The image size become 3.6GiB of which 2GiB is a cached old version of the big file. Rebuilding from _g_a_archive_ stage can reduce image size to 1.6GiB. This situation is quite rare but gives a good explanation of correlation between the layers of the _g_a stages_.
+To illustrate the unnecessary growth of image size assume the rare case of 2GiB file in git repository. First build tranfers this file in the layer of the _git_archive stage_. Then some optimization occured and file is recompiled and it's size is decreased to 1.6GiB. The build of this new commit applies patch in the layer of the _git_cache stage_. The image size become 3.6GiB of which 2GiB is a cached old version of the big file. Rebuilding from _git_archive_ stage can reduce image size to 1.6GiB. This situation is quite rare but gives a good explanation of correlation between the layers of the _git stages_.
 
-You can reset the _g_a_archive stage_ specifying the **[dapp reset]** or **[reset dapp]** string in the commit message. Let us assume that, in the previous example commit `4` contains **[dapp reset]** in its message, and then the builds would look as follows:
+You can reset the _git_archive stage_ specifying the **[dapp reset]** or **[reset dapp]** string in the commit message. Let us assume that, in the previous example commit `4` contains **[dapp reset]** in its message, and then the builds would look as follows:
 
-| | g_a_archive | g_a_cache | g_a_latest_patch |
+| | git_archive | git_cache | git_latest_patch |
 |---|:---:|:---:|:---:|
 | Commit No. 1 is made, build at 12:00 |  1 |  - | - |
 | Commit No. 2 is made, build at 12:05 |  1 |  2 | - |
@@ -418,8 +418,8 @@ You can reset the _g_a_archive stage_ specifying the **[dapp reset]** or **[rese
 | Commit No. 6 is made, build at 12:45 |  4 | 5 | 6 |
 | Commit No. 7 is made, build at 12:57 |  4 | 5 | 7 |
 
-\* — commit `4` contains the **[dapp reset]** string in its message, so the _g_a_archive stage_ is rebuilt.
+\* — commit `4` contains the **[dapp reset]** string in its message, so the _git_archive stage_ is rebuilt.
 
-### _g_a stages_ and rebasing
+### _git stages_ and rebasing
 
-Each _g_a stage_ stores service labels with commits SHA from which this _stage_ was built. These commits are used for creating patches on the next _g_a stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_G_A_STAGE LATEST_COMMIT` for each described _git path_). So, if the any saved commit isn't in a git repository, e.g., after rebasing, then dapp rebuilds that stage with latest commits at the next build.
+Each _git stage_ stores service labels with commits SHA from which this _stage_ was built. These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git path_). So, if the any saved commit isn't in a git repository, e.g., after rebasing, then dapp rebuilds that stage with latest commits at the next build.

@@ -126,7 +126,7 @@ Use `--ssh-key=path-to-id-rsa` option. E.g. `dapp dimg build --ssh-key=path-to-i
 
 [Q: I've added files from a git repository, but I can't access it](#building-2){:id="building-2"}
 
-You can't access files on stage `before_install` because dapp adds sources on stage `g_a_archive`, and therefore you can access files on any stage after (e.g `install`, `before_setup`, `setup`, `build_artifact`).
+You can't access files on stage `before_install` because dapp adds sources on stage `git_archive`, and therefore you can access files on any stage after (e.g `install`, `before_setup`, `setup`, `build_artifact`).
 
 
 [Q: How can I build specific dimgs?](#building-3){:id="building-3"}

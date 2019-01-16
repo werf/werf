@@ -7,23 +7,23 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func GenerateInstallStage(dimgBaseConfig *config.DimgBase, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *InstallStage {
+func GenerateInstallStage(dimgBaseConfig *config.DimgBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *InstallStage {
 	b := getBuilder(dimgBaseConfig, baseStageOptions)
 	if b != nil && !b.IsInstallEmpty() {
-		return newInstallStage(b, gaPatchStageOptions, baseStageOptions)
+		return newInstallStage(b, gitPatchStageOptions, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newInstallStage(builder builder.Builder, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *InstallStage {
+func newInstallStage(builder builder.Builder, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *InstallStage {
 	s := &InstallStage{}
-	s.UserWithGAPatchStage = newUserWithGAPatchStage(builder, Install, gaPatchStageOptions, baseStageOptions)
+	s.UserWithGitPatchStage = newUserWithGitPatchStage(builder, Install, gitPatchStageOptions, baseStageOptions)
 	return s
 }
 
 type InstallStage struct {
-	*UserWithGAPatchStage
+	*UserWithGitPatchStage
 }
 
 func (s *InstallStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
@@ -36,7 +36,7 @@ func (s *InstallStage) GetDependencies(_ Conveyor, _ image.Image) (string, error
 }
 
 func (s *InstallStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
-	if err := s.UserWithGAPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+	if err := s.UserWithGitPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return nil
 	}
 

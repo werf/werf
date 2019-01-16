@@ -18,15 +18,15 @@ const (
 	From                        StageName = "from"
 	BeforeInstall               StageName = "before_install"
 	ArtifactImportBeforeInstall StageName = "imports_before_install"
-	GAArchive                   StageName = "g_a_archive"
+	GitArchive                  StageName = "git_archive"
 	Install                     StageName = "install"
 	ArtifactImportAfterInstall  StageName = "imports_after_install"
 	BeforeSetup                 StageName = "before_setup"
 	ArtifactImportBeforeSetup   StageName = "imports_before_setup"
 	Setup                       StageName = "setup"
 	ArtifactImportAfterSetup    StageName = "imports_after_setup"
-	GACache                     StageName = "g_a_cache"
-	GALatestPatch               StageName = "g_a_latest_patch"
+	GitCache                    StageName = "git_cache"
+	GitLatestPatch              StageName = "git_latest_patch"
 	DockerInstructions          StageName = "docker_instructions"
 )
 
@@ -60,7 +60,7 @@ type BaseStage struct {
 	dimgName         string
 	signature        string
 	image            image.Image
-	gitArtifacts     []*GitArtifact
+	gitPaths         []*GitPath
 	dimgTmpDir       string
 	containerDappDir string
 	projectBuildDir  string
@@ -288,12 +288,12 @@ func (s *BaseStage) GetImage() image.Image {
 	return s.image
 }
 
-func (s *BaseStage) SetGitArtifacts(gitArtifacts []*GitArtifact) {
-	s.gitArtifacts = gitArtifacts
+func (s *BaseStage) SetGitPaths(gitPaths []*GitPath) {
+	s.gitPaths = gitPaths
 }
 
-func (s *BaseStage) GetGitArtifacts() []*GitArtifact {
-	return s.gitArtifacts
+func (s *BaseStage) GetGitPaths() []*GitPath {
+	return s.gitPaths
 }
 
 func mergeMounts(a, b map[string][]string) map[string][]string {
