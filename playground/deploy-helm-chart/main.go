@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/flant/dapp/pkg/deploy"
-	"github.com/flant/dapp/pkg/lock"
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/werf/pkg/deploy"
+	"github.com/flant/werf/pkg/lock"
 )
 
 func main() {

@@ -87,7 +87,7 @@ Dapp watches resources statuses and logs during the deploy process. More info is
 
 Dapp deploy command starts the helm-chart release process in kubernetes. A release named `<dapp name>-<NAMESPACE>` will be installed or updated by helm.
 
-`DAPP_HELM_RELEASE_NAME` environment variable could be used to specify custom helm release name.
+`WERF_HELM_RELEASE_NAME` environment variable could be used to specify custom helm release name.
 
 #### Syntax
 

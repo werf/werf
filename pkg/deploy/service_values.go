@@ -46,7 +46,7 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 		"ref":       TemplateEmptyValue,
 	}
 
-	dappInfo := map[string]interface{}{
+	werfInfo := map[string]interface{}{
 		"name":       projectName,
 		"repo":       repo,
 		"docker_tag": dockerTag,
@@ -55,7 +55,7 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 
 	res["global"] = map[string]interface{}{
 		"namespace": namespace,
-		"dapp":      dappInfo,
+		"werf":      werfInfo,
 	}
 
 	if opts.ForceBranch != "" {
@@ -100,16 +100,16 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 	}
 
 	dimgsInfo := make(map[string]interface{})
-	dappInfo["dimg"] = dimgsInfo
+	werfInfo["dimg"] = dimgsInfo
 
 	for _, image := range images {
 		imageData := make(map[string]interface{})
 
 		if image.IsNameless() {
-			dappInfo["is_nameless_dimg"] = true
-			dappInfo["dimg"] = imageData
+			werfInfo["is_nameless_dimg"] = true
+			werfInfo["dimg"] = imageData
 		} else {
-			dappInfo["is_nameless_dimg"] = false
+			werfInfo["is_nameless_dimg"] = false
 			dimgsInfo[image.GetName()] = imageData
 		}
 

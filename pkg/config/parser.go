@@ -15,26 +15,26 @@ import (
 
 	"github.com/Masterminds/sprig"
 
-	"github.com/flant/dapp/pkg/git_repo"
-	"github.com/flant/dapp/pkg/logger"
-	"github.com/flant/dapp/pkg/slug"
-	"github.com/flant/dapp/pkg/util"
-	"gopkg.in/flant/yaml.v2"
+	"github.com/flant/werf/pkg/git_repo"
+	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/slug"
+	"github.com/flant/werf/pkg/util"
+	yaml "gopkg.in/flant/yaml.v2"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 )
 
-func ParseDappfile(dappfilePath string) (*Dappfile, error) {
-	dappfileRenderContent, err := parseDappfileYaml(dappfilePath)
+func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
+	werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath)
 	if err != nil {
 		return nil, err
 	}
 
-	dappfileRenderPath, err := dumpDappfileRender(dappfilePath, dappfileRenderContent)
+	werfConfigRenderPath, err := dumpWerfConfigRender(werfConfigPath, werfConfigRenderContent)
 	if err != nil {
 		return nil, err
 	}
 
-	docs, err := splitByDocs(dappfileRenderContent, dappfileRenderPath)
+	docs, err := splitByDocs(werfConfigRenderContent, werfConfigRenderPath)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func ParseDappfile(dappfilePath string) (*Dappfile, error) {
 	}
 
 	if meta == nil {
-		defaultProjectName, err := GetProjectName(path.Dir(dappfilePath))
+		defaultProjectName, err := GetProjectName(path.Dir(werfConfigPath))
 		if err != nil {
 			return nil, err
 		}
@@ -55,22 +55,22 @@ func ParseDappfile(dappfilePath string) (*Dappfile, error) {
 			"project: %s\n" +
 			"---\n" +
 			"```\n\n" +
-			"Read more about meta doc here, https://flant.github.io/dapp/reference/build/dappfile.html"
+			"Read more about meta doc here, https://flant.github.io/werf/reference/build/werf_config.html"
 
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}
 
-	dimgs, err := splitByDimgs(rawDimgs, dappfileRenderContent, dappfileRenderPath)
+	dimgs, err := splitByDimgs(rawDimgs, werfConfigRenderContent, werfConfigRenderPath)
 	if err != nil {
 		return nil, err
 	}
 
-	dappfile := &Dappfile{
+	werfConfig := &WerfConfig{
 		Meta:  meta,
 		Dimgs: dimgs,
 	}
 
-	return dappfile, nil
+	return werfConfig, nil
 }
 
 func GetProjectName(projectDir string) (string, error) {
@@ -113,37 +113,37 @@ func gitOwnRepoOriginUrl(projectDir string) (string, error) {
 	return remoteOriginUrl, nil
 }
 
-func dumpDappfileRender(dappfilePath string, dappfileRenderContent string) (string, error) {
+func dumpWerfConfigRender(werfConfigPath string, werfConfigRenderContent string) (string, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
 
-	dappfileNameParts := strings.Split(path.Base(dappfilePath), ".")
-	var dappfileRenderNameParts []string
-	dappfileRenderNameParts = append(dappfileRenderNameParts, dappfileNameParts[0:len(dappfileNameParts)-1]...)
-	dappfileRenderNameParts = append(dappfileRenderNameParts, "render", dappfileNameParts[len(dappfileNameParts)-1])
-	dappfileRenderPath := path.Join(wd, fmt.Sprintf(".%s", strings.Join(dappfileRenderNameParts, ".")))
+	werfConfigNameParts := strings.Split(path.Base(werfConfigPath), ".")
+	var werfConfigRenderNameParts []string
+	werfConfigRenderNameParts = append(werfConfigRenderNameParts, werfConfigNameParts[0:len(werfConfigNameParts)-1]...)
+	werfConfigRenderNameParts = append(werfConfigRenderNameParts, "render", werfConfigNameParts[len(werfConfigNameParts)-1])
+	werfConfigRenderPath := path.Join(wd, fmt.Sprintf(".%s", strings.Join(werfConfigRenderNameParts, ".")))
 
-	dappfileRenderFile, err := os.OpenFile(dappfileRenderPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	werfConfigRenderFile, err := os.OpenFile(werfConfigRenderPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return "", err
 	}
-	dappfileRenderFile.Write([]byte(dappfileRenderContent))
-	dappfileRenderFile.Close()
+	werfConfigRenderFile.Write([]byte(werfConfigRenderContent))
+	werfConfigRenderFile.Close()
 
-	return dappfileRenderPath, nil
+	return werfConfigRenderPath, nil
 }
 
-func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*doc, error) {
+func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([]*doc, error) {
 	var docs []*doc
 	var line int
-	for _, docContent := range splitContent([]byte(dappfileRenderContent)) {
+	for _, docContent := range splitContent([]byte(werfConfigRenderContent)) {
 		if !emptyDocContent(docContent) {
 			docs = append(docs, &doc{
 				Line:           line,
 				Content:        docContent,
-				RenderFilePath: dappfileRenderPath,
+				RenderFilePath: werfConfigRenderPath,
 			})
 		}
 
@@ -157,25 +157,25 @@ func splitByDocs(dappfileRenderContent string, dappfileRenderPath string) ([]*do
 	return docs, nil
 }
 
-func parseDappfileYaml(dappfilePath string) (string, error) {
-	data, err := ioutil.ReadFile(dappfilePath)
+func parseWerfConfigYaml(werfConfigPath string) (string, error) {
+	data, err := ioutil.ReadFile(werfConfigPath)
 	if err != nil {
 		return "", err
 	}
 
-	tmpl := template.New("dappfile")
+	tmpl := template.New("werfConfig")
 	tmpl.Funcs(funcMap(tmpl))
 
-	projectDir := filepath.Dir(dappfilePath)
-	dappfilesDir := filepath.Join(projectDir, ".dappfiles")
-	dappfilesTemplates, err := getDappfilesTemplates(dappfilesDir)
+	projectDir := filepath.Dir(werfConfigPath)
+	werfConfigsDir := filepath.Join(projectDir, ".werf")
+	werfConfigsTemplates, err := getWerfConfigsTemplates(werfConfigsDir)
 	if err != nil {
 		return "", err
 	}
 
-	if len(dappfilesTemplates) != 0 {
-		for _, templatePath := range dappfilesTemplates {
-			templateName, err := filepath.Rel(dappfilesDir, templatePath)
+	if len(werfConfigsTemplates) != 0 {
+		for _, templatePath := range werfConfigsTemplates {
+			templateName, err := filepath.Rel(werfConfigsDir, templatePath)
 			if err != nil {
 				return "", err
 			}
@@ -197,13 +197,13 @@ func parseDappfileYaml(dappfilePath string) (string, error) {
 		return "", err
 	}
 
-	files := files{filepath.Dir(dappfilePath)}
-	config, err := executeTemplate(tmpl, "dappfile", map[string]interface{}{"Files": files})
+	files := files{filepath.Dir(werfConfigPath)}
+	config, err := executeTemplate(tmpl, "werfConfig", map[string]interface{}{"Files": files})
 
 	return config, err
 }
 
-func getDappfilesTemplates(path string) ([]string, error) {
+func getWerfConfigsTemplates(path string) ([]string, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -389,7 +389,7 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func splitByDimgs(rawDimgs []*rawDimg, dappfileRenderContent string, dappfileRenderPath string) ([]*Dimg, error) {
+func splitByDimgs(rawDimgs []*rawDimg, werfConfigRenderContent string, werfConfigRenderPath string) ([]*Dimg, error) {
 	var dimgs []*Dimg
 	var artifacts []*DimgArtifact
 
@@ -410,7 +410,7 @@ func splitByDimgs(rawDimgs []*rawDimg, dappfileRenderContent string, dappfileRen
 	}
 
 	if len(dimgs) == 0 {
-		return nil, newConfigError(fmt.Sprintf("no dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", dappfileRenderPath, dappfileRenderContent))
+		return nil, newConfigError(fmt.Sprintf("no dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", werfConfigRenderPath, werfConfigRenderContent))
 	}
 
 	if err := exportsAutoExcluding(dimgs, artifacts); err != nil {

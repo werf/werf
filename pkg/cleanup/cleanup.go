@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/flant/dapp/pkg/docker_registry"
-	"github.com/flant/dapp/pkg/lock"
-	"github.com/flant/dapp/pkg/logger"
-	"github.com/flant/dapp/pkg/slug"
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/slug"
 )
 
 type CleanupOptions struct {
@@ -123,7 +123,7 @@ Loop:
 			return nil, err
 		}
 
-		scheme, ok := labels["dapp-tag-scheme"]
+		scheme, ok := labels["werf-tag-scheme"]
 		if !ok {
 			continue
 		}
@@ -202,7 +202,7 @@ func repoDimgsCleanupByPolicies(repoDimgs []docker_registry.RepoImage, options C
 			return nil, err
 		}
 
-		scheme, ok := labels["dapp-tag-scheme"]
+		scheme, ok := labels["werf-tag-scheme"]
 		if !ok {
 			continue
 		}
@@ -244,19 +244,19 @@ func repoDimgsCleanupByPolicies(repoDimgs []docker_registry.RepoImage, options C
 }
 
 func gitTagsExpiryDatePeriodPolicyValue() int64 {
-	return policyValue("DAPP_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY", gitTagsExpiryDatePeriodPolicy)
+	return policyValue("WERF_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY", gitTagsExpiryDatePeriodPolicy)
 }
 
 func gitTagsLimitPolicyValue() int64 {
-	return policyValue("DAPP_GIT_TAGS_LIMIT_POLICY", gitTagsLimitPolicy)
+	return policyValue("WERF_GIT_TAGS_LIMIT_POLICY", gitTagsLimitPolicy)
 }
 
 func gitCommitsExpiryDatePeriodPolicyValue() int64 {
-	return policyValue("DAPP_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY", gitCommitsExpiryDatePeriodPolicy)
+	return policyValue("WERF_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY", gitCommitsExpiryDatePeriodPolicy)
 }
 
 func gitCommitsLimitPolicyValue() int64 {
-	return policyValue("DAPP_GIT_COMMITS_LIMIT_POLICY", gitCommitsLimitPolicy)
+	return policyValue("WERF_GIT_COMMITS_LIMIT_POLICY", gitCommitsLimitPolicy)
 }
 
 func policyValue(envKey string, defaultValue int64) int64 {

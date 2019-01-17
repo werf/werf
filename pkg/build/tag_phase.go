@@ -3,9 +3,9 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/lock"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/util"
 )
 
 func NewTagPhase(repo string, opts TagOptions) *TagPhase {
@@ -77,8 +77,8 @@ func (p *TagPhase) tagDimg(c *Conveyor, dimg *Dimg) error {
 				tagImage := image.NewDimgImage(c.GetImage(lastStageImage.Name()), dimgImageName)
 
 				tagImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-					"dapp-tag-scheme": string(scheme),
-					"dapp-dimg":       "true",
+					"werf-tag-scheme": string(scheme),
+					"werf-dimg":       "true",
 				})
 
 				err = tagImage.Build(image.BuildOptions{})

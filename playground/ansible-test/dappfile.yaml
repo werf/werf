@@ -51,7 +51,6 @@ ansible:
 
 ---
 {{ $TMPLPASS := "pas sFromT empltae" }}
-# DAPP_BIN_DAPPFILE_YML=path-to/dappfile-yml bundle exec dapp dimg build --dir=playground/ansible-test
 dimg: alp
 from: alpine:latest
 ansible:

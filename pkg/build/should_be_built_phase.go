@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/flant/dapp/pkg/build/stage"
+	"github.com/flant/werf/pkg/build/stage"
 )
 
 type ShouldBeBuiltPhase struct{}

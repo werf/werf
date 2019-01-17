@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/flant/dapp/pkg/build/stage"
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/logger"
+	"github.com/flant/werf/pkg/build/stage"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type Dimg struct {

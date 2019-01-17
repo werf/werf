@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/flant/dapp/pkg/ssh_agent"
+	"github.com/flant/werf/pkg/ssh_agent"
 )
 
 func main() {

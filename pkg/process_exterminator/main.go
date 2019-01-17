@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/flant/dapp/pkg/dapp"
+	"github.com/flant/werf/pkg/werf"
 )
 
 func Init() error {
@@ -37,7 +37,7 @@ func run(parentsPids []int) {
 
 			ownPid := os.Getpid()
 
-			err := writePidToFile(os.Getpid(), filepath.Join(dapp.GetHomeDir(), ".killed_pids"))
+			err := writePidToFile(os.Getpid(), filepath.Join(werf.GetHomeDir(), ".killed_pids"))
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Process exterminator error: %s\n", err)
 			}

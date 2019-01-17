@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
-	
-	"github.com/flant/dapp/pkg/util"
+
+	"github.com/flant/werf/pkg/util"
 )
 
 func NewFileLock(name string, locksDir string) LockObject {

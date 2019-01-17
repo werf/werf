@@ -7,20 +7,20 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/dapp/pkg/dapp"
-	"github.com/flant/dapp/pkg/logger"
+	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/werf"
 )
 
-func RemoveLostTmpDappFiles() error {
-	tmpFiles, err := ioutil.ReadDir(dapp.GetTmpDir())
+func RemoveLostTmpWerfFiles() error {
+	tmpFiles, err := ioutil.ReadDir(werf.GetTmpDir())
 	if err != nil {
-		return fmt.Errorf("unable to list tmp files in %s: %s", dapp.GetTmpDir(), err)
+		return fmt.Errorf("unable to list tmp files in %s: %s", werf.GetTmpDir(), err)
 	}
 
 	filesToRemove := []string{}
 	for _, finfo := range tmpFiles {
-		if strings.HasPrefix(finfo.Name(), "dapp") {
-			filesToRemove = append(filesToRemove, filepath.Join(dapp.GetTmpDir(), finfo.Name()))
+		if strings.HasPrefix(finfo.Name(), "werf") {
+			filesToRemove = append(filesToRemove, filepath.Join(werf.GetTmpDir(), finfo.Name()))
 		}
 	}
 

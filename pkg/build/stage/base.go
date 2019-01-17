@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/slug"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/slug"
+	"github.com/flant/werf/pkg/util"
 )
 
 type StageName string
@@ -31,16 +31,16 @@ const (
 )
 
 const (
-	mountTmpDirLabel          = "dapp-mount-type-tmp-dir"
-	mountBuildDIrLabel        = "dapp-mount-type-build-dir"
-	mountCustomDirLabelPrefix = "dapp-mount-type-custom-dir-"
+	mountTmpDirLabel          = "werf-mount-type-tmp-dir"
+	mountBuildDIrLabel        = "werf-mount-type-build-dir"
+	mountCustomDirLabelPrefix = "werf-mount-type-custom-dir-"
 )
 
 type NewBaseStageOptions struct {
 	DimgName         string
 	ConfigMounts     []*config.Mount
 	DimgTmpDir       string
-	ContainerDappDir string
+	ContainerWerfDir string
 	ProjectBuildDir  string
 }
 
@@ -51,7 +51,7 @@ func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
 	s.configMounts = options.ConfigMounts
 	s.projectBuildDir = options.ProjectBuildDir
 	s.dimgTmpDir = options.DimgTmpDir
-	s.containerDappDir = options.ContainerDappDir
+	s.containerWerfDir = options.ContainerWerfDir
 	return s
 }
 
@@ -62,7 +62,7 @@ type BaseStage struct {
 	image            image.Image
 	gitPaths         []*GitPath
 	dimgTmpDir       string
-	containerDappDir string
+	containerWerfDir string
 	projectBuildDir  string
 	configMounts     []*config.Mount
 }

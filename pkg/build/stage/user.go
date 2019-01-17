@@ -1,9 +1,9 @@
 package stage
 
 import (
-	"github.com/flant/dapp/pkg/build/builder"
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/build/builder"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/util"
 )
 
 func getBuilder(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) builder.Builder {
@@ -11,7 +11,7 @@ func getBuilder(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageO
 	if dimgBaseConfig.Shell != nil {
 		b = builder.NewShellBuilder(dimgBaseConfig.Shell)
 	} else if dimgBaseConfig.Ansible != nil {
-		extra := &builder.Extra{ContainerDappPath: baseStageOptions.ContainerDappDir, TmpPath: baseStageOptions.DimgTmpDir}
+		extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.DimgTmpDir}
 		b = builder.NewAnsibleBuilder(dimgBaseConfig.Ansible, extra)
 	}
 

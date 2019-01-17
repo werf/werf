@@ -251,7 +251,7 @@ It's not a dapp problem. Most likely there is no access to your private reposito
 
 [Q: How to change helm release name?](#deploying-3){:id="deploying-3"}
 
-Use DAPP_HELM_RELEASE_NAME environment.
+Use WERF_HELM_RELEASE_NAME environment.
 
 
 [Q: How to deploy several applications with different names?](#deploying-4){:id="deploying-4"}

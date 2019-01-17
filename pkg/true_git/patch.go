@@ -32,7 +32,7 @@ func Patch(out io.Writer, gitDir string, opts PatchOptions) (*PatchDescriptor, e
 }
 
 func debugPatch() bool {
-	return os.Getenv("DAPP_TRUE_GIT_DEBUG_PATCH") == "1"
+	return os.Getenv("WERF_TRUE_GIT_DEBUG_PATCH") == "1"
 }
 
 func writePatch(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, opts PatchOptions) (*PatchDescriptor, error) {

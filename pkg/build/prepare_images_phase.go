@@ -3,8 +3,8 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/dapp/pkg/dapp"
-	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/werf"
 )
 
 func NewPrepareImagesPhase() *PrepareImagesPhase {
@@ -13,7 +13,7 @@ func NewPrepareImagesPhase() *PrepareImagesPhase {
 
 type PrepareImagesPhase struct{}
 
-const DappCacheVersionLabel = "dapp-cache-version"
+const WerfCacheVersionLabel = "werf-cache-version"
 
 func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 	if debug() {
@@ -51,17 +51,17 @@ func (p *PrepareImagesPhase) Run(c *Conveyor) error {
 
 			imageServiceCommitChangeOptions := img.Container().ServiceCommitChangeOptions()
 			imageServiceCommitChangeOptions.AddLabel(map[string]string{
-				"dapp":                c.projectName(),
-				"dapp-version":        dapp.Version,
-				DappCacheVersionLabel: BuildCacheVersion,
-				"dapp-dimg":           "false",
-				"dapp-dev-mode":       "false",
+				"werf":                c.projectName(),
+				"werf-version":        werf.Version,
+				WerfCacheVersionLabel: BuildCacheVersion,
+				"werf-dimg":           "false",
+				"werf-dev-mode":       "false",
 			})
 
 			if c.sshAuthSock != "" {
 				imageRunOptions := img.Container().RunOptions()
-				imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/dapp-ssh-agent", c.sshAuthSock))
-				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/dapp-ssh-agent"})
+				imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/werf-ssh-agent", c.sshAuthSock))
+				imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/werf-ssh-agent"})
 			}
 
 			err := s.PrepareImage(c, prevBuiltImage, img)

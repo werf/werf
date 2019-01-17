@@ -191,7 +191,7 @@ The following steps perform, when dapp apply transformations of the text in slug
 
 #### Version 3
 
-Dapp has experimental additions to basic slug algorithm, which is non-default for now. To enable **version 3** algorithm set `DAPP_SLUG_V3=1` environment variable.
+Dapp has experimental additions to basic slug algorithm, which is non-default for now. To enable **version 3** algorithm set `WERF_SLUG_V3=1` environment variable.
 
 This algorithm has additional requirement for input text:
 

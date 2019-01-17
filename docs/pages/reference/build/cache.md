@@ -25,7 +25,7 @@ This caching scheme is required to ensure strict correctness of the saved cache.
 
 For configuration developers, it would be much more convenient if all successfully assembled stages were saved to the cache of the docker images. In this case, if an error is thrown, re-assembling would always start from the erroneous _stage_.
 
-For this purpose, dapp provides the forced cache saving option, which is enabled either by the `--force-save-cache` option or by the presence of the `DAPP_FORCE_SAVE_CACHE=1` environment variable.
+For this purpose, dapp provides the forced cache saving option, which is enabled either by the `--force-save-cache` option or by the presence of the `WERF_FORCE_SAVE_CACHE=1` environment variable.
 
 For example, dappfile:
 
@@ -104,7 +104,7 @@ ruby2go_image command `build` failed!
 
 ## Why does dapp not save the cache of erroneous assemblies by default?
 
-`DAPP_FORCE_SAVE_CACHE` operating mode may result in an invalid cache being created. In this case only removing the erroneous cache manually can help.
+`WERF_FORCE_SAVE_CACHE` operating mode may result in an invalid cache being created. In this case only removing the erroneous cache manually can help.
 
 We should consider an example to understand how an invalid cache could be saved.
 
@@ -224,4 +224,4 @@ This is the feature of dapp cache. The _signature_ of this _stage_ cannot depend
 
 These issues don't appear if the cache for stages is only performed after successfully finished assembly. This caching scheme dapp uses by default.
 
-So if you decide to use `DAPP_FORCE_SAVE_CACHE` option, be prepared for situations like this, use the option carefully, and preferably only use it during configuration debugging.
+So if you decide to use `WERF_FORCE_SAVE_CACHE` option, be prepared for situations like this, use the option carefully, and preferably only use it during configuration debugging.

@@ -6,7 +6,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 
-	"github.com/flant/dapp/pkg/docker"
+	"github.com/flant/werf/pkg/docker"
 )
 
 type Stage struct {

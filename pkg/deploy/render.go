@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/flant/dapp/pkg/config"
+	"github.com/flant/werf/pkg/config"
 )
 
 type RenderOptions struct {
@@ -14,7 +14,7 @@ type RenderOptions struct {
 	SetString    []string
 }
 
-func RunRender(projectDir string, dappfile *config.Dappfile, opts RenderOptions) error {
+func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOptions) error {
 	if debug() {
 		fmt.Printf("Render options: %#v\n", opts)
 	}
@@ -29,23 +29,23 @@ func RunRender(projectDir string, dappfile *config.Dappfile, opts RenderOptions)
 	namespace := "NAMESPACE"
 
 	var images []DimgInfoGetter
-	for _, dimg := range dappfile.Dimgs {
+	for _, dimg := range werfConfig.Dimgs {
 		d := &DimgInfo{Config: dimg, WithoutRegistry: true, Repo: repo, Tag: tag}
 		images = append(images, d)
 	}
 
-	serviceValues, err := GetServiceValues(dappfile.Meta.Project, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 
-	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
+	werfChart, err := getWerfChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {
 		return err
 	}
 	if !debug() {
 		// Do not remove tmp chart in debug
-		defer os.RemoveAll(dappChart.ChartDir)
+		defer os.RemoveAll(werfChart.ChartDir)
 	}
 
-	data, err := dappChart.Render(namespace)
+	data, err := werfChart.Render(namespace)
 	if err != nil {
 		return err
 	}

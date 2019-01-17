@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/dapp/pkg/lock"
-	"gopkg.in/ini.v1"
-	"gopkg.in/satori/go.uuid.v1"
-	"gopkg.in/src-d/go-git.v4"
+	"github.com/flant/werf/pkg/lock"
+	ini "gopkg.in/ini.v1"
+	uuid "gopkg.in/satori/go.uuid.v1"
+	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
@@ -91,7 +91,7 @@ func (repo *Remote) Clone() (bool, error) {
 
 		fmt.Printf("Clone remote git repo `%s` ...\n", repo.String())
 
-		path := filepath.Join("/tmp", fmt.Sprintf("dapp-git-repo-%s", uuid.NewV4().String()))
+		path := filepath.Join("/tmp", fmt.Sprintf("werf-git-repo-%s", uuid.NewV4().String()))
 
 		_, err = git.PlainClone(path, true, &git.CloneOptions{
 			URL:               repo.Url,

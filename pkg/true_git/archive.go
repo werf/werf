@@ -40,7 +40,7 @@ func Archive(out io.Writer, gitDir, workTreeDir string, opts ArchiveOptions) (*A
 }
 
 func debugArchive() bool {
-	return os.Getenv("DAPP_TRUE_GIT_DEBUG_ARCHIVE") == "1"
+	return os.Getenv("WERF_TRUE_GIT_DEBUG_ARCHIVE") == "1"
 }
 
 func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, opts ArchiveOptions) (*ArchiveDescriptor, error) {

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/dapp/pkg/dapp"
+	"github.com/flant/werf/pkg/werf"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 
 func Init() error {
 	Locks = make(map[string]LockObject)
-	LocksDir = filepath.Join(dapp.GetHomeDir(), "locks")
+	LocksDir = filepath.Join(werf.GetHomeDir(), "locks")
 
 	err := os.MkdirAll(LocksDir, 0755)
 	if err != nil {

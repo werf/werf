@@ -3,12 +3,13 @@ package builder
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v1"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/flant/dapp/pkg/util"
+	yaml "gopkg.in/yaml.v1"
+
+	"github.com/flant/werf/pkg/util"
 )
 
 func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
@@ -64,8 +65,8 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 
 	writeFile(filepath.Join(stageCallbackDir, "live.py"), b.assetsLivePy())
 
-	// add dapp specific stdout callback for ansible
-	writeFile(filepath.Join(stageCallbackDir, "dapp.py"), b.assetsDappPy())
+	// add werf specific stdout callback for ansible
+	writeFile(filepath.Join(stageCallbackDir, "werf.py"), b.assetsWerfPy())
 
 	return nil
 }
@@ -145,11 +146,11 @@ func (b *Ansible) stageHostTmpDir(userStageName string) (string, error) {
 }
 
 func (b *Ansible) containerWorkDir() string {
-	return filepath.Join(b.extra.ContainerDappPath, "ansible-workdir")
+	return filepath.Join(b.extra.ContainerWerfPath, "ansible-workdir")
 }
 
 func (b *Ansible) containerTmpDir() string {
-	return filepath.Join(b.extra.ContainerDappPath, "ansible-tmpdir")
+	return filepath.Join(b.extra.ContainerWerfPath, "ansible-tmpdir")
 }
 
 func mkdirP(path string) error {

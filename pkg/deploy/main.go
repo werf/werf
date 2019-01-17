@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/hashicorp/go-version"
+	version "github.com/hashicorp/go-version"
 )
 
 func Init() error {
@@ -71,5 +71,5 @@ func HelmCmd(args ...string) (stdout string, stderr string, err error) {
 }
 
 func debug() bool {
-	return os.Getenv("DAPP_DEPLOY_DEBUG") == "1"
+	return os.Getenv("WERF_DEPLOY_DEBUG") == "1"
 }

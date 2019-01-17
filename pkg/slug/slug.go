@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/util"
 )
 
 const slugSeparator = "-"

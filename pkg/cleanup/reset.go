@@ -7,33 +7,33 @@ import (
 
 	"github.com/docker/docker/api/types/filters"
 
-	"github.com/flant/dapp/pkg/dapp"
+	"github.com/flant/werf/pkg/werf"
 )
 
 func ResetAll(options CommonOptions) error {
-	if err := dappContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
+	if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
 		return err
 	}
 
-	if err := dappImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
+	if err := werfImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
 		return err
 	}
 
-	if err := deleteDappFiles(options); err != nil {
+	if err := deleteWerfFiles(options); err != nil {
 		return err
 	}
 
-	if err := RemoveLostTmpDappFiles(); err != nil {
+	if err := RemoveLostTmpWerfFiles(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func deleteDappFiles(options CommonOptions) error {
+func deleteWerfFiles(options CommonOptions) error {
 	var directoryPathToDelete []string
 	for _, directory := range []string{"bin", "builds", "git", "worktree", "tmp"} {
-		directoryPath := filepath.Join(dapp.GetHomeDir(), directory)
+		directoryPath := filepath.Join(werf.GetHomeDir(), directory)
 
 		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {
 			directoryPathToDelete = append(directoryPathToDelete, directoryPath)
@@ -41,7 +41,7 @@ func deleteDappFiles(options CommonOptions) error {
 	}
 
 	if len(directoryPathToDelete) != 0 {
-		fmt.Println("reset dapp cache")
+		fmt.Println("reset werf cache")
 		for _, directoryPath := range directoryPathToDelete {
 			if options.DryRun {
 				fmt.Println(directoryPath)
@@ -59,14 +59,14 @@ func deleteDappFiles(options CommonOptions) error {
 
 func ResetDevModeCache(options CommonOptions) error {
 	filterSet := filters.NewArgs()
-	filterSet.Add("label", "dapp-dev-mode")
-	if err := dappContainersFlushByFilterSet(filterSet, options); err != nil {
+	filterSet.Add("label", "werf-dev-mode")
+	if err := werfContainersFlushByFilterSet(filterSet, options); err != nil {
 		return err
 	}
 
 	filterSet = filters.NewArgs()
-	filterSet.Add("label", "dapp-dev-mode")
-	if err := dappImagesFlushByFilterSet(filterSet, options); err != nil {
+	filterSet.Add("label", "werf-dev-mode")
+	if err := werfImagesFlushByFilterSet(filterSet, options); err != nil {
 		return err
 	}
 
@@ -74,7 +74,7 @@ func ResetDevModeCache(options CommonOptions) error {
 }
 
 func ResetCacheVersion(options CommonOptions) error {
-	if err := dappDimgstagesFlushByCacheVersion(filters.NewArgs(), options); err != nil {
+	if err := werfDimgstagesFlushByCacheVersion(filters.NewArgs(), options); err != nil {
 		return err
 	}
 

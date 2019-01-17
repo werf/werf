@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/werf/pkg/lock"
 )
 
 func NewRenewPhase() *RenewPhase {

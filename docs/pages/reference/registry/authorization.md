@@ -28,7 +28,7 @@ There are two options:
 
 Standard docker login command, for example, can be used to prepare [docker config](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files).
 
-Once the docker config has been created its path should be specified in the environment variable `DAPP_DOCKER_CONFIG` for all dapp commands. The variable value is the same as `docker --config` standard option value.
+Once the docker config has been created its path should be specified in the environment variable `WERF_DOCKER_CONFIG` for all dapp commands. The variable value is the same as `docker --config` standard option value.
 
 ### Login by dapp
 
@@ -44,7 +44,7 @@ By default without options dapp will try to use username `gitlab-ci-token` and p
 
 When one of [google container registry](https://cloud.google.com/container-registry/) official address is specified dapp will not perform autologin even if the gitlab environment is available.
 
-To manually **disable** autologin procedure specify environment variable `DAPP_IGNORE_CI_DOCKER_AUTOLOGIN=1`.
+To manually **disable** autologin procedure specify environment variable `WERF_IGNORE_CI_DOCKER_AUTOLOGIN=1`.
 
 #### Autologin for build commands
 
@@ -67,9 +67,9 @@ Dapp will perform autologin into `registry.myhost.com` gitlab container registry
 
 Default job token `CI_JOB_TOKEN` of gitlab is not suitable to perform delete operations on [gitlab container registry](https://docs.gitlab.com/ee/user/project/container_registry.html). This token only allows read, create and update operations, but does not allow delete operations.
 
-To work around this problem dapp supports special environment variable `DAPP_CLEANUP_REGISTRY_PASSWORD`. This variable should contain a password for the user with enough permissions to delete images from the docker registry. It could contain *gitlab token* of regular gitlab user with such permissions. Dapp will use the username `dapp-cleanup` in this case.
+To work around this problem dapp supports special environment variable `WERF_CLEANUP_REGISTRY_PASSWORD`. This variable should contain a password for the user with enough permissions to delete images from the docker registry. It could contain *gitlab token* of regular gitlab user with such permissions. Dapp will use the username `dapp-cleanup` in this case.
 
-For [cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html) dapp autologin procedure use `DAPP_CLEANUP_REGISTRY_PASSWORD` instead of `CI_JOB_TOKEN` to access docker registry. This variable should be set up manually via [GitLab CI/CD Secret Variables](https://docs.gitlab.com/ee/ci/variables/#variables).
+For [cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html) dapp autologin procedure use `WERF_CLEANUP_REGISTRY_PASSWORD` instead of `CI_JOB_TOKEN` to access docker registry. This variable should be set up manually via [GitLab CI/CD Secret Variables](https://docs.gitlab.com/ee/ci/variables/#variables).
 
 #### Specify username and password manually
 
@@ -92,13 +92,13 @@ dapp dimg push registry.myhost.com/web/backend --registry-username=myuser --regi
 Run dapp command with disabled autologin procedure:
 
 ```bash
-DAPP_IGNORE_CI_DOCKER_AUTOLOGIN=1 dapp dimg push registry.myhost.com/web/backend
+WERF_IGNORE_CI_DOCKER_AUTOLOGIN=1 dapp dimg push registry.myhost.com/web/backend
 ```
 
 Run dapp cleaning command with a special token for autologin procedure:
 
 ```bash
-export DAPP_CLEANUP_REGISTRY_PASSWORD="A3XewXjfldf"
+export WERF_CLEANUP_REGISTRY_PASSWORD="A3XewXjfldf"
 dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
 ```
 
@@ -111,6 +111,6 @@ dapp dimg cleanup repo registry.myhost.com/web/backend --registry-username=myuse
 Run dapp command with external docker config. Dapp will not perform the login procedure in this case:
 
 ```bash
-export DAPP_DOCKER_CONFIG=./.docker
+export WERF_DOCKER_CONFIG=./.docker
 dapp dimg push registry.myhost.com/web/backend
 ```

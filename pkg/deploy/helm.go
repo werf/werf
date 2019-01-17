@@ -11,17 +11,17 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
-	"github.com/flant/dapp/pkg/dapp"
-	"github.com/flant/dapp/pkg/lock"
-	"github.com/flant/dapp/pkg/logger"
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/kubedog/pkg/tracker"
 	"github.com/flant/kubedog/pkg/trackers/rollout"
+	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/werf"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/releaseutil"
 	"k8s.io/kubernetes/pkg/util/file"
 )
@@ -120,7 +120,7 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 	if err != nil {
 		if strings.HasSuffix(stderr, "has no deployed releases\n") {
 			logger.LogWarningF("WARNING: Helm release '%s' is in improper state: %s", releaseName, stderr)
-			logger.LogWarningF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `dapp kube deploy`", releaseName)
+			logger.LogWarningF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf kube deploy`", releaseName)
 		}
 
 		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
@@ -454,7 +454,7 @@ func removeOldJobs(templates *ChartTemplates, namespace string) error {
 	}
 
 	for _, template := range templates.Jobs() {
-		value, ok := template.Metadata.Annotations["dapp/recreate"]
+		value, ok := template.Metadata.Annotations["werf/recreate"]
 		if ok && (value == "0" || value == "false") {
 			continue
 		}
@@ -466,7 +466,7 @@ func removeOldJobs(templates *ChartTemplates, namespace string) error {
 			continue
 		}
 
-		fmt.Printf("# Deleting hook job '%s' (dapp/recreate)...\n", template.Metadata.Name)
+		fmt.Printf("# Deleting hook job '%s' (werf/recreate)...\n", template.Metadata.Name)
 
 		deletePropagation := v1.DeletePropagationForeground
 		deleteOptions := &v1.DeleteOptions{
@@ -582,5 +582,5 @@ func deleteAutoPurgeTriggerFilePath(releaseName string) error {
 }
 
 func autoPurgeTriggerFilePath(releaseName string) string {
-	return filepath.Join(dapp.GetHomeDir(), "helm", releaseName, "auto_purge_failed_release_on_next_deploy")
+	return filepath.Join(werf.GetHomeDir(), "helm", releaseName, "auto_purge_failed_release_on_next_deploy")
 }

@@ -9,22 +9,22 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flant/dapp/pkg/dapp"
-	"github.com/flant/dapp/pkg/dappdeps"
-	"github.com/flant/dapp/pkg/docker"
-	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/werf/pkg/dappdeps"
+	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/werf"
 )
 
 func GetCreatedTmpDirs() string {
-	return filepath.Join(dapp.GetHomeDir(), "tmp", "created")
+	return filepath.Join(werf.GetHomeDir(), "tmp", "created")
 }
 
 func GetReleasedTmpDirs() string {
-	return filepath.Join(dapp.GetHomeDir(), "tmp", "released")
+	return filepath.Join(werf.GetHomeDir(), "tmp", "released")
 }
 
 func Get() (string, error) {
-	dir, err := ioutil.TempDir(dapp.GetTmpDir(), "dapp-")
+	dir, err := ioutil.TempDir(werf.GetTmpDir(), "werf-")
 	if err != nil {
 		return "", err
 	}
@@ -163,7 +163,7 @@ func removeDirs(dirs []string) error {
 	args := []string{
 		"--rm",
 		"--volumes-from", toolchainContainerName,
-		"--volume", fmt.Sprintf("%s:%s", dapp.GetTmpDir(), dapp.GetTmpDir()),
+		"--volume", fmt.Sprintf("%s:%s", werf.GetTmpDir(), werf.GetTmpDir()),
 		dappdeps.BaseImageName(),
 		dappdeps.RmBinPath(), "-rf",
 	}

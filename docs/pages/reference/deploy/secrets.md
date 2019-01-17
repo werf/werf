@@ -12,13 +12,13 @@ The idea is that sensitive data must be stored in a repository served by an appl
 ## Encryption key
 
 A key is required for encryption and decryption of data. There are two locations from which dapp can read the key:
-* from the `DAPP_SECRET_KEY` environment variable
+* from the `WERF_SECRET_KEY` environment variable
 * from a special `/.dapp_secret_key` file in the project root
 
 You can promptly generate a key using the `dapp kube secret key generate` command:
 ```bash
 $ dapp kube secret key generate
-DAPP_SECRET_KEY=c85e100d4ff006b693b0555f09244fdf
+WERF_SECRET_KEY=c85e100d4ff006b693b0555f09244fdf
 ```
 
 For convenience, the command output already contains an environment variable and can be used in the `export` command.
@@ -31,7 +31,7 @@ $ head -c16 </dev/random | xxd -p
 5c350e9e22f97501c862396019436988
 ```
 
-### Working with the `DAPP_SECRET_KEY` environment variable
+### Working with the `WERF_SECRET_KEY` environment variable
 
 If an environment variable is available in the environment where dapp is launched, dapp can use it.
 

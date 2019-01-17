@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"gopkg.in/flant/yaml.v2"
+	yaml "gopkg.in/flant/yaml.v2"
 )
 
 type configError struct {

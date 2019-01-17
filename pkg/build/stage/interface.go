@@ -1,6 +1,6 @@
 package stage
 
-import "github.com/flant/dapp/pkg/image"
+import "github.com/flant/werf/pkg/image"
 
 type Interface interface {
 	Name() StageName

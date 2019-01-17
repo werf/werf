@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/dappdeps"
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/dappdeps"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/util"
 )
 
 func GenerateFromStage(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) *FromStage {

@@ -12,7 +12,7 @@ dapp kube secret key generate
 ```
 
 ### dapp kube secret generate
-Зашифровать данные ключом `DAPP_SECRET_KEY`.
+Зашифровать данные ключом `WERF_SECRET_KEY`.
 
 ```
 dapp kube secret generate [FILE_PATH] [options]
@@ -25,7 +25,7 @@ dapp kube secret generate [FILE_PATH] [options]
 Перенаправляет зашифрованные данные в файл `OUTPUT_FILE_PATH`.
 
 ### dapp kube secret extract
-Расшифровать данные ключом `DAPP_SECRET_KEY`.
+Расшифровать данные ключом `WERF_SECRET_KEY`.
 
 ```
 dapp kube secret extract [FILE_PATH] [options]
@@ -48,7 +48,7 @@ dapp kube secret edit `FILE_PATH` [options]
 Отредактировать secret-values файл `FILE_PATH`.
 
 ### dapp kube secret regenerate
-Перегенерировать секреты ключом `DAPP_SECRET_KEY`.
+Перегенерировать секреты ключом `WERF_SECRET_KEY`.
 
 ```
 dapp kube secret regenerate [SECRET_VALUES_FILE_PATH ...] [options]

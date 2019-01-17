@@ -5,12 +5,12 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/flant/dapp/pkg/build/stage"
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/git_repo"
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/lock"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/build/stage"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/git_repo"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/util"
 )
 
 type Conveyor struct {
@@ -27,12 +27,12 @@ type Conveyor struct {
 }
 
 type conveyorPermanentFields struct {
-	dappfile           *config.Dappfile
+	werfConfig         *config.WerfConfig
 	dimgNamesToProcess []string
 
 	projectDir       string
 	projectBuildDir  string
-	containerDappDir string
+	containerWerfDir string
 	baseTmpDir       string
 
 	dockerAuthorizer DockerAuthorizer
@@ -45,15 +45,15 @@ type DockerAuthorizer interface {
 	LoginForPush(repo string) error
 }
 
-func NewConveyor(dappfile *config.Dappfile, dimgNamesToProcess []string, projectDir, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, dimgNamesToProcess []string, projectDir, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
 	c := &Conveyor{
 		conveyorPermanentFields: &conveyorPermanentFields{
-			dappfile:           dappfile,
+			werfConfig:         werfConfig,
 			dimgNamesToProcess: dimgNamesToProcess,
 
 			projectDir:       projectDir,
 			projectBuildDir:  buildDir,
-			containerDappDir: "/.dapp",
+			containerWerfDir: "/.werf",
 			baseTmpDir:       baseTmpDir,
 
 			dockerAuthorizer: authorizer,
@@ -208,7 +208,7 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 }
 
 func (c *Conveyor) projectName() string {
-	return c.dappfile.Meta.Project
+	return c.werfConfig.Meta.Project
 }
 
 func (c *Conveyor) lockAllImagesReadOnly() (string, error) {
