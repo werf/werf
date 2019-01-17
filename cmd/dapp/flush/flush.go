@@ -68,7 +68,16 @@ func runFlush() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	if CmdData.Repo != "" {
+	dappfile, err := common.GetDappfile(projectDir)
+	if err != nil {
+		return fmt.Errorf("dappfile parsing failed: %s", err)
+	}
+
+	projectName := dappfile.Meta.Project
+
+	repoName := common.GetOptionalRepoName(projectName, CmdData.Repo)
+
+	if repoName != "" {
 		if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
 			return err
 		}
@@ -84,19 +93,8 @@ func runFlush() error {
 			return err
 		}
 
-		if err := dockerAuthorizer.Login(CmdData.Repo); err != nil {
+		if err := dockerAuthorizer.Login(repoName); err != nil {
 			return err
-		}
-	}
-
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
-		return err
-	}
-
-	if CmdData.Repo != "" {
-		dappfile, err := common.GetDappfile(projectDir)
-		if err != nil {
-			return fmt.Errorf("dappfile parsing failed: %s", err)
 		}
 
 		var dimgNames []string
@@ -105,7 +103,7 @@ func runFlush() error {
 		}
 
 		commonRepoOptions := cleanup.CommonRepoOptions{
-			Repository: CmdData.Repo,
+			Repository: repoName,
 			DimgsNames: dimgNames,
 			DryRun:     CmdData.DryRun,
 		}
@@ -113,14 +111,11 @@ func runFlush() error {
 		if err := cleanup.RepoImagesFlush(CmdData.WithDimgs, commonRepoOptions); err != nil {
 			return err
 		}
+	} else {
+		if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+			return err
+		}
 	}
-
-	dappfile, err := common.GetDappfile(projectDir)
-	if err != nil {
-		return fmt.Errorf("dappfile parsing failed: %s", err)
-	}
-
-	projectName := dappfile.Meta.Project
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,

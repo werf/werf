@@ -38,11 +38,11 @@ func ProjectImagesFlush(withDimgs bool, options CommonProjectOptions) error {
 			}
 		}
 
-		if err := projectDimgstagesFlush(options); err != nil {
+		if err := projectCleanup(options); err != nil {
 			return err
 		}
 
-		if err := projectCleanup(options); err != nil {
+		if err := projectDimgstagesFlush(options); err != nil {
 			return err
 		}
 
