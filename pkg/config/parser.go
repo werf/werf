@@ -90,9 +90,9 @@ func GetProjectName(projectDir string) (string, error) {
 				return "", fmt.Errorf("bad url '%s': %s", remoteOriginUrl, err)
 			}
 
-			path := strings.TrimSuffix(ep.Path, ".git")
+			gitName := strings.TrimSuffix(ep.Path, ".git")
 
-			return slug.Project(path), nil
+			return slug.Project(gitName), nil
 		}
 	}
 
@@ -552,13 +552,13 @@ func splitByMetaAndRawDimgs(docs []*doc) (*Meta, []*rawDimg, error) {
 
 	parentStack = util.NewStack()
 	for _, doc := range docs {
-		raw := &raw{}
+		var raw map[string]interface{}
 		err := yaml.Unmarshal(doc.Content, &raw)
 		if err != nil {
 			return nil, nil, newYamlUnmarshalError(err, doc)
 		}
 
-		if raw.IsRawMeta() {
+		if isMetaDoc(raw) {
 			if resultMeta != nil {
 				return nil, nil, newYamlUnmarshalError(errors.New("duplicate meta definition"), doc)
 			}
@@ -570,7 +570,7 @@ func splitByMetaAndRawDimgs(docs []*doc) (*Meta, []*rawDimg, error) {
 			}
 
 			resultMeta = rawMeta.toMeta()
-		} else if raw.IsRawDimg() {
+		} else if isDimgDoc(raw) {
 			dimg := &rawDimg{doc: doc}
 			err := yaml.Unmarshal(doc.Content, &dimg)
 			if err != nil {
@@ -584,6 +584,24 @@ func splitByMetaAndRawDimgs(docs []*doc) (*Meta, []*rawDimg, error) {
 	}
 
 	return resultMeta, rawDimgs, nil
+}
+
+func isMetaDoc(h map[string]interface{}) bool {
+	if _, ok := h["project"]; ok {
+		return true
+	}
+
+	return false
+}
+
+func isDimgDoc(h map[string]interface{}) bool {
+	if _, ok := h["dimg"]; ok {
+		return true
+	} else if _, ok := h["artifact"]; ok {
+		return true
+	}
+
+	return false
 }
 
 func newYamlUnmarshalError(err error, doc *doc) error {
