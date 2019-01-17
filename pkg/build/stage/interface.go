@@ -21,6 +21,6 @@ type Interface interface {
 	SetImage(image.Image)
 	GetImage() image.Image
 
-	SetGitArtifacts([]*GitArtifact)
-	GetGitArtifacts() []*GitArtifact
+	SetGitPaths([]*GitPath)
+	GetGitPaths() []*GitPath
 }

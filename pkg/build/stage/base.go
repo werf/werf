@@ -17,16 +17,16 @@ type StageName string
 const (
 	From                        StageName = "from"
 	BeforeInstall               StageName = "before_install"
-	ArtifactImportBeforeInstall StageName = "before_install_artifact"
-	GAArchive                   StageName = "g_a_archive"
+	ArtifactImportBeforeInstall StageName = "imports_before_install"
+	GitArchive                  StageName = "git_archive"
 	Install                     StageName = "install"
-	ArtifactImportAfterInstall  StageName = "after_install_artifact"
+	ArtifactImportAfterInstall  StageName = "imports_after_install"
 	BeforeSetup                 StageName = "before_setup"
-	ArtifactImportBeforeSetup   StageName = "before_setup_artifact"
+	ArtifactImportBeforeSetup   StageName = "imports_before_setup"
 	Setup                       StageName = "setup"
-	ArtifactImportAfterSetup    StageName = "after_setup_artifact"
-	GAPostSetupPatch            StageName = "g_a_post_setup_patch"
-	GALatestPatch               StageName = "g_a_latest_patch"
+	ArtifactImportAfterSetup    StageName = "imports_after_setup"
+	GitCache                    StageName = "git_cache"
+	GitLatestPatch              StageName = "git_latest_patch"
 	DockerInstructions          StageName = "docker_instructions"
 )
 
@@ -60,7 +60,7 @@ type BaseStage struct {
 	dimgName         string
 	signature        string
 	image            image.Image
-	gitArtifacts     []*GitArtifact
+	gitPaths         []*GitPath
 	dimgTmpDir       string
 	containerDappDir string
 	projectBuildDir  string
@@ -288,12 +288,12 @@ func (s *BaseStage) GetImage() image.Image {
 	return s.image
 }
 
-func (s *BaseStage) SetGitArtifacts(gitArtifacts []*GitArtifact) {
-	s.gitArtifacts = gitArtifacts
+func (s *BaseStage) SetGitPaths(gitPaths []*GitPath) {
+	s.gitPaths = gitPaths
 }
 
-func (s *BaseStage) GetGitArtifacts() []*GitArtifact {
-	return s.gitArtifacts
+func (s *BaseStage) GetGitPaths() []*GitPath {
+	return s.gitPaths
 }
 
 func mergeMounts(a, b map[string][]string) map[string][]string {

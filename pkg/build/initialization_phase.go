@@ -143,28 +143,28 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 		ProjectBuildDir:  c.projectBuildDir,
 	}
 
-	gaArchiveStageOptions := &stage.NewGAArchiveStageOptions{
+	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{
 		ArchivesDir:          getDimgArchivesDir(dimgName, c),
 		ContainerArchivesDir: getDimgArchivesContainerDir(c),
 	}
 
-	gaPatchStageOptions := &stage.NewGaPatchStageOptions{
+	gitPatchStageOptions := &stage.NewGitPatchStageOptions{
 		PatchesDir:          getDimgPatchesDir(dimgName, c),
 		ContainerPatchesDir: getDimgPatchesContainerDir(c),
 	}
 
-	gitArtifacts, err := generateGitArtifacts(dimgBaseConfig, c)
+	gitPaths, err := generateGitPaths(dimgBaseConfig, c)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, ga := range gitArtifacts {
-		commit, err := ga.LatestCommit()
+	for _, gitPath := range gitPaths {
+		commit, err := gitPath.LatestCommit()
 		if err != nil {
-			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", ga.GitRepo().String(), err)
+			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().String(), err)
 		}
 
-		fmt.Printf("Using commit '%s' of repo '%s'\n", commit, ga.GitRepo().String())
+		fmt.Printf("Using commit '%s' of repo '%s'\n", commit, gitPath.GitRepo().String())
 	}
 
 	// from
@@ -176,47 +176,47 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	// before_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(dimgBaseConfig, baseStageOptions))
 
-	// g_a_archive_stage
-	stages = append(stages, stage.NewGAArchiveStage(gaArchiveStageOptions, baseStageOptions))
+	// git_archive_stage
+	stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
 
 	// install
-	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgBaseConfig, gaPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgBaseConfig, gitPatchStageOptions, baseStageOptions))
 
 	// after_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(dimgBaseConfig, baseStageOptions))
 
 	// before_setup
-	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgBaseConfig, gaPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgBaseConfig, gitPatchStageOptions, baseStageOptions))
 
 	// before_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBaseConfig, baseStageOptions))
 
 	// setup
-	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgBaseConfig, gaPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgBaseConfig, gitPatchStageOptions, baseStageOptions))
 
 	// after_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(dimgBaseConfig, baseStageOptions))
 
 	if !dimgArtifact {
-		// g_a_post_setup_patch
-		stages = append(stages, stage.NewGAPostSetupPatchStage(gaPatchStageOptions, baseStageOptions))
+		// git_post_setup_patch
+		stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
 
-		// g_a_latest_patch
-		stages = append(stages, stage.NewGALatestPatchStage(gaPatchStageOptions, baseStageOptions))
+		// git_latest_patch
+		stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
 
 		// docker_instructions
 		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(dimgConfig.(*config.Dimg), baseStageOptions))
 	}
 
 	for _, s := range stages {
-		s.SetGitArtifacts(gitArtifacts)
+		s.SetGitPaths(gitPaths)
 	}
 
 	return stages, nil
 }
 
-func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stage.GitArtifact, error) {
-	var gitArtifacts, nonEmptyGitArtifacts []*stage.GitArtifact
+func generateGitPaths(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stage.GitPath, error) {
+	var gitPaths, nonEmptyGitPaths []*stage.GitPath
 
 	var localGitRepo *git_repo.Local
 	if len(dimgBaseConfig.Git.Local) != 0 {
@@ -227,21 +227,21 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 		}
 	}
 
-	for _, localGAConfig := range dimgBaseConfig.Git.Local {
-		gitArtifacts = append(gitArtifacts, gitLocalArtifactInit(localGAConfig, localGitRepo, dimgBaseConfig.Name, c))
+	for _, localGitPathConfig := range dimgBaseConfig.Git.Local {
+		gitPaths = append(gitPaths, gitLocalPathInit(localGitPathConfig, localGitRepo, dimgBaseConfig.Name, c))
 	}
 
-	for _, remoteGAConfig := range dimgBaseConfig.Git.Remote {
-		remoteGitRepo, exist := c.remoteGitRepos[remoteGAConfig.Name]
+	for _, remoteGitPathConfig := range dimgBaseConfig.Git.Remote {
+		remoteGitRepo, exist := c.remoteGitRepos[remoteGitPathConfig.Name]
 		if !exist {
-			clonePath, err := getRemoteGitRepoClonePath(remoteGAConfig, c)
+			clonePath, err := getRemoteGitRepoClonePath(remoteGitPathConfig, c)
 			if err != nil {
 				return nil, err
 			}
 
 			remoteGitRepo = &git_repo.Remote{
-				Base:      git_repo.Base{Name: remoteGAConfig.Name},
-				Url:       remoteGAConfig.Url,
+				Base:      git_repo.Base{Name: remoteGitPathConfig.Name},
+				Url:       remoteGitPathConfig.Url,
 				ClonePath: clonePath,
 			}
 
@@ -249,25 +249,25 @@ func generateGitArtifacts(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stag
 				return nil, err
 			}
 
-			c.remoteGitRepos[remoteGAConfig.Name] = remoteGitRepo
+			c.remoteGitRepos[remoteGitPathConfig.Name] = remoteGitRepo
 		}
 
-		gitArtifacts = append(gitArtifacts, gitRemoteArtifactInit(remoteGAConfig, remoteGitRepo, dimgBaseConfig.Name, c))
+		gitPaths = append(gitPaths, gitRemoteArtifactInit(remoteGitPathConfig, remoteGitRepo, dimgBaseConfig.Name, c))
 	}
 
-	for _, ga := range gitArtifacts {
-		if empty, err := ga.IsEmpty(); err != nil {
+	for _, gitPath := range gitPaths {
+		if empty, err := gitPath.IsEmpty(); err != nil {
 			return nil, err
 		} else if !empty {
-			nonEmptyGitArtifacts = append(nonEmptyGitArtifacts, ga)
+			nonEmptyGitPaths = append(nonEmptyGitPaths, gitPath)
 		}
 	}
 
-	return nonEmptyGitArtifacts, nil
+	return nonEmptyGitPaths, nil
 }
 
-func getRemoteGitRepoClonePath(remoteGaConfig *config.GitRemote, c *Conveyor) (string, error) {
-	scheme, err := urlScheme(remoteGaConfig.Url)
+func getRemoteGitRepoClonePath(remoteGitPathConfig *config.GitRemote, c *Conveyor) (string, error) {
+	scheme, err := urlScheme(remoteGitPathConfig.Url)
 	if err != nil {
 		return "", err
 	}
@@ -276,7 +276,7 @@ func getRemoteGitRepoClonePath(remoteGaConfig *config.GitRemote, c *Conveyor) (s
 		c.projectBuildDir,
 		"remote_git_repo",
 		fmt.Sprintf("%v", git_repo.RemoteGitRepoCacheVersion),
-		slug.Slug(remoteGaConfig.Name),
+		slug.Slug(remoteGitPathConfig.Name),
 		scheme,
 	)
 
@@ -299,39 +299,39 @@ func urlScheme(urlString string) (string, error) {
 	return u.Scheme, nil
 }
 
-func gitRemoteArtifactInit(remoteGAConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, dimgName string, c *Conveyor) *stage.GitArtifact {
-	ga := baseGitArtifactInit(remoteGAConfig.GitLocalExport, dimgName, c)
+func gitRemoteArtifactInit(remoteGitPathConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, dimgName string, c *Conveyor) *stage.GitPath {
+	gitPath := baseGitPathInit(remoteGitPathConfig.GitLocalExport, dimgName, c)
 
-	ga.Tag = remoteGAConfig.Tag
-	ga.Commit = remoteGAConfig.Commit
-	ga.Branch = remoteGAConfig.Branch
+	gitPath.Tag = remoteGitPathConfig.Tag
+	gitPath.Commit = remoteGitPathConfig.Commit
+	gitPath.Branch = remoteGitPathConfig.Branch
 
-	ga.Name = remoteGAConfig.Name
+	gitPath.Name = remoteGitPathConfig.Name
 
-	ga.GitRepoInterface = remoteGitRepo
+	gitPath.GitRepoInterface = remoteGitRepo
 
-	return ga
+	return gitPath
 }
 
-func gitLocalArtifactInit(localGAConfig *config.GitLocal, localGitRepo *git_repo.Local, dimgName string, c *Conveyor) *stage.GitArtifact {
-	ga := baseGitArtifactInit(localGAConfig.GitLocalExport, dimgName, c)
+func gitLocalPathInit(localGitPathConfig *config.GitLocal, localGitRepo *git_repo.Local, dimgName string, c *Conveyor) *stage.GitPath {
+	gitPath := baseGitPathInit(localGitPathConfig.GitLocalExport, dimgName, c)
 
-	ga.As = localGAConfig.As
+	gitPath.As = localGitPathConfig.As
 
-	ga.Name = "own"
+	gitPath.Name = "own"
 
-	ga.GitRepoInterface = localGitRepo
+	gitPath.GitRepoInterface = localGitRepo
 
-	return ga
+	return gitPath
 }
 
-func baseGitArtifactInit(local *config.GitLocalExport, dimgName string, c *Conveyor) *stage.GitArtifact {
+func baseGitPathInit(local *config.GitLocalExport, dimgName string, c *Conveyor) *stage.GitPath {
 	var stageDependencies map[stage.StageName][]string
 	if local.StageDependencies != nil {
 		stageDependencies = stageDependenciesToMap(local.StageDependencies)
 	}
 
-	ga := &stage.GitArtifact{
+	gitPath := &stage.GitPath{
 		PatchesDir:           getDimgPatchesDir(dimgName, c),
 		ContainerPatchesDir:  getDimgPatchesContainerDir(c),
 		ArchivesDir:          getDimgArchivesDir(dimgName, c),
@@ -348,7 +348,7 @@ func baseGitArtifactInit(local *config.GitLocalExport, dimgName string, c *Conve
 		StagesDependencies: stageDependencies,
 	}
 
-	return ga
+	return gitPath
 }
 
 func getDimgPatchesDir(dimgName string, c *Conveyor) string {

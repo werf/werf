@@ -98,30 +98,6 @@ dapp dimg build [options] [DIMG ...]
 
 The `DIMG` optional parameter — is a name of dimg from a dappfile. Specifying `DIMG` one or multiple times allows building only certain dimgs from dappfile. By default, dapp builds all dimgs.
 
-##### \-\-introspect-stage STAGE
-
-Introspect specified stage after this stage is built. Affects only dimgs, not artifacts.
-
-`STAGE` is one of the: _from_, _before_install_, _before_install_artifact_, _g_a_archive_, _g_a_pre_install_patch_, _install_, _g_a_post_install_patch_, _after_install_artifact_, _before_setup_, _before_setup_artifact_, _g_a_pre_setup_patch_, _setup_, _g_a_post_setup_patch_, _after_setup_artifact_, _g_a_latest_patch_, _docker_instructions_.
-
-##### \-\-introspect-before STAGE
-
-Introspect stage before the specified stage. Affects only dimgs, not artifacts.
-
-`STAGE` is one of the: _from_, _before_install_, _before_install_artifact_, _g_a_archive_, _g_a_pre_install_patch_, _install_, _g_a_post_install_patch_, _after_install_artifact_, _before_setup_, _before_setup_artifact_, _g_a_pre_setup_patch_, _setup_, _g_a_post_setup_patch_, _after_setup_artifact_, _g_a_latest_patch_, _docker_instructions_.
-
-##### \-\-introspect-artifact-stage STAGE
-
-Introspect specified artifact stage after this stage is built. Affects only artifacts, not dimgs.
-
-`STAGE` is one of the: _from_, _before_install_, _before_install_artifact_, _g_a_archive_, _g_a_pre_install_patch_, _install_, _g_a_post_install_patch_, _after_install_artifact_, _before_setup_, _before_setup_artifact_, _g_a_pre_setup_patch_, _setup_, _after_setup_artifact_, _g_a_artifact_patch_, _build_artifact_.
-
-##### \-\-introspect-artifact-before STAGE
-
-Introspect artifact stage before the specified stage. Affects only artifacts, not dimgs.
-
-`STAGE` is one of the: _from_, _before_install_, _before_install_artifact_, _g_a_archive_, _g_a_pre_install_patch_, _install_, _g_a_post_install_patch_, _after_install_artifact_, _before_setup_, _before_setup_artifact_, _g_a_pre_setup_patch_, _setup_, _after_setup_artifact_, _g_a_artifact_patch_, _build_artifact_.
-
 ##### \-\-introspect-before-error
 
 Introspect dimg or artifact stage in the clean state, when no assembly instructions from the failed stage have been run yet.

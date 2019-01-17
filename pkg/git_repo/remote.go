@@ -9,7 +9,7 @@ import (
 	"github.com/flant/dapp/pkg/lock"
 	"gopkg.in/ini.v1"
 	"gopkg.in/satori/go.uuid.v1"
-	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
@@ -291,7 +291,7 @@ func (repo *Remote) getWorkTreeDir() (string, error) {
 }
 
 func (repo *Remote) withRemoteRepoLock(f func() error) error {
-	lockName := fmt.Sprintf("remote_git_artifact.%s", repo.Name)
+	lockName := fmt.Sprintf("remote_git_path.%s", repo.Name)
 	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
 }
 

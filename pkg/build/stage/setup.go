@@ -7,23 +7,23 @@ import (
 	"github.com/flant/dapp/pkg/util"
 )
 
-func GenerateSetupStage(dimgBaseConfig *config.DimgBase, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *SetupStage {
+func GenerateSetupStage(dimgBaseConfig *config.DimgBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *SetupStage {
 	b := getBuilder(dimgBaseConfig, baseStageOptions)
 	if b != nil && !b.IsSetupEmpty() {
-		return newSetupStage(b, gaPatchStageOptions, baseStageOptions)
+		return newSetupStage(b, gitPatchStageOptions, baseStageOptions)
 	}
 
 	return nil
 }
 
-func newSetupStage(builder builder.Builder, gaPatchStageOptions *NewGaPatchStageOptions, baseStageOptions *NewBaseStageOptions) *SetupStage {
+func newSetupStage(builder builder.Builder, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *SetupStage {
 	s := &SetupStage{}
-	s.UserWithGAPatchStage = newUserWithGAPatchStage(builder, Setup, gaPatchStageOptions, baseStageOptions)
+	s.UserWithGitPatchStage = newUserWithGitPatchStage(builder, Setup, gitPatchStageOptions, baseStageOptions)
 	return s
 }
 
 type SetupStage struct {
-	*UserWithGAPatchStage
+	*UserWithGitPatchStage
 }
 
 func (s *SetupStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
@@ -36,7 +36,7 @@ func (s *SetupStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) 
 }
 
 func (s *SetupStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
-	if err := s.UserWithGAPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
+	if err := s.UserWithGitPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return nil
 	}
 

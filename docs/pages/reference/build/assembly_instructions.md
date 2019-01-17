@@ -511,9 +511,9 @@ So this configuration rebuilds _before_install user stage_ on every commit.
 <img src="https://docs.google.com/drawings/d/e/2PACX-1vTiTbGDHqQZWglQaixUBwR_bQLfrNi_TmeZg9RDScJqBSZ1Sh_WXwrVFkn36K0P8zJIJQvK-ZEIBI9a/pub?w=1016&amp;h=216">
 </a>
 
-As stated in a _git path_ reference, there are _g_a_archive_ and _g_a_latest_patch_ stages. _g_a_archive_ is executed after _before_install user stage_, and _g_a_latest_patch_ is executed after _setup user stage_ if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _g_a_archive_ with [special commit]({{site.baseurl}}/reference/build/git_directive.html#rebuild-of-g_a_archive-stage) or rebuild _before_install_ (change _cacheVersion_ or instructions for _before_install stage_).
+As stated in a _git path_ reference, there are _git_archive_ and _git_latest_patch_ stages. _git_archive_ is executed after _before_install user stage_, and _git_latest_patch_ is executed after _setup user stage_ if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _git_archive_ with [special commit]({{site.baseurl}}/reference/build/git_directive.html#rebuild-of-git_archive-stage) or rebuild _before_install_ (change _cacheVersion_ or instructions for _before_install stage_).
 
-Dapp has additional _stages_, _g_a_pre_install_patch_, _g_a_post_install_patch_ and _g_a_pre_setup_patch_, to apply git patches before _install_, _before_setup_ and _setup_ user stages. These additional _stages_ make _user stages_ dependant on git repository changes so that dapp can execute assembly instructions of the particular _user stage_ with the latest version of source codes.
+Dapp has additional _stages_, _git_pre_install_patch_, _git_post_install_patch_ and _git_pre_setup_patch_, to apply git patches before _install_, _before_setup_ and _setup_ user stages. These additional _stages_ make _user stages_ dependant on git repository changes so that dapp can execute assembly instructions of the particular _user stage_ with the latest version of source codes.
 
 _User stage_ dependency on git repository changes is defined with `git.stageDependencies` parameter. Syntax is:
 
@@ -579,7 +579,7 @@ shell:
   - echo "beforeSetup stage"
 ```
 
-This `dappfile.yaml` has a git path configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _g_a_archive stage_ and assembly instructions for _install_ and _before_setup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src`, then checksums of matched files are changed, and dapp rebuilds _g_a_post_install_patch stage_ and _before_setup_ stages.
+This `dappfile.yaml` has a git path configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _git_archive stage_ and assembly instructions for _install_ and _before_setup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src`, then checksums of matched files are changed, and dapp rebuilds _git_post_install_patch stage_ and _before_setup_ stages.
 
 ## Dependency on CacheVersion values
 
