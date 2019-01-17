@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -55,6 +56,13 @@ func Get() (string, error) {
 		err := lock.WithLock("gc", lock.LockOptions{}, GC)
 		if err != nil {
 			return "", fmt.Errorf("GC failed: %s", err)
+		}
+	}
+
+	if runtime.GOOS == "darwin" {
+		dir, err = filepath.EvalSymlinks(dir)
+		if err != nil {
+			return "", fmt.Errorf("eval symlink failed: %s", err)
 		}
 	}
 
