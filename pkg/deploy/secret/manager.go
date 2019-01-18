@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/dapp/pkg/dapp"
-	"github.com/flant/dapp/pkg/logger"
-	"github.com/flant/dapp/pkg/secret"
+	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/secret"
+	"github.com/flant/werf/pkg/werf"
 
 	"k8s.io/kubernetes/pkg/util/file"
 )
@@ -45,43 +45,43 @@ func GetManager(projectDir string) (Manager, error) {
 
 func GetSecretKey(projectDir string) ([]byte, error) {
 	var secretKey []byte
-	var dappSecretKeyPaths []string
+	var werfSecretKeyPaths []string
 	var notFoundIn []string
 
-	secretKey = []byte(os.Getenv("DAPP_SECRET_KEY"))
+	secretKey = []byte(os.Getenv("WERF_SECRET_KEY"))
 	if len(secretKey) == 0 {
-		notFoundIn = append(notFoundIn, "$DAPP_SECRET_KEY")
+		notFoundIn = append(notFoundIn, "$WERF_SECRET_KEY")
 
-		var dappSecretKeyPath string
+		var werfSecretKeyPath string
 
-		projectDappSecretKeyPath, err := filepath.Abs(filepath.Join(projectDir, ".dapp_secret_key"))
+		projectWerfSecretKeyPath, err := filepath.Abs(filepath.Join(projectDir, ".werf_secret_key"))
 		if err != nil {
 			return nil, err
 		}
 
-		homeDappSecretKeyPath := filepath.Join(dapp.GetHomeDir(), ".dapp_secret_key")
+		homeWerfSecretKeyPath := filepath.Join(werf.GetHomeDir(), ".werf_secret_key")
 
-		dappSecretKeyPaths = []string{
-			projectDappSecretKeyPath,
-			homeDappSecretKeyPath,
+		werfSecretKeyPaths = []string{
+			projectWerfSecretKeyPath,
+			homeWerfSecretKeyPath,
 		}
 
-		for _, path := range dappSecretKeyPaths {
+		for _, path := range werfSecretKeyPaths {
 			exist, err := file.FileExists(path)
 			if err != nil {
 				return nil, err
 			}
 
 			if exist {
-				dappSecretKeyPath = path
+				werfSecretKeyPath = path
 				break
 			} else {
 				notFoundIn = append(notFoundIn, fmt.Sprintf("%s", path))
 			}
 		}
 
-		if dappSecretKeyPath != "" {
-			data, err := ioutil.ReadFile(dappSecretKeyPath)
+		if werfSecretKeyPath != "" {
+			data, err := ioutil.ReadFile(werfSecretKeyPath)
 			if err != nil {
 				return nil, err
 			}
@@ -109,7 +109,7 @@ func NewManager(key []byte, options NewManagerOptions) (Manager, error) {
 				logger.LogWarning(`
 ###################################################################################################
 ###                       WARNING invalid encryption key, do regenerate!                        ###
-### https://flant.github.io/dapp/reference/deploy/secrets.html#regeneration-of-existing-secrets ###
+### https://flant.github.io/werf/reference/deploy/secrets.html#regeneration-of-existing-secrets ###
 ###################################################################################################`)
 			}
 

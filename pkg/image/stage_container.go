@@ -7,9 +7,9 @@ import (
 
 	"github.com/docker/docker/api/types"
 
-	"github.com/flant/dapp/pkg/dappdeps"
-	"github.com/flant/dapp/pkg/docker"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/dappdeps"
+	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/util"
 )
 
 type StageContainer struct {
@@ -22,7 +22,7 @@ type StageContainer struct {
 	serviceCommitChangeOptions *StageContainerOptions
 }
 
-const StageContainerNamePrefix = "dapp.build."
+const StageContainerNamePrefix = "werf.build."
 
 func newStageImageContainer(image *Stage) *StageContainer {
 	c := &StageContainer{}

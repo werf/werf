@@ -2,20 +2,20 @@
 set -e
 
 #BINTRAY_AUTH=            # bintray auth user:TOKEN
-BINTRAY_SUBJECT=dapp      # bintray organization
-BINTRAY_REPO=dapp         # bintray repository
-BINTRAY_PACKAGE=Dapp      # bintray package in repository
+BINTRAY_SUBJECT=flant     # bintray organization
+BINTRAY_REPO=werf         # bintray repository
+BINTRAY_PACKAGE=werf      # bintray package in repository
 
 #NO_PRERELEASE=           # This is not a pre release
 
 GITHUB_OWNER=flant     # github user/org
-GITHUB_REPO=dapp       # github repository
+GITHUB_REPO=werf       # github repository
 
 RELEASE_BUILD_DIR=$(pwd)/release/build
 
 GIT_REMOTE=origin      # can be changed to upstream with env
 
-# Dapp publisher utility
+# Werf publisher utility
 # Create github release and upload go binary as asset.
 main() {
   parse_args "$@" || (usage && exit 1)
@@ -54,7 +54,7 @@ main() {
   if [ -n "$BINTRAY_AUTH" ] ; then
     ( bintray_create_version && echo "Bintray: Version $VERSION created" ) || ( exit 1 )
 
-    for filename in dapp dapp.sha ; do
+    for filename in werf werf.sha ; do
       for arch in darwin linux ; do
         ( bintray_upload_file_into_version $RELEASE_BUILD_DIR/$arch-amd64/$filename $arch-amd64/$filename ) || ( exit 1 )
       done
@@ -143,7 +143,7 @@ github_create_release() {
   GHPAYLOAD=$(cat <<- JSON
 {
   "tag_name": "$GIT_TAG",
-  "name": "Dapp $VERSION",
+  "name": "Werf $VERSION",
   "body": $TAG_RELEASE_MESSAGE,
   "draft": false,
   "prerelease": $prerelease

@@ -72,19 +72,19 @@ permalink: not_used/stages_diagram.html
           </div>
           {% endif %}
         </div>
-        {% if stage.dappfile_base or stage.dappfile_chef or stage.dappfile_shell %}
-        <div class="dappfile">
-          Dappfile <br />
+        {% if stage.config_base or stage.config_chef or stage.config_shell %}
+        <div class="config">
+          Werf config <br />
 
           <div>
-            {% if stage.dappfile_base %}
-            <span>{{ stage.dappfile_base | escape }}</span>
+            {% if stage.config_base %}
+            <span>{{ stage.config_base | escape }}</span>
             {% endif %}
-            {% if stage.dappfile_chef %}
-            <span class="chef hidden">{{ stage.dappfile_chef | escape}}</span>
+            {% if stage.config_chef %}
+            <span class="chef hidden">{{ stage.config_chef | escape}}</span>
             {% endif %}
-            {% if stage.dappfile_shell %}
-            <span class="shell hidden">{{ stage.dappfile_shell | escape}}</span>
+            {% if stage.config_shell %}
+            <span class="shell hidden">{{ stage.config_shell | escape}}</span>
             {% endif %}
           </div>
         </div>
@@ -104,11 +104,11 @@ permalink: not_used/stages_diagram.html
 <script src="{{ site.baseurl }}/js/jquery-3.1.0.min.js"></script>
 <script>
 
-$(".dappfile > div > span").each(function (){
+$(".config > div > span").each(function (){
   var stage = $(this).closest( ".stage" ).attr('id');
   var index = 0;
   $(this).html( $(this).text().replace(/&lt;(.*?)&gt;/g, function(full, match) {
-    return "<span id=" + slugify(stage + ' dappfile ' + match + '-' + (index += 1)) + ">" + full + "</span>";
+    return "<span id=" + slugify(stage + ' config ' + match + '-' + (index += 1)) + ">" + full + "</span>";
   }));
 });
 

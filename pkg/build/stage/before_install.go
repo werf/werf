@@ -1,9 +1,9 @@
 package stage
 
 import (
-	"github.com/flant/dapp/pkg/build/builder"
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/werf/pkg/build/builder"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/image"
 )
 
 func GenerateBeforeInstallStage(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {

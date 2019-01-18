@@ -19,9 +19,9 @@ for arch in linux darwin ; do
 
   mkdir -p $outputDir
 
-  echo "Building dapp for $arch, version $VERSION"
-  GOOS=$arch GOARCH=amd64 go build -ldflags="-s -w -X github.com/flant/dapp/pkg/dapp.Version=$VERSION" -o $outputDir/dapp github.com/flant/dapp/cmd/dapp
+  echo "Building werf for $arch, version $VERSION"
+  GOOS=$arch GOARCH=amd64 go build -ldflags="-s -w -X github.com/flant/werf/pkg/werf.Version=$VERSION" -o $outputDir/werf github.com/flant/werf/cmd/werf
 
-  echo "Calculating checksum dapp.sha"
-  sha256sum $outputDir/dapp | cut -d' ' -f 1 > $outputDir/dapp.sha
+  echo "Calculating checksum werf.sha"
+  sha256sum $outputDir/werf | cut -d' ' -f 1 > $outputDir/werf.sha
 done

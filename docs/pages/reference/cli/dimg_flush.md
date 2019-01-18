@@ -1,24 +1,24 @@
 ---
-title: dapp dimg flush
+title: werf dimg flush
 sidebar: reference
 permalink: reference/cli/dimg_flush.html
 ---
 
-### dapp dimg flush local
+### werf dimg flush local
 Удалить все теги приложений проекта локально.
 
 ```
-dapp dimg flush local [options] [DIMG ...]
+werf dimg flush local [options] [DIMG ...]
 ```
 
 #### `--with-stages`
-Соответствует вызову команды `dapp dimg stages flush local`.
+Соответствует вызову команды `werf dimg stages flush local`.
 
-### dapp dimg flush repo
+### werf dimg flush repo
 Удалить все теги приложений проекта.
 ```
-dapp dimg flush repo [options] [DIMG ...] REPO
+werf dimg flush repo [options] [DIMG ...] REPO
 ```
 
 #### `--with-stages`
-Соответствует вызову команды `dapp dimg stages cleanup flush`.
+Соответствует вызову команды `werf dimg stages cleanup flush`.

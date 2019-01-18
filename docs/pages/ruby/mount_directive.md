@@ -4,7 +4,7 @@ sidebar: ruby
 permalink: ruby/mount_directive.html
 ---
 
-## Ruby синтаксис (Dappfile)
+## Ruby синтаксис (Werf config)
 
 ### mount \<to\>
 

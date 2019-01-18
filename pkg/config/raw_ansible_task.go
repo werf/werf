@@ -2,7 +2,8 @@ package config
 
 import (
 	"fmt"
-	"gopkg.in/flant/yaml.v2"
+
+	yaml "gopkg.in/flant/yaml.v2"
 )
 
 type rawAnsibleTask struct {

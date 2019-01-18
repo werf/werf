@@ -4,18 +4,18 @@ sidebar: not_used
 permalink: not_used/
 ---
 
-# YAML dappfile
+# YAML config
 
 Configuration is a collection of YAML documents (http://yaml.org/spec/1.2/spec.html#id2800132). These YAML documents are searched for in one of the following files:
 
-* `REPO_ROOT/dappfile.yml`
-* `REPO_ROOT/dappfile.yaml`
+* `REPO_ROOT/werf.yaml`
+* `REPO_ROOT/werf.yaml`
 
-YAML configuration file will precede ruby `REPO_ROOT/Dappfile` if the case both files exist. `REPO_ROOT/dappfile.yml` will precede `REPO_ROOT/dappfile.yaml` in case both files exist.
+YAML configuration file will precede ruby `REPO_ROOT/Werf config` if the case both files exist. `REPO_ROOT/werf.yaml` will precede `REPO_ROOT/werf.yaml` in case both files exist.
 
 Processing of YAML configuration is done in two steps:
 
-* Rendering go templates into `WORKDIR/.dappfile.render.yml` or `WORKDIR/.dappfile.render.yaml`.
+* Rendering go templates into `WORKDIR/.config.render.yml` or `WORKDIR/.config.render.yaml`.
 * Processing the result file as a set of YAML documents.
 
 ## Go templates
@@ -25,9 +25,9 @@ Go templates are available within YAML config.
 * Sprig functions supported: https://golang.org/pkg/text/template/, http://masterminds.github.io/sprig/.
 * `env` sprig function also supported to access build-time environment variables (unlike helm, where `env` function is forbidden).
 
-Dapp firstly will render go templates into `WORKDIR/.dappfile.render.yml` or `WORKDIR/.dappfile.render.yaml`. That file will remain after build and will be available if some validation or build error occurs.
+Werf firstly will render go templates into `WORKDIR/.config.render.yml` or `WORKDIR/.config.render.yaml`. That file will remain after build and will be available if some validation or build error occurs.
 
-## Differences from Dappfile
+## Differences from Werf config
 
 1. No equivalent for `dimg_group` and nested `dimg`s and `artifact`s.
 2. No context inheritance because of 1. Use go-template functionality
@@ -55,11 +55,11 @@ One of `dimg: NAME` or `artifact: NAME` is a required parameter for each documen
 
 #### `dimg: NAME` (one of required)
 
-If doc contains `dimg` key, then dapp will treat this yaml-doc as dimg configuration.
+If doc contains `dimg` key, then werf will treat this yaml-doc as dimg configuration.
 
 `NAME` may be:
 
-* Special value `~` to define unnamed dimg. This should be default choice for dimg name in dappfile.
+* Special value `~` to define unnamed dimg. This should be default choice for dimg name in config.
 * Some string to define named dimg with the specified name. The name should be a valid docker image name.
 * Array of strings to define multiple dimgs with the same configuration and different names. The names should be valid docker image names.
 
@@ -67,7 +67,7 @@ Conflicts with `artifact: NAME`.
 
 #### `artifact: NAME` (one of required)
 
-If doc contains `artifact` key, dapp will treat this yaml-doc as artifact configuration.
+If doc contains `artifact` key, werf will treat this yaml-doc as artifact configuration.
 
 `NAME` is a string, that defines the artifact name. An artifact may be referenced in `import` and `fromArtifact` directives by that name.
 

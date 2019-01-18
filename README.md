@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="https://github.com/flant/dapp/raw/master/logo.png" style="max-height:100%;" height="100">
+  <img src="https://github.com/flant/werf/raw/master/logo.png" style="max-height:100%;" height="100">
 </p>
 <p align="center">
-  <a href="https://badge.fury.io/rb/dapp"><img alt="Gem Version" src="https://badge.fury.io/rb/dapp.svg" style="max-width:100%;"></a>
-  <a href="https://travis-ci.org/flant/dapp"><img alt="Build Status" src="https://travis-ci.org/flant/dapp.svg" style="max-width:100%;"></a>
-  <a href="https://codeclimate.com/github/flant/dapp"><img alt="Code Climate" src="https://codeclimate.com/github/flant/dapp/badges/gpa.svg" style="max-width:100%;"></a>
+  <a href="https://badge.fury.io/rb/werf"><img alt="Gem Version" src="https://badge.fury.io/rb/werf.svg" style="max-width:100%;"></a>
+  <a href="https://travis-ci.org/flant/werf"><img alt="Build Status" src="https://travis-ci.org/flant/werf.svg" style="max-width:100%;"></a>
+  <a href="https://codeclimate.com/github/flant/werf"><img alt="Code Climate" src="https://codeclimate.com/github/flant/werf/badges/gpa.svg" style="max-width:100%;"></a>
 </p>
 
 ___
 
-Dapp is made to implement and support Continuous Integration and Continuous Delivery (CI/CD).
+Werf is made to implement and support Continuous Integration and Continuous Delivery (CI/CD).
 
 It helps DevOps engineers generate and deploy images by linking together:
 
@@ -17,7 +17,7 @@ It helps DevOps engineers generate and deploy images by linking together:
 - infrastructure code (with Ansible or shell scripts), and
 - platform as a service (Kubernetes).
 
-Dapp simplifies development of build scripts, reduces commit build time and automates deployment.
+Werf simplifies development of build scripts, reduces commit build time and automates deployment.
 It is designed to make engineer's work fast end efficient.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -27,7 +27,7 @@ It is designed to make engineer's work fast end efficient.
 - [Features](#features)
 - [Requirements and Installation](#requirements-and-installation)
   - [Install Dependencies](#install-dependencies)
-  - [Install dapp](#install-dapp)
+  - [Install werf](#install-werf)
 - [Docs and Support](#docs-and-support)
 - [License](#license)
 
@@ -47,8 +47,8 @@ It is designed to make engineer's work fast end efficient.
 
 # Requirements and Installation
 
-Dapp requires a Linux operating system.
-Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp/issues/661)).
+Werf requires a Linux operating system.
+Support for macOS is coming soon (see issue [#661](https://github.com/flant/werf/issues/661)).
 
 ## Install Dependencies
 
@@ -117,23 +117,23 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
     yum install git
     ```
 
-## Install dapp
+## Install werf
 
   ```bash
-  gem install dapp
+  gem install werf
   ```
 
-Now you have dapp installed. Check it with `dapp --version`.
+Now you have werf installed. Check it with `werf --version`.
 
-Time to [make your first dapp application](https://flant.github.io/dapp/how_to/getting_started.html)!
+Time to [make your first werf application](https://flant.github.io/werf/how_to/getting_started.html)!
 
 # Docs and Support
 
-The dapp documentation is available at [flant.github.io/dapp](https://flant.github.io/dapp/).
+The werf documentation is available at [flant.github.io/werf](https://flant.github.io/werf/).
 
-You can ask for support in [dapp chat in Telegram](https://t.me/dapp_ru).
+You can ask for support in [werf chat in Telegram](https://t.me/werf_ru).
 
 # License
 
-Dapp is published under Apache License v2.0.
-See [LICENSE](https://github.com/flant/dapp/blob/master/LICENSE) for details.
+Werf is published under Apache License v2.0.
+See [LICENSE](https://github.com/flant/werf/blob/master/LICENSE) for details.

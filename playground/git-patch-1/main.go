@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/flant/dapp/pkg/true_git"
+	"github.com/flant/werf/pkg/true_git"
 )
 
 func main() {

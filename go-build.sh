@@ -2,4 +2,4 @@
 
 set -e
 
-go install github.com/flant/dapp/cmd/dapp
+go install github.com/flant/werf/cmd/werf

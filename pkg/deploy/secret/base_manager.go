@@ -2,9 +2,10 @@ package secret
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 
-	"github.com/flant/dapp/pkg/secret"
+	yaml "gopkg.in/yaml.v2"
+
+	"github.com/flant/werf/pkg/secret"
 )
 
 type BaseManager struct {

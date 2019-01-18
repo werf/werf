@@ -23,7 +23,7 @@ permalink: ruby/chef_directives.html
 * Опции \<cookbook-opts\> соответствуют опциям cookbook'ов из Berksfile.
 
 ### chef.recipe \<recipe\>[, \<recipe\>, \<recipe\> ...]
-Включить переданные рецепты из cookbook'а dapp для chef builder в данном контексте.
+Включить переданные рецепты из cookbook'а werf для chef builder в данном контексте.
 
 * Для каждого преданного рецепта может существовать файл рецепта в проекте на каждую из стадий.
 * При отсутствии хотя бы одного файла рецепта из включенных, в runlist для данной стадии используется пустой рецепт \<projectname\>::void.

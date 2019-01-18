@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/util"
 )
 
 var (

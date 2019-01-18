@@ -1,9 +1,9 @@
 output: web
 
-baseurl: /dapp
+baseurl: /werf
 
-topnav_title: Dapp Documentation
-site_title: Dapp Documentation
+topnav_title: Werf Documentation
+site_title: Werf Documentation
 company_name: Flant
 
 exclude:

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/dapp/pkg/true_git"
+	"github.com/flant/werf/pkg/true_git"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -14,7 +14,7 @@ type PatchFile struct {
 }
 
 func NewTmpPatchFile() *PatchFile {
-	path := filepath.Join("/tmp", fmt.Sprintf("dapp-%s.patch", uuid.NewV4().String()))
+	path := filepath.Join("/tmp", fmt.Sprintf("werf-%s.patch", uuid.NewV4().String()))
 	return &PatchFile{FilePath: path}
 }
 

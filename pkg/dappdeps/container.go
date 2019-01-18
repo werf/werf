@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/flant/dapp/pkg/docker"
-	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/lock"
 )
 
 type container struct {

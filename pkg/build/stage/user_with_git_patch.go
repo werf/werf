@@ -1,8 +1,8 @@
 package stage
 
 import (
-	"github.com/flant/dapp/pkg/build/builder"
-	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/werf/pkg/build/builder"
+	"github.com/flant/werf/pkg/image"
 )
 
 func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *UserWithGitPatchStage {

@@ -8,26 +8,26 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
-	"github.com/flant/dapp/pkg/build"
-	"github.com/flant/dapp/pkg/docker"
-	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/werf/pkg/build"
+	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/image"
 )
 
 type CommonOptions struct {
 	DryRun bool
 }
 
-func dappDimgstagesFlushByCacheVersion(filterSet filters.Args, options CommonOptions) error {
-	dappCacheVersionLabel := fmt.Sprintf("%s=%s", build.DappCacheVersionLabel, build.BuildCacheVersion)
-	filterSet.Add("label", dappCacheVersionLabel)
-	images, err := dappImagesByFilterSet(filters.NewArgs())
+func werfDimgstagesFlushByCacheVersion(filterSet filters.Args, options CommonOptions) error {
+	werfCacheVersionLabel := fmt.Sprintf("%s=%s", build.WerfCacheVersionLabel, build.BuildCacheVersion)
+	filterSet.Add("label", werfCacheVersionLabel)
+	images, err := werfImagesByFilterSet(filters.NewArgs())
 	if err != nil {
 		return err
 	}
 
 	var imagesToDelete []types.ImageSummary
 	for _, img := range images {
-		version, ok := img.Labels[build.DappCacheVersionLabel]
+		version, ok := img.Labels[build.WerfCacheVersionLabel]
 		if !ok || version != build.BuildCacheVersion {
 			imagesToDelete = append(imagesToDelete, img)
 		}
@@ -40,8 +40,8 @@ func dappDimgstagesFlushByCacheVersion(filterSet filters.Args, options CommonOpt
 	return nil
 }
 
-func dappImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
-	images, err := dappImagesByFilterSet(filterSet)
+func werfImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
+	images, err := werfImagesByFilterSet(filterSet)
 	if err != nil {
 		return err
 	}
@@ -53,14 +53,14 @@ func dappImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) e
 	return nil
 }
 
-func dappImagesByFilterSet(filterSet filters.Args) ([]types.ImageSummary, error) {
-	filterSet.Add("label", "dapp")
+func werfImagesByFilterSet(filterSet filters.Args) ([]types.ImageSummary, error) {
+	filterSet.Add("label", "werf")
 	options := types.ImageListOptions{Filters: filterSet}
 	return docker.Images(options)
 }
 
-func dappContainersFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
-	containers, err := dappContainersByFilterSet(filterSet)
+func werfContainersFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
+	containers, err := werfContainersByFilterSet(filterSet)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func dappContainersFlushByFilterSet(filterSet filters.Args, options CommonOption
 	return nil
 }
 
-func dappContainersByFilterSet(filterSet filters.Args) ([]types.Container, error) {
+func werfContainersByFilterSet(filterSet filters.Args) ([]types.Container, error) {
 	filterSet.Add("name", image.StageContainerNamePrefix)
 	return containersByFilterSet(filterSet)
 }

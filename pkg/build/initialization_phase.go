@@ -7,11 +7,11 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/flant/dapp/pkg/build/stage"
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/git_repo"
-	"github.com/flant/dapp/pkg/logger"
-	"github.com/flant/dapp/pkg/slug"
+	"github.com/flant/werf/pkg/build/stage"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/git_repo"
+	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/slug"
 )
 
 type InitializationPhase struct{}
@@ -21,7 +21,7 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) error {
-	dimgsInOrder, err := generateDimgsInOrder(c.dappfile.Dimgs, c)
+	dimgsInOrder, err := generateDimgsInOrder(c.werfConfig.Dimgs, c)
 	if err != nil {
 		return err
 	}
@@ -31,9 +31,9 @@ func (p *InitializationPhase) Run(c *Conveyor) error {
 	return nil
 }
 
-func generateDimgsInOrder(dappfile []*config.Dimg, c *Conveyor) ([]*Dimg, error) {
+func generateDimgsInOrder(dimgConfigs []*config.Dimg, c *Conveyor) ([]*Dimg, error) {
 	var dimgs []*Dimg
-	for _, dimgConfig := range getDimgConfigsInOrder(dappfile, c) {
+	for _, dimgConfig := range getDimgConfigsInOrder(dimgConfigs, c) {
 		dimg := &Dimg{}
 
 		dimgBaseConfig, dimgName, dimgArtifact := processDimgConfig(dimgConfig)
@@ -77,30 +77,30 @@ func getFromAndFromDimgName(dimgBaseConfig *config.DimgBase) (string, string) {
 	return from, fromDimgName
 }
 
-func getDimgConfigsInOrder(dappfile []*config.Dimg, c *Conveyor) []config.DimgInterface {
-	var dimgConfigs []config.DimgInterface
-	for _, dimg := range getDimgConfigToProcess(dappfile, c) {
+func getDimgConfigsInOrder(dimgConfigs []*config.Dimg, c *Conveyor) []config.DimgInterface {
+	var dimgs []config.DimgInterface
+	for _, dimg := range getDimgConfigToProcess(dimgConfigs, c) {
 		dimgsInBuildOrder := dimg.DimgTree()
 		for i := 0; i < len(dimgsInBuildOrder); i++ {
-			if isNotInArr(dimgConfigs, dimgsInBuildOrder[i]) {
-				dimgConfigs = append(dimgConfigs, dimgsInBuildOrder[i])
+			if isNotInArr(dimgs, dimgsInBuildOrder[i]) {
+				dimgs = append(dimgs, dimgsInBuildOrder[i])
 			}
 		}
 	}
 
-	return dimgConfigs
+	return dimgs
 }
 
-func getDimgConfigToProcess(dappfile []*config.Dimg, c *Conveyor) []*config.Dimg {
+func getDimgConfigToProcess(dimgConfigs []*config.Dimg, c *Conveyor) []*config.Dimg {
 	var dimgConfigsToProcess []*config.Dimg
 
 	if len(c.dimgNamesToProcess) == 0 {
-		dimgConfigsToProcess = dappfile
+		dimgConfigsToProcess = dimgConfigs
 	} else {
 		for _, dimgName := range c.dimgNamesToProcess {
-			dimgToProcess := getDimgConfigByName(dappfile, dimgName)
+			dimgToProcess := getDimgConfigByName(dimgConfigs, dimgName)
 			if dimgToProcess == nil {
-				logger.LogWarningF("WARNING: Specified dimg '%s' isn't defined in dappfile!\n", dimgName)
+				logger.LogWarningF("WARNING: Specified dimg '%s' isn't defined in werf.yaml!\n", dimgName)
 			} else {
 				dimgConfigsToProcess = append(dimgConfigsToProcess, dimgToProcess)
 			}
@@ -110,8 +110,8 @@ func getDimgConfigToProcess(dappfile []*config.Dimg, c *Conveyor) []*config.Dimg
 	return dimgConfigsToProcess
 }
 
-func getDimgConfigByName(dappfile []*config.Dimg, name string) *config.Dimg {
-	for _, dimg := range dappfile {
+func getDimgConfigByName(dimgConfigs []*config.Dimg, name string) *config.Dimg {
+	for _, dimg := range dimgConfigs {
 		if dimg.Name == name {
 			return dimg
 		}
@@ -139,7 +139,7 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 		DimgName:         dimgName,
 		ConfigMounts:     dimgBaseConfig.Mount,
 		DimgTmpDir:       c.GetDimgTmpDir(dimgBaseConfig.Name),
-		ContainerDappDir: c.containerDappDir,
+		ContainerWerfDir: c.containerWerfDir,
 		ProjectBuildDir:  c.projectBuildDir,
 	}
 
@@ -356,7 +356,7 @@ func getDimgPatchesDir(dimgName string, c *Conveyor) string {
 }
 
 func getDimgPatchesContainerDir(c *Conveyor) string {
-	return path.Join(c.containerDappDir, "patch")
+	return path.Join(c.containerWerfDir, "patch")
 }
 
 func getDimgArchivesDir(dimgName string, c *Conveyor) string {
@@ -364,7 +364,7 @@ func getDimgArchivesDir(dimgName string, c *Conveyor) string {
 }
 
 func getDimgArchivesContainerDir(c *Conveyor) string {
-	return path.Join(c.containerDappDir, "archive")
+	return path.Join(c.containerWerfDir, "archive")
 }
 
 func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]string {

@@ -1,7 +1,7 @@
 package stage
 
 import (
-	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/werf/pkg/image"
 )
 
 func newGitStage(name StageName, baseStageOptions *NewBaseStageOptions) *GitStage {

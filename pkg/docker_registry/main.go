@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/google/go-containerregistry/pkg/v1"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 )
@@ -46,7 +46,7 @@ func IsGCR(reference string) (bool, error) {
 }
 
 func DimgTags(reference string) ([]string, error) {
-	images, err := ImagesByDappDimgLabel(reference, "true")
+	images, err := ImagesByWerfDimgLabel(reference, "true")
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func DimgTags(reference string) ([]string, error) {
 }
 
 func DimgstageTags(reference string) ([]string, error) {
-	images, err := ImagesByDappDimgLabel(reference, "false")
+	images, err := ImagesByWerfDimgLabel(reference, "false")
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func imagesTags(images []RepoImage) []string {
 	}
 }
 
-func ImagesByDappDimgLabel(reference, labelValue string) ([]RepoImage, error) {
+func ImagesByWerfDimgLabel(reference, labelValue string) ([]RepoImage, error) {
 	var repoImages []RepoImage
 
 	tags, err := Tags(reference)
@@ -108,7 +108,7 @@ func ImagesByDappDimgLabel(reference, labelValue string) ([]RepoImage, error) {
 		}
 
 		for k, v := range configFile.Config.Labels {
-			if k == "dapp-dimg" && v == labelValue {
+			if k == "werf-dimg" && v == labelValue {
 				repoImage := RepoImage{
 					Repository: reference,
 					Tag:        tag,
@@ -284,7 +284,7 @@ func image(reference string) (v1.Image, name.Reference, error) {
 func getHttpTransport() (transport http.RoundTripper) {
 	transport = http.DefaultTransport
 
-	if os.Getenv("DAPP_INSECURE_REGISTRY") == "1" {
+	if os.Getenv("WERF_INSECURE_REGISTRY") == "1" {
 		defaultTransport := http.DefaultTransport.(*http.Transport)
 
 		newTransport := &http.Transport{

@@ -1,6 +1,6 @@
 package stage
 
-import "github.com/flant/dapp/pkg/config"
+import "github.com/flant/werf/pkg/config"
 
 func GenerateArtifactImportAfterSetupStage(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) *ArtifactImportAfterSetupStage {
 	imports := getImports(dimgBaseConfig, &getImportsOptions{After: Setup})

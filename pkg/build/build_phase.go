@@ -3,8 +3,8 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/lock"
 )
 
 func NewBuildPhase(opts BuildOptions) *BuildPhase {

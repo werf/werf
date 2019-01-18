@@ -8,10 +8,10 @@ import (
 
 func main() {
 	for _, url := range []string{
-		"git@github.com:flant/dapp.git",
-		"https://github.com/flant/dapp.git",
-		"https://aloha:privet@github.com/flant/dapp.git",
-		"/home/myuser/go-workspace/src/github.com/flant/dapp/",
+		"git@github.com:flant/werf.git",
+		"https://github.com/flant/werf.git",
+		"https://aloha:privet@github.com/flant/werf.git",
+		"/home/myuser/go-workspace/src/github.com/flant/werf/",
 	} {
 		ep, err := transport.NewEndpoint(url)
 		if err != nil {

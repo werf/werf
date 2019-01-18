@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/dapp/pkg/docker_registry"
+	"github.com/flant/werf/pkg/docker_registry"
 )
 
 type CommonRepoOptions struct {
@@ -18,7 +18,7 @@ func repoDimgImages(options CommonRepoOptions) ([]docker_registry.RepoImage, err
 
 	isNamelessDimg := len(options.DimgsNames) == 0
 	if isNamelessDimg {
-		namelessDimgImages, err := docker_registry.ImagesByDappDimgLabel(options.Repository, "true")
+		namelessDimgImages, err := docker_registry.ImagesByWerfDimgLabel(options.Repository, "true")
 		if err != nil {
 			return nil, err
 		}
@@ -27,7 +27,7 @@ func repoDimgImages(options CommonRepoOptions) ([]docker_registry.RepoImage, err
 	} else {
 		for _, dimgName := range options.DimgsNames {
 			repository := fmt.Sprintf("%s/%s", options.Repository, dimgName)
-			images, err := docker_registry.ImagesByDappDimgLabel(repository, "true")
+			images, err := docker_registry.ImagesByWerfDimgLabel(repository, "true")
 			if err != nil {
 				return nil, err
 			}
@@ -40,7 +40,7 @@ func repoDimgImages(options CommonRepoOptions) ([]docker_registry.RepoImage, err
 }
 
 func repoDimgstageImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
-	return docker_registry.ImagesByDappDimgLabel(options.Repository, "false")
+	return docker_registry.ImagesByWerfDimgLabel(options.Repository, "false")
 }
 
 func repoImagesRemove(images []docker_registry.RepoImage, options CommonRepoOptions) error {

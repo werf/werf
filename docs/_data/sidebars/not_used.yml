@@ -9,7 +9,7 @@ entries:
   - title: Glossary
     url: /not_used/glossary
 
-  - title: Dappfile directives
+  - title: Werf config directives
     url: /not_used/directives.html
 
   - title: Описание образов

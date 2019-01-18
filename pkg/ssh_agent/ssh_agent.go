@@ -8,13 +8,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 
-	"github.com/flant/dapp/pkg/dapp"
-	"github.com/flant/dapp/pkg/logger"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/util"
+	"github.com/flant/werf/pkg/werf"
 )
 
 var (
@@ -110,7 +110,7 @@ func runSSHAgentWithKeys(keys []string) (string, error) {
 }
 
 func runSSHAgent() (string, error) {
-	sockPath := filepath.Join(dapp.GetTmpDir(), "dapp-ssh-agent", uuid.NewV4().String())
+	sockPath := filepath.Join(werf.GetTmpDir(), "werf-ssh-agent", uuid.NewV4().String())
 	tmpSockPath = sockPath
 
 	err := os.MkdirAll(filepath.Dir(sockPath), os.ModePerm)

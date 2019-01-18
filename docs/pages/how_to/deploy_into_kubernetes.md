@@ -7,9 +7,9 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Task overview
 
-How to deploy application into kubernetes using dapp.
+How to deploy application into kubernetes using werf.
 
-Dapp uses helm with some additions to deploy applications into kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your kubernetes cluster.
+Werf uses helm with some additions to deploy applications into kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your kubernetes cluster.
 
 ## Requirements
 
@@ -21,7 +21,7 @@ Dapp uses helm with some additions to deploy applications into kubernetes. In th
 
    * Accessible from kubernetes nodes to pull images from the registry.
 
- * Installed `dapp` on a host machine (<{{ site.baseurl }}/how_to/installation.html>).
+ * Installed `werf` on a host machine (<{{ site.baseurl }}/how_to/installation.html>).
 
  * Installed `kubectl` on a host machine configured to access your kubernetes cluster (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
@@ -29,7 +29,7 @@ Dapp uses helm with some additions to deploy applications into kubernetes. In th
 
  * Minimal knowledge of `helm` and its concepts required (such as chart, templates, release etc.). Helm documentation is available here: <https://docs.helm.sh/>.
 
-**NOTICE** In the following steps we will use `:minikube` as `REPO` argument of dapp commands. If you are using own kubernetes and docker-registry installation, specify your own `REPO` address instead of `:minikube`.
+**NOTICE** In the following steps we will use `:minikube` as `REPO` argument of werf commands. If you are using own kubernetes and docker-registry installation, specify your own `REPO` address instead of `:minikube`.
 
 ## The application
 
@@ -50,7 +50,7 @@ Where `backend` is a web server, `frontend` is a proxy for our application and a
 
 ## Application files
 
-Dapp expects that all files needed to build and deploy are residing in the same directory with application source files itself (if any).
+Werf expects that all files needed to build and deploy are residing in the same directory with application source files itself (if any).
 
 So let's create empty application directory on host machine:
 
@@ -61,7 +61,7 @@ cd myapp
 
 ## Prepare an image
 
-We need to prepare main application image with a web server. Create the following `dappfile.yaml` in the root of the application directory:
+We need to prepare main application image with a web server. Create the following `werf.yaml` in the root of the application directory:
 
 ```yaml
 dimg: ~
@@ -79,25 +79,25 @@ ansible:
         <html>
           <body>
             <h2>Congratulations!</h2>
-            <img src="https://github.com/flant/dapp/raw/master/logo.png" style="max-height:100%;" height="25">
+            <img src="https://github.com/flant/werf/raw/master/logo.png" style="max-height:100%;" height="25">
           </body>
         </html>
       dest: /app/index.html
 ```
 
-Our web application consists of a single static web page which created right in the dappfile. This page is served by python HTTP server.
+Our web application consists of a single static web page which created right in the config. This page is served by python HTTP server.
 
 Build and push an image with the following command:
 
 ```shell
-dapp dimg bp :minikube
+werf dimg bp :minikube
 ```
 
-The image name consists of `REPO` and `TAG`. Dapp will use `latest` tag for the image by default. We have specified `:minikube` as a `REPO` — this is a shortcut for `localhost:5000/myapp`. So for our example dapp will push into the docker-registry image with the name `localhost:5000/myapp:latest`.
+The image name consists of `REPO` and `TAG`. Werf will use `latest` tag for the image by default. We have specified `:minikube` as a `REPO` — this is a shortcut for `localhost:5000/myapp`. So for our example werf will push into the docker-registry image with the name `localhost:5000/myapp:latest`.
 
 ## Prepare deploy configuration
 
-Dapp uses helm under the hood *to apply* kubernetes configuration. *To describe* kubernetes configuration dapp also use helm configuration files (templates, values) with some extensions, such as secret files and secret values, additional helm golang templates to generate image names and some more.
+Werf uses helm under the hood *to apply* kubernetes configuration. *To describe* kubernetes configuration werf also use helm configuration files (templates, values) with some extensions, such as secret files and secret values, additional helm golang templates to generate image names and some more.
 
 First, we need to create a helm chart for our application. To do that place a file `.helm/Chart.yaml` with content:
 
@@ -127,7 +127,7 @@ spec:
       - name: backend
         workingDir: /app
         command: [ "python3", "-m", "http.server", "8080" ]
-{{ include "dapp_container_image" . | indent 8 }}
+{{ include "werf_container_image" . | indent 8 }}
         livenessProbe:
           httpGet:
             path: /
@@ -143,7 +143,7 @@ spec:
           name: http
           protocol: TCP
         env:
-{{ include "dapp_container_env" . | indent 8 }}
+{{ include "werf_container_env" . | indent 8 }}
 ---
 apiVersion: v1
 kind: Service
@@ -162,15 +162,15 @@ spec:
 
 In this configuration Deployment with name `myapp-backend` (after template {% raw %}`{{ .Chart.Name }}-backend`{% endraw %} expansion) with several replicas specified.
 
-Construction {% raw %}`{{ include "dapp_container_image" . | indent 8 }}`{% endraw %} is an addition of dapp to helm which:
+Construction {% raw %}`{{ include "werf_container_image" . | indent 8 }}`{% endraw %} is an addition of werf to helm which:
 
 * always generates right image name (`localhost:5000/myapp:latest` in our case), and
 
 * may generate other related fields (such as imagePullPolicy) based on some external conditions.
 
-Go template `dapp_container_image` is the valid way to specify image **from dappfile** in kubernetes resource configuration. There may be multiple images described in dappfile [see the reference for details]({{ site.baseurl }}/reference/deploy/templates.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD-dapp_container_image).
+Go template `werf_container_image` is the valid way to specify image **from config** in kubernetes resource configuration. There may be multiple images described in config [see the reference for details]({{ site.baseurl }}/reference/deploy/templates.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD-werf_container_image).
 
-Construction {% raw %}`{{ include "dapp_container_env" . | indent 8 }}`{% endraw %} is another addition of dapp to helm which *may* generate environment variables section for the kubernetes resource. It is needed for kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details]({{ site.baseurl }}/reference/deploy/templates.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD-dapp_container_env).
+Construction {% raw %}`{{ include "werf_container_env" . | indent 8 }}`{% endraw %} is another addition of werf to helm which *may* generate environment variables section for the kubernetes resource. It is needed for kubernetes to shut down and restart deployment pods only when docker image has been changed, [see the reference for details]({{ site.baseurl }}/reference/deploy/templates.html#%D1%88%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD-werf_container_env).
 
 Finally, in this configuration Service `myapp-backend` specified to access Pods of Deployment `myapp-backend`.
 
@@ -207,13 +207,13 @@ If you use minikube then enable ingress addon before running deploy:
 minikube addons enable ingress
 ```
 
-Run deploy with dapp:
+Run deploy with werf:
 
 ```shell
-dapp kube deploy :minikube --namespace mynamespace
+werf kube deploy :minikube --namespace mynamespace
 ```
 
-With this command dapp will create all kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running). Helm release with name `myapp-mynamespace` will be created. This name consists of chart name `myapp` and namespace `mynamespace`.
+With this command werf will create all kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running). Helm release with name `myapp-mynamespace` will be created. This name consists of chart name `myapp` and namespace `mynamespace`.
 
 ## Check your application
 
@@ -233,12 +233,12 @@ Then you can check application by url: `http://myapp.local`.
 
 ## Delete application from kubernetes
 
-To completely remove deployed application run this dismiss dapp command:
+To completely remove deployed application run this dismiss werf command:
 
 ```shell
-dapp kube dismiss :minikube --namespace mynamespace --with-namespace
+werf kube dismiss :minikube --namespace mynamespace --with-namespace
 ```
 
 ## See also
 
-For all dapp deploy features such as secrets [take a look at reference]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html).
+For all werf deploy features such as secrets [take a look at reference]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html).

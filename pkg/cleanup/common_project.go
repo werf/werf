@@ -5,7 +5,7 @@ import (
 
 	"github.com/docker/docker/api/types/filters"
 
-	"github.com/flant/dapp/pkg/build"
+	"github.com/flant/werf/pkg/build"
 )
 
 type CommonProjectOptions struct {
@@ -16,11 +16,11 @@ type CommonProjectOptions struct {
 func projectCleanup(options CommonProjectOptions) error {
 	filterSet := projectFilterSet(options)
 	filterSet.Add("dangling", "true")
-	if err := dappImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
+	if err := werfImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
 		return err
 	}
 
-	if err := dappContainersFlushByFilterSet(projectFilterSet(options), options.CommonOptions); err != nil {
+	if err := werfContainersFlushByFilterSet(projectFilterSet(options), options.CommonOptions); err != nil {
 		return err
 	}
 
@@ -35,12 +35,12 @@ func projectDimgstageFilterSet(options CommonProjectOptions) filters.Args {
 
 func projectFilterSet(options CommonProjectOptions) filters.Args {
 	filterSet := filters.NewArgs()
-	filterSet.Add("label", dappLabel(options))
+	filterSet.Add("label", werfLabel(options))
 	return filterSet
 }
 
-func dappLabel(options CommonProjectOptions) string {
-	return fmt.Sprintf("dapp=%s", options.ProjectName)
+func werfLabel(options CommonProjectOptions) string {
+	return fmt.Sprintf("werf=%s", options.ProjectName)
 }
 
 func stageCacheReference(options CommonProjectOptions) string {

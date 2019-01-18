@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/bmatcuk/doublestar"
-	"github.com/flant/dapp/pkg/lock"
-	"github.com/flant/dapp/pkg/true_git"
+	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/true_git"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
@@ -584,5 +584,5 @@ func getFilesByPattern(baseDir, pathPattern string) ([]string, error) {
 }
 
 func debugChecksum() bool {
-	return os.Getenv("DAPP_DEBUG_GIT_REPO_CHECKSUM") == "1"
+	return os.Getenv("WERF_DEBUG_GIT_REPO_CHECKSUM") == "1"
 }

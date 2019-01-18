@@ -61,14 +61,14 @@ summary: |
 
 ## What is git path? 
 
-***Git path*** describes a file or directory from the git repository that should be added to the image by a specific path. The repository may be a local one, hosted in the directory that contains the dappfile, or a remote one, and in this case, the configuration of the _git path_ contains the repository address and the version (branch, tag or commit hash).
+***Git path*** describes a file or directory from the git repository that should be added to the image by a specific path. The repository may be a local one, hosted in the directory that contains the config, or a remote one, and in this case, the configuration of the _git path_ contains the repository address and the version (branch, tag or commit hash).
 
-Dapp adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
+Werf adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
 The full transfer is used for the initial adding of files. The subsequent builds use applying patches to reflect changes in a git repository. The algorithm behind the full transfer and applying patches is reviewed the [More details: git_archive...](#more-details-git_archive-git_cache-git_latest_patch) section.
 
 The configuration of the _git path_ supports filtering files, and you can use the set of _git paths_ to create virtually any resulting file structure in the image. Also, you can specify the owner and the group of files in the _git path_ configuration — no subsequent `chown` required.
 
-Dapp has support for submodules. Dapp detects if files specified with _git path_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
+Werf has support for submodules. Werf detects if files specified with _git path_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
 
 An example of a _git path_ configuration for adding source files from a local repository from the `/src` into the `/app` directory, and remote phantomjs source files to `/src/phantomjs`:
 
@@ -91,7 +91,7 @@ Most commits in the real application repository relate to updating the code of t
 
 ### Remote repositories
 
-Building an application image may depend on source files in other repositories. Dapp provides the ability to add files from remote repositories too. Dapp can detect changes in local repositories and remote repositories.
+Building an application image may depend on source files in other repositories. Werf provides the ability to add files from remote repositories too. Werf can detect changes in local repositories and remote repositories.
 
 ## Syntax of a git path
 
@@ -168,7 +168,7 @@ git:
   includePaths: assets
 ```
 
-> Dapp has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same.
+> Werf has no convention for trailing `/` that is available in rsync, i.e. `add: /src` and `add: /src/` are the same.
 
 ### Copying of file
 
@@ -248,7 +248,7 @@ Masks may contain the following patterns:
 - `[set]` — matches any one character in the set. Behaves exactly like character sets in regexp, including set negation ([^a-z])
 - `\` — escapes the next metacharacter
 
-Mask that starts with `*` or `**` patterns should be escaped with quotes in `dappfile.yaml` file:
+Mask that starts with `*` or `**` patterns should be escaped with quotes in `werf.yaml` file:
  - `"*.rb"` — with double quotes
 - `'**/*'` — with single quotes
 
@@ -290,7 +290,7 @@ git:
   to: /app/assets
 ```
 
-When processing a dappfile, dapp calculates the possible intersections among all git paths concerning `includePaths` and `excludePaths` filters. If an intersection is detected, then dapp can resolve simple conflicts with implicitly adding `excludePaths` into the git path. In other cases, the build ends with an error. However, implicit `excludePaths` filter can have undesirable effects, so try to avoid conflicts of intersecting paths between configured git paths.
+When processing a config, werf calculates the possible intersections among all git paths concerning `includePaths` and `excludePaths` filters. If an intersection is detected, then werf can resolve simple conflicts with implicitly adding `excludePaths` into the git path. In other cases, the build ends with an error. However, implicit `excludePaths` filter can have undesirable effects, so try to avoid conflicts of intersecting paths between configured git paths.
 
 Implicit `excludePaths` example:
 
@@ -298,7 +298,7 @@ Implicit `excludePaths` example:
 git:
 - add: /src
   to: /app
-  excludePaths:  # dapp add this filter to resolve a conflict
+  excludePaths:  # werf add this filter to resolve a conflict
   - assets       # between paths /src/assets and /assets
 - add: /assets
   to: /app/assets
@@ -306,7 +306,7 @@ git:
 
 ## Working with remote repositories
 
-Dapp may use remote repositories as file sources. For this purpose, the _git path_ configuration contains an `url` parameter where you should specify the repository address. Dapp supports `https` and `git+ssh` protocols.
+Werf may use remote repositories as file sources. For this purpose, the _git path_ configuration contains an `url` parameter where you should specify the repository address. Werf supports `https` and `git+ssh` protocols.
 
 ### https
 
@@ -334,38 +334,38 @@ In this example, the [env](http://masterminds.github.io/sprig/os.html) method fr
 
 ### git, ssh
 
-Dapp supports access to the repository via the git protocol. Access via this protocol is typically protected using ssh tools: this feature is used by github, bitbucket, gitlab, gogs, gitolite, etc. Most often the repository address looks as follows:
+Werf supports access to the repository via the git protocol. Access via this protocol is typically protected using ssh tools: this feature is used by github, bitbucket, gitlab, gogs, gitolite, etc. Most often the repository address looks as follows:
 
 ```yaml
 git:
 - add: git@gitlab.company.name:project_group/project.git
 ```
 
-To successfully work with remote repositories via ssh, you should understand how dapp searches for access keys.
+To successfully work with remote repositories via ssh, you should understand how werf searches for access keys.
 
 
 #### Working with ssh keys
 
-Keys for ssh connects are provided by ssh-agent. The ssh-agent is a daemon that operates via file socket, the path to which is stored in the environment variable `SSH_AUTH_SOCK`. Dapp mounts this file socket to all _assembly containers_ and sets the environment variable `SSH_AUTH_SOCK`, i.e., connection to remote git repositories is established with the use of keys that are registered in the running ssh-agent.
+Keys for ssh connects are provided by ssh-agent. The ssh-agent is a daemon that operates via file socket, the path to which is stored in the environment variable `SSH_AUTH_SOCK`. Werf mounts this file socket to all _assembly containers_ and sets the environment variable `SSH_AUTH_SOCK`, i.e., connection to remote git repositories is established with the use of keys that are registered in the running ssh-agent.
 
 The ssh-agent is determined as follows:
 
-- If dapp is started with `--ssh-key` flags (there may be multiple flags):
+- If werf is started with `--ssh-key` flags (there may be multiple flags):
   - A temporary ssh-agent runs with defined keys, and it is used for all git operations with remote repositories.
   - The already running ssh-agent is ignored in this case.
 - No `--ssh-key` flags specified and ssh-agent is running:
   - `SSH_AUTH_SOCK` environment variable is used, and the keys added to this agent is used for git operations.
 - No `--ssh-key` flags specified and ssh-agent is not running:
-  - If `~/.ssh/id_rsa` file exists, then dapp will run the temporary ssh-agent with the  key from `~/.ssh/id_rsa` file.
+  - If `~/.ssh/id_rsa` file exists, then werf will run the temporary ssh-agent with the  key from `~/.ssh/id_rsa` file.
 - If none of the previous options is applicable, then the ssh-agent is not started, and no keys for git operation are available. Build images with remote _git paths_ ends with an error.
 
 ## More details: git_archive, git_cache, git_latest_patch
 
-Let us review adding files to the resulting image in more detail. As stated earlier, the docker image contains multiple layers. To understand what layers dapp create, let's consider the building actions based on three sample commits: `1`, `2` and `3`:
+Let us review adding files to the resulting image in more detail. As stated earlier, the docker image contains multiple layers. To understand what layers werf create, let's consider the building actions based on three sample commits: `1`, `2` and `3`:
 
 - Build of commit No. 1. All files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _git_archive stage_.
 - Build of commit No. 2. Another layer is added where the files are changed by applying a patch. This is the layer of the _git_latest_patch stage_.
-- Build of commit No. 3. Files have already added, so dapp apply patches in the _git_latest_patch stage_ layer.
+- Build of commit No. 3. Files have already added, so werf apply patches in the _git_latest_patch stage_ layer.
 
 Build sequence for these commits may be represented as follows:
 
@@ -375,8 +375,8 @@ Build sequence for these commits may be represented as follows:
 | Commit No. 2 is made, build at 10:05 |  files as in commit No. 1 | --- | files as in commit No. 2 |
 | Commit No. 3 is made, build at 10:15 |  files as in commit No. 1 | --- | files as in commit No. 3 |
 
-A space between the layers in this table is not accidental. After a while, the number of commits grows, and the patch between commit No. 1 and the current commit may become quite large, which will further increase the size of the last layer and the total size of the _stages cache_. To prevent the growth of the last layer dapp provides another intermediary stage — _git_cache_.
-How does dapp work with these three stages? Now we are going to need more commits to illustrate this, let it be `1`, `2`, `3`, `4`, `5`, `6` and `7`.
+A space between the layers in this table is not accidental. After a while, the number of commits grows, and the patch between commit No. 1 and the current commit may become quite large, which will further increase the size of the last layer and the total size of the _stages cache_. To prevent the growth of the last layer werf provides another intermediary stage — _git_cache_.
+How does werf work with these three stages? Now we are going to need more commits to illustrate this, let it be `1`, `2`, `3`, `4`, `5`, `6` and `7`.
 
 - Build of commit No. 1. As before, files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _git_archive stage_.
 - Build of commit No. 2. The layer of the _git_cache_ stage is added, where files are changed by applying a patch between commits `1` and `2`.
@@ -406,7 +406,7 @@ For various reasons, you may want to reset the _git_archive stage_, for example,
 
 To illustrate the unnecessary growth of image size assume the rare case of 2GiB file in git repository. First build tranfers this file in the layer of the _git_archive stage_. Then some optimization occured and file is recompiled and it's size is decreased to 1.6GiB. The build of this new commit applies patch in the layer of the _git_cache stage_. The image size become 3.6GiB of which 2GiB is a cached old version of the big file. Rebuilding from _git_archive_ stage can reduce image size to 1.6GiB. This situation is quite rare but gives a good explanation of correlation between the layers of the _git stages_.
 
-You can reset the _git_archive stage_ specifying the **[dapp reset]** or **[reset dapp]** string in the commit message. Let us assume that, in the previous example commit `4` contains **[dapp reset]** in its message, and then the builds would look as follows:
+You can reset the _git_archive stage_ specifying the **[werf reset]** or **[reset werf]** string in the commit message. Let us assume that, in the previous example commit `4` contains **[werf reset]** in its message, and then the builds would look as follows:
 
 | | git_archive | git_cache | git_latest_patch |
 |---|:---:|:---:|:---:|
@@ -418,8 +418,8 @@ You can reset the _git_archive stage_ specifying the **[dapp reset]** or **[rese
 | Commit No. 6 is made, build at 12:45 |  4 | 5 | 6 |
 | Commit No. 7 is made, build at 12:57 |  4 | 5 | 7 |
 
-\* — commit `4` contains the **[dapp reset]** string in its message, so the _git_archive stage_ is rebuilt.
+\* — commit `4` contains the **[werf reset]** string in its message, so the _git_archive stage_ is rebuilt.
 
 ### _git stages_ and rebasing
 
-Each _git stage_ stores service labels with commits SHA from which this _stage_ was built. These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git path_). So, if the any saved commit isn't in a git repository, e.g., after rebasing, then dapp rebuilds that stage with latest commits at the next build.
+Each _git stage_ stores service labels with commits SHA from which this _stage_ was built. These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git path_). So, if the any saved commit isn't in a git repository, e.g., after rebasing, then werf rebuilds that stage with latest commits at the next build.

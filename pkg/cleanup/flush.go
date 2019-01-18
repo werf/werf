@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/werf/pkg/lock"
 )
 
 func RepoImagesFlush(withDimgs bool, options CommonRepoOptions) error {
@@ -86,8 +86,8 @@ func repoDimgstagesFlush(options CommonRepoOptions) error {
 
 func projectDimgsFlush(options CommonProjectOptions) error {
 	filterSet := projectFilterSet(options)
-	filterSet.Add("label", "dapp-dimg=true")
-	if err := dappImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
+	filterSet.Add("label", "werf-dimg=true")
+	if err := werfImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
 		return err
 	}
 
@@ -95,7 +95,7 @@ func projectDimgsFlush(options CommonProjectOptions) error {
 }
 
 func projectDimgstagesFlush(options CommonProjectOptions) error {
-	if err := dappImagesFlushByFilterSet(projectDimgstageFilterSet(options), options.CommonOptions); err != nil {
+	if err := werfImagesFlushByFilterSet(projectDimgstageFilterSet(options), options.CommonOptions); err != nil {
 		return err
 	}
 

@@ -14,7 +14,7 @@ The _dimg name_ is a string, similar to the image name in Docker:
 dimg: frontend
 ```
 
-A _dimg_ can be nameless, `dimg: ` or `dimg: ~`, but only if _dimg_ is single in dappfile. In a dappfile with multiple _dimgs_ there cannot be nameless _dimg_.
+A _dimg_ can be nameless, `dimg: ` or `dimg: ~`, but only if _dimg_ is single in config. In a config with multiple _dimgs_ there cannot be nameless _dimg_.
 
 ```yaml
 dimg: frontend

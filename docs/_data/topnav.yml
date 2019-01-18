@@ -10,7 +10,7 @@ topnav:
 
   - title: Reference
     directory: /reference/
-    url: /reference/build/dappfile.html
+    url: /reference/build/config.html
 
   - title: Publications
     url: /publications.html
@@ -19,7 +19,7 @@ topnav:
     url: /faq.html
 
   - title: GitHub
-    external_url: https://github.com/flant/dapp
+    external_url: https://github.com/flant/werf
 
   - title: Telegram
-    external_url: https://t.me/dapp_ru
+    external_url: https://t.me/werf_ru

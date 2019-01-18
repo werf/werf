@@ -3,8 +3,8 @@ package stage
 import (
 	"fmt"
 
-	"github.com/flant/dapp/pkg/dappdeps"
-	"github.com/flant/dapp/pkg/image"
+	"github.com/flant/werf/pkg/dappdeps"
+	"github.com/flant/werf/pkg/image"
 )
 
 type NewGitPatchStageOptions struct {

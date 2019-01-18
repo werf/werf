@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/flant/dapp/pkg/lock"
 	"os"
 	"time"
+
+	"github.com/flant/werf/pkg/lock"
 )
 
 func main() {

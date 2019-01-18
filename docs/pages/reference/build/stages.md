@@ -16,13 +16,13 @@ What usually needs for build application image?
 
 In what order do you need to perform these steps for the effective assembly (re-assembly) process?
 
-We propose to divide the assembly into steps with clear functions and purposes. In dapp, such steps are called _stages_.
+We propose to divide the assembly into steps with clear functions and purposes. In werf, such steps are called _stages_.
 
 ## What is a stage?
 
-A ***stage*** is a logically grouped set of dappfile instructions, as well as the conditions and rules by which these instructions are assembled.
+A ***stage*** is a logically grouped set of config instructions, as well as the conditions and rules by which these instructions are assembled.
 
-The dapp assembly process is a sequential build of _stages_. Dapp uses different _stage conveyor_ for assembling a particular type of build object. A ***stage conveyor*** is a statically defined sequence of _stages_. The set of _stages_ and their order is predetermined.
+The werf assembly process is a sequential build of _stages_. Werf uses different _stage conveyor_ for assembling a particular type of build object. A ***stage conveyor*** is a statically defined sequence of _stages_. The set of _stages_ and their order is predetermined.
 
 <div class="tab">
   <button class="tablinks active" onclick="openTab(event, 'dimg')">Dimg</button>
@@ -43,7 +43,7 @@ The dapp assembly process is a sequential build of _stages_. Dapp uses different
 
 <!-- 301 -->
 
-**All works with _stages_ are done by dapp, and you only need to write dappfile correctly.**
+**All works with _stages_ are done by werf, and you only need to write config correctly.**
 
 Each _stage_ is assembled in an ***assembly container*** based on an image of the previous _stage_. The result of the assembly _stage_ and _stage conveyor_, in general, is the ***stages cache***: each _stage_ relates to one docker image.
 
@@ -69,22 +69,22 @@ Using a cache for re-assemblies is possible due to the build stage identifier ca
 
 <div style="clear: both;"></div>
 
-## Dapp build
+## Werf build
 
-Dapp build command launches assembly process for dimgs specified in the dappfile.
+Werf build command launches assembly process for dimgs specified in the config.
 
 ### Multiple builds on the same host
 
-Multiple build commands can run at the same time on the same host. When building _stage_ dapp acquires a **lock** using _stage signature_ as ID so that only one build process is active for a stage with a particular signature at the same time.
+Multiple build commands can run at the same time on the same host. When building _stage_ werf acquires a **lock** using _stage signature_ as ID so that only one build process is active for a stage with a particular signature at the same time.
 
-When another build process is holding a lock for a stage, dapp waits until this process releases a lock. Then dapp proceeds to the next stage.
+When another build process is holding a lock for a stage, werf waits until this process releases a lock. Then werf proceeds to the next stage.
 
-The reason is no need to build the same stage multiple times. Dapp build process can wait until another process finishes build and puts _stage_ into the _stages cache_.
+The reason is no need to build the same stage multiple times. Werf build process can wait until another process finishes build and puts _stage_ into the _stages cache_.
 
 ### Syntax
 
 ```bash
-dapp dimg build [options] [DIMG ...]
+werf dimg build [options] [DIMG ...]
   --introspect-stage STAGE
   --introspect-before STAGE
   --introspect-artifact-before STAGE
@@ -98,7 +98,7 @@ dapp dimg build [options] [DIMG ...]
 
 ##### DIMG
 
-The `DIMG` optional parameter — is a name of dimg from a dappfile. Specifying `DIMG` one or multiple times allows building only certain dimgs from dappfile. By default, dapp builds all dimgs.
+The `DIMG` optional parameter — is a name of dimg from a config. Specifying `DIMG` one or multiple times allows building only certain dimgs from config. By default, werf builds all dimgs.
 
 ##### \-\-introspect-before-error
 
@@ -120,28 +120,28 @@ The use of this option disables system ssh-agent for the build. Only specified s
 
 ##### \-\-name NAME
 
-Use custom [dapp name](https://flant.github.io/dapp/reference/glossary.html#dapp-name). Changing default name causes full cache rebuild because dapp name affects stages cache images naming.
+Use custom [werf name](https://flant.github.io/werf/reference/glossary.html#werf-name). Changing default name causes full cache rebuild because werf name affects stages cache images naming.
 
 ##### \-\-lock-timeout TIMEOUT
 
-Specify build lock timeout for dapp to wait until another process builds some stage. 24 hours by default.
+Specify build lock timeout for werf to wait until another process builds some stage. 24 hours by default.
 
 ### Examples
 
 #### Build all dimgs
 
-Build all dimgs of dappfile:
+Build all dimgs of config:
 
 ```bash
-dapp dimg build
+werf dimg build
 ```
 
 #### Build specified dimgs
 
-Given dappfile with dimgs `backend`, `frontend` and `api`, build only `backend` and `api` dimgs:
+Given config with dimgs `backend`, `frontend` and `api`, build only `backend` and `api` dimgs:
 
 ```bash
-dapp dimg build backend api
+werf dimg build backend api
 ```
 
 #### Build with introspection
@@ -149,5 +149,5 @@ dapp dimg build backend api
 Run build and enable drop-in shell session in the failed assembly container in the case when an error occurred:
 
 ```bash
-dapp dimg build --introspect-error
+werf dimg build --introspect-error
 ```

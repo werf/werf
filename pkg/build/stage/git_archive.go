@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/util"
 )
 
-const GitArchiveResetCommitRegex = "(\\[dapp reset\\])|(\\[reset dapp\\])"
+const GitArchiveResetCommitRegex = "(\\[werf reset\\])|(\\[reset werf\\])"
 
 type NewGitArchiveStageOptions struct {
 	ArchivesDir          string

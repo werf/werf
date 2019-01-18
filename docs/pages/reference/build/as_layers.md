@@ -13,7 +13,7 @@ User stages, `before_install`, `install`, `before_setup`, `setup`, depend upon t
 
 Let us also consider the situation where one of the last stage instruction fails. A user cannot retrieve the environment state preceding the failure of the instruction or check those previous instructions were correctly executed.
 
-For development and debugging, we introduce _asLayers_ directive. When assembling, the instructions are cached separately, and re-assembly is only performed when their sequence changes. The directive can be specified for a specific _dimg_ or _artifact_ in the `dappfile.yaml` configuration.
+For development and debugging, we introduce _asLayers_ directive. When assembling, the instructions are cached separately, and re-assembly is only performed when their sequence changes. The directive can be specified for a specific _dimg_ or _artifact_ in the `werf.yaml` configuration.
 
 If `asLayers: true`, then the new caching mode is enabled — one docker image for one shell command, or one task for ansible. Otherwise, if _asLayers_ directive is not specified (or if `asLayers: false`) default caching is applied, one docker image is used for all _stage_ instructions. 
 

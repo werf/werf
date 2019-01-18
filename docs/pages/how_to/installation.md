@@ -5,8 +5,8 @@ permalink: how_to/installation.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Dapp requires a Linux operating system.
-Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp/issues/661)).
+Werf requires a Linux operating system.
+Support for macOS is coming soon (see issue [#661](https://github.com/flant/werf/issues/661)).
 
 ## Install Dependencies
 
@@ -58,12 +58,12 @@ Support for macOS is coming soon (see issue [#661](https://github.com/flant/dapp
     yum install openssl-devel
     ```
 
-## Install dapp
+## Install werf
 
 ```bash
-gem install dapp
+gem install werf
 ```
 
-Now you have dapp installed. Check it with `dapp --version`.
+Now you have werf installed. Check it with `werf --version`.
 
-Time to [make your first dapp application]({{ site.baseurl }}/how_to/getting_started.html)!
+Time to [make your first werf application]({{ site.baseurl }}/how_to/getting_started.html)!

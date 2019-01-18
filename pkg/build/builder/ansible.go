@@ -2,17 +2,17 @@ package builder
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v1"
 	"os"
 	"path/filepath"
 	"strings"
 
 	ghodssYaml "github.com/ghodss/yaml"
-	"gopkg.in/oleiade/reflections.v1"
+	reflections "gopkg.in/oleiade/reflections.v1"
+	yaml "gopkg.in/yaml.v1"
 
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/dappdeps"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/dappdeps"
+	"github.com/flant/werf/pkg/util"
 )
 
 type Ansible struct {
@@ -21,7 +21,7 @@ type Ansible struct {
 }
 
 type Extra struct {
-	ContainerDappPath string
+	ContainerWerfPath string
 	TmpPath           string
 }
 
@@ -60,7 +60,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 	container.AddEnv(
 		map[string]string{
 			"ANSIBLE_CONFIG":              filepath.Join(b.containerWorkDir(), "ansible.cfg"),
-			"DAPP_DUMP_CONFIG_DOC_PATH":   filepath.Join(b.containerWorkDir(), "dump_config.json"),
+			"WERF_DUMP_CONFIG_DOC_PATH":   filepath.Join(b.containerWorkDir(), "dump_config.json"),
 			"PYTHONPATH":                  filepath.Join(b.containerWorkDir(), "lib"),
 			"PYTHONIOENCODING":            "utf-8",
 			"ANSIBLE_PREPEND_SYSTEM_PATH": dappdeps.BasePath(),

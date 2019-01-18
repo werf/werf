@@ -1,8 +1,8 @@
 package stage
 
 import (
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/util"
 )
 
 func NewGitLatestPatchStage(gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GitLatestPatchStage {

@@ -3,10 +3,10 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/dapp/pkg/docker_registry"
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/lock"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/util"
 )
 
 func NewPushPhase(repo string, opts PushOptions) *PushPhase {
@@ -187,8 +187,8 @@ func (p *PushPhase) pushDimg(c *Conveyor, dimg *Dimg) error {
 				pushImage := image.NewDimgImage(c.GetImage(lastStageImage.Name()), dimgImageName)
 
 				pushImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-					"dapp-tag-scheme": string(scheme),
-					"dapp-dimg":       "true",
+					"werf-tag-scheme": string(scheme),
+					"werf-dimg":       "true",
 				})
 
 				err = pushImage.Build(image.BuildOptions{})

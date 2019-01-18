@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/docker_registry"
-	"github.com/flant/dapp/pkg/git_repo"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/git_repo"
 )
 
 type DeployOptions struct {
@@ -92,7 +92,7 @@ func ConstructNameByTemplate(template string, projectName string) error {
 	return nil
 }
 
-func RunDeploy(projectDir, repo, tag, release, namespace string, dappfile *config.Dappfile, opts DeployOptions) error {
+func RunDeploy(projectDir, repo, tag, release, namespace string, werfConfig *config.WerfConfig, opts DeployOptions) error {
 	if debug() {
 		fmt.Printf("Deploy options: %#v\n", opts)
 	}
@@ -108,24 +108,24 @@ func RunDeploy(projectDir, repo, tag, release, namespace string, dappfile *confi
 	localGit := &git_repo.Local{Path: projectDir, GitDir: filepath.Join(projectDir, ".git")}
 
 	var images []DimgInfoGetter
-	for _, dimg := range dappfile.Dimgs {
+	for _, dimg := range werfConfig.Dimgs {
 		d := &DimgInfo{Config: dimg, WithoutRegistry: opts.WithoutRegistry, Repo: repo, Tag: tag}
 		images = append(images, d)
 	}
 
-	serviceValues, err := GetServiceValues(dappfile.Meta.Project, repo, namespace, tag, localGit, images, ServiceValuesOptions{})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, repo, namespace, tag, localGit, images, ServiceValuesOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	dappChart, err := getDappChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
+	werfChart, err := getWerfChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {
 		return err
 	}
 	if !debug() {
 		// Do not remove tmp chart in debug
-		defer os.RemoveAll(dappChart.ChartDir)
+		defer os.RemoveAll(werfChart.ChartDir)
 	}
 
-	return dappChart.Deploy(release, namespace, HelmChartOptions{CommonHelmOptions: CommonHelmOptions{KubeContext: opts.KubeContext}, Timeout: opts.Timeout})
+	return werfChart.Deploy(release, namespace, HelmChartOptions{CommonHelmOptions: CommonHelmOptions{KubeContext: opts.KubeContext}, Timeout: opts.Timeout})
 }

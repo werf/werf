@@ -6,12 +6,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/dappdeps"
-	"github.com/flant/dapp/pkg/docker"
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/slug"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/dappdeps"
+	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/slug"
+	"github.com/flant/werf/pkg/util"
 )
 
 type getImportsOptions struct {
@@ -70,7 +70,7 @@ func (s *ArtifactImportStage) PrepareImage(c Conveyor, _, image image.Image) err
 
 		imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()
 		imageServiceCommitChangeOptions.AddLabel(map[string]string{
-			fmt.Sprintf("dapp-artifact-%s", slug.Slug(elm.ArtifactName)): c.GetDimgSignature(elm.ArtifactName),
+			fmt.Sprintf("werf-artifact-%s", slug.Slug(elm.ArtifactName)): c.GetDimgSignature(elm.ArtifactName),
 		})
 	}
 
@@ -125,7 +125,7 @@ func (s *ArtifactImportStage) generateImportPaths(i *config.ArtifactImport) (str
 	exportFolderName := util.Sha256Hash(fmt.Sprintf("%+v", i))
 	artifactNamePathPart := slug.Slug(i.ArtifactName)
 	importTmpPath := path.Join(s.dimgTmpDir, "artifact", artifactNamePathPart, exportFolderName)
-	importContainerTmpPath := path.Join(s.containerDappDir, "artifact", artifactNamePathPart, exportFolderName)
+	importContainerTmpPath := path.Join(s.containerWerfDir, "artifact", artifactNamePathPart, exportFolderName)
 
 	return importTmpPath, importContainerTmpPath
 }

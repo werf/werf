@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/dapp/pkg/dappdeps"
-	"github.com/flant/dapp/pkg/git_repo"
-	"github.com/flant/dapp/pkg/image"
-	"github.com/flant/dapp/pkg/logger"
+	"github.com/flant/werf/pkg/dappdeps"
+	"github.com/flant/werf/pkg/git_repo"
+	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type GitPath struct {
@@ -187,7 +187,7 @@ func (gp *GitPath) GetGitCommitFromImageLabels(builtImage image.Image) string {
 }
 
 func (gp *GitPath) ImageGitCommitLabel() string {
-	return fmt.Sprintf("dapp-git-%s-commit", gp.GetParamshash())
+	return fmt.Sprintf("werf-git-%s-commit", gp.GetParamshash())
 }
 
 func (gp *GitPath) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage image.Image) ([]string, error) {
@@ -577,7 +577,7 @@ func (gp *GitPath) makeCredentialsOpts() string {
 }
 
 func (gp *GitPath) getArchiveTypeLabelName() string {
-	return fmt.Sprintf("dapp-git-%s-type", gp.GetParamshash())
+	return fmt.Sprintf("werf-git-%s-type", gp.GetParamshash())
 }
 
 func renameFile(fromPath, toPath string) error {

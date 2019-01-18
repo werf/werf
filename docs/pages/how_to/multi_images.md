@@ -9,9 +9,9 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 Often a single application consists of several microservices. It can be microservices built using different technologies and programming languages. E.g., a Yii application which has logic application and worker application. The common practice is to place Dockerfiles into separate directories. So, with Dockerfile, you can't describe all components of the application in one file. As you need to describe image configuration in separate files, you can't share a part of configuration between images.
 
-Dapp allows describing all images of a project in a one dappfile. This approach gives you more convenience.
+Werf allows describing all images of a project in a one config. This approach gives you more convenience.
 
-In this article, we will build an example application — [AtSea Shop](https://github.com/dockersamples/atsea-sample-shop-app), to demonstrate how to describe multiple images in a one dappfile.
+In this article, we will build an example application — [AtSea Shop](https://github.com/dockersamples/atsea-sample-shop-app), to demonstrate how to describe multiple images in a one config.
 
 ## Requirements
 
@@ -54,7 +54,7 @@ import:
 
 #### Storefront artifact
 
-Builds assets. After building dapp imports assets into the `/static` directory of the `app` image. To increase the efficiency of the building `storefront` image, build instructions divided into two stages — _install_ and _setup_.
+Builds assets. After building werf imports assets into the `/static` directory of the `app` image. To increase the efficiency of the building `storefront` image, build instructions divided into two stages — _install_ and _setup_.
 
 ```yaml
 artifact: storefront
@@ -79,7 +79,7 @@ shell:
 
 #### Appserver artifact
 
-Builds a Java code. Dapp imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar` into the `/app` directory of the `app` image. To increase the efficiency of the building `appserver` image, build instructions divided into two stages — _install_ and _setup_. Also, the `/usr/share/maven/ref/repository` directory mounts with the `build_dir` directives to allow some caching (read more about mount directives [here]({{ site.baseurl }}/reference/build/mount_directive.html)).
+Builds a Java code. Werf imports the resulting jarfile `AtSea-0.0.1-SNAPSHOT.jar` into the `/app` directory of the `app` image. To increase the efficiency of the building `appserver` image, build instructions divided into two stages — _install_ and _setup_. Also, the `/usr/share/maven/ref/repository` directory mounts with the `build_dir` directives to allow some caching (read more about mount directives [here]({{ site.baseurl }}/reference/build/mount_directive.html)).
 
 ```yaml
 artifact: appserver
@@ -137,7 +137,7 @@ ansible:
 
 ### Database
 
-It is the `database` image. This image base on the official image of the PostgreSQL server. Dapp adds configs and SQL file for bootstrap in this image. The backend container uses the database to store its data.
+It is the `database` image. This image base on the official image of the PostgreSQL server. Werf adds configs and SQL file for bootstrap in this image. The backend container uses the database to store its data.
 
 {% raw %}
 ```yaml
@@ -206,12 +206,12 @@ Clone the [AtSea Shop](https://github.com/dockersamples/atsea-sample-shop-app) r
 git clone https://github.com/dockersamples/atsea-sample-shop-app.git
 ```
 
-## Step 2: Create a dappfile
+## Step 2: Create a config
 
-To build an application with all of its components create the following `dappfile.yml` **in the root folder** of the repository:
+To build an application with all of its components create the following `werf.yaml` **in the root folder** of the repository:
 
 <details markdown="1">
-<summary>The complete <b><i>dappfile.yml</i></b> file...</summary>
+<summary>The complete <b><i>werf.yaml</i></b> file...</summary>
 
 {% raw %}
 ```yaml
@@ -363,7 +363,7 @@ mkdir -p reverse_proxy/certs && openssl req -newkey rsa:4096 -nodes -subj "/CN=a
 Execute the following command in the root folder of the project to build all images:
 
 ```bash
-dapp dimg build
+werf dimg build
 ```
 
 ## Step 5: Tag images
@@ -371,17 +371,17 @@ dapp dimg build
 Execute the following command in the root folder of the project to tag all images:
 
 ```bash
-dapp dimg tag --tag-plain dapp atsea
+werf dimg tag --tag-plain werf atsea
 ```
 
-## Step 6: Add docker-compose-dapp.yml file
+## Step 6: Add docker-compose-werf.yml file
 
-Existing in the repo `docker-compose.yml` file assumes building some images. As we want to use already built images instead, we need to modify the `docker-compose.yml` file to use images with tag `dapp` (we built and tagged earlier).
+Existing in the repo `docker-compose.yml` file assumes building some images. As we want to use already built images instead, we need to modify the `docker-compose.yml` file to use images with tag `werf` (we built and tagged earlier).
 
-Create the following `docker-compose-dapp.yml` file in the root folder of the project:
+Create the following `docker-compose-werf.yml` file in the root folder of the project:
 
 <details markdown="1">
-<summary>The <b><i>docker-compose-dapp.yml</i></b> file...</summary>
+<summary>The <b><i>docker-compose-werf.yml</i></b> file...</summary>
 
 {% raw %}
 ```yaml
@@ -389,7 +389,7 @@ version: "3.1"
 
 services:
   reverse_proxy:
-    image: atsea/reverse_proxy:dapp
+    image: atsea/reverse_proxy:werf
     ports:
     - "80:80"
     - "443:443"
@@ -398,7 +398,7 @@ services:
     - back-tier
 
   database:
-    image: atsea/database:dapp
+    image: atsea/database:werf
     user: postgres
     environment:
       POSTGRES_USER: gordonuser
@@ -409,7 +409,7 @@ services:
     - back-tier
 
   appserver:
-    image: atsea/app:dapp
+    image: atsea/app:werf
     user: gordon
     ports:
     - "8080:8080"
@@ -419,7 +419,7 @@ services:
     - back-tier
 
   payment_gateway:
-    image: atsea/payment_gw:dapp
+    image: atsea/payment_gw:werf
 
 networks:
   front-tier:
@@ -446,7 +446,7 @@ sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts
 To run the application, execute the following command from the root folder of the project:
 
 ```bash
-docker-compose -f docker-compose-dapp.yml up --no-build
+docker-compose -f docker-compose-werf.yml up --no-build
 ```
 
 > If you get an error like `ERROR: This node is not a swarm manager...` execute `docker swarm init` or `docker swarm init --advertise-addr <ip>` (where ip is the address of on the active interface).
@@ -455,9 +455,9 @@ Open the [atseashop.com](http://atseashop.com) in your browser, and you will be 
 
 ## Conclusions
 
-We've described all project images in a one dappfile.
+We've described all project images in a one config.
 
-The example above shows the benefits of using dappfile:
-* Using dapp allows describing all images of a project in a one dappfile. This approach gives you more convenience.
+The example above shows the benefits of using config:
+* Using werf allows describing all images of a project in a one config. This approach gives you more convenience.
 * If your project has similar images, you can share some piece of images by mounting their folder with the `build_dir` directive (read more about mounts [here]({{ site.baseurl }}/reference/build/mount_directive.html)).
-* You can share artifacts between dimgs in single dappfile.
+* You can share artifacts between dimgs in single config.

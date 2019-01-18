@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"gopkg.in/oleiade/reflections.v1"
+	reflections "gopkg.in/oleiade/reflections.v1"
 
-	"github.com/flant/dapp/pkg/config"
-	"github.com/flant/dapp/pkg/util"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/util"
 )
 
 type Shell struct{ config *config.Shell }

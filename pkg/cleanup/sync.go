@@ -8,9 +8,9 @@ import (
 
 	"github.com/docker/docker/api/types"
 
-	"github.com/flant/dapp/pkg/build"
-	"github.com/flant/dapp/pkg/docker_registry"
-	"github.com/flant/dapp/pkg/lock"
+	"github.com/flant/werf/pkg/build"
+	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/lock"
 )
 
 const syncIgnoreProjectDimgstagePeriod = 2 * 60 * 60
@@ -93,7 +93,7 @@ func repoDimgstagesSyncByCacheVersion(options CommonRepoOptions) error {
 			return err
 		}
 
-		version, ok := labels[build.DappCacheVersionLabel]
+		version, ok := labels[build.WerfCacheVersionLabel]
 		if !ok || (version != build.BuildCacheVersion) {
 			fmt.Printf("%s %s %s\n", repoDimgstage.Tag, version, build.BuildCacheVersion)
 			repoImagesToDelete = append(repoImagesToDelete, repoDimgstage)
@@ -144,7 +144,7 @@ func exceptRepoDimgstagesByRepoDimgstage(repoDimgstages []docker_registry.RepoIm
 	}
 
 	for label, signature := range labels {
-		if strings.HasPrefix(label, "dapp-artifact") {
+		if strings.HasPrefix(label, "werf-artifact") {
 			repoDimgstages, err = exceptRepoDimgstagesBySignature(repoDimgstages, signature)
 			if err != nil {
 				return nil, err
@@ -248,7 +248,7 @@ func projectDimgstagesSyncByRepoDimgs(commonProjectOptions CommonProjectOptions,
 		}
 	}
 
-	if os.Getenv("DAPP_DISABLE_SYNC_LOCAL_STAGES_DATE_PERIOD_POLICY") == "" {
+	if os.Getenv("WERF_DISABLE_SYNC_LOCAL_STAGES_DATE_PERIOD_POLICY") == "" {
 		for _, dimgstage := range dimgstages {
 			if time.Now().Unix()-dimgstage.Created < syncIgnoreProjectDimgstagePeriod {
 				dimgstages = exceptImage(dimgstages, dimgstage)
@@ -281,7 +281,7 @@ func exceptDimgstagesByImageId(dimgstages []types.ImageSummary, imageId string, 
 func exceptDimgstagesByDimgstage(dimgstages []types.ImageSummary, dimgstage types.ImageSummary, commonProjectOptions CommonProjectOptions) ([]types.ImageSummary, error) {
 	var err error
 	for label, value := range dimgstage.Labels {
-		if strings.HasPrefix(label, "dapp-artifact") {
+		if strings.HasPrefix(label, "werf-artifact") {
 			dimgstages, err = exceptDimgstagesBySignarute(dimgstages, value, commonProjectOptions)
 			if err != nil {
 				return nil, err
@@ -344,7 +344,7 @@ func findDimgstageByImageId(dimgstages []types.ImageSummary, imageId string) *ty
 }
 
 func projectDimgstages(options CommonProjectOptions) ([]types.ImageSummary, error) {
-	images, err := dappImagesByFilterSet(projectDimgstageFilterSet(options))
+	images, err := werfImagesByFilterSet(projectDimgstageFilterSet(options))
 	if err != nil {
 		return nil, err
 	}
@@ -353,5 +353,5 @@ func projectDimgstages(options CommonProjectOptions) ([]types.ImageSummary, erro
 }
 
 func projectDimgstagesSyncByCacheVersion(options CommonProjectOptions) error {
-	return dappDimgstagesFlushByCacheVersion(projectDimgstageFilterSet(options), options.CommonOptions)
+	return werfDimgstagesFlushByCacheVersion(projectDimgstageFilterSet(options), options.CommonOptions)
 }

@@ -6,19 +6,19 @@ permalink: not_used/ansible_builder.html
 
 You can use ansible to build your containers.
 
-## dappfile placing
+## config placing
 
-dappfile may be put at different locations:
+config may be put at different locations:
 
-* `REPO_ROOT/dappfile.yml`
-* `REPO_ROOT/dappfile.yaml`
-* `REPO_ROOT/.dappfiles/*.yml`
-* `REPO_ROOT/.dappfiles/*.yaml`
+* `REPO_ROOT/werf.yaml`
+* `REPO_ROOT/werf.yaml`
+* `REPO_ROOT/.configs/*.yml`
+* `REPO_ROOT/.configs/*.yaml`
 
-Dapp will read files from directory `.dappfiles` in the alphabetical order.
-`dappfile.yml` will preceed any files from `.dappfiles`
+Werf will read files from directory `.configs` in the alphabetical order.
+`werf.yaml` will preceed any files from `.configs`
 
-## dappfile yaml syntax 
+## werf.yaml syntax 
 
 Processing of Yaml configuration consists of several steps:
 
@@ -36,19 +36,19 @@ Parsing rules:
 Example of minimal configuration:
 
 ```
-# dappfile.yml
+# werf.yaml
 dimg: app
 from: alpine:latest
 ```
 
 Support for ansible builder divide to this parts:
 
-1. dappdeps-ansible docker image with python and ansible
-2. Dapp::Dimg::Builder::Ansible ruby module. This code converts array of ansible tasks to ansible-playbook
+1. werfdeps-ansible docker image with python and ansible
+2. Werf::Dimg::Builder::Ansible ruby module. This code converts array of ansible tasks to ansible-playbook
    and verify checksums
 3. support for `ansible` directive in yaml configuration
 
-### differences from Chef-style dappfile
+### differences from Chef-style config
 
 1. No equivalent for `dimg_group` and nested `dimg`s and `artifact`s.
 2. No context inheritance because of 1. Use go-template functionality
@@ -56,7 +56,7 @@ Support for ansible builder divide to this parts:
 3. Use `import` in `dimg` for copy artifact results instead of `export`
 4. Each `artifact` must have a name
 
-### dappfile config
+### config config
 
 `ansible` directive is similar to `shell`. It has 4 keys: `beforeInstall`, `install`,
 `beforeSetup`, `setup` for each available stage. Stage description is an array
@@ -94,16 +94,16 @@ Each stage description array is converted to a playbook:
   ...
 ```
 
-This playbook is stored into `/.dapp/ansible-playbook-STAGE/playbook.yml` in stage container and thus available
+This playbook is stored into `/.werf/ansible-playbook-STAGE/playbook.yml` in stage container and thus available
 in introspect mode for debugging purposes.
 
-Default settings for ansible is not suited for dapp, so there are config and inventory files in `/.dapp/ansible-playbook-STAGE`:
+Default settings for ansible is not suited for werf, so there are config and inventory files in `/.werf/ansible-playbook-STAGE`:
 
-`/.dapp/ansible-playbook-STAGE/ansible.cfg`
+`/.werf/ansible-playbook-STAGE/ansible.cfg`
 
 ```
 [defaults]
-inventory = /.dapp/ansible-playbook-STAGE/hosts
+inventory = /.werf/ansible-playbook-STAGE/hosts
 transport = local
 ; do not generate retry files in ro volumes
 retry_files_enabled = False
@@ -111,31 +111,31 @@ retry_files_enabled = False
 stdout_callback = minimal
 ```
 
-`/.dapp/ansible-playbook-STAGE/hosts`
+`/.werf/ansible-playbook-STAGE/hosts`
 
 ```
-localhost ansible_python_interpreter=/.dappdeps/ansible/...
+localhost ansible_python_interpreter=/.werfdeps/ansible/...
 ```
 
-After generation of this files dapp plays the stage playbook like this:
+After generation of this files werf plays the stage playbook like this:
 ```
-ANSIBLE_CONFIG=/.dapp/ansible-playbook-STAGE/ansible.cfg ansible-playbook /.dapp/ansible-playbook-STAGE/playbook.yml
+ANSIBLE_CONFIG=/.werf/ansible-playbook-STAGE/ansible.cfg ansible-playbook /.werf/ansible-playbook-STAGE/playbook.yml
 ```
 
 Notes:
 
 1. stdout_callback set to _minimal_ because of more verbosity.
 2. Ansible has no live stdout. This can be a show stopper for long lasting commands. Quite console is bad for build.
-3. `inventory` and `ansible_python_interpreter` — this can be in dappdeps image
+3. `inventory` and `ansible_python_interpreter` — this can be in werfdeps image
 4. It would be great to create ansible-solo command for local plays with builtin config and inventory
 5. `gather_facts` can be enabled with modules like `setup`, `set_fact`, etc.
 
 ### checksums
 
-Dapp calculates checksum for each stage before build. Stage is considered to be rebuild if checksum
+Werf calculates checksum for each stage before build. Stage is considered to be rebuild if checksum
 changed. The simplest checksum is a hash over text of stage configuration. More interesting is checksum of
 files involved into build process. You can place ansible config files
-everywhere in repository tree. But Ansible has rich syntax for modules and dapp should parse
+everywhere in repository tree. But Ansible has rich syntax for modules and werf should parse
 ansible syntax to get all pathes from `src`, `with_files`, etc and implement logic for lookup plugins
 to mount that files into stage container. That is very difficult to implement. That's why we come to 2 approaches:
 
@@ -144,7 +144,7 @@ function .Files.Get and `content` attribute of modules.
 
 {% raw %}
 ```
-> dappfile.yml
+> werf.yaml
 
 ansible:
   install:
@@ -179,7 +179,7 @@ and generate files structure to mount as volume.
  
 {% raw %}
 ```
-> dappfile.yml
+> werf.yaml
 
 ansible:
   install:
@@ -197,7 +197,7 @@ ansible:
   tasks:   
     install:
     - copy:
-        src: /.dapp/ansible-files-install/conf--etc--nginx.conf
+        src: /.werf/ansible-files-install/conf--etc--nginx.conf
         dest: /etc/nginx
 
 ```
@@ -224,7 +224,7 @@ First iteration will support only go style escaping:
 
 {% raw %}
 ```
-> dappfile.yml
+> werf.yaml
 
 git:
 - add: '/'

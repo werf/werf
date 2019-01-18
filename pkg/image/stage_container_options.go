@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/go-version"
+	version "github.com/hashicorp/go-version"
 
-	"github.com/flant/dapp/pkg/docker"
+	"github.com/flant/werf/pkg/docker"
 )
 
 type StageContainerOptions struct {

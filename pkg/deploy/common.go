@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/dapp/pkg/deploy/secret"
+	"github.com/flant/werf/pkg/deploy/secret"
 )
 
 func getSafeSecretManager(projectDir string, secretValues []string) (secret.Manager, error) {
@@ -36,50 +36,50 @@ func getSafeSecretManager(projectDir string, secretValues []string) (secret.Mana
 	return secret.NewSafeManager()
 }
 
-func getDappChart(projectDir string, m secret.Manager, values, secretValues, set, setString []string, serviceValues map[string]interface{}) (*DappChart, error) {
-	dappChart, err := GenerateDappChart(projectDir, m)
+func getWerfChart(projectDir string, m secret.Manager, values, secretValues, set, setString []string, serviceValues map[string]interface{}) (*WerfChart, error) {
+	werfChart, err := GenerateWerfChart(projectDir, m)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, path := range values {
-		err = dappChart.SetValuesFile(path)
+		err = werfChart.SetValuesFile(path)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for _, path := range secretValues {
-		err = dappChart.SetSecretValuesFile(path, m)
+		err = werfChart.SetSecretValuesFile(path, m)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for _, set := range set {
-		err = dappChart.SetValuesSet(set)
+		err = werfChart.SetValuesSet(set)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for _, setString := range setString {
-		err = dappChart.SetValuesSetString(setString)
+		err = werfChart.SetValuesSetString(setString)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if serviceValues != nil {
-		err = dappChart.SetValues(serviceValues)
+		err = werfChart.SetValues(serviceValues)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if debug() {
-		fmt.Printf("Dapp chart: %#v\n", dappChart)
+		fmt.Printf("Werf chart: %#v\n", werfChart)
 	}
 
-	return dappChart, nil
+	return werfChart, nil
 }

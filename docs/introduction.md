@@ -4,15 +4,15 @@ sidebar: how_to
 permalink: /
 ---
 
-Dapp helps implement and support Continuous Integration and Continuous Delivery (CI/CD).
+Werf helps implement and support Continuous Integration and Continuous Delivery (CI/CD).
 
-With dapp, DevOps engineers generate and deploy images by linking together:
+With werf, DevOps engineers generate and deploy images by linking together:
 
 - application code (with Git support),
 - infrastructure code (with Ansible or shell scripts), and
 - platform as a service (Kubernetes).
 
-Dapp simplifies development of build scripts, reduces commit build time and automates deployment.
+Werf simplifies development of build scripts, reduces commit build time and automates deployment.
 It is designed to make engineer's work fast end efficient.
 
 
@@ -30,5 +30,5 @@ It is designed to make engineer's work fast end efficient.
 
 ## First Steps
 
-* [Install dapp and dependencies]({{ site.baseurl }}/how_to/installation.html).
-* [Build your first application with dapp]({{ site.baseurl }}/how_to/getting_started.html).
+* [Install werf and dependencies]({{ site.baseurl }}/how_to/installation.html).
+* [Build your first application with werf]({{ site.baseurl }}/how_to/getting_started.html).

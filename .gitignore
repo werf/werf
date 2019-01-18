@@ -5,8 +5,8 @@
 /.idea
 /docs/vendor
 
-.dappfile.render.yml
-.dappfile.render.yaml
+.werf.render.yml
+.werf.render.yaml
 dappdeps-toolchain.tar
 dappdeps/*/omnibus/build/
 

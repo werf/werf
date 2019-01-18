@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/dapp/pkg/git_repo"
+	"github.com/flant/werf/pkg/git_repo"
 )
 
 func main() {

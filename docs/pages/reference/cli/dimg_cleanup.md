@@ -1,31 +1,31 @@
 ---
-title: dapp dimg cleanup
+title: werf dimg cleanup
 sidebar: reference
 permalink: reference/cli/dimg_cleanup.html
 ---
-### dapp dimg cleanup
-Убраться в системе после некорректного завершения работы dapp, удалить нетегированные docker-образы и docker-контейнеры.
+### werf dimg cleanup
+Убраться в системе после некорректного завершения работы werf, удалить нетегированные docker-образы и docker-контейнеры.
 
 ```
-dapp dimg cleanup [options]
+werf dimg cleanup [options]
 ```
 
 #### Примеры
 
 ##### Запустить
 ```bash
-$ dapp dimg cleanup
+$ werf dimg cleanup
 ```
 
 ##### Посмотреть, какие команды могут быть выполнены
 ```bash
-$ dapp dimg cleanup --dry-run
+$ werf dimg cleanup --dry-run
 backend
   docker rm -f dd4ec7v33
-  docker rmi dimgstage-dapp-test-project:07758b3ec8aec701a01 dimgstage-dapp-test-project:ec701a0107758b3ec8a
+  docker rmi dimgstage-werf-test-project:07758b3ec8aec701a01 dimgstage-werf-test-project:ec701a0107758b3ec8a
 ```
 
-### dapp dimg cleanup repo
+### werf dimg cleanup repo
 Удалить теги приложений проекта, исходя из соответствующих схем тегирования.
 
 <table class="tag-scheme">
@@ -54,11 +54,11 @@ backend
 * Лишние, в случае, если привышен лимит в 10 тегов на приложение, исходя из времени загрузки образа в registry (`git_tag`, `git_commit`).
 
 ```
-dapp dimg cleanup repo [options] [DIMG ...] REPO
+werf dimg cleanup repo [options] [DIMG ...] REPO
 ```
 
 #### `--with-stages`
-Соответствует вызову команды `dapp dimg stages cleanup local` с опцией `--improper-repo-cache`.
+Соответствует вызову команды `werf dimg stages cleanup local` с опцией `--improper-repo-cache`.
 
 #### `--without-kube`
 Отключает проверку использования образов в кластерах. См. подробнее [о работе очистки]({{ site.baseurl }}/reference/registry/cleaning.html).

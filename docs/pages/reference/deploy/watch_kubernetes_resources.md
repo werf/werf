@@ -5,13 +5,13 @@ permalink: reference/deploy/watch_kubernetes_resources.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Dapp can watch statuses and logs of kubernetes resources during the deploy process.
+Werf can watch statuses and logs of kubernetes resources during the deploy process.
 
 ## Watch hook logs
 
-Dapp can print helm hook logs ([more about helm hooks](https://github.com/helm/helm/blob/master/docs/charts_hooks.md)).
+Werf can print helm hook logs ([more about helm hooks](https://github.com/helm/helm/blob/master/docs/charts_hooks.md)).
 
-To enable logs special annotation `"dapp/watch": "true"` should be specified in the resource template. For example:
+To enable logs special annotation `"werf/watch": "true"` should be specified in the resource template. For example:
 
 ```yaml
 ...
@@ -21,7 +21,7 @@ metadata:
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "1"
-    "dapp/watch": "true"
+    "werf/watch": "true"
 ```
 
 Logs of pods will be printed for a job until job terminated.
@@ -30,7 +30,7 @@ Logs of pods will be printed for a job until job terminated.
 
 ## Watch release status
 
-After helm, a release has been installed, or updated dapp will watch all Deployments that existed in the chart.
+After helm, a release has been installed, or updated werf will watch all Deployments that existed in the chart.
 
 **Status watch procedure** consists of:
 
@@ -39,7 +39,7 @@ After helm, a release has been installed, or updated dapp will watch all Deploym
 
 The procedure is ended when resource readiness condition is reached.
 
-This is **default behavior** for any Deployment found in the chart. To turn it off for specific deployment add special annotation `"dapp/watch": "false"` in the resource template. For example:
+This is **default behavior** for any Deployment found in the chart. To turn it off for specific deployment add special annotation `"werf/watch": "false"` in the resource template. For example:
 
 ```yaml
 ...
@@ -47,7 +47,7 @@ kind: Deployment
 metadata:
   ...
   annotations:
-    "dapp/watch": "false"
+    "werf/watch": "false"
 ```
 
 **NOTICE** For now status watch is supported only for **Deployment** resource kind. ReplicaSet, DaemonSet, and other resources will be supported soon.

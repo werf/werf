@@ -1,26 +1,26 @@
 ---
-title: dapp dimg stages
+title: werf dimg stages
 sidebar: reference
 permalink: reference/cli/dimg_stages.html
 ---
 
-### dapp dimg stages push
+### werf dimg stages push
 Выкатить кэш собранных приложений проекта в репозиторий.
 
 ```
-dapp dimg stages push [options] [DIMG ...] REPO
+werf dimg stages push [options] [DIMG ...] REPO
 ```
 
 #### Примеры
 
 ##### Выкатить кэш собранных dimg-ей проекта в репозиторий localhost:5000/test
 ```bash
-$ dapp dimg stages push localhost:5000/test
+$ werf dimg stages push localhost:5000/test
 ```
 
 ##### Посмотреть, какие образы могут быть добавлены в репозиторий
 ```bash
-$ dapp dimg stages push localhost:5000/test --dry-run
+$ werf dimg stages push localhost:5000/test --dry-run
 backend
   localhost:5000/test:dimgstage-be032ed31bd96506d0ed550fa914017452b553c7f1ecbb136216b2dd2d3d1623
   localhost:5000/test:dimgstage-2183f7db73687e727d9841594e30d8cb200312290a0a967ef214fe3771224ee2
@@ -36,13 +36,13 @@ frontend
   localhost:5000/test:dimgstage-02b636d9316012880e40da44ee5da3f1067cedd66caa3bf89572716cd1f894da
 ```
 
-### dapp dimg stages pull
+### werf dimg stages pull
 Импортировать необходимый кэш приложений проекта, если он присутствует в репозитории **REPO**.
 
 Если не указана опция **`--all`**, импорт будет выполнен до первого найденного кэша стейджа для каждого dimg-a.
 
 ```
-dapp dimg stages pull [options] [DIMG ...] REPO
+werf dimg stages pull [options] [DIMG ...] REPO
 ```
 
 #### `--all`
@@ -52,12 +52,12 @@ dapp dimg stages pull [options] [DIMG ...] REPO
 
 ##### Импортировать кэш dimg-ей проекта из репозитория localhost:5000/test
 ```bash
-$ dapp dimg stages pull localhost:5000/test
+$ werf dimg stages pull localhost:5000/test
 ```
 
 ##### Посмотреть, поиск каких образов в репозитории localhost:5000/test может быть выполнен
 ```bash
-$ dapp dimg stages pull localhost:5000/test --all --dry-run
+$ werf dimg stages pull localhost:5000/test --all --dry-run
 backend
   localhost:5000/test:dimgstage-be032ed31bd96506d0ed550fa914017452b553c7f1ecbb136216b2dd2d3d1623
   localhost:5000/test:dimgstage-2183f7db73687e727d9841594e30d8cb200312290a0a967ef214fe3771224ee2
@@ -73,11 +73,11 @@ frontend
   localhost:5000/test:dimgstage-02b636d9316012880e40da44ee5da3f1067cedd66caa3bf89572716cd1f894da
 ```
 
-### dapp dimg stages cleanup local
+### werf dimg stages cleanup local
 Удалить неактуальный локальный кэш приложений проекта.
 
 ```
-dapp dimg stages cleanup local [options] [REPO]
+werf dimg stages cleanup local [options] [REPO]
 ```
 
 #### `--improper-repo-cache`
@@ -93,24 +93,24 @@ dapp dimg stages cleanup local [options] [REPO]
 
 ##### Оставить только актуальный кэш, исходя из приложений в localhost:5000/test
 ```bash
-$ dapp dimg stages cleanup local --improper-repo-cache localhost:5000/test
+$ werf dimg stages cleanup local --improper-repo-cache localhost:5000/test
 ```
 
 ##### Удалить кэш, версия которого не совпадает с текущей
 ```bash
-$ dapp dimg stages cleanup local --improper-cache-version localhost:5000/test
+$ werf dimg stages cleanup local --improper-cache-version localhost:5000/test
 ```
 
 ##### Почистить кэш после rebase в одном из связанных git-репозиториев
 ```bash
-$ dapp dimg stages cleanup local --improper-git-commit localhost:5000/test
+$ werf dimg stages cleanup local --improper-git-commit localhost:5000/test
 ```
 
-### dapp dimg stages cleanup repo
+### werf dimg stages cleanup repo
 Удалить неиспользуемый кэш приложений в репозитории **REPO**.
 
 ```
-dapp dimg stages cleanup repo [options] REPO
+werf dimg stages cleanup repo [options] REPO
 ```
 
 #### `--improper-repo-cache`
@@ -131,33 +131,33 @@ dapp dimg stages cleanup repo [options] REPO
 * Собран из коммитов, которые в данный момент отсутствуют в git-репозиториях проекта.
 
 ```bash
-$ dapp dimg stages cleanup repo localhost:5000/test --improper-cache-version --improper-repo-cache --improper-git-commit
+$ werf dimg stages cleanup repo localhost:5000/test --improper-cache-version --improper-repo-cache --improper-git-commit
 ```
 
-### dapp dimg stages flush local
+### werf dimg stages flush local
 Удалить кэш приложений проекта.
 
 ```
-dapp dimg stages flush local [options]
+werf dimg stages flush local [options]
 ```
 
 #### Примеры
 
 ##### Удалить кэш приложений
 ```bash
-$ dapp dimg stages flush local
+$ werf dimg stages flush local
 ```
 
-### dapp dimg stages flush repo
+### werf dimg stages flush repo
 Удалить кэш приложений проекта в репозитории **REPO**.
 
 ```
-dapp dimg stages flush repo [options] REPO
+werf dimg stages flush repo [options] REPO
 ```
 
 #### Примеры
 
 ##### Удалить весь кэш приложений в репозитории localhost:5000/test
 ```bash
-$ dapp dimg stages flush repo localhost:5000/test
+$ werf dimg stages flush repo localhost:5000/test
 ```

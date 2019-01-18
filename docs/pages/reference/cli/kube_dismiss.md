@@ -1,14 +1,14 @@
 ---
-title: dapp kube dismiss
+title: werf kube dismiss
 sidebar: reference
 permalink: reference/cli/kube_dismiss.html
 ---
 
-### dapp kube dismiss
+### werf kube dismiss
 Удалить релиз.
 
 ```
-dapp kube dismiss [options]
+werf kube dismiss [options]
 ```
 
 #### --namespace NAMESPACE
