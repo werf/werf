@@ -9,7 +9,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 When you build an application image, it is often necessary to download temporary files or packages for build. In the results, the application image contains files that are not needed to run the application.
 
-Dapp has artifacts, to reduce the size of the image. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but has more advanced files importing options.
+Werf has artifacts, to reduce the size of the image. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but has more advanced files importing options.
 
 In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce image size with using mount directives.
 
@@ -19,7 +19,7 @@ The example application is the [Hotel Booking Example](https://github.com/revel/
 
 ### Building
 
-Create a `booking` directory and place the following `dappfile.yaml` in the `booking` directory:
+Create a `booking` directory and place the following `werf.yaml` in the `booking` directory:
 {% raw %}
 ```yaml
 dimg: go-booking
@@ -48,19 +48,19 @@ ansible:
 ```
 {% endraw %}
 
-The dappfile describes instructions to build one dimg — `go-booking`.
+The config describes instructions to build one dimg — `go-booking`.
 
 Build the application by executing the following command in the `booking` directory:
 
 ```bash
-dapp dimg build
+werf dimg build
 ```
 
 ### Running
 
 Run the application by executing the following command in the `booking` directory:
 ```bash
-dapp dimg run -p 9000:9000 --rm -d -- /app/run.sh
+werf dimg run -p 9000:9000 --rm -d -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -83,10 +83,10 @@ The `revel framework booking demo` page should open, and you can login by enteri
 Create a image with tag `v1.0`:
 
 ```bash
-dapp dimg tag booking --tag-plain v1.0
+werf dimg tag booking --tag-plain v1.0
 ```
 
-After tagging we get an image `booking/go-booking:v1.0` according to dapp naming rules (read more about naming [here]({{ site.baseurl }}/reference/registry/image_naming.html)).
+After tagging we get an image `booking/go-booking:v1.0` according to werf naming rules (read more about naming [here]({{ site.baseurl }}/reference/registry/image_naming.html)).
 
 Determine the image size by executing:
 
@@ -104,13 +104,13 @@ Pay attention, that the image size of the application is **above 1 GB**.
 
 ## Optimize sample application with artifacts
 
-The dappfile above can be optimized to improve the efficiency of the build process.
+The config above can be optimized to improve the efficiency of the build process.
 
-The only the files in the `/app` folder are needed to run the application. So we don't need Go itself and downloaded packages. The use of [dapp artifacts]({{ site.baseurl }}/reference/build/artifact_directive.html) makes it possible to import only specified files into another image.
+The only the files in the `/app` folder are needed to run the application. So we don't need Go itself and downloaded packages. The use of [werf artifacts]({{ site.baseurl }}/reference/build/artifact_directive.html) makes it possible to import only specified files into another image.
 
 ### Building
 
-Replace `dappfile.yml` with the following content:
+Replace `werf.yaml` with the following content:
 
 {% raw %}
 ```yaml
@@ -148,13 +148,13 @@ import:
 ```
 {% endraw %}
 
-In the optimized dappfile, we build the application in the `booking-app` artifact and import the `/app` directory into the `go-booking` dimg.
+In the optimized config, we build the application in the `booking-app` artifact and import the `/app` directory into the `go-booking` dimg.
 
 Pay attention, that `go-booking` dimg based on the ubuntu image, but not on the golang image.
 
-Build the application with the modified dappfile:
+Build the application with the modified config:
 ```yaml
-dapp dimg build
+werf dimg build
 ```
 
 ### Running
@@ -167,7 +167,7 @@ docker stop `docker ps -lq`
 
 Run the modified application by executing the following command:
 ```bash
-dapp dimg run -p 9000:9000 --rm -d -- /app/run.sh
+werf dimg run -p 9000:9000 --rm -d -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -190,7 +190,7 @@ The `revel framework booking demo` page should open, and you can login by enteri
 Create a image with tag `v2.0`:
 
 ```bash
-dapp dimg tag booking --tag-plain v2.0
+werf dimg tag booking --tag-plain v2.0
 ```
 
 Determine the image size of optimized build, by executing:
@@ -211,4 +211,4 @@ Our example shows that **with using artifacts**, the image size **smaller by mor
 
 ## Conclusions
 
-The example shows us that using artifacts is a great way to exclude what shouldn't be in the result image. Moreover, you can use artifacts in any dimg described in a dappfile. In some cases, it increases the speed of build.
+The example shows us that using artifacts is a great way to exclude what shouldn't be in the result image. Moreover, you can use artifacts in any dimg described in a config. In some cases, it increases the speed of build.

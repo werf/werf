@@ -15,7 +15,7 @@ summary: |
   </div>
 ---
 
-Here's a minimal `dappfile.yml`. It describes a _dimg_ named `example` that is based on a _base image_ named `alpine`:
+Here's a minimal `werf.yaml`. It describes a _dimg_ named `example` that is based on a _base image_ named `alpine`:
 
 ```yaml
 dimg: example
@@ -38,7 +38,7 @@ Pay attention, _from stage_ depends on a variable of _from directive_, not on _f
 
 If you have, e.g., _from image_ `alpine:latest`, and need to rebuild _dimg_ with the actual latest alpine image you should set _fromCacheVersion_ (`fromCacheVersion: <arbitrary string>`) and delete existent _from image_ from local docker or manually pull it. 
 
-If you want always build dimg with actual latest _from image_ you should automate this process outside of dapp and use a particular environment variable for `fromCacheVersion` (e.g., the variable with _from image_ digest).
+If you want always build dimg with actual latest _from image_ you should automate this process outside of werf and use a particular environment variable for `fromCacheVersion` (e.g., the variable with _from image_ digest).
 
 {% raw %}
 ```yaml
@@ -49,7 +49,7 @@ fromCacheVersion: {{ env "FROM_IMAGE_DIGEST" }}
 
 ## fromDimg and fromDimgArtifact
 
-Besides using docker image from a repository, _base image_ can refer to _dimg_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact.html), described in the same `dappfile.yml`.
+Besides using docker image from a repository, _base image_ can refer to _dimg_ or [_artifact_]({{ site.baseurl }}/reference/build/artifact.html), described in the same `werf.yaml`.
 
 ```yaml
 fromDimg: <dimg name>

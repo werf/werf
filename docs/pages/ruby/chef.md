@@ -8,7 +8,7 @@ permalink: ruby/chef.html
 
 Chef сборщик — это тип сборщика, использующий chef рецепты в качестве инструкций для сборки образов. Для организации кода используются cookbook'и:
 
-* один основной [cookbook dapp](#cookbook-dapp);
+* один основной [cookbook werf](#cookbook-werf);
 * один или несколько опциональных [dimod](#dimod).
 
 ### Chef dimg
@@ -17,21 +17,21 @@ Chef dimg — это dimg собираемый chef сборщиком.
 
 ### Chef директория
 
-Chef директория — это директория .dapp_chef. Содержит файлы [cookbook dapp](#cookbook-dapp).
+Chef директория — это директория .werf_chef. Содержит файлы [cookbook werf](#cookbook-werf).
 
-### Cookbook dapp
+### Cookbook werf
 
-Cookbook dapp / cookbook сборщика — это основной chef cookbook, связанный с dapp, содержащий инструкции сборки образов.
+Cookbook werf / cookbook сборщика — это основной chef cookbook, связанный с werf, содержащий инструкции сборки образов.
 
-* Cookbook dapp может подключать [модули](#dimod) для расширения инструкций сборки.
-* Cookbook dapp может объявить в зависимостях обыкновенные cookbook'и.
+* Cookbook werf может подключать [модули](#dimod) для расширения инструкций сборки.
+* Cookbook werf может объявить в зависимостях обыкновенные cookbook'и.
 
 #### Организация файлов
 
 * Структура файлов.
   * Атрибуты.
     * Файлы атрибутов не поддерживаются.
-    * Хеш normal-атрибутов задается через Dappfile, см. [chef.attribute](chef_directives.html#chef-attributes), [chef.\<стадия\>\_attribute](chef_directives.html#chef-<стадия>_attributes).
+    * Хеш normal-атрибутов задается через Werf config, см. [chef.attribute](chef_directives.html#chef-attributes), [chef.\<стадия\>\_attribute](chef_directives.html#chef-<стадия>_attributes).
   * Файлы.
     * Директория files/\<стадия\>/\<рецепт\> — содержит файлы рецепта для стадии, опциональна.
     * Директория files/\<стадия\>/common — содержит общие файлы для стадии, опциональна.
@@ -50,7 +50,7 @@ Dimod — это модуль cookbook сборщика.
 * Дополнительный chef cookbook, который подключается к сборке [chef dimg](#chef-dimg).
 * Имя cookbook'а должно начинаться с префикса 'dimod-'.
 
-#### Включение в dapp
+#### Включение в werf
 
 Фактически dimod может находится:
 
@@ -60,13 +60,13 @@ Dimod — это модуль cookbook сборщика.
 
 Чтобы подключить модуль к проекту, надо:
 
-* Включить модуль в Dappfile директивой [chef.dimod](chef_directives.html#chef-dimod-<mod>-<version-constraint>-<cookbook-opts>).
+* Включить модуль в Werf config директивой [chef.dimod](chef_directives.html#chef-dimod-<mod>-<version-constraint>-<cookbook-opts>).
   * Т.к. dimod по факту является chef cookbook'ом, директива chef.dimod поддерживает те же опции, что и директива [chef.cookbook](chef_directives.html#chef-cookbook-<cookbook>-<version-constraint>-<cookbook-opts>).
     * Явно указывать chef.cookbook в дополнение к chef.dimod не надо.
 
 #### Организация файлов
 
-Все файлы описанные далее файлы должны находится в [chef директории dapp](#chef-директория).
+Все файлы описанные далее файлы должны находится в [chef директории werf](#chef-директория).
 
 * Атрибуты.
   * Файл attributes/\<стадия\>.rb — содержит атрибуты для стадии, опционален.
@@ -92,7 +92,7 @@ Dimod — это модуль cookbook сборщика.
 ### Установка стадии cookbook'а
 Установка стадии cookbook'а — это процесс копирования файлов стадии cookbook'а во временное хранилище, подключаемое в дальнейшем в контейнер для сборки стадии.
 
-* Установка [cookbook'а приложения](#cookbook-dapp).
+* Установка [cookbook'а приложения](#cookbook-werf).
   * Атрибуты.
     * Хеш атрибутов, совмещенных из [chef.attribute](chef_directives.html#chef-attributes) и [chef.\<стадия\>\_attribute](chef_directives.html#chef-<стадия>_attributes), устанавливается в normal-атрибуты, передаваемые через JSON-файл.
     * Файлы атрибутов не поддерживаются.

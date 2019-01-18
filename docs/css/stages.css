@@ -3,10 +3,10 @@ div.stage-base { background-color: #cfe2f3; }
 div.stage-tips { background-color: darkseagreen; }
 div.signature { background-color: #6fa8dc; }
 div.context { background-color: #a4c2f4; }
-div.dappfile { background-color: #efefef; }
-div.dappfile > div { background-color: #cccccc; }
+div.werf_config { background-color: #efefef; }
+div.werf_config > div { background-color: #cccccc; }
 div.signature > div:hover, div.context > div:hover { background-color: #3d85c6; }
-div.dappfile span > span:hover { background-color: grey; }
+div.werf_config span > span:hover { background-color: grey; }
 div.stages .dependence { background-color: yellow; }
 div.stages .inverse-dependence { background-color: orange; }
 div.signature > div, div.stages div.signature.dependence > div, div.context > div, div.stages div.context.dependence > div { background-color: #9fc5e8; }
@@ -14,10 +14,10 @@ div.signature > div, div.stages div.signature.dependence > div, div.context > di
 /* display */
 div.stage > div.stage-body { display: flex; }
 div.stage > div.stage-body > div { display: inline-block; }
-div.stage > div.stage-body > div.dappfile div > span { display: block }
+div.stage > div.stage-body > div.werf_config div > span { display: block }
 .hidden { display: none }
 div.stage-tips div { display: none }
-div.stage-base > div, div.dappfile span > span { cursor: pointer }
+div.stage-base > div, div.werf_config span > span { cursor: pointer }
 
 /* other */
 div.stages { font-size: 12px; }
@@ -39,7 +39,7 @@ div.signature > div, div.context > div {
   padding: 2px 10px;
 }
 
-div.dappfile {
+div.werf_config {
   float: right;
 }
 

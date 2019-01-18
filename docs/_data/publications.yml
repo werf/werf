@@ -3,23 +3,23 @@
 #  comment: COMMENT
 #  youtube_id: e.g. 8R5UDg29Vic
 #  created: ISO format date, yyyy-mm-dd
-- title: "Сборка проектов с dapp. Часть 2: JavaScript (frontend)"
+- title: "Сборка проектов с werf. Часть 2: JavaScript (frontend)"
   url: "https://habr.com/company/flant/blog/359204/"
   created: 2018-05-30
   comment: |
-    <p>Этот материал продолжает цикл о сборке Docker-образов для приложений на различных языках программирования с помощью утилиты <a href="https://github.com/flant/dapp">dapp</a>. Поговорим о приложениях на JavaScript. Для начала это будет frontend-приложение, а в следующей части планируется рассказать о сборке backend'а и запуске всего в Kubernetes.</p>
+    <p>Этот материал продолжает цикл о сборке Docker-образов для приложений на различных языках программирования с помощью утилиты <a href="https://github.com/flant/werf">werf</a>. Поговорим о приложениях на JavaScript. Для начала это будет frontend-приложение, а в следующей части планируется рассказать о сборке backend'а и запуске всего в Kubernetes.</p>
 
     <p>В качестве иллюстрации будут использованы приложения <a href="https://github.com/Snipa22/nodejs-pool">nodejs-pool</a> и <a href="https://github.com/mesh0000/poolui">poolui</a>. Да-да, подготовим к запуску в Kubernetes свой майнинг-пул с блокчейном и выплатами!</p>
 
     <img src="https://habrastorage.org/webt/d0/ad/ud/d0adudsg2shdarhlqscwocpnwao.jpeg">
-- title: "Возможности dapp, которые делают жизнь проще"
+- title: "Возможности werf, которые делают жизнь проще"
   url: "https://habr.com/company/flant/blog/354866/"
   created: 2018-05-07
   comment: |
-    <p>В статье представлен (и продемонстрирован в коротких видеороликах) инструментарий, облегчающий разработку и отладку конфигураций с <a href="https://github.com/flant/dapp">dapp</a> — Open Source-утилитой, которую мы ежедневно используем при построении и сопровождении процессов CI/CD.</p>
+    <p>В статье представлен (и продемонстрирован в коротких видеороликах) инструментарий, облегчающий разработку и отладку конфигураций с <a href="https://github.com/flant/werf">werf</a> — Open Source-утилитой, которую мы ежедневно используем при построении и сопровождении процессов CI/CD.</p>
 
     <img src="https://habrastorage.org/webt/r6/kn/cd/r6kncdl1ml0zz5sk_yz5vvj3t2q.gif">
-- title: "Linux-дистрибутив from scratch для сборки Docker-образов — наш опыт с dappdeps"
+- title: "Linux-дистрибутив from scratch для сборки Docker-образов — наш опыт с werfdeps"
   url: "https://habr.com/company/flant/blog/352432/"
   created: 2018-04-03
   comment: |
@@ -29,8 +29,8 @@
 
     <p>Часто возникает необходимость доустановить в базовую систему некоторый набор утилит, с помощью которых происходит установка или сборка некоторых файлов, которые требуются в итоговом образе. Например, чтобы собрать Go-приложение, надо установить компилятор Go, положить все исходные коды приложения в базовом образе, скомпилировать требуемую программу. Однако в итоговом образе требуется лишь скомпилированная программа без всего набора утилит, который использовался для компиляции этой программы.</p>
 
-    <p>Проблема известная: одним из путей её решения может быть сборка вспомогательного образа и перенос файлов из вспомогательного образа в результирующий. Для этого появились <a href="https://docs.docker.com/develop/develop-images/multistage-build/">Docker multi-stage builds</a> или образы-артефакты в dapp. И данный подход идеально решает проблему подобную переносу результатов компиляции исходных кодов в итоговый образ. Однако он не решает все возможные проблемы…</p>
-- title: "Дождались: поддержка YAML и Ansible (без коров) в dapp"
+    <p>Проблема известная: одним из путей её решения может быть сборка вспомогательного образа и перенос файлов из вспомогательного образа в результирующий. Для этого появились <a href="https://docs.docker.com/develop/develop-images/multistage-build/">Docker multi-stage builds</a> или образы-артефакты в werf. И данный подход идеально решает проблему подобную переносу результатов компиляции исходных кодов в итоговый образ. Однако он не решает все возможные проблемы…</p>
+- title: "Дождались: поддержка YAML и Ansible (без коров) в werf"
   url: "https://habr.com/company/flant/blog/351838/"
   created: 2018-03-23
   comment: |
@@ -38,43 +38,43 @@
 
     <br>
 
-    <p>В начале этого года мы посчитали, что наша Open Source-утилита для сопровождения процессов CI/CD — dapp версии 0.25 — обладает достаточным набором функций и была начата работа над нововведениями. В версии 0.26 появился синтаксис YAML, а Ruby DSL был объявлен классическим (далее перестанет поддерживаться вовсе). В следующей версии, 0.27, основным нововведением можно считать появление сборщика с Ansible. Пришло время рассказать об этих новинках подробнее.</p>
-- title: "Сборка проектов с dapp. Часть 1: Java"
+    <p>В начале этого года мы посчитали, что наша Open Source-утилита для сопровождения процессов CI/CD — werf версии 0.25 — обладает достаточным набором функций и была начата работа над нововведениями. В версии 0.26 появился синтаксис YAML, а Ruby DSL был объявлен классическим (далее перестанет поддерживаться вовсе). В следующей версии, 0.27, основным нововведением можно считать появление сборщика с Ansible. Пришло время рассказать об этих новинках подробнее.</p>
+- title: "Сборка проектов с werf. Часть 1: Java"
   url: "https://habr.com/company/flant/blog/348436/"
   created: 2018-02-14
   comment: |
     <br>
     <img src="https://habrastorage.org/webt/o8/mo/vb/o8movbrurpkgf2xtkyoihfukyqy.png">
 
-    <p>Эта статья — начало цикла о сборке <a href="https://github.com/flant/dapp">dapp</a>'ом приложений на различных языках, платформах, технологических стеках. Предыдущие статьи про dapp были больше обзорными, описывали возможности dapp. Теперь же пора поговорить более предметно и поделиться конкретным опытом работы с проектами. В связи с недавним релизом <a href="https://github.com/flant/dapp/releases/tag/0.26.2">dapp 0.26.2</a> я заодно покажу, как описывать сборку в YAML-файле.</p>
+    <p>Эта статья — начало цикла о сборке <a href="https://github.com/flant/werf">werf</a>'ом приложений на различных языках, платформах, технологических стеках. Предыдущие статьи про werf были больше обзорными, описывали возможности werf. Теперь же пора поговорить более предметно и поделиться конкретным опытом работы с проектами. В связи с недавним релизом <a href="https://github.com/flant/werf/releases/tag/0.26.2">werf 0.26.2</a> я заодно покажу, как описывать сборку в YAML-файле.</p>
 
     <p>Описывать сборку буду на примере приложения из репозитория dockersamples — <a href="https://github.com/dockersamples/atsea-sample-shop-app">atsea-sample-shop-app</a>. Это прототип небольшого магазина, построенный на React (фронт) и Java Spring Boot (бэкенд). В качестве БД используется PostgreSQL. Для большей похожести на рабочий проект добавлены реверсивный прокси на nginx и шлюз платежей в виде простого скрипта.</p>
-- title: "Сборка и дeплой приложений в Kubernetes с помощью dapp и GitLab CI"
+- title: "Сборка и дeплой приложений в Kubernetes с помощью werf и GitLab CI"
   url: "https://habr.com/company/flant/blog/345580/"
   created: 2017-12-27
   comment: |
     <br>
     <img src="https://habrastorage.org/webt/qi/xr/x8/qixrx8ivoqcrvtjmvm-2anlhm0y.png">
 
-    <p>Чем dapp помогает в процессах CI/CD?</p>
-- title: "Практика с dapp. Часть 2. Деплой Docker-образов в Kubernetes с помощью Helm"
+    <p>Чем werf помогает в процессах CI/CD?</p>
+- title: "Практика с werf. Часть 2. Деплой Docker-образов в Kubernetes с помощью Helm"
   url: "https://habr.com/company/flant/blog/336170/"
   created: 2017-08-29
   comment: |
-    <p>Демонстрация работы dapp с кластером Kubernetes.</p>
+    <p>Демонстрация работы werf с кластером Kubernetes.</p>
 
     <img src="https://habrastorage.org/web/d8f/ffc/27b/d8fffc27b36847a588f71681cb4d524e.png">
-- title: "Практика с dapp. Часть 1: Сборка простых приложений"
+- title: "Практика с werf. Часть 1: Сборка простых приложений"
   url: "https://habr.com/company/flant/blog/336212/"
   created: 2017-08-23
   comment: |
-    <p>Эта статья — ознакомительное руководство по сборке Docker-образов приложений с помощью нашей Open Source-утилиты <a href="https://github.com/flant/dapp">dapp</a> <i>(подробнее о ней читайте в <a href="https://habrahabr.ru/company/flant/blog/333682/">анонсе</a>)</i>. На примере двух простых приложений (с одним образом) рассмотрим, как могут быть задействованы некоторые из основных возможностей dapp и какой результат они дают.</p>
-- title: "Официально представляем dapp — DevOps-утилиту для сопровождения CI/CD"
+    <p>Эта статья — ознакомительное руководство по сборке Docker-образов приложений с помощью нашей Open Source-утилиты <a href="https://github.com/flant/werf">werf</a> <i>(подробнее о ней читайте в <a href="https://habrahabr.ru/company/flant/blog/333682/">анонсе</a>)</i>. На примере двух простых приложений (с одним образом) рассмотрим, как могут быть задействованы некоторые из основных возможностей werf и какой результат они дают.</p>
+- title: "Официально представляем werf — DevOps-утилиту для сопровождения CI/CD"
   url: "https://habr.com/company/flant/blog/333682/"
   created: 2017-07-19
   comment: |
-    <p>dapp — написанный на Ruby инструмент, созданный в компании «Флант» как Open Source-проект для реализации и сопровождения процессов CI/CD. Что он позволяет?</p>
-- title: "Собираем Docker-образы для CI/CD быстро и удобно вместе с dapp (обзор и видео)"
+    <p>werf — написанный на Ruby инструмент, созданный в компании «Флант» как Open Source-проект для реализации и сопровождения процессов CI/CD. Что он позволяет?</p>
+- title: "Собираем Docker-образы для CI/CD быстро и удобно вместе с werf (обзор и видео)"
   url: "https://habr.com/company/flant/blog/324274/"
   created: 2017-03-28
   comment: |
@@ -124,16 +124,16 @@
         <li><a href="https://speakerdeck.com/flant/nash-opyt-s-kubernetes-v-niebol-shikh-proiektakh">Презентация</li>
         <li><a href="http://rootconf.ru/2017/abstracts/2701">Анонс доклада на сайте конференции</a></li>
     </ul>
-- title: "Собираем Docker-образы быстро и удобно с dapp (Флант, Highload++ 2016)"
+- title: "Собираем Docker-образы быстро и удобно с werf (Флант, Highload++ 2016)"
   url: "https://www.youtube.com/watch?v=8R5UDg29Vic"
   youtube_id: 8R5UDg29Vic
   created: 2016-10-08
   comment: |
-    <p>Доклад Дмитрия Столярова, технического директора компании «Флант», с конференции Highload++ 2016 (8 ноября 2016 г.). Посвящен сборке Docker-образов в контексте CI/CD (Continuous Integration, Continuous Delivery) и обзору основных возможностей Open Source-утилиты dapp.</p>
+    <p>Доклад Дмитрия Столярова, технического директора компании «Флант», с конференции Highload++ 2016 (8 ноября 2016 г.). Посвящен сборке Docker-образов в контексте CI/CD (Continuous Integration, Continuous Delivery) и обзору основных возможностей Open Source-утилиты werf.</p>
 
     <ul>
         <li><a href="https://habr.com/company/flant/blog/324274/">Текстовый обзор доклада</a></li>
-        <li><a href="https://speakerdeck.com/flant/sobiraiem-docker-obrazy-bystro-i-udobno-s-dapp">Презентация</a></li>
+        <li><a href="https://speakerdeck.com/flant/sobiraiem-docker-obrazy-bystro-i-udobno-s-werf">Презентация</a></li>
     </ul>
 
     <p>P.S.  Технические проблемы с микрофоном и вводная часть заканчиваются в 12:45.</p>

@@ -1,21 +1,21 @@
 ---
-title: dapp kube deploy
+title: werf kube deploy
 sidebar: reference
 permalink: reference/cli/kube_deploy.html
 ---
 
-### dapp kube deploy
+### werf kube deploy
 Развернуть приложение, chart описанный в `.helm` согласно [документации helm](https://docs.helm.sh).
 
 ```
-dapp kube deploy [options] REPO
+werf kube deploy [options] REPO
 ```
 
 #### --namespace NAMESPACE
 Задаёт `namespace`, по умолчанию используется context namespace.
 
 #### Опции тегирования `--tag TAG`, `--tag-branch`, `--tag-commit`, `--tag-build-id`, `--tag-ci`, `--tag-slug TAG`, `--tag-plain TAG`
-Версия образа из указанного репозитория. Значение опций соответствует указываемым в [dapp dimg push]({{ site.baseurl }}/reference/cli/dimg_push.html).
+Версия образа из указанного репозитория. Значение опций соответствует указываемым в [werf dimg push]({{ site.baseurl }}/reference/cli/dimg_push.html).
 
 #### --tmp_dir_prefix PREFIX
 Переопределяет префикс временной директории, временного chart-a, который удаляется после запуска.

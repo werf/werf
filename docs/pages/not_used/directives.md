@@ -1,21 +1,21 @@
 ---
-title: Dappfile directives
+title: Werf config directives
 sidebar: not_used
 permalink: not_used/directives.html
 ---
 
-## Types of dappfile syntax 
+## Types of config syntax 
 
-Dapp builds images by instructions in special files, *dappfiles*.
+Werf builds images by instructions in special files, *configs*.
 They can be written in two different syntaxes with corresponding file names:
 
-*   `dappfile.yml`, in YAML syntax;
-*   `Dappfile`, in Ruby syntax.
+*   `werf.yaml`, in YAML syntax;
+*   `Werf config`, in Ruby syntax.
 
     **Deprecation warning:** support for Ruby syntax will be discontinued in one of the future releases.
-    We recommend using YAML syntax for new dappfiles.
+    We recommend using YAML syntax for new configs.
 
-Описание образов приложений и образов артефактов в dappfile выполняется соответственно с помощью директив `dimg` и `artifact`, для обоих синтаксисов dappfile.
+Описание образов приложений и образов артефактов в config выполняется соответственно с помощью директив `dimg` и `artifact`, для обоих синтаксисов config.
 
 Указание базового образа, на основе которого будет производиться сборка образа приложения или образа артефакта, осуществляется с помощью директивы `from`.
 
@@ -24,20 +24,20 @@ Both types share some common features:
 *   Application images are declared with `dimg` directive, and artifact images with `artifact` directive.
 *   Base image for an application or artifact image is declared with `from` directive.
 
-Основное различие при использовании разного синтаксиса dappfile в части описания образов - в YAML синтаксисе используется линейное описание образов и отсутствует вложенность, в Ruby синтаксисе же, можно использовать директиву `dimg_group` и описывать вложенные контексты (см. ниже.).
+Основное различие при использовании разного синтаксиса config в части описания образов - в YAML синтаксисе используется линейное описание образов и отсутствует вложенность, в Ruby синтаксисе же, можно использовать директиву `dimg_group` и описывать вложенные контексты (см. ниже.).
 
 A major difference is that YAML syntax is linear and has no nesting, while Ruby syntax can describe nested context with `dimg_group` directive.
 
-## YAML syntax (dappfile.yml)
+## YAML syntax (werf.yaml)
 
-> YAML синтаксис (dappfile.yml)
+> YAML синтаксис (werf.yaml)
 
 ### Introduction
 
-Dappfile describes building one or more images.
+Werf config describes building one or more images.
 Its syntax is based on [YAML](http://yaml.org/spec/1.2/spec.html).
 
-Here's a minimal `dappfile.yml`. It builds an image named `example` from a base image named `alpine`:
+Here's a minimal `werf.yaml`. It builds an image named `example` from a base image named `alpine`:
 
 ```yaml
 dimg: example
@@ -49,7 +49,7 @@ An image description requires at least two parameters:
 * image type and name, set with `dimg`, or `artifact` directive;
 * base image, set with `from`, `fromDimg`, or `fromDimgArtifact` directive.sss
 
-A single dappfile can build multiple images.
+A single config can build multiple images.
 For more details on this topic, see [Building Multiple Images](#building-multiple-images).
 
 ### `dimg`
@@ -66,7 +66,7 @@ dimg: frontend
 ```
 
 An image can be nameless: `dimg: ` or `dimg: ~`.
-In a dappfile with multiple images there can be only one nameless application image.
+In a config with multiple images there can be only one nameless application image.
 
 ```yaml
 dimg:
@@ -123,7 +123,7 @@ fromDimg: <name>
 fromDimgArtifact: <name>
 ```
 
-Besides using docker images from a repository, one can refer to images, previously described in the same `dappfile.yml`.
+Besides using docker images from a repository, one can refer to images, previously described in the same `werf.yaml`.
 This can be helpful if default build stages are not enough for building an image.
 
 ```yaml
@@ -160,7 +160,7 @@ shell:
 
 ### General Syntax
 
-A `dappfile.yml` can describe any number of images, but at least one of them should be an application image.
+A `werf.yaml` can describe any number of images, but at least one of them should be an application image.
 To describe several images, separate them with `---`:
 
 ```yaml
@@ -176,7 +176,7 @@ To describe several images, separate them with `---`:
 * All artifact images should have non-empty names.
 * Image names should be unique.
 
-Here's an example of describing multiple images in one dappfile:
+Here's an example of describing multiple images in one config:
 
 ```yaml
 dimg: frontend
@@ -207,17 +207,17 @@ shell:
 - объявление переменной, которую можно повторно использовать в разных image-ах. Делается на основании правил go templates.
 - повторяюшийся блок вынесен в include.
 
-Dapp has two powerful features for describing and building multiple images:
+Werf has two powerful features for describing and building multiple images:
 
 * Templating builds with [Go templates syntax](https://golang.org/pkg/text/template/#hdr-Functions) and [Sprig functions](http://masterminds.github.io/sprig/).
-* Reusing code blocks [with `include`]( {{ site.baseurl }}/faq.html#dappfile-7).
+* Reusing code blocks [with `include`]( {{ site.baseurl }}/faq.html#config-7).
 
 The code below demonstrates Go templates and `include`:
 
 {% raw %}
 ```yaml
 # Declaring a "BaseImage" variable
-{{ $_ := set . "BaseImage" "myregistry.myorg.com/dapp/ubuntu-dimg:10" }}
+{{ $_ := set . "BaseImage" "myregistry.myorg.com/werf/ubuntu-dimg:10" }}
 
 dimg: "curl_and_shell"
 from: "{{ .BaseImage }}"
@@ -267,8 +267,8 @@ git:
     excludePaths:
     - .helm
     - .gitlab-ci.yml
-    - .dappfiles
-    - dappfile.yaml
+    - .configs
+    - werf.yaml
     owner: app
     group: app
     stageDependencies:
@@ -279,9 +279,9 @@ git:
 ```
 {% endraw %}
 
-## Ruby синтаксис (Dappfile)
+## Ruby синтаксис (Werf config)
 
-Правила описания образов в Dappfile:
+Правила описания образов в Werf config:
 
 * Наследуются все настройки родительского контекста.
 * Можно дополнять или переопределять настройки родительского контекста.

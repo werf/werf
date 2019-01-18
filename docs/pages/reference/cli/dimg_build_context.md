@@ -1,15 +1,15 @@
 ---
-title: dapp dimg build-context
+title: werf dimg build-context
 sidebar: reference
 permalink: reference/cli/dimg_build_context.html
 ---
 
 
-### dapp dimg build-context export
+### werf dimg build-context export
 Экспортировать контекст, кэш приложений и директорию сборки.
 
 ```
-dapp dimg build-context export [options] [DIMG ...]
+werf dimg build-context export [options] [DIMG ...]
 ```
 
 #### `--build-context-directory DIR_PATH`
@@ -20,14 +20,14 @@ dapp dimg build-context export [options] [DIMG ...]
 ##### Экспортировать контекст приложения 'frontend' из проекта 'project' в директорию 'context'
 
 ```bash
-$ dapp dimg build-context export --dir ~/workspace/project --build-context-directory context frontend
+$ werf dimg build-context export --dir ~/workspace/project --build-context-directory context frontend
 ```
 
-### dapp dimg build-context import
+### werf dimg build-context import
 Импортировать контекст, кэш приложений и директорию сборки.
 
 ```
-dapp dimg build-context import [options]
+werf dimg build-context import [options]
 ```
 
 #### `--build-context-directory DIR_PATH`
@@ -38,5 +38,5 @@ dapp dimg build-context import [options]
 ##### Импортировать контекст приложений проекта 'project' из директории 'context'
 
 ```bash
-$ dapp dimg build-context import --dir ~/workspace/project --build-context-directory context
+$ werf dimg build-context import --dir ~/workspace/project --build-context-directory context
 ```

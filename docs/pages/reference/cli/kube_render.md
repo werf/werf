@@ -1,21 +1,21 @@
 ---
-title: dapp kube render
+title: werf kube render
 sidebar: reference
 permalink: reference/cli/kube_render.html
 ---
 
-### dapp kube render
+### werf kube render
 Вызывает [`helm template`](https://docs.helm.sh/helm/#helm-template) для helm чарта, - выполняет локальный рендеринг чарта и выводит результат.
 
 ```
-dapp kube render [options] REPO
+werf kube render [options] REPO
 ```
 
 #### --namespace NAMESPACE
 Задаёт `namespace`, по умолчанию используется context namespace.
 
 #### Опции тегирования `--tag TAG`, `--tag-branch`, `--tag-commit`, `--tag-build-id`, `--tag-ci`, `--tag-slug TAG`, `--tag-plain TAG`
-Влияют на то, что будет в результате использования шаблона `dapp_container_image`. Значение опций соответствует указываемым в [dapp dimg push]({{ site.baseurl }}/reference/cli/dimg_push.html).
+Влияют на то, что будет в результате использования шаблона `werf_container_image`. Значение опций соответствует указываемым в [werf dimg push]({{ site.baseurl }}/reference/cli/dimg_push.html).
 
 #### --tmp-dir-prefix PREFIX
 Переопределяет префикс временной директории для размещения временных папок используемых при рендеринге (по умолчанию - /tmp).
@@ -37,4 +37,4 @@ dapp kube render [options] REPO
 * пути до subchart `-t .helm/charts/custom_chart/templates/*_custom`;
 * имени (`-t *_custom`).
 
-Пути могут быть как относительными, так и абсолютными. Наличие `*` учитывает только один уровень иерархии и не выполняет рекурсивный обход. Ко всем шаблонам в конец добавляется `*`. Например, `dapp kube render -t '*/*-app'` выполнит рендеринг yaml файлов чарта - `./.helm/templates/10-app.yaml` и `./.helm/templates/50-app-api.yaml`.
+Пути могут быть как относительными, так и абсолютными. Наличие `*` учитывает только один уровень иерархии и не выполняет рекурсивный обход. Ко всем шаблонам в конец добавляется `*`. Например, `werf kube render -t '*/*-app'` выполнит рендеринг yaml файлов чарта - `./.helm/templates/10-app.yaml` и `./.helm/templates/50-app-api.yaml`.

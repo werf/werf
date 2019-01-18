@@ -32,7 +32,7 @@ summary: |
 
 Docker can build images by [Dockerfile](https://docs.docker.com/engine/reference/builder/) instructions. These instructions can be divided into two groups: build-time instructions and other instructions that effect on a running built image and a built image in general.  
 
-Build-time instructions don't make sense in a dapp build process, therefore, dapp supports only following instructions:
+Build-time instructions don't make sense in a werf build process, therefore, werf supports only following instructions:
 
 * `USER` to set the user and the group to use when running the image (read more [here](https://docs.docker.com/engine/reference/builder/#user)).
 * `WORKDIR` to set the working directory (read more [here](https://docs.docker.com/engine/reference/builder/#workdir)).
@@ -46,7 +46,7 @@ Build-time instructions don't make sense in a dapp build process, therefore, dap
 * `STOPSIGNAL` to set the system call signal that will be sent to the container to exit (read more [here](https://docs.docker.com/engine/reference/builder/#stopsignal))
 * `HEALTHCHECK` to tell Docker how to test a container to check that it is still working (read more [here](https://docs.docker.com/engine/reference/builder/#healthcheck))
 
-These instructions can be defined in the dappfile `docker` section.
+These instructions can be defined in the config `docker` section.
 
 Here are the example of using docker instructions:
 
@@ -60,7 +60,7 @@ docker:
     LC_ALL: en_US.UTF-8
 ```
 
-Defined docker instructions are applied on the last stage called `docker_instructions`. Thus instructions don't effect on other stages and a dapp build process in general, they simply will be applied on a result image. 
+Defined docker instructions are applied on the last stage called `docker_instructions`. Thus instructions don't effect on other stages and a werf build process in general, they simply will be applied on a result image. 
 
 If need to use special environment variables in build-time of your application image, such as `TERM` environment, you should use a [base image]({{ site.baseurl }}/reference/build/base_image.html) with these variables.
 

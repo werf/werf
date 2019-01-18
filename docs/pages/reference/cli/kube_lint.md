@@ -1,21 +1,21 @@
 ---
-title: dapp kube lint
+title: werf kube lint
 sidebar: reference
 permalink: reference/cli/kube_lint.html
 ---
 
-### dapp kube lint
+### werf kube lint
 Вызывает [`helm lint`](https://docs.helm.sh/helm/#helm-lint) для helm чарта, - тестирует чарт на возможные ошибки.
 
 ```
-dapp kube lint [options] REPO
+werf kube lint [options] REPO
 ```
 
 #### --namespace NAMESPACE
 Задаёт `namespace`, по умолчанию используется context namespace.
 
 #### Опции тегирования `--tag TAG`, `--tag-branch`, `--tag-commit`, `--tag-build-id`, `--tag-ci`, `--tag-slug TAG`, `--tag-plain TAG`
-Влияют на то, что будет в результате использования шаблона `dapp_container_image`. Значение опций соответствует указываемым в [dapp dimg push]({{ site.baseurl }}/reference/cli/dimg_push.html).
+Влияют на то, что будет в результате использования шаблона `werf_container_image`. Значение опций соответствует указываемым в [werf dimg push]({{ site.baseurl }}/reference/cli/dimg_push.html).
 
 #### --set STRING_ARRAY
 Пробрасывает значения в `helm lint` (значения могут передаваться в одной опции, в формате `key1=val1,key2=val2`, или разбиваться на несколько).

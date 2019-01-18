@@ -1,23 +1,23 @@
 ---
-title: dapp dimg push
+title: werf dimg push
 sidebar: reference
 permalink: reference/cli/dimg_push.html
 ---
 
-### dapp dimg push
+### werf dimg push
 Выкатить собранные dimg-ы в docker registry, в формате **REPO**/**ИМЯ DIMG**:**TAG**. В случае, если **ИМЯ DIMG** отсутствует, формат следующий **REPO**:**TAG**.
 
 ```
-dapp dimg push [options] [DIMG ...] REPO
+werf dimg push [options] [DIMG ...] REPO
 ```
 
 ##### `--dir PATH`
-Определяет директорию, которая используется при поиске **dappfile**.
+Определяет директорию, которая используется при поиске **config**.
 
 ##### `--name NAME`
-Переопределяет имя проекта dapp. По умолчанию, имя проекта — это последний элемент пути к git репозиторию из параметра конфигурации remote.origin.url или, при отсутствии git или параметра конфигурации remote.origin.url, это имя директории dapp.
+Переопределяет имя проекта werf. По умолчанию, имя проекта — это последний элемент пути к git репозиторию из параметра конфигурации remote.origin.url или, при отсутствии git или параметра конфигурации remote.origin.url, это имя директории werf.
 
-При переопределении имени проекта в `dapp dimg build`, его следует переопределять и в последующем, - например при вызове команд `dapp dimg push`, `dapp dimg cleanup`, `dapp kube deploy`.
+При переопределении имени проекта в `werf dimg build`, его следует переопределять и в последующем, - например при вызове команд `werf dimg push`, `werf dimg cleanup`, `werf kube deploy`.
 
 ##### `--with-stages`
 Также выкатить кэш стадий.
@@ -43,7 +43,7 @@ dapp dimg push [options] [DIMG ...] REPO
 Позволяет запустить выкат вхолостую и посмотреть процесс (например - результат применения опций тегирования).
 
 ##### `--ignore-config-sequential-processing-warnings`
-Отключает вывод предупреждений при обработке dappfile.
+Отключает вывод предупреждений при обработке config.
 
 ##### `-q, --quiet`
 Отключает логирование.
@@ -69,7 +69,7 @@ dapp dimg push [options] [DIMG ...] REPO
 В случае отсутствия, используется тег **latest**.
 
 ##### `--tag TAG`, `--tag-slug TAG`
-Добавляет произвольный тег **TAG**, который слагифицируется перед использованием (см. например команду [dapp dimg slug](dimg_slug.html)).
+Добавляет произвольный тег **TAG**, который слагифицируется перед использованием (см. например команду [werf dimg slug](dimg_slug.html)).
 
 ##### `--tag-plain TAG`
 Добавляет тег **TAG**.
@@ -90,12 +90,12 @@ dapp dimg push [options] [DIMG ...] REPO
 
 ##### Выкатить все dimg-ы в репозиторий localhost:5000/test и тегом latest
 ```bash
-$ dapp dimg push localhost:5000/test
+$ werf dimg push localhost:5000/test
 ```
 
 ##### Посмотреть, какие образы могут быть добавлены в репозиторий
 ```bash
-$ dapp dimg push localhost:5000/test --tag yellow --tag-branch --dry-run
+$ werf dimg push localhost:5000/test --tag yellow --tag-branch --dry-run
 backend
   localhost:5000/test:backend-yellow
   localhost:5000/test:backend-master
@@ -105,40 +105,40 @@ frontend
 ```
 
 
-### dapp dimg tag
-Повторяет поведение и опции команды [dapp dimg push](#dapp-dimg-push), при этом, сохраняя dimg-ы локально.
+### werf dimg tag
+Повторяет поведение и опции команды [werf dimg push](#werf-dimg-push), при этом, сохраняя dimg-ы локально.
 
 ```
-dapp dimg tag [options] [DIMG ...] REPO
+werf dimg tag [options] [DIMG ...] REPO
 ```
 
 
-### dapp dimg spush
+### werf dimg spush
 Выкатить собранный dimg в docker registry, в формате **REPO**:**TAG**.
 
 ```
-dapp dimg spush [options] [DIMG] REPO
+werf dimg spush [options] [DIMG] REPO
 ```
 
-Опции - такие же как у [**dapp dimg push**](#dapp-dimg-push).
+Опции - такие же как у [**werf dimg push**](#werf-dimg-push).
 
-`spush` - сокращение от `simple push`, и отличие `spush` от `dapp dimg push` в том, что при использовании `spush` пушится только один образ, и формат его имени в registry - простой (**REPO**:**TAG**). Т.о., если в dappfile описано несколько образов, то указание образа при вызове `dapp dimg spush` является необходимым.
+`spush` - сокращение от `simple push`, и отличие `spush` от `werf dimg push` в том, что при использовании `spush` пушится только один образ, и формат его имени в registry - простой (**REPO**:**TAG**). Т.о., если в config описано несколько образов, то указание образа при вызове `werf dimg spush` является необходимым.
 
 #### Примеры
 
 ##### Выкатить собранный dimg **app** в репозиторий test и тегом latest
 ```bash
-$ dapp dimg spush app localhost:5000/test
+$ werf dimg spush app localhost:5000/test
 ```
 
 ##### Выкатить собранный dimg с произвольными тегами
 ```bash
-$ dapp dimg spush app localhost:5000/test --tag 1 --tag test
+$ werf dimg spush app localhost:5000/test --tag 1 --tag test
 ```
 
 ##### Посмотреть, какие образы могут быть добавлены в репозиторий
 ```bash
-$ dapp dimg spush app localhost:5000/test --tag-commit --tag-branch --dry-run
+$ werf dimg spush app localhost:5000/test --tag-commit --tag-branch --dry-run
 localhost:5000/test:2c622c16c39d4938dcdf7f5c08f7ed4efa8384c4
 localhost:5000/test:master
 ```

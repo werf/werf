@@ -14,7 +14,7 @@ skinparam note {
   BorderColor #434343
 }
 
-title Стадии сборки образа с помощью dapp
+title Стадии сборки образа с помощью werf
 
 
 start

@@ -4,15 +4,15 @@ sidebar: ruby
 permalink: ruby/chef_dimod.html
 ---
 
-Dapp is able to use same snippets of code in multiple repos.
+Werf is able to use same snippets of code in multiple repos.
 
 ## Проблематика
 
-В процессе описания правил сборки образов приложений неизбежно образуются общие части, которые необходимо повторять в нескольких приложениях. В chef существует механизм cookbook'ов для решения этой проблемы. Для простоты интеграции с правилами сборки, описываемыми в Dappfile, и для учета особенностей влияния правил сборки на кэширование собираемых образов в dapp сделаны модули chef сборщика на основе chef cookbook'ов, называемые dimod.
+В процессе описания правил сборки образов приложений неизбежно образуются общие части, которые необходимо повторять в нескольких приложениях. В chef существует механизм cookbook'ов для решения этой проблемы. Для простоты интеграции с правилами сборки, описываемыми в Werf config, и для учета особенностей влияния правил сборки на кэширование собираемых образов в werf сделаны модули chef сборщика на основе chef cookbook'ов, называемые dimod.
 
 ## Решение
 
-Dimod — это отдельный chef cookbook, оформленный специальным образом. В названии cookbook'а dimod'а обязателен префикс 'dimod-'. Файловая структура dimod cookbook'а похожа на структуру директории .dapp\_chef, но имеет свои особенности:
+Dimod — это отдельный chef cookbook, оформленный специальным образом. В названии cookbook'а dimod'а обязателен префикс 'dimod-'. Файловая структура dimod cookbook'а похожа на структуру директории .werf\_chef, но имеет свои особенности:
 
 * metadata.rb — обязательно присутствует, описывает имя cookbook'а, версию и его зависимости от других cookbook'ов.
 * recipes
@@ -41,7 +41,7 @@ Dimod — это отдельный chef cookbook, оформленный спе
 
 ### Установка ruby через dimod-example-ruby
 
-В [сборке с помощью chef]({{ site.baseurl }}/ruby/chef.html) был приведен [пример](https://github.com/flant/dapp-example-chef-for-advanced-build-1.git), в котором происходит установка rvm и ruby в образ. Вынесем установку ruby в dimod, т.к. этот кусок правил сборки образа нужен для каждого приложения, использующего ruby.
+В [сборке с помощью chef]({{ site.baseurl }}/ruby/chef.html) был приведен [пример](https://github.com/flant/werf-example-chef-for-advanced-build-1.git), в котором происходит установка rvm и ruby в образ. Вынесем установку ruby в dimod, т.к. этот кусок правил сборки образа нужен для каждого приложения, использующего ruby.
 
 Рассмотрим подготовленный репозиторий с кодом dimod-example-ruby:
 
@@ -50,7 +50,7 @@ git clone https://github.com/flant/dimod-example-ruby
 cd dimod-example-ruby
 ```
 
-Dimod может иметь параметры, которые пользователь задает при подключении этого dimod'а в Dappfile. Технически для этого используются атрибуты. В dimod-example-ruby параметр с устанавливаемой версией ruby хранится в атрибуте `dimod-example-ruby.ruby_version`. В файле `attributes/before_install.rb` определяется значение по умолчанию:
+Dimod может иметь параметры, которые пользователь задает при подключении этого dimod'а в Werf config. Технически для этого используются атрибуты. В dimod-example-ruby параметр с устанавливаемой версией ruby хранится в атрибуте `dimod-example-ruby.ruby_version`. В файле `attributes/before_install.rb` определяется значение по умолчанию:
 
 ```ruby
 default['dimod-example-ruby']['ruby_version'] = '2.2.4'
@@ -58,7 +58,7 @@ default['dimod-example-ruby']['ruby_version'] = '2.2.4'
 
 Хорошая практика написания dimod'ов предполагает использование файлов атрибутов в dimod'ах для декларирования всех возможных атрибутов для настройки этого dimod. Если значения по умолчанию не нужны — можно создать файл атрибутов с закомментированными примерами назначениями возможных атрибутов.
 
-В первом примере dapp-example-chef-for-advanced-build-1 установка rvm и ruby происходила на стадии before\_install, поэтому для dimod заведен рецепт `recipes/before_install.rb`:
+В первом примере werf-example-chef-for-advanced-build-1 установка rvm и ruby происходила на стадии before\_install, поэтому для dimod заведен рецепт `recipes/before_install.rb`:
 
 ```ruby
 include_recipe 'apt'
@@ -75,14 +75,14 @@ include_recipe 'rvm::system'
 
 ### Использование dimod-example-ruby в проекте
 
-Переделаем пример dapp-example-chef-for-advanced-build-1 на использование dimod-example-ruby:
+Переделаем пример werf-example-chef-for-advanced-build-1 на использование dimod-example-ruby:
 
 ```shell
-git clone https://github.com/flant/dapp-example-chef-for-advanced-build-1.git
-cd dapp-example-chef-for-advanced-build-1
+git clone https://github.com/flant/werf-example-chef-for-advanced-build-1.git
+cd werf-example-chef-for-advanced-build-1
 ```
 
-Dappfile с подключением dimod-example-ruby:
+Werf config с подключением dimod-example-ruby:
 
 ```ruby
 dimg do
@@ -106,12 +106,12 @@ end
 
 В dimod-example-ruby по умолчанию устанавливается версия ruby 2.2.4, предположим для нашего приложения требуется версия 2.3.1. Через директиву `chef.attributes` установлен соответствующий атрибут. [Подробнее об определении атрибутов]({{ site.baseurl }}/ruby/chef.html).
 
-Рецепты, добавляемые через директиву dimod будут запускаться перед рецептами приложения в том порядке, в котором подключаются dimod'ы. В итоге формируется последовательность рецептов в runlist: сначала все dimod'ы, затем все рецепты основного приложения. На данный момент нет поддержки запуска рецептов приложения перед рецептами из dimod'ов — но такая возможность рассматривается: [https://github.com/flant/dapp/issues/177](https://github.com/flant/dapp/issues/177).
+Рецепты, добавляемые через директиву dimod будут запускаться перед рецептами приложения в том порядке, в котором подключаются dimod'ы. В итоге формируется последовательность рецептов в runlist: сначала все dimod'ы, затем все рецепты основного приложения. На данный момент нет поддержки запуска рецептов приложения перед рецептами из dimod'ов — но такая возможность рассматривается: [https://github.com/flant/werf/issues/177](https://github.com/flant/werf/issues/177).
 
-Сборка приложения, запуск контейнера и проверка работоспособности (старый контейнер dapp-example-chef-for-advanced-build-1 требуется удалить, чтобы освободить tcp порт):
+Сборка приложения, запуск контейнера и проверка работоспособности (старый контейнер werf-example-chef-for-advanced-build-1 требуется удалить, чтобы освободить tcp порт):
 
 ```shell
-$ dapp dimg build
+$ werf dimg build
 Before install ...                                                          [OK] 677.09 sec
 Git artifacts: create archive ...                                           [OK] 2.57 sec
 Install group
@@ -123,8 +123,8 @@ Setup group
   Setup ...                                                                 [OK] 12.21 sec
   Git artifacts: apply patches (after setup) ...                            [OK] 1.97 sec
 Docker instructions ...                                                     [OK] 2.03 sec
-$ docker rm -f dapp-example-chef-for-advanced-build-1
-$ dapp dimg run --detach -p 4567:4567 --name dapp-example-chef-for-advanced-build-2
+$ docker rm -f werf-example-chef-for-advanced-build-1
+$ werf dimg run --detach -p 4567:4567 --name werf-example-chef-for-advanced-build-2
 622470f874b0497c15ea0a796267ee01203db37dc828e75c6330b7deaadf5316
 $ curl localhost:4567/message
 Hello from setup/app_config.rb recipe
@@ -133,7 +133,7 @@ Hello from setup/app_config.rb recipe
 Проверим что в образе используется версия ruby 2.3.1:
 
 ```shell
-$ docker exec -ti dapp-example-chef-for-advanced-build-2 bash -l
+$ docker exec -ti werf-example-chef-for-advanced-build-2 bash -l
 root@622470f874b0:/app# ruby --version
 ruby 2.3.1p112 (2016-04-26 revision 54768) [x86_64-linux]
 ```
@@ -160,7 +160,7 @@ package node['dimod-example-local-nginx']['nginx_package'] do
 end
 ```
 
-Порт куда nginx будет проксировать задается атрибутом `dimod-example-local-nginx.proxy\_to\_port`. Генерацию конфига для nginx стоит делать одним из последних шагов сборки образа, т.к. это быстрый процесс. Например, на стадии setup — последней пользовательской стадии из предоставляемых dapp стадий.
+Порт куда nginx будет проксировать задается атрибутом `dimod-example-local-nginx.proxy\_to\_port`. Генерацию конфига для nginx стоит делать одним из последних шагов сборки образа, т.к. это быстрый процесс. Например, на стадии setup — последней пользовательской стадии из предоставляемых werf стадий.
 
 Объявляем поддерживаемые атрибуты в файле `attributes/setup.rb`:
 
@@ -241,7 +241,7 @@ end
 Пересобираем образ, меняем порт 4567 на 80 при запуске контейнера и проверяем результат:
 
 ```shell
-$ dapp dimg build
+$ werf dimg build
 Before install ...                                                          [OK] 345.89 sec
 Git artifacts: create archive ...                                           [OK] 1.36 sec
 Install group
@@ -253,8 +253,8 @@ Setup group
   Setup ...                                                                 [OK] 5.31 sec
   Git artifacts: apply patches (after setup) ...                            [OK] 1.33 sec
 Docker instructions ...                                                     [OK] 1.61 sec
-$ docker rm -f dapp-example-chef-for-advanced-build-2
-$ dapp dimg run --detach -p 80:80 --name dapp-example-chef-for-advanced-build-2
+$ docker rm -f werf-example-chef-for-advanced-build-2
+$ werf dimg run --detach -p 80:80 --name werf-example-chef-for-advanced-build-2
 b47ff0786013132963a9cea7a6a2917ee309b274a9379a6c9b4540092962ba4e
 $ curl localhost/message
 Hello from setup/app_config.rb recipe
@@ -262,7 +262,7 @@ Hello from setup/app_config.rb recipe
 
 ### Пересборка при изменении атрибутов
 
-Изменение атрибутов, установленных через директиву `chef.attributes`, ведет к пересборке образа со стадии before\_install. Чтобы оптимизировать процесс сборки, если атрибуты используются только на определенной стадии, dapp поддерживает определение атрибутов для конкретной стадии.
+Изменение атрибутов, установленных через директиву `chef.attributes`, ведет к пересборке образа со стадии before\_install. Чтобы оптимизировать процесс сборки, если атрибуты используются только на определенной стадии, werf поддерживает определение атрибутов для конкретной стадии.
 
 В нашем примере атрибут `dimod-example-local-nginx.proxy_to_port` установлен директивой `chef.attributes`, однако используется только на стадии setup. Если попытаться изменить значение proxy\_to\_port и перезапустить сборку — произойдет пересборка всех пользовательских стадий, начиная с before\_install, и это займет долгое время. Исправим установку этого атрибута на использование директивы `chef._setup_attributes` и пересоберем приложение:
 
@@ -290,7 +290,7 @@ end
 ```
 
 ```shell
-$ dapp dimg build
+$ werf dimg build
 Before install ...                                                          [OK] 351.04 sec
 Git artifacts: create archive ...                                           [OK] 1.36 sec
 Install group
@@ -330,7 +330,7 @@ end
 ```
 
 ```shell
-$ dapp dimg build
+$ werf dimg build
 Setup group
   Git artifacts: apply patches (before setup) ...                           [OK] 1.31 sec
   Setup ...                                                                 [OK] 4.65 sec
@@ -344,4 +344,4 @@ Docker instructions ...                                                     [OK]
 
 В данном контейнере не используется никакого supervisor'а — следующим шагом было бы логично написать dimod-example-supervisor с настройкой через атрибуты, который бы устанавливал supervisor и генерировал для него конфиги для указанных приложений. Эта задача остается в качестве практики читателям.
 
-Итоговый пример со всеми подключенными dimod'ами можно найти тут: [https://github.com/flant/dapp-example-chef-for-advanced-build-2](https://github.com/flant/dapp-example-chef-for-advanced-build-2).
+Итоговый пример со всеми подключенными dimod'ами можно найти тут: [https://github.com/flant/werf-example-chef-for-advanced-build-2](https://github.com/flant/werf-example-chef-for-advanced-build-2).

@@ -6,8 +6,8 @@ entries:
   - title: Build
     sf:
 
-    - title: Dappfile
-      url: /reference/build/dappfile.html
+    - title: Config
+      url: /reference/build/config.html
 
     - title: Stages
       url: /reference/build/stages.html

@@ -12,12 +12,12 @@ Docker images should be pushed into the docker registry for further usage in mos
 
 ## What can be pushed
 
-The result of dapp [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) is a stages cache related to dimgs defined in the dappfile. Dapp can be used to push either:
+The result of werf [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) is a stages cache related to dimgs defined in the config. Werf can be used to push either:
 
-* Dimgs images. These can only be used as _images for running_. These images are not suitable for _distributes images cache_, because dapp build algorithm implies creating separate images for stages cache. When you pull a dimg from a docker registry, you don't receive stages cache for this image.
+* Dimgs images. These can only be used as _images for running_. These images are not suitable for _distributes images cache_, because werf build algorithm implies creating separate images for stages cache. When you pull a dimg from a docker registry, you don't receive stages cache for this image.
 * Dimgs images with a stages cache images. These images can be used as _images for running_ and also as a _distributed images cache_.
 
-Dapp pushes dimg into a docker registry with a so-called [**dimg push procedure**](#dimg-push-procedure). Also, dapp pushes stages cache of all dimgs from dappfile with a so-called [**stages push procedure**](#stages-push-procedure).
+Werf pushes dimg into a docker registry with a so-called [**dimg push procedure**](#dimg-push-procedure). Also, werf pushes stages cache of all dimgs from config with a so-called [**stages push procedure**](#stages-push-procedure).
 
 Before digging into these algorithms, it is helpful to see how to push images using Docker.
 
@@ -36,19 +36,19 @@ This process will be referred to as **standard push procedure**. There is a dock
 
 ### Dimg push procedure
 
-To push a dimg from the dappfile dapp implements the **dimg push procedure**. It consists of the following steps:
+To push a dimg from the config werf implements the **dimg push procedure**. It consists of the following steps:
 
-1. Perform [**dapp tag procedure**]({{ site.baseurl }}/reference/registry/image_naming.html#dapp-tag-procedure) for built dimg. The result of dapp tag is an image with a name that is compatible with the step 2 of _standard push procedure_. I.e., this image is ready to be pushed.
+1. Perform [**werf tag procedure**]({{ site.baseurl }}/reference/registry/image_naming.html#werf-tag-procedure) for built dimg. The result of werf tag is an image with a name that is compatible with the step 2 of _standard push procedure_. I.e., this image is ready to be pushed.
 2. Push newly created image into docker registry.
 3. Delete temporary image created in the 1'st step.
 
-All of these steps are performed with a single dapp push command, which will be described below.
+All of these steps are performed with a single werf push command, which will be described below.
 
 The result of this procedure is a dimg named by the [image naming]({{ site.baseurl }}/reference/registry/image_naming.html) rules pushed into the docker registry.
 
 ### Stages push procedure
 
-To push stages cache of a dimg from the dappfile dapp implements the **stages push procedure**. It consists of the following steps:
+To push stages cache of a dimg from the config werf implements the **stages push procedure**. It consists of the following steps:
 
  1. Create temporary image names aliases for all docker images in stages cache, so that:
      - [docker repository name](https://docs.docker.com/glossary/?term=repository) is a `REPO` parameter specified by the user without changes ([details about `REPO`]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter)).
@@ -56,18 +56,18 @@ To push stages cache of a dimg from the dappfile dapp implements the **stages pu
  2. Push images by newly created aliases into docker registry.
  3. Delete temporary image names aliases.
 
-All of these steps are also performed with a single dapp command, which will be described below.
+All of these steps are also performed with a single werf command, which will be described below.
 
 The result of this procedure is multiple images from stages cache of dimg pushed into the docker registry.
 
-## Dapp push
+## Werf push
 
-Dapp push command used to perform _dimg push procedure_ and optionally _stages push procedure_. Dimgs should be built with dapp [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) before calling this command.
+Werf push command used to perform _dimg push procedure_ and optionally _stages push procedure_. Dimgs should be built with werf [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) before calling this command.
 
 ### Syntax
 
 ```bash
-dapp dimg push [options] [DIMG ...] REPO
+werf dimg push [options] [DIMG ...] REPO
   --with-stages
   --tag TAG
   --tag-branch
@@ -80,22 +80,22 @@ dapp dimg push [options] [DIMG ...] REPO
 
 This command supports tag options, described in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#image-tag-parameters) article.
 
-The `DIMG` optional parameter — is a name of dimg from a dappfile. Specifying `DIMG` one or multiple times allows pushing only certain dimgs from dappfile. By default, dapp pushes all dimgs.
+The `DIMG` optional parameter — is a name of dimg from a config. Specifying `DIMG` one or multiple times allows pushing only certain dimgs from config. By default, werf pushes all dimgs.
 
 The `REPO` required parameter — is a repository name (see more in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter) article).
 
-The option `--with-stages` specifies dapp to push not only a dimg but also a stages cache for the corresponding dimg. Optional `DIMG` parameter also affects stages cache that will be pushed.
+The option `--with-stages` specifies werf to push not only a dimg but also a stages cache for the corresponding dimg. Optional `DIMG` parameter also affects stages cache that will be pushed.
 
-## Dapp bp
+## Werf bp
 
-Dapp bp stands for _build and push_. It is a command that combines the [build command]({{ site.baseurl }}/reference/cli/dimg_build.html) with a [push command](#dapp-push).
+Werf bp stands for _build and push_. It is a command that combines the [build command]({{ site.baseurl }}/reference/cli/dimg_build.html) with a [push command](#werf-push).
 
 It has an execution speed advantage over using separate build and push commands, because there are common calculation steps, that are performed only once.
 
 ### Syntax
 
 ```bash
-dapp dimg bp [options] [DIMG ...] REPO
+werf dimg bp [options] [DIMG ...] REPO
   --with-stages
   --tag TAG
   --tag-branch
@@ -108,24 +108,24 @@ dapp dimg bp [options] [DIMG ...] REPO
 
 This command supports tag options, described in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#image-tag-parameters) article.
 
-The `DIMG` optional parameter — is a name of dimg from a dappfile. Specifying `DIMG` one or multiple times allows building and pushing only certain dimgs from dappfile. By default, dapp pushes all dimgs.
+The `DIMG` optional parameter — is a name of dimg from a config. Specifying `DIMG` one or multiple times allows building and pushing only certain dimgs from config. By default, werf pushes all dimgs.
 
 The `REPO` required parameter — is a repository name (see more in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter) article).
 
-The option `--with-stages` specifies dapp to push not only a dimg but also a stages cache for the corresponding dimg. Optional `DIMG` parameter also affects stages cache that will be pushed.
+The option `--with-stages` specifies werf to push not only a dimg but also a stages cache for the corresponding dimg. Optional `DIMG` parameter also affects stages cache that will be pushed.
 
-## Dapp spush
+## Werf spush
 
-Dapp spush means _simple push_. It is a command that used to ignore [docker repository](https://docs.docker.com/glossary/?term=repository) naming rules, which described in the [image naming article]({{ site.baseurl }}/reference/registry/image_naming.html) and push docker image with the fully customized name. Unlike regular push, a name of the docker image is not related to the name of the dimg from the dappfile.
+Werf spush means _simple push_. It is a command that used to ignore [docker repository](https://docs.docker.com/glossary/?term=repository) naming rules, which described in the [image naming article]({{ site.baseurl }}/reference/registry/image_naming.html) and push docker image with the fully customized name. Unlike regular push, a name of the docker image is not related to the name of the dimg from the config.
 
 The result of calling this command is always one or more docker images with a custom docker repository names, created for a single dimg.
 
-Dimgs should be built with dapp [build commands] before calling this command.
+Dimgs should be built with werf [build commands] before calling this command.
 
 ### Syntax
 
 ```bash
-dapp dimg spush [options] [DIMG] REPO
+werf dimg spush [options] [DIMG] REPO
   --tag TAG
   --tag-branch
   --tag-build-id
@@ -137,22 +137,22 @@ dapp dimg spush [options] [DIMG] REPO
 
 This command supports tag options, described in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#image-tag-parameters) article. Multiple tags can be specified.
 
-The `REPO` required parameter — is a final [docker repository name](https://docs.docker.com/glossary/?term=repository) used AS-IS, unlike `REPO` parameter from [image naming article]({{ site.baseurl }}/reference/registry/image_naming.html). `REPO` should be unique for each dimg from the dappfile.
+The `REPO` required parameter — is a final [docker repository name](https://docs.docker.com/glossary/?term=repository) used AS-IS, unlike `REPO` parameter from [image naming article]({{ site.baseurl }}/reference/registry/image_naming.html). `REPO` should be unique for each dimg from the config.
 
-The `DIMG` optional parameter — is a name of dimg from a dappfile.
-* Parameter should be omitted only in the case when there is only single unnamed dimg in the dappfile.
-* Parameter should be specified in the case when there are several named dimgs in the dappfile. Only one dimg name can be used with this command at a time.
+The `DIMG` optional parameter — is a name of dimg from a config.
+* Parameter should be omitted only in the case when there is only single unnamed dimg in the config.
+* Parameter should be specified in the case when there are several named dimgs in the config. Only one dimg name can be used with this command at a time.
 
 `DIMG` and `REPO` are specified for each dimg individually.
 
 ## Examples
 
-### Push all dimgs from dappfile
+### Push all dimgs from config
 
-Given dappfile with three dimgs — `core`, `queue` and `api`.
+Given config with three dimgs — `core`, `queue` and `api`.
 
 ```bash
-dapp dimg push registry.hello.com/taxi/backend --tag-plain v1.1.14
+werf dimg push registry.hello.com/taxi/backend --tag-plain v1.1.14
 ```
 
 Command pushes three images into specified repo:
@@ -161,12 +161,12 @@ Command pushes three images into specified repo:
 * `registry.hello.com/taxi/backend/queue:v1.1.14`
 * `registry.hello.com/taxi/backend/api:v1.1.14`
 
-### Build and push all dimgs from dappfile with stages cache
+### Build and push all dimgs from config with stages cache
 
-Given dapp project named `geo` with dappfile, that contains two dimgs — `server`, `geodata`.
+Given werf project named `geo` with config, that contains two dimgs — `server`, `geodata`.
 
 ```bash
-dapp dimg bp registry.hello.com/api/geo --tag stable --with-stages
+werf dimg bp registry.hello.com/api/geo --tag stable --with-stages
 ```
 
 Command builds and pushes following images into specified repo:
@@ -180,12 +180,12 @@ Command builds and pushes following images into specified repo:
 
 Notice the images with the `dimgstage` prefixes in the docker tags. These are the stages cache, that was pushed along with a dimgs.
 
-### Push specified dimgs from dappfile
+### Push specified dimgs from config
 
-Given dappfile with three dimgs — `kubetools`, `backuptools` and `copytools`.
+Given config with three dimgs — `kubetools`, `backuptools` and `copytools`.
 
 ```bash
-dapp dimg push kubetools backuptools registry.hello.com/tools/common
+werf dimg push kubetools backuptools registry.hello.com/tools/common
 ```
 
 Command pushes following images into specified repo for each of the specified dimgs `kubetools` and `backuptools`:
@@ -195,10 +195,10 @@ Command pushes following images into specified repo for each of the specified di
 
 ### Push single dimg using custom docker repository name
 
-Given dappfile with two dimgs — `plain-c` and `rust`.
+Given config with two dimgs — `plain-c` and `rust`.
 
 ```bash
-dapp dimg spush plain-c myregistry.host/lingvo/parser --tag stable --tag-plain v1.4.11
+werf dimg spush plain-c myregistry.host/lingvo/parser --tag stable --tag-plain v1.4.11
 ```
 
 Command pushes image for dimg `plain-c` with two docker tags `stable` and `v1.4.11`:

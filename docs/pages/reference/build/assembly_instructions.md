@@ -58,8 +58,8 @@ summary: |
 
 ## What is user stages?
 
-***User stage*** is a [_stage_]({{ site.baseurl }}/reference/build/stages.html) with _assembly instructions_ from dappfile.
-Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. Dapp
+***User stage*** is a [_stage_]({{ site.baseurl }}/reference/build/stages.html) with _assembly instructions_ from config.
+Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. Werf
 defines 4 _user stages_ and executes them in this order: _before_install_, _install_,
 _before_setup_ and _setup_. Assembly instructions from one stage are executed to
 create one docker layer.
@@ -82,7 +82,7 @@ should be on each _stage_.
 
 ### Run assembly instruction on git changes
 
-_User stage_ execution can depend on changes of files in a git repository. Dapp
+_User stage_ execution can depend on changes of files in a git repository. Werf
 supports local and remote git repositories. User stage can be
 dependent on changes in several repositories. Different changes in one
 repository can cause a rebuild of different _user stages_.
@@ -101,8 +101,8 @@ is not so difficult.
 
 ## Usage of user stages
 
-Dapp provides 4 _user stages_ where assembly instructions can be defined. Assembly
-instructions are not limited by dapp. You can define whatever you define for `RUN`
+Werf provides 4 _user stages_ where assembly instructions can be defined. Assembly
+instructions are not limited by werf. You can define whatever you define for `RUN`
 instruction in Dockerfile. However, assembly instructions grouping arises from
 experience with real-life applications. So the vast majority of application builds
 need these actions:
@@ -206,9 +206,9 @@ shell:
   setupCacheVersion: <version>
 ```
 
-_Shell assembly instructions_ are arrays of bash commands for _user stages_. Commands for one stage are executed as one `RUN` instruction in Dockerfile, and thus dapp creates one layer for one _user stage_.
+_Shell assembly instructions_ are arrays of bash commands for _user stages_. Commands for one stage are executed as one `RUN` instruction in Dockerfile, and thus werf creates one layer for one _user stage_.
 
-Dapp provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/reference/build/base_image.html). Commands for one stage are joined with `&&` and then encoded as base64. _User stage assembly container_ runs decoding and then executes joined commands. For example, _before_install stage_ with `apt-get update` and `apt-get install` commands:
+Werf provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/reference/build/base_image.html). Commands for one stage are joined with `&&` and then encoded as base64. _User stage assembly container_ runs decoding and then executes joined commands. For example, _before_install stage_ with `apt-get update` and `apt-get install` commands:
 
 ```yaml
 beforeInstall:
@@ -221,7 +221,7 @@ These commands transform into this command for _user stage assembly container_:
 bash -ec 'eval $(echo YXB0LWdldCB1cGRhdGUgJiYgYXB0LWdldCBpbnN0YWxsIC15IGJ1aWxkLWVzc2VudGlhbCBnKysgbGliY3VybDQK | base64 --decode)'
 ```
 
-`bash` and `base64` binaries are stored in _dappdeps volume_. Details of _dappdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
+`bash` and `base64` binaries are stored in _werfdeps volume_. Details of _werfdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
 
 ## Ansible
 
@@ -253,11 +253,11 @@ ansible:
 ### Ansible config and stage playbook
 
 _Ansible assembly instructions_ for _user stage_ is a set of ansible tasks. To run
-this tasks with `ansible-playbook` command dapp mounts this directory structure
+this tasks with `ansible-playbook` command werf mounts this directory structure
 into the _user stage assembly container_:
 
 ```bash
-/.dapp/ansible-workdir
+/.werf/ansible-workdir
 ├── ansible.cfg
 ├── hosts
 └── playbook.yml
@@ -265,15 +265,15 @@ into the _user stage assembly container_:
 
 `ansible.cfg` contains settings for ansible:
 - use local transport
-- dapp stdout_callback for better logging
+- werf stdout_callback for better logging
 - turn on force_color
 - use sudo for privilege escalation (no need to use `become` in tasks)
 
 `hosts` is an inventory file and contains the only localhost. Also, there are some
-ansible_* settings, i.e., the path to python in dappdeps.
+ansible_* settings, i.e., the path to python in werfdeps.
 
 `playbook.yml` is a playbook with all tasks from one _user stage_. For example,
-`dappfile.yaml` with _install stage_ like this:
+`werf.yaml` with _install stage_ like this:
 
 ```yaml
 ansible:
@@ -289,14 +289,14 @@ ansible:
   ...
 ```
 
-dapp produces this `playbook.yml` for _install stage_:
+werf produces this `playbook.yml` for _install stage_:
 ```yaml
 - hosts: all
   gather_facts: 'no'
   tasks:
   - debug: msg='Start install'  \
   - file: path=/etc mode=0777   |
-  - copy:                        > these lines are copied from dappfile.yaml
+  - copy:                        > these lines are copied from werf.yaml
       src: /bin/sh              |
       dest: /bin/sh.orig        |
   - apk:                        |
@@ -305,22 +305,22 @@ dapp produces this `playbook.yml` for _install stage_:
   ...
 ```
 
-Dapp plays the _user stage_ playbook in the _user stage assembly container_ with `playbook-ansible`
+Werf plays the _user stage_ playbook in the _user stage assembly container_ with `playbook-ansible`
 command:
 
 ```bash
-$ export ANSIBLE_CONFIG="/.dapp/ansible-workdir/ansible.cfg"
-$ ansible-playbook /.dapp/ansible-workdir/playbook.yml
+$ export ANSIBLE_CONFIG="/.werf/ansible-workdir/ansible.cfg"
+$ ansible-playbook /.werf/ansible-workdir/playbook.yml
 ```
 
-`ansible` and `python` binaries and libraries are stored in _dappdeps/ansible volume_. Details of _dappdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
+`ansible` and `python` binaries and libraries are stored in _werfdeps/ansible volume_. Details of _werfdeps volumes_ can be found in this [blog post [RU]](https://habr.com/company/flant/blog/352432/).
 
 ### Supported modules
 
-One of the ideas behind dapp is idempotent builds. If nothing changed — dapp
+One of the ideas behind werf is idempotent builds. If nothing changed — werf
 should create the same image. This task accomplished by _signature_ calculation
 for _stages_. Ansible has non-idempotent modules — they are giving different
-results if executed twice and dapp cannot correctly calculate _signature_ to
+results if executed twice and werf cannot correctly calculate _signature_ to
 rebuild _stages_. For now, there is a list of supported modules:
 
 - [Command modules](https://docs.ansible.com/ansible/2.5/modules/list_of_commands_modules.html): command, shell, raw, script.
@@ -339,11 +339,11 @@ rebuild _stages_. For now, there is a list of supported modules:
 
 - [Utilities modules](https://docs.ansible.com/ansible/2.5/modules/list_of_utilities_modules.html): assert, debug, set_fact, wait_for.
 
-_Dappfile_ with the module not from this list gives an error and stops a build. Feel free to report an issue if some module should be enabled.
+_Werf config_ with the module not from this list gives an error and stops a build. Feel free to report an issue if some module should be enabled.
 
 ### Copy files
 
-The preferred way of copying files into an image is [_git paths_]({{ site.baseurl }}/reference/build/git_directive.html). Dapp cannot calculate changes of files referred in `copy` module. The only way to
+The preferred way of copying files into an image is [_git paths_]({{ site.baseurl }}/reference/build/git_directive.html). Werf cannot calculate changes of files referred in `copy` module. The only way to
 copy some external file into an image, for now, is to use the go-templating method
 `.Files.Get`. This method returns file content as a string. So content of the file becomes a part of _user stage signature_, and file changes lead to _user stage_
 rebuild.
@@ -361,7 +361,7 @@ ansible:
 ```
 {% endraw %}
 
-Dapp renders that snippet as go template and then transforms it into this `playbook.yml`:
+Werf renders that snippet as go template and then transforms it into this `playbook.yml`:
 
 ```yaml
 - hosts: all
@@ -416,15 +416,15 @@ src: {{`{{item}}`}}
 ### Ansible problems
 
 - Live stdout implemented for raw and command modules. Other modules display stdout and stderr content after execution.
-- Excess logging into stderr may hang ansible task execution ([issue #784](https://github.com/flant/dapp/issues/784)).
-- `apt` module hangs build process on particular debian and ubuntu versions. This affects derived images as well ([issue #645](https://github.com/flant/dapp/issues/645)).
+- Excess logging into stderr may hang ansible task execution ([issue #784](https://github.com/flant/werf/issues/784)).
+- `apt` module hangs build process on particular debian and ubuntu versions. This affects derived images as well ([issue #645](https://github.com/flant/werf/issues/645)).
 
 ## User stages dependencies
 
-One of the dapp features is an ability to define dependencies for _stage_ rebuild.
+One of the werf features is an ability to define dependencies for _stage_ rebuild.
 As described in [_stages_ reference]({{ site.baseurl }}/reference/build/stages.html), _stages_ are built one by one, and each _stage_ has
 a calculated _stage signature_. _Signatures_ have various dependencies. When
-dependencies are changed, the _stage signature_ is changed, and dapp rebuild this _stage_ and
+dependencies are changed, the _stage signature_ is changed, and werf rebuild this _stage_ and
 all following _stages_.
 
 These dependencies can be used for defining rebuild for the
@@ -456,7 +456,7 @@ shell:
 ```
 
 First, build of this dimg execute all four _user stages_. There is no _git path_ in
-this _dappfile_, so next builds never execute assembly instructions because _user
+this _config_, so next builds never execute assembly instructions because _user
 stages signatures_ not changed and build cache remains valid.
 
 Changing assembly instructions for _install user stage_:
@@ -474,7 +474,7 @@ shell:
   - echo "Commands on the Setup stage"
 ```
 
-Now `dapp dimg build` executes _install assembly instructions_ and instructions from
+Now `werf dimg build` executes _install assembly instructions_ and instructions from
 following _stages_.
 
 Go-templating and using environment variables can changes assembly instructions
@@ -513,7 +513,7 @@ So this configuration rebuilds _before_install user stage_ on every commit.
 
 As stated in a _git path_ reference, there are _git_archive_ and _git_latest_patch_ stages. _git_archive_ is executed after _before_install user stage_, and _git_latest_patch_ is executed after _setup user stage_ if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _git_archive_ with [special commit]({{site.baseurl}}/reference/build/git_directive.html#rebuild-of-git_archive-stage) or rebuild _before_install_ (change _cacheVersion_ or instructions for _before_install stage_).
 
-Dapp has additional _stages_, _git_pre_install_patch_, _git_post_install_patch_ and _git_pre_setup_patch_, to apply git patches before _install_, _before_setup_ and _setup_ user stages. These additional _stages_ make _user stages_ dependant on git repository changes so that dapp can execute assembly instructions of the particular _user stage_ with the latest version of source codes.
+Werf has additional _stages_, _git_pre_install_patch_, _git_post_install_patch_ and _git_pre_setup_patch_, to apply git patches before _install_, _before_setup_ and _setup_ user stages. These additional _stages_ make _user stages_ dependant on git repository changes so that werf can execute assembly instructions of the particular _user stage_ with the latest version of source codes.
 
 _User stage_ dependency on git repository changes is defined with `git.stageDependencies` parameter. Syntax is:
 
@@ -534,9 +534,9 @@ git:
 
 `git.stageDependencies` parameter has 3 keys: `install`, `beforeSetup` and `setup`. Each key defines an array of masks for one user stage. User stage is rebuilt if a git repository has changes in files that match with one of the masks defined for _user stage_.
 
-For each _user stage_ dapp creates a list of matched files and calculates a checksum over each file attributes and content. This checksum is a part of _stage signature_. So signature is changed with every change in a repository: getting new attributes for the file, changing file's content, adding a new matched file, deleting a matched file, etc.
+For each _user stage_ werf creates a list of matched files and calculates a checksum over each file attributes and content. This checksum is a part of _stage signature_. So signature is changed with every change in a repository: getting new attributes for the file, changing file's content, adding a new matched file, deleting a matched file, etc.
 
-`git.stageDependencies` masks work together with `git.includePaths` and `git.excludePaths` masks. dapp considers only files matched with `includePaths` filter and `stageDependencies` masks. Likewise, dapp considers only files not matched with `excludePaths` filter and matched with `stageDependencies` masks.
+`git.stageDependencies` masks work together with `git.includePaths` and `git.excludePaths` masks. werf considers only files matched with `includePaths` filter and `stageDependencies` masks. Likewise, werf considers only files not matched with `excludePaths` filter and matched with `stageDependencies` masks.
 
 `stageDependencies` masks works like `includePaths` and `excludePaths` filters. Masks are matched with files paths with [fnmatch method](https://ruby-doc.org/core-2.2.0/File.html#method-c-fnmatch). Masks may contain the following patterns:
 
@@ -546,18 +546,18 @@ For each _user stage_ dapp creates a list of matched files and calculates a chec
 - `[set]` — matches any one character in the set. Behaves exactly like character sets in regexp, including set negation ([^a-z])
 - `\` — escapes the next metacharacter
 
-Mask that starts with `*` or `**` patterns should be escaped with quotes in `dappfile.yaml` file:
+Mask that starts with `*` or `**` patterns should be escaped with quotes in `werf.yaml` file:
 
 - `"*.rb"` — with double quotes
 - `'**/*'` — with single quotes
 
-Dapp determines whether the files changes in the git repository with use of checksums. For _user stage_ and for each mask, the following algorithm is applied:
+Werf determines whether the files changes in the git repository with use of checksums. For _user stage_ and for each mask, the following algorithm is applied:
 
-- dapp creates a list of all files from `add` path and apply `excludePaths` and `includePaths` filters
+- werf creates a list of all files from `add` path and apply `excludePaths` and `includePaths` filters
 - each file path from the list compared to the mask with the use of [fnmatch](https://ruby-doc.org/core-2.2.0/File.html#method-c-fnmatch) with FNM_PATHNAME and FNM_PERIOD flags (`.` is included in the `*`, however `/` is excluded);
   - if fnmatch returns true, then the file is matched;
 - if mask matches a directory then this directory content is matched recursively;
-- dapp calculates checksum of attributes and content of all matched files;
+- werf calculates checksum of attributes and content of all matched files;
 
 These checksums are calculated in the beginning of the build process before any stage container is ran.
 
@@ -579,7 +579,7 @@ shell:
   - echo "beforeSetup stage"
 ```
 
-This `dappfile.yaml` has a git path configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _git_archive stage_ and assembly instructions for _install_ and _before_setup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src`, then checksums of matched files are changed, and dapp rebuilds _git_post_install_patch stage_ and _before_setup_ stages.
+This `werf.yaml` has a git path configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _git_archive stage_ and assembly instructions for _install_ and _before_setup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src`, then checksums of matched files are changed, and werf rebuilds _git_post_install_patch stage_ and _before_setup_ stages.
 
 ## Dependency on CacheVersion values
 
@@ -594,7 +594,7 @@ subsequent stages), you need to change the value of the `installCacheVersion` pa
 
 ### Example: common image for multiple applications
 
-You can define an image with common packages in separated `dappfile.yaml`. `cacheVersion` value can be used to rebuild this image to refresh packages versions.
+You can define an image with common packages in separated `werf.yaml`. `cacheVersion` value can be used to rebuild this image to refresh packages versions.
 
 ```yaml
 dimg: ~
@@ -610,7 +610,7 @@ This image can be used as base image for multiple applications if images from hu
 
 ### External dependency example
 
-_CacheVersion directives_ can be used with [go templates]({{ site.baseurl }}/reference/build/dappfile.html#go-templates) to define _user stage_ dependency on files, not in the git tree. 
+_CacheVersion directives_ can be used with [go templates]({{ site.baseurl }}/reference/build/config.html#go-templates) to define _user stage_ dependency on files, not in the git tree. 
 
 {% raw %}
 ```yaml
@@ -624,4 +624,4 @@ shell:
 ```
 {% endraw %}
 
-Build script can be used to download `some-library-latest.tar.gz` archive and then execute `dapp dimg build` command. If the file is changed then dapp rebuilds _install user stage_ and subsequent stages.
+Build script can be used to download `some-library-latest.tar.gz` archive and then execute `werf dimg build` command. If the file is changed then werf rebuilds _install user stage_ and subsequent stages.

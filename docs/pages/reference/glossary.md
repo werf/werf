@@ -4,17 +4,17 @@ sidebar: reference
 permalink: reference/glossary.html
 ---
 
-## Dappfile
-— is a configuration to build docker images by dapp.
+## Werf config
+— is a configuration to build docker images by werf.
 
-## Dapp name
+## Werf name
 
-_Dapp name_ is either:
+_Werf name_ is either:
 
 * a last element of git repository path from `remote.origin.url` git config parameter;
-* or directory name, where dappfile reside, in the case when no git repository used or `remote.origin.url` parameter is absent.
+* or directory name, where config reside, in the case when no git repository used or `remote.origin.url` parameter is absent.
 
-_Dapp name_ can be explicitly specified with `--name` basic option of the most dapp commands.
+_Werf name_ can be explicitly specified with `--name` basic option of the most werf commands.
 
 ## Dimg
 — is the named set of rules to build one docker image. 
@@ -25,12 +25,12 @@ _Dapp name_ can be explicitly specified with `--name` basic option of the most d
 — is special _dimg_ that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
 
 ## Stage
-— is a logically grouped set of dappfile instructions, as well as the conditions and rules by which these instructions are assembled.
+— is a logically grouped set of config instructions, as well as the conditions and rules by which these instructions are assembled.
 
-The dapp assembly process is a sequential build of _stages_.
+The werf assembly process is a sequential build of _stages_.
 
 ## User stage
-— is a _stage_ with assembly instructions from dappfile.
+— is a _stage_ with assembly instructions from config.
 
 ## Stage assembly container
 — is container for assembling stage instructions based on previous stage image (or on _base image_ for _from stage_).

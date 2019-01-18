@@ -3,256 +3,256 @@ entries:
   type: "app artifact"
   signatures:
   - name: from <image>
-    dependence: 
-    - from-dappfile-image
+    dependence:
+    - from-werf-image
   - name: from <cache_version>
-    dependence: 
-    - from-dappfile-cache-version
+    dependence:
+    - from-werf-cache-version
   - name: mount
     dependence:
-    - from-dappfile-to
-  dappfile_base: "docker.from &lt;image&gt;[, cache_version: &lt;cache_version&gt;]<br />mount &lt;to&gt;"
+    - from-werf-to
+  werf_base: "docker.from &lt;image&gt;[, cache_version: &lt;cache_version&gt;]<br />mount &lt;to&gt;"
 - name: before_install
   type: "app artifact"
   signatures:
   - name: from.signature
-    dependence: 
+    dependence:
     - from-signature
   - name: before_install.context
-    dependence: 
+    dependence:
     - before-install-context
   context_shell:
   - name: before install <cmd>
-    dependence: 
-    - before-install-dappfile-cmd
+    dependence:
+    - before-install-werf-cmd
   context_chef:
   - name: реклама
-    dependence: 
-    - before-install-dappfile
-  dappfile_shell: "shell.before_install &lt;cmd&gt;[, &lt;cmd&gt; ...]"
-  dappfile_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
+    dependence:
+    - before-install-werf
+  werf_shell: "shell.before_install &lt;cmd&gt;[, &lt;cmd&gt; ...]"
+  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
 - name: before_install_artifact
   type: "app artifact"
   signatures:
   - name: before_install_signature
-    dependence: 
+    dependence:
     - before-install-signature
   - name: before install artifacts signatures
   - name: before install artifacts parameters
-    dependence: 
-    - before-install-artifact-dappfile
-  dappfile_base: "artifact &lt;where_to_add&gt;, before: \"install\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
+    dependence:
+    - before-install-artifact-werf
+  werf_base: "artifact &lt;where_to_add&gt;, before: \"install\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
 - name: git_artifact_archive
   type: "app artifact"
   signatures:
   - name: before_install_artifact.signature
-    dependence: 
+    dependence:
     - before-install-artifact-signature
   - name: git artifacts parameters
-    dependence: 
-    - git-artifact-archive-dappfile
-  dappfile_base: "git_artifact.local &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]<br />git_artifact.remote &lt;url&gt;, &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
+    dependence:
+    - git-artifact-archive-werf
+  werf_base: "git_artifact.local &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]<br />git_artifact.remote &lt;url&gt;, &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
 - name: git_artifact_pre_install_patch
   type: "app artifact"
   signatures:
   - name: git_artifact_archive.signature
-    dependence: 
+    dependence:
     - git-artifact-archive-signature
   - name: install.context
-    dependence: 
+    dependence:
     - install-context
 - name: install
   type: "app artifact"
   signatures:
   - name: git_artifact_pre_install_patch.signature
-    dependence: 
+    dependence:
     - git-artifact-pre-install-patch-signature
   context_base:
   - name: install git dependencies
   context_shell:
   - name: install <cmd>
-    dependence: 
-    - install-dappfile-cmd
+    dependence:
+    - install-werf-cmd
   context_chef:
   - name: реклама
-    dependence: 
-    - install-dappfile-mod
-    - install-dappfile-recipe
-  dappfile_shell: "shell.install &lt;cmd&gt;[, &lt;cmd&gt; ...]"
-  dappfile_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
+    dependence:
+    - install-werf-mod
+    - install-werf-recipe
+  werf_shell: "shell.install &lt;cmd&gt;[, &lt;cmd&gt; ...]"
+  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
 - name: git_artifact_post_install_patch
   type: "app artifact"
   signatures:
   - name: install.signature
-    dependence: 
+    dependence:
     - install-signature
   - name: before_setup.context
-    dependence: 
+    dependence:
     - before-setup-context
 - name: after_install_artifact
   type: "app artifact"
   signatures:
   - name: git_artifact_post_install_patch.signature
-    dependence: 
+    dependence:
     - git-artifact-post-install-patch-signature
   - name: after install artifacts signatures
   - name: after install artifacts parameters
-    dependence: 
-    - after-install-artifact-dappfile
-  dappfile_base: "artifact &lt;where_to_add&gt;, after: \"install\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
+    dependence:
+    - after-install-artifact-werf
+  werf_base: "artifact &lt;where_to_add&gt;, after: \"install\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
 - name: before_setup
   type: "app artifact"
   signatures:
   - name: after_install_artifact.signature
-    dependence: 
+    dependence:
     - after-install-artifact-signature
   context_base:
   - name: before_setup git dependencies
   context_shell:
   - name: before_setup <cmd>
-    dependence: 
-    - before_setup-dappfile-cmd
+    dependence:
+    - before_setup-werf-cmd
   context_chef:
   - name: реклама
-    dependence: 
-    - before_setup-dappfile
-  dappfile_shell: shell.before_setup <cmd&gt;[, <cmd&gt; ...]
-  dappfile_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
+    dependence:
+    - before_setup-werf
+  werf_shell: shell.before_setup <cmd&gt;[, <cmd&gt; ...]
+  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
 - name: before_setup_artifact
   type: "app artifact"
   signatures:
   - name: before_setup.signature
-    dependence: 
+    dependence:
     - before-setup-signature
   - name: before setup artifacts signatures
   - name: before setup artifacts parameters
-    dependence: 
-    - before-setup-artifact-dappfile
-  dappfile_base: "artifact &lt;where_to_add&gt;, before: \"setup\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
+    dependence:
+    - before-setup-artifact-werf
+  werf_base: "artifact &lt;where_to_add&gt;, before: \"setup\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
 - name: git_artifact_pre_setup_patch
   type: "app artifact"
   signatures:
   - name: before_setup_artifact.signature
-    dependence: 
+    dependence:
     - before-setup-artifact-signature
   - name: setup.context
-    dependence: 
+    dependence:
     - setup-context
 - name: setup
   type: "app artifact"
   signatures:
   - name: git_artifact_pre_setup_patch.signature
-    dependence: 
+    dependence:
     - git-artifact-pre-setup-patch-signature
   context_base:
   - name: setup git dependencies
   context_shell:
   - name: setup <cmd>
-    dependence: 
-    - setup-dappfile-cmd
+    dependence:
+    - setup-werf-cmd
   context_chef:
   - name: реклама
-    dependence: 
-    - setup-dappfile-mod
-    - setup-dappfile-recipe
-  dappfile_shell: "shell.setup &lt;cmd&gt;[, &lt;cmd&gt; ...]"
-  dappfile_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
+    dependence:
+    - setup-werf-mod
+    - setup-werf-recipe
+  werf_shell: "shell.setup &lt;cmd&gt;[, &lt;cmd&gt; ...]"
+  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
 - name: git_artifact_post_setup_patch
   type: "app"
   signatures:
   - name: setup.signature
-    dependence: 
+    dependence:
     - setup-signature
   - name: git artifacts patch size
 - name: after_setup_artifact
   type: "app"
   signatures:
   - name: git_artifact_post_setup_patch.signature
-    dependence: 
+    dependence:
     - git-artifact-post-setup-patch-signature
   - name: after setup artifacts signatures
   - name: after setup artifacts parameters
-    dependence: 
-    - after-setup-artifact-dappfile
-  dappfile_base: "artifact &lt;where_to_add&gt;, after: \"setup\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
+    dependence:
+    - after-setup-artifact-werf
+  werf_base: "artifact &lt;where_to_add&gt;, after: \"setup\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
 - name: after_setup_artifact (not app)
   type: "artifact"
   signatures:
   - name: setup.signature
-    dependence: 
+    dependence:
     - setup-signature
   - name: after setup artifacts signatures
   - name: after setup artifacts parameters
-    dependence: 
-    - after-setup-artifact-not-app-dappfile
-  dappfile_base: "artifact &lt;where_to_add&gt;, after: \"setup\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
+    dependence:
+    - after-setup-artifact-not-app-werf
+  werf_base: "artifact &lt;where_to_add&gt;, after: \"setup\"[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]"
 - name: git_artifact_latest_patch
   type: "app"
   signatures:
   - name: after_setup_artifact.signature
-    dependence: 
+    dependence:
     - after-setup-artifact-signature
   - name: git artifacts latest patches
 - name: docker_instructions
   type: "app"
   signatures:
   - name: git_artifact_latest_patch.signature
-    dependence: 
+    dependence:
     - git-artifact-latest-patch-signature
   - name: docker instructions
-    dependence: 
-    - docker-instructions-dappfile
-  dappfile_base: "docker.cmd &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.env &lt;env_name&gt;: &lt;env_value&gt;[, &lt;env_name&gt;: &lt;env_value&gt; ...]<br />docker.entrypoint &lt;cmd&gt;[, &lt;arg&gt; ...]<br />docker.expose &lt;expose&gt;[, &lt;expose&gt; ...]<br />docker.label &lt;label_key&gt;: &lt;label_value&gt;[, &lt;label_key&gt;: &lt;label_value&gt; ...]<br />docker.onbuild &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.user &lt;user&gt;<br />docker.volume &lt;volume&gt;[, &lt;volume&gt; ...]<br />docker.workdir &lt;path&gt;"
+    dependence:
+    - docker-instructions-werf
+  werf_base: "docker.cmd &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.env &lt;env_name&gt;: &lt;env_value&gt;[, &lt;env_name&gt;: &lt;env_value&gt; ...]<br />docker.entrypoint &lt;cmd&gt;[, &lt;arg&gt; ...]<br />docker.expose &lt;expose&gt;[, &lt;expose&gt; ...]<br />docker.label &lt;label_key&gt;: &lt;label_value&gt;[, &lt;label_key&gt;: &lt;label_value&gt; ...]<br />docker.onbuild &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.user &lt;user&gt;<br />docker.volume &lt;volume&gt;[, &lt;volume&gt; ...]<br />docker.workdir &lt;path&gt;"
 - name: import_artifact
   type: "scratch"
   signatures:
   - name: import artifact artifacts signatures
   - name: import artifact artifacts parameters
     dependence:
-    - import-artifact-dappfile-where-to-add
-    - import-artifact-dappfile-cwd
-    - import-artifact-dappfile-paths
-    - import-artifact-dappfile-exclude-paths
-    - import-artifact-dappfile-owner
-    - import-artifact-dappfile-group
+    - import-artifact-werf-where-to-add
+    - import-artifact-werf-cwd
+    - import-artifact-werf-paths
+    - import-artifact-werf-exclude-paths
+    - import-artifact-werf-owner
+    - import-artifact-werf-group
   - name: docker instructions
     dependence:
-    - import-artifact-dappfile-cmd
-    - import-artifact-dappfile-arg
-    - import-artifact-dappfile-env-name
-    - import-artifact-dappfile-env-value
-    - import-artifact-dappfile-expose
-    - import-artifact-dappfile-label-key
-    - import-artifact-dappfile-label-value
-    - import-artifact-dappfile-user
-    - import-artifact-dappfile-volume
-    - import-artifact-dappfile-path-26
-  dappfile_base: "artifact &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]<br />docker.cmd &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.env &lt;env_name&gt;: &lt;env_value&gt;[, &lt;env_name&gt;: &lt;env_value&gt; ...]<br />docker.entrypoint &lt;cmd&gt;[, &lt;arg&gt; ...]<br />docker.expose &lt;expose&gt;[, &lt;expose&gt; ...]<br />docker.label &lt;label_key&gt;: &lt;label_value&gt;[, &lt;label_key&gt;: &lt;label_value&gt; ...]<br />docker.onbuild &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.user &lt;user&gt;<br />docker.volume &lt;volume&gt;[, &lt;volume&gt; ...]<br />docker.workdir &lt;path&gt;"
+    - import-artifact-werf-cmd
+    - import-artifact-werf-arg
+    - import-artifact-werf-env-name
+    - import-artifact-werf-env-value
+    - import-artifact-werf-expose
+    - import-artifact-werf-label-key
+    - import-artifact-werf-label-value
+    - import-artifact-werf-user
+    - import-artifact-werf-volume
+    - import-artifact-werf-path-26
+  werf_base: "artifact &lt;where_to_add&gt;[, cwd: &lt;cwd&gt;, paths: &lt;paths&gt;, exclude_paths: &lt;exclude_paths&gt;, owner: &lt;owner&gt;, group: &lt;group&gt;]<br />docker.cmd &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.env &lt;env_name&gt;: &lt;env_value&gt;[, &lt;env_name&gt;: &lt;env_value&gt; ...]<br />docker.entrypoint &lt;cmd&gt;[, &lt;arg&gt; ...]<br />docker.expose &lt;expose&gt;[, &lt;expose&gt; ...]<br />docker.label &lt;label_key&gt;: &lt;label_value&gt;[, &lt;label_key&gt;: &lt;label_value&gt; ...]<br />docker.onbuild &lt;cmd&gt;[, &lt;cmd&gt; ...]<br />docker.user &lt;user&gt;<br />docker.volume &lt;volume&gt;[, &lt;volume&gt; ...]<br />docker.workdir &lt;path&gt;"
 - name: git_artifact_artifact_patch
   type: "artifact"
   signatures:
   - name: after_setup_artifact.signature
-    dependence: 
+    dependence:
     - after-setup-artifact-not-app-signature
   - name: build_artifact.context
-    dependence: 
+    dependence:
     - build-artifact-context
 - name: build_artifact
   type: "artifact"
   signatures:
   - name: git_artifact_artifact_patch.signature
-    dependence: 
+    dependence:
     - git-artifact-artifact-patch-signature
   context_base:
   - name: build artifact git dependencies
   context_shell:
   - name: shell.build_artifact <cmd>
-    dependence: 
-    - build-artifact-dappfile-cmd
+    dependence:
+    - build-artifact-werf-cmd
   context_chef:
   - name: реклама
-    dependence: 
-    - build_artifact-dappfile-mod
-    - build_artifact-dappfile-recipe
-  dappfile_shell: "shell.build_artifact &lt;cmd&gt;[, &lt;cmd&gt; ...]"
-  dappfile_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"
+    dependence:
+    - build_artifact-werf-mod
+    - build_artifact-werf-recipe
+  werf_shell: "shell.build_artifact &lt;cmd&gt;[, &lt;cmd&gt; ...]"
+  werf_chef: "chef.module &lt;mod&gt;[, &lt;mod&gt; ...]<br />chef.recipe &lt;recipe&gt;[, &lt;recipe&gt; ...]"

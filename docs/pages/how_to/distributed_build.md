@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-Dapp can store [_stages cache_](https://flant.github.io/dapp/reference/build/stages.html#what-is-a-stage) in a Docker registry. It gives an opportunity to use a distributed build in the following cases:
+Werf can store [_stages cache_](https://flant.github.io/werf/reference/build/stages.html#what-is-a-stage) in a Docker registry. It gives an opportunity to use a distributed build in the following cases:
 * **Dynamic resources.** You can setup a dynamic allocation of resources for building by using cloud providers. These resources can be temporary, so in build time a stages cache may be absent.
 * **More than one build nodes.** If you have more than one nodes (hosts) for building images, you need to synchronize stages cache before building an image.
 
@@ -25,13 +25,13 @@ In this tutorial, we setup the CI/CD process using GitLab CI and two persistent 
 * Kubernetes cluster
 * Server with GitLab above 10.x version (or account on [SaaS GitLab](https://gitlab.com/));
 * Docker registry (GitLab embedded or somewhere else);
-* A GitLab project with an application, you can successfully build with dapp (e.g., PHP [Symfony application](https://github.com/symfony/demo)).
+* A GitLab project with an application, you can successfully build with werf (e.g., PHP [Symfony application](https://github.com/symfony/demo)).
 * Two hosts for building (**build nodes**) with:
   * GitLab runner installed and activated for the project with the `build` tag;
-  * dapp installed (same versions on both nodes);
+  * werf installed (same versions on both nodes);
 * Host for deploying (**deploy node**) with:
     * GitLab runner installed and activated for the project with the `deploy` tag;
-    * dapp installed;
+    * werf installed;
     * helm installed and initialized;
     * kubectl CLI tool configured to communicate with the Kubernetes cluster;
 
@@ -39,9 +39,9 @@ In this tutorial, we setup the CI/CD process using GitLab CI and two persistent 
 
 ![]({{ site.baseurl }}/images/howto_distributed_build1.png)
 
-> We don't recommend to run dapp in docker for now as it can give an unexpected result.
+> We don't recommend to run werf in docker for now as it can give an unexpected result.
 
-To set up the CI/CD process, you need to describe build, deploy and cleanup stages. For all of these stages, a GitLab runner with shell executor is needed to run dapp.
+To set up the CI/CD process, you need to describe build, deploy and cleanup stages. For all of these stages, a GitLab runner with shell executor is needed to run werf.
 
 Build nodes need access to the application git repository and to the docker registry, while the deployment node additionally needs access to the kubernetes cluster.
 
@@ -77,11 +77,11 @@ Build:
   stage: build
   script:
   ## The line below uses for debugging
-  - dapp --version; pwd; set -x
+  - werf --version; pwd; set -x
   ## Pull stages caсhe
-  - dapp dimg stages pull ${CI_REGISTRY_IMAGE}
+  - werf dimg stages pull ${CI_REGISTRY_IMAGE}
   ## build dimg's than push it with the stages cache
-  - dapp dimg bp --with-stages ${CI_REGISTRY_IMAGE} --tag-ci
+  - werf dimg bp --with-stages ${CI_REGISTRY_IMAGE} --tag-ci
   ## Specify to use runner with the build tag.
   tags:
   - build
@@ -94,8 +94,8 @@ Build:
 It is better to use bp command instead of separate steps with the build and push commands.
 
 Pay attention to the two important moments:
-* There is a `stages pull` step, before build, on which dapp download latest stages cache.
-* There is a build and push stage with the [\-\-with-stages]({{ site.baseurl }}/reference/registry/push.html#dapp-bp) option.
+* There is a `stages pull` step, before build, on which werf download latest stages cache.
+* There is a build and push stage with the [\-\-with-stages]({{ site.baseurl }}/reference/registry/push.html#werf-bp) option.
 
 Two main steps allow distributing cache work.
 
@@ -128,9 +128,9 @@ Add the following lines to `.gitlab-ci.yml` file:
   ##                  jq ".metadata.namespace = \"${APP_NAMESPACE}\"|
   ##                  del(.metadata.annotations,.metadata.creationTimestamp,.metadata.resourceVersion,.metadata.selfLink,.metadata.uid)" |
   ##                  kubectl apply -f -
-  - dapp --version; pwd; set -x
+  - werf --version; pwd; set -x
   ## Next command makes deploy and will be discussed further
-  - dapp kube deploy
+  - werf kube deploy
       --tag-ci
       --namespace ${APP_NAMESPACE}
       --set "global.env=${CI_ENVIRONMENT_SLUG}"
@@ -139,13 +139,13 @@ Add the following lines to `.gitlab-ci.yml` file:
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
   - build
-  ## We need to use deploy runner, because dapp needs to interact with the kubectl
+  ## We need to use deploy runner, because werf needs to interact with the kubectl
   tags:
   - deploy
 ```
 
-Pay attention to `dapp kube deploy` command. It is the main step in deploying the application and note that:
-* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `dapp kube deploy`) otherwise you can't use dapp templates `dapp_container_image` and `dapp_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/templates.html));
+Pay attention to `werf kube deploy` command. It is the main step in deploying the application and note that:
+* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf kube deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/templates.html));
 * we've used the `APP_NAMESPACE` variable, defined at the top of the `.gitlab-ci.yml` file (it is not one of the GitLab [environments](https://docs.gitlab.com/ee/ci/variables/README.html));
 * we've passed the `global.env` parameter, which contains the name of the environment. You can access it in helm templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
 * we've passed the `global.ci_url` parameter, which contains an URL of the environment. You can use it in your helm templates, e.g. to configure ingress.
@@ -193,15 +193,15 @@ Pay attention to `environment.url` — as we deploy the application to productio
 
 ### Cleanup stages
 
-Dapp has an efficient cleanup functionality which can help you to avoid overflow registry and disk space on _build nodes_. You can read more about dapp cleanup functionality [here]({{ site.baseurl }}/reference/registry/cleaning.html).
+Werf has an efficient cleanup functionality which can help you to avoid overflow registry and disk space on _build nodes_. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/reference/registry/cleaning.html).
 
-In the results of dapp works, we have images in a registry and a build cache. Build cache exists only on build node and to the registry dapp push only built images.
+In the results of werf works, we have images in a registry and a build cache. Build cache exists only on build node and to the registry werf push only built images.
 
 There are two stages — `cleanup_registry` and `cleanup_builder`, in the `.gitlab-ci.yml` file for the cleanup process. Every stage has only one job in it and order of stage definition (see `stages` list in the top of the `.gitlab-ci.yml` file) is essential.
 
-The first step in the cleanup process is to clean registry from unused images (built from stale or deleted branches and so on — see more [about dapp cleanup]({{ site.baseurl }}/reference/registry/cleaning.html)). This work will be done on the `cleanup_registry` stage. On this stage, dapp connect to the registry and to the kubernetes cluster. That is why at this stage we need to use deploy runner. From kubernetes cluster, dapp gets info about images are currently used by pods.
+The first step in the cleanup process is to clean registry from unused images (built from stale or deleted branches and so on — see more [about werf cleanup]({{ site.baseurl }}/reference/registry/cleaning.html)). This work will be done on the `cleanup_registry` stage. On this stage, werf connect to the registry and to the kubernetes cluster. That is why at this stage we need to use deploy runner. From kubernetes cluster, werf gets info about images are currently used by pods.
 
-The second step — is to clean up cache on the build node **after** registry has been cleaned. The important word is — after, because dapp will use info from the registry to clean up build cache, and if you haven't cleaned registry you won't get an efficiently cleaned build cache. That's why is important that the `cleanup_builder` stage starts after the `cleanup_registry` stage.
+The second step — is to clean up cache on the build node **after** registry has been cleaned. The important word is — after, because werf will use info from the registry to clean up build cache, and if you haven't cleaned registry you won't get an efficiently cleaned build cache. That's why is important that the `cleanup_builder` stage starts after the `cleanup_registry` stage.
 
 Add the following lines to `.gitlab-ci.yml` file:
 
@@ -209,8 +209,8 @@ Add the following lines to `.gitlab-ci.yml` file:
 Cleanup registry:
   stage: cleanup_registry
   script:
-  - dapp --version; pwd; set -x
-  - dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
+  - werf --version; pwd; set -x
+  - werf dimg cleanup repo ${CI_REGISTRY_IMAGE}
   only:
   - schedules
   tags:
@@ -219,8 +219,8 @@ Cleanup registry:
 Cleanup builder:
   stage: cleanup_builder
   script:
-  - dapp --version; pwd; set -x
-  - dapp dimg stages cleanup local
+  - werf --version; pwd; set -x
+  - werf dimg stages cleanup local
       --improper-cache-version
       --improper-git-commit
       --improper-repo-cache
@@ -233,7 +233,7 @@ Cleanup builder:
 
 To use cleanup, you should create `Personal Access Token` with necessary rights and put it into the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_CLEANUP_REGISTRY_PASSWORD` and a value consisting of `Personal Access Token`.
 
-> Note: `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable is used by dapp only for deleting images in the registry when running `dapp dimg cleanup repo` command. In the other cases, dapp uses `CI_JOB_TOKEN`.
+> Note: `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable is used by werf only for deleting images in the registry when running `werf dimg cleanup repo` command. In the other cases, werf uses `CI_JOB_TOKEN`.
 
 For the demo project create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
 
@@ -261,11 +261,11 @@ Build:
   stage: build
   script:
   ## The line below uses for debugging
-  - dapp --version; pwd; set -x
+  - werf --version; pwd; set -x
   ## Pull stages caсhe
-  - dapp dimg stages pull ${CI_REGISTRY_IMAGE}
+  - werf dimg stages pull ${CI_REGISTRY_IMAGE}
   ## build dimg's than push it with the stages cache
-  - dapp dimg bp --with-stages ${CI_REGISTRY_IMAGE} --tag-ci
+  - werf dimg bp --with-stages ${CI_REGISTRY_IMAGE} --tag-ci
   ## Specify to use runner with the build tag.
   tags:
   - build
@@ -286,9 +286,9 @@ Build:
   ##                  jq ".metadata.namespace = \"${APP_NAMESPACE}\"|
   ##                  del(.metadata.annotations,.metadata.creationTimestamp,.metadata.resourceVersion,.metadata.selfLink,.metadata.uid)" |
   ##                  kubectl apply -f -
-  - dapp --version; pwd; set -x
+  - werf --version; pwd; set -x
   ## Next command makes deploy and will be discussed further
-  - dapp kube deploy
+  - werf kube deploy
       --tag-ci
       --namespace ${APP_NAMESPACE}
       --set "global.env=${CI_ENVIRONMENT_SLUG}"
@@ -297,7 +297,7 @@ Build:
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
   - build
-  ## We need to use deploy runner, because dapp needs to interact with the kubectl
+  ## We need to use deploy runner, because werf needs to interact with the kubectl
   tags:
   - deploy
 
@@ -317,8 +317,8 @@ Review:
 Stop review:
   stage: deploy
   script:
-  - dapp --version; pwd; set -x
-  - dapp kube dismiss --namespace ${APP_NAMESPACE} --with-namespace
+  - werf --version; pwd; set -x
+  - werf kube dismiss --namespace ${APP_NAMESPACE} --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
@@ -355,8 +355,8 @@ Deploy to Production:
 Cleanup registry:
   stage: cleanup_registry
   script:
-  - dapp --version; pwd; set -x
-  - dapp dimg cleanup repo ${CI_REGISTRY_IMAGE}
+  - werf --version; pwd; set -x
+  - werf dimg cleanup repo ${CI_REGISTRY_IMAGE}
   only:
   - schedules
   tags:
@@ -365,8 +365,8 @@ Cleanup registry:
 Cleanup builder:
   stage: cleanup_builder
   script:
-  - dapp --version; pwd; set -x
-  - dapp dimg stages cleanup local
+  - werf --version; pwd; set -x
+  - werf dimg stages cleanup local
       --improper-cache-version
       --improper-git-commit
       --improper-repo-cache
@@ -380,20 +380,20 @@ Cleanup builder:
 
 </details>
 
-With the added `.gitlab-ci.yml`, you can build the application on any runner with such dapp advantages as using stages cache.
+With the added `.gitlab-ci.yml`, you can build the application on any runner with such werf advantages as using stages cache.
 
-When `dapp dimg stages pull <registry_address>` executed, dapp looks into dappfile, calculates signatures of stages and pulls only last available in a Docker registry image, according to stages conveyor.
+When `werf dimg stages pull <registry_address>` executed, werf looks into config, calculates signatures of stages and pulls only last available in a Docker registry image, according to stages conveyor.
 
-> If you need to pull images of every stage you can use `--all` option with `dapp dimg stages pull` command.
+> If you need to pull images of every stage you can use `--all` option with `werf dimg stages pull` command.
 
-Make changes in the dappfile and push it. Retry build stage several times and compare job logs. You will see that dapp uses cache and build only stage with changes and stages after that stage, according to the stage conveyor.
+Make changes in the config and push it. Retry build stage several times and compare job logs. You will see that werf uses cache and build only stage with changes and stages after that stage, according to the stage conveyor.
 
 ## Conclusions
 
-Dapp can use a distributed cache and can work with:
+Werf can use a distributed cache and can work with:
 * **Dynamic resources.** You can start build node on-demand, pull stages cache and build n image.
 * **More than one build nodes.** You can have more than one build nodes in your environment.
 
 The only steps you need are:
-* pull existing stages cache from the Docker registry with the `dapp dimg stages pull REPO` command before building;
-* build images and push it with stages cache to the Docker registry with the `dapp dimg bp --with-stages REPO` command.
+* pull existing stages cache from the Docker registry with the `werf dimg stages pull REPO` command before building;
+* build images and push it with stages cache to the Docker registry with the `werf dimg bp --with-stages REPO` command.

@@ -1,19 +1,19 @@
 ---
-title: Dapp Frequently Asked Questions
+title: Werf Frequently Asked Questions
 permalink: faq.html
 layout: page
 ---
 
 ## General
 
-[Q: Can I use different dapp/docker version for build and for deploy?](#general-1){:id="general-1"}
+[Q: Can I use different werf/docker version for build and for deploy?](#general-1){:id="general-1"}
 
-In some case, you can and it will work, but please try to avoid this and use latest dapp version.
+In some case, you can and it will work, but please try to avoid this and use latest werf version.
 
 
-## Dappfile
+## Werf config
 
-[Q: How to convert **COPY . /var/app** instruction from Dockerfile to dappfile.yaml?](#dappfile-1){:id="dappfile-1"}
+[Q: How to convert **COPY . /var/app** instruction from Dockerfile to werf.yaml?](#config-1){:id="config-1"}
 
 To add files from local git repository you can use the following:
 
@@ -24,14 +24,14 @@ git:
 ```
 
 
-[Q: How to specify stageDependency to all files in all subdirectories?](#dappfile-2){:id="dappfile-2"}
+[Q: How to specify stageDependency to all files in all subdirectories?](#config-2){:id="config-2"}
 
 You can use `**/*` mask.
 
 
-[Q: How can I use environment variable in dappfile?](#dappfile-3){:id="dappfile-3"}
+[Q: How can I use environment variable in config?](#config-3){:id="config-3"}
 
-Use [sprig env function](http://masterminds.github.io/sprig/os.html), `{% raw %}{{ env "ENV_NAME" }}{% endraw %}`, for dappfile.yaml:
+Use [sprig env function](http://masterminds.github.io/sprig/os.html), `{% raw %}{{ env "ENV_NAME" }}{% endraw %}`, for werf.yaml:
 
 {% raw %}
 ```yaml
@@ -51,16 +51,16 @@ git:
 ```
 {% endraw %}
 
-[Q: Can I set an environment variable to use it during build?](#dappfile-4){:id="dappfile-4"}
+[Q: Can I set an environment variable to use it during build?](#config-4){:id="config-4"}
 
-We recommend to build an image which building instructions depend on your code but not on an environment in build time. In other words, you better build one image, which you can run in any environment, and this image has to change its logic when it runs rely on environment variables. If building stage will depend on such black box like changing environments you can get an unexpected behavior of dapp builder and unexpected results.
+We recommend to build an image which building instructions depend on your code but not on an environment in build time. In other words, you better build one image, which you can run in any environment, and this image has to change its logic when it runs rely on environment variables. If building stage will depend on such black box like changing environments you can get an unexpected behavior of werf builder and unexpected results.
 
-Environment variables which have been set in `docker` dappfile section will be added by a builder on the last dimg stage, `docker_instructions`, and will not be accessible on other build stages.
+Environment variables which have been set in `docker` config section will be added by a builder on the last dimg stage, `docker_instructions`, and will not be accessible on other build stages.
 
 Also, you can use `ANSIBLE_ARGS` env when you use ansible builder. E.g. you can `export ANSIBLE_ARGS=-vvv` and get verbose ansible output.
 
 
-[Q: What functions can I use in dappfile.yaml?](#dappfile-5){:id="dappfile-5"}
+[Q: What functions can I use in werf.yaml?](#config-5){:id="config-5"}
 
 * [Go template functions](https://golang.org/pkg/text/template/#hdr-Functions).
 
@@ -111,7 +111,7 @@ ansible:
   - name: "Setup /etc/nginx/nginx.conf"
     copy:
       content: |
-{{ .Files.Get ".dappfiles/nginx.conf" | indent 8 }}
+{{ .Files.Get ".configs/nginx.conf" | indent 8 }}
       dest: /etc/nginx/nginx.conf
 ```
 {% endraw %}
@@ -121,28 +121,28 @@ ansible:
 
 [Q: How to specify ssh keys?](#building-1){:id="building-1"}
 
-Use `--ssh-key=path-to-id-rsa` option. E.g. `dapp dimg build --ssh-key=path-to-id-rsa`.
+Use `--ssh-key=path-to-id-rsa` option. E.g. `werf dimg build --ssh-key=path-to-id-rsa`.
 
 
 [Q: I've added files from a git repository, but I can't access it](#building-2){:id="building-2"}
 
-You can't access files on stage `before_install` because dapp adds sources on stage `git_archive`, and therefore you can access files on any stage after (e.g `install`, `before_setup`, `setup`).
+You can't access files on stage `before_install` because werf adds sources on stage `git_archive`, and therefore you can access files on any stage after (e.g `install`, `before_setup`, `setup`).
 
 
 [Q: How can I build specific dimgs?](#building-3){:id="building-3"}
 
 You can specify `DIMG`, dimg name, for most commands:
 ```bash
-dapp dimg build [options] [DIMG ...]
-dapp dimg bp [options] [DIMG ...] REPO
-dapp dimg push [options] [DIMG ...] REPO
-dapp dimg spush [options] [DIMG] REPO
-dapp dimg tag [options] [DIMG ...] REPO
-dapp dimg run [options] [DIMG] [DOCKER ARGS]
-dapp dimg stage image [options] [DIMG]
+werf dimg build [options] [DIMG ...]
+werf dimg bp [options] [DIMG ...] REPO
+werf dimg push [options] [DIMG ...] REPO
+werf dimg spush [options] [DIMG] REPO
+werf dimg tag [options] [DIMG ...] REPO
+werf dimg run [options] [DIMG] [DOCKER ARGS]
+werf dimg stage image [options] [DIMG]
 ```
 
-E.g., you have three dimgs in dappfile.yaml:
+E.g., you have three dimgs in werf.yaml:
 ```yaml
 dimg: app1
 from: alpine
@@ -154,50 +154,50 @@ dimg: app3
 from: alpine
 ```
 
-To build the only `app2` you should use `dapp dimg build app2`.
+To build the only `app2` you should use `werf dimg build app2`.
 
 
 [Q: How can I find image name after build?](#building-4){:id="building-4"}
 
-Use `dapp dimg stage image` command for getting image name of last stage or specific stage (`--stage <stage_name>`):
+Use `werf dimg stage image` command for getting image name of last stage or specific stage (`--stage <stage_name>`):
 
 ```bash
-$ dapp dimg stage image
-dimgstage-dapp:2e29ea2634a335d4e72c801edb55d610cb8657fdf8f77e7257c4b059d2d36e5a
+$ werf dimg stage image
+dimgstage-werf:2e29ea2634a335d4e72c801edb55d610cb8657fdf8f77e7257c4b059d2d36e5a
 
-$ dapp dimg stage image --stage install
-dimgstage-dapp:f18fa53176ad78e4dc169e2428c03d79d1e9dde90de1a1890140c3cfdcc33025
+$ werf dimg stage image --stage install
+dimgstage-werf:f18fa53176ad78e4dc169e2428c03d79d1e9dde90de1a1890140c3cfdcc33025
 ```
 
-Or tag your image `dapp dimg tag`:
+Or tag your image `werf dimg tag`:
 
 ```bash
-$ dapp dimg tag hello-world
-testing_dapp
-  testing_dapp: calculating stages signatures         [RUNNING]
-  testing_dapp: calculating stages signatures              [OK] 0.5 sec
+$ werf dimg tag hello-world
+testing_werf
+  testing_werf: calculating stages signatures         [RUNNING]
+  testing_werf: calculating stages signatures              [OK] 0.5 sec
   custom
-    hello-world/testing_dapp:latest                   [EXPORTING]
-    hello-world/testing_dapp:latest                          [OK] 2.11 sec
+    hello-world/testing_werf:latest                   [EXPORTING]
+    hello-world/testing_werf:latest                          [OK] 2.11 sec
 Running time 2.64 seconds
 
-$ dapp dimg tag hello-world --tag-plain test1
-testing_dapp
-  testing_dapp: calculating stages signatures         [RUNNING]
-  testing_dapp: calculating stages signatures              [OK] 0.39 sec
+$ werf dimg tag hello-world --tag-plain test1
+testing_werf
+  testing_werf: calculating stages signatures         [RUNNING]
+  testing_werf: calculating stages signatures              [OK] 0.39 sec
   custom
-    hello-world/testing_dapp:test1                    [EXPORTING]
-    hello-world/testing_dapp:test1                           [OK] 2.34 sec
+    hello-world/testing_werf:test1                    [EXPORTING]
+    hello-world/testing_werf:test1                           [OK] 2.34 sec
 Running time 2.77 seconds
 ```
 
-[Q: I use dapp 0.7, alpine image and get error **standard_init_linux.go:178: exec user process caused "no such file or directory"** on build](#building-5){:id="building-5"}
+[Q: I use werf 0.7, alpine image and get error **standard_init_linux.go:178: exec user process caused "no such file or directory"** on build](#building-5){:id="building-5"}
 
-Dapp 0.7 doesn't support `alpine` image, so please use latest dapp version.
+Werf 0.7 doesn't support `alpine` image, so please use latest werf version.
 
-[Q: Why dapp doesn't save cache on failed builds by default?](#building-6){:id="building-6"}
+[Q: Why werf doesn't save cache on failed builds by default?](#building-6){:id="building-6"}
 
-Saving cache on failed builds may cause an incorrect cache. Explanation [here...]({{ site.baseurl }}/not_used/cache_for_advanced_build.html#почему-dapp-не-сохраняет-кэш-ошибочных-сборок-по-умолчанию)
+Saving cache on failed builds may cause an incorrect cache. Explanation [here...]({{ site.baseurl }}/not_used/cache_for_advanced_build.html#почему-werf-не-сохраняет-кэш-ошибочных-сборок-по-умолчанию)
 
 ## Pushing
 
@@ -205,10 +205,10 @@ Saving cache on failed builds may cause an incorrect cache. Explanation [here...
 
 Yes, you can use `--registry-username` and `--registry-password` options.
 
-In general for authorization in registry dapp use:
+In general for authorization in registry werf use:
 * `--registry-username` and `--registry-password` options if specified.
 * `CI_JOB_TOKEN` (in CI environment, e.g. GitLab).
-* Docker config of a user running dapp, `~/.docker/config.json`.
+* Docker config of a user running werf, `~/.docker/config.json`.
 
 
 [Q: How can I push to GCR?](#pushing-2){:id="pushing-2"}
@@ -217,15 +217,15 @@ To push to GCR you can use the following workaround:
 
 {% raw %}
 ```bash
-dapp dimg build
-dapp dimg tag --tag-ci <REPO>
+werf dimg build
+werf dimg tag --tag-ci <REPO>
 docker login <REPO>
 docker push $(docker images <REPO> --format "{{.Repository}}:{{.Tag}}")
-dapp dimg flush local
+werf dimg flush local
 ```
 {% endraw %}
 
-Dapp support push to public and private repositories, but it doesn't work with some platforms such as GCR.
+Werf support push to public and private repositories, but it doesn't work with some platforms such as GCR.
 
 
 [Q: Can I use several tags at the same time?](#pushing-3){:id="pushing-3"}
@@ -233,7 +233,7 @@ Dapp support push to public and private repositories, but it doesn't work with s
 Yes.
 
 ```bash
-dapp dimg push --tag custom1 --tag custom2 --tag-build-id --tag-ci --tag-branch --tag-commit
+werf dimg push --tag custom1 --tag custom2 --tag-build-id --tag-ci --tag-branch --tag-commit
 ```
 
 
@@ -241,12 +241,12 @@ dapp dimg push --tag custom1 --tag custom2 --tag-build-id --tag-ci --tag-branch 
 
 [Q: How to debug **Error: render error in...**](#deploying-1){:id="deploying-1"}
 
-You can use `dapp kube render` to render templates and `dapp kube lint` to validate that it follows the conventions and requirements of the Helm chart standard.
+You can use `werf kube render` to render templates and `werf kube lint` to validate that it follows the conventions and requirements of the Helm chart standard.
 
 
 [Q: How to resolve **ErrImagePull** after deploy?](#deploying-2){:id="deploying-2"}
 
-It's not a dapp problem. Most likely there is no access to your private repository and if so, you can read about how to add a registry secret in kubernetes documentation [here...](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/).
+It's not a werf problem. Most likely there is no access to your private repository and if so, you can read about how to add a registry secret in kubernetes documentation [here...](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/).
 
 
 [Q: How to change helm release name?](#deploying-3){:id="deploying-3"}
@@ -256,4 +256,4 @@ Use WERF_HELM_RELEASE_NAME environment.
 
 [Q: How to deploy several applications with different names?](#deploying-4){:id="deploying-4"}
 
-You can pass a variable, e.g. `dapp kube deploy --set global.ciProjectName=$CI_PROJECT_NAME ...` and use it in deployment template as {% raw %}`{{ .Values.global.ciProjectName }}`{% endraw %}.
+You can pass a variable, e.g. `werf kube deploy --set global.ciProjectName=$CI_PROJECT_NAME ...` and use it in deployment template as {% raw %}`{{ .Values.global.ciProjectName }}`{% endraw %}.

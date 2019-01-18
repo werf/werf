@@ -1,17 +1,20 @@
 ---
-title: Dappfile
+title: Config
 sidebar: reference
-permalink: reference/build/dappfile.html
+permalink: reference/build/config.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-## What is dappfile?
+## What is werf config file?
 
-Dapp uses the configuration file called ***dappfile*** to build docker images. At present, dapp only support YAML syntax and uses one of the following files in the root folder of your project — `dappfile.yaml` or `dappfile.yml`. 
+TODO: describe project name section
+TODO: move file to top level
 
-The dappfile is a collection of [YAML documents](http://yaml.org/spec/1.2/spec.html#id2800132) combined with delimiter `---`. Each YAML document contains instructions to build independent docker image. 
+Werf uses YAML configuration file to describe . At present, werf only support YAML syntax and uses one of the following files in the root folder of your project — `werf.yaml` or `werf.yml`.
 
-Thus, you can describe multiple images in one dappfile:
+The config is a collection of [YAML documents](http://yaml.org/spec/1.2/spec.html#id2800132) combined with delimiter `---`. Each YAML document contains instructions to build independent docker image.
+
+Thus, you can describe multiple images in one config:
 
 ```yaml
 YAML_DOC
@@ -21,20 +24,20 @@ YAML_DOC
 YAML_DOC
 ```
 
-Dapp represents YAML document as an internal object. Currently, dapp supports two object types, [_dimg_]({{ site.baseurl }}/reference/build/naming.html) and [_artifact_]({{ site.baseurl }}/reference/build/artifact.html). 
+Werf represents YAML document as an internal object. Currently, werf supports two object types, [_dimg_]({{ site.baseurl }}/reference/build/naming.html) and [_artifact_]({{ site.baseurl }}/reference/build/artifact.html).
 
-***Dimg*** is the named set of rules, an internal representation of user image. An ***artifact*** is a special dimg that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).  
+***Dimg*** is the named set of rules, an internal representation of user image. An ***artifact*** is a special dimg that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
 
-## Organizing dappfile configuration
+## Organizing config configuration
 
-Part of the configuration can be moved in ***separate template files*** and then includes in __dappfile.yaml__. _Template files_ should live in the ***.dappfiles*** directory with **.tmpl** extension (any nesting is supported).
+Part of the configuration can be moved in ***separate template files*** and then includes in __config.yaml__. _Template files_ should live in the ***.configs*** directory with **.tmpl** extension (any nesting is supported).
 
-> **Tip:** templates can be generated or downloaded before running dapp. For example, for sharing common logic between projects.
+> **Tip:** templates can be generated or downloaded before running werf. For example, for sharing common logic between projects.
 
-Dapp parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _dappfile.yaml_.
+Werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _config.yaml_.
 
 <details markdown="1" open>
-<summary><b>dappfile.yaml</b></summary>
+<summary><b>config.yaml</b></summary>
 
 {% raw %}
 ```yaml
@@ -55,7 +58,7 @@ ansible:
 </details>
 
 <details markdown="1">
-<summary><b>.dappfiles/ansible/components.tmpl</b></summary>
+<summary><b>.configs/ansible/components.tmpl</b></summary>
 
 {% raw %}
 ```yaml
@@ -114,12 +117,12 @@ ansible:
 
 </details>
 
-> If there are templates with the same name dapp will use template defined in _dappfile.yaml_ or the latest described in _templates files_.
+> If there are templates with the same name werf will use template defined in _config.yaml_ or the latest described in _templates files_.
 
-If need to use the whole _template file_, use template file path relative to _.dappfiles_ directory as a template name in [include](#include) function.
+If need to use the whole _template file_, use template file path relative to _.configs_ directory as a template name in [include](#include) function.
 
 <details markdown="1" open>
-<summary><b>dappfile.yaml</b></summary>
+<summary><b>config.yaml</b></summary>
 
 {% raw %}
 ```yaml
@@ -145,13 +148,13 @@ docker:
 {{ include "artifact/appserver.tmpl" . }}
 ---
 {{ include "artifact/storefront.tmpl" . }}
-``` 
+```
 {% endraw %}
 
 </details>
 
 <details markdown="1">
-<summary><b>.dappfiles/artifact/appserver.tmpl</b></summary>
+<summary><b>.configs/artifact/appserver.tmpl</b></summary>
 
 {% raw %}
 ```yaml
@@ -165,13 +168,13 @@ shell:
   - cd /usr/src/atsea
   - mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:resolve
   - mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
-``` 
+```
 {% endraw %}
 
 </details>
 
 <details markdown="1">
-<summary><b>.dappfiles/artifact/storefront.tmpl</b></summary>
+<summary><b>.configs/artifact/storefront.tmpl</b></summary>
 
 {% raw %}
 ```yaml
@@ -185,17 +188,17 @@ shell:
   - cd /usr/src/atsea/app/react-app
   - npm install
   - npm run build
-``` 
+```
 {% endraw %}
 
 </details>
 
-## Processing of dappfile
+## Processing of config
 
 The following steps could describe the processing of a YAML configuration file:
-1. Reading `dappfile.yaml` and extra templates from `.dappfiles` directory;
+1. Reading `config.yaml` and extra templates from `.configs` directory;
 1. Executing Go templates;
-1. Saving dump into `.dappfile.render.yaml` (that file will remain after build and will be available until next render);
+1. Saving dump into `.config.render.yaml` (that file will remain after build and will be available until next render);
 1. Splitting rendered YAML file into separate YAML documents;
 1. Validating each YAML document:
   * Validating YAML syntax (you could read YAML reference [here](http://yaml.org/refcard.html)).
@@ -207,11 +210,11 @@ The following steps could describe the processing of a YAML configuration file:
 Go templates are available within YAML configuration. The following functions are supported:
 
 * [Built-in Go template functions](https://golang.org/pkg/text/template/#hdr-Functions) and other language features. E.g. using common variable:
-  
+
   {% raw %}
   ```yaml
   {{ $base_image := "golang:1.11-alpine" }}
-  
+
   dimg: gogomonia
   from: {{ $base_image }}
   ---
@@ -221,7 +224,7 @@ Go templates are available within YAML configuration. The following functions ar
   {% endraw %}
 
 * [Sprig functions](http://masterminds.github.io/sprig/). E.g. using environment variable:
-  
+
   {% raw %}
   ```yaml
   {{ $_ := env "SPECIFIC_ENV_HERE" | set . "GitBranch" }}
@@ -241,7 +244,7 @@ Go templates are available within YAML configuration. The following functions ar
   {% endraw %}
 
 * `include` function with `define` for reusing configs:<a id="include" href="#include" class="anchorjs-link " aria-label="Anchor link for: include" data-anchorjs-icon=""></a>
-  
+
   {% raw %}
   ```yaml
   dimg: app1
@@ -255,7 +258,7 @@ Go templates are available within YAML configuration. The following functions ar
   ansible:
     beforeInstall:
     {{- include "(component) ruby" . }}
-  
+
   {{- define "(component) ruby" }}
     - command: gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
     - get_url:
@@ -285,7 +288,7 @@ Go templates are available within YAML configuration. The following functions ar
     - name: "Setup /etc/nginx/nginx.conf"
       copy:
         content: |
-  {{ .Files.Get ".dappfiles/nginx.conf" | indent 8 }}
+  {{ .Files.Get ".configs/nginx.conf" | indent 8 }}
         dest: /etc/nginx/nginx.conf
   ```
   {% endraw %}

@@ -5,15 +5,15 @@ permalink: reference/deploy/deploy_to_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Dapp uses [helm](https://helm.sh/) kubernetes package manager to deploy applications into kubernetes.
+Werf uses [helm](https://helm.sh/) kubernetes package manager to deploy applications into kubernetes.
 
 ## Installing helm
 
-Before using dapp for deploy, you should install [helm](https://docs.helm.sh/using_helm/#installing-helm) and its back-end part — [tiller](https://docs.helm.sh/using_helm/#installing-tiller).
+Before using werf for deploy, you should install [helm](https://docs.helm.sh/using_helm/#installing-helm) and its back-end part — [tiller](https://docs.helm.sh/using_helm/#installing-tiller).
 
 ## Helm chart
 
-The `.helm` directory in the project root describes a helm chart (starting now referred to as `chart`) which in turn provides a description of the application configuration and application component used for further release to the kubernetes cluster using the helm toolset. The chart for dapp, i.e. `.helm` folder, has the following structure:
+The `.helm` directory in the project root describes a helm chart (starting now referred to as `chart`) which in turn provides a description of the application configuration and application component used for further release to the kubernetes cluster using the helm toolset. The chart for werf, i.e. `.helm` folder, has the following structure:
 
 ```
 .helm/
@@ -56,9 +56,9 @@ cp  CERTFILE.crt ~gitlab-runner/.
 chown -R gitlab-runner:gitlab-runner ~gitlab-runner/CERTFILE.crt
 ```
 
-* Set the environment variable `SSL_CERT_FILE=/home/gitlab-runner/<domain>.crt]` (export it, or set it just before calling `dapp kube deploy`). Example:
+* Set the environment variable `SSL_CERT_FILE=/home/gitlab-runner/<domain>.crt]` (export it, or set it just before calling `werf kube deploy`). Example:
 ```bash
-SSL_CERT_FILE=/home/gitlab-runner/CERTFILE.crt dapp kube deploy
+SSL_CERT_FILE=/home/gitlab-runner/CERTFILE.crt werf kube deploy
       --namespace ${CI_ENVIRONMENT_SLUG}
       --tag-ci
       ${CI_REGISTRY_IMAGE}
@@ -66,44 +66,44 @@ SSL_CERT_FILE=/home/gitlab-runner/CERTFILE.crt dapp kube deploy
 
 ## Additions to helm
 
-Dapp has several additions to the helm.
+Werf has several additions to the helm.
 
 ### Chart generation
 
-During dapp deploy a temporary helm chart is created.
+During werf deploy a temporary helm chart is created.
 
 This chart contains:
 
-* Additional generated go-templates: `dapp_container_image`, `dapp_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/reference/deploy/templates.html).
+* Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/reference/deploy/templates.html).
 * Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/reference/deploy/secrets.html).
 
-The temporary chart then passed to the helm. Dapp deletes this chart on the dapp deploy command termination.
+The temporary chart then passed to the helm. Werf deletes this chart on the werf deploy command termination.
 
 ### Watch resources
 
-Dapp watches resources statuses and logs during the deploy process. More info is available in the [watch resources article]({{ site.baseurl }}/reference/deploy/watch_kubernetes_resources.html).
+Werf watches resources statuses and logs during the deploy process. More info is available in the [watch resources article]({{ site.baseurl }}/reference/deploy/watch_kubernetes_resources.html).
 
-## Dapp deploy command
+## Werf deploy command
 
-Dapp deploy command starts the helm-chart release process in kubernetes. A release named `<dapp name>-<NAMESPACE>` will be installed or updated by helm.
+Werf deploy command starts the helm-chart release process in kubernetes. A release named `<werf name>-<NAMESPACE>` will be installed or updated by helm.
 
 `WERF_HELM_RELEASE_NAME` environment variable could be used to specify custom helm release name.
 
 #### Syntax
 
 ```bash
-dapp kube deploy REPO [--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci] [--namespace=NAMESPACE] [--set=<value>] [--values=<values-path>] [--secret-values=<secret-values-path>]
+werf kube deploy REPO [--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci] [--namespace=NAMESPACE] [--set=<value>] [--values=<values-path>] [--secret-values=<secret-values-path>]
 ```
 
 ##### `REPO`
 
-Address of the repository, from which images will be retrieved. This parameter must coincide with the parameter specified in [`dapp dimg push`]({{ site.baseurl }}/reference/cli/dimg_push.html).
+Address of the repository, from which images will be retrieved. This parameter must coincide with the parameter specified in [`werf dimg push`]({{ site.baseurl }}/reference/cli/dimg_push.html).
 
 If a special value `:minikube` is set, the local proxy will be used for docker-registry from minikube, see [using minikube section]({{ site.baseurl }}/reference/deploy/minikube.html).
 
 ##### `--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci`
 
-Image version from the specified repository. Options are compliant with those specified in the [`dapp dimg push`]({{ site.baseurl }}/reference/cli/dimg_push.html).
+Image version from the specified repository. Options are compliant with those specified in the [`werf dimg push`]({{ site.baseurl }}/reference/cli/dimg_push.html).
 
 ##### `--namespace=NAMESPACE`
 
@@ -123,12 +123,12 @@ Enables specifying an additional values yaml file together with the standard `.h
 
 Enables specifying an additional secret-values yaml file together with the standard `.helm/secret-values.yaml`. For detailed information about secrets, see the [working with secrets section]({{ site.baseurl }}/reference/deploy/secrets.html).
 
-### dapp kube dismiss
+### werf kube dismiss
 
-Starts the process to remove release `<dapp name>-<NAMESPACE>` from helm.
+Starts the process to remove release `<werf name>-<NAMESPACE>` from helm.
 
 ```bash
-dapp kube dismiss [--namespace=NAMESPACE] [--with-namespace]
+werf kube dismiss [--namespace=NAMESPACE] [--with-namespace]
 ```
 
 ##### `--namespace=NAMESPACE`
