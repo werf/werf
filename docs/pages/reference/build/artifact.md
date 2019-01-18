@@ -4,8 +4,8 @@ sidebar: reference
 permalink: reference/build/artifact.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
-  <a href="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=1914&amp;h=721" data-featherlight="image">
-  <img src="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=957&amp;h=360">
+  <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=1800&amp;h=850" data-featherlight="image">
+  <img src="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=640&amp;h=301">
   </a>
 ---
 
@@ -102,20 +102,11 @@ The _artifact name_ is used to specify the artifact in the [_artifact resources 
 
 ### Adding source code from git repositories
 
-<div class="summary" markdown="1">
+<div class="summary">
 
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=2031&amp;h=144" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vRYyGoELol94us3ahKhn_I8efTOajXntgf-WhB6QPykKZrdm296B6TJm3YAE-DTmkBpKTm9AvZQbZC5/pub?w=1016&amp;h=72">
+<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vQQiyUM9P3-_A6O5tLms_y1UCny9X6lxQSxtMtBalcyjcHhYV4hnPnISmTVY09c-ANOFqwHeOxYPs63/pub?w=2031&amp;h=144" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vQQiyUM9P3-_A6O5tLms_y1UCny9X6lxQSxtMtBalcyjcHhYV4hnPnISmTVY09c-ANOFqwHeOxYPs63/pub?w=1016&amp;h=72">
 </a>
-
-```yaml
-git:
-- ...
-  stageDependencies:
-    ...
-    buildArtifact: 
-    - <relative_path or glob>
-```
 
 </div>
 
@@ -127,53 +118,24 @@ Read about working with _git repositories_ in the corresponding [article]({{ sit
 
 ### Running assembly instructions
 
-<div class="summary" markdown="1">
+<div class="summary">
 
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=2031&amp;h=144" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vSEje1gsyjI89m4lh6PqDEFcwa7NsLeTnbju1hZ7G4AJ2S4f_nJlczEne6rbpuvtoDkbBCqhu-i5dnT/pub?w=1016&amp;h=72">
+<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vTlpKbAr6wQCE4bSxVB5Kr6uxzbCGu_ncsviT2Ax6_qLL3zAVLWIsYElAi9_LMuVeFiDi1lo97HNvD2/pub?w=1428&h=649" data-featherlight="image">
+      <img src="https://docs.google.com/drawings/d/e/2PACX-1vTlpKbAr6wQCE4bSxVB5Kr6uxzbCGu_ncsviT2Ax6_qLL3zAVLWIsYElAi9_LMuVeFiDi1lo97HNvD2/pub?w=426&h=216">
 </a>
 
-<div class="tab">
-    <button class="tablinks active" onclick="openTab(event, 'shell')">Shell</button>
-    <button class="tablinks" onclick="openTab(event, 'ansible')">Ansible</button>
 </div>
+  
+Directives and _user stages_ remain unchanged: _before_install_, _install_, _before_setup_ and _setup_.
 
-<div id="shell" class="tabcontent active" markdown="1">
-```yaml
-shell:
-  ...
-  buildArtifact:
-  - <bash command>
-  buildArtifactCacheVersion: <arbitrary string>
-```
-</div>
+If there are no dependencies on files specified in git `stageDependencies` directive for _user stages_, the image is cached after the first build and will no longer be reassembled while the _stages cache_ exists.
 
-<div id="ansible" class="tabcontent" markdown="1">
-```yaml
-ansible:
-  ...
-  buildArtifact:
-  - <task>
-  buildArtifactCacheVersion: <arbitrary string>
-```
-</div>
-
-</div>
-
-When describing an _artifact_, an additional _build_artifact user stage_ is available, which is no different from the _install_, _before_setup_, and _setup_ stages. As well as the listed _stages_, _build_artifact_ also has a dependent git stage.
-
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vTd0XO1HQdwWQRB-QCNmxhJcaBdZG5m4YktzhMXLB4hdu8NxEEnWZvbaivwK13pEfddxtiHNXzgjhal/pub?w=1917&amp;h=432" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vTd0XO1HQdwWQRB-QCNmxhJcaBdZG5m4YktzhMXLB4hdu8NxEEnWZvbaivwK13pEfddxtiHNXzgjhal/pub?w=959&amp;h=216">
-</a>
-
-If there are no dependencies on files specified in git `stageDependencies` directive for _artifact user stages_, the image is cached after the first build and will no longer be reassembled while the _stages cache_ exists.
-
-> If the artifact should be rebuilt on any change in the related git repository, you should specify the _stageDependency_ `**/*` for any _user stage_, e.g., for _build_artifact stage_:
+> If the artifact should be rebuilt on any change in the related git repository, you should specify the _stageDependency_ `**/*` for any _user stage_, e.g., for _install stage_:
 ```yaml
 git:
 - to: /
   stageDependencies:
-    buildArtifact: "**/*"
+    install: "**/*"
 ```
 
 Read about working with _assembly instructions_ in the corresponding [article]({{ site.baseurl }}/reference/build/assembly_instructions.html).
@@ -207,8 +169,6 @@ git:
     - <relative_path or glob>
     setup:
     - <relative_path or glob>
-    buildArtifact:
-    - <relative_path or glob>
 # remote git
 - url: <git_repo_url>
   branch: <branch_name>
@@ -230,8 +190,6 @@ git:
     - <relative_path or glob>
     setup:
     - <relative_path or glob>
-    buildArtifact:
-    - <relative_path or glob>
 shell:
   beforeInstall:
   - <cmd>
@@ -241,14 +199,11 @@ shell:
   - <cmd>
   setup:
   - <cmd>
-  buildArtifact:
-  - <cmd>
   cacheVersion: <version>
   beforeInstallCacheVersion: <version>
   installCacheVersion: <version>
   beforeSetupCacheVersion: <version>
   setupCacheVersion: <version>
-  buildArtifactCacheVersion: <version>
 ansible:
   beforeInstall:
   - <task>
@@ -258,14 +213,11 @@ ansible:
   - <task>
   setup:
   - <task>
-  buildArtifact:
-  - <task>
   cacheVersion: <version>
   beforeInstallCacheVersion: <version>
   installCacheVersion: <version>
   beforeSetupCacheVersion: <version>
   setupCacheVersion: <version>
-  buildArtifactCacheVersion: <version>
 mount:
 - from: build_dir
   to: <absolute_path>

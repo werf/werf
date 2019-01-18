@@ -30,16 +30,18 @@ The dapp assembly process is a sequential build of _stages_. Dapp uses different
 </div>
 
 <div id="dimg" class="tabcontent active">
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vRbqae63cNHREeseGvz2WDNExunn__HVzTSH9Umuvo8-WD0D9waBDdz_Z0GrRwuDIA5GSalmRgSyJI4/pub?w=2035&amp;h=859" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vRbqae63cNHREeseGvz2WDNExunn__HVzTSH9Umuvo8-WD0D9waBDdz_Z0GrRwuDIA5GSalmRgSyJI4/pub?w=1017&amp;h=429" >
+<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRKB-_Re-ZhkUSB45jF9GcM-3gnE2snMjTOEIQZSyXUniNHKK-eCQl8jw3tHFF-a6JLAr2sV73lGAdw/pub?w=2000&amp;h=881" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vRKB-_Re-ZhkUSB45jF9GcM-3gnE2snMjTOEIQZSyXUniNHKK-eCQl8jw3tHFF-a6JLAr2sV73lGAdw/pub?w=821&amp;h=362" >
 </a>
 </div>
 
 <div id="artifact" class="tabcontent">
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=1914&amp;h=721" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vRPnqkxbv8wSziAE7QVhcP4rsb58AfIGOmOvVUbWKtZdvNhGItnL0RX8ZFZgCxxNZTtYdZ6YbVuItix/pub?w=957&amp;h=360">
+<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=1800&amp;h=850" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vRD-K_z7KEoliEVT4GpTekCkeaFMbSPWZpZkyTDms4XLeJAWEnnj4EeAxsdwnU3OtSW_vuKxDaaFLgD/pub?w=640&amp;h=301">
 </a>
 </div>
+
+<!-- 301 -->
 
 **All works with _stages_ are done by dapp, and you only need to write dappfile correctly.**
 
@@ -58,8 +60,8 @@ Using a cache for re-assemblies is possible due to the build stage identifier ca
 </div>
 
 <div class="rsc-example">
-<a href="https://docs.google.com/drawings/d/e/2PACX-1vSL81NRgq51uWSBUdSG4amon-e-loGKtLGJLWu35Anw-EyE9VVsBxJfP89TiUpWQRHrIXbTTijeedsF/pub?w=572&amp;h=577" data-featherlight="image">
-<img src="https://docs.google.com/drawings/d/e/2PACX-1vSL81NRgq51uWSBUdSG4amon-e-loGKtLGJLWu35Anw-EyE9VVsBxJfP89TiUpWQRHrIXbTTijeedsF/pub?w=286&amp;h=288">
+<a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vR6qxP5dbQNlHXik0jCvEcKZS2gKbdNmbFa8XIem8pixSHSGvmL1n7rpuuQv64YWl48wLXfpwbLQEG_/pub?w=572&amp;h=577" data-featherlight="image">
+<img src="https://docs.google.com/drawings/d/e/2PACX-1vR6qxP5dbQNlHXik0jCvEcKZS2gKbdNmbFa8XIem8pixSHSGvmL1n7rpuuQv64YWl48wLXfpwbLQEG_/pub?w=286&amp;h=288">
 </a>
 </div>
 

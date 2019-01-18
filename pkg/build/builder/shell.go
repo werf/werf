@@ -20,19 +20,16 @@ func (b *Shell) IsBeforeInstallEmpty() bool { return b.isEmptyStage("BeforeInsta
 func (b *Shell) IsInstallEmpty() bool       { return b.isEmptyStage("Install") }
 func (b *Shell) IsBeforeSetupEmpty() bool   { return b.isEmptyStage("BeforeSetup") }
 func (b *Shell) IsSetupEmpty() bool         { return b.isEmptyStage("Setup") }
-func (b *Shell) IsBuildArtifactEmpty() bool { return b.isEmptyStage("BuildArtifact") }
 
 func (b *Shell) BeforeInstall(container Container) error { return b.stage("BeforeInstall", container) }
 func (b *Shell) Install(container Container) error       { return b.stage("Install", container) }
 func (b *Shell) BeforeSetup(container Container) error   { return b.stage("BeforeSetup", container) }
 func (b *Shell) Setup(container Container) error         { return b.stage("Setup", container) }
-func (b *Shell) BuildArtifact(container Container) error { return b.stage("BuildArtifact", container) }
 
 func (b *Shell) BeforeInstallChecksum() string { return b.stageChecksum("BeforeInstall") }
 func (b *Shell) InstallChecksum() string       { return b.stageChecksum("Install") }
 func (b *Shell) BeforeSetupChecksum() string   { return b.stageChecksum("BeforeSetup") }
 func (b *Shell) SetupChecksum() string         { return b.stageChecksum("Setup") }
-func (b *Shell) BuildArtifactChecksum() string { return b.stageChecksum("BuildArtifact") }
 
 func (b *Shell) isEmptyStage(userStageName string) bool {
 	return b.stageChecksum(userStageName) == ""

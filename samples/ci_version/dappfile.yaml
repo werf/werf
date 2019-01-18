@@ -8,7 +8,7 @@ import:
 artifact: "app version"
 from: alpine
 ansible:
-  buildArtifact:
+  setup:
   - copy:
       dest: /version
       content: |

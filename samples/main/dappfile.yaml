@@ -146,9 +146,6 @@ git:
     # - RELATIVE_PATH_OR_GLOB
     # setup:
     # - RELATIVE_PATH_OR_GLOB
-    ## One more stage available for artifact
-    # buildArtifact:
-    # - RELATIVE_PATH_OR_GLOB
 
 ansible:
   # beforeInstall:
@@ -159,22 +156,16 @@ ansible:
   # - TASK
   # setup:
   # - TASK
-  ## One more stage available for artifact
-  # buildArtifact:
-  # - TASK
-  # buildArtifact
-  # cacheVersion: VERSION
   # beforeInstallCacheVersion: VERSION
   # installCacheVersion: VERSION
   # beforeSetupCacheVersion: VERSION
   # setupCacheVersion: VERSION
-  # buildArtifactCacheVersion: VERSION
   install:
   - name: Get dependencies
     shell: ./go-get.sh
     args:
       chdir: /go/src/github.com/flant/gogomonia
-  buildArtifact:
+  setup:
   - name: Build binary
     shell: CGO_ENABLED=0 GOOS=linux ./go-install.sh
     args:
@@ -188,15 +179,11 @@ ansible:
 #   - CMD
 #   setup:
 #   - CMD
-## One more stage available for artifact
-#   buildArtifact:
-#   - CMD
 #   cacheVersion: VERSION
 #   beforeInstallCacheVersion: VERSION
 #   installCacheVersion: VERSION
 #   beforeSetupCacheVersion: VERSION
 #   setupCacheVersion: VERSION
-#   buildArtifactCacheVersion: VERSION
 
 # mount:
 # - from: build_dir

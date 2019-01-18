@@ -131,8 +131,6 @@ git:
     - <relative_path or glob>
     setup:
     - <relative_path or glob>
-    buildArtifact:
-    - <relative_path or glob>
 # remote git
 - url: <git_repo_url>
   branch: <branch_name>
@@ -154,8 +152,6 @@ git:
     - <relative_path or glob>
     setup:
     - <relative_path or glob>
-    buildArtifact:
-    - <relative_path or glob>
 shell:
   beforeInstall:
   - <cmd>
@@ -165,14 +161,11 @@ shell:
   - <cmd>
   setup:
   - <cmd>
-  buildArtifact:
-  - <cmd>
   cacheVersion: <version>
   beforeInstallCacheVersion: <version>
   installCacheVersion: <version>
   beforeSetupCacheVersion: <version>
   setupCacheVersion: <version>
-  buildArtifactCacheVersion: <version>
 ansible:
   beforeInstall:
   - <task>
@@ -182,14 +175,11 @@ ansible:
   - <task>
   setup:
   - <task>
-  buildArtifact:
-  - <task>
   cacheVersion: <version>
   beforeInstallCacheVersion: <version>
   installCacheVersion: <version>
   beforeSetupCacheVersion: <version>
   setupCacheVersion: <version>
-  buildArtifactCacheVersion: <version>
 mount:
 - from: build_dir
   to: <absolute_path>
