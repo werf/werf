@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/docker_authorizer"
+	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
@@ -25,7 +25,8 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "tag [DIMG_NAME...]",
+		Use:                   "tag [DIMG_NAME...]",
+		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runPush(args)
 			if err != nil {
@@ -40,7 +41,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to tag images for. CI_REGISTRY_IMAGE will be used by default if available.")
+	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to tag images for. CI_REGISTRY_IMAGE will be used by default if available.")
 
 	common.SetupTag(&CommonCmdData, cmd)
 

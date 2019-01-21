@@ -9,6 +9,7 @@ import (
 	"github.com/flant/werf/cmd/werf/bp"
 	"github.com/flant/werf/cmd/werf/build"
 	"github.com/flant/werf/cmd/werf/cleanup"
+	"github.com/flant/werf/cmd/werf/common/templates"
 	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/deploy"
 	"github.com/flant/werf/cmd/werf/dismiss"
@@ -44,36 +45,62 @@ func main() {
 		os.Exit(1)
 	}
 
-	cmd := &cobra.Command{
-		Use:          "werf",
+	rootCmd := &cobra.Command{
+		Use:   "werf",
+		Short: "Werf helps to implement and support Continuous Integration and Continuous Delivery",
+		Long: `Werf helps to implement and support Continuous Integration and Continuous Delivery.
+
+Find more information at: https://werf.io`,
 		SilenceUsage: true,
 	}
 
-	cmd.AddCommand(
-		build.NewCmd(),
-		push.NewCmd(),
-		bp.NewCmd(),
-		tag.NewCmd(),
+	groups := templates.CommandGroups{
+		{
+			Message: "Build Commands:",
+			Commands: []*cobra.Command{
+				build.NewCmd(),
+				push.NewCmd(),
+				bp.NewCmd(),
+				tag.NewCmd(),
+			},
+		},
+		{
+			Message: "Deploy Commands:",
+			Commands: []*cobra.Command{
+				deploy.NewCmd(),
+				dismiss.NewCmd(),
+				lint.NewCmd(),
+				render.NewCmd(),
+				secretCmd(),
+			},
+		},
+		{
+			Message: "Project Cleanup Commands:",
+			Commands: []*cobra.Command{
+				flush.NewCmd(),
+				sync.NewCmd(),
+				cleanup.NewCmd(),
+			},
+		},
+		{
+			Message: "Cleanup Commands:",
+			Commands: []*cobra.Command{
+				reset.NewCmd(),
+				gc.NewCmd(),
+			},
+		},
+	}
+	groups.Add(rootCmd)
 
-		deploy.NewCmd(),
-		dismiss.NewCmd(),
-		lint.NewCmd(),
-		render.NewCmd(),
+	templates.ActsAsRootCommand(rootCmd, groups...)
 
-		reset.NewCmd(),
-		flush.NewCmd(),
-		sync.NewCmd(),
-		cleanup.NewCmd(),
-		gc.NewCmd(),
-
-		secretCmd(),
+	rootCmd.AddCommand(
 		slugCmd(),
-
-		completion.NewCmd(cmd),
+		completion.NewCmd(rootCmd),
 		version.NewCmd(),
 	)
 
-	if err := cmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }

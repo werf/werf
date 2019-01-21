@@ -12,8 +12,9 @@ import (
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "keygen",
-		Short: "Generate encryption key",
+		Use:                   "keygen",
+		DisableFlagsInUseLine: true,
+		Short:                 "Generate encryption key",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSecretKeyGenerate()
 			if err != nil {

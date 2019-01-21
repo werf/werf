@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/docker_authorizer"
+	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
@@ -28,8 +28,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "flush",
-		Short: "Delete project images in local docker storage and specified docker registry",
+		Use:                   "flush",
+		DisableFlagsInUseLine: true,
+		Short:                 "Delete project images in local docker storage and specified docker registry",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runFlush()
 			if err != nil {
@@ -43,13 +44,13 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name")
-	cmd.PersistentFlags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
-	cmd.PersistentFlags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
+	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name")
+	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
+	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
 
-	cmd.PersistentFlags().BoolVarP(&CmdData.WithDimgs, "with-dimgs", "", false, "Delete images (not only stages cache)")
+	cmd.Flags().BoolVarP(&CmdData.WithDimgs, "with-dimgs", "", false, "Delete images (not only stages cache)")
 
-	cmd.PersistentFlags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }

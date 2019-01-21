@@ -6,7 +6,6 @@ import (
 	"path"
 
 	"github.com/flant/werf/pkg/docker"
-
 	"github.com/flant/werf/pkg/docker_registry"
 )
 

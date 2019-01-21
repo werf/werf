@@ -9,7 +9,8 @@ import (
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "version",
+		Use:   "version",
+		Short: "Print version",
 		Run: func(_ *cobra.Command, _ []string) {
 			fmt.Println(werf.Version)
 		},

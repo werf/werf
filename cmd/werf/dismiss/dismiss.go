@@ -20,7 +20,8 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "dismiss",
+		Use:                   "dismiss",
+		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runDismiss()
 			if err != nil {
@@ -35,7 +36,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
+	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
 
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupRelease(&CommonCmdData, cmd)

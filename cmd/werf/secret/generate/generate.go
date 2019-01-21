@@ -22,8 +22,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "generate",
-		Short: "Generate secret data",
+		Use:                   "generate",
+		DisableFlagsInUseLine: true,
+		Short:                 "Generate secret data",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSecretGenerate()
 			if err != nil {
@@ -37,9 +38,9 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&CmdData.FilePath, "file-path", "", "", "Encode file data by specified path")
-	cmd.PersistentFlags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "", "", "Save encoded data by specified file path")
-	cmd.PersistentFlags().BoolVarP(&CmdData.Values, "values", "", false, "Encode specified FILE_PATH (--file-path) as secret values file")
+	cmd.Flags().StringVarP(&CmdData.FilePath, "file-path", "", "", "Encode file data by specified path")
+	cmd.Flags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "", "", "Save encoded data by specified file path")
+	cmd.Flags().BoolVarP(&CmdData.Values, "values", "", false, "Encode specified FILE_PATH (--file-path) as secret values file")
 
 	return cmd
 }
