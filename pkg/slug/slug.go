@@ -16,8 +16,11 @@ var (
 	dockerTagRegexp  = regexp.MustCompile(`^[\w][\w.-]*$`)
 	dockerTagMaxSize = 128
 
-	kubernetesNamespaceRegexp  = regexp.MustCompile(`^(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])$`)
-	kubernetesNamespaceMaxSize = 63
+	projectNameRegex   = regexp.MustCompile(`^(?:[a-z0-9]|[a-z0-9][a-z0-9-]*[a-z0-9])$`)
+	projectNameMaxSize = 50
+
+	dnsLabelRegex   = regexp.MustCompile(`^(?:[a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])$`)
+	dnsLabelMaxSize = 63
 
 	helmReleaseRegexp  = regexp.MustCompile(`^(?:(?:[A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])+$`)
 	helmReleaseMaxSize = 53
@@ -32,7 +35,24 @@ func Slug(data string) string {
 }
 
 func Project(name string) string {
-	return slugify(name)
+	if shouldNotBeSlugged(name, projectNameRegex, projectNameMaxSize) {
+		return name
+	}
+
+	res := slugify(name)
+
+	if len(res) > projectNameMaxSize {
+		res = res[:projectNameMaxSize]
+	}
+
+	return res
+}
+
+func ValidateProject(name string) error {
+	if shouldNotBeSlugged(name, projectNameRegex, projectNameMaxSize) {
+		return nil
+	}
+	return fmt.Errorf("Project name should comply with regex '%s' and be maximum %d chars", projectNameRegex, projectNameMaxSize)
 }
 
 func DockerTag(tag string) string {
@@ -51,18 +71,18 @@ func ValidateDockerTag(tag string) error {
 }
 
 func KubernetesNamespace(namespace string) string {
-	if shouldNotBeSlugged(namespace, kubernetesNamespaceRegexp, kubernetesNamespaceMaxSize) {
+	if shouldNotBeSlugged(namespace, dnsLabelRegex, dnsLabelMaxSize) {
 		return namespace
 	}
 
-	return slug(namespace, kubernetesNamespaceMaxSize)
+	return slug(namespace, dnsLabelMaxSize)
 }
 
 func ValidateKubernetesNamespace(namespace string) error {
-	if shouldNotBeSlugged(namespace, kubernetesNamespaceRegexp, kubernetesNamespaceMaxSize) {
+	if shouldNotBeSlugged(namespace, dnsLabelRegex, dnsLabelMaxSize) {
 		return nil
 	}
-	return fmt.Errorf("Kubernetes namespace should comply with DNS Label requirements")
+	return fmt.Errorf("Kubernetes namespace should comply with DNS Label requirements: %s and %d bytes max", dnsLabelRegex, dnsLabelMaxSize)
 }
 
 func HelmRelease(name string) string {

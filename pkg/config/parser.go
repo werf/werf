@@ -55,7 +55,7 @@ func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 			"project: %s\n" +
 			"---\n" +
 			"```\n\n" +
-			"Read more about meta doc here, https://flant.github.io/werf/reference/build/werf_config.html"
+			"Read more about meta doc here, https://flant.github.io/werf/reference/config.html#meta-configuration-doc"
 
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}

@@ -18,6 +18,9 @@ The example application is the [Hotel Booking Example](https://github.com/revel/
 Create a `booking` directory and place the following `werf.yaml` in the `booking` directory:
 {% raw %}
 ```yaml
+project: hotel-booking
+---
+
 {{ $_ := set . "GoDlPath" "https://dl.google.com/go/" }}
 {{ $_ := set . "GoTarball" "go1.11.1.linux-amd64.tar.gz" }}
 {{ $_ := set . "GoTarballChecksum" "sha256:2871270d8ff0c8c69f161aaae42f9f28739855ff5c5204752a8d92a1c9f63993" }}
@@ -193,6 +196,9 @@ Add the following to mount directives into config:
 
 {% raw %}
 ```yaml
+project: hotel-booking
+---
+
 {{ $_ := set . "GoDlPath" "https://dl.google.com/go/" }}
 {{ $_ := set . "GoTarball" "go1.11.1.linux-amd64.tar.gz" }}
 {{ $_ := set . "GoTarballChecksum" "sha256:2871270d8ff0c8c69f161aaae42f9f28739855ff5c5204752a8d92a1c9f63993" }}

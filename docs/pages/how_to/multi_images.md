@@ -215,6 +215,9 @@ To build an application with all of its components create the following `werf.ya
 
 {% raw %}
 ```yaml
+project: atsea-shop
+---
+
 artifact: storefront
 from: node:latest
 git:

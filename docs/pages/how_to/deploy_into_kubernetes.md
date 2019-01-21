@@ -9,7 +9,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 How to deploy application into Kubernetes using Werf.
 
-Werf uses helm with some additions to deploy applications into Kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your kubernetes cluster.
+Werf uses Helm with some additions to deploy applications into Kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your kubernetes cluster.
 
 ## Requirements
 
@@ -64,6 +64,9 @@ cd myapp
 We need to prepare main application image with a web server. Create the following `werf.yaml` in the root of the application directory:
 
 ```yaml
+project: myapp
+---
+
 dimg: ~
 from: python:alpine
 ansible:

@@ -18,7 +18,7 @@ In this tutorial, we will build an image of simple PHP [Symfony application](htt
 1. Setting up the IP address that the web server will listen to. This is done with a setting in `/opt/start.sh`, which will run when the container starts.
 1. Making custom setup actions. As an illustration for the setup stage, we will write current date to `version.txt`.
 
-Also, we will check that the application works and push the image in a docker registry. 
+Also, we will check that the application works and push the image in a docker registry.
 
 ## Requirements
 
@@ -45,6 +45,9 @@ To implement these steps and requirements with werf we will add a special file c
     <div id="Ansible" class="tabcontent active" markdown="1">
       {% raw %}
       ```yaml
+      project: symfony-demo
+      ---
+
       dimg: ~
       from: ubuntu:16.04
       docker:
@@ -132,13 +135,16 @@ To implement these steps and requirements with werf we will add a special file c
         to: /app
         owner: app
         group: app
-      ```   
+      ```
       {% endraw %}
     </div>
 
     <div id="Shell" class="tabcontent" markdown="1">
       {% raw %}
       ```yaml
+      project: symfony-demo
+      ---
+
       dimg: ~
       from: ubuntu:16.04
       docker:
