@@ -1,5 +1,11 @@
 package config
 
+import (
+	"fmt"
+
+	"github.com/flant/werf/pkg/slug"
+)
+
 type rawMeta struct {
 	Project         *string            `yaml:"project,omitempty"`
 	DeployTemplates rawDeployTemplates `yaml:"deploy,omitempty"`
@@ -24,6 +30,10 @@ func (c *rawMeta) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if c.Project != nil && *c.Project == "" {
 		return newDetailedConfigError("project field cannot be empty!", nil, c.doc)
+	}
+
+	if err := slug.ValidateProject(*c.Project); err != nil {
+		return newDetailedConfigError(fmt.Sprintf("bad project name '%s' specified in config: %s", *c.Project, err), nil, c.doc)
 	}
 
 	return nil

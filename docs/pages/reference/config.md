@@ -1,20 +1,18 @@
 ---
 title: Config
 sidebar: reference
-permalink: reference/build/config.html
-author: Alexey Igrychev <alexey.igrychev@flant.com>
+permalink: reference/config.html
+author: Alexey Igrychev <alexey.igrychev@flant.com>, Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
 ## What is werf config?
 
-TODO: describe project name section
-TODO: move file to top level
+Application should be configured to use Werf. This configuration includes:
 
-Werf uses YAML configuration file to describe . At present, werf only support YAML syntax and uses `werf.yaml` file in the root folder of your project.
+1. Definition of project meta information such as project name, which will affect build, deploy and other commands.
+2. Definition of the images to be built.
 
-The config is a collection of [YAML documents](http://yaml.org/spec/1.2/spec.html#id2800132) combined with delimiter `---`. Each YAML document contains instructions to build independent docker image.
-
-Thus, you can describe multiple images in one config:
+Werf uses YAML configuration file `werf.yaml` placed in the root folder of your application. The config is a collection of [YAML documents](http://yaml.org/spec/1.2/spec.html#id2800132) combined with delimiter `---`:
 
 ```yaml
 YAML_DOC
@@ -24,9 +22,75 @@ YAML_DOC
 YAML_DOC
 ```
 
-Werf represents YAML document as an internal object. Currently, werf supports two object types, [_dimg_]({{ site.baseurl }}/reference/build/naming.html) and [_artifact_]({{ site.baseurl }}/reference/build/artifact.html).
+Each YAML document has a type. There are currently 3 types of documents:
 
-***Dimg*** is the named set of rules, an internal representation of user image. An ***artifact*** is a special dimg that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
+1. Document to describe project meta information, which will be referred to as *meta configuration doc*.
+2. Document to describe image build instructions, which will be referred to as *image configuration doc*.
+3. Document to describe artifact build instructions, which will be referred to as *artifact configuraton doc*.
+
+More document types can be added in the future.
+
+### Meta configuration doc
+
+```
+project: PROJECT_NAME
+OTHER_FIELDS
+---
+```
+
+Yaml doc with the key `project: PROJECT_NAME` is the meta configuration doc. This is required doc. There should be only one meta configuration doc in the single `werf.yaml` configuration.
+
+#### Project name
+
+`project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html)). This is single required field of meta configuration.
+
+Project name must be maximum 50 chars, only lowercase alphabetic chars, digits and dashes are allowed.
+
+**WARNING**. You should never change project name, once it has been set up, unless you know what you are doing.
+
+Changing project name leads to issues:
+1. Invalidation of build cache. New images must be built. Old images must be cleaned up from local host and docker registry manually.
+2. Creation of completely new Helm Release. So if you already had deployed your application, then changed project name and deployed it again, there will be created another instance of the same application.
+
+Werf cannot automatically resolve project name change. Described issues must be resolved manually.
+
+### Image configuration doc
+
+Each image configuration doc defines instructions to build one independent docker image. There may be multiple image cofiguration docs defined in the same `werf.yaml` config to build multiple images.
+
+Yaml doc with the key `dimg: IMAGE_NAME` is the image configuration doc. `dimg` defines short name of the docker image to be built. This name must be unique in single `werf.yaml` config.
+
+```
+dimg: IMAGE_NAME_1
+OTHER_FIELDS
+---
+dimg: IMAGE_NAME_2
+OTHER_FIELDS
+---
+...
+---
+dimg: IMAGE_NAME_N
+OTHER_FIELDS
+```
+
+### Artifact configuration doc
+
+Artifact configuration doc also defines instructions to build one independent artifact docker image. Arifact is a secondary image aimed to isolate a build process and build tools resources (environments, software, data, see [artifacts article for the details]({{ site.baseurl }}/reference/build/artifact.html)). There may be multiple artifact configuration docs for multiple artifacts defined in the same `werf.yaml` config.
+
+Yaml doc with the key `artifact: IMAGE_NAME` is the artifact configuration doc. `artifact` defines short name of the artifact to be referred to in another docs. This name must be unique in single `werf.yaml` config.
+
+### Minimal config example
+
+Currently Werf requires to define meta configuration doc and at least one image configuration doc. Image configuration docs will be fully optional soon.
+
+Example of minimal werf config:
+
+```yaml
+project: my-project
+---
+dimg: ~
+from: alpine:latest
+```
 
 ## Organizing configuration
 
@@ -43,6 +107,9 @@ Werf parses all files in one environment, thus described [define](#include) of o
 ```yaml
 {{ $_ := set . "RubyVersion" "2.3.4" }}
 {{ $_ := set . "BaseImage" "alpine" }}
+
+project: my-project
+---
 
 dimg: rails
 from: {{ .BaseImage }}
@@ -126,6 +193,8 @@ If need to use the whole _template file_, use template file path relative to _.w
 
 {% raw %}
 ```yaml
+project: my-project
+---
 dimg: app
 from: java:8-jdk-alpine
 shell:
@@ -215,6 +284,9 @@ Go templates are available within YAML configuration. The following functions ar
   ```yaml
   {{ $base_image := "golang:1.11-alpine" }}
 
+  project: my-project
+  ---
+
   dimg: gogomonia
   from: {{ $base_image }}
   ---
@@ -227,6 +299,9 @@ Go templates are available within YAML configuration. The following functions ar
 
   {% raw %}
   ```yaml
+  project: my-project
+  ---
+
   {{ $_ := env "SPECIFIC_ENV_HERE" | set . "GitBranch" }}
 
   dimg: ~
@@ -247,6 +322,9 @@ Go templates are available within YAML configuration. The following functions ar
 
   {% raw %}
   ```yaml
+  project: my-project
+  ---
+
   dimg: app1
   from: alpine
   ansible:
@@ -281,6 +359,9 @@ Go templates are available within YAML configuration. The following functions ar
 
   {% raw %}
   ```yaml
+  project: my-project
+  ---
+
   dimg: app
   from: alpine
   ansible:

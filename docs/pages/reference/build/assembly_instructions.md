@@ -6,12 +6,12 @@ summary: |
   <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=2031&amp;h=144" data-featherlight="image">
       <img src="https://docs.google.com/drawings/d/e/2PACX-1vQcjW39mf0TUxI7yqNzKPq4_9ffzg2IsMxQxu1Uk1-M0V_Wq5HxZCQJ6x-iD-33u2LN25F1nbk_1Yx5/pub?w=1016&amp;h=72">
   </a>
-  
+
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event, 'shell')">Shell</button>
     <button class="tablinks" onclick="openTab(event, 'ansible')">Ansible</button>
   </div>
-  
+
   <div id="shell" class="tabcontent active">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">shell</span><span class="pi">:</span>
     <span class="na">beforeInstall</span><span class="pi">:</span>
@@ -29,7 +29,7 @@ summary: |
     <span class="na">setupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span></code></pre>
     </div>
   </div>
-  
+
   <div id="ansible" class="tabcontent">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="na">ansible</span><span class="pi">:</span>
     <span class="na">beforeInstall</span><span class="pi">:</span>
@@ -47,10 +47,10 @@ summary: |
     <span class="na">setupCacheVersion</span><span class="pi">:</span> <span class="s">&lt;arbitrary string&gt;</span></code></pre>
       </div>
   </div>
-  
+
   <br/>
   <b>Running assembly instructions with git</b>
-  
+
   <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=1956&amp;h=648" data-featherlight="image">
     <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206">
   </a>
@@ -89,7 +89,7 @@ repository can cause a rebuild of different _user stages_.
 
 ### More build tools: shell, ansible, ...
 
-_Shell_ is a familiar and well-known build tool. Ansible is a newer tool and it 
+_Shell_ is a familiar and well-known build tool. Ansible is a newer tool and it
 needs some time for learning.
 
 If you need prototype as soon as possible then _the shell_ is enough — it works
@@ -181,7 +181,7 @@ Builder directives also contain ***cacheVersion  directives*** that are user-def
 
 ## Shell
 
-Syntax for _user stages_ with _shell assembly instructions_: 
+Syntax for _user stages_ with _shell assembly instructions_:
 
 ```yaml
 shell:
@@ -225,7 +225,7 @@ bash -ec 'eval $(echo YXB0LWdldCB1cGRhdGUgJiYgYXB0LWdldCBpbnN0YWxsIC15IGJ1aWxkLW
 
 ## Ansible
 
-Syntax for _user stages_ with _ansible assembly instructions_: 
+Syntax for _user stages_ with _ansible assembly instructions_:
 
 ```yaml
 ansible:
@@ -366,7 +366,7 @@ Werf renders that snippet as go template and then transforms it into this `playb
 ```yaml
 - hosts: all
   gather_facts: no
-  tasks:   
+  tasks:
     install:
     - copy:
         content: |
@@ -500,7 +500,7 @@ Build for the next commit renders _beforeInstall command_ into:
 
 ```bash
 echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290e84df27"
-``` 
+```
 
 Using `CI_COMMIT_SHA` assembly instructions text changes every commit.
 So this configuration rebuilds _before_install user stage_ on every commit.
@@ -610,7 +610,7 @@ This image can be used as base image for multiple applications if images from hu
 
 ### External dependency example
 
-_CacheVersion directives_ can be used with [go templates]({{ site.baseurl }}/reference/build/config.html#go-templates) to define _user stage_ dependency on files, not in the git tree. 
+_CacheVersion directives_ can be used with [go templates]({{ site.baseurl }}/reference/config.html#go-templates) to define _user stage_ dependency on files, not in the git tree.
 
 {% raw %}
 ```yaml

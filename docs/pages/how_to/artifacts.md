@@ -22,6 +22,9 @@ The example application is the [Hotel Booking Example](https://github.com/revel/
 Create a `booking` directory and place the following `werf.yaml` in the `booking` directory:
 {% raw %}
 ```yaml
+project: hotel-booking
+---
+
 dimg: go-booking
 from: golang
 ansible:
@@ -114,6 +117,9 @@ Replace `werf.yaml` with the following content:
 
 {% raw %}
 ```yaml
+project: hotel-booking
+---
+
 artifact: booking-app
 from: golang
 ansible:

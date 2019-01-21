@@ -3,11 +3,11 @@
 entries:
   f:
 
+  - title: Config
+    url: /reference/config.html
+
   - title: Build
     sf:
-
-    - title: Config
-      url: /reference/build/config.html
 
     - title: Stages
       url: /reference/build/stages.html

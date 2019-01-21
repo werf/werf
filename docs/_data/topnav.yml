@@ -10,7 +10,7 @@ topnav:
 
   - title: Reference
     directory: /reference/
-    url: /reference/build/config.html
+    url: /reference/config.html
 
   - title: Publications
     url: /publications.html
