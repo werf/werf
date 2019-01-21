@@ -5,65 +5,45 @@ permalink: how_to/installation.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Werf requires a Linux operating system.
-Support for macOS is coming soon (see issue [#661](https://github.com/flant/werf/issues/661)).
-
 ## Install Dependencies
 
-1.  Ruby version 2.1 or later:
-    [Ruby installation](https://www.ruby-lang.org/en/documentation/installation/).
+1. [Git command line utility](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+   Minimal required version is 1.9.0.
+   To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
 
-1.  Docker version 1.10.0 or later:
-    [Docker installation](https://docs.docker.com/engine/installation/).
+2. [Helm Kubernetes package manager](https://github.com/helm/helm/blob/master/docs/install.md)
+   Helm is optional and needed only for deploy-related commands.
+   Minimal version is v2.7.0-rc1.
 
-1.  cmake and pkg-config (required to install `rugged` gem):
+## Install Werf binary (simple)
 
-    on Ubuntu or Debian:
+1. [Download latest release](https://bintray.com/dapp/dapp/Dapp/_latestVersion) for your architecture. Linux, MacOS and Windows are supported.
 
-    ```bash
-    apt-get install cmake pkg-config
-    ```
+   For example to download version v1.0.0-alpha.3 on MacOS:
 
-    on CentOS or RHEL:
+   ```bash
+   curl -L https://dl.bintray.com/dapp/dapp/v1.0.0-alpha.3/darwin-amd64/dapp -o werf
+   ```
 
-    ```bash
-    yum install cmake pkgconfig
-    ```
-
-1.  libssh2 header files to work with git via SSH.
-
-    on Ubuntu or Debian:
+2. Make binary executable:
 
     ```bash
-    apt-get install libssh2-1-dev
+    chmod +x ./werf
     ```
 
-    on CentOS or RHEL:
+3. Move binary to your PATH
 
-    ```bash
-    yum install libssh2-devel
-    ```
+   ```bash
+   sudo mv ./werf /usr/local/bin/werf
+   ```
 
-1.  libssl header files to work with git via HTTPS.
+Now you have Werf installed. Check it with `werf version`.
 
-    on Ubuntu or Debian:
+Time to [make your first application](https://flant.github.io/werf/how_to/getting_started.html)!
 
-    ```bash
-    apt-get install libssl-dev
-    ```
+## Install Werf using Multiwerf
 
-    on CentOS or RHEL:
+[Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf.
 
-    ```bash
-    yum install openssl-devel
-    ```
-
-## Install werf
-
-```bash
-gem install werf
-```
-
-Now you have werf installed. Check it with `werf --version`.
-
-Time to [make your first werf application]({{ site.baseurl }}/how_to/getting_started.html)!
+* Manages multiple versions of binaries installed on a single host, that can be used at the same time.
+* Enables autoupdates (optionally).

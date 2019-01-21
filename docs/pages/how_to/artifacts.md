@@ -211,4 +211,4 @@ Our example shows that **with using artifacts**, the image size **smaller by mor
 
 ## Conclusions
 
-The example shows us that using artifacts is a great way to exclude what shouldn't be in the result image. Moreover, you can use artifacts in any dimg described in a config. In some cases, it increases the speed of build.
+The example shows us that using artifacts is a great way to exclude what shouldn't be in the result image. Moreover, you can use artifacts in any dimg described in a `werf.yaml` config. In some cases, it increases the speed of build.

@@ -1,5 +1,5 @@
 ---
-title: Deploy into kubernetes
+title: Deploy into Kubernetes
 sidebar: how_to
 permalink: how_to/deploy_into_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
@@ -7,13 +7,13 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Task overview
 
-How to deploy application into kubernetes using werf.
+How to deploy application into Kubernetes using Werf.
 
-Werf uses helm with some additions to deploy applications into kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your kubernetes cluster.
+Werf uses helm with some additions to deploy applications into Kubernetes. In this article we will create a simple web application, build all needed images, write helm templates and run it on your kubernetes cluster.
 
 ## Requirements
 
- * Working kubernetes cluster. It may be minikube or regular kubernetes installation. Read [the article about minikube setup]({{ site.baseurl }}/reference/deploy/minikube.html) to set up local minikube instance with docker-registry.
+ * Working Kubernetes cluster. It may be Minikube or regular Kubernetes installation. Read [the article about Minikube setup]({{ site.baseurl }}/reference/deploy/minikube.html) to set up local minikube instance with docker-registry.
 
  * Working docker-registry.
 

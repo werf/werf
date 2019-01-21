@@ -2,14 +2,13 @@
   <img src="https://github.com/flant/werf/raw/master/logo.png" style="max-height:100%;" height="100">
 </p>
 <p align="center">
-  <a href="https://badge.fury.io/rb/werf"><img alt="Gem Version" src="https://badge.fury.io/rb/werf.svg" style="max-width:100%;"></a>
+  <a href='https://bintray.com/dapp/dapp/Dapp/_latestVersion'><img src='https://api.bintray.com/packages/dapp/dapp/Dapp/images/download.svg'></a>
   <a href="https://travis-ci.org/flant/werf"><img alt="Build Status" src="https://travis-ci.org/flant/werf.svg" style="max-width:100%;"></a>
-  <a href="https://codeclimate.com/github/flant/werf"><img alt="Code Climate" src="https://codeclimate.com/github/flant/werf/badges/gpa.svg" style="max-width:100%;"></a>
 </p>
 
 ___
 
-Werf is made to implement and support Continuous Integration and Continuous Delivery (CI/CD).
+Werf (previously known as Dapp) is made to implement and support Continuous Integration and Continuous Delivery (CI/CD).
 
 It helps DevOps engineers generate and deploy images by linking together:
 
@@ -20,8 +19,6 @@ It helps DevOps engineers generate and deploy images by linking together:
 Werf simplifies development of build scripts, reduces commit build time and automates deployment.
 It is designed to make engineer's work fast end efficient.
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Contents**
 
 - [Features](#features)
@@ -31,107 +28,69 @@ It is designed to make engineer's work fast end efficient.
 - [Docs and Support](#docs-and-support)
 - [License](#license)
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
 # Features
 
-* Reducing average build time.
-* Sharing a common cache between builds.
-* Running distributed builds with common registry.
-* Reducing image size by detaching source data and build tools.
+* Comlete application lifecycle management: build and cleanup images, deploy application into Kubernetes.
+* Reducing average build time for a sequence of git commits.
 * Building images with Ansible and shell scripts.
 * Building multiple images from one description.
+* Sharing a common cache between builds.
+* Reducing image size by detaching source data and build tools.
+* Running distributed builds with common registry.
 * Advanced tools for debugging built images.
-* Deploying to Kubernetes via [helm](https://helm.sh/), the Kubernetes package manager.
 * Tools for cleaning both local and remote Docker registry caches.
+* Deploying to Kubernetes via [helm](https://helm.sh/), the Kubernetes package manager.
 
-# Requirements and Installation
-
-Werf requires a Linux operating system.
-Support for macOS is coming soon (see issue [#661](https://github.com/flant/werf/issues/661)).
+# Installation
 
 ## Install Dependencies
 
-1.  Ruby version 2.1 or later:
-    [Ruby installation](https://www.ruby-lang.org/en/documentation/installation/).
+1. [Git command line utility](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+   Minimal required version is 1.9.0.
+   To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
 
-1.  Docker version 1.10.0 or later:
-    [Docker installation](https://docs.docker.com/engine/installation/).
+2. [Helm Kubernetes package manager](https://github.com/helm/helm/blob/master/docs/install.md)
+   Helm is optional and needed only for deploy-related commands.
+   Minimal version is v2.7.0-rc1.
 
-1.  сmake and pkg-config (required to install `rugged` gem):
+## Install Werf binary (simple)
 
-    on Ubuntu:
+1. [Download latest release](https://bintray.com/dapp/dapp/Dapp/_latestVersion) for your architecture. Linux, MacOS and Windows are supported.
 
-    ```bash
-    apt-get install cmake pkg-config
-    ```
+   For example to download version v1.0.0-alpha.3 on MacOS:
 
-    on Centos:
+   ```bash
+   curl -L https://dl.bintray.com/dapp/dapp/v1.0.0-alpha.3/darwin-amd64/dapp -o werf
+   ```
 
-    ```bash
-    yum install cmake pkgconfig
-    ```
-
-
-1.  libssh2 header files to work with git via SSH.
-
-    on Ubuntu:
+2. Make binary executable:
 
     ```bash
-    apt-get install libssh2-1-dev
+    chmod +x ./werf
     ```
 
-    on Centos:
+3. Move binary to your PATH
 
-    ```bash
-    yum install libssh2-devel
-    ```
+   ```bash
+   sudo mv ./werf /usr/local/bin/werf
+   ```
 
-1.  libssl header files to work with git via HTTPS.
+Now you have Werf installed. Check it with `werf version`.
 
-    on Ubuntu:
+Time to [make your first application](https://flant.github.io/werf/how_to/getting_started.html)!
 
-    ```bash
-    apt-get install libssl-dev
-    ```
+## Install Werf using Multiwerf
 
-    on Centos:
+[Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf.
 
-    ```bash
-    yum install openssl-devel
-    ```
-
-1.  Git command line utility.
-
-    Minimal required version is `1.9.0`. To use git submodules minimal version is `2.14.0`.
-
-    on Ubuntu:
-
-    ```bash
-    apt-get install git
-    ```
-
-    on Centos:
-
-    ```bash
-    yum install git
-    ```
-
-## Install werf
-
-  ```bash
-  gem install werf
-  ```
-
-Now you have werf installed. Check it with `werf --version`.
-
-Time to [make your first werf application](https://flant.github.io/werf/how_to/getting_started.html)!
+* Manages multiple versions of binaries installed on a single host, that can be used at the same time.
+* Enables autoupdates (optionally).
 
 # Docs and Support
 
-The werf documentation is available at [flant.github.io/werf](https://flant.github.io/werf/).
+The documentation is available at [flant.github.io/werf](https://flant.github.io/werf/).
 
-You can ask for support in [werf chat in Telegram](https://t.me/werf_ru).
+You can ask for support [in Telegram chat](https://t.me/werf_ru).
 
 # License
 

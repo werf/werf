@@ -9,7 +9,7 @@ summary: |
   </a>
 ---
 
-The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them. 
+The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them.
 
 To solve such problems, the Docker community suggests doing the installation of tools, the assembly, and removal of tools in one step.
 
@@ -64,7 +64,7 @@ Werf suggests an alternative in the form of _artifact dimg_, which are built acc
 ## What is an artifact?
 
 ***Artifact*** is special dimg that is used by _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
-          
+
 _Artifact_ cannot be [tagged like _dimg_]({{ site.baseurl }}/reference/registry/image_naming.html#werf-tag-procedure) and used as standalone application.
 
 Using artifacts, you can independently assemble an unlimited number of components, and also solving the following problems:
@@ -76,7 +76,7 @@ Importing _artifacts resources_ are described at destination _dimg_ or _artifact
 
 ## Configuration
 
-The _config configuration_ of the _artifact_ is not much different from the configuration of _dimg_. Each _artifact_ should be described in a separate YAML document.
+The configuration of the _artifact_ is not much different from the configuration of _dimg_. Each _artifact_ should be described in a separate YAML document.
 
 The instructions associated with the _from stage_, namely the [_base image_]({{ site.baseurl }}/reference/build/base_image.html) and [mounts]({{ site.baseurl }}/reference/build/mount_directive.html), remain unchanged.
 
@@ -96,7 +96,7 @@ _Artifact images_ are declared with `artifact` directive: `artifact: <artifact n
 
 ```yaml
 artifact: "application assets"
-```  
+```
 
 The _artifact name_ is used to specify the artifact in the [_artifact resources import_ description](#importing-artifacts) of the _dimg_ or _artifact_.
 
@@ -125,7 +125,7 @@ Read about working with _git repositories_ in the corresponding [article]({{ sit
 </a>
 
 </div>
-  
+
 Directives and _user stages_ remain unchanged: _before_install_, _install_, _before_setup_ and _setup_.
 
 If there are no dependencies on files specified in git `stageDependencies` directive for _user stages_, the image is cached after the first build and will no longer be reassembled while the _stages cache_ exists.

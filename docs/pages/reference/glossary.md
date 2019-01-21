@@ -5,9 +5,11 @@ permalink: reference/glossary.html
 ---
 
 ## Werf config
-— is a configuration to build docker images by werf.
+— is a configuration to build docker images by Werf described in `werf.yaml` file and supplement `.werf/**/*.tmpl` files.
 
 ## Werf name
+
+FIXME: project name and config
 
 _Werf name_ is either:
 
@@ -17,7 +19,7 @@ _Werf name_ is either:
 _Werf name_ can be explicitly specified with `--name` basic option of the most werf commands.
 
 ## Dimg
-— is the named set of rules to build one docker image. 
+— is the named set of rules to build one docker image.
 
 — is result image.
 

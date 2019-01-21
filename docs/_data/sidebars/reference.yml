@@ -88,7 +88,7 @@ entries:
       url: /reference/deploy/secrets.html
 
     - title: Chart configuration
-      url: /reference/deploy/templates.html
+      url: /reference/deploy/chart_configuration.html
 
     - title: Watch kubernetes resources
       url: /reference/deploy/watch_kubernetes_resources.html

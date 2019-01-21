@@ -36,7 +36,7 @@ For example, there was a change in `beforeSetup` stage of the dimg since last pr
 1. Calculates current state of the stage cache and realizes, that there is a change in `beforeSetup` stage.
 2. Downloads `install` (the stage prior `beforeSetup`) stage from docker registry. `beforeInstall` stage will not be downloaded, because only `install` stage is needed to rebuild `beforeSetup` and further stages.
 
-A pulled stage can be used by multiple dimgs of the same config in the case when this stage is common between multiple dimgs.
+A pulled stage can be used by multiple dimgs of the same `werf.yaml` config in the case when this stage is common between multiple dimgs.
 
 In other words, werf downloads from cache **last common stage** between old and new dimg state.
 

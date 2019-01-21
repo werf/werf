@@ -7,7 +7,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 ## Task Overview
 
-Setup CI/CD process using GitLab CI and werf.
+Setup CI/CD process using GitLab CI and Werf.
 
 ## Requirements
 
@@ -20,7 +20,7 @@ To begin, you'll need the following:
 
 ## Infrastructure
 
-![sdf]({{ site.baseurl }}/images/howto_gitlabci_scheme.png)
+![scheme]({{ site.baseurl }}/images/howto_gitlabci_scheme.png)
 
 * Kubernetes cluster
 * GitLab with docker registry enabled

@@ -178,7 +178,7 @@ In the example application, the GO is downloaded and extracted. The GO source is
 
 Building application on the setup stage uses the `/go` directory, specified in the `GOPATH` environment variable. This directory contains necessary packages and application source. After the build, the result is placed in the `/app` directory, and the `/go` directory is not needed to run the application. So, the `/go` directory can be mounted to a temporary place, outside of the image.
 
-Add the following to mount directives in the config:
+Add the following to mount directives into config:
 
 ```yaml
 - from: tmp_dir
@@ -189,7 +189,7 @@ Add the following to mount directives in the config:
   to: /usr/local/go
 ```
 
-### Complete config
+### Complete `werf.yaml` config
 
 {% raw %}
 ```yaml

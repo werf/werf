@@ -1,7 +1,7 @@
 ---
-title: Release configuration
+title: Chart configuration
 sidebar: reference
-permalink: reference/deploy/templates.html
+permalink: reference/deploy/chart_configuration.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
@@ -74,10 +74,10 @@ The logic of generating the `imagePullPolicy` key:
   * In this case, the image for an appropriate docker tag doesn't need to be updated through docker pull if it already exists.
   * In this case, `imagePullPolicy` is not specified, which is consistent with the default value currently adopted in kubernetes: `imagePullPolicy=IfNotPresent`.
 
-An example of using a template in case multiple dimgs exist in the config:
+An example of using a template in case multiple dimgs exist in the `werf.yaml` config:
 * `tuple <dimg-name> . | include "werf_container_image" | indent <N-spaces>`
 
-An example of using a template in case a single unnamed dimg exists in config:
+An example of using a template in case a single unnamed dimg exists in the config:
 * `tuple . | include "werf_container_image" | indent <N-spaces>`
 * `include "werf_container_image" . | indent <N-spaces>` (additional simplified entry format)
 
@@ -85,10 +85,10 @@ An example of using a template in case a single unnamed dimg exists in config:
 
 Enables streamlining the release process if the image remains unchanged. Generates a block with the `DOCKER_IMAGE_ID` environment variable for the pod container, but only if `.Values.global.werf.is_branch=true`, because in this case the image for an appropriate docker tag might have been updated through its name remained unchanged. The `DOCKER_IMAGE_ID` variable contains a new id docker for an image, which forces kubernetes to update an asset. The template may return multiple strings, which is why it must be used together with `indent`.
 
-An example of using a template in case multiple dimgs exist in the config:
+An example of using a template in case multiple dimgs exist in the `werf.yaml` config:
 * `tuple <dimg-name> . | include "werf_container_env" | indent <N-spaces>`
 
-An example of using a template in case a single unnamed dimg exists in config:
+An example of using a template in case a single unnamed dimg exists in the config:
 * `tuple . | include "werf_container_env" | indent <N-spaces>`
 * `include "werf_container_env" . | indent <N-spaces>` (additional simplified entry format)
 
