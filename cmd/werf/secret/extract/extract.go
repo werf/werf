@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"golang.org/x/crypto/ssh/terminal"
-
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/flant/werf/cmd/werf/common"
 	secret_common "github.com/flant/werf/cmd/werf/secret/common"
@@ -25,8 +24,12 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "extract",
-		Short: "Extract data",
+		Use:                   "extract",
+		DisableFlagsInUseLine: true,
+		Short:                 "Extract data",
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSecretExtract()
 			if err != nil {
@@ -40,9 +43,9 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().StringVarP(&CmdData.FilePath, "file-path", "", "", "Decode file data by specified path")
-	cmd.PersistentFlags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "", "", "Save decoded data by specified file path")
-	cmd.PersistentFlags().BoolVarP(&CmdData.Values, "values", "", false, "Decode specified FILE_PATH (--file-path) as secret values file")
+	cmd.Flags().StringVarP(&CmdData.FilePath, "file-path", "", "", "Decode file data by specified path")
+	cmd.Flags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "", "", "Save decoded data by specified file path")
+	cmd.Flags().BoolVarP(&CmdData.Values, "values", "", false, "Decode specified FILE_PATH (--file-path) as secret values file")
 
 	return cmd
 }

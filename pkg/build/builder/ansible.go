@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	ghodssYaml "github.com/ghodss/yaml"
-	reflections "gopkg.in/oleiade/reflections.v1"
-	yaml "gopkg.in/yaml.v1"
+	"gopkg.in/oleiade/reflections.v1"
+	"gopkg.in/yaml.v1"
 
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/dappdeps"
@@ -93,7 +93,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 		filepath.Join(b.containerWorkDir(), "playbook.yml"),
 	}
 
-	if value, exist := os.LookupEnv("ANSIBLE_ARGS"); exist {
+	if value, exist := os.LookupEnv("WERF_ANSIBLE_ARGS"); exist {
 		commandParts = append(commandParts, value)
 	}
 

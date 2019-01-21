@@ -12,6 +12,10 @@ topnav:
     directory: /reference/
     url: /reference/config.html
 
+  - title: CLI
+    directory: /cli/
+    url: /cli/build/build.html
+
   - title: Publications
     url: /publications.html
 

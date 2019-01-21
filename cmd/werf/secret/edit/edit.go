@@ -11,11 +11,10 @@ import (
 	"reflect"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
-
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
+	"gopkg.in/yaml.v2"
 	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -32,9 +31,13 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "edit FILE_PATH",
-		Short: "Edit or create new secret file",
-		Args:  cobra.ExactArgs(1),
+		Use:                   "edit FILE_PATH",
+		DisableFlagsInUseLine: true,
+		Short:                 "Edit or create new secret file",
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfTmp),
+		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSecretEdit(args[0])
 			if err != nil {
@@ -48,7 +51,7 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.PersistentFlags().BoolVarP(&CmdData.Values, "values", "", false, "Edit FILE_PATH as secret values file")
+	cmd.Flags().BoolVarP(&CmdData.Values, "values", "", false, "Edit FILE_PATH as secret values file")
 
 	return cmd
 }

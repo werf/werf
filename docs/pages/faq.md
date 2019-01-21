@@ -57,7 +57,7 @@ We recommend to build an image which building instructions depend on your code b
 
 Environment variables which have been set in `docker` config section will be added by a builder on the last dimg stage, `docker_instructions`, and will not be accessible on other build stages.
 
-Also, you can use `ANSIBLE_ARGS` env when you use ansible builder. E.g. you can `export ANSIBLE_ARGS=-vvv` and get verbose ansible output.
+Also, you can use `WERF_ANSIBLE_ARGS` env when you use ansible builder. E.g. you can `export WERF_ANSIBLE_ARGS=-vvv` and get verbose ansible output.
 
 
 [Q: What functions can I use in werf.yaml?](#config-5){:id="config-5"}
