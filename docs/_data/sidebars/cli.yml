@@ -1,0 +1,92 @@
+entries:
+  f:
+
+  - title: Build commands
+    sf:
+
+    - title: build
+      url: /cli/build/build.html
+
+    - title: bp
+      url: /cli/build/bp.html
+
+    - title: push
+      url: /cli/build/push.html
+
+    - title: tag
+      url: /cli/build/tag.html
+
+  - title: Deploy commands
+    sf:
+
+    - title: deploy
+      url: /cli/deploy/deploy.html
+
+    - title: dismiss
+      url: /cli/deploy/dismiss.html
+
+    - title: render
+      url: /cli/deploy/render.html
+
+    - title: lint
+      url: /cli/deploy/lint.html
+
+    - title: secret
+      sfi:
+
+      - title: keygen
+        url: /cli/deploy/secret/keygen.html
+
+      - title: generate
+        url: /cli/deploy/secret/generate.html
+
+      - title: extract
+        url: /cli/deploy/secret/extract.html
+
+      - title: edit
+        url: /cli/deploy/secret/edit.html
+
+      - title: regenerate
+        url: /cli/deploy/secret/regenerate.html
+
+  - title: Project cleanup commands
+    sf:
+
+    - title: cleanup
+      url: /cli/project_cleanup/cleanup.html
+
+    - title: sync
+      url: /cli/project_cleanup/sync.html
+
+    - title: reset
+      url: /cli/project_cleanup/flush.html
+
+  - title: Cleanup commands
+    sf:
+
+    - title: gc
+      url: /cli/cleanup/gc.html
+
+    - title: reset
+      url: /cli/cleanup/reset.html
+
+  - title: Other commands
+    sf:
+
+    - title: completion
+      url: /cli/other/completion.html
+
+    - title: slug
+      sfi:
+
+      - title: slug namespace
+        url: /cli/other/slug/namespace.html
+
+      - title: slug release
+        url: /cli/other/slug/release.html
+
+      - title: slug tag
+        url: /cli/other/slug/tag.html
+
+    - title: version
+      url: /cli/other/version.html
