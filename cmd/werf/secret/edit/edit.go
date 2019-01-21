@@ -34,7 +34,10 @@ func NewCmd() *cobra.Command {
 		Use:                   "edit FILE_PATH",
 		DisableFlagsInUseLine: true,
 		Short:                 "Edit or create new secret file",
-		Args:                  cobra.ExactArgs(1),
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfTmp),
+		},
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSecretEdit(args[0])
 			if err != nil {

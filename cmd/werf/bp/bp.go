@@ -39,6 +39,9 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "bp [DIMG_NAME...]",
 		DisableFlagsInUseLine: true,
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if CmdData.PullUsername == "" {
 				CmdData.PullUsername = CmdData.RegistryUsername

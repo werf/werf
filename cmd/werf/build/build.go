@@ -2,7 +2,6 @@ package build
 
 import (
 	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -32,6 +31,9 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "build [DIMG_NAME...]",
 		DisableFlagsInUseLine: true,
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runBuild(args)
 			if err != nil {

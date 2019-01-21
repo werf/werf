@@ -2,8 +2,6 @@ package cleanup
 
 import (
 	"fmt"
-	"path"
-
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
@@ -13,6 +11,7 @@ import (
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/project_tmp_dir"
 	"github.com/flant/werf/pkg/werf"
+	"path"
 
 	"github.com/flant/werf/pkg/util"
 	"github.com/spf13/cobra"
@@ -35,6 +34,9 @@ func NewCmd() *cobra.Command {
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
 		Short:                 "Cleanup project images in docker registry by policies",
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome),
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runCleanup()
 			if err != nil {

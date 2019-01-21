@@ -3,7 +3,6 @@ package secret
 import (
 	"bytes"
 	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -25,6 +24,9 @@ func NewCmd() *cobra.Command {
 		Use:                   "generate",
 		DisableFlagsInUseLine: true,
 		Short:                 "Generate secret data",
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSecretGenerate()
 			if err != nil {

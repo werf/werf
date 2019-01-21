@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"golang.org/x/crypto/ssh/terminal"
-
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/flant/werf/cmd/werf/common"
 	secret_common "github.com/flant/werf/cmd/werf/secret/common"
@@ -28,6 +27,9 @@ func NewCmd() *cobra.Command {
 		Use:                   "extract",
 		DisableFlagsInUseLine: true,
 		Short:                 "Extract data",
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSecretExtract()
 			if err != nil {

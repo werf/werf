@@ -11,8 +11,15 @@ const (
 		`{{$rootCmd := rootCmd .}}` +
 		`{{$visibleFlags := visibleFlags (flagsNotIntersected .LocalFlags .PersistentFlags)}}` +
 		`{{$explicitlyExposedFlags := exposed .}}` +
+		`{{$environment := environment .}}` +
 		`{{$optionsCmdFor := optionsCmdFor .}}` +
 		`{{$usageLine := usageLine .}}`
+
+	// SectionAliases is the help template section that displays command aliases.
+	SectionEnvironment = `{{if $environment}}Environment:
+{{ $environment }}
+
+{{end}}`
 
 	// SectionAliases is the help template section that displays command aliases.
 	SectionAliases = `{{if gt .Aliases 0}}Aliases:
@@ -60,6 +67,7 @@ func MainUsageTemplate() string {
 		SectionAliases,
 		SectionExamples,
 		SectionSubcommands,
+		SectionEnvironment,
 		SectionFlags,
 		SectionUsage,
 		SectionTipsHelp,

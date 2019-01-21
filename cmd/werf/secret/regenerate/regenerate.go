@@ -26,6 +26,9 @@ func NewCmd() *cobra.Command {
 		Use:                   "regenerate [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Regenerate secret files with new secret key",
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSecretRegenerate(args...)
 			if err != nil {

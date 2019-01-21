@@ -50,7 +50,7 @@ func main() {
 		Short: "Werf helps to implement and support Continuous Integration and Continuous Delivery",
 		Long: `Werf helps to implement and support Continuous Integration and Continuous Delivery.
 
-Find more information at: https://werf.io`,
+Find more information at https://werf.io`,
 		SilenceUsage: true,
 	}
 

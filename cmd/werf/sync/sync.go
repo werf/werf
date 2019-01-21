@@ -2,7 +2,6 @@ package sync
 
 import (
 	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -29,6 +28,9 @@ func NewCmd() *cobra.Command {
 		Use:                   "sync",
 		DisableFlagsInUseLine: true,
 		Short:                 "Remove local stages cache for the images, that don't exist into the docker registry",
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableSyncLocalStagesDatePeriodPolicy, common.WerfHome),
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSync()
 			if err != nil {

@@ -2,7 +2,6 @@ package flush
 
 import (
 	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -31,6 +30,9 @@ func NewCmd() *cobra.Command {
 		Use:                   "flush",
 		DisableFlagsInUseLine: true,
 		Short:                 "Delete project images in local docker storage and specified docker registry",
+		Annotations: map[string]string{
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfInsecureRegistry, common.WerfHome),
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runFlush()
 			if err != nil {

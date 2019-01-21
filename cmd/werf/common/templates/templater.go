@@ -10,6 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
+
+	"github.com/flant/werf/cmd/werf/common"
 )
 
 type FlagExposer interface {
@@ -79,6 +81,13 @@ func (t *templater) templateFuncs(exposedFlags ...string) template.FuncMap {
 		"isRootCmd":           t.isRootCmd,
 		"optionsCmdFor":       t.optionsCmdFor,
 		"usageLine":           t.usageLine,
+		"environment": func(c *cobra.Command) string {
+			if res, ok := c.Annotations[common.CmdEnvAnno]; ok {
+				return res
+			}
+
+			return ""
+		},
 		"exposed": func(c *cobra.Command) *flag.FlagSet {
 			exposed := flag.NewFlagSet("exposed", flag.ContinueOnError)
 			if len(exposedFlags) > 0 {
