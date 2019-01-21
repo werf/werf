@@ -15,9 +15,8 @@ func NewCmd(rootCmd *cobra.Command) *cobra.Command {
 
 . <(%[1]s completion)
 
-To configure your bash shell to load completions for each session add to your bashrc
+To configure your bash shell to load completions for each session add to your ~/.bashrc ~/.profile
 
-# ~/.bashrc or ~/.profile
 . <(%[1]s completion)
 `, rootCmd.Name()),
 		Run: func(cmd *cobra.Command, args []string) {

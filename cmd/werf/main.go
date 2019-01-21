@@ -13,6 +13,7 @@ import (
 	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/deploy"
 	"github.com/flant/werf/cmd/werf/dismiss"
+	"github.com/flant/werf/cmd/werf/docs"
 	"github.com/flant/werf/cmd/werf/flush"
 	"github.com/flant/werf/cmd/werf/gc"
 	"github.com/flant/werf/cmd/werf/lint"
@@ -98,6 +99,7 @@ Find more information at https://werf.io`,
 		slugCmd(),
 		completion.NewCmd(rootCmd),
 		version.NewCmd(),
+		docs.NewCmd(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {

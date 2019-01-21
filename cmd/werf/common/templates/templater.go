@@ -74,7 +74,7 @@ func (t *templater) templateFuncs(exposedFlags ...string) template.FuncMap {
 		"appendIfNotPresent":  appendIfNotPresent,
 		"flagsNotIntersected": flagsNotIntersected,
 		"visibleFlags":        visibleFlags,
-		"flagsUsages":         flagsUsages,
+		"flagsUsages":         FlagsUsages,
 		"cmdGroups":           t.cmdGroups,
 		"cmdGroupsString":     t.cmdGroupsString,
 		"rootCmd":             t.rootCmdName,
@@ -170,6 +170,10 @@ func (t *templater) optionsCmdFor(c *cobra.Command) string {
 }
 
 func (t *templater) usageLine(c *cobra.Command) string {
+	return UsageLine(c)
+}
+
+func UsageLine(c *cobra.Command) string {
 	usage := c.UseLine()
 	suffix := "[options]"
 	if c.HasFlags() && !strings.Contains(usage, suffix) {
@@ -178,7 +182,7 @@ func (t *templater) usageLine(c *cobra.Command) string {
 	return usage
 }
 
-func flagsUsages(f *flag.FlagSet) string {
+func FlagsUsages(f *flag.FlagSet) string {
 	x := new(bytes.Buffer)
 
 	f.VisitAll(func(flag *flag.Flag) {
