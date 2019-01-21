@@ -536,7 +536,7 @@ button.cursorNorm {
 }
 
 a.dropdown-toggle, .navbar-inverse .navbar-nav > li > a  {
-    margin-left: 10px;
+  margin-left: 2px;
 }
 
 hr.faded {
@@ -857,11 +857,14 @@ span.soft {
 }
 
 @media (min-width: 1000px) {
+  ul#mysidebar {
+    width: 225px;
+    margin-top: 40px;
+  }
 
-    ul#mysidebar {
-        width: 225px;
-        margin-top: 40px;
-    }
+  a.dropdown-toggle, .navbar-inverse .navbar-nav > li > a {
+    margin-left: 10px;
+  }
 }
 
 @media (max-width: 900px) {
