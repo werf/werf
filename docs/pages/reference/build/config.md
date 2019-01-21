@@ -5,12 +5,12 @@ permalink: reference/build/config.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-## What is werf config file?
+## What is werf config?
 
 TODO: describe project name section
 TODO: move file to top level
 
-Werf uses YAML configuration file to describe . At present, werf only support YAML syntax and uses one of the following files in the root folder of your project — `werf.yaml` or `werf.yml`.
+Werf uses YAML configuration file to describe . At present, werf only support YAML syntax and uses `werf.yaml` file in the root folder of your project.
 
 The config is a collection of [YAML documents](http://yaml.org/spec/1.2/spec.html#id2800132) combined with delimiter `---`. Each YAML document contains instructions to build independent docker image.
 
@@ -28,16 +28,16 @@ Werf represents YAML document as an internal object. Currently, werf supports tw
 
 ***Dimg*** is the named set of rules, an internal representation of user image. An ***artifact*** is a special dimg that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
 
-## Organizing config configuration
+## Organizing configuration
 
-Part of the configuration can be moved in ***separate template files*** and then includes in __config.yaml__. _Template files_ should live in the ***.configs*** directory with **.tmpl** extension (any nesting is supported).
+Part of the configuration can be moved in ***separate template files*** and then included into __werf.yaml__. _Template files_ should live in the ***.werf*** directory with **.tmpl** extension (any nesting is supported).
 
 > **Tip:** templates can be generated or downloaded before running werf. For example, for sharing common logic between projects.
 
-Werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _config.yaml_.
+Werf parses all files in one environment, thus described [define](#include) of one _template file_ becomes available in other files, including _werf.yaml_.
 
 <details markdown="1" open>
-<summary><b>config.yaml</b></summary>
+<summary><b>werf.yaml</b></summary>
 
 {% raw %}
 ```yaml
@@ -58,7 +58,7 @@ ansible:
 </details>
 
 <details markdown="1">
-<summary><b>.configs/ansible/components.tmpl</b></summary>
+<summary><b>.werf/ansible/components.tmpl</b></summary>
 
 {% raw %}
 ```yaml
@@ -117,12 +117,12 @@ ansible:
 
 </details>
 
-> If there are templates with the same name werf will use template defined in _config.yaml_ or the latest described in _templates files_.
+> If there are templates with the same name werf will use template defined in _werf.yaml_ or the latest described in _templates files_.
 
-If need to use the whole _template file_, use template file path relative to _.configs_ directory as a template name in [include](#include) function.
+If need to use the whole _template file_, use template file path relative to _.werf_ directory as a template name in [include](#include) function.
 
 <details markdown="1" open>
-<summary><b>config.yaml</b></summary>
+<summary><b>werf.yaml</b></summary>
 
 {% raw %}
 ```yaml
@@ -154,7 +154,7 @@ docker:
 </details>
 
 <details markdown="1">
-<summary><b>.configs/artifact/appserver.tmpl</b></summary>
+<summary><b>.werf/artifact/appserver.tmpl</b></summary>
 
 {% raw %}
 ```yaml
@@ -174,7 +174,7 @@ shell:
 </details>
 
 <details markdown="1">
-<summary><b>.configs/artifact/storefront.tmpl</b></summary>
+<summary><b>.werf/artifact/storefront.tmpl</b></summary>
 
 {% raw %}
 ```yaml
@@ -196,9 +196,9 @@ shell:
 ## Processing of config
 
 The following steps could describe the processing of a YAML configuration file:
-1. Reading `config.yaml` and extra templates from `.configs` directory;
+1. Reading `werf.yaml` and extra templates from `.werf` directory;
 1. Executing Go templates;
-1. Saving dump into `.config.render.yaml` (that file will remain after build and will be available until next render);
+1. Saving dump into `.werf.render.yaml` (that file will remain after build and will be available until next render);
 1. Splitting rendered YAML file into separate YAML documents;
 1. Validating each YAML document:
   * Validating YAML syntax (you could read YAML reference [here](http://yaml.org/refcard.html)).
@@ -288,7 +288,7 @@ Go templates are available within YAML configuration. The following functions ar
     - name: "Setup /etc/nginx/nginx.conf"
       copy:
         content: |
-  {{ .Files.Get ".configs/nginx.conf" | indent 8 }}
+  {{ .Files.Get ".werf/nginx.conf" | indent 8 }}
         dest: /etc/nginx/nginx.conf
   ```
   {% endraw %}

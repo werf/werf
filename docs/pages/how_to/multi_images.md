@@ -457,7 +457,7 @@ Open the [atseashop.com](http://atseashop.com) in your browser, and you will be 
 
 We've described all project images in a one config.
 
-The example above shows the benefits of using config:
-* Using werf allows describing all images of a project in a one config. This approach gives you more convenience.
+The example above shows the benefits:
 * If your project has similar images, you can share some piece of images by mounting their folder with the `build_dir` directive (read more about mounts [here]({{ site.baseurl }}/reference/build/mount_directive.html)).
 * You can share artifacts between dimgs in single config.
+* Common templates can be used in single config to describe configuration of multiple images.

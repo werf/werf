@@ -12,7 +12,7 @@ Docker images should be pushed into the docker registry for further usage in mos
 
 ## What can be pushed
 
-The result of werf [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) is a stages cache related to dimgs defined in the config. Werf can be used to push either:
+The result of werf [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) is a stages cache related to dimgs defined in the `werf.yaml` config. Werf can be used to push either:
 
 * Dimgs images. These can only be used as _images for running_. These images are not suitable for _distributes images cache_, because werf build algorithm implies creating separate images for stages cache. When you pull a dimg from a docker registry, you don't receive stages cache for this image.
 * Dimgs images with a stages cache images. These images can be used as _images for running_ and also as a _distributed images cache_.
@@ -149,7 +149,7 @@ The `DIMG` optional parameter — is a name of dimg from a config.
 
 ### Push all dimgs from config
 
-Given config with three dimgs — `core`, `queue` and `api`.
+Given `werf.yaml` config with three dimgs — `core`, `queue` and `api`.
 
 ```bash
 werf dimg push registry.hello.com/taxi/backend --tag-plain v1.1.14
@@ -182,7 +182,7 @@ Notice the images with the `dimgstage` prefixes in the docker tags. These are th
 
 ### Push specified dimgs from config
 
-Given config with three dimgs — `kubetools`, `backuptools` and `copytools`.
+Given `werf.yaml` config with three dimgs — `kubetools`, `backuptools` and `copytools`.
 
 ```bash
 werf dimg push kubetools backuptools registry.hello.com/tools/common
@@ -195,7 +195,7 @@ Command pushes following images into specified repo for each of the specified di
 
 ### Push single dimg using custom docker repository name
 
-Given config with two dimgs — `plain-c` and `rust`.
+Given `werf.yaml` config with two dimgs — `plain-c` and `rust`.
 
 ```bash
 werf dimg spush plain-c myregistry.host/lingvo/parser --tag stable --tag-plain v1.4.11

@@ -19,7 +19,7 @@ In a Docker world a tag is a creating an alias name for existent docker image.
 In Werf world tagging creates **a new image layer** with the specified name. Werf stores internal service information about tagging schema in this layer (using docker labels). This information is referred to as image **meta-information**. Werf uses this information in [deploying]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#werf-kube-deploy) and [cleaning]({{ site.baseurl }}/reference/registry/cleaning.html) processes.
 
 The procedure of creating such a layer will be referred to as **werf tag procedure**.
- 
+
 ## REPO parameter
 
 For all commands related to a docker registry, werf uses a single parameter named `REPO`. Using this parameter werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
@@ -27,7 +27,7 @@ For all commands related to a docker registry, werf uses a single parameter name
 * If werf project contains nameless dimg, werf uses `REPO` as docker repository.
 * Otherwise, werf constructs docker repository name for each dimg by following template `REPO/DIMG_NAME`.
 
-E.g., if there is unnamed dimg in a config and `REPO` is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two dimgs in a config — `server` and `worker`, then docker repository names are:
+E.g., if there is unnamed dimg in a `werf.yaml` config and `REPO` is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two dimgs in a config — `server` and `worker`, then docker repository names are:
 * `myregistry.myorg.com/sys/backend/server` for `server` dimg;
 * `myregistry.myorg.com/sys/backend/worker` for `worker` dimg.
 
@@ -48,7 +48,7 @@ E.g., if there is unnamed dimg in a config and `REPO` is `myregistry.myorg.com/s
 | `--tag\|--tag-slug TAG` | arbitrary slugged tag TAG |
 | `--tag-plain TAG` | arbitrary non slugged tag TAG |
 
-### --tag-ci
+### `--tag-ci`
 
 Tag works only in GitLab CI or Travis CI environment.
 
@@ -66,23 +66,23 @@ After getting git tag or git branch name, werf applies [slug](#slug) transformat
 
 Option `--tag-ci` is the most recommended way for building in CI.
 
-### --tag-build-id
+### `--tag-build-id`
 
 Tag works only in GitLab CI or Travis CI environment.
 
 The tag name based on the unique id of the current GitLab job from `CI_BUILD_ID` or `CI_JOB_ID` environment variable for Gitlab CI or `TRAVIS_BUILD_NUMBER` environment variable for Travis CI.
 
-### --tag-branch
+### `--tag-branch`
 
 The tag name based on a current git branch. Werf looks for the current branch in the local git repository where config located.
 
 After getting git branch name, werf apply [slug](#slug) transformation rules if tag name doesn't meet with the slug requirements. This behavior allows using branches with arbitrary names like `my/second_patch`.
 
-### --tag-commit
+### `--tag-commit`
 
 The tag name based on a current git commit id (full-length SHA hashsum). Werf looks for the current commit id in the local git repository where config located.
 
-### --tag|--tag-slug TAG
+### `--tag|--tag-slug TAG`
 
 `--tag TAG` and `--tag-slug TAG` is an alias of each other.
 
@@ -90,7 +90,7 @@ The tag name based on a specified TAG in the parameter.
 
 Werf applies [slug](#slug) transformation rules to TAG, and if it doesn't meet with the slug requirements. This behavior allows using text with arbitrary chars as a TAG.
 
-### --tag-plain TAG
+### `--tag-plain TAG`
 
 The tag name based on a specified TAG in the parameter.
 
@@ -122,7 +122,7 @@ produces the following image names respectively:
 
 ### Two dimgs in GitLab job
 
-Given Werf config with 2 dimgs — backend and frontend.
+Given `werf.yaml` config with 2 dimgs — backend and frontend.
 
 The following command runs in GitLab job for git branch named `core/feature/ADD_SETTINGS`:
 ```bash

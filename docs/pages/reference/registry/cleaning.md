@@ -158,7 +158,7 @@ werf dimg mrproper [--all] [--improper-cache-version-stages] [--improper-dev-mod
 
 ### Delete all images and stages cache in the current project
 
-Given config with two dimgs. Images succesfully built and tagged.
+Given `werf.yaml` config with two dimgs. Images succesfully built and tagged.
 
 ```bash
 werf dimg flush local --with-stages

@@ -39,7 +39,7 @@ The `REPO` required parameter — is a repository name (see more in [image namin
 
 ### Tag all dimgs from config
 
-Given config with three dimgs — `backend`, `frontend` and `assets`.
+Given `werf.yaml` config with three dimgs — `backend`, `frontend` and `assets`.
 
 ```bash
 werf dimg tag registry.hello.com/web/core/system --tag-plain v1.3.0
@@ -53,7 +53,7 @@ Command creates three local docker images:
 
 ### Tag specified dimgs from config
 
-Given config with three dimgs — `backend`, `frontend` and `assets`.
+Given `werf.yaml` config with three dimgs — `backend`, `frontend` and `assets`.
 
 ```bash
 werf dimg tag frontend assets registry.hello.com/web/core/system --tag-plain v1.3.0
