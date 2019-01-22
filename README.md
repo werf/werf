@@ -49,31 +49,36 @@ It is designed to make engineer's work fast end efficient.
    Minimal required version is 1.9.0.
    To optionally use [Git Submodules](https://git-scm.com/docs/gitsubmodules) minimal version is 2.14.0.
 
-2. [Helm Kubernetes package manager](https://github.com/helm/helm/blob/master/docs/install.md)
-   Helm is optional and needed only for deploy-related commands.
+2. Helm Kubernetes package manager. Helm is optional and only needed for deploy-related commands.
+   [Helm command line util installation instructions.](https://docs.helm.sh/using_helm/#installing-helm)
+   [Tiller backend installation instructions.](https://docs.helm.sh/using_helm/#installing-tiller)
    Minimal version is v2.7.0-rc1.
 
 ## Install Werf binary (simple)
 
-1. [Download latest release](https://bintray.com/dapp/dapp/Dapp/_latestVersion) for your architecture. Linux, MacOS and Windows are supported.
+The latest release can be reached via [this page](https://bintray.com/dapp/dapp/Dapp/_latestVersion).
 
-   For example to download version v1.0.0-alpha.3 on MacOS:
+### MacOS
 
-   ```bash
-   curl -L https://dl.bintray.com/dapp/dapp/v1.0.0-alpha.3/darwin-amd64/dapp -o werf
-   ```
+```bash
+curl -L https://dl.bintray.com/dapp/dapp/v1.0.0-alpha.3/darwin-amd64/dapp -o /tmp/werf
+chmod +x /tmp/werf
+sudo mv /tmp/werf /usr/local/bin/werf
+```
 
-2. Make binary executable:
+### Linux
 
-    ```bash
-    chmod +x ./werf
-    ```
+```bash
+curl -L https://dl.bintray.com/dapp/dapp/v1.0.0-alpha.3/linux-amd64/dapp -o /tmp/werf
+chmod +x /tmp/werf
+sudo mv /tmp/werf /usr/local/bin/werf
+```
 
-3. Move binary to your PATH
+### Windows
 
-   ```bash
-   sudo mv ./werf /usr/local/bin/werf
-   ```
+Download [werf.exec](https://dl.bintray.com/dapp/dapp/v1.0.0-alpha.3/windows-amd64/dapp).
+
+### Check it
 
 Now you have Werf installed. Check it with `werf version`.
 
@@ -81,18 +86,6 @@ Time to [make your first application](https://flant.github.io/werf/how_to/gettin
 
 ## Install Werf using Multiwerf
 
-[Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf.
-
+[Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf, which:
 * Manages multiple versions of binaries installed on a single host, that can be used at the same time.
 * Enables autoupdates (optionally).
-
-# Docs and Support
-
-The documentation is available at [flant.github.io/werf](https://flant.github.io/werf/).
-
-You can ask for support [in Telegram chat](https://t.me/werf_ru).
-
-# License
-
-Werf is published under Apache License v2.0.
-See [LICENSE](https://github.com/flant/werf/blob/master/LICENSE) for details.

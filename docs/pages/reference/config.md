@@ -38,7 +38,7 @@ OTHER_FIELDS
 ---
 ```
 
-Yaml doc with the key `project: PROJECT_NAME` is the meta configuration doc. This is required doc. There should be only one meta configuration doc in the single `werf.yaml` configuration.
+Yaml doc with the key `project: PROJECT_NAME` is the meta configuration doc. This is required doc. There should be only one meta configuration doc in a single `werf.yaml` configuration.
 
 #### Project name
 
@@ -58,7 +58,7 @@ Werf cannot automatically resolve project name change. Described issues must be 
 
 Each image configuration doc defines instructions to build one independent docker image. There may be multiple image cofiguration docs defined in the same `werf.yaml` config to build multiple images.
 
-Yaml doc with the key `dimg: IMAGE_NAME` is the image configuration doc. `dimg` defines short name of the docker image to be built. This name must be unique in single `werf.yaml` config.
+Yaml doc with the key `dimg: IMAGE_NAME` is the image configuration doc. `dimg` defines short name of the docker image to be built. This name must be unique in a single `werf.yaml` config.
 
 ```
 dimg: IMAGE_NAME_1
@@ -77,7 +77,7 @@ OTHER_FIELDS
 
 Artifact configuration doc also defines instructions to build one independent artifact docker image. Arifact is a secondary image aimed to isolate a build process and build tools resources (environments, software, data, see [artifacts article for the details]({{ site.baseurl }}/reference/build/artifact.html)). There may be multiple artifact configuration docs for multiple artifacts defined in the same `werf.yaml` config.
 
-Yaml doc with the key `artifact: IMAGE_NAME` is the artifact configuration doc. `artifact` defines short name of the artifact to be referred to in another docs. This name must be unique in single `werf.yaml` config.
+Yaml doc with the key `artifact: IMAGE_NAME` is the artifact configuration doc. `artifact` defines short name of the artifact to be referred to from another docs. This name must be unique in a single `werf.yaml` config.
 
 ### Minimal config example
 

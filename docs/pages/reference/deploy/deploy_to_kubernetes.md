@@ -5,19 +5,11 @@ permalink: reference/deploy/deploy_to_kubernetes.html
 author: Timofey Kirillov <timofey.kirillov@flant.com>
 ---
 
-Werf uses [helm](https://helm.sh/) kubernetes package manager to deploy applications into kubernetes.
-
-[Link to installation: helm should be installed at the moment.]
-
-[Naming templates: defaults and how to configure, link to main config page]
-
-## Installing helm
-
-Before using werf for deploy, you should install [helm](https://docs.helm.sh/using_helm/#installing-helm) and its back-end part — [tiller](https://docs.helm.sh/using_helm/#installing-tiller).
+Werf uses [Helm](https://helm.sh/) Kubernetes package manager to deploy applications into kubernetes. Before using Werf for deploy you should install Helm and its back-end Tiller, [see installation for details]({{ site.baseurl }}/how_to/installation.html).
 
 ## Helm chart
 
-The `.helm` directory in the project root describes a helm chart (starting now referred to as `chart`) which in turn provides a description of the application configuration and application component used for further release to the kubernetes cluster using the helm toolset. The chart for werf, i.e. `.helm` folder, has the following structure:
+The `.helm` directory in the project root describes a helm chart. Helm chart provides a description of the application configuration and application component used to release into the kubernetes cluster using the helm toolset. The chart for werf, i.e. `.helm` folder, has the following structure:
 
 ```
 .helm/
@@ -47,26 +39,7 @@ Chart structure includes additional elements that are not contained within the s
 
 ## Connection settings
 
-Connection to kubernetes is setup using the same configuration file as for kubectl: `~/.kube/config`.
-
-* `current-context` context is used if installed, or any other random context from the `contexts` list.
-* The same default kubernetes `namespace` is used as for kubectl: from the namespace field of the current context.
-  * If namespace is not set by default in `~/.kube/config`, `namespace=default` is used.
-
-If you are using a self-signed SSL certificate, you can specify it using the `SSL_CERT_FILE` variable.
-* Copy the certificate file in any folder and set the necessary permissions. Example:
-```bash
-cp  CERTFILE.crt ~gitlab-runner/.
-chown -R gitlab-runner:gitlab-runner ~gitlab-runner/CERTFILE.crt
-```
-
-* Set the environment variable `SSL_CERT_FILE=/home/gitlab-runner/<domain>.crt]` (export it, or set it just before calling `werf kube deploy`). Example:
-```bash
-SSL_CERT_FILE=/home/gitlab-runner/CERTFILE.crt werf kube deploy
-      --namespace ${CI_ENVIRONMENT_SLUG}
-      --tag-ci
-      ${CI_REGISTRY_IMAGE}
-```
+Werf uses standard configuration file `~/.kube/config` to connect to Kubernetes cluster.
 
 ## Additions to helm
 
@@ -87,58 +60,100 @@ The temporary chart then passed to the helm. Werf deletes this chart on the werf
 
 Werf watches resources statuses and logs during the deploy process. More info is available in the [watch resources article]({{ site.baseurl }}/reference/deploy/watch_kubernetes_resources.html).
 
+## Environment
+
+Application can be deployed to multiple environments, like staging, testing, production, development, etc.
+
+Werf has basic support for environments to automate generation of external names, such as Helm Release name or Kubernetes Namespace.
+
+Environment is a required parameter for deploy and should be specified either with option `--environment` or automatically determined for the used CI system. Werf currently support only [Gitlab CI environments integration](#integration-with-gitlab).
+
+### Integration with Gitlab
+
+Gitlab has [environments support](https://docs.gitlab.com/ce/ci/environments.html). Werf will detect current environment for the pipeline in gitlab and use it as environment parameter.
+
+`CI_ENVIRONMENT_SLUG` gitlab variable used in Werf to determine environment name in gitlab pipeline.
+
+## Multiple Kubernetes clusters
+
+There are cases when separate Kubernetes clusters are needed for a different environments. You can [configure access to multiple clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters) using kube contexts in a single kube config.
+
+In that case deploy option `--kube-context=CONTEXT` should be specified manually along with the environment.
+
+## Helm Release name
+
+By default Helm Release name will be constructed by template `[[ project ]]-[[ environment ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) and `[[ environment ]]` refers to the specified or detected environment.
+
+For example for project named `symfony-demo` there will be following Helm Release names depending on the specified environment:
+* `symfony-demo-stage` for the `stage` environment;
+* `symfony-demo-test` for the `test` environment;
+* `symfony-demo-prod` for the `prod` environment.
+
+Helm Release name could be redefined by deploy option `--release NAME`. In that case Werf will use specified name as is.
+
+Custom Helm Release template can also be defined in the [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) of `werf.yaml`:
+
+```yaml
+project: PROJECT_NAME
+deploy:
+  helmRelease: TEMPLATE
+```
+
+`deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ environment ]]` functions support. [Sprig functions](https://masterminds.github.io/sprig/) can also be used (for example function `env` to retrieve environment variables).
+
+### Slug
+
+Helm Release name constructed by template will be slugified to fit release name requirements by [*release slug procedure*]({{ site.baseurl }}/reference/slug.html#release-slug), which generates unique valid Helm Release name.
+
+This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) option `deploy.helmReleaseSlug`:
+
+```
+project: PROJECT_NAME
+deploy:
+  helmReleaseSlug: false
+```
+
+Werf will not apply release slug procedure for the release name specified with `--release NAME` option.
+
+### Kubernetes Namespace
+
+By default Kubernetes Namespace will be constructed by template `[[ project ]]-[[ environment ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) and `[[ environment ]]` refers to the determined environment.
+
+For example for project named `symfony-demo` there will be following Kubernetes Namespaces depending on the specified environment:
+* `symfony-demo-stage` for the `stage` environment;
+* `symfony-demo-test` for the `test` environment;
+* `symfony-demo-prod` for the `prod` environment.
+
+Kubernetes Namespace could be redefined by deploy option `--namespace NAMESPACE`. In that case Werf will use specified name as is.
+
+Custom Kubernetes Namespace template can also be defined in the [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) of `werf.yaml`:
+
+```yaml
+project: PROJECT_NAME
+deploy:
+  kubernetesNamespace: TEMPLATE
+```
+
+`deploy.kubernetesNamespace` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ environment ]]` functions support. [Sprig functions](https://masterminds.github.io/sprig/) can also be used (for example function `env` to retrieve environment variables).
+
+### Slug
+
+Kubernetes Namespace constructed by template will be slugified to fit [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements by [*namespace slug procedure*]({{ site.baseurl }}/reference/slug.html#namespace-slug), which generates unique valid Kubernetes Namespace.
+
+This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) option `deploy.kubernetesNamespaceSlug`:
+
+```
+project: PROJECT_NAME
+deploy:
+  kubernetesNamespaceSlug: false
+```
+
+Werf will not apply namespace slug procedure for the namespace specified with `--namespace NAMESPACE` option.
+
 ## Werf deploy command
 
-Werf deploy command starts the helm-chart release process in kubernetes. A release named `<werf name>-<NAMESPACE>` will be installed or updated by helm.
+{% include /cli/werf_deploy.md %}
 
-`WERF_HELM_RELEASE_NAME` environment variable could be used to specify custom helm release name.
+## Werf dismiss command
 
-#### Syntax
-
-```bash
-werf kube deploy REPO [--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci] [--namespace=NAMESPACE] [--set=<value>] [--values=<values-path>] [--secret-values=<secret-values-path>]
-```
-
-##### `REPO`
-
-Address of the repository, from which images will be retrieved. This parameter must coincide with the parameter specified in [`werf dimg push`]({{ site.baseurl }}/reference/cli/dimg_push.html).
-
-If a special value `:minikube` is set, the local proxy will be used for docker-registry from minikube, see [using minikube section]({{ site.baseurl }}/reference/deploy/minikube.html).
-
-##### `--tag=TAG --tag-branch --tag-commit --tag-build-id --tag-ci`
-
-Image version from the specified repository. Options are compliant with those specified in the [`werf dimg push`]({{ site.baseurl }}/reference/cli/dimg_push.html).
-
-##### `--namespace=NAMESPACE`
-
-Use the specified kubernetes namespace. If not specified, the default namespace according to `~/.kube/config`, or, if not specified, `namespace=default` will be used.
-
-##### `--set=<value>`
-
-Passed unchanged to the `helm --set` parameter.
-
-##### `--values=<values-path>`
-
-Passed unchanged to the [`helm --values`](https://github.com/kubernetes/helm/blob/master/docs/chart_template_guide/values_files.md#values-files) parameter.
-
-Enables specifying an additional values yaml file together with the standard `.helm/values.yaml`.
-
-##### `--secret-values=<secret-values-path>`
-
-Enables specifying an additional secret-values yaml file together with the standard `.helm/secret-values.yaml`. For detailed information about secrets, see the [working with secrets section]({{ site.baseurl }}/reference/deploy/secrets.html).
-
-### werf kube dismiss
-
-Starts the process to remove release `<werf name>-<NAMESPACE>` from helm.
-
-```bash
-werf kube dismiss [--namespace=NAMESPACE] [--with-namespace]
-```
-
-##### `--namespace=NAMESPACE`
-
-Use the specified kubernetes namespace. If not specified, the default namespace according to `~/.kube/config`, or, if not specified, `namespace=default` will be used.
-
-##### `--with-namespace`
-
-Remove the currently used kubernetes namespace after deleting the release from helm. The namespace is not deleted by default.
+{% include /cli/werf_dismiss.md %}

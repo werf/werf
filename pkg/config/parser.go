@@ -55,7 +55,10 @@ func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 			"project: %s\n" +
 			"---\n" +
 			"```\n\n" +
-			"Read more about meta doc here, https://flant.github.io/werf/reference/config.html#meta-configuration-doc"
+			"##################################################################################################################" +
+			"###     WARNING! Project name cannot be changed later without rebuilding and redeploying your application!     ###" +
+			"###  Read more about meta doc here, https://flant.github.io/werf/reference/config.html#meta-configuration-doc  ###" +
+			"##################################################################################################################"
 
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}
