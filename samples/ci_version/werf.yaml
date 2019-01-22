@@ -1,4 +1,4 @@
-dimg: ~
+image: ~
 from: alpine
 import:
 - artifact: "app version"

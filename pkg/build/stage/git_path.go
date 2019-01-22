@@ -139,7 +139,7 @@ func (gp *GitPath) applyPatchCommand(patchFile *ContainerFileDescriptor, archive
 	return commands, nil
 }
 
-func (gp *GitPath) ApplyPatchCommand(prevBuiltImage, image image.Image) error {
+func (gp *GitPath) ApplyPatchCommand(prevBuiltImage, image image.ImageInterface) error {
 	fromCommit, toCommit, err := gp.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return err
@@ -157,7 +157,7 @@ func (gp *GitPath) ApplyPatchCommand(prevBuiltImage, image image.Image) error {
 	return nil
 }
 
-func (gp *GitPath) GetCommitsToPatch(prevBuiltImage image.Image) (string, string, error) {
+func (gp *GitPath) GetCommitsToPatch(prevBuiltImage image.ImageInterface) (string, string, error) {
 	fromCommit := gp.GetGitCommitFromImageLabels(prevBuiltImage)
 	if fromCommit == "" {
 		panic("Commit should be in prev built image labels!")
@@ -171,13 +171,13 @@ func (gp *GitPath) GetCommitsToPatch(prevBuiltImage image.Image) (string, string
 	return fromCommit, toCommit, nil
 }
 
-func (gp *GitPath) AddGitCommitToImageLabels(image image.Image, commit string) {
+func (gp *GitPath) AddGitCommitToImageLabels(image image.ImageInterface, commit string) {
 	image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 		gp.ImageGitCommitLabel(): commit,
 	})
 }
 
-func (gp *GitPath) GetGitCommitFromImageLabels(builtImage image.Image) string {
+func (gp *GitPath) GetGitCommitFromImageLabels(builtImage image.ImageInterface) string {
 	commit, ok := builtImage.Labels()[gp.ImageGitCommitLabel()]
 	if !ok {
 		return ""
@@ -190,7 +190,7 @@ func (gp *GitPath) ImageGitCommitLabel() string {
 	return fmt.Sprintf("werf-git-%s-commit", gp.GetParamshash())
 }
 
-func (gp *GitPath) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage image.Image) ([]string, error) {
+func (gp *GitPath) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltImage image.ImageInterface) ([]string, error) {
 	archiveType := git_repo.ArchiveType(prevBuiltImage.Labels()[gp.getArchiveTypeLabelName()])
 
 	patchOpts := git_repo.PatchOptions{
@@ -300,7 +300,7 @@ func (gp *GitPath) applyArchiveCommand(archiveFile *ContainerFileDescriptor, arc
 	return commands, nil
 }
 
-func (gp *GitPath) ApplyArchiveCommand(image image.Image) error {
+func (gp *GitPath) ApplyArchiveCommand(image image.ImageInterface) error {
 	commit, err := gp.LatestCommit()
 	if err != nil {
 		return err
@@ -318,7 +318,7 @@ func (gp *GitPath) ApplyArchiveCommand(image image.Image) error {
 	return nil
 }
 
-func (gp *GitPath) baseApplyArchiveCommand(commit string, image image.Image) ([]string, error) {
+func (gp *GitPath) baseApplyArchiveCommand(commit string, image image.ImageInterface) ([]string, error) {
 	archiveOpts := git_repo.ArchiveOptions{
 		FilterOptions: gp.getRepoFilterOptions(),
 		Commit:        commit,
@@ -444,7 +444,7 @@ func (gp *GitPath) GetParamshash() string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-func (gp *GitPath) IsPatchEmpty(prevBuiltImage image.Image) (bool, error) {
+func (gp *GitPath) IsPatchEmpty(prevBuiltImage image.ImageInterface) (bool, error) {
 	fromCommit, toCommit, err := gp.GetCommitsToPatch(prevBuiltImage)
 	if err != nil {
 		return false, err

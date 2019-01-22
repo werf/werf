@@ -6,9 +6,9 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func GenerateDockerInstructionsStage(dimgConfig *config.Dimg, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {
-	if dimgConfig.Docker != nil {
-		return newDockerInstructionsStage(dimgConfig.Docker, baseStageOptions)
+func GenerateDockerInstructionsStage(imageConfig *config.Image, baseStageOptions *NewBaseStageOptions) *DockerInstructionsStage {
+	if imageConfig.Docker != nil {
+		return newDockerInstructionsStage(imageConfig.Docker, baseStageOptions)
 	}
 
 	return nil
@@ -27,7 +27,7 @@ type DockerInstructionsStage struct {
 	instructions *config.Docker
 }
 
-func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
+func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ image.ImageInterface) (string, error) {
 	var args []string
 
 	args = append(args, s.instructions.Volume...)
@@ -52,7 +52,7 @@ func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ image.Image) (st
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *DockerInstructionsStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+func (s *DockerInstructionsStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}

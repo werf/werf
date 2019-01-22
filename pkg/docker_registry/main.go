@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 )
@@ -45,8 +45,8 @@ func IsGCR(reference string) (bool, error) {
 	return false, nil
 }
 
-func DimgTags(reference string) ([]string, error) {
-	images, err := ImagesByWerfDimgLabel(reference, "true")
+func ImageTags(reference string) ([]string, error) {
+	images, err := ImagesByWerfImageLabel(reference, "true")
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +54,8 @@ func DimgTags(reference string) ([]string, error) {
 	return imagesTags(images), nil
 }
 
-func DimgstageTags(reference string) ([]string, error) {
-	images, err := ImagesByWerfDimgLabel(reference, "false")
+func ImageStagesTags(reference string) ([]string, error) {
+	images, err := ImagesByWerfImageLabel(reference, "false")
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func imagesTags(images []RepoImage) []string {
 	}
 }
 
-func ImagesByWerfDimgLabel(reference, labelValue string) ([]RepoImage, error) {
+func ImagesByWerfImageLabel(reference, labelValue string) ([]RepoImage, error) {
 	var repoImages []RepoImage
 
 	tags, err := Tags(reference)
@@ -108,7 +108,7 @@ func ImagesByWerfDimgLabel(reference, labelValue string) ([]RepoImage, error) {
 		}
 
 		for k, v := range configFile.Config.Labels {
-			if k == "werf-dimg" && v == labelValue {
+			if k == "werf-image" && v == labelValue {
 				repoImage := RepoImage{
 					Repository: reference,
 					Tag:        tag,

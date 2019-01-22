@@ -74,7 +74,7 @@ func ResetDevModeCache(options CommonOptions) error {
 }
 
 func ResetCacheVersion(options CommonOptions) error {
-	if err := werfDimgstagesFlushByCacheVersion(filters.NewArgs(), options); err != nil {
+	if err := werfImageStagesFlushByCacheVersion(filters.NewArgs(), options); err != nil {
 		return err
 	}
 

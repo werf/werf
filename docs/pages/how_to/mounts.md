@@ -26,7 +26,7 @@ project: hotel-booking
 {{ $_ := set . "GoTarballChecksum" "sha256:2871270d8ff0c8c69f161aaae42f9f28739855ff5c5204752a8d92a1c9f63993" }}
 {{ $_ := set . "BaseImage" "ubuntu:18.04" }}
 
-dimg: go-booking
+image: go-booking
 from: {{ .BaseImage }}
 ansible:
   beforeInstall:
@@ -80,7 +80,7 @@ export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 
 Build the application by executing the following command in the `booking` directory:
 ```bash
-werf dimg build
+werf build
 ```
 
 ### Running
@@ -110,7 +110,7 @@ The `revel framework booking demo` page should open, and you can login by enteri
 Create a image with tag `v1.0`:
 
 ```bash
-werf dimg tag booking --tag-plain v1.0
+werf tag booking --tag v1.0
 ```
 
 After tagging we get an image `booking/go-booking:v1.0` according to werf naming rules (read more about naming [here]({{ site.baseurl }}/reference/registry/image_naming.html)).
@@ -127,14 +127,14 @@ REPOSITORY           TAG           IMAGE ID            CREATED             SIZE
 booking/go-booking   v1.0          0bf71cb34076        10 minutes ago      1.04 GB
 ```
 
-You can check the size of all ancestor images. To find ancestor images tags look at the output of the `werf dimg build` command — in the lines like `signature: dimgstage-booking:c05db314b209a96bd906b77c910d6a5ae76e25f6422bf57f2da37e935805ddca`. The last long HEX value is the image tag. E.e. you could see in the output of the `docker images` command like this (TAGs values was cut to fit the web page):
+You can check the size of all ancestor images. To find ancestor images tags look at the output of the `werf build` command — in the lines like `signature: image-stage-booking:c05db314b209a96bd906b77c910d6a5ae76e25f6422bf57f2da37e935805ddca`. The last long HEX value is the image tag. E.e. you could see in the output of the `docker images` command like this (TAGs values was cut to fit the web page):
 
 ```bash
 REPOSITORY            TAG                  IMAGE ID            CREATED             SIZE
-dimgstage-booking     c05db314b20...ddca   14e6b9c6b93b        21 minutes ago      1.04 GB
-dimgstage-booking     46fb00c9dda...3ef1   9a34966e6c85        22 minutes ago      938 MB
-dimgstage-booking     bf057acfb01...5d4b   97ea9a99ddb2        49 minutes ago      805 MB
-dimgstage-booking     41772c141b1...9a11   66ce7d681e8d        52 minutes ago      84.1 MB
+image-stage-booking     c05db314b20...ddca   14e6b9c6b93b        21 minutes ago      1.04 GB
+image-stage-booking     46fb00c9dda...3ef1   9a34966e6c85        22 minutes ago      938 MB
+image-stage-booking     bf057acfb01...5d4b   97ea9a99ddb2        49 minutes ago      805 MB
+image-stage-booking     41772c141b1...9a11   66ce7d681e8d        52 minutes ago      84.1 MB
 ```
 
 Pay attention, that the image size of the application is **above 1 GB**.
@@ -147,7 +147,7 @@ There are often a lot of useless files in the image. In our example application,
 
 [APT](https://wiki.debian.org/Apt) saves the package list in the `/var/lib/apt/lists/` directory and also saves packages in the `/var/cache/apt/` directory when installs them. So, it is useful to store `/var/cache/apt/` outside the image and share it between builds. The `/var/lib/apt/lists/` directory depends on the status of the installed packages, and it's no good to share it between builds, but it is useful to store it outside the image to reduce its size.
 
-To optimize using APT cache add the following directives to `go-booking` dimg in the config:
+To optimize using APT cache add the following directives to `go-booking` image in the config:
 
 ```yaml
 mount:
@@ -204,7 +204,7 @@ project: hotel-booking
 {{ $_ := set . "GoTarballChecksum" "sha256:2871270d8ff0c8c69f161aaae42f9f28739855ff5c5204752a8d92a1c9f63993" }}
 {{ $_ := set . "BaseImage" "ubuntu:18.04" }}
 
-dimg: go-booking
+image: go-booking
 from: {{ .BaseImage }}
 mount:
 - from: tmp_dir
@@ -274,7 +274,7 @@ export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 
 Build the application with the modified config:
 ```bash
-werf dimg build
+werf build
 ```
 
 ### Running
@@ -310,7 +310,7 @@ The `revel framework booking demo` page should open, and you can login by enteri
 Create a image with tag `v2.0`:
 
 ```bash
-werf dimg tag booking --tag-plain v2.0
+werf tag booking --tag v2.0
 ```
 
 Determine the image size of optimized build, by executing:
@@ -368,7 +368,7 @@ The output will be like this:
 592M    /home/user/.werf/builds/booking/mount
 ```
 
-`592MB` is a size of files excluded from image, but these files are accessible, in case of rebuild image and also they can be mounted in other dimgs in this project. E.g., if you add dimg based on Ubuntu, you can mount `/var/cache/apt` with `from: build_dir` and use already downloaded packages.
+`592MB` is a size of files excluded from image, but these files are accessible, in case of rebuild image and also they can be mounted in other images in this project. E.g., if you add image based on Ubuntu, you can mount `/var/cache/apt` with `from: build_dir` and use already downloaded packages.
 
 Also, approximately `77MB` of space occupy files in directories mounted with `from: tmp_dir`. These files also excluded from the image and deleted from the host at the end of image building.
 

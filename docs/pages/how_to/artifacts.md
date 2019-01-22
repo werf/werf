@@ -25,7 +25,7 @@ Create a `booking` directory and place the following `werf.yaml` in the `booking
 project: hotel-booking
 ---
 
-dimg: go-booking
+image: go-booking
 from: golang
 ansible:
   beforeInstall:
@@ -51,12 +51,12 @@ ansible:
 ```
 {% endraw %}
 
-The config describes instructions to build one dimg — `go-booking`.
+The config describes instructions to build one image — `go-booking`.
 
 Build the application by executing the following command in the `booking` directory:
 
 ```bash
-werf dimg build
+werf build
 ```
 
 ### Running
@@ -86,7 +86,7 @@ The `revel framework booking demo` page should open, and you can login by enteri
 Create a image with tag `v1.0`:
 
 ```bash
-werf dimg tag booking --tag-plain v1.0
+werf tag booking --tag v1.0
 ```
 
 After tagging we get an image `booking/go-booking:v1.0` according to werf naming rules (read more about naming [here]({{ site.baseurl }}/reference/registry/image_naming.html)).
@@ -144,7 +144,7 @@ ansible:
       sed -i 's/^http.addr=$/http.addr=0.0.0.0/' $GOPATH/src/github.com/revel/examples/booking/conf/app.conf
       revel build --run-mode dev github.com/revel/examples/booking /app
 ---
-dimg: go-booking
+image: go-booking
 from: ubuntu
 import:
 - artifact: booking-app
@@ -154,13 +154,13 @@ import:
 ```
 {% endraw %}
 
-In the optimized config, we build the application in the `booking-app` artifact and import the `/app` directory into the `go-booking` dimg.
+In the optimized config, we build the application in the `booking-app` artifact and import the `/app` directory into the `go-booking` image.
 
-Pay attention, that `go-booking` dimg based on the ubuntu image, but not on the golang image.
+Pay attention, that `go-booking` image based on the ubuntu image, but not on the golang image.
 
 Build the application with the modified config:
 ```yaml
-werf dimg build
+werf build
 ```
 
 ### Running
@@ -196,7 +196,7 @@ The `revel framework booking demo` page should open, and you can login by enteri
 Create a image with tag `v2.0`:
 
 ```bash
-werf dimg tag booking --tag-plain v2.0
+werf tag booking --tag v2.0
 ```
 
 Determine the image size of optimized build, by executing:
@@ -217,4 +217,4 @@ Our example shows that **with using artifacts**, the image size **smaller by mor
 
 ## Conclusions
 
-The example shows us that using artifacts is a great way to exclude what shouldn't be in the result image. Moreover, you can use artifacts in any dimg described in a `werf.yaml` config. In some cases, it increases the speed of build.
+The example shows us that using artifacts is a great way to exclude what shouldn't be in the result image. Moreover, you can use artifacts in any image described in a `werf.yaml` config. In some cases, it increases the speed of build.

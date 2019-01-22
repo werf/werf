@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/pkg/docker_registry"
@@ -32,31 +32,31 @@ const (
 
 func Cleanup(options CleanupOptions) error {
 	err := lock.WithLock(options.CommonRepoOptions.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		repoDimgs, err := repoDimgImages(options.CommonRepoOptions)
+		repoImages, err := repoImages(options.CommonRepoOptions)
 		if err != nil {
 			return err
 		}
 
 		if options.LocalRepo != nil {
 			if !options.WithoutKube {
-				repoDimgs, err = exceptRepoDimgsByWhitelist(repoDimgs)
+				repoImages, err = exceptRepoImagesByWhitelist(repoImages)
 				if err != nil {
 					return err
 				}
 			}
 
-			repoDimgs, err = repoDimgsCleanupByNonexistentGitPrimitive(repoDimgs, options)
+			repoImages, err = repoImagesCleanupByNonexistentGitPrimitive(repoImages, options)
 			if err != nil {
 				return err
 			}
 
-			repoDimgs, err = repoDimgsCleanupByPolicies(repoDimgs, options)
+			repoImages, err = repoImagesCleanupByPolicies(repoImages, options)
 			if err != nil {
 				return err
 			}
 		}
 
-		if err := repoDimgstagesSyncByRepoDimgs(repoDimgs, options.CommonRepoOptions); err != nil {
+		if err := repoImageStagesSyncByRepoImages(repoImages, options.CommonRepoOptions); err != nil {
 			return err
 		}
 
@@ -70,8 +70,8 @@ func Cleanup(options CleanupOptions) error {
 	return nil
 }
 
-func exceptRepoDimgsByWhitelist(repoDimgs []docker_registry.RepoImage) ([]docker_registry.RepoImage, error) {
-	var newRepoDimgs, exceptedRepoDimgs []docker_registry.RepoImage
+func exceptRepoImagesByWhitelist(repoImages []docker_registry.RepoImage) ([]docker_registry.RepoImage, error) {
+	var newRepoImages, exceptedRepoImages []docker_registry.RepoImage
 
 	deployedDockerImages, err := deployedDockerImages()
 	if err != nil {
@@ -79,31 +79,31 @@ func exceptRepoDimgsByWhitelist(repoDimgs []docker_registry.RepoImage) ([]docker
 	}
 
 Loop:
-	for _, repoDimg := range repoDimgs {
-		imageName := fmt.Sprintf("%s:%s", repoDimg.Repository, repoDimg.Tag)
+	for _, repoImage := range repoImages {
+		imageName := fmt.Sprintf("%s:%s", repoImage.Repository, repoImage.Tag)
 		for _, deployedDockerImage := range deployedDockerImages {
 			if deployedDockerImage == imageName {
-				exceptedRepoDimgs = append(exceptedRepoDimgs, repoDimg)
+				exceptedRepoImages = append(exceptedRepoImages, repoImage)
 				continue Loop
 			}
 		}
 
-		newRepoDimgs = append(newRepoDimgs, repoDimg)
+		newRepoImages = append(newRepoImages, repoImage)
 	}
 
-	if len(exceptedRepoDimgs) != 0 {
+	if len(exceptedRepoImages) != 0 {
 		fmt.Println("Keep in repo images that are being used in kubernetes")
-		for _, exceptedRepoDimg := range exceptedRepoDimgs {
-			imageName := fmt.Sprintf("%s:%s", exceptedRepoDimg.Repository, exceptedRepoDimg.Tag)
+		for _, exceptedRepoImage := range exceptedRepoImages {
+			imageName := fmt.Sprintf("%s:%s", exceptedRepoImage.Repository, exceptedRepoImage.Tag)
 			fmt.Println(imageName)
 		}
 		fmt.Println()
 	}
 
-	return newRepoDimgs, nil
+	return newRepoImages, nil
 }
 
-func repoDimgsCleanupByNonexistentGitPrimitive(repoDimgs []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
+func repoImagesCleanupByNonexistentGitPrimitive(repoImages []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
 	var nonexistentGitTagRepoImages, nonexistentGitCommitRepoImages, nonexistentGitBranchRepoImages []docker_registry.RepoImage
 
 	gitTags, err := options.LocalRepo.TagsList()
@@ -117,8 +117,8 @@ func repoDimgsCleanupByNonexistentGitPrimitive(repoDimgs []docker_registry.RepoI
 	}
 
 Loop:
-	for _, repoDimg := range repoDimgs {
-		labels, err := repoImageLabels(repoDimg)
+	for _, repoImage := range repoImages {
+		labels, err := repoImageLabels(repoImage)
 		if err != nil {
 			return nil, err
 		}
@@ -130,25 +130,25 @@ Loop:
 
 		switch scheme {
 		case "git_tag":
-			if repoImageTagMatch(repoDimg, gitTags...) {
+			if repoImageTagMatch(repoImage, gitTags...) {
 				continue Loop
 			} else {
-				nonexistentGitTagRepoImages = append(nonexistentGitTagRepoImages, repoDimg)
+				nonexistentGitTagRepoImages = append(nonexistentGitTagRepoImages, repoImage)
 			}
 		case "git_branch":
-			if repoImageTagMatch(repoDimg, gitBranches...) {
+			if repoImageTagMatch(repoImage, gitBranches...) {
 				continue Loop
 			} else {
-				nonexistentGitBranchRepoImages = append(nonexistentGitBranchRepoImages, repoDimg)
+				nonexistentGitBranchRepoImages = append(nonexistentGitBranchRepoImages, repoImage)
 			}
 		case "git_commit":
-			exist, err := options.LocalRepo.IsCommitExists(repoDimg.Tag)
+			exist, err := options.LocalRepo.IsCommitExists(repoImage.Tag)
 			if err != nil {
 				return nil, err
 			}
 
 			if !exist {
-				nonexistentGitCommitRepoImages = append(nonexistentGitCommitRepoImages, repoDimg)
+				nonexistentGitCommitRepoImages = append(nonexistentGitCommitRepoImages, repoImage)
 			}
 		}
 	}
@@ -159,7 +159,7 @@ Loop:
 			return nil, err
 		}
 		fmt.Println()
-		repoDimgs = exceptRepoImages(repoDimgs, nonexistentGitTagRepoImages...)
+		repoImages = exceptRepoImages(repoImages, nonexistentGitTagRepoImages...)
 	}
 
 	if len(nonexistentGitBranchRepoImages) != 0 {
@@ -168,7 +168,7 @@ Loop:
 			return nil, err
 		}
 		fmt.Println()
-		repoDimgs = exceptRepoImages(repoDimgs, nonexistentGitBranchRepoImages...)
+		repoImages = exceptRepoImages(repoImages, nonexistentGitBranchRepoImages...)
 	}
 
 	if len(nonexistentGitCommitRepoImages) != 0 {
@@ -177,10 +177,10 @@ Loop:
 			return nil, err
 		}
 		fmt.Println()
-		repoDimgs = exceptRepoImages(repoDimgs, nonexistentGitCommitRepoImages...)
+		repoImages = exceptRepoImages(repoImages, nonexistentGitCommitRepoImages...)
 	}
 
-	return repoDimgs, nil
+	return repoImages, nil
 }
 
 func repoImageTagMatch(repoImage docker_registry.RepoImage, matches ...string) bool {
@@ -193,11 +193,11 @@ func repoImageTagMatch(repoImage docker_registry.RepoImage, matches ...string) b
 	return false
 }
 
-func repoDimgsCleanupByPolicies(repoDimgs []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
-	var repoDimgsWithGitTagScheme, repoDimgsWithGitCommitScheme []docker_registry.RepoImage
+func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
+	var repoImagesWithGitTagScheme, repoImagesWithGitCommitScheme []docker_registry.RepoImage
 
-	for _, repoDimg := range repoDimgs {
-		labels, err := repoImageLabels(repoDimg)
+	for _, repoImage := range repoImages {
+		labels, err := repoImageLabels(repoImage)
 		if err != nil {
 			return nil, err
 		}
@@ -209,13 +209,13 @@ func repoDimgsCleanupByPolicies(repoDimgs []docker_registry.RepoImage, options C
 
 		switch scheme {
 		case "git_tag":
-			repoDimgsWithGitTagScheme = append(repoDimgsWithGitTagScheme, repoDimg)
+			repoImagesWithGitTagScheme = append(repoImagesWithGitTagScheme, repoImage)
 		case "git_commit":
-			repoDimgsWithGitCommitScheme = append(repoDimgsWithGitCommitScheme, repoDimg)
+			repoImagesWithGitCommitScheme = append(repoImagesWithGitCommitScheme, repoImage)
 		}
 	}
 
-	cleanupByPolicyOptions := repoDimgsCleanupByPolicyOptions{
+	cleanupByPolicyOptions := repoImagesCleanupByPolicyOptions{
 		expiryDatePeriod:  gitTagsExpiryDatePeriodPolicyValue(),
 		expiryLimit:       gitTagsLimitPolicyValue(),
 		gitPrimitive:      "tag",
@@ -223,24 +223,24 @@ func repoDimgsCleanupByPolicies(repoDimgs []docker_registry.RepoImage, options C
 	}
 
 	var err error
-	repoDimgs, err = repoDimgsCleanupByPolicy(repoDimgs, repoDimgsWithGitTagScheme, cleanupByPolicyOptions)
+	repoImages, err = repoImagesCleanupByPolicy(repoImages, repoImagesWithGitTagScheme, cleanupByPolicyOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	cleanupByPolicyOptions = repoDimgsCleanupByPolicyOptions{
+	cleanupByPolicyOptions = repoImagesCleanupByPolicyOptions{
 		expiryDatePeriod:  gitCommitsExpiryDatePeriodPolicyValue(),
 		expiryLimit:       gitCommitsLimitPolicyValue(),
 		gitPrimitive:      "commit",
 		commonRepoOptions: options.CommonRepoOptions,
 	}
 
-	repoDimgs, err = repoDimgsCleanupByPolicy(repoDimgs, repoDimgsWithGitCommitScheme, cleanupByPolicyOptions)
+	repoImages, err = repoImagesCleanupByPolicy(repoImages, repoImagesWithGitCommitScheme, cleanupByPolicyOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	return repoDimgs, nil
+	return repoImages, nil
 }
 
 func gitTagsExpiryDatePeriodPolicyValue() int64 {
@@ -273,33 +273,33 @@ func policyValue(envKey string, defaultValue int64) int64 {
 	return defaultValue
 }
 
-type repoDimgsCleanupByPolicyOptions struct {
+type repoImagesCleanupByPolicyOptions struct {
 	expiryDatePeriod  int64
 	expiryLimit       int64
 	gitPrimitive      string
 	commonRepoOptions CommonRepoOptions
 }
 
-func repoDimgsCleanupByPolicy(repoDimgs, repoDimgsWithScheme []docker_registry.RepoImage, options repoDimgsCleanupByPolicyOptions) ([]docker_registry.RepoImage, error) {
-	repoDimgsByRepository := make(map[string][]docker_registry.RepoImage)
+func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registry.RepoImage, options repoImagesCleanupByPolicyOptions) ([]docker_registry.RepoImage, error) {
+	repoImagesByRepository := make(map[string][]docker_registry.RepoImage)
 
-	for _, repoDimgWithScheme := range repoDimgsWithScheme {
-		if _, ok := repoDimgsByRepository[repoDimgWithScheme.Repository]; !ok {
-			repoDimgsByRepository[repoDimgWithScheme.Repository] = []docker_registry.RepoImage{}
+	for _, repoImageWithScheme := range repoImagesWithScheme {
+		if _, ok := repoImagesByRepository[repoImageWithScheme.Repository]; !ok {
+			repoImagesByRepository[repoImageWithScheme.Repository] = []docker_registry.RepoImage{}
 		}
 
-		repoDimgsByRepository[repoDimgWithScheme.Repository] = append(repoDimgsByRepository[repoDimgWithScheme.Repository], repoDimgWithScheme)
+		repoImagesByRepository[repoImageWithScheme.Repository] = append(repoImagesByRepository[repoImageWithScheme.Repository], repoImageWithScheme)
 	}
 
 	expiryTime := time.Unix(time.Now().Unix()-options.expiryDatePeriod, 0)
-	for repository, repositoryRepoDimgs := range repoDimgsByRepository {
-		sort.Slice(repositoryRepoDimgs, func(i, j int) bool {
-			iCreated, err := repoImageCreated(repositoryRepoDimgs[i])
+	for repository, repositoryRepoImages := range repoImagesByRepository {
+		sort.Slice(repositoryRepoImages, func(i, j int) bool {
+			iCreated, err := repoImageCreated(repositoryRepoImages[i])
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			jCreated, err := repoImageCreated(repositoryRepoDimgs[j])
+			jCreated, err := repoImageCreated(repositoryRepoImages[j])
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -307,38 +307,38 @@ func repoDimgsCleanupByPolicy(repoDimgs, repoDimgsWithScheme []docker_registry.R
 			return iCreated.Before(jCreated)
 		})
 
-		var notExpiredRepoDimgs, expiredRepoDimgs []docker_registry.RepoImage
-		for _, repositoryRepoDimg := range repositoryRepoDimgs {
-			created, err := repoImageCreated(repositoryRepoDimg)
+		var notExpiredRepoImages, expiredRepoImages []docker_registry.RepoImage
+		for _, repositoryRepoImage := range repositoryRepoImages {
+			created, err := repoImageCreated(repositoryRepoImage)
 			if err != nil {
 				return nil, err
 			}
 
 			if created.Before(expiryTime) {
-				expiredRepoDimgs = append(expiredRepoDimgs, repositoryRepoDimg)
+				expiredRepoImages = append(expiredRepoImages, repositoryRepoImage)
 			} else {
-				notExpiredRepoDimgs = append(notExpiredRepoDimgs, repositoryRepoDimg)
+				notExpiredRepoImages = append(notExpiredRepoImages, repositoryRepoImage)
 			}
 		}
 
-		if len(expiredRepoDimgs) != 0 {
+		if len(expiredRepoImages) != 0 {
 			fmt.Printf("%s: git %s date policy (created before %s)\n", repository, options.gitPrimitive, expiryTime.String())
-			repoImagesRemove(expiredRepoDimgs, options.commonRepoOptions)
+			repoImagesRemove(expiredRepoImages, options.commonRepoOptions)
 			fmt.Println()
-			repoDimgs = exceptRepoImages(repoDimgs, expiredRepoDimgs...)
+			repoImages = exceptRepoImages(repoImages, expiredRepoImages...)
 		}
 
-		if int64(len(notExpiredRepoDimgs)) > options.expiryLimit {
+		if int64(len(notExpiredRepoImages)) > options.expiryLimit {
 			fmt.Printf("%s: git %s limit policy (> %d)\n", repository, options.gitPrimitive, options.expiryLimit)
-			if err := repoImagesRemove(notExpiredRepoDimgs[options.expiryLimit:], options.commonRepoOptions); err != nil {
+			if err := repoImagesRemove(notExpiredRepoImages[options.expiryLimit:], options.commonRepoOptions); err != nil {
 				return nil, err
 			}
 			fmt.Println()
-			repoDimgs = exceptRepoImages(repoDimgs, notExpiredRepoDimgs[options.expiryLimit:]...)
+			repoImages = exceptRepoImages(repoImages, notExpiredRepoImages[options.expiryLimit:]...)
 		}
 	}
 
-	return repoDimgs, nil
+	return repoImages, nil
 }
 
 func deployedDockerImages() ([]string, error) {

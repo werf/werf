@@ -6,8 +6,8 @@ import (
 	"github.com/flant/werf/pkg/image"
 )
 
-func GenerateBeforeInstallStage(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
-	b := getBuilder(dimgBaseConfig, baseStageOptions)
+func GenerateBeforeInstallStage(imageBaseConfig *config.ImageBase, baseStageOptions *NewBaseStageOptions) *BeforeInstallStage {
+	b := getBuilder(imageBaseConfig, baseStageOptions)
 	if b != nil && !b.IsBeforeInstallEmpty() {
 		return newBeforeInstallStage(b, baseStageOptions)
 	}
@@ -25,11 +25,11 @@ type BeforeInstallStage struct {
 	*UserStage
 }
 
-func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
+func (s *BeforeInstallStage) GetDependencies(_ Conveyor, _ image.ImageInterface) (string, error) {
 	return s.builder.BeforeInstallChecksum(), nil
 }
 
-func (s *BeforeInstallStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+func (s *BeforeInstallStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}

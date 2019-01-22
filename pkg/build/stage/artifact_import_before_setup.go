@@ -2,8 +2,8 @@ package stage
 
 import "github.com/flant/werf/pkg/config"
 
-func GenerateArtifactImportBeforeSetupStage(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) *ArtifactImportBeforeSetupStage {
-	imports := getImports(dimgBaseConfig, &getImportsOptions{Before: Setup})
+func GenerateArtifactImportBeforeSetupStage(imageBaseConfig *config.ImageBase, baseStageOptions *NewBaseStageOptions) *ArtifactImportBeforeSetupStage {
+	imports := getImports(imageBaseConfig, &getImportsOptions{Before: Setup})
 	if len(imports) != 0 {
 		return newArtifactImportBeforeSetupStage(imports, baseStageOptions)
 	}

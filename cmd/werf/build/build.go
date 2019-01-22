@@ -29,7 +29,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "build [DIMG_NAME...]",
+		Use:                   "build [IMAGE_NAME...]",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
@@ -59,7 +59,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runBuild(dimgsToProcess []string) error {
+func runBuild(imagesToProcess []string) error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -121,7 +121,7 @@ func runBuild(dimgsToProcess []string) error {
 		},
 	}
 
-	c := build.NewConveyor(werfConfig, dimgsToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 	if err = c.Build(buildOpts); err != nil {
 		return err
 	}

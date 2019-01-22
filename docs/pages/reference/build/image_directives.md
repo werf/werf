@@ -1,16 +1,16 @@
 ---
 title: All directives
 sidebar: reference
-permalink: reference/build/dimg_directives.html
+permalink: reference/build/image_directives.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
 ```yaml
-dimg: <dimg name... || ~>
+image: <image name... || ~>
 from: <image[:<tag>]>
 fromCacheVersion: <arbitrary string>
-fromDimg: <dimg name>
-fromDimgArtifact: <artifact name>
+fromImage: <image name>
+fromImageArtifact: <artifact name>
 git:
 # local git
 - as: <custom name>

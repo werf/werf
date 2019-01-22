@@ -18,16 +18,16 @@ func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
 		fmt.Printf("ShouldBeBuiltPhase.Run\n")
 	}
 
-	var badDimgs []*Dimg
+	var badImages []*Image
 
-	for _, dimg := range c.dimgsInOrder {
+	for _, image := range c.imagesInOrder {
 		if debug() {
-			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
+			fmt.Printf("  image: '%s'\n", image.GetName())
 		}
 
 		var badStages []stage.Interface
 
-		for _, s := range dimg.GetStages() {
+		for _, s := range image.GetStages() {
 			image := s.GetImage()
 			if image.IsExists() {
 				continue
@@ -36,20 +36,20 @@ func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
 		}
 
 		for _, s := range badStages {
-			if dimg.GetName() != "" {
-				fmt.Fprintf(os.Stderr, "Dimg '%s' stage '%s' is not built\n", dimg.GetName(), s.Name())
+			if image.GetName() != "" {
+				fmt.Fprintf(os.Stderr, "Image '%s' stage '%s' is not built\n", image.GetName(), s.Name())
 			} else {
-				fmt.Fprintf(os.Stderr, "Dimg stage '%s' is not built\n", s.Name())
+				fmt.Fprintf(os.Stderr, "Image stage '%s' is not built\n", s.Name())
 			}
 		}
 
 		if len(badStages) > 0 {
-			badDimgs = append(badDimgs, dimg)
+			badImages = append(badImages, image)
 		}
 	}
 
-	if len(badDimgs) > 0 {
-		return fmt.Errorf("dimgs should be built")
+	if len(badImages) > 0 {
+		return fmt.Errorf("images should be built")
 	}
 
 	return nil

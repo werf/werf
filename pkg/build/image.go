@@ -10,26 +10,26 @@ import (
 	"github.com/flant/werf/pkg/logger"
 )
 
-type Dimg struct {
+type Image struct {
 	name string
 
-	baseImageName     string
-	baseImageDimgName string
+	baseImageName      string
+	baseImageImageName string
 
 	stages     []stage.Interface
-	baseImage  *image.Stage
+	baseImage  *image.StageImage
 	isArtifact bool
 }
 
-func (d *Dimg) SetStages(stages []stage.Interface) {
+func (d *Image) SetStages(stages []stage.Interface) {
 	d.stages = stages
 }
 
-func (d *Dimg) GetStages() []stage.Interface {
+func (d *Image) GetStages() []stage.Interface {
 	return d.stages
 }
 
-func (d *Dimg) GetStage(name stage.StageName) stage.Interface {
+func (d *Image) GetStage(name stage.StageName) stage.Interface {
 	for _, s := range d.stages {
 		if s.Name() == name {
 			return s
@@ -39,35 +39,35 @@ func (d *Dimg) GetStage(name stage.StageName) stage.Interface {
 	return nil
 }
 
-func (d *Dimg) LatestStage() stage.Interface {
+func (d *Image) LatestStage() stage.Interface {
 	return d.stages[len(d.stages)-1]
 }
 
-func (d *Dimg) GetName() string {
+func (d *Image) GetName() string {
 	return d.name
 }
 
-func (d *Dimg) SetupBaseImage(c *Conveyor) {
+func (d *Image) SetupBaseImage(c *Conveyor) {
 	baseImageName := d.baseImageName
-	if d.baseImageDimgName != "" {
-		baseImageName = c.GetDimg(d.baseImageDimgName).LatestStage().GetImage().Name()
+	if d.baseImageImageName != "" {
+		baseImageName = c.GetImage(d.baseImageImageName).LatestStage().GetImage().Name()
 	}
 
 	d.baseImage = c.GetOrCreateImage(nil, baseImageName)
 }
 
-func (d *Dimg) GetBaseImage() *image.Stage {
+func (d *Image) GetBaseImage() *image.StageImage {
 	return d.baseImage
 }
 
-func (d *Dimg) PrepareBaseImage(c *Conveyor) error {
+func (d *Image) PrepareBaseImage(c *Conveyor) error {
 	fromImage := d.stages[0].GetImage()
 
 	if fromImage.IsExists() {
 		return nil
 	}
 
-	if d.baseImageDimgName != "" {
+	if d.baseImageImageName != "" {
 		return nil
 	}
 
@@ -80,9 +80,9 @@ func (d *Dimg) PrepareBaseImage(c *Conveyor) error {
 	}
 
 	if d.GetName() == "" {
-		fmt.Printf("# Pulling base image for dimg\n")
+		fmt.Printf("# Pulling base image for image\n")
 	} else {
-		fmt.Printf("# Pulling base image for dimg/%s\n", d.GetName())
+		fmt.Printf("# Pulling base image for image/%s\n", d.GetName())
 	}
 
 	if d.baseImage.IsExists() {

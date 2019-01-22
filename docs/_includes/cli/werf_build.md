@@ -8,7 +8,7 @@
 {{ header }} Syntax
 
 ```bash
-werf build [DIMG_NAME...] [options]
+werf build [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Options

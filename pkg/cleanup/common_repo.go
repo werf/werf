@@ -8,39 +8,39 @@ import (
 )
 
 type CommonRepoOptions struct {
-	Repository string
-	DimgsNames []string
-	DryRun     bool
+	Repository  string
+	ImagesNames []string
+	DryRun      bool
 }
 
-func repoDimgImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
-	var dimgImages []docker_registry.RepoImage
+func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
+	var repoImages []docker_registry.RepoImage
 
-	isNamelessDimg := len(options.DimgsNames) == 0
-	if isNamelessDimg {
-		namelessDimgImages, err := docker_registry.ImagesByWerfDimgLabel(options.Repository, "true")
+	isNamelessImage := len(options.ImagesNames) == 0
+	if isNamelessImage {
+		namelessImages, err := docker_registry.ImagesByWerfImageLabel(options.Repository, "true")
 		if err != nil {
 			return nil, err
 		}
 
-		dimgImages = append(dimgImages, namelessDimgImages...)
+		repoImages = append(repoImages, namelessImages...)
 	} else {
-		for _, dimgName := range options.DimgsNames {
-			repository := fmt.Sprintf("%s/%s", options.Repository, dimgName)
-			images, err := docker_registry.ImagesByWerfDimgLabel(repository, "true")
+		for _, imageName := range options.ImagesNames {
+			repository := fmt.Sprintf("%s/%s", options.Repository, imageName)
+			images, err := docker_registry.ImagesByWerfImageLabel(repository, "true")
 			if err != nil {
 				return nil, err
 			}
 
-			dimgImages = append(dimgImages, images...)
+			repoImages = append(repoImages, images...)
 		}
 	}
 
-	return dimgImages, nil
+	return repoImages, nil
 }
 
-func repoDimgstageImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
-	return docker_registry.ImagesByWerfDimgLabel(options.Repository, "false")
+func repoImageStagesImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
+	return docker_registry.ImagesByWerfImageLabel(options.Repository, "false")
 }
 
 func repoImagesRemove(images []docker_registry.RepoImage, options CommonRepoOptions) error {

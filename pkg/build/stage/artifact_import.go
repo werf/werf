@@ -19,9 +19,9 @@ type getImportsOptions struct {
 	After  StageName
 }
 
-func getImports(dimgBaseConfig *config.DimgBase, options *getImportsOptions) []*config.ArtifactImport {
+func getImports(imageBaseConfig *config.ImageBase, options *getImportsOptions) []*config.ArtifactImport {
 	var imports []*config.ArtifactImport
-	for _, elm := range dimgBaseConfig.Import {
+	for _, elm := range imageBaseConfig.Import {
 		if options.Before != "" && elm.Before != "" && elm.Before == string(options.Before) {
 			imports = append(imports, elm)
 		} else if options.After != "" && elm.After != "" && elm.After == string(options.After) {
@@ -45,11 +45,11 @@ type ArtifactImportStage struct {
 	imports []*config.ArtifactImport
 }
 
-func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ image.Image) (string, error) {
+func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ image.ImageInterface) (string, error) {
 	var args []string
 
 	for _, elm := range s.imports {
-		args = append(args, c.GetDimgSignature(elm.ArtifactName))
+		args = append(args, c.GetImageLatestStageSignature(elm.ArtifactName))
 		args = append(args, elm.Add, elm.To)
 		args = append(args, elm.Group, elm.Owner)
 		args = append(args, elm.IncludePaths...)
@@ -59,7 +59,7 @@ func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ image.Image) (string
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ArtifactImportStage) PrepareImage(c Conveyor, _, image image.Image) error {
+func (s *ArtifactImportStage) PrepareImage(c Conveyor, _, image image.ImageInterface) error {
 	for _, elm := range s.imports {
 		importTmpPath, importContainerTmpPath := s.generateImportPaths(elm)
 		command := generateSafeCp(importContainerTmpPath, elm.To, elm.Owner, elm.Group, elm.IncludePaths, elm.ExcludePaths)
@@ -70,7 +70,7 @@ func (s *ArtifactImportStage) PrepareImage(c Conveyor, _, image image.Image) err
 
 		imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()
 		imageServiceCommitChangeOptions.AddLabel(map[string]string{
-			fmt.Sprintf("werf-artifact-%s", slug.Slug(elm.ArtifactName)): c.GetDimgSignature(elm.ArtifactName),
+			fmt.Sprintf("werf-artifact-%s", slug.Slug(elm.ArtifactName)): c.GetImageLatestStageSignature(elm.ArtifactName),
 		})
 	}
 
@@ -108,7 +108,7 @@ func (s *ArtifactImportStage) prepareImportData(c Conveyor, i *config.ArtifactIm
 		fmt.Sprintf("--volumes-from=%s", baseContainer),
 		fmt.Sprintf("--entrypoint=%s", dappdeps.BaseBinPath("bash")),
 		fmt.Sprintf("--volume=%s:%s", importTmpPath, importContainerTmpPath),
-		c.GetDimgImageName(i.ArtifactName),
+		c.GetImageLatestStageImageName(i.ArtifactName),
 		"-ec",
 		image.ShelloutPack(artifactCommand),
 	}
@@ -124,7 +124,7 @@ func (s *ArtifactImportStage) prepareImportData(c Conveyor, i *config.ArtifactIm
 func (s *ArtifactImportStage) generateImportPaths(i *config.ArtifactImport) (string, string) {
 	exportFolderName := util.Sha256Hash(fmt.Sprintf("%+v", i))
 	artifactNamePathPart := slug.Slug(i.ArtifactName)
-	importTmpPath := path.Join(s.dimgTmpDir, "artifact", artifactNamePathPart, exportFolderName)
+	importTmpPath := path.Join(s.imageTmpDir, "artifact", artifactNamePathPart, exportFolderName)
 	importContainerTmpPath := path.Join(s.containerWerfDir, "artifact", artifactNamePathPart, exportFolderName)
 
 	return importTmpPath, importContainerTmpPath

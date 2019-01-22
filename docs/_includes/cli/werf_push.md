@@ -8,7 +8,7 @@
 {{ header }} Syntax
 
 ```bash
-werf push [DIMG_NAME...] [options]
+werf push [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Options

@@ -19,7 +19,7 @@ type GitInfoGetter interface {
 	GetHeadCommit() string
 }
 
-type DimgInfoGetter interface {
+type ImageInfoGetter interface {
 	IsNameless() bool
 	GetName() string
 	GetImageName() string
@@ -31,7 +31,7 @@ type ServiceValuesOptions struct {
 	ForceBranch string
 }
 
-func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit GitInfoGetter, images []DimgInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
+func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit GitInfoGetter, images []ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	if debug() {
 		fmt.Printf("GetServiceValues %s %s %s %s %#v\n", projectName, repo, namespace, dockerTag, opts)
 	}
@@ -99,18 +99,18 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 		}
 	}
 
-	dimgsInfo := make(map[string]interface{})
-	werfInfo["dimg"] = dimgsInfo
+	imagesInfo := make(map[string]interface{})
+	werfInfo["image"] = imagesInfo
 
 	for _, image := range images {
 		imageData := make(map[string]interface{})
 
 		if image.IsNameless() {
-			werfInfo["is_nameless_dimg"] = true
-			werfInfo["dimg"] = imageData
+			werfInfo["is_nameless_image"] = true
+			werfInfo["image"] = imageData
 		} else {
-			werfInfo["is_nameless_dimg"] = false
-			dimgsInfo[image.GetName()] = imageData
+			werfInfo["is_nameless_image"] = false
+			imagesInfo[image.GetName()] = imageData
 		}
 
 		imageData["docker_image"] = image.GetImageName()

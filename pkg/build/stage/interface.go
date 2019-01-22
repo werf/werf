@@ -5,12 +5,12 @@ import "github.com/flant/werf/pkg/image"
 type Interface interface {
 	Name() StageName
 
-	IsEmpty(c Conveyor, prevBuiltImage image.Image) (bool, error)
-	ShouldBeReset(builtImage image.Image) (bool, error)
+	IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface) (bool, error)
+	ShouldBeReset(builtImage image.ImageInterface) (bool, error)
 
-	GetDependencies(c Conveyor, prevImage image.Image) (string, error)
+	GetDependencies(c Conveyor, prevImage image.ImageInterface) (string, error)
 
-	PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error
+	PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error
 
 	AfterImageSyncDockerStateHook(Conveyor) error
 	PreRunHook(Conveyor) error
@@ -18,8 +18,8 @@ type Interface interface {
 	SetSignature(signature string)
 	GetSignature() string
 
-	SetImage(image.Image)
-	GetImage() image.Image
+	SetImage(image.ImageInterface)
+	GetImage() image.ImageInterface
 
 	SetGitPaths([]*GitPath)
 	GetGitPaths() []*GitPath

@@ -80,8 +80,8 @@ Build:
   - werf --version; pwd; set -x
   ## Pull stages caсhe
   - werf dimg stages pull ${CI_REGISTRY_IMAGE}
-  ## build dimg's than push it with the stages cache
-  - werf dimg bp --with-stages ${CI_REGISTRY_IMAGE} --tag-ci
+  ## build image's than push it with the stages cache
+  - werf bp --with-stages --repo ${CI_REGISTRY_IMAGE} --tag-ci
   ## Specify to use runner with the build tag.
   tags:
   - build
@@ -210,7 +210,7 @@ Cleanup registry:
   stage: cleanup_registry
   script:
   - werf --version; pwd; set -x
-  - werf dimg cleanup repo ${CI_REGISTRY_IMAGE}
+  - werf cleanup --repo ${CI_REGISTRY_IMAGE}
   only:
   - schedules
   tags:
@@ -233,7 +233,7 @@ Cleanup builder:
 
 To use cleanup, you should create `Personal Access Token` with necessary rights and put it into the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_CLEANUP_REGISTRY_PASSWORD` and a value consisting of `Personal Access Token`.
 
-> Note: `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable is used by werf only for deleting images in the registry when running `werf dimg cleanup repo` command. In the other cases, werf uses `CI_JOB_TOKEN`.
+> Note: `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable is used by werf only for deleting images in the registry when running `werf cleanup` command. In the other cases, werf uses `CI_JOB_TOKEN`.
 
 For the demo project create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
 
@@ -264,8 +264,8 @@ Build:
   - werf --version; pwd; set -x
   ## Pull stages caсhe
   - werf dimg stages pull ${CI_REGISTRY_IMAGE}
-  ## build dimg's than push it with the stages cache
-  - werf dimg bp --with-stages ${CI_REGISTRY_IMAGE} --tag-ci
+  ## build image's than push it with the stages cache
+  - werf bp --with-stages --repo ${CI_REGISTRY_IMAGE} --tag-ci
   ## Specify to use runner with the build tag.
   tags:
   - build
@@ -356,7 +356,7 @@ Cleanup registry:
   stage: cleanup_registry
   script:
   - werf --version; pwd; set -x
-  - werf dimg cleanup repo ${CI_REGISTRY_IMAGE}
+  - werf cleanup --repo ${CI_REGISTRY_IMAGE}
   only:
   - schedules
   tags:
@@ -396,4 +396,4 @@ Werf can use a distributed cache and can work with:
 
 The only steps you need are:
 * pull existing stages cache from the Docker registry with the `werf dimg stages pull REPO` command before building;
-* build images and push it with stages cache to the Docker registry with the `werf dimg bp --with-stages REPO` command.
+* build images and push it with stages cache to the Docker registry with the `werf bp --with-stages --repo REPO` command.

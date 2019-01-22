@@ -8,7 +8,7 @@
 {{ header }} Syntax
 
 ```bash
-werf tag [DIMG_NAME...] [options]
+werf tag [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Options

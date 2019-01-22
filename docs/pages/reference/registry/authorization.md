@@ -7,7 +7,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 There are several categories of commands that work with docker registry, thus need to authorize in docker registry:
 
-* [Build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) pull base images from docker registry.
+* [Build commands]({{ site.baseurl }}/reference/cli/image_build.html) pull base images from docker registry.
 * [Push commands]({{ site.baseurl }}/reference/registry/push.html) used to create and update images in docker registry.
 * [Pull commands]({{ site.baseurl }}/reference/registry/pull.html) used to pull build cache from docker registry.
 * [Cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html) used to delete images from docker registry.
@@ -48,7 +48,7 @@ To manually **disable** autologin procedure specify environment variable `WERF_I
 
 #### Autologin for build commands
 
-For [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) werf uses pull procedure for images specified as base (see [from directive]({{ site.baseurl }}/reference/build/base_image.html#from-and-fromcacheversion)).
+For [build commands]({{ site.baseurl }}/reference/cli/image_build.html) werf uses pull procedure for images specified as base (see [from directive]({{ site.baseurl }}/reference/build/base_image.html#from-and-fromcacheversion)).
 
 Running in gitlab environment werf build command will perform autologin procedure for the gitlab container registry under these conditions:
 
@@ -80,37 +80,37 @@ Options `--registry-username` and `--registry-password` can be used for werf com
 Run werf command without login options. Autologin procedure is enabled in this case:
 
 ```bash
-werf dimg push registry.myhost.com/web/backend
+werf push --repo registry.myhost.com/web/backend
 ```
 
 Run werf command with a manually specified user and password for docker registry:
 
 ```bash
-werf dimg push registry.myhost.com/web/backend --registry-username=myuser --registry-password=mypassword
+werf push --repo registry.myhost.com/web/backend --registry-username=myuser --registry-password=mypassword
 ```
 
 Run werf command with disabled autologin procedure:
 
 ```bash
-WERF_IGNORE_CI_DOCKER_AUTOLOGIN=1 werf dimg push registry.myhost.com/web/backend
+WERF_IGNORE_CI_DOCKER_AUTOLOGIN=1 werf push --repo registry.myhost.com/web/backend
 ```
 
 Run werf cleaning command with a special token for autologin procedure:
 
 ```bash
 export WERF_CLEANUP_REGISTRY_PASSWORD="A3XewXjfldf"
-werf dimg cleanup repo ${CI_REGISTRY_IMAGE}
+werf cleanup --repo ${CI_REGISTRY_IMAGE}
 ```
 
 Run werf cleaning command with a manually specified user and password:
 
 ```bash
-werf dimg cleanup repo registry.myhost.com/web/backend --registry-username=myuser --registry-password=mypassword
+werf cleanup --repo registry.myhost.com/web/backend --registry-username=myuser --registry-password=mypassword
 ```
 
 Run werf command with external docker config. Werf will not perform the login procedure in this case:
 
 ```bash
 export WERF_DOCKER_CONFIG=./.docker
-werf dimg push registry.myhost.com/web/backend
+werf push --repo registry.myhost.com/web/backend
 ```

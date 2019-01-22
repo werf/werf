@@ -6,13 +6,13 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func getBuilder(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) builder.Builder {
+func getBuilder(imageBaseConfig *config.ImageBase, baseStageOptions *NewBaseStageOptions) builder.Builder {
 	var b builder.Builder
-	if dimgBaseConfig.Shell != nil {
-		b = builder.NewShellBuilder(dimgBaseConfig.Shell)
-	} else if dimgBaseConfig.Ansible != nil {
-		extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.DimgTmpDir}
-		b = builder.NewAnsibleBuilder(dimgBaseConfig.Ansible, extra)
+	if imageBaseConfig.Shell != nil {
+		b = builder.NewShellBuilder(imageBaseConfig.Shell)
+	} else if imageBaseConfig.Ansible != nil {
+		extra := &builder.Extra{ContainerWerfPath: baseStageOptions.ContainerWerfDir, TmpPath: baseStageOptions.ImageTmpDir}
+		b = builder.NewAnsibleBuilder(imageBaseConfig.Ansible, extra)
 	}
 
 	return b

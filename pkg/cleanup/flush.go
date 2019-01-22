@@ -7,15 +7,15 @@ import (
 	"github.com/flant/werf/pkg/lock"
 )
 
-func RepoImagesFlush(withDimgs bool, options CommonRepoOptions) error {
+func RepoImagesFlush(withImages bool, options CommonRepoOptions) error {
 	err := lock.WithLock(options.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if withDimgs {
-			if err := repoDimgsFlush(options); err != nil {
+		if withImages {
+			if err := repoImagesFlush(options); err != nil {
 				return err
 			}
 		}
 
-		if err := repoDimgstagesFlush(options); err != nil {
+		if err := repoImageStagesFlush(options); err != nil {
 			return err
 		}
 
@@ -29,11 +29,11 @@ func RepoImagesFlush(withDimgs bool, options CommonRepoOptions) error {
 	return nil
 }
 
-func ProjectImagesFlush(withDimgs bool, options CommonProjectOptions) error {
+func ProjectImagesFlush(withImages bool, options CommonProjectOptions) error {
 	projectImagesLockName := fmt.Sprintf("%s.images", options.ProjectName)
 	err := lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if withDimgs {
-			if err := projectDimgsFlush(options); err != nil {
+		if withImages {
+			if err := projectImagesFlush(options); err != nil {
 				return err
 			}
 		}
@@ -42,7 +42,7 @@ func ProjectImagesFlush(withDimgs bool, options CommonProjectOptions) error {
 			return err
 		}
 
-		if err := projectDimgstagesFlush(options); err != nil {
+		if err := projectImageStagesFlush(options); err != nil {
 			return err
 		}
 
@@ -56,27 +56,13 @@ func ProjectImagesFlush(withDimgs bool, options CommonProjectOptions) error {
 	return nil
 }
 
-func repoDimgsFlush(options CommonRepoOptions) error {
-	dimgImages, err := repoDimgImages(options)
+func repoImagesFlush(options CommonRepoOptions) error {
+	imageImages, err := repoImages(options)
 	if err != nil {
 		return err
 	}
 
-	err = repoImagesRemove(dimgImages, options)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func repoDimgstagesFlush(options CommonRepoOptions) error {
-	dimgstageImages, err := repoDimgstageImages(options)
-	if err != nil {
-		return err
-	}
-
-	err = repoImagesRemove(dimgstageImages, options)
+	err = repoImagesRemove(imageImages, options)
 	if err != nil {
 		return err
 	}
@@ -84,9 +70,23 @@ func repoDimgstagesFlush(options CommonRepoOptions) error {
 	return nil
 }
 
-func projectDimgsFlush(options CommonProjectOptions) error {
+func repoImageStagesFlush(options CommonRepoOptions) error {
+	imageStagesImages, err := repoImageStagesImages(options)
+	if err != nil {
+		return err
+	}
+
+	err = repoImagesRemove(imageStagesImages, options)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func projectImagesFlush(options CommonProjectOptions) error {
 	filterSet := projectFilterSet(options)
-	filterSet.Add("label", "werf-dimg=true")
+	filterSet.Add("label", "werf-image=true")
 	if err := werfImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
 		return err
 	}
@@ -94,8 +94,8 @@ func projectDimgsFlush(options CommonProjectOptions) error {
 	return nil
 }
 
-func projectDimgstagesFlush(options CommonProjectOptions) error {
-	if err := werfImagesFlushByFilterSet(projectDimgstageFilterSet(options), options.CommonOptions); err != nil {
+func projectImageStagesFlush(options CommonProjectOptions) error {
+	if err := werfImagesFlushByFilterSet(projectImageStageFilterSet(options), options.CommonOptions); err != nil {
 		return err
 	}
 

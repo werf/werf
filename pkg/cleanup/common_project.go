@@ -27,7 +27,7 @@ func projectCleanup(options CommonProjectOptions) error {
 	return nil
 }
 
-func projectDimgstageFilterSet(options CommonProjectOptions) filters.Args {
+func projectImageStageFilterSet(options CommonProjectOptions) filters.Args {
 	filterSet := projectFilterSet(options)
 	filterSet.Add("reference", stageCacheReference(options))
 	return filterSet
@@ -44,5 +44,5 @@ func werfLabel(options CommonProjectOptions) string {
 }
 
 func stageCacheReference(options CommonProjectOptions) string {
-	return fmt.Sprintf(build.LocalDimgstageImageNameFormat, options.ProjectName)
+	return fmt.Sprintf(build.LocalImageStageImageNameFormat, options.ProjectName)
 }

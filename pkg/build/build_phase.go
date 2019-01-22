@@ -3,7 +3,7 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/image"
+	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 )
 
@@ -12,7 +12,7 @@ func NewBuildPhase(opts BuildOptions) *BuildPhase {
 }
 
 type BuildOptions struct {
-	ImageBuildOptions image.BuildOptions
+	ImageBuildOptions imagePkg.BuildOptions
 }
 
 type BuildPhase struct {
@@ -24,9 +24,9 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		fmt.Printf("BuildPhase.Run\n")
 	}
 
-	for _, dimg := range c.dimgsInOrder {
+	for _, image := range c.imagesInOrder {
 		if debug() {
-			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
+			fmt.Printf("  image: '%s'\n", image.GetName())
 		}
 
 		var acquiredLocks []string
@@ -46,7 +46,7 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		defer unlockLocks()
 
 		// lock
-		for _, stage := range dimg.GetStages() {
+		for _, stage := range image.GetStages() {
 			img := stage.GetImage()
 			if img.IsExists() {
 				continue
@@ -66,22 +66,22 @@ func (p *BuildPhase) Run(c *Conveyor) error {
 		}
 
 		// build
-		for _, s := range dimg.GetStages() {
+		for _, s := range image.GetStages() {
 			img := s.GetImage()
 			if img.IsExists() {
-				if dimg.GetName() == "" {
-					fmt.Printf("# Using cached image %s for dimg %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
+				if image.GetName() == "" {
+					fmt.Printf("# Using cached image %s for image %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
 				} else {
-					fmt.Printf("# Using cached image %s for dimg/%s %s\n", img.Name(), dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
+					fmt.Printf("# Using cached image %s for image/%s %s\n", img.Name(), image.GetName(), fmt.Sprintf("stage/%s", s.Name()))
 				}
 
 				continue
 			}
 
-			if dimg.GetName() == "" {
-				fmt.Printf("# Building image %s for dimg %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
+			if image.GetName() == "" {
+				fmt.Printf("# Building image %s for image %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
 			} else {
-				fmt.Printf("# Building image %s for dimg/%s %s\n", img.Name(), dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
+				fmt.Printf("# Building image %s for image/%s %s\n", img.Name(), image.GetName(), fmt.Sprintf("stage/%s", s.Name()))
 			}
 
 			if debug() {

@@ -28,9 +28,9 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 	tag := "DOCKER_TAG"
 	namespace := "NAMESPACE"
 
-	var images []DimgInfoGetter
-	for _, dimg := range werfConfig.Dimgs {
-		d := &DimgInfo{Config: dimg, WithoutRegistry: true, Repo: repo, Tag: tag}
+	var images []ImageInfoGetter
+	for _, image := range werfConfig.Images {
+		d := &ImageInfo{Config: image, WithoutRegistry: true, Repo: repo, Tag: tag}
 		images = append(images, d)
 	}
 

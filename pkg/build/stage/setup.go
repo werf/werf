@@ -7,8 +7,8 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func GenerateSetupStage(dimgBaseConfig *config.DimgBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *SetupStage {
-	b := getBuilder(dimgBaseConfig, baseStageOptions)
+func GenerateSetupStage(imageBaseConfig *config.ImageBase, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *SetupStage {
+	b := getBuilder(imageBaseConfig, baseStageOptions)
 	if b != nil && !b.IsSetupEmpty() {
 		return newSetupStage(b, gitPatchStageOptions, baseStageOptions)
 	}
@@ -26,7 +26,7 @@ type SetupStage struct {
 	*UserWithGitPatchStage
 }
 
-func (s *SetupStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
+func (s *SetupStage) GetDependencies(_ Conveyor, _ image.ImageInterface) (string, error) {
 	stageDependenciesChecksum, err := s.getStageDependenciesChecksum(Setup)
 	if err != nil {
 		return "", err
@@ -35,7 +35,7 @@ func (s *SetupStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) 
 	return util.Sha256Hash(s.builder.SetupChecksum(), stageDependenciesChecksum), nil
 }
 
-func (s *SetupStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+func (s *SetupStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	if err := s.UserWithGitPatchStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return nil
 	}

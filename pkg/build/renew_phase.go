@@ -19,9 +19,9 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 	}
 
 	var conveyorShouldBeReset bool
-	for _, dimg := range c.dimgsInOrder {
+	for _, image := range c.imagesInOrder {
 		if debug() {
-			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
+			fmt.Printf("  image: '%s'\n", image.GetName())
 		}
 
 		var acquiredLocks []string
@@ -37,7 +37,7 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 		defer unlockLocks()
 
 		// lock
-		for _, stage := range dimg.GetStages() {
+		for _, stage := range image.GetStages() {
 			img := stage.GetImage()
 			if !img.IsExists() {
 				continue
@@ -55,7 +55,7 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 		}
 
 		// build
-		for _, s := range dimg.GetStages() {
+		for _, s := range image.GetStages() {
 			img := s.GetImage()
 			if img.IsExists() {
 				if stageShouldBeReset, err := s.ShouldBeReset(img); err != nil {
@@ -63,10 +63,10 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 				} else if stageShouldBeReset {
 					conveyorShouldBeReset = true
 
-					if dimg.GetName() == "" {
-						fmt.Printf("# Reseting image %s for dimg %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
+					if image.GetName() == "" {
+						fmt.Printf("# Reseting image %s for image %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
 					} else {
-						fmt.Printf("# Reseting image %s for dimg/%s %s\n", img.Name(), dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
+						fmt.Printf("# Reseting image %s for image/%s %s\n", img.Name(), image.GetName(), fmt.Sprintf("stage/%s", s.Name()))
 					}
 
 					if err := img.Untag(); err != nil {

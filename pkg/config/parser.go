@@ -14,13 +14,13 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/util"
-	yaml "gopkg.in/flant/yaml.v2"
-	"gopkg.in/src-d/go-git.v4/plumbing/transport"
+	"gopkg.in/flant/yaml.v2"
 )
 
 func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
@@ -39,7 +39,7 @@ func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, err
 	}
 
-	meta, rawDimgs, err := splitByMetaAndRawDimgs(docs)
+	meta, rawImages, err := splitByMetaAndRawImages(docs)
 	if err != nil {
 		return nil, err
 	}
@@ -63,14 +63,14 @@ func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}
 
-	dimgs, err := splitByDimgs(rawDimgs, werfConfigRenderContent, werfConfigRenderPath)
+	images, err := splitByImages(rawImages, werfConfigRenderContent, werfConfigRenderPath)
 	if err != nil {
 		return nil, err
 	}
 
 	werfConfig := &WerfConfig{
-		Meta:  meta,
-		Dimgs: dimgs,
+		Meta:   meta,
+		Images: images,
 	}
 
 	return werfConfig, nil
@@ -392,52 +392,52 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func splitByDimgs(rawDimgs []*rawDimg, werfConfigRenderContent string, werfConfigRenderPath string) ([]*Dimg, error) {
-	var dimgs []*Dimg
-	var artifacts []*DimgArtifact
+func splitByImages(rawImages []*rawImage, werfConfigRenderContent string, werfConfigRenderPath string) ([]*Image, error) {
+	var images []*Image
+	var artifacts []*ImageArtifact
 
-	for _, rawDimg := range rawDimgs {
-		if rawDimg.dimgType() == "dimgs" {
-			if sameDimgs, err := rawDimg.toDimgDirectives(); err != nil {
+	for _, rawImage := range rawImages {
+		if rawImage.imageType() == "images" {
+			if sameImages, err := rawImage.toImageDirectives(); err != nil {
 				return nil, err
 			} else {
-				dimgs = append(dimgs, sameDimgs...)
+				images = append(images, sameImages...)
 			}
 		} else {
-			if dimgArtifact, err := rawDimg.toDimgArtifactDirective(); err != nil {
+			if imageArtifact, err := rawImage.toImageArtifactDirective(); err != nil {
 				return nil, err
 			} else {
-				artifacts = append(artifacts, dimgArtifact)
+				artifacts = append(artifacts, imageArtifact)
 			}
 		}
 	}
 
-	if len(dimgs) == 0 {
-		return nil, newConfigError(fmt.Sprintf("no dimgs defined, at least one dimg required!\n\n%s:\n\n```\n%s```\n", werfConfigRenderPath, werfConfigRenderContent))
+	if len(images) == 0 {
+		return nil, newConfigError(fmt.Sprintf("no images defined, at least one image required!\n\n%s:\n\n```\n%s```\n", werfConfigRenderPath, werfConfigRenderContent))
 	}
 
-	if err := exportsAutoExcluding(dimgs, artifacts); err != nil {
+	if err := exportsAutoExcluding(images, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err := validateDimgsNames(dimgs, artifacts); err != nil {
+	if err := validateImagesNames(images, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err := associateImportsArtifacts(dimgs, artifacts); err != nil {
+	if err := associateImportsArtifacts(images, artifacts); err != nil {
 		return nil, err
 	}
 
-	if err := associateDimgsAndArtifactsFrom(dimgs, artifacts); err != nil {
+	if err := associateImagesFrom(images, artifacts); err != nil {
 		return nil, err
 	}
 
-	return dimgs, nil
+	return images, nil
 }
 
-func exportsAutoExcluding(dimgs []*Dimg, artifacts []*DimgArtifact) error {
-	for _, dimg := range dimgs {
-		if err := dimg.exportsAutoExcluding(); err != nil {
+func exportsAutoExcluding(images []*Image, artifacts []*ImageArtifact) error {
+	for _, image := range images {
+		if err := image.exportsAutoExcluding(); err != nil {
 			return err
 		}
 	}
@@ -451,64 +451,64 @@ func exportsAutoExcluding(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	return nil
 }
 
-func validateDimgsNames(dimgs []*Dimg, artifacts []*DimgArtifact) error {
-	existByDimgName := map[string]bool{}
+func validateImagesNames(images []*Image, artifacts []*ImageArtifact) error {
+	existByImageName := map[string]bool{}
 
-	dimgByName := map[string]*Dimg{}
-	for _, dimg := range dimgs {
-		name := dimg.Name
+	imageByName := map[string]*Image{}
+	for _, image := range images {
+		name := image.Name
 
-		if d, ok := dimgByName[name]; ok {
-			return newConfigError(fmt.Sprintf("conflict between dimgs names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(dimg.raw.doc)))
+		if d, ok := imageByName[name]; ok {
+			return newConfigError(fmt.Sprintf("conflict between images names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(image.raw.doc)))
 		} else {
-			dimgByName[name] = dimg
-			existByDimgName[name] = true
+			imageByName[name] = image
+			existByImageName[name] = true
 		}
 	}
 
-	dimgArtifactByName := map[string]*DimgArtifact{}
+	imageArtifactByName := map[string]*ImageArtifact{}
 	for _, artifact := range artifacts {
 		name := artifact.Name
 
-		if a, ok := dimgArtifactByName[name]; ok {
+		if a, ok := imageArtifactByName[name]; ok {
 			return newConfigError(fmt.Sprintf("conflict between artifacts names!\n\n%s%s\n", dumpConfigDoc(a.raw.doc), dumpConfigDoc(artifact.raw.doc)))
 		} else {
-			dimgArtifactByName[name] = artifact
+			imageArtifactByName[name] = artifact
 		}
 
-		if exist, ok := existByDimgName[name]; ok && exist {
-			d := dimgByName[name]
+		if exist, ok := existByImageName[name]; ok && exist {
+			d := imageByName[name]
 
-			return newConfigError(fmt.Sprintf("conflict between dimg and artifact names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(artifact.raw.doc)))
+			return newConfigError(fmt.Sprintf("conflict between image and artifact names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(artifact.raw.doc)))
 		} else {
-			dimgArtifactByName[name] = artifact
+			imageArtifactByName[name] = artifact
 		}
 	}
 
 	return nil
 }
 
-func associateImportsArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
+func associateImportsArtifacts(images []*Image, artifacts []*ImageArtifact) error {
 	var artifactImports []*ArtifactImport
 
-	for _, dimg := range dimgs {
-		for _, relatedDimgInterface := range dimg.relatedDimgs() {
-			switch relatedDimgInterface.(type) {
-			case *Dimg:
-				artifactImports = append(artifactImports, relatedDimgInterface.(*Dimg).Import...)
-			case *DimgArtifact:
-				artifactImports = append(artifactImports, relatedDimgInterface.(*DimgArtifact).Import...)
+	for _, image := range images {
+		for _, relatedImageInterface := range image.relatedImages() {
+			switch relatedImageInterface.(type) {
+			case *Image:
+				artifactImports = append(artifactImports, relatedImageInterface.(*Image).Import...)
+			case *ImageArtifact:
+				artifactImports = append(artifactImports, relatedImageInterface.(*ImageArtifact).Import...)
 			}
 		}
 	}
 
-	for _, artifactDimg := range artifacts {
-		for _, relatedDimgInterface := range artifactDimg.relatedDimgs() {
-			switch relatedDimgInterface.(type) {
-			case *Dimg:
-				artifactImports = append(artifactImports, relatedDimgInterface.(*Dimg).Import...)
-			case *DimgArtifact:
-				artifactImports = append(artifactImports, relatedDimgInterface.(*DimgArtifact).Import...)
+	for _, artifactImage := range artifacts {
+		for _, relatedImageInterface := range artifactImage.relatedImages() {
+			switch relatedImageInterface.(type) {
+			case *Image:
+				artifactImports = append(artifactImports, relatedImageInterface.(*Image).Import...)
+			case *ImageArtifact:
+				artifactImports = append(artifactImports, relatedImageInterface.(*ImageArtifact).Import...)
 			}
 		}
 	}
@@ -522,15 +522,15 @@ func associateImportsArtifacts(dimgs []*Dimg, artifacts []*DimgArtifact) error {
 	return nil
 }
 
-func associateDimgsAndArtifactsFrom(dimgs []*Dimg, artifacts []*DimgArtifact) error {
-	for _, dimg := range dimgs {
-		if err := associateDimgFrom(dimg.lastLayerOrSelf(), dimgs, artifacts); err != nil {
+func associateImagesFrom(images []*Image, artifacts []*ImageArtifact) error {
+	for _, image := range images {
+		if err := associateImageFrom(image.lastLayerOrSelf(), images, artifacts); err != nil {
 			return err
 		}
 	}
 
-	for _, dimg := range artifacts {
-		if err := associateDimgFrom(dimg.lastLayerOrSelf(), dimgs, artifacts); err != nil {
+	for _, image := range artifacts {
+		if err := associateImageFrom(image.lastLayerOrSelf(), images, artifacts); err != nil {
 			return err
 		}
 	}
@@ -538,19 +538,19 @@ func associateDimgsAndArtifactsFrom(dimgs []*Dimg, artifacts []*DimgArtifact) er
 	return nil
 }
 
-func associateDimgFrom(dimg DimgInterface, dimgs []*Dimg, artifacts []*DimgArtifact) error {
-	switch dimg.(type) {
-	case *Dimg:
-		return dimg.(*Dimg).associateFrom(dimgs, artifacts)
-	case *DimgArtifact:
-		return dimg.(*DimgArtifact).associateFrom(dimgs, artifacts)
+func associateImageFrom(image ImageInterface, images []*Image, artifacts []*ImageArtifact) error {
+	switch image.(type) {
+	case *Image:
+		return image.(*Image).associateFrom(images, artifacts)
+	case *ImageArtifact:
+		return image.(*ImageArtifact).associateFrom(images, artifacts)
 	default:
 		panic("runtime error")
 	}
 }
 
-func splitByMetaAndRawDimgs(docs []*doc) (*Meta, []*rawDimg, error) {
-	var rawDimgs []*rawDimg
+func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, error) {
+	var rawImages []*rawImage
 	var resultMeta *Meta
 
 	parentStack = util.NewStack()
@@ -573,20 +573,20 @@ func splitByMetaAndRawDimgs(docs []*doc) (*Meta, []*rawDimg, error) {
 			}
 
 			resultMeta = rawMeta.toMeta()
-		} else if isDimgDoc(raw) {
-			dimg := &rawDimg{doc: doc}
-			err := yaml.Unmarshal(doc.Content, &dimg)
+		} else if isImageDoc(raw) {
+			image := &rawImage{doc: doc}
+			err := yaml.Unmarshal(doc.Content, &image)
 			if err != nil {
 				return nil, nil, newYamlUnmarshalError(err, doc)
 			}
 
-			rawDimgs = append(rawDimgs, dimg)
+			rawImages = append(rawImages, image)
 		} else {
 			return nil, nil, newYamlUnmarshalError(errors.New("doc type cannot be recognized"), doc)
 		}
 	}
 
-	return resultMeta, rawDimgs, nil
+	return resultMeta, rawImages, nil
 }
 
 func isMetaDoc(h map[string]interface{}) bool {
@@ -597,8 +597,8 @@ func isMetaDoc(h map[string]interface{}) bool {
 	return false
 }
 
-func isDimgDoc(h map[string]interface{}) bool {
-	if _, ok := h["dimg"]; ok {
+func isImageDoc(h map[string]interface{}) bool {
+	if _, ok := h["image"]; ok {
 		return true
 	} else if _, ok := h["artifact"]; ok {
 		return true

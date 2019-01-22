@@ -25,54 +25,54 @@ type DeployOptions struct {
 	KubeContext string
 }
 
-type DimgInfoGetterStub struct {
+type ImageInfoGetterStub struct {
 	Name     string
 	ImageTag string
 	Repo     string
 }
 
-func (d *DimgInfoGetterStub) IsNameless() bool {
+func (d *ImageInfoGetterStub) IsNameless() bool {
 	return d.Name == ""
 }
 
-func (d *DimgInfoGetterStub) GetName() string {
+func (d *ImageInfoGetterStub) GetName() string {
 	return d.Name
 }
 
-func (d *DimgInfoGetterStub) GetImageName() string {
+func (d *ImageInfoGetterStub) GetImageName() string {
 	if d.Name == "" {
 		return fmt.Sprintf("%s:%s", d.Repo, d.ImageTag)
 	}
 	return fmt.Sprintf("%s/%s:%s", d.Repo, d.Name, d.ImageTag)
 }
 
-func (d *DimgInfoGetterStub) GetImageId() (string, error) {
+func (d *ImageInfoGetterStub) GetImageId() (string, error) {
 	return docker_registry.ImageId(d.GetImageName())
 }
 
-type DimgInfo struct {
-	Config          *config.Dimg
+type ImageInfo struct {
+	Config          *config.Image
 	WithoutRegistry bool
 	Repo            string
 	Tag             string
 }
 
-func (d *DimgInfo) IsNameless() bool {
+func (d *ImageInfo) IsNameless() bool {
 	return d.Config.Name == ""
 }
 
-func (d *DimgInfo) GetName() string {
+func (d *ImageInfo) GetName() string {
 	return d.Config.Name
 }
 
-func (d *DimgInfo) GetImageName() string {
+func (d *ImageInfo) GetImageName() string {
 	if d.Config.Name == "" {
 		return fmt.Sprintf("%s:%s", d.Repo, d.Tag)
 	}
 	return fmt.Sprintf("%s/%s:%s", d.Repo, d.Config.Name, d.Tag)
 }
 
-func (d *DimgInfo) GetImageId() (string, error) {
+func (d *ImageInfo) GetImageId() (string, error) {
 	if d.WithoutRegistry {
 		return "", nil
 	}
@@ -86,10 +86,6 @@ func (d *DimgInfo) GetImageId() (string, error) {
 	}
 
 	return res, nil
-}
-
-func ConstructNameByTemplate(template string, projectName string) error {
-	return nil
 }
 
 func RunDeploy(projectDir, repo, tag, release, namespace string, werfConfig *config.WerfConfig, opts DeployOptions) error {
@@ -107,9 +103,9 @@ func RunDeploy(projectDir, repo, tag, release, namespace string, werfConfig *con
 
 	localGit := &git_repo.Local{Path: projectDir, GitDir: filepath.Join(projectDir, ".git")}
 
-	var images []DimgInfoGetter
-	for _, dimg := range werfConfig.Dimgs {
-		d := &DimgInfo{Config: dimg, WithoutRegistry: opts.WithoutRegistry, Repo: repo, Tag: tag}
+	var images []ImageInfoGetter
+	for _, image := range werfConfig.Images {
+		d := &ImageInfo{Config: image, WithoutRegistry: opts.WithoutRegistry, Repo: repo, Tag: tag}
 		images = append(images, d)
 	}
 

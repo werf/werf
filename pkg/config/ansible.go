@@ -15,7 +15,7 @@ type Ansible struct {
 }
 
 func (c *Ansible) GetDumpConfigSection() string {
-	return dumpConfigDoc(c.raw.rawDimg.doc)
+	return dumpConfigDoc(c.raw.rawImage.doc)
 }
 
 func (c *Ansible) validate() error {

@@ -18,13 +18,13 @@ _Werf name_ is either:
 
 _Werf name_ can be explicitly specified with `--name` basic option of the most werf commands.
 
-## Dimg
+## Image
 — is the named set of rules to build one docker image.
 
 — is result image.
 
 ## Artifact
-— is special _dimg_ that is used by another _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
+— is special _image_ that is used by another _images_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
 
 ## Stage
 — is a logically grouped set of config instructions, as well as the conditions and rules by which these instructions are assembled.

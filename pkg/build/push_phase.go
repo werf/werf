@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/image"
+	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/util"
 )
@@ -27,7 +27,7 @@ const (
 	GitCommitScheme TagScheme = "git_commit"
 	CIScheme        TagScheme = "ci"
 
-	RepoDimgstageTagFormat = "dimgstage-%s"
+	RepoImageStageTagFormat = "image-stage-%s"
 )
 
 type TagScheme string
@@ -48,30 +48,30 @@ func (p *PushPhase) Run(c *Conveyor) error {
 		return fmt.Errorf("login into '%s' for push failed: %s", p.Repo, err)
 	}
 
-	for _, dimg := range c.dimgsInOrder {
+	for _, image := range c.imagesInOrder {
 		if p.WithStages {
-			if dimg.GetName() == "" {
-				fmt.Printf("# Pushing dimg stages cache\n")
+			if image.GetName() == "" {
+				fmt.Printf("# Pushing image stages cache\n")
 			} else {
-				fmt.Printf("# Pushing dimg/%s stages cache\n", dimg.GetName())
+				fmt.Printf("# Pushing image/%s stages cache\n", image.GetName())
 			}
 
-			err := p.pushDimgStages(c, dimg)
+			err := p.pushImageStages(c, image)
 			if err != nil {
-				return fmt.Errorf("unable to push dimg %s stages: %s", dimg.GetName(), err)
+				return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
 			}
 		}
 
-		if !dimg.isArtifact {
-			if dimg.GetName() == "" {
-				fmt.Printf("# Pushing dimg\n")
+		if !image.isArtifact {
+			if image.GetName() == "" {
+				fmt.Printf("# Pushing image\n")
 			} else {
-				fmt.Printf("# Pushing dimg/%s\n", dimg.GetName())
+				fmt.Printf("# Pushing image/%s\n", image.GetName())
 			}
 
-			err := p.pushDimg(c, dimg)
+			err := p.pushImage(c, image)
 			if err != nil {
-				return fmt.Errorf("unable to push dimg %s: %s", dimg.GetName(), err)
+				return fmt.Errorf("unable to push image %s: %s", image.GetName(), err)
 			}
 		}
 	}
@@ -79,23 +79,23 @@ func (p *PushPhase) Run(c *Conveyor) error {
 	return nil
 }
 
-func (p *PushPhase) pushDimgStages(c *Conveyor, dimg *Dimg) error {
-	stages := dimg.GetStages()
+func (p *PushPhase) pushImageStages(c *Conveyor, image *Image) error {
+	stages := image.GetStages()
 
-	existingStagesTags, err := docker_registry.DimgstageTags(p.Repo)
+	existingStagesTags, err := docker_registry.ImageStagesTags(p.Repo)
 	if err != nil {
 		return fmt.Errorf("error fetching existing stages cache list %s: %s", p.Repo, err)
 	}
 
 	for _, stage := range stages {
-		stageTagName := fmt.Sprintf(RepoDimgstageTagFormat, stage.GetSignature())
+		stageTagName := fmt.Sprintf(RepoImageStageTagFormat, stage.GetSignature())
 		stageImageName := fmt.Sprintf("%s:%s", p.Repo, stageTagName)
 
 		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
-			if dimg.GetName() == "" {
-				fmt.Printf("# Ignore existing in repo image %s for dimg stage/%s\n", stageImageName, stage.Name())
+			if image.GetName() == "" {
+				fmt.Printf("# Ignore existing in repo image %s for image stage/%s\n", stageImageName, stage.Name())
 			} else {
-				fmt.Printf("# Ignore existing in repo image %s for dimg/%s stage/%s\n", stageImageName, dimg.GetName(), stage.Name())
+				fmt.Printf("# Ignore existing in repo image %s for image/%s stage/%s\n", stageImageName, image.GetName(), stage.Name())
 			}
 
 			continue
@@ -111,13 +111,13 @@ func (p *PushPhase) pushDimgStages(c *Conveyor, dimg *Dimg) error {
 			}
 			defer lock.Unlock(imageLockName)
 
-			if dimg.GetName() == "" {
-				fmt.Printf("# Pushing image %s for dimg stage/%s\n", stageImageName, stage.Name())
+			if image.GetName() == "" {
+				fmt.Printf("# Pushing image %s for image stage/%s\n", stageImageName, stage.Name())
 			} else {
-				fmt.Printf("# Pushing image %s for dimg/%s stage/%s\n", stageImageName, dimg.GetName(), stage.Name())
+				fmt.Printf("# Pushing image %s for image/%s stage/%s\n", stageImageName, image.GetName(), stage.Name())
 			}
 
-			stageImage := c.GetImage(stage.GetImage().Name())
+			stageImage := c.GetStageImage(stage.GetImage().Name())
 
 			err = stageImage.Export(stageImageName)
 			if err != nil {
@@ -135,38 +135,38 @@ func (p *PushPhase) pushDimgStages(c *Conveyor, dimg *Dimg) error {
 	return nil
 }
 
-func (p *PushPhase) pushDimg(c *Conveyor, dimg *Dimg) error {
-	var dimgRepository string
-	if dimg.GetName() != "" {
-		dimgRepository = fmt.Sprintf("%s/%s", p.Repo, dimg.GetName())
+func (p *PushPhase) pushImage(c *Conveyor, image *Image) error {
+	var imageRepository string
+	if image.GetName() != "" {
+		imageRepository = fmt.Sprintf("%s/%s", p.Repo, image.GetName())
 	} else {
-		dimgRepository = p.Repo
+		imageRepository = p.Repo
 	}
 
-	existingTags, err := docker_registry.DimgTags(dimgRepository)
+	existingTags, err := docker_registry.ImageTags(imageRepository)
 	if err != nil {
-		return fmt.Errorf("error fetch existing tags of dimg %s: %s", dimgRepository, err)
+		return fmt.Errorf("error fetch existing tags of image %s: %s", imageRepository, err)
 	}
 
-	stages := dimg.GetStages()
+	stages := image.GetStages()
 	lastStageImage := stages[len(stages)-1].GetImage()
 
 	for scheme, tags := range p.TagsByScheme {
 	ProcessingTags:
 		for _, tag := range tags {
-			dimgImageName := fmt.Sprintf("%s:%s", dimgRepository, tag)
+			imageImageName := fmt.Sprintf("%s:%s", imageRepository, tag)
 
 			if util.IsStringsContainValue(existingTags, tag) {
-				parentID, err := docker_registry.ImageParentId(dimgImageName)
+				parentID, err := docker_registry.ImageParentId(imageImageName)
 				if err != nil {
-					return fmt.Errorf("unable to get image %s parent id: %s", dimgImageName, err)
+					return fmt.Errorf("unable to get image %s parent id: %s", imageImageName, err)
 				}
 
 				if lastStageImage.ID() == parentID {
-					if dimg.GetName() == "" {
-						fmt.Printf("# Ignore existing in repo image %s for dimg\n", dimgImageName)
+					if image.GetName() == "" {
+						fmt.Printf("# Ignore existing in repo image %s for image\n", imageImageName)
 					} else {
-						fmt.Printf("# Ignore existing in repo image %s for dimg/%s\n", dimgImageName, dimg.GetName())
+						fmt.Printf("# Ignore existing in repo image %s for image/%s\n", imageImageName, image.GetName())
 					}
 					continue ProcessingTags
 				}
@@ -175,36 +175,36 @@ func (p *PushPhase) pushDimg(c *Conveyor, dimg *Dimg) error {
 			err := func() error {
 				var err error
 
-				imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(dimgImageName))
+				imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(imageImageName))
 				err = lock.Lock(imageLockName, lock.LockOptions{})
 				if err != nil {
 					return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 				}
 				defer lock.Unlock(imageLockName)
 
-				fmt.Printf("# Build %s layer with tag scheme '%s'\n", dimgImageName, scheme)
+				fmt.Printf("# Build %s layer with tag scheme '%s'\n", imageImageName, scheme)
 
-				pushImage := image.NewDimgImage(c.GetImage(lastStageImage.Name()), dimgImageName)
+				pushImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageImageName)
 
 				pushImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
 					"werf-tag-scheme": string(scheme),
-					"werf-dimg":       "true",
+					"werf-image":      "true",
 				})
 
-				err = pushImage.Build(image.BuildOptions{})
+				err = pushImage.Build(imagePkg.BuildOptions{})
 				if err != nil {
-					return fmt.Errorf("error building %s with tag scheme '%s': %s", dimgImageName, scheme, err)
+					return fmt.Errorf("error building %s with tag scheme '%s': %s", imageImageName, scheme, err)
 				}
 
-				if dimg.GetName() == "" {
-					fmt.Printf("# Pushing image %s for dimg\n", dimgImageName)
+				if image.GetName() == "" {
+					fmt.Printf("# Pushing image %s for image\n", imageImageName)
 				} else {
-					fmt.Printf("# Pushing image %s for dimg/%s\n", dimgImageName, dimg.GetName())
+					fmt.Printf("# Pushing image %s for image/%s\n", imageImageName, image.GetName())
 				}
 
 				err = pushImage.Export()
 				if err != nil {
-					return fmt.Errorf("error pushing %s: %s", dimgImageName, err)
+					return fmt.Errorf("error pushing %s: %s", imageImageName, err)
 				}
 
 				return nil
