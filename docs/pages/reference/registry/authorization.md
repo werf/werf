@@ -7,7 +7,7 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 There are several categories of commands that work with docker registry, thus need to authorize in docker registry:
 
-* [Build commands]({{ site.baseurl }}/reference/cli/image_build.html) pull base images from docker registry.
+* [Build command]({{ site.baseurl }}/reference/build/assembly_process.html#werf-build) pull base images from docker registry.
 * [Push commands]({{ site.baseurl }}/reference/registry/push.html) used to create and update images in docker registry.
 * [Pull commands]({{ site.baseurl }}/reference/registry/pull.html) used to pull build cache from docker registry.
 * [Cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html) used to delete images from docker registry.

@@ -44,25 +44,14 @@ There is also an option to turn off this optimized behavior and always pull all 
 
 ### Syntax
 
-```bash
-werf dimg stages pull [options] [DIMG ...] REPO
-  --registry-username USERNAME
-  --registry-password PASSWORD
-  --all
-```
-
-The `DIMG` optional parameter — is a name of image from a config. Specifying `DIMG` one or multiple times allows pulling stages cache only related to certain images from config. By default, werf pull stages cache of all images from config.
-
-The `REPO` required parameter — is a repository name (see more in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter) article).
-
-`--all` option causes werf to download all available stages for each image from the docker registry, instead of downloading only last common stage between old and new image state.
+**NOT AVAILABLE** `werf pull` command currently not reimplemented from Ruby.
 
 ## Example
 
 ### Pull stages cache
 
 ```bash
-werf image stages pull registry.hello.com/taxi/backend
+werf pull registry.hello.com/taxi/backend
 ```
 
 Command pull stages cache from the specified repo.

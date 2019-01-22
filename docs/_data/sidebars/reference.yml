@@ -89,3 +89,6 @@ entries:
 
     - title: Track Kubernetes resources
       url: /reference/deploy/track_kubernetes_resources.html
+
+  - title: Slug
+    url: /reference/slug.html
