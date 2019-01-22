@@ -120,7 +120,7 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 	if err != nil {
 		if strings.HasSuffix(stderr, "has no deployed releases\n") {
 			logger.LogWarningF("WARNING: Helm release '%s' is in improper state: %s", releaseName, stderr)
-			logger.LogWarningF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf kube deploy`", releaseName)
+			logger.LogWarningF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf deploy`", releaseName)
 		}
 
 		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {

@@ -213,7 +213,7 @@ minikube addons enable ingress
 Run deploy with werf:
 
 ```shell
-werf kube deploy :minikube --namespace mynamespace
+werf deploy --repo :minikube --namespace mynamespace
 ```
 
 With this command werf will create all kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running). Helm release with name `myapp-mynamespace` will be created. This name consists of chart name `myapp` and namespace `mynamespace`.

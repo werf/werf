@@ -130,7 +130,7 @@ Add the following lines to `.gitlab-ci.yml` file:
   ##                  kubectl apply -f -
   - werf --version; pwd; set -x
   ## Next command makes deploy and will be discussed further
-  - werf kube deploy
+  - werf deploy
       --tag-ci
       --namespace ${APP_NAMESPACE}
       --set "global.env=${CI_ENVIRONMENT_SLUG}"
@@ -144,8 +144,8 @@ Add the following lines to `.gitlab-ci.yml` file:
   - deploy
 ```
 
-Pay attention to `werf kube deploy` command. It is the main step in deploying the application and note that:
-* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf kube deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/templates.html));
+Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
+* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/templates.html));
 * we've used the `APP_NAMESPACE` variable, defined at the top of the `.gitlab-ci.yml` file (it is not one of the GitLab [environments](https://docs.gitlab.com/ee/ci/variables/README.html));
 * we've passed the `global.env` parameter, which contains the name of the environment. You can access it in helm templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
 * we've passed the `global.ci_url` parameter, which contains an URL of the environment. You can use it in your helm templates, e.g. to configure ingress.
@@ -288,7 +288,7 @@ Build:
   ##                  kubectl apply -f -
   - werf --version; pwd; set -x
   ## Next command makes deploy and will be discussed further
-  - werf kube deploy
+  - werf deploy
       --tag-ci
       --namespace ${APP_NAMESPACE}
       --set "global.env=${CI_ENVIRONMENT_SLUG}"
