@@ -1,7 +1,7 @@
 ---
 title: Work with local changes without commits in dev mode
-sidebar: reference
-permalink: reference/build/dev_mode.html
+sidebar: not_used
+permalink: not_used/build/dev_mode.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <div class="language-bash highlighter-rouge"><pre class="highlight"><code>werf dimg build --dev

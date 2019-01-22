@@ -12,9 +12,6 @@ entries:
     - title: Stages
       url: /reference/build/stages.html
 
-    - title: Cache
-      url: /reference/build/cache.html
-
     - title: Dimg configuration
       sfi:
 
@@ -50,9 +47,6 @@ entries:
 
       - title: Stage introspection
         url: /reference/build/stage_introspection.html
-
-      - title: Work with local changes without commits in dev mode
-        url: /reference/build/dev_mode.html
 
       - title: Caching each instruction separately with asLayers
         url: /reference/build/as_layers.html

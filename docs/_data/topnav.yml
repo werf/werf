@@ -19,9 +19,6 @@ topnav:
   - title: Publications
     url: /publications.html
 
-  - title: FAQ
-    url: /faq.html
-
   - title: GitHub
     external_url: https://github.com/flant/werf
 
