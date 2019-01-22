@@ -20,9 +20,11 @@ In Werf world tagging creates **a new image layer** with the specified name. Wer
 
 The procedure of creating such a layer will be referred to as **werf tag procedure**.
 
-## REPO parameter
+## `--repo REPO` option
 
-For all commands related to a docker registry, werf uses a single parameter named `REPO`. Using this parameter werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
+For all commands related to a docker registry, werf uses a single option named `--repo REPO`. `REPO` is a required param, but `--repo` option may be omitted in Gitlab CI. Werf will try to autodetect repo by environment variable `CI_REGISTRY_IMAGE` if available.
+
+Using `REPO` werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
 
 * If werf project contains nameless image, werf uses `REPO` as docker repository.
 * Otherwise, werf constructs docker repository name for each image by following template `REPO/IMAGE_NAME`.
@@ -30,12 +32,6 @@ For all commands related to a docker registry, werf uses a single parameter name
 E.g., if there is unnamed image in a `werf.yaml` config and `REPO` is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two images in a config — `server` and `worker`, then docker repository names are:
 * `myregistry.myorg.com/sys/backend/server` for `server` image;
 * `myregistry.myorg.com/sys/backend/worker` for `worker` image.
-
-### Minikube docker registry
-
-`werf kube minikube setup` command is used to prepare kubernetes environment with docker registry running in minikube, see [article]({{ site.baseurl }}/reference/deploy/minikube.html#werf-kube-minikube-setup) for details. To specify this docker registry address in `REPO` parameter werf supports a shortcut value `:minikube`.
-
-`:minikube` value of `REPO` parameter automatically unfolds into `localhost:5000/<werf-name>` (more about [werf name](https://flant.github.io/werf/reference/glossary.html#werf-name)).
 
 ## Image tag parameters
 
@@ -45,8 +41,7 @@ E.g., if there is unnamed image in a `werf.yaml` config and `REPO` is `myregistr
 | `--tag-build-id` | tag with a CI job id |
 | `--tag-branch` | tag with a git branch name |
 | `--tag-commit` | tag with a git commit id |
-| `--tag\|--tag-slug TAG` | arbitrary slugged tag TAG |
-| `--tag-plain TAG` | arbitrary non slugged tag TAG |
+| `--tag TAG` | arbitrary  TAG |
 
 ### `--tag-ci`
 
@@ -62,7 +57,7 @@ The **git tag variable** presents only when building git tag. In this case, werf
 
 If the **git tag variable** is absent, then werf uses the **git branch variable** to get the name of building git branch. In this case, werf creates an image and marks it as an image built for git branch (by adding **meta-information** into newly created docker layer).
 
-After getting git tag or git branch name, werf applies [slug](#slug) transformation rules if this name doesn't meet with the slug requirements. This behavior allows using tags and branches with arbitrary names in Gitlab like `review/fix#23`.
+After getting git tag or git branch name, werf applies [tag slug]({{ site.baseurl }}/reference/slug.html#basic-algorithm) transformation rules if this name doesn't meet with the tag slug requirements. This behavior allows using tags and branches with arbitrary names in Gitlab like `review/fix#23`.
 
 Option `--tag-ci` is the most recommended way for building in CI.
 
@@ -76,25 +71,15 @@ The tag name based on the unique id of the current GitLab job from `CI_BUILD_ID`
 
 The tag name based on a current git branch. Werf looks for the current branch in the local git repository where config located.
 
-After getting git branch name, werf apply [slug](#slug) transformation rules if tag name doesn't meet with the slug requirements. This behavior allows using branches with arbitrary names like `my/second_patch`.
+After getting git branch name, werf apply [tag slug]({{ site.baseurl }}/reference/slug.html#basic-algorithm) transformation rules if tag name doesn't meet with the slug requirements. This behavior allows using branches with arbitrary names like `my/second_patch`.
 
 ### `--tag-commit`
 
 The tag name based on a current git commit id (full-length SHA hashsum). Werf looks for the current commit id in the local git repository where config located.
 
-### `--tag|--tag-slug TAG`
-
-`--tag TAG` and `--tag-slug TAG` is an alias of each other.
+### `--tag TAG`
 
 The tag name based on a specified TAG in the parameter.
-
-Werf applies [slug](#slug) transformation rules to TAG, and if it doesn't meet with the slug requirements. This behavior allows using text with arbitrary chars as a TAG.
-
-### `--tag-plain TAG`
-
-The tag name based on a specified TAG in the parameter.
-
-Werf doesn't apply [slug](#slug) transformation rules to TAG, even though it contains inappropriate symbols and doesn't meet with the slug requirements. Pay attention, that this behavior could lead to an error.
 
 ### Default values
 
@@ -133,7 +118,7 @@ Image names in the result are:
 * `registry.hello.com/web/core/system/backend:core-feature-add-settings-c3fd80df`
 * `registry.hello.com/web/core/system/frontend:core-feature-add-settings-c3fd80df`
 
-Each image name converts according to slug rules with adding murmurhash.
+Each image name converts according to [tag slug]({{ site.baseurl }}/reference/slug.html#basic-algorithm) rules with appended murmurhash of original string.
 
 ### Unnamed image in GitLab job
 
@@ -145,7 +130,7 @@ werf push --repo registry.hello.com/web/core/queue --tag-ci
 
 Image name in the result is `registry.hello.com/web/core/queue:v2-3-1-5cb8b0a4`
 
-Image name converts according to slug rules with adding murmurhash, because of points symbols in the tag `v2.3.1` (points don't meet the requirements).
+Image name converts according to [tag slug]({{ site.baseurl }}/reference/slug.html#basic-algorithm) rules with appended murmurhash of original string, because of points symbols in the tag `v2.3.1` (points don't meet the requirements).
 
 ### Two images with multiple tags in GitLab job
 
@@ -164,61 +149,3 @@ The command produces 6 image names for each image name and each tag-parameter (t
 * `registry.hello.com/web/core/system/frontend:my-test-branch`
 
 For `--tag` parameter image names are converting, but for `--tag-ci` parameter image names are not converting, because branch name meets `rework-cache` the requirements.
-
-## Slug
-
-In some cases, text from environment variables or parameters can't be used AS IS because it can contain unacceptable symbols.
-
-To take into account restrictions for docker images names, helm releases names and kubernetes namespaces werf applies unified slug algorithm when producing these names. This algorithm excludes unacceptable symbols from an arbitrary text and guarantees the uniqueness of the result for each unique input.
-
-Werf applies slug algorithm internally for names such as [werf name], docker tags names, helm releases names and kubernetes namespaces. Also, there is a `werf slug` command (see syntax below) which applies this algorithm for provided input text. You can use this command upon your needs.
-
-### Algorithm
-
-Werf checks the text for compliance with slug **requirements**, and if text complies with slug requirements — werf doesn't modify it. Otherwise, werf performs **transformations** of the text to comply the requirements and add a dash symbol followed by a hash suffix based on the source text. A hash algorithm is a [MurmurHash](https://en.wikipedia.org/wiki/MurmurHash).
-
-A text complies with slug requirements if:
-* it has only lowercase alphanumerical ASCII characters and dashes;
-* it doesn't start or end with dashes;
-* it doesn't contain multiple dashes sequences.
-
-The following steps perform, when werf apply transformations of the text in slug:
-* Converting UTF-8 latin characters to their ASCII counterpart;
-* Replacing some special symbols with dash symbol (`~><+=:;.,[]{}()_&`);
-* Removing all non-recognized characters (leaving lowercase alphanumerical characters and dashes);
-* Removing starting and ending dashes;
-* Reducing multiple dashes sequences to one dash.
-
-#### Version 3
-
-Werf has experimental additions to basic slug algorithm, which is non-default for now. To enable **version 3** algorithm set `WERF_SLUG_V3=1` environment variable.
-
-This algorithm has additional requirement for input text:
-
-* it should contain no more than 53 byte chars.
-
-If this requirement does not meet, then werf transforms input text and adds hash as described earlier. The result fits in 53 byte chars.
-
-### Syntax
-
-```bash
-werf slug STRING
-```
-
-Transform `STRING` according to the slug algorithm (see above) and prints the result.
-
-### Examples
-
-The text `feature-fix-2` isn't transforming because it meets the slug requirements. The result is:
-
-```bash
-$ werf slug 'feature-fix-2'
-feature-fix-2
-```
-
-The text `branch/one/!@#4.4-3` transforming because it doesn't meet the slug requirements and hash adding. The result is:
-
-```bash
-$ werf slug 'branch/one/!@#4.4-3'
-branch-one-4-4-3-5589e04f
-```

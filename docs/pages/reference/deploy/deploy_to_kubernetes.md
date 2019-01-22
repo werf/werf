@@ -103,7 +103,7 @@ deploy:
 
 ### Slug
 
-Helm Release name constructed by template will be slugified to fit release name requirements by [*release slug procedure*]({{ site.baseurl }}/reference/slug.html#release-slug), which generates unique valid Helm Release name.
+Helm Release name constructed by template will be slugified to fit release name requirements by [*release slug procedure*]({{ site.baseurl }}/reference/slug.html#basic-algorithm), which generates unique valid Helm Release name.
 
 This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) option `deploy.helmReleaseSlug`:
 
@@ -115,7 +115,7 @@ deploy:
 
 Werf will not apply release slug procedure for the release name specified with `--release NAME` option.
 
-### Kubernetes Namespace
+## Kubernetes Namespace
 
 By default Kubernetes Namespace will be constructed by template `[[ project ]]-[[ environment ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) and `[[ environment ]]` refers to the determined environment.
 
@@ -138,7 +138,7 @@ deploy:
 
 ### Slug
 
-Kubernetes Namespace constructed by template will be slugified to fit [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements by [*namespace slug procedure*]({{ site.baseurl }}/reference/slug.html#namespace-slug), which generates unique valid Kubernetes Namespace.
+Kubernetes Namespace constructed by template will be slugified to fit [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements by [*namespace slug procedure*]({{ site.baseurl }}/reference/slug.html#basic-algorithm), which generates unique valid Kubernetes Namespace.
 
 This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) option `deploy.kubernetesNamespaceSlug`:
 

@@ -19,7 +19,7 @@ Werf has an efficient multi-level images cleaning. There are two methods of imag
 Cleaning by policies helps to organize automatic periodical cleaning of stale images. It implies regular gradual cleaning of stale images according to cleaning policies. This method is the safest way of cleaning because it doesn't affect your production environment.
 
 The cleaning by policies method includes the steps in the following order:
-1. [**Garbage collection**](#garbage-collection) executes a cleaning docker registry from stale images according to the cleaning policies.
+1. [**Cleanup**](#cleanup) cleans docker registry from stale images according to the cleaning policies.
 2. [**Local storage synchronization**](#local-storage-synchronization) performs syncing local docker image storage with docker registry.
 
 A docker registry is the primary source of information about actual and stale images. Therefore, it is essential to clean docker registry on the first step and only then synchronize the content of local storage with the docker registry.
@@ -33,11 +33,11 @@ The manual cleaning method includes the following options:
 * [**Flush**](#flush). Deleting images of the **current project** in local storage or docker registry.
 * [**Reset**](#reset). Deleting images of **all werf projects** in local storage.
 
-## Garbage collection
+## Cleanup
 
-Garbage collection is a werf ability to automate cleaning of a docker registry. It works according to special rules called **garbage collection policies**. These policies determine which images to delete and which not to.
+Cleanup is a werf ability to automate cleaning of a docker registry. It works according to special rules called **cleanup policies**. These policies determine which images to delete and which not to.
 
-### Garbage collection policies
+### Cleanup policies
 
 * **by branches:**
     * Every new commit updates the image for the git branch (there is the only docker tag for the git branch).
@@ -56,7 +56,7 @@ Garbage collection is a werf ability to automate cleaning of a docker registry. 
       * `WERF_GIT_TAGS_LIMIT_POLICY`.  Deleting all images in docker registry except **last 10 images**. 10 images is a default value. To change the default value set count in `WERF_GIT_TAGS_LIMIT_POLICY`.
     * The policy covers images tagged by werf with `--tag-ci` tag.
 
-**Pay attention,** that garbage collection affects only images built by werf **and** images tagged by werf with one of the `--tag-ci`, `--tag-branch` or `--tag-commit` options. Other images in the docker registry stay as they are.
+**Pay attention,** that cleanup affects only images built by werf **and** images tagged by werf with one of the `--tag-ci`, `--tag-branch` or `--tag-commit` options. Other images in the docker registry stay as they are.
 
 ### Whitelist of images
 
@@ -66,16 +66,11 @@ The functionality can be disabled by option `--without-kube`.
 
 #### Connecting to kubernetes
 
-Werf gets information about kubernetes clusters and how to connect to them in the following order:
-1. gets `KUBECONFIG` environment variable for the path to kubectl configuration file;
-2. or executes `kubectl config view` command if kubectl is available in the system;
-3. or gets `~/.kube/config` kubectl configuration file.
-
-Werf connects to all kubernetes clusters, defined in all contexts of kubectl configuration, to gather images that are in use.
+Werf gets information about kubernetes clusters and how to connect to them from the kube configuration file `~/.kube/config`. Werf connects to all kubernetes clusters, defined in all contexts of kubectl configuration, to gather images that are in use.
 
 ### Docker registry authorization
 
-For docker registry authorization in garbage collection, werf require the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
+For docker registry authorization in cleanup, werf require the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
 
 ### werf cleanup
 
@@ -83,13 +78,13 @@ For docker registry authorization in garbage collection, werf require the `WERF_
 
 ## Local storage synchronization
 
-After cleaning docker registry on the garbage collection step, local storage still contains all of the images that have been deleted from the docker registry. These images include tagged image images (created with a [werf tag procedure]({{ site.baseurl }}/reference/registry/image_naming.html#werf-tag-procedure)) and stages cache for images.
+After cleaning docker registry on the cleanup step, local storage still contains all of the images that have been deleted from the docker registry. These images include tagged image images (created with a [werf tag procedure]({{ site.baseurl }}/reference/registry/image_naming.html#werf-tag-procedure)) and stages cache for images.
 
 Executing a local storage synchronization is necessary to update local storage according to a docker registry. On the local storage synchronization step, werf deletes old local stages cache, which doesn't relate to any of the images currently existing in the docker registry.
 
 There are some consequences of this algorithm:
 
-1. If the garbage collection, — the first step of cleaning by policies, — was skipped, then local storage synchronization makes no sense.
+1. If the cleanup, — the first step of cleaning by policies, — was skipped, then local storage synchronization makes no sense.
 2. Werf completely removes local stages cache for the built images, that don't exist into the docker registry.
 
 ### werf sync
@@ -103,7 +98,7 @@ Allows deleting information about specified (current) project. Flush includes cl
 Local storage cleaning includes:
 * Deleting stages cache images of the project. Also deleting images from previous werf version.
 * Deleting all of the images tagged by `werf tag` command.
-* Deleting `<none>` images of the project. `<none>` images can remain as a result of build process interruption. In this case, such built images exist as orphans outside of the stages cache. These images also not deleted by the garbage collection.
+* Deleting `<none>` images of the project. `<none>` images can remain as a result of build process interruption. In this case, such built images exist as orphans outside of the stages cache. These images also not deleted by the cleanup.
 * Deleting containers associated with the images of the project.
 
 Docker registry cleaning includes:
