@@ -30,6 +30,12 @@ entries:
   - title: Как устроено кэширование
     url: /not_used/cache_for_advanced_build.html
 
+  - title: Cache
+    url: /not_used/build/cache.html
+
+  - title: Work with local changes without commits in dev mode
+    url: /not_used/build/dev_mode.html
+
   - title: CLI
     sf:
 

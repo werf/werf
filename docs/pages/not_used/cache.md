@@ -1,7 +1,7 @@
 ---
 title: Cache
-sidebar: reference
-permalink: reference/build/cache.html
+sidebar: not_used
+permalink: not_used/build/cache.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
