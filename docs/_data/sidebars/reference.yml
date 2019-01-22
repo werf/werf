@@ -12,6 +12,9 @@ entries:
     - title: Stages
       url: /reference/build/stages.html
 
+    - title: Assembly process
+      url: /reference/build/assembly_process.html
+
     - title: Dimg configuration
       sfi:
 
