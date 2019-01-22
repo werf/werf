@@ -1,12 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 Prints name suitable for Docker Tag based on the specified NAME
 
-```
-werf slug tag NAME [flags] [options]
+{{ header }} Syntax
+
+```bash
+werf slug tag NAME [options]
 ```
 
-### Options
+{{ header }} Options
 
-```
+```bash
   -h, --help=false: help for tag
 ```
 

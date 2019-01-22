@@ -1,12 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 Delete images, containers, and cache files for all projects created by werf on the host
 
-```
+{{ header }} Syntax
+
+```bash
 werf reset [options]
 ```
 
-### Options
+{{ header }} Options
 
-```
+```bash
       --dry-run=false: Indicate what the command would do without actually doing that
   -h, --help=false: help for reset
       --home-dir='': Use specified dir to store werf cache files and dirs (use ~/.werf by default)

@@ -1,12 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 
 
-```
+{{ header }} Syntax
+
+```bash
 werf tag [DIMG_NAME...] [options]
 ```
 
-### Options
+{{ header }} Options
 
-```
+```bash
       --dir='': Change to the specified directory to find werf.yaml config
   -h, --help=false: help for tag
       --home-dir='': Use specified dir to store werf cache files and dirs (use ~/.werf by default)

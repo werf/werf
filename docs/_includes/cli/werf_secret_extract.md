@@ -1,18 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 Extract data
 
-```
+{{ header }} Syntax
+
+```bash
 werf secret extract [options]
 ```
 
-### Environments
+{{ header }} Options
 
-```
-  $WERF_SECRET_KEY  
-```
-
-### Options
-
-```
+```bash
       --dir='': Change to the specified directory to find werf.yaml config
       --file-path='': Decode file data by specified path
   -h, --help=false: help for extract
@@ -20,5 +21,11 @@ werf secret extract [options]
       --output-file-path='': Save decoded data by specified file path
       --tmp-dir='': Use specified dir to store tmp files and dirs (use system tmp dir by default)
       --values=false: Decode specified FILE_PATH (--file-path) as secret values file
+```
+
+{{ header }} Environments
+
+```bash
+  $WERF_SECRET_KEY  
 ```
 

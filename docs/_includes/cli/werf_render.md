@@ -1,18 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 
 
-```
+{{ header }} Syntax
+
+```bash
 werf render [options]
 ```
 
-### Environments
+{{ header }} Options
 
-```
-  $WERF_SECRET_KEY  
-```
-
-### Options
-
-```
+```bash
       --dir='': Change to the specified directory to find werf.yaml config
   -h, --help=false: help for render
       --home-dir='': Use specified dir to store werf cache files and dirs (use ~/.werf by default)
@@ -21,5 +22,11 @@ werf render [options]
       --set-string=[]: Additional helm STRING sets
       --tmp-dir='': Use specified dir to store tmp files and dirs (use system tmp dir by default)
       --values=[]: Additional helm values
+```
+
+{{ header }} Environments
+
+```bash
+  $WERF_SECRET_KEY  
 ```
 

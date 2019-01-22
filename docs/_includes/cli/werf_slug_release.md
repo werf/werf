@@ -1,12 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 Prints name suitable for Helm Release based on the specified NAME
 
-```
-werf slug release NAME [flags] [options]
+{{ header }} Syntax
+
+```bash
+werf slug release NAME [options]
 ```
 
-### Options
+{{ header }} Options
 
-```
+```bash
   -h, --help=false: help for release
 ```
 

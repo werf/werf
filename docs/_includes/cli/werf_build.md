@@ -1,22 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 
 
-```
+{{ header }} Syntax
+
+```bash
 werf build [DIMG_NAME...] [options]
 ```
 
-### Environments
+{{ header }} Options
 
-```
-  $WERF_ANSIBLE_ARGS                
-  $WERF_DOCKER_CONFIG               
-  $WERF_IGNORE_CI_DOCKER_AUTOLOGIN  
-  $WERF_HOME                        
-  $WERF_TMP                         
-```
-
-### Options
-
-```
+```bash
       --dir='': Change to the specified directory to find werf.yaml config
   -h, --help=false: help for build
       --home-dir='': Use specified dir to store werf cache files and dirs (use ~/.werf by default)
@@ -28,5 +25,15 @@ werf build [DIMG_NAME...] [options]
       --registry-username='': Docker registry username to authorize pull of base images
       --ssh-key=[]: Enable only specified ssh keys (use system ssh-agent by default)
       --tmp-dir='': Use specified dir to store tmp files and dirs (use system tmp dir by default)
+```
+
+{{ header }} Environments
+
+```bash
+  $WERF_ANSIBLE_ARGS                
+  $WERF_DOCKER_CONFIG               
+  $WERF_IGNORE_CI_DOCKER_AUTOLOGIN  
+  $WERF_HOME                        
+  $WERF_TMP                         
 ```
 

@@ -1,19 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 Delete project images in local docker storage and specified docker registry
 
-```
+{{ header }} Syntax
+
+```bash
 werf flush [options]
 ```
 
-### Environments
+{{ header }} Options
 
-```
-  $WERF_INSECURE_REGISTRY  
-  $WERF_HOME               
-```
-
-### Options
-
-```
+```bash
       --dir='': Change to the specified directory to find werf.yaml config
       --dry-run=false: Indicate what the command would do without actually doing that
   -h, --help=false: help for flush
@@ -23,5 +23,12 @@ werf flush [options]
       --repo='': Docker repository name
       --tmp-dir='': Use specified dir to store tmp files and dirs (use system tmp dir by default)
       --with-dimgs=false: Delete images (not only stages cache)
+```
+
+{{ header }} Environments
+
+```bash
+  $WERF_INSECURE_REGISTRY  
+  $WERF_HOME               
 ```
 

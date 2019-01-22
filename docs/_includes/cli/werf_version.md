@@ -1,12 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 Print version
 
-```
-werf version [flags] [options]
+{{ header }} Syntax
+
+```bash
+werf version [options]
 ```
 
-### Options
+{{ header }} Options
 
-```
+```bash
   -h, --help=false: help for version
 ```
 
