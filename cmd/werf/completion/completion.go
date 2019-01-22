@@ -9,8 +9,9 @@ import (
 
 func NewCmd(rootCmd *cobra.Command) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "completion",
-		Short: "Generate bash completion scripts",
+		Use:                   "completion",
+		DisableFlagsInUseLine: true,
+		Short:                 "Generate bash completion scripts",
 		Long: fmt.Sprintf(`To load completion run
 
 . <(%[1]s completion)
