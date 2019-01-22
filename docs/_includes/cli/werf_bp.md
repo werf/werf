@@ -1,22 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 
 
-```
+{{ header }} Syntax
+
+```bash
 werf bp [DIMG_NAME...] [options]
 ```
 
-### Environments
+{{ header }} Options
 
-```
-  $WERF_ANSIBLE_ARGS                
-  $WERF_DOCKER_CONFIG               
-  $WERF_IGNORE_CI_DOCKER_AUTOLOGIN  
-  $WERF_HOME                        
-  $WERF_TMP                         
-```
-
-### Options
-
-```
+```bash
       --dir='': Change to the specified directory to find werf.yaml config
   -h, --help=false: help for bp
       --home-dir='': Use specified dir to store werf cache files and dirs (use ~/.werf by default)
@@ -37,5 +34,15 @@ werf bp [DIMG_NAME...] [options]
       --tag-commit=false: Tag by git commit
       --tmp-dir='': Use specified dir to store tmp files and dirs (use system tmp dir by default)
       --with-stages=false: Push images with stages cache
+```
+
+{{ header }} Environments
+
+```bash
+  $WERF_ANSIBLE_ARGS                
+  $WERF_DOCKER_CONFIG               
+  $WERF_IGNORE_CI_DOCKER_AUTOLOGIN  
+  $WERF_HOME                        
+  $WERF_TMP                         
 ```
 

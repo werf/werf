@@ -9,9 +9,10 @@ import (
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "namespace NAME",
-		Args:  cobra.MinimumNArgs(1),
-		Short: "Prints name suitable for Kubernetes Namespace based on the specified NAME",
+		Use:                   "namespace NAME",
+		DisableFlagsInUseLine: true,
+		Args:                  cobra.MinimumNArgs(1),
+		Short:                 "Prints name suitable for Kubernetes Namespace based on the specified NAME",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(slug.KubernetesNamespace(args[0]))
 		},

@@ -17,7 +17,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
 	flags := cmd.NonInheritedFlags()
 	flags.SetOutput(buf)
 	if flags.HasAvailableFlags() {
-		buf.WriteString("### Options\n\n```\n")
+		buf.WriteString("{{ header }} Options\n\n```bash\n")
 		buf.WriteString(templates.FlagsUsages(flags))
 		buf.WriteString("```\n\n")
 	}
@@ -25,7 +25,7 @@ func printOptions(buf *bytes.Buffer, cmd *cobra.Command) error {
 	parentFlags := cmd.InheritedFlags()
 	parentFlags.SetOutput(buf)
 	if parentFlags.HasAvailableFlags() {
-		buf.WriteString("### Options inherited from parent commands\n\n```\n")
+		buf.WriteString("{{ header }} Options inherited from parent commands\n\n```bash\n")
 		buf.WriteString(templates.FlagsUsages(parentFlags))
 		buf.WriteString("```\n\n")
 	}
@@ -38,7 +38,7 @@ func printEnvironments(buf *bytes.Buffer, cmd *cobra.Command) error {
 		return nil
 	}
 
-	buf.WriteString("### Environments\n\n```\n")
+	buf.WriteString("{{ header }} Environments\n\n```bash\n")
 	buf.WriteString(environments)
 	buf.WriteString("\n```\n\n")
 
@@ -63,24 +63,33 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 		long = short
 	}
 
+	buf.WriteString(`{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
+`)
+
 	buf.WriteString(long + "\n\n")
 
 	if cmd.Runnable() {
-		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", templates.UsageLine(cmd)))
+		buf.WriteString("{{ header }} Syntax\n\n")
+		buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", templates.UsageLine(cmd)))
 	}
 
 	if len(cmd.Example) > 0 {
-		buf.WriteString("### Examples\n\n")
-		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmd.Example))
+		buf.WriteString("{{ header }} Examples\n\n")
+		buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.Example))
+	}
+
+	if err := printOptions(buf, cmd); err != nil {
+		return err
 	}
 
 	if err := printEnvironments(buf, cmd); err != nil {
 		return err
 	}
 
-	if err := printOptions(buf, cmd); err != nil {
-		return err
-	}
 	_, err := buf.WriteTo(w)
 	return err
 }

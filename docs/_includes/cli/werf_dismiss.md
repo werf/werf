@@ -1,12 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 
 
-```
+{{ header }} Syntax
+
+```bash
 werf dismiss [options]
 ```
 
-### Options
+{{ header }} Options
 
-```
+```bash
       --dir='': Change to the specified directory to find werf.yaml config
       --environment='': Use specified environment (use CI_ENVIRONMENT_SLUG by default). Environment is a required parameter and should be specified with option or CI_ENVIRONMENT_SLUG variable.
   -h, --help=false: help for dismiss

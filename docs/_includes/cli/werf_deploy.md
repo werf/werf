@@ -1,22 +1,19 @@
+{% if include.header %}
+{% assign header = include.header %}
+{% else %}
+{% assign header = "###" %}
+{% endif %}
 
 
-```
+{{ header }} Syntax
+
+```bash
 werf deploy [options]
 ```
 
-### Environments
+{{ header }} Options
 
-```
-  $WERF_SECRET_KEY                  
-  $WERF_DOCKER_CONFIG               
-  $WERF_IGNORE_CI_DOCKER_AUTOLOGIN  
-  $WERF_HOME                        
-  $WERF_TMP                         
-```
-
-### Options
-
-```
+```bash
       --dir='': Change to the specified directory to find werf.yaml config
       --environment='': Use specified environment (use CI_ENVIRONMENT_SLUG by default). Environment is a required parameter and should be specified with option or CI_ENVIRONMENT_SLUG variable.
   -h, --help=false: help for deploy
@@ -40,5 +37,15 @@ werf deploy [options]
       --tmp-dir='': Use specified dir to store tmp files and dirs (use system tmp dir by default)
       --values=[]: Additional helm values
       --without-registry=false: Do not get images info from registry
+```
+
+{{ header }} Environments
+
+```bash
+  $WERF_SECRET_KEY                  
+  $WERF_DOCKER_CONFIG               
+  $WERF_IGNORE_CI_DOCKER_AUTOLOGIN  
+  $WERF_HOME                        
+  $WERF_TMP                         
 ```
 

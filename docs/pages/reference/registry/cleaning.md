@@ -77,13 +77,9 @@ Werf connects to all kubernetes clusters, defined in all contexts of kubectl con
 
 For docker registry authorization in garbage collection, werf require the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
 
-### Syntax
+### werf cleanup
 
-```bash
-werf dimg cleanup repo [--with-stages=false]
-```
-
-`--with-stages` — option used to delete not only tagged images but also _related_ stages cache, which was pushed into the registry (see [push for details]({{ site.baseurl }}/reference/registry/authorization.html#stages-push-procedure)).
+{% include /cli/werf_cleanup.md header="####" %}
 
 ## Local storage synchronization
 
@@ -96,17 +92,9 @@ There are some consequences of this algorithm:
 1. If the garbage collection, — the first step of cleaning by policies, — was skipped, then local storage synchronization makes no sense.
 2. Werf completely removes local stages cache for the built dimgs, that don't exist into the docker registry.
 
-### Syntax
+### werf sync
 
-```bash
-werf dimg stages cleanup local [options] REPO
-  --improper-cache-version
-  --improper-repo-cache
-```
-
-`--improper-cache-version` —  werf deletes images built by another werf version.
-
-`--improper-repo-cache` — werf deletes stages cache non related with any dimg in docker repository. This option enables the exact synchronization with the docker registry step. Images of your project that is not pushed yet will also be deleted with this option.
+{% include /cli/werf_sync.md header="####" %}
 
 ## Flush
 
@@ -122,21 +110,9 @@ Docker registry cleaning includes:
 * Deleting pushed dimgs of the project.
 * Deleting pushed stages cache of the project.
 
-### Syntax
+### werf flush
 
-```bash
-werf dimg flush local [--with-stages]
-```
-
-The command deletes images of the current project only in the local storage.
-
-```bash
-werf dimg flush repo REPO [--with-stages]
-```
-
-The command deletes images of the current project only in docker registry.
-
-The `--with-stages` option uses to delete not only tagged images but also stages cache. The option is disabled by default. It is always recommended to use this option.
+{% include /cli/werf_flush.md header="####" %}
 
 ## Reset
 
@@ -144,52 +120,6 @@ With this variant of cleaning, werf can delete all images, containers, and files
 
 Reset is the fullest method of cleaning on the local machine.
 
-### Syntax
+### werf reset
 
-```bash
-werf dimg mrproper [--all] [--improper-cache-version-stages] [--improper-dev-mode-cache]
-```
-
-* `--improper-cache-version-stages` — delete stages cache, images, and containers created by versions of werf older than current.
-* `--improper-dev-mode-cache` — delete stages cache, images and container created in developer mode (`--dev` option).
-* `--all` — delete stages cache with all of images and containers ever werf created in local storage. This option supersedes any other options specified. That means images targeted by options `--improper-cache-version-stages` and `--improper-dev-mode-cache` will also be deleted.
-
-## Examples
-
-### Delete all images and stages cache in the current project
-
-Given `werf.yaml` config with two dimgs. Images succesfully built and tagged.
-
-```bash
-werf dimg flush local --with-stages
-```
-
-Command deletes all tagged images, and delete stages cache.
-
-### Delete all images of all werf projects
-
-Given several werf projects.
-
-```bash
-werf dimg mrproper --all --improper-cache-version-stages --improper-dev-mode-cache
-```
-
-Command delete every image created by werf. Other docker images like image specified in `from` directive in config - remains.
-
-### Cleaning GitLab CI docker registry
-
-Given project, where werf executes with `--tag-ci` option to push images.
-
-On the first step, the following command performs garbage collection in repo:
-
-```bash
-werf dimg cleanup repo ${CI_REGISTRY_IMAGE}
-```
-
-On the second step, the following command performs synchronizing of local storage with the registry:
-
-```bash
-werf dimg stages cleanup local --improper-cache-version --improper-repo-cache ${CI_REGISTRY_IMAGE}
-```
-
-Read a deeper example [here]({{ site.baseurl }}/how_to/gitlab_ci_cd_integration.html).
+{% include /cli/werf_reset.md header="####" %}
