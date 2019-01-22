@@ -108,7 +108,7 @@ func NewManager(key []byte, options NewManagerOptions) (Manager, error) {
 			if !options.IgnoreWarning {
 				logger.LogWarning(`
 ###################################################################################################
-###                       WARNING invalid encryption key, do regenerate!                        ###
+###                      WARNING! Invalid encryption key, do regenerate!                        ###
 ### https://flant.github.io/werf/reference/deploy/secrets.html#regeneration-of-existing-secrets ###
 ###################################################################################################`)
 			}

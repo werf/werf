@@ -87,11 +87,5 @@ entries:
     - title: Chart configuration
       url: /reference/deploy/chart_configuration.html
 
-    - title: Watch kubernetes resources
-      url: /reference/deploy/watch_kubernetes_resources.html
-
-    - title: Using Minikube
-      url: /reference/deploy/minikube.html
-
-  - title: Glossary
-    url: /reference/glossary.html
+    - title: Track Kubernetes resources
+      url: /reference/deploy/track_kubernetes_resources.html
