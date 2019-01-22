@@ -25,7 +25,7 @@ Then [the werf pull command](#werf-pull) must be used to pull stages cache befor
 1. Pull stages cache from the docker registry with [werf pull](#werf-pull).
 2. Build and push images with a new stages cache to the docker registry with [werf push commands]({{ site.baseurl }}/reference/registry/push.html).
 
-## Werf pull
+## Pull command
 
 Command used to pull stages cache from the specified docker registry. Call command before any of the build commands.
 

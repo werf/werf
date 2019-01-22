@@ -150,10 +150,10 @@ deploy:
 
 Werf will not apply namespace slug procedure for the namespace specified with `--namespace NAMESPACE` option.
 
-## Werf deploy command
+## Deploy command
 
 {% include /cli/werf_deploy.md %}
 
-## Werf dismiss command
+## Dismiss command
 
 {% include /cli/werf_dismiss.md %}

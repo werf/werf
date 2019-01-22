@@ -60,10 +60,10 @@ All of these steps are also performed with a single werf command, which will be 
 
 The result of this procedure is multiple images from stages cache of image pushed into the docker registry.
 
-## werf push
+## Push command
 
 {% include /cli/werf_push.md %}
 
-## werf bp
+## Build and push command
 
 {% include /cli/werf_bp.md %}
