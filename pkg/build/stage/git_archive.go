@@ -31,7 +31,7 @@ type GitArchiveStage struct {
 	ContainerArchivesDir string
 }
 
-func (s *GitArchiveStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
+func (s *GitArchiveStage) GetDependencies(_ Conveyor, _ image.ImageInterface) (string, error) {
 	var args []string
 	for _, gitPath := range s.gitPaths {
 		args = append(args, gitPath.GetParamshash())
@@ -49,7 +49,7 @@ func (s *GitArchiveStage) GetDependencies(_ Conveyor, _ image.Image) (string, er
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	if err := s.GitStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}

@@ -25,7 +25,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "tag [DIMG_NAME...]",
+		Use:                   "tag [IMAGE_NAME...]",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runPush(args)
@@ -48,7 +48,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runPush(dimgsToProcess []string) error {
+func runPush(imagesToProcess []string) error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -108,7 +108,7 @@ func runPush(dimgsToProcess []string) error {
 		return err
 	}
 
-	c := build.NewConveyor(werfConfig, dimgsToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, nil)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, nil)
 	if err = c.Tag(repo, tagOpts); err != nil {
 		return err
 	}

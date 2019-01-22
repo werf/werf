@@ -18,7 +18,7 @@ var CmdData struct {
 	RegistryUsername string
 	RegistryPassword string
 
-	WithDimgs bool
+	WithImages bool
 
 	DryRun bool
 }
@@ -50,7 +50,7 @@ func NewCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
 	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
 
-	cmd.Flags().BoolVarP(&CmdData.WithDimgs, "with-dimgs", "", false, "Delete images (not only stages cache)")
+	cmd.Flags().BoolVarP(&CmdData.WithImages, "with-images", "", false, "Delete images (not only stages cache)")
 
 	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
@@ -100,18 +100,18 @@ func runFlush() error {
 			return err
 		}
 
-		var dimgNames []string
-		for _, dimg := range werfConfig.Dimgs {
-			dimgNames = append(dimgNames, dimg.Name)
+		var imageNames []string
+		for _, image := range werfConfig.Images {
+			imageNames = append(imageNames, image.Name)
 		}
 
 		commonRepoOptions := cleanup.CommonRepoOptions{
-			Repository: repoName,
-			DimgsNames: dimgNames,
-			DryRun:     CmdData.DryRun,
+			Repository:  repoName,
+			ImagesNames: imageNames,
+			DryRun:      CmdData.DryRun,
 		}
 
-		if err := cleanup.RepoImagesFlush(CmdData.WithDimgs, commonRepoOptions); err != nil {
+		if err := cleanup.RepoImagesFlush(CmdData.WithImages, commonRepoOptions); err != nil {
 			return err
 		}
 	} else {
@@ -125,7 +125,7 @@ func runFlush() error {
 		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
 	}
 
-	if err := cleanup.ProjectImagesFlush(CmdData.WithDimgs, commonProjectOptions); err != nil {
+	if err := cleanup.ProjectImagesFlush(CmdData.WithImages, commonProjectOptions); err != nil {
 		return err
 	}
 

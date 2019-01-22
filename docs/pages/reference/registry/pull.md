@@ -4,7 +4,7 @@ sidebar: reference
 permalink: reference/registry/pull.html
 ---
 
-Werf does not have own pull command to download dimg images from docker registry. Regular [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) should be used for such a task.
+Werf does not have own pull command to download images from docker registry. Regular [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) should be used for such a task.
 
 There is a need to use existing old images as a cache to build new images to speed up the builds. This is default behavior when there is a single werf build host with persistent local storage of images. No special actions required from the werf user in such case.
 
@@ -12,9 +12,9 @@ However, if local storage of build host is not persistent or there are multiple 
 
 ## Distributed images cache
 
-It is not sufficient to pull just a dimg from the docker registry. When you pull a dimg from a docker registry, you don't receive stages cache for this image in the Werf world.
+It is not sufficient to pull just a image from the docker registry. When you pull a image from a docker registry, you don't receive stages cache for this image in the Werf world.
 
-To enable stages cache sharing user must firstly push dimgs _with a stages cache_ as it is described in [the push article]({{ site.baseurl }}/reference/registry/push.html).
+To enable stages cache sharing user must firstly push images _with a stages cache_ as it is described in [the push article]({{ site.baseurl }}/reference/registry/push.html).
 
 Then [the werf pull command](#werf-pull) must be used to pull stages cache before the build command.
 
@@ -23,22 +23,22 @@ Then [the werf pull command](#werf-pull) must be used to pull stages cache befor
 ### Build process steps for a distributed build environment
 
 1. Pull stages cache from the docker registry with [werf pull](#werf-pull).
-2. Build and push dimgs with a new stages cache to the docker registry with [werf push commands]({{ site.baseurl }}/reference/registry/push.html).
+2. Build and push images with a new stages cache to the docker registry with [werf push commands]({{ site.baseurl }}/reference/registry/push.html).
 
 ## Werf pull
 
 Command used to pull stages cache from the specified docker registry. Call command before any of the build commands.
 
-Werf pull command optimized to pull only single cache stage for each dimg, that needed to rebuild _current state_ of the dimg.
+Werf pull command optimized to pull only single cache stage for each image, that needed to rebuild _current state_ of the image.
 
-For example, there was a change in `beforeSetup` stage of the dimg since last project build. Werf pull command:
+For example, there was a change in `beforeSetup` stage of the image since last project build. Werf pull command:
 
 1. Calculates current state of the stage cache and realizes, that there is a change in `beforeSetup` stage.
 2. Downloads `install` (the stage prior `beforeSetup`) stage from docker registry. `beforeInstall` stage will not be downloaded, because only `install` stage is needed to rebuild `beforeSetup` and further stages.
 
-A pulled stage can be used by multiple dimgs of the same `werf.yaml` config in the case when this stage is common between multiple dimgs.
+A pulled stage can be used by multiple images of the same `werf.yaml` config in the case when this stage is common between multiple images.
 
-In other words, werf downloads from cache **last common stage** between old and new dimg state.
+In other words, werf downloads from cache **last common stage** between old and new image state.
 
 There is also an option to turn off this optimized behavior and always pull all stages.
 
@@ -51,22 +51,22 @@ werf dimg stages pull [options] [DIMG ...] REPO
   --all
 ```
 
-The `DIMG` optional parameter — is a name of dimg from a config. Specifying `DIMG` one or multiple times allows pulling stages cache only related to certain dimgs from config. By default, werf pull stages cache of all dimgs from config.
+The `DIMG` optional parameter — is a name of image from a config. Specifying `DIMG` one or multiple times allows pulling stages cache only related to certain images from config. By default, werf pull stages cache of all images from config.
 
 The `REPO` required parameter — is a repository name (see more in [image naming]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter) article).
 
-`--all` option causes werf to download all available stages for each dimg from the docker registry, instead of downloading only last common stage between old and new dimg state.
+`--all` option causes werf to download all available stages for each image from the docker registry, instead of downloading only last common stage between old and new image state.
 
 ## Example
 
 ### Pull stages cache
 
 ```bash
-werf dimg stages pull registry.hello.com/taxi/backend
+werf image stages pull registry.hello.com/taxi/backend
 ```
 
 Command pull stages cache from the specified repo.
 
-Pulled images have `dimgstage` prefixes. Here is an example of image name pulled as stages cache:
+Pulled images have `image-stage` prefixes. Here is an example of image name pulled as stages cache:
 
-* `registry.hello.com/taxi/backend:dimgstage-ab192db1f7cf6b894aeaf14c0f1615f27d5170bb16b8529ec18253b94dc4916e`
+* `registry.hello.com/taxi/backend:image-stage-ab192db1f7cf6b894aeaf14c0f1615f27d5170bb16b8529ec18253b94dc4916e`

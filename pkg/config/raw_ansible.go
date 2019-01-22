@@ -11,14 +11,14 @@ type rawAnsible struct {
 	BeforeSetupCacheVersion   string           `yaml:"beforeSetupCacheVersion,omitempty"`
 	SetupCacheVersion         string           `yaml:"setupCacheVersion,omitempty"`
 
-	rawDimg *rawDimg `yaml:"-"` // parent
+	rawImage *rawImage `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
 func (c *rawAnsible) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := parentStack.Peek().(*rawDimg); ok {
-		c.rawDimg = parent
+	if parent, ok := parentStack.Peek().(*rawImage); ok {
+		c.rawImage = parent
 	}
 
 	parentStack.Push(c)
@@ -29,7 +29,7 @@ func (c *rawAnsible) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawDimg.doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawImage.doc); err != nil {
 		return err
 	}
 

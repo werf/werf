@@ -21,106 +21,106 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) error {
-	dimgsInOrder, err := generateDimgsInOrder(c.werfConfig.Dimgs, c)
+	imagesInOrder, err := generateImagesInOrder(c.werfConfig.Images, c)
 	if err != nil {
 		return err
 	}
 
-	c.dimgsInOrder = dimgsInOrder
+	c.imagesInOrder = imagesInOrder
 
 	return nil
 }
 
-func generateDimgsInOrder(dimgConfigs []*config.Dimg, c *Conveyor) ([]*Dimg, error) {
-	var dimgs []*Dimg
-	for _, dimgConfig := range getDimgConfigsInOrder(dimgConfigs, c) {
-		dimg := &Dimg{}
+func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image, error) {
+	var images []*Image
+	for _, imageConfig := range getImageConfigsInOrder(imageConfigs, c) {
+		image := &Image{}
 
-		dimgBaseConfig, dimgName, dimgArtifact := processDimgConfig(dimgConfig)
-		from, fromDimgName := getFromAndFromDimgName(dimgBaseConfig)
+		imageBaseConfig, imageName, imageArtifact := processImageConfig(imageConfig)
+		from, fromImageName := getFromAndFromImageName(imageBaseConfig)
 
-		dimg.name = dimgName
-		dimg.baseImageName = from
-		dimg.baseImageDimgName = fromDimgName
-		dimg.isArtifact = dimgArtifact
+		image.name = imageName
+		image.baseImageName = from
+		image.baseImageImageName = fromImageName
+		image.isArtifact = imageArtifact
 
-		stages, err := generateStages(dimgConfig, c)
+		stages, err := generateStages(imageConfig, c)
 		if err != nil {
 			return nil, err
 		}
 
-		dimg.SetStages(stages)
+		image.SetStages(stages)
 
-		dimgs = append(dimgs, dimg)
+		images = append(images, image)
 	}
 
-	return dimgs, nil
+	return images, nil
 }
 
-func getFromAndFromDimgName(dimgBaseConfig *config.DimgBase) (string, string) {
+func getFromAndFromImageName(imageBaseConfig *config.ImageBase) (string, string) {
 	var from string
-	var fromDimgName string
+	var fromImageName string
 
-	if dimgBaseConfig.From != "" {
-		from = dimgBaseConfig.From
+	if imageBaseConfig.From != "" {
+		from = imageBaseConfig.From
 	} else {
-		fromDimg := dimgBaseConfig.FromDimg
-		fromDimgArtifact := dimgBaseConfig.FromDimgArtifact
+		fromImage := imageBaseConfig.FromImage
+		fromImageArtifact := imageBaseConfig.FromImageArtifact
 
-		if fromDimg != nil {
-			fromDimgName = fromDimg.Name
+		if fromImage != nil {
+			fromImageName = fromImage.Name
 		} else {
-			fromDimgName = fromDimgArtifact.Name
+			fromImageName = fromImageArtifact.Name
 		}
 	}
 
-	return from, fromDimgName
+	return from, fromImageName
 }
 
-func getDimgConfigsInOrder(dimgConfigs []*config.Dimg, c *Conveyor) []config.DimgInterface {
-	var dimgs []config.DimgInterface
-	for _, dimg := range getDimgConfigToProcess(dimgConfigs, c) {
-		dimgsInBuildOrder := dimg.DimgTree()
-		for i := 0; i < len(dimgsInBuildOrder); i++ {
-			if isNotInArr(dimgs, dimgsInBuildOrder[i]) {
-				dimgs = append(dimgs, dimgsInBuildOrder[i])
+func getImageConfigsInOrder(imageConfigs []*config.Image, c *Conveyor) []config.ImageInterface {
+	var images []config.ImageInterface
+	for _, image := range getImageConfigToProcess(imageConfigs, c) {
+		imagesInBuildOrder := image.ImageTree()
+		for i := 0; i < len(imagesInBuildOrder); i++ {
+			if isNotInArr(images, imagesInBuildOrder[i]) {
+				images = append(images, imagesInBuildOrder[i])
 			}
 		}
 	}
 
-	return dimgs
+	return images
 }
 
-func getDimgConfigToProcess(dimgConfigs []*config.Dimg, c *Conveyor) []*config.Dimg {
-	var dimgConfigsToProcess []*config.Dimg
+func getImageConfigToProcess(imageConfigs []*config.Image, c *Conveyor) []*config.Image {
+	var imageConfigsToProcess []*config.Image
 
-	if len(c.dimgNamesToProcess) == 0 {
-		dimgConfigsToProcess = dimgConfigs
+	if len(c.imageNamesToProcess) == 0 {
+		imageConfigsToProcess = imageConfigs
 	} else {
-		for _, dimgName := range c.dimgNamesToProcess {
-			dimgToProcess := getDimgConfigByName(dimgConfigs, dimgName)
-			if dimgToProcess == nil {
-				logger.LogWarningF("WARNING: Specified dimg '%s' isn't defined in werf.yaml!\n", dimgName)
+		for _, imageName := range c.imageNamesToProcess {
+			imageToProcess := getImageConfigByName(imageConfigs, imageName)
+			if imageToProcess == nil {
+				logger.LogWarningF("WARNING: Specified image '%s' isn't defined in werf.yaml!\n", imageName)
 			} else {
-				dimgConfigsToProcess = append(dimgConfigsToProcess, dimgToProcess)
+				imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
 			}
 		}
 	}
 
-	return dimgConfigsToProcess
+	return imageConfigsToProcess
 }
 
-func getDimgConfigByName(dimgConfigs []*config.Dimg, name string) *config.Dimg {
-	for _, dimg := range dimgConfigs {
-		if dimg.Name == name {
-			return dimg
+func getImageConfigByName(imageConfigs []*config.Image, name string) *config.Image {
+	for _, image := range imageConfigs {
+		if image.Name == name {
+			return image
 		}
 	}
 
 	return nil
 }
 
-func isNotInArr(arr []config.DimgInterface, obj config.DimgInterface) bool {
+func isNotInArr(arr []config.ImageInterface, obj config.ImageInterface) bool {
 	for _, elm := range arr {
 		if reflect.DeepEqual(elm, obj) {
 			return false
@@ -130,30 +130,30 @@ func isNotInArr(arr []config.DimgInterface, obj config.DimgInterface) bool {
 	return true
 }
 
-func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Interface, error) {
+func generateStages(imageConfig config.ImageInterface, c *Conveyor) ([]stage.Interface, error) {
 	var stages []stage.Interface
 
-	dimgBaseConfig, dimgName, dimgArtifact := processDimgConfig(dimgConfig)
+	imageBaseConfig, imageName, imageArtifact := processImageConfig(imageConfig)
 
 	baseStageOptions := &stage.NewBaseStageOptions{
-		DimgName:         dimgName,
-		ConfigMounts:     dimgBaseConfig.Mount,
-		DimgTmpDir:       c.GetDimgTmpDir(dimgBaseConfig.Name),
+		ImageName:        imageName,
+		ConfigMounts:     imageBaseConfig.Mount,
+		ImageTmpDir:      c.GetImageTmpDir(imageBaseConfig.Name),
 		ContainerWerfDir: c.containerWerfDir,
 		ProjectBuildDir:  c.projectBuildDir,
 	}
 
 	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{
-		ArchivesDir:          getDimgArchivesDir(dimgName, c),
-		ContainerArchivesDir: getDimgArchivesContainerDir(c),
+		ArchivesDir:          getImageArchivesDir(imageName, c),
+		ContainerArchivesDir: getImageArchivesContainerDir(c),
 	}
 
 	gitPatchStageOptions := &stage.NewGitPatchStageOptions{
-		PatchesDir:          getDimgPatchesDir(dimgName, c),
-		ContainerPatchesDir: getDimgPatchesContainerDir(c),
+		PatchesDir:          getImagePatchesDir(imageName, c),
+		ContainerPatchesDir: getImagePatchesContainerDir(c),
 	}
 
-	gitPaths, err := generateGitPaths(dimgBaseConfig, c)
+	gitPaths, err := generateGitPaths(imageBaseConfig, c)
 	if err != nil {
 		return nil, err
 	}
@@ -168,36 +168,36 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	}
 
 	// from
-	stages = appendIfExist(stages, stage.GenerateFromStage(dimgBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateFromStage(imageBaseConfig, baseStageOptions))
 
 	// before_install
-	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(dimgBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
 	// before_install_artifact
-	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(dimgBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
 	// git_archive_stage
 	stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
 
 	// install
-	stages = appendIfExist(stages, stage.GenerateInstallStage(dimgBaseConfig, gitPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateInstallStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
 
 	// after_install_artifact
-	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(dimgBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(imageBaseConfig, baseStageOptions))
 
 	// before_setup
-	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(dimgBaseConfig, gitPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
 
 	// before_setup_artifact
-	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(dimgBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(imageBaseConfig, baseStageOptions))
 
 	// setup
-	stages = appendIfExist(stages, stage.GenerateSetupStage(dimgBaseConfig, gitPatchStageOptions, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateSetupStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
 
 	// after_setup_artifact
-	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(dimgBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(imageBaseConfig, baseStageOptions))
 
-	if !dimgArtifact {
+	if !imageArtifact {
 		// git_post_setup_patch
 		stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
 
@@ -205,7 +205,7 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 		stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
 
 		// docker_instructions
-		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(dimgConfig.(*config.Dimg), baseStageOptions))
+		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(imageConfig.(*config.Image), baseStageOptions))
 	}
 
 	for _, s := range stages {
@@ -215,11 +215,11 @@ func generateStages(dimgConfig config.DimgInterface, c *Conveyor) ([]stage.Inter
 	return stages, nil
 }
 
-func generateGitPaths(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stage.GitPath, error) {
+func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.GitPath, error) {
 	var gitPaths, nonEmptyGitPaths []*stage.GitPath
 
 	var localGitRepo *git_repo.Local
-	if len(dimgBaseConfig.Git.Local) != 0 {
+	if len(imageBaseConfig.Git.Local) != 0 {
 		localGitRepo = &git_repo.Local{
 			Base:   git_repo.Base{Name: "own"},
 			Path:   c.projectDir,
@@ -227,11 +227,11 @@ func generateGitPaths(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stage.Gi
 		}
 	}
 
-	for _, localGitPathConfig := range dimgBaseConfig.Git.Local {
-		gitPaths = append(gitPaths, gitLocalPathInit(localGitPathConfig, localGitRepo, dimgBaseConfig.Name, c))
+	for _, localGitPathConfig := range imageBaseConfig.Git.Local {
+		gitPaths = append(gitPaths, gitLocalPathInit(localGitPathConfig, localGitRepo, imageBaseConfig.Name, c))
 	}
 
-	for _, remoteGitPathConfig := range dimgBaseConfig.Git.Remote {
+	for _, remoteGitPathConfig := range imageBaseConfig.Git.Remote {
 		remoteGitRepo, exist := c.remoteGitRepos[remoteGitPathConfig.Name]
 		if !exist {
 			clonePath, err := getRemoteGitRepoClonePath(remoteGitPathConfig, c)
@@ -252,7 +252,7 @@ func generateGitPaths(dimgBaseConfig *config.DimgBase, c *Conveyor) ([]*stage.Gi
 			c.remoteGitRepos[remoteGitPathConfig.Name] = remoteGitRepo
 		}
 
-		gitPaths = append(gitPaths, gitRemoteArtifactInit(remoteGitPathConfig, remoteGitRepo, dimgBaseConfig.Name, c))
+		gitPaths = append(gitPaths, gitRemoteArtifactInit(remoteGitPathConfig, remoteGitRepo, imageBaseConfig.Name, c))
 	}
 
 	for _, gitPath := range gitPaths {
@@ -299,8 +299,8 @@ func urlScheme(urlString string) (string, error) {
 	return u.Scheme, nil
 }
 
-func gitRemoteArtifactInit(remoteGitPathConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, dimgName string, c *Conveyor) *stage.GitPath {
-	gitPath := baseGitPathInit(remoteGitPathConfig.GitLocalExport, dimgName, c)
+func gitRemoteArtifactInit(remoteGitPathConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, imageName string, c *Conveyor) *stage.GitPath {
+	gitPath := baseGitPathInit(remoteGitPathConfig.GitLocalExport, imageName, c)
 
 	gitPath.Tag = remoteGitPathConfig.Tag
 	gitPath.Commit = remoteGitPathConfig.Commit
@@ -313,8 +313,8 @@ func gitRemoteArtifactInit(remoteGitPathConfig *config.GitRemote, remoteGitRepo 
 	return gitPath
 }
 
-func gitLocalPathInit(localGitPathConfig *config.GitLocal, localGitRepo *git_repo.Local, dimgName string, c *Conveyor) *stage.GitPath {
-	gitPath := baseGitPathInit(localGitPathConfig.GitLocalExport, dimgName, c)
+func gitLocalPathInit(localGitPathConfig *config.GitLocal, localGitRepo *git_repo.Local, imageName string, c *Conveyor) *stage.GitPath {
+	gitPath := baseGitPathInit(localGitPathConfig.GitLocalExport, imageName, c)
 
 	gitPath.As = localGitPathConfig.As
 
@@ -325,17 +325,17 @@ func gitLocalPathInit(localGitPathConfig *config.GitLocal, localGitRepo *git_rep
 	return gitPath
 }
 
-func baseGitPathInit(local *config.GitLocalExport, dimgName string, c *Conveyor) *stage.GitPath {
+func baseGitPathInit(local *config.GitLocalExport, imageName string, c *Conveyor) *stage.GitPath {
 	var stageDependencies map[stage.StageName][]string
 	if local.StageDependencies != nil {
 		stageDependencies = stageDependenciesToMap(local.StageDependencies)
 	}
 
 	gitPath := &stage.GitPath{
-		PatchesDir:           getDimgPatchesDir(dimgName, c),
-		ContainerPatchesDir:  getDimgPatchesContainerDir(c),
-		ArchivesDir:          getDimgArchivesDir(dimgName, c),
-		ContainerArchivesDir: getDimgArchivesContainerDir(c),
+		PatchesDir:           getImagePatchesDir(imageName, c),
+		ContainerPatchesDir:  getImagePatchesContainerDir(c),
+		ArchivesDir:          getImageArchivesDir(imageName, c),
+		ContainerArchivesDir: getImageArchivesContainerDir(c),
 
 		RepoPath: path.Join("/", local.Add),
 
@@ -351,19 +351,19 @@ func baseGitPathInit(local *config.GitLocalExport, dimgName string, c *Conveyor)
 	return gitPath
 }
 
-func getDimgPatchesDir(dimgName string, c *Conveyor) string {
-	return path.Join(c.tmpDir, dimgName, "patch")
+func getImagePatchesDir(imageName string, c *Conveyor) string {
+	return path.Join(c.tmpDir, imageName, "patch")
 }
 
-func getDimgPatchesContainerDir(c *Conveyor) string {
+func getImagePatchesContainerDir(c *Conveyor) string {
 	return path.Join(c.containerWerfDir, "patch")
 }
 
-func getDimgArchivesDir(dimgName string, c *Conveyor) string {
-	return path.Join(c.tmpDir, dimgName, "archive")
+func getImageArchivesDir(imageName string, c *Conveyor) string {
+	return path.Join(c.tmpDir, imageName, "archive")
 }
 
-func getDimgArchivesContainerDir(c *Conveyor) string {
+func getImageArchivesContainerDir(c *Conveyor) string {
 	return path.Join(c.containerWerfDir, "archive")
 }
 
@@ -377,19 +377,19 @@ func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]
 	return result
 }
 
-func processDimgConfig(dimgConfig config.DimgInterface) (*config.DimgBase, string, bool) {
-	var dimgBase *config.DimgBase
-	var dimgArtifact bool
-	switch dimgConfig.(type) {
-	case *config.Dimg:
-		dimgBase = dimgConfig.(*config.Dimg).DimgBase
-		dimgArtifact = false
-	case *config.DimgArtifact:
-		dimgBase = dimgConfig.(*config.DimgArtifact).DimgBase
-		dimgArtifact = true
+func processImageConfig(imageConfig config.ImageInterface) (*config.ImageBase, string, bool) {
+	var imageBase *config.ImageBase
+	var imageArtifact bool
+	switch imageConfig.(type) {
+	case *config.Image:
+		imageBase = imageConfig.(*config.Image).ImageBase
+		imageArtifact = false
+	case *config.ImageArtifact:
+		imageBase = imageConfig.(*config.ImageArtifact).ImageBase
+		imageArtifact = true
 	}
 
-	return dimgBase, dimgBase.Name, dimgArtifact
+	return imageBase, imageBase.Name, imageArtifact
 }
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {

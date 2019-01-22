@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	yaml "gopkg.in/flant/yaml.v2"
+	"gopkg.in/flant/yaml.v2"
 )
 
 type rawAnsibleTask struct {
@@ -35,7 +35,7 @@ func (c *rawAnsibleTask) UnmarshalYAML(unmarshal func(interface{}) error) error 
 		for _, supportedModule := range supportedModules() {
 			if c.Fields[supportedModule] != nil {
 				if check {
-					return newDetailedConfigError("invalid ansible task!", c, c.rawAnsible.rawDimg.doc)
+					return newDetailedConfigError("invalid ansible task!", c, c.rawAnsible.rawImage.doc)
 				} else {
 					check = true
 				}
@@ -47,7 +47,7 @@ func (c *rawAnsibleTask) UnmarshalYAML(unmarshal func(interface{}) error) error 
 			for _, supportedModule := range supportedModules() {
 				supportedModulesString += fmt.Sprintf("* %s\n", supportedModule)
 			}
-			return newConfigError(fmt.Sprintf("unsupported ansible task!\n\n%s\nSupported modules list:\n%s\n%s", dumpConfigSection(c), supportedModulesString, dumpConfigDoc(c.rawAnsible.rawDimg.doc)))
+			return newConfigError(fmt.Sprintf("unsupported ansible task!\n\n%s\nSupported modules list:\n%s\n%s", dumpConfigSection(c), supportedModulesString, dumpConfigDoc(c.rawAnsible.rawImage.doc)))
 		}
 	}
 

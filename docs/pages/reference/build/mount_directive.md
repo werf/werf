@@ -34,8 +34,8 @@ Thus, those files:
 Reducing image size and speeding up a build can be performed by mounting external folders into assembly containers. Docker implements a mounting mechanism using [volumes](https://docs.docker.com/storage/volumes/).
 
 Mount directive in a config allows defining volumes. Host and assembly container mount folders determine each volume (accordingly in `from`/`fromPath` and `to` directives). When specifying the host mount point, you can choose an arbitrary folder or one of the service folders:
-- `tmp_dir` is an individual temporary dimg directory that is created only for one build;
-- `build_dir` is a directory that is saved between builds. All dimgs in config can use the common directory to store and to share assembly data (e.g., cache). The folder `~/.werf/builds/<project name>/` store directories of this type.
+- `tmp_dir` is an individual temporary image directory that is created only for one build;
+- `build_dir` is a directory that is saved between builds. All images in config can use the common directory to store and to share assembly data (e.g., cache). The folder `~/.werf/builds/<project name>/` store directories of this type.
 
 Werf binds host mount folders for reading/writing on each stage build. If you need to keep assembly data from these directories in a image, you should copy them to another directory during build.
 

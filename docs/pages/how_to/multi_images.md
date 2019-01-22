@@ -32,7 +32,7 @@ It is the `app` image. The backend container handles HTTP requests from the fron
 Image of the backend base on the official java image. It uses files from artifacts and doesn't need any steps for downloading packages or building.
 
 ```yaml
-dimg: app
+image: app
 from: java:8-jdk-alpine
 docker:
   ENTRYPOINT: ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
@@ -110,7 +110,7 @@ It is the `reverse_proxy` image. This image base on the official image of the [N
 
 {% raw %}
 ```yaml
-dimg: reverse_proxy
+image: reverse_proxy
 from: nginx:alpine
 ansible:
   install:
@@ -141,7 +141,7 @@ It is the `database` image. This image base on the official image of the Postgre
 
 {% raw %}
 ```yaml
-dimg: database
+image: database
 from: postgres:11
 docker:
   ENV:
@@ -171,7 +171,7 @@ It is the `payment_gw` image. This image is an example of the payment gateway ap
 
 {% raw %}
 ```yaml
-dimg: payment_gw
+image: payment_gw
 from: alpine
 docker:
   CMD: ["/home/payment/process.sh"]
@@ -258,7 +258,7 @@ shell:
   - cd /usr/src/atsea
   - mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
 ---
-dimg: app
+image: app
 from: java:8-jdk-alpine
 docker:
   ENTRYPOINT: ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
@@ -277,7 +277,7 @@ import:
   to: /app/AtSea-0.0.1-SNAPSHOT.jar
   after: install
 ---
-dimg: reverse_proxy
+image: reverse_proxy
 from: nginx:alpine
 ansible:
   install:
@@ -300,7 +300,7 @@ ansible:
 {{ .Files.Get "reverse_proxy/certs/revprox_key" | indent 8 }}
       dest: /run/secrets/revprox_key
 ---
-dimg: database
+image: database
 from: postgres:11
 docker:
   ENV:
@@ -322,7 +322,7 @@ git:
 - add: /database/docker-entrypoint-initdb.d/
   to:  /docker-entrypoint-initdb.d/
 ---
-dimg: payment_gw
+image: payment_gw
 from: alpine
 docker:
   CMD: ["/home/payment/process.sh"]
@@ -366,7 +366,7 @@ mkdir -p reverse_proxy/certs && openssl req -newkey rsa:4096 -nodes -subj "/CN=a
 Execute the following command in the root folder of the project to build all images:
 
 ```bash
-werf dimg build
+werf build
 ```
 
 ## Step 5: Tag images
@@ -374,7 +374,7 @@ werf dimg build
 Execute the following command in the root folder of the project to tag all images:
 
 ```bash
-werf dimg tag --tag-plain werf atsea
+werf tag atsea --tag werf
 ```
 
 ## Step 6: Add docker-compose-werf.yml file
@@ -462,5 +462,5 @@ We've described all project images in a one config.
 
 The example above shows the benefits:
 * If your project has similar images, you can share some piece of images by mounting their folder with the `build_dir` directive (read more about mounts [here]({{ site.baseurl }}/reference/build/mount_directive.html)).
-* You can share artifacts between dimgs in single config.
+* You can share artifacts between images in single config.
 * Common templates can be used in single config to describe configuration of multiple images.

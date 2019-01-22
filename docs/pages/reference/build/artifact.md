@@ -57,26 +57,26 @@ CMD ["--spring.profiles.active=postgres"]
 
 The meaning of such an approach is as follows, describe several auxiliary images, and selectively copy artifacts from one image to another, leaving behind everything you don’t want in the final image.
 
-Werf suggests an alternative in the form of _artifact dimg_, which are built according to the same rules as _dimg_, but with slight changes in the _stage conveyor_.
+Werf suggests an alternative in the form of _artifact image_, which are built according to the same rules as _image_, but with slight changes in the _stage conveyor_.
 
 > Why doesn't werf use multi-stage? Historically, _artifacts_ appeared much earlier than Docker multi-stage, and werf approach gives more flexibility when working with auxiliary images.
 
 ## What is an artifact?
 
-***Artifact*** is special dimg that is used by _dimgs_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
+***Artifact*** is special image that is used by _images_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
 
-_Artifact_ cannot be [tagged like _dimg_]({{ site.baseurl }}/reference/registry/image_naming.html#werf-tag-procedure) and used as standalone application.
+_Artifact_ cannot be [tagged like _image_]({{ site.baseurl }}/reference/registry/image_naming.html#werf-tag-procedure) and used as standalone application.
 
 Using artifacts, you can independently assemble an unlimited number of components, and also solving the following problems:
 
 - The application can consist of a set of components, and each has its dependencies. With a standard assembly, you should rebuild all every time, but you want to assemble each one on-demand.
 - Components need to be assembled in other environments.
 
-Importing _artifacts resources_ are described at destination _dimg_ or _artifact_ by `import` directive records.
+Importing _artifacts resources_ are described at destination _image_ or _artifact_ by `import` directive records.
 
 ## Configuration
 
-The configuration of the _artifact_ is not much different from the configuration of _dimg_. Each _artifact_ should be described in a separate YAML document.
+The configuration of the _artifact_ is not much different from the configuration of _image_. Each _artifact_ should be described in a separate YAML document.
 
 The instructions associated with the _from stage_, namely the [_base image_]({{ site.baseurl }}/reference/build/base_image.html) and [mounts]({{ site.baseurl }}/reference/build/mount_directive.html), remain unchanged.
 
@@ -92,13 +92,13 @@ artifact: <artifact name>
 ```
 </div>
 
-_Artifact images_ are declared with `artifact` directive: `artifact: <artifact name>`. Unlike the [naming of the _dimg_]({{ site.baseurl }}/reference/build/naming.html), the artifact has no limitations associated with docker naming convention, as used only internal.
+_Artifact images_ are declared with `artifact` directive: `artifact: <artifact name>`. Unlike the [naming of the _image_]({{ site.baseurl }}/reference/build/naming.html), the artifact has no limitations associated with docker naming convention, as used only internal.
 
 ```yaml
 artifact: "application assets"
 ```
 
-The _artifact name_ is used to specify the artifact in the [_artifact resources import_ description](#importing-artifacts) of the _dimg_ or _artifact_.
+The _artifact name_ is used to specify the artifact in the [_artifact resources import_ description](#importing-artifacts) of the _image_ or _artifact_.
 
 ### Adding source code from git repositories
 
@@ -110,7 +110,7 @@ The _artifact name_ is used to specify the artifact in the [_artifact resources 
 
 </div>
 
-Unlike with _dimg_, _artifact stage conveyor_ has no _git_cache_ and _git_latest_patch_ stages.
+Unlike with _image_, _artifact stage conveyor_ has no _git_cache_ and _git_latest_patch_ stages.
 
 > Werf implements optional dependence on changes in git repositories for _artifacts_. Thus, by default werf ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions.
 
@@ -149,8 +149,8 @@ Read about working with _assembly instructions_ in the corresponding [article]({
 artifact: <artifact_name>
 from: <image>
 fromCacheVersion: <version>
-fromDimg: <dimg_name>
-fromDimgArtifact: <artifact_name>
+fromImage: <image_name>
+fromImageArtifact: <artifact_name>
 git:
 # local git
 - as: <custom_name>

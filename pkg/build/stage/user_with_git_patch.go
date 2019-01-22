@@ -18,12 +18,12 @@ type UserWithGitPatchStage struct {
 	GitPatchStage *GitPatchStage
 }
 
-func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
 
-	stageName := c.GetBuildingGitStage(s.dimgName)
+	stageName := c.GetBuildingGitStage(s.imageName)
 	if stageName == s.Name() {
 		if err := s.GitPatchStage.prepareImage(c, prevBuiltImage, image); err != nil {
 			return nil

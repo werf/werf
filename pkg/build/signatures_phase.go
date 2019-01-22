@@ -4,15 +4,15 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/build/stage"
-	"github.com/flant/werf/pkg/image"
+	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
 )
 
 const (
 	BuildCacheVersion = "33"
 
-	LocalDimgstageImageNameFormat = "dimgstage-%s"
-	LocalDimgstageImageFormat     = "dimgstage-%s:%s"
+	LocalImageStageImageNameFormat = "image-stage-%s"
+	LocalImageStageImageFormat     = "image-stage-%s:%s"
 )
 
 func NewSignaturesPhase() *SignaturesPhase {
@@ -26,17 +26,17 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 		fmt.Printf("SignaturesPhase.Run\n")
 	}
 
-	for _, dimg := range c.dimgsInOrder {
+	for _, image := range c.imagesInOrder {
 		if debug() {
-			fmt.Printf("  dimg: '%s'\n", dimg.GetName())
+			fmt.Printf("  image: '%s'\n", image.GetName())
 		}
 
 		var prevStage stage.Interface
 
-		dimg.SetupBaseImage(c)
+		image.SetupBaseImage(c)
 
-		var prevBuiltImage image.Image
-		prevImage := dimg.GetBaseImage()
+		var prevBuiltImage imagePkg.ImageInterface
+		prevImage := image.GetBaseImage()
 		err := prevImage.SyncDockerState()
 		if err != nil {
 			return err
@@ -44,7 +44,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 		var newStagesList []stage.Interface
 
-		for _, s := range dimg.GetStages() {
+		for _, s := range image.GetStages() {
 			if prevImage.IsExists() {
 				prevBuiltImage = prevImage
 			}
@@ -76,7 +76,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 			s.SetSignature(stageSig)
 
-			imageName := fmt.Sprintf(LocalDimgstageImageFormat, c.projectName(), stageSig)
+			imageName := fmt.Sprintf(LocalImageStageImageFormat, c.projectName(), stageSig)
 			i := c.GetOrCreateImage(prevImage, imageName)
 			s.SetImage(i)
 
@@ -88,10 +88,10 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 				return err
 			}
 
-			if dimg.GetName() == "" {
-				fmt.Printf("# Calculated signature %s for dimg %s\n", stageSig, fmt.Sprintf("stage/%s", s.Name()))
+			if image.GetName() == "" {
+				fmt.Printf("# Calculated signature %s for image %s\n", stageSig, fmt.Sprintf("stage/%s", s.Name()))
 			} else {
-				fmt.Printf("# Calculated signature %s for dimg/%s %s\n", stageSig, dimg.GetName(), fmt.Sprintf("stage/%s", s.Name()))
+				fmt.Printf("# Calculated signature %s for image/%s %s\n", stageSig, image.GetName(), fmt.Sprintf("stage/%s", s.Name()))
 			}
 
 			newStagesList = append(newStagesList, s)
@@ -100,7 +100,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 			prevImage = i
 		}
 
-		dimg.SetStages(newStagesList)
+		image.SetStages(newStagesList)
 	}
 
 	return nil

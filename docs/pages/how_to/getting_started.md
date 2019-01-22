@@ -48,7 +48,7 @@ To implement these steps and requirements with werf we will add a special file c
       project: symfony-demo
       ---
 
-      dimg: ~
+      image: ~
       from: ubuntu:16.04
       docker:
         WORKDIR: /app
@@ -145,7 +145,7 @@ To implement these steps and requirements with werf we will add a special file c
       project: symfony-demo
       ---
 
-      dimg: ~
+      image: ~
       from: ubuntu:16.04
       docker:
         WORKDIR: /app
@@ -195,7 +195,7 @@ Let's build and run our first application.
 2.  Build an image:
 
     ```shell
-    werf dimg build
+    werf build
     ```
 
 3.  Run a container from the image:
@@ -223,7 +223,7 @@ Werf can be used to push a built image into docker-registry.
 2. Push image with werf using default `latest` tag:
 
     ```shell
-    werf dimg push localhost:5000/symfony-demo
+    werf push --repo localhost:5000/symfony-demo
     ```
 
 ## What Can Be Improved

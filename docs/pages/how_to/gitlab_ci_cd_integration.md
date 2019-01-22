@@ -133,7 +133,7 @@ Build:
     - werf --version; pwd; set -x
     ## Always use "bp" option instead separate "build" and "push"
     ## It is important to use --tag-ci, --tag-branch or --tag-commit options here (in bp or push commands) otherwise cleanup won't work.
-    - werf dimg bp ${CI_REGISTRY_IMAGE} --tag-ci
+    - werf bp --repo ${CI_REGISTRY_IMAGE} --tag-ci
   tags:
     ## You specify there the tag of the runner to use. We need to use there build runner
     - build
@@ -313,7 +313,7 @@ Cleanup registry:
   stage: cleanup_registry
   script:
     - werf --version; pwd; set -x
-    - werf dimg cleanup repo ${CI_REGISTRY_IMAGE}
+    - werf cleanup --repo ${CI_REGISTRY_IMAGE}
   only:
     - schedules
   tags:
@@ -336,7 +336,7 @@ Cleanup builder:
 
 To use cleanup you should create `Personal Access Token` with necessary rights and put it into the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_CLEANUP_REGISTRY_PASSWORD` and a value consisting `Personal Access Token`.
 
-> Note: `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable is used by werf only for deleting images in registry when run `werf dimg cleanup repo` command. In the other cases werf uses `CI_JOB_TOKEN`.
+> Note: `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable is used by werf only for deleting images in registry when run `werf cleanup` command. In the other cases werf uses `CI_JOB_TOKEN`.
 
 For demo project simply create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
 
@@ -362,7 +362,7 @@ Build:
     - werf --version; pwd; set -x
     ## Always use "bp" option instead separate "build" and "push"
     ## It is important to use --tag-ci, --tag-branch or --tag-commit options otherwise cleanup won't work.
-    - werf dimg bp ${CI_REGISTRY_IMAGE} --tag-ci
+    - werf bp --repo ${CI_REGISTRY_IMAGE} --tag-ci
   tags:
     ## You specify there the tag of the runner to use. We need to use there build runner
     - build
@@ -454,7 +454,7 @@ Cleanup registry:
   stage: cleanup_registry
   script:
     - werf --version; pwd; set -x
-    - werf dimg cleanup repo ${CI_REGISTRY_IMAGE}
+    - werf cleanup --repo ${CI_REGISTRY_IMAGE}
   only:
     - schedules
   tags:

@@ -455,7 +455,7 @@ shell:
   - echo "Commands on the Setup stage"
 ```
 
-First, build of this dimg execute all four _user stages_. There is no _git path_ in
+First, build of this image execute all four _user stages_. There is no _git path_ in
 this _config_, so next builds never execute assembly instructions because _user
 stages signatures_ not changed and build cache remains valid.
 
@@ -474,7 +474,7 @@ shell:
   - echo "Commands on the Setup stage"
 ```
 
-Now `werf dimg build` executes _install assembly instructions_ and instructions from
+Now `werf build` executes _install assembly instructions_ and instructions from
 following _stages_.
 
 Go-templating and using environment variables can changes assembly instructions
@@ -565,7 +565,7 @@ Example:
 
 ```yaml
 ---
-dimg: app
+image: app
 git:
 - add: /src
   to: /app
@@ -597,7 +597,7 @@ subsequent stages), you need to change the value of the `installCacheVersion` pa
 You can define an image with common packages in separated `werf.yaml`. `cacheVersion` value can be used to rebuild this image to refresh packages versions.
 
 ```yaml
-dimg: ~
+image: ~
 from: ubuntu:latest
 shell:
   beforeInstallCacheVersion: 2
@@ -614,7 +614,7 @@ _CacheVersion directives_ can be used with [go templates]({{ site.baseurl }}/ref
 
 {% raw %}
 ```yaml
-dimg: ~
+image: ~
 from: ubuntu:latest
 shell:
   installCacheVersion: {{.Files.Get "some-library-latest.tar.gz" | sha256sum}}
@@ -624,4 +624,4 @@ shell:
 ```
 {% endraw %}
 
-Build script can be used to download `some-library-latest.tar.gz` archive and then execute `werf dimg build` command. If the file is changed then werf rebuilds _install user stage_ and subsequent stages.
+Build script can be used to download `some-library-latest.tar.gz` archive and then execute `werf build` command. If the file is changed then werf rebuilds _install user stage_ and subsequent stages.

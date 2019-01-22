@@ -17,7 +17,7 @@ type CommonOptions struct {
 	DryRun bool
 }
 
-func werfDimgstagesFlushByCacheVersion(filterSet filters.Args, options CommonOptions) error {
+func werfImageStagesFlushByCacheVersion(filterSet filters.Args, options CommonOptions) error {
 	werfCacheVersionLabel := fmt.Sprintf("%s=%s", build.WerfCacheVersionLabel, build.BuildCacheVersion)
 	filterSet.Add("label", werfCacheVersionLabel)
 	images, err := werfImagesByFilterSet(filters.NewArgs())

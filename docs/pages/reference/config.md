@@ -58,18 +58,18 @@ Werf cannot automatically resolve project name change. Described issues must be 
 
 Each image configuration doc defines instructions to build one independent docker image. There may be multiple image cofiguration docs defined in the same `werf.yaml` config to build multiple images.
 
-Yaml doc with the key `dimg: IMAGE_NAME` is the image configuration doc. `dimg` defines short name of the docker image to be built. This name must be unique in a single `werf.yaml` config.
+Yaml doc with the key `image: IMAGE_NAME` is the image configuration doc. `image` defines short name of the docker image to be built. This name must be unique in a single `werf.yaml` config.
 
 ```
-dimg: IMAGE_NAME_1
+image: IMAGE_NAME_1
 OTHER_FIELDS
 ---
-dimg: IMAGE_NAME_2
+image: IMAGE_NAME_2
 OTHER_FIELDS
 ---
 ...
 ---
-dimg: IMAGE_NAME_N
+image: IMAGE_NAME_N
 OTHER_FIELDS
 ```
 
@@ -88,7 +88,7 @@ Example of minimal werf config:
 ```yaml
 project: my-project
 ---
-dimg: ~
+image: ~
 from: alpine:latest
 ```
 
@@ -111,7 +111,7 @@ Werf parses all files in one environment, thus described [define](#include) of o
 project: my-project
 ---
 
-dimg: rails
+image: rails
 from: {{ .BaseImage }}
 ansible:
   beforeInstall:
@@ -195,7 +195,7 @@ If need to use the whole _template file_, use template file path relative to _.w
 ```yaml
 project: my-project
 ---
-dimg: app
+image: app
 from: java:8-jdk-alpine
 shell:
   beforeInstall:
@@ -272,7 +272,7 @@ The following steps could describe the processing of a YAML configuration file:
 1. Validating each YAML document:
   * Validating YAML syntax (you could read YAML reference [here](http://yaml.org/refcard.html)).
   * Validating our syntax.
-1. Generating a set of dimgs.
+1. Generating a set of images.
 
 ### Go templates
 
@@ -287,10 +287,10 @@ Go templates are available within YAML configuration. The following functions ar
   project: my-project
   ---
 
-  dimg: gogomonia
+  image: gogomonia
   from: {{ $base_image }}
   ---
-  dimg: saml-authenticator
+  image: saml-authenticator
   from: {{ $base_image }}
   ```
   {% endraw %}
@@ -304,7 +304,7 @@ Go templates are available within YAML configuration. The following functions ar
 
   {{ $_ := env "SPECIFIC_ENV_HERE" | set . "GitBranch" }}
 
-  dimg: ~
+  image: ~
   from: alpine
   git:
   - url: https://github.com/company/project1.git
@@ -325,13 +325,13 @@ Go templates are available within YAML configuration. The following functions ar
   project: my-project
   ---
 
-  dimg: app1
+  image: app1
   from: alpine
   ansible:
     beforeInstall:
     {{- include "(component) ruby" . }}
   ---
-  dimg: app2
+  image: app2
   from: alpine
   ansible:
     beforeInstall:
@@ -362,7 +362,7 @@ Go templates are available within YAML configuration. The following functions ar
   project: my-project
   ---
 
-  dimg: app
+  image: app
   from: alpine
   ansible:
     setup:

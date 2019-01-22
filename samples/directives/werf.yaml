@@ -1,8 +1,8 @@
-dimg: <dimg_name... || ~>
+image: <image_name... || ~>
 from: <image>
 fromCacheVersion: <version>
-fromDimg: <dimg_name>
-fromDimgArtifact: <artifact_name>
+fromImage: <image_name>
+fromImageArtifact: <artifact_name>
 git:
 # local git
 - as: <custom_name>
@@ -111,8 +111,8 @@ asLayers: <false || true>
 artifact: <artifact_name>
 from: <image>
 fromCacheVersion: <version>
-fromDimg: <dimg_name>
-fromDimgArtifact: <artifact_name>
+fromImage: <image_name>
+fromImageArtifact: <artifact_name>
 git:
 # local git
 - as: <custom_name>

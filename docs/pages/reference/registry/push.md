@@ -12,12 +12,12 @@ Docker images should be pushed into the docker registry for further usage in mos
 
 ## What can be pushed
 
-The result of werf [build commands]({{ site.baseurl }}/reference/cli/dimg_build.html) is a stages cache related to dimgs defined in the `werf.yaml` config. Werf can be used to push either:
+The result of werf [build commands]({{ site.baseurl }}/reference/cli/image_build.html) is a stages cache related to images defined in the `werf.yaml` config. Werf can be used to push either:
 
-* Dimgs images. These can only be used as _images for running_. These images are not suitable for _distributes images cache_, because werf build algorithm implies creating separate images for stages cache. When you pull a dimg from a docker registry, you don't receive stages cache for this image.
-* Dimgs images with a stages cache images. These images can be used as _images for running_ and also as a _distributed images cache_.
+* Images. These can only be used as _images for running_. These images are not suitable for _distributes images cache_, because werf build algorithm implies creating separate images for stages cache. When you pull a image from a docker registry, you don't receive stages cache for this image.
+* Images with a stages cache images. These images can be used as _images for running_ and also as a _distributed images cache_.
 
-Werf pushes dimg into a docker registry with a so-called [**dimg push procedure**](#dimg-push-procedure). Also, werf pushes stages cache of all dimgs from config with a so-called [**stages push procedure**](#stages-push-procedure).
+Werf pushes image into a docker registry with a so-called [**image push procedure**](#image-push-procedure). Also, werf pushes stages cache of all images from config with a so-called [**stages push procedure**](#stages-push-procedure).
 
 Before digging into these algorithms, it is helpful to see how to push images using Docker.
 
@@ -34,31 +34,31 @@ Normally in the Docker world to push an already built arbitrary docker image, th
 
 This process will be referred to as **standard push procedure**. There is a docker command for each of these steps, and usually, they are performed by calling corresponding docker commands.
 
-### Dimg push procedure
+### Image push procedure
 
-To push a dimg from the config werf implements the **dimg push procedure**. It consists of the following steps:
+To push a image from the config werf implements the **image push procedure**. It consists of the following steps:
 
-1. Perform [**werf tag procedure**]({{ site.baseurl }}/reference/registry/image_naming.html#werf-tag-procedure) for built dimg. The result of werf tag is an image with a name that is compatible with the step 2 of _standard push procedure_. I.e., this image is ready to be pushed.
+1. Perform [**werf tag procedure**]({{ site.baseurl }}/reference/registry/image_naming.html#werf-tag-procedure) for built image. The result of werf tag is an image with a name that is compatible with the step 2 of _standard push procedure_. I.e., this image is ready to be pushed.
 2. Push newly created image into docker registry.
 3. Delete temporary image created in the 1'st step.
 
 All of these steps are performed with a single werf push command, which will be described below.
 
-The result of this procedure is a dimg named by the [image naming]({{ site.baseurl }}/reference/registry/image_naming.html) rules pushed into the docker registry.
+The result of this procedure is a image named by the [image naming]({{ site.baseurl }}/reference/registry/image_naming.html) rules pushed into the docker registry.
 
 ### Stages push procedure
 
-To push stages cache of a dimg from the config werf implements the **stages push procedure**. It consists of the following steps:
+To push stages cache of a image from the config werf implements the **stages push procedure**. It consists of the following steps:
 
  1. Create temporary image names aliases for all docker images in stages cache, so that:
      - [docker repository name](https://docs.docker.com/glossary/?term=repository) is a `REPO` parameter specified by the user without changes ([details about `REPO`]({{ site.baseurl }}/reference/registry/image_naming.html#repo-parameter)).
-     - [docker tag name](https://docs.docker.com/glossary/?term=tag) constructed as a signature prefixed with a word `dimgstage-` (for example `dimgstage-41772c141b158349804ad27b354247df8984ead077a5dd601f3940536ebe9a11`).
+     - [docker tag name](https://docs.docker.com/glossary/?term=tag) constructed as a signature prefixed with a word `image-stage-` (for example `image-stage-41772c141b158349804ad27b354247df8984ead077a5dd601f3940536ebe9a11`).
  2. Push images by newly created aliases into docker registry.
  3. Delete temporary image names aliases.
 
 All of these steps are also performed with a single werf command, which will be described below.
 
-The result of this procedure is multiple images from stages cache of dimg pushed into the docker registry.
+The result of this procedure is multiple images from stages cache of image pushed into the docker registry.
 
 ## werf push
 

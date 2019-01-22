@@ -5,16 +5,8 @@ permalink: reference/build/stage_introspection.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 summary: |
   <div class="language-bash highlighter-rouge"><pre class="highlight"><code><span class="c"># introspection before and after execution of a dysfunctional set of instructions</span>
-  werf dimg build --introspect-error 
-  werf dimg build --introspect-before-error
-  
-  <span class="c"># introspection of an assembled STAGE stage</span>
-  werf dimg build --introspect-stage STAGE
-  werf dimg build --introspect-artifact-stage STAGE
-  
-  <span class="c"># introspection before execution of the instructions for the STAGE stage</span>
-  werf dimg build --introspect-before STAGE
-  werf dimg build --introspect-artifact-before STAGE   
+  werf build --introspect-error 
+  werf build --introspect-before-error
   </code></pre>
   </div>
 ---

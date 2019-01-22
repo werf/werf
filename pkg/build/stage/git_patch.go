@@ -28,7 +28,7 @@ type GitPatchStage struct {
 	ContainerPatchesDir string
 }
 
-func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.Image) (bool, error) {
+func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface) (bool, error) {
 	if empty, err := s.willGitLatestCommitBeBuiltOnPrevGitStage(c); err != nil {
 		return false, err
 	} else if empty {
@@ -51,7 +51,7 @@ func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.Image) (bool, e
 }
 
 func (s *GitPatchStage) willGitLatestCommitBeBuiltOnPrevGitStage(c Conveyor) (bool, error) {
-	stageName := c.GetBuildingGitStage(s.dimgName)
+	stageName := c.GetBuildingGitStage(s.imageName)
 	if stageName != "" && stageName != s.Name() {
 		return true, nil
 	}
@@ -59,7 +59,7 @@ func (s *GitPatchStage) willGitLatestCommitBeBuiltOnPrevGitStage(c Conveyor) (bo
 	return false, nil
 }
 
-func (s *GitPatchStage) hasPrevBuiltStageHadActualGitPaths(prevBuiltImage image.Image) (bool, error) {
+func (s *GitPatchStage) hasPrevBuiltStageHadActualGitPaths(prevBuiltImage image.ImageInterface) (bool, error) {
 	for _, gitPath := range s.gitPaths {
 		commit := gitPath.GetGitCommitFromImageLabels(prevBuiltImage)
 		latestCommit, err := gitPath.LatestCommit()
@@ -75,7 +75,7 @@ func (s *GitPatchStage) hasPrevBuiltStageHadActualGitPaths(prevBuiltImage image.
 	return true, nil
 }
 
-func (s *GitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+func (s *GitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	if err := s.GitStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (s *GitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Ima
 	return nil
 }
 
-func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	for _, gitPath := range s.gitPaths {
 		if err := gitPath.ApplyPatchCommand(prevBuiltImage, image); err != nil {
 			return err

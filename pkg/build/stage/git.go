@@ -14,11 +14,11 @@ type GitStage struct {
 	*BaseStage
 }
 
-func (s *GitStage) IsEmpty(_ Conveyor, prevBuiltImage image.Image) (bool, error) {
+func (s *GitStage) IsEmpty(_ Conveyor, prevBuiltImage image.ImageInterface) (bool, error) {
 	return len(s.gitPaths) == 0, nil
 }
 
-func (s *GitStage) ShouldBeReset(builtImage image.Image) (bool, error) {
+func (s *GitStage) ShouldBeReset(builtImage image.ImageInterface) (bool, error) {
 	for _, gitPath := range s.gitPaths {
 		commit := gitPath.GetGitCommitFromImageLabels(builtImage)
 		if exist, err := gitPath.GitRepo().IsCommitExists(commit); err != nil {
@@ -33,16 +33,16 @@ func (s *GitStage) ShouldBeReset(builtImage image.Image) (bool, error) {
 
 func (s *GitStage) AfterImageSyncDockerStateHook(c Conveyor) error {
 	if !s.image.IsExists() {
-		stageName := c.GetBuildingGitStage(s.dimgName)
+		stageName := c.GetBuildingGitStage(s.imageName)
 		if stageName == "" {
-			c.SetBuildingGitStage(s.dimgName, s.Name())
+			c.SetBuildingGitStage(s.imageName, s.Name())
 		}
 	}
 
 	return nil
 }
 
-func (s *GitStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+func (s *GitStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	if err := s.BaseStage.PrepareImage(c, prevBuiltImage, image); err != nil {
 		return err
 	}

@@ -112,15 +112,15 @@ func runCleanup() error {
 		return err
 	}
 
-	var dimgNames []string
-	for _, dimg := range werfConfig.Dimgs {
-		dimgNames = append(dimgNames, dimg.Name)
+	var imagesNames []string
+	for _, image := range werfConfig.Images {
+		imagesNames = append(imagesNames, image.Name)
 	}
 
 	commonRepoOptions := cleanup.CommonRepoOptions{
-		Repository: repoName,
-		DimgsNames: dimgNames,
-		DryRun:     CmdData.DryRun,
+		Repository:  repoName,
+		ImagesNames: imagesNames,
+		DryRun:      CmdData.DryRun,
 	}
 
 	var localRepo *git_repo.Local

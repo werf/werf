@@ -11,8 +11,8 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func GenerateFromStage(dimgBaseConfig *config.DimgBase, baseStageOptions *NewBaseStageOptions) *FromStage {
-	return newFromStage(dimgBaseConfig.FromCacheVersion, baseStageOptions)
+func GenerateFromStage(imageBaseConfig *config.ImageBase, baseStageOptions *NewBaseStageOptions) *FromStage {
+	return newFromStage(imageBaseConfig.FromCacheVersion, baseStageOptions)
 }
 
 func newFromStage(cacheVersion string, baseStageOptions *NewBaseStageOptions) *FromStage {
@@ -28,7 +28,7 @@ type FromStage struct {
 	cacheVersion string
 }
 
-func (s *FromStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, error) {
+func (s *FromStage) GetDependencies(_ Conveyor, prevImage image.ImageInterface) (string, error) {
 	var args []string
 
 	if s.cacheVersion != "" {
@@ -44,7 +44,7 @@ func (s *FromStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, 
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *FromStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Image) error {
+func (s *FromStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	serviceMounts := s.getServiceMounts(prevBuiltImage)
 	s.addServiceMountsLabels(serviceMounts, image)
 

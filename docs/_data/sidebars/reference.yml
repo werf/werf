@@ -15,7 +15,7 @@ entries:
     - title: Assembly process
       url: /reference/build/assembly_process.html
 
-    - title: Dimg configuration
+    - title: Image configuration
       sfi:
 
       - title: Naming (required)
@@ -40,7 +40,7 @@ entries:
         url: /reference/build/import_directive.html
 
       - title: All directives
-        url: /reference/build/dimg_directives.html
+        url: /reference/build/image_directives.html
 
     - title: Artifact configuration
       url: /reference/build/artifact.html

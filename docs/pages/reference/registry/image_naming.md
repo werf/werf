@@ -24,12 +24,12 @@ The procedure of creating such a layer will be referred to as **werf tag procedu
 
 For all commands related to a docker registry, werf uses a single parameter named `REPO`. Using this parameter werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
 
-* If werf project contains nameless dimg, werf uses `REPO` as docker repository.
-* Otherwise, werf constructs docker repository name for each dimg by following template `REPO/DIMG_NAME`.
+* If werf project contains nameless image, werf uses `REPO` as docker repository.
+* Otherwise, werf constructs docker repository name for each image by following template `REPO/IMAGE_NAME`.
 
-E.g., if there is unnamed dimg in a `werf.yaml` config and `REPO` is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two dimgs in a config — `server` and `worker`, then docker repository names are:
-* `myregistry.myorg.com/sys/backend/server` for `server` dimg;
-* `myregistry.myorg.com/sys/backend/worker` for `worker` dimg.
+E.g., if there is unnamed image in a `werf.yaml` config and `REPO` is `myregistry.myorg.com/sys/backend` then the docker repository name is the `myregistry.myorg.com/sys/backend`.  If there are two images in a config — `server` and `worker`, then docker repository names are:
+* `myregistry.myorg.com/sys/backend/server` for `server` image;
+* `myregistry.myorg.com/sys/backend/worker` for `worker` image.
 
 ### Minikube docker registry
 
@@ -102,31 +102,31 @@ By default, werf uses `latest` as a docker tag for all images of config.
 
 ### Combining parameters
 
-Any combination of tag parameters can be used simultaneously for [tag commands]({{ site.baseurl }}/reference/registry/tag.html) and [push commands]({{ site.baseurl }}/reference/registry/push.html). In the result, there is a separate image for each tag parameter of each dimg in a project.
+Any combination of tag parameters can be used simultaneously for [tag commands]({{ site.baseurl }}/reference/registry/tag.html) and [push commands]({{ site.baseurl }}/reference/registry/push.html). In the result, there is a separate image for each tag parameter of each image in a project.
 
 ## Examples
 
-### Two dimgs
+### Two images
 
-Given config with 2 dimgs — backend and frontend.
+Given config with 2 images — backend and frontend.
 
 The following command:
 
 ```bash
-werf dimg tag registry.hello.com/web/core/system --tag-plain v1.2.0
+werf tag registry.hello.com/web/core/system --tag v1.2.0
 ```
 
 produces the following image names respectively:
 * `registry.hello.com/web/core/system/backend:v1.2.0`;
 * `registry.hello.com/web/core/system/frontend:v1.2.0`.
 
-### Two dimgs in GitLab job
+### Two images in GitLab job
 
-Given `werf.yaml` config with 2 dimgs — backend and frontend.
+Given `werf.yaml` config with 2 images — backend and frontend.
 
 The following command runs in GitLab job for git branch named `core/feature/ADD_SETTINGS`:
 ```bash
-werf dimg push registry.hello.com/web/core/system --tag-ci
+werf push --repo registry.hello.com/web/core/system --tag-ci
 ```
 
 Image names in the result are:
@@ -135,27 +135,27 @@ Image names in the result are:
 
 Each image name converts according to slug rules with adding murmurhash.
 
-### Unnamed dimg in GitLab job
+### Unnamed image in GitLab job
 
-Given config with single unnamed dimg. The following command runs in GitLab job for git-tag named `v2.3.1`:
+Given config with single unnamed image. The following command runs in GitLab job for git-tag named `v2.3.1`:
 
 ```bash
-werf dimg push registry.hello.com/web/core/queue --tag-ci
+werf push --repo registry.hello.com/web/core/queue --tag-ci
 ```
 
 Image name in the result is `registry.hello.com/web/core/queue:v2-3-1-5cb8b0a4`
 
 Image name converts according to slug rules with adding murmurhash, because of points symbols in the tag `v2.3.1` (points don't meet the requirements).
 
-### Two dimgs with multiple tags in GitLab job
+### Two images with multiple tags in GitLab job
 
-Given config with 2 dimgs — backend and frontend. The following command runs in GitLab job for git-branch named `rework-cache`:
+Given config with 2 images — backend and frontend. The following command runs in GitLab job for git-branch named `rework-cache`:
 
 ```bash
-werf dimg push registry.hello.com/web/core/system --tag-ci --tag "feature/using_cache" --tag-plain my-test-branch
+werf push --repo registry.hello.com/web/core/system --tag-ci --tag "feature/using_cache" --tag-plain my-test-branch
 ```
 
-The command produces 6 image names for each dimg name and each tag-parameter (two dimgs by three tags):
+The command produces 6 image names for each image name and each tag-parameter (two images by three tags):
 * `registry.hello.com/web/core/system/backend:rework-cache`
 * `registry.hello.com/web/core/system/frontend:rework-cache`
 * `registry.hello.com/web/core/system/backend:feature-using-cache-81644ed0`

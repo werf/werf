@@ -37,9 +37,9 @@ const (
 )
 
 type NewBaseStageOptions struct {
-	DimgName         string
+	ImageName        string
 	ConfigMounts     []*config.Mount
-	DimgTmpDir       string
+	ImageTmpDir      string
 	ContainerWerfDir string
 	ProjectBuildDir  string
 }
@@ -47,21 +47,21 @@ type NewBaseStageOptions struct {
 func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
 	s := &BaseStage{}
 	s.name = name
-	s.dimgName = options.DimgName
+	s.imageName = options.ImageName
 	s.configMounts = options.ConfigMounts
 	s.projectBuildDir = options.ProjectBuildDir
-	s.dimgTmpDir = options.DimgTmpDir
+	s.imageTmpDir = options.ImageTmpDir
 	s.containerWerfDir = options.ContainerWerfDir
 	return s
 }
 
 type BaseStage struct {
 	name             StageName
-	dimgName         string
+	imageName        string
 	signature        string
-	image            image.Image
+	image            image.ImageInterface
 	gitPaths         []*GitPath
-	dimgTmpDir       string
+	imageTmpDir      string
 	containerWerfDir string
 	projectBuildDir  string
 	configMounts     []*config.Mount
@@ -75,19 +75,19 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
-func (s *BaseStage) GetDependencies(_ Conveyor, _ image.Image) (string, error) {
+func (s *BaseStage) GetDependencies(_ Conveyor, _ image.ImageInterface) (string, error) {
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) IsEmpty(_ Conveyor, _ image.Image) (bool, error) {
+func (s *BaseStage) IsEmpty(_ Conveyor, _ image.ImageInterface) (bool, error) {
 	return false, nil
 }
 
-func (s *BaseStage) ShouldBeReset(_ image.Image) (bool, error) {
+func (s *BaseStage) ShouldBeReset(_ image.ImageInterface) (bool, error) {
 	return false, nil
 }
 
-func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.Image) error {
+func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.ImageInterface) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
@@ -116,11 +116,11 @@ func (s *BaseStage) PreRunHook(_ Conveyor) error {
 	return nil
 }
 
-func (s *BaseStage) getServiceMounts(prevBuiltImage image.Image) map[string][]string {
+func (s *BaseStage) getServiceMounts(prevBuiltImage image.ImageInterface) map[string][]string {
 	return mergeMounts(s.getServiceMountsFromLabels(prevBuiltImage), s.getServiceMountsFromConfig())
 }
 
-func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage image.Image) map[string][]string {
+func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage image.ImageInterface) map[string][]string {
 	mountpointsByType := map[string][]string{}
 
 	var labels map[string]string
@@ -159,7 +159,7 @@ func (s *BaseStage) getServiceMountsFromConfig() map[string][]string {
 	return mountpointsByType
 }
 
-func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, image image.Image) error {
+func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, image image.ImageInterface) error {
 	for mountType, mountpoints := range mountpointsByType {
 		for _, mountpoint := range mountpoints {
 			absoluteMountpoint := filepath.Join("/", mountpoint)
@@ -167,7 +167,7 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 			var absoluteFrom string
 			switch mountType {
 			case "tmp_dir":
-				absoluteFrom = filepath.Join(s.dimgTmpDir, "mount", slug.Slug(absoluteMountpoint))
+				absoluteFrom = filepath.Join(s.imageTmpDir, "mount", slug.Slug(absoluteMountpoint))
 			case "build_dir":
 				absoluteFrom = filepath.Join(s.projectBuildDir, "mount", slug.Slug(absoluteMountpoint))
 			default:
@@ -186,7 +186,7 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 	return nil
 }
 
-func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, image image.Image) {
+func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, image image.ImageInterface) {
 	for mountType, mountpoints := range mountpointsByType {
 		var labelName string
 		switch mountType {
@@ -204,11 +204,11 @@ func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string
 	}
 }
 
-func (s *BaseStage) getCustomMounts(prevBuiltImage image.Image) map[string][]string {
+func (s *BaseStage) getCustomMounts(prevBuiltImage image.ImageInterface) map[string][]string {
 	return mergeMounts(s.getCustomMountsFromLabels(prevBuiltImage), s.getCustomMountsFromConfig())
 }
 
-func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage image.Image) map[string][]string {
+func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage image.ImageInterface) map[string][]string {
 	mountpointsByFrom := map[string][]string{}
 
 	var labels map[string]string
@@ -246,7 +246,7 @@ func (s *BaseStage) getCustomMountsFromConfig() map[string][]string {
 	return mountpointsByFrom
 }
 
-func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, image image.Image) error {
+func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, image image.ImageInterface) error {
 	for from, mountpoints := range mountpointsByFrom {
 		absoluteFrom := util.ExpandPath(from)
 
@@ -264,7 +264,7 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 	return nil
 }
 
-func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image image.Image) {
+func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image image.ImageInterface) {
 	for from, mountpoints := range mountpointsByFrom {
 		labelName := fmt.Sprintf("%s%s", mountCustomDirLabelPrefix, strings.Replace(from, "/", "--", -1))
 		labelValue := strings.Join(mountpoints, ";")
@@ -280,11 +280,11 @@ func (s *BaseStage) GetSignature() string {
 	return s.signature
 }
 
-func (s *BaseStage) SetImage(image image.Image) {
+func (s *BaseStage) SetImage(image image.ImageInterface) {
 	s.image = image
 }
 
-func (s *BaseStage) GetImage() image.Image {
+func (s *BaseStage) GetImage() image.ImageInterface {
 	return s.image
 }
 

@@ -17,7 +17,7 @@ type GitCacheStage struct {
 	*GitPatchStage
 }
 
-func (s *GitCacheStage) GetDependencies(_ Conveyor, prevImage image.Image) (string, error) {
+func (s *GitCacheStage) GetDependencies(_ Conveyor, prevImage image.ImageInterface) (string, error) {
 	var size int64
 	for _, gitPath := range s.gitPaths {
 		commit := gitPath.GetGitCommitFromImageLabels(prevImage)

@@ -5,7 +5,7 @@ type BuildOptions struct {
 	IntrospectAfterError  bool
 }
 
-type Image interface {
+type ImageInterface interface {
 	Name() string
 	Labels() map[string]string
 	ID() string

@@ -22,7 +22,7 @@ werf flush [options]
       --registry-username='': Docker registry username (granted read-write permission)
       --repo='': Docker repository name
       --tmp-dir='': Use specified dir to store tmp files and dirs (use system tmp dir by default)
-      --with-dimgs=false: Delete images (not only stages cache)
+      --with-images=false: Delete images (not only stages cache)
 ```
 
 {{ header }} Environments

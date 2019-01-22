@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/go-version"
 
 	"github.com/flant/werf/pkg/docker"
 )
 
-type StageContainerOptions struct {
+type StageImageContainerOptions struct {
 	Volume      []string
 	VolumesFrom []string
 	Expose      []string
@@ -24,66 +24,66 @@ type StageContainerOptions struct {
 	HealthCheck string
 }
 
-func newStageContainerOptions() *StageContainerOptions {
-	c := &StageContainerOptions{}
+func newStageContainerOptions() *StageImageContainerOptions {
+	c := &StageImageContainerOptions{}
 	c.Env = make(map[string]string)
 	c.Label = make(map[string]string)
 	return c
 }
 
-func (co *StageContainerOptions) AddVolume(volumes ...string) {
+func (co *StageImageContainerOptions) AddVolume(volumes ...string) {
 	co.Volume = append(co.Volume, volumes...)
 }
 
-func (co *StageContainerOptions) AddVolumeFrom(volumesFrom ...string) {
+func (co *StageImageContainerOptions) AddVolumeFrom(volumesFrom ...string) {
 	co.VolumesFrom = append(co.VolumesFrom, volumesFrom...)
 }
 
-func (co *StageContainerOptions) AddExpose(exposes ...string) {
+func (co *StageImageContainerOptions) AddExpose(exposes ...string) {
 	co.Expose = append(co.Expose, exposes...)
 }
 
-func (co *StageContainerOptions) AddEnv(envs map[string]string) {
+func (co *StageImageContainerOptions) AddEnv(envs map[string]string) {
 	for env, value := range envs {
 		co.Env[env] = value
 	}
 }
 
-func (co *StageContainerOptions) AddLabel(labels map[string]string) {
+func (co *StageImageContainerOptions) AddLabel(labels map[string]string) {
 	for label, value := range labels {
 		co.Label[label] = value
 	}
 }
 
-func (co *StageContainerOptions) AddCmd(cmds ...string) {
+func (co *StageImageContainerOptions) AddCmd(cmds ...string) {
 	co.Cmd = append(co.Cmd, cmds...)
 }
 
-func (co *StageContainerOptions) AddOnbuild(onbuilds ...string) {
+func (co *StageImageContainerOptions) AddOnbuild(onbuilds ...string) {
 	co.Onbuild = append(co.Onbuild, onbuilds...)
 }
 
-func (co *StageContainerOptions) AddWorkdir(workdir string) {
+func (co *StageImageContainerOptions) AddWorkdir(workdir string) {
 	co.Workdir = workdir
 }
 
-func (co *StageContainerOptions) AddUser(user string) {
+func (co *StageImageContainerOptions) AddUser(user string) {
 	co.User = user
 }
 
-func (co *StageContainerOptions) AddStopSignal(signal string) {
+func (co *StageImageContainerOptions) AddStopSignal(signal string) {
 	co.StopSignal = signal
 }
 
-func (co *StageContainerOptions) AddHealthCheck(check string) {
+func (co *StageImageContainerOptions) AddHealthCheck(check string) {
 	co.HealthCheck = check
 }
 
-func (co *StageContainerOptions) AddEntrypoint(entrypoints ...string) {
+func (co *StageImageContainerOptions) AddEntrypoint(entrypoints ...string) {
 	co.Entrypoint = append(co.Entrypoint, entrypoints...)
 }
 
-func (co *StageContainerOptions) merge(co2 *StageContainerOptions) *StageContainerOptions {
+func (co *StageImageContainerOptions) merge(co2 *StageImageContainerOptions) *StageImageContainerOptions {
 	mergedCo := newStageContainerOptions()
 	mergedCo.Volume = append(co.Volume, co2.Volume...)
 	mergedCo.VolumesFrom = append(co.VolumesFrom, co2.VolumesFrom...)
@@ -148,7 +148,7 @@ func (co *StageContainerOptions) merge(co2 *StageContainerOptions) *StageContain
 	return mergedCo
 }
 
-func (co *StageContainerOptions) toRunArgs() ([]string, error) {
+func (co *StageImageContainerOptions) toRunArgs() ([]string, error) {
 	var args []string
 
 	for _, volume := range co.Volume {
@@ -184,7 +184,7 @@ func (co *StageContainerOptions) toRunArgs() ([]string, error) {
 	return args, nil
 }
 
-func (co *StageContainerOptions) toCommitChanges() ([]string, error) {
+func (co *StageImageContainerOptions) toCommitChanges() ([]string, error) {
 	var args []string
 
 	for _, volume := range co.Volume {

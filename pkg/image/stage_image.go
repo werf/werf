@@ -9,37 +9,37 @@ import (
 	"github.com/flant/werf/pkg/docker"
 )
 
-type Stage struct {
+type StageImage struct {
 	*base
-	fromImage  *Stage
-	container  *StageContainer
+	fromImage  *StageImage
+	container  *StageImageContainer
 	buildImage *build
 }
 
-func NewStageImage(fromImage *Stage, name string) *Stage {
-	stage := &Stage{}
+func NewStageImage(fromImage *StageImage, name string) *StageImage {
+	stage := &StageImage{}
 	stage.base = newBaseImage(name)
 	stage.fromImage = fromImage
 	stage.container = newStageImageContainer(stage)
 	return stage
 }
 
-func (i *Stage) Labels() map[string]string {
+func (i *StageImage) Labels() map[string]string {
 	if i.inspect != nil {
 		return i.inspect.Config.Labels
 	}
 	return nil
 }
 
-func (i *Stage) BuilderContainer() BuilderContainer {
-	return &StageBuilderContainer{i}
+func (i *StageImage) BuilderContainer() BuilderContainer {
+	return &StageImageBuilderContainer{i}
 }
 
-func (i *Stage) Container() Container {
+func (i *StageImage) Container() Container {
 	return i.container
 }
 
-func (i *Stage) MustGetInspect() (*types.ImageInspect, error) {
+func (i *StageImage) MustGetInspect() (*types.ImageInspect, error) {
 	if i.buildImage != nil {
 		return i.buildImage.MustGetInspect()
 	} else {
@@ -47,7 +47,7 @@ func (i *Stage) MustGetInspect() (*types.ImageInspect, error) {
 	}
 }
 
-func (i *Stage) MustGetId() (string, error) {
+func (i *StageImage) MustGetId() (string, error) {
 	if i.buildImage != nil {
 		return i.buildImage.MustGetId()
 	} else {
@@ -55,25 +55,25 @@ func (i *Stage) MustGetId() (string, error) {
 	}
 }
 
-func (i *Stage) ID() string {
+func (i *StageImage) ID() string {
 	if i.inspect != nil {
 		return i.inspect.ID
 	}
 	return ""
 }
 
-func (i *Stage) IsExists() bool {
+func (i *StageImage) IsExists() bool {
 	return i.inspect != nil
 }
 
-func (i *Stage) SyncDockerState() error {
+func (i *StageImage) SyncDockerState() error {
 	if err := i.ResetInspect(); err != nil {
 		return fmt.Errorf("image %s inspect failed: %s", i.name, err)
 	}
 	return nil
 }
 
-func (i *Stage) Build(options BuildOptions) error {
+func (i *StageImage) Build(options BuildOptions) error {
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
@@ -111,7 +111,7 @@ func (i *Stage) Build(options BuildOptions) error {
 	return nil
 }
 
-func (i *Stage) Commit() error {
+func (i *StageImage) Commit() error {
 	builtId, err := i.container.commit()
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func (i *Stage) Commit() error {
 	return nil
 }
 
-func (i *Stage) Introspect() error {
+func (i *StageImage) Introspect() error {
 	if err := i.container.introspect(); err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (i *Stage) Introspect() error {
 	return nil
 }
 
-func (i *Stage) introspectBefore() error {
+func (i *StageImage) introspectBefore() error {
 	if err := i.container.introspectBefore(); err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (i *Stage) introspectBefore() error {
 	return nil
 }
 
-func (i *Stage) SaveInCache() error {
+func (i *StageImage) SaveInCache() error {
 	buildImageId, err := i.buildImage.MustGetId()
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func (i *Stage) SaveInCache() error {
 	return nil
 }
 
-func (i *Stage) Tag(name string) error {
+func (i *StageImage) Tag(name string) error {
 	imageId, err := i.MustGetId()
 	if err != nil {
 		return err
@@ -168,7 +168,7 @@ func (i *Stage) Tag(name string) error {
 	return nil
 }
 
-func (i *Stage) Pull() error {
+func (i *StageImage) Pull() error {
 	if err := docker.CliPull(i.name); err != nil {
 		return err
 	}
@@ -178,11 +178,11 @@ func (i *Stage) Pull() error {
 	return nil
 }
 
-func (i *Stage) Push() error {
+func (i *StageImage) Push() error {
 	return docker.CliPush(i.name)
 }
 
-func (i *Stage) Import(name string) error {
+func (i *StageImage) Import(name string) error {
 	importedImage := newBaseImage(name)
 
 	if err := docker.CliPull(name); err != nil {
@@ -205,7 +205,7 @@ func (i *Stage) Import(name string) error {
 	return nil
 }
 
-func (i *Stage) Export(name string) error {
+func (i *StageImage) Export(name string) error {
 	if err := i.Tag(name); err != nil {
 		return err
 	}

@@ -67,7 +67,7 @@ We need to prepare main application image with a web server. Create the followin
 project: myapp
 ---
 
-dimg: ~
+image: ~
 from: python:alpine
 ansible:
   install:
@@ -93,7 +93,7 @@ Our web application consists of a single static web page which created right in 
 Build and push an image with the following command:
 
 ```shell
-werf dimg bp :minikube
+werf bp --repo :minikube
 ```
 
 The image name consists of `REPO` and `TAG`. Werf will use `latest` tag for the image by default. We have specified `:minikube` as a `REPO` — this is a shortcut for `localhost:5000/myapp`. So for our example werf will push into the docker-registry image with the name `localhost:5000/myapp:latest`.

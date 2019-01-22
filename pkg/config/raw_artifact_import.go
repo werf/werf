@@ -6,7 +6,7 @@ type rawArtifactImport struct {
 	After        string `yaml:"after,omitempty"`
 
 	rawArtifactExport `yaml:",inline"`
-	rawDimg           *rawDimg `yaml:"-"` // parent
+	rawImage          *rawImage `yaml:"-"` // parent
 
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
@@ -16,12 +16,12 @@ func (c *rawArtifactImport) configSection() interface{} {
 }
 
 func (c *rawArtifactImport) doc() *doc {
-	return c.rawDimg.doc
+	return c.rawImage.doc
 }
 
 func (c *rawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	if parent, ok := parentStack.Peek().(*rawDimg); ok {
-		c.rawDimg = parent
+	if parent, ok := parentStack.Peek().(*rawImage); ok {
+		c.rawImage = parent
 	}
 
 	parentStack.Push(c)
@@ -34,7 +34,7 @@ func (c *rawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) err
 
 	c.rawArtifactExport.inlinedIntoRaw(c)
 
-	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawDimg.doc); err != nil {
+	if err := checkOverflow(c.UnsupportedAttributes, c, c.rawImage.doc); err != nil {
 		return err
 	}
 

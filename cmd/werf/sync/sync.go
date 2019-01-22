@@ -102,9 +102,9 @@ func runSync() error {
 		return err
 	}
 
-	var dimgNames []string
-	for _, dimg := range werfConfig.Dimgs {
-		dimgNames = append(dimgNames, dimg.Name)
+	var imageNames []string
+	for _, image := range werfConfig.Images {
+		imageNames = append(imageNames, image.Name)
 	}
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
@@ -113,12 +113,12 @@ func runSync() error {
 	}
 
 	commonRepoOptions := cleanup.CommonRepoOptions{
-		Repository: repoName,
-		DimgsNames: dimgNames,
-		DryRun:     CmdData.DryRun,
+		Repository:  repoName,
+		ImagesNames: imageNames,
+		DryRun:      CmdData.DryRun,
 	}
 
-	if err := cleanup.ProjectDimgstagesSync(commonProjectOptions, commonRepoOptions); err != nil {
+	if err := cleanup.ProjectImageStagesSync(commonProjectOptions, commonRepoOptions); err != nil {
 		return err
 	}
 

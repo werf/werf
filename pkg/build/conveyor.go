@@ -16,19 +16,19 @@ import (
 type Conveyor struct {
 	*conveyorPermanentFields
 
-	dimgsInOrder []*Dimg
+	imagesInOrder []*Image
 
-	stageImages                    map[string]*image.Stage
-	buildingGitStageNameByDimgName map[string]stage.StageName
-	remoteGitRepos                 map[string]*git_repo.Remote
-	imagesBySignature              map[string]image.Image
+	stageImages                     map[string]*image.StageImage
+	buildingGitStageNameByImageName map[string]stage.StageName
+	remoteGitRepos                  map[string]*git_repo.Remote
+	imagesBySignature               map[string]image.ImageInterface
 
 	tmpDir string
 }
 
 type conveyorPermanentFields struct {
-	werfConfig         *config.WerfConfig
-	dimgNamesToProcess []string
+	werfConfig          *config.WerfConfig
+	imageNamesToProcess []string
 
 	projectDir       string
 	projectBuildDir  string
@@ -45,11 +45,11 @@ type DockerAuthorizer interface {
 	LoginForPush(repo string) error
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, dimgNamesToProcess []string, projectDir, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
 	c := &Conveyor{
 		conveyorPermanentFields: &conveyorPermanentFields{
-			werfConfig:         werfConfig,
-			dimgNamesToProcess: dimgNamesToProcess,
+			werfConfig:          werfConfig,
+			imageNamesToProcess: imageNamesToProcess,
 
 			projectDir:       projectDir,
 			projectBuildDir:  buildDir,
@@ -67,10 +67,10 @@ func NewConveyor(werfConfig *config.WerfConfig, dimgNamesToProcess []string, pro
 }
 
 func (c *Conveyor) ReInitRuntimeFields() {
-	c.stageImages = make(map[string]*image.Stage)
-	c.imagesBySignature = make(map[string]image.Image)
+	c.stageImages = make(map[string]*image.StageImage)
+	c.imagesBySignature = make(map[string]image.ImageInterface)
 
-	c.buildingGitStageNameByDimgName = make(map[string]stage.StageName)
+	c.buildingGitStageNameByImageName = make(map[string]stage.StageName)
 
 	c.remoteGitRepos = make(map[string]*git_repo.Remote)
 
@@ -220,11 +220,11 @@ func (c *Conveyor) lockAllImagesReadOnly() (string, error) {
 	return lockName, nil
 }
 
-func (c *Conveyor) GetImage(name string) *image.Stage {
+func (c *Conveyor) GetStageImage(name string) *image.StageImage {
 	return c.stageImages[name]
 }
 
-func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.Stage {
+func (c *Conveyor) GetOrCreateImage(fromImage *image.StageImage, name string) *image.StageImage {
 	if img, ok := c.stageImages[name]; ok {
 		return img
 	}
@@ -234,42 +234,42 @@ func (c *Conveyor) GetOrCreateImage(fromImage *image.Stage, name string) *image.
 	return img
 }
 
-func (c *Conveyor) GetImageBySignature(signature string) image.Image {
+func (c *Conveyor) GetImageBySignature(signature string) image.ImageInterface {
 	return c.imagesBySignature[signature]
 }
 
-func (c *Conveyor) SetImageBySignature(signature string, img image.Image) {
+func (c *Conveyor) SetImageBySignature(signature string, img image.ImageInterface) {
 	c.imagesBySignature[signature] = img
 }
 
-func (c *Conveyor) GetDimg(name string) *Dimg {
-	for _, dimg := range c.dimgsInOrder {
-		if dimg.GetName() == name {
-			return dimg
+func (c *Conveyor) GetImage(name string) *Image {
+	for _, img := range c.imagesInOrder {
+		if img.GetName() == name {
+			return img
 		}
 	}
 
-	panic(fmt.Sprintf("Dimg '%s' not found!", name))
+	panic(fmt.Sprintf("Image '%s' not found!", name))
 }
 
-func (c *Conveyor) GetDimgSignature(dimgName string) string {
-	return c.GetDimg(dimgName).LatestStage().GetSignature()
+func (c *Conveyor) GetImageLatestStageSignature(imageName string) string {
+	return c.GetImage(imageName).LatestStage().GetSignature()
 }
 
-func (c *Conveyor) GetDimgImageName(dimgName string) string {
-	return c.GetDimg(dimgName).LatestStage().GetImage().Name()
+func (c *Conveyor) GetImageLatestStageImageName(imageName string) string {
+	return c.GetImage(imageName).LatestStage().GetImage().Name()
 }
 
 func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
 	return c.dockerAuthorizer
 }
 
-func (c *Conveyor) SetBuildingGitStage(dimgName string, stageName stage.StageName) {
-	c.buildingGitStageNameByDimgName[dimgName] = stageName
+func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {
+	c.buildingGitStageNameByImageName[imageName] = stageName
 }
 
-func (c *Conveyor) GetBuildingGitStage(dimgName string) stage.StageName {
-	stageName, ok := c.buildingGitStageNameByDimgName[dimgName]
+func (c *Conveyor) GetBuildingGitStage(imageName string) stage.StageName {
+	stageName, ok := c.buildingGitStageNameByImageName[imageName]
 	if !ok {
 		return ""
 	}
@@ -277,6 +277,6 @@ func (c *Conveyor) GetBuildingGitStage(dimgName string) stage.StageName {
 	return stageName
 }
 
-func (c *Conveyor) GetDimgTmpDir(dimgName string) string {
-	return path.Join(c.tmpDir, "dimg", dimgName)
+func (c *Conveyor) GetImageTmpDir(imageName string) string {
+	return path.Join(c.tmpDir, "image", imageName)
 }

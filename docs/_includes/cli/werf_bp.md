@@ -8,7 +8,7 @@
 {{ header }} Syntax
 
 ```bash
-werf bp [DIMG_NAME...] [options]
+werf bp [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Options
