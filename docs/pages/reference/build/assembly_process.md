@@ -5,7 +5,7 @@ permalink: reference/build/assembly_process.html
 author: Alexey Igrychev <alexey.igrychev@flant.com>
 ---
 
-## Werf build
+## Build command
 
 {% include /cli/werf_build.md %}
 

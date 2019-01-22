@@ -45,14 +45,14 @@ The following steps perform, when werf apply transformations of the text in slug
 * Reducing multiple dashes sequences to one dash.
 * Trimming the length of the data so that result will fit maximum bytes limit.
 
-## Release slug
+## Release slug command
 
 {% include /cli/werf_slug_release.md %}
 
-## Namespace slug
+## Namespace slug command
 
 {% include /cli/werf_slug_namespace.md %}
 
-## Tag slug
+## Tag slug command
 
 {% include /cli/werf_slug_tag.md %}

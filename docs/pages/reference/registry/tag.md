@@ -16,6 +16,6 @@ Build images with [build commands]({{ site.baseurl }}/reference/cli/image_build.
 
 Unlike `docker tag` command, which simply creates an alias for the specified image, `werf tag` produces a new image layer with a specified name, see [image naming article]({{ site.baseurl }}/reference/registry/image_naming.html) for the details. The result of the executing `werf tag` command is docker images created locally.
 
-## werf tag
+## Tag command
 
 {% include /cli/werf_tag.md %}

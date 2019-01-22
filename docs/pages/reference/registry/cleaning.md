@@ -72,7 +72,7 @@ Werf gets information about kubernetes clusters and how to connect to them from 
 
 For docker registry authorization in cleanup, werf require the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
 
-### werf cleanup
+### Cleanup command
 
 {% include /cli/werf_cleanup.md header="####" %}
 
@@ -87,7 +87,7 @@ There are some consequences of this algorithm:
 1. If the cleanup, — the first step of cleaning by policies, — was skipped, then local storage synchronization makes no sense.
 2. Werf completely removes local stages cache for the built images, that don't exist into the docker registry.
 
-### werf sync
+### Sync command
 
 {% include /cli/werf_sync.md header="####" %}
 
@@ -105,7 +105,7 @@ Docker registry cleaning includes:
 * Deleting pushed images of the project.
 * Deleting pushed stages cache of the project.
 
-### werf flush
+### Flush command
 
 {% include /cli/werf_flush.md header="####" %}
 
@@ -115,6 +115,6 @@ With this variant of cleaning, werf can delete all images, containers, and files
 
 Reset is the fullest method of cleaning on the local machine.
 
-### werf reset
+### Reset command
 
 {% include /cli/werf_reset.md header="####" %}
