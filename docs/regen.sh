@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 SOURCE=`dirname ${BASH_SOURCE[0]}`
 PARTIALS_DIR=$SOURCE/_includes/cli
 
