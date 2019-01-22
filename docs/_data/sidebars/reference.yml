@@ -66,8 +66,8 @@ entries:
     - title: Push
       url: /reference/registry/push.html
 
-    - title: Pull
-      url: /reference/registry/pull.html
+    #    - title: Pull
+    #      url: /reference/registry/pull.html
 
     - title: Cleaning
       url: /reference/registry/cleaning.html
