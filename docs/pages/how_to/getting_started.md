@@ -201,7 +201,8 @@ Let's build and run our first application.
 3.  Run a container from the image:
 
     ```shell
-    werf dimg run -d -p 8000:8000 -- /app/start.sh
+    werf tag --repo myimage --tag mytag
+    docker run myimage:mytag -d -p 8000:8000 /app/start.sh
     ```
 
 4.  Check that the application runs and responds:
@@ -223,7 +224,7 @@ Werf can be used to push a built image into docker-registry.
 2. Push image with werf using default `latest` tag:
 
     ```shell
-    werf push --repo werf-registry.kube-system.svc.cluster.local:5000/symfony-demo
+    werf push --repo localhost:5000/symfony-demo
     ```
 
 ## What Can Be Improved

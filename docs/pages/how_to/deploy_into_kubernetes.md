@@ -21,7 +21,7 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
    * Accessible from kubernetes nodes to pull images from the registry.
 
- * Installed `werf` on a host machine (<{{ site.baseurl }}/how_to/installation.html>).
+ * Installed `werf` on a host machine (<{{ site.url }}/{{ site.baseurl}}/how_to/installation.html>).
 
  * Installed `kubectl` on a host machine configured to access your kubernetes cluster (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
@@ -213,10 +213,16 @@ minikube addons enable ingress
 Run deploy with werf:
 
 ```shell
-werf kube deploy :minikube --namespace mynamespace
+werf deploy --repo :minikube --environment dev
 ```
 
-With this command werf will create all kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running). Helm release with name `myapp-mynamespace` will be created. This name consists of chart name `myapp` and namespace `mynamespace`.
+With this command werf will create all kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running).
+
+[Environment]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#environment) `--environment` is a required param needed to generate helm release name and kubernetes namespace.
+
+Helm release with name `myapp-dev` will be created. This name consists of [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) `myapp` (which you've placed in the `werf.yaml`) and specified environment `dev`. Check docs for details about [helm release name generation]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#helm-release-name).
+
+Kubernetes namespace `myapp-dev` will also be used. This name also consists of [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) `myapp` and specified environment `dev`. Check docs for details about [kubernetes namespace generation]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#kubernetes-namespace).
 
 ## Check your application
 
@@ -239,7 +245,7 @@ Then you can check application by url: `http://myapp.local`.
 To completely remove deployed application run this dismiss werf command:
 
 ```shell
-werf kube dismiss :minikube --namespace mynamespace --with-namespace
+werf dismiss --with-namespace
 ```
 
 ## See also

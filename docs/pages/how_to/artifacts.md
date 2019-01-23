@@ -63,7 +63,8 @@ werf build
 
 Run the application by executing the following command in the `booking` directory:
 ```bash
-werf dimg run -p 9000:9000 --rm -d -- /app/run.sh
+werf tag --repo booking --tag v1.0
+docker run booking/go-booking:v1.0 -p 9000:9000 --rm -d /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -83,18 +84,12 @@ The `revel framework booking demo` page should open, and you can login by enteri
 
 ### Getting the image size
 
-Create a image with tag `v1.0`:
-
-```bash
-werf tag booking --tag v1.0
-```
-
 After tagging we get an image `booking/go-booking:v1.0` according to werf naming rules (read more about naming [here]({{ site.baseurl }}/reference/registry/image_naming.html)).
 
 Determine the image size by executing:
 
 ```bash
-docker images booking/go-booking:v1.0
+docker images booking/go-booking
 ```
 
 The output will be something like this:
@@ -173,7 +168,8 @@ docker stop `docker ps -lq`
 
 Run the modified application by executing the following command:
 ```bash
-werf dimg run -p 9000:9000 --rm -d -- /app/run.sh
+werf tag --repo booking --tag v2.0
+docker run booking/go-booking:v2.0 -p 9000:9000 --rm -d /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -192,12 +188,6 @@ Open in a web browser the following URL — [http://localhost:9000](http://local
 The `revel framework booking demo` page should open, and you can login by entering `demo/demo` as a login/password.
 
 ### Getting images size
-
-Create a image with tag `v2.0`:
-
-```bash
-werf tag booking --tag v2.0
-```
 
 Determine the image size of optimized build, by executing:
 ```bash
