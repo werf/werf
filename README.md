@@ -59,38 +59,45 @@ It is designed to make engineer's work fast end efficient.
 
    Minimal version is v2.7.0-rc1.
 
-## Install Werf binary (simple)
+## Install Werf
 
-The latest release can be reached via [this page](https://bintray.com/dapp/dapp/Dapp/_latestVersion).
+### Download binary
 
-### MacOS
+The latest release can be reached via [this page](https://bintray.com/flant/werf/werf/_latestVersion).
+
+#### MacOS
 
 ```bash
-curl -L https://dl.bintray.com/dapp/dapp/v1.0.0-alpha.3/darwin-amd64/dapp -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.4/werf-darwin-amd64-v1.0.0-alpha.4 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
 
-### Linux
+#### Linux
 
 ```bash
-curl -L https://dl.bintray.com/dapp/dapp/v1.0.0-alpha.3/linux-amd64/dapp -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.4/werf-linux-amd64-v1.0.0-alpha.4 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
 
-### Windows
+#### Windows
 
-Download [werf.exec](https://dl.bintray.com/dapp/dapp/v1.0.0-alpha.3/windows-amd64/dapp).
+Download [werf.exec](https://dl.bintray.com/flant/werf/v1.0.0-alpha.4/werf-windows-amd64-v1.0.0-alpha.4.exe).
 
-### Check it
-
-Now you have Werf installed. Check it with `werf version`.
-
-Time to [make your first application](https://flant.github.io/werf/how_to/getting_started.html)!
-
-## Install Werf using Multiwerf
+### Using Multiwerf
 
 [Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf, which:
-* Manages multiple versions of binaries installed on a single host, that can be used at the same time.
-* Enables autoupdates (optionally).
+* downloads werf binary builds;
+* manages multiple versions of binaries installed on a single host, that can be used at the same time;
+* enables autoupdates (optionally).
+
+### From source
+
+```
+go get github.com/flant/werf/cmd/werf
+```
+
+## Getting started
+
+[Make your first werf application](https://flant.github.io/werf/how_to/getting_started.html)!
