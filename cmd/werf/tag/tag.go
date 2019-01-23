@@ -27,6 +27,11 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "tag [IMAGE_NAME...]",
 		DisableFlagsInUseLine: true,
+		Short:                 "Tag built images",
+		Long: `Tag built images
+
+The IMAGE_NAME optional parameter — is a name of image from a config. 
+Specifying IMAGE_NAME one or multiple times allows tagging only certain images from config. By default, werf tags all images.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runPush(args)
 			if err != nil {

@@ -31,6 +31,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "build [IMAGE_NAME...]",
 		DisableFlagsInUseLine: true,
+		Short:                 "Build images",
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
 		},

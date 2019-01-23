@@ -30,6 +30,11 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "push [IMAGE_NAME...]",
 		DisableFlagsInUseLine: true,
+		Short:                 "Push built images",
+		Long: `Perform image push procedure and optionally stages push procedure.
+
+The IMAGE_NAME optional parameter — is a name of image from a config. 
+Specifying IMAGE_NAME one or multiple times allows pushing only certain images from config. By default, werf pushes all images.`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome, common.WerfTmp),
 		},
@@ -48,7 +53,7 @@ func NewCmd() *cobra.Command {
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to push images to. CI_REGISTRY_IMAGE will be used by default if available.")
-	cmd.Flags().BoolVarP(&CmdData.WithStages, "with-stages", "", false, "Push images with stages cache")
+	cmd.Flags().BoolVarP(&CmdData.WithStages, "with-stages", "", false, "Push not only a image but also corresponding stages cache. Optional IMAGE_NAME parameter also affects stages cache that will be pushed")
 
 	cmd.Flags().StringVarP(&CmdData.PushUsername, "push-username", "", "", "Docker registry username to authorize push to the docker repo")
 	cmd.Flags().StringVarP(&CmdData.PushPassword, "push-password", "", "", "Docker registry password to authorize push to the docker repo")
