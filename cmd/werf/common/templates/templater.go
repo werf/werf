@@ -12,6 +12,7 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/flant/werf/cmd/werf/common"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type FlagExposer interface {
@@ -189,22 +190,27 @@ func FlagsUsages(f *flag.FlagSet) string {
 		if flag.Hidden {
 			return
 		}
-		format := "--%s=%s: %s\n"
 
-		if flag.Value.Type() == "string" {
-			format = "--%s='%s': %s\n"
-		}
-
-		if len(flag.Shorthand) > 0 {
-			format = "  -%s, " + format
-		} else {
-			format = "   %s   " + format
-		}
-
-		fmt.Fprintf(x, format, flag.Shorthand, flag.Name, flag.DefValue, flag.Usage)
+		fmt.Fprintf(x, "%s:\n%s\n", flagLeftPart(flag), logger.FitText(flag.Usage, 12))
 	})
 
 	return x.String()
+}
+
+func flagLeftPart(flag *flag.Flag) string {
+	format := "--%s=%s"
+
+	if flag.Value.Type() == "string" {
+		format = "--%s='%s'"
+	}
+
+	if len(flag.Shorthand) > 0 {
+		format = "  -%s, " + format
+		return fmt.Sprintf(format, flag.Shorthand, flag.Name, flag.DefValue)
+	} else {
+		format = "      " + format
+		return fmt.Sprintf(format, flag.Name, flag.DefValue)
+	}
 }
 
 func rpad(s string, padding int) string {
