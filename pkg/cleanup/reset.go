@@ -32,7 +32,7 @@ func ResetAll(options CommonOptions) error {
 
 func deleteWerfFiles(options CommonOptions) error {
 	var directoryPathToDelete []string
-	for _, directory := range []string{"bin", "builds", "git", "worktree", "tmp"} {
+	for _, directory := range []string{"builds", "git", "worktree", "tmp"} {
 		directoryPath := filepath.Join(werf.GetHomeDir(), directory)
 
 		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {

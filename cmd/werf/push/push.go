@@ -2,6 +2,7 @@ package push
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -28,7 +29,13 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "push [IMAGE_NAME...]",
+		Use:   "push [IMAGE_NAME...]",
+		Short: "Push built images into Docker registry",
+		Long: common.GetLongCommandDescription(`Push built images into Docker registry.
+
+Images will be tagged automatically with the names REPO/IMAGE_NAME:TAG. These tags will be deleted after push. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
+
+If one or more IMAGE_NAME parameters specified, werf will push only these images from werf.yaml.`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome, common.WerfTmp),

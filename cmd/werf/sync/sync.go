@@ -2,6 +2,7 @@ package sync
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -25,9 +26,15 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "sync",
+		Use: "sync",
 		DisableFlagsInUseLine: true,
-		Short:                 "Remove local stages cache for the images, that don't exist into the docker registry",
+		Short: "Remove local stages cache for the images, that doesn't exist in the Docker registry",
+		Long: common.GetLongCommandDescription(`Remove local stages cache for the images, that doesn't exist in the Docker registry.
+
+Sync is a werf ability to automate periodical cleaning of build machine. Command should run after cleaning up Docker registry with the cleanup command.
+See more info about sync: https://flant.github.io/werf/reference/registry/cleaning.html#local-storage-synchronization
+
+Command should run from the project directory, where werf.yaml file reside.`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableSyncLocalStagesDatePeriodPolicy, common.WerfHome),
 		},

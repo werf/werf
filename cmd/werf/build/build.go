@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -29,7 +30,13 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "build [IMAGE_NAME...]",
+		Use:   "build [IMAGE_NAME...]",
+		Short: "Build images",
+		Long: common.GetLongCommandDescription(`Build images from werf.yaml.
+
+The result of build command is a stages cache for images.
+
+If one or more IMAGE_NAME parameters specified, werf will build only these images from werf.yaml.`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),

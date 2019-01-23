@@ -25,7 +25,13 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "tag [IMAGE_NAME...]",
+		Use:   "tag [IMAGE_NAME...]",
+		Short: "Tag built images",
+		Long: common.GetLongCommandDescription(`Tag built images from werf.yaml.
+
+Stages cache should exists for images to be tagged. I.e. images should be built with build command before tagging. Docker images names are constructed from parameters as REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
+
+If one or more IMAGE_NAME parameters specified, werf will tag only these images from werf.yaml. `),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runPush(args)
