@@ -54,17 +54,25 @@ main() {
   if [ -n "$BINTRAY_AUTH" ] ; then
     ( bintray_create_version && echo "Bintray: Version $VERSION created" ) || ( exit 1 )
 
-    for filename in werf werf.sha ; do
-      for arch in darwin linux ; do
-        ( bintray_upload_file_into_version $RELEASE_BUILD_DIR/$arch-amd64/$filename $arch-amd64/$filename ) || ( exit 1 )
+    for os in linux darwin windows ; do
+      for arch in amd64 ; do
+        fileName=werf-$os-$arch-$VERSION
+        if [ "$os" == "windows" ] ; then
+          fileName=$fileName.exe
+        fi
+
+        localFile=$RELEASE_BUILD_DIR/$VERSION/$fileName
+
+        ( bintray_upload_file_into_version $localFile $fileName ) || ( exit 1 )
       done
     done
+
+    ( bintray_upload_file_into_version $RELEASE_BUILD_DIR/$VERSION/SHA256SUMS SHA256SUMS ) || ( exit 1 )
   fi
 
   if [ -n "$GITHUB_TOKEN" ] ; then
     ( github_create_release && echo "Github: Release for tag $GIT_TAG created" ) || ( exit 1 )
   fi
-
 }
 
 bintray_create_version() {
