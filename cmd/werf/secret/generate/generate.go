@@ -3,6 +3,7 @@ package secret
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -21,9 +22,14 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "generate",
+		Use: "generate",
 		DisableFlagsInUseLine: true,
-		Short:                 "Generate secret data",
+		Short: "Encrypt provided data",
+		Long: common.GetLongCommandDescription(`Encrypt provided data.
+
+Provide data onto stdin by default.
+
+Data can be provided in file by specifying --file-path option. Option --values should be specified in the case when values yaml file provided.`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},

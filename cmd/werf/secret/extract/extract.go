@@ -24,9 +24,14 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "extract",
+		Use: "extract",
 		DisableFlagsInUseLine: true,
-		Short:                 "Extract data",
+		Short: "Decrypt data",
+		Long: common.GetLongCommandDescription(`Decrypt data.
+
+Provide encrypted data onto stdin by default.
+
+Data can be provided in a file by specifying --file-path option. Option --values should be specified in the case when secret values yaml file provided.`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},

@@ -7,14 +7,18 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 
+	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy/secret"
 )
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "keygen",
+		Use: "keygen",
 		DisableFlagsInUseLine: true,
-		Short:                 "Generate encryption key",
+		Short: "Generate hex encryption key that can be used as WERF_SECRET_KEY",
+		Long: common.GetLongCommandDescription(`Generate hex key that can be used as WERF_SECRET_KEY.
+
+16-bytes key will be generated (AES-128).`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runSecretKeyGenerate()
 			if err != nil {

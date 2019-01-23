@@ -23,9 +23,18 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "regenerate [EXTRA_SECRET_VALUES_FILE_PATH...]",
+		Use: "regenerate [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		DisableFlagsInUseLine: true,
-		Short:                 "Regenerate secret files with new secret key",
+		Short: "Regenerate secret files with new secret key",
+		Long: common.GetLongCommandDescription(`Regenerate secret files with new secret key.
+
+Old key should be specified with the --old-key option.
+New key should reside either in the WERF_SECRET_KEY environment variable or .werf_secret_key file.
+
+Command will extract data with the old key, generate new secret data and rewrite files:
+* standard raw secret files in the .helm/secret folder;
+* standard secret values yaml file .helm/secret-values.yaml;
+* additional secret values yaml files specified with EXTRA_SECRET_VALUES_FILE_PATH params.`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},

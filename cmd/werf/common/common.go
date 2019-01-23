@@ -11,6 +11,7 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -30,6 +31,10 @@ type CmdData struct {
 	Release     *string
 	Namespace   *string
 	KubeContext *string
+}
+
+func GetLongCommandDescription(text string) string {
+	return logger.FitTextWidth(text, 0, 100) // FIXME: tw or 100
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {

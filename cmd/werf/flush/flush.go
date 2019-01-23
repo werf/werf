@@ -2,6 +2,7 @@ package flush
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -27,9 +28,21 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "flush",
+		Use: "flush",
 		DisableFlagsInUseLine: true,
-		Short:                 "Delete project images in local docker storage and specified docker registry",
+		Short: "Delete project images in local Docker storage and specified Docker registry",
+		Long: common.GetLongCommandDescription(`Delete project images in local Docker storage and specified Docker registry.
+
+This command is useful to fully delete all data related to the project from:
+* local Docker storage or
+* both local Docker storage and Docker registry if --repo parameter has been specified.
+See more info about flush: https://flant.github.io/werf/reference/registry/cleaning.html#flush.
+
+Command should run from the project directory, where werf.yaml file reside.
+
+Flush requires read-write permissions to delete images from Docker registry. Standard Docker config or specified options --registry-username and --registry-password will be used to authorize in the Docker registry.
+
+See more info about authorization: https://flant.github.io/werf/reference/registry/authorization.html`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfInsecureRegistry, common.WerfHome),
 		},

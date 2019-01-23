@@ -36,7 +36,19 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "deploy",
+		Use:   "deploy",
+		Short: "Deploy application into Kubernetes",
+		Long: common.GetLongCommandDescription(`Deploy application into Kubernetes.
+
+Command will create Helm Release and wait until all resources of the release are become ready.
+
+Deploy needs the same parameters as push to construct image names: repo and tags. Docker images names are constructed from paramters as REPO/IMAGE_NAME:TAG. Deploy will fetch built image ids from Docker registry. So images should be built and pushed into the Docker registry prior running deploy.
+
+Helm chart directory .helm should exists and contain valid Helm chart.
+
+Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --environment or CI_ENVIRONMENT_SLUG should be specified for command.
+
+Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),

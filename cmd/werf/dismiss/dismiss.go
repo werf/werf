@@ -20,7 +20,15 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "dismiss",
+		Use:   "dismiss",
+		Short: "Delete application from Kubernetes",
+		Long: common.GetLongCommandDescription(`Delete application from Kubernetes.
+
+Helm Release will be purged and optionally Kubernetes Namespace.
+
+Environment is a required param for the dismiss by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --environment or CI_ENVIRONMENT_SLUG should be specified for command.
+
+Read more info about Helm Release name, Kubernetes Namespace and how to change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runDismiss()

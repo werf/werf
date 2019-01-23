@@ -108,7 +108,10 @@ Find more information at https://werf.io`,
 }
 
 func secretCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "secret"}
+	cmd := &cobra.Command{
+		Use:   "secret",
+		Short: "Commands to work with secrets",
+	}
 	cmd.AddCommand(
 		secret_key_generate.NewCmd(),
 		secret_generate.NewCmd(),

@@ -248,9 +248,12 @@ func availableTerminalLineSpace(parts ...string) int {
 }
 
 func FitText(text string, indentLength int) string {
-	tw := TerminalWidth()
+	return FitTextWidth(text, indentLength, TerminalWidth())
+}
+
+func FitTextWidth(text string, indentLength int, width int) string {
 	indent := strings.Repeat(" ", indentLength)
-	contentLineLength := tw - indentLength
+	contentLineLength := width - indentLength
 
 	var result string
 	lines := strings.Split(text, "\n")

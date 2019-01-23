@@ -23,9 +23,16 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "reset",
+		Use: "reset",
 		DisableFlagsInUseLine: true,
-		Short:                 "Delete images, containers, and cache files for all projects created by werf on the host",
+		Short: "Delete all images, containers, and cache files for all projects created by werf on the host",
+		Long: common.GetLongCommandDescription(`Delete all images, containers, and cache files for all projects created by werf on the host.
+
+Reset is the fullest method of cleaning on the local machine.
+
+No project files (i.e. werf.yaml) are needed to run reset.
+
+See more info about reset type of cleaning: https://flant.github.io/werf/reference/registry/cleaning.html#reset`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runReset()
 			if err != nil {
@@ -39,7 +46,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	//cmd.Flags().BoolVarP(&CmdData.OnlyDevModeCache, "only-dev-mode-cache", "", false, "delete stages cache, images, and containers created in developer mode")
-	cmd.Flags().BoolVarP(&CmdData.OnlyCacheVersion, "only-cache-version", "", false, "Only delete stages cache, images, and containers created by another werf version")
+	cmd.Flags().BoolVarP(&CmdData.OnlyCacheVersion, "only-cache-version", "", false, "Only delete stages cache, images, and containers created by these werf versions which are incompatible with current werf version")
 
 	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 

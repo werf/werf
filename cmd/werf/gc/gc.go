@@ -22,7 +22,13 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "gc",
+		Use:   "gc",
+		Short: "Force run werf gc procedure",
+		Long: common.GetLongCommandDescription(`Force run werf gc procedure.
+
+Werf GC procedure typically runs automatically during execution of some command. With this command user can force werf to run gc procedure to force removal of excess tmp files right now, for example.
+
+See more info about gc: https://flant.github.io/werf/reference/registry/cleaning.html#gc`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := runGC()
