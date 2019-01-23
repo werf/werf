@@ -10,18 +10,26 @@ if [ -z "$VERSION" ] ; then
   exit 1
 fi
 
-RELEASE_BUILD_DIR=$(pwd)/release/build
+RELEASE_BUILD_DIR=release/build/
 
-rm -rf $RELEASE_BUILD_DIR
+rm -rf $RELEASE_BUILD_DIR/$VERSION
+mkdir -p $RELEASE_BUILD_DIR/$VERSION
 
-for arch in linux darwin ; do
-  outputDir=$RELEASE_BUILD_DIR/$arch-amd64
+for os in linux darwin windows ; do
+  for arch in amd64 ; do
+    outputFile=$RELEASE_BUILD_DIR/$VERSION/werf-$os-$arch-$VERSION
+    if [ "$os" == "windows" ] ; then
+      outputFile=$outputFile.exe
+    fi
 
-  mkdir -p $outputDir
+    echo "# Building werf $VERSION for $os $arch ..."
 
-  echo "Building werf for $arch, version $VERSION"
-  GOOS=$arch GOARCH=amd64 go build -ldflags="-s -w -X github.com/flant/werf/pkg/werf.Version=$VERSION" -o $outputDir/werf github.com/flant/werf/cmd/werf
+    GOOS=$os GOARCH=$arch \
+      go build -ldflags="-s -w -X github.com/flant/werf/pkg/werf.Version=$VERSION" \
+               -o $outputFile github.com/flant/werf/cmd/werf
 
-  echo "Calculating checksum werf.sha"
-  sha256sum $outputDir/werf | cut -d' ' -f 1 > $outputDir/werf.sha
+    echo "# Built $outputFile"
+  done
 done
+
+md5sum $RELEASE_BUILD_DIR/$VERSION/werf-* > $RELEASE_BUILD_DIR/$VERSION/SHA256SUMS
