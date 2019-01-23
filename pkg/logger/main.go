@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	defaultTerminalWidth = 120
+	defaultTerminalWidth = 100
 
 	logProcessDefaultProcessMsg      = "[RUNNING]"
 	logProcessSuccessStatus          = "[OK]"
@@ -244,10 +244,50 @@ func availableTerminalLineSpace(parts ...string) int {
 	logIndentLength := len(logIndent())
 	msgsLength := len(strings.Join(parts, " "))
 
-	return terminalWidth() - logIndentLength - msgsLength
+	return TerminalWidth() - logIndentLength - msgsLength
 }
 
-func terminalWidth() int {
+func FitText(text string, indentLength int) string {
+	tw := TerminalWidth()
+	indent := strings.Repeat(" ", indentLength)
+	contentLineLength := tw - indentLength
+
+	var result string
+	lines := strings.Split(text, "\n")
+	for ind, line := range lines {
+		result += indent
+		lineWords := strings.Split(line, " ")
+		var cursor int
+		for ind, word := range lineWords {
+			isLastWord := ind == len(lineWords)-1
+			toAdd := word
+			if !isLastWord {
+				toAdd += " "
+			}
+
+			if cursor+len(toAdd) > contentLineLength {
+				cursor = 0
+				result += "\n"
+
+				if !isLastWord {
+					result += indent
+				}
+			}
+
+			result += toAdd
+			cursor += len(toAdd)
+		}
+
+		isLastLine := ind == len(lines)-1
+		if !isLastLine {
+			result += "\n"
+		}
+	}
+
+	return result
+}
+
+func TerminalWidth() int {
 	if terminal.IsTerminal(int(os.Stdout.Fd())) {
 		w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
 		if err != nil {

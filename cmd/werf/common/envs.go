@@ -3,6 +3,8 @@ package common
 import (
 	"fmt"
 	"strings"
+
+	"github.com/flant/werf/pkg/logger"
 )
 
 type Env string
@@ -52,9 +54,48 @@ func EnvsDescription(envs ...Env) string {
 	}
 
 	for _, env := range envs {
-		envName := strings.Join([]string{string(env), strings.Repeat(" ", envNameWidth-len(env))}, "")
-		lines = append(lines, fmt.Sprintf("  $%s  %s", envName, envDescription[env]))
+		leftPart := strings.Join([]string{"  ", "$", string(env), strings.Repeat(" ", envNameWidth-len(env))}, "")
+		leftPartLength := len(leftPart)
+		space := "  "
+		rightPart := fitDescription(envDescription[env], leftPartLength+len(space))
+		lines = append(lines, fmt.Sprintf("%s%s%s", leftPart, space, rightPart))
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func fitDescription(desc string, indentLength int) string {
+	tw := logger.TerminalWidth()
+	descLines := strings.Split(desc, "\n")
+	if len(descLines[0]) > tw-indentLength {
+		descWords := strings.Split(desc, " ")
+		var cursor int
+		var firstLine string
+		for ind, word := range descWords {
+			isLastWord := ind == len(descWords)
+			toAdd := word
+			if !isLastWord {
+				toAdd += " "
+			}
+
+			if cursor+len(toAdd) > tw-indentLength {
+				break
+			}
+
+			firstLine += toAdd
+			cursor += len(toAdd)
+		}
+
+		fittedText := logger.FitText(desc[cursor:], indentLength)
+		return firstLine + "\n" + fittedText
+	} else {
+		firstLine := descLines[0]
+		if len(descLines) > 1 {
+			otherText := strings.Join(descLines[1:], "\n")
+			fittedText := logger.FitText(otherText, indentLength)
+			return firstLine + "\n" + fittedText
+		} else {
+			return firstLine
+		}
+	}
 }

@@ -16,8 +16,8 @@ const (
 		`{{$usageLine := usageLine .}}`
 
 	// SectionAliases is the help template section that displays command aliases.
-	SectionEnvironment = `{{if $environment}}Environment:
-{{ $environment }}
+	SectionEnvironment = `{{if $environment}}Environments:
+{{$environment }}
 
 {{end}}`
 
