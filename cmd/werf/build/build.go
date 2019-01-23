@@ -32,6 +32,14 @@ func NewCmd() *cobra.Command {
 		Use:                   "build [IMAGE_NAME...]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Build images",
+		Example: `  # Build all images
+  $ werf build
+
+  # Build specified images
+  $ werf build frontend backend
+
+  # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
+  $ werf build --introspect-error`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
 		},
