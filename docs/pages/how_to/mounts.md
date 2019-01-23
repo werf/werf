@@ -87,7 +87,8 @@ werf build
 
 Run the application by executing the following command in the `booking` directory:
 ```bash
-werf dimg run -p 9000:9000 --rm -d -- /app/run.sh
+werf tag --repo booking --tag v1.0
+docker run booking/go-booking:v1.0 -p 9000:9000 --rm -d /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -106,12 +107,6 @@ Open in a web browser the following URL — [http://localhost:9000](http://local
 The `revel framework booking demo` page should open, and you can login by entering `demo/demo` as a login/password.
 
 ### Getting the application image size
-
-Create a image with tag `v1.0`:
-
-```bash
-werf tag booking --tag v1.0
-```
 
 After tagging we get an image `booking/go-booking:v1.0` according to werf naming rules (read more about naming [here]({{ site.baseurl }}/reference/registry/image_naming.html)).
 
@@ -287,7 +282,8 @@ docker stop `docker ps -lq`
 
 Run the modified application by executing the following command:
 ```bash
-werf dimg run -p 9000:9000 --rm -d -- /app/run.sh
+werf tag --repo booking --tag v2.0
+docker run booking/go-booking:v2.0 -p 9000:9000 --rm -d /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -306,12 +302,6 @@ Open in a web browser the following URL — [http://localhost:9000](http://local
 The `revel framework booking demo` page should open, and you can login by entering `demo/demo` as a login/password.
 
 ### Getting images size
-
-Create a image with tag `v2.0`:
-
-```bash
-werf tag booking --tag v2.0
-```
 
 Determine the image size of optimized build, by executing:
 ```bash
@@ -380,4 +370,4 @@ The total size difference between `v1.0` and `v2.0` images is about 730 MB (the 
 
 * Use a smaller base image instead of ubuntu, such as [alpine](https://hub.docker.com/_/alpine/) or [golang](https://hub.docker.com/_/golang/).
 * Using [werf artifacts]({{ site.baseurl }}/reference/build/artifact.html) in many cases can give more efficient.
-  The size of `/app` directory in the image is about only 17 MB (you can check it by executing `werf dimg run --rm -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in werf artifact and then import only the resulting `/app` directory.
+  The size of `/app` directory in the image is about only 17 MB (you can check it by executing `docker run booking/go-booking:v2.0 --rm -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in werf artifact and then import only the resulting `/app` directory.

@@ -102,10 +102,6 @@ When GitLab starts a job, it sets a list of [environments](https://docs.gitlab.c
 Create a `.gitlab-ci.yml` file in the project's root directory and add the following lines:
 
 ```yaml
-variables:
-  ## we will use this variable later as the name of kubernetes namespace for deploying application
-  APP_NAMESPACE: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
-
 stages:
   - build
   - deploy
@@ -130,10 +126,10 @@ Build:
   stage: build
   script:
     ## used for debugging
-    - werf --version; pwd; set -x
+    - werf version; pwd; set -x
     ## Always use "bp" option instead separate "build" and "push"
     ## It is important to use --tag-ci, --tag-branch or --tag-commit options here (in bp or push commands) otherwise cleanup won't work.
-    - werf bp --repo ${CI_REGISTRY_IMAGE} --tag-ci
+    - werf bp --tag-ci
   tags:
     ## You specify there the tag of the runner to use. We need to use there build runner
     - build
@@ -166,23 +162,12 @@ Add the following lines to `.gitlab-ci.yml` file:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    ## create k8s namespace we will use if it doesn't exist.
-    - kubectl get ns ${APP_NAMESPACE} || kubectl create namespace ${APP_NAMESPACE}
-    ## If your application use private registry, you have to:
-    ## 1. create appropriate secret with name registrysecret in namespace kube-system of your k8s cluster
-    ## 2. uncomment following lines:
-    ##- kubectl get secret registrysecret -n kube-system -o json |
-    ##                  jq ".metadata.namespace = \"${APP_NAMESPACE}\"|
-    ##                  del(.metadata.annotations,.metadata.creationTimestamp,.metadata.resourceVersion,.metadata.selfLink,.metadata.uid)" |
-    ##                  kubectl apply -f -
-    - werf --version; pwd; set -x
+    - werf version; pwd; set -x
     ## Next command makes deploy and will be discussed further
-    - werf kube deploy
+    - werf deploy
         --tag-ci
-        --namespace ${APP_NAMESPACE}
         --set "global.env=${CI_ENVIRONMENT_SLUG}"
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-        ${CI_REGISTRY_IMAGE}
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
     - Build
@@ -191,9 +176,8 @@ Add the following lines to `.gitlab-ci.yml` file:
     - deploy
 ```
 
-Pay attention to `werf kube deploy` command. It is the main step in deploying the application and note that:
-* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf kube deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/templates.html));
-* we've used the `APP_NAMESPACE` variable, defined at the top of the `.gitlab-ci.yml` file (it is not one of the GitLab [environments](https://docs.gitlab.com/ee/ci/variables/README.html));
+Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
+* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/templates.html));
 * we've passed the `global.env` parameter, which will contain the name of the environment. You can access it in `helm` templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
 * we've passed the `global.ci_url` parameter, which will contain an URL of the environment. You can use it in your `helm` templates e.g. to configure ingress.
 
@@ -220,8 +204,8 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - werf --version; pwd; set -x
-    - werf kube dismiss --namespace ${APP_NAMESPACE} --with-namespace
+    - werf version; pwd; set -x
+    - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
@@ -240,10 +224,8 @@ We've defined two jobs:
     In this job, we set a name of the environment based on CI_COMMIT_REF_SLUG GitLab variable. For every branch, GitLab will create a unique environment.
 
     The `url` parameter of the job you can use in you helm templates to set up e.g. ingress.
-
-    Name of the kubernetes namespace will be equal `APP_NAMESPACE` (defined in werf parameters in `base_deploy` template).
 2. Stop review.
-    In this job, werf will delete helm release in namespace `APP_NAMESPACE` and delete namespace itself (see more about [werf kube dismiss]({{ site.baseurl }}/reference/cli/kube_dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
+    In this job, werf will delete helm release and delete kubernetes namespace itself (see more about [werf dismiss]({{ site.baseurl }}/reference/cli/kube_dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
 
 Review jobs needn't run on pushes to git master branch, because review environment is for developers.
 
@@ -312,8 +294,8 @@ Add the following lines to `.gitlab-ci.yml` file:
 Cleanup registry:
   stage: cleanup_registry
   script:
-    - werf --version; pwd; set -x
-    - werf cleanup --repo ${CI_REGISTRY_IMAGE}
+    - werf version; pwd; set -x
+    - werf cleanup
   only:
     - schedules
   tags:
@@ -322,12 +304,8 @@ Cleanup registry:
 Cleanup builder:
   stage: cleanup_builder
   script:
-    - werf --version; pwd; set -x
-    - werf dimg stages cleanup local
-        --improper-cache-version
-        --improper-git-commit
-        --improper-repo-cache
-        ${CI_REGISTRY_IMAGE}
+    - werf version; pwd; set -x
+    - werf sync
   only:
     - schedules
   tags:
@@ -345,10 +323,6 @@ Both stages will start only by schedules. You can define schedule in `CI/CD` —
 ## Complete `.gitlab-ci.yml` file
 
 ```yaml
-variables:
-  ## we will use this variable later as the name of kubernetes namespace for deploying application
-  APP_NAMESPACE: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
-
 stages:
   - build
   - deploy
@@ -359,10 +333,10 @@ Build:
   stage: build
   script:
     ## used for debugging
-    - werf --version; pwd; set -x
+    - werf version; pwd; set -x
     ## Always use "bp" option instead separate "build" and "push"
     ## It is important to use --tag-ci, --tag-branch or --tag-commit options otherwise cleanup won't work.
-    - werf bp --repo ${CI_REGISTRY_IMAGE} --tag-ci
+    - werf bp --tag-ci
   tags:
     ## You specify there the tag of the runner to use. We need to use there build runner
     - build
@@ -375,23 +349,12 @@ Build:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    ## create k8s namespace we will use if it doesn't exist.
-    - kubectl get ns ${APP_NAMESPACE} || kubectl create namespace ${APP_NAMESPACE}
-    ## If your application use private registry, you have to:
-    ## 1. create appropriate secret with name registrysecret in namespace kube-system of your k8s cluster
-    ## 2. uncomment following lines:
-    ##- kubectl get secret registrysecret -n kube-system -o json |
-    ##                  jq ".metadata.namespace = \"${APP_NAMESPACE}\"|
-    ##                  del(.metadata.annotations,.metadata.creationTimestamp,.metadata.resourceVersion,.metadata.selfLink,.metadata.uid)" |
-    ##                  kubectl apply -f -
-    - werf --version; pwd; set -x
+    - werf version; pwd; set -x
     ## Next command makes deploy and will be discussed further
-    - werf kube deploy
+    - werf deploy
         --tag-ci
-        --namespace ${APP_NAMESPACE}
         --set "global.env=${CI_ENVIRONMENT_SLUG}"
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-        ${CI_REGISTRY_IMAGE}
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
     - Build
@@ -415,8 +378,8 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - werf --version; pwd; set -x
-    - werf kube dismiss --namespace ${APP_NAMESPACE} --with-namespace
+    - werf version; pwd; set -x
+    - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
@@ -453,8 +416,8 @@ Deploy to Production:
 Cleanup registry:
   stage: cleanup_registry
   script:
-    - werf --version; pwd; set -x
-    - werf cleanup --repo ${CI_REGISTRY_IMAGE}
+    - werf version; pwd; set -x
+    - werf cleanup
   only:
     - schedules
   tags:
@@ -463,12 +426,8 @@ Cleanup registry:
 Cleanup builder:
   stage: cleanup_builder
   script:
-    - werf --version; pwd; set -x
-    - werf dimg stages cleanup local
-        --improper-cache-version
-        --improper-git-commit
-        --improper-repo-cache
-        ${CI_REGISTRY_IMAGE}
+    - werf version; pwd; set -x
+    - werf sync
   only:
     - schedules
   tags:

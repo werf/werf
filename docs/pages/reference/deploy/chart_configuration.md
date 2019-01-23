@@ -12,13 +12,11 @@ For more information:
 * [Sprig reference](https://godoc.org/github.com/Masterminds/sprig) – a library that helm uses for GO template rendering
 * [Advanced functions](https://docs.helm.sh/developing_charts/#chart-development-tips-and-tricks) added to helm for templates like include and required
 
-You can create a chart structure using the `werf kube chart create` command, applying it from the project root directory. As a result, the `.helm` folder is created with the chart containing a sample description of kubernetes objects.
-
 ## Passing parameters
 
 In the course of an application release, there is many ways of passing parameters:
 * using the `values.yaml` or `secret-values.yaml` files. Both methods are identical for access. The only difference is in the storage method; values of variables are encrypted in the `secret-values.yaml` file. Further, in the text, this difference will be ignored.
-* using the --set parameter in `werf kube deploy` commands (see [section](deploy_to_kubernetes.html))
+* using the --set parameter in `werf deploy` commands (see [section](deploy_to_kubernetes.html))
 * using environment variables.
 
 The `values.yaml` and `secret-values.yaml` files contain a description of the variables that are available in the templates. For instance, we have a `values.yaml` file:
@@ -42,13 +40,6 @@ db:
 ```
 
 Then you can address the appropriate variables in the template using a construction like – {% raw %}`{{ .Values.db.username.production }}`{% endraw %}.
-
-Werf sets and uses many variables that are also available in the templates. You can retrieve their values using the `werf kube value get VALUE_KEY` command.
-
-For instance, you can perform the following actions to retrieve values for all variables:
-```bash
-werf kube value get .
-```
 
 ## Features of chart template creation
 
@@ -184,7 +175,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: localhost:5000/example-werf-deploy/frontend:latest
+          image: werf-registry.kube-system.svc.cluster.local:5000/example-werf-deploy/frontend:latest
           imagePullPolicy: Always
           env:
             - name: VAR1
@@ -203,7 +194,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: localhost:5000/example-werf-deploy/backend:latest
+          image: werf-registry.kube-system.svc.cluster.local:5000/example-werf-deploy/backend:latest
           imagePullPolicy: Always
           env:
             - name: DOCKER_IMAGE_ID
@@ -218,7 +209,7 @@ spec:
     spec:
       containers:
         - name: db
-          image: localhost:5000/example-werf-deploy/db:latest
+          image: werf-registry.kube-system.svc.cluster.local:5000/example-werf-deploy/db:latest
           imagePullPolicy: Always
           env:
             - name: DOCKER_IMAGE_ID

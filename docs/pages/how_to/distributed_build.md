@@ -53,13 +53,6 @@ When GitLab starts a job, it sets a list of [environments](https://docs.gitlab.c
 
 ### Base setup
 
-Setup `APP_NAMESPACE` variable to use as the name of kubernetes namespace for deploying application.
-
-```yaml
-variables:
-  APP_NAMESPACE: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
-```
-
 Define stages for building, deploying and two stages for cleaning app.
 
 ```yaml
@@ -77,11 +70,11 @@ Build:
   stage: build
   script:
   ## The line below uses for debugging
-  - werf --version; pwd; set -x
+  - werf version; pwd; set -x
   ## Pull stages caсhe
-  - werf dimg stages pull ${CI_REGISTRY_IMAGE}
+  - werf pull
   ## build image's than push it with the stages cache
-  - werf bp --with-stages --repo ${CI_REGISTRY_IMAGE} --tag-ci
+  - werf bp --with-stages --tag-ci
   ## Specify to use runner with the build tag.
   tags:
   - build
@@ -119,23 +112,12 @@ Add the following lines to `.gitlab-ci.yml` file:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-  ## create k8s namespace we will use if it doesn't exist.
-  - kubectl get ns ${APP_NAMESPACE} || kubectl create namespace ${APP_NAMESPACE}
-  ## If your application use private registry, you have to:
-  ## 1. create appropriate secret with name registrysecret in namespace kube-system of your k8s cluster
-  ## 2. uncomment following lines:
-  ##- kubectl get secret registrysecret -n kube-system -o json |
-  ##                  jq ".metadata.namespace = \"${APP_NAMESPACE}\"|
-  ##                  del(.metadata.annotations,.metadata.creationTimestamp,.metadata.resourceVersion,.metadata.selfLink,.metadata.uid)" |
-  ##                  kubectl apply -f -
-  - werf --version; pwd; set -x
+  - werf version; pwd; set -x
   ## Next command makes deploy and will be discussed further
-  - werf kube deploy
+  - werf deploy
       --tag-ci
-      --namespace ${APP_NAMESPACE}
       --set "global.env=${CI_ENVIRONMENT_SLUG}"
       --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-      ${CI_REGISTRY_IMAGE}
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
   - build
@@ -144,9 +126,8 @@ Add the following lines to `.gitlab-ci.yml` file:
   - deploy
 ```
 
-Pay attention to `werf kube deploy` command. It is the main step in deploying the application and note that:
-* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf kube deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/templates.html));
-* we've used the `APP_NAMESPACE` variable, defined at the top of the `.gitlab-ci.yml` file (it is not one of the GitLab [environments](https://docs.gitlab.com/ee/ci/variables/README.html));
+Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
+* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/templates.html));
 * we've passed the `global.env` parameter, which contains the name of the environment. You can access it in helm templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
 * we've passed the `global.ci_url` parameter, which contains an URL of the environment. You can use it in your helm templates, e.g. to configure ingress.
 
@@ -209,8 +190,8 @@ Add the following lines to `.gitlab-ci.yml` file:
 Cleanup registry:
   stage: cleanup_registry
   script:
-  - werf --version; pwd; set -x
-  - werf cleanup --repo ${CI_REGISTRY_IMAGE}
+  - werf version; pwd; set -x
+  - werf cleanup
   only:
   - schedules
   tags:
@@ -219,12 +200,8 @@ Cleanup registry:
 Cleanup builder:
   stage: cleanup_builder
   script:
-  - werf --version; pwd; set -x
-  - werf dimg stages cleanup local
-      --improper-cache-version
-      --improper-git-commit
-      --improper-repo-cache
-      ${CI_REGISTRY_IMAGE}
+  - werf version; pwd; set -x
+  - werf sync
   only:
   - schedules
   tags:
@@ -248,9 +225,6 @@ To build the application create the following `.gitlab-ci.yml` **in the root fol
 
 {% raw %}
 ```yaml
-variables:
-  APP_NAMESPACE: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
-
 stages:
 - build
 - deploy
@@ -261,11 +235,11 @@ Build:
   stage: build
   script:
   ## The line below uses for debugging
-  - werf --version; pwd; set -x
+  - werf version; pwd; set -x
   ## Pull stages caсhe
-  - werf dimg stages pull ${CI_REGISTRY_IMAGE}
+  - werf pull
   ## build image's than push it with the stages cache
-  - werf bp --with-stages --repo ${CI_REGISTRY_IMAGE} --tag-ci
+  - werf bp --with-stages --tag-ci
   ## Specify to use runner with the build tag.
   tags:
   - build
@@ -277,23 +251,12 @@ Build:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-  ## create k8s namespace we will use if it doesn't exist.
-  - kubectl get ns ${APP_NAMESPACE} || kubectl create namespace ${APP_NAMESPACE}
-  ## If your application use private registry, you have to:
-  ## 1. create appropriate secret with name registrysecret in namespace kube-system of your k8s cluster
-  ## 2. uncomment following lines:
-  ##- kubectl get secret registrysecret -n kube-system -o json |
-  ##                  jq ".metadata.namespace = \"${APP_NAMESPACE}\"|
-  ##                  del(.metadata.annotations,.metadata.creationTimestamp,.metadata.resourceVersion,.metadata.selfLink,.metadata.uid)" |
-  ##                  kubectl apply -f -
-  - werf --version; pwd; set -x
+  - werf version; pwd; set -x
   ## Next command makes deploy and will be discussed further
-  - werf kube deploy
+  - werf deploy
       --tag-ci
-      --namespace ${APP_NAMESPACE}
       --set "global.env=${CI_ENVIRONMENT_SLUG}"
       --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
-      ${CI_REGISTRY_IMAGE}
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
   - build
@@ -317,8 +280,8 @@ Review:
 Stop review:
   stage: deploy
   script:
-  - werf --version; pwd; set -x
-  - werf kube dismiss --namespace ${APP_NAMESPACE} --with-namespace
+  - werf version; pwd; set -x
+  - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
@@ -355,8 +318,8 @@ Deploy to Production:
 Cleanup registry:
   stage: cleanup_registry
   script:
-  - werf --version; pwd; set -x
-  - werf cleanup --repo ${CI_REGISTRY_IMAGE}
+  - werf version; pwd; set -x
+  - werf cleanup
   only:
   - schedules
   tags:
@@ -365,12 +328,8 @@ Cleanup registry:
 Cleanup builder:
   stage: cleanup_builder
   script:
-  - werf --version; pwd; set -x
-  - werf dimg stages cleanup local
-      --improper-cache-version
-      --improper-git-commit
-      --improper-repo-cache
-      ${CI_REGISTRY_IMAGE}
+  - werf version; pwd; set -x
+  - werf sync
   only:
   - schedules
   tags:
@@ -382,9 +341,9 @@ Cleanup builder:
 
 With the added `.gitlab-ci.yml`, you can build the application on any runner with such werf advantages as using stages cache.
 
-When `werf dimg stages pull <registry_address>` executed, werf looks into config, calculates signatures of stages and pulls only last available in a Docker registry image, according to stages conveyor.
+When `werf pull` executed, werf looks into config, calculates signatures of stages and pulls only last available in a Docker registry image, according to stages conveyor.
 
-> If you need to pull images of every stage you can use `--all` option with `werf dimg stages pull` command.
+> If you need to pull images of every stage you can use `--all` option with `werf pull` command.
 
 Make changes in the config and push it. Retry build stage several times and compare job logs. You will see that werf uses cache and build only stage with changes and stages after that stage, according to the stage conveyor.
 
@@ -395,5 +354,5 @@ Werf can use a distributed cache and can work with:
 * **More than one build nodes.** You can have more than one build nodes in your environment.
 
 The only steps you need are:
-* pull existing stages cache from the Docker registry with the `werf dimg stages pull REPO` command before building;
-* build images and push it with stages cache to the Docker registry with the `werf bp --with-stages --repo REPO` command.
+* pull existing stages cache from the Docker registry with the `werf pull` command before building;
+* build images and push it with stages cache to the Docker registry with the `werf bp --with-stages` command.

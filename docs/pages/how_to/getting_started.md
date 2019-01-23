@@ -201,7 +201,8 @@ Let's build and run our first application.
 3.  Run a container from the image:
 
     ```shell
-    werf dimg run -d -p 8000:8000 -- /app/start.sh
+    werf tag --repo myimage --tag mytag
+    docker run myimage:mytag -d -p 8000:8000 /app/start.sh
     ```
 
 4.  Check that the application runs and responds:
