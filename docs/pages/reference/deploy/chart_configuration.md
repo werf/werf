@@ -184,7 +184,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: localhost:5000/example-werf-deploy/frontend:latest
+          image: werf-registry.kube-system.svc.cluster.local:5000/example-werf-deploy/frontend:latest
           imagePullPolicy: Always
           env:
             - name: VAR1
@@ -203,7 +203,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: localhost:5000/example-werf-deploy/backend:latest
+          image: werf-registry.kube-system.svc.cluster.local:5000/example-werf-deploy/backend:latest
           imagePullPolicy: Always
           env:
             - name: DOCKER_IMAGE_ID
@@ -218,7 +218,7 @@ spec:
     spec:
       containers:
         - name: db
-          image: localhost:5000/example-werf-deploy/db:latest
+          image: werf-registry.kube-system.svc.cluster.local:5000/example-werf-deploy/db:latest
           imagePullPolicy: Always
           env:
             - name: DOCKER_IMAGE_ID

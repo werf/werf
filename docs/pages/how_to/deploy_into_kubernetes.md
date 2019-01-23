@@ -96,7 +96,7 @@ Build and push an image with the following command:
 werf bp --repo :minikube
 ```
 
-The image name consists of `REPO` and `TAG`. Werf will use `latest` tag for the image by default. We have specified `:minikube` as a `REPO` — this is a shortcut for `localhost:5000/myapp`. So for our example werf will push into the docker-registry image with the name `localhost:5000/myapp:latest`.
+The image name consists of `REPO` and `TAG`. Werf will use `latest` tag for the image by default. We have specified `:minikube` as a `REPO` — this is a shortcut for `werf-registry.kube-system.svc.cluster.local:5000/myapp`. So for our example werf will push into the docker-registry image with the name `werf-registry.kube-system.svc.cluster.local:5000/myapp:latest`.
 
 ## Prepare deploy configuration
 
@@ -167,7 +167,7 @@ In this configuration Deployment with name `myapp-backend` (after template {% ra
 
 Construction {% raw %}`{{ include "werf_container_image" . | indent 8 }}`{% endraw %} is an addition of werf to helm which:
 
-* always generates right image name (`localhost:5000/myapp:latest` in our case), and
+* always generates right image name (`werf-registry.kube-system.svc.cluster.local:5000/myapp:latest` in our case), and
 
 * may generate other related fields (such as imagePullPolicy) based on some external conditions.
 

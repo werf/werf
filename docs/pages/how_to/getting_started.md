@@ -223,7 +223,7 @@ Werf can be used to push a built image into docker-registry.
 2. Push image with werf using default `latest` tag:
 
     ```shell
-    werf push --repo localhost:5000/symfony-demo
+    werf push --repo werf-registry.kube-system.svc.cluster.local:5000/symfony-demo
     ```
 
 ## What Can Be Improved

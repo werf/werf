@@ -90,5 +90,8 @@ entries:
     - title: Track Kubernetes resources
       url: /reference/deploy/track_kubernetes_resources.html
 
+    - title: Minikube
+      url: /reference/deploy/minikube.html
+
   - title: Slug
     url: /reference/slug.html
