@@ -108,6 +108,9 @@ image: {{ tuple $name $context | include "_image2" }}
 {{-   if $context.Values.global.werf.ci.is_branch -}}
 - name: DOCKER_IMAGE_ID
   value: {{ tuple $context | include "_image_id" }}
+{{-   else -}}
+- name: DOCKER_IMAGE_ID
+  value: "-"
 {{-   end -}}
 {{- end -}}
 
@@ -117,6 +120,9 @@ image: {{ tuple $name $context | include "_image2" }}
 {{-   if $context.Values.global.werf.ci.is_branch -}}
 - name: DOCKER_IMAGE_ID
   value: {{ tuple $name $context | include "_image_id2" }}
+{{-   else -}}
+- name: DOCKER_IMAGE_ID
+  value: "-"
 {{-   end -}}
 {{- end -}}
 
