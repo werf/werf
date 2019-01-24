@@ -14,6 +14,7 @@ werf version [options]
 {{ header }} Options
 
 ```bash
-  -h, --help=false: help for version
+  -h, --help=false:
+            help for version
 ```
 

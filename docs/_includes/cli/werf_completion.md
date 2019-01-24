@@ -21,6 +21,7 @@ werf completion [options]
 {{ header }} Options
 
 ```bash
-  -h, --help=false: help for completion
+  -h, --help=false:
+            help for completion
 ```
 

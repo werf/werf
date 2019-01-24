@@ -3,7 +3,9 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Generate encryption key
+Generate hex key that can be used as WERF_SECRET_KEY.
+
+16-bytes key will be generated (AES-128).
 
 {{ header }} Syntax
 
@@ -14,6 +16,7 @@ werf secret keygen [options]
 {{ header }} Options
 
 ```bash
-  -h, --help=false: help for keygen
+  -h, --help=false:
+            help for keygen
 ```
 
