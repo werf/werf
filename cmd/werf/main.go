@@ -9,6 +9,7 @@ import (
 	"github.com/flant/werf/cmd/werf/bp"
 	"github.com/flant/werf/cmd/werf/build"
 	"github.com/flant/werf/cmd/werf/cleanup"
+	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/templates"
 	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/deploy"
@@ -49,9 +50,9 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "werf",
 		Short: "Werf helps to implement and support Continuous Integration and Continuous Delivery",
-		Long: `Werf helps to implement and support Continuous Integration and Continuous Delivery.
+		Long: common.GetLongCommandDescription(`Werf helps to implement and support Continuous Integration and Continuous Delivery.
 
-Find more information at https://werf.io`,
+Find more information at https://flant.github.io/werf`),
 		SilenceUsage: true,
 	}
 
