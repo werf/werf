@@ -32,4 +32,6 @@ for os in linux darwin windows ; do
   done
 done
 
-md5sum $RELEASE_BUILD_DIR/$VERSION/werf-* > $RELEASE_BUILD_DIR/$VERSION/SHA256SUMS
+cd $RELEASE_BUILD_DIR/$VERSION/
+md5sum werf-* > SHA256SUMS
+cd -
