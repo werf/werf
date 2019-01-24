@@ -3,7 +3,12 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Cleanup project images in docker registry by policies
+Cleanup is a werf ability to automate periodical cleaning of a docker registry.
+
+Command deletes unused and old images from Docker registry by policies.
+See more info about cleanup: https://flant.github.io/werf/reference/registry/cleaning.html#cleanup
+
+Command should run from the project directory, where werf.yaml file reside.
 
 {{ header }} Syntax
 
@@ -14,15 +19,24 @@ werf cleanup [options]
 {{ header }} Options
 
 ```bash
-      --dir='': Change to the specified directory to find werf.yaml config
-      --dry-run=false: Indicate what the command would do without actually doing that
-  -h, --help=false: help for cleanup
-      --home-dir='': Use specified dir to store werf cache files and dirs (use ~/.werf by default)
-      --registry-password='': Docker registry password (granted read-write permission)
-      --registry-username='': Docker registry username (granted read-write permission)
-      --repo='': Docker repository name
-      --tmp-dir='': Use specified dir to store tmp files and dirs (use system tmp dir by default)
-      --without-kube=false: Do not skip deployed kubernetes images
+      --dir='':
+            Change to the specified directory to find werf.yaml config
+      --dry-run=false:
+            Indicate what the command would do without actually doing that
+  -h, --help=false:
+            help for cleanup
+      --home-dir='':
+            Use specified dir to store werf cache files and dirs (use ~/.werf by default)
+      --registry-password='':
+            Docker registry password (granted read-write permission)
+      --registry-username='':
+            Docker registry username (granted read-write permission)
+      --repo='':
+            Docker repository name
+      --tmp-dir='':
+            Use specified dir to store tmp files and dirs (use system tmp dir by default)
+      --without-kube=false:
+            Do not skip deployed kubernetes images
 ```
 
 {{ header }} Environments

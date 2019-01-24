@@ -8,6 +8,7 @@
 {{ header }} Options
 
 ```bash
-  -h, --help=false: help for slug
+  -h, --help=false:
+            help for slug
 ```
 

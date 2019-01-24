@@ -5,11 +5,12 @@
 {% endif %}
 Werf helps to implement and support Continuous Integration and Continuous Delivery.
 
-Find more information at https://werf.io
+Find more information at https://flant.github.io/werf
 
 {{ header }} Options
 
 ```bash
-  -h, --help=false: help for werf
+  -h, --help=false:
+            help for werf
 ```
 
