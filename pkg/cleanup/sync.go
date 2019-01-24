@@ -10,6 +10,7 @@ import (
 
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 )
 
@@ -93,7 +94,7 @@ func repoImageStagesSyncByCacheVersion(options CommonRepoOptions) error {
 			return err
 		}
 
-		version, ok := labels[build.WerfCacheVersionLabel]
+		version, ok := labels[image.WerfCacheVersionLabel]
 		if !ok || (version != build.BuildCacheVersion) {
 			fmt.Printf("%s %s %s\n", repoImageStage.Tag, version, build.BuildCacheVersion)
 			repoImagesToDelete = append(repoImagesToDelete, repoImageStage)

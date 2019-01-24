@@ -41,12 +41,17 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runBuild(args)
-			if err != nil {
-				return fmt.Errorf("build failed: %s", err)
-			}
-			return nil
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			err = common.LogRunningTime(func() error {
+				err := runBuild(args)
+				if err != nil {
+					return fmt.Errorf("build failed: %s", err)
+				}
+
+				return err
+			})
+
+			return
 		},
 	}
 

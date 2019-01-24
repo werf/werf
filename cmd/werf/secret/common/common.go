@@ -8,6 +8,8 @@ import (
 
 	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/kubernetes/pkg/util/file"
+
+	"github.com/flant/werf/pkg/logger"
 )
 
 type GenerateOptions struct {
@@ -43,7 +45,7 @@ func ReadStdin() ([]byte, error) {
 	if terminal.IsTerminal(int(os.Stdin.Fd())) {
 		isStdoutTerminal := terminal.IsTerminal(int(os.Stdout.Fd()))
 		if isStdoutTerminal {
-			fmt.Printf("Enter secret: ")
+			logger.LogServiceF("Enter secret: ")
 		}
 
 		data, err = terminal.ReadPassword(int(os.Stdin.Fd()))

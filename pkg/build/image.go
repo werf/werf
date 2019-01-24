@@ -21,16 +21,29 @@ type Image struct {
 	isArtifact bool
 }
 
-func (d *Image) SetStages(stages []stage.Interface) {
-	d.stages = stages
+func (i *Image) LogName() string {
+	return imageLogName(i.name)
+
 }
 
-func (d *Image) GetStages() []stage.Interface {
-	return d.stages
+func imageLogName(name string) string {
+	if name == "" {
+		return "~"
+	}
+
+	return name
 }
 
-func (d *Image) GetStage(name stage.StageName) stage.Interface {
-	for _, s := range d.stages {
+func (i *Image) SetStages(stages []stage.Interface) {
+	i.stages = stages
+}
+
+func (i *Image) GetStages() []stage.Interface {
+	return i.stages
+}
+
+func (i *Image) GetStage(name stage.StageName) stage.Interface {
+	for _, s := range i.stages {
 		if s.Name() == name {
 			return s
 		}
@@ -39,65 +52,63 @@ func (d *Image) GetStage(name stage.StageName) stage.Interface {
 	return nil
 }
 
-func (d *Image) LatestStage() stage.Interface {
-	return d.stages[len(d.stages)-1]
+func (i *Image) LatestStage() stage.Interface {
+	return i.stages[len(i.stages)-1]
 }
 
-func (d *Image) GetName() string {
-	return d.name
+func (i *Image) GetName() string {
+	return i.name
 }
 
-func (d *Image) SetupBaseImage(c *Conveyor) {
-	baseImageName := d.baseImageName
-	if d.baseImageImageName != "" {
-		baseImageName = c.GetImage(d.baseImageImageName).LatestStage().GetImage().Name()
+func (i *Image) SetupBaseImage(c *Conveyor) {
+	baseImageName := i.baseImageName
+	if i.baseImageImageName != "" {
+		baseImageName = c.GetImage(i.baseImageImageName).LatestStage().GetImage().Name()
 	}
 
-	d.baseImage = c.GetOrCreateImage(nil, baseImageName)
+	i.baseImage = c.GetOrCreateImage(nil, baseImageName)
 }
 
-func (d *Image) GetBaseImage() *image.StageImage {
-	return d.baseImage
+func (i *Image) GetBaseImage() *image.StageImage {
+	return i.baseImage
 }
 
-func (d *Image) PrepareBaseImage(c *Conveyor) error {
-	fromImage := d.stages[0].GetImage()
+func (i *Image) PrepareBaseImage(c *Conveyor) (err error) {
+	fromImage := i.stages[0].GetImage()
 
 	if fromImage.IsExists() {
 		return nil
 	}
 
-	if d.baseImageImageName != "" {
+	if i.baseImageImageName != "" {
 		return nil
 	}
 
 	ciRegistry := os.Getenv("CI_REGISTRY")
-	if ciRegistry != "" && strings.HasPrefix(d.baseImage.Name(), ciRegistry) {
-		err := c.GetDockerAuthorizer().LoginForPull(ciRegistry)
+	if ciRegistry != "" && strings.HasPrefix(i.baseImage.Name(), ciRegistry) {
+		err = c.GetDockerAuthorizer().LoginForPull(ciRegistry)
 		if err != nil {
-			return fmt.Errorf("login into repo %s for base image %s failed: %s", ciRegistry, d.baseImage.Name(), err)
+			return fmt.Errorf("login into repo %s for base image %s failed: %s", ciRegistry, i.baseImage.Name(), err)
 		}
 	}
 
-	if d.GetName() == "" {
-		fmt.Printf("# Pulling base image for image\n")
-	} else {
-		fmt.Printf("# Pulling base image for image/%s\n", d.GetName())
-	}
-
-	if d.baseImage.IsExists() {
-		err := d.baseImage.Pull()
-		if err != nil {
-			logger.LogWarningF("WARNING: cannot pull base image %s: %s\n", d.baseImage.Name(), err)
-			logger.LogWarningF("WARNING: using existing image %s without pull\n", d.baseImage.Name())
+	logger.LogProcess(fmt.Sprintf("Pull %s base image", i.LogName()), "", func() error {
+		if i.baseImage.IsExists() {
+			err = i.baseImage.Pull()
+			if err != nil {
+				logger.LogWarningF("WARNING: cannot pull base image %s: %s\n", i.baseImage.Name(), err)
+				logger.LogWarningF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+			}
+			return nil
 		}
+
+		err = i.baseImage.Pull()
+		if err != nil {
+			return fmt.Errorf("image %s pull failed: %s", i.baseImage.Name(), err)
+		}
+
 		return nil
-	}
+	})
 
-	err := d.baseImage.Pull()
-	if err != nil {
-		return fmt.Errorf("image %s pull failed: %s", d.baseImage.Name(), err)
-	}
-
-	return nil
+	return
 }

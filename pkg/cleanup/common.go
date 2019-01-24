@@ -18,7 +18,7 @@ type CommonOptions struct {
 }
 
 func werfImageStagesFlushByCacheVersion(filterSet filters.Args, options CommonOptions) error {
-	werfCacheVersionLabel := fmt.Sprintf("%s=%s", build.WerfCacheVersionLabel, build.BuildCacheVersion)
+	werfCacheVersionLabel := fmt.Sprintf("%s=%s", image.WerfCacheVersionLabel, build.BuildCacheVersion)
 	filterSet.Add("label", werfCacheVersionLabel)
 	images, err := werfImagesByFilterSet(filters.NewArgs())
 	if err != nil {
@@ -27,7 +27,7 @@ func werfImageStagesFlushByCacheVersion(filterSet filters.Args, options CommonOp
 
 	var imagesToDelete []types.ImageSummary
 	for _, img := range images {
-		version, ok := img.Labels[build.WerfCacheVersionLabel]
+		version, ok := img.Labels[image.WerfCacheVersionLabel]
 		if !ok || version != build.BuildCacheVersion {
 			imagesToDelete = append(imagesToDelete, img)
 		}
@@ -54,7 +54,7 @@ func werfImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) e
 }
 
 func werfImagesByFilterSet(filterSet filters.Args) ([]types.ImageSummary, error) {
-	filterSet.Add("label", "werf")
+	filterSet.Add("label", image.WerfLabel)
 	options := types.ImageListOptions{Filters: filterSet}
 	return docker.Images(options)
 }

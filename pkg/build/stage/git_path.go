@@ -69,6 +69,36 @@ func (gp *GitPath) GitRepo() git_repo.GitRepo {
 	panic("GitRepo not initialized")
 }
 
+func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Archive, err error) {
+	cwd := gp.Cwd
+	if cwd == "" {
+		cwd = "/"
+	}
+
+	logger.LogServiceProcess(fmt.Sprintf("Create archive for commit %s of %s git path %s", opts.Commit, gp.GitRepo().GetName(), cwd), "[RUNNING]", func() error {
+		res, err = gp.GitRepo().CreateArchive(opts)
+
+		return err
+	})
+
+	return
+}
+
+func (gp *GitPath) createPatch(opts git_repo.PatchOptions) (res git_repo.Patch, err error) {
+	cwd := gp.Cwd
+	if cwd == "" {
+		cwd = "/"
+	}
+
+	logger.LogServiceProcessInline(fmt.Sprintf("Create patch %s..%s for %s git path %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd), func() error {
+		res, err = gp.GitRepo().CreatePatch(opts)
+
+		return err
+	})
+
+	return
+}
+
 func (gp *GitPath) getRepoFilterOptions() git_repo.FilterOptions {
 	return git_repo.FilterOptions{
 		BasePath:     gp.RepoPath,
@@ -87,7 +117,6 @@ func (gp *GitPath) IsLocal() bool {
 
 func (gp *GitPath) LatestCommit() (string, error) {
 	if gp.Commit != "" {
-		fmt.Printf("Using specified commit `%s` of repository `%s`\n", gp.Commit, gp.GitRepo().String())
 		return gp.Commit, nil
 	}
 
@@ -198,7 +227,8 @@ func (gp *GitPath) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltI
 		FromCommit:    fromCommit,
 		ToCommit:      toCommit,
 	}
-	patch, err := gp.GitRepo().CreatePatch(patchOpts)
+
+	patch, err := gp.createPatch(patchOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +265,8 @@ func (gp *GitPath) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltI
 			FilterOptions: gp.getRepoFilterOptions(),
 			Commit:        toCommit,
 		}
-		archive, err := gp.GitRepo().CreateArchive(archiveOpts)
+
+		archive, err := gp.createArchive(archiveOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -289,13 +320,15 @@ func (gp *GitPath) applyArchiveCommand(archiveFile *ContainerFileDescriptor, arc
 		unpackArchiveDirectory,
 	))
 
-	commands = append(commands, fmt.Sprintf(
+	tarCommand := fmt.Sprintf(
 		"%s %s -xf %s -C \"%s\"",
 		dappdeps.SudoCommand(gp.Owner, gp.Group),
 		dappdeps.BaseBinPath("tar"),
 		archiveFile.ContainerFilePath,
 		unpackArchiveDirectory,
-	))
+	)
+
+	commands = append(commands, strings.TrimLeft(tarCommand, " "))
 
 	return commands, nil
 }
@@ -323,7 +356,7 @@ func (gp *GitPath) baseApplyArchiveCommand(commit string, image image.ImageInter
 		FilterOptions: gp.getRepoFilterOptions(),
 		Commit:        commit,
 	}
-	archive, err := gp.GitRepo().CreateArchive(archiveOpts)
+	archive, err := gp.createArchive(archiveOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +406,7 @@ func (gp *GitPath) StageDependenciesChecksum(stageName StageName) (string, error
 	}
 
 	for _, path := range checksum.GetNoMatchPaths() {
-		logger.LogWarningF("WARNING: stage `%s` dependency path `%s` have not been found in repo `%s`\n", stageName, path, gp.GitRepo().String())
+		logger.LogWarningF("WARNING: stage %s dependency path %s have not been found in %s git\n", stageName, path, gp.GitRepo().GetName())
 	}
 
 	return checksum.String(), nil
@@ -392,7 +425,8 @@ func (gp *GitPath) PatchSize(fromCommit string) (int64, error) {
 		WithEntireFileContext: true,
 		WithBinary:            true,
 	}
-	patch, err := gp.GitRepo().CreatePatch(patchOpts)
+
+	patch, err := gp.createPatch(patchOpts)
 	if err != nil {
 		return 0, err
 	}
@@ -459,7 +493,8 @@ func (gp *GitPath) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error) {
 		FromCommit:    fromCommit,
 		ToCommit:      toCommit,
 	}
-	patch, err := gp.GitRepo().CreatePatch(patchOpts)
+
+	patch, err := gp.createPatch(patchOpts)
 	if err != nil {
 		return false, err
 	}
@@ -478,7 +513,8 @@ func (gp *GitPath) IsEmpty() (bool, error) {
 		FilterOptions: gp.getRepoFilterOptions(),
 		Commit:        commit,
 	}
-	archive, err := gp.GitRepo().CreateArchive(archiveOpts)
+
+	archive, err := gp.createArchive(archiveOpts)
 	if err != nil {
 		return false, err
 	}

@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/spf13/cobra"
 	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/logger/terminal"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -34,7 +35,7 @@ type CmdData struct {
 }
 
 func GetLongCommandDescription(text string) string {
-	return terminal.FitTextWithIndentWithWidthMaxLimit(text, 0, 100)
+	return logger.FitTextWithIndentWithWidthMaxLimit(text, 0, 100)
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -155,4 +156,13 @@ func GetNamespace(namespaceOption string) string {
 		return kube.DefaultNamespace
 	}
 	return namespaceOption
+}
+
+func LogRunningTime(f func() error) error {
+	t := time.Now()
+	err := f()
+
+	logger.LogService(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
+
+	return err
 }

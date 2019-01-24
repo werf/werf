@@ -4,6 +4,10 @@ type ImageArtifact struct {
 	*ImageBase
 }
 
+func (c *ImageArtifact) IsArtifact() bool {
+	return true
+}
+
 func (c *ImageArtifact) ImageTree() (tree []ImageInterface) {
 	if c.FromImage != nil {
 		tree = append(tree, c.FromImage.ImageTree()...)

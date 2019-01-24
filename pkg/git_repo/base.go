@@ -15,6 +15,7 @@ import (
 
 	"github.com/bmatcuk/doublestar"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/true_git"
 	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
@@ -247,6 +248,8 @@ func HasSubmodulesInCommit(commit *object.Commit) (bool, error) {
 }
 
 func (repo *Base) createArchive(repoPath, gitDir, workTreeDir string, opts ArchiveOptions) (Archive, error) {
+	logger.LogInfoF("Using work tree %s\n", workTreeDir)
+
 	repository, err := git.PlainOpen(repoPath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open repo `%s`: %s", repoPath, err)

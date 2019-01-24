@@ -5,6 +5,11 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
+)
+
+var (
+	ErrConveyorShouldBeReset = errors.New("conveyor should be reset")
 )
 
 func NewRenewPhase() *RenewPhase {
@@ -13,7 +18,20 @@ func NewRenewPhase() *RenewPhase {
 
 type RenewPhase struct{}
 
-func (p *RenewPhase) Run(c *Conveyor) error {
+func (p *RenewPhase) Run(c *Conveyor) (err error) {
+	logger.LogServiceProcess("Check invalid images", "", func() error {
+		err = p.run(c)
+		if isConveyorShouldBeResetError(err) {
+			return nil
+		}
+
+		return err
+	})
+
+	return
+}
+
+func (p *RenewPhase) run(c *Conveyor) error {
 	if debug() {
 		fmt.Printf("RenewPhase.Run\n")
 	}
@@ -54,7 +72,6 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 			}
 		}
 
-		// build
 		for _, s := range image.GetStages() {
 			img := s.GetImage()
 			if img.IsExists() {
@@ -63,11 +80,7 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 				} else if stageShouldBeReset {
 					conveyorShouldBeReset = true
 
-					if image.GetName() == "" {
-						fmt.Printf("# Reseting image %s for image %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
-					} else {
-						fmt.Printf("# Reseting image %s for image/%s %s\n", img.Name(), image.GetName(), fmt.Sprintf("stage/%s", s.Name()))
-					}
+					logger.LogServiceF("Untag %s for %s/%s\n", img.Name(), image.LogName(), s.Name())
 
 					if err := img.Untag(); err != nil {
 						return err
@@ -80,16 +93,12 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 	}
 
 	if conveyorShouldBeReset {
-		return ConveyorShouldBeResetError()
+		return ErrConveyorShouldBeReset
 	} else {
 		return nil
 	}
 }
 
-func ConveyorShouldBeResetError() error {
-	return errors.New("conveyor should be reset")
-}
-
 func isConveyorShouldBeResetError(err error) bool {
-	return err.Error() == ConveyorShouldBeResetError().Error()
+	return err == ErrConveyorShouldBeReset
 }

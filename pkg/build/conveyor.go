@@ -198,10 +198,16 @@ func (c *Conveyor) bp(repo string, buildOpts BuildOptions, pushOpts PushOptions)
 }
 
 func (c *Conveyor) runPhases(phases []Phase) error {
-	for _, phase := range phases {
+	for ind, phase := range phases {
+		isLastPhase := ind == len(phases)-1
+
 		err := phase.Run(c)
 		if err != nil {
 			return err
+		}
+
+		if !isLastPhase {
+			fmt.Println()
 		}
 	}
 	return nil

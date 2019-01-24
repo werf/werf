@@ -2,6 +2,7 @@ package image
 
 import (
 	"fmt"
+	"github.com/flant/werf/pkg/logger"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -22,6 +23,10 @@ func NewStageImage(fromImage *StageImage, name string) *StageImage {
 	stage.fromImage = fromImage
 	stage.container = newStageImageContainer(stage)
 	return stage
+}
+
+func (i *StageImage) Inspect() *types.ImageInspect {
+	return i.inspect
 }
 
 func (i *StageImage) Labels() map[string]string {
@@ -77,7 +82,7 @@ func (i *StageImage) Build(options BuildOptions) error {
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
-				fmt.Printf("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				logger.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 				if err := i.introspectBefore(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
@@ -86,7 +91,7 @@ func (i *StageImage) Build(options BuildOptions) error {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 
-				fmt.Printf("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				logger.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
 				if err := i.Introspect(); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}

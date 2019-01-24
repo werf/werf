@@ -4,11 +4,7 @@ import (
 	"fmt"
 )
 
-type ImageInterface interface{}
-
 type ImageBase struct {
-	ImageInterface
-
 	Name              string
 	From              string
 	FromImage         *Image
@@ -21,6 +17,14 @@ type ImageBase struct {
 	Import            []*ArtifactImport
 
 	raw *rawImage
+}
+
+func (c *ImageBase) ImageBaseConfig() *ImageBase {
+	return c
+}
+
+func (c *ImageBase) IsArtifact() bool {
+	return false
 }
 
 func (c *ImageBase) exportsAutoExcluding() error {

@@ -11,7 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
+
+	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
@@ -123,25 +126,25 @@ Loop:
 			return nil, err
 		}
 
-		scheme, ok := labels["werf-tag-scheme"]
+		scheme, ok := labels[image.WerfTagSchemeLabel]
 		if !ok {
 			continue
 		}
 
 		switch scheme {
-		case "git_tag":
+		case string(build.GitTagScheme):
 			if repoImageTagMatch(repoImage, gitTags...) {
 				continue Loop
 			} else {
 				nonexistentGitTagRepoImages = append(nonexistentGitTagRepoImages, repoImage)
 			}
-		case "git_branch":
+		case string(build.GitBranchScheme):
 			if repoImageTagMatch(repoImage, gitBranches...) {
 				continue Loop
 			} else {
 				nonexistentGitBranchRepoImages = append(nonexistentGitBranchRepoImages, repoImage)
 			}
-		case "git_commit":
+		case string(build.GitCommitScheme):
 			exist, err := options.LocalRepo.IsCommitExists(repoImage.Tag)
 			if err != nil {
 				return nil, err
@@ -202,15 +205,15 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 			return nil, err
 		}
 
-		scheme, ok := labels["werf-tag-scheme"]
+		scheme, ok := labels[image.WerfTagSchemeLabel]
 		if !ok {
 			continue
 		}
 
 		switch scheme {
-		case "git_tag":
+		case string(build.GitTagScheme):
 			repoImagesWithGitTagScheme = append(repoImagesWithGitTagScheme, repoImage)
-		case "git_commit":
+		case string(build.GitCommitScheme):
 			repoImagesWithGitCommitScheme = append(repoImagesWithGitCommitScheme, repoImage)
 		}
 	}

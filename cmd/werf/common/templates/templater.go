@@ -12,7 +12,7 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/logger/terminal"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type FlagExposer interface {
@@ -192,7 +192,7 @@ func FlagsUsages(f *flag.FlagSet) string {
 		}
 
 		leftPart := flagLeftPart(flag)
-		rightPart := terminal.FitTextWithIndent(flag.Usage, 12)
+		rightPart := logger.FitTextWithIndent(flag.Usage, 12)
 
 		fmt.Fprintf(x, "%s:\n%s\n", leftPart, rightPart)
 	})

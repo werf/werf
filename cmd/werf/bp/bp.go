@@ -50,7 +50,7 @@ If one or more IMAGE_NAME parameters specified, werf will build and push only th
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			if CmdData.PullUsername == "" {
 				CmdData.PullUsername = CmdData.RegistryUsername
 			}
@@ -64,11 +64,16 @@ If one or more IMAGE_NAME parameters specified, werf will build and push only th
 				CmdData.PushPassword = CmdData.RegistryPassword
 			}
 
-			err := runBP(args)
-			if err != nil {
-				return fmt.Errorf("bp failed: %s", err)
-			}
-			return nil
+			err = common.LogRunningTime(func() error {
+				err := runBP(args)
+				if err != nil {
+					return fmt.Errorf("bp failed: %s", err)
+				}
+
+				return nil
+			})
+
+			return
 		},
 	}
 

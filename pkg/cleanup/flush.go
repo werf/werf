@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 )
 
@@ -86,7 +87,7 @@ func repoImageStagesFlush(options CommonRepoOptions) error {
 
 func projectImagesFlush(options CommonProjectOptions) error {
 	filterSet := projectFilterSet(options)
-	filterSet.Add("label", "werf-image=true")
+	filterSet.Add("label", fmt.Sprintf("%s=true", image.WerfImageLabel))
 	if err := werfImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
 		return err
 	}

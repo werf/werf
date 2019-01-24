@@ -12,6 +12,7 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy/secret"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -23,9 +24,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "regenerate [EXTRA_SECRET_VALUES_FILE_PATH...]",
+		Use:                   "regenerate [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		DisableFlagsInUseLine: true,
-		Short: "Regenerate secret files with new secret key",
+		Short:                 "Regenerate secret files with new secret key",
 		Long: common.GetLongCommandDescription(`Regenerate secret files with new secret key.
 
 Old key should be specified with the --old-key option.
@@ -157,10 +158,12 @@ func secretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 	}
 
 	for filePath, fileData := range regeneratedFilesData {
-		fmt.Printf("save file '%s'\n", filePath)
+		err := logger.LogProcess(fmt.Sprintf("File '%s'", filePath), "[SAVING]", func() error {
+			fileData = append(bytes.TrimSpace(fileData), []byte("\n")...)
+			return ioutil.WriteFile(filePath, fileData, 0644)
+		})
 
-		fileData = append(bytes.TrimSpace(fileData), []byte("\n")...)
-		if err := ioutil.WriteFile(filePath, fileData, 0644); err != nil {
+		if err != nil {
 			return err
 		}
 	}
@@ -170,19 +173,25 @@ func secretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 
 func regenerateSecrets(filesData, regeneratedFilesData map[string][]byte, decodeFunc, encodeFunc func([]byte) ([]byte, error)) error {
 	for filePath, fileData := range filesData {
-		fmt.Printf("regenerate file '%s' data\n", filePath)
+		err := logger.LogProcess(fmt.Sprintf("File '%s'", filePath), "[REGENERATING]", func() error {
+			data, err := decodeFunc(fileData)
+			if err != nil {
+				return fmt.Errorf("check old encryption key and file data: %s", err)
+			}
 
-		data, err := decodeFunc(fileData)
-		if err != nil {
-			return fmt.Errorf("check old encryption key and file data: %s", err)
-		}
+			resultData, err := encodeFunc(data)
+			if err != nil {
+				return err
+			}
 
-		resultData, err := encodeFunc(data)
+			regeneratedFilesData[filePath] = resultData
+
+			return nil
+		})
+
 		if err != nil {
 			return err
 		}
-
-		regeneratedFilesData[filePath] = resultData
 	}
 
 	return nil

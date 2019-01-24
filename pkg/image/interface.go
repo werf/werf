@@ -1,5 +1,7 @@
 package image
 
+import "github.com/docker/docker/api/types"
+
 type BuildOptions struct {
 	IntrospectBeforeError bool
 	IntrospectAfterError  bool
@@ -7,8 +9,10 @@ type BuildOptions struct {
 
 type ImageInterface interface {
 	Name() string
+	Inspect() *types.ImageInspect
 	Labels() map[string]string
 	ID() string
+	MustGetId() (string, error)
 
 	Container() Container
 	BuilderContainer() BuilderContainer
@@ -27,6 +31,9 @@ type ImageInterface interface {
 
 type Container interface {
 	Name() string
+
+	AllRunCommands() []string
+	CommitChanges() []string
 
 	AddServiceRunCommands(commands ...string)
 	AddRunCommands(commands ...string)
