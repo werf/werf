@@ -177,7 +177,7 @@ Add the following lines to `.gitlab-ci.yml` file:
 ```
 
 Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
-* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/templates.html));
+* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/chart_configuration.html#features-of-chart-template-creation));
 * we've passed the `global.env` parameter, which will contain the name of the environment. You can access it in `helm` templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
 * we've passed the `global.ci_url` parameter, which will contain an URL of the environment. You can use it in your `helm` templates e.g. to configure ingress.
 
@@ -225,7 +225,7 @@ We've defined two jobs:
 
     The `url` parameter of the job you can use in you helm templates to set up e.g. ingress.
 2. Stop review.
-    In this job, werf will delete helm release and delete kubernetes namespace itself (see more about [werf dismiss]({{ site.baseurl }}/reference/cli/kube_dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
+    In this job, werf will delete helm release and delete kubernetes namespace itself (see more about [werf dismiss]({{ site.baseurl }}/cli/deploy/dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
 
 Review jobs needn't run on pushes to git master branch, because review environment is for developers.
 
