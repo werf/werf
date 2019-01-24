@@ -20,7 +20,7 @@ import (
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/util"
-	"gopkg.in/flant/yaml.v2"
+	yaml "gopkg.in/flant/yaml.v2"
 )
 
 func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
@@ -55,9 +55,9 @@ func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 			"project: %s\n" +
 			"---\n" +
 			"```\n\n" +
-			"##################################################################################################################" +
-			"###     WARNING! Project name cannot be changed later without rebuilding and redeploying your application!     ###" +
-			"###  Read more about meta doc here, https://flant.github.io/werf/reference/config.html#meta-configuration-doc  ###" +
+			"##################################################################################################################\n" +
+			"###     WARNING! Project name cannot be changed later without rebuilding and redeploying your application!     ###\n" +
+			"###  Read more about meta doc here, https://flant.github.io/werf/reference/config.html#meta-configuration-doc  ###\n" +
 			"##################################################################################################################"
 
 		return nil, fmt.Errorf(format, defaultProjectName)

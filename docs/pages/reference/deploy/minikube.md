@@ -29,44 +29,58 @@ Using werf to build and deploy on your localhost requires to setup the following
 1. Instal [minikube](https://github.com/kubernetes/minikube).
 2. Start minikube:
 
+     {% raw %}
      ```
      minikube start
      ```
+     {% endraw %}
 
 3. Enable minikube registry addon:
 
+     {% raw %}
      ```
      minikube addons enable registry
      ```
+     {% endraw %}
 
 4. Run custom `werf-registry` service with the binding to 5000 port:
 
+     {% raw %}
      ```
      kubectl -n kube-system expose rc/registry --type=ClusterIP --port=5000 --target-port=5000 --name=werf-registry
      ```
+     {% endraw %}
 
 5. Setup registry domain in minikube VM:
 
+     {% raw %}
      ```
      export REGISTRY_IP=$(kubectl -n kube-system get svc/werf-registry -o=template={{.spec.clusterIP}})
      minikube ssh "echo '$REGISTRY_IP werf-registry.kube-system.svc.cluster.local' | sudo tee -a /etc/hosts"
      ```
+     {% endraw %}
 
 6. Setup registry domain in host system:
 
+     {% raw %}
      ```
      echo "127.0.0.1 werf-registry.kube-system.svc.cluster.local" | sudo tee -a /etc/hosts
      cat /etc/hosts
      ```
+     {% endraw %}
 
 7. Run port forwarder on host system in a separate terminal:
 
+     {% raw %}
      ```
      kubectl port-forward --namespace kube-system service/werf-registry 5000
      ```
+     {% endraw %}
 
 8. Check connectivity on host system:
 
+     {% raw %}
      ```
      curl -X GET werf-registry.kube-system.svc.cluster.local:5000/v2/_catalog
      ```
+     {% endraw %}

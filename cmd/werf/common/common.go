@@ -137,7 +137,7 @@ func GetRequiredRepoName(projectName, repoOption string) (string, error) {
 
 func GetOptionalRepoName(projectName, repoOption string) string {
 	if repoOption == ":minikube" {
-		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local/%s", projectName)
+		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName)
 	} else if repoOption != "" {
 		return repoOption
 	}
