@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 )
 
 const (
-	defaultTerminalWidth = 100
+	defaultTerminalWidth = 120
 
 	logProcessDefaultProcessMsg      = "[RUNNING]"
 	logProcessSuccessStatus          = "[OK]"
@@ -291,13 +292,21 @@ func FitTextWidth(text string, indentLength int, width int) string {
 }
 
 func TerminalWidth() int {
-	if terminal.IsTerminal(int(os.Stdout.Fd())) {
-		w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
-		if err != nil {
-			panic(err)
+	if wtw, ok := os.LookupEnv("WERF_TERMINAL_WIDTH"); ok {
+		if i, err := strconv.Atoi(wtw); err != nil {
+			panic(fmt.Sprintf("Unexpected WERF_TERMINAL_WIDTH: %s", err))
+		} else {
+			return i
 		}
+	} else {
+		if terminal.IsTerminal(int(os.Stdout.Fd())) {
+			w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+			if err != nil {
+				panic(err)
+			}
 
-		return w
+			return w
+		}
 	}
 
 	return defaultTerminalWidth
