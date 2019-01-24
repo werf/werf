@@ -31,8 +31,8 @@ It is designed to make engineer's work fast end efficient.
 # Features
 
 * Comlete application lifecycle management: **build** and **cleanup** images, **deploy** application into Kubernetes.
-* **Incremental rebuilds** for git: reducing average build time for a sequence of git commits.
-* Building images with **Ansible** or **shell** scripts.
+* **Incremental rebuilds** for **git**: reducing average build time for a sequence of git commits.
+* Building images with **Ansible** or **Shell** scripts.
 * Building **multiple images** from one description.
 * Sharing a common cache between builds.
 * Reducing image size by detaching source data and build tools.
