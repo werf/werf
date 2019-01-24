@@ -33,7 +33,7 @@ name: rabbit
 version: 0.1.0
 ```
 
-In the `templates` directory, YAML file (chart element) templates are stored, which describe the resources for their publishing in the cluster. Detailed information about template creation is available in a separate [section]({{ site.baseurl }}/reference/deploy/templates.html). The `charts` directory is used when you need to work with external charts.
+In the `templates` directory, YAML file (chart element) templates are stored, which describe the resources for their publishing in the cluster. Detailed information about template creation is available in a separate [section]({{ site.baseurl }}/reference/deploy/chart_configuration.html#features-of-chart-template-creation). The `charts` directory is used when you need to work with external charts.
 
 Chart structure includes additional elements that are not contained within the structure of a standard helm chart – these are the `secret-values.yaml` file and the `secret` directory that is described in detail in the [working with secrets section]({{ site.baseurl }}/reference/deploy/secrets.html).
 
@@ -51,14 +51,14 @@ During werf deploy a temporary helm chart is created.
 
 This chart contains:
 
-* Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/reference/deploy/templates.html).
+* Additional generated go-templates: `werf_container_image`, `werf_container_env` and other. These templates are described in [the templates article]({{ site.baseurl }}/reference/deploy/chart_configuration.html#features-of-chart-template-creation).
 * Decoded secret values yaml file. The secrets are described in [the secrets article]({{ site.baseurl }}/reference/deploy/secrets.html).
 
 The temporary chart then passed to the helm. Werf deletes this chart on the werf deploy command termination.
 
 ### Watch resources
 
-Werf watches resources statuses and logs during the deploy process. More info is available in the [watch resources article]({{ site.baseurl }}/reference/deploy/watch_kubernetes_resources.html).
+Werf watches resources statuses and logs during the deploy process. More info is available in the [watch resources article]({{ site.baseurl }}/reference/deploy/track_kubernetes_resources.html).
 
 ## Environment
 

@@ -104,7 +104,7 @@ Pay attention, that the image size of the application is **above 1 GB**.
 
 The config above can be optimized to improve the efficiency of the build process.
 
-The only the files in the `/app` folder are needed to run the application. So we don't need Go itself and downloaded packages. The use of [werf artifacts]({{ site.baseurl }}/reference/build/artifact_directive.html) makes it possible to import only specified files into another image.
+The only the files in the `/app` folder are needed to run the application. So we don't need Go itself and downloaded packages. The use of [werf artifacts]({{ site.baseurl }}/reference/build/artifact.html) makes it possible to import only specified files into another image.
 
 ### Building
 

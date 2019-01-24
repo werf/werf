@@ -438,7 +438,7 @@ networks:
 
 ## Step 7: Modify /etc/hosts file
 
-To have an ability to open the example by the `atseashop.com` URL, add the `atseashop.com` name pointing to the address of your local interface into your `/etc/hosts` file. E.g.:
+To have an ability to open the example by the `http://atseashop.com` URL, add the `atseashop.com` name pointing to the address of your local interface into your `/etc/hosts` file. E.g.:
 
 ```bash
 sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts

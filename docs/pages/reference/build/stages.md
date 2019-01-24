@@ -47,7 +47,7 @@ The werf assembly process is a sequential build of _stages_. Werf uses different
 
 Each _stage_ is assembled in an ***assembly container*** based on an image of the previous _stage_. The result of the assembly _stage_ and _stage conveyor_, in general, is the ***stages cache***: each _stage_ relates to one docker image.
 
-Using a cache for re-assemblies is possible due to the build stage identifier called _signature_. The _signature_ is calculated for the _stages_ at each build. At the last step of the build when saving _stages cache_, the _signature_ is used for tagging (`image-stage-<project name>:<signature>`). This logic allows to assembly only _stages_ whose the _stages cache_ does not exist in the docker. More information about _stages cache_ in a [separate article]({{ site.baseurl }}/reference/build/cache.html).
+Using a cache for re-assemblies is possible due to the build stage identifier called _signature_. The _signature_ is calculated for the _stages_ at each build. At the last step of the build when saving _stages cache_, the _signature_ is used for tagging (`image-stage-<project name>:<signature>`). This logic allows to assembly only _stages_ whose the _stages cache_ does not exist in the docker.
 
 <div class="rsc" markdown="1">
 
