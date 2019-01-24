@@ -65,7 +65,7 @@ It is designed to make engineer's work fast end efficient.
 
 The latest release can be reached via [this page](https://bintray.com/flant/werf/werf/_latestVersion).
 
-#### MacOS
+##### MacOS
 
 ```bash
 curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.4/werf-darwin-amd64-v1.0.0-alpha.4 -o /tmp/werf
@@ -73,7 +73,7 @@ chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
 
-#### Linux
+##### Linux
 
 ```bash
 curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.4/werf-linux-amd64-v1.0.0-alpha.4 -o /tmp/werf
@@ -81,7 +81,7 @@ chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
 
-#### Windows
+##### Windows
 
 Download [werf.exec](https://dl.bintray.com/flant/werf/v1.0.0-alpha.4/werf-windows-amd64-v1.0.0-alpha.4.exe).
 
