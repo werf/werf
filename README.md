@@ -31,7 +31,7 @@ It is designed to make engineer's work fast end efficient.
 
 # Features
 
-* Comlete application lifecycle management: **build** and **cleanup** images, **deploy** application into Kubernetes.
+* Complete application lifecycle management: **build** and **cleanup** images, **deploy** application into Kubernetes.
 * **Incremental rebuilds** for **git**: reducing average build time for a sequence of git commits.
 * Building images with **Ansible** or **Shell** scripts.
 * Building **multiple images** from one description.
@@ -54,7 +54,7 @@ It is designed to make engineer's work fast end efficient.
 
 2. Helm Kubernetes package manager. Helm is optional and only needed for deploy-related commands.
 
-   [Helm command line util installation instructions.](https://docs.helm.sh/using_helm/#installing-helm)
+   [Helm client installation instructions.](https://docs.helm.sh/using_helm/#installing-helm)
 
    [Tiller backend installation instructions.](https://docs.helm.sh/using_helm/#installing-tiller)
 
