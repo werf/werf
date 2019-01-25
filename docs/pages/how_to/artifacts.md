@@ -64,7 +64,7 @@ werf build
 Run the application by executing the following command in the `booking` directory:
 ```bash
 werf tag --repo booking --tag v1.0
-docker run booking/go-booking:v1.0 -p 9000:9000 --rm -d /app/run.sh
+docker run -p 9000:9000 --rm -d booking/go-booking:v1.0 /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -169,7 +169,7 @@ docker stop `docker ps -lq`
 Run the modified application by executing the following command:
 ```bash
 werf tag --repo booking --tag v2.0
-docker run booking/go-booking:v2.0 -p 9000:9000 --rm -d /app/run.sh
+docker run -p 9000:9000 --rm -d booking/go-booking:v2.0 /app/run.sh
 ```
 
 Check that container is running by executing the following command:

@@ -48,7 +48,7 @@ import:
   after: install
 - artifact: appserver
   add: /usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar
-  to: /app/AtSea-0.0.1-SNAPSHOT.jar
+  to: /app
   after: install
 ```
 
@@ -274,7 +274,7 @@ import:
   after: install
 - artifact: appserver
   add: /usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar
-  to: /app/AtSea-0.0.1-SNAPSHOT.jar
+  to: /app
   after: install
 ---
 image: reverse_proxy
@@ -374,7 +374,7 @@ werf build
 Execute the following command in the root folder of the project to tag all images:
 
 ```bash
-werf tag atsea --tag werf
+werf tag --repo atsea --tag werf
 ```
 
 ## Step 6: Add docker-compose-werf.yml file
@@ -441,7 +441,7 @@ networks:
 To have an ability to open the example by the `http://atseashop.com` URL, add the `atseashop.com` name pointing to the address of your local interface into your `/etc/hosts` file. E.g.:
 
 ```bash
-sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts
+sudo sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts
 ```
 
 ## Running the application

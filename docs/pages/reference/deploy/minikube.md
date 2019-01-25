@@ -55,7 +55,7 @@ Using werf to build and deploy on your localhost requires to setup the following
 
      {% raw %}
      ```
-     export REGISTRY_IP=$(kubectl -n kube-system get svc/werf-registry -o=template={{.spec.clusterIP}})
+     export REGISTRY_IP=$(kubectl -n kube-system get svc/werf-registry -o=go-template={{.spec.clusterIP}})
      minikube ssh "echo '$REGISTRY_IP werf-registry.kube-system.svc.cluster.local' | sudo tee -a /etc/hosts"
      ```
      {% endraw %}
@@ -73,7 +73,7 @@ Using werf to build and deploy on your localhost requires to setup the following
 
      {% raw %}
      ```
-     kubectl port-forward --namespace kube-system service/werf-registry 5000
+     kubectl port-forward --namespace kube-system $(kubectl --namespace kube-system get po -l kubernetes.io/minikube-addons=registry -o=jsonpath='{.items[0].metadata.name}') 5000
      ```
      {% endraw %}
 
