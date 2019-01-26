@@ -245,7 +245,7 @@ Then you can check application by url: `http://myapp.local`.
 To completely remove deployed application run this dismiss werf command:
 
 ```shell
-werf dismiss --with-namespace
+werf dismiss --environment dev --with-namespace
 ```
 
 ## See also

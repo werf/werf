@@ -88,7 +88,7 @@ werf build
 Run the application by executing the following command in the `booking` directory:
 ```bash
 werf tag --repo booking --tag v1.0
-docker run booking/go-booking:v1.0 -p 9000:9000 --rm -d /app/run.sh
+docker run -p 9000:9000 --rm -d booking/go-booking:v1.0 /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -122,7 +122,7 @@ REPOSITORY           TAG           IMAGE ID            CREATED             SIZE
 booking/go-booking   v1.0          0bf71cb34076        10 minutes ago      1.04 GB
 ```
 
-You can check the size of all ancestor images. To find ancestor images tags look at the output of the `werf build` command — in the lines like `signature: image-stage-booking:c05db314b209a96bd906b77c910d6a5ae76e25f6422bf57f2da37e935805ddca`. The last long HEX value is the image tag. E.e. you could see in the output of the `docker images` command like this (TAGs values was cut to fit the web page):
+You can check the size of all ancestor images. To find ancestor images tags look at the output of the `werf build` command — in the lines like `# Calculated signature c05db314b209a96bd906b77c910d6a5ae76e25f6422bf57f2da37e935805ddca for image/go-booking stage/setup`. The long HEX value is the image tag. E.e. you could see in the output of the `docker images` command like this (TAGs values was cut to fit the web page):
 
 ```bash
 REPOSITORY            TAG                  IMAGE ID            CREATED             SIZE
@@ -283,7 +283,7 @@ docker stop `docker ps -lq`
 Run the modified application by executing the following command:
 ```bash
 werf tag --repo booking --tag v2.0
-docker run booking/go-booking:v2.0 -p 9000:9000 --rm -d /app/run.sh
+docker run -p 9000:9000 --rm -d booking/go-booking:v2.0 /app/run.sh
 ```
 
 Check that container is running by executing the following command:
@@ -322,7 +322,7 @@ Werf store build cache for project in the `~/.werf/builds/<project>/` directory.
 Analyze the structure of the `~/.werf/builds/booking/mount` directory. Execute the following command:
 
 ```bash
-tree -L 3 ~/.werf/builds/booking/mount
+tree -L 3 ~/.werf/builds/hotel-booking/mount
 ```
 
 The output will be like this (some lines skipped):
@@ -347,7 +347,7 @@ As you may see, there are separate directories on the host for every mount in co
 
 Check the directories size, by executing:
 ```bash
-sudo du -kh --max-depth=1 ~/.werf/builds/booking/mount
+sudo du -kh --max-depth=1 ~/.werf/builds/hotel-booking/mount
 ```
 
 The output will be like this:
@@ -370,4 +370,4 @@ The total size difference between `v1.0` and `v2.0` images is about 730 MB (the 
 
 * Use a smaller base image instead of ubuntu, such as [alpine](https://hub.docker.com/_/alpine/) or [golang](https://hub.docker.com/_/golang/).
 * Using [werf artifacts]({{ site.baseurl }}/reference/build/artifact.html) in many cases can give more efficient.
-  The size of `/app` directory in the image is about only 17 MB (you can check it by executing `docker run booking/go-booking:v2.0 --rm -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in werf artifact and then import only the resulting `/app` directory.
+  The size of `/app` directory in the image is about only 17 MB (you can check it by executing `docker run --rm booking/go-booking:v2.0 du -kh --max-depth=0 /app`). So you can build files into the `/app` in werf artifact and then import only the resulting `/app` directory.

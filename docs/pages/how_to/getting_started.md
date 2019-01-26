@@ -43,147 +43,147 @@ To implement these steps and requirements with werf we will add a special file c
     </div>
 
     <div id="Ansible" class="tabcontent active" markdown="1">
-      {% raw %}
-      ```yaml
-      project: symfony-demo
-      ---
+    {% raw %}
+    ```yaml
+    project: symfony-demo
+    ---
 
-      image: ~
-      from: ubuntu:16.04
-      docker:
-        WORKDIR: /app
-        # Non-root user
-        USER: app
-        EXPOSE: "80"
-        ENV:
-          LC_ALL: en_US.UTF-8
-      ansible:
-        beforeInstall:
-        - name: "Install additional packages"
-          apt:
-            name: "{{`{{ item }}`}}"
-            state: present
-            update_cache: yes
-          with_items:
-            - locales
-            - ca-certificates
-        - name: "Generate en_US.UTF-8 default locale"
-          locale_gen:
-            name: en_US.UTF-8
-            state: present
-        - name: "Create non-root group for the main application"
-          group:
-            name: app
-            state: present
-            gid: 242
-        - name: "Create non-root user for the main application"
-          user:
-            name: app
-            comment: "Create non-root user for the main application"
-            uid: 242
-            group: app
-            shell: /bin/bash
-            home: /app
-        - name: Add repository key
-          apt_key:
-            keyserver: keyserver.ubuntu.com
-            id: E5267A6C
-        - name: "Add PHP apt repository"
-          apt_repository:
-            repo: 'deb http://ppa.launchpad.net/ondrej/php/ubuntu xenial main'
-            update_cache: yes
-        - name: "Install PHP and modules"
-          apt:
-            name: "{{`{{ item }}`}}"
-            state: present
-            update_cache: yes
-          with_items:
-            - php7.2
-            - php-sqlite3
-            - php-xml
-            - php-zip
-            - php-mbstring
-            - php-intl
-        - name: Install composer
-          get_url:
-            url: https://getcomposer.org/download/1.6.5/composer.phar
-            dest: /usr/local/bin/composer
-            mode: a+x
-        install:
-        - name: "Install app deps"
-          # NOTICE: Always use `composer install` command in real world environment!
-          shell: composer update
-          become: yes
-          become_user: app
-          args:
-            creates: /app/vendor/
-            chdir: /app/
-        setup:
-        - name: "Create start script"
-          copy:
-            content: |
-              #!/bin/bash
-              php bin/console server:run 0.0.0.0:8000
-            dest: /app/start.sh
-            owner: app
-            group: app
-            mode: 0755
-        - raw: echo `date` > /app/version.txt
-        - raw: chown app:app /app/version.txt
-      git:
-      - add: /
-        to: /app
-        owner: app
-        group: app
-      ```
-      {% endraw %}
+    image: ~
+    from: ubuntu:16.04
+    docker:
+      WORKDIR: /app
+      # Non-root user
+      USER: app
+      EXPOSE: "80"
+      ENV:
+        LC_ALL: en_US.UTF-8
+    ansible:
+      beforeInstall:
+      - name: "Install additional packages"
+        apt:
+          name: "{{`{{ item }}`}}"
+          state: present
+          update_cache: yes
+        with_items:
+          - locales
+          - ca-certificates
+      - name: "Generate en_US.UTF-8 default locale"
+        locale_gen:
+          name: en_US.UTF-8
+          state: present
+      - name: "Create non-root group for the main application"
+        group:
+          name: app
+          state: present
+          gid: 242
+      - name: "Create non-root user for the main application"
+        user:
+          name: app
+          comment: "Create non-root user for the main application"
+          uid: 242
+          group: app
+          shell: /bin/bash
+          home: /app
+      - name: Add repository key
+        apt_key:
+          keyserver: keyserver.ubuntu.com
+          id: E5267A6C
+      - name: "Add PHP apt repository"
+        apt_repository:
+          repo: 'deb http://ppa.launchpad.net/ondrej/php/ubuntu xenial main'
+          update_cache: yes
+      - name: "Install PHP and modules"
+        apt:
+          name: "{{`{{ item }}`}}"
+          state: present
+          update_cache: yes
+        with_items:
+          - php7.2
+          - php-sqlite3
+          - php-xml
+          - php-zip
+          - php-mbstring
+          - php-intl
+      - name: Install composer
+        get_url:
+          url: https://getcomposer.org/download/1.6.5/composer.phar
+          dest: /usr/local/bin/composer
+          mode: a+x
+      install:
+      - name: "Install app deps"
+        # NOTICE: Always use `composer install` command in real world environment!
+        shell: composer update
+        become: yes
+        become_user: app
+        args:
+          creates: /app/vendor/
+          chdir: /app/
+      setup:
+      - name: "Create start script"
+        copy:
+          content: |
+            #!/bin/bash
+            php bin/console server:run 0.0.0.0:8000
+          dest: /app/start.sh
+          owner: app
+          group: app
+          mode: 0755
+      - raw: echo `date` > /app/version.txt
+      - raw: chown app:app /app/version.txt
+    git:
+    - add: /
+      to: /app
+      owner: app
+      group: app
+    ```
+    {% endraw %}
     </div>
 
     <div id="Shell" class="tabcontent" markdown="1">
-      {% raw %}
-      ```yaml
-      project: symfony-demo
-      ---
+    {% raw %}
+    ```yaml
+    project: symfony-demo
+    ---
 
-      image: ~
-      from: ubuntu:16.04
-      docker:
-        WORKDIR: /app
-        # Non-root user
-        USER: app
-        EXPOSE: "80"
-        ENV:
-          LC_ALL: en_US.UTF-8
-      shell:
-        beforeInstall:
-        - apt-get update
-        - apt-get install -y locales ca-certificates curl software-properties-common
-        - locale-gen en_US.UTF-8
-        - groupadd -g 242 app
-        - useradd -m -d /app -g 242 -u 242 -s /bin/bash app
-        # https://askubuntu.com/posts/490910/revisions
-        - LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
-        - apt-get update
-        - apt-get install -y php7.2 php-sqlite3 php-xml php-zip php-mbstring php-intl
-        - curl -LsS https://getcomposer.org/download/1.4.1/composer.phar -o /usr/local/bin/composer
-        - chmod a+x /usr/local/bin/composer
-        install:
-        - cd /app
-        # NOTICE: Always use `composer install` command in real world environment!
-        - su -c 'composer update' app
-        setup:
-        - "echo '#!/bin/bash' >> /app/start.sh"
-        - echo 'php bin/console server:run 0.0.0.0:8000' >> /app/start.sh
-        - echo `date` > /app/version.txt
-        - chown app:app /app/start.sh /app/version.txt
-        - chmod +x /app/start.sh
-      git:
-      - add: /
-        to: /app
-        owner: app
-        group: app
-      ```
-      {% endraw %}
+    image: ~
+    from: ubuntu:16.04
+    docker:
+      WORKDIR: /app
+      # Non-root user
+      USER: app
+      EXPOSE: "80"
+      ENV:
+        LC_ALL: en_US.UTF-8
+    shell:
+      beforeInstall:
+      - apt-get update
+      - apt-get install -y locales ca-certificates curl software-properties-common
+      - locale-gen en_US.UTF-8
+      - groupadd -g 242 app
+      - useradd -m -d /app -g 242 -u 242 -s /bin/bash app
+      # https://askubuntu.com/posts/490910/revisions
+      - LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
+      - apt-get update
+      - apt-get install -y php7.2 php-sqlite3 php-xml php-zip php-mbstring php-intl
+      - curl -LsS https://getcomposer.org/download/1.4.1/composer.phar -o /usr/local/bin/composer
+      - chmod a+x /usr/local/bin/composer
+      install:
+      - cd /app
+      # NOTICE: Always use `composer install` command in real world environment!
+      - su -c 'composer update' app
+      setup:
+      - "echo '#!/bin/bash' >> /app/start.sh"
+      - echo 'php bin/console server:run 0.0.0.0:8000' >> /app/start.sh
+      - echo `date` > /app/version.txt
+      - chown app:app /app/start.sh /app/version.txt
+      - chmod +x /app/start.sh
+    git:
+    - add: /
+      to: /app
+      owner: app
+      group: app
+    ```
+    {% endraw %}
     </div>
 
 ## Step 2: Build and Run the Application
@@ -202,7 +202,7 @@ Let's build and run our first application.
 
     ```shell
     werf tag --repo myimage --tag mytag
-    docker run myimage:mytag -d -p 8000:8000 /app/start.sh
+    docker run -d -p 8000:8000 myimage:mytag /app/start.sh
     ```
 
 4.  Check that the application runs and responds:
