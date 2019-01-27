@@ -19,7 +19,7 @@ func NewRenewPhase() *RenewPhase {
 type RenewPhase struct{}
 
 func (p *RenewPhase) Run(c *Conveyor) (err error) {
-	logger.LogServiceProcess("Check invalid images", "", func() error {
+	logger.LogServiceProcess("Check invalid stages cache", "", func() error {
 		err = p.run(c)
 		if isConveyorShouldBeResetError(err) {
 			return nil
