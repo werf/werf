@@ -293,18 +293,28 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 		gitPaths = append(gitPaths, gitRemoteArtifactInit(remoteGitPathConfig, remoteGitRepo, imageBaseConfig.Name, c))
 	}
 
-	var nonEmptyGitPaths []*stage.GitPath
-	var err error
+	var res []*stage.GitPath
+
 	if len(gitPaths) != 0 {
-		logger.LogServiceProcess(fmt.Sprintf("Check git paths"), "", func() error {
-			nonEmptyGitPaths, err = getNonEmptyGitPaths(gitPaths)
-			return err
+		err := logger.LogServiceProcess(fmt.Sprintf("Check git paths"), "", func() error {
+			nonEmptyGitPaths, err := getNonEmptyGitPaths(gitPaths)
+			if err != nil {
+				return err
+			}
+
+			res = nonEmptyGitPaths
+
+			return nil
 		})
+
+		if err != nil {
+			return nil, err
+		}
 
 		fmt.Println()
 	}
 
-	return nonEmptyGitPaths, err
+	return res, nil
 }
 
 func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {

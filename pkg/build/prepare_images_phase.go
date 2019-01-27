@@ -15,13 +15,10 @@ func NewPrepareImagesPhase() *PrepareImagesPhase {
 
 type PrepareImagesPhase struct{}
 
-func (p *PrepareImagesPhase) Run(c *Conveyor) (err error) {
-	logger.LogServiceProcess("Prepare stages build instructions", "", func() error {
-		err = p.run(c)
-		return err
+func (p *PrepareImagesPhase) Run(c *Conveyor) error {
+	return logger.LogServiceProcess("Prepare stages build instructions", "", func() error {
+		return p.run(c)
 	})
-
-	return
 }
 
 func (p *PrepareImagesPhase) run(c *Conveyor) (err error) {
