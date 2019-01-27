@@ -481,7 +481,7 @@ func parseTemplates(chartPath, releaseName string, set, setString []string, valu
 
 func removeOldJobs(templates *ChartTemplates, namespace string) error {
 	isJobExist := func(name string, namespace string) (bool, error) {
-		options := v1.GetOptions{IncludeUninitialized: true}
+		options := v1.GetOptions{}
 		_, err := kube.Kubernetes.BatchV1().Jobs(namespace).Get(name, options)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
