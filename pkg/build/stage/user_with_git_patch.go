@@ -8,11 +8,8 @@ import (
 func newUserWithGitPatchStage(builder builder.Builder, name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *UserWithGitPatchStage {
 	s := &UserWithGitPatchStage{}
 	s.UserStage = newUserStage(builder, name, baseStageOptions)
-
-	if len(s.gitPaths) != 0 {
-		s.GitPatchStage = newGitPatchStage(name, gitPatchStageOptions, baseStageOptions)
-		s.GitPatchStage.BaseStage = s.BaseStage
-	}
+	s.GitPatchStage = newGitPatchStage(name, gitPatchStageOptions, baseStageOptions)
+	s.GitPatchStage.BaseStage = s.BaseStage
 
 	return s
 }
@@ -27,7 +24,7 @@ func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image i
 		return err
 	}
 
-	if s.GitPatchStage != nil {
+	if !s.GitPatchStage.isEmpty() {
 		stageName := c.GetBuildingGitStage(s.imageName)
 		if stageName == s.Name() {
 			if err := s.GitPatchStage.prepareImage(c, prevBuiltImage, image); err != nil {
@@ -40,7 +37,7 @@ func (s *UserWithGitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image i
 }
 
 func (s *UserWithGitPatchStage) AfterImageSyncDockerStateHook(c Conveyor) error {
-	if s.GitPatchStage != nil {
+	if !s.GitPatchStage.isEmpty() {
 		if err := s.GitPatchStage.AfterImageSyncDockerStateHook(c); err != nil {
 			return err
 		}
