@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	BuildCacheVersion = "33"
+	BuildCacheVersion = "1"
 
 	LocalImageStageImageNameFormat = "image-stage-%s"
 	LocalImageStageImageFormat     = "image-stage-%s:%s"
