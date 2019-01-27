@@ -54,8 +54,7 @@ func (p *PushPhase) Run(c *Conveyor) error {
 		err := logger.LogServiceProcess(fmt.Sprintf("Push %s", image.LogName()), "", func() error {
 			if p.WithStages {
 				err := logger.LogServiceProcess("Push stages cache", "", func() error {
-					err := p.pushImageStages(c, image)
-					if err != nil {
+					if err := p.pushImageStages(c, image); err != nil {
 						return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
 					}
 
@@ -72,15 +71,8 @@ func (p *PushPhase) Run(c *Conveyor) error {
 			}
 
 			if !image.isArtifact {
-				err := p.pushImage(c, image)
-				if err != nil {
+				if err := p.pushImage(c, image); err != nil {
 					return fmt.Errorf("unable to push image %s: %s", image.GetName(), err)
-				}
-
-				return nil
-
-				if err != nil {
-					return err
 				}
 			}
 
@@ -126,20 +118,18 @@ func (p *PushPhase) pushImageStages(c *Conveyor, image *Image) error {
 		}
 
 		err := func() error {
-			var err error
-
 			imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(stageImageName))
-			err = lock.Lock(imageLockName, lock.LockOptions{})
-			if err != nil {
+
+			if err := lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 			}
+
 			defer lock.Unlock(imageLockName)
 
 			stageImage := c.GetStageImage(stage.GetImage().Name())
 
 			return logger.LogProcess(fmt.Sprintf("%s", stage.Name()), "[PUSHING]", func() error {
-				err = stageImage.Export(stageImageName)
-				if err != nil {
+				if err := stageImage.Export(stageImageName); err != nil {
 					return fmt.Errorf("error pushing %s: %s", stageImageName, err)
 				}
 
@@ -195,7 +185,7 @@ func (p *PushPhase) pushImage(c *Conveyor, image *Image) error {
 			continue
 		}
 
-		err = logger.LogServiceProcess(fmt.Sprintf("%s scheme", string(scheme)), "", func() error {
+		err := logger.LogServiceProcess(fmt.Sprintf("%s scheme", string(scheme)), "", func() error {
 		ProcessingTags:
 			for ind, tag := range tags {
 				isLastTag := ind == len(tags)-1
@@ -221,13 +211,12 @@ func (p *PushPhase) pushImage(c *Conveyor, image *Image) error {
 				}
 
 				err := func() error {
-					var err error
-
 					imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(imageName))
-					err = lock.Lock(imageLockName, lock.LockOptions{})
-					if err != nil {
+
+					if err = lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 						return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 					}
+
 					defer lock.Unlock(imageLockName)
 
 					pushImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageName)
@@ -237,21 +226,20 @@ func (p *PushPhase) pushImage(c *Conveyor, image *Image) error {
 						imagePkg.WerfImageLabel:     "true",
 					})
 
-					err = logger.LogProcessInline("Building final image with meta information", func() error {
-						err = pushImage.Build(imagePkg.BuildOptions{})
-						if err != nil {
+					err := logger.LogProcessInline("Building final image with meta information", func() error {
+						if err := pushImage.Build(imagePkg.BuildOptions{}); err != nil {
 							return fmt.Errorf("error building %s with tag scheme '%s': %s", imageName, scheme, err)
 						}
 
 						return nil
 					})
+
 					if err != nil {
 						return err
 					}
 
 					return logger.LogProcess(tag, "[PUSHING]", func() error {
-						err = pushImage.Export()
-						if err != nil {
+						if err := pushImage.Export(); err != nil {
 							return fmt.Errorf("error pushing %s: %s", imageName, err)
 						}
 

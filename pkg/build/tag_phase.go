@@ -35,8 +35,7 @@ func (p *TagPhase) Run(c *Conveyor) error {
 
 		if !image.isArtifact {
 			err := logger.LogServiceProcess(fmt.Sprintf("Tag %s", image.LogName()), "", func() error {
-				err := p.tagImage(c, image)
-				if err != nil {
+				if err := p.tagImage(c, image); err != nil {
 					return fmt.Errorf("unable to tag image %s: %s", image.GetName(), err)
 				}
 
@@ -56,7 +55,7 @@ func (p *TagPhase) Run(c *Conveyor) error {
 	return nil
 }
 
-func (p *TagPhase) tagImage(c *Conveyor, image *Image) (err error) {
+func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 	var imageRepository string
 	if image.GetName() != "" {
 		imageRepository = fmt.Sprintf("%s/%s", p.Repo, image.GetName())
@@ -85,20 +84,19 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) (err error) {
 			continue
 		}
 
-		err = logger.LogServiceProcess(fmt.Sprintf("%s scheme", string(scheme)), "", func() error {
+		err := logger.LogServiceProcess(fmt.Sprintf("%s scheme", string(scheme)), "", func() error {
 			for ind, tag := range tags {
 				isLastTag := ind == len(tags)-1
 
 				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
 
 				err := func() error {
-					var err error
-
 					imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(imageName))
-					err = lock.Lock(imageLockName, lock.LockOptions{})
-					if err != nil {
+
+					if err := lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 						return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 					}
+
 					defer lock.Unlock(imageLockName)
 
 					tagImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageName)
@@ -108,9 +106,8 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) (err error) {
 						imagePkg.WerfImageLabel:     "true",
 					})
 
-					err = logger.LogProcessInline(fmt.Sprintf("Building final image with meta information"), func() error {
-						err = tagImage.Build(imagePkg.BuildOptions{})
-						if err != nil {
+					err := logger.LogProcessInline(fmt.Sprintf("Building final image with meta information"), func() error {
+						if err := tagImage.Build(imagePkg.BuildOptions{}); err != nil {
 							return fmt.Errorf("error building %s: %s", tag, err)
 						}
 
@@ -122,8 +119,7 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) (err error) {
 					}
 
 					err = logger.LogProcessInline(fmt.Sprintf("Tagging %s", tag), func() error {
-						err = tagImage.Tag()
-						if err != nil {
+						if err = tagImage.Tag(); err != nil {
 							return fmt.Errorf("error tagging %s: %s", imageName, err)
 						}
 
@@ -166,5 +162,5 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) (err error) {
 		}
 	}
 
-	return
+	return nil
 }

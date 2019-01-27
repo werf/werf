@@ -13,12 +13,10 @@ func NewShouldBeBuiltPhase() *ShouldBeBuiltPhase {
 	return &ShouldBeBuiltPhase{}
 }
 
-func (p *ShouldBeBuiltPhase) Run(c *Conveyor) (err error) {
-	err = logger.LogServiceProcess("Check built stages cache", "", func() error {
+func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
+	return logger.LogServiceProcess("Check built stages cache", "", func() error {
 		return p.run(c)
 	})
-
-	return
 }
 
 func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
