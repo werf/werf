@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/flant/werf/pkg/logger/terminal"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type Env string
@@ -57,7 +57,7 @@ func EnvsDescription(envs ...Env) string {
 		leftPart := strings.Join([]string{"  ", "$", string(env), strings.Repeat(" ", envNameWidth-len(env))}, "")
 		leftPartLength := len(leftPart)
 		space := "  "
-		rightPart := strings.TrimLeft(terminal.FitTextWithIndentWithWidthMaxLimit(envDescription[env], leftPartLength+len(space), 100), " ")
+		rightPart := strings.TrimLeft(logger.FitTextWithIndentWithWidthMaxLimit(envDescription[env], leftPartLength+len(space), 100), " ")
 		lines = append(lines, fmt.Sprintf("%s%s%s", leftPart, space, rightPart))
 	}
 

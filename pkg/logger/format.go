@@ -1,45 +1,13 @@
-package terminal
+package logger
 
-import (
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
-
-	"golang.org/x/crypto/ssh/terminal"
-)
-
-const (
-	defaultTerminalWidth = 120
-)
-
-func Width() int {
-	if wtw, ok := os.LookupEnv("WERF_TERMINAL_WIDTH"); ok {
-		if i, err := strconv.Atoi(wtw); err != nil {
-			panic(fmt.Sprintf("Unexpected WERF_TERMINAL_WIDTH: %s", err))
-		} else {
-			return i
-		}
-	} else {
-		if terminal.IsTerminal(int(os.Stdout.Fd())) {
-			w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
-			if err != nil {
-				panic(err)
-			}
-
-			return w
-		}
-	}
-
-	return defaultTerminalWidth
-}
+import "strings"
 
 func FitTextWithIndent(text string, indentWidth int) string {
-	return fitTextWithIndent(text, Width(), indentWidth)
+	return fitTextWithIndent(text, TerminalWidth(), indentWidth)
 }
 
 func FitTextWithIndentWithWidthMaxLimit(text string, indentWidth int, maxWidth int) string {
-	tw := Width()
+	tw := TerminalWidth()
 	var lineWidth int
 	if tw < maxWidth {
 		lineWidth = tw
@@ -54,7 +22,7 @@ func fitTextWithIndent(text string, lineWidth, indentWidth int) string {
 	var result string
 	var resultLines []string
 
-	contentWidth := lineWidth - indentWidth
+	contentWidth := lineWidth - indentWidth - indent
 	fittedText := fitText(text, contentWidth)
 	for _, line := range strings.Split(fittedText, "\n") {
 		indent := strings.Repeat(" ", indentWidth)
@@ -87,7 +55,7 @@ func fitText(text string, contentWidth int) string {
 					toAdd += " "
 				}
 
-				if cursor+len(toAdd) > contentWidth && resultLine != "" {
+				if cursor+len(toAdd) >= contentWidth && resultLine != "" {
 					resultLines = append(resultLines, resultLine)
 					cursor = 0
 					resultLine = ""

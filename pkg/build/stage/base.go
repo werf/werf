@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/image"
+	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/util"
 )
@@ -28,12 +28,6 @@ const (
 	GitCache                    StageName = "git_cache"
 	GitLatestPatch              StageName = "git_latest_patch"
 	DockerInstructions          StageName = "docker_instructions"
-)
-
-const (
-	mountTmpDirLabel          = "werf-mount-type-tmp-dir"
-	mountBuildDIrLabel        = "werf-mount-type-build-dir"
-	mountCustomDirLabelPrefix = "werf-mount-type-custom-dir-"
 )
 
 type NewBaseStageOptions struct {
@@ -59,7 +53,7 @@ type BaseStage struct {
 	name             StageName
 	imageName        string
 	signature        string
-	image            image.ImageInterface
+	image            imagePkg.ImageInterface
 	gitPaths         []*GitPath
 	imageTmpDir      string
 	containerWerfDir string
@@ -75,19 +69,30 @@ func (s *BaseStage) Name() StageName {
 	panic("name must be defined!")
 }
 
-func (s *BaseStage) GetDependencies(_ Conveyor, _ image.ImageInterface) (string, error) {
+func (s *BaseStage) GetDependencies(_ Conveyor, _ imagePkg.ImageInterface) (string, error) {
 	panic("method must be implemented!")
 }
 
-func (s *BaseStage) IsEmpty(_ Conveyor, _ image.ImageInterface) (bool, error) {
+func (s *BaseStage) IsEmpty(_ Conveyor, _ imagePkg.ImageInterface) (bool, error) {
 	return false, nil
 }
 
-func (s *BaseStage) ShouldBeReset(_ image.ImageInterface) (bool, error) {
+func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, error) {
+	for _, gitPath := range s.gitPaths {
+		commit := gitPath.GetGitCommitFromImageLabels(builtImage)
+		if commit == "" {
+			return false, nil
+		} else if exist, err := gitPath.GitRepo().IsCommitExists(commit); err != nil {
+			return false, err
+		} else if !exist {
+			return true, nil
+		}
+	}
+
 	return false, nil
 }
 
-func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image image.ImageInterface) error {
+func (s *BaseStage) PrepareImage(_ Conveyor, prevBuiltImage, image imagePkg.ImageInterface) error {
 	/*
 	 * NOTE: BaseStage.PrepareImage does not called in From.PrepareImage.
 	 * NOTE: Take into account when adding new base PrepareImage steps.
@@ -116,11 +121,11 @@ func (s *BaseStage) PreRunHook(_ Conveyor) error {
 	return nil
 }
 
-func (s *BaseStage) getServiceMounts(prevBuiltImage image.ImageInterface) map[string][]string {
+func (s *BaseStage) getServiceMounts(prevBuiltImage imagePkg.ImageInterface) map[string][]string {
 	return mergeMounts(s.getServiceMountsFromLabels(prevBuiltImage), s.getServiceMountsFromConfig())
 }
 
-func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage image.ImageInterface) map[string][]string {
+func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage imagePkg.ImageInterface) map[string][]string {
 	mountpointsByType := map[string][]string{}
 
 	var labels map[string]string
@@ -129,8 +134,8 @@ func (s *BaseStage) getServiceMountsFromLabels(prevBuiltImage image.ImageInterfa
 	}
 
 	for _, labelMountType := range []struct{ Label, MountType string }{
-		{mountTmpDirLabel, "tmp_dir"},
-		{mountBuildDIrLabel, "build_dir"},
+		{imagePkg.WerfMountTmpDirLabel, "tmp_dir"},
+		{imagePkg.WerfMountBuildDirLabel, "build_dir"},
 	} {
 		v, hasKey := labels[labelMountType.Label]
 		if !hasKey {
@@ -159,7 +164,7 @@ func (s *BaseStage) getServiceMountsFromConfig() map[string][]string {
 	return mountpointsByType
 }
 
-func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, image image.ImageInterface) error {
+func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]string, image imagePkg.ImageInterface) error {
 	for mountType, mountpoints := range mountpointsByType {
 		for _, mountpoint := range mountpoints {
 			absoluteMountpoint := filepath.Join("/", mountpoint)
@@ -186,14 +191,14 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 	return nil
 }
 
-func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, image image.ImageInterface) {
+func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string, image imagePkg.ImageInterface) {
 	for mountType, mountpoints := range mountpointsByType {
 		var labelName string
 		switch mountType {
 		case "tmp_dir":
-			labelName = mountTmpDirLabel
+			labelName = imagePkg.WerfMountTmpDirLabel
 		case "build_dir":
-			labelName = mountBuildDIrLabel
+			labelName = imagePkg.WerfMountBuildDirLabel
 		default:
 			panic(fmt.Sprintf("unknown mount type %s", mountType))
 		}
@@ -204,11 +209,11 @@ func (s *BaseStage) addServiceMountsLabels(mountpointsByType map[string][]string
 	}
 }
 
-func (s *BaseStage) getCustomMounts(prevBuiltImage image.ImageInterface) map[string][]string {
+func (s *BaseStage) getCustomMounts(prevBuiltImage imagePkg.ImageInterface) map[string][]string {
 	return mergeMounts(s.getCustomMountsFromLabels(prevBuiltImage), s.getCustomMountsFromConfig())
 }
 
-func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage image.ImageInterface) map[string][]string {
+func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage imagePkg.ImageInterface) map[string][]string {
 	mountpointsByFrom := map[string][]string{}
 
 	var labels map[string]string
@@ -216,11 +221,11 @@ func (s *BaseStage) getCustomMountsFromLabels(prevBuiltImage image.ImageInterfac
 		labels = prevBuiltImage.Labels()
 	}
 	for k, v := range labels {
-		if !strings.HasPrefix(k, mountCustomDirLabelPrefix) {
+		if !strings.HasPrefix(k, imagePkg.WerfMountCustomDirLabelPrefix) {
 			continue
 		}
 
-		parts := strings.SplitN(k, mountCustomDirLabelPrefix, 2)
+		parts := strings.SplitN(k, imagePkg.WerfMountCustomDirLabelPrefix, 2)
 		from := strings.Replace(parts[1], "--", "/", -1)
 
 		mountpoints := util.RejectEmptyStrings(util.UniqStrings(strings.Split(v, ";")))
@@ -246,7 +251,7 @@ func (s *BaseStage) getCustomMountsFromConfig() map[string][]string {
 	return mountpointsByFrom
 }
 
-func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, image image.ImageInterface) error {
+func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string, image imagePkg.ImageInterface) error {
 	for from, mountpoints := range mountpointsByFrom {
 		absoluteFrom := util.ExpandPath(from)
 
@@ -264,9 +269,9 @@ func (s *BaseStage) addCustomMountVolumes(mountpointsByFrom map[string][]string,
 	return nil
 }
 
-func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image image.ImageInterface) {
+func (s *BaseStage) addCustomMountLabels(mountpointsByFrom map[string][]string, image imagePkg.ImageInterface) {
 	for from, mountpoints := range mountpointsByFrom {
-		labelName := fmt.Sprintf("%s%s", mountCustomDirLabelPrefix, strings.Replace(from, "/", "--", -1))
+		labelName := fmt.Sprintf("%s%s", imagePkg.WerfMountCustomDirLabelPrefix, strings.Replace(from, "/", "--", -1))
 		labelValue := strings.Join(mountpoints, ";")
 		image.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{labelName: labelValue})
 	}
@@ -280,11 +285,11 @@ func (s *BaseStage) GetSignature() string {
 	return s.signature
 }
 
-func (s *BaseStage) SetImage(image image.ImageInterface) {
+func (s *BaseStage) SetImage(image imagePkg.ImageInterface) {
 	s.image = image
 }
 
-func (s *BaseStage) GetImage() image.ImageInterface {
+func (s *BaseStage) GetImage() imagePkg.ImageInterface {
 	return s.image
 }
 

@@ -59,8 +59,6 @@ func prepareWorkTree(gitDir, workTreeDir string, commit string, withSubmodules b
 }
 
 func switchWorkTree(repoDir, workTreeDir string, commit string) error {
-	fmt.Printf("Switch work tree `%s` to commit `%s` ...\n", workTreeDir, commit)
-
 	var err error
 
 	err = os.MkdirAll(workTreeDir, os.ModePerm)
@@ -90,8 +88,6 @@ func switchWorkTree(repoDir, workTreeDir string, commit string) error {
 	if err != nil {
 		return fmt.Errorf("git clean failed: %s\n%s", err, output.String())
 	}
-
-	fmt.Printf("Switch work tree `%s` to commit `%s` OK\n", workTreeDir, commit)
 
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -29,17 +30,25 @@ func (p *TagPhase) Run(c *Conveyor) error {
 		fmt.Printf("TagPhase.Run\n")
 	}
 
-	for _, image := range c.imagesInOrder {
+	for ind, image := range c.imagesInOrder {
+		isLastImage := ind == len(c.imagesInOrder)-1
+
 		if !image.isArtifact {
-			if image.GetName() == "" {
-				fmt.Printf("# Tagging image\n")
-			} else {
-				fmt.Printf("# Tagging image/%s\n", image.GetName())
+			err := logger.LogServiceProcess(fmt.Sprintf("Tag %s", image.LogName()), "", func() error {
+				err := p.tagImage(c, image)
+				if err != nil {
+					return fmt.Errorf("unable to tag image %s: %s", image.GetName(), err)
+				}
+
+				return nil
+			})
+
+			if err != nil {
+				return err
 			}
 
-			err := p.tagImage(c, image)
-			if err != nil {
-				return fmt.Errorf("unable to tag image %s: %s", image.GetName(), err)
+			if !isLastImage {
+				fmt.Println()
 			}
 		}
 	}
@@ -47,7 +56,7 @@ func (p *TagPhase) Run(c *Conveyor) error {
 	return nil
 }
 
-func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
+func (p *TagPhase) tagImage(c *Conveyor, image *Image) (err error) {
 	var imageRepository string
 	if image.GetName() != "" {
 		imageRepository = fmt.Sprintf("%s/%s", p.Repo, image.GetName())
@@ -58,53 +67,104 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 	stages := image.GetStages()
 	lastStageImage := stages[len(stages)-1].GetImage()
 
+	var nonEmptySchemeInOrder []TagScheme
+	var lastNonEmptyTagScheme TagScheme
 	for scheme, tags := range p.TagsByScheme {
-		for _, tag := range tags {
-			imageImageName := fmt.Sprintf("%s:%s", imageRepository, tag)
+		if len(tags) == 0 {
+			continue
+		}
 
-			err := func() error {
-				var err error
+		nonEmptySchemeInOrder = append(nonEmptySchemeInOrder, scheme)
+		lastNonEmptyTagScheme = scheme
+	}
 
-				imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(imageImageName))
-				err = lock.Lock(imageLockName, lock.LockOptions{})
+	for _, scheme := range nonEmptySchemeInOrder {
+		tags := p.TagsByScheme[scheme]
+
+		if len(tags) == 0 {
+			continue
+		}
+
+		err = logger.LogServiceProcess(fmt.Sprintf("%s scheme", string(scheme)), "", func() error {
+			for ind, tag := range tags {
+				isLastTag := ind == len(tags)-1
+
+				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
+
+				err := func() error {
+					var err error
+
+					imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(imageName))
+					err = lock.Lock(imageLockName, lock.LockOptions{})
+					if err != nil {
+						return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
+					}
+					defer lock.Unlock(imageLockName)
+
+					tagImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageName)
+
+					tagImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+						imagePkg.WerfTagSchemeLabel: string(scheme),
+						imagePkg.WerfImageLabel:     "true",
+					})
+
+					err = logger.LogProcessInline(fmt.Sprintf("Building final image with meta information"), func() error {
+						err = tagImage.Build(imagePkg.BuildOptions{})
+						if err != nil {
+							return fmt.Errorf("error building %s: %s", tag, err)
+						}
+
+						return nil
+					})
+
+					if err != nil {
+						return err
+					}
+
+					err = logger.LogProcessInline(fmt.Sprintf("Tagging %s", tag), func() error {
+						err = tagImage.Tag()
+						if err != nil {
+							return fmt.Errorf("error tagging %s: %s", imageName, err)
+						}
+
+						return nil
+					})
+
+					if err != nil {
+						return err
+					}
+
+					tagImageId, err := tagImage.MustGetId()
+					if err != nil {
+						return err
+					}
+
+					logger.LogInfoF(logImageInfoFormat, "id", tagImageId)
+					logger.LogInfoF(logImageInfoFormat, "image", imageName)
+
+					return nil
+				}()
+
 				if err != nil {
-					return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
-				}
-				defer lock.Unlock(imageLockName)
-
-				fmt.Printf("# Build %s layer with tag scheme '%s'\n", imageImageName, scheme)
-
-				tagImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageImageName)
-
-				tagImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-					"werf-tag-scheme": string(scheme),
-					"werf-image":      "true",
-				})
-
-				err = tagImage.Build(imagePkg.BuildOptions{})
-				if err != nil {
-					return fmt.Errorf("error building %s with tag scheme '%s': %s", imageImageName, scheme, err)
+					return err
 				}
 
-				if image.GetName() == "" {
-					fmt.Printf("# Tagging image %s for image\n", imageImageName)
-				} else {
-					fmt.Printf("# Tagging image %s for image/%s\n", imageImageName, image.GetName())
+				if !isLastTag {
+					fmt.Println()
 				}
-
-				err = tagImage.Tag()
-				if err != nil {
-					return fmt.Errorf("error tagging %s: %s", imageImageName, err)
-				}
-
-				return nil
-			}()
-
-			if err != nil {
-				return err
 			}
+
+			return nil
+		})
+
+		if err != nil {
+			return err
+		}
+
+		if scheme != lastNonEmptyTagScheme {
+			fmt.Println()
 		}
 	}
 
-	return nil
+	return
 }

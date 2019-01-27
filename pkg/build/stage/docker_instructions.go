@@ -61,6 +61,7 @@ func (s *DockerInstructionsStage) PrepareImage(c Conveyor, prevBuiltImage, image
 	imageCommitChangeOptions.AddVolume(s.instructions.Volume...)
 	imageCommitChangeOptions.AddExpose(s.instructions.Expose...)
 	imageCommitChangeOptions.AddEnv(s.instructions.Env)
+	imageCommitChangeOptions.AddLabel(s.instructions.Label)
 	imageCommitChangeOptions.AddCmd(s.instructions.Cmd...)
 	imageCommitChangeOptions.AddOnbuild(s.instructions.Onbuild...)
 	imageCommitChangeOptions.AddEntrypoint(s.instructions.Entrypoint...)

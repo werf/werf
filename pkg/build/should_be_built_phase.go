@@ -2,9 +2,9 @@ package build
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/flant/werf/pkg/build/stage"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type ShouldBeBuiltPhase struct{}
@@ -13,7 +13,15 @@ func NewShouldBeBuiltPhase() *ShouldBeBuiltPhase {
 	return &ShouldBeBuiltPhase{}
 }
 
-func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
+func (p *ShouldBeBuiltPhase) Run(c *Conveyor) (err error) {
+	err = logger.LogServiceProcess("Check built stages cache", "", func() error {
+		return p.run(c)
+	})
+
+	return
+}
+
+func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
 	if debug() {
 		fmt.Printf("ShouldBeBuiltPhase.Run\n")
 	}
@@ -36,11 +44,7 @@ func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
 		}
 
 		for _, s := range badStages {
-			if image.GetName() != "" {
-				fmt.Fprintf(os.Stderr, "Image '%s' stage '%s' is not built\n", image.GetName(), s.Name())
-			} else {
-				fmt.Fprintf(os.Stderr, "Image stage '%s' is not built\n", s.Name())
-			}
+			logger.LogWarningF("%s %s cache should be built\n", image.LogName(), s.Name())
 		}
 
 		if len(badStages) > 0 {
@@ -49,7 +53,7 @@ func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
 	}
 
 	if len(badImages) > 0 {
-		return fmt.Errorf("images should be built")
+		return fmt.Errorf("images stages cache should be built")
 	}
 
 	return nil

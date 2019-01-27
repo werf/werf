@@ -20,7 +20,11 @@ func NewInitializationPhase() *InitializationPhase {
 	return &InitializationPhase{}
 }
 
-func (p *InitializationPhase) Run(c *Conveyor) error {
+func (p *InitializationPhase) Run(c *Conveyor) (err error) {
+	return p.run(c)
+}
+
+func (p *InitializationPhase) run(c *Conveyor) error {
 	imagesInOrder, err := generateImagesInOrder(c.werfConfig.Images, c)
 	if err != nil {
 		return err
@@ -33,28 +37,57 @@ func (p *InitializationPhase) Run(c *Conveyor) error {
 
 func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image, error) {
 	var images []*Image
-	for _, imageConfig := range getImageConfigsInOrder(imageConfigs, c) {
-		image := &Image{}
 
-		imageBaseConfig, imageName, imageArtifact := processImageConfig(imageConfig)
-		from, fromImageName := getFromAndFromImageName(imageBaseConfig)
+	imagesInterfaceConfigs := getImageConfigsInOrder(imageConfigs, c)
+	for ind, imageInterfaceConfig := range imagesInterfaceConfigs {
+		isLastImage := ind == len(imagesInterfaceConfigs)-1
 
-		image.name = imageName
-		image.baseImageName = from
-		image.baseImageImageName = fromImageName
-		image.isArtifact = imageArtifact
+		imageName := imageLogName(imageInterfaceConfig.ImageBaseConfig().Name)
+		err := logger.LogServiceProcess(fmt.Sprintf("Determine %s stages", imageName), "", func() error {
+			image, err := generateImage(imageInterfaceConfig, c)
+			if err != nil {
+				return err
+			}
 
-		stages, err := generateStages(imageConfig, c)
+			images = append(images, image)
+
+			return nil
+		})
+
 		if err != nil {
 			return nil, err
 		}
 
-		image.SetStages(stages)
-
-		images = append(images, image)
+		if !isLastImage {
+			fmt.Println()
+		}
 	}
 
 	return images, nil
+}
+
+func generateImage(imageInterfaceConfig config.ImageInterface, c *Conveyor) (*Image, error) {
+	image := &Image{}
+
+	imageBaseConfig := imageInterfaceConfig.ImageBaseConfig()
+	imageName := imageBaseConfig.Name
+	imageArtifact := imageInterfaceConfig.IsArtifact()
+
+	from, fromImageName := getFromAndFromImageName(imageBaseConfig)
+
+	image.name = imageName
+	image.baseImageName = from
+	image.baseImageImageName = fromImageName
+	image.isArtifact = imageArtifact
+
+	stages, err := generateStages(imageInterfaceConfig, c)
+	if err != nil {
+		return nil, err
+	}
+
+	image.SetStages(stages)
+
+	return image, nil
 }
 
 func getFromAndFromImageName(imageBaseConfig *config.ImageBase) (string, string) {
@@ -130,10 +163,12 @@ func isNotInArr(arr []config.ImageInterface, obj config.ImageInterface) bool {
 	return true
 }
 
-func generateStages(imageConfig config.ImageInterface, c *Conveyor) ([]stage.Interface, error) {
+func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]stage.Interface, error) {
 	var stages []stage.Interface
 
-	imageBaseConfig, imageName, imageArtifact := processImageConfig(imageConfig)
+	imageBaseConfig := imageInterfaceConfig.ImageBaseConfig()
+	imageName := imageBaseConfig.Name
+	imageArtifact := imageInterfaceConfig.IsArtifact()
 
 	baseStageOptions := &stage.NewBaseStageOptions{
 		ImageName:        imageName,
@@ -158,14 +193,7 @@ func generateStages(imageConfig config.ImageInterface, c *Conveyor) ([]stage.Int
 		return nil, err
 	}
 
-	for _, gitPath := range gitPaths {
-		commit, err := gitPath.LatestCommit()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().String(), err)
-		}
-
-		fmt.Printf("Using commit '%s' of repo '%s'\n", commit, gitPath.GitRepo().String())
-	}
+	gitPathsExist := len(gitPaths) != 0
 
 	// from
 	stages = appendIfExist(stages, stage.GenerateFromStage(imageBaseConfig, baseStageOptions))
@@ -176,8 +204,10 @@ func generateStages(imageConfig config.ImageInterface, c *Conveyor) ([]stage.Int
 	// before_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
-	// git_archive_stage
-	stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
+	if gitPathsExist {
+		// git_archive_stage
+		stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
+	}
 
 	// install
 	stages = appendIfExist(stages, stage.GenerateInstallStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
@@ -198,25 +228,31 @@ func generateStages(imageConfig config.ImageInterface, c *Conveyor) ([]stage.Int
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(imageBaseConfig, baseStageOptions))
 
 	if !imageArtifact {
-		// git_post_setup_patch
-		stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
+		if gitPathsExist {
+			// git_cache
+			stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
 
-		// git_latest_patch
-		stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
+			// git_latest_patch
+			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
+		}
 
 		// docker_instructions
-		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(imageConfig.(*config.Image), baseStageOptions))
+		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(imageInterfaceConfig.(*config.Image), baseStageOptions))
 	}
 
-	for _, s := range stages {
-		s.SetGitPaths(gitPaths)
+	if len(gitPaths) != 0 {
+		logger.LogInfo("Using git stages")
+
+		for _, s := range stages {
+			s.SetGitPaths(gitPaths)
+		}
 	}
 
 	return stages, nil
 }
 
 func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.GitPath, error) {
-	var gitPaths, nonEmptyGitPaths []*stage.GitPath
+	var gitPaths []*stage.GitPath
 
 	var localGitRepo *git_repo.Local
 	if len(imageBaseConfig.Git.Local) != 0 {
@@ -245,7 +281,9 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 				ClonePath: clonePath,
 			}
 
-			if err := remoteGitRepo.CloneAndFetch(); err != nil {
+			if err := logger.LogProcess(fmt.Sprintf("%s git\n", remoteGitPathConfig.Name), "[REFRESHING]", func() error {
+				return remoteGitRepo.CloneAndFetch()
+			}); err != nil {
 				return nil, err
 			}
 
@@ -255,11 +293,53 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 		gitPaths = append(gitPaths, gitRemoteArtifactInit(remoteGitPathConfig, remoteGitRepo, imageBaseConfig.Name, c))
 	}
 
-	for _, gitPath := range gitPaths {
+	var nonEmptyGitPaths []*stage.GitPath
+	var err error
+	if len(gitPaths) != 0 {
+		logger.LogServiceProcess(fmt.Sprintf("Check git paths"), "", func() error {
+			nonEmptyGitPaths, err = getNonEmptyGitPaths(gitPaths)
+			return err
+		})
+
+		fmt.Println()
+	}
+
+	return nonEmptyGitPaths, err
+}
+
+func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
+	var nonEmptyGitPaths []*stage.GitPath
+
+	for ind, gitPath := range gitPaths {
+		isLastGitPath := ind == len(gitPaths)-1
+
+		commit, err := gitPath.LatestCommit()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
+		}
+
+		cwd := gitPath.Cwd
+		if cwd == "" {
+			cwd = "/"
+		}
+
 		if empty, err := gitPath.IsEmpty(); err != nil {
 			return nil, err
 		} else if !empty {
+			logger.LogInfoF("Using commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
 			nonEmptyGitPaths = append(nonEmptyGitPaths, gitPath)
+		} else {
+			logger.LogWarningF("Ignore empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
+			for _, p := range gitPath.IncludePaths {
+				logger.LogWarningF("  include path: %s\n", p)
+			}
+			for _, p := range gitPath.ExcludePaths {
+				logger.LogWarningF("  exclude path: %s\n", p)
+			}
+		}
+
+		if !isLastGitPath {
+			fmt.Println()
 		}
 	}
 
@@ -377,23 +457,9 @@ func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]
 	return result
 }
 
-func processImageConfig(imageConfig config.ImageInterface) (*config.ImageBase, string, bool) {
-	var imageBase *config.ImageBase
-	var imageArtifact bool
-	switch imageConfig.(type) {
-	case *config.Image:
-		imageBase = imageConfig.(*config.Image).ImageBase
-		imageArtifact = false
-	case *config.ImageArtifact:
-		imageBase = imageConfig.(*config.ImageArtifact).ImageBase
-		imageArtifact = true
-	}
-
-	return imageBase, imageBase.Name, imageArtifact
-}
-
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
 	if !reflect.ValueOf(stage).IsNil() {
+		logger.LogInfoF("Using stage %s\n", stage.Name())
 		return append(stages, stage)
 	}
 

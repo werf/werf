@@ -53,13 +53,17 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runDeploy()
-			if err != nil {
-				return fmt.Errorf("deploy failed: %s", err)
-			}
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			err = common.LogRunningTime(func() error {
+				err := runDeploy()
+				if err != nil {
+					return fmt.Errorf("deploy failed: %s", err)
+				}
 
-			return nil
+				return nil
+			})
+
+			return
 		},
 	}
 

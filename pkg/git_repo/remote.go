@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	ini "gopkg.in/ini.v1"
 	uuid "gopkg.in/satori/go.uuid.v1"
 	git "gopkg.in/src-d/go-git.v4"
@@ -89,7 +90,7 @@ func (repo *Remote) Clone() (bool, error) {
 			return nil
 		}
 
-		fmt.Printf("Clone remote git repo `%s` ...\n", repo.String())
+		logger.LogInfoF("Clone %s\n", repo.Url)
 
 		path := filepath.Join("/tmp", fmt.Sprintf("werf-git-repo-%s", uuid.NewV4().String()))
 
@@ -112,8 +113,6 @@ func (repo *Remote) Clone() (bool, error) {
 		if err != nil {
 			return err
 		}
-
-		fmt.Printf("Clone remote git repo `%s` DONE\n", repo.String())
 
 		return nil
 	})
@@ -148,14 +147,12 @@ func (repo *Remote) Fetch() error {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
 
-		fmt.Printf("Fetching remote `%s` of repo `%s` ...\n", remoteName, repo.String())
+		logger.LogInfoF("Fetch remote %s of %s\n", remoteName, repo.Url)
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
 			return fmt.Errorf("cannot fetch remote `%s` of repo `%s`: %s", remoteName, repo.String(), err)
 		}
-
-		fmt.Printf("Fetching remote `%s` of repo `%s` DONE\n", remoteName, repo.String())
 
 		return nil
 	})

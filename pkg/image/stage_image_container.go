@@ -22,8 +22,6 @@ type StageImageContainer struct {
 	serviceCommitChangeOptions *StageImageContainerOptions
 }
 
-const StageContainerNamePrefix = "werf.build."
-
 func newStageImageContainer(image *StageImage) *StageImageContainer {
 	c := &StageImageContainer{}
 	c.image = image
@@ -36,6 +34,19 @@ func newStageImageContainer(image *StageImage) *StageImageContainer {
 
 func (c *StageImageContainer) Name() string {
 	return c.name
+}
+
+func (c *StageImageContainer) CommitChanges() []string {
+	commitChanges, err := c.prepareCommitChanges()
+	if err != nil {
+		panic(err)
+	}
+
+	return commitChanges
+}
+
+func (c *StageImageContainer) AllRunCommands() []string {
+	return c.prepareAllRunCommands()
 }
 
 func (c *StageImageContainer) AddRunCommands(commands ...string) {

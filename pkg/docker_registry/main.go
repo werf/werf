@@ -10,11 +10,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/google/go-containerregistry/pkg/authn"
-	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
-	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
+	"github.com/flant/go-containerregistry/pkg/authn"
+	"github.com/flant/go-containerregistry/pkg/name"
+	v1 "github.com/flant/go-containerregistry/pkg/v1"
+	"github.com/flant/go-containerregistry/pkg/v1/remote"
+	"github.com/flant/go-containerregistry/pkg/v1/remote/transport"
+
+	imagePkg "github.com/flant/werf/pkg/image"
 )
 
 type RepoImage struct {
@@ -108,7 +110,7 @@ func ImagesByWerfImageLabel(reference, labelValue string) ([]RepoImage, error) {
 		}
 
 		for k, v := range configFile.Config.Labels {
-			if k == "werf-image" && v == labelValue {
+			if k == imagePkg.WerfImageLabel && v == labelValue {
 				repoImage := RepoImage{
 					Repository: reference,
 					Tag:        tag,

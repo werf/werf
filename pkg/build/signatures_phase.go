@@ -2,9 +2,11 @@ package build
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/flant/werf/pkg/build/stage"
 	imagePkg "github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -21,87 +23,99 @@ func NewSignaturesPhase() *SignaturesPhase {
 
 type SignaturesPhase struct{}
 
-func (p *SignaturesPhase) Run(c *Conveyor) error {
-	if debug() {
-		fmt.Printf("SignaturesPhase.Run\n")
-	}
+func (p *SignaturesPhase) Run(c *Conveyor) (err error) {
+	for ind, image := range c.imagesInOrder {
+		isLastImage := ind == len(c.imagesInOrder)-1
 
-	for _, image := range c.imagesInOrder {
-		if debug() {
-			fmt.Printf("  image: '%s'\n", image.GetName())
-		}
+		err = logger.LogServiceProcess(fmt.Sprintf("Calculate %s signatures", image.LogName()), "", func() error {
+			return p.calculateImageSignatures(c, image)
+		})
 
-		var prevStage stage.Interface
-
-		image.SetupBaseImage(c)
-
-		var prevBuiltImage imagePkg.ImageInterface
-		prevImage := image.GetBaseImage()
-		err := prevImage.SyncDockerState()
 		if err != nil {
 			return err
 		}
 
-		var newStagesList []stage.Interface
+		if !isLastImage {
+			fmt.Println()
+		}
+	}
 
-		for _, s := range image.GetStages() {
-			if prevImage.IsExists() {
-				prevBuiltImage = prevImage
-			}
+	return nil
+}
 
-			isEmpty, err := s.IsEmpty(c, prevBuiltImage)
-			if err != nil {
-				return fmt.Errorf("error checking stage %s is empty: %s", s.Name(), err)
-			}
-			if isEmpty {
-				continue
-			}
+func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) error {
+	var prevStage stage.Interface
 
-			if debug() {
-				fmt.Printf("    %s\n", s.Name())
-			}
+	image.SetupBaseImage(c)
 
-			stageDependencies, err := s.GetDependencies(c, prevImage)
-			if err != nil {
-				return err
-			}
+	var prevBuiltImage imagePkg.ImageInterface
+	prevImage := image.GetBaseImage()
+	err := prevImage.SyncDockerState()
+	if err != nil {
+		return err
+	}
 
-			checksumArgs := []string{stageDependencies, BuildCacheVersion}
+	maxStageNameLength := 22
 
-			if prevStage != nil {
-				checksumArgs = append(checksumArgs, prevStage.GetSignature())
-			}
+	var newStagesList []stage.Interface
 
-			stageSig := util.Sha256Hash(checksumArgs...)
-
-			s.SetSignature(stageSig)
-
-			imageName := fmt.Sprintf(LocalImageStageImageFormat, c.projectName(), stageSig)
-			i := c.GetOrCreateImage(prevImage, imageName)
-			s.SetImage(i)
-
-			if err = i.SyncDockerState(); err != nil {
-				return fmt.Errorf("error synchronizing docker state of stage %s: %s", s.Name(), err)
-			}
-
-			if err = s.AfterImageSyncDockerStateHook(c); err != nil {
-				return err
-			}
-
-			if image.GetName() == "" {
-				fmt.Printf("# Calculated signature %s for image %s\n", stageSig, fmt.Sprintf("stage/%s", s.Name()))
-			} else {
-				fmt.Printf("# Calculated signature %s for image/%s %s\n", stageSig, image.GetName(), fmt.Sprintf("stage/%s", s.Name()))
-			}
-
-			newStagesList = append(newStagesList, s)
-
-			prevStage = s
-			prevImage = i
+	for _, s := range image.GetStages() {
+		if prevImage.IsExists() {
+			prevBuiltImage = prevImage
 		}
 
-		image.SetStages(newStagesList)
+		isEmpty, err := s.IsEmpty(c, prevBuiltImage)
+		if err != nil {
+			return fmt.Errorf("error checking stage %s is empty: %s", s.Name(), err)
+		}
+		if isEmpty {
+			logger.LogInfoF("%s:%s <empty>\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())))
+			continue
+		}
+
+		stageDependencies, err := s.GetDependencies(c, prevImage)
+		if err != nil {
+			return err
+		}
+
+		checksumArgs := []string{stageDependencies, BuildCacheVersion}
+
+		if prevStage != nil {
+			checksumArgs = append(checksumArgs, prevStage.GetSignature())
+		}
+
+		stageSig := util.Sha256Hash(checksumArgs...)
+
+		s.SetSignature(stageSig)
+
+		imageName := fmt.Sprintf(LocalImageStageImageFormat, c.projectName(), stageSig)
+
+		logger.LogInfoF("%s:%s %s\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())), imageName)
+
+		i := c.GetOrCreateImage(prevImage, imageName)
+		s.SetImage(i)
+
+		if err = i.SyncDockerState(); err != nil {
+			return fmt.Errorf("error synchronizing docker state of stage %s: %s", s.Name(), err)
+		}
+
+		if err = s.AfterImageSyncDockerStateHook(c); err != nil {
+			return err
+		}
+
+		newStagesList = append(newStagesList, s)
+
+		prevStage = s
+		prevImage = i
 	}
+
+	stageName := c.GetBuildingGitStage(image.name)
+	if stageName != "" {
+		fmt.Println()
+		logger.LogInfoF("Git files are actual on the %s stage\n", stageName)
+	}
+
+	image.SetStages(newStagesList)
 
 	return nil
 }

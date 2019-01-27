@@ -42,7 +42,7 @@ func Init(keys []string) error {
 	systemAgentSock := os.Getenv("SSH_AUTH_SOCK")
 	if systemAgentSock != "" && util.FileExists(systemAgentSock) {
 		SSHAuthSock = systemAgentSock
-		fmt.Printf("Using system ssh-agent %s\n", systemAgentSock)
+		logger.LogInfoF("Using system ssh-agent %s\n", systemAgentSock)
 		return nil
 	}
 

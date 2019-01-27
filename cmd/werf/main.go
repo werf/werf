@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -24,6 +25,7 @@ import (
 	"github.com/flant/werf/cmd/werf/sync"
 	"github.com/flant/werf/cmd/werf/tag"
 	"github.com/flant/werf/cmd/werf/version"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/process_exterminator"
 
 	secret_edit "github.com/flant/werf/cmd/werf/secret/edit"
@@ -43,7 +45,7 @@ func main() {
 	trapTerminationSignals()
 
 	if err := process_exterminator.Init(); err != nil {
-		fmt.Fprintf(os.Stderr, "Process exterminator initialization error: %s\n", err)
+		logger.LogError(fmt.Errorf("process exterminator initialization error: %s", err))
 		os.Exit(1)
 	}
 
@@ -53,7 +55,8 @@ func main() {
 		Long: common.GetLongCommandDescription(`Werf helps to implement and support Continuous Integration and Continuous Delivery.
 
 Find more information at https://flant.github.io/werf`),
-		SilenceUsage: true,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
 
 	groups := templates.CommandGroups{
@@ -104,6 +107,7 @@ Find more information at https://flant.github.io/werf`),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
+		logger.LogError(err)
 		os.Exit(1)
 	}
 }
@@ -142,8 +146,7 @@ func trapTerminationSignals() {
 	go func() {
 		<-c
 
-		fmt.Fprintf(os.Stderr, "Interrupted\n")
-
+		logger.LogError(errors.New("interrupted"))
 		os.Exit(17)
 	}()
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/flant/werf/pkg/docker_registry"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -48,31 +49,50 @@ func (p *PushPhase) Run(c *Conveyor) error {
 		return fmt.Errorf("login into '%s' for push failed: %s", p.Repo, err)
 	}
 
-	for _, image := range c.imagesInOrder {
-		if p.WithStages {
-			if image.GetName() == "" {
-				fmt.Printf("# Pushing image stages cache\n")
-			} else {
-				fmt.Printf("# Pushing image/%s stages cache\n", image.GetName())
+	for ind, image := range c.imagesInOrder {
+		isLastImage := ind == len(c.imagesInOrder)-1
+		err := logger.LogServiceProcess(fmt.Sprintf("Push %s", image.LogName()), "", func() error {
+			if p.WithStages {
+				err := logger.LogServiceProcess("Push stages cache", "", func() error {
+					err := p.pushImageStages(c, image)
+					if err != nil {
+						return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
+					}
+
+					return nil
+				})
+
+				if err != nil {
+					return err
+				}
+
+				if !image.isArtifact {
+					fmt.Println()
+				}
 			}
 
-			err := p.pushImageStages(c, image)
-			if err != nil {
-				return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
+			if !image.isArtifact {
+				err := p.pushImage(c, image)
+				if err != nil {
+					return fmt.Errorf("unable to push image %s: %s", image.GetName(), err)
+				}
+
+				return nil
+
+				if err != nil {
+					return err
+				}
 			}
+
+			return nil
+		})
+
+		if err != nil {
+			return err
 		}
 
-		if !image.isArtifact {
-			if image.GetName() == "" {
-				fmt.Printf("# Pushing image\n")
-			} else {
-				fmt.Printf("# Pushing image/%s\n", image.GetName())
-			}
-
-			err := p.pushImage(c, image)
-			if err != nil {
-				return fmt.Errorf("unable to push image %s: %s", image.GetName(), err)
-			}
+		if !isLastImage {
+			fmt.Println()
 		}
 	}
 
@@ -87,15 +107,19 @@ func (p *PushPhase) pushImageStages(c *Conveyor, image *Image) error {
 		return fmt.Errorf("error fetching existing stages cache list %s: %s", p.Repo, err)
 	}
 
-	for _, stage := range stages {
+	for ind, stage := range stages {
+		isLastStage := ind == len(stages)-1
+
 		stageTagName := fmt.Sprintf(RepoImageStageTagFormat, stage.GetSignature())
 		stageImageName := fmt.Sprintf("%s:%s", p.Repo, stageTagName)
 
 		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
-			if image.GetName() == "" {
-				fmt.Printf("# Ignore existing in repo image %s for image stage/%s\n", stageImageName, stage.Name())
-			} else {
-				fmt.Printf("# Ignore existing in repo image %s for image/%s stage/%s\n", stageImageName, image.GetName(), stage.Name())
+			logger.LogState(fmt.Sprintf("%s", stage.Name()), "[EXISTS]")
+
+			logRepoImageInfo(stageImageName)
+
+			if !isLastStage {
+				fmt.Println()
 			}
 
 			continue
@@ -111,24 +135,26 @@ func (p *PushPhase) pushImageStages(c *Conveyor, image *Image) error {
 			}
 			defer lock.Unlock(imageLockName)
 
-			if image.GetName() == "" {
-				fmt.Printf("# Pushing image %s for image stage/%s\n", stageImageName, stage.Name())
-			} else {
-				fmt.Printf("# Pushing image %s for image/%s stage/%s\n", stageImageName, image.GetName(), stage.Name())
-			}
-
 			stageImage := c.GetStageImage(stage.GetImage().Name())
 
-			err = stageImage.Export(stageImageName)
-			if err != nil {
-				return fmt.Errorf("error pushing %s: %s", stageImageName, err)
-			}
+			return logger.LogProcess(fmt.Sprintf("%s", stage.Name()), "[PUSHING]", func() error {
+				err = stageImage.Export(stageImageName)
+				if err != nil {
+					return fmt.Errorf("error pushing %s: %s", stageImageName, err)
+				}
 
-			return nil
+				return nil
+			})
 		}()
+
+		logRepoImageInfo(stageImageName)
 
 		if err != nil {
 			return err
+		}
+
+		if !isLastStage {
+			fmt.Println()
 		}
 	}
 
@@ -151,70 +177,114 @@ func (p *PushPhase) pushImage(c *Conveyor, image *Image) error {
 	stages := image.GetStages()
 	lastStageImage := stages[len(stages)-1].GetImage()
 
+	var nonEmptySchemeInOrder []TagScheme
+	var lastNonEmptyTagScheme TagScheme
 	for scheme, tags := range p.TagsByScheme {
-	ProcessingTags:
-		for _, tag := range tags {
-			imageImageName := fmt.Sprintf("%s:%s", imageRepository, tag)
+		if len(tags) == 0 {
+			continue
+		}
 
-			if util.IsStringsContainValue(existingTags, tag) {
-				parentID, err := docker_registry.ImageParentId(imageImageName)
-				if err != nil {
-					return fmt.Errorf("unable to get image %s parent id: %s", imageImageName, err)
-				}
+		nonEmptySchemeInOrder = append(nonEmptySchemeInOrder, scheme)
+		lastNonEmptyTagScheme = scheme
+	}
 
-				if lastStageImage.ID() == parentID {
-					if image.GetName() == "" {
-						fmt.Printf("# Ignore existing in repo image %s for image\n", imageImageName)
-					} else {
-						fmt.Printf("# Ignore existing in repo image %s for image/%s\n", imageImageName, image.GetName())
+	for _, scheme := range nonEmptySchemeInOrder {
+		tags := p.TagsByScheme[scheme]
+
+		if len(tags) == 0 {
+			continue
+		}
+
+		err = logger.LogServiceProcess(fmt.Sprintf("%s scheme", string(scheme)), "", func() error {
+		ProcessingTags:
+			for ind, tag := range tags {
+				isLastTag := ind == len(tags)-1
+
+				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
+
+				if util.IsStringsContainValue(existingTags, tag) {
+					parentID, err := docker_registry.ImageParentId(imageName)
+					if err != nil {
+						return fmt.Errorf("unable to get image %s parent id: %s", imageName, err)
 					}
-					continue ProcessingTags
+
+					if lastStageImage.ID() == parentID {
+						logger.LogState(tag, "[EXISTS]")
+						logRepoImageInfo(imageName)
+
+						if !isLastTag {
+							fmt.Println()
+						}
+
+						continue ProcessingTags
+					}
+				}
+
+				err := func() error {
+					var err error
+
+					imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(imageName))
+					err = lock.Lock(imageLockName, lock.LockOptions{})
+					if err != nil {
+						return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
+					}
+					defer lock.Unlock(imageLockName)
+
+					pushImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageName)
+
+					pushImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+						imagePkg.WerfTagSchemeLabel: string(scheme),
+						imagePkg.WerfImageLabel:     "true",
+					})
+
+					err = logger.LogProcessInline("Building final image with meta information", func() error {
+						err = pushImage.Build(imagePkg.BuildOptions{})
+						if err != nil {
+							return fmt.Errorf("error building %s with tag scheme '%s': %s", imageName, scheme, err)
+						}
+
+						return nil
+					})
+					if err != nil {
+						return err
+					}
+
+					return logger.LogProcess(tag, "[PUSHING]", func() error {
+						err = pushImage.Export()
+						if err != nil {
+							return fmt.Errorf("error pushing %s: %s", imageName, err)
+						}
+
+						return nil
+					})
+				}()
+
+				if err != nil {
+					return err
+				}
+
+				logRepoImageInfo(imageName)
+
+				if !isLastTag {
+					fmt.Println()
 				}
 			}
 
-			err := func() error {
-				var err error
+			return nil
+		})
 
-				imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(imageImageName))
-				err = lock.Lock(imageLockName, lock.LockOptions{})
-				if err != nil {
-					return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
-				}
-				defer lock.Unlock(imageLockName)
+		if err != nil {
+			return err
+		}
 
-				fmt.Printf("# Build %s layer with tag scheme '%s'\n", imageImageName, scheme)
-
-				pushImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageImageName)
-
-				pushImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-					"werf-tag-scheme": string(scheme),
-					"werf-image":      "true",
-				})
-
-				err = pushImage.Build(imagePkg.BuildOptions{})
-				if err != nil {
-					return fmt.Errorf("error building %s with tag scheme '%s': %s", imageImageName, scheme, err)
-				}
-
-				if image.GetName() == "" {
-					fmt.Printf("# Pushing image %s for image\n", imageImageName)
-				} else {
-					fmt.Printf("# Pushing image %s for image/%s\n", imageImageName, image.GetName())
-				}
-
-				err = pushImage.Export()
-				if err != nil {
-					return fmt.Errorf("error pushing %s: %s", imageImageName, err)
-				}
-
-				return nil
-			}()
-
-			if err != nil {
-				return err
-			}
+		if scheme != lastNonEmptyTagScheme {
+			fmt.Println()
 		}
 	}
 
 	return nil
+}
+
+func logRepoImageInfo(imageName string) {
+	logger.LogInfoF(logImageInfoFormat, "repo-image", imageName)
 }
