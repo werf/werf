@@ -69,7 +69,7 @@ The latest release can be reached via [this page](https://bintray.com/flant/werf
 ##### MacOS
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.6/werf-darwin-amd64-v1.0.0-alpha.6 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.7/werf-darwin-amd64-v1.0.0-alpha.7 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
@@ -77,7 +77,7 @@ sudo mv /tmp/werf /usr/local/bin/werf
 ##### Linux
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.6/werf-linux-amd64-v1.0.0-alpha.6 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.7/werf-linux-amd64-v1.0.0-alpha.7 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
