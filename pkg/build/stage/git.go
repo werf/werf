@@ -15,7 +15,11 @@ type GitStage struct {
 }
 
 func (s *GitStage) IsEmpty(_ Conveyor, _ image.ImageInterface) (bool, error) {
-	return len(s.gitPaths) == 0, nil
+	return s.isEmpty(), nil
+}
+
+func (s *GitStage) isEmpty() bool {
+	return len(s.gitPaths) == 0
 }
 
 func (s *GitStage) AfterImageSyncDockerStateHook(c Conveyor) error {

@@ -179,13 +179,15 @@ func (gp *GitPath) applyPatchCommand(patchFile *ContainerFileDescriptor, archive
 		applyPatchDirectory,
 	))
 
-	commands = append(commands, fmt.Sprintf(
+	gitCommand := fmt.Sprintf(
 		"%s %s apply --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s",
 		dappdeps.SudoCommand(gp.Owner, gp.Group),
 		dappdeps.GitBin(),
 		applyPatchDirectory,
 		patchFile.ContainerFilePath,
-	))
+	)
+
+	commands = append(commands, strings.TrimLeft(gitCommand, " "))
 
 	return commands, nil
 }
