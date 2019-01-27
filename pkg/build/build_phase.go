@@ -35,11 +35,7 @@ func (p *BuildPhase) run(c *Conveyor) error {
 		isLastImage := ind == len(images)-1
 
 		err := logger.LogServiceProcess(fmt.Sprintf("Build %s stages cache", image.LogName()), "", func() error {
-			if err := p.runImage(image, c); err != nil {
-				return err
-			}
-
-			return nil
+			return p.runImage(image, c)
 		})
 
 		if err != nil {

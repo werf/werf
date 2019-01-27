@@ -69,34 +69,56 @@ func (gp *GitPath) GitRepo() git_repo.GitRepo {
 	panic("GitRepo not initialized")
 }
 
-func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Archive, err error) {
+func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (git_repo.Archive, error) {
+	var res git_repo.Archive
+
 	cwd := gp.Cwd
 	if cwd == "" {
 		cwd = "/"
 	}
 
-	logger.LogServiceProcess(fmt.Sprintf("Create archive for commit %s of %s git path %s", opts.Commit, gp.GitRepo().GetName(), cwd), "[RUNNING]", func() error {
-		res, err = gp.GitRepo().CreateArchive(opts)
+	err := logger.LogServiceProcess(fmt.Sprintf("Create archive for commit %s of %s git path %s", opts.Commit, gp.GitRepo().GetName(), cwd), "[RUNNING]", func() error {
+		archive, err := gp.GitRepo().CreateArchive(opts)
+		if err != nil {
+			return err
+		}
 
-		return err
+		res = archive
+
+		return nil
 	})
 
-	return
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
-func (gp *GitPath) createPatch(opts git_repo.PatchOptions) (res git_repo.Patch, err error) {
+func (gp *GitPath) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, error) {
+	var res git_repo.Patch
+
 	cwd := gp.Cwd
 	if cwd == "" {
 		cwd = "/"
 	}
 
-	logger.LogServiceProcessInline(fmt.Sprintf("Create patch %s..%s for %s git path %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd), func() error {
-		res, err = gp.GitRepo().CreatePatch(opts)
+	err := logger.LogServiceProcessInline(fmt.Sprintf("Create patch %s..%s for %s git path %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd), func() error {
+		patch, err := gp.GitRepo().CreatePatch(opts)
+		if err != nil {
+			return err
+		}
 
-		return err
+		res = patch
+
+		return nil
 	})
 
-	return
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func (gp *GitPath) getRepoFilterOptions() git_repo.FilterOptions {

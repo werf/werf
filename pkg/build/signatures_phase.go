@@ -23,11 +23,11 @@ func NewSignaturesPhase() *SignaturesPhase {
 
 type SignaturesPhase struct{}
 
-func (p *SignaturesPhase) Run(c *Conveyor) (err error) {
+func (p *SignaturesPhase) Run(c *Conveyor) error {
 	for ind, image := range c.imagesInOrder {
 		isLastImage := ind == len(c.imagesInOrder)-1
 
-		err = logger.LogServiceProcess(fmt.Sprintf("Calculate %s signatures", image.LogName()), "", func() error {
+		err := logger.LogServiceProcess(fmt.Sprintf("Calculate %s signatures", image.LogName()), "", func() error {
 			return p.calculateImageSignatures(c, image)
 		})
 
