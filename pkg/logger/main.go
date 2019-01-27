@@ -23,6 +23,15 @@ var (
 	indent = 0
 )
 
+func Init() {
+	isGitLabCI := os.Getenv("GITLAB_CI") != ""
+	forceColor := os.Getenv("WERF_FORCE_COLOR") != ""
+
+	if isGitLabCI || forceColor {
+		color.NoColor = false
+	}
+}
+
 func WithLogIndent(f func() error) error {
 	indentUp()
 	err := f()

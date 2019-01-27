@@ -44,6 +44,8 @@ import (
 func main() {
 	trapTerminationSignals()
 
+	logger.Init()
+
 	if err := process_exterminator.Init(); err != nil {
 		logger.LogError(fmt.Errorf("process exterminator initialization error: %s", err))
 		os.Exit(1)
