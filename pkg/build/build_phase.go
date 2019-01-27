@@ -25,7 +25,7 @@ func (p *BuildPhase) Run(c *Conveyor) (err error) {
 	return p.run(c)
 }
 
-func (p *BuildPhase) run(c *Conveyor) (err error) {
+func (p *BuildPhase) run(c *Conveyor) error {
 	if debug() {
 		fmt.Printf("BuildPhase.Run\n")
 	}
@@ -34,8 +34,8 @@ func (p *BuildPhase) run(c *Conveyor) (err error) {
 	for ind, image := range images {
 		isLastImage := ind == len(images)-1
 
-		logger.LogServiceProcess(fmt.Sprintf("Build %s stages cache", image.LogName()), "", func() error {
-			if err = p.runImage(image, c); err != nil {
+		err := logger.LogServiceProcess(fmt.Sprintf("Build %s stages cache", image.LogName()), "", func() error {
+			if err := p.runImage(image, c); err != nil {
 				return err
 			}
 
@@ -43,7 +43,7 @@ func (p *BuildPhase) run(c *Conveyor) (err error) {
 		})
 
 		if err != nil {
-			return
+			return err
 		}
 
 		if !isLastImage {
@@ -54,7 +54,7 @@ func (p *BuildPhase) run(c *Conveyor) (err error) {
 	return nil
 }
 
-func (p *BuildPhase) runImage(image *Image, c *Conveyor) (err error) {
+func (p *BuildPhase) runImage(image *Image, c *Conveyor) error {
 	if debug() {
 		fmt.Printf("  image: '%s'\n", image.GetName())
 	}
@@ -83,14 +83,13 @@ func (p *BuildPhase) runImage(image *Image, c *Conveyor) (err error) {
 		}
 
 		imageLockName := fmt.Sprintf("%s.image.%s", c.projectName(), img.Name())
-		err = lock.Lock(imageLockName, lock.LockOptions{})
-		if err != nil {
+		if err := lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 			return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 		}
 
 		acquiredLocks = append(acquiredLocks, imageLockName)
 
-		if err = img.SyncDockerState(); err != nil {
+		if err := img.SyncDockerState(); err != nil {
 			return err
 		}
 	}
@@ -119,21 +118,20 @@ func (p *BuildPhase) runImage(image *Image, c *Conveyor) (err error) {
 			continue
 		}
 
-		logger.LogProcess(msg, "[BUILDING]", func() error {
+		err := logger.LogProcess(msg, "[BUILDING]", func() error {
 			if debug() {
 				fmt.Printf("    %s\n", s.Name())
 			}
 
-			if err = s.PreRunHook(c); err != nil {
+			if err := s.PreRunHook(c); err != nil {
 				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
 			}
 
-			if err = img.Build(p.ImageBuildOptions); err != nil {
+			if err := img.Build(p.ImageBuildOptions); err != nil {
 				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 			}
 
-			err = img.SaveInCache()
-			if err != nil {
+			if err := img.SaveInCache(); err != nil {
 				return fmt.Errorf("failed to save in cache image %s: %s", img.Name(), err)
 			}
 
@@ -146,7 +144,7 @@ func (p *BuildPhase) runImage(image *Image, c *Conveyor) (err error) {
 				return nil
 			})
 
-			return
+			return err
 		}
 
 		logImageInfo(img, prevStageImageSize, isUsingCache)
@@ -160,7 +158,7 @@ func (p *BuildPhase) runImage(image *Image, c *Conveyor) (err error) {
 		prevStageImageSize = img.Inspect().Size
 	}
 
-	return
+	return nil
 }
 
 var (
