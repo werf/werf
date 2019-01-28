@@ -32,7 +32,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build [IMAGE_NAME...]",
 		Short: "Build images",
-		Long: common.GetLongCommandDescription(`Build images from werf.yaml.
+		Long: common.GetLongCommandDescription(`Build images.
 
 The result of build command is a stages cache for images.
 

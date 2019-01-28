@@ -32,6 +32,11 @@ type CmdData struct {
 	Release     *string
 	Namespace   *string
 	KubeContext *string
+
+	Values       []string
+	SecretValues []string
+	Set          []string
+	SetString    []string
 }
 
 func GetLongCommandDescription(text string) string {
@@ -71,6 +76,12 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.TagCI, "tag-ci", "", false, "Tag by CI branch and tag")
 	cmd.Flags().BoolVarP(cmdData.TagCommit, "tag-commit", "", false, "Tag by git commit")
 }
+
+cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
+cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
+cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
+cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
+
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Environment = new(string)

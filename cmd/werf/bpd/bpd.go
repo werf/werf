@@ -1,4 +1,4 @@
-package bp
+package bpd
 
 import (
 	"fmt"
@@ -37,15 +37,15 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bp [IMAGE_NAME...]",
-		Short: "Build then push built images into Docker registry",
-		Long: common.GetLongCommandDescription(`Build then push built images into Docker registry.
+		Use:   "bpd [IMAGE_NAME...]",
+		Short: "Build, push built images into Docker registry, then run deploy",
+		Long: common.GetLongCommandDescription(`Build, push built images into Docker registry, then run deploy.
 
-This is combined command, which allows more optimized pipelines in your CI, compared to running build and push commands separately. Common phases for these commands will be calculated only once.
+This is combined command, which allows more optimized pipelines in your CI, compared to running build, push and deploy commands separately. Common phases for these commands will be calculated only once.
 
 Images will be tagged automatically with the names REPO/IMAGE_NAME:TAG. These tags will be deleted after push. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
 
-The result of bp command is a stages cache for images and named images pushed into the docker registry.
+The result of bpd command is complete application deployed into kubernetes with all needed images built in one command.
 
 If one or more IMAGE_NAME parameters specified, werf will build and push only these images from werf.yaml.`),
 		DisableFlagsInUseLine: true,
@@ -71,7 +71,7 @@ If one or more IMAGE_NAME parameters specified, werf will build and push only th
 			return common.LogRunningTime(func() error {
 				err := runBP(args)
 				if err != nil {
-					return fmt.Errorf("bp failed: %s", err)
+					return fmt.Errorf("bpd failed: %s", err)
 				}
 
 				return nil
@@ -92,10 +92,22 @@ If one or more IMAGE_NAME parameters specified, werf will build and push only th
 	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images and push to the docker repo")
 	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-password", "", "", "Docker registry password to authorize pull of base images and push to the docker repo")
 
+	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to get images ids from. CI_REGISTRY_IMAGE will be used by default if available.")
+
 	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	common.SetupTag(&CommonCmdData, cmd)
+
+	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
+	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
+	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
+	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
+
+	common.SetupEnvironment(&CommonCmdData, cmd)
+	common.SetupRelease(&CommonCmdData, cmd)
+	common.SetupNamespace(&CommonCmdData, cmd)
+	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	return cmd
 }
