@@ -31,8 +31,8 @@ werf bp [IMAGE_NAME...] [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (use ~/.werf by default)
       --introspect-before-error=false:
-            Introspect failed stage in the clean state, before running all assembly instructions of 
-            the stage
+            Introspect failed stage in the clean state, before running all assembly instructions 
+            of the stage
       --introspect-error=false:
             Introspect failed stage in the state, right after running failed assembly instruction
       --pull-password='':

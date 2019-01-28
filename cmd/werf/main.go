@@ -67,7 +67,6 @@ Find more information at https://flant.github.io/werf`),
 			Commands: []*cobra.Command{
 				build.NewCmd(),
 				push.NewCmd(),
-				bp.NewCmd(),
 				tag.NewCmd(),
 			},
 		},
@@ -82,18 +81,23 @@ Find more information at https://flant.github.io/werf`),
 			},
 		},
 		{
-			Message: "Project Cleanup Commands:",
+			Message: "Combined commands:",
 			Commands: []*cobra.Command{
-				flush.NewCmd(),
-				sync.NewCmd(),
-				cleanup.NewCmd(),
+				bp.NewCmd(),
 			},
 		},
 		{
-			Message: "Cleanup Commands:",
+			Message: "Manual images cleaning:",
 			Commands: []*cobra.Command{
+				flush.NewCmd(),
 				reset.NewCmd(),
-				gc.NewCmd(),
+			},
+		},
+		{
+			Message: "Project images cleaning automation:",
+			Commands: []*cobra.Command{
+				cleanup.NewCmd(),
+				sync.NewCmd(),
 			},
 		},
 	}
@@ -105,6 +109,7 @@ Find more information at https://flant.github.io/werf`),
 		slugCmd(),
 		completion.NewCmd(rootCmd),
 		version.NewCmd(),
+		gc.NewCmd(),
 		docs.NewCmd(),
 	)
 
