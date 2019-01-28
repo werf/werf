@@ -31,11 +31,16 @@ Werf GC procedure typically runs automatically during execution of some command.
 See more info about gc: https://flant.github.io/werf/reference/registry/cleaning.html#gc`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runGC()
-			if err != nil {
-				return fmt.Errorf("gc failed: %s", err)
-			}
-			return nil
+			common.LogVersion()
+
+			return common.LogRunningTime(func() error {
+				err := runGC()
+				if err != nil {
+					return fmt.Errorf("gc failed: %s", err)
+				}
+
+				return nil
+			})
 		},
 	}
 

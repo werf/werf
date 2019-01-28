@@ -40,8 +40,10 @@ If one or more IMAGE_NAME parameters specified, werf will push only these images
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome, common.WerfTmp),
 		},
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			err = common.LogRunningTime(func() error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return common.LogRunningTime(func() error {
+				common.LogVersion()
+
 				err := runPush(args)
 				if err != nil {
 					return fmt.Errorf("push failed: %s", err)
@@ -49,8 +51,6 @@ If one or more IMAGE_NAME parameters specified, werf will push only these images
 
 				return err
 			})
-
-			return
 		},
 	}
 

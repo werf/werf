@@ -34,10 +34,13 @@ No project files (i.e. werf.yaml) are needed to run reset.
 
 See more info about reset type of cleaning: https://flant.github.io/werf/reference/registry/cleaning.html#reset`),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			common.LogVersion()
+
 			err := runReset()
 			if err != nil {
 				return fmt.Errorf("reset failed: %s", err)
 			}
+
 			return nil
 		},
 	}
