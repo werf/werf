@@ -84,7 +84,7 @@ sudo mv /tmp/werf /usr/local/bin/werf
 
 ##### Windows
 
-Download [werf.exec](https://dl.bintray.com/flant/werf/v1.0.0-alpha.6/werf-windows-amd64-v1.0.0-alpha.6.exe).
+Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.0-alpha.6/werf-windows-amd64-v1.0.0-alpha.6.exe).
 
 ### Using Multiwerf
 
