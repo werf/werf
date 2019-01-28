@@ -8,8 +8,9 @@ Deploy application into Kubernetes.
 Command will create Helm Release and wait until all resources of the release are become ready.
 
 Deploy needs the same parameters as push to construct image names: repo and tags. Docker images 
-names are constructed from paramters as REPO/IMAGE_NAME:TAG. Deploy will fetch built image ids from 
-Docker registry. So images should be built and pushed into the Docker registry prior running deploy.
+names are constructed from paramters as REPO/IMAGE_NAME:TAG. Deploy will fetch built image ids 
+from Docker registry. So images should be built and pushed into the Docker registry prior running 
+deploy.
 
 Helm chart directory .helm should exists and contain valid Helm chart.
 

@@ -12,9 +12,9 @@ See more info about flush: https://flant.github.io/werf/reference/registry/clean
 
 Command should run from the project directory, where werf.yaml file reside.
 
-Flush requires read-write permissions to delete images from Docker registry. Standard Docker config 
-or specified options --registry-username and --registry-password will be used to authorize in the 
-Docker registry.
+Flush requires read-write permissions to delete images from Docker registry. Standard Docker 
+config or specified options --registry-username and --registry-password will be used to authorize 
+in the Docker registry.
 
 See more info about authorization: 
 https://flant.github.io/werf/reference/registry/authorization.html

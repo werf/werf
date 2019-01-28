@@ -30,6 +30,7 @@ Werf GC procedure typically runs automatically during execution of some command.
 
 See more info about gc: https://flant.github.io/werf/reference/registry/cleaning.html#gc`),
 		DisableFlagsInUseLine: true,
+		Hidden:                true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
