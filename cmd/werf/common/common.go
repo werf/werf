@@ -106,6 +106,19 @@ func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
 }
 
 func GetProjectDir(cmdData *CmdData) (string, error) {
+	res, err := getProjectDir(cmdData)
+	if err != nil {
+		return res, err
+	}
+
+	if os.Getenv("CI") != "" {
+		LogProjectDir(res)
+	}
+
+	return res, err
+}
+
+func getProjectDir(cmdData *CmdData) (string, error) {
 	if *cmdData.Dir != "" {
 		return *cmdData.Dir, nil
 	}
@@ -165,4 +178,12 @@ func LogRunningTime(f func() error) error {
 	logger.LogService(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
 
 	return err
+}
+
+func LogVersion() {
+	logger.LogInfoF("Version: %s\n", werf.Version)
+}
+
+func LogProjectDir(dir string) {
+	logger.LogInfoF("Using project dir: %s\n", dir)
 }

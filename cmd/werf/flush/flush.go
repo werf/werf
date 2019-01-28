@@ -47,10 +47,13 @@ See more info about authorization: https://flant.github.io/werf/reference/regist
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfInsecureRegistry, common.WerfHome),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			common.LogVersion()
+
 			err := runFlush()
 			if err != nil {
 				return fmt.Errorf("flush failed: %s", err)
 			}
+
 			return nil
 		},
 	}

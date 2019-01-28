@@ -45,11 +45,16 @@ Command should run from the project directory, where werf.yaml file reside.`),
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runCleanup()
-			if err != nil {
-				return fmt.Errorf("cleanup failed: %s", err)
-			}
-			return nil
+			common.LogVersion()
+
+			return common.LogRunningTime(func() error {
+				err := runCleanup()
+				if err != nil {
+					return fmt.Errorf("cleanup failed: %s", err)
+				}
+
+				return nil
+			})
 		},
 	}
 

@@ -34,11 +34,15 @@ Stages cache should exists for images to be tagged. I.e. images should be built 
 If one or more IMAGE_NAME parameters specified, werf will tag only these images from werf.yaml. `),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runPush(args)
-			if err != nil {
-				return fmt.Errorf("tag failed: %s", err)
-			}
-			return nil
+			common.LogVersion()
+
+			return common.LogRunningTime(func() error {
+				err := runTag(args)
+				if err != nil {
+					return fmt.Errorf("tag failed: %s", err)
+				}
+				return nil
+			})
 		},
 	}
 
@@ -54,7 +58,7 @@ If one or more IMAGE_NAME parameters specified, werf will tag only these images 
 	return cmd
 }
 
-func runPush(imagesToProcess []string) error {
+func runTag(imagesToProcess []string) error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}

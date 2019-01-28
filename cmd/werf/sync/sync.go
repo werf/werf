@@ -39,11 +39,16 @@ Command should run from the project directory, where werf.yaml file reside.`),
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableSyncLocalStagesDatePeriodPolicy, common.WerfHome),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runSync()
-			if err != nil {
-				return fmt.Errorf("sync failed: %s", err)
-			}
-			return nil
+			common.LogVersion()
+
+			return common.LogRunningTime(func() error {
+				err := runSync()
+				if err != nil {
+					return fmt.Errorf("sync failed: %s", err)
+				}
+
+				return nil
+			})
 		},
 	}
 

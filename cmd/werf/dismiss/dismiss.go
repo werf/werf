@@ -31,6 +31,8 @@ Environment is a required param for the dismiss by default, because it is needed
 Read more info about Helm Release name, Kubernetes Namespace and how to change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			common.LogVersion()
+
 			err := runDismiss()
 			if err != nil {
 				return fmt.Errorf("dismiss failed: %s", err)
