@@ -83,8 +83,6 @@ If one or more IMAGE_NAME parameters specified, werf will build and push only th
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to push images to. CI_REGISTRY_IMAGE will be used by default if available.")
-	cmd.Flags().BoolVarP(&CmdData.WithStages, "with-stages", "", false, "Push images with stages cache")
-
 	cmd.Flags().StringVarP(&CmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
 	cmd.Flags().StringVarP(&CmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
 	cmd.Flags().StringVarP(&CmdData.PushUsername, "push-username", "", "", "Docker registry username to authorize push to the docker repo")
