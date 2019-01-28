@@ -67,7 +67,7 @@ It is designed to make engineer's work fast end efficient.
 [Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf, which:
 * downloads werf binary builds;
 * manages multiple versions of binaries installed on a single host, that can be used at the same time;
-* enables autoupdates (optionally).
+* automatically updates werf binary (can be disabled).
 
 ### Download binary
 
