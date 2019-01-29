@@ -28,6 +28,9 @@ import (
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/process_exterminator"
 
+	get_namespace "github.com/flant/werf/cmd/werf/get-namespace"
+	get_release "github.com/flant/werf/cmd/werf/get-release"
+
 	secret_edit "github.com/flant/werf/cmd/werf/secret/edit"
 	secret_extract "github.com/flant/werf/cmd/werf/secret/extract"
 	secret_generate "github.com/flant/werf/cmd/werf/secret/generate"
@@ -98,6 +101,13 @@ Find more information at https://flant.github.io/werf`),
 			Commands: []*cobra.Command{
 				cleanup.NewCmd(),
 				sync.NewCmd(),
+			},
+		},
+		{
+			Message: "Get project meta info:",
+			Commands: []*cobra.Command{
+				get_release.NewCmd(),
+				get_namespace.NewCmd(),
 			},
 		},
 	}

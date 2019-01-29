@@ -98,7 +98,7 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 		}
 
 		if environment == "" {
-			return "", fmt.Errorf("--environment option or CI_ENVIRONMENT_SLUG variable required to construct name by template '%s'", templateText)
+			return "", fmt.Errorf("--env option or CI_ENVIRONMENT_SLUG variable required to construct name by template '%s'", templateText)
 		}
 
 		return environment, nil

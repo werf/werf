@@ -221,12 +221,12 @@ minikube addons enable ingress
 Run deploy with werf:
 
 ```shell
-werf deploy --repo :minikube --environment dev
+werf deploy --repo :minikube --env dev
 ```
 
 With this command werf will create all kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running).
 
-[Environment]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#environment) `--environment` is a required param needed to generate helm release name and kubernetes namespace.
+[Environment]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#environment) `--env` is a required param needed to generate helm release name and kubernetes namespace.
 
 Helm release with name `myapp-dev` will be created. This name consists of [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) `myapp` (which you've placed in the `werf.yaml`) and specified environment `dev`. Check docs for details about [helm release name generation]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#helm-release-name).
 
@@ -253,7 +253,7 @@ Then you can check application by url: `http://myapp.local`.
 To completely remove deployed application run this dismiss werf command:
 
 ```shell
-werf dismiss --environment dev --with-namespace
+werf dismiss --env dev --with-namespace
 ```
 
 ## See also

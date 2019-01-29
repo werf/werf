@@ -46,7 +46,7 @@ Deploy needs the same parameters as push to construct image names: repo and tags
 
 Helm chart directory .helm should exists and contain valid Helm chart.
 
-Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --environment or CI_ENVIRONMENT_SLUG should be specified for command.
+Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or CI_ENVIRONMENT_SLUG should be specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html`),
 		DisableFlagsInUseLine: true,
@@ -118,6 +118,7 @@ func runDeploy() error {
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
+	common.LogProjectDir(projectDir)
 
 	projectTmpDir, err := project_tmp_dir.Get()
 	if err != nil {
