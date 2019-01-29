@@ -119,6 +119,7 @@ func runBP(imagesToProcess []string) error {
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
+	common.LogProjectDir(projectDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {

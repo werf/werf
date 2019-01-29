@@ -74,7 +74,7 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Environment = new(string)
-	cmd.Flags().StringVarP(cmdData.Environment, "environment", "", "", "Use specified environment (use CI_ENVIRONMENT_SLUG by default). Environment is a required parameter and should be specified with option or CI_ENVIRONMENT_SLUG variable.")
+	cmd.Flags().StringVarP(cmdData.Environment, "env", "", "", "Use specified environment (use CI_ENVIRONMENT_SLUG by default). Environment is a required parameter and should be specified with option or CI_ENVIRONMENT_SLUG variable.")
 }
 
 func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
@@ -106,19 +106,6 @@ func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
 }
 
 func GetProjectDir(cmdData *CmdData) (string, error) {
-	res, err := getProjectDir(cmdData)
-	if err != nil {
-		return res, err
-	}
-
-	if os.Getenv("CI") != "" {
-		LogProjectDir(res)
-	}
-
-	return res, err
-}
-
-func getProjectDir(cmdData *CmdData) (string, error) {
 	if *cmdData.Dir != "" {
 		return *cmdData.Dir, nil
 	}
@@ -185,5 +172,7 @@ func LogVersion() {
 }
 
 func LogProjectDir(dir string) {
-	logger.LogInfoF("Using project dir: %s\n", dir)
+	if os.Getenv("CI") != "" {
+		logger.LogInfoF("Using project dir: %s\n", dir)
+	}
 }

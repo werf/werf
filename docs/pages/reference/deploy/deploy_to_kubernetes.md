@@ -66,7 +66,7 @@ Application can be deployed to multiple environments, like staging, testing, pro
 
 Werf has basic support for environments to automate generation of external names, such as Helm Release name or Kubernetes Namespace.
 
-Environment is a required parameter for deploy and should be specified either with option `--environment` or automatically determined for the used CI system. Werf currently support only [Gitlab CI environments integration](#integration-with-gitlab).
+Environment is a required parameter for deploy and should be specified either with option `--env` or automatically determined for the used CI system. Werf currently support only [Gitlab CI environments integration](#integration-with-gitlab).
 
 ### Integration with Gitlab
 

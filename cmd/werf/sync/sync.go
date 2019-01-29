@@ -82,6 +82,7 @@ func runSync() error {
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
+	common.LogProjectDir(projectDir)
 
 	projectTmpDir, err := project_tmp_dir.Get()
 	if err != nil {
