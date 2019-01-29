@@ -36,8 +36,8 @@ func getSafeSecretManager(projectDir string, secretValues []string) (secret.Mana
 	return secret.NewSafeManager()
 }
 
-func getWerfChart(projectDir string, m secret.Manager, values, secretValues, set, setString []string, serviceValues map[string]interface{}) (*WerfChart, error) {
-	werfChart, err := GenerateWerfChart(projectDir, m)
+func getWerfChart(projectName, projectDir string, m secret.Manager, values, secretValues, set, setString []string, serviceValues map[string]interface{}) (*WerfChart, error) {
+	werfChart, err := GenerateWerfChart(projectName, projectDir, m)
 	if err != nil {
 		return nil, err
 	}
