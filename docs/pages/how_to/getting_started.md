@@ -22,7 +22,16 @@ Also, we will check that the application works and push the image in a docker re
 
 ## Requirements
 
-Minimal knowledge of [docker](https://www.docker.com/) and [Dockerfile directives](https://docs.docker.com/engine/reference/builder/).
+* Minimal knowledge of [docker](https://www.docker.com/) and [Dockerfile directives](https://docs.docker.com/engine/reference/builder/).
+* Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
+
+### Select werf version
+
+This command should be run prior running any werf command in your shell session:
+
+```
+source <(multiwerf use 1.0)
+```
 
 ## Step 1: Add a config
 

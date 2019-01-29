@@ -65,12 +65,19 @@ On the build and the deployment nodes, you need to install and set up GitLab run
 
     On the master kubernetes node Docker is already installed, and you need to [install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) it only on your build node.
 1. Add the `gitlab-runner` user into the `docker` group.
-    ```bash
-sudo usermod -Ga docker gitlab-runner
-```
-1. Install Werf for the `gitlab-runner` user.
 
-    You need to [install latest werf]({{ site.baseurl }}/how_to/installation.html) for the `gitlab-runner` user on both nodes.
+    ```bash
+    sudo usermod -Ga docker gitlab-runner
+    ```
+
+1. Install latest [`multiwerf`](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
+
+   ```
+   sudo su gitlab-runner
+   mkdir -p ~/bin
+   cd ~/bin
+   curl -L https://raw.githubusercontent.com/flant/multiwerf/master/install.sh | bash
+   ```
 
 ### Setup deploy runner
 
@@ -125,8 +132,7 @@ Add the following lines to the `.gitlab-ci.yml` file:
 Build:
   stage: build
   script:
-    ## used for debugging
-    - werf version; pwd; set -x
+    - source <(multiwerf use 1.0)
     ## Always use "bp" option instead separate "build" and "push"
     ## It is important to use --tag-ci, --tag-branch or --tag-commit options here (in bp or push commands) otherwise cleanup won't work.
     - werf bp --tag-ci
@@ -162,7 +168,7 @@ Add the following lines to `.gitlab-ci.yml` file:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - werf version; pwd; set -x
+    - source <(multiwerf use 1.0)
     ## Next command makes deploy and will be discussed further
     - werf deploy
         --tag-ci
@@ -294,7 +300,7 @@ Add the following lines to `.gitlab-ci.yml` file:
 Cleanup registry:
   stage: cleanup_registry
   script:
-    - werf version; pwd; set -x
+    - source <(multiwerf use 1.0)
     - werf cleanup
   only:
     - schedules
@@ -304,7 +310,7 @@ Cleanup registry:
 Cleanup builder:
   stage: cleanup_builder
   script:
-    - werf version; pwd; set -x
+    - source <(multiwerf use 1.0)
     - werf sync
   only:
     - schedules
@@ -332,8 +338,7 @@ stages:
 Build:
   stage: build
   script:
-    ## used for debugging
-    - werf version; pwd; set -x
+    - source <(multiwerf use 1.0)
     ## Always use "bp" option instead separate "build" and "push"
     ## It is important to use --tag-ci, --tag-branch or --tag-commit options otherwise cleanup won't work.
     - werf bp --tag-ci
@@ -349,7 +354,7 @@ Build:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - werf version; pwd; set -x
+    - source <(multiwerf use 1.0)
     ## Next command makes deploy and will be discussed further
     - werf deploy
         --tag-ci
@@ -378,7 +383,7 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - werf version; pwd; set -x
+    - source <(multiwerf use 1.0)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -416,7 +421,7 @@ Deploy to Production:
 Cleanup registry:
   stage: cleanup_registry
   script:
-    - werf version; pwd; set -x
+    - source <(multiwerf use 1.0)
     - werf cleanup
   only:
     - schedules
@@ -426,7 +431,7 @@ Cleanup registry:
 Cleanup builder:
   stage: cleanup_builder
   script:
-    - werf version; pwd; set -x
+    - source <(multiwerf use 1.0)
     - werf sync
   only:
     - schedules
