@@ -1,16 +1,6 @@
 dist: xenial
 
-language: go
-go:
-- "1.x"
-
 install:
-- if [[ "x$TRAVIS_TAG" != "x" ]] ; then ./release/get.sh ; fi
+- source scripts/lib/release/global_data.sh && source /go/src/github.com/flant/werf/scripts/lib/release/build.sh && go_get && go_build dev
 
 script: echo
-
-deploy:
-  provider: script
-  script: ./release/publish.sh --tag $TRAVIS_TAG
-  on:
-    tags: true
