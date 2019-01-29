@@ -15,7 +15,16 @@ In this article, we will build an example application — [AtSea Shop](https://g
 
 ## Requirements
 
-Installed [docker-compose](https://docs.docker.com/compose/install/).
+* Installed [docker-compose](https://docs.docker.com/compose/install/).
+* Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
+
+### Select werf version
+
+This command should be run prior running any werf command in your shell session:
+
+```
+source <(multiwerf use 1.0)
+```
 
 ## Building the application
 

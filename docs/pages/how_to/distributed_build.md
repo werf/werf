@@ -31,7 +31,6 @@ In this tutorial, we setup the CI/CD process using GitLab CI and two persistent 
   * werf installed (same versions on both nodes);
 * Host for deploying (**deploy node**) with:
     * GitLab runner installed and activated for the project with the `deploy` tag;
-    * werf installed;
     * helm installed and initialized;
     * kubectl CLI tool configured to communicate with the Kubernetes cluster;
 

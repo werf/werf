@@ -13,6 +13,18 @@ Werf has artifacts, to reduce the size of the image. It is like a docker [multi-
 
 In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce image size with using mount directives.
 
+## Requirements
+
+* Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
+
+### Select werf version
+
+This command should be run prior running any werf command in your shell session:
+
+```
+source <(multiwerf use 1.0)
+```
+
 ## Sample application
 
 The example application is the [Hotel Booking Example](https://github.com/revel/examples/tree/master/booking), written in [GO](https://golang.org/) for [Revel Framework](https://github.com/revel).
