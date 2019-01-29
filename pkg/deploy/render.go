@@ -36,7 +36,7 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 
 	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 
-	werfChart, err := getWerfChart(projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
+	werfChart, err := getWerfChart(werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {
 		return err
 	}
