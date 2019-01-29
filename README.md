@@ -37,7 +37,6 @@ It is designed to make engineer's work fast end efficient.
 * Building **multiple images** from one description.
 * Sharing a common cache between builds.
 * Reducing image size by detaching source data and build tools.
-* Running **distributed builds** with common registry.
 * Advanced tools to debug built images.
 * Tools for cleaning both local and remote Docker registry caches.
 * Deploying to **Kubernetes** via [helm](https://helm.sh/), the Kubernetes package manager.
