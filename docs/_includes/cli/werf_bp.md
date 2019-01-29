@@ -64,8 +64,6 @@ werf bp [IMAGE_NAME...] [options]
             Tag by git commit
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (use system tmp dir by default)
-      --with-stages=false:
-            Push images with stages cache
 ```
 
 {{ header }} Environments
