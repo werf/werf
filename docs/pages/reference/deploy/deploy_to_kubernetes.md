@@ -18,20 +18,11 @@ The `.helm` directory in the project root describes a helm chart. Helm chart pro
     <name>.tpl
   charts/
   secret/
-  Chart.yaml
   values.yaml
   secret-values.yaml
 ```
 
-The `Chart.yaml` file describes the application chart, and you must specify at least the name and version of the application. Example of a `Chart.yaml` file:
-
-
-```yaml
-apiVersion: v1
-description: Test RabbitMQ chart for Kubernetes
-name: rabbit
-version: 0.1.0
-```
+The `Chart.yaml` file, which is required for the standard helm chart, is not needed. Werf will autogenerate `Chart.yaml` during deploy process. Chart name (and `.Chart.Name` value) will be the same as [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc).
 
 In the `templates` directory, YAML file (chart element) templates are stored, which describe the resources for their publishing in the cluster. Detailed information about template creation is available in a separate [section]({{ site.baseurl }}/reference/deploy/chart_configuration.html#features-of-chart-template-creation). The `charts` directory is used when you need to work with external charts.
 

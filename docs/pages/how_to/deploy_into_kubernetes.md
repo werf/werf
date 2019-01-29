@@ -110,13 +110,6 @@ The image name consists of `REPO` and `TAG`. Werf will use `latest` tag for the 
 
 Werf uses helm under the hood *to apply* kubernetes configuration. *To describe* kubernetes configuration werf also use helm configuration files (templates, values) with some extensions, such as secret files and secret values, additional helm golang templates to generate image names and some more.
 
-First, we need to create a helm chart for our application. To do that place a file `.helm/Chart.yaml` with content:
-
-```yaml
-name: myapp
-version: 0.1.0
-```
-
 ### Backend configuration
 
 Place a file `.helm/templates/010-backend.yaml` with configuration of `backend` and then we will see what's going on in detail:
