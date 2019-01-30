@@ -16,19 +16,14 @@ import (
 )
 
 var CmdData struct {
+	DryRun bool
 }
 
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "gc",
-		Short: "Force run werf gc procedure",
-		Long: common.GetLongCommandDescription(`Force run werf gc procedure.
-
-Werf GC procedure typically runs automatically during execution of some command. With this command user can force werf to run gc procedure to force removal of excess tmp files right now, for example.
-
-See more info about gc: https://flant.github.io/werf/reference/registry/cleaning.html#gc`),
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
@@ -36,7 +31,7 @@ See more info about gc: https://flant.github.io/werf/reference/registry/cleaning
 			return common.LogRunningTime(func() error {
 				err := runGC()
 				if err != nil {
-					return fmt.Errorf("gc failed: %s", err)
+					return fmt.Errorf("host cleanup failed: %s", err)
 				}
 
 				return nil
@@ -46,6 +41,8 @@ See more info about gc: https://flant.github.io/werf/reference/registry/cleaning
 
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }
@@ -68,13 +65,13 @@ func runGC() error {
 	}
 
 	return lock.WithLock("gc", lock.LockOptions{}, func() error {
-		err := project_tmp_dir.GC()
-		if err != nil {
+		if err := project_tmp_dir.GC(); err != nil {
 			return fmt.Errorf("project tmp dir gc failed: %s", err)
 		}
 
-		if err := cleanup.RemoveLostTmpWerfFiles(); err != nil {
-			return fmt.Errorf("unable to remove lost tmp werf files: %s", err)
+		commonOptions := cleanup.CommonOptions{DryRun: CmdData.DryRun}
+		if err := cleanup.HostCleanup(commonOptions); err != nil {
+			return fmt.Errorf("project tmp dir gc failed: %s", err)
 		}
 
 		return nil

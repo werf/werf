@@ -32,6 +32,9 @@ import (
 	stages_cleanup "github.com/flant/werf/cmd/werf/stages/cleanup"
 	stages_purge "github.com/flant/werf/cmd/werf/stages/purge"
 
+	host_cleanup "github.com/flant/werf/cmd/werf/host/cleanup"
+	host_purge "github.com/flant/werf/cmd/werf/host/purge"
+
 	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/docs"
 	"github.com/flant/werf/cmd/werf/version"
@@ -78,6 +81,7 @@ Find more information at https://flant.github.io/werf`),
 				stagesCmd(),
 				imagesCmd(),
 				helmCmd(),
+				hostCmd(),
 			},
 		},
 	}
@@ -132,6 +136,18 @@ func helmCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		secretCmd(),
+	)
+
+	return cmd
+}
+
+func hostCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "host",
+	}
+	cmd.AddCommand(
+		host_cleanup.NewCmd(),
+		host_purge.NewCmd(),
 	)
 
 	return cmd
