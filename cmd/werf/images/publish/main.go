@@ -1,4 +1,4 @@
-package push
+package publish
 
 import (
 	"fmt"
@@ -17,17 +17,22 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+type CmdDataType struct {
 	PushUsername string
 	PushPassword string
 }
 
+var CmdData CmdDataType
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
+	return NewCmdWithData(&CmdData, &CommonCmdData)
+}
+
+func NewCmdWithData(cmdData *CmdDataType, commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "publish [IMAGE_NAME...]",
-		Short: "Build final images and push into Docker registry",
+		Short: "Build images and push into Docker registry",
 		Long: common.GetLongCommandDescription(`Build final images and push into Docker registry.
 
 New docker layer with service info about tagging scheme will be built for each image. Images will be pushed into docker registry with the names IMAGE_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
@@ -41,7 +46,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 			return common.LogRunningTime(func() error {
 				common.LogVersion()
 
-				err := runImagesPublish(args)
+				err := runImagesPublish(cmdData, commonCmdData, args)
 				if err != nil {
 					return fmt.Errorf("images publish failed: %s", err)
 				}
@@ -51,24 +56,25 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupSSHKey(&CommonCmdData, cmd)
+	common.SetupDir(commonCmdData, cmd)
+	common.SetupTmpDir(commonCmdData, cmd)
+	common.SetupHomeDir(commonCmdData, cmd)
+	common.SetupSSHKey(commonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.PushUsername, "push-username", "", "", "Docker registry username to authorize push to the docker imagesRepo")
-	cmd.Flags().StringVarP(&CmdData.PushPassword, "push-password", "", "", "Docker registry password to authorize push to the docker imagesRepo")
-	cmd.Flags().StringVarP(&CmdData.PushUsername, "registry-username", "", "", "Docker registry username to authorize push to the docker imagesRepo")
-	cmd.Flags().StringVarP(&CmdData.PushPassword, "registry-password", "", "", "Docker registry password to authorize push to the docker imagesRepo")
+	cmd.Flags().StringVarP(&cmdData.PushUsername, "push-username", "", "", "Docker registry username to authorize push to the docker imagesRepo")
+	cmd.Flags().StringVarP(&cmdData.PushPassword, "push-password", "", "", "Docker registry password to authorize push to the docker imagesRepo")
+	cmd.Flags().StringVarP(&cmdData.PushUsername, "registry-username", "", "", "Docker registry username to authorize push to the docker imagesRepo")
+	cmd.Flags().StringVarP(&cmdData.PushPassword, "registry-password", "", "", "Docker registry password to authorize push to the docker imagesRepo")
 
-	common.SetupTag(&CommonCmdData, cmd)
-	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupTag(commonCmdData, cmd)
+	common.SetupStagesRepo(commonCmdData, cmd)
+	common.SetupImagesRepo(commonCmdData, cmd)
 
 	return cmd
 }
 
-func runImagesPublish(imagesToProcess []string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+func runImagesPublish(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesToProcess []string) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -84,7 +90,7 @@ func runImagesPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -108,17 +114,22 @@ func runImagesPublish(imagesToProcess []string) error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
+	_, err = common.GetStagesRepo(commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetPushDockerAuthorizer(projectTmpDir, CmdData.PushUsername, CmdData.PushPassword, imagesRepo)
+	imagesRepo, err := common.GetImagesRepo(projectName, commonCmdData)
 	if err != nil {
 		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+	dockerAuthorizer, err := docker_authorizer.GetPushDockerAuthorizer(projectTmpDir, cmdData.PushUsername, cmdData.PushPassword, imagesRepo)
+	if err != nil {
+		return err
+	}
+
+	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
@@ -128,7 +139,7 @@ func runImagesPublish(imagesToProcess []string) error {
 		}
 	}()
 
-	tagOpts, err := common.GetTagOptions(&CommonCmdData, projectDir)
+	tagOpts, err := common.GetTagOptions(commonCmdData, projectDir)
 	if err != nil {
 		return err
 	}

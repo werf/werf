@@ -11,6 +11,7 @@ import (
 
 	"github.com/flant/werf/cmd/werf/build"
 	"github.com/flant/werf/cmd/werf/cleanup"
+	"github.com/flant/werf/cmd/werf/publish"
 	"github.com/flant/werf/cmd/werf/purge"
 
 	secret_edit "github.com/flant/werf/cmd/werf/secret/edit"
@@ -66,6 +67,7 @@ Find more information at https://flant.github.io/werf`),
 			Message: "Main Commands:",
 			Commands: []*cobra.Command{
 				build.NewCmd(),
+				publish.NewCmd(),
 				cleanup.NewCmd(),
 				purge.NewCmd(),
 			},

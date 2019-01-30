@@ -18,7 +18,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
+type CmdDataType struct {
 	PullUsername string
 	PullPassword string
 
@@ -26,9 +26,14 @@ var CmdData struct {
 	IntrospectAfterError  bool
 }
 
+var CmdData CmdDataType
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
+	return NewCmdWithData(&CmdData, &CommonCmdData)
+}
+
+func NewCmdWithData(cmdData *CmdDataType, commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build [IMAGE_NAME...]",
 		Short: "Build stages",
@@ -45,7 +50,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runStagesBuild(args)
+				err := runStagesBuild(cmdData, commonCmdData, args)
 				if err != nil {
 					return fmt.Errorf("stages build failed: %s", err)
 				}
@@ -55,26 +60,26 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 		},
 	}
 
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupSSHKey(&CommonCmdData, cmd)
+	common.SetupDir(commonCmdData, cmd)
+	common.SetupTmpDir(commonCmdData, cmd)
+	common.SetupHomeDir(commonCmdData, cmd)
+	common.SetupSSHKey(commonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
-	cmd.Flags().StringVarP(&CmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
-	cmd.Flags().StringVarP(&CmdData.PullUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images")
-	cmd.Flags().StringVarP(&CmdData.PullPassword, "registry-password", "", "", "Docker registry password to authorize pull of base images")
+	cmd.Flags().StringVarP(&cmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
+	cmd.Flags().StringVarP(&cmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
+	cmd.Flags().StringVarP(&cmdData.PullUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images")
+	cmd.Flags().StringVarP(&cmdData.PullPassword, "registry-password", "", "", "Docker registry password to authorize pull of base images")
 
-	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
-	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
+	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
+	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
-	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesRepo(commonCmdData, cmd)
 
 	return cmd
 }
 
-func runStagesBuild(imagesToProcess []string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesToProcess []string) error {
+	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -90,7 +95,7 @@ func runStagesBuild(imagesToProcess []string) error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
+	projectDir, err := common.GetProjectDir(commonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -114,12 +119,12 @@ func runStagesBuild(imagesToProcess []string) error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	dockerAuthorizer, err := docker_authorizer.GetBuildStagesDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword)
+	dockerAuthorizer, err := docker_authorizer.GetBuildStagesDockerAuthorizer(projectTmpDir, cmdData.PullUsername, cmdData.PullPassword)
 	if err != nil {
 		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
@@ -129,15 +134,15 @@ func runStagesBuild(imagesToProcess []string) error {
 		}
 	}()
 
-	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
+	stagesRepo, err := common.GetStagesRepo(commonCmdData)
 	if err != nil {
 		return err
 	}
 
 	opts := build.BuildStagesOptions{
 		ImageBuildOptions: image.BuildOptions{
-			IntrospectAfterError:  CmdData.IntrospectAfterError,
-			IntrospectBeforeError: CmdData.IntrospectBeforeError,
+			IntrospectAfterError:  cmdData.IntrospectAfterError,
+			IntrospectBeforeError: cmdData.IntrospectBeforeError,
 		},
 	}
 
