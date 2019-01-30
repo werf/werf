@@ -10,7 +10,7 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func NewPushPhase(repo string, opts PushOptions) *PushPhase {
+func NewPublishImagesPhase(imagesRepo string, opts PublishImagesOptions) *PublishImagesPhase {
 	tagsByScheme := map[TagScheme][]string{
 		CustomScheme:    opts.Tags,
 		CIScheme:        opts.TagsByCI,
@@ -18,7 +18,7 @@ func NewPushPhase(repo string, opts PushOptions) *PushPhase {
 		GitTagScheme:    opts.TagsByGitTag,
 		GitCommitScheme: opts.TagsByGitCommit,
 	}
-	return &PushPhase{Repo: repo, TagsByScheme: tagsByScheme, WithStages: opts.WithStages}
+	return &PublishImagesPhase{ImagesRepo: imagesRepo, TagsByScheme: tagsByScheme}
 }
 
 const (
@@ -33,26 +33,29 @@ const (
 
 type TagScheme string
 
-type PushPhase struct {
+type PublishImagesPhase struct {
 	WithStages   bool
-	Repo         string
+	ImagesRepo   string
 	TagsByScheme map[TagScheme][]string
 }
 
-func (p *PushPhase) Run(c *Conveyor) error {
+func (p *PublishImagesPhase) Run(c *Conveyor) error {
 	if debug() {
-		fmt.Printf("PushPhase.Run\n")
+		fmt.Printf("PublishImagesPhase.Run\n")
 	}
 
-	err := c.GetDockerAuthorizer().LoginForPush(p.Repo)
+	// TODO: Push stages should occur on the BuildStagesPhase
+
+	err := c.GetDockerAuthorizer().LoginForPush(p.ImagesRepo)
 	if err != nil {
-		return fmt.Errorf("login into '%s' for push failed: %s", p.Repo, err)
+		return fmt.Errorf("login into '%s' for push failed: %s", p.ImagesRepo, err)
 	}
 
 	for ind, image := range c.imagesInOrder {
 		isLastImage := ind == len(c.imagesInOrder)-1
 		err := logger.LogServiceProcess(fmt.Sprintf("Push %s", image.LogName()), "", func() error {
 			if p.WithStages {
+
 				err := logger.LogServiceProcess("Push stages cache", "", func() error {
 					if err := p.pushImageStages(c, image); err != nil {
 						return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
@@ -91,19 +94,19 @@ func (p *PushPhase) Run(c *Conveyor) error {
 	return nil
 }
 
-func (p *PushPhase) pushImageStages(c *Conveyor, image *Image) error {
+func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 	stages := image.GetStages()
 
-	existingStagesTags, err := docker_registry.ImageStagesTags(p.Repo)
+	existingStagesTags, err := docker_registry.ImageStagesTags(p.ImagesRepo)
 	if err != nil {
-		return fmt.Errorf("error fetching existing stages cache list %s: %s", p.Repo, err)
+		return fmt.Errorf("error fetching existing stages cache list %s: %s", p.ImagesRepo, err)
 	}
 
 	for ind, stage := range stages {
 		isLastStage := ind == len(stages)-1
 
 		stageTagName := fmt.Sprintf(RepoImageStageTagFormat, stage.GetSignature())
-		stageImageName := fmt.Sprintf("%s:%s", p.Repo, stageTagName)
+		stageImageName := fmt.Sprintf("%s:%s", p.ImagesRepo, stageTagName)
 
 		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
 			logger.LogState(fmt.Sprintf("%s", stage.Name()), "[EXISTS]")
@@ -151,12 +154,12 @@ func (p *PushPhase) pushImageStages(c *Conveyor, image *Image) error {
 	return nil
 }
 
-func (p *PushPhase) pushImage(c *Conveyor, image *Image) error {
+func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 	var imageRepository string
 	if image.GetName() != "" {
-		imageRepository = fmt.Sprintf("%s/%s", p.Repo, image.GetName())
+		imageRepository = fmt.Sprintf("%s/%s", p.ImagesRepo, image.GetName())
 	} else {
-		imageRepository = p.Repo
+		imageRepository = p.ImagesRepo
 	}
 
 	existingTags, err := docker_registry.ImageTags(imageRepository)

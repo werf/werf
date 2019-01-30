@@ -81,9 +81,9 @@ type Phase interface {
 	Run(*Conveyor) error
 }
 
-func (c *Conveyor) Build(opts BuildOptions) error {
+func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
 restart:
-	if err := c.build(opts); err != nil {
+	if err := c.build(stageRepo, opts); err != nil {
 		if isConveyorShouldBeResetError(err) {
 			c.ReInitRuntimeFields()
 			goto restart
@@ -95,7 +95,7 @@ restart:
 	return nil
 }
 
-func (c *Conveyor) build(opts BuildOptions) error {
+func (c *Conveyor) build(stageRepo string, opts BuildStagesOptions) error {
 	var err error
 
 	var phases []Phase
@@ -103,7 +103,7 @@ func (c *Conveyor) build(opts BuildOptions) error {
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareStagesPhase())
-	phases = append(phases, NewBuildPhase(opts))
+	phases = append(phases, NewBuildStagesPhase(stageRepo, opts))
 
 	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {
@@ -122,9 +122,8 @@ type TagOptions struct {
 	TagsByCI        []string
 }
 
-type PushOptions struct {
+type PublishImagesOptions struct {
 	TagOptions
-	WithStages bool
 }
 
 func (c *Conveyor) Tag(repo string, opts TagOptions) error {
@@ -145,14 +144,14 @@ func (c *Conveyor) Tag(repo string, opts TagOptions) error {
 	return c.runPhases(phases)
 }
 
-func (c *Conveyor) Push(repo string, opts PushOptions) error {
+func (c *Conveyor) PublishImages(imagesRepo string, opts PublishImagesOptions) error {
 	var err error
 
 	var phases []Phase
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewShouldBeBuiltPhase())
-	phases = append(phases, NewPushPhase(repo, opts))
+	phases = append(phases, NewPublishImagesPhase(imagesRepo, opts))
 
 	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {
@@ -163,9 +162,14 @@ func (c *Conveyor) Push(repo string, opts PushOptions) error {
 	return c.runPhases(phases)
 }
 
-func (c *Conveyor) BP(repo string, buildOpts BuildOptions, pushOpts PushOptions) error {
+type BuildAndPublishOptions struct {
+	BuildStagesOptions
+	PublishImagesOptions
+}
+
+func (c *Conveyor) BuildAndPublish(stagesRepo, imagesRepo string, opts BuildAndPublishOptions) error {
 restart:
-	if err := c.bp(repo, buildOpts, pushOpts); err != nil {
+	if err := c.bp(stagesRepo, imagesRepo, opts); err != nil {
 		if isConveyorShouldBeResetError(err) {
 			c.ReInitRuntimeFields()
 			goto restart
@@ -177,7 +181,7 @@ restart:
 	return nil
 }
 
-func (c *Conveyor) bp(repo string, buildOpts BuildOptions, pushOpts PushOptions) error {
+func (c *Conveyor) bp(stagesRepo, imagesRepo string, opts BuildAndPublishOptions) error {
 	var err error
 
 	var phases []Phase
@@ -185,8 +189,8 @@ func (c *Conveyor) bp(repo string, buildOpts BuildOptions, pushOpts PushOptions)
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewRenewPhase())
 	phases = append(phases, NewPrepareStagesPhase())
-	phases = append(phases, NewBuildPhase(buildOpts))
-	phases = append(phases, NewPushPhase(repo, pushOpts))
+	phases = append(phases, NewBuildStagesPhase(stagesRepo, opts.BuildStagesOptions))
+	phases = append(phases, NewPublishImagesPhase(imagesRepo, opts.PublishImagesOptions))
 
 	lockName, err := c.lockAllImagesReadOnly()
 	if err != nil {

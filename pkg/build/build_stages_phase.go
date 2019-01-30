@@ -9,32 +9,37 @@ import (
 	"github.com/flant/werf/pkg/logger"
 )
 
-func NewBuildPhase(opts BuildOptions) *BuildPhase {
-	return &BuildPhase{opts}
+func NewBuildStagesPhase(stagesRepo string, opts BuildStagesOptions) *BuildStagesPhase {
+	return &BuildStagesPhase{StagesRepo: stagesRepo, BuildStagesOptions: opts}
 }
 
-type BuildOptions struct {
-	ImageBuildOptions imagePkg.BuildOptions
+type BuildStagesOptions struct {
+	ImageBuildStagesOptions imagePkg.BuildOptions
 }
 
-type BuildPhase struct {
-	BuildOptions
+type BuildStagesPhase struct {
+	StagesRepo string
+	BuildStagesOptions
 }
 
-func (p *BuildPhase) Run(c *Conveyor) (err error) {
+func (p *BuildStagesPhase) Run(c *Conveyor) (err error) {
 	return p.run(c)
 }
 
-func (p *BuildPhase) run(c *Conveyor) error {
+func (p *BuildStagesPhase) run(c *Conveyor) error {
 	if debug() {
-		fmt.Printf("BuildPhase.Run\n")
+		fmt.Printf("BuildStagesPhase.Run\n")
 	}
+
+	/*
+	 * TODO: Build stages phase should push result into stagesRepo if non :local repo has been used
+	 */
 
 	images := c.imagesInOrder
 	for ind, image := range images {
 		isLastImage := ind == len(images)-1
 
-		err := logger.LogServiceProcess(fmt.Sprintf("Build %s stages cache", image.LogName()), "", func() error {
+		err := logger.LogServiceProcess(fmt.Sprintf("Build %s stages", image.LogName()), "", func() error {
 			return p.runImage(image, c)
 		})
 
@@ -50,7 +55,7 @@ func (p *BuildPhase) run(c *Conveyor) error {
 	return nil
 }
 
-func (p *BuildPhase) runImage(image *Image, c *Conveyor) error {
+func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 	if debug() {
 		fmt.Printf("  image: '%s'\n", image.GetName())
 	}
@@ -123,7 +128,7 @@ func (p *BuildPhase) runImage(image *Image, c *Conveyor) error {
 				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
 			}
 
-			if err := img.Build(p.ImageBuildOptions); err != nil {
+			if err := img.Build(p.ImageBuildStagesOptions); err != nil {
 				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 			}
 
