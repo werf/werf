@@ -9,21 +9,21 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-func NewPrepareImagesPhase() *PrepareImagesPhase {
-	return &PrepareImagesPhase{}
+func NewPrepareStagesPhase() *PrepareStagesPhase {
+	return &PrepareStagesPhase{}
 }
 
-type PrepareImagesPhase struct{}
+type PrepareStagesPhase struct{}
 
-func (p *PrepareImagesPhase) Run(c *Conveyor) error {
+func (p *PrepareStagesPhase) Run(c *Conveyor) error {
 	return logger.LogServiceProcess("Prepare stages build instructions", "", func() error {
 		return p.run(c)
 	})
 }
 
-func (p *PrepareImagesPhase) run(c *Conveyor) (err error) {
+func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 	if debug() {
-		fmt.Printf("PrepareImagesPhase.Run\n")
+		fmt.Printf("PrepareStagesPhase.Run\n")
 	}
 
 	for _, image := range c.imagesInOrder {
@@ -35,7 +35,7 @@ func (p *PrepareImagesPhase) run(c *Conveyor) (err error) {
 	return nil
 }
 
-func (p *PrepareImagesPhase) runImage(image *Image, c *Conveyor) (err error) {
+func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 	if debug() {
 		fmt.Printf("  image: '%s'\n", image.GetName())
 	}
