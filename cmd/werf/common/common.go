@@ -97,7 +97,7 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesRepo, "stages", "s", "", "Docker Repo to store stages or :local for non-distributed build")
+	cmd.Flags().StringVarP(cmdData.StagesRepo, "stages", "s", "", "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now)")
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -107,7 +107,9 @@ func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 
 func GetStagesRepo(cmdData *CmdData) (string, error) {
 	if *cmdData.StagesRepo == "" {
-		return "", fmt.Errorf("--stages :local|REPO param required")
+		return "", fmt.Errorf("--stages :local param required")
+	} else if *cmdData.StagesRepo != ":local" {
+		return "", fmt.Errorf("only --stages :local is supported for now, got '%s'", *cmdData.StagesRepo)
 	}
 	return *cmdData.StagesRepo, nil
 }

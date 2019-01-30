@@ -25,6 +25,8 @@ import (
 	slug_release "github.com/flant/werf/cmd/werf/slug/release"
 	slug_tag "github.com/flant/werf/cmd/werf/slug/tag"
 
+	stages_build "github.com/flant/werf/cmd/werf/stages/build"
+
 	"github.com/spf13/cobra"
 )
 
@@ -53,6 +55,12 @@ Find more information at https://flant.github.io/werf`),
 			Message:  "Main Commands:",
 			Commands: []*cobra.Command{},
 		},
+		{
+			Message: "Lowlevel Management Commands:",
+			Commands: []*cobra.Command{
+				stagesCmd(),
+			},
+		},
 	}
 	groups.Add(rootCmd)
 
@@ -68,6 +76,18 @@ Find more information at https://flant.github.io/werf`),
 		logger.LogError(err)
 		os.Exit(1)
 	}
+}
+
+func stagesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stages",
+		Short: "Commands to work with stages, which are cache for images",
+	}
+	cmd.AddCommand(
+		stages_build.NewCmd(),
+	)
+
+	return cmd
 }
 
 func secretCmd() *cobra.Command {

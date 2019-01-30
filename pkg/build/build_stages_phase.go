@@ -14,7 +14,7 @@ func NewBuildStagesPhase(stagesRepo string, opts BuildStagesOptions) *BuildStage
 }
 
 type BuildStagesOptions struct {
-	ImageBuildStagesOptions imagePkg.BuildOptions
+	ImageBuildOptions imagePkg.BuildOptions
 }
 
 type BuildStagesPhase struct {
@@ -128,7 +128,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
 			}
 
-			if err := img.Build(p.ImageBuildStagesOptions); err != nil {
+			if err := img.Build(p.ImageBuildOptions); err != nil {
 				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 			}
 
