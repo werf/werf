@@ -8,7 +8,7 @@ import (
 	"github.com/flant/werf/pkg/lock"
 )
 
-func ImagesFlush(options CommonRepoOptions) error {
+func ImagesPurge(options CommonRepoOptions) error {
 	err := lock.WithLock(options.ImagesRepo, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		if err := repoImagesFlush(options); err != nil {
 			return err
@@ -24,7 +24,7 @@ func ImagesFlush(options CommonRepoOptions) error {
 	return nil
 }
 
-func StagesFlush(options CommonProjectOptions) error {
+func StagesPurge(options CommonProjectOptions) error {
 	projectImagesLockName := fmt.Sprintf("%s.images", options.ProjectName)
 	err := lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		if err := projectImageStagesFlush(options); err != nil {

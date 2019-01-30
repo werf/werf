@@ -1,4 +1,4 @@
-package flush
+package purge
 
 import (
 	"fmt"
@@ -25,14 +25,14 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "flush",
+		Use:                   "purge",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			err := runFlush()
+			err := runPurge()
 			if err != nil {
-				return fmt.Errorf("flush failed: %s", err)
+				return fmt.Errorf("images purge failed: %s", err)
 			}
 
 			return nil
@@ -42,7 +42,6 @@ func NewCmd() *cobra.Command {
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
@@ -53,7 +52,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runFlush() error {
+func runPurge() error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -75,11 +74,6 @@ func runFlush() error {
 
 	projectName := werfConfig.Meta.Project
 
-	_, err = common.GetStagesRepo(&CommonCmdData)
-	if err != nil {
-		return err
-	}
-
 	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
 		return err
@@ -95,7 +89,7 @@ func runFlush() error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	dockerAuthorizer, err := docker_authorizer.GetFlushDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
+	dockerAuthorizer, err := docker_authorizer.GetPurgeDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
 	if err != nil {
 		return err
 	}
@@ -115,16 +109,7 @@ func runFlush() error {
 		DryRun:      CmdData.DryRun,
 	}
 
-	if err := cleanup.ImagesFlush(commonRepoOptions); err != nil {
-		return err
-	}
-
-	commonProjectOptions := cleanup.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
-	}
-
-	if err := cleanup.StagesFlush(commonProjectOptions); err != nil {
+	if err := cleanup.ImagesPurge(commonRepoOptions); err != nil {
 		return err
 	}
 

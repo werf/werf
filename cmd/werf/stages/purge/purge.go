@@ -1,4 +1,4 @@
-package flush
+package purge
 
 import (
 	"fmt"
@@ -21,14 +21,14 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "flush",
+		Use:                   "purge",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			err := runFlush()
+			err := runPurge()
 			if err != nil {
-				return fmt.Errorf("stages flush failed: %s", err)
+				return fmt.Errorf("stages purge failed: %s", err)
 			}
 
 			return nil
@@ -45,7 +45,7 @@ func NewCmd() *cobra.Command {
 	return cmd
 }
 
-func runFlush() error {
+func runPurge() error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -81,7 +81,7 @@ func runFlush() error {
 		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
 	}
 
-	if err := cleanup.StagesFlush(commonProjectOptions); err != nil {
+	if err := cleanup.StagesPurge(commonProjectOptions); err != nil {
 		return err
 	}
 
