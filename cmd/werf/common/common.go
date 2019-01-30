@@ -32,6 +32,9 @@ type CmdData struct {
 	Release     *string
 	Namespace   *string
 	KubeContext *string
+
+	StagesRepo *string
+	ImagesRepo *string
 }
 
 func GetLongCommandDescription(text string) string {
@@ -90,6 +93,30 @@ func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeContext = new(string)
 	cmd.Flags().StringVarP(cmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
+}
+
+func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.StagesRepo = new(string)
+	cmd.Flags().StringVarP(cmdData.StagesRepo, "stages", "s", "", "Docker Repo to store stages or :local for non-distributed build")
+}
+
+func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.StagesRepo = new(string)
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", "", "Docker Repo to store images")
+}
+
+func GetStagesRepo(cmdData *CmdData) (string, error) {
+	if *cmdData.StagesRepo == "" {
+		return "", fmt.Errorf("--stages :local|REPO param required")
+	}
+	return *cmdData.StagesRepo, nil
+}
+
+func GetImagesRepo(cmdData *CmdData) (string, error) {
+	if *cmdData.ImagesRepo == "" {
+		return "", fmt.Errorf("--images REPO param required")
+	}
+	return *cmdData.StagesRepo, nil
 }
 
 func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
