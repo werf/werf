@@ -19,7 +19,6 @@ import (
 )
 
 var CmdData struct {
-	Repo             string
 	RegistryUsername string
 	RegistryPassword string
 
