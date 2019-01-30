@@ -10,14 +10,10 @@ import (
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/project_tmp_dir"
 	"github.com/flant/werf/pkg/werf"
 )
 
 var CmdData struct {
-	RegistryUsername string
-	RegistryPassword string
-
 	DryRun bool
 }
 
@@ -32,7 +28,7 @@ func NewCmd() *cobra.Command {
 
 			err := runFlush()
 			if err != nil {
-				return fmt.Errorf("flush failed: %s", err)
+				return fmt.Errorf("stages flush failed: %s", err)
 			}
 
 			return nil
@@ -43,10 +39,6 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupStagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesRepo(&CommonCmdData, cmd)
-
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
-	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
 
 	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
@@ -80,42 +72,7 @@ func runFlush() error {
 		return err
 	}
 
-	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
-	if err != nil {
-		return err
-	}
-
 	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
-		return err
-	}
-
-	projectTmpDir, err := project_tmp_dir.Get()
-	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
-	}
-	defer project_tmp_dir.Release(projectTmpDir)
-
-	dockerAuthorizer, err := docker_authorizer.GetFlushDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
-	if err != nil {
-		return err
-	}
-
-	if err := dockerAuthorizer.Login(imagesRepo); err != nil {
-		return err
-	}
-
-	var imageNames []string
-	for _, image := range werfConfig.Images {
-		imageNames = append(imageNames, image.Name)
-	}
-
-	commonRepoOptions := cleanup.CommonRepoOptions{
-		ImagesRepo:  imagesRepo,
-		ImagesNames: imageNames,
-		DryRun:      CmdData.DryRun,
-	}
-
-	if err := cleanup.ImagesFlush(commonRepoOptions); err != nil {
 		return err
 	}
 

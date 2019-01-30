@@ -32,7 +32,7 @@ func NewCmd() *cobra.Command {
 
 			err := runFlush()
 			if err != nil {
-				return fmt.Errorf("flush failed: %s", err)
+				return fmt.Errorf("images flush failed: %s", err)
 			}
 
 			return nil
@@ -42,7 +42,6 @@ func NewCmd() *cobra.Command {
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
@@ -74,11 +73,6 @@ func runFlush() error {
 	}
 
 	projectName := werfConfig.Meta.Project
-
-	_, err = common.GetStagesRepo(&CommonCmdData)
-	if err != nil {
-		return err
-	}
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
@@ -116,15 +110,6 @@ func runFlush() error {
 	}
 
 	if err := cleanup.ImagesFlush(commonRepoOptions); err != nil {
-		return err
-	}
-
-	commonProjectOptions := cleanup.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
-	}
-
-	if err := cleanup.StagesFlush(commonProjectOptions); err != nil {
 		return err
 	}
 
