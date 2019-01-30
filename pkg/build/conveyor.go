@@ -83,7 +83,7 @@ type Phase interface {
 
 func (c *Conveyor) BuildStages(stageRepo string, opts BuildStagesOptions) error {
 restart:
-	if err := c.build(stageRepo, opts); err != nil {
+	if err := c.buildStages(stageRepo, opts); err != nil {
 		if isConveyorShouldBeResetError(err) {
 			c.ReInitRuntimeFields()
 			goto restart
@@ -95,7 +95,7 @@ restart:
 	return nil
 }
 
-func (c *Conveyor) build(stageRepo string, opts BuildStagesOptions) error {
+func (c *Conveyor) buildStages(stageRepo string, opts BuildStagesOptions) error {
 	var err error
 
 	var phases []Phase

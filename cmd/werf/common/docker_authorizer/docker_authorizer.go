@@ -72,7 +72,7 @@ func (a *DockerAuthorizer) login(creds *DockerCredentials, repo string) error {
 	return nil
 }
 
-func GetBuildDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption string) (*DockerAuthorizer, error) {
+func GetBuildStagesDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption string) (*DockerAuthorizer, error) {
 	pullCredentials, err := getPullCredentials(pullUsernameOption, pullPasswordOption)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get docker credentials for pull: %s", err)
