@@ -32,11 +32,11 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build [IMAGE_NAME...]",
 		Short: "Build images",
-		Long: common.GetLongCommandDescription(`Build images from werf.yaml.
+		Long: common.GetLongCommandDescription(`Build stages for all images from werf.yaml.
 
-The result of build command is a stages cache for images.
+The result of build command is a stages, which is a cache for images.
 
-If one or more IMAGE_NAME parameters specified, werf will build only these images from werf.yaml.`),
+If one or more IMAGE_NAME parameters specified, werf will build only stages of these images from werf.yaml.`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
@@ -67,6 +67,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 
 	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
+
+	common.SetupStagesRepo(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -112,7 +114,7 @@ func runBuild(imagesToProcess []string) error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	dockerAuthorizer, err := docker_authorizer.GetBuildDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword)
+	dockerAuthorizer, err := docker_authorizer.GetBuildStagesDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword)
 	if err != nil {
 		return err
 	}
@@ -127,7 +129,12 @@ func runBuild(imagesToProcess []string) error {
 		}
 	}()
 
-	buildOpts := build.BuildOptions{
+	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	opts := build.BuildStagesOptions{
 		ImageBuildOptions: image.BuildOptions{
 			IntrospectAfterError:  CmdData.IntrospectAfterError,
 			IntrospectBeforeError: CmdData.IntrospectBeforeError,
@@ -135,7 +142,8 @@ func runBuild(imagesToProcess []string) error {
 	}
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
-	if err = c.Build(buildOpts); err != nil {
+
+	if err = c.BuildStages(stagesRepo, opts); err != nil {
 		return err
 	}
 
