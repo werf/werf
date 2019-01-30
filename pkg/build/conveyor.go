@@ -102,7 +102,7 @@ func (c *Conveyor) build(opts BuildOptions) error {
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewRenewPhase())
-	phases = append(phases, NewPrepareImagesPhase())
+	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildPhase(opts))
 
 	lockName, err := c.lockAllImagesReadOnly()
@@ -184,7 +184,7 @@ func (c *Conveyor) bp(repo string, buildOpts BuildOptions, pushOpts PushOptions)
 	phases = append(phases, NewInitializationPhase())
 	phases = append(phases, NewSignaturesPhase())
 	phases = append(phases, NewRenewPhase())
-	phases = append(phases, NewPrepareImagesPhase())
+	phases = append(phases, NewPrepareStagesPhase())
 	phases = append(phases, NewBuildPhase(buildOpts))
 	phases = append(phases, NewPushPhase(repo, pushOpts))
 
