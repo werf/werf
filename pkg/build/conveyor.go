@@ -169,7 +169,7 @@ type BuildAndPublishOptions struct {
 
 func (c *Conveyor) BuildAndPublish(stagesRepo, imagesRepo string, opts BuildAndPublishOptions) error {
 restart:
-	if err := c.bp(stagesRepo, imagesRepo, opts); err != nil {
+	if err := c.buildAndPublish(stagesRepo, imagesRepo, opts); err != nil {
 		if isConveyorShouldBeResetError(err) {
 			c.ReInitRuntimeFields()
 			goto restart
@@ -181,7 +181,7 @@ restart:
 	return nil
 }
 
-func (c *Conveyor) bp(stagesRepo, imagesRepo string, opts BuildAndPublishOptions) error {
+func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndPublishOptions) error {
 	var err error
 
 	var phases []Phase

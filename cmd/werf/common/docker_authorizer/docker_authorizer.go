@@ -81,7 +81,7 @@ func GetBuildStagesDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPassw
 	return getDockerAuthorizer(projectTmpDir, nil, pullCredentials, nil)
 }
 
-func GetPushDockerAuthorizer(projectTmpDir, pushUsernameOption, pushPasswordOption, repo string) (*DockerAuthorizer, error) {
+func GetImagePublishDockerAuthorizer(projectTmpDir, pushUsernameOption, pushPasswordOption, repo string) (*DockerAuthorizer, error) {
 	pushCredentials, err := getPushCredentials(pushUsernameOption, pushPasswordOption, repo)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get docker credentials for push: %s", err)
@@ -90,7 +90,7 @@ func GetPushDockerAuthorizer(projectTmpDir, pushUsernameOption, pushPasswordOpti
 	return getDockerAuthorizer(projectTmpDir, nil, nil, pushCredentials)
 }
 
-func GetBPDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption, pushUsernameOption, pushPasswordOption, repo string) (*DockerAuthorizer, error) {
+func GetBuildAndPublishDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption, pushUsernameOption, pushPasswordOption, repo string) (*DockerAuthorizer, error) {
 	pullCredentials, err := getPullCredentials(pullUsernameOption, pullPasswordOption)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get docker credentials for pull: %s", err)

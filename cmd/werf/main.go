@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/build"
+	"github.com/flant/werf/cmd/werf/build_and_publish"
 	"github.com/flant/werf/cmd/werf/cleanup"
 	"github.com/flant/werf/cmd/werf/publish"
 	"github.com/flant/werf/cmd/werf/purge"
@@ -71,6 +72,7 @@ Find more information at https://flant.github.io/werf`),
 			Commands: []*cobra.Command{
 				build.NewCmd(),
 				publish.NewCmd(),
+				build_and_publish.NewCmd(),
 				cleanup.NewCmd(),
 				purge.NewCmd(),
 			},

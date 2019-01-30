@@ -1,4 +1,4 @@
-package bp
+package build_and_publish
 
 import (
 	"fmt"
@@ -19,9 +19,6 @@ import (
 )
 
 var CmdData struct {
-	Repo       string
-	WithStages bool
-
 	PullUsername     string
 	PullPassword     string
 	PushUsername     string
@@ -37,15 +34,15 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bp [IMAGE_NAME...]",
-		Short: "Build then push built images into Docker registry",
-		Long: common.GetLongCommandDescription(`Build then push images from werf.yaml.
+		Use:   "build-and-publish [IMAGE_NAME...]",
+		Short: "Build stages then publish images into Docker registry",
+		Long: common.GetLongCommandDescription(`Build stages then publish images into Docker registry.
 
-Images will be tagged automatically with the names REPO/IMAGE_NAME:TAG. These tags will be deleted after push. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
+New docker layer with service info about tagging scheme will be built for each image. Images will be pushed into docker registry with the names IMAGE_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
 
-The result of bp command is a stages cache for images and named images pushed into the docker registry.
+The result of build-and-publish command is a stages cache for images and named images pushed into the docker registry.
 
-If one or more IMAGE_NAME parameters specified, werf will build and push only these images from werf.yaml.`),
+If one or more IMAGE_NAME parameters specified, werf will build images stages and publish only these images from werf.yaml.`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
@@ -67,7 +64,7 @@ If one or more IMAGE_NAME parameters specified, werf will build and push only th
 			}
 
 			return common.LogRunningTime(func() error {
-				err := runBP(args)
+				err := runBuildAndPublish(args)
 				if err != nil {
 					return fmt.Errorf("bp failed: %s", err)
 				}
@@ -82,23 +79,24 @@ If one or more IMAGE_NAME parameters specified, werf will build and push only th
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to push images to. CI_REGISTRY_IMAGE will be used by default if available.")
 	cmd.Flags().StringVarP(&CmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
 	cmd.Flags().StringVarP(&CmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
-	cmd.Flags().StringVarP(&CmdData.PushUsername, "push-username", "", "", "Docker registry username to authorize push to the docker repo")
-	cmd.Flags().StringVarP(&CmdData.PushPassword, "push-password", "", "", "Docker registry password to authorize push to the docker repo")
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images and push to the docker repo")
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-password", "", "", "Docker registry password to authorize pull of base images and push to the docker repo")
+	cmd.Flags().StringVarP(&CmdData.PushUsername, "push-username", "", "", "Docker registry username to authorize push to the docker imagesRepo")
+	cmd.Flags().StringVarP(&CmdData.PushPassword, "push-password", "", "", "Docker registry password to authorize push to the docker imagesRepo")
+	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images and push to the docker imagesRepo")
+	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-password", "", "", "Docker registry password to authorize pull of base images and push to the docker imagesRepo")
 
 	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	common.SetupTag(&CommonCmdData, cmd)
+	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesRepo(&CommonCmdData, cmd)
 
 	return cmd
 }
 
-func runBP(imagesToProcess []string) error {
+func runBuildAndPublish(imagesToProcess []string) error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -139,12 +137,12 @@ func runBP(imagesToProcess []string) error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	repo, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
+	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetBPDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword, CmdData.PushUsername, CmdData.PushPassword, repo)
+	dockerAuthorizer, err := docker_authorizer.GetBuildAndPublishDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword, CmdData.PushUsername, CmdData.PushPassword, imagesRepo)
 	if err != nil {
 		return err
 	}
@@ -159,22 +157,31 @@ func runBP(imagesToProcess []string) error {
 		}
 	}()
 
+	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
 	tagOpts, err := common.GetTagOptions(&CommonCmdData, projectDir)
 	if err != nil {
 		return err
 	}
 
-	buildOpts := build.BuildOptions{
-		ImageBuildOptions: image.BuildOptions{
-			IntrospectAfterError:  CmdData.IntrospectAfterError,
-			IntrospectBeforeError: CmdData.IntrospectBeforeError,
+	opts := build.BuildAndPublishOptions{
+		BuildStagesOptions: build.BuildStagesOptions{
+			ImageBuildOptions: image.BuildOptions{
+				IntrospectAfterError:  CmdData.IntrospectAfterError,
+				IntrospectBeforeError: CmdData.IntrospectBeforeError,
+			},
+		},
+		PublishImagesOptions: build.PublishImagesOptions{
+			TagOptions: tagOpts,
 		},
 	}
 
-	pushOpts := build.PushOptions{TagOptions: tagOpts, WithStages: CmdData.WithStages}
-
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
-	if err = c.BP(repo, buildOpts, pushOpts); err != nil {
+
+	if err = c.BuildAndPublish(stagesRepo, imagesRepo, opts); err != nil {
 		return err
 	}
 

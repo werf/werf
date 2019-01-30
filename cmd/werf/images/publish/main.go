@@ -124,7 +124,7 @@ func runImagesPublish(cmdData *CmdDataType, commonCmdData *common.CmdData, image
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetPushDockerAuthorizer(projectTmpDir, cmdData.PushUsername, cmdData.PushPassword, imagesRepo)
+	dockerAuthorizer, err := docker_authorizer.GetImagePublishDockerAuthorizer(projectTmpDir, cmdData.PushUsername, cmdData.PushPassword, imagesRepo)
 	if err != nil {
 		return err
 	}
