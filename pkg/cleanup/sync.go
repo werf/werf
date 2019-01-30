@@ -11,45 +11,9 @@ import (
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
 )
 
 const syncIgnoreProjectImageStagePeriod = 2 * 60 * 60
-
-func ProjectImageStagesSync(commonProjectOptions CommonProjectOptions, commonRepoOptions CommonRepoOptions) error {
-	projectImagesLockName := fmt.Sprintf("%s.images", commonProjectOptions.ProjectName)
-	err := lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if commonRepoOptions.Repository != "" {
-			err := lock.WithLock(commonRepoOptions.Repository, lock.LockOptions{ReadOnly: true, Timeout: time.Second * 600}, func() error {
-				if err := projectImageStagesSyncByRepoImages(commonProjectOptions, commonRepoOptions); err != nil {
-					return err
-				}
-
-				return nil
-			})
-
-			if err != nil {
-				return err
-			}
-		}
-
-		if err := projectImageStagesSyncByCacheVersion(commonProjectOptions); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if err := projectCleanup(commonProjectOptions); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func repoImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, options CommonRepoOptions) error {
 	repoImageStages, err := repoImageStagesImages(options)
@@ -226,13 +190,8 @@ func repoImageCreated(repoImage docker_registry.RepoImage) (time.Time, error) {
 	return configFile.Created.Time, nil
 }
 
-func projectImageStagesSyncByRepoImages(commonProjectOptions CommonProjectOptions, commonRepoOptions CommonRepoOptions) error {
-	repoImages, err := repoImages(commonRepoOptions)
-	if err != nil {
-		return err
-	}
-
-	imageStages, err := projectImageStages(commonProjectOptions)
+func projectImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, options CommonProjectOptions) error {
+	imageStages, err := projectImageStages(options)
 	if err != nil {
 		return err
 	}
@@ -243,7 +202,7 @@ func projectImageStagesSyncByRepoImages(commonProjectOptions CommonProjectOption
 			return err
 		}
 
-		imageStages, err = exceptImageStagesByImageId(imageStages, parentId, commonProjectOptions)
+		imageStages, err = exceptImageStagesByImageId(imageStages, parentId, options)
 		if err != nil {
 			return err
 		}
@@ -257,7 +216,7 @@ func projectImageStagesSyncByRepoImages(commonProjectOptions CommonProjectOption
 		}
 	}
 
-	err = imagesRemove(imageStages, commonProjectOptions.CommonOptions)
+	err = imagesRemove(imageStages, options.CommonOptions)
 	if err != nil {
 		return err
 	}

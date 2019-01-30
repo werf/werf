@@ -7,13 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/templates"
-	"github.com/flant/werf/cmd/werf/completion"
-	"github.com/flant/werf/cmd/werf/docs"
-	"github.com/flant/werf/cmd/werf/version"
-	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/process_exterminator"
+	"github.com/spf13/cobra"
+
+	"github.com/flant/werf/cmd/werf/cleanup"
 
 	secret_edit "github.com/flant/werf/cmd/werf/secret/edit"
 	secret_extract "github.com/flant/werf/cmd/werf/secret/extract"
@@ -25,9 +21,19 @@ import (
 	slug_release "github.com/flant/werf/cmd/werf/slug/release"
 	slug_tag "github.com/flant/werf/cmd/werf/slug/tag"
 
-	stages_build "github.com/flant/werf/cmd/werf/stages/build"
+	images_cleanup "github.com/flant/werf/cmd/werf/images/cleanup"
 
-	"github.com/spf13/cobra"
+	stages_build "github.com/flant/werf/cmd/werf/stages/build"
+	stages_cleanup "github.com/flant/werf/cmd/werf/stages/cleanup"
+
+	"github.com/flant/werf/cmd/werf/completion"
+	"github.com/flant/werf/cmd/werf/docs"
+	"github.com/flant/werf/cmd/werf/version"
+
+	"github.com/flant/werf/cmd/werf/common"
+	"github.com/flant/werf/cmd/werf/common/templates"
+	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/process_exterminator"
 )
 
 func main() {
@@ -52,12 +58,15 @@ Find more information at https://flant.github.io/werf`),
 
 	groups := templates.CommandGroups{
 		{
-			Message:  "Main Commands:",
-			Commands: []*cobra.Command{},
+			Message: "Main Commands:",
+			Commands: []*cobra.Command{
+				cleanup.NewCmd(),
+			},
 		},
 		{
 			Message: "Lowlevel Management Commands:",
 			Commands: []*cobra.Command{
+				imagesCmd(),
 				stagesCmd(),
 			},
 		},
@@ -78,6 +87,17 @@ Find more information at https://flant.github.io/werf`),
 	}
 }
 
+func imagesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "images",
+	}
+	cmd.AddCommand(
+		images_cleanup.NewCmd(),
+	)
+
+	return cmd
+}
+
 func stagesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stages",
@@ -85,6 +105,7 @@ func stagesCmd() *cobra.Command {
 	}
 	cmd.AddCommand(
 		stages_build.NewCmd(),
+		stages_cleanup.NewCmd(),
 	)
 
 	return cmd
