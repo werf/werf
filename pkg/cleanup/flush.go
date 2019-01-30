@@ -9,7 +9,7 @@ import (
 )
 
 func RepoImagesFlush(withImages bool, options CommonRepoOptions) error {
-	err := lock.WithLock(options.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	err := lock.WithLock(options.ImagesRepo, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		if withImages {
 			if err := repoImagesFlush(options); err != nil {
 				return err

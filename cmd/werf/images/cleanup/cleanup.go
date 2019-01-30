@@ -1,23 +1,29 @@
-package sync
+package cleanup
 
 import (
 	"fmt"
+	"path"
 
-	"github.com/spf13/cobra"
-
+	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/project_tmp_dir"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
+
+	"github.com/spf13/cobra"
 )
 
 var CmdData struct {
 	Repo             string
 	RegistryUsername string
 	RegistryPassword string
+
+	WithoutKube bool
 
 	DryRun bool
 }
@@ -26,25 +32,18 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "sync",
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short: "Remove local stages cache for the images, that doesn't exist in the Docker registry",
-		Long: common.GetLongCommandDescription(`Remove local stages cache for the images, that doesn't exist in the Docker registry.
-
-Sync is a werf ability to automate periodical cleaning of build machine. Command should run after cleaning up Docker registry with the cleanup command.
-See more info about sync: https://flant.github.io/werf/reference/registry/cleaning.html#local-storage-synchronization
-
-Command should run from the project directory, where werf.yaml file reside.`),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableSyncLocalStagesDatePeriodPolicy, common.WerfHome),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runSync()
+				err := runCleanup()
 				if err != nil {
-					return fmt.Errorf("sync failed: %s", err)
+					return fmt.Errorf("images cleanup failed: %s", err)
 				}
 
 				return nil
@@ -55,17 +54,19 @@ Command should run from the project directory, where werf.yaml file reside.`),
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupImagesRepo(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to get images information")
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read permission)")
-	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read permission)")
+	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
+	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
+
+	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
 
 	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }
 
-func runSync() error {
+func runCleanup() error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -77,6 +78,8 @@ func runSync() error {
 	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
 		return err
 	}
+
+	kube.Init(kube.InitOptions{})
 
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
@@ -97,17 +100,17 @@ func runSync() error {
 
 	projectName := werfConfig.Meta.Project
 
-	repoName, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
+	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetSyncDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, repoName)
+	dockerAuthorizer, err := docker_authorizer.GetCleanupDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, imagesRepo)
 	if err != nil {
 		return err
 	}
 
-	if err := dockerAuthorizer.Login(repoName); err != nil {
+	if err := dockerAuthorizer.Login(imagesRepo); err != nil {
 		return err
 	}
 
@@ -115,23 +118,35 @@ func runSync() error {
 		return err
 	}
 
-	var imageNames []string
+	var imagesNames []string
 	for _, image := range werfConfig.Images {
-		imageNames = append(imageNames, image.Name)
-	}
-
-	commonProjectOptions := cleanup.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
+		imagesNames = append(imagesNames, image.Name)
 	}
 
 	commonRepoOptions := cleanup.CommonRepoOptions{
-		Repository:  repoName,
-		ImagesNames: imageNames,
+		ImagesRepo:  imagesRepo,
+		ImagesNames: imagesNames,
 		DryRun:      CmdData.DryRun,
 	}
 
-	if err := cleanup.ProjectImageStagesSync(commonProjectOptions, commonRepoOptions); err != nil {
+	var localRepo *git_repo.Local
+	gitDir := path.Join(projectDir, ".git")
+	if exist, err := util.DirExists(gitDir); err != nil {
+		return err
+	} else if exist {
+		localRepo = &git_repo.Local{
+			Path:   projectDir,
+			GitDir: gitDir,
+		}
+	}
+
+	imagesCleanupOptions := cleanup.ImagesCleanupOptions{
+		CommonRepoOptions: commonRepoOptions,
+		LocalGit:          localRepo,
+		WithoutKube:       CmdData.WithoutKube,
+	}
+
+	if err := cleanup.ImagesCleanup(imagesCleanupOptions); err != nil {
 		return err
 	}
 

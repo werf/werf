@@ -28,9 +28,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "flush",
+		Use:                   "flush",
 		DisableFlagsInUseLine: true,
-		Short: "Delete project images in local Docker storage and specified Docker registry",
+		Short:                 "Delete project images in local Docker storage and specified Docker registry",
 		Long: common.GetLongCommandDescription(`Delete project images in local Docker storage and specified Docker registry.
 
 This command is useful to fully delete all data related to the project from:
@@ -95,9 +95,9 @@ func runFlush() error {
 
 	projectName := werfConfig.Meta.Project
 
-	repoName := common.GetOptionalRepoName(projectName, CmdData.Repo)
+	imagesRepo := common.GetOptionalImagesRepo(projectName, CmdData.Repo)
 
-	if repoName != "" {
+	if imagesRepo != "" {
 		if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ func runFlush() error {
 			return err
 		}
 
-		if err := dockerAuthorizer.Login(repoName); err != nil {
+		if err := dockerAuthorizer.Login(imagesRepo); err != nil {
 			return err
 		}
 
@@ -123,7 +123,7 @@ func runFlush() error {
 		}
 
 		commonRepoOptions := cleanup.CommonRepoOptions{
-			Repository:  repoName,
+			ImagesRepo:  imagesRepo,
 			ImagesNames: imageNames,
 			DryRun:      CmdData.DryRun,
 		}

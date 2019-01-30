@@ -101,7 +101,7 @@ func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesRepo = new(string)
+	cmdData.ImagesRepo = new(string)
 	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", "", "Docker Repo to store images")
 }
 
@@ -114,11 +114,26 @@ func GetStagesRepo(cmdData *CmdData) (string, error) {
 	return *cmdData.StagesRepo, nil
 }
 
-func GetImagesRepo(cmdData *CmdData) (string, error) {
+func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
 	if *cmdData.ImagesRepo == "" {
 		return "", fmt.Errorf("--images REPO param required")
 	}
-	return *cmdData.StagesRepo, nil
+	return GetOptionalImagesRepo(projectName, *cmdData.ImagesRepo), nil
+}
+
+func GetOptionalImagesRepo(projectName, repoOption string) string {
+	if repoOption == ":minikube" {
+		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName)
+	} else if repoOption != "" {
+		return repoOption
+	}
+
+	ciRegistryImage := os.Getenv("CI_REGISTRY_IMAGE")
+	if ciRegistryImage != "" {
+		return ciRegistryImage
+	}
+
+	return ""
 }
 
 func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
@@ -155,29 +170,6 @@ func GetProjectBuildDir(projectName string) (string, error) {
 	}
 
 	return projectBuildDir, nil
-}
-
-func GetRequiredRepoName(projectName, repoOption string) (string, error) {
-	res := GetOptionalRepoName(projectName, repoOption)
-	if res == "" {
-		return "", fmt.Errorf("CI_REGISTRY_IMAGE variable or --repo option required!")
-	}
-	return res, nil
-}
-
-func GetOptionalRepoName(projectName, repoOption string) string {
-	if repoOption == ":minikube" {
-		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName)
-	} else if repoOption != "" {
-		return repoOption
-	}
-
-	ciRegistryImage := os.Getenv("CI_REGISTRY_IMAGE")
-	if ciRegistryImage != "" {
-		return ciRegistryImage
-	}
-
-	return ""
 }
 
 func GetNamespace(namespaceOption string) string {

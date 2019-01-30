@@ -2,28 +2,22 @@ package cleanup
 
 import (
 	"fmt"
-	"path"
 
-	"github.com/flant/kubedog/pkg/kube"
+	"github.com/spf13/cobra"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/project_tmp_dir"
-	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
-
-	"github.com/spf13/cobra"
 )
 
 var CmdData struct {
 	Repo             string
 	RegistryUsername string
 	RegistryPassword string
-
-	WithoutKube bool
 
 	DryRun bool
 }
@@ -34,25 +28,16 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short:                 "Delete unused and old images from Docker registry by policies + stages",
-		Long: common.GetLongCommandDescription(`Cleanup is a werf ability to automate periodical cleaning of a docker registry.
-
-Command deletes unused and old images from Docker registry by policies.
-See more info about cleanup: https://flant.github.io/werf/reference/registry/cleaning.html#cleanup
-
-Command should run from the project directory, where werf.yaml file reside.
-
-TODO: + stages`),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableSyncLocalStagesDatePeriodPolicy, common.WerfHome),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runCleanup()
+				err := runSync()
 				if err != nil {
-					return fmt.Errorf("cleanup failed: %s", err)
+					return fmt.Errorf("stages cleanup failed: %s", err)
 				}
 
 				return nil
@@ -66,17 +51,15 @@ TODO: + stages`),
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
-	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
-
-	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
+	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read permission)")
+	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read permission)")
 
 	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }
 
-func runCleanup() error {
+func runSync() error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -88,8 +71,6 @@ func runCleanup() error {
 	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
 		return err
 	}
-
-	kube.Init(kube.InitOptions{})
 
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
@@ -120,7 +101,7 @@ func runCleanup() error {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetCleanupDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, imagesRepo)
+	dockerAuthorizer, err := docker_authorizer.GetSyncDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, imagesRepo)
 	if err != nil {
 		return err
 	}
@@ -133,27 +114,9 @@ func runCleanup() error {
 		return err
 	}
 
-	var imagesNames []string
+	var imageNames []string
 	for _, image := range werfConfig.Images {
-		imagesNames = append(imagesNames, image.Name)
-	}
-
-	commonRepoOptions := cleanup.CommonRepoOptions{
-		ImagesRepo:  imagesRepo,
-		StagesRepo:  stagesRepo,
-		ImagesNames: imagesNames,
-		DryRun:      CmdData.DryRun,
-	}
-
-	var localGitRepo *git_repo.Local
-	gitDir := path.Join(projectDir, ".git")
-	if exist, err := util.DirExists(gitDir); err != nil {
-		return err
-	} else if exist {
-		localGitRepo = &git_repo.Local{
-			Path:   projectDir,
-			GitDir: gitDir,
-		}
+		imageNames = append(imageNames, image.Name)
 	}
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
@@ -161,10 +124,11 @@ func runCleanup() error {
 		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
 	}
 
-	imagesCleanupOptions := cleanup.ImagesCleanupOptions{
-		CommonRepoOptions: commonRepoOptions,
-		LocalGit:          localGitRepo,
-		WithoutKube:       CmdData.WithoutKube,
+	commonRepoOptions := cleanup.CommonRepoOptions{
+		ImagesRepo:  imagesRepo,
+		StagesRepo:  stagesRepo,
+		ImagesNames: imageNames,
+		DryRun:      CmdData.DryRun,
 	}
 
 	stagesCleanupOptions := cleanup.StagesCleanupOptions{
@@ -172,12 +136,7 @@ func runCleanup() error {
 		CommonProjectOptions: commonProjectOptions,
 	}
 
-	cleanupOptions := cleanup.CleanupOptions{
-		StagesCleanupOptions: stagesCleanupOptions,
-		ImagesCleanupOptions: imagesCleanupOptions,
-	}
-
-	if err := cleanup.Cleanup(cleanupOptions); err != nil {
+	if err := cleanup.StagesCleanup(stagesCleanupOptions); err != nil {
 		return err
 	}
 
