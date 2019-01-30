@@ -7,29 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/flant/werf/cmd/werf/bp"
-	"github.com/flant/werf/cmd/werf/build"
-	"github.com/flant/werf/cmd/werf/cleanup"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/templates"
 	"github.com/flant/werf/cmd/werf/completion"
-	"github.com/flant/werf/cmd/werf/deploy"
-	"github.com/flant/werf/cmd/werf/dismiss"
 	"github.com/flant/werf/cmd/werf/docs"
-	"github.com/flant/werf/cmd/werf/flush"
-	"github.com/flant/werf/cmd/werf/gc"
-	"github.com/flant/werf/cmd/werf/lint"
-	"github.com/flant/werf/cmd/werf/push"
-	"github.com/flant/werf/cmd/werf/render"
-	"github.com/flant/werf/cmd/werf/reset"
-	"github.com/flant/werf/cmd/werf/sync"
-	"github.com/flant/werf/cmd/werf/tag"
 	"github.com/flant/werf/cmd/werf/version"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/process_exterminator"
-
-	get_namespace "github.com/flant/werf/cmd/werf/get-namespace"
-	get_release "github.com/flant/werf/cmd/werf/get-release"
 
 	secret_edit "github.com/flant/werf/cmd/werf/secret/edit"
 	secret_extract "github.com/flant/werf/cmd/werf/secret/extract"
@@ -66,49 +50,8 @@ Find more information at https://flant.github.io/werf`),
 
 	groups := templates.CommandGroups{
 		{
-			Message: "Build Commands:",
-			Commands: []*cobra.Command{
-				build.NewCmd(),
-				push.NewCmd(),
-				tag.NewCmd(),
-			},
-		},
-		{
-			Message: "Deploy Commands:",
-			Commands: []*cobra.Command{
-				deploy.NewCmd(),
-				dismiss.NewCmd(),
-				lint.NewCmd(),
-				render.NewCmd(),
-				secretCmd(),
-			},
-		},
-		{
-			Message: "Combined commands:",
-			Commands: []*cobra.Command{
-				bp.NewCmd(),
-			},
-		},
-		{
-			Message: "Manual images cleaning:",
-			Commands: []*cobra.Command{
-				flush.NewCmd(),
-				reset.NewCmd(),
-			},
-		},
-		{
-			Message: "Project images cleaning automation:",
-			Commands: []*cobra.Command{
-				cleanup.NewCmd(),
-				sync.NewCmd(),
-			},
-		},
-		{
-			Message: "Get project meta info:",
-			Commands: []*cobra.Command{
-				get_release.NewCmd(),
-				get_namespace.NewCmd(),
-			},
+			Message:  "Main Commands:",
+			Commands: []*cobra.Command{},
 		},
 	}
 	groups.Add(rootCmd)
@@ -116,10 +59,8 @@ Find more information at https://flant.github.io/werf`),
 	templates.ActsAsRootCommand(rootCmd, groups...)
 
 	rootCmd.AddCommand(
-		slugCmd(),
 		completion.NewCmd(rootCmd),
 		version.NewCmd(),
-		gc.NewCmd(),
 		docs.NewCmd(),
 	)
 
