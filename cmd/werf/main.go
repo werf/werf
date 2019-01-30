@@ -22,6 +22,7 @@ import (
 	slug_tag "github.com/flant/werf/cmd/werf/slug/tag"
 
 	images_cleanup "github.com/flant/werf/cmd/werf/images/cleanup"
+	images_publish "github.com/flant/werf/cmd/werf/images/publish"
 
 	stages_build "github.com/flant/werf/cmd/werf/stages/build"
 	stages_cleanup "github.com/flant/werf/cmd/werf/stages/cleanup"
@@ -66,8 +67,8 @@ Find more information at https://flant.github.io/werf`),
 		{
 			Message: "Lowlevel Management Commands:",
 			Commands: []*cobra.Command{
-				imagesCmd(),
 				stagesCmd(),
+				imagesCmd(),
 			},
 		},
 	}
@@ -89,9 +90,11 @@ Find more information at https://flant.github.io/werf`),
 
 func imagesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "images",
+		Use:   "images",
+		Short: "Commands to work with images",
 	}
 	cmd.AddCommand(
+		images_publish.NewCmd(),
 		images_cleanup.NewCmd(),
 	)
 
