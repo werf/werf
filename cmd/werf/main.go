@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/flant/werf/cmd/werf/build"
 	"github.com/flant/werf/cmd/werf/cleanup"
 
 	secret_edit "github.com/flant/werf/cmd/werf/secret/edit"
@@ -61,6 +62,7 @@ Find more information at https://flant.github.io/werf`),
 		{
 			Message: "Main Commands:",
 			Commands: []*cobra.Command{
+				build.NewCmd(),
 				cleanup.NewCmd(),
 			},
 		},
