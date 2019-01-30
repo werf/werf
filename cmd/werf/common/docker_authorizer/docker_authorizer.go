@@ -104,10 +104,10 @@ func GetBPDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption
 	return getDockerAuthorizer(projectTmpDir, nil, pullCredentials, pushCredentials)
 }
 
-func GetFlushDockerAuthorizer(projectTmpDir, flushUsernameOption, flushPasswordOption string) (*DockerAuthorizer, error) {
-	credentials, err := getFlushCredentials(flushUsernameOption, flushPasswordOption)
+func GetPurgeDockerAuthorizer(projectTmpDir, purgeUsernameOption, purgePasswordOption string) (*DockerAuthorizer, error) {
+	credentials, err := getPurgeCredentials(purgeUsernameOption, purgePasswordOption)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get docker credentials for flush: %s", err)
+		return nil, fmt.Errorf("cannot get docker credentials for purge: %s", err)
 	}
 
 	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
@@ -189,7 +189,7 @@ func getPushCredentials(usernameOption, passwordOption, repo string) (*DockerCre
 	return getDefaultCredentials(usernameOption, passwordOption, repo)
 }
 
-func getFlushCredentials(usernameOption, passwordOption string) (*DockerCredentials, error) {
+func getPurgeCredentials(usernameOption, passwordOption string) (*DockerCredentials, error) {
 	return getSpecifiedCredentials(usernameOption, passwordOption), nil
 }
 

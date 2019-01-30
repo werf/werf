@@ -11,6 +11,7 @@ import (
 
 	"github.com/flant/werf/cmd/werf/build"
 	"github.com/flant/werf/cmd/werf/cleanup"
+	"github.com/flant/werf/cmd/werf/purge"
 
 	secret_edit "github.com/flant/werf/cmd/werf/secret/edit"
 	secret_extract "github.com/flant/werf/cmd/werf/secret/extract"
@@ -24,9 +25,11 @@ import (
 
 	images_cleanup "github.com/flant/werf/cmd/werf/images/cleanup"
 	images_publish "github.com/flant/werf/cmd/werf/images/publish"
+	images_purge "github.com/flant/werf/cmd/werf/images/purge"
 
 	stages_build "github.com/flant/werf/cmd/werf/stages/build"
 	stages_cleanup "github.com/flant/werf/cmd/werf/stages/cleanup"
+	stages_purge "github.com/flant/werf/cmd/werf/stages/purge"
 
 	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/docs"
@@ -64,6 +67,7 @@ Find more information at https://flant.github.io/werf`),
 			Commands: []*cobra.Command{
 				build.NewCmd(),
 				cleanup.NewCmd(),
+				purge.NewCmd(),
 			},
 		},
 		{
@@ -71,6 +75,7 @@ Find more information at https://flant.github.io/werf`),
 			Commands: []*cobra.Command{
 				stagesCmd(),
 				imagesCmd(),
+				helmCmd(),
 			},
 		},
 	}
@@ -79,6 +84,7 @@ Find more information at https://flant.github.io/werf`),
 	templates.ActsAsRootCommand(rootCmd, groups...)
 
 	rootCmd.AddCommand(
+		slugCmd(),
 		completion.NewCmd(rootCmd),
 		version.NewCmd(),
 		docs.NewCmd(),
@@ -98,6 +104,7 @@ func imagesCmd() *cobra.Command {
 	cmd.AddCommand(
 		images_publish.NewCmd(),
 		images_cleanup.NewCmd(),
+		images_purge.NewCmd(),
 	)
 
 	return cmd
@@ -111,6 +118,18 @@ func stagesCmd() *cobra.Command {
 	cmd.AddCommand(
 		stages_build.NewCmd(),
 		stages_cleanup.NewCmd(),
+		stages_purge.NewCmd(),
+	)
+
+	return cmd
+}
+
+func helmCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use: "helm",
+	}
+	cmd.AddCommand(
+		secretCmd(),
 	)
 
 	return cmd
