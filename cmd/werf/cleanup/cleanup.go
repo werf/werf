@@ -33,15 +33,8 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short:                 "Delete unused and old images from Docker registry by policies + stages",
-		Long: common.GetLongCommandDescription(`Cleanup is a werf ability to automate periodical cleaning of a docker registry.
-
-Command deletes unused and old images from Docker registry by policies.
-See more info about cleanup: https://flant.github.io/werf/reference/registry/cleaning.html#cleanup
-
-Command should run from the project directory, where werf.yaml file reside.
-
-TODO: + stages`),
+		Short:                 "Cleanup project images registry and stages storage",
+		Long:                  common.GetLongCommandDescription("Shortcut for `werf images cleanup && werf stages cleanup`"),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome),
 		},

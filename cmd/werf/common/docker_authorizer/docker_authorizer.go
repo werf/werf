@@ -122,8 +122,8 @@ func GetSyncDockerAuthorizer(projectTmpDir, syncUsernameOption, syncPasswordOpti
 	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
 }
 
-func GetCleanupDockerAuthorizer(projectTmpDir, syncUsernameOption, syncPasswordOption, repo string) (*DockerAuthorizer, error) {
-	credentials, err := getCleanupCredentials(syncUsernameOption, syncPasswordOption, repo)
+func GetCleanupDockerAuthorizer(projectTmpDir, cleanupUsernameOption, cleanupPasswordOption, repo string) (*DockerAuthorizer, error) {
+	credentials, err := getCleanupCredentials(cleanupUsernameOption, cleanupPasswordOption, repo)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get docker credentials for cleanup: %s", err)
 	}
