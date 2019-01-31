@@ -98,7 +98,10 @@ Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.0-alpha.11/werf-windo
 ```
 go get github.com/flant/werf/cmd/werf
 ```
+## Docs and support
 
-## Getting started
+[Official documentation](https://flant.github.io/werf/)
+
+### Getting started
 
 [Make your first werf application](https://flant.github.io/werf/how_to/getting_started.html)!
