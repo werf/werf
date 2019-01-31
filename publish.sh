@@ -7,7 +7,7 @@ BINTRAY_REPO=ruby2go      # bintray repository
 BINTRAY_PACKAGE=ruby2go   # bintray package in repository
 
 GITHUB_OWNER=flant     # github user/org
-GITHUB_REPO=dapp       # github repository
+GITHUB_REPO=werf       # github repository
 
 RUBY2GO_BINARIES_NAMES=$(ls cmd)
 UPLOAD_FROM_DIR=$GOPATH/bin
