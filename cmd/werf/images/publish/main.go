@@ -40,7 +40,7 @@ New docker layer with service info about tagging scheme will be built for each i
 If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml.`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome, common.WerfTmp),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome, common.WerfTmp),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return common.LogRunningTime(func() error {
@@ -124,7 +124,7 @@ func runImagesPublish(cmdData *CmdDataType, commonCmdData *common.CmdData, image
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetImagePublishDockerAuthorizer(projectTmpDir, cmdData.PushUsername, cmdData.PushPassword, imagesRepo)
+	dockerAuthorizer, err := docker_authorizer.GetImagePublishDockerAuthorizer(projectTmpDir, cmdData.PushUsername, cmdData.PushPassword)
 	if err != nil {
 		return err
 	}

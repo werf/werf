@@ -40,9 +40,9 @@ func NewCmd() *cobra.Command {
 
 Werf will generate additional values files, templates Chart.yaml and other files specific to the Werf chart. The result is a valid Helm chart.`),
 		DisableFlagsInUseLine: true,
-		Args: cobra.MinimumNArgs(1),
+		Args:                  cobra.MinimumNArgs(1),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfHome, common.WerfTmp),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := runGenerateChart(args[0]); err != nil {
@@ -123,7 +123,7 @@ func runGenerateChart(targetPath string) error {
 		}
 		defer project_tmp_dir.Release(projectTmpDir)
 
-		dockerAuthorizer, err := docker_authorizer.GetDeployDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, imagesRepo)
+		dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
 		if err != nil {
 			return err
 		}

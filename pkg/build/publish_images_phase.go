@@ -13,7 +13,6 @@ import (
 func NewPublishImagesPhase(imagesRepo string, opts PublishImagesOptions) *PublishImagesPhase {
 	tagsByScheme := map[TagScheme][]string{
 		CustomScheme:    opts.Tags,
-		CIScheme:        opts.TagsByCI,
 		GitBranchScheme: opts.TagsByGitBranch,
 		GitTagScheme:    opts.TagsByGitTag,
 		GitCommitScheme: opts.TagsByGitCommit,
@@ -26,7 +25,6 @@ const (
 	GitTagScheme    TagScheme = "git_tag"
 	GitBranchScheme TagScheme = "git_branch"
 	GitCommitScheme TagScheme = "git_commit"
-	CIScheme        TagScheme = "ci"
 
 	RepoImageStageTagFormat = "image-stage-%s"
 )

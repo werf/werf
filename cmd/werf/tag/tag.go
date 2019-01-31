@@ -51,7 +51,7 @@ If one or more IMAGE_NAME parameters specified, werf will tag only these images 
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to tag images for. CI_REGISTRY_IMAGE will be used by default if available.")
+	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to tag images for. WERF_IMAGES_REGISTRY will be used by default if available.")
 
 	common.SetupTag(&CommonCmdData, cmd)
 
@@ -99,7 +99,7 @@ func runTag(imagesToProcess []string) error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	repo, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
+	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func runTag(imagesToProcess []string) error {
 	}
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, nil)
-	if err = c.Tag(repo, tagOpts); err != nil {
+	if err = c.Tag(imagesRepo, tagOpts); err != nil {
 		return err
 	}
 

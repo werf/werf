@@ -46,12 +46,12 @@ Deploy needs the same parameters as push to construct image names: repo and tags
 
 Helm chart directory .helm should exists and contain valid Helm chart.
 
-Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or CI_ENVIRONMENT_SLUG should be specified for command.
+Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or WERF_DEPLOY_ENVIRONMENT should be specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfHome, common.WerfTmp),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
@@ -151,7 +151,7 @@ func runDeploy() error {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetDeployDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, imagesRepo)
+	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
 	if err != nil {
 		return err
 	}

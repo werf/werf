@@ -16,7 +16,7 @@ import (
 )
 
 func Init() error {
-	if os.Getenv("GITLAB_CI") == "" {
+	if os.Getenv("WERF_ENABLE_PROCESS_EXTERMINATOR") == "" {
 		return nil
 	}
 
@@ -75,7 +75,7 @@ func writePidToFile(pid int, path string) error {
 
 func getParents() ([]int, error) {
 	pid := os.Getpid()
-	parents := []int{}
+	var parents []int
 
 	for {
 		ppid, err := getProcessParentPid(pid)

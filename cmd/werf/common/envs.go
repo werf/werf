@@ -16,7 +16,6 @@ const (
 	WerfTmp                                  Env = "WERF_TMP"
 	WerfAnsibleArgs                          Env = "WERF_ANSIBLE_ARGS"
 	WerfDockerConfig                         Env = "WERF_DOCKER_CONFIG"
-	WerfIgnoreCIDockerAutologin              Env = "WERF_IGNORE_CI_DOCKER_AUTOLOGIN"
 	WerfInsecureRegistry                     Env = "WERF_INSECURE_REGISTRY"
 	WerfSecretKey                            Env = "WERF_SECRET_KEY"
 	WerfCleanupRegistryPassword              Env = "WERF_CLEANUP_REGISTRY_PASSWORD"
@@ -32,7 +31,6 @@ var envDescription = map[Env]string{
 	WerfTmp:                                  "",
 	WerfAnsibleArgs:                          "",
 	WerfDockerConfig:                         "",
-	WerfIgnoreCIDockerAutologin:              "",
 	WerfInsecureRegistry:                     "",
 	WerfSecretKey:                            "",
 	WerfCleanupRegistryPassword:              "",

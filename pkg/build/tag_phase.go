@@ -12,7 +12,6 @@ import (
 func NewTagPhase(repo string, opts TagOptions) *TagPhase {
 	tagsByScheme := map[TagScheme][]string{
 		CustomScheme:    opts.Tags,
-		CIScheme:        opts.TagsByCI,
 		GitBranchScheme: opts.TagsByGitBranch,
 		GitTagScheme:    opts.TagsByGitTag,
 		GitCommitScheme: opts.TagsByGitCommit,

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 )
@@ -43,6 +43,10 @@ func (repo *Local) HeadCommit() (string, error) {
 
 func (repo *Local) HeadBranchName() (string, error) {
 	return repo.getHeadBranchName(repo.Path)
+}
+
+func (repo *Local) HeadTagName() (string, error) {
+	return repo.getHeadTagName(repo.Path)
 }
 
 func (repo *Local) CreatePatch(opts PatchOptions) (Patch, error) {

@@ -42,10 +42,7 @@ func Init(opts Options) {
 		Err = opts.Err
 	}
 
-	isGitLabCI := os.Getenv("GITLAB_CI") != ""
-	forceColor := os.Getenv("WERF_FORCE_COLOR") != ""
-
-	if isGitLabCI || forceColor {
+	if os.Getenv("WERF_LOG_FORCE_COLOR") != "" {
 		color.NoColor = false
 	}
 }

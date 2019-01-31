@@ -134,7 +134,7 @@ Build:
   script:
     - source <(multiwerf use 1.0)
     ## Always use "bp" option instead separate "build" and "push"
-    ## It is important to use --tag-ci, --tag-branch or --tag-commit options here (in bp or push commands) otherwise cleanup won't work.
+    ## It is important to use --tag-ci, --tag-git-branch or --tag-git-commit options here (in bp or push commands) otherwise cleanup won't work.
     - werf bp --tag-ci
   tags:
     ## You specify there the tag of the runner to use. We need to use there build runner
@@ -183,7 +183,7 @@ Add the following lines to `.gitlab-ci.yml` file:
 ```
 
 Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
-* it is important to use `--tag-ci`, `--tag-branch` or `--tag-commit` options here (in `werf deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/chart_configuration.html#features-of-chart-template-creation));
+* it is important to use `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options here (in `werf deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/chart_configuration.html#features-of-chart-template-creation));
 * we've passed the `global.env` parameter, which will contain the name of the environment. You can access it in `helm` templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
 * we've passed the `global.ci_url` parameter, which will contain an URL of the environment. You can use it in your `helm` templates e.g. to configure ingress.
 
@@ -340,7 +340,7 @@ Build:
   script:
     - source <(multiwerf use 1.0)
     ## Always use "bp" option instead separate "build" and "push"
-    ## It is important to use --tag-ci, --tag-branch or --tag-commit options otherwise cleanup won't work.
+    ## It is important to use --tag-ci, --tag-git-branch or --tag-git-commit options otherwise cleanup won't work.
     - werf bp --tag-ci
   tags:
     ## You specify there the tag of the runner to use. We need to use there build runner

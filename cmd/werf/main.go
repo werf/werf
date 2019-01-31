@@ -23,6 +23,7 @@ import (
 	helm_secret_key_generate "github.com/flant/werf/cmd/werf/helm/secret/key_generate"
 	helm_secret_regenerate "github.com/flant/werf/cmd/werf/helm/secret/regenerate"
 
+	"github.com/flant/werf/cmd/werf/tools/ci_env"
 	"github.com/flant/werf/cmd/werf/tools/slugify"
 
 	images_cleanup "github.com/flant/werf/cmd/werf/images/cleanup"
@@ -87,6 +88,7 @@ Find more information at https://flant.github.io/werf`),
 			Message: "Tools Commands:",
 			Commands: []*cobra.Command{
 				slugify.NewCmd(),
+				ci_env.NewCmd(),
 			},
 		},
 		{
