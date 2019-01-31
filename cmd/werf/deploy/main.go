@@ -2,7 +2,7 @@ package deploy
 
 import (
 	"fmt"
-	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -10,7 +10,9 @@ import (
 	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/project_tmp_dir"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/true_git"
@@ -26,10 +28,8 @@ var CmdData struct {
 	Set          []string
 	SetString    []string
 
-	Repo             string
 	RegistryUsername string
 	RegistryPassword string
-	WithoutRegistry  bool
 }
 
 var CommonCmdData common.CmdData
@@ -42,7 +42,7 @@ func NewCmd() *cobra.Command {
 
 Command will create Helm Release and wait until all resources of the release are become ready.
 
-Deploy needs the same parameters as push to construct image names: repo and tags. Docker images names are constructed from paramters as REPO/IMAGE_NAME:TAG. Deploy will fetch built image ids from Docker registry. So images should be built and pushed into the Docker registry prior running deploy.
+Deploy needs the same parameters as push to construct image names: repo and tags. Docker images names are constructed from paramters as IMAGES_REPO/IMAGE_NAME:TAG. Deploy will fetch built image ids from Docker registry. So images should be published prior running deploy.
 
 Helm chart directory .helm should exists and contain valid Helm chart.
 
@@ -79,16 +79,17 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
 	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
 
-	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to get images ids from. CI_REGISTRY_IMAGE will be used by default if available.")
 	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username")
 	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password")
-	cmd.Flags().BoolVarP(&CmdData.WithoutRegistry, "without-registry", "", false, "Do not get images info from registry")
 
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupRelease(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+
+	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesRepo(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -114,6 +115,15 @@ func runDeploy() error {
 		return err
 	}
 
+	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
+	}
+
+	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
+	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext}); err != nil {
+		return fmt.Errorf("cannot initialize kube: %s", err)
+	}
+
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
@@ -131,42 +141,28 @@ func runDeploy() error {
 		return fmt.Errorf("cannot parse werf config: %s", err)
 	}
 
-	projectName := werfConfig.Meta.Project
-
-	var repo string
-	if !CmdData.WithoutRegistry {
-		var err error
-		repo, err = common.GetRequiredRepoName(projectName, CmdData.Repo)
-		if err != nil {
-			return err
-		}
-
-		dockerAuthorizer, err := docker_authorizer.GetDeployDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, repo)
-		if err != nil {
-			return err
-		}
-
-		if err := dockerAuthorizer.Login(repo); err != nil {
-			return fmt.Errorf("docker login failed: %s", err)
-		}
+	_, err = common.GetStagesRepo(&CommonCmdData)
+	if err != nil {
+		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
+	imagesRepo, err := common.GetImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	dockerAuthorizer, err := docker_authorizer.GetDeployDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, imagesRepo)
+	if err != nil {
+		return err
+	}
+
+	if err := dockerAuthorizer.Login(imagesRepo); err != nil {
+		return fmt.Errorf("docker login failed: %s", err)
 	}
 
 	tag, err := common.GetDeployTag(&CommonCmdData, projectDir)
 	if err != nil {
 		return err
-	}
-
-	kubeContext := os.Getenv("KUBECONTEXT")
-	if kubeContext == "" {
-		kubeContext = *CommonCmdData.KubeContext
-	}
-	err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
-	if err != nil {
-		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
 	release, err := common.GetHelmRelease(*CommonCmdData.Release, *CommonCmdData.Environment, werfConfig)
@@ -179,13 +175,30 @@ func runDeploy() error {
 		return err
 	}
 
-	return deploy.RunDeploy(projectDir, repo, tag, release, namespace, werfConfig, deploy.DeployOptions{
-		Values:          CmdData.Values,
-		SecretValues:    CmdData.SecretValues,
-		Set:             CmdData.Set,
-		SetString:       CmdData.SetString,
-		Timeout:         time.Duration(CmdData.Timeout) * time.Second,
-		WithoutRegistry: CmdData.WithoutRegistry,
-		KubeContext:     kubeContext,
+	logger.LogInfoF("Using Helm release name: %s\n", release)
+	logger.LogInfoF("Using Kubernetes namespace: %s\n", namespace)
+
+	localGit := &git_repo.Local{Path: projectDir, GitDir: filepath.Join(projectDir, ".git")}
+
+	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
+
+	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, localGit, images, deploy.ServiceValuesOptions{})
+	if err != nil {
+		return fmt.Errorf("error creating service values: %s", err)
+	}
+
+	m, err := deploy.GetSafeSecretManager(projectDir, CmdData.SecretValues)
+	if err != nil {
+		return fmt.Errorf("cannot get project secret: %s", err)
+	}
+
+	werfChart, err := deploy.PrepareWerfChart(deploy.GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, CmdData.Values, CmdData.SecretValues, CmdData.Set, CmdData.SetString, serviceValues)
+	if err != nil {
+		return err
+	}
+
+	return werfChart.Deploy(release, namespace, deploy.HelmChartOptions{
+		CommonHelmOptions: deploy.CommonHelmOptions{KubeContext: kubeContext},
+		Timeout:           time.Duration(CmdData.Timeout) * time.Second,
 	})
 }
