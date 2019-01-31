@@ -74,6 +74,10 @@ func runGetServiceValues() error {
 		return err
 	}
 
+	if err := deploy.Init(); err != nil {
+		return err
+	}
+
 	if err := true_git.Init(); err != nil {
 		return err
 	}
@@ -118,6 +122,10 @@ func runGetServiceValues() error {
 		if err := dockerAuthorizer.Login(imagesRepo); err != nil {
 			return fmt.Errorf("docker login failed: %s", err)
 		}
+	}
+
+	if imagesRepo == "" {
+		imagesRepo = "IMAGES_REPO"
 	}
 
 	environment := *CommonCmdData.Environment

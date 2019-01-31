@@ -45,7 +45,7 @@ Werf will generate additional values files, templates Chart.yaml and other files
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfHome, common.WerfTmp),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := runGetServiceValues(args[0]); err != nil {
+			if err := runGenerateChart(args[0]); err != nil {
 				return fmt.Errorf("generate-chart failed: %s", err)
 			}
 
@@ -74,12 +74,16 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	return cmd
 }
 
-func runGetServiceValues(targetPath string) error {
+func runGenerateChart(targetPath string) error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
 	if err := lock.Init(); err != nil {
+		return err
+	}
+
+	if err := deploy.Init(); err != nil {
 		return err
 	}
 
@@ -127,6 +131,10 @@ func runGetServiceValues(targetPath string) error {
 		if err := dockerAuthorizer.Login(imagesRepo); err != nil {
 			return fmt.Errorf("docker login failed: %s", err)
 		}
+	}
+
+	if imagesRepo == "" {
+		imagesRepo = "IMAGES_REPO"
 	}
 
 	environment := *CommonCmdData.Environment
