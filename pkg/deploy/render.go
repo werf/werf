@@ -19,7 +19,7 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 		fmt.Printf("Render options: %#v\n", opts)
 	}
 
-	m, err := getSafeSecretManager(projectDir, opts.SecretValues)
+	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
 	if err != nil {
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
@@ -32,7 +32,7 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 
 	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 
-	werfChart, err := getWerfChart(werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
+	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {
 		return err
 	}
