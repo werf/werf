@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/flant/werf/pkg/deploy/secret"
+	"github.com/flant/werf/pkg/logger"
 )
 
-func getSafeSecretManager(projectDir string, secretValues []string) (secret.Manager, error) {
+func GetSafeSecretManager(projectDir string, secretValues []string) (secret.Manager, error) {
 	isSecretsExists := false
 	if _, err := os.Stat(filepath.Join(projectDir, ProjectSecretDir)); !os.IsNotExist(err) {
 		isSecretsExists = true
@@ -24,7 +25,7 @@ func getSafeSecretManager(projectDir string, secretValues []string) (secret.Mana
 		key, err := secret.GetSecretKey(projectDir)
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "encryption key not found in") {
-				fmt.Fprintln(os.Stderr, err)
+				logger.LogWarningF("Unable to get secrets key: %s\n", err)
 			} else {
 				return nil, err
 			}
@@ -36,8 +37,8 @@ func getSafeSecretManager(projectDir string, secretValues []string) (secret.Mana
 	return secret.NewSafeManager()
 }
 
-func getWerfChart(projectName, projectDir string, m secret.Manager, values, secretValues, set, setString []string, serviceValues map[string]interface{}) (*WerfChart, error) {
-	werfChart, err := GenerateWerfChart(projectName, projectDir, m)
+func PrepareWerfChart(targetDir string, projectName, projectDir string, m secret.Manager, values, secretValues, set, setString []string, serviceValues map[string]interface{}) (*WerfChart, error) {
+	werfChart, err := CopyNewWerfChart(projectName, projectDir, targetDir, m)
 	if err != nil {
 		return nil, err
 	}

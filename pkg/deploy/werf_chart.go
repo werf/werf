@@ -27,13 +27,50 @@ const (
 	WerfChartMoreValuesDir    = "more-values"
 )
 
-type WerfChart struct {
-	ChartDir  string
-	Values    []string
-	Set       []string
-	SetString []string
+func LoadWerfChart(werfChartDir string) (*WerfChart, error) {
+	path := filepath.Join(werfChartDir, "werf-chart.yaml")
 
-	moreValuesCounter uint
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return &WerfChart{ChartDir: werfChartDir}, nil
+	}
+
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read file %s: %s", path, err)
+	}
+
+	werfChart := &WerfChart{}
+	err = yaml.Unmarshal(data, werfChart)
+	if err != nil {
+		return nil, fmt.Errorf("bad yaml %s: %s", path, err)
+	}
+
+	return werfChart, nil
+}
+
+type WerfChart struct {
+	ChartDir  string   `yaml:"ChartDir"`
+	Values    []string `yaml:"Values"`
+	Set       []string `yaml:"Set"`
+	SetString []string `yaml:"SetString"`
+
+	moreValuesCounter uint `yaml:"moreValuesCounter"`
+}
+
+func (chart *WerfChart) Save() error {
+	path := filepath.Join(chart.ChartDir, "werf-chart.yaml")
+
+	data, err := yaml.Marshal(chart)
+	if err != nil {
+		return fmt.Errorf("cannot marshal werf chart %#v to yaml: %s", chart, err)
+	}
+
+	err = ioutil.WriteFile(path, data, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("error writing %s: %s", path, err)
+	}
+
+	return nil
 }
 
 func (chart *WerfChart) SetGlobalAnnotation(name, value string) error {
@@ -202,12 +239,11 @@ func (chart *WerfChart) Lint() error {
 	return nil
 }
 
-func GenerateWerfChart(projectName, projectDir string, m secret.Manager) (*WerfChart, error) {
-	tmpChartPath := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-chart-%s", uuid.NewV4().String()))
-	return PrepareWerfChart(projectName, projectDir, tmpChartPath, m)
+func GetTmpWerfChartPath(projectName string) string {
+	return filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-chart-%s", uuid.NewV4().String()), projectName)
 }
 
-func PrepareWerfChart(projectName, projectDir string, targetDir string, m secret.Manager) (*WerfChart, error) {
+func CopyNewWerfChart(projectName, projectDir string, targetDir string, m secret.Manager) (*WerfChart, error) {
 	werfChart := &WerfChart{ChartDir: targetDir}
 
 	projectHelmDir := filepath.Join(projectDir, ".helm")

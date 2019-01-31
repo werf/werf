@@ -19,7 +19,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 		fmt.Printf("Lint options: %#v\n", opts)
 	}
 
-	m, err := getSafeSecretManager(projectDir, opts.SecretValues)
+	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
 	if err != nil {
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
@@ -35,7 +35,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	werfChart, err := getWerfChart(werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
+	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {
 		return err
 	}

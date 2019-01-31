@@ -96,7 +96,7 @@ func RunDeploy(projectDir, imagesRepo, tag, release, namespace string, werfConfi
 	fmt.Printf("Using Helm release name: %s\n", release)
 	fmt.Printf("Using Kubernetes namespace: %s\n", namespace)
 
-	m, err := getSafeSecretManager(projectDir, opts.SecretValues)
+	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
 	if err != nil {
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
@@ -110,7 +110,7 @@ func RunDeploy(projectDir, imagesRepo, tag, release, namespace string, werfConfi
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	werfChart, err := getWerfChart(werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
+	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
 	if err != nil {
 		return err
 	}
