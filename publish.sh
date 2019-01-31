@@ -7,7 +7,7 @@ BINTRAY_REPO=dapp      # bintray repository
 BINTRAY_PACKAGE=dappfile-yml  # bintray package in repository
 
 GITHUB_OWNER=flant     # github user/org
-GITHUB_REPO=dapp       # github repository
+GITHUB_REPO=werf       # github repository
 
 UPLOAD_FROM_DIR=.
 
