@@ -16,16 +16,13 @@ func GetDeployTag(cmdData *CmdData, projectDir string) (string, error) {
 		optionsCount += len(*cmdData.Tag)
 	}
 
-	if *cmdData.TagBranch {
+	if *cmdData.TagGitBranch || os.Getenv("WERF_AUTOTAG_GIT_BRANCH") != "" {
 		optionsCount++
 	}
-	if *cmdData.TagCommit {
+	if *cmdData.TagGitTag || os.Getenv("WERF_AUTOTAG_GIT_TAG") != "" {
 		optionsCount++
 	}
-	if *cmdData.TagBuildID {
-		optionsCount++
-	}
-	if *cmdData.TagCI {
+	if *cmdData.TagGitCommit {
 		optionsCount++
 	}
 
@@ -38,9 +35,8 @@ func GetDeployTag(cmdData *CmdData, projectDir string) (string, error) {
 		return "", err
 	}
 
-	tags := []string{}
+	var tags []string
 	tags = append(tags, opts.Tags...)
-	tags = append(tags, opts.TagsByCI...)
 	tags = append(tags, opts.TagsByGitBranch...)
 	tags = append(tags, opts.TagsByGitCommit...)
 	tags = append(tags, opts.TagsByGitTag...)
@@ -63,7 +59,9 @@ func GetTagOptions(cmdData *CmdData, projectDir string) (build.TagOptions, error
 		emptyTags = false
 	}
 
-	if *cmdData.TagBranch {
+	if os.Getenv("WERF_AUTOTAG_GIT_BRANCH") != "" {
+		opts.TagsByGitBranch = append(opts.TagsByGitBranch, slug.DockerTag(os.Getenv("WERF_AUTOTAG_GIT_BRANCH")))
+	} else if *cmdData.TagGitBranch {
 		localGitRepo := &git_repo.Local{
 			Path:   projectDir,
 			GitDir: path.Join(projectDir, ".git"),
@@ -71,14 +69,31 @@ func GetTagOptions(cmdData *CmdData, projectDir string) (build.TagOptions, error
 
 		branch, err := localGitRepo.HeadBranchName()
 		if err != nil {
-			return build.TagOptions{}, fmt.Errorf("cannot detect local git branch for --tag-branch option: %s", err)
+			return build.TagOptions{}, fmt.Errorf("cannot detect local git branch for --tag-git-branch option: %s", err)
 		}
 
 		opts.TagsByGitBranch = append(opts.TagsByGitBranch, slug.DockerTag(branch))
 		emptyTags = false
 	}
 
-	if *cmdData.TagCommit {
+	if os.Getenv("WERF_AUTOTAG_GIT_TAG") != "" {
+		opts.TagsByGitTag = append(opts.TagsByGitTag, slug.DockerTag(os.Getenv("WERF_AUTOTAG_GIT_TAG")))
+	} else if *cmdData.TagGitTag {
+		localGitRepo := &git_repo.Local{
+			Path:   projectDir,
+			GitDir: path.Join(projectDir, ".git"),
+		}
+
+		branch, err := localGitRepo.HeadTagName()
+		if err != nil {
+			return build.TagOptions{}, fmt.Errorf("cannot detect local git tag for --tag-git-tag option: %s", err)
+		}
+
+		opts.TagsByGitBranch = append(opts.TagsByGitBranch, slug.DockerTag(branch))
+		emptyTags = false
+	}
+
+	if *cmdData.TagGitCommit {
 		localGitRepo := &git_repo.Local{
 			Path:   projectDir,
 			GitDir: path.Join(projectDir, ".git"),
@@ -86,61 +101,11 @@ func GetTagOptions(cmdData *CmdData, projectDir string) (build.TagOptions, error
 
 		commit, err := localGitRepo.HeadCommit()
 		if err != nil {
-			return build.TagOptions{}, fmt.Errorf("cannot detect local git HEAD commit for --tag-commit option: %s", err)
+			return build.TagOptions{}, fmt.Errorf("cannot detect local git HEAD commit for --tag-git-commit option: %s", err)
 		}
 
 		opts.TagsByGitCommit = append(opts.TagsByGitCommit, commit)
 		emptyTags = false
-	}
-
-	if *cmdData.TagBuildID {
-		var buildID string
-
-		if os.Getenv("GITLAB_CI") != "" {
-			buildID = os.Getenv("CI_BUILD_ID")
-			if buildID == "" {
-				buildID = os.Getenv("CI_JOB_ID")
-			}
-		} else if os.Getenv("TRAVIS") != "" {
-			buildID = os.Getenv("TRAVIS_BUILD_NUMBER")
-		} else {
-			return build.TagOptions{}, fmt.Errorf("GITLAB_CI or TRAVIS environment variables has not been found for --tag-build-id option")
-		}
-
-		if buildID != "" {
-			opts.TagsByCI = append(opts.TagsByCI, buildID)
-			emptyTags = false
-		}
-	}
-
-	if *cmdData.TagCI {
-		var gitBranch, gitTag string
-
-		if os.Getenv("GITLAB_CI") != "" {
-			gitTag = os.Getenv("CI_BUILD_TAG")
-			if gitTag != "" {
-				gitTag = os.Getenv("CI_COMMIT_TAG")
-			}
-
-			gitBranch = os.Getenv("CI_BUILD_REF_NAME")
-			if gitBranch != "" {
-				gitBranch = os.Getenv("CI_COMMIT_REF_NAME")
-			}
-		} else if os.Getenv("TRAVIS") != "" {
-			gitTag = os.Getenv("TRAVIS_TAG")
-			gitBranch = os.Getenv("TRAVIS_BRANCH")
-		} else {
-			return build.TagOptions{}, fmt.Errorf("GITLAB_CI or TRAVIS environment variables has not been found for --tag-ci option")
-		}
-
-		if gitTag != "" {
-			opts.TagsByGitTag = append(opts.TagsByGitTag, slug.DockerTag(gitTag))
-			emptyTags = false
-		}
-		if gitBranch != "" {
-			opts.TagsByGitBranch = append(opts.TagsByGitBranch, slug.DockerTag(gitBranch))
-			emptyTags = false
-		}
 	}
 
 	if emptyTags {

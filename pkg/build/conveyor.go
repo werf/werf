@@ -119,7 +119,6 @@ type TagOptions struct {
 	TagsByGitTag    []string
 	TagsByGitBranch []string
 	TagsByGitCommit []string
-	TagsByCI        []string
 }
 
 type PublishImagesOptions struct {

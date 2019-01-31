@@ -2,6 +2,7 @@ package cleanup
 
 import (
 	"fmt"
+	"os"
 	"path"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -36,7 +37,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Cleanup project images registry and stages storage",
 		Long:                  common.GetLongCommandDescription("Shortcut for werf images cleanup and werf stages cleanup commands"),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
@@ -112,7 +113,15 @@ func runCleanup() error {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetCleanupDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, imagesRepo)
+	cleanupImagesRegistryUsername := CmdData.RegistryUsername
+	cleanupImagesRegistryPassword := CmdData.RegistryPassword
+	if cleanupImagesRegistryUsername == "" && cleanupImagesRegistryPassword == "" {
+		if cleanupImagesRegistryPassword = os.Getenv("WERF_CLEANUP_REGISTRY_PASSWORD"); cleanupImagesRegistryPassword != "" {
+			cleanupImagesRegistryUsername = "werf-cleanup"
+		}
+	}
+
+	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, cleanupImagesRegistryUsername, cleanupImagesRegistryPassword)
 	if err != nil {
 		return err
 	}

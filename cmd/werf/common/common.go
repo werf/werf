@@ -22,11 +22,10 @@ type CmdData struct {
 	HomeDir *string
 	SSHKeys *[]string
 
-	Tag        *[]string
-	TagBranch  *bool
-	TagBuildID *bool
-	TagCI      *bool
-	TagCommit  *bool
+	Tag          *[]string
+	TagGitBranch *bool
+	TagGitTag    *bool
+	TagGitCommit *bool
 
 	Environment *string
 	Release     *string
@@ -63,21 +62,19 @@ func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Tag = new([]string)
-	cmdData.TagBranch = new(bool)
-	cmdData.TagBuildID = new(bool)
-	cmdData.TagCI = new(bool)
-	cmdData.TagCommit = new(bool)
+	cmdData.TagGitBranch = new(bool)
+	cmdData.TagGitTag = new(bool)
+	cmdData.TagGitCommit = new(bool)
 
 	cmd.Flags().StringArrayVarP(cmdData.Tag, "tag", "", []string{}, "Add tag (can be used one or more times)")
-	cmd.Flags().BoolVarP(cmdData.TagBranch, "tag-branch", "", false, "Tag by git branch")
-	cmd.Flags().BoolVarP(cmdData.TagBuildID, "tag-build-id", "", false, "Tag by CI build id")
-	cmd.Flags().BoolVarP(cmdData.TagCI, "tag-ci", "", false, "Tag by CI branch and tag")
-	cmd.Flags().BoolVarP(cmdData.TagCommit, "tag-commit", "", false, "Tag by git commit")
+	cmd.Flags().BoolVarP(cmdData.TagGitBranch, "tag-git-branch", "", false, "Tag by git branch")
+	cmd.Flags().BoolVarP(cmdData.TagGitBranch, "tag-git-tag", "", false, "Tag by git tag")
+	cmd.Flags().BoolVarP(cmdData.TagGitCommit, "tag-git-commit", "", false, "Tag by git commit")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Environment = new(string)
-	cmd.Flags().StringVarP(cmdData.Environment, "env", "", "", "Use specified environment (use CI_ENVIRONMENT_SLUG by default)")
+	cmd.Flags().StringVarP(cmdData.Environment, "env", "", "", "Use specified environment (use WERF_DEPLOY_ENVIRONMENT by default)")
 }
 
 func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
@@ -130,9 +127,9 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) string {
 		return repoOption
 	}
 
-	ciRegistryImage := os.Getenv("CI_REGISTRY_IMAGE")
-	if ciRegistryImage != "" {
-		return ciRegistryImage
+	werfImagesRegistry := os.Getenv("WERF_IMAGES_REGISTRY")
+	if werfImagesRegistry != "" {
+		return werfImagesRegistry
 	}
 
 	return ""
@@ -203,7 +200,7 @@ func LogVersion() {
 }
 
 func LogProjectDir(dir string) {
-	if os.Getenv("CI") != "" {
+	if os.Getenv("WERF_LOG_PWD") != "" {
 		logger.LogInfoF("Using project dir: %s\n", dir)
 	}
 }

@@ -77,15 +77,8 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 		ciInfo["is_tag"] = true
 		ciInfo["tag"] = opts.ForceTag
 	} else {
-		ciCommitTag := os.Getenv("CI_COMMIT_TAG")
-		if ciCommitTag == "" {
-			ciCommitTag = os.Getenv("CI_BUILD_TAG")
-		}
-		ciCommitRefName := os.Getenv("CI_COMMIT_REF_NAME")
-		if ciCommitRefName == "" {
-			ciCommitRefName = os.Getenv("CI_BUILD_REF_NAME")
-		}
-
+		ciCommitTag := os.Getenv("WERF_AUTOTAG_GIT_TAG")
+		ciCommitRefName := os.Getenv("WERF_AUTOTAG_GIT_BRANCH")
 		if ciCommitTag != "" {
 			ciInfo["tag"] = ciCommitTag
 			ciInfo["ref"] = ciCommitTag

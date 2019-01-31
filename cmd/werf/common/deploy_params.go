@@ -91,14 +91,14 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 	}
 
 	funcMap["environment"] = func() (string, error) {
-		environment := os.Getenv("CI_ENVIRONMENT_SLUG")
+		environment := os.Getenv("WERF_DEPLOY_ENVIRONMENT")
 
 		if environment == "" {
 			environment = environmentOption
 		}
 
 		if environment == "" {
-			return "", fmt.Errorf("--env option or CI_ENVIRONMENT_SLUG variable required to construct name by template '%s'", templateText)
+			return "", fmt.Errorf("--env option or WERF_DEPLOY_ENVIRONMENT variable required to construct name by template '%s'", templateText)
 		}
 
 		return environment, nil

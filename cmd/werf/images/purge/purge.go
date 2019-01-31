@@ -89,7 +89,7 @@ func runPurge() error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	dockerAuthorizer, err := docker_authorizer.GetPurgeDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
+	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
 	if err != nil {
 		return err
 	}
