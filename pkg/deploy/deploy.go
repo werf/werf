@@ -93,9 +93,6 @@ func RunDeploy(projectDir, imagesRepo, tag, release, namespace string, werfConfi
 		fmt.Printf("Deploy options: %#v\n", opts)
 	}
 
-	fmt.Printf("Using Helm release name: %s\n", release)
-	fmt.Printf("Using Kubernetes namespace: %s\n", namespace)
-
 	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
 	if err != nil {
 		return fmt.Errorf("cannot get project secret: %s", err)
