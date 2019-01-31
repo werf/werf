@@ -21,9 +21,7 @@ import (
 	helm_secret_key_generate "github.com/flant/werf/cmd/werf/helm/secret/key_generate"
 	helm_secret_regenerate "github.com/flant/werf/cmd/werf/helm/secret/regenerate"
 
-	slug_namespace "github.com/flant/werf/cmd/werf/slug/namespace"
-	slug_release "github.com/flant/werf/cmd/werf/slug/release"
-	slug_tag "github.com/flant/werf/cmd/werf/slug/tag"
+	"github.com/flant/werf/cmd/werf/tools/slugify"
 
 	images_cleanup "github.com/flant/werf/cmd/werf/images/cleanup"
 	images_publish "github.com/flant/werf/cmd/werf/images/publish"
@@ -80,6 +78,12 @@ Find more information at https://flant.github.io/werf`),
 			},
 		},
 		{
+			Message: "Tools Commands:",
+			Commands: []*cobra.Command{
+				slugify.NewCmd(),
+			},
+		},
+		{
 			Message: "Lowlevel Management Commands:",
 			Commands: []*cobra.Command{
 				stagesCmd(),
@@ -94,7 +98,6 @@ Find more information at https://flant.github.io/werf`),
 	templates.ActsAsRootCommand(rootCmd, groups...)
 
 	rootCmd.AddCommand(
-		slugCmd(),
 		completion.NewCmd(rootCmd),
 		version.NewCmd(),
 		docs.NewCmd(),
@@ -170,17 +173,6 @@ func secretCmd() *cobra.Command {
 		helm_secret_extract.NewCmd(),
 		helm_secret_edit.NewCmd(),
 		helm_secret_regenerate.NewCmd(),
-	)
-
-	return cmd
-}
-
-func slugCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "slug"}
-	cmd.AddCommand(
-		slug_tag.NewCmd(),
-		slug_namespace.NewCmd(),
-		slug_release.NewCmd(),
 	)
 
 	return cmd
