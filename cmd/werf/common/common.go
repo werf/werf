@@ -181,6 +181,14 @@ func GetNamespace(namespaceOption string) string {
 	return namespaceOption
 }
 
+func GetKubeContext(kubeContextOption string) string {
+	kubeContext := os.Getenv("KUBECONTEXT")
+	if kubeContext == "" {
+		return kubeContextOption
+	}
+	return kubeContext
+}
+
 func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()

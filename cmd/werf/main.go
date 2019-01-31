@@ -35,6 +35,7 @@ import (
 	host_cleanup "github.com/flant/werf/cmd/werf/host/cleanup"
 	host_purge "github.com/flant/werf/cmd/werf/host/purge"
 
+	helm_deploy_chart "github.com/flant/werf/cmd/werf/helm/deploy_chart"
 	helm_generate_chart "github.com/flant/werf/cmd/werf/helm/generate_chart"
 	helm_get_service_values "github.com/flant/werf/cmd/werf/helm/get_service_values"
 
@@ -148,6 +149,7 @@ func helmCmd() *cobra.Command {
 	cmd.AddCommand(
 		helm_get_service_values.NewCmd(),
 		helm_generate_chart.NewCmd(),
+		helm_deploy_chart.NewCmd(),
 		secretCmd(),
 	)
 
