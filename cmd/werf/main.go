@@ -12,6 +12,7 @@ import (
 	"github.com/flant/werf/cmd/werf/build"
 	"github.com/flant/werf/cmd/werf/build_and_publish"
 	"github.com/flant/werf/cmd/werf/cleanup"
+	"github.com/flant/werf/cmd/werf/dismiss"
 	"github.com/flant/werf/cmd/werf/publish"
 	"github.com/flant/werf/cmd/werf/purge"
 
@@ -73,6 +74,7 @@ Find more information at https://flant.github.io/werf`),
 				build.NewCmd(),
 				publish.NewCmd(),
 				build_and_publish.NewCmd(),
+				dismiss.NewCmd(),
 				cleanup.NewCmd(),
 				purge.NewCmd(),
 			},
