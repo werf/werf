@@ -11,14 +11,14 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/werf/cmd/werf/common"
-	secret_common "github.com/flant/werf/cmd/werf/secret/common"
+	secret_common "github.com/flant/werf/cmd/werf/helm/secret/common"
 	"github.com/flant/werf/pkg/deploy/secret"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
@@ -32,9 +32,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "edit FILE_PATH",
+		Use: "edit FILE_PATH",
 		DisableFlagsInUseLine: true,
-		Short:                 "Edit or create new secret file",
+		Short: "Edit or create new secret file",
 		Long: common.GetLongCommandDescription(`Edit or create new secret file.
 
 The file can be raw secret file (by default) or secret values yaml file (with option --values).`),

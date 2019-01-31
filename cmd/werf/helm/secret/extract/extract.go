@@ -3,11 +3,13 @@ package secret
 import (
 	"bytes"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/flant/werf/cmd/werf/common"
-	secret_common "github.com/flant/werf/cmd/werf/secret/common"
+	secret_common "github.com/flant/werf/cmd/werf/helm/secret/common"
 	"github.com/flant/werf/pkg/deploy/secret"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -22,21 +24,21 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "generate",
+		Use: "extract",
 		DisableFlagsInUseLine: true,
-		Short: "Encrypt provided data",
-		Long: common.GetLongCommandDescription(`Encrypt provided data.
+		Short: "Decrypt data",
+		Long: common.GetLongCommandDescription(`Decrypt data.
 
-Provide data onto stdin by default.
+Provide encrypted data onto stdin by default.
 
-Data can be provided in file by specifying --file-path option. Option --values should be specified in the case when values yaml file provided.`),
+Data can be provided in a file by specifying --file-path option. Option --values should be specified in the case when secret values yaml file provided.`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runSecretGenerate()
+			err := runSecretExtract()
 			if err != nil {
-				return fmt.Errorf("secret generate failed: %s", err)
+				return fmt.Errorf("secret extract failed: %s", err)
 			}
 			return nil
 		},
@@ -46,14 +48,14 @@ Data can be provided in file by specifying --file-path option. Option --values s
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.FilePath, "file-path", "", "", "Encode file data by specified path")
-	cmd.Flags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "", "", "Save encoded data by specified file path")
-	cmd.Flags().BoolVarP(&CmdData.Values, "values", "", false, "Encode specified FILE_PATH (--file-path) as secret values file")
+	cmd.Flags().StringVarP(&CmdData.FilePath, "file-path", "", "", "Decode file data by specified path")
+	cmd.Flags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "", "", "Save decoded data by specified file path")
+	cmd.Flags().BoolVarP(&CmdData.Values, "values", "", false, "Decode specified FILE_PATH (--file-path) as secret values file")
 
 	return cmd
 }
 
-func runSecretGenerate() error {
+func runSecretExtract() error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -74,52 +76,56 @@ func runSecretGenerate() error {
 		return err
 	}
 
-	return secretGenerate(m, options)
+	return secretExtract(m, options)
 }
 
-func secretGenerate(m secret.Manager, options *secret_common.GenerateOptions) error {
-	var data []byte
+func secretExtract(m secret.Manager, options *secret_common.GenerateOptions) error {
 	var encodedData []byte
+	var data []byte
 	var err error
 
 	if options.FilePath != "" {
-		data, err = secret_common.ReadFileData(options.FilePath)
+		encodedData, err = secret_common.ReadFileData(options.FilePath)
 		if err != nil {
 			return err
 		}
 	} else {
-		data, err = secret_common.ReadStdin()
+		encodedData, err = secret_common.ReadStdin()
 		if err != nil {
 			return err
 		}
 
-		if len(data) == 0 {
+		if len(encodedData) == 0 {
 			return nil
 		}
 	}
 
+	encodedData = bytes.TrimSpace(encodedData)
+
 	if options.FilePath != "" && options.Values {
-		encodedData, err = m.GenerateYamlData(data)
+		data, err = m.ExtractYamlData(encodedData)
 		if err != nil {
 			return err
 		}
 	} else {
-		encodedData, err = m.Generate(data)
+		data, err = m.Extract(encodedData)
 		if err != nil {
 			return err
 		}
-	}
-
-	if !bytes.HasSuffix(encodedData, []byte("\n")) {
-		encodedData = append(encodedData, []byte("\n")...)
 	}
 
 	if options.OutputFilePath != "" {
-		if err := secret_common.SaveGeneratedData(options.OutputFilePath, encodedData); err != nil {
+		if err := secret_common.SaveGeneratedData(options.OutputFilePath, data); err != nil {
 			return err
 		}
 	} else {
-		fmt.Printf(string(encodedData))
+		if terminal.IsTerminal(int(os.Stdout.Fd())) {
+			if !bytes.HasSuffix(data, []byte("\n")) {
+				data = append(data, []byte("\n")...)
+			}
+		}
+
+		fmt.Printf(string(data))
 	}
 
 	return nil

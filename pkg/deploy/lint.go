@@ -24,17 +24,13 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
 
-	repo := "REPO"
+	imagesRepo := "REPO"
 	tag := "DOCKER_TAG"
 	namespace := "NAMESPACE"
 
-	var images []ImageInfoGetter
-	for _, image := range werfConfig.Images {
-		d := &ImageInfo{Config: image, WithoutRegistry: true, Repo: repo, Tag: tag}
-		images = append(images, d)
-	}
+	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
