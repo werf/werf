@@ -34,7 +34,7 @@ func NewCmd() *cobra.Command {
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
 		Short:                 "Cleanup project images registry and stages storage",
-		Long:                  common.GetLongCommandDescription("Shortcut for `werf images cleanup && werf stages cleanup`"),
+		Long:                  common.GetLongCommandDescription("Shortcut for werf images cleanup and werf stages cleanup commands"),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome),
 		},
