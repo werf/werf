@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/flant/werf/pkg/config"
 	"github.com/ghodss/yaml"
 )
 
@@ -29,6 +30,17 @@ type ImageInfoGetter interface {
 type ServiceValuesOptions struct {
 	ForceTag    string
 	ForceBranch string
+}
+
+func GetImagesInfoGetters(configImages []*config.Image, imagesRepo, tag string, withoutRegistry bool) []ImageInfoGetter {
+	var images []ImageInfoGetter
+
+	for _, image := range configImages {
+		d := &ImageInfo{Config: image, WithoutRegistry: withoutRegistry, ImagesRepo: imagesRepo, Tag: tag}
+		images = append(images, d)
+	}
+
+	return images
 }
 
 func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit GitInfoGetter, images []ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {

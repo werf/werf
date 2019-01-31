@@ -15,11 +15,11 @@ import (
 	"github.com/flant/werf/cmd/werf/publish"
 	"github.com/flant/werf/cmd/werf/purge"
 
-	secret_edit "github.com/flant/werf/cmd/werf/secret/edit"
-	secret_extract "github.com/flant/werf/cmd/werf/secret/extract"
-	secret_generate "github.com/flant/werf/cmd/werf/secret/generate"
-	secret_key_generate "github.com/flant/werf/cmd/werf/secret/key_generate"
-	secret_regenerate "github.com/flant/werf/cmd/werf/secret/regenerate"
+	helm_secret_edit "github.com/flant/werf/cmd/werf/helm/secret/edit"
+	helm_secret_extract "github.com/flant/werf/cmd/werf/helm/secret/extract"
+	helm_secret_generate "github.com/flant/werf/cmd/werf/helm/secret/generate"
+	helm_secret_key_generate "github.com/flant/werf/cmd/werf/helm/secret/key_generate"
+	helm_secret_regenerate "github.com/flant/werf/cmd/werf/helm/secret/regenerate"
 
 	slug_namespace "github.com/flant/werf/cmd/werf/slug/namespace"
 	slug_release "github.com/flant/werf/cmd/werf/slug/release"
@@ -36,6 +36,8 @@ import (
 	host_cleanup "github.com/flant/werf/cmd/werf/host/cleanup"
 	host_purge "github.com/flant/werf/cmd/werf/host/purge"
 
+	helm_get_service_values "github.com/flant/werf/cmd/werf/helm/get_service_values"
+
 	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/docs"
 	"github.com/flant/werf/cmd/werf/version"
@@ -49,7 +51,7 @@ import (
 func main() {
 	trapTerminationSignals()
 
-	logger.Init()
+	logger.Init(logger.Options{})
 
 	if err := process_exterminator.Init(); err != nil {
 		logger.LogError(fmt.Errorf("process exterminator initialization error: %s", err))
@@ -134,9 +136,11 @@ func stagesCmd() *cobra.Command {
 
 func helmCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "helm",
+		Use:   "helm",
+		Short: "Commands to manage deployment with helm",
 	}
 	cmd.AddCommand(
+		helm_get_service_values.NewCmd(),
 		secretCmd(),
 	)
 
@@ -161,11 +165,11 @@ func secretCmd() *cobra.Command {
 		Short: "Commands to work with secrets",
 	}
 	cmd.AddCommand(
-		secret_key_generate.NewCmd(),
-		secret_generate.NewCmd(),
-		secret_extract.NewCmd(),
-		secret_edit.NewCmd(),
-		secret_regenerate.NewCmd(),
+		helm_secret_key_generate.NewCmd(),
+		helm_secret_generate.NewCmd(),
+		helm_secret_extract.NewCmd(),
+		helm_secret_edit.NewCmd(),
+		helm_secret_regenerate.NewCmd(),
 	)
 
 	return cmd

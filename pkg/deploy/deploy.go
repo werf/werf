@@ -26,9 +26,9 @@ type DeployOptions struct {
 }
 
 type ImageInfoGetterStub struct {
-	Name     string
-	ImageTag string
-	Repo     string
+	Name       string
+	ImageTag   string
+	ImagesRepo string
 }
 
 func (d *ImageInfoGetterStub) IsNameless() bool {
@@ -41,9 +41,9 @@ func (d *ImageInfoGetterStub) GetName() string {
 
 func (d *ImageInfoGetterStub) GetImageName() string {
 	if d.Name == "" {
-		return fmt.Sprintf("%s:%s", d.Repo, d.ImageTag)
+		return fmt.Sprintf("%s:%s", d.ImagesRepo, d.ImageTag)
 	}
-	return fmt.Sprintf("%s/%s:%s", d.Repo, d.Name, d.ImageTag)
+	return fmt.Sprintf("%s/%s:%s", d.ImagesRepo, d.Name, d.ImageTag)
 }
 
 func (d *ImageInfoGetterStub) GetImageId() (string, error) {
@@ -53,7 +53,7 @@ func (d *ImageInfoGetterStub) GetImageId() (string, error) {
 type ImageInfo struct {
 	Config          *config.Image
 	WithoutRegistry bool
-	Repo            string
+	ImagesRepo      string
 	Tag             string
 }
 
@@ -67,9 +67,9 @@ func (d *ImageInfo) GetName() string {
 
 func (d *ImageInfo) GetImageName() string {
 	if d.Config.Name == "" {
-		return fmt.Sprintf("%s:%s", d.Repo, d.Tag)
+		return fmt.Sprintf("%s:%s", d.ImagesRepo, d.Tag)
 	}
-	return fmt.Sprintf("%s/%s:%s", d.Repo, d.Config.Name, d.Tag)
+	return fmt.Sprintf("%s/%s:%s", d.ImagesRepo, d.Config.Name, d.Tag)
 }
 
 func (d *ImageInfo) GetImageId() (string, error) {
@@ -88,7 +88,7 @@ func (d *ImageInfo) GetImageId() (string, error) {
 	return res, nil
 }
 
-func RunDeploy(projectDir, repo, tag, release, namespace string, werfConfig *config.WerfConfig, opts DeployOptions) error {
+func RunDeploy(projectDir, imagesRepo, tag, release, namespace string, werfConfig *config.WerfConfig, opts DeployOptions) error {
 	if debug() {
 		fmt.Printf("Deploy options: %#v\n", opts)
 	}
@@ -103,13 +103,9 @@ func RunDeploy(projectDir, repo, tag, release, namespace string, werfConfig *con
 
 	localGit := &git_repo.Local{Path: projectDir, GitDir: filepath.Join(projectDir, ".git")}
 
-	var images []ImageInfoGetter
-	for _, image := range werfConfig.Images {
-		d := &ImageInfo{Config: image, WithoutRegistry: opts.WithoutRegistry, Repo: repo, Tag: tag}
-		images = append(images, d)
-	}
+	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, opts.WithoutRegistry)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, repo, namespace, tag, localGit, images, ServiceValuesOptions{})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, localGit, images, ServiceValuesOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

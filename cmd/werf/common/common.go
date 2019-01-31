@@ -77,7 +77,7 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Environment = new(string)
-	cmd.Flags().StringVarP(cmdData.Environment, "env", "", "", "Use specified environment (use CI_ENVIRONMENT_SLUG by default). Environment is a required parameter and should be specified with option or CI_ENVIRONMENT_SLUG variable.")
+	cmd.Flags().StringVarP(cmdData.Environment, "env", "", "", "Use specified environment (use CI_ENVIRONMENT_SLUG by default)")
 }
 
 func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
@@ -118,10 +118,12 @@ func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
 	if *cmdData.ImagesRepo == "" {
 		return "", fmt.Errorf("--images REPO param required")
 	}
-	return GetOptionalImagesRepo(projectName, *cmdData.ImagesRepo), nil
+	return GetOptionalImagesRepo(projectName, cmdData), nil
 }
 
-func GetOptionalImagesRepo(projectName, repoOption string) string {
+func GetOptionalImagesRepo(projectName string, cmdData *CmdData) string {
+	repoOption := *cmdData.ImagesRepo
+
 	if repoOption == ":minikube" {
 		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName)
 	} else if repoOption != "" {
