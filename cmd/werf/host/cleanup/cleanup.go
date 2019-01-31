@@ -16,7 +16,6 @@ import (
 )
 
 var CmdData struct {
-	DryRun bool
 }
 
 var CommonCmdData common.CmdData
@@ -41,8 +40,6 @@ func NewCmd() *cobra.Command {
 
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
-
-	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }
@@ -69,7 +66,7 @@ func runGC() error {
 			return fmt.Errorf("project tmp dir gc failed: %s", err)
 		}
 
-		commonOptions := cleanup.CommonOptions{DryRun: CmdData.DryRun}
+		commonOptions := cleanup.CommonOptions{DryRun: false} // TODO: DryRun
 		if err := cleanup.HostCleanup(commonOptions); err != nil {
 			return fmt.Errorf("project tmp dir gc failed: %s", err)
 		}
