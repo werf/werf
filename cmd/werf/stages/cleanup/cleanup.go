@@ -28,7 +28,7 @@ func NewCmd() *cobra.Command {
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableSyncLocalStagesDatePeriodPolicy, common.WerfHome),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfHome),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()

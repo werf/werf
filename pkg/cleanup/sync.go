@@ -208,7 +208,7 @@ func projectImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, 
 		}
 	}
 
-	if os.Getenv("WERF_DISABLE_SYNC_LOCAL_STAGES_DATE_PERIOD_POLICY") == "" {
+	if os.Getenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY") == "" {
 		for _, imageStage := range imageStages {
 			if time.Now().Unix()-imageStage.Created < syncIgnoreProjectImageStagePeriod {
 				imageStages = exceptImage(imageStages, imageStage)
