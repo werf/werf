@@ -15,12 +15,11 @@ import (
 )
 
 var CmdData struct {
-	Values       []string
-	SecretValues []string
-	Set          []string
-	SetString    []string
-	Namespace    string
-	Timeout      int
+	Values    []string
+	Set       []string
+	SetString []string
+	Namespace string
+	Timeout   int
 }
 
 var CommonCmdData common.CmdData
@@ -51,7 +50,6 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
-	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
 	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
 	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
 	cmd.Flags().StringVarP(&CmdData.Namespace, "namespace", "", "", "Namespace to install release into")

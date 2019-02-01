@@ -78,9 +78,11 @@ type HelmChartOptions struct {
 	Set       []string
 	SetString []string
 	Values    []string
-	DryRun    bool
-	Debug     bool
 	Timeout   time.Duration
+
+	DryRun bool
+	Debug  bool
+
 	CommonHelmOptions
 }
 

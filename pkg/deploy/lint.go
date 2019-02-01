@@ -2,7 +2,8 @@ package deploy
 
 import (
 	"fmt"
-	"os"
+
+	"github.com/flant/werf/pkg/tag_scheme"
 
 	"github.com/flant/werf/pkg/config"
 )
@@ -25,23 +26,20 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 	}
 
 	imagesRepo := "REPO"
-	tag := "DOCKER_TAG"
+	tag := "GIT_BRANCH"
+	tagScheme := tag_scheme.GitBranchScheme
 	namespace := "NAMESPACE"
 
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagScheme, images)
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
+	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.SecretValues, serviceValues)
 	if err != nil {
 		return err
-	}
-	if !debug() {
-		// Do not remove tmp chart in debug
-		defer os.RemoveAll(werfChart.ChartDir)
 	}
 
 	return werfChart.Lint()

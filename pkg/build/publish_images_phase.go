@@ -7,34 +7,26 @@ import (
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/tag_scheme"
 	"github.com/flant/werf/pkg/util"
 )
 
+const RepoImageStageTagFormat = "image-stage-%s"
+
 func NewPublishImagesPhase(imagesRepo string, opts PublishImagesOptions) *PublishImagesPhase {
-	tagsByScheme := map[TagScheme][]string{
-		CustomScheme:    opts.Tags,
-		GitBranchScheme: opts.TagsByGitBranch,
-		GitTagScheme:    opts.TagsByGitTag,
-		GitCommitScheme: opts.TagsByGitCommit,
+	tagsByScheme := map[tag_scheme.TagScheme][]string{
+		tag_scheme.CustomScheme:    opts.Tags,
+		tag_scheme.GitBranchScheme: opts.TagsByGitBranch,
+		tag_scheme.GitTagScheme:    opts.TagsByGitTag,
+		tag_scheme.GitCommitScheme: opts.TagsByGitCommit,
 	}
 	return &PublishImagesPhase{ImagesRepo: imagesRepo, TagsByScheme: tagsByScheme}
 }
 
-const (
-	CustomScheme    TagScheme = "custom"
-	GitTagScheme    TagScheme = "git_tag"
-	GitBranchScheme TagScheme = "git_branch"
-	GitCommitScheme TagScheme = "git_commit"
-
-	RepoImageStageTagFormat = "image-stage-%s"
-)
-
-type TagScheme string
-
 type PublishImagesPhase struct {
 	WithStages   bool
 	ImagesRepo   string
-	TagsByScheme map[TagScheme][]string
+	TagsByScheme map[tag_scheme.TagScheme][]string
 }
 
 func (p *PublishImagesPhase) Run(c *Conveyor) error {
@@ -168,8 +160,8 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 	stages := image.GetStages()
 	lastStageImage := stages[len(stages)-1].GetImage()
 
-	var nonEmptySchemeInOrder []TagScheme
-	var lastNonEmptyTagScheme TagScheme
+	var nonEmptySchemeInOrder []tag_scheme.TagScheme
+	var lastNonEmptyTagScheme tag_scheme.TagScheme
 	for scheme, tags := range p.TagsByScheme {
 		if len(tags) == 0 {
 			continue

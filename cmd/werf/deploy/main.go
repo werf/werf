@@ -2,20 +2,15 @@ package deploy
 
 import (
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/deploy"
-	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/project_tmp_dir"
-	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 	"github.com/spf13/cobra"
@@ -112,10 +107,6 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
-	}
-
 	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
 	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
@@ -153,11 +144,7 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := dockerAuthorizer.Login(imagesRepo); err != nil {
-		return fmt.Errorf("docker login failed: %s", err)
-	}
-
-	tag, err := common.GetDeployTag(&CommonCmdData)
+	tag, tagScheme, err := common.GetDeployTag(&CommonCmdData)
 	if err != nil {
 		return err
 	}
@@ -172,30 +159,12 @@ func runDeploy() error {
 		return err
 	}
 
-	logger.LogInfoF("Using Helm release name: %s\n", release)
-	logger.LogInfoF("Using Kubernetes namespace: %s\n", namespace)
-
-	localGit := &git_repo.Local{Path: projectDir, GitDir: filepath.Join(projectDir, ".git")}
-
-	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
-
-	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, localGit, images, deploy.ServiceValuesOptions{})
-	if err != nil {
-		return fmt.Errorf("error creating service values: %s", err)
-	}
-
-	m, err := deploy.GetSafeSecretManager(projectDir, CmdData.SecretValues)
-	if err != nil {
-		return fmt.Errorf("cannot get project secret: %s", err)
-	}
-
-	werfChart, err := deploy.PrepareWerfChart(deploy.GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, CmdData.Values, CmdData.SecretValues, CmdData.Set, CmdData.SetString, serviceValues)
-	if err != nil {
-		return err
-	}
-
-	return werfChart.Deploy(release, namespace, helm.HelmChartOptions{
-		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: kubeContext},
-		Timeout:           time.Duration(CmdData.Timeout) * time.Second,
+	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagScheme, werfConfig, dockerAuthorizer, deploy.DeployOptions{
+		Set:          CmdData.Set,
+		SetString:    CmdData.SetString,
+		Values:       CmdData.Values,
+		SecretValues: CmdData.SecretValues,
+		Timeout:      time.Duration(CmdData.Timeout) * time.Second,
+		KubeContext:  kubeContext,
 	})
 }

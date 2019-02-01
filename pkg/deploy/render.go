@@ -2,9 +2,9 @@ package deploy
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/tag_scheme"
 )
 
 type RenderOptions struct {
@@ -25,20 +25,17 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 	}
 
 	imagesRepo := "REPO"
-	tag := "DOCKER_TAG"
+	tag := "GIT_BRANCH"
+	tagScheme := tag_scheme.GitBranchScheme
 	namespace := "NAMESPACE"
 
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagScheme, images)
 
-	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
+	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.SecretValues, serviceValues)
 	if err != nil {
 		return err
-	}
-	if !debug() {
-		// Do not remove tmp chart in debug
-		defer os.RemoveAll(werfChart.ChartDir)
 	}
 
 	data, err := werfChart.Render(namespace)

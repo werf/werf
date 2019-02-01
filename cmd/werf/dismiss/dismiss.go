@@ -2,7 +2,6 @@ package dismiss
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
@@ -80,10 +79,7 @@ func runDismiss() error {
 		return fmt.Errorf("cannot parse werf config: %s", err)
 	}
 
-	kubeContext := os.Getenv("KUBECONTEXT")
-	if kubeContext == "" {
-		kubeContext = *CommonCmdData.KubeContext
-	}
+	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
 	err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)

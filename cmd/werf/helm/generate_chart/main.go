@@ -3,13 +3,13 @@ package generate_chart
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+
+	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/project_tmp_dir"
@@ -21,10 +21,7 @@ import (
 )
 
 var CmdData struct {
-	Values       []string
 	SecretValues []string
-	Set          []string
-	SetString    []string
 }
 
 var CommonCmdData common.CmdData
@@ -37,7 +34,7 @@ func NewCmd() *cobra.Command {
 
 Werf will generate additional values files, templates Chart.yaml and other files specific to the Werf chart. The result is a valid Helm chart.`),
 		DisableFlagsInUseLine: true,
-		Args:                  cobra.MinimumNArgs(1),
+		Args: cobra.MinimumNArgs(1),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfHome, common.WerfTmp),
 		},
@@ -55,10 +52,7 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
 	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
-	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
-	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
 
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupEnvironment(&CommonCmdData, cmd)
@@ -129,30 +123,23 @@ func runGenerateChart(targetPath string) error {
 		}
 	}
 
-	if imagesRepo == "" {
-		imagesRepo = "IMAGES_REPO"
-	}
+	imagesRepo = helm_common.GetImagesRepoOrStub(imagesRepo)
 
-	environment := *CommonCmdData.Environment
-	if environment == "" {
-		environment = "ENV"
-	}
+	environment := helm_common.GetEnvironmentOrStub(*CommonCmdData.Environment)
 
 	namespace, err := common.GetKubernetesNamespace(*CommonCmdData.Namespace, environment, werfConfig)
 	if err != nil {
 		return err
 	}
 
-	tag, err := common.GetDeployTag(&CommonCmdData)
+	tag, tagScheme, err := common.GetDeployTag(&CommonCmdData)
 	if err != nil {
 		return err
 	}
 
-	localGit := &git_repo.Local{Path: projectDir, GitDir: filepath.Join(projectDir, ".git")}
-
 	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, withoutRegistry)
 
-	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, localGit, images, deploy.ServiceValuesOptions{})
+	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagScheme, images)
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
@@ -172,7 +159,7 @@ func runGenerateChart(targetPath string) error {
 		}
 	}
 
-	werfChart, err := deploy.PrepareWerfChart(targetPath, werfConfig.Meta.Project, projectDir, m, CmdData.Values, CmdData.SecretValues, CmdData.Set, CmdData.SetString, serviceValues)
+	werfChart, err := deploy.PrepareWerfChart(targetPath, werfConfig.Meta.Project, projectDir, m, CmdData.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}

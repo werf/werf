@@ -9,16 +9,16 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
 
-	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
+	"github.com/flant/werf/pkg/tag_scheme"
 )
 
 type ImagesCleanupOptions struct {
@@ -178,19 +178,19 @@ Loop:
 		}
 
 		switch scheme {
-		case string(build.GitTagScheme):
+		case string(tag_scheme.GitTagScheme):
 			if repoImageTagMatch(repoImage, gitTags...) {
 				continue Loop
 			} else {
 				nonexistentGitTagRepoImages = append(nonexistentGitTagRepoImages, repoImage)
 			}
-		case string(build.GitBranchScheme):
+		case string(tag_scheme.GitBranchScheme):
 			if repoImageTagMatch(repoImage, gitBranches...) {
 				continue Loop
 			} else {
 				nonexistentGitBranchRepoImages = append(nonexistentGitBranchRepoImages, repoImage)
 			}
-		case string(build.GitCommitScheme):
+		case string(tag_scheme.GitCommitScheme):
 			exist, err := options.LocalGit.IsCommitExists(repoImage.Tag)
 			if err != nil {
 				if strings.HasPrefix(err.Error(), "bad commit hash") {
@@ -261,9 +261,9 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 		}
 
 		switch scheme {
-		case string(build.GitTagScheme):
+		case string(tag_scheme.GitTagScheme):
 			repoImagesWithGitTagScheme = append(repoImagesWithGitTagScheme, repoImage)
-		case string(build.GitCommitScheme):
+		case string(tag_scheme.GitCommitScheme):
 			repoImagesWithGitCommitScheme = append(repoImagesWithGitCommitScheme, repoImage)
 		}
 	}
