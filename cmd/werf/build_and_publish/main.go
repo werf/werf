@@ -162,7 +162,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	tagOpts, err := common.GetTagOptions(&CommonCmdData, projectDir)
+	tagOpts, err := common.GetTagOptions(&CommonCmdData)
 	if err != nil {
 		return err
 	}

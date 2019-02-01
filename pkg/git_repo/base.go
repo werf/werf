@@ -25,7 +25,6 @@ import (
 
 var (
 	errNotABranch = errors.New("cannot get branch name: HEAD refers to a specific revision that is not associated with a branch name")
-	errNotATAG    = errors.New("cannot get tag name: HEAD refers to a specific revision that is not associated with a tag name")
 )
 
 type Base struct {
@@ -152,20 +151,6 @@ func (repo *Base) getHeadBranchName(repoPath string) (string, error) {
 	}
 
 	return "", errNotABranch
-}
-
-func (repo *Base) getHeadTagName(repoPath string) (string, error) {
-	ref, err := repo.getReferenceForRepo(repoPath)
-	if err != nil {
-		return "", fmt.Errorf("cannot get repo `%s` head: %s", repoPath, err)
-	}
-
-	if ref.Name().IsTag() {
-		tagRef := ref.Name()
-		return strings.Split(string(tagRef), "refs/tags/")[1], nil
-	}
-
-	return "", errNotATAG
 }
 
 func (repo *Base) String() string {

@@ -147,7 +147,7 @@ func runGenerateChart(targetPath string) error {
 		return err
 	}
 
-	tag, err := common.GetDeployTag(&CommonCmdData, projectDir)
+	tag, err := common.GetDeployTag(&CommonCmdData)
 	if err != nil {
 		return err
 	}

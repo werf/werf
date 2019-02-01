@@ -45,10 +45,6 @@ func (repo *Local) HeadBranchName() (string, error) {
 	return repo.getHeadBranchName(repo.Path)
 }
 
-func (repo *Local) HeadTagName() (string, error) {
-	return repo.getHeadTagName(repo.Path)
-}
-
 func (repo *Local) CreatePatch(opts PatchOptions) (Patch, error) {
 	return repo.createPatch(repo.Path, repo.GitDir, repo.getWorkTreeDir(), opts)
 }

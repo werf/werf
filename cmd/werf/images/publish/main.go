@@ -139,7 +139,7 @@ func runImagesPublish(cmdData *CmdDataType, commonCmdData *common.CmdData, image
 		}
 	}()
 
-	tagOpts, err := common.GetTagOptions(commonCmdData, projectDir)
+	tagOpts, err := common.GetTagOptions(commonCmdData)
 	if err != nil {
 		return err
 	}

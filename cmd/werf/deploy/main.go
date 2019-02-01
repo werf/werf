@@ -160,7 +160,7 @@ func runDeploy() error {
 		return fmt.Errorf("docker login failed: %s", err)
 	}
 
-	tag, err := common.GetDeployTag(&CommonCmdData, projectDir)
+	tag, err := common.GetDeployTag(&CommonCmdData)
 	if err != nil {
 		return err
 	}

@@ -23,9 +23,9 @@ type CmdData struct {
 	SSHKeys *[]string
 
 	Tag          *[]string
-	TagGitBranch *bool
-	TagGitTag    *bool
-	TagGitCommit *bool
+	TagGitBranch *string
+	TagGitTag    *string
+	TagGitCommit *string
 
 	Environment *string
 	Release     *string
@@ -62,14 +62,14 @@ func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Tag = new([]string)
-	cmdData.TagGitBranch = new(bool)
-	cmdData.TagGitTag = new(bool)
-	cmdData.TagGitCommit = new(bool)
+	cmdData.TagGitBranch = new(string)
+	cmdData.TagGitTag = new(string)
+	cmdData.TagGitCommit = new(string)
 
 	cmd.Flags().StringArrayVarP(cmdData.Tag, "tag", "", []string{}, "Add tag (can be used one or more times)")
-	cmd.Flags().BoolVarP(cmdData.TagGitBranch, "tag-git-branch", "", false, "Tag by git branch")
-	cmd.Flags().BoolVarP(cmdData.TagGitTag, "tag-git-tag", "", false, "Tag by git tag")
-	cmd.Flags().BoolVarP(cmdData.TagGitCommit, "tag-git-commit", "", false, "Tag by git commit")
+	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_AUTOTAG_GIT_BRANCH"), "Tag by git branch")
+	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_AUTOTAG_GIT_TAG"), "Tag by git tag")
+	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_AUTOTAG_GIT_COMMIT"), "Tag by git commit")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
