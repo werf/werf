@@ -2,7 +2,6 @@ package cleanup
 
 import (
 	"fmt"
-	"os"
 	"path"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -20,9 +19,6 @@ import (
 )
 
 var CmdData struct {
-	RegistryUsername string
-	RegistryPassword string
-
 	WithoutKube bool
 
 	DryRun bool
@@ -55,9 +51,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
-	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
+	common.SetupCleanupImagesUsername(&CommonCmdData, cmd, "Docker registry username (granted read-write permission)")
+	common.SetupCleanupImagesPassword(&CommonCmdData, cmd, "Docker registry password (granted read-write permission)")
 
 	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
 
@@ -105,15 +100,7 @@ func runCleanup() error {
 		return err
 	}
 
-	cleanupImagesRegistryUsername := CmdData.RegistryUsername
-	cleanupImagesRegistryPassword := CmdData.RegistryPassword
-	if cleanupImagesRegistryUsername == "" && cleanupImagesRegistryPassword == "" {
-		if cleanupImagesRegistryPassword = os.Getenv("WERF_CLEANUP_REGISTRY_PASSWORD"); cleanupImagesRegistryPassword != "" {
-			cleanupImagesRegistryUsername = "werf-cleanup"
-		}
-	}
-
-	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, cleanupImagesRegistryUsername, cleanupImagesRegistryPassword)
+	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 	if err != nil {
 		return err
 	}

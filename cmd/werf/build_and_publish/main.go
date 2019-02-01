@@ -19,12 +19,8 @@ import (
 )
 
 var CmdData struct {
-	PullUsername     string
-	PullPassword     string
-	PushUsername     string
-	PushPassword     string
-	RegistryUsername string
-	RegistryPassword string
+	PullUsername string
+	PullPassword string
 
 	IntrospectBeforeError bool
 	IntrospectAfterError  bool
@@ -51,16 +47,10 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 			common.LogVersion()
 
 			if CmdData.PullUsername == "" {
-				CmdData.PullUsername = CmdData.RegistryUsername
+				CmdData.PullUsername = *CommonCmdData.ImagesUsername
 			}
 			if CmdData.PullPassword == "" {
-				CmdData.PullPassword = CmdData.RegistryPassword
-			}
-			if CmdData.PushUsername == "" {
-				CmdData.PushUsername = CmdData.RegistryUsername
-			}
-			if CmdData.PushPassword == "" {
-				CmdData.PushPassword = CmdData.RegistryPassword
+				CmdData.PullPassword = *CommonCmdData.ImagesPassword
 			}
 
 			return common.LogRunningTime(func() error {
@@ -81,10 +71,6 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 
 	cmd.Flags().StringVarP(&CmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
 	cmd.Flags().StringVarP(&CmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
-	cmd.Flags().StringVarP(&CmdData.PushUsername, "push-username", "", "", "Docker registry username to authorize push to the docker imagesRepo")
-	cmd.Flags().StringVarP(&CmdData.PushPassword, "push-password", "", "", "Docker registry password to authorize push to the docker imagesRepo")
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username to authorize pull of base images and push to the docker imagesRepo")
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-password", "", "", "Docker registry password to authorize pull of base images and push to the docker imagesRepo")
 
 	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
@@ -92,6 +78,8 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username to authorize pull of base images and push to the docker imagesRepo")
+	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password to authorize pull of base images and push to the docker imagesRepo")
 
 	return cmd
 }
@@ -142,7 +130,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetBuildAndPublishDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword, CmdData.PushUsername, CmdData.PushPassword)
+	dockerAuthorizer, err := docker_authorizer.GetBuildAndPublishDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 	if err != nil {
 		return err
 	}

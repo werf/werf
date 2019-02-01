@@ -21,8 +21,6 @@ import (
 )
 
 var CmdData struct {
-	RegistryUsername string
-	RegistryPassword string
 }
 
 var CommonCmdData common.CmdData
@@ -52,13 +50,12 @@ These values includes project name, docker images ids and other.`),
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username")
-	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password")
-
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username")
+	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password")
 
 	return cmd
 }
@@ -114,7 +111,7 @@ func runGetServiceValues() error {
 		}
 		defer project_tmp_dir.Release(projectTmpDir)
 
-		dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
+		dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 		if err != nil {
 			return err
 		}

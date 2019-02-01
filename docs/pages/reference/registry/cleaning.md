@@ -71,7 +71,7 @@ Werf gets information about kubernetes clusters and how to connect to them from 
 
 ### Docker registry authorization
 
-For docker registry authorization in cleanup, werf require the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
+For docker registry authorization in cleanup, werf require the `WERF_CLEANUP_IMAGES_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
 
 ### Cleanup command
 

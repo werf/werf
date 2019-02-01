@@ -207,9 +207,9 @@ Cleanup builder:
   - build
 ```
 
-To use cleanup, you should create `Personal Access Token` with necessary rights and put it into the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_CLEANUP_REGISTRY_PASSWORD` and a value consisting of `Personal Access Token`.
+To use cleanup, you should create `Personal Access Token` with necessary rights and put it into the `WERF_CLEANUP_IMAGES_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_CLEANUP_IMAGES_PASSWORD` and a value consisting of `Personal Access Token`.
 
-> Note: `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable is used by werf only for deleting images in the registry when running `werf cleanup` command. In the other cases, werf uses `CI_JOB_TOKEN`.
+> Note: `WERF_CLEANUP_IMAGES_PASSWORD` environment variable is used by werf only for deleting images in the registry when running `werf cleanup` command. In the other cases, werf uses `CI_JOB_TOKEN`.
 
 For the demo project create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
 

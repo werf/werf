@@ -32,8 +32,10 @@ type CmdData struct {
 	Namespace   *string
 	KubeContext *string
 
-	StagesRepo *string
-	ImagesRepo *string
+	StagesRepo     *string
+	ImagesRepo     *string
+	ImagesUsername *string
+	ImagesPassword *string
 }
 
 func GetLongCommandDescription(text string) string {
@@ -100,6 +102,42 @@ func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
 	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", "", "Docker Repo to store images")
+}
+
+func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command, usage string) {
+	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") == "" {
+		setupImagesUsername(cmdData, cmd, os.Getenv("werf-cleanup"), usage)
+		return
+	}
+
+	SetupImagesUsername(cmdData, cmd, usage)
+}
+
+func SetupCleanupImagesPassword(cmdData *CmdData, cmd *cobra.Command, usage string) {
+	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") == "" {
+		setupImagesPassword(cmdData, cmd, os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD"), usage)
+		return
+	}
+
+	SetupImagesPassword(cmdData, cmd, usage)
+}
+
+func SetupImagesUsername(cmdData *CmdData, cmd *cobra.Command, usage string) {
+	setupImagesUsername(cmdData, cmd, os.Getenv("WERF_IMAGES_USERNAME"), usage)
+}
+
+func SetupImagesPassword(cmdData *CmdData, cmd *cobra.Command, usage string) {
+	setupImagesPassword(cmdData, cmd, os.Getenv("WERF_IMAGES_PASSWORD"), usage)
+}
+
+func setupImagesUsername(cmdData *CmdData, cmd *cobra.Command, value, usage string) {
+	cmdData.ImagesUsername = new(string)
+	cmd.Flags().StringVarP(cmdData.ImagesUsername, "images-username", "u", value, usage)
+}
+
+func setupImagesPassword(cmdData *CmdData, cmd *cobra.Command, value, usage string) {
+	cmdData.ImagesPassword = new(string)
+	cmd.Flags().StringVarP(cmdData.ImagesPassword, "images-password", "p", value, usage)
 }
 
 func GetStagesRepo(cmdData *CmdData) (string, error) {

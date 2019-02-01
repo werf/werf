@@ -18,7 +18,7 @@ const (
 	WerfDockerConfig                         Env = "WERF_DOCKER_CONFIG"
 	WerfInsecureRegistry                     Env = "WERF_INSECURE_REGISTRY"
 	WerfSecretKey                            Env = "WERF_SECRET_KEY"
-	WerfCleanupRegistryPassword              Env = "WERF_CLEANUP_REGISTRY_PASSWORD"
+	WerfCleanupRegistryPassword              Env = "WERF_CLEANUP_IMAGES_PASSWORD"
 	WerfDisableStagesCleanupDatePeriodPolicy Env = "WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY"
 	WerfGitTagsExpiryDatePeriodPolicy        Env = "WERF_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY"
 	WerfGitTagsLimitPolicy                   Env = "WERF_GIT_TAGS_LIMIT_POLICY"

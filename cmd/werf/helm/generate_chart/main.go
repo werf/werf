@@ -21,9 +21,6 @@ import (
 )
 
 var CmdData struct {
-	RegistryUsername string
-	RegistryPassword string
-
 	Values       []string
 	SecretValues []string
 	Set          []string
@@ -58,9 +55,6 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username")
-	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password")
-
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
 	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
 	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
@@ -70,6 +64,8 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username")
+	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password")
 
 	return cmd
 }
@@ -123,7 +119,7 @@ func runGenerateChart(targetPath string) error {
 		}
 		defer project_tmp_dir.Release(projectTmpDir)
 
-		dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
+		dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 		if err != nil {
 			return err
 		}

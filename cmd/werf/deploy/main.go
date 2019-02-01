@@ -27,9 +27,6 @@ var CmdData struct {
 	SecretValues []string
 	Set          []string
 	SetString    []string
-
-	RegistryUsername string
-	RegistryPassword string
 }
 
 var CommonCmdData common.CmdData
@@ -79,9 +76,6 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
 	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
 
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username")
-	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password")
-
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupRelease(&CommonCmdData, cmd)
@@ -90,6 +84,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username")
+	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password")
 
 	return cmd
 }
@@ -151,7 +147,7 @@ func runDeploy() error {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
+	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 	if err != nil {
 		return err
 	}

@@ -15,9 +15,6 @@ import (
 )
 
 var CmdData struct {
-	RegistryUsername string
-	RegistryPassword string
-
 	DryRun bool
 }
 
@@ -43,9 +40,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
-	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
+	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username (granted read-write permission)")
+	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password (granted read-write permission)")
 
 	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
@@ -89,7 +85,7 @@ func runPurge() error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword)
+	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 	if err != nil {
 		return err
 	}

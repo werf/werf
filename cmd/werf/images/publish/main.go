@@ -18,18 +18,16 @@ import (
 )
 
 type CmdDataType struct {
-	PushUsername string
-	PushPassword string
 }
 
 var CmdData CmdDataType
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
-	return NewCmdWithData(&CmdData, &CommonCmdData)
+	return NewCmdWithData(&CommonCmdData)
 }
 
-func NewCmdWithData(cmdData *CmdDataType, commonCmdData *common.CmdData) *cobra.Command {
+func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "publish [IMAGE_NAME...]",
 		Short: "Build images and push into Docker registry",
@@ -46,7 +44,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 			return common.LogRunningTime(func() error {
 				common.LogVersion()
 
-				err := runImagesPublish(cmdData, commonCmdData, args)
+				err := runImagesPublish(commonCmdData, args)
 				if err != nil {
 					return fmt.Errorf("images publish failed: %s", err)
 				}
@@ -61,19 +59,16 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupHomeDir(commonCmdData, cmd)
 	common.SetupSSHKey(commonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&cmdData.PushUsername, "push-username", "", "", "Docker registry username to authorize push to the docker imagesRepo")
-	cmd.Flags().StringVarP(&cmdData.PushPassword, "push-password", "", "", "Docker registry password to authorize push to the docker imagesRepo")
-	cmd.Flags().StringVarP(&cmdData.PushUsername, "registry-username", "", "", "Docker registry username to authorize push to the docker imagesRepo")
-	cmd.Flags().StringVarP(&cmdData.PushPassword, "registry-password", "", "", "Docker registry password to authorize push to the docker imagesRepo")
-
 	common.SetupTag(commonCmdData, cmd)
 	common.SetupStagesRepo(commonCmdData, cmd)
 	common.SetupImagesRepo(commonCmdData, cmd)
+	common.SetupImagesUsername(commonCmdData, cmd, "Docker registry username to authorize push to the docker imagesRepo")
+	common.SetupImagesPassword(commonCmdData, cmd, "Docker registry password to authorize push to the docker imagesRepo")
 
 	return cmd
 }
 
-func runImagesPublish(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesToProcess []string) error {
+func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) error {
 	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -124,7 +119,7 @@ func runImagesPublish(cmdData *CmdDataType, commonCmdData *common.CmdData, image
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetImagePublishDockerAuthorizer(projectTmpDir, cmdData.PushUsername, cmdData.PushPassword)
+	dockerAuthorizer, err := docker_authorizer.GetImagePublishDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 	if err != nil {
 		return err
 	}
