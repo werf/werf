@@ -74,57 +74,63 @@ module Dapp
           # pod items[] spec containers[] image
           def pod_images(client)
             client.pod_list['items'].map do |item|
-              item['spec']['containers'].map{ |cont| cont['image'] }
+              images_from_pod_spec(item)
             end
           end
 
           # cronjob items[] spec jobTemplate spec template spec containers[] image
           def cronjob_images(client)
             client.cronjob_list['items'].map do |item|
-              item['spec']['jobTemplate']['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+              images_from_pod_spec(item['spec']['jobTemplate']['spec']['template'])
             end
           end
 
           # daemonsets   items[] spec template spec containers[] image
           def daemonset_images(client)
             client.daemonset_list['items'].map do |item|
-              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+              images_from_pod_spec(item['spec']['template'])
             end
           end
 
           # deployment   items[] spec template spec containers[] image
           def deployment_images(client)
             client.deployment_list['items'].map do |item|
-              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+              images_from_pod_spec(item['spec']['template'])
             end
           end
 
           # job          items[] spec template spec containers[] image
           def job_images(client)
             client.job_list['items'].map do |item|
-              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+              images_from_pod_spec(item['spec']['template'])
             end
           end
 
           # replicasets  items[] spec template spec containers[] image
           def replicaset_images(client)
             client.replicaset_list['items'].map do |item|
-              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+              images_from_pod_spec(item['spec']['template'])
             end
           end
 
            # replicasets  items[] spec template spec containers[] image
            def statefulset_images(client)
             client.statefulset_list['items'].map do |item|
-              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+              images_from_pod_spec(item['spec']['template'])
             end
           end
 
           # replicationcontroller    items[] spec template spec containers[] image
           def replicationcontroller_images(client)
             client.replicationcontroller_list['items'].map do |item|
-              item['spec']['template']['spec']['containers'].map{ |cont| cont['image'] }
+              images_from_pod_spec(item['spec']['template'])
             end
+          end
+
+          def images_from_pod_spec(pod_spec)
+            containers = Array(pod_spec['spec']['containers'])
+            initContainers = Array(pod_spec['spec']['initContainers'])
+            (containers + initContainers).map { |cont| cont['image'] }
           end
 
           def without_kube?
