@@ -238,7 +238,7 @@ func LogVersion() {
 }
 
 func LogProjectDir(dir string) {
-	if os.Getenv("WERF_LOG_PWD") != "" {
+	if os.Getenv("WERF_LOG_PROJECT_DIR") != "" {
 		logger.LogInfoF("Using project dir: %s\n", dir)
 	}
 }

@@ -109,7 +109,7 @@ func generateGitlabEnvs() error {
 
 	fmt.Println("\n### OTHER\n")
 	printExport("export WERF_LOG_FORCE_COLOR=\"%s\"\n", "1")
-	printExport("export WERF_LOG_PWD=\"%s\"\n", "1")
+	printExport("export WERF_LOG_PROJECT_DIR=\"%s\"\n", "1")
 	printExport("export WERF_ENABLE_PROCESS_EXTERMINATOR=\"%s\"\n", "1")
 
 	return nil
