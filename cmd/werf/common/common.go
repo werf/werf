@@ -101,7 +101,7 @@ func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", "", "Docker Repo to store images")
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", os.Getenv("WERF_IMAGES_REGISTRY"), "Docker Repo to store images")
 }
 
 func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command, usage string) {
@@ -163,11 +163,6 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) string {
 		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName)
 	} else if repoOption != "" {
 		return repoOption
-	}
-
-	werfImagesRegistry := os.Getenv("WERF_IMAGES_REGISTRY")
-	if werfImagesRegistry != "" {
-		return werfImagesRegistry
 	}
 
 	return ""
