@@ -87,7 +87,7 @@ func GetBuildAndPublishDockerAuthorizer(projectTmpDir, pullUsernameOption, pullP
 	return getDockerAuthorizer(projectTmpDir, nil, pullCredentials, pushCredentials)
 }
 
-func GetCommonDockerAuthorizer(projectTmpDir, username, password string) (*DockerAuthorizer, error) {
+func GetDockerAuthorizer(projectTmpDir, username, password string) (*DockerAuthorizer, error) {
 	credentials := getSpecifiedCredentials(username, password)
 	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
 }

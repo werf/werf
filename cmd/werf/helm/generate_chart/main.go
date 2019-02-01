@@ -119,7 +119,7 @@ func runGenerateChart(targetPath string) error {
 		}
 		defer project_tmp_dir.Release(projectTmpDir)
 
-		dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
+		dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 		if err != nil {
 			return err
 		}

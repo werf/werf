@@ -31,7 +31,7 @@ func NewCmd() *cobra.Command {
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupImagesPassword, common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
@@ -100,7 +100,7 @@ func runCleanup() error {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
+	dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 	if err != nil {
 		return err
 	}

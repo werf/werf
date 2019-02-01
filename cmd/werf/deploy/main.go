@@ -147,7 +147,7 @@ func runDeploy() error {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetCommonDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
+	dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 	if err != nil {
 		return err
 	}
