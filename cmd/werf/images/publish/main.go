@@ -136,7 +136,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 
 	opts := build.PublishImagesOptions{TagOptions: tagOpts}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, common.GetSharedContextDir(), common.GetLocalCacheDir(), projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 
 	if err = c.PublishImages(imagesRepo, opts); err != nil {
 		return err

@@ -194,14 +194,6 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	return currentDir, nil
 }
 
-func GetSharedContextDir() string {
-	return path.Join(werf.GetHomeDir(), "shared_context")
-}
-
-func GetLocalCacheDir() string {
-	return path.Join(werf.GetHomeDir(), "local_cache")
-}
-
 func GetNamespace(namespaceOption string) string {
 	if namespaceOption == "" {
 		return kube.DefaultNamespace

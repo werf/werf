@@ -17,7 +17,7 @@ var (
 
 func Init() error {
 	Locks = make(map[string]LockObject)
-	LocksDir = filepath.Join(werf.GetHomeDir(), "locks")
+	LocksDir = filepath.Join(werf.GetServiceDir(), "locks")
 
 	err := os.MkdirAll(LocksDir, 0755)
 	if err != nil {

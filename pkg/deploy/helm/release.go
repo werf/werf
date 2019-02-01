@@ -629,5 +629,5 @@ func deleteAutoPurgeTriggerFilePath(releaseName string) error {
 }
 
 func autoPurgeTriggerFilePath(releaseName string) string {
-	return filepath.Join(werf.GetHomeDir(), "helm", releaseName, "auto_purge_failed_release_on_next_deploy")
+	return filepath.Join(werf.GetServiceDir(), "helm", releaseName, "auto_purge_failed_release_on_next_deploy")
 }

@@ -10,6 +10,7 @@ import (
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/util"
+	"github.com/flant/werf/pkg/werf"
 )
 
 type StageName string
@@ -35,8 +36,6 @@ type NewBaseStageOptions struct {
 	ConfigMounts     []*config.Mount
 	ImageTmpDir      string
 	ContainerWerfDir string
-	SharedContextDir string
-	LocalCacheDir    string
 	ProjectName      string
 }
 
@@ -45,8 +44,6 @@ func newBaseStage(name StageName, options *NewBaseStageOptions) *BaseStage {
 	s.name = name
 	s.imageName = options.ImageName
 	s.configMounts = options.ConfigMounts
-	s.sharedContextDir = options.SharedContextDir
-	s.localCacheDir = options.LocalCacheDir
 	s.imageTmpDir = options.ImageTmpDir
 	s.containerWerfDir = options.ContainerWerfDir
 	s.projectName = options.ProjectName
@@ -62,10 +59,7 @@ type BaseStage struct {
 	imageTmpDir      string
 	containerWerfDir string
 	configMounts     []*config.Mount
-
 	projectName      string
-	sharedContextDir string
-	localCacheDir    string
 }
 
 func (s *BaseStage) Name() StageName {
@@ -181,7 +175,7 @@ func (s *BaseStage) addServiceMountsVolumes(mountpointsByType map[string][]strin
 			case "tmp_dir":
 				absoluteFrom = filepath.Join(s.imageTmpDir, "mount", slug.Slug(absoluteMountpoint))
 			case "build_dir":
-				absoluteFrom = filepath.Join(s.sharedContextDir, "mounts", "projects", s.projectName, slug.Slug(absoluteMountpoint))
+				absoluteFrom = filepath.Join(werf.GetSharedContextDir(), "mounts", "projects", s.projectName, slug.Slug(absoluteMountpoint))
 			default:
 				panic(fmt.Sprintf("unknown mount type %s", mountType))
 			}

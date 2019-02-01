@@ -14,6 +14,7 @@ import (
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
+	"github.com/flant/werf/pkg/werf"
 )
 
 type InitializationPhase struct{}
@@ -177,8 +178,6 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 		ConfigMounts:     imageBaseConfig.Mount,
 		ImageTmpDir:      c.GetImageTmpDir(imageBaseConfig.Name),
 		ContainerWerfDir: c.containerWerfDir,
-		SharedContextDir: c.sharedContextDir,
-		LocalCacheDir:    c.localCacheDir,
 		ProjectName:      c.werfConfig.Meta.Project,
 	}
 
@@ -371,7 +370,7 @@ func getRemoteGitRepoClonePath(remoteGitPathConfig *config.GitRemote, c *Conveyo
 	}
 
 	clonePath := path.Join(
-		c.localCacheDir,
+		werf.GetLocalCacheDir(),
 		"remote_git_repos",
 		"projects",
 		c.werfConfig.Meta.Project,

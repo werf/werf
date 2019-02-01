@@ -146,7 +146,7 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 		},
 	}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, common.GetSharedContextDir(), common.GetLocalCacheDir(), projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 
 	if err = c.BuildStages(stagesRepo, opts); err != nil {
 		return err
