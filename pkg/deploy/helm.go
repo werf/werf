@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/lock"
@@ -20,7 +20,7 @@ import (
 	"github.com/flant/kubedog/pkg/trackers/rollout"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/releaseutil"
 	"k8s.io/kubernetes/pkg/util/file"
 )
@@ -349,7 +349,7 @@ func parseTemplates(chartPath, releaseName string, set []string, values []string
 
 func removeOldJobs(templates *ChartTemplates, namespace string) error {
 	isJobExist := func(name string, namespace string) (bool, error) {
-		options := v1.GetOptions{IncludeUninitialized: true}
+		options := v1.GetOptions{}
 		_, err := kube.Kubernetes.BatchV1().Jobs(namespace).Get(name, options)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
