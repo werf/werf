@@ -9,6 +9,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/deploy"
+	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
@@ -193,8 +194,8 @@ func runDeploy() error {
 		return err
 	}
 
-	return werfChart.Deploy(release, namespace, deploy.HelmChartOptions{
-		CommonHelmOptions: deploy.CommonHelmOptions{KubeContext: kubeContext},
+	return werfChart.Deploy(release, namespace, helm.HelmChartOptions{
+		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: kubeContext},
 		Timeout:           time.Duration(CmdData.Timeout) * time.Second,
 	})
 }

@@ -1,4 +1,4 @@
-package deploy
+package werf_chart
 
 var WerfChartHelpersTpl = []byte(`{{- define "werf_secret_file" -}}
 {{-   $relative_file_path := index . 0 -}}

@@ -7,6 +7,8 @@ import (
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
+	"github.com/flant/werf/pkg/deploy/helm"
+	"github.com/flant/werf/pkg/deploy/werf_chart"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
 	"github.com/spf13/cobra"
@@ -83,13 +85,13 @@ func runDeployChart(chartDir string, releaseName string) error {
 		namespace = kube.DefaultNamespace
 	}
 
-	werfChart, err := deploy.LoadWerfChart(chartDir)
+	werfChart, err := werf_chart.LoadWerfChart(chartDir)
 	if err != nil {
 		return fmt.Errorf("unable to load chart %s: %s", chartDir, err)
 	}
 
-	return werfChart.Deploy(releaseName, namespace, deploy.HelmChartOptions{
-		CommonHelmOptions: deploy.CommonHelmOptions{KubeContext: kubeContext},
+	return werfChart.Deploy(releaseName, namespace, helm.HelmChartOptions{
+		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: kubeContext},
 		Timeout:           time.Duration(CmdData.Timeout) * time.Second,
 		Set:               CmdData.Set,
 		SetString:         CmdData.SetString,

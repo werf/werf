@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
 )
@@ -116,5 +117,5 @@ func RunDeploy(projectDir, imagesRepo, tag, release, namespace string, werfConfi
 		defer os.RemoveAll(werfChart.ChartDir)
 	}
 
-	return werfChart.Deploy(release, namespace, HelmChartOptions{CommonHelmOptions: CommonHelmOptions{KubeContext: opts.KubeContext}, Timeout: opts.Timeout})
+	return werfChart.Deploy(release, namespace, helm.HelmChartOptions{CommonHelmOptions: helm.CommonHelmOptions{KubeContext: opts.KubeContext}, Timeout: opts.Timeout})
 }

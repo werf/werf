@@ -1,24 +1,13 @@
-package deploy
+package helm
 
 import (
-	"bytes"
 	"fmt"
-	"os"
-	"os/exec"
 	"strings"
 
 	version "github.com/hashicorp/go-version"
 )
 
-func Init() error {
-	if err := validateHelmVersion(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func validateHelmVersion() error {
+func ValidateHelmVersion() error {
 	ver, err := HelmVersion()
 	if err != nil {
 		return err
@@ -52,24 +41,4 @@ func HelmVersion() (*version.Version, error) {
 	}
 
 	return ver, nil
-}
-
-func HelmCmd(args ...string) (stdout string, stderr string, err error) {
-	cmd := exec.Command("helm", args...)
-	cmd.Env = os.Environ()
-
-	var stdoutBuf bytes.Buffer
-	cmd.Stdout = &stdoutBuf
-	var stderrBuf bytes.Buffer
-	cmd.Stderr = &stderrBuf
-
-	err = cmd.Run()
-	stdout = strings.TrimSpace(stdoutBuf.String())
-	stderr = strings.TrimSpace(stderrBuf.String())
-
-	return
-}
-
-func debug() bool {
-	return os.Getenv("WERF_DEPLOY_DEBUG") == "1"
 }
