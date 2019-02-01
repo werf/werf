@@ -23,8 +23,8 @@ import (
 	helm_secret_key_generate "github.com/flant/werf/cmd/werf/helm/secret/key_generate"
 	helm_secret_regenerate "github.com/flant/werf/cmd/werf/helm/secret/regenerate"
 
-	"github.com/flant/werf/cmd/werf/tools/ci_env"
-	"github.com/flant/werf/cmd/werf/tools/slugify"
+	"github.com/flant/werf/cmd/werf/ci_env"
+	"github.com/flant/werf/cmd/werf/slugify"
 
 	images_cleanup "github.com/flant/werf/cmd/werf/images/cleanup"
 	images_publish "github.com/flant/werf/cmd/werf/images/publish"

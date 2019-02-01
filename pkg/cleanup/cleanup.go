@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -192,7 +193,11 @@ Loop:
 		case string(build.GitCommitScheme):
 			exist, err := options.LocalGit.IsCommitExists(repoImage.Tag)
 			if err != nil {
-				return nil, err
+				if strings.HasPrefix(err.Error(), "bad commit hash") {
+					exist = false
+				} else {
+					return nil, err
+				}
 			}
 
 			if !exist {
