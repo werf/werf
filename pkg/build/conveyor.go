@@ -31,9 +31,11 @@ type conveyorPermanentFields struct {
 	imageNamesToProcess []string
 
 	projectDir       string
-	projectBuildDir  string
 	containerWerfDir string
 	baseTmpDir       string
+
+	sharedContextDir string
+	localCacheDir    string
 
 	dockerAuthorizer DockerAuthorizer
 
@@ -45,14 +47,15 @@ type DockerAuthorizer interface {
 	LoginForPush(repo string) error
 }
 
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, buildDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, sharedContextDir, localCacheDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
 	c := &Conveyor{
 		conveyorPermanentFields: &conveyorPermanentFields{
 			werfConfig:          werfConfig,
 			imageNamesToProcess: imageNamesToProcess,
 
 			projectDir:       projectDir,
-			projectBuildDir:  buildDir,
+			sharedContextDir: sharedContextDir,
+			localCacheDir:    localCacheDir,
 			containerWerfDir: "/.werf",
 			baseTmpDir:       baseTmpDir,
 

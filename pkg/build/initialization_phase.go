@@ -3,7 +3,9 @@ package build
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -175,7 +177,9 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 		ConfigMounts:     imageBaseConfig.Mount,
 		ImageTmpDir:      c.GetImageTmpDir(imageBaseConfig.Name),
 		ContainerWerfDir: c.containerWerfDir,
-		ProjectBuildDir:  c.projectBuildDir,
+		SharedContextDir: c.sharedContextDir,
+		LocalCacheDir:    c.localCacheDir,
+		ProjectName:      c.werfConfig.Meta.Project,
 	}
 
 	gitArchiveStageOptions := &stage.NewGitArchiveStageOptions{
@@ -275,6 +279,10 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 				return nil, err
 			}
 
+			if err := os.MkdirAll(filepath.Dir(clonePath), os.ModePerm); err != nil {
+				return nil, fmt.Errorf("unable to mkdir %s: %s", filepath.Dir(clonePath), err)
+			}
+
 			remoteGitRepo = &git_repo.Remote{
 				Base:      git_repo.Base{Name: remoteGitPathConfig.Name},
 				Url:       remoteGitPathConfig.Url,
@@ -363,8 +371,10 @@ func getRemoteGitRepoClonePath(remoteGitPathConfig *config.GitRemote, c *Conveyo
 	}
 
 	clonePath := path.Join(
-		c.projectBuildDir,
-		"remote_git_repo",
+		c.localCacheDir,
+		"remote_git_repos",
+		"projects",
+		c.werfConfig.Meta.Project,
 		fmt.Sprintf("%v", git_repo.RemoteGitRepoCacheVersion),
 		slug.Slug(remoteGitPathConfig.Name),
 		scheme,

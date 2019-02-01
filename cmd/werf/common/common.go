@@ -194,14 +194,12 @@ func GetProjectDir(cmdData *CmdData) (string, error) {
 	return currentDir, nil
 }
 
-func GetProjectBuildDir(projectName string) (string, error) {
-	projectBuildDir := path.Join(werf.GetHomeDir(), "builds", projectName)
+func GetSharedContextDir() string {
+	return path.Join(werf.GetHomeDir(), "shared_context")
+}
 
-	if err := os.MkdirAll(projectBuildDir, os.ModePerm); err != nil {
-		return "", err
-	}
-
-	return projectBuildDir, nil
+func GetLocalCacheDir() string {
+	return path.Join(werf.GetHomeDir(), "local_cache")
 }
 
 func GetNamespace(namespaceOption string) string {

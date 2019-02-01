@@ -113,13 +113,6 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 		return fmt.Errorf("cannot parse werf config: %s", err)
 	}
 
-	projectName := werfConfig.Meta.Project
-
-	projectBuildDir, err := common.GetProjectBuildDir(projectName)
-	if err != nil {
-		return fmt.Errorf("getting project build dir failed: %s", err)
-	}
-
 	projectTmpDir, err := project_tmp_dir.Get()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
@@ -153,7 +146,7 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 		},
 	}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, common.GetSharedContextDir(), common.GetLocalCacheDir(), projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
 
 	if err = c.BuildStages(stagesRepo, opts); err != nil {
 		return err
