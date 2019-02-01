@@ -56,7 +56,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 			return common.LogRunningTime(func() error {
 				err := runBuildAndPublish(args)
 				if err != nil {
-					return fmt.Errorf("bp failed: %s", err)
+					return fmt.Errorf("build-and-publish failed: %s", err)
 				}
 
 				return nil

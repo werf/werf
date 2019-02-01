@@ -112,7 +112,7 @@ Find more information at https://flant.github.io/werf`),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
-		logger.LogError(err)
+		logger.LogError(fmt.Errorf("Error: %s", err))
 		os.Exit(1)
 	}
 }

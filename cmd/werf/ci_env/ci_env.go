@@ -23,16 +23,7 @@ func NewCmd() *cobra.Command {
 Currently supported only GitLab CI`,
 		Example: `  # Load generated werf environment variables on gitlab job runner
   source <(werf ci-env gitlab --tagging-strategy tag-or-branch)`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := runCIEnv(args); err != nil {
-				cmd.Help()
-				fmt.Println()
-
-				return err
-			}
-
-			return nil
-		},
+		RunE: runCIEnv,
 	}
 
 	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "", "tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
@@ -40,15 +31,19 @@ Currently supported only GitLab CI`,
 	return cmd
 }
 
-func runCIEnv(args []string) error {
+func runCIEnv(cmd *cobra.Command, args []string) error {
 	if len(args) != 1 {
+		cmd.Help()
+		fmt.Println()
 		return fmt.Errorf("accepts 1 position argument, received %d", len(args))
 	}
 
 	switch CmdData.TaggingStrategy {
 	case "tag-or-branch":
 	default:
-		return fmt.Errorf("accepts tagging-strategy '%s' not supported", CmdData.TaggingStrategy)
+		cmd.Help()
+		fmt.Println()
+		return fmt.Errorf("provided tagging-strategy '%s' not supported", CmdData.TaggingStrategy)
 	}
 
 	ciSystem := args[0]
@@ -57,7 +52,9 @@ func runCIEnv(args []string) error {
 	case "gitlab":
 		return generateGitlabEnvs()
 	default:
-		return fmt.Errorf("accepts ci system '%s' not supported", ciSystem)
+		cmd.Help()
+		fmt.Println()
+		return fmt.Errorf("provided ci system '%s' not supported", ciSystem)
 	}
 }
 
@@ -90,10 +87,6 @@ func generateGitlabEnvs() error {
 		ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
 	}
 
-	if ciGitTag == "" && ciGitBranch == "" {
-		return fmt.Errorf("enviroment variables for '%s' strategy not detected", CmdData.TaggingStrategy)
-	}
-
 	fmt.Println("### IMAGES REGISTRY\n")
 
 	printExport("export WERF_IMAGES_REGISTRY=\"%s\"\n", imagesRegistry)
@@ -111,6 +104,11 @@ func generateGitlabEnvs() error {
 	printExport("export WERF_LOG_FORCE_COLOR=\"%s\"\n", "1")
 	printExport("export WERF_LOG_PROJECT_DIR=\"%s\"\n", "1")
 	printExport("export WERF_ENABLE_PROCESS_EXTERMINATOR=\"%s\"\n", "1")
+
+	if ciGitTag == "" && ciGitBranch == "" {
+		fmt.Println()
+		return fmt.Errorf("none of enviroment variables WERF_AUTOTAG_GIT_TAG=$CI_COMMIT_TAG or WERF_AUTOTAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
+	}
 
 	return nil
 }
