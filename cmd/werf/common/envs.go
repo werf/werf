@@ -13,8 +13,6 @@ const (
 	CmdEnvAnno                  string = "environment"
 	DisableOptionsInUseLineAnno string = "disableOptionsInUseLine"
 
-	WerfHome                                 Env = "WERF_HOME"
-	WerfTmp                                  Env = "WERF_TMP"
 	WerfAnsibleArgs                          Env = "WERF_ANSIBLE_ARGS"
 	WerfDockerConfig                         Env = "WERF_DOCKER_CONFIG"
 	WerfInsecureRepo                         Env = "WERF_INSECURE_REPO"
@@ -28,8 +26,6 @@ const (
 )
 
 var envDescription = map[Env]string{
-	WerfHome:                                 "",
-	WerfTmp:                                  "",
 	WerfAnsibleArgs:                          "",
 	WerfDockerConfig:                         "",
 	WerfInsecureRepo:                         "",

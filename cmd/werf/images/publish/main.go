@@ -38,7 +38,7 @@ New docker layer with service info about tagging scheme will be built for each i
 If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfInsecureRepo, common.WerfHome, common.WerfTmp),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfInsecureRepo),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return common.LogRunningTime(func() error {

@@ -26,7 +26,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Cleanup project stages from stages storage",
 		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfHome),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()

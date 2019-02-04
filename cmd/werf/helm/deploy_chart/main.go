@@ -33,9 +33,6 @@ func NewCmd() *cobra.Command {
 If specified Helm chart is a Werf chart with additional values and contains werf-chart.yaml, then werf will pass all additinal values and data into helm`),
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.MinimumNArgs(2),
-		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfHome, common.WerfTmp),
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeployChart(args[0], args[1])
 		},

@@ -57,12 +57,12 @@ func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TmpDir = new(string)
-	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (use system tmp dir by default)")
+	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp dir by default)")
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.HomeDir = new(string)
-	cmd.Flags().StringVarP(cmdData.HomeDir, "home-dir", "", "", "Use specified dir to store werf cache files and dirs (use ~/.werf by default)")
+	cmd.Flags().StringVarP(cmdData.HomeDir, "home-dir", "", "", "Use specified dir to store werf cache files and dirs (use WERF_HOME environment or ~/.werf by default)")
 }
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {

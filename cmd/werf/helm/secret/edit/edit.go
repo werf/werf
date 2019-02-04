@@ -39,7 +39,7 @@ func NewCmd() *cobra.Command {
 
 The file can be raw secret file (by default) or secret values yaml file (with option --values)`),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfTmp),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
