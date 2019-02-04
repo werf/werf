@@ -123,6 +123,15 @@ type PublishImagesOptions struct {
 	TagOptions
 }
 
+func (c *Conveyor) ShouldBeBuilt() error {
+	var phases []Phase
+	phases = append(phases, NewInitializationPhase())
+	phases = append(phases, NewSignaturesPhase())
+	phases = append(phases, NewShouldBeBuiltPhase())
+
+	return c.runPhases(phases)
+}
+
 func (c *Conveyor) Tag(repo string, opts TagOptions) error {
 	var err error
 

@@ -16,6 +16,7 @@ import (
 	"github.com/flant/werf/cmd/werf/dismiss"
 	"github.com/flant/werf/cmd/werf/publish"
 	"github.com/flant/werf/cmd/werf/purge"
+	"github.com/flant/werf/cmd/werf/run"
 
 	helm_secret_edit "github.com/flant/werf/cmd/werf/helm/secret/edit"
 	helm_secret_extract "github.com/flant/werf/cmd/werf/helm/secret/extract"
@@ -83,6 +84,7 @@ Find more information at https://flant.github.io/werf`),
 				build.NewCmd(),
 				publish.NewCmd(),
 				build_and_publish.NewCmd(),
+				run.NewCmd(),
 				deploy.NewCmd(),
 				dismiss.NewCmd(),
 				cleanup.NewCmd(),

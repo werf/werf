@@ -176,6 +176,11 @@ func (t *templater) usageLine(c *cobra.Command) string {
 
 func UsageLine(c *cobra.Command) string {
 	usage := c.UseLine()
+
+	if c.Annotations[common.DisableOptionsInUseLineAnno] == "1" {
+		return usage
+	}
+
 	suffix := "[options]"
 	if c.HasFlags() && !strings.Contains(usage, suffix) {
 		usage += " " + suffix

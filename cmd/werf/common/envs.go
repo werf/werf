@@ -10,7 +10,8 @@ import (
 type Env string
 
 const (
-	CmdEnvAnno string = "environment"
+	CmdEnvAnno                  string = "environment"
+	DisableOptionsInUseLineAnno string = "disableOptionsInUseLine"
 
 	WerfHome                                 Env = "WERF_HOME"
 	WerfTmp                                  Env = "WERF_TMP"
