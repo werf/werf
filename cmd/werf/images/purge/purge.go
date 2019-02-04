@@ -34,6 +34,7 @@ func NewCmd() *cobra.Command {
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
+
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images)")
 	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images)")

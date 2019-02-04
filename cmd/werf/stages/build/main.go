@@ -60,13 +60,15 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupHomeDir(commonCmdData, cmd)
 	common.SetupSSHKey(commonCmdData, cmd)
 
-	common.SetupPullUsername(&CommonCmdData, cmd)
-	common.SetupPullPassword(&CommonCmdData, cmd)
+	common.SetupPullUsername(commonCmdData, cmd)
+	common.SetupPullPassword(commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	common.SetupStagesRepo(commonCmdData, cmd)
+	common.SetupStagesUsername(commonCmdData, cmd)
+	common.SetupStagesPassword(commonCmdData, cmd)
 
 	return cmd
 }

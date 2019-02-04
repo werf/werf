@@ -74,6 +74,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesUsername(&CommonCmdData, cmd)
+	common.SetupStagesPassword(&CommonCmdData, cmd)
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")

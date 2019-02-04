@@ -49,6 +49,11 @@ These values includes project name, docker images ids and other.`),
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
+
+	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesUsername(&CommonCmdData, cmd)
+	common.SetupStagesPassword(&CommonCmdData, cmd)
+
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")
 	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")

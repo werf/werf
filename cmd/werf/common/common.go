@@ -33,11 +33,15 @@ type CmdData struct {
 	KubeContext *string
 
 	StagesRepo     *string
+	StagesUsername *string
+	StagesPassword *string
+
 	ImagesRepo     *string
 	ImagesUsername *string
 	ImagesPassword *string
-	PullUsername   *string
-	PullPassword   *string
+
+	PullUsername *string
+	PullPassword *string
 }
 
 func GetLongCommandDescription(text string) string {
@@ -99,6 +103,16 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesRepo = new(string)
 	cmd.Flags().StringVarP(cmdData.StagesRepo, "stages", "s", "", "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now)")
+}
+
+func SetupStagesUsername(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.StagesUsername = new(string)
+	cmd.Flags().StringVarP(cmdData.StagesUsername, "stages-username", "", "", "Stages Docker repo username")
+}
+
+func SetupStagesPassword(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.StagesPassword = new(string)
+	cmd.Flags().StringVarP(cmdData.StagesPassword, "stages-password", "", "", "Stages Docker repo password")
 }
 
 func SetupPullUsername(cmdData *CmdData, cmd *cobra.Command) {

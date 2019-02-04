@@ -39,7 +39,11 @@ func NewCmd() *cobra.Command {
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
+
 	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesUsername(&CommonCmdData, cmd)
+	common.SetupStagesPassword(&CommonCmdData, cmd)
+
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted read permission)")
 	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted read permission)")

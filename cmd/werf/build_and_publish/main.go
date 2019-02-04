@@ -62,10 +62,12 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 
 	common.SetupTag(&CommonCmdData, cmd)
 
-	common.SetupStagesRepo(&CommonCmdData, cmd)
-
 	common.SetupPullUsername(&CommonCmdData, cmd)
 	common.SetupPullPassword(&CommonCmdData, cmd)
+
+	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesUsername(&CommonCmdData, cmd)
+	common.SetupStagesPassword(&CommonCmdData, cmd)
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to push images)")

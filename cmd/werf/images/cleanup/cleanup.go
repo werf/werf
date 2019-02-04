@@ -45,6 +45,7 @@ func NewCmd() *cobra.Command {
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
+
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupCleanupImagesUsername(&CommonCmdData, cmd)
 	common.SetupCleanupImagesPassword(&CommonCmdData, cmd)

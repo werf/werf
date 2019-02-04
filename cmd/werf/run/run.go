@@ -37,8 +37,8 @@ func NewCmd() *cobra.Command {
 
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
-		Short:                 "Run container for specified image",
+		Use:   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
+		Short: "Run container for specified image",
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
   $ werf run application
@@ -93,6 +93,8 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	common.SetupStagesRepo(commonCmdData, cmd)
+	common.SetupStagesUsername(commonCmdData, cmd)
+	common.SetupStagesPassword(commonCmdData, cmd)
 
 	return cmd
 }
