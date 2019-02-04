@@ -1,7 +1,4 @@
 <p align="center">
-  <img src="https://github.com/flant/werf/raw/master/logo.png" style="max-height:100%;" height="100">
-</p>
-<p align="center">
   <a href='https://bintray.com/flant/werf/werf/_latestVersion'><img src='https://api.bintray.com/packages/flant/werf/werf/images/download.svg'></a>
   <a href="https://travis-ci.org/flant/werf"><img alt="Build Status" src="https://travis-ci.org/flant/werf.svg" style="max-width:100%;"></a>
   <a href="https://godoc.org/github.com/flant/werf"><img src="https://godoc.org/github.com/flant/werf?status.svg" alt="GoDoc"></a>
