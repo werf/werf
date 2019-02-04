@@ -16,7 +16,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "slugify STRING",
 		DisableFlagsInUseLine: true,
-		Short:                 "Prints slugged string by specified format",
+		Short:                 "Print slugged string by specified format",
 		Example: `  $ werf slugify -f kubernetes-namespace feature-fix-2
   feature-fix-2
 

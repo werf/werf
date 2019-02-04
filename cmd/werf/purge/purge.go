@@ -15,17 +15,16 @@ import (
 )
 
 var CmdData struct {
-	DryRun bool
 }
 
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "purge",
+		Use:                   "purge",
 		DisableFlagsInUseLine: true,
-		Short: "Complete purge project images registry and stages storage",
-		Long:  common.GetLongCommandDescription("Shortcut for werf images purge and werf stages purge commands"),
+		Short:                 "Complete purge project images registry and stages storage",
+		Long:                  common.GetLongCommandDescription("Shortcut for werf images purge and werf stages purge commands"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
@@ -45,7 +44,7 @@ func NewCmd() *cobra.Command {
 	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images)")
 	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images)")
 
-	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	common.SetupDryRun(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -109,7 +108,7 @@ func runPurge() error {
 	commonRepoOptions := cleanup.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imageNames,
-		DryRun:      CmdData.DryRun,
+		DryRun:      CommonCmdData.DryRun,
 	}
 
 	if err := cleanup.ImagesPurge(commonRepoOptions); err != nil {
@@ -118,7 +117,7 @@ func runPurge() error {
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
+		CommonOptions: cleanup.CommonOptions{DryRun: CommonCmdData.DryRun},
 	}
 
 	if err := cleanup.StagesPurge(commonProjectOptions); err != nil {

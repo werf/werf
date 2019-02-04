@@ -15,15 +15,16 @@ import (
 )
 
 var CmdData struct {
-	DryRun bool
 }
 
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cleanup",
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
+		Short:                 "Cleanup project stages from stages storage",
+		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfHome),
 		},
@@ -48,7 +49,7 @@ func NewCmd() *cobra.Command {
 	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted read permission)")
 	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted read permission)")
 
-	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	common.SetupDryRun(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -115,14 +116,14 @@ func runSync() error {
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
+		CommonOptions: cleanup.CommonOptions{DryRun: CommonCmdData.DryRun},
 	}
 
 	commonRepoOptions := cleanup.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		StagesRepo:  stagesRepo,
 		ImagesNames: imageNames,
-		DryRun:      CmdData.DryRun,
+		DryRun:      CommonCmdData.DryRun,
 	}
 
 	stagesCleanupOptions := cleanup.StagesCleanupOptions{

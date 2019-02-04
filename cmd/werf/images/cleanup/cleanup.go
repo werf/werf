@@ -20,16 +20,15 @@ import (
 
 var CmdData struct {
 	WithoutKube bool
-
-	DryRun bool
 }
 
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cleanup",
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
+		Short:                 "Cleanup project images from images repo",
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupImagesPassword, common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome),
 		},
@@ -50,9 +49,9 @@ func NewCmd() *cobra.Command {
 	common.SetupCleanupImagesUsername(&CommonCmdData, cmd)
 	common.SetupCleanupImagesPassword(&CommonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
+	common.SetupDryRun(&CommonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
 
 	return cmd
 }
@@ -117,7 +116,7 @@ func runCleanup() error {
 	commonRepoOptions := cleanup.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imagesNames,
-		DryRun:      CmdData.DryRun,
+		DryRun:      CommonCmdData.DryRun,
 	}
 
 	var localRepo *git_repo.Local

@@ -20,17 +20,15 @@ import (
 
 var CmdData struct {
 	WithoutKube bool
-
-	DryRun bool
 }
 
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cleanup",
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short: "Cleanup unused images from project images registry and stages storage",
+		Short:                 "Cleanup unused images from project images registry and stages storage",
 		Long: common.GetLongCommandDescription(`Cleanup unused images from project images registry and stages storage.
 
 This is the main cleanup command for periodical automated images cleaning. Command is supposed to be called daily for the project.
@@ -60,9 +58,9 @@ First step is 'werf images cleanup' command, which will delete unused images fro
 	common.SetupCleanupImagesUsername(&CommonCmdData, cmd)
 	common.SetupCleanupImagesPassword(&CommonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
+	common.SetupDryRun(&CommonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
 
 	return cmd
 }
@@ -133,7 +131,7 @@ func runCleanup() error {
 		ImagesRepo:  imagesRepo,
 		StagesRepo:  stagesRepo,
 		ImagesNames: imagesNames,
-		DryRun:      CmdData.DryRun,
+		DryRun:      CommonCmdData.DryRun,
 	}
 
 	var localGitRepo *git_repo.Local
@@ -149,7 +147,7 @@ func runCleanup() error {
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
+		CommonOptions: cleanup.CommonOptions{DryRun: CommonCmdData.DryRun},
 	}
 
 	imagesCleanupOptions := cleanup.ImagesCleanupOptions{

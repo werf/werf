@@ -14,17 +14,16 @@ import (
 )
 
 var CmdData struct {
-	DryRun bool
 }
 
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "purge",
+		Use:                   "purge",
 		DisableFlagsInUseLine: true,
-		Short: "Purge project stages from stages storage",
-		Long:  common.GetLongCommandDescription("Purge project stages from stages storage"),
+		Short:                 "Purge project stages from stages storage",
+		Long:                  common.GetLongCommandDescription("Purge project stages from stages storage"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
@@ -40,7 +39,7 @@ func NewCmd() *cobra.Command {
 	common.SetupStagesUsername(&CommonCmdData, cmd)
 	common.SetupStagesPassword(&CommonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	common.SetupDryRun(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -78,7 +77,7 @@ func runPurge() error {
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CmdData.DryRun},
+		CommonOptions: cleanup.CommonOptions{DryRun: CommonCmdData.DryRun},
 	}
 
 	if err := cleanup.StagesPurge(commonProjectOptions); err != nil {

@@ -15,15 +15,15 @@ import (
 )
 
 var CmdData struct {
-	DryRun bool
 }
 
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "purge",
+		Use:                   "purge",
 		DisableFlagsInUseLine: true,
+		Short:                 "Purge project images from images repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
@@ -39,7 +39,7 @@ func NewCmd() *cobra.Command {
 	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images)")
 	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images)")
 
-	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	common.SetupDryRun(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -98,7 +98,7 @@ func runPurge() error {
 	commonRepoOptions := cleanup.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imageNames,
-		DryRun:      CmdData.DryRun,
+		DryRun:      CommonCmdData.DryRun,
 	}
 
 	if err := cleanup.ImagesPurge(commonRepoOptions); err != nil {

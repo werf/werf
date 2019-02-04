@@ -42,6 +42,8 @@ type CmdData struct {
 
 	PullUsername *string
 	PullPassword *string
+
+	DryRun bool
 }
 
 func GetLongCommandDescription(text string) string {
@@ -168,6 +170,10 @@ func setupImagesUsername(cmdData *CmdData, cmd *cobra.Command, value, usage stri
 func setupImagesPassword(cmdData *CmdData, cmd *cobra.Command, value, usage string) {
 	cmdData.ImagesPassword = new(string)
 	cmd.Flags().StringVarP(cmdData.ImagesPassword, "images-password", "p", value, usage)
+}
+
+func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
+	cmd.Flags().BoolVarP(&cmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 }
 
 func GetStagesRepo(cmdData *CmdData) (string, error) {

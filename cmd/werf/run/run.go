@@ -20,7 +20,6 @@ import (
 
 type CmdDataType struct {
 	Shell            bool
-	DryRun           bool
 	RawDockerOptions string
 
 	DockerOptions []string
@@ -37,8 +36,8 @@ func NewCmd() *cobra.Command {
 
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
-		Short: "Run container for specified image",
+		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
+		Short:                 "Run container for specified image",
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
   $ werf run application
@@ -87,14 +86,14 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	common.SetupHomeDir(commonCmdData, cmd)
 	common.SetupSSHKey(commonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
-	cmd.Flags().StringVarP(&CmdData.RawDockerOptions, "docker-options", "", "", "Define docker run options")
-
-	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
-
 	common.SetupStagesRepo(commonCmdData, cmd)
 	common.SetupStagesUsername(commonCmdData, cmd)
 	common.SetupStagesPassword(commonCmdData, cmd)
+
+	common.SetupDryRun(&CommonCmdData, cmd)
+
+	cmd.Flags().BoolVarP(&CmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
+	cmd.Flags().StringVarP(&CmdData.RawDockerOptions, "docker-options", "", "", "Define docker run options")
 
 	return cmd
 }
@@ -195,7 +194,7 @@ func runRun(commonCmdData *common.CmdData) error {
 	dockerRunArgs = append(dockerRunArgs, dockerImageName)
 	dockerRunArgs = append(dockerRunArgs, CmdData.DockerCommand...)
 
-	if CmdData.DryRun {
+	if CommonCmdData.DryRun {
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
 	} else {
 		docker.CliRun(dockerRunArgs...)
