@@ -47,7 +47,7 @@ If one or more IMAGE_NAME parameters specified, werf will tag only these images 
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to tag images for. WERF_IMAGES_REGISTRY will be used by default if available.")
+	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to tag images for. WERF_IMAGES_REPO will be used by default if available.")
 
 	common.SetupTag(&CommonCmdData, cmd)
 

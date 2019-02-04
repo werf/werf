@@ -23,7 +23,7 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "purge",
 		DisableFlagsInUseLine: true,
-		Short:                 "Complete purge project images registry and stages storage",
+		Short:                 "Complete purge project images repo and stages storage",
 		Long:                  common.GetLongCommandDescription("Shortcut for werf images purge and werf stages purge commands"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()

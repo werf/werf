@@ -99,10 +99,10 @@ func runGetServiceValues() error {
 	}
 
 	imagesRepo := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
-	withoutRegistry := true
+	withoutRepo := true
 
 	if imagesRepo != "" {
-		withoutRegistry = false
+		withoutRepo = false
 
 		var err error
 
@@ -136,7 +136,7 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, withoutRegistry)
+	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, withoutRepo)
 
 	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagScheme, images)
 	if err != nil {

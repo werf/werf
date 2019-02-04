@@ -59,10 +59,10 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 }
 
 func generateGitlabEnvs() error {
-	imagesRegistry := os.Getenv("CI_REGISTRY_IMAGE")
+	imagesRepo := os.Getenv("CI_REGISTRY_IMAGE")
 	var imagesUsername, imagesPassword string
-	if imagesRegistry != "" {
-		isGRC, err := docker_registry.IsGCR(imagesRegistry)
+	if imagesRepo != "" {
+		isGRC, err := docker_registry.IsGCR(imagesRepo)
 		if err != nil {
 			return err
 		}
@@ -87,9 +87,9 @@ func generateGitlabEnvs() error {
 		ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
 	}
 
-	fmt.Println("### IMAGES REGISTRY\n")
+	fmt.Println("### IMAGES REPO\n")
 
-	printExport("export WERF_IMAGES_REGISTRY=\"%s\"\n", imagesRegistry)
+	printExport("export WERF_IMAGES_REPO=\"%s\"\n", imagesRepo)
 	printExport("export WERF_IMAGES_USERNAME=\"%s\"\n", imagesUsername)
 	printExport("export WERF_IMAGES_PASSWORD=\"%s\"\n", imagesPassword)
 

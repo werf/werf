@@ -30,15 +30,15 @@ func NewCmd() *cobra.Command {
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "publish [IMAGE_NAME...]",
-		Short: "Build images and push into Docker registry",
-		Long: common.GetLongCommandDescription(`Build final images and push into Docker registry.
+		Short: "Build images and push into Docker repo",
+		Long: common.GetLongCommandDescription(`Build final images and push into Docker repo.
 
-New docker layer with service info about tagging scheme will be built for each image. Images will be pushed into docker registry with the names IMAGE_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
+New docker layer with service info about tagging scheme will be built for each image. Images will be pushed into docker repo with the names IMAGE_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
 
 If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome, common.WerfTmp),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfInsecureRepo, common.WerfHome, common.WerfTmp),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return common.LogRunningTime(func() error {

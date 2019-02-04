@@ -28,14 +28,14 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short:                 "Cleanup unused images from project images registry and stages storage",
-		Long: common.GetLongCommandDescription(`Cleanup unused images from project images registry and stages storage.
+		Short:                 "Cleanup unused images from project images repo and stages storage",
+		Long: common.GetLongCommandDescription(`Cleanup unused images from project images repo and stages storage.
 
 This is the main cleanup command for periodical automated images cleaning. Command is supposed to be called daily for the project.
 
 First step is 'werf images cleanup' command, which will delete unused images from images repo. Second step is 'werf stages cleanup' command, which will delete unused stages from stages repo (or locally) to be in sync with the images repo`),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupImagesPassword, common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupImagesPassword, common.WerfDockerConfig, common.WerfInsecureRepo, common.WerfHome),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()

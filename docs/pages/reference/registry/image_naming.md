@@ -22,7 +22,7 @@ The procedure of creating such a layer will be referred to as **werf tag procedu
 
 ## `--repo REPO` option
 
-For all commands related to a docker registry, werf uses a single option named `--repo REPO`. `REPO` is a required param, but `--repo` option may be omitted in Gitlab CI. Werf will try to autodetect repo by environment variable `WERF_IMAGES_REGISTRY` if available.
+For all commands related to a docker registry, werf uses a single option named `--repo REPO`. `REPO` is a required param, but `--repo` option may be omitted in Gitlab CI. Werf will try to autodetect repo by environment variable `WERF_IMAGES_REPO` if available.
 
 Using `REPO` werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
 

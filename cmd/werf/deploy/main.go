@@ -35,7 +35,7 @@ func NewCmd() *cobra.Command {
 
 Command will create Helm Release and wait until all resources of the release are become ready.
 
-Deploy needs the same parameters as push to construct image names: repo and tags. Docker images names are constructed from paramters as IMAGES_REPO/IMAGE_NAME:TAG. Deploy will fetch built image ids from Docker registry. So images should be published prior running deploy.
+Deploy needs the same parameters as push to construct image names: repo and tags. Docker images names are constructed from paramters as IMAGES_REPO/IMAGE_NAME:TAG. Deploy will fetch built image ids from Docker repo. So images should be published prior running deploy.
 
 Helm chart directory .helm should exists and contain valid Helm chart.
 

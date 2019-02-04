@@ -17,7 +17,7 @@ const (
 	WerfTmp                                  Env = "WERF_TMP"
 	WerfAnsibleArgs                          Env = "WERF_ANSIBLE_ARGS"
 	WerfDockerConfig                         Env = "WERF_DOCKER_CONFIG"
-	WerfInsecureRegistry                     Env = "WERF_INSECURE_REGISTRY"
+	WerfInsecureRepo                         Env = "WERF_INSECURE_REPO"
 	WerfSecretKey                            Env = "WERF_SECRET_KEY"
 	WerfCleanupImagesPassword                Env = "WERF_CLEANUP_IMAGES_PASSWORD"
 	WerfDisableStagesCleanupDatePeriodPolicy Env = "WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY"
@@ -32,7 +32,7 @@ var envDescription = map[Env]string{
 	WerfTmp:                                  "",
 	WerfAnsibleArgs:                          "",
 	WerfDockerConfig:                         "",
-	WerfInsecureRegistry:                     "",
+	WerfInsecureRepo:                         "",
 	WerfSecretKey:                            "",
 	WerfCleanupImagesPassword:                "",
 	WerfDisableStagesCleanupDatePeriodPolicy: "",

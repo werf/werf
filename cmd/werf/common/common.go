@@ -129,7 +129,7 @@ func SetupPullPassword(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", os.Getenv("WERF_IMAGES_REGISTRY"), "Docker Repo to store images")
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images")
 }
 
 func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command) {
@@ -144,7 +144,7 @@ func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupCleanupImagesPassword(cmdData *CmdData, cmd *cobra.Command) {
-	usage := "Docker registry password (granted permission to read images info and delete images)"
+	usage := "Docker repo password (granted permission to read images info and delete images)"
 
 	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") != "" {
 		setupImagesPassword(cmdData, cmd, os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD"), usage)

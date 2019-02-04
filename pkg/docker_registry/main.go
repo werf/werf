@@ -12,7 +12,7 @@ import (
 
 	"github.com/flant/go-containerregistry/pkg/authn"
 	"github.com/flant/go-containerregistry/pkg/name"
-	v1 "github.com/flant/go-containerregistry/pkg/v1"
+	"github.com/flant/go-containerregistry/pkg/v1"
 	"github.com/flant/go-containerregistry/pkg/v1/remote"
 	"github.com/flant/go-containerregistry/pkg/v1/remote/transport"
 
@@ -286,7 +286,7 @@ func image(reference string) (v1.Image, name.Reference, error) {
 func getHttpTransport() (transport http.RoundTripper) {
 	transport = http.DefaultTransport
 
-	if os.Getenv("WERF_INSECURE_REGISTRY") == "1" {
+	if os.Getenv("WERF_INSECURE_REPO") == "1" {
 		defaultTransport := http.DefaultTransport.(*http.Transport)
 
 		newTransport := &http.Transport{

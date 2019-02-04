@@ -31,12 +31,12 @@ var CommonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build-and-publish [IMAGE_NAME...]",
-		Short: "Build stages then publish images into Docker registry",
-		Long: common.GetLongCommandDescription(`Build stages then publish images into Docker registry.
+		Short: "Build stages then publish images into Docker repo",
+		Long: common.GetLongCommandDescription(`Build stages then publish images into Docker repo.
 
-New docker layer with service info about tagging scheme will be built for each image. Images will be pushed into docker registry with the names IMAGE_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
+New docker layer with service info about tagging scheme will be built for each image. Images will be pushed into docker repo with the names IMAGE_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
 
-The result of build-and-publish command is a stages cache for images and named images pushed into the docker registry.
+The result of build-and-publish command is a stages cache for images and named images pushed into the docker repo.
 
 If one or more IMAGE_NAME parameters specified, werf will build images stages and publish only these images from werf.yaml`),
 		DisableFlagsInUseLine: true,
