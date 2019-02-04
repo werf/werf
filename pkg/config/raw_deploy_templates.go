@@ -1,10 +1,10 @@
 package config
 
 type rawDeployTemplates struct {
-	HelmRelease             *string `yaml:"helmRelease,omitempty"`
-	HelmReleaseSlug         *bool   `yaml:"helmReleaseSlug,omitempty"`
-	KubernetesNamespace     *string `yaml:"kubernetesNamespace,omitempty"`
-	KubernetesNamespaceSlug *bool   `yaml:"kubernetesNamespaceSlug,omitempty"`
+	HelmRelease     *string `yaml:"helmRelease,omitempty"`
+	HelmReleaseSlug *bool   `yaml:"helmReleaseSlug,omitempty"`
+	Namespace       *string `yaml:"namespace,omitempty"`
+	NamespaceSlug   *bool   `yaml:"namespaceSlug,omitempty"`
 
 	rawMeta *rawMeta
 
@@ -32,8 +32,8 @@ func (c *rawDeployTemplates) UnmarshalYAML(unmarshal func(interface{}) error) er
 		return newDetailedConfigError("helmRelease field cannot be empty!", nil, c.rawMeta.doc)
 	}
 
-	if c.KubernetesNamespace != nil && *c.KubernetesNamespace == "" {
-		return newDetailedConfigError("kubernetesNamespace field cannot be empty!", nil, c.rawMeta.doc)
+	if c.Namespace != nil && *c.Namespace == "" {
+		return newDetailedConfigError("namespace field cannot be empty!", nil, c.rawMeta.doc)
 	}
 
 	return nil
@@ -51,13 +51,13 @@ func (c *rawDeployTemplates) toDeployTemplates() DeployTemplates {
 		deployTemplates.HelmReleaseSlug = *c.HelmReleaseSlug
 	}
 
-	if c.KubernetesNamespace != nil {
-		deployTemplates.KubernetesNamespace = *c.KubernetesNamespace
+	if c.Namespace != nil {
+		deployTemplates.Namespace = *c.Namespace
 	}
 
-	deployTemplates.KubernetesNamespaceSlug = true
-	if c.KubernetesNamespaceSlug != nil {
-		deployTemplates.KubernetesNamespaceSlug = *c.KubernetesNamespaceSlug
+	deployTemplates.NamespaceSlug = true
+	if c.NamespaceSlug != nil {
+		deployTemplates.NamespaceSlug = *c.NamespaceSlug
 	}
 
 	return deployTemplates

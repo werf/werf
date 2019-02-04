@@ -43,6 +43,9 @@ import (
 	helm_lint "github.com/flant/werf/cmd/werf/helm/lint"
 	helm_render "github.com/flant/werf/cmd/werf/helm/render"
 
+	meta_get_helm_release "github.com/flant/werf/cmd/werf/meta/get_helm_release"
+	meta_get_namespace "github.com/flant/werf/cmd/werf/meta/get_namespace"
+
 	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/docs"
 	"github.com/flant/werf/cmd/werf/version"
@@ -87,10 +90,11 @@ Find more information at https://flant.github.io/werf`),
 			},
 		},
 		{
-			Message: "Tools Commands:",
+			Message: "Toolbox:",
 			Commands: []*cobra.Command{
 				slugify.NewCmd(),
 				ci_env.NewCmd(),
+				metaCmd(),
 			},
 		},
 		{
@@ -122,7 +126,7 @@ Find more information at https://flant.github.io/werf`),
 func imagesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "images",
-		Short: "Commands to work with images",
+		Short: "Work with images",
 	}
 	cmd.AddCommand(
 		images_publish.NewCmd(),
@@ -136,7 +140,7 @@ func imagesCmd() *cobra.Command {
 func stagesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "stages",
-		Short: "Commands to work with stages, which are cache for images",
+		Short: "Work with stages, which are cache for images",
 	}
 	cmd.AddCommand(
 		stages_build.NewCmd(),
@@ -150,7 +154,7 @@ func stagesCmd() *cobra.Command {
 func helmCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "helm",
-		Short: "Commands to manage deployment with helm",
+		Short: "Manage application deployment with helm",
 	}
 	cmd.AddCommand(
 		helm_get_service_values.NewCmd(),
@@ -179,7 +183,7 @@ func hostCmd() *cobra.Command {
 func secretCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "secret",
-		Short: "Commands to work with secrets",
+		Short: "Work with secrets",
 	}
 	cmd.AddCommand(
 		helm_secret_key_generate.NewCmd(),
@@ -187,6 +191,19 @@ func secretCmd() *cobra.Command {
 		helm_secret_extract.NewCmd(),
 		helm_secret_edit.NewCmd(),
 		helm_secret_regenerate.NewCmd(),
+	)
+
+	return cmd
+}
+
+func metaCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "meta",
+		Short: "Work with werf project meta configuration",
+	}
+	cmd.AddCommand(
+		meta_get_helm_release.NewCmd(),
+		meta_get_namespace.NewCmd(),
 	)
 
 	return cmd
