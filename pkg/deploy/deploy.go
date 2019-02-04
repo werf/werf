@@ -47,12 +47,15 @@ func Deploy(projectDir, imagesRepo, release, namespace string, tag string, tagSc
 	if err != nil {
 		return err
 	}
+	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
 	return werfChart.Deploy(release, namespace, helm.HelmChartOptions{
 		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: opts.KubeContext},
 		Timeout:           opts.Timeout,
-		Set:               opts.Set,
-		SetString:         opts.SetString,
-		Values:            opts.Values,
+		HelmChartValuesOptions: helm.HelmChartValuesOptions{
+			Set:       opts.Set,
+			SetString: opts.SetString,
+			Values:    opts.Values,
+		},
 	})
 }

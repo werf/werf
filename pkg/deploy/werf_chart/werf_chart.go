@@ -13,10 +13,8 @@ import (
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/secret"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/werf"
 	"github.com/ghodss/yaml"
 	"github.com/otiai10/copy"
-	uuid "github.com/satori/go.uuid"
 )
 
 const (
@@ -149,15 +147,17 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.HelmChartOptions) error {
 	return helm.DeployHelmChart(chart.ChartDir, releaseName, namespace, helm.HelmChartOptions{
 		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: opts.KubeContext},
-		Set:               append(chart.Set, opts.Set...),
-		SetString:         append(chart.SetString, opts.SetString...),
-		Values:            append(chart.Values, opts.Values...),
-		DryRun:            opts.DryRun,
-		Debug:             opts.Debug,
+		HelmChartValuesOptions: helm.HelmChartValuesOptions{
+			Set:       append(chart.Set, opts.Set...),
+			SetString: append(chart.SetString, opts.SetString...),
+			Values:    append(chart.Values, opts.Values...),
+		},
+		DryRun: opts.DryRun,
+		Debug:  opts.Debug,
 	})
 }
 
-func (chart *WerfChart) Render(namespace string) (string, error) {
+func (chart *WerfChart) Render(namespace string, opts helm.HelmChartValuesOptions) (string, error) {
 	args := []string{"template", chart.ChartDir}
 
 	args = append(args, "--namespace", namespace)
@@ -169,6 +169,16 @@ func (chart *WerfChart) Render(namespace string) (string, error) {
 		args = append(args, "--set-string", setString)
 	}
 	for _, values := range chart.Values {
+		args = append(args, "--values", values)
+	}
+
+	for _, set := range opts.Set {
+		args = append(args, "--set", set)
+	}
+	for _, setString := range opts.SetString {
+		args = append(args, "--set-string", setString)
+	}
+	for _, values := range opts.Values {
 		args = append(args, "--values", values)
 	}
 
@@ -184,36 +194,9 @@ type ChartConfig struct {
 	Name string `json:"name"`
 }
 
-func (chart *WerfChart) Lint() error {
-	tmpLintPath := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-lint-%s", uuid.NewV4().String()))
-	defer os.RemoveAll(tmpLintPath)
+func (chart *WerfChart) Lint(opts helm.HelmChartValuesOptions) error {
+	args := []string{"lint", chart.ChartDir} // TODO: opts.Strict
 
-	err := os.MkdirAll(tmpLintPath, os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	chartConfigPath := filepath.Join(chart.ChartDir, "Chart.yaml")
-
-	data, err := ioutil.ReadFile(chartConfigPath)
-	if err != nil {
-		return fmt.Errorf("error reading %s: %s", chartConfigPath, err)
-	}
-
-	if debug() {
-		fmt.Printf("Read chart config:\n%s\n", data)
-	}
-
-	var cc ChartConfig
-	err = yaml.Unmarshal(data, &cc)
-	if err != nil {
-		return fmt.Errorf("bad chart config %s: %s", chartConfigPath, err)
-	}
-
-	tmpChartDir := filepath.Join(tmpLintPath, cc.Name)
-	err = copy.Copy(chart.ChartDir, tmpChartDir)
-
-	args := []string{"lint", tmpChartDir, "--strict"}
 	for _, set := range chart.Set {
 		args = append(args, "--set", set)
 	}
@@ -221,6 +204,16 @@ func (chart *WerfChart) Lint() error {
 		args = append(args, "--set-string", setString)
 	}
 	for _, values := range chart.Values {
+		args = append(args, "--values", values)
+	}
+
+	for _, set := range opts.Set {
+		args = append(args, "--set", set)
+	}
+	for _, setString := range opts.SetString {
+		args = append(args, "--set-string", setString)
+	}
+	for _, values := range opts.Values {
 		args = append(args, "--values", values)
 	}
 

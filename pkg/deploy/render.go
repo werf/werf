@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/tag_scheme"
 )
 
@@ -37,8 +38,13 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 	if err != nil {
 		return err
 	}
+	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	data, err := werfChart.Render(namespace)
+	data, err := werfChart.Render(namespace, helm.HelmChartValuesOptions{
+		Set:       opts.Set,
+		SetString: opts.SetString,
+		Values:    opts.Values,
+	})
 	if err != nil {
 		return err
 	}

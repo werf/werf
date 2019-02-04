@@ -40,6 +40,8 @@ import (
 	helm_deploy_chart "github.com/flant/werf/cmd/werf/helm/deploy_chart"
 	helm_generate_chart "github.com/flant/werf/cmd/werf/helm/generate_chart"
 	helm_get_service_values "github.com/flant/werf/cmd/werf/helm/get_service_values"
+	helm_lint "github.com/flant/werf/cmd/werf/helm/lint"
+	helm_render "github.com/flant/werf/cmd/werf/helm/render"
 
 	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/docs"
@@ -154,6 +156,8 @@ func helmCmd() *cobra.Command {
 		helm_get_service_values.NewCmd(),
 		helm_generate_chart.NewCmd(),
 		helm_deploy_chart.NewCmd(),
+		helm_lint.NewCmd(),
+		helm_render.NewCmd(),
 		secretCmd(),
 	)
 

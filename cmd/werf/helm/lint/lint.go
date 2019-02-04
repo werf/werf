@@ -23,7 +23,7 @@ var CommonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "lint",
-		Short: "Run lint procedure for the Helm chart",
+		Short: "Run lint procedure for the Werf chart",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),

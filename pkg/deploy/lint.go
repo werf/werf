@@ -3,6 +3,7 @@ package deploy
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/tag_scheme"
 
 	"github.com/flant/werf/pkg/config"
@@ -41,6 +42,11 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 	if err != nil {
 		return err
 	}
+	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	return werfChart.Lint()
+	return werfChart.Lint(helm.HelmChartValuesOptions{
+		Set:       opts.Set,
+		SetString: opts.SetString,
+		Values:    opts.Values,
+	})
 }

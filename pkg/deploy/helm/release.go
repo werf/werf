@@ -74,16 +74,20 @@ func doPurgeHelmRelease(releaseName string, opts CommonHelmOptions) error {
 	return nil
 }
 
-type HelmChartOptions struct {
+type HelmChartValuesOptions struct {
 	Set       []string
 	SetString []string
 	Values    []string
-	Timeout   time.Duration
+}
+
+type HelmChartOptions struct {
+	Timeout time.Duration
 
 	DryRun bool
 	Debug  bool
 
 	CommonHelmOptions
+	HelmChartValuesOptions
 }
 
 func withLockedHelmRelease(releaseName string, f func() error) error {

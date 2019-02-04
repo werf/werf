@@ -91,8 +91,10 @@ func runDeployChart(chartDir string, releaseName string) error {
 	return werfChart.Deploy(releaseName, namespace, helm.HelmChartOptions{
 		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: kubeContext},
 		Timeout:           time.Duration(CmdData.Timeout) * time.Second,
-		Set:               CmdData.Set,
-		SetString:         CmdData.SetString,
-		Values:            CmdData.Values,
+		HelmChartValuesOptions: helm.HelmChartValuesOptions{
+			Set:       CmdData.Set,
+			SetString: CmdData.SetString,
+			Values:    CmdData.Values,
+		},
 	})
 }

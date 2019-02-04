@@ -23,7 +23,7 @@ var CommonCmdData common.CmdData
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "render",
-		Short: "Render Helm chart templates to stdout",
+		Short: "Render Werf chart templates to stdout",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
