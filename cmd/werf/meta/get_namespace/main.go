@@ -12,9 +12,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "get-namespace",
+		Use:                   "get-namespace",
 		DisableFlagsInUseLine: true,
-		Short: "Prints Kubernetes Namespace that will be used in current configuration with specified params",
+		Short:                 "Print Kubernetes Namespace that will be used in current configuration with specified params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGetNamespace()
 		},
