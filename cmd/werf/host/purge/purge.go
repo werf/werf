@@ -20,17 +20,12 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "purge",
+		Use: "purge",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			err := runReset()
-			if err != nil {
-				return fmt.Errorf("host purge failed: %s", err)
-			}
-
-			return nil
+			return runReset()
 		},
 	}
 

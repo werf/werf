@@ -29,12 +29,7 @@ func NewCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			err := runPurge()
-			if err != nil {
-				return fmt.Errorf("purge failed: %s", err)
-			}
-
-			return nil
+			return runPurge()
 		},
 	}
 

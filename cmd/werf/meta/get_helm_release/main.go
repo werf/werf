@@ -16,10 +16,7 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short: "Prints Helm Release name that will be used in current configuration with specified params",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := runGetRelease(); err != nil {
-				return fmt.Errorf("get-helm-release failed: %s", err)
-			}
-			return nil
+			return runGetRelease()
 		},
 	}
 

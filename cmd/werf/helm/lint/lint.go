@@ -29,11 +29,7 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runLint()
-			if err != nil {
-				return fmt.Errorf("lint failed: %s", err)
-			}
-			return nil
+			return runLint()
 		},
 	}
 

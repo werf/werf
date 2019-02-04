@@ -44,12 +44,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 			return common.LogRunningTime(func() error {
 				common.LogVersion()
 
-				err := runImagesPublish(commonCmdData, args)
-				if err != nil {
-					return fmt.Errorf("images publish failed: %s", err)
-				}
-
-				return err
+				return runImagesPublish(commonCmdData, args)
 			})
 		},
 	}

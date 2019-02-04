@@ -37,11 +37,7 @@ If one or more IMAGE_NAME parameters specified, werf will tag only these images 
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runTag(args)
-				if err != nil {
-					return fmt.Errorf("tag failed: %s", err)
-				}
-				return nil
+				return runTag(args)
 			})
 		},
 	}

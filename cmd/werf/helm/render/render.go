@@ -29,11 +29,7 @@ func NewCmd() *cobra.Command {
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runRender()
-			if err != nil {
-				return fmt.Errorf("render failed: %s", err)
-			}
-			return nil
+			return runRender()
 		},
 	}
 

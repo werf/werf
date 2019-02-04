@@ -21,19 +21,14 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "purge",
+		Use: "purge",
 		DisableFlagsInUseLine: true,
-		Short:                 "Purge project stages from stages storage",
-		Long:                  common.GetLongCommandDescription("Purge project stages from stages storage"),
+		Short: "Purge project stages from stages storage",
+		Long:  common.GetLongCommandDescription("Purge project stages from stages storage"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			err := runPurge()
-			if err != nil {
-				return fmt.Errorf("stages purge failed: %s", err)
-			}
-
-			return nil
+			return runPurge()
 		},
 	}
 

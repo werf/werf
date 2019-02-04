@@ -22,18 +22,13 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "cleanup",
+		Use: "cleanup",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runGC()
-				if err != nil {
-					return fmt.Errorf("host cleanup failed: %s", err)
-				}
-
-				return nil
+				return runGC()
 			})
 		},
 	}

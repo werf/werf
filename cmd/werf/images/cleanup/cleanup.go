@@ -37,12 +37,7 @@ func NewCmd() *cobra.Command {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runCleanup()
-				if err != nil {
-					return fmt.Errorf("images cleanup failed: %s", err)
-				}
-
-				return nil
+				return runCleanup()
 			})
 		},
 	}

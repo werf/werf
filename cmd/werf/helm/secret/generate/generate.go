@@ -34,11 +34,7 @@ Data can be provided in file by specifying --file-path option. Option --values s
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runSecretGenerate()
-			if err != nil {
-				return fmt.Errorf("secret generate failed: %s", err)
-			}
-			return nil
+			return runSecretGenerate()
 		},
 	}
 

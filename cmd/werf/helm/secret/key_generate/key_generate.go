@@ -20,11 +20,7 @@ func NewCmd() *cobra.Command {
 
 16-bytes key will be generated (AES-128).`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runSecretKeyGenerate()
-			if err != nil {
-				return fmt.Errorf("secret keygen failed: %s", err)
-			}
-			return nil
+			return runSecretKeyGenerate()
 		},
 	}
 

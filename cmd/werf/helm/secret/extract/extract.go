@@ -36,11 +36,7 @@ Data can be provided in a file by specifying --file-path option. Option --values
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runSecretExtract()
-			if err != nil {
-				return fmt.Errorf("secret extract failed: %s", err)
-			}
-			return nil
+			return runSecretExtract()
 		},
 	}
 

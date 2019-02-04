@@ -31,12 +31,7 @@ func NewCmd() *cobra.Command {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runSync()
-				if err != nil {
-					return fmt.Errorf("stages cleanup failed: %s", err)
-				}
-
-				return nil
+				return runSync()
 			})
 		},
 	}

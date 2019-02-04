@@ -43,11 +43,7 @@ The file can be raw secret file (by default) or secret values yaml file (with op
 		},
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := runSecretEdit(args[0])
-			if err != nil {
-				return fmt.Errorf("secret edit failed: %s", err)
-			}
-			return nil
+			return runSecretEdit(args[0])
 		},
 	}
 
