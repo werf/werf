@@ -70,8 +70,8 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupStagesPassword(&CommonCmdData, cmd)
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to push images)")
-	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted permission to push images)")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to push images, use WERF_IMAGES_USERNAME environment by default)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted permission to push images, use WERF_IMAGES_PASSWORD environment by default)")
 
 	return cmd
 }

@@ -77,9 +77,9 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TagGitCommit = new(string)
 
 	cmd.Flags().StringArrayVarP(cmdData.Tag, "tag", "", []string{}, "Add tag (can be used one or more times)")
-	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_AUTOTAG_GIT_BRANCH"), "Tag by git branch")
-	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_AUTOTAG_GIT_TAG"), "Tag by git tag")
-	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_AUTOTAG_GIT_COMMIT"), "Tag by git commit")
+	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_AUTOTAG_GIT_BRANCH"), "Tag by git branch (use WERF_AUTOTAG_GIT_BRANCH environment by default)")
+	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_AUTOTAG_GIT_TAG"), "Tag by git tag (use WERF_AUTOTAG_GIT_TAG environment by default)")
+	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_AUTOTAG_GIT_COMMIT"), "Tag by git commit (use WERF_AUTOTAG_GIT_COMMIT environment by default)")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
@@ -129,11 +129,14 @@ func SetupPullPassword(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images")
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (use WERF_IMAGES_REPO environment by default)")
 }
 
 func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command) {
-	usage := "Images Docker repo username (granted permission to read images info and delete images)"
+	usage := `Images Docker repo username (granted permission to read images info and delete images).
+Use by default:
+* werf-cleanup username if WERF_IMAGES_PASSWORD environment defined or 
+* WERF_IMAGES_USERNAME environment`
 
 	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") != "" {
 		setupImagesUsername(cmdData, cmd, "werf-cleanup", usage)
@@ -144,7 +147,10 @@ func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupCleanupImagesPassword(cmdData *CmdData, cmd *cobra.Command) {
-	usage := "Docker repo password (granted permission to read images info and delete images)"
+	usage := `Docker repo password (granted permission to read images info and delete images).
+Use by default:
+* WERF_CLEANUP_IMAGES_PASSWORD or 
+* WERF_IMAGES_PASSWORD environment`
 
 	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") != "" {
 		setupImagesPassword(cmdData, cmd, os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD"), usage)

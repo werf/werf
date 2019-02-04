@@ -46,8 +46,8 @@ func NewCmd() *cobra.Command {
 	common.SetupStagesPassword(&CommonCmdData, cmd)
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted read permission)")
-	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted read permission)")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted read permission, use WERF_IMAGES_USERNAME environment by default)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted read permission, use WERF_IMAGES_PASSWORD environment by default)")
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

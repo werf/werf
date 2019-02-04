@@ -17,7 +17,6 @@ const (
 	WerfDockerConfig                         Env = "WERF_DOCKER_CONFIG"
 	WerfInsecureRepo                         Env = "WERF_INSECURE_REPO"
 	WerfSecretKey                            Env = "WERF_SECRET_KEY"
-	WerfCleanupImagesPassword                Env = "WERF_CLEANUP_IMAGES_PASSWORD"
 	WerfDisableStagesCleanupDatePeriodPolicy Env = "WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY"
 	WerfGitTagsExpiryDatePeriodPolicy        Env = "WERF_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY"
 	WerfGitTagsLimitPolicy                   Env = "WERF_GIT_TAGS_LIMIT_POLICY"
@@ -30,7 +29,6 @@ var envDescription = map[Env]string{
 	WerfDockerConfig:                         "",
 	WerfInsecureRepo:                         "",
 	WerfSecretKey:                            "",
-	WerfCleanupImagesPassword:                "",
 	WerfDisableStagesCleanupDatePeriodPolicy: "",
 	WerfGitTagsExpiryDatePeriodPolicy:        "",
 	WerfGitTagsLimitPolicy:                   "",

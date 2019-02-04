@@ -59,8 +59,8 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	common.SetupStagesPassword(&CommonCmdData, cmd)
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")
-	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info, use WERF_IMAGES_USERNAME environment by default)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info, use WERF_IMAGES_PASSWORD environment by default)")
 
 	return cmd
 }
