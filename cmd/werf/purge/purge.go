@@ -21,10 +21,16 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "purge",
+		Use: "purge",
 		DisableFlagsInUseLine: true,
-		Short:                 "Complete purge project images repo and stages storage",
-		Long:                  common.GetLongCommandDescription("Shortcut for werf images purge and werf stages purge commands"),
+		Short: "Purge all project images from images repo and stages from stages repo (or locally)",
+		Long: common.GetLongCommandDescription(`Purge all project images from images repo and stages from stages repo (or locally).
+
+First step is 'werf images purge', which will delete all project images from images repo. Second step is 'werf stages purge', which will delete all stages from stages repo (or locally).
+
+Command allows deletion of all images of the project at once, meant to be used manually.
+
+WARNING: Images from images repo, that are being used in Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
