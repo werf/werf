@@ -30,9 +30,9 @@ func NewCmd() *cobra.Command {
 		Short: "Deploy Helm chart specified by path",
 		Long: common.GetLongCommandDescription(`Deploy Helm chart specified by path.
 
-If specified Helm chart is a Werf chart with additional values and contains werf-chart.yaml, then werf will pass all additinal values and data into helm.`),
+If specified Helm chart is a Werf chart with additional values and contains werf-chart.yaml, then werf will pass all additinal values and data into helm`),
 		DisableFlagsInUseLine: true,
-		Args: cobra.MinimumNArgs(2),
+		Args:                  cobra.MinimumNArgs(2),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfHome, common.WerfTmp),
 		},

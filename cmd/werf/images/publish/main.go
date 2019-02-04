@@ -35,7 +35,7 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 
 New docker layer with service info about tagging scheme will be built for each image. Images will be pushed into docker registry with the names IMAGE_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
 
-If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml.`),
+If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome, common.WerfTmp),

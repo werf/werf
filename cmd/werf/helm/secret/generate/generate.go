@@ -22,14 +22,14 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "generate",
+		Use:                   "generate",
 		DisableFlagsInUseLine: true,
-		Short: "Encrypt provided data",
+		Short:                 "Encrypt provided data",
 		Long: common.GetLongCommandDescription(`Encrypt provided data.
 
 Provide data onto stdin by default.
 
-Data can be provided in file by specifying --file-path option. Option --values should be specified in the case when values yaml file provided.`),
+Data can be provided in file by specifying --file-path option. Option --values should be specified in the case when values yaml file provided`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},

@@ -13,12 +13,12 @@ import (
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "keygen",
+		Use:                   "keygen",
 		DisableFlagsInUseLine: true,
-		Short: "Generate hex encryption key that can be used as WERF_SECRET_KEY",
+		Short:                 "Generate hex encryption key that can be used as WERF_SECRET_KEY",
 		Long: common.GetLongCommandDescription(`Generate hex key that can be used as WERF_SECRET_KEY.
 
-16-bytes key will be generated (AES-128).`),
+16-bytes key will be generated (AES-128)`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runSecretKeyGenerate()
 		},

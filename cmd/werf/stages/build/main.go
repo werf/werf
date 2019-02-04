@@ -41,7 +41,7 @@ func NewCmdWithData(cmdData *CmdDataType, commonCmdData *common.CmdData) *cobra.
 
 The result of build command are built stages pushed into the specified stages repo or locally if --stages=:local.
 
-If one or more IMAGE_NAME parameters specified, werf will build only these images stages from werf.yaml.`),
+If one or more IMAGE_NAME parameters specified, werf will build only these images stages from werf.yaml`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfHome, common.WerfTmp),

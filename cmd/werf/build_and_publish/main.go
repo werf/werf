@@ -38,7 +38,7 @@ New docker layer with service info about tagging scheme will be built for each i
 
 The result of build-and-publish command is a stages cache for images and named images pushed into the docker registry.
 
-If one or more IMAGE_NAME parameters specified, werf will build images stages and publish only these images from werf.yaml.`),
+If one or more IMAGE_NAME parameters specified, werf will build images stages and publish only these images from werf.yaml`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfAnsibleArgs, common.WerfDockerConfig, common.WerfHome, common.WerfTmp),

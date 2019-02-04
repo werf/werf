@@ -32,9 +32,9 @@ func NewCmd() *cobra.Command {
 		Short: "Generate Werf chart which will contain a valid Helm chart to the specified path",
 		Long: common.GetLongCommandDescription(`Generate Werf chart which will contain a valid Helm chart to the specified path.
 
-Werf will generate additional values files, templates Chart.yaml and other files specific to the Werf chart. The result is a valid Helm chart.`),
+Werf will generate additional values files, templates Chart.yaml and other files specific to the Werf chart. The result is a valid Helm chart`),
 		DisableFlagsInUseLine: true,
-		Args: cobra.MinimumNArgs(1),
+		Args:                  cobra.MinimumNArgs(1),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfHome, common.WerfTmp),
 		},

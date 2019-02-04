@@ -31,7 +31,7 @@ func NewCmd() *cobra.Command {
 
 Stages cache should exists for images to be tagged. I.e. images should be built with build command before tagging. Docker images names are constructed from parameters as REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
 
-If one or more IMAGE_NAME parameters specified, werf will tag only these images from werf.yaml. `),
+If one or more IMAGE_NAME parameters specified, werf will tag only these images from werf.yaml`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
