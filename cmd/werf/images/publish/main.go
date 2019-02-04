@@ -62,8 +62,8 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupTag(commonCmdData, cmd)
 	common.SetupStagesRepo(commonCmdData, cmd)
 	common.SetupImagesRepo(commonCmdData, cmd)
-	common.SetupImagesUsername(commonCmdData, cmd, "Docker registry username to authorize push to the docker imagesRepo")
-	common.SetupImagesPassword(commonCmdData, cmd, "Docker registry password to authorize push to the docker imagesRepo")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to push images)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted permission to push images)")
 
 	return cmd
 }

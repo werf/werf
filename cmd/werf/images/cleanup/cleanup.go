@@ -28,7 +28,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "cleanup",
+		Use: "cleanup",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupImagesPassword, common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome),
@@ -51,8 +51,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupCleanupImagesUsername(&CommonCmdData, cmd, "Docker registry username (granted read-write permission)")
-	common.SetupCleanupImagesPassword(&CommonCmdData, cmd, "Docker registry password (granted read-write permission)")
+	common.SetupCleanupImagesUsername(&CommonCmdData, cmd)
+	common.SetupCleanupImagesPassword(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
 

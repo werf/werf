@@ -32,12 +32,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			err := runDismiss()
-			if err != nil {
-				return fmt.Errorf("dismiss failed: %s", err)
-			}
-
-			return nil
+			return runDismiss()
 		},
 	}
 

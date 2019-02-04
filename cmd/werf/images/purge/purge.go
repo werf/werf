@@ -22,7 +22,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "purge",
+		Use: "purge",
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
@@ -40,8 +40,8 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username (granted read-write permission)")
-	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password (granted read-write permission)")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images)")
 
 	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 

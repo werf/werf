@@ -50,12 +50,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runDeploy()
-				if err != nil {
-					return fmt.Errorf("deploy failed: %s", err)
-				}
-
-				return nil
+				return runDeploy()
 			})
 		},
 	}
@@ -79,9 +74,10 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
+
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username")
-	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")
 
 	return cmd
 }

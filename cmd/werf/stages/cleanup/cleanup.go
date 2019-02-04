@@ -22,7 +22,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "cleanup",
+		Use: "cleanup",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfHome),
@@ -46,8 +46,8 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username (granted read permission)")
-	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password (granted read permission)")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted read permission)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted read permission)")
 
 	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 

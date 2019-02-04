@@ -37,11 +37,7 @@ These values includes project name, docker images ids and other.`),
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfHome, common.WerfTmp),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := runGetServiceValues(); err != nil {
-				return fmt.Errorf("get-service-values failed: %s", err)
-			}
-
-			return nil
+			return runGetServiceValues()
 		},
 	}
 
@@ -54,8 +50,8 @@ These values includes project name, docker images ids and other.`),
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username")
-	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")
 
 	return cmd
 }

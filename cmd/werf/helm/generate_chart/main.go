@@ -39,11 +39,7 @@ Werf will generate additional values files, templates Chart.yaml and other files
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig, common.WerfHome, common.WerfTmp),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := runGenerateChart(args[0]); err != nil {
-				return fmt.Errorf("generate-chart failed: %s", err)
-			}
-
-			return nil
+			return runGenerateChart(args[0])
 		},
 	}
 
@@ -58,8 +54,8 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username")
-	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info)")
 
 	return cmd
 }

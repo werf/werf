@@ -28,10 +28,10 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "cleanup",
+		Use: "cleanup",
 		DisableFlagsInUseLine: true,
-		Short:                 "Cleanup project images registry and stages storage",
-		Long:                  common.GetLongCommandDescription("Shortcut for werf images cleanup and werf stages cleanup commands"),
+		Short: "Cleanup project images registry and stages storage",
+		Long:  common.GetLongCommandDescription("Shortcut for werf images cleanup and werf stages cleanup commands"),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupImagesPassword, common.WerfDockerConfig, common.WerfInsecureRegistry, common.WerfHome),
 		},
@@ -39,12 +39,7 @@ func NewCmd() *cobra.Command {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runCleanup()
-				if err != nil {
-					return fmt.Errorf("cleanup failed: %s", err)
-				}
-
-				return nil
+				return runCleanup()
 			})
 		},
 	}
@@ -54,8 +49,8 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupCleanupImagesUsername(&CommonCmdData, cmd, "Docker registry username (granted read-write permission)")
-	common.SetupCleanupImagesPassword(&CommonCmdData, cmd, "Docker registry password (granted read-write permission)")
+	common.SetupCleanupImagesUsername(&CommonCmdData, cmd)
+	common.SetupCleanupImagesPassword(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
 

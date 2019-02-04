@@ -36,6 +36,8 @@ type CmdData struct {
 	ImagesRepo     *string
 	ImagesUsername *string
 	ImagesPassword *string
+	PullUsername   *string
+	PullPassword   *string
 }
 
 func GetLongCommandDescription(text string) string {
@@ -99,34 +101,48 @@ func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.StagesRepo, "stages", "s", "", "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now)")
 }
 
+func SetupPullUsername(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.PullUsername = new(string)
+	cmd.Flags().StringVarP(cmdData.PullUsername, "pull-username", "", "", "Username to authorize pull of base images")
+}
+
+func SetupPullPassword(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.PullPassword = new(string)
+	cmd.Flags().StringVarP(cmdData.PullPassword, "pull-password", "", "", "Password to authorize pull of base images")
+}
+
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
 	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", os.Getenv("WERF_IMAGES_REGISTRY"), "Docker Repo to store images")
 }
 
-func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command, usage string) {
-	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") == "" {
-		setupImagesUsername(cmdData, cmd, os.Getenv("werf-cleanup"), usage)
+func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command) {
+	usage := "Images Docker repo username (granted permission to read images info and delete images)"
+
+	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") != "" {
+		setupImagesUsername(cmdData, cmd, "werf-cleanup", usage)
 		return
 	}
 
-	SetupImagesUsername(cmdData, cmd, usage)
+	setupImagesUsername(cmdData, cmd, os.Getenv("WERF_IMAGES_USERNAME"), usage)
 }
 
-func SetupCleanupImagesPassword(cmdData *CmdData, cmd *cobra.Command, usage string) {
-	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") == "" {
+func SetupCleanupImagesPassword(cmdData *CmdData, cmd *cobra.Command) {
+	usage := "Docker registry password (granted permission to read images info and delete images)"
+
+	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") != "" {
 		setupImagesPassword(cmdData, cmd, os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD"), usage)
 		return
 	}
 
-	SetupImagesPassword(cmdData, cmd, usage)
+	setupImagesPassword(cmdData, cmd, os.Getenv("WERF_IMAGES_PASSWORD"), usage)
 }
 
-func SetupImagesUsername(cmdData *CmdData, cmd *cobra.Command, usage string) {
+func SetupImagesUsernameWithUsage(cmdData *CmdData, cmd *cobra.Command, usage string) {
 	setupImagesUsername(cmdData, cmd, os.Getenv("WERF_IMAGES_USERNAME"), usage)
 }
 
-func SetupImagesPassword(cmdData *CmdData, cmd *cobra.Command, usage string) {
+func SetupImagesPasswordWithUsage(cmdData *CmdData, cmd *cobra.Command, usage string) {
 	setupImagesPassword(cmdData, cmd, os.Getenv("WERF_IMAGES_PASSWORD"), usage)
 }
 

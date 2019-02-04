@@ -37,11 +37,7 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfHome, common.WerfTmp),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := runDeployChart(args[0], args[1]); err != nil {
-				return fmt.Errorf("deploy-chart failed: %s", err)
-			}
-
-			return nil
+			return runDeployChart(args[0], args[1])
 		},
 	}
 

@@ -46,20 +46,8 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			if CmdData.PullUsername == "" {
-				CmdData.PullUsername = *CommonCmdData.ImagesUsername
-			}
-			if CmdData.PullPassword == "" {
-				CmdData.PullPassword = *CommonCmdData.ImagesPassword
-			}
-
 			return common.LogRunningTime(func() error {
-				err := runBuildAndPublish(args)
-				if err != nil {
-					return fmt.Errorf("build-and-publish failed: %s", err)
-				}
-
-				return nil
+				return runBuildAndPublish(args)
 			})
 		},
 	}
@@ -69,17 +57,19 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
-	cmd.Flags().StringVarP(&CmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
-
 	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	common.SetupTag(&CommonCmdData, cmd)
+
 	common.SetupStagesRepo(&CommonCmdData, cmd)
+
+	common.SetupPullUsername(&CommonCmdData, cmd)
+	common.SetupPullPassword(&CommonCmdData, cmd)
+
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username to authorize pull of base images and push to the docker imagesRepo")
-	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password to authorize pull of base images and push to the docker imagesRepo")
+	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to push images)")
+	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted permission to push images)")
 
 	return cmd
 }

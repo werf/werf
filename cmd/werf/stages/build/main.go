@@ -49,20 +49,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			if CmdData.PullUsername == "" {
-				CmdData.PullUsername = *CommonCmdData.ImagesUsername
-			}
-			if CmdData.PullPassword == "" {
-				CmdData.PullPassword = *CommonCmdData.ImagesPassword
-			}
-
 			return common.LogRunningTime(func() error {
-				err := runStagesBuild(cmdData, commonCmdData, args)
-				if err != nil {
-					return fmt.Errorf("stages build failed: %s", err)
-				}
-
-				return err
+				return runStagesBuild(cmdData, commonCmdData, args)
 			})
 		},
 	}
@@ -72,15 +60,13 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupHomeDir(commonCmdData, cmd)
 	common.SetupSSHKey(commonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&cmdData.PullUsername, "pull-username", "", "", "Docker registry username to authorize pull of base images")
-	cmd.Flags().StringVarP(&cmdData.PullPassword, "pull-password", "", "", "Docker registry password to authorize pull of base images")
+	common.SetupPullUsername(&CommonCmdData, cmd)
+	common.SetupPullPassword(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
 
 	common.SetupStagesRepo(commonCmdData, cmd)
-	common.SetupImagesUsername(&CommonCmdData, cmd, "Docker registry username to authorize pull of base images")
-	common.SetupImagesPassword(&CommonCmdData, cmd, "Docker registry password to authorize pull of base images")
 
 	return cmd
 }
