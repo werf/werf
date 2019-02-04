@@ -37,16 +37,16 @@ func NewCmd() *cobra.Command {
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
-		Short:                 "Run container for specified image",
+		Short:                 "Run container for specified project image",
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
   $ werf run application
 
-  # Run image with predefined docker options and command for debug
+  # Run image with predefined docker run options and command for debug
   $ werf run --shell
 
-  # Run image with defined docker options and command
-  $ werf run --docker-options="-it --name myapp --oom-kill-disable" -- /app/run.sh
+  # Run image with specified docker run options and command
+  $ werf run --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
 
   # Print a resulting docker run command
   $ werf run --shell --dry-run
