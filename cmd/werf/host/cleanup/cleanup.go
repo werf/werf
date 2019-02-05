@@ -22,7 +22,18 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cleanup",
+		Use:   "cleanup",
+		Short: "Cleanup old unused werf cache and data of all projects on host machine",
+		Long: common.GetLongCommandDescription(`Cleanup old unused werf cache and data of all projects on host machine.
+
+The data include:
+* Lost docker containers and images from interrupted builds.
+* Old service tmp dirs, which werf creates during every build, publish, deploy and other commands.
+* Local cache:
+  * Remote git clones cache.
+  * Git worktree cache.
+
+It is safe to run this command periodically by automated cleanup job.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()

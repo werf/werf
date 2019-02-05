@@ -172,7 +172,8 @@ func helmCmd() *cobra.Command {
 
 func hostCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "host",
+		Use:   "host",
+		Short: "Work with werf cache and data of all projects on the host machine",
 	}
 	cmd.AddCommand(
 		host_cleanup.NewCmd(),
