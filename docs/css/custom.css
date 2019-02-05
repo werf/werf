@@ -81,3 +81,12 @@ details {
 a.google-drawings img {
   border: 2px solid black
 }
+
+pre {
+  overflow-x: auto;
+}
+
+pre code {
+  overflow-wrap: normal;
+  white-space: pre;
+}
