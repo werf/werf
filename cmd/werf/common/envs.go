@@ -10,37 +10,30 @@ import (
 type Env string
 
 const (
-	CmdEnvAnno string = "environment"
+	CmdEnvAnno                  string = "environment"
+	DisableOptionsInUseLineAnno string = "disableOptionsInUseLine"
 
-	WerfHome                                   Env = "WERF_HOME"
-	WerfTmp                                    Env = "WERF_TMP"
-	WerfAnsibleArgs                            Env = "WERF_ANSIBLE_ARGS"
-	WerfDockerConfig                           Env = "WERF_DOCKER_CONFIG"
-	WerfIgnoreCIDockerAutologin                Env = "WERF_IGNORE_CI_DOCKER_AUTOLOGIN"
-	WerfInsecureRegistry                       Env = "WERF_INSECURE_REGISTRY"
-	WerfSecretKey                              Env = "WERF_SECRET_KEY"
-	WerfCleanupRegistryPassword                Env = "WERF_CLEANUP_REGISTRY_PASSWORD"
-	WerfDisableSyncLocalStagesDatePeriodPolicy Env = "WERF_DISABLE_SYNC_LOCAL_STAGES_DATE_PERIOD_POLICY"
-	WerfGitTagsExpiryDatePeriodPolicy          Env = "WERF_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY"
-	WerfGitTagsLimitPolicy                     Env = "WERF_GIT_TAGS_LIMIT_POLICY"
-	WerfGitCommitsExpiryDatePeriodPolicy       Env = "WERF_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY"
-	WerfGitCommitsLimitPolicy                  Env = "WERF_GIT_COMMITS_LIMIT_POLICY"
+	WerfAnsibleArgs                          Env = "WERF_ANSIBLE_ARGS"
+	WerfDockerConfig                         Env = "WERF_DOCKER_CONFIG"
+	WerfInsecureRepo                         Env = "WERF_INSECURE_REPO"
+	WerfSecretKey                            Env = "WERF_SECRET_KEY"
+	WerfDisableStagesCleanupDatePeriodPolicy Env = "WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY"
+	WerfGitTagsExpiryDatePeriodPolicy        Env = "WERF_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY"
+	WerfGitTagsLimitPolicy                   Env = "WERF_GIT_TAGS_LIMIT_POLICY"
+	WerfGitCommitsExpiryDatePeriodPolicy     Env = "WERF_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY"
+	WerfGitCommitsLimitPolicy                Env = "WERF_GIT_COMMITS_LIMIT_POLICY"
 )
 
 var envDescription = map[Env]string{
-	WerfHome:                    "",
-	WerfTmp:                     "",
-	WerfAnsibleArgs:             "",
-	WerfDockerConfig:            "",
-	WerfIgnoreCIDockerAutologin: "",
-	WerfInsecureRegistry:        "",
-	WerfSecretKey:               "",
-	WerfCleanupRegistryPassword: "",
-	WerfDisableSyncLocalStagesDatePeriodPolicy: "",
-	WerfGitTagsExpiryDatePeriodPolicy:          "",
-	WerfGitTagsLimitPolicy:                     "",
-	WerfGitCommitsExpiryDatePeriodPolicy:       "",
-	WerfGitCommitsLimitPolicy:                  "",
+	WerfAnsibleArgs:                          "Pass specified cli args to ansible (ANSIBLE_ARGS)",
+	WerfDockerConfig:                         "Force usage of the specified docker config",
+	WerfInsecureRepo:                         "Enable insecure docker repo",
+	WerfSecretKey:                            "Use specified secret key to extract secrets for the deploy; recommended way to set secret key in CI-system",
+	WerfDisableStagesCleanupDatePeriodPolicy: "Redefine default ",
+	WerfGitTagsExpiryDatePeriodPolicy:        "Redefine default tags expiry date period policy: keep images built for git tags, that are no older than 30 days since build time",
+	WerfGitTagsLimitPolicy:                   "Redefine default tags limit policy: keep no more than 10 images built for git tags",
+	WerfGitCommitsExpiryDatePeriodPolicy:     "Redefine default commits expiry date period policy: keep images built for git commits, that are no older than 30 days since build time",
+	WerfGitCommitsLimitPolicy:                "Redefine default commits limit policy: keep no more than 50 images built for git commits",
 }
 
 func EnvsDescription(envs ...Env) string {

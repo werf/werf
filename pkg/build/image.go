@@ -84,10 +84,10 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 		return nil
 	}
 
-	ciRegistry := os.Getenv("CI_REGISTRY")
-	if ciRegistry != "" && strings.HasPrefix(i.baseImage.Name(), ciRegistry) {
-		if err := c.GetDockerAuthorizer().LoginForPull(ciRegistry); err != nil {
-			return fmt.Errorf("login into repo %s for base image %s failed: %s", ciRegistry, i.baseImage.Name(), err)
+	werfImagesRegistry := os.Getenv("WERF_IMAGES_REPO")
+	if werfImagesRegistry != "" && strings.HasPrefix(i.baseImage.Name(), werfImagesRegistry) {
+		if err := c.GetDockerAuthorizer().LoginForPull(werfImagesRegistry); err != nil {
+			return fmt.Errorf("login into repo %s for base image %s failed: %s", werfImagesRegistry, i.baseImage.Name(), err)
 		}
 	}
 

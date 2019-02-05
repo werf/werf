@@ -43,13 +43,13 @@ Cleanup is a werf ability to automate cleaning of a docker registry. It works ac
 * **by branches:**
     * Every new commit updates the image for the git branch (there is the only docker tag for the git branch).
     * Werf deletes the image from the docker registry when the corresponding git branch doesn't exist. The image always remains, while the corresponding git branch exists.
-    * The policy covers images tagged by werf with `--tag-ci` or `--tag-branch` tags.
+    * The policy covers images tagged by werf with `--tag-ci` or `--tag-git-branch` tags.
 * **by commits:**
     * Werf deletes the image from the docker registry when the corresponding git commit doesn't exist.
     * For the remaining images, the following policies apply:
        * `WERF_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY`. Deleting images uploaded in docker registry more than **30 days**. 30 days is a default period. To change the default period set `WERF_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY` environment variable in seconds.
        * `WERF_GIT_COMMITS_LIMIT_POLICY`. Deleting all images in docker registry except **last 50 images**. 50 images is a default value. To change the default value set count in  `WERF_GIT_COMMITS_LIMIT_POLICY` environment variables.
-    * The policy covers images tagged by werf with `--tag-commit` tag.
+    * The policy covers images tagged by werf with `--tag-git-commit` tag.
 * **by tags:**
     * Werf deletes the image from the docker registry when the corresponding git tag doesn't exist.
     * For the remaining images, the following policies apply:
@@ -57,7 +57,7 @@ Cleanup is a werf ability to automate cleaning of a docker registry. It works ac
       * `WERF_GIT_TAGS_LIMIT_POLICY`.  Deleting all images in docker registry except **last 10 images**. 10 images is a default value. To change the default value set count in `WERF_GIT_TAGS_LIMIT_POLICY`.
     * The policy covers images tagged by werf with `--tag-ci` tag.
 
-**Pay attention,** that cleanup affects only images built by werf **and** images tagged by werf with one of the `--tag-ci`, `--tag-branch` or `--tag-commit` options. Other images in the docker registry stay as they are.
+**Pay attention,** that cleanup affects only images built by werf **and** images tagged by werf with one of the `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options. Other images in the docker registry stay as they are.
 
 ### Whitelist of images
 
@@ -71,7 +71,7 @@ Werf gets information about kubernetes clusters and how to connect to them from 
 
 ### Docker registry authorization
 
-For docker registry authorization in cleanup, werf require the `WERF_CLEANUP_REGISTRY_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
+For docker registry authorization in cleanup, werf require the `WERF_CLEANUP_IMAGES_PASSWORD` environment variable with access token in it (read more about [authorization]({{ site.baseurl }}/reference/registry/authorization.html#autologin-for-cleaning-commands)).
 
 ### Cleanup command
 

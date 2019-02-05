@@ -2,7 +2,9 @@ package deploy
 
 import (
 	"fmt"
-	"os"
+
+	"github.com/flant/werf/pkg/deploy/helm"
+	"github.com/flant/werf/pkg/tag_scheme"
 
 	"github.com/flant/werf/pkg/config"
 )
@@ -19,34 +21,32 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 		fmt.Printf("Lint options: %#v\n", opts)
 	}
 
-	m, err := getSafeSecretManager(projectDir, opts.SecretValues)
+	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
 	if err != nil {
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
 
-	repo := "REPO"
-	tag := "DOCKER_TAG"
+	imagesRepo := "REPO"
+	tag := "GIT_BRANCH"
+	tagScheme := tag_scheme.GitBranchScheme
 	namespace := "NAMESPACE"
 
-	var images []ImageInfoGetter
-	for _, image := range werfConfig.Images {
-		d := &ImageInfo{Config: image, WithoutRegistry: true, Repo: repo, Tag: tag}
-		images = append(images, d)
-	}
+	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, repo, namespace, tag, nil, images, ServiceValuesOptions{ForceBranch: "GIT_BRANCH"})
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagScheme, images)
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	werfChart, err := getWerfChart(werfConfig.Meta.Project, projectDir, m, opts.Values, opts.SecretValues, opts.Set, opts.SetString, serviceValues)
+	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}
-	if !debug() {
-		// Do not remove tmp chart in debug
-		defer os.RemoveAll(werfChart.ChartDir)
-	}
+	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	return werfChart.Lint()
+	return werfChart.Lint(helm.HelmChartValuesOptions{
+		Set:       opts.Set,
+		SetString: opts.SetString,
+		Values:    opts.Values,
+	})
 }

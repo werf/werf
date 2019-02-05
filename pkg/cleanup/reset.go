@@ -10,7 +10,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-func ResetAll(options CommonOptions) error {
+func HostCleanup(options CommonOptions) error {
 	if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
 		return err
 	}
@@ -19,11 +19,19 @@ func ResetAll(options CommonOptions) error {
 		return err
 	}
 
-	if err := deleteWerfFiles(options); err != nil {
+	if err := RemoveLostTmpWerfFiles(); err != nil {
 		return err
 	}
 
-	if err := RemoveLostTmpWerfFiles(); err != nil {
+	return nil
+}
+
+func HostPurge(options CommonOptions) error {
+	if err := HostCleanup(options); err != nil {
+		return err
+	}
+
+	if err := deleteWerfFiles(options); err != nil {
 		return err
 	}
 

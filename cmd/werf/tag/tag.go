@@ -31,17 +31,13 @@ func NewCmd() *cobra.Command {
 
 Stages cache should exists for images to be tagged. I.e. images should be built with build command before tagging. Docker images names are constructed from parameters as REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
 
-If one or more IMAGE_NAME parameters specified, werf will tag only these images from werf.yaml. `),
+If one or more IMAGE_NAME parameters specified, werf will tag only these images from werf.yaml`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runTag(args)
-				if err != nil {
-					return fmt.Errorf("tag failed: %s", err)
-				}
-				return nil
+				return runTag(args)
 			})
 		},
 	}
@@ -51,7 +47,7 @@ If one or more IMAGE_NAME parameters specified, werf will tag only these images 
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to tag images for. CI_REGISTRY_IMAGE will be used by default if available.")
+	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name to tag images for. WERF_IMAGES_REPO will be used by default if available.")
 
 	common.SetupTag(&CommonCmdData, cmd)
 
@@ -99,7 +95,7 @@ func runTag(imagesToProcess []string) error {
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
 
-	repo, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
+	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
 		return err
 	}
@@ -120,7 +116,7 @@ func runTag(imagesToProcess []string) error {
 	}
 
 	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectBuildDir, projectTmpDir, ssh_agent.SSHAuthSock, nil)
-	if err = c.Tag(repo, tagOpts); err != nil {
+	if err = c.Tag(imagesRepo, tagOpts); err != nil {
 		return err
 	}
 

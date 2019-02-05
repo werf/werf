@@ -6,7 +6,6 @@ import (
 	"path"
 
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/logger"
 )
 
@@ -72,72 +71,33 @@ func (a *DockerAuthorizer) login(creds *DockerCredentials, repo string) error {
 	return nil
 }
 
-func GetBuildDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption string) (*DockerAuthorizer, error) {
-	pullCredentials, err := getPullCredentials(pullUsernameOption, pullPasswordOption)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get docker credentials for pull: %s", err)
-	}
-
+func GetBuildStagesDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption string) (*DockerAuthorizer, error) {
+	pullCredentials := getSpecifiedCredentials(pullUsernameOption, pullPasswordOption)
 	return getDockerAuthorizer(projectTmpDir, nil, pullCredentials, nil)
 }
 
-func GetPushDockerAuthorizer(projectTmpDir, pushUsernameOption, pushPasswordOption, repo string) (*DockerAuthorizer, error) {
-	pushCredentials, err := getPushCredentials(pushUsernameOption, pushPasswordOption, repo)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get docker credentials for push: %s", err)
-	}
-
+func GetImagePublishDockerAuthorizer(projectTmpDir, pushUsernameOption, pushPasswordOption string) (*DockerAuthorizer, error) {
+	pushCredentials := getSpecifiedCredentials(pushUsernameOption, pushPasswordOption)
 	return getDockerAuthorizer(projectTmpDir, nil, nil, pushCredentials)
 }
 
-func GetBPDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption, pushUsernameOption, pushPasswordOption, repo string) (*DockerAuthorizer, error) {
-	pullCredentials, err := getPullCredentials(pullUsernameOption, pullPasswordOption)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get docker credentials for pull: %s", err)
-	}
-
-	pushCredentials, err := getPushCredentials(pushUsernameOption, pushPasswordOption, repo)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get docker credentials for push: %s", err)
-	}
-
+func GetBuildAndPublishDockerAuthorizer(projectTmpDir, pullUsernameOption, pullPasswordOption, pushUsernameOption, pushPasswordOption string) (*DockerAuthorizer, error) {
+	pullCredentials := getSpecifiedCredentials(pullUsernameOption, pullPasswordOption)
+	pushCredentials := getSpecifiedCredentials(pushUsernameOption, pushPasswordOption)
 	return getDockerAuthorizer(projectTmpDir, nil, pullCredentials, pushCredentials)
 }
 
-func GetFlushDockerAuthorizer(projectTmpDir, flushUsernameOption, flushPasswordOption string) (*DockerAuthorizer, error) {
-	credentials, err := getFlushCredentials(flushUsernameOption, flushPasswordOption)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get docker credentials for flush: %s", err)
-	}
-
+func GetDockerAuthorizer(projectTmpDir, username, password string) (*DockerAuthorizer, error) {
+	credentials := getSpecifiedCredentials(username, password)
 	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
 }
 
-func GetSyncDockerAuthorizer(projectTmpDir, syncUsernameOption, syncPasswordOption, repo string) (*DockerAuthorizer, error) {
-	credentials, err := getSyncCredentials(syncUsernameOption, syncPasswordOption, repo)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get docker credentials for sync: %s", err)
+func getSpecifiedCredentials(usernameOption, passwordOption string) *DockerCredentials {
+	if usernameOption != "" && passwordOption != "" {
+		return &DockerCredentials{Username: usernameOption, Password: passwordOption}
 	}
 
-	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
-}
-
-func GetCleanupDockerAuthorizer(projectTmpDir, syncUsernameOption, syncPasswordOption, repo string) (*DockerAuthorizer, error) {
-	credentials, err := getCleanupCredentials(syncUsernameOption, syncPasswordOption, repo)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get docker credentials for cleanup: %s", err)
-	}
-
-	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
-}
-
-func GetDeployDockerAuthorizer(projectTmpDir, usernameOption, passwordOption, repo string) (*DockerAuthorizer, error) {
-	credentials, err := getDeployCredentials(usernameOption, passwordOption, repo)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get docker credentials for deploy: %s", err)
-	}
-
-	return getDockerAuthorizer(projectTmpDir, credentials, nil, nil)
+	return nil
 }
 
 func getDockerAuthorizer(projectTmpDir string, credentials, pullCredentials, pushCredentials *DockerCredentials) (*DockerAuthorizer, error) {
@@ -174,96 +134,4 @@ func getDockerAuthorizer(projectTmpDir string, credentials, pullCredentials, pus
 
 func GetHomeDockerConfigDir() string {
 	return path.Join(os.Getenv("HOME"), ".docker")
-}
-
-func getPullCredentials(pullUsernameOption, pullPasswordOption string) (*DockerCredentials, error) {
-	creds := getSpecifiedCredentials(pullUsernameOption, pullPasswordOption)
-	if creds != nil {
-		return creds, nil
-	}
-
-	return getDefaultAutologinCredentials()
-}
-
-func getPushCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	return getDefaultCredentials(usernameOption, passwordOption, repo)
-}
-
-func getFlushCredentials(usernameOption, passwordOption string) (*DockerCredentials, error) {
-	return getSpecifiedCredentials(usernameOption, passwordOption), nil
-}
-
-func getSyncCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	return getDefaultCredentials(usernameOption, passwordOption, repo)
-}
-
-func getDeployCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	return getDefaultCredentials(usernameOption, passwordOption, repo)
-}
-
-func getCleanupCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	creds := getSpecifiedCredentials(usernameOption, passwordOption)
-	if creds != nil {
-		return creds, nil
-	}
-
-	werfCleanupRegistryPassword := os.Getenv("WERF_CLEANUP_REGISTRY_PASSWORD")
-	if werfCleanupRegistryPassword != "" {
-		return &DockerCredentials{Username: "werf-cleanup", Password: werfCleanupRegistryPassword}, nil
-	}
-
-	isGCR, err := isGCR(repo)
-	if err != nil {
-		return nil, err
-	}
-	if isGCR {
-		return nil, nil
-	}
-
-	return getDefaultAutologinCredentials()
-}
-
-func getDefaultCredentials(usernameOption, passwordOption, repo string) (*DockerCredentials, error) {
-	creds := getSpecifiedCredentials(usernameOption, passwordOption)
-	if creds != nil {
-		return creds, nil
-	}
-
-	isGCR, err := isGCR(repo)
-	if err != nil {
-		return nil, err
-	}
-	if isGCR {
-		return nil, nil
-	}
-
-	return getDefaultAutologinCredentials()
-}
-
-func getSpecifiedCredentials(usernameOption, passwordOption string) *DockerCredentials {
-	if usernameOption != "" && passwordOption != "" {
-		return &DockerCredentials{Username: usernameOption, Password: passwordOption}
-	}
-
-	return nil
-}
-
-func getDefaultAutologinCredentials() (*DockerCredentials, error) {
-	if os.Getenv("WERF_IGNORE_CI_DOCKER_AUTOLOGIN") == "" {
-		ciRegistryEnv := os.Getenv("CI_REGISTRY")
-		ciJobTokenEnv := os.Getenv("CI_JOB_TOKEN")
-		if ciRegistryEnv != "" && ciJobTokenEnv != "" {
-			return &DockerCredentials{Username: "gitlab-ci-token", Password: ciJobTokenEnv}, nil
-		}
-	}
-
-	return nil, nil
-}
-
-func isGCR(repoOption string) (bool, error) {
-	if repoOption != "" {
-		return docker_registry.IsGCR(repoOption)
-	}
-
-	return false, nil
 }

@@ -22,7 +22,7 @@ func GetHelmRelease(releaseOption string, environmentOption string, werfConfig *
 
 	releaseTemplate := werfConfig.Meta.DeployTemplates.HelmRelease
 	if releaseTemplate == "" {
-		releaseTemplate = "[[ project ]]-[[ environment ]]"
+		releaseTemplate = "[[ project ]]-[[ env ]]"
 	}
 
 	renderedRelease, err := renderDeployParamTemplate("release", releaseTemplate, environmentOption, werfConfig)
@@ -55,9 +55,9 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 		return namespaceOption, nil
 	}
 
-	namespaceTemplate := werfConfig.Meta.DeployTemplates.KubernetesNamespace
+	namespaceTemplate := werfConfig.Meta.DeployTemplates.Namespace
 	if namespaceTemplate == "" {
-		namespaceTemplate = "[[ project ]]-[[ environment ]]"
+		namespaceTemplate = "[[ project ]]-[[ env ]]"
 	}
 
 	renderedNamespace, err := renderDeployParamTemplate("namespace", namespaceTemplate, environmentOption, werfConfig)
@@ -69,7 +69,7 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 		return "", fmt.Errorf("Kubernetes namespace rendered by template '%s' is empty: namespace cannot be empty", namespaceTemplate)
 	}
 
-	if werfConfig.Meta.DeployTemplates.KubernetesNamespaceSlug {
+	if werfConfig.Meta.DeployTemplates.NamespaceSlug {
 		return slug.KubernetesNamespace(renderedNamespace), nil
 	}
 
@@ -90,15 +90,15 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 		return werfConfig.Meta.Project
 	}
 
-	funcMap["environment"] = func() (string, error) {
-		environment := os.Getenv("CI_ENVIRONMENT_SLUG")
+	funcMap["env"] = func() (string, error) {
+		environment := os.Getenv("WERF_DEPLOY_ENVIRONMENT")
 
 		if environment == "" {
 			environment = environmentOption
 		}
 
 		if environment == "" {
-			return "", fmt.Errorf("--env option or CI_ENVIRONMENT_SLUG variable required to construct name by template '%s'", templateText)
+			return "", fmt.Errorf("--env option or WERF_DEPLOY_ENVIRONMENT variable required to construct name by template '%s'", templateText)
 		}
 
 		return environment, nil

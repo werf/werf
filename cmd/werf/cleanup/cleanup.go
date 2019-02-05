@@ -12,48 +12,36 @@ import (
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/project_tmp_dir"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 
-	"github.com/flant/werf/pkg/util"
 	"github.com/spf13/cobra"
 )
 
 var CmdData struct {
-	Repo             string
-	RegistryUsername string
-	RegistryPassword string
-
 	WithoutKube bool
-
-	DryRun bool
 }
 
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cleanup",
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short: "Delete unused and old images from Docker registry by policies",
-		Long: common.GetLongCommandDescription(`Cleanup is a werf ability to automate periodical cleaning of a docker registry.
+		Short:                 "Cleanup unused images from project images repo and stages storage",
+		Long: common.GetLongCommandDescription(`Cleanup unused images from project images repo and stages storage.
 
-Command deletes unused and old images from Docker registry by policies.
-See more info about cleanup: https://flant.github.io/werf/reference/registry/cleaning.html#cleanup
+This is the main cleanup command for periodical automated images cleaning. Command is supposed to be called daily for the project.
 
-Command should run from the project directory, where werf.yaml file reside.`),
+First step is 'werf images cleanup' command, which will delete unused images from images repo. Second step is 'werf stages cleanup' command, which will delete unused stages from stages repo (or locally) to be in sync with the images repo`),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfCleanupRegistryPassword, common.WerfDockerConfig, common.WerfIgnoreCIDockerAutologin, common.WerfInsecureRegistry, common.WerfHome),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfDockerConfig, common.WerfInsecureRepo),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
-				err := runCleanup()
-				if err != nil {
-					return fmt.Errorf("cleanup failed: %s", err)
-				}
-
-				return nil
+				return runCleanup()
 			})
 		},
 	}
@@ -62,13 +50,17 @@ Command should run from the project directory, where werf.yaml file reside.`),
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.Repo, "repo", "", "", "Docker repository name")
-	cmd.Flags().StringVarP(&CmdData.RegistryUsername, "registry-username", "", "", "Docker registry username (granted read-write permission)")
-	cmd.Flags().StringVarP(&CmdData.RegistryPassword, "registry-password", "", "", "Docker registry password (granted read-write permission)")
+	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesUsername(&CommonCmdData, cmd)
+	common.SetupStagesPassword(&CommonCmdData, cmd)
+
+	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupCleanupImagesUsername(&CommonCmdData, cmd)
+	common.SetupCleanupImagesPassword(&CommonCmdData, cmd)
+
+	common.SetupDryRun(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
-
-	cmd.Flags().BoolVarP(&CmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 
 	return cmd
 }
@@ -107,17 +99,22 @@ func runCleanup() error {
 
 	projectName := werfConfig.Meta.Project
 
-	repoName, err := common.GetRequiredRepoName(projectName, CmdData.Repo)
+	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetCleanupDockerAuthorizer(projectTmpDir, CmdData.RegistryUsername, CmdData.RegistryPassword, repoName)
+	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
 	if err != nil {
 		return err
 	}
 
-	if err := dockerAuthorizer.Login(repoName); err != nil {
+	dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
+	if err != nil {
+		return err
+	}
+
+	if err := dockerAuthorizer.Login(imagesRepo); err != nil {
 		return err
 	}
 
@@ -131,26 +128,42 @@ func runCleanup() error {
 	}
 
 	commonRepoOptions := cleanup.CommonRepoOptions{
-		Repository:  repoName,
+		ImagesRepo:  imagesRepo,
+		StagesRepo:  stagesRepo,
 		ImagesNames: imagesNames,
-		DryRun:      CmdData.DryRun,
+		DryRun:      CommonCmdData.DryRun,
 	}
 
-	var localRepo *git_repo.Local
+	var localGitRepo *git_repo.Local
 	gitDir := path.Join(projectDir, ".git")
 	if exist, err := util.DirExists(gitDir); err != nil {
 		return err
 	} else if exist {
-		localRepo = &git_repo.Local{
+		localGitRepo = &git_repo.Local{
 			Path:   projectDir,
 			GitDir: gitDir,
 		}
 	}
 
-	cleanupOptions := cleanup.CleanupOptions{
+	commonProjectOptions := cleanup.CommonProjectOptions{
+		ProjectName:   projectName,
+		CommonOptions: cleanup.CommonOptions{DryRun: CommonCmdData.DryRun},
+	}
+
+	imagesCleanupOptions := cleanup.ImagesCleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
-		LocalRepo:         localRepo,
+		LocalGit:          localGitRepo,
 		WithoutKube:       CmdData.WithoutKube,
+	}
+
+	stagesCleanupOptions := cleanup.StagesCleanupOptions{
+		CommonRepoOptions:    commonRepoOptions,
+		CommonProjectOptions: commonProjectOptions,
+	}
+
+	cleanupOptions := cleanup.CleanupOptions{
+		StagesCleanupOptions: stagesCleanupOptions,
+		ImagesCleanupOptions: imagesCleanupOptions,
 	}
 
 	if err := cleanup.Cleanup(cleanupOptions); err != nil {

@@ -22,7 +22,7 @@ The procedure of creating such a layer will be referred to as **werf tag procedu
 
 ## `--repo REPO` option
 
-For all commands related to a docker registry, werf uses a single option named `--repo REPO`. `REPO` is a required param, but `--repo` option may be omitted in Gitlab CI. Werf will try to autodetect repo by environment variable `CI_REGISTRY_IMAGE` if available.
+For all commands related to a docker registry, werf uses a single option named `--repo REPO`. `REPO` is a required param, but `--repo` option may be omitted in Gitlab CI. Werf will try to autodetect repo by environment variable `WERF_IMAGES_REPO` if available.
 
 Using `REPO` werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
 
@@ -37,10 +37,9 @@ E.g., if there is unnamed image in a `werf.yaml` config and `REPO` is `myregistr
 
 | option | description |
 | ----- | -------- |
-| `--tag-ci` | tag with an autodetection by CI related environment variables |
-| `--tag-build-id` | tag with a CI job id |
-| `--tag-branch` | tag with a git branch name |
-| `--tag-commit` | tag with a git commit id |
+| `--tag-git-tag` | tag with a git tag name |
+| `--tag-git-branch` | tag with a git branch name |
+| `--tag-git-commit` | tag with a git commit id |
 | `--tag TAG` | arbitrary  TAG |
 
 ### `--tag-ci`
@@ -61,19 +60,13 @@ After getting git tag or git branch name, werf applies [tag slug]({{ site.baseur
 
 Option `--tag-ci` is the most recommended way for building in CI.
 
-### `--tag-build-id`
-
-Tag works only in GitLab CI or Travis CI environment.
-
-The tag name based on the unique id of the current GitLab job from `CI_BUILD_ID` or `CI_JOB_ID` environment variable for Gitlab CI or `TRAVIS_BUILD_NUMBER` environment variable for Travis CI.
-
-### `--tag-branch`
+### `--tag-git-branch`
 
 The tag name based on a current git branch. Werf looks for the current branch in the local git repository where config located.
 
 After getting git branch name, werf apply [tag slug]({{ site.baseurl }}/reference/slug.html#basic-algorithm) transformation rules if tag name doesn't meet with the slug requirements. This behavior allows using branches with arbitrary names like `my/second_patch`.
 
-### `--tag-commit`
+### `--tag-git-commit`
 
 The tag name based on a current git commit id (full-length SHA hashsum). Werf looks for the current commit id in the local git repository where config located.
 

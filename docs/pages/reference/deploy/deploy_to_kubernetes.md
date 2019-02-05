@@ -73,7 +73,7 @@ In that case deploy option `--kube-context=CONTEXT` should be specified manually
 
 ## Helm Release name
 
-By default Helm Release name will be constructed by template `[[ project ]]-[[ environment ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) and `[[ environment ]]` refers to the specified or detected environment.
+By default Helm Release name will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) and `[[ env ]]` refers to the specified or detected environment.
 
 For example for project named `symfony-demo` there will be following Helm Release names depending on the specified environment:
 * `symfony-demo-stage` for the `stage` environment;
@@ -90,7 +90,7 @@ deploy:
   helmRelease: TEMPLATE
 ```
 
-`deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ environment ]]` functions support. [Sprig functions](https://masterminds.github.io/sprig/) can also be used (for example function `env` to retrieve environment variables).
+`deploy.helmRelease` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. [Sprig functions](https://masterminds.github.io/sprig/) can also be used (for example function `env` to retrieve environment variables).
 
 ### Slug
 
@@ -108,7 +108,7 @@ Werf will not apply release slug procedure for the release name specified with `
 
 ## Kubernetes Namespace
 
-By default Kubernetes Namespace will be constructed by template `[[ project ]]-[[ environment ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) and `[[ environment ]]` refers to the determined environment.
+By default Kubernetes Namespace will be constructed by template `[[ project ]]-[[ env ]]`. Where `[[ project ]]` refers to the [project name]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) and `[[ env ]]` refers to the determined environment.
 
 For example for project named `symfony-demo` there will be following Kubernetes Namespaces depending on the specified environment:
 * `symfony-demo-stage` for the `stage` environment;
@@ -122,21 +122,21 @@ Custom Kubernetes Namespace template can also be defined in the [meta configurat
 ```yaml
 project: PROJECT_NAME
 deploy:
-  kubernetesNamespace: TEMPLATE
+  namespace: TEMPLATE
 ```
 
-`deploy.kubernetesNamespace` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ environment ]]` functions support. [Sprig functions](https://masterminds.github.io/sprig/) can also be used (for example function `env` to retrieve environment variables).
+`deploy.namespace` is a Go template with `[[` and `]]` delimiters. There are `[[ project ]]`, `[[ env ]]` functions support. [Sprig functions](https://masterminds.github.io/sprig/) can also be used (for example function `env` to retrieve environment variables).
 
 ### Slug
 
 Kubernetes Namespace constructed by template will be slugified to fit [DNS Label](https://www.ietf.org/rfc/rfc1035.txt) requirements by [*namespace slug procedure*]({{ site.baseurl }}/reference/slug.html#basic-algorithm), which generates unique valid Kubernetes Namespace.
 
-This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) option `deploy.kubernetesNamespaceSlug`:
+This is default behaviour, which can be disabled by [meta configuration doc]({{ site.baseurl }}/reference/config.html#meta-configuration-doc) option `deploy.namespaceSlug`:
 
 ```
 project: PROJECT_NAME
 deploy:
-  kubernetesNamespaceSlug: false
+  namespaceSlug: false
 ```
 
 Werf will not apply namespace slug procedure for the namespace specified with `--namespace NAMESPACE` option.

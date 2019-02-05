@@ -2,22 +2,16 @@ package deploy
 
 import (
 	"fmt"
-	"os"
 
+	"github.com/flant/werf/pkg/tag_scheme"
+
+	"github.com/flant/werf/pkg/config"
 	"github.com/ghodss/yaml"
 )
 
 const (
 	TemplateEmptyValue = "\"-\""
 )
-
-type GitInfoGetter interface {
-	IsBranchState() bool
-	GetCurrentBranchName() string
-	IsTagState() bool
-	GetCurrentTagName() string
-	GetHeadCommit() string
-}
 
 type ImageInfoGetter interface {
 	IsNameless() bool
@@ -26,16 +20,18 @@ type ImageInfoGetter interface {
 	GetImageId() (string, error)
 }
 
-type ServiceValuesOptions struct {
-	ForceTag    string
-	ForceBranch string
-}
+func GetImagesInfoGetters(configImages []*config.Image, imagesRepo, tag string, withoutRegistry bool) []ImageInfoGetter {
+	var images []ImageInfoGetter
 
-func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit GitInfoGetter, images []ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
-	if debug() {
-		fmt.Printf("GetServiceValues %s %s %s %s %#v\n", projectName, repo, namespace, dockerTag, opts)
+	for _, image := range configImages {
+		d := &ImageInfo{Config: image, WithoutRegistry: withoutRegistry, ImagesRepo: imagesRepo, Tag: tag}
+		images = append(images, d)
 	}
 
+	return images
+}
+
+func GetServiceValues(projectName, repo, namespace, tag string, tagScheme tag_scheme.TagScheme, images []ImageInfoGetter) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	ciInfo := map[string]interface{}{
@@ -49,7 +45,7 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 	werfInfo := map[string]interface{}{
 		"name":       projectName,
 		"repo":       repo,
-		"docker_tag": dockerTag,
+		"docker_tag": tag,
 		"ci":         ciInfo,
 	}
 
@@ -58,45 +54,16 @@ func GetServiceValues(projectName, repo, namespace, dockerTag string, localGit G
 		"werf":      werfInfo,
 	}
 
-	if opts.ForceBranch != "" {
-		ciInfo["is_branch"] = true
-		ciInfo["branch"] = opts.ForceBranch
-	} else if opts.ForceTag != "" {
+	switch tagScheme {
+	case tag_scheme.GitTagScheme:
+		ciInfo["tag"] = tag
+		ciInfo["ref"] = tag
 		ciInfo["is_tag"] = true
-		ciInfo["tag"] = opts.ForceTag
-	} else {
-		ciCommitTag := os.Getenv("CI_COMMIT_TAG")
-		if ciCommitTag == "" {
-			ciCommitTag = os.Getenv("CI_BUILD_TAG")
-		}
-		ciCommitRefName := os.Getenv("CI_COMMIT_REF_NAME")
-		if ciCommitRefName == "" {
-			ciCommitRefName = os.Getenv("CI_BUILD_REF_NAME")
-		}
 
-		if ciCommitTag != "" {
-			ciInfo["tag"] = ciCommitTag
-			ciInfo["ref"] = ciCommitTag
-			ciInfo["is_tag"] = true
-		} else if ciCommitRefName != "" {
-			ciInfo["branch"] = ciCommitRefName
-			ciInfo["ref"] = ciCommitRefName
-			ciInfo["is_branch"] = true
-		} else if localGit != nil {
-			if localGit.IsBranchState() {
-				ciInfo["branch"] = localGit.GetCurrentBranchName()
-				ciInfo["ref"] = localGit.GetCurrentBranchName()
-				ciInfo["is_branch"] = true
-			} else if localGit.IsTagState() {
-				ciInfo["tag"] = localGit.GetCurrentTagName()
-				ciInfo["ref"] = localGit.GetCurrentTagName()
-				ciInfo["is_tag"] = true
-			} else {
-				ciInfo["tag"] = localGit.GetHeadCommit()
-				ciInfo["ref"] = localGit.GetHeadCommit()
-				ciInfo["is_tag"] = true
-			}
-		}
+	case tag_scheme.GitBranchScheme:
+		ciInfo["branch"] = tag
+		ciInfo["ref"] = tag
+		ciInfo["is_branch"] = true
 	}
 
 	imagesInfo := make(map[string]interface{})

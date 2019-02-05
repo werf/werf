@@ -2,7 +2,6 @@ package dismiss
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
@@ -26,19 +25,14 @@ func NewCmd() *cobra.Command {
 
 Helm Release will be purged and optionally Kubernetes Namespace.
 
-Environment is a required param for the dismiss by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or CI_ENVIRONMENT_SLUG should be specified for command.
+Environment is a required param for the dismiss by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or WERF_DEPLOY_ENVIRONMENT should be specified for command.
 
 Read more info about Helm Release name, Kubernetes Namespace and how to change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			err := runDismiss()
-			if err != nil {
-				return fmt.Errorf("dismiss failed: %s", err)
-			}
-
-			return nil
+			return runDismiss()
 		},
 	}
 
@@ -80,10 +74,7 @@ func runDismiss() error {
 		return fmt.Errorf("cannot parse werf config: %s", err)
 	}
 
-	kubeContext := os.Getenv("KUBECONTEXT")
-	if kubeContext == "" {
-		kubeContext = *CommonCmdData.KubeContext
-	}
+	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
 	err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)

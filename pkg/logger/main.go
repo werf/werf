@@ -21,13 +21,28 @@ const (
 
 var (
 	indent = 0
+
+	Out io.Writer
+	Err io.Writer
 )
 
-func Init() {
-	isGitLabCI := os.Getenv("GITLAB_CI") != ""
-	forceColor := os.Getenv("WERF_FORCE_COLOR") != ""
+type Options struct {
+	Out, Err io.Writer
+}
 
-	if isGitLabCI || forceColor {
+func Init(opts Options) {
+	Out = os.Stdout
+	Err = os.Stderr
+
+	if opts.Out != nil {
+		Out = opts.Out
+	}
+
+	if opts.Err != nil {
+		Err = opts.Err
+	}
+
+	if os.Getenv("WERF_LOG_FORCE_COLOR") != "" {
 		color.NoColor = false
 	}
 }
@@ -69,7 +84,7 @@ func LogStep(msg string) {
 }
 
 func LogStepF(format string, args ...interface{}) {
-	colorizeAndLogF(os.Stdout, colorizeStep, format, args...)
+	colorizeAndLogF(Out, colorizeStep, format, args...)
 }
 
 func LogService(msg string) {
@@ -77,7 +92,7 @@ func LogService(msg string) {
 }
 
 func LogServiceF(format string, args ...interface{}) {
-	colorizeAndLogF(os.Stdout, colorizeService, format, args...)
+	colorizeAndLogF(Out, colorizeService, format, args...)
 }
 
 func LogInfo(msg string) {
@@ -85,11 +100,11 @@ func LogInfo(msg string) {
 }
 
 func LogInfoF(format string, args ...interface{}) {
-	colorizeAndLogF(os.Stdout, colorizeInfo, format, args...)
+	colorizeAndLogF(Out, colorizeInfo, format, args...)
 }
 
 func LogError(err error) {
-	logBase(os.Stderr, colorizeBaseF(colorizeWarning, "%s\n", err))
+	logBase(Err, colorizeBaseF(colorizeWarning, "%s\n", err))
 }
 
 func LogWarning(msg string) {
@@ -97,7 +112,7 @@ func LogWarning(msg string) {
 }
 
 func LogWarningF(format string, args ...interface{}) {
-	colorizeAndLogF(os.Stderr, colorizeWarning, format, args...)
+	colorizeAndLogF(Err, colorizeWarning, format, args...)
 }
 
 func colorizeAndLogF(w io.Writer, colorizeFunc func(string) string, format string, args ...interface{}) {
@@ -158,7 +173,7 @@ func indentDown() {
 
 func logProcessInlineBase(processMsg string, processFunc func() error, colorizeProcessMsgFunc, colorizeSuccessFunc func(string) string) error {
 	processMsg = fmt.Sprintf(logProcessInlineProcessMsgFormat, processMsg)
-	colorizeAndLogF(os.Stdout, colorizeProcessMsgFunc, "%s", processMsg)
+	colorizeAndLogF(Out, colorizeProcessMsgFunc, "%s", processMsg)
 
 	resultStatus := logProcessSuccessStatus
 	resultColorize := colorizeSuccessFunc
@@ -173,7 +188,7 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 	elapsedSeconds := fmt.Sprintf(logProcessTimeFormat, time.Since(start).Seconds())
 
 	rightPart := prepareLogStateRightPart(processMsg, resultStatus, elapsedSeconds, resultColorize)
-	logBase(os.Stdout, fmt.Sprintf("%s\n", rightPart))
+	logBase(Out, fmt.Sprintf("%s\n", rightPart))
 
 	return err
 }
@@ -208,7 +223,7 @@ func logStateBase(msg string, state, time string, colorizeLeftPartFunc, colorize
 		rightPart = prepareLogStateRightPart(msg, state, time, colorizeRightPartFunc)
 	}
 
-	log(os.Stdout, fmt.Sprintf("%s%s", leftPart, rightPart))
+	log(Out, fmt.Sprintf("%s%s", leftPart, rightPart))
 }
 
 func prepareLogStateLeftPart(msg, state, time string, colorizeFunc func(string) string) string {

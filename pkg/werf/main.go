@@ -10,8 +10,35 @@ var (
 )
 
 var (
-	tmpDir, homeDir string
+	tmpDir, homeDir  string
+	sharedContextDir string
+	localCacheDir    string
+	serviceDir       string
 )
+
+func GetSharedContextDir() string {
+	if sharedContextDir == "" {
+		panic("bug: init required!")
+	}
+
+	return sharedContextDir
+}
+
+func GetLocalCacheDir() string {
+	if localCacheDir == "" {
+		panic("bug: init required!")
+	}
+
+	return localCacheDir
+}
+
+func GetServiceDir() string {
+	if serviceDir == "" {
+		panic("bug: init required!")
+	}
+
+	return serviceDir
+}
 
 func GetHomeDir() string {
 	if homeDir == "" {
@@ -45,6 +72,12 @@ func Init(tmpDirOption, homeDirOption string) error {
 	} else {
 		homeDir = filepath.Join(os.Getenv("HOME"), ".werf")
 	}
+
+	// TODO: options
+
+	sharedContextDir = filepath.Join(homeDir, "shared_context")
+	localCacheDir = filepath.Join(homeDir, "local_cache")
+	serviceDir = filepath.Join(homeDir, "service")
 
 	return nil
 }

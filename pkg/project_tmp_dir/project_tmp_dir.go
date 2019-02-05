@@ -16,11 +16,11 @@ import (
 )
 
 func GetCreatedTmpDirs() string {
-	return filepath.Join(werf.GetHomeDir(), "tmp", "created")
+	return filepath.Join(werf.GetServiceDir(), "tmp", "created")
 }
 
 func GetReleasedTmpDirs() string {
-	return filepath.Join(werf.GetHomeDir(), "tmp", "released")
+	return filepath.Join(werf.GetServiceDir(), "tmp", "released")
 }
 
 func Get() (string, error) {

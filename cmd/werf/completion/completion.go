@@ -12,14 +12,11 @@ func NewCmd(rootCmd *cobra.Command) *cobra.Command {
 		Use:                   "completion",
 		DisableFlagsInUseLine: true,
 		Short:                 "Generate bash completion scripts",
-		Long: fmt.Sprintf(`To load completion run
+		Example: fmt.Sprintf(`  # Load completion run
+  $ source <(%[1]s completion)
 
-. <(%[1]s completion)
-
-To configure your bash shell to load completions for each session add to your ~/.bashrc ~/.profile
-
-. <(%[1]s completion)
-`, rootCmd.Name()),
+  # To configure current user bash shell to load completions for each session
+  $ echo ". <(%[1]s completion)" >> ~/.bashrc`, rootCmd.Name()),
 		Run: func(cmd *cobra.Command, args []string) {
 			rootCmd.GenBashCompletion(os.Stdout)
 		},

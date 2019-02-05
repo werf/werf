@@ -8,6 +8,10 @@ import (
 	"github.com/flant/werf/pkg/build"
 )
 
+const (
+	localStagesRepo string = ":local"
+)
+
 type CommonProjectOptions struct {
 	ProjectName   string
 	CommonOptions CommonOptions

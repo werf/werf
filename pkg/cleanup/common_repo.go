@@ -8,7 +8,8 @@ import (
 )
 
 type CommonRepoOptions struct {
-	Repository  string
+	StagesRepo  string
+	ImagesRepo  string
 	ImagesNames []string
 	DryRun      bool
 }
@@ -18,7 +19,7 @@ func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) 
 
 	isNamelessImage := len(options.ImagesNames) == 0
 	if isNamelessImage {
-		namelessImages, err := docker_registry.ImagesByWerfImageLabel(options.Repository, "true")
+		namelessImages, err := docker_registry.ImagesByWerfImageLabel(options.ImagesRepo, "true")
 		if err != nil {
 			return nil, err
 		}
@@ -26,7 +27,7 @@ func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) 
 		repoImages = append(repoImages, namelessImages...)
 	} else {
 		for _, imageName := range options.ImagesNames {
-			repository := fmt.Sprintf("%s/%s", options.Repository, imageName)
+			repository := fmt.Sprintf("%s/%s", options.ImagesRepo, imageName)
 			images, err := docker_registry.ImagesByWerfImageLabel(repository, "true")
 			if err != nil {
 				return nil, err
@@ -40,11 +41,11 @@ func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) 
 }
 
 func repoImageStagesImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
-	return docker_registry.ImagesByWerfImageLabel(options.Repository, "false")
+	return docker_registry.ImagesByWerfImageLabel(options.StagesRepo, "false")
 }
 
 func repoImagesRemove(images []docker_registry.RepoImage, options CommonRepoOptions) error {
-	isGCR, err := docker_registry.IsGCR(options.Repository)
+	isGCR, err := docker_registry.IsGCR(options.ImagesRepo)
 	if err != nil {
 		return err
 	}

@@ -6,24 +6,35 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
 
-	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
+	"github.com/flant/werf/pkg/tag_scheme"
 )
 
-type CleanupOptions struct {
+type ImagesCleanupOptions struct {
 	CommonRepoOptions CommonRepoOptions
-	LocalRepo         GitRepo
+	LocalGit          GitRepo
 	WithoutKube       bool
+}
+
+type StagesCleanupOptions struct {
+	CommonRepoOptions    CommonRepoOptions
+	CommonProjectOptions CommonProjectOptions
+}
+
+type CleanupOptions struct {
+	ImagesCleanupOptions ImagesCleanupOptions
+	StagesCleanupOptions StagesCleanupOptions
 }
 
 const (
@@ -34,13 +45,25 @@ const (
 )
 
 func Cleanup(options CleanupOptions) error {
-	err := lock.WithLock(options.CommonRepoOptions.Repository, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	if err := ImagesCleanup(options.ImagesCleanupOptions); err != nil {
+		return err
+	}
+
+	if err := StagesCleanup(options.StagesCleanupOptions); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ImagesCleanup(options ImagesCleanupOptions) error {
+	err := lock.WithLock(options.CommonRepoOptions.ImagesRepo, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoImages, err := repoImages(options.CommonRepoOptions)
 		if err != nil {
 			return err
 		}
 
-		if options.LocalRepo != nil {
+		if options.LocalGit != nil {
 			if !options.WithoutKube {
 				repoImages, err = exceptRepoImagesByWhitelist(repoImages)
 				if err != nil {
@@ -59,8 +82,31 @@ func Cleanup(options CleanupOptions) error {
 			}
 		}
 
-		if err := repoImageStagesSyncByRepoImages(repoImages, options.CommonRepoOptions); err != nil {
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func StagesCleanup(options StagesCleanupOptions) error {
+	err := lock.WithLock(options.CommonRepoOptions.ImagesRepo, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+		repoImages, err := repoImages(options.CommonRepoOptions)
+		if err != nil {
 			return err
+		}
+
+		if options.CommonRepoOptions.StagesRepo == localStagesRepo {
+			if err := projectImageStagesSyncByRepoImages(repoImages, options.CommonProjectOptions); err != nil {
+				return err
+			}
+		} else {
+			if err := repoImageStagesSyncByRepoImages(repoImages, options.CommonRepoOptions); err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -106,15 +152,15 @@ Loop:
 	return newRepoImages, nil
 }
 
-func repoImagesCleanupByNonexistentGitPrimitive(repoImages []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
+func repoImagesCleanupByNonexistentGitPrimitive(repoImages []docker_registry.RepoImage, options ImagesCleanupOptions) ([]docker_registry.RepoImage, error) {
 	var nonexistentGitTagRepoImages, nonexistentGitCommitRepoImages, nonexistentGitBranchRepoImages []docker_registry.RepoImage
 
-	gitTags, err := options.LocalRepo.TagsList()
+	gitTags, err := options.LocalGit.TagsList()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get local git tags list: %s", err)
 	}
 
-	gitBranches, err := options.LocalRepo.RemoteBranchesList()
+	gitBranches, err := options.LocalGit.RemoteBranchesList()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get local git branches list: %s", err)
 	}
@@ -132,22 +178,26 @@ Loop:
 		}
 
 		switch scheme {
-		case string(build.GitTagScheme):
+		case string(tag_scheme.GitTagScheme):
 			if repoImageTagMatch(repoImage, gitTags...) {
 				continue Loop
 			} else {
 				nonexistentGitTagRepoImages = append(nonexistentGitTagRepoImages, repoImage)
 			}
-		case string(build.GitBranchScheme):
+		case string(tag_scheme.GitBranchScheme):
 			if repoImageTagMatch(repoImage, gitBranches...) {
 				continue Loop
 			} else {
 				nonexistentGitBranchRepoImages = append(nonexistentGitBranchRepoImages, repoImage)
 			}
-		case string(build.GitCommitScheme):
-			exist, err := options.LocalRepo.IsCommitExists(repoImage.Tag)
+		case string(tag_scheme.GitCommitScheme):
+			exist, err := options.LocalGit.IsCommitExists(repoImage.Tag)
 			if err != nil {
-				return nil, err
+				if strings.HasPrefix(err.Error(), "bad commit hash") {
+					exist = false
+				} else {
+					return nil, err
+				}
 			}
 
 			if !exist {
@@ -196,7 +246,7 @@ func repoImageTagMatch(repoImage docker_registry.RepoImage, matches ...string) b
 	return false
 }
 
-func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options CleanupOptions) ([]docker_registry.RepoImage, error) {
+func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options ImagesCleanupOptions) ([]docker_registry.RepoImage, error) {
 	var repoImagesWithGitTagScheme, repoImagesWithGitCommitScheme []docker_registry.RepoImage
 
 	for _, repoImage := range repoImages {
@@ -211,9 +261,9 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 		}
 
 		switch scheme {
-		case string(build.GitTagScheme):
+		case string(tag_scheme.GitTagScheme):
 			repoImagesWithGitTagScheme = append(repoImagesWithGitTagScheme, repoImage)
-		case string(build.GitCommitScheme):
+		case string(tag_scheme.GitCommitScheme):
 			repoImagesWithGitCommitScheme = append(repoImagesWithGitCommitScheme, repoImage)
 		}
 	}

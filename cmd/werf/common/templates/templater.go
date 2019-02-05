@@ -121,7 +121,14 @@ func (t *templater) cmdGroupsString(c *cobra.Command) string {
 		cmds := []string{cmdGroup.Message}
 		for _, cmd := range cmdGroup.Commands {
 			if cmd.IsAvailableCommand() {
-				cmds = append(cmds, "  "+rpad(cmd.Name(), cmd.NamePadding())+" "+cmd.Short)
+				indent := "  "
+				separator := " "
+				cmdLeftPart := rpad(cmd.Name(), cmd.NamePadding())
+				cmdRightPartWidth := len(indent) + len(cmdLeftPart) + len(separator)
+				cmdRightPart := strings.TrimLeft(logger.FitTextWithIndent(cmd.Short, cmdRightPartWidth), " ")
+				cmdLine := fmt.Sprintf("%s%s%s%s", indent, cmdLeftPart, separator, cmdRightPart)
+
+				cmds = append(cmds, cmdLine)
 			}
 		}
 		groups = append(groups, strings.Join(cmds, "\n"))
@@ -176,6 +183,11 @@ func (t *templater) usageLine(c *cobra.Command) string {
 
 func UsageLine(c *cobra.Command) string {
 	usage := c.UseLine()
+
+	if c.Annotations[common.DisableOptionsInUseLineAnno] == "1" {
+		return usage
+	}
+
 	suffix := "[options]"
 	if c.HasFlags() && !strings.Contains(usage, suffix) {
 		usage += " " + suffix

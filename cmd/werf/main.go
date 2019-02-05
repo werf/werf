@@ -7,47 +7,60 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/flant/werf/cmd/werf/bp"
+	"github.com/spf13/cobra"
+
 	"github.com/flant/werf/cmd/werf/build"
+	"github.com/flant/werf/cmd/werf/build_and_publish"
 	"github.com/flant/werf/cmd/werf/cleanup"
-	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/templates"
-	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/deploy"
 	"github.com/flant/werf/cmd/werf/dismiss"
+	"github.com/flant/werf/cmd/werf/publish"
+	"github.com/flant/werf/cmd/werf/purge"
+	"github.com/flant/werf/cmd/werf/run"
+
+	helm_secret_edit "github.com/flant/werf/cmd/werf/helm/secret/edit"
+	helm_secret_extract "github.com/flant/werf/cmd/werf/helm/secret/extract"
+	helm_secret_generate "github.com/flant/werf/cmd/werf/helm/secret/generate"
+	helm_secret_key_generate "github.com/flant/werf/cmd/werf/helm/secret/key_generate"
+	helm_secret_regenerate "github.com/flant/werf/cmd/werf/helm/secret/regenerate"
+
+	"github.com/flant/werf/cmd/werf/ci_env"
+	"github.com/flant/werf/cmd/werf/slugify"
+
+	images_cleanup "github.com/flant/werf/cmd/werf/images/cleanup"
+	images_publish "github.com/flant/werf/cmd/werf/images/publish"
+	images_purge "github.com/flant/werf/cmd/werf/images/purge"
+
+	stages_build "github.com/flant/werf/cmd/werf/stages/build"
+	stages_cleanup "github.com/flant/werf/cmd/werf/stages/cleanup"
+	stages_purge "github.com/flant/werf/cmd/werf/stages/purge"
+
+	host_cleanup "github.com/flant/werf/cmd/werf/host/cleanup"
+	host_purge "github.com/flant/werf/cmd/werf/host/purge"
+
+	helm_deploy_chart "github.com/flant/werf/cmd/werf/helm/deploy_chart"
+	helm_generate_chart "github.com/flant/werf/cmd/werf/helm/generate_chart"
+	helm_get_service_values "github.com/flant/werf/cmd/werf/helm/get_service_values"
+	helm_lint "github.com/flant/werf/cmd/werf/helm/lint"
+	helm_render "github.com/flant/werf/cmd/werf/helm/render"
+
+	meta_get_helm_release "github.com/flant/werf/cmd/werf/meta/get_helm_release"
+	meta_get_namespace "github.com/flant/werf/cmd/werf/meta/get_namespace"
+
+	"github.com/flant/werf/cmd/werf/completion"
 	"github.com/flant/werf/cmd/werf/docs"
-	"github.com/flant/werf/cmd/werf/flush"
-	"github.com/flant/werf/cmd/werf/gc"
-	"github.com/flant/werf/cmd/werf/lint"
-	"github.com/flant/werf/cmd/werf/push"
-	"github.com/flant/werf/cmd/werf/render"
-	"github.com/flant/werf/cmd/werf/reset"
-	"github.com/flant/werf/cmd/werf/sync"
-	"github.com/flant/werf/cmd/werf/tag"
 	"github.com/flant/werf/cmd/werf/version"
+
+	"github.com/flant/werf/cmd/werf/common"
+	"github.com/flant/werf/cmd/werf/common/templates"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/process_exterminator"
-
-	get_namespace "github.com/flant/werf/cmd/werf/get-namespace"
-	get_release "github.com/flant/werf/cmd/werf/get-release"
-
-	secret_edit "github.com/flant/werf/cmd/werf/secret/edit"
-	secret_extract "github.com/flant/werf/cmd/werf/secret/extract"
-	secret_generate "github.com/flant/werf/cmd/werf/secret/generate"
-	secret_key_generate "github.com/flant/werf/cmd/werf/secret/key_generate"
-	secret_regenerate "github.com/flant/werf/cmd/werf/secret/regenerate"
-
-	slug_namespace "github.com/flant/werf/cmd/werf/slug/namespace"
-	slug_release "github.com/flant/werf/cmd/werf/slug/release"
-	slug_tag "github.com/flant/werf/cmd/werf/slug/tag"
-
-	"github.com/spf13/cobra"
 )
 
 func main() {
 	trapTerminationSignals()
 
-	logger.Init()
+	logger.Init(logger.Options{})
 
 	if err := process_exterminator.Init(); err != nil {
 		logger.LogError(fmt.Errorf("process exterminator initialization error: %s", err))
@@ -66,48 +79,33 @@ Find more information at https://flant.github.io/werf`),
 
 	groups := templates.CommandGroups{
 		{
-			Message: "Build Commands:",
+			Message: "Main Commands:",
 			Commands: []*cobra.Command{
 				build.NewCmd(),
-				push.NewCmd(),
-				tag.NewCmd(),
-			},
-		},
-		{
-			Message: "Deploy Commands:",
-			Commands: []*cobra.Command{
+				publish.NewCmd(),
+				build_and_publish.NewCmd(),
+				run.NewCmd(),
 				deploy.NewCmd(),
 				dismiss.NewCmd(),
-				lint.NewCmd(),
-				render.NewCmd(),
-				secretCmd(),
-			},
-		},
-		{
-			Message: "Combined commands:",
-			Commands: []*cobra.Command{
-				bp.NewCmd(),
-			},
-		},
-		{
-			Message: "Manual images cleaning:",
-			Commands: []*cobra.Command{
-				flush.NewCmd(),
-				reset.NewCmd(),
-			},
-		},
-		{
-			Message: "Project images cleaning automation:",
-			Commands: []*cobra.Command{
 				cleanup.NewCmd(),
-				sync.NewCmd(),
+				purge.NewCmd(),
 			},
 		},
 		{
-			Message: "Get project meta info:",
+			Message: "Toolbox:",
 			Commands: []*cobra.Command{
-				get_release.NewCmd(),
-				get_namespace.NewCmd(),
+				slugify.NewCmd(),
+				ci_env.NewCmd(),
+				metaCmd(),
+			},
+		},
+		{
+			Message: "Lowlevel Management Commands:",
+			Commands: []*cobra.Command{
+				stagesCmd(),
+				imagesCmd(),
+				helmCmd(),
+				hostCmd(),
 			},
 		},
 	}
@@ -116,41 +114,99 @@ Find more information at https://flant.github.io/werf`),
 	templates.ActsAsRootCommand(rootCmd, groups...)
 
 	rootCmd.AddCommand(
-		slugCmd(),
 		completion.NewCmd(rootCmd),
 		version.NewCmd(),
-		gc.NewCmd(),
 		docs.NewCmd(),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
-		logger.LogError(err)
+		logger.LogError(fmt.Errorf("Error: %s", err))
 		os.Exit(1)
 	}
 }
 
-func secretCmd() *cobra.Command {
+func imagesCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "secret",
-		Short: "Commands to work with secrets",
+		Use:   "images",
+		Short: "Work with images",
 	}
 	cmd.AddCommand(
-		secret_key_generate.NewCmd(),
-		secret_generate.NewCmd(),
-		secret_extract.NewCmd(),
-		secret_edit.NewCmd(),
-		secret_regenerate.NewCmd(),
+		images_publish.NewCmd(),
+		images_cleanup.NewCmd(),
+		images_purge.NewCmd(),
 	)
 
 	return cmd
 }
 
-func slugCmd() *cobra.Command {
-	cmd := &cobra.Command{Use: "slug"}
+func stagesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "stages",
+		Short: "Work with stages, which are cache for images",
+	}
 	cmd.AddCommand(
-		slug_tag.NewCmd(),
-		slug_namespace.NewCmd(),
-		slug_release.NewCmd(),
+		stages_build.NewCmd(),
+		stages_cleanup.NewCmd(),
+		stages_purge.NewCmd(),
+	)
+
+	return cmd
+}
+
+func helmCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "helm",
+		Short: "Manage application deployment with helm",
+	}
+	cmd.AddCommand(
+		helm_get_service_values.NewCmd(),
+		helm_generate_chart.NewCmd(),
+		helm_deploy_chart.NewCmd(),
+		helm_lint.NewCmd(),
+		helm_render.NewCmd(),
+		secretCmd(),
+	)
+
+	return cmd
+}
+
+func hostCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "host",
+		Short: "Work with werf cache and data of all projects on the host machine",
+	}
+	cmd.AddCommand(
+		host_cleanup.NewCmd(),
+		host_purge.NewCmd(),
+	)
+
+	return cmd
+}
+
+func secretCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "secret",
+		Short: "Work with secrets",
+	}
+	cmd.AddCommand(
+		helm_secret_key_generate.NewCmd(),
+		helm_secret_generate.NewCmd(),
+		helm_secret_extract.NewCmd(),
+		helm_secret_edit.NewCmd(),
+		helm_secret_regenerate.NewCmd(),
+	)
+
+	return cmd
+}
+
+func metaCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "meta",
+		Short: "Work with werf project meta configuration",
+	}
+	cmd.AddCommand(
+		meta_get_helm_release.NewCmd(),
+		meta_get_namespace.NewCmd(),
 	)
 
 	return cmd
