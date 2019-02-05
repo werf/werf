@@ -25,15 +25,15 @@ const (
 )
 
 var envDescription = map[Env]string{
-	WerfAnsibleArgs:                          "",
-	WerfDockerConfig:                         "",
-	WerfInsecureRepo:                         "",
-	WerfSecretKey:                            "",
-	WerfDisableStagesCleanupDatePeriodPolicy: "",
-	WerfGitTagsExpiryDatePeriodPolicy:        "",
-	WerfGitTagsLimitPolicy:                   "",
-	WerfGitCommitsExpiryDatePeriodPolicy:     "",
-	WerfGitCommitsLimitPolicy:                "",
+	WerfAnsibleArgs:                          "Pass specified cli args to ansible (ANSIBLE_ARGS)",
+	WerfDockerConfig:                         "Force usage of the specified docker config",
+	WerfInsecureRepo:                         "Enable insecure docker repo",
+	WerfSecretKey:                            "Use specified secret key to extract secrets for the deploy; recommended way to set secret key in CI-system",
+	WerfDisableStagesCleanupDatePeriodPolicy: "Redefine default ",
+	WerfGitTagsExpiryDatePeriodPolicy:        "Redefine default tags expiry date period policy: keep images built for git tags, that are no older than 30 days since build time",
+	WerfGitTagsLimitPolicy:                   "Redefine default tags limit policy: keep no more than 10 images built for git tags",
+	WerfGitCommitsExpiryDatePeriodPolicy:     "Redefine default commits expiry date period policy: keep images built for git commits, that are no older than 30 days since build time",
+	WerfGitCommitsLimitPolicy:                "Redefine default commits limit policy: keep no more than 50 images built for git commits",
 }
 
 func EnvsDescription(envs ...Env) string {
