@@ -15,4 +15,4 @@ Unlike `docker tag` command, which simply creates an alias for the specified ima
 
 ## Tag command
 
-{% include /cli/werf_tag.md %}
+<!--  TODO -->

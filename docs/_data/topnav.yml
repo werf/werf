@@ -14,7 +14,7 @@ topnav:
 
   - title: CLI
     directory: /cli/
-    url: /cli/build/build.html
+    url: /cli/main/build.html
 
   - title: Publications
     url: /publications.html

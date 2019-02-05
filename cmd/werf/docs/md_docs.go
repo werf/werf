@@ -82,11 +82,11 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer) error {
 		buf.WriteString(fmt.Sprintf("```bash\n%s\n```\n\n", cmd.Example))
 	}
 
-	if err := printOptions(buf, cmd); err != nil {
+	if err := printEnvironments(buf, cmd); err != nil {
 		return err
 	}
 
-	if err := printEnvironments(buf, cmd); err != nil {
+	if err := printOptions(buf, cmd); err != nil {
 		return err
 	}
 
@@ -118,7 +118,11 @@ func GenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHa
 		}
 	}
 
-	basename := strings.Replace(cmd.CommandPath(), " ", "_", -1) + ".md"
+	basename := cmd.CommandPath()
+	basename = strings.Replace(basename, " ", "_", -1)
+	basename = strings.Replace(basename, "-", "_", -1)
+	basename = basename + ".md"
+
 	filename := filepath.Join(dir, basename)
 	f, err := os.Create(filename)
 	if err != nil {

@@ -14,7 +14,7 @@ werf.yaml
 {{ header }} Syntax
 
 ```bash
-werf build [IMAGE_NAME...] [options]
+werf stages build [IMAGE_NAME...] [options]
 ```
 
 {{ header }} Environments

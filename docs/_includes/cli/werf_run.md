@@ -3,25 +3,29 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Build stages for images described in the werf.yaml.
-
-The result of build command are built stages pushed into the specified stages repo or locally if 
---stages=:local.
-
-If one or more IMAGE_NAME parameters specified, werf will build only these images stages from 
-werf.yaml
+Run container for specified project image
 
 {{ header }} Syntax
 
 ```bash
-werf build [IMAGE_NAME...] [options]
+werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 ```
 
-{{ header }} Environments
+{{ header }} Examples
 
 ```bash
-  $WERF_ANSIBLE_ARGS   Pass specified cli args to ansible (ANSIBLE_ARGS)
-  $WERF_DOCKER_CONFIG  Force usage of the specified docker config
+  # Run specified image
+  $ werf run application
+
+  # Run image with predefined docker run options and command for debug
+  $ werf run --shell
+
+  # Run image with specified docker run options and command
+  $ werf run --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
+
+  # Print a resulting docker run command
+  $ werf run --shell --dry-run
+  docker run -ti --rm image-stage-test:1ffe83860127e68e893b6aece5b0b7619f903f8492a285c6410371c87018c6a0 /bin/sh
 ```
 
 {{ header }} Options
@@ -29,20 +33,17 @@ werf build [IMAGE_NAME...] [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --docker-options='':
+            Define docker run options
+      --dry-run=false:
+            Indicate what the command would do without actually doing that
   -h, --help=false:
-            help for build
+            help for run
       --home-dir='':
             Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
             ~/.werf by default)
-      --introspect-before-error=false:
-            Introspect failed stage in the clean state, before running all assembly instructions 
-            of the stage
-      --introspect-error=false:
-            Introspect failed stage in the state, right after running failed assembly instruction
-      --pull-password='':
-            Password to authorize pull of base images
-      --pull-username='':
-            Username to authorize pull of base images
+      --shell=false:
+            Use predefined docker options and command for debug
       --ssh-key=[]:
             Enable only specified ssh keys (use system ssh-agent by default)
   -s, --stages='':
