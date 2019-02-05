@@ -1,92 +1,125 @@
 entries:
   f:
 
-  - title: Build commands
-    sf:
+    - title: Main Commands
+      sf:
 
-    - title: build
-      url: /cli/build/build.html
+        - title: build
+          url: /cli/main/build.html
 
-    - title: bp
-      url: /cli/build/bp.html
+        - title: publish
+          url: /cli/main/publish.html
 
-    - title: push
-      url: /cli/build/push.html
+        - title: build-and-publish
+          url: /cli/main/build_and_publish.html
 
-    - title: tag
-      url: /cli/build/tag.html
+        - title: run
+          url: /cli/main/run.html
 
-  - title: Deploy commands
-    sf:
+        - title: deploy
+          url: /cli/main/deploy.html
 
-    - title: deploy
-      url: /cli/deploy/deploy.html
+        - title: dismiss
+          url: /cli/main/dismiss.html
 
-    - title: dismiss
-      url: /cli/deploy/dismiss.html
+        - title: cleanup
+          url: /cli/main/cleanup.html
 
-    - title: render
-      url: /cli/deploy/render.html
+        - title: purge
+          url: /cli/main/purge.html
 
-    - title: lint
-      url: /cli/deploy/lint.html
+    - title: Toolbox
+      sf:
 
-    - title: secret
-      sfi:
+        - title: slugify
+          url: /cli/toolbox/slugify.html
 
-      - title: keygen
-        url: /cli/deploy/secret/keygen.html
+        - title: ci_env
+          url: /cli/toolbox/ci_env.html
 
-      - title: generate
-        url: /cli/deploy/secret/generate.html
+        - title: meta
+          sfi:
 
-      - title: extract
-        url: /cli/deploy/secret/extract.html
+            - title: get-helm-release
+              url: /cli/toolbox/meta/get_helm_release.html
 
-      - title: edit
-        url: /cli/deploy/secret/edit.html
+            - title: get-namespace
+              url: /cli/toolbox/meta/get_namespace.html
 
-      - title: regenerate
-        url: /cli/deploy/secret/regenerate.html
+    - title: Lowlevel Management Commands
+      sf:
 
-  - title: Project cleanup commands
-    sf:
+        - title: stages
+          sfi:
 
-    - title: cleanup
-      url: /cli/project_cleanup/cleanup.html
+            - title: build
+              url: /cli/management/stages/build.html
 
-    - title: sync
-      url: /cli/project_cleanup/sync.html
+            - title: cleanup
+              url: /cli/management/stages/cleanup.html
 
-    - title: reset
-      url: /cli/project_cleanup/flush.html
+            - title: purge
+              url: /cli/management/stages/purge.html
 
-  - title: Cleanup commands
-    sf:
+        - title: images
+          sfi:
 
-    - title: gc
-      url: /cli/cleanup/gc.html
+            - title: publish
+              url: /cli/management/images/publish.html
 
-    - title: reset
-      url: /cli/cleanup/reset.html
+            - title: cleanup
+              url: /cli/management/images/cleanup.html
 
-  - title: Other commands
-    sf:
+            - title: purge
+              url: /cli/management/images/purge.html
 
-    - title: completion
-      url: /cli/other/completion.html
+        - title: helm
+          sfi:
 
-    - title: slug
-      sfi:
+            - title: deploy-chart
+              url: /cli/management/helm/deploy_chart.html
 
-      - title: slug namespace
-        url: /cli/other/slug/namespace.html
+            - title: generate-chart
+              url: /cli/management/helm/generate_chart.html
 
-      - title: slug release
-        url: /cli/other/slug/release.html
+            - title: get-service-values
+              url: /cli/management/helm/get_service_values.html
 
-      - title: slug tag
-        url: /cli/other/slug/tag.html
+            - title: lint
+              url: /cli/management/helm/lint.html
 
-    - title: version
-      url: /cli/other/version.html
+            - title: render
+              url: /cli/management/helm/render.html
+
+            - title: secret keygen
+              url: /cli/management/helm/secret/keygen.html
+
+            - title: secret generate
+              url: /cli/management/helm/secret/generate.html
+
+            - title: secret extract
+              url: /cli/management/helm/secret/extract.html
+
+            - title: secret edit
+              url: /cli/management/helm/secret/edit.html
+
+            - title: secret regenerate
+              url: /cli/management/helm/secret/regenerate.html
+
+        - title: host
+          sfi:
+
+            - title: cleanup
+              url: /cli/management/host/cleanup.html
+
+            - title: purge
+              url: /cli/management/host/purge.html
+
+    - title: Other commands
+      sf:
+
+        - title: completion
+          url: /cli/other/completion.html
+
+        - title: version
+          url: /cli/other/version.html

@@ -3,19 +3,22 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-To load completion run
-
-. <(werf completion)
-
-To configure your bash shell to load completions for each session add to your ~/.bashrc ~/.profile
-
-. <(werf completion)
-
+Generate bash completion scripts
 
 {{ header }} Syntax
 
 ```bash
 werf completion [options]
+```
+
+{{ header }} Examples
+
+```bash
+  # Load completion run
+  $ source <(werf completion)
+
+  # To configure current user bash shell to load completions for each session
+  $ echo ". <(werf completion)" >> ~/.bashrc
 ```
 
 {{ header }} Options

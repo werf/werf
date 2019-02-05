@@ -90,7 +90,7 @@ There are some consequences of this algorithm:
 
 ### Sync command
 
-{% include /cli/werf_sync.md header="####" %}
+{% include /cli/werf_stages_cleanup.md header="####" %}
 
 ## Flush
 
@@ -108,7 +108,7 @@ Docker registry cleaning includes:
 
 ### Flush command
 
-{% include /cli/werf_flush.md header="####" %}
+{% include /cli/werf_purge.md header="####" %}
 
 ## Reset
 
@@ -120,7 +120,7 @@ Reset is the fullest method of cleaning on the local machine.
 
 ### Reset command
 
-{% include /cli/werf_reset.md header="####" %}
+{% include /cli/werf_host_purge.md header="####" %}
 
 ## GC
 
@@ -132,4 +132,4 @@ There is also gc command to force running of werf gc procedure.
 
 ### GC command
 
-{% include /cli/werf_gc.md header="####" %}
+{% include /cli/werf_host_cleanup.md header="####" %}
