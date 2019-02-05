@@ -13,5 +13,3 @@ dappdeps/*/omnibus/build/
 /release/build
 
 /osx/.vagrant
-
-main
