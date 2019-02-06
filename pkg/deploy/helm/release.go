@@ -18,12 +18,12 @@ import (
 	"github.com/flant/kubedog/pkg/trackers/rollout"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/releaseutil"
-	"k8s.io/kubernetes/pkg/util/file"
 )
 
 type TrackAnno string
@@ -369,7 +369,7 @@ func isReleaseExist(releaseName string) (bool, error) {
 	} else if releaseStatus != "" && (releaseStatus == "FAILED" || releaseStatus == "PENDING_INSTALL") {
 		releaseExist = true
 
-		if exist, err := file.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
+		if exist, err := util.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
 			return false, err
 		} else if exist {
 			fmt.Fprintf(logger.GetOutStream(), "# Delete release '%s'\n", releaseName)
@@ -380,7 +380,7 @@ func isReleaseExist(releaseName string) (bool, error) {
 			releaseExist = false
 		}
 	} else {
-		if exist, err := file.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
+		if exist, err := util.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
 			return false, err
 		} else if exist {
 			logger.LogWarningF("WARNING: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, releaseStatus)
@@ -600,10 +600,10 @@ func createAutoPurgeTriggerFilePath(releaseName string) error {
 	filePath := autoPurgeTriggerFilePath(releaseName)
 	dirPath := path.Dir(filePath)
 
-	if fileExist, err := file.FileExists(filePath); err != nil {
+	if fileExist, err := util.FileExists(filePath); err != nil {
 		return err
 	} else if !fileExist {
-		if dirExist, err := file.FileExists(dirPath); err != nil {
+		if dirExist, err := util.FileExists(dirPath); err != nil {
 			return err
 		} else if !dirExist {
 			if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
@@ -621,7 +621,7 @@ func createAutoPurgeTriggerFilePath(releaseName string) error {
 
 func deleteAutoPurgeTriggerFilePath(releaseName string) error {
 	filePath := autoPurgeTriggerFilePath(releaseName)
-	if fileExist, err := file.FileExists(filePath); err != nil {
+	if fileExist, err := util.FileExists(filePath); err != nil {
 		return err
 	} else if fileExist {
 		if err := os.Remove(filePath); err != nil {

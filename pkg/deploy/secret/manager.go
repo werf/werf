@@ -9,9 +9,8 @@ import (
 
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/secret"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
-
-	"k8s.io/kubernetes/pkg/util/file"
 )
 
 type Manager interface {
@@ -67,7 +66,7 @@ func GetSecretKey(projectDir string) ([]byte, error) {
 		}
 
 		for _, path := range werfSecretKeyPaths {
-			exist, err := file.FileExists(path)
+			exist, err := util.FileExists(path)
 			if err != nil {
 				return nil, err
 			}

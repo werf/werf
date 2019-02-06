@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy/secret"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -84,14 +84,14 @@ func secretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 	secretValuesFilesData := map[string][]byte{}
 
 	helmChartPath := filepath.Join(projectPath, ".helm")
-	isHelmChartDirExist, err := file.FileExists(helmChartPath)
+	isHelmChartDirExist, err := util.FileExists(helmChartPath)
 	if err != nil {
 		return err
 	}
 
 	if isHelmChartDirExist {
 		defaultSecretValuesPath := filepath.Join(helmChartPath, "secret-values.yaml")
-		isDefaultSecretValuesExist, err := file.FileExists(defaultSecretValuesPath)
+		isDefaultSecretValuesExist, err := util.FileExists(defaultSecretValuesPath)
 		if err != nil {
 			return err
 		}
@@ -101,7 +101,7 @@ func secretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 		}
 
 		secretDirectory := filepath.Join(helmChartPath, "secret")
-		isSecretDirectoryExist, err := file.FileExists(defaultSecretValuesPath)
+		isSecretDirectoryExist, err := util.FileExists(defaultSecretValuesPath)
 		if err != nil {
 			return err
 		}
