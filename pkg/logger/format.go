@@ -2,11 +2,11 @@ package logger
 
 import "strings"
 
-func FitTextWithIndent(text string, indentWidth int) string {
-	return fitTextWithIndent(text, TerminalWidth(), indentWidth)
+func FitTextWithIndent(text string, extraIndentWidth int) string {
+	return fitTextWithIndent(text, TerminalWidth(), extraIndentWidth)
 }
 
-func FitTextWithIndentWithWidthMaxLimit(text string, indentWidth int, maxWidth int) string {
+func FitTextWithIndentWithWidthMaxLimit(text string, extraIndentWidth int, maxWidth int) string {
 	tw := TerminalWidth()
 	var lineWidth int
 	if tw < maxWidth {
@@ -15,17 +15,17 @@ func FitTextWithIndentWithWidthMaxLimit(text string, indentWidth int, maxWidth i
 		lineWidth = maxWidth
 	}
 
-	return fitTextWithIndent(text, lineWidth, indentWidth)
+	return fitTextWithIndent(text, lineWidth, extraIndentWidth)
 }
 
-func fitTextWithIndent(text string, lineWidth, indentWidth int) string {
+func fitTextWithIndent(text string, lineWidth, extraIndentWidth int) string {
 	var result string
 	var resultLines []string
 
-	contentWidth := lineWidth - indentWidth - indent
+	contentWidth := lineWidth - indentWidth - extraIndentWidth
 	fittedText := fitText(text, contentWidth)
 	for _, line := range strings.Split(fittedText, "\n") {
-		indent := strings.Repeat(" ", indentWidth)
+		indent := strings.Repeat(" ", extraIndentWidth)
 		resultLines = append(resultLines, strings.Join([]string{indent, line}, ""))
 	}
 

@@ -20,7 +20,7 @@ import (
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/util"
-	yaml "gopkg.in/flant/yaml.v2"
+	"gopkg.in/flant/yaml.v2"
 )
 
 func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
@@ -264,7 +264,7 @@ func (f files) Get(path string) string {
 	filePath := filepath.Join(f.HomePath, path)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		logger.LogWarningF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
+		logger.LogErrorF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
 		return ""
 	}
 
