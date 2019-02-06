@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	indentWidth = 0
+	indentWidth                      = 0
+	isLoggerCursorOnStartingPosition = true
 )
 
 func loggerFormattedLogLn(w io.Writer, msg string) {
@@ -33,19 +34,25 @@ func loggerFormattedLogF(w io.Writer, format string, args ...interface{}) {
 // }
 
 func FormattedLogF(w io.Writer, format string, args ...interface{}) (int, error) {
-	var linesWithIndent []string
-
-	lines := strings.Split(fmt.Sprintf(format, args...), "\n")
+	msg := fmt.Sprintf(format, args...)
 	indent := strings.Repeat(" ", indentWidth)
-	for _, line := range lines {
-		if line == "" {
-			linesWithIndent = append(linesWithIndent, line)
-		} else {
-			linesWithIndent = append(linesWithIndent, fmt.Sprintf("%s%s", indent, line))
+
+	var formattedMsg string
+	for _, r := range []rune(msg) {
+		switch string(r) {
+		case "\n", "\r":
+			isLoggerCursorOnStartingPosition = true
+		default:
+			if isLoggerCursorOnStartingPosition {
+				formattedMsg += indent
+				isLoggerCursorOnStartingPosition = false
+			}
 		}
+
+		formattedMsg += string(r)
 	}
 
-	return logF(w, strings.Join(linesWithIndent, "\n"))
+	return logF(w, formattedMsg)
 }
 
 func logF(w io.Writer, format string, args ...interface{}) (int, error) {

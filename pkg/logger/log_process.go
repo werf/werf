@@ -56,7 +56,7 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 	elapsedSeconds := fmt.Sprintf(logProcessTimeFormat, time.Since(start).Seconds())
 
 	rightPart := prepareLogStateRightPart(processMsg, resultStatus, elapsedSeconds, resultColorize)
-	logF(outStream, fmt.Sprintf("%s\n", rightPart))
+	loggerFormattedLogLn(outStream, rightPart)
 
 	return err
 }
