@@ -289,11 +289,11 @@ func colorizeStep(msg string) string {
 }
 
 func colorizeService(msg string) string {
-	return colorize(msg, color.FgWhite, color.Bold)
+	return colorize(msg, color.Bold)
 }
 
 func colorizeInfo(msg string) string {
-	return colorize(msg, color.FgBlue)
+	return colorize(msg, color.FgHiBlue)
 }
 
 func colorizeWarning(msg string) string {
