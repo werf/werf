@@ -123,7 +123,7 @@ func runSSHAgent() (string, error) {
 		return "", fmt.Errorf("error listen unix sock %s: %s", sockPath, err)
 	}
 
-	fmt.Printf("Running ssh agent on unix sock %s\n", sockPath)
+	fmt.Fprintf(logger.GetOutStream(), "Running ssh agent on unix sock %s\n", sockPath)
 
 	go func() {
 		agnt := agent.NewKeyring()
@@ -180,7 +180,7 @@ func addSSHKey(authSock string, key string) error {
 		return err
 	}
 
-	fmt.Printf("Added private key %s to ssh agent %s\n", key, authSock)
+	fmt.Fprintf(logger.GetOutStream(), "Added private key %s to ssh agent %s\n", key, authSock)
 
 	return nil
 }

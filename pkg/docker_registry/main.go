@@ -12,11 +12,12 @@ import (
 
 	"github.com/flant/go-containerregistry/pkg/authn"
 	"github.com/flant/go-containerregistry/pkg/name"
-	"github.com/flant/go-containerregistry/pkg/v1"
+	v1 "github.com/flant/go-containerregistry/pkg/v1"
 	"github.com/flant/go-containerregistry/pkg/v1/remote"
 	"github.com/flant/go-containerregistry/pkg/v1/remote/transport"
 
 	imagePkg "github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type RepoImage struct {
@@ -94,7 +95,7 @@ func ImagesByWerfImageLabel(reference, labelValue string) ([]RepoImage, error) {
 		v1Image, _, err := image(tagReference)
 		if err != nil {
 			if strings.Contains(err.Error(), "BLOB_UNKNOWN") {
-				fmt.Printf("Ignore broken tag '%s': %s\n", tag, err)
+				fmt.Fprintf(logger.GetOutStream(), "Ignore broken tag '%s': %s\n", tag, err)
 				continue
 			}
 			return nil, err
@@ -103,7 +104,7 @@ func ImagesByWerfImageLabel(reference, labelValue string) ([]RepoImage, error) {
 		configFile, err := v1Image.ConfigFile()
 		if err != nil {
 			if strings.Contains(err.Error(), "MANIFEST_UNKNOWN") {
-				fmt.Printf("Ignore broken tag '%s': %s\n", tag, err)
+				fmt.Fprintf(logger.GetOutStream(), "Ignore broken tag '%s': %s\n", tag, err)
 				continue
 			}
 			return nil, err

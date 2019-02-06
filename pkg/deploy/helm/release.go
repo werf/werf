@@ -65,7 +65,7 @@ func doPurgeHelmRelease(releaseName string, opts CommonHelmOptions) error {
 		return fmt.Errorf("failed to check release status: %s\n%s\n%s", helmStatusErr, helmStatusStdout, helmStatusStderr)
 	}
 
-	fmt.Printf("# Purging helm release '%s'...\n", releaseName)
+	fmt.Fprintf(logger.GetOutStream(), "# Purging helm release '%s'...\n", releaseName)
 	helmPurgeStdout, helmPurgeStderr, helmPurgeErr := HelmCmd(append([]string{"delete", "--purge", releaseName}, args...)...)
 	if helmPurgeErr != nil {
 		return fmt.Errorf("failed to purge release: %s\n%s\n%s", helmPurgeErr, helmPurgeStdout, helmPurgeStderr)
@@ -126,10 +126,10 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 	args := commonHelmCommandArgs(namespace, opts)
 	if releaseExist {
 		args = append([]string{"upgrade", releaseName, chartPath}, args...)
-		fmt.Printf("# Upgrading helm release '%s'...\n", releaseName)
+		fmt.Fprintf(logger.GetOutStream(), "# Upgrading helm release '%s'...\n", releaseName)
 	} else {
 		args = append([]string{"install", chartPath, "--name", releaseName}, args...)
-		fmt.Printf("# Installing helm release '%s'...\n", releaseName)
+		fmt.Fprintf(logger.GetOutStream(), "# Installing helm release '%s'...\n", releaseName)
 	}
 
 	stdout, stderr, err := HelmCmd(args...)
@@ -152,7 +152,7 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 
 	<-jobHooksWatcherDone
 
-	fmt.Printf("%s\n%s\n", stdout, stderr)
+	fmt.Fprintf(logger.GetOutStream(), "%s\n%s\n", stdout, stderr)
 
 	if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
 		return err
@@ -183,7 +183,7 @@ func trackPods(templates *ChartTemplates, deployStartTime time.Time, namespace s
 			continue
 		}
 
-		fmt.Printf("# Track pod/%s\n", template.Metadata.Name)
+		fmt.Fprintf(logger.GetOutStream(), "# Track pod/%s\n", template.Metadata.Name)
 		err := rollout.TrackPodTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
 		if err != nil {
 			return err
@@ -203,7 +203,7 @@ func trackDeployments(templates *ChartTemplates, deployStartTime time.Time, name
 			continue
 		}
 
-		fmt.Printf("# Track deployment/%s\n", template.Metadata.Name)
+		fmt.Fprintf(logger.GetOutStream(), "# Track deployment/%s\n", template.Metadata.Name)
 		err := rollout.TrackDeploymentTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
 		if err != nil {
 			return err
@@ -223,7 +223,7 @@ func trackStatefulSets(templates *ChartTemplates, deployStartTime time.Time, nam
 			continue
 		}
 
-		fmt.Printf("# Track statefulset/%s\n", template.Metadata.Name)
+		fmt.Fprintf(logger.GetOutStream(), "# Track statefulset/%s\n", template.Metadata.Name)
 		err := rollout.TrackStatefulSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
 		if err != nil {
 			return err
@@ -243,7 +243,7 @@ func trackDaemonSets(templates *ChartTemplates, deployStartTime time.Time, names
 			continue
 		}
 
-		fmt.Printf("# Track daemonset/%s\n", template.Metadata.Name)
+		fmt.Fprintf(logger.GetOutStream(), "# Track daemonset/%s\n", template.Metadata.Name)
 		err := rollout.TrackDaemonSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
 		if err != nil {
 			return err
@@ -260,7 +260,7 @@ func trackJobs(templates *ChartTemplates, deployStartTime time.Time, namespace s
 		}
 
 		if template.Metadata.Annotations[TrackAnnoName] == string(TrackTillDone) {
-			fmt.Printf("# Track job/%s\n", template.Metadata.Name)
+			fmt.Fprintf(logger.GetOutStream(), "# Track job/%s\n", template.Metadata.Name)
 			err := rollout.TrackJobTillDone(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
 			if err != nil {
 				return err
@@ -285,7 +285,7 @@ func watchJobHooks(templates *ChartTemplates, releaseExist bool, deployStartTime
 
 	go func() {
 		for _, template := range jobHooksToTrack {
-			fmt.Printf("# Track Helm Hook job/%s\n", template.Metadata.Name)
+			fmt.Fprintf(logger.GetOutStream(), "# Track Helm Hook job/%s\n", template.Metadata.Name)
 
 			var jobNamespace string
 			if template.Metadata.Namespace != "" {
@@ -296,7 +296,7 @@ func watchJobHooks(templates *ChartTemplates, releaseExist bool, deployStartTime
 
 			err := rollout.TrackJobTillDone(template.Metadata.Name, jobNamespace, kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "ERROR %s\n", err)
+				fmt.Fprintf(logger.GetErrStream(), "ERROR %s\n", err)
 				break
 			}
 		}
@@ -372,7 +372,7 @@ func isReleaseExist(releaseName string) (bool, error) {
 		if exist, err := file.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
 			return false, err
 		} else if exist {
-			fmt.Printf("# Delete release '%s'\n", releaseName)
+			fmt.Fprintf(logger.GetOutStream(), "# Delete release '%s'\n", releaseName)
 			if _, _, err := HelmCmd("delete", "--purge", releaseName); err != nil {
 				return false, err
 			}
@@ -513,7 +513,7 @@ func removeOldJobs(templates *ChartTemplates, namespace string) error {
 			continue
 		}
 
-		fmt.Printf("# Deleting hook job '%s' (werf/recreate)...\n", template.Metadata.Name)
+		fmt.Fprintf(logger.GetOutStream(), "# Deleting hook job '%s' (werf/recreate)...\n", template.Metadata.Name)
 
 		deletePropagation := v1.DeletePropagationForeground
 		deleteOptions := &v1.DeleteOptions{

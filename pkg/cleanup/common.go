@@ -11,6 +11,7 @@ import (
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type CommonOptions struct {
@@ -135,7 +136,7 @@ func ignoreUsedImages(images []types.ImageSummary) ([]types.ImageSummary, error)
 	for _, container := range containers {
 		for _, img := range images {
 			if img.ID == container.ImageID {
-				fmt.Printf("Skip image '%s' (used by container '%s')\n", img.ID, container.ID)
+				fmt.Fprintf(logger.GetOutStream(), "Skip image '%s' (used by container '%s')\n", img.ID, container.ID)
 				imagesToExclude = append(imagesToExclude, img)
 			}
 		}
@@ -162,8 +163,8 @@ func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary)
 func containersRemove(containers []types.Container, options CommonOptions) error {
 	for _, container := range containers {
 		if options.DryRun {
-			fmt.Println(container.ID)
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream(), container.ID)
+			fmt.Fprintln(logger.GetOutStream())
 		} else {
 			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{Force: true}); err != nil {
 				return err
@@ -177,8 +178,8 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 func imageReferencesRemove(references []string, options CommonOptions) error {
 	if len(references) != 0 {
 		if options.DryRun {
-			fmt.Printf(strings.Join(references, "\n"))
-			fmt.Println()
+			fmt.Fprintf(logger.GetOutStream(), strings.Join(references, "\n"))
+			fmt.Fprintln(logger.GetOutStream())
 		} else {
 			var args []string
 			args = append(args, "--force")

@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types/filters"
 
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -49,10 +50,10 @@ func deleteWerfFiles(options CommonOptions) error {
 	}
 
 	if len(directoryPathToDelete) != 0 {
-		fmt.Println("reset werf cache")
+		fmt.Fprintln(logger.GetOutStream(), "reset werf cache")
 		for _, directoryPath := range directoryPathToDelete {
 			if options.DryRun {
-				fmt.Println(directoryPath)
+				fmt.Fprintln(logger.GetOutStream(), directoryPath)
 			} else {
 				err := os.RemoveAll(directoryPath)
 				if err != nil {

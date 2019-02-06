@@ -5,6 +5,7 @@ import (
 
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tag_scheme"
 )
 
@@ -17,7 +18,7 @@ type RenderOptions struct {
 
 func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOptions) error {
 	if debug() {
-		fmt.Printf("Render options: %#v\n", opts)
+		fmt.Fprintf(logger.GetOutStream(), "Render options: %#v\n", opts)
 	}
 
 	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)

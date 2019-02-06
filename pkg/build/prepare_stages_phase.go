@@ -23,7 +23,7 @@ func (p *PrepareStagesPhase) Run(c *Conveyor) error {
 
 func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 	if debug() {
-		fmt.Printf("PrepareStagesPhase.Run\n")
+		fmt.Fprintf(logger.GetOutStream(), "PrepareStagesPhase.Run\n")
 	}
 
 	for _, image := range c.imagesInOrder {
@@ -37,7 +37,7 @@ func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 
 func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 	if debug() {
-		fmt.Printf("  image: '%s'\n", image.GetName())
+		fmt.Fprintf(logger.GetOutStream(), "  image: '%s'\n", image.GetName())
 	}
 
 	var prevImage, prevBuiltImage imagePkg.ImageInterface
@@ -61,7 +61,7 @@ func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 		}
 
 		if debug() {
-			fmt.Printf("    %s\n", s.Name())
+			fmt.Fprintf(logger.GetOutStream(), "    %s\n", s.Name())
 		}
 
 		imageServiceCommitChangeOptions := stageImage.Container().ServiceCommitChangeOptions()

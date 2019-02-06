@@ -62,7 +62,7 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 		}
 
 		if !isLastImage {
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 
@@ -318,7 +318,7 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 			return nil, err
 		}
 
-		fmt.Println()
+		fmt.Fprintln(logger.GetOutStream())
 	}
 
 	return res, nil
@@ -356,7 +356,7 @@ func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 		}
 
 		if !isLastGitPath {
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 

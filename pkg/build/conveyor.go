@@ -10,6 +10,7 @@ import (
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -217,7 +218,7 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 		}
 
 		if !isLastPhase {
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 	return nil

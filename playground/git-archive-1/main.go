@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	err := true_git.Init()
+	err := true_git.Init(true_git.Options{})
 	if err != nil {
 		panic(err)
 	}

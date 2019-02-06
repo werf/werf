@@ -31,7 +31,7 @@ type PublishImagesPhase struct {
 
 func (p *PublishImagesPhase) Run(c *Conveyor) error {
 	if debug() {
-		fmt.Printf("PublishImagesPhase.Run\n")
+		fmt.Fprintf(logger.GetOutStream(), "PublishImagesPhase.Run\n")
 	}
 
 	// TODO: Push stages should occur on the BuildStagesPhase
@@ -59,7 +59,7 @@ func (p *PublishImagesPhase) Run(c *Conveyor) error {
 				}
 
 				if !image.isArtifact {
-					fmt.Println()
+					fmt.Fprintln(logger.GetOutStream())
 				}
 			}
 
@@ -77,7 +77,7 @@ func (p *PublishImagesPhase) Run(c *Conveyor) error {
 		}
 
 		if !isLastImage {
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 
@@ -104,7 +104,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 			logRepoImageInfo(stageImageName)
 
 			if !isLastStage {
-				fmt.Println()
+				fmt.Fprintln(logger.GetOutStream())
 			}
 
 			continue
@@ -137,7 +137,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 		}
 
 		if !isLastStage {
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 
@@ -196,7 +196,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 						logRepoImageInfo(imageName)
 
 						if !isLastTag {
-							fmt.Println()
+							fmt.Fprintln(logger.GetOutStream())
 						}
 
 						continue ProcessingTags
@@ -247,7 +247,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 				logRepoImageInfo(imageName)
 
 				if !isLastTag {
-					fmt.Println()
+					fmt.Fprintln(logger.GetOutStream())
 				}
 			}
 
@@ -259,7 +259,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 		}
 
 		if scheme != lastNonEmptyTagScheme {
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 

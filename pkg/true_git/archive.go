@@ -195,7 +195,7 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 		}
 
 		if debugArchive() {
-			fmt.Printf("Added archive file `%s`\n", path)
+			fmt.Fprintf(outStream, "Added archive file `%s`\n", path)
 		}
 
 		return nil
@@ -223,7 +223,7 @@ func startMemprofile() {
 
 func stopMemprofile() {
 	memprofilePath := fmt.Sprintf("/tmp/create-tar-memprofile-%s", uuid.NewV4())
-	fmt.Printf("Creating mem profile: %s\n", memprofilePath)
+	fmt.Fprintf(outStream, "Creating mem profile: %s\n", memprofilePath)
 	f, err := os.Create(memprofilePath)
 	if err != nil {
 		log.Fatal("could not create memory profile: ", err)

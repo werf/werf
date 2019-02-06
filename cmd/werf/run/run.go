@@ -36,8 +36,8 @@ func NewCmd() *cobra.Command {
 
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
-		Short:                 "Run container for specified project image",
+		Use:   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
+		Short: "Run container for specified project image",
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
   $ werf run application
@@ -137,7 +137,7 @@ func runRun(commonCmdData *common.CmdData) error {
 		return err
 	}
 
-	if err := true_git.Init(); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
 		return err
 	}
 

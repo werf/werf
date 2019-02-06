@@ -63,7 +63,7 @@ func runTag(imagesToProcess []string) error {
 		return err
 	}
 
-	if err := true_git.Init(); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
 		return err
 	}
 

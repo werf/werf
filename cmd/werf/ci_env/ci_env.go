@@ -15,9 +15,9 @@ var CmdData struct {
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "ci-env CI_SYSTEM",
+		Use: "ci-env CI_SYSTEM",
 		DisableFlagsInUseLine: true,
-		Short:                 "Generate werf environment variables for specified CI system",
+		Short: "Generate werf environment variables for specified CI system",
 		Long: `Generate werf environment variables for specified CI system.
 
 Currently supported only GitLab CI`,

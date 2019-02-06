@@ -34,7 +34,7 @@ func NewCmd() *cobra.Command {
 
 Werf will generate additional values files, templates Chart.yaml and other files specific to the Werf chart. The result is a valid Helm chart`),
 		DisableFlagsInUseLine: true,
-		Args:                  cobra.MinimumNArgs(1),
+		Args: cobra.MinimumNArgs(1),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig),
 		},
@@ -78,7 +78,7 @@ func runGenerateChart(targetPath string) error {
 		return err
 	}
 
-	if err := true_git.Init(); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
 		return err
 	}
 

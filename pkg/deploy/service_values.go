@@ -3,6 +3,7 @@ package deploy
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tag_scheme"
 
 	"github.com/flant/werf/pkg/config"
@@ -89,7 +90,7 @@ func GetServiceValues(projectName, repo, namespace, tag string, tagScheme tag_sc
 		}
 
 		if debug() {
-			fmt.Printf("GetServiceValues got image id of %s: %#v", image.GetImageName(), imageID)
+			fmt.Fprintf(logger.GetOutStream(), "GetServiceValues got image id of %s: %#v", image.GetImageName(), imageID)
 		}
 
 		var value string
@@ -103,7 +104,7 @@ func GetServiceValues(projectName, repo, namespace, tag string, tagScheme tag_sc
 
 	if debug() {
 		data, err := yaml.Marshal(res)
-		fmt.Printf("GetServiceValues result (err=%s):\n%s\n", err, data)
+		fmt.Fprintf(logger.GetOutStream(), "GetServiceValues result (err=%s):\n%s\n", err, data)
 	}
 
 	return res, nil

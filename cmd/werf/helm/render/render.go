@@ -6,6 +6,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 	"github.com/spf13/cobra"
@@ -54,7 +55,7 @@ func runRender() error {
 		return err
 	}
 
-	if err := true_git.Init(); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
 		return err
 	}
 

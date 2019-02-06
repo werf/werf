@@ -21,14 +21,14 @@ func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
 
 func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
 	if debug() {
-		fmt.Printf("ShouldBeBuiltPhase.Run\n")
+		fmt.Fprintf(logger.GetOutStream(), "ShouldBeBuiltPhase.Run\n")
 	}
 
 	var badImages []*Image
 
 	for _, image := range c.imagesInOrder {
 		if debug() {
-			fmt.Printf("  image: '%s'\n", image.GetName())
+			fmt.Fprintf(logger.GetOutStream(), "  image: '%s'\n", image.GetName())
 		}
 
 		var badStages []stage.Interface

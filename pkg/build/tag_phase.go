@@ -27,7 +27,7 @@ type TagPhase struct {
 
 func (p *TagPhase) Run(c *Conveyor) error {
 	if debug() {
-		fmt.Printf("TagPhase.Run\n")
+		fmt.Fprintf(logger.GetOutStream(), "TagPhase.Run\n")
 	}
 
 	for ind, image := range c.imagesInOrder {
@@ -47,7 +47,7 @@ func (p *TagPhase) Run(c *Conveyor) error {
 			}
 
 			if !isLastImage {
-				fmt.Println()
+				fmt.Fprintln(logger.GetOutStream())
 			}
 		}
 	}
@@ -146,7 +146,7 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 				}
 
 				if !isLastTag {
-					fmt.Println()
+					fmt.Fprintln(logger.GetOutStream())
 				}
 			}
 
@@ -158,7 +158,7 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 		}
 
 		if scheme != lastNonEmptyTagScheme {
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 

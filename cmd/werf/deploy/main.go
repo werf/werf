@@ -10,6 +10,7 @@ import (
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/project_tmp_dir"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -93,7 +94,7 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := true_git.Init(); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
 		return err
 	}
 

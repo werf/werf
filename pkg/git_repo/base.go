@@ -17,7 +17,7 @@ import (
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/true_git"
-	"gopkg.in/src-d/go-git.v4"
+	git "gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
@@ -427,7 +427,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 			if len(res) == 0 {
 				checksum.NoMatchPaths = append(checksum.NoMatchPaths, pathPattern)
 				if debugChecksum() {
-					fmt.Printf("Ignore checksum path pattern `%s`: no matches found\n", pathPattern)
+					fmt.Fprintf(logger.GetOutStream(), "Ignore checksum path pattern `%s`: no matches found\n", pathPattern)
 				}
 			}
 
@@ -447,7 +447,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 
 			if !pathFilter.IsFilePathValid(path) {
 				if debugChecksum() {
-					fmt.Printf("Excluded file `%s` from resulting checksum by path filter %s\n", fullPath, pathFilter.String())
+					fmt.Fprintf(logger.GetOutStream(), "Excluded file `%s` from resulting checksum by path filter %s\n", fullPath, pathFilter.String())
 				}
 				continue
 			}
@@ -502,7 +502,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 						return fmt.Errorf("error closing file `%s`: %s", fullPath, err)
 					}
 
-					fmt.Printf("Added file `%s` to resulting checksum with content checksum: %s\n", fullPath, contentHash)
+					fmt.Fprintf(logger.GetOutStream(), "Added file `%s` to resulting checksum with content checksum: %s\n", fullPath, contentHash)
 				}
 			} else if stat.Mode()&os.ModeSymlink != 0 {
 				linkname, err := os.Readlink(fullPath)
@@ -516,7 +516,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 				}
 
 				if debugChecksum() {
-					fmt.Printf("Added symlink `%s` -> `%s` to resulting checksum\n", fullPath, linkname)
+					fmt.Fprintf(logger.GetOutStream(), "Added symlink `%s` -> `%s` to resulting checksum\n", fullPath, linkname)
 				}
 			}
 		}
@@ -529,7 +529,7 @@ func (repo *Base) checksum(repoPath, gitDir, workTreeDir string, opts ChecksumOp
 	}
 
 	if debugChecksum() {
-		fmt.Printf("Calculated checksum %s\n", checksum.String())
+		fmt.Fprintf(logger.GetOutStream(), "Calculated checksum %s\n", checksum.String())
 	}
 
 	return checksum, nil

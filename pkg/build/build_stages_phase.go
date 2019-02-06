@@ -28,7 +28,7 @@ func (p *BuildStagesPhase) Run(c *Conveyor) (err error) {
 
 func (p *BuildStagesPhase) run(c *Conveyor) error {
 	if debug() {
-		fmt.Printf("BuildStagesPhase.Run\n")
+		fmt.Fprintf(logger.GetOutStream(), "BuildStagesPhase.Run\n")
 	}
 
 	/*
@@ -48,7 +48,7 @@ func (p *BuildStagesPhase) run(c *Conveyor) error {
 		}
 
 		if !isLastImage {
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 
@@ -57,7 +57,7 @@ func (p *BuildStagesPhase) run(c *Conveyor) error {
 
 func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 	if debug() {
-		fmt.Printf("  image: '%s'\n", image.GetName())
+		fmt.Fprintf(logger.GetOutStream(), "  image: '%s'\n", image.GetName())
 	}
 
 	var acquiredLocks []string
@@ -111,7 +111,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 
 			if !isLastStage {
-				fmt.Println()
+				fmt.Fprintln(logger.GetOutStream())
 			}
 
 			prevStageImageSize = img.Inspect().Size
@@ -121,7 +121,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 
 		err := logger.LogProcess(msg, "[BUILDING]", func() error {
 			if debug() {
-				fmt.Printf("    %s\n", s.Name())
+				fmt.Fprintf(logger.GetOutStream(), "    %s\n", s.Name())
 			}
 
 			if err := s.PreRunHook(c); err != nil {
@@ -151,7 +151,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 		logImageInfo(img, prevStageImageSize, isUsingCache)
 
 		if !isLastStage {
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 		}
 
 		unlockLock()

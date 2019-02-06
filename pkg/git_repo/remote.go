@@ -224,7 +224,7 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
 	}
 
-	fmt.Printf("Using commit `%s` of repo `%s` branch `%s`\n", res, repo.String(), branch)
+	fmt.Fprintf(logger.GetOutStream(), "Using commit `%s` of repo `%s` branch `%s`\n", res, repo.String(), branch)
 
 	return res, nil
 }
@@ -245,7 +245,7 @@ func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 		return "", fmt.Errorf("unknown tag `%s` of repo `%s`", tag, repo.String())
 	}
 
-	fmt.Printf("Using commit `%s` of repo `%s` tag `%s`\n", res, repo.String(), tag)
+	fmt.Fprintf(logger.GetOutStream(), "Using commit `%s` of repo `%s` tag `%s`\n", res, repo.String(), tag)
 
 	return res, nil
 }
