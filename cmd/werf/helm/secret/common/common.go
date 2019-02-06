@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 
 	"golang.org/x/crypto/ssh/terminal"
-	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/util"
 )
 
 type GenerateOptions struct {
@@ -19,7 +19,7 @@ type GenerateOptions struct {
 }
 
 func ReadFileData(filePath string) ([]byte, error) {
-	if exist, err := file.FileExists(filePath); err != nil {
+	if exist, err := util.FileExists(filePath); err != nil {
 		return nil, err
 	} else if !exist {
 		absFilePath, err := filepath.Abs(filePath)

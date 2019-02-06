@@ -15,12 +15,12 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/yaml.v2"
-	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/werf/cmd/werf/common"
 	secret_common "github.com/flant/werf/cmd/werf/helm/secret/common"
 	"github.com/flant/werf/pkg/deploy/secret"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -163,7 +163,7 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []byte, error) {
 	var data, encodedData []byte
 
-	exist, err := file.FileExists(filePath)
+	exist, err := util.FileExists(filePath)
 	if err != nil {
 		return nil, nil, err
 	}

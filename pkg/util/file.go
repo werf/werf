@@ -1,10 +1,19 @@
 package util
 
-import "os"
+import (
+	"os"
+)
 
-func FileExists(path string) bool {
+// FileExists returns true if path exists
+func FileExists(path string) (bool, error) {
 	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func DirExists(path string) (bool, error) {

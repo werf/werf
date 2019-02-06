@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"k8s.io/kubernetes/pkg/util/file"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -135,7 +135,7 @@ func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command) {
 	usage := `Images Docker repo username (granted permission to read images info and delete images).
 Use by default:
-* werf-cleanup username if WERF_IMAGES_PASSWORD environment defined or 
+* werf-cleanup username if WERF_IMAGES_PASSWORD environment defined or
 * WERF_IMAGES_USERNAME environment`
 
 	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") != "" {
@@ -149,7 +149,7 @@ Use by default:
 func SetupCleanupImagesPassword(cmdData *CmdData, cmd *cobra.Command) {
 	usage := `Docker repo password (granted permission to read images info and delete images).
 Use by default:
-* WERF_CLEANUP_IMAGES_PASSWORD or 
+* WERF_CLEANUP_IMAGES_PASSWORD or
 * WERF_IMAGES_PASSWORD environment`
 
 	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") != "" {
@@ -213,7 +213,7 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) string {
 func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
 	for _, werfConfigName := range []string{"werf.yml", "werf.yaml"} {
 		werfConfigPath := path.Join(projectDir, werfConfigName)
-		if exist, err := file.FileExists(werfConfigPath); err != nil {
+		if exist, err := util.FileExists(werfConfigPath); err != nil {
 			return nil, err
 		} else if exist {
 			return config.ParseWerfConfig(werfConfigPath)
