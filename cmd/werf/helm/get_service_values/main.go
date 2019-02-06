@@ -2,7 +2,6 @@ package get_service_values
 
 import (
 	"fmt"
-	"io/ioutil"
 
 	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 
@@ -62,7 +61,7 @@ These values includes project name, docker images ids and other`),
 }
 
 func runGetServiceValues() error {
-	logger.Out = ioutil.Discard
+	logger.MuteOut()
 
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
