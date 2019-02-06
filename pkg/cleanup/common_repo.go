@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type CommonRepoOptions struct {
@@ -85,7 +86,7 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 		return err
 	}
 
-	fmt.Printf("%s:\n  ", image.Tag)
+	fmt.Fprintf(logger.GetOutStream(), "%s:\n  ", image.Tag)
 	if err := repoReferenceRemove(reference, options); err != nil {
 		return err
 	}
@@ -94,7 +95,7 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 }
 
 func repoReferenceRemove(reference string, options CommonRepoOptions) error {
-	fmt.Println(reference)
+	fmt.Fprintln(logger.GetOutStream(), reference)
 	if !options.DryRun {
 		err := docker_registry.ImageDelete(reference)
 		if err != nil {

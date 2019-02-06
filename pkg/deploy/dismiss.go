@@ -16,8 +16,8 @@ type DismissOptions struct {
 
 func RunDismiss(release, namespace, kubeContext string, opts DismissOptions) error {
 	if debug() {
-		fmt.Printf("Dismiss options: %#v\n", opts)
-		fmt.Printf("Namespace: %s\n", namespace)
+		fmt.Fprintf(logger.GetOutStream(), "Dismiss options: %#v\n", opts)
+		fmt.Fprintf(logger.GetOutStream(), "Namespace: %s\n", namespace)
 	}
 
 	err := helm.PurgeHelmRelease(release, helm.CommonHelmOptions{KubeContext: opts.KubeContext})

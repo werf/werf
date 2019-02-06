@@ -3,6 +3,8 @@ package true_git
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -21,9 +23,24 @@ var (
 	gitVersionObj                 *semver.Version
 	minVersionConstraintObj       *semver.Constraints
 	submoduleVersionConstraintObj *semver.Constraints
+
+	outStream, errStream io.Writer
 )
 
-func Init() error {
+type Options struct {
+	Out, Err io.Writer
+}
+
+func Init(opts Options) error {
+	outStream = os.Stdout
+	errStream = os.Stderr
+	if opts.Out != nil {
+		outStream = opts.Out
+	}
+	if opts.Err != nil {
+		errStream = opts.Err
+	}
+
 	var err error
 
 	v, err := getGitCliVersion()

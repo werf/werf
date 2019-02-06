@@ -141,12 +141,12 @@ Loop:
 	}
 
 	if len(exceptedRepoImages) != 0 {
-		fmt.Println("Keep in repo images that are being used in kubernetes")
+		fmt.Fprintln(logger.GetOutStream(), "Keep in repo images that are being used in kubernetes")
 		for _, exceptedRepoImage := range exceptedRepoImages {
 			imageName := fmt.Sprintf("%s:%s", exceptedRepoImage.Repository, exceptedRepoImage.Tag)
-			fmt.Println(imageName)
+			fmt.Fprintln(logger.GetOutStream(), imageName)
 		}
-		fmt.Println()
+		fmt.Fprintln(logger.GetOutStream())
 	}
 
 	return newRepoImages, nil
@@ -207,29 +207,29 @@ Loop:
 	}
 
 	if len(nonexistentGitTagRepoImages) != 0 {
-		fmt.Println("git tag nonexistent")
+		fmt.Fprintln(logger.GetOutStream(), "git tag nonexistent")
 		if err := repoImagesRemove(nonexistentGitTagRepoImages, options.CommonRepoOptions); err != nil {
 			return nil, err
 		}
-		fmt.Println()
+		fmt.Fprintln(logger.GetOutStream())
 		repoImages = exceptRepoImages(repoImages, nonexistentGitTagRepoImages...)
 	}
 
 	if len(nonexistentGitBranchRepoImages) != 0 {
-		fmt.Println("git branch nonexistent")
+		fmt.Fprintln(logger.GetOutStream(), "git branch nonexistent")
 		if err := repoImagesRemove(nonexistentGitBranchRepoImages, options.CommonRepoOptions); err != nil {
 			return nil, err
 		}
-		fmt.Println()
+		fmt.Fprintln(logger.GetOutStream())
 		repoImages = exceptRepoImages(repoImages, nonexistentGitBranchRepoImages...)
 	}
 
 	if len(nonexistentGitCommitRepoImages) != 0 {
-		fmt.Println("git commit nonexistent")
+		fmt.Fprintln(logger.GetOutStream(), "git commit nonexistent")
 		if err := repoImagesRemove(nonexistentGitCommitRepoImages, options.CommonRepoOptions); err != nil {
 			return nil, err
 		}
-		fmt.Println()
+		fmt.Fprintln(logger.GetOutStream())
 		repoImages = exceptRepoImages(repoImages, nonexistentGitCommitRepoImages...)
 	}
 
@@ -375,18 +375,18 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 		}
 
 		if len(expiredRepoImages) != 0 {
-			fmt.Printf("%s: git %s date policy (created before %s)\n", repository, options.gitPrimitive, expiryTime.String())
+			fmt.Fprintf(logger.GetOutStream(), "%s: git %s date policy (created before %s)\n", repository, options.gitPrimitive, expiryTime.String())
 			repoImagesRemove(expiredRepoImages, options.commonRepoOptions)
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 			repoImages = exceptRepoImages(repoImages, expiredRepoImages...)
 		}
 
 		if int64(len(notExpiredRepoImages)) > options.expiryLimit {
-			fmt.Printf("%s: git %s limit policy (> %d)\n", repository, options.gitPrimitive, options.expiryLimit)
+			fmt.Fprintf(logger.GetOutStream(), "%s: git %s limit policy (> %d)\n", repository, options.gitPrimitive, options.expiryLimit)
 			if err := repoImagesRemove(notExpiredRepoImages[options.expiryLimit:], options.commonRepoOptions); err != nil {
 				return nil, err
 			}
-			fmt.Println()
+			fmt.Fprintln(logger.GetOutStream())
 			repoImages = exceptRepoImages(repoImages, notExpiredRepoImages[options.expiryLimit:]...)
 		}
 	}

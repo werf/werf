@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/deploy/helm"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tag_scheme"
 
 	"github.com/flant/werf/pkg/config"
@@ -18,7 +19,7 @@ type LintOptions struct {
 
 func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions) error {
 	if debug() {
-		fmt.Printf("Lint options: %#v\n", opts)
+		fmt.Fprintf(logger.GetOutStream(), "Lint options: %#v\n", opts)
 	}
 
 	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
