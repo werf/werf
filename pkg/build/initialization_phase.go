@@ -136,7 +136,7 @@ func getImageConfigToProcess(imageConfigs []*config.Image, c *Conveyor) []*confi
 		for _, imageName := range c.imageNamesToProcess {
 			imageToProcess := getImageConfigByName(imageConfigs, imageName)
 			if imageToProcess == nil {
-				logger.LogWarningF("WARNING: Specified image '%s' isn't defined in werf.yaml!\n", imageName)
+				logger.LogErrorF("WARNING: Specified image '%s' isn't defined in werf.yaml!\n", imageName)
 			} else {
 				imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
 			}
@@ -244,7 +244,7 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 	}
 
 	if len(gitPaths) != 0 {
-		logger.LogInfo("Using git stages")
+		logger.LogInfoLn("Using git stages")
 
 		for _, s := range stages {
 			s.SetGitPaths(gitPaths)
@@ -346,12 +346,12 @@ func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 			logger.LogInfoF("Using commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
 			nonEmptyGitPaths = append(nonEmptyGitPaths, gitPath)
 		} else {
-			logger.LogWarningF("Ignore empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
+			logger.LogErrorF("Ignore empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
 			for _, p := range gitPath.IncludePaths {
-				logger.LogWarningF("  include path: %s\n", p)
+				logger.LogErrorF("  include path: %s\n", p)
 			}
 			for _, p := range gitPath.ExcludePaths {
-				logger.LogWarningF("  exclude path: %s\n", p)
+				logger.LogErrorF("  exclude path: %s\n", p)
 			}
 		}
 

@@ -106,7 +106,7 @@ func NewManager(key []byte, options NewManagerOptions) (Manager, error) {
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "encoding/hex:") {
 			if !options.IgnoreWarning {
-				logger.LogWarning(`
+				logger.LogErrorLn(`
 ###################################################################################################
 ###                      WARNING! Invalid encryption key, do regenerate!                        ###
 ### https://flant.github.io/werf/reference/deploy/secrets.html#regeneration-of-existing-secrets ###

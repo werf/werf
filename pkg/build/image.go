@@ -94,8 +94,8 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 	return logger.LogProcess(fmt.Sprintf("Pull %s base image", i.LogName()), "", func() error {
 		if i.baseImage.IsExists() {
 			if err := i.baseImage.Pull(); err != nil {
-				logger.LogWarningF("WARNING: cannot pull base image %s: %s\n", i.baseImage.Name(), err)
-				logger.LogWarningF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+				logger.LogErrorF("WARNING: cannot pull base image %s: %s\n", i.baseImage.Name(), err)
+				logger.LogErrorF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
 			}
 			return nil
 		}

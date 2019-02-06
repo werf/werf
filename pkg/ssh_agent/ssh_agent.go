@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 
@@ -131,7 +131,7 @@ func runSSHAgent() (string, error) {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				logger.LogWarningF("WARNING: failed to accept ssh-agent connection: %s\n", err)
+				logger.LogErrorF("WARNING: failed to accept ssh-agent connection: %s\n", err)
 				continue
 			}
 
@@ -140,13 +140,13 @@ func runSSHAgent() (string, error) {
 
 				err = agent.ServeAgent(agnt, conn)
 				if err != nil && err != io.EOF {
-					logger.LogWarningF("WARNING: ssh-agent server error: %s\n", err)
+					logger.LogErrorF("WARNING: ssh-agent server error: %s\n", err)
 					return
 				}
 
 				err = conn.Close()
 				if err != nil {
-					logger.LogWarningF("WARNING: ssh-agent server connection close error: %s\n", err)
+					logger.LogErrorF("WARNING: ssh-agent server connection close error: %s\n", err)
 					return
 				}
 			}()

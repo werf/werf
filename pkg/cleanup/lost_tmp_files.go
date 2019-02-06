@@ -27,7 +27,7 @@ func RemoveLostTmpWerfFiles() error {
 	for _, file := range filesToRemove {
 		err := os.RemoveAll(file)
 		if err != nil {
-			logger.LogWarningF("WARNING: unable to remove %s: %s\n", file, err)
+			logger.LogErrorF("WARNING: unable to remove %s: %s\n", file, err)
 		}
 	}
 

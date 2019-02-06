@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/kubedog/pkg/tracker"
@@ -21,7 +21,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/releaseutil"
 	"k8s.io/kubernetes/pkg/util/file"
 )
@@ -135,8 +135,8 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 	stdout, stderr, err := HelmCmd(args...)
 	if err != nil {
 		if strings.HasSuffix(stderr, "has no deployed releases\n") {
-			logger.LogWarningF("WARNING: Helm release '%s' is in improper state: %s", releaseName, stderr)
-			logger.LogWarningF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf deploy`", releaseName)
+			logger.LogErrorF("WARNING: Helm release '%s' is in improper state: %s", releaseName, stderr)
+			logger.LogErrorF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf deploy`", releaseName)
 		}
 
 		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
@@ -383,7 +383,7 @@ func isReleaseExist(releaseName string) (bool, error) {
 		if exist, err := file.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
 			return false, err
 		} else if exist {
-			logger.LogWarningF("WARNING: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, releaseStatus)
+			logger.LogErrorF("WARNING: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, releaseStatus)
 		}
 
 		releaseExist = true
@@ -568,7 +568,7 @@ func jobHooksToTrack(templates *ChartTemplates, releaseExist bool) ([]*Template,
 
 				i, err := strconv.Atoi(val)
 				if err != nil {
-					logger.LogWarningF("WARNING: Incorrect hook-weight anno value '%v'\n", val)
+					logger.LogErrorF("WARNING: Incorrect hook-weight anno value '%v'\n", val)
 					return 0
 				}
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
 
@@ -317,7 +317,7 @@ func policyValue(envKey string, defaultValue int64) int64 {
 	if envValue != "" {
 		value, err := strconv.ParseInt(envValue, 10, 64)
 		if err != nil {
-			logger.LogWarningF("WARNING: '%s' value '%s' is ignored (using default value '%s'\n", envKey, envValue, defaultValue)
+			logger.LogErrorF("WARNING: '%s' value '%s' is ignored (using default value '%s'\n", envKey, envValue, defaultValue)
 		} else {
 			return value
 		}

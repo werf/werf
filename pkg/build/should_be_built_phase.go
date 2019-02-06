@@ -42,7 +42,7 @@ func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
 		}
 
 		for _, s := range badStages {
-			logger.LogWarningF("%s %s cache should be built\n", image.LogName(), s.Name())
+			logger.LogErrorF("%s %s cache should be built\n", image.LogName(), s.Name())
 		}
 
 		if len(badStages) > 0 {
