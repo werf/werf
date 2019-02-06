@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -20,28 +21,69 @@ const (
 )
 
 var (
-	indent = 0
-
-	Out io.Writer
-	Err io.Writer
+	indent              = 0
+	outStream io.Writer = os.Stdout
+	errStream io.Writer = os.Stderr
 )
+
+// AppendTag("a")
+// PopTag() // => delete "a"
+// WithTags("a", "b", "c") {
+// 	WithTags("d") {
+// 		// a b c d : ...
+// 		// a b c d : ...
+// 		// a b c d : ...
+// 		// a b c d : ...
+// 	}
+// }
+
+// IndentUp()
+// IndentDown()
+// WithIndent() {
+// 	...
+// }
+
+// Log(msg)
+
+// type MyWriterProxy struct {
+// 	out io.Writer
+// }
+
+// func Write(n, data) error {
+// 	return Log(data)
+// }
 
 type Options struct {
 	Out, Err io.Writer
 }
 
-func Init(opts Options) {
-	Out = os.Stdout
-	Err = os.Stderr
+func GetOutStream() io.Writer {
+	// return MyWriterProxy(out)
+	return outStream
+}
 
-	if opts.Out != nil {
-		Out = opts.Out
-	}
+func GetErrStream() io.Writer {
+	// return MyWriterProxy(err)
+	return errStream
+}
 
-	if opts.Err != nil {
-		Err = opts.Err
-	}
+func MuteOut() {
+	outStream = ioutil.Discard
+}
 
+func UnmuteOut() {
+	outStream = os.Stdout
+}
+
+func MuteErr() {
+	errStream = ioutil.Discard
+}
+
+func UnmuteErr() {
+	errStream = os.Stderr
+}
+
+func Init() {
 	if os.Getenv("WERF_LOG_FORCE_COLOR") != "" {
 		color.NoColor = false
 	}
@@ -84,7 +126,7 @@ func LogStep(msg string) {
 }
 
 func LogStepF(format string, args ...interface{}) {
-	colorizeAndLogF(Out, colorizeStep, format, args...)
+	colorizeAndLogF(outStream, colorizeStep, format, args...)
 }
 
 func LogService(msg string) {
@@ -92,7 +134,7 @@ func LogService(msg string) {
 }
 
 func LogServiceF(format string, args ...interface{}) {
-	colorizeAndLogF(Out, colorizeService, format, args...)
+	colorizeAndLogF(outStream, colorizeService, format, args...)
 }
 
 func LogInfo(msg string) {
@@ -100,11 +142,11 @@ func LogInfo(msg string) {
 }
 
 func LogInfoF(format string, args ...interface{}) {
-	colorizeAndLogF(Out, colorizeInfo, format, args...)
+	colorizeAndLogF(outStream, colorizeInfo, format, args...)
 }
 
 func LogError(err error) {
-	logBase(Err, colorizeBaseF(colorizeWarning, "%s\n", err))
+	logBase(errStream, colorizeBaseF(colorizeWarning, "%s\n", err))
 }
 
 func LogWarning(msg string) {
@@ -112,7 +154,7 @@ func LogWarning(msg string) {
 }
 
 func LogWarningF(format string, args ...interface{}) {
-	colorizeAndLogF(Err, colorizeWarning, format, args...)
+	colorizeAndLogF(errStream, colorizeWarning, format, args...)
 }
 
 func colorizeAndLogF(w io.Writer, colorizeFunc func(string) string, format string, args ...interface{}) {
@@ -173,7 +215,7 @@ func indentDown() {
 
 func logProcessInlineBase(processMsg string, processFunc func() error, colorizeProcessMsgFunc, colorizeSuccessFunc func(string) string) error {
 	processMsg = fmt.Sprintf(logProcessInlineProcessMsgFormat, processMsg)
-	colorizeAndLogF(Out, colorizeProcessMsgFunc, "%s", processMsg)
+	colorizeAndLogF(outStream, colorizeProcessMsgFunc, "%s", processMsg)
 
 	resultStatus := logProcessSuccessStatus
 	resultColorize := colorizeSuccessFunc
@@ -188,7 +230,7 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 	elapsedSeconds := fmt.Sprintf(logProcessTimeFormat, time.Since(start).Seconds())
 
 	rightPart := prepareLogStateRightPart(processMsg, resultStatus, elapsedSeconds, resultColorize)
-	logBase(Out, fmt.Sprintf("%s\n", rightPart))
+	logBase(outStream, fmt.Sprintf("%s\n", rightPart))
 
 	return err
 }
@@ -223,7 +265,7 @@ func logStateBase(msg string, state, time string, colorizeLeftPartFunc, colorize
 		rightPart = prepareLogStateRightPart(msg, state, time, colorizeRightPartFunc)
 	}
 
-	log(Out, fmt.Sprintf("%s%s", leftPart, rightPart))
+	log(outStream, fmt.Sprintf("%s%s", leftPart, rightPart))
 }
 
 func prepareLogStateLeftPart(msg, state, time string, colorizeFunc func(string) string) string {
