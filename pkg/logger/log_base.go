@@ -7,8 +7,15 @@ import (
 )
 
 var (
-	indentWidth                      = 0
+	indentWidth = 0
+
+	tag       = ""
+	tagIndent = "  "
+	tagWidth  = 20
+
 	isLoggerCursorOnStartingPosition = true
+	isLoggerOptionalLnModeOn         = false
+	isLoggerOptionalLnModeTag        = ""
 )
 
 func loggerFormattedLogLn(w io.Writer, msg string) {
@@ -21,18 +28,6 @@ func loggerFormattedLogF(w io.Writer, format string, args ...interface{}) {
 	}
 }
 
-// TODO
-// AppendTag("a")
-// PopTag() // => delete "a"
-// WithTags("a", "b", "c") {
-// 	WithTags("d") {
-// 		// a b c d : ...
-// 		// a b c d : ...
-// 		// a b c d : ...
-// 		// a b c d : ...
-// 	}
-// }
-
 func FormattedLogF(w io.Writer, format string, args ...interface{}) (int, error) {
 	msg := fmt.Sprintf(format, args...)
 	indent := strings.Repeat(" ", indentWidth)
@@ -41,9 +36,23 @@ func FormattedLogF(w io.Writer, format string, args ...interface{}) (int, error)
 	for _, r := range []rune(msg) {
 		switch string(r) {
 		case "\n", "\r":
+			if isLoggerCursorOnStartingPosition {
+				formattedMsg += formattedTag()
+			}
+
 			isLoggerCursorOnStartingPosition = true
 		default:
+			if isLoggerOptionalLnModeOn {
+				if isLoggerOptionalLnModeTag == tag {
+					formattedMsg += formattedTag()
+				}
+
+				formattedMsg += "\n"
+				resetOptionalLnMode()
+			}
+
 			if isLoggerCursorOnStartingPosition {
+				formattedMsg += formattedTag()
 				formattedMsg += indent
 				isLoggerCursorOnStartingPosition = false
 			}
@@ -66,7 +75,7 @@ func logF(w io.Writer, format string, args ...interface{}) (int, error) {
 	return fmt.Fprintf(w, msg)
 }
 
-func WithLogIndent(f func() error) error {
+func WithIndent(f func() error) error {
 	IndentUp()
 	err := f()
 	IndentDown()
@@ -74,7 +83,7 @@ func WithLogIndent(f func() error) error {
 	return err
 }
 
-func WithoutLogIndent(f func() error) error {
+func WithoutIndent(f func() error) error {
 	oldIndentWidth := indentWidth
 	indentWidth = 0
 	err := f()
@@ -84,6 +93,7 @@ func WithoutLogIndent(f func() error) error {
 }
 
 func IndentUp() {
+	resetOptionalLnMode()
 	indentWidth += 2
 }
 
@@ -92,5 +102,60 @@ func IndentDown() {
 		return
 	}
 
+	resetOptionalLnMode()
 	indentWidth -= 2
+}
+
+func WithTag(value string, f func() error) error {
+	oldTag := tag
+	tag = value
+	err := f()
+	tag = oldTag
+
+	return err
+}
+
+func SetTag(value string) {
+	tag = value
+}
+
+func ResetTag(value string) {
+	tag = value
+}
+
+func formattedTag() string {
+	var fittedTag string
+	longTagPostfix := " ..."
+
+	if len(tag) == 0 {
+		return ""
+	} else if len(tag) > tagWidth {
+		fittedTag = tag[:tagWidth-len(longTagPostfix)] + longTagPostfix
+	} else {
+		fittedTag = tag
+
+	}
+
+	padLeft := strings.Repeat(" ", tagWidth-len(fittedTag))
+	colorizedTag := colorize(fittedTag, tagFormat...)
+
+	return strings.Join([]string{padLeft, colorizedTag, tagIndent}, "")
+}
+
+func tagBlockWidth() int {
+	if len(tag) == 0 {
+		return 0
+	}
+
+	return tagWidth + len(tagIndent)
+}
+
+func LogOptionalLn() {
+	isLoggerOptionalLnModeOn = true
+	isLoggerOptionalLnModeTag = tag
+}
+
+func resetOptionalLnMode() {
+	isLoggerOptionalLnModeOn = false
+	isLoggerOptionalLnModeTag = ""
 }

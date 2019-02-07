@@ -200,16 +200,13 @@ func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndP
 }
 
 func (c *Conveyor) runPhases(phases []Phase) error {
-	for ind, phase := range phases {
-		isLastPhase := ind == len(phases)-1
-
+	for _, phase := range phases {
 		err := phase.Run(c)
+
+		logger.LogOptionalLn()
+
 		if err != nil {
 			return err
-		}
-
-		if !isLastPhase {
-			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 	return nil

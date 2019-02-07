@@ -30,9 +30,7 @@ func (p *TagPhase) Run(c *Conveyor) error {
 		fmt.Fprintf(logger.GetOutStream(), "TagPhase.Run\n")
 	}
 
-	for ind, image := range c.imagesInOrder {
-		isLastImage := ind == len(c.imagesInOrder)-1
-
+	for _, image := range c.imagesInOrder {
 		if !image.isArtifact {
 			err := logger.LogServiceProcess(fmt.Sprintf("Tag %s", image.LogName()), "", func() error {
 				if err := p.tagImage(c, image); err != nil {
@@ -42,12 +40,10 @@ func (p *TagPhase) Run(c *Conveyor) error {
 				return nil
 			})
 
+			logger.LogOptionalLn()
+
 			if err != nil {
 				return err
-			}
-
-			if !isLastImage {
-				fmt.Fprintln(logger.GetOutStream())
 			}
 		}
 	}
@@ -67,14 +63,12 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 	lastStageImage := stages[len(stages)-1].GetImage()
 
 	var nonEmptySchemeInOrder []tag_scheme.TagScheme
-	var lastNonEmptyTagScheme tag_scheme.TagScheme
 	for scheme, tags := range p.TagsByScheme {
 		if len(tags) == 0 {
 			continue
 		}
 
 		nonEmptySchemeInOrder = append(nonEmptySchemeInOrder, scheme)
-		lastNonEmptyTagScheme = scheme
 	}
 
 	for _, scheme := range nonEmptySchemeInOrder {
@@ -85,9 +79,7 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 		}
 
 		err := logger.LogServiceProcess(fmt.Sprintf("%s scheme", string(scheme)), "", func() error {
-			for ind, tag := range tags {
-				isLastTag := ind == len(tags)-1
-
+			for _, tag := range tags {
 				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
 
 				err := func() error {
@@ -141,24 +133,20 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 					return nil
 				}()
 
+				logger.LogOptionalLn()
+
 				if err != nil {
 					return err
-				}
-
-				if !isLastTag {
-					fmt.Fprintln(logger.GetOutStream())
 				}
 			}
 
 			return nil
 		})
 
+		logger.LogOptionalLn()
+
 		if err != nil {
 			return err
-		}
-
-		if scheme != lastNonEmptyTagScheme {
-			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 

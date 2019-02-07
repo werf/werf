@@ -24,7 +24,9 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) (err error) {
-	return p.run(c)
+	return logger.LogServiceProcess("Determine stages", "", func() error {
+		return logger.WithoutIndent(func() error { return p.run(c) })
+	})
 }
 
 func (p *InitializationPhase) run(c *Conveyor) error {
@@ -42,11 +44,9 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 	var images []*Image
 
 	imagesInterfaceConfigs := getImageConfigsInOrder(imageConfigs, c)
-	for ind, imageInterfaceConfig := range imagesInterfaceConfigs {
-		isLastImage := ind == len(imagesInterfaceConfigs)-1
-
-		imageName := imageLogName(imageInterfaceConfig.ImageBaseConfig().Name)
-		err := logger.LogServiceProcess(fmt.Sprintf("Determine %s stages", imageName), "", func() error {
+	for _, imageInterfaceConfig := range imagesInterfaceConfigs {
+		imageName := imageLogName(imageInterfaceConfig.ImageBaseConfig().Name, imageInterfaceConfig.IsArtifact())
+		err := logger.WithTag(imageName, func() error {
 			image, err := generateImage(imageInterfaceConfig, c)
 			if err != nil {
 				return err
@@ -57,12 +57,10 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 			return nil
 		})
 
+		logger.LogOptionalLn()
+
 		if err != nil {
 			return nil, err
-		}
-
-		if !isLastImage {
-			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 
@@ -314,11 +312,11 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 			return nil
 		})
 
+		logger.LogOptionalLn()
+
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Fprintln(logger.GetOutStream())
 	}
 
 	return res, nil
@@ -327,9 +325,7 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 	var nonEmptyGitPaths []*stage.GitPath
 
-	for ind, gitPath := range gitPaths {
-		isLastGitPath := ind == len(gitPaths)-1
-
+	for _, gitPath := range gitPaths {
 		commit, err := gitPath.LatestCommit()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
@@ -355,9 +351,7 @@ func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 			}
 		}
 
-		if !isLastGitPath {
-			fmt.Fprintln(logger.GetOutStream())
-		}
+		logger.LogOptionalLn()
 	}
 
 	return nonEmptyGitPaths, nil

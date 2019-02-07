@@ -30,17 +30,17 @@ type PublishImagesPhase struct {
 }
 
 func (p *PublishImagesPhase) Run(c *Conveyor) error {
-	if debug() {
-		fmt.Fprintf(logger.GetOutStream(), "PublishImagesPhase.Run\n")
-	}
+	return logger.LogServiceProcess("Push images", "", func() error {
+		return logger.WithoutIndent(func() error { return p.run(c) })
+	})
+}
 
+func (p *PublishImagesPhase) run(c *Conveyor) error {
 	// TODO: Push stages should occur on the BuildStagesPhase
 
-	for ind, image := range c.imagesInOrder {
-		isLastImage := ind == len(c.imagesInOrder)-1
-		err := logger.LogServiceProcess(fmt.Sprintf("Push %s", image.LogName()), "", func() error {
+	for _, image := range c.imagesInOrder {
+		err := logger.WithTag(image.LogName(), func() error {
 			if p.WithStages {
-
 				err := logger.LogServiceProcess("Push stages cache", "", func() error {
 					if err := p.pushImageStages(c, image); err != nil {
 						return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
@@ -49,12 +49,10 @@ func (p *PublishImagesPhase) Run(c *Conveyor) error {
 					return nil
 				})
 
+				logger.LogOptionalLn()
+
 				if err != nil {
 					return err
-				}
-
-				if !image.isArtifact {
-					fmt.Fprintln(logger.GetOutStream())
 				}
 			}
 
@@ -62,6 +60,8 @@ func (p *PublishImagesPhase) Run(c *Conveyor) error {
 				if err := p.pushImage(c, image); err != nil {
 					return fmt.Errorf("unable to push image %s: %s", image.GetName(), err)
 				}
+
+				logger.LogOptionalLn()
 			}
 
 			return nil
@@ -69,10 +69,6 @@ func (p *PublishImagesPhase) Run(c *Conveyor) error {
 
 		if err != nil {
 			return err
-		}
-
-		if !isLastImage {
-			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 
@@ -87,9 +83,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 		return fmt.Errorf("error fetching existing stages cache list %s: %s", p.ImagesRepo, err)
 	}
 
-	for ind, stage := range stages {
-		isLastStage := ind == len(stages)-1
-
+	for _, stage := range stages {
 		stageTagName := fmt.Sprintf(RepoImageStageTagFormat, stage.GetSignature())
 		stageImageName := fmt.Sprintf("%s:%s", p.ImagesRepo, stageTagName)
 
@@ -98,9 +92,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 
 			logRepoImageInfo(stageImageName)
 
-			if !isLastStage {
-				fmt.Fprintln(logger.GetOutStream())
-			}
+			logger.LogOptionalLn()
 
 			continue
 		}
@@ -127,12 +119,10 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 
 		logRepoImageInfo(stageImageName)
 
+		logger.LogOptionalLn()
+
 		if err != nil {
 			return err
-		}
-
-		if !isLastStage {
-			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 
@@ -156,14 +146,12 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 	lastStageImage := stages[len(stages)-1].GetImage()
 
 	var nonEmptySchemeInOrder []tag_scheme.TagScheme
-	var lastNonEmptyTagScheme tag_scheme.TagScheme
 	for scheme, tags := range p.TagsByScheme {
 		if len(tags) == 0 {
 			continue
 		}
 
 		nonEmptySchemeInOrder = append(nonEmptySchemeInOrder, scheme)
-		lastNonEmptyTagScheme = scheme
 	}
 
 	for _, scheme := range nonEmptySchemeInOrder {
@@ -175,9 +163,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 
 		err := logger.LogServiceProcess(fmt.Sprintf("%s scheme", string(scheme)), "", func() error {
 		ProcessingTags:
-			for ind, tag := range tags {
-				isLastTag := ind == len(tags)-1
-
+			for _, tag := range tags {
 				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
 
 				if util.IsStringsContainValue(existingTags, tag) {
@@ -190,9 +176,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 						logger.LogState(tag, "[EXISTS]")
 						logRepoImageInfo(imageName)
 
-						if !isLastTag {
-							fmt.Fprintln(logger.GetOutStream())
-						}
+						logger.LogOptionalLn()
 
 						continue ProcessingTags
 					}
@@ -241,20 +225,16 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 
 				logRepoImageInfo(imageName)
 
-				if !isLastTag {
-					fmt.Fprintln(logger.GetOutStream())
-				}
+				logger.LogOptionalLn()
 			}
 
 			return nil
 		})
 
+		logger.LogOptionalLn()
+
 		if err != nil {
 			return err
-		}
-
-		if scheme != lastNonEmptyTagScheme {
-			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 

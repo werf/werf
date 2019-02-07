@@ -17,7 +17,9 @@ type PrepareStagesPhase struct{}
 
 func (p *PrepareStagesPhase) Run(c *Conveyor) error {
 	return logger.LogServiceProcess("Prepare stages build instructions", "", func() error {
-		return p.run(c)
+		return logger.WithoutIndent(func() error {
+			return p.run(c)
+		})
 	})
 }
 
@@ -27,7 +29,13 @@ func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 	}
 
 	for _, image := range c.imagesInOrder {
-		if err = p.runImage(image, c); err != nil {
+		err := logger.WithTag(image.LogName(), func() error {
+			return p.runImage(image, c)
+		})
+
+		logger.LogOptionalLn()
+
+		if err != nil {
 			return err
 		}
 	}

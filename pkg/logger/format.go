@@ -22,7 +22,7 @@ func fitTextWithIndent(text string, lineWidth, extraIndentWidth int) string {
 	var result string
 	var resultLines []string
 
-	contentWidth := lineWidth - indentWidth - extraIndentWidth
+	contentWidth := lineWidth - tagBlockWidth() - indentWidth - extraIndentWidth
 	fittedText := fitText(text, contentWidth)
 	for _, line := range strings.Split(fittedText, "\n") {
 		indent := strings.Repeat(" ", extraIndentWidth)

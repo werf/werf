@@ -35,8 +35,8 @@ func NewCmd() *cobra.Command {
 
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
-		Short: "Run container for specified project image",
+		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
+		Short:                 "Run container for specified project image",
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
   $ werf run application
@@ -185,7 +185,7 @@ func runRun(commonCmdData *common.CmdData) error {
 		return err
 	}
 
-	dockerImageName := c.GetImageLatestStageImageName("")
+	dockerImageName := c.GetImageLatestStageImageName(CmdData.ImageName)
 	var dockerRunArgs []string
 	dockerRunArgs = append(dockerRunArgs, CmdData.DockerOptions...)
 	dockerRunArgs = append(dockerRunArgs, dockerImageName)

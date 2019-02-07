@@ -17,6 +17,8 @@ var (
 
 	failFormat    = warningFormat
 	successFormat = []color.Attribute{color.FgGreen, color.Bold}
+
+	tagFormat = []color.Attribute{color.FgCyan}
 )
 
 func initColorize() {

@@ -61,7 +61,7 @@ func main() {
 	logger.Init()
 
 	if err := process_exterminator.Init(); err != nil {
-		_ = logger.WithoutLogIndent(func() error {
+		_ = logger.WithoutIndent(func() error {
 			logger.LogErrorF("process exterminator initialization error: %s\n", err)
 
 			return nil
@@ -123,7 +123,7 @@ Find more information at https://flant.github.io/werf`),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
-		_ = logger.WithoutLogIndent(func() error {
+		_ = logger.WithoutIndent(func() error {
 			logger.LogErrorF("Error: %s\n", err)
 
 			return nil
@@ -227,7 +227,7 @@ func trapTerminationSignals() {
 	go func() {
 		<-c
 
-		_ = logger.WithoutLogIndent(func() error {
+		_ = logger.WithoutIndent(func() error {
 			logger.LogErrorF("interrupted\n")
 
 			return nil

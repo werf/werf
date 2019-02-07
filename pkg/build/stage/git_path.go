@@ -88,6 +88,8 @@ func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (git_repo.Archive
 		return nil
 	})
 
+	logger.LogOptionalLn()
+
 	if err != nil {
 		return nil, err
 	}
