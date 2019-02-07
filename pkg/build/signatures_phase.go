@@ -24,19 +24,21 @@ func NewSignaturesPhase() *SignaturesPhase {
 type SignaturesPhase struct{}
 
 func (p *SignaturesPhase) Run(c *Conveyor) error {
-	for ind, image := range c.imagesInOrder {
-		isLastImage := ind == len(c.imagesInOrder)-1
+	return logger.LogServiceProcess("Calculate signatures", "", func() error {
+		return logger.WithoutIndent(func() error { return p.run(c) })
+	})
+}
 
-		err := logger.LogServiceProcess(fmt.Sprintf("Calculate %s signatures", image.LogName()), "", func() error {
+func (p *SignaturesPhase) run(c *Conveyor) error {
+	for _, image := range c.imagesInOrder {
+		err := logger.WithTag(image.LogName(), func() error {
 			return p.calculateImageSignatures(c, image)
 		})
 
+		logger.LogOptionalLn()
+
 		if err != nil {
 			return err
-		}
-
-		if !isLastImage {
-			fmt.Println()
 		}
 	}
 
@@ -111,7 +113,6 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 
 	stageName := c.GetBuildingGitStage(image.name)
 	if stageName != "" {
-		fmt.Println()
 		logger.LogInfoF("Git files are actual on the %s stage\n", stageName)
 	}
 

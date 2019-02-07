@@ -23,32 +23,30 @@ type BuildStagesPhase struct {
 }
 
 func (p *BuildStagesPhase) Run(c *Conveyor) (err error) {
-	return p.run(c)
+	if debug() {
+		fmt.Printf("BuildStagesPhase.Run\n")
+	}
+
+	return logger.LogServiceProcess("Build stages", "", func() error {
+		return logger.WithoutIndent(func() error { return p.run(c) })
+	})
 }
 
 func (p *BuildStagesPhase) run(c *Conveyor) error {
-	if debug() {
-		fmt.Fprintf(logger.GetOutStream(), "BuildStagesPhase.Run\n")
-	}
-
 	/*
 	 * TODO: Build stages phase should push result into stagesRepo if non :local repo has been used
 	 */
 
 	images := c.imagesInOrder
-	for ind, image := range images {
-		isLastImage := ind == len(images)-1
-
-		err := logger.LogServiceProcess(fmt.Sprintf("Build %s stages", image.LogName()), "", func() error {
+	for _, image := range images {
+		err := logger.WithTag(image.LogName(), func() error {
 			return p.runImage(image, c)
 		})
 
+		logger.LogOptionalLn()
+
 		if err != nil {
 			return err
-		}
-
-		if !isLastImage {
-			fmt.Fprintln(logger.GetOutStream())
 		}
 	}
 
@@ -98,11 +96,10 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 	// build
 	stages := image.GetStages()
 	var prevStageImageSize int64
-	for ind, s := range stages {
+	for _, s := range stages {
 		img := s.GetImage()
 		msg := fmt.Sprintf("%s", s.Name())
 
-		isLastStage := ind == len(stages)-1
 		isUsingCache := img.IsExists()
 
 		if isUsingCache {
@@ -110,9 +107,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 
-			if !isLastStage {
-				fmt.Fprintln(logger.GetOutStream())
-			}
+			logger.LogOptionalLn()
 
 			prevStageImageSize = img.Inspect().Size
 
@@ -140,19 +135,19 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 		})
 
 		if err != nil {
-			logger.WithLogIndent(func() error {
+			_ = logger.WithIndent(func() error {
 				logImageCommands(img)
 				return nil
 			})
+
+			logger.LogOptionalLn()
 
 			return err
 		}
 
 		logImageInfo(img, prevStageImageSize, isUsingCache)
 
-		if !isLastStage {
-			fmt.Fprintln(logger.GetOutStream())
-		}
+		logger.LogOptionalLn()
 
 		unlockLock()
 

@@ -20,16 +20,19 @@ type Image struct {
 }
 
 func (i *Image) LogName() string {
-	return imageLogName(i.name)
-
+	return imageLogName(i.name, i.isArtifact)
 }
 
-func imageLogName(name string) string {
-	if name == "" {
-		return "~"
-	}
+func imageLogName(name string, isArtifact bool) string {
+	if isArtifact {
+		return fmt.Sprintf("%s", name)
+	} else {
+		if name == "" {
+			return "~"
+		}
 
-	return name
+		return name
+	}
 }
 
 func (i *Image) SetStages(stages []stage.Interface) {
@@ -90,7 +93,7 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 	// 	}
 	// }
 
-	return logger.LogProcess(fmt.Sprintf("Pull %s base image", i.LogName()), "", func() error {
+	return logger.LogProcess("Pull base image", "", func() error {
 		if i.baseImage.IsExists() {
 			if err := i.baseImage.Pull(); err != nil {
 				logger.LogErrorF("WARNING: cannot pull base image %s: %s\n", i.baseImage.Name(), err)

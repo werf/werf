@@ -47,7 +47,7 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 	resultColorize := colorizeSuccessFunc
 	start := time.Now()
 
-	err := WithLogIndent(processFunc)
+	err := WithIndent(processFunc)
 	if err != nil {
 		resultStatus = logProcessFailedStatus
 		resultColorize = colorizeFail
@@ -67,7 +67,7 @@ func logProcessBase(msg, processMsg string, processFunc func() error, colorizeMs
 	start := time.Now()
 	resultStatus := logProcessSuccessStatus
 
-	err := WithLogIndent(processFunc)
+	err := WithIndent(processFunc)
 
 	elapsedSeconds := fmt.Sprintf(logProcessTimeFormat, time.Since(start).Seconds())
 
@@ -140,5 +140,5 @@ func timeOrStub(time string) string {
 func availableTerminalLineSpace(parts ...string) int {
 	msgsLength := len(strings.Join(parts, " "))
 
-	return TerminalWidth() - indentWidth - msgsLength
+	return TerminalWidth() - tagBlockWidth() - indentWidth - msgsLength
 }
