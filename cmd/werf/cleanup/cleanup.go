@@ -6,7 +6,6 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/git_repo"
@@ -26,9 +25,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "cleanup",
+		Use: "cleanup",
 		DisableFlagsInUseLine: true,
-		Short:                 "Cleanup unused images from project images repo and stages storage",
+		Short: "Cleanup unused images from project images repo and stages storage",
 		Long: common.GetLongCommandDescription(`Cleanup unused images from project images repo and stages storage.
 
 This is the main cleanup command for periodical automated images cleaning. Command is supposed to be called daily for the project.
@@ -51,13 +50,8 @@ First step is 'werf images cleanup' command, which will delete unused images fro
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
-	common.SetupStagesUsername(&CommonCmdData, cmd)
-	common.SetupStagesPassword(&CommonCmdData, cmd)
-
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupCleanupImagesUsername(&CommonCmdData, cmd)
-	common.SetupCleanupImagesPassword(&CommonCmdData, cmd)
-
+	common.SetupDockerConfig(&CommonCmdData, cmd)
 	common.SetupDryRun(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
@@ -74,7 +68,7 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
@@ -109,16 +103,7 @@ func runCleanup() error {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
-	if err != nil {
-		return err
-	}
-
-	if err := dockerAuthorizer.Login(imagesRepo); err != nil {
-		return err
-	}
-
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 

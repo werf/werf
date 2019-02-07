@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
@@ -60,15 +59,11 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupHomeDir(commonCmdData, cmd)
 	common.SetupSSHKey(commonCmdData, cmd)
 
-	common.SetupPullUsername(commonCmdData, cmd)
-	common.SetupPullPassword(commonCmdData, cmd)
+	common.SetupStagesRepo(commonCmdData, cmd)
+	common.SetupDockerConfig(commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
-
-	common.SetupStagesRepo(commonCmdData, cmd)
-	common.SetupStagesUsername(commonCmdData, cmd)
-	common.SetupStagesPassword(commonCmdData, cmd)
 
 	return cmd
 }
@@ -86,7 +81,7 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 		return err
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
@@ -106,11 +101,6 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
 	defer project_tmp_dir.Release(projectTmpDir)
-
-	dockerAuthorizer, err := docker_authorizer.GetBuildStagesDockerAuthorizer(projectTmpDir, cmdData.PullUsername, cmdData.PullPassword)
-	if err != nil {
-		return err
-	}
 
 	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
@@ -134,7 +124,7 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 		},
 	}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 
 	if err = c.BuildStages(stagesRepo, opts); err != nil {
 		return err

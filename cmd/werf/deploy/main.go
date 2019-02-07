@@ -6,7 +6,6 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
@@ -61,13 +60,6 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
-
-	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
-	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
-	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
-	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
-
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupRelease(&CommonCmdData, cmd)
@@ -75,12 +67,14 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
-	common.SetupStagesUsername(&CommonCmdData, cmd)
-	common.SetupStagesPassword(&CommonCmdData, cmd)
-
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info, use WERF_IMAGES_USERNAME environment by default)")
-	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info, use WERF_IMAGES_PASSWORD environment by default)")
+	common.SetupDockerConfig(&CommonCmdData, cmd)
+
+	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
+	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
+	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
+	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
+	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
 
 	return cmd
 }
@@ -102,7 +96,7 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
@@ -138,11 +132,6 @@ func runDeploy() error {
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
-	if err != nil {
-		return err
-	}
-
 	tag, tagScheme, err := common.GetDeployTag(&CommonCmdData)
 	if err != nil {
 		return err
@@ -158,7 +147,7 @@ func runDeploy() error {
 		return err
 	}
 
-	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagScheme, werfConfig, dockerAuthorizer, deploy.DeployOptions{
+	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagScheme, werfConfig, deploy.DeployOptions{
 		Set:          CmdData.Set,
 		SetString:    CmdData.SetString,
 		Values:       CmdData.Values,

@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
@@ -21,10 +20,10 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "cleanup",
+		Use: "cleanup",
 		DisableFlagsInUseLine: true,
-		Short:                 "Cleanup project stages from stages storage",
-		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
+		Short: "Cleanup project stages from stages storage",
+		Long:  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy),
 		},
@@ -42,12 +41,8 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
-	common.SetupStagesUsername(&CommonCmdData, cmd)
-	common.SetupStagesPassword(&CommonCmdData, cmd)
-
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted read permission, use WERF_IMAGES_USERNAME environment by default)")
-	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted read permission, use WERF_IMAGES_PASSWORD environment by default)")
+	common.SetupDockerConfig(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -63,7 +58,7 @@ func runSync() error {
 		return err
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
@@ -93,19 +88,6 @@ func runSync() error {
 
 	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
 	if err != nil {
-		return err
-	}
-
-	dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
-	if err != nil {
-		return err
-	}
-
-	if err := dockerAuthorizer.Login(imagesRepo); err != nil {
-		return err
-	}
-
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
 		return err
 	}
 

@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
@@ -57,12 +56,8 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupTag(commonCmdData, cmd)
 
 	common.SetupStagesRepo(commonCmdData, cmd)
-	common.SetupStagesUsername(commonCmdData, cmd)
-	common.SetupStagesPassword(commonCmdData, cmd)
-
 	common.SetupImagesRepo(commonCmdData, cmd)
-	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to push images, use WERF_IMAGES_USERNAME environment by default)")
-	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted permission to push images, use WERF_IMAGES_PASSWORD environment by default)")
+	common.SetupDockerConfig(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -80,7 +75,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
@@ -113,11 +108,6 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	dockerAuthorizer, err := docker_authorizer.GetImagePublishDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
-	if err != nil {
-		return err
-	}
-
 	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
@@ -135,7 +125,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 
 	opts := build.PublishImagesOptions{TagOptions: tagOpts}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 
 	if err = c.PublishImages(imagesRepo, opts); err != nil {
 		return err

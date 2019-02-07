@@ -6,7 +6,6 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/git_repo"
@@ -26,9 +25,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "cleanup",
+		Use: "cleanup",
 		DisableFlagsInUseLine: true,
-		Short:                 "Cleanup project images from images repo",
+		Short: "Cleanup project images from images repo",
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfDockerConfig, common.WerfInsecureRepo),
 		},
@@ -46,8 +45,7 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupCleanupImagesUsername(&CommonCmdData, cmd)
-	common.SetupCleanupImagesPassword(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -65,7 +63,7 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
@@ -92,19 +90,6 @@ func runCleanup() error {
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
-		return err
-	}
-
-	dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
-	if err != nil {
-		return err
-	}
-
-	if err := dockerAuthorizer.Login(imagesRepo); err != nil {
-		return err
-	}
-
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
 		return err
 	}
 

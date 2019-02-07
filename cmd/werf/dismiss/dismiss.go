@@ -40,12 +40,12 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupDir(&CommonCmdData, cmd)
 
-	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
-
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupRelease(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+
+	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
 
 	return cmd
 }

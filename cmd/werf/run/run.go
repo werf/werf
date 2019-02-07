@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
@@ -86,8 +85,7 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	common.SetupSSHKey(commonCmdData, cmd)
 
 	common.SetupStagesRepo(commonCmdData, cmd)
-	common.SetupStagesUsername(commonCmdData, cmd)
-	common.SetupStagesPassword(commonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -141,7 +139,7 @@ func runRun(commonCmdData *common.CmdData) error {
 		return err
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
@@ -181,7 +179,7 @@ func runRun(commonCmdData *common.CmdData) error {
 		return fmt.Errorf("image '%s' is not defined in werf.yaml", CmdData.ImageName)
 	}
 
-	c := build.NewConveyor(werfConfig, []string{CmdData.ImageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, nil)
+	c := build.NewConveyor(werfConfig, []string{CmdData.ImageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 
 	if err = c.ShouldBeBuilt(); err != nil {
 		return err

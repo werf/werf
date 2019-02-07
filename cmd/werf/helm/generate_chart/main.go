@@ -7,12 +7,10 @@ import (
 	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/project_tmp_dir"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/util"
@@ -48,19 +46,15 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
-
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
-	common.SetupStagesUsername(&CommonCmdData, cmd)
-	common.SetupStagesPassword(&CommonCmdData, cmd)
-
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info, use WERF_IMAGES_USERNAME environment by default)")
-	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info, use WERF_IMAGES_PASSWORD environment by default)")
+	common.SetupDockerConfig(&CommonCmdData, cmd)
+
+	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
 
 	return cmd
 }
@@ -86,7 +80,7 @@ func runGenerateChart(targetPath string) error {
 		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
@@ -102,26 +96,8 @@ func runGenerateChart(targetPath string) error {
 
 	imagesRepo := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
 	withoutRepo := true
-
 	if imagesRepo != "" {
 		withoutRepo = false
-
-		var err error
-
-		projectTmpDir, err := project_tmp_dir.Get()
-		if err != nil {
-			return fmt.Errorf("getting project tmp dir failed: %s", err)
-		}
-		defer project_tmp_dir.Release(projectTmpDir)
-
-		dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
-		if err != nil {
-			return err
-		}
-
-		if err := dockerAuthorizer.Login(imagesRepo); err != nil {
-			return fmt.Errorf("docker login failed: %s", err)
-		}
 	}
 
 	imagesRepo = helm_common.GetImagesRepoOrStub(imagesRepo)

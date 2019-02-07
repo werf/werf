@@ -32,7 +32,7 @@ func NewCmd() *cobra.Command {
 
 If specified Helm chart is a Werf chart with additional values and contains werf-chart.yaml, then werf will pass all additinal values and data into helm`),
 		DisableFlagsInUseLine: true,
-		Args:                  cobra.MinimumNArgs(2),
+		Args: cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runDeployChart(args[0], args[1])
 		},
@@ -42,13 +42,13 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
+	common.SetupKubeContext(&CommonCmdData, cmd)
+
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
 	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
 	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
 	cmd.Flags().StringVarP(&CmdData.Namespace, "namespace", "", "", "Namespace to install release into")
 	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
-
-	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	return cmd
 }

@@ -32,16 +32,10 @@ type CmdData struct {
 	Namespace   *string
 	KubeContext *string
 
-	StagesRepo     *string
-	StagesUsername *string
-	StagesPassword *string
+	StagesRepo *string
+	ImagesRepo *string
 
-	ImagesRepo     *string
-	ImagesUsername *string
-	ImagesPassword *string
-
-	PullUsername *string
-	PullPassword *string
+	DockerConfig *string
 
 	DryRun bool
 }
@@ -107,79 +101,23 @@ func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.StagesRepo, "stages", "s", "", "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now)")
 }
 
-func SetupStagesUsername(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesUsername = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesUsername, "stages-username", "", "", "Stages Docker repo username")
-}
-
-func SetupStagesPassword(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesPassword = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesPassword, "stages-password", "", "", "Stages Docker repo password")
-}
-
-func SetupPullUsername(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.PullUsername = new(string)
-	cmd.Flags().StringVarP(cmdData.PullUsername, "pull-username", "", "", "Username to authorize pull of base images")
-}
-
-func SetupPullPassword(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.PullPassword = new(string)
-	cmd.Flags().StringVarP(cmdData.PullPassword, "pull-password", "", "", "Password to authorize pull of base images")
-}
-
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
 	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (use WERF_IMAGES_REPO environment by default)")
 }
 
-func SetupCleanupImagesUsername(cmdData *CmdData, cmd *cobra.Command) {
-	usage := `Images Docker repo username (granted permission to read images info and delete images).
-Use by default:
-* werf-cleanup username if WERF_IMAGES_PASSWORD environment defined or
-* WERF_IMAGES_USERNAME environment`
-
-	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") != "" {
-		setupImagesUsername(cmdData, cmd, "werf-cleanup", usage)
-		return
-	}
-
-	setupImagesUsername(cmdData, cmd, os.Getenv("WERF_IMAGES_USERNAME"), usage)
-}
-
-func SetupCleanupImagesPassword(cmdData *CmdData, cmd *cobra.Command) {
-	usage := `Docker repo password (granted permission to read images info and delete images).
-Use by default:
-* WERF_CLEANUP_IMAGES_PASSWORD or
-* WERF_IMAGES_PASSWORD environment`
-
-	if os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD") != "" {
-		setupImagesPassword(cmdData, cmd, os.Getenv("WERF_CLEANUP_IMAGES_PASSWORD"), usage)
-		return
-	}
-
-	setupImagesPassword(cmdData, cmd, os.Getenv("WERF_IMAGES_PASSWORD"), usage)
-}
-
-func SetupImagesUsernameWithUsage(cmdData *CmdData, cmd *cobra.Command, usage string) {
-	setupImagesUsername(cmdData, cmd, os.Getenv("WERF_IMAGES_USERNAME"), usage)
-}
-
-func SetupImagesPasswordWithUsage(cmdData *CmdData, cmd *cobra.Command, usage string) {
-	setupImagesPassword(cmdData, cmd, os.Getenv("WERF_IMAGES_PASSWORD"), usage)
-}
-
-func setupImagesUsername(cmdData *CmdData, cmd *cobra.Command, value, usage string) {
-	cmdData.ImagesUsername = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesUsername, "images-username", "u", value, usage)
-}
-
-func setupImagesPassword(cmdData *CmdData, cmd *cobra.Command, value, usage string) {
-	cmdData.ImagesPassword = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesPassword, "images-password", "p", value, usage)
-}
-
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+}
+
+func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command) {
+	defaultValue := os.Getenv("WERF_DOCKER_CONFIG")
+	if defaultValue == "" {
+		defaultValue = os.Getenv("DOCKER_CONFIG")
+	}
+
+	cmdData.DockerConfig = new(string)
+	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, "Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker will be used by default (in the order of priority).")
 }
 
 func GetStagesRepo(cmdData *CmdData) (string, error) {
