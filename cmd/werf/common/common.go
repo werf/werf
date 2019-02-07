@@ -67,7 +67,7 @@ func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Enable only specified ssh keys (use system ssh-agent by default)")
+	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (system ssh-agent or default keys will be used by default, see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified multiple times to use multiple keys.")
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {

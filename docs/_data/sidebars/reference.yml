@@ -93,5 +93,11 @@ entries:
     - title: Minikube
       url: /reference/deploy/minikube.html
 
-  - title: Slug
-    url: /reference/slug.html
+  - title: Toolbox
+    fi:
+
+    - title: Slug
+      url: /reference/toolbox/slug.html
+
+    - title: SSH
+      url: /reference/toolbox/ssh.html
