@@ -6,11 +6,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/project_tmp_dir"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -43,12 +41,8 @@ WARNING: Images from images repo, that are being used in Kubernetes cluster will
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
-	common.SetupStagesUsername(&CommonCmdData, cmd)
-	common.SetupStagesPassword(&CommonCmdData, cmd)
-
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images, use WERF_IMAGES_USERNAME environment by default)")
-	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to read images info and delete images, use WERF_IMAGES_PASSWORD environment by default)")
+	common.SetupDockerConfig(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -87,22 +81,7 @@ func runPurge() error {
 		return err
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
-		return err
-	}
-
-	projectTmpDir, err := project_tmp_dir.Get()
-	if err != nil {
-		return fmt.Errorf("getting project tmp dir failed: %s", err)
-	}
-	defer project_tmp_dir.Release(projectTmpDir)
-
-	dockerAuthorizer, err := docker_authorizer.GetDockerAuthorizer(projectTmpDir, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
-	if err != nil {
-		return err
-	}
-
-	if err := dockerAuthorizer.Login(imagesRepo); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 

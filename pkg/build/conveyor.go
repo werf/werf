@@ -35,17 +35,10 @@ type conveyorPermanentFields struct {
 	containerWerfDir string
 	baseTmpDir       string
 
-	dockerAuthorizer DockerAuthorizer
-
 	sshAuthSock string
 }
 
-type DockerAuthorizer interface {
-	LoginForPull(repo string) error
-	LoginForPush(repo string) error
-}
-
-func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string, authorizer DockerAuthorizer) *Conveyor {
+func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, projectDir, baseTmpDir, sshAuthSock string) *Conveyor {
 	c := &Conveyor{
 		conveyorPermanentFields: &conveyorPermanentFields{
 			werfConfig:          werfConfig,
@@ -54,8 +47,6 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 			projectDir:       projectDir,
 			containerWerfDir: "/.werf",
 			baseTmpDir:       baseTmpDir,
-
-			dockerAuthorizer: authorizer,
 
 			sshAuthSock: sshAuthSock,
 		},
@@ -275,10 +266,6 @@ func (c *Conveyor) GetImageLatestStageSignature(imageName string) string {
 
 func (c *Conveyor) GetImageLatestStageImageName(imageName string) string {
 	return c.GetImage(imageName).LatestStage().GetImage().Name()
-}
-
-func (c *Conveyor) GetDockerAuthorizer() DockerAuthorizer {
-	return c.dockerAuthorizer
 }
 
 func (c *Conveyor) SetBuildingGitStage(imageName string, stageName stage.StageName) {

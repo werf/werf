@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/cmd/werf/common/docker_authorizer"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
@@ -59,21 +58,13 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
+	common.SetupTag(&CommonCmdData, cmd)
+	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupImagesRepo(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
-
-	common.SetupTag(&CommonCmdData, cmd)
-
-	common.SetupPullUsername(&CommonCmdData, cmd)
-	common.SetupPullPassword(&CommonCmdData, cmd)
-
-	common.SetupStagesRepo(&CommonCmdData, cmd)
-	common.SetupStagesUsername(&CommonCmdData, cmd)
-	common.SetupStagesPassword(&CommonCmdData, cmd)
-
-	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupImagesUsernameWithUsage(&CommonCmdData, cmd, "Images Docker repo username (granted permission to push images, use WERF_IMAGES_USERNAME environment by default)")
-	common.SetupImagesPasswordWithUsage(&CommonCmdData, cmd, "Images Docker repo password (granted permission to push images, use WERF_IMAGES_PASSWORD environment by default)")
 
 	return cmd
 }
@@ -91,7 +82,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	if err := docker.Init(docker_authorizer.GetHomeDockerConfigDir()); err != nil {
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
@@ -115,11 +106,6 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	defer project_tmp_dir.Release(projectTmpDir)
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
-	if err != nil {
-		return err
-	}
-
-	dockerAuthorizer, err := docker_authorizer.GetBuildAndPublishDockerAuthorizer(projectTmpDir, CmdData.PullUsername, CmdData.PullPassword, *CommonCmdData.ImagesUsername, *CommonCmdData.ImagesPassword)
 	if err != nil {
 		return err
 	}
@@ -156,7 +142,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		},
 	}
 
-	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock, dockerAuthorizer)
+	c := build.NewConveyor(werfConfig, imagesToProcess, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
 
 	if err = c.BuildAndPublish(stagesRepo, imagesRepo, opts); err != nil {
 		return err

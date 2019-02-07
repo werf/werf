@@ -36,11 +36,6 @@ func (p *PublishImagesPhase) Run(c *Conveyor) error {
 
 	// TODO: Push stages should occur on the BuildStagesPhase
 
-	err := c.GetDockerAuthorizer().LoginForPush(p.ImagesRepo)
-	if err != nil {
-		return fmt.Errorf("login into '%s' for push failed: %s", p.ImagesRepo, err)
-	}
-
 	for ind, image := range c.imagesInOrder {
 		isLastImage := ind == len(c.imagesInOrder)-1
 		err := logger.LogServiceProcess(fmt.Sprintf("Push %s", image.LogName()), "", func() error {
