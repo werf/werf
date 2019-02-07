@@ -12,6 +12,10 @@ const (
 	defaultTerminalWidth = 120
 )
 
+func IsTerminal() bool {
+	return terminal.IsTerminal(int(os.Stdout.Fd()))
+}
+
 func TerminalWidth() int {
 	if wtw, ok := os.LookupEnv("WERF_TERMINAL_WIDTH"); ok {
 		if i, err := strconv.Atoi(wtw); err != nil {
