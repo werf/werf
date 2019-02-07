@@ -46,7 +46,10 @@ func ServerVersion() (*types.Version, error) {
 
 func setDockerClient() error {
 	stdIn, _, _ := term.StdStreams()
+
 	cli = command.NewDockerCli(stdIn, logger.GetOutStream(), logger.GetErrStream(), false)
+	cli.Out().SetIsTerminal(logger.IsTerminal())
+
 	opts := flags.NewClientOptions()
 	if err := cli.Initialize(opts); err != nil {
 		return err

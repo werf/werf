@@ -255,7 +255,7 @@ func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()
 
-	logger.LogService(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
+	logger.LogServiceLn(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
 
 	return err
 }

@@ -124,7 +124,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logger.LogWarningF("WARNING: ssh agent termination failed: %s\n", err)
+			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 
