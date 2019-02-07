@@ -41,7 +41,6 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 	for _, image := range c.imagesInOrder {
 		err := logger.WithTag(image.LogName(), func() error {
 			if p.WithStages {
-
 				err := logger.LogServiceProcess("Push stages cache", "", func() error {
 					if err := p.pushImageStages(c, image); err != nil {
 						return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
@@ -61,12 +60,12 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 				if err := p.pushImage(c, image); err != nil {
 					return fmt.Errorf("unable to push image %s: %s", image.GetName(), err)
 				}
+
+				logger.LogOptionalLn()
 			}
 
 			return nil
 		})
-
-		logger.LogOptionalLn()
 
 		if err != nil {
 			return err

@@ -312,6 +312,8 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 			return nil
 		})
 
+		logger.LogOptionalLn()
+
 		if err != nil {
 			return nil, err
 		}
@@ -348,6 +350,8 @@ func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 				logger.LogErrorF("  exclude path: %s\n", p)
 			}
 		}
+
+		logger.LogOptionalLn()
 	}
 
 	return nonEmptyGitPaths, nil

@@ -28,7 +28,7 @@ func imageLogName(name string, isArtifact bool) string {
 		return fmt.Sprintf("%s", name)
 	} else {
 		if name == "" {
-			return "~"
+			name = "~"
 		}
 
 		return name

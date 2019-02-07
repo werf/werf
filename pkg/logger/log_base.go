@@ -15,6 +15,7 @@ var (
 
 	isLoggerCursorOnStartingPosition = true
 	isLoggerOptionalLnModeOn         = false
+	isLoggerOptionalLnModeTag        = ""
 )
 
 func loggerFormattedLogLn(w io.Writer, msg string) {
@@ -35,11 +36,19 @@ func FormattedLogF(w io.Writer, format string, args ...interface{}) (int, error)
 	for _, r := range []rune(msg) {
 		switch string(r) {
 		case "\n", "\r":
+			if isLoggerCursorOnStartingPosition {
+				formattedMsg += formattedTag()
+			}
+
 			isLoggerCursorOnStartingPosition = true
 		default:
 			if isLoggerOptionalLnModeOn {
+				if isLoggerOptionalLnModeTag == tag {
+					formattedMsg += formattedTag()
+				}
+
 				formattedMsg += "\n"
-				isLoggerOptionalLnModeOn = false
+				resetOptionalLnMode()
 			}
 
 			if isLoggerCursorOnStartingPosition {
@@ -84,7 +93,7 @@ func WithoutIndent(f func() error) error {
 }
 
 func IndentUp() {
-	isLoggerOptionalLnModeOn = false
+	resetOptionalLnMode()
 	indentWidth += 2
 }
 
@@ -93,7 +102,7 @@ func IndentDown() {
 		return
 	}
 
-	isLoggerOptionalLnModeOn = false
+	resetOptionalLnMode()
 	indentWidth -= 2
 }
 
@@ -143,4 +152,10 @@ func tagBlockWidth() int {
 
 func LogOptionalLn() {
 	isLoggerOptionalLnModeOn = true
+	isLoggerOptionalLnModeTag = tag
+}
+
+func resetOptionalLnMode() {
+	isLoggerOptionalLnModeOn = false
+	isLoggerOptionalLnModeTag = ""
 }
