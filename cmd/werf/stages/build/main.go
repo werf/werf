@@ -11,8 +11,8 @@ import (
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/project_tmp_dir"
 	"github.com/flant/werf/pkg/ssh_agent"
+	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -96,11 +96,11 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 		return fmt.Errorf("cannot parse werf config: %s", err)
 	}
 
-	projectTmpDir, err := project_tmp_dir.Get()
+	projectTmpDir, err := tmp_manager.CreateProjectDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
-	defer project_tmp_dir.Release(projectTmpDir)
+	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)

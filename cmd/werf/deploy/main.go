@@ -10,7 +10,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/project_tmp_dir"
+	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 	"github.com/spf13/cobra"
@@ -111,11 +111,11 @@ func runDeploy() error {
 	}
 	common.LogProjectDir(projectDir)
 
-	projectTmpDir, err := project_tmp_dir.Get()
+	projectTmpDir, err := tmp_manager.CreateProjectDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
-	defer project_tmp_dir.Release(projectTmpDir)
+	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {

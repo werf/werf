@@ -3,6 +3,7 @@ package ci_env
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -67,11 +68,20 @@ func generateGitlabEnvs() error {
 			return err
 		}
 
-		if isGRC && os.Getenv("CI_JOB_TOKEN") != "" {
+		if !isGRC && os.Getenv("CI_JOB_TOKEN") != "" {
 			imagesUsername = "ci-job-token"
-			imagesUsername = os.Getenv("CI_JOB_TOKEN")
+			imagesPassword = os.Getenv("CI_JOB_TOKEN")
 		}
 	}
+
+	dockerConfig, err := createDockerConfig()
+	if err != nil {
+		return fmt.Errorf("error creating docker config: %s", err)
+	}
+
+	_ = imagesUsername
+	_ = imagesPassword
+	_ = dockerConfig
 
 	var ciGitTag, ciGitBranch string
 
@@ -87,11 +97,11 @@ func generateGitlabEnvs() error {
 		ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
 	}
 
-	fmt.Println("### IMAGES REPO\n")
+	fmt.Println("### DOCKER CONFIG\n")
+	printExport("export WERF_DOCKER_CONFIG=\"%s\"\n", getWerfDockerConfig())
 
+	fmt.Println("### IMAGES REPO\n")
 	printExport("export WERF_IMAGES_REPO=\"%s\"\n", imagesRepo)
-	printExport("export WERF_IMAGES_USERNAME=\"%s\"\n", imagesUsername)
-	printExport("export WERF_IMAGES_PASSWORD=\"%s\"\n", imagesPassword)
 
 	fmt.Println("\n### TAGGING\n")
 	printExport("export WERF_AUTOTAG_GIT_TAG=\"%s\"\n", ciGitTag)
@@ -111,6 +121,23 @@ func generateGitlabEnvs() error {
 	}
 
 	return nil
+}
+
+func createDockerConfig() (string, error) {
+	configPath := os.Getenv("DOCKER_CONFIG")
+	if configPath == "" {
+		configPath = filepath.Join(os.Getenv("HOME"), ".docker")
+	}
+
+	// if err := docker.Init(configPath); err != nil {
+	//
+	// }
+
+	return configPath, nil
+}
+
+func getWerfDockerConfig() string {
+	return ""
 }
 
 func printExport(format, value string) {
