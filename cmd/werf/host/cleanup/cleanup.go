@@ -10,7 +10,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/project_tmp_dir"
+	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -69,7 +69,7 @@ func runGC() error {
 	}
 
 	return lock.WithLock("gc", lock.LockOptions{}, func() error {
-		if err := project_tmp_dir.GC(); err != nil {
+		if err := tmp_manager.GC(); err != nil {
 			return fmt.Errorf("project tmp dir gc failed: %s", err)
 		}
 

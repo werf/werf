@@ -3,15 +3,22 @@ package ci_env
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
+	"github.com/flant/werf/cmd/werf/common"
+	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/tmp_manager"
+	"github.com/flant/werf/pkg/werf"
 )
 
 var CmdData struct {
 	TaggingStrategy string
 }
+
+var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -26,12 +33,20 @@ Currently supported only GitLab CI`,
 		RunE: runCIEnv,
 	}
 
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd)
+
 	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "", "tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
 
 	return cmd
 }
 
 func runCIEnv(cmd *cobra.Command, args []string) error {
+	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
+		return fmt.Errorf("initialization error: %s", err)
+	}
+
 	if len(args) != 1 {
 		cmd.Help()
 		fmt.Println()
@@ -59,17 +74,40 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 }
 
 func generateGitlabEnvs() error {
+	dockerConfigPath := *CommonCmdData.DockerConfig
+	if *CommonCmdData.DockerConfig == "" {
+		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
+	}
+
+	dockerConfig, err := tmp_manager.CreateDockerConfigDir(dockerConfigPath)
+	if err != nil {
+		return fmt.Errorf("unable to create tmp docker config: %s", err)
+	}
+
+	if err := docker.Init(dockerConfig); err != nil {
+		return err
+	}
+
 	imagesRepo := os.Getenv("CI_REGISTRY_IMAGE")
 	var imagesUsername, imagesPassword string
+	doLogin := false
 	if imagesRepo != "" {
 		isGRC, err := docker_registry.IsGCR(imagesRepo)
 		if err != nil {
 			return err
 		}
 
-		if isGRC && os.Getenv("CI_JOB_TOKEN") != "" {
+		if !isGRC && os.Getenv("CI_JOB_TOKEN") != "" {
 			imagesUsername = "ci-job-token"
-			imagesUsername = os.Getenv("CI_JOB_TOKEN")
+			imagesPassword = os.Getenv("CI_JOB_TOKEN")
+			doLogin = true
+		}
+	}
+
+	if doLogin {
+		err := docker.Login(imagesUsername, imagesPassword, imagesRepo)
+		if err != nil {
+			return fmt.Errorf("unable to login into docker repo %s: %s", imagesRepo, err)
 		}
 	}
 
@@ -87,20 +125,20 @@ func generateGitlabEnvs() error {
 		ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
 	}
 
-	fmt.Println("### IMAGES REPO\n")
+	fmt.Println("### DOCKER CONFIG")
+	printExport("export WERF_DOCKER_CONFIG=\"%s\"\n", dockerConfig)
 
+	fmt.Println("\n### IMAGES REPO")
 	printExport("export WERF_IMAGES_REPO=\"%s\"\n", imagesRepo)
-	printExport("export WERF_IMAGES_USERNAME=\"%s\"\n", imagesUsername)
-	printExport("export WERF_IMAGES_PASSWORD=\"%s\"\n", imagesPassword)
 
-	fmt.Println("\n### TAGGING\n")
+	fmt.Println("\n### TAGGING")
 	printExport("export WERF_AUTOTAG_GIT_TAG=\"%s\"\n", ciGitTag)
 	printExport("export WERF_AUTOTAG_GIT_BRANCH=\"%s\"\n", ciGitBranch)
 
-	fmt.Println("\n### DEPLOY\n")
+	fmt.Println("\n### DEPLOY")
 	printExport("export WERF_DEPLOY_ENVIRONMENT=\"%s\"\n", os.Getenv("CI_ENVIRONMENT_SLUG"))
 
-	fmt.Println("\n### OTHER\n")
+	fmt.Println("\n### OTHER")
 	printExport("export WERF_LOG_FORCE_COLOR=\"%s\"\n", "1")
 	printExport("export WERF_LOG_PROJECT_DIR=\"%s\"\n", "1")
 	printExport("export WERF_ENABLE_PROCESS_EXTERMINATOR=\"%s\"\n", "1")

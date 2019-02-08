@@ -11,8 +11,8 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/project_tmp_dir"
 	"github.com/flant/werf/pkg/ssh_agent"
+	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -154,11 +154,11 @@ func runRun(commonCmdData *common.CmdData) error {
 		return fmt.Errorf("cannot parse werf config: %s", err)
 	}
 
-	projectTmpDir, err := project_tmp_dir.Get()
+	projectTmpDir, err := tmp_manager.CreateProjectDir()
 	if err != nil {
 		return fmt.Errorf("getting project tmp dir failed: %s", err)
 	}
-	defer project_tmp_dir.Release(projectTmpDir)
+	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
 	_, err = common.GetStagesRepo(commonCmdData)
 	if err != nil {
