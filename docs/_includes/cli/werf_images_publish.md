@@ -50,11 +50,11 @@ werf images publish [IMAGE_NAME...] [options]
       --tag=[]:
             Add tag (can be used one or more times)
       --tag-git-branch='':
-            Tag by git branch (use WERF_AUTOTAG_GIT_BRANCH environment by default)
+            Tag by git branch (use WERF_TAG_GIT_BRANCH environment by default)
       --tag-git-commit='':
-            Tag by git commit (use WERF_AUTOTAG_GIT_COMMIT environment by default)
+            Tag by git commit (use WERF_TAG_GIT_COMMIT environment by default)
       --tag-git-tag='':
-            Tag by git tag (use WERF_AUTOTAG_GIT_TAG environment by default)
+            Tag by git tag (use WERF_TAG_GIT_TAG environment by default)
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
             dir by default)

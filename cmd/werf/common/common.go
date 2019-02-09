@@ -71,9 +71,9 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TagGitCommit = new(string)
 
 	cmd.Flags().StringArrayVarP(cmdData.Tag, "tag", "", []string{}, "Add tag (can be used one or more times)")
-	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_AUTOTAG_GIT_BRANCH"), "Tag by git branch (use WERF_AUTOTAG_GIT_BRANCH environment by default)")
-	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_AUTOTAG_GIT_TAG"), "Tag by git tag (use WERF_AUTOTAG_GIT_TAG environment by default)")
-	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_AUTOTAG_GIT_COMMIT"), "Tag by git commit (use WERF_AUTOTAG_GIT_COMMIT environment by default)")
+	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_TAG_GIT_BRANCH"), "Tag by git branch (use WERF_TAG_GIT_BRANCH environment by default)")
+	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Tag by git tag (use WERF_TAG_GIT_TAG environment by default)")
+	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Tag by git commit (use WERF_TAG_GIT_COMMIT environment by default)")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {

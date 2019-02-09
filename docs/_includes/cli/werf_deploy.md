@@ -73,11 +73,11 @@ werf deploy [options]
       --tag=[]:
             Add tag (can be used one or more times)
       --tag-git-branch='':
-            Tag by git branch (use WERF_AUTOTAG_GIT_BRANCH environment by default)
+            Tag by git branch (use WERF_TAG_GIT_BRANCH environment by default)
       --tag-git-commit='':
-            Tag by git commit (use WERF_AUTOTAG_GIT_COMMIT environment by default)
+            Tag by git commit (use WERF_TAG_GIT_COMMIT environment by default)
       --tag-git-tag='':
-            Tag by git tag (use WERF_AUTOTAG_GIT_TAG environment by default)
+            Tag by git tag (use WERF_TAG_GIT_TAG environment by default)
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
