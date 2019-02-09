@@ -20,10 +20,10 @@ type Image struct {
 }
 
 func (i *Image) LogName() string {
-	return imageLogName(i.name, i.isArtifact)
+	return ImageLogName(i.name, i.isArtifact)
 }
 
-func imageLogName(name string, isArtifact bool) string {
+func ImageLogName(name string, isArtifact bool) string {
 	if isArtifact {
 		return fmt.Sprintf("%s", name)
 	} else {
