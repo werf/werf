@@ -33,6 +33,9 @@ werf images cleanup [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --docker-config='':
+            Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker 
+            will be used by default (in the order of priority).
       --dry-run=false:
             Indicate what the command would do without actually doing that
   -h, --help=false:
@@ -42,16 +45,6 @@ werf images cleanup [options]
             ~/.werf by default)
   -i, --images='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
-  -p, --images-password='':
-            Docker repo password (granted permission to read images info and delete images).
-            Use by default:
-            * WERF_CLEANUP_IMAGES_PASSWORD or 
-            * WERF_IMAGES_PASSWORD environment
-  -u, --images-username='':
-            Images Docker repo username (granted permission to read images info and delete images).
-            Use by default:
-            * werf-cleanup username if WERF_IMAGES_PASSWORD environment defined or 
-            * WERF_IMAGES_USERNAME environment
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
             dir by default)

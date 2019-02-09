@@ -39,6 +39,9 @@ werf deploy [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --docker-config='':
+            Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker 
+            will be used by default (in the order of priority).
       --env='':
             Use specified environment (use WERF_DEPLOY_ENVIRONMENT by default)
   -h, --help=false:
@@ -48,12 +51,6 @@ werf deploy [options]
             ~/.werf by default)
   -i, --images='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
-  -p, --images-password='':
-            Images Docker repo username (granted permission to read images info, use 
-            WERF_IMAGES_PASSWORD environment by default)
-  -u, --images-username='':
-            Images Docker repo username (granted permission to read images info, use 
-            WERF_IMAGES_USERNAME environment by default)
       --kube-context='':
             Kubernetes config context
       --namespace='':
@@ -67,14 +64,12 @@ werf deploy [options]
       --set-string=[]:
             Additional helm STRING sets
       --ssh-key=[]:
-            Enable only specified ssh keys (use system ssh-agent by default)
+            Use only specific ssh keys (system ssh-agent or default keys will be used by default, 
+            see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
+            multiple times to use multiple keys.
   -s, --stages='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now)
-      --stages-password='':
-            Stages Docker repo password
-      --stages-username='':
-            Stages Docker repo username
       --tag=[]:
             Add tag (can be used one or more times)
       --tag-git-branch='':
