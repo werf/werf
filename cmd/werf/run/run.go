@@ -35,8 +35,8 @@ func NewCmd() *cobra.Command {
 
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
-		Short:                 "Run container for specified project image",
+		Use:   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
+		Short: "Run container for specified project image",
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
   $ werf run application
@@ -85,7 +85,7 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	common.SetupSSHKey(commonCmdData, cmd)
 
 	common.SetupStagesRepo(commonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage.")
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

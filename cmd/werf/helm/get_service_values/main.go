@@ -49,7 +49,7 @@ These values includes project name, docker images ids and other`),
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 
 	return cmd
 }

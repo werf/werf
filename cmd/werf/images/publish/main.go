@@ -57,7 +57,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 
 	common.SetupStagesRepo(commonCmdData, cmd)
 	common.SetupImagesRepo(commonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo.")
 
 	return cmd
 }

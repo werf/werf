@@ -1,4 +1,4 @@
-package gc
+package cleanup
 
 import (
 	"fmt"
@@ -46,7 +46,7 @@ It is safe to run this command periodically by automated cleanup job.`),
 
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
 	return cmd
 }

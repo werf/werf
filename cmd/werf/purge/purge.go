@@ -42,7 +42,7 @@ WARNING: Images from images repo, that are being used in Kubernetes cluster will
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified stages storage and images repo.")
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

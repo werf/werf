@@ -60,7 +60,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupSSHKey(commonCmdData, cmd)
 
 	common.SetupStagesRepo(commonCmdData, cmd)
-	common.SetupDockerConfig(commonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images.")
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")

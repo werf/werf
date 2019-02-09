@@ -111,14 +111,22 @@ func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 }
 
-func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command) {
+func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 	defaultValue := os.Getenv("WERF_DOCKER_CONFIG")
 	if defaultValue == "" {
 		defaultValue = os.Getenv("DOCKER_CONFIG")
 	}
 
 	cmdData.DockerConfig = new(string)
-	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, "Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker will be used by default (in the order of priority).")
+
+	desc := "Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker will be used by default (in the order of priority)."
+
+	if extraDesc != "" {
+		desc += "\n"
+		desc += extraDesc
+	}
+
+	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, desc)
 }
 
 func GetStagesRepo(cmdData *CmdData) (string, error) {
