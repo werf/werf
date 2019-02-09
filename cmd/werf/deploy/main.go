@@ -10,6 +10,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -146,6 +147,16 @@ func runDeploy() error {
 	if err != nil {
 		return err
 	}
+
+	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+	}
+	defer func() {
+		err := ssh_agent.Terminate()
+		if err != nil {
+			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+		}
+	}()
 
 	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagScheme, werfConfig, deploy.DeployOptions{
 		Set:          CmdData.Set,

@@ -102,6 +102,11 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
+	stagesRepo, err := common.GetStagesRepo(commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
@@ -111,11 +116,6 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
-
-	stagesRepo, err := common.GetStagesRepo(commonCmdData)
-	if err != nil {
-		return err
-	}
 
 	opts := build.BuildStagesOptions{
 		ImageBuildOptions: image.BuildOptions{

@@ -32,8 +32,8 @@ type CmdData struct {
 	Namespace   *string
 	KubeContext *string
 
-	StagesRepo *string
-	ImagesRepo *string
+	StagesStorage *string
+	ImagesRepo    *string
 
 	DockerConfig *string
 
@@ -97,13 +97,13 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesRepo, "stages", "s", "", "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now)")
+	cmdData.StagesStorage = new(string)
+	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; use WERF_STAGES_STORAGE environment by default)")
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (use WERF_IMAGES_REPO environment by default)")
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (use WERF_IMAGES_REPO environment by default)")
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
@@ -129,12 +129,12 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 }
 
 func GetStagesRepo(cmdData *CmdData) (string, error) {
-	if *cmdData.StagesRepo == "" {
-		return "", fmt.Errorf("--stages :local param required")
-	} else if *cmdData.StagesRepo != ":local" {
-		return "", fmt.Errorf("only --stages :local is supported for now, got '%s'", *cmdData.StagesRepo)
+	if *cmdData.StagesStorage == "" {
+		return "", fmt.Errorf("--stages-storage :local param required")
+	} else if *cmdData.StagesStorage != ":local" {
+		return "", fmt.Errorf("only --stages-storage :local is supported for now, got '%s'", *cmdData.StagesStorage)
 	}
-	return *cmdData.StagesRepo, nil
+	return *cmdData.StagesStorage, nil
 }
 
 func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {

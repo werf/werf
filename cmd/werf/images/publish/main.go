@@ -108,6 +108,11 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
+	tagOpts, err := common.GetTagOptions(commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
@@ -117,11 +122,6 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
-
-	tagOpts, err := common.GetTagOptions(commonCmdData)
-	if err != nil {
-		return err
-	}
 
 	opts := build.PublishImagesOptions{TagOptions: tagOpts}
 

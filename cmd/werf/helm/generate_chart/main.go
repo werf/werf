@@ -76,10 +76,6 @@ func runGenerateChart(targetPath string) error {
 		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
-	}
-
 	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
@@ -113,6 +109,16 @@ func runGenerateChart(targetPath string) error {
 	if err != nil {
 		return err
 	}
+
+	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+	}
+	defer func() {
+		err := ssh_agent.Terminate()
+		if err != nil {
+			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+		}
+	}()
 
 	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, withoutRepo)
 
