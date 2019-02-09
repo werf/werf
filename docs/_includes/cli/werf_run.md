@@ -33,6 +33,9 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --docker-config='':
+            Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker 
+            will be used by default (in the order of priority).
       --docker-options='':
             Define docker run options
       --dry-run=false:
@@ -45,14 +48,12 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --shell=false:
             Use predefined docker options and command for debug
       --ssh-key=[]:
-            Enable only specified ssh keys (use system ssh-agent by default)
+            Use only specific ssh keys (system ssh-agent or default keys will be used by default, 
+            see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
+            multiple times to use multiple keys.
   -s, --stages='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now)
-      --stages-password='':
-            Stages Docker repo password
-      --stages-username='':
-            Stages Docker repo username
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
             dir by default)
