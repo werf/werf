@@ -85,14 +85,6 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 		return nil
 	}
 
-	// FIXME REMOVE
-	// werfImagesRegistry := os.Getenv("WERF_IMAGES_REPO")
-	// if werfImagesRegistry != "" && strings.HasPrefix(i.baseImage.Name(), werfImagesRegistry) {
-	// 	if err := c.GetDockerAuthorizer().LoginForPull(werfImagesRegistry); err != nil {
-	// 		return fmt.Errorf("login into repo %s for base image %s failed: %s", werfImagesRegistry, i.baseImage.Name(), err)
-	// 	}
-	// }
-
 	return logger.LogProcess("Pull base image", "", func() error {
 		if i.baseImage.IsExists() {
 			if err := i.baseImage.Pull(); err != nil {
