@@ -15,7 +15,7 @@ const RepoImageStageTagFormat = "image-stage-%s"
 
 func NewPublishImagesPhase(imagesRepo string, opts PublishImagesOptions) *PublishImagesPhase {
 	tagsByScheme := map[tag_scheme.TagScheme][]string{
-		tag_scheme.CustomScheme:    opts.Tags,
+		tag_scheme.CustomScheme:    opts.CustomTags,
 		tag_scheme.GitBranchScheme: opts.TagsByGitBranch,
 		tag_scheme.GitTagScheme:    opts.TagsByGitTag,
 		tag_scheme.GitCommitScheme: opts.TagsByGitCommit,
