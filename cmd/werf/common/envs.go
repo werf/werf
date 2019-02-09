@@ -13,7 +13,7 @@ const (
 	CmdEnvAnno                  string = "environment"
 	DisableOptionsInUseLineAnno string = "disableOptionsInUseLine"
 
-	WerfAnsibleArgs                          Env = "WERF_ANSIBLE_ARGS"
+	WerfDebugAnsibleArgs                     Env = "WERF_DEBUG_ANSIBLE_ARGS"
 	WerfDockerConfig                         Env = "WERF_DOCKER_CONFIG"
 	WerfInsecureRepo                         Env = "WERF_INSECURE_REPO"
 	WerfSecretKey                            Env = "WERF_SECRET_KEY"
@@ -25,7 +25,7 @@ const (
 )
 
 var envDescription = map[Env]string{
-	WerfAnsibleArgs:                          "Pass specified cli args to ansible (ANSIBLE_ARGS)",
+	WerfDebugAnsibleArgs:                     "Pass specified cli args to ansible (ANSIBLE_ARGS)",
 	WerfDockerConfig:                         "Force usage of the specified docker config",
 	WerfInsecureRepo:                         "Enable insecure docker repo",
 	WerfSecretKey:                            "Use specified secret key to extract secrets for the deploy; recommended way to set secret key in CI-system",
