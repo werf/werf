@@ -13,6 +13,7 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/werf"
 )
 
 type FlagExposer interface {
@@ -82,6 +83,7 @@ func (t *templater) templateFuncs(exposedFlags ...string) template.FuncMap {
 		"isRootCmd":           t.isRootCmd,
 		"optionsCmdFor":       t.optionsCmdFor,
 		"usageLine":           t.usageLine,
+		"versionLine":         t.versionLine,
 		"environment": func(c *cobra.Command) string {
 			if res, ok := c.Annotations[common.CmdEnvAnno]; ok {
 				return res
@@ -179,6 +181,10 @@ func (t *templater) optionsCmdFor(c *cobra.Command) string {
 
 func (t *templater) usageLine(c *cobra.Command) string {
 	return UsageLine(c)
+}
+
+func (t *templater) versionLine(c *cobra.Command) string {
+	return fmt.Sprintf("Version: %s\n", werf.Version)
 }
 
 func UsageLine(c *cobra.Command) string {
