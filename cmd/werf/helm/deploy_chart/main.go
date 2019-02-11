@@ -42,6 +42,7 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
+	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
@@ -67,7 +68,7 @@ func runDeployChart(chartDir string, releaseName string) error {
 	}
 
 	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
-	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 

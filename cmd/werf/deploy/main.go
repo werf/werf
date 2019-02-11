@@ -65,6 +65,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupRelease(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
+
+	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
@@ -102,7 +104,7 @@ func runDeploy() error {
 	}
 
 	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
-	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 

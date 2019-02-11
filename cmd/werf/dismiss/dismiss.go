@@ -43,6 +43,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupRelease(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
+
+	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
@@ -75,7 +77,7 @@ func runDismiss() error {
 	}
 
 	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
-	err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
+	err = kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}

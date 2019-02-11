@@ -72,7 +72,7 @@ func runSlugify(args []string) error {
 	case "docker-tag", "tag":
 		fmt.Println(slug.DockerTag(data))
 	case "":
-		return fmt.Errorf("--format argument required")
+		return fmt.Errorf("--format FORMAT argument required")
 	default:
 		return fmt.Errorf("unknown format '%s'", CmdData.Format)
 	}

@@ -31,6 +31,7 @@ type CmdData struct {
 	Release     *string
 	Namespace   *string
 	KubeContext *string
+	KubeConfig  *string
 
 	StagesStorage *string
 	ImagesRepo    *string
@@ -96,6 +97,11 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
 }
 
+func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeConfig = new(string)
+	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", "", "Kubernetes config file path")
+}
+
 func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; use WERF_STAGES_STORAGE environment by default).\nMore info about stages: https://flant.github.io/werf/reference/build/stages.html")
@@ -139,7 +145,7 @@ func GetStagesRepo(cmdData *CmdData) (string, error) {
 
 func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
 	if *cmdData.ImagesRepo == "" {
-		return "", fmt.Errorf("--images REPO param required")
+		return "", fmt.Errorf("--images-repo REPO param required")
 	}
 	return GetOptionalImagesRepo(projectName, cmdData), nil
 }
