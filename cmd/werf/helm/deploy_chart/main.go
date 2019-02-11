@@ -31,6 +31,8 @@ func NewCmd() *cobra.Command {
 		Long: common.GetLongCommandDescription(`Deploy Helm chart specified by path.
 
 If specified Helm chart is a Werf chart with additional values and contains werf-chart.yaml, then werf will pass all additinal values and data into helm`),
+		Example: `  # Deploy raw helm chart from current directory
+  $ werf helm deploy-chart . myrelease`,
 		DisableFlagsInUseLine: true,
 		Args: cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

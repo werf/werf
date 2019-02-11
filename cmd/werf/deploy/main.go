@@ -43,6 +43,11 @@ Helm chart directory .helm should exists and contain valid Helm chart.
 Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or WERF_DEPLOY_ENVIRONMENT should be specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html`),
+		Example: `  # Deploy project named 'myproject' into 'dev' environment using images from registry.mydomain.com/myproject tagged as mytag with git-tag tagging scheme; helm release name and namespace named as 'myproject-dev'
+  $ werf deploy --env dev --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
+
+  # Deploy project using specified helm release name and namespace using images from registry.mydomain.com/myproject
+  $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig),

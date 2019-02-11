@@ -18,6 +18,13 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 werf publish [IMAGE_NAME...] [options]
 ```
 
+{{ header }} Examples
+
+```bash
+  # Publish images into myregistry.mydomain.com/myproject images repo using 'mybranch' tag and git-branch tagging scheme
+  $ werf images publish --stages-storage :local --images-repo myregistry.mydomain.com/myproject --tag-git-branch mybranch
+```
+
 {{ header }} Environments
 
 ```bash

@@ -26,6 +26,16 @@ change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.ht
 werf deploy [options]
 ```
 
+{{ header }} Examples
+
+```bash
+  # Deploy project named 'myproject' into 'dev' environment using images from registry.mydomain.com/myproject tagged as mytag with git-tag tagging scheme; helm release name and namespace named as 'myproject-dev'
+  $ werf deploy --env dev --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
+
+  # Deploy project using specified helm release name and namespace using images from registry.mydomain.com/myproject
+  $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject
+```
+
 {{ header }} Environments
 
 ```bash
@@ -53,6 +63,8 @@ werf deploy [options]
             ~/.werf by default)
   -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --kube-config='':
+            Kubernetes config file path
       --kube-context='':
             Kubernetes config context
       --namespace='':

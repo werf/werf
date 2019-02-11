@@ -17,6 +17,16 @@ werf.yaml
 werf stages build [IMAGE_NAME...] [options]
 ```
 
+{{ header }} Examples
+
+```bash
+  # Build stages of all images from werf.yaml, built stages will be placed locally
+  $ werf stages build --stages-storage :local
+
+  # Build stages of image 'backend' from werf.yaml
+  $ werf stages build --stages-storage :local backend
+```
+
 {{ header }} Environments
 
 ```bash

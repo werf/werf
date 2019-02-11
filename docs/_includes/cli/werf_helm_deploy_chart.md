@@ -14,6 +14,13 @@ werf will pass all additinal values and data into helm
 werf helm deploy-chart PATH RELEASE_NAME [options]
 ```
 
+{{ header }} Examples
+
+```bash
+  # Deploy raw helm chart from current directory
+  $ werf helm deploy-chart . myrelease
+```
+
 {{ header }} Options
 
 ```bash
@@ -24,6 +31,8 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
             ~/.werf by default)
+      --kube-config='':
+            Kubernetes config file path
       --kube-context='':
             Kubernetes config context
       --namespace='':

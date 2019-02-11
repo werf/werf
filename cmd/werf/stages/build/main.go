@@ -36,6 +36,11 @@ func NewCmdWithData(cmdData *CmdDataType, commonCmdData *common.CmdData) *cobra.
 	cmd := &cobra.Command{
 		Use:   "build [IMAGE_NAME...]",
 		Short: "Build stages",
+		Example: `  # Build stages of all images from werf.yaml, built stages will be placed locally
+  $ werf stages build --stages-storage :local
+
+  # Build stages of image 'backend' from werf.yaml
+  $ werf stages build --stages-storage :local backend`,
 		Long: common.GetLongCommandDescription(`Build stages for images described in the werf.yaml.
 
 The result of build command are built stages pushed into the specified stages storage (or locally in the case when --stages-storage=:local).

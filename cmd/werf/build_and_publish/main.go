@@ -40,6 +40,11 @@ After stages has been built, new docker layer with service info about tagging sc
 The result of build-and-publish command is a stages cache for images and named images pushed into the docker repo.
 
 If one or more IMAGE_NAME parameters specified, werf will build images stages and publish only these images from werf.yaml`),
+		Example: `  # Build and publish all images from werf.yaml into specified docker repo, built stages will be placed locally; tag images with the mytag tag using custom tagging strategy
+  $ werf build-and-publish --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-custom mytag
+
+  # Build and publish all images from werf.yaml into minikube registry; tag images with the mybranch tag, using git-branch tagging strategy
+  $ werf build-and-publish --stages-storage :local --images-repo :minikube --tag-git-branch mybranch`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfDockerConfig),

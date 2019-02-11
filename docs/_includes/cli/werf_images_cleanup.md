@@ -46,6 +46,10 @@ werf images cleanup [options]
             ~/.werf by default)
   -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --kube-config='':
+            Kubernetes config file path
+      --kube-context='':
+            Kubernetes config context
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
             dir by default)
