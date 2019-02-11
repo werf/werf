@@ -119,10 +119,10 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 		if strings.HasSuffix(stderr, "has no deployed releases\n") {
 			fmt.Printf("WARN: Helm release '%s' is in improper state: %s", releaseName, stderr)
 			fmt.Printf("WARN: Helm release %s will be removed with `helm delete --purge` on the next run of `dapp kube deploy`", releaseName)
-		}
 
-		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
-			return err
+			if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
+				return err
+			}
 		}
 
 		return fmt.Errorf("%s\n%s", stdout, stderr)
