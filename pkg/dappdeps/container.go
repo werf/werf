@@ -6,6 +6,7 @@ import (
 
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type container struct {
@@ -28,18 +29,20 @@ func (c *container) CreateIfNotExist() error {
 
 	if !exist {
 		err := lock.WithLock(fmt.Sprintf("dappdeps.container.%s", c.Name), lock.LockOptions{Timeout: time.Second * 600}, func() error {
-			exist, err := docker.ContainerExist(c.Name)
-			if err != nil {
-				return err
-			}
-
-			if !exist {
-				if err := c.Create(); err != nil {
+			return logger.LogServiceProcess(fmt.Sprintf("Creating container %s from image %s", c.Name, c.ImageName), "", func() error {
+				exist, err := docker.ContainerExist(c.Name)
+				if err != nil {
 					return err
 				}
-			}
 
-			return nil
+				if !exist {
+					if err := c.Create(); err != nil {
+						return err
+					}
+				}
+
+				return nil
+			})
 		})
 
 		if err != nil {

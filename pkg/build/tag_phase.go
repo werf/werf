@@ -98,7 +98,7 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 						imagePkg.WerfImageLabel:     "true",
 					})
 
-					err := logger.LogProcessInline(fmt.Sprintf("Building final image with meta information"), func() error {
+					err := logger.LogProcess(fmt.Sprintf("Building final image with meta information"), "", func() error {
 						if err := tagImage.Build(imagePkg.BuildOptions{}); err != nil {
 							return fmt.Errorf("error building %s: %s", tag, err)
 						}

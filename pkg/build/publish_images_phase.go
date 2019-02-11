@@ -198,7 +198,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 						imagePkg.WerfImageLabel:     "true",
 					})
 
-					err := logger.LogProcessInline("Building final image with meta information", func() error {
+					err := logger.LogProcess("Building final image with meta information", "", func() error {
 						if err := pushImage.Build(imagePkg.BuildOptions{}); err != nil {
 							return fmt.Errorf("error building %s with tag scheme '%s': %s", imageName, scheme, err)
 						}
