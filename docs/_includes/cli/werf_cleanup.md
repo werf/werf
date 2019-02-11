@@ -3,14 +3,14 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Cleanup unused images from project images repo and stages storage.
-
-This is the main cleanup command for periodical automated images cleaning. Command is supposed to 
-be called daily for the project.
+Safely cleanup unused project images and stages.
 
 First step is 'werf images cleanup' command, which will delete unused images from images repo. 
-Second step is 'werf stages cleanup' command, which will delete unused stages from stages repo (or 
-locally) to be in sync with the images repo
+Second step is 'werf stages cleanup' command, which will delete unused stages from stages storage 
+to be in sync with the images repo.
+
+It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel 
+with other werf commands such as build, deploy and host cleanup.
 
 {{ header }} Syntax
 
@@ -44,6 +44,8 @@ werf cleanup [options]
       --docker-config='':
             Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker 
             will be used by default (in the order of priority).
+            Command needs granted permissions to read, pull and delete images from the specified 
+            stages storage and images repo
       --dry-run=false:
             Indicate what the command would do without actually doing that
   -h, --help=false:
@@ -51,11 +53,12 @@ werf cleanup [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
             ~/.werf by default)
-  -i, --images='':
+  -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
-  -s, --stages='':
+  -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
-            supported for now)
+            supported for now; use WERF_STAGES_STORAGE environment by default).
+            More info about stages: https://flant.github.io/werf/reference/build/stages.html
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
             dir by default)

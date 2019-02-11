@@ -38,7 +38,7 @@ func NewCmdWithData(cmdData *CmdDataType, commonCmdData *common.CmdData) *cobra.
 		Short: "Build stages",
 		Long: common.GetLongCommandDescription(`Build stages for images described in the werf.yaml.
 
-The result of build command are built stages pushed into the specified stages repo or locally if --stages=:local.
+The result of build command are built stages pushed into the specified stages storage (or locally in the case when --stages-storage=:local).
 
 If one or more IMAGE_NAME parameters specified, werf will build only these images stages from werf.yaml`),
 		DisableFlagsInUseLine: true,

@@ -16,9 +16,6 @@ werf completion [options]
 ```bash
   # Load completion run
   $ source <(werf completion)
-
-  # To configure current user bash shell to load completions for each session
-  $ echo ". <(werf completion)" >> ~/.bashrc
 ```
 
 {{ header }} Options

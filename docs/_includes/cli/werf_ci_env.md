@@ -26,6 +26,8 @@ werf ci-env CI_SYSTEM [options]
       --docker-config='':
             Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker 
             will be used by default (in the order of priority).
+            Command will copy specified or default (~/.docker) config to the new temporary config 
+            and may perform additional logins into new config.
   -h, --help=false:
             help for ci-env
       --home-dir='':

@@ -12,7 +12,8 @@ The data include:
   * Remote git clones cache.
   * Git worktree cache.
 
-It is safe to run this command periodically by automated cleanup job.
+It is safe to run this command periodically by automated cleanup job in parallel with other werf 
+commands such as build, deploy, stages and images cleanup.
 
 {{ header }} Syntax
 
