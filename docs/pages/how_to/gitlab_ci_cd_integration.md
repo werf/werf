@@ -15,7 +15,6 @@ To begin, you'll need the following:
 * Kubernetes cluster and the kubectl CLI tool configured to communicate with the cluster;
 * Server with GitLab above 10.x version (or account on [SaaS GitLab](https://gitlab.com/));
 * Docker registry (GitLab embedded or somewhere else);
-* Host for build node (optional);
 * An application you can successfully build and deploy with werf;
 
 ## Infrastructure
@@ -24,51 +23,42 @@ To begin, you'll need the following:
 
 * Kubernetes cluster
 * GitLab with docker registry enabled
-* Build node
-* Deployment node
-
-
+* Werf node (node for build and deployment)
 
 We don't recommend to run werf in docker as it can give an unexpected result.
 
-In order to set up the CI/CD process, you need to describe build, deploy and cleanup stages. For all of these stages, a GitLab runner with shell executor is needed to run `werf`.
+In order to set up the CI/CD process, you need to describe build, deploy and cleanup stages. For all of these stages, a GitLab runner with `shell` executor is needed to run `werf`.
 
 Werf use `~/.werf/` folder to store build cache and other files. Werf assumes this folder is preserved for all pipelines. That is why for build processes we don't recommend you to use environments which are don't preserve a GitLab runner's state (files between runs), e.g. some cloud environments.
 
-We recommend you to use separate hosts for building (build node) and for deploying (deployment node). The reasons are:
-* the deployment process needs access to the cluster through kubectl, and simply you can use a master node, but the build process needs more resources than the deployment process, and the master node typically has no such resources;
-* the build process can affect on the master node and can affect on the whole cluster.
+The deployment process needs access to the cluster through kubectl and you can simply use master node as Werf node. But in production case you better setup werf on a separate node.
 
-Also, it is not recommended to set up any node of the kubernetes cluster as a build node.
+This HowTo assumes you setup werf on the master kubernetes node.
 
-You need to set up GitLab runners with only two tags — `build` and `deploy` respectively for build stage and for deployment stage. The cleanup stage will use both runners and doesn't need separate runners or nodes.
+Eventually, Werf node needs access:
+- to the application git repository
+- to the docker registry
+- to the kubernetes cluster.
 
-Build node needs access to the application git repository and to the docker registry, while the deployment node additionally needs access to the kubernetes cluster.
+You need to set up GitLab runner with `werf` tags.
 
 ### Base setup
 
-On the build and the deployment nodes, you need to install and set up GitLab runners. Follow these steps on both nodes:
+On the master kubernetes node, you need to install and set up GitLab runner. Follow these steps:
 
 1. Create GitLab project and push project code into it.
 1. Get a registration token for the runner: in your GitLab project open `Settings` —> `CI/CD`, expand `Runners` and find the token in the section `Setup a specific Runner manually`.
-1. [Install gitlab-runners](https://docs.gitlab.com/runner/install/linux-manually.html):
-    * `deployment runner` — on the master kubernetes node
-    * `build runner` — on the separate host (not on any node of the kubernetes cluster) or on the master kubernetes node (not recommended for production)
+1. [Install gitlab-runner](https://docs.gitlab.com/runner/install/linux-manually.html).
 1. Register the `gitlab-runner`.
 
-    [Use these steps](https://docs.gitlab.com/runner/register/index.html) to register runners, but:
-    * enter following tags associated with runners (if you have only one runner — enter both tags comma separated):
-        * `build` — for build runner
-        * `deploy` — for deployment runner
-    * enter executor for both runners — `shell`;
-1. Install Docker if it is absent.
-
-    On the master kubernetes node Docker is already installed, and you need to [install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) it only on your build node.
+    [Use these steps](https://docs.gitlab.com/runner/register/index.html) to register runner, but:
+    * enter the `werf` tag for runner;
+    * enter executor `shell` for runner;
 1. Add the `gitlab-runner` user into the `docker` group.
 
-    ```bash
-    sudo usermod -Ga docker gitlab-runner
-    ```
+   ```bash
+   sudo usermod -Ga docker gitlab-runner
+   ```
 
 1. Install latest [`multiwerf`](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
 
@@ -79,30 +69,32 @@ On the build and the deployment nodes, you need to install and set up GitLab run
    curl -L https://raw.githubusercontent.com/flant/multiwerf/master/install.sh | bash
    ```
 
-### Setup deploy runner
+### Setup runner
 
-The deployment runner needs [helm](https://helm.sh/) and an access to the kubernetes cluster through the kubectl. An easy way is to use the master kubernetes node for deploy.
+The runner needs [helm](https://helm.sh/) and an access to the kubernetes cluster through the kubectl. An easy way is to use the master kubernetes node.
 
 Make the following steps on the master node:
 1. Install and init Helm.
-    ```bash
-curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh &&
-chmod 700 get_helm.sh &&
-./get_helm.sh &&
-kubectl create serviceaccount tiller --namespace kube-system &&
-kubectl create clusterrolebinding tiller --clusterrole=cluster-admin --serviceaccount=kube-system:tiller &&
-helm init --service-account tiller
-```
+   ```bash
+   curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh &&
+   chmod 700 get_helm.sh &&
+   ./get_helm.sh &&
+   kubectl create serviceaccount tiller --namespace kube-system &&
+   kubectl create clusterrolebinding tiller --clusterrole=cluster-admin --serviceaccount=kube-system:tiller &&
+   helm init --service-account tiller
+   ```
 1. Copy kubectl config to the home folder of the `gitlab-runner` user.
-    ```bash
-mkdir -p /home/gitlab-runner/.kube &&
-sudo cp -i /etc/kubernetes/admin.conf /home/gitlab-runner/.kube/config &&
-sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/.kube
-```
+   ```bash
+   mkdir -p /home/gitlab-runner/.kube &&
+   sudo cp -i /etc/kubernetes/admin.conf /home/gitlab-runner/.kube/config &&
+   sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/.kube
+   ```
+
+> If you install werf not on the master kubernetes node, you must also [install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) Docker and setup kubectl.
 
 ## Pipeline
 
-When you have working build and deployment runners, you are ready to set up GitLab pipeline.
+When you have working runner, you are ready to set up GitLab pipeline.
 
 When GitLab starts a job, it sets a list of [environments](https://docs.gitlab.com/ee/ci/variables/README.html), and we will use some of them.
 
@@ -137,8 +129,8 @@ Build:
     ## It is important to use --tag-ci, --tag-git-branch or --tag-git-commit options here (in bp or push commands) otherwise cleanup won't work.
     - werf bp --tag-ci
   tags:
-    ## You specify there the tag of the runner to use. We need to use there build runner
-    - build
+    ## You specify there the tag of the runner to use. We have only one runner
+    - werf
     ## Cleanup will use schedules, and it is not necessary to rebuild images on running cleanup jobs.
     ## Therefore we need to specify
     ##
@@ -177,9 +169,8 @@ Add the following lines to `.gitlab-ci.yml` file:
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
     - Build
-  ## We need to use deploy runner, because werf needs to interact with the kubectl
   tags:
-    - deploy
+    - werf
 ```
 
 Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
@@ -216,7 +207,7 @@ Stop review:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
   tags:
-    - deploy
+    - werf
   only:
     - branches
   except:
@@ -290,9 +281,9 @@ In the results of werf works, we have images in a registry and a build cache. Bu
 
 There are two stages — `cleanup_registry` and `cleanup_builder`, in the `.gitlab-ci.yml` file for the cleanup process. Every stage has only one job in it and order of stage definition (see `stages` list in the top of the `.gitlab-ci.yml` file) is important.
 
-The first step in the cleanup process is to clean registry from unused images (built from stale or deleted branches and so on — see more [about werf cleanup]({{ site.baseurl }}/reference/registry/cleaning.html)). This work will be done on the `cleanup_registry` stage. On this stage, werf connect to the registry and to the kubernetes cluster. That is why on this stage we need to use deploy runner. From kubernetes cluster werf gets info about images are currently used by pods.
+The first step in the cleanup process is to clean registry from unused images (built from stale or deleted branches and so on — see more [about werf cleanup]({{ site.baseurl }}/reference/registry/cleaning.html)). This work will be done on the `cleanup_registry` stage. On this stage, werf connect to the registry and to the kubernetes cluster. From kubernetes cluster werf gets info about images are currently used by pods.
 
-The second step — is to clean up cache on build node **after** registry has been cleaned. The important word is — after, because werf will use info from the registry to clean up build cache, and if you haven't cleaned registry you won't get an efficiently cleaned build cache. That's why is important that the `cleanup_builder` stage starts after the `cleanup_registry` stage.
+The second step — is to clean up build cache **after** registry has been cleaned. The important word is — after, because werf will use info from the registry to clean up build cache, and if you haven't cleaned registry you won't get an efficiently cleaned build cache. That's why is important that the `cleanup_builder` stage starts after the `cleanup_registry` stage.
 
 Add the following lines to `.gitlab-ci.yml` file:
 
@@ -305,7 +296,7 @@ Cleanup registry:
   only:
     - schedules
   tags:
-    - deploy
+    - werf
 
 Cleanup builder:
   stage: cleanup_builder
@@ -315,7 +306,7 @@ Cleanup builder:
   only:
     - schedules
   tags:
-    - build
+    - werf
 ```
 
 To use cleanup you should create `Personal Access Token` with necessary rights and put it into the `WERF_CLEANUP_IMAGES_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_CLEANUP_IMAGES_PASSWORD` and a value consisting `Personal Access Token`.
@@ -344,7 +335,7 @@ Build:
     - werf bp --tag-ci
   tags:
     ## You specify there the tag of the runner to use. We need to use there build runner
-    - build
+    - werf
     ## Cleanup will use schedules, and it is not necessary to rebuild images on running cleanup jobs.
     ## Therefore we need to specify
     ##
@@ -365,7 +356,7 @@ Build:
     - Build
   ## We need to use deploy runner, because werf needs to interact with the kubectl
   tags:
-    - deploy
+    - werf
 
 Review:
   <<: *base_deploy
@@ -389,7 +380,7 @@ Stop review:
     name: review/${CI_COMMIT_REF_SLUG}
     action: stop
   tags:
-    - deploy
+    - werf
   only:
     - branches
   except:
@@ -426,7 +417,7 @@ Cleanup registry:
   only:
     - schedules
   tags:
-    - deploy
+    - werf
 
 Cleanup builder:
   stage: cleanup_builder
@@ -436,5 +427,5 @@ Cleanup builder:
   only:
     - schedules
   tags:
-    - build
+    - werf
 ```
