@@ -59,14 +59,21 @@ It is designed to make engineer's work fast end efficient.
 
 ## Install Werf
 
-### Using Multiwerf (recommended)
+### Way 1 (recommended): using Multiwerf
 
 [Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf, which:
 * downloads werf binary builds;
 * manages multiple versions of binaries installed on a single host, that can be used at the same time;
 * automatically updates werf binary (can be disabled).
 
-### Download binary
+```
+mkdir ~/bin
+cd ~/bin
+curl -L https://raw.githubusercontent.com/flant/multiwerf/master/install.sh | bash
+source <(multiwerf use 1.0 alpha)
+```
+
+### Way 2: download binary
 
 The latest release can be reached via [this page](https://bintray.com/flant/werf/werf/_latestVersion).
 
@@ -90,7 +97,7 @@ sudo mv /tmp/werf /usr/local/bin/werf
 
 Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.0-alpha.12/werf-windows-amd64-v1.0.0-alpha.12.exe).
 
-### From source
+### Way 3: from source
 
 ```
 go get github.com/flant/werf/cmd/werf
