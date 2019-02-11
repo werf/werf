@@ -13,7 +13,8 @@ const (
 		`{{$explicitlyExposedFlags := exposed .}}` +
 		`{{$environment := environment .}}` +
 		`{{$optionsCmdFor := optionsCmdFor .}}` +
-		`{{$usageLine := usageLine .}}`
+		`{{$usageLine := usageLine .}}` +
+		`{{$versionLine := versionLine .}}`
 
 	// SectionAliases is the help template section that displays command aliases.
 	SectionEnvironment = `{{if $environment}}Environments:
@@ -52,6 +53,9 @@ const (
 	// SectionTipsHelp is the help template section that displays the '--help' hint.
 	SectionTipsHelp = `{{if .HasSubCommands}}Use "{{$rootCmd}} <command> --help" for more information about a given command.
 {{end}}`
+
+	SectionVersion = `
+{{ $versionLine }}`
 )
 
 // MainHelpTemplate if the template for 'help' used by most commands.
@@ -71,6 +75,7 @@ func MainUsageTemplate() string {
 		SectionFlags,
 		SectionUsage,
 		SectionTipsHelp,
+		SectionVersion,
 	}
 	return strings.TrimRightFunc(strings.Join(sections, ""), unicode.IsSpace)
 }

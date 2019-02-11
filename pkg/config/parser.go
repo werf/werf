@@ -20,7 +20,7 @@ import (
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/util"
-	"gopkg.in/flant/yaml.v2"
+	yaml "gopkg.in/flant/yaml.v2"
 )
 
 func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
@@ -52,6 +52,7 @@ func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 
 		format := "meta definition is not defined: add meta doc with required fields, e.g:\n\n" +
 			"```\n" +
+			"configVersion: v1\n" +
 			"project: %s\n" +
 			"---\n" +
 			"```\n\n" +
@@ -582,7 +583,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, error) {
 
 			rawImages = append(rawImages, image)
 		} else {
-			return nil, nil, newYamlUnmarshalError(errors.New("doc type cannot be recognized"), doc)
+			return nil, nil, newYamlUnmarshalError(errors.New("doc type cannot be recognized: 'configVersion' required for meta type doc, 'image' required for the image type doc or 'artifact' required for the artifact type doc"), doc)
 		}
 	}
 
@@ -590,7 +591,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, error) {
 }
 
 func isMetaDoc(h map[string]interface{}) bool {
-	if _, ok := h["project"]; ok {
+	if _, ok := h["configVersion"]; ok {
 		return true
 	}
 

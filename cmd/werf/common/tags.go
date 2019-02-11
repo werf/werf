@@ -10,8 +10,8 @@ import (
 
 func GetDeployTag(cmdData *CmdData) (string, tag_scheme.TagScheme, error) {
 	optionsCount := 0
-	if len(*cmdData.Tag) > 0 {
-		optionsCount += len(*cmdData.Tag)
+	if len(*cmdData.TagCustom) > 0 {
+		optionsCount += len(*cmdData.TagCustom)
 	}
 
 	if *cmdData.TagGitBranch != "" {
@@ -33,8 +33,8 @@ func GetDeployTag(cmdData *CmdData) (string, tag_scheme.TagScheme, error) {
 		return "", "", err
 	}
 
-	if len(opts.Tags) > 0 {
-		return opts.Tags[0], tag_scheme.CustomScheme, nil
+	if len(opts.CustomTags) > 0 {
+		return opts.CustomTags[0], tag_scheme.CustomScheme, nil
 	} else if len(opts.TagsByGitBranch) > 0 {
 		return opts.TagsByGitBranch[0], tag_scheme.GitBranchScheme, nil
 	} else if len(opts.TagsByGitTag) > 0 {
@@ -51,13 +51,13 @@ func GetTagOptions(cmdData *CmdData) (build.TagOptions, error) {
 
 	opts := build.TagOptions{}
 
-	for _, tag := range *cmdData.Tag {
+	for _, tag := range *cmdData.TagCustom {
 		err := slug.ValidateDockerTag(tag)
 		if err != nil {
 			return build.TagOptions{}, fmt.Errorf("bad --tag parameter '%s' specified: %s", tag, err)
 		}
 
-		opts.Tags = append(opts.Tags, tag)
+		opts.CustomTags = append(opts.CustomTags, tag)
 		emptyTags = false
 	}
 
@@ -77,7 +77,7 @@ func GetTagOptions(cmdData *CmdData) (build.TagOptions, error) {
 	}
 
 	if emptyTags {
-		opts.Tags = append(opts.Tags, "latest")
+		return build.TagOptions{}, fmt.Errorf("at least one tag should be specified with --tag-* options")
 	}
 
 	return opts, nil

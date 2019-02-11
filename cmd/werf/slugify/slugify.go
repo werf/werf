@@ -14,9 +14,9 @@ var CmdData struct {
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "slugify STRING",
+		Use: "slugify STRING",
 		DisableFlagsInUseLine: true,
-		Short:                 "Print slugged string by specified format",
+		Short: "Print slugged string by specified format",
 		Example: `  $ werf slugify -f kubernetes-namespace feature-fix-2
   feature-fix-2
 
@@ -71,8 +71,10 @@ func runSlugify(args []string) error {
 		fmt.Println(slug.KubernetesNamespace(data))
 	case "docker-tag", "tag":
 		fmt.Println(slug.DockerTag(data))
+	case "":
+		return fmt.Errorf("--format FORMAT argument required")
 	default:
-		return fmt.Errorf("accepts format '%s' not supported", CmdData.Format)
+		return fmt.Errorf("unknown format '%s'", CmdData.Format)
 	}
 
 	return nil

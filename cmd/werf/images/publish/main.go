@@ -35,6 +35,8 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 New docker layer with service info about tagging scheme will be built for each tag of each image from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
 
 If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml.`),
+		Example: `  # Publish images into myregistry.mydomain.com/myproject images repo using 'mybranch' tag and git-branch tagging scheme
+  $ werf images publish --stages-storage :local --images-repo myregistry.mydomain.com/myproject --tag-git-branch mybranch`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfInsecureRepo),
@@ -57,7 +59,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 
 	common.SetupStagesRepo(commonCmdData, cmd)
 	common.SetupImagesRepo(commonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo.")
 
 	return cmd
 }
@@ -108,6 +110,11 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
+	tagOpts, err := common.GetTagOptions(commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
@@ -117,11 +124,6 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
-
-	tagOpts, err := common.GetTagOptions(commonCmdData)
-	if err != nil {
-		return err
-	}
 
 	opts := build.PublishImagesOptions{TagOptions: tagOpts}
 

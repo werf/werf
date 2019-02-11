@@ -31,6 +31,8 @@ func NewCmd() *cobra.Command {
 		Long: common.GetLongCommandDescription(`Deploy Helm chart specified by path.
 
 If specified Helm chart is a Werf chart with additional values and contains werf-chart.yaml, then werf will pass all additinal values and data into helm`),
+		Example: `  # Deploy raw helm chart from current directory
+  $ werf helm deploy-chart . myrelease`,
 		DisableFlagsInUseLine: true,
 		Args: cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -42,6 +44,7 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
+	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
@@ -67,7 +70,7 @@ func runDeployChart(chartDir string, releaseName string) error {
 	}
 
 	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
-	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 

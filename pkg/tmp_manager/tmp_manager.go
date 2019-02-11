@@ -62,29 +62,33 @@ func releaseDir(dir, createdDirs, releasedDirs string) error {
 }
 
 func checkShouldRunGC() (bool, error) {
-	var releasedProjectsDirs []os.FileInfo
-	var releasedDockerConfigsDirs []os.FileInfo
-
 	releasedProjectsDir := filepath.Join(GetReleasedTmpDirs(), projectsDir)
 	if _, err := os.Stat(releasedProjectsDir); !os.IsNotExist(err) {
 		var err error
-		releasedProjectsDirs, err = ioutil.ReadDir(releasedProjectsDir)
+		releasedProjectsDirs, err := ioutil.ReadDir(releasedProjectsDir)
 		if err != nil {
 			return false, fmt.Errorf("unable to list released projects tmp dirs in %s: %s", releasedProjectsDir, err)
 		}
-	}
 
-	releasedDockerConfigsDir := filepath.Join(GetReleasedTmpDirs(), projectsDir)
-	if _, err := os.Stat(releasedProjectsDir); !os.IsNotExist(err) {
-		var err error
-		releasedDockerConfigsDirs, err = ioutil.ReadDir(releasedDockerConfigsDir)
-		if err != nil {
-			return false, fmt.Errorf("unable to list released docker configs tmp dirs in %s: %s", releasedDockerConfigsDir, err)
+		if len(releasedProjectsDirs) > 50 {
+			return true, nil
 		}
 	}
 
-	if len(releasedProjectsDirs) > 50 || len(releasedDockerConfigsDirs) > 50 {
-		return true, nil
+	createdDockerConfigsDir := filepath.Join(GetCreatedTmpDirs(), dockerConfigsDir)
+	if _, err := os.Stat(createdDockerConfigsDir); !os.IsNotExist(err) {
+		var err error
+		createdDockerConfigsDirs, err := ioutil.ReadDir(createdDockerConfigsDir)
+		if err != nil {
+			return false, fmt.Errorf("unable to list released docker configs tmp dirs in %s: %s", createdDockerConfigsDir, err)
+		}
+
+		now := time.Now()
+		for _, info := range createdDockerConfigsDirs {
+			if now.Sub(info.ModTime()) > 24*time.Hour {
+				return true, nil
+			}
+		}
 	}
 
 	return false, nil
@@ -143,6 +147,10 @@ func CreateDockerConfigDir(fromDockerConfig string) (string, error) {
 		return "", err
 	}
 
+	if err := os.Chmod(newDir, 0700); err != nil {
+		return "", err
+	}
+
 	if _, err := os.Stat(fromDockerConfig); !os.IsNotExist(err) {
 		err := copy.Copy(fromDockerConfig, newDir)
 		if err != nil {
@@ -168,10 +176,6 @@ func CreateDockerConfigDir(fromDockerConfig string) (string, error) {
 	}
 
 	return newDir, nil
-}
-
-func ReleaseDockerConfigDir(dir string) error {
-	return releaseDir(dir, filepath.Join(GetCreatedTmpDirs(), dockerConfigsDir), filepath.Join(GetReleasedTmpDirs(), dockerConfigsDir))
 }
 
 type DirDesc struct {
@@ -204,7 +208,7 @@ func getReleasedDirsToRemove(releasedDirs []*DirDesc) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to read link %s: %s", desc.LinkPath, err)
 		}
-		res = append(res, origDir)
+		res = append(res, origDir, desc.LinkPath)
 	}
 
 	return res, nil
@@ -224,7 +228,7 @@ func getCreatedDirsToRemove(createdDirs []*DirDesc) ([]string, error) {
 			return nil, fmt.Errorf("unable to read link %s: %s", desc.LinkPath, err)
 		}
 
-		res = append(res, origDir)
+		res = append(res, origDir, desc.LinkPath)
 	}
 
 	return res, nil
@@ -241,11 +245,6 @@ func GC() error {
 	createdProjectsDescs, err := getDirsDescs(filepath.Join(GetCreatedTmpDirs(), projectsDir))
 	if err != nil {
 		return fmt.Errorf("unable to get created tmp projects dirs: %s", err)
-	}
-
-	releasedDockerConfigsDescs, err := getDirsDescs(filepath.Join(GetReleasedTmpDirs(), dockerConfigsDir))
-	if err != nil {
-		return fmt.Errorf("unable to get released tmp docker configs dirs: %s", err)
 	}
 
 	createdDockerConfigsDescs, err := getDirsDescs(filepath.Join(GetCreatedTmpDirs(), dockerConfigsDir))
@@ -270,12 +269,6 @@ func GC() error {
 	}
 	projectsToRemove = append(projectsToRemove, dirs...)
 
-	dirs, err = getReleasedDirsToRemove(releasedDockerConfigsDescs)
-	if err != nil {
-		return fmt.Errorf("unable to get released tmp docker configs dirs to remove: %s", err)
-	}
-	dockerConfigsToRemove = append(dockerConfigsToRemove, dirs...)
-
 	dirs, err = getCreatedDirsToRemove(createdDockerConfigsDescs)
 	if err != nil {
 		return fmt.Errorf("unable to get created tmp docker configs dirs to remove: %s", err)
@@ -297,14 +290,34 @@ func GC() error {
 		}
 	}
 
-	for _, descs := range [][]*DirDesc{
-		releasedProjectsDescs, releasedDockerConfigsDescs,
-		createdProjectsDescs, createdDockerConfigsDescs,
-	} {
-		for _, desc := range descs {
-			if err := os.Remove(desc.LinkPath); err != nil {
-				removeErrors = append(removeErrors, fmt.Errorf("unable to remove %s: %s", desc.LinkPath, err))
-			}
+	if len(removeErrors) > 0 {
+		msg := ""
+		for _, err := range removeErrors {
+			msg += fmt.Sprintf("%s\n", err)
+		}
+		return fmt.Errorf("%s", msg)
+	}
+
+	return nil
+}
+
+func Purge() error {
+	tmpFiles, err := ioutil.ReadDir(werf.GetTmpDir())
+	if err != nil {
+		return fmt.Errorf("unable to list tmp files in %s: %s", werf.GetTmpDir(), err)
+	}
+
+	filesToRemove := []string{}
+	for _, finfo := range tmpFiles {
+		if strings.HasPrefix(finfo.Name(), "werf") {
+			filesToRemove = append(filesToRemove, filepath.Join(werf.GetTmpDir(), finfo.Name()))
+		}
+	}
+
+	for _, file := range filesToRemove {
+		err := os.RemoveAll(file)
+		if err != nil {
+			logger.LogErrorF("WARNING: unable to remove %s: %s\n", file, err)
 		}
 	}
 

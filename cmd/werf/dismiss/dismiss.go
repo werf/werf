@@ -28,6 +28,14 @@ Helm Release will be purged and optionally Kubernetes Namespace.
 Environment is a required param for the dismiss by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or WERF_DEPLOY_ENVIRONMENT should be specified for command.
 
 Read more info about Helm Release name, Kubernetes Namespace and how to change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html`),
+		Example: `  # Dismiss project named 'myproject' previously deployed app from 'dev' environment; helm release name and namespace will be named as 'myproject-dev'
+  $ werf dismiss --env dev --stages-storage :local
+
+  # Dismiss project with namespace
+  $ werf dismiss --env my-feature-branch --stages-storage :local --with-namespace
+
+  # Dismiss project using specified helm release name and namespace
+  $ werf dismiss --release myrelease --namespace myns --stages-storage :local`,
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
@@ -43,6 +51,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupRelease(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
+
+	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
@@ -75,7 +85,7 @@ func runDismiss() error {
 	}
 
 	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
-	err = kube.Init(kube.InitOptions{KubeContext: kubeContext})
+	err = kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}

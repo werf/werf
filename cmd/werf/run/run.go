@@ -19,6 +19,7 @@ import (
 
 type CmdDataType struct {
 	Shell            bool
+	Bash             bool
 	RawDockerOptions string
 
 	DockerOptions []string
@@ -35,20 +36,20 @@ func NewCmd() *cobra.Command {
 
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
-		Short:                 "Run container for specified project image",
+		Use:   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
+		Short: "Run container for specified project image",
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
-  $ werf run application
+  $ werf --stages-storage :local run application
 
   # Run image with predefined docker run options and command for debug
-  $ werf run --shell
+  $ werf --stages-storage :local run --shell
 
   # Run image with specified docker run options and command
-  $ werf run --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
+  $ werf --stages-storage :local run --docker-options="-d -p 5000:5000 --restart=always --name registry" -- /app/run.sh
 
   # Print a resulting docker run command
-  $ werf run --shell --dry-run
+  $ werf --stages-storage :local run --shell --dry-run
   docker run -ti --rm image-stage-test:1ffe83860127e68e893b6aece5b0b7619f903f8492a285c6410371c87018c6a0 /bin/sh`,
 		Annotations: map[string]string{
 			common.DisableOptionsInUseLineAnno: "1",
@@ -64,10 +65,20 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 				CmdData.DockerOptions = strings.Split(CmdData.RawDockerOptions, " ")
 			}
 
-			if CmdData.Shell {
+			if CmdData.Shell && CmdData.Bash {
+				return fmt.Errorf("cannot use --shell and --bash options at the same time!")
+			}
+
+			if CmdData.Shell || CmdData.Bash {
 				if len(CmdData.DockerOptions) == 0 && len(CmdData.DockerCommand) == 0 {
 					CmdData.DockerOptions = []string{"-ti", "--rm"}
-					CmdData.DockerCommand = []string{"/bin/sh"}
+					if CmdData.Shell {
+						CmdData.DockerCommand = []string{"/bin/sh"}
+					}
+
+					if CmdData.Bash {
+						CmdData.DockerCommand = []string{"/bin/bash"}
+					}
 				} else {
 					cmd.Help()
 					fmt.Println()
@@ -85,11 +96,12 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	common.SetupSSHKey(commonCmdData, cmd)
 
 	common.SetupStagesRepo(commonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage.")
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.Shell, "shell", "", false, "Use predefined docker options and command for debug")
+	cmd.Flags().BoolVarP(&CmdData.Bash, "bash", "", false, "Use predefined docker options and command for debug")
 	cmd.Flags().StringVarP(&CmdData.RawDockerOptions, "docker-options", "", "", "Define docker run options")
 
 	return cmd
@@ -176,7 +188,7 @@ func runRun(commonCmdData *common.CmdData) error {
 	}()
 
 	if !werfConfig.HasImage(CmdData.ImageName) {
-		return fmt.Errorf("image '%s' is not defined in werf.yaml", CmdData.ImageName)
+		return fmt.Errorf("image '%s' is not defined in werf.yaml", build.ImageLogName(CmdData.ImageName, false))
 	}
 
 	c := build.NewConveyor(werfConfig, []string{CmdData.ImageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)

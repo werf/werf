@@ -49,7 +49,7 @@ These values includes project name, docker images ids and other`),
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 
 	return cmd
 }
@@ -71,10 +71,6 @@ func runGetServiceValues() error {
 
 	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
 		return err
-	}
-
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh-agent: %s", err)
 	}
 
 	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
@@ -110,6 +106,16 @@ func runGetServiceValues() error {
 	if err != nil {
 		return err
 	}
+
+	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+	}
+	defer func() {
+		err := ssh_agent.Terminate()
+		if err != nil {
+			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+		}
+	}()
 
 	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, withoutRepo)
 

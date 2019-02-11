@@ -105,7 +105,7 @@ func (c *Conveyor) buildStages(stageRepo string, opts BuildStagesOptions) error 
 }
 
 type TagOptions struct {
-	Tags            []string
+	CustomTags      []string
 	TagsByGitTag    []string
 	TagsByGitBranch []string
 	TagsByGitCommit []string

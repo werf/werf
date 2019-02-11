@@ -22,7 +22,7 @@ type CmdData struct {
 	HomeDir *string
 	SSHKeys *[]string
 
-	Tag          *[]string
+	TagCustom    *[]string
 	TagGitBranch *string
 	TagGitTag    *string
 	TagGitCommit *string
@@ -31,9 +31,10 @@ type CmdData struct {
 	Release     *string
 	Namespace   *string
 	KubeContext *string
+	KubeConfig  *string
 
-	StagesRepo *string
-	ImagesRepo *string
+	StagesStorage *string
+	ImagesRepo    *string
 
 	DockerConfig *string
 
@@ -65,15 +66,15 @@ func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Tag = new([]string)
+	cmdData.TagCustom = new([]string)
 	cmdData.TagGitBranch = new(string)
 	cmdData.TagGitTag = new(string)
 	cmdData.TagGitCommit = new(string)
 
-	cmd.Flags().StringArrayVarP(cmdData.Tag, "tag", "", []string{}, "Add tag (can be used one or more times)")
-	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_AUTOTAG_GIT_BRANCH"), "Tag by git branch (use WERF_AUTOTAG_GIT_BRANCH environment by default)")
-	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_AUTOTAG_GIT_TAG"), "Tag by git tag (use WERF_AUTOTAG_GIT_TAG environment by default)")
-	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_AUTOTAG_GIT_COMMIT"), "Tag by git commit (use WERF_AUTOTAG_GIT_COMMIT environment by default)")
+	cmd.Flags().StringArrayVarP(cmdData.TagCustom, "tag-custom", "", []string{}, "Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used multiple times to produce multiple images with the specified tags.")
+	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_TAG_GIT_BRANCH"), "Use git-branch tagging strategy and tag by the specified git branch (option can be enabled by specifying git branch in the WERF_TAG_GIT_BRANCH environment variable)")
+	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by specifying git tag in the WERF_TAG_GIT_TAG environment variable)")
+	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Use git-commit tagging strategy and tag by the specified git commit hash (option can be enabled by specifying git commit hash in the WERF_TAG_GIT_COMMIT environment variable)")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
@@ -96,42 +97,55 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
 }
 
+func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.KubeConfig = new(string)
+	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", "", "Kubernetes config file path")
+}
+
 func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesRepo, "stages", "s", "", "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now)")
+	cmdData.StagesStorage = new(string)
+	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; use WERF_STAGES_STORAGE environment by default).\nMore info about stages: https://flant.github.io/werf/reference/build/stages.html")
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (use WERF_IMAGES_REPO environment by default)")
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (use WERF_IMAGES_REPO environment by default)")
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&cmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 }
 
-func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command) {
+func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 	defaultValue := os.Getenv("WERF_DOCKER_CONFIG")
 	if defaultValue == "" {
 		defaultValue = os.Getenv("DOCKER_CONFIG")
 	}
 
 	cmdData.DockerConfig = new(string)
-	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, "Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker will be used by default (in the order of priority).")
+
+	desc := "Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker will be used by default (in the order of priority)."
+
+	if extraDesc != "" {
+		desc += "\n"
+		desc += extraDesc
+	}
+
+	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, desc)
 }
 
 func GetStagesRepo(cmdData *CmdData) (string, error) {
-	if *cmdData.StagesRepo == "" {
-		return "", fmt.Errorf("--stages :local param required")
-	} else if *cmdData.StagesRepo != ":local" {
-		return "", fmt.Errorf("only --stages :local is supported for now, got '%s'", *cmdData.StagesRepo)
+	if *cmdData.StagesStorage == "" {
+		return "", fmt.Errorf("--stages-storage :local param required")
+	} else if *cmdData.StagesStorage != ":local" {
+		return "", fmt.Errorf("only --stages-storage :local is supported for now, got '%s'", *cmdData.StagesStorage)
 	}
-	return *cmdData.StagesRepo, nil
+	return *cmdData.StagesStorage, nil
 }
 
 func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
 	if *cmdData.ImagesRepo == "" {
-		return "", fmt.Errorf("--images REPO param required")
+		return "", fmt.Errorf("--images-repo REPO param required")
 	}
 	return GetOptionalImagesRepo(projectName, cmdData), nil
 }

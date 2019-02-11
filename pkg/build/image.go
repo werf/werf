@@ -20,10 +20,10 @@ type Image struct {
 }
 
 func (i *Image) LogName() string {
-	return imageLogName(i.name, i.isArtifact)
+	return ImageLogName(i.name, i.isArtifact)
 }
 
-func imageLogName(name string, isArtifact bool) string {
+func ImageLogName(name string, isArtifact bool) string {
 	if isArtifact {
 		return fmt.Sprintf("%s", name)
 	} else {
@@ -84,14 +84,6 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 	if i.baseImageImageName != "" {
 		return nil
 	}
-
-	// FIXME REMOVE
-	// werfImagesRegistry := os.Getenv("WERF_IMAGES_REPO")
-	// if werfImagesRegistry != "" && strings.HasPrefix(i.baseImage.Name(), werfImagesRegistry) {
-	// 	if err := c.GetDockerAuthorizer().LoginForPull(werfImagesRegistry); err != nil {
-	// 		return fmt.Errorf("login into repo %s for base image %s failed: %s", werfImagesRegistry, i.baseImage.Name(), err)
-	// 	}
-	// }
 
 	return logger.LogProcess("Pull base image", "", func() error {
 		if i.baseImage.IsExists() {

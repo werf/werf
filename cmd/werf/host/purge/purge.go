@@ -42,7 +42,7 @@ WARNING: Do not run this command during any other werf command is working on the
 
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
 	return cmd
 }

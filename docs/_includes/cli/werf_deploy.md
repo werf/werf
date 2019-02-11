@@ -26,6 +26,16 @@ change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.ht
 werf deploy [options]
 ```
 
+{{ header }} Examples
+
+```bash
+  # Deploy project named 'myproject' into 'dev' environment using images from registry.mydomain.com/myproject tagged as mytag with git-tag tagging scheme; helm release name and namespace named as 'myproject-dev'
+  $ werf deploy --env dev --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-git-tag mytag
+
+  # Deploy project using specified helm release name and namespace using images from registry.mydomain.com/myproject
+  $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject
+```
+
 {{ header }} Environments
 
 ```bash
@@ -42,6 +52,8 @@ werf deploy [options]
       --docker-config='':
             Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker 
             will be used by default (in the order of priority).
+            Command needs granted permissions to read and pull images from the specified stages 
+            storage and images repo
       --env='':
             Use specified environment (use WERF_DEPLOY_ENVIRONMENT by default)
   -h, --help=false:
@@ -49,8 +61,10 @@ werf deploy [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
             ~/.werf by default)
-  -i, --images='':
+  -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --kube-config='':
+            Kubernetes config file path
       --kube-context='':
             Kubernetes config context
       --namespace='':
@@ -67,17 +81,23 @@ werf deploy [options]
             Use only specific ssh keys (system ssh-agent or default keys will be used by default, 
             see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
             multiple times to use multiple keys.
-  -s, --stages='':
+  -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
-            supported for now)
-      --tag=[]:
-            Add tag (can be used one or more times)
+            supported for now; use WERF_STAGES_STORAGE environment by default).
+            More info about stages: https://flant.github.io/werf/reference/build/stages.html
+      --tag-custom=[]:
+            Use custom tagging strategy and tag by the specified arbitrary tags. Option can be 
+            used multiple times to produce multiple images with the specified tags.
       --tag-git-branch='':
-            Tag by git branch (use WERF_AUTOTAG_GIT_BRANCH environment by default)
+            Use git-branch tagging strategy and tag by the specified git branch (option can be 
+            enabled by specifying git branch in the WERF_TAG_GIT_BRANCH environment variable)
       --tag-git-commit='':
-            Tag by git commit (use WERF_AUTOTAG_GIT_COMMIT environment by default)
+            Use git-commit tagging strategy and tag by the specified git commit hash (option can 
+            be enabled by specifying git commit hash in the WERF_TAG_GIT_COMMIT environment 
+            variable)
       --tag-git-tag='':
-            Tag by git tag (use WERF_AUTOTAG_GIT_TAG environment by default)
+            Use git-tag tagging strategy and tag by the specified git tag (option can be enabled 
+            by specifying git tag in the WERF_TAG_GIT_TAG environment variable)
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':

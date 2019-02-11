@@ -45,7 +45,10 @@ func NewCmd() *cobra.Command {
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo.")
+
+	common.SetupKubeConfig(&CommonCmdData, cmd)
+	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -67,7 +70,10 @@ func runCleanup() error {
 		return err
 	}
 
-	kube.Init(kube.InitOptions{})
+	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
+	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
+		return fmt.Errorf("cannot initialize kube: %s", err)
+	}
 
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {

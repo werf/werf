@@ -21,14 +21,12 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "purge",
 		DisableFlagsInUseLine: true,
-		Short: "Purge all project images from images repo and stages from stages repo (or locally)",
-		Long: common.GetLongCommandDescription(`Purge all project images from images repo and stages from stages repo (or locally).
+		Short: "Purge all project images from images repo and stages from stages storage",
+		Long: common.GetLongCommandDescription(`Purge all project images from images repo and stages from stages storage.
 
-First step is 'werf images purge', which will delete all project images from images repo. Second step is 'werf stages purge', which will delete all stages from stages repo (or locally).
+First step is 'werf images purge', which will delete all project images from images repo. Second step is 'werf stages purge', which will delete all stages from stages storage.
 
-Command allows deletion of all images of the project at once, meant to be used manually.
-
-WARNING: Images from images repo, that are being used in Kubernetes cluster will also be deleted.`),
+WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually. Images from images repo, that are being used in Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
@@ -42,7 +40,7 @@ WARNING: Images from images repo, that are being used in Kubernetes cluster will
 
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified stages storage and images repo.")
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

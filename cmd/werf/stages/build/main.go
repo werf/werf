@@ -36,9 +36,14 @@ func NewCmdWithData(cmdData *CmdDataType, commonCmdData *common.CmdData) *cobra.
 	cmd := &cobra.Command{
 		Use:   "build [IMAGE_NAME...]",
 		Short: "Build stages",
+		Example: `  # Build stages of all images from werf.yaml, built stages will be placed locally
+  $ werf stages build --stages-storage :local
+
+  # Build stages of image 'backend' from werf.yaml
+  $ werf stages build --stages-storage :local backend`,
 		Long: common.GetLongCommandDescription(`Build stages for images described in the werf.yaml.
 
-The result of build command are built stages pushed into the specified stages repo or locally if --stages=:local.
+The result of build command are built stages pushed into the specified stages storage (or locally in the case when --stages-storage=:local).
 
 If one or more IMAGE_NAME parameters specified, werf will build only these images stages from werf.yaml`),
 		DisableFlagsInUseLine: true,
@@ -60,7 +65,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupSSHKey(commonCmdData, cmd)
 
 	common.SetupStagesRepo(commonCmdData, cmd)
-	common.SetupDockerConfig(commonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images.")
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
@@ -102,6 +107,11 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
+	stagesRepo, err := common.GetStagesRepo(commonCmdData)
+	if err != nil {
+		return err
+	}
+
 	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
@@ -111,11 +121,6 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
-
-	stagesRepo, err := common.GetStagesRepo(commonCmdData)
-	if err != nil {
-		return err
-	}
 
 	opts := build.BuildStagesOptions{
 		ImageBuildOptions: image.BuildOptions{

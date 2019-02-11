@@ -7,6 +7,7 @@ import (
 )
 
 type rawMeta struct {
+	ConfigVersion   *string            `yaml:"configVersion,omitempty"`
 	Project         *string            `yaml:"project,omitempty"`
 	DeployTemplates rawDeployTemplates `yaml:"deploy,omitempty"`
 
@@ -28,8 +29,12 @@ func (c *rawMeta) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if c.Project != nil && *c.Project == "" {
-		return newDetailedConfigError("project field cannot be empty!", nil, c.doc)
+	if c.ConfigVersion == nil || *c.ConfigVersion == "" || *c.ConfigVersion != "v1" {
+		return newDetailedConfigError("'configVersion: v1' field required!", nil, c.doc)
+	}
+
+	if c.Project == nil || *c.Project == "" {
+		return newDetailedConfigError("'project' field cannot be empty!", nil, c.doc)
 	}
 
 	if err := slug.ValidateProject(*c.Project); err != nil {
@@ -41,6 +46,11 @@ func (c *rawMeta) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (c *rawMeta) toMeta() *Meta {
 	meta := &Meta{}
+
+	if c.ConfigVersion != nil {
+		meta.ConfigVersion = *c.ConfigVersion
+	}
+
 	if c.Project != nil {
 		meta.Project = *c.Project
 	}

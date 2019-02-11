@@ -40,6 +40,11 @@ After stages has been built, new docker layer with service info about tagging sc
 The result of build-and-publish command is a stages cache for images and named images pushed into the docker repo.
 
 If one or more IMAGE_NAME parameters specified, werf will build images stages and publish only these images from werf.yaml`),
+		Example: `  # Build and publish all images from werf.yaml into specified docker repo, built stages will be placed locally; tag images with the mytag tag using custom tagging strategy
+  $ werf build-and-publish --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-custom mytag
+
+  # Build and publish all images from werf.yaml into minikube registry; tag images with the mybranch tag, using git-branch tagging strategy
+  $ werf build-and-publish --stages-storage :local --images-repo :minikube --tag-git-branch mybranch`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfDockerConfig),
@@ -61,7 +66,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupTag(&CommonCmdData, cmd)
 	common.SetupStagesRepo(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images.")
 
 	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
@@ -110,16 +115,6 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %s", err)
-	}
-	defer func() {
-		err := ssh_agent.Terminate()
-		if err != nil {
-			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
-		}
-	}()
-
 	stagesRepo, err := common.GetStagesRepo(&CommonCmdData)
 	if err != nil {
 		return err
@@ -129,6 +124,16 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	if err != nil {
 		return err
 	}
+
+	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+		return fmt.Errorf("cannot initialize ssh agent: %s", err)
+	}
+	defer func() {
+		err := ssh_agent.Terminate()
+		if err != nil {
+			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+		}
+	}()
 
 	opts := build.BuildAndPublishOptions{
 		BuildStagesOptions: build.BuildStagesOptions{

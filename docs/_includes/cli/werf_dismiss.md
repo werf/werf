@@ -20,6 +20,19 @@ https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html
 werf dismiss [options]
 ```
 
+{{ header }} Examples
+
+```bash
+  # Dismiss project named 'myproject' previously deployed app from 'dev' environment; helm release name and namespace will be named as 'myproject-dev'
+  $ werf dismiss --env dev --stages-storage :local
+
+  # Dismiss project with namespace
+  $ werf dismiss --env my-feature-branch --stages-storage :local --with-namespace
+
+  # Dismiss project using specified helm release name and namespace
+  $ werf dismiss --release myrelease --namespace myns --stages-storage :local
+```
+
 {{ header }} Options
 
 ```bash
@@ -32,6 +45,8 @@ werf dismiss [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
             ~/.werf by default)
+      --kube-config='':
+            Kubernetes config file path
       --kube-context='':
             Kubernetes config context
       --namespace='':

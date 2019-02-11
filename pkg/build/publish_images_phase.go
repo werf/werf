@@ -15,7 +15,7 @@ const RepoImageStageTagFormat = "image-stage-%s"
 
 func NewPublishImagesPhase(imagesRepo string, opts PublishImagesOptions) *PublishImagesPhase {
 	tagsByScheme := map[tag_scheme.TagScheme][]string{
-		tag_scheme.CustomScheme:    opts.Tags,
+		tag_scheme.CustomScheme:    opts.CustomTags,
 		tag_scheme.GitBranchScheme: opts.TagsByGitBranch,
 		tag_scheme.GitTagScheme:    opts.TagsByGitTag,
 		tag_scheme.GitCommitScheme: opts.TagsByGitCommit,
@@ -198,7 +198,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 						imagePkg.WerfImageLabel:     "true",
 					})
 
-					err := logger.LogProcessInline("Building final image with meta information", func() error {
+					err := logger.LogProcess("Building final image with meta information", "", func() error {
 						if err := pushImage.Build(imagePkg.BuildOptions{}); err != nil {
 							return fmt.Errorf("error building %s with tag scheme '%s': %s", imageName, scheme, err)
 						}

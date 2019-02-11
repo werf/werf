@@ -35,7 +35,7 @@ Currently supported only GitLab CI`,
 
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
-	common.SetupDockerConfig(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "Command will copy specified or default (~/.docker) config to the new temporary config and may perform additional logins into new config.")
 
 	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "", "tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
 
@@ -132,8 +132,8 @@ func generateGitlabEnvs() error {
 	printExport("export WERF_IMAGES_REPO=\"%s\"\n", imagesRepo)
 
 	fmt.Println("\n### TAGGING")
-	printExport("export WERF_AUTOTAG_GIT_TAG=\"%s\"\n", ciGitTag)
-	printExport("export WERF_AUTOTAG_GIT_BRANCH=\"%s\"\n", ciGitBranch)
+	printExport("export WERF_TAG_GIT_TAG=\"%s\"\n", ciGitTag)
+	printExport("export WERF_TAG_GIT_BRANCH=\"%s\"\n", ciGitBranch)
 
 	fmt.Println("\n### DEPLOY")
 	printExport("export WERF_DEPLOY_ENVIRONMENT=\"%s\"\n", os.Getenv("CI_ENVIRONMENT_SLUG"))
@@ -145,7 +145,7 @@ func generateGitlabEnvs() error {
 
 	if ciGitTag == "" && ciGitBranch == "" {
 		fmt.Println()
-		return fmt.Errorf("none of enviroment variables WERF_AUTOTAG_GIT_TAG=$CI_COMMIT_TAG or WERF_AUTOTAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
+		return fmt.Errorf("none of enviroment variables WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
 	}
 
 	return nil
