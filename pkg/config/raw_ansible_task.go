@@ -70,7 +70,7 @@ func supportedModules() []string {
 	// Packaging/Language Modules
 	modules = append(modules, []string{"bower", "bundler", "composer", "cpanm", "easy_install", "gem", "maven_artifact", "npm", "pear", "pip"}...)
 
-	// Packagning/Os Modules
+	// Packaging/Os Modules
 	modules = append(modules, []string{
 		"apk",
 		"apt",
