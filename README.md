@@ -80,7 +80,7 @@ The latest release can be reached via [this page](https://bintray.com/flant/werf
 ##### MacOS
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.12/werf-darwin-amd64-v1.0.0-alpha.12 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.13/werf-darwin-amd64-v1.0.0-alpha.13 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
@@ -88,14 +88,14 @@ sudo mv /tmp/werf /usr/local/bin/werf
 ##### Linux
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.12/werf-linux-amd64-v1.0.0-alpha.12 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.13/werf-linux-amd64-v1.0.0-alpha.13 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
 
 ##### Windows
 
-Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.0-alpha.12/werf-windows-amd64-v1.0.0-alpha.12.exe).
+Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.0-alpha.13/werf-windows-amd64-v1.0.0-alpha.13.exe).
 
 ### Way 3: from source
 
