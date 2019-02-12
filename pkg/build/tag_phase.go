@@ -6,23 +6,23 @@ import (
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/tag_scheme"
+	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util"
 )
 
 func NewTagPhase(repo string, opts TagOptions) *TagPhase {
-	tagsByScheme := map[tag_scheme.TagScheme][]string{
-		tag_scheme.CustomScheme:    opts.CustomTags,
-		tag_scheme.GitBranchScheme: opts.TagsByGitBranch,
-		tag_scheme.GitTagScheme:    opts.TagsByGitTag,
-		tag_scheme.GitCommitScheme: opts.TagsByGitCommit,
+	tagsByScheme := map[tag_strategy.TagStrategy][]string{
+		tag_strategy.Custom:    opts.CustomTags,
+		tag_strategy.GitBranch: opts.TagsByGitBranch,
+		tag_strategy.GitTag:    opts.TagsByGitTag,
+		tag_strategy.GitCommit: opts.TagsByGitCommit,
 	}
 	return &TagPhase{Repo: repo, TagsByScheme: tagsByScheme}
 }
 
 type TagPhase struct {
 	Repo         string
-	TagsByScheme map[tag_scheme.TagScheme][]string
+	TagsByScheme map[tag_strategy.TagStrategy][]string
 }
 
 func (p *TagPhase) Run(c *Conveyor) error {
@@ -62,23 +62,23 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 	stages := image.GetStages()
 	lastStageImage := stages[len(stages)-1].GetImage()
 
-	var nonEmptySchemeInOrder []tag_scheme.TagScheme
-	for scheme, tags := range p.TagsByScheme {
+	var nonEmptySchemeInOrder []tag_strategy.TagStrategy
+	for strategy, tags := range p.TagsByScheme {
 		if len(tags) == 0 {
 			continue
 		}
 
-		nonEmptySchemeInOrder = append(nonEmptySchemeInOrder, scheme)
+		nonEmptySchemeInOrder = append(nonEmptySchemeInOrder, strategy)
 	}
 
-	for _, scheme := range nonEmptySchemeInOrder {
-		tags := p.TagsByScheme[scheme]
+	for _, strategy := range nonEmptySchemeInOrder {
+		tags := p.TagsByScheme[strategy]
 
 		if len(tags) == 0 {
 			continue
 		}
 
-		err := logger.LogServiceProcess(fmt.Sprintf("%s scheme", string(scheme)), "", func() error {
+		err := logger.LogServiceProcess(fmt.Sprintf("%s tagging strategy", string(strategy)), "", func() error {
 			for _, tag := range tags {
 				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
 
@@ -94,8 +94,8 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 					tagImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageName)
 
 					tagImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
-						imagePkg.WerfTagSchemeLabel: string(scheme),
-						imagePkg.WerfImageLabel:     "true",
+						imagePkg.WerfTagStrategyLabel: string(strategy),
+						imagePkg.WerfImageLabel:       "true",
 					})
 
 					err := logger.LogProcess(fmt.Sprintf("Building final image with meta information"), "", func() error {

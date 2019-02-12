@@ -5,10 +5,10 @@ import (
 
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/slug"
-	"github.com/flant/werf/pkg/tag_scheme"
+	"github.com/flant/werf/pkg/tag_strategy"
 )
 
-func GetDeployTag(cmdData *CmdData) (string, tag_scheme.TagScheme, error) {
+func GetDeployTag(cmdData *CmdData) (string, tag_strategy.TagStrategy, error) {
 	optionsCount := 0
 	if len(*cmdData.TagCustom) > 0 {
 		optionsCount += len(*cmdData.TagCustom)
@@ -34,13 +34,13 @@ func GetDeployTag(cmdData *CmdData) (string, tag_scheme.TagScheme, error) {
 	}
 
 	if len(opts.CustomTags) > 0 {
-		return opts.CustomTags[0], tag_scheme.CustomScheme, nil
+		return opts.CustomTags[0], tag_strategy.Custom, nil
 	} else if len(opts.TagsByGitBranch) > 0 {
-		return opts.TagsByGitBranch[0], tag_scheme.GitBranchScheme, nil
+		return opts.TagsByGitBranch[0], tag_strategy.GitBranch, nil
 	} else if len(opts.TagsByGitTag) > 0 {
-		return opts.TagsByGitTag[0], tag_scheme.GitTagScheme, nil
+		return opts.TagsByGitTag[0], tag_strategy.GitTag, nil
 	} else if len(opts.TagsByGitCommit) > 0 {
-		return opts.TagsByGitCommit[0], tag_scheme.GitCommitScheme, nil
+		return opts.TagsByGitCommit[0], tag_strategy.GitCommit, nil
 	}
 
 	panic("opts should contain at least one tag!")

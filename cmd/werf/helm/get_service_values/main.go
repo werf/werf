@@ -102,7 +102,7 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	tag, tagScheme, err := common.GetDeployTag(&CommonCmdData)
+	tag, tagStrategy, err := common.GetDeployTag(&CommonCmdData)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func runGetServiceValues() error {
 
 	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, withoutRepo)
 
-	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagScheme, images)
+	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images)
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

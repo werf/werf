@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/tag_scheme"
+	"github.com/flant/werf/pkg/tag_strategy"
 
 	"github.com/flant/werf/pkg/config"
 	"github.com/ghodss/yaml"
@@ -32,7 +32,7 @@ func GetImagesInfoGetters(configImages []*config.Image, imagesRepo, tag string, 
 	return images
 }
 
-func GetServiceValues(projectName, repo, namespace, tag string, tagScheme tag_scheme.TagScheme, images []ImageInfoGetter) (map[string]interface{}, error) {
+func GetServiceValues(projectName, repo, namespace, tag string, tagStrategy tag_strategy.TagStrategy, images []ImageInfoGetter) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	ciInfo := map[string]interface{}{
@@ -55,13 +55,13 @@ func GetServiceValues(projectName, repo, namespace, tag string, tagScheme tag_sc
 		"werf":      werfInfo,
 	}
 
-	switch tagScheme {
-	case tag_scheme.GitTagScheme:
+	switch tagStrategy {
+	case tag_strategy.GitTag:
 		ciInfo["tag"] = tag
 		ciInfo["ref"] = tag
 		ciInfo["is_tag"] = true
 
-	case tag_scheme.GitBranchScheme:
+	case tag_strategy.GitBranch:
 		ciInfo["branch"] = tag
 		ciInfo["ref"] = tag
 		ciInfo["is_branch"] = true

@@ -10,7 +10,7 @@ const (
 	WerfMountBuildDirLabel        = "werf-mount-type-build-dir"
 	WerfMountCustomDirLabelPrefix = "werf-mount-type-custom-dir-"
 
-	WerfTagSchemeLabel = "werf-tag-scheme"
+	WerfTagStrategyLabel = "werf-tag-strategy"
 
 	StageContainerNamePrefix = "werf.build."
 )

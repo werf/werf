@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
 
@@ -18,7 +18,7 @@ import (
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
-	"github.com/flant/werf/pkg/tag_scheme"
+	"github.com/flant/werf/pkg/tag_strategy"
 )
 
 type ImagesCleanupOptions struct {
@@ -172,25 +172,25 @@ Loop:
 			return nil, err
 		}
 
-		scheme, ok := labels[image.WerfTagSchemeLabel]
+		strategy, ok := labels[image.WerfTagStrategyLabel]
 		if !ok {
 			continue
 		}
 
-		switch scheme {
-		case string(tag_scheme.GitTagScheme):
+		switch strategy {
+		case string(tag_strategy.GitTag):
 			if repoImageTagMatch(repoImage, gitTags...) {
 				continue Loop
 			} else {
 				nonexistentGitTagRepoImages = append(nonexistentGitTagRepoImages, repoImage)
 			}
-		case string(tag_scheme.GitBranchScheme):
+		case string(tag_strategy.GitBranch):
 			if repoImageTagMatch(repoImage, gitBranches...) {
 				continue Loop
 			} else {
 				nonexistentGitBranchRepoImages = append(nonexistentGitBranchRepoImages, repoImage)
 			}
-		case string(tag_scheme.GitCommitScheme):
+		case string(tag_strategy.GitCommit):
 			exist, err := options.LocalGit.IsCommitExists(repoImage.Tag)
 			if err != nil {
 				if strings.HasPrefix(err.Error(), "bad commit hash") {
@@ -255,15 +255,15 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 			return nil, err
 		}
 
-		scheme, ok := labels[image.WerfTagSchemeLabel]
+		strategy, ok := labels[image.WerfTagStrategyLabel]
 		if !ok {
 			continue
 		}
 
-		switch scheme {
-		case string(tag_scheme.GitTagScheme):
+		switch strategy {
+		case string(tag_strategy.GitTag):
 			repoImagesWithGitTagScheme = append(repoImagesWithGitTagScheme, repoImage)
-		case string(tag_scheme.GitCommitScheme):
+		case string(tag_strategy.GitCommit):
 			repoImagesWithGitCommitScheme = append(repoImagesWithGitCommitScheme, repoImage)
 		}
 	}

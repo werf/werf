@@ -7,7 +7,7 @@ import (
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/tag_scheme"
+	"github.com/flant/werf/pkg/tag_strategy"
 )
 
 type DeployOptions struct {
@@ -19,7 +19,7 @@ type DeployOptions struct {
 	KubeContext  string
 }
 
-func Deploy(projectDir, imagesRepo, release, namespace string, tag string, tagScheme tag_scheme.TagScheme, werfConfig *config.WerfConfig, opts DeployOptions) error {
+func Deploy(projectDir, imagesRepo, release, namespace string, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
 	logger.LogInfoF("Using Helm release name: %s\n", release)
 	logger.LogInfoF("Using Kubernetes namespace: %s\n", namespace)
 
@@ -30,7 +30,7 @@ func Deploy(projectDir, imagesRepo, release, namespace string, tag string, tagSc
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagScheme, images)
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images)
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
