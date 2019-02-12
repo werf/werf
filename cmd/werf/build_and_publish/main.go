@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
@@ -64,9 +65,10 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 	common.SetupSSHKey(&CommonCmdData, cmd)
 
 	common.SetupTag(&CommonCmdData, cmd)
-	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to push images into the specified images repo, to pull base images.")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&CmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
@@ -84,6 +86,10 @@ func runBuildAndPublish(imagesToProcess []string) error {
 	}
 
 	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 

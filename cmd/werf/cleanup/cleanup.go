@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
@@ -50,9 +51,10 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage and images repo")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
@@ -70,6 +72,10 @@ func runCleanup() error {
 	}
 
 	if err := lock.Init(); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 
@@ -111,10 +117,6 @@ func runCleanup() error {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
-		return err
-	}
-
 	var imagesNames []string
 	for _, image := range werfConfig.Images {
 		imagesNames = append(imagesNames, image.Name)
@@ -124,7 +126,7 @@ func runCleanup() error {
 		ImagesRepo:  imagesRepo,
 		StagesRepo:  stagesRepo,
 		ImagesNames: imagesNames,
-		DryRun:      CommonCmdData.DryRun,
+		DryRun:      *CommonCmdData.DryRun,
 	}
 
 	var localGitRepo *git_repo.Local
@@ -140,7 +142,7 @@ func runCleanup() error {
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CommonCmdData.DryRun},
+		CommonOptions: cleanup.CommonOptions{DryRun: *CommonCmdData.DryRun},
 	}
 
 	imagesCleanupOptions := cleanup.ImagesCleanupOptions{

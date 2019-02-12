@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -43,6 +44,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -53,6 +55,10 @@ func runReset() error {
 	}
 
 	if err := lock.Init(); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 

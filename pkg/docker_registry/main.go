@@ -30,6 +30,15 @@ type RepoImage struct {
 	v1.Image
 }
 
+type Options struct {
+	AllowInsecureRepo bool
+}
+
+func Init(opts Options) error {
+	AllowInsecureRepo = opts.AllowInsecureRepo
+	return nil
+}
+
 func IsGCR(reference string) (bool, error) {
 	u, err := url.Parse(fmt.Sprintf("scheme://%s", reference))
 	if err != nil {

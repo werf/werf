@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/ssh_agent"
@@ -55,9 +56,10 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 
 	common.SetupTag(commonCmdData, cmd)
 
-	common.SetupStagesRepo(commonCmdData, cmd)
+	common.SetupStagesStorage(commonCmdData, cmd)
 	common.SetupImagesRepo(commonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo.")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -72,6 +74,10 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	}
 
 	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 

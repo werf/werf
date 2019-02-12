@@ -84,6 +84,10 @@ func generateGitlabEnvs() error {
 		return fmt.Errorf("unable to create tmp docker config: %s", err)
 	}
 
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
+		return err
+	}
+
 	if err := docker.Init(dockerConfig); err != nil {
 		return err
 	}

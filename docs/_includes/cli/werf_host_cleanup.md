@@ -32,6 +32,8 @@ werf host cleanup [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
             ~/.werf by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
             dir by default)

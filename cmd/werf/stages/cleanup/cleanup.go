@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
@@ -40,9 +41,10 @@ func NewCmd() *cobra.Command {
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage, read images from the specified images repo.")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -55,6 +57,10 @@ func runSync() error {
 	}
 
 	if err := lock.Init(); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 
@@ -98,14 +104,14 @@ func runSync() error {
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CommonCmdData.DryRun},
+		CommonOptions: cleanup.CommonOptions{DryRun: *CommonCmdData.DryRun},
 	}
 
 	commonRepoOptions := cleanup.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		StagesRepo:  stagesRepo,
 		ImagesNames: imageNames,
-		DryRun:      CommonCmdData.DryRun,
+		DryRun:      *CommonCmdData.DryRun,
 	}
 
 	stagesCleanupOptions := cleanup.StagesCleanupOptions{

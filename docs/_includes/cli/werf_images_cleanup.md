@@ -44,6 +44,8 @@ werf images cleanup [options]
             ~/.werf by default)
   -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
       --kube-config='':
             Kubernetes config file path
       --kube-context='':

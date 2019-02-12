@@ -42,6 +42,8 @@ werf publish [IMAGE_NAME...] [options]
             ~/.werf by default)
   -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
       --ssh-key=[]:
             Use only specific ssh keys (system ssh-agent or default keys will be used by default, 
             see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 

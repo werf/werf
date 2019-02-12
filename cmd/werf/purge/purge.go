@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -38,9 +39,10 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified stages storage and images repo.")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -79,6 +81,10 @@ func runPurge() error {
 		return err
 	}
 
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
+		return err
+	}
+
 	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
@@ -91,7 +97,7 @@ func runPurge() error {
 	commonRepoOptions := cleanup.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imageNames,
-		DryRun:      CommonCmdData.DryRun,
+		DryRun:      *CommonCmdData.DryRun,
 	}
 
 	if err := cleanup.ImagesPurge(commonRepoOptions); err != nil {
@@ -100,7 +106,7 @@ func runPurge() error {
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: CommonCmdData.DryRun},
+		CommonOptions: cleanup.CommonOptions{DryRun: *CommonCmdData.DryRun},
 	}
 
 	if err := cleanup.StagesPurge(commonProjectOptions); err != nil {

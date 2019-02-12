@@ -37,8 +37,8 @@ type CmdData struct {
 	ImagesRepo    *string
 
 	DockerConfig *string
-
-	DryRun bool
+	InsecureRepo *bool
+	DryRun       *bool
 }
 
 func GetLongCommandDescription(text string) string {
@@ -102,7 +102,7 @@ func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", "", "Kubernetes config file path")
 }
 
-func SetupStagesRepo(cmdData *CmdData, cmd *cobra.Command) {
+func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
 	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; use WERF_STAGES_STORAGE environment by default).\nMore info about stages: https://flant.github.io/werf/reference/build/stages.html")
 }
@@ -112,8 +112,14 @@ func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (use WERF_IMAGES_REPO environment by default)")
 }
 
+func SetupInsecureRepo(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.InsecureRepo = new(bool)
+	cmd.Flags().BoolVarP(cmdData.InsecureRepo, "insecure-repo", "", false, "Allow usage of insecure docker repos")
+}
+
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
-	cmd.Flags().BoolVarP(&cmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
+	cmdData.DryRun = new(bool)
+	cmd.Flags().BoolVarP(cmdData.DryRun, "dry-run", "", false, "Indicate what the command would do without actually doing that")
 }
 
 func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {

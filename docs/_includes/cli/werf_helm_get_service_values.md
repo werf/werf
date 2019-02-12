@@ -39,6 +39,8 @@ werf helm get-service-values [options]
             ~/.werf by default)
   -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
       --namespace='':
             Use specified Kubernetes namespace (use %project-%environment template by default)
       --ssh-key=[]:

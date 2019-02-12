@@ -58,6 +58,8 @@ werf build-and-publish [IMAGE_NAME...] [options]
             ~/.werf by default)
   -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
       --introspect-before-error=false:
             Introspect failed stage in the clean state, before running all assembly instructions 
             of the stage
