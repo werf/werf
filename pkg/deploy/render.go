@@ -6,7 +6,7 @@ import (
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/tag_scheme"
+	"github.com/flant/werf/pkg/tag_strategy"
 )
 
 type RenderOptions struct {
@@ -28,12 +28,12 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 
 	imagesRepo := "REPO"
 	tag := "GIT_BRANCH"
-	tagScheme := tag_scheme.GitBranchScheme
+	tagStrategy := tag_strategy.GitBranch
 	namespace := "NAMESPACE"
 
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagScheme, images)
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images)
 
 	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.SecretValues, serviceValues)
 	if err != nil {

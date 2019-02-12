@@ -32,10 +32,10 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 		Short: "Build images and push into images repo.",
 		Long: common.GetLongCommandDescription(`Build final images using each specified tag with the tagging strategy and push into images repo.
 
-New docker layer with service info about tagging scheme will be built for each tag of each image from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
+New docker layer with service info about tagging strategy will be built for each tag of each image from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
 
 If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml.`),
-		Example: `  # Publish images into myregistry.mydomain.com/myproject images repo using 'mybranch' tag and git-branch tagging scheme
+		Example: `  # Publish images into myregistry.mydomain.com/myproject images repo using 'mybranch' tag and git-branch tagging strategy
   $ werf images publish --stages-storage :local --images-repo myregistry.mydomain.com/myproject --tag-git-branch mybranch`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{

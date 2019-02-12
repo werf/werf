@@ -5,7 +5,7 @@
 {% endif %}
 Build final images using each specified tag with the tagging strategy and push into images repo.
 
-New docker layer with service info about tagging scheme will be built for each tag of each image 
+New docker layer with service info about tagging strategy will be built for each tag of each image 
 from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. 
 See more info about images naming: 
 https://flant.github.io/werf/reference/registry/image_naming.html.
@@ -21,7 +21,7 @@ werf publish [IMAGE_NAME...] [options]
 {{ header }} Examples
 
 ```bash
-  # Publish images into myregistry.mydomain.com/myproject images repo using 'mybranch' tag and git-branch tagging scheme
+  # Publish images into myregistry.mydomain.com/myproject images repo using 'mybranch' tag and git-branch tagging strategy
   $ werf images publish --stages-storage :local --images-repo myregistry.mydomain.com/myproject --tag-git-branch mybranch
 ```
 

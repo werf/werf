@@ -5,7 +5,7 @@ import (
 
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/tag_scheme"
+	"github.com/flant/werf/pkg/tag_strategy"
 
 	"github.com/flant/werf/pkg/config"
 )
@@ -29,12 +29,12 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 
 	imagesRepo := "REPO"
 	tag := "GIT_BRANCH"
-	tagScheme := tag_scheme.GitBranchScheme
+	tagStrategy := tag_strategy.GitBranch
 	namespace := "NAMESPACE"
 
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagScheme, images)
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images)
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
