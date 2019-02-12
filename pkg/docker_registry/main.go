@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 
@@ -20,13 +19,16 @@ import (
 	"github.com/flant/werf/pkg/logger"
 )
 
+var (
+	AllowInsecureRepo = false
+	GCRUrlPatterns    = []string{"^container\\.cloud\\.google\\.com", "^gcr\\.io", "^.*\\.gcr\\.io"}
+)
+
 type RepoImage struct {
 	Repository string
 	Tag        string
 	v1.Image
 }
-
-var GCRUrlPatterns = []string{"^container\\.cloud\\.google\\.com", "^gcr\\.io", "^.*\\.gcr\\.io"}
 
 func IsGCR(reference string) (bool, error) {
 	u, err := url.Parse(fmt.Sprintf("scheme://%s", reference))
@@ -287,7 +289,7 @@ func image(reference string) (v1.Image, name.Reference, error) {
 func getHttpTransport() (transport http.RoundTripper) {
 	transport = http.DefaultTransport
 
-	if os.Getenv("WERF_INSECURE_REPO") == "1" {
+	if AllowInsecureRepo {
 		defaultTransport := http.DefaultTransport.(*http.Transport)
 
 		newTransport := &http.Transport{

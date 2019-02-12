@@ -14,8 +14,6 @@ const (
 	DisableOptionsInUseLineAnno string = "disableOptionsInUseLine"
 
 	WerfDebugAnsibleArgs                     Env = "WERF_DEBUG_ANSIBLE_ARGS"
-	WerfDockerConfig                         Env = "WERF_DOCKER_CONFIG"
-	WerfInsecureRepo                         Env = "WERF_INSECURE_REPO"
 	WerfSecretKey                            Env = "WERF_SECRET_KEY"
 	WerfDisableStagesCleanupDatePeriodPolicy Env = "WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY"
 	WerfGitTagsExpiryDatePeriodPolicy        Env = "WERF_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY"
@@ -26,8 +24,6 @@ const (
 
 var envDescription = map[Env]string{
 	WerfDebugAnsibleArgs:                     "Pass specified cli args to ansible (ANSIBLE_ARGS)",
-	WerfDockerConfig:                         "Force usage of the specified docker config",
-	WerfInsecureRepo:                         "Enable insecure docker repo",
 	WerfSecretKey:                            "Use specified secret key to extract secrets for the deploy; recommended way to set secret key in CI-system",
 	WerfDisableStagesCleanupDatePeriodPolicy: "Redefine default ",
 	WerfGitTagsExpiryDatePeriodPolicy:        "Redefine default tags expiry date period policy: keep images built for git tags, that are no older than 30 days since build time",

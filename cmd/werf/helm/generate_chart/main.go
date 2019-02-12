@@ -34,7 +34,7 @@ Werf will generate additional values files, templates Chart.yaml and other files
 		DisableFlagsInUseLine: true,
 		Args: cobra.MinimumNArgs(1),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGenerateChart(args[0])

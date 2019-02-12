@@ -25,13 +25,6 @@ werf images publish [IMAGE_NAME...] [options]
   $ werf images publish --stages-storage :local --images-repo myregistry.mydomain.com/myproject --tag-git-branch mybranch
 ```
 
-{{ header }} Environments
-
-```bash
-  $WERF_DOCKER_CONFIG  Force usage of the specified docker config
-  $WERF_INSECURE_REPO  Enable insecure docker repo
-```
-
 {{ header }} Options
 
 ```bash

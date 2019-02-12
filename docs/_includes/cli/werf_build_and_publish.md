@@ -39,7 +39,6 @@ werf build-and-publish [IMAGE_NAME...] [options]
 
 ```bash
   $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible (ANSIBLE_ARGS)
-  $WERF_DOCKER_CONFIG       Force usage of the specified docker config
 ```
 
 {{ header }} Options

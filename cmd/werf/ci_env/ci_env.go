@@ -126,7 +126,7 @@ func generateGitlabEnvs() error {
 	}
 
 	fmt.Println("### DOCKER CONFIG")
-	printExport("export WERF_DOCKER_CONFIG=\"%s\"\n", dockerConfig)
+	printExport("export DOCKER_CONFIG=\"%s\"\n", dockerConfig)
 
 	fmt.Println("\n### IMAGES REPO")
 	printExport("export WERF_IMAGES_REPO=\"%s\"\n", imagesRepo)

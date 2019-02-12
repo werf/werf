@@ -47,7 +47,7 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
   $ werf build-and-publish --stages-storage :local --images-repo :minikube --tag-git-branch mybranch`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfDockerConfig),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()

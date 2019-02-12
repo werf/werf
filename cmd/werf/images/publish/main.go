@@ -38,9 +38,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 		Example: `  # Publish images into myregistry.mydomain.com/myproject images repo using 'mybranch' tag and git-branch tagging strategy
   $ werf images publish --stages-storage :local --images-repo myregistry.mydomain.com/myproject --tag-git-branch mybranch`,
 		DisableFlagsInUseLine: true,
-		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDockerConfig, common.WerfInsecureRepo),
-		},
+		Annotations:           map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return common.LogRunningTime(func() error {
 				common.LogVersion()

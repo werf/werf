@@ -35,7 +35,7 @@ First step is 'werf images cleanup' command, which will delete unused images fro
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, deploy and host cleanup.`),
 		Example: `  $ werf cleanup --stages-storage :local --images-repo registry.mydomain.com/myproject`,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfDockerConfig, common.WerfInsecureRepo),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy, common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()

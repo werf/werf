@@ -50,7 +50,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
   $ werf deploy --release myrelease --namespace myns --stages-storage :local --images-repo registry.mydomain.com/myproject`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()

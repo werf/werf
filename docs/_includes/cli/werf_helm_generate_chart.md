@@ -17,9 +17,8 @@ werf helm generate-chart PATH [options]
 {{ header }} Environments
 
 ```bash
-  $WERF_SECRET_KEY     Use specified secret key to extract secrets for the deploy; recommended way 
-                       to set secret key in CI-system
-  $WERF_DOCKER_CONFIG  Force usage of the specified docker config
+  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy; recommended way to 
+                    set secret key in CI-system
 ```
 
 {{ header }} Options

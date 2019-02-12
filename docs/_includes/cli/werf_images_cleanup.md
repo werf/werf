@@ -24,8 +24,6 @@ werf images cleanup [options]
                                                older than 30 days since build time
   $WERF_GIT_COMMITS_LIMIT_POLICY               Redefine default commits limit policy: keep no more 
                                                than 50 images built for git commits
-  $WERF_DOCKER_CONFIG                          Force usage of the specified docker config
-  $WERF_INSECURE_REPO                          Enable insecure docker repo
 ```
 
 {{ header }} Options
