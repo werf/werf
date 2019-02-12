@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/kubedog/pkg/tracker"
@@ -22,7 +22,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/releaseutil"
 )
 
@@ -137,10 +137,10 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 		if strings.HasSuffix(stderr, "has no deployed releases\n") {
 			logger.LogErrorF("WARNING: Helm release '%s' is in improper state: %s", releaseName, stderr)
 			logger.LogErrorF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf deploy`", releaseName)
-		}
 
-		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
-			return err
+			if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
+				return err
+			}
 		}
 
 		return fmt.Errorf("%s\n%s", stdout, stderr)
