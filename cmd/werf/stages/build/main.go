@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
@@ -48,7 +49,7 @@ The result of build command are built stages pushed into the specified stages st
 If one or more IMAGE_NAME parameters specified, werf will build only these images stages from werf.yaml`),
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs, common.WerfDockerConfig),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
@@ -64,8 +65,9 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupHomeDir(commonCmdData, cmd)
 	common.SetupSSHKey(commonCmdData, cmd)
 
-	common.SetupStagesRepo(commonCmdData, cmd)
+	common.SetupStagesStorage(commonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images.")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
@@ -83,6 +85,10 @@ func runStagesBuild(cmdData *CmdDataType, commonCmdData *common.CmdData, imagesT
 	}
 
 	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 

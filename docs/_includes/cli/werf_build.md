@@ -31,7 +31,6 @@ werf build [IMAGE_NAME...] [options]
 
 ```bash
   $WERF_DEBUG_ANSIBLE_ARGS  Pass specified cli args to ansible (ANSIBLE_ARGS)
-  $WERF_DOCKER_CONFIG       Force usage of the specified docker config
 ```
 
 {{ header }} Options
@@ -49,6 +48,8 @@ werf build [IMAGE_NAME...] [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
             ~/.werf by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
       --introspect-before-error=false:
             Introspect failed stage in the clean state, before running all assembly instructions 
             of the stage

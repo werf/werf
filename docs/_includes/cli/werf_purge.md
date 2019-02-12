@@ -37,6 +37,8 @@ werf purge [options]
             ~/.werf by default)
   -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now; use WERF_STAGES_STORAGE environment by default).

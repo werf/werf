@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -35,6 +36,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo.")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -68,6 +70,10 @@ func runPurge() error {
 		return err
 	}
 
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
+		return err
+	}
+
 	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
@@ -80,7 +86,7 @@ func runPurge() error {
 	commonRepoOptions := cleanup.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imageNames,
-		DryRun:      CommonCmdData.DryRun,
+		DryRun:      *CommonCmdData.DryRun,
 	}
 
 	if err := cleanup.ImagesPurge(commonRepoOptions); err != nil {

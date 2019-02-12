@@ -9,6 +9,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/ssh_agent"
@@ -34,7 +35,7 @@ Werf will generate additional values files, templates Chart.yaml and other files
 		DisableFlagsInUseLine: true,
 		Args: cobra.MinimumNArgs(1),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfDockerConfig),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGenerateChart(args[0])
@@ -50,9 +51,10 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 
-	common.SetupStagesRepo(&CommonCmdData, cmd)
+	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
 
@@ -73,6 +75,10 @@ func runGenerateChart(targetPath string) error {
 	}
 
 	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 

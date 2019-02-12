@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
@@ -29,7 +30,7 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short: "Cleanup project images from images repo",
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy, common.WerfDockerConfig, common.WerfInsecureRepo),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfGitTagsExpiryDatePeriodPolicy, common.WerfGitTagsLimitPolicy, common.WerfGitCommitsExpiryDatePeriodPolicy, common.WerfGitCommitsLimitPolicy),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
@@ -46,6 +47,7 @@ func NewCmd() *cobra.Command {
 
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo.")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
@@ -63,6 +65,10 @@ func runCleanup() error {
 	}
 
 	if err := lock.Init(); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 
@@ -107,7 +113,7 @@ func runCleanup() error {
 	commonRepoOptions := cleanup.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imagesNames,
-		DryRun:      CommonCmdData.DryRun,
+		DryRun:      *CommonCmdData.DryRun,
 	}
 
 	var localRepo *git_repo.Local

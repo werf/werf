@@ -9,6 +9,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/ssh_agent"
@@ -95,8 +96,9 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	common.SetupHomeDir(commonCmdData, cmd)
 	common.SetupSSHKey(commonCmdData, cmd)
 
-	common.SetupStagesRepo(commonCmdData, cmd)
+	common.SetupStagesStorage(commonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage.")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -148,6 +150,10 @@ func runRun(commonCmdData *common.CmdData) error {
 	}
 
 	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 
@@ -203,7 +209,7 @@ func runRun(commonCmdData *common.CmdData) error {
 	dockerRunArgs = append(dockerRunArgs, dockerImageName)
 	dockerRunArgs = append(dockerRunArgs, CmdData.DockerCommand...)
 
-	if CommonCmdData.DryRun {
+	if *CommonCmdData.DryRun {
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
 	} else {
 		docker.CliRun(dockerRunArgs...)

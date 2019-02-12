@@ -29,6 +29,8 @@ werf images purge [options]
             ~/.werf by default)
   -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
             dir by default)

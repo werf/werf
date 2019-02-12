@@ -49,6 +49,8 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
             ~/.werf by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
       --shell=false:
             Use predefined docker options and command for debug
       --ssh-key=[]:

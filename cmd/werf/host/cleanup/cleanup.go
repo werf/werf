@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/true_git"
@@ -46,6 +47,7 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
+	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -60,6 +62,10 @@ func runGC() error {
 	}
 
 	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+		return err
+	}
+
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
 		return err
 	}
 

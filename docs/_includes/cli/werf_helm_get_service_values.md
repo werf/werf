@@ -16,9 +16,8 @@ werf helm get-service-values [options]
 {{ header }} Environments
 
 ```bash
-  $WERF_SECRET_KEY     Use specified secret key to extract secrets for the deploy; recommended way 
-                       to set secret key in CI-system
-  $WERF_DOCKER_CONFIG  Force usage of the specified docker config
+  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy; recommended way to 
+                    set secret key in CI-system
 ```
 
 {{ header }} Options
@@ -40,6 +39,8 @@ werf helm get-service-values [options]
             ~/.werf by default)
   -i, --images-repo='':
             Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+      --insecure-repo=false:
+            Allow usage of insecure docker repos
       --namespace='':
             Use specified Kubernetes namespace (use %project-%environment template by default)
       --ssh-key=[]:
