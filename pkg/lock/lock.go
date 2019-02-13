@@ -42,6 +42,27 @@ func Lock(name string, opts LockOptions) error {
 	)
 }
 
+type TryLockOptions struct {
+	ReadOnly bool
+}
+
+func TryLock(name string, opts TryLockOptions) (bool, error) {
+	res := true
+	lock := getLock(name)
+
+	err := lock.Lock(0, opts.ReadOnly, func(doWait func() error) error {
+		// Wait called => is locked now, do not call doWait, just return
+		res = false
+		return nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	return res, nil
+}
+
 func Unlock(name string) error {
 	if _, hasKey := Locks[name]; !hasKey {
 		return fmt.Errorf("no such lock `%s` found", name)

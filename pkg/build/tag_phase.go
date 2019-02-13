@@ -7,7 +7,6 @@ import (
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tag_strategy"
-	"github.com/flant/werf/pkg/util"
 )
 
 func NewTagPhase(repo string, opts TagOptions) *TagPhase {
@@ -83,7 +82,7 @@ func (p *TagPhase) tagImage(c *Conveyor, image *Image) error {
 				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
 
 				err := func() error {
-					imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(imageName))
+					imageLockName := imagePkg.GetImageLockName(imageName)
 
 					if err := lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 						return fmt.Errorf("failed to lock %s: %s", imageLockName, err)

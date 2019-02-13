@@ -6,31 +6,10 @@ import (
 
 	"github.com/docker/docker/api/types/filters"
 
-	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
-
-func HostCleanup(options CommonOptions) error {
-	// FIXME: remove only unused garbage containers and images
-
-	// if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
-	// 	return err
-	// }
-
-	// if err := werfImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
-	// 	return err
-	// }
-
-	return lock.WithLock("gc", lock.LockOptions{}, func() error {
-		if err := tmp_manager.GC(); err != nil {
-			return fmt.Errorf("tmp files gc failed: %s", err)
-		}
-
-		return nil
-	})
-}
 
 func HostPurge(options CommonOptions) error {
 	if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {

@@ -81,7 +81,8 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			continue
 		}
 
-		imageLockName := fmt.Sprintf("%s.image.%s", c.projectName(), img.Name())
+		imageLockName := imagePkg.GetImageLockName(img.Name())
+
 		if err := lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 			return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 		}
