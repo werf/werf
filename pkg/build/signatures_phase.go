@@ -24,7 +24,7 @@ func NewSignaturesPhase() *SignaturesPhase {
 type SignaturesPhase struct{}
 
 func (p *SignaturesPhase) Run(c *Conveyor) error {
-	return logger.LogServiceProcess("Calculate signatures", "", func() error {
+	return logger.LogServiceProcess("Calculating signatures", logger.LogProcessOptions{WithoutBorder: true}, func() error {
 		return logger.WithoutIndent(func() error { return p.run(c) })
 	})
 }

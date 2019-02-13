@@ -9,10 +9,6 @@ import (
 var (
 	indentWidth = 0
 
-	tag       = ""
-	tagIndent = "  "
-	tagWidth  = 20
-
 	isLoggerCursorOnStartingPosition = true
 	isLoggerOptionalLnModeOn         = false
 	isLoggerOptionalLnModeTag        = ""
@@ -30,38 +26,63 @@ func loggerFormattedLogF(w io.Writer, format string, args ...interface{}) {
 
 func FormattedLogF(w io.Writer, format string, args ...interface{}) (int, error) {
 	msg := fmt.Sprintf(format, args...)
-	indent := strings.Repeat(" ", indentWidth)
 
 	var formattedMsg string
 	for _, r := range []rune(msg) {
 		switch string(r) {
 		case "\n", "\r":
-			if isLoggerCursorOnStartingPosition {
-				formattedMsg += formattedTag()
-			}
-
-			isLoggerCursorOnStartingPosition = true
+			formattedMsg += loggerCursorOnStartingPositionCaretRuneHook()
 		default:
-			if isLoggerOptionalLnModeOn {
-				if isLoggerOptionalLnModeTag == tag {
-					formattedMsg += formattedTag()
-				}
-
-				formattedMsg += "\n"
-				resetOptionalLnMode()
-			}
-
-			if isLoggerCursorOnStartingPosition {
-				formattedMsg += formattedTag()
-				formattedMsg += indent
-				isLoggerCursorOnStartingPosition = false
-			}
+			formattedMsg += loggerOptionalLnModeDefaultHook()
+			formattedMsg += loggerCursorOnStartingPositionDefaultHook()
 		}
 
 		formattedMsg += string(r)
 	}
 
 	return logF(w, formattedMsg)
+}
+
+func loggerCursorOnStartingPositionCaretRuneHook() string {
+	var result string
+
+	if isLoggerCursorOnStartingPosition {
+		result += formattedTag()
+		result += formattedProcessBorders()
+	}
+
+	isLoggerCursorOnStartingPosition = true
+
+	return result
+}
+
+func loggerCursorOnStartingPositionDefaultHook() string {
+	var result string
+
+	if isLoggerCursorOnStartingPosition {
+		result += formattedTag()
+		result += formattedProcessBorders()
+		result += strings.Repeat(" ", indentWidth)
+		isLoggerCursorOnStartingPosition = false
+	}
+
+	return result
+}
+
+func loggerOptionalLnModeDefaultHook() string {
+	var result string
+
+	if isLoggerOptionalLnModeOn {
+		if isLoggerOptionalLnModeTag == colorlessTag {
+			result += formattedTag()
+			result += formattedProcessBorders()
+		}
+
+		result += "\n"
+		resetOptionalLnMode()
+	}
+
+	return result
 }
 
 func logF(w io.Writer, format string, args ...interface{}) (int, error) {
@@ -72,7 +93,13 @@ func logF(w io.Writer, format string, args ...interface{}) (int, error) {
 		msg = fmt.Sprintf(format, args...)
 	}
 
-	return fmt.Fprintf(w, msg)
+	return fmt.Fprintf(w, "%s", msg)
+}
+
+func decorateByWithIndent(decoratedFunc func() error) func() error {
+	return func() error {
+		return WithIndent(decoratedFunc)
+	}
 }
 
 func WithIndent(f func() error) error {
@@ -83,10 +110,16 @@ func WithIndent(f func() error) error {
 	return err
 }
 
-func WithoutIndent(f func() error) error {
+func decorateByWithoutIndent(decoratedFunc func() error) func() error {
+	return func() error {
+		return WithoutIndent(decoratedFunc)
+	}
+}
+
+func WithoutIndent(decoratedFunc func() error) error {
 	oldIndentWidth := indentWidth
 	indentWidth = 0
-	err := f()
+	err := decoratedFunc()
 	indentWidth = oldIndentWidth
 
 	return err
@@ -106,56 +139,16 @@ func IndentDown() {
 	indentWidth -= 2
 }
 
-func WithTag(value string, f func() error) error {
-	oldTag := tag
-	tag = value
-	err := f()
-	tag = oldTag
-
-	return err
-}
-
-func SetTag(value string) {
-	tag = value
-}
-
-func ResetTag(value string) {
-	tag = value
-}
-
-func formattedTag() string {
-	var fittedTag string
-	longTagPostfix := " ..."
-
-	if len(tag) == 0 {
-		return ""
-	} else if len(tag) > tagWidth {
-		fittedTag = tag[:tagWidth-len(longTagPostfix)] + longTagPostfix
-	} else {
-		fittedTag = tag
-
-	}
-
-	padLeft := strings.Repeat(" ", tagWidth-len(fittedTag))
-	colorizedTag := colorize(fittedTag, tagFormat...)
-
-	return strings.Join([]string{padLeft, colorizedTag, tagIndent}, "")
-}
-
-func tagBlockWidth() int {
-	if len(tag) == 0 {
-		return 0
-	}
-
-	return tagWidth + len(tagIndent)
-}
-
 func LogOptionalLn() {
 	isLoggerOptionalLnModeOn = true
-	isLoggerOptionalLnModeTag = tag
+	isLoggerOptionalLnModeTag = colorlessTag
 }
 
 func resetOptionalLnMode() {
 	isLoggerOptionalLnModeOn = false
 	isLoggerOptionalLnModeTag = ""
+}
+
+func processOptionalLnMode() {
+	_, _ = logF(outStream, loggerOptionalLnModeDefaultHook())
 }

@@ -24,8 +24,8 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) (err error) {
-	return logger.LogServiceProcess("Determine stages", "", func() error {
-		return logger.WithoutIndent(func() error { return p.run(c) })
+	return logger.LogServiceProcess("Determining of stages", logger.LogProcessOptions{WithoutBorder: true}, func() error {
+		return p.run(c)
 	})
 }
 
@@ -286,7 +286,7 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 				ClonePath: clonePath,
 			}
 
-			if err := logger.LogProcess(fmt.Sprintf("%s git\n", remoteGitPathConfig.Name), "[REFRESHING]", func() error {
+			if err := logger.LogProcess(fmt.Sprintf("Refreshing %s git\n", remoteGitPathConfig.Name), logger.LogProcessOptions{}, func() error {
 				return remoteGitRepo.CloneAndFetch()
 			}); err != nil {
 				return nil, err
@@ -301,7 +301,7 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 	var res []*stage.GitPath
 
 	if len(gitPaths) != 0 {
-		err := logger.LogServiceProcess(fmt.Sprintf("Check git paths"), "", func() error {
+		err := logger.LogServiceProcess(fmt.Sprintf("Checking git paths"), logger.LogProcessOptions{}, func() error {
 			nonEmptyGitPaths, err := getNonEmptyGitPaths(gitPaths)
 			if err != nil {
 				return err
@@ -311,8 +311,6 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 
 			return nil
 		})
-
-		logger.LogOptionalLn()
 
 		if err != nil {
 			return nil, err

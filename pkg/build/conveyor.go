@@ -10,7 +10,6 @@ import (
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -124,24 +123,6 @@ func (c *Conveyor) ShouldBeBuilt() error {
 	return c.runPhases(phases)
 }
 
-func (c *Conveyor) Tag(repo string, opts TagOptions) error {
-	var err error
-
-	var phases []Phase
-	phases = append(phases, NewInitializationPhase())
-	phases = append(phases, NewSignaturesPhase())
-	phases = append(phases, NewShouldBeBuiltPhase())
-	phases = append(phases, NewTagPhase(repo, opts))
-
-	lockName, err := c.lockAllImagesReadOnly()
-	if err != nil {
-		return err
-	}
-	defer lock.Unlock(lockName)
-
-	return c.runPhases(phases)
-}
-
 func (c *Conveyor) PublishImages(imagesRepo string, opts PublishImagesOptions) error {
 	var err error
 
@@ -202,8 +183,6 @@ func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndP
 func (c *Conveyor) runPhases(phases []Phase) error {
 	for _, phase := range phases {
 		err := phase.Run(c)
-
-		logger.LogOptionalLn()
 
 		if err != nil {
 			return err

@@ -25,13 +25,13 @@ func (i *Image) LogName() string {
 
 func ImageLogName(name string, isArtifact bool) string {
 	if isArtifact {
-		return fmt.Sprintf("%s", name)
+		return fmt.Sprintf("🔧 %s", name)
 	} else {
 		if name == "" {
 			name = "~"
 		}
 
-		return name
+		return fmt.Sprintf("🚤 %s", name)
 	}
 }
 
@@ -85,7 +85,7 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 		return nil
 	}
 
-	return logger.LogProcess("Pull base image", "", func() error {
+	return logger.LogProcess("Pulling base image", logger.LogProcessOptions{}, func() error {
 		if i.baseImage.IsExists() {
 			if err := i.baseImage.Pull(); err != nil {
 				logger.LogErrorF("WARNING: cannot pull base image %s: %s\n", i.baseImage.Name(), err)

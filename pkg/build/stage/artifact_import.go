@@ -65,7 +65,7 @@ func (s *ArtifactImportStage) PrepareImage(c Conveyor, _, image image.ImageInter
 		command := generateSafeCp(importContainerTmpPath, elm.To, elm.Owner, elm.Group, elm.IncludePaths, elm.ExcludePaths)
 		volume := fmt.Sprintf("%s:%s:ro", importTmpPath, importContainerTmpPath)
 
-		image.Container().AddRunCommands(command)
+		image.Container().AddServiceRunCommands(command)
 		image.Container().RunOptions().AddVolume(volume)
 
 		imageServiceCommitChangeOptions := image.Container().ServiceCommitChangeOptions()

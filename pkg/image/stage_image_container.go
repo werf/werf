@@ -36,17 +36,12 @@ func (c *StageImageContainer) Name() string {
 	return c.name
 }
 
-func (c *StageImageContainer) CommitChanges() []string {
-	commitChanges, err := c.prepareCommitChanges()
-	if err != nil {
-		panic(err)
-	}
-
-	return commitChanges
+func (c *StageImageContainer) UserCommitChanges() []string {
+	return c.commitChangeOptions.toCommitChanges()
 }
 
-func (c *StageImageContainer) AllRunCommands() []string {
-	return c.prepareAllRunCommands()
+func (c *StageImageContainer) UserRunCommands() []string {
+	return c.runCommands
 }
 
 func (c *StageImageContainer) AddRunCommands(commands ...string) {
@@ -210,7 +205,7 @@ func (c *StageImageContainer) prepareCommitChanges() ([]string, error) {
 		return nil, err
 	}
 
-	commitChanges, err := commitOptions.toCommitChanges()
+	commitChanges, err := commitOptions.prepareCommitChanges()
 	if err != nil {
 		return nil, err
 	}

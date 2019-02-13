@@ -184,7 +184,57 @@ func (co *StageImageContainerOptions) toRunArgs() ([]string, error) {
 	return args, nil
 }
 
-func (co *StageImageContainerOptions) toCommitChanges() ([]string, error) {
+func (co *StageImageContainerOptions) toCommitChanges() []string {
+	var args []string
+
+	for _, volume := range co.Volume {
+		args = append(args, fmt.Sprintf("Volume %s", volume))
+	}
+
+	for _, expose := range co.Expose {
+		args = append(args, fmt.Sprintf("Expose %s", expose))
+	}
+
+	for key, value := range co.Env {
+		args = append(args, fmt.Sprintf("ENV %s=%v", key, value))
+	}
+
+	for key, value := range co.Label {
+		args = append(args, fmt.Sprintf("Label %s=%v", key, value))
+	}
+
+	if len(co.Cmd) != 0 {
+		args = append(args, fmt.Sprintf("Cmd [\"%s\"]", strings.Join(co.Cmd, "\", \"")))
+	}
+
+	if len(co.Onbuild) != 0 {
+		args = append(args, fmt.Sprintf("Onbuild %s", strings.Join(co.Onbuild, " ")))
+	}
+
+	if co.Workdir != "" {
+		args = append(args, fmt.Sprintf("Workdir %s", co.Workdir))
+	}
+
+	if co.User != "" {
+		args = append(args, fmt.Sprintf("User %s", co.User))
+	}
+
+	if len(co.Entrypoint) != 0 {
+		args = append(args, fmt.Sprintf("Entrypoint [\"%s\"]", strings.Join(co.Entrypoint, "\", \"")))
+	}
+
+	if co.StopSignal != "" {
+		args = append(args, fmt.Sprintf("STOPSIGNAL %s", co.StopSignal))
+	}
+
+	if co.HealthCheck != "" {
+		args = append(args, fmt.Sprintf("HEALTHCHECK %s", co.HealthCheck))
+	}
+
+	return args
+}
+
+func (co *StageImageContainerOptions) prepareCommitChanges() ([]string, error) {
 	var args []string
 
 	for _, volume := range co.Volume {

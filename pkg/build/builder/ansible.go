@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	ghodssYaml "github.com/ghodss/yaml"
-	reflections "gopkg.in/oleiade/reflections.v1"
-	yaml "gopkg.in/flant/yaml.v2"
+	"gopkg.in/flant/yaml.v2"
+	"gopkg.in/oleiade/reflections.v1"
 
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/dappdeps"
@@ -100,7 +100,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 	}
 
 	command := strings.Join(commandParts, " ")
-	container.AddRunCommands(command)
+	container.AddServiceRunCommands(command)
 
 	return nil
 }

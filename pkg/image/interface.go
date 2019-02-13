@@ -32,8 +32,8 @@ type ImageInterface interface {
 type Container interface {
 	Name() string
 
-	AllRunCommands() []string
-	CommitChanges() []string
+	UserRunCommands() []string
+	UserCommitChanges() []string
 
 	AddServiceRunCommands(commands ...string)
 	AddRunCommands(commands ...string)
