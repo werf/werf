@@ -19,6 +19,7 @@ import (
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
+	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	yaml "gopkg.in/flant/yaml.v2"
 )
@@ -29,9 +30,14 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, fmt.Errorf("cannot parse config: %s", err)
 	}
 
-	werfConfigRenderPath, err := dumpWerfConfigRender(werfConfigPath, werfConfigRenderContent)
+	werfConfigRenderPath, err := tmp_manager.CreateWerfConfigRender()
 	if err != nil {
 		return nil, err
+	}
+
+	err = writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to write rendered config to %s: %s", werfConfigRenderPath, err)
 	}
 
 	docs, err := splitByDocs(werfConfigRenderContent, werfConfigRenderPath)
@@ -119,26 +125,23 @@ func gitOwnRepoOriginUrl(projectDir string) (string, error) {
 	return remoteOriginUrl, nil
 }
 
-func dumpWerfConfigRender(werfConfigPath string, werfConfigRenderContent string) (string, error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	werfConfigNameParts := strings.Split(path.Base(werfConfigPath), ".")
-	var werfConfigRenderNameParts []string
-	werfConfigRenderNameParts = append(werfConfigRenderNameParts, werfConfigNameParts[0:len(werfConfigNameParts)-1]...)
-	werfConfigRenderNameParts = append(werfConfigRenderNameParts, "render", werfConfigNameParts[len(werfConfigNameParts)-1])
-	werfConfigRenderPath := path.Join(wd, fmt.Sprintf(".%s", strings.Join(werfConfigRenderNameParts, ".")))
-
+func writeWerfConfigRender(werfConfigRenderContent string, werfConfigRenderPath string) error {
 	werfConfigRenderFile, err := os.OpenFile(werfConfigRenderPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
-		return "", err
+		return err
 	}
-	werfConfigRenderFile.Write([]byte(werfConfigRenderContent))
-	werfConfigRenderFile.Close()
 
-	return werfConfigRenderPath, nil
+	_, err = werfConfigRenderFile.Write([]byte(werfConfigRenderContent))
+	if err != nil {
+		return err
+	}
+
+	err = werfConfigRenderFile.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func splitByDocs(werfConfigRenderContent string, werfConfigRenderPath string) ([]*doc, error) {
