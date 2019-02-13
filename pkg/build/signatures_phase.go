@@ -13,8 +13,8 @@ import (
 const (
 	BuildCacheVersion = "1"
 
-	LocalImageStageImageNameFormat = "image-stage-%s"
-	LocalImageStageImageFormat     = "image-stage-%s:%s"
+	LocalImageStageImageNameFormat = "werf-stages-storage/%s"
+	LocalImageStageImageFormat     = "werf-stages-storage/%s:%s"
 )
 
 func NewSignaturesPhase() *SignaturesPhase {
