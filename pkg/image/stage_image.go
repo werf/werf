@@ -2,8 +2,10 @@ package image
 
 import (
 	"fmt"
-	"github.com/flant/werf/pkg/logger"
 	"strings"
+
+	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 
 	"github.com/docker/docker/api/types"
 
@@ -79,6 +81,12 @@ func (i *StageImage) SyncDockerState() error {
 }
 
 func (i *StageImage) Build(options BuildOptions) error {
+	containerLockName := GetContainerLockName(i.container.Name())
+	if err := lock.Lock(containerLockName, lock.LockOptions{}); err != nil {
+		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
+	}
+	defer lock.Unlock(containerLockName)
+
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
