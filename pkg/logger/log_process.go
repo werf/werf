@@ -15,6 +15,12 @@ const (
 	logStateRightPartsSeparator = " "
 )
 
+var (
+	colorlessProcessBorders   []string
+	processBorders            []string
+	processBordersIndentWidth = 1
+)
+
 func LogProcessInline(msg string, processFunc func() error) error {
 	return logProcessInlineBase(msg, processFunc, colorizeStep, colorizeSuccess)
 }
@@ -23,20 +29,22 @@ func LogServiceProcessInline(msg string, processFunc func() error) error {
 	return logProcessInlineBase(msg, processFunc, colorizeService, colorizeService)
 }
 
-func LogProcess(msg, processMsg string, processFunc func() error) error {
-	return logProcessBase(msg, processMsg, processFunc, colorizeStep, colorizeSuccess)
+func LogProcess(msg string, options LogProcessOptions, processFunc func() error) error {
+	return logProcessBase(msg, options, processFunc, colorizeStep)
 }
 
-func LogServiceProcess(msg, processMsg string, processFunc func() error) error {
-	return logProcessBase(msg, processMsg, processFunc, colorizeService, colorizeService)
+func LogServiceProcess(msg string, options LogProcessOptions, processFunc func() error) error {
+	return logProcessBase(msg, options, processFunc, colorizeService)
 }
 
 func LogState(msg, state string) {
-	logStateBase(msg, state, "", colorizeService, colorizeService)
+	options := logStateOptions{State: state}
+	logStateBase(msg, options, colorizeService, colorizeService)
 }
 
 func LogServiceState(msg, state string) {
-	logStateBase(msg, state, "", colorizeService, colorizeService)
+	options := logStateOptions{State: state}
+	logStateBase(msg, options, colorizeService, colorizeService)
 }
 
 func logProcessInlineBase(processMsg string, processFunc func() error, colorizeProcessMsgFunc, colorizeSuccessFunc func(string) string) error {
@@ -61,37 +69,131 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 	return err
 }
 
-func logProcessBase(msg, processMsg string, processFunc func() error, colorizeMsgFunc, colorizeSuccessFunc func(string) string) error {
-	logStateBase(msg, processMsg, "", colorizeMsgFunc, colorizeSuccessFunc)
+type LogProcessOptions struct {
+	WithIndent           bool
+	WithoutBorder        bool
+	WithoutLogOptionalLn bool
+	InfoSectionFunc      func(err error)
+}
+
+func logProcessBase(msg string, options LogProcessOptions, processFunc func() error, colorizeMsgFunc func(string) string) error {
+	processOptionalLnMode()
+
+	headerFunc := func() error {
+		logStateOptions := logStateOptions{IgnoreIndent: true}
+		logStateBase(msg, logStateOptions, colorizeMsgFunc, colorizeSuccess)
+		return nil
+	}
+
+	if !options.WithoutBorder {
+		headerFunc = decorateByWithExtraProcessBorder("┌", colorizeMsgFunc, headerFunc)
+	}
+
+	_ = headerFunc()
 
 	start := time.Now()
 	resultStatus := logProcessSuccessStatus
 
-	err := WithIndent(processFunc)
+	bodyFunc := func() error {
+		return processFunc()
+	}
+
+	if options.WithIndent {
+		bodyFunc = decorateByWithIndent(bodyFunc)
+	}
+
+	if !options.WithoutBorder {
+		bodyFunc = decorateByWithExtraProcessBorder("│", colorizeMsgFunc, bodyFunc)
+	}
+
+	err := bodyFunc()
+
+	resetOptionalLnMode()
+
+	if options.InfoSectionFunc != nil {
+		loggerFormattedLogLn(outStream, colorizeMsgFunc(fmt.Sprintf("├ %s (info)", msg)))
+		_ = decorateByWithExtraProcessBorder("│", colorizeMsgFunc, func() error {
+			options.InfoSectionFunc(err)
+			return nil
+		})()
+	}
 
 	elapsedSeconds := fmt.Sprintf(logProcessTimeFormat, time.Since(start).Seconds())
 
 	if err != nil {
 		resultStatus = logProcessFailedStatus
-		logStateBase(msg, resultStatus, elapsedSeconds, colorizeFail, colorizeFail)
+
+		footerFunc := func() error {
+			logStateOptions := logStateOptions{
+				State:        resultStatus,
+				Time:         elapsedSeconds,
+				IgnoreIndent: true,
+			}
+			logStateBase(msg, logStateOptions, colorizeFail, colorizeFail)
+			return nil
+		}
+
+		if !options.WithoutBorder {
+			footerFunc = decorateByWithExtraProcessBorder("└", colorizeMsgFunc, footerFunc)
+		}
+
+		_ = footerFunc()
+
+		if !options.WithoutLogOptionalLn {
+			LogOptionalLn()
+		}
 
 		return err
 	}
 
-	logStateBase(msg, resultStatus, elapsedSeconds, colorizeMsgFunc, colorizeSuccessFunc)
+	footerFunc := func() error {
+		logStateOptions := logStateOptions{
+			State:        resultStatus,
+			Time:         elapsedSeconds,
+			IgnoreIndent: true,
+		}
+		logStateBase(msg, logStateOptions, colorizeMsgFunc, colorizeSuccess)
+		return nil
+	}
+
+	if !options.WithoutBorder {
+		footerFunc = decorateByWithExtraProcessBorder("└", colorizeMsgFunc, footerFunc)
+	}
+
+	_ = footerFunc()
+
+	if !options.WithoutLogOptionalLn {
+		LogOptionalLn()
+	}
 
 	return nil
 }
 
-func logStateBase(msg string, state, time string, colorizeLeftPartFunc, colorizeRightPartFunc func(string) string) {
-	leftPart := prepareLogStateLeftPart(msg, state, time, colorizeLeftPartFunc)
+type logStateOptions struct {
+	State        string
+	Time         string
+	IgnoreIndent bool
+}
 
-	var rightPart string
-	if state != "" {
-		rightPart = prepareLogStateRightPart(msg, state, time, colorizeRightPartFunc)
+func logStateBase(msg string, options logStateOptions, colorizeLeftPartFunc, colorizeRightPartFunc func(string) string) {
+	action := func() error {
+		leftPart := prepareLogStateLeftPart(msg, options.State, options.Time, colorizeLeftPartFunc)
+
+		var rightPart string
+		if options.State != "" {
+			rightPart = prepareLogStateRightPart(msg, options.State, options.Time, colorizeRightPartFunc)
+		}
+
+		loggerFormattedLogLn(outStream, fmt.Sprintf("%s%s", leftPart, rightPart))
+
+		return nil
 	}
 
-	loggerFormattedLogLn(outStream, fmt.Sprintf("%s%s", leftPart, rightPart))
+	if options.IgnoreIndent {
+		action = decorateByWithoutIndent(action)
+	}
+
+	_ = action()
 }
 
 func prepareLogStateLeftPart(msg, state, time string, colorizeFunc func(string) string) string {
@@ -140,5 +242,49 @@ func timeOrStub(time string) string {
 func availableTerminalLineSpace(parts ...string) int {
 	msgsLength := len(strings.Join(parts, " "))
 
-	return TerminalWidth() - tagBlockWidth() - indentWidth - msgsLength
+	return TerminalWidth() - tagBlockWidth() - indentWidth - processBordersBlockWidth() - msgsLength
+}
+
+func decorateByWithExtraProcessBorder(colorlessBorder string, colorizeFunc func(string) string, decoratedFunc func() error) func() error {
+	return func() error {
+		return withExtraProcessBorder(colorlessBorder, colorizeFunc, decoratedFunc)
+	}
+}
+
+func withExtraProcessBorder(colorlessValue string, colorizeFunc func(string) string, decoratedFunc func() error) error {
+	appendProcessBorder(colorlessValue, colorizeFunc)
+	err := decoratedFunc()
+	popProcessBorder()
+
+	return err
+}
+
+func appendProcessBorder(colorlessValue string, colorizeFunc func(string) string) {
+	colorlessProcessBorders = append(colorlessProcessBorders, colorlessValue)
+	processBorders = append(processBorders, colorizeFunc(colorlessValue))
+}
+
+func popProcessBorder() {
+	if len(processBorders) == 0 {
+		return
+	}
+
+	colorlessProcessBorders = colorlessProcessBorders[:len(colorlessProcessBorders)-1]
+	processBorders = processBorders[:len(processBorders)-1]
+}
+
+func formattedProcessBorders() string {
+	if len(processBorders) == 0 {
+		return ""
+	}
+
+	return strings.Join(processBorders, " ") + strings.Repeat(" ", processBordersIndentWidth)
+}
+
+func processBordersBlockWidth() int {
+	if len(colorlessProcessBorders) == 0 {
+		return 0
+	}
+
+	return len(strings.Join(colorlessProcessBorders, " ")) + processBordersIndentWidth
 }

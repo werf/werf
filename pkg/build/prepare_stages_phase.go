@@ -16,10 +16,8 @@ func NewPrepareStagesPhase() *PrepareStagesPhase {
 type PrepareStagesPhase struct{}
 
 func (p *PrepareStagesPhase) Run(c *Conveyor) error {
-	return logger.LogServiceProcess("Prepare stages build instructions", "", func() error {
-		return logger.WithoutIndent(func() error {
-			return p.run(c)
-		})
+	return logger.LogServiceProcess("Preparing stages build instructions", logger.LogProcessOptions{WithoutBorder: true}, func() error {
+		return p.run(c)
 	})
 }
 

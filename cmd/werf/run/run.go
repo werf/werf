@@ -37,8 +37,8 @@ func NewCmd() *cobra.Command {
 
 func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
-		Short: "Run container for specified project image",
+		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
+		Short:                 "Run container for specified project image",
 		DisableFlagsInUseLine: true,
 		Example: `  # Run specified image
   $ werf --stages-storage :local run application
@@ -194,7 +194,7 @@ func runRun(commonCmdData *common.CmdData) error {
 	}()
 
 	if !werfConfig.HasImage(CmdData.ImageName) {
-		return fmt.Errorf("image '%s' is not defined in werf.yaml", build.ImageLogName(CmdData.ImageName, false))
+		return fmt.Errorf("image '%s' is not defined in werf.yaml", CmdData.ImageName)
 	}
 
 	c := build.NewConveyor(werfConfig, []string{CmdData.ImageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
@@ -212,7 +212,9 @@ func runRun(commonCmdData *common.CmdData) error {
 	if *CommonCmdData.DryRun {
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
 	} else {
-		docker.CliRun(dockerRunArgs...)
+		return logger.RawOutputOn(func() error {
+			return docker.CliRun(dockerRunArgs...)
+		})
 	}
 
 	return nil

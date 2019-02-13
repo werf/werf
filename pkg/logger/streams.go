@@ -9,6 +9,8 @@ import (
 var (
 	outStream io.Writer = os.Stdout
 	errStream io.Writer = os.Stderr
+
+	isRawOutputModeOn = false
 )
 
 type WriterProxy struct {
@@ -16,8 +18,21 @@ type WriterProxy struct {
 }
 
 func (p WriterProxy) Write(data []byte) (int, error) {
+	if isRawOutputModeOn {
+		return logF(p.Writer, "%s", string(data))
+	}
+
 	_, err := FormattedLogF(p.Writer, "%s", string(data))
 	return len(data), err
+}
+
+func RawOutputOn(f func() error) error {
+	savedIsRawOutputModeOn := isRawOutputModeOn
+	isRawOutputModeOn = true
+	err := f()
+	isRawOutputModeOn = savedIsRawOutputModeOn
+
+	return err
 }
 
 func GetOutStream() io.Writer {

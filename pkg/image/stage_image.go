@@ -91,7 +91,7 @@ func (i *StageImage) Build(options BuildOptions) error {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
 				logger.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
-				if err := i.introspectBefore(); err != nil {
+				if err := logger.RawOutputOn(i.introspectBefore); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			} else if options.IntrospectAfterError {
@@ -100,7 +100,7 @@ func (i *StageImage) Build(options BuildOptions) error {
 				}
 
 				logger.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
-				if err := i.Introspect(); err != nil {
+				if err := logger.RawOutputOn(i.Introspect); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			}
