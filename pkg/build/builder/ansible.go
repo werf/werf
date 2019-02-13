@@ -1,5 +1,7 @@
 package builder
 
+//go:generate esc -no-compress -ignore static.go -o ansible/static.go -pkg ansible ansible
+
 import (
 	"fmt"
 	"os"
@@ -8,7 +10,7 @@ import (
 
 	ghodssYaml "github.com/ghodss/yaml"
 	reflections "gopkg.in/oleiade/reflections.v1"
-	yaml "gopkg.in/yaml.v1"
+	yaml "gopkg.in/flant/yaml.v2"
 
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/dappdeps"
