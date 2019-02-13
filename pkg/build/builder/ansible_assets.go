@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	yaml "gopkg.in/yaml.v1"
+	yaml "gopkg.in/flant/yaml.v2"
 
 	"github.com/flant/werf/pkg/util"
 )
@@ -63,10 +63,26 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 
 	writeFile(filepath.Join(stageCallbackDir, "__init__.py"), "# module callback")
 
-	writeFile(filepath.Join(stageCallbackDir, "live.py"), b.assetsLivePy())
+	if livePyPath, exist := os.LookupEnv("WERF_DEBUG_ANSIBLE_LIVE_PY_PATH"); exist {
+		// hardlink a local live.py into workdir to ease ansible callback development
+		er := os.Link(livePyPath, filepath.Join(stageCallbackDir, "live.py"))
+		if er != nil {
+			return er
+		}
+	} else {
+		writeFile(filepath.Join(stageCallbackDir, "live.py"), b.assetsLivePy())
+	}
 
 	// add werf specific stdout callback for ansible
-	writeFile(filepath.Join(stageCallbackDir, "werf.py"), b.assetsWerfPy())
+	if werfPyPath, exist := os.LookupEnv("WERF_DEBUG_ANSIBLE_WERF_PY_PATH"); exist {
+		// hardlink to a local live.py into workdir to ease ansible callback development
+		er := os.Link(werfPyPath, filepath.Join(stageCallbackDir, "werf.py"))
+		if er != nil {
+			return er
+		}
+	} else {
+		writeFile(filepath.Join(stageCallbackDir, "werf.py"), b.assetsWerfPy())
+	}
 
 	return nil
 }

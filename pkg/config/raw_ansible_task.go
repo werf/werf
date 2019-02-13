@@ -60,16 +60,40 @@ func (c *rawAnsibleTask) blockDefined() bool {
 
 func supportedModules() []string {
 	var modules []string
-	// Commands Modules
+	// No Cloud modules
+	// No Clustering modules
+	// Commands Modules (no expect, psexec and telnet)
 	modules = append(modules, []string{"command", "shell", "raw", "script"}...)
-	// Files Modules
-	modules = append(modules, []string{"assemble", "archive", "unarchive", "blockinfile", "lineinfile", "file", "stat", "find", "tempfile", "copy", "acl", "xattr", "ini_file", "iso_extract"}...)
-	// Net Tools Modules
+	// Crypto Modules
+	modules = append(modules, []string{"openssl_certificate", "openssl_csr", "openssl_privatekey", "openssl_publickey"}...)
+	// No Databases modules
+	// Files Modules (no fetch, patch, replace, synchronize, template, xml
+	modules = append(modules, []string{
+		"acl",
+		"archive",
+		"assemble",
+		"blockinfile",
+		"copy",
+		"file",
+		"find",
+		"ini_file",
+		"iso_extract",
+		"lineinfile",
+		"stat",
+		"tempfile",
+		"unarchive",
+		"xattr",
+	}...)
+	// No Identity modules
+	// No Inventory modules
+	// No Messaging modules
+	// No Monitoring messages
+	// Net Tools Modules (only Basics)
 	modules = append(modules, []string{"get_url", "slurp", "uri"}...)
-
+    // No Network modules
+    // No Notification modules
 	// Packaging/Language Modules
 	modules = append(modules, []string{"bower", "bundler", "composer", "cpanm", "easy_install", "gem", "maven_artifact", "npm", "pear", "pip"}...)
-
 	// Packaging/Os Modules
 	modules = append(modules, []string{
 		"apk",
@@ -112,15 +136,15 @@ func supportedModules() []string {
 		"zypper",
 		"zypper_repository",
 	}...)
-
-	// System Modules
-	modules = append(modules, []string{"user", "group", "getent", "locale_gen"}...)
+    // No Remote Management modules
+    // No Source Control modules
+    // No Storage modules
+	// System Modules (only passwd management and locales)
+	modules = append(modules, []string{"cron", "user", "group", "getent", "locale_gen", "timezone"}...)
 	// Utilities Modules
-	modules = append(modules, []string{"assert", "debug", "set_fact", "wait_for"}...)
-	// Crypto Modules
-	modules = append(modules, []string{"openssl_certificate", "openssl_csr", "openssl_privatekey", "openssl_publickey"}...)
-	// Other modules
-	modules = append(modules, []string{"timezone", "cron"}...)
+	modules = append(modules, []string{"meta", "assert", "debug", "fail", "set_fact", "wait_for"}...)
+    // No Web Infrastructure modules
+    // No Windows modules
 
 	return modules
 }
