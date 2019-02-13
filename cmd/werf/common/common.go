@@ -174,7 +174,7 @@ func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
 		if exist, err := util.FileExists(werfConfigPath); err != nil {
 			return nil, err
 		} else if exist {
-			return config.ParseWerfConfig(werfConfigPath)
+			return config.GetWerfConfig(werfConfigPath)
 		}
 	}
 

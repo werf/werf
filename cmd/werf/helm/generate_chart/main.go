@@ -93,7 +93,7 @@ func runGenerateChart(targetPath string) error {
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("cannot parse werf config: %s", err)
+		return fmt.Errorf("bad config: %s", err)
 	}
 
 	imagesRepo := common.GetOptionalImagesRepo(werfConfig.Meta.Project, &CommonCmdData)

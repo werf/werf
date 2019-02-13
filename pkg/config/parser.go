@@ -23,10 +23,10 @@ import (
 	yaml "gopkg.in/flant/yaml.v2"
 )
 
-func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
+func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 	werfConfigRenderContent, err := parseWerfConfigYaml(werfConfigPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot parse config: %s", err)
 	}
 
 	werfConfigRenderPath, err := dumpWerfConfigRender(werfConfigPath, werfConfigRenderContent)
@@ -47,19 +47,21 @@ func ParseWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 	if meta == nil {
 		defaultProjectName, err := GetProjectName(path.Dir(werfConfigPath))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to get default project name: %s", err)
 		}
 
-		format := "meta definition is not defined: add meta doc with required fields, e.g:\n\n" +
+		format := "meta config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132) is not defined: add following example config section with required fields, e.g:\n\n" +
 			"```\n" +
 			"configVersion: v1\n" +
 			"project: %s\n" +
 			"---\n" +
 			"```\n\n" +
-			"##################################################################################################################\n" +
-			"###     WARNING! Project name cannot be changed later without rebuilding and redeploying your application!     ###\n" +
-			"###  Read more about meta doc here, https://flant.github.io/werf/reference/config.html#meta-configuration-doc  ###\n" +
-			"##################################################################################################################"
+			"#####################################################################################################################\n" +
+			"###      WARNING! Project name cannot be changed later without rebuilding and redeploying your application!       ###\n" +
+			"###   Project name should be unique within group of projects that shares build hosts and deployed into the same   ###\n" +
+			"###                 kubernetes cluster (i.e. unique across all groups within the same gitlab).                    ###\n" +
+			"###  Read more about meta config section: https://flant.github.io/werf/reference/config.html#meta-config-section  ###\n" +
+			"#####################################################################################################################"
 
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}
@@ -564,7 +566,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, error) {
 
 		if isMetaDoc(raw) {
 			if resultMeta != nil {
-				return nil, nil, newYamlUnmarshalError(errors.New("duplicate meta definition"), doc)
+				return nil, nil, newYamlUnmarshalError(errors.New("duplicate meta config section definition"), doc)
 			}
 
 			rawMeta := &rawMeta{doc: doc}
@@ -583,7 +585,7 @@ func splitByMetaAndRawImages(docs []*doc) (*Meta, []*rawImage, error) {
 
 			rawImages = append(rawImages, image)
 		} else {
-			return nil, nil, newYamlUnmarshalError(errors.New("doc type cannot be recognized: 'configVersion' required for meta type doc, 'image' required for the image type doc or 'artifact' required for the artifact type doc"), doc)
+			return nil, nil, newYamlUnmarshalError(errors.New("cannot recognize type of config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132):\n * 'configVersion' required for meta config section;\n * 'image' required for the image config sections;\n * 'artifact' required for the artifact config sections;"), doc)
 		}
 	}
 

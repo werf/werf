@@ -169,7 +169,7 @@ func runRun(commonCmdData *common.CmdData) error {
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("cannot parse werf config: %s", err)
+		return fmt.Errorf("bad config: %s", err)
 	}
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir()
