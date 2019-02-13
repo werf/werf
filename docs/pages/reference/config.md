@@ -12,25 +12,25 @@ Application should be configured to use Werf. This configuration includes:
 1. Definition of project meta information such as project name, which will affect build, deploy and other commands.
 2. Definition of the images to be built.
 
-Werf uses YAML configuration file `werf.yaml` placed in the root folder of your application. The config is a collection of [YAML documents](http://yaml.org/spec/1.2/spec.html#id2800132) combined with delimiter `---`:
+Werf uses YAML configuration file `werf.yaml` placed in the root folder of your application. The config is a collection of config sections -- parts of YAML file separated by three hyphens (http://yaml.org/spec/1.2/spec.html#id2800132):
 
 ```yaml
-YAML_DOC
+CONFIG_SECTION
 ---
-YAML_DOC
+CONFIG_SECTION
 ---
-YAML_DOC
+CONFIG_SECTION
 ```
 
-Each YAML document has a type. There are currently 3 types of documents:
+Each config section has a type. There are currently 3 types of config sections:
 
-1. Document to describe project meta information, which will be referred to as *meta configuration doc*.
-2. Document to describe image build instructions, which will be referred to as *image configuration doc*.
-3. Document to describe artifact build instructions, which will be referred to as *artifact configuraton doc*.
+1. Config section to describe project meta information, which will be referred to as *meta config section*.
+2. Config section to describe image build instructions, which will be referred to as *image config section*.
+3. Config section to describe artifact build instructions, which will be referred to as *artifact config section*.
 
-More document types can be added in the future.
+More types can be added in the future.
 
-### Meta configuration doc
+### Meta config section
 
 ```
 project: PROJECT_NAME
@@ -38,11 +38,13 @@ OTHER_FIELDS
 ---
 ```
 
-Yaml doc with the key `project: PROJECT_NAME` is the meta configuration doc. This is required doc. There should be only one meta configuration doc in a single `werf.yaml` configuration.
+Config section with the key `project: PROJECT_NAME` is the meta config section. This is required section. There should be only one meta config section in a single `werf.yaml` configuration.
 
 #### Project name
 
 `project` defines unique project name of your application. Project name affects build cache image names, Kubernetes Namespace, Helm Release name and other derived names (see [deploy to Kubernetes for detailed description]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html)). This is single required field of meta configuration.
+
+Project name should be unique within group of projects that shares build hosts and deployed into the same kubernetes cluster (i.e. unique across all groups within the same gitlab).
 
 Project name must be maximum 50 chars, only lowercase alphabetic chars, digits and dashes are allowed.
 
@@ -54,11 +56,11 @@ Changing project name leads to issues:
 
 Werf cannot automatically resolve project name change. Described issues must be resolved manually.
 
-### Image configuration doc
+### Image config section
 
-Each image configuration doc defines instructions to build one independent docker image. There may be multiple image cofiguration docs defined in the same `werf.yaml` config to build multiple images.
+Each image config section defines instructions to build one independent docker image. There may be multiple image config sections defined in the same `werf.yaml` config to build multiple images.
 
-Yaml doc with the key `image: IMAGE_NAME` is the image configuration doc. `image` defines short name of the docker image to be built. This name must be unique in a single `werf.yaml` config.
+Config section with the key `image: IMAGE_NAME` is the image config section. `image` defines short name of the docker image to be built. This name must be unique in a single `werf.yaml` config.
 
 ```
 image: IMAGE_NAME_1
@@ -73,15 +75,15 @@ image: IMAGE_NAME_N
 OTHER_FIELDS
 ```
 
-### Artifact configuration doc
+### Artifact config section
 
-Artifact configuration doc also defines instructions to build one independent artifact docker image. Arifact is a secondary image aimed to isolate a build process and build tools resources (environments, software, data, see [artifacts article for the details]({{ site.baseurl }}/reference/build/artifact.html)). There may be multiple artifact configuration docs for multiple artifacts defined in the same `werf.yaml` config.
+Artifact config section also defines instructions to build one independent artifact docker image. Arifact is a secondary image aimed to isolate a build process and build tools resources (environments, software, data, see [artifacts article for the details]({{ site.baseurl }}/reference/build/artifact.html)). There may be multiple artifact config sections for multiple artifact config sections defined in the same `werf.yaml` config.
 
-Yaml doc with the key `artifact: IMAGE_NAME` is the artifact configuration doc. `artifact` defines short name of the artifact to be referred to from another docs. This name must be unique in a single `werf.yaml` config.
+Config section with the key `artifact: IMAGE_NAME` is the artifact config section. `artifact` defines short name of the artifact to be referred to from another config sections. This name must be unique in a single `werf.yaml` config.
 
 ### Minimal config example
 
-Currently Werf requires to define meta configuration doc and at least one image configuration doc. Image configuration docs will be fully optional soon.
+Currently Werf requires to define meta config section and at least one image config section. Image config sections will be fully optional soon.
 
 Example of minimal werf config:
 
@@ -266,13 +268,13 @@ shell:
 
 The following steps could describe the processing of a YAML configuration file:
 1. Reading `werf.yaml` and extra templates from `.werf` directory;
-1. Executing Go templates;
-1. Saving dump into `.werf.render.yaml` (that file will remain after build and will be available until next render);
-1. Splitting rendered YAML file into separate YAML documents;
-1. Validating each YAML document:
+2. Executing Go templates;
+3. Saving dump into `.werf.render.yaml` (that file will remain after build and will be available until next render);
+4. Splitting rendered YAML file into separate config sections (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132);
+5. Validating each config section:
   * Validating YAML syntax (you could read YAML reference [here](http://yaml.org/refcard.html)).
-  * Validating our syntax.
-1. Generating a set of images.
+  * Validating werf syntax.
+6. Generating a set of images.
 
 ### Go templates
 

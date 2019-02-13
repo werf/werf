@@ -82,7 +82,7 @@ func runSync() error {
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("cannot parse werf config: %s", err)
+		return fmt.Errorf("bad config: %s", err)
 	}
 
 	projectName := werfConfig.Meta.Project

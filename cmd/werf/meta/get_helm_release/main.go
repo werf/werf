@@ -12,9 +12,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "get-helm-release",
+		Use: "get-helm-release",
 		DisableFlagsInUseLine: true,
-		Short:                 "Print Helm Release name that will be used in current configuration with specified params",
+		Short: "Print Helm Release name that will be used in current configuration with specified params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGetRelease()
 		},
@@ -40,7 +40,7 @@ func runGetRelease() error {
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("cannot parse werf config: %s", err)
+		return fmt.Errorf("bad config: %s", err)
 	}
 
 	release, err := common.GetHelmRelease("", *CommonCmdData.Environment, werfConfig)

@@ -12,9 +12,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "get-namespace",
+		Use: "get-namespace",
 		DisableFlagsInUseLine: true,
-		Short:                 "Print Kubernetes Namespace that will be used in current configuration with specified params",
+		Short: "Print Kubernetes Namespace that will be used in current configuration with specified params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGetNamespace()
 		},
@@ -40,7 +40,7 @@ func runGetNamespace() error {
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {
-		return fmt.Errorf("cannot parse werf config: %s", err)
+		return fmt.Errorf("bad config: %s", err)
 	}
 
 	namespace, err := common.GetKubernetesNamespace("", *CommonCmdData.Environment, werfConfig)
