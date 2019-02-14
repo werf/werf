@@ -188,7 +188,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 				}
 
 				err := func() error {
-					imageLockName := fmt.Sprintf("image.%s", util.Sha256Hash(imageName))
+					imageLockName := imagePkg.GetImageLockName(imageName)
 					if err = lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 						return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 					}
@@ -197,6 +197,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 					pushImage := imagePkg.NewImage(c.GetStageImage(lastStageImage.Name()), imageName)
 
 					pushImage.Container().ServiceCommitChangeOptions().AddLabel(map[string]string{
+						imagePkg.WerfDockerImageName:  imageName,
 						imagePkg.WerfTagStrategyLabel: string(strategy),
 						imagePkg.WerfImageLabel:       "true",
 					})

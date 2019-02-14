@@ -72,6 +72,7 @@ func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 
 		imageServiceCommitChangeOptions := stageImage.Container().ServiceCommitChangeOptions()
 		imageServiceCommitChangeOptions.AddLabel(map[string]string{
+			imagePkg.WerfDockerImageName:   stageImage.Name(),
 			imagePkg.WerfLabel:             c.projectName(),
 			imagePkg.WerfVersionLabel:      werf.Version,
 			imagePkg.WerfCacheVersionLabel: BuildCacheVersion,
