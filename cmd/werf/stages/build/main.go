@@ -41,7 +41,14 @@ func NewCmdWithData(cmdData *CmdDataType, commonCmdData *common.CmdData) *cobra.
   $ werf stages build --stages-storage :local
 
   # Build stages of image 'backend' from werf.yaml
-  $ werf stages build --stages-storage :local backend`,
+  $ werf stages build --stages-storage :local backend
+
+  # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
+  $ werf --stages-storage :local build --introspect-error
+
+  # Set --stages-storage default value using WERF_STAGES_STORAGE param
+  $ export WERF_STAGES_STORAGE=:local
+  $ werf build`,
 		Long: common.GetLongCommandDescription(`Build stages for images described in the werf.yaml.
 
 The result of build command are built stages pushed into the specified stages storage (or locally in the case when --stages-storage=:local).
