@@ -27,8 +27,15 @@ func initColorize() {
 	}
 }
 
-func colorizeAndLogF(w io.Writer, colorizeFunc func(string) string, format string, args ...interface{}) {
-	loggerFormattedLogF(w, colorizeBaseF(colorizeFunc, format, args...))
+func colorizeAndFormattedLogF(w io.Writer, colorizeFunc func(string) string, format string, args ...interface{}) {
+	var msg string
+	if len(args) > 0 {
+		msg = colorizeBaseF(colorizeFunc, format, args...)
+	} else {
+		msg = colorizeBaseF(colorizeFunc, "%s", format)
+	}
+
+	loggerFormattedLogF(w, msg)
 }
 
 func colorizeBaseF(colorizeFunc func(string) string, format string, args ...interface{}) string {

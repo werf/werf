@@ -13,7 +13,9 @@ import (
 )
 
 func runGC() error {
-	return lock.WithLock("gc", lock.LockOptions{}, GC)
+	return lock.WithLock("gc", lock.LockOptions{}, func() error {
+		return GC(false)
+	})
 }
 
 func checkShouldRunGC() (bool, error) {
@@ -65,9 +67,11 @@ func checkShouldRunGC() (bool, error) {
 	return false, nil
 }
 
-func GC() error {
-	logger.LogInfoF("Running GC\n")
+func GC(dryRun bool) error {
+	return logger.LogServiceProcess("Running tmp gc", logger.LogProcessOptions{}, func() error { return gc(dryRun) })
+}
 
+func gc(dryRun bool) error {
 	projectDirsToRemove := []string{}
 	pathsToRemove := []string{}
 
@@ -90,15 +94,23 @@ func GC() error {
 	var removeErrors []error
 
 	if len(projectDirsToRemove) > 0 {
-		if err := removeProjectDirs(projectDirsToRemove); err != nil {
-			removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
+		for _, projectDirToRemove := range projectDirsToRemove {
+			logger.LogF("Removing %s ...\n", projectDirToRemove)
+		}
+		if !dryRun {
+			if err := removeProjectDirs(projectDirsToRemove); err != nil {
+				removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
+			}
 		}
 	}
 
 	for _, path := range pathsToRemove {
-		err := os.RemoveAll(path)
-		if err != nil {
-			removeErrors = append(removeErrors, fmt.Errorf("unable to remove path %s: %s", path, err))
+		logger.LogF("Removing %s ...\n", path)
+		if !dryRun {
+			err := os.RemoveAll(path)
+			if err != nil {
+				removeErrors = append(removeErrors, fmt.Errorf("unable to remove path %s: %s", path, err))
+			}
 		}
 	}
 

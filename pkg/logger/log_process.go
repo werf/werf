@@ -49,7 +49,7 @@ func LogServiceState(msg, state string) {
 
 func logProcessInlineBase(processMsg string, processFunc func() error, colorizeProcessMsgFunc, colorizeSuccessFunc func(string) string) error {
 	processMsg = fmt.Sprintf(logProcessInlineProcessMsgFormat, processMsg)
-	colorizeAndLogF(outStream, colorizeProcessMsgFunc, "%s", processMsg)
+	colorizeAndFormattedLogF(outStream, colorizeProcessMsgFunc, "%s", processMsg)
 
 	resultStatus := logProcessSuccessStatus
 	resultColorize := colorizeSuccessFunc

@@ -18,13 +18,13 @@ type CommonProjectOptions struct {
 }
 
 func projectCleanup(options CommonProjectOptions) error {
-	filterSet := projectFilterSet(options)
-	filterSet.Add("dangling", "true")
-	if err := werfImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
+	if err := werfContainersFlushByFilterSet(projectFilterSet(options), options.CommonOptions); err != nil {
 		return err
 	}
 
-	if err := werfContainersFlushByFilterSet(projectFilterSet(options), options.CommonOptions); err != nil {
+	filterSet := projectFilterSet(options)
+	filterSet.Add("dangling", "true")
+	if err := werfImagesFlushByFilterSet(filterSet, options.CommonOptions); err != nil {
 		return err
 	}
 

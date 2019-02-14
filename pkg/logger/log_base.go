@@ -14,8 +14,13 @@ var (
 	isLoggerOptionalLnModeTag        = ""
 )
 
-func loggerFormattedLogLn(w io.Writer, msg string) {
-	loggerFormattedLogF(w, "%s\n", msg)
+func loggerFormattedLogLn(w io.Writer, args ...interface{}) {
+	var msg string
+	if len(args) > 0 {
+		msg = fmt.Sprintln(args...)
+	}
+
+	loggerFormattedLogF(w, msg)
 }
 
 func loggerFormattedLogF(w io.Writer, format string, args ...interface{}) {

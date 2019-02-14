@@ -49,6 +49,8 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
+	common.SetupDryRun(&CommonCmdData, cmd)
+
 	return cmd
 }
 
@@ -73,7 +75,12 @@ func runGC() error {
 		return err
 	}
 
-	commonOptions := cleanup.CommonOptions{DryRun: false} // TODO: DryRun
+	commonOptions := cleanup.CommonOptions{
+		DryRun:         *CommonCmdData.DryRun,
+		SkipUsedImages: true,
+		RmiForce:       false,
+		RmForce:        true,
+	}
 	if err := cleanup.HostCleanup(commonOptions); err != nil {
 		return err
 	}
