@@ -7,7 +7,7 @@ import (
 )
 
 type rawMeta struct {
-	ConfigVersion   *string            `yaml:"configVersion,omitempty"`
+	ConfigVersion   *int               `yaml:"configVersion,omitempty"`
 	Project         *string            `yaml:"project,omitempty"`
 	DeployTemplates rawDeployTemplates `yaml:"deploy,omitempty"`
 
@@ -29,8 +29,8 @@ func (c *rawMeta) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	if c.ConfigVersion == nil || *c.ConfigVersion == "" || *c.ConfigVersion != "v1" {
-		return newDetailedConfigError("'configVersion: v1' field required!", nil, c.doc)
+	if c.ConfigVersion == nil || *c.ConfigVersion != 1 {
+		return newDetailedConfigError("'configVersion: 1' field required!", nil, c.doc)
 	}
 
 	if c.Project == nil || *c.Project == "" {

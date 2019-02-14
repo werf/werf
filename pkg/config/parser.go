@@ -58,7 +58,7 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 
 		format := "meta config section (part of YAML stream separated by three hyphens, https://yaml.org/spec/1.2/spec.html#id2800132) is not defined: add following example config section with required fields, e.g:\n\n" +
 			"```\n" +
-			"configVersion: v1\n" +
+			"configVersion: 1\n" +
 			"project: %s\n" +
 			"---\n" +
 			"```\n\n" +
