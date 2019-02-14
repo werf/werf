@@ -22,11 +22,14 @@ func purge(dryRun bool) error {
 	}
 
 	filesToRemove := []string{}
+
 	for _, finfo := range tmpFiles {
 		if strings.HasPrefix(finfo.Name(), "werf") {
 			filesToRemove = append(filesToRemove, filepath.Join(werf.GetTmpDir(), finfo.Name()))
 		}
 	}
+
+	filesToRemove = append(filesToRemove, GetServiceTmpDir())
 
 	errors := []error{}
 
