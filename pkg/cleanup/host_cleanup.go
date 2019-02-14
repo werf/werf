@@ -14,14 +14,14 @@ import (
 )
 
 func HostCleanup(options CommonOptions) error {
-	if err := logger.LogServiceProcess("Running safe werf docker containers cleanup", logger.LogProcessOptions{}, func() error {
-		return safeProjectContainersCleanup(options)
+	if err := logger.LogServiceProcess("Running cleanup for docker containers created by werf", logger.LogProcessOptions{}, func() error {
+		return safeContainersCleanup(options)
 	}); err != nil {
 		return err
 	}
 
-	if err := logger.LogServiceProcess("Running werf docker dangling images cleanup", logger.LogProcessOptions{}, func() error {
-		return werfImagesFlushByFilterSet(danglingFilterSet(), options)
+	if err := logger.LogServiceProcess("Running cleanup for dangling docker images created by werf", logger.LogProcessOptions{}, func() error {
+		return safeDanglingImagesCleanup(options)
 	}); err != nil {
 		return nil
 	}
@@ -35,7 +35,44 @@ func HostCleanup(options CommonOptions) error {
 	})
 }
 
-func safeProjectContainersCleanup(options CommonOptions) error {
+func safeDanglingImagesCleanup(options CommonOptions) error {
+	images, err := werfImagesByFilterSet(danglingFilterSet())
+	if err != nil {
+		return err
+	}
+
+	var imagesToRemove []types.ImageSummary
+
+	for _, img := range images {
+		if imgName, hasKey := img.Labels[image.WerfDockerImageName]; hasKey {
+			imageLockName := image.GetImageLockName(imgName)
+
+			isLocked, err := lock.TryLock(imageLockName, lock.TryLockOptions{})
+			if err != nil {
+				return fmt.Errorf("failed to lock %s for image %s: %s", imageLockName, imgName, err)
+			}
+
+			if !isLocked {
+				logger.LogInfoF("Ignore dangling image %s used by another process\n", imgName)
+				continue
+			}
+
+			lock.Unlock(imageLockName) // no need to hold a lock
+
+			imagesToRemove = append(imagesToRemove, img)
+		} else {
+			imagesToRemove = append(imagesToRemove, img)
+		}
+	}
+
+	if err := imagesRemove(imagesToRemove, options); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func safeContainersCleanup(options CommonOptions) error {
 	containers, err := werfContainersByFilterSet(filters.NewArgs())
 	if err != nil {
 		return fmt.Errorf("cannot get stages build containers: %s", err)

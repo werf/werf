@@ -125,6 +125,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 		}
+
 		logProcessOptions := logger.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
 		err := logger.LogProcess(fmt.Sprintf("Building %s", msg), logProcessOptions, func() (err error) {
 			if debug() {
