@@ -55,6 +55,7 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage and images repo")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
+	common.SetupImagesCleanupPolicies(&CommonCmdData, cmd)
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
@@ -140,6 +141,11 @@ func runCleanup() error {
 		}
 	}
 
+	policies, err := common.GetImagesCleanupPolicies(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
 	commonProjectOptions := cleanup.CommonProjectOptions{
 		ProjectName:   projectName,
 		CommonOptions: cleanup.CommonOptions{DryRun: *CommonCmdData.DryRun},
@@ -149,6 +155,7 @@ func runCleanup() error {
 		CommonRepoOptions: commonRepoOptions,
 		LocalGit:          localGitRepo,
 		WithoutKube:       CmdData.WithoutKube,
+		Policies:          policies,
 	}
 
 	stagesCleanupOptions := cleanup.StagesCleanupOptions{

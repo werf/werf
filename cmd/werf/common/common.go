@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/werf/pkg/cleanup"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
@@ -39,6 +41,11 @@ type CmdData struct {
 	DockerConfig *string
 	InsecureRepo *bool
 	DryRun       *bool
+
+	GitTagStrategyLimit         *int64
+	GitTagStrategyExpiryDays    *int64
+	GitCommitStrategyLimit      *int64
+	GitCommitStrategyExpiryDays *int64
 }
 
 func GetLongCommandDescription(text string) string {
@@ -63,6 +70,18 @@ func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (system ssh-agent or default keys will be used by default, see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified multiple times to use multiple keys.")
+}
+
+func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.GitTagStrategyLimit = new(int64)
+	cmdData.GitTagStrategyExpiryDays = new(int64)
+	cmdData.GitCommitStrategyLimit = new(int64)
+	cmdData.GitCommitStrategyExpiryDays = new(int64)
+
+	cmd.Flags().Int64VarP(cmdData.GitTagStrategyLimit, "git-tag-strategy-limit", "", 0, "Keep max number of images published with the git-tag tagging strategy in the images repo. No limit by default. Value can be specified by the WERF_GIT_TAG_STRATEGY_LIMIT environment variable.")
+	cmd.Flags().Int64VarP(cmdData.GitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", 0, `Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default. Value can be specified by the WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS environment variable."`)
+	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyLimit, "git-commit-strategy-limit", "", 0, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default. Value can be specified by the WERF_GIT_COMMIT_STRATEGY_LIMIT environment variable.")
+	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", 0, `Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default. Value can be specified by the WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS environment variable."`)
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
@@ -138,6 +157,83 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 	}
 
 	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, desc)
+}
+
+func GetGitTagStrategyLimit(cmdData *CmdData) (int64, error) {
+	if v := os.Getenv("WERF_GIT_TAG_STRATEGY_LIMIT"); v != "" {
+		vInt, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("bad WERF_GIT_TAG_STRATEGY_LIMIT variable value '%s': %s", v, err)
+		}
+		return vInt, nil
+	}
+
+	return *cmdData.GitTagStrategyLimit, nil
+}
+
+func GetGitTagStrategyExpiryDays(cmdData *CmdData) (int64, error) {
+	if v := os.Getenv("WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS"); v != "" {
+		vInt, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("bad WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS variable value '%s': %s", v, err)
+		}
+		return vInt, nil
+	}
+
+	return *cmdData.GitTagStrategyExpiryDays, nil
+}
+
+func GetGitCommitStrategyLimit(cmdData *CmdData) (int64, error) {
+	if v := os.Getenv("WERF_GIT_COMMIT_STRATEGY_LIMIT"); v != "" {
+		vInt, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("bad WERF_GIT_COMMIT_STRATEGY_LIMIT variable value '%s': %s", v, err)
+		}
+		return vInt, nil
+	}
+
+	return *cmdData.GitCommitStrategyLimit, nil
+}
+
+func GetGitCommitStrategyExpiryDays(cmdData *CmdData) (int64, error) {
+	if v := os.Getenv("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS"); v != "" {
+		vInt, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("bad WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS variable value '%s': %s", v, err)
+		}
+		return vInt, nil
+	}
+
+	return *cmdData.GitCommitStrategyExpiryDays, nil
+}
+
+func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, error) {
+	tagLimit, err := GetGitTagStrategyLimit(cmdData)
+	if err != nil {
+		return cleanup.ImagesCleanupPolicies{}, err
+	}
+
+	tagDays, err := GetGitTagStrategyExpiryDays(cmdData)
+	if err != nil {
+		return cleanup.ImagesCleanupPolicies{}, err
+	}
+
+	commitLimit, err := GetGitCommitStrategyLimit(cmdData)
+	if err != nil {
+		return cleanup.ImagesCleanupPolicies{}, err
+	}
+
+	commitDays, err := GetGitTagStrategyExpiryDays(cmdData)
+	if err != nil {
+		return cleanup.ImagesCleanupPolicies{}, err
+	}
+
+	return cleanup.ImagesCleanupPolicies{
+		GitTagStrategyLimit:           tagLimit,
+		GitTagStrategyExpiryPeriod:    time.Hour * 24 * time.Duration(tagDays),
+		GitCommitStrategyLimit:        commitLimit,
+		GitCommitStrategyExpiryPeriod: time.Hour * 24 * time.Duration(commitDays),
+	}, nil
 }
 
 func GetStagesRepo(cmdData *CmdData) (string, error) {
