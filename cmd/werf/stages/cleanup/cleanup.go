@@ -21,10 +21,10 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cleanup",
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short: "Cleanup project stages from stages storage",
-		Long:  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
+		Short:                 "Cleanup project stages from stages storage",
+		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDisableStagesCleanupDatePeriodPolicy),
 		},
@@ -103,8 +103,13 @@ func runSync() error {
 	}
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: *CommonCmdData.DryRun},
+		ProjectName: projectName,
+		CommonOptions: cleanup.CommonOptions{
+			DryRun:         *CommonCmdData.DryRun,
+			SkipUsedImages: true,
+			RmiForce:       false,
+			RmForce:        false,
+		},
 	}
 
 	commonRepoOptions := cleanup.CommonRepoOptions{

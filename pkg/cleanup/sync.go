@@ -14,7 +14,7 @@ import (
 	"github.com/flant/werf/pkg/logger"
 )
 
-const syncIgnoreProjectImageStagePeriod = 2 * 60 * 60
+const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
 
 func repoImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, options CommonRepoOptions) error {
 	repoImageStages, err := repoImageStagesImages(options)
@@ -211,7 +211,7 @@ func projectImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, 
 
 	if os.Getenv("WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY") == "" {
 		for _, imageStage := range imageStages {
-			if time.Now().Unix()-imageStage.Created < syncIgnoreProjectImageStagePeriod {
+			if time.Now().Unix()-imageStage.Created < stagesCleanupDefaultIgnorePeriodPolicy {
 				imageStages = exceptImage(imageStages, imageStage)
 			}
 		}

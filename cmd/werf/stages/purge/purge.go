@@ -20,10 +20,10 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "purge",
+		Use:                   "purge",
 		DisableFlagsInUseLine: true,
-		Short: "Purge project stages from stages storage",
-		Long:  common.GetLongCommandDescription("Purge project stages from stages storage"),
+		Short:                 "Purge project stages from stages storage",
+		Long:                  common.GetLongCommandDescription("Purge project stages from stages storage"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
@@ -80,8 +80,13 @@ func runPurge() error {
 	}
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: *CommonCmdData.DryRun},
+		ProjectName: projectName,
+		CommonOptions: cleanup.CommonOptions{
+			DryRun:         *CommonCmdData.DryRun,
+			SkipUsedImages: false,
+			RmiForce:       true,
+			RmForce:        false,
+		},
 	}
 
 	if err := cleanup.StagesPurge(commonProjectOptions); err != nil {

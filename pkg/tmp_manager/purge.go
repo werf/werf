@@ -7,10 +7,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
-func Purge() error {
+func Purge(dryRun bool) error {
+	return logger.LogServiceProcess("Running tmp purge", logger.LogProcessOptions{}, func() error { return purge(dryRun) })
+}
+
+func purge(dryRun bool) error {
 	tmpFiles, err := ioutil.ReadDir(werf.GetTmpDir())
 	if err != nil {
 		return fmt.Errorf("unable to list tmp files in %s: %s", werf.GetTmpDir(), err)
@@ -26,9 +31,12 @@ func Purge() error {
 	errors := []error{}
 
 	for _, file := range filesToRemove {
-		err := os.RemoveAll(file)
-		if err != nil {
-			errors = append(errors, fmt.Errorf("unable to remove %s: %s", file, err))
+		logger.LogF("Removing %s ...\n", file)
+		if !dryRun {
+			err := os.RemoveAll(file)
+			if err != nil {
+				errors = append(errors, fmt.Errorf("unable to remove %s: %s", file, err))
+			}
 		}
 	}
 

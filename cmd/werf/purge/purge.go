@@ -20,9 +20,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "purge",
+		Use:                   "purge",
 		DisableFlagsInUseLine: true,
-		Short: "Purge all project images from images repo and stages from stages storage",
+		Short:                 "Purge all project images from images repo and stages from stages storage",
 		Long: common.GetLongCommandDescription(`Purge all project images from images repo and stages from stages storage.
 
 First step is 'werf images purge', which will delete all project images from images repo. Second step is 'werf stages purge', which will delete all stages from stages storage.
@@ -105,8 +105,13 @@ func runPurge() error {
 	}
 
 	commonProjectOptions := cleanup.CommonProjectOptions{
-		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: *CommonCmdData.DryRun},
+		ProjectName: projectName,
+		CommonOptions: cleanup.CommonOptions{
+			DryRun:         *CommonCmdData.DryRun,
+			SkipUsedImages: false,
+			RmiForce:       true,
+			RmForce:        false,
+		},
 	}
 
 	if err := cleanup.StagesPurge(commonProjectOptions); err != nil {

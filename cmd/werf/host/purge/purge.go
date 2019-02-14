@@ -46,6 +46,8 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
+	common.SetupDryRun(&CommonCmdData, cmd)
+
 	return cmd
 }
 
@@ -66,7 +68,12 @@ func runReset() error {
 		return err
 	}
 
-	commonOptions := cleanup.CommonOptions{DryRun: false} // TODO: DryRun
+	commonOptions := cleanup.CommonOptions{
+		DryRun:         *CommonCmdData.DryRun,
+		SkipUsedImages: false,
+		RmiForce:       true,
+		RmForce:        true,
+	}
 	if err := cleanup.HostPurge(commonOptions); err != nil {
 		return err
 	}

@@ -1,25 +1,33 @@
 package logger
 
-func LogServiceLn(msg string) {
-	LogServiceF("%s\n", msg)
+func LogLn(args ...interface{}) {
+	loggerFormattedLogLn(outStream, args...)
+}
+
+func LogF(format string, args ...interface{}) {
+	loggerFormattedLogF(outStream, format, args...)
+}
+
+func LogServiceLn(args ...interface{}) {
+	LogServiceF("%s\n", args...)
 }
 
 func LogServiceF(format string, args ...interface{}) {
-	colorizeAndLogF(outStream, colorizeService, format, args...)
+	colorizeAndFormattedLogF(outStream, colorizeService, format, args...)
 }
 
-func LogInfoLn(msg string) {
-	LogInfoF("%s\n", msg)
+func LogInfoLn(args ...interface{}) {
+	LogInfoF("%s\n", args...)
 }
 
 func LogInfoF(format string, args ...interface{}) {
-	colorizeAndLogF(outStream, colorizeInfo, format, args...)
+	colorizeAndFormattedLogF(outStream, colorizeInfo, format, args...)
 }
 
-func LogErrorLn(msg string) {
-	LogErrorF("%s\n", msg)
+func LogErrorLn(args ...interface{}) {
+	LogErrorF("%s\n", args...)
 }
 
 func LogErrorF(format string, args ...interface{}) {
-	colorizeAndLogF(errStream, colorizeWarning, format, args...)
+	colorizeAndFormattedLogF(errStream, colorizeWarning, format, args...)
 }

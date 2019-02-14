@@ -15,7 +15,10 @@ import (
 )
 
 type CommonOptions struct {
-	DryRun bool
+	DryRun         bool
+	RmForce        bool
+	RmiForce       bool
+	SkipUsedImages bool
 }
 
 func werfImageStagesFlushByCacheVersion(filterSet filters.Args, options CommonOptions) error {
@@ -89,7 +92,7 @@ func containersByFilterSet(filterSet filters.Args) ([]types.Container, error) {
 
 func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
 	var err error
-	images, err = ignoreUsedImages(images)
+	images, err = processUsedImages(images, options)
 	if err != nil {
 		return err
 	}
@@ -121,7 +124,7 @@ func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
 	return nil
 }
 
-func ignoreUsedImages(images []types.ImageSummary) ([]types.ImageSummary, error) {
+func processUsedImages(images []types.ImageSummary, options CommonOptions) ([]types.ImageSummary, error) {
 	filterSet := filters.NewArgs()
 	for _, img := range images {
 		filterSet.Add("ancestor", img.ID)
@@ -136,8 +139,17 @@ func ignoreUsedImages(images []types.ImageSummary) ([]types.ImageSummary, error)
 	for _, container := range containers {
 		for _, img := range images {
 			if img.ID == container.ImageID {
-				fmt.Fprintf(logger.GetOutStream(), "Skip image '%s' (used by container '%s')\n", img.ID, container.ID)
-				imagesToExclude = append(imagesToExclude, img)
+				containerName := container.ImageID
+				if len(container.Names) != 0 {
+					containerName = container.Names[0]
+				}
+
+				if options.SkipUsedImages {
+					logger.LogInfoF("Skip image '%s' (used by container '%s')\n", img.ID, containerName)
+					imagesToExclude = append(imagesToExclude, img)
+				} else {
+					return nil, fmt.Errorf("cannot remove image '%s' used by container '%s'", img.ID, containerName)
+				}
 			}
 		}
 	}
@@ -166,7 +178,7 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 			fmt.Fprintln(logger.GetOutStream(), container.ID)
 			fmt.Fprintln(logger.GetOutStream())
 		} else {
-			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{Force: true}); err != nil {
+			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{Force: options.RmForce}); err != nil {
 				return err
 			}
 		}
@@ -182,7 +194,10 @@ func imageReferencesRemove(references []string, options CommonOptions) error {
 			fmt.Fprintln(logger.GetOutStream())
 		} else {
 			var args []string
-			args = append(args, "--force")
+
+			if options.RmiForce {
+				args = append(args, "--force")
+			}
 			args = append(args, references...)
 
 			if err := docker.CliRmi(args...); err != nil {
@@ -192,4 +207,10 @@ func imageReferencesRemove(references []string, options CommonOptions) error {
 	}
 
 	return nil
+}
+
+func danglingFilterSet() filters.Args {
+	filterSet := filters.NewArgs()
+	filterSet.Add("dangling", "true")
+	return filterSet
 }

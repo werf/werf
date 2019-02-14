@@ -12,15 +12,31 @@ import (
 )
 
 func HostPurge(options CommonOptions) error {
-	if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
+	err := logger.LogServiceProcess("Running werf docker containers purge", logger.LogProcessOptions{}, func() error {
+		if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return err
 	}
 
-	if err := werfImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
+	err = logger.LogServiceProcess("Running werf docker images purge", logger.LogProcessOptions{}, func() error {
+		if err := werfImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return err
 	}
 
-	if err := tmp_manager.Purge(); err != nil {
+	if err := tmp_manager.Purge(options.DryRun); err != nil {
 		return fmt.Errorf("tmp files purge failed: %s", err)
 	}
 
@@ -40,16 +56,19 @@ func deleteWerfFiles(options CommonOptions) error {
 	}
 
 	if len(directoryPathToDelete) != 0 {
-		fmt.Fprintln(logger.GetOutStream(), "purge werf host data")
-		for _, directoryPath := range directoryPathToDelete {
-			fmt.Fprintln(logger.GetOutStream(), directoryPath)
-			if !options.DryRun {
-				err := os.RemoveAll(directoryPath)
-				if err != nil {
-					return err
+		return logger.LogServiceProcess("Running werf host data purge", logger.LogProcessOptions{}, func() error {
+			for _, directoryPath := range directoryPathToDelete {
+				logger.LogF("Removing %s ...\n", directoryPath)
+				if !options.DryRun {
+					err := os.RemoveAll(directoryPath)
+					if err != nil {
+						return err
+					}
 				}
 			}
-		}
+
+			return nil
+		})
 	}
 
 	return nil
