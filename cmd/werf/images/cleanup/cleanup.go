@@ -48,6 +48,7 @@ func NewCmd() *cobra.Command {
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo.")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
+	common.SetupImagesCleanupPolicies(&CommonCmdData, cmd)
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
@@ -127,10 +128,16 @@ func runCleanup() error {
 		}
 	}
 
+	policies, err := common.GetImagesCleanupPolicies(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
 	imagesCleanupOptions := cleanup.ImagesCleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
 		LocalGit:          localRepo,
 		WithoutKube:       CmdData.WithoutKube,
+		Policies:          policies,
 	}
 
 	if err := cleanup.ImagesCleanup(imagesCleanupOptions); err != nil {
