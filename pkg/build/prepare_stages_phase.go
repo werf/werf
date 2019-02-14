@@ -27,7 +27,7 @@ func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 	}
 
 	for _, image := range c.imagesInOrder {
-		err := logger.WithTag(image.LogName(), func() error {
+		err := logger.WithTag(image.LogTagName(), func() error {
 			return p.runImage(image, c)
 		})
 

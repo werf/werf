@@ -23,15 +23,27 @@ func (i *Image) LogName() string {
 	return ImageLogName(i.name, i.isArtifact)
 }
 
+func (i *Image) LogTagName() string {
+	return ImageLogTagName(i.name, i.isArtifact)
+}
+
 func ImageLogName(name string, isArtifact bool) string {
-	if isArtifact {
-		return fmt.Sprintf("🔧 %s", name)
-	} else {
+	if !isArtifact {
 		if name == "" {
 			name = "~"
 		}
+	}
 
-		return fmt.Sprintf("🚤 %s", name)
+	return name
+}
+
+func ImageLogTagName(name string, isArtifact bool) string {
+	logName := ImageLogName(name, isArtifact)
+
+	if isArtifact {
+		return fmt.Sprintf("🔧 %s", logName)
+	} else {
+		return fmt.Sprintf("🚤 %s", logName)
 	}
 }
 

@@ -39,7 +39,7 @@ func (p *BuildStagesPhase) run(c *Conveyor) error {
 
 	images := c.imagesInOrder
 	for _, image := range images {
-		err := logger.WithTag(image.LogName(), func() error {
+		err := logger.WithTag(image.LogTagName(), func() error {
 			return p.runImage(image, c)
 		})
 
