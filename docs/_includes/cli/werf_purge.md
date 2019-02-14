@@ -39,7 +39,7 @@ werf purge [options]
             Docker Repo to store images (default WERF_IMAGES_REPO environment)
       --insecure-repo=false:
             Allow usage of insecure docker repos
-  -s, --stages-storage='':
+  -s, --stages-storage=':local':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now; default WERF_STAGES_STORAGE environment).
             More info about stages: https://flant.github.io/werf/reference/build/stages.html

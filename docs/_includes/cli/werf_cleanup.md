@@ -24,22 +24,6 @@ werf cleanup [options]
   $ werf cleanup --stages-storage :local --images-repo registry.mydomain.com/myproject
 ```
 
-{{ header }} Environments
-
-```bash
-  $WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY  Redefine default 
-  $WERF_GIT_TAGS_EXPIRY_DATE_PERIOD_POLICY         Redefine default tags expiry date period 
-                                                   policy: keep images built for git tags, that 
-                                                   are no older than 30 days since build time
-  $WERF_GIT_TAGS_LIMIT_POLICY                      Redefine default tags limit policy: keep no 
-                                                   more than 10 images built for git tags
-  $WERF_GIT_COMMITS_EXPIRY_DATE_PERIOD_POLICY      Redefine default commits expiry date period 
-                                                   policy: keep images built for git commits, that 
-                                                   are no older than 30 days since build time
-  $WERF_GIT_COMMITS_LIMIT_POLICY                   Redefine default commits limit policy: keep no 
-                                                   more than 50 images built for git commits
-```
-
 {{ header }} Options
 
 ```bash
@@ -52,24 +36,26 @@ werf cleanup [options]
             stages storage and images repo
       --dry-run=false:
             Indicate what the command would do without actually doing that
-      --git-commit-strategy-expiry-days=0:
+      --git-commit-strategy-expiry-days=-1:
             Keep images published with the git-commit tagging strategy in the images repo for the 
             specified maximum days since image published. Republished image will be kept specified 
-            maximum days since new publication date. No days limit by default. Value can be 
-            specified by the WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS environment variable."
-      --git-commit-strategy-limit=0:
+            maximum days since new publication date. No days limit by default, -1 disables the 
+            limit. Value can be specified by the WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS environment 
+            variable.
+      --git-commit-strategy-limit=-1:
             Keep max number of images published with the git-commit tagging strategy in the images 
-            repo. No limit by default. Value can be specified by the 
+            repo. No limit by default, -1 disables the limit. Value can be specified by the 
             WERF_GIT_COMMIT_STRATEGY_LIMIT environment variable.
-      --git-tag-strategy-expiry-days=0:
+      --git-tag-strategy-expiry-days=-1:
             Keep images published with the git-tag tagging strategy in the images repo for the 
             specified maximum days since image published. Republished image will be kept specified 
-            maximum days since new publication date. No days limit by default. Value can be 
-            specified by the WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS environment variable."
-      --git-tag-strategy-limit=0:
+            maximum days since new publication date. No days limit by default, -1 disables the 
+            limit. Value can be specified by the WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS environment 
+            variable.
+      --git-tag-strategy-limit=-1:
             Keep max number of images published with the git-tag tagging strategy in the images 
-            repo. No limit by default. Value can be specified by the WERF_GIT_TAG_STRATEGY_LIMIT 
-            environment variable.
+            repo. No limit by default, -1 disables the limit. Value can be specified by the 
+            WERF_GIT_TAG_STRATEGY_LIMIT environment variable.
   -h, --help=false:
             help for cleanup
       --home-dir='':
@@ -83,7 +69,7 @@ werf cleanup [options]
             Kubernetes config file path
       --kube-context='':
             Kubernetes config context
-  -s, --stages-storage='':
+  -s, --stages-storage=':local':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now; default WERF_STAGES_STORAGE environment).
             More info about stages: https://flant.github.io/werf/reference/build/stages.html
