@@ -143,6 +143,12 @@ func generateGitlabEnvs() error {
 	fmt.Println("\n### DEPLOY")
 	printExport("export WERF_DEPLOY_ENVIRONMENT=\"%s\"\n", os.Getenv("CI_ENVIRONMENT_SLUG"))
 
+	fmt.Println("\n### IMAGE CLEANUP POLICIES")
+	printExport("export WERF_GIT_TAG_STRATEGY_LIMIT=\"%s\"\n", "10")
+	printExport("export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS=\"%s\"\n", "30")
+	printExport("export WERF_GIT_COMMIT_STRATEGY_LIMIT=\"%s\"\n", "50")
+	printExport("export WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS=\"%s\"\n", "30")
+
 	fmt.Println("\n### OTHER")
 	printExport("export WERF_LOG_FORCE_COLOR=\"%s\"\n", "1")
 	printExport("export WERF_LOG_PROJECT_DIR=\"%s\"\n", "1")
