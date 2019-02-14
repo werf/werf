@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	localStagesRepo string = ":local"
+	localStagesStorage string = ":local"
 )
 
 type CommonProjectOptions struct {

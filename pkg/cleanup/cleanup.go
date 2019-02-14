@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
 
@@ -46,11 +46,15 @@ type CleanupOptions struct {
 }
 
 func Cleanup(options CleanupOptions) error {
-	if err := ImagesCleanup(options.ImagesCleanupOptions); err != nil {
+	if err := logger.LogServiceProcess("Running images cleanup", logger.LogProcessOptions{WithIndent: true}, func() error {
+		return ImagesCleanup(options.ImagesCleanupOptions)
+	}); err != nil {
 		return err
 	}
 
-	if err := StagesCleanup(options.StagesCleanupOptions); err != nil {
+	if err := logger.LogServiceProcess("Running stages cleanup", logger.LogProcessOptions{WithIndent: true}, func() error {
+		return StagesCleanup(options.StagesCleanupOptions)
+	}); err != nil {
 		return err
 	}
 
@@ -66,8 +70,10 @@ func ImagesCleanup(options ImagesCleanupOptions) error {
 
 		if options.LocalGit != nil {
 			if !options.WithoutKube {
-				repoImages, err = exceptRepoImagesByWhitelist(repoImages)
-				if err != nil {
+				if err := logger.LogServiceProcess("Ignoring repo images that are being used in kubernetes", logger.LogProcessOptions{}, func() error {
+					repoImages, err = exceptRepoImagesByWhitelist(repoImages)
+					return err
+				}); err != nil {
 					return err
 				}
 			}
@@ -100,7 +106,7 @@ func StagesCleanup(options StagesCleanupOptions) error {
 			return err
 		}
 
-		if options.CommonRepoOptions.StagesRepo == localStagesRepo {
+		if options.CommonRepoOptions.StagesStorage == localStagesStorage {
 			if err := projectImageStagesSyncByRepoImages(repoImages, options.CommonProjectOptions); err != nil {
 				return err
 			}
@@ -123,16 +129,24 @@ func StagesCleanup(options StagesCleanupOptions) error {
 func exceptRepoImagesByWhitelist(repoImages []docker_registry.RepoImage) ([]docker_registry.RepoImage, error) {
 	var newRepoImages, exceptedRepoImages []docker_registry.RepoImage
 
-	deployedDockerImages, err := deployedDockerImages()
-	if err != nil {
-		return nil, fmt.Errorf("cannot get deployed images: %s", err)
+	var deployedDockerImagesNames []string
+	var err error
+	if err := logger.LogServiceProcessInline("Getting deployed docker images", func() error {
+		deployedDockerImagesNames, err = deployedDockerImages()
+		if err != nil {
+			return fmt.Errorf("cannot get deployed images: %s", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 Loop:
 	for _, repoImage := range repoImages {
 		imageName := fmt.Sprintf("%s:%s", repoImage.Repository, repoImage.Tag)
-		for _, deployedDockerImage := range deployedDockerImages {
-			if deployedDockerImage == imageName {
+		for _, deployedDockerImageName := range deployedDockerImagesNames {
+			if deployedDockerImageName == imageName {
 				exceptedRepoImages = append(exceptedRepoImages, repoImage)
 				continue Loop
 			}
@@ -142,12 +156,16 @@ Loop:
 	}
 
 	if len(exceptedRepoImages) != 0 {
-		fmt.Fprintln(logger.GetOutStream(), "Keep in repo images that are being used in kubernetes")
-		for _, exceptedRepoImage := range exceptedRepoImages {
-			imageName := fmt.Sprintf("%s:%s", exceptedRepoImage.Repository, exceptedRepoImage.Tag)
-			fmt.Fprintln(logger.GetOutStream(), imageName)
-		}
-		fmt.Fprintln(logger.GetOutStream())
+		logger.LogServiceLn("Ignored repo images:")
+		_ = logger.WithIndent(func() error {
+			for _, exceptedRepoImage := range exceptedRepoImages {
+				imageName := fmt.Sprintf("%s:%s", exceptedRepoImage.Repository, exceptedRepoImage.Tag)
+				logger.LogLn(imageName)
+			}
+
+			return nil
+		})
+		logger.LogOptionalLn()
 	}
 
 	return newRepoImages, nil
@@ -208,29 +226,38 @@ Loop:
 	}
 
 	if len(nonexistentGitTagRepoImages) != 0 {
-		fmt.Fprintln(logger.GetOutStream(), "git tag nonexistent")
-		if err := repoImagesRemove(nonexistentGitTagRepoImages, options.CommonRepoOptions); err != nil {
+		logger.LogServiceLn("Removed tags by nonexistent git-tag policy:")
+		if err = logger.WithIndent(func() error {
+			return repoImagesRemove(nonexistentGitTagRepoImages, options.CommonRepoOptions)
+		}); err != nil {
 			return nil, err
 		}
-		fmt.Fprintln(logger.GetOutStream())
+		logger.LogOptionalLn()
+
 		repoImages = exceptRepoImages(repoImages, nonexistentGitTagRepoImages...)
 	}
 
 	if len(nonexistentGitBranchRepoImages) != 0 {
-		fmt.Fprintln(logger.GetOutStream(), "git branch nonexistent")
-		if err := repoImagesRemove(nonexistentGitBranchRepoImages, options.CommonRepoOptions); err != nil {
+		logger.LogServiceLn("Removed tags by nonexistent git-branch policy:")
+		if err = logger.WithIndent(func() error {
+			return repoImagesRemove(nonexistentGitBranchRepoImages, options.CommonRepoOptions)
+		}); err != nil {
 			return nil, err
 		}
-		fmt.Fprintln(logger.GetOutStream())
+		logger.LogOptionalLn()
+
 		repoImages = exceptRepoImages(repoImages, nonexistentGitBranchRepoImages...)
 	}
 
 	if len(nonexistentGitCommitRepoImages) != 0 {
-		fmt.Fprintln(logger.GetOutStream(), "git commit nonexistent")
-		if err := repoImagesRemove(nonexistentGitCommitRepoImages, options.CommonRepoOptions); err != nil {
+		logger.LogServiceLn("Removed tags by nonexistent git-commit policy:")
+		if err = logger.WithIndent(func() error {
+			return repoImagesRemove(nonexistentGitCommitRepoImages, options.CommonRepoOptions)
+		}); err != nil {
 			return nil, err
 		}
-		fmt.Fprintln(logger.GetOutStream())
+		logger.LogOptionalLn()
+
 		repoImages = exceptRepoImages(repoImages, nonexistentGitCommitRepoImages...)
 	}
 
@@ -364,18 +391,26 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 		}
 
 		if len(expiredRepoImages) != 0 {
-			fmt.Fprintf(logger.GetOutStream(), "%s: git %s date policy (created before %s)\n", repository, options.gitPrimitive, expiryTime.String())
-			repoImagesRemove(expiredRepoImages, options.commonRepoOptions)
-			fmt.Fprintln(logger.GetOutStream())
+			logger.LogServiceF("Removed repository %s tags by git-%s date policy (created before %s):\n", repository, options.gitPrimitive, expiryTime.String())
+			if err := logger.WithIndent(func() error {
+				return repoImagesRemove(expiredRepoImages, options.commonRepoOptions)
+			}); err != nil {
+				return nil, err
+			}
+			logger.LogOptionalLn()
+
 			repoImages = exceptRepoImages(repoImages, expiredRepoImages...)
 		}
 
 		if options.expiryLimit > 0 && int64(len(notExpiredRepoImages)) > options.expiryLimit {
-			fmt.Fprintf(logger.GetOutStream(), "%s: git %s limit policy (> %d)\n", repository, options.gitPrimitive, options.expiryLimit)
-			if err := repoImagesRemove(notExpiredRepoImages[options.expiryLimit:], options.commonRepoOptions); err != nil {
+			logger.LogServiceF("Removed repository %s tags by git-%s limit policy (> %d):\n", repository, options.gitPrimitive, options.expiryLimit)
+			if err := logger.WithIndent(func() error {
+				return repoImagesRemove(notExpiredRepoImages[options.expiryLimit:], options.commonRepoOptions)
+			}); err != nil {
 				return nil, err
 			}
-			fmt.Fprintln(logger.GetOutStream())
+			logger.LogOptionalLn()
+
 			repoImages = exceptRepoImages(repoImages, notExpiredRepoImages[options.expiryLimit:]...)
 		}
 	}
