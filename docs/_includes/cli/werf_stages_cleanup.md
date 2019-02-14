@@ -12,12 +12,6 @@ images repo
 werf stages cleanup [options]
 ```
 
-{{ header }} Environments
-
-```bash
-  $WERF_DISABLE_STAGES_CLEANUP_DATE_PERIOD_POLICY  Redefine default 
-```
-
 {{ header }} Options
 
 ```bash
@@ -39,7 +33,7 @@ werf stages cleanup [options]
             Docker Repo to store images (default WERF_IMAGES_REPO environment)
       --insecure-repo=false:
             Allow usage of insecure docker repos
-  -s, --stages-storage='':
+  -s, --stages-storage=':local':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now; default WERF_STAGES_STORAGE environment).
             More info about stages: https://flant.github.io/werf/reference/build/stages.html
