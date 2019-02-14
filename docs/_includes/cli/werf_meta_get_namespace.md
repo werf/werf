@@ -17,14 +17,14 @@ werf meta get-namespace [options]
       --dir='':
             Change to the specified directory to find werf.yaml config
       --env='':
-            Use specified environment (use WERF_DEPLOY_ENVIRONMENT by default)
+            Use specified environment (default WERF_DEPLOY_ENVIRONMENT)
   -h, --help=false:
             help for get-namespace
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
-            ~/.werf by default)
+            Use specified dir to store werf cache files and dirs (default WERF_HOME environment or 
+            ~/.werf)
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
-            dir by default)
+            Use specified dir to store tmp files and dirs (default WERF_TMP environment or system 
+            tmp dir)
 ```
 

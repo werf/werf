@@ -39,23 +39,23 @@ werf dismiss [options]
       --dir='':
             Change to the specified directory to find werf.yaml config
       --env='':
-            Use specified environment (use WERF_DEPLOY_ENVIRONMENT by default)
+            Use specified environment (default WERF_DEPLOY_ENVIRONMENT)
   -h, --help=false:
             help for dismiss
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
-            ~/.werf by default)
+            Use specified dir to store werf cache files and dirs (default WERF_HOME environment or 
+            ~/.werf)
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
             Kubernetes config context
       --namespace='':
-            Use specified Kubernetes namespace (use %project-%environment template by default)
+            Use specified Kubernetes namespace (default %project-%environment template)
       --release='':
-            Use specified Helm release name (use %project-%environment template by default)
+            Use specified Helm release name (default %project-%environment template)
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
-            dir by default)
+            Use specified dir to store tmp files and dirs (default WERF_TMP environment or system 
+            tmp dir)
       --with-namespace=false:
             Delete Kubernetes Namespace after purging Helm Release
 ```

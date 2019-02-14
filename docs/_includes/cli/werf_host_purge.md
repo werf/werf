@@ -26,17 +26,19 @@ werf host purge [options]
 
 ```bash
       --docker-config='':
-            Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker 
-            will be used by default (in the order of priority).
+            Specify docker config directory path. Default WERF_DOCKER_CONFIG or DOCKER_CONFIG or 
+            ~/.docker (in the order of priority).
+      --dry-run=false:
+            Indicate what the command would do without actually doing that
   -h, --help=false:
             help for purge
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
-            ~/.werf by default)
+            Use specified dir to store werf cache files and dirs (default WERF_HOME environment or 
+            ~/.werf)
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
-            dir by default)
+            Use specified dir to store tmp files and dirs (default WERF_TMP environment or system 
+            tmp dir)
 ```
 
