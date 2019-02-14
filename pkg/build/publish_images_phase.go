@@ -39,7 +39,7 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 	// TODO: Push stages should occur on the BuildStagesPhase
 
 	for _, image := range c.imagesInOrder {
-		err := logger.WithTag(image.LogName(), func() error {
+		err := logger.WithTag(image.LogTagName(), func() error {
 			if p.WithStages {
 				err := logger.LogServiceProcess("Pushing stages cache", logger.LogProcessOptions{}, func() error {
 					if err := p.pushImageStages(c, image); err != nil {

@@ -31,7 +31,7 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 func (p *SignaturesPhase) run(c *Conveyor) error {
 	for _, image := range c.imagesInOrder {
-		err := logger.WithTag(image.LogName(), func() error {
+		err := logger.WithTag(image.LogTagName(), func() error {
 			return p.calculateImageSignatures(c, image)
 		})
 
