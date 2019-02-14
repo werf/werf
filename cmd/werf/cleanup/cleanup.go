@@ -26,9 +26,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cleanup",
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short: "Safely cleanup unused project images and stages",
+		Short:                 "Safely cleanup unused project images and stages",
 		Long: common.GetLongCommandDescription(`Safely cleanup unused project images and stages.
 
 First step is 'werf images cleanup' command, which will delete unused images from images repo. Second step is 'werf stages cleanup' command, which will delete unused stages from stages storage to be in sync with the images repo.
@@ -121,10 +121,10 @@ func runCleanup() error {
 	}
 
 	commonRepoOptions := cleanup.CommonRepoOptions{
-		ImagesRepo:  imagesRepo,
-		StagesRepo:  stagesRepo,
-		ImagesNames: imagesNames,
-		DryRun:      *CommonCmdData.DryRun,
+		ImagesRepo:    imagesRepo,
+		StagesStorage: stagesRepo,
+		ImagesNames:   imagesNames,
+		DryRun:        *CommonCmdData.DryRun,
 	}
 
 	var localGitRepo *git_repo.Local

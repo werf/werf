@@ -175,8 +175,13 @@ func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary)
 func containersRemove(containers []types.Container, options CommonOptions) error {
 	for _, container := range containers {
 		if options.DryRun {
-			fmt.Fprintln(logger.GetOutStream(), container.ID)
-			fmt.Fprintln(logger.GetOutStream())
+			containerName := container.ID
+			if len(container.Names) != 0 {
+				containerName = container.Names[0]
+			}
+
+			logger.LogLn(containerName)
+			logger.LogOptionalLn()
 		} else {
 			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{Force: options.RmForce}); err != nil {
 				return err
@@ -190,8 +195,8 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 func imageReferencesRemove(references []string, options CommonOptions) error {
 	if len(references) != 0 {
 		if options.DryRun {
-			fmt.Fprintf(logger.GetOutStream(), strings.Join(references, "\n"))
-			fmt.Fprintln(logger.GetOutStream())
+			logger.LogLn(strings.Join(references, "\n"))
+			logger.LogOptionalLn()
 		} else {
 			var args []string
 

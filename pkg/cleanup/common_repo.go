@@ -9,10 +9,10 @@ import (
 )
 
 type CommonRepoOptions struct {
-	StagesRepo  string
-	ImagesRepo  string
-	ImagesNames []string
-	DryRun      bool
+	StagesStorage string
+	ImagesRepo    string
+	ImagesNames   []string
+	DryRun        bool
 }
 
 func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
@@ -42,7 +42,7 @@ func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) 
 }
 
 func repoImageStagesImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
-	return docker_registry.ImagesByWerfImageLabel(options.StagesRepo, "false")
+	return docker_registry.ImagesByWerfImageLabel(options.StagesStorage, "false")
 }
 
 func repoImagesRemove(images []docker_registry.RepoImage, options CommonRepoOptions) error {
@@ -86,16 +86,17 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 		return err
 	}
 
-	fmt.Fprintf(logger.GetOutStream(), "%s:\n  ", image.Tag)
 	if err := repoReferenceRemove(reference, options); err != nil {
 		return err
 	}
+	logger.LogInfoF("  tag: %s\n", image.Tag)
+	logger.LogOptionalLn()
 
 	return nil
 }
 
 func repoReferenceRemove(reference string, options CommonRepoOptions) error {
-	fmt.Fprintln(logger.GetOutStream(), reference)
+	logger.LogLn(reference)
 	if !options.DryRun {
 		err := docker_registry.ImageDelete(reference)
 		if err != nil {

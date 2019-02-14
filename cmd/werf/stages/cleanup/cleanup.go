@@ -110,10 +110,10 @@ func runSync() error {
 	}
 
 	commonRepoOptions := cleanup.CommonRepoOptions{
-		ImagesRepo:  imagesRepo,
-		StagesRepo:  stagesRepo,
-		ImagesNames: imageNames,
-		DryRun:      *CommonCmdData.DryRun,
+		ImagesRepo:    imagesRepo,
+		StagesStorage: stagesRepo,
+		ImagesNames:   imageNames,
+		DryRun:        *CommonCmdData.DryRun,
 	}
 
 	stagesCleanupOptions := cleanup.StagesCleanupOptions{
