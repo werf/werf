@@ -16,12 +16,16 @@ const (
 	werfConfigRendersDir = "werf_config_renders"
 )
 
+func GetServiceTmpDir() string {
+	return filepath.Join(werf.GetServiceDir(), "tmp")
+}
+
 func GetCreatedTmpDirs() string {
-	return filepath.Join(werf.GetServiceDir(), "tmp", "created")
+	return filepath.Join(GetServiceTmpDir(), "created")
 }
 
 func GetReleasedTmpDirs() string {
-	return filepath.Join(werf.GetServiceDir(), "tmp", "released")
+	return filepath.Join(GetServiceTmpDir(), "released")
 }
 
 func registerCreatedPath(newPath, createdPathsDir string) error {
