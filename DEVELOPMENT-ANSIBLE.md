@@ -41,7 +41,7 @@ Example:
 $ cat werf.yaml
 
 project: app
-configVersion: v1
+configVersion: 1
 ---
 image: ~
 from: ubuntu:16.04

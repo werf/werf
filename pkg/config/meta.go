@@ -1,7 +1,7 @@
 package config
 
 type Meta struct {
-	ConfigVersion   string
+	ConfigVersion   int
 	Project         string
 	DeployTemplates DeployTemplates
 }
