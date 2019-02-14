@@ -26,8 +26,8 @@ werf helm render [options]
   -h, --help=false:
             help for render
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
-            ~/.werf by default)
+            Use specified dir to store werf cache files and dirs (default WERF_HOME environment or 
+            ~/.werf)
       --secret-values=[]:
             Additional helm secret values
       --set=[]:
@@ -35,8 +35,8 @@ werf helm render [options]
       --set-string=[]:
             Additional helm STRING sets
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
-            dir by default)
+            Use specified dir to store tmp files and dirs (default WERF_TMP environment or system 
+            tmp dir)
       --values=[]:
             Additional helm values
 ```

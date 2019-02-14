@@ -59,17 +59,17 @@ func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TmpDir = new(string)
-	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp dir by default)")
+	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default WERF_TMP environment or system tmp dir)")
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.HomeDir = new(string)
-	cmd.Flags().StringVarP(cmdData.HomeDir, "home-dir", "", "", "Use specified dir to store werf cache files and dirs (use WERF_HOME environment or ~/.werf by default)")
+	cmd.Flags().StringVarP(cmdData.HomeDir, "home-dir", "", "", "Use specified dir to store werf cache files and dirs (default WERF_HOME environment or ~/.werf)")
 }
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SSHKeys = new([]string)
-	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (system ssh-agent or default keys will be used by default, see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified multiple times to use multiple keys.")
+	cmd.Flags().StringArrayVarP(cmdData.SSHKeys, "ssh-key", "", []string{}, "Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified multiple times to use multiple keys.")
 }
 
 func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
@@ -98,17 +98,17 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Environment = new(string)
-	cmd.Flags().StringVarP(cmdData.Environment, "env", "", "", "Use specified environment (use WERF_DEPLOY_ENVIRONMENT by default)")
+	cmd.Flags().StringVarP(cmdData.Environment, "env", "", "", "Use specified environment (default WERF_DEPLOY_ENVIRONMENT)")
 }
 
 func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Release = new(string)
-	cmd.Flags().StringVarP(cmdData.Release, "release", "", "", "Use specified Helm release name (use %project-%environment template by default)")
+	cmd.Flags().StringVarP(cmdData.Release, "release", "", "", "Use specified Helm release name (default %project-%environment template)")
 }
 
 func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Namespace = new(string)
-	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", "", "Use specified Kubernetes namespace (use %project-%environment template by default)")
+	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", "", "Use specified Kubernetes namespace (default %project-%environment template)")
 }
 
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
@@ -123,12 +123,12 @@ func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.StagesStorage = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; use WERF_STAGES_STORAGE environment by default).\nMore info about stages: https://flant.github.io/werf/reference/build/stages.html")
+	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default WERF_STAGES_STORAGE environment).\nMore info about stages: https://flant.github.io/werf/reference/build/stages.html")
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (use WERF_IMAGES_REPO environment by default)")
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (default WERF_IMAGES_REPO environment)")
 }
 
 func SetupInsecureRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -149,7 +149,7 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 
 	cmdData.DockerConfig = new(string)
 
-	desc := "Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker will be used by default (in the order of priority)."
+	desc := "Specify docker config directory path. Default WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker (in the order of priority)."
 
 	if extraDesc != "" {
 		desc += "\n"

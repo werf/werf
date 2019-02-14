@@ -49,19 +49,19 @@ werf deploy [options]
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':
-            Specify docker config directory path. WERF_DOCKER_CONFIG or DOCKER_CONFIG or ~/.docker 
-            will be used by default (in the order of priority).
+            Specify docker config directory path. Default WERF_DOCKER_CONFIG or DOCKER_CONFIG or 
+            ~/.docker (in the order of priority).
             Command needs granted permissions to read and pull images from the specified stages 
             storage and images repo
       --env='':
-            Use specified environment (use WERF_DEPLOY_ENVIRONMENT by default)
+            Use specified environment (default WERF_DEPLOY_ENVIRONMENT)
   -h, --help=false:
             help for deploy
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (use WERF_HOME environment or 
-            ~/.werf by default)
+            Use specified dir to store werf cache files and dirs (default WERF_HOME environment or 
+            ~/.werf)
   -i, --images-repo='':
-            Docker Repo to store images (use WERF_IMAGES_REPO environment by default)
+            Docker Repo to store images (default WERF_IMAGES_REPO environment)
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --kube-config='':
@@ -69,9 +69,9 @@ werf deploy [options]
       --kube-context='':
             Kubernetes config context
       --namespace='':
-            Use specified Kubernetes namespace (use %project-%environment template by default)
+            Use specified Kubernetes namespace (default %project-%environment template)
       --release='':
-            Use specified Helm release name (use %project-%environment template by default)
+            Use specified Helm release name (default %project-%environment template)
       --secret-values=[]:
             Additional helm secret values
       --set=[]:
@@ -79,12 +79,12 @@ werf deploy [options]
       --set-string=[]:
             Additional helm STRING sets
       --ssh-key=[]:
-            Use only specific ssh keys (system ssh-agent or default keys will be used by default, 
+            Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, 
             see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
             multiple times to use multiple keys.
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
-            supported for now; use WERF_STAGES_STORAGE environment by default).
+            supported for now; default WERF_STAGES_STORAGE environment).
             More info about stages: https://flant.github.io/werf/reference/build/stages.html
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags. Option can be 
@@ -102,8 +102,8 @@ werf deploy [options]
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (use WERF_TMP environment or system tmp 
-            dir by default)
+            Use specified dir to store tmp files and dirs (default WERF_TMP environment or system 
+            tmp dir)
       --values=[]:
             Additional helm values
 ```
