@@ -22,10 +22,17 @@ import (
 )
 
 type ImagesCleanupPolicies struct {
-	GitTagStrategyLimit           int64
+	GitTagStrategyHasLimit bool // No limit by default!
+	GitTagStrategyLimit    int64
+
+	GitTagStrategyHasExpiryPeriod bool // No expiration by default!
 	GitTagStrategyExpiryPeriod    time.Duration
-	GitCommitStrategyLimit        int64
-	GitCommitStrategyExpiryPeriod time.Duration
+
+	GitCommitStrategyHasLimit bool // No limit by default!
+	GitCommitStrategyLimit    int64
+
+	GitCommitStrategyHasExpiryPeriod bool // No expiration by default!
+	GitCommitStrategyExpiryPeriod    time.Duration
 }
 
 type ImagesCleanupOptions struct {
@@ -297,8 +304,10 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 	}
 
 	cleanupByPolicyOptions := repoImagesCleanupByPolicyOptions{
+		hasLimit:          options.Policies.GitTagStrategyHasLimit,
+		limit:             options.Policies.GitTagStrategyLimit,
+		hasExpiryPeriod:   options.Policies.GitTagStrategyHasExpiryPeriod,
 		expiryPeriod:      options.Policies.GitTagStrategyExpiryPeriod,
-		expiryLimit:       options.Policies.GitTagStrategyLimit,
 		gitPrimitive:      "tag",
 		commonRepoOptions: options.CommonRepoOptions,
 	}
@@ -310,8 +319,10 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 	}
 
 	cleanupByPolicyOptions = repoImagesCleanupByPolicyOptions{
+		hasLimit:          options.Policies.GitCommitStrategyHasLimit,
+		limit:             options.Policies.GitCommitStrategyLimit,
+		hasExpiryPeriod:   options.Policies.GitCommitStrategyHasExpiryPeriod,
 		expiryPeriod:      options.Policies.GitCommitStrategyExpiryPeriod,
-		expiryLimit:       options.Policies.GitCommitStrategyLimit,
 		gitPrimitive:      "commit",
 		commonRepoOptions: options.CommonRepoOptions,
 	}
@@ -339,8 +350,11 @@ func policyValue(envKey string, defaultValue int64) int64 {
 }
 
 type repoImagesCleanupByPolicyOptions struct {
-	expiryPeriod      time.Duration
-	expiryLimit       int64
+	hasLimit        bool
+	limit           int64
+	hasExpiryPeriod bool
+	expiryPeriod    time.Duration
+
 	gitPrimitive      string
 	commonRepoOptions CommonRepoOptions
 }
@@ -357,7 +371,7 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 	}
 
 	var expiryTime time.Time
-	if options.expiryPeriod > 0 {
+	if options.hasExpiryPeriod {
 		expiryTime = time.Now().Add(time.Duration(-options.expiryPeriod))
 	}
 
@@ -383,7 +397,7 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 				return nil, err
 			}
 
-			if !expiryTime.IsZero() && created.Before(expiryTime) {
+			if options.hasExpiryPeriod && created.Before(expiryTime) {
 				expiredRepoImages = append(expiredRepoImages, repositoryRepoImage)
 			} else {
 				notExpiredRepoImages = append(notExpiredRepoImages, repositoryRepoImage)
@@ -402,16 +416,16 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 			repoImages = exceptRepoImages(repoImages, expiredRepoImages...)
 		}
 
-		if options.expiryLimit > 0 && int64(len(notExpiredRepoImages)) > options.expiryLimit {
-			logger.LogServiceF("Removed repository %s tags by git-%s limit policy (> %d):\n", repository, options.gitPrimitive, options.expiryLimit)
+		if options.hasLimit && int64(len(notExpiredRepoImages)) > options.limit {
+			logger.LogServiceF("Removed repository %s tags by git-%s limit policy (> %d):\n", repository, options.gitPrimitive, options.limit)
 			if err := logger.WithIndent(func() error {
-				return repoImagesRemove(notExpiredRepoImages[options.expiryLimit:], options.commonRepoOptions)
+				return repoImagesRemove(notExpiredRepoImages[options.limit:], options.commonRepoOptions)
 			}); err != nil {
 				return nil, err
 			}
 			logger.LogOptionalLn()
 
-			repoImages = exceptRepoImages(repoImages, notExpiredRepoImages[options.expiryLimit:]...)
+			repoImages = exceptRepoImages(repoImages, notExpiredRepoImages[options.limit:]...)
 		}
 	}
 
