@@ -45,7 +45,15 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
   $ werf build-and-publish --stages-storage :local --images-repo registry.mydomain.com/myproject --tag-custom mytag
 
   # Build and publish all images from werf.yaml into minikube registry; tag images with the mybranch tag, using git-branch tagging strategy
-  $ werf build-and-publish --stages-storage :local --images-repo :minikube --tag-git-branch mybranch`,
+  $ werf build-and-publish --stages-storage :local --images-repo :minikube --tag-git-branch mybranch
+
+  # Build and publish with enabled drop-in shell session in the failed assembly container in the case when an error occurred
+  $ werf --stages-storage :local build-and-publish --introspect-error --images-repo :minikube --tag-git-branch mybranch
+
+  # Set --stages-storage default value using WERF_STAGES_STORAGE param and --images-repo default value using WERF_IMAGE_REPO param
+  $ export WERF_STAGES_STORAGE=:local
+  $ export WERF_IMAGES_REPO=myregistry.mydomain.com/myproject
+  $ werf build-and-publish --tag-git-tag v1.4.9`,
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
