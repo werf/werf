@@ -103,7 +103,7 @@ func generateGitlabEnvs() error {
 		}
 
 		if !isGRC && os.Getenv("CI_JOB_TOKEN") != "" {
-			imagesUsername = "ci-job-token"
+			imagesUsername = "gitlab-ci-token"
 			imagesPassword = os.Getenv("CI_JOB_TOKEN")
 			doLogin = true
 		}
