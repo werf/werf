@@ -37,6 +37,11 @@ func werfImageStagesFlushByCacheVersion(filterSet filters.Args, options CommonOp
 		}
 	}
 
+	imagesToDelete, err = processUsedImages(imagesToDelete, options)
+	if err != nil {
+		return err
+	}
+
 	if err := imagesRemove(imagesToDelete, options); err != nil {
 		return err
 	}
@@ -46,6 +51,11 @@ func werfImageStagesFlushByCacheVersion(filterSet filters.Args, options CommonOp
 
 func werfImagesFlushByFilterSet(filterSet filters.Args, options CommonOptions) error {
 	images, err := werfImagesByFilterSet(filterSet)
+	if err != nil {
+		return err
+	}
+
+	images, err = processUsedImages(images, options)
 	if err != nil {
 		return err
 	}
@@ -91,13 +101,8 @@ func containersByFilterSet(filterSet filters.Args) ([]types.Container, error) {
 }
 
 func imagesRemove(images []types.ImageSummary, options CommonOptions) error {
-	var err error
-	images, err = processUsedImages(images, options)
-	if err != nil {
-		return err
-	}
-
 	var imageReferences []string
+
 	for _, img := range images {
 		if len(img.RepoTags) == 0 {
 			imageReferences = append(imageReferences, img.ID)
