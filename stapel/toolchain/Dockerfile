@@ -1,6 +1,6 @@
 # Build tools
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN >/etc/profile && >/root/.profile
@@ -9,7 +9,7 @@ SHELL ["/bin/bash", "-lc"]
 RUN apt update && apt install -y build-essential wget curl gawk flex bison bzip2 liblzma5 texinfo file gettext python
 
 ENV LFS=/mnt/lfs
-ENV TOOLS=/.dapp/deps/toolchain/0.1.1
+ENV TOOLS=/.werf/stapel/toolchain/0.2.0
 ENV LFS_TGT=x86_64-lfs-linux-gnu
 
 RUN mkdir -pv $LFS$TOOLS && mkdir -pv $LFS/sources && chmod -v a+wt $LFS/sources
@@ -20,7 +20,7 @@ RUN bash -c "pushd $LFS/sources && md5sum -c $LFS/sources/md5sums && popd"
 ADD version-check.sh $LFS/sources/version-check.sh
 RUN $LFS/sources/version-check.sh
 
-RUN ln -sv $LFS/.dapp /
+RUN ln -sv $LFS/.werf /
 RUN groupadd lfs && useradd -s /bin/bash -g lfs -m -k /dev/null lfs
 RUN chown -R lfs:lfs $LFS
 RUN >/home/lfs/.profile && \
@@ -34,7 +34,7 @@ ENV MAKEFLAGS='-j 5'
 
 RUN cd $LFS/sources/ && \
 mkdir binutils && \
-tar xf binutils-*.tar.bz2 -C binutils --strip-components 1 && \
+tar xf binutils-*.tar.* -C binutils --strip-components 1 && \
 cd binutils && \
 mkdir -v build && \
 cd build && \
@@ -53,13 +53,13 @@ RUN mkdir -pv $TOOLS/lib && ln -sv lib $TOOLS/lib64 && make install
 ADD ./gcc-before-configure.sh $LFS/sources/gcc-before-configure.sh
 RUN cd $LFS/sources/ && \
 mkdir gcc && \
-tar xf gcc-*.tar.xz -C gcc --strip-components 1 && \
+tar xf gcc-*.tar.* -C gcc --strip-components 1 && \
 mkdir gcc/mpfr && \
-tar xf mpfr*.tar.xz -C gcc/mpfr --strip-components 1 && \
+tar xf mpfr*.tar.* -C gcc/mpfr --strip-components 1 && \
 mkdir gcc/gmp && \
-tar xf gmp*.tar.xz -C gcc/gmp --strip-components 1 && \
+tar xf gmp*.tar.* -C gcc/gmp --strip-components 1 && \
 mkdir gcc/mpc && \
-tar xf mpc*.tar.gz -C gcc/mpc --strip-components 1 && \
+tar xf mpc*.tar.* -C gcc/mpc --strip-components 1 && \
 cd gcc && \
 $LFS/sources/gcc-before-configure.sh && \
 mkdir -v build && \
@@ -92,7 +92,7 @@ RUN make install
 
 RUN cd $LFS/sources/ && \
 mkdir linux && \
-tar xf linux*.tar.xz -C linux --strip-components 1
+tar xf linux*.tar.* -C linux --strip-components 1
 WORKDIR $LFS/sources/linux
 RUN make mrproper && \
 make INSTALL_HDR_PATH=dest headers_install && \
@@ -100,7 +100,7 @@ cp -rv dest/include/* $TOOLS/include
 
 RUN cd $LFS/sources/ && \
 mkdir glibc && \
-tar xf glibc*.tar.xz -C glibc --strip-components 1 && \
+tar xf glibc*.tar.* -C glibc --strip-components 1 && \
 cd glibc && \
 mkdir -v build && \
 cd build && \
@@ -110,7 +110,6 @@ cd build && \
 --build=$(../scripts/config.guess) \
 --enable-kernel=3.2 \
 --with-headers=$TOOLS/include \
---enable-obsolete-nsl \
 libc_cv_forced_unwind=yes \
 libc_cv_c_cleanup=yes
 WORKDIR $LFS/sources/glibc/build
@@ -120,13 +119,13 @@ RUN make install
 RUN cd $LFS/sources/ && \
 rm -rf gcc && \
 mkdir gcc && \
-tar xf gcc-*.tar.xz -C gcc --strip-components 1 && \
+tar xf gcc-*.tar.* -C gcc --strip-components 1 && \
 mkdir gcc/mpfr && \
-tar xf mpfr*.tar.xz -C gcc/mpfr --strip-components 1 && \
+tar xf mpfr*.tar.* -C gcc/mpfr --strip-components 1 && \
 mkdir gcc/gmp && \
-tar xf gmp*.tar.xz -C gcc/gmp --strip-components 1 && \
+tar xf gmp*.tar.* -C gcc/gmp --strip-components 1 && \
 mkdir gcc/mpc && \
-tar xf mpc*.tar.gz -C gcc/mpc --strip-components 1 && \
+tar xf mpc*.tar.* -C gcc/mpc --strip-components 1 && \
 cd gcc && \
 $LFS/sources/gcc-before-configure.sh && \
 mkdir -v build && \
@@ -138,7 +137,7 @@ cd build && \
 --disable-nls \
 --disable-libstdcxx-threads \
 --disable-libstdcxx-pch \
---with-gxx-include-dir=$TOOLS/$LFS_TGT/include/c++/7.2.0
+--with-gxx-include-dir=$TOOLS/$LFS_TGT/include/c++/8.2.0
 WORKDIR $LFS/sources/gcc/build
 RUN make
 RUN make install
@@ -148,7 +147,7 @@ RUN make install
 RUN cd $LFS/sources/ && \
 rm -rf binutils && \
 mkdir binutils && \
-tar xf binutils-*.tar.bz2 -C binutils --strip-components 1 && \
+tar xf binutils-*.tar.* -C binutils --strip-components 1 && \
 cd binutils && \
 mkdir -v build && \
 cd build && \
@@ -167,13 +166,13 @@ RANLIB=$LFS_TGT-ranlib \
 RUN cd $LFS/sources/ && \
 rm -rf gcc && \
 mkdir gcc && \
-tar xf gcc-*.tar.xz -C gcc --strip-components 1 && \
+tar xf gcc-*.tar.* -C gcc --strip-components 1 && \
 mkdir gcc/mpfr && \
-tar xf mpfr*.tar.xz -C gcc/mpfr --strip-components 1 && \
+tar xf mpfr*.tar.* -C gcc/mpfr --strip-components 1 && \
 mkdir gcc/gmp && \
-tar xf gmp*.tar.xz -C gcc/gmp --strip-components 1 && \
+tar xf gmp*.tar.* -C gcc/gmp --strip-components 1 && \
 mkdir gcc/mpc && \
-tar xf mpc*.tar.gz -C gcc/mpc --strip-components 1 && \
+tar xf mpc*.tar.* -C gcc/mpc --strip-components 1 && \
 cd gcc && \
 cat gcc/limitx.h gcc/glimits.h gcc/limity.h > \
   `dirname $($LFS_TGT-gcc -print-libgcc-file-name)`/include-fixed/limits.h && \
@@ -198,8 +197,8 @@ RUN make
 RUN make install
 RUN ln -sv gcc $TOOLS/bin/cc
 
-# Import tools into dappdeps/toolchain scratch
+# Import tools
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /.dapp/deps/toolchain/0.1.1 /.dapp/deps/toolchain/0.1.1
+COPY --from=0 /.werf/stapel/toolchain/0.2.0 /.werf/stapel/toolchain/0.2.0

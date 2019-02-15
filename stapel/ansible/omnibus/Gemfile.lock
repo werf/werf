@@ -1,0 +1,101 @@
+GIT
+  remote: git://github.com/chef/omnibus-software.git
+  revision: 3213f1d282f6b62dfa656353c6c8557fdca8378b
+  specs:
+    omnibus-software (4.0.0)
+      chef-sugar (>= 3.4.0)
+      omnibus (>= 5.6.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    addressable (2.6.0)
+      public_suffix (>= 2.0.2, < 4.0)
+    awesome_print (1.8.0)
+    aws-sdk (2.11.225)
+      aws-sdk-resources (= 2.11.225)
+    aws-sdk-core (2.11.225)
+      aws-sigv4 (~> 1.0)
+      jmespath (~> 1.0)
+    aws-sdk-resources (2.11.225)
+      aws-sdk-core (= 2.11.225)
+    aws-sigv4 (1.0.3)
+    chef-config (13.12.3)
+      addressable
+      fuzzyurl
+      mixlib-config (>= 2.2.12, < 3.0)
+      mixlib-shellout (~> 2.0)
+      tomlrb (~> 1.2)
+    chef-sugar (3.6.0)
+    citrus (3.0.2)
+    cleanroom (1.0.0)
+    ffi (1.10.0)
+    ffi-yajl (2.3.1)
+      libyajl2 (~> 1.2)
+    fuzzyurl (0.9.0)
+    iostruct (0.0.4)
+    ipaddress (0.8.3)
+    jmespath (1.4.0)
+    libyajl2 (1.2.0)
+    license_scout (1.0.22)
+      ffi-yajl (~> 2.2)
+      mixlib-shellout (~> 2.2)
+      toml-rb (~> 1.0)
+    mixlib-cli (2.0.1)
+    mixlib-config (2.2.18)
+      tomlrb
+    mixlib-log (1.7.1)
+    mixlib-shellout (2.4.4)
+    mixlib-versioning (1.2.7)
+    multipart-post (2.0.0)
+    ohai (8.26.1)
+      chef-config (>= 12.5.0.alpha.1, < 14)
+      ffi (~> 1.9)
+      ffi-yajl (~> 2.2)
+      ipaddress
+      mixlib-cli
+      mixlib-config (~> 2.0)
+      mixlib-log (>= 1.7.1, < 2.0)
+      mixlib-shellout (~> 2.0)
+      plist (~> 3.1)
+      systemu (~> 2.6.4)
+      wmi-lite (~> 1.0)
+    omnibus (5.6.8)
+      aws-sdk (~> 2)
+      chef-sugar (~> 3.3)
+      cleanroom (~> 1.0)
+      ffi-yajl (~> 2.2)
+      license_scout (~> 1.0)
+      mixlib-shellout (~> 2.0)
+      mixlib-versioning
+      ohai (~> 8.0)
+      pedump
+      ruby-progressbar (~> 1.7)
+      thor (~> 0.18)
+    pedump (0.5.2)
+      awesome_print
+      iostruct (>= 0.0.4)
+      multipart-post (~> 2.0.0)
+      progressbar
+      zhexdump (>= 0.0.2)
+    plist (3.5.0)
+    progressbar (1.10.0)
+    public_suffix (3.0.3)
+    ruby-progressbar (1.10.0)
+    systemu (2.6.5)
+    thor (0.20.3)
+    toml-rb (1.1.2)
+      citrus (~> 3.0, > 3.0)
+    tomlrb (1.2.8)
+    wmi-lite (1.0.2)
+    zhexdump (0.0.2)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  omnibus (~> 5.6)
+  omnibus-software!
+
+BUNDLED WITH
+   1.16.1
