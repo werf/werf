@@ -1,7 +1,6 @@
 package cleanup
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/flant/werf/pkg/docker_registry"
@@ -28,7 +27,7 @@ func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) 
 		repoImages = append(repoImages, namelessImages...)
 	} else {
 		for _, imageName := range options.ImagesNames {
-			repository := fmt.Sprintf("%s/%s", options.ImagesRepo, imageName)
+			repository := strings.Join([]string{options.ImagesRepo, imageName}, "/")
 			images, err := docker_registry.ImagesByWerfImageLabel(repository, "true")
 			if err != nil {
 				return nil, err
