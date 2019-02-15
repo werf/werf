@@ -61,7 +61,7 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 		return err
 	}
 
-	writeFile(filepath.Join(stageCallbackDir, "__init__.py"), "# module callback")
+	writeFile(filepath.Join(stageCallbackDir, "__init__.py"), b.assetsCallbackInitPy())
 
 	if livePyPath, exist := os.LookupEnv("WERF_DEBUG_ANSIBLE_LIVE_PY_PATH"); exist {
 		// hardlink a local live.py into workdir to ease ansible callback development
@@ -70,7 +70,7 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 			return er
 		}
 	} else {
-		writeFile(filepath.Join(stageCallbackDir, "live.py"), b.assetsLivePy())
+		writeFile(filepath.Join(stageCallbackDir, "live.py"), b.assetsCallbackLivePy())
 	}
 
 	// add werf specific stdout callback for ansible
@@ -81,7 +81,7 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 			return er
 		}
 	} else {
-		writeFile(filepath.Join(stageCallbackDir, "werf.py"), b.assetsWerfPy())
+		writeFile(filepath.Join(stageCallbackDir, "werf.py"), b.assetsCallbackWerfPy())
 	}
 
 	return nil
@@ -170,9 +170,9 @@ func (b *Ansible) containerTmpDir() string {
 }
 
 func mkdirP(path string) error {
-	return os.MkdirAll(path, os.ModePerm)
+	return os.MkdirAll(path, os.FileMode(0775))
 }
 
 func writeFile(path string, content string) error {
-	return ioutil.WriteFile(path, []byte(content), os.ModePerm)
+	return ioutil.WriteFile(path, []byte(content), os.FileMode(0664))
 }

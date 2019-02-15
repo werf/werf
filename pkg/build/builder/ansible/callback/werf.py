@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # (c) 2018, Ivan Mikheykin <ivan.mikheykin@flant.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
@@ -18,10 +19,10 @@ DOCUMENTATION = '''
       - set as stdout callback in configuration
 '''
 
-#from ansible.plugins.callback.live import CallbackModule as CallbackModule_live
-# live.py moved to werf
 from callback.live import CallbackModule as CallbackModule_live
+from callback.live import vt100, lColor
 from ansible import constants as C
+from ansible.utils.color import stringc
 
 import os
 import json
@@ -47,12 +48,12 @@ class CallbackModule(CallbackModule_live):
     def _read_dump_config_doc(self):
         # read content from file in WERF_DUMP_CONFIG_DOC_PATH env
         if 'WERF_DUMP_CONFIG_DOC_PATH' not in os.environ:
-            return ''
+            return {}
         dump_path = os.environ['WERF_DUMP_CONFIG_DOC_PATH']
-        res = ''
+        res = {}
         try:
             fh = open(dump_path, 'r')
-            res = json.load(fh) #.read()
+            res = json.load(fh)
             fh.close()
         except:
             pass
@@ -61,17 +62,21 @@ class CallbackModule(CallbackModule_live):
 
     # werf_stage_name commented for consistency with werffile-yml behaviour
     def _display_werf_config(self, task):
-        print('qweqweqweqwe')
         tags = task.tags
-        dump_config_section_key = ''
-        #werf_stage_name = ''
-        if len(tags) > 0:
-            # stage name appended before dump
-            #werf_stage_name = tags[-2]
-            # last tag is dump of section
-            dump_config_section_key = tags[-1]
+        if not tags or len(tags) == 0:
+            return
+
+        # last tag is a key to a section dump in dump_config
+        dump_config_section_key = tags[-1]
 
         dump_config = self._read_dump_config_doc()
-        dump_config_doc = dump_config['dump_config_doc']
-        dump_config_section = dump_config['dump_config_sections'][dump_config_section_key]
-        self._display.display("\n\n%s\n%s\n" % (dump_config_section, dump_config_doc), color=C.COLOR_DEBUG)
+        dump_config_doc = dump_config.get('dump_config_doc', '')
+        dump_config_sections = dump_config.get('dump_config_sections', {})
+        dump_config_section = dump_config_sections.get(dump_config_section_key, '')
+        self._print(
+            u"\n",
+            lColor.COLOR_DEBUG, u"Failed task configuration:\n\n", vt100.reset,
+            stringc(dump_config_section, C.COLOR_DEBUG),
+            u"\n",
+            stringc(dump_config_doc, C.COLOR_DEBUG),
+            u"\n")
