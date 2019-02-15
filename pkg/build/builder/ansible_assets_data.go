@@ -25,6 +25,7 @@ callback_plugins = %[2]s
 stdout_callback = werf
 ; force color
 force_color = 1
+; use uncompressed modules because of local connection
 module_compression = 'ZIP_STORED'
 local_tmp = %[3]s
 remote_tmp = %[4]s
@@ -48,10 +49,14 @@ func (b *Ansible) assetsCryptPy() string {
 	return ansible.FSMustString(false, "/ansible/crypt.py")
 }
 
-func (b *Ansible) assetsLivePy() string {
-	return ansible.FSMustString(false, "/ansible/live.py")
+func (b *Ansible) assetsCallbackInitPy() string {
+	return ansible.FSMustString(false, "/ansible/callback/__init__.py")
 }
 
-func (b *Ansible) assetsWerfPy() string {
-	return ansible.FSMustString(false, "/ansible/werf.py")
+func (b *Ansible) assetsCallbackLivePy() string {
+	return ansible.FSMustString(false, "/ansible/callback/live.py")
+}
+
+func (b *Ansible) assetsCallbackWerfPy() string {
+	return ansible.FSMustString(false, "/ansible/callback/werf.py")
 }
