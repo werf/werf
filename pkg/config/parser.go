@@ -21,7 +21,7 @@ import (
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
-	yaml "gopkg.in/flant/yaml.v2"
+	"gopkg.in/flant/yaml.v2"
 )
 
 func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
@@ -398,7 +398,7 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func splitByImages(rawImages []*rawImage, werfConfigRenderContent string, werfConfigRenderPath string) ([]*Image, error) {
+func splitByImages(rawImages []*rawImage, werfConfigRenderContent, werfConfigRenderPath string) ([]*Image, error) {
 	var images []*Image
 	var artifacts []*ImageArtifact
 
@@ -463,6 +463,10 @@ func validateImagesNames(images []*Image, artifacts []*ImageArtifact) error {
 	imageByName := map[string]*Image{}
 	for _, image := range images {
 		name := image.Name
+
+		if name == "" && len(images) > 1 {
+			return newConfigError(fmt.Sprintf("conflict between images names: a nameless image cannot be specified in the config with multiple images!\n\n%s\n", dumpConfigDoc(image.raw.doc)))
+		}
 
 		if d, ok := imageByName[name]; ok {
 			return newConfigError(fmt.Sprintf("conflict between images names!\n\n%s%s\n", dumpConfigDoc(d.raw.doc), dumpConfigDoc(image.raw.doc)))
