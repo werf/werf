@@ -29,8 +29,8 @@ Also, we will check that the application works and push the image in a docker re
 
 This command should be run prior running any werf command in your shell session:
 
-```
-source <(multiwerf use 1.0)
+```shell
+source <(multiwerf use 1.0 beta)
 ```
 
 ## Step 1: Add a config
@@ -55,6 +55,7 @@ To implement these steps and requirements with werf we will add a special file c
     {% raw %}
     ```yaml
     project: symfony-demo
+    configVersion: 1
     ---
 
     image: ~
@@ -152,8 +153,8 @@ To implement these steps and requirements with werf we will add a special file c
     {% raw %}
     ```yaml
     project: symfony-demo
+    configVersion: 1
     ---
-
     image: ~
     from: ubuntu:16.04
     docker:
@@ -204,14 +205,13 @@ Let's build and run our first application.
 2.  Build an image:
 
     ```shell
-    werf build
+    werf build --stages-storage :local
     ```
 
 3.  Run a container from the image:
 
     ```shell
-    werf tag --repo myimage --tag mytag
-    docker run -d -p 8000:8000 myimage:mytag /app/start.sh
+    werf --stages-storage :local run --docker-options="-d -p 8000:8000" -- /app/start.sh
     ```
 
 4.  Check that the application runs and responds:
@@ -233,7 +233,7 @@ Werf can be used to push a built image into docker-registry.
 2. Push image with werf using default `latest` tag:
 
     ```shell
-    werf push --repo localhost:5000/symfony-demo
+    werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-git-branch mybranch
     ```
 
 ## What Can Be Improved

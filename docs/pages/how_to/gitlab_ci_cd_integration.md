@@ -42,7 +42,7 @@ Eventually, Werf node needs access:
 
 You need to set up GitLab runner with `werf` tags.
 
-### Base setup
+### Setup runner
 
 On the master kubernetes node, you need to install and set up GitLab runner. Follow these steps:
 
@@ -60,29 +60,16 @@ On the master kubernetes node, you need to install and set up GitLab runner. Fol
    sudo usermod -Ga docker gitlab-runner
    ```
 
-1. Install latest [`multiwerf`](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
+1. Install [Werf dependencies]({{ site.baseurl }}/how_to/installation.html#install-dependencies) including Helm.
+1. Install [`Multiwerf`](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
 
    ```
    sudo su gitlab-runner
    mkdir -p ~/bin
    cd ~/bin
-   curl -L https://raw.githubusercontent.com/flant/multiwerf/master/install.sh | bash
+   curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
    ```
 
-### Setup runner
-
-The runner needs [helm](https://helm.sh/) and an access to the kubernetes cluster through the kubectl. An easy way is to use the master kubernetes node.
-
-Make the following steps on the master node:
-1. Install and init Helm.
-   ```bash
-   curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get > get_helm.sh &&
-   chmod 700 get_helm.sh &&
-   ./get_helm.sh &&
-   kubectl create serviceaccount tiller --namespace kube-system &&
-   kubectl create clusterrolebinding tiller --clusterrole=cluster-admin --serviceaccount=kube-system:tiller &&
-   helm init --service-account tiller
-   ```
 1. Copy kubectl config to the home folder of the `gitlab-runner` user.
    ```bash
    mkdir -p /home/gitlab-runner/.kube &&
@@ -90,7 +77,7 @@ Make the following steps on the master node:
    sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/.kube
    ```
 
-> If you install werf not on the master kubernetes node, you must also [install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) Docker and setup kubectl.
+> If you install Werf not on the master kubernetes node, you must [install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) Docker and setup kubectl.
 
 ## Pipeline
 

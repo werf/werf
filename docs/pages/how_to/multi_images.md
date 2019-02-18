@@ -15,15 +15,14 @@ In this article, we will build an example application — [AtSea Shop](https://g
 
 ## Requirements
 
-* Installed [docker-compose](https://docs.docker.com/compose/install/).
 * Installed [multiwerf](https://github.com/flant/multiwerf) on the host system.
 
 ### Select werf version
 
 This command should be run prior running any werf command in your shell session:
 
-```
-source <(multiwerf use 1.0)
+```shell
+source <(multiwerf use 1.0 beta)
 ```
 
 ## Building the application
@@ -225,6 +224,7 @@ To build an application with all of its components create the following `werf.ya
 {% raw %}
 ```yaml
 project: atsea-shop
+configVersion: 1
 ---
 
 artifact: storefront
@@ -375,77 +375,10 @@ mkdir -p reverse_proxy/certs && openssl req -newkey rsa:4096 -nodes -subj "/CN=a
 Execute the following command in the root folder of the project to build all images:
 
 ```bash
-werf build
+werf build --stages-storage :local
 ```
 
-## Step 5: Tag images
-
-Execute the following command in the root folder of the project to tag all images:
-
-```bash
-werf tag --repo atsea --tag werf
-```
-
-## Step 6: Add docker-compose-werf.yml file
-
-Existing in the repo `docker-compose.yml` file assumes building some images. As we want to use already built images instead, we need to modify the `docker-compose.yml` file to use images with tag `werf` (we built and tagged earlier).
-
-Create the following `docker-compose-werf.yml` file in the root folder of the project:
-
-<details markdown="1">
-<summary>The <b><i>docker-compose-werf.yml</i></b> file...</summary>
-
-{% raw %}
-```yaml
-version: "3.1"
-
-services:
-  reverse_proxy:
-    image: atsea/reverse_proxy:werf
-    ports:
-    - "80:80"
-    - "443:443"
-    networks:
-    - front-tier
-    - back-tier
-
-  database:
-    image: atsea/database:werf
-    user: postgres
-    environment:
-      POSTGRES_USER: gordonuser
-      POSTGRES_DB: atsea
-    ports:
-    - "5432:5432"
-    networks:
-    - back-tier
-
-  appserver:
-    image: atsea/app:werf
-    user: gordon
-    ports:
-    - "8080:8080"
-    - "5005:5005"
-    networks:
-    - front-tier
-    - back-tier
-
-  payment_gateway:
-    image: atsea/payment_gw:werf
-
-networks:
-  front-tier:
-  back-tier:
-
-networks:
-  front-tier:
-  back-tier:
-```
-{% endraw %}
-
-</details>
-
-## Step 7: Modify /etc/hosts file
+## Step 5: Modify /etc/hosts file
 
 To have an ability to open the example by the `http://atseashop.com` URL, add the `atseashop.com` name pointing to the address of your local interface into your `/etc/hosts` file. E.g.:
 
@@ -453,17 +386,33 @@ To have an ability to open the example by the `http://atseashop.com` URL, add th
 sudo sed -ri 's/^(127.0.0.1)(\s)+/\1\2atseashop.com /' /etc/hosts
 ```
 
-## Running the application
+## Step 6: Run the application
 
-To run the application, execute the following command from the root folder of the project:
+To run the application images, execute the following commands from the root folder of the project:
 
 ```bash
-docker-compose -f docker-compose-werf.yml up --no-build
+werf run --stages-storage :local --docker-options="-d --rm --name payment_gw" payment_gw  &&
+werf run --stages-storage :local --docker-options="-d --rm --name database -p 5432:5432" database &&
+werf run --stages-storage :local --docker-options="-d --rm --name app -p 8080:8080 --link database:database" app &&
+werf run --stages-storage :local --docker-options="-d --rm --name reverse_proxy -p 80:80 -p 443:443 --link app:appserver" reverse_proxy
 ```
 
-> If you get an error like `ERROR: This node is not a swarm manager...` execute `docker swarm init` or `docker swarm init --advertise-addr <ip>` (where ip is the address of on the active interface).
+Check that all containers are running, by executing:
+```bash
+docker ps
+```
 
-Open the [atseashop.com](http://atseashop.com) in your browser, and you will be redirected by NGINX to `https://atseashop.com`. You will get a warning message from your browser about the security of the connection because there is a self-signed certificate used in the example. You need to add an exception to open the [https://atseashop.com](atseashop.com) page.
+You should see running containers with names: reverse_proxy, app, database, payment_gw and registry.
+
+Wait for about 30 seconds or a bit more for all the containers to be ready, then open the [atseashop.com](http://atseashop.com) in your browser. You will be redirected by NGINX to `https://atseashop.com` and you will get a warning message from your browser about the security of the connection, because there is a self-signed certificate used in the example. You need to add an exception to open the [https://atseashop.com](atseashop.com) page.
+
+## Stopping the application
+
+To stop application containers execute the following command:
+
+```bash
+docker stop reverse_proxy app database payment_gw
+```
 
 ## Conclusions
 

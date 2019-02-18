@@ -18,7 +18,7 @@ In this article, we will build an example GO application. Then we will optimize 
 This command should be run prior running any werf command in your shell session:
 
 ```
-source <(multiwerf use 1.0)
+source <(multiwerf use 1.0 beta)
 ```
 
 ## Sample application
@@ -31,6 +31,7 @@ Create a `booking` directory and place the following `werf.yaml` in the `booking
 {% raw %}
 ```yaml
 project: hotel-booking
+configVersion: 1
 ---
 
 {{ $_ := set . "GoDlPath" "https://dl.google.com/go/" }}
@@ -92,26 +93,25 @@ export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 
 Build the application by executing the following command in the `booking` directory:
 ```bash
-werf build
+werf build --stages-storage :local
 ```
 
 ### Running
 
 Run the application by executing the following command in the `booking` directory:
 ```bash
-werf tag --repo booking --tag v1.0
-docker run -p 9000:9000 --rm -d booking/go-booking:v1.0 /app/run.sh
+werf --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" run go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
 ```bash
-docker ps
+docker ps -f "name=go-booking"
 ```
 
-You should see a running container with a random name, like this:
+You should see a running container with a `go-booking` name, like this:
 ```bash
-CONTAINER ID  IMAGE         COMMAND        CREATED        STATUS        PORTS                   NAMES
-41d6f49798a8  14e6b9c6b93b  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  infallible_bell
+CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
+41d6f49798a8  image-stage-hotel-booking:f27efaf9...1456b0b4  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
 
 Open in a web browser the following URL — [http://localhost:9000](http://localhost:9000).
@@ -120,29 +120,21 @@ The `revel framework booking demo` page should open, and you can login by enteri
 
 ### Getting the application image size
 
-After tagging we get an image `booking/go-booking:v1.0` according to werf naming rules (read more about naming [here]({{ site.baseurl }}/reference/registry/image_naming.html)).
-
 Determine the image size by executing:
 
+{% raw %}
 ```bash
-docker images booking/go-booking:v1.0
+docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
+{% endraw %}
 
 The output will be something like this:
 ```bash
-REPOSITORY           TAG           IMAGE ID            CREATED             SIZE
-booking/go-booking   v1.0          0bf71cb34076        10 minutes ago      1.04 GB
+REPOSITORY                 TAG                   IMAGE ID          CREATED             SIZE
+image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ago      1.04 GB
 ```
 
-You can check the size of all ancestor images. To find ancestor images tags look at the output of the `werf build` command — in the lines like `# Calculated signature c05db314b209a96bd906b77c910d6a5ae76e25f6422bf57f2da37e935805ddca for image/go-booking stage/setup`. The long HEX value is the image tag. E.e. you could see in the output of the `docker images` command like this (TAGs values was cut to fit the web page):
-
-```bash
-REPOSITORY            TAG                  IMAGE ID            CREATED             SIZE
-image-stage-booking     c05db314b20...ddca   14e6b9c6b93b        21 minutes ago      1.04 GB
-image-stage-booking     46fb00c9dda...3ef1   9a34966e6c85        22 minutes ago      938 MB
-image-stage-booking     bf057acfb01...5d4b   97ea9a99ddb2        49 minutes ago      805 MB
-image-stage-booking     41772c141b1...9a11   66ce7d681e8d        52 minutes ago      84.1 MB
-```
+You can check the size of all ancestor images in the output of the `werf build --stages-storage :local` command. After Werf built or used any image it outputs some information  like image name and tag, image size or image size difference, used instructions and commands.
 
 Pay attention, that the image size of the application is **above 1 GB**.
 
@@ -204,6 +196,7 @@ Add the following to mount directives into config:
 {% raw %}
 ```yaml
 project: hotel-booking
+configVersion: 1
 ---
 
 {{ $_ := set . "GoDlPath" "https://dl.google.com/go/" }}
@@ -281,32 +274,31 @@ export PATH=$GOPATH/bin:$PATH:/usr/local/go/bin
 
 Build the application with the modified config:
 ```bash
-werf build
+werf build --stages-storage :local
 ```
 
 ### Running
 
-Before running the modified application, you need to stop running container. Otherwise, the new container can't bind to 9000 port on localhost. E.g., execute the following command to stop last created container:
+Before running the modified application, you need to stop running `go-booking` container we built. Otherwise, the new container can't bind to 9000 port on localhost. E.g., execute the following command to stop last created container:
 
 ```bash
-docker stop `docker ps -lq`
+docker stop go-booking
 ```
 
 Run the modified application by executing the following command:
 ```bash
-werf tag --repo booking --tag v2.0
-docker run -p 9000:9000 --rm -d booking/go-booking:v2.0 /app/run.sh
+werf --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" run go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
 ```bash
-docker ps
+docker ps -f "name=go-booking"
 ```
 
-You should see a running container with a random name, like this:
+You should see a running container with a `go-booking` name, like this:
 ```bash
-CONTAINER ID  IMAGE         COMMAND        CREATED        STATUS        PORTS                   NAMES
-88287022813b  c8277cd4a801  "/app/run.sh"  5 seconds ago  Up 3 seconds  0.0.0.0:9000->9000/tcp  naughty_dubinsky
+CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
+41d6f49798a8  image-stage-hotel-booking:306aa6e8...f71dbe53  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
 
 Open in a web browser the following URL — [http://localhost:9000](http://localhost:9000).
@@ -316,30 +308,31 @@ The `revel framework booking demo` page should open, and you can login by enteri
 ### Getting images size
 
 Determine the image size of optimized build, by executing:
+{% raw %}
 ```bash
-docker images booking/go-booking
+docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
+{% endraw %}
 
 The output will be something like this:
 ```bash
-REPOSITORY            TAG        IMAGE ID         CREATED            SIZE
-booking/go-booking    v2.0      0a9943b0da6a     3 minutes ago      335 MB
-booking/go-booking    v1.0      0bf71cb34076     15 minutes ago     1.04 GB
+REPOSITORY                   TAG                      IMAGE ID         CREATED            SIZE
+image-stage-hotel-booking    306aa6e8...f71dbe53      0a9943b0da6a     3 minutes ago      335 MB
 ```
 
 ### Analysis
 
-Werf store build cache for project in the `~/.werf/builds/<project>/` directory. Contents of directories mounted with `from: build_dir` parameter are placed in the `~/.werf/builds/<project>/mount/` directory.
+Werf store stages cache for project in `~/.werf/local_cache` and `~/.werf/shared_context` directory. Contents of directories mounted with `from: build_dir` parameter are placed in the `~/.werf/shared_context/mounts/projects/<project>/` directory.
 
-Analyze the structure of the `~/.werf/builds/booking/mount` directory. Execute the following command:
+Analyze the structure of the `~/.werf/shared_context/mounts/projects/hotel-booking` directory. Execute the following command:
 
 ```bash
-tree -L 3 ~/.werf/builds/hotel-booking/mount
+tree -L 3 ~/.werf/shared_context/mounts/projects/hotel-booking
 ```
 
 The output will be like this (some lines skipped):
 ```bash
-/home/user/.werf/builds/booking/mount
+/home/user/.werf/shared_context/mounts/projects/hotel-booking
 ├── usr-local-go-a179aaae
 │   ├── api
 │   ├── lib
@@ -359,22 +352,22 @@ As you may see, there are separate directories on the host for every mount in co
 
 Check the directories size, by executing:
 ```bash
-sudo du -kh --max-depth=1 ~/.werf/builds/hotel-booking/mount
+sudo du -kh --max-depth=1 ~/.werf/shared_context/mounts/projects/hotel-booking
 ```
 
 The output will be like this:
 ```bash
-49M     /home/user/.werf/builds/booking/mount/var-cache-apt-28143ccf
-122M    /home/user/.werf/builds/booking/mount/usr-local-src-f1bad46a
-423M    /home/user/.werf/builds/booking/mount/usr-local-go-a179aaae
-592M    /home/user/.werf/builds/booking/mount
+49M     /home/user/.werf/shared_context/mounts/projects/hotel-booking/var-cache-apt-28143ccf
+122M    /home/user/.werf/shared_context/mounts/projects/hotel-booking/usr-local-src-f1bad46a
+423M    /home/user/.werf/shared_context/mounts/projects/hotel-booking/usr-local-go-a179aaae
+592M    /home/user/.werf/shared_context/mounts/projects/hotel-booking
 ```
 
 `592MB` is a size of files excluded from image, but these files are accessible, in case of rebuild image and also they can be mounted in other images in this project. E.g., if you add image based on Ubuntu, you can mount `/var/cache/apt` with `from: build_dir` and use already downloaded packages.
 
 Also, approximately `77MB` of space occupy files in directories mounted with `from: tmp_dir`. These files also excluded from the image and deleted from the host at the end of image building.
 
-The total size difference between `v1.0` and `v2.0` images is about 730 MB (the result of 1.04 GB — 335 MB).
+The total size difference between images with and without using mounts is about 730 MB (the result of 1.04 GB — 335 MB).
 
 **Our example shows that with using werf mounts the image size smaller by more than 68% than the original image size!**
 
@@ -382,4 +375,4 @@ The total size difference between `v1.0` and `v2.0` images is about 730 MB (the 
 
 * Use a smaller base image instead of ubuntu, such as [alpine](https://hub.docker.com/_/alpine/) or [golang](https://hub.docker.com/_/golang/).
 * Using [werf artifacts]({{ site.baseurl }}/reference/build/artifact.html) in many cases can give more efficient.
-  The size of `/app` directory in the image is about only 17 MB (you can check it by executing `docker run --rm booking/go-booking:v2.0 du -kh --max-depth=0 /app`). So you can build files into the `/app` in werf artifact and then import only the resulting `/app` directory.
+  The size of `/app` directory in the image is about only 17 MB (you can check it by executing `werf --stages-storage :local --docker-options="--rm" run go-booking -- du -kh --max-depth=0 /app`). So you can build files into the `/app` in werf artifact and then import only the resulting `/app` directory.
