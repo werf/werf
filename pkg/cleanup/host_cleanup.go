@@ -65,6 +65,11 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 		}
 	}
 
+	imagesToRemove, err = processUsedImages(imagesToRemove, options)
+	if err != nil {
+		return err
+	}
+
 	if err := imagesRemove(imagesToRemove, options); err != nil {
 		return err
 	}

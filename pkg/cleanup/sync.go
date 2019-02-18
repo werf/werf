@@ -217,6 +217,11 @@ func projectImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, 
 		}
 	}
 
+	imageStages, err = processUsedImages(imageStages, options.CommonOptions)
+	if err != nil {
+		return err
+	}
+
 	err = imagesRemove(imageStages, options.CommonOptions)
 	if err != nil {
 		return err

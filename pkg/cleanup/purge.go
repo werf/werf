@@ -27,7 +27,7 @@ func ImagesPurge(options CommonRepoOptions) error {
 func StagesPurge(options CommonProjectOptions) error {
 	projectImagesLockName := fmt.Sprintf("%s.images", options.ProjectName)
 	err := lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if err := projectImageStagesFlush(options); err != nil {
+		if err := projectStagesPurge(options); err != nil {
 			return err
 		}
 
@@ -79,8 +79,13 @@ func projectImagesFlush(options CommonProjectOptions) error {
 	return nil
 }
 
-func projectImageStagesFlush(options CommonProjectOptions) error {
-	if err := werfImagesFlushByFilterSet(projectImageStageFilterSet(options), options.CommonOptions); err != nil {
+func projectStagesPurge(options CommonProjectOptions) error {
+	images, err := werfImagesByFilterSet(projectImageStageFilterSet(options))
+	if err != nil {
+		return err
+	}
+
+	if err := imagesRemove(images, options.CommonOptions); err != nil {
 		return err
 	}
 
