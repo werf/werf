@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleanup"
+	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
@@ -95,21 +95,21 @@ func runPurge() error {
 		imageNames = append(imageNames, image.Name)
 	}
 
-	commonRepoOptions := cleanup.CommonRepoOptions{
+	commonRepoOptions := cleaning.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imageNames,
 		DryRun:      *CommonCmdData.DryRun,
 	}
 
 	if err := logger.LogServiceProcess("Running images purge", logger.LogProcessOptions{WithIndent: true}, func() error {
-		return cleanup.ImagesPurge(commonRepoOptions)
+		return cleaning.ImagesPurge(commonRepoOptions)
 	}); err != nil {
 		return err
 	}
 
-	commonProjectOptions := cleanup.CommonProjectOptions{
+	commonProjectOptions := cleaning.CommonProjectOptions{
 		ProjectName: projectName,
-		CommonOptions: cleanup.CommonOptions{
+		CommonOptions: cleaning.CommonOptions{
 			DryRun:         *CommonCmdData.DryRun,
 			SkipUsedImages: false,
 			RmiForce:       true,
@@ -118,7 +118,7 @@ func runPurge() error {
 	}
 
 	if err := logger.LogServiceProcess("Running stages purge", logger.LogProcessOptions{WithIndent: true}, func() error {
-		return cleanup.StagesPurge(commonProjectOptions)
+		return cleaning.StagesPurge(commonProjectOptions)
 	}); err != nil {
 		return err
 	}

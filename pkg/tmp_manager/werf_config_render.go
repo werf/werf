@@ -7,12 +7,12 @@ import (
 )
 
 func CreateWerfConfigRender() (string, error) {
-	newFile, err := newTmpFile("werf-config-render-")
+	newFile, err := newTmpFile(WerfConfigRenderPrefix)
 	if err != nil {
 		return "", err
 	}
 
-	if err := registerCreatedPath(newFile, filepath.Join(GetCreatedTmpDirs(), werfConfigRendersDir)); err != nil {
+	if err := registerCreatedPath(newFile, filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir)); err != nil {
 		os.RemoveAll(newFile)
 		return "", err
 	}

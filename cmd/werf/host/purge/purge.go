@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleanup"
+	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
@@ -68,13 +68,13 @@ func runReset() error {
 		return err
 	}
 
-	commonOptions := cleanup.CommonOptions{
+	commonOptions := cleaning.CommonOptions{
 		DryRun:         *CommonCmdData.DryRun,
 		SkipUsedImages: false,
 		RmiForce:       true,
 		RmForce:        true,
 	}
-	if err := cleanup.HostPurge(commonOptions); err != nil {
+	if err := cleaning.HostPurge(commonOptions); err != nil {
 		return err
 	}
 

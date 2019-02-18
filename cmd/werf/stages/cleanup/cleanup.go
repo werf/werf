@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleanup"
+	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
@@ -21,10 +21,10 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cleanup",
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short: "Cleanup project stages from stages storage",
-		Long:  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
+		Short:                 "Cleanup project stages from stages storage",
+		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
@@ -99,9 +99,9 @@ func runSync() error {
 		imageNames = append(imageNames, image.Name)
 	}
 
-	commonProjectOptions := cleanup.CommonProjectOptions{
+	commonProjectOptions := cleaning.CommonProjectOptions{
 		ProjectName: projectName,
-		CommonOptions: cleanup.CommonOptions{
+		CommonOptions: cleaning.CommonOptions{
 			DryRun:         *CommonCmdData.DryRun,
 			SkipUsedImages: true,
 			RmiForce:       false,
@@ -109,19 +109,19 @@ func runSync() error {
 		},
 	}
 
-	commonRepoOptions := cleanup.CommonRepoOptions{
+	commonRepoOptions := cleaning.CommonRepoOptions{
 		ImagesRepo:    imagesRepo,
 		StagesStorage: stagesRepo,
 		ImagesNames:   imageNames,
 		DryRun:        *CommonCmdData.DryRun,
 	}
 
-	stagesCleanupOptions := cleanup.StagesCleanupOptions{
+	stagesCleanupOptions := cleaning.StagesCleanupOptions{
 		CommonRepoOptions:    commonRepoOptions,
 		CommonProjectOptions: commonProjectOptions,
 	}
 
-	if err := cleanup.StagesCleanup(stagesCleanupOptions); err != nil {
+	if err := cleaning.StagesCleanup(stagesCleanupOptions); err != nil {
 		return err
 	}
 

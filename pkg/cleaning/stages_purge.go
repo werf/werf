@@ -1,4 +1,4 @@
-package cleanup
+package cleaning
 
 import (
 	"fmt"
@@ -7,22 +7,6 @@ import (
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 )
-
-func ImagesPurge(options CommonRepoOptions) error {
-	err := lock.WithLock(options.ImagesRepo, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if err := repoImagesFlush(options); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func StagesPurge(options CommonProjectOptions) error {
 	projectImagesLockName := fmt.Sprintf("%s.images", options.ProjectName)
@@ -41,14 +25,13 @@ func StagesPurge(options CommonProjectOptions) error {
 	return nil
 }
 
-func repoImagesFlush(options CommonRepoOptions) error {
-	imageImages, err := repoImages(options)
+func projectStagesPurge(options CommonProjectOptions) error {
+	images, err := werfImagesByFilterSet(projectImageStageFilterSet(options))
 	if err != nil {
 		return err
 	}
 
-	err = repoImagesRemove(imageImages, options)
-	if err != nil {
+	if err := imagesRemove(images, options.CommonOptions); err != nil {
 		return err
 	}
 
@@ -79,13 +62,8 @@ func projectImagesFlush(options CommonProjectOptions) error {
 	return nil
 }
 
-func projectStagesPurge(options CommonProjectOptions) error {
-	images, err := werfImagesByFilterSet(projectImageStageFilterSet(options))
-	if err != nil {
-		return err
-	}
-
-	if err := imagesRemove(images, options.CommonOptions); err != nil {
+func projectImageStagesFlush(options CommonProjectOptions) error {
+	if err := werfImagesFlushByFilterSet(projectImageStageFilterSet(options), options.CommonOptions); err != nil {
 		return err
 	}
 

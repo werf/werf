@@ -9,7 +9,7 @@ import (
 )
 
 func CreateDockerConfigDir(fromDockerConfig string) (string, error) {
-	newDir, err := newTmpDir("werf-docker-config-")
+	newDir, err := newTmpDir(DockerConfigDirPrefix)
 	if err != nil {
 		return "", err
 	}
@@ -25,7 +25,7 @@ func CreateDockerConfigDir(fromDockerConfig string) (string, error) {
 		}
 	}
 
-	if err := registerCreatedPath(newDir, filepath.Join(GetCreatedTmpDirs(), dockerConfigsDir)); err != nil {
+	if err := registerCreatedPath(newDir, filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir)); err != nil {
 		os.RemoveAll(newDir)
 		return "", err
 	}
