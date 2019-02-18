@@ -19,7 +19,7 @@ func runGC() error {
 }
 
 func checkShouldRunGC() (bool, error) {
-	releasedProjectsDir := filepath.Join(GetReleasedTmpDirs(), projectsDir)
+	releasedProjectsDir := filepath.Join(GetReleasedTmpDirs(), projectsServiceDir)
 	if _, err := os.Stat(releasedProjectsDir); !os.IsNotExist(err) {
 		var err error
 		releasedProjectsDirs, err := ioutil.ReadDir(releasedProjectsDir)
@@ -34,7 +34,7 @@ func checkShouldRunGC() (bool, error) {
 
 	now := time.Now()
 
-	createdDockerConfigsDir := filepath.Join(GetCreatedTmpDirs(), dockerConfigsDir)
+	createdDockerConfigsDir := filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir)
 	if _, err := os.Stat(createdDockerConfigsDir); !os.IsNotExist(err) {
 		var err error
 		createdDirs, err := ioutil.ReadDir(createdDockerConfigsDir)
@@ -49,7 +49,7 @@ func checkShouldRunGC() (bool, error) {
 		}
 	}
 
-	createdWerfConfigRenderFiles := filepath.Join(GetCreatedTmpDirs(), werfConfigRendersDir)
+	createdWerfConfigRenderFiles := filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir)
 	if _, err := os.Stat(createdWerfConfigRenderFiles); !os.IsNotExist(err) {
 		var err error
 		createdFiles, err := ioutil.ReadDir(createdWerfConfigRenderFiles)
@@ -127,7 +127,7 @@ func gc(dryRun bool) error {
 
 // Remove all released project dirs
 func gcReleasedProjectDirs(projectDirsToRemove, pathsToRemove *[]string) error {
-	releasedProjectDirsLinks, err := getLinks(filepath.Join(GetReleasedTmpDirs(), projectsDir))
+	releasedProjectDirsLinks, err := getLinks(filepath.Join(GetReleasedTmpDirs(), projectsServiceDir))
 	if err != nil {
 		return fmt.Errorf("unable to get released tmp projects dirs: %s", err)
 	}
@@ -147,7 +147,7 @@ func gcReleasedProjectDirs(projectDirsToRemove, pathsToRemove *[]string) error {
 
 // Remove only these created project dirs, which can be removed
 func gcCreatedProjectDirs(projectDirsToRemove, pathsToRemove *[]string) error {
-	createdProjectDirsLinks, err := getLinks(filepath.Join(GetCreatedTmpDirs(), projectsDir))
+	createdProjectDirsLinks, err := getLinks(filepath.Join(GetCreatedTmpDirs(), projectsServiceDir))
 	if err != nil {
 		return fmt.Errorf("unable to get created tmp projects dirs: %s", err)
 	}
@@ -172,7 +172,7 @@ func gcCreatedProjectDirs(projectDirsToRemove, pathsToRemove *[]string) error {
 
 // Remove only these created docker configs, which can be removed
 func gcCreatedDockerConfigs(pathsToRemove *[]string) error {
-	createdDockerConfigsLinks, err := getLinks(filepath.Join(GetCreatedTmpDirs(), dockerConfigsDir))
+	createdDockerConfigsLinks, err := getLinks(filepath.Join(GetCreatedTmpDirs(), dockerConfigsServiceDir))
 	if err != nil {
 		return fmt.Errorf("unable to get created tmp docker configs: %s", err)
 	}
@@ -197,7 +197,7 @@ func gcCreatedDockerConfigs(pathsToRemove *[]string) error {
 
 // Remove only these created werf config render files, which can be removed
 func gcCreatedWerfConfigRenders(pathsToRemove *[]string) error {
-	createdWerfConfigRendersLinks, err := getLinks(filepath.Join(GetCreatedTmpDirs(), werfConfigRendersDir))
+	createdWerfConfigRendersLinks, err := getLinks(filepath.Join(GetCreatedTmpDirs(), werfConfigRendersServiceDir))
 	if err != nil {
 		return fmt.Errorf("unable to get created tmp werf config render files: %s", err)
 	}

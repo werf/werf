@@ -1,11 +1,12 @@
-package cleanup
+package cleaning
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/docker/docker/api/types/filters"
 
+	"github.com/flant/werf/pkg/dappdeps"
+	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
@@ -40,36 +41,9 @@ func HostPurge(options CommonOptions) error {
 		return fmt.Errorf("tmp files purge failed: %s", err)
 	}
 
-	if err := deleteWerfFiles(options); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func deleteWerfFiles(options CommonOptions) error {
-	var directoryPathToDelete []string
-	for _, directoryPath := range []string{werf.GetServiceDir(), werf.GetLocalCacheDir(), werf.GetSharedContextDir()} {
-		if _, err := os.Stat(directoryPath); !os.IsNotExist(err) {
-			directoryPathToDelete = append(directoryPathToDelete, directoryPath)
-		}
-	}
-
-	if len(directoryPathToDelete) != 0 {
-		return logger.LogServiceProcess("Running werf host data purge", logger.LogProcessOptions{}, func() error {
-			for _, directoryPath := range directoryPathToDelete {
-				logger.LogF("Removing %s ...\n", directoryPath)
-				if !options.DryRun {
-					err := os.RemoveAll(directoryPath)
-					if err != nil {
-						return err
-					}
-				}
-			}
-
-			return nil
-		})
-	}
+	return logger.LogServiceProcess("Running werf home data purge", logger.LogProcessOptions{}, func() error {
+		return purgeHomeWerfFiles(options.DryRun)
+	})
 
 	return nil
 }
@@ -96,4 +70,33 @@ func ResetCacheVersion(options CommonOptions) error {
 	}
 
 	return nil
+}
+
+func purgeHomeWerfFiles(dryRun bool) error {
+	pathsToRemove := []string{werf.GetServiceDir(), werf.GetLocalCacheDir(), werf.GetSharedContextDir()}
+
+	for _, path := range pathsToRemove {
+		logger.LogF("Removing %s ...\n", path)
+	}
+
+	if dryRun {
+		return nil
+	}
+
+	toolchainContainerName, err := dappdeps.ToolchainContainer()
+	if err != nil {
+		return err
+	}
+
+	args := []string{
+		"--rm",
+		"--volumes-from", toolchainContainerName,
+		"--volume", fmt.Sprintf("%s:%s", werf.GetHomeDir(), werf.GetHomeDir()),
+		dappdeps.BaseImageName(),
+		dappdeps.RmBinPath(), "-rf",
+	}
+
+	args = append(args, pathsToRemove...)
+
+	return docker.CliRun(args...)
 }

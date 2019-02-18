@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
-	"github.com/flant/werf/pkg/cleanup"
+	cleanup "github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"

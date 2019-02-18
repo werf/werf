@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleanup"
+	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
@@ -20,9 +20,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "purge",
+		Use:                   "purge",
 		DisableFlagsInUseLine: true,
-		Short: "Purge project images from images repo",
+		Short:                 "Purge project images from images repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
@@ -83,13 +83,13 @@ func runPurge() error {
 		imageNames = append(imageNames, image.Name)
 	}
 
-	commonRepoOptions := cleanup.CommonRepoOptions{
+	commonRepoOptions := cleaning.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imageNames,
 		DryRun:      *CommonCmdData.DryRun,
 	}
 
-	if err := cleanup.ImagesPurge(commonRepoOptions); err != nil {
+	if err := cleaning.ImagesPurge(commonRepoOptions); err != nil {
 		return err
 	}
 

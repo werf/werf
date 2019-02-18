@@ -1,4 +1,4 @@
-package cleanup
+package cleaning
 
 type GitRepo interface {
 	IsCommitExists(commit string) (bool, error)

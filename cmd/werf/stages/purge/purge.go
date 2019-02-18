@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleanup"
+	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
@@ -79,9 +79,9 @@ func runPurge() error {
 		return err
 	}
 
-	commonProjectOptions := cleanup.CommonProjectOptions{
+	commonProjectOptions := cleaning.CommonProjectOptions{
 		ProjectName: projectName,
-		CommonOptions: cleanup.CommonOptions{
+		CommonOptions: cleaning.CommonOptions{
 			DryRun:         *CommonCmdData.DryRun,
 			SkipUsedImages: false,
 			RmiForce:       true,
@@ -89,7 +89,7 @@ func runPurge() error {
 		},
 	}
 
-	if err := cleanup.StagesPurge(commonProjectOptions); err != nil {
+	if err := cleaning.StagesPurge(commonProjectOptions); err != nil {
 		return err
 	}
 

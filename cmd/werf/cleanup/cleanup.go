@@ -6,7 +6,7 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleanup"
+	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
@@ -32,7 +32,7 @@ func NewCmd() *cobra.Command {
 		Long: common.GetLongCommandDescription(`Safely cleanup unused project images and stages.
 
 First step is 'werf images cleanup' command, which will delete unused images from images repo. Second step is 'werf stages cleanup' command, which will delete unused stages from stages storage to be in sync with the images repo.
-
+		
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, deploy and host cleanup.`),
 		Example: `  $ werf cleanup --stages-storage :local --images-repo registry.mydomain.com/myproject`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -120,7 +120,7 @@ func runCleanup() error {
 		imagesNames = append(imagesNames, image.Name)
 	}
 
-	commonRepoOptions := cleanup.CommonRepoOptions{
+	commonRepoOptions := cleaning.CommonRepoOptions{
 		ImagesRepo:    imagesRepo,
 		StagesStorage: stagesRepo,
 		ImagesNames:   imagesNames,
@@ -143,29 +143,29 @@ func runCleanup() error {
 		return err
 	}
 
-	commonProjectOptions := cleanup.CommonProjectOptions{
+	commonProjectOptions := cleaning.CommonProjectOptions{
 		ProjectName:   projectName,
-		CommonOptions: cleanup.CommonOptions{DryRun: *CommonCmdData.DryRun},
+		CommonOptions: cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun},
 	}
 
-	imagesCleanupOptions := cleanup.ImagesCleanupOptions{
+	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
 		LocalGit:          localGitRepo,
 		WithoutKube:       CmdData.WithoutKube,
 		Policies:          policies,
 	}
 
-	stagesCleanupOptions := cleanup.StagesCleanupOptions{
+	stagesCleanupOptions := cleaning.StagesCleanupOptions{
 		CommonRepoOptions:    commonRepoOptions,
 		CommonProjectOptions: commonProjectOptions,
 	}
 
-	cleanupOptions := cleanup.CleanupOptions{
+	cleanupOptions := cleaning.CleanupOptions{
 		StagesCleanupOptions: stagesCleanupOptions,
 		ImagesCleanupOptions: imagesCleanupOptions,
 	}
 
-	if err := cleanup.Cleanup(cleanupOptions); err != nil {
+	if err := cleaning.Cleanup(cleanupOptions); err != nil {
 		return err
 	}
 

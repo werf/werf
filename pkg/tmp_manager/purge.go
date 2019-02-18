@@ -22,16 +22,32 @@ func purge(dryRun bool) error {
 	}
 
 	filesToRemove := []string{}
+	projectDirsToRemove := []string{}
 
 	for _, finfo := range tmpFiles {
-		if strings.HasPrefix(finfo.Name(), "werf") {
+		if strings.HasPrefix(finfo.Name(), ProjectDirPrefix) {
+			projectDirsToRemove = append(projectDirsToRemove, filepath.Join(werf.GetTmpDir(), finfo.Name()))
+		}
+
+		if strings.HasPrefix(finfo.Name(), CommonPrefix) {
 			filesToRemove = append(filesToRemove, filepath.Join(werf.GetTmpDir(), finfo.Name()))
 		}
 	}
 
-	filesToRemove = append(filesToRemove, GetServiceTmpDir())
-
 	errors := []error{}
+
+	if len(projectDirsToRemove) > 0 {
+		for _, projectDirToRemove := range projectDirsToRemove {
+			logger.LogF("Removing %s ...\n", projectDirToRemove)
+		}
+		if !dryRun {
+			if err := removeProjectDirs(projectDirsToRemove); err != nil {
+				errors = append(errors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
+			}
+		}
+	}
+
+	filesToRemove = append(filesToRemove, GetServiceTmpDir())
 
 	for _, file := range filesToRemove {
 		logger.LogF("Removing %s ...\n", file)

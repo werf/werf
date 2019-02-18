@@ -11,9 +11,14 @@ import (
 )
 
 const (
-	projectsDir          = "projects"
-	dockerConfigsDir     = "docker_configs"
-	werfConfigRendersDir = "werf_config_renders"
+	projectsServiceDir          = "projects"
+	dockerConfigsServiceDir     = "docker_configs"
+	werfConfigRendersServiceDir = "werf_config_renders"
+
+	CommonPrefix           = "werf-"
+	ProjectDirPrefix       = CommonPrefix + "project-data-"
+	DockerConfigDirPrefix  = CommonPrefix + "docker-config-"
+	WerfConfigRenderPrefix = CommonPrefix + "config-render-"
 )
 
 func GetServiceTmpDir() string {

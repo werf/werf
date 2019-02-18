@@ -6,7 +6,7 @@ import (
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
-	"github.com/flant/werf/pkg/cleanup"
+	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
@@ -26,9 +26,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "cleanup",
+		Use:                   "cleanup",
 		DisableFlagsInUseLine: true,
-		Short: "Cleanup project images from images repo",
+		Short:                 "Cleanup project images from images repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
@@ -108,7 +108,7 @@ func runCleanup() error {
 		imagesNames = append(imagesNames, image.Name)
 	}
 
-	commonRepoOptions := cleanup.CommonRepoOptions{
+	commonRepoOptions := cleaning.CommonRepoOptions{
 		ImagesRepo:  imagesRepo,
 		ImagesNames: imagesNames,
 		DryRun:      *CommonCmdData.DryRun,
@@ -130,14 +130,14 @@ func runCleanup() error {
 		return err
 	}
 
-	imagesCleanupOptions := cleanup.ImagesCleanupOptions{
+	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
 		LocalGit:          localRepo,
 		WithoutKube:       CmdData.WithoutKube,
 		Policies:          policies,
 	}
 
-	if err := cleanup.ImagesCleanup(imagesCleanupOptions); err != nil {
+	if err := cleaning.ImagesCleanup(imagesCleanupOptions); err != nil {
 		return err
 	}
 

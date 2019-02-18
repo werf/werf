@@ -11,12 +11,12 @@ import (
 )
 
 func CreateProjectDir() (string, error) {
-	newDir, err := newTmpDir("werf-project-data-")
+	newDir, err := newTmpDir(ProjectDirPrefix)
 	if err != nil {
 		return "", err
 	}
 
-	if err := registerCreatedPath(newDir, filepath.Join(GetCreatedTmpDirs(), projectsDir)); err != nil {
+	if err := registerCreatedPath(newDir, filepath.Join(GetCreatedTmpDirs(), projectsServiceDir)); err != nil {
 		os.RemoveAll(newDir)
 		return "", err
 	}
@@ -37,7 +37,7 @@ func CreateProjectDir() (string, error) {
 }
 
 func ReleaseProjectDir(dir string) error {
-	return releasePath(dir, filepath.Join(GetCreatedTmpDirs(), projectsDir), filepath.Join(GetReleasedTmpDirs(), projectsDir))
+	return releasePath(dir, filepath.Join(GetCreatedTmpDirs(), projectsServiceDir), filepath.Join(GetReleasedTmpDirs(), projectsServiceDir))
 }
 
 func removeProjectDirs(dirs []string) error {
