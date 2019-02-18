@@ -45,7 +45,7 @@ func ReadStdin() ([]byte, error) {
 	if terminal.IsTerminal(int(os.Stdin.Fd())) {
 		isStdoutTerminal := terminal.IsTerminal(int(os.Stdout.Fd()))
 		if isStdoutTerminal {
-			logger.LogServiceF("Enter secret: ")
+			logger.LogHighlightF("Enter secret: ")
 		}
 
 		data, err = terminal.ReadPassword(int(os.Stdin.Fd()))

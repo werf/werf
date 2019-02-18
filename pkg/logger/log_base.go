@@ -11,26 +11,25 @@ var (
 
 	isLoggerCursorOnStartingPosition = true
 	isLoggerOptionalLnModeOn         = false
-	isLoggerOptionalLnModeTag        = ""
 )
 
-func loggerFormattedLogLn(w io.Writer, args ...interface{}) {
-	var msg string
-	if len(args) > 0 {
-		msg = fmt.Sprintln(args...)
-	}
-
-	loggerFormattedLogF(w, msg)
+func loggerFormattedLogLn(w io.Writer, a ...interface{}) {
+	loggerFormattedLogF(w, fmt.Sprintln(a...))
 }
 
-func loggerFormattedLogF(w io.Writer, format string, args ...interface{}) {
-	if _, err := FormattedLogF(w, format, args...); err != nil {
+func loggerFormattedLogF(w io.Writer, format string, a ...interface{}) {
+	if _, err := FormattedLogF(w, format, a...); err != nil {
 		panic(err)
 	}
 }
 
-func FormattedLogF(w io.Writer, format string, args ...interface{}) (int, error) {
-	msg := fmt.Sprintf(format, args...)
+func FormattedLogF(w io.Writer, format string, a ...interface{}) (int, error) {
+	var msg string
+	if len(a) != 0 {
+		msg = fmt.Sprintf(format, a...)
+	} else {
+		msg = format
+	}
 
 	var formattedMsg string
 	for _, r := range []rune(msg) {
@@ -45,15 +44,15 @@ func FormattedLogF(w io.Writer, format string, args ...interface{}) (int, error)
 		formattedMsg += string(r)
 	}
 
-	return logF(w, formattedMsg)
+	return logF(w, "%s", formattedMsg)
 }
 
 func loggerCursorOnStartingPositionCaretRuneHook() string {
 	var result string
 
 	if isLoggerCursorOnStartingPosition {
-		result += formattedTag()
 		result += formattedProcessBorders()
+		result += formattedTag()
 	}
 
 	isLoggerCursorOnStartingPosition = true
@@ -65,9 +64,10 @@ func loggerCursorOnStartingPositionDefaultHook() string {
 	var result string
 
 	if isLoggerCursorOnStartingPosition {
-		result += formattedTag()
 		result += formattedProcessBorders()
+		result += formattedTag()
 		result += strings.Repeat(" ", indentWidth)
+
 		isLoggerCursorOnStartingPosition = false
 	}
 
@@ -78,27 +78,19 @@ func loggerOptionalLnModeDefaultHook() string {
 	var result string
 
 	if isLoggerOptionalLnModeOn {
-		if isLoggerOptionalLnModeTag == colorlessTag {
-			result += formattedTag()
-			result += formattedProcessBorders()
-		}
-
+		result += formattedProcessBorders()
+		result += formattedTag()
 		result += "\n"
+
+		isLoggerCursorOnStartingPosition = true
 		resetOptionalLnMode()
 	}
 
 	return result
 }
 
-func logF(w io.Writer, format string, args ...interface{}) (int, error) {
-	var msg string
-	if len(args) == 0 {
-		msg = format
-	} else {
-		msg = fmt.Sprintf(format, args...)
-	}
-
-	return fmt.Fprintf(w, "%s", msg)
+func logF(w io.Writer, format string, a ...interface{}) (int, error) {
+	return fmt.Fprintf(w, format, a...)
 }
 
 func decorateByWithIndent(decoratedFunc func() error) func() error {
@@ -113,12 +105,6 @@ func WithIndent(f func() error) error {
 	IndentDown()
 
 	return err
-}
-
-func decorateByWithoutIndent(decoratedFunc func() error) func() error {
-	return func() error {
-		return WithoutIndent(decoratedFunc)
-	}
 }
 
 func WithoutIndent(decoratedFunc func() error) error {
@@ -146,14 +132,22 @@ func IndentDown() {
 
 func LogOptionalLn() {
 	isLoggerOptionalLnModeOn = true
-	isLoggerOptionalLnModeTag = colorlessTag
 }
 
 func resetOptionalLnMode() {
 	isLoggerOptionalLnModeOn = false
-	isLoggerOptionalLnModeTag = ""
 }
 
 func processOptionalLnMode() {
-	_, _ = logF(outStream, loggerOptionalLnModeDefaultHook())
+	if _, err := logF(outStream, loggerOptionalLnModeDefaultHook()); err != nil {
+		panic(err)
+	}
+}
+
+func terminalContentWidth() int {
+	return TerminalWidth() - terminalServiceWidth()
+}
+
+func terminalServiceWidth() int {
+	return processBordersBlockWidth() + tagBlockWidth() + indentWidth
 }

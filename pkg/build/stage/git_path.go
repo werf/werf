@@ -77,7 +77,7 @@ func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (git_repo.Archive
 		cwd = "/"
 	}
 
-	err := logger.LogServiceProcess(fmt.Sprintf("Creating archive for commit %s of %s git path %s", opts.Commit, gp.GitRepo().GetName(), cwd), logger.LogProcessOptions{}, func() error {
+	err := logger.LogSecondaryProcess(fmt.Sprintf("Creating archive for commit %s of %s git path %s", opts.Commit, gp.GitRepo().GetName(), cwd), logger.LogProcessOptions{}, func() error {
 		archive, err := gp.GitRepo().CreateArchive(opts)
 		if err != nil {
 			return err
@@ -103,7 +103,7 @@ func (gp *GitPath) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, erro
 		cwd = "/"
 	}
 
-	err := logger.LogServiceProcessInline(fmt.Sprintf("Creating patch %s..%s for %s git path %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd), func() error {
+	err := logger.LogSecondaryProcessInline(fmt.Sprintf("Creating patch %s..%s for %s git path %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd), func() error {
 		patch, err := gp.GitRepo().CreatePatch(opts)
 		if err != nil {
 			return err

@@ -12,7 +12,7 @@ import (
 )
 
 func Purge(dryRun bool) error {
-	return logger.LogServiceProcess("Running tmp purge", logger.LogProcessOptions{}, func() error { return purge(dryRun) })
+	return logger.LogSecondaryProcess("Running tmp purge", logger.LogProcessOptions{}, func() error { return purge(dryRun) })
 }
 
 func purge(dryRun bool) error {

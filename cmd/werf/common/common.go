@@ -49,7 +49,7 @@ type CmdData struct {
 }
 
 func GetLongCommandDescription(text string) string {
-	return logger.FitTextWithIndentWithWidthMaxLimit(text, 0, 100)
+	return logger.FitText(text, logger.FitTextOptions{MaxWidth: 100})
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -335,7 +335,7 @@ func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()
 
-	logger.LogServiceLn(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
+	logger.LogHighlightLn(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
 
 	return err
 }

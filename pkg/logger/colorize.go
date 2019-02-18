@@ -10,15 +10,13 @@ import (
 )
 
 var (
-	highlightFormat = []color.Attribute{color.FgYellow, color.Bold}
-	serviceFormat   = []color.Attribute{color.Bold}
+	highlightFormat = []color.Attribute{color.Bold}
+	secondaryFormat []color.Attribute
 	infoFormat      = []color.Attribute{color.FgHiBlue}
 	warningFormat   = []color.Attribute{color.FgRed, color.Bold}
 
 	failFormat    = warningFormat
 	successFormat = []color.Attribute{color.FgGreen, color.Bold}
-
-	tagFormat = []color.Attribute{color.FgCyan}
 )
 
 func initColorize() {
@@ -27,7 +25,7 @@ func initColorize() {
 	}
 }
 
-func colorizeAndFormattedLogF(w io.Writer, colorizeFunc func(string) string, format string, args ...interface{}) {
+func colorizeAndFormattedLogF(w io.Writer, colorizeFunc func(...interface{}) string, format string, args ...interface{}) {
 	var msg string
 	if len(args) > 0 {
 		msg = colorizeBaseF(colorizeFunc, format, args...)
@@ -38,7 +36,7 @@ func colorizeAndFormattedLogF(w io.Writer, colorizeFunc func(string) string, for
 	loggerFormattedLogF(w, msg)
 }
 
-func colorizeBaseF(colorizeFunc func(string) string, format string, args ...interface{}) string {
+func colorizeBaseF(colorizeFunc func(...interface{}) string, format string, args ...interface{}) string {
 	var colorizeLines []string
 	lines := strings.Split(fmt.Sprintf(format, args...), "\n")
 	for _, line := range lines {
@@ -52,30 +50,30 @@ func colorizeBaseF(colorizeFunc func(string) string, format string, args ...inte
 	return strings.Join(colorizeLines, "\n")
 }
 
-func colorizeFail(msg string) string {
-	return colorize(msg, failFormat...)
+func colorizeFail(a ...interface{}) string {
+	return colorize(failFormat, a...)
 }
 
-func colorizeSuccess(msg string) string {
-	return colorize(msg, successFormat...)
+func colorizeSuccess(a ...interface{}) string {
+	return colorize(successFormat, a...)
 }
 
-func colorizeStep(msg string) string {
-	return colorize(msg, highlightFormat...)
+func colorizeHighlight(a ...interface{}) string {
+	return colorize(highlightFormat, a...)
 }
 
-func colorizeService(msg string) string {
-	return colorize(msg, serviceFormat...)
+func colorizeSecondary(a ...interface{}) string {
+	return colorize(secondaryFormat, a...)
 }
 
-func colorizeInfo(msg string) string {
-	return colorize(msg, infoFormat...)
+func colorizeInfo(a ...interface{}) string {
+	return colorize(infoFormat, a...)
 }
 
-func colorizeWarning(msg string) string {
-	return colorize(msg, warningFormat...)
+func colorizeWarning(a ...interface{}) string {
+	return colorize(warningFormat, a...)
 }
 
-func colorize(msg string, attributes ...color.Attribute) string {
-	return color.New(attributes...).Sprint(msg)
+func colorize(attributes []color.Attribute, a ...interface{}) string {
+	return color.New(attributes...).Sprint(a...)
 }

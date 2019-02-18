@@ -24,7 +24,7 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) (err error) {
-	return logger.LogServiceProcess("Determining of stages", logger.LogProcessOptions{WithoutBorder: true}, func() error {
+	return logger.LogProcess("Determining of stages", logger.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
@@ -45,8 +45,8 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 
 	imagesInterfaceConfigs := getImageConfigsInOrder(imageConfigs, c)
 	for _, imageInterfaceConfig := range imagesInterfaceConfigs {
-		imageName := ImageLogTagName(imageInterfaceConfig.ImageBaseConfig().Name, imageInterfaceConfig.IsArtifact())
-		err := logger.WithTag(imageName, func() error {
+		imageName := ImageLogProcessName(imageInterfaceConfig.ImageBaseConfig().Name, imageInterfaceConfig.IsArtifact())
+		err := logger.LogProcess(imageName, logger.LogProcessOptions{ColorizeMsgFunc: ImageLogProcessColorizeFunc(imageInterfaceConfig.IsArtifact())}, func() error {
 			image, err := generateImage(imageInterfaceConfig, c)
 			if err != nil {
 				return err
@@ -56,8 +56,6 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 
 			return nil
 		})
-
-		logger.LogOptionalLn()
 
 		if err != nil {
 			return nil, err
@@ -301,7 +299,7 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 	var res []*stage.GitPath
 
 	if len(gitPaths) != 0 {
-		err := logger.LogServiceProcess(fmt.Sprintf("Checking git paths"), logger.LogProcessOptions{}, func() error {
+		err := logger.LogSecondaryProcess(fmt.Sprintf("Checking git paths"), logger.LogProcessOptions{}, func() error {
 			nonEmptyGitPaths, err := getNonEmptyGitPaths(gitPaths)
 			if err != nil {
 				return err

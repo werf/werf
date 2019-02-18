@@ -127,7 +127,8 @@ func (t *templater) cmdGroupsString(c *cobra.Command) string {
 				separator := " "
 				cmdLeftPart := rpad(cmd.Name(), cmd.NamePadding())
 				cmdRightPartWidth := len(indent) + len(cmdLeftPart) + len(separator)
-				cmdRightPart := strings.TrimLeft(logger.FitTextWithIndent(cmd.Short, cmdRightPartWidth), " ")
+				fitTextOptions := logger.FitTextOptions{ExtraIndentWidth: cmdRightPartWidth}
+				cmdRightPart := strings.TrimLeft(logger.FitText(cmd.Short, fitTextOptions), " ")
 				cmdLine := fmt.Sprintf("%s%s%s%s", indent, cmdLeftPart, separator, cmdRightPart)
 
 				cmds = append(cmds, cmdLine)
@@ -210,7 +211,7 @@ func FlagsUsages(f *flag.FlagSet) string {
 		}
 
 		leftPart := flagLeftPart(flag)
-		rightPart := logger.FitTextWithIndent(flag.Usage, 12)
+		rightPart := logger.FitText(flag.Usage, logger.FitTextOptions{ExtraIndentWidth: 12})
 
 		fmt.Fprintf(x, "%s:\n%s\n", leftPart, rightPart)
 	})

@@ -27,7 +27,7 @@ func (p *BuildStagesPhase) Run(c *Conveyor) (err error) {
 		fmt.Printf("BuildStagesPhase.Run\n")
 	}
 
-	return logger.LogServiceProcess("Building stages", logger.LogProcessOptions{WithoutBorder: true}, func() error {
+	return logger.LogProcess("Building stages", logger.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
@@ -39,11 +39,9 @@ func (p *BuildStagesPhase) run(c *Conveyor) error {
 
 	images := c.imagesInOrder
 	for _, image := range images {
-		err := logger.WithTag(image.LogTagName(), func() error {
+		if err := logger.LogProcess(image.LogProcessName(), logger.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			return p.runImage(image, c)
-		})
-
-		if err != nil {
+		}); err != nil {
 			return err
 		}
 	}
@@ -102,7 +100,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 		isUsingCache := img.IsExists()
 
 		if isUsingCache {
-			logger.LogServiceState(msg, "[USING CACHE]")
+			logger.LogState(msg, "[USING CACHE]")
 
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 
@@ -136,8 +134,14 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
 			}
 
-			if err := img.Build(p.ImageBuildOptions); err != nil {
-				return fmt.Errorf("failed to build %s: %s", img.Name(), err)
+			if err := logger.WithTag(fmt.Sprintf("%s/%s", image.LogName(), s.Name()), image.LogTagColorizeFunc(), func() error {
+				if err := img.Build(p.ImageBuildOptions); err != nil {
+					return fmt.Errorf("failed to build %s: %s", img.Name(), err)
+				}
+
+				return nil
+			}); err != nil {
+				return err
 			}
 
 			if err := img.SaveInCache(); err != nil {
@@ -178,7 +182,8 @@ func logImageInfo(img imagePkg.ImageInterface, prevStageImageSize int64, isUsing
 	if !isUsingCache {
 		changes := img.Container().UserCommitChanges()
 		if len(changes) != 0 {
-			formattedCommands := strings.TrimLeft(logger.FitTextWithIndent(strings.Join(changes, "\n"), logImageInfoLeftPartWidth+4), " ")
+			fitTextOptions := logger.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
+			formattedCommands := strings.TrimLeft(logger.FitText(strings.Join(changes, "\n"), fitTextOptions), " ")
 			logger.LogInfoF(logImageInfoFormat, "instructions", formattedCommands)
 		}
 
@@ -189,7 +194,8 @@ func logImageInfo(img imagePkg.ImageInterface, prevStageImageSize int64, isUsing
 func logImageCommands(img imagePkg.ImageInterface) {
 	commands := img.Container().UserRunCommands()
 	if len(commands) != 0 {
-		formattedCommands := strings.TrimLeft(logger.FitTextWithIndent(strings.Join(commands, "\n"), logImageInfoLeftPartWidth+4), " ")
+		fitTextOptions := logger.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
+		formattedCommands := strings.TrimLeft(logger.FitText(strings.Join(commands, "\n"), fitTextOptions), " ")
 		logger.LogInfoF(logImageInfoFormat, "commands", formattedCommands)
 	}
 }

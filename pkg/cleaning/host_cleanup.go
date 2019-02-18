@@ -14,13 +14,13 @@ import (
 )
 
 func HostCleanup(options CommonOptions) error {
-	if err := logger.LogServiceProcess("Running cleanup for docker containers created by werf", logger.LogProcessOptions{}, func() error {
+	if err := logger.LogSecondaryProcess("Running cleanup for docker containers created by werf", logger.LogProcessOptions{}, func() error {
 		return safeContainersCleanup(options)
 	}); err != nil {
 		return err
 	}
 
-	if err := logger.LogServiceProcess("Running cleanup for dangling docker images created by werf", logger.LogProcessOptions{}, func() error {
+	if err := logger.LogSecondaryProcess("Running cleanup for dangling docker images created by werf", logger.LogProcessOptions{}, func() error {
 		return safeDanglingImagesCleanup(options)
 	}); err != nil {
 		return nil
