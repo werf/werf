@@ -146,7 +146,7 @@ func runDeploy() error {
 		return err
 	}
 
-	tag, tagStrategy, err := common.GetDeployTag(&CommonCmdData)
+	tag, tagStrategy, err := common.GetDeployTag(&CommonCmdData, common.TagOptionsGetterOptions{})
 	if err != nil {
 		return err
 	}
@@ -178,5 +178,6 @@ func runDeploy() error {
 		SecretValues: CmdData.SecretValues,
 		Timeout:      time.Duration(CmdData.Timeout) * time.Second,
 		KubeContext:  kubeContext,
+		Env:          *CommonCmdData.Environment,
 	})
 }

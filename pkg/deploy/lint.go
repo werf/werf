@@ -15,6 +15,7 @@ type LintOptions struct {
 	SecretValues []string
 	Set          []string
 	SetString    []string
+	Env          string
 }
 
 func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions) error {
@@ -34,7 +35,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images)
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

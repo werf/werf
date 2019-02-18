@@ -8,7 +8,11 @@ import (
 	"github.com/flant/werf/pkg/tag_strategy"
 )
 
-func GetDeployTag(cmdData *CmdData) (string, tag_strategy.TagStrategy, error) {
+type TagOptionsGetterOptions struct {
+	Optional bool
+}
+
+func GetDeployTag(cmdData *CmdData, opts TagOptionsGetterOptions) (string, tag_strategy.TagStrategy, error) {
 	optionsCount := 0
 	if len(*cmdData.TagCustom) > 0 {
 		optionsCount += len(*cmdData.TagCustom)
@@ -28,28 +32,32 @@ func GetDeployTag(cmdData *CmdData) (string, tag_strategy.TagStrategy, error) {
 		return "", "", fmt.Errorf("exactly one tag should be specified for deploy")
 	}
 
-	opts, err := GetTagOptions(cmdData)
+	tagOpts, err := GetTagOptions(cmdData, opts)
 	if err != nil {
 		return "", "", err
 	}
 
-	if len(opts.CustomTags) > 0 {
-		return opts.CustomTags[0], tag_strategy.Custom, nil
-	} else if len(opts.TagsByGitBranch) > 0 {
-		return opts.TagsByGitBranch[0], tag_strategy.GitBranch, nil
-	} else if len(opts.TagsByGitTag) > 0 {
-		return opts.TagsByGitTag[0], tag_strategy.GitTag, nil
-	} else if len(opts.TagsByGitCommit) > 0 {
-		return opts.TagsByGitCommit[0], tag_strategy.GitCommit, nil
+	if len(tagOpts.CustomTags) > 0 {
+		return tagOpts.CustomTags[0], tag_strategy.Custom, nil
+	} else if len(tagOpts.TagsByGitBranch) > 0 {
+		return tagOpts.TagsByGitBranch[0], tag_strategy.GitBranch, nil
+	} else if len(tagOpts.TagsByGitTag) > 0 {
+		return tagOpts.TagsByGitTag[0], tag_strategy.GitTag, nil
+	} else if len(tagOpts.TagsByGitCommit) > 0 {
+		return tagOpts.TagsByGitCommit[0], tag_strategy.GitCommit, nil
 	}
 
-	panic("opts should contain at least one tag!")
+	if !opts.Optional {
+		panic("tagOpts should contain at least one tag!")
+	}
+
+	return "", "", nil
 }
 
-func GetTagOptions(cmdData *CmdData) (build.TagOptions, error) {
+func GetTagOptions(cmdData *CmdData, opts TagOptionsGetterOptions) (build.TagOptions, error) {
 	emptyTags := true
 
-	opts := build.TagOptions{}
+	res := build.TagOptions{}
 
 	for _, tag := range *cmdData.TagCustom {
 		err := slug.ValidateDockerTag(tag)
@@ -57,28 +65,28 @@ func GetTagOptions(cmdData *CmdData) (build.TagOptions, error) {
 			return build.TagOptions{}, fmt.Errorf("bad --tag parameter '%s' specified: %s", tag, err)
 		}
 
-		opts.CustomTags = append(opts.CustomTags, tag)
+		res.CustomTags = append(res.CustomTags, tag)
 		emptyTags = false
 	}
 
 	if *cmdData.TagGitBranch != "" {
-		opts.TagsByGitBranch = append(opts.TagsByGitBranch, slug.DockerTag(*cmdData.TagGitBranch))
+		res.TagsByGitBranch = append(res.TagsByGitBranch, slug.DockerTag(*cmdData.TagGitBranch))
 		emptyTags = false
 	}
 
 	if *cmdData.TagGitTag != "" {
-		opts.TagsByGitTag = append(opts.TagsByGitTag, slug.DockerTag(*cmdData.TagGitTag))
+		res.TagsByGitTag = append(res.TagsByGitTag, slug.DockerTag(*cmdData.TagGitTag))
 		emptyTags = false
 	}
 
 	if *cmdData.TagGitCommit != "" {
-		opts.TagsByGitCommit = append(opts.TagsByGitCommit, *cmdData.TagGitCommit)
+		res.TagsByGitCommit = append(res.TagsByGitCommit, *cmdData.TagGitCommit)
 		emptyTags = false
 	}
 
-	if emptyTags {
-		return build.TagOptions{}, fmt.Errorf("at least one tag should be specified with --tag-* options")
+	if emptyTags && !opts.Optional {
+		return build.TagOptions{}, fmt.Errorf("at least one tag should be specified with --tag-custom|--tag-git-tag|--tag-git-branch|--tag-git-commit options")
 	}
 
-	return opts, nil
+	return res, nil
 }

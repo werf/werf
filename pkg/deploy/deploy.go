@@ -17,9 +17,10 @@ type DeployOptions struct {
 	SetString    []string
 	Timeout      time.Duration
 	KubeContext  string
+	Env          string
 }
 
-func Deploy(projectDir, imagesRepo, release, namespace string, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
+func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
 	logger.LogInfoF("Using Helm release name: %s\n", release)
 	logger.LogInfoF("Using Kubernetes namespace: %s\n", namespace)
 
@@ -30,7 +31,7 @@ func Deploy(projectDir, imagesRepo, release, namespace string, tag string, tagSt
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images)
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

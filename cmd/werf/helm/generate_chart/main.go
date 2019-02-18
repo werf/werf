@@ -33,7 +33,7 @@ func NewCmd() *cobra.Command {
 
 Werf will generate additional values files, templates Chart.yaml and other files specific to the Werf chart. The result is a valid Helm chart`),
 		DisableFlagsInUseLine: true,
-		Args: cobra.MinimumNArgs(1),
+		Args:                  cobra.MinimumNArgs(1),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
@@ -111,7 +111,7 @@ func runGenerateChart(targetPath string) error {
 		return err
 	}
 
-	tag, tagStrategy, err := common.GetDeployTag(&CommonCmdData)
+	tag, tagStrategy, err := helm_common.GetTagOrStub(&CommonCmdData)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func runGenerateChart(targetPath string) error {
 
 	images := deploy.GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, withoutRepo)
 
-	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images)
+	serviceValues, err := deploy.GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, deploy.ServiceValuesOptions{Env: environment})
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}

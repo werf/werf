@@ -23,8 +23,8 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "render",
-		Short: "Render Werf chart templates to stdout",
+		Use:                   "render",
+		Short:                 "Render Werf chart templates to stdout",
 		DisableFlagsInUseLine: true,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
@@ -37,6 +37,8 @@ func NewCmd() *cobra.Command {
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	common.SetupEnvironment(&CommonCmdData, cmd)
 
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
 	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
@@ -78,5 +80,6 @@ func runRender() error {
 		SecretValues: CmdData.SecretValues,
 		Set:          CmdData.Set,
 		SetString:    CmdData.SetString,
+		Env:          *CommonCmdData.Environment,
 	})
 }
