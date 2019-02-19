@@ -33,10 +33,6 @@ func (i *Image) LogProcessColorizeFunc() func(...interface{}) string {
 	return ImageLogProcessColorizeFunc(i.isArtifact)
 }
 
-func (i *Image) LogTagName() string {
-	return ImageLogTagName(i.name, i.isArtifact)
-}
-
 func (i *Image) LogTagColorizeFunc() func(...interface{}) string {
 	return ImageLogTagColorizeFunc(i.isArtifact)
 }
@@ -54,18 +50,14 @@ func ImageLogName(name string, isArtifact bool) string {
 func ImageLogProcessName(name string, isArtifact bool) string {
 	logName := ImageLogName(name, isArtifact)
 	if !isArtifact {
-		return fmt.Sprintf("image %s", logName)
+		return fmt.Sprintf("⛵ image %s", logName)
 	} else {
-		return fmt.Sprintf("artifact %s", logName)
+		return fmt.Sprintf("🛸 artifact %s", logName)
 	}
 }
 
 func ImageLogProcessColorizeFunc(isArtifact bool) func(...interface{}) string {
 	return imageDefaultColorizeFunc(isArtifact)
-}
-
-func ImageLogTagName(name string, isArtifact bool) string {
-	return ImageLogName(name, isArtifact)
 }
 
 func ImageLogTagColorizeFunc(isArtifact bool) func(...interface{}) string {

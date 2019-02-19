@@ -9,19 +9,19 @@ import (
 )
 
 const (
-	defaultTerminalWidth = 120
+	defaultTerminalWidth = 140
 )
 
-func IsTerminal() bool {
-	return terminal.IsTerminal(int(os.Stdout.Fd()))
-}
+var terminalWidth int
 
-func TerminalWidth() int {
+func initTerminalWidth() {
 	if wtw, ok := os.LookupEnv("WERF_TERMINAL_WIDTH"); ok {
 		if i, err := strconv.Atoi(wtw); err != nil {
 			panic(fmt.Sprintf("Unexpected WERF_TERMINAL_WIDTH: %s", err))
 		} else {
-			return i
+			terminalWidth = i
+
+			return
 		}
 	} else {
 		if terminal.IsTerminal(int(os.Stdout.Fd())) {
@@ -30,9 +30,19 @@ func TerminalWidth() int {
 				panic(err)
 			}
 
-			return w
+			terminalWidth = w
+
+			return
 		}
 	}
 
-	return defaultTerminalWidth
+	terminalWidth = defaultTerminalWidth
+}
+
+func IsTerminal() bool {
+	return terminal.IsTerminal(int(os.Stdout.Fd()))
+}
+
+func TerminalWidth() int {
+	return terminalWidth
 }

@@ -10,7 +10,10 @@ var (
 	indentWidth = 0
 
 	isLoggerCursorOnStartingPosition = true
+	isLoggerCursorOnRemoveCaret      = false
 	isLoggerOptionalLnModeOn         = false
+
+	cursor int
 )
 
 func loggerFormattedLogLn(w io.Writer, a ...interface{}) {
@@ -34,11 +37,19 @@ func FormattedLogF(w io.Writer, format string, a ...interface{}) (int, error) {
 	var formattedMsg string
 	for _, r := range []rune(msg) {
 		switch string(r) {
-		case "\n", "\r":
-			formattedMsg += loggerCursorOnStartingPositionCaretRuneHook()
+		case "\r":
+			formattedMsg += loggerCursorOnStartingPositionRemoveCaretRuneHook()
+			cursor = 0
+			isLoggerCursorOnRemoveCaret = true
+		case "\n":
+			formattedMsg += loggerCursorOnStartingPositionNewLineCaretRuneHook()
+			cursor = 0
+			isLoggerCursorOnRemoveCaret = false
 		default:
 			formattedMsg += loggerOptionalLnModeDefaultHook()
 			formattedMsg += loggerCursorOnStartingPositionDefaultHook()
+			cursor += 1
+			isLoggerCursorOnRemoveCaret = false
 		}
 
 		formattedMsg += string(r)
@@ -47,10 +58,23 @@ func FormattedLogF(w io.Writer, format string, a ...interface{}) (int, error) {
 	return logF(w, "%s", formattedMsg)
 }
 
-func loggerCursorOnStartingPositionCaretRuneHook() string {
+func loggerCursorOnStartingPositionRemoveCaretRuneHook() string {
 	var result string
 
 	if isLoggerCursorOnStartingPosition {
+		result += formattedProcessBorders()
+		result += formattedTag()
+	}
+
+	isLoggerCursorOnStartingPosition = true
+
+	return result
+}
+
+func loggerCursorOnStartingPositionNewLineCaretRuneHook() string {
+	var result string
+
+	if isLoggerCursorOnStartingPosition && !isLoggerCursorOnRemoveCaret {
 		result += formattedProcessBorders()
 		result += formattedTag()
 	}
@@ -136,12 +160,15 @@ func LogOptionalLn() {
 
 func resetOptionalLnMode() {
 	isLoggerOptionalLnModeOn = false
+	cursor = 0
 }
 
 func processOptionalLnMode() {
 	if _, err := logF(outStream, loggerOptionalLnModeDefaultHook()); err != nil {
 		panic(err)
 	}
+
+	resetOptionalLnMode()
 }
 
 func terminalContentWidth() int {

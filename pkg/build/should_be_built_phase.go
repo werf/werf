@@ -20,17 +20,9 @@ func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
 }
 
 func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
-	if debug() {
-		fmt.Fprintf(logger.GetOutStream(), "ShouldBeBuiltPhase.Run\n")
-	}
-
 	var badImages []*Image
 
 	for _, image := range c.imagesInOrder {
-		if debug() {
-			fmt.Fprintf(logger.GetOutStream(), "  image: '%s'\n", image.GetName())
-		}
-
 		var badStages []stage.Interface
 
 		for _, s := range image.GetStages() {

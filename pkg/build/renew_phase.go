@@ -41,16 +41,8 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 }
 
 func (p *RenewPhase) run(c *Conveyor) error {
-	if debug() {
-		fmt.Fprintf(logger.GetOutStream(), "RenewPhase.Run\n")
-	}
-
 	var conveyorShouldBeReset bool
 	for _, image := range c.imagesInOrder {
-		if debug() {
-			fmt.Fprintf(logger.GetOutStream(), "  image: '%s'\n", image.GetName())
-		}
-
 		var acquiredLocks []string
 
 		unlockLocks := func() {

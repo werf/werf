@@ -10,7 +10,8 @@ var (
 	outStream io.Writer = os.Stdout
 	errStream io.Writer = os.Stderr
 
-	isRawOutputModeOn = false
+	isRawOutputModeOn    = false
+	isFittedOutputModeOn = false
 )
 
 type WriterProxy struct {
@@ -22,7 +23,13 @@ func (p WriterProxy) Write(data []byte) (int, error) {
 		return logF(p.Writer, "%s", string(data))
 	}
 
-	_, err := FormattedLogF(p.Writer, "%s", string(data))
+	msg := string(data)
+	if isFittedOutputModeOn {
+		msg = fitText(msg, cursor, terminalContentWidth(), true)
+	}
+
+	_, err := FormattedLogF(p.Writer, "%s", msg)
+
 	return len(data), err
 }
 
@@ -35,12 +42,21 @@ func RawOutputOn(f func() error) error {
 	return err
 }
 
+func FittedOutputOn(f func() error) error {
+	savedIsFittedOutputModeOn := isFittedOutputModeOn
+	isFittedOutputModeOn = true
+	err := f()
+	isFittedOutputModeOn = savedIsFittedOutputModeOn
+
+	return err
+}
+
 func GetOutStream() io.Writer {
-	return WriterProxy{errStream}
+	return WriterProxy{outStream}
 }
 
 func GetErrStream() io.Writer {
-	return WriterProxy{outStream}
+	return WriterProxy{errStream}
 }
 
 func MuteOut() {

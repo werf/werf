@@ -230,5 +230,5 @@ func processBordersBlockWidth() int {
 		return 0
 	}
 
-	return len(strings.Join(processesBorderValues, " ")) + processesBorderIndentWidth
+	return len([]rune(strings.Join(processesBorderValues, " "))) + processesBorderIndentWidth
 }

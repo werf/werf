@@ -22,10 +22,6 @@ func (p *PrepareStagesPhase) Run(c *Conveyor) error {
 }
 
 func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
-	if debug() {
-		fmt.Fprintf(logger.GetOutStream(), "PrepareStagesPhase.Run\n")
-	}
-
 	for _, image := range c.imagesInOrder {
 		if err := logger.LogProcess(image.LogProcessName(), logger.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			return p.runImage(image, c)
@@ -38,10 +34,6 @@ func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 }
 
 func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
-	if debug() {
-		fmt.Fprintf(logger.GetOutStream(), "  image: '%s'\n", image.GetName())
-	}
-
 	var prevImage, prevBuiltImage imagePkg.ImageInterface
 
 	err = image.PrepareBaseImage(c)
@@ -60,10 +52,6 @@ func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 		if c.GetImageBySignature(s.GetSignature()) != nil || stageImage.IsExists() {
 			prevImage = stageImage
 			continue
-		}
-
-		if debug() {
-			fmt.Fprintf(logger.GetOutStream(), "    %s\n", s.Name())
 		}
 
 		imageServiceCommitChangeOptions := stageImage.Container().ServiceCommitChangeOptions()
