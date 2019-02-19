@@ -2,23 +2,12 @@ package cleaning
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/lock"
 )
 
 func StagesPurge(options CommonProjectOptions) error {
-	projectImagesLockName := fmt.Sprintf("%s.images", options.ProjectName)
-	err := lock.WithLock(projectImagesLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if err := projectStagesPurge(options); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
+	if err := projectStagesPurge(options); err != nil {
 		return err
 	}
 
