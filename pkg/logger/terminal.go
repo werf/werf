@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultTerminalWidth = 120
+	defaultTerminalWidth = 140
 )
 
 var terminalWidth int
