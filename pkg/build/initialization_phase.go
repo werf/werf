@@ -284,7 +284,7 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 				ClonePath: clonePath,
 			}
 
-			if err := logger.LogProcess(fmt.Sprintf("Refreshing %s git\n", remoteGitPathConfig.Name), logger.LogProcessOptions{}, func() error {
+			if err := logger.LogSecondaryProcess(fmt.Sprintf("Refreshing %s git", remoteGitPathConfig.Name), logger.LogProcessOptions{}, func() error {
 				return remoteGitRepo.CloneAndFetch()
 			}); err != nil {
 				return nil, err
