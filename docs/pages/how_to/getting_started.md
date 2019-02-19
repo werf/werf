@@ -230,10 +230,10 @@ Werf can be used to push a built image into docker-registry.
     docker run -d -p 5000:5000 --restart=always --name registry registry:2
     ```
 
-2. Push image with werf using default `latest` tag:
+2. Publish image with werf using custom tagging strategy with docker tag `v0.1.0`:
 
     ```shell
-    werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-git-branch mybranch
+    werf publish --stages-storage :local --images-repo localhost:5000/symfony-demo --tag-custom v0.1.0
     ```
 
 ## What Can Be Improved
