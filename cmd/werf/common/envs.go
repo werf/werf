@@ -18,7 +18,7 @@ const (
 )
 
 var envDescription = map[Env]string{
-	WerfDebugAnsibleArgs: "Pass specified cli args to ansible (ANSIBLE_ARGS)",
+	WerfDebugAnsibleArgs: "Pass specified cli args to ansible ($ANSIBLE_ARGS)",
 	WerfSecretKey:        "Use specified secret key to extract secrets for the deploy; recommended way to set secret key in CI-system",
 }
 

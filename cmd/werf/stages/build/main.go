@@ -46,7 +46,7 @@ func NewCmdWithData(cmdData *CmdDataType, commonCmdData *common.CmdData) *cobra.
   # Build and enable drop-in shell session in the failed assembly container in the case when an error occurred
   $ werf --stages-storage :local build --introspect-error
 
-  # Set --stages-storage default value using WERF_STAGES_STORAGE param
+  # Set --stages-storage default value using $WERF_STAGES_STORAGE param
   $ export WERF_STAGES_STORAGE=:local
   $ werf build`,
 		Long: common.GetLongCommandDescription(`Build stages for images described in the werf.yaml.

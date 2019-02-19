@@ -14,8 +14,8 @@ ids from Docker repo. So images should be published prior running deploy.
 Helm chart directory .helm should exists and contain valid Helm chart.
 
 Environment is a required param for the deploy by default, because it is needed to construct Helm 
-Release name and Kubernetes Namespace. Either --env or WERF_DEPLOY_ENVIRONMENT should be specified 
-for command.
+Release name and Kubernetes Namespace. Either --env or $WERF_DEPLOY_ENVIRONMENT should be 
+specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to 
 change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html
@@ -49,19 +49,19 @@ werf deploy [options]
       --dir='':
             Change to the specified directory to find werf.yaml config
       --docker-config='':
-            Specify docker config directory path. Default WERF_DOCKER_CONFIG or DOCKER_CONFIG or 
+            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or 
             ~/.docker (in the order of priority).
             Command needs granted permissions to read and pull images from the specified stages 
             storage and images repo
       --env='':
-            Use specified environment (default WERF_DEPLOY_ENVIRONMENT)
+            Use specified environment (default $WERF_DEPLOY_ENVIRONMENT)
   -h, --help=false:
             help for deploy
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default WERF_HOME environment or 
-            ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
+            or ~/.werf)
   -i, --images-repo='':
-            Docker Repo to store images (default WERF_IMAGES_REPO environment)
+            Docker Repo to store images (default $WERF_IMAGES_REPO environment)
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --kube-config='':
@@ -82,27 +82,27 @@ werf deploy [options]
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, 
             see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
             multiple times to use multiple keys.
-  -s, --stages-storage=':local':
+  -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
-            supported for now; default WERF_STAGES_STORAGE environment).
+            supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://flant.github.io/werf/reference/build/stages.html
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags. Option can be 
             used multiple times to produce multiple images with the specified tags.
       --tag-git-branch='':
             Use git-branch tagging strategy and tag by the specified git branch (option can be 
-            enabled by specifying git branch in the WERF_TAG_GIT_BRANCH environment variable)
+            enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH environment variable)
       --tag-git-commit='':
             Use git-commit tagging strategy and tag by the specified git commit hash (option can 
-            be enabled by specifying git commit hash in the WERF_TAG_GIT_COMMIT environment 
+            be enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT environment 
             variable)
       --tag-git-tag='':
             Use git-tag tagging strategy and tag by the specified git tag (option can be enabled 
-            by specifying git tag in the WERF_TAG_GIT_TAG environment variable)
+            by specifying git tag in the $WERF_TAG_GIT_TAG environment variable)
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default WERF_TMP environment or system 
+            Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
             tmp dir)
       --values=[]:
             Additional helm values

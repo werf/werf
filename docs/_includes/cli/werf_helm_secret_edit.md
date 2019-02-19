@@ -28,10 +28,10 @@ werf helm secret edit FILE_PATH [options]
   -h, --help=false:
             help for edit
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default WERF_HOME environment or 
-            ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
+            or ~/.werf)
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default WERF_TMP environment or system 
+            Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
             tmp dir)
       --values=false:
             Edit FILE_PATH as secret values file
