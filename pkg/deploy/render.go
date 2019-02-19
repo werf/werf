@@ -14,6 +14,7 @@ type RenderOptions struct {
 	SecretValues []string
 	Set          []string
 	SetString    []string
+	Env          string
 }
 
 func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOptions) error {
@@ -33,7 +34,7 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, true)
 
-	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images)
+	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})
 
 	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.SecretValues, serviceValues)
 	if err != nil {

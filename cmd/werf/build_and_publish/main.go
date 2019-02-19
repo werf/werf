@@ -134,7 +134,7 @@ func runBuildAndPublish(imagesToProcess []string) error {
 		return err
 	}
 
-	tagOpts, err := common.GetTagOptions(&CommonCmdData)
+	tagOpts, err := common.GetTagOptions(&CommonCmdData, common.TagOptionsGetterOptions{})
 	if err != nil {
 		return err
 	}

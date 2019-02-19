@@ -32,7 +32,11 @@ func GetImagesInfoGetters(configImages []*config.Image, imagesRepo, tag string, 
 	return images
 }
 
-func GetServiceValues(projectName, repo, namespace, tag string, tagStrategy tag_strategy.TagStrategy, images []ImageInfoGetter) (map[string]interface{}, error) {
+type ServiceValuesOptions struct {
+	Env string
+}
+
+func GetServiceValues(projectName, repo, namespace, tag string, tagStrategy tag_strategy.TagStrategy, images []ImageInfoGetter, opts ServiceValuesOptions) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 
 	ciInfo := map[string]interface{}{
@@ -50,10 +54,14 @@ func GetServiceValues(projectName, repo, namespace, tag string, tagStrategy tag_
 		"ci":         ciInfo,
 	}
 
-	res["global"] = map[string]interface{}{
+	globalInfo := map[string]interface{}{
 		"namespace": namespace,
 		"werf":      werfInfo,
 	}
+	if opts.Env != "" {
+		globalInfo["env"] = opts.Env
+	}
+	res["global"] = globalInfo
 
 	switch tagStrategy {
 	case tag_strategy.GitTag:
