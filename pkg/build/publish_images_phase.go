@@ -30,7 +30,7 @@ type PublishImagesPhase struct {
 }
 
 func (p *PublishImagesPhase) Run(c *Conveyor) error {
-	return logger.LogServiceProcess("Pushing images", logger.LogProcessOptions{WithoutBorder: true}, func() error {
+	return logger.LogProcess("Pushing images", logger.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
@@ -39,9 +39,9 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 	// TODO: Push stages should occur on the BuildStagesPhase
 
 	for _, image := range c.imagesInOrder {
-		err := logger.WithTag(image.LogTagName(), func() error {
+		if err := logger.LogProcess(image.LogProcessName(), logger.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			if p.WithStages {
-				err := logger.LogServiceProcess("Pushing stages cache", logger.LogProcessOptions{}, func() error {
+				err := logger.LogSecondaryProcess("Pushing stages cache", logger.LogProcessOptions{}, func() error {
 					if err := p.pushImageStages(c, image); err != nil {
 						return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
 					}
@@ -61,9 +61,7 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 			}
 
 			return nil
-		})
-
-		if err != nil {
+		}); err != nil {
 			return err
 		}
 	}
@@ -163,7 +161,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 			continue
 		}
 
-		err := logger.LogServiceProcess(fmt.Sprintf("%s tagging strategy", string(strategy)), logger.LogProcessOptions{}, func() error {
+		err := logger.LogProcess(fmt.Sprintf("%s tagging strategy", string(strategy)), logger.LogProcessOptions{}, func() error {
 		ProcessingTags:
 			for _, tag := range tags {
 				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
@@ -202,7 +200,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 						imagePkg.WerfImageLabel:       "true",
 					})
 
-					err := logger.LogProcess("Building final image with meta information", logger.LogProcessOptions{}, func() error {
+					err := logger.LogSecondaryProcess("Building final image with meta information", logger.LogProcessOptions{}, func() error {
 						if err := pushImage.Build(imagePkg.BuildOptions{}); err != nil {
 							return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, strategy, err)
 						}

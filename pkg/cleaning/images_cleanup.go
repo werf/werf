@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/flant/kubedog/pkg/kube"
 
@@ -53,13 +53,13 @@ type CleanupOptions struct {
 }
 
 func Cleanup(options CleanupOptions) error {
-	if err := logger.LogServiceProcess("Running images cleanup", logger.LogProcessOptions{WithIndent: true}, func() error {
+	if err := logger.LogProcess("Running images cleanup", logger.LogProcessOptions{WithIndent: true}, func() error {
 		return ImagesCleanup(options.ImagesCleanupOptions)
 	}); err != nil {
 		return err
 	}
 
-	if err := logger.LogServiceProcess("Running stages cleanup", logger.LogProcessOptions{WithIndent: true}, func() error {
+	if err := logger.LogProcess("Running stages cleanup", logger.LogProcessOptions{WithIndent: true}, func() error {
 		return StagesCleanup(options.StagesCleanupOptions)
 	}); err != nil {
 		return err
@@ -77,7 +77,7 @@ func ImagesCleanup(options ImagesCleanupOptions) error {
 
 		if options.LocalGit != nil {
 			if !options.WithoutKube {
-				if err := logger.LogServiceProcess("Ignoring repo images that are being used in kubernetes", logger.LogProcessOptions{}, func() error {
+				if err := logger.LogSecondaryProcess("Ignoring repo images that are being used in kubernetes", logger.LogProcessOptions{}, func() error {
 					repoImages, err = exceptRepoImagesByWhitelist(repoImages)
 					return err
 				}); err != nil {
@@ -138,7 +138,7 @@ func exceptRepoImagesByWhitelist(repoImages []docker_registry.RepoImage) ([]dock
 
 	var deployedDockerImagesNames []string
 	var err error
-	if err := logger.LogServiceProcessInline("Getting deployed docker images", func() error {
+	if err := logger.LogSecondaryProcessInline("Getting deployed docker images", func() error {
 		deployedDockerImagesNames, err = deployedDockerImages()
 		if err != nil {
 			return fmt.Errorf("cannot get deployed images: %s", err)

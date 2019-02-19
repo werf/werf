@@ -101,7 +101,7 @@ func runPurge() error {
 		DryRun:      *CommonCmdData.DryRun,
 	}
 
-	if err := logger.LogServiceProcess("Running images purge", logger.LogProcessOptions{WithIndent: true}, func() error {
+	if err := logger.LogProcess("Running images purge", logger.LogProcessOptions{WithIndent: true}, func() error {
 		return cleaning.ImagesPurge(commonRepoOptions)
 	}); err != nil {
 		return err
@@ -117,7 +117,7 @@ func runPurge() error {
 		},
 	}
 
-	if err := logger.LogServiceProcess("Running stages purge", logger.LogProcessOptions{WithIndent: true}, func() error {
+	if err := logger.LogProcess("Running stages purge", logger.LogProcessOptions{WithIndent: true}, func() error {
 		return cleaning.StagesPurge(commonProjectOptions)
 	}); err != nil {
 		return err

@@ -21,8 +21,8 @@ type RenewPhase struct{}
 func (p *RenewPhase) Run(c *Conveyor) error {
 	var resErr error
 
-	logProcessOptions := logger.LogProcessOptions{WithoutBorder: true}
-	err := logger.LogServiceProcess("Checking invalid stages cache", logProcessOptions, func() error {
+	logProcessOptions := logger.LogProcessOptions{}
+	err := logger.LogProcess("Checking invalid stages cache", logProcessOptions, func() error {
 		err := p.run(c)
 
 		if isConveyorShouldBeResetError(err) {

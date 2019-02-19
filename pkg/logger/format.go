@@ -1,28 +1,31 @@
 package logger
 
-import "strings"
+import (
+	"strings"
+)
 
-func FitTextWithIndent(text string, extraIndentWidth int) string {
-	return fitTextWithIndent(text, TerminalWidth(), extraIndentWidth)
+type FitTextOptions struct {
+	ExtraIndentWidth int
+	MaxWidth         int
 }
 
-func FitTextWithIndentWithWidthMaxLimit(text string, extraIndentWidth int, maxWidth int) string {
+func FitText(text string, options FitTextOptions) string {
 	tw := TerminalWidth()
 	var lineWidth int
-	if tw < maxWidth {
-		lineWidth = tw
+	if options.MaxWidth != 0 && tw > options.MaxWidth {
+		lineWidth = options.MaxWidth
 	} else {
-		lineWidth = maxWidth
+		lineWidth = tw
 	}
 
-	return fitTextWithIndent(text, lineWidth, extraIndentWidth)
+	return fitTextWithIndent(text, lineWidth, options.ExtraIndentWidth)
 }
 
 func fitTextWithIndent(text string, lineWidth, extraIndentWidth int) string {
 	var result string
 	var resultLines []string
 
-	contentWidth := lineWidth - tagBlockWidth() - indentWidth - processBordersBlockWidth() - extraIndentWidth
+	contentWidth := lineWidth - terminalServiceWidth() - extraIndentWidth
 	fittedText := fitText(text, contentWidth)
 	for _, line := range strings.Split(fittedText, "\n") {
 		indent := strings.Repeat(" ", extraIndentWidth)

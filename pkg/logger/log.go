@@ -1,33 +1,43 @@
 package logger
 
-func LogLn(args ...interface{}) {
-	loggerFormattedLogLn(outStream, args...)
+import "fmt"
+
+func LogLn(a ...interface{}) {
+	loggerFormattedLogLn(outStream, a...)
 }
 
-func LogF(format string, args ...interface{}) {
-	loggerFormattedLogF(outStream, format, args...)
+func LogF(format string, a ...interface{}) {
+	loggerFormattedLogF(outStream, format, a...)
 }
 
-func LogServiceLn(args ...interface{}) {
-	LogServiceF("%s\n", args...)
+func LogHighlightLn(a ...interface{}) {
+	LogHighlightF("%s", fmt.Sprintln(a...))
 }
 
-func LogServiceF(format string, args ...interface{}) {
-	colorizeAndFormattedLogF(outStream, colorizeService, format, args...)
+func LogHighlightF(format string, a ...interface{}) {
+	colorizeAndFormattedLogF(outStream, colorizeHighlight, format, a...)
 }
 
-func LogInfoLn(args ...interface{}) {
-	LogInfoF("%s\n", args...)
+func LogServiceLn(a ...interface{}) {
+	LogServiceF("%s", fmt.Sprintln(a...))
 }
 
-func LogInfoF(format string, args ...interface{}) {
-	colorizeAndFormattedLogF(outStream, colorizeInfo, format, args...)
+func LogServiceF(format string, a ...interface{}) {
+	colorizeAndFormattedLogF(outStream, colorizeSecondary, format, a...)
 }
 
-func LogErrorLn(args ...interface{}) {
-	LogErrorF("%s\n", args...)
+func LogInfoLn(a ...interface{}) {
+	LogInfoF("%s", fmt.Sprintln(a...))
 }
 
-func LogErrorF(format string, args ...interface{}) {
-	colorizeAndFormattedLogF(errStream, colorizeWarning, format, args...)
+func LogInfoF(format string, a ...interface{}) {
+	colorizeAndFormattedLogF(outStream, colorizeInfo, format, a...)
+}
+
+func LogErrorLn(a ...interface{}) {
+	LogErrorF("%s", fmt.Sprintln(a...))
+}
+
+func LogErrorF(format string, a ...interface{}) {
+	colorizeAndFormattedLogF(errStream, colorizeWarning, format, a...)
 }

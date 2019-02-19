@@ -13,7 +13,7 @@ import (
 )
 
 func HostPurge(options CommonOptions) error {
-	err := logger.LogServiceProcess("Running werf docker containers purge", logger.LogProcessOptions{}, func() error {
+	err := logger.LogSecondaryProcess("Running werf docker containers purge", logger.LogProcessOptions{}, func() error {
 		if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
 			return err
 		}
@@ -25,7 +25,7 @@ func HostPurge(options CommonOptions) error {
 		return err
 	}
 
-	err = logger.LogServiceProcess("Running werf docker images purge", logger.LogProcessOptions{}, func() error {
+	err = logger.LogSecondaryProcess("Running werf docker images purge", logger.LogProcessOptions{}, func() error {
 		if err := werfImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
 			return err
 		}
@@ -41,11 +41,9 @@ func HostPurge(options CommonOptions) error {
 		return fmt.Errorf("tmp files purge failed: %s", err)
 	}
 
-	return logger.LogServiceProcess("Running werf home data purge", logger.LogProcessOptions{}, func() error {
+	return logger.LogSecondaryProcess("Running werf home data purge", logger.LogProcessOptions{}, func() error {
 		return purgeHomeWerfFiles(options.DryRun)
 	})
-
-	return nil
 }
 
 func ResetDevModeCache(options CommonOptions) error {

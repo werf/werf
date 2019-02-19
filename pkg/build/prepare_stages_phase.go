@@ -16,7 +16,7 @@ func NewPrepareStagesPhase() *PrepareStagesPhase {
 type PrepareStagesPhase struct{}
 
 func (p *PrepareStagesPhase) Run(c *Conveyor) error {
-	return logger.LogServiceProcess("Preparing stages build instructions", logger.LogProcessOptions{WithoutBorder: true}, func() error {
+	return logger.LogProcess("Preparing stages build instructions", logger.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
@@ -27,13 +27,9 @@ func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 	}
 
 	for _, image := range c.imagesInOrder {
-		err := logger.WithTag(image.LogTagName(), func() error {
+		if err := logger.LogProcess(image.LogProcessName(), logger.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			return p.runImage(image, c)
-		})
-
-		logger.LogOptionalLn()
-
-		if err != nil {
+		}); err != nil {
 			return err
 		}
 	}

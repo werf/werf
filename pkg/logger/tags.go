@@ -1,48 +1,45 @@
 package logger
 
-import "strings"
-
-var (
-	colorlessTag   = ""
-	tagWidth       = 20
-	tagIndentWidth = 2
+import (
+	"fmt"
+	"strings"
 )
 
-func WithTag(value string, f func() error) error {
-	savedTag := colorlessTag
-	colorlessTag = value
-	err := f()
-	colorlessTag = savedTag
+var (
+	tagValue        = ""
+	tagColorizeFunc = func(a ...interface{}) string { return fmt.Sprint(a...) }
+	tagIndentWidth  = 2
+)
 
+func WithTag(value string, colorizeFunc func(...interface{}) string, f func() error) error {
+	savedTag := tagValue
+	savedColorizeFunc := tagColorizeFunc
+	SetTag(value, colorizeFunc)
+	err := f()
+	SetTag(savedTag, savedColorizeFunc)
 	return err
 }
 
-func SetTag(value string) {
-	colorlessTag = value
+func SetTag(value string, colorizeFunc func(...interface{}) string) {
+	tagValue = value
+	tagColorizeFunc = colorizeFunc
 }
 
 func formattedTag() string {
-	var fittedTag string
-
-	if len(colorlessTag) == 0 {
+	if len(tagValue) == 0 {
 		return ""
-	} else if len(colorlessTag) > tagWidth {
-		longTagPostfix := " ..."
-		fittedTag = colorlessTag[:tagWidth-len(longTagPostfix)] + longTagPostfix
-	} else {
-		fittedTag = colorlessTag
 	}
 
-	padLeft := strings.Repeat(" ", tagWidth-len(fittedTag))
-	colorizedTag := colorize(fittedTag, tagFormat...)
-
-	return strings.Join([]string{padLeft, colorizedTag, strings.Repeat(" ", tagIndentWidth)}, "")
+	return strings.Join([]string{
+		tagColorizeFunc(tagValue),
+		strings.Repeat(" ", tagIndentWidth),
+	}, "")
 }
 
 func tagBlockWidth() int {
-	if len(colorlessTag) == 0 {
+	if len(tagValue) == 0 {
 		return 0
-	} else {
-		return tagWidth + tagIndentWidth
 	}
+
+	return len(tagValue) + tagIndentWidth
 }
