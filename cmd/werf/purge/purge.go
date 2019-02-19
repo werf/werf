@@ -10,7 +10,6 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -101,12 +100,6 @@ func runPurge() error {
 		DryRun:      *CommonCmdData.DryRun,
 	}
 
-	if err := logger.LogProcess("Running images purge", logger.LogProcessOptions{WithIndent: true}, func() error {
-		return cleaning.ImagesPurge(commonRepoOptions)
-	}); err != nil {
-		return err
-	}
-
 	commonProjectOptions := cleaning.CommonProjectOptions{
 		ProjectName: projectName,
 		CommonOptions: cleaning.CommonOptions{
@@ -117,9 +110,12 @@ func runPurge() error {
 		},
 	}
 
-	if err := logger.LogProcess("Running stages purge", logger.LogProcessOptions{WithIndent: true}, func() error {
-		return cleaning.StagesPurge(commonProjectOptions)
-	}); err != nil {
+	purgeOptions := cleaning.PurgeOptions{
+		CommonRepoOptions:    commonRepoOptions,
+		CommonProjectOptions: commonProjectOptions,
+	}
+
+	if err := cleaning.Purge(purgeOptions); err != nil {
 		return err
 	}
 
