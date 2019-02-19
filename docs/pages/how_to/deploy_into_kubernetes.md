@@ -21,13 +21,13 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
 
    * Accessible from kubernetes nodes to pull images from the registry.
 
- * Installed [`multiwerf`](https://github.com/flant/multiwerf) on the host system.
+ * Installed [Werf dependencies]({{ site.baseurl }}/how_to/installation.html#install-dependencies) (including Helm)  on the host system.
+
+ * Installed [`Multiwerf`](https://github.com/flant/multiwerf) on the host system.
 
  * Installed `kubectl` on a host machine configured to access your kubernetes cluster (<https://kubernetes.io/docs/tasks/tools/install-kubectl/>).
 
- * Installed `helm` on a host machine (<https://docs.helm.sh/using_helm/#installing-helm>).
-
- * Minimal knowledge of `helm` and its concepts required (such as chart, templates, release etc.). Helm documentation is available here: <https://docs.helm.sh/>.
+ * Minimal knowledge of `helm` and its concepts required (such as chart, templates, release etc.). Helm documentation is available here: <https://docs.helm.sh>.
 
 **NOTICE** In the following steps we will use `:minikube` as `REPO` argument of werf commands. If you are using own kubernetes and docker-registry installation, specify your own `REPO` address instead of `:minikube`.
 
