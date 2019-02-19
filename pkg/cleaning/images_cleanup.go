@@ -107,18 +107,25 @@ func ImagesCleanup(options ImagesCleanupOptions) error {
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
-	err := lock.WithLock(options.CommonRepoOptions.ImagesRepo, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s.images", options.CommonProjectOptions.ProjectName)
+	err := lock.WithLock(projectStagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoImages, err := repoImages(options.CommonRepoOptions)
 		if err != nil {
 			return err
 		}
 
-		if options.CommonRepoOptions.StagesStorage == localStagesStorage {
-			if err := projectImageStagesSyncByRepoImages(repoImages, options.CommonProjectOptions); err != nil {
-				return err
+		if len(repoImages) != 0 {
+			if options.CommonRepoOptions.StagesStorage == localStagesStorage {
+				if err := projectImageStagesSyncByRepoImages(repoImages, options.CommonProjectOptions); err != nil {
+					return err
+				}
+			} else {
+				if err := repoImageStagesSyncByRepoImages(repoImages, options.CommonRepoOptions); err != nil {
+					return err
+				}
 			}
 		} else {
-			if err := repoImageStagesSyncByRepoImages(repoImages, options.CommonRepoOptions); err != nil {
+			if err := projectStagesPurge(options.CommonProjectOptions); err != nil {
 				return err
 			}
 		}
