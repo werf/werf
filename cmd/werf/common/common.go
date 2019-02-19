@@ -235,7 +235,7 @@ func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, 
 		return cleanup.ImagesCleanupPolicies{}, err
 	}
 
-	commitDays, err := GetGitTagStrategyExpiryDays(cmdData)
+	commitDays, err := GetGitCommitStrategyExpiryDays(cmdData)
 	if err != nil {
 		return cleanup.ImagesCleanupPolicies{}, err
 	}
