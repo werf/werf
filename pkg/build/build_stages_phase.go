@@ -23,10 +23,6 @@ type BuildStagesPhase struct {
 }
 
 func (p *BuildStagesPhase) Run(c *Conveyor) (err error) {
-	if debug() {
-		fmt.Printf("BuildStagesPhase.Run\n")
-	}
-
 	return logger.LogProcess("Building stages", logger.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
@@ -50,10 +46,6 @@ func (p *BuildStagesPhase) run(c *Conveyor) error {
 }
 
 func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
-	if debug() {
-		fmt.Fprintf(logger.GetOutStream(), "  image: '%s'\n", image.GetName())
-	}
-
 	var acquiredLocks []string
 
 	unlockLock := func() {
@@ -126,10 +118,6 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 
 		logProcessOptions := logger.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
 		err := logger.LogProcess(fmt.Sprintf("Building %s", msg), logProcessOptions, func() (err error) {
-			if debug() {
-				fmt.Fprintf(logger.GetOutStream(), "    %s\n", s.Name())
-			}
-
 			if err := s.PreRunHook(c); err != nil {
 				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
 			}
