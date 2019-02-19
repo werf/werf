@@ -22,7 +22,7 @@ In this article, we will build an example GO application. Then we will optimize 
 This command should be run prior running any werf command in your shell session:
 
 ```
-source <(multiwerf use 1.0)
+source <(multiwerf use 1.0 beta)
 ```
 
 ## Sample application
@@ -35,6 +35,7 @@ Create a `booking` directory and place the following `werf.yaml` in the `booking
 {% raw %}
 ```yaml
 project: hotel-booking
+configVersion: 1
 ---
 
 image: go-booking
@@ -68,26 +69,25 @@ The config describes instructions to build one image — `go-booking`.
 Build the application by executing the following command in the `booking` directory:
 
 ```bash
-werf build
+werf build --stages-storage :local
 ```
 
 ### Running
 
 Run the application by executing the following command in the `booking` directory:
 ```bash
-werf tag --repo booking --tag v1.0
-docker run -p 9000:9000 --rm -d booking/go-booking:v1.0 /app/run.sh
+werf --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" run go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
 ```bash
-docker ps
+docker ps -f "name=go-booking"
 ```
 
 You should see a running container with a random name, like this:
 ```bash
-CONTAINER ID  IMAGE         COMMAND        CREATED        STATUS        PORTS                   NAMES
-41d6f49798a8  14e6b9c6b93b  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  infallible_bell
+CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
+41d6f49798a8  image-stage-hotel-booking:f27efaf9...1456b0b4  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
 
 Open in a web browser the following URL — [http://localhost:9000](http://localhost:9000).
@@ -96,18 +96,18 @@ The `revel framework booking demo` page should open, and you can login by enteri
 
 ### Getting the image size
 
-After tagging we get an image `booking/go-booking:v1.0` according to werf naming rules (read more about naming [here]({{ site.baseurl }}/reference/registry/image_naming.html)).
-
 Determine the image size by executing:
 
+{% raw %}
 ```bash
-docker images booking/go-booking
+docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
+{% endraw %}
 
 The output will be something like this:
 ```bash
-REPOSITORY           TAG           IMAGE ID            CREATED             SIZE
-booking/go-booking   v1.0          0bf71cb34076        10 minutes ago      1.03 GB
+REPOSITORY                 TAG                   IMAGE ID          CREATED             SIZE
+image-stage-hotel-booking  f27efaf9...1456b0b4   0bf71cb34076      10 minutes ago      1.04 GB
 ```
 
 Pay attention, that the image size of the application is **above 1 GB**.
@@ -125,6 +125,7 @@ Replace `werf.yaml` with the following content:
 {% raw %}
 ```yaml
 project: hotel-booking
+configVersion: 1
 ---
 
 artifact: booking-app
@@ -167,32 +168,31 @@ Pay attention, that `go-booking` image based on the ubuntu image, but not on the
 
 Build the application with the modified config:
 ```yaml
-werf build
+werf build --stages-storage :local
 ```
 
 ### Running
 
-Before running the modified application, you need to stop already running container. Otherwise, the new container can't bind to 9000 port on localhost. E.g., execute the following command to stop last created container:
+Before running the modified application, you need to stop running `go-booking` container we built. Otherwise, the new container can't bind to 9000 port on localhost. E.g., execute the following command to stop last created container:
 
 ```bash
-docker stop `docker ps -lq`
+docker stop go-booking
 ```
 
 Run the modified application by executing the following command:
 ```bash
-werf tag --repo booking --tag v2.0
-docker run -p 9000:9000 --rm -d booking/go-booking:v2.0 /app/run.sh
+werf --stages-storage :local --docker-options="-d -p 9000:9000 --rm --name go-booking" run go-booking -- /app/run.sh
 ```
 
 Check that container is running by executing the following command:
 ```bash
-docker ps
+docker ps -f "name=go-booking"
 ```
 
 You should see a running container with a random name, like this:
 ```bash
-CONTAINER ID  IMAGE         COMMAND        CREATED        STATUS        PORTS                   NAMES
-88287022813b  c8277cd4a801  "/app/run.sh"  5 seconds ago  Up 3 seconds  0.0.0.0:9000->9000/tcp  naughty_dubinsky
+CONTAINER ID  IMAGE                                          COMMAND        CREATED        STATUS        PORTS                   NAMES
+41d6f49798a8  image-stage-hotel-booking:306aa6e8...f71dbe53  "/app/run.sh"  3 minutes ago  Up 3 minutes  0.0.0.0:9000->9000/tcp  go-booking
 ```
 
 Open in a web browser the following URL — [http://localhost:9000](http://localhost:9000).
@@ -202,18 +202,17 @@ The `revel framework booking demo` page should open, and you can login by enteri
 ### Getting images size
 
 Determine the image size of optimized build, by executing:
+{% raw %}
 ```bash
-docker images booking/go-booking
+docker images `docker ps -f "name=go-booking" --format='{{.Image}}'`
 ```
+{% endraw %}
 
 The output will be something like this:
 ```bash
-REPOSITORY            TAG        IMAGE ID         CREATED            SIZE
-booking/go-booking    v2.0      0a9943b0da6a     3 minutes ago      103 MB
-booking/go-booking    v1.0      0bf71cb34076     15 minutes ago     1.04 GB
+REPOSITORY                   TAG                      IMAGE ID         CREATED            SIZE
+image-stage-hotel-booking    306aa6e8...f71dbe53      0a9943b0da6a     3 minutes ago      103 MB
 ```
-
-The total size difference between `v1.0` and `v2.0` images is about 900 MB.
 
 Our example shows that **with using artifacts**, the image size **smaller by more than 90%** than the original image size!
 
