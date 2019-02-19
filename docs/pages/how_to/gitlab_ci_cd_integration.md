@@ -91,17 +91,13 @@ Create a `.gitlab-ci.yml` file in the project's root directory and add the follo
 stages:
   - build
   - deploy
-  - cleanup_registry
-  - cleanup_builder
+  - cleanup
 ```
 
 We've defined the following stages:
 * `build` — stage for building application images;
 * `deploy` — stage for deploying built images on environments such as — stage, test, review, production or any other;
-* `cleanup_registry` — stage for cleaning up registry;
-* `cleanup_builder` — stage for cleaning up werf cache on the build node.
-
-> The ordering of elements in stages is important because it defines the order of execution of jobs.
+* `cleanup` — stage for cleaning up registry and build cache.
 
 ### Build stage
 
@@ -111,19 +107,16 @@ Add the following lines to the `.gitlab-ci.yml` file:
 Build:
   stage: build
   script:
-    - source <(multiwerf use 1.0)
-    ## Always use "bp" option instead separate "build" and "push"
-    ## It is important to use --tag-ci, --tag-git-branch or --tag-git-commit options here (in bp or push commands) otherwise cleanup won't work.
-    - werf bp --tag-ci
+    - source <(multiwerf use 1.0 beta)
+    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - werf build-and-publish
   tags:
-    ## You specify there the tag of the runner to use. We have only one runner
     - werf
-    ## Cleanup will use schedules, and it is not necessary to rebuild images on running cleanup jobs.
-    ## Therefore we need to specify
-    ##
   except:
     - schedules
 ```
+
+Cleanup will use schedule, and it is not necessary to rebuild images on running cleanup job. Therefore we need to specify `except: schedules` in the build stage above.
 
 For registry authorization on push/pull operations werf use `CI_JOB_TOKEN` GitLab environment (see more about [GitLab CI job permissions model](https://docs.gitlab.com/ee/user/project/new_ci_build_permissions_model.html)), and this is the most recommended way you to use (see more about [werf registry authorization]({{ site.baseurl }}/reference/registry/authorization.html)). In a simple case, when you use GitLab with enabled container registry in it, you needn't do anything for authorization.
 
@@ -147,10 +140,10 @@ Add the following lines to `.gitlab-ci.yml` file:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - source <(multiwerf use 1.0)
+    - source <(multiwerf use 1.0 beta)
+    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     ## Next command makes deploy and will be discussed further
     - werf deploy
-        --tag-ci
         --set "global.env=${CI_ENVIRONMENT_SLUG}"
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
@@ -161,7 +154,6 @@ Add the following lines to `.gitlab-ci.yml` file:
 ```
 
 Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
-* it is important to use `--tag-ci`, `--tag-git-branch` or `--tag-git-commit` options here (in `werf deploy`) otherwise you can't use werf templates `werf_container_image` and `werf_container_env` (see more [about deploy]({{ site.baseurl }}/reference/deploy/chart_configuration.html#features-of-chart-template-creation));
 * we've passed the `global.env` parameter, which will contain the name of the environment. You can access it in `helm` templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
 * we've passed the `global.ci_url` parameter, which will contain an URL of the environment. You can use it in your `helm` templates e.g. to configure ingress.
 
@@ -188,7 +180,8 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - werf version; pwd; set -x
+    - source <(./multiwerf use 1.0 beta)
+    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -266,43 +259,30 @@ Werf has an efficient cleanup functionality which can help you to avoid overflow
 
 In the results of werf works, we have images in a registry and a build cache. Build cache exists only on build node and to the registry werf push only built images.
 
-There are two stages — `cleanup_registry` and `cleanup_builder`, in the `.gitlab-ci.yml` file for the cleanup process. Every stage has only one job in it and order of stage definition (see `stages` list in the top of the `.gitlab-ci.yml` file) is important.
-
-The first step in the cleanup process is to clean registry from unused images (built from stale or deleted branches and so on — see more [about werf cleanup]({{ site.baseurl }}/reference/registry/cleaning.html)). This work will be done on the `cleanup_registry` stage. On this stage, werf connect to the registry and to the kubernetes cluster. From kubernetes cluster werf gets info about images are currently used by pods.
-
-The second step — is to clean up build cache **after** registry has been cleaned. The important word is — after, because werf will use info from the registry to clean up build cache, and if you haven't cleaned registry you won't get an efficiently cleaned build cache. That's why is important that the `cleanup_builder` stage starts after the `cleanup_registry` stage.
+There is a `cleanup` stage in the `.gitlab-ci.yml` file for the cleanup process.
 
 Add the following lines to `.gitlab-ci.yml` file:
 
 ```yaml
-Cleanup registry:
-  stage: cleanup_registry
+Cleanup:
+  stage: cleanup
   script:
-    - source <(multiwerf use 1.0)
-    - werf cleanup
-  only:
-    - schedules
-  tags:
-    - werf
-
-Cleanup builder:
-  stage: cleanup_builder
-  script:
-    - source <(multiwerf use 1.0)
-    - werf sync
+    - source <(multiwerf use 1.0 beta)
+    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - werf cleanup --stages-storage :local
   only:
     - schedules
   tags:
     - werf
 ```
 
-To use cleanup you should create `Personal Access Token` with necessary rights and put it into the `WERF_CLEANUP_IMAGES_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_CLEANUP_IMAGES_PASSWORD` and a value consisting `Personal Access Token`.
+To use cleanup you should create `Personal Access Token` with necessary rights and put it into the `WERF_IMAGES_CLEANUP_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_IMAGES_CLEANUP_PASSWORD` and a value consisting `Personal Access Token`.
 
-> Note: `WERF_CLEANUP_IMAGES_PASSWORD` environment variable is used by werf only for deleting images in registry when run `werf cleanup` command. In the other cases werf uses `CI_JOB_TOKEN`.
+> Note: `WERF_IMAGES_CLEANUP_PASSWORD` environment variable is used by werf only for deleting images in registry when run `werf cleanup` command. In the other cases werf uses `CI_JOB_TOKEN`.
 
 For demo project simply create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
 
-Both stages will start only by schedules. You can define schedule in `CI/CD` —> `Schedules` section of your project in GitLab Web interface. Push `New schedule` button, fill description, define cron pattern, leave the master branch in target branch (because it doesn't affect on cleanup), check on Active (if it's not checked) and save pipeline schedule. That's all!
+Cleanup stage will start only by schedule. You can define schedule in `CI/CD` —> `Schedules` section of your project in GitLab Web interface. Push `New schedule` button, fill description, define cron pattern, leave the master branch in target branch (because it doesn't affect on cleanup), check on Active (if it's not checked) and save pipeline schedule. That's all!
 
 ## Complete `.gitlab-ci.yml` file
 
@@ -310,38 +290,31 @@ Both stages will start only by schedules. You can define schedule in `CI/CD` —
 stages:
   - build
   - deploy
-  - cleanup_registry
-  - cleanup_builder
+  - cleanup
 
 Build:
   stage: build
   script:
-    - source <(multiwerf use 1.0)
-    ## Always use "bp" option instead separate "build" and "push"
-    ## It is important to use --tag-ci, --tag-git-branch or --tag-git-commit options otherwise cleanup won't work.
-    - werf bp --tag-ci
+    - source <(multiwerf use 1.0 beta)
+    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - werf build-and-publish
   tags:
-    ## You specify there the tag of the runner to use. We need to use there build runner
     - werf
-    ## Cleanup will use schedules, and it is not necessary to rebuild images on running cleanup jobs.
-    ## Therefore we need to specify
-    ##
   except:
     - schedules
 
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - source <(multiwerf use 1.0)
+    - source <(multiwerf use 1.0 beta)
+    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     ## Next command makes deploy and will be discussed further
     - werf deploy
-        --tag-ci
         --set "global.env=${CI_ENVIRONMENT_SLUG}"
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
     - Build
-  ## We need to use deploy runner, because werf needs to interact with the kubectl
   tags:
     - werf
 
@@ -361,7 +334,8 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - source <(multiwerf use 1.0)
+    - source <(./multiwerf use 1.0 beta)
+    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -396,21 +370,12 @@ Deploy to Production:
   except:
     - schedules
 
-Cleanup registry:
-  stage: cleanup_registry
+Cleanup:
+  stage: cleanup
   script:
-    - source <(multiwerf use 1.0)
-    - werf cleanup
-  only:
-    - schedules
-  tags:
-    - werf
-
-Cleanup builder:
-  stage: cleanup_builder
-  script:
-    - source <(multiwerf use 1.0)
-    - werf sync
+    - source <(multiwerf use 1.0 beta)
+    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - werf cleanup --stages-storage :local
   only:
     - schedules
   tags:
