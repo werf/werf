@@ -135,8 +135,14 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			}
 
 			if err := logger.WithTag(fmt.Sprintf("%s/%s", image.LogName(), s.Name()), image.LogTagColorizeFunc(), func() error {
-				if err := img.Build(p.ImageBuildOptions); err != nil {
-					return fmt.Errorf("failed to build %s: %s", img.Name(), err)
+				if err := logger.FittedOutputOn(func() error {
+					if err := img.Build(p.ImageBuildOptions); err != nil {
+						return fmt.Errorf("failed to build %s: %s", img.Name(), err)
+					}
+
+					return nil
+				}); err != nil {
+					return err
 				}
 
 				return nil

@@ -7,6 +7,7 @@ import (
 type FitTextOptions struct {
 	ExtraIndentWidth int
 	MaxWidth         int
+	MarkEndOfLine    bool
 }
 
 func FitText(text string, options FitTextOptions) string {
@@ -18,15 +19,15 @@ func FitText(text string, options FitTextOptions) string {
 		lineWidth = tw
 	}
 
-	return fitTextWithIndent(text, lineWidth, options.ExtraIndentWidth)
+	return fitTextWithIndent(text, lineWidth, options.ExtraIndentWidth, options.MarkEndOfLine)
 }
 
-func fitTextWithIndent(text string, lineWidth, extraIndentWidth int) string {
+func fitTextWithIndent(text string, lineWidth, extraIndentWidth int, markEndOfLine bool) string {
 	var result string
 	var resultLines []string
 
 	contentWidth := lineWidth - terminalServiceWidth() - extraIndentWidth
-	fittedText := fitText(text, contentWidth)
+	fittedText := fitText(text, 0, contentWidth, markEndOfLine)
 	for _, line := range strings.Split(fittedText, "\n") {
 		indent := strings.Repeat(" ", extraIndentWidth)
 		resultLines = append(resultLines, strings.Join([]string{indent, line}, ""))
@@ -37,44 +38,82 @@ func fitTextWithIndent(text string, lineWidth, extraIndentWidth int) string {
 	return result
 }
 
-func fitText(text string, contentWidth int) string {
-	var result string
-	var resultLines []string
+func fitText(text string, cursor int, contentWidth int, markEndOfLine bool) string {
+	if markEndOfLine {
+		contentWidth -= 2
+	}
 
-	lines := strings.Split(text, "\n")
-	for _, line := range lines {
-		var cursor int
-		var resultLine string
+	var fittedText string
+	var line, word string
+	var wordCursor int
 
-		lineWords := strings.Split(line, " ")
-		if len(lineWords) == 1 && len(lineWords[0]) == 0 {
-			resultLines = append(resultLines, "")
-		} else {
-			for ind, word := range lineWords {
-				isLastWord := ind == len(lineWords)-1
+	lineCursor := cursor
 
-				toAdd := word
-				if !isLastWord {
-					toAdd += " "
-				}
-
-				if cursor+len(toAdd) >= contentWidth && resultLine != "" {
-					resultLines = append(resultLines, resultLine)
-					cursor = 0
-					resultLine = ""
-				}
-
-				cursor += len(toAdd)
-				resultLine += toAdd
+	addWithSignInLine := func() {
+		if markEndOfLine {
+			if contentWidth-lineCursor+1 > 0 {
+				line += strings.Repeat(" ", contentWidth-lineCursor+1)
+			} else {
+				line += " "
 			}
 
-			if resultLine != "" {
-				resultLines = append(resultLines, resultLine)
-			}
+			line += "↵"
 		}
 	}
 
-	result = strings.Join(resultLines, "\n")
+	for _, r := range []rune(text) {
+		word += string(r)
+		wordCursor := lineCursor + len([]rune(word))
 
-	return result
+		switch string(r) {
+		case "\n", "\r":
+			if wordCursor > contentWidth && line != "" {
+				addWithSignInLine()
+
+				fittedText += line
+				fittedText += "\n"
+				fittedText += word
+			} else {
+				fittedText += line + word
+			}
+
+			line = ""
+			lineCursor = 0
+			word = ""
+			wordCursor = 0
+		case " ":
+			if wordCursor > contentWidth && line != "" {
+				addWithSignInLine()
+
+				fittedText += line
+				fittedText += "\n"
+				line = ""
+				lineCursor = 0
+			}
+
+			line += word
+			lineCursor += len([]rune(word))
+			word = ""
+			wordCursor = 0
+		}
+	}
+
+	if line != "" || word != "" {
+		wordCursor = lineCursor + len([]rune(word))
+		if wordCursor > contentWidth {
+			addWithSignInLine()
+
+			fittedText += line
+
+			if word != "" {
+				fittedText += "\n"
+				fittedText += word
+			}
+		} else {
+			fittedText += line
+			fittedText += word
+		}
+	}
+
+	return fittedText
 }
