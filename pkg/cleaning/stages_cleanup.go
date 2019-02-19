@@ -11,10 +11,50 @@ import (
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 )
 
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
+
+type StagesCleanupOptions struct {
+	CommonRepoOptions    CommonRepoOptions
+	CommonProjectOptions CommonProjectOptions
+}
+
+func StagesCleanup(options StagesCleanupOptions) error {
+	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s.images", options.CommonProjectOptions.ProjectName)
+	err := lock.WithLock(projectStagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+		repoImages, err := repoImages(options.CommonRepoOptions)
+		if err != nil {
+			return err
+		}
+
+		if len(repoImages) != 0 {
+			if options.CommonRepoOptions.StagesStorage == localStagesStorage {
+				if err := projectImageStagesSyncByRepoImages(repoImages, options.CommonProjectOptions); err != nil {
+					return err
+				}
+			} else {
+				if err := repoImageStagesSyncByRepoImages(repoImages, options.CommonRepoOptions); err != nil {
+					return err
+				}
+			}
+		} else {
+			if err := projectStagesPurge(options.CommonProjectOptions); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func repoImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, options CommonRepoOptions) error {
 	repoImageStages, err := repoImageStagesImages(options)

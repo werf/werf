@@ -42,32 +42,6 @@ type ImagesCleanupOptions struct {
 	Policies          ImagesCleanupPolicies
 }
 
-type StagesCleanupOptions struct {
-	CommonRepoOptions    CommonRepoOptions
-	CommonProjectOptions CommonProjectOptions
-}
-
-type CleanupOptions struct {
-	ImagesCleanupOptions ImagesCleanupOptions
-	StagesCleanupOptions StagesCleanupOptions
-}
-
-func Cleanup(options CleanupOptions) error {
-	if err := logger.LogProcess("Running images cleanup", logger.LogProcessOptions{WithIndent: true}, func() error {
-		return ImagesCleanup(options.ImagesCleanupOptions)
-	}); err != nil {
-		return err
-	}
-
-	if err := logger.LogProcess("Running stages cleanup", logger.LogProcessOptions{WithIndent: true}, func() error {
-		return StagesCleanup(options.StagesCleanupOptions)
-	}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func ImagesCleanup(options ImagesCleanupOptions) error {
 	err := lock.WithLock(options.CommonRepoOptions.ImagesRepo, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoImages, err := repoImages(options.CommonRepoOptions)
@@ -92,40 +66,6 @@ func ImagesCleanup(options ImagesCleanupOptions) error {
 
 			repoImages, err = repoImagesCleanupByPolicies(repoImages, options)
 			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func StagesCleanup(options StagesCleanupOptions) error {
-	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s.images", options.CommonProjectOptions.ProjectName)
-	err := lock.WithLock(projectStagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		repoImages, err := repoImages(options.CommonRepoOptions)
-		if err != nil {
-			return err
-		}
-
-		if len(repoImages) != 0 {
-			if options.CommonRepoOptions.StagesStorage == localStagesStorage {
-				if err := projectImageStagesSyncByRepoImages(repoImages, options.CommonProjectOptions); err != nil {
-					return err
-				}
-			} else {
-				if err := repoImageStagesSyncByRepoImages(repoImages, options.CommonRepoOptions); err != nil {
-					return err
-				}
-			}
-		} else {
-			if err := projectStagesPurge(options.CommonProjectOptions); err != nil {
 				return err
 			}
 		}
