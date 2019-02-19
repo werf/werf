@@ -10,6 +10,7 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -22,9 +23,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "ci-env CI_SYSTEM",
+		Use:                   "ci-env CI_SYSTEM",
 		DisableFlagsInUseLine: true,
-		Short: "Generate werf environment variables for specified CI system",
+		Short:                 "Generate werf environment variables for specified CI system",
 		Long: `Generate werf environment variables for specified CI system.
 
 Currently supported only GitLab CI`,
@@ -46,6 +47,10 @@ Currently supported only GitLab CI`,
 func runCIEnv(cmd *cobra.Command, args []string) error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
+	}
+
+	if err := lock.Init(); err != nil {
+		return err
 	}
 
 	if len(args) != 1 {
