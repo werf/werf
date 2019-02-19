@@ -52,11 +52,11 @@ func FittedOutputOn(f func() error) error {
 }
 
 func GetOutStream() io.Writer {
-	return WriterProxy{errStream}
+	return WriterProxy{outStream}
 }
 
 func GetErrStream() io.Writer {
-	return WriterProxy{outStream}
+	return WriterProxy{errStream}
 }
 
 func MuteOut() {
