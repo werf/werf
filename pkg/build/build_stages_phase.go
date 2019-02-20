@@ -87,12 +87,12 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 	var prevStageImageSize int64
 	for _, s := range stages {
 		img := s.GetImage()
-		msg := fmt.Sprintf("%s", s.Name())
+		stageLogName := fmt.Sprintf("stage %s", s.Name())
 
 		isUsingCache := img.IsExists()
 
 		if isUsingCache {
-			logger.LogState(msg, "[USING CACHE]")
+			logger.LogState(stageLogName, "[USING CACHE]")
 
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 
@@ -117,7 +117,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 		}
 
 		logProcessOptions := logger.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
-		err := logger.LogProcess(fmt.Sprintf("Building %s", msg), logProcessOptions, func() (err error) {
+		err := logger.LogProcess(fmt.Sprintf("Building %s", stageLogName), logProcessOptions, func() (err error) {
 			if err := s.PreRunHook(c); err != nil {
 				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
 			}

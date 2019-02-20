@@ -164,6 +164,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 		err := logger.LogProcess(fmt.Sprintf("%s tagging strategy", string(strategy)), logger.LogProcessOptions{}, func() error {
 		ProcessingTags:
 			for _, tag := range tags {
+				tagLogName := fmt.Sprintf("tag %s", tag)
 				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
 
 				if util.IsStringsContainValue(existingTags, tag) {
@@ -173,7 +174,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 					}
 
 					if lastStageImage.ID() == parentID {
-						logger.LogState(tag, "[EXISTS]")
+						logger.LogState(tagLogName, "[EXISTS]")
 						_ = logger.WithIndent(func() error {
 							logRepoImageInfo(imageName)
 							return nil
@@ -221,7 +222,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 						}
 					}
 					logProcessOptions := logger.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
-					return logger.LogProcess(fmt.Sprintf("Pushing %s", tag), logProcessOptions, func() error {
+					return logger.LogProcess(fmt.Sprintf("Pushing %s", tagLogName), logProcessOptions, func() error {
 						if err := pushImage.Export(); err != nil {
 							return fmt.Errorf("error pushing %s: %s", imageName, err)
 						}
