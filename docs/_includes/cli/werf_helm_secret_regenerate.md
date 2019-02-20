@@ -34,8 +34,8 @@ werf helm secret regenerate [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
   -h, --help=false:
             help for regenerate
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
-            or ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
+            ~/.werf)
       --old-key='':
             Old secret key
       --tmp-dir='':

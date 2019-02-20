@@ -45,8 +45,8 @@ werf images cleanup [options]
   -h, --help=false:
             help for cleanup
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
-            or ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
+            ~/.werf)
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO environment)
       --insecure-repo=false:

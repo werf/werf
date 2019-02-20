@@ -8,9 +8,9 @@ Purge all project images from images repo and stages from stages storage.
 First step is 'werf images purge', which will delete all project images from images repo. Second 
 step is 'werf stages purge', which will delete all stages from stages storage.
 
-WARNING: Do not run this command during any other werf command is working on the host machine. 
-This command is supposed to be run manually. Images from images repo, that are being used in 
-Kubernetes cluster will also be deleted.
+WARNING: Do not run this command during any other werf command is working on the host machine. This 
+command is supposed to be run manually. Images from images repo, that are being used in Kubernetes 
+cluster will also be deleted.
 
 {{ header }} Syntax
 
@@ -33,8 +33,8 @@ werf purge [options]
   -h, --help=false:
             help for purge
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
-            or ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
+            ~/.werf)
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO environment)
       --insecure-repo=false:

@@ -146,7 +146,7 @@ func generateGitlabEnvs() error {
 	printExport("export WERF_TAG_GIT_BRANCH=\"%s\"\n", ciGitBranch)
 
 	fmt.Println("\n### DEPLOY")
-	printExport("export WERF_DEPLOY_ENVIRONMENT=\"%s\"\n", os.Getenv("CI_ENVIRONMENT_SLUG"))
+	printExport("export WERF_ENV=\"%s\"\n", os.Getenv("CI_ENVIRONMENT_SLUG"))
 
 	fmt.Println("\n### IMAGE CLEANUP POLICIES")
 	printExport("export WERF_GIT_TAG_STRATEGY_LIMIT=\"%s\"\n", "10")

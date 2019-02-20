@@ -31,8 +31,8 @@ werf ci-env CI_SYSTEM [options]
   -h, --help=false:
             help for ci-env
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
-            or ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
+            ~/.werf)
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --tagging-strategy='':

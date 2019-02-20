@@ -98,7 +98,7 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Environment = new(string)
-	cmd.Flags().StringVarP(cmdData.Environment, "env", "", "", "Use specified environment (default $WERF_DEPLOY_ENVIRONMENT)")
+	cmd.Flags().StringVarP(cmdData.Environment, "env", "", os.Getenv("WERF_ENV"), "Use specified environment (default $WERF_ENV)")
 }
 
 func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {

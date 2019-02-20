@@ -53,18 +53,18 @@ werf build [IMAGE_NAME...] [options]
   -h, --help=false:
             help for build
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
-            or ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
+            ~/.werf)
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --introspect-before-error=false:
-            Introspect failed stage in the clean state, before running all assembly instructions 
-            of the stage
+            Introspect failed stage in the clean state, before running all assembly instructions of 
+            the stage
       --introspect-error=false:
             Introspect failed stage in the state, right after running failed assembly instruction
       --ssh-key=[]:
-            Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, 
-            see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
+            Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
+            https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
             multiple times to use multiple keys.
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
