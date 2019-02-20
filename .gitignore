@@ -10,6 +10,6 @@
 dappdeps-toolchain.tar
 dappdeps/*/omnibus/build/
 
-/release/build
+/release-build
 
 /osx/.vagrant
