@@ -29,8 +29,8 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
   -h, --help=false:
             help for deploy-chart
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
-            or ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
+            ~/.werf)
       --kube-config='':
             Kubernetes config file path
       --kube-context='':

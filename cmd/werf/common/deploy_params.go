@@ -3,7 +3,6 @@ package common
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"text/template"
 
 	"github.com/Masterminds/sprig"
@@ -91,17 +90,11 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 	}
 
 	funcMap["env"] = func() (string, error) {
-		environment := os.Getenv("WERF_DEPLOY_ENVIRONMENT")
-
-		if environment == "" {
-			environment = environmentOption
+		if environmentOption == "" {
+			return "", fmt.Errorf("--env option or $WERF_ENV variable required to construct name by template '%s'", templateText)
 		}
 
-		if environment == "" {
-			return "", fmt.Errorf("--env option or $WERF_DEPLOY_ENVIRONMENT variable required to construct name by template '%s'", templateText)
-		}
-
-		return environment, nil
+		return environmentOption, nil
 	}
 
 	tmpl = tmpl.Funcs(template.FuncMap(funcMap))

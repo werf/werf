@@ -47,15 +47,15 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
   -h, --help=false:
             help for run
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
-            or ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
+            ~/.werf)
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --shell=false:
             Use predefined docker options and command for debug
       --ssh-key=[]:
-            Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, 
-            see https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
+            Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
+            https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
             multiple times to use multiple keys.
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 

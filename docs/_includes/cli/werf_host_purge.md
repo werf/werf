@@ -13,8 +13,8 @@ The data include:
 * Shared context:
   * Mounts which persists between several builds (mounts from build_dir).
 
-WARNING: Do not run this command during any other werf command is working on the host machine. 
-This command is supposed to be run manually.
+WARNING: Do not run this command during any other werf command is working on the host machine. This 
+command is supposed to be run manually.
 
 {{ header }} Syntax
 
@@ -33,8 +33,8 @@ werf host purge [options]
   -h, --help=false:
             help for purge
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
-            or ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
+            ~/.werf)
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --tmp-dir='':

@@ -26,8 +26,8 @@ werf stages purge [options]
   -h, --help=false:
             help for purge
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment 
-            or ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
+            ~/.werf)
       --insecure-repo=false:
             Allow usage of insecure docker repos
   -s, --stages-storage='':
