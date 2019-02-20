@@ -45,7 +45,7 @@ func RawStreamsOutputModeOn() {
 	isRawStreamsOutputModeOn = true
 }
 
-func WithFittedOutputOn(f func() error) error {
+func WithFittedStreamsOutputOn(f func() error) error {
 	savedIsFittedOutputModeOn := isFittedStreamsOutputModeOn
 	isFittedStreamsOutputModeOn = true
 	err := f()

@@ -14,6 +14,7 @@ import (
 	cleanup "github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -46,6 +47,8 @@ type CmdData struct {
 	GitTagStrategyExpiryDays    *int64
 	GitCommitStrategyLimit      *int64
 	GitCommitStrategyExpiryDays *int64
+
+	DisablePrettyLog *bool
 }
 
 func GetLongCommandDescription(text string) string {
@@ -157,6 +160,20 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 	}
 
 	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, desc)
+}
+
+func SetupDisablePrettyLog(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DisablePrettyLog = new(bool)
+	cmd.Flags().BoolVarP(cmdData.DisablePrettyLog, "disable-pretty-log", "", getBoolEnvironment("WERF_DISABLE_PRETTY_LOG"), `Disable emojis, auto line wrapping and replace log process border characters with spaces (default $WERF_DISABLE_PRETTY_LOG).`)
+}
+
+func getBoolEnvironment(environmentName string) bool {
+	switch os.Getenv(environmentName) {
+	case "1", "true", "yes":
+		return true
+	default:
+		return false
+	}
 }
 
 func getInt64EnvVar(varName string) (*int64, error) {
@@ -329,6 +346,12 @@ func GetKubeContext(kubeContextOption string) string {
 		return kubeContextOption
 	}
 	return kubeContext
+}
+
+func ApplyDisablePrettyLog(cmdData *CmdData) {
+	if *cmdData.DisablePrettyLog {
+		logging.DisablePrettyLog()
+	}
 }
 
 func LogRunningTime(f func() error) error {

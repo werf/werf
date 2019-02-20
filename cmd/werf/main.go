@@ -52,13 +52,14 @@ import (
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/templates"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/process_exterminator"
 )
 
 func main() {
 	trapTerminationSignals()
 
-	logger.Init()
+	logging.Init()
 
 	if err := process_exterminator.Init(); err != nil {
 		_ = logger.WithoutIndent(func() error {

@@ -36,6 +36,7 @@ First step is 'werf images cleanup' command, which will delete unused images fro
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel with other werf commands such as build, deploy and host cleanup.`),
 		Example: `  $ werf cleanup --stages-storage :local --images-repo registry.mydomain.com/myproject`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			common.ApplyDisablePrettyLog(&CommonCmdData)
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
@@ -58,6 +59,8 @@ It is safe to run this command periodically (daily is enough) by automated clean
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
+
+	common.SetupDisablePrettyLog(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&CmdData.WithoutKube, "without-kube", "", false, "Do not skip deployed kubernetes images")
 

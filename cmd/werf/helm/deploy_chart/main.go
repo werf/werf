@@ -34,8 +34,9 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 		Example: `  # Deploy raw helm chart from current directory
   $ werf helm deploy-chart . myrelease`,
 		DisableFlagsInUseLine: true,
-		Args: cobra.MinimumNArgs(2),
+		Args:                  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			common.ApplyDisablePrettyLog(&CommonCmdData)
 			return runDeployChart(args[0], args[1])
 		},
 	}
@@ -46,6 +47,8 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+
+	common.SetupDisablePrettyLog(&CommonCmdData, cmd)
 
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
 	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")

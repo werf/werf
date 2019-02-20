@@ -35,6 +35,7 @@ The data include:
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			common.ApplyDisablePrettyLog(&CommonCmdData)
 			common.LogVersion()
 
 			return runReset()
@@ -45,6 +46,8 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
+
+	common.SetupDisablePrettyLog(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

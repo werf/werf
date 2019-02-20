@@ -54,6 +54,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			common.ApplyDisablePrettyLog(&CommonCmdData)
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
@@ -79,6 +80,8 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
+
+	common.SetupDisablePrettyLog(&CommonCmdData, cmd)
 
 	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")

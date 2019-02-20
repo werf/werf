@@ -59,6 +59,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			common.ApplyDisablePrettyLog(&CommonCmdData)
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
@@ -75,6 +76,8 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupStagesStorage(commonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and push images into the specified stages storage, to pull base images.")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
+
+	common.SetupDisablePrettyLog(&CommonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")

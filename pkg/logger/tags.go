@@ -6,9 +6,10 @@ import (
 )
 
 var (
-	tagValue        = ""
-	tagColorizeFunc = func(a ...interface{}) string { return fmt.Sprint(a...) }
-	tagIndentWidth  = 2
+	defaultColorizeFunc = func(a ...interface{}) string { return fmt.Sprint(a...) }
+	tagValue            = ""
+	tagColorizeFunc     = defaultColorizeFunc
+	tagIndentWidth      = 2
 )
 
 func WithTag(value string, colorizeFunc func(...interface{}) string, f func() error) error {
