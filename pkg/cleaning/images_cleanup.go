@@ -119,7 +119,7 @@ Loop:
 
 			return nil
 		})
-		logger.LogOptionalLn()
+		logger.OptionalLnModeOn()
 	}
 
 	return newRepoImages, nil
@@ -186,7 +186,7 @@ Loop:
 		}); err != nil {
 			return nil, err
 		}
-		logger.LogOptionalLn()
+		logger.OptionalLnModeOn()
 
 		repoImages = exceptRepoImages(repoImages, nonexistentGitTagRepoImages...)
 	}
@@ -198,7 +198,7 @@ Loop:
 		}); err != nil {
 			return nil, err
 		}
-		logger.LogOptionalLn()
+		logger.OptionalLnModeOn()
 
 		repoImages = exceptRepoImages(repoImages, nonexistentGitBranchRepoImages...)
 	}
@@ -210,7 +210,7 @@ Loop:
 		}); err != nil {
 			return nil, err
 		}
-		logger.LogOptionalLn()
+		logger.OptionalLnModeOn()
 
 		repoImages = exceptRepoImages(repoImages, nonexistentGitCommitRepoImages...)
 	}
@@ -358,7 +358,7 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 			}); err != nil {
 				return nil, err
 			}
-			logger.LogOptionalLn()
+			logger.OptionalLnModeOn()
 
 			repoImages = exceptRepoImages(repoImages, expiredRepoImages...)
 		}
@@ -370,7 +370,7 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 			}); err != nil {
 				return nil, err
 			}
-			logger.LogOptionalLn()
+			logger.OptionalLnModeOn()
 
 			repoImages = exceptRepoImages(repoImages, notExpiredRepoImages[options.limit:]...)
 		}

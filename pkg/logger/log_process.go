@@ -103,7 +103,7 @@ func LogSecondaryProcess(msg string, options LogProcessOptions, processFunc func
 }
 
 func logProcessBase(msg string, options LogProcessOptions, processFunc func() error, colorizeMsgFunc func(...interface{}) string) error {
-	processOptionalLnMode()
+	applyOptionalLnMode()
 
 	if options.ColorizeMsgFunc != nil {
 		colorizeMsgFunc = options.ColorizeMsgFunc
@@ -162,7 +162,7 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 		_ = footerFunc()
 
 		if !options.WithoutLogOptionalLn {
-			LogOptionalLn()
+			OptionalLnModeOn()
 		}
 
 		return err
@@ -183,7 +183,7 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 	_ = footerFunc()
 
 	if !options.WithoutLogOptionalLn {
-		LogOptionalLn()
+		OptionalLnModeOn()
 	}
 
 	return nil

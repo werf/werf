@@ -86,7 +86,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 
 			logRepoImageInfo(stageImageName)
 
-			logger.LogOptionalLn()
+			logger.OptionalLnModeOn()
 
 			continue
 		}
@@ -179,7 +179,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 							return nil
 						})
 
-						logger.LogOptionalLn()
+						logger.OptionalLnModeOn()
 
 						continue ProcessingTags
 					}
@@ -238,7 +238,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 			return nil
 		})
 
-		logger.LogOptionalLn()
+		logger.OptionalLnModeOn()
 
 		if err != nil {
 			return err

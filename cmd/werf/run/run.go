@@ -212,7 +212,7 @@ func runRun(commonCmdData *common.CmdData) error {
 	if *CommonCmdData.DryRun {
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
 	} else {
-		return logger.RawOutputOn(func() error {
+		return logger.WithRawStreamsOutputModeOn(func() error {
 			return docker.CliRun(dockerRunArgs...)
 		})
 	}

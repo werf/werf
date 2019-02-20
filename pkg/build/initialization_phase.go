@@ -347,7 +347,7 @@ func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 			}
 		}
 
-		logger.LogOptionalLn()
+		logger.OptionalLnModeOn()
 	}
 
 	return nonEmptyGitPaths, nil
