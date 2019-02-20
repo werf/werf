@@ -6,6 +6,7 @@ import (
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
+	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
 	"github.com/spf13/cobra"
@@ -54,6 +55,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
 	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
 
@@ -70,6 +72,10 @@ func runDismiss() error {
 	}
 
 	if err := deploy.Init(); err != nil {
+		return err
+	}
+
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 

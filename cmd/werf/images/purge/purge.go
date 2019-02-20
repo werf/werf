@@ -52,6 +52,14 @@ func runPurge() error {
 		return err
 	}
 
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
+		return err
+	}
+
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+		return err
+	}
+
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
@@ -67,14 +75,6 @@ func runPurge() error {
 
 	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
-		return err
-	}
-
-	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
-		return err
-	}
-
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
