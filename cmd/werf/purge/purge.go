@@ -64,19 +64,7 @@ func runPurge() error {
 	}
 	common.LogProjectDir(projectDir)
 
-	werfConfig, err := common.GetWerfConfig(projectDir)
-	if err != nil {
-		return fmt.Errorf("bad config: %s", err)
-	}
-
-	projectName := werfConfig.Meta.Project
-
 	_, err = common.GetStagesRepo(&CommonCmdData)
-	if err != nil {
-		return err
-	}
-
-	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
 	if err != nil {
 		return err
 	}
@@ -86,6 +74,18 @@ func runPurge() error {
 	}
 
 	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+		return err
+	}
+
+	werfConfig, err := common.GetWerfConfig(projectDir)
+	if err != nil {
+		return fmt.Errorf("bad config: %s", err)
+	}
+
+	projectName := werfConfig.Meta.Project
+
+	imagesRepo, err := common.GetImagesRepo(projectName, &CommonCmdData)
+	if err != nil {
 		return err
 	}
 

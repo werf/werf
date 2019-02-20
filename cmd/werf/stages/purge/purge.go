@@ -20,10 +20,10 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "purge",
+		Use:                   "purge",
 		DisableFlagsInUseLine: true,
-		Short: "Purge project stages from stages storage",
-		Long:  common.GetLongCommandDescription("Purge project stages from stages storage"),
+		Short:                 "Purge project stages from stages storage",
+		Long:                  common.GetLongCommandDescription("Purge project stages from stages storage"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
@@ -53,6 +53,14 @@ func runPurge() error {
 		return err
 	}
 
+	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
+		return err
+	}
+
+	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+		return err
+	}
+
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
@@ -68,14 +76,6 @@ func runPurge() error {
 
 	_, err = common.GetStagesRepo(&CommonCmdData)
 	if err != nil {
-		return err
-	}
-
-	if err := docker_registry.Init(docker_registry.Options{AllowInsecureRepo: *CommonCmdData.InsecureRepo}); err != nil {
-		return err
-	}
-
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}
 
