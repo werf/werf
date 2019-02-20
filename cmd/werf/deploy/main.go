@@ -41,7 +41,7 @@ Deploy needs the same parameters as push to construct image names: repo and tags
 
 Helm chart directory .helm should exists and contain valid Helm chart.
 
-Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or WERF_DEPLOY_ENVIRONMENT should be specified for command.
+Environment is a required param for the deploy by default, because it is needed to construct Helm Release name and Kubernetes Namespace. Either --env or $WERF_DEPLOY_ENVIRONMENT should be specified for command.
 
 Read more info about Helm chart structure, Helm Release name, Kubernetes Namespace and how to change it: https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html`),
 		Example: `  # Deploy project named 'myproject' into 'dev' environment using images from registry.mydomain.com/myproject tagged as mytag with git-tag tagging strategy; helm release name and namespace will be named as 'myproject-dev'

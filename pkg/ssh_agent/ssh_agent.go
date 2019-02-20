@@ -126,7 +126,7 @@ func runSSHAgent() (string, error) {
 		return "", fmt.Errorf("error listen unix sock %s: %s", sockPath, err)
 	}
 
-	fmt.Fprintf(logger.GetOutStream(), "Running ssh agent on unix sock %s\n", sockPath)
+	logger.LogInfoF("Running ssh agent on unix sock %s\n", sockPath)
 
 	go func() {
 		agnt := agent.NewKeyring()

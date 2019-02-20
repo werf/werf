@@ -98,7 +98,7 @@ func renderDeployParamTemplate(templateName, templateText string, environmentOpt
 		}
 
 		if environment == "" {
-			return "", fmt.Errorf("--env option or WERF_DEPLOY_ENVIRONMENT variable required to construct name by template '%s'", templateText)
+			return "", fmt.Errorf("--env option or $WERF_DEPLOY_ENVIRONMENT variable required to construct name by template '%s'", templateText)
 		}
 
 		return environment, nil

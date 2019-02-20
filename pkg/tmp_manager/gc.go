@@ -68,7 +68,7 @@ func checkShouldRunGC() (bool, error) {
 }
 
 func GC(dryRun bool) error {
-	return logger.LogSecondaryProcess("Running tmp gc", logger.LogProcessOptions{}, func() error { return gc(dryRun) })
+	return logger.LogSecondaryProcess("Running GC for tmp data", logger.LogProcessOptions{}, func() error { return gc(dryRun) })
 }
 
 func gc(dryRun bool) error {

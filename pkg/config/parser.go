@@ -65,7 +65,7 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 			"#####################################################################################################################\n" +
 			"###      WARNING! Project name cannot be changed later without rebuilding and redeploying your application!       ###\n" +
 			"###   Project name should be unique within group of projects that shares build hosts and deployed into the same   ###\n" +
-			"###                 kubernetes cluster (i.e. unique across all groups within the same gitlab).                    ###\n" +
+			"###                 kubernetes clusters (i.e. unique across all groups within the same gitlab).                   ###\n" +
 			"###  Read more about meta config section: https://flant.github.io/werf/reference/config.html#meta-config-section  ###\n" +
 			"#####################################################################################################################"
 

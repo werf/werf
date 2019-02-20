@@ -161,7 +161,7 @@ func generateGitlabEnvs() error {
 
 	if ciGitTag == "" && ciGitBranch == "" {
 		fmt.Println()
-		return fmt.Errorf("none of enviroment variables WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
+		return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
 	}
 
 	return nil

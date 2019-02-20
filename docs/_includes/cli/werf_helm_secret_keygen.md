@@ -3,7 +3,7 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Generate hex key that can be used as WERF_SECRET_KEY.
+Generate hex key that can be used as $WERF_SECRET_KEY.
 
 16-bytes key will be generated (AES-128)
 
