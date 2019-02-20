@@ -1,6 +1,10 @@
 dist: xenial
 
+language: go
+go:
+- 1.11.x
+
 install:
-- source scripts/lib/release/global_data.sh && source /go/src/github.com/flant/werf/scripts/lib/release/build.sh && go_get && go_build dev
+- source scripts/lib/release/global_data.sh && source scripts/lib/release/build.sh && go_get && go_build dev
 
 script: echo
