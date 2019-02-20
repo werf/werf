@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -51,7 +52,6 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/cmd/werf/common/templates"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/process_exterminator"
 )
@@ -62,11 +62,7 @@ func main() {
 	logging.Init()
 
 	if err := process_exterminator.Init(); err != nil {
-		_ = logger.WithoutIndent(func() error {
-			logger.LogErrorF("process exterminator initialization error: %s\n", err)
-
-			return nil
-		})
+		common.LogErrorF(fmt.Sprintf("process exterminator initialization error: %s\n", err))
 
 		os.Exit(1)
 	}
@@ -124,11 +120,7 @@ Find more information at https://werf.io`),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
-		_ = logger.WithoutIndent(func() error {
-			logger.LogErrorF("Error: %s\n", err)
-
-			return nil
-		})
+		common.LogErrorF("Error: %s\n", err)
 
 		os.Exit(1)
 	}
@@ -228,11 +220,7 @@ func trapTerminationSignals() {
 	go func() {
 		<-c
 
-		_ = logger.WithoutIndent(func() error {
-			logger.LogErrorF("interrupted\n")
-
-			return nil
-		})
+		common.LogErrorF("interrupted\n")
 
 		os.Exit(17)
 	}()

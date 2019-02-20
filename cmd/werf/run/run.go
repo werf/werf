@@ -57,7 +57,11 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.ApplyDisablePrettyLog(&CommonCmdData)
+			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+				cmd.Help()
+				fmt.Println()
+				return err
+			}
 
 			if err := processArgs(cmd, args); err != nil {
 				cmd.Help()
@@ -103,7 +107,7 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage.")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
-	common.SetupDisablePrettyLog(&CommonCmdData, cmd)
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

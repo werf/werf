@@ -155,7 +155,7 @@ func generateGitlabEnvs() error {
 	printExport("export WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS=\"%s\"\n", "30")
 
 	fmt.Println("\n### OTHER")
-	printExport("export WERF_LOG_FORCE_COLOR=\"%s\"\n", "1")
+	printExport("export WERF_LOG_COLOR_MODE=\"%s\"\n", "on")
 	printExport("export WERF_LOG_PROJECT_DIR=\"%s\"\n", "1")
 	printExport("export WERF_ENABLE_PROCESS_EXTERMINATOR=\"%s\"\n", "1")
 

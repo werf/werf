@@ -40,6 +40,11 @@ Command will extract data with the old key, generate new secret data and rewrite
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+				cmd.Help()
+				fmt.Println()
+				return err
+			}
 			return runSecretRegenerate(args...)
 		},
 	}
@@ -47,6 +52,8 @@ Command will extract data with the old key, generate new secret data and rewrite
 	common.SetupDir(&CommonCmdData, cmd)
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
+
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&CmdData.OldKey, "old-key", "", "", "Old secret key")
 	cmd.MarkPersistentFlagRequired("old-key")

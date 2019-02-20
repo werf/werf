@@ -15,6 +15,14 @@ func Init() {
 	logger.Init()
 }
 
+func EnableLogColor() {
+	logger.EnableLogColor()
+}
+
+func DisableLogColor() {
+	logger.DisableLogColor()
+}
+
 func DisablePrettyLog() {
 	imageNameFormat = "image %s"
 	artifactNameFormat = "artifact %s"

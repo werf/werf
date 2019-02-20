@@ -36,7 +36,11 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.ApplyDisablePrettyLog(&CommonCmdData)
+			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+				cmd.Help()
+				fmt.Println()
+				return err
+			}
 			return runDeployChart(args[0], args[1])
 		},
 	}
@@ -48,7 +52,7 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
-	common.SetupDisablePrettyLog(&CommonCmdData, cmd)
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
 	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")

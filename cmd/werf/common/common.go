@@ -49,6 +49,7 @@ type CmdData struct {
 	GitCommitStrategyExpiryDays *int64
 
 	DisablePrettyLog *bool
+	LogColorMode     *string
 }
 
 func GetLongCommandDescription(text string) string {
@@ -160,6 +161,26 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 	}
 
 	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, desc)
+}
+
+func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
+	SetupLogColor(cmdData, cmd)
+	SetupDisablePrettyLog(cmdData, cmd)
+}
+
+func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogColorMode = new(string)
+
+	logColorEnvironmentValue := os.Getenv("WERF_LOG_COLOR_MODE")
+
+	defaultValue := "auto"
+	if logColorEnvironmentValue != "" {
+		defaultValue = logColorEnvironmentValue
+	}
+
+	cmd.Flags().StringVarP(cmdData.LogColorMode, "log-color-mode", "", defaultValue, `Set log color mode. 
+Supported on, off and auto (based on the stdout's file descriptor referring to a terminal) modes. 
+Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
 
 func SetupDisablePrettyLog(cmdData *CmdData, cmd *cobra.Command) {
@@ -348,6 +369,30 @@ func GetKubeContext(kubeContextOption string) string {
 	return kubeContext
 }
 
+func ApplyLogOptions(cmdData *CmdData) error {
+	if err := ApplyLogColorMode(cmdData); err != nil {
+		return err
+	}
+
+	ApplyDisablePrettyLog(cmdData)
+
+	return nil
+}
+
+func ApplyLogColorMode(cmdData *CmdData) error {
+	switch *cmdData.LogColorMode {
+	case "auto":
+	case "on":
+		logging.EnableLogColor()
+	case "off":
+		logging.DisableLogColor()
+	default:
+		return fmt.Errorf("bad log color mode '%s': on, off and auto modes are supported", *cmdData.LogColorMode)
+	}
+
+	return nil
+}
+
 func ApplyDisablePrettyLog(cmdData *CmdData) {
 	if *cmdData.DisablePrettyLog {
 		logging.DisablePrettyLog()
@@ -371,4 +416,12 @@ func LogProjectDir(dir string) {
 	if os.Getenv("WERF_LOG_PROJECT_DIR") != "" {
 		logger.LogInfoF("Using project dir: %s\n", dir)
 	}
+}
+
+func LogErrorF(format string, a ...interface{}) {
+	_ = logger.WithoutIndent(func() error {
+		logger.LogErrorF(format, a...)
+
+		return nil
+	})
 }

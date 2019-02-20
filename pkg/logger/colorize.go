@@ -3,7 +3,6 @@ package logger
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/fatih/color"
@@ -19,10 +18,12 @@ var (
 	successFormat = []color.Attribute{color.FgGreen, color.Bold}
 )
 
-func initColorize() {
-	if os.Getenv("WERF_LOG_FORCE_COLOR") != "" {
-		color.NoColor = false
-	}
+func EnableLogColor() {
+	color.NoColor = false
+}
+
+func DisableLogColor() {
+	color.NoColor = true
 }
 
 func colorizeAndFormattedLogF(w io.Writer, colorizeFunc func(...interface{}) string, format string, args ...interface{}) {

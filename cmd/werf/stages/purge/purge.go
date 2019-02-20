@@ -25,7 +25,11 @@ func NewCmd() *cobra.Command {
 		Short:                 "Purge project stages from stages storage",
 		Long:                  common.GetLongCommandDescription("Purge project stages from stages storage"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.ApplyDisablePrettyLog(&CommonCmdData)
+			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+				cmd.Help()
+				fmt.Println()
+				return err
+			}
 			common.LogVersion()
 
 			return runPurge()
@@ -40,7 +44,7 @@ func NewCmd() *cobra.Command {
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage.")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
-	common.SetupDisablePrettyLog(&CommonCmdData, cmd)
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

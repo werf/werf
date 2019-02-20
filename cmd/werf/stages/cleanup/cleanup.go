@@ -26,7 +26,11 @@ func NewCmd() *cobra.Command {
 		Short:                 "Cleanup project stages from stages storage",
 		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			common.ApplyDisablePrettyLog(&CommonCmdData)
+			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+				cmd.Help()
+				fmt.Println()
+				return err
+			}
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
@@ -44,7 +48,7 @@ func NewCmd() *cobra.Command {
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read, pull and delete images from the specified stages storage, read images from the specified images repo.")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
-	common.SetupDisablePrettyLog(&CommonCmdData, cmd)
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
