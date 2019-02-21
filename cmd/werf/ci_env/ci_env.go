@@ -112,6 +112,12 @@ func generateGitlabEnvs() error {
 			imagesPassword = os.Getenv("CI_JOB_TOKEN")
 			doLogin = true
 		}
+
+		if os.Getenv("WERF_IMAGES_CLEANUP_PASSWORD") != "" {
+			imagesUsername = "images-cleanup-token"
+			imagesPassword = os.Getenv("WERF_IMAGES_CLEANUP_PASSWORD")
+			doLogin = true
+		}
 	}
 
 	if doLogin {
