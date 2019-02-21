@@ -71,7 +71,7 @@ It is designed to make engineer's work fast end efficient.
 mkdir ~/bin
 cd ~/bin
 curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
-source <(multiwerf use 1.0 alpha)
+source <(multiwerf use 1.0 beta)
 ```
 
 ### Way 2: download binary
@@ -106,11 +106,11 @@ go get github.com/flant/werf/cmd/werf
 
 ## Docs and support
 
-[Official documentation](https://flant.github.io/werf/)
+[Official documentation](https://werf.io)
 
 ### Getting started
 
-[Make your first werf application](https://flant.github.io/werf/how_to/getting_started.html)!
+[Make your first werf application](https://werf.io/how_to/getting_started.html)!
 
 ## Backward Compatibility Promise
 

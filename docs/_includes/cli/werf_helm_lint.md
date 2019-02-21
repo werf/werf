@@ -23,6 +23,9 @@ werf helm lint [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --docker-config='':
+            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or 
+            ~/.docker (in the order of priority).
       --env='':
             Use specified environment (default $WERF_ENV)
   -h, --help=false:

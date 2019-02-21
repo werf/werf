@@ -64,12 +64,12 @@ werf build [IMAGE_NAME...] [options]
             Introspect failed stage in the state, right after running failed assembly instruction
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
-            https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
-            multiple times to use multiple keys.
+            https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to 
+            use multiple keys.
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://flant.github.io/werf/reference/build/stages.html
+            More info about stages: https://werf.io/reference/build/stages.html
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
             tmp dir)

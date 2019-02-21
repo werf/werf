@@ -1,7 +1,5 @@
 output: web
 
-baseurl: /werf
-
 topnav_title: Werf Documentation
 site_title: Werf Documentation
 company_name: Flant

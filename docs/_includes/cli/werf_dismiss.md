@@ -11,7 +11,7 @@ Environment is a required param for the dismiss by default, because it is needed
 Release name and Kubernetes Namespace. Either --env or $WERF_ENV should be specified for command.
 
 Read more info about Helm Release name, Kubernetes Namespace and how to change it: 
-https://flant.github.io/werf/reference/deploy/deploy_to_kubernetes.html
+https://werf.io/reference/deploy/deploy_to_kubernetes.html
 
 {{ header }} Syntax
 
@@ -37,6 +37,9 @@ werf dismiss [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --docker-config='':
+            Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or 
+            ~/.docker (in the order of priority).
       --env='':
             Use specified environment (default $WERF_ENV)
   -h, --help=false:

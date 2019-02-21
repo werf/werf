@@ -7,8 +7,7 @@ Build final images using each specified tag with the tagging strategy and push i
 
 New docker layer with service info about tagging strategy will be built for each tag of each image 
 from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. 
-See more info about images naming: 
-https://flant.github.io/werf/reference/registry/image_naming.html.
+See more info about images naming: https://werf.io/reference/registry/image_naming.html.
 
 If one or more IMAGE_NAME parameters specified, werf will publish only these images from werf.yaml.
 
@@ -46,12 +45,12 @@ werf publish [IMAGE_NAME...] [options]
             Allow usage of insecure docker repos
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
-            https://flant.github.io/werf/reference/toolbox/ssh.html). Option can be specified 
-            multiple times to use multiple keys.
+            https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to 
+            use multiple keys.
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://flant.github.io/werf/reference/build/stages.html
+            More info about stages: https://werf.io/reference/build/stages.html
       --tag-custom=[]:
             Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used 
             multiple times to produce multiple images with the specified tags.
