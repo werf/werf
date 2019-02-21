@@ -58,7 +58,7 @@ werf build [IMAGE_NAME...] [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-repo=false:
-            Allow usage of insecure docker repos
+            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --introspect-before-error=false:
             Introspect failed stage in the clean state, before running all assembly instructions of 
             the stage

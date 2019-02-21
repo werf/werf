@@ -69,7 +69,7 @@ werf build-and-publish [IMAGE_NAME...] [options]
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
-            Allow usage of insecure docker repos
+            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --introspect-before-error=false:
             Introspect failed stage in the clean state, before running all assembly instructions of 
             the stage

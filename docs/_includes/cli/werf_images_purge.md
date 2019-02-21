@@ -32,7 +32,7 @@ werf images purge [options]
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
-            Allow usage of insecure docker repos
+            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
