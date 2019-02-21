@@ -6,7 +6,7 @@ RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN >/etc/profile && >/root/.profile
 SHELL ["/bin/bash", "-lc"]
 
-RUN apt update && apt install -y build-essential wget curl gawk flex bison bzip2 liblzma5 texinfo file gettext python
+RUN apt update && apt install -y build-essential wget curl gawk flex bison bzip2 liblzma5 texinfo file gettext python python3
 
 ENV LFS=/mnt/lfs
 ENV TOOLS=/.werf/stapel/toolchain/0.2.0
