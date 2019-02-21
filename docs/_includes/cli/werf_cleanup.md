@@ -72,7 +72,7 @@ werf cleanup [options]
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
             supported for now; default $WERF_STAGES_STORAGE environment).
-            More info about stages: https://flant.github.io/werf/reference/build/stages.html
+            More info about stages: https://werf.io/reference/build/stages.html
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
             tmp dir)

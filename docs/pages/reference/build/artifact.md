@@ -76,7 +76,7 @@ Importing _artifacts resources_ are described at destination _image_ or _artifac
 
 ## Configuration
 
-The configuration of the _artifact_ is not much different from the configuration of _image_. Each _artifact_ should be described in a separate [artifact config section](https://flant.github.io/werf/reference/config.html#artifact-config-section).
+The configuration of the _artifact_ is not much different from the configuration of _image_. Each _artifact_ should be described in a separate [artifact config section]({{ site.baseurl }}/reference/config.html#artifact-config-section).
 
 The instructions associated with the _from stage_, namely the [_base image_]({{ site.baseurl }}/reference/build/base_image.html) and [mounts]({{ site.baseurl }}/reference/build/mount_directive.html), remain unchanged.
 

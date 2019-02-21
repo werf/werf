@@ -36,7 +36,7 @@ func NewCmd() *cobra.Command {
 
 Command combines 'werf stages build' and 'werf images publish'.
 
-After stages has been built, new docker layer with service info about tagging strategy will be built for each tag of each image from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. See more info about images naming: https://flant.github.io/werf/reference/registry/image_naming.html.
+After stages has been built, new docker layer with service info about tagging strategy will be built for each tag of each image from werf.yaml. Images will be pushed into docker repo with the names IMAGES_REPO/IMAGE_NAME:TAG. See more info about images naming: https://werf.io/reference/registry/image_naming.html.
 
 The result of build-and-publish command is a stages cache for images and named images pushed into the docker repo.
 

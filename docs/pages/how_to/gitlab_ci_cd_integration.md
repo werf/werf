@@ -107,8 +107,8 @@ Add the following lines to the `.gitlab-ci.yml` file:
 Build:
   stage: build
   script:
-    - source <(multiwerf use 1.0 beta)
-    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     - werf build-and-publish
   tags:
     - werf
@@ -140,8 +140,8 @@ Add the following lines to `.gitlab-ci.yml` file:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - source <(multiwerf use 1.0 beta)
-    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     ## Next command makes deploy and will be discussed further
     - werf deploy
         --set "global.env=${CI_ENVIRONMENT_SLUG}"
@@ -180,8 +180,8 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - source <(./multiwerf use 1.0 beta)
-    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type multiwerf && source <(./multiwerf use 1.0 beta)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -267,8 +267,8 @@ Add the following lines to `.gitlab-ci.yml` file:
 Cleanup:
   stage: cleanup
   script:
-    - source <(multiwerf use 1.0 beta)
-    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     - werf cleanup --stages-storage :local
   only:
     - schedules
@@ -295,8 +295,8 @@ stages:
 Build:
   stage: build
   script:
-    - source <(multiwerf use 1.0 beta)
-    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     - werf build-and-publish
   tags:
     - werf
@@ -306,8 +306,8 @@ Build:
 .base_deploy: &base_deploy
   stage: deploy
   script:
-    - source <(multiwerf use 1.0 beta)
-    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     ## Next command makes deploy and will be discussed further
     - werf deploy
         --set "global.env=${CI_ENVIRONMENT_SLUG}"
@@ -334,8 +334,8 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - source <(./multiwerf use 1.0 beta)
-    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -373,8 +373,8 @@ Deploy to Production:
 Cleanup:
   stage: cleanup
   script:
-    - source <(multiwerf use 1.0 beta)
-    - source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
     - werf cleanup --stages-storage :local
   only:
     - schedules

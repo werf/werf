@@ -36,7 +36,7 @@ Werf uses Helm with some additions to deploy applications into Kubernetes. In th
 This command should be run prior running any werf command in your shell session:
 
 ```
-source <(multiwerf use 1.0)
+source <(multiwerf use 1.0 beta)
 ```
 
 ## The application

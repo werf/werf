@@ -106,10 +106,10 @@ func NewManager(key []byte, options NewManagerOptions) (Manager, error) {
 		if strings.HasPrefix(err.Error(), "encoding/hex:") {
 			if !options.IgnoreWarning {
 				logger.LogErrorLn(`
-###################################################################################################
-###                      WARNING! Invalid encryption key, do regenerate!                        ###
-### https://flant.github.io/werf/reference/deploy/secrets.html#regeneration-of-existing-secrets ###
-###################################################################################################`)
+############################################################################################
+###                      WARNING! Invalid encryption key, do regenerate!                 ###
+###    https://werf.io/reference/deploy/secrets.html#regeneration-of-existing-secrets    ###
+############################################################################################`)
 			}
 
 			return NewManager(ruby2GoSecretKey(key), options)

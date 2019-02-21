@@ -75,7 +75,7 @@ func main() {
 		Short: "Werf helps to implement and support Continuous Integration and Continuous Delivery",
 		Long: common.GetLongCommandDescription(`Werf helps to implement and support Continuous Integration and Continuous Delivery.
 
-Find more information at https://flant.github.io/werf`),
+Find more information at https://werf.io`),
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
