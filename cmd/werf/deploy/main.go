@@ -121,8 +121,7 @@ func runDeploy() error {
 		return err
 	}
 
-	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
-	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: *CommonCmdData.KubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
@@ -184,7 +183,7 @@ func runDeploy() error {
 		Values:       CmdData.Values,
 		SecretValues: CmdData.SecretValues,
 		Timeout:      time.Duration(CmdData.Timeout) * time.Second,
-		KubeContext:  kubeContext,
+		KubeContext:  *CommonCmdData.KubeContext,
 		Env:          *CommonCmdData.Environment,
 	})
 }

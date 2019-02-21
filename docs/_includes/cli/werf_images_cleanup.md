@@ -54,11 +54,11 @@ werf images cleanup [options]
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
-            Kubernetes config context
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
-            Set log color mode. 
+            Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
-            terminal) modes. 
+            terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)

@@ -81,8 +81,7 @@ func runCleanup() error {
 		return err
 	}
 
-	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
-	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: *CommonCmdData.KubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 

@@ -49,7 +49,7 @@ werf dismiss [options]
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
-            Kubernetes config context
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --namespace='':
             Use specified Kubernetes namespace (default %project-%environment template)
       --release='':

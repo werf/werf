@@ -117,7 +117,7 @@ func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeContext = new(string)
-	cmd.Flags().StringVarP(cmdData.KubeContext, "kube-context", "", "", "Kubernetes config context")
+	cmd.Flags().StringVarP(cmdData.KubeContext, "kube-context", "", os.Getenv("WERF_KUBE_CONTEXT"), "Kubernetes config context (default $WERF_KUBE_CONTEXT)")
 }
 
 func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
@@ -178,8 +178,8 @@ func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
 		defaultValue = logColorEnvironmentValue
 	}
 
-	cmd.Flags().StringVarP(cmdData.LogColorMode, "log-color-mode", "", defaultValue, `Set log color mode. 
-Supported on, off and auto (based on the stdout's file descriptor referring to a terminal) modes. 
+	cmd.Flags().StringVarP(cmdData.LogColorMode, "log-color-mode", "", defaultValue, `Set log color mode.
+Supported on, off and auto (based on the stdout's file descriptor referring to a terminal) modes.
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
 
@@ -359,14 +359,6 @@ func GetNamespace(namespaceOption string) string {
 		return kube.DefaultNamespace
 	}
 	return namespaceOption
-}
-
-func GetKubeContext(kubeContextOption string) string {
-	kubeContext := os.Getenv("KUBECONTEXT")
-	if kubeContext == "" {
-		return kubeContextOption
-	}
-	return kubeContext
 }
 
 func ApplyLogOptions(cmdData *CmdData) error {

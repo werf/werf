@@ -76,8 +76,7 @@ func runDeployChart(chartDir string, releaseName string) error {
 		return err
 	}
 
-	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
-	if err := kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
+	if err := kube.Init(kube.InitOptions{KubeContext: *CommonCmdData.KubeContext, KubeConfig: *CommonCmdData.KubeConfig}); err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
@@ -92,7 +91,7 @@ func runDeployChart(chartDir string, releaseName string) error {
 	}
 
 	return werfChart.Deploy(releaseName, namespace, helm.HelmChartOptions{
-		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: kubeContext},
+		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: *CommonCmdData.KubeContext},
 		Timeout:           time.Duration(CmdData.Timeout) * time.Second,
 		HelmChartValuesOptions: helm.HelmChartValuesOptions{
 			Set:       CmdData.Set,
