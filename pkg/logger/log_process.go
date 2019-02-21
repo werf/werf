@@ -14,10 +14,26 @@ const (
 )
 
 var (
-	processesBorderValues          []string
-	processesBorderFormattedValues []string
-	processesBorderIndentWidth     = 1
+	logProcessDownAndRightBorderSign     = "┌"
+	logProcessVerticalBorderSign         = "│"
+	logProcessVerticalAndRightBorderSign = "├"
+	logProcessUpAndRightBorderSign       = "└"
+
+	processesBorderValues             []string
+	processesBorderFormattedValues    []string
+	processesBorderBetweenIndentWidth = 1
+	processesBorderIndentWidth        = 1
 )
+
+func disableLogProcessBorder() {
+	logProcessDownAndRightBorderSign = ""
+	logProcessVerticalBorderSign = "  "
+	logProcessVerticalAndRightBorderSign = ""
+	logProcessUpAndRightBorderSign = ""
+
+	processesBorderIndentWidth = 0
+	processesBorderBetweenIndentWidth = 0
+}
 
 func LogProcessInline(msg string, processFunc func() error) error {
 	return logProcessInlineBase(msg, processFunc, colorizeHighlight)
@@ -103,7 +119,7 @@ func LogSecondaryProcess(msg string, options LogProcessOptions, processFunc func
 }
 
 func logProcessBase(msg string, options LogProcessOptions, processFunc func() error, colorizeMsgFunc func(...interface{}) string) error {
-	processOptionalLnMode()
+	applyOptionalLnMode()
 
 	if options.ColorizeMsgFunc != nil {
 		colorizeMsgFunc = options.ColorizeMsgFunc
@@ -116,7 +132,7 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 		})
 	}
 
-	headerFunc = decorateByWithExtraProcessBorder("┌", colorizeMsgFunc, headerFunc)
+	headerFunc = decorateByWithExtraProcessBorder(logProcessDownAndRightBorderSign, colorizeMsgFunc, headerFunc)
 
 	_ = headerFunc()
 
@@ -130,18 +146,36 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 		bodyFunc = decorateByWithIndent(bodyFunc)
 	}
 
-	bodyFunc = decorateByWithExtraProcessBorder("│", colorizeMsgFunc, bodyFunc)
+	bodyFunc = decorateByWithExtraProcessBorder(logProcessVerticalBorderSign, colorizeMsgFunc, bodyFunc)
 
 	err := bodyFunc()
 
 	resetOptionalLnMode()
 
 	if options.InfoSectionFunc != nil {
-		loggerFormattedLogLn(outStream, colorizeMsgFunc("├ Info"))
-		_ = withExtraProcessBorder("│", colorizeMsgFunc, func() error {
+		infoHeaderFunc := func() error {
+			return WithoutIndent(func() error {
+				loggerFormattedLogLn(outStream, prepareLogStateLeftPart("Info", colorizeMsgFunc))
+				return nil
+			})
+		}
+
+		infoHeaderFunc = decorateByWithExtraProcessBorder(logProcessVerticalAndRightBorderSign, colorizeMsgFunc, infoHeaderFunc)
+
+		_ = infoHeaderFunc()
+
+		infoFunc := func() error {
 			options.InfoSectionFunc(err)
 			return nil
-		})
+		}
+
+		if options.WithIndent {
+			infoFunc = decorateByWithIndent(infoFunc)
+		}
+
+		infoFunc = decorateByWithExtraProcessBorder(logProcessVerticalBorderSign, colorizeMsgFunc, infoFunc)
+
+		_ = infoFunc()
 	}
 
 	elapsedSeconds := fmt.Sprintf(logProcessTimeFormat, time.Since(start).Seconds())
@@ -157,12 +191,12 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 			})
 		}
 
-		footerFunc = decorateByWithExtraProcessBorder("└", colorizeMsgFunc, footerFunc)
+		footerFunc = decorateByWithExtraProcessBorder(logProcessUpAndRightBorderSign, colorizeMsgFunc, footerFunc)
 
 		_ = footerFunc()
 
 		if !options.WithoutLogOptionalLn {
-			LogOptionalLn()
+			OptionalLnModeOn()
 		}
 
 		return err
@@ -178,12 +212,12 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 		})
 	}
 
-	footerFunc = decorateByWithExtraProcessBorder("└", colorizeMsgFunc, footerFunc)
+	footerFunc = decorateByWithExtraProcessBorder(logProcessUpAndRightBorderSign, colorizeMsgFunc, footerFunc)
 
 	_ = footerFunc()
 
 	if !options.WithoutLogOptionalLn {
-		LogOptionalLn()
+		OptionalLnModeOn()
 	}
 
 	return nil
@@ -209,7 +243,7 @@ func appendProcessBorder(colorlessValue string, colorizeFunc func(...interface{}
 }
 
 func popProcessBorder() {
-	if len(processesBorderFormattedValues) == 0 {
+	if len(processesBorderValues) == 0 {
 		return
 	}
 
@@ -218,11 +252,11 @@ func popProcessBorder() {
 }
 
 func formattedProcessBorders() string {
-	if len(processesBorderFormattedValues) == 0 {
+	if len(processesBorderValues) == 0 {
 		return ""
 	}
 
-	return strings.Join(processesBorderFormattedValues, " ") + strings.Repeat(" ", processesBorderIndentWidth)
+	return strings.Join(processesBorderFormattedValues, strings.Repeat(" ", processesBorderBetweenIndentWidth)) + strings.Repeat(" ", processesBorderIndentWidth)
 }
 
 func processBordersBlockWidth() int {
@@ -230,5 +264,5 @@ func processBordersBlockWidth() int {
 		return 0
 	}
 
-	return len([]rune(strings.Join(processesBorderValues, " "))) + processesBorderIndentWidth
+	return len([]rune(strings.Join(processesBorderValues, strings.Repeat(" ", processesBorderBetweenIndentWidth)))) + processesBorderIndentWidth
 }

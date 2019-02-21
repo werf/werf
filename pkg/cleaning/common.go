@@ -186,7 +186,7 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 			}
 
 			logger.LogLn(containerName)
-			logger.LogOptionalLn()
+			logger.OptionalLnModeOn()
 		} else {
 			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{Force: options.RmForce}); err != nil {
 				return err
@@ -201,7 +201,7 @@ func imageReferencesRemove(references []string, options CommonOptions) error {
 	if len(references) != 0 {
 		if options.DryRun {
 			logger.LogLn(strings.Join(references, "\n"))
-			logger.LogOptionalLn()
+			logger.OptionalLnModeOn()
 		} else {
 			var args []string
 

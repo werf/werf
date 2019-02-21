@@ -47,6 +47,9 @@ werf deploy [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --disable-pretty-log=false:
+            Disable emojis, auto line wrapping and replace log process border characters with 
+            spaces (default $WERF_DISABLE_PRETTY_LOG).
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or 
             ~/.docker (in the order of priority).
@@ -57,16 +60,20 @@ werf deploy [options]
   -h, --help=false:
             help for deploy
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
-            ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
   -i, --images-repo='':
-            Docker Repo to store images (default $WERF_IMAGES_REPO environment)
+            Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
             Kubernetes config context
+      --log-color-mode='auto':
+            Set log color mode. 
+            Supported on, off and auto (based on the stdout's file descriptor referring to a 
+            terminal) modes. 
+            Default $WERF_LOG_COLOR_MODE or auto mode.
       --namespace='':
             Use specified Kubernetes namespace (default %project-%environment template)
       --release='':
@@ -90,18 +97,17 @@ werf deploy [options]
             multiple times to produce multiple images with the specified tags.
       --tag-git-branch='':
             Use git-branch tagging strategy and tag by the specified git branch (option can be 
-            enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH environment variable)
+            enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)
       --tag-git-commit='':
             Use git-commit tagging strategy and tag by the specified git commit hash (option can be 
-            enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT environment variable)
+            enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)
       --tag-git-tag='':
             Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by 
-            specifying git tag in the $WERF_TAG_GIT_TAG environment variable)
+            specifying git tag in the $WERF_TAG_GIT_TAG)
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
-            tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
       --values=[]:
             Additional helm values
 ```

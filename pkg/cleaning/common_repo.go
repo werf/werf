@@ -89,7 +89,7 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 		return err
 	}
 	logger.LogInfoF("  tag: %s\n", image.Tag)
-	logger.LogOptionalLn()
+	logger.OptionalLnModeOn()
 
 	return nil
 }

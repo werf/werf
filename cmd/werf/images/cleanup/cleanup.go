@@ -30,6 +30,11 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Cleanup project images from images repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+				cmd.Help()
+				fmt.Println()
+				return err
+			}
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
@@ -49,6 +54,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

@@ -7,7 +7,7 @@ import (
 type FitTextOptions struct {
 	ExtraIndentWidth int
 	MaxWidth         int
-	MarkEndOfLine    bool
+	MarkWrappedLine  bool
 }
 
 func FitText(text string, options FitTextOptions) string {
@@ -19,15 +19,15 @@ func FitText(text string, options FitTextOptions) string {
 		lineWidth = tw
 	}
 
-	return fitTextWithIndent(text, lineWidth, options.ExtraIndentWidth, options.MarkEndOfLine)
+	return fitTextWithIndent(text, lineWidth, options.ExtraIndentWidth, options.MarkWrappedLine)
 }
 
-func fitTextWithIndent(text string, lineWidth, extraIndentWidth int, markEndOfLine bool) string {
+func fitTextWithIndent(text string, lineWidth, extraIndentWidth int, markWrappedLine bool) string {
 	var result string
 	var resultLines []string
 
 	contentWidth := lineWidth - terminalServiceWidth() - extraIndentWidth
-	fittedText := fitText(text, 0, contentWidth, markEndOfLine)
+	fittedText := fitText(text, 0, contentWidth, markWrappedLine)
 	for _, line := range strings.Split(fittedText, "\n") {
 		indent := strings.Repeat(" ", extraIndentWidth)
 		resultLines = append(resultLines, strings.Join([]string{indent, line}, ""))
@@ -38,8 +38,8 @@ func fitTextWithIndent(text string, lineWidth, extraIndentWidth int, markEndOfLi
 	return result
 }
 
-func fitText(text string, cursor int, contentWidth int, markEndOfLine bool) string {
-	if markEndOfLine {
+func fitText(text string, contentCursor int, contentWidth int, markWrappedLine bool) string {
+	if markWrappedLine {
 		contentWidth -= 2
 	}
 
@@ -47,10 +47,10 @@ func fitText(text string, cursor int, contentWidth int, markEndOfLine bool) stri
 	var line, word string
 	var wordCursor int
 
-	lineCursor := cursor
+	lineCursor := contentCursor
 
-	addWithSignInLine := func() {
-		if markEndOfLine {
+	wrappedLine := func() string {
+		if markWrappedLine {
 			if contentWidth-lineCursor+1 > 0 {
 				line += strings.Repeat(" ", contentWidth-lineCursor+1)
 			} else {
@@ -59,6 +59,8 @@ func fitText(text string, cursor int, contentWidth int, markEndOfLine bool) stri
 
 			line += "↵"
 		}
+
+		return line
 	}
 
 	for _, r := range []rune(text) {
@@ -68,9 +70,7 @@ func fitText(text string, cursor int, contentWidth int, markEndOfLine bool) stri
 		switch string(r) {
 		case "\n", "\r":
 			if wordCursor > contentWidth && line != "" {
-				addWithSignInLine()
-
-				fittedText += line
+				fittedText += wrappedLine()
 				fittedText += "\n"
 				fittedText += word
 			} else {
@@ -83,9 +83,7 @@ func fitText(text string, cursor int, contentWidth int, markEndOfLine bool) stri
 			wordCursor = 0
 		case " ":
 			if wordCursor > contentWidth && line != "" {
-				addWithSignInLine()
-
-				fittedText += line
+				fittedText += wrappedLine()
 				fittedText += "\n"
 				line = ""
 				lineCursor = 0
@@ -101,9 +99,7 @@ func fitText(text string, cursor int, contentWidth int, markEndOfLine bool) stri
 	if line != "" || word != "" {
 		wordCursor = lineCursor + len([]rune(word))
 		if wordCursor > contentWidth {
-			addWithSignInLine()
-
-			fittedText += line
+			fittedText += wrappedLine()
 
 			if word != "" {
 				fittedText += "\n"

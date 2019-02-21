@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/logging"
 )
 
 type Image struct {
@@ -22,11 +23,11 @@ type Image struct {
 }
 
 func (i *Image) LogName() string {
-	return ImageLogName(i.name, i.isArtifact)
+	return logging.ImageLogName(i.name, i.isArtifact)
 }
 
 func (i *Image) LogProcessName() string {
-	return ImageLogProcessName(i.name, i.isArtifact)
+	return logging.ImageLogProcessName(i.name, i.isArtifact)
 }
 
 func (i *Image) LogProcessColorizeFunc() func(...interface{}) string {
@@ -35,25 +36,6 @@ func (i *Image) LogProcessColorizeFunc() func(...interface{}) string {
 
 func (i *Image) LogTagColorizeFunc() func(...interface{}) string {
 	return ImageLogTagColorizeFunc(i.isArtifact)
-}
-
-func ImageLogName(name string, isArtifact bool) string {
-	if !isArtifact {
-		if name == "" {
-			name = "~"
-		}
-	}
-
-	return name
-}
-
-func ImageLogProcessName(name string, isArtifact bool) string {
-	logName := ImageLogName(name, isArtifact)
-	if !isArtifact {
-		return fmt.Sprintf("⛵ image %s", logName)
-	} else {
-		return fmt.Sprintf("🛸 artifact %s", logName)
-	}
 }
 
 func ImageLogProcessColorizeFunc(isArtifact bool) func(...interface{}) string {

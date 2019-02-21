@@ -36,6 +36,11 @@ The data include:
 It is safe to run this command periodically by automated cleanup job in parallel with other werf commands such as build, deploy, stages and images cleanup.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+				cmd.Help()
+				fmt.Println()
+				return err
+			}
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {
@@ -48,6 +53,8 @@ It is safe to run this command periodically by automated cleanup job in parallel
 	common.SetupHomeDir(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
+
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

@@ -33,13 +33,11 @@ werf helm secret generate [options]
   -h, --help=false:
             help for generate
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
-            ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --output-file-path='':
             Save encoded data by specified file path
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
-            tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
       --values=false:
             Encode specified FILE_PATH (--file-path) as secret values file
 ```

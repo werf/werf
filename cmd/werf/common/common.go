@@ -14,6 +14,7 @@ import (
 	cleanup "github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -46,6 +47,9 @@ type CmdData struct {
 	GitTagStrategyExpiryDays    *int64
 	GitCommitStrategyLimit      *int64
 	GitCommitStrategyExpiryDays *int64
+
+	DisablePrettyLog *bool
+	LogColorMode     *string
 }
 
 func GetLongCommandDescription(text string) string {
@@ -59,12 +63,12 @@ func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TmpDir = new(string)
-	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system tmp dir)")
+	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)")
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.HomeDir = new(string)
-	cmd.Flags().StringVarP(cmdData.HomeDir, "home-dir", "", "", "Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or ~/.werf)")
+	cmd.Flags().StringVarP(cmdData.HomeDir, "home-dir", "", "", "Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)")
 }
 
 func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
@@ -78,10 +82,10 @@ func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.GitCommitStrategyLimit = new(int64)
 	cmdData.GitCommitStrategyExpiryDays = new(int64)
 
-	cmd.Flags().Int64VarP(cmdData.GitTagStrategyLimit, "git-tag-strategy-limit", "", -1, "Keep max number of images published with the git-tag tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_LIMIT environment variable.")
-	cmd.Flags().Int64VarP(cmdData.GitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", -1, "Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS environment variable.")
-	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyLimit, "git-commit-strategy-limit", "", -1, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_LIMIT environment variable.")
-	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", -1, "Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS environment variable.")
+	cmd.Flags().Int64VarP(cmdData.GitTagStrategyLimit, "git-tag-strategy-limit", "", -1, "Keep max number of images published with the git-tag tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_LIMIT.")
+	cmd.Flags().Int64VarP(cmdData.GitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", -1, "Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS.")
+	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyLimit, "git-commit-strategy-limit", "", -1, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_LIMIT.")
+	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", -1, "Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS.")
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
@@ -91,9 +95,9 @@ func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TagGitCommit = new(string)
 
 	cmd.Flags().StringArrayVarP(cmdData.TagCustom, "tag-custom", "", []string{}, "Use custom tagging strategy and tag by the specified arbitrary tags. Option can be used multiple times to produce multiple images with the specified tags.")
-	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_TAG_GIT_BRANCH"), "Use git-branch tagging strategy and tag by the specified git branch (option can be enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH environment variable)")
-	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by specifying git tag in the $WERF_TAG_GIT_TAG environment variable)")
-	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Use git-commit tagging strategy and tag by the specified git commit hash (option can be enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT environment variable)")
+	cmd.Flags().StringVarP(cmdData.TagGitBranch, "tag-git-branch", "", os.Getenv("WERF_TAG_GIT_BRANCH"), "Use git-branch tagging strategy and tag by the specified git branch (option can be enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)")
+	cmd.Flags().StringVarP(cmdData.TagGitTag, "tag-git-tag", "", os.Getenv("WERF_TAG_GIT_TAG"), "Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by specifying git tag in the $WERF_TAG_GIT_TAG)")
+	cmd.Flags().StringVarP(cmdData.TagGitCommit, "tag-git-commit", "", os.Getenv("WERF_TAG_GIT_COMMIT"), "Use git-commit tagging strategy and tag by the specified git commit hash (option can be enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)")
 }
 
 func SetupEnvironment(cmdData *CmdData, cmd *cobra.Command) {
@@ -128,7 +132,7 @@ func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.ImagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (default $WERF_IMAGES_REPO environment)")
+	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (default $WERF_IMAGES_REPO)")
 }
 
 func SetupInsecureRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -157,6 +161,40 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 	}
 
 	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, desc)
+}
+
+func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
+	SetupLogColor(cmdData, cmd)
+	SetupDisablePrettyLog(cmdData, cmd)
+}
+
+func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogColorMode = new(string)
+
+	logColorEnvironmentValue := os.Getenv("WERF_LOG_COLOR_MODE")
+
+	defaultValue := "auto"
+	if logColorEnvironmentValue != "" {
+		defaultValue = logColorEnvironmentValue
+	}
+
+	cmd.Flags().StringVarP(cmdData.LogColorMode, "log-color-mode", "", defaultValue, `Set log color mode. 
+Supported on, off and auto (based on the stdout's file descriptor referring to a terminal) modes. 
+Default $WERF_LOG_COLOR_MODE or auto mode.`)
+}
+
+func SetupDisablePrettyLog(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.DisablePrettyLog = new(bool)
+	cmd.Flags().BoolVarP(cmdData.DisablePrettyLog, "disable-pretty-log", "", getBoolEnvironment("WERF_DISABLE_PRETTY_LOG"), `Disable emojis, auto line wrapping and replace log process border characters with spaces (default $WERF_DISABLE_PRETTY_LOG).`)
+}
+
+func getBoolEnvironment(environmentName string) bool {
+	switch os.Getenv(environmentName) {
+	case "1", "true", "yes":
+		return true
+	default:
+		return false
+	}
 }
 
 func getInt64EnvVar(varName string) (*int64, error) {
@@ -331,6 +369,36 @@ func GetKubeContext(kubeContextOption string) string {
 	return kubeContext
 }
 
+func ApplyLogOptions(cmdData *CmdData) error {
+	if err := ApplyLogColorMode(cmdData); err != nil {
+		return err
+	}
+
+	ApplyDisablePrettyLog(cmdData)
+
+	return nil
+}
+
+func ApplyLogColorMode(cmdData *CmdData) error {
+	switch *cmdData.LogColorMode {
+	case "auto":
+	case "on":
+		logging.EnableLogColor()
+	case "off":
+		logging.DisableLogColor()
+	default:
+		return fmt.Errorf("bad log color mode '%s': on, off and auto modes are supported", *cmdData.LogColorMode)
+	}
+
+	return nil
+}
+
+func ApplyDisablePrettyLog(cmdData *CmdData) {
+	if *cmdData.DisablePrettyLog {
+		logging.DisablePrettyLog()
+	}
+}
+
 func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()
@@ -348,4 +416,12 @@ func LogProjectDir(dir string) {
 	if os.Getenv("WERF_LOG_PROJECT_DIR") != "" {
 		logger.LogInfoF("Using project dir: %s\n", dir)
 	}
+}
+
+func LogErrorF(format string, a ...interface{}) {
+	_ = logger.WithoutIndent(func() error {
+		logger.LogErrorF(format, a...)
+
+		return nil
+	})
 }

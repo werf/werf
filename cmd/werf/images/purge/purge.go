@@ -24,6 +24,11 @@ func NewCmd() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		Short:                 "Purge project images from images repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+				cmd.Help()
+				fmt.Println()
+				return err
+			}
 			common.LogVersion()
 
 			return runPurge()
@@ -37,6 +42,8 @@ func NewCmd() *cobra.Command {
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to delete images from the specified images repo.")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
+
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 

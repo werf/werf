@@ -42,6 +42,11 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 		Annotations:           map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return common.LogRunningTime(func() error {
+				if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+					cmd.Help()
+					fmt.Println()
+					return err
+				}
 				common.LogVersion()
 
 				return runImagesPublish(commonCmdData, args)
@@ -60,6 +65,8 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupImagesRepo(commonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and push images into images repo.")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
+
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	return cmd
 }

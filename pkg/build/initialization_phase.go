@@ -13,6 +13,7 @@ import (
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -45,7 +46,7 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 
 	imagesInterfaceConfigs := getImageConfigsInOrder(imageConfigs, c)
 	for _, imageInterfaceConfig := range imagesInterfaceConfigs {
-		imageName := ImageLogProcessName(imageInterfaceConfig.ImageBaseConfig().Name, imageInterfaceConfig.IsArtifact())
+		imageName := logging.ImageLogProcessName(imageInterfaceConfig.ImageBaseConfig().Name, imageInterfaceConfig.IsArtifact())
 		err := logger.LogProcess(imageName, logger.LogProcessOptions{ColorizeMsgFunc: ImageLogProcessColorizeFunc(imageInterfaceConfig.IsArtifact())}, func() error {
 			image, err := generateImage(imageInterfaceConfig, c)
 			if err != nil {
@@ -347,7 +348,7 @@ func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 			}
 		}
 
-		logger.LogOptionalLn()
+		logger.OptionalLnModeOn()
 	}
 
 	return nonEmptyGitPaths, nil

@@ -45,8 +45,7 @@ werf dismiss [options]
   -h, --help=false:
             help for dismiss
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
-            ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
@@ -56,8 +55,7 @@ werf dismiss [options]
       --release='':
             Use specified Helm release name (default %project-%environment template)
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
-            tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
       --with-namespace=false:
             Delete Kubernetes Namespace after purging Helm Release
 ```

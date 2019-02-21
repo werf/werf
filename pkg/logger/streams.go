@@ -10,8 +10,8 @@ var (
 	outStream io.Writer = os.Stdout
 	errStream io.Writer = os.Stderr
 
-	isRawOutputModeOn    = false
-	isFittedOutputModeOn = false
+	isRawStreamsOutputModeOn    = false
+	isFittedStreamsOutputModeOn = false
 )
 
 type WriterProxy struct {
@@ -19,34 +19,37 @@ type WriterProxy struct {
 }
 
 func (p WriterProxy) Write(data []byte) (int, error) {
-	if isRawOutputModeOn {
+	if isRawStreamsOutputModeOn {
 		return logF(p.Writer, "%s", string(data))
 	}
 
 	msg := string(data)
-	if isFittedOutputModeOn {
-		msg = fitText(msg, cursor, terminalContentWidth(), true)
+	if isFittedStreamsOutputModeOn {
+		msg = fitText(msg, contentCursor, terminalContentWidth(), true)
 	}
 
 	_, err := FormattedLogF(p.Writer, "%s", msg)
-
 	return len(data), err
 }
 
-func RawOutputOn(f func() error) error {
-	savedIsRawOutputModeOn := isRawOutputModeOn
-	isRawOutputModeOn = true
+func WithRawStreamsOutputModeOn(f func() error) error {
+	savedIsRawOutputModeOn := isRawStreamsOutputModeOn
+	isRawStreamsOutputModeOn = true
 	err := f()
-	isRawOutputModeOn = savedIsRawOutputModeOn
+	isRawStreamsOutputModeOn = savedIsRawOutputModeOn
 
 	return err
 }
 
-func FittedOutputOn(f func() error) error {
-	savedIsFittedOutputModeOn := isFittedOutputModeOn
-	isFittedOutputModeOn = true
+func RawStreamsOutputModeOn() {
+	isRawStreamsOutputModeOn = true
+}
+
+func WithFittedStreamsOutputOn(f func() error) error {
+	savedIsFittedOutputModeOn := isFittedStreamsOutputModeOn
+	isFittedStreamsOutputModeOn = true
 	err := f()
-	isFittedOutputModeOn = savedIsFittedOutputModeOn
+	isFittedStreamsOutputModeOn = savedIsFittedOutputModeOn
 
 	return err
 }

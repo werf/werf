@@ -12,6 +12,7 @@ import (
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
@@ -56,6 +57,12 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 			common.DisableOptionsInUseLineAnno: "1",
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+				cmd.Help()
+				fmt.Println()
+				return err
+			}
+
 			if err := processArgs(cmd, args); err != nil {
 				cmd.Help()
 				fmt.Println()
@@ -99,6 +106,8 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	common.SetupStagesStorage(commonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage.")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
+
+	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -194,7 +203,7 @@ func runRun(commonCmdData *common.CmdData) error {
 	}()
 
 	if !werfConfig.HasImage(CmdData.ImageName) {
-		return fmt.Errorf("image '%s' is not defined in werf.yaml", build.ImageLogName(CmdData.ImageName, false))
+		return fmt.Errorf("image '%s' is not defined in werf.yaml", logging.ImageLogName(CmdData.ImageName, false))
 	}
 
 	c := build.NewConveyor(werfConfig, []string{CmdData.ImageName}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
@@ -212,7 +221,7 @@ func runRun(commonCmdData *common.CmdData) error {
 	if *CommonCmdData.DryRun {
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
 	} else {
-		return logger.RawOutputOn(func() error {
+		return logger.WithRawStreamsOutputModeOn(func() error {
 			return docker.CliRun(dockerRunArgs...)
 		})
 	}
