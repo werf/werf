@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path"
 
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
@@ -157,6 +159,7 @@ func runCleanup() error {
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
 		LocalGit:          localGitRepo,
+		KubernetesClients: []kubernetes.Interface{kube.Kubernetes},
 		WithoutKube:       CmdData.WithoutKube,
 		Policies:          policies,
 	}
