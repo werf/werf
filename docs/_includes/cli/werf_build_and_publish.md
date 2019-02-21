@@ -76,9 +76,9 @@ werf build-and-publish [IMAGE_NAME...] [options]
       --introspect-error=false:
             Introspect failed stage in the state, right after running failed assembly instruction
       --log-color-mode='auto':
-            Set log color mode. 
+            Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
-            terminal) modes. 
+            terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 

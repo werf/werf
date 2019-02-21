@@ -54,9 +54,9 @@ werf run [options] [IMAGE_NAME] [-- COMMAND ARG...]
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --log-color-mode='auto':
-            Set log color mode. 
+            Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
-            terminal) modes. 
+            terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --shell=false:
             Use predefined docker options and command for debug

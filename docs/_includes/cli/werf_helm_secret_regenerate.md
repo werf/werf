@@ -39,9 +39,9 @@ werf helm secret regenerate [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto':
-            Set log color mode. 
+            Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
-            terminal) modes. 
+            terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --old-key='':
             Old secret key

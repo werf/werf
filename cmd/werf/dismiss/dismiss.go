@@ -90,8 +90,7 @@ func runDismiss() error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	kubeContext := common.GetKubeContext(*CommonCmdData.KubeContext)
-	err = kube.Init(kube.InitOptions{KubeContext: kubeContext, KubeConfig: *CommonCmdData.KubeConfig})
+	err = kube.Init(kube.InitOptions{KubeContext: *CommonCmdData.KubeContext, KubeConfig: *CommonCmdData.KubeConfig})
 	if err != nil {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
@@ -106,7 +105,7 @@ func runDismiss() error {
 		return err
 	}
 
-	return deploy.RunDismiss(release, namespace, kubeContext, deploy.DismissOptions{
+	return deploy.RunDismiss(release, namespace, *CommonCmdData.KubeContext, deploy.DismissOptions{
 		WithNamespace: CmdData.WithNamespace,
 	})
 }

@@ -40,9 +40,9 @@ werf host purge [options]
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --log-color-mode='auto':
-            Set log color mode. 
+            Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
-            terminal) modes. 
+            terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)

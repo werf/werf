@@ -68,11 +68,11 @@ werf deploy [options]
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
-            Kubernetes config context
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
-            Set log color mode. 
+            Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
-            terminal) modes. 
+            terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --namespace='':
             Use specified Kubernetes namespace (default %project-%environment template)

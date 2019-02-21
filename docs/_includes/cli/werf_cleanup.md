@@ -8,7 +8,7 @@ Safely cleanup unused project images and stages.
 First step is 'werf images cleanup' command, which will delete unused images from images repo. 
 Second step is 'werf stages cleanup' command, which will delete unused stages from stages storage 
 to be in sync with the images repo.
-		
+
 It is safe to run this command periodically (daily is enough) by automated cleanup job in parallel 
 with other werf commands such as build, deploy and host cleanup.
 
@@ -68,11 +68,11 @@ werf cleanup [options]
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
-            Kubernetes config context
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --log-color-mode='auto':
-            Set log color mode. 
+            Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
-            terminal) modes. 
+            terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
   -s, --stages-storage='':
             Docker Repo to store stages or :local for non-distributed build (only :local is 
