@@ -55,7 +55,7 @@ werf dismiss [options]
       --release='':
             Use specified Helm release name (default %project-%environment template)
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --with-namespace=false:
             Delete Kubernetes Namespace after purging Helm Release
 ```

@@ -37,7 +37,7 @@ werf helm secret generate [options]
       --output-file-path='':
             Save encoded data by specified file path
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=false:
             Encode specified FILE_PATH (--file-path) as secret values file
 ```
