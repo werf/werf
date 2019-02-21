@@ -86,9 +86,9 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 
 		s.SetSignature(stageSig)
 
-		imageName := fmt.Sprintf(LocalImageStageImageFormat, c.projectName(), stageSig)
+		logger.LogInfoF("%s:%s %s\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())), stageSig)
 
-		logger.LogInfoF("%s:%s %s\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())), imageName)
+		imageName := fmt.Sprintf(LocalImageStageImageFormat, c.projectName(), stageSig)
 
 		i := c.GetOrCreateImage(prevImage, imageName)
 		s.SetImage(i)
@@ -109,7 +109,8 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 
 	stageName := c.GetBuildingGitStage(image.name)
 	if stageName != "" {
-		logger.LogInfoF("Git files are actual on the %s stage\n", stageName)
+		logger.LogLn()
+		logger.LogInfoF("Git files are actual on stage %s\n", stageName)
 	}
 
 	image.SetStages(newStagesList)
