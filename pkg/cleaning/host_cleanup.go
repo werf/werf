@@ -3,6 +3,7 @@ package cleaning
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -14,24 +15,26 @@ import (
 )
 
 func HostCleanup(options CommonOptions) error {
-	if err := logger.LogSecondaryProcess("Running cleanup for docker containers created by werf", logger.LogProcessOptions{}, func() error {
-		return safeContainersCleanup(options)
-	}); err != nil {
-		return err
-	}
-
-	if err := logger.LogSecondaryProcess("Running cleanup for dangling docker images created by werf", logger.LogProcessOptions{}, func() error {
-		return safeDanglingImagesCleanup(options)
-	}); err != nil {
-		return nil
-	}
-
-	return lock.WithLock("gc", lock.LockOptions{}, func() error {
-		if err := tmp_manager.GC(options.DryRun); err != nil {
-			return fmt.Errorf("tmp files gc failed: %s", err)
+	return lock.WithLock("host-cleanup", lock.LockOptions{Timeout: time.Second * 600}, func() error {
+		if err := logger.LogSecondaryProcess("Running cleanup for docker containers created by werf", logger.LogProcessOptions{}, func() error {
+			return safeContainersCleanup(options)
+		}); err != nil {
+			return err
 		}
 
-		return nil
+		if err := logger.LogSecondaryProcess("Running cleanup for dangling docker images created by werf", logger.LogProcessOptions{}, func() error {
+			return safeDanglingImagesCleanup(options)
+		}); err != nil {
+			return nil
+		}
+
+		return lock.WithLock("gc", lock.LockOptions{}, func() error {
+			if err := tmp_manager.GC(options.DryRun); err != nil {
+				return fmt.Errorf("tmp files gc failed: %s", err)
+			}
+
+			return nil
+		})
 	})
 }
 
