@@ -39,5 +39,7 @@ werf ci-env CI_SYSTEM [options]
             CI_SYSTEM environment variables
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+      --verbose=false:
+            Generate echo command for each resulted script line
 ```
 

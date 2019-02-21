@@ -17,6 +17,7 @@ import (
 
 var CmdData struct {
 	TaggingStrategy string
+	Verbose         bool
 }
 
 var CommonCmdData common.CmdData
@@ -40,6 +41,7 @@ Currently supported only GitLab CI`,
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	cmd.Flags().StringVarP(&CmdData.TaggingStrategy, "tagging-strategy", "", "", "tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified CI_SYSTEM environment variables")
+	cmd.Flags().BoolVarP(&CmdData.Verbose, "verbose", "", false, "Generate echo command for each resulted script line")
 
 	return cmd
 }
@@ -135,29 +137,29 @@ func generateGitlabEnvs() error {
 		ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
 	}
 
-	fmt.Println("### DOCKER CONFIG")
-	printExport("export DOCKER_CONFIG=\"%s\"\n", dockerConfig)
+	printHeader("DOCKER CONFIG", false)
+	printExportCommand("DOCKER_CONFIG", dockerConfig)
 
-	fmt.Println("\n### IMAGES REPO")
-	printExport("export WERF_IMAGES_REPO=\"%s\"\n", imagesRepo)
+	printHeader("IMAGES REPO", true)
+	printExportCommand("WERF_IMAGES_REPO", imagesRepo)
 
-	fmt.Println("\n### TAGGING")
-	printExport("export WERF_TAG_GIT_TAG=\"%s\"\n", ciGitTag)
-	printExport("export WERF_TAG_GIT_BRANCH=\"%s\"\n", ciGitBranch)
+	printHeader("TAGGING", true)
+	printExportCommand("WERF_TAG_GIT_TAG", ciGitTag)
+	printExportCommand("WERF_TAG_GIT_BRANCH", ciGitBranch)
 
-	fmt.Println("\n### DEPLOY")
-	printExport("export WERF_ENV=\"%s\"\n", os.Getenv("CI_ENVIRONMENT_SLUG"))
+	printHeader("DEPLOY", true)
+	printExportCommand("WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"))
 
-	fmt.Println("\n### IMAGE CLEANUP POLICIES")
-	printExport("export WERF_GIT_TAG_STRATEGY_LIMIT=\"%s\"\n", "10")
-	printExport("export WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS=\"%s\"\n", "30")
-	printExport("export WERF_GIT_COMMIT_STRATEGY_LIMIT=\"%s\"\n", "50")
-	printExport("export WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS=\"%s\"\n", "30")
+	printHeader("IMAGE CLEANUP POLICIES", true)
+	printExportCommand("WERF_GIT_TAG_STRATEGY_LIMIT", "10")
+	printExportCommand("WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", "30")
+	printExportCommand("WERF_GIT_COMMIT_STRATEGY_LIMIT", "50")
+	printExportCommand("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", "30")
 
-	fmt.Println("\n### OTHER")
-	printExport("export WERF_LOG_COLOR_MODE=\"%s\"\n", "on")
-	printExport("export WERF_LOG_PROJECT_DIR=\"%s\"\n", "1")
-	printExport("export WERF_ENABLE_PROCESS_EXTERMINATOR=\"%s\"\n", "1")
+	printHeader("OTHER", true)
+	printExportCommand("WERF_LOG_COLOR_MODE", "on")
+	printExportCommand("WERF_LOG_PROJECT_DIR", "1")
+	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1")
 
 	if ciGitTag == "" && ciGitBranch == "" {
 		fmt.Println()
@@ -167,10 +169,33 @@ func generateGitlabEnvs() error {
 	return nil
 }
 
-func printExport(format, value string) {
+func printHeader(header string, withNewLine bool) {
+	header = fmt.Sprintf("### %s", header)
+
+	if withNewLine {
+		fmt.Println()
+	}
+	fmt.Println(header)
+
+	if CmdData.Verbose {
+		if withNewLine {
+			fmt.Println("echo")
+		}
+		echoHeader := fmt.Sprintf("echo '%s'", header)
+		fmt.Println(echoHeader)
+	}
+}
+
+func printExportCommand(key, value string) {
+	exportCommand := fmt.Sprintf("export %s=\"%s\"", key, value)
 	if value == "" {
-		format = fmt.Sprintf("# %s", format)
+		exportCommand = fmt.Sprintf("# %s", exportCommand)
 	}
 
-	fmt.Printf(format, value)
+	fmt.Println(exportCommand)
+
+	if CmdData.Verbose {
+		echoExportCommand := fmt.Sprintf("echo '%s'", exportCommand)
+		fmt.Println(echoExportCommand)
+	}
 }
