@@ -31,8 +31,7 @@ werf helm lint [options]
   -h, --help=false:
             help for lint
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
-            ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --secret-values=[]:
             Additional helm secret values
       --set=[]:
@@ -40,8 +39,7 @@ werf helm lint [options]
       --set-string=[]:
             Additional helm STRING sets
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
-            tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
       --values=[]:
             Additional helm values
 ```

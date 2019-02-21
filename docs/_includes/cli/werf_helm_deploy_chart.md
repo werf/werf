@@ -26,15 +26,22 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
+      --disable-pretty-log=false:
+            Disable emojis, auto line wrapping and replace log process border characters with 
+            spaces (default $WERF_DISABLE_PRETTY_LOG).
   -h, --help=false:
             help for deploy-chart
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
-            ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
             Kubernetes config context
+      --log-color-mode='auto':
+            Set log color mode. 
+            Supported on, off and auto (based on the stdout's file descriptor referring to a 
+            terminal) modes. 
+            Default $WERF_LOG_COLOR_MODE or auto mode.
       --namespace='':
             Namespace to install release into
       --set=[]:
@@ -44,8 +51,7 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
-            tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
       --values=[]:
             Additional helm values
 ```

@@ -35,10 +35,9 @@ werf helm get-service-values [options]
   -h, --help=false:
             help for get-service-values
       --home-dir='':
-            Use specified dir to store werf cache files and dirs (default $WERF_HOME environment or 
-            ~/.werf)
+            Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
   -i, --images-repo='':
-            Docker Repo to store images (default $WERF_IMAGES_REPO environment)
+            Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
             Allow usage of insecure docker repos
       --namespace='':
@@ -56,15 +55,14 @@ werf helm get-service-values [options]
             multiple times to produce multiple images with the specified tags.
       --tag-git-branch='':
             Use git-branch tagging strategy and tag by the specified git branch (option can be 
-            enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH environment variable)
+            enabled by specifying git branch in the $WERF_TAG_GIT_BRANCH)
       --tag-git-commit='':
             Use git-commit tagging strategy and tag by the specified git commit hash (option can be 
-            enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT environment variable)
+            enabled by specifying git commit hash in the $WERF_TAG_GIT_COMMIT)
       --tag-git-tag='':
             Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by 
-            specifying git tag in the $WERF_TAG_GIT_TAG environment variable)
+            specifying git tag in the $WERF_TAG_GIT_TAG)
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP environment or system 
-            tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
 ```
 
