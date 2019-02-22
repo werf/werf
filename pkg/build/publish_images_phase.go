@@ -82,7 +82,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 		stageImageName := fmt.Sprintf("%s:%s", p.ImagesRepo, stageTagName)
 
 		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
-			logger.LogState(fmt.Sprintf("%s", stage.Name()), "[EXISTS]")
+			logger.LogHighlightLn(stage.Name())
 
 			logRepoImageInfo(stageImageName)
 
@@ -174,7 +174,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 					}
 
 					if lastStageImage.ID() == parentID {
-						logger.LogState(tagLogName, "[EXISTS]")
+						logger.LogHighlightLn(tagLogName)
 						_ = logger.WithIndent(func() error {
 							logRepoImageInfo(imageName)
 							return nil

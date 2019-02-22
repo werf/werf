@@ -94,7 +94,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 		isUsingCache := img.IsExists()
 
 		if isUsingCache {
-			logger.LogState(stageLogName, "[USING CACHE]")
+			logger.LogHighlightLn(stageLogName)
 
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 

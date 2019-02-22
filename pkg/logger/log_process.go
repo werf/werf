@@ -61,13 +61,7 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 	return err
 }
 
-func LogState(msg, state string) {
-	leftPart := prepareLogStateLeftPart(msg, colorizeHighlight, state)
-	rightPart := prepareLogStateRightPart(msg, colorizeHighlight, state)
-	loggerFormattedLogLn(outStream, fmt.Sprintf("%s%s", leftPart, rightPart))
-}
-
-func prepareLogStateLeftPart(leftPart string, colorizeFunc func(...interface{}) string, rightParts ...string) string {
+func prepareLogProcessMsgLeftPart(leftPart string, colorizeFunc func(...interface{}) string, rightParts ...string) string {
 	var result string
 
 	spaceWidth := terminalContentWidth() - len(strings.Join(rightParts, logStateRightPartsSeparator))
@@ -87,20 +81,6 @@ func prepareLogStateLeftPart(leftPart string, colorizeFunc func(...interface{}) 
 	}
 
 	return colorizeFunc(result)
-}
-
-func prepareLogStateRightPart(msg string, colorizeFunc func(...interface{}) string, rightParts ...string) string {
-	var result string
-
-	spaceWidth := terminalContentWidth() - len(msg)
-	rightPartWidth := len(strings.Join(rightParts, logStateRightPartsSeparator))
-	if spaceWidth-rightPartWidth > 0 {
-		result += strings.Repeat(" ", spaceWidth-rightPartWidth)
-	}
-
-	result += colorizeFunc(strings.Join(rightParts, logStateRightPartsSeparator))
-
-	return result
 }
 
 type LogProcessOptions struct {
@@ -127,7 +107,7 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 
 	headerFunc := func() error {
 		return WithoutIndent(func() error {
-			loggerFormattedLogLn(outStream, prepareLogStateLeftPart(msg, colorizeMsgFunc))
+			loggerFormattedLogLn(outStream, prepareLogProcessMsgLeftPart(msg, colorizeMsgFunc))
 			return nil
 		})
 	}
@@ -155,7 +135,7 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 	if options.InfoSectionFunc != nil {
 		infoHeaderFunc := func() error {
 			return WithoutIndent(func() error {
-				loggerFormattedLogLn(outStream, prepareLogStateLeftPart("Info", colorizeMsgFunc))
+				loggerFormattedLogLn(outStream, prepareLogProcessMsgLeftPart("Info", colorizeMsgFunc))
 				return nil
 			})
 		}
@@ -184,7 +164,7 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 		footerFunc := func() error {
 			return WithoutIndent(func() error {
 				timePart := fmt.Sprintf(" (%s) FAILED", elapsedSeconds)
-				loggerFormattedLogF(outStream, prepareLogStateLeftPart(msg, colorizeFail, timePart))
+				loggerFormattedLogF(outStream, prepareLogProcessMsgLeftPart(msg, colorizeFail, timePart))
 				colorizeAndFormattedLogF(outStream, colorizeFail, "%s\n", timePart)
 
 				return nil
@@ -205,7 +185,7 @@ func logProcessBase(msg string, options LogProcessOptions, processFunc func() er
 	footerFunc := func() error {
 		return WithoutIndent(func() error {
 			timePart := fmt.Sprintf(" (%s)", elapsedSeconds)
-			loggerFormattedLogF(outStream, prepareLogStateLeftPart(msg, colorizeMsgFunc, timePart))
+			loggerFormattedLogF(outStream, prepareLogProcessMsgLeftPart(msg, colorizeMsgFunc, timePart))
 			colorizeAndFormattedLogF(outStream, colorizeMsgFunc, "%s\n", timePart)
 
 			return nil
