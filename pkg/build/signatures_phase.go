@@ -110,7 +110,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 	stageName := c.GetBuildingGitStage(image.name)
 	if stageName != "" {
 		logger.LogLn()
-		logger.LogInfoF("Git files are actual on stage %s\n", stageName)
+		logger.LogInfoF("Git files will be actualized on stage %s\n", stageName)
 	}
 
 	image.SetStages(newStagesList)
