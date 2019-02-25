@@ -30,7 +30,7 @@ type PublishImagesPhase struct {
 }
 
 func (p *PublishImagesPhase) Run(c *Conveyor) error {
-	return logger.LogProcess("Pushing images", logger.LogProcessOptions{}, func() error {
+	return logger.LogProcess("Publishing images", logger.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
@@ -82,7 +82,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 		stageImageName := fmt.Sprintf("%s:%s", p.ImagesRepo, stageTagName)
 
 		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
-			logger.LogState(fmt.Sprintf("%s", stage.Name()), "[EXISTS]")
+			logger.LogHighlightLn(stage.Name())
 
 			logRepoImageInfo(stageImageName)
 
@@ -112,7 +112,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 			}
 
 			logProcessOptions := logger.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
-			return logger.LogProcess(fmt.Sprintf("Pushing %s", stage.Name()), logProcessOptions, func() error {
+			return logger.LogProcess(fmt.Sprintf("Publishing %s", stage.Name()), logProcessOptions, func() error {
 				if err := stageImage.Export(stageImageName); err != nil {
 					return fmt.Errorf("error pushing %s: %s", stageImageName, err)
 				}
@@ -174,7 +174,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 					}
 
 					if lastStageImage.ID() == parentID {
-						logger.LogState(tagLogName, "[EXISTS]")
+						logger.LogHighlightLn(tagLogName)
 						_ = logger.WithIndent(func() error {
 							logRepoImageInfo(imageName)
 							return nil
@@ -201,18 +201,6 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 						imagePkg.WerfImageLabel:       "true",
 					})
 
-					err := logger.LogSecondaryProcess("Building final image with meta information", logger.LogProcessOptions{}, func() error {
-						if err := pushImage.Build(imagePkg.BuildOptions{}); err != nil {
-							return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, strategy, err)
-						}
-
-						return nil
-					})
-
-					if err != nil {
-						return err
-					}
-
 					infoSectionFunc := func(err error) {
 						if err == nil {
 							_ = logger.WithIndent(func() error {
@@ -222,7 +210,17 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 						}
 					}
 					logProcessOptions := logger.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
-					return logger.LogProcess(fmt.Sprintf("Pushing %s", tagLogName), logProcessOptions, func() error {
+					return logger.LogProcess(fmt.Sprintf("Publishing %s", tagLogName), logProcessOptions, func() error {
+						if err := logger.LogSecondaryProcess("Building final image with meta information", logger.LogProcessOptions{}, func() error {
+							if err := pushImage.Build(imagePkg.BuildOptions{}); err != nil {
+								return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, strategy, err)
+							}
+
+							return nil
+						}); err != nil {
+							return err
+						}
+
 						if err := pushImage.Export(); err != nil {
 							return fmt.Errorf("error pushing %s: %s", imageName, err)
 						}

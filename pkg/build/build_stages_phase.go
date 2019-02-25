@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/docker/docker/pkg/stringid"
+
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
@@ -92,7 +94,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 		isUsingCache := img.IsExists()
 
 		if isUsingCache {
-			logger.LogState(stageLogName, "[USING CACHE]")
+			logger.LogHighlightLn(stageLogName)
 
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 
@@ -163,9 +165,13 @@ var (
 )
 
 func logImageInfo(img imagePkg.ImageInterface, prevStageImageSize int64, isUsingCache bool) {
-	logger.LogInfoF(logImageInfoFormat, "image", img.Name())
+	parts := strings.Split(img.Name(), ":")
+	repository, tag := parts[0], parts[1]
 
+	logger.LogInfoF(logImageInfoFormat, "repository", repository)
+	logger.LogInfoF(logImageInfoFormat, "image_id", stringid.TruncateID(img.ID()))
 	logger.LogInfoF(logImageInfoFormat, "created", img.Inspect().Created)
+	logger.LogInfoF(logImageInfoFormat, "tag", tag)
 
 	if prevStageImageSize == 0 {
 		logger.LogInfoF(logImageInfoFormat, "size", byteCountBinary(img.Inspect().Size))

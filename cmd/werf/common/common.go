@@ -401,7 +401,7 @@ func LogRunningTime(f func() error) error {
 }
 
 func LogVersion() {
-	logger.LogInfoF("Version: %s\n", werf.Version)
+	logger.LogF("Version: %s\n", werf.Version)
 }
 
 func LogProjectDir(dir string) {

@@ -45,7 +45,8 @@ func Init(keys []string) error {
 	systemAgentSockExists, _ := util.FileExists(systemAgentSock)
 	if systemAgentSock != "" && systemAgentSockExists {
 		SSHAuthSock = systemAgentSock
-		logger.LogInfoF("Using system ssh-agent %s\n", systemAgentSock)
+		logger.LogF("Using system ssh-agent %s\n", systemAgentSock)
+		logger.OptionalLnModeOn()
 		return nil
 	}
 
@@ -126,7 +127,8 @@ func runSSHAgent() (string, error) {
 		return "", fmt.Errorf("error listen unix sock %s: %s", sockPath, err)
 	}
 
-	logger.LogInfoF("Running ssh agent on unix sock %s\n", sockPath)
+	logger.LogF("Running ssh agent on unix sock %s\n", sockPath)
+	logger.OptionalLnModeOn()
 
 	go func() {
 		agnt := agent.NewKeyring()

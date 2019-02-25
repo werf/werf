@@ -285,7 +285,7 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 				ClonePath: clonePath,
 			}
 
-			if err := logger.LogSecondaryProcess(fmt.Sprintf("Refreshing %s git", remoteGitPathConfig.Name), logger.LogProcessOptions{}, func() error {
+			if err := logger.LogSecondaryProcess(fmt.Sprintf("Refreshing %s repository", remoteGitPathConfig.Name), logger.LogProcessOptions{}, func() error {
 				return remoteGitRepo.CloneAndFetch()
 			}); err != nil {
 				return nil, err
@@ -300,7 +300,7 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 	var res []*stage.GitPath
 
 	if len(gitPaths) != 0 {
-		err := logger.LogSecondaryProcess(fmt.Sprintf("Checking git paths"), logger.LogProcessOptions{}, func() error {
+		err := logger.LogSecondaryProcess(fmt.Sprintf("Initializing git paths"), logger.LogProcessOptions{}, func() error {
 			nonEmptyGitPaths, err := getNonEmptyGitPaths(gitPaths)
 			if err != nil {
 				return err
@@ -322,33 +322,82 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 	var nonEmptyGitPaths []*stage.GitPath
 
-	for _, gitPath := range gitPaths {
-		commit, err := gitPath.LatestCommit()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
-		}
+	for ind, gitPath := range gitPaths {
+		if err := logger.LogSecondaryProcess(fmt.Sprintf("[%d] git path of %s repository", ind, gitPath.Name), logger.LogProcessOptions{}, func() error {
+			withTripleIndent := func(f func()) {
+				logger.IndentUp()
+				logger.IndentUp()
+				logger.IndentUp()
+				f()
+				logger.IndentDown()
+				logger.IndentDown()
+				logger.IndentDown()
+			}
 
-		cwd := gitPath.Cwd
-		if cwd == "" {
-			cwd = "/"
-		}
+			withTripleIndent(func() {
+				logger.LogInfoF("add: %s\n", gitPath.Cwd)
+				logger.LogInfoF("to: %s\n", gitPath.To)
 
-		if empty, err := gitPath.IsEmpty(); err != nil {
+				if len(gitPath.IncludePaths) != 0 {
+					logger.LogInfoF("includePaths: %+v\n", gitPath.IncludePaths)
+				}
+
+				if len(gitPath.ExcludePaths) != 0 {
+					logger.LogInfoF("excludePaths: %+v\n", gitPath.ExcludePaths)
+				}
+
+				if gitPath.Commit != "" {
+					logger.LogInfoF("commit: %s\n", gitPath.Commit)
+				}
+
+				if gitPath.Branch != "" {
+					logger.LogInfoF("branch: %s\n", gitPath.Branch)
+				}
+
+				if gitPath.Owner != "" {
+					logger.LogInfoF("owner: %s\n", gitPath.Owner)
+				}
+
+				if gitPath.Group != "" {
+					logger.LogInfoF("group: %s\n", gitPath.Group)
+				}
+
+				if len(gitPath.StagesDependencies) != 0 {
+					logger.LogInfoLn("stageDependencies:")
+					for s, values := range gitPath.StagesDependencies {
+						if len(values) != 0 {
+							logger.LogInfoF("  %s: %v\n", s, values)
+						}
+					}
+
+				}
+			})
+
+			logger.LogLn()
+
+			commit, err := gitPath.LatestCommit()
+			if err != nil {
+				return fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
+			}
+
+			cwd := gitPath.Cwd
+			if cwd == "" {
+				cwd = "/"
+			}
+
+			if empty, err := gitPath.IsEmpty(); err != nil {
+				return err
+			} else if !empty {
+				logger.LogInfoF("Commit %s will be used\n", commit)
+				nonEmptyGitPaths = append(nonEmptyGitPaths, gitPath)
+			} else {
+				logger.LogErrorF("WARNING: Empty git path will be ignored (commit %s)\n", commit)
+			}
+
+			return nil
+		}); err != nil {
 			return nil, err
-		} else if !empty {
-			logger.LogInfoF("Using commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
-			nonEmptyGitPaths = append(nonEmptyGitPaths, gitPath)
-		} else {
-			logger.LogErrorF("Ignore empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
-			for _, p := range gitPath.IncludePaths {
-				logger.LogErrorF("  include path: %s\n", p)
-			}
-			for _, p := range gitPath.ExcludePaths {
-				logger.LogErrorF("  exclude path: %s\n", p)
-			}
 		}
-
-		logger.OptionalLnModeOn()
 	}
 
 	return nonEmptyGitPaths, nil
