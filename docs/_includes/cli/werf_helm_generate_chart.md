@@ -40,7 +40,7 @@ werf helm generate-chart PATH [options]
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
-            Allow usage of insecure docker repos
+            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --namespace='':
             Use specified Kubernetes namespace (default %project-%environment template)
       --secret-values=[]:

@@ -64,7 +64,7 @@ werf deploy [options]
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
-            Allow usage of insecure docker repos
+            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --kube-config='':
             Kubernetes config file path
       --kube-context='':

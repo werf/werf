@@ -37,7 +37,7 @@ werf host cleanup [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --insecure-repo=false:
-            Allow usage of insecure docker repos
+            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 

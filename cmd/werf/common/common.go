@@ -137,7 +137,7 @@ func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupInsecureRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.InsecureRepo = new(bool)
-	cmd.Flags().BoolVarP(cmdData.InsecureRepo, "insecure-repo", "", false, "Allow usage of insecure docker repos")
+	cmd.Flags().BoolVarP(cmdData.InsecureRepo, "insecure-repo", "", getBoolEnvironment("WERF_INSECURE_REPO"), "Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)")
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {
