@@ -43,7 +43,8 @@ type ImagesCleanupOptions struct {
 }
 
 func ImagesCleanup(options ImagesCleanupOptions) error {
-	err := lock.WithLock(options.CommonRepoOptions.ImagesRepo, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	imagesCleanupLockName := fmt.Sprintf("images-cleanup.%s", options.CommonRepoOptions.ImagesRepo)
+	return lock.WithLock(imagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoImages, err := repoImages(options.CommonRepoOptions)
 		if err != nil {
 			return err
@@ -72,12 +73,6 @@ func ImagesCleanup(options ImagesCleanupOptions) error {
 
 		return nil
 	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func exceptRepoImagesByWhitelist(repoImages []docker_registry.RepoImage) ([]docker_registry.RepoImage, error) {

@@ -63,7 +63,7 @@ func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.TmpDir = new(string)
-	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)")
+	cmd.Flags().StringVarP(cmdData.TmpDir, "tmp-dir", "", "", "Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)")
 }
 
 func SetupHomeDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -137,7 +137,7 @@ func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupInsecureRepo(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.InsecureRepo = new(bool)
-	cmd.Flags().BoolVarP(cmdData.InsecureRepo, "insecure-repo", "", false, "Allow usage of insecure docker repos")
+	cmd.Flags().BoolVarP(cmdData.InsecureRepo, "insecure-repo", "", getBoolEnvironment("WERF_INSECURE_REPO"), "Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)")
 }
 
 func SetupDryRun(cmdData *CmdData, cmd *cobra.Command) {

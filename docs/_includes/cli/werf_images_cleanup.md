@@ -50,7 +50,7 @@ werf images cleanup [options]
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
-            Allow usage of insecure docker repos
+            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
@@ -61,7 +61,7 @@ werf images cleanup [options]
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --without-kube=false:
             Do not skip deployed kubernetes images
 ```

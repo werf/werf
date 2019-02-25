@@ -26,6 +26,6 @@ werf meta get-namespace [options]
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
 

@@ -64,7 +64,7 @@ werf deploy [options]
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
-            Allow usage of insecure docker repos
+            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --kube-config='':
             Kubernetes config file path
       --kube-context='':
@@ -107,7 +107,7 @@ werf deploy [options]
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]:
             Additional helm values
 ```

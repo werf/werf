@@ -3,13 +3,12 @@
 .tags
 /.vscode
 /.idea
+
 /docs/vendor
 
-.werf.render.yml
-.werf.render.yaml
-dappdeps-toolchain.tar
-dappdeps/*/omnibus/build/
+/dappdeps-toolchain.tar
+/stapel/*/omnibus/build
+/stapel/*/omnibus/vendor
+/stapel/*/omnibus/.bundle
 
 /release-build
-
-/osx/.vagrant

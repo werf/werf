@@ -46,6 +46,6 @@ werf helm secret regenerate [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
       --old-key='':
             Old secret key
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
 

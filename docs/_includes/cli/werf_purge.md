@@ -40,7 +40,7 @@ werf purge [options]
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
-            Allow usage of insecure docker repos
+            Allow usage of insecure docker repos (default $WERF_INSECURE_REPO)
       --log-color-mode='auto':
             Set log color mode.
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
@@ -51,6 +51,6 @@ werf purge [options]
             supported for now; default $WERF_STAGES_STORAGE environment).
             More info about stages: https://werf.io/reference/build/stages.html
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
 
