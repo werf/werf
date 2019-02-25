@@ -184,8 +184,10 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 	}
 
 	gitPatchStageOptions := &stage.NewGitPatchStageOptions{
-		PatchesDir:          getImagePatchesDir(imageName, c),
-		ContainerPatchesDir: getImagePatchesContainerDir(c),
+		PatchesDir:           getImagePatchesDir(imageName, c),
+		ArchivesDir:          getImageArchivesDir(imageName, c),
+		ContainerPatchesDir:  getImagePatchesContainerDir(c),
+		ContainerArchivesDir: getImageArchivesContainerDir(c),
 	}
 
 	gitPaths, err := generateGitPaths(imageBaseConfig, c)

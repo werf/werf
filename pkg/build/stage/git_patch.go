@@ -8,14 +8,18 @@ import (
 )
 
 type NewGitPatchStageOptions struct {
-	PatchesDir          string
-	ContainerPatchesDir string
+	PatchesDir           string
+	ArchivesDir          string
+	ContainerPatchesDir  string
+	ContainerArchivesDir string
 }
 
 func newGitPatchStage(name StageName, gitPatchStageOptions *NewGitPatchStageOptions, baseStageOptions *NewBaseStageOptions) *GitPatchStage {
 	s := &GitPatchStage{
-		PatchesDir:          gitPatchStageOptions.PatchesDir,
-		ContainerPatchesDir: gitPatchStageOptions.ContainerPatchesDir,
+		PatchesDir:           gitPatchStageOptions.PatchesDir,
+		ArchivesDir:          gitPatchStageOptions.ArchivesDir,
+		ContainerPatchesDir:  gitPatchStageOptions.ContainerPatchesDir,
+		ContainerArchivesDir: gitPatchStageOptions.ContainerArchivesDir,
 	}
 	s.GitStage = newGitStage(name, baseStageOptions)
 	return s
@@ -24,8 +28,10 @@ func newGitPatchStage(name StageName, gitPatchStageOptions *NewGitPatchStageOpti
 type GitPatchStage struct {
 	*GitStage
 
-	PatchesDir          string
-	ContainerPatchesDir string
+	PatchesDir           string
+	ArchivesDir          string
+	ContainerPatchesDir  string
+	ContainerArchivesDir string
 }
 
 func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface) (bool, error) {
@@ -101,6 +107,7 @@ func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image image.Ima
 
 	image.Container().RunOptions().AddVolumeFrom(gitArtifactContainerName)
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.PatchesDir, s.ContainerPatchesDir))
+	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ArchivesDir, s.ContainerArchivesDir))
 
 	return nil
 }

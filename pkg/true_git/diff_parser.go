@@ -215,9 +215,23 @@ func (p *diffParser) handleDiffLine(line string) error {
 }
 
 func (p *diffParser) handleDiffBegin(line string) error {
-	lineParts := strings.Split(line, " ")
+	var lineParts []string
+	var aAndBParts []string
+	var a, b string
 
-	a, b := lineParts[2], lineParts[3]
+	lineParts = strings.SplitN(line, " \"a/", 2)
+	if len(lineParts) == 2 {
+		aAndBParts = strings.SplitN(lineParts[1], " \"b/", 2)
+		a, b = fmt.Sprintf("\"a/%s", aAndBParts[0]), fmt.Sprintf("\"b/%s", aAndBParts[1])
+	} else {
+		lineParts = strings.SplitN(line, " a/", 2)
+		if len(lineParts) == 2 {
+			aAndBParts = strings.SplitN(lineParts[1], " b/", 2)
+			a, b = fmt.Sprintf("a/%s", aAndBParts[0]), fmt.Sprintf("b/%s", aAndBParts[1])
+		} else {
+			return fmt.Errorf("unexpected diff begin line: %#v", line)
+		}
+	}
 
 	trimmedPaths := make(map[string]string)
 
