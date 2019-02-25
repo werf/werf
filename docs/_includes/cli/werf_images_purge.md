@@ -39,6 +39,6 @@ werf images purge [options]
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
 

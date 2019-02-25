@@ -101,6 +101,6 @@ werf build-and-publish [IMAGE_NAME...] [options]
             Use git-tag tagging strategy and tag by the specified git tag (option can be enabled by 
             specifying git tag in the $WERF_TAG_GIT_TAG)
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
 

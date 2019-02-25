@@ -38,6 +38,6 @@ werf ci-env CI_SYSTEM [options]
             tag-or-branch: generate auto '--tag-git-branch' or '--tag-git-tag' tag by specified 
             CI_SYSTEM environment variables
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
 

@@ -51,7 +51,7 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
-            Use specified dir to store tmp files and dirs (default $WERF_TMP or system tmp dir)
+            Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]:
             Additional helm values
 ```

@@ -57,7 +57,7 @@ func GetTmpDir() string {
 }
 
 func Init(tmpDirOption, homeDirOption string) error {
-	if val, ok := os.LookupEnv("WERF_TMP"); ok {
+	if val, ok := os.LookupEnv("WERF_TMP_DIR"); ok {
 		tmpDir = val
 	} else if tmpDirOption != "" {
 		tmpDir = tmpDirOption
