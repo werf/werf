@@ -67,9 +67,9 @@ Werf will perform autologin into `registry.myhost.com` gitlab container registry
 
 Default job token `CI_JOB_TOKEN` of gitlab is not suitable to perform delete operations on [gitlab container registry](https://docs.gitlab.com/ee/user/project/container_registry.html). This token only allows read, create and update operations, but does not allow delete operations.
 
-To work around this problem werf supports special environment variable `WERF_CLEANUP_IMAGES_PASSWORD`. This variable should contain a password for the user with enough permissions to delete images from the docker registry. It could contain *gitlab token* of regular gitlab user with such permissions. Werf will use the username `werf-cleanup` in this case.
+To work around this problem werf supports special environment variable `WERF_IMAGES_CLEANUP_PASSWORD`. This variable should contain a password for the user with enough permissions to delete images from the docker registry. It could contain *gitlab token* of regular gitlab user with such permissions. Werf will use the username `werf-cleanup` in this case.
 
-For [cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html) werf autologin procedure use `WERF_CLEANUP_IMAGES_PASSWORD` instead of `CI_JOB_TOKEN` to access docker registry. This variable should be set up manually via [GitLab CI/CD Secret Variables](https://docs.gitlab.com/ee/ci/variables/#variables).
+For [cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html) werf autologin procedure use `WERF_IMAGES_CLEANUP_PASSWORD` instead of `CI_JOB_TOKEN` to access docker registry. This variable should be set up manually via [GitLab CI/CD Secret Variables](https://docs.gitlab.com/ee/ci/variables/#variables).
 
 #### Specify username and password manually
 
@@ -98,7 +98,7 @@ WERF_IGNORE_CI_DOCKER_AUTOLOGIN=1 werf push --repo registry.myhost.com/web/backe
 Run werf cleaning command with a special token for autologin procedure:
 
 ```bash
-export WERF_CLEANUP_IMAGES_PASSWORD="A3XewXjfldf"
+export WERF_IMAGES_CLEANUP_PASSWORD="A3XewXjfldf"
 werf cleanup --repo ${CI_REGISTRY_IMAGE}
 ```
 
