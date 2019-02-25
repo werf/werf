@@ -23,8 +23,8 @@ type StagesCleanupOptions struct {
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
-	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s.images", options.CommonProjectOptions.ProjectName)
-	err := lock.WithLock(projectStagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
+	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s", options.CommonProjectOptions.ProjectName)
+	return lock.WithLock(projectStagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoImages, err := repoImages(options.CommonRepoOptions)
 		if err != nil {
 			return err
@@ -48,12 +48,6 @@ func StagesCleanup(options StagesCleanupOptions) error {
 
 		return nil
 	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func repoImageStagesSyncByRepoImages(repoImages []docker_registry.RepoImage, options CommonRepoOptions) error {
