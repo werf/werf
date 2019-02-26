@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"path"
 
-	"k8s.io/client-go/kubernetes"
-
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
@@ -151,6 +149,11 @@ func runCleanup() error {
 		return err
 	}
 
+	kubernetesClients, err := kube.GetAllClients(kube.GetClientsOptions{KubeConfig: *CommonCmdData.KubeConfig})
+	if err != nil {
+		return fmt.Errorf("unable to get kubernetes clusters connections: %s", err)
+	}
+
 	commonProjectOptions := cleaning.CommonProjectOptions{
 		ProjectName:   projectName,
 		CommonOptions: cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun},
@@ -159,7 +162,7 @@ func runCleanup() error {
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
 		LocalGit:          localGitRepo,
-		KubernetesClients: []kubernetes.Interface{kube.Kubernetes},
+		KubernetesClients: kubernetesClients,
 		WithoutKube:       CmdData.WithoutKube,
 		Policies:          policies,
 	}
