@@ -30,8 +30,9 @@ fi
 ( create_release_message $VERSION ) || ( echo "Failed to create release message!" 1>&2 && exit 1 )
 
 docker run --rm \
-    --env BINTRAY_AUTH=$BINTRAY_AUTH \
-    --env GITHUB_TOKEN=$GITHUB_TOKEN \
+    --env SSH_AUTH_SOCK=$SSH_AUTH_SOCK \
+    --volume $SSH_AUTH_SOCK:$SSH_AUTH_SOCK \
+    --volume ~/.ssh/known_hosts:/root/.ssh/known_hosts \
     --volume $(pwd):/go/src/github.com/flant/werf \
     flant/werf-builder \
     bash -ec "source scripts/lib/release/global_data.sh && source scripts/lib/release/build.sh && build_binaries $VERSION"
