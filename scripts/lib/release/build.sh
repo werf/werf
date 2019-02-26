@@ -42,6 +42,7 @@ build_binaries() {
 
     # git checkout -f $VERSION || (echo "$0: git checkout error" && exit 2)
 
-    ( go_get ) || ( exit 1 )
+    go_get
+
     ( go_build $VERSION ) || ( exit 1 )
 }
