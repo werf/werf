@@ -152,9 +152,9 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 	if err := trackDeployments(templates, deployStartTime, namespace, opts); err != nil {
 		return err
 	}
-	if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
+	// if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
+	// 	return err
+	// }
 	if err := trackDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
 		return err
 	}
