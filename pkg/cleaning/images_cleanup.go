@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/flant/kubedog/pkg/kube"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
@@ -38,6 +37,7 @@ type ImagesCleanupPolicies struct {
 type ImagesCleanupOptions struct {
 	CommonRepoOptions CommonRepoOptions
 	LocalGit          GitRepo
+	KubernetesClients []kubernetes.Interface
 	WithoutKube       bool
 	Policies          ImagesCleanupPolicies
 }
@@ -53,7 +53,7 @@ func ImagesCleanup(options ImagesCleanupOptions) error {
 		if options.LocalGit != nil {
 			if !options.WithoutKube {
 				if err := logger.LogSecondaryProcess("Ignoring repo images that are being used in kubernetes", logger.LogProcessOptions{}, func() error {
-					repoImages, err = exceptRepoImagesByWhitelist(repoImages)
+					repoImages, err = exceptRepoImagesByWhitelist(repoImages, options.KubernetesClients)
 					return err
 				}); err != nil {
 					return err
@@ -75,20 +75,23 @@ func ImagesCleanup(options ImagesCleanupOptions) error {
 	})
 }
 
-func exceptRepoImagesByWhitelist(repoImages []docker_registry.RepoImage) ([]docker_registry.RepoImage, error) {
+func exceptRepoImagesByWhitelist(repoImages []docker_registry.RepoImage, kubernetesClients []kubernetes.Interface) ([]docker_registry.RepoImage, error) {
 	var newRepoImages, exceptedRepoImages []docker_registry.RepoImage
 
 	var deployedDockerImagesNames []string
-	var err error
-	if err := logger.LogSecondaryProcessInline("Getting deployed docker images", func() error {
-		deployedDockerImagesNames, err = deployedDockerImages()
-		if err != nil {
-			return fmt.Errorf("cannot get deployed images: %s", err)
-		}
+	for _, kubernetesClient := range kubernetesClients {
+		if err := logger.LogSecondaryProcessInline("Getting deployed docker images", func() error {
+			kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(kubernetesClient)
+			if err != nil {
+				return fmt.Errorf("cannot get deployed images: %s", err)
+			}
 
-		return nil
-	}); err != nil {
-		return nil, err
+			deployedDockerImagesNames = append(deployedDockerImagesNames, kubernetesClientDeployedDockerImagesNames...)
+
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 	}
 
 Loop:
@@ -374,59 +377,59 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 	return repoImages, nil
 }
 
-func deployedDockerImages() ([]string, error) {
+func deployedDockerImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var deployedDockerImages []string
 
-	images, err := getPodsImages()
+	images, err := getPodsImages(kubernetesClient)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Pods images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getReplicationControllersImages()
+	images, err = getReplicationControllersImages(kubernetesClient)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get ReplicationControllers images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getDeploymentsImages()
+	images, err = getDeploymentsImages(kubernetesClient)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Deployments images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getStatefulSetsImages()
+	images, err = getStatefulSetsImages(kubernetesClient)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get StatefulSets images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getDaemonSetsImages()
+	images, err = getDaemonSetsImages(kubernetesClient)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get DaemonSets images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getReplicaSetsImages()
+	images, err = getReplicaSetsImages(kubernetesClient)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get ReplicaSets images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getCronJobsImages()
+	images, err = getCronJobsImages(kubernetesClient)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get CronJobs images: %s", err)
 	}
 
 	deployedDockerImages = append(deployedDockerImages, images...)
 
-	images, err = getJobsImages()
+	images, err = getJobsImages(kubernetesClient)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get Jobs images: %s", err)
 	}
@@ -436,9 +439,9 @@ func deployedDockerImages() ([]string, error) {
 	return deployedDockerImages, nil
 }
 
-func getPodsImages() ([]string, error) {
+func getPodsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kube.Kubernetes.CoreV1().Pods("").List(v1.ListOptions{})
+	list, err := kubernetesClient.CoreV1().Pods("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -452,9 +455,9 @@ func getPodsImages() ([]string, error) {
 	return images, nil
 }
 
-func getReplicationControllersImages() ([]string, error) {
+func getReplicationControllersImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kube.Kubernetes.CoreV1().ReplicationControllers("").List(v1.ListOptions{})
+	list, err := kubernetesClient.CoreV1().ReplicationControllers("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -468,9 +471,9 @@ func getReplicationControllersImages() ([]string, error) {
 	return images, nil
 }
 
-func getDeploymentsImages() ([]string, error) {
+func getDeploymentsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kube.Kubernetes.AppsV1beta1().Deployments("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1beta1().Deployments("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -484,9 +487,9 @@ func getDeploymentsImages() ([]string, error) {
 	return images, nil
 }
 
-func getStatefulSetsImages() ([]string, error) {
+func getStatefulSetsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kube.Kubernetes.AppsV1beta1().StatefulSets("").List(v1.ListOptions{})
+	list, err := kubernetesClient.AppsV1beta1().StatefulSets("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -500,9 +503,9 @@ func getStatefulSetsImages() ([]string, error) {
 	return images, nil
 }
 
-func getDaemonSetsImages() ([]string, error) {
+func getDaemonSetsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kube.Kubernetes.ExtensionsV1beta1().DaemonSets("").List(v1.ListOptions{})
+	list, err := kubernetesClient.ExtensionsV1beta1().DaemonSets("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -516,9 +519,9 @@ func getDaemonSetsImages() ([]string, error) {
 	return images, nil
 }
 
-func getReplicaSetsImages() ([]string, error) {
+func getReplicaSetsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kube.Kubernetes.ExtensionsV1beta1().ReplicaSets("").List(v1.ListOptions{})
+	list, err := kubernetesClient.ExtensionsV1beta1().ReplicaSets("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -532,9 +535,9 @@ func getReplicaSetsImages() ([]string, error) {
 	return images, nil
 }
 
-func getCronJobsImages() ([]string, error) {
+func getCronJobsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kube.Kubernetes.BatchV1beta1().CronJobs("").List(v1.ListOptions{})
+	list, err := kubernetesClient.BatchV1beta1().CronJobs("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -548,9 +551,9 @@ func getCronJobsImages() ([]string, error) {
 	return images, nil
 }
 
-func getJobsImages() ([]string, error) {
+func getJobsImages(kubernetesClient kubernetes.Interface) ([]string, error) {
 	var images []string
-	list, err := kube.Kubernetes.BatchV1().Jobs("").List(v1.ListOptions{})
+	list, err := kubernetesClient.BatchV1().Jobs("").List(v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

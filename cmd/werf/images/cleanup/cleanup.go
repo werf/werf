@@ -136,9 +136,15 @@ func runCleanup() error {
 		return err
 	}
 
+	kubernetesClients, err := kube.GetAllClients(kube.GetClientsOptions{KubeConfig: *CommonCmdData.KubeConfig})
+	if err != nil {
+		return fmt.Errorf("unable to get kubernetes clusters connections: %s", err)
+	}
+
 	imagesCleanupOptions := cleaning.ImagesCleanupOptions{
 		CommonRepoOptions: commonRepoOptions,
 		LocalGit:          localRepo,
+		KubernetesClients: kubernetesClients,
 		WithoutKube:       CmdData.WithoutKube,
 		Policies:          policies,
 	}
