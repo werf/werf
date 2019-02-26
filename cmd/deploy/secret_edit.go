@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,10 +11,12 @@ import (
 	"reflect"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/flant/dapp/pkg/deploy/secret"
+	"github.com/flant/dapp/pkg/util"
 
 	"golang.org/x/crypto/ssh/terminal"
-	"k8s.io/kubernetes/pkg/util/file"
 )
 
 func secretEdit(m secret.Manager, filePath string, values bool, tmpDir string) error {
@@ -110,7 +111,7 @@ func secretEdit(m secret.Manager, filePath string, values bool, tmpDir string) e
 func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []byte, error) {
 	var data, encodedData []byte
 
-	exist, err := file.FileExists(filePath)
+	exist, err := util.FileExists(filePath)
 	if err != nil {
 		return nil, nil, err
 	}

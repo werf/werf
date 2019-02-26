@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/flant/dapp/pkg/util"
 	"golang.org/x/crypto/ssh/terminal"
-	"k8s.io/kubernetes/pkg/util/file"
 )
 
 type secretGenerateOptions struct {
@@ -17,7 +17,7 @@ type secretGenerateOptions struct {
 }
 
 func readFileData(filePath string) ([]byte, error) {
-	if exist, err := file.FileExists(filePath); err != nil {
+	if exist, err := util.FileExists(filePath); err != nil {
 		return nil, err
 	} else if !exist {
 		absFilePath, err := filepath.Abs(filePath)

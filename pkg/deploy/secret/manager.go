@@ -9,8 +9,7 @@ import (
 
 	"github.com/flant/dapp/pkg/dapp"
 	"github.com/flant/dapp/pkg/secret"
-
-	"k8s.io/kubernetes/pkg/util/file"
+	"github.com/flant/dapp/pkg/util"
 )
 
 type Manager interface {
@@ -66,7 +65,7 @@ func GetSecretKey(projectDir string) ([]byte, error) {
 		}
 
 		for _, path := range dappSecretKeyPaths {
-			exist, err := file.FileExists(path)
+			exist, err := util.FileExists(path)
 			if err != nil {
 				return nil, err
 			}
