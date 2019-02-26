@@ -25,8 +25,18 @@ import (
 	"k8s.io/helm/pkg/releaseutil"
 )
 
+type TrackAnno string
+
 const (
 	DefaultHelmTimeout = 24 * time.Hour
+
+	TrackAnnoName          = "werf/track"
+	HelmHookAnnoName       = "helm.sh/hook"
+	HelmHookWeightAnnoName = "helm.sh/hook-weight"
+
+	TrackDisabled  TrackAnno = "false"
+	TrackTillDone  TrackAnno = "till_done"
+	TrackTillReady TrackAnno = "till_ready"
 )
 
 type CommonHelmOptions struct {
@@ -136,20 +146,121 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 
 	fmt.Printf("%s\n%s\n", stdout, stderr)
 
-	if err := watchDeployments(templates, deployStartTime, namespace, opts); err != nil {
-		return fmt.Errorf("watching deployments failed: %s", err)
+	if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
+		return err
+	}
+	if err := trackDeployments(templates, deployStartTime, namespace, opts); err != nil {
+		return err
+	}
+	if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
+		return err
+	}
+	if err := trackDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
+		return err
+	}
+	if err := trackJobs(templates, deployStartTime, namespace, opts); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func watchDeployments(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
-	for _, template := range templates.Deployments() {
-		fmt.Printf("# Run watch for deployment '%s'\n", template.Metadata.Name)
+func trackPods(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+	for _, template := range templates.Pods() {
+		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
+			continue
+		}
 
+		if template.Metadata.Annotations[TrackAnnoName] == string(TrackDisabled) {
+			continue
+		}
+
+		fmt.Printf("# Track pod/%s\n", template.Metadata.Name)
+		err := rollout.TrackPodTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func trackDeployments(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+	for _, template := range templates.Deployments() {
+		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
+			continue
+		}
+
+		if template.Metadata.Annotations[TrackAnnoName] == string(TrackDisabled) {
+			continue
+		}
+
+		fmt.Printf("# Track deployment/%s\n", template.Metadata.Name)
 		err := rollout.TrackDeploymentTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
 		if err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func trackStatefulSets(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+	for _, template := range templates.StatefulSets() {
+		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
+			continue
+		}
+
+		if template.Metadata.Annotations[TrackAnnoName] == string(TrackDisabled) {
+			continue
+		}
+
+		fmt.Printf("# Track statefulset/%s\n", template.Metadata.Name)
+		err := rollout.TrackStatefulSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func trackDaemonSets(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+	for _, template := range templates.DaemonSets() {
+		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
+			continue
+		}
+
+		if template.Metadata.Annotations[TrackAnnoName] == string(TrackDisabled) {
+			continue
+		}
+
+		fmt.Printf("# Track daemonset/%s\n", template.Metadata.Name)
+		err := rollout.TrackDaemonSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func trackJobs(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+	for _, template := range templates.Jobs() {
+		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
+			continue
+		}
+
+		if template.Metadata.Annotations[TrackAnnoName] == string(TrackTillDone) {
+			fmt.Printf("# Track job/%s\n", template.Metadata.Name)
+			err := rollout.TrackJobTillDone(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
+			if err != nil {
+				return err
+			}
+		} else {
+			// TODO: https://github.com/flant/werf/issues/1143
+			// till_ready by default
+			// if werf/track=false -- no track at all
 		}
 	}
 
@@ -275,12 +386,24 @@ func isReleaseExist(releaseName string) (bool, error) {
 
 type ChartTemplates []*Template
 
+func (templates *ChartTemplates) Pods() []*Template {
+	return templates.ByKind("Pod")
+}
+
 func (templates *ChartTemplates) Jobs() []*Template {
 	return templates.ByKind("Job")
 }
 
 func (templates *ChartTemplates) Deployments() []*Template {
 	return templates.ByKind("Deployment")
+}
+
+func (templates *ChartTemplates) StatefulSets() []*Template {
+	return templates.ByKind("StatefulSet")
+}
+
+func (templates *ChartTemplates) DaemonSets() []*Template {
+	return templates.ByKind("DaemonSet")
 }
 
 func (templates *ChartTemplates) ByKind(kind string) []*Template {
