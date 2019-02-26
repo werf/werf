@@ -10,6 +10,8 @@ go get -v github.com/satori/go.uuid
 git -C $path/github.com/satori/go.uuid checkout v1.2.0
 
 go get -v github.com/docker/cli/...
-git -C $path/github.com/docker/cli checkout v18.06.0-ce-rc3
+git -C $path/github.com/docker/cli checkout v18.06.3-ce
 
-go get -u -v github.com/flant/werf/cmd/werf
+go get -u -v github.com/flant/kubedog/...
+
+go get -v github.com/flant/werf/cmd/werf
