@@ -8,8 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/flant/dapp/pkg/deploy/secret"
-
-	"k8s.io/kubernetes/pkg/util/file"
+	"github.com/flant/dapp/pkg/util"
 )
 
 func SecretsRegenerate(newManager, oldManager secret.Manager, projectPath string, secretValuesPaths ...string) error {
@@ -19,14 +18,14 @@ func SecretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 	secretValuesFilesData := map[string][]byte{}
 
 	helmChartPath := filepath.Join(projectPath, ".helm")
-	isHelmChartDirExist, err := file.FileExists(helmChartPath)
+	isHelmChartDirExist, err := util.FileExists(helmChartPath)
 	if err != nil {
 		return err
 	}
 
 	if isHelmChartDirExist {
 		defaultSecretValuesPath := filepath.Join(helmChartPath, "secret-values.yaml")
-		isDefaultSecretValuesExist, err := file.FileExists(defaultSecretValuesPath)
+		isDefaultSecretValuesExist, err := util.FileExists(defaultSecretValuesPath)
 		if err != nil {
 			return err
 		}
@@ -36,7 +35,7 @@ func SecretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 		}
 
 		secretDirectory := filepath.Join(helmChartPath, "secret")
-		isSecretDirectoryExist, err := file.FileExists(defaultSecretValuesPath)
+		isSecretDirectoryExist, err := util.FileExists(defaultSecretValuesPath)
 		if err != nil {
 			return err
 		}
