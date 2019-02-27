@@ -55,6 +55,7 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
 	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
@@ -71,7 +72,7 @@ func runDismiss() error {
 		return err
 	}
 
-	if err := deploy.Init(); err != nil {
+	if err := deploy.Init(*CommonCmdData.KubeContext); err != nil {
 		return err
 	}
 

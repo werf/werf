@@ -11,7 +11,6 @@ import (
 
 type DismissOptions struct {
 	WithNamespace bool
-	KubeContext   string
 }
 
 func RunDismiss(release, namespace, kubeContext string, opts DismissOptions) error {
@@ -20,7 +19,7 @@ func RunDismiss(release, namespace, kubeContext string, opts DismissOptions) err
 		fmt.Fprintf(logger.GetOutStream(), "Namespace: %s\n", namespace)
 	}
 
-	err := helm.PurgeHelmRelease(release, helm.CommonHelmOptions{KubeContext: opts.KubeContext})
+	err := helm.PurgeHelmRelease(release)
 	if err != nil {
 		return err
 	}

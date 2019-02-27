@@ -40,22 +40,14 @@ const (
 	TrackTillReady TrackAnno = "till_ready"
 )
 
-type CommonHelmOptions struct {
-	KubeContext string
-}
-
-func PurgeHelmRelease(releaseName string, opts CommonHelmOptions) error {
+func PurgeHelmRelease(releaseName string) error {
 	return withLockedHelmRelease(releaseName, func() error {
-		return doPurgeHelmRelease(releaseName, opts)
+		return doPurgeHelmRelease(releaseName)
 	})
 }
 
-func doPurgeHelmRelease(releaseName string, opts CommonHelmOptions) error {
+func doPurgeHelmRelease(releaseName string) error {
 	var args []string
-	if opts.KubeContext != "" {
-		args = append(args, "--kube-context")
-		args = append(args, opts.KubeContext)
-	}
 
 	helmStatusStdout, helmStatusStderr, helmStatusErr := HelmCmd(append([]string{"status", releaseName}, args...)...)
 	if helmStatusErr != nil {
@@ -86,7 +78,6 @@ type HelmChartOptions struct {
 	DryRun bool
 	Debug  bool
 
-	CommonHelmOptions
 	HelmChartValuesOptions
 }
 
@@ -324,10 +315,6 @@ func commonHelmCommandArgs(namespace string, opts HelmChartOptions) []string {
 
 	for _, values := range opts.Values {
 		args = append(args, "--values", values)
-	}
-
-	if opts.KubeContext != "" {
-		args = append(args, "--kube-context", opts.KubeContext)
 	}
 
 	if opts.DryRun {

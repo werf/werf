@@ -7,7 +7,15 @@ import (
 	"strings"
 )
 
+var (
+	KubeContext string
+)
+
 func HelmCmd(args ...string) (stdout string, stderr string, err error) {
+	if KubeContext != "" {
+		args = append([]string{"--kube-context", KubeContext}, args...)
+	}
+
 	cmd := exec.Command("helm", args...)
 	cmd.Env = os.Environ()
 

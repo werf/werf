@@ -146,7 +146,6 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 
 func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.HelmChartOptions) error {
 	return helm.DeployHelmChart(chart.ChartDir, releaseName, namespace, helm.HelmChartOptions{
-		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: opts.KubeContext},
 		HelmChartValuesOptions: helm.HelmChartValuesOptions{
 			Set:       append(chart.Set, opts.Set...),
 			SetString: append(chart.SetString, opts.SetString...),

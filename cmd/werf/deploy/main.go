@@ -109,7 +109,7 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := deploy.Init(); err != nil {
+	if err := deploy.Init(*CommonCmdData.KubeContext); err != nil {
 		return err
 	}
 
@@ -183,7 +183,6 @@ func runDeploy() error {
 		Values:       CmdData.Values,
 		SecretValues: CmdData.SecretValues,
 		Timeout:      time.Duration(CmdData.Timeout) * time.Second,
-		KubeContext:  *CommonCmdData.KubeContext,
 		Env:          *CommonCmdData.Environment,
 	})
 }
