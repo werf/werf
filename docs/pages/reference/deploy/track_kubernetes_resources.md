@@ -16,7 +16,7 @@ Werf uses [kubedog](https://github.com/flant/kubedog) library to track resources
 
 Werf can optionally track statuses and logs of Helm Hooks. Only Jobs Helm Hooks tracking is supported for now (other resources tracking already implemented and will be added soon).
 
-To enable logs special annotation `"werf/track": "true"` should be specified in the resource template. For example:
+To enable logs special annotation `"werf.io/track": "true"` should be specified in the resource template. For example:
 
 ```yaml
 ...
@@ -26,7 +26,7 @@ metadata:
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "1"
-    "werf/track": "true"
+    "werf.io/track": "true"
 ```
 
 Logs of pods will be printed for a job until job terminated.
@@ -46,7 +46,7 @@ The following Kubernetes resources are supported:
 
 Werf tracks resources kinds in the specified order one by one. Within the same resource kind resources are sorted in the order of definition.
 
-This tracking procedure is the *default behavior* for any supported resource found in the chart. To turn it off for specific resource add special annotation `"werf/track": "false"` into the resource template. For example:
+This tracking procedure is the *default behavior* for any supported resource found in the chart. To turn it off for specific resource add special annotation `"werf.io/track": "false"` into the resource template. For example:
 
 ```yaml
 ...
@@ -54,5 +54,5 @@ kind: Deployment
 metadata:
   ...
   annotations:
-    "werf/track": "false"
+    "werf.io/track": "false"
 ```

@@ -31,7 +31,7 @@ type TrackAnno string
 const (
 	DefaultHelmTimeout = 24 * time.Hour
 
-	TrackAnnoName          = "werf/track"
+	TrackAnnoName          = "werf.io/track"
 	HelmHookAnnoName       = "helm.sh/hook"
 	HelmHookWeightAnnoName = "helm.sh/hook-weight"
 
@@ -151,9 +151,9 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 	if err := trackDeployments(templates, deployStartTime, namespace, opts); err != nil {
 		return err
 	}
-	if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
+	// if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
+	// 	return err
+	// }
 	if err := trackDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
 		return err
 	}
@@ -259,7 +259,7 @@ func trackJobs(templates *ChartTemplates, deployStartTime time.Time, namespace s
 		} else {
 			// TODO: https://github.com/flant/werf/issues/1143
 			// till_ready by default
-			// if werf/track=false -- no track at all
+			// if werf.io/track=false -- no track at all
 		}
 	}
 
