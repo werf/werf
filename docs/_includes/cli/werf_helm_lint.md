@@ -32,6 +32,10 @@ werf helm lint [options]
             help for lint
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --kube-config='':
+            Kubernetes config file path
+      --kube-context='':
+            Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --secret-values=[]:
             Additional helm secret values
       --set=[]:
