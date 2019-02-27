@@ -42,6 +42,9 @@ func NewCmd() *cobra.Command {
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
+	common.SetupKubeConfig(&CommonCmdData, cmd)
+	common.SetupKubeContext(&CommonCmdData, cmd)
+
 	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
 	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
 	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
@@ -63,7 +66,7 @@ func runLint() error {
 		return err
 	}
 
-	if err := deploy.Init(); err != nil {
+	if err := deploy.Init(*CommonCmdData.KubeContext); err != nil {
 		return err
 	}
 

@@ -72,7 +72,7 @@ func runDeployChart(chartDir string, releaseName string) error {
 		return err
 	}
 
-	if err := deploy.Init(); err != nil {
+	if err := deploy.Init(*CommonCmdData.KubeContext); err != nil {
 		return err
 	}
 
@@ -91,8 +91,7 @@ func runDeployChart(chartDir string, releaseName string) error {
 	}
 
 	return werfChart.Deploy(releaseName, namespace, helm.HelmChartOptions{
-		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: *CommonCmdData.KubeContext},
-		Timeout:           time.Duration(CmdData.Timeout) * time.Second,
+		Timeout: time.Duration(CmdData.Timeout) * time.Second,
 		HelmChartValuesOptions: helm.HelmChartValuesOptions{
 			Set:       CmdData.Set,
 			SetString: CmdData.SetString,

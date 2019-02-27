@@ -16,7 +16,6 @@ type DeployOptions struct {
 	Set          []string
 	SetString    []string
 	Timeout      time.Duration
-	KubeContext  string
 	Env          string
 }
 
@@ -43,8 +42,7 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
 	return werfChart.Deploy(release, namespace, helm.HelmChartOptions{
-		CommonHelmOptions: helm.CommonHelmOptions{KubeContext: opts.KubeContext},
-		Timeout:           opts.Timeout,
+		Timeout: opts.Timeout,
 		HelmChartValuesOptions: helm.HelmChartValuesOptions{
 			Set:       opts.Set,
 			SetString: opts.SetString,

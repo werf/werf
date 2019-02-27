@@ -51,6 +51,9 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupNamespace(&CommonCmdData, cmd)
 
+	common.SetupKubeConfig(&CommonCmdData, cmd)
+	common.SetupKubeContext(&CommonCmdData, cmd)
+
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
@@ -70,7 +73,7 @@ func runGenerateChart(targetPath string) error {
 		return err
 	}
 
-	if err := deploy.Init(); err != nil {
+	if err := deploy.Init(*CommonCmdData.KubeContext); err != nil {
 		return err
 	}
 
