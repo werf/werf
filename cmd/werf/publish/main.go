@@ -5,7 +5,7 @@ import (
 
 	"github.com/flant/werf/cmd/werf/common"
 
-	images_publish "github.com/flant/werf/cmd/werf/images/publish"
+	images_publish "github.com/flant/werf/cmd/werf/images/publish/cmd_factory"
 )
 
 var CommonCmdData common.CmdData
