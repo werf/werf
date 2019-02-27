@@ -33,10 +33,6 @@ var CmdData CmdDataType
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
-	return NewCmdWithData(&CommonCmdData)
-}
-
-func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "run [options] [IMAGE_NAME] [-- COMMAND ARG...]",
 		Short:                 "Run container for specified project image",
@@ -94,16 +90,16 @@ func NewCmdWithData(commonCmdData *common.CmdData) *cobra.Command {
 				}
 			}
 
-			return runRun(commonCmdData)
+			return runRun()
 		},
 	}
 
-	common.SetupDir(commonCmdData, cmd)
-	common.SetupTmpDir(commonCmdData, cmd)
-	common.SetupHomeDir(commonCmdData, cmd)
-	common.SetupSSHKey(commonCmdData, cmd)
+	common.SetupDir(&CommonCmdData, cmd)
+	common.SetupTmpDir(&CommonCmdData, cmd)
+	common.SetupHomeDir(&CommonCmdData, cmd)
+	common.SetupSSHKey(&CommonCmdData, cmd)
 
-	common.SetupStagesStorage(commonCmdData, cmd)
+	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage.")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
@@ -149,8 +145,8 @@ func processArgs(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runRun(commonCmdData *common.CmdData) error {
-	if err := werf.Init(*commonCmdData.TmpDir, *commonCmdData.HomeDir); err != nil {
+func runRun() error {
+	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
 
@@ -170,7 +166,7 @@ func runRun(commonCmdData *common.CmdData) error {
 		return err
 	}
 
-	projectDir, err := common.GetProjectDir(commonCmdData)
+	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
@@ -187,12 +183,12 @@ func runRun(commonCmdData *common.CmdData) error {
 	}
 	defer tmp_manager.ReleaseProjectDir(projectTmpDir)
 
-	_, err = common.GetStagesRepo(commonCmdData)
+	_, err = common.GetStagesRepo(&CommonCmdData)
 	if err != nil {
 		return err
 	}
 
-	if err := ssh_agent.Init(*commonCmdData.SSHKeys); err != nil {
+	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
 		return fmt.Errorf("cannot initialize ssh agent: %s", err)
 	}
 	defer func() {
