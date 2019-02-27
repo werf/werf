@@ -108,8 +108,8 @@ Build:
   stage: build
   script:
     - type multiwerf && source <(multiwerf use 1.0 beta)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
-    - werf build-and-publish
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - werf build-and-publish --stages-storage :local
   tags:
     - werf
   except:
@@ -141,9 +141,9 @@ Add the following lines to `.gitlab-ci.yml` file:
   stage: deploy
   script:
     - type multiwerf && source <(multiwerf use 1.0 beta)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     ## Next command makes deploy and will be discussed further
-    - werf deploy
+    - werf deploy --stages-storage :local
         --set "global.env=${CI_ENVIRONMENT_SLUG}"
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
@@ -180,8 +180,8 @@ Review:
 Stop review:
   stage: deploy
   script:
-    - type multiwerf && source <(./multiwerf use 1.0 beta)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type multiwerf && source <(multiwerf use 1.0 beta)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -261,6 +261,12 @@ In the results of werf works, we have images in a registry and a build cache. Bu
 
 There is a `cleanup` stage in the `.gitlab-ci.yml` file for the cleanup process.
 
+To use cleanup you should create `Personal Access Token` with necessary rights and login to the docker registy with it before cleanup.
+
+For demo project simply create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
+
+To put `Personal Access Token` in a GitLab variable, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then, create a new variable with a key `WERF_IMAGES_CLEANUP_PASSWORD` and a value consisting `Personal Access Token`. Make this variable protected for security reason.
+
 Add the following lines to `.gitlab-ci.yml` file:
 
 ```yaml
@@ -268,19 +274,14 @@ Cleanup:
   stage: cleanup
   script:
     - type multiwerf && source <(multiwerf use 1.0 beta)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup --stages-storage :local
   only:
     - schedules
   tags:
     - werf
 ```
-
-To use cleanup you should create `Personal Access Token` with necessary rights and put it into the `WERF_IMAGES_CLEANUP_PASSWORD` environment variable. You can simply put this variable in GitLab variables of your project. To do this, go to your project in GitLab Web interface, then open `Settings` —> `CI/CD` and expand `Variables`. Then you can create a new variable with a key `WERF_IMAGES_CLEANUP_PASSWORD` and a value consisting `Personal Access Token`.
-
-> Note: `WERF_IMAGES_CLEANUP_PASSWORD` environment variable is used by werf only for deleting images in registry when run `werf cleanup` command. In the other cases werf uses `CI_JOB_TOKEN`.
-
-For demo project simply create `Personal Access Token` for your account. To do this, in GitLab go to your settings, then open `Access Token` section. Fill token name, make check in Scope on `api` and click `Create personal access token` — you'll get the `Personal Access Token`.
 
 Cleanup stage will start only by schedule. You can define schedule in `CI/CD` —> `Schedules` section of your project in GitLab Web interface. Push `New schedule` button, fill description, define cron pattern, leave the master branch in target branch (because it doesn't affect on cleanup), check on Active (if it's not checked) and save pipeline schedule. That's all!
 
@@ -296,8 +297,8 @@ Build:
   stage: build
   script:
     - type multiwerf && source <(multiwerf use 1.0 beta)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
-    - werf build-and-publish
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - werf build-and-publish --stages-storage :local
   tags:
     - werf
   except:
@@ -307,9 +308,9 @@ Build:
   stage: deploy
   script:
     - type multiwerf && source <(multiwerf use 1.0 beta)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     ## Next command makes deploy and will be discussed further
-    - werf deploy
+    - werf deploy --stages-storage :local
         --set "global.env=${CI_ENVIRONMENT_SLUG}"
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
@@ -335,7 +336,7 @@ Stop review:
   stage: deploy
   script:
     - type multiwerf && source <(multiwerf use 1.0 beta)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     - werf dismiss --with-namespace
   environment:
     name: review/${CI_COMMIT_REF_SLUG}
@@ -374,7 +375,8 @@ Cleanup:
   stage: cleanup
   script:
     - type multiwerf && source <(multiwerf use 1.0 beta)
-    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch)
+    - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+    - docker login -u nobody -p ${WERF_IMAGES_CLEANUP_PASSWORD} ${WERF_IMAGES_REPO}
     - werf cleanup --stages-storage :local
   only:
     - schedules
