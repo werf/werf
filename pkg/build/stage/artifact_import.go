@@ -125,9 +125,9 @@ func (s *ArtifactImportStage) prepareImportData(c Conveyor, i *config.ArtifactIm
 }
 
 func (s *ArtifactImportStage) generateImportFromContainerTmpPath(i *config.ArtifactImport) string {
-	exportFolderName := util.Sha256Hash(fmt.Sprintf("%+v", i))
+	exportArtifactID := util.Sha256Hash(fmt.Sprintf("%+v", i))
 	_, artifactContainerTmpPath := s.artifactTmpDirs(i)
-	importContainerTmpPath := path.Join(artifactContainerTmpPath, exportFolderName)
+	importContainerTmpPath := path.Join(artifactContainerTmpPath, exportArtifactID)
 
 	return importContainerTmpPath
 }
