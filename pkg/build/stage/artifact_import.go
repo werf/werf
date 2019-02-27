@@ -61,9 +61,10 @@ func (s *ArtifactImportStage) GetDependencies(c Conveyor, _ image.ImageInterface
 
 func (s *ArtifactImportStage) PrepareImage(c Conveyor, _, image image.ImageInterface) error {
 	for _, elm := range s.imports {
-		importTmpPath, importContainerTmpPath := s.generateImportPaths(elm)
-		command := generateSafeCp(importContainerTmpPath, elm.To, elm.Owner, elm.Group, elm.IncludePaths, elm.ExcludePaths)
-		volume := fmt.Sprintf("%s:%s:ro", importTmpPath, importContainerTmpPath)
+		importFromContainerTmpPath := s.generateImportFromContainerTmpPath(elm)
+		command := generateSafeCp(importFromContainerTmpPath, elm.To, elm.Owner, elm.Group, elm.IncludePaths, elm.ExcludePaths)
+		artifactTmpDir, artifactContainerTmpDir := s.artifactTmpDirs(elm)
+		volume := fmt.Sprintf("%s:%s:ro", artifactTmpDir, artifactContainerTmpDir)
 
 		image.Container().AddServiceRunCommands(command)
 		image.Container().RunOptions().AddVolume(volume)
@@ -88,7 +89,7 @@ func (s *ArtifactImportStage) PreRunHook(c Conveyor) error {
 }
 
 func (s *ArtifactImportStage) prepareImportData(c Conveyor, i *config.ArtifactImport) error {
-	importTmpPath, importContainerTmpPath := s.generateImportPaths(i)
+	importContainerTmpPath := s.generateImportFromContainerTmpPath(i)
 
 	artifactCommand := generateSafeCp(i.Add, importContainerTmpPath, "", "", []string{}, []string{})
 
@@ -102,12 +103,14 @@ func (s *ArtifactImportStage) prepareImportData(c Conveyor, i *config.ArtifactIm
 		return err
 	}
 
+	artifactTmp, artifactContainerTmp := s.artifactTmpDirs(i)
+
 	args := []string{
 		"--rm",
 		fmt.Sprintf("--volumes-from=%s", toolchainContainer),
 		fmt.Sprintf("--volumes-from=%s", baseContainer),
 		fmt.Sprintf("--entrypoint=%s", dappdeps.BaseBinPath("bash")),
-		fmt.Sprintf("--volume=%s:%s", importTmpPath, importContainerTmpPath),
+		fmt.Sprintf("--volume=%s:%s", artifactTmp, artifactContainerTmp),
 		c.GetImageLatestStageImageName(i.ArtifactName),
 		"-ec",
 		image.ShelloutPack(artifactCommand),
@@ -121,13 +124,20 @@ func (s *ArtifactImportStage) prepareImportData(c Conveyor, i *config.ArtifactIm
 	return nil
 }
 
-func (s *ArtifactImportStage) generateImportPaths(i *config.ArtifactImport) (string, string) {
-	exportFolderName := util.Sha256Hash(fmt.Sprintf("%+v", i))
-	artifactNamePathPart := slug.Slug(i.ArtifactName)
-	importTmpPath := path.Join(s.imageTmpDir, "artifact", artifactNamePathPart, exportFolderName)
-	importContainerTmpPath := path.Join(s.containerWerfDir, "artifact", artifactNamePathPart, exportFolderName)
+func (s *ArtifactImportStage) generateImportFromContainerTmpPath(i *config.ArtifactImport) string {
+	exportArtifactID := util.Sha256Hash(fmt.Sprintf("%+v", i))
+	_, artifactContainerTmpPath := s.artifactTmpDirs(i)
+	importContainerTmpPath := path.Join(artifactContainerTmpPath, exportArtifactID)
 
-	return importTmpPath, importContainerTmpPath
+	return importContainerTmpPath
+}
+
+func (s *ArtifactImportStage) artifactTmpDirs(i *config.ArtifactImport) (string, string) {
+	artifactNamePathPart := slug.Slug(i.ArtifactName)
+	artifactTmpDir := path.Join(s.imageTmpDir, "artifact", artifactNamePathPart)
+	artifactContainerTmpDir := path.Join(s.containerWerfDir, "artifact", artifactNamePathPart)
+
+	return artifactTmpDir, artifactContainerTmpDir
 }
 
 func generateSafeCp(from, to, owner, group string, includePaths, excludePaths []string) string {
