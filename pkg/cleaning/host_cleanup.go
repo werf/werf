@@ -15,6 +15,10 @@ import (
 )
 
 func HostCleanup(options CommonOptions) error {
+	options.SkipUsedImages = true
+	options.RmiForce = false
+	options.RmForce = true
+
 	return lock.WithLock("host-cleanup", lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		if err := logger.LogSecondaryProcess("Running cleanup for docker containers created by werf", logger.LogProcessOptions{}, func() error {
 			return safeContainersCleanup(options)

@@ -82,12 +82,7 @@ func runGC() error {
 		return err
 	}
 
-	commonOptions := cleaning.CommonOptions{
-		DryRun:         *CommonCmdData.DryRun,
-		SkipUsedImages: true,
-		RmiForce:       false,
-		RmForce:        true,
-	}
+	commonOptions := cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun}
 	if err := cleaning.HostCleanup(commonOptions); err != nil {
 		return err
 	}
