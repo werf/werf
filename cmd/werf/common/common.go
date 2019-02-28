@@ -362,33 +362,29 @@ func GetNamespace(namespaceOption string) string {
 }
 
 func ApplyLogOptions(cmdData *CmdData) error {
-	if err := ApplyLogColorMode(cmdData); err != nil {
+	if err := ApplyLogColorMode(*cmdData.LogColorMode); err != nil {
 		return err
 	}
 
-	ApplyDisablePrettyLog(cmdData)
+	if *cmdData.DisablePrettyLog {
+		logging.DisablePrettyLog()
+	}
 
 	return nil
 }
 
-func ApplyLogColorMode(cmdData *CmdData) error {
-	switch *cmdData.LogColorMode {
+func ApplyLogColorMode(logColorMode string) error {
+	switch logColorMode {
 	case "auto":
 	case "on":
 		logging.EnableLogColor()
 	case "off":
 		logging.DisableLogColor()
 	default:
-		return fmt.Errorf("bad log color mode '%s': on, off and auto modes are supported", *cmdData.LogColorMode)
+		return fmt.Errorf("bad log color mode '%s': on, off and auto modes are supported", logColorMode)
 	}
 
 	return nil
-}
-
-func ApplyDisablePrettyLog(cmdData *CmdData) {
-	if *cmdData.DisablePrettyLog {
-		logging.DisablePrettyLog()
-	}
 }
 
 func LogRunningTime(f func() error) error {
