@@ -253,7 +253,7 @@ Deploy to Production:
 
 Pay attention to `environment.url` — as we deploy the application to production (to public access), we definitely have a static domain for it. We simply write it here and also use in helm templates as `.Values.global.ci_url` (see definition of `base_deploy` template earlier).
 
-### Cleanup stages
+### Cleanup stage
 
 Werf has an efficient cleanup functionality which can help you to avoid overflow registry and disk space on build nodes. You can read more about werf cleanup functionality [here]({{ site.baseurl }}/reference/registry/cleaning.html).
 
