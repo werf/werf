@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/docker/cli/cli/command"
@@ -21,6 +22,10 @@ var (
 func Init(dockerConfigDir string) error {
 	if dockerConfigDir != "" {
 		cliconfig.SetDir(dockerConfigDir)
+	}
+
+	if err := os.Setenv("DOCKER_CONFIG", dockerConfigDir); err != nil {
+		return fmt.Errorf("cannot set DOCKER_CONFIG to %s: %s", dockerConfigDir, err)
 	}
 
 	if err := setDockerClient(); err != nil {
