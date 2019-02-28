@@ -7,6 +7,10 @@ import (
 )
 
 func StagesPurge(options CommonProjectOptions) error {
+	options.CommonOptions.SkipUsedImages = false
+	options.CommonOptions.RmiForce = true
+	options.CommonOptions.RmForce = false
+
 	if err := projectStagesPurge(options); err != nil {
 		return err
 	}

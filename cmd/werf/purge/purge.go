@@ -108,13 +108,8 @@ func runPurge() error {
 	}
 
 	commonProjectOptions := cleaning.CommonProjectOptions{
-		ProjectName: projectName,
-		CommonOptions: cleaning.CommonOptions{
-			DryRun:         *CommonCmdData.DryRun,
-			SkipUsedImages: false,
-			RmiForce:       true,
-			RmForce:        false,
-		},
+		ProjectName:   projectName,
+		CommonOptions: cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun},
 	}
 
 	purgeOptions := cleaning.PurgeOptions{

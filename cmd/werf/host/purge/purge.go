@@ -75,12 +75,7 @@ func runReset() error {
 		return err
 	}
 
-	commonOptions := cleaning.CommonOptions{
-		DryRun:         *CommonCmdData.DryRun,
-		SkipUsedImages: false,
-		RmiForce:       true,
-		RmForce:        true,
-	}
+	commonOptions := cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun}
 	if err := cleaning.HostPurge(commonOptions); err != nil {
 		return err
 	}

@@ -8,6 +8,10 @@ type PurgeOptions struct {
 }
 
 func Purge(options PurgeOptions) error {
+	options.CommonProjectOptions.CommonOptions.SkipUsedImages = false
+	options.CommonProjectOptions.CommonOptions.RmiForce = true
+	options.CommonProjectOptions.CommonOptions.RmForce = false
+
 	if err := logger.LogProcess("Running images purge", logger.LogProcessOptions{WithIndent: true}, func() error {
 		return ImagesPurge(options.CommonRepoOptions)
 	}); err != nil {

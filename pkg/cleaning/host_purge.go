@@ -13,6 +13,10 @@ import (
 )
 
 func HostPurge(options CommonOptions) error {
+	options.SkipUsedImages = false
+	options.RmiForce = true
+	options.RmForce = true
+
 	err := logger.LogSecondaryProcess("Running werf docker containers purge", logger.LogProcessOptions{}, func() error {
 		if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
 			return err

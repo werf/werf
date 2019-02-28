@@ -23,6 +23,10 @@ type StagesCleanupOptions struct {
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
+	options.CommonProjectOptions.CommonOptions.SkipUsedImages = true
+	options.CommonProjectOptions.CommonOptions.RmiForce = false
+	options.CommonProjectOptions.CommonOptions.RmForce = false
+
 	projectStagesCleanupLockName := fmt.Sprintf("stages-cleanup.%s", options.CommonProjectOptions.ProjectName)
 	return lock.WithLock(projectStagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoImages, err := repoImages(options.CommonRepoOptions)

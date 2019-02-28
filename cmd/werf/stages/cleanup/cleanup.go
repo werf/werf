@@ -107,13 +107,8 @@ func runSync() error {
 	}
 
 	commonProjectOptions := cleaning.CommonProjectOptions{
-		ProjectName: projectName,
-		CommonOptions: cleaning.CommonOptions{
-			DryRun:         *CommonCmdData.DryRun,
-			SkipUsedImages: true,
-			RmiForce:       false,
-			RmForce:        false,
-		},
+		ProjectName:   projectName,
+		CommonOptions: cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun},
 	}
 
 	commonRepoOptions := cleaning.CommonRepoOptions{
