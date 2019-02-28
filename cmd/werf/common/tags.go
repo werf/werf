@@ -75,7 +75,7 @@ func GetTagOptions(cmdData *CmdData, opts TagOptionsGetterOptions) (build.TagOpt
 			return build.TagOptions{}, fmt.Errorf("bad --tag-git-branch paramter '%s' specified: %s", tag, err)
 		}
 
-		res.TagsByGitBranch = append(res.TagsByGitBranch)
+		res.TagsByGitBranch = append(res.TagsByGitBranch, tag)
 		emptyTags = false
 	}
 
