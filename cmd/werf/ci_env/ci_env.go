@@ -11,6 +11,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -135,9 +136,7 @@ func generateGitlabEnvs() error {
 		ciGitTag = os.Getenv("CI_BUILD_TAG")
 	} else if os.Getenv("CI_COMMIT_TAG") != "" {
 		ciGitTag = os.Getenv("CI_COMMIT_TAG")
-	}
-
-	if os.Getenv("CI_BUILD_REF_NAME") != "" {
+	} else if os.Getenv("CI_BUILD_REF_NAME") != "" {
 		ciGitBranch = os.Getenv("CI_BUILD_REF_NAME")
 	} else if os.Getenv("CI_COMMIT_REF_NAME") != "" {
 		ciGitBranch = os.Getenv("CI_COMMIT_REF_NAME")
@@ -150,8 +149,12 @@ func generateGitlabEnvs() error {
 	printExportCommand("WERF_IMAGES_REPO", imagesRepo)
 
 	printHeader("TAGGING", true)
-	printExportCommand("WERF_TAG_GIT_TAG", ciGitTag)
-	printExportCommand("WERF_TAG_GIT_BRANCH", ciGitBranch)
+	if ciGitTag != "" {
+		printExportCommand("WERF_TAG_GIT_TAG", slug.DockerTag(ciGitTag))
+	}
+	if ciGitBranch != "" {
+		printExportCommand("WERF_TAG_GIT_BRANCH", slug.DockerTag(ciGitBranch))
+	}
 
 	printHeader("DEPLOY", true)
 	printExportCommand("WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"))
