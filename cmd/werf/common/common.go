@@ -40,7 +40,7 @@ type CmdData struct {
 	StagesStorage *string
 	ImagesRepo    *string
 
-	DockerConfig *string
+	dockerConfig *string
 	InsecureRepo *bool
 	DryRun       *bool
 
@@ -152,7 +152,7 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 		defaultValue = os.Getenv("DOCKER_CONFIG")
 	}
 
-	cmdData.DockerConfig = new(string)
+	cmdData.dockerConfig = new(string)
 
 	desc := "Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or ~/.docker (in the order of priority)."
 
@@ -161,7 +161,7 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 		desc += extraDesc
 	}
 
-	cmd.Flags().StringVarP(cmdData.DockerConfig, "docker-config", "", defaultValue, desc)
+	cmd.Flags().StringVarP(cmdData.dockerConfig, "docker-config", "", defaultValue, desc)
 }
 
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
@@ -364,6 +364,17 @@ func GetNamespace(namespaceOption string) string {
 		return kube.DefaultNamespace
 	}
 	return namespaceOption
+}
+
+func ApplyAndGetDockerConfig(cmdData *CmdData) string {
+	dockerConfig := *cmdData.dockerConfig
+	if dockerConfig != "" {
+		if err := os.Setenv("DOCKER_CONFIG", dockerConfig); err != nil {
+			panic(err)
+		}
+	}
+
+	return dockerConfig
 }
 
 func ApplyLogOptions(cmdData *CmdData) error {

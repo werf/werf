@@ -98,7 +98,7 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(common.ApplyAndGetDockerConfig(commonCmdData)); err != nil {
 		return err
 	}
 

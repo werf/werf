@@ -77,7 +77,7 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 		return err
 	}
 
-	if err := docker.Init(*commonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(common.ApplyAndGetDockerConfig(commonCmdData)); err != nil {
 		return err
 	}
 

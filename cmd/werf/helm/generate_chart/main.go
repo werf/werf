@@ -85,7 +85,7 @@ func runGenerateChart(targetPath string) error {
 		return err
 	}
 
-	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
+	if err := docker.Init(common.ApplyAndGetDockerConfig(&CommonCmdData)); err != nil {
 		return err
 	}
 

@@ -82,8 +82,8 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 }
 
 func generateGitlabEnvs() error {
-	dockerConfigPath := *CommonCmdData.DockerConfig
-	if *CommonCmdData.DockerConfig == "" {
+	dockerConfigPath := common.ApplyAndGetDockerConfig(&CommonCmdData)
+	if dockerConfigPath == "" {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
 	}
 
