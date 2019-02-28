@@ -21,7 +21,7 @@ import (
 )
 
 type CmdData struct {
-	Dir     *string
+	dir     *string
 	TmpDir  *string
 	HomeDir *string
 	SSHKeys *[]string
@@ -37,20 +37,20 @@ type CmdData struct {
 	KubeContext *string
 	KubeConfig  *string
 
-	StagesStorage *string
-	ImagesRepo    *string
+	stagesStorage *string
+	imagesRepo    *string
 
 	dockerConfig *string
 	InsecureRepo *bool
 	DryRun       *bool
 
-	GitTagStrategyLimit         *int64
-	GitTagStrategyExpiryDays    *int64
-	GitCommitStrategyLimit      *int64
-	GitCommitStrategyExpiryDays *int64
+	gitTagStrategyLimit         *int64
+	gitTagStrategyExpiryDays    *int64
+	gitCommitStrategyLimit      *int64
+	gitCommitStrategyExpiryDays *int64
 
-	DisablePrettyLog *bool
-	LogColorMode     *string
+	disablePrettyLog *bool
+	logColorMode     *string
 }
 
 func GetLongCommandDescription(text string) string {
@@ -58,8 +58,8 @@ func GetLongCommandDescription(text string) string {
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.Dir = new(string)
-	cmd.Flags().StringVarP(cmdData.Dir, "dir", "", "", "Change to the specified directory to find werf.yaml config")
+	cmdData.dir = new(string)
+	cmd.Flags().StringVarP(cmdData.dir, "dir", "", "", "Change to the specified directory to find werf.yaml config")
 }
 
 func SetupTmpDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -78,15 +78,15 @@ func SetupSSHKey(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupImagesCleanupPolicies(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.GitTagStrategyLimit = new(int64)
-	cmdData.GitTagStrategyExpiryDays = new(int64)
-	cmdData.GitCommitStrategyLimit = new(int64)
-	cmdData.GitCommitStrategyExpiryDays = new(int64)
+	cmdData.gitTagStrategyLimit = new(int64)
+	cmdData.gitTagStrategyExpiryDays = new(int64)
+	cmdData.gitCommitStrategyLimit = new(int64)
+	cmdData.gitCommitStrategyExpiryDays = new(int64)
 
-	cmd.Flags().Int64VarP(cmdData.GitTagStrategyLimit, "git-tag-strategy-limit", "", -1, "Keep max number of images published with the git-tag tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_LIMIT.")
-	cmd.Flags().Int64VarP(cmdData.GitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", -1, "Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS.")
-	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyLimit, "git-commit-strategy-limit", "", -1, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_LIMIT.")
-	cmd.Flags().Int64VarP(cmdData.GitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", -1, "Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS.")
+	cmd.Flags().Int64VarP(cmdData.gitTagStrategyLimit, "git-tag-strategy-limit", "", -1, "Keep max number of images published with the git-tag tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_LIMIT.")
+	cmd.Flags().Int64VarP(cmdData.gitTagStrategyExpiryDays, "git-tag-strategy-expiry-days", "", -1, "Keep images published with the git-tag tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS.")
+	cmd.Flags().Int64VarP(cmdData.gitCommitStrategyLimit, "git-commit-strategy-limit", "", -1, "Keep max number of images published with the git-commit tagging strategy in the images repo. No limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_LIMIT.")
+	cmd.Flags().Int64VarP(cmdData.gitCommitStrategyExpiryDays, "git-commit-strategy-expiry-days", "", -1, "Keep images published with the git-commit tagging strategy in the images repo for the specified maximum days since image published. Republished image will be kept specified maximum days since new publication date. No days limit by default, -1 disables the limit. Value can be specified by the $WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS.")
 }
 
 func SetupTag(cmdData *CmdData, cmd *cobra.Command) {
@@ -127,13 +127,13 @@ func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.StagesStorage = new(string)
-	cmd.Flags().StringVarP(cmdData.StagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/reference/build/stages.html")
+	cmdData.stagesStorage = new(string)
+	cmd.Flags().StringVarP(cmdData.stagesStorage, "stages-storage", "s", os.Getenv("WERF_STAGES_STORAGE"), "Docker Repo to store stages or :local for non-distributed build (only :local is supported for now; default $WERF_STAGES_STORAGE environment).\nMore info about stages: https://werf.io/reference/build/stages.html")
 }
 
 func SetupImagesRepo(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.ImagesRepo = new(string)
-	cmd.Flags().StringVarP(cmdData.ImagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (default $WERF_IMAGES_REPO)")
+	cmdData.imagesRepo = new(string)
+	cmd.Flags().StringVarP(cmdData.imagesRepo, "images-repo", "i", os.Getenv("WERF_IMAGES_REPO"), "Docker Repo to store images (default $WERF_IMAGES_REPO)")
 }
 
 func SetupInsecureRepo(cmdData *CmdData, cmd *cobra.Command) {
@@ -170,7 +170,7 @@ func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
 }
 
 func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.LogColorMode = new(string)
+	cmdData.logColorMode = new(string)
 
 	logColorEnvironmentValue := os.Getenv("WERF_LOG_COLOR_MODE")
 
@@ -179,14 +179,14 @@ func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
 		defaultValue = logColorEnvironmentValue
 	}
 
-	cmd.Flags().StringVarP(cmdData.LogColorMode, "log-color-mode", "", defaultValue, `Set log color mode.
+	cmd.Flags().StringVarP(cmdData.logColorMode, "log-color-mode", "", defaultValue, `Set log color mode.
 Supported on, off and auto (based on the stdout's file descriptor referring to a terminal) modes.
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
 
 func SetupDisablePrettyLog(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DisablePrettyLog = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisablePrettyLog, "disable-pretty-log", "", getBoolEnvironment("WERF_DISABLE_PRETTY_LOG"), `Disable emojis, auto line wrapping and replace log process border characters with spaces (default $WERF_DISABLE_PRETTY_LOG).`)
+	cmdData.disablePrettyLog = new(bool)
+	cmd.Flags().BoolVarP(cmdData.disablePrettyLog, "disable-pretty-log", "", getBoolEnvironment("WERF_DISABLE_PRETTY_LOG"), `Disable emojis, auto line wrapping and replace log process border characters with spaces (default $WERF_DISABLE_PRETTY_LOG).`)
 }
 
 func getBoolEnvironment(environmentName string) bool {
@@ -222,7 +222,7 @@ func GetGitTagStrategyLimit(cmdData *CmdData) (int64, error) {
 	if v != nil {
 		return *v, nil
 	}
-	return *cmdData.GitTagStrategyLimit, nil
+	return *cmdData.gitTagStrategyLimit, nil
 }
 
 func GetGitTagStrategyExpiryDays(cmdData *CmdData) (int64, error) {
@@ -233,7 +233,7 @@ func GetGitTagStrategyExpiryDays(cmdData *CmdData) (int64, error) {
 	if v != nil {
 		return *v, nil
 	}
-	return *cmdData.GitTagStrategyExpiryDays, nil
+	return *cmdData.gitTagStrategyExpiryDays, nil
 }
 
 func GetGitCommitStrategyLimit(cmdData *CmdData) (int64, error) {
@@ -244,7 +244,7 @@ func GetGitCommitStrategyLimit(cmdData *CmdData) (int64, error) {
 	if v != nil {
 		return *v, nil
 	}
-	return *cmdData.GitCommitStrategyLimit, nil
+	return *cmdData.gitCommitStrategyLimit, nil
 }
 
 func GetGitCommitStrategyExpiryDays(cmdData *CmdData) (int64, error) {
@@ -255,7 +255,7 @@ func GetGitCommitStrategyExpiryDays(cmdData *CmdData) (int64, error) {
 	if v != nil {
 		return *v, nil
 	}
-	return *cmdData.GitCommitStrategyExpiryDays, nil
+	return *cmdData.gitCommitStrategyExpiryDays, nil
 }
 
 func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, error) {
@@ -302,23 +302,23 @@ func GetImagesCleanupPolicies(cmdData *CmdData) (cleanup.ImagesCleanupPolicies, 
 }
 
 func GetStagesRepo(cmdData *CmdData) (string, error) {
-	if *cmdData.StagesStorage == "" {
+	if *cmdData.stagesStorage == "" {
 		return "", fmt.Errorf("--stages-storage :local param required")
-	} else if *cmdData.StagesStorage != ":local" {
-		return "", fmt.Errorf("only --stages-storage :local is supported for now, got '%s'", *cmdData.StagesStorage)
+	} else if *cmdData.stagesStorage != ":local" {
+		return "", fmt.Errorf("only --stages-storage :local is supported for now, got '%s'", *cmdData.stagesStorage)
 	}
-	return *cmdData.StagesStorage, nil
+	return *cmdData.stagesStorage, nil
 }
 
 func GetImagesRepo(projectName string, cmdData *CmdData) (string, error) {
-	if *cmdData.ImagesRepo == "" {
+	if *cmdData.imagesRepo == "" {
 		return "", fmt.Errorf("--images-repo REPO param required")
 	}
 	return GetOptionalImagesRepo(projectName, cmdData), nil
 }
 
 func GetOptionalImagesRepo(projectName string, cmdData *CmdData) string {
-	repoOption := *cmdData.ImagesRepo
+	repoOption := *cmdData.imagesRepo
 
 	if repoOption == ":minikube" {
 		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName)
@@ -347,8 +347,8 @@ func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
 }
 
 func GetProjectDir(cmdData *CmdData) (string, error) {
-	if *cmdData.Dir != "" {
-		return *cmdData.Dir, nil
+	if *cmdData.dir != "" {
+		return *cmdData.dir, nil
 	}
 
 	currentDir, err := os.Getwd()
@@ -388,21 +388,21 @@ func ApplyLogOptions(cmdData *CmdData) error {
 }
 
 func ApplyLogColorMode(cmdData *CmdData) error {
-	switch *cmdData.LogColorMode {
+	switch *cmdData.logColorMode {
 	case "auto":
 	case "on":
 		logging.EnableLogColor()
 	case "off":
 		logging.DisableLogColor()
 	default:
-		return fmt.Errorf("bad log color mode '%s': on, off and auto modes are supported", *cmdData.LogColorMode)
+		return fmt.Errorf("bad log color mode '%s': on, off and auto modes are supported", *cmdData.logColorMode)
 	}
 
 	return nil
 }
 
 func ApplyDisablePrettyLog(cmdData *CmdData) {
-	if *cmdData.DisablePrettyLog {
+	if *cmdData.disablePrettyLog {
 		logging.DisablePrettyLog()
 	}
 }
