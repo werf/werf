@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -322,10 +323,14 @@ func GetOptionalImagesRepo(projectName string, cmdData *CmdData) string {
 	if repoOption == ":minikube" {
 		return fmt.Sprintf("werf-registry.kube-system.svc.cluster.local:5000/%s", projectName)
 	} else if repoOption != "" {
-		return repoOption
+		return formatRepoOption(repoOption)
 	}
 
 	return ""
+}
+
+func formatRepoOption(repoOption string) string {
+	return strings.TrimRight(repoOption, "/")
 }
 
 func GetWerfConfig(projectDir string) (*config.WerfConfig, error) {
