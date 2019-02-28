@@ -23,21 +23,28 @@ author: Timofey Kirillov <timofey.kirillov@flant.com>
 
 ## Install Werf
 
-### Using Multiwerf (recommended)
+### Way 1 (recommended): using Multiwerf
 
 [Multiwerf](https://github.com/flant/multiwerf) is a version manager for Werf, which:
 * downloads werf binary builds;
 * manages multiple versions of binaries installed on a single host, that can be used at the same time;
 * automatically updates werf binary (can be disabled).
 
-### Download binary
+```
+mkdir ~/bin
+cd ~/bin
+curl -L https://raw.githubusercontent.com/flant/multiwerf/master/get.sh | bash
+source <(multiwerf use 1.0 beta)
+```
+
+### Way 2: download binary
 
 The latest release can be reached via [this page](https://bintray.com/flant/werf/werf/_latestVersion).
 
 ##### MacOS
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.10/werf-darwin-amd64-v1.0.0-alpha.10 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.0-beta.1/werf-darwin-amd64-v1.0.0-beta.1 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
@@ -45,16 +52,16 @@ sudo mv /tmp/werf /usr/local/bin/werf
 ##### Linux
 
 ```bash
-curl -L https://dl.bintray.com/flant/werf/v1.0.0-alpha.10/werf-linux-amd64-v1.0.0-alpha.10 -o /tmp/werf
+curl -L https://dl.bintray.com/flant/werf/v1.0.0-beta.1/werf-linux-amd64-v1.0.0-beta.1 -o /tmp/werf
 chmod +x /tmp/werf
 sudo mv /tmp/werf /usr/local/bin/werf
 ```
 
 ##### Windows
 
-Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.0-alpha.10/werf-windows-amd64-v1.0.0-alpha.10.exe).
+Download [werf.exe](https://dl.bintray.com/flant/werf/v1.0.0-beta.1/werf-windows-amd64-v1.0.0-beta.1.exe).
 
-### From source
+### Way 3: from source
 
 ```
 go get github.com/flant/werf/cmd/werf
