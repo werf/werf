@@ -62,25 +62,40 @@ func GetTagOptions(cmdData *CmdData, opts TagOptionsGetterOptions) (build.TagOpt
 	for _, tag := range *cmdData.TagCustom {
 		err := slug.ValidateDockerTag(tag)
 		if err != nil {
-			return build.TagOptions{}, fmt.Errorf("bad --tag parameter '%s' specified: %s", tag, err)
+			return build.TagOptions{}, fmt.Errorf("bad --tag-custom parameter '%s' specified: %s", tag, err)
 		}
 
 		res.CustomTags = append(res.CustomTags, tag)
 		emptyTags = false
 	}
 
-	if *cmdData.TagGitBranch != "" {
-		res.TagsByGitBranch = append(res.TagsByGitBranch, slug.DockerTag(*cmdData.TagGitBranch))
+	if tag := *cmdData.TagGitBranch; tag != "" {
+		err := slug.ValidateDockerTag(tag)
+		if err != nil {
+			return build.TagOptions{}, fmt.Errorf("bad --tag-git-branch paramter '%s' specified: %s", tag, err)
+		}
+
+		res.TagsByGitBranch = append(res.TagsByGitBranch)
 		emptyTags = false
 	}
 
-	if *cmdData.TagGitTag != "" {
-		res.TagsByGitTag = append(res.TagsByGitTag, slug.DockerTag(*cmdData.TagGitTag))
+	if tag := *cmdData.TagGitTag; tag != "" {
+		err := slug.ValidateDockerTag(tag)
+		if err != nil {
+			return build.TagOptions{}, fmt.Errorf("bad --tag-git-tag paramter '%s' specified: %s", tag, err)
+		}
+
+		res.TagsByGitTag = append(res.TagsByGitTag, tag)
 		emptyTags = false
 	}
 
-	if *cmdData.TagGitCommit != "" {
-		res.TagsByGitCommit = append(res.TagsByGitCommit, *cmdData.TagGitCommit)
+	if tag := *cmdData.TagGitCommit; tag != "" {
+		err := slug.ValidateDockerTag(tag)
+		if err != nil {
+			return build.TagOptions{}, fmt.Errorf("bad --tag-git-commit paramter '%s' specified: %s", tag, err)
+		}
+
+		res.TagsByGitCommit = append(res.TagsByGitCommit, tag)
 		emptyTags = false
 	}
 
