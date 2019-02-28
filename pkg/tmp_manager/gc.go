@@ -12,6 +12,10 @@ import (
 	"github.com/flant/werf/pkg/logger"
 )
 
+var (
+	AutoGCEnabled = true
+)
+
 func runGC() error {
 	return lock.WithLock("gc", lock.LockOptions{}, func() error {
 		return GC(false)
@@ -19,6 +23,10 @@ func runGC() error {
 }
 
 func checkShouldRunGC() (bool, error) {
+	if !AutoGCEnabled {
+		return false, nil
+	}
+
 	releasedProjectsDir := filepath.Join(GetReleasedTmpDirs(), projectsServiceDir)
 	if _, err := os.Stat(releasedProjectsDir); !os.IsNotExist(err) {
 		var err error

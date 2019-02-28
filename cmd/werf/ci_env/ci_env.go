@@ -88,10 +88,7 @@ func generateGitlabEnvs() error {
 		dockerConfigPath = filepath.Join(os.Getenv("HOME"), ".docker")
 	}
 
-	// First init needed for tmp_manager GC
-	if err := docker.Init(""); err != nil {
-		return err
-	}
+	tmp_manager.AutoGCEnabled = false
 
 	dockerConfig, err := tmp_manager.CreateDockerConfigDir(dockerConfigPath)
 	if err != nil {
