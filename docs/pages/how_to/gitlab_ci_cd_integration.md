@@ -269,6 +269,7 @@ To put `Personal Access Token` in a GitLab variable, go to your project in GitLa
 
 Add the following lines to `.gitlab-ci.yml` file:
 
+
 ```yaml
 Cleanup:
   stage: cleanup
@@ -284,6 +285,12 @@ Cleanup:
 ```
 
 Cleanup stage will start only by schedule. You can define schedule in `CI/CD` —> `Schedules` section of your project in GitLab Web interface. Push `New schedule` button, fill description, define cron pattern, leave the master branch in target branch (because it doesn't affect on cleanup), check on Active (if it's not checked) and save pipeline schedule. That's all!
+
+> How it works:
+   - `werf ci-env` creates a temporary docker configuration file for each GitLab job, sets the path to that file in the DOCKER_CONFIG variable, and exports it;
+   - `docker login` uses a temporary configuration file from DOCKER_CONFIG environment for registry authentication;
+   - `werf cleanup` also uses a temporary configuration file from DOCKER_CONFIG.
+
 
 ## Complete `.gitlab-ci.yml` file
 
