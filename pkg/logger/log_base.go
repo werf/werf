@@ -12,8 +12,6 @@ var (
 	isLoggerCursorOnStartingPosition     = true
 	isPrevLoggerCursorStateOnRemoveCaret = false
 	isLoggerOptionalLnModeOn             = false
-
-	contentCursor int
 )
 
 func loggerFormattedLogLn(w io.Writer, a ...interface{}) {
@@ -59,7 +57,6 @@ func processCaret(caret string) string {
 
 	isPrevLoggerCursorStateOnRemoveCaret = caret == "\r"
 	isLoggerCursorOnStartingPosition = true
-	contentCursor = 0
 
 	return result
 }
@@ -73,7 +70,6 @@ func processOptionalLnMode() string {
 
 		resetOptionalLnMode()
 		isLoggerCursorOnStartingPosition = true
-		contentCursor = 0
 	}
 
 	return result
@@ -90,7 +86,6 @@ func processDefault() string {
 	}
 
 	isPrevLoggerCursorStateOnRemoveCaret = false
-	contentCursor += 1
 
 	return result
 }

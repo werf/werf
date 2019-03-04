@@ -12,6 +12,8 @@ var (
 
 	isRawStreamsOutputModeOn    = false
 	isFittedStreamsOutputModeOn = false
+
+	streamsFitterState fitterState
 )
 
 type WriterProxy struct {
@@ -25,7 +27,7 @@ func (p WriterProxy) Write(data []byte) (int, error) {
 
 	msg := string(data)
 	if isFittedStreamsOutputModeOn {
-		msg = fitText(msg, contentCursor, terminalContentWidth(), true)
+		msg, streamsFitterState = fitText(msg, streamsFitterState, terminalContentWidth(), true, true)
 	}
 
 	_, err := FormattedLogF(p.Writer, "%s", msg)
@@ -46,6 +48,7 @@ func RawStreamsOutputModeOn() {
 }
 
 func WithFittedStreamsOutputOn(f func() error) error {
+	streamsFitterState = fitterState{}
 	savedIsFittedOutputModeOn := isFittedStreamsOutputModeOn
 	isFittedStreamsOutputModeOn = true
 	err := f()
