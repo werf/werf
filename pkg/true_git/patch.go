@@ -91,6 +91,11 @@ func writePatch(out io.Writer, gitDir, workTreeDir string, withSubmodules bool, 
 			return nil, fmt.Errorf("cannot deinit submodules: %s", err)
 		}
 
+		err = syncSubmodules(gitDir, workTreeDir)
+		if err != nil {
+			return nil, fmt.Errorf("cannot sync submodules: %s", err)
+		}
+
 		err = updateSubmodules(gitDir, workTreeDir)
 		if err != nil {
 			return nil, fmt.Errorf("cannot update submodules: %s", err)
