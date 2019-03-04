@@ -14,8 +14,7 @@ summary: |
   
   <div id="local" class="tabcontent active">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">git</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s">as</span><span class="pi">:</span> <span class="s">&lt;custom name&gt;</span>
-    <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
+  <span class="pi">-</span> <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
     <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
     <span class="s">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
     <span class="s">group</span><span class="pi">:</span> <span class="s">&lt;group&gt;</span>
@@ -39,7 +38,6 @@ summary: |
     <span class="s">branch</span><span class="pi">:</span> <span class="s">&lt;branch name&gt;</span>
     <span class="s">commit</span><span class="pi">:</span> <span class="s">&lt;commit&gt;</span>
     <span class="s">tag</span><span class="pi">:</span> <span class="s">&lt;tag&gt;</span>
-    <span class="s">as</span><span class="pi">:</span> <span class="s">&lt;custom name&gt;</span>
     <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
     <span class="s">to</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
     <span class="s">owner</span><span class="pi">:</span> <span class="s">&lt;owner&gt;</span>
