@@ -15,15 +15,15 @@ A key is required for encryption and decryption of data. There are two locations
 * from the `WERF_SECRET_KEY` environment variable
 * from a special `/.werf_secret_key` file in the project root
 
-You can promptly generate a key using the `werf secret keygen` command:
+You can promptly generate a key using the `werf helm secret keygen` command:
 ```bash
-$ werf secret keygen
+$ werf helm secret keygen
 WERF_SECRET_KEY=c85e100d4ff006b693b0555f09244fdf
 ```
 
 For convenience, the command output already contains an environment variable and can be used in the `export` command.
 
-> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. `werf secret keygen` command returns AES-128 encryption key.
+> Encryption key must be **hex dump** of either 16, 24, or 32 bytes long to select AES-128, AES-192, or AES-256. `werf helm secret keygen` command returns AES-128 encryption key.
 
 If you want to generate key yourself don't forget about hex dump:
 ```bash
@@ -64,16 +64,16 @@ mysql:
 
 ### Encryption of a single value
 
-For data encryption, a `werf secret generate` command is used.
+For data encryption, a `werf helm secret generate` command is used.
 ```bash
-$ werf secret generate
+$ werf helm secret generate
 Enter secret:
 1000541517bccae1acce015629f4ec89996e0b4
 ```
 
 The command also supports a redirected output, which is the performance outcome of other commands.
 ```bash
-$ rake magic | werf secret generate
+$ rake magic | werf helm secret generate
 1000541517bccae1acce015629f4ec89996e0b4
 ```
 
@@ -88,9 +88,9 @@ mysql:
   db: dbforapp
 ```
 
-You can apply encryption to it using `werf secret VALUES_PATH generate --values`, and it will output the file with encrypted keys:
+You can apply encryption to it using `werf helm secret generate --file-path VALUES_PATH --values`, and it will output the file with encrypted keys:
 ```bash
-$ werf secret generate .helm/secret-values.yaml --values
+$ werf helm secret generate --file-path .helm/secret-values.yaml --values
 mysql:
   host: 100070c0e52ba2ff965ebd85f5fea9549392294e52aca006cf75
   user: 2ad80161428063803509eba8e9909ddcd0db0ddaada!b9ee47
@@ -104,15 +104,15 @@ Besides secret values, templates also use files that may not be stored unencrypt
 
 When applying file encryption, you must specify the file path:
 ```bash
-$ werf secret generate ~/certs/tls.key
+$ werf helm secret generate --file-path ~/certs/tls.key
 100023b2d1c0ec145681183ec721dc06db34f7ebce9f328739f0350d7f3aea988b6d0b69e9f71ed5e2ad9d79449b7a7d830ee5148a30a50bd43b7e2ecaef1c657199a483f60322cf7727ddf3928b2f51b0fbb0b1cd931489c20061a5071cf4362cb7e91c79fdbfc6d950352535eac28affd47d8ea8af64559fa39d89e815ea2b95cb07e81ddba792bf0e834cbbdc2ef843394a23f0cd44a95a38dd1583c2ae8352af140fc3fcfa6da3485bbf9bd286e2864ad45e31bc8ce4239aa05aaa82beba58c0583d3e93141ae28d87f4ffdb3d089f18b86e42e88a0b065c604f92a1478e0bbaeee46136579895b803a4be80977135979c4022b83fb1787e7b1540ddc07cd287ba5a7442f8a3ce0f5177487751c25767c28fd6eacb7f021036d978301895d6f528f06d555c926ba617669348c7873ba98372ae75ee0fdb730cabe507c576371970a27476e557b8b250f83137535f1d466eb53756986160f75ef78075dd7f63f83d72c1daf04aa026000802d4bbc2832f6d63eb231b8e16af5f44fc2cd79220715cba783a495a9d25e778ec1c2aa8013ccc164b5fc51f3a061c1eeed1228f65867c25f962639c90d2398e48ad93744cab5f8fff1f9988ccdbc5778ff39c31bdd47950759f33bf126509d3105521571252823f523fcd4a478d9bce3ddf923f8f8cbe7bff5edc0e99fe908e8b737a6de2391729e6ada3d8069819a0857ceba1eb5a16ecc81d6bcd16e497c4e60af5d218d2d2e0064c07850e5aa2a8d83e0f0a2
 ```
 
 To use the data in helm templates, you must save it to an appropriate file in the `.helm/secret` directory.
 
-Calling the command with the `-o OUTPUT_FILE_PATH` option saves encrypted data to the file `OUTPUT_FILE_PATH`:
+Calling the command with the `--output-file-path OUTPUT_FILE_PATH` option saves encrypted data to the file `OUTPUT_FILE_PATH`:
 ```bash
-$ werf secret generate ~/certs/tls.key -o .helm/secret/backend-saml/tls.key
+$ werf helm secret generate --file-path ~/certs/tls.key --output-file-path .helm/secret/backend-saml/tls.key
 ```
 
 Using a secret in a template may appear as follows:
@@ -127,14 +127,14 @@ data:
 
 ## Editing encrypted data
 
-You can edit existing secrets using the `werf secret edit` command. This command means you can work with data interactively.
+You can edit existing secrets using the `werf helm secret edit` command. This command means you can work with data interactively.
 
 ## Inverse conversion of data
 
-You can decrypt previously encrypted values using the `werf secret extract` command.
+You can decrypt previously encrypted values using the `werf helm secret extract` command.
 
 ```bash
-$ werf secret extract
+$ werf helm secret extract
 Enter secret: 1000541517bccae1acce015629f4ec89996e0b4
 42
 ```
@@ -142,19 +142,19 @@ Enter secret: 1000541517bccae1acce015629f4ec89996e0b4
 Like with encryption, redirected output and secrets from files are also supported.
 
 ```bash
-$ echo "1000541517bccae1acce015629f4ec89996e0b4" | werf secret extract
+$ echo "1000541517bccae1acce015629f4ec89996e0b4" | werf helm secret extract
 42
 ```
 
 ```bash
-$ werf secret extract .helm/secret/sense_of_life.txt
+$ werf helm secret extract --file-path .helm/secret/sense_of_life.txt
 The Ultimate Question of Life, the Universe, and Everything.
 ```
 
 If you need to decrypt the secret-values file, you must also specify the `--values` option.
 
 ```bash
-$ werf secret extract .helm/secret-values.yaml --values
+$ werf helm secret extract --file-path .helm/secret-values.yaml --values
 sense:
   of:
     life: 42
@@ -166,11 +166,11 @@ sense:
 When launching the command, the secrets (`.helm/secret/**/*`) and secret values (`.helm/secret-values.yaml`) will be re-generated. In the course of generation, the current key is used along with the key (`--old-secret-key KEY`) that was used to encrypt the data.
 
 ```bash
-$ werf secret regenerate --old-secret-key c85e100d4ff006b693b0555f09244fdf
+$ werf helm secret regenerate --old-key c85e100d4ff006b693b0555f09244fdf
 ```
 
 If the secret values are stored in multiple files, add paths as arguments.
 
 ```bash
-$ werf secret regenerate --old-secret-key c85e100d4ff006b693b0555f09244fdf .helm/secret-values2.yaml .helm/secret-staging.yaml
+$ werf helm secret regenerate --old-key c85e100d4ff006b693b0555f09244fdf .helm/secret-values2.yaml .helm/secret-staging.yaml
 ```
