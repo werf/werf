@@ -35,7 +35,7 @@ The werf assembly process is a sequential build of _stages_.
 — is a _stage_ with assembly instructions from config.
 
 ## Stage assembly container
-— is container for assembling stage instructions based on previous stage image (or on _base image_ for _from stage_).
+— is container for assembling stage instructions based on previous stage image (or on _base image_ for _from_ stage).
 
 ## Stage signature
 — is build _stage_ identifier. The _stage signature_ determines whether to build the _stage_.

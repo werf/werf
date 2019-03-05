@@ -197,48 +197,27 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 
 	gitPathsExist := len(gitPaths) != 0
 
-	// from
 	stages = appendIfExist(stages, stage.GenerateFromStage(imageBaseConfig, baseStageOptions))
-
-	// before_install
 	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(imageBaseConfig, baseStageOptions))
-
-	// before_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
 	if gitPathsExist {
-		// git_archive_stage
 		stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
 	}
 
-	// install
 	stages = appendIfExist(stages, stage.GenerateInstallStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-
-	// after_install_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(imageBaseConfig, baseStageOptions))
-
-	// before_setup
 	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-
-	// before_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(imageBaseConfig, baseStageOptions))
-
-	// setup
 	stages = appendIfExist(stages, stage.GenerateSetupStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-
-	// after_setup_artifact
 	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(imageBaseConfig, baseStageOptions))
 
 	if !imageArtifact {
 		if gitPathsExist {
-			// git_cache
 			stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
-
-			// git_latest_patch
 			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
 		}
 
-		// docker_instructions
 		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(imageInterfaceConfig.(*config.Image), baseStageOptions))
 	}
 

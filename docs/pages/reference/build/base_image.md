@@ -26,15 +26,15 @@ _Base image_ can be declared with `from`, `fromImage` or `fromImageArtifact` dir
 
 ## from and fromCacheVersion
 
-The `from` directive sets the name and tag of a _base image_ to build _from stage_. If absent, tag defaults to `latest`.
+The `from` directive sets the name and tag of a _base image_ to build _from_ stage. If absent, tag defaults to `latest`.
 
 ```yaml
 from: <image>[:<tag>]
 ```
 
-On _from stage_, _from image_ is pulled from a repository and saved in the [_stages cache_]({{ site.baseurl }}/reference/build/stages.html). If _from stage_ is using cache image won't be pulled.
+On _from_ stage, _from image_ is pulled from a repository and saved in the [_stages cache_]({{ site.baseurl }}/reference/build/stages.html). If _from_ stage is using cache image won't be pulled.
 
-Pay attention, _from stage_ depends on a variable of _from_ directive, not on _from image_ digest or something else.
+Pay attention, _from_ stage depends on a variable of _from_ directive, not on _from image_ digest or something else.
 
 If you have, e.g., _from image_ `alpine:latest`, and need to rebuild _image_ with the actual latest alpine image you should set _fromCacheVersion_ (`fromCacheVersion: <arbitrary string>`) and delete existent _from image_ from local docker or manually pull it.
 

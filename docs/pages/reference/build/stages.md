@@ -55,7 +55,7 @@ Using a cache for re-assemblies is possible due to the build stage identifier ca
 
   The ***stage signature*** is the checksum of _stage dependencies_ and previous _stage signature_. In the absence of _stage dependencies_, the _stage_ is skipped.
 
-  It means that the _stage conveyor_, e.g., image _stage conveyor_, can be reduced to several _stages_ or even to single _from stage_.
+  It means that the _stage conveyor_, e.g., image _stage conveyor_, can be reduced to several _stages_ or even to single _from_ stage.
 
 </div>
 
