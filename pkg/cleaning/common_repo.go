@@ -17,23 +17,31 @@ type CommonRepoOptions struct {
 func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
 	var repoImages []docker_registry.RepoImage
 
-	for _, imageName := range options.ImagesNames {
-		namelessImage := imageName == ""
+	if err := logger.LogSecondaryProcessInline("Getting repo images", func() error {
+		for _, imageName := range options.ImagesNames {
+			namelessImage := imageName == ""
 
-		var repository string
-		if namelessImage {
-			repository = options.ImagesRepo
-		} else {
-			repository = strings.Join([]string{strings.TrimRight(options.ImagesRepo, "/"), imageName}, "/")
+			var repository string
+			if namelessImage {
+				repository = options.ImagesRepo
+			} else {
+				repository = strings.Join([]string{strings.TrimRight(options.ImagesRepo, "/"), imageName}, "/")
+			}
+
+			images, err := docker_registry.ImagesByWerfImageLabel(repository, "true")
+			if err != nil {
+				return err
+			}
+
+			repoImages = append(repoImages, images...)
 		}
 
-		images, err := docker_registry.ImagesByWerfImageLabel(repository, "true")
-		if err != nil {
-			return nil, err
-		}
-
-		repoImages = append(repoImages, images...)
+		return nil
+	}); err != nil {
+		return nil, err
 	}
+
+	logger.OptionalLnModeOn()
 
 	return repoImages, nil
 }

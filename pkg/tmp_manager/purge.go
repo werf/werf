@@ -38,7 +38,7 @@ func purge(dryRun bool) error {
 
 	if len(projectDirsToRemove) > 0 {
 		for _, projectDirToRemove := range projectDirsToRemove {
-			logger.LogF("Removing %s ...\n", projectDirToRemove)
+			logger.LogLn(projectDirToRemove)
 		}
 		if !dryRun {
 			if err := removeProjectDirs(projectDirsToRemove); err != nil {
@@ -50,7 +50,8 @@ func purge(dryRun bool) error {
 	filesToRemove = append(filesToRemove, GetServiceTmpDir())
 
 	for _, file := range filesToRemove {
-		logger.LogF("Removing %s ...\n", file)
+		logger.LogLn(file)
+
 		if !dryRun {
 			err := os.RemoveAll(file)
 			if err != nil {

@@ -1,14 +1,14 @@
 package cleaning
 
-func ImagesPurge(options CommonRepoOptions) error {
-	if err := repoImagesFlush(options); err != nil {
-		return err
-	}
+import "github.com/flant/werf/pkg/logger"
 
-	return nil
+func ImagesPurge(options CommonRepoOptions) error {
+	return logger.LogProcess("Running images purge", logger.LogProcessOptions{}, func() error {
+		return imagesPurge(options)
+	})
 }
 
-func repoImagesFlush(options CommonRepoOptions) error {
+func imagesPurge(options CommonRepoOptions) error {
 	imageImages, err := repoImages(options)
 	if err != nil {
 		return err

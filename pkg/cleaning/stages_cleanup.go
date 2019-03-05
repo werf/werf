@@ -23,6 +23,12 @@ type StagesCleanupOptions struct {
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
+	return logger.LogProcess("Running stages cleanup", logger.LogProcessOptions{}, func() error {
+		return stagesCleanup(options)
+	})
+}
+
+func stagesCleanup(options StagesCleanupOptions) error {
 	options.CommonProjectOptions.CommonOptions.SkipUsedImages = true
 	options.CommonProjectOptions.CommonOptions.RmiForce = false
 	options.CommonProjectOptions.CommonOptions.RmForce = false

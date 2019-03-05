@@ -10,6 +10,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -123,6 +124,7 @@ func runSync() error {
 		CommonProjectOptions: commonProjectOptions,
 	}
 
+	logger.OptionalLnModeOn()
 	if err := cleaning.StagesCleanup(stagesCleanupOptions); err != nil {
 		return err
 	}

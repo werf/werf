@@ -10,6 +10,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -42,7 +43,9 @@ WARNING: Do not run this command during any other werf command is working on the
 			}
 			common.LogVersion()
 
-			return runReset()
+			return common.LogRunningTime(func() error {
+				return runReset()
+			})
 		},
 	}
 
@@ -75,6 +78,7 @@ func runReset() error {
 		return err
 	}
 
+	logger.OptionalLnModeOn()
 	commonOptions := cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun}
 	if err := cleaning.HostPurge(commonOptions); err != nil {
 		return err
