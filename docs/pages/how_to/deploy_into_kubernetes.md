@@ -73,6 +73,7 @@ We need to prepare main application image with a web server. Create the followin
 
 ```yaml
 project: myapp
+configVersion: 1
 ---
 
 image: ~
@@ -90,7 +91,7 @@ ansible:
         <html>
           <body>
             <h2>Congratulations!</h2>
-            <img src="https://github.com/flant/werf/raw/master/logo.png" style="max-height:100%;" height="25">
+            <img src="https://flant.com/images/logo_en.png" style="max-height:100%;" height="76">
           </body>
         </html>
       dest: /app/index.html
@@ -101,10 +102,10 @@ Our web application consists of a single static web page which created right in 
 Build and push an image with the following command:
 
 ```shell
-werf bp --repo :minikube
+werf build-and-publish --stages-storage :local --tag-custom myapp --images-repo :minikube
 ```
 
-The image name consists of `REPO` and `TAG`. Werf will use `latest` tag for the image by default. We have specified `:minikube` as a `REPO` — this is a shortcut for `werf-registry.kube-system.svc.cluster.local:5000/myapp`. So for our example werf will push into the docker-registry image with the name `werf-registry.kube-system.svc.cluster.local:5000/myapp:latest`.
+The image name consists of `REPO` and `TAG`. We have specified `:minikube` as a `REPO` — this is a shortcut for `werf-registry.kube-system.svc.cluster.local:5000/myapp`. As we have specified `myapp` as a tag, for our example werf will push into the docker-registry image with the name `werf-registry.kube-system.svc.cluster.local:5000/myapp:myapp`.
 
 ## Prepare deploy configuration
 
@@ -214,7 +215,7 @@ minikube addons enable ingress
 Run deploy with werf:
 
 ```shell
-werf deploy --repo :minikube --env dev
+werf deploy --stages-storage :local --images-repo :minikube --tag-custom myapp --env dev
 ```
 
 With this command werf will create all kubernetes resources using helm and watch until `myapp-backend` Deployment is ready (when all replicas Pods are up and running).

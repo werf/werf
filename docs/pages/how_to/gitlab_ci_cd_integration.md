@@ -144,7 +144,6 @@ Add the following lines to `.gitlab-ci.yml` file:
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     ## Next command makes deploy and will be discussed further
     - werf deploy --stages-storage :local
-        --set "global.env=${CI_ENVIRONMENT_SLUG}"
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
@@ -153,9 +152,9 @@ Add the following lines to `.gitlab-ci.yml` file:
     - werf
 ```
 
-Pay attention to `werf deploy` command. It is the main step in deploying the application and note that:
-* we've passed the `global.env` parameter, which will contain the name of the environment. You can access it in `helm` templates as `.Values.global.env` in Go-template's blocks, to configure deployment of your application according to the environment;
-* we've passed the `global.ci_url` parameter, which will contain an URL of the environment. You can use it in your `helm` templates e.g. to configure ingress.
+Pay attention to `werf deploy` command. It is the main step in deploying the application and note that we've passed the `global.ci_url` parameter, which will contain an URL of the environment. You can use it in your `helm` templates e.g. to configure ingress.
+
+To configure deployment of your application according to the environment you can use `.Values.global.env` variable in Go-template's blocks of your `helm` templates - werf sets `global.env` parameter according to the CI environment.
 
 #### Review
 
@@ -318,7 +317,6 @@ Build:
     - type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
     ## Next command makes deploy and will be discussed further
     - werf deploy --stages-storage :local
-        --set "global.env=${CI_ENVIRONMENT_SLUG}"
         --set "global.ci_url=$(echo ${CI_ENVIRONMENT_URL} | cut -d / -f 3)"
   ## It is important that the deploy stage depends on the build stage. If the build stage fails, deploy stage should not start.
   dependencies:
