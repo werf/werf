@@ -12,7 +12,7 @@ Docker images should be pushed into the docker registry for further usage in mos
 
 ## What can be pushed
 
-The result of werf [build commands]({{ site.baseurl }}/cli/build/build.html) is a stages cache related to images defined in the `werf.yaml` config. Werf can be used to push either:
+The result of werf [build commands]({{ site.baseurl }}/cli/main/build.html) is a stages cache related to images defined in the `werf.yaml` config. Werf can be used to push either:
 
 * Images. These can only be used as _images for running_. These images are not suitable for _distributes images cache_, because werf build algorithm implies creating separate images for stages cache. When you pull a image from a docker registry, you don't receive stages cache for this image.
 * Images with a stages cache images. These images can be used as _images for running_ and also as a _distributed images cache_.

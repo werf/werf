@@ -201,7 +201,7 @@ We've defined two jobs:
 
     The `url` parameter of the job you can use in you helm templates to set up e.g. ingress.
 2. Stop review.
-    In this job, werf will delete helm release and delete kubernetes namespace itself (see more about [werf dismiss]({{ site.baseurl }}/cli/deploy/dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
+    In this job, werf will delete helm release and delete kubernetes namespace itself (see more about [werf dismiss]({{ site.baseurl }}/cli/main/dismiss.html)). This job will be available for the manual run and also it will run by GitLab in case of e.g branch deletion.
 
 Review jobs needn't run on pushes to git master branch, because review environment is for developers.
 

@@ -56,7 +56,7 @@ The **git tag variable** presents only when building git tag. In this case, werf
 
 If the **git tag variable** is absent, then werf uses the **git branch variable** to get the name of building git branch. In this case, werf creates an image and marks it as an image built for git branch (by adding **meta-information** into newly created docker layer).
 
-After getting git tag or git branch name, werf applies [tag slug]({{ site.baseurl }}/reference/slug.html#basic-algorithm) transformation rules if this name doesn't meet with the tag slug requirements. This behavior allows using tags and branches with arbitrary names in Gitlab like `review/fix#23`.
+After getting git tag or git branch name, werf applies [tag slug]({{ site.baseurl }}/reference/toolbox/slug.html#basic-algorithm) transformation rules if this name doesn't meet with the tag slug requirements. This behavior allows using tags and branches with arbitrary names in Gitlab like `review/fix#23`.
 
 Option `--tag-ci` is the most recommended way for building in CI.
 
@@ -64,7 +64,7 @@ Option `--tag-ci` is the most recommended way for building in CI.
 
 The tag name based on a current git branch. Werf looks for the current branch in the local git repository where config located.
 
-After getting git branch name, werf apply [tag slug]({{ site.baseurl }}/reference/slug.html#basic-algorithm) transformation rules if tag name doesn't meet with the slug requirements. This behavior allows using branches with arbitrary names like `my/second_patch`.
+After getting git branch name, werf apply [tag slug]({{ site.baseurl }}/reference/toolbox/slug.html#basic-algorithm) transformation rules if tag name doesn't meet with the slug requirements. This behavior allows using branches with arbitrary names like `my/second_patch`.
 
 ### `--tag-git-commit`
 
@@ -111,7 +111,7 @@ Image names in the result are:
 * `registry.hello.com/web/core/system/backend:core-feature-add-settings-c3fd80df`
 * `registry.hello.com/web/core/system/frontend:core-feature-add-settings-c3fd80df`
 
-Each image name converts according to [tag slug]({{ site.baseurl }}/reference/slug.html#basic-algorithm) rules with appended murmurhash of original string.
+Each image name converts according to [tag slug]({{ site.baseurl }}/reference/toolbox/slug.html#basic-algorithm) rules with appended murmurhash of original string.
 
 ### Unnamed image in GitLab job
 
@@ -123,7 +123,7 @@ werf push --repo registry.hello.com/web/core/queue --tag-ci
 
 Image name in the result is `registry.hello.com/web/core/queue:v2-3-1-5cb8b0a4`
 
-Image name converts according to [tag slug]({{ site.baseurl }}/reference/slug.html#basic-algorithm) rules with appended murmurhash of original string, because of points symbols in the tag `v2.3.1` (points don't meet the requirements).
+Image name converts according to [tag slug]({{ site.baseurl }}/reference/toolbox/slug.html#basic-algorithm) rules with appended murmurhash of original string, because of points symbols in the tag `v2.3.1` (points don't meet the requirements).
 
 ### Two images with multiple tags in GitLab job
 

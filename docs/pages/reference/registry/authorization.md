@@ -48,7 +48,7 @@ To manually **disable** autologin procedure specify environment variable `WERF_I
 
 #### Autologin for build commands
 
-For [build commands]({{ site.baseurl }}/cli/build/build.html) werf uses pull procedure for images specified as base (see [from directive]({{ site.baseurl }}/reference/build/base_image.html#from-and-fromcacheversion)).
+For [build commands]({{ site.baseurl }}/cli/main/build.html) werf uses pull procedure for images specified as base (see [from directive]({{ site.baseurl }}/reference/build/base_image.html#from-and-fromcacheversion)).
 
 Running in gitlab environment werf build command will perform autologin procedure for the gitlab container registry under these conditions:
 
