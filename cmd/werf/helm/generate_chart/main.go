@@ -144,7 +144,7 @@ func runGenerateChart(targetPath string) error {
 	targetPath = util.ExpandPath(targetPath)
 
 	if _, err := os.Stat(targetPath); !os.IsNotExist(err) {
-		logger.LogInfoF("Removing existing %s\n", targetPath)
+		logger.LogServiceF("Removing existing %s\n", targetPath)
 		err = os.RemoveAll(targetPath)
 		if err != nil {
 			return err

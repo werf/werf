@@ -82,6 +82,7 @@ func runGC() error {
 		return err
 	}
 
+	logger.OptionalLnModeOn()
 	commonOptions := cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun}
 	if err := cleaning.HostCleanup(commonOptions); err != nil {
 		return err

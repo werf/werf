@@ -10,6 +10,7 @@ import (
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -181,6 +182,8 @@ func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndP
 }
 
 func (c *Conveyor) runPhases(phases []Phase) error {
+	logger.OptionalLnModeOn()
+
 	for _, phase := range phases {
 		err := phase.Run(c)
 
@@ -188,6 +191,7 @@ func (c *Conveyor) runPhases(phases []Phase) error {
 			return err
 		}
 	}
+
 	return nil
 }
 

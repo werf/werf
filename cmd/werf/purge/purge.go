@@ -10,6 +10,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -36,7 +37,9 @@ WARNING: Do not run this command during any other werf command is working on the
 			}
 			common.LogVersion()
 
-			return runPurge()
+			return common.LogRunningTime(func() error {
+				return runPurge()
+			})
 		},
 	}
 
@@ -117,6 +120,7 @@ func runPurge() error {
 		CommonProjectOptions: commonProjectOptions,
 	}
 
+	logger.OptionalLnModeOn()
 	if err := cleaning.Purge(purgeOptions); err != nil {
 		return err
 	}

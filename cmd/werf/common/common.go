@@ -397,12 +397,12 @@ func LogRunningTime(f func() error) error {
 }
 
 func LogVersion() {
-	logger.LogF("Version: %s\n", werf.Version)
+	logger.LogServiceF("Version: %s\n", werf.Version)
 }
 
 func LogProjectDir(dir string) {
 	if os.Getenv("WERF_LOG_PROJECT_DIR") != "" {
-		logger.LogInfoF("Using project dir: %s\n", dir)
+		logger.LogServiceF("Using project dir: %s\n", dir)
 	}
 }
 

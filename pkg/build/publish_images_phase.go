@@ -84,7 +84,8 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
 			logger.LogHighlightLn(stage.Name())
 
-			logRepoImageInfo(stageImageName)
+			logger.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
+			logger.LogInfoF("      image: %s\n", stageImageName)
 
 			logger.OptionalLnModeOn()
 
@@ -105,7 +106,9 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 			infoSectionFunc := func(err error) {
 				if err == nil {
 					_ = logger.WithIndent(func() error {
-						logRepoImageInfo(stageImageName)
+						logger.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
+						logger.LogInfoF("      image: %s\n", stageImageName)
+
 						return nil
 					})
 				}
@@ -174,9 +177,11 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 					}
 
 					if lastStageImage.ID() == parentID {
-						logger.LogHighlightLn(tagLogName)
+						logger.LogHighlightF("Tag %s is up-to-date\n", tag)
 						_ = logger.WithIndent(func() error {
-							logRepoImageInfo(imageName)
+							logger.LogInfoF("images-repo: %s\n", imageRepository)
+							logger.LogInfoF("      image: %s\n", imageName)
+
 							return nil
 						})
 
@@ -204,7 +209,9 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 					infoSectionFunc := func(err error) {
 						if err == nil {
 							_ = logger.WithIndent(func() error {
-								logRepoImageInfo(imageName)
+								logger.LogInfoF("images-repo: %s\n", imageRepository)
+								logger.LogInfoF("      image: %s\n", imageName)
+
 								return nil
 							})
 						}
@@ -237,16 +244,10 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 			return nil
 		})
 
-		logger.OptionalLnModeOn()
-
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func logRepoImageInfo(imageName string) {
-	logger.LogInfoF("repo-image: %s\n", imageName)
 }

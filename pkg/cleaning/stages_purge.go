@@ -4,9 +4,16 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/logger"
 )
 
 func StagesPurge(options CommonProjectOptions) error {
+	return logger.LogProcess("Running stages purge", logger.LogProcessOptions{}, func() error {
+		return stagesPurge(options)
+	})
+}
+
+func stagesPurge(options CommonProjectOptions) error {
 	options.CommonOptions.SkipUsedImages = false
 	options.CommonOptions.RmiForce = true
 	options.CommonOptions.RmForce = false

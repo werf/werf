@@ -103,8 +103,9 @@ func gc(dryRun bool) error {
 
 	if len(projectDirsToRemove) > 0 {
 		for _, projectDirToRemove := range projectDirsToRemove {
-			logger.LogF("Removing %s ...\n", projectDirToRemove)
+			logger.LogLn(projectDirToRemove)
 		}
+
 		if !dryRun {
 			if err := removeProjectDirs(projectDirsToRemove); err != nil {
 				removeErrors = append(removeErrors, fmt.Errorf("unable to remove tmp projects dirs %s: %s", strings.Join(projectDirsToRemove, ", "), err))
@@ -113,7 +114,8 @@ func gc(dryRun bool) error {
 	}
 
 	for _, path := range pathsToRemove {
-		logger.LogF("Removing %s ...\n", path)
+		logger.LogLn(path)
+
 		if !dryRun {
 			err := os.RemoveAll(path)
 			if err != nil {

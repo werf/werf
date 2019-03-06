@@ -3,9 +3,7 @@ package cleaning
 import (
 	"fmt"
 	"log"
-	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -43,6 +41,12 @@ type ImagesCleanupOptions struct {
 }
 
 func ImagesCleanup(options ImagesCleanupOptions) error {
+	return logger.LogProcess("Running images cleanup", logger.LogProcessOptions{}, func() error {
+		return imagesCleanup(options)
+	})
+}
+
+func imagesCleanup(options ImagesCleanupOptions) error {
 	imagesCleanupLockName := fmt.Sprintf("images-cleanup.%s", options.CommonRepoOptions.ImagesRepo)
 	return lock.WithLock(imagesCleanupLockName, lock.LockOptions{Timeout: time.Second * 600}, func() error {
 		repoImages, err := repoImages(options.CommonRepoOptions)
@@ -52,7 +56,7 @@ func ImagesCleanup(options ImagesCleanupOptions) error {
 
 		if options.LocalGit != nil {
 			if !options.WithoutKube {
-				if err := logger.LogSecondaryProcess("Ignoring repo images that are being used in kubernetes", logger.LogProcessOptions{}, func() error {
+				if err := logger.LogSecondaryProcess("Skipping repo images that are being used in kubernetes", logger.LogProcessOptions{}, func() error {
 					repoImages, err = exceptRepoImagesByWhitelist(repoImages, options.KubernetesClients)
 					return err
 				}); err != nil {
@@ -100,24 +104,12 @@ Loop:
 		for _, deployedDockerImageName := range deployedDockerImagesNames {
 			if deployedDockerImageName == imageName {
 				exceptedRepoImages = append(exceptedRepoImages, repoImage)
+				logger.LogLn(imageName)
 				continue Loop
 			}
 		}
 
 		newRepoImages = append(newRepoImages, repoImage)
-	}
-
-	if len(exceptedRepoImages) != 0 {
-		logger.LogServiceLn("Ignored repo images:")
-		_ = logger.WithIndent(func() error {
-			for _, exceptedRepoImage := range exceptedRepoImages {
-				imageName := fmt.Sprintf("%s:%s", exceptedRepoImage.Repository, exceptedRepoImage.Tag)
-				logger.LogLn(imageName)
-			}
-
-			return nil
-		})
-		logger.OptionalLnModeOn()
 	}
 
 	return newRepoImages, nil
@@ -278,20 +270,6 @@ func repoImagesCleanupByPolicies(repoImages []docker_registry.RepoImage, options
 	}
 
 	return repoImages, nil
-}
-
-func policyValue(envKey string, defaultValue int64) int64 {
-	envValue := os.Getenv(envKey)
-	if envValue != "" {
-		value, err := strconv.ParseInt(envValue, 10, 64)
-		if err != nil {
-			logger.LogErrorF("WARNING: '%s' value '%s' is ignored (using default value '%s'\n", envKey, envValue, defaultValue)
-		} else {
-			return value
-		}
-	}
-
-	return defaultValue
 }
 
 type repoImagesCleanupByPolicyOptions struct {

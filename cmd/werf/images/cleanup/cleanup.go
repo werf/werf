@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
@@ -11,11 +13,10 @@ import (
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
-
-	"github.com/spf13/cobra"
 )
 
 var CmdData struct {
@@ -149,6 +150,7 @@ func runCleanup() error {
 		Policies:          policies,
 	}
 
+	logger.OptionalLnModeOn()
 	if err := cleaning.ImagesCleanup(imagesCleanupOptions); err != nil {
 		return err
 	}

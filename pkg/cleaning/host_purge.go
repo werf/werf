@@ -78,7 +78,7 @@ func purgeHomeWerfFiles(dryRun bool) error {
 	pathsToRemove := []string{werf.GetServiceDir(), werf.GetLocalCacheDir(), werf.GetSharedContextDir()}
 
 	for _, path := range pathsToRemove {
-		logger.LogF("Removing %s ...\n", path)
+		logger.LogLn(path)
 	}
 
 	if dryRun {

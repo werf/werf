@@ -84,16 +84,10 @@ func WithLock(name string, opts LockOptions, f func() error) error {
 }
 
 func onWait(name string, doWait func() error) error {
-	fmt.Fprintf(logger.GetOutStream(), "Waiting for locked resource `%s` ...\n", name)
-
-	err := doWait()
-	if err != nil {
-		return err
-	}
-
-	fmt.Fprintf(logger.GetOutStream(), "Waiting for locked resource `%s` DONE\n", name)
-
-	return err
+	logProcessMsg := fmt.Sprintf("Waiting for locked resource '%s'", name)
+	return logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+		return doWait()
+	})
 }
 
 func getTimeout(opts LockOptions) time.Duration {

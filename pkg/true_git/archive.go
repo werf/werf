@@ -11,7 +11,9 @@ import (
 	"runtime/pprof"
 	"strings"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
+
+	"github.com/flant/werf/pkg/logger"
 )
 
 type ArchiveOptions struct {
@@ -200,7 +202,7 @@ func writeArchive(out io.Writer, gitDir, workTreeDir string, withSubmodules bool
 		}
 
 		if debugArchive() {
-			fmt.Fprintf(outStream, "Added archive file `%s`\n", path)
+			logger.LogServiceF("Added archive file '%s'\n", path)
 		}
 
 		return nil

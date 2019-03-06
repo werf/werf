@@ -23,6 +23,12 @@ type StagesCleanupOptions struct {
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
+	return logger.LogProcess("Running stages cleanup", logger.LogProcessOptions{}, func() error {
+		return stagesCleanup(options)
+	})
+}
+
+func stagesCleanup(options StagesCleanupOptions) error {
 	options.CommonProjectOptions.CommonOptions.SkipUsedImages = true
 	options.CommonProjectOptions.CommonOptions.RmiForce = false
 	options.CommonProjectOptions.CommonOptions.RmForce = false
@@ -99,7 +105,7 @@ func repoImageStagesSyncByCacheVersion(options CommonRepoOptions) error {
 
 		version, ok := labels[image.WerfCacheVersionLabel]
 		if !ok || (version != build.BuildCacheVersion) {
-			logger.LogF("%s %s %s\n", repoImageStage.Tag, version, build.BuildCacheVersion)
+			logger.LogServiceF("%s %s %s\n", repoImageStage.Tag, version, build.BuildCacheVersion)
 			repoImagesToDelete = append(repoImagesToDelete, repoImageStage)
 		}
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -177,6 +178,7 @@ func runCleanup() error {
 		ImagesCleanupOptions: imagesCleanupOptions,
 	}
 
+	logger.OptionalLnModeOn()
 	if err := cleaning.Cleanup(cleanupOptions); err != nil {
 		return err
 	}

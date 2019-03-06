@@ -219,15 +219,21 @@ func (i *StageImage) Import(name string) error {
 }
 
 func (i *StageImage) Export(name string) error {
-	if err := i.Tag(name); err != nil {
+	if err := logger.LogSecondaryProcess(fmt.Sprintf("Tagging %s", name), logger.LogProcessOptions{}, func() error {
+		return i.Tag(name)
+	}); err != nil {
 		return err
 	}
 
-	if err := docker.CliPush(name); err != nil {
+	if err := logger.LogSecondaryProcess(fmt.Sprintf("Pushing %s", name), logger.LogProcessOptions{}, func() error {
+		return docker.CliPush(name)
+	}); err != nil {
 		return err
 	}
 
-	if err := docker.CliRmi(name); err != nil {
+	if err := logger.LogSecondaryProcess(fmt.Sprintf("Untagging %s", name), logger.LogProcessOptions{}, func() error {
+		return docker.CliRmi(name)
+	}); err != nil {
 		return err
 	}
 

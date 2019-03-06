@@ -118,8 +118,6 @@ func safeContainersCleanup(options CommonOptions) error {
 			}
 			defer lock.Unlock(containerLockName)
 
-			logger.LogInfoF("Removing container %s (%s)\n", containerName, container.ID)
-
 			if err := containersRemove([]types.Container{container}, options); err != nil {
 				return fmt.Errorf("failed to remove container %s (%s) :%s", containerName, container.ID, err)
 			}

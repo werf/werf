@@ -10,6 +10,7 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -31,7 +32,9 @@ func NewCmd() *cobra.Command {
 			}
 			common.LogVersion()
 
-			return runPurge()
+			return common.LogRunningTime(func() error {
+				return runPurge()
+			})
 		},
 	}
 
@@ -96,6 +99,7 @@ func runPurge() error {
 		DryRun:      *CommonCmdData.DryRun,
 	}
 
+	logger.OptionalLnModeOn()
 	if err := cleaning.ImagesPurge(commonRepoOptions); err != nil {
 		return err
 	}
