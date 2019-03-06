@@ -168,11 +168,24 @@ func generateGitlabEnvs() error {
 	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1")
 
 	if ciGitTag == "" && ciGitBranch == "" {
+		errMsg := fmt.Sprintf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
+
 		fmt.Println()
-		return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
+		printError(errMsg)
+		return fmt.Errorf(errMsg)
 	}
 
 	return nil
+}
+
+func printError(errMsg string) {
+	if CmdData.Verbose {
+		fmt.Println("echo")
+		fmt.Printf("echo 'Error: %s'\n", errMsg)
+	}
+
+	fmt.Printf("exit 1\n")
+	fmt.Println()
 }
 
 func printHeader(header string, withNewLine bool) {
