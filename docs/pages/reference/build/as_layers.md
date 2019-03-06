@@ -9,7 +9,7 @@ summary: |
   </div>
 ---
 
-User stages, `before_install`, `install`, `before_setup`, `setup`, depend upon the appropriate instructions in the configuration. Any modification in _stage_ instructions leads to re-assembling the appropriate _stage_ with all instructions. Therefore, if the instructions are heavy and time-consuming, development of the configuration may take much time.
+User stages, `beforeInstall`, `install`, `beforeSetup`, `setup`, depend upon the appropriate instructions in the configuration. Any modification in _stage_ instructions leads to re-assembling the appropriate _stage_ with all instructions. Therefore, if the instructions are heavy and time-consuming, development of the configuration may take much time.
 
 Let us also consider the situation where one of the last stage instruction fails. A user cannot retrieve the environment state preceding the failure of the instruction or check those previous instructions were correctly executed.
 

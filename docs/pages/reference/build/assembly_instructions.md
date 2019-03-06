@@ -60,8 +60,8 @@ summary: |
 
 ***User stage*** is a [_stage_]({{ site.baseurl }}/reference/build/stages.html) with _assembly instructions_ from config.
 Currently, there are two kinds of assembly instructions: _shell_ and _ansible_. Werf
-defines 4 _user stages_ and executes them in this order: _before_install_, _install_,
-_before_setup_ and _setup_. Assembly instructions from one stage are executed to
+defines 4 _user stages_ and executes them in this order: _beforeInstall_, _install_,
+_beforeSetup_ and _setup_. Assembly instructions from one stage are executed to
 create one docker layer.
 
 ## Motivation behind stages
@@ -118,12 +118,12 @@ by one to cache interim results. The other thought is not to mix instructions
 for these actions because of different file dependencies. _User stages pattern_
 suggests this strategy:
 
-- use _before_install user stage_ for installing system packages
-- use _install user stage_ to install system dependencies and application dependencies
-- use _before_setup user stage_ to setup system settings and install an application
-- use _setup user stage_ to setup application settings
+- use _beforeInstall_ user stage for installing system packages
+- use _install_ user stage to install system dependencies and application dependencies
+- use _beforeSetup_ user stage to setup system settings and install an application
+- use _setup_ user stage to setup application settings
 
-### before_install
+### beforeInstall
 
 A stage that executes instructions before install an application. This stage
 is for system applications that rarely changes but time consuming to install.
@@ -131,7 +131,7 @@ Also, long-lived system settings can be done here like setting locale, setting
 time zone, adding groups and users, etc. Installation of enormous language
 distributions and build tools like PHP and composer, java and gradle, etc. are good candidates to execute at this stage.
 
-In practice, these components are rarely changes, and _before_install stage_ caches
+In practice, these components are rarely changes, and _beforeInstall_ stage caches
 them for an extended period.
 
 ### install
@@ -145,7 +145,7 @@ gradle, npm, etc.) that require some manifest file (i.e., pom.xml,
 Gruntfile). Best practice is to make this stage dependent on changes in that
 manifest file.
 
-### before_setup
+### beforeSetup
 
 This stage is for prepare application before setup some settings. Every kind
 of compilation can be done here: creating jars, creating executable files and
@@ -208,7 +208,7 @@ shell:
 
 _Shell assembly instructions_ are arrays of bash commands for _user stages_. Commands for one stage are executed as one `RUN` instruction in Dockerfile, and thus werf creates one layer for one _user stage_.
 
-Werf provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/reference/build/base_image.html). Commands for one stage are joined with `&&` and then encoded as base64. _User stage assembly container_ runs decoding and then executes joined commands. For example, _before_install stage_ with `apt-get update` and `apt-get install` commands:
+Werf provides distribution agnostic bash binary, so you need no bash binary in the [base image]({{ site.baseurl }}/reference/build/base_image.html). Commands for one stage are joined with `&&` and then encoded as base64. _User stage assembly container_ runs decoding and then executes joined commands. For example, _beforeInstall_ stage with `apt-get update` and `apt-get install` commands:
 
 ```yaml
 beforeInstall:
@@ -273,7 +273,7 @@ into the _user stage assembly container_:
 ansible_* settings, i.e., the path to python in werfdeps.
 
 `playbook.yml` is a playbook with all tasks from one _user stage_. For example,
-`werf.yaml` with _install stage_ like this:
+`werf.yaml` with _install_ stage like this:
 
 ```yaml
 ansible:
@@ -289,7 +289,7 @@ ansible:
   ...
 ```
 
-werf produces this `playbook.yml` for _install stage_:
+werf produces this `playbook.yml` for _install_ stage:
 ```yaml
 - hosts: all
   gather_facts: 'no'
@@ -459,7 +459,7 @@ First, build of this image execute all four _user stages_. There is no _git path
 this _config_, so next builds never execute assembly instructions because _user
 stages signatures_ not changed and build cache remains valid.
 
-Changing assembly instructions for _install user stage_:
+Changing assembly instructions for _install_ user stage:
 
 ```yaml
 shell:
@@ -503,7 +503,7 @@ echo "Commands on the Before Install stage for 36e907f8b6a639bd99b4ea812dae7a290
 ```
 
 Using `CI_COMMIT_SHA` assembly instructions text changes every commit.
-So this configuration rebuilds _before_install user stage_ on every commit.
+So this configuration rebuilds _beforeInstall_ user stage on every commit.
 
 ## Dependency on git repo changes
 
@@ -511,9 +511,9 @@ So this configuration rebuilds _before_install user stage_ on every commit.
     <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206">
   </a>
 
-As stated in a _git path_ reference, there are _git_archive_ and _git_latest_patch_ stages. _git_archive_ is executed after _before_install user stage_, and _git_latest_patch_ is executed after _setup user stage_ if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _git_archive_ with [special commit]({{site.baseurl}}/reference/build/git_directive.html#rebuild-of-git_archive-stage) or rebuild _before_install_ (change _cacheVersion_ or instructions for _before_install stage_).
+As stated in a _git path_ reference, there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ is executed after _beforeInstall_ user stage, and _gitLatestPatch_ is executed after _setup_ user stage if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _gitArchive_ with [special commit]({{site.baseurl}}/reference/build/git_directive.html#rebuild-of-git_archive-stage) or rebuild _beforeInstall_ (change _cacheVersion_ or instructions for _beforeInstall_ stage).
 
-_install_, _before_setup_ and _setup_ user stages are also dependant on git repository changes. A git patch is applied at the beginning of _user stage_ to execute assembly instructions with the latest version of source codes.
+_install_, _beforeSetup_ and _setup_ user stages are also dependant on git repository changes. A git patch is applied at the beginning of _user stage_ to execute assembly instructions with the latest version of source codes.
 
 _User stage_ dependency on git repository changes is defined with `git.stageDependencies` parameter. Syntax is:
 
@@ -579,18 +579,18 @@ shell:
   - echo "beforeSetup stage"
 ```
 
-This `werf.yaml` has a git path configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _git_archive stage_ and assembly instructions for _install_ and _before_setup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, and werf rebuilds _before_setup_ stage with applying a git patch.
+This `werf.yaml` has a git path configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, and werf rebuilds _beforeSetup_ stage with applying a git patch.
 
 ## Dependency on CacheVersion values
 
 There are situations when a user wants to rebuild all or one of _user stages_. This
 can be accomplished by changing `cacheVersion` or `<user stage name>CacheVersion` values.
 
-Signature of the _install user stage_ depends on the value of the
-`installCacheVersion` parameter. To rebuild the _install user stage_ (and
+Signature of the _install_ user stage depends on the value of the
+`installCacheVersion` parameter. To rebuild the _install_ user stage (and
 subsequent stages), you need to change the value of the `installCacheVersion` parameter.
 
-> Note that `cacheVersion` and `beforeInstallCacheVersion` directives have the same effect. When these values are changed, then the _before_install stage_ and subsequent stages rebuilt.
+> Note that `cacheVersion` and `beforeInstallCacheVersion` directives have the same effect. When these values are changed, then the _beforeInstall_ stage and subsequent stages rebuilt.
 
 ### Example: common image for multiple applications
 

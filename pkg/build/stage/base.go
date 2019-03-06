@@ -17,18 +17,18 @@ type StageName string
 
 const (
 	From                        StageName = "from"
-	BeforeInstall               StageName = "before_install"
-	ArtifactImportBeforeInstall StageName = "imports_before_install"
-	GitArchive                  StageName = "git_archive"
+	BeforeInstall               StageName = "beforeInstall"
+	ArtifactImportBeforeInstall StageName = "importsBeforeInstall"
+	GitArchive                  StageName = "gitArchive"
 	Install                     StageName = "install"
-	ArtifactImportAfterInstall  StageName = "imports_after_install"
-	BeforeSetup                 StageName = "before_setup"
-	ArtifactImportBeforeSetup   StageName = "imports_before_setup"
+	ArtifactImportAfterInstall  StageName = "importsAfterInstall"
+	BeforeSetup                 StageName = "beforeSetup"
+	ArtifactImportBeforeSetup   StageName = "importsBeforeSetup"
 	Setup                       StageName = "setup"
-	ArtifactImportAfterSetup    StageName = "imports_after_setup"
-	GitCache                    StageName = "git_cache"
-	GitLatestPatch              StageName = "git_latest_patch"
-	DockerInstructions          StageName = "docker_instructions"
+	ArtifactImportAfterSetup    StageName = "importsAfterSetup"
+	GitCache                    StageName = "gitCache"
+	GitLatestPatch              StageName = "gitLatestPatch"
+	DockerInstructions          StageName = "dockerInstructions"
 )
 
 type NewBaseStageOptions struct {

@@ -110,7 +110,7 @@ The _artifact name_ is used to specify the artifact in the [_artifact resources 
 
 </div>
 
-Unlike with _image_, _artifact stage conveyor_ has no _git_cache_ and _git_latest_patch_ stages.
+Unlike with _image_, _artifact stage conveyor_ has no _gitCache_ and _gitLatestPatch_ stages.
 
 > Werf implements optional dependence on changes in git repositories for _artifacts_. Thus, by default werf ignores them and _artifact image_ is cached after the first assembly, but you can specify any dependencies for assembly instructions.
 
@@ -126,7 +126,7 @@ Read about working with _git repositories_ in the corresponding [article]({{ sit
 
 </div>
 
-Directives and _user stages_ remain unchanged: _before_install_, _install_, _before_setup_ and _setup_.
+Directives and _user stages_ remain unchanged: _beforeInstall_, _install_, _beforeSetup_ and _setup_.
 
 If there are no dependencies on files specified in git `stageDependencies` directive for _user stages_, the image is cached after the first build and will no longer be reassembled while the _stages cache_ exists.
 
