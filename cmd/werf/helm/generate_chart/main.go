@@ -158,10 +158,10 @@ func runGenerateChart(targetPath string) error {
 
 	err = werfChart.Save()
 	if err != nil {
-		return fmt.Errorf("unable to save Werf chart: %s", err)
+		return fmt.Errorf("unable to save werf chart: %s", err)
 	}
 
-	logger.LogServiceF("Generated Werf chart %s\n", targetPath)
+	logger.LogServiceF("Generated werf chart: %s\n", targetPath)
 
 	return nil
 }

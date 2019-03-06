@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 	"k8s.io/helm/pkg/releaseutil"
 )
 
@@ -68,11 +68,12 @@ func GetTemplatesFromRevision(releaseName string, revision int) (ChartTemplates,
 		return nil, err
 	}
 
-	res, err := parseTemplates(rawTemplates)
+	chartTemplates, err := parseTemplates(rawTemplates)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse revision templates: %s", err)
 	}
-	return res, nil
+
+	return chartTemplates, nil
 }
 
 func GetTemplatesFromChart(chartPath, releaseName string, set, setString, values []string) (ChartTemplates, error) {
@@ -81,11 +82,12 @@ func GetTemplatesFromChart(chartPath, releaseName string, set, setString, values
 		return nil, err
 	}
 
-	res, err := parseTemplates(rawTemplates)
+	chartTemplates, err := parseTemplates(rawTemplates)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse chart templates: %s", err)
 	}
-	return res, nil
+
+	return chartTemplates, nil
 }
 
 func getRawTemplatesFromChart(chartPath, releaseName string, set, setString, values []string) (string, error) {
@@ -102,7 +104,7 @@ func getRawTemplatesFromChart(chartPath, releaseName string, set, setString, val
 
 	stdout, stderr, err := HelmCmd(args...)
 	if err != nil {
-		return "", fmt.Errorf("%s %s\n%s", stdout, stderr, err)
+		return "", FormatHelmCmdError(stdout, stderr, err)
 	}
 
 	return stdout, nil
@@ -111,12 +113,12 @@ func getRawTemplatesFromChart(chartPath, releaseName string, set, setString, val
 func getRawTemplatesFromRevision(releaseName string, revision int) (string, error) {
 	hooksOutput, stderr, err := HelmCmd("get", "hooks", releaseName, "--revision", fmt.Sprintf("%d", revision))
 	if err != nil {
-		return "", fmt.Errorf("%s %s\n%s", hooksOutput, stderr, err)
+		return "", FormatHelmCmdError(hooksOutput, stderr, err)
 	}
 
 	manifestOutput, stderr, err := HelmCmd("get", "manifest", releaseName, "--revision", fmt.Sprintf("%d", revision))
 	if err != nil {
-		return "", fmt.Errorf("%s %s\n%s", manifestOutput, stderr, err)
+		return "", FormatHelmCmdError(manifestOutput, stderr, err)
 	}
 
 	return strings.Join([]string{hooksOutput, manifestOutput}, "\n"), nil

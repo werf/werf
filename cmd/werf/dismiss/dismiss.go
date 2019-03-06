@@ -3,13 +3,14 @@ package dismiss
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
 var CmdData struct {
@@ -41,7 +42,9 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 		RunE: func(cmd *cobra.Command, args []string) error {
 			common.LogVersion()
 
-			return runDismiss()
+			return common.LogRunningTime(func() error {
+				return runDismiss()
+			})
 		},
 	}
 

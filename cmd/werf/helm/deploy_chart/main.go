@@ -41,7 +41,10 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 				fmt.Println()
 				return err
 			}
-			return runDeployChart(args[0], args[1])
+
+			return common.LogRunningTime(func() error {
+				return runDeployChart(args[0], args[1])
+			})
 		},
 	}
 

@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"strings"
 
-	version "github.com/hashicorp/go-version"
+	"github.com/hashicorp/go-version"
 )
 
 func ValidateHelmVersion() error {
 	ver, err := HelmVersion()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to get helm version: %s", err)
 	}
 
 	lowestVersion, err := version.NewVersion("v2.7.0-rc1")
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	if ver.LessThan(lowestVersion) {
@@ -28,7 +28,7 @@ func ValidateHelmVersion() error {
 func HelmVersion() (*version.Version, error) {
 	stdout, stderr, err := HelmCmd("version", "--client", "--short")
 	if err != nil {
-		return nil, fmt.Errorf("unable to get helm version: %v\n%v %v", err, stdout, stderr)
+		return nil, FormatHelmCmdError(stdout, stderr, err)
 	}
 
 	parts := strings.Split(stdout, " ")

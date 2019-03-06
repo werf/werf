@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"os/exec"
 	"strings"
@@ -29,4 +30,27 @@ func HelmCmd(args ...string) (stdout string, stderr string, err error) {
 	stderr = strings.TrimSpace(stderrBuf.String())
 
 	return
+}
+
+func FormatHelmCmdError(stdout, stderr string, err error) error {
+	errMsg := err.Error()
+
+	formattedHelmCmdOutput := FormatHelmCmdOutput(stdout, stderr)
+	if formattedHelmCmdOutput != "" {
+		errMsg += "\n"
+		errMsg += formattedHelmCmdOutput
+	}
+
+	return errors.New(errMsg)
+}
+
+func FormatHelmCmdOutput(stdout, stderr string) string {
+	var args []string
+	for _, arg := range []string{stdout, stderr} {
+		if arg != "" {
+			args = append(args, arg)
+		}
+	}
+
+	return strings.Join(args, "\n")
 }

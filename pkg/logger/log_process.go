@@ -50,13 +50,16 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 	resultColorize := colorizeProcessMsgFunc
 	start := time.Now()
 
+	resultFormat := " (%s)\n"
+
 	var err error
 	if err = WithIndent(processFunc); err != nil {
 		resultColorize = colorizeFail
+		resultFormat = " (%s) FAILED\n"
 	}
 
 	elapsedSeconds := fmt.Sprintf(logProcessTimeFormat, time.Since(start).Seconds())
-	colorizeAndFormattedLogF(outStream, resultColorize, " (%s)\n", elapsedSeconds)
+	colorizeAndFormattedLogF(outStream, resultColorize, resultFormat, elapsedSeconds)
 
 	return err
 }
