@@ -2,6 +2,7 @@ package helm
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -10,8 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/kubedog/pkg/tracker"
@@ -23,7 +22,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/helm/pkg/releaseutil"
 )
 
 type TrackAnno string
@@ -38,6 +36,10 @@ const (
 	TrackDisabled  TrackAnno = "false"
 	TrackTillDone  TrackAnno = "till_done"
 	TrackTillReady TrackAnno = "till_ready"
+)
+
+var (
+	ErrNoDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
 )
 
 func PurgeHelmRelease(releaseName string) error {
@@ -86,55 +88,116 @@ func withLockedHelmRelease(releaseName string, f func() error) error {
 	return lock.WithLock(lockName, lock.LockOptions{}, f)
 }
 
-func DeployHelmChart(chartPath string, releaseName string, namespace string, opts HelmChartOptions) error {
+func DeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartOptions) error {
 	return withLockedHelmRelease(releaseName, func() error {
 		return doDeployHelmChart(chartPath, releaseName, namespace, opts)
 	})
 }
 
-func doDeployHelmChart(chartPath string, releaseName string, namespace string, opts HelmChartOptions) error {
-	releaseExist, err := isReleaseExist(releaseName)
+func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartOptions) error {
+	releaseStatus, err := getReleaseStatus(releaseName)
 	if err != nil {
-		return fmt.Errorf("checking release failed: %s", err)
+		return fmt.Errorf("getting release status failed: %s", err)
 	}
 
-	templates, err := parseTemplates(chartPath, releaseName, opts.Set, opts.SetString, opts.Values)
-	if err != nil {
-		return fmt.Errorf("parsing templates failed: %s", err)
+	if releaseStatus.PurgeNeeded {
+		if err := purgeRelease(releaseName); err != nil {
+			return fmt.Errorf("unable to purge release %s: %s", releaseName, err)
+		}
+
+		releaseStatus.IsExists = false
+
+		if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
+			return err
+		}
 	}
 
-	if err := removeOldJobs(templates, namespace); err != nil {
-		return fmt.Errorf("removing old jobs failed: %s", err)
+	if releaseStatus.IsExists && releaseStatus.Status == "FAILED" {
+		revision, err := getLatestDeployedReleaseRevision(releaseName)
+		if err != nil && err != ErrNoDeployedReleaseRevisionFound {
+			return fmt.Errorf("unable to get latest deployed revision of release %s: %s", releaseName, err)
+		}
+
+		if err != ErrNoDeployedReleaseRevisionFound {
+			templates, err := GetTemplatesFromRevision(releaseName, revision)
+			if err != nil {
+				return fmt.Errorf("unable to get helm templates from revision %d of release %s: %s", revision, releaseName, err)
+			}
+
+			watchHookTypes := []string{"pre-rollback", "post-rollback"}
+
+			deployFunc := func() (string, error) {
+				output, err := rollbackRelease(releaseName, revision, namespace, opts)
+				if err != nil {
+					return "", fmt.Errorf("helm release %s rollback to revision %d failed: %s", releaseName, revision, err)
+				}
+				return output, nil
+			}
+
+			if err := runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc); err != nil {
+				return err
+			}
+		}
+	}
+
+	templates, err := GetTemplatesFromChart(chartPath, releaseName, opts.Set, opts.SetString, opts.Values)
+	if err != nil {
+		return fmt.Errorf("unable to get templates of chart %s: %s", chartPath, err)
+	}
+
+	var watchHookTypes []string
+	if releaseStatus.IsExists {
+		watchHookTypes = []string{"pre-upgrade", "post-upgrade"}
+	} else {
+		watchHookTypes = []string{"pre-install", "post-install"}
+	}
+
+	var deployFunc func() (string, error)
+	if releaseStatus.IsExists {
+		deployFunc = func() (string, error) {
+			output, err := upgradeRelease(chartPath, releaseName, namespace, opts)
+			if err != nil {
+				return "", fmt.Errorf("helm release %s upgrade failed: %s", releaseName, err)
+			}
+
+			if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
+				return "", err
+			}
+
+			return output, nil
+		}
+	} else {
+		deployFunc = func() (string, error) {
+			output, err := installRelease(chartPath, releaseName, namespace, opts)
+			if err != nil {
+				return "", fmt.Errorf("helm release %s install failed: %s", releaseName, err)
+			}
+			return output, nil
+		}
+	}
+
+	if err := runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func runDeployProcess(releaseName, namespace string, opts HelmChartOptions, templates ChartTemplates, watchHookTypes []string, deployFunc func() (string, error)) error {
+	if err := removeHelmHooksByRecreatePolicy(templates, namespace); err != nil {
+		return fmt.Errorf("unable to remove helm hooks by werf/recreate policy: %s", err)
 	}
 
 	deployStartTime := time.Now()
 
-	jobHooksWatcherDone, err := watchJobHooks(templates, releaseExist, deployStartTime, namespace, opts)
+	jobHooksWatcherDone, err := watchJobHooks(templates, watchHookTypes, deployStartTime, namespace, opts)
 	if err != nil {
 		return fmt.Errorf("watching job hooks failed: %s", err)
 	}
 
-	args := commonHelmCommandArgs(namespace, opts)
-	if releaseExist {
-		args = append([]string{"upgrade", releaseName, chartPath}, args...)
-		fmt.Fprintf(logger.GetOutStream(), "# Upgrading helm release '%s'...\n", releaseName)
-	} else {
-		args = append([]string{"install", chartPath, "--name", releaseName}, args...)
-		fmt.Fprintf(logger.GetOutStream(), "# Installing helm release '%s'...\n", releaseName)
-	}
-
-	stdout, stderr, err := HelmCmd(args...)
+	helmOutput, err := deployFunc()
 	if err != nil {
-		if strings.HasSuffix(stderr, "has no deployed releases\n") {
-			logger.LogErrorF("WARNING: Helm release '%s' is in improper state: %s", releaseName, stderr)
-			logger.LogErrorF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf deploy`", releaseName)
-
-			if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
-				return err
-			}
-		}
-
-		return fmt.Errorf("%s\n%s", stdout, stderr)
+		return err
 	}
 
 	if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
@@ -143,7 +206,7 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 
 	<-jobHooksWatcherDone
 
-	fmt.Fprintf(logger.GetOutStream(), "%s\n%s\n", stdout, stderr)
+	fmt.Fprintf(logger.GetOutStream(), "%s", helmOutput)
 
 	if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
 		return err
@@ -164,7 +227,74 @@ func doDeployHelmChart(chartPath string, releaseName string, namespace string, o
 	return nil
 }
 
-func trackPods(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+func purgeRelease(releaseName string) error {
+	fmt.Fprintf(logger.GetOutStream(), "# Purging helm release '%s' ...\n", releaseName)
+
+	if stdout, stderr, err := HelmCmd("delete", "--purge", releaseName); err != nil {
+		return fmt.Errorf("%s %s\n%s", stdout, stderr, err)
+	}
+
+	return nil
+}
+
+func rollbackRelease(releaseName string, revision int, namespace string, chartOpts HelmChartOptions) (string, error) {
+	args := commonDeployHelmCommandArgs(chartOpts)
+	args = append([]string{"rollback", releaseName, fmt.Sprintf("%d", revision)}, args...)
+	fmt.Fprintf(logger.GetOutStream(), "# Rollback helm release %s to revision %d...\n", releaseName, revision)
+
+	stdout, stderr, err := HelmCmd(args...)
+	if err != nil {
+		return "", fmt.Errorf("%s\n%s\n%s", stdout, stderr, err)
+	}
+
+	return fmt.Sprintf("%s\n%s\n", stdout, stderr), nil
+}
+
+func installRelease(chartPath, releaseName, namespace string, chartOpts HelmChartOptions) (string, error) {
+	args := commonDeployHelmCommandArgs(chartOpts)
+	args = append(args, commonInstallOrUpgradeHelmCommandArgs(namespace, chartOpts)...)
+	args = append([]string{"install", chartPath, "--name", releaseName}, args...)
+
+	fmt.Fprintf(logger.GetOutStream(), "# Installing helm release '%s'...\n", releaseName)
+
+	stdout, stderr, err := HelmCmd(args...)
+	if err != nil {
+		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
+			return "", err
+		}
+
+		return "", fmt.Errorf("%s\n%s\n%s", stdout, stderr, err)
+	}
+
+	return fmt.Sprintf("%s\n%s\n", stdout, stderr), nil
+}
+
+func upgradeRelease(chartPath, releaseName, namespace string, chartOpts HelmChartOptions) (string, error) {
+	args := commonDeployHelmCommandArgs(chartOpts)
+	args = append(args, commonInstallOrUpgradeHelmCommandArgs(namespace, chartOpts)...)
+	args = append([]string{"upgrade", releaseName, chartPath}, args...)
+
+	fmt.Fprintf(logger.GetOutStream(), "# Upgrading helm release '%s'...\n", releaseName)
+
+	stdout, stderr, err := HelmCmd(args...)
+	if err != nil {
+		if strings.HasSuffix(stderr, "has no deployed releases") {
+			logger.LogErrorF("WARNING: Helm release '%s' is in improper state: %s\n", releaseName, stderr)
+
+			if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
+				return "", err
+			}
+
+			logger.LogErrorF("WARNING: Helm release %s will be removed with 'helm delete --purge' on the next run of 'werf deploy'\n", releaseName)
+		}
+
+		return "", fmt.Errorf("%s\n%s\n%s", stdout, stderr, err)
+	}
+
+	return fmt.Sprintf("%s\n%s\n", stdout, stderr), nil
+}
+
+func trackPods(templates ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
 	for _, template := range templates.Pods() {
 		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
 			continue
@@ -184,7 +314,19 @@ func trackPods(templates *ChartTemplates, deployStartTime time.Time, namespace s
 	return nil
 }
 
-func trackDeployments(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+func removeHelmHooksByRecreatePolicy(templates ChartTemplates, namespace string) error {
+	for _, jobTemplate := range getHooksJobsToRecreate(templates.Jobs()) {
+		fmt.Fprintf(logger.GetOutStream(), "# Deleting hook job '%s' (werf/recreate)...\n", jobTemplate.Metadata.Name)
+
+		if err := removeJob(jobTemplate.Metadata.Name, jobTemplate.Namespace(namespace)); err != nil {
+			return fmt.Errorf("unable to remove job '%s': %s", jobTemplate.Metadata.Name, err)
+		}
+	}
+
+	return nil
+}
+
+func trackDeployments(templates ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
 	for _, template := range templates.Deployments() {
 		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
 			continue
@@ -204,7 +346,7 @@ func trackDeployments(templates *ChartTemplates, deployStartTime time.Time, name
 	return nil
 }
 
-func trackStatefulSets(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+func trackStatefulSets(templates ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
 	for _, template := range templates.StatefulSets() {
 		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
 			continue
@@ -224,7 +366,7 @@ func trackStatefulSets(templates *ChartTemplates, deployStartTime time.Time, nam
 	return nil
 }
 
-func trackDaemonSets(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+func trackDaemonSets(templates ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
 	for _, template := range templates.DaemonSets() {
 		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
 			continue
@@ -244,7 +386,7 @@ func trackDaemonSets(templates *ChartTemplates, deployStartTime time.Time, names
 	return nil
 }
 
-func trackJobs(templates *ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
+func trackJobs(templates ChartTemplates, deployStartTime time.Time, namespace string, opts HelmChartOptions) error {
 	for _, template := range templates.Jobs() {
 		if _, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
 			continue
@@ -266,10 +408,10 @@ func trackJobs(templates *ChartTemplates, deployStartTime time.Time, namespace s
 	return nil
 }
 
-func watchJobHooks(templates *ChartTemplates, releaseExist bool, deployStartTime time.Time, namespace string, opts HelmChartOptions) (chan bool, error) {
+func watchJobHooks(templates ChartTemplates, hookTypes []string, deployStartTime time.Time, namespace string, opts HelmChartOptions) (chan bool, error) {
 	jobHooksWatcherDone := make(chan bool)
 
-	jobHooksToTrack, err := jobHooksToTrack(templates, releaseExist)
+	jobHooksToTrack, err := jobHooksToTrack(templates, hookTypes)
 	if err != nil {
 		return jobHooksWatcherDone, err
 	}
@@ -298,7 +440,7 @@ func watchJobHooks(templates *ChartTemplates, releaseExist bool, deployStartTime
 	return jobHooksWatcherDone, nil
 }
 
-func commonHelmCommandArgs(namespace string, opts HelmChartOptions) []string {
+func commonInstallOrUpgradeHelmCommandArgs(namespace string, opts HelmChartOptions) []string {
 	var args []string
 
 	if namespace != "" {
@@ -317,6 +459,12 @@ func commonHelmCommandArgs(namespace string, opts HelmChartOptions) []string {
 		args = append(args, "--values", values)
 	}
 
+	return args
+}
+
+func commonDeployHelmCommandArgs(opts HelmChartOptions) []string {
+	var args []string
+
 	if opts.DryRun {
 		args = append(args, "--dry-run")
 		args = append(args, "--debug")
@@ -331,9 +479,14 @@ func commonHelmCommandArgs(namespace string, opts HelmChartOptions) []string {
 	return args
 }
 
-func isReleaseExist(releaseName string) (bool, error) {
-	var releaseStatus string
-	var releaseExist bool
+type ReleaseStatus struct {
+	IsExists    bool
+	Status      string
+	PurgeNeeded bool
+}
+
+func getReleaseStatus(releaseName string) (ReleaseStatus, error) {
+	var res ReleaseStatus
 
 	helmStatusStdout, _, helmStatusErr := HelmCmd("status", releaseName)
 	if helmStatusErr == nil {
@@ -342,137 +495,82 @@ func isReleaseExist(releaseName string) (bool, error) {
 		for scanner.Scan() {
 			line := scanner.Text()
 			if strings.HasPrefix(line, statusLinePrefix) {
-				releaseStatus = line[len(statusLinePrefix):]
+				res.Status = line[len(statusLinePrefix):]
 				break
 			}
 		}
 	}
 
 	if helmStatusErr != nil {
-		releaseExist = false
+		res.IsExists = false
 		if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
-			return false, err
+			return ReleaseStatus{}, err
 		}
-	} else if releaseStatus != "" && (releaseStatus == "FAILED" || releaseStatus == "PENDING_INSTALL") {
-		releaseExist = true
+	} else if res.Status != "" && (res.Status == "FAILED" || res.Status == "PENDING_INSTALL") {
+		res.IsExists = true
 
 		if exist, err := util.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
-			return false, err
+			return ReleaseStatus{}, err
 		} else if exist {
-			fmt.Fprintf(logger.GetOutStream(), "# Delete release '%s'\n", releaseName)
-			if _, _, err := HelmCmd("delete", "--purge", releaseName); err != nil {
-				return false, err
-			}
-
-			releaseExist = false
+			res.PurgeNeeded = true
 		}
 	} else {
 		if exist, err := util.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
-			return false, err
+			return ReleaseStatus{}, err
 		} else if exist {
-			logger.LogErrorF("WARNING: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, releaseStatus)
+			logger.LogErrorF("WARNING: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, res.Status)
 		}
 
-		releaseExist = true
+		res.IsExists = true
 
 		if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
-			return false, err
+			return ReleaseStatus{}, err
 		}
 	}
 
-	return releaseExist, nil
+	return res, nil
 }
 
-type ChartTemplates []*Template
-
-func (templates *ChartTemplates) Pods() []*Template {
-	return templates.ByKind("Pod")
-}
-
-func (templates *ChartTemplates) Jobs() []*Template {
-	return templates.ByKind("Job")
-}
-
-func (templates *ChartTemplates) Deployments() []*Template {
-	return templates.ByKind("Deployment")
-}
-
-func (templates *ChartTemplates) StatefulSets() []*Template {
-	return templates.ByKind("StatefulSet")
-}
-
-func (templates *ChartTemplates) DaemonSets() []*Template {
-	return templates.ByKind("DaemonSet")
-}
-
-func (templates *ChartTemplates) ByKind(kind string) []*Template {
-	var resultTemplates []*Template
-
-	for _, template := range []*Template(*templates) {
-		if strings.ToLower(template.Kind) == strings.ToLower(kind) {
-			resultTemplates = append(resultTemplates, template)
-		}
-	}
-
-	return resultTemplates
-}
-
-type Template struct {
-	Version  string `yaml:"apiVersion"`
-	Kind     string `yaml:"kind,omitempty"`
-	Metadata *struct {
-		Name        string            `yaml:"name"`
-		Namespace   string            `yaml:"namespace"`
-		Annotations map[string]string `yaml:"annotations"`
-		Uid         string            `yaml:"uid"`
-	} `yaml:"metadata,omitempty"`
-	Status string `yaml:"status,omitempty"`
-}
-
-func (t *Template) Namespace(namespace string) string {
-	if t.Metadata.Namespace != "" {
-		return t.Metadata.Namespace
-	}
-
-	return namespace
-}
-
-func parseTemplates(chartPath, releaseName string, set, setString []string, values []string) (*ChartTemplates, error) {
-	var templates []*Template
-
-	args := []string{"template", chartPath, "--name", releaseName}
-	for _, s := range set {
-		args = append(args, "--set", s)
-	}
-	for _, s := range setString {
-		args = append(args, "--set-string", s)
-	}
-	for _, v := range values {
-		args = append(args, "--values", v)
-	}
-
-	stdout, stderr, err := HelmCmd(args...)
+func getLatestDeployedReleaseRevision(releaseName string) (int, error) {
+	history, err := GetReleaseHistory(releaseName)
 	if err != nil {
-		return nil, fmt.Errorf(stderr)
+		return 0, fmt.Errorf("unable to get release history: %s", err)
 	}
 
-	for _, doc := range releaseutil.SplitManifests(stdout) {
-		var t Template
-		err := yaml.Unmarshal([]byte(doc), &t)
-		if err != nil {
-			return nil, err
-		}
+	var reversedHistory ReleaseHistory
+	for _, historyRec := range history {
+		reversedHistory = append(ReleaseHistory{historyRec}, reversedHistory...)
+	}
 
-		if t.Metadata != nil && t.Metadata.Name != "" {
-			templates = append(templates, &t)
+	for _, historyRec := range reversedHistory {
+		if historyRec.Status == "DEPLOYED" {
+			return historyRec.Revision, nil
 		}
 	}
 
-	chartTemplates := ChartTemplates(templates)
-	return &chartTemplates, nil
+	return 0, ErrNoDeployedReleaseRevisionFound
 }
 
-func removeOldJobs(templates *ChartTemplates, namespace string) error {
+func getHooksJobsToRecreate(jobsTemplates []Template) []Template {
+	var res []Template
+
+	for _, template := range jobsTemplates {
+		if _, isHelmHook := template.Metadata.Annotations[HelmHookAnnoName]; !isHelmHook {
+			continue
+		}
+
+		value, ok := template.Metadata.Annotations["werf/recreate"]
+		if ok && (value == "0" || value == "false") {
+			continue
+		}
+
+		res = append(res, template)
+	}
+
+	return res
+}
+
+func removeJob(jobName string, namespace string) error {
 	isJobExist := func(name string, namespace string) (bool, error) {
 		options := v1.GetOptions{}
 		_, err := kube.Kubernetes.BatchV1().Jobs(namespace).Get(name, options)
@@ -487,48 +585,39 @@ func removeOldJobs(templates *ChartTemplates, namespace string) error {
 		return true, nil
 	}
 
-	for _, template := range templates.Jobs() {
-		value, ok := template.Metadata.Annotations["werf/recreate"]
-		if ok && (value == "0" || value == "false") {
-			continue
-		}
+	exist, err := isJobExist(jobName, namespace)
+	if err != nil {
+		return err
+	} else if !exist {
+		return nil
+	}
 
-		exist, err := isJobExist(template.Metadata.Name, template.Namespace(namespace))
+	deletePropagation := v1.DeletePropagationForeground
+	deleteOptions := &v1.DeleteOptions{
+		PropagationPolicy: &deletePropagation,
+	}
+	err = kube.Kubernetes.BatchV1().Jobs(namespace).Delete(jobName, deleteOptions)
+	if err != nil {
+		return err
+	}
+
+	for {
+		exist, err := isJobExist(jobName, namespace)
 		if err != nil {
 			return err
 		} else if !exist {
-			continue
+			break
 		}
 
-		fmt.Fprintf(logger.GetOutStream(), "# Deleting hook job '%s' (werf/recreate)...\n", template.Metadata.Name)
-
-		deletePropagation := v1.DeletePropagationForeground
-		deleteOptions := &v1.DeleteOptions{
-			PropagationPolicy: &deletePropagation,
-		}
-		err = kube.Kubernetes.BatchV1().Jobs(template.Namespace(namespace)).Delete(template.Metadata.Name, deleteOptions)
-		if err != nil {
-			return err
-		}
-
-		for {
-			exist, err := isJobExist(template.Metadata.Name, template.Namespace(namespace))
-			if err != nil {
-				return err
-			} else if !exist {
-				break
-			}
-
-			time.Sleep(500 * time.Millisecond)
-		}
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	return nil
 }
 
-func jobHooksToTrack(templates *ChartTemplates, releaseExist bool) ([]*Template, error) {
-	var jobHooksToTrack []*Template
-	jobHooksByType := make(map[string][]*Template)
+func jobHooksToTrack(templates ChartTemplates, hookTypes []string) ([]Template, error) {
+	var jobHooksToTrack []Template
+	jobHooksByType := make(map[string][]Template)
 
 	for _, template := range templates.Jobs() {
 		if anno, ok := template.Metadata.Annotations[HelmHookAnnoName]; ok {
@@ -538,7 +627,7 @@ func jobHooksToTrack(templates *ChartTemplates, releaseExist bool) ([]*Template,
 
 			for _, hookType := range strings.Split(anno, ",") {
 				if _, ok := jobHooksByType[hookType]; !ok {
-					jobHooksByType[hookType] = []*Template{}
+					jobHooksByType[hookType] = []Template{}
 				}
 				jobHooksByType[hookType] = append(jobHooksByType[hookType], template)
 			}
@@ -547,7 +636,7 @@ func jobHooksToTrack(templates *ChartTemplates, releaseExist bool) ([]*Template,
 
 	for _, templates := range jobHooksByType {
 		sort.Slice(templates, func(i, j int) bool {
-			toWeight := func(t *Template) int {
+			toWeight := func(t Template) int {
 				val, ok := t.Metadata.Annotations[HelmHookWeightAnnoName]
 				if !ok {
 					return 0
@@ -566,17 +655,9 @@ func jobHooksToTrack(templates *ChartTemplates, releaseExist bool) ([]*Template,
 		})
 	}
 
-	if releaseExist {
-		for _, hookType := range []string{"pre-upgrade", "post-upgrade"} {
-			if templates, ok := jobHooksByType[hookType]; ok {
-				jobHooksToTrack = append(jobHooksToTrack, templates...)
-			}
-		}
-	} else {
-		for _, hookType := range []string{"pre-install", "post-install"} {
-			if templates, ok := jobHooksByType[hookType]; ok {
-				jobHooksToTrack = append(jobHooksToTrack, templates...)
-			}
+	for _, hookType := range hookTypes {
+		if templates, ok := jobHooksByType[hookType]; ok {
+			jobHooksToTrack = append(jobHooksToTrack, templates...)
 		}
 	}
 
