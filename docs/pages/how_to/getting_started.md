@@ -155,6 +155,7 @@ To implement these steps and requirements with werf we will add a special file c
     project: symfony-demo
     configVersion: 1
     ---
+
     image: ~
     from: ubuntu:16.04
     docker:

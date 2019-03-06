@@ -86,6 +86,7 @@ Custom Helm Release template can also be defined in the [meta configuration doc]
 
 ```yaml
 project: PROJECT_NAME
+configVersion: 1
 deploy:
   helmRelease: TEMPLATE
 ```
@@ -100,6 +101,7 @@ This is default behaviour, which can be disabled by [meta configuration doc]({{ 
 
 ```
 project: PROJECT_NAME
+configVersion: 1
 deploy:
   helmReleaseSlug: false
 ```
@@ -121,6 +123,7 @@ Custom Kubernetes Namespace template can also be defined in the [meta configurat
 
 ```yaml
 project: PROJECT_NAME
+configVersion: 1
 deploy:
   namespace: TEMPLATE
 ```
@@ -135,6 +138,7 @@ This is default behaviour, which can be disabled by [meta configuration doc]({{ 
 
 ```
 project: PROJECT_NAME
+configVersion: 1
 deploy:
   namespaceSlug: false
 ```

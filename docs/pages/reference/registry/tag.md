@@ -5,6 +5,8 @@ permalink: reference/registry/tag.html
 author: Artem Kladov <artem.kladov@flant.com>
 ---
 
+**NOT AVAILABLE** `werf tag` command currently not reimplemented from Ruby.
+
 When werf builds images, the result is a build cache — a set of image layers. To create a final image and assign a specified docker tag (see more about image naming [here]({{ site.baseurl }}/reference/registry/image_naming.html)) use `werf tag` command.
 
 You might want to create a named images for built images with `werf tag` command to push these named images with command other than [werf push command]({{ site.baseurl }}/reference/registry/push.html). For example with [docker push](https://docs.docker.com/engine/reference/commandline/image_push/).
