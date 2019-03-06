@@ -7,7 +7,6 @@ import (
 
 type rawGit struct {
 	rawGitExport         `yaml:",inline"`
-	As                   string                `yaml:"as,omitempty"`
 	Url                  string                `yaml:"url,omitempty"`
 	Branch               string                `yaml:"branch,omitempty"`
 	Tag                  string                `yaml:"tag,omitempty"`
@@ -65,8 +64,6 @@ func (c *rawGit) toGitLocalDirective() (gitLocal *GitLocal, err error) {
 	} else {
 		gitLocal.GitLocalExport = gitLocalExport
 	}
-
-	gitLocal.As = c.As
 
 	gitLocal.raw = c
 
@@ -133,7 +130,6 @@ func (c *rawGit) toGitRemoteDirective() (gitRemote *GitRemote, err error) {
 		gitRemote.GitRemoteExport = gitRemoteExport
 	}
 
-	gitRemote.As = c.As
 	gitRemote.Url = c.Url
 
 	if url, err := c.getNameFromUrl(); err != nil {

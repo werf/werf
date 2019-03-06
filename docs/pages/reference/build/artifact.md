@@ -153,7 +153,6 @@ fromImage: <image_name>
 fromImageArtifact: <artifact_name>
 git:
 # local git
-- as: <custom_name>
   add: <absolute_path>
   to: <absolute_path>
   owner: <owner>
@@ -174,7 +173,6 @@ git:
   branch: <branch_name>
   commit: <commit>
   tag: <tag>
-  as: <custom_name>
   add: <absolute_path>
   to: <absolute_path>
   owner: <owner>
