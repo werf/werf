@@ -6,14 +6,15 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
-	ini "gopkg.in/ini.v1"
-	uuid "gopkg.in/satori/go.uuid.v1"
-	git "gopkg.in/src-d/go-git.v4"
+	"gopkg.in/ini.v1"
+	"gopkg.in/satori/go.uuid.v1"
+	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
+
+	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 )
 
 const RemoteGitRepoCacheVersion = 4
@@ -224,7 +225,7 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
 	}
 
-	fmt.Fprintf(logger.GetOutStream(), "Using commit `%s` of repo `%s` branch `%s`\n", res, repo.String(), branch)
+	logger.LogServiceF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
 
 	return res, nil
 }
@@ -245,7 +246,7 @@ func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 		return "", fmt.Errorf("unknown tag `%s` of repo `%s`", tag, repo.String())
 	}
 
-	fmt.Fprintf(logger.GetOutStream(), "Using commit `%s` of repo `%s` tag `%s`\n", res, repo.String(), tag)
+	logger.LogServiceF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
 
 	return res, nil
 }

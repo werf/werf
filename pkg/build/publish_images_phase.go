@@ -244,8 +244,6 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 			return nil
 		})
 
-		logger.OptionalLnModeOn()
-
 		if err != nil {
 			return err
 		}

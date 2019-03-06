@@ -105,7 +105,7 @@ func repoImageStagesSyncByCacheVersion(options CommonRepoOptions) error {
 
 		version, ok := labels[image.WerfCacheVersionLabel]
 		if !ok || (version != build.BuildCacheVersion) {
-			logger.LogF("%s %s %s\n", repoImageStage.Tag, version, build.BuildCacheVersion)
+			logger.LogServiceF("%s %s %s\n", repoImageStage.Tag, version, build.BuildCacheVersion)
 			repoImagesToDelete = append(repoImagesToDelete, repoImageStage)
 		}
 	}
