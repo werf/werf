@@ -18,6 +18,9 @@ summary: |
 Here's a minimal `werf.yaml`. It describes a _image_ named `example` that is based on a _base image_ named `alpine`:
 
 ```yaml
+project: my-project
+configVersion: 1
+---
 image: example
 from: alpine
 ```

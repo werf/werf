@@ -6,9 +6,9 @@ author: Artem Kladov <artem.kladov@flant.com>
 ---
 
 Werf builds and tags docker images to run and push in a registry. For tagging images werf uses a `REPO` and image tag parameters (`--tag-*`) in the following commands:
-* [Tag commands]({{ site.baseurl }}/reference/registry/tag.html)
-* [Push commands]({{ site.baseurl }}/reference/registry/push.html)
-* [Pull commands]({{ site.baseurl }}/reference/registry/pull.html)
+* (**DEPRECATED**) [Tag commands]({{ site.baseurl }}/reference/registry/tag.html)  
+* [Publish commands]({{ site.baseurl }}/reference/registry/publish.html)
+* (**DEPRECATED**) [Pull commands]({{ site.baseurl }}/reference/registry/pull.html)
 * [Cleaning commands]({{ site.baseurl }}/reference/registry/cleaning.html)
 * [Deploy commands]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html#werf-kube-deploy)
 
@@ -20,9 +20,9 @@ In Werf world tagging creates **a new image layer** with the specified name. Wer
 
 The procedure of creating such a layer will be referred to as **werf tag procedure**.
 
-## `--repo REPO` option
+## `--images-repo REPO` option
 
-For all commands related to a docker registry, werf uses a single option named `--repo REPO`. `REPO` is a required param, but `--repo` option may be omitted in Gitlab CI. Werf will try to autodetect repo by environment variable `WERF_IMAGES_REPO` if available.
+For all commands related to a docker registry, werf uses a single option named `--images-repo REPO`. `REPO` is a required param, but `--images-repo` option may be omitted in Gitlab CI. Werf will try to autodetect repo by environment variable `WERF_IMAGES_REPO` if available.
 
 Using `REPO` werf constructs a [docker repository](https://docs.docker.com/glossary/?term=repository) as follows:
 
@@ -40,11 +40,13 @@ E.g., if there is unnamed image in a `werf.yaml` config and `REPO` is `myregistr
 | `--tag-git-tag` | tag with a git tag name |
 | `--tag-git-branch` | tag with a git branch name |
 | `--tag-git-commit` | tag with a git commit id |
-| `--tag TAG` | arbitrary  TAG |
+| `--tag-custom TAG` | arbitrary  TAG |
 
 ### `--tag-ci`
 
-Tag works only in GitLab CI or Travis CI environment.
+**DEPRECATED**: `--tag-ci` parameter was reimplemented from Ruby in a different way - see [werf ci-env]({{ site.baseurl }}/cli/toolbox/ci_env.html) command.
+
+Tag works only in GitLab CI.
 
 The [docker tag](https://docs.docker.com/glossary/?term=tag) name is based on a current git-tag or git-branch, for which CI job is run.
 
@@ -70,7 +72,7 @@ After getting git branch name, werf apply [tag slug]({{ site.baseurl }}/referenc
 
 The tag name based on a current git commit id (full-length SHA hashsum). Werf looks for the current commit id in the local git repository where config located.
 
-### `--tag TAG`
+### `--tag-custom TAG`
 
 The tag name based on a specified TAG in the parameter.
 
@@ -80,7 +82,7 @@ By default, werf uses `latest` as a docker tag for all images of config.
 
 ### Combining parameters
 
-Any combination of tag parameters can be used simultaneously for [tag commands]({{ site.baseurl }}/reference/registry/tag.html) and [push commands]({{ site.baseurl }}/reference/registry/push.html). In the result, there is a separate image for each tag parameter of each image in a project.
+Any combination of tag parameters can be used simultaneously for [tag commands]({{ site.baseurl }}/reference/registry/tag.html) and [push commands]({{ site.baseurl }}/reference/registry/publish.html). In the result, there is a separate image for each tag parameter of each image in a project.
 
 ## Examples
 
@@ -91,7 +93,7 @@ Given config with 2 images — backend and frontend.
 The following command:
 
 ```bash
-werf tag registry.hello.com/web/core/system --tag v1.2.0
+werf publish --stages-storage :local --images-repo registry.hello.com/web/core/system --tag-custom v1.2.0
 ```
 
 produces the following image names respectively:
@@ -104,7 +106,8 @@ Given `werf.yaml` config with 2 images — backend and frontend.
 
 The following command runs in GitLab job for git branch named `core/feature/ADD_SETTINGS`:
 ```bash
-werf push --repo registry.hello.com/web/core/system --tag-ci
+type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+werf publish --stages-storage :local
 ```
 
 Image names in the result are:
@@ -118,7 +121,8 @@ Each image name converts according to [tag slug]({{ site.baseurl }}/reference/to
 Given config with single unnamed image. The following command runs in GitLab job for git-tag named `v2.3.1`:
 
 ```bash
-werf push --repo registry.hello.com/web/core/queue --tag-ci
+type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+werf publish --stages-storage :local
 ```
 
 Image name in the result is `registry.hello.com/web/core/queue:v2-3-1-5cb8b0a4`
@@ -130,7 +134,8 @@ Image name converts according to [tag slug]({{ site.baseurl }}/reference/toolbox
 Given config with 2 images — backend and frontend. The following command runs in GitLab job for git-branch named `rework-cache`:
 
 ```bash
-werf push --repo registry.hello.com/web/core/system --tag-ci --tag "feature/using_cache" --tag-plain my-test-branch
+type werf && source <(werf ci-env gitlab --tagging-strategy tag-or-branch --verbose)
+werf publish --stages-storage :local --tag-custom "feature/using_cache" --tag-custom  my-test-branch
 ```
 
 The command produces 6 image names for each image name and each tag-parameter (two images by three tags):
@@ -141,4 +146,4 @@ The command produces 6 image names for each image name and each tag-parameter (t
 * `registry.hello.com/web/core/system/backend:my-test-branch`
 * `registry.hello.com/web/core/system/frontend:my-test-branch`
 
-For `--tag` parameter image names are converting, but for `--tag-ci` parameter image names are not converting, because branch name meets `rework-cache` the requirements.
+For `--tag-custom` parameter image names are converting, but for `--tag-ci` parameter image names are not converting, because branch name meets `rework-cache` the requirements.

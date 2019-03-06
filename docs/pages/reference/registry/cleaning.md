@@ -98,7 +98,7 @@ Allows deleting information about specified (current) project. Flush includes cl
 
 Local storage cleaning includes:
 * Deleting stages cache images of the project. Also deleting images from previous werf version.
-* Deleting all of the images tagged by `werf tag` command.
+* Deleting all of the images tagged by werf with custom tags.
 * Deleting `<none>` images of the project. `<none>` images can remain as a result of build process interruption. In this case, such built images exist as orphans outside of the stages cache. These images also not deleted by the cleanup.
 * Deleting containers associated with the images of the project.
 

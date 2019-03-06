@@ -34,11 +34,12 @@ More types can be added in the future.
 
 ```
 project: PROJECT_NAME
+configVersion: CONFIG_VERSION
 OTHER_FIELDS
 ---
 ```
 
-Config section with the key `project: PROJECT_NAME` is the meta config section. This is required section. There should be only one meta config section in a single `werf.yaml` configuration.
+Config section with the key `project: PROJECT_NAME` and `configVersion: CONFIG_VERSION` is the meta config section. This is required section. There should be only one meta config section in a single `werf.yaml` configuration.
 
 #### Project name
 
@@ -55,6 +56,10 @@ Changing project name leads to issues:
 2. Creation of completely new Helm Release. So if you already had deployed your application, then changed project name and deployed it again, there will be created another instance of the same application.
 
 Werf cannot automatically resolve project name change. Described issues must be resolved manually.
+
+#### Config version
+
+The `configVersion` defines a `werf.yaml` format. It should always be `1` for now.
 
 ### Image config section
 
@@ -89,6 +94,7 @@ Example of minimal werf config:
 
 ```yaml
 project: my-project
+configVersion: 1
 ---
 image: ~
 from: alpine:latest
@@ -111,6 +117,7 @@ Werf parses all files in one environment, thus described [define](#include) of o
 {{ $_ := set . "BaseImage" "alpine" }}
 
 project: my-project
+configVersion: 1
 ---
 
 image: rails
@@ -196,6 +203,7 @@ If need to use the whole _template file_, use template file path relative to _.w
 {% raw %}
 ```yaml
 project: my-project
+configVersion: 1
 ---
 image: app
 from: java:8-jdk-alpine
@@ -287,6 +295,7 @@ Go templates are available within YAML configuration. The following functions ar
   {{ $base_image := "golang:1.11-alpine" }}
 
   project: my-project
+  configVersion: 1
   ---
 
   image: gogomonia
@@ -302,6 +311,7 @@ Go templates are available within YAML configuration. The following functions ar
   {% raw %}
   ```yaml
   project: my-project
+  configVersion: 1
   ---
 
   {{ $_ := env "SPECIFIC_ENV_HERE" | set . "GitBranch" }}
@@ -325,6 +335,7 @@ Go templates are available within YAML configuration. The following functions ar
   {% raw %}
   ```yaml
   project: my-project
+  configVersion: 1
   ---
 
   image: app1
@@ -362,6 +373,7 @@ Go templates are available within YAML configuration. The following functions ar
   {% raw %}
   ```yaml
   project: my-project
+  configVersion: 1
   ---
 
   image: app
