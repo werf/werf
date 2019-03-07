@@ -412,6 +412,15 @@ func ApplyLogColorMode(logColorMode string) error {
 	return nil
 }
 
+func ValidateArgumentCount(expectedCount int, args []string, cmd *cobra.Command) error {
+	if len(args) != expectedCount {
+		PrintHelp(cmd)
+		return fmt.Errorf("requires %d position argument(s), received %d", expectedCount, len(args))
+	}
+
+	return nil
+}
+
 func PrintHelp(cmd *cobra.Command) {
 	_ = cmd.Help()
 	logger.OptionalLnModeOn()

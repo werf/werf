@@ -31,8 +31,11 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 		Example: `  # Deploy raw helm chart from current directory
   $ werf helm deploy-chart . myrelease`,
 		DisableFlagsInUseLine: true,
-		Args:                  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ValidateArgumentCount(2, args, cmd); err != nil {
+				return err
+			}
+
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err

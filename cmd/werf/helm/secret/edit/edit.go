@@ -41,8 +41,11 @@ The file can be raw secret file (by default) or secret values yaml file (with op
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
-		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
+				return err
+			}
+
 			return runSecretEdit(args[0])
 		},
 	}

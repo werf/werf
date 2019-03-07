@@ -56,10 +56,8 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if len(args) != 1 {
-		cmd.Help()
-		fmt.Println()
-		return fmt.Errorf("accepts 1 position argument, received %d", len(args))
+	if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
+		return err
 	}
 
 	switch CmdData.TaggingStrategy {

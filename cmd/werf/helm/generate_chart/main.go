@@ -33,11 +33,14 @@ func NewCmd() *cobra.Command {
 
 Werf will generate additional values files, templates Chart.yaml and other files specific to the Werf chart. The result is a valid Helm chart`),
 		DisableFlagsInUseLine: true,
-		Args:                  cobra.MinimumNArgs(1),
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
+				return err
+			}
+
 			return runGenerateChart(args[0])
 		},
 	}
