@@ -208,20 +208,27 @@ func runDeployProcess(releaseName, namespace string, opts HelmChartOptions, temp
 
 	fmt.Fprintf(logger.GetOutStream(), "%s", helmOutput)
 
-	if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
-	if err := trackDeployments(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
-	if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
-	if err := trackDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
-	if err := trackJobs(templates, deployStartTime, namespace, opts); err != nil {
-		return err
+	err = func() error {
+		if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+		if err := trackDeployments(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+		if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+		if err := trackDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+		if err := trackJobs(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+		return nil
+	}()
+
+	if err != nil {
+
 	}
 
 	return nil
