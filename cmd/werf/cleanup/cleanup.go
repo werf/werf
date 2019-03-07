@@ -93,6 +93,10 @@ func runCleanup() error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
+	if err := common.InitKubedog(); err != nil {
+		return fmt.Errorf("cannot init kubedog: %s", err)
+	}
+
 	projectDir, err := common.GetProjectDir(&CommonCmdData)
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)

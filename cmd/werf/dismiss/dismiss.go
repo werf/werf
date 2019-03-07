@@ -99,6 +99,10 @@ func runDismiss() error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
+	if err := common.InitKubedog(); err != nil {
+		return fmt.Errorf("cannot init kubedog: %s", err)
+	}
+
 	release, err := common.GetHelmRelease(*CommonCmdData.Release, *CommonCmdData.Environment, werfConfig)
 	if err != nil {
 		return err

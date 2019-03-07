@@ -83,6 +83,10 @@ func runDeployChart(chartDir string, releaseName string) error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
+	if err := common.InitKubedog(); err != nil {
+		return fmt.Errorf("cannot init kubedog: %s", err)
+	}
+
 	namespace := CmdData.Namespace
 	if namespace == "" {
 		namespace = kube.DefaultNamespace
