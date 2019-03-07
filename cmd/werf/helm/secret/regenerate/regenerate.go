@@ -41,8 +41,7 @@ Command will extract data with the old key, generate new secret data and rewrite
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
 			return runSecretRegenerate(args...)

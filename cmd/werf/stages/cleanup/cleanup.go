@@ -28,10 +28,10 @@ func NewCmd() *cobra.Command {
 		Long:                  common.GetLongCommandDescription(`Cleanup project stages from stages storage for the images, that do not exist in the specified images repo`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
+
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {

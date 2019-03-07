@@ -34,8 +34,7 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 		Args:                  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
 			return runDeployChart(args[0], args[1])

@@ -54,14 +54,12 @@ func NewCmd() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
 
 			if err := processArgs(cmd, args); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
 
@@ -84,8 +82,7 @@ func NewCmd() *cobra.Command {
 						CmdData.DockerCommand = []string{"/bin/bash"}
 					}
 				} else {
-					cmd.Help()
-					fmt.Println()
+					common.PrintHelp(cmd)
 					return fmt.Errorf("shell option cannot be used with other docker run arguments")
 				}
 			}

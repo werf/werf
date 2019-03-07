@@ -412,6 +412,11 @@ func ApplyLogColorMode(logColorMode string) error {
 	return nil
 }
 
+func PrintHelp(cmd *cobra.Command) {
+	_ = cmd.Help()
+	logger.OptionalLnModeOn()
+}
+
 func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()

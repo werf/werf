@@ -37,8 +37,7 @@ WARNING: Do not run this command during any other werf command is working on the
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
 			common.LogVersion()

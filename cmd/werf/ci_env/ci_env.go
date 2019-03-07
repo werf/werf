@@ -65,8 +65,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	switch CmdData.TaggingStrategy {
 	case "tag-or-branch":
 	default:
-		cmd.Help()
-		fmt.Println()
+		common.PrintHelp(cmd)
 		return fmt.Errorf("provided tagging-strategy '%s' not supported", CmdData.TaggingStrategy)
 	}
 
@@ -76,8 +75,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	case "gitlab":
 		return generateGitlabEnvs()
 	default:
-		cmd.Help()
-		fmt.Println()
+		common.PrintHelp(cmd)
 		return fmt.Errorf("provided ci system '%s' not supported", ciSystem)
 	}
 }
