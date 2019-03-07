@@ -64,7 +64,7 @@ func (d *ImageInfo) GetImageId() (string, error) {
 
 	res, err := docker_registry.ImageId(imageName)
 	if err != nil {
-		fmt.Fprintf(logger.GetErrStream(), "ERROR getting image %s id: %s\n", imageName, err)
+		logger.LogErrorF("WARNING: Getting image %s id failed: %s\n", imageName, err)
 		return "", nil
 	}
 

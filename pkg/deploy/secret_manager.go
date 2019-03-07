@@ -25,7 +25,7 @@ func GetSafeSecretManager(projectDir string, secretValues []string) (secret.Mana
 		key, err := secret.GetSecretKey(projectDir)
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "encryption key not found in") {
-				logger.LogErrorF("Unable to get secrets key: %s\n", err)
+				logger.LogErrorF("WARNING: Unable to get secrets key: %s\n", err)
 			} else {
 				return nil, err
 			}

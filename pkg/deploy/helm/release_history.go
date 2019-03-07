@@ -18,7 +18,7 @@ type ReleaseHistoryRecord struct {
 func GetReleaseHistory(releaseName string) (ReleaseHistory, error) {
 	stdout, stderr, err := HelmCmd("history", releaseName, "-o", "json")
 	if err != nil {
-		return nil, fmt.Errorf("%s %s\n%s", stdout, stderr, err)
+		return nil, FormatHelmCmdError(stdout, stderr, err)
 	}
 
 	res := ReleaseHistory{}

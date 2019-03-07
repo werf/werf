@@ -20,8 +20,8 @@ type DeployOptions struct {
 }
 
 func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
-	logger.LogInfoF("Using Helm release name: %s\n", release)
-	logger.LogInfoF("Using Kubernetes namespace: %s\n", namespace)
+	logger.LogInfoF("Using helm release name: %s\n", release)
+	logger.LogInfoF("Using kubernetes namespace: %s\n", namespace)
 
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
 
@@ -41,6 +41,7 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 	}
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
+	logger.OptionalLnModeOn()
 	return werfChart.Deploy(release, namespace, helm.HelmChartOptions{
 		Timeout: opts.Timeout,
 		HelmChartValuesOptions: helm.HelmChartValuesOptions{
