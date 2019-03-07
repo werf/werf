@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/slug"
 )
 
@@ -14,9 +15,9 @@ var CmdData struct {
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "slugify STRING",
+		Use:                   "slugify STRING",
 		DisableFlagsInUseLine: true,
-		Short: "Print slugged string by specified format",
+		Short:                 "Print slugged string by specified format",
 		Example: `  $ werf slugify -f kubernetes-namespace feature-fix-2
   feature-fix-2
 
@@ -40,9 +41,7 @@ func NewCmd() *cobra.Command {
   16.04`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := runSlugify(args); err != nil {
-				cmd.Help()
-				fmt.Println()
-
+				common.PrintHelp(cmd)
 				return err
 			}
 

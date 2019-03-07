@@ -26,8 +26,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Purge project images from images repo",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
 			common.LogVersion()

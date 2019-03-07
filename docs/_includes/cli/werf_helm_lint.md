@@ -37,14 +37,16 @@ werf helm lint [options]
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --secret-values=[]:
-            Additional helm secret values
+            Specify helm secret values in a YAML file (can specify multiple)
       --set=[]:
-            Additional helm sets
+            Set helm values on the command line (can specify multiple or separate values with 
+            commas: key1=val1,key2=val2)
       --set-string=[]:
-            Additional helm STRING sets
+            Set STRING helm values on the command line (can specify multiple or separate values 
+            with commas: key1=val1,key2=val2)
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]:
-            Additional helm values
+            Specify helm values in a YAML file or a URL (can specify multiple)
 ```
 

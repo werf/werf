@@ -45,14 +45,16 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
       --namespace='':
             Namespace to install release into
       --set=[]:
-            Additional helm sets
+            Set helm values on the command line (can specify multiple or separate values with 
+            commas: key1=val1,key2=val2)
       --set-string=[]:
-            Additional helm STRING sets
+            Set STRING helm values on the command line (can specify multiple or separate values 
+            with commas: key1=val1,key2=val2)
   -t, --timeout=0:
             Resources tracking timeout in seconds
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]:
-            Additional helm values
+            Specify helm values in a YAML file or a URL (can specify multiple)
 ```
 

@@ -60,10 +60,10 @@ If one or more IMAGE_NAME parameters specified, werf will build images stages an
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
+
 			common.LogVersion()
 
 			return common.LogRunningTime(func() error {

@@ -13,13 +13,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var CmdData struct {
-	Values       []string
-	SecretValues []string
-	Set          []string
-	SetString    []string
-}
-
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
@@ -45,10 +38,10 @@ func NewCmd() *cobra.Command {
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
 
-	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
-	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
-	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
-	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
+	common.SetupSet(&CommonCmdData, cmd)
+	common.SetupSetString(&CommonCmdData, cmd)
+	common.SetupValues(&CommonCmdData, cmd)
+	common.SetupSecretValues(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -85,10 +78,10 @@ func runLint() error {
 	}
 
 	return deploy.RunLint(projectDir, werfConfig, deploy.LintOptions{
-		Values:       CmdData.Values,
-		SecretValues: CmdData.SecretValues,
-		Set:          CmdData.Set,
-		SetString:    CmdData.SetString,
+		Values:       *CommonCmdData.Values,
+		SecretValues: *CommonCmdData.SecretValues,
+		Set:          *CommonCmdData.Set,
+		SetString:    *CommonCmdData.SetString,
 		Env:          *CommonCmdData.Environment,
 	})
 }

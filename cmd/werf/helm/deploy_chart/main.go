@@ -15,9 +15,6 @@ import (
 )
 
 var CmdData struct {
-	Values    []string
-	Set       []string
-	SetString []string
 	Namespace string
 	Timeout   int
 }
@@ -34,11 +31,13 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 		Example: `  # Deploy raw helm chart from current directory
   $ werf helm deploy-chart . myrelease`,
 		DisableFlagsInUseLine: true,
-		Args:                  cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := common.ValidateArgumentCount(2, args, cmd); err != nil {
+				return err
+			}
+
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
 
@@ -57,9 +56,10 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
 
-	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
-	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
-	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
+	common.SetupSet(&CommonCmdData, cmd)
+	common.SetupSetString(&CommonCmdData, cmd)
+	common.SetupValues(&CommonCmdData, cmd)
+
 	cmd.Flags().StringVarP(&CmdData.Namespace, "namespace", "", "", "Namespace to install release into")
 	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 
@@ -96,9 +96,9 @@ func runDeployChart(chartDir string, releaseName string) error {
 	return werfChart.Deploy(releaseName, namespace, helm.HelmChartOptions{
 		Timeout: time.Duration(CmdData.Timeout) * time.Second,
 		HelmChartValuesOptions: helm.HelmChartValuesOptions{
-			Set:       CmdData.Set,
-			SetString: CmdData.SetString,
-			Values:    CmdData.Values,
+			Set:       *CommonCmdData.Set,
+			SetString: *CommonCmdData.SetString,
+			Values:    *CommonCmdData.Values,
 		},
 	})
 }

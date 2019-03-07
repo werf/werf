@@ -36,6 +36,11 @@ type CmdData struct {
 	KubeContext *string
 	KubeConfig  *string
 
+	Set          *[]string
+	SetString    *[]string
+	Values       *[]string
+	SecretValues *[]string
+
 	StagesStorage *string
 	ImagesRepo    *string
 
@@ -186,6 +191,26 @@ Default $WERF_LOG_COLOR_MODE or auto mode.`)
 func SetupDisablePrettyLog(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.DisablePrettyLog = new(bool)
 	cmd.Flags().BoolVarP(cmdData.DisablePrettyLog, "disable-pretty-log", "", getBoolEnvironment("WERF_DISABLE_PRETTY_LOG"), `Disable emojis, auto line wrapping and replace log process border characters with spaces (default $WERF_DISABLE_PRETTY_LOG).`)
+}
+
+func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Set = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.Set, "set", "", []string{}, "Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+}
+
+func SetupSetString(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SetString = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.SetString, "set-string", "", []string{}, "Set STRING helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+}
+
+func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.Values = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.Values, "values", "", []string{}, "Specify helm values in a YAML file or a URL (can specify multiple)")
+}
+
+func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.SecretValues = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, "Specify helm secret values in a YAML file (can specify multiple)")
 }
 
 func getBoolEnvironment(environmentName string) bool {
@@ -385,6 +410,20 @@ func ApplyLogColorMode(logColorMode string) error {
 	}
 
 	return nil
+}
+
+func ValidateArgumentCount(expectedCount int, args []string, cmd *cobra.Command) error {
+	if len(args) != expectedCount {
+		PrintHelp(cmd)
+		return fmt.Errorf("requires %d position argument(s), received %d", expectedCount, len(args))
+	}
+
+	return nil
+}
+
+func PrintHelp(cmd *cobra.Command) {
+	_ = cmd.Help()
+	logger.OptionalLnModeOn()
 }
 
 func LogRunningTime(f func() error) error {

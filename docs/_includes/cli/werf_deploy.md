@@ -79,11 +79,13 @@ werf deploy [options]
       --release='':
             Use specified Helm release name (default %project-%environment template)
       --secret-values=[]:
-            Additional helm secret values
+            Specify helm secret values in a YAML file (can specify multiple)
       --set=[]:
-            Additional helm sets
+            Set helm values on the command line (can specify multiple or separate values with 
+            commas: key1=val1,key2=val2)
       --set-string=[]:
-            Additional helm STRING sets
+            Set STRING helm values on the command line (can specify multiple or separate values 
+            with commas: key1=val1,key2=val2)
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
             https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to 
@@ -109,6 +111,6 @@ werf deploy [options]
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --values=[]:
-            Additional helm values
+            Specify helm values in a YAML file or a URL (can specify multiple)
 ```
 

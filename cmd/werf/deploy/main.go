@@ -20,11 +20,6 @@ import (
 
 var CmdData struct {
 	Timeout int
-
-	Values       []string
-	SecretValues []string
-	Set          []string
-	SetString    []string
 }
 
 var CommonCmdData common.CmdData
@@ -55,8 +50,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
-				cmd.Help()
-				fmt.Println()
+				common.PrintHelp(cmd)
 				return err
 			}
 			common.LogVersion()
@@ -87,11 +81,12 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
 
+	common.SetupSet(&CommonCmdData, cmd)
+	common.SetupSetString(&CommonCmdData, cmd)
+	common.SetupValues(&CommonCmdData, cmd)
+	common.SetupSecretValues(&CommonCmdData, cmd)
+
 	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
-	cmd.Flags().StringArrayVarP(&CmdData.Values, "values", "", []string{}, "Additional helm values")
-	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
-	cmd.Flags().StringArrayVarP(&CmdData.Set, "set", "", []string{}, "Additional helm sets")
-	cmd.Flags().StringArrayVarP(&CmdData.SetString, "set-string", "", []string{}, "Additional helm STRING sets")
 
 	return cmd
 }
@@ -178,10 +173,10 @@ func runDeploy() error {
 	}()
 
 	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagStrategy, werfConfig, deploy.DeployOptions{
-		Set:          CmdData.Set,
-		SetString:    CmdData.SetString,
-		Values:       CmdData.Values,
-		SecretValues: CmdData.SecretValues,
+		Set:          *CommonCmdData.Set,
+		SetString:    *CommonCmdData.SetString,
+		Values:       *CommonCmdData.Values,
+		SecretValues: *CommonCmdData.SecretValues,
 		Timeout:      time.Duration(CmdData.Timeout) * time.Second,
 		Env:          *CommonCmdData.Environment,
 	})

@@ -56,17 +56,14 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if len(args) != 1 {
-		cmd.Help()
-		fmt.Println()
-		return fmt.Errorf("accepts 1 position argument, received %d", len(args))
+	if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
+		return err
 	}
 
 	switch CmdData.TaggingStrategy {
 	case "tag-or-branch":
 	default:
-		cmd.Help()
-		fmt.Println()
+		common.PrintHelp(cmd)
 		return fmt.Errorf("provided tagging-strategy '%s' not supported", CmdData.TaggingStrategy)
 	}
 
@@ -76,8 +73,7 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 	case "gitlab":
 		return generateGitlabEnvs()
 	default:
-		cmd.Help()
-		fmt.Println()
+		common.PrintHelp(cmd)
 		return fmt.Errorf("provided ci system '%s' not supported", ciSystem)
 	}
 }
