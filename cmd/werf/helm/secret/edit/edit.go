@@ -143,7 +143,7 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 		err := editIteration()
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "encoding failed") {
-				fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+				logger.LogErrorF("Error: %s\n", err)
 				ok, err := askForConfirmation()
 				if err != nil {
 					return err
