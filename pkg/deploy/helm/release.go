@@ -155,6 +155,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 
 				deployFunc := func(startJobHooksWatcher chan bool) (string, error) {
 					logger.LogServiceF("Running helm rollback command...\n")
+					logger.OptionalLnModeOn()
 
 					startJobHooksWatcher <- true
 
@@ -202,6 +203,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 	if releaseStatus.IsExists {
 		deployFunc = func(startJobHooksWatcher chan bool) (string, error) {
 			logger.LogServiceF("Running helm upgrade command...\n")
+			logger.OptionalLnModeOn()
 
 			startJobHooksWatcher <- true
 
@@ -219,6 +221,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 	} else {
 		deployFunc = func(startJobHooksWatcher chan bool) (string, error) {
 			logger.LogServiceF("Running helm install command...\n")
+			logger.OptionalLnModeOn()
 
 			startJobHooksWatcher <- true
 
