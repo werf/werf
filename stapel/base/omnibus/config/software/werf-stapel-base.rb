@@ -1,7 +1,7 @@
-name 'dappdeps-base'
+name 'werf-stapel-base'
 
-license 'MIT'
-license_file 'https://github.com/flant/dappdeps-base/blob/master/LICENSE.txt'
+license "Apache 2.0"
+license_file "LICENSE"
 
 dependency 'termcap'
 dependency 'bash'
@@ -13,3 +13,4 @@ dependency 'diffutils'
 dependency 'sed'
 dependency 'rsync'
 dependency 'shadow'
+dependency 'git'

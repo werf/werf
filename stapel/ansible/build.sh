@@ -2,22 +2,16 @@
 
 set -e
 
-DOCKER_IMAGE_VERSION=$(cat omnibus/config/projects/dappdeps-ansible.rb | \
+DOCKER_IMAGE_VERSION=$(cat stapel/ansible/omnibus/config/projects/werf-stapel-ansible.rb | \
 grep "DOCKER_IMAGE_VERSION =" | \
 cut -d"=" -f2 | \
 cut -d'"' -f2)
 
-if [ ! -f dappdeps-toolchain.tar ] ; then
-  docker pull dappdeps/toolchain:0.1.1
-  docker save dappdeps/toolchain:0.1.1 -o dappdeps-toolchain.tar
+if [ ! -f stapel/ansible/werf-stapel-toolchain.tar ] ; then
+  docker pull flant/werf-stapel-toolchain:0.2.0
+  docker save flant/werf-stapel-toolchain:0.2.0 -o stapel/ansible/werf-stapel-toolchain.tar
 fi
 
-echo "# Building dappdeps/ansible:$DOCKER_IMAGE_VERSION"
-echo "# How to change versions:"
-echo "#   * Change docker image version DOCKER_IMAGE_VERSION in omnibus/config/projects/dappdeps-ansible.rb"
-echo "#   * Change ansible source code version tag ANSIBLE_GIT_TAG in omnibus/config/software/ansible.rb"
-echo
-docker build -t dappdeps/ansible:$DOCKER_IMAGE_VERSION .
+docker build -t flant/werf-stapel-ansible:$DOCKER_IMAGE_VERSION stapel/ansible
 
-docker login -u $DOCKER_HUB_LOGIN -p $DOCKER_HUB_PASSWORD || true
-docker push dappdeps/ansible:$DOCKER_IMAGE_VERSION
+docker push flant/werf-stapel-ansible:$DOCKER_IMAGE_VERSION

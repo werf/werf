@@ -1,38 +1,31 @@
-# Build tools
+# Build
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN >/etc/profile && >/root/.profile
 SHELL ["/bin/bash", "-lc"]
 
-RUN apt update && apt install -y curl git fakeroot gettext
+RUN apt update && apt install -y curl git fakeroot gettext gpg ruby ruby-bundler ruby-dev make file m4 xz-utils
 
-ADD ./dappdeps-toolchain.tar /dappdeps-toolchain
-RUN tar xf /dappdeps-toolchain/**/layer.tar -C /
+ADD ./werf-stapel-toolchain.tar /werf-stapel-toolchain
+RUN tar xf /werf-stapel-toolchain/**/layer.tar -C /
 
 RUN git config --global user.name flant && git config --global user.name 256@flant.com
-
-RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 && \
-curl -sSL https://get.rvm.io | bash && \
-. /etc/profile.d/rvm.sh && \
-rvm install 2.3
-RUN echo "source /etc/profile.d/rvm.sh" >> /etc/profile
 
 ADD ./omnibus /omnibus
 WORKDIR /omnibus
 ENV BUNDLE_GEMFILE=/omnibus/Gemfile
-RUN gem install bundler && \
-bundle install --without development
+RUN bundle install --without development
 
-ENV PATH=/.dapp/deps/toolchain/0.1.1/bin:$PATH
-RUN bundle exec omnibus build -o append_timestamp:false dappdeps-base
+ENV PATH=/.werf/stapel/toolchain/0.2.0/x86_64-lfs-linux-gnu/bin:/.werf/stapel/toolchain/0.2.0/bin:$PATH
+RUN bundle exec omnibus build -o append_timestamp:false werf-stapel-base
 
 RUN mkdir /tmp/result && \
-dpkg -x /omnibus/pkg/dappdeps-base_*.deb /tmp/result
+dpkg -x /omnibus/pkg/werf-stapel-base_*.deb /tmp/result
 
-# Import tools into dappdeps/base scratch
+# Import
 
 FROM scratch
 CMD ["no-such-command"]
-COPY --from=0 /tmp/result/.dapp/deps/base/ /.dapp/deps/base/
+COPY --from=0 /tmp/result/.werf/stapel/base /.werf/stapel/base

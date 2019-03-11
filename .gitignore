@@ -6,9 +6,9 @@
 
 /docs/vendor
 
-/dappdeps-toolchain.tar
 /stapel/*/omnibus/build
 /stapel/*/omnibus/vendor
 /stapel/*/omnibus/.bundle
+/stapel/*/werf-stapel-toolchain.tar
 
 /release-build
