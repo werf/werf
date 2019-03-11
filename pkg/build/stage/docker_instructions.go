@@ -1,6 +1,8 @@
 package stage
 
 import (
+	"sort"
+
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/util"
@@ -32,15 +34,8 @@ func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ image.ImageInter
 
 	args = append(args, s.instructions.Volume...)
 	args = append(args, s.instructions.Expose...)
-
-	for k, v := range s.instructions.Env {
-		args = append(args, k, v)
-	}
-
-	for k, v := range s.instructions.Label {
-		args = append(args, k, v)
-	}
-
+	args = append(args, mapToSortedArgs(s.instructions.Env)...)
+	args = append(args, mapToSortedArgs(s.instructions.Label)...)
 	args = append(args, s.instructions.Cmd...)
 	args = append(args, s.instructions.Onbuild...)
 	args = append(args, s.instructions.Entrypoint...)
@@ -50,6 +45,20 @@ func (s *DockerInstructionsStage) GetDependencies(_ Conveyor, _ image.ImageInter
 	args = append(args, s.instructions.HealthCheck)
 
 	return util.Sha256Hash(args...), nil
+}
+
+func mapToSortedArgs(h map[string]string) (result []string) {
+	keys := make([]string, 0, len(h))
+	for key := range h {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		result = append(result, key, h[key])
+	}
+
+	return
 }
 
 func (s *DockerInstructionsStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
