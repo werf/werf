@@ -4,28 +4,30 @@ import (
 	"fmt"
 )
 
-type ArtifactImport struct {
+type Import struct {
 	*ArtifactExport
+	ImageName    string
 	ArtifactName string
 	Before       string
 	After        string
 
 	ImageArtifact *ImageArtifact
+	Image         *Image
 
-	raw *rawArtifactImport
+	raw *rawImport
 }
 
-func (c *ArtifactImport) GetRaw() interface{} {
+func (c *Import) GetRaw() interface{} {
 	return c.raw
 }
 
-func (c *ArtifactImport) validate() error {
+func (c *Import) validate() error {
 	if err := c.ArtifactExport.validate(); err != nil {
 		return err
 	}
 
-	if c.ArtifactName == "" {
-		return newDetailedConfigError("artifact name `artifact: NAME` required for import!", c.raw, c.raw.rawImage.doc)
+	if c.ArtifactName == "" && c.ImageName == "" {
+		return newDetailedConfigError("artifact name `artifact: NAME` or image name `image: NAME` required for import!", c.raw, c.raw.rawImage.doc)
 	} else if c.Before != "" && c.After != "" {
 		return newDetailedConfigError("specify only one artifact stage using `before: install|setup` or `after: install|setup` for import!", c.raw, c.raw.rawImage.doc)
 	} else if c.Before == "" && c.After == "" {
@@ -42,12 +44,21 @@ func checkInvalidRelation(rel string) bool {
 	return !(rel == "install" || rel == "setup")
 }
 
-func (c *ArtifactImport) associateArtifact(artifacts []*ImageArtifact) error {
-	if imageArtifact := artifactByName(artifacts, c.ArtifactName); imageArtifact != nil {
-		c.ImageArtifact = imageArtifact
+func (c *Import) associateImportImage(images []*Image, artifacts []*ImageArtifact) error {
+	if c.ImageName != "" {
+		if image := imageByName(images, c.ImageName); image != nil {
+			c.Image = image
+		} else {
+			return newDetailedConfigError(fmt.Sprintf("no such image `%s`!", c.ImageName), c.raw, c.raw.rawImage.doc)
+		}
 	} else {
-		return newDetailedConfigError(fmt.Sprintf("no such artifact `%s`!", c.ArtifactName), c.raw, c.raw.rawImage.doc)
+		if imageArtifact := artifactByName(artifacts, c.ArtifactName); imageArtifact != nil {
+			c.ImageArtifact = imageArtifact
+		} else {
+			return newDetailedConfigError(fmt.Sprintf("no such artifact `%s`!", c.ArtifactName), c.raw, c.raw.rawImage.doc)
+		}
 	}
+
 	return nil
 }
 

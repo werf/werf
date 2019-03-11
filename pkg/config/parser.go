@@ -501,7 +501,7 @@ func validateImagesNames(images []*Image, artifacts []*ImageArtifact) error {
 }
 
 func associateImportsArtifacts(images []*Image, artifacts []*ImageArtifact) error {
-	var artifactImports []*ArtifactImport
+	var artifactImports []*Import
 
 	for _, image := range images {
 		for _, relatedImageInterface := range image.relatedImages() {
@@ -526,7 +526,7 @@ func associateImportsArtifacts(images []*Image, artifacts []*ImageArtifact) erro
 	}
 
 	for _, artifactImport := range artifactImports {
-		if err := artifactImport.associateArtifact(artifacts); err != nil {
+		if err := artifactImport.associateImportImage(images, artifacts); err != nil {
 			return err
 		}
 	}

@@ -14,7 +14,7 @@ type ImageBase struct {
 	Shell             *Shell
 	Ansible           *Ansible
 	Mount             []*Mount
-	Import            []*ArtifactImport
+	Import            []*Import
 
 	raw *rawImage
 }

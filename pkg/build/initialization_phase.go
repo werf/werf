@@ -199,18 +199,18 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 
 	stages = appendIfExist(stages, stage.GenerateFromStage(imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(imageBaseConfig, baseStageOptions))
-	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeInstallStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateImportBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
 	if gitPathsExist {
 		stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
 	}
 
 	stages = appendIfExist(stages, stage.GenerateInstallStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterInstallStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateImportAfterInstallStage(imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(stages, stage.GenerateBeforeSetupStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(stages, stage.GenerateArtifactImportBeforeSetupStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateImportBeforeSetupStage(imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(stages, stage.GenerateSetupStage(imageBaseConfig, gitPatchStageOptions, baseStageOptions))
-	stages = appendIfExist(stages, stage.GenerateArtifactImportAfterSetupStage(imageBaseConfig, baseStageOptions))
+	stages = appendIfExist(stages, stage.GenerateImportAfterSetupStage(imageBaseConfig, baseStageOptions))
 
 	if !imageArtifact {
 		if gitPathsExist {

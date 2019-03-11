@@ -9,12 +9,17 @@ func (c *Image) ImageTree() (tree []ImageInterface) {
 	if c.FromImage != nil {
 		tree = append(tree, c.FromImage.ImageTree()...)
 	}
+
 	if c.FromImageArtifact != nil {
 		tree = append(tree, c.FromImageArtifact.ImageTree()...)
 	}
 
 	for _, importElm := range c.Import {
-		tree = append(tree, importElm.ImageArtifact.ImageTree()...)
+		if importElm.Image != nil {
+			tree = append(tree, importElm.Image.ImageTree()...)
+		} else {
+			tree = append(tree, importElm.ImageArtifact.ImageTree()...)
+		}
 	}
 
 	tree = append(tree, c)

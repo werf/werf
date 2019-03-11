@@ -12,6 +12,7 @@ func (c *ImageArtifact) ImageTree() (tree []ImageInterface) {
 	if c.FromImage != nil {
 		tree = append(tree, c.FromImage.ImageTree()...)
 	}
+
 	if c.FromImageArtifact != nil {
 		tree = append(tree, c.FromImageArtifact.ImageTree()...)
 	}
