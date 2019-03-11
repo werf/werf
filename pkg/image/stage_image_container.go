@@ -105,7 +105,7 @@ func (c *StageImageContainer) prepareRunCommands() []string {
 }
 
 func (c *StageImageContainer) prepareAllRunCommands() []string {
-	return append(c.runCommands, c.serviceRunCommands...)
+	return append(c.serviceRunCommands, c.runCommands...)
 }
 
 func ShelloutPack(command string) string {
