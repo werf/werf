@@ -154,7 +154,7 @@ func applyOptionalLnMode() {
 	}
 }
 
-func terminalContentWidth() int {
+func TerminalContentWidth() int {
 	return TerminalWidth() - terminalServiceWidth()
 }
 

@@ -27,7 +27,7 @@ func (p WriterProxy) Write(data []byte) (int, error) {
 
 	msg := string(data)
 	if isFittedStreamsOutputModeOn {
-		msg, streamsFitterState = fitText(msg, streamsFitterState, terminalContentWidth(), true, true)
+		msg, streamsFitterState = fitText(msg, streamsFitterState, TerminalContentWidth(), true, true)
 	}
 
 	_, err := FormattedLogF(p.Writer, "%s", msg)
