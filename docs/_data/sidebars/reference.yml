@@ -36,7 +36,7 @@ entries:
       - title: Reducing image size and speeding up a build by mounts
         url: /reference/build/mount_directive.html
 
-      - title: Importing artifacts
+      - title: Importing from images and artifacts
         url: /reference/build/import_directive.html
 
       - title: All directives

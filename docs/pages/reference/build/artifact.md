@@ -9,61 +9,9 @@ summary: |
   </a>
 ---
 
-The size of the image can be increased several times due to the assembly tools and source files, while the user does not need them.
-
-To solve such problems, the Docker community suggests doing the installation of tools, the assembly, and removal of tools in one step.
-
-```
-RUN “download-source && cmd && cmd2 && remove-source”
-```
-
-> To obtain a similar effect when using werf, it is sufficient to describe the instructions in one _user stage_. For example, the _shell assembly instructions_ for the _install stage_ (similarly for _ansible_):
-```yaml
-shell:
-  install:
-  - "download-source"
-  - "cmd"
-  - "cmd2"
-  - "remove-source"
-```
-
-However, with this method, it isn't possible to use caching and need to install toolkit regularly.
-
-Another solution is to use multi-stage builds, which are supported starting with Docker 17.05.
-
-```
-FROM node:latest AS storefront
-WORKDIR /usr/src/atsea/app/react-app
-COPY react-app .
-RUN npm install
-RUN npm run build
-
-FROM maven:latest AS appserver
-WORKDIR /usr/src/atsea
-COPY pom.xml .
-RUN mvn -B -f pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:resolve
-COPY . .
-RUN mvn -B -s /usr/share/maven/ref/settings-docker.xml package -DskipTests
-
-FROM java:8-jdk-alpine
-RUN adduser -Dh /home/gordon gordon
-WORKDIR /static
-COPY --from=storefront /usr/src/atsea/app/react-app/build/ .
-WORKDIR /app
-COPY --from=appserver /usr/src/atsea/target/AtSea-0.0.1-SNAPSHOT.jar .
-ENTRYPOINT ["java", "-jar", "/app/AtSea-0.0.1-SNAPSHOT.jar"]
-CMD ["--spring.profiles.active=postgres"]
-```
-
-The meaning of such an approach is as follows, describe several auxiliary images, and selectively copy artifacts from one image to another, leaving behind everything you don’t want in the final image.
-
-Werf suggests an alternative in the form of _artifact image_, which are built according to the same rules as _image_, but with slight changes in the _stage conveyor_.
-
-> Why doesn't werf use multi-stage? Historically, _artifacts_ appeared much earlier than Docker multi-stage, and werf approach gives more flexibility when working with auxiliary images.
-
 ## What is an artifact?
 
-***Artifact*** is special image that is used by _images_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
+***Artifact*** is a special image that is used by _images_ and _artifacts_ to isolate the build process and build tools resources (environments, software, data).
 
 _Artifact_ cannot be [tagged like _image_]({{ site.baseurl }}/reference/registry/image_naming.html#werf-tag-procedure) and used as standalone application.
 
@@ -72,15 +20,15 @@ Using artifacts, you can independently assemble an unlimited number of component
 - The application can consist of a set of components, and each has its dependencies. With a standard assembly, you should rebuild all every time, but you want to assemble each one on-demand.
 - Components need to be assembled in other environments.
 
-Importing _artifacts resources_ are described at destination _image_ or _artifact_ by `import` directive records.
+Importing _resources_ from _artifacts_ are described in [import directive]({{ site.baseurl }}/reference/build/import_directive.html) in _destination image_ config section ([_image_]({{ site.baseurl }}/reference/config.html#image-config-section) or [_artifact_]({{ site.baseurl }}/reference/config.html#artifact-config-section])).
 
 ## Configuration
 
 The configuration of the _artifact_ is not much different from the configuration of _image_. Each _artifact_ should be described in a separate [artifact config section]({{ site.baseurl }}/reference/config.html#artifact-config-section).
 
-The instructions associated with the _from stage_, namely the [_base image_]({{ site.baseurl }}/reference/build/base_image.html) and [mounts]({{ site.baseurl }}/reference/build/mount_directive.html), remain unchanged.
+The instructions associated with the _from stage_, namely the [_base image_]({{ site.baseurl }}/reference/build/base_image.html) and [mounts]({{ site.baseurl }}/reference/build/mount_directive.html), and also [imports]({{ site.baseurl }}/reference/build/import_directive.html) remain unchanged.
 
-The _docker_instructions stage_ and the [corresponding instructions]({{ site.baseurl }}/reference/build/docker_directive.html) are not supported for the _artifact_. A _artifact_ is an assembly tool and only the data stored in it is required.
+The _docker_instructions stage_ and the [corresponding instructions]({{ site.baseurl }}/reference/build/docker_directive.html) are not supported for the _artifact_. An _artifact_ is an assembly tool and only the data stored in it is required.
 
 The remaining _stages_ and instructions are considered further separately.
 
@@ -97,8 +45,6 @@ _Artifact images_ are declared with `artifact` directive: `artifact: <artifact n
 ```yaml
 artifact: "application assets"
 ```
-
-The _artifact name_ is used to specify the artifact in the [_artifact resources import_ description](#importing-artifacts) of the _image_ or _artifact_.
 
 ### Adding source code from git repositories
 
@@ -139,10 +85,6 @@ git:
 ```
 
 Read about working with _assembly instructions_ in the corresponding [article]({{ site.baseurl }}/reference/build/assembly_instructions.html).
-
-### Importing artifacts
-
-{% include_relative import_artifacts_partial.md %}
 
 ## All directives
 ```yaml
@@ -225,6 +167,7 @@ mount:
   to: <absolute_path>
 import:
 - artifact: <artifact name>
+  image: <image name>
   before: <install || setup>
   after: <install || setup>
   add: <absolute path>

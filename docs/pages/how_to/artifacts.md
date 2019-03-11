@@ -9,7 +9,7 @@ author: Artem Kladov <artem.kladov@flant.com>
 
 When you build an application image, it is often necessary to download temporary files or packages for build. In the results, the application image contains files that are not needed to run the application.
 
-Werf has artifacts, to reduce the size of the image. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but has more advanced files importing options.
+Werf can [import]({{ site.baseurl }}/reference/build/import_directive.html) resources from images and [artifacts]({{ site.baseurl }}/reference/build/artifact.html). Thus you can isolate build process and tools in other images and then copy result files to reduce the image size. It is like a docker [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) which are supported starting with Docker 17.05, but has more advanced files importing options.
 
 In this article, we will build an example GO application. Then we will optimize the build instructions to substantial reduce image size with using mount directives.
 
