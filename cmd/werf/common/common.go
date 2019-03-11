@@ -55,6 +55,8 @@ type CmdData struct {
 
 	DisablePrettyLog *bool
 	LogColorMode     *string
+	LogProjectDir    *bool
+	LogTerminalWidth *int64
 }
 
 func GetLongCommandDescription(text string) string {
@@ -171,6 +173,7 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
 	SetupLogColor(cmdData, cmd)
 	SetupDisablePrettyLog(cmdData, cmd)
+	SetupTerminalWidth(cmdData, cmd)
 }
 
 func SetupLogColor(cmdData *CmdData, cmd *cobra.Command) {
@@ -193,6 +196,11 @@ func SetupDisablePrettyLog(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(cmdData.DisablePrettyLog, "disable-pretty-log", "", getBoolEnvironment("WERF_DISABLE_PRETTY_LOG"), `Disable emojis, auto line wrapping and replace log process border characters with spaces (default $WERF_DISABLE_PRETTY_LOG).`)
 }
 
+func SetupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogTerminalWidth = new(int64)
+	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf("Set log terminal width (default $WERF_LOG_TERMINAL_WIDTH or %d).", logger.DefaultTerminalWidth))
+}
+
 func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Set = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.Set, "set", "", []string{}, "Set helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
@@ -211,6 +219,11 @@ func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
 func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SecretValues = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, "Specify helm secret values in a YAML file (can specify multiple)")
+}
+
+func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogProjectDir = new(bool)
+	cmd.Flags().BoolVarP(cmdData.LogProjectDir, "log-project-dir", "", getBoolEnvironment("WERF_LOG_PROJECT_DIR"), `Print current project directory path (default $WERF_LOG_PROJECT_DIR)`)
 }
 
 func getBoolEnvironment(environmentName string) bool {
@@ -386,8 +399,14 @@ func GetNamespace(namespaceOption string) string {
 	return namespaceOption
 }
 
-func ApplyLogOptions(cmdData *CmdData) error {
-	if err := ApplyLogColorMode(*cmdData.LogColorMode); err != nil {
+func ProcessLogProjectDir(cmdData *CmdData, projectDir string) {
+	if *cmdData.LogProjectDir {
+		logger.LogServiceF("Using project dir: %s\n", projectDir)
+	}
+}
+
+func ProcessLogOptions(cmdData *CmdData) error {
+	if err := ProcessLogColorMode(cmdData); err != nil {
 		return err
 	}
 
@@ -395,10 +414,16 @@ func ApplyLogOptions(cmdData *CmdData) error {
 		logging.DisablePrettyLog()
 	}
 
+	if err := ProcessLogTerminalWidth(cmdData); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func ApplyLogColorMode(logColorMode string) error {
+func ProcessLogColorMode(cmdData *CmdData) error {
+	logColorMode := *cmdData.LogColorMode
+
 	switch logColorMode {
 	case "auto":
 	case "on":
@@ -407,6 +432,35 @@ func ApplyLogColorMode(logColorMode string) error {
 		logging.DisableLogColor()
 	default:
 		return fmt.Errorf("bad log color mode '%s': on, off and auto modes are supported", logColorMode)
+	}
+
+	return nil
+}
+
+func ProcessLogTerminalWidth(cmdData *CmdData) error {
+	value := *cmdData.LogTerminalWidth
+
+	if value != -1 {
+		if value < 0 {
+			return fmt.Errorf("--log-terminal-width parameter (%d) can not be negative", value)
+		}
+
+		logging.SetTerminalWidth(int(value))
+	} else {
+		pInt64, err := getInt64EnvVar("WERF_LOG_TERMINAL_WIDTH")
+		if err != nil {
+			return err
+		}
+
+		if pInt64 == nil {
+			return nil
+		}
+
+		if *pInt64 < 0 {
+			return fmt.Errorf("WERF_LOG_TERMINAL_WIDTH value (%s) can not be negative", os.Getenv("WERF_LOG_TERMINAL_WIDTH"))
+		}
+
+		logging.SetTerminalWidth(int(*pInt64))
 	}
 
 	return nil
@@ -437,12 +491,6 @@ func LogRunningTime(f func() error) error {
 
 func LogVersion() {
 	logger.LogServiceF("Version: %s\n", werf.Version)
-}
-
-func LogProjectDir(dir string) {
-	if os.Getenv("WERF_LOG_PROJECT_DIR") != "" {
-		logger.LogServiceF("Using project dir: %s\n", dir)
-	}
 }
 
 func LogErrorF(format string, a ...interface{}) {

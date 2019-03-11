@@ -31,7 +31,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 		Annotations:           map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return common.LogRunningTime(func() error {
-				if err := common.ApplyLogOptions(commonCmdData); err != nil {
+				if err := common.ProcessLogOptions(commonCmdData); err != nil {
 					common.PrintHelp(cmd)
 					return err
 				}
@@ -55,6 +55,7 @@ If one or more IMAGE_NAME parameters specified, werf will publish only these ima
 	common.SetupInsecureRepo(commonCmdData, cmd)
 
 	common.SetupLogOptions(commonCmdData, cmd)
+	common.SetupLogProjectDir(commonCmdData, cmd)
 
 	return cmd
 }
@@ -84,7 +85,8 @@ func runImagesPublish(commonCmdData *common.CmdData, imagesToProcess []string) e
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
-	common.LogProjectDir(projectDir)
+
+	common.ProcessLogProjectDir(commonCmdData, projectDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {

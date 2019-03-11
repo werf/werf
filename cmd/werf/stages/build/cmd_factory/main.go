@@ -51,7 +51,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfDebugAnsibleArgs),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ApplyLogOptions(commonCmdData); err != nil {
+			if err := common.ProcessLogOptions(commonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -74,6 +74,7 @@ If one or more IMAGE_NAME parameters specified, werf will build only these image
 	common.SetupInsecureRepo(commonCmdData, cmd)
 
 	common.SetupLogOptions(commonCmdData, cmd)
+	common.SetupLogProjectDir(commonCmdData, cmd)
 
 	cmd.Flags().BoolVarP(&cmdData.IntrospectAfterError, "introspect-error", "", false, "Introspect failed stage in the state, right after running failed assembly instruction")
 	cmd.Flags().BoolVarP(&cmdData.IntrospectBeforeError, "introspect-before-error", "", false, "Introspect failed stage in the clean state, before running all assembly instructions of the stage")
@@ -106,7 +107,8 @@ func runStagesBuild(cmdData *CmdData, commonCmdData *common.CmdData, imagesToPro
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
-	common.LogProjectDir(projectDir)
+
+	common.ProcessLogProjectDir(commonCmdData, projectDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {

@@ -61,6 +61,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
+	common.SetupLogProjectDir(&CommonCmdData, cmd)
+
 	cmd.Flags().BoolVarP(&CmdData.WithNamespace, "with-namespace", "", false, "Delete Kubernetes Namespace after purging Helm Release")
 
 	return cmd
@@ -87,7 +89,8 @@ func runDismiss() error {
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
-	common.LogProjectDir(projectDir)
+
+	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {

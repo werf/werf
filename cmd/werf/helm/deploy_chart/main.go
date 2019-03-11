@@ -36,7 +36,7 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 				return err
 			}
 
-			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
