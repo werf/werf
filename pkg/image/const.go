@@ -11,7 +11,7 @@ const (
 	WerfMountBuildDirLabel        = "werf-mount-type-build-dir"
 	WerfMountCustomDirLabelPrefix = "werf-mount-type-custom-dir-"
 
-	WerfImportMountLabelPrefix = "werf-import-"
+	WerfImportLabelPrefix = "werf-import-"
 
 	WerfTagStrategyLabel = "werf-tag-strategy"
 

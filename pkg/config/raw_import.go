@@ -46,31 +46,31 @@ func (c *rawImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (c *rawImport) toDirective() (importInstance *Import, err error) {
-	importInstance = &Import{}
+func (c *rawImport) toDirective() (imp *Import, err error) {
+	imp = &Import{}
 
 	if artifactExport, err := c.rawArtifactExport.toDirective(); err != nil {
 		return nil, err
 	} else {
-		importInstance.ArtifactExport = artifactExport
+		imp.ArtifactExport = artifactExport
 	}
 
-	importInstance.ImageName = c.ImageName
-	importInstance.ArtifactName = c.ArtifactName
-	importInstance.Before = c.Before
-	importInstance.After = c.After
+	imp.ImageName = c.ImageName
+	imp.ArtifactName = c.ArtifactName
+	imp.Before = c.Before
+	imp.After = c.After
 
-	importInstance.raw = c
+	imp.raw = c
 
-	if err = c.validateDirective(importInstance); err != nil {
+	if err = c.validateDirective(imp); err != nil {
 		return nil, err
 	}
 
-	return importInstance, nil
+	return imp, nil
 }
 
-func (c *rawImport) validateDirective(importInstance *Import) (err error) {
-	if err = importInstance.validate(); err != nil {
+func (c *rawImport) validateDirective(imp *Import) (err error) {
+	if err = imp.validate(); err != nil {
 		return err
 	}
 

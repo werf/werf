@@ -11,8 +11,8 @@ type Import struct {
 	Before       string
 	After        string
 
-	ImageArtifact *ImageArtifact
 	Image         *Image
+	ImageArtifact *ImageArtifact
 
 	raw *rawImport
 }

@@ -19,6 +19,18 @@ type ImageBase struct {
 	raw *rawImage
 }
 
+func (c *ImageBase) fromImage() *Image {
+	return c.FromImage
+}
+
+func (c *ImageBase) fromImageArtifact() *ImageArtifact {
+	return c.FromImageArtifact
+}
+
+func (c *ImageBase) imports() []*Import {
+	return c.Import
+}
+
 func (c *ImageBase) ImageBaseConfig() *ImageBase {
 	return c
 }

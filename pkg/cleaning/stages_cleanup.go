@@ -154,7 +154,7 @@ func exceptRepoImageStagesByRepoImageStage(repoImageStages []docker_registry.Rep
 	}
 
 	for label, signature := range labels {
-		if strings.HasPrefix(label, image.WerfImportMountLabelPrefix) {
+		if strings.HasPrefix(label, image.WerfImportLabelPrefix) {
 			repoImageStages, err = exceptRepoImageStagesBySignature(repoImageStages, signature)
 			if err != nil {
 				return nil, err
@@ -291,7 +291,7 @@ func exceptImageStagesByImageId(imageStages []types.ImageSummary, imageId string
 func exceptImageStagesByImageStage(imageStages []types.ImageSummary, imageStage types.ImageSummary, commonProjectOptions CommonProjectOptions) ([]types.ImageSummary, error) {
 	var err error
 	for label, value := range imageStage.Labels {
-		if strings.HasPrefix(label, image.WerfImportMountLabelPrefix) {
+		if strings.HasPrefix(label, image.WerfImportLabelPrefix) {
 			imageStages, err = exceptImageStagesBySignarute(imageStages, value, commonProjectOptions)
 			if err != nil {
 				return nil, err

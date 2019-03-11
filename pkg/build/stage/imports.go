@@ -32,20 +32,20 @@ func getImports(imageBaseConfig *config.ImageBase, options *getImportsOptions) [
 	return imports
 }
 
-func newImportStage(imports []*config.Import, name StageName, baseStageOptions *NewBaseStageOptions) *ImportStage {
-	s := &ImportStage{}
+func newImportsStage(imports []*config.Import, name StageName, baseStageOptions *NewBaseStageOptions) *ImportsStage {
+	s := &ImportsStage{}
 	s.imports = imports
 	s.BaseStage = newBaseStage(name, baseStageOptions)
 	return s
 }
 
-type ImportStage struct {
+type ImportsStage struct {
 	*BaseStage
 
 	imports []*config.Import
 }
 
-func (s *ImportStage) GetDependencies(c Conveyor, _ imagePkg.ImageInterface) (string, error) {
+func (s *ImportsStage) GetDependencies(c Conveyor, _ imagePkg.ImageInterface) (string, error) {
 	var args []string
 
 	for _, elm := range s.imports {
@@ -64,7 +64,7 @@ func (s *ImportStage) GetDependencies(c Conveyor, _ imagePkg.ImageInterface) (st
 	return util.Sha256Hash(args...), nil
 }
 
-func (s *ImportStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface) error {
+func (s *ImportsStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface) error {
 	for _, elm := range s.imports {
 		importFromContainerTmpPath := s.importContainerTmpPath(elm)
 		command := generateSafeCp(importFromContainerTmpPath, elm.To, elm.Owner, elm.Group, elm.IncludePaths, elm.ExcludePaths)
@@ -78,10 +78,10 @@ func (s *ImportStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface)
 
 		var labelKey, labelValue string
 		if elm.ImageName != "" {
-			labelKey = fmt.Sprintf("%s%s", imagePkg.WerfImportMountLabelPrefix, slug.Slug(elm.ImageName))
+			labelKey = imagePkg.WerfImportLabelPrefix + slug.Slug(elm.ImageName)
 			labelValue = c.GetImageLatestStageSignature(elm.ImageName)
 		} else {
-			labelKey = fmt.Sprintf("%s%s", imagePkg.WerfImportMountLabelPrefix, slug.Slug(elm.ArtifactName))
+			labelKey = imagePkg.WerfImportLabelPrefix + slug.Slug(elm.ArtifactName)
 			labelValue = c.GetImageLatestStageSignature(elm.ArtifactName)
 		}
 
@@ -91,7 +91,7 @@ func (s *ImportStage) PrepareImage(c Conveyor, _, image imagePkg.ImageInterface)
 	return nil
 }
 
-func (s *ImportStage) PreRunHook(c Conveyor) error {
+func (s *ImportsStage) PreRunHook(c Conveyor) error {
 	for _, elm := range s.imports {
 		if err := s.prepareImportData(c, elm); err != nil {
 			return err
@@ -101,7 +101,7 @@ func (s *ImportStage) PreRunHook(c Conveyor) error {
 	return nil
 }
 
-func (s *ImportStage) prepareImportData(c Conveyor, i *config.Import) error {
+func (s *ImportsStage) prepareImportData(c Conveyor, i *config.Import) error {
 	importContainerTmpPath := s.importContainerTmpPath(i)
 
 	imageCommand := generateSafeCp(i.Add, importContainerTmpPath, "", "", []string{}, []string{})
@@ -144,7 +144,7 @@ func (s *ImportStage) prepareImportData(c Conveyor, i *config.Import) error {
 	return nil
 }
 
-func (s *ImportStage) importContainerTmpPath(i *config.Import) string {
+func (s *ImportsStage) importContainerTmpPath(i *config.Import) string {
 	importID := util.Sha256Hash(fmt.Sprintf("%+v", i))
 	_, importImageContainerTmpPath := s.importImageTmpDirs(i)
 	importContainerTmpPath := path.Join(importImageContainerTmpPath, importID)
@@ -152,7 +152,7 @@ func (s *ImportStage) importContainerTmpPath(i *config.Import) string {
 	return importContainerTmpPath
 }
 
-func (s *ImportStage) importImageTmpDirs(i *config.Import) (string, string) {
+func (s *ImportsStage) importImageTmpDirs(i *config.Import) (string, string) {
 	var importNamePathPart string
 	if i.ImageName != "" {
 		importNamePathPart = slug.Slug(i.ImageName)
