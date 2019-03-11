@@ -23,7 +23,9 @@ To begin, you'll need the following:
 
 * Kubernetes cluster
 * GitLab with docker registry enabled
-* Werf node (node for build and deployment)
+* Werf node (node for build and for deploy)
+
+Pay attention, that both the build process and the deployment process run on the same node — this is the only right way to use local stages storage specified with `--stages-storage :local` (distributed stages storage not supported yet, will be added soon).
 
 We don't recommend to run werf in docker as it can give an unexpected result.
 
@@ -31,9 +33,7 @@ In order to set up the CI/CD process, you need to describe build, deploy and cle
 
 Werf use `~/.werf/` folder to store build cache and other files. Werf assumes this folder is preserved for all pipelines. That is why for build processes we don't recommend you to use environments which are don't preserve a GitLab runner's state (files between runs), e.g. some cloud environments.
 
-The deployment process needs access to the cluster through kubectl and you can simply use master node as Werf node. But in production case you better setup werf on a separate node.
-
-This HowTo assumes you setup werf on the master kubernetes node.
+The deployment process needs access to the cluster through the kubectl, and therefore you need to setup kubectl on a Werf node. Werf will use default kubectl context for deploy unless you specify otherwise (e.g. with the `--kube-context` option or `$WERF_KUBE_CONTEXT` environment variable).
 
 Eventually, Werf node needs access:
 - to the application git repository
@@ -44,7 +44,7 @@ You need to set up GitLab runner with `werf` tags.
 
 ### Setup runner
 
-On the master kubernetes node, you need to install and set up GitLab runner. Follow these steps:
+On the Werf node, you need to install and set up GitLab runner. Follow these steps:
 
 1. Create GitLab project and push project code into it.
 1. Get a registration token for the runner: in your GitLab project open `Settings` —> `CI/CD`, expand `Runners` and find the token in the section `Setup a specific Runner manually`.
@@ -60,6 +60,7 @@ On the master kubernetes node, you need to install and set up GitLab runner. Fol
    sudo usermod -Ga docker gitlab-runner
    ```
 
+1. [Install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) Docker and setup kubectl (of course if they are not already installed).
 1. Install [Werf dependencies]({{ site.baseurl }}/how_to/installation.html#install-dependencies) including Helm.
 1. Install [`Multiwerf`](https://github.com/flant/multiwerf) under the `gitlab-runner` user:
 
@@ -76,8 +77,6 @@ On the master kubernetes node, you need to install and set up GitLab runner. Fol
    sudo cp -i /etc/kubernetes/admin.conf /home/gitlab-runner/.kube/config &&
    sudo chown -R gitlab-runner:gitlab-runner /home/gitlab-runner/.kube
    ```
-
-> If you install Werf not on the master kubernetes node, you must [install](https://kubernetes.io/docs/setup/independent/install-kubeadm/#installing-docker) Docker and setup kubectl.
 
 ## Pipeline
 
