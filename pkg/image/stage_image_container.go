@@ -9,6 +9,7 @@ import (
 
 	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/docker"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -77,6 +78,9 @@ func (c *StageImageContainer) prepareRunArgs() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logger.TerminalContentWidth())
+	runArgs = append(runArgs, setColumnsEnv)
 
 	fromImageId, err := c.image.fromImage.MustGetId()
 	if err != nil {

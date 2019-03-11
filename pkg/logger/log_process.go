@@ -67,7 +67,7 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 func prepareLogProcessMsgLeftPart(leftPart string, colorizeFunc func(...interface{}) string, rightParts ...string) string {
 	var result string
 
-	spaceWidth := terminalContentWidth() - len(strings.Join(rightParts, logStateRightPartsSeparator))
+	spaceWidth := TerminalContentWidth() - len(strings.Join(rightParts, logStateRightPartsSeparator))
 	if spaceWidth > 0 {
 		if spaceWidth > len(leftPart) {
 			result = leftPart
