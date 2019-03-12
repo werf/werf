@@ -3,40 +3,33 @@ package logger
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
 
 const (
-	defaultTerminalWidth = 140
+	DefaultTerminalWidth = 140
 )
 
 var terminalWidth int
 
-func initTerminalWidth() {
-	if wtw, ok := os.LookupEnv("WERF_TERMINAL_WIDTH"); ok {
-		if i, err := strconv.Atoi(wtw); err != nil {
-			panic(fmt.Sprintf("Unexpected WERF_TERMINAL_WIDTH: %s", err))
-		} else {
-			terminalWidth = i
-
-			return
+func initTerminalWidth() error {
+	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+		w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
+		if err != nil {
+			return fmt.Errorf("get terminal size failed: %s", err)
 		}
+
+		SetTerminalWidth(w)
 	} else {
-		if terminal.IsTerminal(int(os.Stdout.Fd())) {
-			w, _, err := terminal.GetSize(int(os.Stdout.Fd()))
-			if err != nil {
-				panic(err)
-			}
-
-			terminalWidth = w
-
-			return
-		}
+		SetTerminalWidth(DefaultTerminalWidth)
 	}
 
-	terminalWidth = defaultTerminalWidth
+	return nil
+}
+
+func SetTerminalWidth(value int) {
+	terminalWidth = value
 }
 
 func IsTerminal() bool {

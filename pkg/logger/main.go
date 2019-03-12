@@ -1,7 +1,7 @@
 package logger
 
-func Init() {
-	initTerminalWidth()
+func Init() error {
+	return initTerminalWidth()
 }
 
 func DisablePrettyLog() {

@@ -59,7 +59,11 @@ import (
 func main() {
 	trapTerminationSignals()
 
-	logging.Init()
+	if err := logging.Init(); err != nil {
+		common.LogErrorF(fmt.Sprintf("logger initialization error: %s\n", err))
+
+		os.Exit(1)
+	}
 
 	if err := process_exterminator.Init(); err != nil {
 		common.LogErrorF(fmt.Sprintf("process exterminator initialization error: %s\n", err))

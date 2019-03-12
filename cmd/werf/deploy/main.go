@@ -49,7 +49,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -80,6 +80,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
+	common.SetupLogProjectDir(&CommonCmdData, cmd)
 
 	common.SetupSet(&CommonCmdData, cmd)
 	common.SetupSetString(&CommonCmdData, cmd)
@@ -128,7 +129,8 @@ func runDeploy() error {
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
-	common.LogProjectDir(projectDir)
+
+	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
 
 	projectTmpDir, err := tmp_manager.CreateProjectDir()
 	if err != nil {

@@ -40,7 +40,7 @@ Command will extract data with the old key, generate new secret data and rewrite
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}

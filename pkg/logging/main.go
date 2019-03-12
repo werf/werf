@@ -11,8 +11,8 @@ var (
 	artifactNameFormat = "🛸 artifact %s"
 )
 
-func Init() {
-	logger.Init()
+func Init() error {
+	return logger.Init()
 }
 
 func EnableLogColor() {
@@ -21,6 +21,10 @@ func EnableLogColor() {
 
 func DisableLogColor() {
 	logger.DisableLogColor()
+}
+
+func SetTerminalWidth(value int) {
+	logger.SetTerminalWidth(value)
 }
 
 func DisablePrettyLog() {

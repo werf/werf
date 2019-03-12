@@ -26,7 +26,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Purge project stages from stages storage",
 		Long:                  common.GetLongCommandDescription("Purge project stages from stages storage"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -48,6 +48,7 @@ func NewCmd() *cobra.Command {
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
+	common.SetupLogProjectDir(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -75,7 +76,8 @@ func runPurge() error {
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
-	common.LogProjectDir(projectDir)
+
+	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
 
 	werfConfig, err := common.GetWerfConfig(projectDir)
 	if err != nil {

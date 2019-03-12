@@ -30,7 +30,7 @@ First step is 'werf images purge', which will delete all project images from ima
 
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually. Images from images repo, that are being used in Kubernetes cluster will also be deleted.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
@@ -52,6 +52,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
+	common.SetupLogProjectDir(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
 
@@ -71,7 +72,8 @@ func runPurge() error {
 	if err != nil {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
-	common.LogProjectDir(projectDir)
+
+	common.ProcessLogProjectDir(&CommonCmdData, projectDir)
 
 	_, err = common.GetStagesRepo(&CommonCmdData)
 	if err != nil {

@@ -36,7 +36,7 @@ The data include:
 WARNING: Do not run this command during any other werf command is working on the host machine. This command is supposed to be run manually.`),
 		DisableFlagsInUseLine: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ApplyLogOptions(&CommonCmdData); err != nil {
+			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
