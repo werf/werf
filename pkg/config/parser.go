@@ -440,7 +440,27 @@ func splitByImages(rawImages []*rawImage, werfConfigRenderContent, werfConfigRen
 		return nil, err
 	}
 
+	if err := validateInfiniteLoopBetweenRelatedImages(images, artifacts); err != nil {
+		return nil, err
+	}
+
 	return images, nil
+}
+
+func validateInfiniteLoopBetweenRelatedImages(images []*Image, artifacts []*ImageArtifact) error {
+	for _, image := range images {
+		if err := image.validateInfiniteLoop(); err != nil {
+			return err
+		}
+	}
+
+	for _, artifact := range artifacts {
+		if err := artifact.validateInfiniteLoop(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func exportsAutoExcluding(images []*Image, artifacts []*ImageArtifact) error {
@@ -501,10 +521,10 @@ func validateImagesNames(images []*Image, artifacts []*ImageArtifact) error {
 }
 
 func associateImportsArtifacts(images []*Image, artifacts []*ImageArtifact) error {
-	var artifactImports []*ArtifactImport
+	var artifactImports []*Import
 
 	for _, image := range images {
-		for _, relatedImageInterface := range image.relatedImages() {
+		for _, relatedImageInterface := range relatedImageImages(image) {
 			switch relatedImageInterface.(type) {
 			case *Image:
 				artifactImports = append(artifactImports, relatedImageInterface.(*Image).Import...)
@@ -515,7 +535,7 @@ func associateImportsArtifacts(images []*Image, artifacts []*ImageArtifact) erro
 	}
 
 	for _, artifactImage := range artifacts {
-		for _, relatedImageInterface := range artifactImage.relatedImages() {
+		for _, relatedImageInterface := range relatedImageImages(artifactImage) {
 			switch relatedImageInterface.(type) {
 			case *Image:
 				artifactImports = append(artifactImports, relatedImageInterface.(*Image).Import...)
@@ -526,7 +546,7 @@ func associateImportsArtifacts(images []*Image, artifacts []*ImageArtifact) erro
 	}
 
 	for _, artifactImport := range artifactImports {
-		if err := artifactImport.associateArtifact(artifacts); err != nil {
+		if err := artifactImport.associateImportImage(images, artifacts); err != nil {
 			return err
 		}
 	}
@@ -536,13 +556,13 @@ func associateImportsArtifacts(images []*Image, artifacts []*ImageArtifact) erro
 
 func associateImagesFrom(images []*Image, artifacts []*ImageArtifact) error {
 	for _, image := range images {
-		if err := associateImageFrom(image.lastLayerOrSelf(), images, artifacts); err != nil {
+		if err := associateImageFrom(headImage(image), images, artifacts); err != nil {
 			return err
 		}
 	}
 
 	for _, image := range artifacts {
-		if err := associateImageFrom(image.lastLayerOrSelf(), images, artifacts); err != nil {
+		if err := associateImageFrom(headImage(image), images, artifacts); err != nil {
 			return err
 		}
 	}

@@ -1,6 +1,7 @@
 package config
 
-type rawArtifactImport struct {
+type rawImport struct {
+	ImageName    string `yaml:"image,omitempty"`
 	ArtifactName string `yaml:"artifact,omitempty"`
 	Before       string `yaml:"before,omitempty"`
 	After        string `yaml:"after,omitempty"`
@@ -11,21 +12,21 @@ type rawArtifactImport struct {
 	UnsupportedAttributes map[string]interface{} `yaml:",inline"`
 }
 
-func (c *rawArtifactImport) configSection() interface{} {
+func (c *rawImport) configSection() interface{} {
 	return c
 }
 
-func (c *rawArtifactImport) doc() *doc {
+func (c *rawImport) doc() *doc {
 	return c.rawImage.doc
 }
 
-func (c *rawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *rawImport) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if parent, ok := parentStack.Peek().(*rawImage); ok {
 		c.rawImage = parent
 	}
 
 	parentStack.Push(c)
-	type plain rawArtifactImport
+	type plain rawImport
 	err := unmarshal((*plain)(c))
 	parentStack.Pop()
 	if err != nil {
@@ -45,30 +46,31 @@ func (c *rawArtifactImport) UnmarshalYAML(unmarshal func(interface{}) error) err
 	return nil
 }
 
-func (c *rawArtifactImport) toDirective() (artifactImport *ArtifactImport, err error) {
-	artifactImport = &ArtifactImport{}
+func (c *rawImport) toDirective() (imp *Import, err error) {
+	imp = &Import{}
 
 	if artifactExport, err := c.rawArtifactExport.toDirective(); err != nil {
 		return nil, err
 	} else {
-		artifactImport.ArtifactExport = artifactExport
+		imp.ArtifactExport = artifactExport
 	}
 
-	artifactImport.ArtifactName = c.ArtifactName
-	artifactImport.Before = c.Before
-	artifactImport.After = c.After
+	imp.ImageName = c.ImageName
+	imp.ArtifactName = c.ArtifactName
+	imp.Before = c.Before
+	imp.After = c.After
 
-	artifactImport.raw = c
+	imp.raw = c
 
-	if err = c.validateDirective(artifactImport); err != nil {
+	if err = c.validateDirective(imp); err != nil {
 		return nil, err
 	}
 
-	return artifactImport, nil
+	return imp, nil
 }
 
-func (c *rawArtifactImport) validateDirective(artifactImport *ArtifactImport) (err error) {
-	if err = artifactImport.validate(); err != nil {
+func (c *rawImport) validateDirective(imp *Import) (err error) {
+	if err = imp.validate(); err != nil {
 		return err
 	}
 

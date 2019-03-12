@@ -14,9 +14,21 @@ type ImageBase struct {
 	Shell             *Shell
 	Ansible           *Ansible
 	Mount             []*Mount
-	Import            []*ArtifactImport
+	Import            []*Import
 
 	raw *rawImage
+}
+
+func (c *ImageBase) fromImage() *Image {
+	return c.FromImage
+}
+
+func (c *ImageBase) fromImageArtifact() *ImageArtifact {
+	return c.FromImageArtifact
+}
+
+func (c *ImageBase) imports() []*Import {
+	return c.Import
 }
 
 func (c *ImageBase) ImageBaseConfig() *ImageBase {

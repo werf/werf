@@ -5,8 +5,7 @@ fromImage: <image_name>
 fromImageArtifact: <artifact_name>
 git:
 # local git
-- as: <custom_name>
-  add: <absolute_path>
+  - add: <absolute_path>
   to: <absolute_path>
   owner: <owner>
   group: <group>
@@ -26,7 +25,6 @@ git:
   branch: <branch_name>
   commit: <commit>
   tag: <tag>
-  as: <custom_name>
   add: <absolute_path>
   to: <absolute_path>
   owner: <owner>
@@ -44,6 +42,7 @@ git:
     - <relative_path or glob>
 import:
 - artifact: <artifact_name>
+  image: <image name>
   before: <install || setup>
   after: <install || setup>
   add: <absolute_path>
@@ -115,8 +114,7 @@ fromImage: <image_name>
 fromImageArtifact: <artifact_name>
 git:
 # local git
-- as: <custom_name>
-  add: <absolute_path>
+  - add: <absolute_path>
   to: <absolute_path>
   owner: <owner>
   group: <group>
@@ -136,7 +134,6 @@ git:
   branch: <branch_name>
   commit: <commit>
   tag: <tag>
-  as: <custom_name>
   add: <absolute_path>
   to: <absolute_path>
   owner: <owner>
@@ -152,6 +149,19 @@ git:
     - <relative_path or glob>
     setup:
     - <relative_path or glob>
+import:
+  - artifact: <artifact_name>
+    image: <image name>
+    before: <install || setup>
+    after: <install || setup>
+    add: <absolute_path>
+    to: <absolute_path>
+    owner: <owner>
+    group: <group>
+    includePaths:
+      - <relative_path or glob>
+    excludePaths:
+      - <relative_path or glob>
 shell:
   beforeInstall:
   - <cmd>

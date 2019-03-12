@@ -6,19 +6,19 @@ import (
 )
 
 type rawImage struct {
-	Images            []string             `yaml:"-"`
-	Artifact          string               `yaml:"artifact,omitempty"`
-	From              string               `yaml:"from,omitempty"`
-	FromCacheVersion  string               `yaml:"fromCacheVersion,omitempty"`
-	FromImage         string               `yaml:"fromImage,omitempty"`
-	FromImageArtifact string               `yaml:"fromImageArtifact,omitempty"`
-	RawGit            []*rawGit            `yaml:"git,omitempty"`
-	RawShell          *rawShell            `yaml:"shell,omitempty"`
-	RawAnsible        *rawAnsible          `yaml:"ansible,omitempty"`
-	RawMount          []*rawMount          `yaml:"mount,omitempty"`
-	RawDocker         *rawDocker           `yaml:"docker,omitempty"`
-	RawImport         []*rawArtifactImport `yaml:"import,omitempty"`
-	AsLayers          bool                 `yaml:"asLayers,omitempty"`
+	Images            []string     `yaml:"-"`
+	Artifact          string       `yaml:"artifact,omitempty"`
+	From              string       `yaml:"from,omitempty"`
+	FromCacheVersion  string       `yaml:"fromCacheVersion,omitempty"`
+	FromImage         string       `yaml:"fromImage,omitempty"`
+	FromImageArtifact string       `yaml:"fromImageArtifact,omitempty"`
+	RawGit            []*rawGit    `yaml:"git,omitempty"`
+	RawShell          *rawShell    `yaml:"shell,omitempty"`
+	RawAnsible        *rawAnsible  `yaml:"ansible,omitempty"`
+	RawMount          []*rawMount  `yaml:"mount,omitempty"`
+	RawDocker         *rawDocker   `yaml:"docker,omitempty"`
+	RawImport         []*rawImport `yaml:"import,omitempty"`
+	AsLayers          bool         `yaml:"asLayers,omitempty"`
 
 	doc *doc `yaml:"-"` // parent
 
@@ -496,7 +496,7 @@ func (c *rawImage) toImageArtifactTopLayerDirective() (mainImageArtifactLayer *I
 	return mainImageArtifactLayer, nil
 }
 
-func (c *rawImage) layerImportArtifactsByLayer(before string, after string) (artifactImports []*ArtifactImport, err error) {
+func (c *rawImage) layerImportArtifactsByLayer(before string, after string) (artifactImports []*Import, err error) {
 	for _, importArtifact := range c.RawImport {
 		var condition bool
 		if before != "" {
