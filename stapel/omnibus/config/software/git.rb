@@ -34,7 +34,7 @@ source url: "https://www.kernel.org/pub/software/scm/git/git-#{version}.tar.gz"
 
 build do
   env = with_standard_compiler_flags(with_embedded_path)
-  env["LDFLAGS"] += " -Wl,-rpath-link,/.werf/stapel/base/0.3.0/embedded/lib"
+  env["LDFLAGS"] += " -Wl,-rpath-link,/.werf/stapel/embedded/lib"
 
   make "distclean"
 
