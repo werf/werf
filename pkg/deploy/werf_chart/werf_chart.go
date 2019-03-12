@@ -121,7 +121,7 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 		return fmt.Errorf("cannot read secret values file %s: %s", path, err)
 	}
 
-	decodedData, err := m.ExtractYamlData(data)
+	decodedData, err := m.DecryptYamlData(data)
 	if err != nil {
 		return fmt.Errorf("cannot decode secret values file %s data: %s", path, err)
 	}
@@ -302,7 +302,7 @@ func CreateNewWerfChart(projectName, projectDir string, targetDir string, m secr
 				return fmt.Errorf("error reading file %s: %s", path, err)
 			}
 
-			decodedData, err := m.Extract([]byte(strings.TrimRightFunc(string(data), unicode.IsSpace)))
+			decodedData, err := m.Decrypt([]byte(strings.TrimRightFunc(string(data), unicode.IsSpace)))
 			if err != nil {
 				return fmt.Errorf("error decoding %s: %s", path, err)
 			}

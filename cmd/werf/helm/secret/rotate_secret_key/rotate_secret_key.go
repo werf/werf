@@ -24,7 +24,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "regenerate [EXTRA_SECRET_VALUES_FILE_PATH...]",
+		Use:                   "rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...]",
 		DisableFlagsInUseLine: true,
 		Short:                 "Regenerate secret files with new secret key",
 		Long: common.GetLongCommandDescription(`Regenerate secret files with new secret key.
@@ -44,7 +44,7 @@ Command will extract data with the old key, generate new secret data and rewrite
 				common.PrintHelp(cmd)
 				return err
 			}
-			return runSecretRegenerate(args...)
+			return runRotateSecretKey(args...)
 		},
 	}
 
@@ -60,7 +60,7 @@ Command will extract data with the old key, generate new secret data and rewrite
 	return cmd
 }
 
-func runSecretRegenerate(secretValuesPaths ...string) error {
+func runRotateSecretKey(secretValuesPaths ...string) error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -151,11 +151,11 @@ func secretsRegenerate(newManager, oldManager secret.Manager, projectPath string
 		return err
 	}
 
-	if err := regenerateSecrets(secretFilesData, regeneratedFilesData, oldManager.Extract, newManager.Generate); err != nil {
+	if err := regenerateSecrets(secretFilesData, regeneratedFilesData, oldManager.Decrypt, newManager.Encrypt); err != nil {
 		return err
 	}
 
-	if err := regenerateSecrets(secretValuesFilesData, regeneratedFilesData, oldManager.ExtractYamlData, newManager.GenerateYamlData); err != nil {
+	if err := regenerateSecrets(secretValuesFilesData, regeneratedFilesData, oldManager.DecryptYamlData, newManager.EncryptYamlData); err != nil {
 		return err
 	}
 

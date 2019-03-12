@@ -22,9 +22,9 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "generate",
+		Use:                   "encrypt",
 		DisableFlagsInUseLine: true,
-		Short:                 "Encrypt provided data",
+		Short:                 "Encrypt data",
 		Long: common.GetLongCommandDescription(`Encrypt provided data.
 
 Provide data onto stdin by default.
@@ -34,7 +34,7 @@ Data can be provided in file by specifying --file-path option. Option --values s
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSecretGenerate()
+			return runSecretEncrypt()
 		},
 	}
 
@@ -49,7 +49,7 @@ Data can be provided in file by specifying --file-path option. Option --values s
 	return cmd
 }
 
-func runSecretGenerate() error {
+func runSecretEncrypt() error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -70,10 +70,10 @@ func runSecretGenerate() error {
 		return err
 	}
 
-	return secretGenerate(m, options)
+	return secretEncrypt(m, options)
 }
 
-func secretGenerate(m secret.Manager, options *secret_common.GenerateOptions) error {
+func secretEncrypt(m secret.Manager, options *secret_common.GenerateOptions) error {
 	var data []byte
 	var encodedData []byte
 	var err error
@@ -95,12 +95,12 @@ func secretGenerate(m secret.Manager, options *secret_common.GenerateOptions) er
 	}
 
 	if options.FilePath != "" && options.Values {
-		encodedData, err = m.GenerateYamlData(data)
+		encodedData, err = m.EncryptYamlData(data)
 		if err != nil {
 			return err
 		}
 	} else {
-		encodedData, err = m.Generate(data)
+		encodedData, err = m.Encrypt(data)
 		if err != nil {
 			return err
 		}

@@ -24,7 +24,7 @@ var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "extract",
+		Use:                   "decrypt",
 		DisableFlagsInUseLine: true,
 		Short:                 "Decrypt data",
 		Long: common.GetLongCommandDescription(`Decrypt data.
@@ -36,7 +36,7 @@ Data can be provided in a file by specifying --file-path option. Option --values
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSecretExtract()
+			return runSecretDecrypt()
 		},
 	}
 
@@ -51,7 +51,7 @@ Data can be provided in a file by specifying --file-path option. Option --values
 	return cmd
 }
 
-func runSecretExtract() error {
+func runSecretDecrypt() error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -72,10 +72,10 @@ func runSecretExtract() error {
 		return err
 	}
 
-	return secretExtract(m, options)
+	return secretDecrypt(m, options)
 }
 
-func secretExtract(m secret.Manager, options *secret_common.GenerateOptions) error {
+func secretDecrypt(m secret.Manager, options *secret_common.GenerateOptions) error {
 	var encodedData []byte
 	var data []byte
 	var err error
@@ -99,12 +99,12 @@ func secretExtract(m secret.Manager, options *secret_common.GenerateOptions) err
 	encodedData = bytes.TrimSpace(encodedData)
 
 	if options.FilePath != "" && options.Values {
-		data, err = m.ExtractYamlData(encodedData)
+		data, err = m.DecryptYamlData(encodedData)
 		if err != nil {
 			return err
 		}
 	} else {
-		data, err = m.Extract(encodedData)
+		data, err = m.Decrypt(encodedData)
 		if err != nil {
 			return err
 		}

@@ -17,11 +17,11 @@ import (
 	"github.com/flant/werf/cmd/werf/purge"
 	"github.com/flant/werf/cmd/werf/run"
 
+	helm_secret_decrypt "github.com/flant/werf/cmd/werf/helm/secret/decrypt"
 	helm_secret_edit "github.com/flant/werf/cmd/werf/helm/secret/edit"
-	helm_secret_extract "github.com/flant/werf/cmd/werf/helm/secret/extract"
-	helm_secret_generate "github.com/flant/werf/cmd/werf/helm/secret/generate"
-	helm_secret_key_generate "github.com/flant/werf/cmd/werf/helm/secret/key_generate"
-	helm_secret_regenerate "github.com/flant/werf/cmd/werf/helm/secret/regenerate"
+	helm_secret_encrypt "github.com/flant/werf/cmd/werf/helm/secret/encrypt"
+	helm_secret_generate_secret_key "github.com/flant/werf/cmd/werf/helm/secret/generate_secret_key"
+	helm_secret_rotate_secret_key "github.com/flant/werf/cmd/werf/helm/secret/rotate_secret_key"
 
 	"github.com/flant/werf/cmd/werf/ci_env"
 	"github.com/flant/werf/cmd/werf/slugify"
@@ -194,11 +194,11 @@ func secretCmd() *cobra.Command {
 		Short: "Work with secrets",
 	}
 	cmd.AddCommand(
-		helm_secret_key_generate.NewCmd(),
-		helm_secret_generate.NewCmd(),
-		helm_secret_extract.NewCmd(),
+		helm_secret_generate_secret_key.NewCmd(),
+		helm_secret_encrypt.NewCmd(),
+		helm_secret_decrypt.NewCmd(),
 		helm_secret_edit.NewCmd(),
-		helm_secret_regenerate.NewCmd(),
+		helm_secret_rotate_secret_key.NewCmd(),
 	)
 
 	return cmd

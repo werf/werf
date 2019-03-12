@@ -113,12 +113,12 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 
 		var newEncodedData []byte
 		if values {
-			newEncodedData, err = m.GenerateYamlData(newData)
+			newEncodedData, err = m.EncryptYamlData(newData)
 			if err != nil {
 				return err
 			}
 		} else {
-			newEncodedData, err = m.Generate(newData)
+			newEncodedData, err = m.Encrypt(newData)
 			if err != nil {
 				return err
 			}
@@ -180,12 +180,12 @@ func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []b
 		encodedData = bytes.TrimSpace(encodedData)
 
 		if values {
-			data, err = m.ExtractYamlData(encodedData)
+			data, err = m.DecryptYamlData(encodedData)
 			if err != nil {
 				return nil, nil, err
 			}
 		} else {
-			data, err = m.Extract(encodedData)
+			data, err = m.Decrypt(encodedData)
 			if err != nil {
 				return nil, nil, err
 			}
