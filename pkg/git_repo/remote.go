@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"gopkg.in/ini.v1"
-	"gopkg.in/satori/go.uuid.v1"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
@@ -15,6 +14,8 @@ import (
 
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/werf/pkg/werf"
+	uuid "github.com/satori/go.uuid"
 )
 
 const RemoteGitRepoCacheVersion = 4
@@ -93,7 +94,7 @@ func (repo *Remote) Clone() (bool, error) {
 
 		logger.LogInfoF("Clone %s\n", repo.Url)
 
-		path := filepath.Join("/tmp", fmt.Sprintf("werf-git-repo-%s", uuid.NewV4().String()))
+		path := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-git-repo-%s", uuid.NewV4().String()))
 
 		_, err = git.PlainClone(path, true, &git.CloneOptions{
 			URL:               repo.Url,
