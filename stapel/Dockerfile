@@ -212,13 +212,15 @@ RUN bundle exec omnibus build -o append_timestamp:false werf-stapel
 # python-apt will be installed automatically by ansible apt module on first run.
 # flant/werf-stapel offers support for ansible-apt-module only for ubuntu:14.04 ubuntu:16.04 ubuntu:18.04
 ENV PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-RUN apt install -y python-apt
+RUN apt install -y python-apt libzstd1
 RUN \
 cp /usr/lib/x86_64-linux-gnu/libapt-inst.so.2.0 $TOOLS/embedded/lib/ && \
 cp /usr/lib/x86_64-linux-gnu/libapt-pkg.so.5.0 $TOOLS/embedded/lib/ && \
 cp /usr/lib/x86_64-linux-gnu/liblz4.so.1 $TOOLS/embedded/lib/ && \
 cp /lib/x86_64-linux-gnu/liblzma.so.5 $TOOLS/embedded/lib/ && \
 cp /lib/x86_64-linux-gnu/libbz2.so.1.0 $TOOLS/embedded/lib/ && \
+cp /lib/x86_64-linux-gnu/libudev.so.1 $TOOLS/embedded/lib/ && \
+cp /usr/lib/x86_64-linux-gnu/libzstd.so* $TOOLS/embedded/lib/ && \
 cp /usr/lib/python2.7/dist-packages/apt_inst.x86_64-linux-gnu.so /tmp/apt_inst.so && \
 cp /tmp/apt_inst.so $TOOLS/embedded/lib/python2.7/ && \
 cp /usr/lib/python2.7/dist-packages/apt_pkg.x86_64-linux-gnu.so /tmp/apt_pkg.so && \
@@ -228,28 +230,57 @@ cp -r /usr/lib/python2.7/dist-packages/aptsources $TOOLS/embedded/lib/python2.7/
 
 # Cleanup stapel: only runtime libs and binaries are needed
 RUN rm -rf \
-/.werf/stapel/LICENSE* \
-/.werf/stapel/version-manifest.* \
-/.werf/stapel/sbin \
-/.werf/stapel/bin \
-/.werf/stapel/include \
-/.werf/stapel/x86_64-lfs-linux-gnu/include \
-/.werf/stapel/x86_64-lfs-linux-gnu/lib/ldscripts \
-/.werf/stapel/lib/*.a \
-/.werf/stapel/lib64/*.a \
-/.werf/stapel/lib/gcc \
-/.werf/stapel/libexec/gcc \
-/.werf/stapel/share \
-/.werf/stapel/var \
-/.werf/stapel/etc \
-/.werf/stapel/embedded/lib/*.a \
-/.werf/stapel/embedded/include \
-/.werf/stapel/embedded/info \
-/.werf/stapel/embedded/man \
-/.werf/stapel/embedded/share \
-/.werf/stapel/embedded/var \
-/.werf/stapel/embedded/ssl
-RUN find /.werf/stapel/embedded/lib/python2.7 -name *.py[oc] | xargs rm
+$TOOLS/LICENSE* \
+$TOOLS/version-manifest.* \
+$TOOLS/sbin \
+$TOOLS/bin \
+$TOOLS/include \
+$TOOLS/x86_64-lfs-linux-gnu/include \
+$TOOLS/x86_64-lfs-linux-gnu/lib \
+$TOOLS/lib/*.a \
+$TOOLS/lib/*.o \
+$TOOLS/lib64/*.a \
+$TOOLS/lib/gcc \
+$TOOLS/libexec/gcc \
+$TOOLS/share \
+$TOOLS/var \
+$TOOLS/etc \
+$TOOLS/embedded/lib/*.a \
+$TOOLS/embedded/include \
+$TOOLS/embedded/lib/python2.7/test \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/galaxy \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/clustering \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/source_control \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/notification \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/web_infrastructure \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/remote_management \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/monitoring \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/windows \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/storage \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/cloud \
+$TOOLS/embedded/lib/python2.7/site-packages/ansible/modules/network \
+$TOOLS/embedded/lib/python2.7/site-packages/pip \
+$TOOLS/embedded/lib/python2.7/site-packages/setuptools \
+$TOOLS/embedded/lib/python2.7/site-packages/*.dist-info \
+$TOOLS/embedded/share/doc \
+$TOOLS/embedded/share/info \
+$TOOLS/embedded/share/man \
+$TOOLS/embedded/share/local \
+$TOOLS/embedded/var \
+$TOOLS/embedded/info \
+$TOOLS/embedded/man
+
+RUN cp $TOOLS/x86_64-lfs-linux-gnu/bin/ld /tmp && \
+rm -rf $TOOLS/x86_64-lfs-linux-gnu/bin && \
+mkdir -p $TOOLS/x86_64-lfs-linux-gnu/bin && \
+mv /tmp/ld $TOOLS/x86_64-lfs-linux-gnu/bin
+
+RUN cp $TOOLS/lib/gconv/UNICODE.so /tmp && \
+rm -rf $TOOLS/lib/gconv && \
+mkdir -p $TOOLS/lib/gconv && \
+mv /tmp/UNICODE.so $TOOLS/lib/gconv
+
+RUN find $TOOLS/embedded/lib/python2.7 -name *.py[oc] | xargs rm
 
 # Import tools
 
