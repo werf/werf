@@ -40,7 +40,8 @@ type GitRepo interface {
 	IsEmpty() (bool, error)
 	HeadCommit() (string, error)
 	LatestBranchCommit(branch string) (string, error)
-	LatestTagCommit(tag string) (string, error)
+	TagCommit(tag string) (string, error)
+	IsCommitExists(commit string) (bool, error)
 	FindCommitIdByMessage(regex string) (string, error)
 
 	CreatePatch(PatchOptions) (Patch, error)

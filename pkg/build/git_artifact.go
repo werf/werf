@@ -87,7 +87,7 @@ func (ga *GitArtifact) LatestCommit() (string, error) {
 	}
 
 	if ga.Tag != "" {
-		return ga.GitRepo().LatestTagCommit(ga.Tag)
+		return ga.GitRepo().TagCommit(ga.Tag)
 	}
 
 	if ga.Branch != "" {

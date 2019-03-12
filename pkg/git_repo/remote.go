@@ -230,7 +230,7 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 	return res, nil
 }
 
-func (repo *Remote) LatestTagCommit(tag string) (string, error) {
+func (repo *Remote) TagCommit(tag string) (string, error) {
 	var err error
 
 	rawRepo, err := git.PlainOpen(repo.ClonePath)
@@ -238,12 +238,22 @@ func (repo *Remote) LatestTagCommit(tag string) (string, error) {
 		return "", fmt.Errorf("cannot open repo: %s", err)
 	}
 
-	res, err := repo.findReference(rawRepo, fmt.Sprintf("refs/tags/%s", tag))
+	ref, err := rawRepo.Tag(tag)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("bad tag '%s' of repo %s: %s", tag, repo.String(), err)
 	}
-	if res == "" {
-		return "", fmt.Errorf("unknown tag `%s` of repo `%s`", tag, repo.String())
+
+	var res string
+
+	obj, err := rawRepo.TagObject(ref.Hash())
+	switch err {
+	case nil:
+		// Tag object present
+		res = obj.Target.String()
+	case plumbing.ErrObjectNotFound:
+		res = ref.Hash().String()
+	default:
+		return "", fmt.Errorf("bad tag '%s' of repo %s: %s", tag, repo.String(), err)
 	}
 
 	fmt.Printf("Using commit `%s` of repo `%s` tag `%s`\n", res, repo.String(), tag)

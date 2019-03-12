@@ -39,7 +39,7 @@ func (repo *Base) LatestBranchCommit(branch string) (string, error) {
 	panic("not implemented")
 }
 
-func (repo *Base) LatestTagCommit(branch string) (string, error) {
+func (repo *Base) TagCommit(branch string) (string, error) {
 	panic("not implemented")
 }
 
