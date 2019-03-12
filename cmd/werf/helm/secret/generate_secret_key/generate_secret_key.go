@@ -2,23 +2,24 @@ package secret
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy/secret"
+	"github.com/spf13/cobra"
 )
 
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "generate-secret-key",
 		DisableFlagsInUseLine: true,
-		Short:                 "Generate hex encryption key that can be used as $WERF_SECRET_KEY",
-		Long: common.GetLongCommandDescription(`Generate hex key that can be used as $WERF_SECRET_KEY.
+		Short:                 "Generate hex encryption key",
+		Long: common.GetLongCommandDescription(`Generate hex encryption key. 
+For further usage, the encryption key should be saved in $WERF_SECRET_KEY or .werf_secret_key file`),
+		Example: `  # Export encryption key
+  $ export WERF_SECRET_KEY=$(werf helm secret generate-secret-key)
 
-16-bytes key will be generated (AES-128)`),
+  # Save encryption key in .werf_secret_key file
+  $ werf helm secret generate-secret-key > .werf_secret_key`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runGenerateSecretKey()
 		},
@@ -33,11 +34,7 @@ func runGenerateSecretKey() error {
 		return err
 	}
 
-	if terminal.IsTerminal(int(os.Stdout.Fd())) {
-		fmt.Printf("WERF_SECRET_KEY=%s\n", string(key))
-	} else {
-		fmt.Println(string(key))
-	}
+	fmt.Println(string(key))
 
 	return nil
 }
