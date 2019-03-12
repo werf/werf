@@ -8,12 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/werf/pkg/stapel"
+
 	ghodssYaml "github.com/ghodss/yaml"
 	"gopkg.in/flant/yaml.v2"
 	"gopkg.in/oleiade/reflections.v1"
 
 	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -65,7 +66,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 			"WERF_DUMP_CONFIG_DOC_PATH":   filepath.Join(b.containerWorkDir(), "dump_config.json"),
 			"PYTHONPATH":                  filepath.Join(b.containerWorkDir(), "lib"),
 			"PYTHONIOENCODING":            "utf-8",
-			"ANSIBLE_PREPEND_SYSTEM_PATH": dappdeps.BasePath(),
+			"ANSIBLE_PREPEND_SYSTEM_PATH": stapel.SystemPATH(),
 		},
 	)
 
@@ -84,14 +85,14 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 		fmt.Sprintf("%s:%s:rw", stageHostTmpDir, b.containerTmpDir()),
 	)
 
-	containerName, err := dappdeps.AnsibleContainer()
+	containerName, err := stapel.GetOrCreateContainer()
 	if err != nil {
 		return err
 	}
 	container.AddVolumeFrom(fmt.Sprintf("%s:ro", containerName))
 
 	commandParts := []string{
-		dappdeps.AnsibleBinPath("ansible-playbook"),
+		stapel.AnsiblePlaybookBinPath(),
 		filepath.Join(b.containerWorkDir(), "playbook.yml"),
 	}
 

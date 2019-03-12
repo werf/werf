@@ -3,9 +3,10 @@ package cleaning
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/stapel"
+
 	"github.com/docker/docker/api/types/filters"
 
-	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
@@ -85,17 +86,11 @@ func purgeHomeWerfFiles(dryRun bool) error {
 		return nil
 	}
 
-	toolchainContainerName, err := dappdeps.ToolchainContainer()
-	if err != nil {
-		return err
-	}
-
 	args := []string{
 		"--rm",
-		"--volumes-from", toolchainContainerName,
 		"--volume", fmt.Sprintf("%s:%s", werf.GetHomeDir(), werf.GetHomeDir()),
-		dappdeps.BaseImageName(),
-		dappdeps.RmBinPath(), "-rf",
+		stapel.ImageName(),
+		stapel.RmBinPath(), "-rf",
 	}
 
 	args = append(args, pathsToRemove...)
