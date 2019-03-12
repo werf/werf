@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/flant/werf/pkg/true_git"
+	"github.com/flant/werf/pkg/werf"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -14,7 +15,7 @@ type ArchiveFile struct {
 }
 
 func NewTmpArchiveFile() *ArchiveFile {
-	path := filepath.Join("/tmp", fmt.Sprintf("werf-%s.archive.tar", uuid.NewV4().String()))
+	path := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-%s.archive.tar", uuid.NewV4().String()))
 	return &ArchiveFile{FilePath: path}
 }
 

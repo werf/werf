@@ -65,8 +65,8 @@ func (p *PrepareStagesPhase) runImage(image *Image, c *Conveyor) (err error) {
 
 		if c.sshAuthSock != "" {
 			imageRunOptions := stageImage.Container().RunOptions()
-			imageRunOptions.AddVolume(fmt.Sprintf("%s:/tmp/werf-ssh-agent", c.sshAuthSock))
-			imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/tmp/werf-ssh-agent"})
+			imageRunOptions.AddVolume(fmt.Sprintf("%s:/.werf/tmp/ssh-auth-sock", c.sshAuthSock))
+			imageRunOptions.AddEnv(map[string]string{"SSH_AUTH_SOCK": "/.werf/tmp/ssh-auth-sock"})
 		}
 
 		err := s.PrepareImage(c, prevBuiltImage, stageImage)
