@@ -143,7 +143,7 @@ func (gp *GitPath) LatestCommit() (string, error) {
 	}
 
 	if gp.Tag != "" {
-		return gp.GitRepo().LatestTagCommit(gp.Tag)
+		return gp.GitRepo().TagCommit(gp.Tag)
 	}
 
 	if gp.Branch != "" {
