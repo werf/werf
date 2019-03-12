@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/chef/omnibus-software.git
-  revision: 3213f1d282f6b62dfa656353c6c8557fdca8378b
+  revision: 44f52c320c3fe866e4d4186319fb6b5537f0656f
   specs:
     omnibus-software (4.0.0)
       chef-sugar (>= 3.4.0)
@@ -12,21 +12,21 @@ GEM
     addressable (2.6.0)
       public_suffix (>= 2.0.2, < 4.0)
     awesome_print (1.8.0)
-    aws-sdk (2.11.225)
-      aws-sdk-resources (= 2.11.225)
-    aws-sdk-core (2.11.225)
+    aws-sdk (2.11.238)
+      aws-sdk-resources (= 2.11.238)
+    aws-sdk-core (2.11.238)
       aws-sigv4 (~> 1.0)
       jmespath (~> 1.0)
-    aws-sdk-resources (2.11.225)
-      aws-sdk-core (= 2.11.225)
+    aws-sdk-resources (2.11.238)
+      aws-sdk-core (= 2.11.238)
     aws-sigv4 (1.0.3)
-    chef-config (13.12.3)
+    chef-config (14.11.21)
       addressable
       fuzzyurl
       mixlib-config (>= 2.2.12, < 3.0)
       mixlib-shellout (~> 2.0)
       tomlrb (~> 1.2)
-    chef-sugar (3.6.0)
+    chef-sugar (5.0.0)
     citrus (3.0.2)
     cleanroom (1.0.0)
     ffi (1.10.0)
@@ -44,31 +44,31 @@ GEM
     mixlib-cli (2.0.1)
     mixlib-config (2.2.18)
       tomlrb
-    mixlib-log (1.7.1)
+    mixlib-log (2.0.9)
     mixlib-shellout (2.4.4)
     mixlib-versioning (1.2.7)
     multipart-post (2.0.0)
-    ohai (8.26.1)
-      chef-config (>= 12.5.0.alpha.1, < 14)
+    ohai (14.8.10)
+      chef-config (>= 12.8, < 15)
       ffi (~> 1.9)
       ffi-yajl (~> 2.2)
       ipaddress
-      mixlib-cli
+      mixlib-cli (>= 1.7.0)
       mixlib-config (~> 2.0)
-      mixlib-log (>= 1.7.1, < 2.0)
+      mixlib-log (~> 2.0, >= 2.0.1)
       mixlib-shellout (~> 2.0)
       plist (~> 3.1)
       systemu (~> 2.6.4)
       wmi-lite (~> 1.0)
-    omnibus (5.6.8)
+    omnibus (6.0.1)
       aws-sdk (~> 2)
-      chef-sugar (~> 3.3)
+      chef-sugar (>= 3.3)
       cleanroom (~> 1.0)
       ffi-yajl (~> 2.2)
       license_scout (~> 1.0)
       mixlib-shellout (~> 2.0)
       mixlib-versioning
-      ohai (~> 8.0)
+      ohai (>= 13, < 15)
       pedump
       ruby-progressbar (~> 1.7)
       thor (~> 0.18)
@@ -94,7 +94,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  omnibus (~> 5.4)
+  omnibus
   omnibus-software!
 
 BUNDLED WITH
