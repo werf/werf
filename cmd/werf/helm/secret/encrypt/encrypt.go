@@ -3,8 +3,10 @@ package secret
 import (
 	"bytes"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/flant/werf/cmd/werf/common"
 	secret_common "github.com/flant/werf/cmd/werf/helm/secret/common"
@@ -13,9 +15,7 @@ import (
 )
 
 var CmdData struct {
-	FilePath       string
 	OutputFilePath string
-	Values         bool
 }
 
 var CommonCmdData common.CmdData
@@ -25,11 +25,15 @@ func NewCmd() *cobra.Command {
 		Use:                   "encrypt",
 		DisableFlagsInUseLine: true,
 		Short:                 "Encrypt data",
-		Long: common.GetLongCommandDescription(`Encrypt provided data.
+		Long: common.GetLongCommandDescription(`Encrypt data from standard input.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file`),
+		Example: `  # Encrypt data in interactive mode
+  $ werf helm secret encrypt
+  Enter secret: 
+  100044d3f6a2ffd6dd2b73fa8f50db5d61fb6ac04da29955c77d13bb44e937448ee4
 
-Provide data onto stdin by default.
-
-Data can be provided in file by specifying --file-path option. Option --values should be specified in the case when values yaml file provided`),
+  # Encrypt from a pipe and save result in file
+  $ date | werf helm secret encrypt -o .helm/secret/date`,
 		Annotations: map[string]string{
 			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
 		},
@@ -42,9 +46,7 @@ Data can be provided in file by specifying --file-path option. Option --values s
 	common.SetupTmpDir(&CommonCmdData, cmd)
 	common.SetupHomeDir(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.FilePath, "file-path", "", "", "Encode file data by specified path")
-	cmd.Flags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "", "", "Save encoded data by specified file path")
-	cmd.Flags().BoolVarP(&CmdData.Values, "values", "", false, "Encode specified FILE_PATH (--file-path) as secret values file")
+	cmd.Flags().StringVarP(&CmdData.OutputFilePath, "output-file-path", "o", "", "Write to file instead of stdout")
 
 	return cmd
 }
@@ -59,59 +61,46 @@ func runSecretEncrypt() error {
 		return fmt.Errorf("getting project dir failed: %s", err)
 	}
 
-	options := &secret_common.GenerateOptions{
-		FilePath:       CmdData.FilePath,
-		OutputFilePath: CmdData.OutputFilePath,
-		Values:         CmdData.Values,
-	}
-
 	m, err := secret.GetManager(projectDir)
 	if err != nil {
 		return err
 	}
 
-	return secretEncrypt(m, options)
+	return secretEncrypt(m)
 }
 
-func secretEncrypt(m secret.Manager, options *secret_common.GenerateOptions) error {
+func secretEncrypt(m secret.Manager) error {
 	var data []byte
 	var encodedData []byte
 	var err error
 
-	if options.FilePath != "" {
-		data, err = secret_common.ReadFileData(options.FilePath)
+	if terminal.IsTerminal(int(os.Stdin.Fd())) {
+		data, err = secret_common.InputFromInteractiveStdin()
 		if err != nil {
 			return err
 		}
 	} else {
-		data, err = secret_common.ReadStdin()
+		data, err = secret_common.InputFromStdin()
 		if err != nil {
 			return err
-		}
-
-		if len(data) == 0 {
-			return nil
 		}
 	}
 
-	if options.FilePath != "" && options.Values {
-		encodedData, err = m.EncryptYamlData(data)
-		if err != nil {
-			return err
-		}
-	} else {
-		encodedData, err = m.Encrypt(data)
-		if err != nil {
-			return err
-		}
+	if len(data) == 0 {
+		return nil
+	}
+
+	encodedData, err = m.Encrypt(data)
+	if err != nil {
+		return err
 	}
 
 	if !bytes.HasSuffix(encodedData, []byte("\n")) {
 		encodedData = append(encodedData, []byte("\n")...)
 	}
 
-	if options.OutputFilePath != "" {
-		if err := secret_common.SaveGeneratedData(options.OutputFilePath, encodedData); err != nil {
+	if CmdData.OutputFilePath != "" {
+		if err := secret_common.SaveGeneratedData(CmdData.OutputFilePath, encodedData); err != nil {
 			return err
 		}
 	} else {

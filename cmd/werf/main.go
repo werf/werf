@@ -18,10 +18,15 @@ import (
 	"github.com/flant/werf/cmd/werf/run"
 
 	helm_secret_decrypt "github.com/flant/werf/cmd/werf/helm/secret/decrypt"
-	helm_secret_edit "github.com/flant/werf/cmd/werf/helm/secret/edit"
 	helm_secret_encrypt "github.com/flant/werf/cmd/werf/helm/secret/encrypt"
+	helm_secret_file_decrypt "github.com/flant/werf/cmd/werf/helm/secret/file/decrypt"
+	helm_secret_file_edit "github.com/flant/werf/cmd/werf/helm/secret/file/edit"
+	helm_secret_file_encrypt "github.com/flant/werf/cmd/werf/helm/secret/file/encrypt"
 	helm_secret_generate_secret_key "github.com/flant/werf/cmd/werf/helm/secret/generate_secret_key"
 	helm_secret_rotate_secret_key "github.com/flant/werf/cmd/werf/helm/secret/rotate_secret_key"
+	helm_secret_values_decrypt "github.com/flant/werf/cmd/werf/helm/secret/values/decrypt"
+	helm_secret_values_edit "github.com/flant/werf/cmd/werf/helm/secret/values/edit"
+	helm_secret_values_encrypt "github.com/flant/werf/cmd/werf/helm/secret/values/encrypt"
 
 	"github.com/flant/werf/cmd/werf/ci_env"
 	"github.com/flant/werf/cmd/werf/slugify"
@@ -193,11 +198,35 @@ func secretCmd() *cobra.Command {
 		Use:   "secret",
 		Short: "Work with secrets",
 	}
+
+	fileCmd := &cobra.Command{
+		Use:   "file",
+		Short: "Work with secret files",
+	}
+
+	fileCmd.AddCommand(
+		helm_secret_file_encrypt.NewCmd(),
+		helm_secret_file_decrypt.NewCmd(),
+		helm_secret_file_edit.NewCmd(),
+	)
+
+	valuesCmd := &cobra.Command{
+		Use:   "values",
+		Short: "Work with secret values files",
+	}
+
+	valuesCmd.AddCommand(
+		helm_secret_values_encrypt.NewCmd(),
+		helm_secret_values_decrypt.NewCmd(),
+		helm_secret_values_edit.NewCmd(),
+	)
+
 	cmd.AddCommand(
+		fileCmd,
+		valuesCmd,
 		helm_secret_generate_secret_key.NewCmd(),
 		helm_secret_encrypt.NewCmd(),
 		helm_secret_decrypt.NewCmd(),
-		helm_secret_edit.NewCmd(),
 		helm_secret_rotate_secret_key.NewCmd(),
 	)
 
