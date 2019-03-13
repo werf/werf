@@ -26,9 +26,6 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
-      --disable-pretty-log=false:
-            Disable emojis, auto line wrapping and replace log process border characters with 
-            spaces (default $WERF_DISABLE_PRETTY_LOG).
   -h, --help=false:
             help for deploy-chart
       --home-dir='':
@@ -42,6 +39,14 @@ werf helm deploy-chart PATH RELEASE_NAME [options]
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-pretty=true:
+            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or 
+            true).
+      --log-terminal-width=-1:
+            Set log terminal width.
+            Defaults to:
+            * $WERF_LOG_TERMINAL_WIDTH
+            * interactive terminal width or 140
       --namespace='':
             Namespace to install release into
       --set=[]:

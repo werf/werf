@@ -47,9 +47,6 @@ werf deploy [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
-      --disable-pretty-log=false:
-            Disable emojis, auto line wrapping and replace log process border characters with 
-            spaces (default $WERF_DISABLE_PRETTY_LOG).
       --docker-config='':
             Specify docker config directory path. Default $WERF_DOCKER_CONFIG or $DOCKER_CONFIG or 
             ~/.docker (in the order of priority).
@@ -74,6 +71,16 @@ werf deploy [options]
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
+      --log-pretty=true:
+            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or 
+            true).
+      --log-project-dir=false:
+            Print current project directory path (default $WERF_LOG_PROJECT_DIR)
+      --log-terminal-width=-1:
+            Set log terminal width.
+            Defaults to:
+            * $WERF_LOG_TERMINAL_WIDTH
+            * interactive terminal width or 140
       --namespace='':
             Use specified Kubernetes namespace (default %project-%environment template)
       --release='':
