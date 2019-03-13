@@ -16,10 +16,6 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
-	OldKey string
-}
-
 var CommonCmdData common.CmdData
 
 func NewCmd() *cobra.Command {
@@ -29,7 +25,7 @@ func NewCmd() *cobra.Command {
 		Short:                 "Regenerate secret files with new secret key",
 		Long: common.GetLongCommandDescription(`Regenerate secret files with new secret key.
 
-Old key should be specified with the --old-key option.
+Old key should be specified in the $WERF_OLD_SECRET_KEY.
 New key should reside either in the $WERF_SECRET_KEY or .werf_secret_key file.
 
 Command will extract data with the old key, generate new secret data and rewrite files:
@@ -37,14 +33,14 @@ Command will extract data with the old key, generate new secret data and rewrite
 * standard secret values yaml file .helm/secret-values.yaml;
 * additional secret values yaml files specified with EXTRA_SECRET_VALUES_FILE_PATH params`),
 		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
+			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey, common.WerfOldSecretKey),
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := common.ProcessLogOptions(&CommonCmdData); err != nil {
 				common.PrintHelp(cmd)
 				return err
 			}
-			return runRotateSecretKey(args...)
+			return runRotateSecretKey(cmd, args...)
 		},
 	}
 
@@ -54,13 +50,10 @@ Command will extract data with the old key, generate new secret data and rewrite
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
 
-	cmd.Flags().StringVarP(&CmdData.OldKey, "old-key", "", "", "Old secret key")
-	cmd.MarkPersistentFlagRequired("old-key")
-
 	return cmd
 }
 
-func runRotateSecretKey(secretValuesPaths ...string) error {
+func runRotateSecretKey(cmd *cobra.Command, secretValuesPaths ...string) error {
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
 	}
@@ -75,7 +68,13 @@ func runRotateSecretKey(secretValuesPaths ...string) error {
 		return err
 	}
 
-	oldSecret, err := secret.NewManager([]byte(CmdData.OldKey), secret.NewManagerOptions{IgnoreWarning: true})
+	oldSecretKey := os.Getenv("WERF_OLD_SECRET_KEY")
+	if oldSecretKey == "" {
+		common.PrintHelp(cmd)
+		return fmt.Errorf("WERF_OLD_SECRET_KEY environment required")
+	}
+
+	oldSecret, err := secret.NewManager([]byte(oldSecretKey), secret.NewManagerOptions{IgnoreWarning: true})
 	if err != nil {
 		return err
 	}
