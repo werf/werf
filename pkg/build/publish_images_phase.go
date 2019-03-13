@@ -140,10 +140,15 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 		imageRepository = p.ImagesRepo
 	}
 
-	existingTags, err := docker_registry.ImageTags(imageRepository)
-	if err != nil {
+	var existingTags []string
+	var err error
+	if err := logger.LogSecondaryProcessInline("Fetching existing image tags", func() error {
+		existingTags, err = docker_registry.ImageTags(imageRepository)
+		return err
+	}); err != nil {
 		return fmt.Errorf("error fetch existing tags of image %s: %s", imageRepository, err)
 	}
+	logger.OptionalLnModeOn()
 
 	stages := image.GetStages()
 	lastStageImage := stages[len(stages)-1].GetImage()
@@ -171,10 +176,16 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 				imageName := fmt.Sprintf("%s:%s", imageRepository, tag)
 
 				if util.IsStringsContainValue(existingTags, tag) {
-					parentID, err := docker_registry.ImageParentId(imageName)
-					if err != nil {
+					var parentID string
+					var err error
+					logProcessMsg := fmt.Sprintf("Getting existing tag %s parent id", tag)
+					if err := logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+						parentID, err = docker_registry.ImageParentId(imageName)
+						return err
+					}); err != nil {
 						return fmt.Errorf("unable to get image %s parent id: %s", imageName, err)
 					}
+					logger.OptionalLnModeOn()
 
 					if lastStageImage.ID() == parentID {
 						logger.LogHighlightF("Tag %s is up-to-date\n", tag)
