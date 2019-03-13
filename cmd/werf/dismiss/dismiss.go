@@ -81,6 +81,8 @@ func runDismiss() error {
 		return err
 	}
 
+	common.LogKubeContext(kube.Context)
+
 	if err := docker.Init(*CommonCmdData.DockerConfig); err != nil {
 		return err
 	}

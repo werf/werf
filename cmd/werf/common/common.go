@@ -399,6 +399,12 @@ func GetNamespace(namespaceOption string) string {
 	return namespaceOption
 }
 
+func LogKubeContext(kubeContext string) {
+	if kubeContext != "" {
+		logger.LogServiceF("Using kube context: %s\n", kubeContext)
+	}
+}
+
 func ProcessLogProjectDir(cmdData *CmdData, projectDir string) {
 	if *cmdData.LogProjectDir {
 		logger.LogServiceF("Using project dir: %s\n", projectDir)
