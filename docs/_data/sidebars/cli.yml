@@ -91,20 +91,35 @@ entries:
             - title: render
               url: /cli/management/helm/render.html
 
-            - title: secret keygen
-              url: /cli/management/helm/secret/keygen.html
+            - title: secret generate-secret-key
+              url: /cli/management/helm/secret/generate_secret_key.html
 
-            - title: secret generate
-              url: /cli/management/helm/secret/generate.html
+            - title: secret encrypt
+              url: /cli/management/helm/secret/encrypt.html
 
-            - title: secret extract
-              url: /cli/management/helm/secret/extract.html
+            - title: secret decrypt
+              url: /cli/management/helm/secret/decrypt.html
 
-            - title: secret edit
-              url: /cli/management/helm/secret/edit.html
+            - title: secret file encrypt
+              url: /cli/management/helm/secret/file/encrypt.html
 
-            - title: secret regenerate
-              url: /cli/management/helm/secret/regenerate.html
+            - title: secret file decrypt
+              url: /cli/management/helm/secret/file/decrypt.html
+
+            - title: secret file edit
+              url: /cli/management/helm/secret/file/edit.html
+
+            - title: secret values encrypt
+              url: /cli/management/helm/secret/values/encrypt.html
+
+            - title: secret values decrypt
+              url: /cli/management/helm/secret/values/decrypt.html
+
+            - title: secret values edit
+              url: /cli/management/helm/secret/values/edit.html
+
+            - title: secret rotate-secret-key
+              url: /cli/management/helm/secret/rotate_secret_key.html
 
         - title: host
           sfi:

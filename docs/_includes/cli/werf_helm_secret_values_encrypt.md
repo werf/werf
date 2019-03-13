@@ -3,17 +3,20 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Decrypt data.
-
-Provide encrypted data onto stdin by default.
-
-Data can be provided in a file by specifying --file-path option. Option --values should be 
-specified in the case when secret values yaml file provided
+Encrypt data from FILE_PATH or pipe.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file
 
 {{ header }} Syntax
 
 ```bash
-werf helm secret extract [options]
+werf helm secret values encrypt [FILE_PATH] [options]
+```
+
+{{ header }} Examples
+
+```bash
+  # Encrypt and save result in file
+  $ werf helm secret values encrypt test.yaml -o .helm/secret-values.yaml
 ```
 
 {{ header }} Environments
@@ -28,17 +31,13 @@ werf helm secret extract [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
-      --file-path='':
-            Decode file data by specified path
   -h, --help=false:
-            help for extract
+            help for encrypt
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --output-file-path='':
-            Save decoded data by specified file path
+  -o, --output-file-path='':
+            Write to file instead of stdout
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --values=false:
-            Decode specified FILE_PATH (--file-path) as secret values file
 ```
 

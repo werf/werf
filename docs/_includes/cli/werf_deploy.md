@@ -82,9 +82,11 @@ werf deploy [options]
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
       --namespace='':
-            Use specified Kubernetes namespace (default %project-%environment template)
+            Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or 
+            deploy.namespace custom template from werf.yaml)
       --release='':
-            Use specified Helm release name (default %project-%environment template)
+            Use specified Helm release name (default [[ project ]]-[[ env ]] template or 
+            deploy.helmRelease custom template from werf.yaml)
       --secret-values=[]:
             Specify helm secret values in a YAML file (can specify multiple)
       --set=[]:

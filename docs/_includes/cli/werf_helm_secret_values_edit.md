@@ -3,17 +3,20 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Encrypt provided data.
-
-Provide data onto stdin by default.
-
-Data can be provided in file by specifying --file-path option. Option --values should be specified 
-in the case when values yaml file provided
+Edit or create new secret values file.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file
 
 {{ header }} Syntax
 
 ```bash
-werf helm secret generate [options]
+werf helm secret values edit FILE_PATH [options]
+```
+
+{{ header }} Examples
+
+```bash
+  # Create/edit existing secret values file
+  $ werf helm secret values edit .helm/secret-values.yaml
 ```
 
 {{ header }} Environments
@@ -28,17 +31,11 @@ werf helm secret generate [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
-      --file-path='':
-            Encode file data by specified path
   -h, --help=false:
-            help for generate
+            help for edit
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
-      --output-file-path='':
-            Save encoded data by specified file path
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --values=false:
-            Encode specified FILE_PATH (--file-path) as secret values file
 ```
 

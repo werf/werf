@@ -46,7 +46,8 @@ werf helm generate-chart PATH [options]
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --namespace='':
-            Use specified Kubernetes namespace (default %project-%environment template)
+            Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or 
+            deploy.namespace custom template from werf.yaml)
       --secret-values=[]:
             Additional helm secret values
       --ssh-key=[]:
