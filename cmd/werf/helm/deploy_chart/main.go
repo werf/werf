@@ -83,6 +83,8 @@ func runDeployChart(chartDir string, releaseName string) error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
+	common.LogKubeContext(kube.Context)
+
 	if err := common.InitKubedog(); err != nil {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
