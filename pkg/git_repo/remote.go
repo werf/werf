@@ -148,7 +148,7 @@ func (repo *Remote) Fetch() error {
 
 		fmt.Printf("Fetching remote `%s` of repo `%s` ...\n", remoteName, repo.String())
 
-		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true})
+		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
 			return fmt.Errorf("cannot fetch remote `%s` of repo `%s`: %s", remoteName, repo.String(), err)
 		}
