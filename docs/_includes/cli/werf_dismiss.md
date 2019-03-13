@@ -50,6 +50,8 @@ werf dismiss [options]
             Kubernetes config file path
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
+      --log-project-dir=false:
+            Print current project directory path (default $WERF_LOG_PROJECT_DIR)
       --namespace='':
             Use specified Kubernetes namespace (default %project-%environment template)
       --release='':

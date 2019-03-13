@@ -53,7 +53,7 @@ type CmdData struct {
 	GitCommitStrategyLimit      *int64
 	GitCommitStrategyExpiryDays *int64
 
-	DisablePrettyLog *bool
+	LogPretty        *bool
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
@@ -172,7 +172,7 @@ func SetupDockerConfig(cmdData *CmdData, cmd *cobra.Command, extraDesc string) {
 
 func SetupLogOptions(cmdData *CmdData, cmd *cobra.Command) {
 	SetupLogColor(cmdData, cmd)
-	SetupDisablePrettyLog(cmdData, cmd)
+	SetupLogPretty(cmdData, cmd)
 	SetupTerminalWidth(cmdData, cmd)
 }
 
@@ -191,14 +191,25 @@ Supported on, off and auto (based on the stdout's file descriptor referring to a
 Default $WERF_LOG_COLOR_MODE or auto mode.`)
 }
 
-func SetupDisablePrettyLog(cmdData *CmdData, cmd *cobra.Command) {
-	cmdData.DisablePrettyLog = new(bool)
-	cmd.Flags().BoolVarP(cmdData.DisablePrettyLog, "disable-pretty-log", "", getBoolEnvironment("WERF_DISABLE_PRETTY_LOG"), `Disable emojis, auto line wrapping and replace log process border characters with spaces (default $WERF_DISABLE_PRETTY_LOG).`)
+func SetupLogPretty(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.LogPretty = new(bool)
+
+	var defaultValue bool
+	if os.Getenv("WERF_LOG_PRETTY") != "" {
+		defaultValue = getBoolEnvironment("WERF_LOG_PRETTY")
+	} else {
+		defaultValue = true
+	}
+
+	cmd.Flags().BoolVarP(cmdData.LogPretty, "log-pretty", "", defaultValue, `Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or true).`)
 }
 
 func SetupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogTerminalWidth = new(int64)
-	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf("Set log terminal width (default $WERF_LOG_TERMINAL_WIDTH or %d).", logger.DefaultTerminalWidth))
+	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
+Defaults to:
+* $WERF_LOG_TERMINAL_WIDTH
+* interactive terminal width or %d`, logger.DefaultTerminalWidth))
 }
 
 func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
@@ -416,7 +427,7 @@ func ProcessLogOptions(cmdData *CmdData) error {
 		return err
 	}
 
-	if *cmdData.DisablePrettyLog {
+	if !*cmdData.LogPretty {
 		logging.DisablePrettyLog()
 	}
 
