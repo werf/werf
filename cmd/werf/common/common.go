@@ -53,7 +53,7 @@ type CmdData struct {
 	GitCommitStrategyLimit      *int64
 	GitCommitStrategyExpiryDays *int64
 
-	DisablePrettyLog *bool
+	LogPretty        *bool
 	LogColorMode     *string
 	LogProjectDir    *bool
 	LogTerminalWidth *int64
@@ -198,7 +198,10 @@ func SetupDisablePrettyLog(cmdData *CmdData, cmd *cobra.Command) {
 
 func SetupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.LogTerminalWidth = new(int64)
-	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf("Set log terminal width (default $WERF_LOG_TERMINAL_WIDTH or %d).", logger.DefaultTerminalWidth))
+	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
+Defaults to:
+* $WERF_LOG_TERMINAL_WIDTH
+* interactive terminal width or %d`, logger.DefaultTerminalWidth))
 }
 
 func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
@@ -410,7 +413,7 @@ func ProcessLogOptions(cmdData *CmdData) error {
 		return err
 	}
 
-	if *cmdData.DisablePrettyLog {
+	if *cmdData.LogPretty {
 		logging.DisablePrettyLog()
 	}
 
