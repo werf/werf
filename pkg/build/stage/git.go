@@ -19,7 +19,7 @@ func (s *GitStage) IsEmpty(_ Conveyor, _ image.ImageInterface) (bool, error) {
 }
 
 func (s *GitStage) isEmpty() bool {
-	return len(s.gitPaths) == 0
+	return len(s.gitMappings) == 0
 }
 
 func (s *GitStage) AfterImageSyncDockerStateHook(c Conveyor) error {

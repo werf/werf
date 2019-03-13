@@ -33,10 +33,10 @@ type GitArchiveStage struct {
 
 func (s *GitArchiveStage) GetDependencies(_ Conveyor, _ image.ImageInterface) (string, error) {
 	var args []string
-	for _, gitPath := range s.gitPaths {
-		args = append(args, gitPath.GetParamshash())
+	for _, gitMapping := range s.gitMappings {
+		args = append(args, gitMapping.GetParamshash())
 
-		commit, err := gitPath.GitRepo().FindCommitIdByMessage(GitArchiveResetCommitRegex)
+		commit, err := gitMapping.GitRepo().FindCommitIdByMessage(GitArchiveResetCommitRegex)
 		if err != nil {
 			return "", err
 		}
@@ -54,8 +54,8 @@ func (s *GitArchiveStage) PrepareImage(c Conveyor, prevBuiltImage, image image.I
 		return err
 	}
 
-	for _, gitPath := range s.gitPaths {
-		if err := gitPath.ApplyArchiveCommand(image); err != nil {
+	for _, gitMapping := range s.gitMappings {
+		if err := gitMapping.ApplyArchiveCommand(image); err != nil {
 			return err
 		}
 	}

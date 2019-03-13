@@ -47,7 +47,7 @@ func (s *GitPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface)
 		return true, nil
 	}
 
-	if empty, err := s.hasPrevBuiltStageHadActualGitPaths(prevBuiltImage); err != nil {
+	if empty, err := s.hasPrevBuiltStageHadActualGitMappings(prevBuiltImage); err != nil {
 		return false, err
 	} else if empty {
 		return true, nil
@@ -65,10 +65,10 @@ func (s *GitPatchStage) willGitLatestCommitBeBuiltOnPrevGitStage(c Conveyor) (bo
 	return false, nil
 }
 
-func (s *GitPatchStage) hasPrevBuiltStageHadActualGitPaths(prevBuiltImage image.ImageInterface) (bool, error) {
-	for _, gitPath := range s.gitPaths {
-		commit := gitPath.GetGitCommitFromImageLabels(prevBuiltImage)
-		latestCommit, err := gitPath.LatestCommit()
+func (s *GitPatchStage) hasPrevBuiltStageHadActualGitMappings(prevBuiltImage image.ImageInterface) (bool, error) {
+	for _, gitMapping := range s.gitMappings {
+		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage)
+		latestCommit, err := gitMapping.LatestCommit()
 		if err != nil {
 			return false, err
 		}
@@ -94,8 +94,8 @@ func (s *GitPatchStage) PrepareImage(c Conveyor, prevBuiltImage, image image.Ima
 }
 
 func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image image.ImageInterface) error {
-	for _, gitPath := range s.gitPaths {
-		if err := gitPath.ApplyPatchCommand(prevBuiltImage, image); err != nil {
+	for _, gitMapping := range s.gitMappings {
+		if err := gitMapping.ApplyPatchCommand(prevBuiltImage, image); err != nil {
 			return err
 		}
 	}

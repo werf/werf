@@ -343,7 +343,7 @@ _Werf config_ with the module not from this list gives an error and stops a buil
 
 ### Copy files
 
-The preferred way of copying files into an image is [_git paths_]({{ site.baseurl }}/reference/build/git_directive.html). Werf cannot calculate changes of files referred in `copy` module. The only way to
+The preferred way of copying files into an image is [_git mappings_]({{ site.baseurl }}/reference/build/git_directive.html). Werf cannot calculate changes of files referred in `copy` module. The only way to
 copy some external file into an image, for now, is to use the go-templating method
 `.Files.Get`. This method returns file content as a string. So content of the file becomes a part of _user stage signature_, and file changes lead to _user stage_
 rebuild.
@@ -455,7 +455,7 @@ shell:
   - echo "Commands on the Setup stage"
 ```
 
-First, build of this image execute all four _user stages_. There is no _git path_ in
+First, build of this image execute all four _user stages_. There is no _git mapping_ in
 this _config_, so next builds never execute assembly instructions because _user
 stages signatures_ not changed and build cache remains valid.
 
@@ -511,7 +511,7 @@ So this configuration rebuilds _beforeInstall_ user stage on every commit.
     <img src="https://docs.google.com/drawings/d/e/2PACX-1vRv56S-dpoTSzLC_24ifLqJHQoHdmJ30l1HuAS4dgqBgUzZdNQyA1balT-FwK16pBbbXqlLE3JznYDk/pub?w=622&amp;h=206">
   </a>
 
-As stated in a _git path_ reference, there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ is executed after _beforeInstall_ user stage, and _gitLatestPatch_ is executed after _setup_ user stage if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _gitArchive_ with [special commit]({{site.baseurl}}/reference/build/git_directive.html#rebuild-of-git_archive-stage) or rebuild _beforeInstall_ (change _cacheVersion_ or instructions for _beforeInstall_ stage).
+As stated in a _git mapping_ reference, there are _gitArchive_ and _gitLatestPatch_ stages. _gitArchive_ is executed after _beforeInstall_ user stage, and _gitLatestPatch_ is executed after _setup_ user stage if a local git repository has changes. So, to execute assembly instructions with the latest version of source codes, you may rebuild _gitArchive_ with [special commit]({{site.baseurl}}/reference/build/git_directive.html#rebuild-of-git_archive-stage) or rebuild _beforeInstall_ (change _cacheVersion_ or instructions for _beforeInstall_ stage).
 
 _install_, _beforeSetup_ and _setup_ user stages are also dependant on git repository changes. A git patch is applied at the beginning of _user stage_ to execute assembly instructions with the latest version of source codes.
 
@@ -579,7 +579,7 @@ shell:
   - echo "beforeSetup stage"
 ```
 
-This `werf.yaml` has a git path configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, and werf rebuilds _beforeSetup_ stage with applying a git patch.
+This `werf.yaml` has a git mapping configuration to transfer `/src` content from local git repository into `/app` directory in the image. During the first build, files are cached in _gitArchive_ stage and assembly instructions for _install_ and _beforeSetup_ are executed. The next builds of commits that have only changes outside of the `/src` do not execute assembly instructions. If a commit has changes inside `/src` directory, then checksums of matched files are changed, and werf rebuilds _beforeSetup_ stage with applying a git patch.
 
 ## Dependency on CacheVersion values
 
