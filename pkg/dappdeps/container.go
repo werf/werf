@@ -1,4 +1,4 @@
-package stapel
+package dappdeps
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ func (c *container) CreateIfNotExist() error {
 	}
 
 	if !exist {
-		err := lock.WithLock(fmt.Sprintf("stapel.container.%s", c.Name), lock.LockOptions{Timeout: time.Second * 600}, func() error {
+		err := lock.WithLock(fmt.Sprintf("dappdeps.container.%s", c.Name), lock.LockOptions{Timeout: time.Second * 600}, func() error {
 			return logger.LogSecondaryProcess(fmt.Sprintf("Creating container %s from image %s", c.Name, c.ImageName), logger.LogProcessOptions{}, func() error {
 				exist, err := docker.ContainerExist(c.Name)
 				if err != nil {

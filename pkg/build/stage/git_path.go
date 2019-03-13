@@ -7,8 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/stapel"
-
+	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/logger"
@@ -175,15 +174,15 @@ func (gp *GitPath) applyPatchCommand(patchFile *ContainerFileDescriptor, archive
 
 	commands = append(commands, fmt.Sprintf(
 		"%s %s -d \"%s\"",
-		stapel.InstallBinPath(),
+		dappdeps.BaseBinPath("install"),
 		gp.makeCredentialsOpts(),
 		applyPatchDirectory,
 	))
 
 	gitCommand := fmt.Sprintf(
 		"%s %s apply --whitespace=nowarn --directory=\"%s\" --unsafe-paths %s",
-		stapel.SudoCommand(gp.Owner, gp.Group),
-		stapel.GitBinPath(),
+		dappdeps.SudoCommand(gp.Owner, gp.Group),
+		dappdeps.GitBin(),
 		applyPatchDirectory,
 		patchFile.ContainerFilePath,
 	)
@@ -275,14 +274,14 @@ func (gp *GitPath) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltI
 
 		commands = append(commands, fmt.Sprintf(
 			"%s --arg-file=%s --null %s --force",
-			stapel.XargsBinPath(),
+			dappdeps.BaseBinPath("xargs"),
 			pathsListFile.ContainerFilePath,
-			stapel.RmBinPath(),
+			dappdeps.BaseBinPath("rm"),
 		))
 
 		commands = append(commands, fmt.Sprintf(
 			"%s %s -type d -empty -delete",
-			stapel.FindBinPath(),
+			dappdeps.BaseBinPath("find"),
 			gp.To,
 		))
 
@@ -340,15 +339,15 @@ func (gp *GitPath) applyArchiveCommand(archiveFile *ContainerFileDescriptor, arc
 
 	commands = append(commands, fmt.Sprintf(
 		"%s %s -d \"%s\"",
-		stapel.InstallBinPath(),
+		dappdeps.BaseBinPath("install"),
 		gp.makeCredentialsOpts(),
 		unpackArchiveDirectory,
 	))
 
 	tarCommand := fmt.Sprintf(
 		"%s %s -xf %s -C \"%s\"",
-		stapel.SudoCommand(gp.Owner, gp.Group),
-		stapel.TarBinPath(),
+		dappdeps.SudoCommand(gp.Owner, gp.Group),
+		dappdeps.BaseBinPath("tar"),
 		archiveFile.ContainerFilePath,
 		unpackArchiveDirectory,
 	)

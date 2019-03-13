@@ -3,6 +3,7 @@ package stage
 import (
 	"fmt"
 
+	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/image"
 )
 
@@ -99,6 +100,12 @@ func (s *GitPatchStage) prepareImage(c Conveyor, prevBuiltImage, image image.Ima
 		}
 	}
 
+	gitArtifactContainerName, err := dappdeps.GitArtifactContainer()
+	if err != nil {
+		return err
+	}
+
+	image.Container().RunOptions().AddVolumeFrom(gitArtifactContainerName)
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.PatchesDir, s.ContainerPatchesDir))
 	image.Container().RunOptions().AddVolume(fmt.Sprintf("%s:%s:ro", s.ArchivesDir, s.ContainerArchivesDir))
 

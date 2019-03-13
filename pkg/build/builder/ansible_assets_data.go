@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/flant/werf/pkg/stapel"
-
+	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/build/builder/ansible"
 )
 
 func (b *Ansible) assetsAnsibleCfg() string {
 	hostsPath := filepath.Join(b.containerWorkDir(), "hosts")
 	callbackPluginsPath := filepath.Join(b.containerWorkDir(), "lib", "callback")
-	sudoBinPath := stapel.SudoBinPath()
+	sudoBinPath := dappdeps.BaseBinPath("sudo")
 	localTmpDirPath := filepath.Join(b.containerTmpDir(), "local")
 	remoteTmpDirPath := filepath.Join(b.containerTmpDir(), "remote")
 
@@ -43,7 +42,7 @@ become_flags = -E -H`
 
 func (b *Ansible) assetsHosts() string {
 	format := "localhost ansible_raw_live_stdout=yes ansible_script_live_stdout=yes ansible_python_interpreter=%s"
-	return fmt.Sprintf(format, stapel.PythonBinPath())
+	return fmt.Sprintf(format, dappdeps.AnsibleBinPath("python"))
 }
 
 func (b *Ansible) assetsCryptPy() string {

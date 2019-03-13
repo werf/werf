@@ -50,7 +50,7 @@ DOCUMENTATION = '''
 
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
-# from ansible.vars.manager import strip_internal_keys
+from ansible.vars.manager import strip_internal_keys
 from ansible.utils.color import stringc
 
 import io, sys
@@ -369,8 +369,7 @@ class CallbackModule(LiveCallbackHelpers):
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
-        # abridged_result = strip_internal_keys(result)
-        abridged_result = result
+        abridged_result = strip_internal_keys(result)
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:

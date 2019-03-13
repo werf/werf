@@ -29,7 +29,7 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 	}
 	writeFile(filepath.Join(stageWorkDir, "playbook.yml"), string(data))
 
-	// generate inventory with localhost and python in stapel
+	// generate inventory with localhost and python in dappdeps-ansible
 	writeFile(filepath.Join(stageWorkDir, "hosts"), b.assetsHosts())
 
 	// generate ansible config for solo mode
@@ -53,7 +53,7 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 	}
 
 	// crypt.py hack
-	// TODO must be in stapel
+	// TODO must be in dappdeps-ansible
 	writeFile(filepath.Join(stageWorkDirLib, "crypt.py"), b.assetsCryptPy())
 
 	stageCallbackDir := filepath.Join(stageWorkDirLib, "callback")

@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -57,7 +57,7 @@ func (s *FromStage) PrepareImage(c Conveyor, prevBuiltImage, image image.ImageIn
 	}
 	if len(mountpoints) != 0 {
 		mountpointsStr := strings.Join(mountpoints, " ")
-		image.Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", stapel.RmBinPath(), mountpointsStr))
+		image.Container().AddServiceRunCommands(fmt.Sprintf("%s -rf %s", dappdeps.RmBinPath(), mountpointsStr))
 	}
 
 	return nil
