@@ -55,7 +55,7 @@ type BaseStage struct {
 	imageName        string
 	signature        string
 	image            imagePkg.ImageInterface
-	gitPaths         []*GitPath
+	gitMappings      []*GitMapping
 	imageTmpDir      string
 	containerWerfDir string
 	configMounts     []*config.Mount
@@ -79,11 +79,11 @@ func (s *BaseStage) IsEmpty(_ Conveyor, _ imagePkg.ImageInterface) (bool, error)
 }
 
 func (s *BaseStage) ShouldBeReset(builtImage imagePkg.ImageInterface) (bool, error) {
-	for _, gitPath := range s.gitPaths {
-		commit := gitPath.GetGitCommitFromImageLabels(builtImage)
+	for _, gitMapping := range s.gitMappings {
+		commit := gitMapping.GetGitCommitFromImageLabels(builtImage)
 		if commit == "" {
 			return false, nil
-		} else if exist, err := gitPath.GitRepo().IsCommitExists(commit); err != nil {
+		} else if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
 			return false, err
 		} else if !exist {
 			return true, nil
@@ -294,12 +294,12 @@ func (s *BaseStage) GetImage() imagePkg.ImageInterface {
 	return s.image
 }
 
-func (s *BaseStage) SetGitPaths(gitPaths []*GitPath) {
-	s.gitPaths = gitPaths
+func (s *BaseStage) SetGitMappings(gitMappings []*GitMapping) {
+	s.gitMappings = gitMappings
 }
 
-func (s *BaseStage) GetGitPaths() []*GitPath {
-	return s.gitPaths
+func (s *BaseStage) GetGitMappings() []*GitMapping {
+	return s.gitMappings
 }
 
 func mergeMounts(a, b map[string][]string) map[string][]string {

@@ -19,16 +19,16 @@ type GitCacheStage struct {
 
 func (s *GitCacheStage) GetDependencies(_ Conveyor, prevImage image.ImageInterface) (string, error) {
 	var size int64
-	for _, gitPath := range s.gitPaths {
-		commit := gitPath.GetGitCommitFromImageLabels(prevImage)
+	for _, gitMapping := range s.gitMappings {
+		commit := gitMapping.GetGitCommitFromImageLabels(prevImage)
 		if commit != "" {
-			exist, err := gitPath.GitRepo().IsCommitExists(commit)
+			exist, err := gitMapping.GitRepo().IsCommitExists(commit)
 			if err != nil {
 				return "", err
 			}
 
 			if exist {
-				patchSize, err := gitPath.PatchSize(commit)
+				patchSize, err := gitMapping.PatchSize(commit)
 				if err != nil {
 					return "", err
 				}

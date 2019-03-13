@@ -21,6 +21,6 @@ type Interface interface {
 	SetImage(image.ImageInterface)
 	GetImage() image.ImageInterface
 
-	SetGitPaths([]*GitPath)
-	GetGitPaths() []*GitPath
+	SetGitMappings([]*GitMapping)
+	GetGitMappings() []*GitMapping
 }

@@ -7,7 +7,7 @@ summary: |
   <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vSHlip8uqKZ7Wh00abw6kuh0_3raMr-g1LcLjgRDgztHVIHbY2V-_qp7zZ0GPeN46LKoqb-yMhfaG-l/pub?w=2031&amp;h=144" data-featherlight="image">
   <img src="https://docs.google.com/drawings/d/e/2PACX-1vSHlip8uqKZ7Wh00abw6kuh0_3raMr-g1LcLjgRDgztHVIHbY2V-_qp7zZ0GPeN46LKoqb-yMhfaG-l/pub?w=1016&amp;h=72">
   </a>
-  
+
   <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">import</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="na">artifact</span><span class="pi">:</span> <span class="s">&lt;artifact name&gt;</span>
     <span class="na">image</span><span class="pi">:</span> <span class="s">&lt;image name&gt;</span>
@@ -93,9 +93,9 @@ import:
   after: setup
 ```
 
-As in the case of adding _git paths_, masks are supported for including and excluding files from the specified path, and you can also specify the rights for the imported resources. Read more about these in the [git directive article]({{ site.baseurl }}/reference/build/git_directive.html).
+As in the case of adding _git mappings_, masks are supported for including and excluding files from the specified path, and you can also specify the rights for the imported resources. Read more about these in the [git directive article]({{ site.baseurl }}/reference/build/git_directive.html).
 
-> Import paths and _git paths_ should not overlap with each other.
+> Import paths and _git mappings_ should not overlap with each other.
 
 
 Information about _using artifacts_ available in [separate article]({{ site.baseurl }}/reference/build/artifact.html).

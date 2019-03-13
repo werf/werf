@@ -300,7 +300,7 @@ func (repo *Remote) getWorkTreeDir() (string, error) {
 }
 
 func (repo *Remote) withRemoteRepoLock(f func() error) error {
-	lockName := fmt.Sprintf("remote_git_path.%s", repo.Name)
+	lockName := fmt.Sprintf("remote_git_mapping.%s", repo.Name)
 	return lock.WithLock(lockName, lock.LockOptions{Timeout: 600 * time.Second}, f)
 }
 
