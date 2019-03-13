@@ -81,7 +81,7 @@ func TestAesSecret_Generate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = s.Generate([]byte("flant"))
+	_, err = s.Encrypt([]byte("flant"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -93,7 +93,7 @@ func TestAesSecret_Extract_positive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = s.Extract([]byte("10000f13a718d019612ab8ad30d9bec8e2c09df0f2d168c179bef954e78371bf6a5a"))
+	_, err = s.Decrypt([]byte("10000f13a718d019612ab8ad30d9bec8e2c09df0f2d168c179bef954e78371bf6a5a"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -134,7 +134,7 @@ func TestAesSecret_Extract_negative(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err = s.Extract(test.encodedData)
+			_, err = s.Decrypt(test.encodedData)
 			if err == nil {
 				t.Errorf("Expected error: %s", test.errorMessage)
 			} else if err.Error() != test.errorMessage {
@@ -163,12 +163,12 @@ func TestAesSecret(t *testing.T) {
 		t.Run(fmt.Sprintf("%v|%v", size, string(key)), func(t *testing.T) {
 			for _, test := range tests {
 				t.Run(test, func(t *testing.T) {
-					encodedData, err := s.Generate([]byte(test))
+					encodedData, err := s.Encrypt([]byte(test))
 					if err != nil {
 						t.Fatal(err)
 					}
 
-					result, err := s.Extract(encodedData)
+					result, err := s.Decrypt(encodedData)
 					if err != nil {
 						t.Fatal(err)
 					}

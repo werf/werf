@@ -1,8 +1,8 @@
 package secret
 
 type Secret interface {
-	Generate(data []byte) ([]byte, error)
-	Extract(encodedData []byte) ([]byte, error)
+	Encrypt(data []byte) ([]byte, error)
+	Decrypt(encodedData []byte) ([]byte, error)
 }
 
 func NewSecret(key []byte) (Secret, error) {

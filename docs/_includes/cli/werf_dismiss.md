@@ -53,9 +53,11 @@ werf dismiss [options]
       --log-project-dir=false:
             Print current project directory path (default $WERF_LOG_PROJECT_DIR)
       --namespace='':
-            Use specified Kubernetes namespace (default %project-%environment template)
+            Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or 
+            deploy.namespace custom template from werf.yaml)
       --release='':
-            Use specified Helm release name (default %project-%environment template)
+            Use specified Helm release name (default [[ project ]]-[[ env ]] template or 
+            deploy.helmRelease custom template from werf.yaml)
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
       --with-namespace=false:

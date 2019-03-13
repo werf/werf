@@ -45,7 +45,8 @@ werf helm get-service-values [options]
       --kube-context='':
             Kubernetes config context (default $WERF_KUBE_CONTEXT)
       --namespace='':
-            Use specified Kubernetes namespace (default %project-%environment template)
+            Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or 
+            deploy.namespace custom template from werf.yaml)
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
             https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to 

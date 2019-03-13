@@ -3,6 +3,7 @@ package secret
 import (
 	"bytes"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,72 +13,15 @@ import (
 	"strings"
 
 	"github.com/satori/go.uuid"
-	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
-	"gopkg.in/yaml.v2"
 
-	"github.com/flant/werf/cmd/werf/common"
-	secret_common "github.com/flant/werf/cmd/werf/helm/secret/common"
 	"github.com/flant/werf/pkg/deploy/secret"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
 
-var CmdData struct {
-	Values bool
-}
-
-var CommonCmdData common.CmdData
-
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:                   "edit FILE_PATH",
-		DisableFlagsInUseLine: true,
-		Short:                 "Edit or create new secret file",
-		Long: common.GetLongCommandDescription(`Edit or create new secret file.
-
-The file can be raw secret file (by default) or secret values yaml file (with option --values)`),
-		Annotations: map[string]string{
-			common.CmdEnvAnno: common.EnvsDescription(common.WerfSecretKey),
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := common.ValidateArgumentCount(1, args, cmd); err != nil {
-				return err
-			}
-
-			return runSecretEdit(args[0])
-		},
-	}
-
-	common.SetupDir(&CommonCmdData, cmd)
-	common.SetupTmpDir(&CommonCmdData, cmd)
-	common.SetupHomeDir(&CommonCmdData, cmd)
-
-	cmd.Flags().BoolVarP(&CmdData.Values, "values", "", false, "Edit FILE_PATH as secret values file")
-
-	return cmd
-}
-
-func runSecretEdit(filepPath string) error {
-	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
-		return fmt.Errorf("initialization error: %s", err)
-	}
-
-	projectDir, err := common.GetProjectDir(&CommonCmdData)
-	if err != nil {
-		return fmt.Errorf("getting project dir failed: %s", err)
-	}
-
-	m, err := secret.GetManager(projectDir)
-	if err != nil {
-		return err
-	}
-
-	return secretEdit(m, filepPath, CmdData.Values)
-}
-
-func secretEdit(m secret.Manager, filePath string, values bool) error {
+func SecretEdit(m secret.Manager, filePath string, values bool) error {
 	data, encodedData, err := readEditedFile(m, filePath, values)
 	if err != nil {
 		return err
@@ -113,12 +57,12 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 
 		var newEncodedData []byte
 		if values {
-			newEncodedData, err = m.GenerateYamlData(newData)
+			newEncodedData, err = m.EncryptYamlData(newData)
 			if err != nil {
 				return err
 			}
 		} else {
-			newEncodedData, err = m.Generate(newData)
+			newEncodedData, err = m.Encrypt(newData)
 			if err != nil {
 				return err
 			}
@@ -131,7 +75,7 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 				newEncodedData, err = prepareResultValuesData(data, encodedData, newData, newEncodedData)
 			}
 
-			if err := secret_common.SaveGeneratedData(filePath, newEncodedData); err != nil {
+			if err := SaveGeneratedData(filePath, newEncodedData); err != nil {
 				return err
 			}
 		}
@@ -142,7 +86,7 @@ func secretEdit(m secret.Manager, filePath string, values bool) error {
 	for {
 		err := editIteration()
 		if err != nil {
-			if strings.HasPrefix(err.Error(), "encoding failed") {
+			if strings.HasPrefix(err.Error(), "encryption failed") {
 				logger.LogErrorF("Error: %s\n", err)
 				ok, err := askForConfirmation()
 				if err != nil {
@@ -180,12 +124,12 @@ func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []b
 		encodedData = bytes.TrimSpace(encodedData)
 
 		if values {
-			data, err = m.ExtractYamlData(encodedData)
+			data, err = m.DecryptYamlData(encodedData)
 			if err != nil {
 				return nil, nil, err
 			}
 		} else {
-			data, err = m.Extract(encodedData)
+			data, err = m.Decrypt(encodedData)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -228,7 +172,7 @@ func askForConfirmation() (bool, error) {
 }
 
 func createTmpEditedFile(filePath string, data []byte) error {
-	if err := secret_common.SaveGeneratedData(filePath, data); err != nil {
+	if err := SaveGeneratedData(filePath, data); err != nil {
 		return err
 	}
 	return nil

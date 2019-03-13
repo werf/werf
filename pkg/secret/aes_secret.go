@@ -42,7 +42,7 @@ func NewAesSecret(key []byte) (*AesSecret, error) {
 	return secret, nil
 }
 
-func (s *AesSecret) Generate(data []byte) ([]byte, error) {
+func (s *AesSecret) Encrypt(data []byte) ([]byte, error) {
 	dataToEncrypt := pad([]byte(data))
 
 	cipherData := make([]byte, aes.BlockSize+len(dataToEncrypt))
@@ -67,7 +67,7 @@ func (s *AesSecret) Generate(data []byte) ([]byte, error) {
 	return result, nil
 }
 
-func (s *AesSecret) Extract(data []byte) ([]byte, error) {
+func (s *AesSecret) Decrypt(data []byte) ([]byte, error) {
 	if len(data) == 0 {
 		return data, nil
 	}

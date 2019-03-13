@@ -3,14 +3,20 @@
 {% else %}
 {% assign header = "###" %}
 {% endif %}
-Edit or create new secret file.
-
-The file can be raw secret file (by default) or secret values yaml file (with option --values)
+Encrypt data from FILE_PATH or pipe.
+Encryption key should be in $WERF_SECRET_KEY or .werf_secret_key file
 
 {{ header }} Syntax
 
 ```bash
-werf helm secret edit FILE_PATH [options]
+werf helm secret file encrypt [FILE_PATH] [options]
+```
+
+{{ header }} Examples
+
+```bash
+  # Encrypt and save result in file
+  $ werf helm secret file encrypt tls.crt -o .helm/secret/tls.crt
 ```
 
 {{ header }} Environments
@@ -26,12 +32,12 @@ werf helm secret edit FILE_PATH [options]
       --dir='':
             Change to the specified directory to find werf.yaml config
   -h, --help=false:
-            help for edit
+            help for encrypt
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+  -o, --output-file-path='':
+            Write to file instead of stdout
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
-      --values=false:
-            Edit FILE_PATH as secret values file
 ```
 

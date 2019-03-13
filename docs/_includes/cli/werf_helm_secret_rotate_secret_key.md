@@ -5,7 +5,7 @@
 {% endif %}
 Regenerate secret files with new secret key.
 
-Old key should be specified with the --old-key option.
+Old key should be specified in the $WERF_OLD_SECRET_KEY.
 New key should reside either in the $WERF_SECRET_KEY or .werf_secret_key file.
 
 Command will extract data with the old key, generate new secret data and rewrite files:
@@ -16,14 +16,15 @@ Command will extract data with the old key, generate new secret data and rewrite
 {{ header }} Syntax
 
 ```bash
-werf helm secret regenerate [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
+werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
 ```
 
 {{ header }} Environments
 
 ```bash
-  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy; recommended way to 
-                    set secret key in CI-system
+  $WERF_SECRET_KEY      Use specified secret key to extract secrets for the deploy; recommended way 
+                        to set secret key in CI-system
+  $WERF_OLD_SECRET_KEY  Use specified old secret key to rotate secrets
 ```
 
 {{ header }} Options
@@ -32,7 +33,7 @@ werf helm secret regenerate [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
       --dir='':
             Change to the specified directory to find werf.yaml config
   -h, --help=false:
-            help for regenerate
+            help for rotate-secret-key
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto':
@@ -48,8 +49,6 @@ werf helm secret regenerate [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
             Defaults to:
             * $WERF_LOG_TERMINAL_WIDTH
             * interactive terminal width or 140
-      --old-key='':
-            Old secret key
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
