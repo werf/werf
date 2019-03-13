@@ -7,9 +7,9 @@ import (
 
 	"github.com/docker/docker/api/types"
 
+	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/logger"
-	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -104,7 +104,7 @@ func (c *StageImageContainer) prepareRunCommands() []string {
 	if len(runCommands) != 0 {
 		return runCommands
 	} else {
-		return []string{stapel.TrueBinPath()}
+		return []string{dappdeps.BaseBinPath("true")}
 	}
 }
 
@@ -113,7 +113,7 @@ func (c *StageImageContainer) prepareAllRunCommands() []string {
 }
 
 func ShelloutPack(command string) string {
-	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), stapel.Base64BinPath())
+	return fmt.Sprintf("eval $(echo %s | %s --decode)", base64.StdEncoding.EncodeToString([]byte(command)), dappdeps.BaseBinPath("base64"))
 }
 
 func (c *StageImageContainer) prepareIntrospectBeforeArgs() ([]string, error) {
@@ -129,7 +129,7 @@ func (c *StageImageContainer) prepareIntrospectBeforeArgs() ([]string, error) {
 
 	args = append(args, fromImageId)
 	args = append(args, "-ec")
-	args = append(args, stapel.BashBinPath())
+	args = append(args, dappdeps.BaseBinPath("bash"))
 
 	return args, nil
 }
@@ -147,7 +147,7 @@ func (c *StageImageContainer) prepareIntrospectArgs() ([]string, error) {
 
 	args = append(args, imageId)
 	args = append(args, "-ec")
-	args = append(args, stapel.BashBinPath())
+	args = append(args, dappdeps.BaseBinPath("bash"))
 
 	return args, nil
 }
@@ -182,15 +182,19 @@ func (c *StageImageContainer) prepareRunOptions() (*StageImageContainerOptions, 
 func (c *StageImageContainer) prepareServiceRunOptions() (*StageImageContainerOptions, error) {
 	serviceRunOptions := newStageContainerOptions()
 	serviceRunOptions.Workdir = "/"
-	serviceRunOptions.Entrypoint = []string{stapel.BashBinPath()}
+	serviceRunOptions.Entrypoint = []string{dappdeps.BaseBinPath("bash")}
 	serviceRunOptions.User = "0:0"
 
-	stapelContainerName, err := stapel.GetOrCreateContainer()
+	baseContainerName, err := dappdeps.BaseContainer()
 	if err != nil {
 		return nil, err
 	}
 
-	serviceRunOptions.VolumesFrom = []string{stapelContainerName}
+	toolchainContainerName, err := dappdeps.ToolchainContainer()
+	if err != nil {
+		return nil, err
+	}
+	serviceRunOptions.VolumesFrom = []string{baseContainerName, toolchainContainerName}
 
 	return serviceRunOptions, nil
 }

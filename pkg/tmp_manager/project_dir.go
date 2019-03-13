@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -41,11 +41,17 @@ func ReleaseProjectDir(dir string) error {
 }
 
 func removeProjectDirs(dirs []string) error {
+	toolchainContainerName, err := dappdeps.ToolchainContainer()
+	if err != nil {
+		return err
+	}
+
 	args := []string{
 		"--rm",
+		"--volumes-from", toolchainContainerName,
 		"--volume", fmt.Sprintf("%s:%s", werf.GetTmpDir(), werf.GetTmpDir()),
-		stapel.ImageName(),
-		stapel.RmBinPath(), "-rf",
+		dappdeps.BaseImageName(),
+		dappdeps.RmBinPath(), "-rf",
 	}
 
 	args = append(args, dirs...)

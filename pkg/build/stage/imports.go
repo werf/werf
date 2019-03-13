@@ -6,9 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/flant/werf/pkg/stapel"
-
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/dappdeps"
 	"github.com/flant/werf/pkg/docker"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/slug"
@@ -107,7 +106,12 @@ func (s *ImportsStage) prepareImportData(c Conveyor, i *config.Import) error {
 
 	imageCommand := generateSafeCp(i.Add, importContainerTmpPath, "", "", []string{}, []string{})
 
-	stapelContainerName, err := stapel.GetOrCreateContainer()
+	toolchainContainer, err := dappdeps.ToolchainContainer()
+	if err != nil {
+		return err
+	}
+
+	baseContainer, err := dappdeps.BaseContainer()
 	if err != nil {
 		return err
 	}
@@ -123,8 +127,9 @@ func (s *ImportsStage) prepareImportData(c Conveyor, i *config.Import) error {
 
 	args := []string{
 		"--rm",
-		fmt.Sprintf("--volumes-from=%s", stapelContainerName),
-		fmt.Sprintf("--entrypoint=%s", stapel.BashBinPath()),
+		fmt.Sprintf("--volumes-from=%s", toolchainContainer),
+		fmt.Sprintf("--volumes-from=%s", baseContainer),
+		fmt.Sprintf("--entrypoint=%s", dappdeps.BaseBinPath("bash")),
 		fmt.Sprintf("--volume=%s:%s", importImageTmp, importImageContainerTmp),
 		dockerImageName,
 		"-ec",
@@ -164,11 +169,11 @@ func (s *ImportsStage) importImageTmpDirs(i *config.Import) (string, string) {
 func generateSafeCp(from, to, owner, group string, includePaths, excludePaths []string) string {
 	var args []string
 
-	mkdirBin := stapel.MkdirBinPath()
+	mkdirBin := dappdeps.BaseBinPath("mkdir")
 	mkdirPath := path.Dir(to)
 	mkdirCommand := fmt.Sprintf("%s -p %s", mkdirBin, mkdirPath)
 
-	rsyncBin := stapel.RsyncBinPath()
+	rsyncBin := dappdeps.BaseBinPath("rsync")
 	var rsyncChownOption string
 	if owner != "" || group != "" {
 		rsyncChownOption = fmt.Sprintf("--chown=%s:%s", owner, group)
