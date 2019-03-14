@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-const VERSION = "0.1.0"
+const VERSION = "0.1.1"
 
 func ImageName() string {
 	return fmt.Sprintf("flant/werf-stapel:%s", VERSION)
@@ -23,7 +23,6 @@ func GetOrCreateContainer() (string, error) {
 	} else {
 		return container.Name, nil
 	}
-
 }
 
 func TrueBinPath() string {
