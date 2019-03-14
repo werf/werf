@@ -7,11 +7,11 @@ import (
 
 type SecretMock struct{}
 
-func (s *SecretMock) Generate(data []byte) ([]byte, error) {
+func (s *SecretMock) Encrypt(data []byte) ([]byte, error) {
 	return []byte("encoded data"), nil
 }
 
-func (s *SecretMock) Extract(data []byte) ([]byte, error) {
+func (s *SecretMock) Decrypt(data []byte) ([]byte, error) {
 	return []byte("data"), nil
 }
 
@@ -57,12 +57,12 @@ func TestBaseSecret_doYamlData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	encodedData, err := s.GenerateYamlData(valuesData)
+	encodedData, err := s.EncryptYamlData(valuesData)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	resultData, err := s.ExtractYamlData(encodedData)
+	resultData, err := s.DecryptYamlData(encodedData)
 	if err != nil {
 		t.Fatal(err)
 	}

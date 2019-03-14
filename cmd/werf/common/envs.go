@@ -15,11 +15,13 @@ const (
 
 	WerfDebugAnsibleArgs Env = "WERF_DEBUG_ANSIBLE_ARGS"
 	WerfSecretKey        Env = "WERF_SECRET_KEY"
+	WerfOldSecretKey     Env = "WERF_OLD_SECRET_KEY"
 )
 
 var envDescription = map[Env]string{
 	WerfDebugAnsibleArgs: "Pass specified cli args to ansible ($ANSIBLE_ARGS)",
 	WerfSecretKey:        "Use specified secret key to extract secrets for the deploy; recommended way to set secret key in CI-system",
+	WerfOldSecretKey:     "Use specified old secret key to rotate secrets",
 }
 
 func EnvsDescription(envs ...Env) string {

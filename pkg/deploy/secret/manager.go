@@ -16,8 +16,8 @@ import (
 type Manager interface {
 	secret.Secret
 
-	GenerateYamlData(data []byte) ([]byte, error)
-	ExtractYamlData(encodedData []byte) ([]byte, error)
+	EncryptYamlData(data []byte) ([]byte, error)
+	DecryptYamlData(encodedData []byte) ([]byte, error)
 }
 
 func GenerateSecretKey() ([]byte, error) {

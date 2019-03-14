@@ -5,7 +5,7 @@
 {% endif %}
 Regenerate secret files with new secret key.
 
-Old key should be specified with the --old-key option.
+Old key should be specified in the $WERF_OLD_SECRET_KEY.
 New key should reside either in the $WERF_SECRET_KEY or .werf_secret_key file.
 
 Command will extract data with the old key, generate new secret data and rewrite files:
@@ -16,14 +16,15 @@ Command will extract data with the old key, generate new secret data and rewrite
 {{ header }} Syntax
 
 ```bash
-werf helm secret regenerate [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
+werf helm secret rotate-secret-key [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
 ```
 
 {{ header }} Environments
 
 ```bash
-  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy; recommended way to 
-                    set secret key in CI-system
+  $WERF_SECRET_KEY      Use specified secret key to extract secrets for the deploy; recommended way 
+                        to set secret key in CI-system
+  $WERF_OLD_SECRET_KEY  Use specified old secret key to rotate secrets
 ```
 
 {{ header }} Options
@@ -31,11 +32,8 @@ werf helm secret regenerate [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
 ```bash
       --dir='':
             Change to the specified directory to find werf.yaml config
-      --disable-pretty-log=false:
-            Disable emojis, auto line wrapping and replace log process border characters with 
-            spaces (default $WERF_DISABLE_PRETTY_LOG).
   -h, --help=false:
-            help for regenerate
+            help for rotate-secret-key
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
       --log-color-mode='auto':
@@ -43,8 +41,14 @@ werf helm secret regenerate [EXTRA_SECRET_VALUES_FILE_PATH...] [options]
             Supported on, off and auto (based on the stdout's file descriptor referring to a 
             terminal) modes.
             Default $WERF_LOG_COLOR_MODE or auto mode.
-      --old-key='':
-            Old secret key
+      --log-pretty=true:
+            Enable emojis, auto line wrapping and log process border (default $WERF_LOG_PRETTY or 
+            true).
+      --log-terminal-width=-1:
+            Set log terminal width.
+            Defaults to:
+            * $WERF_LOG_TERMINAL_WIDTH
+            * interactive terminal width or 140
       --tmp-dir='':
             Use specified dir to store tmp files and dirs (default $WERF_TMP_DIR or system tmp dir)
 ```
