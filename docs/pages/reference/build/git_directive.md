@@ -6,12 +6,12 @@ summary: |
   <a class="google-drawings" href="https://docs.google.com/drawings/d/e/2PACX-1vRUYmRNmeuP14OcChoeGzX_4soCdXx7ZPgNqm5ePcz9L_ItMUqyolRoJyPL7baMNoY7P6M0B08eMtsb/pub?w=2031&amp;h=144" data-featherlight="image">
       <img src="https://docs.google.com/drawings/d/e/2PACX-1vRUYmRNmeuP14OcChoeGzX_4soCdXx7ZPgNqm5ePcz9L_ItMUqyolRoJyPL7baMNoY7P6M0B08eMtsb/pub?w=1016&amp;h=72">
   </a>
-      
+
   <div class="tab">
     <button class="tablinks active" onclick="openTab(event, 'local')">Local</button>
     <button class="tablinks" onclick="openTab(event, 'remote')">Remote</button>
   </div>
-  
+
   <div id="local" class="tabcontent active">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">git</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="s">add</span><span class="pi">:</span> <span class="s">&lt;absolute path&gt;</span>
@@ -31,7 +31,7 @@ summary: |
       <span class="pi">-</span> <span class="s">&lt;relative path or glob&gt;</span></code></pre>
     </div>
   </div>
-  
+
   <div id="remote" class="tabcontent">
     <div class="language-yaml highlighter-rouge"><pre class="highlight"><code><span class="s">git</span><span class="pi">:</span>
   <span class="pi">-</span> <span class="s">url</span><span class="pi">:</span> <span class="s">&lt;git repo url&gt;</span>
@@ -57,18 +57,18 @@ summary: |
   </div>
 ---
 
-## What is git path? 
+## What is git mapping?
 
-***Git path*** describes a file or directory from the git repository that should be added to the image by a specific path. The repository may be a local one, hosted in the directory that contains the config, or a remote one, and in this case, the configuration of the _git path_ contains the repository address and the version (branch, tag or commit hash).
+***Git mapping*** describes a file or directory from the git repository that should be added to the image by a specific path. The repository may be a local one, hosted in the directory that contains the config, or a remote one, and in this case, the configuration of the _git mapping_ contains the repository address and the version (branch, tag or commit hash).
 
 Werf adds the files from the repository to the image by using the full transfer of files with git archive or by applying patches between commits.
 The full transfer is used for the initial adding of files. The subsequent builds use applying patches to reflect changes in a git repository. The algorithm behind the full transfer and applying patches is reviewed the [More details: git_archive...](#more-details-git_archive-gitCache-gitLatestPatch) section.
 
-The configuration of the _git path_ supports filtering files, and you can use the set of _git paths_ to create virtually any resulting file structure in the image. Also, you can specify the owner and the group of files in the _git path_ configuration — no subsequent `chown` required.
+The configuration of the _git mapping_ supports filtering files, and you can use the set of _git mappings_ to create virtually any resulting file structure in the image. Also, you can specify the owner and the group of files in the _git mapping_ configuration — no subsequent `chown` required.
 
-Werf has support for submodules. Werf detects if files specified with _git path_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
+Werf has support for submodules. Werf detects if files specified with _git mapping_ configuration are contained in submodules and does the very best it could to handle the changes of files in submodules correctly.
 
-An example of a _git path_ configuration for adding source files from a local repository from the `/src` into the `/app` directory, and remote phantomjs source files to `/src/phantomjs`:
+An example of a _git mapping_ configuration for adding source files from a local repository from the `/src` into the `/app` directory, and remote phantomjs source files to `/src/phantomjs`:
 
 ```yaml
 git:
@@ -79,7 +79,7 @@ git:
   to: /src/phantomjs
 ```
 
-## Motivation for git paths
+## Motivation for git mappings
 
 The main idea is to bring git history into the build process.
 
@@ -91,9 +91,9 @@ Most commits in the real application repository relate to updating the code of t
 
 Building an application image may depend on source files in other repositories. Werf provides the ability to add files from remote repositories too. Werf can detect changes in local repositories and remote repositories.
 
-## Syntax of a git path
+## Syntax of a git mapping
 
-The _git path_ configuration for a local repository has the following parameters:
+The _git mapping_ configuration for a local repository has the following parameters:
 
 - `add` — the path to a directory or file whose contents must be copied to the image. The path is specified relative to the repository root, and the path is absolute (i.e., it must start with `/`). This parameter is optional, the content of the entire repository is transferred by default, i.e., an empty `add` is equal to `add: /`;
 - `to` — the path in the image, where the content specified with `add` will be copied;
@@ -103,12 +103,12 @@ The _git path_ configuration for a local repository has the following parameters
 - `includePaths` — a set of masks to include the files or directories during recursive copying. Paths in masks are specified relative to add;
 - `stageDependencies` — a set of masks to detect changes that lead to the user stages rebuilds. This is reviewed in detail in the [Running assembly instructions]({{ site.baseurl }}/reference/build/assembly_instructions.html) reference.
 
-The _git path_ configuration for a remote repository has some additional parameters:
+The _git mapping_ configuration for a remote repository has some additional parameters:
 - `url` — remote repository address;
 - `branch`, `tag`, `commit` — a name of branch, tag or commit hash that will be used. If these parameters are not specified, the master branch is used;
 - `as` — defines an alias to simplify the retrieval of remote repository-related information in helm templates. Details are available in the [Deployment to kubernetes]({{ site.baseurl }}/reference/deploy/deploy_to_kubernetes.html) reference.
 
-## Uses of git paths
+## Uses of git mappings
 
 ### Copying of directories
 
@@ -121,17 +121,17 @@ git:
   to: /app
 ```
 
-This is the simple _git path_ configuration that adds the entire content from the repository to the `/app` directory in the image.
+This is the simple _git mapping_ configuration that adds the entire content from the repository to the `/app` directory in the image.
 
 If the repository contains the following structure:
 
-![git repository files tree]({{ site.baseurl }}/images/build/git_path_01.png)
+![git repository files tree]({{ site.baseurl }}/images/build/git_mapping_01.png)
 
 Then the image contains this structure:
 
-![image files tree]({{ site.baseurl }}/images/build/git_path_02.png)
+![image files tree]({{ site.baseurl }}/images/build/git_mapping_02.png)
 
-Multiple _git paths_ may be specified:
+Multiple _git mappings_ may be specified:
 
 ```yaml
 git:
@@ -143,13 +143,13 @@ git:
 
 If the repository contains the following structure:
 
-![git repository files tree]({{ site.baseurl }}/images/build/git_path_03.png)
+![git repository files tree]({{ site.baseurl }}/images/build/git_mapping_03.png)
 
 Then the image contains this structure:
 
-![image files tree]({{ site.baseurl }}/images/build/git_path_04.png)
+![image files tree]({{ site.baseurl }}/images/build/git_mapping_04.png)
 
-It should be noted, that _git path_ configuration doesn't specify a directory to be transferred like `cp -r /src /app`. `add` parameter specifies a directory content that will be recursively transferred from the repository. That is if the `/assets` directory needs to be transferred to the `/app/assets` directory, then the name **assets** should be written twice, or `includePaths` [filter](#using-filters) can be used.
+It should be noted, that _git mapping_ configuration doesn't specify a directory to be transferred like `cp -r /src /app`. `add` parameter specifies a directory content that will be recursively transferred from the repository. That is if the `/assets` directory needs to be transferred to the `/app/assets` directory, then the name **assets** should be written twice, or `includePaths` [filter](#using-filters) can be used.
 
 ```yaml
 git:
@@ -180,7 +180,7 @@ git:
 
 ### Changing an owner
 
-The _git path_ configuration provides parameters `owner` and `group`. These are the names or numerical ids of the owner and group used for all files and directories transferred to the image.
+The _git mapping_ configuration provides parameters `owner` and `group`. These are the names or numerical ids of the owner and group used for all files and directories transferred to the image.
 
 ```yaml
 git:
@@ -189,7 +189,7 @@ git:
   owner: www-data
 ```
 
-![index.php owned by www-data user and group]({{ site.baseurl }}/images/build/git_path_05.png)
+![index.php owned by www-data user and group]({{ site.baseurl }}/images/build/git_mapping_05.png)
 
 If only the `owner` parameter is specified, the group for files is the same as the primary group of the specified user.
 
@@ -208,7 +208,7 @@ git:
 
 `includePaths` and `excludePaths` parameters are used when processing the file list. These are the sets of masks that can be used to include and exclude files and directories from/to the list of files that will be transferred to the image. Simply stated, the `excludePaths` filter works as follows: masks are applied to each file found in `add` path. If at least one mask matches, then the file is ignored; if no matches are found, then the file gets added to the image. `includePaths` works the opposite way: if at least one mask is a match, the file gets added to the image.
 
-_Git path_ configuration can contain both filters. In this case, a file is added to the image if the path matches with one of `includePaths` masks and not match with all `excludePaths` masks.
+_Git mapping_ configuration can contain both filters. In this case, a file is added to the image if the path matches with one of `includePaths` masks and not match with all `excludePaths` masks.
 
 For example:
 
@@ -224,7 +224,7 @@ git:
   - '**/*-test.*'
 ```
 
-This is the git path configuration that adds `.php` and `.js` files from `/src` except files with `-dev` or `-test` suffixes.
+This is the git mapping configuration that adds `.php` and `.js` files from `/src` except files with `-dev` or `-test` suffixes.
 
 To determine whether the file matches the mask the following algorithm is applied:
 - the path in `add` is concatenated with the mask;
@@ -236,7 +236,7 @@ To determine whether the file matches the mask the following algorithm is applie
 - two paths are compared with the use of fnmatch with FNM_PATHNAME and FNM_DOTMATCH flags (`.` is included in the `*`, however `/` is excluded);
 - if fnmatch returns true, then the file is matched; if false, the file does not match;
 
-> The second step with adding `**/*` template is for convenience: the most frequent use case of a _git path_ with filters is to configure recursive copying for the directory. Adding `**/*` makes enough to specify the directory name only, and its entire content matches the filter.
+> The second step with adding `**/*` template is for convenience: the most frequent use case of a _git mapping_ with filters is to configure recursive copying for the directory. Adding `**/*` makes enough to specify the directory name only, and its entire content matches the filter.
 
 Masks may contain the following patterns:
 
@@ -257,7 +257,7 @@ add: /src
 to: /app
 includePaths:
 # match all php files residing directly in /src
-- '*.php' 
+- '*.php'
 
 # matches recursively all php files from /src
 # (also matches *.php because '.' is included in **)
@@ -278,7 +278,7 @@ git:
 
 ### Target paths overlapping
 
-If multiple git paths are added, you should remember those intersecting paths defined in `to` may result in the inability to add files to the image. For example:
+If multiple git mappings are added, you should remember those intersecting paths defined in `to` may result in the inability to add files to the image. For example:
 
 ```yaml
 git:
@@ -288,7 +288,7 @@ git:
   to: /app/assets
 ```
 
-When processing a config, werf calculates the possible intersections among all git paths concerning `includePaths` and `excludePaths` filters. If an intersection is detected, then werf can resolve simple conflicts with implicitly adding `excludePaths` into the git path. In other cases, the build ends with an error. However, implicit `excludePaths` filter can have undesirable effects, so try to avoid conflicts of intersecting paths between configured git paths.
+When processing a config, werf calculates the possible intersections among all git mappings concerning `includePaths` and `excludePaths` filters. If an intersection is detected, then werf can resolve simple conflicts with implicitly adding `excludePaths` into the git mapping. In other cases, the build ends with an error. However, implicit `excludePaths` filter can have undesirable effects, so try to avoid conflicts of intersecting paths between configured git mappings.
 
 Implicit `excludePaths` example:
 
@@ -304,7 +304,7 @@ git:
 
 ## Working with remote repositories
 
-Werf may use remote repositories as file sources. For this purpose, the _git path_ configuration contains an `url` parameter where you should specify the repository address. Werf supports `https` and `git+ssh` protocols.
+Werf may use remote repositories as file sources. For this purpose, the _git mapping_ configuration contains an `url` parameter where you should specify the repository address. Werf supports `https` and `git+ssh` protocols.
 
 ### https
 
@@ -355,13 +355,13 @@ The ssh-agent is determined as follows:
   - `SSH_AUTH_SOCK` environment variable is used, and the keys added to this agent is used for git operations.
 - No `--ssh-key` flags specified and ssh-agent is not running:
   - If `~/.ssh/id_rsa` file exists, then werf will run the temporary ssh-agent with the  key from `~/.ssh/id_rsa` file.
-- If none of the previous options is applicable, then the ssh-agent is not started, and no keys for git operation are available. Build images with remote _git paths_ ends with an error.
+- If none of the previous options is applicable, then the ssh-agent is not started, and no keys for git operation are available. Build images with remote _git mappings_ ends with an error.
 
 ## More details: gitArchive, gitCache, gitLatestPatch
 
 Let us review adding files to the resulting image in more detail. As stated earlier, the docker image contains multiple layers. To understand what layers werf create, let's consider the building actions based on three sample commits: `1`, `2` and `3`:
 
-- Build of commit No. 1. All files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _gitArchive_ stage.
+- Build of commit No. 1. All files are added to a single layer based on the configuration of the _git mappings_. This is done with the help of the git archive. This is the layer of the _gitArchive_ stage.
 - Build of commit No. 2. Another layer is added where the files are changed by applying a patch. This is the layer of the _gitLatestPatch_ stage.
 - Build of commit No. 3. Files have already added, so werf apply patches in the _gitLatestPatch_ stage layer.
 
@@ -376,7 +376,7 @@ Build sequence for these commits may be represented as follows:
 A space between the layers in this table is not accidental. After a while, the number of commits grows, and the patch between commit No. 1 and the current commit may become quite large, which will further increase the size of the last layer and the total size of the _stages cache_. To prevent the growth of the last layer werf provides another intermediary stage — _gitCache_.
 How does werf work with these three stages? Now we are going to need more commits to illustrate this, let it be `1`, `2`, `3`, `4`, `5`, `6` and `7`.
 
-- Build of commit No. 1. As before, files are added to a single layer based on the configuration of the _git paths_. This is done with the help of the git archive. This is the layer of the _gitArchive_ stage.
+- Build of commit No. 1. As before, files are added to a single layer based on the configuration of the _git mappings_. This is done with the help of the git archive. This is the layer of the _gitArchive_ stage.
 - Build of commit No. 2. The layer of the _gitCache_ stage is added, where files are changed by applying a patch between commits `1` and `2`.
 - Build of commit No. 3. The layer of the _gitLatestPatch_ stage is added, where the patch between `2` and `3` is applied.
 - Build of commit No. 4. The size of the patch between `1` and `4` does not exceed 1 MiB, so only the layer of the _gitLatestPatch_ stage is modified by applying the patch between `2` and `4`.
@@ -400,7 +400,7 @@ This means that as commits are added starting from the moment the first build is
 
 ### Rebuild of gitArchive stage
 
-For various reasons, you may want to reset the _gitArchive_ stage, for example, to decrease the size of the _stages cache_ and the image. 
+For various reasons, you may want to reset the _gitArchive_ stage, for example, to decrease the size of the _stages cache_ and the image.
 
 To illustrate the unnecessary growth of image size assume the rare case of 2GiB file in git repository. First build tranfers this file in the layer of the _gitArchive_ stage. Then some optimization occured and file is recompiled and it's size is decreased to 1.6GiB. The build of this new commit applies patch in the layer of the _gitCache_ stage. The image size become 3.6GiB of which 2GiB is a cached old version of the big file. Rebuilding from _gitArchive_ stage can reduce image size to 1.6GiB. This situation is quite rare but gives a good explanation of correlation between the layers of the _git stages_.
 
@@ -420,4 +420,4 @@ You can reset the _gitArchive_ stage specifying the **[werf reset]** or **[reset
 
 ### _git stages_ and rebasing
 
-Each _git stage_ stores service labels with commits SHA from which this _stage_ was built. These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git path_). So, if the any saved commit isn't in a git repository, e.g., after rebasing, then werf rebuilds that stage with latest commits at the next build.
+Each _git stage_ stores service labels with commits SHA from which this _stage_ was built. These commits are used for creating patches on the next _git stage_ (in a nutshell, `git diff COMMIT_FROM_PREVIOUS_GIT_STAGE LATEST_COMMIT` for each described _git mapping_). So, if the any saved commit isn't in a git repository, e.g., after rebasing, then werf rebuilds that stage with latest commits at the next build.

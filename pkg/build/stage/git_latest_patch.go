@@ -23,15 +23,15 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInte
 	}
 
 	isEmpty := true
-	for _, gitPath := range s.gitPaths {
-		commit := gitPath.GetGitCommitFromImageLabels(prevBuiltImage)
-		if exist, err := gitPath.GitRepo().IsCommitExists(commit); err != nil {
+	for _, gitMapping := range s.gitMappings {
+		commit := gitMapping.GetGitCommitFromImageLabels(prevBuiltImage)
+		if exist, err := gitMapping.GitRepo().IsCommitExists(commit); err != nil {
 			return false, err
 		} else if !exist {
 			return true, nil
 		}
 
-		if empty, err := gitPath.IsPatchEmpty(prevBuiltImage); err != nil {
+		if empty, err := gitMapping.IsPatchEmpty(prevBuiltImage); err != nil {
 			return false, err
 		} else if !empty {
 			isEmpty = false
@@ -45,8 +45,8 @@ func (s *GitLatestPatchStage) IsEmpty(c Conveyor, prevBuiltImage image.ImageInte
 func (s *GitLatestPatchStage) GetDependencies(_ Conveyor, prevImage image.ImageInterface) (string, error) {
 	var args []string
 
-	for _, gitPath := range s.gitPaths {
-		commit, err := gitPath.LatestCommit()
+	for _, gitMapping := range s.gitMappings {
+		commit, err := gitMapping.LatestCommit()
 		if err != nil {
 			return "", err
 		}

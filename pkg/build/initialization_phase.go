@@ -190,18 +190,18 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 		ContainerArchivesDir: getImageArchivesContainerDir(c),
 	}
 
-	gitPaths, err := generateGitPaths(imageBaseConfig, c)
+	gitMappings, err := generateGitMappings(imageBaseConfig, c)
 	if err != nil {
 		return nil, err
 	}
 
-	gitPathsExist := len(gitPaths) != 0
+	gitMappingsExist := len(gitMappings) != 0
 
 	stages = appendIfExist(stages, stage.GenerateFromStage(imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(stages, stage.GenerateBeforeInstallStage(imageBaseConfig, baseStageOptions))
 	stages = appendIfExist(stages, stage.GenerateImportsBeforeInstallStage(imageBaseConfig, baseStageOptions))
 
-	if gitPathsExist {
+	if gitMappingsExist {
 		stages = append(stages, stage.NewGitArchiveStage(gitArchiveStageOptions, baseStageOptions))
 	}
 
@@ -213,7 +213,7 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 	stages = appendIfExist(stages, stage.GenerateImportsAfterSetupStage(imageBaseConfig, baseStageOptions))
 
 	if !imageArtifact {
-		if gitPathsExist {
+		if gitMappingsExist {
 			stages = append(stages, stage.NewGitCacheStage(gitPatchStageOptions, baseStageOptions))
 			stages = append(stages, stage.NewGitLatestPatchStage(gitPatchStageOptions, baseStageOptions))
 		}
@@ -221,19 +221,19 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 		stages = appendIfExist(stages, stage.GenerateDockerInstructionsStage(imageInterfaceConfig.(*config.Image), baseStageOptions))
 	}
 
-	if len(gitPaths) != 0 {
+	if len(gitMappings) != 0 {
 		logger.LogInfoLn("Using git stages")
 
 		for _, s := range stages {
-			s.SetGitPaths(gitPaths)
+			s.SetGitMappings(gitMappings)
 		}
 	}
 
 	return stages, nil
 }
 
-func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.GitPath, error) {
-	var gitPaths []*stage.GitPath
+func generateGitMappings(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.GitMapping, error) {
+	var gitMappings []*stage.GitMapping
 
 	var localGitRepo *git_repo.Local
 	if len(imageBaseConfig.Git.Local) != 0 {
@@ -244,14 +244,14 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 		}
 	}
 
-	for _, localGitPathConfig := range imageBaseConfig.Git.Local {
-		gitPaths = append(gitPaths, gitLocalPathInit(localGitPathConfig, localGitRepo, imageBaseConfig.Name, c))
+	for _, localGitMappingConfig := range imageBaseConfig.Git.Local {
+		gitMappings = append(gitMappings, gitLocalPathInit(localGitMappingConfig, localGitRepo, imageBaseConfig.Name, c))
 	}
 
-	for _, remoteGitPathConfig := range imageBaseConfig.Git.Remote {
-		remoteGitRepo, exist := c.remoteGitRepos[remoteGitPathConfig.Name]
+	for _, remoteGitMappingConfig := range imageBaseConfig.Git.Remote {
+		remoteGitRepo, exist := c.remoteGitRepos[remoteGitMappingConfig.Name]
 		if !exist {
-			clonePath, err := getRemoteGitRepoClonePath(remoteGitPathConfig, c)
+			clonePath, err := getRemoteGitRepoClonePath(remoteGitMappingConfig, c)
 			if err != nil {
 				return nil, err
 			}
@@ -261,33 +261,33 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 			}
 
 			remoteGitRepo = &git_repo.Remote{
-				Base:      git_repo.Base{Name: remoteGitPathConfig.Name},
-				Url:       remoteGitPathConfig.Url,
+				Base:      git_repo.Base{Name: remoteGitMappingConfig.Name},
+				Url:       remoteGitMappingConfig.Url,
 				ClonePath: clonePath,
 			}
 
-			if err := logger.LogSecondaryProcess(fmt.Sprintf("Refreshing %s repository", remoteGitPathConfig.Name), logger.LogProcessOptions{}, func() error {
+			if err := logger.LogSecondaryProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logger.LogProcessOptions{}, func() error {
 				return remoteGitRepo.CloneAndFetch()
 			}); err != nil {
 				return nil, err
 			}
 
-			c.remoteGitRepos[remoteGitPathConfig.Name] = remoteGitRepo
+			c.remoteGitRepos[remoteGitMappingConfig.Name] = remoteGitRepo
 		}
 
-		gitPaths = append(gitPaths, gitRemoteArtifactInit(remoteGitPathConfig, remoteGitRepo, imageBaseConfig.Name, c))
+		gitMappings = append(gitMappings, gitRemoteArtifactInit(remoteGitMappingConfig, remoteGitRepo, imageBaseConfig.Name, c))
 	}
 
-	var res []*stage.GitPath
+	var res []*stage.GitMapping
 
-	if len(gitPaths) != 0 {
-		err := logger.LogSecondaryProcess(fmt.Sprintf("Initializing git paths"), logger.LogProcessOptions{}, func() error {
-			nonEmptyGitPaths, err := getNonEmptyGitPaths(gitPaths)
+	if len(gitMappings) != 0 {
+		err := logger.LogSecondaryProcess(fmt.Sprintf("Initializing git mappings"), logger.LogProcessOptions{}, func() error {
+			nonEmptyGitMappings, err := getNonEmptyGitMappings(gitMappings)
 			if err != nil {
 				return err
 			}
 
-			res = nonEmptyGitPaths
+			res = nonEmptyGitMappings
 
 			return nil
 		})
@@ -300,11 +300,11 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 	return res, nil
 }
 
-func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
-	var nonEmptyGitPaths []*stage.GitPath
+func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMapping, error) {
+	var nonEmptyGitMappings []*stage.GitMapping
 
-	for ind, gitPath := range gitPaths {
-		if err := logger.LogSecondaryProcess(fmt.Sprintf("[%d] git path of %s repository", ind, gitPath.Name), logger.LogProcessOptions{}, func() error {
+	for ind, gitMapping := range gitMappings {
+		if err := logger.LogSecondaryProcess(fmt.Sprintf("[%d] git mapping of %s repository", ind, gitMapping.Name), logger.LogProcessOptions{}, func() error {
 			withTripleIndent := func(f func()) {
 				logger.IndentUp()
 				logger.IndentUp()
@@ -316,36 +316,36 @@ func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 			}
 
 			withTripleIndent(func() {
-				logger.LogInfoF("add: %s\n", gitPath.Cwd)
-				logger.LogInfoF("to: %s\n", gitPath.To)
+				logger.LogInfoF("add: %s\n", gitMapping.Cwd)
+				logger.LogInfoF("to: %s\n", gitMapping.To)
 
-				if len(gitPath.IncludePaths) != 0 {
-					logger.LogInfoF("includePaths: %+v\n", gitPath.IncludePaths)
+				if len(gitMapping.IncludePaths) != 0 {
+					logger.LogInfoF("includePaths: %+v\n", gitMapping.IncludePaths)
 				}
 
-				if len(gitPath.ExcludePaths) != 0 {
-					logger.LogInfoF("excludePaths: %+v\n", gitPath.ExcludePaths)
+				if len(gitMapping.ExcludePaths) != 0 {
+					logger.LogInfoF("excludePaths: %+v\n", gitMapping.ExcludePaths)
 				}
 
-				if gitPath.Commit != "" {
-					logger.LogInfoF("commit: %s\n", gitPath.Commit)
+				if gitMapping.Commit != "" {
+					logger.LogInfoF("commit: %s\n", gitMapping.Commit)
 				}
 
-				if gitPath.Branch != "" {
-					logger.LogInfoF("branch: %s\n", gitPath.Branch)
+				if gitMapping.Branch != "" {
+					logger.LogInfoF("branch: %s\n", gitMapping.Branch)
 				}
 
-				if gitPath.Owner != "" {
-					logger.LogInfoF("owner: %s\n", gitPath.Owner)
+				if gitMapping.Owner != "" {
+					logger.LogInfoF("owner: %s\n", gitMapping.Owner)
 				}
 
-				if gitPath.Group != "" {
-					logger.LogInfoF("group: %s\n", gitPath.Group)
+				if gitMapping.Group != "" {
+					logger.LogInfoF("group: %s\n", gitMapping.Group)
 				}
 
-				if len(gitPath.StagesDependencies) != 0 {
+				if len(gitMapping.StagesDependencies) != 0 {
 					logger.LogInfoLn("stageDependencies:")
-					for s, values := range gitPath.StagesDependencies {
+					for s, values := range gitMapping.StagesDependencies {
 						if len(values) != 0 {
 							logger.LogInfoF("  %s: %v\n", s, values)
 						}
@@ -356,23 +356,23 @@ func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 
 			logger.LogLn()
 
-			commit, err := gitPath.LatestCommit()
+			commit, err := gitMapping.LatestCommit()
 			if err != nil {
-				return fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
+				return fmt.Errorf("unable to get commit of repo '%s': %s", gitMapping.GitRepo().GetName(), err)
 			}
 
-			cwd := gitPath.Cwd
+			cwd := gitMapping.Cwd
 			if cwd == "" {
 				cwd = "/"
 			}
 
-			if empty, err := gitPath.IsEmpty(); err != nil {
+			if empty, err := gitMapping.IsEmpty(); err != nil {
 				return err
 			} else if !empty {
 				logger.LogInfoF("Commit %s will be used\n", commit)
-				nonEmptyGitPaths = append(nonEmptyGitPaths, gitPath)
+				nonEmptyGitMappings = append(nonEmptyGitMappings, gitMapping)
 			} else {
-				logger.LogErrorF("WARNING: Empty git path will be ignored (commit %s)\n", commit)
+				logger.LogErrorF("WARNING: Empty git mapping will be ignored (commit %s)\n", commit)
 			}
 
 			return nil
@@ -381,11 +381,11 @@ func getNonEmptyGitPaths(gitPaths []*stage.GitPath) ([]*stage.GitPath, error) {
 		}
 	}
 
-	return nonEmptyGitPaths, nil
+	return nonEmptyGitMappings, nil
 }
 
-func getRemoteGitRepoClonePath(remoteGitPathConfig *config.GitRemote, c *Conveyor) (string, error) {
-	scheme, err := urlScheme(remoteGitPathConfig.Url)
+func getRemoteGitRepoClonePath(remoteGitMappingConfig *config.GitRemote, c *Conveyor) (string, error) {
+	scheme, err := urlScheme(remoteGitMappingConfig.Url)
 	if err != nil {
 		return "", err
 	}
@@ -396,7 +396,7 @@ func getRemoteGitRepoClonePath(remoteGitPathConfig *config.GitRemote, c *Conveyo
 		"projects",
 		c.werfConfig.Meta.Project,
 		fmt.Sprintf("%v", git_repo.RemoteGitRepoCacheVersion),
-		slug.Slug(remoteGitPathConfig.Name),
+		slug.Slug(remoteGitMappingConfig.Name),
 		scheme,
 	)
 
@@ -419,39 +419,39 @@ func urlScheme(urlString string) (string, error) {
 	return u.Scheme, nil
 }
 
-func gitRemoteArtifactInit(remoteGitPathConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, imageName string, c *Conveyor) *stage.GitPath {
-	gitPath := baseGitPathInit(remoteGitPathConfig.GitLocalExport, imageName, c)
+func gitRemoteArtifactInit(remoteGitMappingConfig *config.GitRemote, remoteGitRepo *git_repo.Remote, imageName string, c *Conveyor) *stage.GitMapping {
+	gitMapping := baseGitMappingInit(remoteGitMappingConfig.GitLocalExport, imageName, c)
 
-	gitPath.Tag = remoteGitPathConfig.Tag
-	gitPath.Commit = remoteGitPathConfig.Commit
-	gitPath.Branch = remoteGitPathConfig.Branch
+	gitMapping.Tag = remoteGitMappingConfig.Tag
+	gitMapping.Commit = remoteGitMappingConfig.Commit
+	gitMapping.Branch = remoteGitMappingConfig.Branch
 
-	gitPath.Name = remoteGitPathConfig.Name
+	gitMapping.Name = remoteGitMappingConfig.Name
 
-	gitPath.GitRepoInterface = remoteGitRepo
+	gitMapping.GitRepoInterface = remoteGitRepo
 
-	return gitPath
+	return gitMapping
 }
 
-func gitLocalPathInit(localGitPathConfig *config.GitLocal, localGitRepo *git_repo.Local, imageName string, c *Conveyor) *stage.GitPath {
-	gitPath := baseGitPathInit(localGitPathConfig.GitLocalExport, imageName, c)
+func gitLocalPathInit(localGitMappingConfig *config.GitLocal, localGitRepo *git_repo.Local, imageName string, c *Conveyor) *stage.GitMapping {
+	gitMapping := baseGitMappingInit(localGitMappingConfig.GitLocalExport, imageName, c)
 
-	gitPath.As = localGitPathConfig.As
+	gitMapping.As = localGitMappingConfig.As
 
-	gitPath.Name = "own"
+	gitMapping.Name = "own"
 
-	gitPath.GitRepoInterface = localGitRepo
+	gitMapping.GitRepoInterface = localGitRepo
 
-	return gitPath
+	return gitMapping
 }
 
-func baseGitPathInit(local *config.GitLocalExport, imageName string, c *Conveyor) *stage.GitPath {
+func baseGitMappingInit(local *config.GitLocalExport, imageName string, c *Conveyor) *stage.GitMapping {
 	var stageDependencies map[stage.StageName][]string
 	if local.StageDependencies != nil {
 		stageDependencies = stageDependenciesToMap(local.StageDependencies)
 	}
 
-	gitPath := &stage.GitPath{
+	gitMapping := &stage.GitMapping{
 		PatchesDir:           getImagePatchesDir(imageName, c),
 		ContainerPatchesDir:  getImagePatchesContainerDir(c),
 		ArchivesDir:          getImageArchivesDir(imageName, c),
@@ -468,7 +468,7 @@ func baseGitPathInit(local *config.GitLocalExport, imageName string, c *Conveyor
 		StagesDependencies: stageDependencies,
 	}
 
-	return gitPath
+	return gitMapping
 }
 
 func getImagePatchesDir(imageName string, c *Conveyor) string {

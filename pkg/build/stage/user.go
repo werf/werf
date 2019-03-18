@@ -33,8 +33,8 @@ type UserStage struct {
 
 func (s *UserStage) getStageDependenciesChecksum(name StageName) (string, error) {
 	var args []string
-	for _, gitPath := range s.gitPaths {
-		checksum, err := gitPath.StageDependenciesChecksum(name)
+	for _, gitMapping := range s.gitMappings {
+		checksum, err := gitMapping.StageDependenciesChecksum(name)
 		if err != nil {
 			return "", err
 		}
