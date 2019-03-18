@@ -35,6 +35,13 @@ def DisableLogColor():
     lib.DisableLogColor()
 
 
+lib.SetTerminalWidth.argtypes = [c_int]
+lib.SetTerminalWidth.restype = None
+
+def SetTerminalWidth(width):
+    lib.SetTerminalWidth(width)
+
+
 lib.IndentUp.argtypes = []
 lib.IndentUp.restype = None
 
