@@ -44,29 +44,49 @@ func OptionalLnModeOn() {
 	logger.OptionalLnModeOn()
 }
 
-//export LogLn
-func LogLn(data *C.char) {
-	logger.LogLn(C.GoString(data))
+//export Log
+func Log(data *C.char) {
+	logger.LogF("%s", C.GoString(data))
 }
 
-//export LogHighlightLn
-func LogHighlightLn(data *C.char) {
-	logger.LogHighlightLn(C.GoString(data))
+//export LogHighlight
+func LogHighlight(data *C.char) {
+	logger.LogHighlightF("%s", C.GoString(data))
 }
 
-//export LogServiceLn
-func LogServiceLn(data *C.char) {
-	logger.LogServiceLn(C.GoString(data))
+//export LogService
+func LogService(data *C.char) {
+	logger.LogServiceF("%s", C.GoString(data))
 }
 
-//export LogInfoLn
-func LogInfoLn(data *C.char) {
-	logger.LogInfoLn(C.GoString(data))
+//export LogInfo
+func LogInfo(data *C.char) {
+	logger.LogInfoF("%s", C.GoString(data))
 }
 
-//export LogErrorLn
-func LogErrorLn(data *C.char) {
-	logger.LogErrorLn(C.GoString(data))
+//export LogError
+func LogError(data *C.char) {
+	logger.LogErrorF("%s", C.GoString(data))
+}
+
+//export LogProcessStart
+func LogProcessStart(msg *C.char) {
+	logger.LogProcessStart(C.GoString(msg), logger.LogProcessStartOptions{})
+}
+
+//export LogProcessEnd
+func LogProcessEnd(withoutLogOptionalLn bool) {
+	logger.LogProcessEnd(logger.LogProcessEndOptions{WithoutLogOptionalLn: withoutLogOptionalLn})
+}
+
+//export LogProcessStepEnd
+func LogProcessStepEnd(msg *C.char) {
+	logger.LogProcessStepEnd(C.GoString(msg))
+}
+
+//export LogProcessFail
+func LogProcessFail(withoutLogOptionalLn bool) {
+	logger.LogProcessFail(logger.LogProcessEndOptions{WithoutLogOptionalLn: withoutLogOptionalLn})
 }
 
 //export FitText
@@ -112,24 +132,5 @@ func MuteErr() {
 func UnmuteErr() {
 	logger.UnmuteErr()
 }
-
-//func StartLogProcess(msg *C.char, withIndent bool, withoutLogOptionalLn bool) *C.char {
-//
-//}
-
-//func StopLogProcess() *C.char {
-//
-//}
-
-// func LogProcessStart(msg string) *C.char {
-// 	err := logger.LogProcess(msg, logger.LogProcessOptions{}, func() error {
-// 		return nil
-// 	})
-//
-// 	if err != nil {
-// 		return C.CString(err.Error())
-// 	}
-// 	return nil
-// }
 
 func main() {}
