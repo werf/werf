@@ -47,17 +47,18 @@ DOCUMENTATION = '''
 # └ action 'name' [additional info] [OK]/[FAIL]
 
 
-
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
-# from ansible.vars.manager import strip_internal_keys
+from ansible.vars.clean import strip_internal_keys
+from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
 
-import io, sys
+import io, os, sys
 import json, re
 from collections import Iterable
-from datetime import datetime
 
+from werf.live_stdout import LiveStdoutListener
+import logger
 
 # Taken from Dstat
 class vt100:
@@ -109,13 +110,6 @@ class vt100:
     left = '\033[1D'
 
 
-class uSym:
-    light_down_right = u'┌'
-    light_up_right = u'└'
-    light_vertical = u'│'
-    light_vertical_and_right = u'├'
-    black_diamond = u'◆'
-
 class lColor:
     COLOR_OK = vt100.darkgreen
     COLOR_CHANGED = vt100.darkyellow
@@ -123,16 +117,12 @@ class lColor:
     COLOR_DEBUG = vt100.darkgray
 
 
-INDENT = vt100.reset+vt100.bold+uSym.light_vertical+vt100.reset+' '
-
 class LiveCallbackHelpers(CallbackBase):
     def __init__(self):
         super(LiveCallbackHelpers, self).__init__()
-        self._stdout = io.open(sys.stdout.fileno(), mode='w', encoding='utf8')
 
-    def _print(self, *args):
-        self._stdout.write(u''.join(self._flatten(args)))
-        self._stdout.flush()
+    def LogArgs(self, *args):
+        logger.Log(u''.join(self._flatten(args)).encode('utf-8'))
 
     # nested arrays into flat array    # action(module name)
     # action(module name) 'task name'
@@ -197,12 +187,10 @@ class CallbackModule(LiveCallbackHelpers):
     def __init__(self):
         super(CallbackModule, self).__init__()
         self._play = None
-        # timestamps for duration
-        self._task_started=None
-        self._play_started=None
-        self._item_done=None
+        self._live_stdout_listener = LiveStdoutListener()
 
-    # header format is:
+
+# header format is:
     # action 'task name' [significant args info]
     # if task name length exceed its maximum then format is:
     # action 'task name'
@@ -294,7 +282,7 @@ class CallbackModule(LiveCallbackHelpers):
             info = task.args.get('command', 'install')
 
         if task.loop and start:
-            loop_args = task.loop_args
+            loop_args = task.loop
             if len(loop_args) > 0:
                 info = "'%s' over %s" % (info, ', '.join(loop_args))
 
@@ -309,25 +297,25 @@ class CallbackModule(LiveCallbackHelpers):
                 return self._display_msg(task, result['results'][0], color)
 
         # prevent dublication of stdout in case of live_stdout
-        if not result.get('live_stdout', False):
+        if not self._live_stdout_listener.is_live_stdout():
             stdout = result.get('stdout', None)
             if stdout:
-                self._print(INDENT, vt100.bold, "stdout:", vt100.reset, "\n")
-                self._print(self._indent(INDENT+'  ', stdout), "\n")
+                self.LogArgs(vt100.bold, "stdout:", vt100.reset, "\n")
+                self.LogArgs(self._indent('  ', stdout), "\n")
             stderr = result.get('stderr', '')
             if stderr:
-                self._print(INDENT, vt100.bold, "stderr:", vt100.reset, "\n")
-                self._print(self._indent(INDENT+'  ', stringc(stderr, C.COLOR_ERROR)), "\n")
+                self.LogArgs(vt100.bold, "stderr:", vt100.reset, "\n")
+                self.LogArgs(self._indent('  ', stringc(stderr, C.COLOR_ERROR)), "\n")
 
         if self._msg_is_needed(task, result):
-            self._print(INDENT, stringc(result['msg'], color), "\n")
+            self.LogArgs(stringc(result['msg'], color), "\n")
 
         if 'rc' in result:
             exitCode = result['rc']
             exitColor = C.COLOR_OK
             if exitCode != '0' and exitCode != 0:
                 exitColor = C.COLOR_ERROR
-            self._print(INDENT, stringc('exit code: %s' % exitCode, exitColor), "\n")
+            self.LogArgs(stringc('exit code: %s' % exitCode, exitColor), "\n")
 
     def _msg_is_needed(self, task, result):
         if 'msg' not in result:
@@ -342,35 +330,39 @@ class CallbackModule(LiveCallbackHelpers):
 
     def _display_debug_msg(self, task, result):
         #if (self._display.verbosity > 0 or '_ansible_verbose_always' in result) and '_ansible_verbose_override' not in result:
-        color = C.COLOR_OK
         if task.args.get('msg'):
-            self._print(INDENT, vt100.bold, "debug msg", vt100.reset, "\n")
-            self._print(self._indent(INDENT+'  ', stringc(result.get('msg', ''), color)), "\n")
+            color = C.COLOR_OK
+            msg = result.get('msg', '')
         if task.args.get('var'):
-            self._print(INDENT, vt100.bold,
-                        "debug var \'%s\'" % task.args.get('var'),
+            var_key = task.args.get('var')
+            if isinstance(var_key, (list, dict)):
+                var_key = to_text(type(var_key))
+            var_obj = result.get(var_key)
+
+            self.LogArgs(vt100.bold,
+                        "var=%s" % to_text(task.args.get('var')),
+                        ", ", stringc(to_text(type(var_obj)), C.COLOR_DEBUG),
                         vt100.reset, "\n")
-            var_obj = result.get(task.args.get('var'), '')
-            if isinstance(var_obj, str):
+
+            if isinstance(var_obj, (unicode, str, bytes)):
+                color = C.COLOR_OK
                 if 'IS NOT DEFINED' in var_obj:
                     color = C.COLOR_ERROR
-                    path = task.get_path()
-                    if path:
-                        self._print(INDENT, stringc(u"task path: %s" % path, color=C.COLOR_DEBUG), "\n")
-                self._print(self._indent(INDENT+'  ', stringc(var_obj, color)), "\n")
+                msg = var_obj
             else:
-                self._print(self._indent(INDENT+'  ', stringc(json.dumps(var_obj, indent=4), color)), "\n")
+                color = C.COLOR_OK
+                msg = json.dumps(var_obj, indent=4)
+
+        self.LogArgs(stringc(msg, color), "\n")
 
     # TODO remove stdout here if live_stdout!
     # TODO handle results for looped tasks
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
-
         if not indent and (result.get('_ansible_verbose_always') or self._display.verbosity > 2):
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
-        # abridged_result = strip_internal_keys(result)
-        abridged_result = result
+        abridged_result = strip_internal_keys(result)
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
@@ -397,69 +389,64 @@ class CallbackModule(LiveCallbackHelpers):
 
         return ''
 
-    def _duration(self):
-        end = datetime.now()
-        total_duration = (end - self._task_started)
-        duration = total_duration.total_seconds() * 1000
-        return duration
-
     def v2_playbook_on_play_start(self, play):
         self._play = play
-        self._play_started = datetime.now()
+
+        logger.Init()
+        try:
+            cols = int(os.environ['COLUMNS'])
+        except:
+            cols = 140
+        #cols=60
+        self.HEADER_NAME_INFO_LEN = cols-2
+        logger.SetTerminalWidth(cols)
+        logger.FittedStreamsOutputOn()
+        #logger.LogProcessStart(play.name)
+        self._live_stdout_listener.start()
+
+    def v2_playbook_on_stats(self, stats):
+        #pass
+        self._live_stdout_listener.stop()
+        #if stats.failures:
+        #    logger.LogProcessFail()
+        #else:
+        #    logger.LogProcessEnd()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._display.v("TASK action=%s args=%s" % (task.action, json.dumps(task.args, indent=4)))
-        self._task_started = datetime.now()
 
-        #if task.action == 'debug' or self._play.strategy == 'free':
-        #    return
         if self._play.strategy == 'free':
             return
 
         # task header line
-        self._print(
-            vt100.reset, vt100.bold,
-            uSym.light_down_right,
-            ' ',
-            self._task_details(task, start=True),
-            " ",
-            "[START]",
-            vt100.reset,
-            "\n"
-        )
-
+        logger.LogProcessStart(self._task_details(task, start=True).encode('utf-8'))
+        # reset live_stdout flag on task start
+        self._live_stdout_listener.set_live_stdout(False)
 
     def v2_runner_on_ok(self, result):
         self._display.v("TASK action=%s OK => %s" % (result._task.action, json.dumps(result._result, indent=4)))
         self._clean_results(result._result, result._task.action)
         self._handle_warnings(result._result)
 
-        task = result._task
-        color = lColor.COLOR_OK
-        ccolor = C.COLOR_OK
-        if 'changed' in result._result and result._result['changed']:
-            color = lColor.COLOR_CHANGED
-            ccolor = C.COLOR_CHANGED
+        try:
+            task = result._task
+            #color = lColor.COLOR_OK
+            ccolor = C.COLOR_OK
+            if 'changed' in result._result and result._result['changed']:
+                #color = lColor.COLOR_CHANGED
+                ccolor = C.COLOR_CHANGED
 
-        # task result info if any
-        if task.action == 'debug':
-            self._display_debug_msg(result._task, result._result)
-        else:
-            self._display_msg(result._task, result._result, ccolor)
+            # task result info if any
+            if task.action == 'debug':
+                self._display_debug_msg(result._task, result._result)
+            else:
+                self._display_msg(result._task, result._result, ccolor)
+        except Exception as e:
+            self.LogArgs(stringc(u'Exception: %s'%e, C.COLOR_ERROR), "\n")
 
+        finally:
         # task footer line
-        status = u'[OK] %sms' % self._duration()
-        self._print(
-            vt100.reset, vt100.bold,
-            uSym.light_up_right,
-            ' ',
-            self._task_details(task, start=True), vt100.reset,
-            ' ',
-            color,
-            status,
-            vt100.reset,
-            "\n"
-        )
+            logger.LogProcessEnd()
 
     def v2_runner_item_on_ok(self, result):
         self._display.v("TASK action=%s item OK => %s" % (result._task.action, json.dumps(result._result, indent=4)))
@@ -483,18 +470,21 @@ class CallbackModule(LiveCallbackHelpers):
 
         # task item footer line
         # TODO item duration
+
         status = u'[OK]'
-        self._print(
+        logger.LogProcessStepEnd(u''.join([
             vt100.reset, vt100.bold,
-            uSym.light_vertical_and_right,
-            ' ',
             self._item_details(task, result._result.get('item', '')), vt100.reset,
             ' ',
             color,
             status,
             vt100.reset,
-            "\n"
+            "\n"]).encode('utf-8')
         )
+
+        # reset live_stdout flag on item end
+        self._live_stdout_listener.set_live_stdout(False)
+
 
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
@@ -502,62 +492,56 @@ class CallbackModule(LiveCallbackHelpers):
         self._handle_exception(result._result)
         self._handle_warnings(result._result)
 
-        task = result._task
+        try:
+            task = result._task
+            # task result info if any
+            self._display_msg(task, result._result, C.COLOR_ERROR)
 
-        # task result info if any
-        self._display_msg(task, result._result, C.COLOR_ERROR)
-
-        # task footer line
-        status = u'[FAIL] %sms' % self._duration()
-        self._print(
-            vt100.reset, vt100.bold,
-            uSym.light_up_right,
-            ' ',
-            self._task_details(task, start=True),
-            vt100.reset,
-            ' ',
-            lColor.COLOR_ERROR,
-            status,
-            vt100.reset,
-            "\n"
-        )
+        except Exception as e:
+            logger.Log(e)
+        finally:
+            logger.LogProcessFail()
 
     def v2_runner_item_on_failed(self, result, ignore_errors=False):
         self._display.v("TASK action=%s ITEM FAILED => %s" % (result._task.action, json.dumps(result._result, indent=4)))
         self._handle_exception(result._result)
         self._handle_warnings(result._result)
+
+
         task = result._task
         if task.action in self.SQUASH_LOOP_MODULES:
             return
         # task item result info if any
         self._display_msg(task, result._result, C.COLOR_ERROR)
-        # task item footer line
-        # TODO item duration
+        # task item status line
         status = u'[FAIL]'
-        self._print(
+        logger.LogProcessStepEnd(u''.join([
             vt100.reset, vt100.bold,
-            uSym.light_vertical_and_right,
-            ' ',
             self._item_details(task, result._result.get('item', '')), vt100.reset,
             ' ',
             C.COLOR_ERROR,
             status,
             vt100.reset,
-            "\n"
+            "\n"]).encode('utf-8')
         )
+        # reset live_stdout flag on item end
+        self._live_stdout_listener.set_live_stdout(False)
 
     def v2_runner_on_skipped(self, result):
-        self._print(stringc("%s | SKIPPED" % (result._host.get_name()), C.COLOR_SKIP), "\n")
+        self.LogArgs(stringc("SKIPPED", C.COLOR_SKIP), "\n")
+        logger.LogProcessEnd()
 
+    # Implemented for completeness. Local connection cannot be unreachable.
     def v2_runner_on_unreachable(self, result):
-        self._print(stringc("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color=C.COLOR_UNREACHABLE), "\n")
+        self.LogArgs(stringc("UNREACHABLE!", color=C.COLOR_UNREACHABLE), "\n")
+        logger.LogProcessEnd()
 
     def v2_on_file_diff(self, result):
         if 'diff' in result._result and result._result['diff']:
-            self._print(self._get_diff(result._result['diff']), "\n")
+            self.LogArgs(self._get_diff(result._result['diff']), "\n")
 
     def _handle_exception(self, result):
         if 'exception' in result:
             msg = "An exception occurred during task execution. The full traceback is:\n" + result['exception']
             del result['exception']
-            self._print(stringc(msg, C.COLOR_ERROR))
+            self.LogArgs(stringc(msg, C.COLOR_ERROR))
