@@ -12,3 +12,7 @@
 /stapel/*/werf-stapel-toolchain.tar
 
 /release-build
+
+/pkg/build/builder/ansible/pylogger.h
+/pkg/build/builder/ansible/pylogger.so
+*.pyc

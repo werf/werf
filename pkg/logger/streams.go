@@ -43,8 +43,16 @@ func WithRawStreamsOutputModeOn(f func() error) error {
 	return err
 }
 
+func GetRawStreamsOutputMode() bool {
+	return isRawStreamsOutputModeOn
+}
+
 func RawStreamsOutputModeOn() {
 	isRawStreamsOutputModeOn = true
+}
+
+func RawStreamsOutputModeOff() {
+	isRawStreamsOutputModeOn = false
 }
 
 func WithFittedStreamsOutputOn(f func() error) error {
