@@ -29,6 +29,11 @@ func DisableLogColor() {
 	logger.DisableLogColor()
 }
 
+//export SetTerminalWidth
+func SetTerminalWidth(width C.int) {
+	logger.SetTerminalWidth(int(width))
+}
+
 //export IndentUp
 func IndentUp() {
 	logger.IndentUp()
