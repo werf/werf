@@ -166,8 +166,8 @@ def LogProcessStart(msg):
     print "LogProcessStart"
     print msg
 
-def LogProcessStop():
-    print "LogProcessStop"
+def LogProcessEnd():
+    print "LogProcessEnd"
 
 def LogProcessFail():
     print "LogProcessFail"
