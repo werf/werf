@@ -304,7 +304,7 @@ func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappin
 	var nonEmptyGitMappings []*stage.GitMapping
 
 	for ind, gitMapping := range gitMappings {
-		if err := logger.LogSecondaryProcess(fmt.Sprintf("[%d] git mapping of %s repository", ind, gitMapping.Name), logger.LogProcessOptions{}, func() error {
+		if err := logger.LogSecondaryProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logger.LogProcessOptions{}, func() error {
 			withTripleIndent := func(f func()) {
 				logger.IndentUp()
 				logger.IndentUp()
