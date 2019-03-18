@@ -56,39 +56,67 @@ def OptionalLnModeOn():
     lib.OptionalLnModeOn()
 
 
-lib.LogLn.argtypes = [c_char_p]
-lib.LogLn.restype = None
+lib.Log.argtypes = [c_char_p]
+lib.Log.restype = None
 
-def LogLn(data):
-    lib.LogLn(data)
-
-
-lib.LogHighlightLn.argtypes = [c_char_p]
-lib.LogHighlightLn.restype = None
-
-def LogHighlightLn(data):
-    lib.LogHighlightLn(data)
+def Log(data):
+    lib.Log(data)
 
 
-lib.LogServiceLn.argtypes = [c_char_p]
-lib.LogServiceLn.restype = None
+lib.LogHighlight.argtypes = [c_char_p]
+lib.LogHighlight.restype = None
 
-def LogServiceLn(data):
-    lib.LogServiceLn(data)
-
-
-lib.LogInfoLn.argtypes = [c_char_p]
-lib.LogInfoLn.restype = None
-
-def LogInfoLn(data):
-    lib.LogInfoLn(data)
+def LogHighlight(data):
+    lib.LogHighlight(data)
 
 
-lib.LogErrorLn.argtypes = [c_char_p]
-lib.LogErrorLn.restype = None
+lib.LogService.argtypes = [c_char_p]
+lib.LogService.restype = None
 
-def LogErrorLn(data):
-    lib.LogErrorLn(data)
+def LogService(data):
+    lib.LogService(data)
+
+
+lib.LogInfo.argtypes = [c_char_p]
+lib.LogInfo.restype = None
+
+def LogInfo(data):
+    lib.LogInfo(data)
+
+
+lib.LogError.argtypes = [c_char_p]
+lib.LogError.restype = None
+
+def LogError(data):
+    lib.LogError(data)
+
+
+lib.LogProcessStart.argtypes = [c_char_p]
+lib.LogProcessStart.restype = None
+
+def LogProcessStart(msg):
+    lib.LogProcessStart(msg)
+
+
+lib.LogProcessEnd.argtypes = [c_bool]
+lib.LogProcessEnd.restype = None
+
+def LogProcessEnd(**kwargs):
+    lib.LogProcessEnd(kwargs.get("without_log_optional_ln", False))
+
+
+lib.LogProcessFail.argtypes = [c_bool]
+lib.LogProcessFail.restype = None
+
+def LogProcessFail(**kwargs):
+    lib.LogProcessFail(kwargs.get("without_log_optional_ln", False))
+
+
+lib.LogProcessStepEnd.argtypes = [c_char_p]
+lib.LogProcessStepEnd.restype = None
+
+def LogProcessStepEnd(msg):
+    lib.LogProcessFail(msg)
 
 
 lib.FitText.argtypes = [c_char_p, c_int, c_int, c_bool]
@@ -145,33 +173,3 @@ lib.UnmuteErr.restype = None
 
 def UnmuteErr():
     lib.UnmuteErr()
-
-
-def Log(msg):
-    print msg
-
-def LogHighlight(msg):
-    print msg
-
-def LogService(msg):
-    print msg
-
-def LogInfo(msg):
-    print msg
-
-def LogError(msg):
-    print msg
-
-def LogProcessStart(msg):
-    print "LogProcessStart"
-    print msg
-
-def LogProcessEnd():
-    print "LogProcessEnd"
-
-def LogProcessFail():
-    print "LogProcessFail"
-
-def LogProcessEndStep(msg):
-    print "LogProcessEndStep"
-    print msg

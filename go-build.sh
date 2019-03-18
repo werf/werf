@@ -2,6 +2,6 @@
 
 set -e
 
-scripts/update_pylogger_so.sh
+$(dirname $0)/scripts/update_pylogger_so.sh
 
 go install github.com/flant/werf/cmd/werf
