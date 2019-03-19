@@ -154,6 +154,20 @@ def RawStreamsOutputModeOff():
     lib.RawStreamsOutputModeOff()
 
 
+lib.FittedStreamsOutputOn.argtypes = []
+lib.FittedStreamsOutputOn.restype = None
+
+def FittedStreamsOutputOn():
+    lib.FittedStreamsOutputOn()
+
+
+lib.FittedStreamsOutputOff.argtypes = []
+lib.FittedStreamsOutputOff.restype = None
+
+def FittedStreamsOutputOff():
+    lib.FittedStreamsOutputOff()
+
+
 lib.MuteOut.argtypes = []
 lib.MuteOut.restype = None
 
@@ -180,3 +194,17 @@ lib.UnmuteErr.restype = None
 
 def UnmuteErr():
     lib.UnmuteErr()
+
+
+lib.Out.argtypes = [c_char_p]
+lib.Out.restype = None
+
+def Out(data):
+    lib.Out(data)
+
+
+lib.Err.argtypes = [c_char_p]
+lib.Err.restype = None
+
+def Err(data):
+    lib.Out(data)

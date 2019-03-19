@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -56,13 +57,26 @@ func RawStreamsOutputModeOff() {
 }
 
 func WithFittedStreamsOutputOn(f func() error) error {
-	streamsFitterState = fitterState{}
+	savedStreamsFitterState := streamsFitterState
 	savedIsFittedOutputModeOn := isFittedStreamsOutputModeOn
+
+	streamsFitterState = fitterState{}
 	isFittedStreamsOutputModeOn = true
 	err := f()
+	streamsFitterState = savedStreamsFitterState
 	isFittedStreamsOutputModeOn = savedIsFittedOutputModeOn
 
 	return err
+}
+
+func FittedStreamsOutputOn() {
+	streamsFitterState = fitterState{}
+	isFittedStreamsOutputModeOn = true
+}
+
+func FittedStreamsOutputOff() {
+	streamsFitterState = fitterState{}
+	isFittedStreamsOutputModeOn = false
 }
 
 func GetOutStream() io.Writer {
@@ -87,4 +101,12 @@ func MuteErr() {
 
 func UnmuteErr() {
 	errStream = os.Stderr
+}
+
+func OutF(format string, a ...interface{}) {
+	fmt.Fprintf(GetOutStream(), format, a...)
+}
+
+func ErrF(format string, a ...interface{}) {
+	fmt.Fprintf(GetErrStream(), format, a...)
 }

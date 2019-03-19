@@ -118,6 +118,16 @@ func RawStreamsOutputModeOff() {
 	logger.RawStreamsOutputModeOff()
 }
 
+//export FittedStreamsOutputOn
+func FittedStreamsOutputOn() {
+	logger.FittedStreamsOutputOn()
+}
+
+//export FittedStreamsOutputOff
+func FittedStreamsOutputOff() {
+	logger.FittedStreamsOutputOff()
+}
+
 //export MuteOut
 func MuteOut() {
 	logger.MuteOut()
@@ -136,6 +146,16 @@ func MuteErr() {
 //export UnmuteErr
 func UnmuteErr() {
 	logger.UnmuteErr()
+}
+
+//export Out
+func Out(msg *C.char) {
+	logger.OutF("%s", C.GoString(msg))
+}
+
+//export Err
+func Err(msg *C.char) {
+	logger.ErrF("%s", C.GoString(msg))
 }
 
 func main() {}
