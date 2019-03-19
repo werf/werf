@@ -10,7 +10,7 @@ SHELL ["/bin/bash", "-lc"]
 RUN apt update && apt install -y \
 build-essential wget curl gawk flex bison bzip2 liblzma5 texinfo file \
 gettext python python3 curl git fakeroot gettext gpg ruby ruby-bundler \
-ruby-dev make file m4 xz-utils
+ruby-dev make file m4 xz-utils texlive
 
 RUN git config --global user.name flant && git config --global user.email 256@flant.com
 
@@ -244,7 +244,6 @@ $TOOLS/lib/gcc \
 $TOOLS/libexec/gcc \
 $TOOLS/share \
 $TOOLS/var \
-$TOOLS/etc \
 $TOOLS/embedded/lib/*.a \
 $TOOLS/embedded/include \
 $TOOLS/embedded/lib/python2.7/test \

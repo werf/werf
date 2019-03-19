@@ -5,7 +5,7 @@ import (
 	"strconv"
 )
 
-const VERSION = "0.1.1"
+const VERSION = "0.1.2"
 
 func ImageName() string {
 	return fmt.Sprintf("flant/werf-stapel:%s", VERSION)

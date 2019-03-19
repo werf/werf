@@ -2,7 +2,7 @@
 
 set -e
 
-IMAGE_VERSION=0.1.1
+IMAGE_VERSION=0.1.2
 
 docker build -t flant/werf-stapel:$IMAGE_VERSION stapel
 
