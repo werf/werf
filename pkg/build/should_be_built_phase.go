@@ -34,7 +34,7 @@ func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
 		}
 
 		for _, s := range badStages {
-			logger.LogErrorF("%s %s cache should be built\n", image.LogName(), s.Name())
+			logger.LogErrorF("%s %s is not exist in stages storage\n", image.LogDetailedName(), s.LogDetailedName())
 		}
 
 		if len(badStages) > 0 {
@@ -43,7 +43,7 @@ func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
 	}
 
 	if len(badImages) > 0 {
-		return fmt.Errorf("images stages cache should be built")
+		return fmt.Errorf("stages required")
 	}
 
 	return nil
