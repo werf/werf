@@ -72,7 +72,7 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 	stages := image.GetStages()
 
-	existingStagesTags, err := docker_registry.ImageStagesTags(p.ImagesRepo)
+	existingTags, err := docker_registry.Tags(p.ImagesRepo)
 	if err != nil {
 		return fmt.Errorf("error fetching existing stages cache list %s: %s", p.ImagesRepo, err)
 	}
@@ -81,7 +81,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 		stageTagName := fmt.Sprintf(RepoImageStageTagFormat, stage.GetSignature())
 		stageImageName := fmt.Sprintf("%s:%s", p.ImagesRepo, stageTagName)
 
-		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
+		if util.IsStringsContainValue(existingTags, stageTagName) {
 			logger.LogHighlightLn(stage.Name())
 
 			logger.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
@@ -142,13 +142,21 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 
 	var existingTags []string
 	var err error
-	if err := logger.LogSecondaryProcessInline("Fetching existing image tags", func() error {
-		existingTags, err = docker_registry.ImageTags(imageRepository)
+	fetchExistingTagsFunc := func() error {
+		existingTags, err = docker_registry.Tags(imageRepository)
 		return err
-	}); err != nil {
+	}
+
+	if debug() {
+		err = logger.LogSecondaryProcessInline("Fetching existing image tags", fetchExistingTagsFunc)
+		logger.OptionalLnModeOn()
+	} else {
+		err = fetchExistingTagsFunc()
+	}
+
+	if err != nil {
 		return fmt.Errorf("error fetch existing tags of image %s: %s", imageRepository, err)
 	}
-	logger.OptionalLnModeOn()
 
 	stages := image.GetStages()
 	lastStageImage := stages[len(stages)-1].GetImage()
@@ -178,14 +186,22 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 				if util.IsStringsContainValue(existingTags, tag) {
 					var parentID string
 					var err error
-					logProcessMsg := fmt.Sprintf("Getting existing tag %s parent id", tag)
-					if err := logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+					getImageParentIDFunc := func() error {
 						parentID, err = docker_registry.ImageParentId(imageName)
 						return err
-					}); err != nil {
+					}
+
+					if debug() {
+						logProcessMsg := fmt.Sprintf("Getting existing tag %s parent id", tag)
+						err = logger.LogSecondaryProcessInline(logProcessMsg, getImageParentIDFunc)
+						logger.OptionalLnModeOn()
+					} else {
+						err = getImageParentIDFunc()
+					}
+
+					if err != nil {
 						return fmt.Errorf("unable to get image %s parent id: %s", imageName, err)
 					}
-					logger.OptionalLnModeOn()
 
 					if lastStageImage.ID() == parentID {
 						logger.LogHighlightF("Tag %s is up-to-date\n", tag)
