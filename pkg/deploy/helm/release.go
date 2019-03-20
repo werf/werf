@@ -266,19 +266,29 @@ func runDeployProcess(releaseName, namespace string, opts HelmChartOptions, temp
 	logboek.LogInfoLn(logboek.FitText(helmOutput, logboek.FitTextOptions{MaxWidth: 120}))
 	logboek.OptionalLnModeOn()
 
-	if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
-	if err := trackDeployments(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
-	if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
-	if err := trackDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
-		return err
-	}
-	if err := trackJobs(templates, deployStartTime, namespace, opts); err != nil {
+	if err := logboek.WithFittedStreamsOutputOn(func() error {
+		if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+
+		if err := trackDeployments(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+
+		if err := trackStatefulSets(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+
+		if err := trackDaemonSets(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+
+		if err := trackJobs(templates, deployStartTime, namespace, opts); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
 		return err
 	}
 
@@ -487,7 +497,9 @@ func watchJobHooks(templates ChartTemplates, hookTypes []string, deployStartTime
 
 			loggerProcessMsg := fmt.Sprintf("Tracking helm hook jobs/%s", template.Metadata.Name)
 			if err := logboek.LogSecondaryProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
-				return rollout.TrackJobTillDone(template.Metadata.Name, jobNamespace, kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
+				return logboek.WithFittedStreamsOutputOn(func() error {
+					return rollout.TrackJobTillDone(template.Metadata.Name, jobNamespace, kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
+				})
 			}); err != nil {
 				logboek.LogErrorF("ERROR: %s\n", err)
 				break
