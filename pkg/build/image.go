@@ -26,7 +26,7 @@ func (i *Image) LogName() string {
 	return logging.ImageLogName(i.name, i.isArtifact)
 }
 
-func (i *Image) LogProcessName() string {
+func (i *Image) LogDetailedName() string {
 	return logging.ImageLogProcessName(i.name, i.isArtifact)
 }
 

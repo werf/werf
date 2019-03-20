@@ -37,7 +37,7 @@ func (p *BuildStagesPhase) run(c *Conveyor) error {
 
 	images := c.imagesInOrder
 	for _, image := range images {
-		if err := logboek.LogProcess(image.LogProcessName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+		if err := logboek.LogProcess(image.LogDetailedName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			return p.runImage(image, c)
 		}); err != nil {
 			return err
@@ -89,12 +89,11 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 	var prevStageImageSize int64
 	for _, s := range stages {
 		img := s.GetImage()
-		stageLogName := fmt.Sprintf("stage %s", s.Name())
 
 		isUsingCache := img.IsExists()
 
 		if isUsingCache {
-			logboek.LogHighlightF("Use cache image for %s\n", stageLogName)
+			logboek.LogHighlightF("Use cache image for %s\n", s.LogDetailedName())
 
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 
@@ -119,9 +118,9 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 		}
 
 		logProcessOptions := logboek.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
-		err := logboek.LogProcess(fmt.Sprintf("Building %s", stageLogName), logProcessOptions, func() (err error) {
+		err := logboek.LogProcess(fmt.Sprintf("Building %s", s.LogDetailedName()), logProcessOptions, func() (err error) {
 			if err := s.PreRunHook(c); err != nil {
-				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
+				return fmt.Errorf("%s preRunHook failed: %s", s.LogDetailedName(), err)
 			}
 
 			if err := logboek.WithTag(fmt.Sprintf("%s/%s", image.LogName(), s.Name()), image.LogTagColorizeFunc(), func() error {

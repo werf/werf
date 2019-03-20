@@ -43,7 +43,7 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 			continue
 		}
 
-		if err := logboek.LogProcess(image.LogProcessName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+		if err := logboek.LogProcess(image.LogDetailedName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			if p.WithStages {
 				err := logboek.LogSecondaryProcess("Pushing stages cache", logboek.LogProcessOptions{}, func() error {
 					if err := p.pushImageStages(c, image); err != nil {

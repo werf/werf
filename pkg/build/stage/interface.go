@@ -4,6 +4,7 @@ import "github.com/flant/werf/pkg/image"
 
 type Interface interface {
 	Name() StageName
+	LogDetailedName() string
 
 	IsEmpty(c Conveyor, prevBuiltImage image.ImageInterface) (bool, error)
 	ShouldBeReset(builtImage image.ImageInterface) (bool, error)

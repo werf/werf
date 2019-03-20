@@ -22,7 +22,7 @@ func (p *PrepareStagesPhase) Run(c *Conveyor) error {
 
 func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 	for _, image := range c.imagesInOrder {
-		if err := logboek.LogProcess(image.LogProcessName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+		if err := logboek.LogProcess(image.LogDetailedName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			return p.runImage(image, c)
 		}); err != nil {
 			return err

@@ -62,6 +62,10 @@ type BaseStage struct {
 	projectName      string
 }
 
+func (s *BaseStage) LogDetailedName() string {
+	return fmt.Sprintf("stage %s", s.Name())
+}
+
 func (s *BaseStage) Name() StageName {
 	if s.name != "" {
 		return s.name
