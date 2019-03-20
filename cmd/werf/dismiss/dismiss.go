@@ -6,6 +6,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/logboek"
+
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
@@ -117,6 +119,9 @@ func runDismiss() error {
 	if err != nil {
 		return err
 	}
+
+	logboek.LogServiceF("Using helm release name: %s\n", release)
+	logboek.LogServiceF("Using kubernetes namespace: %s\n", namespace)
 
 	return deploy.RunDismiss(release, namespace, *CommonCmdData.KubeContext, deploy.DismissOptions{
 		WithNamespace: CmdData.WithNamespace,

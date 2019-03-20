@@ -20,9 +20,6 @@ type DeployOptions struct {
 }
 
 func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
-	logboek.LogServiceF("Using helm release name: %s\n", release)
-	logboek.LogServiceF("Using kubernetes namespace: %s\n", namespace)
-
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
 
 	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
