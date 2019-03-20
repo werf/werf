@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	yaml "gopkg.in/flant/yaml.v2"
+	"gopkg.in/flant/yaml.v2"
+
+	"github.com/flant/werf/pkg/util"
 )
 
 type configError struct {
@@ -54,12 +56,8 @@ func dumpConfigSection(config interface{}) string {
 }
 
 func dumpConfigDoc(doc *doc) string {
-	contentLines := getLines(doc.Content)
-
 	res := fmt.Sprintf("%s\n\n", doc.RenderFilePath)
-	for lineNum, lineBytes := range contentLines {
-		res += fmt.Sprintf("%6d  %s\n", doc.Line+lineNum+1, string(lineBytes))
-	}
+	res += util.NumerateLines(string(doc.Content), doc.Line+1)
 	res += "\n"
 
 	return res
