@@ -20,8 +20,8 @@ type DeployOptions struct {
 }
 
 func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
-	logboek.LogInfoF("Using helm release name: %s\n", release)
-	logboek.LogInfoF("Using kubernetes namespace: %s\n", namespace)
+	logboek.LogServiceF("Using helm release name: %s\n", release)
+	logboek.LogServiceF("Using kubernetes namespace: %s\n", namespace)
 
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
 

@@ -3,11 +3,12 @@ package deploy
 import (
 	"fmt"
 
-	"github.com/flant/logboek"
-	"github.com/flant/werf/pkg/tag_strategy"
-
-	"github.com/flant/werf/pkg/config"
+	"github.com/docker/docker/pkg/stringid"
 	"github.com/ghodss/yaml"
+
+	"github.com/flant/logboek"
+	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/tag_strategy"
 )
 
 const (
@@ -105,6 +106,7 @@ func GetServiceValues(projectName, repo, namespace, tag string, tagStrategy tag_
 		if imageID == "" {
 			value = TemplateEmptyValue
 		} else {
+			logboek.LogInfoF("Using image %s (%s)\n", imageData["docker_image"], stringid.TruncateID(imageID))
 			value = imageID
 		}
 		imageData["docker_image_id"] = value
