@@ -3,7 +3,6 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/3werf/pkg/logger"
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker_registry"
 	imagePkg "github.com/flant/werf/pkg/image"
@@ -153,8 +152,8 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 	}
 
 	if debug() {
-		err = logger.LogSecondaryProcessInline("Fetching existing image tags", fetchExistingTagsFunc)
-		logger.OptionalLnModeOn()
+		err = logboek.LogSecondaryProcessInline("Fetching existing image tags", fetchExistingTagsFunc)
+		logboek.OptionalLnModeOn()
 	} else {
 		err = fetchExistingTagsFunc()
 	}
@@ -198,8 +197,8 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 
 					if debug() {
 						logProcessMsg := fmt.Sprintf("Getting existing tag %s parent id", tag)
-						err = logger.LogSecondaryProcessInline(logProcessMsg, getImageParentIDFunc)
-						logger.OptionalLnModeOn()
+						err = logboek.LogSecondaryProcessInline(logProcessMsg, getImageParentIDFunc)
+						logboek.OptionalLnModeOn()
 					} else {
 						err = getImageParentIDFunc()
 					}
