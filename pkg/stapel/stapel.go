@@ -3,6 +3,8 @@ package stapel
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/flant/werf/pkg/docker"
 )
 
 const VERSION = "0.1.2"
@@ -11,18 +13,48 @@ func ImageName() string {
 	return fmt.Sprintf("flant/werf-stapel:%s", VERSION)
 }
 
-func GetOrCreateContainer() (string, error) {
-	container := &container{
+func getContainer() container {
+	return container{
 		Name:      fmt.Sprintf("stapel_%s", VERSION),
 		ImageName: ImageName(),
 		Volume:    "/.werf/stapel",
 	}
+}
+
+func GetOrCreateContainer() (string, error) {
+	container := getContainer()
 
 	if err := container.CreateIfNotExist(); err != nil {
 		return "", err
 	} else {
 		return container.Name, nil
 	}
+}
+
+func Purge() error {
+	container := getContainer()
+	if err := container.RmIfExist(); err != nil {
+		return err
+	}
+
+	if err := rmiIfExist(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func rmiIfExist() error {
+	exist, err := docker.ImageExist(ImageName())
+	if err != nil {
+		return err
+	}
+
+	if exist {
+		return docker.CliRmi(ImageName())
+	}
+
+	return nil
 }
 
 func TrueBinPath() string {

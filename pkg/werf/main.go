@@ -73,7 +73,7 @@ func Init(tmpDirOption, homeDirOption string) error {
 		homeDir = filepath.Join(os.Getenv("HOME"), ".werf")
 	}
 
-	// TODO: options
+	// TODO: options + update purgeHomeWerfFiles
 
 	sharedContextDir = filepath.Join(homeDir, "shared_context")
 	localCacheDir = filepath.Join(homeDir, "local_cache")
