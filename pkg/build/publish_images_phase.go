@@ -40,6 +40,10 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 	// TODO: Push stages should occur on the BuildStagesPhase
 
 	for _, image := range c.imagesInOrder {
+		if image.isArtifact { // FIXME: distributed stages
+			continue
+		}
+
 		if err := logboek.LogProcess(image.LogProcessName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			if p.WithStages {
 				err := logboek.LogSecondaryProcess("Pushing stages cache", logboek.LogProcessOptions{}, func() error {
