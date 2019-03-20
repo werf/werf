@@ -144,16 +144,11 @@ func processUsedImages(images []types.ImageSummary, options CommonOptions) ([]ty
 	for _, container := range containers {
 		for _, img := range images {
 			if img.ID == container.ImageID {
-				containerName := container.ImageID
-				if len(container.Names) != 0 {
-					containerName = container.Names[0]
-				}
-
 				if options.SkipUsedImages {
-					logboek.LogInfoF("Skip image '%s' (used by container '%s')\n", img.ID, containerName)
+					logboek.LogInfoF("Skip image %s (used by container %s)\n", logImageName(img), logContainerName(container))
 					imagesToExclude = append(imagesToExclude, img)
 				} else {
-					return nil, fmt.Errorf("cannot remove image '%s' used by container '%s'", img.ID, containerName)
+					return nil, fmt.Errorf("cannot remove image %s used by container %s", logImageName(img), logContainerName(container))
 				}
 			}
 		}
@@ -180,12 +175,7 @@ func exceptImage(images []types.ImageSummary, imageToExclude types.ImageSummary)
 func containersRemove(containers []types.Container, options CommonOptions) error {
 	for _, container := range containers {
 		if options.DryRun {
-			containerName := container.ID
-			if len(container.Names) != 0 {
-				containerName = container.Names[0]
-			}
-
-			logboek.LogLn(containerName)
+			logboek.LogLn(logContainerName(container))
 			logboek.OptionalLnModeOn()
 		} else {
 			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{Force: options.RmForce}); err != nil {
@@ -223,4 +213,22 @@ func danglingFilterSet() filters.Args {
 	filterSet := filters.NewArgs()
 	filterSet.Add("dangling", "true")
 	return filterSet
+}
+
+func logImageName(image types.ImageSummary) string {
+	name := image.ID
+	if len(image.RepoTags) != 0 {
+		name = image.RepoTags[0]
+	}
+
+	return name
+}
+
+func logContainerName(container types.Container) string {
+	name := container.ID
+	if len(container.Names) != 0 {
+		name = container.Names[0]
+	}
+
+	return name
 }

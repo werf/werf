@@ -109,17 +109,17 @@ func safeContainersCleanup(options CommonOptions) error {
 
 			isLocked, err := lock.TryLock(containerLockName, lock.TryLockOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, containerName, err)
+				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)
 			}
 
 			if !isLocked {
-				logboek.LogInfoF("Ignore container %s (%s) used by another process\n", containerName, container.ID)
+				logboek.LogInfoF("Ignore container %s used by another process\n", logContainerName(container))
 				return nil
 			}
 			defer lock.Unlock(containerLockName)
 
 			if err := containersRemove([]types.Container{container}, options); err != nil {
-				return fmt.Errorf("failed to remove container %s (%s) :%s", containerName, container.ID, err)
+				return fmt.Errorf("failed to remove container %s: %s", logContainerName(container), err)
 			}
 
 			return nil

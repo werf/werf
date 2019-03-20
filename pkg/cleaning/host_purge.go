@@ -18,27 +18,23 @@ func HostPurge(options CommonOptions) error {
 	options.RmiForce = true
 	options.RmForce = true
 
-	err := logboek.LogSecondaryProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogSecondaryProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
 		if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
 			return err
 		}
 
 		return nil
-	})
-
-	if err != nil {
+	}); err != nil {
 		return err
 	}
 
-	err = logboek.LogSecondaryProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogSecondaryProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
 		if err := werfImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
 			return err
 		}
 
 		return nil
-	})
-
-	if err != nil {
+	}); err != nil {
 		return err
 	}
 
