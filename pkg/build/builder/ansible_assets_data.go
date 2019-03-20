@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/flant/logboek_py"
 	"github.com/flant/werf/pkg/stapel"
 
 	"github.com/flant/werf/pkg/build/builder/ansible"
@@ -60,4 +61,12 @@ func (b *Ansible) assetsCallbackLivePy() string {
 
 func (b *Ansible) assetsCallbackWerfPy() string {
 	return ansible.FSMustString(false, "/ansible/callback/werf.py")
+}
+
+func (b *Ansible) assetsLogboekPy() string {
+	return logboek_py.FSMustString(false, "/logboek.py")
+}
+
+func (b *Ansible) assetsLogboekSo() string {
+	return logboek_py.FSMustString(false, "/logboek.so")
 }
