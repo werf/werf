@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/logboek"
 )
 
 func deinitSubmodules(repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Deinit submodules in work tree '%s'", workTreeDir)
-	return logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+	return logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 		cmd := exec.Command(
 			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
 			"submodule", "deinit", "--all", "--force",
@@ -30,7 +30,7 @@ func deinitSubmodules(repoDir, workTreeDir string) error {
 
 func syncSubmodules(repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Sync submodules in work tree '%s'", workTreeDir)
-	return logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+	return logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 		cmd := exec.Command(
 			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
 			"submodule", "sync", "--recursive",
@@ -51,7 +51,7 @@ func syncSubmodules(repoDir, workTreeDir string) error {
 
 func updateSubmodules(repoDir, workTreeDir string) error {
 	logProcessMsg := fmt.Sprintf("Update submodules in work tree '%s'", workTreeDir)
-	return logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+	return logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 		cmd := exec.Command(
 			"git", "--git-dir", repoDir, "--work-tree", workTreeDir,
 			"submodule", "update", "--checkout", "--force", "--init", "--recursive",

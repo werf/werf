@@ -10,7 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/term"
-	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/logboek"
 	"golang.org/x/net/context"
 )
 
@@ -52,8 +52,8 @@ func ServerVersion() (*types.Version, error) {
 func setDockerClient() error {
 	stdIn, _, _ := term.StdStreams()
 
-	cli = command.NewDockerCli(stdIn, logger.GetOutStream(), logger.GetErrStream(), false)
-	cli.Out().SetIsTerminal(logger.IsTerminal())
+	cli = command.NewDockerCli(stdIn, logboek.GetOutStream(), logboek.GetErrStream(), false)
+	cli.Out().SetIsTerminal(logboek.IsTerminal())
 
 	opts := flags.NewClientOptions()
 	if err := cli.Initialize(opts); err != nil {

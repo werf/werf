@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 )
 
 var (
@@ -21,8 +21,8 @@ type RenewPhase struct{}
 func (p *RenewPhase) Run(c *Conveyor) error {
 	var resErr error
 
-	logProcessOptions := logger.LogProcessOptions{}
-	err := logger.LogProcess("Checking invalid stages cache", logProcessOptions, func() error {
+	logProcessOptions := logboek.LogProcessOptions{}
+	err := logboek.LogProcess("Checking invalid stages cache", logProcessOptions, func() error {
 		err := p.run(c)
 
 		if isConveyorShouldBeResetError(err) {
@@ -81,7 +81,7 @@ func (p *RenewPhase) run(c *Conveyor) error {
 				} else if stageShouldBeReset {
 					conveyorShouldBeReset = true
 
-					logger.LogServiceF("Untag %s for %s/%s\n", img.Name(), image.LogName(), s.Name())
+					logboek.LogServiceF("Untag %s for %s/%s\n", img.Name(), image.LogName(), s.Name())
 
 					if err := img.Untag(); err != nil {
 						return err

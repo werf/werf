@@ -16,8 +16,8 @@ import (
 	"github.com/Masterminds/sprig"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
@@ -35,7 +35,7 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, err
 	}
 
-	logger.LogServiceF("Using werf config render file: %s\n", werfConfigRenderPath)
+	logboek.LogServiceF("Using werf config render file: %s\n", werfConfigRenderPath)
 
 	err = writeWerfConfigRender(werfConfigRenderContent, werfConfigRenderPath)
 	if err != nil {
@@ -272,7 +272,7 @@ func (f files) Get(path string) string {
 	filePath := filepath.Join(f.HomePath, path)
 
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		logger.LogErrorF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
+		logboek.LogErrorF("WARNING: Config: {{ .Files.Get '%s' }}: file '%s' not exist!\n", path, filePath)
 		return ""
 	}
 

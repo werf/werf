@@ -2,12 +2,12 @@ package common
 
 import (
 	"github.com/flant/kubedog/pkg/display"
-	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/logboek"
 )
 
 func InitKubedog() error {
-	display.SetOut(logger.GetOutStream())
-	display.SetErr(logger.GetErrStream())
+	display.SetOut(logboek.GetOutStream())
+	display.SetErr(logboek.GetErrStream())
 
 	return nil
 }

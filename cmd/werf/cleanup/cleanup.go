@@ -5,13 +5,13 @@ import (
 	"path"
 
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/logboek"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -185,7 +185,7 @@ func runCleanup() error {
 		ImagesCleanupOptions: imagesCleanupOptions,
 	}
 
-	logger.OptionalLnModeOn()
+	logboek.OptionalLnModeOn()
 	if err := cleaning.Cleanup(cleanupOptions); err != nil {
 		return err
 	}

@@ -15,13 +15,13 @@ import (
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/kubedog/pkg/tracker"
 	"github.com/flant/kubedog/pkg/trackers/rollout"
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type TrackAnno string
@@ -50,7 +50,7 @@ func PurgeHelmRelease(releaseName string) error {
 
 func doPurgeHelmRelease(releaseName string) error {
 	logProcessMsg := fmt.Sprintf("Checking release %s status", releaseName)
-	if err := logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+	if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 		stdout, stderr, err := HelmCmd("status", releaseName)
 		if err != nil {
 			if strings.HasSuffix(stderr, "not found") {
@@ -65,7 +65,7 @@ func doPurgeHelmRelease(releaseName string) error {
 		return err
 	}
 
-	return logger.LogSecondaryProcessInline("Running helm purge command", func() error {
+	return logboek.LogSecondaryProcessInline("Running helm purge command", func() error {
 		if err := purgeRelease(releaseName); err != nil {
 			return fmt.Errorf("purge helm release %s failed: %s", releaseName, err)
 		}
@@ -106,7 +106,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 
 	preDeployFunc := func() error {
 		logProcessMsg := fmt.Sprintf("Checking release %s status", releaseName)
-		if err := logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+		if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 			releaseStatus, err = getReleaseStatus(releaseName)
 			return err
 		}); err != nil {
@@ -115,7 +115,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 
 		if releaseStatus.PurgeNeeded {
 			logProcessMsg := fmt.Sprintf("Purging failed release %s", releaseName)
-			if err := logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+			if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 				return purgeRelease(releaseName)
 			}); err != nil {
 				return fmt.Errorf("purge helm release %s failed: %s", releaseName, err)
@@ -131,7 +131,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 		if releaseStatus.IsExists && releaseStatus.Status == "FAILED" {
 			var revision int
 			logProcessMsg := fmt.Sprintf("Getting latest deployed release %s revision", releaseName)
-			if err := logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+			if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 				revision, err = getLatestDeployedReleaseRevision(releaseName)
 				if err != nil && err != ErrNoDeployedReleaseRevisionFound {
 					return err
@@ -144,7 +144,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 
 			if err != ErrNoDeployedReleaseRevisionFound {
 				logProcessMsg := fmt.Sprintf("Getting templates from release %s revision %d", releaseName, revision)
-				if err := logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+				if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 					templates, err = GetTemplatesFromRevision(releaseName, revision)
 					return err
 				}); err != nil {
@@ -154,8 +154,8 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 				watchHookTypes := []string{"pre-rollback", "post-rollback"}
 
 				deployFunc := func(startJobHooksWatcher chan bool) (string, error) {
-					logger.LogServiceF("Running helm rollback command...\n")
-					logger.OptionalLnModeOn()
+					logboek.LogServiceF("Running helm rollback command...\n")
+					logboek.OptionalLnModeOn()
 
 					startJobHooksWatcher <- true
 
@@ -168,7 +168,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 				}
 
 				logProcessMsg = fmt.Sprintf("Running rollback release %s to revision %d", releaseName, revision)
-				if err := logger.LogSecondaryProcess(logProcessMsg, logger.LogProcessOptions{}, func() error {
+				if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 					return runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc)
 				}); err != nil {
 					return err
@@ -176,7 +176,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 			}
 		}
 
-		if err := logger.LogSecondaryProcessInline("Getting chart templates", func() error {
+		if err := logboek.LogSecondaryProcessInline("Getting chart templates", func() error {
 			templates, err = GetTemplatesFromChart(chartPath, releaseName, opts.Set, opts.SetString, opts.Values)
 			return err
 		}); err != nil {
@@ -186,7 +186,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 		return nil
 	}
 
-	if err := logger.LogProcess("Running pre-deploy", logger.LogProcessOptions{}, func() error {
+	if err := logboek.LogProcess("Running pre-deploy", logboek.LogProcessOptions{}, func() error {
 		return preDeployFunc()
 	}); err != nil {
 		return err
@@ -202,8 +202,8 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 	var deployFunc func(chan bool) (string, error)
 	if releaseStatus.IsExists {
 		deployFunc = func(startJobHooksWatcher chan bool) (string, error) {
-			logger.LogServiceF("Running helm upgrade command...\n")
-			logger.OptionalLnModeOn()
+			logboek.LogServiceF("Running helm upgrade command...\n")
+			logboek.OptionalLnModeOn()
 
 			startJobHooksWatcher <- true
 
@@ -220,8 +220,8 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 		}
 	} else {
 		deployFunc = func(startJobHooksWatcher chan bool) (string, error) {
-			logger.LogServiceF("Running helm install command...\n")
-			logger.OptionalLnModeOn()
+			logboek.LogServiceF("Running helm install command...\n")
+			logboek.OptionalLnModeOn()
 
 			startJobHooksWatcher <- true
 
@@ -235,7 +235,7 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 	}
 
 	logProcessMsg := fmt.Sprintf("Running deploy release %s", releaseName)
-	return logger.LogProcess(logProcessMsg, logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 		return runDeployProcess(releaseName, namespace, opts, templates, watchHookTypes, deployFunc)
 	})
 }
@@ -263,8 +263,8 @@ func runDeployProcess(releaseName, namespace string, opts HelmChartOptions, temp
 
 	<-jobHooksWatcherDone
 
-	logger.LogInfoLn(logger.FitText(helmOutput, logger.FitTextOptions{MaxWidth: 120}))
-	logger.OptionalLnModeOn()
+	logboek.LogInfoLn(logboek.FitText(helmOutput, logboek.FitTextOptions{MaxWidth: 120}))
+	logboek.OptionalLnModeOn()
 
 	if err := trackPods(templates, deployStartTime, namespace, opts); err != nil {
 		return err
@@ -330,13 +330,13 @@ func upgradeRelease(chartPath, releaseName, namespace string, chartOpts HelmChar
 	stdout, stderr, err := HelmCmd(args...)
 	if err != nil {
 		if strings.HasSuffix(stderr, "has no deployed releases") {
-			logger.LogErrorF("WARNING: Helm release '%s' is in improper state: %s\n", releaseName, stderr)
+			logboek.LogErrorF("WARNING: Helm release '%s' is in improper state: %s\n", releaseName, stderr)
 
 			if err := createAutoPurgeTriggerFilePath(releaseName); err != nil {
 				return "", err
 			}
 
-			logger.LogErrorF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf deploy`\n", releaseName)
+			logboek.LogErrorF("WARNING: Helm release %s will be removed with `helm delete --purge` on the next run of `werf deploy`\n", releaseName)
 		}
 
 		return "", FormatHelmCmdError(stdout, stderr, err)
@@ -356,7 +356,7 @@ func trackPods(templates ChartTemplates, deployStartTime time.Time, namespace st
 		}
 
 		logProcessMsg := fmt.Sprintf("Tracking po/%s", template.Metadata.Name)
-		if err := logger.LogSecondaryProcess(logProcessMsg, logger.LogProcessOptions{}, func() error {
+		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 			return rollout.TrackPodTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
 		}); err != nil {
 			return err
@@ -369,7 +369,7 @@ func trackPods(templates ChartTemplates, deployStartTime time.Time, namespace st
 func removeHelmHooksByRecreatePolicy(templates ChartTemplates, namespace string) error {
 	for _, jobTemplate := range getHooksJobsToRecreate(templates.Jobs()) {
 		logProcessMsg := fmt.Sprintf("Deleting helm hook jobs/%s (werf/recreate)", jobTemplate.Metadata.Name)
-		if err := logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+		if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 			return removeJob(jobTemplate.Metadata.Name, jobTemplate.Namespace(namespace))
 		}); err != nil {
 			return fmt.Errorf("unable to remove job '%s': %s", jobTemplate.Metadata.Name, err)
@@ -390,7 +390,7 @@ func trackDeployments(templates ChartTemplates, deployStartTime time.Time, names
 		}
 
 		logProcessMsg := fmt.Sprintf("Tracking deploy/%s", template.Metadata.Name)
-		if err := logger.LogSecondaryProcess(logProcessMsg, logger.LogProcessOptions{}, func() error {
+		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 			return rollout.TrackDeploymentTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
 		}); err != nil {
 			return err
@@ -411,7 +411,7 @@ func trackStatefulSets(templates ChartTemplates, deployStartTime time.Time, name
 		}
 
 		logProcessMsg := fmt.Sprintf("Tracking sts/%s", template.Metadata.Name)
-		if err := logger.LogSecondaryProcess(logProcessMsg, logger.LogProcessOptions{}, func() error {
+		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 			return rollout.TrackStatefulSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
 		}); err != nil {
 			return err
@@ -432,7 +432,7 @@ func trackDaemonSets(templates ChartTemplates, deployStartTime time.Time, namesp
 		}
 
 		logProcessMsg := fmt.Sprintf("Tracking ds/%s", template.Metadata.Name)
-		if err := logger.LogSecondaryProcess(logProcessMsg, logger.LogProcessOptions{}, func() error {
+		if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 			return rollout.TrackDaemonSetTillReady(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
 		}); err != nil {
 			return err
@@ -450,7 +450,7 @@ func trackJobs(templates ChartTemplates, deployStartTime time.Time, namespace st
 
 		if template.Metadata.Annotations[TrackAnnoName] == string(TrackTillDone) {
 			logProcessMsg := fmt.Sprintf("Tracking jobs/%s", template.Metadata.Name)
-			if err := logger.LogSecondaryProcess(logProcessMsg, logger.LogProcessOptions{}, func() error {
+			if err := logboek.LogSecondaryProcess(logProcessMsg, logboek.LogProcessOptions{}, func() error {
 				return rollout.TrackJobTillDone(template.Metadata.Name, template.Namespace(namespace), kube.Kubernetes, tracker.Options{Timeout: time.Second * time.Duration(opts.Timeout), LogsFromTime: deployStartTime})
 			}); err != nil {
 				return err
@@ -486,10 +486,10 @@ func watchJobHooks(templates ChartTemplates, hookTypes []string, deployStartTime
 			}
 
 			loggerProcessMsg := fmt.Sprintf("Tracking helm hook jobs/%s", template.Metadata.Name)
-			if err := logger.LogSecondaryProcess(loggerProcessMsg, logger.LogProcessOptions{}, func() error {
+			if err := logboek.LogSecondaryProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
 				return rollout.TrackJobTillDone(template.Metadata.Name, jobNamespace, kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
 			}); err != nil {
-				logger.LogErrorF("ERROR: %s\n", err)
+				logboek.LogErrorF("ERROR: %s\n", err)
 				break
 			}
 		}
@@ -578,7 +578,7 @@ func getReleaseStatus(releaseName string) (ReleaseStatus, error) {
 		if exist, err := util.FileExists(autoPurgeTriggerFilePath(releaseName)); err != nil {
 			return ReleaseStatus{}, err
 		} else if exist {
-			logger.LogErrorF("WARNING: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, res.Status)
+			logboek.LogErrorF("WARNING: Will not purge helm release '%s': expected FAILED or PENDING_INSTALL release status, got %s\n", releaseName, res.Status)
 		}
 
 		res.IsExists = true
@@ -704,7 +704,7 @@ func jobHooksToTrack(templates ChartTemplates, hookTypes []string) ([]Template, 
 
 				i, err := strconv.Atoi(val)
 				if err != nil {
-					logger.LogErrorF("WARNING: Incorrect hook-weight anno value '%v'\n", val)
+					logboek.LogErrorF("WARNING: Incorrect hook-weight anno value '%v'\n", val)
 					return 0
 				}
 

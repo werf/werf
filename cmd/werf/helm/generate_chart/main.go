@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/flant/logboek"
 	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -11,7 +12,6 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/util"
@@ -80,7 +80,7 @@ func runGenerateChart(targetPath string) error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream()}); err != nil {
 		return err
 	}
 
@@ -128,7 +128,7 @@ func runGenerateChart(targetPath string) error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 
@@ -147,7 +147,7 @@ func runGenerateChart(targetPath string) error {
 	targetPath = util.ExpandPath(targetPath)
 
 	if _, err := os.Stat(targetPath); !os.IsNotExist(err) {
-		logger.LogServiceF("Removing existing %s\n", targetPath)
+		logboek.LogServiceF("Removing existing %s\n", targetPath)
 		err = os.RemoveAll(targetPath)
 		if err != nil {
 			return err
@@ -164,7 +164,7 @@ func runGenerateChart(targetPath string) error {
 		return fmt.Errorf("unable to save werf chart: %s", err)
 	}
 
-	logger.LogServiceF("Generated werf chart: %s\n", targetPath)
+	logboek.LogServiceF("Generated werf chart: %s\n", targetPath)
 
 	return nil
 }

@@ -1,30 +1,30 @@
 package main
 
-import "github.com/flant/werf/pkg/logger"
+import "github.com/flant/logboek"
 
 func main() {
-	logger.Init()
+	logboek.Init()
 
-	logger.LogProcessStart("Running task", logger.LogProcessStartOptions{})
-	logger.WithIndent(func() error {
-		logger.LogProcessStart("Running subtask", logger.LogProcessStartOptions{})
-		logger.LogF("HELO!\n")
-		logger.LogF("HELO!\n")
-		logger.LogProcessFail(logger.LogProcessEndOptions{})
+	logboek.LogProcessStart("Running task", logboek.LogProcessStartOptions{})
+	logboek.WithIndent(func() error {
+		logboek.LogProcessStart("Running subtask", logboek.LogProcessStartOptions{})
+		logboek.LogF("HELO!\n")
+		logboek.LogF("HELO!\n")
+		logboek.LogProcessFail(logboek.LogProcessEndOptions{})
 		return nil
 	})
-	logger.LogProcessEnd(logger.LogProcessEndOptions{})
+	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
 
-	logger.LogProcessStart("Running task", logger.LogProcessStartOptions{})
-	logger.LogProcessStepEnd("Item X done")
-	logger.LogProcessStepEnd("Item Y done")
-	logger.LogProcessStepEnd("Item Z done")
-	logger.LogProcessEnd(logger.LogProcessEndOptions{})
+	logboek.LogProcessStart("Running task", logboek.LogProcessStartOptions{})
+	logboek.LogProcessStepEnd("Item X done")
+	logboek.LogProcessStepEnd("Item Y done")
+	logboek.LogProcessStepEnd("Item Z done")
+	logboek.LogProcessEnd(logboek.LogProcessEndOptions{})
 
-	logger.LogProcess("Running task", logger.LogProcessOptions{}, func() error {
-		return logger.LogProcess("Running subtask", logger.LogProcessOptions{WithIndent: true}, func() error {
-			logger.LogF("HELO!\n")
-			logger.LogF("HELO!\n")
+	logboek.LogProcess("Running task", logboek.LogProcessOptions{}, func() error {
+		return logboek.LogProcess("Running subtask", logboek.LogProcessOptions{WithIndent: true}, func() error {
+			logboek.LogF("HELO!\n")
+			logboek.LogF("HELO!\n")
 			return nil
 		})
 	})

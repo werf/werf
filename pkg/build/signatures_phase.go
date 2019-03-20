@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/build/stage"
 	imagePkg "github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -24,14 +24,14 @@ func NewSignaturesPhase() *SignaturesPhase {
 type SignaturesPhase struct{}
 
 func (p *SignaturesPhase) Run(c *Conveyor) error {
-	return logger.LogProcess("Calculating signatures", logger.LogProcessOptions{}, func() error {
-		return logger.WithoutIndent(func() error { return p.run(c) })
+	return logboek.LogProcess("Calculating signatures", logboek.LogProcessOptions{}, func() error {
+		return logboek.WithoutIndent(func() error { return p.run(c) })
 	})
 }
 
 func (p *SignaturesPhase) run(c *Conveyor) error {
 	for _, image := range c.imagesInOrder {
-		if err := logger.LogProcess(image.LogProcessName(), logger.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+		if err := logboek.LogProcess(image.LogProcessName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			return p.calculateImageSignatures(c, image)
 		}); err != nil {
 			return err
@@ -67,7 +67,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 			return fmt.Errorf("error checking stage %s is empty: %s", s.Name(), err)
 		}
 		if isEmpty {
-			logger.LogInfoF("%s:%s <empty>\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())))
+			logboek.LogInfoF("%s:%s <empty>\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())))
 			continue
 		}
 
@@ -86,7 +86,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 
 		s.SetSignature(stageSig)
 
-		logger.LogInfoF("%s:%s %s\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())), stageSig)
+		logboek.LogInfoF("%s:%s %s\n", s.Name(), strings.Repeat(" ", maxStageNameLength-len(s.Name())), stageSig)
 
 		imageName := fmt.Sprintf(LocalImageStageImageFormat, c.projectName(), stageSig)
 
@@ -109,8 +109,8 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 
 	stageName := c.GetBuildingGitStage(image.name)
 	if stageName != "" {
-		logger.LogLn()
-		logger.LogInfoF("Git files will be actualized on stage %s\n", stageName)
+		logboek.LogLn()
+		logboek.LogInfoF("Git files will be actualized on stage %s\n", stageName)
 	}
 
 	image.SetStages(newStagesList)

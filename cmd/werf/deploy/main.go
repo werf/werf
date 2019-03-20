@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/logboek"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
@@ -101,7 +101,7 @@ func runDeploy() error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream()}); err != nil {
 		return err
 	}
 
@@ -176,7 +176,7 @@ func runDeploy() error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 

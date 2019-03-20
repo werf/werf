@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/werf"
 )
 
 func Purge(dryRun bool) error {
-	return logger.LogSecondaryProcess("Running purge for tmp data", logger.LogProcessOptions{}, func() error { return purge(dryRun) })
+	return logboek.LogSecondaryProcess("Running purge for tmp data", logboek.LogProcessOptions{}, func() error { return purge(dryRun) })
 }
 
 func purge(dryRun bool) error {
@@ -38,7 +38,7 @@ func purge(dryRun bool) error {
 
 	if len(projectDirsToRemove) > 0 {
 		for _, projectDirToRemove := range projectDirsToRemove {
-			logger.LogLn(projectDirToRemove)
+			logboek.LogLn(projectDirToRemove)
 		}
 		if !dryRun {
 			if err := removeProjectDirs(projectDirsToRemove); err != nil {
@@ -50,7 +50,7 @@ func purge(dryRun bool) error {
 	filesToRemove = append(filesToRemove, GetServiceTmpDir())
 
 	for _, file := range filesToRemove {
-		logger.LogLn(file)
+		logboek.LogLn(file)
 
 		if !dryRun {
 			err := os.RemoveAll(file)

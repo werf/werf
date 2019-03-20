@@ -3,7 +3,6 @@ package secret
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,11 +11,13 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/satori/go.uuid"
+	"gopkg.in/yaml.v2"
+
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/ssh/terminal"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/deploy/secret"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -87,7 +88,7 @@ func SecretEdit(m secret.Manager, filePath string, values bool) error {
 		err := editIteration()
 		if err != nil {
 			if strings.HasPrefix(err.Error(), "encryption failed") {
-				logger.LogErrorF("Error: %s\n", err)
+				logboek.LogErrorF("Error: %s\n", err)
 				ok, err := askForConfirmation()
 				if err != nil {
 					return err
@@ -142,7 +143,7 @@ func readEditedFile(m secret.Manager, filePath string, values bool) ([]byte, []b
 func askForConfirmation() (bool, error) {
 	r := os.Stdin
 
-	logger.LogHighlightLn("Do you want to continue editing the file (Y/n)?")
+	logboek.LogHighlightLn("Do you want to continue editing the file (Y/n)?")
 
 	isTerminal := terminal.IsTerminal(int(r.Fd()))
 	if isTerminal {

@@ -7,7 +7,7 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/registry"
 	"github.com/docker/cli/cli/flags"
-	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/logboek"
 )
 
 func Login(username, password, repo string) error {
@@ -26,7 +26,7 @@ func Login(username, password, repo string) error {
 
 	err := cmd.Execute()
 	if Debug() {
-		fmt.Fprintf(logger.GetOutStream(), "Docker login stdout:\n%s\nDocker login stderr:\n%s\n", outb.String(), errb.String())
+		fmt.Fprintf(logboek.GetOutStream(), "Docker login stdout:\n%s\nDocker login stderr:\n%s\n", outb.String(), errb.String())
 	}
 
 	if err != nil {

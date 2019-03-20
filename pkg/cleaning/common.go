@@ -8,10 +8,10 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/logger"
 )
 
 type CommonOptions struct {
@@ -150,7 +150,7 @@ func processUsedImages(images []types.ImageSummary, options CommonOptions) ([]ty
 				}
 
 				if options.SkipUsedImages {
-					logger.LogInfoF("Skip image '%s' (used by container '%s')\n", img.ID, containerName)
+					logboek.LogInfoF("Skip image '%s' (used by container '%s')\n", img.ID, containerName)
 					imagesToExclude = append(imagesToExclude, img)
 				} else {
 					return nil, fmt.Errorf("cannot remove image '%s' used by container '%s'", img.ID, containerName)
@@ -185,8 +185,8 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 				containerName = container.Names[0]
 			}
 
-			logger.LogLn(containerName)
-			logger.OptionalLnModeOn()
+			logboek.LogLn(containerName)
+			logboek.OptionalLnModeOn()
 		} else {
 			if err := docker.ContainerRemove(container.ID, types.ContainerRemoveOptions{Force: options.RmForce}); err != nil {
 				return err
@@ -200,8 +200,8 @@ func containersRemove(containers []types.Container, options CommonOptions) error
 func imageReferencesRemove(references []string, options CommonOptions) error {
 	if len(references) != 0 {
 		if options.DryRun {
-			logger.LogLn(strings.Join(references, "\n"))
-			logger.OptionalLnModeOn()
+			logboek.LogLn(strings.Join(references, "\n"))
+			logboek.OptionalLnModeOn()
 		} else {
 			var args []string
 

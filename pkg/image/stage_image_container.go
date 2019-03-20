@@ -7,8 +7,8 @@ import (
 
 	"github.com/docker/docker/api/types"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/stapel"
 	"github.com/flant/werf/pkg/util"
 )
@@ -79,7 +79,7 @@ func (c *StageImageContainer) prepareRunArgs() ([]string, error) {
 		return nil, err
 	}
 
-	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logger.TerminalContentWidth())
+	setColumnsEnv := fmt.Sprintf("--env=COLUMNS=%d", logboek.TerminalContentWidth())
 	runArgs = append(runArgs, setColumnsEnv)
 
 	fromImageId, err := c.image.fromImage.MustGetId()

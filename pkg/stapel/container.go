@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 )
 
 type container struct {
@@ -29,7 +29,7 @@ func (c *container) CreateIfNotExist() error {
 
 	if !exist {
 		err := lock.WithLock(fmt.Sprintf("stapel.container.%s", c.Name), lock.LockOptions{Timeout: time.Second * 600}, func() error {
-			return logger.LogSecondaryProcess(fmt.Sprintf("Creating container %s from image %s", c.Name, c.ImageName), logger.LogProcessOptions{}, func() error {
+			return logboek.LogSecondaryProcess(fmt.Sprintf("Creating container %s from image %s", c.Name, c.ImageName), logboek.LogProcessOptions{}, func() error {
 				exist, err := docker.ContainerExist(c.Name)
 				if err != nil {
 					return err

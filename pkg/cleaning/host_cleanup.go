@@ -8,9 +8,9 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
 )
 
@@ -20,13 +20,13 @@ func HostCleanup(options CommonOptions) error {
 	options.RmForce = true
 
 	return lock.WithLock("host-cleanup", lock.LockOptions{Timeout: time.Second * 600}, func() error {
-		if err := logger.LogSecondaryProcess("Running cleanup for docker containers created by werf", logger.LogProcessOptions{}, func() error {
+		if err := logboek.LogSecondaryProcess("Running cleanup for docker containers created by werf", logboek.LogProcessOptions{}, func() error {
 			return safeContainersCleanup(options)
 		}); err != nil {
 			return err
 		}
 
-		if err := logger.LogSecondaryProcess("Running cleanup for dangling docker images created by werf", logger.LogProcessOptions{}, func() error {
+		if err := logboek.LogSecondaryProcess("Running cleanup for dangling docker images created by werf", logboek.LogProcessOptions{}, func() error {
 			return safeDanglingImagesCleanup(options)
 		}); err != nil {
 			return nil
@@ -60,7 +60,7 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 			}
 
 			if !isLocked {
-				logger.LogInfoF("Ignore dangling image %s used by another process\n", imgName)
+				logboek.LogInfoF("Ignore dangling image %s used by another process\n", imgName)
 				continue
 			}
 
@@ -100,7 +100,7 @@ func safeContainersCleanup(options CommonOptions) error {
 		}
 
 		if containerName == "" {
-			logger.LogErrorF("Ignore bad container %s\n", container.ID)
+			logboek.LogErrorF("Ignore bad container %s\n", container.ID)
 			continue
 		}
 
@@ -113,7 +113,7 @@ func safeContainersCleanup(options CommonOptions) error {
 			}
 
 			if !isLocked {
-				logger.LogInfoF("Ignore container %s (%s) used by another process\n", containerName, container.ID)
+				logboek.LogInfoF("Ignore container %s (%s) used by another process\n", containerName, container.ID)
 				return nil
 			}
 			defer lock.Unlock(containerLockName)

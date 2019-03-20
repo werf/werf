@@ -8,11 +8,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 
-	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -45,7 +45,7 @@ func Init(keys []string) error {
 	systemAgentSockExists, _ := util.FileExists(systemAgentSock)
 	if systemAgentSock != "" && systemAgentSockExists {
 		SSHAuthSock = systemAgentSock
-		logger.LogServiceF("Using system ssh-agent: %s\n", systemAgentSock)
+		logboek.LogServiceF("Using system ssh-agent: %s\n", systemAgentSock)
 		return nil
 	}
 
@@ -126,7 +126,7 @@ func runSSHAgent() (string, error) {
 		return "", fmt.Errorf("error listen unix sock %s: %s", sockPath, err)
 	}
 
-	logger.LogServiceF("Running ssh agent on unix sock: %s\n", sockPath)
+	logboek.LogServiceF("Running ssh agent on unix sock: %s\n", sockPath)
 
 	go func() {
 		agnt := agent.NewKeyring()
@@ -134,7 +134,7 @@ func runSSHAgent() (string, error) {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				logger.LogErrorF("WARNING: failed to accept ssh-agent connection: %s\n", err)
+				logboek.LogErrorF("WARNING: failed to accept ssh-agent connection: %s\n", err)
 				continue
 			}
 
@@ -143,13 +143,13 @@ func runSSHAgent() (string, error) {
 
 				err = agent.ServeAgent(agnt, conn)
 				if err != nil && err != io.EOF {
-					logger.LogErrorF("WARNING: ssh-agent server error: %s\n", err)
+					logboek.LogErrorF("WARNING: ssh-agent server error: %s\n", err)
 					return
 				}
 
 				err = conn.Close()
 				if err != nil {
-					logger.LogErrorF("WARNING: ssh-agent server connection close error: %s\n", err)
+					logboek.LogErrorF("WARNING: ssh-agent server connection close error: %s\n", err)
 					return
 				}
 			}()
@@ -183,7 +183,7 @@ func addSSHKey(authSock string, key string) error {
 		return err
 	}
 
-	logger.LogServiceF("Added private key %s to ssh agent %s\n", key, authSock)
+	logboek.LogServiceF("Added private key %s to ssh agent %s\n", key, authSock)
 
 	return nil
 }

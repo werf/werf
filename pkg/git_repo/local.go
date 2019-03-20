@@ -5,11 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/logboek"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
-
-	"github.com/flant/werf/pkg/logger"
 )
 
 type Local struct {
@@ -94,7 +93,7 @@ func (repo *Local) IsBranchState() bool {
 	if err == errNotABranch {
 		return false
 	} else if err != nil {
-		logger.LogErrorF("ERROR: Getting branch of local git: %s\n", err)
+		logboek.LogErrorF("ERROR: Getting branch of local git: %s\n", err)
 		return false
 	}
 	return true
@@ -103,7 +102,7 @@ func (repo *Local) IsBranchState() bool {
 func (repo *Local) GetCurrentBranchName() string {
 	name, err := repo.HeadBranchName()
 	if err != nil {
-		logger.LogErrorF("ERROR: Getting branch of local git: %s\n", err)
+		logboek.LogErrorF("ERROR: Getting branch of local git: %s\n", err)
 		return ""
 	}
 	return name
@@ -152,13 +151,13 @@ func (repo *Local) findTagByCommitID(repoPath string, commitID plumbing.Hash) (s
 func (repo *Local) GetCurrentTagName() string {
 	ref, err := repo.getReferenceForRepo(repo.Path)
 	if err != nil {
-		logger.LogErrorF("ERROR: Cannot get local git repo head ref: %s\n", err)
+		logboek.LogErrorF("ERROR: Cannot get local git repo head ref: %s\n", err)
 		return ""
 	}
 
 	tag, err := repo.findTagByCommitID(repo.Path, ref.Hash())
 	if err != nil {
-		logger.LogErrorF("ERROR: Cannot get local git repo tag: %s\n", err)
+		logboek.LogErrorF("ERROR: Cannot get local git repo tag: %s\n", err)
 		return ""
 	}
 	return tag
@@ -167,7 +166,7 @@ func (repo *Local) GetCurrentTagName() string {
 func (repo *Local) GetHeadCommit() string {
 	ref, err := repo.getReferenceForRepo(repo.Path)
 	if err != nil {
-		logger.LogErrorF("ERROR: Getting HEAD commit id of local git repo: %s\n", err)
+		logboek.LogErrorF("ERROR: Getting HEAD commit id of local git repo: %s\n", err)
 		return ""
 	}
 	return fmt.Sprintf("%s", ref.Hash())

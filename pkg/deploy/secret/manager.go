@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/secret"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -105,7 +105,7 @@ func NewManager(key []byte, options NewManagerOptions) (Manager, error) {
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "encoding/hex:") {
 			if !options.IgnoreWarning {
-				logger.LogErrorLn(`
+				logboek.LogErrorLn(`
 ############################################################################################
 ###                      WARNING! Invalid encryption key, do regenerate!                 ###
 ###    https://werf.io/reference/deploy/secrets.html#regeneration-of-existing-secrets    ###

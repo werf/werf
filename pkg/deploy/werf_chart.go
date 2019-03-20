@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/deploy/secret"
 	"github.com/flant/werf/pkg/deploy/werf_chart"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 	uuid "github.com/satori/go.uuid"
 )
@@ -42,7 +42,7 @@ func PrepareWerfChart(targetDir string, projectName, projectDir string, m secret
 	}
 
 	if debug() {
-		fmt.Fprintf(logger.GetOutStream(), "Werf chart: %#v\n", werfChart)
+		fmt.Fprintf(logboek.GetOutStream(), "Werf chart: %#v\n", werfChart)
 	}
 
 	return werfChart, nil

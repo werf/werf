@@ -14,5 +14,6 @@ git -C $path/github.com/docker/cli fetch
 git -C $path/github.com/docker/cli checkout v18.06.3-ce
 
 go get -u -v github.com/flant/kubedog/...
+go get -u -v github.com/flant/logboek/...
 
 go get -v github.com/flant/werf/cmd/werf

@@ -6,12 +6,12 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/tmp_manager"
@@ -152,7 +152,7 @@ func runRun() error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream()}); err != nil {
 		return err
 	}
 
@@ -193,7 +193,7 @@ func runRun() error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 
@@ -216,7 +216,7 @@ func runRun() error {
 	if *CommonCmdData.DryRun {
 		fmt.Printf("docker run %s\n", strings.Join(dockerRunArgs, " "))
 	} else {
-		return logger.WithRawStreamsOutputModeOn(func() error {
+		return logboek.WithRawStreamsOutputModeOn(func() error {
 			return docker.CliRun(dockerRunArgs...)
 		})
 	}

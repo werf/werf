@@ -3,8 +3,8 @@ package build
 import (
 	"fmt"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/build/stage"
-	"github.com/flant/werf/pkg/logger"
 )
 
 type ShouldBeBuiltPhase struct{}
@@ -14,7 +14,7 @@ func NewShouldBeBuiltPhase() *ShouldBeBuiltPhase {
 }
 
 func (p *ShouldBeBuiltPhase) Run(c *Conveyor) error {
-	return logger.LogProcess("Checking built stages cache", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Checking built stages cache", logboek.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
@@ -34,7 +34,7 @@ func (p *ShouldBeBuiltPhase) run(c *Conveyor) error {
 		}
 
 		for _, s := range badStages {
-			logger.LogErrorF("%s %s cache should be built\n", image.LogName(), s.Name())
+			logboek.LogErrorF("%s %s cache should be built\n", image.LogName(), s.Name())
 		}
 
 		if len(badStages) > 0 {

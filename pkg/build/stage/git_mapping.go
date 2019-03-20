@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/stapel"
 
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/logger"
 )
 
 type GitMapping struct {
@@ -78,7 +78,7 @@ func (gp *GitMapping) createArchive(opts git_repo.ArchiveOptions) (git_repo.Arch
 		cwd = "/"
 	}
 
-	err := logger.LogSecondaryProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gp.GitRepo().GetName(), cwd), logger.LogProcessOptions{}, func() error {
+	err := logboek.LogSecondaryProcess(fmt.Sprintf("Creating archive for commit %s of %s git mapping %s", opts.Commit, gp.GitRepo().GetName(), cwd), logboek.LogProcessOptions{}, func() error {
 		archive, err := gp.GitRepo().CreateArchive(opts)
 		if err != nil {
 			return err
@@ -104,7 +104,7 @@ func (gp *GitMapping) createPatch(opts git_repo.PatchOptions) (git_repo.Patch, e
 		cwd = "/"
 	}
 
-	err := logger.LogSecondaryProcessInline(fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd), func() error {
+	err := logboek.LogSecondaryProcessInline(fmt.Sprintf("Creating patch %s..%s for %s git mapping %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd), func() error {
 		patch, err := gp.GitRepo().CreatePatch(opts)
 		if err != nil {
 			return err
@@ -431,7 +431,7 @@ func (gp *GitMapping) StageDependenciesChecksum(stageName StageName) (string, er
 	}
 
 	for _, path := range checksum.GetNoMatchPaths() {
-		logger.LogErrorF("WARNING: stage %s dependency path %s have not been found in %s git\n", stageName, path, gp.GitRepo().GetName())
+		logboek.LogErrorF("WARNING: stage %s dependency path %s have not been found in %s git\n", stageName, path, gp.GitRepo().GetName())
 	}
 
 	return checksum.String(), nil
