@@ -21,7 +21,7 @@ import (
 	"github.com/flant/werf/pkg/werf"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type TrackAnno string
@@ -42,13 +42,13 @@ var (
 	ErrNoDeployedReleaseRevisionFound = errors.New("no DEPLOYED release revision found")
 )
 
-func PurgeHelmRelease(releaseName string) error {
+func PurgeHelmRelease(releaseName, namespace string, withNamespace bool) error {
 	return withLockedHelmRelease(releaseName, func() error {
-		return doPurgeHelmRelease(releaseName)
+		return doPurgeHelmRelease(releaseName, namespace, withNamespace)
 	})
 }
 
-func doPurgeHelmRelease(releaseName string) error {
+func doPurgeHelmRelease(releaseName, namespace string, withNamespace bool) error {
 	logProcessMsg := fmt.Sprintf("Checking release %s status", releaseName)
 	if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 		stdout, stderr, err := HelmCmd("status", releaseName)
@@ -65,13 +65,28 @@ func doPurgeHelmRelease(releaseName string) error {
 		return err
 	}
 
-	return logboek.LogSecondaryProcessInline("Running helm purge command", func() error {
-		if err := purgeRelease(releaseName); err != nil {
-			return fmt.Errorf("purge helm release %s failed: %s", releaseName, err)
+	if err := validateHelmReleaseNamespace(releaseName, namespace); err != nil {
+		return err
+	}
+
+	if err := logboek.LogSecondaryProcessInline("Running helm purge command", func() error {
+		return purgeRelease(releaseName)
+	}); err != nil {
+		return fmt.Errorf("purge helm release %s failed: %s", releaseName, err)
+	}
+
+	if withNamespace {
+		logProcessMsg := fmt.Sprintf("Deleting kubernetes namespace %s", namespace)
+		if err := logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
+			return kube.Kubernetes.CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
+		}); err != nil {
+			return fmt.Errorf("failed to delete namespace %s: %s", namespace, err)
 		}
 
-		return nil
-	})
+		logboek.OptionalLnModeOn()
+	}
+
+	return nil
 }
 
 type HelmChartValuesOptions struct {
@@ -124,6 +139,12 @@ func doDeployHelmChart(chartPath, releaseName, namespace string, opts HelmChartO
 			releaseStatus.IsExists = false
 
 			if err := deleteAutoPurgeTriggerFilePath(releaseName); err != nil {
+				return err
+			}
+		}
+
+		if releaseStatus.IsExists {
+			if err := validateHelmReleaseNamespace(releaseName, namespace); err != nil {
 				return err
 			}
 		}
@@ -557,6 +578,20 @@ type ReleaseStatus struct {
 	PurgeNeeded bool
 }
 
+func validateHelmReleaseNamespace(releaseName, namespace string) error {
+	filter := "^" + releaseName + "$"
+	stdout, stderr, err := HelmCmd("list", filter, "--namespace", namespace, "--short")
+	if err != nil {
+		return fmt.Errorf("failed to check release namespace: %s", FormatHelmCmdError(stdout, stderr, err))
+	}
+
+	if stdout == "" {
+		return fmt.Errorf("existing helm release %s is not deployed in namespace %s: check --namespace option value", releaseName, namespace)
+	}
+
+	return nil
+}
+
 func getReleaseStatus(releaseName string) (ReleaseStatus, error) {
 	var res ReleaseStatus
 
@@ -644,7 +679,7 @@ func getHooksJobsToRecreate(jobsTemplates []Template) []Template {
 
 func removeJob(jobName string, namespace string) error {
 	isJobExist := func(name string, namespace string) (bool, error) {
-		options := v1.GetOptions{}
+		options := metav1.GetOptions{}
 		_, err := kube.Kubernetes.BatchV1().Jobs(namespace).Get(name, options)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -664,8 +699,8 @@ func removeJob(jobName string, namespace string) error {
 		return nil
 	}
 
-	deletePropagation := v1.DeletePropagationForeground
-	deleteOptions := &v1.DeleteOptions{
+	deletePropagation := metav1.DeletePropagationForeground
+	deleteOptions := &metav1.DeleteOptions{
 		PropagationPolicy: &deletePropagation,
 	}
 	err = kube.Kubernetes.BatchV1().Jobs(namespace).Delete(jobName, deleteOptions)
