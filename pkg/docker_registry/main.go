@@ -59,45 +59,11 @@ func IsGCR(reference string) (bool, error) {
 	return false, nil
 }
 
-func ImageTags(reference string) ([]string, error) {
-	images, err := ImagesByWerfImageLabel(reference, "true")
-	if err != nil {
-		return nil, err
-	}
-
-	return imagesTags(images), nil
-}
-
-func ImageStagesTags(reference string) ([]string, error) {
-	images, err := ImagesByWerfImageLabel(reference, "false")
-	if err != nil {
-		return nil, err
-	}
-
-	return imagesTags(images), nil
-}
-
-func imagesTags(images []RepoImage) []string {
-	if len(images) == 0 {
-		return []string{}
-	} else {
-		var tags []string
-		for _, image := range images {
-			tags = append(tags, image.Tag)
-		}
-
-		return tags
-	}
-}
-
 func ImagesByWerfImageLabel(reference, labelValue string) ([]RepoImage, error) {
 	var repoImages []RepoImage
 
 	tags, err := Tags(reference)
 	if err != nil {
-		if strings.Contains(err.Error(), "NAME_UNKNOWN") {
-			return []RepoImage{}, nil
-		}
 		return nil, err
 	}
 
@@ -139,6 +105,18 @@ func ImagesByWerfImageLabel(reference, labelValue string) ([]RepoImage, error) {
 }
 
 func Tags(reference string) ([]string, error) {
+	tags, err := list(reference)
+	if err != nil {
+		if strings.Contains(err.Error(), "NAME_UNKNOWN") {
+			return []string{}, nil
+		}
+		return nil, err
+	}
+
+	return tags, nil
+}
+
+func list(reference string) ([]string, error) {
 	repo, err := name.NewRepository(reference, name.WeakValidation)
 	if err != nil {
 		return nil, fmt.Errorf("parsing repo %q: %v", reference, err)

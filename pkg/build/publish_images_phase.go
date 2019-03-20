@@ -72,7 +72,7 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 	stages := image.GetStages()
 
-	existingStagesTags, err := docker_registry.ImageStagesTags(p.ImagesRepo)
+	existingTags, err := docker_registry.Tags(p.ImagesRepo)
 	if err != nil {
 		return fmt.Errorf("error fetching existing stages cache list %s: %s", p.ImagesRepo, err)
 	}
@@ -81,7 +81,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 		stageTagName := fmt.Sprintf(RepoImageStageTagFormat, stage.GetSignature())
 		stageImageName := fmt.Sprintf("%s:%s", p.ImagesRepo, stageTagName)
 
-		if util.IsStringsContainValue(existingStagesTags, stageTagName) {
+		if util.IsStringsContainValue(existingTags, stageTagName) {
 			logger.LogHighlightLn(stage.Name())
 
 			logger.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
@@ -143,7 +143,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 	var existingTags []string
 	var err error
 	if err := logger.LogSecondaryProcessInline("Fetching existing image tags", func() error {
-		existingTags, err = docker_registry.ImageTags(imageRepository)
+		existingTags, err = docker_registry.Tags(imageRepository)
 		return err
 	}); err != nil {
 		return fmt.Errorf("error fetch existing tags of image %s: %s", imageRepository, err)
