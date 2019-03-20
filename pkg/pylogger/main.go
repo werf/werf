@@ -2,13 +2,12 @@ package main
 
 import (
 	"C"
-
-	"github.com/flant/werf/pkg/logger"
 )
+import "github.com/flant/logboek"
 
 //export Init
 func Init() *C.char {
-	if err := logger.Init(); err != nil {
+	if err := logboek.Init(); err != nil {
 		return C.CString(err.Error())
 	}
 	return nil
@@ -16,87 +15,87 @@ func Init() *C.char {
 
 //export DisablePrettyLog
 func DisablePrettyLog() {
-	logger.DisablePrettyLog()
+	logboek.DisablePrettyLog()
 }
 
 //export EnableLogColor
 func EnableLogColor() {
-	logger.EnableLogColor()
+	logboek.EnableLogColor()
 }
 
 //export DisableLogColor
 func DisableLogColor() {
-	logger.DisableLogColor()
+	logboek.DisableLogColor()
 }
 
 //export SetTerminalWidth
 func SetTerminalWidth(width C.int) {
-	logger.SetTerminalWidth(int(width))
+	logboek.SetTerminalWidth(int(width))
 }
 
 //export IndentUp
 func IndentUp() {
-	logger.IndentUp()
+	logboek.IndentUp()
 }
 
 //export IndentDown
 func IndentDown() {
-	logger.IndentDown()
+	logboek.IndentDown()
 }
 
 //export OptionalLnModeOn
 func OptionalLnModeOn() {
-	logger.OptionalLnModeOn()
+	logboek.OptionalLnModeOn()
 }
 
 //export Log
 func Log(data *C.char) {
-	logger.LogF("%s", C.GoString(data))
+	logboek.LogF("%s", C.GoString(data))
 }
 
 //export LogHighlight
 func LogHighlight(data *C.char) {
-	logger.LogHighlightF("%s", C.GoString(data))
+	logboek.LogHighlightF("%s", C.GoString(data))
 }
 
 //export LogService
 func LogService(data *C.char) {
-	logger.LogServiceF("%s", C.GoString(data))
+	logboek.LogServiceF("%s", C.GoString(data))
 }
 
 //export LogInfo
 func LogInfo(data *C.char) {
-	logger.LogInfoF("%s", C.GoString(data))
+	logboek.LogInfoF("%s", C.GoString(data))
 }
 
 //export LogError
 func LogError(data *C.char) {
-	logger.LogErrorF("%s", C.GoString(data))
+	logboek.LogErrorF("%s", C.GoString(data))
 }
 
 //export LogProcessStart
 func LogProcessStart(msg *C.char) {
-	logger.LogProcessStart(C.GoString(msg), logger.LogProcessStartOptions{})
+	logboek.LogProcessStart(C.GoString(msg), logboek.LogProcessStartOptions{})
 }
 
 //export LogProcessEnd
 func LogProcessEnd(withoutLogOptionalLn bool) {
-	logger.LogProcessEnd(logger.LogProcessEndOptions{WithoutLogOptionalLn: withoutLogOptionalLn})
+	logboek.LogProcessEnd(logboek.LogProcessEndOptions{WithoutLogOptionalLn: withoutLogOptionalLn})
 }
 
 //export LogProcessStepEnd
 func LogProcessStepEnd(msg *C.char) {
-	logger.LogProcessStepEnd(C.GoString(msg))
+	logboek.LogProcessStepEnd(C.GoString(msg))
 }
 
 //export LogProcessFail
 func LogProcessFail(withoutLogOptionalLn bool) {
-	logger.LogProcessFail(logger.LogProcessEndOptions{WithoutLogOptionalLn: withoutLogOptionalLn})
+	logboek.LogProcessFail(logboek.LogProcessEndOptions{WithoutLogOptionalLn: withoutLogOptionalLn})
 }
 
 //export FitText
 func FitText(text *C.char, extraIndentWidth, maxWidth int, markWrappedFile bool) *C.char {
-	return C.CString(logger.FitText(C.GoString(text), logger.FitTextOptions{
+	return C.CString(logboek.FitText(C.GoString(text), logboek.FitTextOptions{
 		ExtraIndentWidth: extraIndentWidth,
 		MaxWidth:         maxWidth,
 		MarkWrappedLine:  markWrappedFile,
@@ -105,57 +104,57 @@ func FitText(text *C.char, extraIndentWidth, maxWidth int, markWrappedFile bool)
 
 //export GetRawStreamsOutputMode
 func GetRawStreamsOutputMode() bool {
-	return logger.GetRawStreamsOutputMode()
+	return logboek.GetRawStreamsOutputMode()
 }
 
 //export RawStreamsOutputModeOn
 func RawStreamsOutputModeOn() {
-	logger.RawStreamsOutputModeOn()
+	logboek.RawStreamsOutputModeOn()
 }
 
 //export RawStreamsOutputModeOff
 func RawStreamsOutputModeOff() {
-	logger.RawStreamsOutputModeOff()
+	logboek.RawStreamsOutputModeOff()
 }
 
 //export FittedStreamsOutputOn
 func FittedStreamsOutputOn() {
-	logger.FittedStreamsOutputOn()
+	logboek.FittedStreamsOutputOn()
 }
 
 //export FittedStreamsOutputOff
 func FittedStreamsOutputOff() {
-	logger.FittedStreamsOutputOff()
+	logboek.FittedStreamsOutputOff()
 }
 
 //export MuteOut
 func MuteOut() {
-	logger.MuteOut()
+	logboek.MuteOut()
 }
 
 //export UnmuteOut
 func UnmuteOut() {
-	logger.UnmuteOut()
+	logboek.UnmuteOut()
 }
 
 //export MuteErr
 func MuteErr() {
-	logger.MuteErr()
+	logboek.MuteErr()
 }
 
 //export UnmuteErr
 func UnmuteErr() {
-	logger.UnmuteErr()
+	logboek.UnmuteErr()
 }
 
 //export Out
 func Out(msg *C.char) {
-	logger.OutF("%s", C.GoString(msg))
+	logboek.OutF("%s", C.GoString(msg))
 }
 
 //export Err
 func Err(msg *C.char) {
-	logger.ErrF("%s", C.GoString(msg))
+	logboek.ErrF("%s", C.GoString(msg))
 }
 
 func main() {}

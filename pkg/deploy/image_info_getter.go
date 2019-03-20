@@ -3,9 +3,9 @@ package deploy
 import (
 	"fmt"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/logger"
 )
 
 type ImageInfoGetterStub struct {
@@ -64,7 +64,7 @@ func (d *ImageInfo) GetImageId() (string, error) {
 
 	res, err := docker_registry.ImageId(imageName)
 	if err != nil {
-		logger.LogErrorF("WARNING: Getting image %s id failed: %s\n", imageName, err)
+		logboek.LogErrorF("WARNING: Getting image %s id failed: %s\n", imageName, err)
 		return "", nil
 	}
 

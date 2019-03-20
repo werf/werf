@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -85,7 +85,7 @@ func WithLock(name string, opts LockOptions, f func() error) error {
 
 func onWait(name string, doWait func() error) error {
 	logProcessMsg := fmt.Sprintf("Waiting for locked resource '%s'", name)
-	return logger.LogSecondaryProcessInline(logProcessMsg, func() error {
+	return logboek.LogSecondaryProcessInline(logProcessMsg, func() error {
 		return doWait()
 	})
 }

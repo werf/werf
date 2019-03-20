@@ -8,11 +8,11 @@ import (
 
 	"github.com/docker/docker/api/types"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 )
 
 const stagesCleanupDefaultIgnorePeriodPolicy = 2 * 60 * 60
@@ -23,7 +23,7 @@ type StagesCleanupOptions struct {
 }
 
 func StagesCleanup(options StagesCleanupOptions) error {
-	return logger.LogProcess("Running stages cleanup", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Running stages cleanup", logboek.LogProcessOptions{}, func() error {
 		return stagesCleanup(options)
 	})
 }
@@ -105,7 +105,7 @@ func repoImageStagesSyncByCacheVersion(options CommonRepoOptions) error {
 
 		version, ok := labels[image.WerfCacheVersionLabel]
 		if !ok || (version != build.BuildCacheVersion) {
-			logger.LogServiceF("%s %s %s\n", repoImageStage.Tag, version, build.BuildCacheVersion)
+			logboek.LogServiceF("%s %s %s\n", repoImageStage.Tag, version, build.BuildCacheVersion)
 			repoImagesToDelete = append(repoImagesToDelete, repoImageStage)
 		}
 	}

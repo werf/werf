@@ -5,12 +5,12 @@ import (
 	"path"
 	"path/filepath"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -182,7 +182,7 @@ func (c *Conveyor) buildAndPublish(stagesRepo, imagesRepo string, opts BuildAndP
 }
 
 func (c *Conveyor) runPhases(phases []Phase) error {
-	logger.OptionalLnModeOn()
+	logboek.OptionalLnModeOn()
 
 	for _, phase := range phases {
 		err := phase.Run(c)

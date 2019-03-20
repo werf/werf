@@ -3,12 +3,12 @@ package cleaning
 import (
 	"fmt"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/logger"
 )
 
 func StagesPurge(options CommonProjectOptions) error {
-	return logger.LogProcess("Running stages purge", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Running stages purge", logboek.LogProcessOptions{}, func() error {
 		return stagesPurge(options)
 	})
 }

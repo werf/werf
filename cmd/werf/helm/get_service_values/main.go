@@ -3,6 +3,7 @@ package get_service_values
 import (
 	"fmt"
 
+	"github.com/flant/logboek"
 	helm_common "github.com/flant/werf/cmd/werf/helm/common"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -10,7 +11,6 @@ import (
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/ssh_agent"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/util"
@@ -60,7 +60,7 @@ These values includes project name, docker images ids and other`),
 }
 
 func runGetServiceValues() error {
-	logger.MuteOut()
+	logboek.MuteOut()
 
 	if err := werf.Init(*CommonCmdData.TmpDir, *CommonCmdData.HomeDir); err != nil {
 		return fmt.Errorf("initialization error: %s", err)
@@ -74,7 +74,7 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	if err := true_git.Init(true_git.Options{Out: logger.GetOutStream(), Err: logger.GetErrStream()}); err != nil {
+	if err := true_git.Init(true_git.Options{Out: logboek.GetOutStream(), Err: logboek.GetErrStream()}); err != nil {
 		return err
 	}
 
@@ -122,7 +122,7 @@ func runGetServiceValues() error {
 	defer func() {
 		err := ssh_agent.Terminate()
 		if err != nil {
-			logger.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+			logboek.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
 		}
 	}()
 

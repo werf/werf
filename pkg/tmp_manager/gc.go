@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 )
 
 var (
@@ -76,7 +76,7 @@ func checkShouldRunGC() (bool, error) {
 }
 
 func GC(dryRun bool) error {
-	return logger.LogSecondaryProcess("Running GC for tmp data", logger.LogProcessOptions{}, func() error { return gc(dryRun) })
+	return logboek.LogSecondaryProcess("Running GC for tmp data", logboek.LogProcessOptions{}, func() error { return gc(dryRun) })
 }
 
 func gc(dryRun bool) error {
@@ -103,7 +103,7 @@ func gc(dryRun bool) error {
 
 	if len(projectDirsToRemove) > 0 {
 		for _, projectDirToRemove := range projectDirsToRemove {
-			logger.LogLn(projectDirToRemove)
+			logboek.LogLn(projectDirToRemove)
 		}
 
 		if !dryRun {
@@ -114,7 +114,7 @@ func gc(dryRun bool) error {
 	}
 
 	for _, path := range pathsToRemove {
-		logger.LogLn(path)
+		logboek.LogLn(path)
 
 		if !dryRun {
 			err := os.RemoveAll(path)

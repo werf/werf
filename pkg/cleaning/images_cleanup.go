@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/tag_strategy"
 )
@@ -41,7 +41,7 @@ type ImagesCleanupOptions struct {
 }
 
 func ImagesCleanup(options ImagesCleanupOptions) error {
-	return logger.LogProcess("Running images cleanup", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Running images cleanup", logboek.LogProcessOptions{}, func() error {
 		return imagesCleanup(options)
 	})
 }
@@ -56,7 +56,7 @@ func imagesCleanup(options ImagesCleanupOptions) error {
 
 		if options.LocalGit != nil {
 			if !options.WithoutKube {
-				if err := logger.LogSecondaryProcess("Skipping repo images that are being used in kubernetes", logger.LogProcessOptions{}, func() error {
+				if err := logboek.LogSecondaryProcess("Skipping repo images that are being used in kubernetes", logboek.LogProcessOptions{}, func() error {
 					repoImages, err = exceptRepoImagesByWhitelist(repoImages, options.KubernetesClients)
 					return err
 				}); err != nil {
@@ -84,7 +84,7 @@ func exceptRepoImagesByWhitelist(repoImages []docker_registry.RepoImage, kuberne
 
 	var deployedDockerImagesNames []string
 	for _, kubernetesClient := range kubernetesClients {
-		if err := logger.LogSecondaryProcessInline("Getting deployed docker images", func() error {
+		if err := logboek.LogSecondaryProcessInline("Getting deployed docker images", func() error {
 			kubernetesClientDeployedDockerImagesNames, err := deployedDockerImages(kubernetesClient)
 			if err != nil {
 				return fmt.Errorf("cannot get deployed images: %s", err)
@@ -104,7 +104,7 @@ Loop:
 		for _, deployedDockerImageName := range deployedDockerImagesNames {
 			if deployedDockerImageName == imageName {
 				exceptedRepoImages = append(exceptedRepoImages, repoImage)
-				logger.LogLn(imageName)
+				logboek.LogLn(imageName)
 				continue Loop
 			}
 		}
@@ -170,37 +170,37 @@ Loop:
 	}
 
 	if len(nonexistentGitTagRepoImages) != 0 {
-		logger.LogServiceLn("Removed tags by nonexistent git-tag policy:")
-		if err = logger.WithIndent(func() error {
+		logboek.LogServiceLn("Removed tags by nonexistent git-tag policy:")
+		if err = logboek.WithIndent(func() error {
 			return repoImagesRemove(nonexistentGitTagRepoImages, options.CommonRepoOptions)
 		}); err != nil {
 			return nil, err
 		}
-		logger.OptionalLnModeOn()
+		logboek.OptionalLnModeOn()
 
 		repoImages = exceptRepoImages(repoImages, nonexistentGitTagRepoImages...)
 	}
 
 	if len(nonexistentGitBranchRepoImages) != 0 {
-		logger.LogServiceLn("Removed tags by nonexistent git-branch policy:")
-		if err = logger.WithIndent(func() error {
+		logboek.LogServiceLn("Removed tags by nonexistent git-branch policy:")
+		if err = logboek.WithIndent(func() error {
 			return repoImagesRemove(nonexistentGitBranchRepoImages, options.CommonRepoOptions)
 		}); err != nil {
 			return nil, err
 		}
-		logger.OptionalLnModeOn()
+		logboek.OptionalLnModeOn()
 
 		repoImages = exceptRepoImages(repoImages, nonexistentGitBranchRepoImages...)
 	}
 
 	if len(nonexistentGitCommitRepoImages) != 0 {
-		logger.LogServiceLn("Removed tags by nonexistent git-commit policy:")
-		if err = logger.WithIndent(func() error {
+		logboek.LogServiceLn("Removed tags by nonexistent git-commit policy:")
+		if err = logboek.WithIndent(func() error {
 			return repoImagesRemove(nonexistentGitCommitRepoImages, options.CommonRepoOptions)
 		}); err != nil {
 			return nil, err
 		}
-		logger.OptionalLnModeOn()
+		logboek.OptionalLnModeOn()
 
 		repoImages = exceptRepoImages(repoImages, nonexistentGitCommitRepoImages...)
 	}
@@ -328,25 +328,25 @@ func repoImagesCleanupByPolicy(repoImages, repoImagesWithScheme []docker_registr
 		}
 
 		if len(expiredRepoImages) != 0 {
-			logger.LogServiceF("Removed repository %s tags by git-%s date policy (created before %s):\n", repository, options.gitPrimitive, expiryTime.String())
-			if err := logger.WithIndent(func() error {
+			logboek.LogServiceF("Removed repository %s tags by git-%s date policy (created before %s):\n", repository, options.gitPrimitive, expiryTime.String())
+			if err := logboek.WithIndent(func() error {
 				return repoImagesRemove(expiredRepoImages, options.commonRepoOptions)
 			}); err != nil {
 				return nil, err
 			}
-			logger.OptionalLnModeOn()
+			logboek.OptionalLnModeOn()
 
 			repoImages = exceptRepoImages(repoImages, expiredRepoImages...)
 		}
 
 		if options.hasLimit && int64(len(notExpiredRepoImages)) > options.limit {
-			logger.LogServiceF("Removed repository %s tags by git-%s limit policy (> %d):\n", repository, options.gitPrimitive, options.limit)
-			if err := logger.WithIndent(func() error {
+			logboek.LogServiceF("Removed repository %s tags by git-%s limit policy (> %d):\n", repository, options.gitPrimitive, options.limit)
+			if err := logboek.WithIndent(func() error {
 				return repoImagesRemove(notExpiredRepoImages[options.limit:], options.commonRepoOptions)
 			}); err != nil {
 				return nil, err
 			}
-			logger.OptionalLnModeOn()
+			logboek.OptionalLnModeOn()
 
 			repoImages = exceptRepoImages(repoImages, notExpiredRepoImages[options.limit:]...)
 		}

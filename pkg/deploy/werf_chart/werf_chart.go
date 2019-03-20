@@ -10,9 +10,9 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/secret"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/ghodss/yaml"
 	"github.com/otiai10/copy"
 )
@@ -243,7 +243,7 @@ func CreateNewWerfChart(projectName, projectDir string, targetDir string, m secr
 
 	chartFile := filepath.Join(projectHelmDir, "Chart.yaml")
 	if _, err := os.Stat(chartFile); !os.IsNotExist(err) {
-		logger.LogErrorLn("WARNING: To skip the warning please delete .helm/Chart.yaml from project")
+		logboek.LogErrorLn("WARNING: To skip the warning please delete .helm/Chart.yaml from project")
 	}
 
 	targetChartFile := filepath.Join(targetDir, "Chart.yaml")

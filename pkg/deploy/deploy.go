@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tag_strategy"
 )
 
@@ -20,8 +20,8 @@ type DeployOptions struct {
 }
 
 func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
-	logger.LogInfoF("Using helm release name: %s\n", release)
-	logger.LogInfoF("Using kubernetes namespace: %s\n", namespace)
+	logboek.LogInfoF("Using helm release name: %s\n", release)
+	logboek.LogInfoF("Using kubernetes namespace: %s\n", namespace)
 
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
 
@@ -41,7 +41,7 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 	}
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	logger.OptionalLnModeOn()
+	logboek.OptionalLnModeOn()
 	return werfChart.Deploy(release, namespace, helm.HelmChartOptions{
 		Timeout: opts.Timeout,
 		HelmChartValuesOptions: helm.HelmChartValuesOptions{

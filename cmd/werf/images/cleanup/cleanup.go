@@ -7,13 +7,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/logboek"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/git_repo"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -157,7 +157,7 @@ func runCleanup() error {
 		Policies:          policies,
 	}
 
-	logger.OptionalLnModeOn()
+	logboek.OptionalLnModeOn()
 	if err := cleaning.ImagesCleanup(imagesCleanupOptions); err != nil {
 		return err
 	}

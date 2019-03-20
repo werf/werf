@@ -5,12 +5,12 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/cmd/werf/common"
 	"github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 )
 
@@ -96,7 +96,7 @@ func runPurge() error {
 		CommonOptions: cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun},
 	}
 
-	logger.OptionalLnModeOn()
+	logboek.OptionalLnModeOn()
 	if err := cleaning.StagesPurge(commonProjectOptions); err != nil {
 		return err
 	}

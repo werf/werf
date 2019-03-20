@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 
 	"github.com/docker/docker/api/types"
 
@@ -90,8 +90,8 @@ func (i *StageImage) Build(options BuildOptions) error {
 	if containerRunErr := i.container.run(); containerRunErr != nil {
 		if strings.HasPrefix(containerRunErr.Error(), "container run failed") {
 			if options.IntrospectBeforeError {
-				logger.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
-				if err := logger.WithRawStreamsOutputModeOn(i.introspectBefore); err != nil {
+				logboek.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				if err := logboek.WithRawStreamsOutputModeOn(i.introspectBefore); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			} else if options.IntrospectAfterError {
@@ -99,8 +99,8 @@ func (i *StageImage) Build(options BuildOptions) error {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 
-				logger.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
-				if err := logger.WithRawStreamsOutputModeOn(i.Introspect); err != nil {
+				logboek.LogInfoF("Launched command: %s\n", strings.Join(i.container.prepareAllRunCommands(), " && "))
+				if err := logboek.WithRawStreamsOutputModeOn(i.Introspect); err != nil {
 					return fmt.Errorf("introspect error failed: %s", err)
 				}
 			}
@@ -219,19 +219,19 @@ func (i *StageImage) Import(name string) error {
 }
 
 func (i *StageImage) Export(name string) error {
-	if err := logger.LogSecondaryProcess(fmt.Sprintf("Tagging %s", name), logger.LogProcessOptions{}, func() error {
+	if err := logboek.LogSecondaryProcess(fmt.Sprintf("Tagging %s", name), logboek.LogProcessOptions{}, func() error {
 		return i.Tag(name)
 	}); err != nil {
 		return err
 	}
 
-	if err := logger.LogSecondaryProcess(fmt.Sprintf("Pushing %s", name), logger.LogProcessOptions{}, func() error {
+	if err := logboek.LogSecondaryProcess(fmt.Sprintf("Pushing %s", name), logboek.LogProcessOptions{}, func() error {
 		return docker.CliPush(name)
 	}); err != nil {
 		return err
 	}
 
-	if err := logger.LogSecondaryProcess(fmt.Sprintf("Untagging %s", name), logger.LogProcessOptions{}, func() error {
+	if err := logboek.LogSecondaryProcess(fmt.Sprintf("Untagging %s", name), logboek.LogProcessOptions{}, func() error {
 		return docker.CliRmi(name)
 	}); err != nil {
 		return err

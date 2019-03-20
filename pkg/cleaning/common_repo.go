@@ -3,8 +3,8 @@ package cleaning
 import (
 	"strings"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker_registry"
-	"github.com/flant/werf/pkg/logger"
 )
 
 type CommonRepoOptions struct {
@@ -17,7 +17,7 @@ type CommonRepoOptions struct {
 func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) {
 	var repoImages []docker_registry.RepoImage
 
-	if err := logger.LogSecondaryProcessInline("Getting repo images", func() error {
+	if err := logboek.LogSecondaryProcessInline("Getting repo images", func() error {
 		for _, imageName := range options.ImagesNames {
 			namelessImage := imageName == ""
 
@@ -41,7 +41,7 @@ func repoImages(options CommonRepoOptions) ([]docker_registry.RepoImage, error) 
 		return nil, err
 	}
 
-	logger.OptionalLnModeOn()
+	logboek.OptionalLnModeOn()
 
 	return repoImages, nil
 }
@@ -94,14 +94,14 @@ func repoImageRemove(image docker_registry.RepoImage, options CommonRepoOptions)
 	if err := repoReferenceRemove(reference, options); err != nil {
 		return err
 	}
-	logger.LogInfoF("  tag: %s\n", image.Tag)
-	logger.OptionalLnModeOn()
+	logboek.LogInfoF("  tag: %s\n", image.Tag)
+	logboek.OptionalLnModeOn()
 
 	return nil
 }
 
 func repoReferenceRemove(reference string, options CommonRepoOptions) error {
-	logger.LogLn(reference)
+	logboek.LogLn(reference)
 	if !options.DryRun {
 		err := docker_registry.ImageDelete(reference)
 		if err != nil {

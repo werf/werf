@@ -11,9 +11,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/flant/kubedog/pkg/kube"
+	"github.com/flant/logboek"
 	cleanup "github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/config"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -60,7 +60,7 @@ type CmdData struct {
 }
 
 func GetLongCommandDescription(text string) string {
-	return logger.FitText(text, logger.FitTextOptions{MaxWidth: 100})
+	return logboek.FitText(text, logboek.FitTextOptions{MaxWidth: 100})
 }
 
 func SetupDir(cmdData *CmdData, cmd *cobra.Command) {
@@ -209,7 +209,7 @@ func SetupTerminalWidth(cmdData *CmdData, cmd *cobra.Command) {
 	cmd.Flags().Int64VarP(cmdData.LogTerminalWidth, "log-terminal-width", "", -1, fmt.Sprintf(`Set log terminal width.
 Defaults to:
 * $WERF_LOG_TERMINAL_WIDTH
-* interactive terminal width or %d`, logger.DefaultTerminalWidth))
+* interactive terminal width or %d`, logboek.DefaultTerminalWidth))
 }
 
 func SetupSet(cmdData *CmdData, cmd *cobra.Command) {
@@ -412,13 +412,13 @@ func GetNamespace(namespaceOption string) string {
 
 func LogKubeContext(kubeContext string) {
 	if kubeContext != "" {
-		logger.LogServiceF("Using kube context: %s\n", kubeContext)
+		logboek.LogServiceF("Using kube context: %s\n", kubeContext)
 	}
 }
 
 func ProcessLogProjectDir(cmdData *CmdData, projectDir string) {
 	if *cmdData.LogProjectDir {
-		logger.LogServiceF("Using project dir: %s\n", projectDir)
+		logboek.LogServiceF("Using project dir: %s\n", projectDir)
 	}
 }
 
@@ -494,25 +494,25 @@ func ValidateArgumentCount(expectedCount int, args []string, cmd *cobra.Command)
 
 func PrintHelp(cmd *cobra.Command) {
 	_ = cmd.Help()
-	logger.OptionalLnModeOn()
+	logboek.OptionalLnModeOn()
 }
 
 func LogRunningTime(f func() error) error {
 	t := time.Now()
 	err := f()
 
-	logger.LogHighlightLn(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
+	logboek.LogHighlightLn(fmt.Sprintf("Running time %0.2f seconds", time.Now().Sub(t).Seconds()))
 
 	return err
 }
 
 func LogVersion() {
-	logger.LogServiceF("Version: %s\n", werf.Version)
+	logboek.LogServiceF("Version: %s\n", werf.Version)
 }
 
 func LogErrorF(format string, a ...interface{}) {
-	_ = logger.WithoutIndent(func() error {
-		logger.LogErrorF(format, a...)
+	_ = logboek.WithoutIndent(func() error {
+		logboek.LogErrorF(format, a...)
 
 		return nil
 	})

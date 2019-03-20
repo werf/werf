@@ -6,9 +6,9 @@ import (
 
 	"github.com/docker/docker/pkg/stringid"
 
+	"github.com/flant/logboek"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 )
 
 func NewBuildStagesPhase(stagesRepo string, opts BuildStagesOptions) *BuildStagesPhase {
@@ -25,7 +25,7 @@ type BuildStagesPhase struct {
 }
 
 func (p *BuildStagesPhase) Run(c *Conveyor) (err error) {
-	return logger.LogProcess("Building stages", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Building stages", logboek.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
@@ -37,7 +37,7 @@ func (p *BuildStagesPhase) run(c *Conveyor) error {
 
 	images := c.imagesInOrder
 	for _, image := range images {
-		if err := logger.LogProcess(image.LogProcessName(), logger.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+		if err := logboek.LogProcess(image.LogProcessName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			return p.runImage(image, c)
 		}); err != nil {
 			return err
@@ -94,11 +94,11 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 		isUsingCache := img.IsExists()
 
 		if isUsingCache {
-			logger.LogHighlightF("Use cache image for %s\n", stageLogName)
+			logboek.LogHighlightF("Use cache image for %s\n", stageLogName)
 
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 
-			logger.OptionalLnModeOn()
+			logboek.OptionalLnModeOn()
 
 			prevStageImageSize = img.Inspect().Size
 
@@ -107,7 +107,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 
 		infoSectionFunc := func(err error) {
 			if err != nil {
-				_ = logger.WithIndent(func() error {
+				_ = logboek.WithIndent(func() error {
 					logImageCommands(img)
 					return nil
 				})
@@ -118,14 +118,14 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			logImageInfo(img, prevStageImageSize, isUsingCache)
 		}
 
-		logProcessOptions := logger.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
-		err := logger.LogProcess(fmt.Sprintf("Building %s", stageLogName), logProcessOptions, func() (err error) {
+		logProcessOptions := logboek.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
+		err := logboek.LogProcess(fmt.Sprintf("Building %s", stageLogName), logProcessOptions, func() (err error) {
 			if err := s.PreRunHook(c); err != nil {
 				return fmt.Errorf("stage '%s' preRunHook failed: %s", s.Name(), err)
 			}
 
-			if err := logger.WithTag(fmt.Sprintf("%s/%s", image.LogName(), s.Name()), image.LogTagColorizeFunc(), func() error {
-				if err := logger.WithFittedStreamsOutputOn(func() error {
+			if err := logboek.WithTag(fmt.Sprintf("%s/%s", image.LogName(), s.Name()), image.LogTagColorizeFunc(), func() error {
+				if err := logboek.WithFittedStreamsOutputOn(func() error {
 					if err := img.Build(p.ImageBuildOptions); err != nil {
 						return fmt.Errorf("failed to build %s: %s", img.Name(), err)
 					}
@@ -168,23 +168,23 @@ func logImageInfo(img imagePkg.ImageInterface, prevStageImageSize int64, isUsing
 	parts := strings.Split(img.Name(), ":")
 	repository, tag := parts[0], parts[1]
 
-	logger.LogInfoF(logImageInfoFormat, "repository", repository)
-	logger.LogInfoF(logImageInfoFormat, "image_id", stringid.TruncateID(img.ID()))
-	logger.LogInfoF(logImageInfoFormat, "created", img.Inspect().Created)
-	logger.LogInfoF(logImageInfoFormat, "tag", tag)
+	logboek.LogInfoF(logImageInfoFormat, "repository", repository)
+	logboek.LogInfoF(logImageInfoFormat, "image_id", stringid.TruncateID(img.ID()))
+	logboek.LogInfoF(logImageInfoFormat, "created", img.Inspect().Created)
+	logboek.LogInfoF(logImageInfoFormat, "tag", tag)
 
 	if prevStageImageSize == 0 {
-		logger.LogInfoF(logImageInfoFormat, "size", byteCountBinary(img.Inspect().Size))
+		logboek.LogInfoF(logImageInfoFormat, "size", byteCountBinary(img.Inspect().Size))
 	} else {
-		logger.LogInfoF(logImageInfoFormat, "diff", byteCountBinary(img.Inspect().Size-prevStageImageSize))
+		logboek.LogInfoF(logImageInfoFormat, "diff", byteCountBinary(img.Inspect().Size-prevStageImageSize))
 	}
 
 	if !isUsingCache {
 		changes := img.Container().UserCommitChanges()
 		if len(changes) != 0 {
-			fitTextOptions := logger.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
-			formattedCommands := strings.TrimLeft(logger.FitText(strings.Join(changes, "\n"), fitTextOptions), " ")
-			logger.LogInfoF(logImageInfoFormat, "instructions", formattedCommands)
+			fitTextOptions := logboek.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
+			formattedCommands := strings.TrimLeft(logboek.FitText(strings.Join(changes, "\n"), fitTextOptions), " ")
+			logboek.LogInfoF(logImageInfoFormat, "instructions", formattedCommands)
 		}
 
 		logImageCommands(img)
@@ -194,9 +194,9 @@ func logImageInfo(img imagePkg.ImageInterface, prevStageImageSize int64, isUsing
 func logImageCommands(img imagePkg.ImageInterface) {
 	commands := img.Container().UserRunCommands()
 	if len(commands) != 0 {
-		fitTextOptions := logger.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
-		formattedCommands := strings.TrimLeft(logger.FitText(strings.Join(commands, "\n"), fitTextOptions), " ")
-		logger.LogInfoF(logImageInfoFormat, "commands", formattedCommands)
+		fitTextOptions := logboek.FitTextOptions{ExtraIndentWidth: logImageInfoLeftPartWidth + 4}
+		formattedCommands := strings.TrimLeft(logboek.FitText(strings.Join(commands, "\n"), fitTextOptions), " ")
+		logboek.LogInfoF(logImageInfoFormat, "commands", formattedCommands)
 	}
 }
 

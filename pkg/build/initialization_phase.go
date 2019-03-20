@@ -9,10 +9,10 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/config"
 	"github.com/flant/werf/pkg/git_repo"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/slug"
 	"github.com/flant/werf/pkg/werf"
@@ -25,7 +25,7 @@ func NewInitializationPhase() *InitializationPhase {
 }
 
 func (p *InitializationPhase) Run(c *Conveyor) (err error) {
-	return logger.LogProcess("Determining of stages", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Determining of stages", logboek.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
@@ -47,7 +47,7 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 	imagesInterfaceConfigs := getImageConfigsInOrder(imageConfigs, c)
 	for _, imageInterfaceConfig := range imagesInterfaceConfigs {
 		imageName := logging.ImageLogProcessName(imageInterfaceConfig.ImageBaseConfig().Name, imageInterfaceConfig.IsArtifact())
-		err := logger.LogProcess(imageName, logger.LogProcessOptions{ColorizeMsgFunc: ImageLogProcessColorizeFunc(imageInterfaceConfig.IsArtifact())}, func() error {
+		err := logboek.LogProcess(imageName, logboek.LogProcessOptions{ColorizeMsgFunc: ImageLogProcessColorizeFunc(imageInterfaceConfig.IsArtifact())}, func() error {
 			image, err := generateImage(imageInterfaceConfig, c)
 			if err != nil {
 				return err
@@ -133,7 +133,7 @@ func getImageConfigToProcess(imageConfigs []*config.Image, c *Conveyor) []*confi
 		for _, imageName := range c.imageNamesToProcess {
 			imageToProcess := getImageConfigByName(imageConfigs, imageName)
 			if imageToProcess == nil {
-				logger.LogErrorF("WARNING: Specified image '%s' isn't defined in werf.yaml!\n", imageName)
+				logboek.LogErrorF("WARNING: Specified image '%s' isn't defined in werf.yaml!\n", imageName)
 			} else {
 				imageConfigsToProcess = append(imageConfigsToProcess, imageToProcess)
 			}
@@ -222,7 +222,7 @@ func generateStages(imageInterfaceConfig config.ImageInterface, c *Conveyor) ([]
 	}
 
 	if len(gitMappings) != 0 {
-		logger.LogInfoLn("Using git stages")
+		logboek.LogInfoLn("Using git stages")
 
 		for _, s := range stages {
 			s.SetGitMappings(gitMappings)
@@ -266,7 +266,7 @@ func generateGitMappings(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*sta
 				ClonePath: clonePath,
 			}
 
-			if err := logger.LogSecondaryProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logger.LogProcessOptions{}, func() error {
+			if err := logboek.LogSecondaryProcess(fmt.Sprintf("Refreshing %s repository", remoteGitMappingConfig.Name), logboek.LogProcessOptions{}, func() error {
 				return remoteGitRepo.CloneAndFetch()
 			}); err != nil {
 				return nil, err
@@ -281,7 +281,7 @@ func generateGitMappings(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*sta
 	var res []*stage.GitMapping
 
 	if len(gitMappings) != 0 {
-		err := logger.LogSecondaryProcess(fmt.Sprintf("Initializing git mappings"), logger.LogProcessOptions{}, func() error {
+		err := logboek.LogSecondaryProcess(fmt.Sprintf("Initializing git mappings"), logboek.LogProcessOptions{}, func() error {
 			nonEmptyGitMappings, err := getNonEmptyGitMappings(gitMappings)
 			if err != nil {
 				return err
@@ -304,57 +304,57 @@ func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappin
 	var nonEmptyGitMappings []*stage.GitMapping
 
 	for ind, gitMapping := range gitMappings {
-		if err := logger.LogSecondaryProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logger.LogProcessOptions{}, func() error {
+		if err := logboek.LogSecondaryProcess(fmt.Sprintf("[%d] git mapping from %s repository", ind, gitMapping.Name), logboek.LogProcessOptions{}, func() error {
 			withTripleIndent := func(f func()) {
-				logger.IndentUp()
-				logger.IndentUp()
-				logger.IndentUp()
+				logboek.IndentUp()
+				logboek.IndentUp()
+				logboek.IndentUp()
 				f()
-				logger.IndentDown()
-				logger.IndentDown()
-				logger.IndentDown()
+				logboek.IndentDown()
+				logboek.IndentDown()
+				logboek.IndentDown()
 			}
 
 			withTripleIndent(func() {
-				logger.LogInfoF("add: %s\n", gitMapping.Cwd)
-				logger.LogInfoF("to: %s\n", gitMapping.To)
+				logboek.LogInfoF("add: %s\n", gitMapping.Cwd)
+				logboek.LogInfoF("to: %s\n", gitMapping.To)
 
 				if len(gitMapping.IncludePaths) != 0 {
-					logger.LogInfoF("includePaths: %+v\n", gitMapping.IncludePaths)
+					logboek.LogInfoF("includePaths: %+v\n", gitMapping.IncludePaths)
 				}
 
 				if len(gitMapping.ExcludePaths) != 0 {
-					logger.LogInfoF("excludePaths: %+v\n", gitMapping.ExcludePaths)
+					logboek.LogInfoF("excludePaths: %+v\n", gitMapping.ExcludePaths)
 				}
 
 				if gitMapping.Commit != "" {
-					logger.LogInfoF("commit: %s\n", gitMapping.Commit)
+					logboek.LogInfoF("commit: %s\n", gitMapping.Commit)
 				}
 
 				if gitMapping.Branch != "" {
-					logger.LogInfoF("branch: %s\n", gitMapping.Branch)
+					logboek.LogInfoF("branch: %s\n", gitMapping.Branch)
 				}
 
 				if gitMapping.Owner != "" {
-					logger.LogInfoF("owner: %s\n", gitMapping.Owner)
+					logboek.LogInfoF("owner: %s\n", gitMapping.Owner)
 				}
 
 				if gitMapping.Group != "" {
-					logger.LogInfoF("group: %s\n", gitMapping.Group)
+					logboek.LogInfoF("group: %s\n", gitMapping.Group)
 				}
 
 				if len(gitMapping.StagesDependencies) != 0 {
-					logger.LogInfoLn("stageDependencies:")
+					logboek.LogInfoLn("stageDependencies:")
 					for s, values := range gitMapping.StagesDependencies {
 						if len(values) != 0 {
-							logger.LogInfoF("  %s: %v\n", s, values)
+							logboek.LogInfoF("  %s: %v\n", s, values)
 						}
 					}
 
 				}
 			})
 
-			logger.LogLn()
+			logboek.LogLn()
 
 			commit, err := gitMapping.LatestCommit()
 			if err != nil {
@@ -369,10 +369,10 @@ func getNonEmptyGitMappings(gitMappings []*stage.GitMapping) ([]*stage.GitMappin
 			if empty, err := gitMapping.IsEmpty(); err != nil {
 				return err
 			} else if !empty {
-				logger.LogInfoF("Commit %s will be used\n", commit)
+				logboek.LogInfoF("Commit %s will be used\n", commit)
 				nonEmptyGitMappings = append(nonEmptyGitMappings, gitMapping)
 			} else {
-				logger.LogErrorF("WARNING: Empty git mapping will be ignored (commit %s)\n", commit)
+				logboek.LogErrorF("WARNING: Empty git mapping will be ignored (commit %s)\n", commit)
 			}
 
 			return nil
@@ -499,7 +499,7 @@ func stageDependenciesToMap(sd *config.StageDependencies) map[stage.StageName][]
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
 	if !reflect.ValueOf(stage).IsNil() {
-		logger.LogInfoF("Using stage %s\n", stage.Name())
+		logboek.LogInfoF("Using stage %s\n", stage.Name())
 		return append(stages, stage)
 	}
 

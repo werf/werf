@@ -5,9 +5,9 @@ import (
 
 	"github.com/fatih/color"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/build/stage"
 	"github.com/flant/werf/pkg/image"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/logging"
 )
 
@@ -107,11 +107,11 @@ func (i *Image) PrepareBaseImage(c *Conveyor) error {
 		return nil
 	}
 
-	return logger.LogProcess("Pulling base image", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Pulling base image", logboek.LogProcessOptions{}, func() error {
 		if i.baseImage.IsExists() {
 			if err := i.baseImage.Pull(); err != nil {
-				logger.LogErrorF("WARNING: cannot pull base image %s: %s\n", i.baseImage.Name(), err)
-				logger.LogErrorF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
+				logboek.LogErrorF("WARNING: cannot pull base image %s: %s\n", i.baseImage.Name(), err)
+				logboek.LogErrorF("WARNING: using existing image %s without pull\n", i.baseImage.Name())
 			}
 			return nil
 		}

@@ -1,9 +1,9 @@
 package cleaning
 
-import "github.com/flant/werf/pkg/logger"
+import "github.com/flant/logboek"
 
 func ImagesPurge(options CommonRepoOptions) error {
-	return logger.LogProcess("Running images purge", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Running images purge", logboek.LogProcessOptions{}, func() error {
 		return imagesPurge(options)
 	})
 }

@@ -12,8 +12,8 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/storer"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/werf"
 	uuid "github.com/satori/go.uuid"
 )
@@ -92,7 +92,7 @@ func (repo *Remote) Clone() (bool, error) {
 			return nil
 		}
 
-		logger.LogInfoF("Clone %s\n", repo.Url)
+		logboek.LogInfoF("Clone %s\n", repo.Url)
 
 		path := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-git-repo-%s", uuid.NewV4().String()))
 
@@ -149,7 +149,7 @@ func (repo *Remote) Fetch() error {
 			return fmt.Errorf("cannot open repo: %s", err)
 		}
 
-		logger.LogInfoF("Fetch remote %s of %s\n", remoteName, repo.Url)
+		logboek.LogInfoF("Fetch remote %s of %s\n", remoteName, repo.Url)
 
 		err = rawRepo.Fetch(&git.FetchOptions{RemoteName: remoteName, Force: true, Tags: git.AllTags})
 		if err != nil && err != git.NoErrAlreadyUpToDate {
@@ -226,7 +226,7 @@ func (repo *Remote) LatestBranchCommit(branch string) (string, error) {
 		return "", fmt.Errorf("unknown branch `%s` of repo `%s`", branch, repo.String())
 	}
 
-	logger.LogServiceF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
+	logboek.LogServiceF("Using commit '%s' of repo '%s' branch '%s'\n", res, repo.String(), branch)
 
 	return res, nil
 }
@@ -257,7 +257,7 @@ func (repo *Remote) TagCommit(tag string) (string, error) {
 		return "", fmt.Errorf("bad tag '%s' of repo %s: %s", tag, repo.String(), err)
 	}
 
-	logger.LogServiceF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
+	logboek.LogServiceF("Using commit '%s' of repo '%s' tag '%s'\n", res, repo.String(), tag)
 
 	return res, nil
 }

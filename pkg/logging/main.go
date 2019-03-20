@@ -3,7 +3,7 @@ package logging
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/logger"
+	"github.com/flant/logboek"
 )
 
 var (
@@ -12,26 +12,26 @@ var (
 )
 
 func Init() error {
-	return logger.Init()
+	return logboek.Init()
 }
 
 func EnableLogColor() {
-	logger.EnableLogColor()
+	logboek.EnableLogColor()
 }
 
 func DisableLogColor() {
-	logger.DisableLogColor()
+	logboek.DisableLogColor()
 }
 
 func SetTerminalWidth(value int) {
-	logger.SetTerminalWidth(value)
+	logboek.SetTerminalWidth(value)
 }
 
 func DisablePrettyLog() {
 	imageNameFormat = "image %s"
 	artifactNameFormat = "artifact %s"
 
-	logger.DisablePrettyLog()
+	logboek.DisablePrettyLog()
 }
 
 func ImageLogName(name string, isArtifact bool) string {

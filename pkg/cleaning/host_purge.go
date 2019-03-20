@@ -3,12 +3,12 @@ package cleaning
 import (
 	"fmt"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/stapel"
 
 	"github.com/docker/docker/api/types/filters"
 
 	"github.com/flant/werf/pkg/docker"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -18,7 +18,7 @@ func HostPurge(options CommonOptions) error {
 	options.RmiForce = true
 	options.RmForce = true
 
-	err := logger.LogSecondaryProcess("Running werf docker containers purge", logger.LogProcessOptions{}, func() error {
+	err := logboek.LogSecondaryProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
 		if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
 			return err
 		}
@@ -30,7 +30,7 @@ func HostPurge(options CommonOptions) error {
 		return err
 	}
 
-	err = logger.LogSecondaryProcess("Running werf docker images purge", logger.LogProcessOptions{}, func() error {
+	err = logboek.LogSecondaryProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
 		if err := werfImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func HostPurge(options CommonOptions) error {
 		return fmt.Errorf("tmp files purge failed: %s", err)
 	}
 
-	return logger.LogSecondaryProcess("Running werf home data purge", logger.LogProcessOptions{}, func() error {
+	return logboek.LogSecondaryProcess("Running werf home data purge", logboek.LogProcessOptions{}, func() error {
 		return purgeHomeWerfFiles(options.DryRun)
 	})
 }
@@ -79,7 +79,7 @@ func purgeHomeWerfFiles(dryRun bool) error {
 	pathsToRemove := []string{werf.GetServiceDir(), werf.GetLocalCacheDir(), werf.GetSharedContextDir()}
 
 	for _, path := range pathsToRemove {
-		logger.LogLn(path)
+		logboek.LogLn(path)
 	}
 
 	if dryRun {

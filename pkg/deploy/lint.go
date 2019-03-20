@@ -3,8 +3,8 @@ package deploy
 import (
 	"fmt"
 
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/deploy/helm"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tag_strategy"
 
 	"github.com/flant/werf/pkg/config"
@@ -20,7 +20,7 @@ type LintOptions struct {
 
 func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions) error {
 	if debug() {
-		fmt.Fprintf(logger.GetOutStream(), "Lint options: %#v\n", opts)
+		fmt.Fprintf(logboek.GetOutStream(), "Lint options: %#v\n", opts)
 	}
 
 	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)

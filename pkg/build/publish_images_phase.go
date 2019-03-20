@@ -3,10 +3,11 @@ package build
 import (
 	"fmt"
 
+	"github.com/flant/3werf/pkg/logger"
+	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/docker_registry"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
-	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/util"
 )
@@ -30,7 +31,7 @@ type PublishImagesPhase struct {
 }
 
 func (p *PublishImagesPhase) Run(c *Conveyor) error {
-	return logger.LogProcess("Publishing images", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Publishing images", logboek.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
@@ -39,9 +40,9 @@ func (p *PublishImagesPhase) run(c *Conveyor) error {
 	// TODO: Push stages should occur on the BuildStagesPhase
 
 	for _, image := range c.imagesInOrder {
-		if err := logger.LogProcess(image.LogProcessName(), logger.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+		if err := logboek.LogProcess(image.LogProcessName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			if p.WithStages {
-				err := logger.LogSecondaryProcess("Pushing stages cache", logger.LogProcessOptions{}, func() error {
+				err := logboek.LogSecondaryProcess("Pushing stages cache", logboek.LogProcessOptions{}, func() error {
 					if err := p.pushImageStages(c, image); err != nil {
 						return fmt.Errorf("unable to push image %s stages: %s", image.GetName(), err)
 					}
@@ -82,12 +83,12 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 		stageImageName := fmt.Sprintf("%s:%s", p.ImagesRepo, stageTagName)
 
 		if util.IsStringsContainValue(existingTags, stageTagName) {
-			logger.LogHighlightLn(stage.Name())
+			logboek.LogHighlightLn(stage.Name())
 
-			logger.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
-			logger.LogInfoF("      image: %s\n", stageImageName)
+			logboek.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
+			logboek.LogInfoF("      image: %s\n", stageImageName)
 
-			logger.OptionalLnModeOn()
+			logboek.OptionalLnModeOn()
 
 			continue
 		}
@@ -105,17 +106,17 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 
 			infoSectionFunc := func(err error) {
 				if err == nil {
-					_ = logger.WithIndent(func() error {
-						logger.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
-						logger.LogInfoF("      image: %s\n", stageImageName)
+					_ = logboek.WithIndent(func() error {
+						logboek.LogInfoF("stages-repo: %s\n", p.ImagesRepo)
+						logboek.LogInfoF("      image: %s\n", stageImageName)
 
 						return nil
 					})
 				}
 			}
 
-			logProcessOptions := logger.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
-			return logger.LogProcess(fmt.Sprintf("Publishing %s", stage.Name()), logProcessOptions, func() error {
+			logProcessOptions := logboek.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
+			return logboek.LogProcess(fmt.Sprintf("Publishing %s", stage.Name()), logProcessOptions, func() error {
 				if err := stageImage.Export(stageImageName); err != nil {
 					return fmt.Errorf("error pushing %s: %s", stageImageName, err)
 				}
@@ -177,7 +178,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 			continue
 		}
 
-		err := logger.LogProcess(fmt.Sprintf("%s tagging strategy", string(strategy)), logger.LogProcessOptions{}, func() error {
+		err := logboek.LogProcess(fmt.Sprintf("%s tagging strategy", string(strategy)), logboek.LogProcessOptions{}, func() error {
 		ProcessingTags:
 			for _, tag := range tags {
 				tagLogName := fmt.Sprintf("tag %s", tag)
@@ -204,15 +205,15 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 					}
 
 					if lastStageImage.ID() == parentID {
-						logger.LogHighlightF("Tag %s is up-to-date\n", tag)
-						_ = logger.WithIndent(func() error {
-							logger.LogInfoF("images-repo: %s\n", imageRepository)
-							logger.LogInfoF("      image: %s\n", imageName)
+						logboek.LogHighlightF("Tag %s is up-to-date\n", tag)
+						_ = logboek.WithIndent(func() error {
+							logboek.LogInfoF("images-repo: %s\n", imageRepository)
+							logboek.LogInfoF("      image: %s\n", imageName)
 
 							return nil
 						})
 
-						logger.OptionalLnModeOn()
+						logboek.OptionalLnModeOn()
 
 						continue ProcessingTags
 					}
@@ -235,17 +236,17 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 
 					infoSectionFunc := func(err error) {
 						if err == nil {
-							_ = logger.WithIndent(func() error {
-								logger.LogInfoF("images-repo: %s\n", imageRepository)
-								logger.LogInfoF("      image: %s\n", imageName)
+							_ = logboek.WithIndent(func() error {
+								logboek.LogInfoF("images-repo: %s\n", imageRepository)
+								logboek.LogInfoF("      image: %s\n", imageName)
 
 								return nil
 							})
 						}
 					}
-					logProcessOptions := logger.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
-					return logger.LogProcess(fmt.Sprintf("Publishing %s", tagLogName), logProcessOptions, func() error {
-						if err := logger.LogSecondaryProcess("Building final image with meta information", logger.LogProcessOptions{}, func() error {
+					logProcessOptions := logboek.LogProcessOptions{InfoSectionFunc: infoSectionFunc}
+					return logboek.LogProcess(fmt.Sprintf("Publishing %s", tagLogName), logProcessOptions, func() error {
+						if err := logboek.LogSecondaryProcess("Building final image with meta information", logboek.LogProcessOptions{}, func() error {
 							if err := pushImage.Build(imagePkg.BuildOptions{}); err != nil {
 								return fmt.Errorf("error building %s with tagging strategy '%s': %s", imageName, strategy, err)
 							}

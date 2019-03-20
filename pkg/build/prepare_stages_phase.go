@@ -3,8 +3,7 @@ package build
 import (
 	"fmt"
 
-	"github.com/flant/werf/pkg/logger"
-
+	"github.com/flant/logboek"
 	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/werf"
 )
@@ -16,14 +15,14 @@ func NewPrepareStagesPhase() *PrepareStagesPhase {
 type PrepareStagesPhase struct{}
 
 func (p *PrepareStagesPhase) Run(c *Conveyor) error {
-	return logger.LogProcess("Preparing stages build instructions", logger.LogProcessOptions{}, func() error {
+	return logboek.LogProcess("Preparing stages build instructions", logboek.LogProcessOptions{}, func() error {
 		return p.run(c)
 	})
 }
 
 func (p *PrepareStagesPhase) run(c *Conveyor) (err error) {
 	for _, image := range c.imagesInOrder {
-		if err := logger.LogProcess(image.LogProcessName(), logger.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
+		if err := logboek.LogProcess(image.LogProcessName(), logboek.LogProcessOptions{ColorizeMsgFunc: image.LogProcessColorizeFunc()}, func() error {
 			return p.runImage(image, c)
 		}); err != nil {
 			return err
