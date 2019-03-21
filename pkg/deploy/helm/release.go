@@ -12,6 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/net/context"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/kubedog/pkg/tracker"
 	"github.com/flant/kubedog/pkg/trackers/rollout"
@@ -19,9 +24,6 @@ import (
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
-
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type TrackAnno string
@@ -268,13 +270,17 @@ func runDeployProcess(releaseName, namespace string, opts HelmChartOptions, temp
 
 	deployStartTime := time.Now()
 
-	jobHooksWatcherDone, startJobHooksWatcher, err := watchJobHooks(templates, watchHookTypes, deployStartTime, namespace, opts)
+	ctx := context.Background()
+	ctx, cancelJobHooksWatcher := context.WithCancel(ctx)
+	jobHooksWatcherDone, startJobHooksWatcher, err := watchJobHooks(ctx, templates, watchHookTypes, deployStartTime, namespace, opts)
 	if err != nil {
 		return fmt.Errorf("watching job hooks failed: %s", err)
 	}
 
 	helmOutput, err := deployFunc(startJobHooksWatcher)
 	if err != nil {
+		cancelJobHooksWatcher()
+		<-jobHooksWatcherDone
 		return err
 	}
 
@@ -496,7 +502,7 @@ func trackJobs(templates ChartTemplates, deployStartTime time.Time, namespace st
 	return nil
 }
 
-func watchJobHooks(templates ChartTemplates, hookTypes []string, deployStartTime time.Time, namespace string, opts HelmChartOptions) (chan bool, chan bool, error) {
+func watchJobHooks(ctx context.Context, templates ChartTemplates, hookTypes []string, deployStartTime time.Time, namespace string, opts HelmChartOptions) (chan bool, chan bool, error) {
 	jobHooksWatcherDone := make(chan bool)
 	startJobHooksWatcher := make(chan bool)
 
@@ -519,7 +525,7 @@ func watchJobHooks(templates ChartTemplates, hookTypes []string, deployStartTime
 			loggerProcessMsg := fmt.Sprintf("Tracking helm hook jobs/%s", template.Metadata.Name)
 			if err := logboek.LogSecondaryProcess(loggerProcessMsg, logboek.LogProcessOptions{}, func() error {
 				return logboek.WithFittedStreamsOutputOn(func() error {
-					return rollout.TrackJobTillDone(template.Metadata.Name, jobNamespace, kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime})
+					return rollout.TrackJobTillDone(template.Metadata.Name, jobNamespace, kube.Kubernetes, tracker.Options{Timeout: opts.Timeout, LogsFromTime: deployStartTime, ParentContext: ctx})
 				})
 			}); err != nil {
 				logboek.LogErrorF("ERROR: %s\n", err)
