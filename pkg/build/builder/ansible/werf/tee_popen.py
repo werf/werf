@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # TeePopen is a reader from stdout and stderr of subprocess.Popen into
-# pipes to return to ansible and into unix socket to send to werf logger.
+# pipes to return to ansible and into unix socket to send to werf logger (logboek).
 #
 # stdout from subprocess.Popen (original_popen)
 # |

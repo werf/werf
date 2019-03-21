@@ -5,9 +5,8 @@ import os
 import socket
 import select
 
-import logger
-
 from werf import STDOUT_UNIX_SOCK_NAME
+from werf import logboek
 
 '''
 
@@ -93,7 +92,7 @@ class LiveStdoutReader(threading.Thread):
                     if part:
                         self.listener.set_live_stdout(True)
                         if self.listener.is_enabled_live_stdout():
-                            logger.Out(part)
+                            logboek.Out(part)
                     else:
                         s.close()
                         rsockets.remove(s)

@@ -58,7 +58,7 @@ import json, re
 from collections import Iterable
 
 from werf.live_stdout import LiveStdoutListener
-import logger
+from werf import logboek
 
 # Taken from Dstat
 class vt100:
@@ -122,7 +122,7 @@ class LiveCallbackHelpers(CallbackBase):
         super(LiveCallbackHelpers, self).__init__()
 
     def LogArgs(self, *args):
-        logger.Log(u''.join(self._flatten(args)).encode('utf-8'))
+        logboek.Log(u''.join(self._flatten(args)).encode('utf-8'))
 
     # nested arrays into flat array    # action(module name)
     # action(module name) 'task name'
@@ -392,25 +392,25 @@ class CallbackModule(LiveCallbackHelpers):
     def v2_playbook_on_play_start(self, play):
         self._play = play
 
-        logger.Init()
+        logboek.Init()
         try:
             cols = int(os.environ['COLUMNS'])
         except:
             cols = 140
         #cols=60
         self.HEADER_NAME_INFO_LEN = cols-2
-        logger.SetTerminalWidth(cols)
-        logger.FittedStreamsOutputOn()
-        #logger.LogProcessStart(play.name)
+        logboek.SetTerminalWidth(cols)
+        logboek.FittedStreamsOutputOn()
+        #logboek.LogProcessStart(play.name)
         self._live_stdout_listener.start()
 
     def v2_playbook_on_stats(self, stats):
         #pass
         self._live_stdout_listener.stop()
         #if stats.failures:
-        #    logger.LogProcessFail()
+        #    logboek.LogProcessFail()
         #else:
-        #    logger.LogProcessEnd()
+        #    logboek.LogProcessEnd()
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._display.v("TASK action=%s args=%s" % (task.action, json.dumps(task.args, indent=4)))
@@ -419,7 +419,7 @@ class CallbackModule(LiveCallbackHelpers):
             return
 
         # task header line
-        logger.LogProcessStart(self._task_details(task, start=True).encode('utf-8'))
+        logboek.LogProcessStart(self._task_details(task, start=True).encode('utf-8'))
         # reset live_stdout flag on task start
         self._live_stdout_listener.set_live_stdout(False)
 
@@ -446,7 +446,7 @@ class CallbackModule(LiveCallbackHelpers):
 
         finally:
         # task footer line
-            logger.LogProcessEnd()
+            logboek.LogProcessEnd()
 
     def v2_runner_item_on_ok(self, result):
         self._display.v("TASK action=%s item OK => %s" % (result._task.action, json.dumps(result._result, indent=4)))
@@ -472,7 +472,7 @@ class CallbackModule(LiveCallbackHelpers):
         # TODO item duration
 
         status = u'[OK]'
-        logger.LogProcessStepEnd(u''.join([
+        logboek.LogProcessStepEnd(u''.join([
             vt100.reset, vt100.bold,
             self._item_details(task, result._result.get('item', '')), vt100.reset,
             ' ',
@@ -498,9 +498,9 @@ class CallbackModule(LiveCallbackHelpers):
             self._display_msg(task, result._result, C.COLOR_ERROR)
 
         except Exception as e:
-            logger.Log(e)
+            logboek.Log(e)
         finally:
-            logger.LogProcessFail()
+            logboek.LogProcessFail()
 
     def v2_runner_item_on_failed(self, result, ignore_errors=False):
         self._display.v("TASK action=%s ITEM FAILED => %s" % (result._task.action, json.dumps(result._result, indent=4)))
@@ -515,7 +515,7 @@ class CallbackModule(LiveCallbackHelpers):
         self._display_msg(task, result._result, C.COLOR_ERROR)
         # task item status line
         status = u'[FAIL]'
-        logger.LogProcessStepEnd(u''.join([
+        logboek.LogProcessStepEnd(u''.join([
             vt100.reset, vt100.bold,
             self._item_details(task, result._result.get('item', '')), vt100.reset,
             ' ',
@@ -529,12 +529,12 @@ class CallbackModule(LiveCallbackHelpers):
 
     def v2_runner_on_skipped(self, result):
         self.LogArgs(stringc("SKIPPED", C.COLOR_SKIP), "\n")
-        logger.LogProcessEnd()
+        logboek.LogProcessEnd()
 
     # Implemented for completeness. Local connection cannot be unreachable.
     def v2_runner_on_unreachable(self, result):
         self.LogArgs(stringc("UNREACHABLE!", color=C.COLOR_UNREACHABLE), "\n")
-        logger.LogProcessEnd()
+        logboek.LogProcessEnd()
 
     def v2_on_file_diff(self, result):
         if 'diff' in result._result and result._result['diff']:

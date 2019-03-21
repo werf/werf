@@ -46,43 +46,60 @@ func (b *Ansible) createStageWorkDirStructure(userStageName string) error {
 	}
 	writeFile(filepath.Join(stageWorkDir, "dump_config.json"), string(data))
 
-	// python modules
+	// PYTHONPATH content
 	stageWorkDirLib := filepath.Join(stageWorkDir, "lib")
 	if err := mkdirP(stageWorkDirLib); err != nil {
 		return err
 	}
 
+
 	// crypt.py hack
-	// TODO must be in stapel
+	// TODO should be in stapel image
 	writeFile(filepath.Join(stageWorkDirLib, "crypt.py"), b.assetsCryptPy())
 
-	stageCallbackDir := filepath.Join(stageWorkDirLib, "callback")
-	if err := mkdirP(stageCallbackDir); err != nil {
+	// sitecustomize with mocks
+	writeFile(filepath.Join(stageWorkDirLib, "sitecustomize.py"), b.assetsSiteCustomizePy())
+
+
+	callbackPackageDir := filepath.Join(stageWorkDirLib, "callback")
+	if err := mkdirP(callbackPackageDir); err != nil {
 		return err
 	}
 
-	writeFile(filepath.Join(stageCallbackDir, "__init__.py"), b.assetsCallbackInitPy())
+	writeFile(filepath.Join(callbackPackageDir, "__init__.py"), b.assetsCallbackInitPy())
 
 	if livePyPath, exist := os.LookupEnv("WERF_DEBUG_ANSIBLE_LIVE_PY_PATH"); exist {
 		// hardlink a local live.py into workdir to ease ansible callback development
-		er := os.Link(livePyPath, filepath.Join(stageCallbackDir, "live.py"))
+		er := os.Link(livePyPath, filepath.Join(callbackPackageDir, "live.py"))
 		if er != nil {
 			return er
 		}
 	} else {
-		writeFile(filepath.Join(stageCallbackDir, "live.py"), b.assetsCallbackLivePy())
+		writeFile(filepath.Join(callbackPackageDir, "live.py"), b.assetsCallbackLivePy())
 	}
 
 	// add werf specific stdout callback for ansible
 	if werfPyPath, exist := os.LookupEnv("WERF_DEBUG_ANSIBLE_WERF_PY_PATH"); exist {
 		// hardlink to a local live.py into workdir to ease ansible callback development
-		er := os.Link(werfPyPath, filepath.Join(stageCallbackDir, "werf.py"))
+		er := os.Link(werfPyPath, filepath.Join(callbackPackageDir, "werf.py"))
 		if er != nil {
 			return er
 		}
 	} else {
-		writeFile(filepath.Join(stageCallbackDir, "werf.py"), b.assetsCallbackWerfPy())
+		writeFile(filepath.Join(callbackPackageDir, "werf.py"), b.assetsCallbackWerfPy())
 	}
+
+	werfPackageDir := filepath.Join(stageWorkDirLib, "werf")
+	if err := mkdirP(werfPackageDir); err != nil {
+		return err
+	}
+	writeFile(filepath.Join(werfPackageDir, "__init__.py"), b.assetsWerfInitPy())
+	writeFile(filepath.Join(werfPackageDir, "live_stdout.py"), b.assetsWerfLiveStdoutPy())
+	writeFile(filepath.Join(werfPackageDir, "tee_popen.py"), b.assetsWerfTeePopenPy())
+
+	// logboek py module and so library
+	writeFile(filepath.Join(werfPackageDir, "logboek.py"), b.assetsLogboekPy())
+	writeFileBytes(filepath.Join(werfPackageDir, ".logboek.so"), b.assetsLogboekSo())
 
 	return nil
 }
@@ -175,4 +192,8 @@ func mkdirP(path string) error {
 
 func writeFile(path string, content string) error {
 	return ioutil.WriteFile(path, []byte(content), os.FileMode(0664))
+}
+
+func writeFileBytes(path string, content []byte) error {
+	return ioutil.WriteFile(path, content, os.FileMode(0664))
 }
