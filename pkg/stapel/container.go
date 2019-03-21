@@ -52,3 +52,16 @@ func (c *container) CreateIfNotExist() error {
 
 	return nil
 }
+
+func (c *container) RmIfExist() error {
+	exist, err := docker.ContainerExist(c.Name)
+	if err != nil {
+		return err
+	}
+
+	if exist {
+		return docker.CliRm(c.Name)
+	}
+
+	return nil
+}

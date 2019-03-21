@@ -3,10 +3,10 @@ package cleaning
 import (
 	"fmt"
 
+	"github.com/docker/docker/api/types/filters"
+
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/stapel"
-
-	"github.com/docker/docker/api/types/filters"
 
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/tmp_manager"
@@ -18,27 +18,23 @@ func HostPurge(options CommonOptions) error {
 	options.RmiForce = true
 	options.RmForce = true
 
-	err := logboek.LogSecondaryProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogSecondaryProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
 		if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
 			return err
 		}
 
 		return nil
-	})
-
-	if err != nil {
+	}); err != nil {
 		return err
 	}
 
-	err = logboek.LogSecondaryProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogSecondaryProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
 		if err := werfImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
 			return err
 		}
 
 		return nil
-	})
-
-	if err != nil {
+	}); err != nil {
 		return err
 	}
 
@@ -46,9 +42,19 @@ func HostPurge(options CommonOptions) error {
 		return fmt.Errorf("tmp files purge failed: %s", err)
 	}
 
-	return logboek.LogSecondaryProcess("Running werf home data purge", logboek.LogProcessOptions{}, func() error {
+	if err := logboek.LogSecondaryProcess("Running werf home data purge", logboek.LogProcessOptions{}, func() error {
 		return purgeHomeWerfFiles(options.DryRun)
-	})
+	}); err != nil {
+		return err
+	}
+
+	if err := logboek.LogSecondaryProcess("Deleting stapel", logboek.LogProcessOptions{}, func() error {
+		return deleteStapel(options.DryRun)
+	}); err != nil {
+		return fmt.Errorf("stapel delete failed: %s", err)
+	}
+
+	return nil
 }
 
 func ResetDevModeCache(options CommonOptions) error {
@@ -69,6 +75,18 @@ func ResetDevModeCache(options CommonOptions) error {
 
 func ResetCacheVersion(options CommonOptions) error {
 	if err := werfImageStagesFlushByCacheVersion(filters.NewArgs(), options); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func deleteStapel(dryRun bool) error {
+	if dryRun {
+		return nil
+	}
+
+	if err := stapel.Purge(); err != nil {
 		return err
 	}
 

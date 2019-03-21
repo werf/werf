@@ -3,6 +3,7 @@ package docker
 import (
 	"github.com/docker/cli/cli/command/image"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"golang.org/x/net/context"
 )
 
@@ -14,6 +15,16 @@ func Images(options types.ImageListOptions) ([]types.ImageSummary, error) {
 	}
 
 	return images, nil
+}
+
+func ImageExist(ref string) (bool, error) {
+	if _, err := ImageInspect(ref); err != nil {
+		if client.IsErrNotFound(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func ImageInspect(ref string) (*types.ImageInspect, error) {
@@ -70,34 +81,6 @@ func CliTag(args ...string) error {
 
 func CliRmi(args ...string) error {
 	cmd := image.NewRemoveCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs(args)
-
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func CliSave(args ...string) error {
-	cmd := image.NewSaveCommand(cli)
-	cmd.SilenceErrors = true
-	cmd.SilenceUsage = true
-	cmd.SetArgs(args)
-
-	err := cmd.Execute()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func CliLoad(args ...string) error {
-	cmd := image.NewLoadCommand(cli)
 	cmd.SilenceErrors = true
 	cmd.SilenceUsage = true
 	cmd.SetArgs(args)
