@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -510,9 +511,12 @@ func LogVersion() {
 	logboek.LogServiceF("Version: %s\n", werf.Version)
 }
 
-func LogErrorF(format string, a ...interface{}) {
+func LogError(format string, a ...interface{}) {
 	_ = logboek.WithoutIndent(func() error {
-		logboek.LogErrorF(format, a...)
+		msg := fmt.Sprintf(format, a...)
+		msg = strings.TrimSuffix(msg, "\n")
+
+		logboek.LogErrorLn(msg)
 
 		return nil
 	})

@@ -65,13 +65,13 @@ func main() {
 	trapTerminationSignals()
 
 	if err := logging.Init(); err != nil {
-		common.LogErrorF(fmt.Sprintf("logger initialization error: %s\n", err))
+		common.LogError(fmt.Sprintf("logger initialization error: %s", err))
 
 		os.Exit(1)
 	}
 
 	if err := process_exterminator.Init(); err != nil {
-		common.LogErrorF(fmt.Sprintf("process exterminator initialization error: %s\n", err))
+		common.LogError(fmt.Sprintf("process exterminator initialization error: %s", err))
 
 		os.Exit(1)
 	}
@@ -129,7 +129,7 @@ Find more information at https://werf.io`),
 	)
 
 	if err := rootCmd.Execute(); err != nil {
-		common.LogErrorF("Error: %s\n", err)
+		common.LogError("Error: %s", err)
 
 		os.Exit(1)
 	}
@@ -253,7 +253,7 @@ func trapTerminationSignals() {
 	go func() {
 		<-c
 
-		common.LogErrorF("interrupted\n")
+		common.LogError("interrupted")
 
 		os.Exit(17)
 	}()

@@ -6,6 +6,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/helm/pkg/releaseutil"
+
+	"github.com/flant/werf/pkg/util"
 )
 
 type ChartTemplates []Template
@@ -131,7 +133,7 @@ func parseTemplates(rawTemplates string) (ChartTemplates, error) {
 		var t Template
 		err := yaml.Unmarshal([]byte(doc), &t)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%s\n\n%s\n", err, util.NumerateLines(doc, 1))
 		}
 
 		if t.Metadata.Name != "" {
