@@ -180,6 +180,9 @@ func runDeploy() error {
 		}
 	}()
 
+	logboek.LogServiceF("Using helm release name: %s\n", release)
+	logboek.LogServiceF("Using kubernetes namespace: %s\n", namespace)
+
 	return deploy.Deploy(projectDir, imagesRepo, release, namespace, tag, tagStrategy, werfConfig, deploy.DeployOptions{
 		Set:          *CommonCmdData.Set,
 		SetString:    *CommonCmdData.SetString,
