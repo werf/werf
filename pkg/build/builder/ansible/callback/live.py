@@ -16,36 +16,6 @@ DOCUMENTATION = '''
         - Solo mode with live stdout for raw and script tasks with fallback to minimal
 '''
 
-# Task output format:
-#
-# ┌ action 'name' [additional info] [START]
-#   stdout:
-#     Start installing...
-#     operation 1 is done
-#     operation 2 complete
-#     all done.
-#   stderr:
-#     ...
-#   msg: — if not failed or if failed without output
-#   Exit code: 0/1/2..
-# └ action 'name' [additional info] [OK]/[FAIL]
-#
-# Task with loop:
-# ┌ action 'name' [additional info] [START]
-#   stdout:
-#     Start installing...
-#     operation 1 is done
-#     operation 2 complete
-#     all done.
-#   stderr:
-#     ...
-#   Message (if not failed or if failed without output)
-#   Exit code: 0/1/2..
-# ◆ action 'name' item 'item_var_content' [OK]
-# ...
-# ...
-# └ action 'name' [additional info] [OK]/[FAIL]
-
 
 from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
@@ -53,7 +23,7 @@ from ansible.vars.clean import strip_internal_keys
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
 
-import io, os, sys
+import os
 import json, re
 from collections import Iterable
 
@@ -159,6 +129,7 @@ class LiveCallbackHelpers(CallbackBase):
             return s
 
     def _clean_str(self, s):
+        s = to_text(s)
         s = re.sub(r'\s+', r' ', s, flags=re.UNICODE)
         return s.strip()
 
@@ -220,9 +191,12 @@ class CallbackModule(LiveCallbackHelpers):
     # if no task_name:
     # action item 'item_name'
     # task_name and item_name are squashed if cannot fit into available space
-    def _item_details(self, task, item_name):
+    def _item_details(self, task, item_result):
         task_name = self._clean_str(task.name)
-        item_name = self._clean_str(item_name)
+        if '_ansible_item_label' in item_result:
+            item_name = item_result.get('_ansible_item_label','')
+        else:
+            item_name = self._clean_str(item_result.get('item', ''))
 
         if task_name != '':
             task_space = self.HEADER_NAME_INFO_LEN - len(item_name)
@@ -283,8 +257,9 @@ class CallbackModule(LiveCallbackHelpers):
 
         if task.loop and start:
             loop_args = task.loop
+
             if len(loop_args) > 0:
-                info = "'%s' over %s" % (info, ', '.join(loop_args))
+                info = "'%s' over %s" % (info, to_text(loop_args))
 
         return self._clean_str(info)
 
@@ -430,22 +405,19 @@ class CallbackModule(LiveCallbackHelpers):
 
         try:
             task = result._task
-            #color = lColor.COLOR_OK
-            ccolor = C.COLOR_OK
+            color = C.COLOR_OK
             if 'changed' in result._result and result._result['changed']:
-                #color = lColor.COLOR_CHANGED
-                ccolor = C.COLOR_CHANGED
+                color = C.COLOR_CHANGED
 
             # task result info if any
             if task.action == 'debug':
                 self._display_debug_msg(result._task, result._result)
             else:
-                self._display_msg(result._task, result._result, ccolor)
+                self._display_msg(result._task, result._result, color)
         except Exception as e:
             self.LogArgs(stringc(u'Exception: %s'%e, C.COLOR_ERROR), "\n")
-
         finally:
-        # task footer line
+            # task footer line
             logboek.LogProcessEnd()
 
     def v2_runner_item_on_ok(self, result):
@@ -456,30 +428,22 @@ class CallbackModule(LiveCallbackHelpers):
         task = result._task
         if task.action in self.SQUASH_LOOP_MODULES:
             return
-        color = lColor.COLOR_OK
-        ccolor = C.COLOR_OK
+        color = C.COLOR_OK
         if 'changed' in result._result and result._result['changed']:
-            color = lColor.COLOR_CHANGED
-            ccolor = C.COLOR_CHANGED
+            color = C.COLOR_CHANGED
 
         # item result info if any
         if task.action == 'debug':
             self._display_debug_msg(result._task, result._result)
         else:
-            self._display_msg(result._task, result._result, ccolor)
+            self._display_msg(result._task, result._result, color)
 
-        # task item footer line
-        # TODO item duration
-
-        status = u'[OK]'
         logboek.LogProcessStepEnd(u''.join([
             vt100.reset, vt100.bold,
-            self._item_details(task, result._result.get('item', '')), vt100.reset,
+            self._item_details(task, result._result), vt100.reset,
             ' ',
-            color,
-            status,
-            vt100.reset,
-            "\n"]).encode('utf-8')
+            stringc(u'[OK]', color)
+            ]).encode('utf-8')
         )
 
         # reset live_stdout flag on item end
@@ -507,22 +471,18 @@ class CallbackModule(LiveCallbackHelpers):
         self._handle_exception(result._result)
         self._handle_warnings(result._result)
 
-
         task = result._task
         if task.action in self.SQUASH_LOOP_MODULES:
             return
         # task item result info if any
         self._display_msg(task, result._result, C.COLOR_ERROR)
         # task item status line
-        status = u'[FAIL]'
         logboek.LogProcessStepEnd(u''.join([
             vt100.reset, vt100.bold,
-            self._item_details(task, result._result.get('item', '')), vt100.reset,
+            self._item_details(task, result._result), vt100.reset,
             ' ',
-            C.COLOR_ERROR,
-            status,
-            vt100.reset,
-            "\n"]).encode('utf-8')
+            stringc(u'[FAIL]', C.COLOR_ERROR),
+            ]).encode('utf-8')
         )
         # reset live_stdout flag on item end
         self._live_stdout_listener.set_live_stdout(False)
@@ -533,7 +493,7 @@ class CallbackModule(LiveCallbackHelpers):
 
     # Implemented for completeness. Local connection cannot be unreachable.
     def v2_runner_on_unreachable(self, result):
-        self.LogArgs(stringc("UNREACHABLE!", color=C.COLOR_UNREACHABLE), "\n")
+        self.LogArgs(stringc("UNREACHABLE!", C.COLOR_UNREACHABLE), "\n")
         logboek.LogProcessEnd()
 
     def v2_on_file_diff(self, result):
