@@ -22,6 +22,7 @@ from ansible import constants as C
 from ansible.vars.clean import strip_internal_keys
 from ansible.module_utils._text import to_text
 from ansible.utils.color import stringc
+from ansible.errors import AnsibleError
 
 import os
 import json, re
@@ -440,7 +441,7 @@ class CallbackModule(LiveCallbackHelpers):
 
         logboek.LogProcessStepEnd(u''.join([
             vt100.reset, vt100.bold,
-            self._item_details(task, result._result), vt100.reset,
+            self._clean_str(self._item_details(task, result._result)), vt100.reset,
             ' ',
             stringc(u'[OK]', color)
             ]).encode('utf-8')
@@ -479,7 +480,7 @@ class CallbackModule(LiveCallbackHelpers):
         # task item status line
         logboek.LogProcessStepEnd(u''.join([
             vt100.reset, vt100.bold,
-            self._item_details(task, result._result), vt100.reset,
+            self._clean_str(self._item_details(task, result._result)), vt100.reset,
             ' ',
             stringc(u'[FAIL]', C.COLOR_ERROR),
             ]).encode('utf-8')
@@ -500,8 +501,36 @@ class CallbackModule(LiveCallbackHelpers):
         if 'diff' in result._result and result._result['diff']:
             self.LogArgs(self._get_diff(result._result['diff']), "\n")
 
-    def _handle_exception(self, result):
+    def _handle_exception(self, result, use_stderr=False):
         if 'exception' in result:
             msg = "An exception occurred during task execution. The full traceback is:\n" + result['exception']
             del result['exception']
             self.LogArgs(stringc(msg, C.COLOR_ERROR))
+
+    def _handle_warnings(self, res):
+        ''' display warnings, if enabled and any exist in the result '''
+        if C.ACTION_WARNINGS:
+            if 'warnings' in res and res['warnings']:
+                for warning in res['warnings']:
+                    self.LogArgs(stringc(u'[WARNING]: %s' % warning, C.COLOR_WARN))
+                del res['warnings']
+            if 'deprecations' in res and res['deprecations']:
+                for warning in res['deprecations']:
+                    self.LogArgs(stringc(self._deprecated_msg(**warning), C.COLOR_DEPRECATE))
+                del res['deprecations']
+
+    def _deprecated_msg(self, msg, version=None, removed=False):
+        ''' used to print out a deprecation message.'''
+        if not removed and not C.DEPRECATION_WARNINGS:
+            return
+
+        if not removed:
+            if version:
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+            else:
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
+            new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
+        else:
+            raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
+
+        return new_msg
