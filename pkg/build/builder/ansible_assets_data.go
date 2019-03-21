@@ -51,6 +51,10 @@ func (b *Ansible) assetsCryptPy() string {
 	return ansible.FSMustString(false, "/ansible/crypt.py")
 }
 
+func (b *Ansible) assetsSiteCustomizePy() string {
+	return ansible.FSMustString(false, "/ansible/sitecustomize.py")
+}
+
 func (b *Ansible) assetsCallbackInitPy() string {
 	return ansible.FSMustString(false, "/ansible/callback/__init__.py")
 }
@@ -63,10 +67,22 @@ func (b *Ansible) assetsCallbackWerfPy() string {
 	return ansible.FSMustString(false, "/ansible/callback/werf.py")
 }
 
+func (b *Ansible) assetsWerfInitPy() string {
+	return ansible.FSMustString(false, "/ansible/werf/__init__.py")
+}
+
+func (b *Ansible) assetsWerfLiveStdoutPy() string {
+	return ansible.FSMustString(false, "/ansible/werf/live_stdout.py")
+}
+
+func (b *Ansible) assetsWerfTeePopenPy() string {
+	return ansible.FSMustString(false, "/ansible/werf/tee_popen.py")
+}
+
 func (b *Ansible) assetsLogboekPy() string {
 	return logboek_py.FSMustString(false, "/logboek.py")
 }
 
-func (b *Ansible) assetsLogboekSo() string {
-	return logboek_py.FSMustString(false, "/logboek.so")
+func (b *Ansible) assetsLogboekSo() []byte {
+	return logboek_py.FSMustByte(false, "/logboek.so")
 }

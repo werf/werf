@@ -65,6 +65,7 @@ func (b *Ansible) stage(userStageName string, container Container) error {
 			"ANSIBLE_CONFIG":              filepath.Join(b.containerWorkDir(), "ansible.cfg"),
 			"WERF_DUMP_CONFIG_DOC_PATH":   filepath.Join(b.containerWorkDir(), "dump_config.json"),
 			"PYTHONPATH":                  filepath.Join(b.containerWorkDir(), "lib"),
+			"LOGBOEK_SO_PATH":             filepath.Join(b.containerWorkDir(), "lib", "werf", ".logboek.so"),
 			"PYTHONIOENCODING":            "utf-8",
 			"ANSIBLE_PREPEND_SYSTEM_PATH": stapel.SystemPATH(),
 		},

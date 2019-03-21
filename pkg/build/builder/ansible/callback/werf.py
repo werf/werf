@@ -10,7 +10,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     callback: werf
     type: stdout
-    short_description: live output for raw and script with werf specific additions
+    short_description: Print related werf config section in case of task failure
     version_added: "2.4"
     description:
         - Solo mode with live stdout for raw and script tasks
@@ -73,7 +73,7 @@ class CallbackModule(CallbackModule_live):
         dump_config_doc = dump_config.get('dump_config_doc', '')
         dump_config_sections = dump_config.get('dump_config_sections', {})
         dump_config_section = dump_config_sections.get(dump_config_section_key, '')
-        self._print(
+        self.LogArgs(
             u"\n",
             lColor.COLOR_DEBUG, u"Failed task configuration:\n\n", vt100.reset,
             stringc(dump_config_section, C.COLOR_DEBUG),
