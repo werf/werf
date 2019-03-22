@@ -1,7 +1,9 @@
 package deploy_chart
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/flant/kubedog/pkg/kube"
@@ -99,7 +101,7 @@ func runDeployChart(chartDir string, releaseName string) error {
 		return fmt.Errorf("unable to load chart %s: %s", chartDir, err)
 	}
 
-	return werfChart.Deploy(releaseName, namespace, helm.HelmChartOptions{
+	err = werfChart.Deploy(releaseName, namespace, helm.HelmChartOptions{
 		Timeout: time.Duration(CmdData.Timeout) * time.Second,
 		HelmChartValuesOptions: helm.HelmChartValuesOptions{
 			Set:       *CommonCmdData.Set,
@@ -107,4 +109,13 @@ func runDeployChart(chartDir string, releaseName string) error {
 			Values:    *CommonCmdData.Values,
 		},
 	})
+
+	if err != nil {
+		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
+		replaceNew := fmt.Sprintf("%s/", strings.TrimRight(werfChart.ChartDir, "/"))
+		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
+		return errors.New(errMsg)
+	}
+
+	return nil
 }

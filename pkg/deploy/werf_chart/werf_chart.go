@@ -48,6 +48,7 @@ func LoadWerfChart(werfChartDir string) (*WerfChart, error) {
 }
 
 type WerfChart struct {
+	Name      string   `yaml:"Name"`
 	ChartDir  string   `yaml:"ChartDir"`
 	Values    []string `yaml:"Values"`
 	Set       []string `yaml:"Set"`
@@ -241,6 +242,8 @@ func CreateNewWerfChart(projectName, projectDir string, targetDir string, m secr
 		return nil, fmt.Errorf("unable to copy project helm dir %s into %s: %s", projectHelmDir, targetDir, err)
 	}
 
+	werfChart.Name = projectName
+
 	chartFile := filepath.Join(projectHelmDir, "Chart.yaml")
 	if _, err := os.Stat(chartFile); !os.IsNotExist(err) {
 		logger.LogErrorLn("WARNING: To skip the warning please delete .helm/Chart.yaml from project")
@@ -252,7 +255,7 @@ func CreateNewWerfChart(projectName, projectDir string, targetDir string, m secr
 		return nil, fmt.Errorf("unable to create %s: %s", targetChartFile, err)
 	}
 
-	chartData := fmt.Sprintf("name: %s\nversion: 0.1.0\n", projectName)
+	chartData := fmt.Sprintf("name: %s\nversion: 0.1.0\n", werfChart.Name)
 
 	_, err = f.Write([]byte(chartData))
 	if err != nil {
