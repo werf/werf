@@ -1,7 +1,9 @@
 package deploy
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/deploy/helm"
@@ -46,9 +48,18 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 	}
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	return werfChart.Lint(helm.HelmChartValuesOptions{
+	err = werfChart.Lint(helm.HelmChartValuesOptions{
 		Set:       opts.Set,
 		SetString: opts.SetString,
 		Values:    opts.Values,
 	})
+
+	if err != nil {
+		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
+		replaceNew := fmt.Sprintf("%s/", ".helm")
+		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
+		return errors.New(errMsg)
+	}
+
+	return nil
 }

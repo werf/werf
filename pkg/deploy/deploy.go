@@ -1,7 +1,9 @@
 package deploy
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/flant/logboek"
@@ -39,7 +41,7 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
 	logboek.OptionalLnModeOn()
-	return werfChart.Deploy(release, namespace, helm.HelmChartOptions{
+	err = werfChart.Deploy(release, namespace, helm.HelmChartOptions{
 		Timeout: opts.Timeout,
 		HelmChartValuesOptions: helm.HelmChartValuesOptions{
 			Set:       opts.Set,
@@ -47,4 +49,13 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 			Values:    opts.Values,
 		},
 	})
+
+	if err != nil {
+		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
+		replaceNew := fmt.Sprintf("%s/", ".helm")
+		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
+		return errors.New(errMsg)
+	}
+
+	return nil
 }
