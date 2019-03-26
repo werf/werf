@@ -13,7 +13,7 @@ func ValidateHelmVersion() error {
 		return fmt.Errorf("unable to get helm version: %s", err)
 	}
 
-	lowestVersion, err := version.NewVersion("v2.7.0-rc1")
+	lowestVersion, err := version.NewVersion("v2.9.0")
 	if err != nil {
 		panic(err)
 	}
