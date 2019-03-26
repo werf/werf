@@ -90,8 +90,8 @@ func supportedModules() []string {
 	// No Monitoring messages
 	// Net Tools Modules (only Basics)
 	modules = append(modules, []string{"get_url", "slurp", "uri"}...)
-    // No Network modules
-    // No Notification modules
+	// No Network modules
+	// No Notification modules
 	// Packaging/Language Modules
 	modules = append(modules, []string{"bower", "bundler", "composer", "cpanm", "easy_install", "gem", "maven_artifact", "npm", "pear", "pip"}...)
 	// Packaging/Os Modules
@@ -103,6 +103,7 @@ func supportedModules() []string {
 		"apt_rpm",
 		"dnf",
 		"dpkg_selections",
+		"debconf",
 		"homebrew",
 		"homebrew_cask",
 		"homebrew_tap",
@@ -136,15 +137,15 @@ func supportedModules() []string {
 		"zypper",
 		"zypper_repository",
 	}...)
-    // No Remote Management modules
-    // No Source Control modules
-    // No Storage modules
+	// No Remote Management modules
+	// No Source Control modules
+	// No Storage modules
 	// System Modules (only passwd management and locales)
 	modules = append(modules, []string{"cron", "user", "group", "getent", "locale_gen", "timezone"}...)
 	// Utilities Modules
 	modules = append(modules, []string{"meta", "assert", "debug", "fail", "set_fact", "wait_for"}...)
-    // No Web Infrastructure modules
-    // No Windows modules
+	// No Web Infrastructure modules
+	// No Windows modules
 
 	return modules
 }
