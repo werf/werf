@@ -76,7 +76,7 @@ func (i *base) unsetInspect() {
 }
 
 func (i *base) Untag() error {
-	if err := docker.CliRmi(i.name); err != nil {
+	if err := docker.CliRmi(i.name, "--force"); err != nil {
 		return err
 	}
 
