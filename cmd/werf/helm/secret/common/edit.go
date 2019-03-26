@@ -28,7 +28,7 @@ func SecretEdit(m secret.Manager, filePath string, values bool) error {
 		return err
 	}
 
-	tmpFilePath := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-edit-secret-%s", uuid.NewV4().String()))
+	tmpFilePath := filepath.Join(werf.GetTmpDir(), fmt.Sprintf("werf-edit-secret-%s.yaml", uuid.NewV4().String()))
 	defer os.RemoveAll(tmpFilePath)
 
 	if err := createTmpEditedFile(tmpFilePath, data); err != nil {
