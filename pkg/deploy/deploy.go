@@ -8,6 +8,7 @@ import (
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/tag_strategy"
+	"github.com/ghodss/yaml"
 )
 
 type DeployOptions struct {
@@ -34,6 +35,10 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 	if err != nil {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
+
+	serviceValuesRaw, _ := yaml.Marshal(serviceValues)
+	logger.LogInfoF("Using service values:\n%s", serviceValuesRaw)
+	logger.OptionalLnModeOn()
 
 	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.SecretValues, serviceValues)
 	if err != nil {
