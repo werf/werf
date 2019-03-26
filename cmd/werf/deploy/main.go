@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/flant/kubedog/pkg/kube"
 	"github.com/flant/logboek"
+
 	"github.com/flant/werf/cmd/werf/common"
+	"github.com/flant/werf/pkg/build"
 	"github.com/flant/werf/pkg/deploy"
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
@@ -15,7 +19,6 @@ import (
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
-	"github.com/spf13/cobra"
 )
 
 var CmdData struct {
@@ -121,8 +124,6 @@ func runDeploy() error {
 		return fmt.Errorf("cannot initialize kube: %s", err)
 	}
 
-	common.LogKubeContext(kube.Context)
-
 	if err := common.InitKubedog(); err != nil {
 		return fmt.Errorf("cannot init kubedog: %s", err)
 	}
@@ -180,6 +181,12 @@ func runDeploy() error {
 		}
 	}()
 
+	c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+	if err = c.ShouldBeBuilt(); err != nil {
+		return err
+	}
+
+	common.LogKubeContext(kube.Context)
 	logboek.LogServiceF("Using helm release name: %s\n", release)
 	logboek.LogServiceF("Using kubernetes namespace: %s\n", namespace)
 
