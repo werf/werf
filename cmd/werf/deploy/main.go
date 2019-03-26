@@ -16,6 +16,7 @@ import (
 	"github.com/flant/werf/pkg/docker_registry"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/ssh_agent"
+	"github.com/flant/werf/pkg/tag_strategy"
 	"github.com/flant/werf/pkg/tmp_manager"
 	"github.com/flant/werf/pkg/true_git"
 	"github.com/flant/werf/pkg/werf"
@@ -146,19 +147,39 @@ func runDeploy() error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
-	_, err = common.GetStagesRepo(&CommonCmdData)
-	if err != nil {
-		return err
-	}
+	var imagesRepo string
+	var tag string
+	var tagStrategy tag_strategy.TagStrategy
+	if len(werfConfig.Images) != 0 {
+		_, err = common.GetStagesRepo(&CommonCmdData)
+		if err != nil {
+			return err
+		}
 
-	imagesRepo, err := common.GetImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
-	if err != nil {
-		return err
-	}
+		imagesRepo, err = common.GetImagesRepo(werfConfig.Meta.Project, &CommonCmdData)
+		if err != nil {
+			return err
+		}
 
-	tag, tagStrategy, err := common.GetDeployTag(&CommonCmdData, common.TagOptionsGetterOptions{})
-	if err != nil {
-		return err
+		tag, tagStrategy, err = common.GetDeployTag(&CommonCmdData, common.TagOptionsGetterOptions{})
+		if err != nil {
+			return err
+		}
+
+		if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
+			return fmt.Errorf("cannot initialize ssh agent: %s", err)
+		}
+		defer func() {
+			err := ssh_agent.Terminate()
+			if err != nil {
+				logboek.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
+			}
+		}()
+
+		c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
+		if err = c.ShouldBeBuilt(); err != nil {
+			return err
+		}
 	}
 
 	release, err := common.GetHelmRelease(*CommonCmdData.Release, *CommonCmdData.Environment, werfConfig)
@@ -168,21 +189,6 @@ func runDeploy() error {
 
 	namespace, err := common.GetKubernetesNamespace(*CommonCmdData.Namespace, *CommonCmdData.Environment, werfConfig)
 	if err != nil {
-		return err
-	}
-
-	if err := ssh_agent.Init(*CommonCmdData.SSHKeys); err != nil {
-		return fmt.Errorf("cannot initialize ssh agent: %s", err)
-	}
-	defer func() {
-		err := ssh_agent.Terminate()
-		if err != nil {
-			logboek.LogErrorF("WARNING: ssh agent termination failed: %s\n", err)
-		}
-	}()
-
-	c := build.NewConveyor(werfConfig, []string{}, projectDir, projectTmpDir, ssh_agent.SSHAuthSock)
-	if err = c.ShouldBeBuilt(); err != nil {
 		return err
 	}
 
