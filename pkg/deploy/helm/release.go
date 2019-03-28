@@ -90,7 +90,7 @@ type HelmChartOptions struct {
 }
 
 func withLockedHelmRelease(releaseName string, f func() error) error {
-	lockName := fmt.Sprintf("helm_release.%s", releaseName)
+	lockName := fmt.Sprintf("helm_release.%s-kube_context.%s", releaseName, KubeContext)
 	return lock.WithLock(lockName, lock.LockOptions{}, f)
 }
 
