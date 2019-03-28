@@ -81,7 +81,7 @@ func (i *StageImage) SyncDockerState() error {
 }
 
 func (i *StageImage) Build(options BuildOptions) error {
-	containerLockName := GetContainerLockName(i.container.Name())
+	containerLockName := ContainerLockName(i.container.Name())
 	if err := lock.Lock(containerLockName, lock.LockOptions{}); err != nil {
 		return fmt.Errorf("failed to lock %s: %s", containerLockName, err)
 	}

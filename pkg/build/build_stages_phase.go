@@ -71,8 +71,7 @@ func (p *BuildStagesPhase) runImage(image *Image, c *Conveyor) error {
 			continue
 		}
 
-		imageLockName := imagePkg.GetImageLockName(img.Name())
-
+		imageLockName := imagePkg.ImageLockName(img.Name())
 		if err := lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 			return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 		}

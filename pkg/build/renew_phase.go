@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	imagePkg "github.com/flant/werf/pkg/image"
 	"github.com/flant/werf/pkg/lock"
 	"github.com/flant/werf/pkg/logger"
 )
@@ -42,19 +43,23 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 
 func (p *RenewPhase) run(c *Conveyor) error {
 	var conveyorShouldBeReset bool
-	for _, image := range c.imagesInOrder {
-		var acquiredLocks []string
+	var acquiredLocks []string
 
-		unlockLocks := func() {
-			for len(acquiredLocks) > 0 {
-				var lockName string
-				lockName, acquiredLocks = acquiredLocks[0], acquiredLocks[1:]
-				lock.Unlock(lockName)
-			}
+	unlockLock := func() {
+		var lockName string
+		lockName, acquiredLocks = acquiredLocks[0], acquiredLocks[1:]
+		lock.Unlock(lockName)
+	}
+
+	unlockLocks := func() {
+		for len(acquiredLocks) > 0 {
+			unlockLock()
 		}
+	}
 
-		defer unlockLocks()
+	defer unlockLocks()
 
+	for _, image := range c.imagesInOrder {
 		// lock
 		for _, stage := range image.GetStages() {
 			img := stage.GetImage()
@@ -62,11 +67,13 @@ func (p *RenewPhase) run(c *Conveyor) error {
 				continue
 			}
 
-			imageLockName := fmt.Sprintf("%s.image.%s", c.projectName(), img.Name())
+			imageLockName := imagePkg.ImageLockName(img.Name())
 			err := lock.Lock(imageLockName, lock.LockOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 			}
+
+			acquiredLocks = append(acquiredLocks, imageLockName)
 
 			if err := img.SyncDockerState(); err != nil {
 				return err
@@ -86,12 +93,14 @@ func (p *RenewPhase) run(c *Conveyor) error {
 					if err := img.Untag(); err != nil {
 						return err
 					}
+
+					unlockLock()
 				}
 			}
 		}
-
-		unlockLocks()
 	}
+
+	unlockLocks()
 
 	if conveyorShouldBeReset {
 		return ErrConveyorShouldBeReset

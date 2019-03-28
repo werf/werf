@@ -97,8 +97,7 @@ func (p *PublishImagesPhase) pushImageStages(c *Conveyor, image *Image) error {
 		}
 
 		err := func() error {
-			imageLockName := imagePkg.GetImageLockName(stageImageName)
-
+			imageLockName := imagePkg.ImageLockName(stageImageName)
 			if err := lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 				return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 			}
@@ -223,7 +222,7 @@ func (p *PublishImagesPhase) pushImage(c *Conveyor, image *Image) error {
 				}
 
 				err := func() error {
-					imageLockName := imagePkg.GetImageLockName(imageName)
+					imageLockName := imagePkg.ImageLockName(imageName)
 					if err = lock.Lock(imageLockName, lock.LockOptions{}); err != nil {
 						return fmt.Errorf("failed to lock %s: %s", imageLockName, err)
 					}
