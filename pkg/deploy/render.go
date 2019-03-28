@@ -1,7 +1,9 @@
 package deploy
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/config"
@@ -47,8 +49,12 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 		SetString: opts.SetString,
 		Values:    opts.Values,
 	})
+
 	if err != nil {
-		return err
+		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
+		replaceNew := fmt.Sprintf("%s/", ".helm")
+		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
+		return errors.New(errMsg)
 	}
 
 	if data != "" {
