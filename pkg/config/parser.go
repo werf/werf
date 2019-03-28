@@ -74,7 +74,7 @@ func GetWerfConfig(werfConfigPath string) (*WerfConfig, error) {
 		return nil, fmt.Errorf(format, defaultProjectName)
 	}
 
-	images, err := splitByImages(rawImages, werfConfigRenderContent, werfConfigRenderPath)
+	images, err := splitByImages(rawImages)
 	if err != nil {
 		return nil, err
 	}
@@ -400,7 +400,7 @@ func emptyDocContent(content []byte) bool {
 	return true
 }
 
-func splitByImages(rawImages []*rawImage, werfConfigRenderContent, werfConfigRenderPath string) ([]*Image, error) {
+func splitByImages(rawImages []*rawImage) ([]*Image, error) {
 	var images []*Image
 	var artifacts []*ImageArtifact
 
@@ -418,10 +418,6 @@ func splitByImages(rawImages []*rawImage, werfConfigRenderContent, werfConfigRen
 				artifacts = append(artifacts, imageArtifact)
 			}
 		}
-	}
-
-	if len(images) == 0 {
-		return nil, newConfigError(fmt.Sprintf("no images defined, at least one image required!\n\n%s:\n\n```\n%s```\n", werfConfigRenderPath, werfConfigRenderContent))
 	}
 
 	if err := exportsAutoExcluding(images, artifacts); err != nil {
