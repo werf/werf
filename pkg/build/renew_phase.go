@@ -80,12 +80,13 @@ func (p *RenewPhase) run(c *Conveyor) error {
 			}
 		}
 
+		shouldResetAllNextStages := false
 		for _, s := range image.GetStages() {
 			img := s.GetImage()
 			if img.IsExists() {
 				if stageShouldBeReset, err := s.ShouldBeReset(img); err != nil {
 					return err
-				} else if stageShouldBeReset {
+				} else if stageShouldBeReset || shouldResetAllNextStages {
 					conveyorShouldBeReset = true
 
 					logboek.LogServiceF("Untag %s for %s/%s\n", img.Name(), image.LogName(), s.Name())
@@ -96,6 +97,8 @@ func (p *RenewPhase) run(c *Conveyor) error {
 
 					unlockLock()
 				}
+			} else {
+				shouldResetAllNextStages = true
 			}
 		}
 	}
