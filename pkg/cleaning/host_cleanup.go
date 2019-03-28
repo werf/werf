@@ -52,8 +52,7 @@ func safeDanglingImagesCleanup(options CommonOptions) error {
 
 	for _, img := range images {
 		if imgName, hasKey := img.Labels[image.WerfDockerImageName]; hasKey {
-			imageLockName := image.GetImageLockName(imgName)
-
+			imageLockName := image.ImageLockName(imgName)
 			isLocked, err := lock.TryLock(imageLockName, lock.TryLockOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for image %s: %s", imageLockName, imgName, err)
@@ -105,8 +104,7 @@ func safeContainersCleanup(options CommonOptions) error {
 		}
 
 		err := func() error {
-			containerLockName := image.GetContainerLockName(containerName)
-
+			containerLockName := image.ContainerLockName(containerName)
 			isLocked, err := lock.TryLock(containerLockName, lock.TryLockOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to lock %s for container %s: %s", containerLockName, logContainerName(container), err)
