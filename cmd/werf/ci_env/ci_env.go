@@ -2,9 +2,11 @@ package ci_env
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 
 	"github.com/flant/werf/cmd/werf/common"
@@ -71,7 +73,12 @@ func runCIEnv(cmd *cobra.Command, args []string) error {
 
 	switch ciSystem {
 	case "gitlab":
-		return generateGitlabEnvs()
+		err := generateGitlabEnvs()
+		if err != nil {
+			fmt.Println()
+			printError(err.Error())
+		}
+		return err
 	default:
 		common.PrintHelp(cmd)
 		return fmt.Errorf("provided ci system '%s' not supported", ciSystem)
@@ -152,11 +159,16 @@ func generateGitlabEnvs() error {
 	printHeader("DEPLOY", true)
 	printExportCommand("WERF_ENV", os.Getenv("CI_ENVIRONMENT_SLUG"))
 
+	cleanupConfig, err := getCleanupConfig()
+	if err != nil {
+		return fmt.Errorf("unable to get cleanup config: %s", err)
+	}
+
 	printHeader("IMAGE CLEANUP POLICIES", true)
-	printExportCommand("WERF_GIT_TAG_STRATEGY_LIMIT", "10")
-	printExportCommand("WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", "30")
-	printExportCommand("WERF_GIT_COMMIT_STRATEGY_LIMIT", "50")
-	printExportCommand("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", "30")
+	printExportCommand("WERF_GIT_TAG_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyLimit))
+	printExportCommand("WERF_GIT_TAG_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitTagStrategyExpiryDays))
+	printExportCommand("WERF_GIT_COMMIT_STRATEGY_LIMIT", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyLimit))
+	printExportCommand("WERF_GIT_COMMIT_STRATEGY_EXPIRY_DAYS", fmt.Sprintf("%d", cleanupConfig.GitCommitStrategyExpiryDays))
 
 	printHeader("OTHER", true)
 	printExportCommand("WERF_LOG_COLOR_MODE", "on")
@@ -164,11 +176,7 @@ func generateGitlabEnvs() error {
 	printExportCommand("WERF_ENABLE_PROCESS_EXTERMINATOR", "1")
 
 	if ciGitTag == "" && ciGitBranch == "" {
-		errMsg := fmt.Sprintf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
-
-		fmt.Println()
-		printError(errMsg)
-		return fmt.Errorf(errMsg)
+		return fmt.Errorf("none of enviroment variables $WERF_TAG_GIT_TAG=$CI_COMMIT_TAG or $WERF_TAG_GIT_BRANCH=$CI_COMMIT_REF_NAME for '%s' strategy are detected", CmdData.TaggingStrategy)
 	}
 
 	return nil
@@ -213,4 +221,36 @@ func printExportCommand(key, value string) {
 		echoExportCommand := fmt.Sprintf("echo '%s'", exportCommand)
 		fmt.Println(echoExportCommand)
 	}
+}
+
+type CleanupConfig struct {
+	GitTagStrategyLimit         int `yaml:"gitTagStrategyLimit"`
+	GitTagStrategyExpiryDays    int `yaml:"gitTagStrategyExpiryDays"`
+	GitCommitStrategyLimit      int `yaml:"gitCommitStrategyLimit"`
+	GitCommitStrategyExpiryDays int `yaml:"gitCommitStrategyExpiryDays"`
+}
+
+func getCleanupConfig() (CleanupConfig, error) {
+	configPath := filepath.Join(werf.GetHomeDir(), "config", "cleanup.yaml")
+
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return CleanupConfig{
+			GitTagStrategyLimit:         10,
+			GitTagStrategyExpiryDays:    30,
+			GitCommitStrategyLimit:      50,
+			GitCommitStrategyExpiryDays: 30,
+		}, nil
+	}
+
+	data, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return CleanupConfig{}, fmt.Errorf("error reading %s: %s", configPath, err)
+	}
+
+	config := CleanupConfig{}
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return CleanupConfig{}, fmt.Errorf("bad config yaml %s: %s", configPath, err)
+	}
+
+	return config, nil
 }
