@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
@@ -48,18 +49,23 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 	}
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	err = werfChart.Lint(helm.HelmChartValuesOptions{
-		Set:       opts.Set,
-		SetString: opts.SetString,
-		Values:    opts.Values,
-	})
-
-	if err != nil {
+	out := &bytes.Buffer{}
+	if err := helm.Lint(
+		out,
+		werfChart.ChartDir,
+		namespace,
+		append(werfChart.Values, opts.Values...),
+		append(werfChart.Set, opts.Set...),
+		append(werfChart.SetString, opts.SetString...),
+		helm.LintOptions{Strict: true},
+	); err != nil {
 		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
 		replaceNew := fmt.Sprintf("%s/", ".helm")
 		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
 		return errors.New(errMsg)
 	}
+
+	fmt.Print(out.String())
 
 	return nil
 }

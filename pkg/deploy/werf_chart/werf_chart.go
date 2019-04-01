@@ -1,20 +1,19 @@
 package werf_chart
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"unicode"
 
+	"github.com/ghodss/yaml"
+	"github.com/otiai10/copy"
+
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/deploy/secret"
-	"github.com/ghodss/yaml"
-	"github.com/otiai10/copy"
 )
 
 const (
@@ -145,9 +144,9 @@ func (chart *WerfChart) SetSecretValuesFile(path string, m secret.Manager) error
 	return nil
 }
 
-func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.HelmChartOptions) error {
-	return helm.DeployHelmChart(chart.ChartDir, releaseName, namespace, helm.HelmChartOptions{
-		HelmChartValuesOptions: helm.HelmChartValuesOptions{
+func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.ChartOptions) error {
+	return helm.DeployHelmChart(chart.ChartDir, releaseName, namespace, helm.ChartOptions{
+		ChartValuesOptions: helm.ChartValuesOptions{
 			Set:       append(chart.Set, opts.Set...),
 			SetString: append(chart.SetString, opts.SetString...),
 			Values:    append(chart.Values, opts.Values...),
@@ -157,80 +156,8 @@ func (chart *WerfChart) Deploy(releaseName string, namespace string, opts helm.H
 	})
 }
 
-func (chart *WerfChart) Render(namespace string, opts helm.HelmChartValuesOptions) (string, error) {
-	args := []string{"template", chart.ChartDir}
-
-	args = append(args, "--namespace", namespace)
-
-	for _, set := range chart.Set {
-		args = append(args, "--set", set)
-	}
-	for _, setString := range chart.SetString {
-		args = append(args, "--set-string", setString)
-	}
-	for _, values := range chart.Values {
-		args = append(args, "--values", values)
-	}
-
-	for _, set := range opts.Set {
-		args = append(args, "--set", set)
-	}
-	for _, setString := range opts.SetString {
-		args = append(args, "--set-string", setString)
-	}
-	for _, values := range opts.Values {
-		args = append(args, "--values", values)
-	}
-
-	stdout, stderr, err := helm.HelmCmd(args...)
-	if err != nil {
-		return "", helm.FormatHelmCmdError(stdout, stderr, err)
-	}
-
-	return stdout, nil
-}
-
 type ChartConfig struct {
 	Name string `json:"name"`
-}
-
-func (chart *WerfChart) Lint(opts helm.HelmChartValuesOptions) error {
-	args := []string{"lint", chart.ChartDir} // TODO: opts.Strict
-
-	for _, set := range chart.Set {
-		args = append(args, "--set", set)
-	}
-	for _, setString := range chart.SetString {
-		args = append(args, "--set-string", setString)
-	}
-	for _, values := range chart.Values {
-		args = append(args, "--values", values)
-	}
-
-	for _, set := range opts.Set {
-		args = append(args, "--set", set)
-	}
-	for _, setString := range opts.SetString {
-		args = append(args, "--set-string", setString)
-	}
-	for _, values := range opts.Values {
-		args = append(args, "--values", values)
-	}
-
-	cmd := exec.Command("helm", args...)
-	cmd.Env = os.Environ()
-
-	var output bytes.Buffer
-	cmd.Stdout = &output
-	cmd.Stderr = &output
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("helm lint failed: %s\n%s", err, output.String())
-	}
-
-	fmt.Printf("%s", output.String())
-
-	return nil
 }
 
 func CreateNewWerfChart(projectName, projectDir string, targetDir string, m secret.Manager) (*WerfChart, error) {

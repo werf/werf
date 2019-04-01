@@ -1,10 +1,11 @@
 package helm
 
 import (
+	"bytes"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"strings"
 
-	"gopkg.in/yaml.v2"
 	"k8s.io/helm/pkg/releaseutil"
 
 	"github.com/flant/werf/pkg/util"
@@ -64,7 +65,7 @@ func (t Template) Namespace(namespace string) string {
 	return namespace
 }
 
-func GetTemplatesFromRevision(releaseName string, revision int) (ChartTemplates, error) {
+func GetTemplatesFromRevision(releaseName string, revision int32) (ChartTemplates, error) {
 	rawTemplates, err := getRawTemplatesFromRevision(releaseName, revision)
 	if err != nil {
 		return nil, err
@@ -78,8 +79,8 @@ func GetTemplatesFromRevision(releaseName string, revision int) (ChartTemplates,
 	return chartTemplates, nil
 }
 
-func GetTemplatesFromChart(chartPath, releaseName string, set, setString, values []string) (ChartTemplates, error) {
-	rawTemplates, err := getRawTemplatesFromChart(chartPath, releaseName, set, setString, values)
+func GetTemplatesFromChart(chartPath, releaseName, namespace string, values, set, setString []string) (ChartTemplates, error) {
+	rawTemplates, err := getRawTemplatesFromChart(chartPath, releaseName, namespace, values, set, setString)
 	if err != nil {
 		return nil, err
 	}
@@ -92,38 +93,35 @@ func GetTemplatesFromChart(chartPath, releaseName string, set, setString, values
 	return chartTemplates, nil
 }
 
-func getRawTemplatesFromChart(chartPath, releaseName string, set, setString, values []string) (string, error) {
-	args := []string{"template", chartPath, "--name", releaseName}
-	for _, s := range set {
-		args = append(args, "--set", s)
-	}
-	for _, s := range setString {
-		args = append(args, "--set-string", s)
-	}
-	for _, v := range values {
-		args = append(args, "--values", v)
+func getRawTemplatesFromChart(chartPath, releaseName, namespace string, values, set, setString []string) (string, error) {
+	out := &bytes.Buffer{}
+
+	renderOptions := RenderOptions{
+		ShowNotes: false,
 	}
 
-	stdout, stderr, err := HelmCmd(args...)
-	if err != nil {
-		return "", FormatHelmCmdError(stdout, stderr, err)
+	if err := Render(out, chartPath, releaseName, namespace, values, set, setString, renderOptions); err != nil {
+		return "", err
 	}
 
-	return stdout, nil
+	return out.String(), nil
 }
 
-func getRawTemplatesFromRevision(releaseName string, revision int) (string, error) {
-	hooksOutput, stderr, err := HelmCmd("get", "hooks", releaseName, "--revision", fmt.Sprintf("%d", revision))
+func getRawTemplatesFromRevision(releaseName string, revision int32) (string, error) {
+	var result string
+	resp, err := releaseContent(releaseName, releaseContentOptions{Version: revision})
 	if err != nil {
-		return "", FormatHelmCmdError(hooksOutput, stderr, err)
+		return "", err
 	}
 
-	manifestOutput, stderr, err := HelmCmd("get", "manifest", releaseName, "--revision", fmt.Sprintf("%d", revision))
-	if err != nil {
-		return "", FormatHelmCmdError(manifestOutput, stderr, err)
+	for _, hook := range resp.Release.Hooks {
+		result += fmt.Sprintf("---\n# %s\n%s\n", hook.Name, hook.Manifest)
 	}
 
-	return strings.Join([]string{hooksOutput, manifestOutput}, "\n"), nil
+	result += "\n"
+	result += resp.Release.Manifest
+
+	return result, nil
 }
 
 func parseTemplates(rawTemplates string) (ChartTemplates, error) {

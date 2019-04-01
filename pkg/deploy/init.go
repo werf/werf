@@ -2,7 +2,10 @@ package deploy
 
 import "github.com/flant/werf/pkg/deploy/helm"
 
-func Init(kubeContext string) error {
-	helm.KubeContext = kubeContext
-	return helm.ValidateHelmVersion()
+func Init(kubeConfig, kubeContext, tillerNamespace, tillerStorage string) error {
+	if err := helm.Init(kubeConfig, kubeContext, tillerNamespace, tillerStorage); err != nil {
+		return err
+	}
+
+	return nil
 }

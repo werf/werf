@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strings"
@@ -29,6 +30,7 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 		return fmt.Errorf("cannot get project secret: %s", err)
 	}
 
+	releaseName := "RELEASE_NAME"
 	imagesRepo := "REPO"
 	tag := "GIT_BRANCH"
 	tagStrategy := tag_strategy.GitBranch
@@ -44,22 +46,29 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 	}
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
-	data, err := werfChart.Render(namespace, helm.HelmChartValuesOptions{
-		Set:       opts.Set,
-		SetString: opts.SetString,
-		Values:    opts.Values,
-	})
+	out := &bytes.Buffer{}
 
-	if err != nil {
+	renderOptions := helm.RenderOptions{
+		ShowNotes: false,
+	}
+
+	if err := helm.Render(
+		out,
+		werfChart.ChartDir,
+		releaseName,
+		namespace,
+		append(werfChart.Values, opts.Values...),
+		append(werfChart.Set, opts.Set...),
+		append(werfChart.SetString, opts.SetString...),
+		renderOptions,
+	); err != nil {
 		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
 		replaceNew := fmt.Sprintf("%s/", ".helm")
 		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
 		return errors.New(errMsg)
 	}
 
-	if data != "" {
-		fmt.Println(data)
-	}
+	fmt.Print(out.String())
 
 	return nil
 }

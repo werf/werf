@@ -46,9 +46,9 @@ func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy 
 	defer ReleaseTmpWerfChart(werfChart.ChartDir)
 
 	logboek.OptionalLnModeOn()
-	err = werfChart.Deploy(release, namespace, helm.HelmChartOptions{
+	err = werfChart.Deploy(release, namespace, helm.ChartOptions{
 		Timeout: opts.Timeout,
-		HelmChartValuesOptions: helm.HelmChartValuesOptions{
+		ChartValuesOptions: helm.ChartValuesOptions{
 			Set:       opts.Set,
 			SetString: opts.SetString,
 			Values:    opts.Values,

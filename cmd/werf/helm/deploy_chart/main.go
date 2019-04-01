@@ -55,6 +55,8 @@ If specified Helm chart is a Werf chart with additional values and contains werf
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+	common.SetupTillerNamespace(&CommonCmdData, cmd)
+	common.SetupTillerStorage(&CommonCmdData, cmd)
 
 	common.SetupLogOptions(&CommonCmdData, cmd)
 
@@ -77,7 +79,12 @@ func runDeployChart(chartDir string, releaseName string) error {
 		return err
 	}
 
-	if err := deploy.Init(*CommonCmdData.KubeContext); err != nil {
+	tillerStorage, err := common.GetTillerStorage(*CommonCmdData.TillerStorage)
+	if err != nil {
+		return err
+	}
+
+	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.TillerNamespace, tillerStorage); err != nil {
 		return err
 	}
 
@@ -101,16 +108,14 @@ func runDeployChart(chartDir string, releaseName string) error {
 		return fmt.Errorf("unable to load chart %s: %s", chartDir, err)
 	}
 
-	err = werfChart.Deploy(releaseName, namespace, helm.HelmChartOptions{
+	if err := werfChart.Deploy(releaseName, namespace, helm.ChartOptions{
 		Timeout: time.Duration(CmdData.Timeout) * time.Second,
-		HelmChartValuesOptions: helm.HelmChartValuesOptions{
+		ChartValuesOptions: helm.ChartValuesOptions{
 			Set:       *CommonCmdData.Set,
 			SetString: *CommonCmdData.SetString,
 			Values:    *CommonCmdData.Values,
 		},
-	})
-
-	if err != nil {
+	}); err != nil {
 		replaceOld := fmt.Sprintf("%s/", werfChart.Name)
 		replaceNew := fmt.Sprintf("%s/", strings.TrimRight(werfChart.ChartDir, "/"))
 		errMsg := strings.Replace(err.Error(), replaceOld, replaceNew, -1)
