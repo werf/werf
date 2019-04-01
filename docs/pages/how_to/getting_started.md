@@ -109,11 +109,11 @@ To implement these steps and requirements with werf we will add a special file c
           update_cache: yes
         with_items:
           - php7.2
-          - php-sqlite3
-          - php-xml
-          - php-zip
-          - php-mbstring
-          - php-intl
+          - php7.2-sqlite3
+          - php7.2-xml
+          - php7.2-zip
+          - php7.2-mbstring
+          - php7.2-intl
       - name: Install composer
         get_url:
           url: https://getcomposer.org/download/1.6.5/composer.phar
@@ -175,7 +175,7 @@ To implement these steps and requirements with werf we will add a special file c
       # https://askubuntu.com/posts/490910/revisions
       - LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
       - apt-get update
-      - apt-get install -y php7.2 php-sqlite3 php-xml php-zip php-mbstring php-intl
+      - apt-get install -y php7.2 php7.2-sqlite3 php7.2-xml php7.2-zip php7.2-mbstring php7.2-intl
       - curl -LsS https://getcomposer.org/download/1.4.1/composer.phar -o /usr/local/bin/composer
       - chmod a+x /usr/local/bin/composer
       install:
