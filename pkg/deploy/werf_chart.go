@@ -20,8 +20,8 @@ func ReleaseTmpWerfChart(tmpWerfChartPath string) {
 	os.RemoveAll(filepath.Dir(tmpWerfChartPath))
 }
 
-func PrepareWerfChart(targetDir string, projectName, projectDir string, m secret.Manager, secretValues []string, serviceValues map[string]interface{}) (*werf_chart.WerfChart, error) {
-	werfChart, err := werf_chart.CreateNewWerfChart(projectName, projectDir, targetDir, m)
+func PrepareWerfChart(targetDir string, projectName, projectDir, env string, m secret.Manager, secretValues []string, serviceValues map[string]interface{}) (*werf_chart.WerfChart, error) {
+	werfChart, err := werf_chart.CreateNewWerfChart(projectName, projectDir, targetDir, env, m)
 	if err != nil {
 		return nil, err
 	}

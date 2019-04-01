@@ -35,6 +35,8 @@ type CmdData struct {
 	Environment     *string
 	Release         *string
 	Namespace       *string
+	AddAnnotations  *[]string
+	AddLabels       *[]string
 	KubeContext     *string
 	KubeConfig      *string
 	TillerNamespace *string
@@ -124,6 +126,20 @@ func SetupRelease(cmdData *CmdData, cmd *cobra.Command) {
 func SetupNamespace(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.Namespace = new(string)
 	cmd.Flags().StringVarP(cmdData.Namespace, "namespace", "", "", "Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or deploy.namespace custom template from werf.yaml)")
+}
+
+func SetupAddAnnotations(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.AddAnnotations = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.AddAnnotations, "add-annotation", "", []string{}, `Add annotation to deploying resources (can specify multiple).
+Format: annoName=annoValue.
+Also can be specified in $WERF_ADD_ANNOTATION* (e.g. $WERF_ADD_ANNOTATION_1=annoName1=annoValue1", $WERF_ADD_ANNOTATION_2=annoName2=annoValue2")`)
+}
+
+func SetupAddLabels(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.AddLabels = new([]string)
+	cmd.Flags().StringArrayVarP(cmdData.AddLabels, "add-label", "", []string{}, `Add label to deploying resources (can specify multiple).
+Format: labelName=labelValue.
+Also can be specified in $WERF_ADD_LABEL* (e.g. $WERF_ADD_LABEL_1=labelName1=labelValue1", $WERF_ADD_LABEL_2=labelName2=labelValue2")`)
 }
 
 func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {

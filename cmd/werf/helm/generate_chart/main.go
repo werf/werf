@@ -161,7 +161,7 @@ func runGenerateChart(targetPath string) error {
 		}
 	}
 
-	werfChart, err := deploy.PrepareWerfChart(targetPath, werfConfig.Meta.Project, projectDir, m, CmdData.SecretValues, serviceValues)
+	werfChart, err := deploy.PrepareWerfChart(targetPath, werfConfig.Meta.Project, projectDir, environment, m, CmdData.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}

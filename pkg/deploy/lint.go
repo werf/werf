@@ -43,7 +43,7 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, m, opts.SecretValues, serviceValues)
+	werfChart, err := PrepareWerfChart(GetTmpWerfChartPath(werfConfig.Meta.Project), werfConfig.Meta.Project, projectDir, opts.Env, m, opts.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}

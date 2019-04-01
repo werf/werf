@@ -34,6 +34,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupEnvironment(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
+	common.SetupAddAnnotations(&CommonCmdData, cmd)
+	common.SetupAddLabels(&CommonCmdData, cmd)
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
@@ -84,11 +86,23 @@ func runRender() error {
 		return fmt.Errorf("bad config: %s", err)
 	}
 
+	userExtraAnnotations, err := common.GetUserExtraAnnotations(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
+	userExtraLabels, err := common.GetUserExtraLabels(&CommonCmdData)
+	if err != nil {
+		return err
+	}
+
 	return deploy.RunRender(projectDir, werfConfig, deploy.RenderOptions{
-		Values:       *CommonCmdData.Values,
-		SecretValues: *CommonCmdData.SecretValues,
-		Set:          *CommonCmdData.Set,
-		SetString:    *CommonCmdData.SetString,
-		Env:          *CommonCmdData.Environment,
+		Values:               *CommonCmdData.Values,
+		SecretValues:         *CommonCmdData.SecretValues,
+		Set:                  *CommonCmdData.Set,
+		SetString:            *CommonCmdData.SetString,
+		Env:                  *CommonCmdData.Environment,
+		UserExtraAnnotations: userExtraAnnotations,
+		UserExtraLabels:      userExtraLabels,
 	})
 }
