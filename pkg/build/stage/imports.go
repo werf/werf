@@ -123,6 +123,8 @@ func (s *ImportsStage) prepareImportData(c Conveyor, i *config.Import) error {
 
 	args := []string{
 		"--rm",
+		"--user=0:0",
+		"--workdir=/",
 		fmt.Sprintf("--volumes-from=%s", stapelContainerName),
 		fmt.Sprintf("--entrypoint=%s", stapel.BashBinPath()),
 		fmt.Sprintf("--volume=%s:%s", importImageTmp, importImageContainerTmp),
