@@ -22,14 +22,15 @@ type DeployOptions struct {
 	Env                  string
 	UserExtraAnnotations map[string]string
 	UserExtraLabels      map[string]string
+	IgnoreSecretKey      bool
 }
 
 func Deploy(projectDir, imagesRepo, release, namespace, tag string, tagStrategy tag_strategy.TagStrategy, werfConfig *config.WerfConfig, opts DeployOptions) error {
 	images := GetImagesInfoGetters(werfConfig.Images, imagesRepo, tag, false)
 
-	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
+	m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
 	if err != nil {
-		return fmt.Errorf("cannot get project secret: %s", err)
+		return err
 	}
 
 	serviceValues, err := GetServiceValues(werfConfig.Meta.Project, imagesRepo, namespace, tag, tagStrategy, images, ServiceValuesOptions{Env: opts.Env})

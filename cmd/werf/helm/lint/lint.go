@@ -44,6 +44,7 @@ func NewCmd() *cobra.Command {
 	common.SetupSetString(&CommonCmdData, cmd)
 	common.SetupValues(&CommonCmdData, cmd)
 	common.SetupSecretValues(&CommonCmdData, cmd)
+	common.SetupIgnoreSecretKey(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -85,10 +86,11 @@ func runLint() error {
 	}
 
 	return deploy.RunLint(projectDir, werfConfig, deploy.LintOptions{
-		Values:       *CommonCmdData.Values,
-		SecretValues: *CommonCmdData.SecretValues,
-		Set:          *CommonCmdData.Set,
-		SetString:    *CommonCmdData.SetString,
-		Env:          *CommonCmdData.Environment,
+		Values:          *CommonCmdData.Values,
+		SecretValues:    *CommonCmdData.SecretValues,
+		Set:             *CommonCmdData.Set,
+		SetString:       *CommonCmdData.SetString,
+		Env:             *CommonCmdData.Environment,
+		IgnoreSecretKey: *CommonCmdData.IgnoreSecretKey,
 	})
 }
