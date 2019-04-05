@@ -16,8 +16,12 @@ werf helm get-service-values [options]
 {{ header }} Environments
 
 ```bash
-  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy; recommended way to 
-                    set secret key in CI-system
+  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to 
+                    set secret key in CI-system. 
+                    
+                    Secret key also can be defined in files:
+                    * ~/.werf_secret_key (globally),
+                    * .werf_secret_key (per project)
 ```
 
 {{ header }} Options
