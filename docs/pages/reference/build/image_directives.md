@@ -8,6 +8,7 @@ author: Alexey Igrychev <alexey.igrychev@flant.com>
 ```yaml
 image: <image name... || ~>
 from: <image[:<tag>]>
+fromLatest: <false || true>
 fromCacheVersion: <arbitrary string>
 fromImage: <image name>
 fromImageArtifact: <artifact name>
