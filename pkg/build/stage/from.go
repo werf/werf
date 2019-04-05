@@ -11,13 +11,19 @@ import (
 	"github.com/flant/werf/pkg/util"
 )
 
-func GenerateFromStage(imageBaseConfig *config.ImageBase, baseStageOptions *NewBaseStageOptions) *FromStage {
-	return newFromStage(imageBaseConfig.FromCacheVersion, baseStageOptions)
+func GenerateFromStage(imageBaseConfig *config.ImageBase, baseImageRepoId string, baseStageOptions *NewBaseStageOptions) *FromStage {
+	var baseImageRepoIdOrNone string
+	if imageBaseConfig.FromLatest {
+		baseImageRepoIdOrNone = baseImageRepoId
+	}
+
+	return newFromStage(baseImageRepoIdOrNone, imageBaseConfig.FromCacheVersion, baseStageOptions)
 }
 
-func newFromStage(cacheVersion string, baseStageOptions *NewBaseStageOptions) *FromStage {
+func newFromStage(baseImageRepoIdOrNone, cacheVersion string, baseStageOptions *NewBaseStageOptions) *FromStage {
 	s := &FromStage{}
 	s.cacheVersion = cacheVersion
+	s.baseImageRepoIdOrNone = baseImageRepoIdOrNone
 	s.BaseStage = newBaseStage(From, baseStageOptions)
 	return s
 }
@@ -25,7 +31,8 @@ func newFromStage(cacheVersion string, baseStageOptions *NewBaseStageOptions) *F
 type FromStage struct {
 	*BaseStage
 
-	cacheVersion string
+	baseImageRepoIdOrNone string
+	cacheVersion          string
 }
 
 func (s *FromStage) GetDependencies(_ Conveyor, prevImage image.ImageInterface) (string, error) {
@@ -33,6 +40,10 @@ func (s *FromStage) GetDependencies(_ Conveyor, prevImage image.ImageInterface) 
 
 	if s.cacheVersion != "" {
 		args = append(args, s.cacheVersion)
+	}
+
+	if s.baseImageRepoIdOrNone != "" {
+		args = append(args, s.baseImageRepoIdOrNone)
 	}
 
 	for _, mount := range s.configMounts {

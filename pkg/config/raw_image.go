@@ -9,6 +9,7 @@ type rawImage struct {
 	Images            []string     `yaml:"-"`
 	Artifact          string       `yaml:"artifact,omitempty"`
 	From              string       `yaml:"from,omitempty"`
+	FromLatest        bool         `yaml:"fromLatest,omitempty"`
 	FromCacheVersion  string       `yaml:"fromCacheVersion,omitempty"`
 	FromImage         string       `yaml:"fromImage,omitempty"`
 	FromImageArtifact string       `yaml:"fromImageArtifact,omitempty"`
@@ -180,6 +181,7 @@ func (c *rawImage) toImageAsLayersDirective(name string) (image *Image, err erro
 	for _, imageLayer := range layers {
 		if prevImageLayer == nil {
 			imageLayer.From = c.From
+			imageLayer.FromLatest = c.FromLatest
 			imageLayer.FromCacheVersion = c.FromCacheVersion
 		} else {
 			imageLayer.FromImage = prevImageLayer
@@ -388,6 +390,7 @@ func (c *rawImage) toImageArtifactAsLayersDirective() (imageArtifactLayer *Image
 	for _, layer := range layers {
 		if prevImageLayer == nil {
 			layer.From = c.From
+			layer.FromLatest = c.FromLatest
 			layer.FromCacheVersion = c.FromCacheVersion
 		} else {
 			layer.FromImageArtifact = prevImageLayer
@@ -585,6 +588,7 @@ func (c *rawImage) toImageBaseDirective(name string) (imageBase *ImageBase, err 
 	}
 
 	imageBase.From = c.From
+	imageBase.FromLatest = c.FromLatest
 	imageBase.FromCacheVersion = c.FromCacheVersion
 
 	for _, git := range c.RawGit {

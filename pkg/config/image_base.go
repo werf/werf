@@ -7,6 +7,7 @@ import (
 type ImageBase struct {
 	Name              string
 	From              string
+	FromLatest        bool
 	FromImage         *Image
 	FromImageArtifact *ImageArtifact
 	FromCacheVersion  string

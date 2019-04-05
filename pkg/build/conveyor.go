@@ -23,6 +23,8 @@ type Conveyor struct {
 	buildingGitStageNameByImageName map[string]stage.StageName
 	remoteGitRepos                  map[string]*git_repo.Remote
 	imagesBySignature               map[string]image.ImageInterface
+	baseImagesRepoIdsCache          map[string]string
+	baseImagesRepoErrCache          map[string]error
 
 	tmpDir string
 }
@@ -58,6 +60,11 @@ func NewConveyor(werfConfig *config.WerfConfig, imageNamesToProcess []string, pr
 
 func (c *Conveyor) ReInitRuntimeFields() {
 	c.stageImages = make(map[string]*image.StageImage)
+
+	c.baseImagesRepoIdsCache = make(map[string]string)
+
+	c.baseImagesRepoErrCache = make(map[string]error)
+
 	c.imagesBySignature = make(map[string]image.ImageInterface)
 
 	c.buildingGitStageNameByImageName = make(map[string]stage.StageName)
