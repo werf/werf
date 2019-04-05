@@ -15,6 +15,7 @@ import (
 )
 
 var CmdData struct {
+	Force bool
 }
 
 var CommonCmdData common.CmdData
@@ -56,6 +57,7 @@ WARNING: Do not run this command during any other werf command is working on the
 	common.SetupLogOptions(&CommonCmdData, cmd)
 
 	common.SetupDryRun(&CommonCmdData, cmd)
+	cmd.Flags().BoolVarP(&CmdData.Force, "force", "", false, "Remove containers that use werf docker images")
 
 	return cmd
 }
@@ -78,8 +80,8 @@ func runReset() error {
 	}
 
 	logboek.OptionalLnModeOn()
-	commonOptions := cleaning.CommonOptions{DryRun: *CommonCmdData.DryRun}
-	if err := cleaning.HostPurge(commonOptions); err != nil {
+	hostPurgeOptions := cleaning.HostPurgeOptions{DryRun: *CommonCmdData.DryRun, RmContainersThatUseWerfImages: CmdData.Force}
+	if err := cleaning.HostPurge(hostPurgeOptions); err != nil {
 		return err
 	}
 

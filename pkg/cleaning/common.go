@@ -15,10 +15,11 @@ import (
 )
 
 type CommonOptions struct {
-	DryRun         bool
-	RmForce        bool
-	RmiForce       bool
-	SkipUsedImages bool
+	DryRun                        bool
+	RmForce                       bool
+	RmiForce                      bool
+	SkipUsedImages                bool
+	RmContainersThatUseWerfImages bool
 }
 
 func werfImageStagesFlushByCacheVersion(filterSet filters.Args, options CommonOptions) error {
@@ -141,17 +142,24 @@ func processUsedImages(images []types.ImageSummary, options CommonOptions) ([]ty
 	}
 
 	var imagesToExclude []types.ImageSummary
+	var containersToRemove []types.Container
 	for _, container := range containers {
 		for _, img := range images {
 			if img.ID == container.ImageID {
 				if options.SkipUsedImages {
 					logboek.LogInfoF("Skip image %s (used by container %s)\n", logImageName(img), logContainerName(container))
 					imagesToExclude = append(imagesToExclude, img)
+				} else if options.RmContainersThatUseWerfImages {
+					containersToRemove = append(containersToRemove, container)
 				} else {
 					return nil, fmt.Errorf("cannot remove image %s used by container %s", logImageName(img), logContainerName(container))
 				}
 			}
 		}
+	}
+
+	if err := containersRemove(containersToRemove, options); err != nil {
+		return nil, err
 	}
 
 	for _, img := range imagesToExclude {

@@ -13,13 +13,20 @@ import (
 	"github.com/flant/werf/pkg/werf"
 )
 
-func HostPurge(options CommonOptions) error {
-	options.SkipUsedImages = false
-	options.RmiForce = true
-	options.RmForce = true
+type HostPurgeOptions struct {
+	DryRun                        bool
+	RmContainersThatUseWerfImages bool
+}
+
+func HostPurge(options HostPurgeOptions) error {
+	var commonOptions CommonOptions
+	commonOptions.RmiForce = true
+	commonOptions.RmForce = true
+	commonOptions.RmContainersThatUseWerfImages = options.RmContainersThatUseWerfImages
+	commonOptions.DryRun = options.DryRun
 
 	if err := logboek.LogSecondaryProcess("Running werf docker containers purge", logboek.LogProcessOptions{}, func() error {
-		if err := werfContainersFlushByFilterSet(filters.NewArgs(), options); err != nil {
+		if err := werfContainersFlushByFilterSet(filters.NewArgs(), commonOptions); err != nil {
 			return err
 		}
 
@@ -29,7 +36,7 @@ func HostPurge(options CommonOptions) error {
 	}
 
 	if err := logboek.LogSecondaryProcess("Running werf docker images purge", logboek.LogProcessOptions{}, func() error {
-		if err := werfImagesFlushByFilterSet(filters.NewArgs(), options); err != nil {
+		if err := werfImagesFlushByFilterSet(filters.NewArgs(), commonOptions); err != nil {
 			return err
 		}
 
@@ -38,18 +45,18 @@ func HostPurge(options CommonOptions) error {
 		return err
 	}
 
-	if err := tmp_manager.Purge(options.DryRun); err != nil {
+	if err := tmp_manager.Purge(commonOptions.DryRun); err != nil {
 		return fmt.Errorf("tmp files purge failed: %s", err)
 	}
 
 	if err := logboek.LogSecondaryProcess("Running werf home data purge", logboek.LogProcessOptions{}, func() error {
-		return purgeHomeWerfFiles(options.DryRun)
+		return purgeHomeWerfFiles(commonOptions.DryRun)
 	}); err != nil {
 		return err
 	}
 
 	if err := logboek.LogSecondaryProcess("Deleting stapel", logboek.LogProcessOptions{}, func() error {
-		return deleteStapel(options.DryRun)
+		return deleteStapel(commonOptions.DryRun)
 	}); err != nil {
 		return fmt.Errorf("stapel delete failed: %s", err)
 	}
