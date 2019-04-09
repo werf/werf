@@ -18,12 +18,17 @@ import (
 )
 
 const (
-	ProjectHelmChartDir            = ".helm"
-	ProjectDefaultSecretValuesFile = ProjectHelmChartDir + "/secret-values.yaml"
-	ProjectSecretDir               = ProjectHelmChartDir + "/secret"
+	DefaultSecretValuesFile = "secret-values.yaml"
+	SecretDir               = "secret"
 
-	WerfChartDecodedSecretDir = "decoded-secret"
-	WerfChartMoreValuesDir    = "more-values"
+	WerfChartMoreValuesDir    = "werf.values"
+	WerfChartDecodedSecretDir = "werf.secret"
+)
+
+var (
+	ProjectHelmChartDir            = ".helm"
+	ProjectDefaultSecretValuesFile = filepath.Join(ProjectHelmChartDir, DefaultSecretValuesFile)
+	ProjectSecretDir               = filepath.Join(ProjectHelmChartDir, SecretDir)
 )
 
 func LoadWerfChart(werfChartDir string) (*WerfChart, error) {
@@ -259,15 +264,18 @@ func CreateNewWerfChart(projectName, projectDir string, targetDir, env string, m
 
 	defaultSecretValues := filepath.Join(projectDir, ProjectDefaultSecretValuesFile)
 	if _, err := os.Stat(defaultSecretValues); !os.IsNotExist(err) {
-		err := werfChart.SetSecretValuesFile(defaultSecretValues, m)
-		if err != nil {
+		if err := werfChart.SetSecretValuesFile(defaultSecretValues, m); err != nil {
+			return nil, err
+		}
+
+		if err := os.Remove(filepath.Join(targetDir, DefaultSecretValuesFile)); err != nil {
 			return nil, err
 		}
 	}
 
 	secretDir := filepath.Join(projectDir, ProjectSecretDir)
 	if _, err := os.Stat(secretDir); !os.IsNotExist(err) {
-		err := filepath.Walk(secretDir, func(path string, info os.FileInfo, accessErr error) error {
+		if err := filepath.Walk(secretDir, func(path string, info os.FileInfo, accessErr error) error {
 			if accessErr != nil {
 				return fmt.Errorf("error accessing file %s: %s", path, accessErr)
 			}
@@ -299,9 +307,11 @@ func CreateNewWerfChart(projectName, projectDir string, targetDir, env string, m
 			}
 
 			return nil
-		})
+		}); err != nil {
+			return nil, err
+		}
 
-		if err != nil {
+		if err := os.RemoveAll(filepath.Join(targetDir, SecretDir)); err != nil {
 			return nil, err
 		}
 	}
