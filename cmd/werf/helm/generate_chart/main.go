@@ -20,7 +20,6 @@ import (
 )
 
 var CmdData struct {
-	SecretValues []string
 }
 
 var CommonCmdData common.CmdData
@@ -59,12 +58,13 @@ Werf will generate additional values files, templates Chart.yaml and other files
 	common.SetupTillerNamespace(&CommonCmdData, cmd)
 	common.SetupTillerStorage(&CommonCmdData, cmd)
 
+	common.SetupSecretValues(&CommonCmdData, cmd)
+	common.SetupIgnoreSecretKey(&CommonCmdData, cmd)
+
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
 	common.SetupDockerConfig(&CommonCmdData, cmd, "Command needs granted permissions to read and pull images from the specified stages storage and images repo")
 	common.SetupInsecureRepo(&CommonCmdData, cmd)
-
-	cmd.Flags().StringArrayVarP(&CmdData.SecretValues, "secret-values", "", []string{}, "Additional helm secret values")
 
 	return cmd
 }
@@ -146,9 +146,9 @@ func runGenerateChart(targetPath string) error {
 		return fmt.Errorf("error creating service values: %s", err)
 	}
 
-	m, err := deploy.GetSafeSecretManager(projectDir, CmdData.SecretValues)
+	m, err := deploy.GetSafeSecretManager(projectDir, *CommonCmdData.SecretValues, *CommonCmdData.IgnoreSecretKey)
 	if err != nil {
-		return fmt.Errorf("cannot get project secret: %s", err)
+		return err
 	}
 
 	targetPath = util.ExpandPath(targetPath)
@@ -161,7 +161,7 @@ func runGenerateChart(targetPath string) error {
 		}
 	}
 
-	werfChart, err := deploy.PrepareWerfChart(targetPath, werfConfig.Meta.Project, projectDir, environment, m, CmdData.SecretValues, serviceValues)
+	werfChart, err := deploy.PrepareWerfChart(targetPath, werfConfig.Meta.Project, projectDir, environment, m, *CommonCmdData.SecretValues, serviceValues)
 	if err != nil {
 		return err
 	}

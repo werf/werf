@@ -20,6 +20,7 @@ type RenderOptions struct {
 	Env                  string
 	UserExtraAnnotations map[string]string
 	UserExtraLabels      map[string]string
+	IgnoreSecretKey      bool
 }
 
 func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOptions) error {
@@ -27,9 +28,9 @@ func RunRender(projectDir string, werfConfig *config.WerfConfig, opts RenderOpti
 		fmt.Fprintf(logboek.GetOutStream(), "Render options: %#v\n", opts)
 	}
 
-	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
+	m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
 	if err != nil {
-		return fmt.Errorf("cannot get project secret: %s", err)
+		return err
 	}
 
 	releaseName := "RELEASE_NAME"

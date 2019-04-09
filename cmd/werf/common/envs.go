@@ -20,8 +20,12 @@ const (
 
 var envDescription = map[Env]string{
 	WerfDebugAnsibleArgs: "Pass specified cli args to ansible ($ANSIBLE_ARGS)",
-	WerfSecretKey:        "Use specified secret key to extract secrets for the deploy; recommended way to set secret key in CI-system",
-	WerfOldSecretKey:     "Use specified old secret key to rotate secrets",
+	WerfSecretKey: `Use specified secret key to extract secrets for the deploy. Recommended way to set secret key in CI-system. 
+
+Secret key also can be defined in files:
+* ~/.werf_secret_key (globally),
+* .werf_secret_key (per project)`,
+	WerfOldSecretKey: "Use specified old secret key to rotate secrets",
 }
 
 func EnvsDescription(envs ...Env) string {

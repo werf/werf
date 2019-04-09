@@ -17,8 +17,12 @@ werf helm generate-chart PATH [options]
 {{ header }} Environments
 
 ```bash
-  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy; recommended way to 
-                    set secret key in CI-system
+  $WERF_SECRET_KEY  Use specified secret key to extract secrets for the deploy. Recommended way to 
+                    set secret key in CI-system. 
+                    
+                    Secret key also can be defined in files:
+                    * ~/.werf_secret_key (globally),
+                    * .werf_secret_key (per project)
 ```
 
 {{ header }} Options
@@ -37,6 +41,8 @@ werf helm generate-chart PATH [options]
             help for generate-chart
       --home-dir='':
             Use specified dir to store werf cache files and dirs (default $WERF_HOME or ~/.werf)
+      --ignore-secret-key=false:
+            Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)
   -i, --images-repo='':
             Docker Repo to store images (default $WERF_IMAGES_REPO)
       --insecure-repo=false:
@@ -49,7 +55,7 @@ werf helm generate-chart PATH [options]
             Use specified Kubernetes namespace (default [[ project ]]-[[ env ]] template or 
             deploy.namespace custom template from werf.yaml)
       --secret-values=[]:
-            Additional helm secret values
+            Specify helm secret values in a YAML file (can specify multiple)
       --ssh-key=[]:
             Use only specific ssh keys (Defaults to system ssh-agent or ~/.ssh/{id_rsa|id_dsa}, see 
             https://werf.io/reference/toolbox/ssh.html). Option can be specified multiple times to 

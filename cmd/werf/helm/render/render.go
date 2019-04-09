@@ -46,6 +46,7 @@ func NewCmd() *cobra.Command {
 	common.SetupSetString(&CommonCmdData, cmd)
 	common.SetupValues(&CommonCmdData, cmd)
 	common.SetupSecretValues(&CommonCmdData, cmd)
+	common.SetupIgnoreSecretKey(&CommonCmdData, cmd)
 
 	return cmd
 }
@@ -104,5 +105,6 @@ func runRender() error {
 		Env:                  *CommonCmdData.Environment,
 		UserExtraAnnotations: userExtraAnnotations,
 		UserExtraLabels:      userExtraLabels,
+		IgnoreSecretKey:      *CommonCmdData.IgnoreSecretKey,
 	})
 }

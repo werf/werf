@@ -94,6 +94,7 @@ Read more info about Helm chart structure, Helm Release name, Kubernetes Namespa
 	common.SetupSetString(&CommonCmdData, cmd)
 	common.SetupValues(&CommonCmdData, cmd)
 	common.SetupSecretValues(&CommonCmdData, cmd)
+	common.SetupIgnoreSecretKey(&CommonCmdData, cmd)
 
 	cmd.Flags().IntVarP(&CmdData.Timeout, "timeout", "t", 0, "Resources tracking timeout in seconds")
 
@@ -226,5 +227,6 @@ func runDeploy() error {
 		Env:                  *CommonCmdData.Environment,
 		UserExtraAnnotations: userExtraAnnotations,
 		UserExtraLabels:      userExtraLabels,
+		IgnoreSecretKey:      *CommonCmdData.IgnoreSecretKey,
 	})
 }

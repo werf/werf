@@ -14,11 +14,12 @@ import (
 )
 
 type LintOptions struct {
-	Values       []string
-	SecretValues []string
-	Set          []string
-	SetString    []string
-	Env          string
+	Values          []string
+	SecretValues    []string
+	Set             []string
+	SetString       []string
+	Env             string
+	IgnoreSecretKey bool
 }
 
 func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions) error {
@@ -26,9 +27,9 @@ func RunLint(projectDir string, werfConfig *config.WerfConfig, opts LintOptions)
 		fmt.Fprintf(logboek.GetOutStream(), "Lint options: %#v\n", opts)
 	}
 
-	m, err := GetSafeSecretManager(projectDir, opts.SecretValues)
+	m, err := GetSafeSecretManager(projectDir, opts.SecretValues, opts.IgnoreSecretKey)
 	if err != nil {
-		return fmt.Errorf("cannot get project secret: %s", err)
+		return err
 	}
 
 	imagesRepo := "REPO"

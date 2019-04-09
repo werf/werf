@@ -42,10 +42,11 @@ type CmdData struct {
 	TillerNamespace *string
 	TillerStorage   *string
 
-	Set          *[]string
-	SetString    *[]string
-	Values       *[]string
-	SecretValues *[]string
+	Set             *[]string
+	SetString       *[]string
+	Values          *[]string
+	SecretValues    *[]string
+	IgnoreSecretKey *bool
 
 	StagesStorage *string
 	ImagesRepo    *string
@@ -281,6 +282,11 @@ func SetupValues(cmdData *CmdData, cmd *cobra.Command) {
 func SetupSecretValues(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.SecretValues = new([]string)
 	cmd.Flags().StringArrayVarP(cmdData.SecretValues, "secret-values", "", []string{}, "Specify helm secret values in a YAML file (can specify multiple)")
+}
+
+func SetupIgnoreSecretKey(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.IgnoreSecretKey = new(bool)
+	cmd.Flags().BoolVarP(cmdData.IgnoreSecretKey, "ignore-secret-key", "", getBoolEnvironment("WERF_IGNORE_SECRET_KEY"), "Disable secrets decryption (default $WERF_IGNORE_SECRET_KEY)")
 }
 
 func SetupLogProjectDir(cmdData *CmdData, cmd *cobra.Command) {
