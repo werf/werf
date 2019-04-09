@@ -37,6 +37,8 @@ func NewCmd() *cobra.Command {
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+	common.SetupTillerNamespace(&CommonCmdData, cmd)
+	common.SetupTillerStorage(&CommonCmdData, cmd)
 
 	common.SetupSet(&CommonCmdData, cmd)
 	common.SetupSetString(&CommonCmdData, cmd)
@@ -59,7 +61,12 @@ func runLint() error {
 		return err
 	}
 
-	if err := deploy.Init(*CommonCmdData.KubeContext); err != nil {
+	tillerStorage, err := common.GetTillerStorage(*CommonCmdData.TillerStorage)
+	if err != nil {
+		return err
+	}
+
+	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.TillerNamespace, tillerStorage); err != nil {
 		return err
 	}
 

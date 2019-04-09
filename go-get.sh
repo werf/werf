@@ -17,4 +17,13 @@ go get -u -v github.com/flant/kubedog/...
 go get -u -v github.com/flant/logboek/...
 go get -u -v github.com/flant/logboek_py/...
 
+# TODO: k8s.io/helm
+
 go get -v github.com/flant/werf/cmd/werf
+
+# FIXME
+cwd=`pwd`
+cd $path/k8s.io/helm
+make bootstrap
+find . -type f -regex './vendor/golang.org/x/net/trace/.*' -delete
+cd $cwd

@@ -2,6 +2,7 @@ package logging
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/flant/logboek"
 )
@@ -12,7 +13,13 @@ var (
 )
 
 func Init() error {
-	return logboek.Init()
+	if err := logboek.Init(); err != nil {
+		return err
+	}
+
+	log.SetOutput(logboek.GetOutStream())
+
+	return nil
 }
 
 func EnableLogColor() {

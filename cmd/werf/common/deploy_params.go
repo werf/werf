@@ -6,7 +6,9 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
+
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/slug"
 )
 
@@ -78,6 +80,15 @@ func GetKubernetesNamespace(namespaceOption string, environmentOption string, we
 	}
 
 	return renderedNamespace, nil
+}
+
+func GetTillerStorage(tillerStorage string) (string, error) {
+	switch tillerStorage {
+	case helm.ConfigMapStorage, helm.SecretStorage:
+		return tillerStorage, nil
+	default:
+		return "", fmt.Errorf("bad --tiller-storage value %s. Use one of %s or %s", tillerStorage, helm.ConfigMapStorage, helm.SecretStorage)
+	}
 }
 
 func renderDeployParamTemplate(templateName, templateText string, environmentOption string, werfConfig *config.WerfConfig) (string, error) {

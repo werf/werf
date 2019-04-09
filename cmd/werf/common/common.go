@@ -15,6 +15,7 @@ import (
 	"github.com/flant/logboek"
 	cleanup "github.com/flant/werf/pkg/cleaning"
 	"github.com/flant/werf/pkg/config"
+	"github.com/flant/werf/pkg/deploy/helm"
 	"github.com/flant/werf/pkg/logging"
 	"github.com/flant/werf/pkg/util"
 	"github.com/flant/werf/pkg/werf"
@@ -31,11 +32,13 @@ type CmdData struct {
 	TagGitTag    *string
 	TagGitCommit *string
 
-	Environment *string
-	Release     *string
-	Namespace   *string
-	KubeContext *string
-	KubeConfig  *string
+	Environment     *string
+	Release         *string
+	Namespace       *string
+	KubeContext     *string
+	KubeConfig      *string
+	TillerNamespace *string
+	TillerStorage   *string
 
 	Set          *[]string
 	SetString    *[]string
@@ -131,6 +134,37 @@ func SetupKubeContext(cmdData *CmdData, cmd *cobra.Command) {
 func SetupKubeConfig(cmdData *CmdData, cmd *cobra.Command) {
 	cmdData.KubeConfig = new(string)
 	cmd.Flags().StringVarP(cmdData.KubeConfig, "kube-config", "", "", "Kubernetes config file path")
+}
+
+func SetupTillerNamespace(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.TillerNamespace = new(string)
+
+	defaultValues := []string{
+		os.Getenv("WERF_TILLER_NAMESPACE"),
+		os.Getenv("TILLER_NAMESPACE"),
+		helm.DefaultTillerNamespace,
+	}
+
+	var defaultValue string
+	for _, value := range defaultValues {
+		if value != "" {
+			defaultValue = value
+			break
+		}
+	}
+
+	cmd.Flags().StringVarP(cmdData.TillerNamespace, "tiller-namespace", "", defaultValue, fmt.Sprintf("tiller namespace (default $WERF_TILLER_NAMESPACE, $TILLER_NAMESPACE or %s)", helm.DefaultTillerNamespace))
+}
+
+func SetupTillerStorage(cmdData *CmdData, cmd *cobra.Command) {
+	cmdData.TillerStorage = new(string)
+
+	defaultValue := os.Getenv("WERF_TILLER_STORAGE")
+	if defaultValue == "" {
+		defaultValue = helm.ConfigMapStorage
+	}
+
+	cmd.Flags().StringVarP(cmdData.TillerStorage, "tiller-storage", "", defaultValue, fmt.Sprintf("helm storage driver to use. One of %[1]s or %[2]s (default $WERF_TILLER_STORAGE or %[1]s)", helm.ConfigMapStorage, helm.SecretStorage))
 }
 
 func SetupStagesStorage(cmdData *CmdData, cmd *cobra.Command) {

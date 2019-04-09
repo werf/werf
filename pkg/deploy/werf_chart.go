@@ -2,14 +2,13 @@ package deploy
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/flant/logboek"
 	"github.com/flant/werf/pkg/deploy/secret"
 	"github.com/flant/werf/pkg/deploy/werf_chart"
 	"github.com/flant/werf/pkg/werf"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
+	"os"
+	"path/filepath"
 )
 
 func GetTmpWerfChartPath(projectName string) string {

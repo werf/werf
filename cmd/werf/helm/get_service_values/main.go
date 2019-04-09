@@ -50,6 +50,8 @@ These values includes project name, docker images ids and other`),
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+	common.SetupTillerNamespace(&CommonCmdData, cmd)
+	common.SetupTillerStorage(&CommonCmdData, cmd)
 
 	common.SetupStagesStorage(&CommonCmdData, cmd)
 	common.SetupImagesRepo(&CommonCmdData, cmd)
@@ -70,7 +72,12 @@ func runGetServiceValues() error {
 		return err
 	}
 
-	if err := deploy.Init(*CommonCmdData.KubeContext); err != nil {
+	tillerStorage, err := common.GetTillerStorage(*CommonCmdData.TillerStorage)
+	if err != nil {
+		return err
+	}
+
+	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.TillerNamespace, tillerStorage); err != nil {
 		return err
 	}
 

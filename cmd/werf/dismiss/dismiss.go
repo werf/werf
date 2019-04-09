@@ -60,6 +60,8 @@ Read more info about Helm Release name, Kubernetes Namespace and how to change i
 
 	common.SetupKubeConfig(&CommonCmdData, cmd)
 	common.SetupKubeContext(&CommonCmdData, cmd)
+	common.SetupTillerNamespace(&CommonCmdData, cmd)
+	common.SetupTillerStorage(&CommonCmdData, cmd)
 
 	common.SetupDockerConfig(&CommonCmdData, cmd, "")
 
@@ -79,7 +81,12 @@ func runDismiss() error {
 		return err
 	}
 
-	if err := deploy.Init(*CommonCmdData.KubeContext); err != nil {
+	tillerStorage, err := common.GetTillerStorage(*CommonCmdData.TillerStorage)
+	if err != nil {
+		return err
+	}
+
+	if err := deploy.Init(*CommonCmdData.KubeConfig, *CommonCmdData.KubeContext, *CommonCmdData.TillerNamespace, tillerStorage); err != nil {
 		return err
 	}
 
@@ -120,6 +127,8 @@ func runDismiss() error {
 		return err
 	}
 
+	logboek.LogServiceF("Using tiller namespace: %s\n", *CommonCmdData.TillerNamespace)
+	logboek.LogServiceF("Using tiller storage: %s\n", tillerStorage)
 	logboek.LogServiceF("Using helm release name: %s\n", release)
 	logboek.LogServiceF("Using kubernetes namespace: %s\n", namespace)
 
